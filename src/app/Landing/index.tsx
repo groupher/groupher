@@ -72,11 +72,10 @@ export default () => {
 
   return (
     <div className={s.wrapper} data-testid="landing-page">
-      <DashboardIntros />
+      {/* <DashboardIntros /> */}
       {/* <PatternBg /> */}
       <div className={s.inner}>
         {/* <BgGlow wallpaper={wallpaper} /> */}
-        {/* <DashboardIntros /> */}
         <div className={s.banner}>
           <HomeHeader />
           <div className={s.betaText} style={{ background: s.betaGradientStyle }}>
@@ -123,7 +122,7 @@ export default () => {
 
         <BatteryBento />
 
-        {/* <DashboardIntros /> */}
+        <DashboardIntros />
 
         <TechStacks />
 
