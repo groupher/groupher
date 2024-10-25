@@ -1,10 +1,12 @@
-import styled, { css, animate } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row()};
-  width: 100%;
-  height: 100%;
-  position: relative;
-  animation: ${animate.jump} 0.5s linear;
-`
-export const holder = 1
+export default () => {
+  const { cn } = useTwBelt()
+
+  return {
+    wrapper: cn(
+      'row w-full h-full relative',
+      'animate-fade-up animate-duration-500 animate-ease-in-out',
+    ),
+  }
+}

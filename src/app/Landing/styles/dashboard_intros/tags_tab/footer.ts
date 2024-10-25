@@ -18,7 +18,7 @@ export const Wrapper = styled.div`
   position: absolute;
   bottom: 40px;
   left: -20px;
-  z-index: 5;
+  z-index: 30;
   box-shadow: rgba(149, 157, 165, 0.2) 0px -4px 24px;
 `
 export const EditLabel = styled(WithPosition)`

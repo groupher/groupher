@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: cn(
-      'row w-full h-full relative',
+      'row w-full h-5/6 mt-14 relative',
       'animate-fade-up animate-duration-500 animate-ease-in-out',
     ),
   }

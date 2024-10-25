@@ -8,7 +8,7 @@ export default () => {
   const { cn, fg, bg, br, fill, global, shadow, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('absolute top-14 mt-0.5 left-8 w-full h-full'),
+    wrapper: cn('absolute top-44 mt-0.5 left-8 w-full h-5/6'),
     postItemWrapper: cn(
       'absolute -top-2 rounded-t-xl p-1 z-30 border border-dashed',
       bg('htmlBg'),

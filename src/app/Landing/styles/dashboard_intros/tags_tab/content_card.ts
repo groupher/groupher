@@ -1,39 +1,19 @@
-import styled, { theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  background: ${theme('htmlBg')};
-  color: ${theme('article.digest')};
-  width: 420px;
-  height: 460px;
-  border-radius: 15px;
-  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-  z-index: 2;
-  position: absolute;
-  bottom: 68px;
-  left: 0px;
+export default () => {
+  const { cn, bg, br, shadow } = useTwBelt()
 
-  &:after {
-    content: "";
-    position: absolute;
-    top: -2px;
-    right: 2px;
-    width: 423px;
-    z-index: -1;
-    height: 60%;
-    border: 1px solid;
-    border-color: ${theme('divider')};
-    background: ${theme('htmlBg')};
-    border-radius: 6px;
-    transform: rotate(-2deg);
+  return {
+    wrapper: cn(
+      'absolute bottom-16 left-0 w-[420px] h-[460px] rounded-xl z-10',
+      bg('htmlBg'),
+      shadow('sm'),
+    ),
+    shadowCover: cn(
+      'absolute -left-0.5 w-full h-1/2 -rotate-2 rounded-xl',
+      shadow('md'),
+      bg('htmlBg'),
+    ),
+    inner: cn('relative border px-6 py-5 w-full h-full rounded-md', br('divider'), bg('htmlBg')),
   }
-`
-export const InnerContent = styled.div`
-  position: relative;
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  border-radius: 8px;
-  background: ${theme('htmlBg')};
-  padding: 20px 26px;
-  width: 100%;
-  height: 100%;
-`
+}
