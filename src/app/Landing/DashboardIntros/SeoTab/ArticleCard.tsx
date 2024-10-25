@@ -1,31 +1,24 @@
-import type { FC } from 'react'
+import Img from '~/Img'
 
-import {
-  Wrapper,
-  Title,
-  Desc,
-  Header,
-  Url,
-  Logo,
-} from '../../styles/dashboard_intros/seo_tab/article_card'
+import useSalon from '../../styles/dashboard_intros/seo_tab/article_card'
 
-const ArticleCard: FC = () => {
+export default () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Header>
-        <Logo src="/landing/seo/wechat.png" $size={15} />
-        <Logo src="/landing/seo/zhihu.png" $size={15} />
-        <Logo src="/landing/seo/xhs.png" $size={17} top={1} />
-        <Logo src="/landing/seo/medium.png" $size={15} />
-        <Logo src="/landing/seo/discord.png" $size={15} />
-        <Logo src="/landing/seo/tg.png" $size={15} />
+    <div className={s.wrapper}>
+      <div className={s.header}>
+        <Img src="/landing/seo/wechat.png" className={s.brand} />
+        <Img src="/landing/seo/zhihu.png" className={s.brand} />
+        <Img src="/landing/seo/xhs.png" className={s.brand} />
+        <Img src="/landing/seo/medium.png" className={s.brand} />
+        <Img src="/landing/seo/discord.png" className={s.brand} />
+        <Img src="/landing/seo/tg.png" className={s.brand} />
         <div className="grow" />
-      </Header>
-      <Title>Motojie - (摩界)</Title>
-      <Desc>发现复古摩托车的魅力。我们专注于提供全球最独特...</Desc>
-      <Url>https://motojie.com</Url>
-    </Wrapper>
+      </div>
+      <div className={s.title}>Motojie - (摩界)</div>
+      <div className={s.desc}>发现复古摩托车的魅力。我们专注于提供全球最独特...</div>
+      <div className={s.url}>https://motojie.com</div>
+    </div>
   )
 }
-
-export default ArticleCard

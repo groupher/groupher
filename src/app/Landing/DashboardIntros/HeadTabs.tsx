@@ -20,7 +20,7 @@ export default ({ tab, onChange }: TProps) => {
         className={cn(s.button, tab === DASHBOARD_ROUTE.LAYOUT && s.purpleActive)}
         onClick={() => onChange(DASHBOARD_ROUTE.LAYOUT)}
       >
-        布局 & 样式
+        布局 / 样式
       </button>
       <button
         className={cn(s.button, tab === DASHBOARD_ROUTE.POST && s.blueActive)}
@@ -32,7 +32,7 @@ export default ({ tab, onChange }: TProps) => {
         className={cn(s.button, tab === DASHBOARD_ROUTE.SEO && s.cyanActive)}
         onClick={() => onChange(DASHBOARD_ROUTE.SEO)}
       >
-        SEO
+        SEO / RSS
       </button>
       <button
         className={cn(s.button, tab === DASHBOARD_ROUTE.TAGS && s.greenActive)}
@@ -44,19 +44,19 @@ export default ({ tab, onChange }: TProps) => {
         className={cn(s.button, tab === DASHBOARD_ROUTE.ADMINS && s.redActive)}
         onClick={() => onChange(DASHBOARD_ROUTE.ADMINS)}
       >
-        管理员 & 权限
+        权限管理
       </button>
       <button
         className={cn(s.button, tab === DASHBOARD_ROUTE.HEADER && s.brownActive)}
         onClick={() => onChange(DASHBOARD_ROUTE.HEADER)}
       >
-        页头 & 页脚
+        页头 / 页脚
       </button>
       <button
         className={cn(s.button, tab === DASHBOARD_ROUTE.INOUT && s.yellowActive)}
         onClick={() => onChange(DASHBOARD_ROUTE.INOUT)}
       >
-        导入 & 通知
+        导入 / 通知
       </button>
       <button className={s.button}>嵌入集成</button>
       <button className={s.button}>统计分析</button>

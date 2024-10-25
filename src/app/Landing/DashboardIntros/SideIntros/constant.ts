@@ -45,20 +45,17 @@ export default {
   },
 
   [DASHBOARD_ROUTE.SEO]: {
-    title: 'SEO',
-    desc: '搜索引擎/社交媒体优化相关设置',
+    title: 'SEO / RSS',
+    desc: '搜索引擎/社交媒体/RSS 优化及设置',
     color: COLOR_NAME.CYAN,
     icon: SpiderSVG,
     iconClass: 'size-8 opacity-40',
 
     items: [
-      '社区基本信息，主题色',
-      '品牌展示样式',
-      '社区整体布局',
-      '讨论区布局',
-      '看板布局，背景颜色',
-      '更新日志布局',
-      '壁纸，辉光，毛玻璃效果',
+      'OpenGraph 自定义设置',
+      'Twitter Card 自定义设置',
+      '自定义 RSS 输出',
+      '自定义开启 / 关闭',
     ],
   },
 

@@ -1,15 +1,19 @@
-import type { FC } from 'react'
+import useSalon from '../../styles/dashboard_intros/seo_tab'
 
-import ContentCard from './ContentCard'
+import ArticleCard from './ArticleCard'
+import WebCard from './WebCard'
+import Content from './Content'
+import TwitterCard from './TwitterCard'
 
-import { Wrapper } from '../../styles/dashboard_intros/seo_tab'
+export default () => {
+  const s = useSalon()
 
-const SeoTab: FC = () => {
   return (
-    <Wrapper>
-      <ContentCard />
-    </Wrapper>
+    <div className={s.wrapper}>
+      <ArticleCard />
+      <WebCard />
+      <TwitterCard />
+      <Content />
+    </div>
   )
 }
-
-export default SeoTab
