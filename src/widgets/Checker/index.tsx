@@ -6,11 +6,12 @@
 
 import type { FC, ReactNode } from 'react'
 
-import type { TSizeSM, TSpace } from '~/spec'
-import usePrimaryColor from '~/hooks/usePrimaryColor'
+import type { TColorName, TSizeSM, TSpace } from '~/spec'
 import SIZE from '~/const/size'
 
-import { Wrapper, IconWrapper, CheckIcon, ChildWrapper } from './styles'
+import CheckedSVG from '~/icons/CheckBold'
+
+import useSalon from './salon'
 
 type TProps = {
   children?: ReactNode | null
@@ -19,6 +20,7 @@ type TProps = {
   size?: TSizeSM
   dimWhenIdle?: boolean
   disabled?: boolean
+  color?: TColorName | null
   onChange?: (checked: boolean) => void
 } & TSpace
 
@@ -30,26 +32,20 @@ const Checker: FC<TProps> = ({
   children = null,
   disabled = false,
   dimWhenIdle = false,
-  ...restProps
+  color = null,
+  ...spacing
 }) => {
-  const primaryColor = usePrimaryColor()
+  const s = useSalon({ disabled, checked, hiddenMode, dimWhenIdle, color, size, ...spacing })
+
   const show = checked || !hiddenMode
 
   return (
-    <Wrapper
-      show={show}
-      $dimWhenIdle={dimWhenIdle}
-      disabled={disabled}
-      onClick={() => show && !disabled && onChange(!checked)}
-      {...restProps}
-    >
-      <IconWrapper checked={checked} size={size} disabled={disabled} $color={primaryColor}>
-        <CheckIcon checked={checked} size={size} disabled={disabled} $color={primaryColor} />
-      </IconWrapper>
-      <ChildWrapper checked={checked} size={size} disabled={disabled}>
-        {children}
-      </ChildWrapper>
-    </Wrapper>
+    <div className={s.wrapper} onClick={() => show && !disabled && onChange(!checked)}>
+      <div className={s.iconBox}>
+        <CheckedSVG className={s.checkIcon} />
+      </div>
+      <div className={s.children}>{children}</div>
+    </div>
   )
 }
 
