@@ -4,7 +4,6 @@
  * LandingPage
  */
 
-import { Suspense } from 'react'
 import Link from 'next/link'
 
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
@@ -17,7 +16,6 @@ import LinkSVG from '~/icons/LinkOutside'
 
 import Button from '~/widgets/Buttons/Button'
 import BorderButton from '~/widgets/Buttons/BorderButton'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import Tooltip from '~/widgets/Tooltip'
 import FaqList from '~/widgets/FaqList'
 import HomeHeader from '~/widgets/HomeHeader'
@@ -74,6 +72,7 @@ export default () => {
 
   return (
     <div className={s.wrapper} data-testid="landing-page">
+      <DashboardIntros />
       {/* <PatternBg /> */}
       <div className={s.inner}>
         {/* <BgGlow wallpaper={wallpaper} /> */}
@@ -122,21 +121,13 @@ export default () => {
 
         <ArticlesIntroTabs />
 
-        <Suspense fallback={<LavaLampLoading />}>
-          <BatteryBento />
-        </Suspense>
+        <BatteryBento />
 
-        <Suspense fallback={<LavaLampLoading />}>
-          <DashboardIntros />
-        </Suspense>
+        {/* <DashboardIntros /> */}
 
-        <Suspense fallback={<LavaLampLoading />}>
-          <TechStacks />
-        </Suspense>
+        <TechStacks />
 
-        <Suspense fallback={<LavaLampLoading />}>
-          <CompareDev />
-        </Suspense>
+        <CompareDev />
 
         <div className={cn(s.divider, 'mt-20')} />
         <UsersWall wallpaper={wallpaper} />

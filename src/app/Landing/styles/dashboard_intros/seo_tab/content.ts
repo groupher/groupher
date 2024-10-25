@@ -1,65 +1,36 @@
-import styled, { css, theme, animate } from '~/css'
+import { COLOR_NAME } from '~/const/colors'
 
-import EditSVG from '~/icons/Spider'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row()};
-  margin-top: 300px;
-  width: 100%;
-  height: 235px;
-  border-radius: 15px;
-  padding: 10px 18px;
-  padding-top: 40px;
-  position: relative;
-  background: #f1f1f163;
-`
-export const IconBox = styled.div`
-  ${css.circle(35)};
-  ${css.row('align-both')};
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  position: absolute;
-  top: 100px;
-  left: 196px;
-  box-shadow: rgba(149, 157, 165, 0.2) 0px -1px 24px;
-  background: ${theme('gradientBg.cyan')};
-  animation: ${animate.jump} 3s linear infinite alternate;
+export { cn } from '~/css'
 
-  &:after {
-    content: '';
-    position: absolute;
-    left: 16px;
-    top: -100px;
-    height: 100px;
-    width: 1px;
-    background: ${theme('hint')};
-    opacity: 0.35;
+export default () => {
+  const { cn, fg, bg, br, shadow, global, rainbow } = useTwBelt()
+
+  return {
+    wrapper: cn(
+      'row-center-between absolute bottom-12 w-11/12 h-56 px-4 py-2 rounded-xl',
+      bg('hoverBg'),
+    ),
+    ogPanel: 'w-1/2 pl-6 relative',
+    twPanel: 'w-1/2 pl-12 relative',
+    title: cn('text-xs mb-0.5 bold-sm', fg('text.title')),
+    desc: cn('text-xs mb-2.5', fg('text.digest')),
+    //
+    line: cn(
+      'absolute -top-5 left-1/2 -ml-4 w-2 h-28 border-r-2 border-dashed',
+      'opacity-20',
+      br('text.digest'),
+    ),
+    iconBox: cn(
+      'size-9 circle align-both',
+      'absolute top-24 left-1/2 -ml-7 z-20',
+      'animate-bounce animate-infinite animate-duration-[4000ms] animate-ease-in-out',
+      shadow('sm'),
+      global('gradient-cyan'),
+    ),
+    spiderSVG: cn('size-5 opacity-80', rainbow(COLOR_NAME.CYAN, 'fill')),
+    //
+    bar: cn('absolute h-1 w-10 rounded-md opacity-20', bg('text.digest')),
   }
-`
-export const SpiderIcon = styled(EditSVG)`
-  ${css.size(20)};
-  fill: ${theme('rainbow.cyan')};
-  transform: rotate(180deg);
-  opacity: 0.6;
-`
-export const OgPanel = styled.div`
-  width: 50%;
-  padding-left: 10px;
-  position: relative;
-`
-export const TwPanel = styled.div`
-  width: 50%;
-  padding-left: 60px;
-  position: relative;
-`
-export const Title = styled.div`
-  font-size: 13px;
-  color: ${theme('article.title')};
-  font-weight: 550;
-`
-export const Desc = styled.div`
-  font-size: 13px;
-  color: ${theme('article.digest')};
-  font-weight: 400;
-  margin-bottom: 10px;
-`
+}
