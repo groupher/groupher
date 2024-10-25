@@ -6,7 +6,7 @@ export default () => {
   return {
     wrapper: cn(
       'column w-64 h-40 px-5 py-4 pb-0 rounded-xl',
-      'absolute top-8 left-4 rotate-2',
+      'absolute top-10 left-2 rotate-2',
       bg('alphaBg'),
       shadow('md'),
     ),

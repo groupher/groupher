@@ -33,7 +33,7 @@ export default () => {
         <div className={s.count}>8</div>
         <div className="mr-9" />
         <ViewSVG className={s.icon} />
-        <div className={s.count}>2948</div>
+        <div className={s.count}>248</div>
         <div className="mr-9" />
         <TwMarkSVG className={cn(s.icon, s.fillBlue)} />
       </div>
