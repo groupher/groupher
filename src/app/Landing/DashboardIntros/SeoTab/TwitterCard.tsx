@@ -1,56 +1,42 @@
-import type { FC } from 'react'
+import CommentSVG from '~/icons/Comment'
+import HeartSVG from '~/icons/Heart'
+import RetweetSVG from '~/icons/Retweet'
+import ViewSVG from '~/icons/TwView'
+import TwMarkSVG from '~/icons/BookMark'
+import XSVG from '~/icons/X'
 
-import { Space } from '~/widgets/Common'
+import useSalon, { cn } from '../../styles/dashboard_intros/seo_tab/twitter_card'
 
-import {
-  Wrapper,
-  Card,
-  Url,
-  Title,
-  Cover,
-  XIcon,
-  Content,
-  Footer,
-  CommentIcon,
-  HeartIcon,
-  RetweetIcon,
-  ViewIcon,
-  MarkIcon,
-  Count,
-} from '../../styles/dashboard_intros/seo_tab/twitter_card'
-
-const TwitterCard: FC = () => {
-  const space = 35
+export default () => {
+  const s = useSalon()
 
   return (
-    <Wrapper>
-      <Card>
-        <Cover>
-          <XIcon />
-        </Cover>
-        <Content>
-          <Url>https://motuojie.com</Url>
-          <Title>Motojie - (摩界)</Title>
-          <Url>发现复古摩托车的魅力。我们专..</Url>
-        </Content>
-      </Card>
-      <Footer>
-        <CommentIcon />
-        <Count>12</Count>
-        <Space right={space} />
-        <HeartIcon />
-        <Count>29</Count>
-        <Space right={space} />
-        <RetweetIcon />
-        <Count>8</Count>
-        <Space right={space} />
-        <ViewIcon />
-        <Count>2948</Count>
-        <Space right={space} />
-        <MarkIcon />
-      </Footer>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <div className={s.card}>
+        <div className={s.cover}>
+          <XSVG className={s.xLogo} />
+        </div>
+        <div className={s.content}>
+          <div className={s.url}>https://motuojie.com</div>
+          <div className={s.title}>Motojie - (摩界)</div>
+          <div className={s.url}>发现复古摩托车的魅力。我们专..</div>
+        </div>
+      </div>
+      <div className={s.footer}>
+        <CommentSVG className={s.icon} />
+        <div className={s.count}>12</div>
+        <div className="mr-9" />
+        <HeartSVG className={cn(s.icon, s.fillRed)} />
+        <div className={s.count}>29</div>
+        <div className="mr-9" />
+        <RetweetSVG className={s.icon} />
+        <div className={s.count}>8</div>
+        <div className="mr-9" />
+        <ViewSVG className={s.icon} />
+        <div className={s.count}>2948</div>
+        <div className="mr-9" />
+        <TwMarkSVG className={cn(s.icon, s.fillBlue)} />
+      </div>
+    </div>
   )
 }
-
-export default TwitterCard
