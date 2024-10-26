@@ -1,32 +1,19 @@
-import styled, { css, rainbow, theme } from '~/css'
+import { COLOR_NAME } from '~/const/colors'
 
-import type { TActive, TColor } from '~/spec'
-import HashTagSVG from '~/icons/HashTagBold'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  position: absolute;
-  right: 38px;
-  top: 56px;
-  width: 80px;
-  height: 250px;
-  padding-top: 48px;
-  /* border: 1px solid;
-  border-color: ${theme('divider')}; */
-`
-type TTag = TColor & TActive
-export const TagIcon = styled(HashTagSVG)<TTag>`
-  ${css.size(11)};
-  fill: ${({ $active, $color }) => ($active ? rainbow($color) : theme('article.digest'))};
-  opacity: 0.6;
-  transform: rotate(18deg);
-  margin-right: 4px;
-`
-export const TagItem = styled.div<TActive>`
-  ${css.row('align-center')};
-  margin-bottom: 7px;
-  opacity: ${({ $active }) => ($active ? 1 : 0.4)};
-`
-export const TagTitle = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 12px;
-`
+export { cn } from '~/css'
+
+export default () => {
+  const { cn, fg, bg, fill, rainbow } = useTwBelt()
+
+  return {
+    wrapper: cn('absolute top-14 right-9 w-20 h-56 pt-12'),
+    tag: 'row-center mb-2 opacity-65',
+    icon: cn('size-3 rotate-12 mr-2 opacity-40', fill('text.digest')),
+    fillGreen: rainbow(COLOR_NAME.GREEN, 'fill'),
+    title: cn('text-xs', fg('text.digest')),
+    //
+    bar: cn('absolute h-1.5 w-20 rounded-md opacity-20', bg('text.digest')),
+  }
+}

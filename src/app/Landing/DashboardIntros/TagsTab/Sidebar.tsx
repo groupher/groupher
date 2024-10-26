@@ -1,47 +1,45 @@
-import type { FC } from 'react'
+import HashTagSVG from '~/icons/HashTagBold'
 
-import { COLOR_NAME } from '~/const/colors'
-import { Brick } from '~/widgets/Common'
-import { Wrapper, TagItem, TagIcon, TagTitle } from '../../styles/dashboard_intros/tags_tab/sidebar'
+import useSalon, { cn } from '../../styles/dashboard_intros/tags_tab/sidebar'
 
-const Sidebar: FC = () => {
+export default () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Brick $width={80} $height={7} $opacity={0.08} left={0} top={5} />
-      <Brick $width={50} $height={7} $opacity={0.05} left={0} top={20} />
-      <Brick $width={50} $height={7} $opacity={0.04} left={2} top={210} />
+    <div className={s.wrapper}>
+      <div className={cn(s.bar, 'top-1.5 left-0')} />
+      <div className={cn(s.bar, 'top-5 left-0 w-12 opacity-10')} />
+      <div className={cn(s.bar, 'top-56 left-0 w-12 opacity-10')} />
 
-      <TagItem>
-        <TagIcon />
-        <TagTitle>iOS</TagTitle>
-      </TagItem>
+      <div className={s.tag}>
+        <HashTagSVG className={s.icon} />
+        <div className={s.title}>iOS</div>
+      </div>
 
-      <TagItem>
-        <TagIcon />
-        <TagTitle>Web</TagTitle>
-      </TagItem>
+      <div className={s.tag}>
+        <HashTagSVG className={s.icon} />
+        <div className={s.title}>Web</div>
+      </div>
 
-      <TagItem>
-        <TagIcon />
-        <TagTitle>Android</TagTitle>
-      </TagItem>
+      <div className={cn(s.tag, 'opacity-100')}>
+        <HashTagSVG className={cn(s.icon, s.fillGreen)} />
+        <div className={cn(s.title, 'bold-sm')}>Android</div>
+      </div>
 
-      <TagItem $active>
-        <TagIcon $color={COLOR_NAME.GREEN} $active />
-        <TagTitle>使用分享</TagTitle>
-      </TagItem>
+      <div className={s.tag}>
+        <HashTagSVG className={s.icon} />
+        <div className={s.title}>编辑器</div>
+      </div>
 
-      <TagItem>
-        <TagIcon />
-        <TagTitle>安全性</TagTitle>
-      </TagItem>
+      <div className={s.tag}>
+        <HashTagSVG className={s.icon} />
+        <div className={s.title}>安全性</div>
+      </div>
 
-      <TagItem>
-        <TagIcon />
-        <TagTitle>安装部署</TagTitle>
-      </TagItem>
-    </Wrapper>
+      <div className={s.tag}>
+        <HashTagSVG className={s.icon} />
+        <div className={s.title}>安装部署</div>
+      </div>
+    </div>
   )
 }
-
-export default Sidebar
