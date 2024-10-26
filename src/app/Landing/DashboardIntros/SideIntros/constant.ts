@@ -52,10 +52,12 @@ export default {
     iconClass: 'size-8 opacity-40',
 
     items: [
-      'OpenGraph 自定义设置',
+      'OpenGraph 信息设置',
       'Twitter Card 自定义设置',
+      'canonical 信息设置',
+      '自定义 meta 信息',
+      '开启 / 屏蔽爬虫',
       '自定义 RSS 输出',
-      '自定义开启 / 关闭',
     ],
   },
 
@@ -66,13 +68,12 @@ export default {
     icon: HashTagBoldSVG,
 
     items: [
-      '社区基本信息，主题色',
-      '品牌展示样式',
-      '社区整体布局',
-      '讨论区布局',
-      '看板布局，背景颜色',
-      '更新日志布局',
-      '壁纸，辉光，毛玻璃效果',
+      '板块标签增删改',
+      '标签颜色，样式，描述等',
+      '标签内容展示模版',
+      '自定义 URL slug',
+      '支持私有 Tag, 仅内部可见',
+      '关联内容统计',
     ],
   },
 

@@ -1,62 +1,54 @@
-import type { FC } from 'react'
+import ClipSVG from '~/icons/Clip'
 
-import {
-  Wrapper,
-  EditLabel,
-  ClipIcon,
-  Left,
-  Right,
-  Item,
-  Label,
-  ColorDot,
-  Value,
-  HashTagIcon,
-  OptionArrowIcon,
-  Slash,
-  TagDot,
-} from '../../styles/dashboard_intros/tags_tab/footer'
+import OptionArrowSVG from '~/icons/OptionArrow'
+import HashTagSVG from '~/icons/HashTag'
 
-const Footer: FC = () => {
+import useSalon from '../../styles/dashboard_intros/tags_tab/footer'
+
+export default () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <EditLabel top={70} left={160}>
-        edit
-      </EditLabel>
-      <ClipIcon />
-      <Left>
-        <Item>
-          <Label>标签颜色</Label>
-          <ColorDot />
-        </Item>
-        <Item>
-          <Label>标签样式</Label>
-          <HashTagIcon />
-          <Slash>/</Slash>
-          <TagDot />
-        </Item>
-        <Item>
-          <Label>标签名称</Label>
-          <Value>使用分享</Value>
-        </Item>
-        <Item>
-          <Label>URL(slug)</Label>
-          <Value>showcase</Value>
-        </Item>
-      </Left>
+    <div className={s.wrapper}>
+      <div className={s.inner}>
+        <ClipSVG className={s.clipIcon} />
+        <div className={s.left}>
+          <div className={s.item}>
+            <label className={s.label}>标签颜色</label>
+            <div className={s.colorDot} />
+          </div>
+          <div className={s.item}>
+            <label className={s.label}>标签样式</label>
+            <div className="row-center">
+              <HashTagSVG className={s.hashTagIcon} />
+              <div className={s.slash}>/</div>
+              <div className={s.dotTag} />
+            </div>
+          </div>
+          <div className={s.item}>
+            <label className={s.label}>标签名称</label>
+            <div className={s.value}>使用分享</div>
+          </div>
+          <div className={s.item}>
+            <label className={s.label}>URL(slug)</label>
+            <div className={s.value}>showcase</div>
+          </div>
+        </div>
 
-      <Right>
-        <Item>
-          <Label>内容布局</Label>
-          <Value>图文瀑布流</Value>
-          <OptionArrowIcon />
-        </Item>
-        <Item>
-          <Label>标签简介</Label>
-          <Value>这里搜集各位亲们的日常使用分享、实用技巧以及攻略等，Have fun !</Value>
-        </Item>
-      </Right>
-    </Wrapper>
+        <div className={s.right}>
+          <div className={s.item}>
+            <label className={s.label}>内容布局</label>
+            <div className={s.value}>图文瀑布流</div>
+            <OptionArrowSVG className={s.optArrowIcon} />
+          </div>
+          <div className={s.item}>
+            <label className={s.label}>标签简介</label>
+            <div className={s.value}>
+              这里搜集各位亲们的日常使用分享、实用技巧以及攻略等，Have fun !
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
-
-export default Footer

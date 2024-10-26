@@ -1,118 +1,32 @@
-import styled, { css, theme } from '~/css'
+import { COLOR_NAME } from '~/const/colors'
 
-import OptionArrowSVG from '~/icons/OptionArrow'
-import HashTagSVG from '~/icons/HashTagBold'
-import ClipSVG from '~/icons/Clip'
-import { WithPosition } from '~/widgets/Common'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row()};
-  height: 158px;
-  width: 460px;
-  padding: 18px 26px;
-  padding-top: 22px;
-  border: 5px solid;
-  border-color: ${theme('htmlBg')};
-  background: ${theme('gradientBg.green')};
-  border-radius: 12px;
-  position: absolute;
-  bottom: 40px;
-  left: -20px;
-  z-index: 5;
-  box-shadow: rgba(149, 157, 165, 0.2) 0px -4px 24px;
-`
-export const EditLabel = styled(WithPosition)`
-  ${css.row('align-both')};
-  width: auto;
-  padding: 0 6px;
-  height: 20px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: ${theme('article.digest')};
-  background: #ffea9c;
-  box-shadow: rgb(215 214 210 / 20%) 4px -7px 19px;
-  border: 1px solid;
-  border-color: ${theme('divider')};
+export default () => {
+  const { cn, shadow, fg, bg, fill, global, rainbow } = useTwBelt()
 
-  &:before {
-    content: '';
-    height: 28px;
-    width: 2px;
-    background: #ffea9c;
-    position: absolute;
-    box-shadow: rgb(215 214 210 / 20%) 4px -7px 19px;
-    top: 2px;
-    left: 0;
+  return {
+    wrapper: cn(
+      'row h-40 w-[460px] rounded-lg absolute bottom-10 -left-5 z-30 p-1',
+      shadow('sm'),
+      bg('htmlBg'),
+    ),
+    inner: cn('row w-full h-full rounded-xl py-4 px-6', global('gradient-green')),
+    left: 'w-1/2',
+    right: 'w-1/2',
+    item: 'row items-start h-8',
+    label: cn('text-xs min-w-20 mt-0.5', fg('text.digest')),
+    value: cn('text-xs leading-relaxed opacity-90', fg('text.title')),
+    //
+    colorDot: cn('size-3.5 opacity-40 rounded mt-0.5', rainbow(COLOR_NAME.GREEN, 'bg')),
+    hashTagIcon: cn('size-3.5 opacity-65', rainbow(COLOR_NAME.GREEN, 'fill')),
+    clipIcon: cn(
+      'size-5 absolute right-10 -top-2 z-50 -rotate-12 opacity-65',
+      rainbow(COLOR_NAME.GREEN, 'fill'),
+    ),
+    optArrowIcon: cn('size-3 ml-1.5 mt-0.5', fill('text.digest')),
+    //
+    slash: cn('text-xs ml-1.5 mr-1.5 opacity-50', rainbow(COLOR_NAME.GREEN, 'fg')),
+    dotTag: cn('size-2.5 circle opacity-50', rainbow(COLOR_NAME.GREEN, 'bg')),
   }
-`
-export const ClipIcon = styled(ClipSVG)`
-  ${css.size(18)};
-  fill: ${theme('rainbow.green')};
-  position: absolute;
-  right: 70px;
-  top: -12px;
-  z-index: 3;
-  transform: rotate(-15deg);
-  opacity: 0.6;
-`
-export const Left = styled.div`
-  width: 50%;
-`
-export const Right = styled.div`
-  width: 50%;
-`
-export const Item = styled.div`
-  ${css.row('align-start')};
-  height: 30px;
-`
-export const Label = styled.div`
-  font-size: 13px;
-  min-width: 76px;
-  color: ${theme('article.digest')};
-  opacity: 0.9;
-
-  &:after {
-    content: ":";
-  }
-`
-export const ColorDot = styled.div`
-  width: 15px;
-  height: 15px;
-  background: ${theme('rainbow.green')};
-  opacity: 0.4;
-  border-radius: 4px;
-`
-export const Value = styled.div`
-  color: ${theme('article.title')};
-  font-weight: 500;
-  opacity: 0.68;
-  font-size: 13px;
-`
-export const OptionArrowIcon = styled(OptionArrowSVG)`
-  ${css.circle(11)};
-  fill: ${theme('article.digest')};
-  margin-top: 3px;
-  margin-left: 6px;
-`
-export const HashTagIcon = styled(HashTagSVG)`
-  ${css.circle(16)};
-  fill: ${theme('rainbow.green')};
-  transform: rotate(18deg);
-  opacity: 0.6;
-  margin-left: -1px;
-  margin-top: 1px;
-`
-export const Slash = styled.div`
-  font-size: 11px;
-  color: ${theme('hint')};
-  opacity: 0.8;
-  margin-left: 6px;
-  margin-right: 7px;
-`
-export const TagDot = styled.div`
-  ${css.circle(10)};
-  background: ${theme('rainbow.green')};
-  opacity: 0.5;
-  margin-top: 4px;
-`
+}

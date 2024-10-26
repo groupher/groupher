@@ -1,17 +1,15 @@
-import type { FC } from 'react'
-
 import ContentCard from './ContentCard'
 import Footer from './Footer'
 
-import { Wrapper } from '../../styles/dashboard_intros/tags_tab'
+import useSalon from '../../styles/dashboard_intros/tags_tab'
 
-const SeoTab: FC = () => {
+export default () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <ContentCard />
       <Footer />
-    </Wrapper>
+    </div>
   )
 }
-
-export default SeoTab

@@ -33,9 +33,9 @@ export default () => {
         <div className={s.desc}>强大的自定义设置，满足你的品牌个性化及内容管理需要</div>
       </div>
 
-      <div className={s.content}>
-        <HeadTabs tab={tab} onChange={(tab) => setTab(tab)} />
+      <HeadTabs tab={tab} onChange={(tab) => setTab(tab)} />
 
+      <div className={s.content}>
         <div className={s.inner}>
           <SideIntros tab={tab} />
 
