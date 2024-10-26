@@ -41,7 +41,7 @@ export default ({
     iconBox: cn(
       size === SIZE.SMALL ? 'size-3' : 'size-4',
       'align-both size-4 rounded trans-all-200',
-      disabled ? 'border-none' : 'border',
+      disabled ? 'border-none' : 'border-2',
       checked ? rainbow(color$, 'bg') : 'bg-transparent',
       rainbow(color$, 'border'),
     ),

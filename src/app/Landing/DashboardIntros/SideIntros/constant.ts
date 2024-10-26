@@ -52,10 +52,12 @@ export default {
     iconClass: 'size-8 opacity-40',
 
     items: [
-      'OpenGraph 自定义设置',
+      'OpenGraph 信息设置',
       'Twitter Card 自定义设置',
+      'canonical 信息设置',
+      '自定义 meta 信息',
+      '开启 / 屏蔽爬虫',
       '自定义 RSS 输出',
-      '自定义开启 / 关闭',
     ],
   },
 
