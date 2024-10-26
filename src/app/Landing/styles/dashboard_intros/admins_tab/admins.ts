@@ -1,73 +1,27 @@
-import styled, { css, theme } from '~/css'
+import { COLOR_NAME } from '~/const/colors'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import type { TActive } from '~/spec'
-import Img from '~/Img'
+export { cn } from '~/css'
 
-export const Wrapper = styled.div`
-  ${css.column('align-both')};
-  width: 440px;
-  height: auto;
-  position: absolute;
-  top: 40px;
-  left: 20px;
-`
-export const InnerWrapper = styled.div`
-  ${css.row('justify-between')};
-  width: 100%;
-  padding: 0 10px;
-`
-export const Item = styled.div<TActive>`
-  ${css.row('align-both')};
-  background: ${({ $active }) => ($active ? theme('alphaBg') : '')};
-  padding: 8px 10px;
-  border: 1px solid;
-  border-color: ${({ $active }) => ($active ? theme('divider') : 'transparent')}; 
-  border-radius: 8px;
-  box-shadow: ${({ $active }) => ($active ? 'rgba(149, 157, 165, 0.18) 0px 8px 24px' : '')};
-  opacity: ${({ $active }) => ($active ? 1 : 0.6)}; 
-  transform: ${({ $active }) => ($active ? 'scale(1)' : 'scale(0.9)')}; 
-  cursor: pointer;
+export default () => {
+  const { cn, fg, bg, br, shadow, rainbow } = useTwBelt()
 
-  &:hover {
-    border-color: ${theme('divider')};
-    box-shadow: rgba(149, 157, 165, 0.18) 0px 8px 24px;
-    background: ${theme('alphaBg')};
-    transform: scale(1);
-    opacity: 1;
+  return {
+    wrapper: cn('column-align-both w-[440px] h-auto absolute top-16 left-5'),
+    inner: 'row justify-between w-full px-2.5',
+    item: 'align-both px-2.5 py-2 trans-all-200 scale-90 pointer border border-transparent rounded-xl',
+    itemActive: cn('scale-100', bg('alphaBg'), br('divider'), shadow('sm')),
+    //
+    avatar: 'size-10 rounded-md',
+    intro: 'ml-3.5',
+    nickname: cn('text-sm mb-0.5', fg('text.digest')),
+    desc: cn('text-xs opacity-80', fg('text.digest')),
+    //
+    num: cn('text-sm bold-sm', rainbow(COLOR_NAME.PINK, 'fg')),
+    rootLabel: cn(
+      'align-both text-xs bold px-1 ml-px opacity-65 rounded',
+      fg('button.fg'),
+      rainbow(COLOR_NAME.RED, 'bg'),
+    ),
   }
-
-  transition: all .1s;
-`
-export const Avatar = styled(Img)`
-  ${css.size(42)};
-  border-radius: 10px;
-`
-export const Intro = styled.div`
-  margin-left: 12px;
-`
-export const Nickname = styled.div`
-  font-size: 15px;
-  color: ${theme('article.title')};
-  margin-bottom: 2px;
-`
-export const Highlight = styled.span`
-  background-color: ${theme('rainbow.red')};
-  color: ${theme('button.fg')};
-  font-size: 12px;
-  padding: 1px 4px;
-  border-radius: 4px;
-  margin-left: 1px;
-  margin-right: 1px;
-  font-weight: 600;
-  opacity: 0.8;
-`
-export const Num = styled.span`
-  font-size: 14;
-  color: ${theme('rainbow.pink')};
-  font-weight: 500;
-  display: inline-block;
-`
-export const Desc = styled.div`
-  font-size: 12px;
-  color: ${theme('article.digest')};
-`
+}

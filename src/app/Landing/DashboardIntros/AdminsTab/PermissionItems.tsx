@@ -1,15 +1,10 @@
 import type { FC } from 'react'
 import { includes } from 'ramda'
 
+import CheckSVG from '~/icons/CheckBold'
+
 import { LIST, ACTIVE_ITMES } from './constant'
-import {
-  Wrapper,
-  Item,
-  HolderItem,
-  HolderBar,
-  CheckIcon,
-  Title,
-} from '../../styles/dashboard_intros/admins_tab/permision_items'
+import useSalon, { cn } from '../../styles/dashboard_intros/admins_tab/permision_items'
 
 type TProps = {
   userHover: boolean[]
@@ -26,32 +21,33 @@ const getActiveItemKeys = (userHover: boolean[]) => {
 }
 
 const PermissionItems: FC<TProps> = ({ userHover }) => {
+  const s = useSalon()
+
   const activeKeys = getActiveItemKeys(userHover)
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {LIST.map((item) => {
         const { key, title } = item
-        const wider = key % 2 === 0
         const active = includes(key, activeKeys)
 
         if (key > 10) {
           return (
-            <HolderItem key={key} $wider={wider} $active={active}>
-              <CheckIcon $active={active} />
-              <HolderBar />
-            </HolderItem>
+            <div key={key} className={s.holderItem}>
+              <CheckSVG className={cn(s.checkIcon, !active || 'opacity-50')} />
+              <div className={cn(s.holderBar, !active || 'opacity-10')} />
+            </div>
           )
         }
 
         return (
-          <Item key={key} $active={active} $wider={wider}>
-            <CheckIcon $active={active} />
-            <Title>{title}</Title>
-          </Item>
+          <div key={key} className={cn(s.item, !active || 'opacity-50')}>
+            <CheckSVG className={cn(s.checkIcon, !active || 'opacity-50')} />
+            <div className={s.title}>{title}</div>
+          </div>
         )
       })}
-    </Wrapper>
+    </div>
   )
 }
 

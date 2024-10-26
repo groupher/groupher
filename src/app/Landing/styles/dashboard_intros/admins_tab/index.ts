@@ -1,24 +1,16 @@
-import styled, { css, theme, animate } from '~/css'
+import { COLOR_NAME } from '~/const/colors'
 
-import { WithPosition } from '~/widgets/Common'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row()};
-  width: 100%;
-  height: 100%;
-  position: relative;
-  animation: ${animate.jump} 0.5s linear;
-`
-export const Notes = styled(WithPosition)`
-  color: ${theme('hint')};
-  font-size: 15px;
-  bottom: 40px;
-  left: 50px;
-`
-export const Highlight = styled.span`
-  color: ${theme('rainbow.pink')};
-  margin-left: 3px;
-  margin-right: 3px;
-  font-weight: 500;
-  opacity: 0.8;
-`
+export default () => {
+  const { cn, fg, rainbow } = useTwBelt()
+
+  return {
+    wrapper: cn(
+      'row w-full h-5/6 relative mt-5',
+      'animate-fade-up animate-duration-500 animate-ease-in-out',
+    ),
+    notes: cn('text-sm absolute bottom-8 left-12 opacity-80', fg('text.digest')),
+    highlight: cn('bold-sm ml-1 mr-1', rainbow(COLOR_NAME.PINK, 'fg')),
+  }
+}

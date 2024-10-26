@@ -2,21 +2,12 @@ import { type FC, useEffect } from 'react'
 
 import { mockUsers } from '~/mock'
 
+import Img from '~/Img'
 import useHover from '~/hooks/useHover'
 
 import { ACTIVE_ITMES } from './constant'
 
-import {
-  Wrapper,
-  InnerWrapper,
-  Item,
-  Num,
-  Avatar,
-  Intro,
-  Nickname,
-  Desc,
-  Highlight,
-} from '../../styles/dashboard_intros/admins_tab/admins'
+import useSalon, { cn } from '../../styles/dashboard_intros/admins_tab/admins'
 
 type TProps = {
   onHover: (state: boolean[]) => void
@@ -24,6 +15,8 @@ type TProps = {
 }
 
 const Admins: FC<TProps> = ({ onHover, userHover }) => {
+  const s = useSalon()
+
   const users = mockUsers(4)
   const [user1Ref, user1Hovered] = useHover<HTMLDivElement>()
   const [user2Ref, user2Hovered] = useHover<HTMLDivElement>()
@@ -35,37 +28,37 @@ const Admins: FC<TProps> = ({ onHover, userHover }) => {
   }, [user1Hovered, user2Hovered, user3Hovered])
 
   return (
-    <Wrapper>
-      <InnerWrapper>
-        <Item ref={user1Ref} $active={user1Hovered || userHover[0]}>
-          <Avatar src={users[0].avatar} />
-          <Intro>
-            <Nickname>{users[0].nickname}</Nickname>
-            <Highlight>Owner</Highlight>
-          </Intro>
-        </Item>
+    <div className={s.wrapper}>
+      <div className={s.inner}>
+        <div ref={user1Ref} className={cn(s.item, (user1Hovered || userHover[0]) && s.itemActive)}>
+          <Img src={users[0].avatar} className={s.avatar} />
+          <div className={s.intro}>
+            <div className={s.nickname}>{users[0].nickname}</div>
+            <div className={s.rootLabel}>Root</div>
+          </div>
+        </div>
 
-        <Item ref={user2Ref} $active={user2Hovered || userHover[1]}>
-          <Avatar src={users[1].avatar} />
-          <Intro>
-            <Nickname>{users[1].nickname}</Nickname>
-            <Desc>
-              <Num>{ACTIVE_ITMES.user2.length}</Num> 项权限
-            </Desc>
-          </Intro>
-        </Item>
+        <div ref={user2Ref} className={cn(s.item, (user2Hovered || userHover[1]) && s.itemActive)}>
+          <Img src={users[1].avatar} className={s.avatar} />
+          <div className={s.intro}>
+            <div className={s.nickname}>{users[1].nickname}</div>
+            <div className={s.desc}>
+              <span className={s.num}>{ACTIVE_ITMES.user2.length}</span> 项权限
+            </div>
+          </div>
+        </div>
 
-        <Item ref={user3Ref} $active={user3Hovered || userHover[2]}>
-          <Avatar src={users[2].avatar} />
-          <Intro>
-            <Nickname>{users[2].nickname}</Nickname>
-            <Desc>
-              <Num>{ACTIVE_ITMES.user3.length}</Num> 项权限
-            </Desc>
-          </Intro>
-        </Item>
-      </InnerWrapper>
-    </Wrapper>
+        <div ref={user3Ref} className={cn(s.item, (user3Hovered || userHover[2]) && s.itemActive)}>
+          <Img src={users[2].avatar} className={s.avatar} />
+          <div className={s.intro}>
+            <div className={s.nickname}>{users[2].nickname}</div>
+            <div className={s.desc}>
+              <span className={s.num}>{ACTIVE_ITMES.user3.length}</span> 项权限
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 

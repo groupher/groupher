@@ -1,15 +1,16 @@
-import { type FC, useState } from 'react'
+import { useState } from 'react'
 
 import Admins from './Admins'
 import ContentCard from './ContentCard'
 
-import { Wrapper, Notes, Highlight } from '../../styles/dashboard_intros/admins_tab'
+import useSalon from '../../styles/dashboard_intros/admins_tab'
 
-const AdminsTab: FC = () => {
+export default () => {
+  const s = useSalon()
   const [userHover, setUserHover] = useState([false, true, false])
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <Admins
         onHover={(hover) => {
           if (!hover[0] && !hover[1] && !hover[2]) return setUserHover([false, true, false])
@@ -18,11 +19,9 @@ const AdminsTab: FC = () => {
         userHover={userHover}
       />
       <ContentCard userHover={userHover} />
-      <Notes>
-        原子化的<Highlight>ABAC</Highlight>权限控制策略，灵活精确，符合直觉。
-      </Notes>
-    </Wrapper>
+      <div className={s.notes}>
+        原子化的<span className={s.highlight}>ABAC</span>权限控制策略，灵活精确，符合直觉。
+      </div>
+    </div>
   )
 }
-
-export default AdminsTab
