@@ -1,14 +1,9 @@
-import styled, { css } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  background: #f1f1f163;
-  width: 460px;
-  height: 540px;
-  border-radius: 15px;
-  z-index: 2;
-  position: absolute;
-  bottom: 20px;
-  left: 0;
-`
-export const holder = 1
+export default () => {
+  const { cn, bg } = useTwBelt()
+
+  return {
+    wrapper: cn('column w-[440px] h-[540px] rounded-xl absolute bottom-5 left-0', bg('sandBox')),
+  }
+}

@@ -1,32 +1,21 @@
-import type { FC } from 'react'
+import useSalon from '../../styles/dashboard_intros/links_tab/header_card'
 
-import {
-  Wrapper,
-  Links,
-  LinkName,
-  Title,
-  CommunityLogo,
-  FakeAvatar,
-} from '../../styles/dashboard_intros/links_tab/header_card'
+export default () => {
+  const s = useSalon()
 
-const HeaderCard: FC = () => {
   return (
-    <Wrapper>
-      <Title>
-        <CommunityLogo />
+    <div className={s.wrapper}>
+      <div className={s.title}>
+        <div className={s.communityLogo} />
         Tiki-taka
-      </Title>
-      <Links>
-        <LinkName>讨论</LinkName>
-        <LinkName>看板</LinkName>
-        <LinkName>更新日志</LinkName>
-        <LinkName>游乐场</LinkName>
-        <LinkName>价格</LinkName>
-        <LinkName>更多</LinkName>
-      </Links>
-      <FakeAvatar />
-    </Wrapper>
+      </div>
+      <div className={s.links}>
+        <div className={s.linkName}>讨论</div>
+        <div className={s.linkName}>看板</div>
+        <div className={s.linkName}>更新日志</div>
+        <div className={s.linkName}>游乐场</div>
+      </div>
+      <div className={s.bar} />
+    </div>
   )
 }
-
-export default HeaderCard
