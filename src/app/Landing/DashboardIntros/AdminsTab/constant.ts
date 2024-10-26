@@ -58,7 +58,7 @@ export const LIST = [
 ]
 
 export const ACTIVE_ITMES = {
-  user1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  user1: [],
   user2: [0, 1, 3, 4, 6, 7, 8, 11, 12],
   user3: [2, 3, 7, 8, 9],
 }

@@ -1,52 +1,21 @@
-import styled, { css, theme } from '~/css'
+import { COLOR_NAME } from '~/const/colors'
 
-import FingerPrintSVG from '~/icons/FingerPrintDuo'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  padding: 20px;
-  background: ${theme('htmlBg')};
-  color: ${theme('article.digest')};
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  width: 440px;
-  height: 360px;
-  border-radius: 15px;
-  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-  z-index: 2;
-  position: absolute;
-  top: 140px;
-  left: 20px;
-  z-index: 2;
+export default () => {
+  const { cn, bg, global, shadow, rainbow } = useTwBelt()
 
-  &:before {
-    content: '';
-    z-index: 0;
-    width: calc(100% - 16px);
-    height: calc(100% - 16px);
-    background: ${theme('gradientBg.pink')};
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    opacity: 0.6;
-    border-radius: 12px;
+  return {
+    wrapper: cn(
+      'column p-1.5 rounded-2xl w-[440px] h-[360px] absolute top-40 left-5',
+      bg('htmlBg'),
+      shadow('sm'),
+    ),
+    inner: cn('w-full h-full rounded-xl relative', global('gradient-red')),
+    bar: cn(
+      'w-12 h-1.5 -ml-6 rounded-xl absolute top-4 left-1/2 opacity-15',
+      rainbow(COLOR_NAME.RED, 'bg'),
+    ),
+    printIcon: cn('size-16 opacity-10 absolute right-2 top-2', rainbow(COLOR_NAME.RED, 'fill')),
   }
-`
-export const Bar = styled.div`
-  height: 5px;
-  width: 30px;
-  border-radius: 3px;
-  position: absolute;
-  top: 22px;
-  left: 202px;
-  background: ${theme('rainbow.red')};
-  opacity: 0.12;
-`
-export const FingerPrint = styled(FingerPrintSVG)`
-  ${css.size(50)};
-  fill: ${theme('rainbow.red')};
-  opacity: 0.08;
-  position: absolute;
-  top: 15px;
-  right: 20px;
-`
+}
