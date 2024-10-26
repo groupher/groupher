@@ -78,8 +78,8 @@ export default {
   },
 
   [DASHBOARD_ROUTE.ADMINS]: {
-    title: '管理员 & 权限管理',
-    desc: '社区管理员操作权限相关',
+    title: '管理员 & 权限',
+    desc: '社区管理员设置，操作权限相关',
     color: COLOR_NAME.RED,
     icon: AdminSVG,
 
@@ -95,19 +95,18 @@ export default {
   },
 
   [DASHBOARD_ROUTE.HEADER]: {
-    title: '页头 & 页脚链接',
-    desc: '链接及链接组管理',
+    title: '页头 & 页脚',
+    desc: '链接及分组管理，展示模板设置',
     color: COLOR_NAME.BROWN,
     icon: IntroHeaderFooterSVG,
 
     items: [
-      '社区基本信息，主题色',
-      '品牌展示样式',
-      '社区整体布局',
-      '讨论区布局',
-      '看板布局，背景颜色',
-      '更新日志布局',
-      '壁纸，辉光，毛玻璃效果',
+      '社区基本信息',
+      '页头/页脚链接，分组管理',
+      '可视化排序调整',
+      '个性化标签展示',
+      '多种展示模板',
+      '响应式设计',
     ],
   },
 

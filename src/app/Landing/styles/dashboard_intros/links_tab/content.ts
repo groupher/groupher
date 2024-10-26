@@ -1,73 +1,33 @@
-import styled, { css, theme } from '~/css'
+import { COLOR_NAME } from '~/const/colors'
 
-import EditSVG from '~/icons/EditPen'
-import { WithPosition } from '~/widgets/Common'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export { Icon } from './footer_card'
+export { cn } from '~/css'
 
-export const Wrapper = styled.div`
-  ${css.row()};
-  margin-top: 88px;
-  width: 100%;
-  height: 180px;
-  padding: 10px 18px;
-  position: relative;
-`
-export const EditBox = styled.div`
-  ${css.circle(35)};
-  ${css.row('align-both')};
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  position: absolute;
-  top: 120px;
-  left: 206px;
-  box-shadow: rgba(149, 157, 165, 0.2) 0px -1px 24px;
-  background: ${theme('gradientBg.orange')};
-`
-export const EditIcon = styled(EditSVG)`
-  ${css.size(16)};
-  fill: ${theme('article.digest')};
-  opacity: 0.8;
-`
-export const OgPanel = styled.div`
-  width: 50%;
-  padding-left: 10px;
-  position: relative;
-`
-export const TwPanel = styled.div`
-  width: 55%;
-  padding-left: 68px;
-  position: relative;
-`
-export const Title = styled.div`
-  font-size: 13px;
-  color: ${theme('article.title')};
-  margin-bottom: 4px;
-`
-export const Desc = styled.div`
-  font-size: 13px;
-  color: ${theme('article.digest')};
-  opacity: 0.9;
-  font-weight: 400;
-  margin-bottom: 10px;
-`
-export const Logo = styled.div`
-  ${css.size(35)};
-  background: ${theme('gradientBg.orange')};
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  border-radius: 5px;
-  margin-top: 6px;
-  margin-bottom: 10px;
-`
-export const LinkDesc = styled.div`
-  font-size: 13px;
-  color: ${theme('article.digest')};
-  opacity: 0.9;
-  font-weight: 400;
-  margin-top: 3px;
-`
-export const IconBox = styled(WithPosition)`
-  ${css.size(25)};
-  ${css.row('align-both')};
-`
+export default () => {
+  const { cn, fg, bg, global, br, shadow, rainbow } = useTwBelt()
+
+  return {
+    wrapper: cn('row w-full h-44 px-4 py-4 mt-20'),
+    ogPanel: 'w-1/2 pl-2.5 relative',
+    twPanel: 'w-1/2 pl-14 relative',
+    logo: cn('size-9 rounded mb-4 mt-2', global('gradient-orange')),
+
+    title: cn('text-xs mb-1.5 mt-2.5', fg('text.title')),
+    desc: cn('text-xs', fg('text.digest')),
+    //
+    linkDesc: cn('text-xs mt-1.5', fg('text.digest')),
+    iconBox: 'absolute left-2.5',
+    icon: 'size-3.5 mr-1 opacity-65',
+    //
+    bar: cn('w-10 h-1.5 opacity-15 rounded-md absolute', bg('text.digest')),
+    editBox: cn(
+      'align-both size-9 rounded-2xl border',
+      'absolute top-48 left-48',
+      br('divider'),
+      shadow('sm'),
+      global('gradient-orange'),
+    ),
+    editIcon: cn('size-4 opacity-65', rainbow(COLOR_NAME.BROWN, 'fill')),
+  }
+}

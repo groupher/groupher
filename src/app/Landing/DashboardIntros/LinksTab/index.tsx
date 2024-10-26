@@ -1,15 +1,13 @@
-import type { FC } from 'react'
-
 import ContentCard from './ContentCard'
 
-import { Wrapper } from '../../styles/dashboard_intros/links_tab'
+import useSalon from '../../styles/dashboard_intros/links_tab'
 
-const LinksTab: FC = () => {
+export default () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <ContentCard />
-    </Wrapper>
+    </div>
   )
 }
-
-export default LinksTab

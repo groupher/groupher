@@ -1,88 +1,60 @@
-import type { FC } from 'react'
+import EditSVG from '~/icons/EditPen'
+import WechatSVG from '~/icons/social/WeChat'
+import TwitterSVG from '~/icons/TwitterX'
 
-import { Brick, Br } from '~/widgets/Common'
-import {
-  Wrapper,
-  OgPanel,
-  TwPanel,
-  EditBox,
-  EditIcon,
-  Title,
-  Logo,
-  Desc,
-  LinkDesc,
-  IconBox,
-  Icon,
-} from '../../styles/dashboard_intros/links_tab/content'
+import useSalon, { cn } from '../../styles/dashboard_intros/links_tab/content'
 
-const Content: FC = () => {
+export default () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <OgPanel>
-        <Title>社区图标</Title>
-        <Logo />
-        <Title>社区名称</Title>
-        <Desc>Tiki-taka</Desc>
-        <Title>社区简介</Title>
-        <Desc>Visca Barca Visca Catalunya!</Desc>
-        <Title>社交媒体</Title>
+    <div className={s.wrapper}>
+      <div className={s.ogPanel}>
+        <div className={s.title}>社区图标</div>
+        <div className={s.logo} />
+        <div className={s.title}>社区名称</div>
+        <div className={s.desc}>Tiki-taka</div>
+        <div className={s.title}>社区简介</div>
+        <div className={s.desc}>Visca Barca Visca Catalunya!</div>
+        <div className={s.title}>社交媒体</div>
 
-        <IconBox top={202} left={6}>
-          <Icon.Wechat />
-        </IconBox>
-        <Brick $width={76} top={210} left={40} $opacity={0.08} />
+        <div className={cn(s.iconBox, 'top-52')}>
+          <WechatSVG className={s.icon} />
+        </div>
+        <div className={cn(s.bar, 'top-52 left-8 mt-1')} />
 
-        <IconBox top={225} left={6}>
-          <Icon.Twitter />
-        </IconBox>
-        <Brick $width={50} top={234} left={40} $opacity={0.08} />
+        <div className={cn(s.iconBox, 'top-56 mt-2')}>
+          <TwitterSVG className={s.icon} />
+        </div>
 
-        {/*
+        <div className={cn(s.bar, 'top-56 left-8 mt-3')} />
+      </div>
+      <div className={s.editBox}>
+        <EditSVG className={s.editIcon} />
+      </div>
+      <div className={s.twPanel}>
+        <div className={cn(s.title, 'mb-2')}>页眉链接</div>
+        <div className={s.linkDesc}>游乐场</div>
+        <div className={s.linkDesc}>价格</div>
 
-        <IconBox top={178} left={6}>
-          <ICON.Zhihu />
-        </IconBox>
-        <Brick $width={50} top={186} left={40} $opacity={0.08} /> */}
+        <div className={cn(s.bar, 'top-10 right-12')} />
+        <div className={cn(s.bar, 'top-14 mt-1 right-12')} />
 
-        {/* <Brick $width={15} top={215} left={12} $opacity={0.12} />
-        <Brick $width={40} top={215} left={40} $opacity={0.06} />
+        <div className={cn(s.title, 'mt-5 mb-2')}>页脚链接</div>
+        <div className={s.linkDesc}>梅西</div>
+        <div className={s.linkDesc}>哈维</div>
+        <div className={s.linkDesc}>小白</div>
+        <div className={s.linkDesc}>布教授</div>
 
-        <Brick $width={15} top={235} left={12} $opacity={0.12} />
-        <Brick $width={40} top={235} left={40} $opacity={0.06} /> */}
-      </OgPanel>
-      <EditBox>
-        <EditIcon />
-      </EditBox>
-      <TwPanel>
-        <Title>页眉链接</Title>
-        <Br top={8} />
-        <LinkDesc>游乐场</LinkDesc>
-        <LinkDesc>价格</LinkDesc>
-        <Brick $width={50} top={34} right={46} $opacity={0.08} />
-        <Brick $width={50} top={56} right={46} $opacity={0.08} />
+        <div className={cn(s.bar, 'top-28 mt-1.5 right-12')} />
+        <div className={cn(s.bar, 'top-36 right-12 -mt-0.5')} />
 
-        <Br top={20} />
-        <Title>页脚链接</Title>
-        <Br top={8} />
-        <LinkDesc>梅西</LinkDesc>
-        <LinkDesc>哈维</LinkDesc>
-        <LinkDesc>小白</LinkDesc>
-        <LinkDesc>布教授</LinkDesc>
+        <div className={cn(s.bar, 'top-44 right-10 -mt-3 w-12')} />
+        <div className={cn(s.bar, 'top-48 right-12 -mt-1.5')} />
 
-        <Brick $width={50} top={124} right={46} $opacity={0.08} />
-        <Brick $width={50} top={145} right={46} $opacity={0.08} />
-
-        <Brick $width={50} top={168} right={46} $opacity={0.08} />
-        <Brick $width={50} top={188} right={46} $opacity={0.08} />
-
-        <Brick $width={30} top={220} left={68} $opacity={0.12} />
-        <Brick $width={50} top={220} right={48} $opacity={0.06} />
-
-        <Brick $width={30} top={237} left={68} $opacity={0.08} />
-        <Brick $width={50} top={237} right={48} $opacity={0.04} />
-      </TwPanel>
-    </Wrapper>
+        <div className={cn(s.bar, 'top-56 right-10 -mt-1 w-28 opacity-10')} />
+        <div className={cn(s.bar, 'top-60 right-10 -mt-1 w-28 opacity-5')} />
+      </div>
+    </div>
   )
 }
-
-export default Content

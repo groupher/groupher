@@ -21,7 +21,7 @@ export default ({ tab }: TProps) => {
     title: cn('text-3xl bold-sm opacity-70', fg('text.title'), global('text-shadow')),
     desc: cn('text-lg mt-3', fg('text.digest')),
     //
-    content: 'column items-center relative w-full px-30 h-[720px]',
+    content: 'column items-center relative w-full px-30 h-[720px] overflow-hidden',
     inner: 'row-center-between w-8/12 h-full gap-x-10 pl-2 -mt-8',
     graphDemo: 'align-both w-1/2 h-full mr-2',
 

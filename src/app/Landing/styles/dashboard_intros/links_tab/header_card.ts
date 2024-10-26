@@ -1,45 +1,22 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row('align-center', 'justify-between')};
-  padding: 0 15px;
-  padding-bottom: 0;
-  background: ${theme('htmlBg')};
-  color: ${theme('article.digest')};
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  width: 445px;
-  height: 56px;
-  border-radius: 10px;
-  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-  z-index: 2;
-  position: absolute;
-  top: 8px;
-  left: 8px;
-`
-export const CommunityLogo = styled.div`
-  ${css.size(20)};
-  background: ${theme('gradientBg.orange')};
-  border-radius: 4px;
-  margin-right: 5px;
-`
-export const Title = styled.div`
-  ${css.row('align-center')};
-  color: ${theme('article.title')};
-  font-size: 14px;
-`
-export const Links = styled.div`
-  ${css.row('align-both')};
-  margin-left: -8px;
-  gap: 0 10px;
-`
-export const LinkName = styled.div`
-  font-size: 12px;
-`
+export default () => {
+  const { cn, fg, bg, br, global, shadow } = useTwBelt()
 
-export const FakeAvatar = styled.div`
-  width: 16px;
-  height: 5px;
-  background: ${theme('divider')};
-  border-radius: 5px;
-`
+  return {
+    wrapper: cn(
+      'row-center-between px-4 pb-0 z-20 w-11/12 h-16 rounded-xl border',
+      'absolute top-2 left-4',
+      fg('text.digest'),
+      bg('htmlBg'),
+      br('divider'),
+      shadow('sm'),
+    ),
+    communityLogo: cn('size-5 rounded mr-1.5', global('gradient-orange')),
+    title: cn('row-center text-sm', fg('text.title')),
+    links: 'align-both -ml-2 gap-x-4',
+    linkName: 'text-xs',
+    //
+    bar: cn('w-4 h-1.5 opacity-15', bg('text.digest')),
+  }
+}

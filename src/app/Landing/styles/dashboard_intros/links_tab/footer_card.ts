@@ -1,77 +1,26 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import ZhihuSVG from '~/icons/social/Zhihu'
-import WechatSVG from '~/icons/social/WeChat'
-import TwitterSVG from '~/icons/TwitterX'
+export default () => {
+  const { cn, fg, bg, br, global, shadow } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.row('justify-between')};
-  padding: 0 18px;
-  padding-top: 20px;;
-  padding-right: 30px;
-  background: ${theme('htmlBg')};
-  color: ${theme('article.digest')};
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  width: 445px;
-  height: 162px;
-  border-radius: 10px;
-  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-  z-index: 2;
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-`
-export const Brand = styled.div`
-  width: 33%;
-`
-export const CommunityLogo = styled.div`
-  ${css.size(26)};
-  background: ${theme('gradientBg.orange')};
-  border-radius: 4px;
-  margin-top: 2px;
-  margin-right: 5px;
-  margin-bottom: 8px;
-`
-export const Title = styled.div`
-  ${css.row('align-center')};
-  color: ${theme('article.title')};
-  font-size: 13px;
-`
-export const Desc = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 11px;
-`
-export const Links = styled.div`
-  ${css.column()};
-  gap: 0 10px;
-`
-export const LinkTitle = styled.div`
-  color: ${theme('article.title')};
-  font-size: 12px;
-  margin-bottom: 6px;
-`
-export const LinkName = styled.div`
-  font-size: 12px;
-  color: ${theme('article.digest')};
-  opacity: 0.8;
-  margin-bottom: 2px;
-`
-export const Contract = styled.div`
-  ${css.row('align-center')};
-  gap: 0 6px;
-  margin-top: 16px;
-`
-const commonIcon = (comp) => {
-  return styled(comp)`
-    ${css.size(14)};
-  `
-}
-
-export const Icon = {
-  Wechat: commonIcon(WechatSVG),
-  Twitter: styled(commonIcon(TwitterSVG))`
-    fill: ${theme('article.digest')};
-  `,
-  Zhihu: commonIcon(ZhihuSVG),
+  return {
+    wrapper: cn(
+      'row justify-between w-11/12 h-40 px-3.5 pb-0 pt-5 z-20 rounded-xl border',
+      'absolute bottom-2 left-4',
+      shadow('sm'),
+      bg('htmlBg'),
+      br('divider'),
+    ),
+    brand: 'w-1/3',
+    communityLogo: cn('size-6 rounded mr-1.5 mt-0.5 mb-2', global('gradient-orange')),
+    title: cn('row-center text-sm', fg('text.title')),
+    desc: cn('row-center text-xs mt-1', fg('text.digest')),
+    //
+    links: 'column gap-x-2.5',
+    linkTitle: cn('text-xs mb-2.5', fg('text.title')),
+    linkName: cn('text-xs mb-2 opacity-80', fg('text.digest')),
+    //
+    social: 'row-center gap-x-1.5 mt-4',
+    icon: 'size-3.5 opacity-65',
+  }
 }
