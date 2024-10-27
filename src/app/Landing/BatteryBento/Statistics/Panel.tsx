@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import ChartCard from './ChartCard'
 import SummaryCard from './SummaryCard'
 
-import useSalon from '../../styles/battery_bento/statistics/panel'
+import useSalon from '../../salon/battery_bento/statistics/panel'
 
 type TProps = {
   hovering: boolean

@@ -7,7 +7,7 @@ import Fans from './Fans'
 import SeedSVG from '~/icons/Seed'
 import TadaSVG from '~/icons/Tada'
 
-import useSalon from '../../styles/compare_dev/our_way'
+import useSalon from '../../salon/compare_dev/our_way'
 
 export default () => {
   const s = useSalon()

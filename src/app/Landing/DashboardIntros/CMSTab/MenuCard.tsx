@@ -10,7 +10,7 @@ import WipSVG from '~/icons/GtdWip'
 
 import LightSVG from '~/icons/ColorLight'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/cms_tab/menu_card'
+import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/menu_card'
 
 import HashTagBoldSVG from '~/icons/HashTag'
 

@@ -4,7 +4,7 @@ import type { TColor } from '~/spec'
 import CheckSVG from '~/icons/CheckBold'
 // import CheckSVG from '~/icons/CheckCircle'
 
-import useSalon from '../styles/articles_intro_tabs/feat_item'
+import useSalon from '../salon/articles_intro_tabs/feat_item'
 
 type TProps = {
   text?: string

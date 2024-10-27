@@ -11,7 +11,7 @@ import { callWallpaperEditor } from '~/signal'
 import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 import { GLOW_EFFECT_NAME } from '~/const/glow_effect'
 
-import useSalon, { cn } from '../../../styles/dashboard_intros/layout_tab/wallpaper_bar'
+import useSalon, { cn } from '../../../salon/dashboard_intros/layout_tab/wallpaper_bar'
 
 export default () => {
   const s = useSalon()

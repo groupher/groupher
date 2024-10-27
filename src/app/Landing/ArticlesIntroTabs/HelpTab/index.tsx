@@ -5,7 +5,7 @@ import type { TActive } from '~/spec'
 import IntroDigest from './IntroDigest'
 import HelpDemo from './HelpDemo'
 
-import useSalon, { cn } from '../../styles/articles_intro_tabs/help_tab'
+import useSalon, { cn } from '../../salon/articles_intro_tabs/help_tab'
 
 const HelpFeat: FC<TActive> = ({ active }) => {
   const s = useSalon()

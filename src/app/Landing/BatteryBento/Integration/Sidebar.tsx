@@ -4,7 +4,7 @@ import { mockUsers } from '~/mock'
 
 import Img from '~/widgets/Img'
 
-import useSalon, { cn } from '../../styles/battery_bento/integration/sidebar'
+import useSalon, { cn } from '../../salon/battery_bento/integration/sidebar'
 
 type TProps = {
   hovering: boolean

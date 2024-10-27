@@ -1,7 +1,5 @@
 import { COLOR_NAME } from '~/const/colors'
 
-export { Icon } from '~/widgets/ArticleSettingMenu/styles/icon'
-
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'

@@ -6,7 +6,7 @@ import { THREAD } from '~/const/thread'
 import Tabs from './Tabs'
 import Content from './Content'
 
-import useSalon from '../styles/articles_intro_tabs'
+import useSalon from '../salon/articles_intro_tabs'
 
 export default () => {
   const s = useSalon()

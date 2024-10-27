@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import Img from '~/Img'
-import useSalon, { cn } from '../styles/tech_stacks/tech_item'
+import useSalon, { cn } from '../salon/tech_stacks/tech_item'
 
 type TProps = {
   path: string

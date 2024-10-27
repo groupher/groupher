@@ -6,7 +6,7 @@ import GtdWipSVG from '~/icons/GtdWip'
 import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 
-import useSalon, { cn } from '../../../styles/articles_intro_tabs/kanban_tab/banner'
+import useSalon, { cn } from '../../../salon/articles_intro_tabs/kanban_tab/banner'
 
 export default () => {
   const s = useSalon()

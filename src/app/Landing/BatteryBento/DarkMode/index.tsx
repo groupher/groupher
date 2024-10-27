@@ -5,7 +5,7 @@ import useTheme from '~/hooks/useTheme'
 
 import Panel from './Panel'
 
-import useSalon, { cn } from '../../styles/battery_bento/dark_mode'
+import useSalon, { cn } from '../../salon/battery_bento/dark_mode'
 
 export default () => {
   const s = useSalon()

@@ -2,7 +2,7 @@ import { mockUsers } from '~/mock'
 
 import Facepile from '~/widgets/Facepile/LandingPage'
 
-import useSalon from '../styles/tech_stacks/teams'
+import useSalon from '../salon/tech_stacks/teams'
 
 export default () => {
   const s = useSalon()

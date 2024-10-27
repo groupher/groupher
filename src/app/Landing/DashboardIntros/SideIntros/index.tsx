@@ -5,7 +5,7 @@ import type { TIntroTab } from '../spec'
 import INTROS from './constant'
 import FeatItem from './FeatItem'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/side_intros'
+import useSalon, { cn } from '../../salon/dashboard_intros/side_intros'
 
 type TProps = {
   tab: TIntroTab

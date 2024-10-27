@@ -1,7 +1,7 @@
 import WechatSVG from '~/icons/social/WeChat'
 import TwitterSVG from '~/icons/TwitterX'
 
-import useSalon from '../../styles/dashboard_intros/links_tab/footer_card'
+import useSalon from '../../salon/dashboard_intros/links_tab/footer_card'
 
 export default () => {
   const s = useSalon()

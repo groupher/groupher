@@ -4,7 +4,7 @@ import type { TColorName } from '~/spec'
 
 import UpvoteSVG from '~/icons/Upvote'
 
-import useSalon from '../../styles/compare_dev/our_way/upvote_counter'
+import useSalon from '../../salon/compare_dev/our_way/upvote_counter'
 
 type TProps = {
   text?: string

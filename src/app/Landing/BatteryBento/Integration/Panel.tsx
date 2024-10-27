@@ -4,7 +4,7 @@ import Header from './Header'
 import Sidebar from './Sidebar'
 import EmbedScript from './EmbedScript'
 
-import useSalon, { cn } from '../../styles/battery_bento/integration/panel'
+import useSalon, { cn } from '../../salon/battery_bento/integration/panel'
 
 type TProps = {
   hovering: boolean

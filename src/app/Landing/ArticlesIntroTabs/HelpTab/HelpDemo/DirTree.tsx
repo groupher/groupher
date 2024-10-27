@@ -1,7 +1,7 @@
 import GithubSVG from '~/icons/Github8'
 import BookSVG from '~/icons/Book'
 
-import useSalon, { cn } from '../../../styles/articles_intro_tabs/help_tab/help_demo/dir_tree'
+import useSalon, { cn } from '../../../salon/articles_intro_tabs/help_tab/help_demo/dir_tree'
 
 export default () => {
   const s = useSalon()

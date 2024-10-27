@@ -1,6 +1,6 @@
 import ContentCard from './ContentCard'
 
-import useSalon from '../../styles/dashboard_intros/links_tab'
+import useSalon from '../../salon/dashboard_intros/links_tab'
 
 export default () => {
   const s = useSalon()

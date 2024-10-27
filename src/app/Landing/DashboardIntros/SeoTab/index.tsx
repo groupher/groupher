@@ -1,4 +1,4 @@
-import useSalon from '../../styles/dashboard_intros/seo_tab'
+import useSalon from '../../salon/dashboard_intros/seo_tab'
 
 import ArticleCard from './ArticleCard'
 import WebCard from './WebCard'

@@ -8,7 +8,7 @@ import BannerTab from './BannerTab'
 import BrandLayout from './BrandLayout'
 import MainLayouts from './MainLayouts'
 
-import useSalon from '../../styles/dashboard_intros/layout_tab/content_card'
+import useSalon from '../../salon/dashboard_intros/layout_tab/content_card'
 
 export default () => {
   const s = useSalon()

@@ -1,7 +1,7 @@
 import StackCard from './StackCard'
 import GithubCard from './GithubCard'
 
-import useSalon, { cn } from '../styles/tech_stacks'
+import useSalon, { cn } from '../salon/tech_stacks'
 
 export default () => {
   const s = useSalon()

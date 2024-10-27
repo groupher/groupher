@@ -6,7 +6,7 @@ import BorderButton from '~/widgets/Buttons/BorderButton'
 
 import { LinkAble } from '~/widgets/Common'
 
-import useSalon from '../styles/footer'
+import useSalon from '../salon/footer'
 
 export default () => {
   const s = useSalon()

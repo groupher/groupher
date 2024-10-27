@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import type { TColorName } from '~/spec'
-import useSalon, { cn } from '../../styles/dashboard_intros/layout_tab/main_layouts'
+import useSalon, { cn } from '../../salon/dashboard_intros/layout_tab/main_layouts'
 
 type TProps = {
   primaryColor: TColorName

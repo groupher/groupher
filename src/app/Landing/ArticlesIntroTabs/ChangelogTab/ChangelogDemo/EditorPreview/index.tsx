@@ -8,7 +8,7 @@ import CoverPreview from '../CoverPreview'
 
 import useSalon, {
   cn,
-} from '../../../../styles/articles_intro_tabs/changelog_tab/changelog_demo/editor_preview'
+} from '../../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/editor_preview'
 
 const EditorPreview: FC = () => {
   const s = useSalon()

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import Admins from './Admins'
 import ContentCard from './ContentCard'
 
-import useSalon from '../../styles/dashboard_intros/admins_tab'
+import useSalon from '../../salon/dashboard_intros/admins_tab'
 
 export default () => {
   const s = useSalon()

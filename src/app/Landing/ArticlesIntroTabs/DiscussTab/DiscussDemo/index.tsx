@@ -14,7 +14,7 @@ import Facepile from '~/widgets/Facepile/LandingPage'
 import PostItem from './PostItem'
 import CommentItem from './CommentItem'
 
-import useSalon, { cn } from '../../../styles/articles_intro_tabs/discuss_tab/discuss_demo'
+import useSalon, { cn } from '../../../salon/articles_intro_tabs/discuss_tab/discuss_demo'
 
 const DiscussDemo: FC = () => {
   const s = useSalon()

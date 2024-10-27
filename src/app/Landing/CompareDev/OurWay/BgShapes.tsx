@@ -1,17 +1,17 @@
 import GtdWipSVG from '~/icons/GtdWip'
 import TagSVG from '~/icons/HashTagBold'
 
-import CurveLine1SVG from '../../styles/compare_dev/bg_shapes/CurveLine1'
-import CurveLine2SVG from '../../styles/compare_dev/bg_shapes/CurveLine2'
-import CurveLine3SVG from '../../styles/compare_dev/bg_shapes/CurveLine3'
-import CurveLine4SVG from '../../styles/compare_dev/bg_shapes/CurveLine4'
+import CurveLine1SVG from '../../salon/compare_dev/bg_shapes/CurveLine1'
+import CurveLine2SVG from '../../salon/compare_dev/bg_shapes/CurveLine2'
+import CurveLine3SVG from '../../salon/compare_dev/bg_shapes/CurveLine3'
+import CurveLine4SVG from '../../salon/compare_dev/bg_shapes/CurveLine4'
 
-import ShapeCircleSVG from '../../styles/compare_dev/bg_shapes/ShapeCircle'
-import ShapeCross2SVG from '../../styles/compare_dev/bg_shapes/ShapeCross2'
-import ShapeCircleHalfSVG from '../../styles/compare_dev/bg_shapes/ShapeCircleHalf'
-import TwoLineSVG from '../../styles/compare_dev/bg_shapes/TwoLine'
+import ShapeCircleSVG from '../../salon/compare_dev/bg_shapes/ShapeCircle'
+import ShapeCross2SVG from '../../salon/compare_dev/bg_shapes/ShapeCross2'
+import ShapeCircleHalfSVG from '../../salon/compare_dev/bg_shapes/ShapeCircleHalf'
+import TwoLineSVG from '../../salon/compare_dev/bg_shapes/TwoLine'
 
-import useSalon, { cn } from '../../styles/compare_dev/bg_shapes'
+import useSalon, { cn } from '../../salon/compare_dev/bg_shapes'
 
 export default () => {
   const s = useSalon()

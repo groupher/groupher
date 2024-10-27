@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import CursorSVG from '~/icons/Cursor'
 
-import useSalon, { cn } from '../../styles/battery_bento/design/panel'
+import useSalon, { cn } from '../../salon/battery_bento/design/panel'
 
 type TProps = {
   hovering: boolean

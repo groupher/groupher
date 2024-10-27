@@ -4,7 +4,7 @@ import SosoSVG from '~/icons/EmojiSoSo'
 import BadSVG from '~/icons/EmojiBad'
 import ArrowSimple from '~/icons/ArrowSimple'
 
-import useSalon, { cn } from '../../../styles/articles_intro_tabs/help_tab/help_demo/article'
+import useSalon, { cn } from '../../../salon/articles_intro_tabs/help_tab/help_demo/article'
 
 export default () => {
   const s = useSalon()

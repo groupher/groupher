@@ -4,7 +4,7 @@ import DesktopDevice from './DesktopDevice'
 import DashboardDevice from './DashboardDevice'
 import MobileDevice from './MobileDevice'
 
-import { Wrapper, ParallaxWrapper, FreeLabel } from '../../styles/cover_image/desktop_view'
+import { Wrapper, ParallaxWrapper, FreeLabel } from '../../salon/cover_image/desktop_view'
 
 export default () => {
   const { wallpaper } = useWallpaper()

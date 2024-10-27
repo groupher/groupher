@@ -19,7 +19,7 @@ import IntegrateTab from './IntegrateTab'
 import ImportTab from './ImportTab'
 import TrendTab from './TrendTab'
 
-import useSalon from '../styles/dashboard_intros'
+import useSalon from '../salon/dashboard_intros'
 
 export default () => {
   const [tab, setTab] = useState<TIntroTab>(DASHBOARD_ROUTE.LAYOUT)

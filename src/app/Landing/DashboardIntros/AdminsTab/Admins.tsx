@@ -7,7 +7,7 @@ import useHover from '~/hooks/useHover'
 
 import { ACTIVE_ITMES } from './constant'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/admins_tab/admins'
+import useSalon, { cn } from '../../salon/dashboard_intros/admins_tab/admins'
 
 type TProps = {
   onHover: (state: boolean[]) => void

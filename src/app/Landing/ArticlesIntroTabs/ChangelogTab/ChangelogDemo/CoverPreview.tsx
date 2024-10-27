@@ -3,7 +3,7 @@ import Cards2SVG from '~/icons/Cards2'
 
 import useSalon, {
   cn,
-} from '../../../styles/articles_intro_tabs/changelog_tab/changelog_demo/cover_preview'
+} from '../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/cover_preview'
 
 export default () => {
   const s = useSalon()

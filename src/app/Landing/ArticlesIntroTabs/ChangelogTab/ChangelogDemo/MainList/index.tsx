@@ -2,14 +2,14 @@ import { COLOR_NAME } from '~/const/colors'
 
 import TagNode from '~/widgets/TagNode'
 
-import StarSVG from '../../../../styles/articles_intro_tabs/changelog_tab/Star'
+import StarSVG from '../../../../salon/articles_intro_tabs/changelog_tab/Star'
 
 import CoverPreview from '../CoverPreview'
 import Footer from './Footer'
 
 import useSalon, {
   cn,
-} from '../../../../styles/articles_intro_tabs/changelog_tab/changelog_demo/main_list'
+} from '../../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/main_list'
 
 export default () => {
   const s = useSalon()

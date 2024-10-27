@@ -6,7 +6,7 @@ import LightSVG from '~/icons/FlashLight'
 import RatioSVG from '~/icons/Ratio'
 import SizeSVG from '~/icons/ImageSize'
 
-import useSalon from '../../../../styles/articles_intro_tabs/changelog_tab/changelog_demo/editor_preview/toolbox'
+import useSalon from '../../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/editor_preview/toolbox'
 
 export default () => {
   const s = useSalon()

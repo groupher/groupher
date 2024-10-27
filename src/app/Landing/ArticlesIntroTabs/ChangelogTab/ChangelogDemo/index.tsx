@@ -3,7 +3,7 @@ import EditorPreview from './EditorPreview'
 import EmotionBar from './EmotionBar'
 import EmotionBarBad from './EmotionBarBad'
 
-import useSalon from '../../../styles/articles_intro_tabs/changelog_tab/changelog_demo'
+import useSalon from '../../../salon/articles_intro_tabs/changelog_tab/changelog_demo'
 
 export default () => {
   const s = useSalon()

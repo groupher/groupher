@@ -19,7 +19,7 @@ import {
   BgGradient,
   DempP,
   Highlight,
-} from '../styles/users_wall'
+} from '../salon/users_wall'
 
 const P1 = (markColor: TColorName): ReactNode => (
   <DempP>

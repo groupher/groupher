@@ -18,7 +18,7 @@ import QuestionSVG from '~/icons/Question'
 import DiscussSVG from '~/icons/Discuss'
 import ToolSVG from '~/icons/Tool'
 
-import useSalon, { cn } from '../../styles/compare_dev/our_way/node_block'
+import useSalon, { cn } from '../../salon/compare_dev/our_way/node_block'
 
 type TProps = {
   cat?: TArticleCat | 'DEFAULT'

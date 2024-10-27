@@ -1,4 +1,4 @@
-import useSalon, { cn } from '../../styles/battery_bento/integration/header'
+import useSalon, { cn } from '../../salon/battery_bento/integration/header'
 
 export default () => {
   const s = useSalon()

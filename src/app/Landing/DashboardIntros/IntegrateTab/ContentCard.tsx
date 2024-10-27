@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import { Wrapper } from '../../styles/dashboard_intros/integrate_tab/content_card'
+import { Wrapper } from '../../salon/dashboard_intros/integrate_tab/content_card'
 
 const ContentCard: FC = () => {
   return (

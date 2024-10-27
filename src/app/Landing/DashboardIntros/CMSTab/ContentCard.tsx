@@ -12,7 +12,7 @@ import Checker from '~/widgets/Checker'
 import ArticleCatState from '~/widgets/ArticleCatState'
 import CommentsCount from '~/widgets/CommentsCount'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/cms_tab/content_card'
+import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/content_card'
 
 export default () => {
   const s = useSalon()

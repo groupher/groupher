@@ -5,7 +5,7 @@ import Img from '~/Img'
 import ToolBox from './ToolBox'
 import InlineToolBox from './InlineToolBox'
 
-import useSalon from '../../styles/battery_bento/rich_content/panel'
+import useSalon from '../../salon/battery_bento/rich_content/panel'
 
 type TProps = {
   hovering: boolean

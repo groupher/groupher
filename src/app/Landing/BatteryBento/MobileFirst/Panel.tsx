@@ -6,7 +6,7 @@ import Img from '~/Img'
 
 import ActionsMask from './ActionsMask'
 
-import useSalon, { cn } from '../../styles/battery_bento/mobile_first/panel'
+import useSalon, { cn } from '../../salon/battery_bento/mobile_first/panel'
 
 type TProps = {
   hovering: boolean

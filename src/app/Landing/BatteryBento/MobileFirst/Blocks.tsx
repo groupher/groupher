@@ -5,7 +5,7 @@ import LinkSVG from '~/icons/Share'
 import QRCodeSolidSVG from '~/icons/QRCodeSolid'
 import TwitterSVG from '~/icons/TwitterX'
 
-import useSalon, { cn } from '../../styles/battery_bento/mobile_first/blocks'
+import useSalon, { cn } from '../../salon/battery_bento/mobile_first/blocks'
 
 type TProps = {
   hovering: boolean

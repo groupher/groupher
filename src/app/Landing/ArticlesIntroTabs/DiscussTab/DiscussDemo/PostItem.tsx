@@ -5,9 +5,7 @@ import type { TArticleCat, TActive } from '~/spec'
 import UpvoteSVG from '~/icons/Upvote'
 import ArticleCatState from '~/widgets/ArticleCatState'
 
-import useSalon, {
-  cn,
-} from '../../../styles/articles_intro_tabs/discuss_tab/discuss_demo/post_item'
+import useSalon, { cn } from '../../../salon/articles_intro_tabs/discuss_tab/discuss_demo/post_item'
 
 type TProps = {
   title?: string

@@ -1,6 +1,6 @@
 import Img from '~/Img'
 
-import useSalon from '../../../styles/articles_intro_tabs/changelog_tab/changelog_demo/emotion_bar_bad'
+import useSalon from '../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/emotion_bar_bad'
 
 const EMOTION_STATIC = '/icons/static/emotion'
 
