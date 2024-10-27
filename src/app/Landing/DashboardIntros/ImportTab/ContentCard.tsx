@@ -2,47 +2,36 @@ import HeaderCard from './HeaderCard'
 import Content from './Content'
 import FooterCard from './FooterCard'
 
-import {
-  Wrapper,
-  BgBubble,
-  Bot,
-  AI,
-  HLineIcon,
-  HLineIcon2,
-  //
-  LineIcon,
-  LineIcon2,
-  CurveLineIcon1,
-  CurveLineIcon2,
-  CurveLineIcon3,
-  CurveLineIcon4,
-} from '../../styles/dashboard_intros/import_tab/content_card'
+import LineSVG from '../../styles/dashboard_intros/import_tab/Line'
+
+import useSalon, { cn } from '../../styles/dashboard_intros/import_tab/content_card'
 
 export default () => {
-  return (
-    <Wrapper>
-      <Bot top={230} left={40}>
-        Bot
-      </Bot>
-      <AI top={230} right={50}>
-        AI
-      </AI>
-      {/* <LeftBgBubble />
-      <RightBgBubble /> */}
-      <BgBubble />
-      <HLineIcon />
-      <HLineIcon2 />
+  const s = useSalon()
 
-      <LineIcon />
-      <LineIcon2 />
-      <CurveLineIcon1 />
-      <CurveLineIcon2 />
-      <CurveLineIcon3 />
-      <CurveLineIcon4 />
+  return (
+    <div className={s.wrapper}>
+      <div className={cn(s.bot, 'left-8 top-56 mt-2')}>Bot</div>
+      <div className={cn(s.ai, 'right-9 top-56 mt-1')}>AI</div>
+      <div className={s.BgBubble} />
+      <LineSVG className={s.lLine} />
+      <LineSVG className={s.rLine} />
+
+      <div className={cn(s.dot, 'top-20 left-24')} />
+      <div className={cn(s.dot, 'top-28 left-32 size-1.5 opacity-15')} />
+
+      <div className={cn(s.dot, 'top-20 right-20')} />
+      <div className={cn(s.dot, 'top-28 right-28 size-1.5 opacity-15')} />
+
+      <div className={cn(s.dot, 'bottom-20 left-24 size-1.5 opacity-15')} />
+      <div className={cn(s.dot, 'bottom-28 left-32')} />
+
+      <div className={cn(s.dot, 'bottom-20 right-20')} />
+      <div className={cn(s.dot, 'bottom-28 right-28 size-1.5 opacity-15')} />
 
       <HeaderCard />
       <Content />
       <FooterCard />
-    </Wrapper>
+    </div>
   )
 }

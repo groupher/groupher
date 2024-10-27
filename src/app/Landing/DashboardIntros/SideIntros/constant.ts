@@ -112,19 +112,19 @@ export default {
 
   [DASHBOARD_ROUTE.INOUT]: {
     title: '导入 & 通知',
-    desc: '从其他服务商 / 平台导入内容',
+    desc: '三方平台导入内容 / 信息通知',
     color: COLOR_NAME.YELLOW,
     icon: IntroInoutSVG,
     iconClass: 'size-8 opacity-80',
 
     items: [
-      '社区基本信息，主题色',
-      '品牌展示样式',
-      '社区整体布局',
-      '讨论区布局',
-      '看板布局，背景颜色',
-      '更新日志布局',
-      '壁纸，辉光，毛玻璃效果',
+      '主流平台内容一键导入',
+      'Markdown / CSV 等手动导入',
+      '主流 IM 平台通知机器人',
+      'webhook 通知机制',
+      'RSS 内容输出',
+      '邮件精准通知',
+      '多种高模板自定义',
     ],
   },
 }
