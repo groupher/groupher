@@ -5,9 +5,7 @@ import type { TArticleCat } from '~/spec'
 import UpvoteSVG from '~/icons/Upvote'
 import ArticleCatState from '~/widgets/ArticleCatState'
 
-import useSalon, {
-  cn,
-} from '../../../styles/articles_intro_tabs/kanban_tab/kanban_demo/kanban_item'
+import useSalon, { cn } from '../../../salon/articles_intro_tabs/kanban_tab/kanban_demo/kanban_item'
 
 type TProps = {
   count?: number

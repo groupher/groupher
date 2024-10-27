@@ -2,7 +2,7 @@ import HammerSVG from '~/icons/HammerSolid'
 
 import TechItem from './TechItem'
 
-import useSalon from '../styles/tech_stacks/stack_card'
+import useSalon from '../salon/tech_stacks/stack_card'
 
 export default () => {
   const s = useSalon()

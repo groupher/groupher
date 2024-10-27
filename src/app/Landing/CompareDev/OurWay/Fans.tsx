@@ -3,7 +3,7 @@ import { mockUsers } from '~/mock'
 import Facepile from '~/widgets/Facepile/LandingPage'
 import Img from '~/Img'
 
-import useSalon, { cn } from '../../styles/compare_dev/fans'
+import useSalon, { cn } from '../../salon/compare_dev/fans'
 
 export default () => {
   const s = useSalon()

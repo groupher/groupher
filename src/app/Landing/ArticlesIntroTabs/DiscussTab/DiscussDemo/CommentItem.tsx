@@ -7,7 +7,7 @@ import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon, {
   cn,
-} from '../../../styles/articles_intro_tabs/discuss_tab/discuss_demo/comment_item'
+} from '../../../salon/articles_intro_tabs/discuss_tab/discuss_demo/comment_item'
 
 type TProps = {
   user?: TUser

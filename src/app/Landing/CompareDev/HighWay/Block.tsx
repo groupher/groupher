@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import GraveSVG from '~/icons/Grave'
 import PlaneSVG from '~/icons/Plane'
 
-import useSalon, { cn } from '../../styles/compare_dev/high_way/block'
+import useSalon, { cn } from '../../salon/compare_dev/high_way/block'
 
 type TProps = {
   text: string

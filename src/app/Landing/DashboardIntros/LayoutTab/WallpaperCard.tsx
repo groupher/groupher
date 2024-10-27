@@ -4,7 +4,7 @@ import { fmt2CompStyle } from '~/fmt'
 
 import WallpaperBar from './WallpaperBar'
 
-import useSalon from '../../styles/dashboard_intros/layout_tab/wallpaper_card'
+import useSalon from '../../salon/dashboard_intros/layout_tab/wallpaper_card'
 
 export default () => {
   const s = useSalon()

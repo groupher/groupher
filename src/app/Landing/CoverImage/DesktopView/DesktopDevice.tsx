@@ -15,7 +15,7 @@ import {
   Content,
   Background,
   Image,
-} from '../../styles/cover_image/desktop_view/desktop_device'
+} from '../../salon/cover_image/desktop_view/desktop_device'
 
 export default () => {
   const { wallpaper, background, effect, hasShadow } = useWallpaper()

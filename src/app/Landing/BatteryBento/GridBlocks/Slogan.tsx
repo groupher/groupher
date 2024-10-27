@@ -1,7 +1,7 @@
 import PlugSVG from '~/icons/Plug'
 import PointSVG from '~/icons/PointDuo'
 
-import useSalon from '../../styles/battery_bento/grid_blocks/slogan'
+import useSalon from '../../salon/battery_bento/grid_blocks/slogan'
 
 export default () => {
   const s = useSalon()

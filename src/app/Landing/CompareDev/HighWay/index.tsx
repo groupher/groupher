@@ -1,7 +1,7 @@
 import Block from './Block'
 
 import SeedSVG from '~/icons/Seed'
-import useSalon, { cn } from '../../styles/compare_dev/high_way'
+import useSalon, { cn } from '../../salon/compare_dev/high_way'
 
 export default () => {
   const s = useSalon()

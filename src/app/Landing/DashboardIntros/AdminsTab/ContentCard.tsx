@@ -4,7 +4,7 @@ import FingerPrintSVG from '~/icons/FingerPrintDuo'
 
 import PermissionItems from './PermissionItems'
 
-import useSalon from '../../styles/dashboard_intros/admins_tab/content_card'
+import useSalon from '../../salon/dashboard_intros/admins_tab/content_card'
 
 type TProps = {
   userHover: boolean[]

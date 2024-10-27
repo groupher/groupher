@@ -6,7 +6,7 @@ import {
   Image,
   Background,
   Bar,
-} from '../../styles/cover_image/desktop_view/mobile_device'
+} from '../../salon/cover_image/desktop_view/mobile_device'
 
 export default () => {
   const { background, effect } = useWallpaper()

@@ -10,7 +10,7 @@ import IntroSpinSVG from '~/icons/IntroSpin'
 
 import PreviewBars from './PreviewBars'
 
-import useSalon, { cn, ICON } from '../styles/articles_intro_tabs/tabs'
+import useSalon, { cn, ICON } from '../salon/articles_intro_tabs/tabs'
 
 const TAB_ITEMS = [
   {

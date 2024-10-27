@@ -5,7 +5,7 @@ import { COLOR_NAME } from '~/const/colors'
 import Button from '~/widgets/Buttons/Button'
 
 import FeatItem from '../FeatItem'
-import useSalon from '../../styles/articles_intro_tabs'
+import useSalon from '../../salon/articles_intro_tabs'
 
 const color = COLOR_NAME.PURPLE
 

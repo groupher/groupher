@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import type { TColorName } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/layout_tab/header'
+import useSalon, { cn } from '../../salon/dashboard_intros/layout_tab/header'
 
 type TProps = {
   primaryColor: TColorName

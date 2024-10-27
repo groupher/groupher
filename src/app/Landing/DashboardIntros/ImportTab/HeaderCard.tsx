@@ -2,7 +2,7 @@ import Img from '~/Img'
 
 import GithubSVG from '~/icons/social/Github'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/import_tab/header_card'
+import useSalon, { cn } from '../../salon/dashboard_intros/import_tab/header_card'
 
 export default () => {
   const s = useSalon()

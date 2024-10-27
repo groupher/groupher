@@ -2,7 +2,7 @@ import type { FC, ReactNode } from 'react'
 
 import type { TColorName, TUser } from '~/spec'
 
-import { Wrapper, Header, Avatar, User, Nickname, Content } from '../styles/users_wall/card'
+import { Wrapper, Header, Avatar, User, Nickname, Content } from '../salon/users_wall/card'
 
 type TProps = {
   content: ReactNode

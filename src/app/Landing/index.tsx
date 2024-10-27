@@ -30,7 +30,7 @@ import CompareDev from './CompareDev'
 import UsersWall from './UsersWall'
 import Footer from './Footer'
 
-import useSalon, { cn } from './styles'
+import useSalon, { cn } from './salon'
 
 const faqs = [
   {

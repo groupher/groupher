@@ -5,7 +5,7 @@ import { mockUsers } from '~/mock'
 import UpvoteSVG from '~/icons/Upvote'
 import Facepile from '~/widgets/Facepile/LandingPage'
 
-import useSalon from '../../../../styles/articles_intro_tabs/changelog_tab/changelog_demo/main_list/footer'
+import useSalon from '../../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/main_list/footer'
 
 type TProps = {
   upvotesCount?: number

@@ -1,6 +1,6 @@
 import HashTagSVG from '~/icons/HashTagBold'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/tags_tab/sidebar'
+import useSalon, { cn } from '../../salon/dashboard_intros/tags_tab/sidebar'
 
 export default () => {
   const s = useSalon()

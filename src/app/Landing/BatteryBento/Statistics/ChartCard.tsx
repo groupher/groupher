@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import AnimatedCount from '~/widgets/AnimatedCount'
 
-import useSalon, { cn } from '../../styles/battery_bento/statistics/chart_card'
+import useSalon, { cn } from '../../salon/battery_bento/statistics/chart_card'
 
 type TProps = {
   hovering: boolean

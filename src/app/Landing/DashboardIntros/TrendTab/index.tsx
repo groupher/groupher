@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import ContentCard from './ContentCard'
 
-import { Wrapper } from '../../styles/dashboard_intros/trend_tab'
+import { Wrapper } from '../../salon/dashboard_intros/trend_tab'
 
 const TrendTab: FC = () => {
   return (

@@ -3,7 +3,7 @@ import useHover from '~/hooks/useHover'
 import Panel from './Panel'
 import Blocks from './Blocks'
 
-import useSalon from '../../styles/battery_bento/mobile_first'
+import useSalon from '../../salon/battery_bento/mobile_first'
 
 export default () => {
   const s = useSalon()

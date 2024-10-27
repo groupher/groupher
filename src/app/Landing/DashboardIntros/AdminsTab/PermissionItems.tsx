@@ -4,7 +4,7 @@ import { includes } from 'ramda'
 import CheckSVG from '~/icons/CheckBold'
 
 import { LIST, ACTIVE_ITMES } from './constant'
-import useSalon, { cn } from '../../styles/dashboard_intros/admins_tab/permision_items'
+import useSalon, { cn } from '../../salon/dashboard_intros/admins_tab/permision_items'
 
 type TProps = {
   userHover: boolean[]

@@ -2,9 +2,9 @@ import HeaderCard from './HeaderCard'
 import Content from './Content'
 import FooterCard from './FooterCard'
 
-import LineSVG from '../../styles/dashboard_intros/import_tab/Line'
+import LineSVG from '../../salon/dashboard_intros/import_tab/Line'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/import_tab/content_card'
+import useSalon, { cn } from '../../salon/dashboard_intros/import_tab/content_card'
 
 export default () => {
   const s = useSalon()

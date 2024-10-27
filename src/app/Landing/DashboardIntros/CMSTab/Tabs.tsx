@@ -2,7 +2,7 @@ import TimeSVG from '~/icons/TimelineMode'
 import CategorySVG from '~/icons/Category'
 import WipSVG from '~/icons/GtdWip'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/cms_tab/tabs'
+import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/tabs'
 
 export default () => {
   const s = useSalon()

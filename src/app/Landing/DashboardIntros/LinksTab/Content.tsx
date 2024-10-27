@@ -2,7 +2,7 @@ import EditSVG from '~/icons/EditPen'
 import WechatSVG from '~/icons/social/WeChat'
 import TwitterSVG from '~/icons/TwitterX'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/links_tab/content'
+import useSalon, { cn } from '../../salon/dashboard_intros/links_tab/content'
 
 export default () => {
   const s = useSalon()

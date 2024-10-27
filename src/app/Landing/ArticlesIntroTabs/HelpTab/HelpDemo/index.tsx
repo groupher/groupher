@@ -2,7 +2,7 @@ import DirTree from './DirTree'
 import Article from './Article'
 import InlineComment from './InlineComment'
 
-import useSalon from '../../../styles/articles_intro_tabs/help_tab/help_demo'
+import useSalon from '../../../salon/articles_intro_tabs/help_tab/help_demo'
 
 export default () => {
   const s = useSalon()

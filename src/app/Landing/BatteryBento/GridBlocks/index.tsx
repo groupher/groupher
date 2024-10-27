@@ -20,7 +20,7 @@ import SqaureSrewSVG from '~/icons/SqaureSrewDuo'
 import { SHINE_DOTS } from './constant'
 import Slogan from './Slogan'
 
-import useSalon, { cn } from '../../styles/battery_bento/grid_blocks'
+import useSalon, { cn } from '../../salon/battery_bento/grid_blocks'
 
 const GridBlocks: FC = () => {
   const s = useSalon()

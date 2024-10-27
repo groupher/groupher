@@ -1,7 +1,7 @@
 import useHover from '~/hooks/useHover'
 
 import Panel from './Panel'
-import useSalon from '../../styles/battery_bento/statistics'
+import useSalon from '../../salon/battery_bento/statistics'
 
 export default () => {
   const s = useSalon()

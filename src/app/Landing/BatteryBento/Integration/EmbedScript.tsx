@@ -1,6 +1,6 @@
 import TerminalSVG from '~/icons/Terminal'
 
-import useSalon from '../../styles/battery_bento/integration/embed_script'
+import useSalon from '../../salon/battery_bento/integration/embed_script'
 
 export default () => {
   const s = useSalon()

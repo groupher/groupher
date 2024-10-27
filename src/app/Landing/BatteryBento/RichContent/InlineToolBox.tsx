@@ -5,7 +5,7 @@ import StrikeSVG from '~/icons/editor/Strike'
 import LinkSVG from '~/icons/editor/Link'
 import HighlightSVG from '~/icons/editor/Highlight'
 
-import useSalon, { cn } from '../../styles/battery_bento/rich_content/inline_tool_box'
+import useSalon, { cn } from '../../salon/battery_bento/rich_content/inline_tool_box'
 
 type TProps = {
   hovering: boolean

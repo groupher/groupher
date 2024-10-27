@@ -3,7 +3,7 @@ import { ARTICLE_CAT } from '~/const/gtd'
 import Banner from './Banner'
 import KanbanItem from './KanbanItem'
 
-import useSalon, { cn } from '../../../styles/articles_intro_tabs/kanban_tab/kanban_demo'
+import useSalon, { cn } from '../../../salon/articles_intro_tabs/kanban_tab/kanban_demo'
 
 export default () => {
   const s = useSalon()

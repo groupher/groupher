@@ -3,7 +3,7 @@ import ClipSVG from '~/icons/Clip'
 import OptionArrowSVG from '~/icons/OptionArrow'
 import HashTagSVG from '~/icons/HashTag'
 
-import useSalon from '../../styles/dashboard_intros/tags_tab/footer'
+import useSalon from '../../salon/dashboard_intros/tags_tab/footer'
 
 export default () => {
   const s = useSalon()

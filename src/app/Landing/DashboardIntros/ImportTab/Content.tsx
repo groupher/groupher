@@ -1,6 +1,6 @@
 import Img from '~/Img'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/import_tab/content'
+import useSalon, { cn } from '../../salon/dashboard_intros/import_tab/content'
 
 export default () => {
   const s = useSalon()

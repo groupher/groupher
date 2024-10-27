@@ -7,7 +7,7 @@ import LoadingGapSVG from '~/icons/LoadingGap'
 
 import { PRODUCTS, MAX_SIZE } from './constant'
 
-import useSalon, { cn } from '../../styles/battery_bento/bundle_size/panel'
+import useSalon, { cn } from '../../salon/battery_bento/bundle_size/panel'
 
 type TProps = {
   hovering: boolean

@@ -6,7 +6,7 @@ import DeleteSVG from '~/icons/Trash'
 import ShareSVG from '~/icons/Share'
 import ArchivedSVG from '~/icons/Archived'
 
-import useSalon, { cn } from '../../styles/battery_bento/mobile_first/action_mask'
+import useSalon, { cn } from '../../salon/battery_bento/mobile_first/action_mask'
 
 type TProps = {
   hovering: boolean

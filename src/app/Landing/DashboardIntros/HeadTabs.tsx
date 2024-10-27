@@ -4,7 +4,7 @@ import { DASHBOARD_ROUTE } from '~/const/route'
 
 import type { TIntroTab } from './spec'
 
-import useSalon, { cn } from '../styles/dashboard_intros/head_tabs'
+import useSalon, { cn } from '../salon/dashboard_intros/head_tabs'
 
 type TProps = {
   tab: TIntroTab

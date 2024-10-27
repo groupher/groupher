@@ -8,7 +8,7 @@ import ChangelogTab from './ChangelogTab'
 import KanbanTab from './KanbanTab'
 import HelpTab from './HelpTab'
 
-import useSalon from '../styles/articles_intro_tabs/content'
+import useSalon from '../salon/articles_intro_tabs/content'
 
 type TProps = {
   tab: TThread

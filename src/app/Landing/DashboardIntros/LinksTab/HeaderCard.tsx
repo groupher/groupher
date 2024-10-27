@@ -1,4 +1,4 @@
-import useSalon from '../../styles/dashboard_intros/links_tab/header_card'
+import useSalon from '../../salon/dashboard_intros/links_tab/header_card'
 
 export default () => {
   const s = useSalon()

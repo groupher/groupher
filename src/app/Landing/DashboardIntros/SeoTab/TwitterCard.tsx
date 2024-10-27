@@ -5,7 +5,7 @@ import ViewSVG from '~/icons/TwView'
 import TwMarkSVG from '~/icons/BookMark'
 import XSVG from '~/icons/X'
 
-import useSalon, { cn } from '../../styles/dashboard_intros/seo_tab/twitter_card'
+import useSalon, { cn } from '../../salon/dashboard_intros/seo_tab/twitter_card'
 
 export default () => {
   const s = useSalon()

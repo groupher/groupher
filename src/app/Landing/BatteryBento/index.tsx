@@ -9,7 +9,7 @@ import Statistics from './Statistics'
 
 import GridBlocks from './GridBlocks'
 
-import useSalon from '../styles/battery_bento'
+import useSalon from '../salon/battery_bento'
 
 export default () => {
   const s = useSalon()

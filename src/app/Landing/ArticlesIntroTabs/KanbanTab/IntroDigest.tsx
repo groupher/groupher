@@ -2,7 +2,7 @@ import { COLOR_NAME } from '~/const/colors'
 
 import FeatItem from '../FeatItem'
 
-import useSalon, {} from '../../styles/articles_intro_tabs/kanban_tab/intro_digest'
+import useSalon, {} from '../../salon/articles_intro_tabs/kanban_tab/intro_digest'
 
 const color = COLOR_NAME.BLUE
 

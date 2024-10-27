@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import type { TThread } from '~/spec'
 import { THREAD } from '~/const/thread'
 
-import useSalon, { cn } from '../styles/articles_intro_tabs/preview_bars'
+import useSalon, { cn } from '../salon/articles_intro_tabs/preview_bars'
 
 type TProps = {
   tab: TThread

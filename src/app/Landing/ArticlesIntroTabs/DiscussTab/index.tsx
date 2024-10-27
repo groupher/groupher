@@ -5,7 +5,7 @@ import type { TActive } from '~/spec'
 import IntroDigest from './IntroDigest'
 import DiscussDemo from './DiscussDemo'
 
-import useSalon, { cn } from '../../styles/articles_intro_tabs/discuss_tab'
+import useSalon, { cn } from '../../salon/articles_intro_tabs/discuss_tab'
 
 const DiscussFeat: FC<TActive> = ({ active }) => {
   const s = useSalon()

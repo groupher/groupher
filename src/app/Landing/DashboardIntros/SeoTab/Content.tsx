@@ -1,4 +1,4 @@
-import useSalon, { cn } from '../../styles/dashboard_intros/seo_tab/content'
+import useSalon, { cn } from '../../salon/dashboard_intros/seo_tab/content'
 
 import SpiderSVG from '~/icons/Spider'
 

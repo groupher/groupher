@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import UpvoteSVG from '~/icons/Upvote'
 
-import useSalon, { cn } from '../../styles/battery_bento/dark_mode/article_card'
+import useSalon, { cn } from '../../salon/battery_bento/dark_mode/article_card'
 
 type TProps = {
   hovering: boolean

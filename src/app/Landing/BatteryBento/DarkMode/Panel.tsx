@@ -9,7 +9,7 @@ import SunSVG from '~/icons/Sun'
 import SunSolidSVG from '~/icons/SunSolid'
 import MoonSolidSVG from '~/icons/MoonSolid'
 
-import useSalon, { cn } from '../../styles/battery_bento/dark_mode/panel'
+import useSalon, { cn } from '../../salon/battery_bento/dark_mode/panel'
 
 type TProps = {
   hovering: boolean

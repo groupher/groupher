@@ -11,7 +11,7 @@ import UploadSVG from '~/icons/Upload'
 import CloudSVG from '~/icons/CloudCheck'
 
 import Header from './Header'
-import useSalon, { cn } from '../../styles/battery_bento/security/panel'
+import useSalon, { cn } from '../../salon/battery_bento/security/panel'
 
 type TProps = {
   hovering: boolean

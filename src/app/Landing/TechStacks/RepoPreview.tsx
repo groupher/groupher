@@ -5,7 +5,7 @@ import ForkSVG from '~/icons/github/Fork'
 import PrSVG from '~/icons/github/Pr'
 import EditSVG from '~/icons/EditPen'
 
-import useSalon, { cn } from '../styles/tech_stacks/repo_preview'
+import useSalon, { cn } from '../salon/tech_stacks/repo_preview'
 
 type TProps = {
   name: string

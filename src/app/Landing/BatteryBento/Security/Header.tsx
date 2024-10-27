@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import MoreSVG from '~/icons/menu/MoreL'
 
-import useSalon, { cn } from '../../styles/battery_bento/security/header'
+import useSalon, { cn } from '../../salon/battery_bento/security/header'
 
 type TProps = {
   hovering: boolean
