@@ -1,49 +1,20 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import Img from '~/Img'
-export const Wrapper = styled.div`
-  ${css.row('align-center', 'justify-between')};
-  padding: 0 15px;
-  padding-bottom: 0;
-  color: ${theme('article.digest')};
-  width: 100%;
-  height: 56px;
-  z-index: 2;
-  position: absolute;
-  bottom: 5px;
-  left: 0;
-`
-export const ImCard = styled.div`
-  width: 240px;
-  height: 60px;
-  ${css.column('align-both')};
-  background: ${theme('htmlBg')};
-  gap: 8px 0px;
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-  border-radius: 30px;
-  padding-top: 5px;
-`
-export const OhterCard = styled(ImCard)`
-  width: 150px;
-  height: 60px;
-`
-export const ImIcons = styled.div`
-  width: 100%;
-  ${css.row('align-both')};
-  opacity: 0.9;
-  gap: 0 15px;
-`
-export const ToolIcons = styled(ImIcons)`
-  gap: 0 16px;
-`
-export const FooterNote = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 13px;
-  margin-bottom: -5px;
-`
+export { cn } from '~/css'
 
-export const ImgIcon = styled(Img)<{ $size?: number }>`
-  ${({ $size }) => css.size($size || 28)}};
-`
+export default () => {
+  const { cn, bg, br, shadow } = useTwBelt()
+
+  return {
+    wrapper: cn('row-center-between px-4 pb-0 w-full h-14 z-20', 'absolute bottom-1 left-0'),
+
+    imcard: cn(
+      'align-both w-60 h-14 gap-y-3 border rounded-2xl gap-x-4',
+      bg('htmlBg'),
+      br('divider'),
+      shadow('sm'),
+    ),
+    otherCard: cn('ml-10 w-36 h-14'),
+    img: 'size-7',
+  }
+}
