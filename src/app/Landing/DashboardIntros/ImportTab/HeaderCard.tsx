@@ -1,40 +1,25 @@
-import type { FC } from 'react'
+import Img from '~/Img'
 
-import {
-  Wrapper,
-  ImCard,
-  ImIcons,
-  OhterCard,
-  Icon,
-  ImgIcon,
-  MDIcon,
-  CVSIcon,
-  ToolIcons,
-  // FooterNote,
-} from '../../styles/dashboard_intros/import_tab/header_card'
+import GithubSVG from '~/icons/social/Github'
 
-const HeaderCard: FC = () => {
+import useSalon, { cn } from '../../styles/dashboard_intros/import_tab/header_card'
+
+export default () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <ImCard>
-        <ImIcons>
-          <Icon.GITHUB />
-          <ImgIcon src="landing/products/gitlab.png" $size={32} />
-          <ImgIcon src="landing/products/notion.png" $size={30} />
-          <ImgIcon src="landing/products/linear.png" $size={24} />
-          <ImgIcon src="landing/products/jira.png" $size={22} />
-        </ImIcons>
-        {/* <FooterNote>常见 issue 管理工具</FooterNote> */}
-      </ImCard>
-      <OhterCard>
-        <ToolIcons>
-          <MDIcon src="landing/products/markdown.png" />
-          <CVSIcon src="landing/products/cvs.png" />
-        </ToolIcons>
-        {/* <FooterNote>Markdown / CVS 导入</FooterNote> */}
-      </OhterCard>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <div className={s.imcard}>
+        <GithubSVG className={s.svgIcon} />
+        <Img src="landing/products/gitlab.png" className={s.img} />
+        <Img src="landing/products/notion.png" className={s.img} />
+        <Img src="landing/products/linear.png" className={s.img} />
+        <Img src="landing/products/jira.png" className={cn(s.img, 'size-6')} />
+      </div>
+      <div className={cn(s.imcard, s.otherCard)}>
+        <Img src="landing/products/markdown.png" className={cn(s.img, 'size-6')} />
+        <Img src="landing/products/cvs.png" className={cn(s.img, 'size-6')} />
+      </div>
+    </div>
   )
 }
-
-export default HeaderCard

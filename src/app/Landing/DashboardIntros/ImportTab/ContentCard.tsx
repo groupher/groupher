@@ -1,5 +1,3 @@
-import type { FC } from 'react'
-
 import HeaderCard from './HeaderCard'
 import Content from './Content'
 import FooterCard from './FooterCard'
@@ -7,8 +5,6 @@ import FooterCard from './FooterCard'
 import {
   Wrapper,
   BgBubble,
-  // LeftBgBubble,
-  // RightBgBubble,
   Bot,
   AI,
   HLineIcon,
@@ -22,7 +18,7 @@ import {
   CurveLineIcon4,
 } from '../../styles/dashboard_intros/import_tab/content_card'
 
-const ContentCard: FC = () => {
+export default () => {
   return (
     <Wrapper>
       <Bot top={230} left={40}>
@@ -50,5 +46,3 @@ const ContentCard: FC = () => {
     </Wrapper>
   )
 }
-
-export default ContentCard

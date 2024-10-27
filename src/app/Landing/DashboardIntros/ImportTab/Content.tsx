@@ -1,24 +1,22 @@
-import type { FC } from 'react'
+import Img from '~/Img'
 
-import { Brick } from '~/widgets/Common'
+import useSalon, { cn } from '../../styles/dashboard_intros/import_tab/content'
 
-import { Wrapper, Header, Logo, Title } from '../../styles/dashboard_intros/import_tab/content'
+export default () => {
+  const s = useSalon()
 
-const Content: FC = () => {
   return (
-    <Wrapper>
-      <Header>
-        <Logo src="groupher-alpha.png" />
-        <Title>Groupher</Title>
-      </Header>
+    <div className={s.wrapper}>
+      <div className={s.head}>
+        <Img src="groupher.png" className={s.logo} />
+        <div className={s.title}>Groupher</div>
+      </div>
 
-      <Brick $width={100} $height={6} $opacity={0.18} top={60} left={30} />
-      <Brick $width={120} $height={6} $opacity={0.16} top={78} left={30} />
-      <Brick $width={90} $height={6} $opacity={0.13} top={96} left={30} />
-      <Brick $width={80} $height={6} $opacity={0.1} top={114} left={30} />
-      <Brick $width={100} $height={6} $opacity={0.06} top={132} left={30} />
-    </Wrapper>
+      <div className={cn(s.bar, 'mt-3.5')} />
+      <div className={cn(s.bar, 'w-28')} />
+      <div className={cn(s.bar, 'w-32 opacity-15')} />
+      <div className={cn(s.bar, 'w-20 opacity-10')} />
+      <div className={cn(s.bar, 'opacity-5')} />
+    </div>
   )
 }
-
-export default Content

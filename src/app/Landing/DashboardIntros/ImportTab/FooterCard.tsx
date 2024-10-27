@@ -1,38 +1,24 @@
-import type { FC } from 'react'
+import Img from '~/Img'
 
-import {
-  Wrapper,
-  ImCard,
-  ImIcons,
-  ToolIcons,
-  // FooterNote,
-  ImgIcon,
-  OhterCard,
-} from '../../styles/dashboard_intros/import_tab/footer_card'
+import useSalon, { cn } from '../../styles/dashboard_intros/import_tab/footer_card'
 
-const FooterCard: FC = () => {
+export default () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <ImCard>
-        <ImIcons>
-          <ImgIcon src="landing/products/dingding.png" />
-          <ImgIcon src="landing/products/feishu.png" $size={30} />
-          <ImgIcon src="landing/seo/wechat2.png" $size={26} />
-          <ImgIcon src="landing/products/slack.png" $size={22} />
-          <ImgIcon src="landing/products/discord.png" $size={24} />
-        </ImIcons>
-        {/* <FooterNote>主流 IM 平台</FooterNote> */}
-      </ImCard>
-      <OhterCard>
-        <ToolIcons>
-          <ImgIcon src="landing/products/email.png" $size={26} />
-          <ImgIcon src="landing/seo/rss.png" $size={25} />
-          <ImgIcon src="landing/products/webhook.png" $size={20} />
-        </ToolIcons>
-        {/* <FooterNote>Mail / RSS / Webhook</FooterNote> */}
-      </OhterCard>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <div className={s.imcard}>
+        <Img src="landing/products/dingding.png" className={s.img} />
+        <Img src="landing/products/feishu.png" className={s.img} />
+        <Img src="landing/seo/wechat2.png" className={s.img} />
+        <Img src="landing/products/slack.png" className={s.img} />
+        <Img src="landing/products/discord.png" className={s.img} />
+      </div>
+      <div className={cn(s.imcard, s.otherCard)}>
+        <Img src="landing/products/email.png" className={s.img} />
+        <Img src="landing/seo/rss.png" className={s.img} />
+        <Img src="landing/products/webhook.png" className={cn(s.img, 'size-6')} />
+      </div>
+    </div>
   )
 }
-
-export default FooterCard

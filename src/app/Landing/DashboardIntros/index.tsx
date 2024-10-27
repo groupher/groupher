@@ -22,7 +22,8 @@ import TrendTab from './TrendTab'
 import useSalon from '../styles/dashboard_intros'
 
 export default () => {
-  const [tab, setTab] = useState<TIntroTab>(DASHBOARD_ROUTE.LAYOUT)
+  // const [tab, setTab] = useState<TIntroTab>(DASHBOARD_ROUTE.LAYOUT)
+  const [tab, setTab] = useState<TIntroTab>(DASHBOARD_ROUTE.INOUT)
 
   const s = useSalon({ tab })
 
