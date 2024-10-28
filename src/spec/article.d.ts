@@ -86,12 +86,6 @@ export type TTechStack = {
   slug: string
   category?: string
 }
-type TCity = {
-  title: string
-  logo?: string
-  link: string
-  desc?: string
-}
 
 export type TSocialInfo = { platform: string; link: string }
 

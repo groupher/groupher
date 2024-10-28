@@ -228,10 +228,10 @@ export const queryStringToJSON = (path, opt = { noPagiInfo: false, pagi: 'string
   const result = {}
   const paris = splited[1].split('&')
 
-  paris.forEach((pair) => {
-    pair = pair.split('=')
-    result[pair[0]] = decodeURIComponent(pair[1] || '')
-  })
+  for (const pair of paris) {
+    const [key, value] = pair.split('=')
+    result[key] = decodeURIComponent(value || '')
+  }
 
   const json = JSON.parse(JSON.stringify(result))
 
@@ -243,8 +243,8 @@ export const queryStringToJSON = (path, opt = { noPagiInfo: false, pagi: 'string
 export const getParameterByName = (name) => {
   /* if (!url) url = window.location.href;*/
   const url = Global.location.href
-  name = name.replace(/[\[\]]/g, '\\$&')
-  const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`)
+  const name$ = name.replace(/[\[\]]/g, '\\$&')
+  const regex = new RegExp(`[?&]${name$}(=([^&#]*)|&|#|$)`)
   const results = regex.exec(url)
   if (!results) return null
   if (!results[2]) return ''
@@ -252,10 +252,10 @@ export const getParameterByName = (name) => {
 }
 
 export const getQueryFromUrl = (name, url) => {
-  if (!url) url = window.location.href
+  if (!url) url$ = window.location.href
   const nameVal = name.replace(/[\[\]]/g, '\\$&')
   const regex = new RegExp(`[?&]${nameVal}(=([^&#]*)|&|#|$)`)
-  const results = regex.exec(url)
+  const results = regex.exec(url$)
   if (!results) return null
   if (!results[2]) return ''
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
@@ -318,7 +318,7 @@ export const parseDomain = (url) => {
 
     return parsedUrl.host
   } catch (e) {
-    return '??'
+    return `?? ${e}`
   }
 }
 /* eslint-enable */
@@ -326,13 +326,14 @@ export const parseDomain = (url) => {
 // sync json query to the brower url without reload the page
 // empty value obj will be omit
 export const markRoute = (query, opt = { noPagiInfo: true }) => {
-  if (nilOrEmpty(query)) query = {}
+  let query$ = query
+  if (nilOrEmpty(query)) query$ = {}
 
   const exsitQuery = queryStringToJSON(Global.location.search, {
     ...opt,
   })
 
-  const newQueryObj = pickBy((v) => !nilOrEmpty(v), mergeRight(exsitQuery, query))
+  const newQueryObj = pickBy((v) => !nilOrEmpty(v), mergeRight(exsitQuery, query$))
   const newQueryString = serializeQuery(newQueryObj)
 
   Global.history.pushState({}, null, newQueryString)

@@ -26,17 +26,17 @@ export default () => {
         <div className={s.labelBar}>
           <div className={cn(s.item, 'left-1 bottom-0')}>
             <GtdWipSVG className={s.icon} />
-            <label className={s.label}>已计划</label>
+            <div className={s.label}>已计划</div>
           </div>
 
           <div className={cn(s.item, 'left-60 bottom-0')}>
             <GtdDoneSVG className={s.icon} />
-            <label className={s.label}>进行中</label>
+            <div className={s.label}>进行中</div>
           </div>
 
           <div className={cn(s.item, 'right-36 bottom-0')}>
             <GtdTodoSVG className={s.icon} />
-            <label className={s.label}>已完成</label>
+            <div className={s.label}>已完成</div>
           </div>
         </div>
       </div>

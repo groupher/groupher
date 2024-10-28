@@ -36,7 +36,7 @@ export default () => {
       <br />
 
       <div className={s.item}>
-        <label className={s.label}>背景色</label>
+        <div className={s.label}>背景色</div>
         <div className={s.bgLabel}>
           <ColorSelector
             activeColor={broadcastBg}
@@ -50,12 +50,12 @@ export default () => {
       </div>
 
       <div className={s.item}>
-        <label className={s.label}>广播内容</label>
+        <div className={s.label}>广播内容</div>
         <Input />
       </div>
 
       <div className={s.item}>
-        <label className={s.label}>链接地址</label>
+        <div className={s.label}>链接地址</div>
         <Input />
       </div>
 

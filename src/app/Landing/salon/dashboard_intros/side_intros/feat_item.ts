@@ -8,8 +8,7 @@ type TProps = TColor
 export default ({ color }: TProps) => {
   const { cn, fg, rainbow } = useTwBelt()
 
-  const fillColor = useCallback((color: TColorName) => rainbow(color, 'fill'), [color])
-  // const textColor = useCallback((color: TColorName) => rainbow(color, 'fg'), [color])
+  const fillColor = useCallback((color: TColorName) => rainbow(color, 'fill'), [rainbow])
 
   return {
     wrapper: cn('row-center mt-4'),

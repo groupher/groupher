@@ -39,7 +39,6 @@ type TProps = {
 const BrowserHead: FC<TProps> = ({
   domain = '',
   title = '',
-  desc = '',
   activePath = '',
   logo = null,
   communityType,

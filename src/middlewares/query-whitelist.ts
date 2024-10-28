@@ -9,7 +9,7 @@ export function queryWhitelistMiddleware(req: NextRequest) {
   let hasUnallowedParams = false
 
   // 检查URL中的查询参数是否都在白名单中
-  url.searchParams.forEach((value, key) => {
+  url.searchParams.forEach((_, key) => {
     if (!ALLOWED_PARAMS.includes(key)) {
       hasUnallowedParams = true
     }

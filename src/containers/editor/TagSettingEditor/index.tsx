@@ -47,7 +47,7 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
 
   useEffect(() => {
     initEditingTag(mode)
-  }, [])
+  }, [initEditingTag, mode])
 
   return (
     <Wrapper $testid="tag-setting-editor">

@@ -27,7 +27,7 @@ const useTrans = (): TRet => {
 
       return ret
     },
-    [localeData],
+    [localeJson],
   )
 
   return { t, locale }

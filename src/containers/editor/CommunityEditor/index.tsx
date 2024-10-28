@@ -21,7 +21,7 @@ export default () => {
 
   useEffect(() => {
     checkPendingApply()
-  }, [])
+  }, [checkPendingApply])
 
   return (
     <Wrapper metric={metric}>

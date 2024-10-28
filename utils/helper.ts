@@ -68,7 +68,7 @@ export const countWords = (str: string): number => {
 // errRescue({type: ERR.GRAPHQL, operation: operationName, details: graphQLErrors})
 
 export const debounce = (fn, ms = 0) => {
-  let timeoutId
+  let timeoutId: ReturnType<typeof setTimeout>
   // eslint-disable-next-line func-names
   return function (...args) {
     clearTimeout(timeoutId)
@@ -98,7 +98,7 @@ export const extractMentions = (str: string): string[] => {
  * @see @link https://blogs.sap.com/2017/07/15/use-regular-expression-to-parse-the-image-reference-in-the-markdown-sourcre-code/
  */
 export const extractAttachments = (str: string): string[] => {
-  let m
+  let m: RegExpExecArray | null
   const regex = /!\[(.*?)\]\((.*?)\)/g
 
   const urls = []
@@ -154,7 +154,7 @@ export const randomBgNames = (
     ? keys(COLOR_NAME)
     : keys(COLOR_NAME).filter((k) => !includes(k, excepts))
 
-  let randomIdx
+  let randomIdx: number
   const ret = []
 
   for (let idx = 0; idx < count; idx += 1) {
@@ -290,13 +290,14 @@ export const isRejectedState = (state: TArticleState): boolean => {
 export const removeEmptyValuesFromObject = (object) => {
   const newObject = {}
 
-  Object.keys(object).forEach((key) => {
-    const value = object[key]
-    // if (value !== null && value !== undefined && value !== '') {
-    if (value !== null && value !== undefined) {
-      newObject[key] = value
+  for (const key in object) {
+    if (Object.prototype.hasOwnProperty.call(object, key)) {
+      const value = object[key]
+      if (value !== null && value !== undefined) {
+        newObject[key] = value
+      }
     }
-  })
+  }
 
   return newObject
 }

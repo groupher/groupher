@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { clone, keys, forEach, pick } from 'ramda'
+import { clone, keys, forEach } from 'ramda'
 
 import type {
   TWallpaper,
@@ -52,16 +52,28 @@ export default (): TRet => {
   }, [store])
 
   const getWallpaper = useCallback((): TWallpaperData => {
-    const { customColorValue, direction } = store
+    const {
+      customColorValue,
+      direction,
+      hasPattern,
+      hasBlur,
+      hasShadow,
+      wallpaper,
+      wallpaperType,
+    } = store
 
     return {
-      ...pick(['wallpaper', 'wallpaperType', 'hasPattern', 'hasBlur', 'hasShadow'], store),
+      wallpaper,
+      wallpaperType,
+      hasPattern,
+      hasBlur,
+      hasShadow,
       gradientWallpapers: getGradientWallpapers(),
       patternWallpapers: getPatternWallpapers(),
       customColor: customColorValue,
       direction,
     }
-  }, [store])
+  }, [store, getGradientWallpapers, getPatternWallpapers])
 
   const changeWallpaper = (wallpaper: string): void => store.commit({ wallpaper })
 
