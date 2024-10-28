@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, br, global } = useTwBelt()
+  const { cn, fg, br, landingTitle } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both w-full mt-32'),
@@ -14,7 +14,7 @@ export default () => {
     ),
     innerBgWrapper: cn('absolute top-0 left-0 w-full h-full overflow-hidden rounded-xl'),
     slogan: 'column-align-both',
-    title: cn('text-3xl bold-sm opacity-70', fg('text.title'), global('text-shadow')),
+    title: landingTitle(),
     desc: cn('text-lg mt-3', fg('text.digest')),
     cadBg: cn('absolute top-0 h-full object-cover z-10 opacity-60'),
   }

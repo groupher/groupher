@@ -9,7 +9,7 @@ type TProps = {
 }
 
 export default ({ tab }: TProps) => {
-  const { cn, fg, global } = useTwBelt()
+  const { cn, fg, global, landingTitle } = useTwBelt()
 
   const bgGradient = cn(
     'absolute top-0 left-0 w-full h-full opacity-0 transition-opacity duration-500 -z-10',
@@ -18,7 +18,7 @@ export default ({ tab }: TProps) => {
   return {
     wrapper: cn('column-align-both w-full mt-20 mb-16'),
     slogan: 'column align-both mb-8',
-    title: cn('text-3xl bold-sm opacity-70', fg('text.title'), global('text-shadow')),
+    title: landingTitle(),
     desc: cn('text-lg mt-3', fg('text.digest')),
     //
     content: 'column items-center relative w-full px-30 h-[720px] overflow-hidden',

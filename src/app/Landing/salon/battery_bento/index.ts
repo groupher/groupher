@@ -5,12 +5,12 @@ import styled, { css, rainbow, gradientBg } from '~/css'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, global, rainbow } = useTwBelt()
+  const { cn, fg, global, rainbow, landingTitle } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both w-full mt-32 mb-16'),
     slogan: 'column align-both mb-16',
-    title: cn('text-3xl bold-sm opacity-70', fg('text.title'), global('text-shadow')),
+    title: landingTitle(),
     desc: cn('text-lg mt-3', fg('text.digest')),
     //
     cards: 'align-both w-full h-auto gap-x-9',

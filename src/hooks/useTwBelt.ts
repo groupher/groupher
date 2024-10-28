@@ -50,6 +50,7 @@ type TRet = {
   menu: (part: TMenuPart) => string
   shadow: (size: TShadowSize) => string
   cutRest: (classname?: string) => string
+  landingTitle: () => string
 
   isDarkBlack: boolean
   isBlackPrimary: boolean
@@ -321,6 +322,14 @@ export default (): TRet => {
     return cn('truncate', classnames)
   }
 
+  const landingTitle = (): string => {
+    return cn(
+      'text-3xl bold-sm opacity-70',
+      fg('text.title'),
+      isLightTheme && global('text-shadow'),
+    )
+  }
+
   return {
     cn,
     global,
@@ -352,5 +361,6 @@ export default (): TRet => {
     cutRest,
     isDarkBlack,
     isBlackPrimary,
+    landingTitle,
   }
 }

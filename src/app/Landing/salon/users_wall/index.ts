@@ -5,12 +5,12 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, global, rainbow } = useTwBelt()
+  const { cn, fg, landingTitle, rainbow } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both w-full relative mt-20'),
     slogan: 'column align-both mb-16',
-    title: cn('text-3xl bold-sm opacity-70', fg('text.title'), global('text-shadow')),
+    title: landingTitle(),
     desc: cn('text-lg mt-3', fg('text.digest')),
     //
     wall: 'column-align-both relative w-full h-auto mt-6',
