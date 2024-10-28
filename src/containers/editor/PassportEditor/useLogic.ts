@@ -66,7 +66,6 @@ export default (): TRet => {
     }
 
     query(S.allPassportRules).then((res) => {
-      console.log('## allPassportRules: ', res)
       const { moderator, root } = res.allPassportRules
 
       dashbaord.commit({ allRootRules: root, allModeratorRules: moderator })
@@ -77,8 +76,15 @@ export default (): TRet => {
     const community = curCommunity.slug
 
     const innerRules = {}
-    forEach((key) => (innerRules[key] = false), keys(JSON.parse(allModeratorRules)))
-    forEach((key) => (innerRules[key] = true), selectedRules)
+    forEach(
+      (key) => {
+        innerRules[key] = false
+      },
+      keys(JSON.parse(allModeratorRules)),
+    )
+    forEach((key) => {
+      innerRules[key] = true
+    }, selectedRules)
 
     const rules = JSON.stringify({ [community]: innerRules })
 

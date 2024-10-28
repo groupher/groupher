@@ -30,6 +30,7 @@ const isTokenExpired = () => {
 }
 
 const applyStsTokens = async (): Promise<TTokens> => {
+  // @ts-ignore
   const { applyUploadTokens } = await gqClient.request(S.applyUploadTokens)
 
   return { ...applyUploadTokens }

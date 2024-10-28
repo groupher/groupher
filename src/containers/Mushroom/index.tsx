@@ -13,7 +13,7 @@ const Mushroom: FC = () => {
   const curThread = useViewingThread()
 
   const handleBrowserPopChange = useCallback(
-    (data) => {
+    (_) => {
       if (curThread === THREAD.POST) {
         // window.location = data.target.location.pathname
       }
@@ -32,7 +32,7 @@ const Mushroom: FC = () => {
     return () => {
       window.removeEventListener('popstate', handleBrowserPopChange)
     }
-  }, [])
+  }, [handleBrowserPopChange, initAppVersion])
 
   return <></>
 }

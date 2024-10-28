@@ -54,10 +54,10 @@ export const isString = (value: unknown): boolean => {
 
 export const isURL = (v: string, emptyAsError = false): boolean => {
   if (trim(v).length === 0) return !emptyAsError
-  let url
+  let url: URL
   try {
     url = new URL(v)
-  } catch (e) {
+  } catch (_) {
     return false
   }
 

@@ -20,7 +20,7 @@
     "clean": "shjs ./utils/scripts/clean.js",
     "gen": "plop --plopfile ./utils/scripts/generators/index.js",
     "analyze": "cross-env ANALYZE=true next build",
-    "lint": "./node_modules/.bin/biome lint src/ utils/",
+    "lint": "./node_modules/.bin/biome lint src/**/*.{ts,tsx}",
     "format:staged": "./node_modules/.bin/biome format ./src",
     "clean:up": "rm -rf *.tsbuildinfo",
     "test": "cross-env NOD_ENV=test jest --config .jest.config.js",
@@ -117,7 +117,7 @@
     "valtio": "^2.1.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.8.3",
+    "@biomejs/biome": "^1.9.4",
     "@cfaester/enzyme-adapter-react-18": "0.5.1",
     "@commitlint/cli": "^17.6.6",
     "@commitlint/config-conventional": "^8.2.0",

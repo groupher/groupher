@@ -381,6 +381,11 @@
     @apply border border-dashed;
     border-color: blue;
   }
+
+}
+
+.tippy-arrow {
+  display: none;
 }
 
 .header-layout-community-brief {
@@ -389,6 +394,3 @@
   }
 }
 
-.tippy-arrow {
-  display: none;
-}
