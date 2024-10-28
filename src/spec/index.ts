@@ -229,13 +229,14 @@ interface IWindow extends Window {
   /**
    * used for check platform hook
    */
-  chrome?: unknown
-  safari?: unknown
-  StyleMedia?: unknown
-  HTMLElement?: unknown
+
+  chrome?: any
+  safari?: any
+  StyleMedia?: any
+  HTMLElement?: any
 
   // for baidu analysis
-  _hmt?: unknown
+  _hmt?: any
 }
 
 export type TWindow = IWindow | null
