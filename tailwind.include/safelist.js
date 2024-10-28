@@ -20,17 +20,9 @@ const GENERAL = [
   'shadow-md',
   'shadow-lg',
   'shadow-xl',
-
-  'gradient-blue',
-  'gradient-purple',
-  'gradient-pink',
-  'gradient-red',
-  'gradient-green',
-  'gradient-yellow',
-  'gradient-black',
-  'gradient-cyan',
-  'gradient-orange',
 ]
+
+const LANDING_GRADIENTS = ['purple', 'blue', 'pink', 'red', 'green', 'black', 'cyan', 'orange']
 
 const TEXT_COLORS = [
   'text-title',
@@ -49,6 +41,7 @@ const BG_COLORS = [
   'hoverBg',
   'sandBox',
   'htmlBg',
+  'cardBg',
   'popover-bg',
   'menuHoverBg',
   'alphaBg',
@@ -143,6 +136,10 @@ module.exports = uniq([
        border-rainbow-${c}/${borderSoft.opacity} border-rainbow-${c}-dark/${borderSoft.opacity_dark}
        hover:border-rainbow-${c}/${borderSoft.opacity} hover:border-rainbow-${c}-dark/${borderSoft.opacity_dark}
       `,
+  ),
+
+  ...LANDING_GRADIENTS.map(
+    (c) => `landing-gradient-${c} landing-gradient-${c}-dark gradient-${c}, gradient-${c}-dark`,
   ),
 
   ...MARGIN.map((c) => `mt-${c} mb-${c} ml-${c} mr-${c}`),

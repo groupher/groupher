@@ -9,7 +9,7 @@ type TProps = {
 }
 
 export default ({ color }: TProps) => {
-  const { cn, fg, bg, rainbow } = useTwBelt()
+  const { cn, fg, bg, rainbow, vividDark } = useTwBelt()
 
   return {
     wrapper: cn('column w-80 h-auto mt-12'),
@@ -17,8 +17,8 @@ export default ({ color }: TProps) => {
     footer: 'row-center mt-12 gap-x-5',
 
     // --
-    iconBox: cn('size-12 align-both rounded-lg mb-5', bg('htmlBg')),
-    icon: cn('size-6 opacity-50', rainbow(color, 'fill')),
+    iconBox: cn('size-12 align-both rounded-lg mb-5', bg('cardBg')),
+    icon: cn('size-6 opacity-50', rainbow(color, 'fill'), vividDark()),
     title: cn('text-2xl', fg('text.title')),
     desc: cn('text-base mt-1', fg('text.digest')),
 

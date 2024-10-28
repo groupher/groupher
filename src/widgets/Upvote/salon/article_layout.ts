@@ -6,11 +6,11 @@ type TProps = {
 }
 
 export default ({ viewerHasUpvoted }: TProps) => {
-  const { cn, br, bg, fg, rainbowSoft, primary, enhanceDark } = useTwBelt()
+  const { cn, br, bg, fg, rainbowSoft, primary, vividDark } = useTwBelt()
   const color = usePrimaryColor()
 
   return {
-    wrapper: cn('column-align-both', enhanceDark()),
+    wrapper: cn('column-align-both', vividDark()),
     button: cn(
       'align-both w-44 py-2 rounded-xl border',
       br('divider'),

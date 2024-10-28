@@ -7,7 +7,7 @@ type TProps = {
   TActive
 
 export default ({ count, active, ...spacing }: TProps) => {
-  const { cn, fg, enhanceDark, margin, primary } = useTwBelt()
+  const { cn, fg, vividDark, margin, primary } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -15,7 +15,7 @@ export default ({ count, active, ...spacing }: TProps) => {
       fg('text.digest'),
       active && primary('fg'),
       count > 0 && 'bold-sm',
-      enhanceDark(),
+      vividDark(),
       margin(spacing),
     ),
   }

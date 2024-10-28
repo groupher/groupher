@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, primary, enhanceDark } = useTwBelt()
+  const { cn, fg, primary, vividDark } = useTwBelt()
 
   return {
     wrapper: 'column pr-1',
@@ -19,7 +19,7 @@ export default () => {
       'text-xs bold-sm px-1.5 ml-2 rounded-md -mt-px border',
       fg('button.fg'),
       primary('bg'),
-      enhanceDark(),
+      vividDark(),
     ),
     settingIcon: cn(),
     arrowIcon: cn('size-3.5 rotate-180 ml-0.5', primary('fill')),

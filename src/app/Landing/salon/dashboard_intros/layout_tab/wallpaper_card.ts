@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, bg, shadow } = useTwBelt()
+  const { cn, bg, shadow, dimDark } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -10,7 +10,7 @@ export default () => {
       bg('htmlBg'),
       shadow('sm'),
     ),
-    background: 'w-full h-full rounded-xl trans-all-200',
+    background: cn('w-full h-full rounded-xl trans-all-200', dimDark()),
     edittool: 'absolute -bottom-3 left-28 z-30',
   }
 }

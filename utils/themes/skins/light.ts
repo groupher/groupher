@@ -21,6 +21,7 @@ export default {
   transparent: '',
   primary: primaryColor,
   htmlBg: bannerBg,
+  cardBg: '',
   loading: {
     basic: '#E0E0E0',
     animate: contentBg,

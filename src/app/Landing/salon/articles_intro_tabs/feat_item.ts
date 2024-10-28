@@ -1,15 +1,22 @@
 import type { TColor, TColorName } from '~/spec'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import { useCallback } from 'react'
 
 type TProps = TColor
 
 export default ({ color }: TProps) => {
-  const { cn, rainbow } = useTwBelt()
+  const { isLightTheme } = useTheme()
+  const { cn, fg, rainbow } = useTwBelt()
 
   const fillColor = useCallback((color: TColorName) => rainbow(color, 'fill'), [rainbow])
-  const textColor = useCallback((color: TColorName) => rainbow(color, 'fg'), [rainbow])
+  const textColor = useCallback(
+    (color: TColorName) => {
+      return isLightTheme ? rainbow(color, 'fg') : fg('text.digest')
+    },
+    [rainbow, isLightTheme, fg],
+  )
 
   return {
     wrapper: cn('row-center'),

@@ -5,11 +5,13 @@
  */
 
 import Link from 'next/link'
+import { useEffect } from 'react'
+
+import useTheme from '~/hooks/useTheme'
 
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
 
 import { ROUTE } from '~/const/route'
-
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/LinkOutside'
 
@@ -66,6 +68,11 @@ const faqs = [
 
 export default () => {
   const s = useSalon()
+  const { change } = useTheme()
+
+  useEffect(() => {
+    change('dark')
+  }, [])
 
   return (
     <div className={s.wrapper} data-testid="landing-page">

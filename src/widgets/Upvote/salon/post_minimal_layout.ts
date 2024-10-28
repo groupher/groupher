@@ -6,7 +6,7 @@ type TProps = {
 }
 
 export default ({ viewerHasUpvoted }: TProps) => {
-  const { cn, bg, br, rainbowSoft, enhanceDark } = useTwBelt()
+  const { cn, bg, br, rainbowSoft, vividDark } = useTwBelt()
   const color = usePrimaryColor()
 
   return {
@@ -17,7 +17,7 @@ export default ({ viewerHasUpvoted }: TProps) => {
       'trans-all-200',
       br('divider'),
       viewerHasUpvoted && cn(rainbowSoft(color)),
-      enhanceDark(),
+      vividDark(),
     ),
     //
   }

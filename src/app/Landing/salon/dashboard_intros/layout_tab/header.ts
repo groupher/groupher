@@ -18,7 +18,7 @@ export default ({ color }: TProps) => {
       `hover:${br('text.digest')}`,
       shadow('sm'),
       br('divider'),
-      bg('htmlBg'),
+      bg('cardBg'),
     ),
     colorBall: cn('size-5 rounded opacity-65', rainbow(color, 'bg')),
     brand: 'row-center',

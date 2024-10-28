@@ -17,6 +17,10 @@ module.exports = {
     DEFAULT: lightTokens.bannerBg,
     dark: darkTokens.bannerBg,
   },
+  cardBg: {
+    DEFAULT: lightTokens.bannerBg,
+    dark: '#2b2b2b',
+  },
   loading: {
     basic: {
       DEFAULT: colors.slate['400'],

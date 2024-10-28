@@ -1,8 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, br, bg, fill, shadow, primary, sexyHBorder, enhanceDark, isBlackPrimary } =
-    useTwBelt()
+  const { cn, br, bg, fill, shadow, primary, sexyHBorder, vividDark, isBlackPrimary } = useTwBelt()
 
   return {
     wrapper: 'column pl-16 w-10/12',
@@ -33,13 +32,13 @@ export default () => {
       'absolute h-1.5 w-20 opacity-40 rounded',
       primary('bg'),
       isBlackPrimary && bg('text.link'),
-      enhanceDark(),
+      vividDark(),
     ),
     circle: cn(
       'absolute size-2 circle opacity-40',
       primary('bg'),
       isBlackPrimary && bg('text.link'),
-      enhanceDark(),
+      vividDark(),
     ),
     icon: cn('absolute size-3 opacity-65', primary('fill'), isBlackPrimary && fill('text.link')),
   }

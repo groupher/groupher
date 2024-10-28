@@ -3,7 +3,7 @@ import useTopbar from '~/hooks/useTopbar'
 import useWallpaper from '~/hooks/useWallpaper'
 
 export default () => {
-  const { cn, bg, rainbow, container, enhanceDark } = useTwBelt()
+  const { cn, bg, rainbow, container, vividDark } = useTwBelt()
 
   const { topbarBg, isDarkBlack } = useTopbar()
   const { hasShadow } = useWallpaper()
@@ -19,7 +19,7 @@ export default () => {
       'h-0.5 w-full absolute top-0 left-0',
       rainbow(topbarBg, 'bg'),
       isDarkBlack && bg('text.digest'),
-      !isDarkBlack && enhanceDark(),
+      !isDarkBlack && vividDark(),
     ),
     scrollWrapper: 'absolute w-full',
     body: 'column-align-both w-full',

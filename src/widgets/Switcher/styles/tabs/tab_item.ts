@@ -7,7 +7,7 @@ type TProps = {
 }
 
 export default ({ bottomSpace }: TProps) => {
-  const { cn, bg, fg, enhanceDark } = useTwBelt()
+  const { cn, bg, fg, vividDark } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -22,6 +22,6 @@ export default ({ bottomSpace }: TProps) => {
       `hover:${fg('text.title')}`,
       `mb-${bottomSpace}`,
     ),
-    labelActive: cn('bold-sm', fg('text.title'), enhanceDark()),
+    labelActive: cn('bold-sm', fg('text.title'), vividDark()),
   }
 }
