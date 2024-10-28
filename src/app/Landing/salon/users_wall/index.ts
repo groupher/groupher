@@ -1,8 +1,4 @@
-import styled from '~/css'
-
 import { COLOR_NAME } from '~/const/colors'
-
-import { getUserwallGradient, getUserwallGradientOpacity } from '../metric'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -30,17 +26,10 @@ export default () => {
     yellowBg: cn('', rainbow(COLOR_NAME.YELLOW, 'bgSoft')),
     brownBg: cn('', rainbow(COLOR_NAME.BROWN, 'bgSoft')),
     cyanBg: cn('', rainbow(COLOR_NAME.CYAN, 'bgSoft')),
+    //
+    bgGradient: cn(
+      'size-96 circle absolute top-1/3 left-1/3 ml-10 blur-3xl',
+      rainbow(COLOR_NAME.ORANGE, 'bgSoft'),
+    ),
   }
 }
-
-export const BgGradient = styled.div<{ wallpaper: string }>`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: ${({ wallpaper }) => `${getUserwallGradientOpacity(wallpaper)}`};
-
-  background: ${({ wallpaper }) =>
-    `radial-gradient(circle at 50% 50%, ${getUserwallGradient(wallpaper)[0]} 0, transparent 35%)`};;
-`

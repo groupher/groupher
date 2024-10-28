@@ -70,7 +70,6 @@ export default () => {
   return (
     <div className={s.wrapper} data-testid="landing-page">
       {/* <DashboardIntros /> */}
-      <UsersWall />
       {/* <PatternBg /> */}
       <div className={s.inner}>
         {/* <BgGlow wallpaper={wallpaper} /> */}
@@ -126,7 +125,7 @@ export default () => {
 
         <CompareDev />
 
-        {/* <UsersWall wallpaper={wallpaper} /> */}
+        <UsersWall />
 
         <div className={s.divider} />
 

@@ -1,5 +1,4 @@
 import { COLOR_NAME } from '~/const/colors'
-import useWallpaper from '~/hooks/useWallpaper'
 import { mockUsers } from '~/mock'
 
 import MasonryCards from '~/widgets/MasonryCards'
@@ -7,7 +6,7 @@ import MasonryCards from '~/widgets/MasonryCards'
 import Card from './Card'
 import { P1, P2, P3 } from './Contents'
 
-import useSalon, { BgGradient } from '../salon/users_wall'
+import useSalon from '../salon/users_wall'
 
 const CardsList = () => {
   const users = mockUsers(10)
@@ -28,7 +27,6 @@ const CardsList = () => {
 }
 
 export default () => {
-  const { wallpaper } = useWallpaper()
   const s = useSalon()
 
   return (
@@ -38,7 +36,7 @@ export default () => {
         <div className={s.desc}>从独立开发者到中小型创业团队，我们用产品力回报信任</div>
       </div>
 
-      <BgGradient wallpaper={wallpaper} />
+      <div className={s.bgGradient} />
 
       <div className={s.wall}>
         <CardsList />

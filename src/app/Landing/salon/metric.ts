@@ -68,31 +68,6 @@ export const getPathGradient = (wallpaper: string): string => {
   return `${color1}, ${color2}`
 }
 
-export const getUserwallGradientOpacity = (wallpaper: string): number => {
-  switch (wallpaper) {
-    case GRADIENT_WALLPAPER_NAME.PINK: {
-      return 0.2
-    }
-    case GRADIENT_WALLPAPER_NAME.ORANGE: {
-      return 0.15
-    }
-    case GRADIENT_WALLPAPER_NAME.PURPLE: {
-      return 0.16
-    }
-
-    default: {
-      return 0.35
-    }
-  }
-}
-
-export const getUserwallGradient = (wallpaper: string): string[] => {
-  if (includes(wallpaper, [GRADIENT_WALLPAPER_NAME.PURPLE, GRADIENT_WALLPAPER_NAME.ORANGE])) {
-    return getPathGradient(wallpaper).split(',').reverse()
-  }
-  return getPathGradient(wallpaper).split(',')
-}
-
 export const getCursorGradient = (wallpaper: string): string => {
   return getPathGradient(wallpaper).split(',')[1]
 }
