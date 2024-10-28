@@ -16,6 +16,7 @@ const GENERAL = [
   'sexy-border-35',
   'sexy-border-40',
   'sexy-border-50',
+  // TODO
   'shadow-sm',
   'shadow-md',
   'shadow-lg',

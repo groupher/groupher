@@ -19,7 +19,7 @@ module.exports = {
   },
   cardBg: {
     DEFAULT: lightTokens.bannerBg,
-    dark: '#2b2b2b',
+    dark: '#252526c2',
   },
   loading: {
     basic: {

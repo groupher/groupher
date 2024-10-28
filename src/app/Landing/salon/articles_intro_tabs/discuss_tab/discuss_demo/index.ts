@@ -10,7 +10,7 @@ export default () => {
   return {
     wrapper: cn('row items-end relative'),
     listCard: cn(
-      'relative h-96 p-6 rounded-md mb-5 border',
+      'relative h-96 p-6 rounded-xl mb-5 border',
       shadow('sm'),
       br('divider'),
       bg('cardBg'),
@@ -18,7 +18,7 @@ export default () => {
 
     // detail card
     detailCard: cn(
-      'relative grow w-80 -ml-5 mt-4 p-8 pt-5 z-20 rounded-md border',
+      'relative grow w-80 -ml-5 mt-4 p-8 pt-5 z-20 rounded-xl border',
       bg('cardBg'),
       br('divider'),
       shadow('sm'),
