@@ -7,7 +7,6 @@
 import Link from 'next/link'
 
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
-import useWallpaper from '~/hooks/useWallpaper'
 
 import { ROUTE } from '~/const/route'
 
@@ -30,7 +29,7 @@ import CompareDev from './CompareDev'
 import UsersWall from './UsersWall'
 import Footer from './Footer'
 
-import useSalon, { cn } from './salon'
+import useSalon from './salon'
 
 const faqs = [
   {
@@ -68,11 +67,10 @@ const faqs = [
 export default () => {
   const s = useSalon()
 
-  const { wallpaper } = useWallpaper()
-
   return (
     <div className={s.wrapper} data-testid="landing-page">
       {/* <DashboardIntros /> */}
+      <UsersWall />
       {/* <PatternBg /> */}
       <div className={s.inner}>
         {/* <BgGlow wallpaper={wallpaper} /> */}
@@ -128,8 +126,8 @@ export default () => {
 
         <CompareDev />
 
-        <div className={cn(s.divider, 'mt-20')} />
-        <UsersWall wallpaper={wallpaper} />
+        {/* <UsersWall wallpaper={wallpaper} /> */}
+
         <div className={s.divider} />
 
         <div className={s.faqWrapper}>

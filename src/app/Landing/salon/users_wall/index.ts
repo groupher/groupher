@@ -1,71 +1,38 @@
-import type { TColor, TTestable } from '~/spec'
+import styled from '~/css'
 
-import styled, { css, theme, rainbowSoft } from '~/css'
+import { COLOR_NAME } from '~/const/colors'
 
 import { getUserwallGradient, getUserwallGradientOpacity } from '../metric'
 
-export const Wrapper = styled.div.attrs<TTestable>(({ $testid }) => ({
-  'data-test-id': $testid,
-}))<TTestable>`
-  ${css.column('align-both')};
-  width: 100%;
-  position: relative;
-`
-export const Slogan = styled.div`
-  ${css.column('align-both')};
-`
-export const Title = styled.div`
-  color: ${theme('article.title')};
-  font-size: 38px;
-  font-weight: 500;
+import useTwBelt from '~/hooks/useTwBelt'
 
-  text-shadow: rgb(0 0 0 / 8%) 0px 10px 20px;
-  opacity: 0.9;
+export { cn } from '~/css'
 
-  ${css.media.mobile`
-    font-size: 22px;
-    font-weight: 600;
-  `};
-`
-export const Desc = styled.div`
-  font-size: 17px;
-  color: ${theme('article.digest')};
-  margin-top: 12px;
-  opacity: 0.8;
+export default () => {
+  const { cn, fg, global, rainbow } = useTwBelt()
 
-  ${css.media.mobile`
-    font-size: 15px;
-    text-align: center;
-    padding: 0 20px;
-    display: inline-block;
-    font-weight: 400;
-  `};
-`
-//
-export const Wall = styled.div`
-  ${css.column('align-both')};
-  margin-top: 80px;
-  width: 100%;
-  height: auto;
-  position: relative;
+  return {
+    wrapper: cn('column-align-both w-full relative mt-20'),
+    slogan: 'column align-both mb-16',
+    title: cn('text-3xl bold-sm opacity-70', fg('text.title'), global('text-shadow')),
+    desc: cn('text-lg mt-3', fg('text.digest')),
+    //
+    wall: 'column-align-both relative w-full h-auto mt-6',
+    demoP: 'text-base leading-relaxed',
+    p: 'mt-2.5',
+    highlight: cn('px-1 bold-sm rounded', fg('text.digest')),
+    // colors
+    blueBg: cn('', rainbow(COLOR_NAME.BLUE, 'bgSoft')),
+    greenBg: cn('', rainbow(COLOR_NAME.GREEN, 'bgSoft')),
+    purpleBg: cn('', rainbow(COLOR_NAME.PURPLE, 'bgSoft')),
+    orangeBg: cn('', rainbow(COLOR_NAME.ORANGE, 'bgSoft')),
+    redBg: cn('', rainbow(COLOR_NAME.RED, 'bgSoft')),
+    yellowBg: cn('', rainbow(COLOR_NAME.YELLOW, 'bgSoft')),
+    brownBg: cn('', rainbow(COLOR_NAME.BROWN, 'bgSoft')),
+    cyanBg: cn('', rainbow(COLOR_NAME.CYAN, 'bgSoft')),
+  }
+}
 
-  ${css.media.mobile`
-    width: 200%;
-    margin-top: 30px;
-    padding: 0 20px;
-    overflow-x: scroll;
-  `};
-`
-export const WallInner = styled.div`
-  width: 220%;
-  padding-left: 85%;
-  padding-right: 25%;
-  display: none;
-
-  ${css.media.mobile`
-    display: block;
-  `};
-`
 export const BgGradient = styled.div<{ wallpaper: string }>`
   position: absolute;
   top: 0;
@@ -76,23 +43,4 @@ export const BgGradient = styled.div<{ wallpaper: string }>`
 
   background: ${({ wallpaper }) =>
     `radial-gradient(circle at 50% 50%, ${getUserwallGradient(wallpaper)[0]} 0, transparent 35%)`};;
-`
-
-export const DempP = styled.div`
-  line-height: 1.75;
-  font-size: 15px;
-  p {
-    margin-top: 10px;
-  }
-
-  ${css.media.mobile`
-    font-size: 12px;
-    margin-top: 6px;
-  `};
-`
-export const Highlight = styled.span<TColor>`
-  color: ${theme('article.digest')};
-  font-weight: 450;
-  padding: 0 2px;
-  background-color: ${({ $color }) => rainbowSoft($color)};
 `
