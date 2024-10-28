@@ -2,6 +2,7 @@ import type { TSpace, TSizeTSM, TColorName } from '~/spec'
 
 import { getHeight, getPadding, getRouned, getFontSize } from './metircs/button'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import { COLOR_NAME } from '~/const/colors'
 
@@ -33,6 +34,7 @@ export default ({
   color,
   ...spacing
 }: TProps) => {
+  const { isLightTheme } = useTheme()
   const { cn, margin, primary, br, fg, bg, rainbow, isDarkBlack } = useTwBelt()
 
   const isRed = type === 'red'
@@ -65,22 +67,20 @@ export default ({
       !ghost && isDarkBlack && bg('rainbow.blackBtn'),
       ghost && `hover:${primary('bgSoft')}`,
       // ghost && `hover:${primary('bgSoft')}`,
-      // ghost && 'saturate-50',
-      ghost && primary('borderSoft'),
       ghost && bg('transparent'),
-      ghost ? primary('fg') : fg('button.fg'),
+      ghost && !color ? primary('fg') : fg('button.fg'),
       isRed && 'border-transparent',
       isRed && ghost && rainbow(COLOR_NAME.RED, 'borderSoft'),
       loading && bg('transparent'),
       color && !ghost && rainbow(color, 'bg'),
-      color && ghost && rainbow(color, 'borderSoft'),
       color && ghost && rainbow(color, 'fg'),
+      ghost && color && rainbow(color, 'borderSoft'),
     ),
     innerRed: cn(
       'hover:brightness-105 active:brightness-95 trans-all-200',
       ghost ? bg('alphaBg') : bg('button.redBg'),
       fg('rainbow.red'),
     ),
-    children: cn('align-both relative w-auto'),
+    children: cn('align-both relative w-auto', !isLightTheme && 'brightness-110'),
   }
 }

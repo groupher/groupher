@@ -271,19 +271,28 @@
     background: linear-gradient(rgb(236 229 255 / 30%) 0%, rgb(255 255 255 / 96%) 100%);
   }
   .landing-gradient-purple-dark {
-    background: linear-gradient(#332d434d 0%, #252525 100%);
+    background: linear-gradient(#423b544d 0%, #252525 100%);
   }
   .landing-gradient-blue {
     background: linear-gradient(rgb(240 246 255 / 82%) 0%, rgb(255 255 255 / 96%) 100%);
   }
-  .landing-gradient-green {
+  .landing-gradient-blue-dark {
+    background: linear-gradient(#2f3e564d 0%, #252525 100%);
+  }
+  .landing-gradient-green {  
     background: linear-gradient(#F0F8EE 0%, rgb(255 255 255) 100%);
   }
   .landing-gradient-cyan {
     background: linear-gradient(#e0feff66 0%, rgb(255 255 255) 100%);
   }
+  .landing-gradient-cyan-dark {
+    background: linear-gradient(#2f49564d 0%, #252525 100%);
+  }
   .landing-gradient-red {
     background: linear-gradient(rgb(255 204 204 / 19%) 0%, rgb(255 255 255) 100%);
+  }
+  .landing-gradient-red-dark {
+    background: linear-gradient(#5536314d 0%, #252525 100%);
   }
   .landing-gradient-brown {
     background: linear-gradient(rgb(231 206 195 / 12%) 0%, rgb(255 255 255) 100%);  

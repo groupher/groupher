@@ -141,7 +141,7 @@ export default (): TRet => {
     if (prefix === 'borderSoft') {
       const opacity = isLightTheme ? borderSoftConf.opacity : borderSoftConf.opacity_dark
 
-      if (isDarkBlack) {
+      if (isDarkBlack && metric !== METRIC.HOME) {
         return 'border-text-hint-dark'
       }
 

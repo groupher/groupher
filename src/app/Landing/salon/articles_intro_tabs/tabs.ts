@@ -11,7 +11,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, rainbow } = useTwBelt()
+  const { cn, fg, rainbow, vividDark } = useTwBelt()
 
   return {
     wrapper: cn('align-both w-full gap-x-20 relative'),
@@ -57,7 +57,7 @@ export default () => {
     descActive: '!opacity-100',
 
     //
-    iconBox: cn('size-10 rounded-md relative border border-dotted trans-all-200'),
+    iconBox: cn('size-10 rounded-md relative border border-dotted trans-all-200', vividDark()),
     icon: cn('size-7 absolute'),
   }
 }
