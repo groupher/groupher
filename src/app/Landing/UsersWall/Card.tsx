@@ -2,7 +2,7 @@ import type { FC, ReactNode } from 'react'
 
 import type { TColorName, TUser } from '~/spec'
 
-import { Wrapper, Header, Avatar, User, Nickname, Content } from '../salon/users_wall/card'
+import useSalon from '../salon/users_wall/card'
 
 type TProps = {
   content: ReactNode
@@ -11,16 +11,16 @@ type TProps = {
 }
 
 const Card: FC<TProps> = ({ content, user, color }) => {
+  const s = useSalon({ color })
+
   return (
-    <Wrapper>
-      <Header>
-        <Avatar src={user.avatar} color={color} />
-        <User>
-          <Nickname>{user.nickname}</Nickname>
-        </User>
-      </Header>
-      <Content>{content}</Content>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <div className={s.header}>
+        <img className={s.avatar} src={user.avatar} color={color} alt="user" />
+        <div className={s.nickname}>{user.nickname}</div>
+      </div>
+      {content}
+    </div>
   )
 }
 

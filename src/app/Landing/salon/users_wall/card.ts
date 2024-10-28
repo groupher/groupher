@@ -1,54 +1,23 @@
 import type { TColorName } from '~/spec'
 
-import styled, { css, theme, rainbowSoft } from '~/css'
-import Img from '~/Img'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  color: ${theme('article.digest')};
-  width: 300px;
-  /* height: 300px; */
-  height: auto;
-  border-radius: 10px;
-  font-size: 16px;
-  background: #ffffffd4;
-  padding: 20px;
-  box-shadow: 0 5px 25px rgb(35 35 35 / 10%);
-  margin-bottom: 25px;
+type TProps = {
+  color: TColorName
+}
 
-  ${css.media.mobile`
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 10px;
-  `};
-`
+export default ({ color }: TProps) => {
+  const { cn, fg, bg, shadow, rainbow } = useTwBelt()
 
-export const Header = styled.div`
-  ${css.row('align-center')};
-  margin-bottom: 10px;
-`
-
-export const Avatar = styled(Img)<{ color: TColorName }>`
-  ${css.circle(30)};
-  border: 2px solid;
-  padding: 2px;
-  border-color: ${({ color }) => rainbowSoft(color)};
-  background-color: ${({ color }) => rainbowSoft(color)};
-
-  ${css.media.mobile`
-    ${css.circle(25)};
-  `};
-`
-
-export const User = styled.div``
-
-export const Nickname = styled.div`
-  color: ${theme('article.title')};
-  margin-left: 10px;
-  font-size: 14px;
-
-  ${css.media.mobile`
-    font-size: 12px;
-  `};
-`
-
-export const Content = styled.div``
+  return {
+    wrapper: cn(
+      'w-80 h-auto rounded-md p-5 mb-6 trans-all-100',
+      fg('text.digest'),
+      bg('alphaBg'),
+      shadow('sm'),
+    ),
+    header: 'row-center mb-2.5',
+    avatar: cn('size-8 border-2 p-0.5 rounded-lg', rainbow(color, 'border')),
+    nickname: cn('ml-2.5 text-sm', fg('text.title')),
+  }
+}
