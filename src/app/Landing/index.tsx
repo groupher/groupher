@@ -5,9 +5,6 @@
  */
 
 import Link from 'next/link'
-import { useEffect } from 'react'
-
-import useTheme from '~/hooks/useTheme'
 
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
 
@@ -68,11 +65,6 @@ const faqs = [
 
 export default () => {
   const s = useSalon()
-  const { change } = useTheme()
-
-  useEffect(() => {
-    change('dark')
-  }, [])
 
   return (
     <div className={s.wrapper} data-testid="landing-page">
