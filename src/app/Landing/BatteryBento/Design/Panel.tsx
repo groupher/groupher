@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import CursorSVG from '~/icons/Cursor'
+import GridSVG from '~/icons/Grid'
 
 import useSalon, { cn } from '../../salon/battery_bento/design/panel'
 
@@ -69,7 +70,8 @@ const Panel: FC<TProps> = ({ hovering }) => {
         <div className={s.indexBarBottom} />
         <div className={cn(s.indexText, 'bottom-5 left-20 mb-0.5 bold-sm')}>2022 born</div>
 
-        <div className={s.gridBg} style={s.gridBgStyle} />
+        <GridSVG className={cn(s.gridIcon, 'left-3 top-3')} />
+        <GridSVG className={cn(s.gridIcon, 'left-32 top-3 -ml-2')} />
       </div>
     </div>
   )

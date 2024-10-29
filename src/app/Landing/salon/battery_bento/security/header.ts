@@ -1,11 +1,13 @@
 import { COLOR_NAME } from '~/const/colors'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, rainbow } = useTwBelt()
+  const { isLightTheme } = useTheme()
+  const { cn, fg, rainbow, dimDark } = useTwBelt()
 
   return {
     wrapper: cn('row-center-between absolute left-0 top-0 w-full h-8 px-3 trans-all-200'),
@@ -19,8 +21,13 @@ export default () => {
     domain: cn(
       'brightness-50 w-28 h-5 mt-1 rounded-md px-2 opacity-50',
       rainbow(COLOR_NAME.GREEN, 'bgSoft'),
+      dimDark(),
     ),
 
-    domainText: cn('absolute left-1/2 top-2.5 -ml-3.5 text-xs bold', fg('button.fg')),
+    domainText: cn(
+      'absolute left-1/2 top-2.5 -ml-3.5 text-xs',
+      isLightTheme ? 'bold' : '',
+      isLightTheme ? fg('button.fg') : fg('text.digest'),
+    ),
   }
 }
