@@ -15,7 +15,11 @@ export default () => {
       <div className={s.wall}>
         <div className={s.inner}>
           <div className={s.innerBgWrapper}>
-            <img src="/cad-bg.png" className={cn(s.cadBg, 'left-0 w-8/12')} alt="card-bg" />
+            <img
+              src="/cad-bg.png"
+              className={cn(s.cadBg, 'left-0 w-8/12', s.cadDark)}
+              alt="card-bg"
+            />
             <img
               src="/cad-bg.png"
               className={cn(s.cadBg, 'right-0 w-4/12 rotate-180')}

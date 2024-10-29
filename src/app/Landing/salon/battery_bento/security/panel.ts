@@ -1,10 +1,12 @@
 import { COLOR_NAME } from '~/const/colors'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
+  const { isLightTheme } = useTheme()
   const { cn, fg, bg, rainbow, shadow } = useTwBelt()
 
   return {
@@ -18,9 +20,10 @@ export default () => {
     blocks: cn('row-center wrap mt-1.5 gap-3 trans-all-200'),
     brick: cn(
       'align-both px-2 z-20 border h-8 rounded-md trans-all-100',
+      !isLightTheme && 'border-dashed',
       rainbow(COLOR_NAME.GREEN, 'borderSoft'),
       shadow('sm'),
-      bg('htmlBg'),
+      bg('card'),
     ),
     icon: cn('size-3', rainbow(COLOR_NAME.GREEN, 'fill')),
     title: cn('text-xs ml-1', fg('text.digest')),

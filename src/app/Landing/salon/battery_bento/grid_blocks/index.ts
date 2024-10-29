@@ -1,10 +1,12 @@
 import { COLOR_NAME } from '~/const/colors'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
+  const { isLightTheme } = useTheme()
   const { cn, fg, bg, fill, rainbow, sexyHBorder } = useTwBelt()
 
   return {
@@ -17,8 +19,12 @@ export default () => {
     iconBox: 'align-both size-8',
     blockIcon: cn('size-7 opacity-50'),
 
-    vibeIcon: cn('absolute size-4 rotate-180 trans-all-200	!duration-1000', fill('text.digest')),
-    vibeDown: '-rotate-90 opacity-30',
+    vibeIcon: cn(
+      'absolute size-4 rotate-180 trans-all-200 !duration-1000',
+      fill('text.digest'),
+      !isLightTheme && 'opacity-25',
+    ),
+    vibeDown: cn('-rotate-90 opacity-30', isLightTheme ? 'opacity-30' : 'opacity-10'),
 
     fillPurple: rainbow(COLOR_NAME.PURPLE, 'fill'),
     fillRed: rainbow(COLOR_NAME.RED, 'fill'),

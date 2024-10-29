@@ -11,7 +11,7 @@ export default () => {
     wrapper: cn(
       'column border w-[460px] h-[452px] rounded-xl z-30 py-5',
       'absolute bottom-16 left-0',
-      bg('htmlBg'),
+      bg('card'),
       br('divider'),
       shadow('sm'),
     ),
@@ -20,14 +20,14 @@ export default () => {
     itemBlue: global('gradient-blue'),
     title: cn('text-xs line-clamp-1', fg('text.title')),
     //
-    falseChecker: cn('size-3.5 border rounded ml-5', shadow('sm'), br('divider'), bg('htmlBg')),
+    falseChecker: cn('size-3.5 border rounded ml-5', shadow('sm'), br('divider'), bg('card')),
     //
     tip: cn(
       'align-both absolute h-9 w-auto px-3 text-sm rounded-xl border z-20',
       shadow('sm'),
       br('divider'),
       fg('text.digest'),
-      bg('htmlBg'),
+      bg('card'),
     ),
     tipLogo: cn(
       'size-3.5 mr-1.5 brightness-110 saturate-150 opacity-65',

@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react'
+
 import StarSVG from '~/icons/Star'
 
+import THEME from '~/const/theme'
 import useHover from '~/hooks/useHover'
 import useTheme from '~/hooks/useTheme'
 
@@ -8,17 +11,30 @@ import Panel from './Panel'
 import useSalon, { cn } from '../../salon/battery_bento/dark_mode'
 
 export default () => {
+  const [hoverIn, setHoverIn] = useState(false)
   const s = useSalon()
-
-  const { toggle } = useTheme()
+  const { toggle, theme } = useTheme()
 
   const [ref, isHovered] = useHover<HTMLDivElement>()
 
+  useEffect(() => {
+    if (isHovered) {
+      setHoverIn(true)
+      if (hoverIn) {
+        toggle()
+      }
+    } else {
+      setHoverIn(false)
+    }
+  }, [isHovered, hoverIn, toggle])
+
+  const showStars = isHovered || theme === THEME.DARK
+
   return (
-    <div className={s.wrapper} ref={ref} onClick={() => toggle()}>
+    <div className={s.wrapper} ref={ref}>
       <div className={cn(s.inner, isHovered && '-rotate-180')} />
-      {isHovered && <StarSVG className={cn(s.starIcon, 'top-3 right-8')} />}
-      {isHovered && <StarSVG className={cn(s.starIcon, 'top-6 right-3 !opacity-50')} />}
+      {showStars && <StarSVG className={cn(s.starIcon, 'top-3 right-8')} />}
+      {showStars && <StarSVG className={cn(s.starIcon, 'top-6 right-3 !opacity-50')} />}
 
       <Panel hovering={isHovered} />
       <div className={s.footer}>

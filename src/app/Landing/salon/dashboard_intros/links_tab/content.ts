@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, global, br, shadow, rainbow } = useTwBelt()
+  const { cn, fg, bg, fill, global, br, shadow, rainbow } = useTwBelt()
 
   return {
     wrapper: cn('row w-full h-44 px-4 py-4 mt-20'),
@@ -18,7 +18,7 @@ export default () => {
     //
     linkDesc: cn('text-xs mt-1.5', fg('text.digest')),
     iconBox: 'absolute left-2.5',
-    icon: 'size-3.5 mr-1 opacity-65',
+    icon: cn('size-3.5 mr-1 opacity-65', fill('text.digest')),
     //
     bar: cn('w-10 h-1.5 opacity-15 rounded-md absolute', bg('text.digest')),
     editBox: cn(

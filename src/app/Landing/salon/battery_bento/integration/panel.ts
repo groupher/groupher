@@ -11,7 +11,7 @@ export default () => {
     wrapper: cn('relative w-full h-full p-4 overflow-hidden'),
     block: cn(
       'align-both w-64 h-40 relative p-2.5 overflow-hidden rounded-md trans-all-200',
-      bg('htmlBg'),
+      bg('card'),
       shadow('sm'),
     ),
     mask: bg('hoverBg'),

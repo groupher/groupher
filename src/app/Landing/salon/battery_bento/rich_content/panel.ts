@@ -3,7 +3,7 @@ import { COLOR_NAME } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, bg, br, shadow, rainbow } = useTwBelt()
+  const { cn, fg, bg, br, shadow, rainbow, dimDark } = useTwBelt()
 
   return {
     wrapper: cn('p-4 w-full h-80'),
@@ -22,6 +22,6 @@ export default () => {
       rainbow(COLOR_NAME.CYAN, 'bgSoft'),
     ),
 
-    pic: 'w-full h-16 mt-2 ml-2 object-cover	rounded-md opacity-50',
+    pic: cn('w-full h-16 mt-2 ml-2 object-cover	rounded-md opacity-50', dimDark()),
   }
 }

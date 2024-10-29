@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, bg, br, fill, shadow } = useTwBelt()
+  const { cn, bg, br, fill, shadow, dimDark } = useTwBelt()
 
   return {
     wrapper: cn('row-center-between px-4 pb-0 w-full h-14 z-20', 'absolute top-0 left-0'),
@@ -15,7 +15,7 @@ export default () => {
     ),
     otherCard: cn('ml-10 w-28 h-14'),
     //
-    img: 'size-7',
+    img: cn('size-7', dimDark()),
     svgIcon: cn('size-7', fill('text.digest')),
   }
 }

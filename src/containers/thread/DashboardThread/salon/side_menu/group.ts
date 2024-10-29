@@ -9,7 +9,7 @@ type TProps = {
 
 export default ({ fold }: TProps) => {
   const { isLightTheme } = useTheme()
-  const { cn, fill, fg, bg, global, primary, enhanceDark, isDarkBlack } = useTwBelt()
+  const { cn, fill, fg, bg, global, primary, vividDark, isDarkBlack } = useTwBelt()
 
   return {
     wrapper: 'mb-4',
@@ -33,7 +33,7 @@ export default ({ fold }: TProps) => {
       primary('fg'),
       bg('hoverBg'),
       isDarkBlack && fg('text.digest'),
-      enhanceDark(),
+      vividDark(),
     ),
     itemActiveBar: cn(
       'absolute -left-0.5 top-2 w-1 h-4 rounded opacity-80',

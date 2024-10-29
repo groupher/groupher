@@ -3,12 +3,14 @@ import useWallpaper from '~/hooks/useWallpaper'
 
 import { getGithubGradient } from '../metric'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 import useBase from '..'
 
 export default () => {
-  const { cn, fill, bg, shadow, rainbow } = useTwBelt()
+  const { cn, fill, bg, shadow, rainbow, dimDark } = useTwBelt()
+  const { isLightTheme } = useTheme()
   const { wallpaper } = useWallpaper()
   const base = useBase()
 
@@ -16,8 +18,9 @@ export default () => {
     wrapper: cn(
       'column w-[340px] h-96 rounded-xl p-5 px-8 z-30 rotate-2 border-2',
       bg('htmlBg', 'dark'),
-      shadow('xl'),
+      isLightTheme ? shadow('xl') : shadow('sm'),
       rainbow(wallpaper as TColorName, 'border'),
+      dimDark(),
     ),
     backgroundStyle: { background: getGithubGradient(wallpaper) },
     topping: 'row-center mb-1.5',

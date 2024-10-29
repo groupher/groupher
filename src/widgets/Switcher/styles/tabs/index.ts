@@ -6,7 +6,7 @@ type TProps = {
 }
 
 export default ({ noAnimation, slipHeight }: TProps) => {
-  const { cn, bg, primary, enhanceDark, isDarkBlack } = useTwBelt()
+  const { cn, bg, primary, vividDark, isDarkBlack } = useTwBelt()
 
   return {
     wrapper: cn('relative text-sm w-auto overflow-hidden'),
@@ -17,6 +17,6 @@ export default ({ noAnimation, slipHeight }: TProps) => {
       'border-t border-t-transparent',
       `h-${slipHeight}`,
     ),
-    realBar: cn(primary('bg'), isDarkBlack && bg('text.digest'), enhanceDark()),
+    realBar: cn(primary('bg'), isDarkBlack && bg('text.digest'), vividDark()),
   }
 }

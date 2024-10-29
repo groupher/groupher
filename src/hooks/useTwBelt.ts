@@ -46,10 +46,12 @@ type TRet = {
   avatar: (level?: 'md' | 'sm' | '') => string
   gradiientBar: (color: TColorName) => string
   breakOut: (type?: TBreakOut) => string
-  enhanceDark: () => string
+  vividDark: () => string
+  dimDark: () => string
   menu: (part: TMenuPart) => string
   shadow: (size: TShadowSize) => string
   cutRest: (classname?: string) => string
+  landingTitle: () => string
 
   isDarkBlack: boolean
   isBlackPrimary: boolean
@@ -139,7 +141,7 @@ export default (): TRet => {
     if (prefix === 'borderSoft') {
       const opacity = isLightTheme ? borderSoftConf.opacity : borderSoftConf.opacity_dark
 
-      if (isDarkBlack) {
+      if (isDarkBlack && metric !== METRIC.HOME) {
         return 'border-text-hint-dark'
       }
 
@@ -279,8 +281,14 @@ export default (): TRet => {
     return 'w-full'
   }
 
-  const enhanceDark = (): string => {
+  const vividDark = (): string => {
     if (!isLightTheme) return 'saturate-150 brightness-125'
+
+    return ''
+  }
+
+  const dimDark = (): string => {
+    if (!isLightTheme) return 'brightness-75'
 
     return ''
   }
@@ -321,6 +329,14 @@ export default (): TRet => {
     return cn('truncate', classnames)
   }
 
+  const landingTitle = (): string => {
+    return cn(
+      'text-3xl bold-sm opacity-70',
+      fg('text.title'),
+      isLightTheme && global('text-shadow'),
+    )
+  }
+
   return {
     cn,
     global,
@@ -346,11 +362,13 @@ export default (): TRet => {
     avatar,
     gradiientBar,
     breakOut,
-    enhanceDark,
+    vividDark,
     menu,
     shadow,
     cutRest,
     isDarkBlack,
     isBlackPrimary,
+    landingTitle,
+    dimDark,
   }
 }

@@ -1,9 +1,9 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, enhanceDark } = useTwBelt()
+  const { cn, vividDark } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both gap-y-0.5', enhanceDark()),
+    wrapper: cn('column-align-both gap-y-0.5', vividDark()),
   }
 }

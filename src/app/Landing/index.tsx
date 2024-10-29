@@ -9,7 +9,6 @@ import Link from 'next/link'
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
 
 import { ROUTE } from '~/const/route'
-
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/LinkOutside'
 

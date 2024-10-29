@@ -12,7 +12,7 @@ export default () => {
       'absolute top-2 w-20 h-36 border rounded-md p-1.5 z-30 trans-all-200 opacity-0',
       shadow('sm'),
       br('divider'),
-      bg('htmlBg'),
+      bg('card'),
     ),
     avatar: cn('size-5 z-40 circle border border-transparent absolute', shadow('sm')),
     brGreen: rainbow(COLOR_NAME.GREEN, 'border'),

@@ -1,16 +1,18 @@
 import { COLOR_NAME } from '~/const/colors'
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, br, bg, rainbow, shadow } = useTwBelt()
+  const { isLightTheme } = useTheme()
+  const { cn, fg, br, bg, rainbow, shadow, dimDark } = useTwBelt()
 
   return {
     wrapper: cn(
       'absolute w-48 h-36 rounded-xl top-5 right-6 border border-dotted',
       'bg-cover bg-center',
-      bg('htmlBg'),
+      bg('card'),
       br('divider'),
       shadow('sm'),
     ),
@@ -20,13 +22,18 @@ export default () => {
     trendNum: cn('absolute top-8 left-3.5 text-base', fg('text.title')),
     //
     bottomGradient: 'absolute w-full h-14 bottom-0 right-0 rounded-xl z-20',
-    bottomGradientBg: 'linear-gradient(360deg, rgb(255 255 255) 5%, rgb(0 0 0 / 0%) 80%)',
+    bottomGradientBg: isLightTheme
+      ? 'linear-gradient(360deg, rgb(255 255 255) 5%, rgb(0 0 0 / 0%) 80%)'
+      : 'linear-gradient(360deg, #252525 5%, rgb(0 0 0 / 0%) 80%)',
 
     topGradient: 'absolute w-2/3 h-10 top-0 right-0 rounded-xl z-20',
-    topGradientBg: 'linear-gradient(rgb(255 255 255) 25%, rgb(0 0 0 / 0%) 90%)',
+    topGradientBg: isLightTheme
+      ? 'linear-gradient(rgb(255 255 255) 25%, rgb(0 0 0 / 0%) 90%)'
+      : 'linear-gradient(#252525 25%, rgb(0 0 0 / 0%) 90%)',
     //
     highlightColumn: cn(
       'absolute right-24 mr-1 top-10 w-0.5 h-28 z-10 opacity-40 trans-all-200',
+      dimDark(),
       rainbow(COLOR_NAME.ORANGE, 'bg'),
     ),
     highlightColumnHover: 'opacity-100 right-16 mr-3',
@@ -37,7 +44,7 @@ export default () => {
       rainbow(COLOR_NAME.ORANGE, 'bg'),
     ),
     highlightDotHover: 'top-16 mt-0.5 right-16 mr-1.5 opacity-100',
-    dotBorderStyle: { borderColor: 'white' },
+    dotBorderStyle: { borderColor: isLightTheme ? 'white' : 'black' },
     //
     column: cn('absolute top-12 w-px h-28 opacity-15 z-10 trans-all-100', bg('text.digest')),
   }

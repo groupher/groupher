@@ -5,13 +5,13 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, br, global, rainbow } = useTwBelt()
+  const { cn, fg, br, global, rainbow, landingTitle } = useTwBelt()
 
   return {
     wrapper: cn('column align-both w-full mt-36 mb-24'),
     slogan: 'column align-both mb-10',
     tips: cn('text-xs border mb-2.5 px-3.5 py-0.5', fg('text.title'), br('divider')),
-    title: cn('text-3xl bold-sm opacity-70', fg('text.title'), global('text-shadow')),
+    title: landingTitle(),
     desc: cn('text-lg mt-3', fg('text.digest')),
     //
     ourWall: cn('relative column-align-both w-full h-auto pl-10 overflow-hidden'),
