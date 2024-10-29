@@ -298,7 +298,7 @@ module.exports = {
     primary: { DEFAULT: lightTokens.primaryColor, dark: darkTokens.primaryColor },
     toggle: { DEFAULT: 'white', dark: colors.slate['50'] },
     redBg: { DEFAULT: colors.rose['100'], dark: '#472823' },
-    fg: { DEFAULT: 'white', dark: 'white' },
+    fg: { DEFAULT: 'white', dark: colors.zinc['400'] },
     hoverBg: { DEFAULT: lightTokens.primaryColor, dark: darkTokens.primaryColor },
     upvoteBorder: { DEFAULT: '#c5c5c5b0', dark: '#5f5f5fb5' },
   },
