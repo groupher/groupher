@@ -10,13 +10,13 @@ export default () => {
   return {
     wrapper: cn(
       'column gap-y-4 p-4 w-64 h-[500px] rounded-tl-md rounded-tr-md border-b-none',
-      bg('htmlBg'),
+      bg('card'),
       rainbow(COLOR_NAME.PURPLE, 'borderSoft'),
       shadow('sm'),
     ),
     header: 'row-center mb-1',
     iconBox: 'align-both size-3.5 mr-1.5',
-    title: 'text-xs',
+    title: cn('text-xs', fg('text.digest')),
     size: cn('text-xs', fg('text.digest')),
     textGreen: rainbow(COLOR_NAME.GREEN, 'fg'),
     textRed: rainbow(COLOR_NAME.RED, 'fg'),

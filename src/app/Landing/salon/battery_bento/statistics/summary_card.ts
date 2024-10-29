@@ -11,7 +11,7 @@ export default () => {
     wrapper: cn(
       'row-center wrap absolute top-20 left-5 py-1 w-36 h-24 rounded-lg border z-50',
       br('divider'),
-      bg('htmlBg'),
+      bg('card'),
       shadow('sm'),
     ),
     block: 'relative w-1/2 h-10 px-2.5 py-0.5',

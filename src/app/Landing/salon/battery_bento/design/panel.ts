@@ -25,7 +25,7 @@ export default () => {
     },
 
     wrapper: cn('relative p-4 pt-7 w-full h-full overflow-hidden'),
-    gridBg: 'absolute left-10 top-5 w-44 h-28 opacity-10 z-10',
+    gridBg: 'absolute left-10 top-5 w-44 h-28 opacity-10 z-10 debug',
     gridBgStyle: {
       backgroundImage: `url("data:image/svg+xml,<svg id='patternId' width='100%' height='100%' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(1) rotate(0)'><rect x='0' y='0' width='100%' height='100%' fill='hsla(0,0%,100%,1)'/><path d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z'  stroke-width='0.5' stroke='hsla(259, 0%, 28%, 1)' fill='none'/></pattern></defs><rect width='800%' height='800%' transform='translate(-16,-4)' fill='url(%23a)'/></svg>")`,
     },

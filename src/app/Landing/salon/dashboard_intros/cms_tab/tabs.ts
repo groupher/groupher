@@ -11,7 +11,7 @@ export default () => {
     wrapper: cn('absolute top-44 mt-0.5 left-8 w-full h-5/6'),
     postItemWrapper: cn(
       'absolute -top-2 rounded-t-xl p-1 z-30 border border-dashed',
-      bg('htmlBg'),
+      bg('card'),
       rainbow(COLOR_NAME.BLUE, 'borderSoft'),
     ),
     postItem: cn(
@@ -25,7 +25,7 @@ export default () => {
       'absolute p-1 z-20 align-both w-20 h-8 rounded-t-2xl border border-dashed',
       'text-xs',
       fg('text.digest'),
-      bg('htmlBg'),
+      bg('card'),
       rainbow(COLOR_NAME.BLUE, 'borderSoft'),
     ),
     bottomItem: cn(

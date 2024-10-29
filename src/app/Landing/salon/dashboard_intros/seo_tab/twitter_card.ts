@@ -12,7 +12,7 @@ export default () => {
       'column p-4 pb-0 border w-[360px] h-36 -rotate-2 rounded-md scale-90',
       'absolute top-14 right-8',
       br('divider'),
-      bg('htmlBg'),
+      bg('card'),
       shadow('sm'),
     ),
     card: cn('row-center w-full rounded-xl border overflow-hidden', br('divider')),

@@ -17,7 +17,11 @@ module.exports = {
     DEFAULT: lightTokens.bannerBg,
     dark: darkTokens.bannerBg,
   },
-  cardBg: {
+  card: {
+    DEFAULT: lightTokens.bannerBg,
+    dark: '#252525',
+  },
+  cardAlpha: {
     DEFAULT: lightTokens.bannerBg,
     dark: '#252526c2',
   },

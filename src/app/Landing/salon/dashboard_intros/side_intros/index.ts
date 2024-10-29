@@ -17,7 +17,7 @@ export default ({ color }: TProps) => {
     footer: 'row-center mt-12 gap-x-5',
 
     // --
-    iconBox: cn('size-12 align-both rounded-lg mb-5', bg('cardBg')),
+    iconBox: cn('size-12 align-both rounded-lg mb-5', bg('cardAlpha')),
     icon: cn('size-6 opacity-50', rainbow(color, 'fill'), vividDark()),
     title: cn('text-2xl', fg('text.title')),
     desc: cn('text-base mt-1', fg('text.digest')),

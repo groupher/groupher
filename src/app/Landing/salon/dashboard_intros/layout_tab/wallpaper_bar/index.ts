@@ -12,11 +12,11 @@ export default () => {
       shadow('md'),
       bg('alphaBg'),
     ),
-    ballWrapperActive: cn('size-9', bg('cardBg')),
+    ballWrapperActive: cn('size-9', bg('cardAlpha')),
     colorBall: 'size-6 circle',
     colorBallActive: 'size-7',
     //
-    curstomBall: cn('align-both size-7 circle', bg('cardBg'), shadow('sm')),
+    curstomBall: cn('align-both size-7 circle', bg('cardAlpha'), shadow('sm')),
     themeIcon: cn('size-5 z-20 opacity-80', fill('text.digest')),
   }
 }

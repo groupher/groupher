@@ -23,7 +23,17 @@ const GENERAL = [
   'shadow-xl',
 ]
 
-const LANDING_GRADIENTS = ['purple', 'blue', 'pink', 'red', 'green', 'black', 'cyan', 'orange']
+const LANDING_GRADIENTS = [
+  'purple',
+  'blue',
+  'pink',
+  'red',
+  'green',
+  'black',
+  'cyan',
+  'orange',
+  'yellow',
+]
 
 const TEXT_COLORS = [
   'text-title',
@@ -42,7 +52,8 @@ const BG_COLORS = [
   'hoverBg',
   'sandBox',
   'htmlBg',
-  'cardBg',
+  'card',
+  'cardAlpha',
   'popover-bg',
   'menuHoverBg',
   'alphaBg',
@@ -140,7 +151,7 @@ module.exports = uniq([
   ),
 
   ...LANDING_GRADIENTS.map(
-    (c) => `landing-gradient-${c} landing-gradient-${c}-dark gradient-${c}, gradient-${c}-dark`,
+    (c) => `landing-gradient-${c} landing-gradient-${c}-dark gradient-${c} gradient-${c}-dark`,
   ),
 
   ...MARGIN.map((c) => `mt-${c} mb-${c} ml-${c} mr-${c}`),
