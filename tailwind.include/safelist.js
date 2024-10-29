@@ -33,6 +33,7 @@ const LANDING_GRADIENTS = [
   'cyan',
   'orange',
   'yellow',
+  'brown',
 ]
 
 const TEXT_COLORS = [

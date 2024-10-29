@@ -210,7 +210,7 @@ module.exports = {
   text: {
     // title: { DEFAULT: lightTokens.threadTitle, dark: darkTokens.threadTitle },
     title: { DEFAULT: colors.gray['800'], dark: colors.gray['100'] },
-    digest: { DEFAULT: colors.gray['500'], dark: colors.gray['400'] },
+    digest: { DEFAULT: colors.gray['500'], dark: colors.zinc['400'] },
     hint: {
       DEFAULT: colors.gray['400'],
       dark: colors.gray['500'],

@@ -282,6 +282,9 @@
   .landing-gradient-green {  
     background: linear-gradient(#F0F8EE 0%, rgb(255 255 255) 100%);
   }
+  .landing-gradient-green-dark {  
+    background: linear-gradient(#272c25 0%, #252525 100%);
+  }
   .landing-gradient-cyan {
     background: linear-gradient(#e0feff66 0%, rgb(255 255 255) 100%);
   }
@@ -297,8 +300,14 @@
   .landing-gradient-brown {
     background: linear-gradient(rgb(231 206 195 / 12%) 0%, rgb(255 255 255) 100%);  
   }
+  .landing-gradient-brown-dark {
+    background: linear-gradient(#ad91681f 0%, #252525 100%);
+  }
   .landing-gradient-yellow {
     background: linear-gradient(#f5f7cf42 0%, rgb(255 255 255) 100%);
+  }
+  .landing-gradient-yellow-dark {
+    background: linear-gradient(#56583242 0%, #252525 100%);
   }
 
   .gradient-purple {
@@ -346,7 +355,7 @@
   }
 
   .gradient-red-dark {
-    background: linear-gradient(6deg, #ffe4e424 0%, #ffdcdcc9 100%);
+    background: linear-gradient(6deg, #322b2b 0%, #603737c9 100%);
   }
 
   .gradient-black {
