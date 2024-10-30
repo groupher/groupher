@@ -1,15 +1,18 @@
 import { COLOR_NAME } from '~/const/colors'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
+  const { isLightTheme } = useTheme()
   const { cn, bg, global, shadow, rainbow } = useTwBelt()
 
   return {
     wrapper: cn(
       'column p-1.5 rounded-2xl w-[440px] h-[360px] absolute top-40 left-5',
-      bg('htmlBg'),
-      shadow('sm'),
+      isLightTheme ? 'p-1.5' : 'p-2',
+      isLightTheme ? bg('card') : bg('hoverBg'),
+      isLightTheme ? shadow('sm') : shadow('md'),
     ),
     inner: cn('w-full h-full rounded-xl relative', global('gradient-red')),
     bar: cn(

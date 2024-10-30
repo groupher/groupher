@@ -141,9 +141,9 @@ module.exports = uniq([
       `text-rainbow-${c} text-rainbow-${c}-dark
        bg-rainbow-${c} bg-rainbow-${c}-dark 
        decoration-rainbow-${c} bg-rainbow-${c}-dark 
-       hover:bg-rainbow-${c}Soft hover:bg-rainbow-${c}Soft-dark
        hover:border-rainbow-${c} hover:border-rainbow-${c}-dark
        bg-rainbow-${c}Soft bg-rainbow-${c}Soft-dark fill-rainbow-${c} fill-rainbow-${c}-dark 
+       hover:bg-rainbow-${c}Soft hover:bg-rainbow-${c}Soft-dark
        from-rainbow-${c}Soft from-rainbow-${c}Soft-dark 
        border-rainbow-${c} border-rainbow-${c}-dark
        border-rainbow-${c}/${borderSoft.opacity} border-rainbow-${c}-dark/${borderSoft.opacity_dark}
