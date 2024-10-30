@@ -6,6 +6,7 @@ export default () => {
   const s = useSalon()
 
   const { glowType } = useGlowLight()
+
   if (!glowType) return null
 
   const style = { background: `${s.bgStyle}` }

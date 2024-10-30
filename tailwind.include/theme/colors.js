@@ -79,8 +79,6 @@ module.exports = {
   dashboardBlockOpacity: { DEFAULT: 0.65, dark: 0.7 },
   snackBar: { DEFAULT: colors.neutral['700'] },
 
-  // TODO: 有歧义，现在的 xxBg 应改为 xxSoft
-  // 现在的 xxSoft 应改为 xxPale
   rainbow: {
     red: { DEFAULT: '#ca5f4d', dark: '#ca5f4d' },
     redSoft: { DEFAULT: '#FFEBEC', dark: '#7d3b363d' },
@@ -90,7 +88,7 @@ module.exports = {
     // },
 
     orange: { DEFAULT: 'orange', dark: '#ffa500c7' },
-    orangeSoft: { DEFAULT: '#FEF7E8', dark: '#4c3e37' },
+    orangeSoft: { DEFAULT: '#FEF7E8', dark: '#3f332dba' },
     // orangePale: {
     //   DEFAULT: 'linear-gradient(90deg, #fcb32d26 0%, #f5dfb726 100%)',
     //   dark: 'linear-gradient(90deg, #44352ead 0%, #382c27a1 100%)',
@@ -111,7 +109,7 @@ module.exports = {
     // },
 
     green: { DEFAULT: '#699411', dark: '#699411' },
-    greenSoft: { DEFAULT: '#eefdd89c', dark: '#8a97764a' },
+    greenSoft: { DEFAULT: '#eefdd89c', dark: '#4248374a' },
     // greenPale: {
     //   DEFAULT: 'linear-gradient(90deg, #e3f3cc4a 0%, #f2ffe05c 100%)',
     //   dark: 'linear-gradient(90deg, #636e534a 0%, #474e3c36 100%)',
@@ -137,14 +135,14 @@ module.exports = {
     // cyanLightPale: { DEFAULT: '#e1fcff94', dark: '#39494b94' },
 
     blue: { DEFAULT: '#5073C6', dark: '#3a7ec7' },
-    blueSoft: { DEFAULT: '#E7EDF7', dark: '#76809654' },
+    blueSoft: { DEFAULT: '#E7EDF7', dark: '#27324c54' },
     // bluePale: {
     //   DEFAULT: 'linear-gradient(90deg, #f3f7ff 0%, #f5f8ffb5 100%);',
     //   dark: 'linear-gradient(90deg, #505a7254 0%, #3a415038 100%)',
     // },
 
     purple: { DEFAULT: '#7d519e', dark: '#7d519e' },
-    purpleSoft: { DEFAULT: '#f7d8fd38', dark: '#7c618238' },
+    purpleSoft: { DEFAULT: '#f7d8fd38', dark: '#4a334f38' },
     // purplePale: {
     //   DEFAULT: 'linear-gradient(90deg, #f7d8fd38 0%, #f5e5f838 100%)',
     //   dark: 'linear-gradient(90deg, #86539147  0%, #58445d38 100%)',
@@ -213,7 +211,7 @@ module.exports = {
     digest: { DEFAULT: colors.gray['500'], dark: colors.zinc['400'] },
     hint: {
       DEFAULT: colors.gray['400'],
-      dark: colors.gray['500'],
+      dark: colors.zinc['500'],
     },
     invert: {
       DEFAULT: colors.gray['100'],
@@ -298,7 +296,7 @@ module.exports = {
     primary: { DEFAULT: lightTokens.primaryColor, dark: darkTokens.primaryColor },
     toggle: { DEFAULT: 'white', dark: colors.slate['50'] },
     redBg: { DEFAULT: colors.rose['100'], dark: '#472823' },
-    fg: { DEFAULT: 'white', dark: colors.zinc['400'] },
+    fg: { DEFAULT: 'white', dark: '#e0e0e0' },
     hoverBg: { DEFAULT: lightTokens.primaryColor, dark: darkTokens.primaryColor },
     upvoteBorder: { DEFAULT: '#c5c5c5b0', dark: '#5f5f5fb5' },
   },

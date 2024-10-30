@@ -21,7 +21,7 @@ export default () => {
     if (isHovered) {
       setHoverIn(true)
       if (hoverIn) {
-        toggle()
+        setTimeout(() => toggle(), 300)
       }
     } else {
       setHoverIn(false)

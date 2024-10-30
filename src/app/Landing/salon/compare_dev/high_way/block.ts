@@ -11,7 +11,7 @@ export default () => {
     wrapper: cn(
       'row-center relative w-auto px-3.5 py-1 rounded-xl -ml-2.5 border border-dashed',
       rainbow(COLOR_NAME.RED, 'borderSoft'),
-      bg('htmlBg'),
+      bg('card'),
     ),
     dot: cn('size-1.5 circle absolute -left-1 z-20 opacity-65', rainbow(COLOR_NAME.RED, 'bg')),
     buildIcon: 'text-xs opacity-65',

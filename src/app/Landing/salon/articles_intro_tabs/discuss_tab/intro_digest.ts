@@ -3,7 +3,7 @@ import { COLOR_NAME } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, rainbow, vividDark } = useTwBelt()
+  const { cn, fg, rainbow } = useTwBelt()
 
   return {
     wrapper: cn('column mt-6'),
@@ -13,7 +13,6 @@ export default () => {
       'bold-sm italic ml-px mr-px px-0.5',
       rainbow(COLOR_NAME.PURPLE, 'fg'),
       rainbow(COLOR_NAME.PURPLE, 'bgSoft'),
-      vividDark(),
     ),
   }
 }

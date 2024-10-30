@@ -1,13 +1,15 @@
 import { COLOR_NAME } from '~/const/colors'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
+  const { isLightTheme } = useTheme()
   const { cn, rainbow, fill } = useTwBelt()
 
-  const turnning = 'opacity-30 saturate-50'
+  const turnning = isLightTheme ? 'opacity-30 saturate-50' : 'opacity-15 saturate-100'
 
   return {
     wrapper: cn('absolute w-full h-full top-0 left-0'),
@@ -39,10 +41,10 @@ export default () => {
     ),
 
     curveLineTL: cn('absolute size-80 top-24 left-60', turnning),
-    curveLineBL: cn('absolute size-80 bottom-20 left-60 ml-2', turnning),
+    curveLineBL: cn('absolute size-80 bottom-20 left-60 ml-2.5 mb-1', turnning),
     //
     curveLineTR: cn('absolute size-80 top-24 right-48', turnning),
-    curveLineBR: cn('absolute size-80 bottom-20 right-44', turnning),
+    curveLineBR: cn('absolute size-80 bottom-20 right-44 mb-1', turnning),
     fillPurple: rainbow(COLOR_NAME.PURPLE, 'fill'),
     fillDigest: fill('text.digest'),
     //
