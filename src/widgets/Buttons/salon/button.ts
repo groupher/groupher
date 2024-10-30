@@ -75,7 +75,7 @@ export default ({
       color && !ghost && rainbow(color, 'bg'),
       color && ghost && rainbow(color, 'fg'),
       ghost && rainbow(color, 'borderSoft'),
-      ghost && isDarkBlack && br('text.hint'),
+      ghost && !color && isDarkBlack && br('text.hint'),
     ),
     innerRed: cn(
       'hover:brightness-105 active:brightness-95 trans-all-200',
