@@ -22,7 +22,7 @@ export default () => {
             />
             <img
               src="/cad-bg.png"
-              className={cn(s.cadBg, 'right-0 w-4/12 rotate-180')}
+              className={cn(s.cadBg, 'right-0 w-4/12 rotate-180', s.cadDark)}
               alt="card-bg"
             />
           </div>
