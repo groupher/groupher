@@ -1,22 +1,24 @@
 import { COLOR_NAME } from '~/const/colors'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, landingTitle, rainbow } = useTwBelt()
+  const { isDarkTheme } = useTheme()
+  const { cn, fg, landingTitle, rainbow, vividDark } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both w-full relative mt-20'),
     slogan: 'column align-both mb-16',
     title: landingTitle(),
-    desc: cn('text-lg mt-3', fg('text.digest')),
+    desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
     //
     wall: 'column-align-both relative w-full h-auto mt-6',
     demoP: 'text-base leading-relaxed',
     p: 'mt-2.5',
-    highlight: cn('px-1 bold-sm rounded', fg('text.digest')),
+    highlight: cn('px-1 bold-sm rounded', fg('text.digest'), vividDark()),
     // colors
     blueBg: cn('', rainbow(COLOR_NAME.BLUE, 'bgSoft')),
     greenBg: cn('', rainbow(COLOR_NAME.GREEN, 'bgSoft')),

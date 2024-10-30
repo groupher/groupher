@@ -1,17 +1,17 @@
-import type { TColor, TColorName } from '~/spec'
+import type { TColorName } from '~/spec'
 
-import styled, { css, rainbow, gradientBg } from '~/css'
-
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
+  const { isDarkTheme } = useTheme()
   const { cn, fg, global, rainbow, landingTitle } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both w-full mt-32 mb-16'),
     slogan: 'column align-both mb-16',
     title: landingTitle(),
-    desc: cn('text-lg mt-3', fg('text.digest')),
+    desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
     //
     cards: 'align-both w-full h-auto gap-x-9',
     footerCards: 'align-both w-full gap-x-9 mt-9 mb-24',
@@ -32,21 +32,3 @@ export default () => {
     introDesc: cn('text-sm break-all', fg('text.digest')),
   }
 }
-
-export const BaseCard = styled.div<TColor>`
-  ${css.column('align-center', 'justify-end')};
-  width: 300px;
-  height: 278px;
-  background: ${({ $color }) => gradientBg($color)};
-  border: 1px dotted;
-  border-color: transparent;
-  border-radius: 10px;
-  position: relative;
-  cursor: pointer;
-  padding: 0 12px;
-
-  &:hover {
-    border-color: ${({ $color }) => rainbow($color)};
-  }
-  transition: all 0.2s;
-`

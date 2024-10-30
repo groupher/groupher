@@ -2,6 +2,7 @@ import { DASHBOARD_ROUTE } from '~/const/route'
 
 import type { TIntroTab } from '../../DashboardIntros/spec'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 type TProps = {
@@ -9,6 +10,7 @@ type TProps = {
 }
 
 export default ({ tab }: TProps) => {
+  const { isDarkTheme } = useTheme()
   const { cn, fg, global, landingTitle } = useTwBelt()
 
   const bgGradient = cn(
@@ -19,7 +21,7 @@ export default ({ tab }: TProps) => {
     wrapper: cn('column-align-both w-full mt-20 mb-16'),
     slogan: 'column align-both mb-8',
     title: landingTitle(),
-    desc: cn('text-lg mt-3', fg('text.digest')),
+    desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
     //
     content: 'column items-center relative w-full px-30 h-[720px] overflow-hidden',
     inner: 'row-center-between w-8/12 h-full gap-x-10 pl-2 -mt-8',

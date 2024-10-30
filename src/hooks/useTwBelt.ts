@@ -20,6 +20,7 @@ type TBreakOut = 'footer' | 'header'
 type TMenuPart = 'bg' | 'bar' | 'title' | 'link'
 type TShadowSize = 'sm' | 'md' | 'lg' | 'xl'
 type TThemeSwitch = 'auto' | 'dark' | 'light'
+type TDimLevel = 'md' | 'sm'
 
 type TRet = {
   cn: (...inputs: ClassValue[]) => string
@@ -47,7 +48,7 @@ type TRet = {
   gradiientBar: (color: TColorName) => string
   breakOut: (type?: TBreakOut) => string
   vividDark: () => string
-  dimDark: () => string
+  dimDark: (level?: TDimLevel) => string
   menu: (part: TMenuPart) => string
   shadow: (size: TShadowSize) => string
   cutRest: (classname?: string) => string
@@ -287,10 +288,12 @@ export default (): TRet => {
     return ''
   }
 
-  const dimDark = (): string => {
-    if (!isLightTheme) return 'brightness-75'
+  const dimDark = (level: TDimLevel = 'md'): string => {
+    if (isLightTheme) return ''
 
-    return ''
+    if (level === 'sm') return 'brightness-90'
+
+    return 'brightness-75'
   }
 
   const menu = (part: TMenuPart): string => {

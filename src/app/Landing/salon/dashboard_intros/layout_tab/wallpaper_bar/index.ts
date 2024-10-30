@@ -6,7 +6,7 @@ export default () => {
   const { cn, bg, fill, shadow, dimDark } = useTwBelt()
 
   return {
-    wrapper: cn('align-both gap-x-5', dimDark()),
+    wrapper: cn('align-both gap-x-5', dimDark('sm')),
     ballWrapper: cn(
       'align-both group size-8 circle p-1 pointer trans-all-200',
       shadow('md'),

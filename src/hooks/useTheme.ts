@@ -8,6 +8,7 @@ import useSubStore from '~/hooks/useSubStore'
 type TRet = {
   theme: TThemeName
   isLightTheme: boolean
+  isDarkTheme: boolean
   themeMap: TThemeMap
   change: (name: TThemeName) => void
   toggle: () => void
@@ -20,6 +21,7 @@ export default (): TRet => {
   return {
     theme,
     isLightTheme: theme === THEME.LIGHT,
+    isDarkTheme: theme === THEME.DARK,
     themeMap: styledTheme,
     change,
     toggle,
