@@ -17,7 +17,7 @@ export default () => {
   return {
     wrapper: cn(
       'column w-[340px] h-96 rounded-xl p-5 px-8 z-30 rotate-2 border-2',
-      bg('htmlBg', 'dark'),
+      bg('card', 'dark'),
       isLightTheme ? shadow('xl') : shadow('sm'),
       rainbow(wallpaper as TColorName, 'border'),
       dimDark(),

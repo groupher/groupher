@@ -57,8 +57,8 @@ export default () => {
     descActive: '!opacity-100',
 
     //
-    iconBox: cn('size-10 rounded-md relative border border-dotted trans-all-200', vividDark()),
-    icon: cn('size-7 absolute'),
+    iconBox: cn('size-10 rounded-md relative border border-dotted trans-all-200'),
+    icon: cn('size-7 absolute', vividDark()),
   }
 }
 

@@ -213,7 +213,7 @@ module.exports = {
     digest: { DEFAULT: colors.gray['500'], dark: colors.zinc['400'] },
     hint: {
       DEFAULT: colors.gray['400'],
-      dark: colors.gray['500'],
+      dark: colors.zinc['500'],
     },
     invert: {
       DEFAULT: colors.gray['100'],
@@ -298,7 +298,7 @@ module.exports = {
     primary: { DEFAULT: lightTokens.primaryColor, dark: darkTokens.primaryColor },
     toggle: { DEFAULT: 'white', dark: colors.slate['50'] },
     redBg: { DEFAULT: colors.rose['100'], dark: '#472823' },
-    fg: { DEFAULT: 'white', dark: colors.zinc['400'] },
+    fg: { DEFAULT: 'white', dark: '#e0e0e0' },
     hoverBg: { DEFAULT: lightTokens.primaryColor, dark: darkTokens.primaryColor },
     upvoteBorder: { DEFAULT: '#c5c5c5b0', dark: '#5f5f5fb5' },
   },

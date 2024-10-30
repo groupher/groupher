@@ -18,20 +18,21 @@ export const GradientText = styled.div<{ wallpaper: string }>`
 `
 
 export default () => {
-  const { cn, fg, fill, container, linkable, menu, landingTitle, sexyHBorder } = useTwBelt()
+  const { cn, fg, fill, container, linkable, menu, landingTitle, sexyHBorder, dimDark } =
+    useTwBelt()
   const { wallpaper } = useWallpaper()
 
   return {
     wrapper: cn('column-align-both relative h-full w-full overflow-hidden', container()),
     inner: 'column-align-both relative w-full h-full',
     banner: 'column-center relative w-full h-[640px]',
-    betaText: 'clip-text text-base bold mb-3',
+    betaText: cn('clip-text text-base bold mb-3', dimDark()),
     betaGradientStyle: `linear-gradient(to top, ${getPathGradient(wallpaper)})`,
     textGradientStyle: { background: `linear-gradient(to left, ${getPathGradient(wallpaper)})` },
     title: cn(landingTitle(), 'text-4xl opacity-70'),
     desc: cn('text-lg mt-4', fg('text.digest')),
     //
-    buttonGroup: 'row-center mt-6 gap-x-6 w-auto',
+    buttonGroup: 'row-center mt-6 -ml-5 gap-x-6 w-auto',
     linkable: linkable(),
     //
     demoPanel: cn('column gap-x-0.5 py-0.5 w-32', menu('bg')),
