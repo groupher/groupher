@@ -1,41 +1,38 @@
 import Typewriter from 'typewriter-effect'
 
-import useWallpaper from '~/hooks/useWallpaper'
-import { Space } from '~/widgets/Common'
+import Img from '~/Img'
 
-import {
-  Wrapper,
-  BrowerHead,
-  Dot,
-  AddrBar,
-  LockIcon,
-  AddText,
-  GradientText,
-  Highlight,
-  Content,
-  Background,
-  Image,
-} from '../salon/cover_image/desktop_device'
+// import Image from 'next/image'
+import { fmt2CompStyle } from '~/fmt'
+
+import LockSVG from '~/icons/Lock'
+
+import useTheme from '~/hooks/useTheme'
+import useWallpaper from '~/hooks/useWallpaper'
+
+import useSalon from '../salon/cover_image/desktop_device'
 
 export default () => {
-  const { wallpaper, background, effect, hasShadow } = useWallpaper()
+  const s = useSalon()
 
-  const imageSrc = '/landing/intro/home.png'
+  const { isLightTheme } = useTheme()
+  const { background, effect } = useWallpaper()
+
+  const imageSrc = isLightTheme ? '/landing/intro/home.webp' : '/landing/intro/home-dark.webp'
 
   return (
-    <Wrapper>
-      <BrowerHead>
-        <Dot />
-        <Dot />
-        <Dot />
+    <div className={s.wrapper}>
+      <div className={s.brower}>
+        <div className={s.dot} />
+        <div className={s.dot} />
+        <div className={s.dot} />
         <div className="grow" />
-        <AddrBar>
-          <LockIcon />
-          <AddText>https://</AddText>
-          <Space right={2} />
-          <Highlight>your-product</Highlight>
-          <AddText>.groupher.com/</AddText>
-          <GradientText wallpaper={wallpaper}>
+        <div className={s.addrBar}>
+          <LockSVG className={s.lock} />
+          <div className={s.addtext}>https://</div>
+          <div className={s.brand}>your-brand</div>
+          <div className={s.addtext}>.groupher.com/</div>
+          <div className={s.threadText} style={s.threadTextStyle}>
             <Typewriter
               options={{
                 strings: ['posts', 'kanban', 'changelog', 'help', 'roadmap', 'docs'],
@@ -43,14 +40,25 @@ export default () => {
                 loop: true,
               }}
             />
-          </GradientText>
-        </AddrBar>
+          </div>
+        </div>
         <div className="grow" />
-      </BrowerHead>
-      <Content>
-        <Image src={imageSrc} hasShadow={hasShadow} />
-        <Background style={{ background }} effect={effect} />
-      </Content>
-    </Wrapper>
+      </div>
+      <div className={s.content}>
+        <div className={s.imageBox}>
+          <Img src={imageSrc} className={s.coverImg} alt="home page cover" />
+        </div>
+        {/* <div className={s.imageBox}>
+          <Image
+            src={imageSrc}
+            width={900}
+            height={760}
+            alt="cover page"
+            className="z-10 object-cover"
+          />
+        </div> */}
+      </div>
+      <div className={s.background} style={{ background, ...fmt2CompStyle(effect) }} />
+    </div>
   )
 }

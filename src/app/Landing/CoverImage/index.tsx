@@ -1,22 +1,13 @@
-import useWallpaper from '~/hooks/useWallpaper'
-
 import DesktopDevice from './DesktopDevice'
-import DashboardDevice from './DashboardDevice'
-import MobileDevice from './MobileDevice'
 
-import { Wrapper, ParallaxWrapper, FreeLabel } from '../salon/cover_image'
+import useSalon from '../salon/cover_image'
 
 export default () => {
-  const { wallpaper } = useWallpaper()
+  const s = useSalon()
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <DesktopDevice />
-      <FreeLabel wallpaper={wallpaper}>It's free !</FreeLabel>
-      <ParallaxWrapper>
-        <DashboardDevice />
-        <MobileDevice />
-      </ParallaxWrapper>
-    </Wrapper>
+    </div>
   )
 }
