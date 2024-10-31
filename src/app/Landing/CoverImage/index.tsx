@@ -1,15 +1,13 @@
-import { type FC, memo } from 'react'
+import DesktopDevice from './DesktopDevice'
 
-import DesktopView from './DesktopView'
-import MobileView from './MobileView'
+import useSalon from '../salon/cover_image'
 
-const CoverImage: FC = () => {
+export default () => {
+  const s = useSalon()
+
   return (
-    <>
-      <MobileView />
-      <DesktopView />
-    </>
+    <div className={s.wrapper}>
+      <DesktopDevice />
+    </div>
   )
 }
-
-export default memo(CoverImage)

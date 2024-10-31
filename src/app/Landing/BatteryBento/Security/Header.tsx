@@ -19,8 +19,9 @@ const Header: FC<TProps> = ({ hovering }) => {
         <div className={cn(s.dot, s.greenowBg)} />
       </div>
 
-      <div className={s.domain} />
-      <div className={s.domainText}>自定义域名</div>
+      <div className={s.domain}>
+        <div className={s.domainText}>自定义域名</div>
+      </div>
 
       <MoreSVG className={s.moreIcon} />
     </div>

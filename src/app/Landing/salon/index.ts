@@ -1,5 +1,3 @@
-import styled, { theme } from '~/css'
-
 import useWallpaper from '~/hooks/useWallpaper'
 
 // import { getGlowOpacity, getGlowBackground, getPathGradient } from './metric'
@@ -9,14 +7,6 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export const GradientText = styled.div<{ wallpaper: string }>`
-  color: ${theme('article.digest')};
-  background: ${({ wallpaper }) => `linear-gradient(to left, ${getPathGradient(wallpaper)})`};
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 600;
-`
-
 export default () => {
   const { cn, fg, fill, container, linkable, menu, landingTitle, sexyHBorder, dimDark } =
     useTwBelt()
@@ -25,7 +15,7 @@ export default () => {
   return {
     wrapper: cn('column-align-both relative h-full w-full overflow-hidden', container()),
     inner: 'column-align-both relative w-full h-full',
-    banner: 'column-center relative w-full h-[640px]',
+    banner: 'column-center relative w-full',
     betaText: cn('clip-text text-base bold mb-3', dimDark()),
     betaGradientStyle: `linear-gradient(to top, ${getPathGradient(wallpaper)})`,
     textGradientStyle: { background: `linear-gradient(to left, ${getPathGradient(wallpaper)})` },
@@ -48,6 +38,5 @@ export default () => {
       'absolute -right-5 top-0.5 size-4 rotate-180 opacity-65 hidden group-hover:block trans-all-100',
       fill('button.fg'),
     ),
-    // 'group-smoky-0'
   }
 }

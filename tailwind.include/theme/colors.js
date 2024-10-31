@@ -22,7 +22,7 @@ module.exports = {
     dark: '#252525',
   },
   cardAlpha: {
-    DEFAULT: lightTokens.bannerBg,
+    DEFAULT: '#ffffffd4', //lightTokens.bannerBg,
     dark: '#252526c2',
   },
   loading: {

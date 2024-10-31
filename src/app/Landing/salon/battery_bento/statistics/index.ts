@@ -8,7 +8,7 @@ export default () => {
   const base = useBase()
 
   return {
-    wrapper: cn(base.baseCard, 'p-0', base.gradient(COLOR_NAME.YELLOW)),
+    wrapper: cn(base.baseCard, 'p-0', base.gradient(COLOR_NAME.ORANGE)),
     title: base.introTitle,
     desc: base.introDesc,
     footer: 'column w-full p-4 pl-6',
