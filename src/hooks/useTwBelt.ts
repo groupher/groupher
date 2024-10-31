@@ -85,7 +85,7 @@ export default (): TRet => {
    */
   const _theme = (key: TFlatThemeKey, prefix: string, switchBy?: TThemeSwitch) => {
     if (switchBy === 'dark') return `${prefix}-${key.replace(/\./g, '-')}-dark`
-    if (switchBy === 'light') `${prefix}-${key.replace(/\./g, '-')}`
+    if (switchBy === 'light') return `${prefix}-${key.replace(/\./g, '-')}`
 
     return isLightTheme
       ? `${prefix}-${key.replace(/\./g, '-')}`

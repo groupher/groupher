@@ -13,10 +13,12 @@ type TProps = {
   type?: 'primary' | 'red'
   width?: string
   space?: number | null
+  spaceY?: number | null
   size?: TSizeTSM
   onClick?: () => void
   loading?: boolean
   noBorder?: boolean
+  withSoftBg?: boolean
   disabled?: boolean
   noLeftRouned?: boolean
   color?: TColorName | null
@@ -27,13 +29,15 @@ const Button: FC<TProps> = ({
   children = 'button',
   ghost = false,
   type = 'primary',
-  width = 'w-full',
+  width = 'w-auto',
   onClick = console.log,
   space = null,
+  spaceY = null,
   size = SIZE.MEDIUM,
   className = '',
   loading = false,
   noBorder = false,
+  withSoftBg = false,
   disabled = false,
   noLeftRouned = false,
   color = null,
@@ -45,8 +49,10 @@ const Button: FC<TProps> = ({
     width,
     ghost,
     space,
+    spaceY,
     size,
     noBorder,
+    withSoftBg,
     disabled,
     loading,
     noLeftRouned,

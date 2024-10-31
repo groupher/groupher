@@ -3,11 +3,14 @@ import type { TColorName, TSpace } from '~/spec'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
+export { cn } from '~/css'
+
 type TProps = {
   color: TColorName | null
+  withSoftBg: boolean
 } & TSpace
 
-export default ({ color, ...spacing }: TProps) => {
+export default ({ color, withSoftBg, ...spacing }: TProps) => {
   const { isLightTheme } = useTheme()
   const { cn, margin, primary, rainbow } = useTwBelt()
 
@@ -16,10 +19,11 @@ export default ({ color, ...spacing }: TProps) => {
 
   return {
     wrapper: cn(
-      'row-center group pr-1.5 pl-2 py-1.5 rounded-lg trans-all-100',
+      'row-center group pr-1.5 pl-2.5 py-1.5 rounded-lg w-max	trans-all-100',
       `hover:${rainbow(color, 'bgSoft')}`,
-      // light theme collapse with two hover together, not sure if it's bug
       !isLightTheme && 'hover:brightness-125',
+      !isLightTheme && !color && 'hover:brightness-95',
+      withSoftBg && color && rainbow(color, 'bgSoft'),
       margin(spacing),
     ),
     title: cn('text-sm', fgColor),

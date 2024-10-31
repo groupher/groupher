@@ -10,6 +10,10 @@ export const getHeight = (size: string): string => {
       return 'h-6'
     }
 
+    case SIZE.MEDIUM: {
+      return 'h-9'
+    }
+
     default: {
       return 'h-8'
     }

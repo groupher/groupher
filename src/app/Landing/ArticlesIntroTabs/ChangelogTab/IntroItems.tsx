@@ -1,11 +1,10 @@
-import type { FC } from 'react'
-
 import { COLOR_NAME } from '~/const/colors'
 
+import ArrowLinker from '~/widgets/ArrowLinker'
 import Button from '~/widgets/Buttons/Button'
 import FeatItem from '../FeatItem'
 
-import useSalon from '../../salon/articles_intro_tabs'
+import useSalon, { cn } from '../../salon/articles_intro_tabs'
 
 const color = COLOR_NAME.RED
 
@@ -22,7 +21,7 @@ const Contents = () => {
   )
 }
 
-const IntroItems: FC = () => {
+export default () => {
   const s = useSalon()
 
   return (
@@ -32,14 +31,12 @@ const IntroItems: FC = () => {
       </div>
 
       <div className="grow" />
-      <div className="w-32 mt-14 row gap-x-2">
+      <div className={cn(s.footer, 'mt-16')}>
         <Button color={color}>查看示例</Button>
-        <Button color={color} ghost>
+        <ArrowLinker href="/" color={color} className="py-2">
           了解更多
-        </Button>
+        </ArrowLinker>
       </div>
     </>
   )
 }
-
-export default IntroItems
