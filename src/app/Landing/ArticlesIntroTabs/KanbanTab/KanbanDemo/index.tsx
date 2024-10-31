@@ -40,7 +40,7 @@ export default () => {
           />
           <KanbanItem className="opacity-25" />
         </div>
-        <div className={cn(s.board, 'landing-gradient-blue')}>
+        <div className={cn(s.board, s.boardHighlight)}>
           <KanbanItem count={21} title="支持暗黑模式" cat={ARTICLE_CAT.FEATURE} />
           <KanbanItem
             draging
