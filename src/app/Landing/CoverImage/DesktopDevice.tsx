@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import Typewriter from 'typewriter-effect'
 
 import Img from '~/Img'
@@ -13,12 +14,15 @@ import useWallpaper from '~/hooks/useWallpaper'
 import useSalon from '../salon/cover_image/desktop_device'
 
 export default () => {
+  const [imgSrc, setImgSrc] = useState('/landing/intro/home.webp')
   const s = useSalon()
 
   const { isLightTheme } = useTheme()
   const { background, effect } = useWallpaper()
 
-  const imageSrc = isLightTheme ? '/landing/intro/home.webp' : '/landing/intro/home-dark.webp'
+  useEffect(() => {
+    setImgSrc(isLightTheme ? '/landing/intro/home.webp' : '/landing/intro/home-dark.webp')
+  }, [isLightTheme])
 
   return (
     <div className={s.wrapper}>
@@ -46,7 +50,7 @@ export default () => {
       </div>
       <div className={s.content}>
         <div className={s.imageBox}>
-          <Img src={imageSrc} className={s.coverImg} alt="home page cover" />
+          <Img src={imgSrc} className={s.coverImg} alt="home page cover" />
         </div>
         {/* <div className={s.imageBox}>
           <Image
