@@ -1,12 +1,6 @@
 import useWallpaper from '~/hooks/useWallpaper'
 
-import {
-  Wrapper,
-  Content,
-  Image,
-  Background,
-  Bar,
-} from '../../salon/cover_image/desktop_view/mobile_device'
+import { Wrapper, Content, Image, Background, Bar } from '../salon/cover_image/mobile_device'
 
 export default () => {
   const { background, effect } = useWallpaper()

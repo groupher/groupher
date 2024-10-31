@@ -1,15 +1,22 @@
-import { type FC, memo } from 'react'
+import useWallpaper from '~/hooks/useWallpaper'
 
-import DesktopView from './DesktopView'
-import MobileView from './MobileView'
+import DesktopDevice from './DesktopDevice'
+import DashboardDevice from './DashboardDevice'
+import MobileDevice from './MobileDevice'
 
-const CoverImage: FC = () => {
+import { Wrapper, ParallaxWrapper, FreeLabel } from '../salon/cover_image'
+
+export default () => {
+  const { wallpaper } = useWallpaper()
+
   return (
-    <>
-      <MobileView />
-      <DesktopView />
-    </>
+    <Wrapper>
+      <DesktopDevice />
+      <FreeLabel wallpaper={wallpaper}>It's free !</FreeLabel>
+      <ParallaxWrapper>
+        <DashboardDevice />
+        <MobileDevice />
+      </ParallaxWrapper>
+    </Wrapper>
   )
 }
-
-export default memo(CoverImage)

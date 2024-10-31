@@ -1,6 +1,6 @@
 import styled, { css, theme } from '~/css'
 
-import { getPathGradient } from '../../metric'
+import { getPathGradient } from '../metric'
 
 export const Wrapper = styled.div`
   ${css.column('align-center')};

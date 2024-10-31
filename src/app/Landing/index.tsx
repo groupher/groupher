@@ -21,7 +21,6 @@ import FaqList from '~/widgets/FaqList'
 import HomeHeader from '~/widgets/HomeHeader'
 
 import CoverImage from './CoverImage'
-
 import ArticlesIntroTabs from './ArticlesIntroTabs'
 import BatteryBento from './BatteryBento'
 import TechStacks from './TechStacks'

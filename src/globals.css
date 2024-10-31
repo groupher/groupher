@@ -331,7 +331,7 @@
   }
 
   .gradient-green-dark {
-    background: linear-gradient(133deg, #282c27 0%, #29362ccc 100%); 
+    background: linear-gradient(237deg, #2c2f2b 0%, #37453acc 100%);
   }
 
   .gradient-orange {
@@ -339,7 +339,15 @@
   }
 
   .gradient-orange-dark {
-    background: linear-gradient(244deg, #302e26 0%, #6b482b99 100%);
+    background: linear-gradient(244deg, #3f3c3473 0%, #57463899 100%);
+  }
+
+  .gradient-brown {
+    background: linear-gradient(244deg, #fffcf75e 0%, #F0EFE9 100%);
+  }
+
+  .gradient-brown-dark {
+    background: linear-gradient(244deg, #3c393680 0%, #484640c7 100%);
   }
 
   .gradient-pink {
