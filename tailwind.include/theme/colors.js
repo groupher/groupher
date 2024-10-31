@@ -156,7 +156,7 @@ module.exports = {
 
     black: { DEFAULT: '#333333', dark: '#4e4e4e' },
     // TODO: is for dark theme only
-    blackBtn: { DEFAULT: colors.gray['800'], dark: '#4e4e4e' },
+    blackBtn: { DEFAULT: colors.gray['800'], dark: '#e6e6e6' },
     blackSoft: { DEFAULT: '#f4f4f4', dark: '#313131' },
     // blackPale: { DEFAULT: '#f4f4f4', dark: '#313131' },
 

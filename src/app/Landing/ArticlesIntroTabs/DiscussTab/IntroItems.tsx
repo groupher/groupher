@@ -1,5 +1,4 @@
-import type { FC } from 'react'
-
+import ArrowLinker from '~/widgets/ArrowLinker'
 import { COLOR_NAME } from '~/const/colors'
 
 import Button from '~/widgets/Buttons/Button'
@@ -22,7 +21,7 @@ const Contents = () => {
   )
 }
 
-const IntroItems: FC = () => {
+export default () => {
   const s = useSalon()
 
   return (
@@ -32,14 +31,13 @@ const IntroItems: FC = () => {
       </div>
 
       <div className="grow" />
-      <div className="w-32 mt-10 row gap-x-2">
+      <div className={s.footer}>
         <Button color={color}>查看示例</Button>
-        <Button color={color} ghost>
+
+        <ArrowLinker href="/" color={color} className="py-2">
           了解更多
-        </Button>
+        </ArrowLinker>
       </div>
     </>
   )
 }
-
-export default IntroItems

@@ -14,7 +14,7 @@ export default ({ color }: TProps) => {
   return {
     wrapper: cn('column w-80 h-auto mt-12'),
     head: 'mb-8',
-    footer: 'row-center mt-12 gap-x-5',
+    footer: 'row-center mt-12 gap-x-4',
 
     // --
     iconBox: cn('size-12 align-both rounded-lg mb-5', bg('cardAlpha')),

@@ -12,6 +12,8 @@ import { ROUTE } from '~/const/route'
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/LinkOutside'
 
+import useTheme from '~/hooks/useTheme'
+
 import Button from '~/widgets/Buttons/Button'
 import BorderButton from '~/widgets/Buttons/BorderButton'
 import Tooltip from '~/widgets/Tooltip'
@@ -65,6 +67,7 @@ const faqs = [
 
 export default () => {
   const s = useSalon()
+  const { isLightTheme } = useTheme()
 
   return (
     <div className={s.wrapper} data-testid="landing-page">
@@ -84,7 +87,9 @@ export default () => {
 
           <div className={s.buttonGroup}>
             <Link href={ROUTE.APPLY_COMMUNITY} className={s.linkable}>
-              <BorderButton space={8}>开始使用</BorderButton>
+              <BorderButton space={8} className="bold-sm">
+                开始使用
+              </BorderButton>
             </Link>
 
             <Tooltip
@@ -105,7 +110,13 @@ export default () => {
               delay={200}
               offset={[1, 5]}
             >
-              <Button size="medium" ghost>
+              <Button
+                size="medium"
+                ghost
+                noBorder
+                withSoftBg
+                className={isLightTheme && 'brightness-95'}
+              >
                 <div className="ml-2" />
                 在线体验 <ArrowSVG className={s.arrow} />
               </Button>

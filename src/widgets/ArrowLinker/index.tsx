@@ -11,7 +11,7 @@ import type { TColorName, TSpace } from '~/spec'
 
 import ArrowSVG from '~/icons/ArrowUpRight'
 
-import useSalon from './styles'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   testid?: string
@@ -20,6 +20,8 @@ type TProps = {
   target?: string
   bold?: boolean
   color?: TColorName | null
+  withSoftBg?: boolean
+  className?: string
 } & TSpace
 
 const ArrowLinker: FC<TProps> = ({
@@ -28,14 +30,16 @@ const ArrowLinker: FC<TProps> = ({
   target = '_blank',
   bold = false,
   color = null,
+  withSoftBg = false,
+  className = '',
   children,
   ...spacing
 }) => {
-  const s = useSalon({ color, ...spacing })
+  const s = useSalon({ color, withSoftBg, ...spacing })
 
   return (
     <Link href={href} target={target}>
-      <div className={s.wrapper} data-testid={testid}>
+      <div className={cn(s.wrapper, className)} data-testid={testid}>
         <div className={s.title}>{children}</div>
         <ArrowSVG className={s.arrowIcon} />
       </div>

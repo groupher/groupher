@@ -32,7 +32,7 @@ export default () => {
     title: cn(landingTitle(), 'text-4xl opacity-70'),
     desc: cn('text-lg mt-4', fg('text.digest')),
     //
-    buttonGroup: 'row-center mt-6 -ml-5 gap-x-6 w-auto',
+    buttonGroup: 'row-center mt-6 -ml-5 gap-x-4 w-auto',
     linkable: linkable(),
     //
     demoPanel: cn('column gap-x-0.5 py-0.5 w-32', menu('bg')),
