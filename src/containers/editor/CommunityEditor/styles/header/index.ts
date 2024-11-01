@@ -1,22 +1,14 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import { LineDivider } from '~/widgets/Common'
+export default () => {
+  const { cn, fg, bg } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.row('align-center')};
-  padding: 0 10%;
-  width: 100%;
-  height: 78px;
-`
-export const Title = styled.div`
-  color: ${theme('article.title')};
-  font-size: 15px;
-  font-weight: 500;
-`
-export const Divider = styled(LineDivider)`
-  background: ${theme('lightText')};
-`
-export const SubTitle = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 14px;
-`
+  return {
+    wrapper: cn('row-center w-full h-12 mt-4'),
+    title: cn('text-base bold-sm', fg('text.title')),
+    divider: cn('w-px h-3 ml-4 mr-3.5 mt-px', bg('text.digest')),
+    subTitle: cn('text-sm bold-sm mt-px', fg('text.digest')),
+    //
+    right: 'row-center gap-x-3 -mt-0.5',
+  }
+}

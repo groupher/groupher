@@ -19,6 +19,8 @@ export default () => {
   const { isLogin } = useAccount()
   const { communityType, validState, nextStep, isOfficalOnChange } = useLogic()
 
+  const selected = !!communityType
+
   const s = useSalon({ selected: !!communityType })
 
   if (!validState.hasPendingApply && !isLogin) {
@@ -38,12 +40,18 @@ export default () => {
     <div className={s.wrapper}>
       <div className={s.inner}>
         <div className={s.introTitle}>选择你的社区类型</div>
-        <div className={s.introDesc}>请根据你服务的类型选择，后续和展示在发现页，提升曝光度。</div>
+        {!selected ? (
+          <div className={s.introDesc}>
+            请根据你服务的类型选择，后续和展示在发现页，提升曝光度。
+          </div>
+        ) : (
+          <div className={s.divider} />
+        )}
 
         <TypeBoxes />
 
-        {!communityType && <div className="mb-48" />}
-        {communityType && (
+        {!selected && <div className="mb-48" />}
+        {selected && (
           <div className={s.note}>
             <Checker
               checked={validState.isOfficalValid}
@@ -51,11 +59,13 @@ export default () => {
               onChange={isOfficalOnChange}
             />
             我代表产品官方团队，
-            <ArrowLinker href="/">为什么</ArrowLinker>
+            <ArrowLinker href="/" className="py-0.5">
+              为什么
+            </ArrowLinker>
           </div>
         )}
 
-        {communityType && (
+        {selected && (
           <div className={s.nextBtn}>
             <NextStepButton
               onClick={nextStep}
