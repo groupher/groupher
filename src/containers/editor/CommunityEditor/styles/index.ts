@@ -1,19 +1,10 @@
-import type { TMetric } from '~/spec'
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div<{ metric: TMetric }>`
-  ${css.column('align-both')};
-  width: 100%;
-  height: 100%;
+export default () => {
+  const { cn, container } = useTwBelt()
 
-  ${({ metric }) => css.fitPageWidth(metric)};
-`
-export const InnerWrapper = styled.div<{ metric: TMetric }>`
-  ${css.column('justify-center')};
-  width: 100%;
-  ${({ metric }) => css.fitContentWidth(metric)};
-`
-export const ContentWrapper = styled.div`
-  color: ${theme('article.digest')};
-  transition: all 0.2s;
-`
+  return {
+    wrapper: cn('column-align-both w-full h-full', container()),
+    main: 'h-screen',
+  }
+}
