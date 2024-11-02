@@ -11,9 +11,9 @@ export default () => {
   const { cn, fg, bg, br, shadow, fill } = useTwBelt()
 
   return {
-    wrapper: cn('row-center-between mt-8 w-full h-auto gap-8'),
+    wrapper: cn('row-center-between mt-8 w-full h-auto gap-10'),
     block: cn(
-      'items-start justify-between p-4 w-52 h-60 rounded-md border pointer',
+      'group items-start justify-between relative p-4 w-52 h-64 rounded-md border pointer',
       'hover:rotate-3 hover:-mt-5',
       `hover:${br('text.digest')}`,
       `hover:${shadow('sm')}`,
@@ -25,10 +25,13 @@ export default () => {
     blockActive: cn('rotate-3 -mt-5 border', shadow('sm'), br('text.digest'), bg('card')),
     //
     header: 'row-center-between w-full',
-    title: cn('text-base bold-sm mt-2.5', fg('text.digest')),
+    title: cn('text-base bold-sm mt-2 transition-colors', fg('text.digest')),
+    titleActive: cn(fg('text.title')),
     checkIcon: cn('size-4', fill('text.digest')),
     icon: cn('size-5 opacity-50', fill('text.digest')),
     iconActive: cn('size-6 trans-all-100'),
+    //
+    codeImage: 'absolute bottom-5 rounded-md opacity-80 size-4 w-24 h-24 object-cover',
   }
 }
 

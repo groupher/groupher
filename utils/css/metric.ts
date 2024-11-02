@@ -25,6 +25,11 @@ export const WIDTH = {
     CONTENT: '960px',
     CONTENT_OFFSET: '40px',
   },
+  APPLY_COMMUNITY: {
+    PAGE: '1200px',
+    CONTENT: '960px',
+    CONTENT_OFFSET: '40px',
+  },
   COMMUNITY_SIDEBAR: {
     PAGE: '1360px',
     CONTENT: '1180px',

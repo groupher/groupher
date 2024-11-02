@@ -2,7 +2,10 @@ import useTheme from '~/hooks/useTheme'
 
 import CheckSVG from '~/icons/CheckCircle'
 
+import IntroImages from './IntroImages'
+
 import { COMMUNITY_CATS } from '../../constant'
+
 import useLogic from '../../useLogic'
 import useSalon, { cn, Icon } from '../../styles/banner/select_type/type_boxes'
 
@@ -23,11 +26,13 @@ export default () => {
             className={cn(s.block, active && s.blockActive)}
             onClick={() => communityTypeOnChange(item.type)}
           >
+            <IntroImages type={item.type} current={communityType} />
+
             <div className={s.header}>
               <IconComp className={cn(s.icon, active && s.iconActive)} />
               {active && <CheckSVG className={s.checkIcon} />}
             </div>
-            <h3 className={s.title}>{item.title}</h3>
+            <h3 className={cn(s.title, active && s.titleActive)}>{item.title}</h3>
             <div className="grow" />
           </div>
         )

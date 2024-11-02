@@ -1,10 +1,13 @@
 import useTwBelt from '~/hooks/useTwBelt'
+import useMetric from '~/hooks/useMetric'
 import useTopbar from '~/hooks/useTopbar'
 import useWallpaper from '~/hooks/useWallpaper'
 
 export default () => {
   const { cn, bg, rainbow, container, vividDark } = useTwBelt()
+  const metric = useMetric()
 
+  console.log('## metric: ', metric)
   const { topbarBg, isDarkBlack } = useTopbar()
   const { hasShadow } = useWallpaper()
 
