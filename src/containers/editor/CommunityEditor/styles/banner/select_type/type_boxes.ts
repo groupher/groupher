@@ -11,9 +11,9 @@ export default () => {
   const { cn, fg, bg, br, shadow, fill } = useTwBelt()
 
   return {
-    wrapper: cn('row-center-between mt-8 w-full h-auto gap-10'),
+    wrapper: cn('row-center-between mt-8 w-full h-auto gap-7'),
     block: cn(
-      'group items-start justify-between relative p-4 w-52 h-64 rounded-md border pointer',
+      'group items-start justify-between relative p-4 w-56 h-64 rounded-md border pointer',
       'hover:rotate-3 hover:-mt-5',
       `hover:${br('text.digest')}`,
       `hover:${shadow('sm')}`,

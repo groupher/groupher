@@ -48,17 +48,17 @@ export const COMMUNITY_CATS = [
   },
   {
     //
-    type: COMMUNITY_TYPE.CLIENT,
-    title: '圈子 / 团体',
-    color: COLOR_NAME.BLUE,
-    icon: 'Hammer',
-  },
-  {
-    //
     type: COMMUNITY_TYPE.HARDWARE,
     title: '课程 / 教学',
     color: COLOR_NAME.GREEN,
     icon: 'Robot',
+  },
+  {
+    //
+    type: COMMUNITY_TYPE.CLIENT,
+    title: '圈子 / 团体',
+    color: COLOR_NAME.BLUE,
+    icon: 'Hammer',
   },
 ]
 

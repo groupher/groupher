@@ -4,7 +4,7 @@ import { COLOR_NAME } from '~/const/colors'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, bg, br, shadow, rainbow } = useTwBelt()
+  const { cn, bg, br, shadow, rainbow, global, fill } = useTwBelt()
 
   const boxBase = cn(
     'absolute border p-0.5 alian-both rounded-lg',
@@ -29,7 +29,7 @@ export default () => {
     //
     gameBox: cn('size-20 absolute bg-transparent z-20'),
     gameImage: cn('w-full h-full object-cover', shadow('md')),
-    gameBar: cn('w-32 h-3 rounded-md absolute -z-10', rainbow(COLOR_NAME.PURPLE, 'bg')),
+    gameBar: cn('w-32 h-3 rounded-md absolute -z-10', rainbow(COLOR_NAME.ORANGE, 'bg')),
     //
 
     // teach
@@ -37,7 +37,21 @@ export default () => {
     chartImage: cn('absolute size-20 -rotate-3 right-4 bottom-14 z-20', boxBase, 'p-1'),
     users: 'absolute bottom-2 left-2 scale-90 opacity-65',
 
-    textImage: cn('rounded-lg w-full h-full object-cover'),
-    text2Image: 'absolute bottom-5 right-2 rounded-xl size-24 object-cover -rotate-3',
+    //
+    pillsWrapper: 'row-center gap-x-2',
+    pill: cn(
+      'rounded-3xl w-20 h-32 scale-90 relative overflow-hidden border-2',
+      bg('hoverBg'),
+      br('divider'),
+    ),
+    pillHighlight: cn('h-36 mb-4 border-dashed', rainbow(COLOR_NAME.PURPLE, 'borderSoft')),
+    pillNormal: global('gradient-black'),
+    pillGadient: cn('absolute w-full h-full rotate-180', global('gradient-purple')),
+    pillIcon: cn('size-5 absolute bottom-2 left-3.5', fill('text.digest')),
+    pillHighlighIcon: cn(rainbow(COLOR_NAME.PURPLE, 'fill')),
+
+    avatar: 'absolute size-7 circle saturate-50 opacity-20',
+    avatarHighlight: 'saturate-100 opacity-100',
+    //
   }
 }

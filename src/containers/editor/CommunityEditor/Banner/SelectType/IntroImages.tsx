@@ -1,6 +1,10 @@
 import Image from 'next/image'
 
 import { mockUsers } from '~/mock'
+import ArtSVG from '~/icons/Art'
+import MusicSVG from '~/icons/Music'
+import RocketSVG from '~/icons/Rocket'
+import UniverseSVG from '~/icons/Universe'
 import Facepile from '~/widgets/Facepile/LandingPage'
 
 import type { TCommunityType } from '../../spec'
@@ -114,34 +118,72 @@ export default ({ type, current }: TProps) => {
 
   return (
     <div className={cn(s.wrapper, current === type && s.active)}>
-      <div className={cn(s.cinemaImage, 'w-28')}>
-        <Image
-          src="/landing/apply/cinema4d.webp"
-          width={200}
-          height={200}
-          className={cn(s.image, 'opacity-80')}
-          alt="demo"
-        />
-      </div>
+      <div className={s.pillsWrapper}>
+        <div className={cn(s.pill, s.pillNormal)}>
+          <img src={users[0].avatar} className={cn(s.avatar, 'top-2 left-0')} alt="avatar" />
+          <img src={users[1].avatar} className={cn(s.avatar, 'top-4 -right-2')} alt="avatar" />
+          <img src={users[2].avatar} className={cn(s.avatar, 'top-9 left-2')} alt="avatar" />
+          <img src={users[3].avatar} className={cn(s.avatar, 'top-12 -left-3')} alt="avatar" />
+          <img src={users[3].avatar} className={cn(s.avatar, 'top-14 -right-3')} alt="avatar" />
+          <img src={users[4].avatar} className={cn(s.avatar, '-top-3 -right-2')} alt="avatar" />
 
-      <div className={s.codeImage}>
-        <Image
-          src="/landing/apply/code.png"
-          width={200}
-          height={200}
-          className={cn(s.image, 'opacity-65')}
-          alt="demo"
-        />
-      </div>
+          <ArtSVG className={s.pillIcon} />
+        </div>
+        <div className={cn(s.pill, s.pillNormal)}>
+          <img src={users[0].avatar} className={cn(s.avatar, 'top-2 left-0')} alt="avatar" />
+          <img src={users[1].avatar} className={cn(s.avatar, 'top-4 -right-2')} alt="avatar" />
+          <img src={users[2].avatar} className={cn(s.avatar, 'top-9 left-2')} alt="avatar" />
+          <img src={users[3].avatar} className={cn(s.avatar, 'top-12 -left-3')} alt="avatar" />
+          <img src={users[3].avatar} className={cn(s.avatar, 'top-14 -right-3')} alt="avatar" />
+          <img src={users[4].avatar} className={cn(s.avatar, '-top-3 -right-2')} alt="avatar" />
 
-      <div className={s.adminsImage}>
-        <Image
-          src="/landing/apply/admins.png"
-          width={200}
-          height={200}
-          className={cn(s.image, 'opacity-65')}
-          alt="demo"
-        />
+          <RocketSVG className={s.pillIcon} />
+        </div>
+        <div className={cn(s.pill, s.pillHighlight)}>
+          <div className={s.pillGadient} />
+          <img
+            src={users[0].avatar}
+            className={cn(s.avatar, s.avatarHighlight, 'top-2 left-0')}
+            alt="avatar"
+          />
+          <img
+            src={users[1].avatar}
+            className={cn(s.avatar, s.avatarHighlight, 'top-4 -right-2')}
+            alt="avatar"
+          />
+          <img
+            src={users[2].avatar}
+            className={cn(s.avatar, s.avatarHighlight, 'top-9 left-2')}
+            alt="avatar"
+          />
+          <img
+            src={users[3].avatar}
+            className={cn(s.avatar, s.avatarHighlight, 'top-12 -left-3')}
+            alt="avatar"
+          />
+          <img
+            src={users[3].avatar}
+            className={cn(s.avatar, s.avatarHighlight, 'top-14 -right-3')}
+            alt="avatar"
+          />
+          <img
+            src={users[4].avatar}
+            className={cn(s.avatar, s.avatarHighlight, '-top-3 -right-2')}
+            alt="avatar"
+          />
+
+          <UniverseSVG className={cn(s.pillIcon, s.pillHighlighIcon)} />
+        </div>
+        <div className={cn(s.pill, s.pillNormal)}>
+          <img src={users[0].avatar} className={cn(s.avatar, 'top-2 left-0')} alt="avatar" />
+          <img src={users[1].avatar} className={cn(s.avatar, 'top-4 -right-2')} alt="avatar" />
+          <img src={users[2].avatar} className={cn(s.avatar, 'top-9 left-2')} alt="avatar" />
+          <img src={users[3].avatar} className={cn(s.avatar, 'top-12 -left-3')} alt="avatar" />
+          <img src={users[3].avatar} className={cn(s.avatar, 'top-14 -right-3')} alt="avatar" />
+          <img src={users[4].avatar} className={cn(s.avatar, '-top-3 -right-2')} alt="avatar" />
+
+          <MusicSVG className={s.pillIcon} />
+        </div>
       </div>
     </div>
   )
