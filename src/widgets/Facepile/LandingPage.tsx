@@ -8,10 +8,11 @@ import useSalon, { cn } from './salon/landing_page'
 type TProps = {
   users: TUser[]
   className?: string
+  circle?: boolean
 } & TSpace
 
-const LandingPage: FC<TProps> = ({ users, className = '', ...spacing }) => {
-  const s = useSalon({ ...spacing })
+const LandingPage: FC<TProps> = ({ users, circle = false, className = '', ...spacing }) => {
+  const s = useSalon({ circle, ...spacing })
 
   return (
     <div className={cn(s.wrapper, className)}>

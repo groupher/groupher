@@ -1,5 +1,8 @@
 import Image from 'next/image'
 
+import { mockUsers } from '~/mock'
+import Facepile from '~/widgets/Facepile/LandingPage'
+
 import type { TCommunityType } from '../../spec'
 import { COMMUNITY_TYPE } from '../../constant'
 
@@ -12,6 +15,8 @@ type TProps = {
 
 export default ({ type, current }: TProps) => {
   const s = useSalon()
+
+  const users = mockUsers(6)
 
   if (type === COMMUNITY_TYPE.WEB) {
     return (
@@ -73,6 +78,35 @@ export default ({ type, current }: TProps) => {
             className={cn(s.gameImage, 'opacity-65')}
             alt="demo"
           />
+        </div>
+      </div>
+    )
+  }
+
+  if (type === COMMUNITY_TYPE.HARDWARE) {
+    return (
+      <div className={cn(s.wrapper, current === type && s.active)}>
+        <div className={cn(s.teachImage, 'w-28')}>
+          <Image
+            src="/landing/apply/blackboard.png"
+            width={200}
+            height={200}
+            className={cn(s.image, 'opacity-80')}
+            alt="demo"
+          />
+        </div>
+
+        <div className={cn(s.chartImage, 'w-28')}>
+          <Image
+            src="/landing/apply/chart.png"
+            width={200}
+            height={200}
+            className={cn(s.image, 'opacity-80')}
+            alt="demo"
+          />
+        </div>
+        <div className={s.users}>
+          <Facepile users={users} className="gap-x-1" circle />
         </div>
       </div>
     )
