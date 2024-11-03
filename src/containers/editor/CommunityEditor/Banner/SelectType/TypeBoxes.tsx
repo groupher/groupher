@@ -30,7 +30,7 @@ export default () => {
 
             <div className={s.header}>
               <IconComp className={cn(s.icon, active && s.iconActive)} />
-              {active && <CheckSVG className={s.checkIcon} />}
+              {active ? <CheckSVG className={s.checkIcon} /> : <div className={s.emptyCheck} />}
             </div>
             <h3 className={cn(s.title, active && s.titleActive)}>{item.title}</h3>
             <div className="grow" />

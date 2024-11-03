@@ -47,6 +47,9 @@ export default () => {
     pillHighlight: cn('h-36 mb-4 border-dashed', rainbow(COLOR_NAME.PURPLE, 'borderSoft')),
     pillNormal: global('gradient-black'),
     pillGadient: cn('absolute w-full h-full rotate-180', global('gradient-purple')),
+    pillGadient2: cn('absolute w-full h-full rotate-180', global('gradient-orange')),
+    pillGadient3: cn('absolute w-full h-full', global('gradient-red')),
+    pillGadient4: cn('absolute w-full h-full', global('gradient-blue')),
     pillIcon: cn('size-5 absolute bottom-2 left-3.5', fill('text.digest')),
     pillHighlighIcon: cn(rainbow(COLOR_NAME.PURPLE, 'fill')),
 

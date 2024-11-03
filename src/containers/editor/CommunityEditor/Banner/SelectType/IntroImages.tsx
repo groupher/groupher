@@ -120,6 +120,8 @@ export default ({ type, current }: TProps) => {
     <div className={cn(s.wrapper, current === type && s.active)}>
       <div className={s.pillsWrapper}>
         <div className={cn(s.pill, s.pillNormal)}>
+          {current === type && <div className={s.pillGadient3} />}
+
           <img src={users[0].avatar} className={cn(s.avatar, 'top-2 left-0')} alt="avatar" />
           <img src={users[1].avatar} className={cn(s.avatar, 'top-4 -right-2')} alt="avatar" />
           <img src={users[2].avatar} className={cn(s.avatar, 'top-9 left-2')} alt="avatar" />
@@ -130,6 +132,8 @@ export default ({ type, current }: TProps) => {
           <ArtSVG className={s.pillIcon} />
         </div>
         <div className={cn(s.pill, s.pillNormal)}>
+          {current === type && <div className={s.pillGadient2} />}
+
           <img src={users[0].avatar} className={cn(s.avatar, 'top-2 left-0')} alt="avatar" />
           <img src={users[1].avatar} className={cn(s.avatar, 'top-4 -right-2')} alt="avatar" />
           <img src={users[2].avatar} className={cn(s.avatar, 'top-9 left-2')} alt="avatar" />
@@ -175,6 +179,7 @@ export default ({ type, current }: TProps) => {
           <UniverseSVG className={cn(s.pillIcon, s.pillHighlighIcon)} />
         </div>
         <div className={cn(s.pill, s.pillNormal)}>
+          {current === type && <div className={s.pillGadient4} />}
           <img src={users[0].avatar} className={cn(s.avatar, 'top-2 left-0')} alt="avatar" />
           <img src={users[1].avatar} className={cn(s.avatar, 'top-4 -right-2')} alt="avatar" />
           <img src={users[2].avatar} className={cn(s.avatar, 'top-9 left-2')} alt="avatar" />
