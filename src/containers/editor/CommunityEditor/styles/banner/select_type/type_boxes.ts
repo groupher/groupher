@@ -3,32 +3,34 @@ import GameSVG from '~/icons/Game'
 import RobotSVG from '~/icons/Robot'
 import HammerSVG from '~/icons/Hammer'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, br, shadow, fill } = useTwBelt()
+  const { isLightTheme } = useTheme()
+  const { cn, fg, bg, br, shadow, fill, primary } = useTwBelt()
 
   return {
     wrapper: cn('row-center-between mt-8 w-full h-auto gap-7'),
     block: cn(
-      'group items-start justify-between relative p-4 w-56 h-64 rounded-md border pointer',
+      'group items-start justify-between relative p-4 w-56 h-64 rounded-xl border pointer',
       'hover:rotate-3 hover:-mt-5',
-      `hover:${br('text.digest')}`,
+      `hover:${primary('border')}`,
       `hover:${shadow('sm')}`,
       `hover:${bg('card')}`,
       'trans-all-200',
       bg('sandBox'),
-      br('divider'),
+      isLightTheme ? 'border-transparent' : br('divider'),
     ),
-    blockActive: cn('rotate-3 -mt-5 border', shadow('sm'), br('text.digest'), bg('card')),
+    blockActive: cn('rotate-3 -mt-5 border', shadow('sm'), primary('border'), bg('card')),
     //
     header: 'row-center-between w-full',
-    title: cn('text-base bold-sm mt-2 transition-colors', fg('text.digest')),
+    title: cn('text-base bold-sm mt-2 ml-1 transition-colors', fg('text.digest')),
     titleActive: cn(fg('text.title')),
-    checkIcon: cn('size-4', fill('text.digest')),
-    icon: cn('size-5 opacity-50', fill('text.digest')),
+    checkIcon: cn('size-4', primary('fill')),
+    icon: cn('size-5 opacity-50 ml-1', fill('text.digest')),
     iconActive: cn('size-6 trans-all-100'),
     //
     codeImage: 'absolute bottom-5 rounded-md opacity-80 size-4 w-24 h-24 object-cover',

@@ -33,8 +33,8 @@ export default () => {
     //
 
     // teach
-    teachImage: cn('absolute size-24 left-1 bottom-12 z-30'),
-    chartImage: cn('absolute size-20 -rotate-3 right-4 bottom-14 z-20', boxBase, 'p-1'),
+    teachImage: cn('absolute size-24 left-1 bottom-12 z-30 saturate-50'),
+    chartImage: cn('absolute size-20 -rotate-3 right-4 bottom-14 z-20 opacity-80', boxBase, 'p-1'),
     users: 'absolute bottom-2 left-2 scale-90 opacity-65',
 
     //

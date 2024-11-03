@@ -11,7 +11,7 @@ export const getHeight = (size: string): string => {
     }
 
     case SIZE.MEDIUM: {
-      return 'h-9'
+      return 'h-8'
     }
 
     default: {
@@ -44,6 +44,10 @@ export const getPadding = (size: string): string => {
 
     case SIZE.SMALL: {
       return 'py-1 px-1'
+    }
+
+    case SIZE.MEDIUM: {
+      return 'py-1 px-3.5'
     }
 
     default: {

@@ -39,10 +39,12 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <div className={s.inner}>
-        <div className={s.introTitle}>选择你的社区类型</div>
+        <div className={s.introTitle}>选择社区类型</div>
         {!selected ? (
           <div className={s.introDesc}>
-            请根据你服务的类型选择，后续和展示在发现页，提升曝光度。
+            请根据你服务的类型选择分类
+            <br />
+            后续你的社区会展示在发现页，进一步提升曝光度。
           </div>
         ) : (
           <div className={s.divider} />

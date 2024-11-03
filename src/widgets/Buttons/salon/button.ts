@@ -47,8 +47,8 @@ export default ({
   return {
     wrapper: cn(
       common,
-      disabled && 'saturate-50 cursor-not-allowed',
       !ghost && !isRed && !noBorder && 'border border-4',
+      disabled && 'border-2',
       width,
       'rounded-xl',
       br('divider'),
@@ -86,6 +86,22 @@ export default ({
       withSoftBg && color && rainbow(color, 'bgSoft'),
       withSoftBg && isLightTheme && !color && 'hover:brightness-95',
       withSoftBg && !color && bg('hoverBg'),
+      disabled &&
+        !ghost &&
+        isLightTheme &&
+        cn(
+          'brightness-90 hover:brightness-90 hover:cursor-not-allowed',
+          bg('hoverBg'),
+          fg('text.hint'),
+        ),
+      disabled &&
+        !ghost &&
+        !isLightTheme &&
+        cn(
+          'brightness-125 hover:brightness-125 hover:cursor-not-allowed',
+          bg('hoverBg'),
+          fg('text.hint'),
+        ),
     ),
     innerRed: cn(
       'hover:brightness-105 active:brightness-95 trans-all-200',
