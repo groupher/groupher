@@ -1,10 +1,12 @@
-import BrowserSVG from '~/icons/Browser'
-import GameSVG from '~/icons/Game'
-import RobotSVG from '~/icons/Robot'
-import HammerSVG from '~/icons/Hammer'
+import EarSVG from '~/icons/Ear'
+import GameSVG from '~/icons/GamePs'
+import ClassSVG from '~/icons/Class'
+import GroupSVG from '~/icons/Group'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
+
+import { COMMUNITY_TYPE } from '../../../constant'
 
 export { cn } from '~/css'
 
@@ -36,7 +38,7 @@ export default () => {
     titleActive: cn(fg('text.title')),
     emptyCheck: cn('size-4 circle border-2', bg('card'), br('divider')),
     checkIcon: cn('size-4', primary('fill')),
-    icon: cn('size-5 opacity-50 ml-1', fill('text.digest')),
+    icon: cn('size-5 opacity-65 ml-1', fill('text.digest')),
     iconActive: cn('size-6 trans-all-100'),
     //
     codeImage: 'absolute bottom-5 rounded-md opacity-80 size-4 w-24 h-24 object-cover',
@@ -44,8 +46,8 @@ export default () => {
 }
 
 export const Icon = {
-  Browser: BrowserSVG,
-  Game: GameSVG,
-  Hammer: HammerSVG,
-  Robot: RobotSVG,
+  [COMMUNITY_TYPE.PRODUCT]: EarSVG,
+  [COMMUNITY_TYPE.GAMING]: GameSVG,
+  [COMMUNITY_TYPE.TEACH]: ClassSVG,
+  [COMMUNITY_TYPE.GROUP]: GroupSVG,
 }

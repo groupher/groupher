@@ -1,42 +1,34 @@
 import type { FC } from 'react'
 
-import type { TCommunityType } from '../spec'
-import { COMMUNITY_CATS_TEXT_COLORS } from '../constant'
+import CheckSVG from '~/icons/CheckBold'
 
-import {
-  DoingWrapper,
-  DoneWrapper,
-  TodoWrapper,
-  Dot,
-  CheckIcon,
-} from '../styles/header/status_ball'
+import useSalon from '../styles/header/status_ball'
 
 type TProps = {
   done?: boolean
   doing?: boolean
-  communityType: TCommunityType
 }
 
-const StatusBall: FC<TProps> = ({ done = false, doing = false, communityType }) => {
-  const colors = COMMUNITY_CATS_TEXT_COLORS[communityType]
+const StatusBall: FC<TProps> = ({ done = false, doing = false }) => {
+  const s = useSalon()
 
   if (done) {
     return (
-      <DoneWrapper $colors={colors} $noBorder>
-        <CheckIcon />
-      </DoneWrapper>
+      <div className={s.done}>
+        <CheckSVG className={s.checkIcon} />
+      </div>
     )
   }
 
   if (doing) {
     return (
-      <DoingWrapper $colors={colors}>
-        <Dot $colors={colors} />
-      </DoingWrapper>
+      <div className={s.doing}>
+        <div className={s.dot} />
+      </div>
     )
   }
 
-  return <TodoWrapper $colors={colors} />
+  return <div className={s.todo} />
 }
 
 export default StatusBall

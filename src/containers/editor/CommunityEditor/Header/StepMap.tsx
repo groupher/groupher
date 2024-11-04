@@ -1,14 +1,19 @@
 import { useEffect } from 'react'
 
+import TadaSVG from '~/icons/Tada'
+
 import StatusBall from './StatusBall'
 
 import { STEP } from '../constant'
-
 import { tada } from '../helper'
 import useLogic from '../useLogic'
-import { Wrapper, Line, TadaIcon } from '../styles/header/step_map'
+
+import { Icon } from '../styles/banner/select_type/type_boxes'
+import useSalon from '../styles/header/step_map'
 
 export default () => {
+  const s = useSalon()
+
   const { headerStatus } = useLogic()
   const { step, communityType } = headerStatus
 
@@ -18,76 +23,78 @@ export default () => {
     }
   }, [step])
 
+  const TypeIcon = Icon[communityType]
+
   switch (step) {
     case STEP.SELECT_TYPE: {
       return (
-        <Wrapper>
-          <StatusBall communityType={communityType} doing />
-          <Line />
-          <StatusBall communityType={communityType} />
-          <Line />
-          <StatusBall communityType={communityType} />
-          <Line />
-          <StatusBall communityType={communityType} />
-        </Wrapper>
+        <div className={s.wrapper}>
+          <StatusBall doing />
+          <div className={s.line} />
+          <StatusBall />
+          <div className={s.line} />
+          <StatusBall />
+          <div className={s.line} />
+          <StatusBall />
+        </div>
       )
     }
 
     case STEP.SETUP_DOMAIN: {
       return (
-        <Wrapper>
-          <StatusBall communityType={communityType} done />
-          <Line />
-          <StatusBall communityType={communityType} doing />
-          <Line />
-          <StatusBall communityType={communityType} />
-          <Line />
-          <StatusBall communityType={communityType} />
-        </Wrapper>
+        <div className={s.wrapper}>
+          <TypeIcon className={s.icon} />
+          <div className={s.line} />
+          <StatusBall doing />
+          <div className={s.line} />
+          <StatusBall />
+          <div className={s.line} />
+          <StatusBall />
+        </div>
       )
     }
 
     case STEP.SETUP_INFO: {
       return (
-        <Wrapper>
-          <StatusBall communityType={communityType} done />
-          <Line />
-          <StatusBall communityType={communityType} done />
-          <Line />
-          <StatusBall communityType={communityType} doing />
-          <Line />
-          <StatusBall communityType={communityType} />
-        </Wrapper>
+        <div className={s.wrapper}>
+          <TypeIcon className={s.icon} />
+          <div className={s.line} />
+          <StatusBall done />
+          <div className={s.line} />
+          <StatusBall doing />
+          <div className={s.line} />
+          <StatusBall />
+        </div>
       )
     }
 
     case STEP.SETUP_EXTRA: {
       return (
-        <Wrapper>
-          <StatusBall communityType={communityType} done />
-          <Line />
-          <StatusBall communityType={communityType} done />
-          <Line />
-          <StatusBall communityType={communityType} done />
-          <Line />
-          <StatusBall communityType={communityType} doing />
-        </Wrapper>
+        <div className={s.wrapper}>
+          <TypeIcon className={s.icon} />
+          <div className={s.line} />
+          <StatusBall done />
+          <div className={s.line} />
+          <StatusBall done />
+          <div className={s.line} />
+          <StatusBall doing />
+        </div>
       )
     }
 
     case STEP.FINISHED: {
       return (
-        <Wrapper>
-          <StatusBall communityType={communityType} done />
-          <Line />
-          <StatusBall communityType={communityType} done />
-          <Line />
-          <StatusBall communityType={communityType} done />
-          <Line />
-          <StatusBall communityType={communityType} done />
-          <Line />
-          <TadaIcon onClick={() => tada()} />
-        </Wrapper>
+        <div className={s.wrapper}>
+          <TypeIcon className={s.icon} />
+          <div className={s.line} />
+          <StatusBall done />
+          <div className={s.line} />
+          <StatusBall done />
+          <div className={s.line} />
+          <StatusBall done />
+          <div className={s.line} />
+          <TadaSVG className={s.tadaIcon} onClick={() => tada()} />
+        </div>
       )
     }
 

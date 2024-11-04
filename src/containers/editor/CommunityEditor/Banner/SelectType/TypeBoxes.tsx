@@ -18,7 +18,7 @@ export default () => {
     <div className={s.wrapper} key={theme}>
       {COMMUNITY_CATS.map((item) => {
         const active = item.type === communityType
-        const IconComp = Icon[item.icon]
+        const IconComp = Icon[item.type]
 
         return (
           <div

@@ -22,7 +22,7 @@ export default ({ type, current }: TProps) => {
 
   const users = mockUsers(6)
 
-  if (type === COMMUNITY_TYPE.WEB) {
+  if (type === COMMUNITY_TYPE.PRODUCT) {
     return (
       <div className={cn(s.wrapper, current === type && s.active)}>
         <div className={cn(s.cinemaImage, 'w-28')}>
@@ -58,7 +58,7 @@ export default ({ type, current }: TProps) => {
     )
   }
 
-  if (type === COMMUNITY_TYPE.GAME) {
+  if (type === COMMUNITY_TYPE.GAMING) {
     return (
       <div className={cn(s.wrapper, current === type && s.active)}>
         <div className={cn(s.gameBar, 'bottom-24 left-3 opacity-40 rotate-3')} />
@@ -87,7 +87,7 @@ export default ({ type, current }: TProps) => {
     )
   }
 
-  if (type === COMMUNITY_TYPE.HARDWARE) {
+  if (type === COMMUNITY_TYPE.TEACH) {
     return (
       <div className={cn(s.wrapper, current === type && s.active)}>
         <div className={cn(s.teachImage, 'w-28')}>

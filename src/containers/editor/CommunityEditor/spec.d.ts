@@ -1,4 +1,4 @@
-export type TCommunityType = 'WEB' | 'CLIENT' | 'HARDWARE' | 'GAME' | null
+export type TCommunityType = 'PRODUCT' | 'GAMING' | 'TEACH' | 'GROUP' | null
 
 export type TStep = 'SELECT_TYPE' | 'SETUP_DOMAIN' | 'SETUP_INFO' | 'SETUP_EXTRA' | 'FINISHED'
 

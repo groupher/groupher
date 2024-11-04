@@ -1,30 +1,13 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import TadaSVG from '~/icons/Tada'
+export default () => {
+  const { cn, br, fill } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.row('align-center', 'justify-between')};
-  margin-left: -140px;
-`
-export const Line = styled.div`
-  width: 30px;
-  height: 2px;
-  margin: 0 4px;
-  opacity: 0.5;
+  return {
+    wrapper: cn('row-center-between -ml-36'),
+    line: cn('w-8 h-0.5 mx-1 border-b', br('divider')),
+    tadaIcon: 'size-5',
 
-  border-bottom: 1px solid transparent;
-  border-image: linear-gradient(
-    0.25turn,
-    transparent,
-    ${theme('lightText')},
-    ${theme('lightText')},
-    ${theme('lightText')},
-    transparent
-  );
-
-  border-image-slice: 1;
-`
-
-export const TadaIcon = styled(TadaSVG)`
-  ${css.size(20)};
-`
+    icon: cn('size-5', fill('text.digest')),
+  }
+}
