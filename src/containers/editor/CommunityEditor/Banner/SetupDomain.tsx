@@ -2,16 +2,18 @@ import { isEmpty } from 'ramda'
 
 import { cutRest } from '~/fmt'
 
+import DomainSVG from '~/icons/Domain'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
 import NextStepButton from './NextStepButton'
 import InputBox from './InputBox'
 
-import { Wrapper, IntroTitle, DomainIcon, NextBtn, ErrorMsg } from '../styles/banner/setup_domain'
-
+import useSalon from '../styles/banner/setup_domain'
 import useLogic from '../useLogic'
 
 export default () => {
+  const s = useSalon()
+
   const { slug, validState, pervStep, nextStep, inputOnChange } = useLogic()
   const { isRawValid, checking, communityExist } = validState
 
@@ -19,28 +21,31 @@ export default () => {
   const slugExist = !checking && communityExist
 
   return (
-    <Wrapper>
-      <IntroTitle>
-        <DomainIcon />
+    <div className={s.wrapper}>
+      <h3 className={s.introTitle}>
+        <DomainSVG className={s.introLogo} />
         社区域名
-      </IntroTitle>
+      </h3>
+
       <InputBox value={slug} placeholder="your-domain" onChange={(e) => inputOnChange(e, 'slug')} />
 
-      {fmtError && <ErrorMsg>仅支持字母、数字与-_的组合</ErrorMsg>}
+      {fmtError && <div className={s.errorMsg}>仅支持字母、数字与-_的组合</div>}
 
       {slugExist && (
-        <ErrorMsg>{cutRest(slug, 8)} 已存在（或他人在申请中），请尝试其他域名</ErrorMsg>
+        <div className={s.errorMsg}>
+          {cutRest(slug, 8)} 已存在（或他人在申请中），请尝试其他域名
+        </div>
       )}
 
       {!(fmtError || slugExist) && (
-        <NextBtn>
-          <ArrowButton leftLayout onClick={pervStep} dimWhenIdle>
+        <div className={s.nextBtn}>
+          <ArrowButton leftLayout onClick={pervStep} dimWhenIdle className="saturate-0">
             上一步
           </ArrowButton>
 
           <NextStepButton loading={checking} onClick={nextStep} disabled={!isRawValid} />
-        </NextBtn>
+        </div>
       )}
-    </Wrapper>
+    </div>
   )
 }

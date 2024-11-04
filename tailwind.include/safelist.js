@@ -21,6 +21,8 @@ const GENERAL = [
   'shadow-md',
   'shadow-lg',
   'shadow-xl',
+  //
+  'hidden-panel',
 ]
 
 const LANDING_GRADIENTS = [

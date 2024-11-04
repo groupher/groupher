@@ -1,11 +1,11 @@
-import { type FC, memo, useState } from 'react'
+import { type FC, useState } from 'react'
 
 import BrowserHead from './BrowerHead'
 import Content from './Content'
 import MaskPanel from './MaskPanel'
 
 import type { TStep, TCommunityType } from '../../spec'
-import { Wrapper } from '../../styles/content/fake_browser'
+import useSalon from '../../styles/content/fake_browser'
 
 type TProps = {
   step: TStep
@@ -24,17 +24,13 @@ const FakeBrowser: FC<TProps> = ({
   logo = null,
   communityType = null,
 }) => {
+  const s = useSalon()
+
   const [activePath, setActivePath] = useState('')
 
   return (
-    <Wrapper>
-      <BrowserHead
-        domain={domain}
-        title={title}
-        desc={desc}
-        communityType={communityType}
-        activePath={activePath}
-      />
+    <div className={s.wrapper}>
+      <BrowserHead domain={domain} title={title} desc={desc} activePath={activePath} />
       <Content
         title={title}
         desc={desc}
@@ -43,8 +39,8 @@ const FakeBrowser: FC<TProps> = ({
         onHoverThread={setActivePath}
       />
       <MaskPanel step={step} />
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(FakeBrowser)
+export default FakeBrowser

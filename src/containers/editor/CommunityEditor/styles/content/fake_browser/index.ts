@@ -1,17 +1,13 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.column('align-center')};
-  width: 100%;
-  max-width: 880px;
-  min-height: 500px;
-  border-radius: 12px;
-  background: ${theme('alphaBg')};
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  /* border-color: ${theme('hoverBg')}; */
-  border-bottom: none;
+export default () => {
+  const { cn, br, bg } = useTwBelt()
 
-  position: relative;
-`
-export const holder = 1
+  return {
+    wrapper: cn(
+      'column-align-center relative w-full rounded-xl border border-b-none w-[680px] h-96',
+      bg('alphaBg'),
+      br('divider'),
+    ),
+  }
+}

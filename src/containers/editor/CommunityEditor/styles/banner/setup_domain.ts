@@ -1,42 +1,16 @@
-import styled, { css, theme } from '~/css'
+import { COLOR_NAME } from '~/const/colors'
 
-import DomainSVG from '~/icons/Domain'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  position: relative;
-  ${css.column('align-both')};
-  color: ${theme('article.digest')};
-  width: 100%;
-  height: 260px;
-`
-export const IntroTitle = styled.div`
-  position: relative;
-  ${css.row('align-center')};
-  color: ${theme('article.title')};
-  font-size: 18px;
-  margin-bottom: 20px;
-  margin-left: -10px;
-`
+export default () => {
+  const { cn, fg, fill, rainbow } = useTwBelt()
 
-export const Title = styled.div`
-  color: ${theme('article.title')};
-  font-size: 1.1rem;
-`
-export const DomainIcon = styled(DomainSVG)`
-  fill: ${theme('article.title')};
-  ${css.size(18)};
-  margin-right: 10px;
-`
-export const NextBtn = styled.div`
-  position: absolute;
-  ${css.row('align-center', 'justify-around')};
-  width: 200px;
-  bottom: 25px;
-  filter: grayscale(1);
-`
-export const ErrorMsg = styled.div`
-  position: absolute;
-  bottom: 55px;
-  color: ${theme('rainbow.red')};
-  font-size: 13px;
-`
+  return {
+    wrapper: cn('column-align-both relative w-full h-64'),
+    introTitle: cn('row-center text-lg mb-5 -ml-2.5', fg('text.title')),
+    introLogo: cn('size-4 mr-2.5', fill('text.digest')),
+
+    nextBtn: 'row-center justify-around w-52 absolute bottom-6',
+    errorMsg: cn('absolute bottom-12 text-sm w-52', rainbow(COLOR_NAME.RED, 'fg')),
+  }
+}

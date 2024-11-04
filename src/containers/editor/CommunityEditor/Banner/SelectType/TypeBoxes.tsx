@@ -1,5 +1,3 @@
-import useTheme from '~/hooks/useTheme'
-
 import CheckSVG from '~/icons/CheckCircle'
 
 import IntroImages from './IntroImages'
@@ -11,11 +9,10 @@ import useSalon, { cn, Icon } from '../../styles/banner/select_type/type_boxes'
 
 export default () => {
   const s = useSalon()
-  const { theme } = useTheme()
   const { communityType, communityTypeOnChange } = useLogic()
 
   return (
-    <div className={s.wrapper} key={theme}>
+    <div className={s.wrapper}>
       {COMMUNITY_CATS.map((item) => {
         const active = item.type === communityType
         const IconComp = Icon[item.type]
