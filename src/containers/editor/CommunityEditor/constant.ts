@@ -25,13 +25,6 @@ export const COMMUNITY_CATS_COLOR = {
   [COMMUNITY_TYPE.GROUP]: COLOR_NAME.ORANGE,
 }
 
-export const COMMUNITY_CATS_TEXT_COLORS = {
-  [COMMUNITY_TYPE.PRODUCT]: ['#c479de', '#f8be6d'], // pink
-  [COMMUNITY_TYPE.GAMING]: ['#5c96f1', '#94d3e7'],
-  [COMMUNITY_TYPE.TEACH]: ['#72B58C', '#C6D183'],
-  [COMMUNITY_TYPE.GROUP]: ['#ff862c', '#ffd599'],
-}
-
 export const COMMUNITY_CATS = [
   {
     //

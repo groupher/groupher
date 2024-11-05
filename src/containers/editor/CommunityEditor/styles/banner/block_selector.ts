@@ -1,28 +1,24 @@
-import type { TActive } from '~/spec'
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.rowWrap('align-center')};
-  color: ${theme('article.digest')};
-  width: 300px;
-  margin-top: 14px;
-  gap: 12px 14px;
-`
-type TBox = TActive & { radius: number }
-export const Box = styled.div<TBox>`
-  font-size: 13px;
-  padding: 2px 15px;
-  color: ${({ $active }) => ($active ? theme('article.title') : theme('article.digest'))};
-  border: 1px solid;
-  border-color: ${({ $active }) => ($active ? theme('article.title') : theme('editor.border'))};
-  border-radius: ${({ radius }) => `${radius}px;`};
-  font-weight: ${({ $active }) => ($active ? 600 : 400)};
+export { cn } from '~/css'
 
-  &:hover {
-    border-color: ${theme('article.title')};
-    color: ${theme('article.title')};
-    cursor: pointer;
+type TProps = {
+  rounded?: boolean
+}
+
+export default ({ rounded }: TProps) => {
+  const { cn, fg, br } = useTwBelt()
+
+  return {
+    wrapper: cn('row-center wrap w-full mt-4 gap-x-3.5 gap-y-3'),
+    block: cn(
+      'text-sm px-4 py-0.5 rounded-md border trans-all-200 pointer',
+      rounded ? 'rounded-xl' : 'rounded-md',
+      `hover:${fg('text.title')}`,
+      `hover:${br('text.digest')}`,
+      fg('text.digest'),
+      br('divider'),
+    ),
+    blockActive: cn('bold-sm', fg('text.title'), br('text.digest')),
   }
-
-  transition: all 0.2s;
-`
+}

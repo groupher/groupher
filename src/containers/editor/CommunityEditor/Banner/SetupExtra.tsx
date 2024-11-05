@@ -16,9 +16,7 @@ import useSalon from '../styles/banner/setup_extra'
 export default () => {
   const s = useSalon()
 
-  const { homepage, city, source, communityType, validState, pervStep, nextStep, inputOnChange } =
-    useLogic()
-
+  const { homepage, city, source, validState, pervStep, nextStep, inputOnChange } = useLogic()
   const { isTitleValid, isDescValid, isLogoValid, submitting } = validState
   const isValid = isTitleValid && isDescValid && isLogoValid
 
@@ -46,7 +44,7 @@ export default () => {
         <div className="mb-9" />
 
         <div className={s.label}>团队规模</div>
-        <ScaleSelector communityType={communityType} />
+        <ScaleSelector />
         <div className="mb-10" />
 
         <div className={s.label}>您（的团队）所在城市是？</div>
@@ -58,9 +56,9 @@ export default () => {
         <div className="mb-5" />
         <BlockSelector
           options={SOURCE_OPTIONS}
-          radius={20}
           activeValue={source}
           onChange={(v) => inputOnChange(v, 'source')}
+          rounded
         />
         <div className="mb-5" />
         {/* <ExtraInputBox

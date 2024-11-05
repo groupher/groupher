@@ -1,85 +1,37 @@
-import type { TActive, TSpace } from '~/spec'
-import styled, { css, theme } from '~/css'
+import useTheme from '~/hooks/useTheme'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import { WithMargin } from '~/widgets/Common'
+export { cn } from '~/css'
 
-export const Wrapper = styled.div`
-  ${css.column('align-center')};
-  color: ${theme('article.digest')};
-  width: 100%;
-  margin-top: 10px;
-`
+export default () => {
+  const { isDarkTheme } = useTheme()
+  const { cn, fg, br, bg, shadow, global, vividDark } = useTwBelt()
 
-export const SlideBox = styled.div`
-  position: relative;
-  ${css.row('align-center', 'justify-around')};
-  width: 100%;
-  height: 24px;
-  border: 1px solid;
-  border-color: ${theme('editor.border')};
-  border-radius: 20px;
-`
-type TBar = { $width: string; $colors: string[]; $darker: boolean }
-export const Bar = styled.div<TBar>`
-  position: absolute;
-  left: 0;
-  top: -1px;
-  border-radius: 15px;
-  height: 24px;
-  width: ${({ $width }) => $width};
-  filter: ${({ $darker }) => ($darker ? 'brightness(0.85)' : 'brightness(1.02)')};
-  transition: width 0.25s;
-`
-/* background: ${({ $colors }) => `linear-gradient(to right, ${$colors[1]}, ${$colors[0]})`}; */
+  return {
+    wrapper: cn('column-alian-center w-full mt-4', fg('text.digest')),
+    slideBox: cn('row-center justify-around w-full h-6 rounded-xl border relative', br('divider')),
+    noteBtn: cn('text-xs pointer', `hover:${fg('text.title')}`, fg('text.digest')),
+    noteBtnActive: cn('bold-sm', fg('text.title')),
+    footer: 'row-center justify-around w-full mt-2.5',
 
-export const BarDot = styled.div`
-  ${css.circle(16)};
-  background: white;
-  position: absolute;
-  right: 4px;
-  top: 4px;
-  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-`
-export const IndexDot = styled.div`
-  ${css.circle(6)};
-  background-color: ${theme('editor.border')};
-  margin-left: -8px;
-  cursor: pointer;
-
-  &:hover {
-    ${css.circle(8)};
+    indexDot: cn(
+      'align-both size-5 circle border border-dotted pointer',
+      'absolute right-1 top-0.5 ',
+      isDarkTheme ? shadow('sm') : shadow('xl'),
+      bg('card'),
+      br('text.digest'),
+    ),
+    indexInner: cn('size-3.5 circle', bg('text.digest')),
+    //
+    markDot: cn('align-both w-8 h-4 pointer -ml-2'),
+    markInner: cn('size-2 circle opacity-40', bg('text.digest')),
+    //
+    gradientBar: cn('absolute left-0 -top-px h-6 rounded-xl trans-all-200 overflow-hidden'),
+    gradientBg: cn(
+      'absolute top-0 left-0 w-full h-full',
+      global('gradient-purple'),
+      isDarkTheme && 'rotate-180',
+      vividDark(),
+    ),
   }
-
-  transition: all 0.2s;
-`
-export const Footer = styled.div`
-  ${css.row('align-center', 'justify-around')};
-  width: 100%;
-  margin-top: 8px;
-`
-
-type TNote = TActive & TSpace
-export const Note = styled(WithMargin)<TNote>`
-  font-size: 12px;
-  color: ${({ $active }) => ($active ? theme('article.title') : theme('lightText'))};
-  font-weight: ${({ $active }) => ($active ? 500 : 400)};
-
-  &:hover {
-    color: ${theme('article.title')};
-    cursor: pointer;
-    font-weight: 500;
-  }
-
-  transition: color 0.2s;
-`
-export const ShineNote = styled.div<{ $colors: string[] }>`
-  font-size: 12px;
-  background: ${({ $colors }) => `linear-gradient(to right, ${$colors[0]}, ${$colors[1]})`};
-  font-weight: 550;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 500;
-  cursor: pointer;
-  margin-left: -22px;
-`
+}
