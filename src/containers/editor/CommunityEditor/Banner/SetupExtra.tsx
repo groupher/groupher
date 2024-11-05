@@ -69,7 +69,7 @@ export default () => {
           /> */}
       </div>
       <div className={s.nextBtn}>
-        <ArrowButton leftLayout onClick={pervStep} dimWhenIdle className="saturate-0 opacity-80">
+        <ArrowButton leftLayout onClick={pervStep} dimWhenIdle className={s.prevBtn}>
           上一步
         </ArrowButton>
         <div className="mr-6" />

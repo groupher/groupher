@@ -15,7 +15,7 @@ export default () => {
     footer: 'row-center justify-around w-full mt-2.5',
 
     indexDot: cn(
-      'align-both size-5 circle border border-dotted pointer',
+      'align-both size-5 circle border border-dotted',
       'absolute right-1 top-0.5 ',
       isDarkTheme ? shadow('sm') : shadow('xl'),
       bg('card'),
@@ -23,8 +23,12 @@ export default () => {
     ),
     indexInner: cn('size-3.5 circle', bg('text.digest')),
     //
-    markDot: cn('align-both w-8 h-4 pointer -ml-2'),
-    markInner: cn('size-2 circle opacity-40', bg('text.digest')),
+    markDot: cn('align-both group w-10 h-4 pointer -ml-2 z-30'),
+    markInner: cn(
+      'size-2 circle opacity-40 trans-all-100 group-hover:scale-110',
+      isDarkTheme ? 'group-hover:brightness-150' : 'group-hover:brightness-50',
+      bg('text.digest'),
+    ),
     //
     gradientBar: cn('absolute left-0 -top-px h-6 rounded-xl trans-all-200 overflow-hidden'),
     gradientBg: cn(

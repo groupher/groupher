@@ -1,6 +1,8 @@
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
+  const { isLightTheme } = useTheme()
   const { cn, fg, bg, fill } = useTwBelt()
 
   return {
@@ -19,5 +21,6 @@ export default () => {
     //
     inputs: 'ml-4',
     input: 'w-72 h-9 rounded-md placeholder:text-sm',
+    prevBtn: cn('saturate-0', isLightTheme && 'opacity-80'),
   }
 }

@@ -1,6 +1,8 @@
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
+  const { isLightTheme } = useTheme()
   const { cn, fg, fill } = useTwBelt()
 
   return {
@@ -14,5 +16,6 @@ export default () => {
     info: 'mb-9',
     label: cn('text-sm ml-px mb-2.5 bold-sm', fg('text.digest')),
     nextBtn: 'align-both w-52 -ml-6',
+    prevBtn: cn('saturate-0', isLightTheme && 'opacity-80'),
   }
 }
