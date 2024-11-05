@@ -1,13 +1,21 @@
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
+  const { isDarkTheme } = useTheme()
   const { cn, br, bg, fill } = useTwBelt()
 
   const base = cn('align-both size-5 circle border', br('text.digest'))
+
   return {
     dot: cn('size-2 circle', bg('text.digest')),
     //
-    done: cn(base, 'size-4', bg('text.digest'), 'border-none'),
+    done: cn(
+      base,
+      'size-4',
+      !isDarkTheme && cn(bg('text.digest'), 'border-none'),
+      isDarkTheme && cn(bg('card'), 'border-dotted'),
+    ),
     doing: cn(base, 'border-dashed animate-spin animate-duration-[8000ms]'),
     todo: cn(base, 'border', br('divider')),
     //
