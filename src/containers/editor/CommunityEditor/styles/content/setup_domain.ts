@@ -1,11 +1,9 @@
-import styled, { css } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.column('align-center')};
-  width: 100%;
-  border-radius: 6px;
-  margin-top: 20px;
-  margin-bottom: 60px;
-`
+export default () => {
+  const { cn } = useTwBelt()
 
-export const holder = 1
+  return {
+    wrapper: cn('column-align-center w-full rounded-md mt-5 mb-16'),
+  }
+}

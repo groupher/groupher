@@ -6,14 +6,12 @@
 
 import useAccount from '~/hooks/useAccount'
 
-import SelectType from './SelectType'
 import SetupDomain from './SetupDomain'
 import SetupInfo from './SetupInfo'
 
 import { STEP } from '../constant'
 
 import useLogic from '../useLogic'
-import { Wrapper } from '../styles/content'
 
 export default () => {
   const { isLogin } = useAccount()
@@ -33,7 +31,7 @@ export default () => {
 
   switch (step) {
     case STEP.SELECT_TYPE: {
-      stepComp = <SelectType />
+      stepComp = null
       break
     }
     case STEP.SETUP_DOMAIN: {
@@ -50,5 +48,5 @@ export default () => {
     }
   }
 
-  return <Wrapper>{stepComp}</Wrapper>
+  return <div className="justify-center row">{stepComp}</div>
 }

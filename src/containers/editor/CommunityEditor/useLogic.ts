@@ -31,8 +31,7 @@ type TRet = {
 
 const store = proxy<TStore>({
   count: 10,
-  // step: STEP.SELECT_TYPE,
-  step: STEP.SETUP_INFO,
+  step: STEP.SELECT_TYPE,
   communityType: null,
 
   checking: false,

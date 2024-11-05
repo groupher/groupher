@@ -1,19 +1,11 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.column('align-both')};
-  width: 100%;
-  height: 50vh;
-  color: ${theme('rainbow.red')};
-  font-size: 14px;
-`
-export const Title = styled.div`
-  color: ${theme('article.title')};
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 10px;
-`
-export const Desc = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 14px;
-`
+export default () => {
+  const { cn, fg } = useTwBelt()
+
+  return {
+    wrapper: cn('column-align-both w-full h-screen text-sm'),
+    title: cn('text-base bold-sm mb-2.5', fg('text.title')),
+    desc: cn('text-sm', fg('text.digest')),
+  }
+}
