@@ -11,7 +11,7 @@ import BlockSelector from './BlockSelector'
 import NextStepButton from './NextStepButton'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/banner/setup_extra'
+import useSalon from '../salon/banner/setup_extra'
 
 export default () => {
   const s = useSalon()

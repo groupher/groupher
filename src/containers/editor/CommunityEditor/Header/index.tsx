@@ -5,7 +5,7 @@ import ThemeSwitch from '~/widgets/ThemeSwitch'
 import StepMap from './StepMap'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/header'
+import useSalon from '../salon/header'
 
 export default () => {
   const s = useSalon()

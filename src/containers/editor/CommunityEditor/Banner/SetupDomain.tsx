@@ -8,7 +8,7 @@ import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import NextStepButton from './NextStepButton'
 import InputBox from './InputBox'
 
-import useSalon from '../styles/banner/setup_domain'
+import useSalon from '../salon/banner/setup_domain'
 import useLogic from '../useLogic'
 
 export default () => {

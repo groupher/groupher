@@ -11,7 +11,7 @@ import Banner from './Banner'
 import Content from './Content'
 
 import useLogic from './useLogic'
-import useSalon from './styles'
+import useSalon from './salon'
 
 export default () => {
   const s = useSalon()

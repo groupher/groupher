@@ -12,7 +12,7 @@ import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import NextStepButton from './NextStepButton'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/banner/setup_info'
+import useSalon from '../salon/banner/setup_info'
 
 export default () => {
   const s = useSalon()

@@ -13,7 +13,7 @@ import Finished from './Finished'
 import { STEP } from '../constant'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/banner'
+import useSalon from '../salon/banner'
 
 export default () => {
   const s = useSalon()

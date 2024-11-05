@@ -13,7 +13,7 @@ import TypeBoxes from './TypeBoxes'
 import WarnBox from './WarnBox'
 
 import useLogic from '../../useLogic'
-import useSalon from '../../styles/banner/select_type'
+import useSalon from '../../salon/banner/select_type'
 
 export default () => {
   const { isLogin } = useAccount()

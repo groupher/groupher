@@ -10,7 +10,7 @@ import Facepile from '~/widgets/Facepile/LandingPage'
 import type { TCommunityType } from '../../spec'
 import { COMMUNITY_TYPE } from '../../constant'
 
-import useSalon, { cn } from '../../styles/banner/select_type/intro_images'
+import useSalon, { cn } from '../../salon/banner/select_type/intro_images'
 
 type TProps = {
   type: TCommunityType

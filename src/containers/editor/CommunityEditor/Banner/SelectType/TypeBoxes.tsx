@@ -5,7 +5,7 @@ import IntroImages from './IntroImages'
 import { COMMUNITY_CATS } from '../../constant'
 
 import useLogic from '../../useLogic'
-import useSalon, { cn, Icon } from '../../styles/banner/select_type/type_boxes'
+import useSalon, { cn, Icon } from '../../salon/banner/select_type/type_boxes'
 
 export default () => {
   const s = useSalon()

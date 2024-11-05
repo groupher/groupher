@@ -9,7 +9,7 @@ import StarSVG from '~/icons/Star5'
 
 import Favicon from './Favicon'
 
-import useSalon, { cn } from '../../styles/content/fake_browser/browser_head'
+import useSalon, { cn } from '../../salon/content/fake_browser/browser_head'
 
 type TProps = {
   domain?: string

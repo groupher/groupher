@@ -8,7 +8,7 @@ import ArrowSVG from '~/icons/ArrowUpRight'
 import { SexyDivider } from '~/widgets/Common'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/banner/finished'
+import useSalon, { cn } from '../salon/banner/finished'
 
 export default () => {
   const s = useSalon()

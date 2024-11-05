@@ -5,7 +5,7 @@ import Content from './Content'
 import MaskPanel from './MaskPanel'
 
 import type { TStep, TCommunityType } from '../../spec'
-import useSalon from '../../styles/content/fake_browser'
+import useSalon from '../../salon/content/fake_browser'
 
 type TProps = {
   step: TStep

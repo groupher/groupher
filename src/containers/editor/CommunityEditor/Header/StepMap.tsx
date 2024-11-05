@@ -8,8 +8,8 @@ import { STEP } from '../constant'
 import { tada } from '../helper'
 import useLogic from '../useLogic'
 
-import { Icon } from '../styles/banner/select_type/type_boxes'
-import useSalon from '../styles/header/step_map'
+import { Icon } from '../salon/banner/select_type/type_boxes'
+import useSalon from '../salon/header/step_map'
 
 export default () => {
   const s = useSalon()

@@ -6,7 +6,7 @@ import ArrowLinker from '~/widgets/ArrowLinker'
 import type { TStep } from '../../spec'
 import { STEP } from '../../constant'
 
-import useSalon, { cn } from '../../styles/content/fake_browser/mask_panel'
+import useSalon, { cn } from '../../salon/content/fake_browser/mask_panel'
 
 type TProps = {
   step: TStep

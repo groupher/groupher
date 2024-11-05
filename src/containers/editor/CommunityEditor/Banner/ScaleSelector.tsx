@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import useSalon, { cn } from '../styles/banner/scale_selector'
+import useSalon, { cn } from '../salon/banner/scale_selector'
 
 const STEP = {
   S: '15%',

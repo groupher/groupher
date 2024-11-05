@@ -4,7 +4,7 @@ import { find } from 'ramda'
 
 import type { TSelectOption } from '~/spec'
 
-import useSalon, { cn } from '../styles/banner/block_selector'
+import useSalon, { cn } from '../salon/banner/block_selector'
 
 type TProps = {
   options: TSelectOption[]

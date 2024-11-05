@@ -1,7 +1,7 @@
 import { type FC, memo } from 'react'
 
 import Img from '~/Img'
-import useSalon from '../../styles/content/fake_browser/favicon'
+import useSalon from '../../salon/content/fake_browser/favicon'
 
 type TProps = {
   title: string

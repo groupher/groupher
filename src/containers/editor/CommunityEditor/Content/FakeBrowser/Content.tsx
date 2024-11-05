@@ -6,7 +6,7 @@ import Img from '~/Img'
 import communityIntros from '../communityIntros'
 import type { TCommunityType } from '../../spec'
 
-import useSalon, { cn } from '../../styles/content/fake_browser/content'
+import useSalon, { cn } from '../../salon/content/fake_browser/content'
 
 type TProps = {
   title?: string
