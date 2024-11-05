@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import { Wrapper, Title, Desc } from '../../styles/banner/select_type/warn_box'
+import useSalon from '../../salon/banner/select_type/warn_box'
 
 type TProps = {
   title: string
@@ -8,11 +8,13 @@ type TProps = {
 }
 
 const WarnBox: FC<TProps> = ({ title, desc }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Title>{title}</Title>
-      <Desc>{desc}</Desc>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <h3 className={s.title}>{title}</h3>
+      <div className={s.desc}>{desc}</div>
+    </div>
   )
 }
 

@@ -202,8 +202,9 @@ export default (): TRet => {
     if (part === 'slug') {
       snap.commit({ communityExist: false })
     }
+
     // @ts-ignore
-    snap.commit({ [part]: e?.target.value || e })
+    snap.commit({ [part]: e?.target.value || '' })
   }
 
   return {

@@ -13,9 +13,11 @@ import Finished from './Finished'
 import { STEP } from '../constant'
 
 import useLogic from '../useLogic'
-import { Wrapper } from '../styles/banner'
+import useSalon from '../salon/banner'
 
 export default () => {
+  const s = useSalon()
+
   const { step } = useLogic()
 
   let stepComp = null
@@ -44,5 +46,5 @@ export default () => {
     }
   }
 
-  return <Wrapper $testid="create-community-digest">{stepComp}</Wrapper>
+  return <div className={s.wrapper}>{stepComp}</div>
 }

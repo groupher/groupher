@@ -1,51 +1,39 @@
-import useTheme from '~/hooks/useTheme'
-import THEME from '~/const/theme'
+import CheckSVG from '~/icons/CheckCircle'
+
+import IntroImages from './IntroImages'
 
 import { COMMUNITY_CATS } from '../../constant'
+
 import useLogic from '../../useLogic'
-import {
-  Wrapper,
-  Box,
-  InnerBox,
-  ColorMask,
-  Header,
-  MainText,
-  CheckIcon,
-  Icon,
-} from '../../styles/banner/select_type/type_boxes'
+import useSalon, { cn, Icon } from '../../salon/banner/select_type/type_boxes'
 
 export default () => {
-  const { theme } = useTheme()
+  const s = useSalon()
   const { communityType, communityTypeOnChange } = useLogic()
 
   return (
-    <Wrapper key={theme}>
-      {COMMUNITY_CATS.map((item, index) => {
-        const $active = item.type === communityType
-        const $color = item.color
-        const IconComp = Icon[item.icon]
+    <div className={s.wrapper}>
+      {COMMUNITY_CATS.map((item) => {
+        const active = item.type === communityType
+        const IconComp = Icon[item.type]
 
         return (
-          <Box
+          <div
             key={item.type}
-            touched={!!communityType}
-            $active={$active}
-            $angle={index % 2 === 0 ? -2 : 2}
-            $withBorder={theme === THEME.DARK}
+            className={cn(s.block, active && s.blockActive)}
             onClick={() => communityTypeOnChange(item.type)}
           >
-            <InnerBox $active={$active} $color={$color}>
-              <Header>
-                <IconComp $active={$active} $color={$color} />
-                {$active && <CheckIcon $color={$color} />}
-              </Header>
-              <MainText>{item.title}</MainText>
-              <div className="grow" />
-              <ColorMask $active={$active} $color={$color} />
-            </InnerBox>
-          </Box>
+            <IntroImages type={item.type} current={communityType} />
+
+            <div className={s.header}>
+              <IconComp className={cn(s.icon, active && s.iconActive)} />
+              {active ? <CheckSVG className={s.checkIcon} /> : <div className={s.emptyCheck} />}
+            </div>
+            <h3 className={cn(s.title, active && s.titleActive)}>{item.title}</h3>
+            <div className="grow" />
+          </div>
         )
       })}
-    </Wrapper>
+    </div>
   )
 }

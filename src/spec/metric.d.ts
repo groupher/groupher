@@ -8,6 +8,8 @@ export type TMetric =
   | 'ARTICLE'
   | 'CHANGELOG_ARTICLE'
   | 'DASHBOARD'
+  // landings
+  | 'APPLY_COMMUNITY'
 
   // 版块
   | 'EXPLORE'

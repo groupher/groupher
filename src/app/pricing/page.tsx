@@ -1,5 +1,8 @@
 'use client'
 
+// https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config
+export const dynamic = 'force-static'
+
 import { EMAIL_SUPPORT } from '~/config'
 import AnimatedCount from '~/widgets/AnimatedCount'
 import { Link } from '~/widgets/Common'

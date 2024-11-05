@@ -390,6 +390,14 @@
     background: linear-gradient(53deg, #2b2b287a 13%, #98885340 100%);
   }
 
+  .hidden-panel {
+    background: linear-gradient(#fff0 0%, #fcfafc 40%);
+  }
+
+  .hidden-panel-dark {
+    background: linear-gradient(#0000 0%, #252525 40%);
+  }
+
   .animation-fade-up {
      @apply animate-fade-up animate-once animate-duration-200
   }

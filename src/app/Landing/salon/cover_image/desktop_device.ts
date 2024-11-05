@@ -38,10 +38,10 @@ export default () => {
     content: 'w-full h-[680px] align-both rounded-b-lg z-10',
     //
     imageBox: cn(
-      'align-both w-[900px] h-[650px] mt-8 rounded-t-lg border overflow-hidden',
+      'align-both relative w-11/12 h-[648px] mt-8 rounded-t-lg border overflow-hidden',
       br('divider'),
       shadow('sm'),
     ),
-    coverImg: cn('w-[900px] h-[760px] object-cover'),
+    coverImg: cn('w-full h-[762px] object-cover'),
   }
 }

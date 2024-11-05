@@ -21,6 +21,8 @@ const GENERAL = [
   'shadow-md',
   'shadow-lg',
   'shadow-xl',
+  //
+  'hidden-panel',
 ]
 
 const LANDING_GRADIENTS = [
@@ -92,10 +94,13 @@ const HOVERS = [
   'bg-rainbow-redBg',
   'bg-hoverBg',
   'bg-htmlBg',
+  'bg-card',
   'bg-menuHoverBg',
   'bg-alphaBg2',
   'border-divider',
   'border-text-digest',
+  // shadows
+  'shadow-sm',
 ]
 
 const INPUTS = ['border-text-digest']

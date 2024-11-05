@@ -15,6 +15,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import type { TCommunity, TMetric, TThemeName } from '~/spec'
 import { P } from '~/schemas'
 import { THREAD, ARTICLE_THREAD } from '~/const/thread'
+import { ROUTE } from '~/const/route'
 import THEME from '~/const/theme'
 import METRIC from '~/const/metric'
 import URL_PARAM from '~/const/url_param'
@@ -107,11 +108,17 @@ export const useI18n = (): TUseI18n => {
 // }
 
 export const useMetric = (): TMetric => {
+  const pathname = usePathname()
+
   const thread = useThreadParam()
   const articleParams = useArticleParams()
 
   if (includes(thread, values(ARTICLE_THREAD)) && articleParams.id) {
     return METRIC.ARTICLE
+  }
+
+  if (ROUTE.APPLY_COMMUNITY === pathname) {
+    return METRIC.APPLY_COMMUNITY
   }
 
   if (thread === THREAD.DASHBOARD) {

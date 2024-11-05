@@ -1,20 +1,6 @@
-import { type FC, useState } from 'react'
+import { useState } from 'react'
 
-import useTheme from '~/hooks/useTheme'
-import THEME from '~/const/theme'
-
-import type { TCommunityType } from '../spec'
-import { COMMUNITY_CATS_TEXT_COLORS } from '../constant'
-import {
-  Wrapper,
-  SlideBox,
-  Bar,
-  BarDot,
-  IndexDot,
-  Footer,
-  Note,
-  ShineNote,
-} from '../styles/banner/scale_selector'
+import useSalon, { cn } from '../salon/banner/scale_selector'
 
 const STEP = {
   S: '15%',
@@ -23,49 +9,59 @@ const STEP = {
   L: '91%',
 }
 
-type TProps = {
-  communityType: TCommunityType
-}
-
-const ScaleSelector: FC<TProps> = ({ communityType }) => {
-  const { theme } = useTheme()
+export default () => {
+  const s = useSalon()
   const [step, setStep] = useState(STEP.X)
-  const colors = COMMUNITY_CATS_TEXT_COLORS[communityType]
-  const darker = theme === THEME.DARK
 
   return (
-    <Wrapper>
-      <SlideBox>
-        <Bar $width={step} $colors={colors} $darker={darker}>
-          <BarDot />
-        </Bar>
-        <IndexDot onClick={() => setStep(STEP.S)} />
-        <IndexDot onClick={() => setStep(STEP.X)} />
-        <IndexDot onClick={() => setStep(STEP.M)} />
-        <IndexDot onClick={() => setStep(STEP.L)} />
-      </SlideBox>
-      <Footer>
-        {step !== STEP.S ? (
-          <Note left={-22} onClick={() => setStep(STEP.S)} $active={step === STEP.S}>
-            独立开发者
-          </Note>
-        ) : (
-          <ShineNote $colors={colors} onClick={() => setStep(STEP.S)}>
-            独立开发者
-          </ShineNote>
-        )}
-        <Note left={-12} onClick={() => setStep(STEP.X)} $active={step === STEP.X}>
+    <div className={s.wrapper}>
+      <div className={s.slideBox}>
+        <div className={s.gradientBar} style={{ width: step }}>
+          <div className={s.gradientBg} />
+          <div className={s.indexDot}>
+            <div className={s.indexInner} />
+          </div>
+        </div>
+
+        <div className={s.markDot} onClick={() => setStep(STEP.S)}>
+          <div className={s.markInner} />
+        </div>
+        <div className={s.markDot} onClick={() => setStep(STEP.X)}>
+          <div className={s.markInner} />
+        </div>
+        <div className={s.markDot} onClick={() => setStep(STEP.M)}>
+          <div className={s.markInner} />
+        </div>
+        <div className={s.markDot} onClick={() => setStep(STEP.L)}>
+          <div className={s.markInner} />
+        </div>
+      </div>
+      <div className={s.footer}>
+        <div
+          className={cn(s.noteBtn, '-ml-5', step === STEP.S && s.noteBtnActive)}
+          onClick={() => setStep(STEP.S)}
+        >
+          独立开发者
+        </div>
+        <div
+          className={cn(s.noteBtn, '-ml-4', step === STEP.X && s.noteBtnActive)}
+          onClick={() => setStep(STEP.X)}
+        >
           2-20
-        </Note>
-        <Note left={-4} onClick={() => setStep(STEP.M)} $active={step === STEP.M}>
+        </div>
+        <div
+          className={cn(s.noteBtn, '-ml-1', step === STEP.M && s.noteBtnActive)}
+          onClick={() => setStep(STEP.M)}
+        >
           20-100
-        </Note>
-        <Note left={-4} right={2} onClick={() => setStep(STEP.L)} $active={step === STEP.L}>
+        </div>
+        <div
+          className={cn(s.noteBtn, '-ml-1 mr-0.5', step === STEP.L && s.noteBtnActive)}
+          onClick={() => setStep(STEP.L)}
+        >
           100+
-        </Note>
-      </Footer>
-    </Wrapper>
+        </div>
+      </div>
+    </div>
   )
 }
-
-export default ScaleSelector

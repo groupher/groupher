@@ -2,13 +2,14 @@ import FakeBrowser from './FakeBrowser'
 
 import { STEP } from '../constant'
 import useLogic from '../useLogic'
-import { Wrapper } from '../styles/content/setup_domain'
+import useSalon from '../salon/content/setup_domain'
 
 export default () => {
+  const s = useSalon()
   const { slug, title, desc, logo, communityType } = useLogic()
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <FakeBrowser
         domain={slug}
         communityType={communityType}
@@ -17,6 +18,6 @@ export default () => {
         logo={logo}
         step={STEP.SETUP_INFO}
       />
-    </Wrapper>
+    </div>
   )
 }

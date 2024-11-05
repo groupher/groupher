@@ -1,4 +1,5 @@
 import type { TTopbarLayout, TColorName } from '~/spec'
+import { includes } from 'ramda'
 
 import useTheme from '~/hooks/useTheme'
 import useSubStore from '~/hooks/useSubStore'
@@ -20,7 +21,9 @@ export default (): TRet => {
   const metric = useMetric()
   const { isLightTheme } = useTheme()
 
-  const hasTopbar = metric !== METRIC.HOME && store.topbarLayout === TOPBAR_LAYOUT.YES
+  const hasTopbar =
+    !includes(metric, [METRIC.APPLY_COMMUNITY, METRIC.HOME]) &&
+    store.topbarLayout === TOPBAR_LAYOUT.YES
   const isDarkBlack = !isLightTheme && store.topbarBg === COLOR_NAME.BLACK
 
   return {

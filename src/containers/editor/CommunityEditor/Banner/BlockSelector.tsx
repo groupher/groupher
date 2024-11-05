@@ -4,31 +4,32 @@ import { find } from 'ramda'
 
 import type { TSelectOption } from '~/spec'
 
-import { Wrapper, Box } from '../styles/banner/block_selector'
+import useSalon, { cn } from '../salon/banner/block_selector'
 
 type TProps = {
   options: TSelectOption[]
   radius?: number
   onChange: (value: string) => void
   activeValue: string
+  rounded?: boolean
 }
 
-const BlockSelector: FC<TProps> = ({ options, radius = 5, activeValue, onChange }) => {
+const BlockSelector: FC<TProps> = ({ options, rounded = false, activeValue, onChange }) => {
+  const s = useSalon({ rounded })
   const activeOption = find((item) => item.value === activeValue, options)
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {options.map((option) => (
-        <Box
-          $active={activeOption?.value === option.value}
+        <div
           key={option.value}
-          radius={radius}
+          className={cn(s.block, activeOption?.value === option.value && s.blockActive)}
           onClick={() => onChange(option.value)}
         >
           {option.label}
-        </Box>
+        </div>
       ))}
-    </Wrapper>
+    </div>
   )
 }
 

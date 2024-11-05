@@ -11,54 +11,44 @@ export const STEP = {
 } as Record<Uppercase<TStep>, Uppercase<TStep>>
 
 export const COMMUNITY_TYPE = {
-  WEB: 'WEB',
-  CLIENT: 'CLIENT',
-  HARDWARE: 'HARDWARE',
-  GAME: 'GAME',
+  PRODUCT: 'PRODUCT',
+  GAMING: 'GAMING',
+  TEACH: 'TEACH',
+  GROUP: 'GROUP',
 } as Record<Uppercase<TCommunityType>, Uppercase<TCommunityType>>
 
+// TODO: remove later
 export const COMMUNITY_CATS_COLOR = {
-  [COMMUNITY_TYPE.WEB]: COLOR_NAME.PURPLE,
-  [COMMUNITY_TYPE.CLIENT]: COLOR_NAME.BLUE,
-  [COMMUNITY_TYPE.HARDWARE]: COLOR_NAME.GREEN,
-  [COMMUNITY_TYPE.GAME]: COLOR_NAME.ORANGE,
-}
-
-export const COMMUNITY_CATS_TEXT_COLORS = {
-  [COMMUNITY_TYPE.WEB]: ['#c479de', '#f8be6d'], // pink
-  [COMMUNITY_TYPE.CLIENT]: ['#5c96f1', '#94d3e7'],
-  [COMMUNITY_TYPE.HARDWARE]: ['#72B58C', '#C6D183'],
-  [COMMUNITY_TYPE.GAME]: ['#ff862c', '#ffd599'],
+  [COMMUNITY_TYPE.PRODUCT]: COLOR_NAME.PURPLE,
+  [COMMUNITY_TYPE.PRODUCT]: COLOR_NAME.BLUE,
+  [COMMUNITY_TYPE.TEACH]: COLOR_NAME.GREEN,
+  [COMMUNITY_TYPE.GROUP]: COLOR_NAME.ORANGE,
 }
 
 export const COMMUNITY_CATS = [
   {
     //
-    type: COMMUNITY_TYPE.WEB,
-    title: 'Web/移动应用',
+    type: COMMUNITY_TYPE.PRODUCT,
+    title: '产品支持',
     color: COLOR_NAME.PURPLE,
-    icon: 'Browser',
   },
   {
     //
-    type: COMMUNITY_TYPE.CLIENT,
-    title: '桌面生产力',
-    color: COLOR_NAME.BLUE,
-    icon: 'Hammer',
-  },
-  {
-    //
-    type: COMMUNITY_TYPE.HARDWARE,
-    title: '硬件产品',
-    color: COLOR_NAME.GREEN,
-    icon: 'Robot',
-  },
-  {
-    //
-    type: COMMUNITY_TYPE.GAME,
+    type: COMMUNITY_TYPE.GAMING,
     title: '游戏开发',
     color: COLOR_NAME.ORANGE,
-    icon: 'Game',
+  },
+  {
+    //
+    type: COMMUNITY_TYPE.TEACH,
+    title: '课程 / 教学',
+    color: COLOR_NAME.GREEN,
+  },
+  {
+    //
+    type: COMMUNITY_TYPE.GROUP,
+    title: '圈子 / 团体',
+    color: COLOR_NAME.BLUE,
   },
 ]
 

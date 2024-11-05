@@ -47,6 +47,11 @@
       "pl": 40,
       "pr": 36
     },
+    "apply_community": {
+      "width": "1460px",
+      "pl": 32,
+      "pr": 28
+    },
     "dashboard": {
       "width": "1300px",
       "pl": 24,

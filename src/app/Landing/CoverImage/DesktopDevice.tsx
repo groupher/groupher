@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import Typewriter from 'typewriter-effect'
 
-import Img from '~/Img'
+// import Img from '~/Img'
 
-// import Image from 'next/image'
+import Image from 'next/image'
 import { fmt2CompStyle } from '~/fmt'
 
 import LockSVG from '~/icons/Lock'
@@ -49,18 +49,18 @@ export default () => {
         <div className="grow" />
       </div>
       <div className={s.content}>
-        <div className={s.imageBox}>
-          <Img src={imgSrc} className={s.coverImg} alt="home page cover" />
-        </div>
         {/* <div className={s.imageBox}>
-          <Image
-            src={imageSrc}
-            width={900}
-            height={760}
-            alt="cover page"
-            className="z-10 object-cover"
-          />
+          <Img src={imgSrc} className={s.coverImg} alt="home page cover" />
         </div> */}
+        <div className={s.imageBox}>
+          <Image
+            src={imgSrc}
+            alt="cover page"
+            width={400}
+            height={300}
+            className="z-10 object-cover w-full h-[768px]"
+          />
+        </div>
       </div>
       <div className={s.background} style={{ background, ...fmt2CompStyle(effect) }} />
     </div>

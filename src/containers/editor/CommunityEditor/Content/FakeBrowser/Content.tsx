@@ -1,26 +1,12 @@
 import { type FC, memo } from 'react'
 
 import { Trans } from '~/i18n'
+import Img from '~/Img'
 
 import communityIntros from '../communityIntros'
 import type { TCommunityType } from '../../spec'
 
-import {
-  Wrapper,
-  BannerWrapper,
-  IconBlock,
-  AccountIcon,
-  RealLogo,
-  Intro,
-  Title,
-  Desc,
-  TitleHolder,
-  ThreadWrapper,
-  ThreadItem,
-  FeedWrapper,
-  TagWrapper,
-  Feed,
-} from '../../styles/content/fake_browser/content'
+import useSalon, { cn } from '../../salon/content/fake_browser/content'
 
 type TProps = {
   title?: string
@@ -31,42 +17,52 @@ type TProps = {
 }
 
 const Content: FC<TProps> = ({ title = '', desc = '', logo, communityType, onHoverThread }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <BannerWrapper>
-        <Intro>
-          {logo ? <RealLogo src={logo} /> : <IconBlock />}
-          {title ? <Title>{title}</Title> : <TitleHolder>你的社区</TitleHolder>}
-        </Intro>
+    <div className={s.wrapper}>
+      <div className={s.banner}>
+        <div className="row-center">
+          {logo ? <Img src={logo} className={s.logo} /> : <div className={s.bar} />}
+          {title ? (
+            <div className={s.title}>{title}</div>
+          ) : (
+            <div className={cn(s.title, 'opacity-50')}>你的社区</div>
+          )}
+        </div>
         {communityType && (
-          <ThreadWrapper>
+          <div className={s.threads}>
             {communityIntros[communityType].threads.map((thread) => (
-              <ThreadItem key={thread} onMouseOver={() => onHoverThread(thread)}>
+              <div
+                key={thread}
+                className={s.threadItem}
+                onMouseOver={() => onHoverThread(thread)}
+                onFocus={() => onHoverThread(thread)}
+              >
                 {Trans(thread)}
-              </ThreadItem>
+              </div>
             ))}
-          </ThreadWrapper>
+          </div>
         )}
-        <AccountIcon />
-      </BannerWrapper>
-      <Desc>{desc}</Desc>
-      <TagWrapper hasDesc={!!desc}>
-        <Feed width="50%" />
-        <Feed width="30%" />
-        <Feed width="6%" />
-        <Feed width="50%" />
-      </TagWrapper>
-      <FeedWrapper>
-        <Feed width="50%" />
-        <Feed width="40%" />
-        <Feed width="46%" />
-        <Feed width="50%" />
-        <Feed width="40%" />
-        <Feed width="46%" />
-        <Feed width="46%" />
-        <Feed width="50%" />
-      </FeedWrapper>
-    </Wrapper>
+        <div className={cn(s.bar, 'size-4')} />
+      </div>
+      <div className={s.desc}>{desc}</div>
+      <div className={cn(s.tags, desc && 'top-32')}>
+        <div className={cn(s.feedBar, 'w-32')} />
+        <div className={cn(s.feedBar, 'w-28')} />
+        <div className={cn(s.feedBar, 'w-24')} />
+        <div className={cn(s.feedBar, 'w-32')} />
+      </div>
+      <div className={s.feeds}>
+        <div className={s.feedBar} />
+        <div className={cn(s.feedBar, 'w-72')} />
+        <div className={cn(s.feedBar, 'w-64')} />
+        <div className={s.feedBar} />
+        <div className={cn(s.feedBar, 'w-52')} />
+        <div className={s.feedBar} />
+        <div className={cn(s.feedBar, 'w-48')} />
+      </div>
+    </div>
   )
 }
 

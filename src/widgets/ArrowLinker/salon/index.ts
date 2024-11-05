@@ -2,6 +2,7 @@ import type { TColorName, TSpace } from '~/spec'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
+import usePrimaryColor from '~/hooks/usePrimaryColor'
 
 export { cn } from '~/css'
 
@@ -14,16 +15,19 @@ export default ({ color, withSoftBg, ...spacing }: TProps) => {
   const { isLightTheme } = useTheme()
   const { cn, margin, primary, rainbow } = useTwBelt()
 
+  const primaryColor = usePrimaryColor()
+
   const fgColor = color ? rainbow(color, 'fg') : primary('fg')
   const fillColor = color ? rainbow(color, 'fill') : primary('fill')
 
   return {
     wrapper: cn(
       'row-center group pr-1.5 pl-2.5 py-1.5 rounded-lg w-max	trans-all-100',
-      `hover:${rainbow(color, 'bgSoft')}`,
+      `hover:${rainbow(color || primaryColor, 'bgSoft')}`,
       !isLightTheme && 'hover:brightness-125',
       !isLightTheme && !color && 'hover:brightness-95',
       withSoftBg && color && rainbow(color, 'bgSoft'),
+      withSoftBg && !color && rainbow(primaryColor, 'bgSoft'),
       margin(spacing),
     ),
     title: cn('text-sm', fgColor),

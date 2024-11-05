@@ -4,7 +4,7 @@ import { HCN } from '~/const/name'
 import { ROUTE } from '~/const/route'
 
 const COMMUNITY_INTRO = {
-  WEB: {
+  PRODUCT: {
     title: '什么是 Web 应用?',
     desc: '你的产品主要通过浏览器 web 端为用户提供服务，如网站，H5 页面等。',
     threads: [ROUTE.POST, ROUTE.KANBAN, ROUTE.CHANGELOG, ROUTE.HELP, ROUTE.ABOUT],
@@ -36,19 +36,8 @@ const COMMUNITY_INTRO = {
       },
     ],
   },
-  CLIENT: {
-    title: '什么是客户端软件?',
-    desc: '包括但不限于各行业 PC / Mac 端生产力工具，手机 APP 等。',
-    threads: [ROUTE.POST, ROUTE.KANBAN, ROUTE.CHANGELOG, ROUTE.HELP, ROUTE.ABOUT],
-    demos: [
-      {
-        title: 'Groupher',
-        slug: HCN,
-        logo: '',
-      },
-    ],
-  },
-  HARDWARE: {
+
+  TEACH: {
     title: '什么是硬件产品',
     desc: '各类机器人，无人机及其类似可玩性较强的硬件类及工业类产品。',
     threads: [ROUTE.POST, ROUTE.KANBAN, ROUTE.CHANGELOG, ROUTE.HELP, ROUTE.ABOUT],
@@ -59,7 +48,7 @@ const COMMUNITY_INTRO = {
       },
     ],
   },
-  GAME: {
+  GAMING: {
     title: '什么是独立游戏',
     desc: '个人或小团队开发的平台或手机游戏，Indie Game Rocks!',
     threads: [ROUTE.POST, ROUTE.KANBAN, ROUTE.CHANGELOG, ROUTE.HELP, ROUTE.ABOUT],
@@ -89,6 +78,18 @@ const COMMUNITY_INTRO = {
         title: '成都',
         slug: 'chengdu',
         logo: `${ICON_BASE}/city/chengdu.svg`,
+      },
+    ],
+  },
+  GROUP: {
+    title: '什么是客户端软件?',
+    desc: '包括但不限于各行业 PC / Mac 端生产力工具，手机 APP 等。',
+    threads: [ROUTE.POST, ROUTE.KANBAN, ROUTE.CHANGELOG, ROUTE.HELP, ROUTE.ABOUT],
+    demos: [
+      {
+        title: 'Groupher',
+        slug: HCN,
+        logo: '',
       },
     ],
   },
