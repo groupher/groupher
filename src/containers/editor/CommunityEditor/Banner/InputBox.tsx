@@ -1,48 +1,32 @@
-import { type FC, memo, useRef } from 'react'
+import type { FC } from 'react'
 
 import type { TInput } from '~/spec'
 
-import { Wrapper, InputWrapper, InputMask, MaskNumer, InputBar } from '../styles/banner/input_box'
+import Input from '~/widgets/Input'
+import useSalon from '../styles/banner/input_box'
 
 type TProps = {
-  showMask?: boolean
   placeholder?: string
   value?: string
   onChange: (e: TInput) => void
   onBlur?: () => void
 }
 
-const InputBox: FC<TProps> = ({
-  showMask = false,
-  placeholder = '',
-  value = '',
-  onChange,
-  onBlur = console.log,
-}) => {
-  const ref = useRef(null)
+const InputBox: FC<TProps> = ({ placeholder = '', value = '', onChange, onBlur = console.log }) => {
+  const s = useSalon()
 
   return (
-    <Wrapper>
-      <InputWrapper>
-        <InputMask
-          show={showMask}
-          onClick={() => {
-            ref.current.focus()
-          }}
-        >
-          <MaskNumer>--</MaskNumer> xxx
-        </InputMask>
-        <InputBar
-          ref={ref}
-          onChange={(e) => onChange(e)}
-          value={value}
-          placeholder={placeholder}
-          onBlur={onBlur}
-          autoFocus
-        />
-      </InputWrapper>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <Input
+        className={s.input}
+        onChange={(e) => onChange(e)}
+        value={value}
+        placeholder={placeholder}
+        onBlur={onBlur}
+        autoFocus
+      />
+    </div>
   )
 }
 
-export default memo(InputBox)
+export default InputBox

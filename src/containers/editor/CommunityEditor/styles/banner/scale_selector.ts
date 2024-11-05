@@ -27,10 +27,11 @@ export const Bar = styled.div<TBar>`
   border-radius: 15px;
   height: 24px;
   width: ${({ $width }) => $width};
-  background: ${({ $colors }) => `linear-gradient(to right, ${$colors[1]}, ${$colors[0]})`};
   filter: ${({ $darker }) => ($darker ? 'brightness(0.85)' : 'brightness(1.02)')};
   transition: width 0.25s;
 `
+/* background: ${({ $colors }) => `linear-gradient(to right, ${$colors[1]}, ${$colors[0]})`}; */
+
 export const BarDot = styled.div`
   ${css.circle(16)};
   background: white;

@@ -39,7 +39,7 @@ export default () => {
 
       {!(fmtError || slugExist) && (
         <div className={s.nextBtn}>
-          <ArrowButton leftLayout onClick={pervStep} dimWhenIdle className="saturate-0">
+          <ArrowButton leftLayout onClick={pervStep} dimWhenIdle className="saturate-0 opacity-80">
             上一步
           </ArrowButton>
 

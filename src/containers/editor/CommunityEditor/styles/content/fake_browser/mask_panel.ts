@@ -8,7 +8,7 @@ export default () => {
   const { cn, global, fg, bg, rainbow, sexyHBorder } = useTwBelt()
 
   return {
-    wrapper: cn('absolute -left-2.5 -bottom-10 pt-16 w-[700px] h-48 px-24', global('hidden-panel')),
+    wrapper: cn('absolute left-0 -bottom-10 pt-16 w-[678px] h-48 px-24', global('hidden-panel')),
     item: cn('row-center mb-2', fg('text.digest')),
     inner: 'row wrap gap-y-2',
     dot: cn('size-1 circle mr-2', bg('text.digest')),
