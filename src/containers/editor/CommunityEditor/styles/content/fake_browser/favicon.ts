@@ -1,15 +1,10 @@
-import styled, { css, theme } from '~/css'
-import Img from '~/Img'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const HolderIcon = styled.div`
-  ${css.size(14)};
-  border-radius: 3px;
-  background: ${theme('lightText')};
-  margin-left: 15px;
-`
-export const RealIcon = styled(Img)`
-  margin-left: 15px;
-  ${css.size(14)};
-  border-radius: 3px;
-  background: ${theme('lightText')};
-`
+export default () => {
+  const { cn, bg } = useTwBelt()
+
+  return {
+    holder: cn('size-3.5 opacity-30 rounded ml-4', bg('text.digest')),
+    logo: 'size-3.5 ml-4 rounded',
+  }
+}

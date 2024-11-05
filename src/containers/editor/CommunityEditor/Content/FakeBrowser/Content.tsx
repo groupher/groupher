@@ -47,7 +47,7 @@ const Content: FC<TProps> = ({ title = '', desc = '', logo, communityType, onHov
         <div className={cn(s.bar, 'size-4')} />
       </div>
       <div className={s.desc}>{desc}</div>
-      <div className={cn(s.tags, desc && 'top-36')}>
+      <div className={cn(s.tags, desc && 'top-32')}>
         <div className={cn(s.feedBar, 'w-32')} />
         <div className={cn(s.feedBar, 'w-28')} />
         <div className={cn(s.feedBar, 'w-24')} />
