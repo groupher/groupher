@@ -98,8 +98,6 @@ export default {
     purpleSoft: '#f7d8fd38',
     purplePale: 'linear-gradient(90deg, #f7d8fd38 0%, #f5e5f838 100%)',
 
-    grey: '#106d8a',
-
     pink: '#b36976',
     pinkSoft: '#ffd8ea59',
     pinkPale: '#ffd8ea59',
@@ -108,11 +106,6 @@ export default {
     blackBtn: '',
     blackSoft: '#f4f4f4',
     blackPale: '#f4f4f4',
-  },
-  grey: {
-    rare: '#fafafa',
-    middle: '#F1F3F4',
-    hard: '#F1F3F4',
   },
   shadow: {
     md: 'rgba(0, 0, 0, 0.03) 0px 6px 24px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px;',

@@ -4,13 +4,16 @@
 export const dynamic = 'force-static'
 
 import { EMAIL_SUPPORT } from '~/config'
-import AnimatedCount from '~/widgets/AnimatedCount'
-import { Link } from '~/widgets/Common'
+
+import { COLOR_NAME } from '~/const/colors'
 
 import useHover from '~/hooks/useHover'
 import useThemeData from '~/hooks/useThemeData'
-import { COLOR_NAME } from '~/const/colors'
+
 import HomeHeader from '~/widgets/HomeHeader'
+import AnimatedCount from '~/widgets/AnimatedCount'
+import { Link } from '~/widgets/Common'
+import Button from '~/widgets/Buttons/Button'
 
 import { FREE_PAN_ITEMS, PAID_PAN_ITEMS, CUSTOM_PAN_ITEMS } from './constant'
 import Feature from './Feature'
@@ -29,7 +32,6 @@ import {
   LetsTalk,
   CancelNote,
   ButtonWrapper,
-  UpgradeButton,
   CatPaw,
 } from './styles'
 
@@ -54,7 +56,7 @@ export default () => {
             ))}
           </Board>
           <ButtonWrapper>
-            <UpgradeButton ghost>创建社区实例</UpgradeButton>
+            <Button ghost>创建社区实例</Button>
           </ButtonWrapper>
         </Column>
         <Column ref={paidHoveredRef} $color={COLOR_NAME.ORANGE} $opacity={0.6}>
@@ -84,11 +86,11 @@ export default () => {
             ))}
           </Board>
           <ButtonWrapper>
-            <UpgradeButton>开始 30 天试用</UpgradeButton>
+            <Button>开始 30 天试用</Button>
           </ButtonWrapper>
         </Column>
-        <Column $color={COLOR_NAME.BLUE} $opacity={0.4}>
-          <TopTitle $color={COLOR_NAME.BLUE}>定制开发</TopTitle>
+        <Column $color={COLOR_NAME.PURPLE} $opacity={0.4}>
+          <TopTitle $color={COLOR_NAME.PURPLE}>定制开发</TopTitle>
           <Desc>您的产品需要更加个性化的功能，我们可提供量身定做服务。</Desc>
           <LetsTalk>
             <CoffeeIcon />
@@ -97,12 +99,12 @@ export default () => {
           <CancelNote>对社区产品有想法？让我们知道！</CancelNote>
           <Board>
             {CUSTOM_PAN_ITEMS.map((item) => (
-              <Feature key={item.key} title={item.title} color={COLOR_NAME.BLUE} />
+              <Feature key={item.key} title={item.title} color={COLOR_NAME.PURPLE} />
             ))}
           </Board>
           <ButtonWrapper>
             <Link href={`mailto:${EMAIL_SUPPORT}`}>
-              <UpgradeButton ghost>联系我们</UpgradeButton>
+              <Button ghost>联系我们</Button>
             </Link>
           </ButtonWrapper>
         </Column>

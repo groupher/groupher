@@ -2,7 +2,6 @@ import styled, { css, gradientBg, theme, rainbow } from '~/css'
 import type { TColor } from '~/spec'
 
 import CoffeeSVG from '~/icons/CoffeeDuo'
-import Button from '~/widgets/Buttons/Button'
 import Img from '~/Img'
 
 export const Wrapper = styled.div`
@@ -139,7 +138,7 @@ export const Price = styled.div`
 `
 export const CoffeeIcon = styled(CoffeeSVG)`
   ${css.size(22)};
-  fill: ${theme('rainbow.blue')};
+  fill: ${theme('rainbow.purple')};
   margin-right: 5px;
   margin-left: 1px;
   opacity: 0.8;
@@ -160,9 +159,6 @@ export const CancelNote = styled.div<TCancelNote>`
   opacity: 0.8;
   margin-top: ${({ $hide }) => ($hide ? '50px' : 0)};
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2);
-`
-export const UpgradeButton = styled(Button)`
-  width: 100%;
 `
 export const ButtonWrapper = styled.div`
   position: absolute;

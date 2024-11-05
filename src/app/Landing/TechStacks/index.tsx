@@ -9,7 +9,7 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <div className={s.slogan}>
-        <h3 className={s.title}>代码开源，开放透明</h3>
+        <h3 className={s.title}>Open Web, Open Source</h3>
         <div className={s.desc}>由久经考验的优秀开源技术栈驱动，期待您的共同参与</div>
       </div>
       <div className={s.wall}>
