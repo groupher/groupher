@@ -1,140 +1,36 @@
-import Link from 'next/link'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import styled, { css, theme } from '~/css'
-import ArrowSVG from '~/icons/ArrowUpRight'
+export { cn } from '~/css'
 
-import Img from '~/Img'
+export default () => {
+  const { cn, fg, bg, br, fill, menu, shadow, cutRest } = useTwBelt()
 
-export const Wrapper = styled.div`
-  position: relative;
-  ${css.column('align-both')};
-  color: ${theme('article.digest')};
-  padding-top: 5%;
-  padding-bottom: 5%;
-  width: 100%;
-  height: auto;
-`
-export const Title = styled.div`
-  color: ${theme('article.title')};
-  font-size: 18px;
-  margin-bottom: 12px;
-  font-weight: 550;
-  margin-left: -10px;
-`
-export const Desc = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 15px;
-  margin-bottom: 10px;
-`
-export const Frame = styled.div`
-  ${css.row()};
-  width: 700px;
-  height: 540px;
-  border-radius: 12px;
-  margin-top: 30px;
-`
-
-export const LeftFrame = styled.div`
-  ${css.column('align-both')};
-  background: ${theme('grey.rare')};
-  width: 50%;
-  height: 100%;
-  border-top-left-radius: 30px;
-  border-bottom-left-radius: 30px;
-  padding-bottom: 20px;
-`
-export const RightFrame = styled.div`
-  ${css.column('align-both')};
-  background: ${theme('grey.middle')};
-  width: 50%;
-  height: 100%;
-  padding: 20px 40px;
-  padding-top: 30px;
-
-  border-top-right-radius: 30px;
-  border-bottom-right-radius: 30px;
-`
-export const CommunityLogo = styled(Img)`
-  ${css.size(50)};
-`
-export const CommunityTitle = styled.div`
-  font-size: 18px;
-  color: ${theme('article.title')};
-  margin-top: 15px;
-  font-weight: 500;
-`
-export const CommunityDesc = styled.div`
-  font-size: 13px;
-  ${css.cutRest('200px')};
-  color: ${theme('hint')};
-`
-export const GotoLink = styled(Link)`
-  ${css.row('align-both')};
-  color: ${theme('article.title')};
-  text-decoration: none;
-  font-size: 13px;
-  min-width: 90px;
-  height: 34px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: ${theme('grey.middle')};
-  margin-top: 30px;
-
-  &:hover {
-    color: ${theme('article.title')};
-    text-decoration: underline;
-    text-decoration-color: ${theme('hint')};
-    cursor: pointer;
+  return {
+    wrapper: cn('column-align-both relative w-full mt-10 mb-10'),
+    title: cn('text-xl mb-3.5 mt-5 -ml-2.5', fg('text.title')),
+    desc: cn('text-sm mb-3', fg('text.digest')),
+    frame: 'row w-[680px] h-[540px] rounded-xl mt-8',
+    //
+    leftFrame: cn('column-align-both w-1/2 h-full rounded-l-xl pb-5', bg('sandBox')),
+    rightFrame: cn('column-align-both w-1/2 h-full rounded-r-xl px-2.5', bg('hoverBg')),
+    //
+    dashItem: cn(menu('bar'), 'py-4 px-6 h-20 rounded-lg'),
+    dashTitle: cn(menu('title'), 'row-center text-base bold-sm'),
+    dashDesc: cn('text-sm mt-1', fg('text.hint')),
+    linkIcon: cn(menu('link'), 'size-4 ml-1'),
+    //
+    gotoLink: cn(
+      'align-both text-sm w-max pl-4 pr-3 h-8 no-underline mt-8 border border-transparent rounded-lg',
+      'hover:underline',
+      br('divider'),
+      fg('text.title'),
+      bg('card'),
+      shadow('sm'),
+    ),
+    goDashboard: 'mt-5',
+    gotoLinkIcon: cn('size-3.5 ml-0.5 opacity-80', fill('text.digest')),
+    //
+    communityTitle: cn('text-lg mt-4 bold-sm', fg('text.title')),
+    communityDesc: cn('text-sm', fg('text.hint'), cutRest('w-48')),
   }
-
-  transition: all 0.2s;
-`
-export const GoDashLink = styled(GotoLink)`
-  background: ${theme('grey.rare')};
-  margin-top: 10px;
-`
-export const DashItem = styled(Link)`
-  ${css.row()};
-  width: 100%;
-  padding: 15px 25px;
-  border-radius: 6px;
-  text-decoration: none;
-
-  &:hover {
-    background: ${theme('grey.rare')};
-    cursor: pointer;
-    text-decoration: none;
-  }
-
-  transition: all 0.1s;
-`
-export const DashIntro = styled.div`
-  ${css.column('align-start')};
-`
-export const DashTitle = styled.div`
-  ${css.row('align-center')};
-  font-size: 13px;
-  color: ${theme('dashboard.menuTitle')};
-  font-weight: 500;
-  margin-bottom: 2px;
-
-  ${DashItem}:hover & {
-    color: ${theme('article.title')};
-    font-weight: 500;
-    text-decoration: underline;
-  }
-`
-export const ArrowIcon = styled(ArrowSVG)`
-  ${css.size(14)};
-  fill: ${theme('article.digest')};
-  margin-left: 8px;
-  opacity: 0;
-
-  ${DashItem}:hover & {
-    opacity: 1;
-  }
-`
-export const DashDesc = styled.div`
-  font-size: 12px;
-  color: ${theme('hint')};
-`
+}
