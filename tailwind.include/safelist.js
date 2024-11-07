@@ -21,6 +21,7 @@ const GENERAL = [
   'shadow-md',
   'shadow-lg',
   'shadow-xl',
+  'shape-shadow',
   //
   'hidden-panel',
 ]
@@ -105,7 +106,7 @@ const HOVERS = [
 
 const INPUTS = ['border-text-digest']
 
-const GROUP_HOVERS = ['text-text-title', 'fill-rainbow-red', 'fill-text-title']
+const GROUP_HOVERS = ['text-text-title', 'fill-rainbow-red', 'fill-text-title', 'shadow-sm']
 const MENU_GROUP_HOVERS = ['text-rainbow-red', 'fill-rainbow-red', 'fill-text-title']
 
 const CONTAINERS = keys(container).map(

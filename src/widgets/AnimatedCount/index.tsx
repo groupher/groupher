@@ -6,7 +6,7 @@ import SIZE from '~/const/size'
 
 import AnimatedCount from './AnimatedCount'
 
-import useSalon from './styles'
+import useSalon from './salon'
 
 export type TProps = {
   count?: number

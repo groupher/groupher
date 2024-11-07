@@ -33,7 +33,6 @@ export const Wrapper = styled.div<TWrapper>`
   height: auto;
   border-radius: 8px;
   min-height: 280px;
-  max-height: 65vh;
   box-shadow: ${theme('modal.shadow')};
   border: 1px solid;
   border-color: ${theme('popover.borderColor')};

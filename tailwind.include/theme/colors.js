@@ -94,7 +94,7 @@ module.exports = {
     //   dark: 'linear-gradient(90deg, #44352ead 0%, #382c27a1 100%)',
     // },
 
-    brown: { DEFAULT: '#8d691e', dark: '#8d691e' },
+    brown: { DEFAULT: '#8d691e', dark: '#a77c22' },
     brownSoft: { DEFAULT: '#fff3df', dark: '#3a342b' },
     // brownPale: {
     //   DEFAULT: 'linear-gradient(90deg, #cf806921 0%, #dbd0d01c 100%)',
@@ -148,8 +148,6 @@ module.exports = {
     //   dark: 'linear-gradient(90deg, #86539147  0%, #58445d38 100%)',
     // },
 
-    grey: { DEFAULT: '#106d8a', dark: '#106d8a' },
-
     pink: { DEFAULT: '#b36976', dark: '#b36976' },
     pinkSoft: { DEFAULT: '#ffd8ea59', dark: '#73526159' },
     // pinkPale: { DEFAULT: '#ffd8ea59', dark: '#73526159' },
@@ -164,12 +162,6 @@ module.exports = {
     // custom: { DEFAULT: '--var(rainbow-custom)', dark: '--var(rainbow-custom-dark)' },
     // custom: { DEFAULT: 'var(--rainbow-custom)', dark: 'var(--rainbow-custom-dark)' },
   },
-  grey: {
-    rare: { DEFAULT: '#fafafa', dark: '#272727' },
-    middle: { DEFAULT: '#F1F3F4', dark: '#333333' },
-    hard: { DEFAULT: '#F1F3F4', dark: '#414141' },
-  },
-
   // inspired by https://endless.design/
   gradientBg: {
     purple: {
