@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { Waypoint } from 'react-waypoint'
+import { range } from 'ramda'
 
-import useSalon from '../salon/cover_image/scroll_bar'
+import useSalon, { cn } from '../salon/cover_image/scroll_bar'
 
-export default () => {
+type TProps = {
+  imageIndex: number
+  onChange: (index: number) => void
+}
+
+export default ({ imageIndex, onChange }: TProps) => {
   const s = useSalon()
   const [show, setShow] = useState(false)
-
-  console.log('## show: ', show)
 
   return (
     <>
@@ -17,11 +21,14 @@ export default () => {
 
       {show && (
         <div className={s.wrapper}>
-          <div className={s.bar} />
-          <div className={s.dot} />
-          <div className={s.dot} />
-          <div className={s.dot} />
-          <div className={s.dot} />
+          {range(0, 5).map((i) => {
+            const active = i === imageIndex
+            return (
+              <div key={i} className={cn(s.dot, active && s.dotActive)}>
+                {!active && <div className={s.dotBox} onClick={() => onChange(i)} />}
+              </div>
+            )
+          })}
         </div>
       )}
     </>

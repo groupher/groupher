@@ -1,6 +1,8 @@
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
+export { cn } from '~/css'
+
 export default () => {
   const { isLightTheme } = useTheme()
 
@@ -16,7 +18,8 @@ export default () => {
       br('divider'),
       bg('alphaBg'),
     ),
-    dot: cn('size-2 circle opacity-65', bg('text.digest')),
-    bar: cn('w-12 h-2 circle rounded-md', bg('text.digest')),
+    dot: cn('relative size-2 circle opacity-65 trans-all-200 pointer', bg('text.digest')),
+    dotBox: cn('align-both absolute w-5 h-5 -top-1.5 -left-1.5 circle pointer'),
+    dotActive: 'w-12 rounded-md opacity-100',
   }
 }

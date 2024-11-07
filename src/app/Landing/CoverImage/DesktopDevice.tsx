@@ -13,10 +13,13 @@ import useTheme from '~/hooks/useTheme'
 import useWallpaper from '~/hooks/useWallpaper'
 
 import Scrollbar from './Scrollbar'
-
 import useSalon from '../salon/cover_image/desktop_device'
 
+const MAX_INTRO_IMAGES_COUNT = 5
+
 export default () => {
+  const [curImageIndex, setCurImageIndex] = useState(0)
+
   const [imgSrc, setImgSrc] = useState('/landing/intro/home.webp')
   const s = useSalon()
 
@@ -29,10 +32,20 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <div className={s.leftNavi}>
+      <div
+        className={s.leftNavi}
+        onClick={() =>
+          setCurImageIndex(curImageIndex <= 0 ? MAX_INTRO_IMAGES_COUNT - 1 : curImageIndex - 1)
+        }
+      >
         <ArrowSVG className={s.leftArrow} />
       </div>
-      <div className={s.rightNavi}>
+      <div
+        className={s.rightNavi}
+        onClick={() =>
+          setCurImageIndex(curImageIndex >= MAX_INTRO_IMAGES_COUNT - 1 ? 0 : curImageIndex + 1)
+        }
+      >
         <ArrowSVG className={s.rightArrow} />
       </div>
 
@@ -71,7 +84,7 @@ export default () => {
             className="z-10 object-cover w-full h-[768px]"
           />
         </div>
-        <Scrollbar />
+        <Scrollbar imageIndex={curImageIndex} onChange={(index) => setCurImageIndex(index)} />
       </div>
       <div className={s.background} style={{ background, ...fmt2CompStyle(effect) }} />
     </div>
