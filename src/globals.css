@@ -406,6 +406,14 @@
      @apply animate-fade-down animate-once animate-duration-200
   }
 
+  .shape-shadow {
+    filter: drop-shadow(2px 4px 6px lightgrey);
+  }
+
+  .shape-shadow-dark {
+    filter: drop-shadow(2px 4px 6px #141414);
+  }
+
   .debug {
     @apply border border-dashed;
     border-color: red;

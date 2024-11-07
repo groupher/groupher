@@ -5,9 +5,9 @@ import SIZE from '~/const/size'
 import FlipNumbers from 'react-flip-numbers'
 
 import type { TProps } from '.'
-import { getFontSize, getFlipNumOffset } from './styles/metric'
+import { getFontSize, getFlipNumOffset } from './salon/metric'
 
-import useSalon from './styles'
+import useSalon from './salon'
 
 const AnimatedCount: FC<TProps> = ({ count = 0, size = SIZE.SMALL, active = false }) => {
   const s = useSalon({ count, active })

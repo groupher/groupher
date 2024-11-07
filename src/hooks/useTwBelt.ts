@@ -20,7 +20,7 @@ type TBreakOut = 'footer' | 'header'
 type TMenuPart = 'bg' | 'bar' | 'title' | 'link'
 type TShadowSize = 'sm' | 'md' | 'lg' | 'xl'
 type TThemeSwitch = 'auto' | 'dark' | 'light'
-type TDimLevel = 'md' | 'sm'
+type TDimLevel = 'lg' | 'md' | 'sm'
 
 type TRet = {
   cn: (...inputs: ClassValue[]) => string
@@ -292,6 +292,7 @@ export default (): TRet => {
     if (isLightTheme) return ''
 
     if (level === 'sm') return 'brightness-90'
+    if (level === 'lg') return 'brightness-50'
 
     return 'brightness-75'
   }

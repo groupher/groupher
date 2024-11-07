@@ -94,7 +94,7 @@ module.exports = {
     //   dark: 'linear-gradient(90deg, #44352ead 0%, #382c27a1 100%)',
     // },
 
-    brown: { DEFAULT: '#8d691e', dark: '#8d691e' },
+    brown: { DEFAULT: '#8d691e', dark: '#a77c22' },
     brownSoft: { DEFAULT: '#fff3df', dark: '#3a342b' },
     // brownPale: {
     //   DEFAULT: 'linear-gradient(90deg, #cf806921 0%, #dbd0d01c 100%)',
