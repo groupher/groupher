@@ -8,11 +8,12 @@ export default () => {
   const { cn, fg, bg, rainbow, global, shadow, dimDark } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both w-full h-full mb-20 overflow-hidden'),
+    wrapper: cn('column-align-both w-full h-full mb-14 overflow-hidden'),
     bannerTitle: cn('text-2xl bold-sm mt-5 mb-2', fg('text.title')),
-    bannerDesc: cn('text-base', fg('text.digest')),
+    bannerDesc: cn('text-base mb-14', fg('text.digest')),
+    bannerNote: cn('text-base mb-8', fg('text.title')),
     //
-    inner: 'row justify-center w-full gap-x-9 mt-14',
+    inner: 'row justify-center w-full gap-x-9',
     toppingTitle: 'text-sm ml-px mb-2.5 z-20',
     fgGreen: rainbow(COLOR_NAME.GREEN, 'fg'),
     fgBrown: rainbow(COLOR_NAME.BROWN, 'fg'),

@@ -8,7 +8,6 @@ import CoffeeSVG from '~/icons/CoffeeDuo'
 import useHover from '~/hooks/useHover'
 import useThemeData from '~/hooks/useThemeData'
 
-import HomeHeader from '~/widgets/HomeHeader'
 import AnimatedCount from '~/widgets/AnimatedCount'
 import { Link } from '~/widgets/Common'
 import Button from '~/widgets/Buttons/Button'
@@ -19,17 +18,29 @@ import { FREE_PAN_ITEMS, PAID_PAN_ITEMS, CUSTOM_PAN_ITEMS } from './constant'
 
 import useSalon, { cn } from './salon'
 
-export default () => {
+type TProps = {
+  layout?: 'page' | 'modal'
+}
+
+export default ({ layout = 'page' }: TProps) => {
   const s = useSalon()
 
   const [paidHoveredRef, paidHovered] = useHover<HTMLDivElement>()
   const themeData = useThemeData()
 
   return (
-    <div className={s.wrapper}>
-      <HomeHeader />
-      <h3 className={s.bannerTitle}>与用户社区一起，走的更远</h3>
-      <div className={s.bannerDesc}>无套路，无广告，持续迭代，开放透明</div>
+    <div className={cn(s.wrapper, layout === 'modal' && 'scale-95 mb-0')}>
+      {layout === 'page' ? (
+        <>
+          <h3 className={s.bannerTitle}>与用户社区一起，走的更远</h3>
+          <div className={s.bannerDesc}>无套路，无广告，持续迭代，开放透明</div>
+        </>
+      ) : (
+        <>
+          <div className={s.bannerNote}>请升级到高级版本解锁该功能 👇</div>
+        </>
+      )}
+
       <div className={s.inner}>
         <div className={s.column}>
           <div className={s.gradientGreen} />

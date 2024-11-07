@@ -7,6 +7,7 @@
 import type { FC, ReactNode } from 'react'
 
 import useTrans from '~/hooks/useTrans'
+
 import usePageBg from '~/hooks/usePageBg'
 import useTopbar from '~/hooks/useTopbar'
 

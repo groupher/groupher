@@ -7,6 +7,7 @@ import { Toaster } from 'sonner'
 import useShortcut from '~/hooks/useShortcut'
 
 import Drawer from '~/containers/tool/Drawer'
+import PriceWall from '~/widgets/PriceWall/Modal'
 import UserListModal from '~/widgets/UserListModal'
 
 // import { Drawer } from './dynamic'
@@ -22,6 +23,7 @@ const Addon: FC = () => {
       {/* {!isMobile && <AbuseReport />} */}
       {/* @ts-ignore */}
       <Drawer />
+      <PriceWall />
       <UserListModal />
       <Toaster position="top-center" />
       {/* @ts-ignore */}
