@@ -45,11 +45,12 @@ export default () => {
     //
     content: 'relative w-full h-[680px] align-both rounded-b-lg z-10',
     //
+    snapContent: '',
     imageBox: cn(
       'align-both relative w-11/12 h-[648px] mt-8 rounded-t-lg border overflow-hidden',
       br('divider'),
       shadow('sm'),
     ),
-    coverImg: cn('w-full h-[762px] object-cover'),
+    coverImg: cn('z-10 object-cover w-full h-[768px] animation-fade-up'),
   }
 }

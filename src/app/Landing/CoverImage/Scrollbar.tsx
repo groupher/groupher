@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Waypoint } from 'react-waypoint'
 import { range } from 'ramda'
 
+import { MAX_INTRO_IMAGES_COUNT } from './DesktopDevice'
 import useSalon, { cn } from '../salon/cover_image/scroll_bar'
 
 type TProps = {
@@ -21,7 +22,7 @@ export default ({ imageIndex, onChange }: TProps) => {
 
       {show && (
         <div className={s.wrapper}>
-          {range(0, 5).map((i) => {
+          {range(0, MAX_INTRO_IMAGES_COUNT).map((i) => {
             const active = i === imageIndex
             return (
               <div key={i} className={cn(s.dot, active && s.dotActive)}>

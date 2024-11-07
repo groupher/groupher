@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import Typewriter from 'typewriter-effect'
 
-// import Img from '~/Img'
+import Img from '~/Img'
 
-import Image from 'next/image'
+// import Image from 'next/image'
 import { fmt2CompStyle } from '~/fmt'
 
 import LockSVG from '~/icons/Lock'
@@ -15,12 +15,13 @@ import useWallpaper from '~/hooks/useWallpaper'
 import Scrollbar from './Scrollbar'
 import useSalon from '../salon/cover_image/desktop_device'
 
-const MAX_INTRO_IMAGES_COUNT = 5
+export const MAX_INTRO_IMAGES_COUNT = 5
 
 export default () => {
   const [curImageIndex, setCurImageIndex] = useState(0)
 
   const [imgSrc, setImgSrc] = useState('/landing/intro/home.webp')
+  const [imgSrc2, _] = useState('/landing/intro/home-dark.webp')
   const s = useSalon()
 
   const { isLightTheme } = useTheme()
@@ -72,17 +73,10 @@ export default () => {
         <div className="grow" />
       </div>
       <div className={s.content}>
-        {/* <div className={s.imageBox}>
-          <Img src={imgSrc} className={s.coverImg} alt="home page cover" />
-        </div> */}
         <div className={s.imageBox}>
-          <Image
-            src={imgSrc}
-            alt="cover page"
-            width={400}
-            height={300}
-            className="z-10 object-cover w-full h-[768px]"
-          />
+          {curImageIndex === 0 && <Img src={imgSrc} alt="cover page" className={s.coverImg} />}
+
+          {curImageIndex === 1 && <Img src={imgSrc2} alt="cover page" className={s.coverImg} />}
         </div>
         <Scrollbar imageIndex={curImageIndex} onChange={(index) => setCurImageIndex(index)} />
       </div>

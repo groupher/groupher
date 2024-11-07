@@ -11,6 +11,7 @@ import { DOC_FAQ_LAYOUT } from '~/const/layout'
 import { ROUTE } from '~/const/route'
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/LinkOutside'
+import GithubSVG from '~/icons/social/Github'
 
 import useTheme from '~/hooks/useTheme'
 
@@ -76,8 +77,11 @@ export default () => {
         {/* <BgGlow wallpaper={wallpaper} /> */}
         <div className={s.banner}>
           <HomeHeader />
-          <div className={s.betaText} style={{ background: s.betaGradientStyle }}>
-            内测中
+          <div className={s.githubInfo}>
+            <GithubSVG className={s.githubIcon} style={s.githubIconStyle} />
+            <Link href="/" target="_blank" className={s.githubText} style={s.textGradientStyle}>
+              Github
+            </Link>
           </div>
           <h1 className={s.title}>让你的产品听见用户的声音</h1>
           <div className={s.desc}>
