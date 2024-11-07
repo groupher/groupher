@@ -18,10 +18,11 @@ import AnimatedCount from '~/widgets/AnimatedCount'
 import { Link } from '~/widgets/Common'
 import Button from '~/widgets/Buttons/Button'
 
-import { FREE_PAN_ITEMS, PAID_PAN_ITEMS, CUSTOM_PAN_ITEMS } from './constant'
 import Feature from './Feature'
 
-import useSalon, { cn } from './styles'
+import { FREE_PAN_ITEMS, PAID_PAN_ITEMS, CUSTOM_PAN_ITEMS } from './constant'
+
+import useSalon, { cn } from './salon'
 
 export default () => {
   const s = useSalon()
