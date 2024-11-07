@@ -7,9 +7,12 @@ import Image from 'next/image'
 import { fmt2CompStyle } from '~/fmt'
 
 import LockSVG from '~/icons/Lock'
+import ArrowSVG from '~/icons/ArrowSimple'
 
 import useTheme from '~/hooks/useTheme'
 import useWallpaper from '~/hooks/useWallpaper'
+
+import Scrollbar from './Scrollbar'
 
 import useSalon from '../salon/cover_image/desktop_device'
 
@@ -26,6 +29,13 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
+      <div className={s.leftNavi}>
+        <ArrowSVG className={s.leftArrow} />
+      </div>
+      <div className={s.rightNavi}>
+        <ArrowSVG className={s.rightArrow} />
+      </div>
+
       <div className={s.brower}>
         <div className={s.dot} />
         <div className={s.dot} />
@@ -61,6 +71,7 @@ export default () => {
             className="z-10 object-cover w-full h-[768px]"
           />
         </div>
+        <Scrollbar />
       </div>
       <div className={s.background} style={{ background, ...fmt2CompStyle(effect) }} />
     </div>
