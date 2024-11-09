@@ -10,12 +10,14 @@ export default ({ totalSlides, currentSlide, slideTo }: TProps) => {
   const wrapperClass = cn(
     'absolute bottom-10 left-1/2 align-both w-52 h-12 -ml-24 rounded-3xl z-50',
     'animate-fade-up animate-duration-500',
-    'brightness-95',
     'gap-x-4 backdrop-blur-sm',
-    'bg-alphaBg',
+    'bg-alphaBg-dark',
   )
 
-  const dotClass = cn('relative size-2 circle opacity-65 trans-all-200 pointer', 'bg-text-digest')
+  const dotClass = cn(
+    'relative size-2 circle opacity-65 trans-all-200 pointer',
+    'bg-text-digest-dark',
+  )
   const dotBoxClass = cn('align-both absolute w-5 h-5 -top-1.5 -left-1.5 circle pointer')
 
   const dotActive = 'w-12 rounded-md opacity-100'
