@@ -11,7 +11,7 @@ export default () => {
   const base = useBase()
 
   const navi = cn(
-    'align-both group size-16 circle absolute top-96 transition-colors pointer',
+    'align-both group size-16 circle absolute bottom-72 transition-colors pointer z-30',
     `hover:${bg('hoverBg')}`,
   )
   const naviArrow = cn('size-10 opacity-25', 'group-hover:opacity-50', fill('text.digest'))
@@ -19,8 +19,8 @@ export default () => {
   return {
     wrapper: cn('column-center relative rounded-lg mt-16 ml-5', 'w-[1000px]', shadow('sm')),
     //
-    leftNavi: cn(navi, '-left-28'),
-    rightNavi: cn(navi, '-right-28'),
+    leftNavi: cn(navi, '-left-36'),
+    rightNavi: cn(navi, '-right-36'),
     leftArrow: cn(naviArrow),
     rightArrow: cn(naviArrow, 'rotate-180'),
 
@@ -43,14 +43,9 @@ export default () => {
     threadText: 'clip-text bold ml-0.5',
     threadTextStyle: base.textGradientStyle,
     //
-    content: 'relative w-full h-[680px] align-both rounded-b-lg z-10',
-    //
-    snapContent: '',
-    imageBox: cn(
-      'align-both relative w-11/12 h-[648px] mt-8 rounded-t-lg border overflow-hidden',
-      br('divider'),
-      shadow('sm'),
-    ),
-    coverImg: cn('z-10 object-cover w-full h-[768px] animation-fade-up'),
+    content: 'relative w-full h-[700px] align-both rounded-b-lg z-10',
+    slideBox: cn('relative w-11/12 h-full rounded-t-lg', shadow('sm')),
+    slideImage: 'w-full h-[700px] overflow-hidden',
+    coverImg: cn('object-cover w-full h-[788px] -mt-6 animation-fade-up'),
   }
 }

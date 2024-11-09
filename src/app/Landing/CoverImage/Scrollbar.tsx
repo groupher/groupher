@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Waypoint } from 'react-waypoint'
+import { useRef } from 'react'
+import { useInView } from 'framer-motion'
 import { range } from 'ramda'
 
 import { MAX_INTRO_IMAGES_COUNT } from './DesktopDevice'
@@ -12,15 +12,14 @@ type TProps = {
 
 export default ({ imageIndex, onChange }: TProps) => {
   const s = useSalon()
-  const [show, setShow] = useState(false)
+  const ref = useRef(null)
+  const isInView = useInView(ref)
 
   return (
     <>
-      <div className={s.tracker}>
-        <Waypoint onEnter={() => setShow(true)} onLeave={() => setShow(false)} />
-      </div>
+      <div ref={ref} className={s.tracker} />
 
-      {show && (
+      {isInView && (
         <div className={s.wrapper}>
           {range(0, MAX_INTRO_IMAGES_COUNT).map((i) => {
             const active = i === imageIndex

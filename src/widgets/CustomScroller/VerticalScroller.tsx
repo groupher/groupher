@@ -4,10 +4,10 @@
  *
  */
 
-import { type FC, useState, Fragment, useCallback, memo } from 'react'
+import { type FC, useState, Fragment, memo } from 'react'
 
 // NOTE: do not use ViewportTracker here, it cause crash
-import { Waypoint } from 'react-waypoint'
+// import { Waypoint } from 'react-waypoint'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
 
 import SIZE from '~/const/size'
@@ -37,39 +37,16 @@ const VerticalScroller: FC<TProps> = ({
   // autoHide = true,
   // showOnHover = false,
   withBorder = false,
-  onTopEnter,
-  onTopLeave,
-  onBottomEnter,
-  onBottomLeave,
   // onScrollDirectionChange,
   // instanceKey = null,
 }) => {
-  const [showTopShadow, setShowTopShadow] = useState(true)
-  const [showBottomShadow, setShowBottomShadow] = useState(true)
+  const [showTopShadow] = useState(true)
+  const [showBottomShadow] = useState(true)
 
   // record last y position after scroll
   // to judge is scroll up or down
   // 记录上一次距离顶部的 y 轴位置，用于计算当前滑动是向上还是向下
   // const [lastYPosition, setLastYPosition] = useState(0)
-
-  const handleShowTopShadow = useCallback(() => {
-    setShowTopShadow(true)
-    onTopLeave?.()
-  }, [onTopLeave])
-  const handleHideTopShadow = useCallback(() => {
-    setShowTopShadow(false)
-    onTopEnter?.()
-  }, [onTopEnter])
-
-  const handleShowBottomShadow = useCallback(() => {
-    setShowBottomShadow(true)
-    onBottomLeave?.()
-  }, [onBottomLeave])
-
-  const handleHideBottomShadow = useCallback(() => {
-    setShowBottomShadow(false)
-    onBottomEnter?.()
-  }, [onBottomEnter])
 
   // @ts-ignore
   // const { themeMap } = useTheme()
@@ -99,10 +76,10 @@ const VerticalScroller: FC<TProps> = ({
         }}
       >
         <ViewHolder />
-        <Waypoint onEnter={handleHideTopShadow} onLeave={handleShowTopShadow} />
+        {/* <Waypoint onEnter={handleHideTopShadow} onLeave={handleShowTopShadow} /> */}
         {children}
         <ViewHolder />
-        <Waypoint onEnter={handleHideBottomShadow} onLeave={handleShowBottomShadow} />
+        {/* <Waypoint onEnter={handleHideBottomShadow} onLeave={handleShowBottomShadow} /> */}
       </OverlayScrollbarsComponent>
 
       {showShadow && (
