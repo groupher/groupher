@@ -6,7 +6,7 @@ export default () => {
   const { cn, br, bg, fill, shadow } = useTwBelt()
 
   const navi = cn(
-    'align-both group size-16 circle absolute bottom-72 transition-colors pointer z-30',
+    'absolute bottom-72 align-both group size-16 circle transition-colors pointer z-30',
     `hover:${bg('hoverBg')}`,
   )
   const naviArrow = cn('size-10 opacity-25', 'group-hover:opacity-50', fill('text.digest'))
@@ -24,7 +24,7 @@ export default () => {
     coverImg: cn('object-cover w-full h-[788px] -mt-6 animation-fade-up'),
     //
     themeSwitch: cn(
-      'absolute bottom-5 right-72 mr-8 align-both size-12 circle z-50 pointer',
+      'absolute bottom-6 right-72 mr-8 align-both size-12 circle z-50 pointer',
       'animate-fade-up animate-duration-500',
       isLightTheme && 'brightness-95 hover:brightness-90',
       !isLightTheme && 'hover:brightness-110',
