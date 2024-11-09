@@ -8,7 +8,7 @@ type TProps = IRenderDotsProps
 
 export default ({ totalSlides, currentSlide, slideTo }: TProps) => {
   const wrapperClass = cn(
-    'absolute bottom-10 left-1/2 align-both w-52 h-12 -ml-32 rounded-3xl z-50',
+    'absolute bottom-6 left-1/2 align-both w-52 h-12 -ml-32 rounded-3xl z-50',
     'animate-fade-up animate-duration-500',
     'brightness-95',
     'gap-x-4 backdrop-blur-sm',

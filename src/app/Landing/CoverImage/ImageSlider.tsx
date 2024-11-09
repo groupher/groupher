@@ -1,13 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 
-import {
-  ButtonBack,
-  ButtonNext,
-  Carousel,
-  Slide,
-  Slider,
-  SliderBarDotGroup,
-} from 'react-scroll-snap-anime-slider'
+import { Carousel, Slide, Slider, SliderBarDotGroup } from 'react-scroll-snap-anime-slider'
 import { range } from 'ramda'
 
 import Img from '~/Img'
@@ -104,31 +97,43 @@ export default () => {
             ))}
           </Slider>
 
-          <ButtonBack>
-            <div
-              className={s.leftNavi}
-              onClick={() =>
-                setCurImageIndex(
-                  curImageIndex <= 0 ? MAX_INTRO_IMAGES_COUNT - 1 : curImageIndex - 1,
-                )
-              }
-            >
-              <ArrowSVG className={s.leftArrow} />
-            </div>
-          </ButtonBack>
+          <div
+            className={s.leftNavi}
+            onClick={() => {
+              let targetSlideIndex = 0
 
-          <ButtonNext>
-            <div
-              className={s.rightNavi}
-              onClick={() =>
-                setCurImageIndex(
-                  curImageIndex >= MAX_INTRO_IMAGES_COUNT - 1 ? 0 : curImageIndex + 1,
-                )
+              if (curImageIndex === 0) {
+                targetSlideIndex = MAX_INTRO_IMAGES_COUNT - 1
+              } else {
+                targetSlideIndex =
+                  curImageIndex <= 0 ? MAX_INTRO_IMAGES_COUNT - 1 : curImageIndex - 1
               }
-            >
-              <ArrowSVG className={s.rightArrow} />
-            </div>
-          </ButtonNext>
+
+              sliderRef.current.slideTo(targetSlideIndex)
+              setCurImageIndex(targetSlideIndex)
+            }}
+          >
+            <ArrowSVG className={s.leftArrow} />
+          </div>
+
+          <div
+            className={s.rightNavi}
+            onClick={() => {
+              let targetSlideIndex = 0
+
+              if (curImageIndex === MAX_INTRO_IMAGES_COUNT - 1) {
+                targetSlideIndex = 0
+              } else {
+                targetSlideIndex =
+                  curImageIndex >= MAX_INTRO_IMAGES_COUNT - 1 ? 0 : curImageIndex + 1
+              }
+
+              sliderRef.current.slideTo(targetSlideIndex)
+              setCurImageIndex(targetSlideIndex)
+            }}
+          >
+            <ArrowSVG className={s.rightArrow} />
+          </div>
 
           {/* tmp solution due to the react version conflict, can't use hooks inside it */}
           {isLightTheme ? (
