@@ -1,8 +1,8 @@
 // avold SSR to save first load build size
-import type { FC } from 'react'
+import { useRef, useEffect } from 'react'
+import { useInView } from 'framer-motion'
 
-import { Waypoint } from 'react-waypoint'
-
+// see details: https://www.framer.com/motion/use-in-view/
 type TProps = {
   /**
    * Function called when waypoint enters viewport
@@ -16,12 +16,20 @@ type TProps = {
    * Whether to activate on horizontal scrolling instead of vertical
    */
   horizontal?: boolean
-  topOffset?: string | number
-  bottomOffset?: string | number
+  margin?: string
 }
 
-const ViewportTracker: FC<TProps> = (props) => {
-  return <Waypoint {...props} />
-}
+export default ({ onEnter, onLeave }: TProps) => {
+  const ref = useRef(null)
+  const isInView = useInView(ref)
 
-export default ViewportTracker
+  useEffect(() => {
+    if (isInView) {
+      onEnter?.()
+    } else {
+      onLeave?.()
+    }
+  }, [isInView, onEnter, onLeave])
+
+  return <div ref={ref} />
+}

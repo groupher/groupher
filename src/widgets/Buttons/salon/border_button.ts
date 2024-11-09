@@ -1,5 +1,6 @@
 import type { TColorName } from '~/spec'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
 
@@ -8,12 +9,13 @@ export { cn } from '~/css'
 import { getGithubGradient } from '../../../../src/app/Landing/salon/metric'
 
 export default () => {
+  const { isLightTheme } = useTheme()
   const { cn, global, bg, shadow, fill, rainbow } = useTwBelt()
   const { wallpaper } = useWallpaper()
 
   return {
     wrapper: cn('relative group'),
-    button: cn(shadow('xl')),
+    button: cn(isLightTheme && shadow('xl')),
     background: cn('relative align-center p-1 rounded-xl overflow-hidden'),
     realBg: cn(
       'absolute -top-12 -left-2 size-40 circle',

@@ -23,7 +23,8 @@
 				"noAssignInExpressions": "warn",
 				"noDuplicateJsxProps": "error",
 				"noDuplicateObjectKeys": "error",
-				"noDuplicateParameters": "error"
+				"noDuplicateParameters": "error",
+				"noArrayIndexKey":"warn"
 			},
 			"performance": {
 				"noDelete":"off"

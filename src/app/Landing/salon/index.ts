@@ -1,24 +1,25 @@
 import useWallpaper from '~/hooks/useWallpaper'
 
 // import { getGlowOpacity, getGlowBackground, getPathGradient } from './metric'
-import { getPathGradient } from './metric'
+import { getPathGradient, getCursorGradient } from './metric'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, fill, container, linkable, menu, landingTitle, sexyHBorder, dimDark } =
-    useTwBelt()
+  const { cn, fg, fill, container, linkable, menu, landingTitle, sexyHBorder } = useTwBelt()
   const { wallpaper } = useWallpaper()
 
   return {
     wrapper: cn('column-align-both relative h-full w-full overflow-hidden', container()),
     inner: 'column-align-both relative w-full h-full',
     banner: 'column-center relative w-full',
-    betaText: cn('clip-text text-base bold mb-3', dimDark()),
-    betaGradientStyle: `linear-gradient(to top, ${getPathGradient(wallpaper)})`,
-    textGradientStyle: { background: `linear-gradient(to left, ${getPathGradient(wallpaper)})` },
+    githubInfo: cn('row-center mb-3 hover:underline pointer', fg('text.digest')),
+    githubIcon: cn('size-4 mr-1.5'),
+    githubText: 'clip-text bold text-base',
+    githubIconStyle: { fill: getCursorGradient(wallpaper) },
+    textGradientStyle: { background: `linear-gradient(to top, ${getPathGradient(wallpaper)})` },
     title: cn(landingTitle(), 'text-4xl opacity-70'),
     desc: cn('text-lg mt-4', fg('text.digest')),
     //

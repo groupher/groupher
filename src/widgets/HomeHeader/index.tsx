@@ -10,9 +10,9 @@ import KanbanSVG from '~/icons/Kanban'
 import BookSVG from '~/icons/Book'
 
 import ArrowSVG from '~/icons/ArrowSimple'
-import GithubSVG from '~/icons/social/Github'
 import DemoSVG from '~/icons/DemoTV'
 
+import ThemeSwitch from '~/widgets/ThemeSwitch'
 import Tooltip from '~/widgets/Tooltip'
 import CommunityBrand from '~/widgets/CommunityBrand'
 
@@ -132,7 +132,7 @@ const HomeHeader: FC = () => {
       </div>
 
       <div className={s.extraInfo}>
-        <GithubSVG className={s.githubIcon} />
+        <ThemeSwitch />
         <div className={s.divider} />
         <Link className={s.requestDemoLink} href={`/${ROUTE.BOOK_DEMO}`}>
           <DemoSVG className={s.demoIcon} />

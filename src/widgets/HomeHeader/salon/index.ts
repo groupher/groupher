@@ -22,7 +22,6 @@ export default () => {
     arrowIcon: cn(hoverLinkIcon(), '-rotate-90 mt-px mr-0 ml-1'),
     //
     extraInfo: 'row-center w-40 justify-end',
-    githubIcon: cn('size-4', fill('text.digest')),
     divider: cn(VDivider(), 'ml-3'),
     //
     panel: cn('w-32 mt-1', menu('bg')),
