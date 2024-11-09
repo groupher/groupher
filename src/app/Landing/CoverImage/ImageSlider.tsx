@@ -12,9 +12,10 @@ import { range } from 'ramda'
 
 import Img from '~/Img'
 
-// import Image from 'next/image'
 import ArrowSVG from '~/icons/ArrowSimple'
+import ThemeRulerSVG from '~/icons/ThemeRuler'
 
+import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useLoaded from '~/hooks/useLoaded'
 import useTheme from '~/hooks/useTheme'
 
@@ -23,6 +24,7 @@ import ScrollbarDark from './ScrollbarDark'
 import useSalon from '../salon/cover_image/image_slider'
 
 export const MAX_INTRO_IMAGES_COUNT = 5
+export const MAX_THEMES_COUNT = 5
 
 // see: https://karanokara.github.io/react-scroll-snap-anime-slider/docs/component-api/carousel
 const visible = 1
@@ -30,9 +32,12 @@ const step = 3
 
 export default () => {
   const { loaded } = useLoaded()
+  const { changeWallpaper, changePatternWallpaper } = useFullWallpaper()
+
   const sliderRef = useRef<Slider>(null)
 
   const [curImageIndex, setCurImageIndex] = useState(0)
+  const [themeIndex, setThemeIndex] = useState(0)
 
   const [imgSrc, setImgSrc] = useState('/landing/intro/home.webp')
   const [imgSrc2, _] = useState('/landing/intro/home-dark.webp')
@@ -43,6 +48,40 @@ export default () => {
   useEffect(() => {
     setImgSrc(isLightTheme ? '/landing/intro/home.webp' : '/landing/intro/home-dark.webp')
   }, [isLightTheme])
+
+  useEffect(() => {
+    switch (themeIndex) {
+      case 1: {
+        changePatternWallpaper('newspaper')
+        break
+      }
+
+      case 2: {
+        changePatternWallpaper('cartoon')
+        break
+      }
+
+      case 3: {
+        changePatternWallpaper('idian')
+        break
+      }
+
+      case 4: {
+        changePatternWallpaper('country1')
+        break
+      }
+
+      case 5: {
+        changePatternWallpaper('mac')
+        break
+      }
+
+      default: {
+        changeWallpaper('pink')
+        return
+      }
+    }
+  }, [themeIndex])
 
   return (
     <div className={s.slideBox}>
@@ -98,6 +137,20 @@ export default () => {
             <SliderBarDotGroup renderDots={ScrollbarDark} />
           )}
         </Carousel>
+      )}
+      {loaded && (
+        <div
+          className={s.themeSwitch}
+          onClick={() => {
+            if (themeIndex >= MAX_THEMES_COUNT) {
+              setThemeIndex(0)
+              return
+            }
+            setThemeIndex(themeIndex + 1)
+          }}
+        >
+          <ThemeRulerSVG className={s.themeIcon} />
+        </div>
       )}
     </div>
   )

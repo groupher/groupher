@@ -1,3 +1,5 @@
+import { includes } from 'ramda'
+
 import type { TMetric, TGlowPosition } from '~/spec'
 
 import { GLOW_EFFECTS_DAY, GLOW_EFFECTS_NIGHT } from '~/const/glow_effect'
@@ -41,8 +43,8 @@ export default () => {
       : '',
     wrapper: cn(
       'w-full -z-10',
-      isAbsolute ? 'h-2/5 right-0' : 'h-fit',
-      isAbsolute && metric === METRIC.DASHBOARD && 'h-2/5',
+      isAbsolute ? 'h-1/5 right-0' : 'h-fit',
+      isAbsolute && includes(metric, [METRIC.DASHBOARD, METRIC.HOME]) && 'h-2/5',
       `opacity-${fmtOpacity(glowOpacity)}`,
       glowPosition,
     ),
