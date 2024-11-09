@@ -22,7 +22,7 @@ export default () => {
         <div className={s.title}>弧度</div>
       </div>
       <div className={s.item}>
-        <ShadowSVG className={s.item} />
+        <ShadowSVG className={s.icon} />
         <div className={s.title}>阴影</div>
       </div>
       <div className={s.item}>

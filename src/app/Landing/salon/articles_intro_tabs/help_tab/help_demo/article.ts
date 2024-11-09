@@ -1,10 +1,13 @@
 import { COLOR_NAME } from '~/const/colors'
+
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, br, fill, shadow, rainbow } = useTwBelt()
+  const { isLightTheme } = useTheme()
+  const { cn, fg, bg, br, fill, shadow, rainbow, vividDark } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -42,11 +45,12 @@ export default () => {
     bar: cn('h-1.5 w-40 mt-4 opacity-30 rounded-md', bg('text.digest')),
     // cover
     coverWrapper: cn(
-      'relative row-center-between mt-5 mb-4 w-64 h-24 rounded-md opacity-25',
+      'relative row-center-between mt-5 mb-4 w-64 h-24 rounded-md',
+      isLightTheme ? 'opacity-25' : 'opacity-40',
       rainbow('CYAN', 'bg'),
     ),
     slash: cn('absolute h-28 w-1 left-1/2 top-0 rotate-12', bg('htmlBg')),
-    coverText: cn('text-lg absolute bold', fg('button.fg')),
+    coverText: cn('text-lg absolute bold', fg('button.fg'), vividDark()),
     // comment
     commentDot: cn(
       'align-both absolute right-32 bottom-52 size-3.5 z-50',

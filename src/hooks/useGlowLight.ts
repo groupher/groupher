@@ -6,13 +6,11 @@ import { GLOW_EFFECT_NAME, GLOW_OPACITY } from '~/const/glow_effect'
 
 import useSubStore from '~/hooks/useSubStore'
 import useMetric from '~/hooks/useMetric'
-import useTheme from '~/hooks/useTheme'
 
 export default (): TGlowEffect => {
   const dashboard = useSubStore('dashboard')
   const { wallpaper } = useSubStore('wallpaper')
 
-  const { isLightTheme } = useTheme()
   const metric = useMetric()
 
   const { glowType, glowFixed, glowOpacity } = dashboard
@@ -32,7 +30,8 @@ export default (): TGlowEffect => {
     return {
       glowType: GLOW_EFFECT_NAME.ORANGE_PURPLE,
       glowFixed: false,
-      glowOpacity: isLightTheme ? GLOW_OPACITY.WEEK : GLOW_OPACITY.NORMAL,
+      // glowOpacity: isLightTheme ? GLOW_OPACITY.WEEK : GLOW_OPACITY.NORMAL,
+      glowOpacity: GLOW_OPACITY.WEEK,
       changeGlowEffect,
     }
   }

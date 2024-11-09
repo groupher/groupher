@@ -15,7 +15,7 @@ export default () => {
 
     //
     background: cn(
-      'absolute h-full w-full top-0 will-change-transform overflow-hidden rounded-lg',
+      'absolute h-full w-full top-0 will-change-transform overflow-hidden rounded-lg trans-all-200',
       theme === THEME.DARK && 'brightness-75',
     ),
     // browser

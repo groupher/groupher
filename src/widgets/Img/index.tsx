@@ -36,7 +36,7 @@ const Img: FC<IProps> = ({
     return <>SVG TODO</>
   }
   return (
-    <>
+    <div>
       {noLazy ? (
         <NativeImg
           className={className}
@@ -56,7 +56,7 @@ const Img: FC<IProps> = ({
           onClick={onClick}
         />
       )}
-    </>
+    </div>
   )
 }
 
