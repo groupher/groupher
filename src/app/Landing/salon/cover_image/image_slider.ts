@@ -24,11 +24,11 @@ export default () => {
     coverImg: cn('object-cover w-full h-[788px] -mt-6 animation-fade-up'),
     //
     themeSwitch: cn(
-      'absolute bottom-6 right-72 mr-8 align-both size-12 circle z-50 pointer',
-      'animate-fade-up animate-duration-500',
+      'absolute bottom-6 right-72 mr-8 align-both size-12 circle z-50 pointer active:scale-90',
+      // 'animate-fade-up animate-duration-500',
       isLightTheme && 'brightness-95 hover:brightness-90',
       !isLightTheme && 'hover:brightness-110',
-      'gap-x-4 backdrop-blur-sm opacity-20 trans-all-100',
+      'gap-x-4 backdrop-blur-sm trans-all-100',
       br('divider'),
       bg('alphaBg'),
     ),

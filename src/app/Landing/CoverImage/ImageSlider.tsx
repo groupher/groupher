@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 
 import { Carousel, Slide, Slider, SliderBarDotGroup } from 'react-scroll-snap-anime-slider'
 import { range } from 'ramda'
+import useInterval from '~/hooks/useInterval'
 
 import Img from '~/Img'
 
@@ -20,12 +21,14 @@ export const MAX_INTRO_IMAGES_COUNT = 5
 export const MAX_THEMES_COUNT = 5
 
 // see: https://karanokara.github.io/react-scroll-snap-anime-slider/docs/component-api/carousel
-const visible = 1
-const step = 3
+const VISIBLE_SLIDES = 1
+const SLIDE_STEP = 3
+const LOOP_TIMMER = 5000
 
 export default () => {
   const { loaded } = useLoaded()
   const { changeWallpaper, changePatternWallpaper } = useFullWallpaper()
+  const [loopTimer, toggleLoop] = useState(true)
 
   const sliderRef = useRef<Slider>(null)
 
@@ -37,6 +40,25 @@ export default () => {
   const s = useSalon()
 
   const { isLightTheme } = useTheme()
+
+  const localCurrentSlide = useMemo(() => {
+    return {
+      index: 0,
+    }
+  }, [])
+
+  useInterval(
+    () => {
+      const slider = sliderRef.current
+      if (slider) {
+        const maxSlideIndex = MAX_INTRO_IMAGES_COUNT - VISIBLE_SLIDES
+        let nextSlideIndex = localCurrentSlide.index + 1
+        nextSlideIndex = nextSlideIndex > maxSlideIndex ? 0 : nextSlideIndex
+        slider.slideTo(nextSlideIndex)
+      }
+    },
+    loopTimer ? LOOP_TIMMER : null,
+  )
 
   useEffect(() => {
     setImgSrc(isLightTheme ? '/landing/intro/home.webp' : '/landing/intro/home-dark.webp')
@@ -77,13 +99,16 @@ export default () => {
   }, [themeIndex])
 
   return (
-    <div className={s.slideBox}>
+    <div className={s.slideBox} onClick={() => toggleLoop(false)}>
       {loaded && (
         <Carousel
           totalSlides={MAX_INTRO_IMAGES_COUNT}
-          visibleSlides={visible}
-          step={step}
+          visibleSlides={VISIBLE_SLIDES}
+          step={SLIDE_STEP}
           slideMargin="20px"
+          onSlide={({ currentSlide }) => {
+            localCurrentSlide.index = currentSlide
+          }}
         >
           <Slider ref={sliderRef}>
             {range(0, MAX_INTRO_IMAGES_COUNT).map((_, i) => (

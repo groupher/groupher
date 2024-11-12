@@ -2,6 +2,7 @@ import type { TGlowEffect } from '~/spec'
 import { includes } from 'ramda'
 
 import METRIC from '~/const/metric'
+import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 import { GLOW_EFFECT_NAME, GLOW_OPACITY } from '~/const/glow_effect'
 
 import useSubStore from '~/hooks/useSubStore'
@@ -17,7 +18,10 @@ export default (): TGlowEffect => {
 
   const changeGlowEffect = (glowType: string): void => dashboard.commit({ glowType })
 
-  if (includes(metric, [METRIC.APPLY_COMMUNITY])) {
+  if (
+    includes(metric, [METRIC.APPLY_COMMUNITY]) ||
+    (metric === METRIC.HOME && wallpaper !== GRADIENT_WALLPAPER_NAME.PINK)
+  ) {
     return {
       glowType: null,
       glowFixed: false,

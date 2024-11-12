@@ -11,23 +11,26 @@ import { useState } from 'react'
 import HomeHeader from '~/widgets/HomeHeader'
 import Button from '~/widgets/Buttons/Button'
 
-import { Wrapper, Content, Thanks, Title, Bold, P } from './styles'
+import useSalon, { cn } from './salon'
 
 export default () => {
+  const s = useSalon()
   const [showV, setShowV] = useState(false)
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <HomeHeader />
-      <Content>
-        <Thanks>🙏</Thanks>
-        <Title>萍水相逢，感谢关注</Title>
-        <P>如果你的团队还想进一步了解 Groupher 以确定它是否能满足需求，我们很乐意提供帮助！</P>
-        <P>我们会在约定时间以线上会议的形式提供使用前的各种咨询。</P>
-        <P>
+      <div className={s.inner}>
+        <div className={s.emoji}>🗓</div>
+        <h2 className={s.title}>萍水相逢，感谢关注</h2>
+        <p className={s.p}>
+          如果你的团队还想进一步了解 Groupher 以确定它是否能满足需求，我们很乐意提供帮助！
+        </p>
+        <p className={cn(s.p, 'mb-10')}>我们会在约定时间以线上会议的形式提供使用前的各种咨询。</p>
+        <p className={s.p}>
           {showV && (
             <>
-              请添加微信：<Bold>mydearxym</Bold>{' '}
+              请添加微信：<span className="bold-sm">mydearxym</span>
             </>
           )}
           {!showV && (
@@ -35,8 +38,8 @@ export default () => {
               预约演示
             </Button>
           )}
-        </P>
-      </Content>
-    </Wrapper>
+        </p>
+      </div>
+    </div>
   )
 }
