@@ -1,6 +1,0 @@
-export { default as DirectoryGallery } from './DirectoryGallery'
-export { default as ProductGallery } from './ProductGallery'
-export { default as PeopleGallery } from './PeopleGallery'
-export { default as ImageGallery } from './ImageGallery'
-export { default as FriendsGallery } from './FriendsGallery'
-export { default as SnippetGallery } from './SnippetGallery'

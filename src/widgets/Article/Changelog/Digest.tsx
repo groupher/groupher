@@ -16,7 +16,6 @@ import ArticleBaseStats from '~/widgets/ArticleBaseStats'
 import Share from '~/widgets/Share'
 import ArticleSettingMenu from '~/widgets/ArticleSettingMenu'
 
-// import ArticleBelongCommunity from '~/widgets/ArticleBelongCommunity'
 // import ArticleMenu from '~/widgets/ArticleMenu'
 // import BackTo from './BackTo'
 

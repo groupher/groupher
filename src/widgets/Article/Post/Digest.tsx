@@ -16,7 +16,6 @@ import Share from '~/widgets/Share'
 import ArticleSettingMenu from '~/widgets/ArticleSettingMenu'
 import ArticlePinLabel from '~/widgets/ArticlePinLabel'
 
-// import ArticleBelongCommunity from '~/widgets/ArticleBelongCommunity'
 // import ArticleMenu from '~/widgets/ArticleMenu'
 // import BackTo from './BackTo'
 
