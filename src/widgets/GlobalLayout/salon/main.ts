@@ -11,7 +11,6 @@ export default () => {
   return {
     wrapper: cn(
       container(),
-      'debug',
       'column relative w-full h-full min-h-fit',
       'relative transition-transform transition-shadow backdrop-blur-2xl',
       hasShadow && 'shadow-lg',

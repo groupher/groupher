@@ -1,57 +1,24 @@
-import styled, { css, theme, rainbowSoft, rainbow } from '~/css'
-import type { TColor, TColorName } from '~/spec'
+import useTwBelt from '~/hooks/useTwBelt'
+import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 
-import GtdWipSVG from '~/icons/GtdWip'
-import GtdDoneSVG from '~/icons/GtdDone'
-import GtdTodoSVG from '~/icons/GtdTodo'
-import AddSVG from '~/icons/Add'
+export default () => {
+  const [todoBg, wipBg, doneBg] = useKanbanBgColors()
+  const { cn, fg, rainbow } = useTwBelt()
 
-export const Column = styled.div`
-  ${css.column('align-start')};
-  width: 32%;
-  min-width: 32%;
-  min-height: 70vh;
-  /* border: 1px solid; */
-  /* border-color: ${theme('article.info')}; */
-`
-export const Header = styled.div`
-  ${css.row('align-center')};
-  padding-bottom: 15px;
-  width: 100%;
-  padding-left: 3px;
-`
-export const Body = styled.div<{ color: TColorName }>`
-  background-color: ${({ color }) => rainbowSoft(color)};
-  padding: 8px;
-  padding-bottom: 0;
-  border-radius: 12px;
-  width: 100%;
-`
-export const SubTitle = styled.div`
-  color: ${theme('hint')};
-  font-size: 13px;
-  margin-left: 6px;
-`
-export const Label = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 15px;
-  font-weight: 600;
-  margin-left: 10px;
-`
-export const TODOIcon = styled(GtdTodoSVG)<TColor>`
-  ${css.size(12)};
-  fill: ${({ $color }) => rainbow($color)};
-`
-export const WipIcon = styled(GtdWipSVG)<TColor>`
-  ${css.size(15)};
-  fill: ${({ $color }) => rainbow($color)};
-`
-export const DoneIcon = styled(GtdDoneSVG)<TColor>`
-  ${css.size(12)};
-  fill: ${({ $color }) => rainbow($color)};
-`
+  const body = 'p-2 pb-0 rounded-xl w-full'
 
-export const AddIcon = styled(AddSVG)`
-  ${css.size(14)};
-  fill: ${theme('article.digest')};
-`
+  return {
+    column: cn('column w-[32%] min-w-[32%] min-h-96'),
+    header: 'row-center pb-4 w-full pl-0.5',
+    label: cn('text-base bold ml-2.5', fg('text.digest')),
+    subTitle: cn('text-sm ml-1.5', fg('text.hint')),
+    //
+    todoIcon: cn('size-3', rainbow(todoBg, 'fill')),
+    wipIcon: cn('size-3.5', rainbow(wipBg, 'fill')),
+    doneIcon: cn('size-3', rainbow(doneBg, 'fill')),
+    //
+    todoBody: cn(body, rainbow(todoBg, 'bgSoft')),
+    wipBody: cn(body, rainbow(wipBg, 'bgSoft')),
+    doneBody: cn(body, rainbow(doneBg, 'bgSoft')),
+  }
+}

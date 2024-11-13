@@ -13,7 +13,6 @@ export const CardWrapper = styled.div`
   height: 68px;
   border: 1px solid;
   border-color: ${theme('divider')};
-  border: 1px solid tomato;
   z-index: 1000;
   top: 6.5px;
 `

@@ -3,78 +3,65 @@
  *
  */
 
-import type { FC } from 'react'
-
 import useKanbanPosts from '~/hooks/useKanbanPosts'
-import useKanbanBgColors from '~/hooks/useKanbanBgColors'
+
+import GtdWipSVG from '~/icons/GtdWip'
+import GtdDoneSVG from '~/icons/GtdDone'
+import GtdTodoSVG from '~/icons/GtdTodo'
 
 import KanbanItem from '~/widgets/KanbanItem'
 import EmptyItem from '~/widgets/KanbanItem/EmptyItem'
 
-import {
-  Column,
-  Header,
-  Body,
-  Label,
-  SubTitle,
-  TODOIcon,
-  WipIcon,
-  DoneIcon,
-  AddIcon,
-} from '../styles/classic_layout/columns'
+import useSalon from '../styles/classic_layout/columns'
 
-const Columns: FC = () => {
+export default () => {
+  const s = useSalon()
+
   const { todo: todoPosts, wip: wipPosts, done: donePosts } = useKanbanPosts()
-  const [todoBg, wipBg, doneBg] = useKanbanBgColors()
 
   return (
     <>
-      <Column>
-        <Header>
-          <TODOIcon $color={todoBg} />
-          <Label>待办</Label>
-          <SubTitle>{todoPosts.totalCount}</SubTitle>
+      <div className={s.column}>
+        <div className={s.header}>
+          <GtdTodoSVG className={s.todoIcon} />
+          <h4 className={s.label}>待办</h4>
+          <div className={s.subTitle}>{todoPosts.totalCount}</div>
           <div className="grow" />
-          <AddIcon />
-        </Header>
-        <Body color={todoBg}>
+        </div>
+        <div className={s.todoBody}>
           {todoPosts.totalCount === 0 && <EmptyItem />}
           {todoPosts.totalCount !== 0 &&
             todoPosts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
-        </Body>
-      </Column>
-      <Column>
-        <Header>
-          <WipIcon $color={wipBg} />
-          <Label>进行中</Label>
-          <SubTitle>{wipPosts.totalCount}</SubTitle>
+        </div>
+      </div>
+      <div className={s.column}>
+        <div className={s.header}>
+          <GtdWipSVG className={s.wipIcon} />
+          <h4 className={s.label}>进行中</h4>
+          <div className={s.subTitle}>{wipPosts.totalCount}</div>
           <div className="grow" />
-          <AddIcon />
-        </Header>
-        <Body color={wipBg}>
+        </div>
+        <div className={s.wipBody}>
           {wipPosts.totalCount === 0 && <EmptyItem />}
 
           {wipPosts.totalCount !== 0 &&
             wipPosts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
-        </Body>
-      </Column>
-      <Column>
-        <Header>
-          <DoneIcon $color={doneBg} />
-          <Label>已完成</Label>
-          <SubTitle>{donePosts.totalCount}</SubTitle>
+        </div>
+      </div>
+      <div className={s.column}>
+        <div className={s.header}>
+          <GtdDoneSVG className={s.doneIcon} />
+          <h4 className={s.label}>已完成</h4>
+          <div className={s.subTitle}>{donePosts.totalCount}</div>
           <div className="grow" />
-          <AddIcon />
-        </Header>
-        <Body color={doneBg}>
+        </div>
+        <div className={s.doneBody}>
           {donePosts.totalCount === 0 && <EmptyItem />}
 
           {donePosts.totalCount !== 0 &&
             donePosts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
-        </Body>
-      </Column>
+        </div>
+      </div>
     </>
   )
 }
-
-export default Columns
