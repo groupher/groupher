@@ -1,7 +1,9 @@
-import styled from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  width: 100%;
-  height: 100%;
-`
-export const holder = 1
+export default () => {
+  const { cn } = useTwBelt()
+
+  return {
+    wrapper: cn('w-full h-full'),
+  }
+}

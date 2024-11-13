@@ -11,7 +11,7 @@ export default () => {
     test: cn('debug w-full h-[768px] overflow-hidden', rainbow(COLOR_NAME.PINK, 'bg')),
     slideBox: cn('align-both h-auto border', br('divider')),
     coverImg: cn(
-      'z-10 object-cover w-full h-[768px] w-[900px] min-w-[900px] animation-fade-up debug-g mt-14',
+      'z-10 object-cover w-full h-[768px] w-[900px] min-w-[900px] animation-fade-up mt-14',
     ),
   }
 }
