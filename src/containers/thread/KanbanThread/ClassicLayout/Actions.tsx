@@ -3,7 +3,7 @@ import { mockUsers } from '~/mock'
 import KanbanSVG from '~/icons/Kanban'
 import Facepile from '~/widgets/Facepile'
 
-import useSalon from '../styles/classic_layout/actions'
+import useSalon from '../salon/classic_layout/actions'
 
 export default () => {
   const s = useSalon()

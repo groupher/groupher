@@ -5,7 +5,7 @@
 import Actions from './Actions'
 import Columns from './Columns'
 
-import useSalon from '../styles/classic_layout'
+import useSalon from '../salon/classic_layout'
 
 export default () => {
   const s = useSalon()

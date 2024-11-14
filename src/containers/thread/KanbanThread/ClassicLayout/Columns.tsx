@@ -12,7 +12,7 @@ import GtdTodoSVG from '~/icons/GtdTodo'
 import KanbanItem from '~/widgets/KanbanItem'
 import EmptyItem from '~/widgets/KanbanItem/EmptyItem'
 
-import useSalon from '../styles/classic_layout/columns'
+import useSalon from '../salon/classic_layout/columns'
 
 export default () => {
   const s = useSalon()

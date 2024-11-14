@@ -9,7 +9,7 @@ import { KANBAN_LAYOUT } from '~/const/layout'
 import WaterfallLayout from './WaterfallLayout'
 import ClassicLayout from './ClassicLayout'
 
-import useSalon from './styles'
+import useSalon from './salon'
 
 export default () => {
   const s = useSalon()
