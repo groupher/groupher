@@ -1,6 +1,6 @@
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const SVGIcon = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -2 28 28" {...props}>
       <path d="m8.606 11.366 2.16-7.008 4.619 10.497 1.022-3.546h11.12a9.91 9.91 0 0 0 .423-2.895c0-.42-.026-.833-.075-1.239l.005.049c-.281-2.127-1.432-6.101-6.094-7.014a10.518 10.518 0 0 0-1.948-.208H19.692a7.957 7.957 0 0 0-5.722 2.563l-.005.005A7.974 7.974 0 0 0 8.245.002H8.098c-.699.011-1.373.086-2.027.22l.07-.012C2.797.934.289 3.754.048 7.2l-.001.024a10.534 10.534 0 0 0 .438 4.216l-.02-.075z" />
@@ -9,4 +9,4 @@ const SVGIcon = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(SVGIcon)
+export default SVG

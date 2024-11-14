@@ -1,6 +1,6 @@
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const CloseCross = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
       viewBox="0 0 1024 1024"
@@ -14,4 +14,4 @@ const CloseCross = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(CloseCross)
+export default SVG

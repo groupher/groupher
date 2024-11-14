@@ -1,7 +1,7 @@
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
 // see https://www.svgrepo.com/svg/406090/light-bulb?edit=true
-const Light = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -32,4 +32,4 @@ const Light = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(Light)
+export default SVG

@@ -1,6 +1,6 @@
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const Twitter = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
       aria-hidden="true"
@@ -13,4 +13,4 @@ const Twitter = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(Twitter)
+export default SVG

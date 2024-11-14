@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const RSS = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" {...props}>
       <title>{'rss-feed'}</title>
@@ -16,4 +16,4 @@ const RSS = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(RSS)
+export default SVG

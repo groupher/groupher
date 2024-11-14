@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-const SvgComponent: FC = (props) => {
+const SVG: FC = (props) => {
   return (
     <svg
       className="prefix__icon"
@@ -18,4 +18,4 @@ const SvgComponent: FC = (props) => {
   )
 }
 
-export default SvgComponent
+export default SVG
