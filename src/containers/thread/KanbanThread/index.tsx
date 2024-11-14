@@ -9,14 +9,15 @@ import { KANBAN_LAYOUT } from '~/const/layout'
 import WaterfallLayout from './WaterfallLayout'
 import ClassicLayout from './ClassicLayout'
 
-import { Wrapper } from './styles'
+import useSalon from './salon'
 
 export default () => {
+  const s = useSalon()
   const { kanbanLayout } = useLayout()
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {kanbanLayout === KANBAN_LAYOUT.WATERFALL ? <WaterfallLayout /> : <ClassicLayout />}
-    </Wrapper>
+    </div>
   )
 }

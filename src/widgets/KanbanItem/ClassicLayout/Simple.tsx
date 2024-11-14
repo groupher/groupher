@@ -15,21 +15,20 @@ import { previewArticle } from '~/signal'
 import { getRandomInt } from '~/helper'
 
 import CommentsCount from '~/widgets/CommentsCount'
-import { Row, Space } from '~/widgets/Common'
 
-// import IconButton from '~/widgets/Buttons/IconButton'
 import ArticleCatState from '~/widgets/ArticleCatState'
 import Upvote from '~/widgets/Upvote'
 import TagsList from '~/widgets/TagsList'
 
-import { Wrapper, Header, Footer, Title } from '../styles/classic_layout/simple'
+import useSalon from '../salon/classic_layout/simple'
 
 type TProps = {
-  testid?: string
   article: TArticle
 }
 
-const KanbanItem: FC<TProps> = ({ testid = 'gtd-item', article }) => {
+const KanbanItem: FC<TProps> = ({ article }) => {
+  const s = useSalon()
+
   const [titleIdx, setTitleIdx] = useState(0)
 
   useEffect(() => {
@@ -39,27 +38,28 @@ const KanbanItem: FC<TProps> = ({ testid = 'gtd-item', article }) => {
   const tags = mockTags(8)
 
   return (
-    <Wrapper $testid={testid}>
-      <Header>
-        <TagsList items={[tags[titleIdx]]} left={1} />
-        {/* <IconButton path="shape/more.svg" /> */}
-      </Header>
-      <Title onClick={() => previewArticle(article)}>{article.title}</Title>
-      <Footer>
-        <Row>
+    <div className={s.wrapper}>
+      <div className={s.header}>
+        <TagsList items={[tags[titleIdx]]} />
+      </div>
+      <div className={s.title} onClick={() => previewArticle(article)}>
+        {article.title}
+      </div>
+      <div className={s.footer}>
+        <div className="row-center">
           <Upvote
             count={article.upvotesCount}
             avatarList={mockUsers(3)}
             type={UPVOTE_LAYOUT.SIMPLE}
           />
-          <Space right={15} />
+          <div className="mr-4" />
           {article.commentsCount !== 0 && (
             <CommentsCount count={article.commentsCount} size="medium" />
           )}
-        </Row>
+        </div>
         <ArticleCatState cat={article.cat} />
-      </Footer>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 

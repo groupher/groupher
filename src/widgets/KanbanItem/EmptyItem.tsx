@@ -1,13 +1,11 @@
-import type { FC } from 'react'
+import useSalon from './salon/empty_item'
 
-import { Wrapper, Text } from './styles/empty_item'
+export default () => {
+  const s = useSalon()
 
-const EmptyItem: FC = () => {
   return (
-    <Wrapper>
-      <Text>内容为空</Text>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <div className={s.title}>内容为空</div>
+    </div>
   )
 }
-
-export default EmptyItem

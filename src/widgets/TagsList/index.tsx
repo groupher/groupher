@@ -23,6 +23,8 @@ export type TProps = {
 const TagsList: FC<TProps> = ({ items, max = 3, size = SIZE.TINY, ...spacing }) => {
   const s = useSalon(spacing)
 
+  if (!items) return null
+
   if (items.length < max) {
     return (
       <div className={s.wrapper}>

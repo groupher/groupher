@@ -1,39 +1,26 @@
-import { type FC, memo } from 'react'
-
 import { mockUsers } from '~/mock'
 
+import KanbanSVG from '~/icons/Kanban'
 import Facepile from '~/widgets/Facepile'
 
-import {
-  Wrapper,
-  Title,
-  Count,
-  LeftPart,
-  RightPart,
-  KanbanIcon,
-  JoinTitle,
-} from '../styles/classic_layout/actions'
+import useSalon from '../salon/classic_layout/actions'
 
-const Actions: FC = () => {
+export default () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <LeftPart>
-        <KanbanIcon />
-        <Title>
+    <div className={s.wrapper}>
+      <div className={s.left}>
+        <KanbanSVG className={s.kanbanIcon} />
+        <h3 className={s.title}>
           看板墙
-          <Count>23</Count>
-        </Title>
-      </LeftPart>
-      <RightPart>
-        <JoinTitle>参与者</JoinTitle>
+          <div className={s.count}>23</div>
+        </h3>
+      </div>
+      <div className={s.right}>
+        <h3 className={s.joinTitle}>参与者</h3>
         <Facepile size="medium" users={mockUsers(6)} total={20} />
-        {/* <Space right={25} /> */}
-        {/* <NewButton size="medium">
-          <BtnText>新增</BtnText>
-        </NewButton> */}
-      </RightPart>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
-
-export default memo(Actions)

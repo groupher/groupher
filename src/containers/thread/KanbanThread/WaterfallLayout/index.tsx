@@ -2,19 +2,18 @@
  * KanbanThread
  */
 
-import useIsSidebarLayout from '~/hooks/useIsSidebarLayout'
-
 import Actions from './Actions'
 import Sections from './Sections'
-import { Wrapper } from '../styles/waterfall_layout'
+
+import useSalon from '../salon/waterfall_layout'
 
 export default () => {
-  const isSidebarLayout = useIsSidebarLayout()
+  const s = useSalon()
 
   return (
-    <Wrapper $testid="kanban-thread" isSidebarLayout={isSidebarLayout}>
+    <div className={s.wrapper}>
       <Actions />
       <Sections />
-    </Wrapper>
+    </div>
   )
 }
