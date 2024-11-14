@@ -12,19 +12,19 @@ import { mockTags, mockUsers } from '~/mock'
 import { getRandomInt } from '~/helper'
 import { UPVOTE_LAYOUT } from '~/const/layout'
 
-// import IconButton from '~/widgets/Buttons/IconButton'
 import ArticleCatState from '~/widgets/ArticleCatState'
 import Upvote from '~/widgets/Upvote'
 import TagsList from '~/widgets/TagsList'
 
-import { Wrapper, Header, Footer, UpvotesWrapper, Title, Desc } from '../styles/classic_layout/full'
+import useSalon from '../salon/classic_layout/full'
 
 type TProps = {
-  testid?: string
   article: TArticle
 }
 
-const KanbanItem: FC<TProps> = ({ testid = 'gtd-item', article }) => {
+const KanbanItem: FC<TProps> = ({ article }) => {
+  const s = useSalon()
+
   const [titleIdx, setTitleIdx] = useState(0)
 
   useEffect(() => {
@@ -34,24 +34,21 @@ const KanbanItem: FC<TProps> = ({ testid = 'gtd-item', article }) => {
   const tags = mockTags(8)
 
   return (
-    <Wrapper $testid={testid}>
-      <Header>
-        <TagsList items={[tags[titleIdx]]} left={2} />
-        {/* <IconButton path="shape/more.svg" /> */}
-      </Header>
-      <Title>{article.title}</Title>
-      <Desc>{article.digest}</Desc>
-      <Footer>
-        <UpvotesWrapper>
-          <Upvote
-            count={article.upvotesCount}
-            avatarList={mockUsers(3)}
-            type={UPVOTE_LAYOUT.GENERAL}
-          />
-        </UpvotesWrapper>
+    <div className={s.wrapper}>
+      <div className={s.header}>
+        <TagsList items={[tags[titleIdx]]} />
+      </div>
+      <div className={s.title}>{article.title}</div>
+      <div className={s.desc}>{article.digest}</div>
+      <div className={s.footer}>
+        <Upvote
+          count={article.upvotesCount}
+          avatarList={mockUsers(3)}
+          type={UPVOTE_LAYOUT.GENERAL}
+        />
         <ArticleCatState cat={article.cat} top={1} />
-      </Footer>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 
