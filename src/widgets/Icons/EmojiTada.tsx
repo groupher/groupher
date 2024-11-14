@@ -1,6 +1,6 @@
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const Heart = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 36 36" {...props}>
       <path
@@ -43,4 +43,4 @@ const Heart = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(Heart)
+export default SVG

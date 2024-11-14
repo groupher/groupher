@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const I18n = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -16,4 +16,4 @@ const I18n = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(I18n)
+export default SVG

@@ -1,6 +1,6 @@
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const CollectionBookmark = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
       className="prefix__icon"
@@ -18,4 +18,4 @@ const CollectionBookmark = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(CollectionBookmark)
+export default SVG

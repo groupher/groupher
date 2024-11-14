@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react'
 
-const Icon = (props: SVGProps<SVGSVGElement>) => (
+const SVG = (props: SVGProps<SVGSVGElement>) => (
   <svg
     className="prefix__icon"
     viewBox="0 0 1024 1024"
@@ -16,4 +16,4 @@ const Icon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
-export default Icon
+export default SVG

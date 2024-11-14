@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-const EditPublish: FC = (props) => (
+const SVG: FC = (props) => (
   <svg
     className="icon"
     viewBox="0 0 1024 1024"
@@ -13,4 +13,4 @@ const EditPublish: FC = (props) => (
   </svg>
 )
 
-export default EditPublish
+export default SVG

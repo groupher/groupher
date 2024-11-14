@@ -1,4 +1,4 @@
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
 const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
@@ -45,4 +45,4 @@ const SVG = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(SVG)
+export default SVG

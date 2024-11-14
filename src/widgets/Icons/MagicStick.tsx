@@ -1,6 +1,6 @@
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const MagicStick = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
       className="prefix__icon"
@@ -18,4 +18,4 @@ const MagicStick = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(MagicStick)
+export default SVG

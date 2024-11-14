@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const Blog = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
       className="prefix__icon"
@@ -16,7 +16,7 @@ const Blog = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(Blog)
+export default SVG
 
 // <svg
 //   className="prefix__icon"

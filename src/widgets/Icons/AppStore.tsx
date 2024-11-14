@@ -1,6 +1,6 @@
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const Icon = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -189.93 539.856 539.856" {...props}>
       <g transform="scale(4.00216 4.0011)">
@@ -46,4 +46,4 @@ const Icon = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(Icon)
+export default SVG

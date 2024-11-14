@@ -1,6 +1,6 @@
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const Comment = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
       className="icon"
@@ -15,4 +15,4 @@ const Comment = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(Comment)
+export default SVG

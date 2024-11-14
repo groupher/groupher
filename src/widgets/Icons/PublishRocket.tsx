@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-const PublishRocket: FC = (props) => (
+const SVG: FC = (props) => (
   <svg
     className="prefix__icon"
     viewBox="0 0 1024 1024"
@@ -19,4 +19,4 @@ const PublishRocket: FC = (props) => (
   </svg>
 )
 
-export default PublishRocket
+export default SVG

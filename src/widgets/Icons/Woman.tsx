@@ -1,6 +1,6 @@
-import { memo, type SVGProps } from 'react'
+import type { SVGProps } from 'react'
 
-const Woman = (props: SVGProps<SVGSVGElement>) => {
+const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg
       className="prefix__icon"
@@ -15,4 +15,4 @@ const Woman = (props: SVGProps<SVGSVGElement>) => {
   )
 }
 
-export default memo(Woman)
+export default SVG
