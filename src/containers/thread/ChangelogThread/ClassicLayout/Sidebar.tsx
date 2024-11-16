@@ -9,13 +9,15 @@ import Sticky from '~/widgets/Sticky'
 import type { TTagsMode } from '../spec'
 import { TABS_MODE_OPTIONS } from '../constant'
 import { tagsModeChange } from '../logic'
-import { Wrapper, Desc, TabWrapper } from '../styles/classic_layout/sidebar'
+import useSalon from '../styles/classic_layout/sidebar'
 
 type TProps = {
   tagsMode: TTagsMode
 }
 
 const Sidebar: FC<TProps> = ({ tagsMode }) => {
+  const s = useSalon()
+
   useEffect(() => {
     setTimeout(() => {
       tagsModeChange(TABS_MODE_OPTIONS[1].slug)
@@ -23,10 +25,10 @@ const Sidebar: FC<TProps> = ({ tagsMode }) => {
   }, [])
 
   return (
-    <Wrapper>
-      <Desc>Groupher 的功能更新，界面调整，性能与 Bug 修复等</Desc>
+    <div className={s.wrapper}>
+      <div className={s.desc}>Groupher 的功能更新，界面调整，性能与 Bug 修复等</div>
       <Sticky offsetTop={30}>
-        <TabWrapper>
+        <div className={s.tabs}>
           <Tabs
             items={TABS_MODE_OPTIONS.slice(1)}
             size="small"
@@ -35,10 +37,10 @@ const Sidebar: FC<TProps> = ({ tagsMode }) => {
             onChange={tagsModeChange}
             view={VIEW.DESKTOP}
           />
-        </TabWrapper>
+        </div>
         <TagsBar onSelect={() => console.log} />
       </Sticky>
-    </Wrapper>
+    </div>
   )
 }
 

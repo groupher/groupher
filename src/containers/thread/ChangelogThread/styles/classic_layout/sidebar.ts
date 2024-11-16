@@ -1,15 +1,17 @@
-import type { TTestable } from '~/spec'
 import styled, { css, theme } from '~/css'
 
-export const Wrapper = styled.div.attrs<TTestable>(({ $testid }) => ({
-  'data-test-id': $testid,
-}))<TTestable>`
-  ${css.column()};
-  width: 200px;
-  min-width: 200px;
-  color: ${theme('article.digest')};
-  padding-top: 25px;
-`
+import useTwBelt from '~/hooks/useTwBelt'
+
+export default () => {
+  const { cn, fg } = useTwBelt()
+
+  return {
+    wrapper: cn('column w-52 min-w-52 pt-6'),
+    desc: cn('text-base mb-6', fg('text.digest')),
+    tabs: 'row-center mb-6 -ml-2.5',
+  }
+}
+
 export const Desc = styled.div`
   color: ${theme('article.digest')};
   font-size: 14px;

@@ -1,22 +1,10 @@
-import type { TTestable } from '~/spec'
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div.attrs<TTestable>(({ $testid }) => ({
-  'data-test-id': $testid,
-}))<TTestable>`
-  ${css.row()};
-  width: 100%;
-`
-export const MainWrapper = styled.div`
-  flex-grow: 1;
-  width: 100%;
-  min-height: 500px;
+export default () => {
+  const { cn, br } = useTwBelt()
 
-  background: transparent;
-  border-radius: 6px;
-  margin-top: 12px;
-  padding-right: 65px;
-  margin-right: 60px;
-  border-right: 1px solid;
-  border-right-color: ${theme('divider')};
-`
+  return {
+    wrapper: cn('row w-full'),
+    main: cn('w-full grow min-h-96 mt-3 pr-16 mr-16 border-r', br('divider')),
+  }
+}

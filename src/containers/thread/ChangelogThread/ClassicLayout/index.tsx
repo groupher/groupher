@@ -8,19 +8,20 @@ import ChangelogItem from '~/widgets/ChangelogItem'
 
 import Sidebar from './Sidebar'
 
-import { Wrapper, MainWrapper } from '../styles/classic_layout'
+import useSalon from '../styles/classic_layout'
 
 export default () => {
+  const s = useSalon()
   const { pagedChangelogs } = usePagedChangelogs()
 
   return (
-    <Wrapper>
-      <MainWrapper>
+    <div className={s.wrapper}>
+      <div className={s.main}>
         {pagedChangelogs.entries.map((item) => (
           <ChangelogItem key={item.innerId} article={item} />
         ))}
-      </MainWrapper>
+      </div>
       <Sidebar tagsMode="all" />
-    </Wrapper>
+    </div>
   )
 }
