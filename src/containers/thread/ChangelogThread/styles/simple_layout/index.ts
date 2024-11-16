@@ -1,76 +1,32 @@
-import type { TTestable } from '~/spec'
-import styled, { css, theme } from '~/css'
+import { BANNER_LAYOUT, CHANGELOG_LAYOUT } from '~/const/layout'
 
-type TWrapper = TTestable & { isSidebarLayout: boolean }
-export const Wrapper = styled.div.attrs<TTestable>(({ $testid }) => ({
-  'data-test-id': $testid,
-}))<TWrapper>`
-  ${css.column('align-center')};
-  width: ${({ isSidebarLayout }) => (isSidebarLayout ? 'auto' : '100%')};
-`
-export const Banner = styled.div<{ alignLeft: boolean }>`
-  ${css.column('align-both')};
-  align-items: ${({ alignLeft }) => (alignLeft ? 'flex-start' : 'center')};
-  padding-left: ${({ alignLeft }) => (alignLeft ? '186px' : '')};
+import useTheme from '~/hooks/useTheme'
+import useTwBelt from '~/hooks/useTwBelt'
+import useLayout from '~/hooks/useLayout'
 
-  height: 200px;
-  width: 700px;
-  margin-bottom: 20px;
-  position: relative;
+export default () => {
+  const { isLightTheme } = useTheme()
+  const { cn, fg, sexyHBorder } = useTwBelt()
+  const { bannerLayout, changelogLayout } = useLayout()
 
-  border-bottom: 1px solid transparent;
-  border-image: linear-gradient(
-    0.55turn,
-    transparent,
-    ${theme('divider')},
-    ${theme('divider')},
-    ${theme('divider')},
-    transparent
-  );
+  const isSidebarLayout = bannerLayout === BANNER_LAYOUT.SIDEBAR
+  const alignLeft = changelogLayout === CHANGELOG_LAYOUT.SIMPLE
 
-  border-image-slice: 1;
-
-  ${css.media.mobile`
-    width: 100%;
-    height: 160px;
-  `};
-`
-
-export const TabsWrapper = styled.div<{ alignLeft: boolean }>`
-  position: absolute;
-  bottom: 0;
-
-  left: ${({ alignLeft }) => (alignLeft ? '172px' : '')};
-`
-
-export const Title = styled.h2`
-  font-size: 25px;
-  color: ${theme('article.title')};
-  margin-bottom: 5px;
-  margin-top: -35px;
-
-  ${css.media.mobile`
-    font-size: 20px;
-  `};
-`
-export const Desc = styled.div`
-  font-size: 15px;
-  color: ${theme('article.digest')};
-
-  ${css.media.mobile`
-    text-align: center;
-    font-size: 13px;
-    width: 80%;
-  `};
-`
-export const MainWrapper = styled.div`
-  width: 600px;
-  margin-top: 12px;
-
-  border-radius: 6px;
-
-  ${css.media.mobile`
-    width: 100%; 
-    padding: 0 20px;
-  `};
-`
+  return {
+    wrapper: cn('column-center', isSidebarLayout ? 'w-auto' : 'w-full'),
+    banner: cn(
+      'column-align-both h-48 w-8/12 mb-5 relative',
+      alignLeft ? 'items-start pl-48' : 'items-center',
+    ),
+    divider: cn(
+      'w-52 absolute bottom-px',
+      sexyHBorder(35),
+      isLightTheme ? 'brightness-95' : 'brightness-125',
+    ),
+    tabs: cn('absolute bottom-0 z-10', alignLeft && 'left-44'),
+    //
+    title: cn('text-2xl mb-1.5 -mt-9', fg('text.title')),
+    desc: cn('text-base opacity-80', fg('text.digest')),
+    main: 'w-8/12 mt-3',
+  }
+}

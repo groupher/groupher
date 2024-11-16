@@ -3,17 +3,14 @@
  *
  */
 
-import type { FC } from 'react'
-
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
 import ChangelogItem from '~/widgets/ChangelogItem'
 
-// import type { TTagsMode } from '../spec'
 import Sidebar from './Sidebar'
 
 import { Wrapper, MainWrapper } from '../styles/classic_layout'
 
-const ClassicLayout: FC = () => {
+export default () => {
   const { pagedChangelogs } = usePagedChangelogs()
 
   return (
@@ -27,5 +24,3 @@ const ClassicLayout: FC = () => {
     </Wrapper>
   )
 }
-
-export default ClassicLayout
