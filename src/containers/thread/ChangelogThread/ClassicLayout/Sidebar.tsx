@@ -9,7 +9,7 @@ import Sticky from '~/widgets/Sticky'
 import type { TTagsMode } from '../spec'
 import { TABS_MODE_OPTIONS } from '../constant'
 import { tagsModeChange } from '../logic'
-import useSalon from '../styles/classic_layout/sidebar'
+import useSalon from '../salon/classic_layout/sidebar'
 
 type TProps = {
   tagsMode: TTagsMode

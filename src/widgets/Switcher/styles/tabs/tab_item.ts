@@ -11,7 +11,7 @@ export default ({ bottomSpace }: TProps) => {
 
   return {
     wrapper: cn(
-      'row justify-center group relative h-full z-10 mr-4 px-2 py-1.5',
+      'row justify-center group relative h-full z-10 px-2 py-1.5',
       'text-center m-w-auth pointer trans-all-200',
       fg('text.title'),
     ),

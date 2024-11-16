@@ -8,7 +8,7 @@ import ChangelogItem from '~/widgets/ChangelogItem'
 
 import Sidebar from './Sidebar'
 
-import useSalon from '../styles/classic_layout'
+import useSalon from '../salon/classic_layout'
 
 export default () => {
   const s = useSalon()

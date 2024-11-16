@@ -1,14 +1,17 @@
 import type { FC } from 'react'
 
-import { Item } from '../../styles/simple_layout/filter_bar'
+import useSalon from '../../salon/simple_layout/filter_bar'
 
 const TimeBar: FC = () => {
+  const s = useSalon()
+
   return (
     <>
-      <Item>2023</Item>
-      <Item>2022</Item>
-      <Item>2021</Item>
-      <Item>2020</Item>
+      <div className={s.item}>2024</div>
+      <div className={s.item}>2023</div>
+      <div className={s.item}>2022</div>
+      <div className={s.item}>2021</div>
+      <div className={s.item}>2020</div>
     </>
   )
 }

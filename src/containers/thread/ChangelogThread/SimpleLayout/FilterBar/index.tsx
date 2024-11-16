@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import type { TTagsMode } from '../../spec'
 import { TAGS_MODE } from '../../constant'
 
-import { Wrapper } from '../../styles/simple_layout/filter_bar'
+import useSalon from '../../salon/simple_layout/filter_bar'
 
 import TagFilter from './TagFilter'
 import TimeFilter from './TimeFilter'
@@ -11,32 +11,36 @@ import VersionFilter from './VersionFilter'
 
 type TProps = {
   tab: TTagsMode
-  alignLeft: boolean
 }
 
-const FilterBar: FC<TProps> = ({ tab, alignLeft }) => {
+const FilterBar: FC<TProps> = ({ tab }) => {
+  const s = useSalon()
+
   switch (tab) {
     case TAGS_MODE.TAG: {
       return (
-        <Wrapper alignLeft={alignLeft}>
+        <div className={s.wrapper}>
           <TagFilter />
-        </Wrapper>
+          <div className={s.divider} />
+        </div>
       )
     }
 
     case TAGS_MODE.TIME: {
       return (
-        <Wrapper alignLeft={alignLeft}>
+        <div className={s.wrapper}>
           <TimeFilter />
-        </Wrapper>
+          <div className={s.divider} />
+        </div>
       )
     }
 
     case TAGS_MODE.VERSION: {
       return (
-        <Wrapper alignLeft={alignLeft}>
+        <div className={s.wrapper}>
           <VersionFilter />
-        </Wrapper>
+          <div className={s.divider} />
+        </div>
       )
     }
 

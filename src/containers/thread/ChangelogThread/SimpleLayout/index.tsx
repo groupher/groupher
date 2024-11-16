@@ -5,9 +5,7 @@
 
 import { useState } from 'react'
 
-import useLayout from '~/hooks/useLayout'
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
-import { CHANGELOG_LAYOUT } from '~/const/layout'
 
 import ChangelogItem from '~/widgets/ChangelogItem'
 import Tabs from '~/widgets/Switcher/Tabs'
@@ -15,17 +13,14 @@ import Tabs from '~/widgets/Switcher/Tabs'
 import { TABS_MODE_OPTIONS } from '../constant'
 import FilterBar from './FilterBar'
 
-import useSalon from '../styles/simple_layout'
+import useSalon from '../salon/simple_layout'
 
 export default () => {
   const s = useSalon()
   const { pagedChangelogs } = usePagedChangelogs()
-  const { changelogLayout } = useLayout()
 
   const [filterExpand, setFilterExpand] = useState(false)
   const [tab, setTab] = useState(TABS_MODE_OPTIONS[0].slug)
-
-  const alignLeft = changelogLayout === CHANGELOG_LAYOUT.SIMPLE
 
   return (
     <div className={s.wrapper}>
@@ -51,7 +46,7 @@ export default () => {
         <div className={s.divider} />
       </div>
 
-      {filterExpand && <FilterBar tab={tab} alignLeft={alignLeft} />}
+      {filterExpand && <FilterBar tab={tab} />}
       <div className={s.main}>
         {pagedChangelogs.entries.map((item) => (
           <ChangelogItem key={item.innerId} article={item} />

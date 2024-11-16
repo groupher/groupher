@@ -1,13 +1,15 @@
 import type { FC } from 'react'
 
-import { Item } from '../../styles/simple_layout/filter_bar'
+import useSalon from '../../salon/simple_layout/filter_bar'
 
 const TagFilter: FC = () => {
+  const s = useSalon()
+
   return (
     <>
-      <Item>iOS</Item>
-      <Item>编辑器</Item>
-      <Item>性能</Item>
+      <div className={s.item}>iOS</div>
+      <div className={s.item}>编辑器</div>
+      <div className={s.item}>性能</div>
     </>
   )
 }
