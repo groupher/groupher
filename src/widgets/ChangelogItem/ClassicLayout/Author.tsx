@@ -1,22 +1,24 @@
 import type { FC } from 'react'
 
 import type { TUser } from '~/spec'
-import useLayout from '~/hooks/useLayout'
 
-import { Wrapper, Avatar, Name } from '../styles/classic_layout/author'
+import Img from '~/Img'
+
+import useSalon from '../styles/classic_layout/author'
 
 type TProps = {
   user: TUser
 }
 
 const Author: FC<TProps> = ({ user }) => {
-  const { avatarLayout } = useLayout()
+  const s = useSalon()
+  const { avatar, nickname } = user
 
   return (
-    <Wrapper>
-      <Avatar src={user.avatar} $avatarLayout={avatarLayout} />
-      <Name>{user.nickname}</Name>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <Img src={avatar} />
+      <div className={s.name}>{nickname}</div>
+    </div>
   )
 }
 

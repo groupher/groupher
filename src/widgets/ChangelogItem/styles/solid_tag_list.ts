@@ -1,29 +1,17 @@
 import type { TColorName } from '~/spec'
+import { COLOR_NAME } from '~/const/colors'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import styled, { css, theme, rainbowSoft } from '~/css'
+type TProps = {
+  color?: TColorName
+}
 
-export const Wrapper = styled.div`
-  ${css.row('align-center')};
-  gap: 0 8px;
-  margin-left: -2px;
+export default ({ color = COLOR_NAME.BLACK }: TProps = {}) => {
+  const { cn, fg, rainbow } = useTwBelt()
 
-  ${css.media.mobile`
-    gap: 6px;
-  `};
-`
-
-export const TagWrapper = styled.div<{ color: TColorName }>`
-  background: ${({ color }) => rainbowSoft(color)};
-  padding: 2px 10px;
-  border-radius: 10px;
-
-  ${css.media.mobile`
-    padding: 2px 6px;
-  `};
-`
-
-export const Name = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 11px;
-  font-weight: 400;
-`
+  return {
+    wrapper: 'row-center gap-x-2 -ml-0.5',
+    tag: cn('px-2.5 py-0.5 rounded-xl', rainbow(color, 'bgSoft')),
+    name: cn('text-xs font-normal', fg('text.digest')),
+  }
+}
