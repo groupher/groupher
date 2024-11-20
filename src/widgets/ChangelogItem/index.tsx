@@ -6,7 +6,6 @@ import useLayout from '~/hooks/useLayout'
 
 import ClassicLayout from './ClassicLayout'
 import SimpleLayout from './SimpleLayout'
-// import OutlineLayout from './OutlineLayout'
 
 type TProps = {
   article: TChangelog

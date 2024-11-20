@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import type { TColorName, TTag } from '~/spec'
 
-import useSalon from './styles/solid_tag_list'
+import useSalon from './salon/solid_tag_list'
 
 type TProps = {
   tags: TTag[]

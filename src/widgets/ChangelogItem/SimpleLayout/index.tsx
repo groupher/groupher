@@ -5,11 +5,14 @@
  */
 
 import { type FC, memo } from 'react'
+import Link from 'next/link'
 
 import type { TChangelog } from '~/spec'
 import { previewArticle } from '~/signal'
 import { THREAD } from '~/const/thread'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
+
+import ShareSVG from '~/icons/Share'
 
 import TagsList from '~/widgets/TagsList'
 import EmotionSelector from '~/widgets/EmotionSelector'
@@ -18,62 +21,50 @@ import ReadableDate from '~/widgets/ReadableDate'
 
 import { demoTags, demoEmotion } from '../constant'
 
-// import SolidTagList from '../SolidTagList'
-// import Author from './Author'
-
-import {
-  Wrapper,
-  Main,
-  Title,
-  TagsWrapper,
-  Body,
-  Footer,
-  Version,
-  DateTime,
-  ShareIcon,
-} from '../styles/simple_layout/article_layout'
+import useSalon from '../salon/simple_layout/article_layout'
 
 type TProps = {
-  testid?: string
   article: TChangelog
 }
 
-const SimpleLayout: FC<TProps> = ({ testid = 'changelog-item', article }) => {
+const SimpleLayout: FC<TProps> = ({ article }) => {
+  const s = useSalon()
   const { slug } = useViewingCommunity()
 
   return (
-    <Wrapper $testid={testid}>
-      <DateTime>
+    <div className={s.wrapper}>
+      <div className={s.dateTime}>
         <ReadableDate date={article.insertedAt} withTime={false} />
-      </DateTime>
+      </div>
 
-      <Main>
-        <Title
+      <div className={s.main}>
+        <Link
           href={`/${slug}/${THREAD.CHANGELOG}/${article.innerId}`}
+          className={s.title}
           onClick={(e) => {
             e.preventDefault()
             previewArticle(article)
           }}
         >
           {article.title}
-          <Version>v3.21</Version>
-        </Title>
-        <TagsWrapper>
+          <div className={s.version}>v3.21</div>
+        </Link>
+        <div className={s.tags}>
           <TagsList items={demoTags} size="small" />
-        </TagsWrapper>
-        <Body>
+        </div>
+        <div className={s.body}>
           这次俄乌冲突出现侮辱乌女性的评论就是1450干的，刷完评论就截图转发外网，成为外媒攻击中国人的“口实”。
           这种行为十分危险，战争期间各种武装组织骚动，随时对我国在乌克兰撤侨的6000人直接造成生命威胁。前段时间，刘学州那个找爸妈的孩子，也是被1450它们网暴死的。
           （1450罪恶滔天啊！1450是九世恶人下凡！连孩子都不放过。
-        </Body>
-        <Footer>
+        </div>
+        <div className={s.footer}>
           <EmotionSelector emotions={demoEmotion} isLegal />
           <div className="grow" />
           <CommentsCount count={article.commentsCount} size="medium" right={15} />
-          <ShareIcon />
-        </Footer>
-      </Main>
-    </Wrapper>
+          <ShareSVG className={s.shareIcon} />
+        </div>
+      </div>
+    </div>
   )
 }
 

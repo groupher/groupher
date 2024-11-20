@@ -24,7 +24,7 @@ import { demoTags, demoEmotion } from '../constant'
 import SolidTagList from '../SolidTagList'
 import Author from './Author'
 
-import useSalon from '../styles/classic_layout/article_layout'
+import useSalon from '../salon/classic_layout/article_layout'
 
 type TProps = {
   article: TChangelog

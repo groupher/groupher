@@ -4,7 +4,7 @@ import type { TUser } from '~/spec'
 
 import Img from '~/Img'
 
-import useSalon from '../styles/classic_layout/author'
+import useSalon from '../salon/classic_layout/author'
 
 type TProps = {
   user: TUser
