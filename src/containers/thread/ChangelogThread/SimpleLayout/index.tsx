@@ -5,9 +5,7 @@
 
 import { useState } from 'react'
 
-import useLayout from '~/hooks/useLayout'
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
-import { BANNER_LAYOUT, CHANGELOG_LAYOUT } from '~/const/layout'
 
 import ChangelogItem from '~/widgets/ChangelogItem'
 import Tabs from '~/widgets/Switcher/Tabs'
@@ -15,28 +13,26 @@ import Tabs from '~/widgets/Switcher/Tabs'
 import { TABS_MODE_OPTIONS } from '../constant'
 import FilterBar from './FilterBar'
 
-import { Wrapper, Banner, TabsWrapper, Title, Desc, MainWrapper } from '../styles/simple_layout'
+import useSalon from '../salon/simple_layout'
 
 export default () => {
+  const s = useSalon()
   const { pagedChangelogs } = usePagedChangelogs()
-  const { bannerLayout, changelogLayout } = useLayout()
 
   const [filterExpand, setFilterExpand] = useState(false)
   const [tab, setTab] = useState(TABS_MODE_OPTIONS[0].slug)
 
-  const alignLeft = changelogLayout === CHANGELOG_LAYOUT.SIMPLE
-
   return (
-    <Wrapper isSidebarLayout={bannerLayout === BANNER_LAYOUT.SIDEBAR}>
-      <Banner alignLeft={alignLeft}>
-        <Title>更新日志</Title>
-        <Desc>Groupher 的功能更新，界面调整，性能与 Bug 修复等</Desc>
-        <TabsWrapper alignLeft={alignLeft}>
+    <div className={s.wrapper}>
+      <div className={s.banner}>
+        <h2 className={s.title}>更新日志</h2>
+        <div className={s.desc}>Groupher 的功能更新，界面调整，性能与 Bug 修复等</div>
+        <div className={s.tabs}>
           <Tabs
             items={TABS_MODE_OPTIONS}
             size="small"
             activeKey={tab}
-            bottomSpace={4}
+            bottomSpace={0}
             onChange={(slug) => {
               setTab(slug)
 
@@ -46,15 +42,16 @@ export default () => {
               setFilterExpand(true)
             }}
           />
-        </TabsWrapper>
-      </Banner>
+        </div>
+        <div className={s.divider} />
+      </div>
 
-      {filterExpand && <FilterBar tab={tab} alignLeft={alignLeft} />}
-      <MainWrapper>
+      {filterExpand && <FilterBar tab={tab} />}
+      <div className={s.main}>
         {pagedChangelogs.entries.map((item) => (
           <ChangelogItem key={item.innerId} article={item} />
         ))}
-      </MainWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }

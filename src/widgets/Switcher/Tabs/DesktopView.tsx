@@ -80,6 +80,7 @@ const Tabs: FC<TProps> = ({
     if (navRef.current) {
       const activeSlipWidth =
         navRef.current.childNodes[defaultActiveTabIndex].firstElementChild.offsetWidth
+
       setSlipWidth(activeSlipWidth)
     }
     setActive(defaultActiveTabIndex)

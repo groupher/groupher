@@ -1,16 +1,25 @@
-import useLayout from '~/hooks/useLayout'
-import { mockUsers } from '~/mock'
+import type { FC } from 'react'
 
-import { Wrapper, Avatar, Name } from '../styles/simple_layout/author'
+import type { TUser } from '~/spec'
 
-export default () => {
-  const { avatarLayout } = useLayout()
-  const user = mockUsers(1)[0]
+import Img from '~/Img'
+
+import useSalon from '../salon/classic_layout/author'
+
+type TProps = {
+  user: TUser
+}
+
+const Author: FC<TProps> = ({ user }) => {
+  const s = useSalon()
+  const { avatar, nickname } = user
 
   return (
-    <Wrapper>
-      <Avatar src={user.avatar} $avatarLayout={avatarLayout} />
-      <Name>{user.nickname}</Name>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <Img src={avatar} />
+      <div className={s.name}>{nickname}</div>
+    </div>
   )
 }
+
+export default Author

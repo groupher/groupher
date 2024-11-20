@@ -1,14 +1,16 @@
 import type { FC } from 'react'
 
-import { Item } from '../../styles/simple_layout/filter_bar'
+import useSalon from '../../salon/simple_layout/filter_bar'
 
 const VersionBar: FC = () => {
+  const s = useSalon()
+
   return (
     <>
-      <Item>v4.0</Item>
-      <Item>v3.0</Item>
-      <Item>v2.0</Item>
-      <Item>v1.0</Item>
+      <div className={s.item}>v4.0</div>
+      <div className={s.item}>v3.0</div>
+      <div className={s.item}>v2.0</div>
+      <div className={s.item}>v1.0</div>
     </>
   )
 }

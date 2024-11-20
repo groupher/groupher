@@ -3,29 +3,25 @@
  *
  */
 
-import type { FC } from 'react'
-
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
 import ChangelogItem from '~/widgets/ChangelogItem'
 
-// import type { TTagsMode } from '../spec'
 import Sidebar from './Sidebar'
 
-import { Wrapper, MainWrapper } from '../styles/classic_layout'
+import useSalon from '../salon/classic_layout'
 
-const ClassicLayout: FC = () => {
+export default () => {
+  const s = useSalon()
   const { pagedChangelogs } = usePagedChangelogs()
 
   return (
-    <Wrapper>
-      <MainWrapper>
+    <div className={s.wrapper}>
+      <div className={s.main}>
         {pagedChangelogs.entries.map((item) => (
           <ChangelogItem key={item.innerId} article={item} />
         ))}
-      </MainWrapper>
+      </div>
       <Sidebar tagsMode="all" />
-    </Wrapper>
+    </div>
   )
 }
-
-export default ClassicLayout
