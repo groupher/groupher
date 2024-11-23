@@ -1,52 +1,45 @@
 import type { FC } from 'react'
 
+import Link from 'next/link'
+import Img from '~/Img'
+import ArrowSVG from '~/icons/ArrowUpRight'
+
 import type { TMediaReport } from '~/spec'
 import { sortByIndex } from '~/helper'
 
-import useLayout from '~/hooks/useLayout'
-
-import {
-  Wrapper,
-  PreviewWrapper,
-  Brand,
-  Favicon,
-  SiteName,
-  Title,
-  ArrowBox,
-  ArrowIcon,
-} from './styles/media_reports'
+import useSalon from './styles/media_reports'
 
 type TProps = {
   items: TMediaReport[]
 }
 
 const MediaReports: FC<TProps> = ({ items }) => {
-  const { bannerLayout } = useLayout()
+  const s = useSalon()
 
   return (
-    <Wrapper>
+    <>
       {/* @ts-ignore */}
       {sortByIndex(items).map((item: TMediaReport) => {
         const { index, favicon, title, url, siteName } = item
         if (!title) return null
 
         return (
-          <PreviewWrapper key={index}>
-            <Brand>
-              <Favicon src={favicon} />
-              <SiteName>{siteName}</SiteName>
-            </Brand>
+          <div className={s.preview} key={index}>
+            <div className={s.brand}>
+              <Img src={favicon} className={s.favicon} />
+              <div className={s.siteName}>{siteName}</div>
+            </div>
 
-            <Title href={url} target="_blank" $bannerLayout={bannerLayout}>
+            <Link href={url} target="_blank" className={s.title}>
               {title}
-            </Title>
-            <ArrowBox>
-              <ArrowIcon />
-            </ArrowBox>
-          </PreviewWrapper>
+            </Link>
+            <div className={s.arrowBox}>
+              <ArrowSVG className={s.arrowIcon} />
+            </div>
+          </div>
         )
       })}
-    </Wrapper>
+    </>
   )
 }
 
