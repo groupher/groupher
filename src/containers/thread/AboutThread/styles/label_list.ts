@@ -1,15 +1,14 @@
-import styled, { css, theme } from '~/css'
-import { WithMargin } from '~/widgets/Common'
+import type { TSpace } from '~/spec'
 
-export const Wrapper = styled(WithMargin)`
-  ${css.rowWrap('align-center')};
-  gap: 0 8px;
-`
-export const Label = styled.div`
-  border: 1px solid;
-  color: ${theme('article.title')};
-  border-color: ${theme('divider')};
-  padding: 1px 8px;
-  font-size: 13px;
-  border-radius: 8px;
-`
+import useTwBelt from '~/hooks/useTwBelt'
+
+type TProps = TSpace
+
+export default ({ ...spacing }: TProps) => {
+  const { cn, fg, br, margin } = useTwBelt()
+
+  return {
+    wrapper: cn('row-center gap-x-2', margin(spacing)),
+    label: cn('border text-sm rounded px-2 py-px', br('divider'), fg('text.title')),
+  }
+}
