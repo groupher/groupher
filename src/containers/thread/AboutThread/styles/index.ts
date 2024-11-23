@@ -1,60 +1,30 @@
-import type { TBannerLayout, TTestable } from '~/spec'
-import styled, { css, theme } from '~/css'
 import { BANNER_LAYOUT } from '~/const'
 
-type TWrapper = TTestable & { $bannerLayout: TBannerLayout }
-export const Wrapper = styled.div.attrs<TWrapper>(({ $testid }) => ({
-  'data-test-id': $testid,
-}))<TWrapper>`
-  ${css.row('align-start')};
-  width: 100%;
+import useLayout from '~/hooks/useLayout'
+import useTwBelt from '~/hooks/useTwBelt'
 
-  padding-left: ${({ $bannerLayout }) => ($bannerLayout === BANNER_LAYOUT.SIDEBAR ? '90px' : '')};
-  ${({ $bannerLayout }) => ($bannerLayout === BANNER_LAYOUT.TABBER ? 'padding: 0 6px;' : '')};
+export { cn } from '~/css'
 
-  ${css.media.mobile`
-    ${css.column('align-start')};
-  `};
-`
-export const MainWrapper = styled.div<{ $isSidebarLayout: boolean }>`
-  width: auto;
-  min-height: 550px;
-  flex-grow: 1;
+type TProps = {
+  isSidebarLayout: boolean
+}
 
-  background: transparent;
-  border-radius: 6px;
-  margin-top: 25px;
-  padding-left: ${({ $isSidebarLayout }) => ($isSidebarLayout ? '60px' : '')};
+export default ({ isSidebarLayout }: TProps) => {
+  const { cn, fg } = useTwBelt()
+  const { bannerLayout } = useLayout()
 
-  ${css.media.mobile`
-    width: 100%;
-  `};
-`
-export const Block = styled.div`
-  padding-bottom: 30px;
-  width: 620px;
-
-  ${css.media.mobile`
-    width: 100%;
-  `};
-`
-export const IntroBlock = styled(Block)`
-  padding-right: 20px;
-`
-export const StateBlock = styled(Block)`
-  padding-right: 0;
-`
-export const MemberBlock = styled(Block)`
-  border-bottom: none;
-`
-export const Title = styled.div`
-  font-size: 14px;
-  color: ${theme('article.digest')};
-  font-weight: 600;
-  margin-bottom: 18px;
-`
-export const Desc = styled.div`
-  font-size: 14.5px;
-  color: ${theme('article.digest')};
-  line-height: 1.8;
-`
+  return {
+    wrapper: cn(
+      'row align-start w-full mt-6',
+      bannerLayout === BANNER_LAYOUT.SIDEBAR && 'pl-24',
+      bannerLayout === BANNER_LAYOUT.TABBER && 'px-1.5',
+    ),
+    main: cn('w-auto min-h-3/5 bg-transparent mt-6', isSidebarLayout && 'pl-16'),
+    intro: 'w-[620px] pb-14',
+    state: 'pr-0 pb-8',
+    members: 'border-b-none',
+    //
+    title: cn('text-sm bold-sm mb-4', fg('text.title')),
+    desc: cn('text-sm leading-relaxed', fg('text.digest')),
+  }
+}

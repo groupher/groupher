@@ -1,46 +1,15 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  width: 300px;
-  min-width: 300px;
-  height: auto;
-  border-left: 1px solid;
-  border-left-color: ${theme('divider')};
-  padding-left: 60px;
-  padding-top: 10px;
-  padding-bottom: 0;
-  margin-top: 20px;
-  margin-left: 70px;
+export { cn } from '~/css'
 
-  ${css.media.mobile`
-    display: none;
-  `};
-`
+export default () => {
+  const { cn, fg, br, sexyHBorder } = useTwBelt()
 
-export const MobileWrapper = styled.div`
-  display: none;
-
-  ${css.media.mobile`
-    display: block;
-    padding: 0 20px;
-  `};
-`
-
-export const Block = styled.div<{ hide?: boolean }>`
-  display: ${({ hide }) => (hide ? 'none' : 'block')};
-
-  margin-bottom: 20px;
-`
-
-export const Title = styled.div`
-  font-size: 13px;
-  color: ${theme('article.digest')};
-  font-weight: 500;
-  margin-bottom: 10px;
-`
-export const Desc = styled.div`
-  font-size: 14px;
-  font-weight: 400;
-  color: ${theme('article.digest')};
-  line-height: 1.6;
-`
+  return {
+    wrapper: cn('w-72 h-auto pl-12 mt-6 ml-14 border-l', br('divider')),
+    block: 'mb-5',
+    title: cn('text-sm bold-sm mb-2.5', fg('text.digest')),
+    desc: cn('text-sm leading-loose', fg('text.digest')),
+    divider: cn('my-7 -ml-1', sexyHBorder(35)),
+  }
+}
