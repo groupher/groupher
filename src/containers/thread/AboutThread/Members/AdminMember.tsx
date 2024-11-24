@@ -4,21 +4,23 @@ import type { TUser } from '~/spec'
 
 import AdminAvatar from '~/widgets/AdminAvatar'
 
-import { Wrapper, Info, Name, Bio } from '../styles/members/admin_member'
+import useSalon from '../salon/members/admin_member'
 
 type TProps = {
   user: TUser
 }
 
 const AdminMember: FC<TProps> = ({ user }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <AdminAvatar user={user} right={15} top={4} />
-      <Info>
-        <Name>{user.nickname}</Name>
-        <Bio>{user.bio}</Bio>
-      </Info>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <AdminAvatar user={user} right={5} top={1} />
+      <div className={s.info}>
+        <div className={s.name}>{user.nickname}</div>
+        <div className={s.bio}>{user.bio}</div>
+      </div>
+    </div>
   )
 }
 

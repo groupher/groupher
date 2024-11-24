@@ -1,79 +1,69 @@
 import type { FC } from 'react'
 
 import type { TModerator } from '~/spec'
-import useLayout from '~/hooks/useLayout'
 import { mockUsers } from '~/mock'
 
+import Img from '~/Img'
 import ImgFallback from '~/widgets/ImgFallback'
 import NoteTip from '~/widgets/NoteTip'
-import { SexyDivider as Divider } from '~/widgets/Common'
 
 import AdminMember from './AdminMember'
 
-import {
-  Wrapper,
-  Block,
-  Header,
-  Title,
-  AdminsRow,
-  Admin,
-  JoinersRow,
-  JoinersAvatar,
-} from '../styles/members'
+import useSalon, { cn } from '../salon/members'
 
 type TProps = {
   moderators: TModerator[]
 }
 
 const Members: FC<TProps> = ({ moderators }) => {
-  const { avatarLayout } = useLayout()
+  const s = useSalon()
 
   return (
-    <Wrapper>
-      <Block>
-        <Header>
-          <Title>社区管理员</Title>
-        </Header>
-        <AdminsRow>
+    <div className={s.wrapper}>
+      <div className={s.block}>
+        <div className={s.header}>
+          <h3 className={s.title}>社区管理员</h3>
+        </div>
+        <div className={s.adminsRow}>
           {moderators.map((moderator: TModerator) => (
-            <Admin key={moderator.user.login}>
+            <div key={moderator.user.login} className={s.admin}>
               <AdminMember user={moderator.user} />
-            </Admin>
+            </div>
           ))}
-        </AdminsRow>
-      </Block>
+        </div>
+      </div>
 
-      <Divider bottom={40} top={30} />
+      <div className={s.divider} />
 
-      <Block>
-        <Header>
-          <Title>
+      <div className={s.block}>
+        <div className={s.header}>
+          <h3 className={s.title}>
             参与互动
             <NoteTip fontSize={14} left={4} placement="right" offset={[-6, 10]}>
               参与发布，投票，评论，以及 Emoji 反馈的用户
             </NoteTip>
-          </Title>
-        </Header>
-        <JoinersRow>
+          </h3>
+        </div>
+        <div className={cn(s.adminsRow, 'gap-3')}>
           {mockUsers(15).map((user) => (
-            <JoinersAvatar
+            <Img
+              className={s.joinerAavtar}
               key={user.login}
               src={user.avatar}
-              $avatarLayout={avatarLayout}
               fallback={<ImgFallback size={26} user={user} />}
             />
           ))}
           {mockUsers(15).map((user) => (
-            <JoinersAvatar
+            <Img
+              className={s.joinerAavtar}
               key={user.login}
               src={user.avatar}
-              $avatarLayout={avatarLayout}
               fallback={<ImgFallback size={26} user={user} />}
             />
           ))}
-        </JoinersRow>
-      </Block>
-    </Wrapper>
+        </div>
+      </div>
+    </div>
   )
 }
 

@@ -12,7 +12,7 @@ export default ({ ...spacing }: TProps) => {
   const { cn, avatar, fill, margin, primary, shadow } = useTwBelt()
 
   return {
-    wrapper: cn('size-12', margin(spacing)),
+    wrapper: cn('size-12 shrink-0', margin(spacing)),
     innerWrapper: cn(
       'align-both relative p-0.5 border',
       primary('borderSoft'),
