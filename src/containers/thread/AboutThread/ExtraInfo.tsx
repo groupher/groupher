@@ -7,7 +7,7 @@ import SocialList from '~/widgets/SocialList'
 import LabelList from './LabelList'
 import MediaReports from './MediaReports'
 
-import { Wrapper, Block, Title } from './styles/extra_info'
+import { Wrapper, Block, Title } from './salon/extra_info'
 
 const Content = () => {
   const { cities, techstacks, socialLinks, mediaReports } = useAboutInfo()

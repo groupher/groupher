@@ -8,7 +8,7 @@ import SocialList from '~/widgets/SocialList'
 import LabelList from './LabelList'
 import MediaReports from './MediaReports'
 
-import useSalon, { cn } from './styles/sidebar'
+import useSalon, { cn } from './salon/sidebar'
 
 export default () => {
   const s = useSalon()

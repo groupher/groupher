@@ -7,7 +7,7 @@ import ArrowSVG from '~/icons/ArrowUpRight'
 import type { TMediaReport } from '~/spec'
 import { sortByIndex } from '~/helper'
 
-import useSalon from './styles/media_reports'
+import useSalon from './salon/media_reports'
 
 type TProps = {
   items: TMediaReport[]

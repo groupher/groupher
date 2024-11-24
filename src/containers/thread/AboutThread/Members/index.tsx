@@ -9,7 +9,7 @@ import NoteTip from '~/widgets/NoteTip'
 
 import AdminMember from './AdminMember'
 
-import useSalon, { cn } from '../styles/members'
+import useSalon, { cn } from '../salon/members'
 
 type TProps = {
   moderators: TModerator[]

@@ -4,7 +4,7 @@ import type { TUser } from '~/spec'
 
 import AdminAvatar from '~/widgets/AdminAvatar'
 
-import useSalon from '../styles/members/admin_member'
+import useSalon from '../salon/members/admin_member'
 
 type TProps = {
   user: TUser

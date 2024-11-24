@@ -10,7 +10,7 @@ export default () => {
     block: 'w-full',
     header: 'row-center mb-8',
     //
-    title: cn('row-center text-sm row-enter bold-sm', fg('text.digest')),
+    title: cn('row-center text-base row-enter bold', fg('text.digest')),
     divider: cn(sexyHBorder(35), 'my-10'),
     adminsRow: 'row-center wrap',
     admin: 'row items-start w-1/2',

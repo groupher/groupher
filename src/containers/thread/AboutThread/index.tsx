@@ -18,7 +18,7 @@ import BasicStates from './BasicStates'
 import ExtraInfo from './ExtraInfo'
 import Sidebar from './Sidebar'
 
-import useSalon, { cn } from './styles'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   isSidebarLayout?: boolean

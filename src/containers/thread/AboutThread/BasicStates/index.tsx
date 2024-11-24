@@ -2,35 +2,26 @@ import { type FC, memo } from 'react'
 
 import Trend from 'react-trend'
 
-import {
-  Wrapper,
-  Block,
-  UsersWrapper,
-  UsersIcon,
-  ContentWrapper,
-  ContentIcon,
-  CommentsWrapper,
-  CommentIcon,
-  EmojisWrapper,
-  EmojiIcon,
-  TrendWrapper,
-  TrendIcon,
-  Title,
-  Desc,
-  Num,
-  TrendLineWrapper,
-} from '../styles/basic_states'
+import PostSVG from '~/icons/Post'
+import CommentSVG from '~/icons/Comment'
+import UserSVG from '~/icons/Users'
+import EmojiSVG from '~/icons/Heart'
+import PulseSVG from '~/icons/Pulse'
+
+import useSalon, { cn } from '../salon/basic_states'
 
 const BasicStates: FC = () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Block>
-        <TrendWrapper>
-          <TrendIcon />
-        </TrendWrapper>
-        <Title>活跃度</Title>
-        <Desc>最近 30 天</Desc>
-        <TrendLineWrapper>
+    <div className={s.wrapper}>
+      <div className={cn(s.block, 'pl-0')}>
+        <div className={cn(s.iconBox, s.greenBg)}>
+          <PulseSVG className={cn(s.icon, s.greenFill)} />
+        </div>
+        <h4 className={s.title}>活跃度</h4>
+        <div className={s.desc}>最近 30 天</div>
+        <div className={s.trendChart}>
           <Trend
             smooth
             width={80}
@@ -41,41 +32,43 @@ const BasicStates: FC = () => {
             strokeWidth={1}
             strokeLinecap="round"
           />
-        </TrendLineWrapper>
-      </Block>
-      <Block>
-        <UsersWrapper>
-          <UsersIcon />
-        </UsersWrapper>
-        <Title>互动人数</Title>
-        <Desc>参与互动的用户</Desc>
-        <Num>28</Num>
-      </Block>
-      <Block>
-        <ContentWrapper>
-          <ContentIcon />
-        </ContentWrapper>
-        <Title>内容</Title>
-        <Desc>所有板块内容总和</Desc>
-        <Num>12k</Num>
-      </Block>
-      <Block>
-        <CommentsWrapper>
-          <CommentIcon />
-        </CommentsWrapper>
-        <Title>评论</Title>
-        <Desc>所有评论总和</Desc>
-        <Num>237</Num>
-      </Block>
-      <Block>
-        <EmojisWrapper>
-          <EmojiIcon />
-        </EmojisWrapper>
-        <Title>回应</Title>
-        <Desc>投票和表情</Desc>
-        <Num>374</Num>
-      </Block>
-    </Wrapper>
+        </div>
+      </div>
+      <div className={cn(s.block, 'pl-3')}>
+        <div className={cn(s.iconBox, s.purpleBg)}>
+          <PostSVG className={cn(s.icon, 'size-4', s.purpleFill)} />
+        </div>
+        <h4 className={s.title}>内容</h4>
+        <div className={s.desc}>所有板块内容总和</div>
+        <div className={s.num}>12k</div>
+      </div>
+
+      <div className={cn(s.block, 'pl-6')}>
+        <div className={cn(s.iconBox, s.blueBg)}>
+          <CommentSVG className={cn(s.icon, 'size-3', s.blueFill)} />
+        </div>
+        <h4 className={s.title}>评论</h4>
+        <div className={s.desc}>所有评论总和</div>
+        <div className={s.num}>237</div>
+      </div>
+      <div className={cn(s.block, 'pl-7')}>
+        <div className={cn(s.iconBox, s.orangeBg)}>
+          <UserSVG className={cn(s.icon, s.orangeFill)} />
+        </div>
+        <h4 className={s.title}>互动人数</h4>
+        <div className={s.desc}>参与互动的用户</div>
+        <div className={s.num}>28</div>
+      </div>
+      <div className={cn(s.block, 'pl-12')}>
+        <div className={cn(s.iconBox, s.redBg)}>
+          <EmojiSVG className={cn(s.icon, s.redFill)} />
+        </div>
+
+        <h4 className={s.title}>表情</h4>
+        <div className={s.desc}>投票和表情</div>
+        <div className={s.num}>374</div>
+      </div>
+    </div>
   )
 }
 

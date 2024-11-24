@@ -24,7 +24,7 @@ export default ({ isSidebarLayout }: TProps) => {
     state: 'pr-0 pb-8',
     members: 'border-b-none',
     //
-    title: cn('text-sm bold-sm mb-4', fg('text.title')),
+    title: cn('text-base bold mb-4', fg('text.digest')),
     desc: cn('text-sm leading-relaxed', fg('text.digest')),
   }
 }
