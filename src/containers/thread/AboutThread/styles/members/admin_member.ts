@@ -1,20 +1,12 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row('align-start')};
-  margin-bottom: 15px;
-`
-export const Info = styled.div``
-export const Name = styled.div`
-  ${css.cutRest('140px')};
-  color: ${theme('article.title')};
-  font-size: 15px;
-  margin-bottom: 2px;
-  font-weight: 500;
-`
-export const Bio = styled.div`
-  color: ${theme('hint')};
-  font-size: 12px;
-  ${css.lineClamp(2)};
-  width: 80%;
-`
+export default () => {
+  const { cn, fg } = useTwBelt()
+
+  return {
+    wrapper: 'row items-start mb-4',
+    info: '',
+    name: cn('truncate w-28 text-base mb-0.5 font-medium', fg('text.title')),
+    bio: cn('text-xs w-4/5 line-clamp-2', fg('text.hint')),
+  }
+}
