@@ -1,36 +1,21 @@
-import type { TBannerLayout, TTestable } from '~/spec'
 import styled, { css } from '~/css'
 import { BANNER_LAYOUT } from '~/const'
 
-type TWrapper = TTestable & { $bannerLayout: TBannerLayout }
-export const Wrapper = styled.div.attrs<TTestable>(({ $testid }) => ({
-  'data-test-id': $testid,
-}))<TWrapper>`
-  ${css.column('align-center')};
-  width: ${({ $bannerLayout }) =>
-    $bannerLayout === BANNER_LAYOUT.SIDEBAR ? 'calc(100% + 30px)' : '100%'};
+import useLayout from '~/hooks/useLayout'
+import useTwBelt from '~/hooks/useTwBelt'
 
-  ${({ $bannerLayout }) => {
-    switch ($bannerLayout) {
-      case BANNER_LAYOUT.SIDEBAR:
-        return 'padding-left: 100px'
+export default () => {
+  const { cn } = useTwBelt()
+  const { bannerLayout } = useLayout()
 
-      case BANNER_LAYOUT.HEADER:
-        return 'padding-left: 0'
+  return {
+    wrapper: cn('column-center w-full mt-2.5', bannerLayout === BANNER_LAYOUT.SIDEBAR && 'pl-24'),
+    faqs: '-ml-10 mb-5 max-w-11/12',
+    //
+    main: 'grow w-full min-h-96 mt-4 pl-4 pr-20',
+  }
+}
 
-      default:
-        return ''
-    }
-  }};
-
-  margin-top: 10px;
-  margin: 0;
-
-  ${css.media.mobile`
-    margin: 0;
-    padding: 0;
-  `};
-`
 export const MainWrapper = styled.div`
   flex-grow: 1;
   width: 100%;
@@ -44,16 +29,5 @@ export const MainWrapper = styled.div`
 
   ${css.media.mobile`
     padding-right: 0;
-  `};
-`
-export const FAQWrapper = styled.div`
-  margin-left: -5%;
-  margin-bottom: 15px;
-  max-width: 90%;
-
-  ${css.media.mobile`
-    margin-left: 0;
-    max-width: 100%;
-    margin-bottom: 0;
   `};
 `
