@@ -1,66 +1,24 @@
-import type { TColorName, TTestable } from '~/spec'
-import styled, { css, theme, rainbowSoft } from '~/css'
+import type { TColorName } from '~/spec'
 
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
+import useTwBelt from '~/hooks/useTwBelt'
 
-type TWrapper = TTestable & { color?: string }
-export const Wrapper = styled.div.attrs<TTestable>(({ $testid }) => ({
-  'data-test-id': $testid,
-}))<TWrapper>`
-  ${css.row('align-center')};
-  width: 580px;
-  min-height: 80px;
-  padding: 30px 0;
-  border-bottom: 1px solid;
-  border-bottom-color: ${theme('divider')};
+type TProps = {
+  color: TColorName
+}
 
-  &:last-child {
-    border-bottom: none;
+export default ({ color }: TProps) => {
+  const { cn, fg, br, rainbow } = useTwBelt()
+
+  return {
+    wrapper: cn('row-center w-7/12 min-h-20 py-8 border-b last:border-b-0', br('divider')),
+    cover: cn('column mr-12'),
+    iconBox: cn('align-both size-12 -mt-8 rounded-lg', rainbow(color, 'bgSoft')),
+    content: 'column grow',
+    //
+    title: cn('text-base', fg('text.title')),
+    desc: cn('text-sm line-clamp-2 mt-1.5', fg('text.digest')),
+    footer: cn('row-center-between w-full mt-4'),
+    authorHint: cn('text-xs', fg('text.hint')),
+    moreLink: 'mt-1 scale-90',
   }
-
-  transition: all 0.2s;
-  background: transparent;
-`
-export const Cover = styled.div`
-  ${css.column()};
-  margin-right: 50px;
-`
-export const Content = styled.div`
-  ${css.column()};
-  flex-grow: 1;
-`
-export const IconWrapper = styled.div<{ color: TColorName }>`
-  ${css.size(50)};
-  ${css.row('align-both')};
-  margin-top: -35px;
-  border-radius: 12px;
-  background: ${({ color }) => rainbowSoft(color)};
-  opacity: 0.8;
-`
-export const Title = styled.div`
-  color: ${theme('article.title')};
-  font-size: 17px;
-  font-weight: 500;
-`
-export const Desc = styled.div`
-  ${css.lineClamp(2)};
-  color: ${theme('article.digest')}
-  font-size: 13px;
-  opacity: 0.8;
-  margin-top: 5px;
-`
-export const Footer = styled.div`
-  width: 100%;
-  margin-top: 16px;
-  ${css.row('align-center', 'justify-between')}
-`
-
-export const AuthorHint = styled.div`
-  color: ${theme('lightText')};
-  font-size: 12px;
-`
-
-export const MoreLink = styled(ArrowButton)`
-  margin-top: 5px;
-  transform: scale(0.9);
-`
+}
