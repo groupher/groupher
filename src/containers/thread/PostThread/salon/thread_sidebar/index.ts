@@ -19,9 +19,9 @@ export default () => {
   return {
     wrapper: 'min-w-52 max-w-52 mt-5',
     stickyWrapper: 'relative min-h-screen',
-    showArea: cn('transition-opacity ', {
-      'opacity-100 duration-300 ease-in': badgeInView,
-      'opacity-0 duration-100 ease-out': !badgeInView,
+    showArea: cn('transition-opacity duration-200', {
+      'opacity-100 ease-in max-h-auto': badgeInView,
+      'opacity-0 max-h-16 duration-0': !badgeInView,
     }),
     title: cn('row-center text-sm bold mb-2.5', fg('text.digest')),
     desc: cn('text-sm mb-2.5 line-clamp-2 leading-normal', fg('text.digest')),

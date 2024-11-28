@@ -4,6 +4,16 @@ import styled, { css, theme } from '~/css'
 
 import { MainWrapper } from '..'
 
+import useTwBelt from '~/hooks/useTwBelt'
+
+export default () => {
+  const { cn } = useTwBelt()
+
+  return {
+    wrapper: cn(''),
+  }
+}
+
 export const Wrapper = styled.div<{ $bannerLayout?: TBannerLayout }>`
   ${css.column('align-both')};
   width: 100%;
@@ -14,19 +24,15 @@ export const Wrapper = styled.div<{ $bannerLayout?: TBannerLayout }>`
 `
 export const CatsWrapper = styled(MainWrapper)<{ $bannerLayout?: TBannerLayout }>`
   ${css.rowWrap()};
-  gap: 30px 32px;
+  gap: 30px 30px;
   width: ${({ $bannerLayout }) =>
     $bannerLayout === BANNER_LAYOUT.TABBER ? 'calc(100% + 90px);' : '100%'};
   min-height: 600px;
   padding-right: 0;
-  padding-left: 16px;
+  padding-left: 0;
 
   background: transparent;
   border-right: none;
-
-  ${css.media.mobile`
-    padding: 0;
-  `};
 `
 
 export const Divider = styled.div`
