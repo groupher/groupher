@@ -3,7 +3,7 @@ import { type FC, memo } from 'react'
 import ArrowSVG from '~/icons/ArrowSimple'
 import ListSVG from '~/icons/List'
 
-import useSalon from '../styles/article_layout/toggle_btn'
+import useSalon from '../salon/article_layout/toggle_btn'
 
 type TProps = {
   open: boolean

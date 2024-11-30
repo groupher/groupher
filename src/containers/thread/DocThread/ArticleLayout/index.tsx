@@ -17,7 +17,7 @@ import ArticleCover from './ArticleCover'
 import ToggleBtn from './ToggleBtn'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/article_layout'
+import useSalon from '../salon/article_layout'
 
 export default () => {
   const { gotoDetailLayout, isFAQArticleLayout } = useLogic()

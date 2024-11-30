@@ -18,6 +18,7 @@ export default ({ filterOpen }: TProps) => {
       base.main,
       'grow text-base pl-12 pr-0 max-w-full',
       filterOpen ? 'w-[680px]' : 'px-20',
+      fg('text.digest'),
     ),
     //
     title: cn('text-2xl bold-sm', fg('text.title')),

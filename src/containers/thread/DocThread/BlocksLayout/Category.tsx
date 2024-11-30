@@ -6,7 +6,7 @@ import FaIcons from '~/widgets/FaIcons'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/blocks_layout/category'
+import useSalon from '../salon/blocks_layout/category'
 
 const FOLD_LIMIT = 5
 

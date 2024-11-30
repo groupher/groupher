@@ -15,7 +15,7 @@ import CardsLayout from './CardsLayout'
 import ArticleLayout from './ArticleLayout'
 
 import useLogic from './useLogic'
-import useSalon from './styles'
+import useSalon from './salon'
 
 export default () => {
   const s = useSalon()

@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { mockHelpCats } from '~/mock'
 
 import Category from './Category'
-import useSalon from '../styles/lists_layout'
+import useSalon from '../salon/lists_layout'
 
 const ListsLayout: FC = () => {
   const s = useSalon()

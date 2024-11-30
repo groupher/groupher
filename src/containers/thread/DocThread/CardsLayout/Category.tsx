@@ -6,7 +6,7 @@ import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import Facepile from '~/widgets/Facepile'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/cards_layout/category'
+import useSalon from '../salon/cards_layout/category'
 
 const FOLD_LIMIT = 5
 

@@ -8,7 +8,7 @@ import FaIcons from '~/widgets/FaIcons'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/lists_layout/category'
+import useSalon from '../salon/lists_layout/category'
 
 type TProps = {
   color: TColorName

@@ -1,10 +1,14 @@
-import { Wrapper, Image } from '../styles/article_layout/article_cover'
+import useSalon from '../salon/article_layout/article_cover'
+
+import Img from '~/Img'
 
 const ArticleCover = () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Image src="/help-cover-demo.png" noLazy />
-    </Wrapper>
+    <div className={s.wrapper}>
+      <Img src="/help-cover-demo.png" noLazy className={s.image} />
+    </div>
   )
 }
 

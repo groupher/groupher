@@ -5,7 +5,7 @@ import { DOC_FAQ_LAYOUT } from '~/const/layout'
 
 import FaqList from '~/widgets/FaqList'
 
-import useSalon from './styles/faq_layout'
+import useSalon from './salon/faq_layout'
 
 type TProps = TSpace
 

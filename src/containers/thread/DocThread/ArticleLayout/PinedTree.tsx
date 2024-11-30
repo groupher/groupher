@@ -3,7 +3,7 @@ import QuestionSVG from '~/icons/Question'
 import BookSVG from '~/icons/Book'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/article_layout/pined_tree'
+import useSalon, { cn } from '../salon/article_layout/pined_tree'
 
 export default () => {
   const s = useSalon()
