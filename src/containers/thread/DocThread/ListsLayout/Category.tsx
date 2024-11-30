@@ -5,19 +5,10 @@ import { mockUsers } from '~/mock'
 
 import Facepile from '~/widgets/Facepile'
 import FaIcons from '~/widgets/FaIcons'
+import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  Cover,
-  Content,
-  IconWrapper,
-  Title,
-  Desc,
-  Footer,
-  AuthorHint,
-  MoreLink,
-} from '../styles/lists_layout/category'
+import useSalon from '../salon/lists_layout/category'
 
 type TProps = {
   color: TColorName
@@ -26,26 +17,29 @@ type TProps = {
 }
 
 const Category: FC<TProps> = ({ color, title, desc }) => {
+  const s = useSalon({ color })
   const { gotoDetailLayout } = useLogic()
 
   return (
-    <Wrapper color={color}>
-      <Cover>
-        <IconWrapper color={color}>
+    <div className={s.wrapper}>
+      <div className={s.cover}>
+        <div className={s.iconBox}>
           <FaIcons icon="music" size={25} color={color} opacity={0.6} />
-        </IconWrapper>
-      </Cover>
-      <Content>
-        <Title>{title}</Title>
-        {desc && <Desc>{desc}</Desc>}
-        <Footer>
+        </div>
+      </div>
+      <div className={s.content}>
+        <h3 className={s.title}>{title}</h3>
+        {desc && <div className={s.desc}>{desc}</div>}
+        <div className={s.footer}>
           <Facepile size="small" users={mockUsers(6)} total={20} />
-          <AuthorHint>6 位共同编辑</AuthorHint>
+          <div className={s.authorHint}>6 位共同编辑</div>
           <div className="grow" />
-          <MoreLink onClick={() => gotoDetailLayout()}>9 篇文档</MoreLink>
-        </Footer>
-      </Content>
-    </Wrapper>
+          <ArrowButton className={s.moreLink} onClick={() => gotoDetailLayout()}>
+            9 篇文档
+          </ArrowButton>
+        </div>
+      </div>
+    </div>
   )
 }
 

@@ -1,50 +1,42 @@
 import { isEmpty } from 'ramda'
 
 import useAboutInfo from '~/hooks/useAboutInfo'
-import { SexyDivider as Divider } from '~/widgets/Common'
 import SocialList from '~/widgets/SocialList'
 
 import LabelList from './LabelList'
 import MediaReports from './MediaReports'
 
-import { Wrapper, Block, Title } from './salon/extra_info'
+import useSalon, { cn } from './salon/extra_info'
 
-const Content = () => {
+export default () => {
+  const s = useSalon()
   const { cities, techstacks, socialLinks, mediaReports } = useAboutInfo()
 
   const noMediaReports = mediaReports.length <= 1 && !mediaReports[0].title
 
   return (
-    <>
-      <Divider bottom={40} top={0} />
-      <Block hide={isEmpty(cities)}>
-        <Title>所在地</Title>
+    <div className={s.wrapper}>
+      <div className={s.divider} />
+      <div className={cn(s.block, isEmpty(cities) && 'hidden')}>
+        <h4 className={s.title}>所在地</h4>
         <LabelList items={cities} left={-2} />
-      </Block>
+      </div>
 
-      <Block>
-        <Title>技术栈</Title>
+      <div className={s.block}>
+        <h3 className={s.title}>技术栈</h3>
         <LabelList items={techstacks} left={-2} />
-      </Block>
-      <Divider bottom={40} />
-      <Block hide={isEmpty(socialLinks)}>
-        <Title>关注我们</Title>
+      </div>
+      <div className={s.divider} />
+      <div className={cn(s.block, isEmpty(socialLinks) && 'hidden')}>
+        <h4 className={s.title}>关注我们</h4>
         <SocialList size="small" selected={socialLinks} left={-10} top={12} />
-      </Block>
+      </div>
 
-      <Block hide={noMediaReports}>
-        <Title>媒体报道</Title>
+      <div className={cn(s.block, noMediaReports && 'hidden')}>
+        <div className={s.title}>媒体报道</div>
         <MediaReports items={mediaReports} />
-      </Block>
-      <Divider bottom={40} />
-    </>
-  )
-}
-
-export default () => {
-  return (
-    <Wrapper>
-      <Content />
-    </Wrapper>
+      </div>
+      <div className={s.divider} />
+    </div>
   )
 }

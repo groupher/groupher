@@ -19,19 +19,21 @@ export default () => {
   const { enterView, leaveView } = useCommunityDigestViewport()
 
   return (
-    <div id={ANCHOR.GLOBAL_HEADER_ID} className={cn(s.wrapper, 'header-layout-community-brief')}>
-      <CommunityBrief />
+    <>
+      <div id={ANCHOR.GLOBAL_HEADER_ID} className={cn(s.wrapper, 'header-layout-community-brief')}>
+        <CommunityBrief />
 
-      {layout === HEADER_LAYOUT.RIGHT && <div className="grow" />}
-      <ThreadTab right={layout === HEADER_LAYOUT.RIGHT ? 20 : 0} />
-      {/* <GithubItem href="/">
+        {layout === HEADER_LAYOUT.RIGHT && <div className="grow" />}
+        <ThreadTab right={layout === HEADER_LAYOUT.RIGHT ? 20 : 0} />
+        {/* <GithubItem href="/">
                 <img
                   alt="GitHub Repo stars"
                   src="https://img.shields.io/github/stars/vercel/next.js?style=social&logo=github&label=%20%20&labelColor=black&color=white"
                 />
               </GithubItem> */}
-      <AccountUnit />
-      <ViewportTracker onEnter={enterView} onLeave={leaveView} />
-    </div>
+        <AccountUnit />
+      </div>
+      <ViewportTracker onEnter={enterView} onLeave={leaveView} rootMargin="-20px" />
+    </>
   )
 }

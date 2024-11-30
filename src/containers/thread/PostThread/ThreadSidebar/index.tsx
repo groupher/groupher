@@ -6,7 +6,7 @@
  *
  */
 
-import { Fragment, lazy, Suspense } from 'react'
+import { lazy, Suspense } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
@@ -16,7 +16,7 @@ import useActiveTag from '~/hooks/useActiveTag'
 import { refreshArticles, callGEditor, callSyncSelector, listUsers } from '~/signal'
 import { mockUsers } from '~/mock'
 
-import { Link, Br, SexyDivider } from '~/widgets/Common'
+import { Link, SexyDivider } from '~/widgets/Common'
 import ImgFallback from '~/widgets/ImgFallback'
 import Sticky from '~/widgets/Sticky'
 import GetMe from '~/widgets/GetMe'
@@ -41,51 +41,42 @@ export default () => {
 
   const s = useSalon()
 
+  console.log('## showCommunityBadge: ', showCommunityBadge)
+
   return (
     <div className={s.wrapper} data-test-id="thread-sidebar">
       <Sticky offsetTop={0}>
         <div className={s.stickyWrapper}>
-          <Fragment>
-            {showCommunityBadge && (
-              <Fragment>
-                {/* <h3 className={s.title}>{t('intro', 'titleCase')}</h3> */}
-                <SocialBanner />
-                <div className={s.desc}>{curCommunity.desc}</div>
-                <div className={s.homeLinks}>
-                  <LinkSVG className={s.linkIcon} />
-                  <Link href={curCommunity.homepage} maxLength="150px">
-                    {curCommunity.homepage}
-                  </Link>
-                  <div className="grow" />
+          <div className={s.showArea}>
+            <SocialBanner />
+            <div className={s.desc}>{curCommunity.desc}</div>
+            <div className={s.homeLinks}>
+              <LinkSVG className={s.linkIcon} />
+              <Link href={curCommunity.homepage} maxLength="150px">
+                {curCommunity.homepage}
+              </Link>
+              <div className="grow" />
 
-                  <GetMe />
-                </div>
-              </Fragment>
-            )}
+              <GetMe />
+            </div>
 
-            <div className={s.showArea}>
-              {showCommunityBadge && (
-                <Fragment>
-                  <h3 className={s.title}>{t('team.member', 'titleCase')}</h3>
-                  <Br top={14} />
-                </Fragment>
-              )}
+            <h3 className={s.title}>{t('team.member', 'titleCase')}</h3>
+            <div className="mt-6" />
 
-              <div className={s.joiners}>
-                {mockUsers(5).map((user) => (
-                  <Img
-                    key={user.login}
-                    className={s.joinAvatar}
-                    src={user.avatar}
-                    fallback={<ImgFallback size={24} right={8} user={user} />}
-                  />
-                ))}
-                <div className={s.moreNum} onClick={() => listUsers('drawer')}>
-                  +2
-                </div>
+            <div className={s.joiners}>
+              {mockUsers(5).map((user) => (
+                <Img
+                  key={user.login}
+                  className={s.joinAvatar}
+                  src={user.avatar}
+                  fallback={<ImgFallback size={24} right={8} user={user} />}
+                />
+              ))}
+              <div className={s.moreNum} onClick={() => listUsers('drawer')}>
+                +2
               </div>
             </div>
-          </Fragment>
+          </div>
 
           <div className={s.publish}>
             <PublishButton

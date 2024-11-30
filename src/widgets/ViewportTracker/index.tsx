@@ -1,35 +1,45 @@
-// avold SSR to save first load build size
 import { useRef, useEffect } from 'react'
-import { useInView } from 'framer-motion'
 
-// see details: https://www.framer.com/motion/use-in-view/
 type TProps = {
-  /**
-   * Function called when waypoint enters viewport
-   */
   onEnter: () => void
-  /**
-   * Function called when waypoint leaves viewport
-   */
   onLeave?: () => void
-  /**
-   * Whether to activate on horizontal scrolling instead of vertical
-   */
-  horizontal?: boolean
-  margin?: string
+  threshold?: number
+  rootMargin?: string
 }
 
-export default ({ onEnter, onLeave }: TProps) => {
+export default ({ onEnter, onLeave, threshold = 0.1, rootMargin = '0px' }: TProps) => {
   const ref = useRef(null)
-  const isInView = useInView(ref)
 
   useEffect(() => {
-    if (isInView) {
-      onEnter?.()
-    } else {
-      onLeave?.()
+    const currentRef = ref.current
+    let isInView = false
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isInView) {
+          isInView = true
+          onEnter()
+        } else if (!entry.isIntersecting && isInView) {
+          isInView = false
+          onLeave?.()
+        }
+      },
+      {
+        threshold,
+        rootMargin,
+      },
+    )
+
+    if (currentRef) {
+      observer.observe(currentRef)
     }
-  }, [isInView, onEnter, onLeave])
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef)
+      }
+    }
+  }, [onEnter, onLeave, threshold, rootMargin])
 
   return <div ref={ref} />
 }

@@ -6,14 +6,7 @@ import FaIcons from '~/widgets/FaIcons'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  Header,
-  IconWrapper,
-  Title,
-  ItemsWrapper,
-  Item,
-} from '../styles/blocks_layout/category'
+import useSalon from '../salon/blocks_layout/category'
 
 const FOLD_LIMIT = 5
 
@@ -24,38 +17,40 @@ type TProps = {
 }
 
 const Category: FC<TProps> = ({ color, title, articles }) => {
+  const s = useSalon({ color })
+
   const { gotoDetailLayout } = useLogic()
   const [sliceCount, setSliceCount] = useState(FOLD_LIMIT)
 
   return (
-    <Wrapper color={color}>
-      <Header>
-        <IconWrapper color={color}>
+    <div className={s.wrapper}>
+      <div className={s.header}>
+        <div className={s.iconBox}>
           <FaIcons icon="music" size={15} color={color} opacity={0.6} />
-        </IconWrapper>
-        <Title>{title}</Title>
-      </Header>
+        </div>
+        <h4 className={s.title}>{title}</h4>
+      </div>
 
-      <ItemsWrapper>
+      <div className={s.itemsWrapper}>
         {articles.slice(0, sliceCount).map((article) => (
-          <Item key={article.id} color={color} onClick={() => gotoDetailLayout()}>
+          <div className={s.item} key={article.id} onClick={() => gotoDetailLayout()}>
             {article.title}
-          </Item>
+          </div>
         ))}
-      </ItemsWrapper>
+      </div>
 
       {articles.length >= FOLD_LIMIT && sliceCount <= FOLD_LIMIT && (
-        <ArrowButton down onClick={() => setSliceCount(articles.length)} top={18}>
+        <ArrowButton down onClick={() => setSliceCount(articles.length)} top={3} left={-1}>
           查看全部
         </ArrowButton>
       )}
 
       {articles.length >= FOLD_LIMIT && sliceCount > FOLD_LIMIT && (
-        <ArrowButton up onClick={() => setSliceCount(FOLD_LIMIT)} top={18}>
+        <ArrowButton up onClick={() => setSliceCount(FOLD_LIMIT)} top={3} left={-1}>
           收起
         </ArrowButton>
       )}
-    </Wrapper>
+    </div>
   )
 }
 

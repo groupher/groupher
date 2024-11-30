@@ -3,6 +3,18 @@ import styled, { css } from '~/css'
 
 // import Img from '~/Img'
 
+import useTwBelt from '~/hooks/useTwBelt'
+
+type TProps = TSpace
+
+export default ({ ...spacing }: TProps) => {
+  const { cn, margin } = useTwBelt()
+
+  return {
+    wrapper: cn('column relative', margin(spacing)),
+  }
+}
+
 export const Wrapper = styled.div<TSpace>`
   position: relative;
   ${css.column()};

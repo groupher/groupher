@@ -35,18 +35,3 @@ export default ({ ...spacing }: TProps) => {
     unLoginIcon: cn('size-3 pointer', fill('text.digest'), `hover:${fill('text.title')}`),
   }
 }
-
-// export const WithBgWrapper = styled(NormalWrapper)`
-//   border: 1px solid;
-//   border-color: ${theme('divider')};
-//   height: 32px;
-//   border-radius: 10px;
-//   padding: 5px 8px;
-//   width: auto;
-//   background: ${theme('alphaBg')};
-//   box-shadow: ${theme('popover.boxShadow')};
-
-//   &:hover {
-//     cursor: pointer;
-//   }
-// `

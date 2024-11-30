@@ -1,27 +1,19 @@
 import { mockHelpCats } from '~/mock'
-import useLayout from '~/hooks/useLayout'
 
 import Category from './Category'
-import { Wrapper, CatsWrapper } from '../styles/cards_layout'
+import useSalon from '../salon/cards_layout'
 
 export default () => {
   const cats = mockHelpCats()
-
-  const { bannerLayout } = useLayout()
+  const s = useSalon()
 
   return (
-    <Wrapper $bannerLayout={bannerLayout}>
-      <CatsWrapper $bannerLayout={bannerLayout}>
+    <div className={s.wrapper}>
+      <div className={s.cats}>
         {cats.map((cat) => (
-          <Category
-            key={cat.id}
-            color={cat.color}
-            title={cat.title}
-            desc={cat.desc}
-            articles={cat.articles}
-          />
+          <Category key={cat.id} title={cat.title} desc={cat.desc} articles={cat.articles} />
         ))}
-      </CatsWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }

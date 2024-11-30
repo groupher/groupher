@@ -1,6 +1,9 @@
 import { type FC, memo } from 'react'
 
-import { Wrapper, ToggleArrowIcon, ToggleListIcon } from '../styles/article_layout/toggle_btn'
+import ArrowSVG from '~/icons/ArrowSimple'
+import ListSVG from '~/icons/List'
+
+import useSalon from '../salon/article_layout/toggle_btn'
 
 type TProps = {
   open: boolean
@@ -8,10 +11,12 @@ type TProps = {
 }
 
 const ToggleBtn: FC<TProps> = ({ open, onToggle }) => {
+  const s = useSalon({ open })
+
   return (
-    <Wrapper open={open} onClick={() => onToggle(!open)}>
-      {open ? <ToggleArrowIcon /> : <ToggleListIcon />}
-    </Wrapper>
+    <div className={s.wrapper} onClick={() => onToggle(!open)}>
+      {open ? <ArrowSVG className={s.arrowIcon} /> : <ListSVG className={s.listIcon} />}
+    </div>
   )
 }
 
