@@ -5,7 +5,7 @@ type TProps = {
 }
 
 export default ({ open }: TProps) => {
-  const { cn, bg, br, shadow, fill } = useTwBelt()
+  const { cn, bg, br, shadow, actionIcon } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -15,7 +15,7 @@ export default ({ open }: TProps) => {
       shadow('sm'),
       open ? 'left-48' : 'left-0',
     ),
-    arrowIcon: cn('size-4 trans-all-100', fill('text.digest'), `group-hover:${fill('text.title')}`),
-    listIcon: cn('size-3 trans-all-100', fill('text.digest'), `group-hover:${fill('text.title')}`),
+    arrowIcon: actionIcon(),
+    listIcon: actionIcon('size-3.5'),
   }
 }

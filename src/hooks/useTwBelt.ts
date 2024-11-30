@@ -53,6 +53,7 @@ type TRet = {
   shadow: (size: TShadowSize) => string
   cutRest: (classname?: string) => string
   landingTitle: () => string
+  actionIcon: (className?: string) => string
 
   isDarkBlack: boolean
   isBlackPrimary: boolean
@@ -341,6 +342,10 @@ export default (): TRet => {
     )
   }
 
+  const actionIcon = (className = 'size-4'): string => {
+    return cn('trans-all-100', fill('text.digest'), `group-hover:${fill('text.title')}`, className)
+  }
+
   return {
     cn,
     global,
@@ -374,5 +379,6 @@ export default (): TRet => {
     isBlackPrimary,
     landingTitle,
     dimDark,
+    actionIcon,
   }
 }
