@@ -1,4 +1,3 @@
-import styled, { css } from '~/css'
 import { BANNER_LAYOUT } from '~/const'
 
 import useLayout from '~/hooks/useLayout'
@@ -15,19 +14,3 @@ export default () => {
     main: 'grow w-full min-h-96 mt-4 pl-4 pr-20',
   }
 }
-
-export const MainWrapper = styled.div`
-  flex-grow: 1;
-  width: 100%;
-  min-height: 600px;
-
-  background: transparent;
-  border-radius: 6px;
-  margin-top: 12px;
-  padding-left: 25px;
-  padding-right: 80px;
-
-  ${css.media.mobile`
-    padding-right: 0;
-  `};
-`

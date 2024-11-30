@@ -4,10 +4,8 @@ import useMobileDetect from '@groupher/use-mobile-detect-hook'
 import { BANNER_LAYOUT } from '~/const/layout'
 
 import FileTree from '~/widgets/FileTree'
-import { Space } from '~/widgets/Common'
 import FeedbackFooter from '~/widgets/FeedbackFooter'
 import Sticky from '~/widgets/Sticky'
-import CustomScroller from '~/widgets/CustomScroller'
 
 import useLayout from '~/hooks/useLayout'
 
@@ -19,59 +17,42 @@ import ArticleCover from './ArticleCover'
 import ToggleBtn from './ToggleBtn'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  Header,
-  Title,
-  Content,
-  FAQWrapper,
-  Sidebar,
-  TreeWrapper,
-} from '../styles/article_layout'
+import useSalon from '../styles/article_layout'
 
 export default () => {
   const { gotoDetailLayout, isFAQArticleLayout } = useLogic()
+  const [filterOpen, setFilterOpen] = useState(true)
 
-  const [filetreeOpen, setFileTreeOpen] = useState(true)
+  const s = useSalon({ filterOpen })
 
   const { isMobile } = useMobileDetect()
   const { bannerLayout } = useLayout()
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {!isMobile && bannerLayout !== BANNER_LAYOUT.SIDEBAR && (
         <>
-          <ToggleBtn open={filetreeOpen} onToggle={(toggle) => setFileTreeOpen(toggle)} />
-          <Sidebar isLeftLayout open={filetreeOpen}>
-            {filetreeOpen && <PinedTree />}
+          <ToggleBtn open={filterOpen} onToggle={(toggle) => setFilterOpen(toggle)} />
+          <div className={s.sidebar}>
+            {filterOpen && <PinedTree />}
             <Sticky offsetTop={30}>
-              <TreeWrapper>
-                <CustomScroller
-                  direction="vertical"
-                  height="calc(100vh - 110px)"
-                  barSize="small"
-                  showShadow={false}
-                >
-                  <FileTree onSelect={() => gotoDetailLayout()} left={18} />
-                </CustomScroller>
-              </TreeWrapper>
+              <FileTree onSelect={() => gotoDetailLayout()} left={10} />
             </Sticky>
-          </Sidebar>
-          <Space right={80} />
+          </div>
         </>
       )}
 
-      <Content isRightLayout open={filetreeOpen} bannerLayout={BANNER_LAYOUT.SIDEBAR}>
-        <Header>
+      <div className={s.content}>
+        <div className={s.header}>
           {!isFAQArticleLayout && <NaviHead />}
-          {!isFAQArticleLayout && <Title>关于帮助台的使用</Title>}
+          {!isFAQArticleLayout && <h1 className={s.title}>关于帮助台的使用</h1>}
           {!isFAQArticleLayout && <ArticleCover />}
-        </Header>
+        </div>
 
         {isFAQArticleLayout ? (
-          <FAQWrapper>
+          <div className={s.faq}>
             <FaqLayout left={50} />
-          </FAQWrapper>
+          </div>
         ) : (
           <>
             <div>
@@ -101,7 +82,7 @@ export default () => {
           </>
         )}
         {!isFAQArticleLayout && <FeedbackFooter top={60} />}
-      </Content>
-    </Wrapper>
+      </div>
+    </div>
   )
 }

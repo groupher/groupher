@@ -5,15 +5,17 @@ import { DOC_FAQ_LAYOUT } from '~/const/layout'
 
 import FaqList from '~/widgets/FaqList'
 
-import { Wrapper } from './styles/faq_layout'
+import useSalon from './styles/faq_layout'
 
 type TProps = TSpace
 
-const FaqLayout: FC<TProps> = ({ ...restProps }) => {
+const FaqLayout: FC<TProps> = ({ ...spacing }) => {
+  const s = useSalon({ ...spacing })
+
   return (
-    <Wrapper {...restProps}>
+    <div className={s.wrapper}>
       <FaqList layout={DOC_FAQ_LAYOUT.COLLAPSE} />
-    </Wrapper>
+    </div>
   )
 }
 

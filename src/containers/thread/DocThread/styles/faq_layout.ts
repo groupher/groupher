@@ -1,14 +1,16 @@
 import type { TSpace } from '~/spec'
-import styled, { css } from '~/css'
 
-import { MainWrapper } from '.'
+import useBase from '.'
 
-export const Wrapper = styled(MainWrapper)<TSpace>`
-  ${css.column('align-center')};
-  border-right: none;
-  width: 100%;
-  max-width: 500px;
+import useTwBelt from '~/hooks/useTwBelt'
 
-  ${(props) => css.spaceMargins(props)};
-`
-export const Holder = styled.div``
+type TProps = TSpace
+
+export default ({ ...spacing }: TProps) => {
+  const { cn, margin } = useTwBelt()
+  const base = useBase()
+
+  return {
+    wrapper: cn(base.main, 'column-center w-full border-r-none', margin(spacing)),
+  }
+}

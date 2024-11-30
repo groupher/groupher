@@ -33,7 +33,7 @@ export default () => {
               </GithubItem> */}
         <AccountUnit />
       </div>
-      <ViewportTracker onEnter={enterView} onLeave={leaveView} />
+      <ViewportTracker onEnter={enterView} onLeave={leaveView} rootMargin="-20px" />
     </>
   )
 }

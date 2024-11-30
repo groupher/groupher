@@ -41,6 +41,8 @@ export default () => {
 
   const s = useSalon()
 
+  console.log('## showCommunityBadge: ', showCommunityBadge)
+
   return (
     <div className={s.wrapper} data-test-id="thread-sidebar">
       <Sticky offsetTop={0}>

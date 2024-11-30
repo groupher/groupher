@@ -22,6 +22,8 @@ export default () => {
   const { isArticleLayout, layout, faqLayout, faqSections } = useLogic()
   const { isMobile } = useMobileDetect()
 
+  // return <ArticleLayout />
+
   if (isArticleLayout) {
     return <ArticleLayout />
   }
