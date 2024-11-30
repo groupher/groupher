@@ -1,73 +1,24 @@
-import type { TColorName } from '~/spec'
+import { COLOR_NAME } from '~/const/colors'
 
-import styled, { css, theme, rainbow } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import GithubSVG from '~/icons/social/Github'
-import QuestionSVG from '~/icons/Question'
-import BookSVG from '~/icons/Book'
+export { cn } from '~/css'
 
-export const Wrapper = styled.div`
-  ${css.column('justify-center')};
-  gap: 16px 0;
-  width: 100%;
-  margin-bottom: 35px;
-`
-export const Item = styled.div`
-  ${css.row('align-center')};
-  cursor: pointer;
-`
-export const IconBox = styled.div`
-  ${css.size(25)};
-  ${css.row('align-both')};
-  position: relative;
-  margin-right: 14px;
-`
-export const Cover = styled.div<{ color?: TColorName }>`
-  ${css.size(25)};
-  position: absolute;
-  left: 0;
-  top: 0;
+export default () => {
+  const { cn, fg, bg, br, rainbow, fill, isDarkBlack } = useTwBelt()
 
-  background-color: ${({ color }) => rainbow(color)};
-  border-radius: 5px;
-  opacity: 0.6;
-
-  ${Item}:hover & {
-    box-shadow: ${css.cardShadow};
-    opacity: 0.8;
+  return {
+    wrapper: cn('column justify-center gap-y-4 w-full mb-9'),
+    item: 'row-center pointer group',
+    iconBox: cn('align-both size-6 align-center relative mr-3.5'),
+    cover: 'size-6 absolute left-0 top-0 rounded',
+    //
+    blackBg: rainbow(COLOR_NAME.BLACK, 'bg'),
+    purpleBg: rainbow(COLOR_NAME.PURPLE, 'bg'),
+    grayBg: cn('border', bg('hoverBg'), br('divider')),
+    //
+    bookIcon: cn('size-4 z-20', fill('text.digest')),
+    normalIcon: cn('size-4 z-20', !isDarkBlack ? 'fill-text-title-dark' : 'fill-text-digest'),
+    title: cn('text-sm', fg('text.digest'), `group-hover:${fg('text.title')}`),
   }
-
-  transition: all 0.2s;
-`
-export const CategoryCover = styled(Cover)`
-  background: ${theme('divider')};
-  border: 1px solid;
-  border-color: ${theme('lightText')};
-`
-export const BookIcon = styled(BookSVG)`
-  ${css.size(15)};
-  fill: ${theme('article.digest')};
-  z-index: 1;
-`
-export const QuestionIcon = styled(QuestionSVG)`
-  ${css.size(12)};
-  fill: white;
-  z-index: 1;
-`
-export const GithubIcon = styled(GithubSVG)`
-  ${css.size(16)};
-  fill: white;
-  z-index: 1;
-`
-
-export const Title = styled.div<{ color: TColorName }>`
-  font-size: 14px;
-  color: ${theme('article.digest')};
-
-  &:hover {
-    color: ${({ color }) => rainbow(color)};
-    font-weight: 500;
-  }
-
-  transition: all 0.2s;
-`
+}

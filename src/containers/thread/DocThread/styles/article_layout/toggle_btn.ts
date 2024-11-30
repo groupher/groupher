@@ -16,6 +16,6 @@ export default ({ open }: TProps) => {
       open ? 'left-48' : 'left-0',
     ),
     arrowIcon: actionIcon(),
-    listIcon: actionIcon('size-3.5'),
+    listIcon: actionIcon('size-3.5 opacity-65'),
   }
 }

@@ -1,43 +1,37 @@
-import { COLOR_NAME } from '~/const/colors'
+import GithubSVG from '~/icons/social/Github'
+import QuestionSVG from '~/icons/Question'
+import BookSVG from '~/icons/Book'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  Item,
-  Cover,
-  IconBox,
-  CategoryCover,
-  BookIcon,
-  QuestionIcon,
-  GithubIcon,
-  Title,
-} from '../styles/article_layout/pined_tree'
+import useSalon, { cn } from '../styles/article_layout/pined_tree'
 
 export default () => {
+  const s = useSalon()
   const { back2Layout, gotoFAQDetailLayout } = useLogic()
+
   return (
-    <Wrapper>
-      <Item onClick={() => back2Layout()}>
-        <IconBox>
-          <CategoryCover color={COLOR_NAME.BLACK} />
-          <BookIcon />
-        </IconBox>
-        <Title color={COLOR_NAME.BLACK}>全部文档</Title>
-      </Item>
-      <Item onClick={() => gotoFAQDetailLayout()}>
-        <IconBox>
-          <Cover color={COLOR_NAME.PURPLE} />
-          <QuestionIcon />
-        </IconBox>
-        <Title color={COLOR_NAME.PURPLE}>常见问题</Title>
-      </Item>
-      <Item onClick={() => gotoFAQDetailLayout()}>
-        <IconBox>
-          <Cover color={COLOR_NAME.BLACK} />
-          <GithubIcon />
-        </IconBox>
-        <Title color={COLOR_NAME.BLACK}>Github</Title>
-      </Item>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <div className={s.item} onClick={() => back2Layout()}>
+        <div className={s.iconBox}>
+          <div className={cn(s.cover, s.grayBg)} />
+          <BookSVG className={s.bookIcon} />
+        </div>
+        <h3 className={s.title}>全部文档</h3>
+      </div>
+      <div className={s.item} onClick={() => gotoFAQDetailLayout()}>
+        <div className={s.iconBox}>
+          <div className={cn(s.cover, s.purpleBg)} />
+          <QuestionSVG className={s.normalIcon} />
+        </div>
+        <h3 className={s.title}>常见问题</h3>
+      </div>
+      <div className={s.item} onClick={() => gotoFAQDetailLayout()}>
+        <div className={s.iconBox}>
+          <div className={cn(s.cover, s.blackBg)} />
+          <GithubSVG className={s.normalIcon} />
+        </div>
+        <h3 className={s.title}>Github</h3>
+      </div>
+    </div>
   )
 }
