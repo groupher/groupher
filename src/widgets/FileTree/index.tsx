@@ -13,13 +13,15 @@ import { mockTags } from '~/mock'
 
 import Folder from './Folder'
 
-import { Wrapper } from './styles'
+import useSalon from './styles'
 
 type TProps = {
   onSelect?: () => void
 } & TSpace
 
-const FileTree: FC<TProps> = ({ onSelect, ...restProps }) => {
+const FileTree: FC<TProps> = ({ onSelect, ...spacing }) => {
+  const s = useSalon({ ...spacing })
+
   const tagsData = mockTags(15)
   // console.log('## ## tagsData: ', tagsData)
 
@@ -28,7 +30,7 @@ const FileTree: FC<TProps> = ({ onSelect, ...restProps }) => {
   const groupsKeys = reverse(keys(groupedTags)) as string[]
 
   return (
-    <Wrapper {...restProps}>
+    <div className={s.wrapper}>
       {groupsKeys.map((groupKey) => (
         <Folder
           key={groupKey}
@@ -44,7 +46,7 @@ const FileTree: FC<TProps> = ({ onSelect, ...restProps }) => {
           }}
         />
       ))}
-    </Wrapper>
+    </div>
   )
 }
 
