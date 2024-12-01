@@ -9,28 +9,32 @@ import useTheme from '~/hooks/useTheme'
 
 import THEME from '~/const/theme'
 
-import { Wrapper, Button, SunIcon, MoonIcon } from './styles'
+import SunSVG from '~/icons/Sun'
+import MoonSVG from '~/icons/Moon'
+
+import useSalon from './salon'
 
 type TProps = {
   testid?: string
 } & TSpace
 
-const ThemeSwitch: FC<TProps> = ({ testid = 'theme-switch', ...restProps }) => {
+const ThemeSwitch: FC<TProps> = ({ testid = 'theme-switch', ...spacing }) => {
+  const s = useSalon({ ...spacing })
   const { theme, toggle } = useTheme()
 
   return (
-    <Wrapper $testid={testid} {...restProps}>
-      <Button
-        className="theme-toggle"
+    <div className={s.wrapper}>
+      <button
         id="theme-toggle"
+        className={s.button}
         title="Toggles light & dark"
         aria-label="auto"
         aria-live="polite"
         onClick={toggle}
       >
-        {theme === THEME.LIGHT ? <SunIcon /> : <MoonIcon />}
-      </Button>
-    </Wrapper>
+        {theme === THEME.LIGHT ? <SunSVG className={s.icon} /> : <MoonSVG className={s.icon} />}
+      </button>
+    </div>
   )
 }
 
