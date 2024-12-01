@@ -11,7 +11,7 @@ import useActiveTag from '~/hooks/useActiveTag'
 import TagNode from '~/widgets/TagNode'
 import Markdown from '~/widgets/Markdown'
 
-import useSalon from './styles'
+import useSalon from './salon'
 
 export default () => {
   const tag = useActiveTag()

@@ -7,25 +7,18 @@
 import { type FC, memo } from 'react'
 
 import AbsoluteFmt from './AbsoluteFmt'
-import { Wrapper } from './styles'
 
 type TProps = {
-  testid?: string
   date: string
   withTime?: boolean
   className?: string
 }
 
-const ReadableDate: FC<TProps> = ({
-  testid = 'readable-date',
-  className = 'readable-date',
-  withTime = true,
-  date,
-}) => {
+const ReadableDate: FC<TProps> = ({ className = 'readable-date', withTime = true, date }) => {
   return (
-    <Wrapper $testid={testid} className={className}>
+    <div className={className}>
       <AbsoluteFmt datetime={date} className={className} withTime={withTime} />
-    </Wrapper>
+    </div>
   )
 }
 

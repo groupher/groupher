@@ -1,7 +1,6 @@
 import { type FC, memo, Fragment } from 'react'
 
-import { Space } from '~/widgets/Common'
-import { Wrapper } from './styles/absolute_fmt'
+import useSalon, { cn } from './salon/absolute_fmt'
 
 const calcRange = (hours) => {
   if (hours >= 0 && hours <= 6) return '凌晨'
@@ -16,6 +15,8 @@ type TProps = {
 }
 
 const AbsoluteFmt: FC<TProps> = ({ datetime, className, withTime }) => {
+  const s = useSalon()
+
   const DateObj = new Date(datetime)
 
   const year = DateObj.getFullYear()
@@ -26,27 +27,27 @@ const AbsoluteFmt: FC<TProps> = ({ datetime, className, withTime }) => {
   const hour = hours > 12 ? hours - 12 : hours
 
   return (
-    <Wrapper className={className}>
+    <div className={cn(s.wrapper, className)}>
       {year}
-      <Space right={3} />
+      <div className="mr-0.5" />
       年
-      <Space right={3} />
+      <div className="mr-0.5" />
       {month}
-      <Space right={3} />
+      <div className="mr-0.5" />
       月
-      <Space right={3} />
+      <div className="mr-0.5" />
       {day}
-      <Space right={3} />日
+      <div className="mr-0.5" /> 日
       {withTime && (
         <Fragment>
-          <Space right={2} />
+          <div className="mr-0.5" />
           {range}
-          <Space right={2} />
+          <div className="mr-0.5" />
           {hour}
-          <Space right={3} />点
+          <div className="mr-0.5" />
         </Fragment>
       )}
-    </Wrapper>
+    </div>
   )
 }
 
