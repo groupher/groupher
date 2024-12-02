@@ -25,7 +25,7 @@ export default ({ filterOpen }: TProps) => {
     faq: 'ml-8 -mt-2.5',
 
     sidebar: cn(
-      'column w-52 min-w-52 pt-8 border-r',
+      'column w-52 min-w-52 pt-8 border-r transition-all duration-150',
       br('divider'),
       filterOpen ? 'max-w-auto visiable' : 'min-w-0 max-w-0 w-0 hidden overflow-hidden border-none',
     ),

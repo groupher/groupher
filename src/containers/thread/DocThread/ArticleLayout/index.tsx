@@ -30,18 +30,30 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
+      {!filterOpen && (
+        <div>
+          <Sticky offsetTop={50}>
+            <div className="h-fit">
+              <ToggleBtn
+                open={false}
+                onToggle={(toggle) => setFilterOpen(toggle)}
+                className="mt-1 top-16"
+              />
+            </div>
+          </Sticky>
+        </div>
+      )}
+
       {!isMobile && bannerLayout !== BANNER_LAYOUT.SIDEBAR && (
-        <>
-          <ToggleBtn open={filterOpen} onToggle={(toggle) => setFilterOpen(toggle)} />
-          <div className={s.sidebar}>
-            {filterOpen && <PinedTree />}
-            <Sticky offsetTop={30}>
-              <div className="h-fit">
-                <FileTree onSelect={() => gotoDetailLayout()} left={0} />
-              </div>
-            </Sticky>
-          </div>
-        </>
+        <div className={s.sidebar}>
+          {filterOpen && <PinedTree />}
+          <Sticky offsetTop={30}>
+            <div className="h-fit">
+              <ToggleBtn open={filterOpen} onToggle={(toggle) => setFilterOpen(toggle)} />
+              {filterOpen && <FileTree onSelect={() => gotoDetailLayout()} left={0} />}
+            </div>
+          </Sticky>
+        </div>
       )}
 
       <div className={s.content}>
