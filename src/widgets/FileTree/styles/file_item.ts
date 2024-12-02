@@ -7,6 +7,16 @@ import { TagsWrapper } from '.'
 
 type TTag = TActive & { color?: string }
 
+import useTwBelt from '~/hooks/useTwBelt'
+
+export default () => {
+  const { cn } = useTwBelt()
+
+  return {
+    wrapper: cn('column relative p-1 max-w-36 pl-0'),
+  }
+}
+
 export const Wrapper = styled.div<TTag>`
   position: relative;
   /* margin-left: 20px; */

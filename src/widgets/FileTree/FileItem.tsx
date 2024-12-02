@@ -6,8 +6,6 @@ import { Trans } from '~/i18n'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 
 import Outline from './Outline'
-// import DotDivider from '~/widgets/DotDivider'
-// import TagCount from './TagCount'
 
 import { Wrapper, File, Title, IndexDot } from './styles/file_item'
 

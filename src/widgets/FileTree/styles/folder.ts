@@ -1,88 +1,36 @@
-import type { TActive } from '~/spec'
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import ArrowSVG from '~/icons/ArrowSimple'
+type TProps = {
+  show: boolean
+  isFolderOpen: boolean
+}
 
-export const Wrapper = styled.div``
-export const Header = styled.div<TActive>`
-  ${css.row('align-center')};
-  display: ${({ show }) => (show ? 'flex' : 'none')};
-  margin-bottom: 8px;
-  position: relative;
+export default ({ show, isFolderOpen }: TProps) => {
+  const { cn, fg, bg, fill, cutRest } = useTwBelt()
 
-  &:hover {
-    cursor: pointer;
+  return {
+    wrapper: cn(''),
+    header: cn('group row-center pointer relative mb-2', !show && 'hidden'),
+    title: cn('row-center bold-sm mb-1.5'),
+    folderTitle: cn(
+      'text-sm mr-2 grow',
+      'group-hover:opacity-80',
+      fg('text.title'),
+      cutRest('w-28'),
+    ),
+    //
+    arrowIcon: cn(
+      'size-4 group-smoky-0 trans-all-200',
+      isFolderOpen ? '-rotate-90' : 'rotate-0',
+      fill('text.digest'),
+    ),
+    //
+    content: cn('w-full mb-8 -ml-1', isFolderOpen ? 'block' : 'hidden'),
+    subToggle: cn(
+      'align-both text-xs w-fit pointer px-2 py-0.5 rounded-md mt-1.5 ml-0.5',
+      `hover:${fg('text.title')}`,
+      bg('hoverBg'),
+      fg('text.digest'),
+    ),
   }
-`
-export const ArrowIcon = styled(ArrowSVG)<{ $isOpen: boolean }>`
-  fill: ${theme('tags.text')};
-  ${css.size(15)};
-  opacity: 0.6;
-  transform: ${({ $isOpen }) => ($isOpen ? 'rotate(270deg)' : 'rotate(180deg)')};
-  transition: transform 0.5s;
-
-  ${Wrapper}:hover & {
-    opacity: 0.8;
-  }
-
-  ${Header}:hover & {
-    opacity: 1;
-  }
-  transition: all 0.2s;
-`
-
-export const ArrowHintIcon = styled(ArrowSVG)`
-  ${css.size(15)};
-  opacity: 0;
-  transform: rotate(270deg);
-
-  ${Header}:hover & {
-    opacity: 0.8;
-  }
-  transition: transform 0.2s;
-`
-export const Title = styled.div`
-  ${css.row('align-center')};
-  font-weight: 600;
-  margin-bottom: 5px;
-`
-export const FolderTitle = styled.div<{ $isOpen: boolean }>`
-  /* color: ${({ $isOpen }) => (!$isOpen ? theme('article.digest') : theme('lightText'))}; */
-  color: ${theme('article.title')};
-  font-size: 14px;
-  margin-right: 8px;
-  ${css.cutRest('85px')};
-
-  ${Header}:hover & {
-    color: ${theme('article.digest')};
-  }
-`
-
-export const Content = styled.div<{ $isOpen: boolean }>`
-  display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};
-  width: 100%;
-  margin-bottom: 32px;
-  margin-left: -5px;
-`
-export const SubToggle = styled.div`
-  ${css.row('align-center')};
-  margin-top: 5px;
-  margin-left: 3px;
-
-  &:hover {
-    cursor: pointer;
-  }
-`
-export const SubToggleTitle = styled.div`
-  color: ${theme('lightText')};
-  font-size: 12px;
-  margin-left: 11px;
-  padding: 2px;
-  border-radius: 5px;
-
-  &:hover {
-    color: ${theme('article.digest')};
-  }
-
-  transition: color 0.2s;
-`
+}

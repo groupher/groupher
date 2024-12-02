@@ -36,7 +36,7 @@ export default () => {
           <div className={s.sidebar}>
             {filterOpen && <PinedTree />}
             <Sticky offsetTop={30}>
-              <div className="h-screen">
+              <div className="h-fit">
                 <FileTree onSelect={() => gotoDetailLayout()} left={0} />
               </div>
             </Sticky>

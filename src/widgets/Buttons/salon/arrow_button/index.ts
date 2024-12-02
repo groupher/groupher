@@ -15,13 +15,13 @@ export default ({ disabled, dimWhenIdle, leftLayout, ...spacing }: TProps) => {
 
   return {
     wrapper: cn(
-      'group row-center relative inline-flex border-none bg-transparent bold-sm',
+      'group row-center relative inline-flex border-none bg-transparent bold-sm text-sm',
       leftLayout ? 'pl-2' : 'pr-3.5',
       !leftLayout && 'hover:pr-1',
       'hover:brightness-110 trans-all-100 pointer',
       linker('fg'),
       margin(spacing),
     ),
-    text: cn('break-keep whitespace-nowrap text-sm'),
+    text: cn('break-keep whitespace-nowrap'),
   }
 }

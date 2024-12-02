@@ -11,7 +11,7 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <ArrowButton leftLayout onClick={() => back2Layout()}>
+      <ArrowButton leftLayout onClick={() => back2Layout()} className="mt-px text-xs">
         全部
       </ArrowButton>
       <div className={s.slash}>/</div>

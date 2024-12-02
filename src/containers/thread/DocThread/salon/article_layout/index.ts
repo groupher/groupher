@@ -21,7 +21,7 @@ export default ({ filterOpen }: TProps) => {
       fg('text.digest'),
     ),
     //
-    title: cn('text-2xl bold-sm', fg('text.title')),
+    title: cn('text-2xl bold-sm mt-4', fg('text.title')),
     faq: 'ml-8 -mt-2.5',
 
     sidebar: cn(
