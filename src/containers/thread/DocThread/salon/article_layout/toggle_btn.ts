@@ -15,7 +15,7 @@ export default ({ open }: TProps) => {
       bg('card'),
       br('divider'),
       shadow('sm'),
-      open ? 'left-48' : 'left-0',
+      open ? 'left-44 ml-2.5' : 'left-0',
     ),
     arrowIcon: actionIcon(),
     listIcon: actionIcon('size-3.5 opacity-65'),

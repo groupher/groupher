@@ -9,7 +9,7 @@ export default () => {
 
   return {
     wrapper: cn('column justify-center gap-y-4 w-full mb-9'),
-    item: 'row-center pointer group',
+    item: 'row-center pointer group shrink-0',
     iconBox: cn('align-both size-6 align-center relative mr-3.5'),
     cover: 'size-6 absolute left-0 top-0 rounded',
     //
@@ -19,6 +19,6 @@ export default () => {
     //
     bookIcon: cn('size-4 z-20', fill('text.digest')),
     normalIcon: cn('size-4 z-20', !isDarkBlack ? 'fill-text-title-dark' : 'fill-text-digest'),
-    title: cn('text-sm', fg('text.digest'), `group-hover:${fg('text.title')}`),
+    title: cn('text-sm shrink-0', fg('text.digest'), `group-hover:${fg('text.title')}`),
   }
 }

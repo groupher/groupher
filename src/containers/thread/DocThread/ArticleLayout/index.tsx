@@ -21,22 +21,22 @@ import useSalon from '../salon/article_layout'
 
 export default () => {
   const { gotoDetailLayout, isFAQArticleLayout } = useLogic()
-  const [filterOpen, setFilterOpen] = useState(true)
+  const [outlineOpen, setOutlineOpen] = useState(true)
 
-  const s = useSalon({ filterOpen })
+  const s = useSalon({ outlineOpen })
 
   const { isMobile } = useMobileDetect()
   const { bannerLayout } = useLayout()
 
   return (
     <div className={s.wrapper}>
-      {!filterOpen && (
+      {!outlineOpen && (
         <div>
           <Sticky offsetTop={50}>
             <div className="h-fit">
               <ToggleBtn
                 open={false}
-                onToggle={(toggle) => setFilterOpen(toggle)}
+                onToggle={(toggle) => setOutlineOpen(toggle)}
                 className="mt-1 top-16"
               />
             </div>
@@ -46,11 +46,11 @@ export default () => {
 
       {!isMobile && bannerLayout !== BANNER_LAYOUT.SIDEBAR && (
         <div className={s.sidebar}>
-          {filterOpen && <PinedTree />}
+          <PinedTree />
           <Sticky offsetTop={30}>
             <div className="h-fit">
-              <ToggleBtn open={filterOpen} onToggle={(toggle) => setFilterOpen(toggle)} />
-              {filterOpen && <FileTree onSelect={() => gotoDetailLayout()} left={0} />}
+              <ToggleBtn open={outlineOpen} onToggle={(toggle) => setOutlineOpen(toggle)} />
+              <FileTree onSelect={() => gotoDetailLayout()} left={0} />
             </div>
           </Sticky>
         </div>
