@@ -13,7 +13,7 @@ import { mockTags } from '~/mock'
 
 import Folder from './Folder'
 
-import useSalon from './styles'
+import useSalon from './salon'
 
 type TProps = {
   onSelect?: () => void

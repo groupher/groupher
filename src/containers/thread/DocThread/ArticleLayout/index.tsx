@@ -31,7 +31,7 @@ export default () => {
   return (
     <div className={s.wrapper}>
       {!outlineOpen && (
-        <div>
+        <div className="animate-fade-left animate-duration-300">
           <Sticky offsetTop={50}>
             <div className="h-fit">
               <ToggleBtn
@@ -49,7 +49,9 @@ export default () => {
           <PinedTree />
           <Sticky offsetTop={30}>
             <div className="h-fit">
-              <ToggleBtn open={outlineOpen} onToggle={(toggle) => setOutlineOpen(toggle)} />
+              {outlineOpen && (
+                <ToggleBtn open={outlineOpen} onToggle={(toggle) => setOutlineOpen(toggle)} />
+              )}
               <FileTree onSelect={() => gotoDetailLayout()} left={0} />
             </div>
           </Sticky>

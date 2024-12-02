@@ -5,10 +5,9 @@ import type { TTag } from '~/spec'
 import { sortByColor } from '~/helper'
 
 import ArrowSVG from '~/icons/ArrowSimple'
-
 import FileItem from './FileItem'
 
-import useSalon from './styles/folder'
+import useSalon from './salon/folder'
 
 type TProps = {
   title: string

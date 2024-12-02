@@ -1,13 +1,9 @@
 import type { FC } from 'react'
 
 import type { TTag } from '~/spec'
-import { cutRest } from '~/fmt'
 import { Trans } from '~/i18n'
-import usePrimaryColor from '~/hooks/usePrimaryColor'
 
-import Outline from './Outline'
-
-import { Wrapper, File, Title, IndexDot } from './styles/file_item'
+import useSalon, { cn } from './salon/file_item'
 
 type TProps = {
   tag: TTag
@@ -16,18 +12,16 @@ type TProps = {
 }
 
 const FileItem: FC<TProps> = ({ tag, active, onSelect }) => {
-  const primaryColor = usePrimaryColor()
+  const s = useSalon()
 
   return (
-    <Wrapper $active={active}>
-      <File $active={active} onClick={() => onSelect(tag)}>
-        <Title $active={active} $color={primaryColor}>
-          {cutRest(Trans(tag.title), 10)}
-        </Title>
-      </File>
-      {active && <Outline />}
-      {active && <IndexDot $color={primaryColor} />}
-    </Wrapper>
+    <div className={cn(s.wrapper)}>
+      <div className={cn(s.file, active && 'py-0.5')} onClick={() => onSelect(tag)}>
+        <div className={cn(s.title, active && s.primary)}>{Trans(tag.title)}</div>
+      </div>
+      {/* {active && <Outline />} */}
+      {active && <div className={s.indexDot} />}
+    </div>
   )
 }
 
