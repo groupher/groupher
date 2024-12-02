@@ -4,19 +4,10 @@ import { findIndex, reverse } from 'ramda'
 import type { TTag } from '~/spec'
 import { sortByColor } from '~/helper'
 
+import ArrowSVG from '~/icons/ArrowSimple'
 import FileItem from './FileItem'
 
-import {
-  Wrapper,
-  Header,
-  ArrowIcon,
-  Title,
-  FolderTitle,
-  ArrowHintIcon,
-  Content,
-  SubToggle,
-  SubToggleTitle,
-} from './styles/folder'
+import useSalon from './salon/folder'
 
 type TProps = {
   title: string
@@ -46,6 +37,8 @@ const Folder: FC<TProps> = ({
   const [isFolderOpen, toggleFolder] = useState(true)
   const [curDisplayCount, setCurDisplayCount] = useState(initDisplayCount)
 
+  const s = useSalon({ show: title !== null, isFolderOpen })
+
   const sortedTags = reverse(sortByColor(groupTags))
 
   // @ts-ignore
@@ -60,9 +53,9 @@ const Folder: FC<TProps> = ({
   }, [subToggleRef, isActiveTagInFolder, groupTags])
 
   return (
-    <Wrapper>
-      <Header
-        show={title !== 'null'}
+    <div className={s.wrapper}>
+      <div
+        className={s.header}
         onClick={() => {
           toggleFolder(!isFolderOpen)
 
@@ -73,14 +66,14 @@ const Folder: FC<TProps> = ({
           }
         }}
       >
-        <Title>
-          <FolderTitle $isOpen={isFolderOpen}>{title}</FolderTitle>
-          {!isFolderOpen && <ArrowIcon $isOpen={isFolderOpen} />}
-          {isFolderOpen && <ArrowHintIcon />}
-        </Title>
-      </Header>
+        <div className={s.title}>
+          <div className={s.folderTitle}>{title}</div>
 
-      <Content $isOpen={isFolderOpen}>
+          <ArrowSVG className={s.arrowIcon} />
+        </div>
+      </div>
+
+      <div className={s.content}>
         {sortedTags.slice(0, curDisplayCount).map((tag) => (
           <FileItem
             key={tag.slug}
@@ -90,7 +83,8 @@ const Folder: FC<TProps> = ({
           />
         ))}
         {needSubToggle && (
-          <SubToggle
+          <div
+            className={s.subToggle}
             ref={subToggleRef}
             onClick={() => {
               setCurDisplayCount(
@@ -98,11 +92,11 @@ const Folder: FC<TProps> = ({
               )
             }}
           >
-            <SubToggleTitle>{curDisplayCount === maxDisplayCount ? '展开' : '收起'}</SubToggleTitle>
-          </SubToggle>
+            {curDisplayCount === maxDisplayCount ? '展开...' : '收起'}
+          </div>
         )}
-      </Content>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 

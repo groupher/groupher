@@ -21,27 +21,41 @@ import useSalon from '../salon/article_layout'
 
 export default () => {
   const { gotoDetailLayout, isFAQArticleLayout } = useLogic()
-  const [filterOpen, setFilterOpen] = useState(true)
+  const [outlineOpen, setOutlineOpen] = useState(true)
 
-  const s = useSalon({ filterOpen })
+  const s = useSalon({ outlineOpen })
 
   const { isMobile } = useMobileDetect()
   const { bannerLayout } = useLayout()
 
   return (
     <div className={s.wrapper}>
+      {!outlineOpen && (
+        <div className="animate-fade-left animate-duration-300">
+          <Sticky offsetTop={50}>
+            <div className="h-fit">
+              <ToggleBtn
+                open={false}
+                onToggle={(toggle) => setOutlineOpen(toggle)}
+                className="mt-1 top-16"
+              />
+            </div>
+          </Sticky>
+        </div>
+      )}
+
       {!isMobile && bannerLayout !== BANNER_LAYOUT.SIDEBAR && (
-        <>
-          <ToggleBtn open={filterOpen} onToggle={(toggle) => setFilterOpen(toggle)} />
-          <div className={s.sidebar}>
-            {filterOpen && <PinedTree />}
-            <Sticky offsetTop={30}>
-              <div className="h-screen">
-                <FileTree onSelect={() => gotoDetailLayout()} left={0} />
-              </div>
-            </Sticky>
-          </div>
-        </>
+        <div className={s.sidebar}>
+          <PinedTree />
+          <Sticky offsetTop={30}>
+            <div className="h-fit">
+              {outlineOpen && (
+                <ToggleBtn open={outlineOpen} onToggle={(toggle) => setOutlineOpen(toggle)} />
+              )}
+              <FileTree onSelect={() => gotoDetailLayout()} left={0} />
+            </div>
+          </Sticky>
+        </div>
       )}
 
       <div className={s.content}>

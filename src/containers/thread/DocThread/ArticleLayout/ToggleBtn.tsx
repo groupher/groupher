@@ -3,18 +3,19 @@ import { type FC, memo } from 'react'
 import ArrowSVG from '~/icons/ArrowSimple'
 import ListSVG from '~/icons/List'
 
-import useSalon from '../salon/article_layout/toggle_btn'
+import useSalon, { cn } from '../salon/article_layout/toggle_btn'
 
 type TProps = {
   open: boolean
   onToggle: (toggle: boolean) => void
+  className?: string
 }
 
-const ToggleBtn: FC<TProps> = ({ open, onToggle }) => {
+const ToggleBtn: FC<TProps> = ({ open, onToggle, className = '' }) => {
   const s = useSalon({ open })
 
   return (
-    <div className={s.wrapper} onClick={() => onToggle(!open)}>
+    <div className={cn(s.wrapper, className)} onClick={() => onToggle(!open)}>
       {open ? <ArrowSVG className={s.arrowIcon} /> : <ListSVG className={s.listIcon} />}
     </div>
   )
