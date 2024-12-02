@@ -15,14 +15,14 @@ export default ({ outlineOpen }: TProps) => {
     content: cn(
       base.main,
       'grow text-base pl-12 pr-0 max-w-full trans-all-200',
-      outlineOpen ? 'w-[680px]' : 'px-0 mr-32',
+      outlineOpen ? 'w-[680px]' : 'px-0 mr-20 -ml-10',
       fg('text.digest'),
     ),
     title: cn('text-2xl bold-sm mt-4', fg('text.title')),
     faq: 'ml-8 -mt-2.5',
 
     sidebar: cn(
-      'column w-52 pt-8 border-r',
+      'column w-48 shrink-0 pt-8 border-r',
       'transition-all duration-300 ease-in-out',
       br('divider'),
       outlineOpen ? 'opacity-100' : 'opacity-0 pointer-events-none',
