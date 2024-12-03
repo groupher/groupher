@@ -3,14 +3,17 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg } = useTwBelt()
+  const { cn, fg, bg, shadow } = useTwBelt()
 
   return {
-    wrapper: cn(
-      'row-center relative overflow-hidden w-full h-9 rounded-md py-1.5 px-1',
-      bg('hoverBg'),
+    wrapper: cn('relative overflow-hidden w-full h-9 rounded-xl p-1', bg('hoverBg')),
+    tabsContainer: cn('row-center w-full h-full relative z-10'),
+    tabItem: cn('align-both h-full grow rounded-md text-xs pointer', fg('text.digest')),
+    activeTabItem: cn(fg('text.title')),
+    slider: cn(
+      'absolute top-1 bottom-1 left-1 rounded-md transition-all duration-300 ease-in-out',
+      bg('card'),
+      shadow('md'),
     ),
-    tabItem: cn('align-both h-full grow ml-px mr-px rounded-md text-xs pointer', fg('text.title')),
-    tabItemActive: cn('bold-sm', fg('text.digest')),
   }
 }
