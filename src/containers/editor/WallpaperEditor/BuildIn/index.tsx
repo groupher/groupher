@@ -3,11 +3,8 @@
  *
  */
 
-import { Fragment } from 'react'
-
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 
-import { Br, SexyDivider } from '~/widgets/Common'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 
 import PictureGroup from './PictureGroup'
@@ -16,63 +13,56 @@ import CustomGradientEditor from './CustomGradientEditor'
 import AnglePanel from './AnglePanel'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  Title,
-  SettingWrapper,
-  SwitchWrapper,
-  ToggleTitle,
-  GeneralSettings,
-  Divider,
-  AngleSettings,
-} from '../styles/build_in'
+import useSalon, { cn } from '../styles/build_in'
 
 export default () => {
   const { getWallpaper, togglePattern, toggleBlur, toggleShadow } = useLogic()
   const { wallpaperType, hasPattern, hasBlur, hasShadow } = getWallpaper()
 
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Title>渐变:</Title>
+    <div className={s.wrapper}>
+      <div className={s.title}>渐变:</div>
       <GradientGroup />
       {wallpaperType === WALLPAPER_TYPE.CUSTOM_GRADIENT && <CustomGradientEditor />}
-      <Br top={25} />
-      <Title>图片:</Title>
+      <div className="mt-6" />
+      <div className={s.title}>图片:</div>
       <PictureGroup />
-      <SexyDivider top={50} bottom={50} />
-      <SettingWrapper show={wallpaperType !== WALLPAPER_TYPE.NONE}>
-        <GeneralSettings>
-          <Title>附加效果:</Title>
+      <div className={s.divider} />
+      <div className={cn(s.settingWrapper, !(wallpaperType !== WALLPAPER_TYPE.NONE) && 'hidden')}>
+        <div className={s.generalSettings}>
+          <div className={s.title}>附加效果:</div>
           {wallpaperType === WALLPAPER_TYPE.GRADIENT && (
-            <SwitchWrapper>
-              <ToggleTitle>叠加花纹</ToggleTitle>
+            <div className={s.switchWrapper}>
+              <div className={s.toggleTitle}>叠加花纹</div>
               <ToggleSwitch checked={hasPattern} onChange={togglePattern} />
-            </SwitchWrapper>
+            </div>
           )}
-          <Br top={6} />
-          <SwitchWrapper>
-            <ToggleTitle>模糊效果</ToggleTitle>
+          <div className="mt-1.5" />
+          <div className={s.switchWrapper}>
+            <div className={s.toggleTitle}>模糊效果</div>
             <ToggleSwitch checked={hasBlur} onChange={toggleBlur} />
-          </SwitchWrapper>
+          </div>
 
-          <Br top={6} />
-          <SwitchWrapper>
-            <ToggleTitle>阴影效果</ToggleTitle>
+          <div className="mt-1.5" />
+          <div className={s.switchWrapper}>
+            <div className={s.toggleTitle}>阴影效果</div>
             <ToggleSwitch checked={hasShadow} onChange={toggleShadow} />
-          </SwitchWrapper>
-        </GeneralSettings>
+          </div>
+        </div>
 
         {wallpaperType === WALLPAPER_TYPE.GRADIENT && (
-          <Fragment>
-            <Divider />
-            <AngleSettings>
-              <Title>渐变方向:</Title>
+          <>
+            <div className={s.dividerV} />
+            <div className={s.angleSettings}>
+              <div className={s.title}>渐变方向:</div>
               <AnglePanel />
-            </AngleSettings>
-          </Fragment>
+            </div>
+          </>
         )}
-      </SettingWrapper>
-      <Br top={80} />
-    </Wrapper>
+      </div>
+      <div className="mt-20" />
+    </div>
   )
 }

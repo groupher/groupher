@@ -8,6 +8,10 @@ export const getSlipMargin = (size: string, mobileView: boolean): number => {
       return 0
     }
 
+    case SIZE.MEDIUM: {
+      return 0
+    }
+
     default:
       return 16
   }

@@ -1,23 +1,12 @@
-import type { TTestable } from '~/spec'
-import styled, { theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div.attrs<TTestable>(({ $testid }) => ({
-  'data-test-id': $testid,
-}))<TTestable>`
-  height: 100%;
-  position: relative;
-`
-export const Banner = styled.div`
-  padding: 20px 62px;
-`
-export const Title = styled.div`
-  font-size: 17px;
-  color: ${theme('article.title')};
-  font-weight: bold;
-  margin-bottom: 16px;
-  margin-left: 2px;
-`
-export const Content = styled.div`
-  padding: 0 30px;
-  height: 100%;
-`
+export default () => {
+  const { cn, fg } = useTwBelt()
+
+  return {
+    wrapper: cn('h-full relative'),
+    banner: 'px-14 py-5',
+    title: cn('text-base bold-sm mb-4 ml-0.5', fg('text.title')),
+    content: 'px-7 h-full',
+  }
+}
