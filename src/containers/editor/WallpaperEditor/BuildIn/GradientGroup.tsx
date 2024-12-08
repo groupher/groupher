@@ -6,7 +6,7 @@ import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import PenSVG from '~/icons/EditPen'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/build_in/gradient_group'
+import useSalon, { cn } from '../salon/build_in/gradient_group'
 
 export default () => {
   const s = useSalon()

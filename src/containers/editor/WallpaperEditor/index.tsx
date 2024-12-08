@@ -15,7 +15,7 @@ import UploadPic from './UploadPic'
 import Footer from './Footer'
 
 import useLogic from './useLogic'
-import useSalon from './styles'
+import useSalon from './salon'
 
 export default () => {
   const s = useSalon()

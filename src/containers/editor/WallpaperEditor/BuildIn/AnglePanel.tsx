@@ -2,7 +2,7 @@ import { GRADIENT_DIRECTION } from '~/const/wallpaper'
 
 import ArrowSVG from '~/icons/ArrowSolid'
 
-import useSalon, { cn } from '../styles/build_in/angle_panel'
+import useSalon, { cn } from '../salon/build_in/angle_panel'
 import useLogic from '../useLogic'
 
 export default () => {

@@ -7,7 +7,7 @@ import CheckedSVG from '~/icons/CheckBold'
 import CircleArrowSVG from '~/icons/ArrowSimple'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/build_in/pictrue_group'
+import useSalon, { cn } from '../salon/build_in/pictrue_group'
 
 export default () => {
   const { getWallpaper, changePatternWallpaper } = useLogic()

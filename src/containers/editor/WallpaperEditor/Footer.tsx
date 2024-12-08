@@ -6,7 +6,7 @@ import Button from '~/widgets/Buttons/Button'
 import ForbidSVG from '~/icons/ForbidImg'
 
 import useLogic from './useLogic'
-import useSalon from './styles/footer'
+import useSalon from './salon/footer'
 
 export default () => {
   const s = useSalon()

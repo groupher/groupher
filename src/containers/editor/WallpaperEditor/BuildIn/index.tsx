@@ -13,7 +13,7 @@ import CustomGradientEditor from './CustomGradientEditor'
 import AnglePanel from './AnglePanel'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/build_in'
+import useSalon, { cn } from '../salon/build_in'
 
 export default () => {
   const { getWallpaper, togglePattern, toggleBlur, toggleShadow } = useLogic()

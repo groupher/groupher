@@ -4,7 +4,7 @@ import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/build_in/custom_gradient_editor'
+import useSalon from '../salon/build_in/custom_gradient_editor'
 
 export default () => {
   const s = useSalon()

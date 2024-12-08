@@ -6,7 +6,7 @@ import UploadSVG from '~/icons/Upload'
 import MoreSVG from '~/icons/menu/More'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 
-import useSalon from '../styles/upload_pic/upload_box'
+import useSalon from '../salon/upload_pic/upload_box'
 
 const menuOptions = [
   {
