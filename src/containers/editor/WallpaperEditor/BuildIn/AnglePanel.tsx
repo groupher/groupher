@@ -1,90 +1,105 @@
 import { GRADIENT_DIRECTION } from '~/const/wallpaper'
-import usePrimaryColor from '~/hooks/usePrimaryColor'
 
+import ArrowSVG from '~/icons/ArrowSolid'
+
+import useSalon, { cn } from '../styles/build_in/angle_panel'
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  Top,
-  TopLeft,
-  TopRight,
-  Bottom,
-  BottomLeft,
-  BottomRight,
-  Left,
-  Right,
-  NeedleDot,
-  Needle,
-  ArrowIcon,
-} from '../styles/build_in/angle_panel'
 
 export default () => {
   const { getWallpaper, changeDirection } = useLogic()
   const { direction } = getWallpaper()
 
-  const primaryColor = usePrimaryColor()
+  const s = useSalon({ direction })
 
   const { TOP, TOP_LEFT, TOP_RIGHT, LEFT, RIGHT, BOTTOM, BOTTOM_LEFT, BOTTOM_RIGHT } =
     GRADIENT_DIRECTION
 
   return (
-    <Wrapper>
-      <Top $active={direction === TOP} $color={primaryColor} onClick={() => changeDirection(TOP)}>
-        <ArrowIcon deg="-90deg" $active={direction === TOP} />
-      </Top>
-      <TopLeft
-        $active={direction === TOP_LEFT}
-        $color={primaryColor}
+    <div className={s.wrapper}>
+      <div
+        className={cn(s.point, s.top, direction === TOP && s.pointActive)}
+        onClick={() => changeDirection(TOP)}
+      >
+        <ArrowSVG
+          className={cn(s.arrowIcon, direction === TOP && s.arrowActive)}
+          style={{ transform: 'rotate(-90deg)' }}
+        />
+      </div>
+      <div
+        className={cn(s.point, s.sidePoint, s.topLeft, direction === TOP_LEFT && s.pointActive)}
         onClick={() => changeDirection(TOP_LEFT)}
       >
-        <ArrowIcon deg="-135deg" $active={direction === TOP_LEFT} />
-      </TopLeft>
-      <TopRight
-        $active={direction === TOP_RIGHT}
-        $color={primaryColor}
+        <ArrowSVG
+          className={cn(s.arrowIcon, direction === TOP_LEFT && s.arrowActive)}
+          style={{ transform: 'rotate(-135deg)' }}
+        />
+      </div>
+      <div
+        className={cn(s.point, s.sidePoint, s.topRight, direction === TOP_RIGHT && s.pointActive)}
         onClick={() => changeDirection(TOP_RIGHT)}
       >
-        <ArrowIcon deg="-45deg" $active={direction === TOP_RIGHT} />
-      </TopRight>
-      <Bottom
-        $active={direction === BOTTOM}
-        $color={primaryColor}
+        <ArrowSVG
+          className={cn(s.arrowIcon, direction === TOP_RIGHT && s.arrowActive)}
+          style={{ transform: 'rotate(-45deg)' }}
+        />
+      </div>
+      <div
+        className={cn(s.point, s.bottom, direction === BOTTOM && s.pointActive)}
         onClick={() => changeDirection(BOTTOM)}
       >
-        <ArrowIcon deg="90deg" $active={direction === BOTTOM} />
-      </Bottom>
+        <ArrowSVG
+          className={cn(s.arrowIcon, direction === BOTTOM && s.arrowActive)}
+          style={{ transform: 'rotate(90deg)' }}
+        />
+      </div>
 
-      <BottomLeft
-        $active={direction === BOTTOM_LEFT}
-        $color={primaryColor}
+      <div
+        className={cn(
+          s.point,
+          s.sidePoint,
+          s.bottomLeft,
+          direction === BOTTOM_LEFT && s.pointActive,
+        )}
         onClick={() => changeDirection(BOTTOM_LEFT)}
       >
-        <ArrowIcon deg="135deg" $active={direction === BOTTOM_LEFT} />
-      </BottomLeft>
+        <ArrowSVG
+          className={cn(s.arrowIcon, direction === BOTTOM_LEFT && s.arrowActive)}
+          style={{ transform: 'rotate(135deg)' }}
+        />
+      </div>
 
-      <BottomRight
-        $active={direction === BOTTOM_RIGHT}
+      <div
+        className={cn(
+          s.point,
+          s.sidePoint,
+          s.bottomRight,
+          direction === BOTTOM_RIGHT && s.pointActive,
+        )}
         onClick={() => changeDirection(BOTTOM_RIGHT)}
-        $color={primaryColor}
       >
-        <ArrowIcon deg="42deg" $active={direction === BOTTOM_RIGHT} />
-      </BottomRight>
+        <ArrowSVG
+          className={cn(s.arrowIcon, direction === BOTTOM_RIGHT && s.arrowActive)}
+          style={{ transform: 'rotate(42deg)' }}
+        />
+      </div>
 
-      <Left
-        $active={direction === LEFT}
-        $color={primaryColor}
+      <div
+        className={cn(s.point, s.left, direction === LEFT && s.pointActive)}
         onClick={() => changeDirection(LEFT)}
       >
-        <ArrowIcon deg="-180deg" $active={direction === LEFT} />
-      </Left>
-      <Right
-        $active={direction === RIGHT}
-        $color={primaryColor}
+        <ArrowSVG
+          className={cn(s.arrowIcon, direction === LEFT && s.arrowActive)}
+          style={{ transform: 'rotate(-180deg)' }}
+        />
+      </div>
+      <div
+        className={cn(s.point, s.right, direction === RIGHT && s.pointActive)}
         onClick={() => changeDirection(RIGHT)}
       >
-        <ArrowIcon deg="0" $active={direction === RIGHT} />
-      </Right>
-      <NeedleDot />
-      <Needle direction={direction} />
-    </Wrapper>
+        <ArrowSVG className={cn(s.arrowIcon, direction === RIGHT && s.arrowActive)} />
+      </div>
+      <div className={s.needleDot} />
+      <div className={s.needle} style={s.needleStyle} />
+    </div>
   )
 }

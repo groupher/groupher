@@ -1,54 +1,15 @@
-import Link from 'next/link'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import styled, { css, theme } from '~/css'
+export { cn } from '~/css'
 
-import Input from '~/widgets/Input'
+export default () => {
+  const { cn, br, bg, fg } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  width: 100%;
-  margin-top: 25px;
-  padding: 20px;
-
-  border: 1px solid;
-  border-color: ${theme('article.digest')};
-  border-radius: 5px;
-  position: relative;
-`
-export const Label = styled.div`
-  position: absolute;
-  top: -10px;
-  left: 15px;
-  padding: 0 5px;
-  background: white;
-  font-size: 12px;
-`
-export const Inputer = styled(Input)`
-  width: 100%;
-  font-size: 13px;
-
-  ::placeholder {
-    font-size: 12px;
+  return {
+    wrapper: cn('column w-11/12 mt-6 p-5 rounded-md relative border', br('text.digest')),
+    label: cn('absolute -top-2.5 left-3.5 px-1', bg('card'), fg('text.digest')),
+    input: 'w-full text-sm',
+    footer: 'row-center mt-3.5',
+    note: cn('text-xs', fg('text.digest')),
   }
-`
-export const Footer = styled.div`
-  ${css.row('align-center')};
-  margin-top: 15px;
-`
-
-export const NoteText = styled.div`
-  font-size: 12px;
-  color: ${theme('hint')};
-`
-
-export const Note = styled(Link)`
-  font-size: 11px;
-  color: ${theme('article.info')};
-  text-decoration: none;
-
-  &:hover {
-    font-weight: 500;
-  }
-
-  transition: all 0.2s;
-`
+}

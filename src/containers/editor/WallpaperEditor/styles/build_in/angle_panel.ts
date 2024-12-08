@@ -1,8 +1,8 @@
-import type { TActive, TColor } from '~/spec'
 import { GRADIENT_DIRECTION } from '~/const/wallpaper'
 
-import styled, { css, theme, rainbow } from '~/css'
-import ArrowSVG from '~/icons/ArrowSolid'
+import useTwBelt from '~/hooks/useTwBelt'
+
+export { cn } from '~/css'
 
 const metric = {
   [GRADIENT_DIRECTION.TOP]: {
@@ -31,115 +31,39 @@ const metric = {
   },
 }
 
-export const Wrapper = styled.div`
-  ${css.circle(68)};
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  position: relative;
-  margin-top: 26px;
-`
-export const NeedleDot = styled.div`
-  ${css.circle(4)};
-  background: ${theme('article.title')};
-  position: absolute;
-  left: 30px;
-  top: 29px;
-`
-export const Needle = styled.div<{ direction: string }>`
-  position: absolute;
-  top: 30px;
-  left: 2px;
+type TProps = {
+  direction: string
+}
 
-  width: 30px;
-  height: 1px;
-  background: ${theme('article.title')};
+export default ({ direction }: TProps) => {
+  const { cn, br, bg, fill, primary } = useTwBelt()
 
-  transform: ${({ direction }) => `rotate(${metric[direction].rotate}) `};
-  transform-origin: right;
-`
-type TPoint = TActive & TColor
-const Point = styled.div<TPoint>`
-  position: absolute;
-  font-size: 8px;
-  ${css.circle(16)};
-  ${css.row('align-both')};
-  z-index: 2;
+  return {
+    wrapper: cn('group size-[68px] circle border relative mt-6', br('divider')),
+    needleDot: cn('size-1.5 circle absolute left-7 top-7 ml-px', bg('dot')),
+    needle: cn('absolute w-8 h-px top-7 left-0 mt-0.5 origin-right', bg('dot')),
+    needleStyle: { transform: `rotate(${metric[direction].rotate}) ` },
+    //
+    point: cn(
+      'align-both absolute size-4 circle z-20 pointer border border-transparent',
+      bg('divider'),
+      `hover:${br('text.digest')}`,
+    ),
+    pointActive: cn(primary('bg')),
+    top: '-top-2 left-6 pb-px',
+    bottom: '-bottom-2 left-6 pt-px',
+    left: '-left-2 top-6 pr-px',
+    right: '-right-2 top-6 pl-px',
 
-  font-weight: ${({ $active }) => ($active ? 600 : 'bormal')};
-  background: ${({ $active, $color }) => ($active ? rainbow($color) : theme('divider'))};
-  color: ${({ $active }) => (!$active ? theme('article.title') : 'white')};
-  border: 1px solid transparent;
+    //
+    sidePoint: 'size-3 group-smoky-65',
+    topLeft: 'top-1 left-0.5 pb-px pr-px',
+    topRight: 'top-1 left-14 pb-px -ml-0.5',
+    bottomLeft: 'bottom-1.5 left-0.5 pr-px',
+    bottomRight: 'bottom-1.5 left-14 pt-px -ml-0.5',
 
-  &:hover {
-    border-color: ${theme('article.digest')};
-    border-color: ${({ $color }) => rainbow($color)};
-    font-weight: 600;
-    cursor: pointer;
-    color: white;
+    //
+    arrowIcon: cn('size-3.5', fill('text.digest')),
+    arrowActive: cn(fill('button.fg')),
   }
-
-  transition: all 0.2s;
-`
-
-const SidePoint = styled(Point)`
-  ${css.circle(10)};
-  ${css.row('align-both')};
-
-  opacity: ${({ $active }) => ($active ? 1 : 0.4)};
-
-  ${Wrapper}:hover & {
-    opacity: 1;
-  }
-`
-
-type TArrowIcon = { deg: string } & TActive
-export const ArrowIcon = styled(ArrowSVG)<TArrowIcon>`
-  ${css.size(13)};
-  fill: ${({ $active }) => ($active ? 'white' : theme('article.digest'))};
-  transform: ${({ deg }) => `rotate(${deg})`};
-`
-
-export const Top = styled(Point)`
-  top: -8px;
-  left: 24px;
-  padding-bottom: 1px;
-`
-export const TopLeft = styled(SidePoint)`
-  top: 5px;
-  left: 2px;
-  padding-bottom: 1px;
-  padding-right: 1px;
-`
-export const TopRight = styled(SidePoint)`
-  top: 5px;
-  left: 52px;
-  padding-bottom: 1px;
-  padding-left: 1px;
-`
-export const Right = styled(Point)`
-  top: 24px;
-  right: -8px;
-  padding-left: 3px;
-`
-export const Bottom = styled(Point)`
-  bottom: -8px;
-  left: 24px;
-  padding-top: 1px;
-`
-export const BottomLeft = styled(SidePoint)`
-  bottom: 6px;
-  left: 2px;
-  padding-top: 1px;
-  padding-right: 1px;
-`
-export const BottomRight = styled(SidePoint)`
-  bottom: 6px;
-  left: 52px;
-  padding-top: 1px;
-  padding-left: 1px;
-`
-export const Left = styled(Point)`
-  top: 23px;
-  left: -8px;
-  padding-right: 3px;
-`
+}
