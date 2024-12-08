@@ -1,9 +1,12 @@
 import { type FC, memo } from 'react'
 
 import SVG from '~/const/svg'
+
+import UploadSVG from '~/icons/Upload'
+import MoreSVG from '~/icons/menu/More'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 
-import { Wrapper, Menu, MoreIcon, UploadIcon, Title } from '../styles/upload_pic/upload_box'
+import useSalon from '../styles/upload_pic/upload_box'
 
 const menuOptions = [
   {
@@ -14,16 +17,18 @@ const menuOptions = [
 ]
 
 const UploadBox: FC = () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Menu>
+    <div className={s.wrapper}>
+      <div className={s.menu}>
         <MenuButton placement="bottom-end" options={menuOptions}>
-          <MoreIcon />
+          <MoreSVG className={s.moreIcon} />
         </MenuButton>
-      </Menu>
-      <UploadIcon />
-      <Title>上传 / 引入图片</Title>
-    </Wrapper>
+      </div>
+      <UploadSVG className={s.uploadIcon} />
+      <div className={s.title}>上传 / 引入图片</div>
+    </div>
   )
 }
 
