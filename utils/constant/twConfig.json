@@ -53,9 +53,9 @@
       "pr": 28
     },
     "dashboard": {
-      "width": "1300px",
-      "pl": 24,
-      "pr": 16
+      "width": "1400px",
+      "pl": 32,
+      "pr": 28
     },
     "community_sidebar": {
       "width": "1200px",

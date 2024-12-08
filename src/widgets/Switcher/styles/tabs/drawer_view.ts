@@ -11,7 +11,7 @@ export default () => {
     tabItem: cn('align-both h-full grow rounded-md text-xs pointer', fg('text.digest')),
     activeTabItem: cn(fg('text.title')),
     slider: cn(
-      'absolute top-1 bottom-1 left-1 rounded-md transition-all duration-300 ease-in-out',
+      'absolute top-1 bottom-1 left-1 rounded-md transition-all duration-200 ease-in-out',
       bg('card'),
       shadow('md'),
     ),

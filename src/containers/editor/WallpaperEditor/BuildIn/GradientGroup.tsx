@@ -3,17 +3,13 @@ import { keys } from 'ramda'
 import { parseWallpaper } from '~/wallpaper'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 
+import PenSVG from '~/icons/EditPen'
+
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  BallWrapper,
-  ColorBall,
-  CustomColorBall,
-  PenWrapper,
-  PenIcon,
-} from '../styles/build_in/gradient_group'
+import useSalon, { cn } from '../styles/build_in/gradient_group'
 
 export default () => {
+  const s = useSalon()
   const { getWallpaper, changeGradientWallpaper, changeCustomGradientWallpaper } = useLogic()
 
   const { wallpaper, gradientWallpapers } = getWallpaper()
@@ -21,29 +17,35 @@ export default () => {
   const gradientKeys = keys(gradientWallpapers)
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {gradientKeys.map((name) => (
-        <BallWrapper
+        <div
           key={name}
-          $active={name === wallpaper}
+          className={cn(s.ballWrapper, name === wallpaper && s.ballActive)}
           onClick={() => changeGradientWallpaper(name)}
         >
-          <ColorBall
-            $active={name === wallpaper}
-            background={parseWallpaper(gradientWallpapers, name).background}
+          <div
+            className={s.colorBall}
+            style={{ background: parseWallpaper(gradientWallpapers, name).background }}
           />
-        </BallWrapper>
+        </div>
       ))}
-      <BallWrapper
-        $active={wallpaper === WALLPAPER_TYPE.CUSTOM_GRADIENT}
+      <div
+        className={cn(s.ballWrapper, wallpaper === WALLPAPER_TYPE.CUSTOM_GRADIENT && s.ballActive)}
         onClick={() => changeCustomGradientWallpaper()}
       >
-        <CustomColorBall>
-          <PenWrapper>
-            <PenIcon />
-          </PenWrapper>
-        </CustomColorBall>
-      </BallWrapper>
-    </Wrapper>
+        <div
+          className={cn(s.colorBall, 'align-both')}
+          style={{
+            background:
+              'conic-gradient(rgb(235, 87, 87),rgb(78, 167, 252),rgb(76, 183, 130),rgb(242, 201, 76),rgb(250, 96, 122))',
+          }}
+        >
+          <div className={s.penWrapper}>
+            <PenSVG className={s.penIcon} />
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

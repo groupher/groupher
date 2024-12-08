@@ -1,18 +1,13 @@
 import { useState } from 'react'
 import { keys } from 'ramda'
 
+import Img from '~/Img'
 import Button from '~/widgets/Buttons/Button'
+import CheckedSVG from '~/icons/CheckBold'
+import CircleArrowSVG from '~/icons/ArrowSimple'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  ShowMoreMask,
-  Block,
-  Image,
-  ActiveSign,
-  CheckIcon,
-  CircleArrow,
-} from '../styles/build_in/pictrue_group'
+import useSalon, { cn } from '../styles/build_in/pictrue_group'
 
 export default () => {
   const { getWallpaper, changePatternWallpaper } = useLogic()
@@ -20,38 +15,44 @@ export default () => {
 
   const [showMore, setShowMore] = useState(false)
 
+  const s = useSalon({ showMore })
+
   const _patternKeys = keys(patternWallpapers)
   const patternKeys = showMore ? _patternKeys : _patternKeys.slice(0, 4)
 
   return (
-    <Wrapper showMore={showMore}>
+    <div className={s.wrapper}>
       {patternKeys.map((name) => {
         // @ts-ignore
         const { bgImage } = patternWallpapers[name]
         const bgSrc = bgImage === '/wallpaper/ms.svg' ? '/wallpaper/ms.png' : bgImage
 
         return (
-          <Block key={name} $active={name === wallpaper}>
+          <div className={cn(s.block, name === wallpaper && s.blockActive)} key={name}>
             {name === wallpaper && (
-              <ActiveSign>
-                <CheckIcon />
-              </ActiveSign>
+              <div className={s.activeSign}>
+                <CheckedSVG className={s.checkIcon} />
+              </div>
             )}
-            <Image
-              src={bgSrc}
-              height={name === 'ms' ? '110px' : 'auto'}
-              onClick={() => changePatternWallpaper(name)}
-            />
-          </Block>
+            <Img className={s.image} src={bgSrc} onClick={() => changePatternWallpaper(name)} />
+          </div>
         )
       })}
 
-      <ShowMoreMask showMore={showMore}>
-        <Button ghost noBorder size="small" top={60} onClick={() => setShowMore(!showMore)}>
-          <CircleArrow showMore={showMore} />
+      <div className={s.showMoreMask}>
+        <Button
+          ghost
+          noBorder
+          size="small"
+          space={3}
+          top={10}
+          withSoftBg={showMore}
+          onClick={() => setShowMore(!showMore)}
+        >
+          <CircleArrowSVG className={s.showMoreIcon} />
           {!showMore ? <>查看全部</> : <>收起</>}
         </Button>
-      </ShowMoreMask>
-    </Wrapper>
+      </div>
+    </div>
   )
 }

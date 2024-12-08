@@ -1,38 +1,15 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import ForbidSVG from '~/icons/ForbidImg'
+export default () => {
+  const { cn, bg, fill, sexyHBorder } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.column('align-both')};
-  width: calc(100% - 2px);
-  border-radius: 5px;
-  padding: 0 30px;
-  position: fixed;
-  bottom: 49px;
-  left: 0;
-  height: 50px;
-  background: ${theme('htmlBg')};
-  z-index: 10;
-
-  border-top: 1px solid transparent;
-  border-image: linear-gradient(
-    0.22turn,
-    transparent,
-    ${theme('divider')},
-    ${theme('divider')},
-    ${theme('divider')},
-    transparent
-  );
-
-  border-image-slice: 1;
-`
-export const InnrWrapper = styled.div`
-  ${css.row('align-center', 'justify-between')};
-  width: 100%;
-  height: 100%;
-`
-export const ForbidImgIcon = styled(ForbidSVG)`
-  fill: ${theme('article.digest')};
-  ${css.size(14)};
-  margin-right: 10px;
-`
+  return {
+    wrapper: cn(
+      'column-align-both z-30 w-full rounded-md px-8 fixed left-0 bottom-14 h-16',
+      bg('card'),
+    ),
+    divider: sexyHBorder(35),
+    inner: 'row-center-between w-full h-full pt-2',
+    blankIcon: cn('size-3.5 mr-2.5', fill('text.digest')),
+  }
+}
