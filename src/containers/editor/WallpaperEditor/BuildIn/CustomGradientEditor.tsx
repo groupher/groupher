@@ -1,18 +1,14 @@
 import { useState } from 'react'
 
-import { Row } from '~/widgets/Common'
 import Button from '~/widgets/Buttons/Button'
+import Input from '~/widgets/Input'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  Label,
-  Inputer,
-  Footer,
-  NoteText,
-} from '../styles/build_in/custom_gradient_editor'
+import useSalon from '../salon/build_in/custom_gradient_editor'
 
 export default () => {
+  const s = useSalon()
+
   const { getWallpaper, confirmCustomColor } = useLogic()
   const { customColor } = getWallpaper()
 
@@ -20,17 +16,16 @@ export default () => {
   const changed = colorVal !== customColor
 
   return (
-    <Wrapper>
-      <Label>自定义</Label>
-      <Inputer
+    <div className={s.wrapper}>
+      <div className={s.label}>自定义</div>
+      <Input
         placeholder="颜色值以, 分隔, 如 #EBDDD1,#CEB2D3,#F16061"
+        className={s.input}
         value={colorVal}
         onChange={(e) => setColorVal(e.target.value)}
       />
-      <Footer>
-        <Row>
-          <NoteText>支持多组 HEX 颜色值，</NoteText>
-        </Row>
+      <div className={s.footer}>
+        <div className={s.note}>支持多组 HEX 颜色值，</div>
 
         <div className="grow" />
         {changed && (
@@ -49,7 +44,7 @@ export default () => {
             </Button>
           </>
         )}
-      </Footer>
-    </Wrapper>
+      </div>
+    </div>
   )
 }

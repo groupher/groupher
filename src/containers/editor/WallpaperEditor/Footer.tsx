@@ -3,21 +3,26 @@ import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
 import Button from '~/widgets/Buttons/Button'
 
+import ForbidSVG from '~/icons/ForbidImg'
+
 import useLogic from './useLogic'
-import { Wrapper, InnrWrapper, ForbidImgIcon } from './styles/footer'
+import useSalon from './salon/footer'
 
 export default () => {
+  const s = useSalon()
+
   const { getWallpaper, loading, getIsTouched, removeWallpaper, onSave, rollbackWallpaper } =
     useLogic()
   const { wallpaperType } = getWallpaper()
   const isTouched = getIsTouched()
 
   return (
-    <Wrapper>
-      <InnrWrapper>
+    <div className={s.wrapper}>
+      <div className={s.divider} />
+      <div className={s.inner}>
         {wallpaperType !== WALLPAPER_TYPE.NONE ? (
           <Button size="small" ghost onClick={() => removeWallpaper()}>
-            <ForbidImgIcon /> 空白壁纸
+            <ForbidSVG className={s.blankIcon} /> 空白壁纸
           </Button>
         ) : (
           <div />
@@ -39,7 +44,7 @@ export default () => {
             确定
           </Button>
         )}
-      </InnrWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }

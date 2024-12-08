@@ -6,7 +6,6 @@
 import { useEffect } from 'react'
 import VIEW from '~/const/view'
 
-import { DesktopOnly, MobileOnly } from '~/widgets/Common'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 import { TAB, TAB_OPTIONS } from './constant'
@@ -16,9 +15,10 @@ import UploadPic from './UploadPic'
 import Footer from './Footer'
 
 import useLogic from './useLogic'
-import { Wrapper, Banner, Title, Content } from './styles'
+import useSalon from './salon'
 
 export default () => {
+  const s = useSalon()
   const { tab, changeTab, initRollback } = useLogic()
 
   useEffect(() => {
@@ -26,26 +26,18 @@ export default () => {
   }, [])
 
   return (
-    <Wrapper $testid="wallpaper-editor">
-      <Banner>
-        <Title>壁纸设置</Title>
+    <div className={s.wrapper}>
+      <div className={s.banner}>
+        <h3 className={s.title}>壁纸设置</h3>
         <Tabs items={TAB_OPTIONS} activeKey={tab} onChange={changeTab} view={VIEW.DRAWER} />
-      </Banner>
+      </div>
 
-      <MobileOnly>
-        <Content>
-          {tab === TAB.BUILDIN && <BuildIn />}
-          {tab === TAB.UPLOAD && <UploadPic />}
-        </Content>
-      </MobileOnly>
-      <DesktopOnly>
-        <Content>
-          {tab === TAB.BUILDIN && <BuildIn />}
-          {tab === TAB.UPLOAD && <UploadPic />}
-        </Content>
-      </DesktopOnly>
+      <div className={s.content}>
+        {tab === TAB.BUILDIN && <BuildIn />}
+        {tab === TAB.UPLOAD && <UploadPic />}
+      </div>
 
       <Footer />
-    </Wrapper>
+    </div>
   )
 }
