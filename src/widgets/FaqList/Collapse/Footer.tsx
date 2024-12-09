@@ -1,30 +1,29 @@
 import { type FC, memo } from 'react'
 
-import {
-  Wrapper,
-  Note,
-  Bottom,
-  BookIcon,
-  PeopleIcon,
-  MoreButton,
-  AskButton,
-} from '../styles/collapse/footer'
+import BookSVG from '~/icons/Book'
+import PeopleSVG from '~/icons/People'
+import Button from '~/widgets/Buttons/Button'
+
+import useSalon from '../salon/collapse/footer'
 
 const Footer: FC = () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Note>没能解决你的问题？</Note>
-      <Bottom>
-        <MoreButton size="small" space={10}>
-          <BookIcon />
+    <div className={s.wrapper}>
+      <div className={s.divider} />
+      <div className={s.note}>没能解决你的问题？</div>
+      <div className={s.bottom}>
+        <Button space={5}>
+          <BookSVG className={s.bookIcon} />
           更多文档
-        </MoreButton>
-        <AskButton size="small" ghost space={10}>
-          <PeopleIcon />
+        </Button>
+        <Button ghost space={5}>
+          <PeopleSVG className={s.peopleIcon} />
           社区求助
-        </AskButton>
-      </Bottom>
-    </Wrapper>
+        </Button>
+      </div>
+    </div>
   )
 }
 

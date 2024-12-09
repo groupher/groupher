@@ -1,47 +1,39 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
+import CheckSVG from '~/icons/Check'
 import Markdown from '~/widgets/Markdown'
 
-import {
-  Wrapper,
-  Header,
-  BrandText,
-  Content,
-  Section,
-  SectionHead,
-  CheckIconWrapper,
-  CheckIcon,
-  Title,
-  Body,
-} from './styles/flat'
+import useSalon from './salon/flat'
 
 import type { TProps as TIndex } from '.'
 
 type TProps = Pick<TIndex, 'sections' | 'large'>
 
 const Flat: FC<TProps> = ({ sections, large }) => {
+  const s = useSalon({ large })
+
   return (
-    <Wrapper>
-      <Header $large={large}>
-        <BrandText $large={large}>常见问题</BrandText>
-      </Header>
-      <Content $large={large}>
+    <div className={s.wrapper}>
+      <div className={s.header}>
+        <div className={s.brandText}>常见问题</div>
+      </div>
+      <div className={s.content}>
         {sections.map((item) => (
-          <Section key={item.title} $large={large}>
-            <SectionHead>
-              <CheckIconWrapper $large={large}>
-                <CheckIcon $large={large} />
-              </CheckIconWrapper>
-              <Title $large={large}>{item.title}</Title>
-            </SectionHead>
-            <Body $large={large}>
+          <div className={s.section} key={item.title}>
+            <div className="row-center">
+              <div className={s.checkBox}>
+                <CheckSVG className={s.checkIcon} />
+              </div>
+              <div className={s.title}>{item.title}</div>
+            </div>
+            <div className={s.body}>
               <Markdown>{item.body}</Markdown>
-            </Body>
-          </Section>
+            </div>
+          </div>
         ))}
-      </Content>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 
-export default memo(Flat)
+export default Flat

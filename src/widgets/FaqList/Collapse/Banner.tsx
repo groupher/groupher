@@ -3,9 +3,10 @@ import { pluck } from 'ramda'
 
 import type { TMenuOption, TFAQSection } from '~/spec'
 
+import ArrowSVG from '~/icons/ArrowSolid'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 
-import { Wrapper, Title, MenuWrapper, MenuIcon } from '../styles/collapse/banner'
+import useSalon from '../salon/collapse/banner'
 
 type TProps = {
   menuOptions: TMenuOption[]
@@ -14,6 +15,8 @@ type TProps = {
 }
 
 const Banner: FC<TProps> = ({ menuOptions, setOpenedIndexes, sections }) => {
+  const s = useSalon()
+
   const foldAll = () => setOpenedIndexes([])
   const unFoldAll = useCallback(
     () => setOpenedIndexes(pluck('index', sections)),
@@ -39,14 +42,14 @@ const Banner: FC<TProps> = ({ menuOptions, setOpenedIndexes, sections }) => {
   }
 
   return (
-    <Wrapper>
-      <Title>常见问题</Title>
-      <MenuWrapper>
+    <div className={s.wrapper}>
+      <div className={s.title}>常见问题</div>
+      <div className={s.menu}>
         <MenuButton placement="bottom-end" options={menuOptions} onClick={(key) => handleMenu(key)}>
-          <MenuIcon />
+          <ArrowSVG className={s.arrowIcon} />
         </MenuButton>
-      </MenuWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 

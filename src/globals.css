@@ -93,12 +93,12 @@
     @apply opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer
   }
 
-  .group-smoky-80 {
-    @apply opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer
-  }
-
   .group-smoky-65 {
     @apply opacity-65 group-hover:opacity-100 transition-opacity cursor-pointer
+  }
+
+  .group-smoky-80 {
+    @apply opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer
   }
 
   .article-hover-linear::before {

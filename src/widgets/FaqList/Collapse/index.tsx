@@ -9,13 +9,15 @@ import Banner from './Banner'
 import Section from './Section'
 import Footer from './Footer'
 
-import { Wrapper } from '../styles/collapse'
+import useSalon from '../salon/collapse'
 
 import type { TProps as TIndex } from '..'
 
 type TProps = Pick<TIndex, 'sections'>
 
 const Collapse: FC<TProps> = ({ sections }) => {
+  const s = useSalon()
+
   const [openedIndexes, setOpenedIndexes] = useState<number[]>([])
   const [menuOptions, setMenuOptions] = useState<TMenuOption[]>(DEFAULT_MENU)
 
@@ -41,7 +43,7 @@ const Collapse: FC<TProps> = ({ sections }) => {
   )
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <Banner menuOptions={menuOptions} setOpenedIndexes={setOpenedIndexes} sections={sections} />
 
       {sections.map((item) => (
@@ -49,7 +51,7 @@ const Collapse: FC<TProps> = ({ sections }) => {
       ))}
 
       <Footer />
-    </Wrapper>
+    </div>
   )
 }
 
