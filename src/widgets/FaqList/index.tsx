@@ -27,7 +27,7 @@ export type TProps = {
 const TEST_DATA = [
   {
     title: 'sldkjfie',
-    body: 'dlskdjslddslkdjsldksjdldsjdkc,nveekldj',
+    body: 'dlskdjslddslkdjsldksjdldsjdkc,nveekldj ldksjdldsjdkc,nveekldj end',
     index: 0,
   },
 
