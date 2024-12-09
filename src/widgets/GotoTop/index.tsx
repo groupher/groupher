@@ -8,20 +8,22 @@ import { type FC, memo } from 'react'
 
 import { scrollToHeader, scrollDrawerToTop } from '~/dom'
 
-import { Wrapper, AirBalloonIcon } from './styles'
+import AirBalloonSVG from '~/widgets/Icons/AirBalloon'
+
+import useSalon from './salon'
 
 export type TProps = {
-  testid?: string
   type?: 'body' | 'drawer'
 }
 
-const GotoTop: FC<TProps> = ({ testid = 'goto-top', type = 'body' }) => {
+const GotoTop: FC<TProps> = ({ type = 'body' }) => {
+  const s = useSalon()
   const handler = type === 'body' ? scrollToHeader : scrollDrawerToTop
 
   return (
-    <Wrapper $testid={testid} onClick={handler}>
-      <AirBalloonIcon />
-    </Wrapper>
+    <div className={s.wrapper} onClick={handler}>
+      <AirBalloonSVG className={s.icon} />
+    </div>
   )
 }
 
