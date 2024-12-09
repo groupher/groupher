@@ -1,12 +1,13 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
 import { includes } from 'ramda'
 
 import type { TFAQSection } from '~/spec'
 
+import ArrowSVG from '~/icons/ArrowSimple'
 import Markdown from '~/widgets/Markdown'
 
-import { Wrapper, Header, Title, ArrowIcon, Body } from '../styles/collapse/section'
+import useSalon from '../salon/collapse/section'
 
 type TProps = {
   item: TFAQSection
@@ -16,19 +17,25 @@ type TProps = {
 
 const Section: FC<TProps> = ({ item, openedIndexes, toggle }) => {
   const isOpened = includes(item.index, openedIndexes)
+  const s = useSalon({ isOpened })
 
   return (
-    <Wrapper>
-      <Header onClick={() => toggle(item.index)}>
-        <Title $active={isOpened}>{item.title}</Title>
-        <ArrowIcon $active={isOpened} />
-      </Header>
+    <div className={s.wrapper}>
+      <div className={s.header} onClick={() => toggle(item.index)}>
+        <div className={s.title}>{item.title}</div>
+        <ArrowSVG
+          className={s.arrowIcon}
+          style={{
+            transform: isOpened ? 'rotate(90deg)' : 'rotate(270deg)',
+          }}
+        />
+      </div>
 
-      <Body show={isOpened}>
+      <div className={s.body}>
         <Markdown>{item.body}</Markdown>
-      </Body>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 
-export default memo(Section)
+export default Section

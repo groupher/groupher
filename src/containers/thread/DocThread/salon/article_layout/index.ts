@@ -15,7 +15,7 @@ export default ({ outlineOpen }: TProps) => {
     content: cn(
       base.main,
       'grow text-base pl-12 pr-0 max-w-full trans-all-200',
-      outlineOpen ? 'w-[680px]' : 'px-0 mr-20 -ml-10',
+      outlineOpen ? 'w-[680px]' : 'px-0 mr-20',
       fg('text.digest'),
     ),
     title: cn('text-2xl bold-sm mt-4', fg('text.title')),
