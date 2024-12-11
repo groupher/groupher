@@ -1,9 +1,3 @@
-/*
- *
- * Tabs
- *
- */
-
 import { type FC, useEffect, useRef, useState, useCallback } from 'react'
 import { isEmpty, findIndex, pluck, includes } from 'ramda'
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
@@ -24,14 +18,6 @@ const temItems = [
   },
 ]
 
-/**
- * get default active key in tabs array
- * if not found, return 0 as first
- *
- * @param {array of string or object} items
- * @param {string} activeKey
- * @returns number
- */
 const getDefaultActiveTabIndex = (items: TTabItem[], activeKey: string): number => {
   if (isEmpty(activeKey)) return 0
   const index = findIndex((item) => {
@@ -70,12 +56,11 @@ const Tabs: FC<TProps> = ({
 
   const [active, setActive] = useState(defaultActiveTabIndex)
   const [slipWidth, setSlipWidth] = useState(0)
-  const [tabWidthList, setTabWidthList] = useState([])
+  const [isInitialRender, setIsInitialRender] = useState(true)
 
   const navRef = useRef(null)
+  const tabWidthListRef = useRef([])
 
-  // set initial slipbar with of active item
-  // 给 slipbar 设置一个初始宽度
   useEffect(() => {
     if (navRef.current) {
       const activeSlipWidth =
@@ -84,17 +69,16 @@ const Tabs: FC<TProps> = ({
       setSlipWidth(activeSlipWidth)
     }
     setActive(defaultActiveTabIndex)
+
+    // mare sure the real bar animation starts only when this component fullly loaded
+    const timerId = setTimeout(() => setIsInitialRender(false), 500)
+
+    return () => clearTimeout(timerId)
   }, [defaultActiveTabIndex, hasActiveItem])
 
-  // set slipbar with for current nav item
-  // 为下面的滑动条设置当前 TabItem 的宽度
-  const handleNaviItemWith = useCallback(
-    (index, width) => {
-      tabWidthList[index] = width
-      setTabWidthList(tabWidthList)
-    },
-    [tabWidthList],
-  )
+  const handleNaviItemWith = useCallback((index, width) => {
+    tabWidthListRef.current[index] = width
+  }, [])
 
   const handleItemClick = useCallback(
     (index, e) => {
@@ -108,7 +92,7 @@ const Tabs: FC<TProps> = ({
   )
 
   const translateX = `${
-    tabWidthList.slice(0, active).reduce((a, b) => a + b, 0) +
+    tabWidthListRef.current.slice(0, active).reduce((a, b) => a + b, 0) +
     getSlipMargin(size, isMobile) * active
   }px`
 
@@ -133,10 +117,17 @@ const Tabs: FC<TProps> = ({
             className={s.slipbar}
             style={{
               transform: `translate3d(${translateX}, 0, 0)`,
-              width: `${tabWidthList[active]}px`,
+              width: `${tabWidthListRef.current[active]}px`,
+              transition: isInitialRender ? 'none' : undefined,
             }}
           >
-            <span className={s.realBar} style={{ width: `${slipWidth}px` }} />
+            <span
+              className={s.realBar}
+              style={{
+                width: `${slipWidth}px`,
+                transition: isInitialRender ? 'none' : undefined,
+              }}
+            />
           </span>
         )}
       </nav>
