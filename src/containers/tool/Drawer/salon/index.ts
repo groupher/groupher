@@ -43,7 +43,6 @@ export default ({ visible, type, rightOffset = '0px', fromContentEdge = true }: 
       transition: 'visibility 0.1s ease-in, opacity 0.1s ease-in, background 0.1s ease-in',
     },
 
-    naviArea: 'absolute left-0 z-20 w-12 h-5/6 top-20 group',
     drawerContent: cn(
       'relative w-full border rounded-tl-md',
       br('divider'),
@@ -57,7 +56,7 @@ export default ({ visible, type, rightOffset = '0px', fromContentEdge = true }: 
     drawer: cn(
       'fixed row h-full will-change-transform box-border border',
       br('divider'),
-      isWideMode(type) ? 'top-0' : 'top-6',
+      isWideMode(type) ? 'top-0' : 'top-5',
       visible ? 'visible' : 'hidden',
     ),
     drawerStyle,

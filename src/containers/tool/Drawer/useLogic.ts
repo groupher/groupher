@@ -2,12 +2,12 @@ import { useSnapshot } from 'valtio'
 
 import { pick, keys, values, forEach, includes, mergeRight } from 'ramda'
 
-import type { TArticle, TDirection } from '~/spec'
+import type { TDirection } from '~/spec'
 import EVENT from '~/const/event'
 import { ARTICLE_THREAD } from '~/const/thread'
 import TYPE from '~/const/type'
 import { lockPage, unlockPage, toggleGlobalBlur } from '~/dom'
-import { send, previewArticle } from '~/signal'
+import { send } from '~/signal'
 
 import type { TStore, TSwipeOption } from './spec'
 import store from './valtioStore'
@@ -16,7 +16,6 @@ import PubSub from '~/utils/pubsub'
 
 type TRet = {
   initPubSub: () => void
-  naviToArticle: (article: TArticle) => void
   closeDrawer: () => void
   onSwipedYHandler: (
     ev,
@@ -72,12 +71,6 @@ export default (): TRet => {
 
   const toggleHeaderTextVisiable = (bool: boolean): void => {
     snap.commit({ showHeaderText: bool })
-  }
-
-  const naviToArticle = (article: TArticle): void => {
-    // store.markPreviewHomeURLIfNeed()
-    previewArticle(article)
-    send(EVENT.RELOAD_ARTICLE)
   }
 
   const closeDrawer = (): void => {
@@ -156,7 +149,6 @@ export default (): TRet => {
   return {
     ...pick(keys(snap), snap),
     initPubSub,
-    naviToArticle,
     closeDrawer,
     onSwipedYHandler,
     onSwipingYHandler,

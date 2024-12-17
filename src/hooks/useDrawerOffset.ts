@@ -1,5 +1,5 @@
 import useWindowResize from '~/hooks/useWindowResize'
-import { WIDTH } from '~/css/metric'
+import { container } from '~/const/twConfig.json'
 
 import useMetric from './useMetric'
 
@@ -14,7 +14,7 @@ const useDrawerOffset = (): TRes => {
   const metric = useMetric()
   const { width: windowWidth } = useWindowResize()
 
-  const MAX_WIDTH = Number(WIDTH[metric].PAGE.slice(0, -2))
+  const MAX_WIDTH = Number(container[metric.toLowerCase()].width.slice(0, -2))
 
   return {
     rightOffset: `${windowWidth <= MAX_WIDTH ? '0' : (windowWidth - MAX_WIDTH) / 2}px`,
