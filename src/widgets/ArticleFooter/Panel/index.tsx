@@ -29,13 +29,7 @@ const Panel: FC<TProps> = ({ testid = 'author-info' }) => {
   return (
     <Wrapper $testid={testid}>
       <TabsWrapper>
-        <Tabs
-          items={TAB_ITEMS}
-          size="small"
-          activeKey={tab}
-          bottomSpace={5}
-          onChange={(tab) => setTab(tab)}
-        />
+        <Tabs items={TAB_ITEMS} size="small" activeKey={tab} onChange={(tab) => setTab(tab)} />
       </TabsWrapper>
       <ContentWrapper>
         {tab === TAB_ACTIVITIES && <Activities />}

@@ -11,8 +11,8 @@ export const Wrapper = styled.div.attrs<TTestable>(({ $testid }) => ({
   border-color: ${theme('divider')};
   padding: 26px 0;
   padding-bottom: 12px;
-  margin-top: 72px;
-  margin-bottom: 42px;
+  margin-top: 68px;
+  margin-bottom: 32px;
   min-height: 100px;
   color: ${theme('article.digest')};
 
@@ -25,8 +25,8 @@ export const Wrapper = styled.div.attrs<TTestable>(({ $testid }) => ({
 `
 export const TabsWrapper = styled.div`
   position: absolute;
-  top: -36px;
-  left: -14px;
+  top: -44px;
+  left: -10px;
 
   ${css.media.mobile`
     left: -20px;
