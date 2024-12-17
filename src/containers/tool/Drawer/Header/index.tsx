@@ -8,7 +8,7 @@ import CloseButtonSVG from '~/icons/CloseLight'
 import type { TSwipeOption } from '../spec'
 // import CloseLine from './CloseLine'
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/header'
+import useSalon, { cn } from '../salon/header'
 
 type TProps = {
   headerText?: string

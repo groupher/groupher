@@ -4,8 +4,8 @@ import CustomScroller from '~/widgets/CustomScroller'
 
 import type { TSwipeOption } from '../spec'
 import Content from './Content'
-import { getMobileContentHeight } from '../styles/metrics'
-import useSalon from '../styles/content'
+import { getMobileContentHeight } from '../salon/metrics'
+import useSalon from '../salon/content'
 import useLogic from '../useLogic'
 
 type TProps = {

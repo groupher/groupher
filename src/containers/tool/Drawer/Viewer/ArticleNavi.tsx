@@ -3,7 +3,7 @@ import useNaviArticle from '~/hooks/useNaviArticle'
 import ArrowSVG from '~/icons/ArrowSimple'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/article_navi'
+import useSalon, { cn } from '../salon/article_navi'
 
 export default () => {
   const s = useSalon()

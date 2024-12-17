@@ -8,7 +8,7 @@ import type { TSwipeOption } from '../spec'
 import Header from '../Header'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/mobile_view'
+import useSalon, { cn } from '../salon/mobile_view'
 
 type TProps = {
   testid?: string

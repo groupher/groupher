@@ -4,7 +4,7 @@ import { scrollDrawerToTop } from '~/dom'
 import { ANCHOR } from '~/const/dom'
 
 import Content from './Content'
-import useSalon from '../styles/content'
+import useSalon from '../salon/content'
 
 type TProps = {
   type: string // TODO:

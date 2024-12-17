@@ -18,7 +18,7 @@
 
 // import type { TSwipeOption, TExtraInfo } from './spec'
 // import { ARTICLE_VIEWER_TYPES, ARTICLE_THREAD_CURD_TYPES } from './constant'
-// import { SWIPE_THRESHOLD } from './styles/metrics'
+// import { SWIPE_THRESHOLD } from './salon/metrics'
 
 // const defaultOptions: TSwipeOption = { direction: 'bottom', position: 'M' }
 

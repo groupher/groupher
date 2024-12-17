@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/header/close_line'
+import useSalon from '../salon/header/close_line'
 
 type TProps = {
   curve: boolean

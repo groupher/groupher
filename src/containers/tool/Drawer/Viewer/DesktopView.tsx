@@ -9,7 +9,7 @@ import { ARTICLE_VIEWER_TYPES } from '../constant'
 
 import ArticleNavi from './ArticleNavi'
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles'
+import useSalon, { cn } from '../salon'
 
 type TProps = {
   options: TSwipeOption
