@@ -1,39 +1,40 @@
 import useNaviArticle from '~/hooks/useNaviArticle'
 
+import ArrowSVG from '~/icons/ArrowSimple'
+
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  UpSwitchBlock,
-  UpArrow,
-  DownSwitchBlock,
-  DownArrow,
-  IndexWrapper,
-  UpIndexWrapper,
-  DownIndexWrapper,
-} from '../styles/article_navi'
+import useSalon, { cn } from '../styles/article_navi'
 
 export default () => {
+  const s = useSalon()
+
   const articleNavi = useNaviArticle()
   const { naviToArticle } = useLogic()
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {articleNavi?.previous && (
-        <UpSwitchBlock onClick={() => naviToArticle(articleNavi.previous)}>
-          <UpArrow />
-          <IndexWrapper>
-            <UpIndexWrapper>上一篇</UpIndexWrapper>
-          </IndexWrapper>
-        </UpSwitchBlock>
+        <div
+          className={cn(s.switchBlock, s.upBlock)}
+          onClick={() => naviToArticle(articleNavi.previous)}
+        >
+          <ArrowSVG className={s.upArrow} />
+          <div className={cn(s.indexWrapper)}>
+            <div className={s.upIndex}>上一篇</div>
+          </div>
+        </div>
       )}
       {articleNavi?.next && (
-        <DownSwitchBlock onClick={() => naviToArticle(articleNavi.next)}>
-          <DownArrow />
-          <IndexWrapper>
-            <DownIndexWrapper>下一篇</DownIndexWrapper>
-          </IndexWrapper>
-        </DownSwitchBlock>
+        <div
+          className={cn(s.switchBlock, s.downBlock)}
+          onClick={() => naviToArticle(articleNavi.next)}
+        >
+          <ArrowSVG className={s.downArrow} />
+          <div className={cn(s.indexWrapper)}>
+            <div className={s.downIndex}>下一篇</div>
+          </div>
+        </div>
       )}
-    </Wrapper>
+    </div>
   )
 }

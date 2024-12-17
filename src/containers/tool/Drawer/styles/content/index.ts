@@ -1,13 +1,26 @@
-import styled from '~/css'
+import { useMemo } from 'react'
 
 import { NARROW_HEIGHT_OFFSET } from '../../constant'
 import { isWideMode } from '../metrics'
-// import styled, { css } from '~/css'
 
-export const Wrapper = styled.div<{ type: string }>`
-  width: 100%;
-  height: ${({ type }) =>
-    isWideMode(type) ? '100vh' : `calc(100vh - ${NARROW_HEIGHT_OFFSET * 2}px)`};
-  overflow-y: scroll;
-`
-export const InnerWrapper = styled.div``
+import useTwBelt from '~/hooks/useTwBelt'
+
+type TProps = {
+  type: string
+}
+
+export default ({ type }: TProps) => {
+  const { cn } = useTwBelt()
+
+  const wrapperStyle = useMemo(
+    () => ({
+      height: isWideMode(type) ? '100vh' : `calc(100vh - ${NARROW_HEIGHT_OFFSET * 2}px)`,
+    }),
+    [type],
+  )
+
+  return {
+    wrapper: cn('w-full overflow-y-auto'),
+    wrapperStyle,
+  }
+}

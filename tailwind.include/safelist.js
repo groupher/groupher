@@ -65,6 +65,7 @@ const BG_COLORS = [
   'button-redBg',
   'button-toggle',
   'button-fg',
+  'drawer-mask',
 ]
 const FILL_COLORS = ['text-title', 'text-digest', 'button-fg', 'heightIcon', 'text-link']
 // for fg,bg & fill

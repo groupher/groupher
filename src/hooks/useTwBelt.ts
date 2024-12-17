@@ -18,7 +18,7 @@ type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 
 type TLinkColorPrefix = 'fg' | 'fill'
 type TBreakOut = 'footer' | 'header'
 type TMenuPart = 'bg' | 'bar' | 'title' | 'link'
-type TShadowSize = 'sm' | 'md' | 'lg' | 'xl'
+type TShadowSize = 'sm' | 'md' | 'lg' | 'xl' | 'drawer'
 type TThemeSwitch = 'auto' | 'dark' | 'light'
 type TDimLevel = 'lg' | 'md' | 'sm'
 

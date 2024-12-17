@@ -1,5 +1,3 @@
-import { Fragment } from 'react'
-
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
 
 import DesktopView from './DesktopView'
@@ -13,10 +11,10 @@ const Viewer = (props) => {
   const { isMobile } = useMobileDetect()
 
   return (
-    <Fragment>
+    <>
       {!isMobile && <DesktopView {...props} />}
       {isMobile && <MobileView {...props} />}
-    </Fragment>
+    </>
   )
 }
 

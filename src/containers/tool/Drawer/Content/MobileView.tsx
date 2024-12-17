@@ -5,7 +5,7 @@ import CustomScroller from '~/widgets/CustomScroller'
 import type { TSwipeOption } from '../spec'
 import Content from './Content'
 import { getMobileContentHeight } from '../styles/metrics'
-import { Wrapper } from '../styles/content'
+import useSalon from '../styles/content'
 import useLogic from '../useLogic'
 
 type TProps = {
@@ -15,6 +15,13 @@ type TProps = {
 }
 
 const MobileView: FC<TProps> = ({ visible, options, type }) => {
+  const [wrapperStyle, setWrapperStyle] = useState({})
+  const s = useSalon({ type })
+
+  useEffect(() => {
+    setWrapperStyle(s.wrapperStyle)
+  }, [s.wrapperStyle])
+
   const { toggleSwipeAviliable, toggleHeaderTextVisiable } = useLogic()
 
   const ref = useRef(null)
@@ -90,9 +97,9 @@ const MobileView: FC<TProps> = ({ visible, options, type }) => {
       onBottomLeave={() => toggleSwipeAviliable('up', false)}
       autoHide
     >
-      <Wrapper ref={ref} type={type}>
+      <div ref={ref} className={s.wrapper} style={wrapperStyle}>
         <Content type={type} onLoad={() => {}} />
-      </Wrapper>
+      </div>
     </CustomScroller>
   )
 }

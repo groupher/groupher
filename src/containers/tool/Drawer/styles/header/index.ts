@@ -1,44 +1,22 @@
 // see example: https://codepen.io/mattbraun/pen/EywBJR
-import styled, { css, theme } from '~/css'
 
-import CloseButtonSVG from '~/icons/CloseLight'
+import useTwBelt from '~/hooks/useTwBelt'
 
-const BaseWrapper = styled.div`
-  z-index: 1;
-  position: absolute;
-  bottom: 10px;
-  left: 0;
-  width: 100%;
-  height: 30px;
-  background: ${theme('alphaBg2')};
-  backdrop-filter: blur(3px);
+export { cn } from '~/css'
 
-  border-bottom: 1px solid;
-  border-bottom-color: ${theme('divider')};
-  border-bottom-left-radius: 16px;
-  border-bottom-right-radius: 16px;
-`
-export const BottomWrapper = styled(BaseWrapper)`
-  top: 10px;
-  transform: rotate(180deg);
-`
+export default () => {
+  const { cn, bg, br, fg, fill } = useTwBelt()
 
-export const CloseButton = styled(CloseButtonSVG)`
-  ${css.size(18)};
-  fill: ${theme('lightText')};
-  position: absolute;
-  left: 16px;
-  top: 1px;
-`
-
-export const TopWrapper = styled(BaseWrapper)`
-  bottom: 10px;
-`
-export const TextWrapper = styled.div`
-  ${css.row('align-both')};
-  height: 100%;
-  transform: rotate(180deg);
-  font-size: 12px;
-  color: ${theme('article.title')};
-  font-weight: bold;
-`
+  return {
+    wrapper: cn(
+      'absolute bottom-2.5 left-0 w-full h-7 z-10 backdrop-blur-sm border-b rounded-tl-xl rounded-tr-xl',
+      bg('alphaBg'),
+      br('divider'),
+    ),
+    bottomWrapper: 'top-2.5 rotate-180',
+    topWrapper: 'bottom-2.5',
+    //
+    textWrapper: cn('align-both h-full rotate-180 text-xs bold-sm', fg('text.title')),
+    closeButton: cn('absolute top-0.5 left-4 size-5', fill('text.digest')),
+  }
+}

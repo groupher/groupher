@@ -1,13 +1,14 @@
 import { type FC, type ReactNode, useEffect, useState, memo, useRef } from 'react'
 
 import useSwipe from '~/hooks/useSwipe'
-import useTheme from '~/hooks/useTheme'
+
+import { ANCHOR } from '~/const/dom'
 
 import type { TSwipeOption } from '../spec'
 import Header from '../Header'
 
 import useLogic from '../useLogic'
-import { DrawerOverlay, DrawerWrapper, DrawerMobileContent, MobileInnerContent } from '../styles'
+import useSalon, { cn } from '../styles/mobile_view'
 
 type TProps = {
   testid?: string
@@ -32,12 +33,24 @@ const Viewer: FC<TProps> = ({
   disableContentDrag,
   children,
 }) => {
-  const { themeMap } = useTheme()
+  const [drawerStyle, setDrawerStyle] = useState({})
+  const [contentStyle, setContentStyle] = useState({})
+  const [innerStyle, setInnerStyle] = useState({})
+
   const { closeDrawer, onSwipedYHandler, onSwipingYHandler, resetSwipeAviliable } = useLogic()
   // swipe action state for top && bottom
   // null means restore and close
   const [swipeDownY, setSwipeDownY] = useState(null)
   const [swipeUpY, setSwipeUpY] = useState(null)
+
+  const s = useSalon({ visible, type, swipeUpY, swipeDownY, options })
+
+  // force style update
+  useEffect(() => {
+    setDrawerStyle(s.drawerStyle)
+    setContentStyle(s.contentStyle)
+    setInnerStyle(s.innerStyle)
+  }, [s.drawerStyle, s.contentStyle, s.innerStyle])
 
   const overlayRef = useRef(null)
 
@@ -77,26 +90,18 @@ const Viewer: FC<TProps> = ({
 
   return (
     <>
-      <DrawerOverlay ref={overlayRef} visible={visible} onClick={() => closeDrawer()} />
-      <DrawerWrapper
-        $testid={testid}
-        $visible={visible}
-        type={type}
-        swipeUpY={swipeUpY}
-        swipeDownY={swipeDownY}
-        options={options}
-        $mobile
-      >
-        <DrawerMobileContent options={options} bgColor={themeMap.drawer.bg}>
-          <MobileInnerContent
-            options={options}
-            swipeUpY={swipeUpY}
-            swipeDownY={swipeDownY}
-            {...swipeHandlers}
-          >
+      <div
+        className={cn(s.overlay, ANCHOR.GLOBAL_BLUR_CLASS)}
+        onClick={() => closeDrawer()}
+        style={s.overlayStyle}
+      />
+
+      <div className={s.drawer} style={drawerStyle}>
+        <div className={s.content} style={contentStyle}>
+          <div className={s.inner} style={innerStyle} {...swipeHandlers}>
             {children}
-          </MobileInnerContent>
-        </DrawerMobileContent>
+          </div>
+        </div>
         <Header
           headerText={headerText}
           options={options}
@@ -105,7 +110,7 @@ const Viewer: FC<TProps> = ({
           canBeClose={canBeClose}
           showHeaderText={showHeaderText}
         />
-      </DrawerWrapper>
+      </div>
     </>
   )
 }

@@ -1,9 +1,17 @@
 import { useMemo } from 'react'
 import { zIndex } from '~/css'
-import { pixelAdd } from '~/dom'
 
+import type { TSwipeOption } from '../spec'
 import { NARROW_HEIGHT_OFFSET } from '../constant'
-import { getDesktopTransform, isWideMode, getDrawerWidth, getDrawerMinWidth } from './metrics'
+import {
+  getMobileTransform,
+  getMobileContentHeight,
+  getContentLinearGradient,
+  getDim,
+  isWideMode,
+  getDrawerWidth,
+  getDrawerMinWidth,
+} from './metrics'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -12,38 +20,54 @@ export { cn } from '~/css'
 type TProps = {
   visible: boolean
   type: string
-  rightOffset?: string
-  fromContentEdge?: boolean
+  swipeUpY: number
+  swipeDownY: number
+  options: TSwipeOption
 }
 
-export default ({ visible, type, rightOffset = '0px', fromContentEdge = true }: TProps) => {
+export default ({ visible, type, swipeUpY, swipeDownY, options }: TProps) => {
   const { cn, bg, br, shadow } = useTwBelt()
 
   const drawerStyle = useMemo(
     () => ({
-      transform: getDesktopTransform(visible, fromContentEdge),
+      transform: getMobileTransform(visible, swipeUpY, swipeDownY, options),
       transition: 'transform 850ms cubic-bezier(0.23, 1, 0.32, 1) 0ms',
-      right: isWideMode(type) ? rightOffset : pixelAdd(rightOffset, 30),
       width: getDrawerWidth(type),
       minWidth: getDrawerMinWidth(type),
       zIndex: visible ? zIndex.drawer : -1,
       maxWidth: '985px',
       transitionDelay: '0s, 0s, 0.14s',
     }),
-    [visible, fromContentEdge, type, rightOffset],
+    [visible, type, swipeUpY, swipeDownY, options],
+  )
+
+  const contentStyle = useMemo(
+    () => ({
+      height: getMobileContentHeight(options),
+      background: getContentLinearGradient(options, 'white'),
+    }),
+    [options],
+  )
+
+  const innerStyle = useMemo(
+    () => ({
+      filter: getDim(swipeUpY, swipeDownY, options),
+    }),
+    [swipeUpY, swipeDownY, options],
   )
 
   return {
     overlay: cn(
-      'fixed bottom-0 left-0 overflow-auto h-full w-full',
+      'fixed bottom-0 left-0 right-0 overflow-auto h-full w-full',
       visible ? cn('visible opacity-50', bg('drawer.mask')) : 'hidden',
     ),
+
     overlayStyle: {
       zIndex: zIndex.drawerOverlay,
       transition: 'visibility 0.1s ease-in, opacity 0.1s ease-in, background 0.1s ease-in',
     },
 
-    naviArea: 'absolute left-0 z-20 w-12 h-5/6 top-20 group',
+    naviArea: 'absolute left-0 z-20 w-12 h-5/6 top-20',
     drawerContent: cn(
       'relative w-full border rounded-tl-md',
       br('divider'),
@@ -55,11 +79,21 @@ export default ({ visible, type, rightOffset = '0px', fromContentEdge = true }: 
       height: isWideMode(type) ? '100vh' : `calc(100vh - ${NARROW_HEIGHT_OFFSET * 2}px)`,
     },
     drawer: cn(
-      'fixed row h-full will-change-transform box-border border',
+      'fixed roww-full min-w-full overflow-auto h-auto will-change-transform box-border border',
       br('divider'),
       isWideMode(type) ? 'top-0' : 'top-6',
       visible ? 'visible' : 'hidden',
     ),
+
     drawerStyle,
+    //
+    content: cn('w-full'),
+    contentStyle,
+    inner: cn(
+      'w-full overflow-y-auto trans-all-200 hax-h-5/6',
+      shadow('xl'),
+      options.direction === 'bottom' && 'mt-4',
+    ),
+    innerStyle,
   }
 }
