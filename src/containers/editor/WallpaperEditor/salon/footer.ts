@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: cn(
-      'column-align-both z-30 w-full rounded-md px-8 fixed left-0 bottom-14 h-16',
+      'column-align-both z-30 w-full rounded-md px-12 fixed left-0 bottom-10 h-16',
       bg('card'),
     ),
     divider: sexyHBorder(35),

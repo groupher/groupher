@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import useLogic from '../useLogic'
-import { Wrapper, LeftLine, RightLine } from '../styles/header/close_line'
+import useSalon from '../salon/header/close_line'
 
 type TProps = {
   curve: boolean
@@ -9,12 +9,12 @@ type TProps = {
 
 const CloseLine: FC<TProps> = ({ curve }) => {
   const { closeDrawer } = useLogic()
+  const s = useSalon()
 
   return (
-    <Wrapper onClick={() => closeDrawer()}>
-      <LeftLine curve={curve} />
-      <RightLine curve={curve} />
-    </Wrapper>
+    <div className={s.wrapper} onClick={() => closeDrawer()}>
+      <div>todo</div>
+    </div>
   )
 }
 

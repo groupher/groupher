@@ -1,19 +1,30 @@
 import { closeDrawer } from '~/signal'
 
+import ArrowSVG from '~/icons/Arrow'
+import WarningSVG from '~/icons/Warning'
+
 import Share from '~/widgets/Share'
 import ArticleSettingMenu from '~/widgets/ArticleSettingMenu'
 
-import { Wrapper, BackButton, ArrowIcon, BackText, ReportIcon } from '../styles/drawer_header'
+import ArticleNavi from './ArticleNavi'
 
-export default () => (
-  <Wrapper>
-    <BackButton onClick={() => closeDrawer()}>
-      <ArrowIcon />
-      <BackText>返回列表</BackText>
-    </BackButton>
-    <div className="grow" />
-    <Share modalOffset="53%" />
-    <ReportIcon />
-    <ArticleSettingMenu left={16} />
-  </Wrapper>
-)
+import useSalon from '../styles/drawer_header'
+
+export default () => {
+  const s = useSalon()
+
+  return (
+    <div className={s.wrapper}>
+      <div className={s.backBtn} onClick={() => closeDrawer()}>
+        <ArrowSVG className={s.arrow} />
+      </div>
+      <div className="ml-1" />
+      <ArticleNavi />
+      <div className="grow" />
+      <Share modalOffset="53%" />
+      <div className="ml-4" />
+      <WarningSVG className={s.arrow} />
+      <ArticleSettingMenu left={16} />
+    </div>
+  )
+}

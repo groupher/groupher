@@ -1,62 +1,44 @@
-import { Fragment, type FC, type ReactNode } from 'react'
-import { includes } from 'ramda'
+import { type FC, type ReactNode, useEffect, useState } from 'react'
 
 import { ANCHOR } from '~/const/dom'
 import useDrawerOffset from '~/hooks/useDrawerOffset'
 
 import type { TSwipeOption } from '../spec'
-import { ARTICLE_VIEWER_TYPES } from '../constant'
 
-import ArticleNavi from './ArticleNavi'
 import useLogic from '../useLogic'
-import { DrawerOverlay, DrawerWrapper, DrawerContent, NaviArea } from '../styles'
+import useSalon, { cn } from '../salon'
 
 type TProps = {
-  testid?: string
   options: TSwipeOption
   visible: boolean
   type: string
   children: ReactNode
 }
 
-const DesktopView: FC<TProps> = ({
-  testid = 'drawer-sidebar-panel',
-  options,
-  visible,
-  type,
-  children,
-}) => {
+const DesktopView: FC<TProps> = ({ options, visible, type, children }) => {
+  const [drawerStyle, setDrawerStyle] = useState({})
   const { rightOffset, fromContentEdge } = useDrawerOffset()
   const { closeDrawer } = useLogic()
 
-  const isArticleViewer = includes(type, ARTICLE_VIEWER_TYPES)
+  const s = useSalon({ visible, type, rightOffset, fromContentEdge })
+
+  useEffect(() => {
+    setDrawerStyle(s.drawerStyle)
+  }, [s.drawerStyle])
 
   return (
-    <Fragment>
-      <DrawerOverlay
-        $visible={visible}
+    <>
+      <div
+        className={cn(s.overlay, ANCHOR.GLOBAL_BLUR_CLASS)}
         onClick={() => closeDrawer()}
-        className={ANCHOR.GLOBAL_BLUR_CLASS}
+        style={s.overlayStyle}
       />
-      <DrawerWrapper
-        $testid={testid}
-        $visible={visible}
-        $fromContentEdge={fromContentEdge}
-        $rightOffset={rightOffset}
-        type={type}
-        $mobile={false}
-        options={options}
-      >
-        <DrawerContent type={type}>
-          {isArticleViewer && (
-            <NaviArea>
-              <ArticleNavi />
-            </NaviArea>
-          )}
+      <div className={s.drawer} style={drawerStyle}>
+        <div className={s.drawerContent} style={s.drawerContentStyle}>
           {children}
-        </DrawerContent>
-      </DrawerWrapper>
-    </Fragment>
+        </div>
+      </div>
+    </>
   )
 }
 

@@ -3,12 +3,12 @@ import type { FC } from 'react'
 import useSwipe from '~/hooks/useSwipe'
 import { nilOrEmpty } from '~/validator'
 
+import CloseButtonSVG from '~/icons/CloseLight'
+
 import type { TSwipeOption } from '../spec'
 // import CloseLine from './CloseLine'
 import useLogic from '../useLogic'
-import { TopWrapper, BottomWrapper, TextWrapper, CloseButton } from '../styles/header'
-
-/* <TextWrapper>讨论共 167 条</TextWrapper> */
+import useSalon, { cn } from '../salon/header'
 
 type TProps = {
   headerText?: string
@@ -27,6 +27,8 @@ const Header: FC<TProps> = ({
   canBeClose,
   showHeaderText,
 }) => {
+  const s = useSalon()
+
   const { closeDrawer, onSwipedYHandler, onSwipingYHandler } = useLogic()
   const ignoreSwipeAviliable = true
   const swipeHandlers = useSwipe({
@@ -35,19 +37,23 @@ const Header: FC<TProps> = ({
   })
 
   const content = showHeaderText && !nilOrEmpty(headerText) && (
-    <TextWrapper>{headerText}</TextWrapper>
+    <div className={s.textWrapper}>{headerText}</div>
   )
   // <CloseLine curve={!canBeClose} />
 
   if (options.direction === 'bottom') {
     return (
-      <BottomWrapper {...swipeHandlers}>
+      <div className={cn(s.wrapper, s.bottomWrapper)} {...swipeHandlers}>
         {content}
-        <CloseButton onClick={() => closeDrawer()} />
-      </BottomWrapper>
+        <CloseButtonSVG className={s.closeButton} onClick={() => closeDrawer()} />
+      </div>
     )
   }
-  return <TopWrapper {...swipeHandlers}>{content}</TopWrapper>
+  return (
+    <div className={cn(s.wrapper, s.topWrapper)} {...swipeHandlers}>
+      {content}
+    </div>
+  )
 }
 
 export default Header
