@@ -5,7 +5,7 @@
  */
 import { useEffect } from 'react'
 
-import Comments from '~/containers/unit/Comments'
+// import Comments from '~/containers/unit/Comments'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
 import DrawerHeader from './DrawerHeader'
@@ -29,8 +29,10 @@ export default () => {
       {/* @ts-ignore */}
       {/* <CollectionFolder /> */}
       <Viewer article={article} />
+
       <CommentsWrapper>
-        <Comments />
+        <h3>TODO: comments (slow down the drawer)</h3>
+        {/* <Comments /> */}
       </CommentsWrapper>
     </Wrapper>
   )

@@ -64,7 +64,7 @@ export default (): TRet => {
       mode: snap.mode,
       filter: { page, size: PAGI_SIZE },
     }
-    console.log('## loadComments args: ', params)
+    // console.log('## loadComments args: ', params)
 
     query(S.pagedComments, params).then(({ pagedComments }) => {
       repliesPagiNo = {}

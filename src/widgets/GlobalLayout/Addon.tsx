@@ -1,6 +1,6 @@
 'use client'
 
-import { type FC, Fragment } from 'react'
+import type { FC } from 'react'
 // eslint-disable-next-line import/no-unresolved
 import { Toaster } from 'sonner'
 
@@ -18,7 +18,7 @@ const Addon: FC = () => {
   useShortcut('Control+P', () => console.log('## # Ctrl P pressed'))
 
   return (
-    <Fragment>
+    <>
       {/* @ts-ignore */}
       {/* {!isMobile && <AbuseReport />} */}
       {/* @ts-ignore */}
@@ -27,7 +27,7 @@ const Addon: FC = () => {
       <UserListModal />
       <Toaster position="top-center" />
       {/* @ts-ignore */}
-    </Fragment>
+    </>
   )
 }
 

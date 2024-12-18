@@ -33,7 +33,7 @@ export default (): TRet => {
     viewing.commit({ [thread]: article })
 
     setTimeout(() => {
-      console.log('## todo: sync article in list')
+      // console.log('## todo: sync article in list')
       // const { id, viewerHasUpvoted, views, upvotesCount } = article
       // store.syncArticle({
       //   id,

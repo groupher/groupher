@@ -5,9 +5,6 @@
  */
 
 import { type FC, memo } from 'react'
-import dynamic from 'next/dynamic'
-
-// import Pagi from '~/widgets/Pagi'
 
 import EVENT from '~/const/event'
 
@@ -16,9 +13,7 @@ import { send } from '~/signal'
 import PostList from './PostList'
 import useSalon from './styles'
 
-export const Pagi = dynamic(() => import('~/widgets/Pagi'), {
-  ssr: false,
-})
+import Pagi from '~/widgets/Pagi'
 
 const PagedPosts: FC = () => {
   const s = useSalon()
