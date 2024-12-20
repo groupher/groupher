@@ -24,7 +24,7 @@ export default () => {
       <Share modalOffset="53%" />
       <div className="ml-4" />
       <WarningSVG className={s.arrow} />
-      <ArticleSettingMenu left={16} />
+      <ArticleSettingMenu left={3} />
     </div>
   )
 }

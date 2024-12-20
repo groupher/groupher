@@ -1,37 +1,23 @@
-import { createGlobalStyle } from 'styled-components'
-import styled, { css, theme } from '~/css'
+import type { TSpace } from '~/spec'
 
-import type { TActive, TTestable } from '~/spec'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import SettingSVG from '~/icons/Setting'
-import { WithMargin } from '~/widgets/Common'
+export { cn } from '~/css'
 
-export const Wrapper = styled(WithMargin).attrs<TTestable>(({ $testid }) => ({
-  'data-test-id': $testid,
-}))<TTestable>``
+type TProps = TSpace
 
-export const Title = styled.div``
+export default ({ ...spacing }: TProps) => {
+  const { cn, margin, bg, fill } = useTwBelt()
 
-export const SettingIcon = styled(SettingSVG)<TActive>`
-  ${css.size(16)};
-  fill: ${({ $active }) => ($active ? theme('article.title') : theme('article.digest'))};
-  opacity: ${({ $active }) => ($active ? 1 : 0.8)};
-  cursor: pointer;
-
-  transform: ${({ $active }) => ($active ? 'rotate(45deg);' : 'rotate(-30deg);')};
-
-  &:hover {
-    opacity: 1;
-    fill: ${theme('article.title')};
+  return {
+    wrapper: margin(spacing),
+    settingBox: cn('group align-both size-6 rounded pointer', `hover:${bg('hoverBg')}`),
+    settingBoxActive: cn(bg('hoverBg')),
+    settingIcon: cn(
+      'size-4 trans-all-200 rotate-45',
+      fill('text.digest'),
+      'group-hover:rotate-90 group-smoky-80',
+      `group-hover:${fill('text.title')}`,
+    ),
   }
-
-  transition: fill 0.2s, opacity 0.2s, transform 0.4s ease-out;
-`
-
-export const DisableTippyJump = createGlobalStyle`
-  // this is for disable pop animation
-  // should have no animation when navi to sub menu
-  .tippy-box[data-placement^=bottom][data-state='visible'] {
-    transform: translateY(0);
-  }
-`
+}

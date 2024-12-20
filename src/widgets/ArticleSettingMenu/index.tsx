@@ -4,37 +4,28 @@
  *
  */
 
-import { type FC, memo, useState, useEffect } from 'react'
+import { type FC, useState } from 'react'
 import { Provider } from 'urql'
 import client from '~/server/gq_client'
 
 import type { TSpace } from '~/spec'
 
+import SettingSVG from '~/icons/Setting'
 import Tooltip from '~/widgets/Tooltip'
 
 import Menu from './Menu'
-import { Wrapper, SettingIcon, DisableTippyJump } from './styles'
+import useSalon, { cn } from './styles'
 
 type TProps = {
   testid?: string
 } & TSpace
 
-const ArticleSettingMenu: FC<TProps> = ({ testid = 'article-setting-menu', ...restProps }) => {
+const ArticleSettingMenu: FC<TProps> = ({ testid = 'article-setting-menu', ...spacing }) => {
+  const s = useSalon({ ...spacing })
+
   const [visible, setVisible] = useState(null)
   const [subMenuOpen, setSubMenuOpen] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [disablePopAnimate, setDisablePopAnimate] = useState(false)
-
-  useEffect(() => {
-    if (menuOpen) {
-      setTimeout(() => {
-        setDisablePopAnimate(true)
-      }, 100)
-    } else {
-      setDisablePopAnimate(false)
-    }
-    return () => setDisablePopAnimate(false)
-  }, [menuOpen])
 
   const doClose = () => {
     setSubMenuOpen(null)
@@ -48,7 +39,7 @@ const ArticleSettingMenu: FC<TProps> = ({ testid = 'article-setting-menu', ...re
 
   return (
     <Provider value={client}>
-      <Wrapper $testid={testid} {...restProps}>
+      <div className={s.wrapper}>
         <Tooltip
           visible={visible}
           content={<Menu onSubMenuToggle={(t) => setSubMenuOpen(t)} onClose={doClose} />}
@@ -66,12 +57,13 @@ const ArticleSettingMenu: FC<TProps> = ({ testid = 'article-setting-menu', ...re
           trigger="click"
           noPadding
         >
-          <SettingIcon $active={menuOpen} />
+          <div className={cn(s.settingBox, menuOpen && s.settingBoxActive)}>
+            <SettingSVG className={s.settingIcon} />
+          </div>
         </Tooltip>
-        {disablePopAnimate && <DisableTippyJump />}
-      </Wrapper>
+      </div>
     </Provider>
   )
 }
 
-export default memo(ArticleSettingMenu)
+export default ArticleSettingMenu
