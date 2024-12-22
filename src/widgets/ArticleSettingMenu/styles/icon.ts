@@ -29,7 +29,15 @@ import RejectSVG from '~/icons/Reject'
 
 // import OtherSVG from '~/icons/menu/Feedback'
 
-import { MenuItem } from './menu'
+import useTwBelt from '~/hooks/useTwBelt'
+
+export default () => {
+  const { cn, fill } = useTwBelt()
+
+  return {
+    icon: cn('size-3.5 mr-1.5', fill('text.digest'), `group-hover:${fill('text.title')}`),
+  }
+}
 
 const commonIcon = (comp): FC => {
   return styled(comp)`
@@ -37,9 +45,7 @@ const commonIcon = (comp): FC => {
     fill: ${theme('article.digest')};
     margin-right: 6px;
 
-    ${MenuItem}:hover & {
-      fill: ${theme('article.title')};
-    }
+    
   `
 }
 
@@ -50,10 +56,6 @@ export const Icon = {
     transform: rotate(180deg);
     ${css.size(15)};
     opacity: 0.5;
-
-    ${MenuItem}:hover & {
-      opacity: 1;
-    }
   `,
   Edit: commonIcon(EditSVG),
   Category: styled(commonIcon(CategorySVG))`
@@ -65,34 +67,18 @@ export const Icon = {
   State: commonIcon(WipSVG),
   [ARTICLE_STATE.TODO]: styled(commonIcon(TodoSVG))<TGTDItem>`
     fill: ${({ $color, $active }) => ($active ? rainbow($color) : theme('article.digest'))};
-
-    ${MenuItem}:hover & {
-      fill: ${({ $color }) => rainbow($color)};
-    }
   `,
   [ARTICLE_STATE.WIP]: styled(commonIcon(WipSVG))<TGTDItem>`
     fill: ${({ $color, $active }) => ($active ? rainbow($color) : theme('article.digest'))};
     ${css.size(14)};
-
-    ${MenuItem}:hover & {
-      fill: ${({ $color }) => rainbow($color)};
-    }
   `,
   [ARTICLE_STATE.DONE]: styled(commonIcon(DoneSVG))<TGTDItem>`
     fill: ${({ $color, $active }) => ($active ? rainbow($color) : theme('article.digest'))};
     margin-left: 1px;
-
-    ${MenuItem}:hover & {
-      fill: ${({ $color }) => rainbow($color)};
-    }
   `,
   [ARTICLE_STATE.REJECT]: styled(commonIcon(RejectSVG))<TGTDItem>`
     fill: ${({ $active }) => ($active ? rainbow('red') : theme('article.digest'))};
     margin-left: 1px;
-
-    ${MenuItem}:hover & {
-      fill: ${({ $color }) => rainbow($color)};
-    }
   `,
 
   Slug: commonIcon(SlugSVG),
@@ -102,9 +88,6 @@ export const Icon = {
   Delete: styled(commonIcon(DeleteSVG))`
     ${css.size(14)};
     margin-top: 1px;
-    ${MenuItem}:hover & {
-      fill: ${theme('rainbow.red')};
-    }
   `,
   Pin: styled(commonIcon(PinSVG))`
     margin-top: 2px;

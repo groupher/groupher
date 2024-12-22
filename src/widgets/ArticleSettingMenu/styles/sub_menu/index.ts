@@ -1,7 +1,9 @@
-import styled, { animate } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  animation: ${animate.fadeInRight} 0.1s linear;
-  padding: 0 5px;
-`
-export const holder = 1
+export default () => {
+  const { cn } = useTwBelt()
+
+  return {
+    wrapper: cn('px-1.5 animate-fade-left animate-duration-200'),
+  }
+}

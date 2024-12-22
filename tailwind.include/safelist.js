@@ -94,6 +94,7 @@ const HOVERS = [
   'fill-rainbow-red',
   'text-rainbow-red',
   'bg-rainbow-redBg',
+  'bg-rainbow-redSoftBg',
   'bg-hoverBg',
   'bg-htmlBg',
   'bg-card',

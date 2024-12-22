@@ -4,23 +4,23 @@ import { SUB_MENU_TYPE } from '../constant'
 export const getSubMenuWidth = (subType: TSubMenu): string => {
   switch (subType) {
     case SUB_MENU_TYPE.EDIT: {
-      return '280px'
+      return 'w-72'
     }
     case SUB_MENU_TYPE.CATEGORY:
     case SUB_MENU_TYPE.STATE: {
-      return '172px'
+      return 'w-44'
     }
     case SUB_MENU_TYPE.SLUG: {
-      return '240px'
+      return 'w-40'
     }
     case SUB_MENU_TYPE.TAGS: {
-      return '180px'
+      return 'w-48'
     }
     case SUB_MENU_TYPE.MIRROR: {
-      return '240px'
+      return 'w-60'
     }
     default: {
-      return '146px'
+      return 'w-40'
     }
   }
 }

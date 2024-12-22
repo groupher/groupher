@@ -1,51 +1,37 @@
-import styled, { css, theme } from '~/css'
+import type { TColorName } from '~/spec'
+
+import useTwBelt from '~/hooks/useTwBelt'
+import { COLOR_NAME } from '~/const/colors'
 
 import type { TSubMenu } from '../../spec'
 import { getSubMenuWidth } from '../metric'
 
-type TWrapper = { $subMenuType: TSubMenu }
+export { cn } from '~/css'
 
-export const Wrapper = styled.div<TWrapper>`
-  padding: 8px;
-  padding-right: 4px;
-  width: ${({ $subMenuType }) => getSubMenuWidth($subMenuType)};
-  transition: all 0.1s;
-`
-export const MenuItem = styled.div`
-  ${css.row('align-center')};
-  color: ${theme('article.digest')};
-  height: 30px;
-  width: 100%;
-  padding: 2px 8px;
-  padding-right: 0;
-  border-radius: 5px;
+type TProps = {
+  subMenuType?: TSubMenu
+  color?: TColorName
+}
 
-  &:hover {
-    color: ${theme('article.title')};
-    background: ${theme('menuHoverBg')};
-    cursor: pointer;
+export default ({ subMenuType = null, color = COLOR_NAME.BLACK }: TProps = {}) => {
+  const { cn, fg, bg, menu, fill, cutRest, sexyHBorder, rainbow } = useTwBelt()
 
-    svg {
-      fill: ${theme('article.title')};
-    }
+  return {
+    wrapper: cn(menu('bg'), 'p-2 pr-1 trans-all-200', getSubMenuWidth(subMenuType)),
+    menuItem: cn(
+      menu('bar'),
+      'row-center h-8 w-full px-2 py-0.5 pr-0 rounded-md group',
+      fg('text.digest'),
+    ),
+    menuItemDanger: cn(
+      fg('text.digest'),
+      `hover:${fg('rainbow.red')}`,
+      `hover:${bg('rainbow.redSoft')}`,
+    ),
+    menuTitle: cn(menu('title'), cutRest('w-24')),
+    divider: cn(sexyHBorder(35), 'my-2.5'),
+    //
+    icon: cn('size-3.5 mr-1.5', fill('text.digest'), `group-hover:${fill('text.title')}`),
+    rainbowFill: rainbow(color, 'fill'),
   }
-
-  transition: all 0.05s;
-`
-export const MenuTitle = styled.div`
-  ${css.cutRest('85px')};
-`
-export const DangerMenuItem = styled(MenuItem)`
-  &:hover {
-    background: ${theme('rainbow.redSoft')};
-    color: ${theme('rainbow.red')};
-    cursor: pointer;
-  }
-`
-export const ItemDivider = styled.div`
-  height: 1px;
-  width: 100%;
-  background: ${theme('popover.borderColor')};
-  margin-top: 10px;
-  margin-bottom: 10px;
-`
+}

@@ -25,8 +25,8 @@ export type TProps = {
   dotLeft?: number
   dotTop?: number
   hashSize?: number
-  hashRight?: number
-  hashLeft?: number
+  hashRight?: number | 'px'
+  hashLeft?: number | 'px'
   hashTop?: number
   boldHash?: boolean
 }
