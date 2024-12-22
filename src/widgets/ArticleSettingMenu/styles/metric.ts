@@ -11,7 +11,7 @@ export const getSubMenuWidth = (subType: TSubMenu): string => {
       return 'w-44'
     }
     case SUB_MENU_TYPE.SLUG: {
-      return 'w-40'
+      return 'w-60'
     }
     case SUB_MENU_TYPE.TAGS: {
       return 'w-48'
