@@ -40,8 +40,8 @@ const Mirrow2Home: FC<TProps> = ({ onBack }) => {
       <Note>请确保该帖子内容属于社区本身的功能请求/Bug/使用问题等。</Note>
       <Footer
         onBack={onBack}
-        top={20}
-        bottom={5}
+        top={12}
+        bottom={2}
         loading={result.fetching}
         onConfirm={() => handleUpdate()}
       />

@@ -87,8 +87,8 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
         onBack={onBack}
         disabled={!touched}
         onConfirm={handleUpdate}
-        top={20}
-        bottom={5}
+        top={12}
+        bottom={2}
         loading={updatePostRes.fetching}
       />
     </Wrapper>

@@ -24,8 +24,8 @@ const SlugSetting: FC<TProps> = ({ onBack }) => {
       <Footer
         onBack={onBack}
         onConfirm={() => console.log('## ## title confirm')}
-        top={20}
-        bottom={5}
+        top={8}
+        bottom={2}
       />
     </Wrapper>
   )

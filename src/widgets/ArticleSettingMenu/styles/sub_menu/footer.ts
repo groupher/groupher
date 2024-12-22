@@ -1,29 +1,19 @@
-import Button from '~/widgets/Buttons/Button'
-import { WithMargin } from '~/widgets/Common'
-import ArrowSVG from '~/icons/Arrow'
+import type { TSpace } from '~/spec'
 
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled(WithMargin)`
-  ${css.row('align-center', 'justify-between')};
-  border-top: 1px solid;
-  border-top-color: ${theme('divider')};
-  padding-top: 12px;
-`
-export const ArrowIcon = styled(ArrowSVG)`
-  ${css.size(15)};
-  margin-left: 3px;
-  fill: ${theme('article.digest')};
-  opacity: 0.6;
-  cursor: pointer;
+type TProps = TSpace
 
-  &:hover {
-    opacity: 1;
-    fill: ${theme('article.title')};
+export default ({ ...spacing }: TProps) => {
+  const { cn, margin, br, bg, fill } = useTwBelt()
+
+  return {
+    wrapper: cn('row-center-between pt-3 border-t', margin(spacing), br('divider')),
+    arrowBox: cn('align-both group size-6 rounded pointer', `hover:${bg('hoverBg')}`),
+    arrowIocn: cn(
+      'size-3.5 ml-0.5 group-smoky-80 trans-all-200',
+      fill('text.digest'),
+      `group-hover:${fill('text.title')}`,
+    ),
   }
-  transition: all 0.1s;
-`
-export const Confirm = styled(Button)`
-  border-radius: 5px;
-  height: 22px;
-`
+}
