@@ -16,7 +16,7 @@ import S from '../schema'
 import Footer from './Footer'
 import useTouched from '../useTouched'
 
-import useSalon from '../styles/sub_menu/tags_setting'
+import useSalon from '../salon/sub_menu/tags_setting'
 
 type TProps = {
   onBack: () => void

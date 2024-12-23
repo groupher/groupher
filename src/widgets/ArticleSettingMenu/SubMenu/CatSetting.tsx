@@ -13,7 +13,7 @@ import CheckSVG from '~/icons/CheckBold'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'
-import useSalon, { cn } from '../styles/sub_menu/cat_setting'
+import useSalon, { cn } from '../salon/sub_menu/cat_setting'
 
 type TProps = {
   onBack: () => void

@@ -8,7 +8,7 @@ import S from '../schema'
 import useTouched from '../useTouched'
 
 import Footer from './Footer'
-import useSalon from '../styles/sub_menu/mirror_home'
+import useSalon from '../salon/sub_menu/mirror_home'
 
 type TProps = {
   onBack: () => void

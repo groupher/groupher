@@ -19,7 +19,7 @@ import useTouched from '../useTouched'
 import Footer from './Footer'
 import { getGTDColor } from '../helper'
 
-import useSalon, { cn } from '../styles/sub_menu/state_setting'
+import useSalon, { cn } from '../salon/sub_menu/state_setting'
 
 type TProps = {
   onBack: () => void

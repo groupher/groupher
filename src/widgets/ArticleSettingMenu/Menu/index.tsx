@@ -21,7 +21,7 @@ import TagsItem from './TagsItem'
 import PinItem from './PinItem'
 import StateItem from './StateItem'
 
-import useSalon, { cn } from '../styles/menu'
+import useSalon, { cn } from '../salon/menu'
 
 type TProps = {
   onSubMenuToggle: (t: boolean) => void

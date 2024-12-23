@@ -14,7 +14,7 @@ import SettingSVG from '~/icons/Setting'
 import Tooltip from '~/widgets/Tooltip'
 
 import Menu from './Menu'
-import useSalon, { cn } from './styles'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   testid?: string

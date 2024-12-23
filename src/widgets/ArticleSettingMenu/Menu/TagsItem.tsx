@@ -7,7 +7,7 @@ import useViewingArticle from '~/hooks/useViewingArticle'
 import ArrowSVG from '~/icons/ArrowSimple'
 import TagNode from '~/widgets/TagNode'
 
-import useSalon, { cn } from '../styles/menu/tags_item'
+import useSalon, { cn } from '../salon/menu/tags_item'
 
 type TProps = {
   onClick: () => void

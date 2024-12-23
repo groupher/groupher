@@ -12,7 +12,7 @@ import SlugSetting from './SlugSetting'
 import TagsSetting from './TagsSetting'
 import Mirror2Home from './Mirror2Home'
 
-import useSalon from '../styles/sub_menu'
+import useSalon from '../salon/sub_menu'
 
 type TProps = {
   closeSubMenu: () => void

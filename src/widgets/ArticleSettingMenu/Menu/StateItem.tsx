@@ -11,7 +11,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 
 import { ICON } from '../constant'
 
-import useSalon, { cn } from '../styles/menu'
+import useSalon, { cn } from '../salon/menu'
 import { getGTDColor } from '../helper'
 
 type TProps = {

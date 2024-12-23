@@ -10,7 +10,7 @@ import S from '../schema'
 import useTouched from '../useTouched'
 
 import Footer from './Footer'
-import useSalon from '../styles/sub_menu/title_setting'
+import useSalon from '../salon/sub_menu/title_setting'
 
 type TProps = {
   onBack: () => void

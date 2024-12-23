@@ -9,7 +9,7 @@ import UnPinSVG from '~/icons/UnPin'
 import SpinSVG from '~/icons/Spin'
 
 import S from '../schema'
-import useSalon from '../styles/menu'
+import useSalon from '../salon/menu'
 
 export default () => {
   const s = useSalon()

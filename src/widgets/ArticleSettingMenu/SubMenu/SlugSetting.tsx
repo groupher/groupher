@@ -5,7 +5,7 @@ import useViewingArticle from '~/hooks/useViewingArticle'
 import Input from '~/widgets/Input'
 
 import Footer from './Footer'
-import useSalon from '../styles/sub_menu/slug_setting'
+import useSalon from '../salon/sub_menu/slug_setting'
 
 type TProps = {
   onBack: () => void

@@ -11,7 +11,7 @@ import TagNode from '~/widgets/TagNode'
 import type { TSubMenu } from '../spec'
 import { SUB_MENU_TYPE } from '../constant'
 
-import useSalon from '../styles/sub_menu/header'
+import useSalon from '../salon/sub_menu/header'
 
 type TProps = {
   type: TSubMenu
