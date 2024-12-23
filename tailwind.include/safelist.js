@@ -149,6 +149,7 @@ module.exports = uniq([
     (c) =>
       `text-rainbow-${c} text-rainbow-${c}-dark
        hover:text-rainbow-${c} hover:text-rainbow-${c}-dark
+       group-hover:fill-rainbow-${c} group-hover:fill-rainbow-${c}-dark
        bg-rainbow-${c} bg-rainbow-${c}-dark 
        decoration-rainbow-${c} bg-rainbow-${c}-dark 
        hover:border-rainbow-${c} hover:border-rainbow-${c}-dark
