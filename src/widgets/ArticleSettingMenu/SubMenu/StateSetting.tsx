@@ -2,10 +2,12 @@ import { type FC, useState, useEffect } from 'react'
 import { useMutation } from 'urql'
 
 import { Trans } from '~/i18n'
-import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useNameAlias from '~/hooks/useNameAlias'
+
+import { ICON } from '../constant'
+import CheckSVG from '~/icons/CheckBold'
 
 import { POST_STATE_MENU_ITEMS } from '~/const/menu'
 import { ARTICLE_STATE } from '~/const/gtd'
@@ -16,16 +18,16 @@ import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'
 import { getGTDColor } from '../helper'
-import { Icon } from '../styles/icon'
 
-import { Wrapper, Item, Divider, Title, CheckIcon } from '../styles/sub_menu/state_setting'
+import useSalon, { cn } from '../salon/sub_menu/state_setting'
 
 type TProps = {
   onBack: () => void
 }
 
 const StateSetting: FC<TProps> = ({ onBack }) => {
-  const primaryColor = usePrimaryColor()
+  const s = useSalon()
+
   const { article } = useViewingArticle()
   const bgColors = useKanbanBgColors()
   const kanbanAlias = useNameAlias('kanban')
@@ -56,35 +58,43 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
   }
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {POST_STATE_MENU_ITEMS.map((item, index) => {
-        const TheIcon = Icon[item.key] || Icon[ARTICLE_STATE.REJECT]
-        const $active = item.key === state
-        const $color = getGTDColor(item.key, bgColors)
+        const TheIcon = ICON[item.key] || ICON[ARTICLE_STATE.REJECT]
+        const active = item.key === state
+        const color = getGTDColor(item.key, bgColors)
 
         return (
-          <Item
-            $active={$active}
+          <div
             key={item.key}
+            className={cn(
+              s.item,
+              `hover:${s.rainbowSoft(color)}`,
+              active && s.rainbowSoft(color),
+              index === 3 && 'mt-3.5',
+            )}
             onClick={() => {
               setState(item.key)
               setTouched(article.state !== item.key)
             }}
-            $color={$color}
-            hasDivider={index === 3}
           >
-            {index === 3 && <Divider />}
-            {/* @ts-ignore */}
-            <TheIcon $active={$active} $color={$color} />
-            <Title $active={$active}>
+            <TheIcon
+              className={cn(
+                s.icon,
+                item.key === ARTICLE_STATE.WIP && 'size-4 -ml-px',
+                `group-hover:${s.rainbow(color, 'fill')}`,
+                active && s.rainbow(color, 'fill'),
+              )}
+            />
+            <div className={cn(s.title, active && s.titleActive)}>
               {article.state === ARTICLE_STATE.DONE ? (
                 <>{Trans(aliasGTDDoneState(article.cat, item.key))}</>
               ) : (
                 <>{kanbanAlias[ARTICLE_STATE[item.key].toLowerCase()]?.name || Trans(item.key)}</>
               )}
-            </Title>
-            {$active && <CheckIcon $color={primaryColor} />}
-          </Item>
+            </div>
+            {active && <CheckSVG className={s.checkIcon} />}
+          </div>
         )
       })}
 
@@ -93,10 +103,9 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
         loading={result.fetching}
         disabled={!touched}
         onConfirm={() => handleState()}
-        top={20}
-        bottom={5}
+        top={4}
       />
-    </Wrapper>
+    </div>
   )
 }
 

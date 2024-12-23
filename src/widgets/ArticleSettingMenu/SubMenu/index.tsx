@@ -12,7 +12,7 @@ import SlugSetting from './SlugSetting'
 import TagsSetting from './TagsSetting'
 import Mirror2Home from './Mirror2Home'
 
-import { Wrapper } from '../styles/sub_menu'
+import useSalon from '../salon/sub_menu'
 
 type TProps = {
   closeSubMenu: () => void
@@ -20,6 +20,8 @@ type TProps = {
 }
 
 const SubMenu: FC<TProps> = ({ closeSubMenu, subMenuType }) => {
+  const s = useSalon()
+
   let Content = null
 
   switch (subMenuType) {
@@ -60,10 +62,10 @@ const SubMenu: FC<TProps> = ({ closeSubMenu, subMenuType }) => {
   }
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <Header type={subMenuType} />
       <Content onBack={closeSubMenu} />
-    </Wrapper>
+    </div>
   )
 }
 

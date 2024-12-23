@@ -7,7 +7,7 @@ type Options = {
   direction?: 'bottom' | 'top'
 }
 
-const VIEWER_WIDTH = '752px'
+const VIEWER_WIDTH = '840px'
 const NORMAL_WIDTH = '475px'
 
 export const SWIPE_THRESHOLD = {

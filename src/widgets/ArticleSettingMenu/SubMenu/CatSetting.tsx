@@ -1,25 +1,28 @@
 import { type FC, useState, useEffect } from 'react'
 import { useMutation } from 'urql'
 
-import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { POST_CAT_MENU_ITEMS } from '~/const/menu'
 import { Trans } from '~/i18n'
 import { toast, updateViewingArticle } from '~/signal'
 
+import { ICON } from '../constant'
+
+import CheckSVG from '~/icons/CheckBold'
+
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'
-import { Icon } from '../styles/icon'
-import { Wrapper, Item, Title, CheckIcon } from '../styles/sub_menu/cat_setting'
+import useSalon, { cn } from '../salon/sub_menu/cat_setting'
 
 type TProps = {
   onBack: () => void
 }
 
 const CatSetting: FC<TProps> = ({ onBack }) => {
+  const s = useSalon()
+
   const { article } = useViewingArticle()
-  const primaryColor = usePrimaryColor()
   const [cat, setCat] = useState(article.cat)
 
   const { touched, setTouched, resetTouched } = useTouched()
@@ -45,24 +48,24 @@ const CatSetting: FC<TProps> = ({ onBack }) => {
   }
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {POST_CAT_MENU_ITEMS.map((item) => {
-        const TheIcon = Icon[item.key]
+        const TheIcon = ICON[item.key]
         const $active = item.key === cat
 
         return (
-          <Item
-            $active={$active}
+          <div
             key={item.key}
+            className={cn(s.item, $active && s.itemActive)}
             onClick={() => {
               setCat(item.key)
               setTouched(item.key !== article.cat)
             }}
           >
-            <TheIcon />
-            <Title $active={$active}>{Trans(item.key)}</Title>
-            {$active && <CheckIcon $color={primaryColor} />}
-          </Item>
+            <TheIcon className={s.icon} />
+            <div className={cn(s.title, $active && s.titleActive)}>{Trans(item.key)}</div>
+            {$active && <CheckSVG className={s.checkIcon} />}
+          </div>
         )
       })}
 
@@ -71,10 +74,9 @@ const CatSetting: FC<TProps> = ({ onBack }) => {
         loading={result.fetching}
         disabled={!touched}
         onConfirm={() => handleCat()}
-        top={20}
-        bottom={5}
+        top={4}
       />
-    </Wrapper>
+    </div>
   )
 }
 

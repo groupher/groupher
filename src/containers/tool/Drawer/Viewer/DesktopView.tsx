@@ -35,6 +35,7 @@ const DesktopView: FC<TProps> = ({ options, visible, type, children }) => {
       />
       <div className={s.drawer} style={drawerStyle}>
         <div className={s.drawerContent} style={s.drawerContentStyle}>
+          {/* <h2>Desktop View</h2> */}
           {children}
         </div>
       </div>

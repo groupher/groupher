@@ -40,27 +40,37 @@
     "home": {
       "width": "1460px",
       "pl": 0,
-      "pr": 0
+      "pr": 0,
+      "pl_lg": 0,
+      "pr_lg": 0
     },
     "community": {
       "width": "1360px",
       "pl": 52,
-      "pr": 52
+      "pr": 52,
+      "pl_lg": 20,
+      "pr_lg": 20
     },
     "apply_community": {
       "width": "1460px",
       "pl": 32,
-      "pr": 28
+      "pr": 28,
+      "pl_lg": 20,
+      "pr_lg": 20
     },
     "dashboard": {
       "width": "1400px",
       "pl": 32,
-      "pr": 28
+      "pr": 28,
+      "pl_lg": 16,
+      "pr_lg": 12
     },
     "community_sidebar": {
-      "width": "1200px",
+      "width": "1280px",
       "pl": 20,
-      "pr": 20
+      "pr": 20,
+      "pl_lg": 12,
+      "pr_lg": 12
     }
 
   }

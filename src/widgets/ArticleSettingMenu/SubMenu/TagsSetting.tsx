@@ -16,13 +16,15 @@ import S from '../schema'
 import Footer from './Footer'
 import useTouched from '../useTouched'
 
-import { Wrapper, Item, Title } from '../styles/sub_menu/tags_setting'
+import useSalon from '../salon/sub_menu/tags_setting'
 
 type TProps = {
   onBack: () => void
 }
 
 const TagSetting: FC<TProps> = ({ onBack }) => {
+  const s = useSalon()
+
   const [checked, setChecked] = useState([])
   const { touched, setTouched, resetTouched } = useTouched()
 
@@ -70,28 +72,28 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   }
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {tags.map((item: TTag) => (
-        <Item
+        <div
+          className={s.item}
           key={item.id}
           onClick={() => handleCheck(item.id, !includes(String(item.id), checked))}
         >
-          <TagNode dotSize={8} color={item.color as TColorName} hashSize={13} />
-          <Title>{item.title}</Title>
+          <TagNode dotSize={2.5} color={item.color as TColorName} hashSize={3.5} />
+          <div className={s.title}>{item.title}</div>
           <div className="grow" />
           <Checker size="small" checked={includes(item.id, checked)} />
-        </Item>
+        </div>
       ))}
 
       <Footer
         onBack={onBack}
         disabled={!touched}
         onConfirm={handleUpdate}
-        top={20}
-        bottom={5}
+        top={10}
         loading={updatePostRes.fetching}
       />
-    </Wrapper>
+    </div>
   )
 }
 

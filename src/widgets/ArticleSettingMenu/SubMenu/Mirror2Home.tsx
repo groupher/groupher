@@ -8,13 +8,15 @@ import S from '../schema'
 import useTouched from '../useTouched'
 
 import Footer from './Footer'
-import { Wrapper, Note } from '../styles/sub_menu/mirror_home'
+import useSalon from '../salon/sub_menu/mirror_home'
 
 type TProps = {
   onBack: () => void
 }
 
 const Mirrow2Home: FC<TProps> = ({ onBack }) => {
+  const s = useSalon()
+
   const { article } = useViewingArticle()
   const { resetTouched } = useTouched()
   const [result, updatePost] = useMutation(S.updatePost)
@@ -35,17 +37,11 @@ const Mirrow2Home: FC<TProps> = ({ onBack }) => {
     })
   }
   return (
-    <Wrapper>
-      <Note>该操作会将当前帖子镜像到 Groupher 官方社区，</Note>
-      <Note>请确保该帖子内容属于社区本身的功能请求/Bug/使用问题等。</Note>
-      <Footer
-        onBack={onBack}
-        top={20}
-        bottom={5}
-        loading={result.fetching}
-        onConfirm={() => handleUpdate()}
-      />
-    </Wrapper>
+    <div className={s.wrapper}>
+      <div className={s.note}>该操作会将当前帖子镜像到 Groupher 官方社区，</div>
+      <div className={s.note}>请确保该帖子内容属于社区本身的功能请求/Bug/使用问题等。</div>
+      <Footer onBack={onBack} top={10} loading={result.fetching} onConfirm={() => handleUpdate()} />
+    </div>
   )
 }
 

@@ -2,14 +2,18 @@ import { useCallback, useEffect, useState } from 'react'
 import { useMutation } from 'urql'
 
 import { toast, updateViewingArticle } from '~/signal'
-
 import useViewingArticle from '~/hooks/useViewingArticle'
 
+import PinSVG from '~/icons/Pin'
+import UnPinSVG from '~/icons/UnPin'
+import SpinSVG from '~/icons/Spin'
+
 import S from '../schema'
-import { Icon } from '../styles/icon'
-import { MenuItem } from '../styles/menu'
+import useSalon from '../salon/menu'
 
 export default () => {
+  const s = useSalon()
+
   const { article } = useViewingArticle()
   const [result, pinPost] = useMutation(S.pinPost)
   const [_result2, undoPinPost] = useMutation(S.undoPinPost)
@@ -37,11 +41,11 @@ export default () => {
   }, [pin, article, pinPost, undoPinPost])
 
   return (
-    <MenuItem onClick={handlePin}>
-      {pin ? <Icon.UnPin /> : <Icon.Pin />}
+    <div className={s.menuItem} onClick={handlePin}>
+      {pin ? <UnPinSVG className={s.icon} /> : <PinSVG className={s.icon} />}
       {pin ? '取消置顶' : '置顶'}
       <div className="grow" />
-      {result.fetching && <Icon.Spin />}
-    </MenuItem>
+      {result.fetching && <SpinSVG className={s.icon} />}
+    </div>
   )
 }

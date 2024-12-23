@@ -41,6 +41,9 @@
 				"noAutofocus": "off",
 				"useButtonType": "off",
 				"useKeyWithClickEvents": "off"
+			},
+			"nursery": {
+				"useComponentExportOnlyModules": "warn"
 			}
 		}
 	},

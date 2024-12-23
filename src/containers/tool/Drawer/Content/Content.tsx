@@ -5,10 +5,10 @@ import { LoadWatcher } from '~/widgets/Common'
 // import ModeLineMenu from '~/containers/unit/ModeLineMenu'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
-// import ArticleViewer from '~/containers/viewer/ArticleViewer'
+import ArticleViewer from '~/containers/viewer/ArticleViewer'
 
 import {
-  ArticleViewer,
+  // ArticleViewer,
   TagSettingEditor,
   PassportEditor,
   ArticleEditor,

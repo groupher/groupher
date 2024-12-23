@@ -1,8 +1,11 @@
 import type { FC } from 'react'
 
 import type { TSpace } from '~/spec'
+import Button from '~/widgets/Buttons/Button'
 
-import { Wrapper, ArrowIcon, Confirm } from '../styles/sub_menu/footer'
+import ArrowSVG from '~/icons/Arrow'
+
+import useSalon from '../salon/sub_menu/footer'
 
 type TProps = {
   onBack: () => void
@@ -16,15 +19,25 @@ const Footer: FC<TProps> = ({
   onConfirm,
   loading = false,
   disabled = false,
-  ...restProps
+  ...spacing
 }) => {
+  const s = useSalon({ ...spacing })
+
   return (
-    <Wrapper {...restProps}>
-      <ArrowIcon onClick={() => onBack()} />
-      <Confirm size="small" onClick={() => onConfirm()} loading={loading} disabled={disabled}>
+    <div className={s.wrapper}>
+      <div className={s.arrowBox} onClick={() => onBack()}>
+        <ArrowSVG className={s.arrowIocn} />
+      </div>
+      <Button
+        size="small"
+        onClick={() => onConfirm()}
+        loading={loading}
+        disabled={disabled}
+        space={3}
+      >
         确认
-      </Confirm>
-    </Wrapper>
+      </Button>
+    </div>
   )
 }
 

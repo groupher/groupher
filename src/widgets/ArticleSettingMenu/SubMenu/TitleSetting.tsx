@@ -4,17 +4,21 @@ import { useMutation } from 'urql'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { toast, updateViewingArticle } from '~/signal'
 
+import Input from '~/widgets/Input'
+
 import S from '../schema'
 import useTouched from '../useTouched'
 
 import Footer from './Footer'
-import { Wrapper, Inputer, Note } from '../styles/sub_menu/title_setting'
+import useSalon from '../salon/sub_menu/title_setting'
 
 type TProps = {
   onBack: () => void
 }
 
 const TitleSetting: FC<TProps> = ({ onBack }) => {
+  const s = useSalon()
+
   const { article } = useViewingArticle()
   const [title, setTitle] = useState(article.title)
   const { touched, setTouched, resetTouched } = useTouched()
@@ -40,8 +44,9 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
   }
 
   return (
-    <Wrapper>
-      <Inputer
+    <div className={s.wrapper}>
+      <Input
+        className={s.input}
         autoFocus
         value={title}
         onChange={(e) => {
@@ -49,16 +54,17 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
           setTouched(e.target.value !== article.title)
         }}
       />
-      <Note>修改记录会显示在下方日志中。管理员仅能修改标题，帖子作者仅能修改内容。</Note>
+      <div className={s.note}>
+        修改记录会显示在下方日志中。管理员仅能修改标题，帖子作者仅能修改内容。
+      </div>
       <Footer
         onBack={onBack}
         disabled={!touched}
-        top={20}
-        bottom={5}
+        top={10}
         loading={result.fetching}
         onConfirm={() => handleUpdate()}
       />
-    </Wrapper>
+    </div>
   )
 }
 
