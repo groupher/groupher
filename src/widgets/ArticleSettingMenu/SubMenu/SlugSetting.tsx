@@ -2,27 +2,31 @@ import type { FC } from 'react'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
 
+import Input from '~/widgets/Input'
+
 import Footer from './Footer'
-import { Wrapper, Inputer, Note, Preview, Slug } from '../styles/sub_menu/slug_setting'
+import useSalon from '../styles/sub_menu/slug_setting'
 
 type TProps = {
   onBack: () => void
 }
 
 const SlugSetting: FC<TProps> = ({ onBack }) => {
+  const s = useSalon()
+
   const { articleLink } = useViewingArticle()
 
   return (
-    <Wrapper>
-      <Inputer autoFocus />
-      <Note>链接预览: </Note>
-      <Preview>
+    <div className={s.wrapper}>
+      <Input autoFocus className={s.input} />
+      <div className={s.note}>链接预览: </div>
+      <div className={s.preview}>
         {articleLink}
-        <Slug>/whats-new</Slug>
-      </Preview>
+        <span className={s.slug}>/whats-new</span>
+      </div>
 
       <Footer onBack={onBack} onConfirm={() => console.log('## ## title confirm')} top={8} />
-    </Wrapper>
+    </div>
   )
 }
 

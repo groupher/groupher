@@ -1,11 +1,10 @@
-import styled, { theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  margin-right: 5px;
-`
-export const Note = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 12px;
-  margin-top: 10px;
-  margin-bottom: 5px;
-`
+export default () => {
+  const { cn, fg } = useTwBelt()
+
+  return {
+    wrapper: cn('mr-0.5'),
+    note: cn('text-xs mt-2.5 mb-1', fg('text.digest')),
+  }
+}

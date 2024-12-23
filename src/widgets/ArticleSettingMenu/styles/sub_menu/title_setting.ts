@@ -1,17 +1,11 @@
-import Input from '~/widgets/Input'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import styled, { theme } from '~/css'
+export default () => {
+  const { cn, fg } = useTwBelt()
 
-export const Wrapper = styled.div`
-  margin-right: 5px;
-`
-export const Inputer = styled(Input)`
-  width: 100%;
-  height: 32px;
-`
-export const Note = styled.div`
-  color: ${theme('hint')};
-  font-size: 12px;
-  margin-top: 10px;
-  margin-bottom: 5px;
-`
+  return {
+    wrapper: cn('mr-1'),
+    input: 'w-full h-8',
+    note: cn('text-xs mt-2.5 mb-1.5', fg('text.hint')),
+  }
+}

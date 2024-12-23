@@ -1,28 +1,13 @@
-import { WithMargin } from '~/widgets/Common'
-import Input from '~/widgets/Input'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import styled, { css, theme } from '~/css'
+export default () => {
+  const { cn, fg } = useTwBelt()
 
-export const Wrapper = styled.div`
-  margin-right: 5px;
-`
-export const Note = styled.div`
-  font-size: 12px;
-  margin-top: 10px;
-  margin-bottom: 5px;
-`
-export const Preview = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 13px;
-  word-wrap: break-word;
-`
-export const Slug = styled.span`
-  color: ${theme('article.title')};
-`
-export const Inputer = styled(Input)`
-  width: 100%;
-  height: 32px;
-`
-export const Title = styled(WithMargin)`
-  ${css.row('align-center')};
-`
+  return {
+    wrapper: cn('mr-1'),
+    input: 'w-full h-8',
+    note: cn('text-xs mt-2.5 mb-1.5', fg('text.hint')),
+    preview: cn('text-xs text-wrap break-words', fg('text.digest')),
+    slug: fg('text.title'),
+  }
+}
