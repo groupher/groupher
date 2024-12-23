@@ -1,33 +1,39 @@
 import type { FC } from 'react'
 
+import InfoSVG from '~/icons/Info'
+import EditSVG from '~/icons/EditPen'
+import CategorySVG from '~/icons/Category'
+import WipSVG from '~/icons/GtdWip'
+import SlugSVG from '~/icons/Slug'
+
 import TagNode from '~/widgets/TagNode'
 
 import type { TSubMenu } from '../spec'
 import { SUB_MENU_TYPE } from '../constant'
 
-import { Icon } from '../styles/icon'
-import { Wrapper, Hint, InfoIcon, Help } from '../styles/sub_menu/header'
+import useSalon from '../styles/sub_menu/header'
 
 type TProps = {
   type: TSubMenu
 }
 
 const Header: FC<TProps> = ({ type }) => {
+  const s = useSalon()
+
   let Content = null
+  let showDivider = true
 
   switch (type) {
     case SUB_MENU_TYPE.EDIT: {
       Content = (
         <>
-          <Icon.Edit />
+          <EditSVG className={s.icon} />
           修改标题
           <div className="grow" />
-          <Hint>
-            <InfoIcon />
-            <Help href="/">帮助</Help>
-          </Hint>
+          <InfoSVG className={s.questionIcon} />
         </>
       )
+      showDivider = false
 
       break
     }
@@ -35,13 +41,10 @@ const Header: FC<TProps> = ({ type }) => {
     case SUB_MENU_TYPE.CATEGORY: {
       Content = (
         <>
-          <Icon.Category />
+          <CategorySVG className={s.icon} />
           设置分类
           <div className="grow" />
-          <Hint>
-            <InfoIcon />
-            <Help href="/">帮助</Help>
-          </Hint>
+          <InfoSVG className={s.questionIcon} />
         </>
       )
 
@@ -51,13 +54,10 @@ const Header: FC<TProps> = ({ type }) => {
     case SUB_MENU_TYPE.STATE: {
       Content = (
         <>
-          <Icon.State />
+          <WipSVG className={s.icon} />
           设置状态
           <div className="grow" />
-          <Hint>
-            <InfoIcon />
-            <Help href="/">帮助</Help>
-          </Hint>
+          <InfoSVG className={s.questionIcon} />
         </>
       )
 
@@ -67,15 +67,13 @@ const Header: FC<TProps> = ({ type }) => {
     case SUB_MENU_TYPE.SLUG: {
       Content = (
         <>
-          <Icon.Slug />
+          <SlugSVG className={s.icon} />
           设置路径 (Slug)
           <div className="grow" />
-          <Hint>
-            <InfoIcon />
-            <Help href="/">帮助</Help>
-          </Hint>
+          <InfoSVG className={s.questionIcon} />
         </>
       )
+      showDivider = false
 
       break
     }
@@ -83,13 +81,10 @@ const Header: FC<TProps> = ({ type }) => {
     case SUB_MENU_TYPE.MIRROR: {
       Content = (
         <>
-          <Icon.Slug />
+          <SlugSVG className={s.icon} />
           镜像到 Groupher
           <div className="grow" />
-          <Hint>
-            <InfoIcon />
-            <Help href="/">帮助</Help>
-          </Hint>
+          <InfoSVG className={s.questionIcon} />
         </>
       )
 
@@ -99,13 +94,10 @@ const Header: FC<TProps> = ({ type }) => {
     case SUB_MENU_TYPE.TAGS: {
       Content = (
         <>
-          <TagNode />
+          <TagNode hashSize={3.5} hashRight={0.5} />
           设置标签
           <div className="grow" />
-          <Hint>
-            <InfoIcon />
-            <Help href="/">帮助</Help>
-          </Hint>
+          <InfoSVG className={s.questionIcon} />
         </>
       )
       break
@@ -116,13 +108,18 @@ const Header: FC<TProps> = ({ type }) => {
         <>
           <div>??</div>
           <div className="grow" />
-          <InfoIcon />
+          <InfoSVG className={s.questionIcon} />
         </>
       )
     }
   }
 
-  return <Wrapper>{Content}</Wrapper>
+  return (
+    <>
+      <div className={s.inner}>{Content}</div>
+      {showDivider && <div className={s.divider} />}
+    </>
+  )
 }
 
 export default Header

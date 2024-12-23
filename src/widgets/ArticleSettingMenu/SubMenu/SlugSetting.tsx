@@ -21,12 +21,7 @@ const SlugSetting: FC<TProps> = ({ onBack }) => {
         <Slug>/whats-new</Slug>
       </Preview>
 
-      <Footer
-        onBack={onBack}
-        onConfirm={() => console.log('## ## title confirm')}
-        top={8}
-        bottom={2}
-      />
+      <Footer onBack={onBack} onConfirm={() => console.log('## ## title confirm')} top={8} />
     </Wrapper>
   )
 }

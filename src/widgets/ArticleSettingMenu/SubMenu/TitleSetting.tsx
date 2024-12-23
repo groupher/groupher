@@ -53,8 +53,7 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
       <Footer
         onBack={onBack}
         disabled={!touched}
-        top={12}
-        bottom={2}
+        top={10}
         loading={result.fetching}
         onConfirm={() => handleUpdate()}
       />

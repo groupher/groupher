@@ -93,8 +93,7 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
         loading={result.fetching}
         disabled={!touched}
         onConfirm={() => handleState()}
-        top={12}
-        bottom={2}
+        top={4}
       />
     </Wrapper>
   )

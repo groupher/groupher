@@ -74,8 +74,7 @@ const CatSetting: FC<TProps> = ({ onBack }) => {
         loading={result.fetching}
         disabled={!touched}
         onConfirm={() => handleCat()}
-        top={12}
-        bottom={2}
+        top={4}
       />
     </div>
   )
