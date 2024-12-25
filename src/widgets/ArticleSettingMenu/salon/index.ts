@@ -11,11 +11,11 @@ export default ({ ...spacing }: TProps) => {
 
   return {
     wrapper: margin(spacing),
-    settingBox: cn(' size-6', hoverable('bg')),
+    settingBox: cn(' size-7', hoverable('bg')),
     settingBoxActive: cn(bg('hoverBg')),
     settingIcon: cn(
-      'size-4 trans-all-200 rotate-45',
-      'group-hover:rotate-90 group-smoky-80',
+      'size-5 trans-all-200 rotate-45',
+      'group-hover:rotate-180 group-smoky-80',
       hoverable('icon'),
     ),
   }

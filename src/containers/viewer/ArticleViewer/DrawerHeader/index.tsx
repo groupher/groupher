@@ -8,7 +8,7 @@ import ArticleSettingMenu from '~/widgets/ArticleSettingMenu'
 
 import ArticleNavi from './ArticleNavi'
 
-import useSalon from '../styles/drawer_header'
+import useSalon, { cn } from '../styles/drawer_header'
 
 export default () => {
   const s = useSalon()
@@ -16,15 +16,17 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <div className={s.backBtn} onClick={() => closeDrawer()}>
-        <ArrowSVG className={s.arrow} />
+        <ArrowSVG className={s.icon} />
       </div>
       <div className="ml-1" />
       <ArticleNavi />
       <div className="grow" />
       <Share modalOffset="53%" />
-      <div className="ml-4" />
-      <WarningSVG className={s.arrow} />
-      <ArticleSettingMenu left={3} />
+      <div className={s.divider} />
+      <div className={s.iconBoxRed}>
+        <WarningSVG className={cn(s.iconRed, 'size-4')} />
+      </div>
+      <ArticleSettingMenu left={0.5} />
     </div>
   )
 }

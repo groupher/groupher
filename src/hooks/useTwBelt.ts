@@ -21,7 +21,7 @@ type TMenuPart = 'bg' | 'bar' | 'title' | 'link'
 type TShadowSize = 'sm' | 'md' | 'lg' | 'xl' | 'drawer'
 type TThemeSwitch = 'auto' | 'dark' | 'light'
 type TDimLevel = 'lg' | 'md' | 'sm'
-type THoverPart = 'bg' | 'icon'
+type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red'
 
 type TRet = {
   cn: (...inputs: ClassValue[]) => string
@@ -348,8 +348,21 @@ export default (): TRet => {
       case 'bg': {
         return cn('group align-both rounded trans-all-100 pointer', `hover:${bg('hoverBg')}`)
       }
+      case 'bg-red': {
+        return cn(
+          'group align-both rounded trans-all-100 pointer',
+          `hover:${rainbowSoft(COLOR_NAME.RED)}`,
+        )
+      }
       case 'icon': {
         return cn('trans-all-100', fill('text.digest'), `group-hover:${fill('text.title')}`)
+      }
+      case 'icon-red': {
+        return cn(
+          'trans-all-100',
+          fill('text.digest'),
+          `group-hover:${rainbow(COLOR_NAME.RED, 'fill')}`,
+        )
       }
       default: {
         return 'debug'

@@ -1,57 +1,22 @@
-import LinkSVG from '~/icons/Link'
-import QRCodeSVG from '~/icons/QRCodeSolid'
-import MoreSVG from '~/icons/ShareArrow'
-import WeiboRawSVG from '~/icons/social/WeiboRaw'
-import WeChatRawSVG from '~/icons/social/WeChatRaw'
+import type { TSpace } from '~/spec'
 
-import { WithMargin } from '~/widgets/Common'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import styled, { css, theme } from '~/css'
+export { cn } from '~/css'
 
-export const Wrapper = styled(WithMargin)`
-  ${css.row('align-center')};
-`
-export const Panel = styled.div`
-  padding: 6px;
-`
-export const TipNote = styled.div`
-  font-size: 11px;
-  color: ${theme('hint')};
-  margin-top: 5px;
-`
-export const QRTip = styled(TipNote)`
-  max-width: 120px;
-`
-export const LinkTip = styled(TipNote)`
-  margin-top: 0;
-  font-size: 12px;
-`
+type TProps = TSpace
 
-const commonIcon = (comp) => {
-  return styled(comp)`
-    ${css.size(18)};
-    fill: ${theme('hint')};
-    opacity: 0.85;
-    margin-left: 15px;
-    cursor: pointer;
+export default ({ ...spacing }: TProps) => {
+  const { cn, fg, margin, hoverable } = useTwBelt()
 
-    &:hover {
-      fill: ${theme('article.title')};
-      opacity: 1;
-    }
+  const tipNote = cn('text-xs mt-1.5', fg('text.digest'))
 
-    transition: all 0.2s;
-  `
-}
-
-export const Icon = {
-  Link: styled(commonIcon(LinkSVG))`
-    ${css.size(22)};
-  `,
-  More: commonIcon(MoreSVG),
-  QRCode: commonIcon(QRCodeSVG),
-  WeChat: commonIcon(WeChatRawSVG),
-  Weibo: styled(commonIcon(WeiboRawSVG))`
-    margin-top: -3px;
-  `,
+  return {
+    wrapper: cn('row-center gap-x-2', margin(spacing)),
+    panel: 'p-1.5',
+    qrTip: cn(tipNote, 'max-w-32'),
+    linkTip: cn(tipNote, 'mt-2 text-xs'),
+    iconBox: cn('size-7', hoverable('bg')),
+    icon: cn('size-5', hoverable('icon')),
+  }
 }
