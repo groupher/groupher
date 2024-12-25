@@ -26,7 +26,7 @@ export default () => {
       <div className={s.iconBoxRed}>
         <WarningSVG className={cn(s.iconRed, 'size-4')} />
       </div>
-      <ArticleSettingMenu left={0.5} />
+      <ArticleSettingMenu left={1} />
     </div>
   )
 }
