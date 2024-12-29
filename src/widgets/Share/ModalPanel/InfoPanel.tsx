@@ -1,4 +1,4 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
 import { SITE_SHARE_TYPE } from '../constant'
 
@@ -8,7 +8,7 @@ import LinkBoard from './LinkBoard'
 import IFrameBoard from './IFrameBoard'
 import WechatBoard from './WechatBoard'
 
-import { Wrapper } from '../styles/modal_panel/info_panel'
+import useSalon from '../salon/modal_panel/info_panel'
 
 type TProps = {
   type: string
@@ -16,29 +16,31 @@ type TProps = {
 }
 
 const InfoPanel: FC<TProps> = ({ type, linksData }) => {
+  const s = useSalon({ type })
+
   switch (type) {
     case SITE_SHARE_TYPE.EMBED: {
       return (
-        <Wrapper type={type}>
+        <div className={s.wrapper}>
           <IFrameBoard />
-        </Wrapper>
+        </div>
       )
     }
     case SITE_SHARE_TYPE.WECHAT: {
       return (
-        <Wrapper type={type}>
+        <div className={s.wrapper}>
           <WechatBoard />
-        </Wrapper>
+        </div>
       )
     }
     default: {
       return (
-        <Wrapper type={type}>
+        <div className={s.wrapper}>
           <LinkBoard linksData={linksData} />
-        </Wrapper>
+        </div>
       )
     }
   }
 }
 
-export default memo(InfoPanel)
+export default InfoPanel

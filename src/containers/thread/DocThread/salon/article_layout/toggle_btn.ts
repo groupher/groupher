@@ -7,17 +7,18 @@ type TProps = {
 }
 
 export default ({ open }: TProps) => {
-  const { cn, bg, br, shadow, actionIcon } = useTwBelt()
+  const { cn, bg, br, shadow, hoverable } = useTwBelt()
 
   return {
     wrapper: cn(
-      'group align-both absolute top-10 size-7 circle border z-20 trans-all-100 pointer',
+      'absolute top-10 size-7 circle border z-20',
       bg('card'),
+      hoverable('bg'),
       br('divider'),
       shadow('sm'),
       open ? 'left-44' : 'left-0',
     ),
-    arrowIcon: actionIcon(),
-    listIcon: actionIcon('size-3.5 opacity-65'),
+    arrowIcon: cn('size-4', hoverable('icon')),
+    listIcon: cn('size-3.5 opacity-65', hoverable('icon')),
   }
 }

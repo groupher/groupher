@@ -2,7 +2,7 @@
  * Share
  */
 
-import { type FC, Fragment } from 'react'
+import type { FC } from 'react'
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
 
 import type { TArticle } from '~/spec'
@@ -13,7 +13,7 @@ import type { TLinksData } from '../spec'
 import Platforms from './Platforms'
 import InfoPanel from './InfoPanel'
 
-import { Wrapper } from '../styles/modal_panel'
+import useSalon, { cn } from '../salon/modal_panel'
 
 type TProps = {
   show: boolean
@@ -34,30 +34,26 @@ const SharePanel: FC<TProps> = ({
   article,
   onClose,
   changeType,
-  testid = 'share-panel',
 }) => {
+  const s = useSalon()
   const { isMobile } = useMobileDetect()
 
   if (isMobile) {
     return (
-      <Fragment>
-        <Wrapper $testid={testid} type={siteShareType}>
-          <Platforms article={article} changeType={changeType} />
-          <InfoPanel type={siteShareType} linksData={linksData} />
-        </Wrapper>
-      </Fragment>
+      <div className={cn(s.wrapper, 'w-full')}>
+        <Platforms article={article} changeType={changeType} />
+        <InfoPanel type={siteShareType} linksData={linksData} />
+      </div>
     )
   }
 
   return (
-    <Fragment>
-      <Modal width="450px" show={show} offsetLeft={offsetLeft} onClose={onClose} showCloseBtn>
-        <Wrapper $testid={testid} type={siteShareType}>
-          <Platforms article={article} changeType={changeType} />
-          <InfoPanel type={siteShareType} linksData={linksData} />
-        </Wrapper>
-      </Modal>
-    </Fragment>
+    <Modal width="450px" show={show} offsetLeft={offsetLeft} onClose={onClose} showCloseBtn>
+      <div className={s.wrapper}>
+        <Platforms article={article} changeType={changeType} />
+        <InfoPanel type={siteShareType} linksData={linksData} />
+      </div>
+    </Modal>
   )
 }
 

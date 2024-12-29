@@ -7,17 +7,16 @@ export { cn } from '~/css'
 type TProps = TSpace
 
 export default ({ ...spacing }: TProps) => {
-  const { cn, margin, bg, fill } = useTwBelt()
+  const { cn, margin, bg, hoverable } = useTwBelt()
 
   return {
     wrapper: margin(spacing),
-    settingBox: cn('group align-both size-6 rounded pointer', `hover:${bg('hoverBg')}`),
+    settingBox: cn(' size-7', hoverable('bg')),
     settingBoxActive: cn(bg('hoverBg')),
     settingIcon: cn(
-      'size-4 trans-all-200 rotate-45',
-      fill('text.digest'),
-      'group-hover:rotate-90 group-smoky-80',
-      `group-hover:${fill('text.title')}`,
+      'size-5 trans-all-200 rotate-45',
+      'group-hover:rotate-180 group-smoky-80',
+      hoverable('icon'),
     ),
   }
 }
