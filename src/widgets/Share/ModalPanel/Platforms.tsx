@@ -1,19 +1,9 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
 import type { TArticle } from '~/spec'
 
 import { PLATFORMS } from '../constant'
-import {
-  Wrapper,
-  Header,
-  Hint,
-  Article,
-  InnerWrapper,
-  Media,
-  LogoWrapper,
-  Title,
-  Icon,
-} from '../styles/modal_panel/platform'
+import useSalon, { Icon } from '../salon/modal_panel/platform'
 
 type TProps = {
   article: TArticle
@@ -21,29 +11,31 @@ type TProps = {
 }
 
 const Platforms: FC<TProps> = ({ article, changeType }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Header>
-        <Hint>分享</Hint>
-        <Article>{article.title}</Article>
-        <Hint>到:</Hint>
-      </Header>
-      <InnerWrapper>
+    <div className={s.wrapper}>
+      <div className={s.header}>
+        <div className={s.hint}>分享</div>
+        <div className={s.article}>{article.title}</div>
+        <div className={s.hint}>到:</div>
+      </div>
+      <div className={s.inner}>
         {PLATFORMS.map((item) => {
           const CurIcon = Icon[item.type]
 
           return (
-            <Media key={item.title} onClick={() => changeType(item.type)}>
-              <LogoWrapper>
-                <CurIcon />
-              </LogoWrapper>
-              <Title>{item.title}</Title>
-            </Media>
+            <div className={s.media} key={item.title} onClick={() => changeType(item.type)}>
+              <div className={s.logoBox}>
+                <CurIcon className={s.icon} />
+              </div>
+              <div className={s.title}>{item.title}</div>
+            </div>
           )
         })}
-      </InnerWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 
-export default memo(Platforms)
+export default Platforms

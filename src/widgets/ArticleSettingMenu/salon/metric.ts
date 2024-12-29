@@ -20,7 +20,7 @@ export const getSubMenuWidth = (subType: TSubMenu): string => {
       return 'w-60'
     }
     default: {
-      return 'w-48'
+      return 'w-44'
     }
   }
 }

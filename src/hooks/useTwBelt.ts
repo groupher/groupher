@@ -21,7 +21,7 @@ type TMenuPart = 'bg' | 'bar' | 'title' | 'link'
 type TShadowSize = 'sm' | 'md' | 'lg' | 'xl' | 'drawer'
 type TThemeSwitch = 'auto' | 'dark' | 'light'
 type TDimLevel = 'lg' | 'md' | 'sm'
-type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red'
+type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red' | 'fg'
 
 type TRet = {
   cn: (...inputs: ClassValue[]) => string
@@ -356,6 +356,9 @@ export default (): TRet => {
       }
       case 'icon': {
         return cn('trans-all-100', fill('text.digest'), `group-hover:${fill('text.title')}`)
+      }
+      case 'fg': {
+        return cn('trans-all-100', fg('text.digest'), `group-hover:${fg('text.title')}`)
       }
       case 'icon-red': {
         return cn(

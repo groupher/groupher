@@ -1,20 +1,22 @@
 import { type FC, memo } from 'react'
 import QRCode from 'qrcode.react'
 
-import { Wrapper, QRCodeWrapper, DescTitle, DescWrapper } from '../styles/modal_panel/wechat_board'
+import useSalon from '../salon/modal_panel/wechat_board'
 
 const WechatBoard: FC = () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <QRCodeWrapper>
+    <div className={s.wrapper}>
+      <div className={s.qrCode}>
         <QRCode value="hello world" size={100} />
-      </QRCodeWrapper>
-      <DescWrapper>
-        <DescTitle>分享到微信</DescTitle>
+      </div>
+      <div className={s.desc}>
+        <div className={s.descTitle}>分享到微信</div>
         <div>打开微信 &gt; 发现 &gt; 扫一扫</div>
         <div>即可将本文分享到微信。</div>
-      </DescWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 

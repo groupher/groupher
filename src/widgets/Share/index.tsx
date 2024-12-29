@@ -22,7 +22,7 @@ import Tooltip from '~/widgets/Tooltip'
 
 import { SITE_SHARE_TYPE, SHARE_TYPE } from './constant'
 import { parseLinksData, toPlatform } from './helper'
-import useSalon, { cn } from './styles'
+import useSalon, { cn } from './salon'
 
 let ModalPanel = null
 
