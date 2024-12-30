@@ -4,8 +4,7 @@
  *
  */
 
-import { type FC, useEffect, useState } from 'react'
-import dynamic from 'next/dynamic'
+import { type FC, useState, lazy, Suspense } from 'react'
 import copy from 'copy-to-clipboard'
 import QRCode from 'qrcode.react'
 
@@ -14,7 +13,6 @@ import useViewingArticle from '~/hooks/useViewingArticle'
 import { toast } from '~/signal'
 
 import LinkSVG from '~/icons/Link'
-// import QRCodeSVG from '~/icons/QRCodeSolid'
 import MoreSVG from '~/icons/ShareArrow'
 import WeiboRawSVG from '~/icons/social/WeiboRaw'
 import WeChatRawSVG from '~/icons/social/WeChatRaw'
@@ -24,7 +22,7 @@ import { SITE_SHARE_TYPE, SHARE_TYPE } from './constant'
 import { parseLinksData, toPlatform } from './helper'
 import useSalon, { cn } from './salon'
 
-let ModalPanel = null
+const ModalPanel = lazy(() => import('./ModalPanel'))
 
 type TProps = {
   modalOffset?: string
@@ -38,12 +36,6 @@ const Share: FC<TProps> = ({ modalOffset = '', ...spacing }) => {
 
   const [showMore, setShowMore] = useState(false)
   const [shareType, setShareType] = useState(SITE_SHARE_TYPE.LINKS)
-
-  useEffect(() => {
-    ModalPanel = dynamic(() => import('./ModalPanel'), {
-      ssr: false,
-    })
-  }, [showMore])
 
   return (
     <div className={s.wrapper}>
@@ -92,22 +84,24 @@ const Share: FC<TProps> = ({ modalOffset = '', ...spacing }) => {
         </div>
       </Tooltip>
 
-      {ModalPanel && (
-        <ModalPanel
-          show={showMore}
-          offsetLeft={modalOffset}
-          siteShareType={shareType}
-          changeType={(type) => {
-            setShareType(type)
-            toPlatform(article, type, articleLink)
-          }}
-          linksData={linksData}
-          article={article}
-          onClose={() => {
-            setShowMore(false)
-            setShareType(SITE_SHARE_TYPE.LINKS)
-          }}
-        />
+      {showMore && (
+        <Suspense fallback={null}>
+          <ModalPanel
+            show={showMore}
+            offsetLeft={modalOffset}
+            siteShareType={shareType}
+            changeType={(type) => {
+              setShareType(type)
+              toPlatform(article, type, articleLink)
+            }}
+            linksData={linksData}
+            article={article}
+            onClose={() => {
+              setShowMore(false)
+              setShareType(SITE_SHARE_TYPE.LINKS)
+            }}
+          />
+        </Suspense>
       )}
     </div>
   )

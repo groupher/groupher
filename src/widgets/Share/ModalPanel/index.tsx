@@ -47,6 +47,8 @@ const SharePanel: FC<TProps> = ({
     )
   }
 
+  console.log('## show !!!-: ', show)
+
   return (
     <Modal width="450px" show={show} offsetLeft={offsetLeft} onClose={onClose} showCloseBtn>
       <div className={s.wrapper}>
