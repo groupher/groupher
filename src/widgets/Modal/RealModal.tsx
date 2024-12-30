@@ -1,5 +1,4 @@
 import { type FC, useEffect, useState, useCallback } from 'react'
-// import { Portal } from 'react-portal'
 
 import useShortcut from '~/hooks/useShortcut'
 import useTheme from '~/hooks/useTheme'
@@ -62,8 +61,6 @@ const RealModal: FC<TProps> = ({
       toggleGlobalBlur(false)
     }
   }, [show, visibleOnPage])
-
-  console.log('## final show: ', show)
 
   return (
     <Portal>
