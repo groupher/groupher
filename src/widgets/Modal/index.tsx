@@ -1,13 +1,8 @@
 import { type FC, type ReactNode, useCallback, memo } from 'react'
-import dynamic from 'next/dynamic'
 
 import useShortcut from '~/hooks/useShortcut'
 
-// import RealModal from './RealModal'
-
-export const RealModal = dynamic(() => import('./RealModal'), {
-  ssr: false,
-})
+import RealModal from './RealModal'
 
 export type TProps = {
   children: ReactNode

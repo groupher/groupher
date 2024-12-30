@@ -54,8 +54,7 @@ export default ({ visible, type, rightOffset = '0px', fromContentEdge = true }: 
       height: isWideMode(type) ? '100vh' : `calc(100vh - ${NARROW_HEIGHT_OFFSET * 2}px)`,
     },
     drawer: cn(
-      'fixed row h-full will-change-transform box-border border',
-      br('divider'),
+      'fixed row h-full will-change-transform box-border',
       isWideMode(type) ? 'top-0' : 'top-5',
       visible ? 'visible' : 'hidden',
     ),
