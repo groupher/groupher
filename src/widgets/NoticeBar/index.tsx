@@ -4,18 +4,18 @@
  *
  */
 
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 import Link from 'next/link'
 import TimeAgo from 'timeago-react'
 
 import type { TSpace } from '~/spec'
-import { ICON } from '~/config'
 
+import QuestionSVG from '~/icons/Question'
 import Icon from './Icon'
 
 import type { TType } from './spec'
 import { TYPE } from './constant'
-import { Wrapper, Main, UserName, AuthorTag, Timestamp, Why } from './styles'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   testid?: string
@@ -39,28 +39,30 @@ const NoticeBar: FC<TProps> = ({
   timestamp = null,
   explainLink = null,
   noBg = false,
-  ...restProps
+  ...spacing
 }) => {
+  const s = useSalon({ ...spacing })
+
   return (
-    <Wrapper $testid={testid} noBg={noBg} {...restProps}>
+    <div className={cn(s.wrapper, noBg && s.noBg)}>
       <Icon type={type} />
-      <Main>
-        {user && <UserName>{user.nickname}</UserName>}
-        {isArticleAuthor && <AuthorTag>(作者)</AuthorTag>}
+      <div className={s.main}>
+        {user && <div className={s.userName}>{user.nickname}</div>}
+        {isArticleAuthor && <div className={s.authorTag}>(作者)</div>}
         {content}
-      </Main>
+      </div>
       {timestamp && (
-        <Timestamp>
+        <div className={s.timestamp}>
           <TimeAgo datetime={timestamp} locale="zh_CN" />
-        </Timestamp>
+        </div>
       )}
       {explainLink && (
         <Link href={explainLink} prefetch={false}>
-          <Why src={`${ICON}/shape/question.svg`} />
+          <QuestionSVG className={s.questionIcon} />
         </Link>
       )}
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(NoticeBar)
+export default NoticeBar

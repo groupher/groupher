@@ -1,29 +1,36 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
-import { LockIcon, ArchivedIcon, NoticeIcon, InfoIcon } from './styles/icon'
+import ArchivedSVG from '~/icons/Archived'
+import LockSVG from '~/icons/Lock'
+import NoticeSVG from '~/icons/Notice'
+import InfoSVG from '~/icons/Info'
 
 import type { TType } from './spec'
 import { TYPE } from './constant'
+
+import useSalon, { cn } from './salon/icon'
 
 type TProps = {
   type: TType
 }
 
 const Icon: FC<TProps> = ({ type }) => {
+  const s = useSalon()
+
   switch (type) {
     case TYPE.ARCHIVED: {
-      return <ArchivedIcon />
+      return <ArchivedSVG className={cn(s.icon, s.lock)} />
     }
     case TYPE.LOCK: {
-      return <LockIcon />
+      return <LockSVG className={cn(s.icon, s.lock)} />
     }
     case TYPE.INFO: {
-      return <InfoIcon />
+      return <InfoSVG className={s.icon} />
     }
     default: {
-      return <NoticeIcon />
+      return <NoticeSVG className={cn(s.icon, s.lock)} />
     }
   }
 }
 
-export default memo(Icon)
+export default Icon

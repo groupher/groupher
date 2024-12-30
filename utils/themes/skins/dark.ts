@@ -194,6 +194,10 @@ export default {
     borderRight: darken(bannerBg, 5),
     hoverBg: '#eee',
   },
+  notice: {
+    bg: '',
+    icon: '',
+  },
   popover: {
     bg: '#2e2e2ef0',
     borderColor: border,

@@ -297,6 +297,10 @@ module.exports = {
     borderRight: { DEFAULT: lightTokens.bannerBg, dark: darkTokens.primaryColor },
     hoverBg: { DEFAULT: '#eee', dark: '#eee' },
   },
+  notice: {
+    bg: { DEFAULT: '#FDF6E8', dark: '#FDF6E8' },
+    icon: { DEFAULT: '#a57a32', dark: '#a57a32' },
+  },
   popover: {
     bg: { DEFAULT: '#fafafa', dark: '#2e2e2ef0' }, // '#fffffff2',
     borderColor: { DEFAULT: '#e9e9ea', dark: darkTokens.border },
