@@ -17,7 +17,7 @@ import { Row, Space } from '~/widgets/Common'
 
 import { IndicatorsContainer } from './components'
 
-import { Wrapper, getSelectStyles } from './styles'
+import useSalon, { cn, getSelectStyles } from './salon'
 
 type TProps = {
   testid?: string
@@ -75,11 +75,12 @@ const Select: FC<TProps> = ({
   creatable = false,
   className = '',
   onCreateOption = console.log,
-  ...restProps
+  ...spacing
 }) => {
   // @ts-ignore
   const { themeMap } = useTheme()
   const styles = getSelectStyles(themeMap)
+  const s = useSalon({ ...spacing })
 
   const baseProps = {
     value,
@@ -135,7 +136,7 @@ const Select: FC<TProps> = ({
   }
 
   return (
-    <Wrapper $testid={testid} className={className} {...restProps}>
+    <div className={cn(s.wrapper, className)}>
       {!creatable ? (
         <ReactSelect
           {...baseProps}
@@ -145,7 +146,7 @@ const Select: FC<TProps> = ({
       ) : (
         <CreatableReactSelect {...baseProps} onCreateOption={onCreateOption} />
       )}
-    </Wrapper>
+    </div>
   )
 }
 

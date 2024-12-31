@@ -4,7 +4,7 @@ import { components, type IndicatorSeparatorProps } from 'react-select'
 import type { TSelectOption } from '~/spec'
 
 import type { TSelectProps } from './spec'
-import { OptionRow, OptionTitle, OptionDesc } from './styles'
+import useSalon, { cn } from './salon/components'
 
 /* @ts-ignore */
 export const IndicatorsContainer: FC = (props: IndicatorSeparatorProps) => {
@@ -22,15 +22,23 @@ type TOption = {
 }
 
 export const Option: FC<TOption> = (props) => {
+  const s = useSalon()
   const { data, selectProps } = props
 
   return (
     // @ts-ignore
     <components.Option {...props}>
-      <OptionRow>
-        <OptionTitle active={selectProps?.value?.value === data.value}>{data.label}</OptionTitle>
-        {data.desc && <OptionDesc>{data.desc}</OptionDesc>}
-      </OptionRow>
+      <div className={s.optionRow}>
+        <div
+          className={cn(
+            s.optionTitle,
+            selectProps?.value?.value === data.value && s.optionTitleActive,
+          )}
+        >
+          {data.label}
+        </div>
+        {data.desc && <div className={s.optionDesc}>{data.desc}</div>}
+      </div>
     </components.Option>
   )
 }
