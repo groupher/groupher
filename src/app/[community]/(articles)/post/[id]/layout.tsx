@@ -1,6 +1,6 @@
 'use client'
 
-import useSalon from '~/widgets/Article/styles/post'
+import useSalon from '~/widgets/Article/salon/post'
 
 const Layout = ({ children }) => {
   const s = useSalon()
