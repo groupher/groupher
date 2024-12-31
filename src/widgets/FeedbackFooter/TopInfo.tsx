@@ -1,14 +1,16 @@
 import type { FC } from 'react'
 
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import { Wrapper } from './styles/top_info'
+import useSalon from './salon/top_info'
 
 const TopInfo: FC = () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <ArrowButton leftLayout>编辑器</ArrowButton>
       <ArrowButton>三方集成</ArrowButton>
-    </Wrapper>
+    </div>
   )
 }
 

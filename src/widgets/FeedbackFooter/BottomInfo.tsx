@@ -4,52 +4,57 @@
  *
  */
 
-import { type FC, memo, useState } from 'react'
+import { type FC, useState } from 'react'
 
 import type { TSpace } from '~/spec'
 
+import GoodSVG from './salon/GoodSVG'
+import SoSoSVG from './salon/SoSoSVG'
+import BadSVG from './salon/BadSVG'
+
 import type { TDocFeedback } from './spec'
 import { HELP_FEEDBACK } from './constant'
-import {
-  Wrapper,
-  LastUpdateWrapper,
-  FeedbackWrapper,
-  Title,
-  FaceWraper,
-  IconWrapper,
-  GoodIcon,
-  SoSoIcon,
-  BadIcon,
-} from './styles/bottom_info'
+import useSalon, { cn } from './salon/bottom_info'
 
 type TProps = {
-  offsetRight?: number
+  offsetRight: number
   withLastUpdated?: boolean
 } & TSpace
 
-const FeedbackFooter: FC<TProps> = ({ offsetRight = 30, withLastUpdated = true }) => {
+const FeedbackFooter: FC<TProps> = ({ offsetRight, withLastUpdated = true }) => {
+  const s = useSalon({ offsetRight, withLastUpdated })
+
   const { GOOD, BAD, SOSO } = HELP_FEEDBACK
   const [feedback, setFeedback] = useState<TDocFeedback | ''>('')
 
   return (
-    <Wrapper offsetRight={offsetRight} withLastUpdated={withLastUpdated}>
-      {withLastUpdated && <LastUpdateWrapper>最后更新: 3 天前</LastUpdateWrapper>}
-      <FeedbackWrapper withLastUpdated={withLastUpdated}>
-        <Title small={withLastUpdated}>本文是否有帮助?</Title>
-        <FaceWraper small={withLastUpdated}>
-          <IconWrapper $active={feedback === BAD} onClick={() => setFeedback(BAD)}>
-            <BadIcon $active={feedback === BAD} small={withLastUpdated} />
-          </IconWrapper>
-          <IconWrapper $active={feedback === SOSO} onClick={() => setFeedback(SOSO)}>
-            <SoSoIcon $active={feedback === SOSO} small={withLastUpdated} />
-          </IconWrapper>
-          <IconWrapper $active={feedback === GOOD} onClick={() => setFeedback(GOOD)}>
-            <GoodIcon $active={feedback === GOOD} small={withLastUpdated} />
-          </IconWrapper>
-        </FaceWraper>
-      </FeedbackWrapper>
-    </Wrapper>
+    <div className={s.wrapper}>
+      {withLastUpdated && <div className={s.lastUpdate}>最后更新: 3 天前</div>}
+      <div className={s.feedback}>
+        <div className={cn(s.title, withLastUpdated && s.titleSmall)}>本文是否有帮助?</div>
+        <div className={cn(s.faces, withLastUpdated && s.facesSmall)}>
+          <div
+            className={cn(s.iconBox, feedback === BAD && s.iconBoxActive)}
+            onClick={() => setFeedback(BAD)}
+          >
+            <BadSVG className={cn(s.icon, 'circle', withLastUpdated && s.iconSmall)} />
+          </div>
+          <div
+            className={cn(s.iconBox, feedback === SOSO && s.iconBoxActive)}
+            onClick={() => setFeedback(SOSO)}
+          >
+            <SoSoSVG className={cn(s.icon, 'circle', withLastUpdated && s.iconSmall)} />
+          </div>
+          <div
+            className={cn(s.iconBox, feedback === GOOD && s.iconBoxActive)}
+            onClick={() => setFeedback(GOOD)}
+          >
+            <GoodSVG className={cn(s.icon, withLastUpdated && s.iconSmall)} />
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
-export default memo(FeedbackFooter)
+export default FeedbackFooter

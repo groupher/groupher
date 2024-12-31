@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 
-import dynamic from 'next/dynamic'
+import { lazy, Suspense } from 'react'
 // import { trackWindowScroll } from 'react-lazy-load-image-component'
 
 import usePagedPosts from '~/hooks/usePagedPosts'
@@ -13,13 +13,13 @@ import PostItem from '~/widgets/PostItem'
 import MasonryCards from '~/widgets/MasonryCards'
 // import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
-import { MasonryCardsWrapper } from './styles/article_list'
+import useSalon from './salon/article_list'
 
-export const EmptyThread = dynamic(() => import('~/widgets/EmptyThread'), {
-  ssr: false,
-})
+export const EmptyThread = lazy(() => import('~/widgets/EmptyThread'))
 
 export default () => {
+  const s = useSalon()
+
   const { postLayout } = useLayout()
   const { pagedPosts, resState } = usePagedPosts()
   if (!pagedPosts) return null
@@ -35,18 +35,22 @@ export default () => {
     (resState === TYPE.RES_STATE.EMPTY && entries.length === 0) ||
     (resState === TYPE.RES_STATE.DONE && entries.length === 0)
   ) {
-    return <EmptyThread thread={THREAD.POST} />
+    return (
+      <Suspense fallback={null}>
+        <EmptyThread thread={THREAD.POST} />
+      </Suspense>
+    )
   }
 
   if (postLayout === POST_LAYOUT.MASONRY) {
     return (
-      <MasonryCardsWrapper>
+      <div className={s.cards}>
         <MasonryCards column={2}>
           {entries.map((entry) => (
             <PostItem key={entry.id} article={entry} layout={postLayout} />
           ))}
         </MasonryCards>
-      </MasonryCardsWrapper>
+      </div>
     )
   }
 

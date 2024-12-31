@@ -1,5 +1,4 @@
 import styled, { css, theme } from '~/css'
-import PromptIcon from '~/widgets/PromptIcon'
 
 export const Wrapper = styled.div<{ noShiftRight: boolean }>`
   ${css.column('align-center')};
@@ -13,7 +12,7 @@ export const Wrapper = styled.div<{ noShiftRight: boolean }>`
   `};
 `
 // TODO: media size
-export const Icon404 = styled(PromptIcon)`
+export const Icon404 = styled.div`
   width: 320px;
   height: 320px;
 

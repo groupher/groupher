@@ -2,7 +2,6 @@ import type { FC } from 'react'
 
 import type { TArticle } from '~/spec'
 import { THREAD } from '~/const/thread'
-import SIZE from '~/const/size'
 import { cutRest } from '~/fmt'
 import { previewArticle } from '~/signal'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
@@ -10,13 +9,12 @@ import useIsArticleViewing from '~/hooks/useIsArticleViewing'
 
 import ArticleReadLabel from '~/widgets/ArticleReadLabel'
 import ArticlePinLabel from '~/widgets/ArticlePinLabel'
-import DigestSentence from '~/widgets/DigestSentence'
-import { Br, DesktopOnly, MobileOnly } from '~/widgets/Common'
+import { Br } from '~/widgets/Common'
 import ArticleImgWindow from '~/widgets/ArticleImgWindow'
 
 import Footer from './Footer'
 
-import { Wrapper, Title, MobileDigest, PinHintDot, ViewedHintDot } from './styles'
+import { Wrapper, Title, PinHintDot, ViewedHintDot } from './styles'
 
 export type TProps = {
   data: TArticle
@@ -48,22 +46,13 @@ const ArticleCard: FC<TProps> = ({ data }) => {
         {title}
       </Title>
 
-      <DesktopOnly>
-        <DigestSentence
-          top={5}
-          bottom={16}
-          size={SIZE.SMALL}
-          onPreview={() => {
-            previewArticle(data)
-          }}
-        >
-          {cutRest(digest, 150)}
-        </DigestSentence>
-      </DesktopOnly>
-
-      <MobileOnly>
-        <MobileDigest>{digest}</MobileDigest>
-      </MobileOnly>
+      <div
+        onClick={() => {
+          previewArticle(data)
+        }}
+      >
+        {cutRest(digest, 150)}
+      </div>
 
       <Br top={4} />
       <ArticleImgWindow />
