@@ -8,8 +8,6 @@ import type { FC, ReactNode } from 'react'
 
 import type { TSpace, TPagi } from '~/spec'
 
-import usePagedPosts from '~/hooks/usePagedPosts'
-
 import { EmptyWrapper, BottomMsg } from './styles'
 import RealPagi from './RealPagi'
 
@@ -37,8 +35,7 @@ const Pagi: FC<TProps> = ({
   noMoreMsg = '没有更多讨论了',
   ...restProps
 }) => {
-  const { pagedPosts } = usePagedPosts()
-  const { pageNumber, pageSize, totalCount, totalPages } = pagedPosts
+  const { pageNumber, pageSize, totalCount, totalPages } = restProps
 
   const handlePageChange = (page: number) => {
     onChange(page)

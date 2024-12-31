@@ -2,8 +2,6 @@
 
 import ArticlePost from '~/widgets/Article/Post'
 
-const CommunityPostPage = () => {
+export default () => {
   return <ArticlePost />
 }
-
-export default CommunityPostPage

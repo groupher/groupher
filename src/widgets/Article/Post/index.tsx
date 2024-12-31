@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react'
+import { useState } from 'react'
 
 // import Header from '~/widgets/CommunityDigest/HeaderLayout'
 import ViewportTracker from '~/widgets/ViewportTracker'
@@ -9,7 +9,7 @@ import SideInfo from './SideInfo'
 
 import { BannerContent, Main } from '../styles/post'
 
-const Post: FC = () => {
+export default () => {
   const [_inViewport, setInViewport] = useState(false)
 
   return (
@@ -25,5 +25,3 @@ const Post: FC = () => {
     </>
   )
 }
-
-export default Post
