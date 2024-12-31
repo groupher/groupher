@@ -14,7 +14,7 @@ export default () => {
     generalSettings: 'w-1/2',
     angleSettings: '-mt-px ml-2.5',
     toggleTitle: cn('text-xs ml-px mt-0.5', fg('text.digest')),
-    divider: cn(sexyHBorder(35), 'my-14'),
+    divider: cn(sexyHBorder(), 'my-14'),
     dividerV: cn(sexyVBorder(35), 'h-24 mt-7 ml-6 mr-8'),
   }
 }

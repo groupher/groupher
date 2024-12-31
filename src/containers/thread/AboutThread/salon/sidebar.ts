@@ -10,6 +10,6 @@ export default () => {
     block: 'mb-5',
     title: cn('text-sm bold-sm mb-2.5', fg('text.digest')),
     desc: cn('text-sm leading-loose', fg('text.digest')),
-    divider: cn('my-7 -ml-1', sexyHBorder(35)),
+    divider: cn('my-7 -ml-1', sexyHBorder()),
   }
 }

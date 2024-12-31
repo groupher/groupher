@@ -13,7 +13,7 @@ export default ({ color }: TProps) => {
 
   return {
     wrapper: cn('column w-full ml-4 mt-6'),
-    divider: cn('-ml-2 opacity-80 w-11/12', sexyHBorder(35)),
+    divider: cn('-ml-2 opacity-80 w-11/12', sexyHBorder()),
     itemsWrapper: 'row-center gap-x-5 w-full pb-3 px-1',
     item: cn('text-xs opacity-80', fg('text.digest')),
     itemActive: cn('bold-sm', rainbow(color, 'fg')),

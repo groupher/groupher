@@ -8,7 +8,7 @@ export default () => {
   return {
     wrapper: 'w-full group',
     readonly: 'column gap-x-2.5',
-    divider: cn(sexyHBorder(35), 'mb-4'),
+    divider: cn(sexyHBorder(), 'mb-4'),
     readonlyEditing: 'pt-0',
     readonlyHead: 'row-center',
     actions: 'row-center mr-3 gap-x-1 group-smoky-0',

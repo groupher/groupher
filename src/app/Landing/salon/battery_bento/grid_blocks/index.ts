@@ -34,6 +34,6 @@ export default () => {
     fillCyan: rainbow(COLOR_NAME.CYAN, 'fill'),
     //
     line: cn('absolute top-0 h-full w-px', bg('divider')),
-    rowLine: cn('absolute', sexyHBorder(35)),
+    rowLine: cn('absolute', sexyHBorder()),
   }
 }

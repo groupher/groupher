@@ -11,7 +11,7 @@ export default () => {
     header: 'row-center mb-8',
     //
     title: cn('row-center text-base row-enter bold', fg('text.digest')),
-    divider: cn(sexyHBorder(35), 'my-10'),
+    divider: cn(sexyHBorder(), 'my-10'),
     adminsRow: 'row-center wrap',
     admin: 'row items-start w-1/2',
     //

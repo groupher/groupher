@@ -29,7 +29,7 @@ export default ({ subMenuType = null, color = COLOR_NAME.BLACK }: TProps = {}) =
       `hover:${bg('rainbow.redSoft')}`,
     ),
     menuTitle: cn(menu('title'), cutRest('w-24')),
-    divider: cn(sexyHBorder(35), 'my-2.5'),
+    divider: cn(sexyHBorder(), 'my-2.5'),
     //
     icon: cn('size-3.5 mr-1.5', fill('text.digest'), `group-hover:${fill('text.title')}`),
     rainbowFill: rainbow(color, 'fill'),

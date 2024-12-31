@@ -44,6 +44,13 @@
       "pl_lg": 0,
       "pr_lg": 0
     },
+    "article": {
+      "width": "1360px",
+      "pl": 52,
+      "pr": 52,
+      "pl_lg": 20,
+      "pr_lg": 20
+    },
     "community": {
       "width": "1360px",
       "pl": 52,
