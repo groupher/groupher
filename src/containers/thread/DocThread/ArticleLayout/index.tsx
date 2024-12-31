@@ -97,7 +97,7 @@ export default () => {
             </div>
           </>
         )}
-        {!isFAQArticleLayout && <FeedbackFooter top={60} />}
+        {!isFAQArticleLayout && <FeedbackFooter top={14} />}
       </div>
     </div>
   )

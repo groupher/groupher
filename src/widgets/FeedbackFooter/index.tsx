@@ -4,26 +4,28 @@
  *
  */
 
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
 import type { TSpace } from '~/spec'
 
 import TopInfo from './TopInfo'
 import BottomInfo from './BottomInfo'
 
-import { Wrapper } from './styles'
+import useSalon from './salon'
 
 type TProps = {
   offsetRight?: number
 } & TSpace
 
-const FeedbackFooter: FC<TProps> = ({ offsetRight = 30, ...restProps }) => {
+const FeedbackFooter: FC<TProps> = ({ offsetRight = 8, ...spacing }) => {
+  const s = useSalon({ ...spacing })
+
   return (
-    <Wrapper {...restProps}>
+    <div className={s.wrapper}>
       <TopInfo />
       <BottomInfo offsetRight={offsetRight} />
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(FeedbackFooter)
+export default FeedbackFooter
