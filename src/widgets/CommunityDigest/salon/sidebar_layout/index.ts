@@ -10,6 +10,6 @@ export default () => {
     innerWrapper: cn('column h-lvh min-h-full mt-3'),
     tabs: cn('row-center justify-start w-4/5 ml-1'),
     fileTree: 'mt-2.5 ml-2.5',
-    divider: cn(sexyHBorder(35, 'w-52 -ml-2.5')),
+    divider: cn(sexyHBorder(), 'w-52 -ml-2.5'),
   }
 }

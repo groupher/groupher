@@ -20,7 +20,7 @@ export default () => {
     ),
     divider: cn(
       'w-52 absolute bottom-px',
-      sexyHBorder(35),
+      sexyHBorder(),
       isLightTheme ? 'brightness-95' : 'brightness-125',
     ),
     tabs: cn('absolute bottom-0 z-10', alignLeft && 'left-44'),

@@ -18,7 +18,7 @@ import Share from '~/widgets/Share'
 import ArticleSettingMenu from '~/widgets/ArticleSettingMenu'
 import ArticlePinLabel from '~/widgets/ArticlePinLabel'
 
-import useSalon from '../styles/post/digest'
+import useSalon from '../salon/post/digest'
 
 export default () => {
   const router = useRouter()

@@ -20,7 +20,7 @@ export default () => {
     divider: cn(
       'absolute bottom-0',
       isLightTheme ? 'brightness-95' : 'brightness-125',
-      sexyHBorder(35),
+      sexyHBorder(),
     ),
     item: cn('text-sm', fg('text.digest')),
   }

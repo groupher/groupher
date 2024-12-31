@@ -10,7 +10,7 @@ export default () => {
     item: cn(menu('bar'), 'row-center group'),
     title: cn(menu('title'), 'grow ml-0.5 text-sm'),
     titleActive: fg('text.title'),
-    divider: sexyHBorder(35),
+    divider: sexyHBorder(),
     checkIcon: cn('size-4', primary('fill')),
     icon: cn('size-3.5 mr-2', fill('text.digest')),
     rainbow,

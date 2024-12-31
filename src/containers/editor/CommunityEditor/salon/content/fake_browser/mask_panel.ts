@@ -15,6 +15,6 @@ export default () => {
     //
     checkIcon: cn('size-4 mr-2', rainbow(COLOR_NAME.GREEN, 'fill')),
     header: 'column-align-both w-full mb-8',
-    divider: cn(sexyHBorder(35), 'w-40 h-0.5 mt-4 mb-3'),
+    divider: cn(sexyHBorder(), 'w-40 h-0.5 mt-4 mb-3'),
   }
 }

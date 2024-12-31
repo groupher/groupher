@@ -23,7 +23,7 @@ export default () => {
     bar: base.bar,
     circle: base.circle,
 
-    hDivider: cn(sexyHBorder(35)),
+    hDivider: cn(sexyHBorder()),
     vDivider: cn('absolute', sexyVBorder(35)),
   }
 }

@@ -32,7 +32,7 @@ export default () => {
     outLink: cn(menu('link')),
     arrow: cn('size-3.5 rotate-180 ml-0.5', fill('text.digest')),
     //
-    divider: cn('mb-20 mt-14', sexyHBorder(35)),
+    divider: cn('mb-20 mt-14', sexyHBorder()),
     faqWrapper: 'w-full mb-5 px-32',
     //
     tryArrow: cn(

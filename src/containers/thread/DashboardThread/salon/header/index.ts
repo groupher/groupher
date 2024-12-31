@@ -5,6 +5,6 @@ export default () => {
 
   return {
     wrapper: 'column',
-    divider: cn('mb-12', sexyHBorder(35)),
+    divider: cn('mb-12', sexyHBorder()),
   }
 }

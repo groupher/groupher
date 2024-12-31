@@ -23,7 +23,7 @@ export default () => {
     tagItem: 'row-center text-xs',
     content: 'column mt-4 w-52 gap-2.5',
     //
-    divider: cn('mt-8 -ml-4', sexyHBorder(35)),
+    divider: cn('mt-8 -ml-4', sexyHBorder()),
     cover: cn(
       'relative w-44 h-24 overflow-hidden rounded mb-1 border border-dashed',
       bg('hoverBg'),

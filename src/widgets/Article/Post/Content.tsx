@@ -11,7 +11,7 @@ import ArtimentBody from '~/widgets/ArtimentBody'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 // import ViewportTracker from '~/widgets/ViewportTracker'
 
-import useSalon from '../styles/post/content'
+import useSalon from '../salon/post/content'
 
 export const Comments = lazy(() => import('~/containers/unit/Comments'))
 

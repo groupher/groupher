@@ -7,7 +7,7 @@ import Digest from './Digest'
 import Content from './Content'
 import SideInfo from './SideInfo'
 
-import useSalon from '../styles/post'
+import useSalon from '../salon/post'
 
 export default () => {
   const s = useSalon()

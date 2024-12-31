@@ -1,73 +1,62 @@
 import { upvoteArticle } from '~/signal'
 import useViewingArticle from '~/hooks/useViewingArticle'
-import { AVATAR_LAYOUT, UPVOTE_LAYOUT } from '~/const/layout'
+import { UPVOTE_LAYOUT } from '~/const/layout'
 
-import { Br } from '~/widgets/Common'
+import Img from '~/Img'
 import Upvote from '~/widgets/Upvote'
 import ArticleCatState from '~/widgets/ArticleCatState'
 import TagsList from '~/widgets/TagsList'
 import ReadableDate from '~/widgets/ReadableDate'
 
-import {
-  Wrapper,
-  InnerWrapper,
-  UserList,
-  User,
-  Avatar,
-  Nickname,
-  Label,
-  Count,
-  Value,
-  TagsSection,
-} from '../styles/post/side_info'
+import useSalon from '../salon/post/side_info'
 
 export default () => {
+  const s = useSalon()
   const { article } = useViewingArticle()
 
   const { insertedAt, articleTags, upvotesCount, meta, viewerHasUpvoted, cat, state } = article
   const { latestUpvotedUsers } = meta
 
   return (
-    <Wrapper>
-      <InnerWrapper>
+    <div className={s.wrapper}>
+      <div className={s.inner}>
         <Upvote
           count={upvotesCount}
           avatarList={latestUpvotedUsers}
           viewerHasUpvoted={viewerHasUpvoted}
           onAction={(viewerHasUpvoted) => upvoteArticle(article, viewerHasUpvoted)}
           type={UPVOTE_LAYOUT.ARTICLE}
-          bottom={35}
+          bottom={8}
         />
 
-        <Label>
-          参与投票 <Count>{upvotesCount}</Count>
-        </Label>
-        <UserList>
+        <div className={s.label}>
+          参与投票 <div className={s.count}>{upvotesCount}</div>
+        </div>
+        <div className={s.userList}>
           {latestUpvotedUsers.map((user) => (
-            <User key={user.login}>
-              <Avatar src={user.avatar} $avatarLayout={AVATAR_LAYOUT.SQUARE} />
-              <Nickname>{user.nickname}</Nickname>
-            </User>
+            <div key={user.login} className={s.user}>
+              <Img src={user.avatar} className={s.avatar} />
+              <div className={s.nickname}>{user.nickname}</div>
+            </div>
           ))}
-        </UserList>
+        </div>
 
-        <Br bottom={25} />
-        <Label>标签</Label>
-        <TagsSection>
-          <TagsList items={articleTags} size="medium" left={1} max={20} />
-        </TagsSection>
+        <div className="mb-6" />
+        <div className={s.label}>标签</div>
+        <TagsList items={articleTags} size="medium" left={1} max={20} bottom={2} />
 
-        <Br bottom={25} />
-        <Label>分类</Label>
+        <div className="mb-6" />
+        <div className={s.label}>分类</div>
         <ArticleCatState cat={cat} state={state} smaller={false} />
+        <div className="mb-6" />
 
-        <Br bottom={25} />
-
-        <Label>发布时间</Label>
-        <Value>
+        <div className={s.label}>发布时间</div>
+        <div className={s.value}>
           <ReadableDate date={insertedAt} withTime={false} />
-        </Value>
-      </InnerWrapper>
-    </Wrapper>
+        </div>
+      </div>
+
+      <div className={s.divider} />
+    </div>
   )
 }

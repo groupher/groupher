@@ -1,7 +1,6 @@
-import { type FC, useState } from 'react'
+import { useState } from 'react'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
-import useMetric from '~/hooks/useMetric'
 
 import Header from '~/widgets/CommunityDigest/HeaderLayout'
 import ViewportTracker from '~/widgets/ViewportTracker'
@@ -9,31 +8,27 @@ import ViewportTracker from '~/widgets/ViewportTracker'
 import Digest from './Digest'
 import Content from './Content'
 
-import { Wrapper, InnerWrapper, HeaderWrapper, BannerContent, Main } from '../styles/changelog'
+import useSalon from '../salon/changelog'
 
-const Changelog: FC = () => {
+export default () => {
+  const s = useSalon()
   const { article } = useViewingArticle()
-  const metric = useMetric()
 
   const [_inViewport, setInViewport] = useState(false)
 
   return (
-    <Wrapper metric={metric}>
+    <div className={s.wrapper}>
       {/* <FixedHeader show={!inViewport} article={viewingArticle} metric={metric} /> */}
-      <InnerWrapper metric={metric}>
-        <HeaderWrapper>
-          <Header />
-        </HeaderWrapper>
-        <BannerContent>
-          <Main>
-            <Digest article={article} />
-            <Content article={article} />
-          </Main>
-        </BannerContent>
-      </InnerWrapper>
+      <div className={s.header}>
+        <Header />
+      </div>
+      <div className={s.banner}>
+        <div className={s.main}>
+          <Digest article={article} />
+          <Content article={article} />
+        </div>
+      </div>
       <ViewportTracker onEnter={() => setInViewport(true)} onLeave={() => setInViewport(false)} />
-    </Wrapper>
+    </div>
   )
 }
-
-export default Changelog

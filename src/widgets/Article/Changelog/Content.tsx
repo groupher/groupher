@@ -12,7 +12,7 @@ import ArtimentBody from '~/widgets/ArtimentBody'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 // import ViewportTracker from '~/widgets/ViewportTracker'
 
-import { Wrapper, InnerWrapper, ArticleWrapper, CommentsWrapper } from '../styles/changelog/content'
+import useSalon from '../salon/changelog/content'
 
 const Comments = lazy(() => import('~/containers/unit/Comments'))
 
@@ -21,31 +21,25 @@ type TProps = {
 }
 
 const Content: FC<TProps> = ({ article }) => {
+  const s = useSalon()
+
   const ref = useRef()
 
   return (
-    <Wrapper>
-      <InnerWrapper>
-        {/* <ViewportTracker
-          onEnter={() => checkAnchor(ref?.current)}
-          onLeave={() => checkAnchor(ref?.current)}
-        /> */}
-        <ArticleWrapper ref={ref}>
+    <div className={s.wrapper}>
+      <div className={s.inner}>
+        <div className={s.article} ref={ref}>
           {/* {!!article.linkAddr && <Linker src={article.linkAddr} bottom={22} />} */}
           <ArtimentBody document={article.document} />
-        </ArticleWrapper>
+        </div>
 
-        {/* <ViewportTracker
-            onEnter={() => checkAnchor(ref?.current)}
-            onLeave={() => checkAnchor(ref?.current)}
-          /> */}
-        <CommentsWrapper>
+        <div className={s.comments}>
           <Suspense fallback={<LavaLampLoading />}>
             <Comments />
           </Suspense>
-        </CommentsWrapper>
-      </InnerWrapper>
-    </Wrapper>
+        </div>
+      </div>
+    </div>
   )
 }
 

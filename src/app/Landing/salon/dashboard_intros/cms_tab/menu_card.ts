@@ -20,6 +20,6 @@ export default () => {
     icon: cn('size-3.5 mr-1.5', fill('text.digest')),
     tagIcon: cn('size-3.5 mr-1.5', rainbow(COLOR_NAME.BLUE, 'fill')),
     //
-    divider: cn('mt-2.5 mb-2.5', sexyHBorder(35)),
+    divider: cn('mt-2.5 mb-2.5', sexyHBorder()),
   }
 }

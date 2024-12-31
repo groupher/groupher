@@ -25,7 +25,7 @@ export default () => {
     ),
 
     box: cn('relative rounded-md border', primary('borderSoft'), isBlackPrimary && br('text.link')),
-    divider: sexyHBorder(35, 'mt-14 mb-14'),
+    divider: cn(sexyHBorder(), 'mt-14 mb-14'),
 
     // basic shape
     bar: cn(
