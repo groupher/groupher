@@ -1,18 +1,11 @@
 'use client'
 
-import useMetric from '~/hooks/useMetric'
-
-import { Wrapper, InnerWrapper } from '~/widgets/Article/styles/post'
+import useSalon from '~/widgets/Article/styles/post'
 
 const Layout = ({ children }) => {
-  const metric = useMetric()
+  const s = useSalon()
 
-  return (
-    <Wrapper metric={metric}>
-      {/* <FixedHeader show={!inViewport} article={viewingArticle} metric={metric} /> */}
-      <InnerWrapper metric={metric}>{children}</InnerWrapper>
-    </Wrapper>
-  )
+  return <div className={s.wrapper}>{children}</div>
 }
 
 export default Layout

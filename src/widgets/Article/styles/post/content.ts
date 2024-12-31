@@ -1,28 +1,13 @@
-import styled, { css } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row('justify-center')};
-  position: relative;
-  min-height: 250px;
-  width: 100%;
+export default () => {
+  const { cn } = useTwBelt()
 
-  ${css.media.mobile`
-    padding: 0 20px;
-    margin-left: 0;
-  `};
-`
-export const InnerWrapper = styled.div`
-  width: 100%;
-`
-export const ArticleWrapper = styled.div`
-  font-size: 15px;
-  min-height: 200px;
-  max-width: 580px;
-`
-export const BodyHeaderWrapper = styled.div`
-  margin-top: -18px;
-  margin-bottom: 18px;
-`
-export const CommentsWrapper = styled.div`
-  margin-top: 35px;
-`
+  return {
+    wrapper: cn('row justify-center relative min-h-60 w-full'),
+    inner: 'w-full',
+    article: 'text-base min-h-52 max-w-[600px]',
+    bodyHeader: '-mt-4 mb-4',
+    comments: 'mt-9',
+  }
+}

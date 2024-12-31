@@ -4,45 +4,36 @@
  *
  */
 
-import { type FC, useRef, lazy, Suspense } from 'react'
+import { useRef, lazy, Suspense } from 'react'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
 import ArtimentBody from '~/widgets/ArtimentBody'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 // import ViewportTracker from '~/widgets/ViewportTracker'
 
-import { Wrapper, InnerWrapper, ArticleWrapper, CommentsWrapper } from '../styles/post/content'
+import useSalon from '../styles/post/content'
 
-const Comments = lazy(() => import('~/containers/unit/Comments'))
+export const Comments = lazy(() => import('~/containers/unit/Comments'))
 
-const Content: FC = () => {
+export default () => {
   const ref = useRef()
   const { article } = useViewingArticle()
 
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <InnerWrapper>
-        {/* <ViewportTracker
-          onEnter={() => checkAnchor(ref?.current)}
-          onLeave={() => checkAnchor(ref?.current)}
-        /> */}
-        <ArticleWrapper ref={ref}>
+    <div className={s.wrapper}>
+      <div className={s.inner}>
+        <div ref={ref} className={s.article}>
           {/* {!!article.linkAddr && <Linker src={article.linkAddr} bottom={22} />} */}
           <ArtimentBody document={article.document} />
-        </ArticleWrapper>
-
-        {/* <ViewportTracker
-            onEnter={() => checkAnchor(ref?.current)}
-            onLeave={() => checkAnchor(ref?.current)}
-          /> */}
-        <CommentsWrapper>
+        </div>
+        <div className={s.comments}>
           <Suspense fallback={<LavaLampLoading />}>
             <Comments />
           </Suspense>
-        </CommentsWrapper>
-      </InnerWrapper>
-    </Wrapper>
+        </div>
+      </div>
+    </div>
   )
 }
-
-export default Content

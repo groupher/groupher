@@ -7,20 +7,21 @@ import Digest from './Digest'
 import Content from './Content'
 import SideInfo from './SideInfo'
 
-import { BannerContent, Main } from '../styles/post'
+import useSalon from '../styles/post'
 
 export default () => {
+  const s = useSalon()
   const [_inViewport, setInViewport] = useState(false)
 
   return (
     <>
-      <BannerContent>
-        <Main>
+      <div className={s.banner}>
+        <div className={s.main}>
           <Digest />
           <Content />
-        </Main>
+        </div>
         <SideInfo />
-      </BannerContent>
+      </div>
       <ViewportTracker onEnter={() => setInViewport(true)} onLeave={() => setInViewport(false)} />
     </>
   )
