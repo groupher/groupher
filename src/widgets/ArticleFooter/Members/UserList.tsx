@@ -1,29 +1,30 @@
 import type { FC } from 'react'
 
 import type { TUser } from '~/spec'
-import useLayout from '~/hooks/useLayout'
+import Img from '~/Img'
+
 import ImgFallback from '~/widgets/ImgFallback'
 
-import { Wrapper, Avatar } from '../../styles/panel/user_list'
+import useSalon from '../salon/user_list'
 
 type TProps = {
   users: TUser[]
 }
 
 const UserList: FC<TProps> = ({ users }) => {
-  const { avatarLayout } = useLayout()
+  const s = useSalon()
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {users.map((user) => (
-        <Avatar
+        <Img
           key={user.login}
           src={user.avatar}
-          $avatarLayout={avatarLayout}
+          className={s.avatar}
           fallback={<ImgFallback size={20} user={user} />}
         />
       ))}
-    </Wrapper>
+    </div>
   )
 }
 

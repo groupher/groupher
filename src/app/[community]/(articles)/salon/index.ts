@@ -11,6 +11,6 @@ export default () => {
 
   return {
     wrapper: cn('w-full', isSidebarLayout && 'row justify-between'),
-    content: 'column w-full',
+    content: 'column w-full min-h-screen',
   }
 }

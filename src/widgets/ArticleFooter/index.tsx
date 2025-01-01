@@ -1,23 +1,35 @@
 /*
  *
- * ArticleFooter
+ * AuthorInfo
  *
  */
 
-import { type FC, memo } from 'react'
+import { useState } from 'react'
 
-import Panel from './Panel'
+import Tabs from '~/widgets/Switcher/Tabs'
 
-type TProps = {
-  testid?: string
-}
+import Activities from './Activities'
+import Members from './Members'
 
-const ArticleFooter: FC<TProps> = ({ testid = 'article-footer' }) => {
+import { TAB_ITEMS, TAB_ACTIVITIES, TAB_MEMBERS } from './constant'
+import useSalon from './salon'
+
+// import { onFollow, undoFollow } from '../logic'
+
+export default () => {
+  const s = useSalon()
+
+  const [tab, setTab] = useState(TAB_ACTIVITIES)
+
   return (
-    <>
-      <Panel />
-    </>
+    <div className={s.wrapper}>
+      <div className={s.tabs}>
+        <Tabs items={TAB_ITEMS} size="small" activeKey={tab} onChange={(tab) => setTab(tab)} />
+      </div>
+      <div className={s.content}>
+        {tab === TAB_ACTIVITIES && <Activities />}
+        {tab === TAB_MEMBERS && <Members />}
+      </div>
+    </div>
   )
 }
-
-export default memo(ArticleFooter)
