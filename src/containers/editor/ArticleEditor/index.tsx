@@ -15,7 +15,7 @@ import ArchiveAlert from '~/widgets/ArchiveAlert'
 import NoticeBar from '~/widgets/NoticeBar'
 import TagSelector from '~/widgets/TagSelector'
 
-// import ArticleCover from './ArticleCover'
+import ArticleCover from './ArticleCover'
 
 import TitleInput from './TitleInput'
 import Footer from './Footer'
@@ -76,7 +76,7 @@ const ArticleEditor: FC<TProps> = ({ metric = METRIC.ARTICLE_EDITOR }) => {
           {!allowEdit && <NoticeBar type="notice" content="只有作者可以编辑本内容。" left={25} />}
           {isArchived && <ArchiveAlert date={archivedAt} top={12} bottom={20} left={25} />}
 
-          {/* <ArticleCover /> */}
+          <ArticleCover />
           <TitleInput title={title} placeholder={texts.holder.title} />
           <FuncRow>
             <ConditionSelector

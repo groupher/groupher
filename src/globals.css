@@ -53,6 +53,10 @@
     @apply text-base;
   }
 
+  .bold-none {
+    @apply font-normal;
+  }
+
   .bold {
     @apply font-semibold;
   }

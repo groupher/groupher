@@ -307,8 +307,9 @@ export default (): TRet => {
       case 'bar': {
         return cn(
           'group/menubar row-center text-sm w-full border border-transparent rounded-md pointer',
-          'px-1.5 py-1 cursor-pointer',
+          'px-1.5 py-1 cursor-pointer bold-none',
           'trans-all-100',
+          'hover:bold-none',
           `hover:${fg('text.title')}`,
           `hover:${bg('menuHoverBg')}`,
           `hover:${br('divider')}`,

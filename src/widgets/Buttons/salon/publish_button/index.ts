@@ -17,6 +17,6 @@ export default ({ ...spacing }: TProps) => {
 
     arrowBtn: cn('absolute h-full w-8 right-0'),
     arrowIcon: cn('size-3 rotate-90 opacity-40 z-30', fill('button.fg')),
-    menuOffset: bannerLayout === BANNER_LAYOUT.HEADER ? [-95, 4] : [-80, 4],
+    menuOffset: bannerLayout === BANNER_LAYOUT.HEADER ? [-98, 4] : [-80, 4],
   }
 }

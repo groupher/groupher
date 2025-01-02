@@ -1,31 +1,51 @@
 import type { TActive } from '~/spec'
-import styled, { css, animate, theme } from '~/css'
+import styled, { css, theme } from '~/css'
 
 import UploadSVG from '~/icons/Upload'
 
-import { Wrapper as Container } from '..'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row('align-both')};
-  position: absolute;
-  bottom: 0;
-  width: 440px;
-  height: 65px;
-  padding-top: 3px;
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  border-radius: 8px;
-  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
-  background: ${theme('alphaBg2')};
-  backdrop-filter: blur(5px);
-  z-index: 2;
-  display: none;
-  animation: ${animate.jump} 0.4s linear;
+export default () => {
+  const { cn, br, shadow, fg, bg, fill } = useTwBelt()
 
-  ${Container}:hover & {
-    display: flex;
+  return {
+    wrapper: cn(
+      'align-both absolute bottom-0 w-[480px] h-16 pt-0.5 border rounded-md z-20',
+      // 'group-smoky-0 trans-all-200',
+      'trans-all-200',
+      'backdrop-blur-2xl',
+      br('divider'),
+      shadow('md'),
+      bg('card'),
+    ),
+
+    settingBlock: cn(
+      'align-both rounded size-8 border mt-px',
+      `hover:${br('text.digest')}`,
+      br('divider'),
+      shadow('sm'),
+      bg('card'),
+    ),
+    settingBlockActive: cn(br('text.digest'), shadow('md')),
+    settingTitle: cn('text-xs scale-75 mt-0.5', fg('text.digest')),
+    settingIcon: cn(
+      'size-5 opacity-65 trans-all-100',
+      'group-hover/block:opacity-100',
+      fill('text.title'),
+    ),
+    optionItem: cn(
+      'align-both size-6 text-sm rounded border trans-all-100',
+      `hover:${br('text.digest')}`,
+      br('divider'),
+      fg('text.digest'),
+      shadow('sm'),
+    ),
+    optionItemActive: cn('bold-sm', fg('text.title'), br('text.digest')),
+    //
+    desc: cn('text-xs', fg('text.digest')),
   }
-`
+}
+
 export const UploadIcon = styled(UploadSVG)`
   ${css.size(50)};
   fill: ${theme('article.info')};
