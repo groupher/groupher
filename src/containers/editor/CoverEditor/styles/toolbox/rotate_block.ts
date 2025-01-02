@@ -1,52 +1,24 @@
-import styled, { css, theme } from '~/css'
-import RotateSVG from '~/icons/Rotate'
+import useBase from '.'
 
-import { SettingBlock, SettingTitle } from '.'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.size(60)};
-  ${css.column('align-both')};
-`
+export { cn } from '~/css'
 
-export const Block = styled(SettingBlock)``
+export default () => {
+  const { cn, hoverable } = useTwBelt()
+  const base = useBase()
 
-export const Panel = styled.div`
-  ${css.row('align-both')};
-  color: ${theme('article.digest')};
-  width: 220px;
-  height: 100px;
-
-  background: ${theme('alphaBg2')};
-  backdrop-filter: blur(5px);
-  position: relative;
-`
-
-export const Reset = styled.div`
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  font-size: 10px;
-  color: ${theme('article.digest')};
-
-  &:hover {
-    color: ${theme('article.title')};
-    cursor: pointer;
+  return {
+    wrapper: cn('column-align-both size-16 -ml-1 group/block'),
+    panel: cn(base.panel, 'py-5'),
+    block: base.settingBlock,
+    blockActive: base.settingBlockActive,
+    title: base.settingTitle,
+    icon: base.settingIcon,
+    //
+    optionItem: base.optionItem,
+    optionItemActive: base.optionItemActive,
+    // reset
+    reset: cn('absolute right-2.5 top-2.5 text-xs scale-90', hoverable('fg')),
   }
-`
-
-export const Icon = styled(RotateSVG)`
-  ${css.size(20)};
-  fill: ${theme('article.digest')};
-  opacity: 0.7;
-
-  ${Block}:hover & {
-    fill: ${theme('article.title')};
-    cursor: pointer;
-  }
-`
-
-export const Desc = styled(SettingTitle)`
-  ${Wrapper}:hover & {
-    color: ${theme('article.title')};
-  }
-`
+}

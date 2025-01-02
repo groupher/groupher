@@ -359,7 +359,7 @@ export default (): TRet => {
         return cn('trans-all-100', fill('text.digest'), `group-hover:${fill('text.title')}`)
       }
       case 'fg': {
-        return cn('trans-all-100', fg('text.digest'), `group-hover:${fg('text.title')}`)
+        return cn('trans-all-100 pointer', fg('text.digest'), `group-hover:${fg('text.title')}`)
       }
       case 'icon-red': {
         return cn(

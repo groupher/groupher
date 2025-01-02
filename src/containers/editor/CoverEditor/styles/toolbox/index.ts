@@ -19,10 +19,10 @@ export default () => {
       bg('card'),
     ),
 
-    panel: cn('align-both gap-x-4 h-12 w-fit px-5', fg('text.digest')),
+    panel: cn('align-both gap-x-4 h-fit w-fit px-5 py-3', fg('text.digest')),
 
     settingBlock: cn(
-      'align-both rounded size-8 border mt-px',
+      'align-both rounded size-8 border mt-0.5',
       `hover:${br('text.digest')}`,
       br('divider'),
       shadow('sm'),
@@ -36,7 +36,7 @@ export default () => {
       fill('text.title'),
     ),
     optionItem: cn(
-      'align-both size-6 text-sm rounded border trans-all-100',
+      'align-both size-6 text-sm rounded border trans-all-100 pointer',
       `hover:${br('text.digest')}`,
       br('divider'),
       fg('text.digest'),
