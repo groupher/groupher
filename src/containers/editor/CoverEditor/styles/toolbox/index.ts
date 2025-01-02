@@ -19,6 +19,8 @@ export default () => {
       bg('card'),
     ),
 
+    panel: cn('align-both gap-x-4 h-12 w-fit px-5', fg('text.digest')),
+
     settingBlock: cn(
       'align-both rounded size-8 border mt-px',
       `hover:${br('text.digest')}`,

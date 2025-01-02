@@ -5,12 +5,12 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg } = useTwBelt()
+  const { cn } = useTwBelt()
   const base = useBase()
 
   return {
     wrapper: cn('column-align-both size-16 -ml-1 group/block'),
-    panel: cn('align-both gap-x-4 h-12 w-36', fg('text.digest')),
+    panel: base.panel,
     block: base.settingBlock,
     blockActive: base.settingBlockActive,
     title: base.settingTitle,

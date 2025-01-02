@@ -1,43 +1,49 @@
 import { type FC, useState } from 'react'
 
+import RatioSVG from '~/icons/Ratio'
 import Tooltip from '~/widgets/Tooltip'
 
 import type { TImageRadio } from '../spec'
 import { IMAGE_RATIO } from '../constant'
 
 import useLogic from '../useLogic'
-import { Wrapper, Block, Panel, Item, Icon, Desc } from '../styles/toolbox/ratio_block'
+import useSalon, { cn } from '../styles/toolbox/ratio_block'
 
 type TProps = {
   ratio: TImageRadio
 }
 
 const RatioBlock: FC<TProps> = ({ ratio }) => {
+  const s = useSalon()
+
   const { ratioOnChange } = useLogic()
   const [panelOpen, setPanelOpen] = useState(false)
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <Tooltip
         content={
-          <Panel>
-            <Item
-              $active={ratio === IMAGE_RATIO.SCREEN}
+          <div className={s.panel}>
+            <div
+              className={cn(s.optionItem, ratio === IMAGE_RATIO.SCREEN && s.optionItemActive)}
               onClick={() => ratioOnChange(IMAGE_RATIO.SCREEN)}
             >
               16:9
-            </Item>
+            </div>
 
-            <Item $active={ratio === IMAGE_RATIO.TV} onClick={() => ratioOnChange(IMAGE_RATIO.TV)}>
+            <div
+              className={cn(s.optionItem, ratio === IMAGE_RATIO.TV && s.optionItemActive)}
+              onClick={() => ratioOnChange(IMAGE_RATIO.TV)}
+            >
               4:3
-            </Item>
-            <Item
-              $active={ratio === IMAGE_RATIO.SQUARE}
+            </div>
+            <div
+              className={cn(s.optionItem, ratio === IMAGE_RATIO.SQUARE && s.optionItemActive)}
               onClick={() => ratioOnChange(IMAGE_RATIO.SQUARE)}
             >
               1:1
-            </Item>
-          </Panel>
+            </div>
+          </div>
         }
         placement="top"
         trigger="mouseenter focus"
@@ -47,13 +53,13 @@ const RatioBlock: FC<TProps> = ({ ratio }) => {
         offset={[-1, 5]}
         noPadding
       >
-        <Block $active={panelOpen}>
-          <Icon />
-        </Block>
+        <div className={cn(s.block, panelOpen && s.blockActive)}>
+          <RatioSVG className={s.icon} />
+        </div>
       </Tooltip>
 
-      <Desc>比例</Desc>
-    </Wrapper>
+      <div className={s.title}>比例</div>
+    </div>
   )
 }
 

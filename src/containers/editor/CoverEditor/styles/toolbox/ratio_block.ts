@@ -1,56 +1,22 @@
-import type { TActive } from '~/spec'
-import styled, { css, theme } from '~/css'
-import RatioSVG from '~/icons/Ratio'
+import useBase from '.'
 
-import { SettingBlock, SettingTitle } from '.'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.size(60)};
-  ${css.column('align-both')};
-`
+export { cn } from '~/css'
 
-export const Block = styled(SettingBlock)``
+export default () => {
+  const { cn } = useTwBelt()
+  const base = useBase()
 
-export const Panel = styled.div`
-  ${css.row('align-both')};
-  gap: 0 15px;
-  color: ${theme('article.digest')};
-  width: 200px;
-  height: 50px;
-
-  background: ${theme('alphaBg2')};
-  backdrop-filter: blur(5px);
-`
-export const Item = styled.div<TActive>`
-  font-size: 14px;
-  color: ${({ $active }) => ($active ? theme('article.title') : theme('article.digest'))};
-  border: 1px solid transparent;
-  border-radius: 3px;
-  border-color: ${({ $active }) => ($active ? theme('article.digest') : 'transparent')};
-  font-weight: ${({ $active }) => ($active ? 600 : 400)};
-  padding: 1px 6px;
-  cursor: pointer;
-  background: white;
-  box-shadow: ${css.cardShadow};
-
-  &:hover {
-    border-color: ${theme('article.digest')};
+  return {
+    wrapper: cn('column-align-both size-16 -ml-1 group/block'),
+    panel: base.panel,
+    block: base.settingBlock,
+    blockActive: base.settingBlockActive,
+    title: base.settingTitle,
+    icon: base.settingIcon,
+    //
+    optionItem: cn(base.optionItem, 'h-6 w-10'),
+    optionItemActive: base.optionItemActive,
   }
-
-  transition: all 0.2s;
-`
-export const Icon = styled(RatioSVG)`
-  ${css.size(20)};
-  fill: ${theme('article.digest')};
-
-  ${Block}:hover & {
-    fill: ${theme('article.title')};
-    cursor: pointer;
-  }
-`
-
-export const Desc = styled(SettingTitle)`
-  ${Wrapper}:hover & {
-    color: ${theme('article.title')};
-  }
-`
+}
