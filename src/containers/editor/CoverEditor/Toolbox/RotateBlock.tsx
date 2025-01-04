@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react'
+import { type FC, useState, Fragment } from 'react'
 
 import Tooltip from '~/widgets/Tooltip'
 
@@ -22,14 +22,18 @@ const RotateBlock: FC<TProps> = ({ rotate }) => {
     <div className={s.wrapper}>
       <Tooltip
         content={
-          <div className={s.panel}>
-            {rotate !== 0 && (
-              <div className={s.reset} onClick={() => rotateOnChange(0)}>
-                回正
+          <Fragment>
+            {panelOpen && (
+              <div className={s.panel}>
+                {rotate !== 0 && (
+                  <div className={s.reset} onClick={() => rotateOnChange(0)}>
+                    回正
+                  </div>
+                )}
+                <RangeSlider value={rotate} onChange={(v) => rotateOnChange(v)} />
               </div>
             )}
-            <RangeSlider value={rotate} onChange={(v) => rotateOnChange(v)} />
-          </div>
+          </Fragment>
         }
         placement="top"
         trigger="mouseenter focus"

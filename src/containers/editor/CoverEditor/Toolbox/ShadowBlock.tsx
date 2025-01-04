@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react'
+import { type FC, useState, Fragment } from 'react'
 import { values } from 'ramda'
 
 import ShadowSVG from '~/icons/Shadow'
@@ -24,39 +24,43 @@ const ShadowBlock: FC<TProps> = ({ shadowLevel }) => {
     <div className={s.wrapper}>
       <Tooltip
         content={
-          <div className={s.panel}>
-            {values(SETTING_LEVEL).map((level) => {
-              if (level === 'L1') {
-                return (
-                  <div
-                    key={level}
-                    className={cn(
-                      s.optionItem,
-                      shadowLevel === SETTING_LEVEL[level] && s.optionItemActive,
-                    )}
-                    onClick={() => shadowOnChange(SETTING_LEVEL[level])}
-                  >
-                    <EmptySVG className={s.forbidIcon} />
-                  </div>
-                )
-              }
+          <Fragment>
+            {panelOpen && (
+              <div className={s.panel}>
+                {values(SETTING_LEVEL).map((level) => {
+                  if (level === 'L1') {
+                    return (
+                      <div
+                        key={level}
+                        className={cn(
+                          s.optionItem,
+                          shadowLevel === SETTING_LEVEL[level] && s.optionItemActive,
+                        )}
+                        onClick={() => shadowOnChange(SETTING_LEVEL[level])}
+                      >
+                        <EmptySVG className={s.forbidIcon} />
+                      </div>
+                    )
+                  }
 
-              return (
-                <div
-                  key={level}
-                  className={cn(
-                    s.shadowBox,
-                    'debug',
-                    shadowLevel === SETTING_LEVEL[level] && s.optionItemActive,
-                  )}
-                  style={{
-                    boxShadow: IMAGE_SHADOW[level],
-                  }}
-                  onClick={() => shadowOnChange(SETTING_LEVEL[level])}
-                />
-              )
-            })}
-          </div>
+                  return (
+                    <div
+                      key={level}
+                      className={cn(
+                        s.shadowBox,
+                        'debug',
+                        shadowLevel === SETTING_LEVEL[level] && s.optionItemActive,
+                      )}
+                      style={{
+                        boxShadow: IMAGE_SHADOW[level],
+                      }}
+                      onClick={() => shadowOnChange(SETTING_LEVEL[level])}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </Fragment>
         }
         placement="top"
         trigger="mouseenter focus"

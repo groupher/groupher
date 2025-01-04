@@ -1,4 +1,4 @@
-import { useState, type FC } from 'react'
+import { useState, type FC, Fragment } from 'react'
 import { keys, values } from 'ramda'
 
 import type { TWallpaper, TWallpaperGradientDir } from '~/spec'
@@ -39,36 +39,40 @@ const BackgroundBlock: FC<TProps> = ({ wallpapers, wallpaper, direction }) => {
     <Wrapper>
       <Tooltip
         content={
-          <Panel>
-            <Title>渐变背景色:</Title>
-            <BgRow>
-              <ImageWrapper $active={wallpaper === ''}>
-                <ImageBlock background="" onClick={() => wallpaperOnChange('')} />
-              </ImageWrapper>
+          <Fragment>
+            {panelOpen && (
+              <Panel>
+                <Title>渐变背景色:</Title>
+                <BgRow>
+                  <ImageWrapper $active={wallpaper === ''}>
+                    <ImageBlock background="" onClick={() => wallpaperOnChange('')} />
+                  </ImageWrapper>
 
-              {keys(COVER_GRADIENT_WALLPAPER).map((themeName) => (
-                <ImageWrapper key={themeName} $active={wallpaper === themeName}>
-                  <ImageBlock
-                    background={parseWallpaper(wallpapers, themeName).background}
-                    onClick={() => wallpaperOnChange(themeName)}
-                  />
-                </ImageWrapper>
-              ))}
-            </BgRow>
-            <Divider />
-            <Title>渐变方向:</Title>
-            <DirRow>
-              {values(GRADIENT_DIRECTION).map((dir) => (
-                <DirWrapper
-                  key={dir}
-                  $active={dir === direction}
-                  onClick={() => gradientDirOnChange(dir)}
-                >
-                  <DirArrowIcon dir={dir} />
-                </DirWrapper>
-              ))}
-            </DirRow>
-          </Panel>
+                  {keys(COVER_GRADIENT_WALLPAPER).map((themeName) => (
+                    <ImageWrapper key={themeName} $active={wallpaper === themeName}>
+                      <ImageBlock
+                        background={parseWallpaper(wallpapers, themeName).background}
+                        onClick={() => wallpaperOnChange(themeName)}
+                      />
+                    </ImageWrapper>
+                  ))}
+                </BgRow>
+                <Divider />
+                <Title>渐变方向:</Title>
+                <DirRow>
+                  {values(GRADIENT_DIRECTION).map((dir) => (
+                    <DirWrapper
+                      key={dir}
+                      $active={dir === direction}
+                      onClick={() => gradientDirOnChange(dir)}
+                    >
+                      <DirArrowIcon dir={dir} />
+                    </DirWrapper>
+                  ))}
+                </DirRow>
+              </Panel>
+            )}
+          </Fragment>
         }
         placement="top-end"
         trigger="mouseenter focus"

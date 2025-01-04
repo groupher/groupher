@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react'
+import { type FC, useState, Fragment } from 'react'
 
 import Tooltip from '~/widgets/Tooltip'
 
@@ -23,34 +23,38 @@ const SizeBlock: FC<TProps> = ({ size }) => {
     <div className={s.wrapper}>
       <Tooltip
         content={
-          <div className={s.panel}>
-            <div
-              className={cn(
-                s.optionItem,
-                'text-base',
-                size === IMAGE_SIZE.LARGE && s.optionItemActive,
-              )}
-              onClick={() => sizeOnChange(IMAGE_SIZE.LARGE)}
-            >
-              大
-            </div>
-            <div
-              className={cn(s.optionItem, size === IMAGE_SIZE.MEDIUM && s.optionItemActive)}
-              onClick={() => sizeOnChange(IMAGE_SIZE.MEDIUM)}
-            >
-              中
-            </div>
-            <div
-              className={cn(
-                s.optionItem,
-                'text-xs',
-                size === IMAGE_SIZE.SMALL && s.optionItemActive,
-              )}
-              onClick={() => sizeOnChange(IMAGE_SIZE.SMALL)}
-            >
-              小
-            </div>
-          </div>
+          <Fragment>
+            {panelOpen && (
+              <div className={s.panel}>
+                <div
+                  className={cn(
+                    s.optionItem,
+                    'text-base',
+                    size === IMAGE_SIZE.LARGE && s.optionItemActive,
+                  )}
+                  onClick={() => sizeOnChange(IMAGE_SIZE.LARGE)}
+                >
+                  大
+                </div>
+                <div
+                  className={cn(s.optionItem, size === IMAGE_SIZE.MEDIUM && s.optionItemActive)}
+                  onClick={() => sizeOnChange(IMAGE_SIZE.MEDIUM)}
+                >
+                  中
+                </div>
+                <div
+                  className={cn(
+                    s.optionItem,
+                    'text-xs',
+                    size === IMAGE_SIZE.SMALL && s.optionItemActive,
+                  )}
+                  onClick={() => sizeOnChange(IMAGE_SIZE.SMALL)}
+                >
+                  小
+                </div>
+              </div>
+            )}
+          </Fragment>
         }
         placement="top"
         trigger="mouseenter focus"

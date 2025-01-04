@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react'
+import { type FC, useState, Fragment } from 'react'
 
 import Tooltip from '~/widgets/Tooltip'
 
@@ -25,13 +25,17 @@ const ActionBlock: FC<TProps> = ({ onDelete, onReplace }) => {
     <Wrapper>
       <Tooltip
         content={
-          <Panel>
-            <Item onClick={onReplace}>替换图片</Item>
-            <DeleteItem onClick={onDelete}>
-              <DeleteIcon />
-              删除
-            </DeleteItem>
-          </Panel>
+          <Fragment>
+            {panelOpen && (
+              <Panel>
+                <Item onClick={onReplace}>替换图片</Item>
+                <DeleteItem onClick={onDelete}>
+                  <DeleteIcon />
+                  删除
+                </DeleteItem>
+              </Panel>
+            )}
+          </Fragment>
         }
         placement="top"
         trigger="mouseenter focus"
