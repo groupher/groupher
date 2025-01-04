@@ -3,26 +3,29 @@ import styled, { css, theme } from '~/css'
 
 import UploadSVG from '~/icons/Upload'
 
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
+  const { isLightTheme } = useTheme()
   const { cn, br, shadow, fg, bg, fill } = useTwBelt()
 
   return {
     wrapper: cn(
-      'align-both absolute bottom-0 w-[480px] h-16 pt-0.5 border rounded-md z-20',
+      'align-both absolute bottom-0 w-[480px] h-16 pt-0.5 border rounded-xl z-20',
       // 'group-smoky-0 trans-all-200',
       'trans-all-200',
-      'backdrop-blur-2xl',
+      'backdrop-blur-xl',
+      isLightTheme && 'backdrop-brightness-125',
       br('divider'),
       shadow('md'),
-      bg('card'),
+      bg('cardAlpha'),
     ),
 
     panel: cn('align-both gap-x-4 h-fit w-fit px-5 py-3', fg('text.digest')),
 
     settingBlock: cn(
-      'align-both rounded size-8 border mt-0.5',
+      'align-both rounded size-8 border mt-0.5 pointer',
       `hover:${br('text.digest')}`,
       br('divider'),
       shadow('sm'),

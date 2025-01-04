@@ -1,6 +1,8 @@
 import type { TWallpaperGradientDir } from '~/spec'
 import { GRADIENT_DIRECTION } from '~/const/wallpaper'
 
+import colors from '../../../../../tailwind.include/theme/colors'
+
 import type { TImagePos, TLinearBorderPos, TImageSize, TImageRadio, TImageSizeValue } from '../spec'
 import { IMAGE_RATIO_SIZE, IMAGE_POS, LINEAR_BORDER, IMAGE_SIZE } from '../constant'
 
@@ -170,51 +172,45 @@ export const getLightPos = (pos: TImagePos): TLightPos => {
   }
 }
 
-export const getLinearBorder = (pos: TLinearBorderPos, active = false): string => {
-  const color = active ? '#333333' : '#dcd6ca' // light or dark
+export const getLinearBorder = (
+  pos: TLinearBorderPos,
+  active = false,
+  isLightTheme = true,
+): string => {
+  const themeKey = isLightTheme ? 'DEFAULT' : 'dark'
+  const color = active ? colors.text.digest[themeKey] : colors.text.hint[themeKey]
 
   switch (pos) {
     case LINEAR_BORDER.TOP_LEFT: {
       return `linear-gradient(transparent, transparent), 
       linear-gradient(to left top, transparent, transparent 62%, ${color})`
     }
-    case LINEAR_BORDER.TOP_RIGHT: {
+    case LINEAR_BORDER.TOP_RIGHT:
       return `linear-gradient(transparent, transparent),
-      linear-gradient(to right top, transparent, transparent 62%, ${color});`
-    }
-    case LINEAR_BORDER.TOP_ALL: {
+              linear-gradient(to right top, transparent, transparent 62%, ${color})`
+    case LINEAR_BORDER.TOP_ALL:
       return `linear-gradient(transparent, transparent),
-      linear-gradient(to top, transparent, transparent 20%, ${color});`
-    }
-    case LINEAR_BORDER.BOTTOM_LEFT: {
+              linear-gradient(to top, transparent, transparent 20%, ${color})`
+    case LINEAR_BORDER.BOTTOM_LEFT:
       return `linear-gradient(transparent, transparent), 
-      linear-gradient(to left bottom, transparent, transparent 62%, ${color});`
-    }
-    case LINEAR_BORDER.BOTTOM_RIGHT: {
+              linear-gradient(to left bottom, transparent, transparent 62%, ${color})`
+    case LINEAR_BORDER.BOTTOM_RIGHT:
       return `linear-gradient(transparent, transparent), 
-      linear-gradient(to right bottom, transparent, transparent 62%, ${color});`
-    }
-
-    case LINEAR_BORDER.BOTTOM_ALL: {
+              linear-gradient(to right bottom, transparent, transparent 62%, ${color})`
+    case LINEAR_BORDER.BOTTOM_ALL:
       return `linear-gradient(transparent, transparent), 
-      linear-gradient(to bottom, transparent, transparent 20%, ${color});`
-    }
-    case LINEAR_BORDER.LEFT_ALL: {
+              linear-gradient(to bottom, transparent, transparent 20%, ${color})`
+    case LINEAR_BORDER.LEFT_ALL:
       return `linear-gradient(transparent, transparent), 
-      linear-gradient(to left, transparent, transparent 20%, ${color});`
-    }
-    case LINEAR_BORDER.RIGHT_ALL: {
+              linear-gradient(to left, transparent, transparent 20%, ${color})`
+    case LINEAR_BORDER.RIGHT_ALL:
       return `linear-gradient(transparent, transparent),
-      linear-gradient(to right, transparent, transparent 20%, ${color});`
-    }
-    case LINEAR_BORDER.NONE: {
+              linear-gradient(to right, transparent, transparent 20%, ${color})`
+    case LINEAR_BORDER.NONE:
       return 'none'
-    }
-    // all
-    default: {
+    default:
       return `linear-gradient(transparent, transparent),
-      linear-gradient(to left, transparent, transparent, ${color});`
-    }
+              linear-gradient(to left, transparent, transparent, ${color})`
   }
 }
 

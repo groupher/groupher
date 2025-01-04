@@ -30,7 +30,6 @@ const Toolbox: FC<TProps> = ({ onDelete, onReplace }) => {
       <BorderBlock
         borderRadiusLevel={setting.borderRadiusLevel}
         linearBorderPos={setting.linearBorderPos}
-        shadowLevel={setting.shadowLevel}
         hasGlassBorder={setting.hasGlassBorder}
       />
       <RatioBlock ratio={setting.ratio} />

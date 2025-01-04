@@ -81,6 +81,10 @@
     @apply transition-all duration-100;
   }
 
+  .smoky-40 {
+    @apply opacity-40 hover:opacity-100 cursor-pointer
+  }
+
   .smoky-65 {
     @apply opacity-65 hover:opacity-100 cursor-pointer
   }
