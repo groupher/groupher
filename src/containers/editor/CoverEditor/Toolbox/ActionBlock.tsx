@@ -5,7 +5,7 @@ import Tooltip from '~/widgets/Tooltip'
 import SettingSVG from '~/icons/Setting'
 import DeleteSVG from '~/icons/Delete'
 
-import useSalon, { cn } from '../styles/toolbox/action_block'
+import useSalon, { cn } from '../salon/toolbox/action_block'
 
 type TProps = {
   onDelete: () => void

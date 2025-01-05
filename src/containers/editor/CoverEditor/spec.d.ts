@@ -72,14 +72,3 @@ export type TToolboxSetting = {
   rotate: number
   hasGlassBorder: boolean
 }
-
-export type TCoverImage = {
-  pos: TImagePos
-  shadowLevel: TSettingLevel
-  borderRadiusLevel: TSettingLevel
-  linearBorderPos: TLinearBorderPos
-  size: TImageSize
-  ratio: TImageRadio
-  rotate: number
-  hasGlassBorder?: boolean
-}

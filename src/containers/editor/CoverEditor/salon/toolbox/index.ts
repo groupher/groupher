@@ -1,8 +1,3 @@
-import type { TActive } from '~/spec'
-import styled, { css, theme } from '~/css'
-
-import UploadSVG from '~/icons/Upload'
-
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -50,45 +45,3 @@ export default () => {
     desc: cn('text-xs', fg('text.digest')),
   }
 }
-
-export const UploadIcon = styled(UploadSVG)`
-  ${css.size(50)};
-  fill: ${theme('article.info')};
-  margin-bottom: 15px;
-  opacity: 0.3;
-`
-export const Title = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 5px;
-`
-export const Desc = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 12px;
-  opacity: 0.8;
-`
-export const SettingBlock = styled.div<TActive>`
-  ${css.size(29)};
-  ${css.row('align-both')};
-  border-radius: 2px;
-  border: 1px solid;
-  border-color: ${({ $active }) => ($active ? theme('article.digest') : theme('divider'))};
-  margin-top: 3px;
-  margin-bottom: 7px;
-  background: white;
-
-  box-shadow: ${css.cardShadow};
-  transition: all 0.3s;
-
-  &:hover {
-    border-color: ${theme('article.digest')};
-  }
-`
-export const SettingTitle = styled.div<TActive>`
-  color: ${({ $active }) => ($active ? theme('article.title') : theme('article.digest'))};
-  font-size: 9px;
-  opacity: 0.8;
-
-  transition: color 0.2s;
-`

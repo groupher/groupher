@@ -11,7 +11,7 @@ import ActionBlock from './ActionBlock'
 import BackgroundBlock from './BackgroundBlock'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/toolbox'
+import useSalon from '../salon/toolbox'
 
 type TProps = {
   onDelete: () => void

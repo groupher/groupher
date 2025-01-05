@@ -6,7 +6,7 @@ import RotateSVG from '~/icons/Rotate'
 import RangeSlider from '~/widgets/RangeSlider'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/toolbox/rotate_block'
+import useSalon, { cn } from '../salon/toolbox/rotate_block'
 
 type TProps = {
   rotate: number

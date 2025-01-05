@@ -9,7 +9,7 @@ import type { TSettingLevel } from '../spec'
 import { IMAGE_SHADOW, SETTING_LEVEL } from '../constant'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/toolbox/shadow_block'
+import useSalon, { cn } from '../salon/toolbox/shadow_block'
 
 type TProps = {
   shadowLevel: TSettingLevel
@@ -48,7 +48,6 @@ const ShadowBlock: FC<TProps> = ({ shadowLevel }) => {
                       key={level}
                       className={cn(
                         s.shadowBox,
-                        'debug',
                         shadowLevel === SETTING_LEVEL[level] && s.optionItemActive,
                       )}
                       style={{

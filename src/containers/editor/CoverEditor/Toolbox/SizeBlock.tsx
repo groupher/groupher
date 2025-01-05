@@ -8,7 +8,7 @@ import type { TImageSize } from '../spec'
 import { IMAGE_SIZE } from '../constant'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/toolbox/size_block'
+import useSalon, { cn } from '../salon/toolbox/size_block'
 
 type TProps = {
   size: TImageSize

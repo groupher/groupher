@@ -12,7 +12,7 @@ import type { TLinearBorderPos, TSettingLevel } from '../../spec'
 import { IMAGE_BORDER_RADIUS, IMAGE_SHADOW, SETTING_LEVEL, LINEAR_BORDER } from '../../constant'
 
 import useLogic from '../../useLogic'
-import useSalon, { cn } from '../../styles/toolbox/border_block'
+import useSalon, { cn } from '../../salon/toolbox/border_block'
 
 type TProps = {
   borderRadiusLevel: TSettingLevel

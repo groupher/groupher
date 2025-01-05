@@ -7,7 +7,7 @@ import type { TImageRadio } from '../spec'
 import { IMAGE_RATIO } from '../constant'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/toolbox/ratio_block'
+import useSalon, { cn } from '../salon/toolbox/ratio_block'
 
 type TProps = {
   ratio: TImageRadio

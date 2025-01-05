@@ -5,7 +5,7 @@ import type { TImagePos } from '../spec'
 import { IMAGE_POS } from '../constant'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/toolbox/position_block'
+import useSalon, { cn } from '../salon/toolbox/position_block'
 
 type TProps = {
   pos: TImagePos

@@ -1,13 +1,15 @@
-import { UploadIcon, Title, Desc } from '../styles/cover/placeholder'
+import useSalon from '../salon/cover/placeholder'
 
-const Placeholder = () => {
+import UploadSVG from '~/icons/Upload'
+
+export default () => {
+  const s = useSalon()
+
   return (
     <>
-      <UploadIcon />
-      <Title>上传封面图</Title>
-      <Desc>上传本地图片或 URL, 默认展示为 680x400 宽度</Desc>
+      <UploadSVG className={s.uploadIcon} />
+      <div className={s.title}>上传封面图</div>
+      <div className={s.desc}>上传本地图片或 URL, 默认展示为 680x400 宽度</div>
     </>
   )
 }
-
-export default Placeholder

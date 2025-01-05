@@ -9,7 +9,7 @@ import ArrowSVG from '~/icons/Arrow'
 import Tooltip from '~/widgets/Tooltip'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../styles/toolbox/background_block'
+import useSalon, { cn } from '../salon/toolbox/background_block'
 
 type TProps = {
   wallpapers: Record<string, TWallpaper>
