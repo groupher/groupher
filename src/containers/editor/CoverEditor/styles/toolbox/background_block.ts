@@ -1,111 +1,40 @@
-import type { TActive, TWallpaperGradientDir } from '~/spec'
-import styled, { css, theme } from '~/css'
+import useBase from '.'
 
-import ArchSVG from '~/icons/Arch'
-import ArrowSVG from '~/icons/Arrow'
-
-import { SettingBlock, SettingTitle } from '.'
+import useTwBelt from '~/hooks/useTwBelt'
 import { getBgGradientDirAngle } from '../metric'
 
-export const Wrapper = styled.div`
-  ${css.size(60)};
-  ${css.column('align-both')};
-`
-export const Block = styled(SettingBlock)``
+export { cn } from '~/css'
 
-export const Panel = styled.div`
-  ${css.column('align-start')};
-  width: 320px;
-  height: 200px;
-  padding: 10px;
+export default () => {
+  const { cn, bg, br, fg, fill, sexyHBorder } = useTwBelt()
+  const base = useBase()
 
-  background: ${theme('alphaBg2')};
-  backdrop-filter: blur(5px);
-`
-
-export const Title = styled.div`
-  color: ${theme('article.digest')};
-  font-weight: 600;
-  font-size: 12px;
-  margin-top: 5px;
-  margin-bottom: 8px;
-  margin-left: 2px;
-`
-
-export const BgRow = styled.div`
-  ${css.rowWrap('align-center')};
-  gap: 10px;
-`
-
-export const Divider = styled.div`
-  width: 90%;
-  height: 1px;
-  background: ${theme('divider')};
-  opacity: 0.4;
-  margin-top: 15px;
-  margin-bottom: 6px;
-`
-
-export const DirRow = styled.div`
-  ${css.rowWrap('align-center')};
-  gap: 0 12px;
-`
-
-export const BgImage = styled.div<{ background: string }>`
-  ${css.size(23)};
-  border-radius: 5px;
-  background: ${({ background }) => background || theme('hoverBg')};
-  transition: all 0.2s;
-  cursor: pointer;
-`
-
-export const ImageWrapper = styled.div<TActive>`
-  ${css.size(28)};
-  ${css.row('align-both')};
-  border: 1px solid transparent;
-  background-color: white;
-  border-radius: 3px;
-  box-shadow: ${css.cardShadow};
-  border-color: ${({ $active }) => ($active ? theme('article.digest') : 'transparent')};
-  opacity: ${({ $active }) => ($active ? 1 : 0.85)};
-
-  &:hover {
-    border-color: ${theme('article.digest')};
-    opacity: 1;
-    cursor: pointer;
+  return {
+    wrapper: cn('column-align-both size-16 group/block'),
+    panel: cn(base.panel, 'column !items-start justify-start w-68 pb-4'),
+    block: base.settingBlock,
+    blockActive: base.settingBlockActive,
+    title: base.settingTitle,
+    icon: base.settingIcon,
+    //
+    sectionTitle: cn('text-xs bold-sm mt-1 mb-2 ml-0.5', fg('text.digest')),
+    bgRow: 'row-center wrap gap-2.5',
+    dirRow: 'row wrap gap-x-3',
+    divider: cn(sexyHBorder(), 'mt-3.5 mb-1.5'),
+    //
+    optionItem: cn(base.optionItem, 'h-6 w-10'),
+    optionItemActive: base.optionItemActive,
+    //
+    bgImage: cn('size-6 rounded pointer', bg('hoverBg')),
+    imageItem: cn(
+      'align-both size-7 border border-transparent rounded-md opacity-90 pointer',
+      bg('card'),
+      `hover:${br('text.digest')}`,
+    ),
+    imageItemActive: cn('opacity-100', br('text.digest')),
+    imageBlock: 'size-5 rounded',
+    dirItem: cn(br('divider')),
+    dirArrow: cn('size-2.5', fill('text.digest')),
+    getBgGradientDirAngle,
   }
-`
-
-export const DirWrapper = styled(ImageWrapper)`
-  ${css.size(24)};
-  ${css.row('align-both')};
-`
-
-type TImageBlock = { background: string }
-export const ImageBlock = styled.div<TImageBlock>`
-  ${css.size(22)};
-  border-radius: 5px;
-  background: ${({ background }) => background || theme('hoverBg')};
-`
-
-export const Icon = styled(ArchSVG)`
-  ${css.size(20)};
-  fill: ${theme('article.digest')};
-
-  ${Block}:hover & {
-    fill: ${theme('article.title')};
-    cursor: pointer;
-  }
-`
-
-export const Desc = styled(SettingTitle)`
-  ${Wrapper}:hover & {
-    color: ${theme('article.title')};
-  }
-`
-export const DirArrowIcon = styled(ArrowSVG)<{ dir: TWallpaperGradientDir }>`
-  ${css.size(10)};
-  fill: ${theme('article.title')};
-
-  transform: ${({ dir }) => `rotate(${getBgGradientDirAngle(dir)})`};
-`
+}

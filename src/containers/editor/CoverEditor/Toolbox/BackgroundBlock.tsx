@@ -5,24 +5,11 @@ import type { TWallpaper, TWallpaperGradientDir } from '~/spec'
 import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
 import { parseWallpaper } from '~/wallpaper'
 
+import ArrowSVG from '~/icons/Arrow'
 import Tooltip from '~/widgets/Tooltip'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  Block,
-  Panel,
-  Title,
-  BgRow,
-  DirRow,
-  Divider,
-  BgImage,
-  Desc,
-  ImageWrapper,
-  ImageBlock,
-  DirWrapper,
-  DirArrowIcon,
-} from '../styles/toolbox/background_block'
+import useSalon, { cn } from '../styles/toolbox/background_block'
 
 type TProps = {
   wallpapers: Record<string, TWallpaper>
@@ -31,64 +18,77 @@ type TProps = {
 }
 
 const BackgroundBlock: FC<TProps> = ({ wallpapers, wallpaper, direction }) => {
+  const s = useSalon()
+
   const { wallpaperOnChange, gradientDirOnChange } = useLogic()
 
   const [panelOpen, setPanelOpen] = useState(false)
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <Tooltip
         content={
           <Fragment>
             {panelOpen && (
-              <Panel>
-                <Title>渐变背景色:</Title>
-                <BgRow>
-                  <ImageWrapper $active={wallpaper === ''}>
-                    <ImageBlock background="" onClick={() => wallpaperOnChange('')} />
-                  </ImageWrapper>
+              <div className={s.panel}>
+                <div className={s.sectionTitle}>渐变背景色:</div>
+                <div className={s.bgRow}>
+                  <div className={cn(s.imageItem, wallpaper === '' && s.imageItemActive)}>
+                    <div className={s.imageBlock} onClick={() => wallpaperOnChange('')} />
+                  </div>
 
                   {keys(COVER_GRADIENT_WALLPAPER).map((themeName) => (
-                    <ImageWrapper key={themeName} $active={wallpaper === themeName}>
-                      <ImageBlock
-                        background={parseWallpaper(wallpapers, themeName).background}
+                    <div
+                      key={themeName}
+                      className={cn(s.imageItem, wallpaper === themeName && s.imageItemActive)}
+                    >
+                      <div
+                        className={s.imageBlock}
+                        style={{ background: parseWallpaper(wallpapers, themeName).background }}
                         onClick={() => wallpaperOnChange(themeName)}
                       />
-                    </ImageWrapper>
+                    </div>
                   ))}
-                </BgRow>
-                <Divider />
-                <Title>渐变方向:</Title>
-                <DirRow>
+                </div>
+                <div className={s.divider} />
+                <div className={s.sectionTitle}>渐变方向:</div>
+                <div className={s.dirRow}>
                   {values(GRADIENT_DIRECTION).map((dir) => (
-                    <DirWrapper
+                    <div
                       key={dir}
-                      $active={dir === direction}
+                      className={cn(s.imageItem, s.dirItem, dir === direction && s.imageItemActive)}
                       onClick={() => gradientDirOnChange(dir)}
                     >
-                      <DirArrowIcon dir={dir} />
-                    </DirWrapper>
+                      <ArrowSVG
+                        className={s.dirArrow}
+                        style={{ transform: `rotate(${s.getBgGradientDirAngle(dir)})` }}
+                      />
+                    </div>
                   ))}
-                </DirRow>
-              </Panel>
+                </div>
+              </div>
             )}
           </Fragment>
         }
         placement="top-end"
-        trigger="mouseenter focus"
+        trigger="click"
         onShow={() => setPanelOpen(true)}
         onHide={() => setPanelOpen(false)}
         hideOnClick={false}
-        offset={[26, 5]}
+        offset={[60, 5]}
         noPadding
       >
-        <Block $active={panelOpen}>
-          <BgImage background={parseWallpaper(wallpapers, wallpaper).background} />
-        </Block>
+        <div className={cn(s.block, panelOpen && s.blockActive)}>
+          {/* <BgImage background={parseWallpaper(wallpapers, wallpaper).background} /> */}
+          <div
+            className={s.bgImage}
+            style={{ background: parseWallpaper(wallpapers, wallpaper).background }}
+          />
+        </div>
       </Tooltip>
 
-      <Desc $active={panelOpen}>背景</Desc>
-    </Wrapper>
+      <div className={s.title}>背景</div>
+    </div>
   )
 }
 
