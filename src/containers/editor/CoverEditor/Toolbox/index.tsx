@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
-import LightBlock from './LightBlock'
 import PositionBlock from './PositionBlock'
+import LightBlock from './LightBlock'
 import BorderBlock from './BorderBlock'
 import ShadowBlock from './ShadowBlock'
 import SizeBlock from './SizeBlock'
@@ -11,7 +11,7 @@ import ActionBlock from './ActionBlock'
 import BackgroundBlock from './BackgroundBlock'
 
 import useLogic from '../useLogic'
-import { Wrapper } from '../styles/toolbox'
+import useSalon from '../salon/toolbox'
 
 type TProps = {
   onDelete: () => void
@@ -19,17 +19,17 @@ type TProps = {
 }
 
 const Toolbox: FC<TProps> = ({ onDelete, onReplace }) => {
+  const s = useSalon()
   const { toolboxSetting: setting } = useLogic()
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <PositionBlock pos={setting.pos} />
       <SizeBlock size={setting.size} />
       <ShadowBlock shadowLevel={setting.shadowLevel} />
       <BorderBlock
         borderRadiusLevel={setting.borderRadiusLevel}
         linearBorderPos={setting.linearBorderPos}
-        shadowLevel={setting.shadowLevel}
         hasGlassBorder={setting.hasGlassBorder}
       />
       <RatioBlock ratio={setting.ratio} />
@@ -41,7 +41,7 @@ const Toolbox: FC<TProps> = ({ onDelete, onReplace }) => {
         direction={setting.direction}
       />
       <ActionBlock onDelete={onDelete} onReplace={onReplace} />
-    </Wrapper>
+    </div>
   )
 }
 

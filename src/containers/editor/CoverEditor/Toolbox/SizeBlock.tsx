@@ -1,48 +1,60 @@
-import { type FC, useState } from 'react'
+import { type FC, useState, Fragment } from 'react'
 
 import Tooltip from '~/widgets/Tooltip'
+
+import ImageSizeSVG from '~/icons/ImageSize'
 
 import type { TImageSize } from '../spec'
 import { IMAGE_SIZE } from '../constant'
 
 import useLogic from '../useLogic'
-import { Wrapper, Panel, Block, Item, Icon, Desc } from '../styles/toolbox/size_block'
+import useSalon, { cn } from '../salon/toolbox/size_block'
 
 type TProps = {
   size: TImageSize
 }
 
 const SizeBlock: FC<TProps> = ({ size }) => {
+  const s = useSalon()
   const { sizeOnChange } = useLogic()
   const [panelOpen, setPanelOpen] = useState(false)
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <Tooltip
         content={
-          <Panel>
-            <Item
-              fontSize={15}
-              $active={size === IMAGE_SIZE.LARGE}
-              onClick={() => sizeOnChange(IMAGE_SIZE.LARGE)}
-            >
-              大
-            </Item>
-            <Item
-              fontSize={13}
-              $active={size === IMAGE_SIZE.MEDIUM}
-              onClick={() => sizeOnChange(IMAGE_SIZE.MEDIUM)}
-            >
-              中
-            </Item>
-            <Item
-              fontSize={10}
-              $active={size === IMAGE_SIZE.SMALL}
-              onClick={() => sizeOnChange(IMAGE_SIZE.SMALL)}
-            >
-              小
-            </Item>
-          </Panel>
+          <Fragment>
+            {panelOpen && (
+              <div className={s.panel}>
+                <div
+                  className={cn(
+                    s.optionItem,
+                    'text-base',
+                    size === IMAGE_SIZE.LARGE && s.optionItemActive,
+                  )}
+                  onClick={() => sizeOnChange(IMAGE_SIZE.LARGE)}
+                >
+                  大
+                </div>
+                <div
+                  className={cn(s.optionItem, size === IMAGE_SIZE.MEDIUM && s.optionItemActive)}
+                  onClick={() => sizeOnChange(IMAGE_SIZE.MEDIUM)}
+                >
+                  中
+                </div>
+                <div
+                  className={cn(
+                    s.optionItem,
+                    'text-xs',
+                    size === IMAGE_SIZE.SMALL && s.optionItemActive,
+                  )}
+                  onClick={() => sizeOnChange(IMAGE_SIZE.SMALL)}
+                >
+                  小
+                </div>
+              </div>
+            )}
+          </Fragment>
         }
         placement="top"
         trigger="mouseenter focus"
@@ -52,12 +64,12 @@ const SizeBlock: FC<TProps> = ({ size }) => {
         offset={[-1, 5]}
         noPadding
       >
-        <Block $active={panelOpen}>
-          <Icon />
-        </Block>
+        <div className={cn(s.block, panelOpen && s.blockActive)}>
+          <ImageSizeSVG className={s.icon} />
+        </div>
       </Tooltip>
-      <Desc>大小</Desc>
-    </Wrapper>
+      <div className={s.title}>大小</div>
+    </div>
   )
 }
 

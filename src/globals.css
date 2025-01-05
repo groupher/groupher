@@ -53,6 +53,10 @@
     @apply text-base;
   }
 
+  .bold-none {
+    @apply font-normal;
+  }
+
   .bold {
     @apply font-semibold;
   }
@@ -75,6 +79,10 @@
 
   .trans-all-100 {
     @apply transition-all duration-100;
+  }
+
+  .smoky-40 {
+    @apply opacity-40 hover:opacity-100 cursor-pointer
   }
 
   .smoky-65 {

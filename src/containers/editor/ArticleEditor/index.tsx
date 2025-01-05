@@ -9,13 +9,12 @@ import METRIC from '~/const/metric'
 import { CONDITION_MODE } from '~/const/mode'
 
 // import RichEditor from '~/containers/editor/RichEditor'
-import { Space } from '~/widgets/Common'
 import ConditionSelector from '~/widgets/ConditionSelector'
 import ArchiveAlert from '~/widgets/ArchiveAlert'
 import NoticeBar from '~/widgets/NoticeBar'
 import TagSelector from '~/widgets/TagSelector'
 
-// import ArticleCover from './ArticleCover'
+import ArticleCover from './ArticleCover'
 
 import TitleInput from './TitleInput'
 import Footer from './Footer'
@@ -73,10 +72,10 @@ const ArticleEditor: FC<TProps> = ({ metric = METRIC.ARTICLE_EDITOR }) => {
     <Wrapper>
       <InnerWrapper metric={metric}>
         <ContentWrapper>
-          {!allowEdit && <NoticeBar type="notice" content="只有作者可以编辑本内容。" left={25} />}
-          {isArchived && <ArchiveAlert date={archivedAt} top={12} bottom={20} left={25} />}
+          {!allowEdit && <NoticeBar type="notice" content="只有作者可以编辑本内容。" left={5} />}
+          {isArchived && <ArchiveAlert date={archivedAt} top={3} bottom={4} left={5} />}
 
-          {/* <ArticleCover /> */}
+          <ArticleCover />
           <TitleInput title={title} placeholder={texts.holder.title} />
           <FuncRow>
             <ConditionSelector
@@ -85,9 +84,8 @@ const ArticleEditor: FC<TProps> = ({ metric = METRIC.ARTICLE_EDITOR }) => {
               selected
               active={activeCat}
               onSelect={catOnChange}
-              right={20}
+              right={4}
             />
-            <Space left={14} />
             <TagSelector groupedTags={groupedTags} activeTag={activeTag} onSelect={onTagSelect} />
           </FuncRow>
 

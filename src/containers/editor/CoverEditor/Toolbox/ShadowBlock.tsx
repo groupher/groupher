@@ -1,59 +1,65 @@
-import { type FC, useState } from 'react'
+import { type FC, useState, Fragment } from 'react'
 import { values } from 'ramda'
 
+import ShadowSVG from '~/icons/Shadow'
+import EmptySVG from '~/icons/Empty'
 import Tooltip from '~/widgets/Tooltip'
 
 import type { TSettingLevel } from '../spec'
 import { IMAGE_SHADOW, SETTING_LEVEL } from '../constant'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  Block,
-  Icon,
-  Desc,
-  Panel,
-  ShadowBox,
-  SelectBox,
-  ForbidIcon,
-} from '../styles/toolbox/shadow_block'
+import useSalon, { cn } from '../salon/toolbox/shadow_block'
 
 type TProps = {
   shadowLevel: TSettingLevel
 }
 
 const ShadowBlock: FC<TProps> = ({ shadowLevel }) => {
+  const s = useSalon()
   const { shadowOnChange } = useLogic()
   const [panelOpen, setPanelOpen] = useState(false)
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <Tooltip
         content={
-          <Panel>
-            {values(SETTING_LEVEL).map((level) => {
-              if (level === 'L1') {
-                return (
-                  <SelectBox
-                    key={level}
-                    $active={shadowLevel === SETTING_LEVEL[level]}
-                    onClick={() => shadowOnChange(SETTING_LEVEL[level])}
-                  >
-                    <ForbidIcon $active={shadowLevel === SETTING_LEVEL[level]} />
-                  </SelectBox>
-                )
-              }
+          <Fragment>
+            {panelOpen && (
+              <div className={s.panel}>
+                {values(SETTING_LEVEL).map((level) => {
+                  if (level === 'L1') {
+                    return (
+                      <div
+                        key={level}
+                        className={cn(
+                          s.optionItem,
+                          shadowLevel === SETTING_LEVEL[level] && s.optionItemActive,
+                        )}
+                        onClick={() => shadowOnChange(SETTING_LEVEL[level])}
+                      >
+                        <EmptySVG className={s.forbidIcon} />
+                      </div>
+                    )
+                  }
 
-              return (
-                <ShadowBox
-                  key={level}
-                  boxShadow={IMAGE_SHADOW[level]}
-                  $active={shadowLevel === SETTING_LEVEL[level]}
-                  onClick={() => shadowOnChange(SETTING_LEVEL[level])}
-                />
-              )
-            })}
-          </Panel>
+                  return (
+                    <div
+                      key={level}
+                      className={cn(
+                        s.shadowBox,
+                        shadowLevel === SETTING_LEVEL[level] && s.optionItemActive,
+                      )}
+                      style={{
+                        boxShadow: IMAGE_SHADOW[level],
+                      }}
+                      onClick={() => shadowOnChange(SETTING_LEVEL[level])}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </Fragment>
         }
         placement="top"
         trigger="mouseenter focus"
@@ -62,13 +68,13 @@ const ShadowBlock: FC<TProps> = ({ shadowLevel }) => {
         hideOnClick={false}
         noPadding
       >
-        <Block $active={panelOpen}>
-          <Icon />
-        </Block>
+        <div className={cn(s.block, panelOpen && s.blockActive)}>
+          <ShadowSVG className={s.icon} />
+        </div>
       </Tooltip>
 
-      <Desc $active={panelOpen}>阴影</Desc>
-    </Wrapper>
+      <div className={s.title}>阴影</div>
+    </div>
   )
 }
 

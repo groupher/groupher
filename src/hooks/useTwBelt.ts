@@ -307,8 +307,9 @@ export default (): TRet => {
       case 'bar': {
         return cn(
           'group/menubar row-center text-sm w-full border border-transparent rounded-md pointer',
-          'px-1.5 py-1 cursor-pointer',
+          'px-1.5 py-1 cursor-pointer bold-none',
           'trans-all-100',
+          'hover:bold-none',
           `hover:${fg('text.title')}`,
           `hover:${bg('menuHoverBg')}`,
           `hover:${br('divider')}`,
@@ -358,7 +359,7 @@ export default (): TRet => {
         return cn('trans-all-100', fill('text.digest'), `group-hover:${fill('text.title')}`)
       }
       case 'fg': {
-        return cn('trans-all-100', fg('text.digest'), `group-hover:${fg('text.title')}`)
+        return cn('trans-all-100 pointer', fg('text.digest'), `group-hover:${fg('text.title')}`)
       }
       case 'icon-red': {
         return cn(
