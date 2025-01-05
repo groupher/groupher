@@ -30,7 +30,7 @@ const PositionBlock: FC<TProps> = ({ pos }) => {
           )
         })}
       </div>
-      <div className={s.desc}>位置</div>
+      <div className={s.title}>位置</div>
     </div>
   )
 }
