@@ -10,7 +10,6 @@ export default () => {
   const base = useBase()
 
   return {
-    wrapper: cn('column-align-both size-16 group/block'),
     panel: cn(base.panel, 'column !items-start justify-start w-68 pb-4'),
     block: base.settingBlock,
     blockActive: base.settingBlockActive,

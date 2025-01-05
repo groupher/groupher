@@ -9,7 +9,6 @@ export default () => {
   const base = useBase()
 
   return {
-    wrapper: cn('column-align-both size-16 -ml-1 group/block'),
     panel: cn(base.panel, 'column items-start w-64 pl-4'),
     block: base.settingBlock,
     blockActive: base.settingBlockActive,
