@@ -71,7 +71,7 @@ const BackgroundBlock: FC<TProps> = ({ wallpapers, wallpaper, direction }) => {
           </Fragment>
         }
         placement="top-end"
-        trigger="click"
+        trigger="mouseenter focus"
         onShow={() => setPanelOpen(true)}
         onHide={() => setPanelOpen(false)}
         hideOnClick={false}

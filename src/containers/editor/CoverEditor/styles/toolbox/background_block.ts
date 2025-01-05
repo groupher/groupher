@@ -33,7 +33,7 @@ export default () => {
     ),
     imageItemActive: cn('opacity-100', br('text.digest')),
     imageBlock: 'size-5 rounded',
-    dirItem: cn(br('divider')),
+    dirItem: cn('size-6', br('divider')),
     dirArrow: cn('size-2.5', fill('text.digest')),
     getBgGradientDirAngle,
   }

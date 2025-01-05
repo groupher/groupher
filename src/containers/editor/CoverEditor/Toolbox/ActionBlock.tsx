@@ -2,16 +2,10 @@ import { type FC, useState, Fragment } from 'react'
 
 import Tooltip from '~/widgets/Tooltip'
 
-import {
-  Wrapper,
-  Block,
-  Panel,
-  DeleteItem,
-  DeleteIcon,
-  Item,
-  Icon,
-  Desc,
-} from '../styles/toolbox/action_block'
+import SettingSVG from '~/icons/Setting'
+import DeleteSVG from '~/icons/Delete'
+
+import useSalon, { cn } from '../styles/toolbox/action_block'
 
 type TProps = {
   onDelete: () => void
@@ -19,21 +13,24 @@ type TProps = {
 }
 
 const ActionBlock: FC<TProps> = ({ onDelete, onReplace }) => {
+  const s = useSalon()
   const [panelOpen, setPanelOpen] = useState(false)
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <Tooltip
         content={
           <Fragment>
             {panelOpen && (
-              <Panel>
-                <Item onClick={onReplace}>替换图片</Item>
-                <DeleteItem onClick={onDelete}>
-                  <DeleteIcon />
+              <div className={s.panel}>
+                <div className={s.item} onClick={onReplace}>
+                  替换图片
+                </div>
+                <div className={cn(s.item, s.deleteItem)} onClick={onDelete}>
+                  <DeleteSVG className={s.deleteIcon} />
                   删除
-                </DeleteItem>
-              </Panel>
+                </div>
+              </div>
             )}
           </Fragment>
         }
@@ -45,13 +42,13 @@ const ActionBlock: FC<TProps> = ({ onDelete, onReplace }) => {
         offset={[-1, 5]}
         noPadding
       >
-        <Block $active={panelOpen}>
-          <Icon />
-        </Block>
+        <div className={cn(s.block, panelOpen && s.blockActive)}>
+          <SettingSVG className={s.icon} />
+        </div>
       </Tooltip>
 
-      <Desc>操作</Desc>
-    </Wrapper>
+      <div className={s.title}>其他</div>
+    </div>
   )
 }
 

@@ -1,77 +1,38 @@
-import styled, { css, theme } from '~/css'
-import SettingSVG from '~/icons/Setting'
-import DeleteSVG from '~/icons/Delete'
+import useBase from '.'
 
-import { SettingBlock, SettingTitle } from '.'
+import { COLOR_NAME } from '~/const/colors'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.size(60)};
-  ${css.column('align-both')};
-`
+export { cn } from '~/css'
 
-export const Block = styled(SettingBlock)``
+export default () => {
+  const { cn, fg, bg, br, shadow, rainbow } = useTwBelt()
+  const base = useBase()
 
-export const Panel = styled.div`
-  ${css.row('align-both')};
-  gap: 0 15px;
-  color: ${theme('article.digest')};
-  width: 200px;
-  height: 50px;
-
-  background: ${theme('alphaBg2')};
-  backdrop-filter: blur(5px);
-`
-export const Item = styled.div`
-  ${css.row('align-center')};
-  font-size: 11px;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  padding: 1px 6px;
-  cursor: pointer;
-  background: white;
-  box-shadow: ${css.cardShadow};
-
-  &:hover {
-    border-color: ${theme('article.digest')};
+  return {
+    wrapper: cn('column-align-both size-16 -ml-1 group/block'),
+    panel: base.panel,
+    block: base.settingBlock,
+    blockActive: base.settingBlockActive,
+    title: base.settingTitle,
+    icon: base.settingIcon,
+    //
+    optionItem: base.optionItem,
+    optionItemActive: base.optionItemActive,
+    //
+    item: cn(
+      'row-center text-xs rounded py-0.5 px-2 border trans-all-100 pointer',
+      bg('card'),
+      br('divider'),
+      fg('text.digest'),
+      `hover:${fg('text.title')}`,
+      shadow('md'),
+    ),
+    deleteItem: cn(
+      rainbow(COLOR_NAME.RED, 'fg'),
+      `hover:${rainbow(COLOR_NAME.RED, 'fg')}`,
+      `hover:${rainbow(COLOR_NAME.RED, 'bgSoft')}`,
+    ),
+    deleteIcon: cn('size-3 pointer mr-1 opacity-65', rainbow(COLOR_NAME.RED, 'fill')),
   }
-
-  transition: all 0.2s;
-`
-
-export const DeleteItem = styled(Item)`
-  color: ${theme('rainbow.red')};
-
-  &:hover {
-    border-color: ${theme('rainbow.red')};
-    font-weight: 500;
-  }
-`
-
-export const DeleteIcon = styled(DeleteSVG)`
-  ${css.size(12)};
-  fill: ${theme('rainbow.red')};
-  margin-right: 4px;
-  margin-top: -1px;
-  opacity: 0.6;
-
-  ${DeleteItem}:hover & {
-    opacity: 1;
-  }
-  transition: all 0.2s;
-`
-
-export const Icon = styled(SettingSVG)`
-  ${css.size(14)};
-  fill: ${theme('article.digest')};
-
-  ${Block}:hover & {
-    fill: ${theme('article.title')};
-    cursor: pointer;
-  }
-`
-
-export const Desc = styled(SettingTitle)`
-  ${Wrapper}:hover & {
-    color: ${theme('article.title')};
-  }
-`
+}
