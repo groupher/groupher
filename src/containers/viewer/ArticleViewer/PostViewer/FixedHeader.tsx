@@ -8,7 +8,7 @@ import Upvote from '~/widgets/Upvote'
 import ArticleCatState from '~/widgets/ArticleCatState'
 // import ArticleBaseStats from '~/widgets/ArticleBaseStats'
 
-import { Wrapper, LeftPart, ArticleTitle } from '../styles/post_viewer/fixed_header'
+import useSalon from '../salon/post_viewer/fixed_header'
 
 type TProps = {
   article: TArticle
@@ -17,21 +17,23 @@ type TProps = {
 }
 
 const FixedHeader: FC<TProps> = ({ article, visible, footerVisible }) => {
+  const s = useSalon({ visible })
   const { upvotesCount, viewerHasUpvoted, cat, state } = article
 
   return (
-    <Wrapper $visible={visible}>
-      <LeftPart>
+    <div className={s.wrapper}>
+      <div className={s.left}>
         <Upvote
           count={upvotesCount}
           viewerHasUpvoted={viewerHasUpvoted}
           type={UPVOTE_LAYOUT.FIXED_HEADER}
-          right={25}
+          right={6}
         />
-        <ArticleTitle>{article.title}</ArticleTitle>
-      </LeftPart>
+        <div className={s.articleTitle}>{article.title}</div>
+      </div>
       <ArticleCatState cat={cat} state={state} />
-    </Wrapper>
+      <div className={s.divider} />
+    </div>
   )
 }
 

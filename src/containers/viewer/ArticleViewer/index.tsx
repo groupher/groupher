@@ -12,9 +12,10 @@ import DrawerHeader from './DrawerHeader'
 import Viewer from './Viewer'
 
 import useLogic from './useLogic'
-import { Wrapper, CommentsWrapper } from './styles'
+import useSalon from './salon'
 
 export default () => {
+  const s = useSalon()
   const { article, loadArticle } = useLogic()
 
   useEffect(() => {
@@ -24,16 +25,16 @@ export default () => {
   if (!article) return <LavaLampLoading top={20} left={20} />
 
   return (
-    <Wrapper $testid="article-viewer">
+    <div className={s.wrapper}>
       <DrawerHeader />
       {/* @ts-ignore */}
       {/* <CollectionFolder /> */}
       <Viewer article={article} />
 
-      <CommentsWrapper>
+      <div className={s.comments}>
         <h3>TODO: comments (slow down the drawer)</h3>
         {/* <Comments /> */}
-      </CommentsWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }

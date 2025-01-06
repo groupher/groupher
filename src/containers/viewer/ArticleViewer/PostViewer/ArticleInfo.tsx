@@ -3,49 +3,35 @@ import { memo, type FC } from 'react'
 import type { TArticle } from '~/spec'
 
 import { upvoteArticle } from '~/signal'
-// import { mockUsers } from '~/mock'
-// import { addCollection } from '~/helper'
 import { UPVOTE_LAYOUT } from '~/const/layout'
 
 import Upvote from '~/widgets/Upvote'
 import ArticleBaseStats from '~/widgets/ArticleBaseStats'
 
-import {
-  Wrapper,
-  // CollectWrapper,
-  // CollectIcon,
-  // CollectText,
-  BaseWrapper,
-} from '../styles/post_viewer/article_info'
+import useSalon from '../salon/post_viewer/article_info'
 
 type TProps = {
   article: TArticle
 }
 
 const ArticleInfo: FC<TProps> = ({ article }) => {
+  const s = useSalon()
   const { upvotesCount, viewerHasUpvoted, meta } = article
 
   return (
-    <Wrapper>
-      <BaseWrapper>
+    <div className={s.wrapper}>
+      <div className={s.baseWrapper}>
         <Upvote
           type={UPVOTE_LAYOUT.DEFAULT}
           count={upvotesCount}
           avatarList={meta.latestUpvotedUsers}
-          // count={10}
-          // avatarList={mockUsers(5)}
           viewerHasUpvoted={viewerHasUpvoted}
           onAction={(viewerHasUpvoted) => upvoteArticle(article, viewerHasUpvoted)}
         />
         <div className="grow" />
         <ArticleBaseStats article={article} container="drawer" />
-        {/* <Space right={18} />
-        <CollectWrapper onClick={() => addCollection()}>
-          <CollectIcon />
-          <CollectText>收藏</CollectText>
-        </CollectWrapper> */}
-      </BaseWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 

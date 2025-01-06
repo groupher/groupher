@@ -21,16 +21,11 @@ import Header from './Header'
 import ArticleInfo from './ArticleInfo'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  BodyWrapper,
-  Title,
-  TitleText,
-  SubTitle,
-  GoTopWrapper,
-} from '../styles/post_viewer'
+import useSalon, { cn } from '../salon/post_viewer'
 
 export default () => {
+  const s = useSalon()
+
   const { loading, article } = useLogic()
   const broadcastConfig = useBroadcast()
 
@@ -50,35 +45,33 @@ export default () => {
   return (
     <>
       <FixedHeader article={article} visible={fixedHeaderVisible} footerVisible={footerVisible} />
-      <Wrapper>
-        <Header article={article} />
-        <Title>
-          <TitleText>{article.title}</TitleText>
-          <SubTitle>{article.innerId}</SubTitle>
-        </Title>
-        <ArticleInfo article={article} />
-        <ViewportTracker onEnter={hideFixedHeader} onLeave={showFixedHeader} />
-        {loading && <ArticleContentLoading num={1} top={15} bottom={30} left={-25} />}
-        {!loading && (
-          <BodyWrapper>
-            <ArticeBody document={article.document} />
-          </BodyWrapper>
-        )}
+      <Header article={article} />
+      <div className={s.title}>
+        <div className={s.titleText}>{article.title}</div>
+        <div className={s.subTitle}>{article.innerId}</div>
+      </div>
+      <ArticleInfo article={article} />
+      <ViewportTracker onEnter={hideFixedHeader} onLeave={showFixedHeader} />
+      {loading && <ArticleContentLoading num={1} top={15} bottom={30} left={-25} />}
+      {!loading && (
+        <div className={s.bodyWrapper}>
+          <ArticeBody document={article.document} />
+        </div>
+      )}
 
-        {broadcastConfig.broadcastArticleEnable && (
-          <ArticleBroadcast
-            top={20}
-            bottom={30}
-            color={broadcastConfig.broadcastArticleBg}
-            simple={broadcastConfig.broadcastArticleLayout === BROADCAST_ARTICLE_LAYOUT.SIMPLE}
-          />
-        )}
-        <ArticleFooter />
-        <ViewportTracker onEnter={showFooter} onLeave={hideFooter} />
-        <GoTopWrapper $show={fixedHeaderVisible}>
-          <GotoTop type="drawer" />
-        </GoTopWrapper>
-      </Wrapper>
+      {broadcastConfig.broadcastArticleEnable && (
+        <ArticleBroadcast
+          top={20}
+          bottom={30}
+          color={broadcastConfig.broadcastArticleBg}
+          simple={broadcastConfig.broadcastArticleLayout === BROADCAST_ARTICLE_LAYOUT.SIMPLE}
+        />
+      )}
+      <ArticleFooter />
+      <ViewportTracker onEnter={showFooter} onLeave={hideFooter} />
+      <div className={cn(s.gotoTop, fixedHeaderVisible ? 'visible' : 'invisible')}>
+        <GotoTop type="drawer" />
+      </div>
     </>
   )
 }
