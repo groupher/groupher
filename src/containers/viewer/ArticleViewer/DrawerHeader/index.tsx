@@ -8,7 +8,7 @@ import ArticleSettingMenu from '~/widgets/ArticleSettingMenu'
 
 import ArticleNavi from './ArticleNavi'
 
-import useSalon, { cn } from '../styles/drawer_header'
+import useSalon, { cn } from '../salon/drawer_header'
 
 export default () => {
   const s = useSalon()

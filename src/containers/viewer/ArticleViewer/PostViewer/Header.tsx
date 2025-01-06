@@ -1,4 +1,4 @@
-import { type FC, memo, Fragment } from 'react'
+import { type FC, Fragment } from 'react'
 
 import type { TPost } from '~/spec'
 
@@ -6,29 +6,30 @@ import DotDivider from '~/widgets/DotDivider'
 import ArticleCatState from '~/widgets/ArticleCatState'
 import TagsList from '~/widgets/TagsList'
 
-import { Wrapper, PublishWrapper, EditedHint } from '../styles/post_viewer/header'
+import useSalon from '../salon/post_viewer/header'
 
 type TProps = {
   article: TPost
 }
 
 const Header: FC<TProps> = ({ article }) => {
+  const s = useSalon()
   const { meta, cat, state, articleTags } = article
 
   return (
-    <Wrapper>
-      <ArticleCatState cat={cat} state={state} smaller={false} right={14} />
+    <div className={s.wrapper}>
+      <ArticleCatState cat={cat} state={state} smaller={false} right={4} />
       <TagsList items={articleTags} size="medium" />
-      <PublishWrapper>
+      <div className={s.publishWrapper}>
         {meta.isEdited && (
           <Fragment>
             <DotDivider space={8} />
-            <EditedHint>修改过</EditedHint>
+            <div className={s.editedHint}>修改过</div>
           </Fragment>
         )}
-      </PublishWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 
-export default memo(Header)
+export default Header

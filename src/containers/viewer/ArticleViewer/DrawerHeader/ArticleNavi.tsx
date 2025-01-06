@@ -6,7 +6,7 @@ import useNaviArticle from '~/hooks/useNaviArticle'
 
 import ArrowSVG from '~/icons/ArrowSimple'
 
-import useSalon, { cn } from '../styles/drawer_header/article_navi'
+import useSalon, { cn } from '../salon/drawer_header/article_navi'
 
 const naviToArticle = (article: TArticle): void => {
   // store.markPreviewHomeURLIfNeed()
