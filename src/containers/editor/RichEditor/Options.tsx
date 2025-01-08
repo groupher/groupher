@@ -2,19 +2,21 @@ import { type FC, memo, type ReactNode } from 'react'
 
 import Menu from './Menu'
 
-import { Wrapper } from './styles/options'
+import useSalon from './salon/options'
 
 type TProps = {
   addon: ReactNode
 }
 
 const Options: FC<TProps> = ({ addon }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {addon}
       <div className="grow" />
       <Menu />
-    </Wrapper>
+    </div>
   )
 }
 

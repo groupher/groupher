@@ -1,4 +1,4 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 import { ICON } from '~/config'
 
 import IconButton from '~/widgets/Buttons/IconButton'
@@ -43,4 +43,4 @@ const Menu: FC = () => {
   )
 }
 
-export default memo(Menu)
+export default Menu
