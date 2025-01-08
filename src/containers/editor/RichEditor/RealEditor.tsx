@@ -8,8 +8,7 @@ import type { FC } from 'react'
 
 import TheRichEditor from '@groupher/react-editor'
 
-import OverwriteStyle from './styles/overwrite'
-import { Wrapper, InnerWrapper, EditorWrapper } from './styles'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   placeholder?: string
@@ -26,23 +25,24 @@ const RichEditor: FC<TProps> = ({
   reinitKey = '',
   onChange = console.log,
 }) => {
+  const s = useSalon()
+
   // 使用模板 or 转载或翻译 or 请保持友善
   return (
-    <Wrapper>
-      <InnerWrapper type={type}>
+    <div className={s.wrapper}>
+      <div className={s.inner}>
         {/* {type !== 'comment' && <Options addon={addon} />} */}
-        <EditorWrapper className="rich-editor" type={type}>
+        <div className={cn(s.editor, 'rich-editor')}>
           <TheRichEditor
             onData={onChange}
             reinitKey={reinitKey}
             data={JSON.parse(data || '{}')}
             placeholder={placeholder}
           />
-          <OverwriteStyle />
-        </EditorWrapper>
-      </InnerWrapper>
+        </div>
+      </div>
       {/* <EditorWrapper id="codex-editor" /> */}
-    </Wrapper>
+    </div>
   )
 }
 
