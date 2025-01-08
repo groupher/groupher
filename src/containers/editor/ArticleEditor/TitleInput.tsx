@@ -1,6 +1,8 @@
 import type { FC } from 'react'
 
-import { Wrapper, Inputer } from '../styles/title_input'
+import Input from '~/widgets/Input'
+
+import useSalon from './salon/title_input'
 
 type TProps = {
   title: string
@@ -8,9 +10,12 @@ type TProps = {
 }
 
 const TitleInput: FC<TProps> = ({ title, placeholder }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Inputer
+    <div className={s.wrapper}>
+      <Input
+        className={s.inputer}
         value={title}
         placeholder={placeholder}
         behavior="textarea"
@@ -18,7 +23,7 @@ const TitleInput: FC<TProps> = ({ title, placeholder }) => {
         disableEnter
         autoFocus
       />
-    </Wrapper>
+    </div>
   )
 }
 
