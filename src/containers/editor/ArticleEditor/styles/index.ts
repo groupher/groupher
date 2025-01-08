@@ -1,37 +1,11 @@
-import type { TMetric } from '~/spec'
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row('justify-center')};
-  width: 100%;
-  margin-top: 40px;
-`
-export const InnerWrapper = styled.div<{ metric: TMetric }>`
-  ${css.row('justify-center')};
-  width: 100%;
-  margin-top: 30px;
-  ${({ metric }) => css.fitContentWidth(metric)};
-`
+export default () => {
+  const { cn, br } = useTwBelt()
 
-export const FuncRow = styled.div`
-  ${css.row('align-center')};
-  margin-top: 10px;
-  margin-bottom: 10px;
-  margin-left: 28px;
-  border-bottom: 1px solid;
-  border-bottom-color: ${theme('divider')};
-  padding-bottom: 20px;
-`
-
-export const ContentWrapper = styled.div`
-  /* min-height: 40vh; */
-`
-export const Footer = styled.div`
-  ${css.row('align-center', 'justify-end')};
-  width: 100%;
-  border-top: 2px solid;
-  border-top-color: #03343f;
-  margin-top: 35px;
-  margin-bottom: 40px;
-  padding-top: 20px;
-`
+  return {
+    wrapper: cn('row justify-center w-full'),
+    inner: 'column w-full mt-8 px-20',
+    funcRow: cn('row-center mt-2.5 mb-2.5 pb-5 border-b', br('divider')),
+  }
+}

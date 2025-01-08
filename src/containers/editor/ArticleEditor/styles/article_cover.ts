@@ -1,38 +1,12 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import AdderSVG from '~/icons/Plus'
-import ImageSVG from '~/icons/Image'
+export default () => {
+  const { cn, hoverable } = useTwBelt()
 
-export const Wrapper = styled.div`
-  /* width: 100%; */
-  margin-bottom: 20px;
-`
-export const Adder = styled.div`
-  ${css.row('align-center')};
-  margin-left: 25px;
-  opacity: 0.7;
-
-  &:hover {
-    opacity: 1;
-    cursor: pointer;
+  return {
+    wrapper: cn('mb-2'),
+    adder: cn(hoverable('bg'), 'row-center w-fit px-2 py-1.5 ml-2 rounded-md'),
+    imageIcon: cn('size-4 mr-1.5 -mt-px opacity-65', hoverable('icon')),
+    addTitle: cn('text-sm', hoverable('fg')),
   }
-
-  transition: all 0.2s;
-`
-export const AddIcon = styled(AdderSVG)`
-  ${css.size(16)};
-  fill: ${theme('article.digest')};
-  margin-right: 7px;
-  opacity: 0.6;
-`
-export const AddTitle = styled.div`
-  font-size: 14px;
-  margin-top: 1px;
-  color: ${theme('article.digest')};
-  margin-right: 12px;
-`
-
-export const ImageIcon = styled(ImageSVG)`
-  ${css.size(18)};
-  fill: ${theme('article.digest')};
-`
+}

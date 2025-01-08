@@ -1,28 +1,29 @@
 import { useState, lazy, Suspense } from 'react'
 
+import ImageSVG from '~/icons/Image'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
-import { Wrapper, Adder, AddIcon, AddTitle, ImageIcon } from './styles/article_cover'
+import useSalon from './styles/article_cover'
 
 export const CoverEditor = lazy(() => import('~/containers/editor/CoverEditor'))
 
 export default () => {
-  const [hasCover, setHasCover] = useState(true)
+  const s = useSalon()
+  const [hasCover, setHasCover] = useState(false)
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {!hasCover && (
-        <Adder onClick={() => setHasCover(true)}>
-          <AddIcon />
-          <AddTitle>添加封面图</AddTitle>
-          <ImageIcon />
-        </Adder>
+        <div className={s.adder} onClick={() => setHasCover(true)}>
+          <ImageSVG className={s.imageIcon} />
+          <div className={s.addTitle}>添加封面图</div>
+        </div>
       )}
       {hasCover && (
         <Suspense fallback={<LavaLampLoading />}>
           <CoverEditor onDelete={() => setHasCover(false)} />
         </Suspense>
       )}
-    </Wrapper>
+    </div>
   )
 }

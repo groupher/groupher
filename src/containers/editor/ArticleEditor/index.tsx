@@ -21,13 +21,15 @@ import Footer from './Footer'
 
 // import Settings from './Settings'
 import useLogic from './useLogic'
-import { Wrapper, InnerWrapper, ContentWrapper, FuncRow } from './styles'
+import useSalon from './styles'
 
 type TProps = {
   metric?: TMetric
 }
 
 const ArticleEditor: FC<TProps> = ({ metric = METRIC.ARTICLE_EDITOR }) => {
+  const s = useSalon()
+
   const {
     isArchived,
     archivedAt,
@@ -69,37 +71,35 @@ const ArticleEditor: FC<TProps> = ({ metric = METRIC.ARTICLE_EDITOR }) => {
   // const initEditor = mode === 'publish' || body !== '{}'
 
   return (
-    <Wrapper>
-      <InnerWrapper metric={metric}>
-        <ContentWrapper>
-          {!allowEdit && <NoticeBar type="notice" content="只有作者可以编辑本内容。" left={5} />}
-          {isArchived && <ArchiveAlert date={archivedAt} top={3} bottom={4} left={5} />}
+    <div className={s.wrapper}>
+      <div className={s.inner}>
+        {!allowEdit && <NoticeBar type="notice" content="只有作者可以编辑本内容。" left={5} />}
+        {isArchived && <ArchiveAlert date={archivedAt} top={3} bottom={4} left={5} />}
 
-          <ArticleCover />
-          <TitleInput title={title} placeholder={texts.holder.title} />
-          <FuncRow>
-            <ConditionSelector
-              mode={CONDITION_MODE.CAT}
-              closable={false}
-              selected
-              active={activeCat}
-              onSelect={catOnChange}
-              right={4}
-            />
-            <TagSelector groupedTags={groupedTags} activeTag={activeTag} onSelect={onTagSelect} />
-          </FuncRow>
+        <ArticleCover />
+        <TitleInput title={title} placeholder={texts.holder.title} />
+        <div className={s.funcRow}>
+          <ConditionSelector
+            mode={CONDITION_MODE.CAT}
+            closable={false}
+            selected
+            active={activeCat}
+            onSelect={catOnChange}
+            right={4}
+          />
+          <TagSelector groupedTags={groupedTags} activeTag={activeTag} onSelect={onTagSelect} />
+        </div>
 
-          {/* {initEditor && (
+        {/* {initEditor && (
             <RichEditor
               data={body}
               onChange={(v) => editOnChange(JSON.stringify(v), 'body')}
               placeholder={texts.holder.body}
             />
           )} */}
-          <Footer mode={mode as TEditMode} editData={editData} submitState={submitState} />
-        </ContentWrapper>
-      </InnerWrapper>
-    </Wrapper>
+        <Footer mode={mode as TEditMode} editData={editData} submitState={submitState} />
+      </div>
+    </div>
   )
 }
 
