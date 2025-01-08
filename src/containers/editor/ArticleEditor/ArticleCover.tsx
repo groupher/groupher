@@ -3,7 +3,7 @@ import { useState, lazy, Suspense } from 'react'
 import ImageSVG from '~/icons/Image'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
-import useSalon from './styles/article_cover'
+import useSalon from './salon/article_cover'
 
 export const CoverEditor = lazy(() => import('~/containers/editor/CoverEditor'))
 

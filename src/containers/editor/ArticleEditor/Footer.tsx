@@ -8,7 +8,7 @@ import WordsCounter from '~/widgets/WordsCounter'
 
 import type { TEditData } from './spec'
 import useLogic from './useLogic'
-import useSalon from './styles/footer'
+import useSalon from './salon/footer'
 
 type TProps = {
   mode: TEditMode

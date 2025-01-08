@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import Input from '~/widgets/Input'
 
-import useSalon from './styles/title_input'
+import useSalon from './salon/title_input'
 
 type TProps = {
   title: string

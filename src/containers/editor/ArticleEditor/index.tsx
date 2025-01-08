@@ -21,7 +21,7 @@ import Footer from './Footer'
 
 // import Settings from './Settings'
 import useLogic from './useLogic'
-import useSalon from './styles'
+import useSalon from './salon'
 
 type TProps = {
   metric?: TMetric
