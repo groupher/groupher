@@ -1,37 +1,46 @@
 import { CHANGE_MODE } from '~/const/mode'
+
+import Button from '~/widgets/Buttons/Button'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
 import useLogic from './useLogic'
-import { Wrapper, UpdateWrapper, ActionButton } from './styles/footer'
+import useSalon, { cn } from './salon/footer'
 
 export default () => {
+  const s = useSalon()
   const { mode, editingTag, onCreate, onUpdate, onDelete, processing } = useLogic()
 
   if (processing) {
     return (
-      <Wrapper>
+      <div className={s.wrapper}>
         <LavaLampLoading />
-      </Wrapper>
+      </div>
     )
   }
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {mode === CHANGE_MODE.CREATE ? (
-        <ActionButton top={15} onClick={() => onCreate()}>
+        <Button className={cn(s.actionButton, 'mt-1')} onClick={() => onCreate()}>
           创建新标签
-        </ActionButton>
+        </Button>
       ) : (
-        <UpdateWrapper>
-          <ActionButton bottom={8} onClick={() => onUpdate()}>
+        <div className={s.updateWrapper}>
+          <Button className={cn(s.actionButton, 'mb-0.5')} onClick={() => onUpdate()}>
             更新链接
-          </ActionButton>
+          </Button>
 
-          <ActionButton type="red" onClick={() => onDelete(editingTag)} ghost noBorder>
+          <Button
+            className={s.actionButton}
+            type="red"
+            onClick={() => onDelete(editingTag)}
+            ghost
+            noBorder
+          >
             删除标签
-          </ActionButton>
-        </UpdateWrapper>
+          </Button>
+        </div>
       )}
-    </Wrapper>
+    </div>
   )
 }
