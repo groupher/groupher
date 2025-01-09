@@ -1,11 +1,9 @@
-import styled, { css } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  margin-bottom: 5px;
+export default () => {
+  const { cn } = useTwBelt()
 
-  ${css.media.mobile`
-    margin-bottom: 0;
-  `};
-`
-
-export const holder = 1
+  return {
+    wrapper: cn('mb-1.5'),
+  }
+}

@@ -7,7 +7,7 @@ import PublishBar from './PublishBar'
 import PublishEditor from '../Editor/PublishEditor'
 
 import useLogic from '../useLogic'
-import { Wrapper } from '../styles/head_bar'
+import useSalon from '../styles/head_bar'
 
 import type { TMode, TAPIMode, TEditState } from '../spec'
 
@@ -21,6 +21,7 @@ export type TProps = {
 }
 
 export default () => {
+  const s = useSalon()
   const { mode, apiMode, loading, getFoldState, getEditState, getBasicState } = useLogic()
 
   const foldState = getFoldState()
@@ -33,7 +34,7 @@ export default () => {
   const [barMode, setBarMode] = useState('normal')
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {barMode === 'normal' && (
         <StateBar
           apiMode={apiMode}
@@ -51,6 +52,6 @@ export default () => {
           <PublishEditor body={commentBody} submitState={submitState} />
         </Fragment>
       )}
-    </Wrapper>
+    </div>
   )
 }

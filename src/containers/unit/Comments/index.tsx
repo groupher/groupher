@@ -15,11 +15,12 @@ import List from './List'
 // import LockedMessage from './LockedMessage'
 
 import type { TAPIMode } from './spec'
-import { API_MODE } from './constant'
-import useLogic from './useLogic'
-import { Wrapper } from './styles'
 
+import { API_MODE } from './constant'
 import HeadBar from './HeadBar'
+
+import useSalon from './styles'
+import useLogic from './useLogic'
 
 type TProps = {
   apiMode?: TAPIMode
@@ -27,6 +28,7 @@ type TProps = {
 }
 
 const Comments: FC<TProps> = ({ locked = false, apiMode = API_MODE.ARTICLE }) => {
+  const s = useSalon()
   const { pagedComments, getEditState, loadComments } = useLogic()
 
   useEffect(() => {
@@ -37,7 +39,7 @@ const Comments: FC<TProps> = ({ locked = false, apiMode = API_MODE.ARTICLE }) =>
   const { totalCount } = pagedComments
 
   return (
-    <Wrapper id={ANCHOR.COMMENTS_ID}>
+    <div id={ANCHOR.COMMENTS_ID} className={s.wrapper}>
       {apiMode === API_MODE.ARTICLE && <Editor editState={editState} />}
 
       {/* <br />
@@ -50,7 +52,7 @@ const Comments: FC<TProps> = ({ locked = false, apiMode = API_MODE.ARTICLE }) =>
       /> */}
       {totalCount > 0 && <HeadBar />}
       <List />
-    </Wrapper>
+    </div>
   )
 }
 

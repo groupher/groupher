@@ -17,7 +17,7 @@ import usePrimaryColor from '~/hooks/usePrimaryColor'
 type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 'decoration'
 type TLinkColorPrefix = 'fg' | 'fill'
 type TBreakOut = 'footer' | 'header'
-type TMenuPart = 'bg' | 'bar' | 'title' | 'link'
+type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon'
 type TShadowSize = 'sm' | 'md' | 'lg' | 'xl' | 'drawer'
 type TThemeSwitch = 'auto' | 'dark' | 'light'
 type TDimLevel = 'lg' | 'md' | 'sm'
@@ -318,6 +318,9 @@ export default (): TRet => {
       }
       case 'title': {
         return cn('text-sm grow', `group-hover/menubar:${fg('text.title')}`)
+      }
+      case 'icon': {
+        return cn('size-3 mr-2.5', fill('text.digest'), `group-hover/menubar:${fill('text.title')}`)
       }
       case 'link': {
         return cn('size-3.5 opacity-0 group-hover/menubar:opacity-60', fill('text.digest'))

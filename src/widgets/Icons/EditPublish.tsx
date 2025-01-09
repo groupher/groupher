@@ -1,6 +1,6 @@
-import type { FC } from 'react'
+import type { SVGProps } from 'react'
 
-const SVG: FC = (props) => (
+const SVG = (props: SVGProps<SVGSVGElement>) => (
   <svg
     className="icon"
     viewBox="0 0 1024 1024"

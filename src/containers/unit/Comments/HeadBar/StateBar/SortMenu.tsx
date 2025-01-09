@@ -1,4 +1,11 @@
-import { type FC, useState } from 'react'
+import type { FC } from 'react'
+
+import ReplyModeSVG from '~/icons/CommentReplyMode'
+import TimelineModeSVG from '~/icons/CommentTimelineMode'
+import ArrowSVG from '~/icons/ArrowSolid'
+
+import ExpandSVG from '~/icons/Expand'
+import FoldSVG from '~/icons/Fold'
 
 import Tooltip from '~/widgets/Tooltip'
 
@@ -7,63 +14,52 @@ import { MODE } from '../../constant'
 import type { TProps as TBase } from '..'
 
 import useLogic from '../../useLogic'
-import {
-  Wrapper,
-  Title,
-  ArrowIcon,
-  Panel,
-  MenuTitle,
-  MenuItem,
-  ReplyModeIcon,
-  TimelineModeIcon,
-  ExpandIcon,
-  FoldIcon,
-} from '../../styles/head_bar/state_bar/sort_menu'
+import useSalon, { cn } from '../../styles/head_bar/state_bar/sort_menu'
 
 type TProps = Pick<TBase, 'mode' | 'apiMode' | 'isAllFolded'>
 
 const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode }) => {
+  const s = useSalon()
+
   const { foldAllComments, expandAllComments, onModeChange } = useLogic()
 
-  const [moreActive, setMenuActive] = useState(false)
-
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {isAllFolded ? (
-        <Title onClick={() => expandAllComments()}>展开全部</Title>
+        <div className={cn(s.title, 'mr-3')} onClick={() => expandAllComments()}>
+          展开全部
+        </div>
       ) : (
         <Tooltip
           content={
-            <Panel width="124px">
-              <MenuItem onClick={() => onModeChange(MODE.REPLIES)}>
-                <ReplyModeIcon />
-                <MenuTitle>默认排序</MenuTitle>
-              </MenuItem>
-              <MenuItem onClick={() => onModeChange(MODE.TIMELINE)}>
-                <TimelineModeIcon />
-                <MenuTitle>时间线排序</MenuTitle>
-              </MenuItem>
-              <MenuItem onClick={() => expandAllComments()}>
-                <ExpandIcon />
-                <MenuTitle>展开全部</MenuTitle>
-              </MenuItem>
-              <MenuItem onClick={() => foldAllComments()}>
-                <FoldIcon />
-                <MenuTitle>折叠全部</MenuTitle>
-              </MenuItem>
-            </Panel>
+            <div className={s.panel}>
+              <div className={s.menuItem} onClick={() => onModeChange(MODE.REPLIES)}>
+                <ReplyModeSVG className={s.menuIcon} />
+                <div className={s.menuTitle}>默认排序</div>
+              </div>
+              <div className={s.menuItem} onClick={() => onModeChange(MODE.TIMELINE)}>
+                <TimelineModeSVG className={s.menuIcon} />
+                <div className={s.menuTitle}>时间线排序</div>
+              </div>
+              <div className={s.menuItem} onClick={() => expandAllComments()}>
+                <ExpandSVG className={s.menuIcon} />
+                <div className={s.menuTitle}>展开全部</div>
+              </div>
+              <div className={s.menuItem} onClick={() => foldAllComments()}>
+                <FoldSVG className={s.menuIcon} />
+                <div className={s.menuTitle}>折叠全部</div>
+              </div>
+            </div>
           }
           placement="bottom-end"
           trigger="mouseenter focus"
           offset={[-5, 5]}
-          onShow={() => setMenuActive(true)}
-          onHide={() => setMenuActive(false)}
           noPadding
         >
-          <Title $active={moreActive}>
+          <div className={cn(s.title, 'mr-3')}>
             {mode === MODE.REPLIES ? '默认排序' : '时间线排序'}
-            <ArrowIcon $active={moreActive} />
-          </Title>
+            <ArrowSVG className={s.arrowIcon} />
+          </div>
         </Tooltip>
       )}
 
@@ -82,7 +78,7 @@ const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode }) => {
             {...actionIconConfig}
           />
         )} */}
-    </Wrapper>
+    </div>
   )
 }
 

@@ -1,95 +1,18 @@
-import type { TActive } from '~/spec'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import styled, { css, theme } from '~/css'
-import ArrowSVG from '~/icons/ArrowSolid'
+export { cn } from '~/css'
 
-import ReplyModeSVG from '~/icons/CommentReplyMode'
-import TimelineModeSVG from '~/icons/CommentTimelineMode'
+export default () => {
+  const { cn, fill, menu, hoverable } = useTwBelt()
 
-import ExpandSVG from '~/icons/Expand'
-import FoldSVG from '~/icons/Fold'
-
-export const Wrapper = styled.div`
-  ${css.row('align-center')};
-`
-export const Title = styled.div<TActive>`
-  ${css.row('align-center')};
-  font-size: 12px;
-  color: ${({ $active }) => ($active ? theme('article.title') : theme('article.digest'))};
-  margin-right: 15px;
-
-  &:hover {
-    cursor: pointer;
-    color: ${theme('article.title')};
+  return {
+    wrapper: cn('row-center'),
+    title: cn('row-center text-sm', hoverable('fg')),
+    panel: cn('w-32 py-1.5 px-1', menu('bg')),
+    menuIcon: cn('', menu('icon')),
+    menuItem: cn('text-sm', menu('bar')),
+    menuTitle: cn('text.sm', menu('title')),
+    //
+    arrowIcon: cn('size-3 rotate-90', fill('text.digest')),
   }
-  transition: all 0.2s;
-`
-const baseIconStyles = `
-  ${css.size(12)};
-  margin-right: 10px;
-`
-
-export const ReplyModeIcon = styled(ReplyModeSVG)`
-  ${baseIconStyles}
-  fill: ${theme('article.digest')};
-`
-export const TimelineModeIcon = styled(TimelineModeSVG)`
-  ${baseIconStyles}
-  fill: ${theme('article.digest')};
-`
-export const ExpandIcon = styled(ExpandSVG)`
-  ${baseIconStyles}
-  fill: ${theme('article.digest')};
-`
-export const FoldIcon = styled(FoldSVG)`
-  ${baseIconStyles}
-  fill: ${theme('article.digest')};
-`
-
-export const ArrowIcon = styled(ArrowSVG)<TActive>`
-  ${css.size(12)};
-  fill: ${({ $active }) => ($active ? theme('article.title') : theme('article.digest'))};
-  transform: rotate(90deg);
-  opacity: 0.6;
-  margin-left: 3px;
-`
-
-export const Panel = styled.div<{ width?: string }>`
-  ${css.column()};
-  margin-top: 3px;
-  margin-bottom: 3px;
-  gap: 3px 0;
-  padding: 6px 4px;
-  padding-left: 8px;
-  width: ${({ width }) => width};
-  background: ${theme('alphaBg2')};
-`
-
-export const MenuItem = styled.div`
-  ${css.row('align-center')};
-  font-size: 14px;
-  padding: 6px 8px;
-
-  border: 1px solid transparent;
-  border-radius: 8px;
-
-  &:hover {
-    cursor: pointer;
-    background: #e4e4e457;
-    text-decoration: none;
-    border-color: ${theme('popover.activeBorder')};
-  }
-
-  will-change: background;
-`
-export const MenuTitle = styled.div`
-  color: ${theme('article.title')};
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 0.8;
-
-  ${MenuItem}:hover & {
-    opacity: 1;
-    cursor: pointer;
-  }
-`
+}
