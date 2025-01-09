@@ -4,7 +4,7 @@ import Button from '~/widgets/Buttons/Button'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
 import useLogic from './useLogic'
-import useSalon, { cn } from './styles/footer'
+import useSalon, { cn } from './salon/footer'
 
 export default () => {
   const s = useSalon()

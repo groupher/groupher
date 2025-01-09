@@ -23,7 +23,7 @@ import Footer from './Footer'
 
 import useLogic from './useLogic'
 
-import useSalon, { cn } from './styles'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   mode?: TChangeMode
