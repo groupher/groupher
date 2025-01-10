@@ -1,7 +1,4 @@
-import Img from '~/Img'
-import styled, { css, theme, animate } from '~/css'
-
-import UserBadge from '~/icons/UserBadge'
+import styled, { css, theme } from '~/css'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -30,24 +27,7 @@ export const SidebarWrapper = styled.div`
   height: 100%;
   min-width: 33px;
 `
-export const BadgePopContent = styled.div`
-  padding: 5px 10px;
-  font-size: 12px;
-`
-export const AuthorUpvotedIcon = styled(UserBadge)`
-  ${css.size(14)};
-  fill: ${theme('comment.icon')};
-  opacity: 0.8;
-  margin-top: 4px;
-  margin-left: 1px;
-  animation: ${animate.zoomIn} 0.2s linear;
-`
-export const SolutionIcon = styled(Img)<{ isAuthorUpvoted: boolean }>`
-  ${css.size(14)};
-  fill: ${theme('rainbow.green')};
-  margin-top: ${({ isAuthorUpvoted }) => (isAuthorUpvoted ? '7px' : '3px')};
-  margin-left: 1px;
-`
+
 export const IndentLine = styled.div`
   flex-grow: 1;
   width: 20px;

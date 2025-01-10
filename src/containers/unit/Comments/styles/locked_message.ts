@@ -1,24 +1,11 @@
-import Img from '~/Img'
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row('align-center')};
-  margin-bottom: 16px;
-  padding: 15px;
-  padding-left: 30px;
-  position: relative;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  border-radius: 3px;
-  background: ${theme('drawer.bg')};
-`
+export default () => {
+  const { cn, shadow, bg, fg, fill } = useTwBelt()
 
-export const LockIcon = styled(Img)`
-  fill: ${theme('article.title')};
-  ${css.size(20)};
-  margin-right: 10px;
-  margin-top: -4px;
-`
-
-export const Message = styled.div`
-  color: ${theme('article.title')};
-`
+  return {
+    wrapper: cn('relative row-center mb-4 p-4 pl-7 rounded', shadow('sm'), bg('sandBox')),
+    lockIcon: cn('size-5 mr-2.5 -mt-1', fill('text.digest')),
+    msg: cn('text-sm', fg('text.digest')),
+  }
+}

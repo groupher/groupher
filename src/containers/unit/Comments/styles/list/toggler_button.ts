@@ -1,30 +1,11 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row('align-center')};
-  color: ${theme('article.info')};
-  padding-top: 25px;
-  padding-bottom: 18px;
-  margin-left: 25px;
-`
-export const SlashSign = styled.div`
-  font-size: 11px;
-  font-weight: bolder;
-  font-family: monospace;
-  opacity: 0.8;
-`
+export default () => {
+  const { cn, fg } = useTwBelt()
 
-export const Text = styled.div`
-  font-size: 12px;
-  color: ${theme('article.info')};
-  margin-left: 14px;
-  font-weight: bold;
-  opacity: 0.85;
-
-  &:hover {
-    opacity: 1;
-    cursor: pointer;
+  return {
+    wrapper: cn('row-center pt-6 pb-4 ml-6', fg('text.digest')),
+    slashSign: 'text-xs bold opacity-65 mr-2',
+    text: cn('text-xs ml-3.5 pointer', fg('text.digest')),
   }
-
-  transition: all 0.2s;
-`
+}

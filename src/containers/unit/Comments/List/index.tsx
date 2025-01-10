@@ -1,7 +1,6 @@
 import { Fragment } from 'react'
 
 import Pagi from '~/widgets/Pagi'
-import { Br } from '~/widgets/Common'
 
 import List from './List'
 
@@ -26,7 +25,7 @@ export default () => {
         repliesState={repliesState}
         foldedIds={foldedIds}
       />
-      <Br bottom={50} />
+      <div className="mb-14" />
       {!loading && (
         <Pagi
           pageNumber={pageNumber}

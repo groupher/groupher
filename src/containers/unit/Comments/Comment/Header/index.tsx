@@ -3,7 +3,6 @@ import { type FC, memo } from 'react'
 import type { TComment } from '~/spec'
 
 import ArticleHeader from './Article'
-import UserPublishedHeader from './UserPublished'
 
 import type { TAPIMode } from '../../spec'
 import { API_MODE } from '../../constant'
@@ -22,11 +21,7 @@ const CommentHeader: FC<TProps> = ({ data, showInnerRef, apiMode = API_MODE.ARTI
 
   return (
     <div className={s.wrapper}>
-      {apiMode === API_MODE.USER_PUBLISHED ? (
-        <UserPublishedHeader data={data} />
-      ) : (
-        <ArticleHeader data={data} showInnerRef={showInnerRef} isReply={isReply} />
-      )}
+      <ArticleHeader data={data} showInnerRef={showInnerRef} isReply={isReply} />
     </div>
   )
 }

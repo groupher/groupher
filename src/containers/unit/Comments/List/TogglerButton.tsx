@@ -1,8 +1,8 @@
-import { type FC, memo, Fragment } from 'react'
+import type { FC } from 'react'
 
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
-import { Wrapper, SlashSign, Text } from '../styles/list/toggler_button'
+import useSalon from '../styles/list/toggler_button'
 
 type TProps = {
   text: string
@@ -11,18 +11,20 @@ type TProps = {
 }
 
 const TogglerButton: FC<TProps> = ({ text, loading, onClick }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <SlashSign>&#47;&#47;</SlashSign>
+    <div className={s.wrapper}>
+      <div className={s.slashSign}>&#47;&#47;</div>
       {loading ? (
         <LavaLampLoading left={18} />
       ) : (
-        <Fragment>
-          <Text onClick={onClick}>{text}</Text>
-        </Fragment>
+        <div className={s.text} onClick={onClick}>
+          {text}
+        </div>
       )}
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(TogglerButton)
+export default TogglerButton
