@@ -53,7 +53,7 @@ type TRet = {
   dimDark: (level?: TDimLevel) => string
   menu: (part: TMenuPart) => string
   shadow: (size: TShadowSize) => string
-  cutRest: (classname?: string) => string
+  cutRest: (classname?: TCutWWidth) => string
   landingTitle: () => string
   hoverable: (part: THoverPart) => string
 

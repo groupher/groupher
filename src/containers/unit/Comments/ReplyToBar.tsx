@@ -1,24 +1,26 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
 import type { TComment } from '~/spec'
 // import { ICON_CMD } from '~/config'
 // import { Wrapper } from './styles'
 import { cutRest } from '~/fmt'
-import { ReplyBar, ReplyToBody, ReplyToFloor } from './styles/reply_to_bar'
+import useSalon from './styles/reply_to_bar'
 
 type TProps = {
   comment: TComment
 }
 
 const ReplyToBar: FC<TProps> = ({ comment }) => {
+  const s = useSalon()
+
   if (!comment) return null
   return (
-    <ReplyBar>
+    <div className={s.replyBar}>
       回复&nbsp;
-      {cutRest(comment.author.nickname, 10)}:<ReplyToBody>{comment.bodyHtml}</ReplyToBody>
-      <ReplyToFloor>#{comment.floor}</ReplyToFloor>
-    </ReplyBar>
+      {cutRest(comment.author.nickname, 10)}:<div className={s.replyToBody}>{comment.bodyHtml}</div>
+      <div className={s.replyToFloor}>#{comment.floor}</div>
+    </div>
   )
 }
 
-export default memo(ReplyToBar)
+export default ReplyToBar
