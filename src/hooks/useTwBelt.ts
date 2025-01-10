@@ -22,6 +22,7 @@ type TShadowSize = 'sm' | 'md' | 'lg' | 'xl' | 'drawer'
 type TThemeSwitch = 'auto' | 'dark' | 'light'
 type TDimLevel = 'lg' | 'md' | 'sm'
 type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red' | 'fg'
+type TCutWWidth = `w-${number}` | `w-[${number}px]`
 
 type TRet = {
   cn: (...inputs: ClassValue[]) => string
@@ -335,8 +336,9 @@ export default (): TRet => {
     return global(`shadow-${size}`)
   }
 
-  const cutRest = (classnames = 'w-12'): string => {
-    return cn('truncate', classnames)
+  const cutRest = (classnames: TCutWWidth = 'w-12'): string => {
+    const maxWidth = classnames.replace('w-', 'max-w-')
+    return cn('truncate', maxWidth, 'w-fit', 'w-auto')
   }
 
   const landingTitle = (): string => {

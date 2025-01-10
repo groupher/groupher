@@ -1,5 +1,3 @@
-import styled, { css, theme } from '~/css'
-
 import { COLOR_NAME } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -21,24 +19,3 @@ export default () => {
     solutionIcon: cn('size-3.5 ml-px mt-0.5', rainbow(COLOR_NAME.GREEN, 'fill')),
   }
 }
-
-export const CurveLine = styled.div`
-  position: absolute;
-  left: -38px;
-  top: -15px;
-  ${css.size(45)};
-  border-radius: 22px;
-  border-bottom: 1px solid;
-  border-bottom-color: ${theme('comment.indentLine')};
-  transform: rotate(20deg);
-  z-index: -1;
-
-  &:after {
-    content: '';
-    ${css.circle(26)};
-    background: ${theme('alphaBg2')};
-    position: absolute;
-    bottom: -5px;
-    right: -1px;
-  }
-`

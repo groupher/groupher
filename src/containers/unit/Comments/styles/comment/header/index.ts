@@ -1,10 +1,15 @@
 import styled, { css, theme } from '~/css'
 
-export const Wrapper = styled.div`
-  ${css.row('align-center')};
-  margin-bottom: 15px;
-  margin-left: -38px;
-`
+import useTwBelt from '~/hooks/useTwBelt'
+
+export default () => {
+  const { cn } = useTwBelt()
+
+  return {
+    wrapper: cn('row-center mb-4 -ml-9'),
+  }
+}
+
 export const HeaderBaseInfo = styled.div`
   ${css.column()};
   width: 100%;

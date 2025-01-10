@@ -11,7 +11,7 @@ import ImgFallback from '~/widgets/ImgFallback'
 import IllegalBar from './IllegalBar'
 
 import useLogic from '../../useLogic'
-import useSalon, { cn, CurveLine } from '../../styles/comment/desktop_view/fold_layout'
+import useSalon, { cn } from '../../styles/comment/desktop_view/fold_layout'
 
 type TProps = {
   data: TComment
@@ -29,7 +29,7 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
 
   return (
     <div className={s.wrapper} onClick={() => expandComment(data.id)}>
-      {isReply && <CurveLine />}
+      {isReply && <span>curve</span>}
       <ExpandSVG className={s.expandIcon} />
       <Img
         className={s.avatar}

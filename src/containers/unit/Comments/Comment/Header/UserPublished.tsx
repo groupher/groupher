@@ -43,7 +43,7 @@ const CommentHeader: FC<TProps> = ({ data }) => {
         </AuthorName>
 
         <CreateDate>
-          // 评论于: <TimeAgo datetime={data.insertedAt} locale="zh_CN" />
+          评论于: <TimeAgo datetime={data.insertedAt} locale="zh_CN" />
         </CreateDate>
       </HeaderBaseInfo>
     </Fragment>

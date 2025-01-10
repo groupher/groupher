@@ -1,30 +1,12 @@
 import type { FC } from 'react'
 import TimeAgo from 'timeago-react'
-import useMobileDetect from '@groupher/use-mobile-detect-hook'
 
 import type { TComment } from '~/spec'
-import useLayout from '~/hooks/useLayout'
 
+import Img from '~/Img'
 import ImgFallback from '~/widgets/ImgFallback'
-import { Space } from '~/widgets/Common'
-import DotDivider from '~/widgets/DotDivider'
 
-import {
-  Wrapper,
-  CurveLine,
-  FloorNum,
-  CreateDate,
-  Avatar,
-  HeaderBaseInfo,
-  BaseInfo,
-  Nickname,
-  UserBase,
-  AuthorTag,
-  RefToOther,
-  RefLabel,
-  RefUser,
-  ShortIntro,
-} from '../../styles/comment/header/article'
+import useSalon from '../../styles/comment/header/article'
 
 type TProps = {
   data: TComment
@@ -33,47 +15,44 @@ type TProps = {
 }
 
 const CommentHeader: FC<TProps> = ({ data, showInnerRef, isReply }) => {
-  const { isMobile } = useMobileDetect()
-  const { avatarLayout } = useLayout()
+  const s = useSalon()
 
   const { author, meta } = data
-  const avatarSize = author.bio ? 26 : 24
 
   return (
-    <Wrapper>
-      {isReply && <CurveLine />}
-      <Avatar
+    <div className={s.wrapper}>
+      {isReply && <span>curve</span>}
+      <Img
+        className={s.avatar}
         src={data.author.avatar}
-        avatarSize={avatarSize}
-        $avatarLayout={avatarLayout}
-        fallback={<ImgFallback user={data.author} size={avatarSize} right={10} />}
+        fallback={<ImgFallback user={data.author} size={24} right={10} />}
       />
-      <HeaderBaseInfo>
-        <BaseInfo>
-          <UserBase>
-            <Nickname>{author.nickname}</Nickname>
-            {data.isArticleAuthor && <AuthorTag>发帖</AuthorTag>}
+      <div className={s.headerInfo}>
+        <div className={s.baseInfo}>
+          <div className={s.user}>
+            <div className={s.nickname}>{author.nickname}</div>
+            {data.isArticleAuthor && <div className={s.authorTag}>发帖</div>}
             {showInnerRef && meta.isReplyToOthers && (
-              <RefToOther>
-                <RefLabel>回复</RefLabel>
-                <RefUser>{data.replyTo?.author?.nickname}</RefUser>
-              </RefToOther>
+              <div className={s.refToOther}>
+                <div className={s.refLabel}>回复:</div>
+                <div className={s.refUser}>{data.replyTo?.author?.nickname}</div>
+              </div>
             )}
-            <CreateDate>
-              <DotDivider space={isMobile ? 4 : 8} />
+            <div className={s.createDate}>
               <TimeAgo datetime={data.insertedAt} locale="zh_CN" />
-            </CreateDate>
-          </UserBase>
-          <FloorNum>
-            #<Space right={2} />
-            {data.floor}
-          </FloorNum>
-          <Space right={10} />
-        </BaseInfo>
+            </div>
+          </div>
 
-        {author.bio && <ShortIntro>{author.bio}</ShortIntro>}
-      </HeaderBaseInfo>
-    </Wrapper>
+          <div className={s.floorNum}>
+            #<span className="mr-0.5" />
+            {data.floor}
+          </div>
+          <div className="mr-2.5" />
+        </div>
+
+        {author.bio && <div className={s.shortBio}>{author.bio}</div>}
+      </div>
+    </div>
   )
 }
 
