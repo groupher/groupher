@@ -1,40 +1,25 @@
 import Img from '~/Img'
 import styled, { css, theme, animate } from '~/css'
 
-import PinSVG from '~/icons/Pin'
 import UserBadge from '~/icons/UserBadge'
 
-type TWrapper = {
-  $isPinned: boolean
+import useTwBelt from '~/hooks/useTwBelt'
+
+export { cn } from '~/css'
+
+export default () => {
+  const { cn, fg, fill } = useTwBelt()
+
+  return {
+    wrapper: cn('row relative bg-transparent pt-5'),
+    pinState: 'row-center absolute top-0 left-0 ml-px',
+    pinIcon: cn('size-3.5 -rotate-12', fill('text.digest')),
+    pinText: cn('text-xs ml-4', fg('text.digest')),
+    comment: 'group row grow w-full',
+    sidebar: cn('column h-full min-w-8', fg('text.title')),
+    commentBody: 'column w-full',
+  }
 }
-
-export const Wrapper = styled.div<TWrapper>`
-  position: relative;
-  ${css.row()};
-  padding-top: ${({ $isPinned }) => ($isPinned ? '24px' : '20px')};
-  position: relative;
-  background: transparent;
-`
-export const PinState = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  ${css.row('align-center')};
-  margin-left: 1px;
-`
-export const PinIcon = styled(PinSVG)`
-  fill: ${theme('article.digest')};
-  ${css.size(14)};
-  opacity: 0.9;
-  transform: rotate(-30deg);
-`
-export const PinText = styled.div`
-  font-size: 12px;
-  color: ${theme('article.digest')};
-  margin-left: 15px;
-  opacity: 0.8;
-`
-
 export const CommentWrapper = styled.div`
   ${css.rowGrow()};
   width: 100%;
@@ -101,17 +86,4 @@ export const IndentLine = styled.div`
   }
 
   transition: all 0.2s;
-`
-export const CommentBodyInfo = styled.div`
-  ${css.column()};
-  width: 100%;
-
-  ${css.media.mobile`
-    width: calc(100vw - 60px);
-  `};
-`
-export const CommentContent = styled.div`
-  ${css.media.mobile`
-    margin-left: -2px;
-  `};
 `

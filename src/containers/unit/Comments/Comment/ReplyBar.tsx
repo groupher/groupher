@@ -1,29 +1,34 @@
 import { type FC, memo } from 'react'
 
 import type { TComment } from '~/spec'
-import { ICON } from '~/config'
 import { cutRest } from '~/fmt'
 
-import { Wrapper, ReplyIcon, Avatar, ReplyToBody, ReplyToFloor } from '../styles/comment/reply_bar'
+import ReplySVG from '~/icons/Reply'
+import Img from '~/Img'
+
+import useSalon from '../styles/comment/reply_bar'
 
 type TProps = {
   data: TComment
 }
 
 const CommentReplyBar: FC<TProps> = ({ data }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <ReplyIcon src={`${ICON}/article/reply.svg`} />
-      <Avatar src={data.author.avatar} />
+    <div className={s.wrapper}>
+      <ReplySVG className={s.replyIcon} />
+      <Img src={data.author.avatar} className={s.avatar} noLazy />
       {cutRest(data.author.nickname, 20)}:
-      <ReplyToBody
+      <div
+        className={s.replyToBody}
         dangerouslySetInnerHTML={{
           __html: data.bodyHtml,
         }}
       />
       <div className="grow" />
-      <ReplyToFloor>#{data.floor}</ReplyToFloor>
-    </Wrapper>
+      <div className={s.replyToFloor}>#{data.floor}</div>
+    </div>
   )
 }
 

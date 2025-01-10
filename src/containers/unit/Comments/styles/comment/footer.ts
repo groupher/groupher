@@ -1,59 +1,16 @@
-// import Img from '~/Img'
-import UserBadge from '~/icons/UserBadge'
-import CheckSVG from '~/icons/CheckBold'
+import { COLOR_NAME } from '~/const/colors'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import styled, { css, theme } from '~/css'
+export default () => {
+  const { cn, fg, fill, rainbow } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  margin-bottom: 5px;
-  margin-top: -12px;
-  margin-left: -8px;
-
-  ${css.media.mobile`
-    margin-left: -8px;
-  `};
-`
-
-export const MainWrapper = styled.div`
-  ${css.row('align-center')};
-
-  ${css.media.mobile`
-    flex-wrap: wrap;
-    gap: 10px 0; 
-  `};
-`
-
-export const ExtraWrapper = styled.div`
-  ${css.row('align-center')};
-  margin-bottom: 14px;
-  padding: 0 8px;
-`
-export const AnwserWrapper = styled.span`
-  ${css.row('align-center')};
-  font-size: 12px;
-  color: ${theme('rainbow.green')};
-  font-weight: 600;
-  margin-right: 15px;
-  text-shadow: #8bc34a2e 1px 0 8px;
-`
-export const CheckSVGIcon = styled(CheckSVG)`
-  ${css.size(13)};
-  fill: ${theme('rainbow.green')};
-  margin-right: 5px;
-  margin-top: -1px;
-  opacity: 0.6;
-`
-export const AuthorUpvoteWrapper = styled.span`
-  ${css.row('align-center')};
-  font-size: 11px;
-  color: ${theme('article.info')};
-  opacity: 0.8;
-`
-export const UpvotedIcon = styled(UserBadge)`
-  ${css.size(12)};
-  fill: ${theme('article.info')};
-  margin-right: 5px;
-  margin-top: -1px;
-  opacity: 0.6;
-`
+  return {
+    wrapper: cn('column mb-1 -mt-3 -ml-2'),
+    main: 'row-center',
+    extra: 'row-center mb-3.5 px-2',
+    anwser: cn('text-xs row-center mr-4 bold-sm', rainbow(COLOR_NAME.GREEN, 'fg')),
+    checkIcon: cn('size-3.5 mr-1 mt-px', rainbow(COLOR_NAME.GREEN, 'fill')),
+    authorUpvote: cn('text-xs row-center scale-90', fg('link')),
+    upvoteIcon: cn('size-3 mr-1.5 -mt-px', fill('link')),
+  }
+}

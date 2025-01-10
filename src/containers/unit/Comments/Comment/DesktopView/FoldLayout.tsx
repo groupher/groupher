@@ -2,24 +2,16 @@ import type { FC } from 'react'
 import TimeAgo from 'timeago-react'
 
 import type { TComment } from '~/spec'
-import useLayout from '~/hooks/useLayout'
-import { ICON } from '~/config'
 
+import Img from '~/Img'
+import ExpandSVG from '~/icons/Expand'
+import CheckBoldSVG from '~/icons/CheckBold'
 import ImgFallback from '~/widgets/ImgFallback'
 
 import IllegalBar from './IllegalBar'
 
 import useLogic from '../../useLogic'
-import {
-  Wrapper,
-  CurveLine,
-  Avatar,
-  CommentBody,
-  RepliesHint,
-  SolutionIcon,
-  CreateDate,
-  ExpandIcon,
-} from '../../styles/comment/desktop_view/fold_layout'
+import useSalon, { cn, CurveLine } from '../../styles/comment/desktop_view/fold_layout'
 
 type TProps = {
   data: TComment
@@ -27,7 +19,8 @@ type TProps = {
 }
 
 const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
-  const { avatarLayout } = useLayout()
+  const s = useSalon()
+
   const { expandComment } = useLogic()
 
   const isSolution = false //
@@ -35,16 +28,18 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
   const { isLegal, illegalReason, illegalWords } = meta
 
   return (
-    <Wrapper onClick={() => expandComment(data.id)}>
+    <div className={s.wrapper} onClick={() => expandComment(data.id)}>
       {isReply && <CurveLine />}
-      <ExpandIcon />
-      <Avatar
+      <ExpandSVG className={s.expandIcon} />
+      <Img
+        className={s.avatar}
         src={data.author.avatar}
-        $avatarLayout={avatarLayout}
         fallback={<ImgFallback user={data.author} size={16} />}
+        noLazy
       />
       {isLegal ? (
-        <CommentBody
+        <div
+          className={s.commentBody}
           dangerouslySetInnerHTML={{
             __html: data.bodyHtml,
           }}
@@ -53,18 +48,17 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
         <IllegalBar illegalReason={illegalReason} illegalWords={illegalWords} isFold />
       )}
 
-      {data.repliesCount > 0 && <RepliesHint>[ {data.repliesCount} 条回复 ]</RepliesHint>}
+      {data.repliesCount > 0 && <div className={s.repliesHint}>[ {data.repliesCount} 条回复 ]</div>}
 
       {isSolution && (
-        <SolutionIcon
-          isAuthorUpvoted={data.meta.isArticleAuthorUpvoted}
-          src={`${ICON}/shape/solution-check.svg`}
+        <CheckBoldSVG
+          className={cn(s.solutionIcon, data.meta.isArticleAuthorUpvoted && 'mt-1.5')}
         />
       )}
-      <CreateDate>
+      <div className={s.createDate}>
         <TimeAgo datetime={data.insertedAt} locale="zh_CN" />
-      </CreateDate>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 

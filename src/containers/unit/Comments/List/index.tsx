@@ -6,7 +6,6 @@ import { Br } from '~/widgets/Common'
 import List from './List'
 
 import useLogic from '../useLogic'
-import { ListsWrapper } from '../styles/list'
 
 export default () => {
   const { mode, apiMode, loading, getFoldState, getRepliesState, pagedComments, onPageChange } =
@@ -20,15 +19,13 @@ export default () => {
 
   return (
     <Fragment>
-      <ListsWrapper>
-        <List
-          mode={mode}
-          apiMode={apiMode}
-          entries={entries}
-          repliesState={repliesState}
-          foldedIds={foldedIds}
-        />
-      </ListsWrapper>
+      <List
+        mode={mode}
+        apiMode={apiMode}
+        entries={entries}
+        repliesState={repliesState}
+        foldedIds={foldedIds}
+      />
       <Br bottom={50} />
       {!loading && (
         <Pagi

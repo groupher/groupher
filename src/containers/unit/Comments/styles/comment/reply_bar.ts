@@ -1,37 +1,17 @@
-import styled, { css, theme } from '~/css'
-import Img from '~/Img'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import { ReplyBarBase, ReplyToBodyBase, ReplyToFloorBase } from './base'
+export default () => {
+  const { cn, fg, bg, fill, avatar } = useTwBelt()
 
-export const Wrapper = styled(ReplyBarBase)`
-  margin-left: -2px;
-
-  ${css.media.mobile`
-    margin: 4px 0;
-    padding: 5px 3px;
-  `};
-`
-export const Avatar = styled(Img)`
-  ${css.circle(14)};
-  margin-left: 5px;
-  margin-right: 5px;
-`
-export const ReplyIcon = styled(Img)`
-  fill: ${theme('comment.username')};
-  ${css.size(15)};
-  margin-right: 3px;
-  margin-top: 2px;
-`
-export const ReplyToBody = styled(ReplyToBodyBase)`
-  ${css.media.mobile`
-    font-size: 12px;
-    margin-top: 3px;
-  `};
-`
-export const ReplyToFloor = styled(ReplyToFloorBase)`
-  ${css.media.mobile`
-    font-size: 12px;
-    opacity: 0.8;
-    margin-top: 2px;
-  `};
-`
+  return {
+    wrapper: cn(
+      'row-center rounded-md px-2 py-1.5 mr-2 mb-2 max-w-[580px] -ml-0.5',
+      fg('text.digest'),
+      bg('sandBox'),
+    ),
+    avatar: cn('size-3.5 circle ml-1.5 mr-1.5', avatar()),
+    replyToBody: cn('ml-2.5 mr-5 grow italic', fg('text.title')),
+    replyToFloor: cn('mr-1.5', fg('text.hint')),
+    replyIcon: cn('size-3.5 mr-1 mt-0.5', fill('text.hint')),
+  }
+}

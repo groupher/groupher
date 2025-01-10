@@ -1,7 +1,5 @@
 import styled, { css, theme } from '~/css'
 
-import { Wrapper as CommentBlock } from '../desktop_view'
-
 export const Wrapper = styled.div`
   ${css.row('align-center')};
   margin-bottom: 15px;
@@ -24,11 +22,7 @@ export const FloorNum = styled.div`
   color: ${theme('comment.floor')};
   font-size: 13px;
   margin-top: 2px;
-  opacity: 0.6;
-
-  ${CommentBlock}:hover & {
-    opacity: 0.8;
-  }
+  opacity: 0.8;
 
   transition: opacity 0.25s;
 `

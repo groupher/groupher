@@ -1,10 +1,16 @@
 import styled, { theme } from '~/css'
 // import styled, { css } from '~/css'
 
-export const Wrapper = styled.div`
-  position: relative;
-  margin-left: 6px;
-`
+import useTwBelt from '~/hooks/useTwBelt'
+
+export default () => {
+  const { cn } = useTwBelt()
+
+  return {
+    wrapper: cn('relative ml-1.5'),
+  }
+}
+
 type TIndentLine = {
   isFold: boolean
   hasReplies: boolean

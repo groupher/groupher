@@ -1,4 +1,4 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 import { includes } from 'ramda'
 
 import type { TID, TAccount, TComment } from '~/spec'
@@ -24,4 +24,4 @@ const Comment: FC<TProps> = (props) => {
   return isFolded ? <FoldLayout {...props} /> : <DefaultLayout {...props} />
 }
 
-export default memo(Comment)
+export default Comment

@@ -1,42 +1,11 @@
-import styled, { css, theme } from '~/css'
-import MoreSVG from '~/icons/menu/More'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import { Wrapper as CommentWrapper } from './desktop_view'
+export default () => {
+  const { cn, fg, fill } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.row('align-center')};
-  width: 100%;
-
-  ${css.media.mobile`
-    font-size: 12px;
-    width: 50px;
-    word-break: keep-all;
-    margin-left: 15px;
-  `};
-`
-export const ReplyAction = styled.div`
-  color: ${theme('article.info')};
-  opacity: 0.7;
-  font-weight: bold;
-
-  &:hover {
-    opacity: 1;
-    cursor: pointer;
+  return {
+    wrapper: cn('row-center w-full'),
+    replyAction: cn('bold-sm pointer', fg('text.digest')),
+    moreIcon: cn('size-4', fill('text.digest')),
   }
-
-  transition: all 0.2s;
-`
-export const MoreWrapper = styled.div`
-  opacity: 0;
-
-  ${CommentWrapper}:hover & {
-    opacity: 1;
-  }
-
-  transition: all 0.2s;
-`
-
-export const MoreIcon = styled(MoreSVG)`
-  ${css.size(16)};
-  fill: ${theme('article.digest')};
-`
+}

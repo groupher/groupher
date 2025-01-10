@@ -3,6 +3,7 @@ import { type FC, Fragment } from 'react'
 import type { TComment } from '~/spec'
 
 // import Tooltip from '~/widgets/Tooltip'
+import PinSVG from '~/icons/Pin'
 import ArtimentBody from '~/widgets/ArtimentBody'
 
 import Header from '../Header'
@@ -13,20 +14,7 @@ import IllegalBar from './IllegalBar'
 import type { TAPIMode } from '../../spec'
 
 import useLogic from '../../useLogic'
-import {
-  Wrapper,
-  CommentWrapper,
-  SidebarWrapper,
-  CommentContent,
-  CommentBodyInfo,
-  PinState,
-  PinIcon,
-  PinText,
-  // AuthorUpvotedIcon,
-  // SolutionIcon,
-  // BadgePopContent,
-  IndentLine,
-} from '../../styles/comment/desktop_view'
+import useSalon, { cn, IndentLine } from '../../styles/comment/desktop_view'
 
 type TProps = {
   data: TComment
@@ -36,27 +24,28 @@ type TProps = {
 }
 
 const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false, apiMode }) => {
+  const s = useSalon()
   const { foldComment } = useLogic()
 
   const { isPinned, meta } = data
   const { isLegal, illegalReason, illegalWords } = meta
 
   return (
-    <Wrapper $isPinned={isPinned}>
+    <div className={cn(s.wrapper, isPinned && 'pt-6')}>
       {isPinned && (
-        <PinState>
-          <PinIcon />
-          <PinText>置顶讨论</PinText>
-        </PinState>
+        <div className={s.pinState}>
+          <PinSVG className={s.pinIcon} />
+          <div className={s.pinText}>置顶讨论</div>
+        </div>
       )}
-      <CommentWrapper>
-        <SidebarWrapper>
+      <div className={s.comment}>
+        <div className={s.sidebar}>
           {isReply && <IndentLine onClick={() => foldComment(data.id)} />}
-        </SidebarWrapper>
+        </div>
 
-        <CommentBodyInfo>
+        <div className={s.commentBody}>
           <Header data={data} showInnerRef={showInnerRef} apiMode={apiMode} isReply={isReply} />
-          <CommentContent>
+          <div>
             {isLegal ? (
               <Fragment>
                 {!isReply && data.replyTo && <ReplyBar data={data.replyTo} />}
@@ -69,13 +58,11 @@ const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false
             ) : (
               <IllegalBar illegalReason={illegalReason} illegalWords={illegalWords} />
             )}
-
-            {/* <IllegalBar /> */}
-          </CommentContent>
+          </div>
           <Footer data={data} apiMode={apiMode} />
-        </CommentBodyInfo>
-      </CommentWrapper>
-    </Wrapper>
+        </div>
+      </div>
+    </div>
   )
 }
 

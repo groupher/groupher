@@ -1,29 +1,15 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import BotSVG from '~/icons/Bot'
+export { cn } from '~/css'
 
-export const Wrapper = styled.div<{ isFold: boolean }>`
-  ${css.row('align-center')};
-  padding: ${({ isFold }) => (isFold ? '0 5px' : '5px 10px')};
-  border-radius: 5px;
-  background: ${({ isFold }) => (isFold ? 'transparent' : '#00313d')};
-  width: ${({ isFold }) => (isFold ? 'auto' : '100%')};
-  height: ${({ isFold }) => (isFold ? 'auto' : '35px')};
-  margin-bottom: ${({ isFold }) => (isFold ? '2px' : '10px;')};
-`
+export default () => {
+  const { cn, fg, bg, fill } = useTwBelt()
 
-export const BotIcon = styled(BotSVG)`
-  fill: ${theme('article.digest')};
-  ${css.size(15)};
-  margin-top: -1px;
-  opacity: 0.6;
-`
-export const Content = styled.div`
-  ${css.row('align-center')};
-  color: ${theme('article.digest')};
-  margin-left: 10px;
-  font-size: 13px;
-`
-export const Reason = styled.div`
-  color: ${theme('article.title')};
-`
+  return {
+    wrapper: cn('row-center rounded-md px-1 py-0 w-full h-9 mb-2.5'),
+    wrapperFold: cn('px-2.5 py-1 w-auto h-auto mb-0.5', bg('sandBox')),
+    content: cn('row-center ml-2.5 text-sm', fg('text.digest')),
+    reason: fg('text.title'),
+    botIcon: cn('size-4', fill('article.digest')),
+  }
+}
