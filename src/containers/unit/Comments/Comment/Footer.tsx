@@ -19,7 +19,7 @@ import type { TAPIMode } from '../spec'
 import { API_MODE } from '../constant'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/comment/footer'
+import useSalon from '../salon/comment/footer'
 
 type TProps = {
   data: TComment

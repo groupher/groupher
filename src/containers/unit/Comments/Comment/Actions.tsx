@@ -10,7 +10,7 @@ import MoreSVG from '~/icons/menu/More'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/comment/actions'
+import useSalon from '../salon/comment/actions'
 
 const menuOptions = [
   // {

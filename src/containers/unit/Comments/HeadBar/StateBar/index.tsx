@@ -7,7 +7,7 @@ import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import SortMenu from './SortMenu'
 import type { TProps as TBase } from '..'
 
-import useSalon from '../../styles/head_bar/state_bar'
+import useSalon from '../../salon/head_bar/state_bar'
 
 type TProps = Pick<TBase, 'mode' | 'apiMode' | 'isAllFolded' | 'loading' | 'basicState'> & {
   callEditor?: () => void

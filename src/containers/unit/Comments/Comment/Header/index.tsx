@@ -7,7 +7,7 @@ import ArticleHeader from './Article'
 import type { TAPIMode } from '../../spec'
 import { API_MODE } from '../../constant'
 
-import useSalon from '../../styles/comment/header'
+import useSalon from '../../salon/comment/header'
 
 type TProps = {
   data: TComment

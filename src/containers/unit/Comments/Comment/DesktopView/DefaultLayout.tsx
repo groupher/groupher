@@ -14,7 +14,7 @@ import IllegalBar from './IllegalBar'
 import type { TAPIMode } from '../../spec'
 
 import useLogic from '../../useLogic'
-import useSalon, { cn, IndentLine } from '../../styles/comment/desktop_view'
+import useSalon, { cn } from '../../salon/comment/desktop_view'
 
 type TProps = {
   data: TComment
@@ -40,7 +40,7 @@ const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false
       )}
       <div className={s.comment}>
         <div className={s.sidebar}>
-          {isReply && <IndentLine onClick={() => foldComment(data.id)} />}
+          {isReply && <div className={s.indentLine} onClick={() => foldComment(data.id)} />}
         </div>
 
         <div className={s.commentBody}>

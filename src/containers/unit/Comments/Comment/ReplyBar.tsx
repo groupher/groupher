@@ -6,7 +6,7 @@ import { cutRest } from '~/fmt'
 import ReplySVG from '~/icons/Reply'
 import Img from '~/Img'
 
-import useSalon from '../styles/comment/reply_bar'
+import useSalon from '../salon/comment/reply_bar'
 
 type TProps = {
   data: TComment

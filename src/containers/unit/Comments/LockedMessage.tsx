@@ -1,6 +1,6 @@
 import LockSVG from '~/icons/Lock'
 
-import useSalon from './styles/locked_message'
+import useSalon from './salon/locked_message'
 
 export default () => {
   const s = useSalon()

@@ -13,7 +13,7 @@ import { MODE } from '../constant'
 import { passedDate } from '../helper'
 
 import useLogic from '../useLogic'
-import useSalon, { IndentLine } from '../styles/list/list'
+import useSalon from '../salon/list/list'
 
 type TProps = {
   mode: TMode
@@ -52,11 +52,7 @@ const List: FC<TProps> = ({ mode, repliesState, apiMode, entries, foldedIds }) =
                 foldedIds={foldedIds}
               />
             )}
-          <IndentLine
-            hasReplies={comment.repliesCount > 0}
-            onClick={() => foldComment(comment.id)}
-            isFold={includes(comment.id, foldedIds)}
-          />
+          <div className={s.indentLine} onClick={() => foldComment(comment.id)} />
         </div>
       ))}
     </>

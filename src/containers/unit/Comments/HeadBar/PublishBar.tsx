@@ -6,7 +6,7 @@ import Img from '~/Img'
 import EditPublishSVG from '~/icons/EditPublish'
 import Button from '~/widgets/Buttons/Button'
 
-import useSalon from '../styles/head_bar/publish_bar'
+import useSalon from '../salon/head_bar/publish_bar'
 
 type TProps = {
   closeEditor: () => void

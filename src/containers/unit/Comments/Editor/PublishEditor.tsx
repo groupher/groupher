@@ -6,7 +6,7 @@ import type { TSubmitState } from '~/spec'
 import BodyEditor from './BodyEditor'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/editor/publish_editor'
+import useSalon from '../salon/editor/publish_editor'
 
 type TProps = {
   body: string

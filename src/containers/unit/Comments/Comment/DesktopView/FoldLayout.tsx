@@ -11,7 +11,7 @@ import ImgFallback from '~/widgets/ImgFallback'
 import IllegalBar from './IllegalBar'
 
 import useLogic from '../../useLogic'
-import useSalon, { cn } from '../../styles/comment/desktop_view/fold_layout'
+import useSalon, { cn } from '../../salon/comment/desktop_view/fold_layout'
 
 type TProps = {
   data: TComment

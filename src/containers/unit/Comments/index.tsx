@@ -19,7 +19,7 @@ import type { TAPIMode } from './spec'
 import { API_MODE } from './constant'
 import HeadBar from './HeadBar'
 
-import useSalon from './styles'
+import useSalon from './salon'
 import useLogic from './useLogic'
 
 type TProps = {

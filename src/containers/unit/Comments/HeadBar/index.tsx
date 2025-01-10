@@ -7,7 +7,7 @@ import PublishBar from './PublishBar'
 import PublishEditor from '../Editor/PublishEditor'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/head_bar'
+import useSalon from '../salon/head_bar'
 
 import type { TMode, TAPIMode, TEditState } from '../spec'
 

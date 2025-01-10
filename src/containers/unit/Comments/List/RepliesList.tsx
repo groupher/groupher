@@ -7,7 +7,7 @@ import TogglerButton from './TogglerButton'
 import Comment from '../Comment'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/list/replies_list'
+import useSalon from '../salon/list/replies_list'
 
 type TProps = {
   parentId: TID

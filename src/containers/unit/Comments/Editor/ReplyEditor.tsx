@@ -9,7 +9,7 @@ import BodyEditor from './BodyEditor'
 import Footer from './Footer'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/editor/reply_editor'
+import useSalon from '../salon/editor/reply_editor'
 
 type TProps = {
   body: string

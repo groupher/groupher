@@ -6,7 +6,7 @@ import WordsCounter from '~/widgets/WordsCounter'
 import SubmitButton from '~/widgets/Buttons/SubmitButton'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/editor/footer'
+import useSalon from '../salon/editor/footer'
 
 type TProps = {
   body: string

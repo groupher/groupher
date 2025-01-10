@@ -2,9 +2,9 @@ import type { FC } from 'react'
 
 import type { TComment } from '~/spec'
 // import { ICON_CMD } from '~/config'
-// import { Wrapper } from './styles'
+// import { Wrapper } from './salon'
 import { cutRest } from '~/fmt'
-import useSalon from './styles/reply_to_bar'
+import useSalon from './salon/reply_to_bar'
 
 type TProps = {
   comment: TComment

@@ -7,7 +7,7 @@ import CommentSVG from '~/icons/Comment'
 import UserSVG from '~/icons/User'
 
 import useLogic from '../useLogic'
-import useSalon from '../styles/editor/header'
+import useSalon from '../salon/editor/header'
 
 type TProps = {
   accountInfo: TAccount

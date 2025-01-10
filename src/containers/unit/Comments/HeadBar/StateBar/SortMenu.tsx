@@ -14,7 +14,7 @@ import { MODE } from '../../constant'
 import type { TProps as TBase } from '..'
 
 import useLogic from '../../useLogic'
-import useSalon, { cn } from '../../styles/head_bar/state_bar/sort_menu'
+import useSalon, { cn } from '../../salon/head_bar/state_bar/sort_menu'
 
 type TProps = Pick<TBase, 'mode' | 'apiMode' | 'isAllFolded'>
 

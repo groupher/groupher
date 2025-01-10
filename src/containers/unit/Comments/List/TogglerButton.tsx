@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
-import useSalon from '../styles/list/toggler_button'
+import useSalon from '../salon/list/toggler_button'
 
 type TProps = {
   text: string

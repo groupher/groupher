@@ -3,7 +3,7 @@ import { type FC, memo, Fragment } from 'react'
 
 import BotSVG from '~/icons/Bot'
 
-import useSalon, { cn } from '../../styles/comment/desktop_view/illegal_bar'
+import useSalon, { cn } from '../../salon/comment/desktop_view/illegal_bar'
 
 type TProps = {
   illegalReason: string[]
