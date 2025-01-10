@@ -1,33 +1,16 @@
-// import Img from '~/Img'
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  padding: 10px 0;
-  background: ${theme('modal.subPanel')};
-  min-height: 300px;
-  height: auto;
-  border-bottom: 3px solid;
-  border-color: #00424f;
-  transition: all 0.2s;
-`
-export const Header = styled.div`
-  ${css.row('align-center')};
-  height: 32px;
-  padding: 0 28px;
-  padding-bottom: 8px;
-  width: 100%;
-  color: ${theme('article.digest')};
-  font-size: 16px;
-`
+export default () => {
+  const { cn, bg, fg, br } = useTwBelt()
 
-export const EditorWrapper = styled.div`
-  overflow-x: hidden;
-  padding-top: 10px;
-  background: #002a34;
-  min-height: 320px;
-`
-export const FooterWrapper = styled.div`
-  width: 100%;
-  padding-top: 16px;
-`
+  return {
+    wrapper: cn(
+      'column py-2.5 min-h-72 h-auto border-b-2 trans-all-200',
+      bg('sandBox'),
+      br('divider'),
+    ),
+    header: cn('row-center text-base h-8 px-7 pb-2 w-full', fg('text.digest')),
+    editorWrapper: cn('overflow-x-hidden pt-2.5 min-h-80', bg('sandBox')),
+    footer: 'pt-4 w-full',
+  }
+}

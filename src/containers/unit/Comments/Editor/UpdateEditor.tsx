@@ -9,7 +9,7 @@ import BodyEditor from './BodyEditor'
 import Footer from './Footer'
 
 import useLogic from '../useLogic'
-import { Wrapper, Header, EditorWrapper, FooterWrapper } from '../styles/editor/update_editor'
+import useSalon from '../styles/editor/update_editor'
 
 type TProps = {
   body: string
@@ -18,22 +18,23 @@ type TProps = {
 }
 
 const UpdateEditor: FC<TProps> = ({ id, body, submitState }) => {
+  const s = useSalon()
   const { commentOnChange, updateComment, closeUpdateEditor } = useLogic()
 
   return (
-    <Wrapper>
-      <Header>修改评论</Header>
+    <div className={s.wrapper}>
+      <div className={s.header}>修改评论</div>
       <CustomScroller direction="vertical" height="320px" showShadow={false} autoHide={false}>
-        <EditorWrapper>
+        <div className={s.editorWrapper}>
           {id ? (
             <BodyEditor body={body} onChange={(v) => commentOnChange(v)} />
           ) : (
             <LavaLampLoading top={10} left={30} />
           )}
-        </EditorWrapper>
+        </div>
       </CustomScroller>
 
-      <FooterWrapper>
+      <div className={s.footer}>
         <Footer
           label="更 新"
           submitState={submitState}
@@ -41,8 +42,8 @@ const UpdateEditor: FC<TProps> = ({ id, body, submitState }) => {
           onPublish={updateComment}
           onCancel={closeUpdateEditor}
         />
-      </FooterWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 

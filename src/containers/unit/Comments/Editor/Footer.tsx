@@ -6,7 +6,7 @@ import WordsCounter from '~/widgets/WordsCounter'
 import SubmitButton from '~/widgets/Buttons/SubmitButton'
 
 import useLogic from '../useLogic'
-import { Wrapper } from '../styles/editor/footer'
+import useSalon from '../styles/editor/footer'
 
 type TProps = {
   body: string
@@ -17,10 +17,11 @@ type TProps = {
 }
 
 const EditorFooter: FC<TProps> = ({ body, label = '发 布', submitState, onPublish, onCancel }) => {
+  const s = useSalon()
   const { setWordsCountState } = useLogic()
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <WordsCounter body={body} bottom={3} min={10} max={1000} onChange={setWordsCountState} />
       <SubmitButton
         okText={label}
@@ -28,7 +29,7 @@ const EditorFooter: FC<TProps> = ({ body, label = '发 布', submitState, onPubl
         onPublish={onPublish}
         onCancel={onCancel}
       />
-    </Wrapper>
+    </div>
   )
 }
 

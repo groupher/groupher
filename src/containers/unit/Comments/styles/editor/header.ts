@@ -1,65 +1,17 @@
-import type { TAvatarLayout } from '~/spec'
-import { AVATAR_LAYOUT } from '~/const/layout'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import Img from '~/Img'
-import styled, { css, theme } from '~/css'
-import CommentSVG from '~/icons/Comment'
-import UserSVG from '~/icons/User'
+export default () => {
+  const { cn, fg, fill, avatar } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.row('align-center')};
-  height: 44px;
-
-  cursor: pointer;
-  -webkit-mask: linear-gradient(-60deg, #000 30%, #0005, #000 70%) right/300% 100%;
-
-  background-repeat: no-repeat;
-  animation: shimmer 3s infinite;
-  /* max-width: 300px; */
-
-  @keyframes shimmer {
-    100% {
-      -webkit-mask-position: left;
-    }
+  return {
+    wrapper: cn('row-center h-10 pointer'),
+    expandWrapper: 'row-center h-14 ml-0 relative',
+    hintText: cn('absolute -top-6 left-0.5 text-xs opacity-50', fg('text.digest')),
+    unLogUserIcon: cn('size-3 opacity-50', fill('text.digest')),
+    avatar: cn('size-5 ml-2', avatar()),
+    leaveRes: cn('text-sm ml-4 opacity-50', fg('text.digest')),
+    leaveResUsername: cn('text-base mx-3.5', fg('text.digest')),
+    //
+    commentIcon: cn('size-3.5 mr-4', fill('text.digest')),
   }
-`
-export const ExpandWrapper = styled.div`
-  ${css.row('align-center')};
-  height: 60px;
-  margin-left: 0;
-  position: relative;
-`
-export const HintText = styled.div`
-  position: absolute;
-  top: -25px;
-  left: 3px;
-  font-size: 12px;
-  color: ${theme('hint')};
-`
-export const UnloginUser = styled(UserSVG)`
-  ${css.size(12)};
-  fill: ${theme('comment.placeholder')};
-`
-export const UserAvatar = styled(Img)<{ $avatarLayout: TAvatarLayout }>`
-  ${css.size(20)};
-  border-radius: ${({ $avatarLayout }) => ($avatarLayout === AVATAR_LAYOUT.SQUARE ? '4px' : '100%')};
-
-  fill: ${theme('comment.placeholder')};
-  margin-left: 4%;
-`
-export const LeaveResponseText = styled.div`
-  font-size: 14px;
-  margin-left: 15px;
-  color: ${theme('comment.placeholder')};
-`
-export const LeaveResponseUsername = styled.div`
-  color: ${theme('comment.username')};
-  font-size: 16px;
-  margin-left: 12px;
-  margin-right: 10px;
-`
-export const PenIcon = styled(CommentSVG)`
-  fill: ${theme('comment.placeholder')};
-  ${css.size(14)};
-  margin-right: 15px;
-`
+}

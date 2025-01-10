@@ -1,18 +1,19 @@
-// import Img from '~/Img'
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  padding: 10px 0;
-  background: transparent;
-  min-height: 100px;
-  height: auto;
+export default () => {
+  const { cn, br } = useTwBelt()
 
-  margin-top: -10px;
-  margin-bottom: 20px;
-
-  border-bottom: 2px solid;
-  border-bottom-color: ${theme('divider')};
-`
-
-export const holder = 1
+  return {
+    wrapper: cn(
+      'column',
+      'py-2.5',
+      'bg-transparent',
+      'min-h-24',
+      'h-auto',
+      '-mt-2.5',
+      'mb-5',
+      'border-b-2',
+      br('divider'),
+    ),
+  }
+}

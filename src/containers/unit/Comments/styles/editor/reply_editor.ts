@@ -1,46 +1,20 @@
-// import Img from '~/Img'
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  padding: 10px 0;
-  background: ${theme('modal.subPanel')};
-  min-height: 300px;
-  height: auto;
-  border-bottom: 3px solid;
-  border-color: #00424f;
-  transition: all 0.2s;
-`
+export default () => {
+  const { cn, fg, bg, br } = useTwBelt()
 
-export const Header = styled.div`
-  ${css.column()};
-  height: 68px;
-  padding: 0 28px;
-  padding-bottom: 8px;
-  width: 100%;
-  color: ${theme('article.digest')};
-  font-size: 16px;
-`
-export const ReplyToHint = styled.div`
-  ${css.row('align-center')};
-  margin-bottom: 6px;
-`
-export const ReplyToContent = styled.div`
-  ${css.lineClamp(1)}
-  color: ${theme('article.digest')};
-  font-size: 14px;
-`
-export const ReplyToAuthor = styled.div`
-  color: ${theme('article.title')};
-  margin-left: 5px;
-`
-export const EditorWrapper = styled.div`
-  overflow-x: hidden;
-  padding-top: 10px;
-  background: #002a34;
-  min-height: 320px;
-`
-export const FooterWrapper = styled.div`
-  width: 100%;
-  padding-top: 16px;
-`
+  return {
+    wrapper: cn(
+      'column py-2.5 min-h-72 h-auto border-b-2 trans-all-200',
+      bg('sandBox'),
+      br('divider'),
+    ),
+    header: cn('text-base column h-16 px-7 pb-2 w-full', fg('text.digest')),
+    //
+    replyToHint: 'row-center mb-1.5',
+    replyToContent: cn('line-clamp-1 text-sm', fg('text.title')),
+    replyToAuthor: cn('ml-1.5', fg('text.title')),
+    editorWrapper: cn('overflow-x-hidden pt-2.5 min-h-80', bg('sandBox')),
+    footer: 'w-full pt-4',
+  }
+}

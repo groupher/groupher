@@ -9,15 +9,7 @@ import BodyEditor from './BodyEditor'
 import Footer from './Footer'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  Header,
-  ReplyToHint,
-  ReplyToContent,
-  ReplyToAuthor,
-  EditorWrapper,
-  FooterWrapper,
-} from '../styles/editor/reply_editor'
+import useSalon from '../styles/editor/reply_editor'
 
 type TProps = {
   body: string
@@ -26,22 +18,24 @@ type TProps = {
 }
 
 const ReplyEditor: FC<TProps> = ({ body, submitState, replyTo }) => {
+  const s = useSalon()
   const { commentOnChange, replyComment, closeReplyEditor } = useLogic()
 
   return (
-    <Wrapper>
-      <Header>
-        <ReplyToHint>
-          回复 <ReplyToAuthor>{replyTo?.author?.nickname}</ReplyToAuthor>
-        </ReplyToHint>
-        <ReplyToContent
+    <div className={s.wrapper}>
+      <div className={s.header}>
+        <div className={s.replyToHint}>
+          回复 <div className={s.replyToAuthor}>{replyTo?.author?.nickname}</div>
+        </div>
+        <div
+          className={s.replyToContent}
           dangerouslySetInnerHTML={{
             __html: replyTo?.bodyHtml,
           }}
         />
-      </Header>
+      </div>
       <CustomScroller direction="vertical" height="320px" showShadow={false} autoHide={false}>
-        <EditorWrapper>
+        <div className={s.editorWrapper}>
           {replyTo.id ? (
             <BodyEditor
               body={body}
@@ -51,10 +45,10 @@ const ReplyEditor: FC<TProps> = ({ body, submitState, replyTo }) => {
           ) : (
             <LavaLampLoading top={10} left={30} />
           )}
-        </EditorWrapper>
+        </div>
       </CustomScroller>
 
-      <FooterWrapper>
+      <div className={s.footer}>
         <Footer
           label="回 复"
           submitState={submitState}
@@ -62,8 +56,8 @@ const ReplyEditor: FC<TProps> = ({ body, submitState, replyTo }) => {
           onPublish={replyComment}
           onCancel={closeReplyEditor}
         />
-      </FooterWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 

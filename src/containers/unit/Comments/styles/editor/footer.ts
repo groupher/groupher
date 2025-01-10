@@ -1,10 +1,9 @@
-// import Img from '~/Img'
-import styled, { css } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row('align-center', 'justify-between')};
-  margin-bottom: 8px;
-  padding: 0 30px;
-`
+export default () => {
+  const { cn } = useTwBelt()
 
-export const holder = 1
+  return {
+    wrapper: cn('row-center-between mb-2 px-7'),
+  }
+}

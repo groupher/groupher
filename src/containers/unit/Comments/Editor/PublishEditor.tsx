@@ -6,7 +6,7 @@ import type { TSubmitState } from '~/spec'
 import BodyEditor from './BodyEditor'
 
 import useLogic from '../useLogic'
-import { Wrapper } from '../styles/editor/publish_editor'
+import useSalon from '../styles/editor/publish_editor'
 
 type TProps = {
   body: string
@@ -14,10 +14,11 @@ type TProps = {
 }
 
 const PublishEditor: FC<TProps> = ({ submitState, body }) => {
+  const s = useSalon()
   const { commentOnChange } = useLogic()
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {/* <Header accountInfo={accountInfo} showEditor={showEditor} /> */}
       <BodyEditor body={body} onChange={(v) => commentOnChange(v)} />
 
@@ -27,7 +28,7 @@ const PublishEditor: FC<TProps> = ({ submitState, body }) => {
         onPublish={createComment}
         onCancel={closeEditor}
       /> */}
-    </Wrapper>
+    </div>
   )
 }
 
