@@ -1,4 +1,4 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
 import type { TComment, TID } from '~/spec'
 
@@ -7,7 +7,7 @@ import TogglerButton from './TogglerButton'
 import Comment from '../Comment'
 
 import useLogic from '../useLogic'
-import { Wrapper, CountHint, SlashSign, CountNum, ListWrapper } from '../styles/list/replies_list'
+import useSalon from '../salon/list/replies_list'
 
 type TProps = {
   parentId: TID
@@ -26,22 +26,24 @@ const RepliesList: FC<TProps> = ({
   repliesState,
   foldedIds,
 }) => {
+  const s = useSalon()
+
   const { loadCommentReplies } = useLogic()
   const loading = parentId === repliesState.repliesParentId && repliesState.repliesLoading
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {repliesCount > 0 && (
-        <CountHint>
-          <SlashSign>&#47;&#47;</SlashSign>
-          <CountNum>{repliesCount}</CountNum> 条回复:
-        </CountHint>
+        <div className={s.countHint}>
+          <div className={s.slashSign}>&#47;&#47;</div>
+          <div className={s.countNum}>{repliesCount}</div> 条回复:
+        </div>
       )}
       {entries.map((comment) => {
         return (
-          <ListWrapper key={comment.id}>
+          <div key={comment.id} className={s.list}>
             <Comment apiMode={apiMode} data={comment} foldedIds={foldedIds} showInnerRef isReply />
-          </ListWrapper>
+          </div>
         )
       })}
       {repliesCount > entries.length && (
@@ -51,8 +53,8 @@ const RepliesList: FC<TProps> = ({
           onClick={() => loadCommentReplies(parentId)}
         />
       )}
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(RepliesList)
+export default RepliesList

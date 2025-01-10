@@ -7,11 +7,6 @@ import DesktopView from './DesktopView'
 
 const Comment = (props) => {
   return <DesktopView {...props} />
-  // return (
-  //   <Fragment>
-  //     {!isMobile ? <DesktopView {...props} /> : <MobileView {...props} />}
-  //   </Fragment>
-  // )
 }
 
 export default memo(Comment)

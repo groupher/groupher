@@ -1,13 +1,14 @@
-import type { FC } from 'react'
+import LockSVG from '~/icons/Lock'
 
-import { ICON_CMD } from '~/config'
-import { Wrapper, LockIcon, Message } from './styles/locked_message'
+import useSalon from './salon/locked_message'
 
-const LockedMessage: FC = () => (
-  <Wrapper>
-    <LockIcon src={`${ICON_CMD}/article_lock.svg`} />
-    <Message>讨论已关闭, 不再接受新回复</Message>
-  </Wrapper>
-)
+export default () => {
+  const s = useSalon()
 
-export default LockedMessage
+  return (
+    <div className={s.wrapper}>
+      <LockSVG className={s.lockIcon} />
+      <div className={s.msg}>讨论已关闭, 不再接受新回复</div>
+    </div>
+  )
+}

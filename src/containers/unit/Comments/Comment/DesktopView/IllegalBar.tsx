@@ -1,7 +1,9 @@
 /* eslint-disable react/no-array-index-key */
 import { type FC, memo, Fragment } from 'react'
 
-import { Wrapper, BotIcon, Content, Reason } from '../../styles/comment/desktop_view/illegal_bar'
+import BotSVG from '~/icons/Bot'
+
+import useSalon, { cn } from '../../salon/comment/desktop_view/illegal_bar'
 
 type TProps = {
   illegalReason: string[]
@@ -10,21 +12,23 @@ type TProps = {
 }
 
 const IllegalBar: FC<TProps> = ({ illegalReason, illegalWords, isFold }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper isFold={isFold}>
-      <BotIcon />
-      <Content>
+    <div className={cn(s.wrapper, isFold && s.wrapperFold)}>
+      <BotSVG className={s.botIcon} />
+      <div className={s.content}>
         该评论包含 [
         {illegalReason.map((reason, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           <Fragment key={index}>
-            <Reason>{reason}</Reason>
+            <div className={s.reason}>{reason}</div>
             {index !== illegalReason.length - 1 && <>，</>}
           </Fragment>
         ))}
         ] 内容，不便展示。
-      </Content>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 

@@ -13,7 +13,7 @@ import { MODE } from '../constant'
 import { passedDate } from '../helper'
 
 import useLogic from '../useLogic'
-import { Wrapper, IndentLine } from '../styles/list/list'
+import useSalon from '../salon/list/list'
 
 type TProps = {
   mode: TMode
@@ -24,12 +24,13 @@ type TProps = {
 }
 
 const List: FC<TProps> = ({ mode, repliesState, apiMode, entries, foldedIds }) => {
+  const s = useSalon()
   const { foldComment } = useLogic()
 
   return (
     <>
       {entries.map((comment, index) => (
-        <Wrapper key={comment.id}>
+        <div key={comment.id} className={s.wrapper}>
           <Comment
             data={comment}
             apiMode={apiMode}
@@ -51,12 +52,8 @@ const List: FC<TProps> = ({ mode, repliesState, apiMode, entries, foldedIds }) =
                 foldedIds={foldedIds}
               />
             )}
-          <IndentLine
-            hasReplies={comment.repliesCount > 0}
-            onClick={() => foldComment(comment.id)}
-            isFold={includes(comment.id, foldedIds)}
-          />
-        </Wrapper>
+          <div className={s.indentLine} onClick={() => foldComment(comment.id)} />
+        </div>
       ))}
     </>
   )

@@ -3,12 +3,11 @@ import { type FC, memo } from 'react'
 import type { TComment } from '~/spec'
 
 import ArticleHeader from './Article'
-import UserPublishedHeader from './UserPublished'
 
 import type { TAPIMode } from '../../spec'
 import { API_MODE } from '../../constant'
 
-import { Wrapper } from '../../styles/comment/header'
+import useSalon from '../../salon/comment/header'
 
 type TProps = {
   data: TComment
@@ -18,14 +17,12 @@ type TProps = {
 }
 
 const CommentHeader: FC<TProps> = ({ data, showInnerRef, apiMode = API_MODE.ARTICLE, isReply }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      {apiMode === API_MODE.USER_PUBLISHED ? (
-        <UserPublishedHeader data={data} />
-      ) : (
-        <ArticleHeader data={data} showInnerRef={showInnerRef} isReply={isReply} />
-      )}
-    </Wrapper>
+    <div className={s.wrapper}>
+      <ArticleHeader data={data} showInnerRef={showInnerRef} isReply={isReply} />
+    </div>
   )
 }
 

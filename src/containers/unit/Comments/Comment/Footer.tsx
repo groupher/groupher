@@ -7,8 +7,9 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 
 import { authWarn } from '~/signal'
 
-import DotDivider from '~/widgets/DotDivider'
-import { DesktopOnly, Space } from '~/widgets/Common'
+import CheckSVG from '~/icons/CheckBold'
+import UserBadge from '~/icons/UserBadge'
+
 import EmotionSelector from '~/widgets/EmotionSelector'
 import Upvote from '~/widgets/Upvote'
 
@@ -18,15 +19,7 @@ import type { TAPIMode } from '../spec'
 import { API_MODE } from '../constant'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  MainWrapper,
-  AnwserWrapper,
-  CheckSVGIcon,
-  AuthorUpvoteWrapper,
-  UpvotedIcon,
-  ExtraWrapper,
-} from '../styles/comment/footer'
+import useSalon from '../salon/comment/footer'
 
 type TProps = {
   data: TComment
@@ -34,6 +27,8 @@ type TProps = {
 }
 
 const Footer: FC<TProps> = ({ data, apiMode }) => {
+  const s = useSalon()
+
   const accountInfo = useAccount()
   const { handleUpvote, handleEmotion } = useLogic()
 
@@ -45,37 +40,36 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
   const noExtraInfo = !isSolution && !isArticleAuthorUpvoted
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {!noExtraInfo && (
-        <ExtraWrapper>
+        <div className={s.extra}>
           {isSolution && (
-            <AnwserWrapper>
-              <CheckSVGIcon />
+            <span className={s.anwser}>
+              <CheckSVG className={s.checkIcon} />
               解决方案
-            </AnwserWrapper>
+            </span>
           )}
 
           {isArticleAuthorUpvoted && (
-            <AuthorUpvoteWrapper>
-              <UpvotedIcon />
+            <div className={s.authorUpvote}>
+              <UserBadge className={s.upvoteIcon} />
               作者点了赞
-            </AuthorUpvoteWrapper>
+            </div>
           )}
           <div className="grow" />
-        </ExtraWrapper>
+        </div>
       )}
 
-      <MainWrapper>
+      <div className={s.main}>
         <Upvote
-          left={5}
-          top={-1}
+          left={1.5}
           type={UPVOTE_LAYOUT.COMMENT}
           count={upvotesCount}
           viewerHasUpvoted={viewerHasUpvoted}
           onAction={(did) => handleUpvote(data, did)}
         />
 
-        <Space right={10} />
+        <div className="mr-2.5" />
 
         <EmotionSelector
           isLegal={isLegal}
@@ -85,14 +79,14 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
             handleEmotion(data, name, hasEmotioned)
           }}
         />
-        <DesktopOnly width="auto">
-          {apiMode === API_MODE.ARTICLE && isLegal && <DotDivider radius={3} space={10} />}
-        </DesktopOnly>
+
+        <div className="mr-2.5" />
+
         {apiMode === API_MODE.ARTICLE && <Actions data={data} />}
 
         <div className="grow" />
-      </MainWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 

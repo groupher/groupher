@@ -6,10 +6,11 @@ import useAccount from '~/hooks/useAccount'
 
 import { authWarn } from '~/signal'
 
+import MoreSVG from '~/icons/menu/More'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 
 import useLogic from '../useLogic'
-import { Wrapper, ReplyAction, MoreWrapper, MoreIcon } from '../styles/comment/actions'
+import useSalon from '../salon/comment/actions'
 
 const menuOptions = [
   // {
@@ -34,6 +35,8 @@ type TProps = {
 }
 
 const Actions: FC<TProps> = ({ data }) => {
+  const s = useSalon()
+
   const accountInfo = useAccount()
   const { openUpdateEditor, openReplyEditor } = useLogic()
 
@@ -84,9 +87,10 @@ const Actions: FC<TProps> = ({ data }) => {
   )
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {data.meta.isLegal && (
-        <ReplyAction
+        <div
+          className={s.replyAction}
           onClick={() => {
             if (accountInfo) return authWarn()
 
@@ -94,16 +98,14 @@ const Actions: FC<TProps> = ({ data }) => {
           }}
         >
           回复
-        </ReplyAction>
+        </div>
       )}
 
       <div className="grow" />
       <MenuButton options={menuOptions} extraOptions={extraOptions} onClick={handleAction}>
-        <MoreWrapper>
-          <MoreIcon />
-        </MoreWrapper>
+        <MoreSVG className={s.moreIcon} />
       </MenuButton>
-    </Wrapper>
+    </div>
   )
 }
 

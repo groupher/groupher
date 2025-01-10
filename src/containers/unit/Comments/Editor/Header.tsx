@@ -1,19 +1,13 @@
 import type { FC } from 'react'
 
 import type { TAccount } from '~/spec'
-import useLayout from '~/hooks/useLayout'
+
+import Img from '~/Img'
+import CommentSVG from '~/icons/Comment'
+import UserSVG from '~/icons/User'
 
 import useLogic from '../useLogic'
-import {
-  Wrapper,
-  ExpandWrapper,
-  HintText,
-  UserAvatar,
-  UnloginUser,
-  LeaveResponseText,
-  LeaveResponseUsername,
-  PenIcon,
-} from '../styles/editor/header'
+import useSalon from '../salon/editor/header'
 
 type TProps = {
   accountInfo: TAccount
@@ -21,29 +15,30 @@ type TProps = {
 }
 
 const EditorHeader: FC<TProps> = ({ accountInfo, showEditor }) => {
-  const { avatarLayout } = useLayout()
+  const s = useSalon()
+
   const { openEditor } = useLogic()
 
   if (showEditor) {
     return (
-      <ExpandWrapper>
-        <HintText>创建评论:</HintText>
-        <UserAvatar src={accountInfo.avatar} $avatarLayout={avatarLayout} />
-        <LeaveResponseUsername>{accountInfo.nickname}</LeaveResponseUsername>
-      </ExpandWrapper>
+      <div className={s.expandWrapper}>
+        <div className={s.hintText}>创建评论:</div>
+        <Img className={s.avatar} src={accountInfo.avatar} />
+        <div className={s.leaveResUsername}>{accountInfo.nickname}</div>
+      </div>
     )
   }
   return (
-    <Wrapper onClick={openEditor}>
+    <div className={s.wrapper} onClick={openEditor}>
       {accountInfo.avatar ? (
-        <UserAvatar src={accountInfo.avatar} $avatarLayout={avatarLayout} />
+        <Img src={accountInfo.avatar} className={s.avatar} />
       ) : (
-        <UnloginUser />
+        <UserSVG className={s.unLogUserIcon} />
       )}
-      <LeaveResponseText>欢迎参与进来一起讨论 ~</LeaveResponseText>
+      <div className={s.leaveRes}>欢迎参与进来一起讨论 ~</div>
       <div className="grow" />
-      <PenIcon />
-    </Wrapper>
+      <CommentSVG className={s.commentIcon} />
+    </div>
   )
 }
 
