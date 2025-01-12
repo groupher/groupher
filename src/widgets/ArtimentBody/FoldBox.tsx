@@ -1,7 +1,8 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
-import { ICON } from '~/config'
-import { Wrapper, Hint, FoldHint, ArrowIcon } from './styles/fold_box'
+import ArrowSVG from '~/icons/ArrowSimple'
+
+import useSalon, { cn } from './salon/fold_box'
 
 type TProps = {
   fold: boolean
@@ -11,22 +12,24 @@ type TProps = {
 }
 
 const FoldBox: FC<TProps> = ({ fold, onFold, onExpand, mode }) => {
+  const s = useSalon({ fold })
+
   return (
-    <Wrapper fold={fold} mode={mode} onClick={() => (fold ? onExpand() : onFold())}>
+    <div className={s.wrapper} onClick={() => (fold ? onExpand() : onFold())}>
       {!fold && (
-        <FoldHint mode={mode}>
+        <div className={cn(s.hint, 'opacity-20', mode === 'article' ? 'text-base' : 'text-sm')}>
           折叠内容
-          <ArrowIcon src={`${ICON}/shape/arrow-simple.svg`} reverse />
-        </FoldHint>
+          <ArrowSVG className={cn(s.arrowIcon, 'rotate-180')} />
+        </div>
       )}
       {fold && (
-        <Hint mode={mode}>
+        <div className={cn(s.hint, mode === 'article' ? 'text-base' : 'text-sm')}>
           展开全部
-          <ArrowIcon src={`${ICON}/shape/arrow-simple.svg`} />
-        </Hint>
+          <ArrowSVG className={s.arrowIcon} />
+        </div>
       )}
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(FoldBox)
+export default FoldBox

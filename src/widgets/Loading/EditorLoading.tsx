@@ -1,4 +1,4 @@
-import { Fragment, FC, memo } from 'react'
+import { Fragment, type FC, memo } from 'react'
 import { range } from 'ramda'
 import styled, { useTheme } from 'styled-components'
 import ContentLoader from 'react-content-loader'

@@ -2,14 +2,13 @@
 /*
  * ArtimentBody
  */
-import { type FC, memo, useRef, useState, useEffect } from 'react'
+import { type FC, useRef, useState, useEffect } from 'react'
 
 import type { TDocument } from '~/spec'
 
 import FoldBox from './FoldBox'
-import { Br } from '~/widgets/Common'
 
-import { Wrapper, Body, HTML } from './styles'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   testid?: string
@@ -25,6 +24,8 @@ const ArtimentBody: FC<TProps> = ({
   initLineClamp = 15,
   mode = 'article',
 }) => {
+  const s = useSalon()
+
   const bodyRef = useRef(null)
   const [fold, setFold] = useState(false)
   const [needFold, setNeedFold] = useState(false)
@@ -45,14 +46,22 @@ const ArtimentBody: FC<TProps> = ({
   }, [bodyRef])
 
   return (
-    <Wrapper $testid={testid}>
-      <Body ref={bodyRef} $lineClamp={lineClamp} mode={mode}>
-        <HTML
+    <div className={s.wrapper}>
+      <div
+        ref={bodyRef}
+        className={cn(
+          s.body,
+          `line-clamp-[${lineClamp}]`,
+          mode === 'article' ? 'text-base' : 'text-sm',
+        )}
+      >
+        <div
+          className={s.html}
           dangerouslySetInnerHTML={{
             __html: document.bodyHtml,
           }}
         />
-      </Body>
+      </div>
 
       {needFold ? (
         <FoldBox
@@ -68,10 +77,10 @@ const ArtimentBody: FC<TProps> = ({
           }}
         />
       ) : (
-        <Br bottom={mode === 'article' ? 0 : 15} />
+        <div className={cn(mode === 'article' ? 'w-auto' : 'w-4')} />
       )}
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(ArtimentBody)
+export default ArtimentBody

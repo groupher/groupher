@@ -137,6 +137,7 @@ const UTILS = [
   'group-hover/menubar:text-rainbow-red',
   'group-hover/menubar:text-rainbow-red-dark',
   'z-50',
+  'line-clamp-[15]',
 ]
 
 module.exports = uniq([
