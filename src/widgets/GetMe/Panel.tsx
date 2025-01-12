@@ -9,7 +9,7 @@ import GithubSVG from '~/icons/social/Github'
 import LinkSVG from '~/icons/ArrowUpRight'
 import { SexyDivider } from '~/widgets/Common'
 
-import useSalon from './styles/panel'
+import useSalon from './salon/panel'
 
 const Panel: FC = () => {
   const s = useSalon()
