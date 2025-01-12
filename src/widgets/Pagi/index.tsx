@@ -8,7 +8,7 @@ import type { FC, ReactNode } from 'react'
 
 import type { TSpace, TPagi } from '~/spec'
 
-import { EmptyWrapper, BottomMsg } from './styles'
+import useSalon, { cn } from './salon'
 import RealPagi from './RealPagi'
 
 export type TProps = {
@@ -23,19 +23,18 @@ export type TProps = {
 
 const hasExtraPage = (totalCount, pageSize) => totalCount > pageSize
 
-const BottomFooter = ({ show, msg }) => {
-  if (show) return <BottomMsg>{msg}</BottomMsg>
-  return <div />
-}
-
 const Pagi: FC<TProps> = ({
   onChange = console.log,
   showBottomMsg = false,
   emptyMsg = '还没有讨论',
   noMoreMsg = '没有更多讨论了',
-  ...restProps
+  pageNumber,
+  pageSize,
+  totalCount,
+  totalPages,
+  ...spacing
 }) => {
-  const { pageNumber, pageSize, totalCount, totalPages } = restProps
+  const s = useSalon({ ...spacing })
 
   const handlePageChange = (page: number) => {
     onChange(page)
@@ -43,9 +42,9 @@ const Pagi: FC<TProps> = ({
 
   if (totalCount === 0) {
     return (
-      <EmptyWrapper {...restProps}>
-        <BottomFooter show={showBottomMsg} msg={emptyMsg} />
-      </EmptyWrapper>
+      <div className={cn(s.wrapper, s.empty)}>
+        {showBottomMsg && <div className={s.bottomMsg}>{emptyMsg}</div>}
+      </div>
     )
   }
 
@@ -58,12 +57,12 @@ const Pagi: FC<TProps> = ({
           totalPages={totalPages}
           pageSize={pageSize}
           onChange={handlePageChange}
-          {...restProps}
+          {...spacing}
         />
       ) : (
-        <EmptyWrapper {...restProps}>
-          <BottomFooter show={showBottomMsg} msg={noMoreMsg} />
-        </EmptyWrapper>
+        <div className={cn(s.wrapper, s.empty)}>
+          {showBottomMsg && <div className={s.bottomMsg}>{noMoreMsg}</div>}
+        </div>
       )}
     </>
   )
