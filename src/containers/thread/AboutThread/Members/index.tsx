@@ -39,7 +39,7 @@ const Members: FC<TProps> = ({ moderators }) => {
         <div className={s.header}>
           <h3 className={s.title}>
             参与互动
-            <NoteTip fontSize={14} left={4} placement="right" offset={[-6, 10]}>
+            <NoteTip left={1} placement="right" offset={[-6, 10]}>
               参与发布，投票，评论，以及 Emoji 反馈的用户
             </NoteTip>
           </h3>

@@ -5,10 +5,15 @@
 import { type FC, memo } from 'react'
 
 import type { TSizeSM, TThread } from '~/spec'
+import SIZE from '~/const/size'
+import { THREAD } from '~/const/thread'
+import { ANCHOR } from '~/const/dom'
+
+import { sortByIndex } from '~/helper'
+
+import NormalView from './NormalView'
 
 import type { TTabItem } from './spec'
-
-import DesktopView from './DesktopView'
 
 export type TProps = {
   source: TTabItem[]
@@ -18,8 +23,26 @@ export type TProps = {
   onChange?: (thread: TThread) => void
 }
 
-const TabBar: FC<TProps> = (props) => {
-  return <DesktopView {...props} />
+const TabBar: FC<TProps> = ({
+  source,
+  active = THREAD.POST,
+  onChange = console.log,
+  size = SIZE.MEDIUM,
+  withIcon = false,
+}) => {
+  const sortedSource = sortByIndex(source)
+
+  return (
+    <div id={ANCHOR.GLOBAL_TABBER_ID}>
+      <NormalView
+        source={sortedSource}
+        active={active}
+        onChange={onChange}
+        size={size}
+        withIcon={withIcon}
+      />
+    </div>
+  )
 }
 
 export default memo(TabBar)

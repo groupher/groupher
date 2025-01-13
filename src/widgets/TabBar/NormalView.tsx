@@ -3,7 +3,7 @@ import { type FC, memo } from 'react'
 import { sortByIndex } from '~/helper'
 import Tabs from '~/widgets/Switcher/Tabs'
 
-import type { TProps } from '..'
+import type { TProps } from '.'
 
 const NormalView: FC<TProps> = ({ source, active, onChange, size, withIcon }) => {
   const items = source.map((item) => ({
