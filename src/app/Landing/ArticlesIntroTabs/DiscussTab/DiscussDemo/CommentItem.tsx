@@ -20,11 +20,7 @@ const CommentItem: FC<TProps> = ({ user, className = '' }) => {
 
   return (
     <div className={cn(s.wrapper, className)}>
-      <Img
-        src={user.avatar}
-        className={s.avatar}
-        fallback={<ImgFallback size={24} user={user} />}
-      />
+      <Img src={user.avatar} className={s.avatar} fallback={<ImgFallback size={6} user={user} />} />
       <div className={s.rightPart}>
         <div className={s.nickname}>{user.nickname}</div>
         <div className={s.bar} />

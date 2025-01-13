@@ -28,7 +28,7 @@ const AdminAvatar: FC<TProps> = ({ testid = 'admin-avatar', user, ...spacing }) 
         <Img
           className={s.avatar}
           src={user.avatar}
-          fallback={<ImgFallback size={40} user={user} />}
+          fallback={<ImgFallback size={10} user={user} />}
         />
         <div className={s.badge}>
           <AdminStarSVG className={s.starIcon} />

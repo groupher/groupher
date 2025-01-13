@@ -44,7 +44,7 @@ export default () => {
             <Img
               className={s.logo}
               src={assetSrc(logo)}
-              fallback={<ImgFallback size={60} title={title} />}
+              fallback={<ImgFallback size={16} title={title} />}
             />
           </div>
         )}

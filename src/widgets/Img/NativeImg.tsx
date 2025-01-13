@@ -1,6 +1,6 @@
 import { type FC, memo, useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
 
-import { Image } from './styles'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   className?: string
@@ -22,6 +22,8 @@ const NativeImg: FC<TProps> = ({
   fallback = null,
   onClick,
 }) => {
+  const s = useSalon()
+
   const ref = useRef(null)
   const [loadCheck, setLoadCheck] = useState(true)
   const [loadCheck2, setLoadCheck2] = useState(true)
@@ -43,10 +45,9 @@ const NativeImg: FC<TProps> = ({
 
   return (
     <>
-      <Image
-        $loaded={!fallback || (fallback && loaded)}
+      <img
         ref={ref}
-        className={className}
+        className={cn(className, s.wrapper, !loaded && s.notLoaded)}
         src={src}
         alt={alt}
         onClick={onClick}

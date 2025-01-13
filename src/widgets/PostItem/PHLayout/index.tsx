@@ -30,7 +30,7 @@ const DigestView: FC<TProps> = ({ article }) => {
         <Img
           src={author.avatar}
           className={s.avatar}
-          fallback={<ImgFallback size={26} user={author} />}
+          fallback={<ImgFallback size={6} user={author} />}
         />
       </div>
       <div className={s.main} onClick={() => previewArticle(article)}>

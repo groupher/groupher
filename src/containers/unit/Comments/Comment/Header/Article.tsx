@@ -25,7 +25,7 @@ const CommentHeader: FC<TProps> = ({ data, showInnerRef, isReply }) => {
       <Img
         className={s.avatar}
         src={data.author.avatar}
-        fallback={<ImgFallback user={data.author} size={24} right={10} />}
+        fallback={<ImgFallback user={data.author} size={6} right={2.5} />}
       />
       <div className={s.headerInfo}>
         <div className={s.baseInfo}>

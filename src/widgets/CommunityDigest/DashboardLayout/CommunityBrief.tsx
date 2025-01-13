@@ -41,7 +41,7 @@ export default () => {
         <Img
           className={s.logo}
           src={assetSrc(logo)}
-          fallback={<ImgFallback size={25} title={title} />}
+          fallback={<ImgFallback size={6} title={title} />}
         />
       )}
       {brandLayout !== BRAND_LAYOUT.LOGO && <div className={s.title}>{title}</div>}

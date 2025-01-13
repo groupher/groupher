@@ -25,7 +25,7 @@ export default () => {
       <Img
         className={s.logo}
         src={assetSrc(logo)}
-        fallback={<ImgFallback size={32} top={-6} title={title} />}
+        fallback={<ImgFallback size={8} top={-1.5} title={title} />}
         noLazy
       />
 

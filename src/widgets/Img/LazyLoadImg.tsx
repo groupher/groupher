@@ -1,15 +1,9 @@
-import { type FC, type ReactNode, memo, useState, useCallback } from 'react'
+import { type FC, type ReactNode, useState, useCallback } from 'react'
 import { pick } from 'ramda'
 
 import { LazyLoadImage } from 'react-lazy-load-image-component'
 
-import {
-  NormalWrapper,
-  FallbackOffsetWrapper,
-  LazyImageWrapper,
-  FallbackWrapper,
-  CheckPixel,
-} from './styles/lazy_load_image'
+import useSalon, { cn } from './salon/lazy_load_image'
 
 type TProps = {
   className?: string
@@ -35,14 +29,16 @@ const LazyLoadImg: FC<TProps> = ({
   onClick,
   threshold = 200,
 }) => {
+  // @ts-ignore
+  const fallbackOpt = pick(['size', 'left', 'right', 'top', 'bottom'], fallback?.props || {})
+
+  // @ts-ignore
+  const s = useSalon({ ...fallbackOpt })
+
   const [imgLoaded, setImgLoaded] = useState(true)
   const [checkError, setCheckError] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [over, setOver] = useState(false)
-
-  // @ts-ignore
-  const fallbackOpt = pick(['size', 'left', 'right', 'top', 'bottom'], fallback?.props || {})
-  const Wrapper = !imgLoaded ? FallbackOffsetWrapper : NormalWrapper
 
   const handleBeforeLoad = useCallback(() => {
     if (!over) {
@@ -70,9 +66,9 @@ const LazyLoadImg: FC<TProps> = ({
 
   if (!src) {
     return (
-      <Wrapper key={src} onClick={onClick} {...fallbackOpt}>
-        <FallbackWrapper>{fallback}</FallbackWrapper>
-      </Wrapper>
+      <div key={src} onClick={onClick} className={cn(s.normal, !imgLoaded && s.fallbackOffset)}>
+        <div className={s.fallback}>{fallback}</div>
+      </div>
     )
   }
   /**
@@ -81,11 +77,19 @@ const LazyLoadImg: FC<TProps> = ({
    * so on before load callback, we aetup a real img to track is onError mannually triggered
    */
   return (
-    <Wrapper onClick={onClick} {...fallbackOpt}>
-      {!imgLoaded && <FallbackWrapper>{fallback}</FallbackWrapper>}
+    <div onClick={onClick} className={cn(s.normal, !imgLoaded && s.fallbackOffset)}>
+      {!imgLoaded && <div className={s.fallback}>{fallback}</div>}
 
-      <LazyImageWrapper>
-        {checkError && <CheckPixel src={src} alt="" onLoad={handleLoad} onError={handleError} />}
+      <div className="z-10">
+        {checkError && (
+          <img
+            src={src}
+            alt=""
+            onLoad={handleLoad}
+            onError={handleError}
+            className={s.checkPixel}
+          />
+        )}
 
         {!loadError && (
           <LazyLoadImage
@@ -99,9 +103,9 @@ const LazyLoadImg: FC<TProps> = ({
             threshold={threshold}
           />
         )}
-      </LazyImageWrapper>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 
-export default memo(LazyLoadImg)
+export default LazyLoadImg

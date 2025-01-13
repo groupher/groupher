@@ -34,7 +34,7 @@ const CommunityBrand: FC<TProps> = ({ className = '', landingBrand = false, ...s
           src={landingLogo}
           className={s.logo}
           noLazy
-          fallback={<ImgFallback size={25} left={-2} right={6} title={title} />}
+          fallback={<ImgFallback size={6} left={-0.5} right={1.5} title={title} />}
         />
 
         <h1 className={s.title}>{landingTitle}</h1>
@@ -49,7 +49,7 @@ const CommunityBrand: FC<TProps> = ({ className = '', landingBrand = false, ...s
           src={assetSrc(logo)}
           className={s.logo}
           noLazy
-          fallback={<ImgFallback size={25} left={-2} right={6} title={title} />}
+          fallback={<ImgFallback size={6} left={-0.5} right={1.5} title={title} />}
         />
       )}
       {brandLayout !== BRAND_LAYOUT.LOGO && <h1 className={s.title}>{title}</h1>}

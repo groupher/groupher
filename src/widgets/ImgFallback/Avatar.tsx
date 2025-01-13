@@ -7,46 +7,30 @@
 import type { FC } from 'react'
 
 import { getLetterColor } from '~/utils/color'
-import useLayout from '~/hooks/useLayout'
 
 import type { TAvatarProps as TProps } from '.'
-import { Wrapper, Name } from './styles/avatar'
+import useSalon, { cn } from './salon/avatar'
 
 const Avatar: FC<TProps> = ({
   testid = 'avatar-fallback',
   className = '',
-  size = 15,
+  size = 4,
   title = '',
   user = {},
-  left = 0,
-  right = 0,
-  top = 0,
-  bottom = 0,
   quote = false,
+  ...spacing
 }) => {
-  const { avatarLayout } = useLayout()
+  const s = useSalon({ size, ...spacing })
 
   const name = user?.login || title || '?'
-  const sliceCount = size >= 30 ? 2 : 1
+  const sliceCount = size >= 4 ? 2 : 1
 
   const color = getLetterColor(name)
 
   return (
-    <Wrapper
-      className={className}
-      color={color}
-      $testid={testid}
-      size={size}
-      left={left}
-      right={right}
-      top={top}
-      bottom={bottom}
-      $avatarLayout={avatarLayout}
-    >
-      <Name size={size} color={color}>
-        {name.slice(0, sliceCount)}
-      </Name>
-    </Wrapper>
+    <div className={cn(className, s.wrapper, s.rainbowSoft(color))}>
+      <div className={cn(s.name, s.rainbow(color))}>{name.slice(0, sliceCount)}</div>
+    </div>
   )
 }
 
