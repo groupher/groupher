@@ -23,7 +23,7 @@ const Footer: FC<TProps> = ({ data }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.publish}>
-        {author.nickname} <DotDivider space={6} />
+        {author.nickname} <DotDivider className="mx-1.5" />
         <TimeAgo datetime={insertedAt} locale="zh_CN" />
       </div>
       <div className={s.bottom}>

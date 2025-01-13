@@ -37,7 +37,7 @@ const CommunityCard: FC<TProps> = ({ item: { logo, title, slug, desc } }) => {
             <Raw href={`/${slug}`} prefetch={false}>
               {slug}
             </Raw>
-            <DotDivider space={6} />
+            <DotDivider className="mx-1.5" />
             <SubsInfo>
               <UserIcon />
               {/* <UserCount>{subscribersCount}</UserCount> */}
