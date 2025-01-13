@@ -2,7 +2,7 @@
  * EmojiSelector
  */
 
-import { type FC, memo, Fragment } from 'react'
+import { type FC, Fragment } from 'react'
 
 import type { TEmotion, TEmotionType } from '~/spec'
 
@@ -26,4 +26,4 @@ const SelectedEmotions: FC<TProps> = ({ emotions, onAction }) => {
   )
 }
 
-export default memo(SelectedEmotions)
+export default SelectedEmotions

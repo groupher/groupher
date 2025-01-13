@@ -9,7 +9,7 @@ import { cutRest } from '~/fmt'
 
 import EmotionIcon from './EmotionIcon'
 
-import { Wrapper, UsersWrapper, Units, Username } from '../styles/selected_emotions/users_panel'
+import useSalon from '../salon/selected_emotions/users_panel'
 
 type TProps = {
   name: TEmotionType
@@ -18,21 +18,22 @@ type TProps = {
 }
 
 const UsersPanel: FC<TProps> = ({ name, count, users }) => {
+  const s = useSalon()
   const showUnit = users.length > count
 
   return (
-    <Wrapper>
-      <UsersWrapper>
+    <div className={s.wrapper}>
+      <div className={s.users}>
         {users.slice(0, 5).map((u, index) => (
-          <Username key={u.login}>
+          <div className={s.username} key={u.login}>
             {cutRest(u.nickname, 12)}
             {users.length - 1 !== index ? ',' : ''}
-          </Username>
+          </div>
         ))}
-        {showUnit && <Units>等 {count} 人</Units>}
-      </UsersWrapper>{' '}
+        {showUnit && <div className={s.units}>等 {count} 人</div>}
+      </div>{' '}
       <EmotionIcon name={name} />
-    </Wrapper>
+    </div>
   )
 }
 

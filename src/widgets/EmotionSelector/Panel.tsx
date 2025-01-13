@@ -1,13 +1,14 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 import { values } from 'ramda'
 
+import Img from '~/Img'
 import type { TEmotion, TEmotionType } from '~/spec'
 
 import EMOTION from '~/const/emotion'
 import { ICON } from '~/config'
 
 import { isViewerEmotioned } from './helper'
-import { Wrapper, Item, EIcon, Name } from './styles/panel'
+import useSalon, { cn } from './salon/panel'
 
 const Trans = {
   downvote: '踩',
@@ -24,25 +25,22 @@ type TProps = {
 }
 
 const EmojiPanel: FC<TProps> = ({ emotions, onAction }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {values(EMOTION).map((name) => {
         const viewerHasEmotioned = isViewerEmotioned(emotions, name)
 
         return (
-          <Item key={name} name={name} onClick={() => onAction(name, viewerHasEmotioned)}>
-            <EIcon
-              src={`${ICON}/emotion/${name}.png`}
-              name={name}
-              $active={viewerHasEmotioned}
-              noLazy
-            />
-            <Name $active={viewerHasEmotioned}>{Trans[name]}</Name>
-          </Item>
+          <div className={s.item} key={name} onClick={() => onAction(name, viewerHasEmotioned)}>
+            <Img className={s.icon} src={`${ICON}/emotion/${name}.png`} noLazy />
+            <div className={cn(s.name, viewerHasEmotioned && s.nameActive)}>{Trans[name]}</div>
+          </div>
         )
       })}
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(EmojiPanel)
+export default EmojiPanel

@@ -12,9 +12,10 @@ import AnimatedCount from '~/widgets/AnimatedCount'
 
 import EmotionIcon from './EmotionIcon'
 import UsersPanel from './UsersPanel'
+
 import { getEmotionName } from '../helper'
 
-import { Wrapper, Count } from '../styles/selected_emotions/emotion_unit'
+import useSalon from '../salon/selected_emotions/emotion_unit'
 
 type TProps = {
   item: TEmotion
@@ -22,6 +23,8 @@ type TProps = {
 }
 
 const EmotionUnit: FC<TProps> = ({ item, onAction }) => {
+  const s = useSalon()
+
   const name = getEmotionName(item)
   const count = item[`${name}Count`] as number
   const users = item[`latest${titleCase(name)}Users`] as TSimpleUser[]
@@ -33,12 +36,12 @@ const EmotionUnit: FC<TProps> = ({ item, onAction }) => {
       interactive={false}
       noPadding
     >
-      <Wrapper $active={hasEmotioned} onClick={() => onAction(name as TEmotionType, hasEmotioned)}>
+      <div className={s.wrapper} onClick={() => onAction(name as TEmotionType, hasEmotioned)}>
         <EmotionIcon name={name} />
-        <Count>
+        <div className={s.count}>
           <AnimatedCount count={count} size="small" active={hasEmotioned} />
-        </Count>
-      </Wrapper>
+        </div>
+      </div>
     </Tooltip>
   )
 }
