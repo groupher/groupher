@@ -4,28 +4,23 @@
  *
  */
 
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
-import { DesktopOnly, MobileOnly } from '~/widgets/Common'
-import { Wrapper, Block, MobileBlock } from './styles'
+import useSalon from './salon'
 
 type TProps = {
   testid?: string
 }
 
 const ArticleImgWindow: FC<TProps> = ({ testid = 'article-img-window' }) => {
-  return (
-    <Wrapper $testid={testid}>
-      <DesktopOnly flex>
-        <Block />
-        <Block />
-      </DesktopOnly>
+  const s = useSalon()
 
-      <MobileOnly>
-        <MobileBlock />
-      </MobileOnly>
-    </Wrapper>
+  return (
+    <div className={s.wrapper}>
+      <div className={s.block} />
+      <div className={s.block} />
+    </div>
   )
 }
 
-export default memo(ArticleImgWindow)
+export default ArticleImgWindow
