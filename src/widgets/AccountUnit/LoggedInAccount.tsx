@@ -21,7 +21,7 @@ import { SexyDivider, LinkAble } from '~/widgets/Common'
 import Tooltip from '~/widgets/Tooltip'
 import ImgFallback from '~/widgets/ImgFallback'
 
-import useSalon, { cn } from './styles/logged_in_account'
+import useSalon, { cn } from './salon/logged_in_account'
 
 type TProps = {
   withName?: boolean
