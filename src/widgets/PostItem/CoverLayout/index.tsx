@@ -29,7 +29,7 @@ const DigestView: FC<TProps> = ({ article }) => {
 
   return (
     <section className={s.wrapper} onClick={() => previewArticle(article)}>
-      <ArticlePinLabel isPinned={article.isPinned} top={32} />
+      <ArticlePinLabel isPinned={article.isPinned} className="top-8" />
       <div className={s.coverWrapper}>
         <Img src={coverImg} className={s.cover} />
       </div>

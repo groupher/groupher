@@ -29,7 +29,7 @@ const Avatar: FC<TProps> = ({
 
   return (
     <div className={cn(className, s.wrapper, s.rainbowSoft(color))}>
-      <div className={cn(s.name, s.rainbow(color))}>{name.slice(0, sliceCount)}</div>
+      <div className={cn(s.name, s.rainbow(color, 'fg'))}>{name.slice(0, sliceCount)}</div>
     </div>
   )
 }

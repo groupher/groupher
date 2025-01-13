@@ -29,7 +29,7 @@ const ArticleCard: FC<TProps> = ({ data }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.pinHintDot}>
-        <ArticlePinLabel isPinned={isPinned} top={0} left={0} />
+        <ArticlePinLabel isPinned={isPinned} />
       </div>
 
       <div className={s.viewHintDot}>

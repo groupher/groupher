@@ -24,7 +24,7 @@ const DigestView: FC<TProps> = ({ article }) => {
 
   return (
     <div className={s.wrapper}>
-      <ArticlePinLabel isPinned={article.isPinned} top={26} />
+      <ArticlePinLabel isPinned={article.isPinned} className="top-6" />
 
       <div className={s.avatarWrapper}>
         <Img
