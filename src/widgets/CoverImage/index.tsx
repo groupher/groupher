@@ -6,19 +6,23 @@
 
 import { type FC, memo } from 'react'
 
-import { Wrapper, ImageWrapper, Image } from './styles'
+import Img from '~/Img'
+
+import useSalon from './salon'
 
 type TProps = {
   testid?: string
 }
 
 const CoverImage: FC<TProps> = ({ testid = 'cover-image' }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper $testid={testid}>
-      <ImageWrapper>
-        <Image src="/help-cover-demo.png" noLazy />
-      </ImageWrapper>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <div className={s.imageWrapper}>
+        <Img className={s.image} src="/help-cover-demo.png" noLazy />
+      </div>
+    </div>
   )
 }
 
