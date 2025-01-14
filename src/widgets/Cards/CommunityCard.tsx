@@ -1,54 +1,47 @@
 /*
  * cards for job MasonryCards view
  */
-
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
+import Link from 'next/link'
 
 import type { TCommunity } from '~/spec'
 import { cutRest } from '~/fmt'
 
+import UserSVG from '~/icons/User'
+
+import Img from '~/Img'
 import DotDivider from '~/widgets/DotDivider'
-import {
-  Wrapper,
-  CommunityLogo,
-  Info,
-  SubInfo,
-  SubsInfo,
-  UserIcon,
-  UserCount,
-  Header,
-  Title,
-  Raw,
-  Desc,
-} from './styles/community_card'
+
+import useSalon from './salon/community_card'
 
 type TProps = {
   item: TCommunity
 }
 
 const CommunityCard: FC<TProps> = ({ item: { logo, title, slug, desc } }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper key={slug}>
-      <Header>
-        <CommunityLogo src={logo} />
-        <Info>
-          <Title>{title}</Title>
-          <SubInfo>
-            <Raw href={`/${slug}`} prefetch={false}>
+    <div key={slug} className={s.wrapper}>
+      <div className={s.header}>
+        <Img src={logo} className={s.communityLogo} />
+        <div className={s.info}>
+          <div className={s.title}>{title}</div>
+          <div className={s.subInfo}>
+            <Link href={`/${slug}`} prefetch={false} className={s.rawLink}>
               {slug}
-            </Raw>
+            </Link>
             <DotDivider className="mx-1.5" />
-            <SubsInfo>
-              <UserIcon />
-              {/* <UserCount>{subscribersCount}</UserCount> */}
-              <UserCount>74</UserCount>
-            </SubsInfo>
-          </SubInfo>
-        </Info>
-      </Header>
-      <Desc>{cutRest(desc, 50)}</Desc>
-    </Wrapper>
+            <div className={s.subsInfo}>
+              <UserSVG className={s.userIcon} />
+              <div className={s.userCount}>74</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className={s.desc}>{cutRest(desc, 50)}</div>
+    </div>
   )
 }
 
-export default memo(CommunityCard)
+export default CommunityCard
