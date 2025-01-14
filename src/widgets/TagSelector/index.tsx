@@ -2,7 +2,7 @@
  * this selector is only used for normal user edtior
  */
 
-import { type FC, memo, useState, Fragment } from 'react'
+import { type FC, useState, Fragment } from 'react'
 
 import type { TTag, TGroupedTags } from '~/spec'
 
@@ -63,4 +63,4 @@ const TagSelector: FC<TProps> = ({ mode = 'default', groupedTags, activeTag, onS
   )
 }
 
-export default memo(TagSelector)
+export default TagSelector
