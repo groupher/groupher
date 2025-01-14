@@ -2,28 +2,29 @@ import type { FC } from 'react'
 
 import type { TUser } from '~/spec'
 
+import Img from '~/Img'
+
 import { assetSrc } from '~/helper'
-import useLayout from '~/hooks/useLayout'
-import { Wrapper, Avatar, Main, Header, Title, Login, Bio } from './styles/user_item'
+import useSalon from './salon/user_item'
 
 type TProps = {
   user: TUser
 }
 
 const UserItem: FC<TProps> = ({ user }) => {
-  const { avatarLayout } = useLayout()
+  const s = useSalon()
 
   return (
-    <Wrapper>
-      <Avatar src={assetSrc(user.avatar)} $avatarLayout={avatarLayout} />
-      <Main>
-        <Header>
-          <Title>{user.nickname}</Title>
-          <Login>{user.login}</Login>
-        </Header>
-        <Bio>{user.bio}</Bio>
-      </Main>
-    </Wrapper>
+    <div className={s.wrapper}>
+      <Img src={assetSrc(user.avatar)} className={s.avatar} />
+      <div className={s.main}>
+        <div className={s.header}>
+          <div className={s.title}>{user.nickname}</div>
+          <div className={s.login}>{user.login}</div>
+        </div>
+        <div className={s.bio}>{user.bio}</div>
+      </div>
+    </div>
   )
 }
 
