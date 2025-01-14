@@ -14,7 +14,7 @@ type TProps = {
 }
 
 export default ({ subMenuType = null, color = COLOR_NAME.BLACK }: TProps = {}) => {
-  const { cn, fg, bg, menu, fill, cutRest, sexyBorder, rainbow } = useTwBelt()
+  const { cn, fg, bg, menu, fill, cut, sexyBorder, rainbow } = useTwBelt()
 
   return {
     wrapper: cn(menu('bg'), 'p-2 pr-1 trans-all-200', getSubMenuWidth(subMenuType)),
@@ -28,7 +28,7 @@ export default ({ subMenuType = null, color = COLOR_NAME.BLACK }: TProps = {}) =
       `hover:${fg('rainbow.red')}`,
       `hover:${bg('rainbow.redSoft')}`,
     ),
-    menuTitle: cn(menu('title'), cutRest('w-24')),
+    menuTitle: cn(menu('title'), cut('w-24')),
     divider: cn(sexyBorder(), 'my-2.5'),
     //
     icon: cn('size-3.5 mr-1.5', fill('text.digest'), `group-hover:${fill('text.title')}`),

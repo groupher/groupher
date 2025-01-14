@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, br, cutRest } = useTwBelt()
+  const { cn, fg, bg, br, cut } = useTwBelt()
 
   return {
     wrapper: cn('column relative w-full'),
@@ -11,7 +11,7 @@ export default () => {
     banner: 'row-center-between relative h-16 px-20 rounded-md',
 
     logo: cn('size-6 mr-5 rounded border', br('divider')),
-    title: cn('text-sm ml-2 min-w-24', fg('text.title'), cutRest('w-24')),
+    title: cn('text-sm ml-2 min-w-24', fg('text.title'), cut('w-24')),
     bar: cn('size-6 rounded', bg('hoverBg')),
     //
     threads: 'row-center gap-x-5 -ml-20',

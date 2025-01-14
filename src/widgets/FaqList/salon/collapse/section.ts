@@ -5,16 +5,12 @@ type TProps = {
 }
 
 export default ({ isOpened }: TProps) => {
-  const { cn, cutRest, fg, fill } = useTwBelt()
+  const { cn, cut, fg, fill } = useTwBelt()
 
   return {
     wrapper: cn('py-4 w-full'),
     header: 'row-center-between pointer group',
-    title: cn(
-      'text-base bold-sm',
-      isOpened ? fg('text.title') : fg('text.digest'),
-      cutRest('w-96'),
-    ),
+    title: cn('text-base bold-sm', isOpened ? fg('text.title') : fg('text.digest'), cut('w-96')),
     arrowIcon: cn('size-4 ml-5 mr-2.5 group-smoky-80 trans-all-200', fill('text.digest')),
     body: cn(
       'text-base trans-all-200 overflow-hidden',

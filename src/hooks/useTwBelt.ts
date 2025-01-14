@@ -22,7 +22,7 @@ type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon'
 type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'drawer' | 'modal'
 type TThemeSwitch = 'auto' | 'dark' | 'light'
 type TDimLevel = 'lg' | 'md' | 'sm'
-type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red' | 'fg'
+type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red' | 'fg' | 'fg-red'
 type TCutWWidth = `w-${number}` | `w-[${number}px]`
 
 type TRet = {
@@ -54,7 +54,7 @@ type TRet = {
   dimDark: (level?: TDimLevel) => string
   menu: (part: TMenuPart) => string
   shadow: (size: TShadowType) => string
-  cutRest: (classname?: TCutWWidth) => string
+  cut: (classname?: TCutWWidth) => string
   landingTitle: () => string
   hoverable: (part: THoverPart) => string
   zIndex: (key: TZIndexKey) => string
@@ -338,7 +338,7 @@ export default (): TRet => {
     return global(`shadow-${size}`)
   }
 
-  const cutRest = (classnames: TCutWWidth = 'w-12'): string => {
+  const cut = (classnames: TCutWWidth = 'w-12'): string => {
     const maxWidth = classnames.replace('w-', 'max-w-')
     return cn('truncate', maxWidth, 'w-fit', 'w-auto')
   }
@@ -367,6 +367,13 @@ export default (): TRet => {
       }
       case 'fg': {
         return cn('trans-all-100 pointer', fg('text.digest'), `group-hover:${fg('text.title')}`)
+      }
+      case 'fg-red': {
+        return cn(
+          'trans-all-100 pointer',
+          fg('text.digest'),
+          `group-hover:${rainbow(COLOR_NAME.RED, 'fg')}`,
+        )
       }
       case 'icon-red': {
         return cn(
@@ -413,7 +420,7 @@ export default (): TRet => {
     vividDark,
     menu,
     shadow,
-    cutRest,
+    cut,
     isDarkBlack,
     isBlackPrimary,
     landingTitle,

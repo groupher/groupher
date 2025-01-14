@@ -5,7 +5,7 @@ type TProps = {
 }
 
 export default ({ visible }: TProps) => {
-  const { cn, fg, bg, cutRest, sexyBorder } = useTwBelt()
+  const { cn, fg, bg, cut, sexyBorder } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -14,7 +14,7 @@ export default ({ visible }: TProps) => {
       bg('alphaBg'),
     ),
     left: 'row-center',
-    articleTitle: cn('row-center text-lg', cutRest('w-72'), fg('text.title')),
+    articleTitle: cn('row-center text-lg', cut('w-72'), fg('text.title')),
     divider: cn(sexyBorder(), 'absolute bottom-0 left-0 w-full'),
   }
 }

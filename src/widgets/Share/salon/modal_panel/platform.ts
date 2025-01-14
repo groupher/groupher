@@ -13,13 +13,13 @@ import CodeSVG from '~/icons/Code'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, fill, cutRest, hoverable } = useTwBelt()
+  const { cn, fg, fill, cut, hoverable } = useTwBelt()
 
   return {
     wrapper: cn('px-5 pb-4 w-full min-h-44 trans-all-200'),
     header: 'row items-end mt-4 pl-6 mb-5',
     hint: cn('text-xs', fg('text.digest')),
-    article: cn('text-sm mx-1', cutRest('w-44'), fg('text.title')),
+    article: cn('text-sm mx-1', cut('w-44'), fg('text.title')),
     inner: 'row wrap',
     //
     media: cn('size-20 column-align-both', hoverable('bg')),

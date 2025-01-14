@@ -7,7 +7,7 @@ type TProps = {
 }
 
 export default ({ large }: TProps) => {
-  const { cn, fg, cutRest, rainbow } = useTwBelt()
+  const { cn, fg, cut, rainbow } = useTwBelt()
 
   return {
     wrapper: cn('column w-full min-w-80'),
@@ -16,7 +16,7 @@ export default ({ large }: TProps) => {
     //
     content: cn('row justify-between wrap', large ? 'gap-y-10' : 'gap-y-12'),
     section: cn('line-clamp-2 w-64', fg('text.title'), large ? 'text-lg' : 'text-base'),
-    title: cn('bold-sm', cutRest('w-60'), fg('text.title'), large ? 'text-lg' : 'text-base'),
+    title: cn('bold-sm', cut('w-60'), fg('text.title'), large ? 'text-lg' : 'text-base'),
     checkBox: cn('size-5', large ? 'mr-4' : 'mr-2.5'),
     checkIcon: cn('size-4', large && 'scale-110', rainbow(COLOR_NAME.GREEN, 'fill')),
     //

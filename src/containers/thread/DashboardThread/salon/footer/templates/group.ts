@@ -5,7 +5,7 @@ import useBase from '.'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, cutRest } = useTwBelt()
+  const { cn, fg, cut } = useTwBelt()
   const base = useBase()
 
   return {
@@ -19,7 +19,7 @@ export default () => {
     linkItem: cn(
       'text-xs pointer no-underline hover:underline mb-1',
       fg('text.digest'),
-      cutRest('w-20'),
+      cut('w-20'),
     ),
   }
 }
