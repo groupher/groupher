@@ -5,7 +5,7 @@ import { COLOR_NAME } from '~/const/colors'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, br, rainbow, shadow, sexyHBorder } = useTwBelt()
+  const { cn, fg, bg, br, rainbow, shadow, sexyBorder } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -23,7 +23,7 @@ export default () => {
     tagItem: 'row-center text-xs',
     content: 'column mt-4 w-52 gap-2.5',
     //
-    divider: cn('mt-8 -ml-4', sexyHBorder()),
+    divider: cn('mt-8 -ml-4', sexyBorder()),
     cover: cn(
       'relative w-44 h-24 overflow-hidden rounded mb-1 border border-dashed',
       bg('hoverBg'),

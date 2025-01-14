@@ -1,10 +1,10 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, sexyHBorder } = useTwBelt()
+  const { cn, sexyBorder } = useTwBelt()
 
   return {
     wrapper: 'column',
-    divider: cn('mb-12', sexyHBorder()),
+    divider: cn('mb-12', sexyBorder()),
   }
 }

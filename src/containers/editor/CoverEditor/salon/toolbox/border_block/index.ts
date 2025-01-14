@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, br, fg, bg, fill, sexyHBorder } = useTwBelt()
+  const { cn, br, fg, bg, fill, sexyBorder } = useTwBelt()
   const base = useBase()
 
   return {
@@ -15,7 +15,7 @@ export default () => {
     title: base.settingTitle,
     icon: base.settingIcon,
     forbidIcon: cn('size-3', fill('text.digest')),
-    divider: cn(sexyHBorder(35), 'my-4'),
+    divider: cn(sexyBorder(35), 'my-4'),
     //
     optionItem: cn(base.optionItem, 'size-4'),
     optionItemActive: base.optionItemActive,

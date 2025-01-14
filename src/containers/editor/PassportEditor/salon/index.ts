@@ -3,7 +3,7 @@ import { COLOR_NAME } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, rainbow, sexyHBorder } = useTwBelt()
+  const { cn, fg, rainbow, sexyBorder } = useTwBelt()
 
   return {
     wrapper: cn('px-8 py-6'),
@@ -14,6 +14,6 @@ export default () => {
       rainbow(COLOR_NAME.BLUE, 'bgSoft'),
       rainbow(COLOR_NAME.BLUE, 'border'),
     ),
-    divider: cn(sexyHBorder(), 'mb-8'),
+    divider: cn(sexyBorder(), 'mb-8'),
   }
 }

@@ -8,7 +8,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, fill, container, linkable, menu, landingTitle, sexyHBorder } = useTwBelt()
+  const { cn, fg, fill, container, linkable, menu, landingTitle, sexyBorder } = useTwBelt()
   const { wallpaper } = useWallpaper()
 
   return {
@@ -32,7 +32,7 @@ export default () => {
     outLink: cn(menu('link')),
     arrow: cn('size-3.5 rotate-180 ml-0.5', fill('text.digest')),
     //
-    divider: cn('mb-20 mt-14', sexyHBorder()),
+    divider: cn('mb-20 mt-14', sexyBorder()),
     faqWrapper: 'w-full mb-5 px-32',
     //
     tryArrow: cn(

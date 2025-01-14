@@ -6,7 +6,7 @@ import useLayout from '~/hooks/useLayout'
 
 export default () => {
   const { isLightTheme } = useTheme()
-  const { cn, fg, sexyHBorder } = useTwBelt()
+  const { cn, fg, sexyBorder } = useTwBelt()
   const { bannerLayout, changelogLayout } = useLayout()
 
   const isSidebarLayout = bannerLayout === BANNER_LAYOUT.SIDEBAR
@@ -20,7 +20,7 @@ export default () => {
     ),
     divider: cn(
       'w-52 absolute bottom-px',
-      sexyHBorder(),
+      sexyBorder(),
       isLightTheme ? 'brightness-95' : 'brightness-125',
     ),
     tabs: cn('absolute bottom-0 z-10', alignLeft && 'left-44'),

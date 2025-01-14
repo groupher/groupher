@@ -1,11 +1,11 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, sexyHBorder, primary } = useTwBelt()
+  const { cn, fg, sexyBorder, primary } = useTwBelt()
 
   return {
     topWrapper: cn('row w-11/12 justify-between mb-5 p-1'),
-    divider: cn('mb-10', sexyHBorder()),
+    divider: cn('mb-10', sexyBorder()),
     groupInputer: 'w-60',
     leftPart: 'column w-64 gap-y-6',
     rightPart: 'w-64 max-w-64 mr-4 list-disc',
