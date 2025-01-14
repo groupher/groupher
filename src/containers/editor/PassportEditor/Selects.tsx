@@ -1,12 +1,17 @@
 import { keys, includes } from 'ramda'
 
 import { Trans } from '~/i18n/dashboard'
+
+import RootCheckSVG from '~/icons/CheckCircle'
+import CheckSVG from '~/icons/Check'
 import Checker from '~/widgets/Checker'
 
 import useLogic from './useLogic'
-import { Wrapper, Item, ReadonlyItem, CheckIcon, RootCheckIcon, ItemTitle } from './styles/selects'
+import useSalon from './salon/selects'
 
 export default () => {
+  const s = useSalon()
+
   const { getRules, allModeratorRules, selectedRules, getIsReadonly, toggleCheck } = useLogic()
   const rules = getRules()
 
@@ -19,37 +24,41 @@ export default () => {
     const moderatorKeys = keys(JSON.parse(allModeratorRules))
 
     return (
-      <Wrapper>
+      <div className={s.wrapper}>
         {optionKeys.map((ruleKey: string) => {
           const isRootRule = !includes(ruleKey, moderatorKeys)
 
           return (
-            <ReadonlyItem key={ruleKey}>
-              {isRootRule ? <RootCheckIcon /> : <CheckIcon />}
+            <div className={s.readonlyItem} key={ruleKey}>
+              {isRootRule ? (
+                <RootCheckSVG className={s.rootCheckIcon} />
+              ) : (
+                <CheckSVG className={s.checkIcon} />
+              )}
 
-              <ItemTitle>{Trans(ruleKey)}</ItemTitle>
-            </ReadonlyItem>
+              <div className={s.itemTitle}>{Trans(ruleKey)}</div>
+            </div>
           )
         })}
-      </Wrapper>
+      </div>
     )
   }
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {optionKeys.map((ruleKey: string) => {
         return (
-          <Item key={ruleKey}>
+          <div className={s.item} key={ruleKey}>
             <Checker
               checked={includes(ruleKey, selectedRules)}
               size="small"
               onChange={(checked) => toggleCheck(ruleKey, checked)}
             >
-              <ItemTitle>{Trans(ruleKey)}</ItemTitle>
+              <div className={s.itemTitle}>{Trans(ruleKey)}</div>
             </Checker>
-          </Item>
+          </div>
         )
       })}
-    </Wrapper>
+    </div>
   )
 }
