@@ -7,8 +7,7 @@ import SIZE from '~/const/size'
 import { isString } from '~/validator'
 
 import TabItem from './TabItem'
-import useSalon from '../styles/tabs'
-import { getSlipMargin } from '../styles/metric/tabs'
+import useSalon from '../salon/tabs'
 
 const temItems = [
   {
@@ -93,7 +92,7 @@ const Tabs: FC<TProps> = ({
 
   const translateX = `${
     tabWidthListRef.current.slice(0, active).reduce((a, b) => a + b, 0) +
-    getSlipMargin(size, isMobile) * active
+    s.getSlipMargin(size, isMobile) * active
   }px`
 
   return (

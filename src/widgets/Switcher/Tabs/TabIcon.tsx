@@ -1,7 +1,7 @@
 import { type FC, useCallback, lazy, Suspense } from 'react'
 
 import type { TTabItem } from '~/spec'
-import useSalon from '../styles/tabs/tab_icon'
+import useSalon from '../salon/tabs/tab_icon'
 
 type TProps = {
   item: TTabItem

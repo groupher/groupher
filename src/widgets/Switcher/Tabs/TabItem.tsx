@@ -12,7 +12,7 @@ import { isString } from '~/validator'
 import { isElementInViewport } from '~/dom'
 
 import TabIcon from './TabIcon'
-import useSalon, { cn } from '../styles/tabs/tab_item'
+import useSalon, { cn } from '../salon/tabs/tab_item'
 
 type TProps = {
   wrapMode?: boolean

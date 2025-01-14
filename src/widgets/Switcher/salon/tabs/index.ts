@@ -1,5 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+import { getSlipMargin } from '../metric/tabs'
+
 type TProps = {
   noAnimation: boolean
   slipHeight: 'px' | 1
@@ -18,5 +20,6 @@ export default ({ noAnimation, slipHeight }: TProps) => {
       `h-${slipHeight}`,
     ),
     realBar: cn(primary('bg'), isDarkBlack && bg('text.digest'), vividDark()),
+    getSlipMargin,
   }
 }

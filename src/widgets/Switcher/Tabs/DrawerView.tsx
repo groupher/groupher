@@ -3,7 +3,7 @@ import { type FC, useCallback, useState, useRef, useEffect } from 'react'
 import type { TTabItem } from '~/spec'
 import { isString } from '~/validator'
 
-import useSalon, { cn } from '../styles/tabs/drawer_view'
+import useSalon, { cn } from '../salon/tabs/drawer_view'
 
 const temItems = [
   {
