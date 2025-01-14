@@ -4,14 +4,16 @@
  *
  */
 
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
 import type { TSpace } from '~/spec'
 
 import { prettyURL } from '~/fmt'
+
+import LinkSVG from '~/icons/Link'
 import Tooltip from '~/widgets/Tooltip'
 
-import { Wrapper, LinkIcon, Source, PopHint } from './styles'
+import useSalon, { cn } from './salon'
 
 type TProps = TSpace & {
   testid?: string
@@ -30,28 +32,34 @@ const Linker: FC<TProps> = ({
   external = true,
   inline = false,
   plainColor = false,
-  ...restProps
+  ...spacing
 }) => {
+  const s = useSalon({ ...spacing })
+
   if (!src) return null
 
   return (
-    <Wrapper $testid={testid} inline={inline} {...restProps}>
-      <LinkIcon />
-      {/* {!external ? <LinkOutIcon /> : <LinkIcon />} */}
+    <div className={cn(s.wrapper, inline ? 'inline-flex' : 'flex')}>
+      <LinkSVG className={s.linkIcon} />
       <Tooltip
-        content={<PopHint>{src}</PopHint>}
+        content={<div className={s.popHint}>{src}</div>}
         placement="bottom"
         hideOnClick={false}
         delay={300}
         offset={[-10, 0] as [number, number]}
         noPadding
       >
-        <Source href={src} target="_blank" plainColor={plainColor}>
+        <a
+          className={cn(s.sourceLink, plainColor && s.plainColor)}
+          href={src}
+          target="_blank"
+          rel="noreferrer"
+        >
           {prettyURL(src)}
-        </Source>
+        </a>
       </Tooltip>
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(Linker)
+export default Linker

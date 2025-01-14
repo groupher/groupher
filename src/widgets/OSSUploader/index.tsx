@@ -2,24 +2,19 @@
 /*
  * OSSUploader
  */
+import { type FC, type ReactNode, useState, useEffect, useRef, useCallback } from 'react'
 import Script from 'next/script'
-
-import { type FC, memo, type ReactNode, useState, useEffect, useRef, useCallback } from 'react'
 
 import uid from '~/utils/uid'
 import { assetPath } from '~/helper'
 
-import {
-  Wrapper,
-  InnerWrapper,
-  Label,
-  HintIcon,
-  TurboIcon,
-  InputFile,
-  CloseBtn,
-  CrossIcon,
-} from './styles'
+import CrossSVG from '~/icons/CloseCross'
+import UploadSVG from '~/icons/Upload'
+import TurboSVG from '~/icons/Turbo'
+
 import PreviewBlock from './PreviewBlock'
+
+import useSalon, { cn } from './salon'
 import { initOSSClient, handleUploadFile, applyUploadTokensIfNeed } from './helper'
 
 type TProps = {
@@ -29,9 +24,6 @@ type TProps = {
   filePrefix?: string | null
   fileType?: string
   previewUrl?: string
-  previewHeight?: number
-  previewWidth?: number
-  previewRadius?: number
 }
 
 const OSSUploader: FC<TProps> = ({
@@ -41,10 +33,9 @@ const OSSUploader: FC<TProps> = ({
   onUploadDone = console.log,
   onDelete = console.log,
   previewUrl = '', // 'https://static.groupher.com/ugc/_tmp/2023-10-13/Linth.png',
-  previewHeight = 50,
-  previewWidth = 50,
-  previewRadius = 4,
 }) => {
+  const s = useSalon()
+
   const [loaded, setOnLoad] = useState(false)
   const [uniqueId, setUniqueId] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -90,46 +81,42 @@ const OSSUploader: FC<TProps> = ({
   const showPreview = !!previewUrl
 
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <Script
         src="https://gosspublic.alicdn.com/aliyun-oss-sdk-6.18.1.min.js"
         onLoad={() => setOnLoad(true)}
       />
 
       {showPreview && (
-        <CloseBtn onClick={onDelete}>
-          <CrossIcon />
-        </CloseBtn>
+        <div className={s.crossIcon} onClick={onDelete}>
+          <CrossSVG className={s.crossIcon} />
+        </div>
       )}
 
-      <InnerWrapper>
-        <InputFile
+      <div className={s.inner}>
+        <input
+          className={s.inputFile}
           id={`file-${uniqueId}`}
           type="file"
           name={`file-${uniqueId}`}
           accept={fileType}
           onChange={(e) => handleUploadFile(ossClient, e, filePrefix, callbacks)}
         />
-        <Label htmlFor={`file-${uniqueId}`} ref={labelRef} $loading={loading}>
-          <>
-            {showPreview ? (
-              <PreviewBlock
-                url={previewUrl}
-                height={previewHeight}
-                width={previewWidth}
-                radius={previewRadius}
-              />
-            ) : (
-              <>{children}</>
-            )}
-          </>
-        </Label>
+        <label
+          ref={labelRef}
+          className={cn(s.label, loading && 'brightness-75')}
+          htmlFor={`file-${uniqueId}`}
+        >
+          {showPreview ? <PreviewBlock url={previewUrl} /> : <>{children}</>}
+        </label>
 
-        {!loading && <HintIcon onClick={() => labelRef.current.click()} />}
-        {loading && <TurboIcon />}
-      </InnerWrapper>
-    </Wrapper>
+        {!loading && (
+          <UploadSVG onClick={() => labelRef.current.click()} className={s.uploadIcon} />
+        )}
+        {loading && <TurboSVG className={s.turboIcon} />}
+      </div>
+    </div>
   )
 }
 
-export default memo(OSSUploader)
+export default OSSUploader
