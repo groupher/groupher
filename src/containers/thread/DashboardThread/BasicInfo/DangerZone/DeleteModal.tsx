@@ -2,8 +2,7 @@ import type { FC } from 'react'
 
 import Modal from '~/widgets/Modal'
 
-// import NoteTip from '~/widgets/NoteTip'
-import HeadsUp from '~/widgets/HeadsUp'
+import NoticeBar from '~/widgets/NoticeBar'
 
 // import from '~/widgets/Alert'
 import List from './List'
@@ -24,7 +23,7 @@ const DeleteModal: FC<TProps> = ({ show, onClose }) => {
       <div className={s.wrapper}>
         <h3 className={s.warningTitle}>删除社区</h3>
         <div className={s.body}>
-          <HeadsUp type="danger">以下内容将被永久删除, 无法恢复, 请谨慎操作。</HeadsUp>
+          <NoticeBar type="notice" content="以下内容将被永久删除, 无法恢复, 请谨慎操作。" />
 
           <List
             items={[

@@ -2,8 +2,7 @@ import type { FC } from 'react'
 
 import Modal from '~/widgets/Modal'
 
-// import NoteTip from '~/widgets/NoteTip'
-import HeadsUp from '~/widgets/HeadsUp'
+import NoticeBar from '~/widgets/NoticeBar'
 import Button from '~/widgets/Buttons/Button'
 
 // import from '~/widgets/Alert'
@@ -26,7 +25,7 @@ const ArchiveModal: FC<TProps> = ({ show, onClose }) => {
       <div className={s.wrapper}>
         <h3 className={s.warningTitle}>社区归档</h3>
         <div className={s.body}>
-          <HeadsUp type="warning">归档后社区将变为只读，可再次切换。</HeadsUp>
+          <NoticeBar type="notice" content="归档后社区将变为只读，可再次切换。" />
 
           <List
             items={[

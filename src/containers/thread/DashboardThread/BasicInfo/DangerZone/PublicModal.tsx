@@ -6,7 +6,7 @@ import Input from '~/widgets/Input'
 import Modal from '~/widgets/Modal'
 import Tabs from '~/widgets/Switcher/Tabs'
 import Button from '~/widgets/Buttons/Button'
-import HeadsUp from '~/widgets/HeadsUp'
+import NoticeBar from '~/widgets/NoticeBar'
 
 // import from '~/widgets/Alert'
 import List from './List'
@@ -46,7 +46,7 @@ const PublicModal: FC<TProps> = ({ show, onClose }) => {
       <div className={s.wrapper}>
         <h3 className={s.warningTitle}>社区可见性</h3>
         <div className={s.body}>
-          <HeadsUp type="warning">隐藏后所有内容只对管理员可见，当前为公开。</HeadsUp>
+          <NoticeBar type="notice" content="隐藏后所有内容只对管理员可见，当前为公开。" />
 
           <List
             items={[
