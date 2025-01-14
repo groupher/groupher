@@ -24,6 +24,8 @@ module.exports = {
         'xl-dark': '-9px 7px 20px 9px rgb(24 24 24 / 44%)',
         drawer: '-8px 8px 20px 11px rgb(143 143 143 / 2%)',
         'drawer-dark': '-13px 1px 20px 11px rgb(0 0 0 / 9%)',
+        modal: '-2px 4px 20px 0px rgb(158 157 157 / 23%)',
+        'modal-dark': '-4px 5px 20px 5px rgb(21 21 21 / 47%)',
       },
       // borderColor: (theme) => ({
       // 'custom-light/35': `${theme('colors.rainbow.purple.light')}59`, // 35% 透明度

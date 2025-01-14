@@ -1,7 +1,8 @@
 import { clsx, type ClassValue } from 'clsx'
 
-import { cn } from '~/css'
-import type { TColorName, TSpace } from '~/spec'
+import { cn, zIndex as Z_INDEX } from '~/css'
+
+import type { TColorName, TSpace, TZIndexKey } from '~/spec'
 import { COLOR_NAME } from '~/const/colors'
 import type { TFlatThemeKey } from '~/utils/themes/skins'
 
@@ -18,7 +19,7 @@ type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 
 type TLinkColorPrefix = 'fg' | 'fill'
 type TBreakOut = 'footer' | 'header'
 type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon'
-type TShadowSize = 'sm' | 'md' | 'lg' | 'xl' | 'drawer'
+type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'drawer' | 'modal'
 type TThemeSwitch = 'auto' | 'dark' | 'light'
 type TDimLevel = 'lg' | 'md' | 'sm'
 type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red' | 'fg'
@@ -52,10 +53,11 @@ type TRet = {
   vividDark: () => string
   dimDark: (level?: TDimLevel) => string
   menu: (part: TMenuPart) => string
-  shadow: (size: TShadowSize) => string
+  shadow: (size: TShadowType) => string
   cutRest: (classname?: TCutWWidth) => string
   landingTitle: () => string
   hoverable: (part: THoverPart) => string
+  zIndex: (key: TZIndexKey) => string
 
   isDarkBlack: boolean
   isBlackPrimary: boolean
@@ -332,7 +334,7 @@ export default (): TRet => {
     }
   }
 
-  const shadow = (size: TShadowSize): string => {
+  const shadow = (size: TShadowType): string => {
     return global(`shadow-${size}`)
   }
 
@@ -379,6 +381,10 @@ export default (): TRet => {
     }
   }
 
+  const zIndex = (key: TZIndexKey): string => {
+    return `z-[${Z_INDEX[key]}]`
+  }
+
   return {
     cn,
     global,
@@ -413,5 +419,6 @@ export default (): TRet => {
     landingTitle,
     dimDark,
     hoverable,
+    zIndex,
   }
 }

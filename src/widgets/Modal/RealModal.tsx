@@ -6,22 +6,16 @@ import useGlowLight from '~/hooks/useGlowLight'
 
 import { toggleGlobalBlur, lockPage, unlockPage } from '~/dom'
 
+import CloseCrossSVG from '~/icons/CloseLight'
 import Portal from '~/widgets/Portal'
 import ViewportTracker from '~/widgets/ViewportTracker'
 
 import type { TProps as BaseTProps } from '.'
-import { Mask, Wrapper, CloseBtn, CloseBox, ChildrenWrapper, GlowLight } from './styles'
+import useSalon, { cn } from './salon'
 
 type TProps = Pick<
   BaseTProps,
-  | 'children'
-  | 'show'
-  | 'width'
-  | 'showCloseBtn'
-  | 'mode'
-  | 'background'
-  | 'offsetTop'
-  | 'offsetLeft'
+  'children' | 'show' | 'width' | 'showCloseBtn' | 'mode' | 'offsetTop' | 'offsetLeft'
 > & {
   handleCloseModal: () => void
 }
@@ -32,11 +26,12 @@ const RealModal: FC<TProps> = ({
   width,
   showCloseBtn,
   mode,
-  background,
   offsetTop = '20%',
   offsetLeft,
   handleCloseModal,
 }) => {
+  const s = useSalon()
+
   const { glowType } = useGlowLight()
   const { theme } = useTheme()
 
@@ -64,31 +59,32 @@ const RealModal: FC<TProps> = ({
 
   return (
     <Portal>
-      <Mask show={show} onClick={handleClose}>
-        <Wrapper
-          width={width}
-          mode={mode}
-          background={background}
-          offsetTop={offsetTop}
-          offsetLeft={offsetLeft}
+      <div className={cn(s.mask, !show && 'opacity-0 -z-10')} onClick={handleClose}>
+        <div
+          className={s.wrapper}
+          style={{
+            width,
+            top: offsetTop,
+            marginLeft: offsetLeft,
+          }}
         >
-          <GlowLight
-            glowType={glowType}
-            $theme={theme}
-            onClick={(e) => {
-              e.stopPropagation()
-            }}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={s.glowLight}
+            style={s.glowLightStyle(glowType, theme)}
           />
           <ViewportTracker onEnter={() => setVisibleOnPage(true)} />
           {showCloseBtn && (
-            <CloseBox onKeyUp={handleClose}>
-              <CloseBtn mode={mode} />
-            </CloseBox>
+            <div className={s.closeBox} onKeyUp={handleClose}>
+              <CloseCrossSVG className={s.closeIcon} />
+            </div>
           )}
           {/* {showCloseBtn && <EscHint mode={mode}>Esc</EscHint>} */}
-          <ChildrenWrapper onClick={(e) => e.stopPropagation()}>{children}</ChildrenWrapper>
-        </Wrapper>
-      </Mask>
+          <div className={s.children} onClick={(e) => e.stopPropagation()}>
+            {children}
+          </div>
+        </div>
+      </div>
     </Portal>
   )
 }

@@ -89,7 +89,7 @@ export const css = {
 
 export { theme, rainbowLink, rainbow, rainbowSoft, rainbowPale, gradientBg } from '../themes'
 export { WIDTH } from './metric'
-export { default as zIndex } from './zindex'
+export { default as zIndex, type TZIndexKey } from './zindex'
 
 export { default as animate } from './animations'
 
