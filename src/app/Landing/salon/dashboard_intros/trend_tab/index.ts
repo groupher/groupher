@@ -1,10 +1,9 @@
-import styled, { css } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row()};
-  width: 100%;
-  height: 100%;
-  position: relative;
-  margin-left: 46px;
-`
-export const holder = 1
+export default () => {
+  const { cn } = useTwBelt()
+
+  return {
+    wrapper: cn('row w-full h-full relative ml-12'),
+  }
+}

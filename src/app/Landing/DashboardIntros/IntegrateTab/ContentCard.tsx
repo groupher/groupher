@@ -1,13 +1,11 @@
-import type { FC } from 'react'
+import useSalon from '../../salon/dashboard_intros/integrate_tab/content_card'
 
-import { Wrapper } from '../../salon/dashboard_intros/integrate_tab/content_card'
+export default () => {
+  const s = useSalon()
 
-const ContentCard: FC = () => {
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <div>integrate tab </div>
-    </Wrapper>
+    </div>
   )
 }
-
-export default ContentCard

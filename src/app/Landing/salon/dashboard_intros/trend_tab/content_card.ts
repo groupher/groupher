@@ -1,19 +1,16 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  padding: 20px;
-  background: ${theme('htmlBg')};
-  color: ${theme('article.digest')};
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  width: 420px;
-  height: 460px;
-  border-radius: 15px;
-  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-  z-index: 2;
-  position: absolute;
-  bottom: 160px;
-  left: 140px;
-`
-export const holder = 1
+export default () => {
+  const { cn, fg, bg, shadow, br } = useTwBelt()
+
+  return {
+    wrapper: cn(
+      'column p-5 rounded-md z-20 border w-[420px] h-[460px]',
+      'absolute bottom-40 left-36',
+      br('divider'),
+      fg('text.digest'),
+      bg('htmlBg'),
+      shadow('md'),
+    ),
+  }
+}

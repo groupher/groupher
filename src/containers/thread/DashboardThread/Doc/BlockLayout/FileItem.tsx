@@ -1,19 +1,22 @@
 import type { FC } from 'react'
 
+import MoreSVG from '~/icons/menu/More'
 import Tooltip from '~/widgets/Tooltip'
 
 import FileMenu from './FileMenu'
 
-import { Wrapper, Name, SettingIcon } from '../../salon/doc/block_layout/file_item'
+import useSalon from '../../salon/doc/block_layout/file_item'
 
 type TProps = {
   name: string
 }
 
 const FileItem: FC<TProps> = ({ name }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Name>{name}</Name>
+    <div className={s.wrapper}>
+      <div className={s.name}>{name}</div>
 
       <Tooltip
         content={<FileMenu />}
@@ -23,9 +26,9 @@ const FileItem: FC<TProps> = ({ name }) => {
         hideOnClick
         noPadding
       >
-        <SettingIcon />
+        <MoreSVG className={s.settingIcon} />
       </Tooltip>
-    </Wrapper>
+    </div>
   )
 }
 

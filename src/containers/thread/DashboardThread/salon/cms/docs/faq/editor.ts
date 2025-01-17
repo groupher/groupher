@@ -1,17 +1,11 @@
-import styled, { css } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import Input from '~/widgets/Input'
+export default () => {
+  const { cn } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  width: 100%;
-`
-
-export const TitleInput = styled(Input)`
-  margin-bottom: 10px;
-`
-
-export const BodyInput = styled(Input)`
-  line-height: 23px;
-  margin-bottom: 15px;
-`
+  return {
+    wrapper: cn('column w-full'),
+    titleInput: 'mb-2.5',
+    bodyInput: 'mb-4',
+  }
+}

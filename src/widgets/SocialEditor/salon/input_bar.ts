@@ -1,19 +1,6 @@
-import styled, { css, theme } from '~/css'
-
 export { Icon } from '.'
 
 import useTwBelt from '~/hooks/useTwBelt'
-
-export const IconWrapper = styled.div`
-  border: 1px solid;
-  border-color: ${theme('editor.border')};
-  ${css.row('align-both')};
-  width: 38px;
-  height: 34px;
-  border-top-left-radius: 5px;
-  border-bottom-left-radius: 5px;
-  border-right: none;
-`
 
 export default () => {
   const { cn, fill, bg, br } = useTwBelt()

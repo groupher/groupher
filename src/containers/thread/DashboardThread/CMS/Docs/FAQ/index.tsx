@@ -12,7 +12,7 @@ import Editor from './Editor'
 import Adder from './Adder'
 import Block from './Block'
 
-import useSalon, { ItemsWrapper } from '../../../salon/cms/docs/faq'
+import useSalon from '../../../salon/cms/docs/faq'
 
 export type TProps = {
   sections: TFAQSection[]
@@ -31,7 +31,7 @@ const FAQ: FC<TProps> = ({ sections, editingFAQIndex, editingFAQ, isTouched }) =
     <div className={s.wrapper}>
       <Markdown>
         <div className={s.inner}>
-          <ItemsWrapper ref={animateRef}>
+          <div className={s.items} ref={animateRef}>
             {sections.map((section, index) => (
               <Block
                 key={section.index}
@@ -43,7 +43,7 @@ const FAQ: FC<TProps> = ({ sections, editingFAQIndex, editingFAQ, isTouched }) =
                 isLast={index === sections.length - 1}
               />
             ))}
-          </ItemsWrapper>
+          </div>
 
           {showAdder && !isTouched && <Editor editingFAQ={editingFAQ} addNew />}
           {!showAdder && !isTouched && <Adder />}

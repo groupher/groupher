@@ -1,24 +1,20 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
 // import { config, library } from '@fortawesome/fontawesome-svg-core'
 // config.autoAddCss = false
 
 import type { TColorName } from '~/spec'
+
+import Button from '~/widgets/Buttons/Button'
+import PlusSVG from '~/icons/Plus'
+import MoreSVG from '~/icons/menu/More'
 import FaIconSelector from '~/widgets/FaIcons/Selector'
 import Tooltip from '~/widgets/Tooltip'
 
 import BlockMenu from './BlockMenu'
 // import FileItem from './FileItem'
 
-import {
-  Wrapper,
-  GlobalSettingIcon,
-  Header,
-  Title,
-  // MoreLink,
-  AdderButton,
-  PlusIcon,
-} from '../../salon/doc/block_layout/block'
+import useSalon from '../../salon/doc/block_layout/block'
 
 type TProps = {
   color: TColorName
@@ -26,8 +22,10 @@ type TProps = {
 }
 
 const Block: FC<TProps> = ({ color, title }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <Tooltip
         content={<BlockMenu />}
         placement="bottom-end"
@@ -36,21 +34,21 @@ const Block: FC<TProps> = ({ color, title }) => {
         hideOnClick
         noPadding
       >
-        <GlobalSettingIcon />
+        <MoreSVG className={s.globalSettingIcon} />
       </Tooltip>
-      <Header>
+      <div className={s.header}>
         <FaIconSelector size={15} left={0} bottom={5} />
-        <Title>{title}</Title>
-      </Header>
+        <div className={s.title}>{title}</div>
+      </div>
 
       {/* <FileItem name={desc} />
       <FileItem name={desc} /> */}
 
-      <AdderButton ghost size="small">
-        <PlusIcon /> 添加文章
-      </AdderButton>
-    </Wrapper>
+      <Button ghost size="small" className={s.adderBtn}>
+        <PlusSVG className={s.plusIcon} /> 添加文章
+      </Button>
+    </div>
   )
 }
 
-export default memo(Block)
+export default Block

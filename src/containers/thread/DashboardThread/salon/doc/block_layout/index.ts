@@ -1,18 +1,10 @@
-import styled, { css } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  width: 100%;
-  margin-top: 10px;
-`
-export const CatsWrapper = styled.div`
-  ${css.rowWrap('justify-start')};
-  gap: 15px 20px;
+export default () => {
+  const { cn } = useTwBelt()
 
-  flex-grow: 1;
-  width: 100%;
-  min-height: 600px;
-
-  border-radius: 6px;
-  margin-top: 5px;
-`
+  return {
+    wrapper: cn('column w-full mt-2.5'),
+    cats: 'row grow wrap justify-start gap-x-5 gap-y-4 w-full min-h-96 rounded-md mt-1',
+  }
+}

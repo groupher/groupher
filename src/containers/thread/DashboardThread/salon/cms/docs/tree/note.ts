@@ -1,25 +1,12 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  width: 400px;
-  height: auto;
-  padding: 20px;
-  background: ${theme('hoverBg')};
-  border-radius: 10px;
-`
-export const Title = styled.div`
-  font-size: 13px;
-  color: ${theme('article.title')};
-  font-weight: bold;
-  margin-bottom: 20px;
-`
-export const Ul = styled.ul`
-  margin-left: 4px;
-`
-export const Li = styled.li`
-  font-size: 13px;
-  color: ${theme('article.title')};
-  list-style: circle inside;
-  margin-bottom: 10px;
-`
+export default () => {
+  const { cn, bg, fg } = useTwBelt()
+
+  return {
+    wrapper: cn('column w-96 h-auto p-5 rounded-lg', bg('hoverBg')),
+    title: cn('text-sm bold mb-5', fg('text.title')),
+    ul: 'ml-1',
+    li: cn('text-sm mb-2.5 list-inside list-disc', fg('text.title')),
+  }
+}
