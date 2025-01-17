@@ -116,44 +116,6 @@ export const Bar = styled.div<TBar>`
   ${(props) => css.spaceMargins(props)};
 `
 
-type TDesktopOnly = { flex?: boolean; width?: string }
-export const DesktopOnly = styled.div<TDesktopOnly>`
-  display: ${({ flex }) => (flex ? 'flex' : 'block')};
-  width: ${({ width }) => width || '100%'};
-  ${css.media.mobile`
-    display: none;
-  `};
-`
-
-export const MobileOnly = styled.div`
-  display: none;
-  width: auto;
-  ${css.media.mobile`
-    display: block;
-  `};
-`
-
-/**
- * used for markdown render component
- */
-export const MarkdownStyles = styled.div`
-  ul {
-    margin-left: 2px;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    color: ${theme('article.title')};
-  }
-  li {
-    list-style: disc inside;
-  }
-`
-
 export const WithMargin = styled.div<TSpace>`
   ${(props) => css.spaceMargins(props)};
 `
