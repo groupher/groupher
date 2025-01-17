@@ -11,4 +11,3 @@ export { default as PostItemLoading } from './PostItemLoading'
 export { default as EditorLoading } from './EditorLoading'
 
 export { default as ArticleContentLoading } from './ArticleContentLoading'
-export { default as CommunityHolder } from './CommunityHolder'
