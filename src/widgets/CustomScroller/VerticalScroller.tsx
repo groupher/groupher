@@ -4,10 +4,8 @@
  *
  */
 
-import { type FC, useState, Fragment, memo } from 'react'
+import { type FC, Fragment, memo } from 'react'
 
-// NOTE: do not use ViewportTracker here, it cause crash
-// import { Waypoint } from 'react-waypoint'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
 
 import SIZE from '~/const/size'
@@ -17,12 +15,7 @@ import SIZE from '~/const/size'
 
 import type { TProps as TScrollProps } from '.'
 
-import {
-  ViewHolder,
-  //
-  TopShadowBar,
-  BottomShadowBar,
-} from './styles/vertical_scroller'
+import useSalon from './salon/vertical_scroller'
 
 type TProps = Omit<TScrollProps, 'direction' | 'innerHeight'>
 
@@ -40,56 +33,24 @@ const VerticalScroller: FC<TProps> = ({
   // onScrollDirectionChange,
   // instanceKey = null,
 }) => {
-  const [showTopShadow] = useState(true)
-  const [showBottomShadow] = useState(true)
+  const s = useSalon()
+  // const [showTopShadow] = useState(true)
+  // const [showBottomShadow] = useState(true)
 
-  // record last y position after scroll
-  // to judge is scroll up or down
-  // 记录上一次距离顶部的 y 轴位置，用于计算当前滑动是向上还是向下
-  // const [lastYPosition, setLastYPosition] = useState(0)
-
-  // @ts-ignore
-  // const { themeMap } = useTheme()
-  // const { category: themeCategory } = themeMeta
-
-  //   <Wrapper
-  //   height={height}
-  //   width={width}
-  //   $shadowSize={shadowSize}
-  //   $barSize={barSize}
-  //   $showOnHover={showOnHover}
-  // >
   return (
     <Fragment>
-      {showShadow && (
-        <TopShadowBar
-          show={showTopShadow}
-          height={height}
-          $shadowSize={shadowSize}
-          withBorder={withBorder}
-        />
-      )}
-
       <OverlayScrollbarsComponent
         options={{
           scrollbars: { autoHide: 'leave', autoHideDelay: 300, autoHideSuspend: true },
         }}
       >
-        <ViewHolder />
+        <div className={s.viewHolder} />
         {/* <Waypoint onEnter={handleHideTopShadow} onLeave={handleShowTopShadow} /> */}
         {children}
-        <ViewHolder />
+
+        <div className={s.viewHolder} />
         {/* <Waypoint onEnter={handleHideBottomShadow} onLeave={handleShowBottomShadow} /> */}
       </OverlayScrollbarsComponent>
-
-      {showShadow && (
-        <BottomShadowBar
-          show={showBottomShadow}
-          height={height}
-          $shadowSize={shadowSize}
-          withBorder={withBorder}
-        />
-      )}
     </Fragment>
   )
 }

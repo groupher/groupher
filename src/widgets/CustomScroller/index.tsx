@@ -1,4 +1,4 @@
-import { type FC, type ReactNode, memo } from 'react'
+import type { FC, ReactNode } from 'react'
 
 import type { TSizeSML } from '~/spec'
 import type { TDirection, TScrollDirection } from './spec'
@@ -33,4 +33,4 @@ const CustomScroller: FC<TProps> = ({ children, direction = 'vertical', ...restP
   return <VerticalScroller {...restProps}>{children}</VerticalScroller>
 }
 
-export default memo(CustomScroller)
+export default CustomScroller
