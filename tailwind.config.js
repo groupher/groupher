@@ -31,6 +31,20 @@ module.exports = {
       // 'custom-light/35': `${theme('colors.rainbow.purple.light')}59`, // 35% 透明度
       // 'rainbow-purple-dark/75': 'rgba(var(--rainbow-custom-dark), 0.75)',
       // }),
+      keyframes: {
+        'loading-grow': {
+          '0%': { transform: 'scale(0, 0)', opacity: '0' },
+          '100%': { transform: 'scale(1, 1)', opacity: '1' },
+        },
+        'loading-move': {
+          '0%': { transform: 'translateX(0px)' },
+          '100%': { transform: 'translateX(80px)' },
+        },
+      },
+      animation: {
+        'loading-grow': 'loading-grow 1s linear infinite',
+        'loading-move': 'loading-move 1s linear infinite',
+      },
     },
   },
   safelist,

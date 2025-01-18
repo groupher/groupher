@@ -1,28 +1,36 @@
 import type { FC } from 'react'
-import { range, mergeRight } from 'ramda'
+import { range } from 'ramda'
 
 import type { TSpace, TSizeTSM } from '~/spec'
-import usePrimaryColor from '~/hooks/usePrimaryColor'
 import SIZE from '~/const/size'
 
-import { Wrapper, Container, Circle } from './styles/lava_lamp_loading'
+import useSalon, { cn } from './salon/lava_lamp_loading'
 
 type TProps = TSpace & { size?: TSizeTSM; className?: string }
 
-const LavaLampLoading: FC<TProps> = (props) => {
-  const primaryColor = usePrimaryColor()
+const LavaLampLoading: FC<TProps> = ({ size, className = '', ...spacing }) => {
+  const s = useSalon({ ...spacing })
 
-  const { size } = props
-  const _props = mergeRight({ size: size || SIZE.MEDIUM }, props)
+  // <Circle key={num} index={num} $color={primaryColor} />
 
   return (
-    <Wrapper {..._props}>
-      <Container>
+    <div
+      className={cn(s.wrapper, size === SIZE.TINY && 'scale-75', size === SIZE.SMALL && 'scale-90')}
+    >
+      <div className={s.container}>
         {range(0, 9).map((num) => (
-          <Circle key={num} index={num} $color={primaryColor} />
+          <span
+            key={num}
+            className={cn(
+              s.circle,
+              'animate-loading-move first:absolute first:top-0 first:left-0 first:animate-loading-grow last:absolute last:top-0 last:right-0 last:mr-0 last:animate-loading-grow last:animation-reverse',
+              num === 2 || num === 6 ? 'w-3.5' : 'w-1',
+            )}
+            style={{ animationDelay: `${s.speedMap[num]}s` }}
+          />
         ))}
-      </Container>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 

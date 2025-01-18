@@ -1,11 +1,11 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 import { range } from 'ramda'
 import ContentLoader from 'react-content-loader'
 
 import type { TSpace } from '~/spec'
 import useTheme from '~/hooks/useTheme'
 
-import { Wrapper, LoadingWrapper } from './styles/article_content_loading'
+import useSalon from './salon/article_content_loading'
 
 const LoadingItem = ({ theme }) => (
   <ContentLoader
@@ -27,18 +27,19 @@ const LoadingItem = ({ theme }) => (
 
 type TProps = TSpace & { num?: number }
 
-const ArticleContentLoading: FC<TProps> = ({ num = 1, ...restProps }) => {
+const ArticleContentLoading: FC<TProps> = ({ num = 1, ...spacing }) => {
+  const s = useSalon({ ...spacing })
   const { themeMap } = useTheme()
 
   return (
-    <Wrapper {...restProps}>
+    <div className={s.wrapper}>
       {range(0, num).map((item) => (
-        <LoadingWrapper key={item}>
+        <div className={s.inner} key={item}>
           <LoadingItem theme={themeMap} />
-        </LoadingWrapper>
+        </div>
       ))}
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(ArticleContentLoading)
+export default ArticleContentLoading

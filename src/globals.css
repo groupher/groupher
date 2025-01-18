@@ -422,6 +422,10 @@
     filter: drop-shadow(2px 4px 6px #141414);
   }
 
+  .animation-reverse {
+    animation-direction: reverse;
+  }
+
   .debug {
     @apply border border-dashed;
     border-color: red;
