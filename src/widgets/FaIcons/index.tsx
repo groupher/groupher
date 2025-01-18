@@ -4,7 +4,7 @@
  *
  */
 
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import '@fortawesome/fontawesome-svg-core/styles.css'
@@ -16,7 +16,7 @@ import { camelize } from '~/fmt'
 import FaIcon from './icons'
 import type { TIcon } from './spec'
 
-import { Wrapper } from './styles'
+import useSalon from './salon'
 
 export type TProps = {
   testid?: string
@@ -31,19 +31,20 @@ const FaIcons: FC<TProps> = ({
   size = 16,
   icon = 'user',
   color = 'ORANGE',
-  ...restProps
+  ...spacing
 }) => {
+  const s = useSalon({ ...spacing })
   const themeData = useThemeData()
 
   return (
-    <Wrapper $testid={testid} {...restProps}>
+    <div className={s.wrapper}>
       <FontAwesomeIcon
         icon={FaIcon[icon]}
         fontSize={size}
         color={themeData.rainbow[camelize(color)]}
       />
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(FaIcons)
+export default FaIcons

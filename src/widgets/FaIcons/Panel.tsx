@@ -4,21 +4,13 @@ import { includes, keys, filter } from 'ramda'
 import type { TColorName } from '~/spec'
 import { COLOR_NAME } from '~/const/colors'
 import CustomScroller from '~/widgets/CustomScroller'
+import Input from '~/widgets/Input'
 
 import type { TIcon } from './spec'
 import FaIcon from '.'
 import ICONS from './icons'
 
-import {
-  Wrapper,
-  ColorWrapper,
-  ColorBlock,
-  ColorCenter,
-  Item,
-  IconWrapper,
-  Title,
-  Input,
-} from './styles/panel'
+import useSalon, { cn } from './salon/panel'
 
 type TProps = {
   selectColor: TColorName
@@ -29,6 +21,7 @@ type TProps = {
 }
 
 const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelect, panelOpen }) => {
+  const s = useSalon()
   const iconKeys = keys(ICONS)
   const colorNames = keys(COLOR_NAME)
 
@@ -42,21 +35,25 @@ const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelec
   }, [panelOpen])
 
   return (
-    <Wrapper>
-      <ColorWrapper>
+    <div className={s.wrapper}>
+      <div className={s.colorWrapper}>
         {colorNames.map((color) => (
-          <ColorBlock
+          <div
             key={color}
-            color={color}
+            className={cn(
+              s.colorBlock,
+              s.rainbow(color, 'bgSoft'),
+              selectColor === color && s.rainbow(color, 'border'),
+            )}
             onClick={() => onColorSelect(color)}
-            $active={selectColor === color}
           >
-            <ColorCenter color={color} />
-          </ColorBlock>
+            <div className={cn(s.colorCenter, s.rainbow(color, 'bg'))} />
+          </div>
         ))}
-      </ColorWrapper>
+      </div>
 
       <Input
+        className={s.input}
         value={searchKey}
         placeholder="// 搜索图标（英文）"
         onChange={(e) => setSearchKey(e.target.value)}
@@ -70,15 +67,19 @@ const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelec
         autoHide
       >
         {filteredIconKeys.map((name) => (
-          <Item key={name} onClick={() => onIconSelect(name)} $active={selectIcon === name}>
-            <IconWrapper>
+          <div
+            className={cn(s.item, selectIcon === name && s.itemActive)}
+            key={name}
+            onClick={() => onIconSelect(name)}
+          >
+            <div className={s.iconBox}>
               <FaIcon icon={name} size={13} color={COLOR_NAME.BLACK} />
-            </IconWrapper>
-            <Title>{name}</Title>
-          </Item>
+            </div>
+            <div className={s.title}>{name}</div>
+          </div>
         ))}
       </CustomScroller>
-    </Wrapper>
+    </div>
   )
 }
 
