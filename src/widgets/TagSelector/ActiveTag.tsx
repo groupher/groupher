@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import type { TColorName, TTag } from '~/spec'
 import TagNode from '~/widgets/TagNode'
 
-import { Wrapper, TagItem, TagTitle } from './styles/active_tag'
+import useSalon from './salon/active_tag'
 
 type TProps = {
   activeTag: TTag
@@ -11,17 +11,19 @@ type TProps = {
 }
 
 const ActiveTag: FC<TProps> = ({ activeTag, mode }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {activeTag?.id ? (
-        <TagItem>
+        <div className={s.tagItem}>
           <TagNode color={activeTag.color as TColorName} boldHash />
-          <TagTitle>{activeTag.title}</TagTitle>
-        </TagItem>
+          <div className={s.tagTitle}>{activeTag.title}</div>
+        </div>
       ) : (
         <>{mode === 'default' ? '未设置' : '标签'}</>
       )}
-    </Wrapper>
+    </div>
   )
 }
 
