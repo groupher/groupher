@@ -15,7 +15,7 @@ export default () => {
     <div className={s.wrapper}>
       <h3 className={s.title}>favicon</h3>
       <div className={s.faviconBox}>
-        <OSSUploader previewHeight={30} previewWidth={30}>
+        <OSSUploader>
           <div className={s.favicon} />
         </OSSUploader>
       </div>
@@ -25,8 +25,6 @@ export default () => {
       <div className={s.logoBox}>
         <OSSUploader
           previewUrl={logo}
-          previewHeight={70}
-          previewWidth={70}
           onDelete={() => edit('', 'logo')}
           onUploadDone={(v) => edit(v, 'logo')}
         >
