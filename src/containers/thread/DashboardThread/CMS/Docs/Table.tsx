@@ -5,13 +5,15 @@ import { Table, Column, HeaderCell, Cell } from 'rsuite-table'
 
 import type { TID, TPagedArticles } from '~/spec'
 
+import ArrowSVG from '~/icons/Arrow'
+import FilterSVG from '~/icons/Filter'
 import Checker from '~/widgets/Checker'
 
 import { CheckCell, ArticleCell, StateCell, AuthorDateCell, DateCell } from '../Cell'
 import FilterBar from '../FilterBar'
 
 import useCMSInfo from '../../hooks/useCMSInfo'
-import { Title, SortIcon } from '../../salon/cms/docs/table'
+import useSalon from '../../salon/cms/posts'
 
 /**
  * example: https://table.rsuitejs.com/#fixed-column
@@ -25,6 +27,7 @@ type TProps = {
 }
 
 const DocsTables: FC<TProps> = ({ pagedDocs, loading, batchSelectedIDs }) => {
+  const s = useSalon()
   const { batchSelectAll } = useCMSInfo()
 
   const [showCheckColumn, setShowCheckColumn] = useState(false)
@@ -53,14 +56,14 @@ const DocsTables: FC<TProps> = ({ pagedDocs, loading, batchSelectedIDs }) => {
 
       switch (sortType) {
         case 'asc': {
-          return <SortIcon.ArrowUp />
+          return <ArrowSVG className={s.icon.arrowUp} />
         }
         case 'desc': {
-          return <SortIcon.ArrowDown />
+          return <ArrowSVG className={s.icon.arrowDown} />
         }
 
         default:
-          return <SortIcon.Filter />
+          return <FilterSVG className={s.icon.filter} />
       }
     },
     [sortState],
@@ -108,7 +111,7 @@ const DocsTables: FC<TProps> = ({ pagedDocs, loading, batchSelectedIDs }) => {
 
         <Column width={280} fixed>
           <HeaderCell>
-            <Title>标题</Title>
+            <div className={s.title}>标题</div>
           </HeaderCell>
           {/* @ts-ignore */}
           <ArticleCell dataKey="title" />
@@ -116,7 +119,7 @@ const DocsTables: FC<TProps> = ({ pagedDocs, loading, batchSelectedIDs }) => {
 
         <Column width={90} fixed>
           <HeaderCell align="center">
-            <Title>状态</Title>
+            <div className={s.title}>状态</div>
           </HeaderCell>
           {/* @ts-ignore */}
           <StateCell />
@@ -124,28 +127,28 @@ const DocsTables: FC<TProps> = ({ pagedDocs, loading, batchSelectedIDs }) => {
 
         <Column width={65} fixed sortable>
           <HeaderCell align="center" renderSortIcon={() => renderSortIcon('upvotesCount')}>
-            <Title>投票</Title>
+            <div className={s.title}>投票</div>
           </HeaderCell>
           <Cell dataKey="upvotesCount" align="center" />
         </Column>
 
         <Column width={65} sortable>
           <HeaderCell align="center" renderSortIcon={() => renderSortIcon('views')}>
-            <Title>浏览</Title>
+            <div className={s.title}>浏览</div>
           </HeaderCell>
           <Cell dataKey="views" align="center" />
         </Column>
 
         <Column width={60} sortable>
           <HeaderCell align="center" renderSortIcon={() => renderSortIcon('commentsCount')}>
-            <Title>评论</Title>
+            <div className={s.title}>评论</div>
           </HeaderCell>
           <Cell dataKey="commentsCount" align="center" />
         </Column>
 
         <Column width={100}>
           <HeaderCell align="right">
-            <Title>发布/活跃</Title>
+            <div className={s.title}>发布/活跃</div>
           </HeaderCell>
           {/* @ts-ignore */}
           <DateCell />
@@ -153,7 +156,7 @@ const DocsTables: FC<TProps> = ({ pagedDocs, loading, batchSelectedIDs }) => {
 
         <Column width={115}>
           <HeaderCell align="right">
-            <Title>作者</Title>
+            <div className={s.title}>作者</div>
           </HeaderCell>
           {/* @ts-ignore */}
           <AuthorDateCell />

@@ -2,13 +2,15 @@ import { type FC, useCallback, useState } from 'react'
 import { pluck } from 'ramda'
 import { Table, Column, HeaderCell, Cell } from 'rsuite-table'
 
+import ArrowSVG from '~/icons/Arrow'
+import FilterSVG from '~/icons/Filter'
 import Checker from '~/widgets/Checker'
 
 import { CheckCell, CommunityCell, PendingCell, TimestampCell } from '../Cell'
 import FilterBar from '../FilterBar'
 
 import useCMSInfo from '../../hooks/useCMSInfo'
-import { Title, SortIcon } from '../../salon/cms/communities'
+import useSalon from '../../salon/cms/communities'
 
 /**
  * example: https://table.rsuitejs.com/#fixed-column
@@ -16,6 +18,8 @@ import { Title, SortIcon } from '../../salon/cms/communities'
  */
 
 const Communities: FC = () => {
+  const s = useSalon()
+
   const { pagedCommunities, loading, batchSelectedIDs, batchSelectAll } = useCMSInfo()
   const [showCheckColumn, setShowCheckColumn] = useState(false)
   const [sortColumn, setSortColumn] = useState('id')
@@ -43,14 +47,14 @@ const Communities: FC = () => {
 
       switch (sortType) {
         case 'asc': {
-          return <SortIcon.ArrowUp />
+          return <ArrowSVG className={s.icon.arrowUp} />
         }
         case 'desc': {
-          return <SortIcon.ArrowDown />
+          return <ArrowSVG className={s.icon.arrowDown} />
         }
 
         default:
-          return <SortIcon.Filter />
+          return <FilterSVG className={s.icon.filter} />
       }
     },
     [sortState],
@@ -98,7 +102,7 @@ const Communities: FC = () => {
 
         <Column width={180} fixed>
           <HeaderCell>
-            <Title>名称</Title>
+            <div className={s.title}>名称</div>
           </HeaderCell>
           {/* @ts-ignore */}
           <CommunityCell />
@@ -106,14 +110,14 @@ const Communities: FC = () => {
 
         <Column width={200} fixed>
           <HeaderCell align="left" renderSortIcon={() => renderSortIcon('commentsCount')}>
-            <Title>简介</Title>
+            <div className={s.title}>简介</div>
           </HeaderCell>
           <Cell dataKey="desc" align="left" />
         </Column>
 
         <Column width={90} fixed>
           <HeaderCell align="center">
-            <Title>状态</Title>
+            <div className={s.title}>状态</div>
           </HeaderCell>
           {/* @ts-ignore */}
           <PendingCell />
@@ -121,28 +125,28 @@ const Communities: FC = () => {
 
         <Column width={65} sortable>
           <HeaderCell align="center" renderSortIcon={() => renderSortIcon('commentsCount')}>
-            <Title>关注</Title>
+            <div className={s.title}>关注</div>
           </HeaderCell>
           <Cell dataKey="subscribersCount" align="center" />
         </Column>
 
         <Column width={65} sortable>
           <HeaderCell align="center" renderSortIcon={() => renderSortIcon('views')}>
-            <Title>浏览</Title>
+            <div className={s.title}>浏览</div>
           </HeaderCell>
           <Cell dataKey="views" align="center" />
         </Column>
 
         <Column width={60} sortable>
           <HeaderCell align="center" renderSortIcon={() => renderSortIcon('commentsCount')}>
-            <Title>内容</Title>
+            <div className={s.title}>内容</div>
           </HeaderCell>
           <Cell dataKey="articlesCount" align="center" />
         </Column>
 
         <Column width={100}>
           <HeaderCell align="right">
-            <Title>创建/更新</Title>
+            <div className={s.title}>创建/更新</div>
           </HeaderCell>
           {/* @ts-ignore */}
           <TimestampCell />
