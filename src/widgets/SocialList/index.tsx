@@ -1,9 +1,10 @@
 import { type FC, memo } from 'react'
+import Link from 'next/link'
 
 import type { TSizeTSM, TSocialItem, TSpace } from '~/spec'
 import SIZE from '~/const/size'
 
-import { Wrapper, SocialWrapper, Icon } from './styles'
+import useSalon, { cn, Icon } from './salon'
 
 type TProps = {
   size?: TSizeTSM
@@ -15,19 +16,23 @@ const SocialList: FC<TProps> = ({
   testid = 'social-list',
   selected = [],
   size = SIZE.SMALL,
-  ...restProps
+  ...spacing
 }) => {
+  const s = useSalon({ ...spacing })
+
   return (
-    <Wrapper $testid={testid} size={size} {...restProps}>
+    <div
+      className={cn(s.wrapper, size === SIZE.TINY && 'scale-75', size === SIZE.TINY && 'scale-90')}
+    >
       {selected.map((social) => {
         const SocialIcon = Icon[social.type]
         return (
-          <SocialWrapper key={social.type} href={social.link} target="_blank">
-            <SocialIcon />
-          </SocialWrapper>
+          <Link className={s.socialBox} key={social.type} href={social.link} target="_blank">
+            <SocialIcon className={s.icon} />
+          </Link>
         )
       })}
-    </Wrapper>
+    </div>
   )
 }
 
