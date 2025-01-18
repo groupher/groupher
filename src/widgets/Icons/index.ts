@@ -37,104 +37,102 @@ import QuestionIcon from './Question'
 import DesktopIcon from './Desktop'
 import MobileIcon from './Mobile'
 
-type TstyledFn = (comp: FC) => FC
-
-export const getLocalSVG = (type: string, styledFn: TstyledFn): FC => {
+export const getLocalSVG = (type: string): FC => {
   switch (type) {
     case SVG.DESKTOP: {
-      return styledFn(DesktopIcon)
+      return DesktopIcon
     }
 
     case SVG.MOBILE: {
-      return styledFn(MobileIcon)
+      return MobileIcon
     }
 
     case SVG.FEATURE: {
-      return styledFn(LightIcon)
+      return LightIcon
     }
 
     case SVG.BUG: {
-      return styledFn(BugIcon)
+      return BugIcon
     }
 
     case SVG.QUESTION: {
-      return styledFn(QuestionIcon)
+      return QuestionIcon
     }
 
     case SVG.REPORT: {
-      return styledFn(ReportIcon)
+      return ReportIcon
     }
 
     case SVG.QR_CODE: {
-      return styledFn(QRCodeIcon)
+      return QRCodeIcon
     }
 
     case SVG.MOREL_DOT: {
-      return styledFn(MoreDotIcon)
+      return MoreDotIcon
     }
 
     case SVG.COPY: {
-      return styledFn(CopyIcon)
+      return CopyIcon
     }
 
     case SVG.EMAIL: {
-      return styledFn(EmailIcon)
+      return EmailIcon
     }
 
     case SVG.WECHAT: {
-      return styledFn(WechatIcon)
+      return WechatIcon
     }
 
     case SVG.UPVOTE: {
-      return styledFn(UpvoteIcon)
+      return UpvoteIcon
     }
 
     case SVG.EDIT_PEN: {
-      return styledFn(EditPenIcon)
+      return EditPenIcon
     }
 
     case SVG.LOCK: {
-      return styledFn(LockIcon)
+      return LockIcon
     }
 
     case SVG.COLLECTION: {
-      return styledFn(CollectionIcon)
+      return CollectionIcon
     }
 
     case SVG.SHARE: {
-      return styledFn(ShareIcon)
+      return ShareIcon
     }
 
     case SVG.ARCHIVED: {
-      return styledFn(ArchivedIcon)
+      return ArchivedIcon
     }
 
     case SVG.ACTIVITY: {
-      return styledFn(ActivityIcon)
+      return ActivityIcon
     }
 
     case SVG.CLOSE: {
-      return styledFn(CloseCrossIcon)
+      return CloseCrossIcon
     }
 
     case SVG.TO_TOP: {
-      return styledFn(AirBalloonIcon)
+      return AirBalloonIcon
     }
 
     case SVG.EMOTION: {
-      return styledFn(Emotion)
+      return Emotion
     }
     case SVG.COMMENT: {
-      return styledFn(CommentIcon)
+      return CommentIcon
     }
     case SVG.MOREL: {
-      return styledFn(MoreLIcon)
+      return MoreLIcon
     }
     case SVG.MORE: {
-      return styledFn(MoreIcon)
+      return MoreIcon
     }
     default: {
-      return styledFn(UpvoteIcon)
+      return UpvoteIcon
     }
   }
 }

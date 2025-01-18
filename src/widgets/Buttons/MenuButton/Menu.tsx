@@ -6,7 +6,7 @@ import type { TMenuOption } from '~/spec'
 
 import Img from '~/Img'
 import { ICON } from '~/config'
-// import SVG from '~/const/svg'
+import SVG from '~/const/svg'
 import { cutRest } from '~/fmt'
 
 import useSalon, { cn } from '../salon/menu_button/menu'
@@ -14,13 +14,14 @@ import useSalon, { cn } from '../salon/menu_button/menu'
 // there is two types of block, normal block and link
 const OptionBlock = ({ item, onClick }) => {
   const s = useSalon()
-  // const Icon = getIcon(item.icon || SVG.UPVOTE)
+  const Icon = s.getIcon(item.icon || SVG.UPVOTE)
 
   if (item.link) {
     return (
       <a className={cn(s.block, 'no-underline')} href={item.link}>
         <div className={s.item}>
-          <div>Icon</div>
+          {/* @ts-ignore */}
+          <Icon className={s.icon} />
           <div className={s.title}>{cutRest(item.title, 50)}</div>
           <Img src={`${ICON}/shape/link-hint.svg`} className={s.linkIcon} />
         </div>
@@ -30,7 +31,8 @@ const OptionBlock = ({ item, onClick }) => {
   return (
     <div className={s.block} onClick={onClick}>
       <div className={s.item}>
-        <div>Icon</div>
+        {/* @ts-ignore */}
+        <Icon className={s.icon} />
         <div className={s.title}>{cutRest(item.title, 50)}</div>
       </div>
     </div>

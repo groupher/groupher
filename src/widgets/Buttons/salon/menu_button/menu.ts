@@ -1,3 +1,5 @@
+import { getLocalSVG } from '~/icons'
+
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
@@ -15,9 +17,6 @@ export default () => {
     linkIcon: cn('size-2.5 ml-1.5', fill('text.digest')),
     //
     icon: cn('size-3 mr-2.5 opacity-80', fill('text.digest')),
+    getIcon: (type: string) => getLocalSVG(type),
   }
 }
-
-// export const getIcon = (type: string): FC => {
-//   return getLocalSVG(type, styledIcon)
-// }
