@@ -6,6 +6,6 @@ export default () => {
   return {
     wrapper: 'row justify-center',
     scrollWrapper: 'absolute w-full',
-    skeleton: 'w-screen h-screen',
+    skeleton: 'w-screen h-screen antialiased',
   }
 }

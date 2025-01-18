@@ -1,87 +1,23 @@
-import type { FC } from 'react'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import Img from '~/Img'
-import styled, { css, theme } from '~/css'
+export { cn } from '~/css'
 
-import { getLocalSVG } from '~/icons'
+export default () => {
+  const { cn, fg, bg, fill, sexyBorder } = useTwBelt()
 
-export const Wrapper = styled.div<{ $panelMinWidth: string }>`
-  ${css.column('align-center')};
-  width: 100%;
-  min-width: ${({ $panelMinWidth }) => $panelMinWidth};
-  max-height: 300px;
-  overflow: hidden;
-  padding: 4px 3px;
-`
-export const Block = styled.div`
-  ${css.row('align-start')};
-  width: 100%;
-  padding: 4px 10px;
-  padding-left: 15px;
-  border-radius: 4px;
-
-  &:hover {
-    background: ${theme('hoverBg')};
-    cursor: pointer;
+  return {
+    wrapper: cn('column-align-center w-full max-h-72 p-1 overflow-hidden'),
+    block: cn('row items-start w-full px-2.5 py-1 pl-4 rounded pointer', `hover:${bg('hoverBg')}`),
+    qrWrapper: 'ml-0.5 mt-1.5 opacity-65',
+    item: 'row-center',
+    title: cn('text-sm', fg('text.title')),
+    divider: cn(sexyBorder(), 'my-1'),
+    linkIcon: cn('size-2.5 ml-1.5', fill('text.digest')),
+    //
+    icon: cn('size-3 mr-2.5 opacity-80', fill('text.digest')),
   }
-`
-export const QRWrapper = styled.div`
-  opacity: 0.55;
-  margin-top: 7px;
-  margin-left: 2px;
-
-  &:hover {
-    opacity: 1;
-  }
-
-  transition: opacity 0.25s;
-`
-export const Divider = styled.div`
-  width: 100%;
-  height: 1px;
-  background: ${theme('divider')};
-  margin-top: 3px;
-  margin-bottom: 3px;
-`
-export const BlockA = styled(Block)`
-  text-decoration: none;
-`
-export const Item = styled.div`
-  ${css.row('align-center')};
-`
-
-export const Title = styled.div`
-  color: ${theme('article.title')};
-  font-size: 13px;
-`
-export const Desc = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 11px;
-  margin-top: 4px;
-`
-export const LinkIcon = styled(Img)`
-  ${css.size(10)};
-  fill: ${theme('article.digest')};
-  margin-left: 7px;
-`
-
-export const styledIcon = (comp: FC): FC => {
-  return styled(comp)`
-    fill: ${theme('article.digest')};
-    ${css.size(12)};
-    margin-right: 10px;
-    opacity: 0.8;
-
-    &:hover {
-      fill: ${theme('article.info')};
-      opacity: 1;
-      cursor: pointer;
-    }
-
-    transition: all 0.2s;
-  `
 }
 
-export const getIcon = (type: string): FC => {
-  return getLocalSVG(type, styledIcon)
-}
+// export const getIcon = (type: string): FC => {
+//   return getLocalSVG(type, styledIcon)
+// }

@@ -25,7 +25,7 @@ const MenuButton: FC<TProps> = ({
   offset = [5, 5],
   onClick = console.log,
   placement = 'top-end',
-  panelMinWidth = '110px',
+  panelMinWidth = 'w-28',
 }) => {
   return (
     <Tooltip
