@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, fill } = useTwBelt()
+  const { cn, fg, fill, linkable, cut } = useTwBelt()
 
   return {
     wrapper: 'w-4/5 mt-4 pl-1',
@@ -12,5 +12,7 @@ export default () => {
     homeLink: 'row-center text-sm -ml-1 mt-2',
     linkIconBox: 'align-both size-5',
     linkIcon: cn('size-4 mt-px', fill('text.digest')),
+    //
+    link: cn(linkable(), cut('w-40')),
   }
 }
