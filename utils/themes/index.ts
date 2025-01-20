@@ -13,10 +13,7 @@
 
 import { path, split } from 'ramda'
 
-import type { TColorName, TTheme } from '~/spec'
-import { COLOR_NAME } from '~/const/colors'
-
-import { camelize } from '~/fmt'
+import type { TTheme } from '~/spec'
 
 import type { TFlatThemeKey } from './skins'
 import skinsData from './skins'
@@ -26,39 +23,6 @@ export const themeSkins = { ...skinsData }
 // curried shorthand for style-components
 export const theme = (themeKey: TFlatThemeKey): TTheme => {
   return (path(['theme', ...split('.', themeKey)]) || 'wheat') as TTheme
-}
-
-export const gradientBg = (color: TColorName | string): string => {
-  return theme(`gradientBg.${camelize(color)}` as TFlatThemeKey)
-}
-
-/**
- * used for dynamic primary color or tag color based on pre-defined color names for each theme
- */
-export const rainbow = (color: TColorName | string, darkThemeOverWriteKey = ''): string => {
-  if (color === COLOR_NAME.BLACK) {
-    return darkThemeOverWriteKey
-      ? theme(`${darkThemeOverWriteKey as TFlatThemeKey}`)
-      : theme(`rainbow.${camelize(color)}` as TFlatThemeKey)
-  }
-
-  return theme(`rainbow.${camelize(color)}` as TFlatThemeKey)
-}
-
-export const rainbowSoft = (color: TColorName | string): string => {
-  if (color === COLOR_NAME.BLACK) {
-    return theme('hoverBg')
-  }
-
-  return theme(`rainbow.${camelize(color)}Soft` as TFlatThemeKey)
-}
-
-export const rainbowPale = (color: TColorName | string): string => {
-  if (color === COLOR_NAME.BLACK) {
-    return theme('hoverBg')
-  }
-
-  return theme(`rainbow.${camelize(color)}Pale` as TFlatThemeKey)
 }
 
 export { default as themeMeta } from './theme_meta'
