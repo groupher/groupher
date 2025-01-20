@@ -18,6 +18,6 @@ export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
 
 export const css = {}
 
-export { theme, rainbow, rainbowSoft, gradientBg } from '../themes'
+export { theme, rainbow, gradientBg } from '../themes'
 export { WIDTH } from './metric'
 export type { TZIndexKey } from './zindex'
