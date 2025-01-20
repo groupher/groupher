@@ -24,13 +24,13 @@ const DigestView: FC<TProps> = ({ article }) => {
 
   return (
     <div className={s.wrapper}>
-      <ArticlePinLabel isPinned={article.isPinned} top={26} />
+      <ArticlePinLabel isPinned={article.isPinned} className="top-6" />
 
       <div className={s.avatarWrapper}>
         <Img
           src={author.avatar}
           className={s.avatar}
-          fallback={<ImgFallback size={26} user={author} />}
+          fallback={<ImgFallback size={6} user={author} />}
         />
       </div>
       <div className={s.main} onClick={() => previewArticle(article)}>

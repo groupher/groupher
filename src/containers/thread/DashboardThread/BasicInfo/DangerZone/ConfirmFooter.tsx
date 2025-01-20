@@ -5,7 +5,6 @@ import type { TSpace } from '~/spec'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 
 import Input from '~/widgets/Input'
-import { SexyDivider } from '~/widgets/Common'
 import Button from '~/widgets/Buttons/Button'
 
 import useBaseInfo from '../../logic/useBaseInfo'
@@ -25,7 +24,7 @@ const ConfirmFooter: FC<TProps> = ({ testid = '', ...spacing }) => {
 
   return (
     <div className={s.wrapper}>
-      <SexyDivider />
+      <div className={s.divider} />
       <div className={s.note}>
         请在下方输入社区名称<span className={s.bold}>{slug}</span>确认
       </div>

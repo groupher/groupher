@@ -4,31 +4,12 @@
  *
  */
 
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
 import type { TMetric } from '~/spec'
 import METRIC from '~/const/metric'
 
-import SpinPlanet from './SpinPlanet'
-// import CodeSnippets from './CodeSnippets'
-
-import NotFoundMessage from './NotFoundMessage'
-import ErrorDesc from './ErrorDesc'
-
-import {
-  Wrapper,
-  HintWrapper,
-  IconsWrapper,
-  Planet1Wrapper,
-  Planet2Wrapper,
-  OopsLetter,
-  TextWrapper,
-  HintTitle,
-  LogoWrapper,
-  SiteLogo,
-  SiteTitle,
-  FooterWrapper,
-} from './styles'
+import useSalon from './salon'
 
 export type TProps = {
   errorCode?: number // 400 | 500 | 404
@@ -43,36 +24,12 @@ const ErrorPage: FC<TProps> = ({
   metric = METRIC.COMMUNITY,
   target = '',
 }) => {
-  return (
-    <Wrapper $testid={testid}>
-      <LogoWrapper href="/" $testid="site-logo">
-        <SiteLogo />
-        <SiteTitle>oderPlanets</SiteTitle>
-      </LogoWrapper>
+  const s = useSalon()
 
-      <HintWrapper>
-        <IconsWrapper>
-          <Planet1Wrapper>
-            <SpinPlanet scale={0.8} />
-          </Planet1Wrapper>
-          <Planet2Wrapper>
-            <SpinPlanet scale={0.45} />
-          </Planet2Wrapper>
-          <OopsLetter>ps~</OopsLetter>
-          {/* <CodeSnippets path={target || router.asPath} /> */}
-        </IconsWrapper>
-        <TextWrapper>
-          {/** TODO:   */}
-          {errorCode === 404 ? (
-            <NotFoundMessage metric={metric} path={target || '/'} />
-          ) : (
-            <HintTitle $testid={testid}>抱歉，服务器发生错误</HintTitle>
-          )}
-          <ErrorDesc code={errorCode} />
-        </TextWrapper>
-      </HintWrapper>
-      <FooterWrapper />
-    </Wrapper>
+  return (
+    <div className={s.wrapper}>
+      <h3>this is error page, make me pretty</h3>
+    </div>
   )
 }
-export default memo(ErrorPage)
+export default ErrorPage

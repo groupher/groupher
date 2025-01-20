@@ -1,81 +1,24 @@
-import type { TActive } from '~/spec'
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import { MarkdownStyles } from '~/widgets/Common'
-import EditSVG from '~/icons/EditPen'
-import DeleteSVG from '~/icons/Delete'
-import ArrowSVG from '~/icons/Arrow'
+export { cn } from '~/css'
 
-export const Wrapper = styled.div`
-  position: relative;
-`
-export const Title = styled.div<TActive>`
-  ${css.cutRest('440px')};
-  color: ${({ $active }) => ($active ? theme('article.title') : theme('article.digest'))};
-  font-size: 17px;
-  font-weight: 500;
-`
-export const Actions = styled.div<{ $rightOffset: boolean }>`
-  ${css.row('align-center')}
-  position: absolute;
-  right: ${({ $rightOffset }) => ($rightOffset ? '-223px' : '-210px')};
-  top: 5px;
-  opacity: 0.4;
+export default () => {
+  const { cn, fg, cut, fill, hoverable } = useTwBelt()
 
-  ${Wrapper}:hover & {
-    opacity: 1;
+  return {
+    wrapper: cn('relative group'),
+    title: cn('text-base bold-sm', cut('w-96')),
+    body: cn('mt-2.5 mb-6 break-words', fg('text.digest')),
+    actions: cn('row-center absolute top-1 group-smoky-65 -ml-52'),
+    //
+    hintBox: cn('row-center px-1 py-0.5', hoverable('bg')),
+    hint: cn('text-xs mr-4', hoverable('fg')),
+    editIcon: cn('size-3 mr-2 -mt-px', hoverable('icon')),
+    //
+    deleteBox: cn('row-center px-1 py-0.5', hoverable('bg-red')),
+    deleteIcon: cn('size-3 mr-1 -mt-px', hoverable('icon-red')),
+    deleteHint: cn('text-xs', hoverable('fg-red')),
+    //
+    arrowIcon: cn('size-2.5 rotate-90 mr-1 pointer', fill('text.digest')),
   }
-
-  transition: all 0.2s;
-`
-export const DeleteWrapper = styled.div`
-  ${css.row('align-center')};
-`
-export const Hint = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 12px;
-  margin-right: 15px;
-
-  &:hover {
-    color: ${theme('article.title')};
-    cursor: pointer;
-  }
-`
-export const DeleteHint = styled(Hint)`
-  &:hover {
-    font-weight: 500;
-    color: ${theme('rainbow.red')};
-  }
-`
-export const EditIcon = styled(EditSVG)`
-  fill: ${theme('article.digest')};
-  ${css.size(13)};
-  margin-right: 2px;
-  margin-top: -1px;
-`
-export const DeleteIcon = styled(DeleteSVG)`
-  ${css.size(13)};
-  fill: ${theme('rainbow.red')};
-  margin-right: 3px;
-  margin-top: -1px;
-`
-export const Body = styled(MarkdownStyles)`
-  margin-top: 10px;
-  margin-bottom: 25px;
-  word-wrap: break-word;
-`
-
-export const ArrowUpIcon = styled(ArrowSVG)`
-  ${css.size(10)};
-  fill: ${theme('article.digest')};
-  transform: rotate(90deg);
-  margin-right: 5px;
-  cursor: pointer;
-
-  ${Wrapper}:hover & {
-    color: ${theme('article.title')};
-  }
-`
-export const ArrowDownIcon = styled(ArrowUpIcon)`
-  transform: rotate(-90deg);
-`
+}

@@ -1,119 +1,28 @@
-import type { TActive } from '~/spec'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import styled, { css, theme } from '~/css'
+export { cn } from '~/css'
 
-import DragSVG from '~/icons/Dragble'
-import ArrowSVG from '~/icons/ArrowSimple'
-import DeleteSVG from '~/icons/Trash'
-import EditSVG from '~/icons/EditPen'
+export default () => {
+  const { cn, fg, br, fill, hoverable } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.row('align-start')};
-  gap: 0 65px;
-  margin-top: 32px;
-  /* padding-left: 10px; */
-`
-export const Content = styled.div`
-  ${css.column()};
-`
-type TFolderWrapper = TActive & { hasChild?: boolean }
-export const FolderWrapper = styled.div<TFolderWrapper>`
-  ${css.row('align-center')};
-  /* background: ${({ $active }) => ($active ? theme('hoverBg') : 'transparent')}; */
-  background: ${({ $active }) =>
-    $active ? 'linear-gradient(to right, #f7f7f7 50%, transparent)' : 'transparent'};
-  border-radius: 6px;
+  return {
+    wrapper: cn('row items-start mt-8 gap-x-14'),
+    content: 'column',
+    folderWrapper: cn('row-center rounded', hoverable('bg')),
+    folderName: cn('row-center grow text-sm px-2.5 py-0.5 pl-4', fg('text.title')),
+    //
+    actionWrapper: 'row-center gap-x-1 group-smoky-0',
+    dragIcon: cn('size-3 absolute left-1 group-smoky-0', fill('text.digest')),
+    editIcon: cn('size-3 pointer', fill('text.digest')),
+    deleteIcon: cn('size-3 pointer', fill('text.digest')),
+    //
+    arrowUpIcon: cn('size-4 -rotate-90 ml-1', fill('text.digest')),
+    arrowDownIcon: cn('size-4 rotate-180 ml-1', fill('text.digest')),
+    customCursor: cn(
+      'absolute w-3/5 border-2 border-dashed',
+      'before:content-["o"] before:absolute before:-top-2.5 before:-left-2.5 before:text-sm',
 
-  &:hover {
-    background: linear-gradient(to right, #f7f7f7 50%, transparent);
-    cursor: pointer;
+      br('text.digest'),
+    ),
   }
-`
-
-export const FolderName = styled.div<TFolderWrapper>`
-  ${css.row('align-center')};
-  flex-grow: 1;
-  font-size: 14px;
-  color: ${theme('article.title')};
-  padding: 3px 10px;
-  padding-left: 18px;
-
-  font-weight: ${({ hasChild, $active }) => (hasChild || $active ? 500 : 400)};
-  line-height: ${({ hasChild }) => (hasChild ? '30px' : 'auto')};
-
-  ${FolderWrapper}:hover & {
-    font-weight: 500;
-  }
-`
-export const ActionWrapper = styled.div`
-  ${css.row('align-center')};
-  gap: 0 5px;
-  opacity: 0;
-
-  ${FolderWrapper}:hover & {
-    opacity: 1;
-  }
-
-  transition: all 0.2s;
-`
-
-export const DragIcon = styled(DragSVG)`
-  ${css.size(12)};
-  position: absolute;
-  left: 3px;
-  fill: ${theme('article.title')};
-  opacity: 0;
-
-  ${FolderWrapper}:hover & {
-    opacity: 1;
-  }
-`
-
-export const EditIcon = styled(EditSVG)`
-  ${css.size(12)};
-  fill: ${theme('article.digest')};
-  &:hover {
-    fill: ${theme('article.title')};
-  }
-`
-export const DeleteIcon = styled(DeleteSVG)`
-  ${css.size(12)};
-  fill: ${theme('article.digest')};
-  &:hover {
-    fill: ${theme('rainbow.red')};
-  }
-`
-
-export const ArrowUpIcon = styled(ArrowSVG)`
-  ${css.size(15)};
-  fill: ${theme('article.title')};
-  transform: rotate(-90deg);
-  margin-left: 5px;
-`
-export const ArrowDownIcon = styled(ArrowUpIcon)`
-  transform: rotate(180deg);
-`
-
-type TCursor = {
-  top: number
-  left: number
 }
-export const CustomCursor = styled.div.attrs<TCursor>(({ top, left }) => ({
-  style: {
-    top: top - 5,
-    left: left + 25,
-  },
-}))`
-  position: absolute;
-  width: 60%;
-  border-bottom: 2px dashed;
-  border-bottom-color: ${theme('article.digest')};
-
-  &:before {
-    content: 'o';
-    position: absolute;
-    left: -10px;
-    top: -10px;
-    font-size: 13px;
-  }
-`

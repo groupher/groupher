@@ -4,7 +4,7 @@ import useLayout from '~/hooks/useLayout'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, bg, fill, cutRest } = useTwBelt()
+  const { cn, fg, bg, fill, cut } = useTwBelt()
   const { bannerLayout } = useLayout()
 
   return {
@@ -16,7 +16,7 @@ export default () => {
     title: cn(
       'text-sm no-underline hover:underline',
       `hover:${fg('text.title')}`,
-      bannerLayout === BANNER_LAYOUT.SIDEBAR ? cutRest('w-44') : cutRest('w-28'),
+      bannerLayout === BANNER_LAYOUT.SIDEBAR ? cut('w-44') : cut('w-28'),
       fg('text.digest'),
     ),
     //

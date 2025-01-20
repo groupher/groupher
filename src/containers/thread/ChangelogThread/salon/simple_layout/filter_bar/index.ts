@@ -6,7 +6,7 @@ import { CHANGELOG_LAYOUT } from '~/const/layout'
 
 export default () => {
   const { isLightTheme } = useTheme()
-  const { cn, fg, sexyHBorder } = useTwBelt()
+  const { cn, fg, sexyBorder } = useTwBelt()
 
   const { changelogLayout } = useLayout()
   const alignLeft = changelogLayout === CHANGELOG_LAYOUT.SIMPLE
@@ -20,7 +20,7 @@ export default () => {
     divider: cn(
       'absolute bottom-0',
       isLightTheme ? 'brightness-95' : 'brightness-125',
-      sexyHBorder(),
+      sexyBorder(),
     ),
     item: cn('text-sm', fg('text.digest')),
   }

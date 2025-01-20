@@ -5,11 +5,9 @@ import ChromeWebStoreSVG from '~/icons/ChromeWebStore'
 import GooglePlaySVG from '~/icons/GooglePlay'
 import AppStoreSVG from '~/icons/AppStore'
 import GithubSVG from '~/icons/social/Github'
-
 import LinkSVG from '~/icons/ArrowUpRight'
-import { SexyDivider } from '~/widgets/Common'
 
-import useSalon from './styles/panel'
+import useSalon from './salon/panel'
 
 const Panel: FC = () => {
   const s = useSalon()
@@ -24,7 +22,7 @@ const Panel: FC = () => {
         <AppStoreSVG className={s.storeIcon} />
       </div>
 
-      <SexyDivider top={8} bottom={6} />
+      <div className={s.divider} />
 
       <div className={s.menuBar}>
         <div className={s.iconBox}>

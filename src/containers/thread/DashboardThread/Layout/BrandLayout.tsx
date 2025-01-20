@@ -2,7 +2,6 @@ import { BRAND_LAYOUT } from '~/const/layout'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 
 import BrandSVG from '~/icons/Brand'
-import { SexyDivider as Divider } from '~/widgets/Common'
 import CheckLabel from '~/widgets/CheckLabel'
 
 import { SETTING_FIELD } from '../constant'
@@ -30,7 +29,7 @@ export default () => {
               <div className="mr-2.5" />
               <h3 className={s.brandTitle}>{curCommunity.title}</h3>
             </div>
-            <Divider top={15} />
+            <div className={s.divider} />
           </div>
           <CheckLabel title="Logo & 文字" active={layout === BRAND_LAYOUT.BOTH} top={4} />
         </div>
@@ -39,7 +38,7 @@ export default () => {
             <div className={s.brand}>
               <BrandSVG className={s.brandIcon} />
             </div>
-            <Divider top={15} />
+            <div className={s.divider} />
           </div>
           <CheckLabel title="仅 Logo" active={layout === BRAND_LAYOUT.LOGO} top={4} />
         </div>
@@ -48,7 +47,7 @@ export default () => {
             <div className={s.brand}>
               <h3 className={s.brandTitle}>{curCommunity.title}</h3>
             </div>
-            <Divider top={15} />
+            <div className={s.divider} />
           </div>
           <CheckLabel title="仅文字" active={layout === BRAND_LAYOUT.TEXT} top={4} />
         </div>

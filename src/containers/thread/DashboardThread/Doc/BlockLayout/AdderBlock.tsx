@@ -1,13 +1,16 @@
+import PlusSVG from '~/icons/BoxAdd'
+
 import useDoc from '../../logic/useDoc'
-import { Wrapper, AddIcon, Title } from '../../salon/doc/block_layout/adder_block'
+import useSalon from '../../salon/doc/block_layout/adder_block'
 
 export default () => {
+  const s = useSalon()
   const { addDocCategory } = useDoc()
 
   return (
-    <Wrapper onClick={() => addDocCategory()}>
-      <AddIcon />
-      <Title>添加新分类</Title>
-    </Wrapper>
+    <div className={s.wrapper} onClick={() => addDocCategory()}>
+      <PlusSVG className={s.addIcon} />
+      <div className={s.title}>添加新分类</div>
+    </div>
   )
 }

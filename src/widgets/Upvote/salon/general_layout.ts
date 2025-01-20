@@ -23,5 +23,6 @@ export default ({ viewerHasUpvoted }: TProps) => {
       viewerHasUpvoted && cn('mr-2 ml-px pr-2', br('divider'), rainbowSoft(color)),
     ),
     upvote: 'align-both scale-90',
+    lineDivider: cn('h-3 w-px ml-2 mr-2.5', bg('divider')),
   }
 }

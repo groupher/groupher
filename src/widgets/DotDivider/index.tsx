@@ -6,15 +6,16 @@
 
 import { type FC, memo } from 'react'
 
-import { Wrapper } from './styles'
+import useSalon, { cn } from './salon'
 
-export type TProps = {
+type TProps = {
   className?: string
-  radius?: number
-  space?: number
 }
-const DotDivider: FC<TProps> = ({ radius = 2, space = 3, className = 'dot-divider-class' }) => {
-  return <Wrapper className={className} $radius={radius} $space={space} />
+
+const DotDivider: FC<TProps> = ({ className = '' }) => {
+  const s = useSalon()
+
+  return <div className={cn(s.wrapper, className)} />
 }
 
 export default memo(DotDivider)

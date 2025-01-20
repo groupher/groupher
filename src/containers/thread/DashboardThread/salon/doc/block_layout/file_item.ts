@@ -1,41 +1,11 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import MoreSVG from '~/icons/menu/More'
+export default () => {
+  const { cn, hoverable } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.row('align-center', 'justify-between')};
-  margin-bottom: 6px;
-  position: relative;
-`
-export const Name = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 14px;
-
-  &:hover {
-    color: ${theme('article.title')};
-    cursor: pointer;
+  return {
+    wrapper: cn('row-center-between mb-1.5 relative', hoverable('bg')),
+    name: cn('text-sm pointer', hoverable('fg')),
+    settingIcon: cn('size-3.5 absolute rotate-90 -top-1.5 -right-1', hoverable('icon')),
   }
-
-  transition: all 0.2s;
-`
-
-export const SettingIcon = styled(MoreSVG)`
-  ${css.size(15)};
-  fill: ${theme('article.digest')};
-  position: absolute;
-  transform: rotate(90deg);
-  top: -7px;
-  right: -4px;
-  opacity: 0;
-
-  ${Wrapper}:hover & {
-    opacity: 1;
-  }
-
-  &:hover {
-    fill: ${theme('article.title')};
-    cursor: pointer;
-  }
-
-  transition: all 0.2s;
-`
+}

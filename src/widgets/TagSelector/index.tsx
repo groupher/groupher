@@ -2,7 +2,7 @@
  * this selector is only used for normal user edtior
  */
 
-import { type FC, memo, useState, Fragment } from 'react'
+import { type FC, useState, Fragment } from 'react'
 
 import type { TTag, TGroupedTags } from '~/spec'
 
@@ -12,7 +12,7 @@ import DropdownButton from '~/widgets/Buttons/DropdownButton'
 import ActiveTag from './ActiveTag'
 import FilterPanel from './FilterPanel'
 
-import { EditorWrapper, MobileWrapper, Label } from './styles'
+import useSalon from './salon'
 
 type TProps = {
   groupedTags: TGroupedTags
@@ -22,18 +22,19 @@ type TProps = {
 }
 
 const TagSelector: FC<TProps> = ({ mode = 'default', groupedTags, activeTag, onSelect }) => {
+  const s = useSalon()
+
   const [show, setShow] = useState(false)
+  // @ts-ignore
   const [menuOpen, setMenuOpen] = useState(false)
 
   const handleSelect = (tag: TTag) => {
     onSelect(tag)
   }
 
-  const Wrapper = mode === 'default' ? EditorWrapper : MobileWrapper
-
   return (
-    <Wrapper $menuOpen={menuOpen}>
-      <Label>标签</Label>
+    <div className={s.wrapper}>
+      <div className={s.label}>标签</div>
       <Tooltip
         placement="bottom-start"
         trigger="click"
@@ -59,8 +60,8 @@ const TagSelector: FC<TProps> = ({ mode = 'default', groupedTags, activeTag, onS
           <ActiveTag activeTag={activeTag} mode={mode} />
         </DropdownButton>
       </Tooltip>
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(TagSelector)
+export default TagSelector

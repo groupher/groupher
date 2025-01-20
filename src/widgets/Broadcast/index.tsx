@@ -4,20 +4,13 @@ import { type FC, Fragment } from 'react'
 
 import { ANCHOR } from '~/const/dom'
 import { BROADCAST_LAYOUT } from '~/const/layout'
-import useMetric from '~/hooks/useMetric'
 import useBroadcast from '~/hooks/useBroadcast'
 
-import {
-  Wrapper,
-  InnerWrapper,
-  Desc,
-  LinkText,
-  LinkBtn,
-  Row,
-  NotifyIcon,
-  CrossIcon,
-  ArrowIcon,
-} from './styles'
+import CrossSVG from '~/icons/CloseCross'
+import ArrowSVG from '~/icons/Arrow'
+import NotifySVG from '~/icons/Trumpet'
+
+import useSalon, { cn } from './salon'
 
 type TProps = {
   testid?: string
@@ -27,37 +20,42 @@ const DETAIL_TEXT =
   'Groupher.com, 为中小产品团队提供社区反馈服务，如果你对此有兴趣，欢迎加 v(mydearxym) 详聊。'
 
 const Broadcast: FC<TProps> = ({ testid = 'banner-notify' }) => {
-  const metric = useMetric()
+  const s = useSalon()
 
   const { broadcastBg: bg, broadcastLayout: layout, broadcastEnable: enabled } = useBroadcast()
 
   if (!enabled) return null
 
   return (
-    <Wrapper $testid={testid} bg={bg} id={ANCHOR.GLOBAL_HEADER_ID}>
-      <InnerWrapper metric={metric} center={layout === BROADCAST_LAYOUT.CENTER}>
-        <Row>
-          <NotifyIcon />
-          <Desc>站点开发重构中，服务暂不可用。</Desc>
-        </Row>
+    <div id={ANCHOR.GLOBAL_HEADER_ID} className={cn(s.wrapper, s.rainbow(bg, 'bg'))}>
+      <div className={cn(s.inner, layout === BROADCAST_LAYOUT.CENTER && 'justify-center')}>
+        <div className="row">
+          <NotifySVG className={s.icon} />
+          <div className={s.desc}>站点开发重构中，服务暂不可用。</div>
+        </div>
 
-        <Row>
+        <div className="row">
           {layout === BROADCAST_LAYOUT.DEFAULT ? (
             <Fragment>
-              <LinkBtn onClick={() => alert(DETAIL_TEXT)} bg={bg}>
+              <div
+                className={cn(s.linkBtn, s.rainbow(bg, 'bg'))}
+                onClick={() => alert(DETAIL_TEXT)}
+              >
                 查看详情
-              </LinkBtn>
-              <CrossIcon />
+              </div>
+              <CrossSVG className={s.icon} />
             </Fragment>
           ) : (
             <Fragment>
-              <LinkText onClick={() => alert(DETAIL_TEXT)}>查看详情</LinkText>
-              <ArrowIcon />
+              <div className={s.linkText} onClick={() => alert(DETAIL_TEXT)}>
+                查看详情
+              </div>
+              <ArrowSVG className={s.icon} />
             </Fragment>
           )}
-        </Row>
-      </InnerWrapper>
-    </Wrapper>
+        </div>
+      </div>
+    </div>
   )
 }
 

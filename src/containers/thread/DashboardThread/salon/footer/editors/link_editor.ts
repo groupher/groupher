@@ -3,12 +3,12 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, fill, rainbow, sexyHBorder } = useTwBelt()
+  const { cn, fg, fill, rainbow, sexyBorder } = useTwBelt()
 
   return {
     wrapper: 'w-full group',
     readonly: 'column gap-x-2.5',
-    divider: cn(sexyHBorder(), 'mb-4'),
+    divider: cn(sexyBorder(), 'mb-4'),
     readonlyEditing: 'pt-0',
     readonlyHead: 'row-center',
     actions: 'row-center mr-3 gap-x-1 group-smoky-0',

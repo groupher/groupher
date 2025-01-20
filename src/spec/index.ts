@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-unresolved */
 /* eslint-disable import/extensions */
+export type { TZIndexKey } from '~/css'
+
 import type { TThemeName } from './theme'
 import type { TArticle } from './article'
 import type { TCommunity } from './community'

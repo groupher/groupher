@@ -3,20 +3,21 @@ import Modal from '~/widgets/Modal'
 import CustomScroller from '~/widgets/CustomScroller'
 import UserList from '~/widgets/UserList'
 
-import { Wrapper } from './styles'
+import useSalon from './salon'
 
 export default () => {
+  const s = useSalon()
   const { show, onClose } = useUserListModal()
 
   return (
     <Modal show={show} width="400px" onClose={onClose} showCloseBtn>
-      <Wrapper>
+      <div className={s.wrapper}>
         <h2>List Modal</h2>
 
         <CustomScroller>
           <UserList />
         </CustomScroller>
-      </Wrapper>
+      </div>
     </Modal>
   )
 }

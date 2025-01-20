@@ -4,13 +4,12 @@
  *
  */
 
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 import { findIndex, propEq } from 'ramda'
 
-import SVG from '~/const/svg'
 import Tooltip from '~/widgets/Tooltip'
 
-import { Wrapper, Tabs, DescText, Label, Slider, getLocalIcon } from './styles/icon_selector'
+import useSalon from './salon/icon_selector'
 
 type TItem = {
   icon?: string
@@ -25,34 +24,35 @@ type TProps = {
 }
 
 const IconSwitcher: FC<TProps> = ({ items, activeKey, onChange = console.log }) => {
+  const s = useSalon()
+
   const slideIndex = findIndex(propEq(activeKey, 'key'), items)
 
   return (
-    <Wrapper $testid="selectors">
-      {/* <AccessZone /> */}
-      <Tabs>
+    <div className={s.wrapper}>
+      <div className={s.tabs}>
         {items.map((item) => {
-          const LocalIcon = getLocalIcon(item.icon || SVG.UPVOTE)
-
           return (
             <Tooltip
               key={item.key}
-              content={<DescText>{item.desc}</DescText>}
+              content={<div className={s.descText}>{item.desc}</div>}
               placement="top"
               delay={500}
               forceZIndex
               noPadding
             >
-              <Label onClick={() => onChange(item)}>
-                <LocalIcon $active={activeKey === item.key} />
-              </Label>
+              <div className={s.label} onClick={() => onChange(item)}>
+                <div>SVG</div>
+              </div>
             </Tooltip>
           )
         })}
-        {slideIndex !== -1 && <Slider index={slideIndex} />}
-      </Tabs>
-    </Wrapper>
+        {slideIndex !== -1 && (
+          <div className={s.slider} style={{ transform: `translateX(${slideIndex * 100}%)` }} />
+        )}
+      </div>
+    </div>
   )
 }
 
-export default memo(IconSwitcher)
+export default IconSwitcher

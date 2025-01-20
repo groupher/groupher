@@ -1,22 +1,24 @@
-import MenuItem from '~/widgets/MenuItem'
 import MENU from '~/const/menu'
 
-import { Wrapper, Item, Title, Icon } from '../../salon/doc/block_layout/file_menu'
+import TransforSVG from '~/icons/Transfor'
+import MenuItem from '~/widgets/MenuItem'
 
-const FileMenu = () => {
+import useSalon from '../../salon/doc/block_layout/file_menu'
+
+export default () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <MenuItem icon={MENU.ARROW_UP} title="上移" />
       <MenuItem icon={MENU.ARROW_DOWN} title="下移" />
 
       <MenuItem icon={MENU.ARROW_TO_TOP} title="移至最前" />
       <MenuItem icon={MENU.ARROW_TO_BOTTOM} title="移至最后" />
-      <Item>
-        <Icon.Transfor />
-        <Title>移动到</Title>
-      </Item>
-    </Wrapper>
+      <div className={s.item}>
+        <TransforSVG className={s.transforIcon} />
+        <div className={s.title}>移动到</div>
+      </div>
+    </div>
   )
 }
-
-export default FileMenu

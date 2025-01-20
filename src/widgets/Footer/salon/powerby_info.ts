@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg } = useTwBelt()
+  const { cn, fg, bg } = useTwBelt()
 
   return {
     wrapper: 'column-align-both w-full mt-12',
@@ -12,5 +12,6 @@ export default () => {
       fg('text.digest'),
     ),
     bottom: 'row-center mt-1.5',
+    lineDivider: cn('h-2.5 w-px ml-2 mr-1.5', bg('divider')),
   }
 }

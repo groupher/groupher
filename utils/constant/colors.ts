@@ -1,7 +1,9 @@
 import type { TColorName } from '~/spec'
 
 import { upperSnakeCase } from '~/fmt'
-import { pageBgColor } from '~/const/twConfig.json'
+import twConfig from '~/const/twConfig.json'
+
+const pageBgColor = twConfig.pageBgColor
 
 // 定义输入类型
 type TInputColorScheme = {

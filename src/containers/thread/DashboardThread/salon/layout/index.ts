@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, br, bg, fill, shadow, primary, sexyHBorder, vividDark, isBlackPrimary } = useTwBelt()
+  const { cn, br, bg, fill, shadow, primary, sexyBorder, vividDark, isBlackPrimary } = useTwBelt()
 
   return {
     wrapper: 'column pl-16 w-10/12',
@@ -25,7 +25,7 @@ export default () => {
     ),
 
     box: cn('relative rounded-md border', primary('borderSoft'), isBlackPrimary && br('text.link')),
-    divider: cn(sexyHBorder(), 'mt-14 mb-14'),
+    divider: cn(sexyBorder(), 'mt-14 mb-14'),
 
     // basic shape
     bar: cn(

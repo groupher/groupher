@@ -1,49 +1,16 @@
-import styled, { css, theme } from '~/css'
+import { COLOR_NAME } from '~/const/colors'
 
-import Button from '~/widgets/Buttons/Button'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  width: calc(100% + 5px);
-  min-height: 52px;
-  padding-right: 5px;
-  margin-left: 3px;
-  margin-top: 15px;
-`
-export const MainWrapper = styled.div`
-  ${css.row('align-center')};
-  width: 100%;
-  margin-left: -8px;
-  border-radius: 5px;
-  padding-left: 10px;
-  padding-right: 0;
-  height: 34px;
-  background: linear-gradient(to right, #fffbe9 30%, transparent);
-`
-export const Note = styled.div`
-  ${css.row('align-center')};
-  color: ${theme('article.digest')};
-  font-size: 12px;
-`
-export const Focus = styled.div`
-  color: ${theme('rainbow.red')};
-  font-weight: 600;
-  font-size: 14px;
-  margin-left: 4px;
-  margin-right: 5px;
-  margin-top: -2px;
-`
+export default () => {
+  const { cn, fg, rainbow } = useTwBelt()
 
-export const ActionNotes = styled.div`
-  ${css.row('align-center')};
-  margin-left: 5px;
-`
-export const DeleteNote = styled.div`
-  color: ${theme('rainbow.red')};
-  font-size: 12px;
-  font-weight: 600;
-  margin-left: 8px;
-`
-
-export const ConfirmButton = styled(Button)`
-  transform: scale(0.95);
-`
+  return {
+    wrapper: cn('w-full min-h-14 pl-1 ml-1 mt-3.5'),
+    main: 'row-center w-full -ml-2 pl-2.5 pr-0 h-8',
+    note: cn('row-center text-xs', fg('text.digest')),
+    focus: cn('text-sm mx-1 -mt-0.5', rainbow(COLOR_NAME.RED, 'fg')),
+    actionNotes: 'row-center ml-1',
+    deleteNote: cn('text-xs bold ml-2', rainbow(COLOR_NAME.RED, 'fg')),
+  }
+}

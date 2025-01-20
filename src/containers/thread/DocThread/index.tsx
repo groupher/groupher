@@ -2,11 +2,8 @@
  * DocThread
  */
 
-import useMobileDetect from '@groupher/use-mobile-detect-hook'
-
 import { DOC_LAYOUT } from '~/const/layout'
 
-import { Divider } from '~/widgets/Common'
 import FaqList from '~/widgets/FaqList'
 
 import BlocksLayout from './BlocksLayout'
@@ -20,8 +17,6 @@ import useSalon from './salon'
 export default () => {
   const s = useSalon()
   const { isArticleLayout, layout, faqLayout, faqSections } = useLogic()
-  const { isMobile } = useMobileDetect()
-
   // return <ArticleLayout />
 
   if (isArticleLayout) {
@@ -34,7 +29,7 @@ export default () => {
       {layout === DOC_LAYOUT.LISTS && <ListsLayout />}
       {layout === DOC_LAYOUT.CARDS && <CardsLayout />}
 
-      <Divider top={50} bottom={80} width={isMobile ? '90%' : '100%'} />
+      <div className={s.divider} />
 
       <div className={s.faqs}>
         <FaqList layout={faqLayout} sections={faqSections} />

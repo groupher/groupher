@@ -1,8 +1,8 @@
 /* eslint-disable react/no-array-index-key */
 
-import { type FC, memo, Fragment } from 'react'
+import { type FC, Fragment } from 'react'
 
-import { Wrapper, Title, Reason, Content, IllegalItem } from './styles'
+import useSalon from './salon'
 
 type TProps = {
   illegalReason: string[]
@@ -10,26 +10,30 @@ type TProps = {
 }
 
 const IllegalWarning: FC<TProps> = ({ illegalReason, illegalWords }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Title>
+    <div className={s.wrapper}>
+      <div className={s.title}>
         包含 [
         {illegalReason.map((reason, index) => (
           <Fragment key={reason}>
-            <Reason>{reason}</Reason>
+            <div className={s.reason}>{reason}</div>
             {index !== illegalReason.length - 1 && <>|</>}
           </Fragment>
         ))}
         ] 内容:
-      </Title>
+      </div>
 
-      <Content>
+      <div className={s.content}>
         {illegalWords.map((word) => (
-          <IllegalItem key={word}>{word}</IllegalItem>
+          <div className={s.illegalItem} key={word}>
+            {word}
+          </div>
         ))}
-      </Content>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 
-export default memo(IllegalWarning)
+export default IllegalWarning

@@ -9,7 +9,7 @@ import type { FC } from 'react'
 import type { TSizeSM, TSpace } from '~/spec'
 import SIZE from '~/const/size'
 
-import useSalon, { cn } from './styles/radio'
+import useSalon, { cn } from './salon/radio'
 
 type TItem = {
   value: string
@@ -39,14 +39,14 @@ const Radio: FC<TProps> = ({
         const active = item.key === activeKey
 
         return (
-          <label
+          <div
             key={item.value}
             className={cn(s.label, active && s.labelChecked)}
             onClick={() => onChange?.(item)}
           >
             <div className={cn(s.circle, active && s.checked)} />
             {item.value}
-          </label>
+          </div>
         )
       })}
     </div>

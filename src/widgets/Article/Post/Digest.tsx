@@ -43,7 +43,7 @@ export default () => {
           <ArticleSettingMenu left={2} />
         </div>
 
-        <ArticlePinLabel isPinned={isPinned} top={56} />
+        <ArticlePinLabel isPinned={isPinned} className="top-14" />
         <div className={s.title}>
           {title}
           <div className={s.subTitle}>{innerId}</div>

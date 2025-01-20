@@ -17,11 +17,6 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // transpilePackages: ['ramda'],
-  compiler: {
-    // see https://styled-components.com/docs/tooling#babel-plugin for more info on the options.
-    styledComponents: true,
-  },
-
   // only in dev
   // see https://nextjs.org/docs/pages/building-your-application/rendering
   //     https://github.com/vercel/next.js/issues/35822

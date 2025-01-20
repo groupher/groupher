@@ -2,18 +2,19 @@ import type { FC } from 'react'
 
 import { assetSrc } from '~/helper'
 
-import type { TUploadPreview } from '~/spec'
-import { Wrapper, PreviewImg } from './styles/preview_block'
+import useSalon from './salon/preview_block'
 
 type TProps = {
   url: string
-} & TUploadPreview
+}
 
-const PreviewBlock: FC<TProps> = ({ url, height, width, radius }) => {
+const PreviewBlock: FC<TProps> = ({ url }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <PreviewImg src={assetSrc(url)} height={height} width={width} radius={radius} />
-    </Wrapper>
+    <div>
+      <img src={assetSrc(url)} className={s.previewImg} alt="preview img" />
+    </div>
   )
 }
 

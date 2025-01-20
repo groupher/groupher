@@ -9,10 +9,8 @@ import { type FC, memo } from 'react'
 import type { TUser } from '~/spec'
 
 import Facepile from '~/widgets/Facepile'
-import { LineDivider } from '~/widgets/Common'
 
 import AnimatedCount from '../AnimatedCount'
-
 import useUpvote from './useUpvote'
 import UpvoteBtn from './UpvoteBtn'
 
@@ -51,7 +49,9 @@ const Upvote: FC<TProps> = ({
           size={count === 0 ? 'small' : 'medium'}
         />
       </button>
-      {!noOne && <LineDivider left={!viewerHasUpvoted && count > 0 ? 4 : 12} right={10} />}
+      {!noOne && (
+        <div className={cn(s.lineDivider, !viewerHasUpvoted && count > 0 ? 'ml-1' : 'ml-3')} />
+      )}
       {!noOne && <Facepile users={avatarList} showMore />}
     </div>
   )

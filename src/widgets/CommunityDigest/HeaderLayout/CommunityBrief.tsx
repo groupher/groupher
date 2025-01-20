@@ -12,7 +12,6 @@ import GlobalSVG from '~/icons/social/Global'
 import PlusSVG from '~/icons/PlusCircle'
 
 import Tooltip from '~/widgets/Tooltip'
-import { SexyDivider } from '~/widgets/Common'
 import CommunityBrand from '~/widgets/CommunityBrand'
 
 import useSalon, { cn } from '../salon/header_layout/community_brief'
@@ -63,7 +62,7 @@ export default () => {
             <ArrowSVG className={s.linkArrow} />
           </Link>
 
-          <SexyDivider top={5} bottom={5} />
+          <div className={s.divider} />
           <Link className={s.menuItem} href="/apply/community">
             <div className={s.menuIconBox}>
               <PlusSVG className={s.menuIcon} />

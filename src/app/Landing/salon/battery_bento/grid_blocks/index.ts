@@ -7,7 +7,7 @@ export { cn } from '~/css'
 
 export default () => {
   const { isLightTheme } = useTheme()
-  const { cn, fg, bg, fill, rainbow, sexyHBorder } = useTwBelt()
+  const { cn, fg, bg, fill, rainbow, sexyBorder } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both w-[1400px] h-auto mb-16 px-44'),
@@ -34,6 +34,6 @@ export default () => {
     fillCyan: rainbow(COLOR_NAME.CYAN, 'fill'),
     //
     line: cn('absolute top-0 h-full w-px', bg('divider')),
-    rowLine: cn('absolute', sexyHBorder()),
+    rowLine: cn('absolute', sexyBorder()),
   }
 }

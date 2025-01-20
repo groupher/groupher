@@ -9,7 +9,7 @@ import TadaSVG from '~/icons/TadaRaw'
 import InfoSVG from '~/icons/Info'
 import ArrowSVG from '~/icons/ArrowUpRight'
 
-import useSalon, { cn } from '../styles/tabs/local_icon'
+import useSalon, { cn } from '../salon/tabs/local_icon'
 
 type TProps = {
   slug: string

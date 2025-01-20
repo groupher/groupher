@@ -5,7 +5,6 @@ import { ROUTE } from '~/const/route'
 
 import Img from '~/Img'
 import ArrowSVG from '~/icons/ArrowUpRight'
-import { SexyDivider } from '~/widgets/Common'
 
 import useLogic from '../useLogic'
 import useSalon, { cn } from '../salon/banner/finished'
@@ -73,7 +72,7 @@ export default () => {
             </div>
           </Link>
 
-          <SexyDivider />
+          <div className={s.divider} />
           <Link
             href={`/${slug}/${ROUTE.DASHBOARD.OVERVIEW}`}
             className={cn(s.gotoLink, s.goDashboard)}

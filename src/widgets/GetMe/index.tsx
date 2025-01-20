@@ -5,18 +5,21 @@
 
 import type { FC } from 'react'
 
+import DownloadSVG from '~/icons/DownloadCircle'
 import Tooltip from '~/widgets/Tooltip'
 
 import Panel from './Panel'
-import { Wrapper, DownloadIcon } from './styles'
+import useSalon from './salon'
 
 const GetMe: FC = () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       <Tooltip content={<Panel />} placement="bottom-end" noPadding>
-        <DownloadIcon />
+        <DownloadSVG className={s.downloadIcon} />
       </Tooltip>
-    </Wrapper>
+    </div>
   )
 }
 

@@ -43,12 +43,6 @@ const SavingBar: FC<TProps> = ({
   const s = useSalon({ minimal, width, ...spacing })
   const { rollbackEdit, onSave } = useHelper()
 
-  // cannot pass minimal to Wrapper, cuz the wired issue on styled-components@6
-  // const Wrapper = !minimal ? NormalWrapper : MinimalWrapper
-
-  // direction="left"
-  // direction="right"
-
   if (children !== null) {
     if (isTouched) {
       return (

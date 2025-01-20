@@ -2,36 +2,22 @@
 
 import { Cell } from 'rsuite-table'
 import TimeAgo from 'timeago-react'
+import Link from 'next/link'
 
 import { previewArticle } from '~/signal'
 import { COMMUNITY_STATUS } from '~/const/mode'
 
+import Img from '~/Img'
+import PulseSVG from '~/icons/Pulse'
 import Checker from '~/widgets/Checker'
 import ArticleCatState from '~/widgets/ArticleCatState'
-import { Row } from '~/widgets/Common'
+import Button from '~/widgets/Buttons/Button'
 import TagsList from '~/widgets/TagsList'
 
 // import { mockTags } from '~/mock'
 
 import useCMSInfo from '../../hooks/useCMSInfo'
-import {
-  ArticleWrapper,
-  ArticleTitle,
-  StateWrapper,
-  DateCellWrapper,
-  AuthorWrapper,
-  AuthorAvatar,
-  DateItem,
-  Nickname,
-  CommunityLogo,
-  CommunityTitle,
-  CommunitySlug,
-  Pending,
-  SwitchButton,
-  ActionCell,
-  // PublishIcon,
-  PulseIcon,
-} from '../../salon/cms/cell'
+import useSalon, { cn } from '../../salon/cms/cell'
 
 export const CheckCell = ({ rowData, ...props }) => {
   const { batchSelect } = useCMSInfo()
@@ -51,117 +37,132 @@ export const CheckCell = ({ rowData, ...props }) => {
 }
 
 export const StateCell = ({ rowData, ...props }) => {
+  const s = useSalon()
   const { cat, state } = rowData
 
   return (
     <Cell {...props}>
-      <StateWrapper>
+      <div className={s.stateWrapper}>
         <ArticleCatState cat={cat} state={state} left={-8} smaller />
-      </StateWrapper>
+      </div>
     </Cell>
   )
 }
 
 export const CommunityCell = ({ rowData, ...props }) => {
+  const s = useSalon()
   const { logo, title, slug } = rowData
 
   return (
     <Cell {...props}>
-      <Row>
-        <CommunityLogo src={logo} />
+      <div className="row">
+        <Img className={s.communityLogo} src={logo} />
         <div>
-          <CommunityTitle>{title}</CommunityTitle>
-          <CommunitySlug href={`/${slug}`}>/{slug}</CommunitySlug>
+          <div className={s.communityTitle}>{title}</div>
+          <Link className={s.communitySlug} href={`/${slug}`}>
+            /{slug}
+          </Link>
         </div>
-      </Row>
+      </div>
     </Cell>
   )
 }
 
 export const PendingCell = ({ rowData, ...props }) => {
+  const s = useSalon()
   const { pending } = rowData
 
   const _pending = pending === COMMUNITY_STATUS.PENDING
 
   return (
     <Cell {...props} align="center">
-      <ActionCell>
-        <Pending blocked={_pending}>{_pending ? '待审核' : '正常'}</Pending>
-        <SwitchButton size="tiny" ghost>
+      <div className={s.actionCell}>
+        <div className={cn(s.pending, _pending && s.pendingBlocked)}>
+          {_pending ? '待审核' : '正常'}
+        </div>
+        <Button className={s.switchButton} size="tiny" ghost>
           开关
-        </SwitchButton>
-      </ActionCell>
+        </Button>
+      </div>
     </Cell>
   )
 }
 
 export const ArticleCell = ({ rowData, ...props }) => {
+  const s = useSalon()
+
   return (
     <Cell {...props}>
-      <ArticleWrapper>
-        <ArticleTitle onClick={() => previewArticle(rowData)}>{rowData.title}</ArticleTitle>
+      <>
+        <div className={s.articleTitle} onClick={() => previewArticle(rowData)}>
+          {rowData.title}
+        </div>
         <TagsList items={rowData.articleTags} left={0} />
-      </ArticleWrapper>
+      </>
     </Cell>
   )
 }
 
 export const AuthorDateCell = ({ rowData, ...props }) => {
+  const s = useSalon()
   return (
     <Cell {...props}>
-      <AuthorWrapper>
-        <AuthorAvatar src={rowData.author.avatar} />
-        <Nickname>{rowData.author.nickname}</Nickname>
-      </AuthorWrapper>
+      <div className={s.author}>
+        <Img className={s.authorAvatar} src={rowData.author.avatar} />
+        <div className={s.nickname}>{rowData.author.nickname}</div>
+      </div>
     </Cell>
   )
 }
 
 export const DateCell = ({ rowData, ...props }) => {
+  const s = useSalon()
   const { insertedAt, activeAt } = rowData
 
   return (
     <Cell {...props}>
-      <DateCellWrapper>
-        <DateItem>
+      <div className={s.dateCell}>
+        <div className={s.dateItem}>
           {/* <PublishIcon /> */}
           <TimeAgo datetime={insertedAt} locale="zh_CN" />
-        </DateItem>
-        <DateItem>
-          <PulseIcon />
+        </div>
+        <div className={s.dateItem}>
+          <PulseSVG className={s.pulseIcon} />
           <TimeAgo datetime={activeAt} locale="zh_CN" />
-        </DateItem>
-      </DateCellWrapper>
+        </div>
+      </div>
     </Cell>
   )
 }
 
 export const TimestampCell = ({ rowData, ...props }) => {
+  const s = useSalon()
   const { insertedAt, updatedAt } = rowData
+
   if (insertedAt === updatedAt) {
     return (
       <Cell {...props}>
-        <DateCellWrapper>
-          <DateItem warn>
+        <div className={s.dateCell}>
+          <div className={cn(s.dateItem, s.dateItemWarn)}>
             <TimeAgo datetime={insertedAt} locale="zh_CN" />
-          </DateItem>
-        </DateCellWrapper>
+          </div>
+        </div>
       </Cell>
     )
   }
 
   return (
     <Cell {...props}>
-      <DateCellWrapper>
-        <DateItem>
+      <div className={s.dateCell}>
+        <div className={s.dateItem}>
           {/* <PublishIcon /> */}
           <TimeAgo datetime={insertedAt} locale="zh_CN" />
-        </DateItem>
-        <DateItem>
-          <PulseIcon />
+        </div>
+        <div className={s.dateItem}>
+          <PulseSVG className={s.pulseIcon} />
           <TimeAgo datetime={updatedAt} locale="zh_CN" />
-        </DateItem>
-      </DateCellWrapper>
+        </div>
+      </div>
     </Cell>
   )
 }

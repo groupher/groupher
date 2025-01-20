@@ -4,40 +4,18 @@
  *
  */
 
-import { type FC, memo } from 'react'
-import { includes } from 'ramda'
+import type { FC } from 'react'
 
 import type { TThread } from '~/spec'
-import { THREAD } from '~/const/thread'
-
-import { Trans } from '~/i18n'
-
-import { Icon404, Wrapper, Icon, Text, Title, DescWrapper, Desc, IssueLink } from './styles'
 
 type TProps = {
   thread: TThread
 }
 
 const EmptyThread: FC<TProps> = ({ thread }) => (
-  <Wrapper noShiftRight={includes(thread, [THREAD.POST])}>
-    <Icon>
-      <Icon404 />
-    </Icon>
-    <Text>
-      <Title>
-        未找到相关
-        {`${Trans(thread)}`}
-        信息
-      </Title>
-      <DescWrapper>
-        <Desc>如果你有相关的内容，欢迎一起和大家一起分享交流</Desc>
-        <Desc>
-          建议或遇到问题请
-          <IssueLink href="/feedback">在这里反馈</IssueLink>
-        </Desc>
-      </DescWrapper>
-    </Text>
-  </Wrapper>
+  <div>
+    <h3>Empty Thread</h3>
+  </div>
 )
 
-export default memo(EmptyThread)
+export default EmptyThread

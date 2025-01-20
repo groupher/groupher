@@ -1,4 +1,3 @@
-import { Br } from '~/widgets/Common'
 import OSSUploader from '~/widgets/OSSUploader'
 
 import { SETTING_FIELD } from '../constant'
@@ -15,18 +14,16 @@ export default () => {
     <div className={s.wrapper}>
       <h3 className={s.title}>favicon</h3>
       <div className={s.faviconBox}>
-        <OSSUploader previewHeight={30} previewWidth={30}>
+        <OSSUploader>
           <div className={s.favicon} />
         </OSSUploader>
       </div>
       <div className={s.desc}>上传 favicon, 仅支持 ico 格式，最大 10 KB。可选。</div>
-      <Br bottom={30} />
+      <div className="mb-8" />
       <h3 className={s.title}>LOGO</h3>
       <div className={s.logoBox}>
         <OSSUploader
           previewUrl={logo}
-          previewHeight={70}
-          previewWidth={70}
           onDelete={() => edit('', 'logo')}
           onUploadDone={(v) => edit(v, 'logo')}
         >

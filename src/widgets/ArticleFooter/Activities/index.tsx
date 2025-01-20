@@ -21,7 +21,7 @@ export default () => {
         <Img
           src={user.avatar}
           className={s.avatar}
-          fallback={<ImgFallback size={18} user={user} left={-3} />}
+          fallback={<ImgFallback size={5} user={user} left={-0.5} />}
         />
 
         <div className={s.content}>

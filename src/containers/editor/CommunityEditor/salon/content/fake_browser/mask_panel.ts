@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, global, fg, bg, rainbow, sexyHBorder } = useTwBelt()
+  const { cn, global, fg, bg, rainbow, sexyBorder } = useTwBelt()
 
   return {
     wrapper: cn('absolute left-0 -bottom-10 pt-16 w-[678px] h-48 px-24', global('hidden-panel')),
@@ -15,6 +15,6 @@ export default () => {
     //
     checkIcon: cn('size-4 mr-2', rainbow(COLOR_NAME.GREEN, 'fill')),
     header: 'column-align-both w-full mb-8',
-    divider: cn(sexyHBorder(), 'w-40 h-0.5 mt-4 mb-3'),
+    divider: cn(sexyBorder(), 'w-40 h-0.5 mt-4 mb-3'),
   }
 }

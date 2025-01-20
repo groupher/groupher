@@ -1,4 +1,3 @@
-import type { FC } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { DASHBOARD_DOC_ROUTE } from '~/const/route'
@@ -15,9 +14,10 @@ import FAQ from './FAQ'
 import { DOC_TABS } from '../../constant'
 import useDoc from '../../logic/useDoc'
 import useCMSInfo from '../../hooks/useCMSInfo'
-import { Wrapper, TabsWrapper } from '../../salon/cms/docs'
+import useSalon from '../../salon/cms/docs'
 
-const Docs: FC = () => {
+export default () => {
+  const s = useSalon()
   const { edit } = useDoc()
 
   const {
@@ -35,8 +35,8 @@ const Docs: FC = () => {
   const curCommunity = useViewingCommunity()
 
   return (
-    <Wrapper>
-      <TabsWrapper>
+    <div className={s.wrapper}>
+      <div className={s.tabs}>
         <Tabs
           items={DOC_TABS}
           activeKey={docTab}
@@ -53,7 +53,7 @@ const Docs: FC = () => {
           view={VIEW.DESKTOP}
           noAnimation
         />
-      </TabsWrapper>
+      </div>
 
       {docTab === DASHBOARD_DOC_ROUTE.TREE && <TreeView pagedDocs={pagedDocs} />}
       {docTab === DASHBOARD_DOC_ROUTE.TABLE && (
@@ -68,8 +68,6 @@ const Docs: FC = () => {
           isTouched={isFaqSectionsTouched}
         />
       )}
-    </Wrapper>
+    </div>
   )
 }
-
-export default Docs

@@ -4,35 +4,43 @@
  *
  */
 
-import { type FC, memo, type ReactNode } from 'react'
+import type { FC, ReactNode } from 'react'
 
 import type { TSpace, TTooltipPlacement } from '~/spec'
 
+import InfoSVG from '~/icons/Info'
 import Tooltip from '~/widgets/Tooltip'
 
-import { Wrapper, InfoIcon, Note } from './styles'
+import useSalon, { cn } from './salon'
 
 type TProps = {
-  fontSize?: number
+  className?: string
   children?: ReactNode
   offset?: [number, number]
   placement?: TTooltipPlacement
 } & TSpace
 
 const NoteTip: FC<TProps> = ({
-  fontSize = 13,
+  className = 'text-sm',
   children = 'note tip',
   offset = [-5, -5],
   placement = 'bottom',
-  ...restProps
+  ...spacing
 }) => {
+  const s = useSalon({ ...spacing })
+
   return (
-    <Wrapper fontSize={fontSize} {...restProps}>
-      <Tooltip placement={placement} content={<Note>{children}</Note>} offset={offset} noPadding>
-        <InfoIcon fontSize={fontSize} />
+    <div className={cn(s.wrapper, className)}>
+      <Tooltip
+        placement={placement}
+        content={<div className={s.note}>{children}</div>}
+        offset={offset}
+        noPadding
+      >
+        <InfoSVG className={s.infoIcon} />
       </Tooltip>
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(NoteTip)
+export default NoteTip

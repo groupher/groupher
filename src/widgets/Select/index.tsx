@@ -11,13 +11,10 @@ import ReactSelect, { components } from 'react-select'
 import CreatableReactSelect from 'react-select/creatable'
 
 import type { TSelectOption, TSpace } from '~/spec'
-import useTheme from '~/hooks/useTheme'
-
-import { Row, Space } from '~/widgets/Common'
 
 import { IndicatorsContainer } from './components'
 
-import useSalon, { cn, getSelectStyles } from './salon'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   testid?: string
@@ -41,10 +38,10 @@ const CustomOption = (props) => {
 
   return (
     <components.Option {...props}>
-      <Row>
+      <div className="row">
         {icon && <Icon />}
         <span>{label}</span>
-      </Row>
+      </div>
     </components.Option>
   )
 }
@@ -55,10 +52,10 @@ const CustomSingleValue = (props) => {
 
   return (
     <components.SingleValue {...props}>
-      <Row>
-        <Space left={-5}>{icon && <Icon />}</Space>
+      <div className="row">
+        <div className="-ml-1">{icon && <Icon />}</div>
         <span>{label}</span>
-      </Row>
+      </div>
     </components.SingleValue>
   )
 }
@@ -78,8 +75,6 @@ const Select: FC<TProps> = ({
   ...spacing
 }) => {
   // @ts-ignore
-  const { themeMap } = useTheme()
-  const styles = getSelectStyles(themeMap)
   const s = useSalon({ ...spacing })
 
   const baseProps = {
@@ -90,40 +85,11 @@ const Select: FC<TProps> = ({
     placeholder,
     isClearable,
     components: { IndicatorsContainer },
-    styles: {
-      ...styles,
-      // menuPortal: (provided) => ({ ...provided, zIndex: 9999 }),
-      menu: (base) => ({
-        ...base,
-        backgroundColor: themeMap.htmlBg,
-        marginTop: 0,
-      }),
-      menuList: (base) => ({
-        ...base,
-        marginTop: 0,
-        marginBottom: 0,
-        paddingBottom: 1,
-      }),
-      control: (base) => ({
-        ...base,
-        backgroundColor: themeMap.alphaBg,
-        borderColor: themeMap.editor.border,
-        '&:hover': {
-          borderColor: themeMap.editor.border,
-        },
-      }),
-      option: (base, { isSelected }) => ({
-        ...base,
-        backgroundColor: isSelected ? themeMap.hoverBg : themeMap.htmlBg,
-        '&:hover': {
-          backgroundColor: themeMap.hoverBg,
-          color: themeMap.article.title,
-          cursor: 'pointer',
-        },
-        border: '1px solid',
-        borderColor: isSelected ? themeMap.divider : 'transparent',
-        color: isSelected ? themeMap.article.title : themeMap.article.digest,
-      }),
+    classNames: {
+      menu: (_) => s.menu,
+      menuList: (_) => s.menuList,
+      control: (_) => s.control,
+      option: (state) => cn(s.option, state.isSelected && s.optionActive),
     },
     theme: (theme) => ({
       ...theme,

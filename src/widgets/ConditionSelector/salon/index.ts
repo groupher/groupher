@@ -1,5 +1,4 @@
-import type { TActive, TSpace } from '~/spec'
-import styled, { css, theme } from '~/css'
+import type { TSpace } from '~/spec'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -20,17 +19,3 @@ export default ({ menuOpen, selected, ...spacing }: TProps) => {
     //
   }
 }
-
-export const SelectItem = styled.div<TActive>`
-  ${css.row('align-start')};
-  padding: 4px 8px;
-  width: auto;
-  border-radius: 5px;
-  background-color: ${({ $active }) => ($active ? theme('hoverBg') : 'transparent')}; // to-theme
-  position: relative;
-
-  &:hover {
-    cursor: pointer;
-    background-color: ${theme('hoverBg')};
-  }
-`

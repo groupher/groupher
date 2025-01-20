@@ -4,7 +4,7 @@ import useLayout from '~/hooks/useLayout'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn } = useTwBelt()
+  const { cn, divider } = useTwBelt()
   const { bannerLayout } = useLayout()
 
   return {
@@ -12,5 +12,6 @@ export default () => {
     faqs: 'mb-5 w-full',
     //
     main: 'grow w-full min-h-96 mt-4 pl-4 pr-20',
+    divider: cn(divider(), 'mt-12 mb-20'),
   }
 }

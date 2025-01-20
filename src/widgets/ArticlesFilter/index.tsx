@@ -15,7 +15,6 @@ import usePagedPosts from '~/hooks/usePagedPosts'
 import useLayout from '~/hooks/useLayout'
 import useArticlesFilter from '~/hooks/useArticlesFilter'
 
-import { Space } from '~/widgets/Common'
 import PublishButton from '~/widgets/Buttons/PublishButton'
 import ConditionSelector from '~/widgets/ConditionSelector'
 import SearchBox from '~/widgets/SearchBox'
@@ -70,7 +69,7 @@ export default () => {
         selected={!!activeState}
         prefixIcon="status"
       />
-      <Space right={10} />
+      <div className="mr-2.5" />
       <div className="grow" />
       {resState === TYPE.RES_STATE.LOADING && <LavaLampLoading right={28} left={10} />}
       {bannerLayout === BANNER_LAYOUT.SIDEBAR && <SearchBox />}

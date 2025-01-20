@@ -7,6 +7,7 @@
  */
 
 import { lazy, Suspense } from 'react'
+import Link from 'next/link'
 
 import useTrans from '~/hooks/useTrans'
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
@@ -16,7 +17,6 @@ import useActiveTag from '~/hooks/useActiveTag'
 import { refreshArticles, callGEditor, callSyncSelector, listUsers } from '~/signal'
 import { mockUsers } from '~/mock'
 
-import { Link, SexyDivider } from '~/widgets/Common'
 import ImgFallback from '~/widgets/ImgFallback'
 import Sticky from '~/widgets/Sticky'
 import GetMe from '~/widgets/GetMe'
@@ -50,7 +50,7 @@ export default () => {
             <div className={s.desc}>{curCommunity.desc}</div>
             <div className={s.homeLinks}>
               <LinkSVG className={s.linkIcon} />
-              <Link href={curCommunity.homepage} maxLength="150px">
+              <Link href={curCommunity.homepage} className={s.link}>
                 {curCommunity.homepage}
               </Link>
               <div className="grow" />
@@ -67,7 +67,7 @@ export default () => {
                   key={user.login}
                   className={s.joinAvatar}
                   src={user.avatar}
-                  fallback={<ImgFallback size={24} right={8} user={user} />}
+                  fallback={<ImgFallback size={6} right={2} user={user} />}
                 />
               ))}
               <div className={s.moreNum} onClick={() => listUsers('drawer')}>
@@ -87,7 +87,7 @@ export default () => {
           </div>
 
           <CommunityBrief />
-          {!showCommunityBadge && <SexyDivider bottom={5} />}
+          {!showCommunityBadge && <div className={s.divider} />}
 
           <div className={s.tagsBar}>
             <TagsBar onSelect={() => refreshArticles()} />

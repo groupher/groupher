@@ -23,7 +23,7 @@ const Header: FC<TProps> = ({ article }) => {
       <div className={s.publishWrapper}>
         {meta.isEdited && (
           <Fragment>
-            <DotDivider space={8} />
+            <DotDivider className="mx-2" />
             <div className={s.editedHint}>修改过</div>
           </Fragment>
         )}

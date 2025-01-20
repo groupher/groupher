@@ -1,52 +1,15 @@
-import type { TTestable } from '~/spec'
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import PlusSVG from '~/icons/BoxAdd'
+export default () => {
+  const { cn, fg, br, fill } = useTwBelt()
 
-type TWrapper = TTestable
-export const Wrapper = styled.div.attrs<TTestable>(({ $testid }) => ({
-  'data-test-id': $testid,
-}))<TWrapper>`
-  ${css.column('align-both')};
-  position: relative;
-  background: transparent;
-  width: 225px;
-  height: 300px;
-  min-height: 80px;
-  padding: 15px 20px;
-  padding-left: 0;
-
-  border: 2px dotted;
-  border-color: ${theme('divider')};
-  border-radius: 8px;
-  padding: 15px;
-
-  transition: all 0.2s;
-
-  &:hover {
-    box-shadow: ${css.cardShadow};
-    border-color: ${theme('article.digest')};
-    cursor: pointer;
+  return {
+    wrapper: cn(
+      'group align-both relative w-56 h-72 min-h-20 px-5 py-4 pl-0 border-2 border-dotted rounded-md pointer',
+      br('divider'),
+      `hover:${br('text.digest')}`,
+    ),
+    addIcon: cn('size-12', fill('text.digest')),
+    title: cn('text-sm bold mt-4', fg('text.digest')),
   }
-`
-export const AddIcon = styled(PlusSVG)`
-  ${css.size(45)};
-  fill: ${theme('article.digest')};
-  opacity: 0.2;
-
-  ${Wrapper}:hover & {
-    opacity: 0.5;
-  }
-`
-
-export const Title = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 15px;
-  font-weight: 600;
-  opacity: 0.5;
-  margin-top: 15px;
-
-  ${Wrapper}:hover & {
-    opacity: 0.8;
-  }
-`
+}

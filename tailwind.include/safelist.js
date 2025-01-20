@@ -1,6 +1,8 @@
 const { keys, uniq } = require('ramda')
 const { borderSoft, container } = require('../utils/constant/twConfig.json')
 
+const Z_INDEX = require('../utils/css/zindex.json')
+
 const GENERAL = [
   'border-divider',
   'border-text-link',
@@ -45,7 +47,7 @@ const TEXT_COLORS = [
   'text-body',
   'text-hint',
   'text-invert',
-  'text-link',
+  'link',
   'button-fg',
 ]
 const BG_COLORS = [
@@ -66,6 +68,8 @@ const BG_COLORS = [
   'button-toggle',
   'button-fg',
   'drawer-mask',
+  'modal-mask',
+  'modal-bg',
 ]
 const FILL_COLORS = ['text-title', 'text-digest', 'button-fg', 'heightIcon', 'text-link']
 // for fg,bg & fill
@@ -137,7 +141,10 @@ const UTILS = [
   'group-hover/menubar:text-rainbow-red',
   'group-hover/menubar:text-rainbow-red-dark',
   'z-50',
+  'line-clamp-[15]',
 ]
+
+const Z_INDEX_VALUES = Object.entries(Z_INDEX).map(([_, value]) => `z-[${value}]`)
 
 module.exports = uniq([
   ...GENERAL.map((c) => `${c} ${c}-dark`),
@@ -178,4 +185,5 @@ module.exports = uniq([
 
   ...CONTAINERS,
   ...UTILS,
+  ...Z_INDEX_VALUES,
 ])

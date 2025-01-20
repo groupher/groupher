@@ -1,16 +1,16 @@
 import { type FC, useState } from 'react'
+import Link from 'next/link'
 
 import { signIn } from '~/oauth'
 import { titleCase } from '~/fmt'
 
 import useTrans from '~/hooks/useTrans'
 import Modal from '~/widgets/Modal'
-import { SlientLink } from '~/widgets/Common'
 
 import { OAUTH_PROVIDERS } from './constant'
 import Loading, { LoadingMask } from './Loading'
 
-import { Wrapper, Header, Body, SocialItem, IconBox, SocialIcon, Footer } from './styles/panel'
+import useSalon, { SocialIcon } from './salon/panel'
 
 type TProps = {
   show: boolean
@@ -18,45 +18,52 @@ type TProps = {
 }
 
 const Panel: FC<TProps> = ({ show, onClose }) => {
+  const s = useSalon()
+
   const [loadingProvider, setLoadingProvider] = useState(null)
   const { t } = useTrans()
 
   return (
     <Modal show={show} width="400px" onClose={() => onClose()} showCloseBtn>
-      <Wrapper>
+      <div className={s.wrapper}>
         {loadingProvider && (
           <>
             <LoadingMask />
             <Loading provider={loadingProvider} />
           </>
         )}
-        <Header>{t('login.with.social')}</Header>
-        <Body>
+        <div className={s.header}>{t('login.with.social')}</div>
+        <div className={s.body}>
           {OAUTH_PROVIDERS.map((provider) => {
             const providerKey = titleCase(provider)
             const Icon = SocialIcon[providerKey] || null
 
             return (
-              <SocialItem
+              <div
+                className={s.socialItem}
                 key={provider}
                 onClick={() => {
                   signIn('github')
                   setLoadingProvider(providerKey)
                 }}
               >
-                <IconBox>
-                  <Icon />
-                </IconBox>
+                <div className={s.iconBox}>
+                  <Icon className={s.icon} />
+                </div>
                 {providerKey}
-              </SocialItem>
+              </div>
             )
           })}
-        </Body>
-        <Footer>
-          <SlientLink href="/">{t('login.bind.hint')}</SlientLink>
-          <SlientLink href="/">{t('need.help')}</SlientLink>
-        </Footer>
-      </Wrapper>
+        </div>
+        <div className={s.footer}>
+          <Link href="/" className={s.link}>
+            {t('login.bind.hint')}
+          </Link>
+          <Link href="/" className={s.link}>
+            {t('need.help')}
+          </Link>
+        </div>
+      </div>
     </Modal>
   )
 }

@@ -1,11 +1,10 @@
-import styled, { theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  width: 100%;
-`
-export const TabsWrapper = styled.div`
-  margin-top: -10px;
-  margin-bottom: 25px;
-  border-bottom: 1px solid;
-  border-bottom-color: ${theme('divider')};
-`
+export default () => {
+  const { cn, br } = useTwBelt()
+
+  return {
+    wrapper: cn('w-full'),
+    tabs: cn('-mt-2.5 mb-6 border-b', br('divider')),
+  }
+}

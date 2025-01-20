@@ -1,55 +1,17 @@
-import styled, { css, theme } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import AdderSVG from '~/icons/Plus'
-import EditPenSVG from '~/icons/EditPen'
+export default () => {
+  const { cn, fg, br, fill } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.column()};
-  width: 400px;
-  margin-bottom: 36px;
-`
-export const Preview = styled.div`
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid;
-  border-bottom-color: ${theme('divider')};
-`
-export const PreviewButtonsWrapper = styled.div`
-  ${css.row('align-center')};
-  margin-top: 8px;
-`
-export const Head = styled.div`
-  ${css.row('align-start')};
-`
-export const Title = styled.div`
-  flex-grow: 1;
-  font-size: 15px;
-  color: ${theme('article.title')};
-  font-weight: bold;
-  max-width: 80%;
-`
-export const UpdateHint = styled.div`
-  width: 20%;
-  text-align: right;
-  font-size: 10px;
-  color: ${theme('hint')};
-  margin-top: 4px;
-`
-
-export const ButtonsWrapper = styled(PreviewButtonsWrapper)`
-  gap: 0 15px;
-  margin-top: 5px;
-`
-export const AddIcon = styled(AdderSVG)`
-  ${css.size(12)};
-  fill: ${theme('article.digest')};
-  margin-right: 6px;
-  opacity: 0.6;
-`
-
-export const EditIcon = styled(EditPenSVG)`
-  ${css.size(12)};
-  fill: ${theme('article.digest')};
-  margin-right: 6px;
-  opacity: 0.6;
-`
+  return {
+    wrapper: cn('column w-96 mb-9'),
+    preview: cn('mb-5 pb-5 border-b', br('divider')),
+    previewButtons: 'row-center mt-2',
+    head: 'row items-start',
+    title: cn('grow text-sm bold-sm', fg('text.title')),
+    updateHint: cn('w-1/5 text-xs align-right mt-1', fg('text.hint')),
+    //
+    addIcon: cn('size-3 mr-1.5 opacity-80', fill('text.digest')),
+    editIcon: cn('size-3 mr-1.5 opacity-80', fill('text.digest')),
+  }
+}

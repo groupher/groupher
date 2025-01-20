@@ -1,12 +1,14 @@
-import { Wrapper, Title, ViewWrapper } from '../salon/doc/Header'
+import useSalon from '../salon/doc/Header'
 
 const Header = () => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
-      <Title>目录</Title>
+    <div className={s.wrapper}>
+      <div className={s.title}>目录</div>
       <div className="grow" />
-      <ViewWrapper>块视图</ViewWrapper>
-    </Wrapper>
+      <div>块视图</div>
+    </div>
   )
 }
 

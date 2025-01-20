@@ -63,7 +63,7 @@ export const PAID_PAN_ITEMS = [
     title: '统计分析 & 日志',
   },
   {
-    key: 5,
+    key: 55,
     title: '上传自定义壁纸',
   },
   {
@@ -106,7 +106,7 @@ export const CUSTOM_PAN_ITEMS = [
     title: '售后问题优先响应',
   },
   {
-    key: 5,
+    key: 6,
     title: '其他业务需求',
   },
 ]

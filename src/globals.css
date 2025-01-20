@@ -422,6 +422,10 @@
     filter: drop-shadow(2px 4px 6px #141414);
   }
 
+  .animation-reverse {
+    animation-direction: reverse;
+  }
+
   .debug {
     @apply border border-dashed;
     border-color: red;
@@ -437,13 +441,71 @@
 
 }
 
-.tippy-arrow {
-  display: none;
+/* third-part global styles */
+.lazy-load-image-background.blur {
+    filter: blur(3px);
+  }
+
+.lazy-load-image-background.blur.lazy-load-image-loaded {
+  filter: blur(0);
+  transition: filter 0.2s;
 }
 
+.lazy-load-image-background.blur > img {
+  opacity: 0;
+}
+
+.lazy-load-image-background.blur.lazy-load-image-loaded > img {
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+  
 .header-layout-community-brief {
   .tippy-box[data-placement^=bottom][data-state='visible'] {
     transform: translateY(1px) !important;
   }
+}
+
+/* masonry cards styles */
+.masonry-cards-grid {
+  display: flex;
+  width: auto;
+}
+.masonry-cards-grid_column {
+  background-clip: padding-box;
+  padding: 8px;
+}
+
+.tippy-box {
+  border: 1px solid;
+  border-radius: 4px;
+  transition: all .2s ease-in-out !important;
+}
+
+/* wechat brower not support backdrop-filter well */
+@supports (-webkit-backdrop-filter:none) or (backdrop-filter:none) {
+  .tippy-box {
+    border: 1px solid;
+    border-radius: 4px;
+    transition: all .2s ease-in-out !important;
+  }
+}
+
+.tippy-box[data-placement^=top][data-state='visible'] {
+  transform: translateY(-5px);
+}
+.tippy-box[data-placement^=bottom][data-state='visible'] {
+  transform: translateY(5px);
+}
+.tippy-box[data-placement^=left][data-state='visible'] {
+  transform: translateX(-5px);
+}
+.tippy-box[data-placement^=right][data-state='visible'] {
+  transform: translateX(5px);
+}
+
+/* 不然图片下面后有个条 */
+.lazy-load-image-background.blur.lazy-load-image-loaded {
+  line-height: 0.8;
 }
 

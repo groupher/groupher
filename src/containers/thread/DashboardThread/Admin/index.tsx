@@ -1,5 +1,4 @@
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import { Inline } from '~/widgets/Common'
 
 import Portal from '../Portal'
 import Adder from './Adder'
@@ -17,9 +16,9 @@ export default () => {
         desc={
           <>
             添加可参与社区内容管理的账号。
-            <Inline>
+            <div className="inline-block">
               <ArrowButton>设置参考</ArrowButton>
-            </Inline>
+            </div>
           </>
         }
       />

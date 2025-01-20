@@ -7,15 +7,16 @@ import { type FC, useEffect } from 'react'
 
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 
-import { SexyDivider } from '~/widgets/Common'
 import Button from '~/widgets/Buttons/Button'
 
 import Selects from './Selects'
 
 import useLogic from './useLogic'
-import { Wrapper, Desc, Footer, RootSign } from './styles'
+import useSalon from './salon'
 
 const PassportEditor: FC = () => {
+  const s = useSalon()
+
   const curCommunity = useViewingCommunity()
 
   useEffect(() => {
@@ -39,38 +40,38 @@ const PassportEditor: FC = () => {
   if (!activeModerator) return null
 
   return (
-    <Wrapper $testid="passport-editor">
-      {!isActiveModeratorRoot ? <h3>权限设置</h3> : <RootSign>ROOT</RootSign>}
+    <div className={s.wrapper}>
+      {!isActiveModeratorRoot ? <h3>权限设置</h3> : <div className={s.rootSign}>ROOT</div>}
       {isActiveModeratorRoot ? (
-        <Desc>
+        <div className={s.desc}>
           {activeModerator.nickname} 拥有 {curCommunity.title} 社区的所有管理权限
-        </Desc>
+        </div>
       ) : (
-        <Desc>
+        <div className={s.desc}>
           在 {curCommunity.title} 社区范围内，{activeModerator.nickname} 拥有以下权限
-        </Desc>
+        </div>
       )}
-      <SexyDivider bottom={30} />
+      <div className={s.divider} />
       <Selects />
-      <SexyDivider bottom={30} />
+      <div className={s.divider} />
 
       {!readonly && (
-        <Footer>
+        <div className={s.footer}>
           <Button type="red" ghost>
             删除管理员
           </Button>
           <Button onClick={() => updatePassport()}>更新权限</Button>
-        </Footer>
+        </div>
       )}
 
       {isActiveModeratorRoot && isCurUserModeratorRoot && (
-        <Footer>
+        <div className={s.footer}>
           <Button ghost left={30}>
             转移 ROOT 给其他管理员
           </Button>
-        </Footer>
+        </div>
       )}
-    </Wrapper>
+    </div>
   )
 }
 

@@ -4,7 +4,7 @@
  *
  */
 
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
 import AbsoluteFmt from './AbsoluteFmt'
 
@@ -22,4 +22,4 @@ const ReadableDate: FC<TProps> = ({ className = 'readable-date', withTime = true
   )
 }
 
-export default memo(ReadableDate)
+export default ReadableDate

@@ -5,12 +5,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 
 import '../globals.css'
 
-import {
-  StyledComponentsRegistry,
-  GraphQLProvider,
-  StateStoreProvider,
-  GlobalLayout,
-} from './providers'
+import { GraphQLProvider, StateStoreProvider, GlobalLayout } from './providers'
 
 export const metadata: Metadata = {
   title: 'Groupher | 让你的产品听见用户的声音',
@@ -28,13 +23,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <StyledComponentsRegistry>
-          <GraphQLProvider>
-            <StateStoreProvider>
-              <GlobalLayout>{children}</GlobalLayout>
-            </StateStoreProvider>
-          </GraphQLProvider>
-        </StyledComponentsRegistry>
+        <GraphQLProvider>
+          <StateStoreProvider>
+            <GlobalLayout>{children}</GlobalLayout>
+          </StateStoreProvider>
+        </GraphQLProvider>
         <Analytics />
         <SpeedInsights />
       </body>

@@ -24,15 +24,15 @@ export const getLiSize = (size: TAvatarSize): string => {
 export const getAvatarSize = (size: string, fmt = 'string'): string | number => {
   switch (size) {
     case SIZE.SMALL: {
-      return fmt === 'string' ? '18px' : 18
+      return fmt === 'string' ? '4' : 4
     }
 
     case SIZE.MEDIUM: {
-      return fmt === 'string' ? '24px' : 24
+      return fmt === 'string' ? '6' : 6
     }
 
     default: {
-      return fmt === 'string' ? '22px' : 22
+      return fmt === 'string' ? '5' : 5
     }
   }
 }

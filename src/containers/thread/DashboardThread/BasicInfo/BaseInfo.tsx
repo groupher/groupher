@@ -3,7 +3,6 @@ import { find } from 'ramda'
 import type { TSelectOption } from '~/spec'
 import { LANGS_OPTIONS } from '~/const/i18n'
 
-import { Br } from '~/widgets/Common'
 import Select from '~/widgets/Select'
 import Input from '~/widgets/Input'
 
@@ -42,12 +41,12 @@ export default () => {
         社区的 URL 地址段，填写后可通过 https://groupher.com/[slug] 或 https://[slug].groupher.com
         访问。
       </p>
-      <Br bottom={10} />
+      <div className="mb-2.5" />
 
       <div className={s.label}>社区名称</div>
       <Input value={title} className={s.input} onChange={(v) => edit(v, 'title')} />
 
-      <Br bottom={10} />
+      <div className="mb-2.5" />
 
       <div className={s.label}>官方主页</div>
       <Input value={homepage} className={s.input} onChange={(v) => edit(v, 'homepage')} />
@@ -60,7 +59,7 @@ export default () => {
         className={s.input}
         onChange={(v) => edit(v, 'desc')}
       />
-      <Br bottom={15} />
+      <div className="mb-4" />
 
       <div className={s.label}>关于社区</div>
       <Input
@@ -81,7 +80,7 @@ export default () => {
         />
       )}
 
-      <Br bottom={45} />
+      <div className="mb-12" />
       <DangerZone />
     </div>
   )

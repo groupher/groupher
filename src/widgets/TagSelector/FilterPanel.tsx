@@ -1,10 +1,10 @@
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 import { keys } from 'ramda'
 
 import type { TTag, TGroupedTags, TColorName } from '~/spec'
 import TagNode from '~/widgets/TagNode'
 
-import { Wrapper, GroupWrapper, GroupTitle, SelectItem, Title } from './styles/filter_panel'
+import useSalon from './salon/filter_panel'
 
 type TProps = {
   activeTag: TTag
@@ -18,29 +18,33 @@ type TGroupTags = {
   onSelect: (tag: TTag) => void
 }
 const GroupTags: FC<TGroupTags> = ({ tags, activeTag, onSelect }) => {
-  return (
-    <GroupWrapper>
-      {tags.map((tag) => {
-        const $active = tag.id === activeTag?.id
+  const s = useSalon()
 
+  return (
+    <div className={s.group}>
+      {tags.map((tag) => {
+        console.log('## active Tag: ', activeTag)
+        // const $active = tag.id === activeTag?.id
         return (
-          <SelectItem key={tag.id} $active={$active} onClick={() => onSelect(tag)}>
+          <div className={s.selectItem} key={tag.id} onClick={() => onSelect(tag)}>
             <TagNode color={tag.color as TColorName} boldHash />
-            <Title>{tag.title}</Title>
-          </SelectItem>
+            <div className={s.title}>{tag.title}</div>
+          </div>
         )
       })}
-    </GroupWrapper>
+    </div>
   )
 }
 
 const FilterPanel: FC<TProps> = ({ groupedTags, activeTag, onSelect }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper>
+    <div className={s.wrapper}>
       {keys(groupedTags).map((title) => {
         return (
           <div key={title as string}>
-            <GroupTitle>{title}</GroupTitle>
+            <div className={s.groupTitle}>{title}</div>
             <GroupTags
               tags={groupedTags[title as string]}
               onSelect={onSelect}
@@ -49,8 +53,8 @@ const FilterPanel: FC<TProps> = ({ groupedTags, activeTag, onSelect }) => {
           </div>
         )
       })}
-    </Wrapper>
+    </div>
   )
 }
 
-export default memo(FilterPanel)
+export default FilterPanel

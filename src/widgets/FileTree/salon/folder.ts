@@ -6,18 +6,13 @@ type TProps = {
 }
 
 export default ({ show, isFolderOpen }: TProps) => {
-  const { cn, fg, bg, fill, cutRest } = useTwBelt()
+  const { cn, fg, bg, fill, cut } = useTwBelt()
 
   return {
     wrapper: cn(''),
     header: cn('group row-center pointer relative mb-2', !show && 'hidden'),
     title: cn('row-center bold-sm mb-1.5'),
-    folderTitle: cn(
-      'text-sm mr-2 grow',
-      'group-hover:opacity-80',
-      fg('text.title'),
-      cutRest('w-28'),
-    ),
+    folderTitle: cn('text-sm mr-2 grow', 'group-hover:opacity-80', fg('text.title'), cut('w-28')),
     //
     arrowIcon: cn(
       'size-4 group-smoky-0 trans-all-200',

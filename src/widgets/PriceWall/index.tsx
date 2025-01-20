@@ -1,6 +1,6 @@
-import { EMAIL_SUPPORT } from '~/config'
+import Link from 'next/link'
 
-import Img from '~/Img'
+import { EMAIL_SUPPORT } from '~/config'
 
 import { COLOR_NAME } from '~/const/colors'
 import CoffeeSVG from '~/icons/CoffeeDuo'
@@ -8,8 +8,8 @@ import CoffeeSVG from '~/icons/CoffeeDuo'
 import useHover from '~/hooks/useHover'
 import useThemeData from '~/hooks/useThemeData'
 
+import Img from '~/Img'
 import AnimatedCount from '~/widgets/AnimatedCount'
-import { Link } from '~/widgets/Common'
 import Button from '~/widgets/Buttons/Button'
 
 import Feature from './Feature'
@@ -118,7 +118,7 @@ export default ({ layout = 'page' }: TProps) => {
               <Feature key={item.key} title={item.title} color={COLOR_NAME.PURPLE} />
             ))}
           </div>
-          <Link href={`mailto:${EMAIL_SUPPORT}`}>
+          <Link href={`mailto:${EMAIL_SUPPORT}`} className={s.link}>
             <Button ghost>联系我们</Button>
           </Link>
         </div>

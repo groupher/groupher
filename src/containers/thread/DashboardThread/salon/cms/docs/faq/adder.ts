@@ -1,25 +1,12 @@
-import styled, { css, theme } from '~/css'
-import AdderSVG from '~/icons/Plus'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import Button from '~/widgets/Buttons/Button'
+export default () => {
+  const { cn, fg, fill } = useTwBelt()
 
-export const Wrapper = styled.div`
-  ${css.column('justify-center')};
-  margin-top: 50px;
-`
-export const Notes = styled.div`
-  color: ${theme('article.digest')};
-  font-size: 12px;
-  margin-top: 10px;
-`
-export const AddButton = styled(Button)`
-  width: 120px;
-  border-color: ${theme('article.digest')};
-
-  transition: all 0.2s;
-`
-export const AddIcon = styled(AdderSVG)`
-  ${css.size(14)};
-  margin-right: 5px;
-  fill: white;
-`
+  return {
+    wrapper: cn('column justify-center mt-12'),
+    notes: cn('text-xs mt-2.5', fg('text.digest')),
+    addBtn: cn('w-28'),
+    addIcon: cn('size-3.5 mr-1.5', fill('button.fg')),
+  }
+}

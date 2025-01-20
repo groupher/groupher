@@ -43,7 +43,6 @@ export const P3 = (markColor: TColorName): ReactNode => {
       <span className={cn(s.highlight, s[`${color$}Bg`])}>新疆，安徽，河南三省</span>
       人均都是600多公斤，辽宁省人均刚好600公斤，这四个省份也是最接近
       黑吉蒙的，但是可以看出人均也只有黑吉蒙的一半都不到。
-      {/* <Br /> */}
       <div className={s.p}>
         我们再说四川省，四川省 一直被认为是中国的
         <span className={cn(s.highlight, s[`${color$}Bg`])}>战略备份省份</span>

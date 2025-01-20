@@ -4,7 +4,7 @@ import useBase from '.'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, cutRest, primary, sexyHBorder, sexyVBorder, isBlackPrimary } = useTwBelt()
+  const { cn, fg, bg, cut, primary, sexyBorder, sexyVBorder, isBlackPrimary } = useTwBelt()
   const base = useBase()
 
   return {
@@ -15,7 +15,7 @@ export default () => {
     blockActive: base.blockBaseActive,
     communityTitle: cn(
       'text-xs bold-sm',
-      cutRest('w-14'),
+      cut('w-14'),
       primary('fg'),
       isBlackPrimary && fg('text.link'),
     ),
@@ -23,7 +23,7 @@ export default () => {
     bar: base.bar,
     circle: base.circle,
 
-    hDivider: cn(sexyHBorder()),
+    hDivider: cn(sexyBorder()),
     vDivider: cn('absolute', sexyVBorder(35)),
   }
 }

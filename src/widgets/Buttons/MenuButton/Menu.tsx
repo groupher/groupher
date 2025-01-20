@@ -4,44 +4,38 @@ import QRCode from 'qrcode.react'
 
 import type { TMenuOption } from '~/spec'
 
+import Img from '~/Img'
 import { ICON } from '~/config'
 import SVG from '~/const/svg'
 import { cutRest } from '~/fmt'
 
-import {
-  Wrapper,
-  Block,
-  BlockA,
-  QRWrapper,
-  Item,
-  Title,
-  LinkIcon,
-  Divider,
-  getIcon,
-} from '../salon/menu_button/menu'
+import useSalon, { cn } from '../salon/menu_button/menu'
 
 // there is two types of block, normal block and link
 const OptionBlock = ({ item, onClick }) => {
-  const Icon = getIcon(item.icon || SVG.UPVOTE)
+  const s = useSalon()
+  const Icon = s.getIcon(item.icon || SVG.UPVOTE)
 
   if (item.link) {
     return (
-      <BlockA as="a" href={item.link}>
-        <Item>
-          <Icon />
-          <Title>{cutRest(item.title, 50)}</Title>
-          <LinkIcon src={`${ICON}/shape/link-hint.svg`} />
-        </Item>
-      </BlockA>
+      <a className={cn(s.block, 'no-underline')} href={item.link}>
+        <div className={s.item}>
+          {/* @ts-ignore */}
+          <Icon className={s.icon} />
+          <div className={s.title}>{cutRest(item.title, 50)}</div>
+          <Img src={`${ICON}/shape/link-hint.svg`} className={s.linkIcon} />
+        </div>
+      </a>
     )
   }
   return (
-    <Block onClick={onClick}>
-      <Item>
-        <Icon />
-        <Title>{cutRest(item.title, 50)}</Title>
-      </Item>
-    </Block>
+    <div className={s.block} onClick={onClick}>
+      <div className={s.item}>
+        {/* @ts-ignore */}
+        <Icon className={s.icon} />
+        <div className={s.title}>{cutRest(item.title, 50)}</div>
+      </div>
+    </div>
   )
 }
 
@@ -53,23 +47,25 @@ type TProps = {
 }
 
 const Menu: FC<TProps> = ({ options, extraOptions, onClick, panelMinWidth }) => {
+  const s = useSalon()
+
   return (
-    <Wrapper $panelMinWidth={panelMinWidth}>
+    <div className={cn(s.wrapper, panelMinWidth)}>
       {options.map((item) => (
         <Fragment key={item.key}>
           <OptionBlock item={item} onClick={() => onClick(item.key)} />
           {item.qrLink && (
-            <QRWrapper>
+            <div className={s.qrWrapper}>
               <QRCode value={item.qrLink} size={72} />
-            </QRWrapper>
+            </div>
           )}
         </Fragment>
       ))}
-      {!isEmpty(extraOptions) && <Divider />}
+      {!isEmpty(extraOptions) && <div className={s.divider} />}
       {extraOptions.map((item) => (
         <OptionBlock key={item.key} item={item} onClick={() => onClick(item.key)} />
       ))}
-    </Wrapper>
+    </div>
   )
 }
 

@@ -4,15 +4,18 @@ import 'rsuite-table/dist/css/rsuite-table.css'
 import { DASHBOARD_ROUTE } from '~/const/route'
 
 import useTabInfo from '../logic/useTab'
-import GlobalTableStyle from '../salon/cms/global'
-import { Wrapper } from '../salon/cms'
+import useSalon from '../salon/cms'
 
 import Posts from './Posts'
 import Communities from './Communities'
 import Changelogs from './Changelogs'
 import Docs from './Docs'
 
+import '../salon/cms/global.css'
+
 const CMS: FC = () => {
+  const s = useSalon()
+
   let contents = null
   const { curTab: route } = useTabInfo()
 
@@ -38,12 +41,7 @@ const CMS: FC = () => {
       break
   }
 
-  return (
-    <Wrapper>
-      {contents}
-      <GlobalTableStyle />
-    </Wrapper>
-  )
+  return <div className={s.wrapper}>{contents}</div>
 }
 
 export default CMS

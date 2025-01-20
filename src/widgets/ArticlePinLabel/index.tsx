@@ -4,23 +4,22 @@
  *
  */
 
-import { type FC, memo } from 'react'
+import type { FC } from 'react'
 
-import usePrimaryColor from '~/hooks/usePrimaryColor'
+import PinSVG from '~/icons/Pin'
 
-import { PinIcon } from './styles'
+import useSalon, { cn } from './salon'
 
 export type TProps = {
-  top?: number
-  left?: number
+  className?: string
   isPinned?: boolean
 }
-const ArticlePinLabel: FC<TProps> = ({ isPinned, top = 24, left = -30 }) => {
-  const primaryColor = usePrimaryColor()
+const ArticlePinLabel: FC<TProps> = ({ isPinned, className }) => {
+  const s = useSalon()
 
-  if (isPinned) return <PinIcon top={top} left={left} $color={primaryColor} />
+  if (isPinned) return <PinSVG className={cn(s.pinIcon, className)} />
 
   return null
 }
 
-export default memo(ArticlePinLabel)
+export default ArticlePinLabel

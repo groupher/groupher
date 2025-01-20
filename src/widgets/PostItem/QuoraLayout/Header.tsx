@@ -12,7 +12,6 @@ import SIZE from '~/const/size'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import ArticleReadLabel from '~/widgets/ArticleReadLabel'
 import Tooltip from '~/widgets/Tooltip'
-import { Space } from '~/widgets/Common'
 import TagsList from '~/widgets/TagsList'
 import CommentsCount from '~/widgets/CommentsCount'
 
@@ -50,7 +49,7 @@ const Header: FC<TProps> = ({ article }) => {
           <div className={s.author}>{author.nickname}</div>
         </Tooltip>
         <div className={s.dot} />
-        <Space right={2} />
+        <div className="mr-0.5" />
         <div className={s.publish}>
           <TimeAgo datetime={insertedAt} locale="zh_CN" suppressHydrationWarning />
         </div>

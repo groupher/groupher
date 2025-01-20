@@ -1,98 +1,22 @@
-import type { TColorName, TTestable } from '~/spec'
-import styled, { css, theme, rainbow } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
-import Button from '~/widgets/Buttons/Button'
-import LaptopSVG from '~/icons/Works'
-import PlusSVG from '~/icons/Plus'
-import MoreSVG from '~/icons/menu/More'
+export default () => {
+  const { cn, br, fg, fill } = useTwBelt()
 
-type TWrapper = TTestable
-export const Wrapper = styled.div.attrs<TTestable>(({ $testid }) => ({
-  'data-test-id': $testid,
-}))<TWrapper>`
-  ${css.column()};
-  position: relative;
-  background: transparent;
-  width: 225px;
-  height: 300px;
-  min-height: 80px;
-  padding: 15px 20px;
-  padding-left: 0;
-
-  border: 1px solid;
-  border-color: ${theme('divider')};
-  border-radius: 8px;
-  padding: 15px;
-
-  transition: all 0.2s;
-
-  &:hover {
-    box-shadow: ${css.cardShadow};
-    border-color: ${theme('article.digest')};
+  return {
+    wrapper: cn(
+      'group column relative bg-transparent w-56 h-72 min-h-20 p-4 rounded-md border',
+      br('divider'),
+      `hover:${br('text.digest')}`,
+    ),
+    globalSettingIcon: cn(
+      'size-4 absolute top-1 -right-0.5 group-smoky-0',
+      fill('text.digest'),
+      `hover:${fill('text.title')}`,
+    ),
+    header: 'column mb-3',
+    title: cn('text-lg bold mt-2', fg('text.title')),
+    adderBtn: 'w-20 -ml-px mt-2',
+    plusIcon: cn('size-2.5 mr-0.5', fill('text.digest')),
   }
-`
-
-export const GlobalSettingIcon = styled(MoreSVG)`
-  ${css.size(15)};
-  fill: ${theme('article.digest')};
-  position: absolute;
-  top: 5px;
-  right: -2px;
-  opacity: 0;
-
-  ${Wrapper}:hover & {
-    opacity: 1;
-  }
-
-  &:hover {
-    fill: ${theme('article.title')};
-    cursor: pointer;
-  }
-
-  transition: all 0.2s;
-`
-
-export const Header = styled.div`
-  ${css.column()};
-  margin-bottom: 12px;
-`
-export const Icon = styled(LaptopSVG)<{ color: TColorName }>`
-  ${css.size(16)};
-  fill: ${({ color }) => rainbow(color)};
-  opacity: 0.65;
-
-  ${Wrapper}:hover & {
-    opacity: 1;
-  }
-
-  transition: all 0.3s;
-`
-export const Title = styled.div`
-  color: ${theme('article.title')};
-  font-size: 18px;
-  font-weight: 600;
-  margin-top: 8px;
-`
-export const PlusIcon = styled(PlusSVG)`
-  ${css.size(10)};
-  fill: ${theme('article.digest')};
-  margin-right: 2px;
-`
-
-export const AdderButton = styled(Button)`
-  width: 80px;
-  margin-left: -1px;
-  margin-top: 8px;
-`
-
-export const MoreLink = styled.div`
-  color: ${theme('link')};
-  font-size: 12px;
-  margin-top: 5px;
-
-  &:hover {
-    cursor: pointer;
-  }
-
-  transition: all 0.2s;
-`
+}

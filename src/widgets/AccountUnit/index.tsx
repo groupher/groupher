@@ -18,7 +18,7 @@ import AccountSVG from '~/icons/Acount'
 import LoggedInAccount from './LoggedInAccount'
 import Panel from './Panel'
 
-import useSalon from './styles'
+import useSalon from './salon'
 
 type TProps = {
   withName?: boolean

@@ -6,7 +6,7 @@ import { getBgGradientDirAngle } from '../metric'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, bg, br, fg, fill, sexyHBorder } = useTwBelt()
+  const { cn, bg, br, fg, fill, sexyBorder } = useTwBelt()
   const base = useBase()
 
   return {
@@ -19,7 +19,7 @@ export default () => {
     sectionTitle: cn('text-xs bold-sm mt-1 mb-2 ml-0.5', fg('text.digest')),
     bgRow: 'row-center wrap gap-2.5',
     dirRow: 'row wrap gap-x-3',
-    divider: cn(sexyHBorder(), 'mt-3.5 mb-1.5'),
+    divider: cn(sexyBorder(), 'mt-3.5 mb-1.5'),
     //
     optionItem: cn(base.optionItem, 'h-6 w-10'),
     optionItemActive: base.optionItemActive,

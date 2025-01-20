@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, rainbow, global, shadow, dimDark } = useTwBelt()
+  const { cn, fg, bg, rainbow, global, shadow, dimDark, linkable } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both w-full h-full mb-14 overflow-hidden'),
@@ -53,5 +53,7 @@ export default () => {
     //
     catPawImg: cn('absolute w-20 z-20 trans-jump', global('shape-shadow'), dimDark('lg')),
     catNote: cn('text-xs trans-jump z-10 ml-1', rainbow(COLOR_NAME.BROWN, 'fg')),
+    //
+    link: cn(linkable(), fg('link')),
   }
 }

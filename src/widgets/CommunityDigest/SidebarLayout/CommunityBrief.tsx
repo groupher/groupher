@@ -1,4 +1,5 @@
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 import { BANNER_LAYOUT, BRAND_LAYOUT } from '~/const/layout'
 import { THREAD } from '~/const/thread'
@@ -6,8 +7,6 @@ import { assetSrc } from '~/helper'
 import { prettyURL } from '~/fmt'
 
 import LinkSVG from '~/icons/Link'
-
-import { Link } from '~/widgets/Common'
 
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 import useViewingThread from '~/hooks/useViewingThread'
@@ -36,7 +35,7 @@ export default () => {
           <Img
             src={assetSrc(logo)}
             className={s.logo}
-            fallback={<ImgFallback size={30} title={title} />}
+            fallback={<ImgFallback size={8} title={title} />}
           />
         </div>
       )}
@@ -55,7 +54,7 @@ export default () => {
           <div className={s.linkIconBox}>
             <LinkSVG className={s.linkIcon} />
           </div>
-          <Link href={baseInfo.homepage} maxLength="150px">
+          <Link href={baseInfo.homepage} className={s.link}>
             {prettyURL(baseInfo.homepage)}
           </Link>
         </div>
