@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fill, sexyBorder } = useTwBelt()
+  const { cn, fill, sexyBorder, linkable } = useTwBelt()
 
   const icon = cn('size-3.5 pointer', fill('text.digest'))
 
@@ -12,5 +12,6 @@ export default () => {
     linkIcon: cn(icon, 'group-smoky-0'),
     dashboardIcon: cn(icon, 'size-4'),
     divider: cn(sexyBorder(), 'my-1.5'),
+    linkable: linkable(),
   }
 }

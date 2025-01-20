@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, landingTitle } = useTwBelt()
+  const { cn, fg, landingTitle, linkable } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both w-full h-72'),
@@ -11,5 +11,6 @@ export default () => {
     hightLight: cn('bold-sm ml-px mr-px', fg('text.title')),
     //
     buttons: 'row-center gap-x-4',
+    linkable: linkable(),
   }
 }

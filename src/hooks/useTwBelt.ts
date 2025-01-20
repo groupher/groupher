@@ -198,7 +198,7 @@ export default (): TRet => {
   }
 
   const linkable = () => {
-    return 'no-underline pointer hover:underline'
+    return cn('no-underline pointer hover:underline')
   }
 
   const hoverLink = (textSize = 'text-base') => {

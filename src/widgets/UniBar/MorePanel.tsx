@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import useTrans from '~/hooks/useTrans'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 
@@ -8,7 +10,6 @@ import SettingSVG from '~/icons/Setting'
 import LinkSVG from '~/icons/ArrowUpRight'
 
 import HomeLogo from '~/widgets/HomeLogo'
-import { LinkAble } from '~/widgets/Common'
 
 import MenuBar from './MenuBar'
 import useSalon from './salon/more_panel'
@@ -20,7 +21,7 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <LinkAble href={`/${slug}/${DASHBOARD_ROUTE.OVERVIEW}`}>
+      <Link href={`/${slug}/${DASHBOARD_ROUTE.OVERVIEW}`} className={s.linkable}>
         <MenuBar>
           <div className={s.iconBox}>
             <SettingSVG className={s.dashboardIcon} />
@@ -29,7 +30,7 @@ export default () => {
           <div className="grow" />
           <LinkSVG className={s.linkIcon} />
         </MenuBar>
-      </LinkAble>
+      </Link>
 
       <div className={s.divider} />
       <MenuBar>

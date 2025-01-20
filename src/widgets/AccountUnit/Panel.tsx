@@ -1,11 +1,11 @@
 import { type FC, useState } from 'react'
+import Link from 'next/link'
 
 import { signIn } from '~/oauth'
 import { titleCase } from '~/fmt'
 
 import useTrans from '~/hooks/useTrans'
 import Modal from '~/widgets/Modal'
-import { SlientLink } from '~/widgets/Common'
 
 import { OAUTH_PROVIDERS } from './constant'
 import Loading, { LoadingMask } from './Loading'
@@ -56,8 +56,12 @@ const Panel: FC<TProps> = ({ show, onClose }) => {
           })}
         </div>
         <div className={s.footer}>
-          <SlientLink href="/">{t('login.bind.hint')}</SlientLink>
-          <SlientLink href="/">{t('need.help')}</SlientLink>
+          <Link href="/" className={s.link}>
+            {t('login.bind.hint')}
+          </Link>
+          <Link href="/" className={s.link}>
+            {t('need.help')}
+          </Link>
         </div>
       </div>
     </Modal>

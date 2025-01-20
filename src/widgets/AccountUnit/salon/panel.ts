@@ -11,7 +11,7 @@ import LineSVG from '~/icons/social/Line'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, bg, br } = useTwBelt()
+  const { cn, fg, bg, br, linkable } = useTwBelt()
 
   return {
     wrapper: cn('column px-5 py-2.5 text-sm min-h-64 relative'),
@@ -31,6 +31,8 @@ export default () => {
     //
     icon: 'size-5 -mt-0.5',
     footer: cn('row-center-between mt-4 ml-0.5 text-sm', fg('text.digest')),
+    //
+    link: cn(linkable(), fg('text.digest'), `hover:${fg('text.title')}`),
   }
 }
 

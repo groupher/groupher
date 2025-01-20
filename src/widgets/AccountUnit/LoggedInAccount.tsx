@@ -5,6 +5,7 @@
  */
 
 import type { FC } from 'react'
+import Link from 'next/link'
 
 import type { TSpace } from '~/spec'
 import useAccount from '~/hooks/useAccount'
@@ -17,7 +18,6 @@ import SettingSVG from '~/icons/Setting'
 import AddSVG from '~/icons/Add'
 import LogoutSVG from '~/icons/Logout'
 import CmdSVG from '~/icons/Cmd'
-import { LinkAble } from '~/widgets/Common'
 import Tooltip from '~/widgets/Tooltip'
 import ImgFallback from '~/widgets/ImgFallback'
 
@@ -57,12 +57,12 @@ const LoggedInAccount: FC<TProps> = () => {
             <CmdSVG className={s.icon} />
           </div>
           {/* <MenuBar>主题?</MenuBar> */}
-          <LinkAble href={ROUTE.APPLY_COMMUNITY} prefetch={false}>
+          <Link href={ROUTE.APPLY_COMMUNITY} prefetch={false} className={s.linkable}>
             <div className={s.menuBar}>
               <div className={s.menuTitle}>创建社区</div>
               <AddSVG className={s.icon} />
             </div>
-          </LinkAble>
+          </Link>
           <div className={s.divider} />
           <div className={cn(s.menuBar, s.warningActive)} onClick={() => signOut()}>
             <div className={s.menuTitle}>登出</div>

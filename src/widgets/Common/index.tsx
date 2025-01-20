@@ -4,28 +4,6 @@ import * as NextLink from 'next/link'
 import styled, { css, theme } from '~/css'
 
 // @ts-ignore
-export const LinkAble = styled(NextLink)`
-  text-decoration: none;
-
-  &:hover 
-    text-decoration: underline;
-    cursor: pointer;
-  }
-`
-
-// @ts-ignore
-export const SlientLink = styled(NextLink)`
-  text-decoration: none;
-  color: ${theme('article.digest')};
-
-  &:hover {
-    text-decoration: underline;
-    color: ${theme('article.title')};
-    cursor: pointer;
-  }
-`
-
-// @ts-ignore
 export const Link = styled(NextLink)<{ maxLength?: string }>`
   color: ${theme('link')};
   text-decoration: none;
