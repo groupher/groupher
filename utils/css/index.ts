@@ -18,4 +18,4 @@ export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
 
 export { theme } from '../themes'
 export { WIDTH } from './metric'
-export type { TZIndexKey } from './zindex'
+export { default as zIndex, type TZIndexKey } from './zindex'

@@ -7,7 +7,6 @@ export type TStore = {
 
   // views
   accountInfo: TAccount
-  // themeData: TThemeMap
   // actions
   setSession: (user: TUser, token: string) => void
 }
