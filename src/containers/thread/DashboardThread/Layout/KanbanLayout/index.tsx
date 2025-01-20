@@ -1,5 +1,4 @@
 import { KANBAN_LAYOUT } from '~/const/layout'
-import { Br } from '~/widgets/Common'
 
 import GlobalLayout from './GlobalLayout'
 import ItemCardLayout from './ItemCardLayout'
@@ -18,7 +17,7 @@ export default () => {
 
       {kanbanLayout === KANBAN_LAYOUT.CLASSIC && <ItemCardLayout />}
 
-      <Br top={50} />
+      <div className="mt-12" />
       <BgColorsSetter />
     </div>
   )

@@ -4,7 +4,6 @@ import type { TMediaReport } from '~/spec'
 
 import DeleteSVG from '~/icons/DeleteSolid'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-import { Br } from '~/widgets/Common'
 import Input from '~/widgets/Input'
 
 import MediaPreview from './MediaPreview'
@@ -38,7 +37,7 @@ const InputBox: FC<TProps> = ({ item, queringMediaReportIndex }) => {
         />
         <DeleteSVG className={s.deleteIcon} onClick={() => removeMediaReport(index)} />
       </div>
-      {editUrl && <Br bottom={20} />}
+      {editUrl && <div className="mb-5" />}
       {!editUrl && <p>复制相关媒体报道的 URL 链接</p>}
     </div>
   )

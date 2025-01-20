@@ -1,7 +1,7 @@
 import { TOPBAR_LAYOUT, DASHBOARD_DESC_LAYOUT } from '~/const/layout'
 import { callDashboardDesc } from '~/signal'
 
-import { Br, Inline } from '~/widgets/Common'
+import { Inline } from '~/widgets/Common'
 import ColorSelector from '~/widgets/ColorSelector'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
@@ -64,7 +64,7 @@ export default () => {
         top={10}
       />
 
-      <Br top={30} />
+      <div className="mt-8" />
       {layout === TOPBAR_LAYOUT.YES && (
         <>
           <SavingBar

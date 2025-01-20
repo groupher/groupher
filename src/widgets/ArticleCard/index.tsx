@@ -9,7 +9,6 @@ import useViewingCommunity from '~/hooks/useViewingCommunity'
 
 import ArticleReadLabel from '~/widgets/ArticleReadLabel'
 import ArticlePinLabel from '~/widgets/ArticlePinLabel'
-import { Br } from '~/widgets/Common'
 import ArticleImgWindow from '~/widgets/ArticleImgWindow'
 
 import Footer from './Footer'
@@ -51,7 +50,6 @@ const ArticleCard: FC<TProps> = ({ data }) => {
       <div onClick={() => previewArticle(data)}>{cutRest(digest, 150)}</div>
 
       <div className="mt-1" />
-      <Br top={4} />
       <ArticleImgWindow />
       <div className="mt-4" />
       <div className="grow" />

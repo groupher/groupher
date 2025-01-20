@@ -43,10 +43,6 @@ export const Link = styled(NextLink)<{ maxLength?: string }>`
 export const Row = styled.div`
   ${css.row('align-center')};
 `
-export const Br = styled.div<TSpace>`
-  margin-top: ${({ top }) => `${top}px` || 0};
-  margin-bottom: ${({ bottom }) => `${bottom}px` || 0};
-`
 export const Space = styled.span<TSpace>`
   margin-left: ${({ left }) => `${left}px` || 0};
   margin-right: ${({ right }) => `${right}px` || 0};
