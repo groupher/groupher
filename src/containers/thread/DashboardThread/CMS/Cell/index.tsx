@@ -11,7 +11,6 @@ import Img from '~/Img'
 import PulseSVG from '~/icons/Pulse'
 import Checker from '~/widgets/Checker'
 import ArticleCatState from '~/widgets/ArticleCatState'
-import { Row } from '~/widgets/Common'
 import Button from '~/widgets/Buttons/Button'
 import TagsList from '~/widgets/TagsList'
 
@@ -56,7 +55,7 @@ export const CommunityCell = ({ rowData, ...props }) => {
 
   return (
     <Cell {...props}>
-      <Row>
+      <div className="row">
         <Img className={s.communityLogo} src={logo} />
         <div>
           <div className={s.communityTitle}>{title}</div>
@@ -64,7 +63,7 @@ export const CommunityCell = ({ rowData, ...props }) => {
             /{slug}
           </Link>
         </div>
-      </Row>
+      </div>
     </Cell>
   )
 }

@@ -1,7 +1,6 @@
 import type { FC } from 'react'
 
 import Button from '~/widgets/Buttons/Button'
-import { Space } from '~/widgets/Common'
 
 import { FOOTER_BEHAVIOR } from './constant'
 
@@ -25,7 +24,7 @@ const ConfirmFooter: FC<TProps> = ({ onConfirm, onCancel, behavior }) => {
           <button className={s.cancelBtn} onClick={onCancel}>
             取消
           </button>
-          <Space right={10} />
+          <div className="mr-2.5" />
           <Button size="tiny" type="red" onClick={() => onConfirm?.()}>
             确定
           </Button>
@@ -40,7 +39,7 @@ const ConfirmFooter: FC<TProps> = ({ onConfirm, onCancel, behavior }) => {
           <Button size="small" type="primary" onClick={() => onConfirm?.()}>
             添加
           </Button>
-          <Space right={10} />
+          <div className="mr-2.5" />
           <button className={s.cancelBtn} onClick={() => onCancel?.()}>
             取消
           </button>
@@ -55,7 +54,7 @@ const ConfirmFooter: FC<TProps> = ({ onConfirm, onCancel, behavior }) => {
           <Button size="small" type="primary" onClick={onConfirm}>
             确定
           </Button>
-          <Space right={10} />
+          <div className="mr-2.5" />
           <button className={s.cancelBtn} onClick={() => onCancel?.()}>
             取消
           </button>

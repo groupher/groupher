@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, br, fill, menu } = useTwBelt()
+  const { cn, fg, br, fill, menu, sexyBorder } = useTwBelt()
 
   return {
     wrapper: 'row-center group',
@@ -23,5 +23,7 @@ export default () => {
 
     outside: 'hover-underline',
     icon: cn('size-3.5 mr-3 pointer', fill('text.digest'), `group-hover:${fill('text.title')}`),
+    //
+    divider: cn(sexyBorder(), 'my-1.5'),
   }
 }

@@ -13,8 +13,6 @@ import CreatableReactSelect from 'react-select/creatable'
 import type { TSelectOption, TSpace } from '~/spec'
 import useTheme from '~/hooks/useTheme'
 
-import { Row, Space } from '~/widgets/Common'
-
 import { IndicatorsContainer } from './components'
 
 import useSalon, { cn, getSelectStyles } from './salon'
@@ -41,10 +39,10 @@ const CustomOption = (props) => {
 
   return (
     <components.Option {...props}>
-      <Row>
+      <div className="row">
         {icon && <Icon />}
         <span>{label}</span>
-      </Row>
+      </div>
     </components.Option>
   )
 }
@@ -55,10 +53,10 @@ const CustomSingleValue = (props) => {
 
   return (
     <components.SingleValue {...props}>
-      <Row>
-        <Space left={-5}>{icon && <Icon />}</Space>
+      <div className="row">
+        <div className="-ml-1">{icon && <Icon />}</div>
         <span>{label}</span>
-      </Row>
+      </div>
     </components.SingleValue>
   )
 }

@@ -6,7 +6,6 @@ import useTrans from '~/hooks/useTrans'
 
 import DropdownButton from '~/widgets/Buttons/DropdownButton'
 import Menu from '~/widgets/Menu'
-import { Space } from '~/widgets/Common'
 
 import ActiveLabel from './ActiveLabel'
 
@@ -67,7 +66,7 @@ const ConditionSelector: FC<TProps> = ({
         >
           <DropdownButton $active={menuOpen} selected={selected} prefixIcon={prefixIcon}>
             {t(title, 'titleCase')}
-            <Space right={3} />
+            <div className="mr-1.5" />
           </DropdownButton>
         </Menu>
       ) : (

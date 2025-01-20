@@ -22,7 +22,6 @@ import GlobalSVG from '~/icons/social/Global'
 import PlusSVG from '~/icons/PlusCircle'
 
 import OptionArrowSVG from '~/icons/OptionArrow'
-import { Space, SexyDivider } from '~/widgets/Common'
 import Tooltip from '~/widgets/Tooltip'
 import ImgFallback from '~/widgets/ImgFallback'
 
@@ -66,7 +65,7 @@ export default () => {
               <div>关于</div>
             </Link>
 
-            <SexyDivider top={5} bottom={5} />
+            <div className={s.divider} />
 
             <Link className={cn(s.panelItem, s.outside)} href={dashboard.baseInfo.homepage}>
               <GlobalSVG className={s.icon} />
@@ -82,7 +81,7 @@ export default () => {
               <ArrowSVG className={s.arrowIcon} />
             </Link>
 
-            <SexyDivider top={5} bottom={5} />
+            <div className={s.divider} />
             <Link className={cn(s.panelItem, s.outside)} href="/apply/community">
               <PlusSVG className={s.icon} />
               <div>新社区</div>
@@ -99,7 +98,7 @@ export default () => {
       >
         <div className={s.menuWrapper}>
           <div className={s.title}>管理后台</div>
-          <Space right={12} />
+          <div className="mr-3" />
           <OptionArrowSVG className={s.optArrowIcon} />
         </div>
       </Tooltip>

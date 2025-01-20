@@ -9,7 +9,6 @@
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { assetSrc } from '~/utils/helper'
 
-import { Space } from '~/widgets/Common'
 import ImgFallback from '~/widgets/ImgFallback'
 import Img from '~/Img'
 
@@ -34,7 +33,7 @@ export default () => {
         <div className={s.row}>
           <div className={s.label}>关注</div>
           <div className={s.count}>{subscribersCount}</div>
-          <Space right={15} />
+          <div className="mr-4" />
           <div className={s.label}>帖子</div>
           <div className={s.count}>{meta?.postsCount}</div>
         </div>
