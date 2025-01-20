@@ -35,7 +35,6 @@
 - [ ] community tuts list layout prototype
 - [ ] community jobs list layout prototype
 - [ ] make Doraemon ^x work
-- [ ] [lint css](https://github.com/styled-components/stylelint-processor-styled-components)
 
 ## v0.0.3
 
