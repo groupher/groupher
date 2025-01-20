@@ -4,8 +4,6 @@
  *
  */
 
-import styled from 'styled-components'
-
 import { twMerge } from 'tailwind-merge'
 import { clsx, type ClassValue } from 'clsx'
 
@@ -34,5 +32,3 @@ export { WIDTH } from './metric'
 export { default as zIndex, type TZIndexKey } from './zindex'
 
 export { default as animate } from './animations'
-
-export default styled
