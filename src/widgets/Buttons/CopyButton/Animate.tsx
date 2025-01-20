@@ -1,8 +1,11 @@
-import { type FC, memo, useEffect, useState } from 'react'
+import { type FC, useEffect, useState } from 'react'
 
-import { CopyedHint, CopyIcon, CopyedText } from '../salon/copy_button'
+import CopySVG from '~/icons/Copy'
+import useSalon from '../salon/copy_button'
 
 const CopyButton: FC = () => {
+  const s = useSalon()
+
   const [done, setDone] = useState(false)
 
   useEffect(() => {
@@ -11,14 +14,14 @@ const CopyButton: FC = () => {
 
   return (
     <div>
-      {!done && <CopyIcon onClick={() => setDone(true)} />}
+      {!done && <CopySVG className={s.copyIcon} onClick={() => setDone(true)} />}
       {done && (
-        <CopyedHint>
-          <CopyedText>已复制</CopyedText>
-        </CopyedHint>
+        <div className={s.copyedHint}>
+          <div className={s.copyedText}>已复制</div>
+        </div>
       )}
     </div>
   )
 }
 
-export default memo(CopyButton)
+export default CopyButton

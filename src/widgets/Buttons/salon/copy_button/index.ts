@@ -1,24 +1,13 @@
-import styled, { css, theme } from '~/css'
-import CopySVG from '~/icons/Copy'
+import { COLOR_NAME } from '~/const/colors'
+import useTwBelt from '~/hooks/useTwBelt'
 
-export const Wrapper = styled.div`
-  ${css.row('align-center')};
-`
-export const CopyIcon = styled(CopySVG)`
-  fill: ${theme('article.digest')};
-  ${css.size(16)};
-  margin-right: 2px;
-  opacity: 0.8;
+export default () => {
+  const { cn, fill, rainbow } = useTwBelt()
 
-  &:hover {
-    cursor: pointer;
-    opacity: 1;
+  return {
+    wrapper: cn('row-center'),
+    copyIcon: cn('size-4 ml-0.5 pointer', fill('text.digest')),
+    copyedHint: 'align-both',
+    copyedText: cn('text-xs', rainbow(COLOR_NAME.GREEN, 'fg')),
   }
-`
-export const CopyedHint = styled.div`
-  ${css.row('align-both')};
-`
-export const CopyedText = styled.div`
-  font-size: 12px;
-  color: ${theme('rainbow.green')};
-`
+}
