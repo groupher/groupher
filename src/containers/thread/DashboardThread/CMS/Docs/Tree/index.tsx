@@ -3,24 +3,17 @@ import { type CursorProps, type NodeApi, type NodeRendererProps, Tree } from 're
 
 import type { TPagedArticles } from '~/spec'
 
+import DragSVG from '~/icons/Dragble'
+import ArrowSVG from '~/icons/ArrowSimple'
+import DeleteSVG from '~/icons/Trash'
+import EditSVG from '~/icons/EditPen'
+
 import { treeData, type TTreeItem } from '../treeData'
 
 import Actions from './Actions'
 import Note from './Note'
 
-import {
-  Wrapper,
-  Content,
-  FolderWrapper,
-  FolderName,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  CustomCursor,
-  ActionWrapper,
-  EditIcon,
-  DeleteIcon,
-  DragIcon,
-} from '../../../salon/cms/docs/tree'
+import useSalon, { cn } from '../../../salon/cms/docs/tree'
 
 type TProps = {
   pagedDocs: TPagedArticles
@@ -29,6 +22,7 @@ type TProps = {
 // see example: https://codesandbox.io/s/react-arborist-epopl1?file=/src/components/Tree/index.ts
 
 const TreeView: FC<TProps> = ({ pagedDocs }) => {
+  const s = useSalon()
   const treeRef = useRef()
   console.log('## pagedDocs: ', pagedDocs)
 
@@ -38,7 +32,8 @@ const TreeView: FC<TProps> = ({ pagedDocs }) => {
   }, [])
 
   return (
-    <Wrapper
+    <div
+      className={s.wrapper}
       onClick={() => {
         // treeRef.current.createLeaf()
         // treeRef.current.createInternal()
@@ -70,43 +65,57 @@ const TreeView: FC<TProps> = ({ pagedDocs }) => {
       >
         {Node}
       </Tree>
-      <Content>
+      <div className={s.content}>
         <Actions />
         <Note />
-      </Content>
-    </Wrapper>
+      </div>
+    </div>
   )
 }
 
 function Node({ node, style, dragHandle }: NodeRendererProps<TTreeItem>) {
+  const s = useSalon()
   // const Icon = node.data?.icon || <span>O</span>
+  const hasChild = node.isInternal && !!node.data.children
+
   return (
-    <FolderWrapper
+    <div
+      className={cn(s.folderWrapper, hasChild && 'bold-sm')}
       ref={dragHandle}
       style={style}
       onClick={() => node.isInternal && node.toggle()}
-      hasChild={node.isInternal && !!node.data.children}
-      $active={node.isSelected}
     >
-      <DragIcon />
-      <FolderName hasChild={!!node.data.children} $active={node.isSelected}>
+      <DragSVG className={s.dragIcon} />
+      <div
+        className={cn(s.folderName, !!node.data.children || (node.isSelected && 'bold leading-8'))}
+      >
         {node.isEditing ? <Input node={node} /> : node.data.name}
         <FolderArrow node={node} />
-      </FolderName>
+      </div>
 
-      <ActionWrapper>
-        <EditIcon />
-        <DeleteIcon />
-      </ActionWrapper>
+      <div className={s.actionWrapper}>
+        <EditSVG className={s.editIcon} />
+        <DeleteSVG className={s.deleteIcon} />
+      </div>
       {/* <span>{node.data.unread === 0 ? null : node.data.unread}</span> */}
-    </FolderWrapper>
+    </div>
   )
 }
 
 function FolderArrow({ node }: { node: NodeApi<TTreeItem> }) {
+  const s = useSalon()
+
   if (node.isLeaf) return <span />
 
-  return <>{node.isOpen ? <ArrowUpIcon /> : <ArrowDownIcon />}</>
+  return (
+    <>
+      {node.isOpen ? (
+        <ArrowSVG className={s.arrowUpIcon} />
+      ) : (
+        <ArrowSVG className={s.arrowDownIcon} />
+      )}
+    </>
+  )
 }
 
 function Input({ node }: { node: NodeApi<TTreeItem> }) {
@@ -125,8 +134,17 @@ function Input({ node }: { node: NodeApi<TTreeItem> }) {
 }
 
 const Cursor: FC<CursorProps> = ({ top, left }) => {
+  const s = useSalon()
   // @ts-ignore
-  return <CustomCursor top={top} left={left} />
+  return (
+    <div
+      className={s.customCursor}
+      style={{
+        top,
+        left,
+      }}
+    />
+  )
 }
 
 export default TreeView
