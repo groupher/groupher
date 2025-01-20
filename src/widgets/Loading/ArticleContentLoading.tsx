@@ -7,14 +7,14 @@ import useTheme from '~/hooks/useTheme'
 
 import useSalon from './salon/article_content_loading'
 
-const LoadingItem = ({ theme }) => {
+const LoadingItem = ({ color }) => {
   return (
     <ContentLoader
       height={100}
       width={400}
       speed={2}
-      foregroundColor={theme.divider}
-      backgroundColor={theme.divider}
+      foregroundColor={color}
+      backgroundColor={color}
       backgroundOpacity={0.5}
     >
       <rect x="25" y="16.05" rx="5" ry="5" width="363" height="8" />
@@ -31,13 +31,15 @@ type TProps = TSpace & { num?: number }
 
 const ArticleContentLoading: FC<TProps> = ({ num = 1, ...spacing }) => {
   const s = useSalon({ ...spacing })
-  const { themeMap } = useTheme()
+  const { isLightTheme } = useTheme()
+  // tmp solution for remove styled-component
+  const color = isLightTheme ? '#EAE9E9' : '#3c3c3c'
 
   return (
     <div className={s.wrapper}>
       {range(0, num).map((item) => (
         <div className={s.inner} key={item}>
-          <LoadingItem theme={themeMap} />
+          <LoadingItem color={color} />
         </div>
       ))}
     </div>

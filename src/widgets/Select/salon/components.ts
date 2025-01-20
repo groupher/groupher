@@ -1,7 +1,5 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export { getSelectStyles } from './metric'
-
 export { cn } from '~/css'
 
 export default () => {

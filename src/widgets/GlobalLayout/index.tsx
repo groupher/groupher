@@ -7,7 +7,6 @@
 import { type FC, type ReactNode, lazy, Suspense } from 'react'
 
 import Mushroom from '~/containers/Mushroom'
-import ThemePalette from '~/widgets/ThemePalette'
 
 // import Broadcast from '~/widgets/Broadcast'
 // import ModeLine from '~/containers/unit/ModeLine'
@@ -46,7 +45,7 @@ const GlobalLayout: FC<TProps> = ({ children }) => {
   // }, [showDashboardAlert])
 
   return (
-    <ThemePalette>
+    <>
       <Mushroom />
       <Suspense fallback={null}>
         <Addon />
@@ -64,7 +63,7 @@ const GlobalLayout: FC<TProps> = ({ children }) => {
 
       {/* <DashboardAlert /> */}
       {/* {showDashboardAlertUI && <DashboardAlert />} */}
-    </ThemePalette>
+    </>
   )
 }
 
