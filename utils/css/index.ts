@@ -11,9 +11,6 @@ import { clsx, type ClassValue } from 'clsx'
 
 import { mediaBreakPoints } from './metric'
 import { media, fitContentWidth, fitStickerWidth, fitPageWidth } from './media'
-import { flex, flexGrow, flexWrap, flexColumn, flexColumnGrow, flexColumnWrap } from './flex'
-
-import { circle, size } from './shape'
 
 /**
  * Prevents output of unnecessary Tailwind classes and merges classes.
@@ -25,14 +22,6 @@ import { circle, size } from './shape'
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
 
 export const css = {
-  circle,
-  size,
-  row: flex,
-  rowWrap: flexWrap,
-  rowGrow: flexGrow,
-  column: flexColumn,
-  columnGrow: flexColumnGrow,
-  columnWrap: flexColumnWrap,
   mediaBreakPoints,
   media,
   fitContentWidth,
