@@ -47,7 +47,7 @@ const TEXT_COLORS = [
   'text-body',
   'text-hint',
   'text-invert',
-  'text-link',
+  'link',
   'button-fg',
 ]
 const BG_COLORS = [

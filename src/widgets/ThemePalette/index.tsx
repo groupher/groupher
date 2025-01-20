@@ -6,10 +6,7 @@
 import type { FC, ReactNode } from 'react'
 import { ThemeProvider } from 'styled-components'
 
-import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useThemeData from '~/hooks/useThemeData'
-
-import GlobalStyle from './GlobalStyle'
 
 type TProps = {
   children: ReactNode
@@ -17,13 +14,12 @@ type TProps = {
 
 const ThemePalette: FC<TProps> = ({ children }) => {
   const themeData = useThemeData()
-  const primaryColor = usePrimaryColor()
   // see https://css-tricks.com/meta-theme-color-and-trickery/
   // theme seems conflict with manifest
 
   return (
     <ThemeProvider theme={themeData}>
-      <GlobalStyle $color={primaryColor} />
+      {/* <GlobalStyle */}
       {children}
     </ThemeProvider>
   )
