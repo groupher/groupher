@@ -16,8 +16,6 @@ import { clsx, type ClassValue } from 'clsx'
  */
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
 
-export const css = {}
-
 export { theme } from '../themes'
 export { WIDTH } from './metric'
 export type { TZIndexKey } from './zindex'
