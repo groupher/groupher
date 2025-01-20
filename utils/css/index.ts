@@ -7,9 +7,6 @@
 import { twMerge } from 'tailwind-merge'
 import { clsx, type ClassValue } from 'clsx'
 
-import { mediaBreakPoints } from './metric'
-import { media, fitContentWidth, fitStickerWidth, fitPageWidth } from './media'
-
 /**
  * Prevents output of unnecessary Tailwind classes and merges classes.
  * usefull tips from: https://www.youtube.com/watch?v=re2JFITR7TI
@@ -19,13 +16,7 @@ import { media, fitContentWidth, fitStickerWidth, fitPageWidth } from './media'
  */
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
 
-export const css = {
-  mediaBreakPoints,
-  media,
-  fitContentWidth,
-  fitStickerWidth,
-  fitPageWidth,
-}
+export const css = {}
 
 export { theme, rainbowLink, rainbow, rainbowSoft, rainbowPale, gradientBg } from '../themes'
 export { WIDTH } from './metric'

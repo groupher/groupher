@@ -1,6 +1,6 @@
 import { createGlobalStyle } from 'styled-components'
 
-import { css, theme } from '~/css'
+import { theme } from '~/css'
 import type { TColor } from '~/spec'
 
 import normalize from './normalize'
@@ -12,9 +12,6 @@ const GlobalStyle = createGlobalStyle<TColor>`
     -webkit-font-smoothing: antialiased;
   }
   body {
-    ${css.media.mobile`
-      position: relative;
-   `};
     margin: 0;
     overflow-x: hidden;
   }
@@ -77,7 +74,6 @@ const GlobalStyle = createGlobalStyle<TColor>`
     display: inline-block;
     margin-left: 8px;
 
-    ${css.cutRest('200px')};
     max-width: 368px;
     font-size: 1rem;
     margin-bottom: 0.2em;
@@ -105,18 +101,10 @@ const GlobalStyle = createGlobalStyle<TColor>`
   .masonry-cards-grid {
     display: flex;
     width: auto;
-
-    ${css.media.mobile`
-      margin-left: 0;
-    `};
   }
   .masonry-cards-grid_column {
     background-clip: padding-box;
     padding: 8px;
-
-    ${css.media.mobile`
-      padding: 5px;
-    `};
   }
 
   .tippy-box {
