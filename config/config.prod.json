@@ -1,5 +1,5 @@
 {
   "//--- endpoint configs ---//": "",
-  "// GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql",
-  "GRAPHQL_ENDPOINT": "http://127.0.0.1:4001/graphiql"
+  "GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql",
+  "// GRAPHQL_ENDPOINT": "http://127.0.0.1:4001/graphiql"
 }
