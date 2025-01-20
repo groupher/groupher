@@ -10,7 +10,6 @@ import useLayout from '~/hooks/useLayout'
 import { BANNER_LAYOUT } from '~/const/layout'
 
 import Markdown from '~/widgets/Markdown'
-import { SexyDivider as Divider } from '~/widgets/Common'
 
 import Members from './Members'
 import BasicStates from './BasicStates'
@@ -50,7 +49,7 @@ const AboutThreadContainer: FC<TProps> = ({ isSidebarLayout = false }) => {
         <div className={cn(s.intro, s.state)}>
           <div className={s.title}>社区概况</div>
           <BasicStates />
-          <Divider bottom={40} top={60} />
+          <div className={s.divider} />
         </div>
 
         <div className={cn(s.intro, s.members)}>

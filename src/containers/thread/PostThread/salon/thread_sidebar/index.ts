@@ -6,7 +6,7 @@ import useScroll from '~/hooks/useScroll'
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 
 export default () => {
-  const { cn, fg, fill, avatar } = useTwBelt()
+  const { cn, fg, fill, avatar, sexyBorder } = useTwBelt()
   const { bannerLayout } = useLayout()
 
   const isTabberLayout = BANNER_LAYOUT.TABBER === bannerLayout
@@ -37,5 +37,6 @@ export default () => {
       isHeaderLayout && (badgeInView ? 'mb-28 pb-2' : 'mb-10'),
       isTabberLayout && (isAtTop ? 'mb-80 pb-4' : 'mb-8'),
     ),
+    divider: cn(sexyBorder(), 'mt-0 mb-1.5'),
   }
 }

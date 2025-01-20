@@ -16,7 +16,7 @@ import useActiveTag from '~/hooks/useActiveTag'
 import { refreshArticles, callGEditor, callSyncSelector, listUsers } from '~/signal'
 import { mockUsers } from '~/mock'
 
-import { Link, SexyDivider } from '~/widgets/Common'
+import { Link } from '~/widgets/Common'
 import ImgFallback from '~/widgets/ImgFallback'
 import Sticky from '~/widgets/Sticky'
 import GetMe from '~/widgets/GetMe'
@@ -87,7 +87,7 @@ export default () => {
           </div>
 
           <CommunityBrief />
-          {!showCommunityBadge && <SexyDivider bottom={5} />}
+          {!showCommunityBadge && <div className={s.divider} />}
 
           <div className={s.tagsBar}>
             <TagsBar onSelect={() => refreshArticles()} />

@@ -17,7 +17,7 @@ import SettingSVG from '~/icons/Setting'
 import AddSVG from '~/icons/Add'
 import LogoutSVG from '~/icons/Logout'
 import CmdSVG from '~/icons/Cmd'
-import { SexyDivider, LinkAble } from '~/widgets/Common'
+import { LinkAble } from '~/widgets/Common'
 import Tooltip from '~/widgets/Tooltip'
 import ImgFallback from '~/widgets/ImgFallback'
 
@@ -48,7 +48,7 @@ const LoggedInAccount: FC<TProps> = () => {
           <div className={s.menuBar}>
             <div className={s.menuTitle}>个人主页</div>
           </div>
-          <SexyDivider top={8} bottom={8} />
+          <div className={s.divider} />
           <div className={s.menuBar}>
             <div className={s.menuTitle}>使用指南</div>
           </div>
@@ -63,7 +63,7 @@ const LoggedInAccount: FC<TProps> = () => {
               <AddSVG className={s.icon} />
             </div>
           </LinkAble>
-          <SexyDivider top={8} bottom={8} />
+          <div className={s.divider} />
           <div className={cn(s.menuBar, s.warningActive)} onClick={() => signOut()}>
             <div className={s.menuTitle}>登出</div>
             <LogoutSVG className={s.logoutIcon} />

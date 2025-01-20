@@ -10,7 +10,7 @@ type TProps = {
 }
 
 export default ({ isSidebarLayout }: TProps) => {
-  const { cn, fg } = useTwBelt()
+  const { cn, fg, sexyBorder } = useTwBelt()
   const { bannerLayout } = useLayout()
 
   return {
@@ -26,5 +26,6 @@ export default ({ isSidebarLayout }: TProps) => {
     //
     title: cn('text-base bold mb-4', fg('text.digest')),
     desc: cn('text-sm leading-relaxed', fg('text.digest')),
+    divider: cn(sexyBorder(), 'mt-14 mb-10'),
   }
 }

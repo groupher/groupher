@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, avatar, fg, bg, fill, menu } = useTwBelt()
+  const { cn, avatar, fg, bg, fill, menu, sexyBorder } = useTwBelt()
 
   return {
     panel: cn('w-40 px-2 py-2'),
@@ -16,5 +16,7 @@ export default () => {
     menuTitle: cn('grow'),
     icon: cn('size-3.5 group-smoky', fill('text.digest')),
     logoutIcon: cn('size-3 group-smoky', `group-hover:${fill('rainbow.red')}`),
+    //
+    divider: cn(sexyBorder(), 'my-2'),
   }
 }

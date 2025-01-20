@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, menu } = useTwBelt()
+  const { cn, fg, menu, sexyBorder } = useTwBelt()
 
   return {
     wrapper: 'w-52 px-2 py-2.5',
@@ -14,5 +14,6 @@ export default () => {
     storeIcon: 'w-40 h-auto',
     icon: 'size-6',
     linkIcon: cn(menu('link')),
+    divider: cn(sexyBorder(), 'mt-2 mb-1.5'),
   }
 }

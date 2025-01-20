@@ -8,7 +8,7 @@ import SettingSVG from '~/icons/Setting'
 import LinkSVG from '~/icons/ArrowUpRight'
 
 import HomeLogo from '~/widgets/HomeLogo'
-import { SexyDivider, LinkAble } from '~/widgets/Common'
+import { LinkAble } from '~/widgets/Common'
 
 import MenuBar from './MenuBar'
 import useSalon from './salon/more_panel'
@@ -31,7 +31,7 @@ export default () => {
         </MenuBar>
       </LinkAble>
 
-      <SexyDivider top={6} bottom={6} />
+      <div className={s.divider} />
       <MenuBar>
         <div className={s.iconBox}>
           <ReportSVG className={s.icon} />

@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, br, fill, menu, shadow, cut } = useTwBelt()
+  const { cn, fg, bg, br, fill, menu, shadow, cut, sexyBorder } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both relative w-full mt-10 mb-10'),
@@ -32,5 +32,7 @@ export default () => {
     //
     communityTitle: cn('text-lg mt-4 bold-sm', fg('text.title')),
     communityDesc: cn('text-sm', fg('text.hint'), cut('w-48')),
+    //
+    divider: cn(sexyBorder(), 'my-5'),
   }
 }
