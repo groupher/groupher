@@ -1,18 +1,21 @@
 import { keys } from 'ramda'
 
-import { pageBgColor as BgColors } from '~/const/twConfig.json'
+import twConfig from '~/const/twConfig.json'
+
 import useTwBelt from '~/hooks/useTwBelt'
 import useTheme from '~/hooks/useTheme'
 
 export { cn } from '~/css'
+
+const pageBgColors = twConfig.pageBgColor
 
 export default () => {
   const { cn, shadow, br, fg, primary, isBlackPrimary } = useTwBelt()
   const { theme } = useTheme()
 
   return {
-    bgColors: keys(BgColors[theme]),
-    bgColorsObj: BgColors[theme],
+    bgColors: keys(pageBgColors[theme]),
+    bgColorsObj: pageBgColors[theme],
     rotateAngle: [
       6, 3, 2, 6, 12, 2, 3, 6, 12, 3, -2, 6, 12, 3, 2, -2, 6, 3, 12, 6, -3, 2, 3, 6, 12, 3, -2, 6,
       12, 3, 2, -2,

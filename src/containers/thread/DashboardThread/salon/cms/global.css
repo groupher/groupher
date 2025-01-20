@@ -2,7 +2,6 @@
   border: none;
 }
 
-// .rs-table-cell-group-fixed-right
 .rs-table-cell, .rs-table-row-header {
   background: transparent;
 }
@@ -13,7 +12,6 @@
   background: transparent;
 }
 
-// .rs-table-hover .rs-table-body-row-wrapper .rs-table-row:hover {
 .rs-table-row:hover {
   background: transparent;
 }

@@ -6,7 +6,7 @@ import type { TColorName, TSpace, TZIndexKey } from '~/spec'
 import { COLOR_NAME } from '~/const/colors'
 import type { TFlatThemeKey } from '~/utils/themes/skins'
 
-import { container as containerConf, borderSoft as borderSoftConf } from '~/const/twConfig.json'
+import twConfig from '~/const/twConfig.json'
 import { camelize } from '~/fmt'
 
 import METRIC from '~/const/metric'
@@ -14,6 +14,9 @@ import useTheme from '~/hooks/useTheme'
 import useMetric from '~/hooks/useMetric'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
+
+const containerConf = twConfig.container
+const borderSoftConf = twConfig.borderSoft
 
 type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 'decoration'
 type TLinkColorPrefix = 'fg' | 'fill'
