@@ -28,14 +28,6 @@ export const theme = (themeKey: TFlatThemeKey): TTheme => {
   return (path(['theme', ...split('.', themeKey)]) || 'wheat') as TTheme
 }
 
-export const rainbowLink = (primaryColor: TColorName, rollbackForBlack = 'link'): string => {
-  if (primaryColor === COLOR_NAME.BLACK) {
-    return theme(rollbackForBlack as TFlatThemeKey)
-  }
-
-  return theme(`rainbow.${camelize(primaryColor)}` as TFlatThemeKey)
-}
-
 export const gradientBg = (color: TColorName | string): string => {
   return theme(`gradientBg.${camelize(color)}` as TFlatThemeKey)
 }
