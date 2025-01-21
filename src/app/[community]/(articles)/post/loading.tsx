@@ -3,7 +3,7 @@
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
 const Loading = () => {
-  return <LavaLampLoading top={80} />
+  return <LavaLampLoading top={10} />
 }
 
 export default Loading

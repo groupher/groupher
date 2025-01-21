@@ -1,4 +1,6 @@
-import { createContext, useRef } from 'react'
+'use client'
+
+import { createContext } from 'react'
 import { proxy } from 'valtio'
 
 import type { TRootStore } from './spec'
@@ -40,5 +42,7 @@ export const StoreContext = createContext(setupRootStore())
 
 export const useStore = (initState) => {
   // see details: https://valtio.pmnd.rs/docs/how-tos/how-to-use-with-context
-  return useRef(proxy(setupRootStore(initState))).current
+  // return useRef(proxy(setupRootStore(initState))).current
+  // do not use useRef above, otherwise the useStore will not update in some cases
+  return setupRootStore(initState)
 }

@@ -21,7 +21,6 @@ const ThreadTab: FC<TProps> = ({ ...spacing }) => {
   const { getCustomLinks } = useHeaderLinks()
   const threads = usePublicThreads()
   const activeThread = useViewingThread()
-
   const customLinks = getCustomLinks()
 
   return (
@@ -31,9 +30,10 @@ const ThreadTab: FC<TProps> = ({ ...spacing }) => {
 
         return (
           <Link
-            className={cn(s.title, active && s.titleActive)}
             key={item.slug}
+            className={cn(s.title, active && s.titleActive)}
             href={`/${community.slug}/${item.slug}`}
+            prefetch={false}
           >
             {item.title}
           </Link>
