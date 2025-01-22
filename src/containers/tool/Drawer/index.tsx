@@ -3,13 +3,21 @@
  */
 
 import { useEffect } from 'react'
+import dynamic from 'next/dynamic'
 
 import useShortcut from '~/hooks/useShortcut'
 
+import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+
 import Viewer from './Viewer'
-import Content from './Content'
+// import Content from './Content'
 
 import useLogic from './useLogic'
+
+const DynamicContent = dynamic(() => import('./Content'), {
+  loading: () => <LavaLampLoading top={10} left={10} />,
+  ssr: false,
+})
 
 const Drwawer = () => {
   const {
@@ -46,7 +54,7 @@ const Drwawer = () => {
       showHeaderText={showHeaderText}
       disableContentDrag={disableContentDrag}
     >
-      <Content type={type} visible={visible} options={options} />
+      {visible && <DynamicContent type={type} visible={visible} options={options} />}
     </Viewer>
   )
 }

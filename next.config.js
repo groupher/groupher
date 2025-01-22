@@ -22,7 +22,7 @@ const nextConfig = {
   //     https://github.com/vercel/next.js/issues/35822
   reactStrictMode: true,
   swcMinify: true,
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: false,
   experimental: {
     reactCompiler: true,
     scrollRestoration: true,

@@ -10,8 +10,6 @@ import Drawer from '~/containers/tool/Drawer'
 import PriceWall from '~/widgets/PriceWall/Modal'
 import UserListModal from '~/widgets/UserListModal'
 
-// import { Drawer } from './dynamic'
-
 const Addon: FC = () => {
   // const { isMobile } = useMobileDetect()
 
@@ -19,14 +17,10 @@ const Addon: FC = () => {
 
   return (
     <>
-      {/* @ts-ignore */}
-      {/* {!isMobile && <AbuseReport />} */}
-      {/* @ts-ignore */}
       <Drawer />
       <PriceWall />
       <UserListModal />
       <Toaster position="top-center" />
-      {/* @ts-ignore */}
     </>
   )
 }
