@@ -114,7 +114,7 @@
     "typewriter-effect": "^2.19.0",
     "urql": "^4.2.0",
     "use-debounce": "^10.0.4",
-    "valtio": "^2.1.0"
+    "valtio": "^2.1.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

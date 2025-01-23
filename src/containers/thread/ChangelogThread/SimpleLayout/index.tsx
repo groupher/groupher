@@ -48,7 +48,7 @@ export default () => {
 
       {filterExpand && <FilterBar tab={tab} />}
       <div className={s.main}>
-        {pagedChangelogs.entries.map((item) => (
+        {pagedChangelogs?.entries.map((item) => (
           <ChangelogItem key={item.innerId} article={item} />
         ))}
       </div>

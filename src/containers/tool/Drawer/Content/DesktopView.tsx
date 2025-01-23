@@ -1,4 +1,4 @@
-import { type FC, memo, useEffect, useState } from 'react'
+import type { FC } from 'react'
 
 import { scrollDrawerToTop } from '~/dom'
 import { ANCHOR } from '~/const/dom'
@@ -11,19 +11,14 @@ type TProps = {
 }
 
 const DesktopView: FC<TProps> = ({ type }) => {
-  const [wrapperStyle, setWrapperStyle] = useState({})
   const s = useSalon({ type })
 
-  useEffect(() => {
-    setWrapperStyle(s.wrapperStyle)
-  }, [s.wrapperStyle])
-
   return (
-    <div className={s.wrapper} style={wrapperStyle}>
+    <div className={s.wrapper} style={s.wrapperStyle}>
       <div id={ANCHOR.DRAWER_HEAD} />
       <Content type={type} onLoad={() => scrollDrawerToTop()} />
     </div>
   )
 }
 
-export default memo(DesktopView)
+export default DesktopView

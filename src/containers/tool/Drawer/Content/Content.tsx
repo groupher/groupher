@@ -1,19 +1,18 @@
-import { type FC, Suspense, memo } from 'react'
+import { type FC, Suspense } from 'react'
 
 import TYPE from '~/const/type'
 import { LoadWatcher } from '~/widgets/Common'
 // import ModeLineMenu from '~/containers/unit/ModeLineMenu'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
-import ArticleViewer from '~/containers/viewer/ArticleViewer'
+// import ArticleViewer from '~/containers/viewer/ArticleViewer'
 
 import {
-  // ArticleViewer,
+  ArticleViewer,
   TagSettingEditor,
   PassportEditor,
   ArticleEditor,
   WallpaperEditor,
-  // MailsViewer,
 } from './dynamic'
 
 import UserList from '~/widgets/UserList'
@@ -54,9 +53,6 @@ const Content: FC<TProps> = ({ type, onLoad }) => {
           <ArticleEditor />
         </Suspense>
       )
-
-    // case DRAWER.MAILS_VIEW:
-    //   return <MailsViewer />
 
     case DRAWER.CUSTOM_BG_EDITOR:
       return (
@@ -105,4 +101,4 @@ const Content: FC<TProps> = ({ type, onLoad }) => {
   }
 }
 
-export default memo(Content)
+export default Content

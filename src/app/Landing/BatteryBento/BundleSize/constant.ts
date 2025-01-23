@@ -5,17 +5,17 @@ const ICON_ASSET = '/landing/products'
 export const PRODUCTS = [
   {
     title: 'Groupher',
-    size: '462 KB',
-    sizeNum: 462,
+    size: '413 KB',
+    sizeNum: 413,
     icon: `${ICON_ASSET}/groupher.png`,
     iconSize: 'size-3.5',
   },
-  // {
-  //   title: 'Flarum',
-  //   size: '401 KB',
-  //   sizeNum: 401,
-  //   icon: `${ICON_ASSET}/flarum.png`,
-  // },
+  {
+    title: 'Flarum',
+    size: '433 KB',
+    sizeNum: 433,
+    icon: `${ICON_ASSET}/flarum.png`,
+  },
   // {
   //   title: 'UserVoice',
   //   size: '515 KB',
@@ -24,47 +24,52 @@ export const PRODUCTS = [
   // },
   {
     title: 'Canny',
-    size: '828 KB',
-    sizeNum: 828,
+    size: '883 KB',
+    sizeNum: 883,
     icon: `${ICON_ASSET}/canny.png`,
-  },
-  {
-    title: 'Github Discussions',
-    size: '866 KB',
-    sizeNum: 866,
-    icon: `${ICON_ASSET}/github.png`,
-  },
-  {
-    title: 'FeatureOS',
-    size: '1+ MB',
-    sizeNum: 1.05 * 1024,
-    iconSize: 'size-3.5',
-    icon: `${ICON_ASSET}/featureos.png`,
-  },
-  {
-    title: 'Gainsight',
-    size: '1.15 MB',
-    sizeNum: 1.15 * 1024,
-    icon: `${ICON_ASSET}/gainsight.png`,
-  },
-  {
-    title: 'Outverse',
-    size: '1.2+ MB',
-    sizeNum: 1.2 * 1024,
-    iconSize: 'size-3',
-    icon: `${ICON_ASSET}/outverse.png`,
   },
   // https://feedback.frill.co/b/4q0qxv2r/frillco-customer-ideas
   {
     title: 'Frill',
-    size: '1.21+ MB',
-    sizeNum: 1.22 * 1024,
+    size: '1.1+ MB',
+    sizeNum: 1.14 * 1024,
     icon: `${ICON_ASSET}/frill.png`,
   },
+  // https://www.gainsight.com/customer-communities/examples/
+  // {
+  //   title: 'Gainsight',
+  //   size: '1.3+ MB',
+  //   sizeNum: 1.32 * 1024,
+  //   icon: `${ICON_ASSET}/gainsight.png`,
+  // },
+  // https://feedback.featureos.app/
+  {
+    title: 'FeatureOS',
+    size: '1.3+ MB',
+    sizeNum: 1.35 * 1024,
+    iconSize: 'size-3.5',
+    icon: `${ICON_ASSET}/featureos.png`,
+  },
+  // https://feedback.featurebase.app/
+  {
+    title: 'Featurebase',
+    size: '1.4+ MB',
+    sizeNum: 1.45 * 1024,
+    iconSize: 'size-3',
+    icon: `${ICON_ASSET}/featurebase.webp`,
+  },
+  // https://github.com/vercel/next.js/discussions
+  {
+    title: 'Github Discussions',
+    size: '1.7+ MB',
+    sizeNum: 1.7 * 1024,
+    icon: `${ICON_ASSET}/github.png`,
+  },
+  // https://meta.discourse.com/
   {
     title: 'Discourse',
-    size: '1.8+ MB',
-    sizeNum: 1.83 * 1024,
+    size: '1.9+ MB',
+    sizeNum: 1.96 * 1024,
     opacity: 'opacity-90',
     icon: `${ICON_ASSET}/discourse.png`,
   },

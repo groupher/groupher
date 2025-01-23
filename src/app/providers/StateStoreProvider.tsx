@@ -41,9 +41,6 @@ export default ({ children }: { children: ReactNode }) => {
   const dashboard = useDashboard(community)
   const wallpaper = useWallpaper(community)
 
-  // @ts-ignore
-  // console.log('## dashbaord: ', dashboard)
-
   const rootStore = useStore({
     locale,
     localeData,

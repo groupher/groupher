@@ -1,9 +1,7 @@
+import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+
 const Loading = () => {
-  return (
-    <div>
-      <h2>post id loading</h2>
-    </div>
-  )
+  return <LavaLampLoading top={20} />
 }
 
 export default Loading
