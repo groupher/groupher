@@ -1,0 +1,17 @@
+import type { TColorName } from '~/spec'
+import { COLOR_NAME } from '~/const/colors'
+import useTwBelt from '~/hooks/useTwBelt'
+
+type TProps = {
+  color?: TColorName
+}
+
+export default ({ color = COLOR_NAME.BLACK }: TProps = {}) => {
+  const { cn, fg, rainbow } = useTwBelt()
+
+  return {
+    wrapper: 'row-center gap-x-2 -ml-0.5',
+    tag: cn('px-2.5 py-0.5 rounded-xl', rainbow(color, 'bgSoft')),
+    name: cn('text-xs font-normal', fg('text.digest')),
+  }
+}
