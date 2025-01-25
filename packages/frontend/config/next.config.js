@@ -1,33 +1,17 @@
-// const webpack = require('webpack')
-
-// next-plugins
-// const withPlugins = require('next-compose-plugins')
-
-// const withPWA = require('next-pwa')({
-//   dest: 'public',
-// })
+// base-next.config.js
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 })
 
-// next-plugins end
-
-// if move pwa config to witPlugins, it will not work
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  // transpilePackages: ['ramda'],
-  // only in dev
-  // see https://nextjs.org/docs/pages/building-your-application/rendering
-  //     https://github.com/vercel/next.js/issues/35822
+const baseConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  productionBrowserSourceMaps: false,
+  productionBrowserSourceMaps: true,
   experimental: {
-    reactCompiler: true,
     scrollRestoration: true,
     optimizePackageImports: ['ramda'],
-    // for fix build error for useSearchParams
     missingSuspenseWithCSRBailout: false,
   },
 
@@ -73,5 +57,15 @@ const nextConfig = {
   },
 }
 
-// module.exports = withBundleAnalyzer(withPWA(nextConfig))
-module.exports = withBundleAnalyzer(nextConfig)
+module.exports = (customConfig = {}) => {
+  const mergedConfig = {
+    ...baseConfig,
+    ...customConfig,
+    experimental: {
+      ...baseConfig.experimental,
+      ...customConfig.experimental,
+    },
+  }
+
+  return withBundleAnalyzer(mergedConfig)
+}
