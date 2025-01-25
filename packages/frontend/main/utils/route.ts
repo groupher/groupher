@@ -25,6 +25,7 @@ import { Global } from './helper'
 const parseMainPath = compose(head, split('?'), head, reject(isEmpty), split('/'), prop('asPath'))
 
 // example: /xxx/getme?aa=bb&cc=dd
+// @ts-ignore
 const parsePathList = compose(
   reject(isEmpty),
   split('/'),
@@ -36,27 +37,28 @@ const parsePathList = compose(
 )
 
 const INDEX = ''
-const getMainPath = (args) => {
+const getMainPath = (args: any): string => {
   if (args.asPath === '/') return INDEX
 
+  // @ts-ignore
   return parseMainPath(args)
 }
 
-const getSubPath = (args) => {
+const getSubPath = (args: any): string => {
   if (args.asPath === '/') return INDEX
 
   const asPathList = parsePathList(args)
-  // const subPath = asPathList.length > 1 ? asPathList[1] : asPathList[0]
+  // @ts-ignore
   const subPath = asPathList.length > 1 ? asPathList[1] : ''
 
   return subPath
 }
 
-const getThirdPath = (args) => {
+const getThirdPath = (args: any): string => {
   if (args.asPath === '/') return INDEX
 
   const asPathList = parsePathList(args)
-  // const subPath = asPathList.length > 1 ? asPathList[1] : asPathList[0]
+  // @ts-ignore
   const subPath = asPathList.length > 2 ? asPathList[2] : ''
 
   return subPath
@@ -68,37 +70,28 @@ const getThirdPath = (args) => {
  * will return emacs
  * otherwise will return ""
  */
-const parseSubDomain = (args) => {
+const parseSubDomain = (args: any): string => {
   let communityPath = ''
   const isServerSide = false
   if (isServerSide) {
     // on server side
     const { subdomains } = args.req
-    // eslint-disable-next-line no-console
-    // NOTE:  subdomains is reversed
-    // http://expressjs.com/en/4x/api.html#req.subdomains
     if (!isEmpty(subdomains)) {
       communityPath = subdomains[subdomains.length - 1]
     }
   } else {
     // browser side
-    // eslint-disable-next-line no-useless-escape
-    const domain = /:\/\/([^\/]+)/.exec(window.location.href)[1]
+    const domain = /:\/\/([^\/]+)/.exec(window.location.href)?.[1] ?? ''
     const domainList = domain.split('.')
 
     if (domainList.length >= 3) {
-      // eslint-disable-next-line prefer-destructuring
       communityPath = domainList[0]
     }
-    // eslint-disable-next-line no-console
   }
   return communityPath
 }
 
-export const parseURL = (args) => {
-  // const isServer = typeof window === 'undefined'
-  // props 可能来自服务端的 props
-  // props 也可能来自客户端的 routeObj
+export const parseURL = (args: any): any => {
   let mainPath = ''
   let subPath = ''
   let thirdPath = ''
@@ -128,7 +121,7 @@ export const parseURL = (args) => {
 }
 
 // --------------
-
+// @ts-ignore
 export const getRoutePathList = compose(
   reject(isEmpty),
   split('/'),
@@ -140,13 +133,14 @@ export const getRoutePathList = compose(
 
 const doGetRouteMainPath = compose(head, split('?'), head, reject(isEmpty), split('/'))
 
-export const getRouteMainPath = (asPath) => {
+export const getRouteMainPath = (asPath: string): string => {
   if (asPath === '/') return ROUTE.HOME
 
+  // @ts-ignore
   return doGetRouteMainPath(asPath)
 }
 
-export const ssrParseURL = (req) => {
+export const ssrParseURL = (req: any): any => {
   const { url } = req
   if (url === '/') {
     const mainPath = 'home'
@@ -181,7 +175,7 @@ export const ssrParseURL = (req) => {
   }
 }
 
-export const akaTranslate = (communitySlug) => {
+export const akaTranslate = (communitySlug: string): string => {
   switch (communitySlug) {
     case 'k8s':
       return 'kubernetes'
@@ -204,12 +198,13 @@ export const akaTranslate = (communitySlug) => {
   }
 }
 
-const mergePagiQuery = (query = {}, opt = { pagi: 'string' }) => {
+const mergePagiQuery = (query: any = {}, opt: any = { pagi: 'string' }): any => {
   const routeQuery = clone(query)
 
   let defaultQuery = { page: '1', size: '20' }
 
   if (opt.pagi === 'number') {
+    // @ts-ignore
     defaultQuery = { page: 1, size: 20 }
   }
 
@@ -221,11 +216,14 @@ const mergePagiQuery = (query = {}, opt = { pagi: 'string' }) => {
 }
 
 // convert url query string to json, with optional pagi info
-export const queryStringToJSON = (path, opt = { noPagiInfo: false, pagi: 'string' }) => {
+export const queryStringToJSON = (
+  path: string,
+  opt: any = { noPagiInfo: false, pagi: 'string' },
+): any => {
   const splited = split('?', path)
   if (splited.length === 1) return mergePagiQuery({}, opt)
 
-  const result = {}
+  const result: any = {}
   const paris = splited[1].split('&')
 
   for (const pair of paris) {
@@ -238,10 +236,7 @@ export const queryStringToJSON = (path, opt = { noPagiInfo: false, pagi: 'string
   return opt.noPagiInfo ? json : mergePagiQuery(json, opt)
 }
 
-/* eslint-disable */
-
-export const getParameterByName = (name) => {
-  /* if (!url) url = window.location.href;*/
+export const getParameterByName = (name: string): string | null => {
   const url = Global.location.href
   const name$ = name.replace(/[\[\]]/g, '\\$&')
   const regex = new RegExp(`[?&]${name$}(=([^&#]*)|&|#|$)`)
@@ -251,35 +246,30 @@ export const getParameterByName = (name) => {
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
 
-export const getQueryFromUrl = (name, url) => {
-  if (!url) url$ = window.location.href
+export const getQueryFromUrl = (name: string, url: string): string | null => {
+  if (!url) url = window.location.href
   const nameVal = name.replace(/[\[\]]/g, '\\$&')
   const regex = new RegExp(`[?&]${nameVal}(=([^&#]*)|&|#|$)`)
-  const results = regex.exec(url$)
+  const results = regex.exec(url)
   if (!results) return null
   if (!results[2]) return ''
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
-/* eslint-enable */
 
-export const serializeQuery = (obj) => {
-  /* eslint-disable */
+export const serializeQuery = (obj: any): string => {
   const qstring = Object.keys(obj)
-    .reduce((a, k) => {
+    .reduce((a: string[], k: string) => {
       a.push(`${k}=${encodeURIComponent(obj[k])}`)
       return a
     }, [])
     .join('&')
 
   return isEmpty(qstring) ? '' : `?${qstring}`
-  /* eslint-enable */
 }
 
-/* eslint-disable */
-// see: https://stackoverflow.com/questions/8498592/extract-hostname-name-from-string
-export const parseDomain = (url) => {
+export const parseDomain = (url: string): any => {
   try {
-    const parsedUrl = {}
+    const parsedUrl: any = {}
 
     if (url === null || url.length === 0) return parsedUrl
 
@@ -321,11 +311,10 @@ export const parseDomain = (url) => {
     return `?? ${e}`
   }
 }
-/* eslint-enable */
 
 // sync json query to the brower url without reload the page
 // empty value obj will be omit
-export const markRoute = (query, opt = { noPagiInfo: true }) => {
+export const markRoute = (query: any, opt: any = { noPagiInfo: true }): void => {
   let query$ = query
   if (nilOrEmpty(query)) query$ = {}
 
@@ -333,7 +322,7 @@ export const markRoute = (query, opt = { noPagiInfo: true }) => {
     ...opt,
   })
 
-  const newQueryObj = pickBy((v) => !nilOrEmpty(v), mergeRight(exsitQuery, query$))
+  const newQueryObj = pickBy((v: any) => !nilOrEmpty(v), mergeRight(exsitQuery, query$))
   const newQueryString = serializeQuery(newQueryObj)
 
   Global.history.pushState({}, null, newQueryString)

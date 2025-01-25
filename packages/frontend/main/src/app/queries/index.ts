@@ -79,26 +79,20 @@ export const useI18n = (): TUseI18n => {
   // const lang = LangParser.parse('zh-CN,zh;q=0.9,en;q=0.8,ja;q=0.7,it;q=0.6,fr;q=0.5,zh-TW;q=0.4')
   // console.log('## ## lang: ', lang)
 
-  try {
-    const [result] = useQuery({
-      query: i18nQuery,
-      // TODO: use community.locale or search lang query
-      variables: { locale },
-      // pause: false,
-      pause: skipLandingQuery,
-    })
-    console.log('## got result: ', result)
+  const [result] = useQuery({
+    query: i18nQuery,
+    // TODO: use community.locale or search lang query
+    variables: { locale },
+    // pause: false,
+    pause: skipLandingQuery,
+  })
 
-    return useMemo(() => {
-      return {
-        locale,
-        localeData: JSON.stringify(result.data),
-      }
-    }, [locale, result.data])
-  } catch (e) {
-    console.log('## e: ', e)
-    return { locale: 'en', localeData: JSON.stringify({}) } // 提供默认值
-  }
+  return useMemo(() => {
+    return {
+      locale,
+      localeData: JSON.stringify(result.data),
+    }
+  }, [locale, result.data])
 }
 
 // export const useThemeFromURL = (): TThemeName => {

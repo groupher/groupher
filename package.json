@@ -3,8 +3,13 @@
   "version": "1.2.50",
   "license": "Apache License 2.0",
   "scripts": {
+    "info:main": "yarn workspace @groupher/frontend-main next info",
+    "clean:main": "yarn workspace @groupher/frontend-main rm -rf .next",
+    "predev:main": "yarn clean:main",
     "dev:main": "yarn workspace @groupher/frontend-main dev",
+    "prebuild:prod:main": "yarn clean:main",
     "build:prod:main": "yarn workspace @groupher/frontend-main build:prod",
+    "serve:prod:main": "yarn workspace @groupher/frontend-main cross-env NODE_ENV=production next start -p 3000",
     "dev": "next dev --turbo",
     "ci": "cross-env NODE_ENV=ci next dev",
     "update.version": "node -p \"'export const APP_VERSION = ' + JSON.stringify(require('./package.json').version)\" > config/version.ts",
