@@ -3,10 +3,20 @@
 	"buildCommand": "yarn workspaces run build",
 	"installCommand": "yarn install",
 	"rewrites": [
-		{ "source": "/", "destination": "/frontend/landing" },
-		{ "source": "/pricing", "destination": "/frontend/landing" },
-		{ "source": "/(.*)", "destination": "/frontend/main/$1" }
-	],
+    { "source": "/", "destination": "/packages/frontend/landing" },
+    { "source": "/pricing", "destination": "/packages/frontend/landing" },
+    { "source": "/((?!packages/).*)", "destination": "/packages/frontend/main/$1" }
+  ],
+	"builds": [
+    {
+      "src": "packages/frontend/main/package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "packages/frontend/landing/package.json",
+      "use": "@vercel/next"
+    }
+  ],
 	"headers": [
 		{
 			"source": "/(.+\\.png)",
