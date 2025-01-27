@@ -1,4 +1,13 @@
 {
+	"version": 2,
+	"buildCommand": "yarn workspaces run build",
+	"installCommand": "yarn install",
+	"outputDirectory": ".",
+	"rewrites": [
+		{ "source": "/", "destination": "/frontend/landing" },
+		{ "source": "/pricing", "destination": "/frontend/landing" },
+		{ "source": "/(.*)", "destination": "/frontend/main/$1" }
+	],
 	"headers": [
 		{
 			"source": "/(.+\\.png)",
@@ -9,6 +18,5 @@
 				}
 			]
 		}
-	],
-	"installCommand": "npm install --legacy-peer-deps"
+	]
 }
