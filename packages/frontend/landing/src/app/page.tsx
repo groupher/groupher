@@ -4,5 +4,10 @@ export const dynamic = 'force-static'
 import Landing from './Landing'
 
 export default () => {
-  return <Landing />
+  return (
+    <>
+      <h2>from landing repo</h2>
+      <Landing />
+    </>
+  )
 }

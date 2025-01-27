@@ -63,7 +63,8 @@
     }
   },
   "lint-staged": {
-    "**/*.ts?(x)": "tsc-files --noEmit"
+    "packages/frontend/main/**/*.ts?(x)": "tsc-files --noEmit --project ./packages/frontend/main/tsconfig.json",
+    "packages/frontend/landing/**/*.ts?(x)": "tsc-files --noEmit --project ./packages/frontend/landing/tsconfig.json"
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.8.0",
