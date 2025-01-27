@@ -1,5 +1,5 @@
 {
-	"version": 2,
+	"framework": "nextjs",
 	"buildCommand": "yarn workspaces run build",
 	"installCommand": "yarn install",
 	"rewrites": [
