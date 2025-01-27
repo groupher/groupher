@@ -2,5 +2,12 @@
 const withBaseConfig = require('../config/next.config')
 
 module.exports = withBaseConfig({
-  basePath: '/frontend/main',
+  async rewrites() {
+    return [
+      {
+        source: '/:path*',
+        destination: '/main/:path*',
+      },
+    ]
+  },
 })

@@ -1,9 +1,14 @@
-module.exports = {
-  rewrites: async () => {
-    return [
-      { source: '/', destination: '/packages/frontend/landing' },
-      { source: '/pricing', destination: '/packages/frontend/landing' },
-      { source: '/((?!packages/).*)', destination: '/packages/frontend/main/$1' },
-    ]
-  },
-}
+const { withZone } = require('@vercel/next')
+
+module.exports = withZone({
+  zones: [
+    {
+      name: 'landing',
+      path: 'packages/frontend/landing',
+    },
+    {
+      name: 'main',
+      path: 'packages/frontend/main',
+    },
+  ],
+})
