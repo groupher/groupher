@@ -2,7 +2,6 @@
 	"version": 2,
 	"buildCommand": "yarn workspaces run build",
 	"installCommand": "yarn install",
-	"outputDirectory": "packages/frontend/main/.next",
 	"rewrites": [
 		{ "source": "/", "destination": "/frontend/landing" },
 		{ "source": "/pricing", "destination": "/frontend/landing" },
