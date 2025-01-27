@@ -5,4 +5,12 @@ module.exports = {
       { name: 'main', path: './packages/frontend/main' },
     ],
   },
+  rewrites: async () => {
+    return [
+      {
+        source: '/:path*',
+        destination: '/main/:path*',
+      },
+    ]
+  },
 }

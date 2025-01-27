@@ -1,23 +1,7 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "yarn workspaces run build",
   "installCommand": "yarn install",
-  "rewrites": [
-    { "source": "/", "destination": "/packages/frontend/landing" },
-    { "source": "/pricing", "destination": "/packages/frontend/landing" },
-    { "source": "/((?!packages/).*)", "destination": "/packages/frontend/main/$1" }
-  ],
-  "builds": [
-    {
-      "src": "packages/frontend/main/package.json",
-      "use": "@vercel/next"
-    },
-    {
-      "src": "packages/frontend/landing/package.json",
-      "use": "@vercel/next"
-    }
-  ],
   "headers": [
     {
       "source": "/(.+\\.png)",
