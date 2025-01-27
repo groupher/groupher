@@ -1,7 +1,7 @@
 const { keys, uniq } = require('ramda')
 const { borderSoft, container } = require('../twConfig.json')
 
-const Z_INDEX = require('../zindex.json')
+const Z_INDEX = require('../zIndex.json')
 
 const GENERAL = [
   'border-divider',
