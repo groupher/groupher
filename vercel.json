@@ -18,14 +18,14 @@
       }
     }
   ],
-  "routes": [
+	"rewrites": [
     {
-      "src": "/",
-      "dest": "/packages/frontend/landing"
+      "source": "/",
+      "destination": "/packages/frontend/landing"
     },
     {
-      "src": "/(.*)",
-      "dest": "/packages/frontend/main/$1"
+      "source": "/(.*)",
+      "destination": "/packages/frontend/main/$1"
     }
   ],
   "headers": [
