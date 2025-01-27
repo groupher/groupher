@@ -2,32 +2,6 @@
   "version": 2,
   "framework": "nextjs",
   "installCommand": "yarn install",
-	"builds": [
-    {
-      "src": "packages/frontend/landing/next.config.js",
-      "use": "@vercel/next",
-      "config": {
-        "distDir": ".next-landing"
-      }
-    },
-    {
-      "src": "packages/frontend/main/next.config.js",
-      "use": "@vercel/next",
-      "config": {
-        "distDir": ".next-main"
-      }
-    }
-  ],
-	"rewrites": [
-    {
-      "source": "/",
-      "destination": "/packages/frontend/landing"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/packages/frontend/main/$1"
-    }
-  ],
   "headers": [
     {
       "source": "/(.+\\.png)",
