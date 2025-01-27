@@ -11,6 +11,10 @@ module.exports = {
   rewrites: async () => {
     return [
       {
+        source: '/',
+        destination: '/landing',
+      },
+      {
         source: '/:path*',
         destination: '/main/:path*',
       },
