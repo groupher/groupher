@@ -1,13 +1,14 @@
 {
-	"framework": "nextjs",
-	"buildCommand": "yarn workspaces run build",
-	"installCommand": "yarn install",
-	"rewrites": [
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "yarn workspaces run build",
+  "installCommand": "yarn install",
+  "rewrites": [
     { "source": "/", "destination": "/packages/frontend/landing" },
     { "source": "/pricing", "destination": "/packages/frontend/landing" },
     { "source": "/((?!packages/).*)", "destination": "/packages/frontend/main/$1" }
   ],
-	"builds": [
+  "builds": [
     {
       "src": "packages/frontend/main/package.json",
       "use": "@vercel/next"
@@ -17,15 +18,15 @@
       "use": "@vercel/next"
     }
   ],
-	"headers": [
-		{
-			"source": "/(.+\\.png)",
-			"headers": [
-				{
-					"key": "Cache-Control",
-					"value": "public, max-age=31536000, immutable"
-				}
-			]
-		}
-	]
+  "headers": [
+    {
+      "source": "/(.+\\.png)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
 }
