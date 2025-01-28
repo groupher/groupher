@@ -5,6 +5,8 @@
       "src": "/(.*)",
       "dest": "/api/proxy"
     }
-  ]
+  ],
+  "installCommand": "echo 'Skipping install'",
+  "buildCommand": "echo 'Skipping build'"
 }
 
