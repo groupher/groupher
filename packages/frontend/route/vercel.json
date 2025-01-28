@@ -1,9 +1,15 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "proxy.js",
+      "use": "@vercel/node"
+    }
+  ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/api/proxy"
+      "dest": "proxy.js"
     }
   ],
   "installCommand": "echo 'Skipping install'",

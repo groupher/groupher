@@ -1,5 +1,3 @@
-import { NextResponse } from 'next/server'
-
 export const config = {
   runtime: 'edge',
 }
@@ -24,7 +22,7 @@ export default async function handler(request) {
     // 处理静态文件请求
     if (url.pathname.startsWith('/_next/') || url.pathname.startsWith('/static/')) {
       const response = await fetch(targetUrl)
-      return new NextResponse(response.body, {
+      return new Response(response.body, {
         status: response.status,
         headers: response.headers,
       })
@@ -42,12 +40,12 @@ export default async function handler(request) {
     })
 
     // 返回代理响应
-    return new NextResponse(response.body, {
+    return new Response(response.body, {
       status: response.status,
       headers: response.headers,
     })
   } catch (error) {
     console.error('Proxy error:', error)
-    return new NextResponse('Internal Server Error', { status: 500 })
+    return new Response('Internal Server Error', { status: 500 })
   }
 }
