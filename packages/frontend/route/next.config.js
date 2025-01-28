@@ -1,4 +1,21 @@
-// next.config.js
-const withBaseConfig = require('../config/next.config')
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/',
+        destination: 'https://groupher-landing.vercel.app',
+      },
+      {
+        source: '/pricing',
+        destination: 'https://groupher-landing.vercel.app/pricing',
+      },
+      {
+        source: '/(.*)',
+        destination: 'https://groupher-main.vercel.app/$1',
+      },
+    ]
+  },
+}
 
-module.exports = withBaseConfig()
+module.exports = nextConfig
