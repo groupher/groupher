@@ -22,6 +22,10 @@ export default async function handler(request) {
     // 处理静态文件请求
     if (url.pathname.startsWith('/_next/') || url.pathname.startsWith('/static/')) {
       const response = await fetch(targetUrl)
+      if (!response.ok) {
+        console.error('Static resource not found:', targetUrl.toString())
+        return new Response('Static resource not found', { status: 404 })
+      }
       return new Response(response.body, {
         status: response.status,
         headers: response.headers,
@@ -38,6 +42,11 @@ export default async function handler(request) {
       headers: headers,
       body: body,
     })
+
+    if (!response.ok) {
+      console.error('Resource not found:', targetUrl.toString())
+      return new Response('Resource not found', { status: 404 })
+    }
 
     // 返回代理响应
     return new Response(response.body, {
