@@ -4,55 +4,66 @@ export const config = {
 
 export default async function handler(request) {
   const url = new URL(request.url)
+  const { pathname, search } = url
 
-  // 确定目标网站
-  let target
-  if (url.pathname === '/' || url.pathname === '/pricing') {
-    target = 'https://groupher-landing.vercel.app'
+  console.log('Received request:', request.method, pathname)
+
+  // 定义目标 URL 的基础路径
+  let targetBaseUrl
+
+  if (pathname === '/' || pathname === '/pricing') {
+    // 根路径或 /pricing，路由到 landing
+    targetBaseUrl = 'https://groupher-landing.vercel.app'
+  } else if (pathname.startsWith('/_next/')) {
+    // 静态资源请求，判断 Referer 头
+    const referer = request.headers.get('referer') || ''
+    if (referer.includes('/') || referer.includes('/pricing')) {
+      // 来自 / 或 /pricing 的静态资源
+      targetBaseUrl = 'https://groupher-landing.vercel.app'
+    } else {
+      // 默认路由到 main 的静态资源
+      targetBaseUrl = 'https://groupher-main.vercel.app'
+    }
   } else {
-    target = 'https://groupher-main.vercel.app'
+    // 其他路径，路由到 main
+    targetBaseUrl = 'https://groupher-main.vercel.app'
   }
 
   // 构建目标 URL
-  const targetUrl = new URL(url.pathname + url.search, target)
+  const targetUrl = new URL(pathname + search, targetBaseUrl)
 
   console.log('Proxying to:', targetUrl.toString())
 
   try {
-    // 处理静态文件请求
-    if (url.pathname.startsWith('/_next/') || url.pathname.startsWith('/static/')) {
-      const response = await fetch(targetUrl)
-      if (!response.ok) {
-        console.error('Static resource not found:', targetUrl.toString())
-        return new Response('Static resource not found', { status: 404 })
-      }
-      return new Response(response.body, {
-        status: response.status,
-        headers: response.headers,
-      })
-    }
-
-    // 处理其他请求
+    // 读取请求体
     const body =
       request.method === 'GET' || request.method === 'HEAD' ? undefined : await request.text()
+
+    // 复制请求头
     const headers = new Headers(request.headers)
 
+    // 发起代理请求
     const response = await fetch(targetUrl, {
       method: request.method,
       headers: headers,
       body: body,
+      redirect: 'follow',
     })
 
-    if (!response.ok) {
-      console.error('Resource not found:', targetUrl.toString())
-      return new Response('Resource not found', { status: 404 })
-    }
+    console.log('Received response:', response.status, response.statusText)
 
-    // 返回代理响应
-    return new Response(response.body, {
+    // 创建新的响应对象
+    const newResponse = new Response(response.body, {
       status: response.status,
       headers: response.headers,
     })
+
+    // 设置 CORS 头（如果需要）
+    newResponse.headers.set('Access-Control-Allow-Origin', '*')
+    newResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    newResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+    return newResponse
   } catch (error) {
     console.error('Proxy error:', error)
     return new Response('Internal Server Error', { status: 500 })
