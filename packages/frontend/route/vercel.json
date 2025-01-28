@@ -2,15 +2,15 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "https://landing.vercel.app"
+      "destination": "https://groupher-landing.vercel.app"
     },
     {
       "source": "/pricing",
-      "destination": "https://landing.vercel.app"
+      "destination": "https://groupher-landing.vercel.app"
     },
     {
       "source": "/(.*)",
-      "destination": "https://main.vercel.app/$1"
+      "destination": "https://groupher-main.vercel.app/$1"
     }
   ]
 }
