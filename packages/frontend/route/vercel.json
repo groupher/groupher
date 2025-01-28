@@ -1,26 +1,11 @@
 {
-  "version": 2,
-  "routes": [
-    {
-      "src": "/",
-      "dest": "https://groupher-landing.vercel.app"
-    },
-    {
-      "src": "/_next/static/(.*)",
-      "dest": "https://groupher-landing.vercel.app/_next/static/$1"
-    },
-    {
-      "src": "/_next-landing/(.*)",
-      "dest": "https://groupher-landing.vercel.app/_next-landing/$1"
-    },
-    {
-      "src": "/_next-main/(.*)",
-      "dest": "https://groupher-main.vercel.app/_next-main/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "https://groupher-main.vercel.app/$1"
-    }
+  "rewrites": [
+    { "source": "/landing/_next/static/:path*", "destination": "https://landing-project.vercel.app/_next/static/:path*" },
+    { "source": "/_next/static/:path*", "destination": "https://main-project.vercel.app/_next/static/:path*" },
+    { "source": "/", "destination": "https://landing-project.vercel.app" },
+    { "source": "/:path*", "destination": "https://main-project.vercel.app/:path*" }
   ]
 }
+
+
 
