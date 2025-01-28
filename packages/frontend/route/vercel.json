@@ -1,16 +1,10 @@
 {
-  "rewrites": [
+  "version": 2,
+  "routes": [
     {
-      "source": "/",
-      "destination": "https://groupher-landing.vercel.app"
-    },
-    {
-      "source": "/pricing",
-      "destination": "https://groupher-landing.vercel.app/pricing"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "https://groupher-main.vercel.app/$1"
+      "src": "/(.*)",
+      "dest": "/api/proxy"
     }
   ]
 }
+
