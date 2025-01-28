@@ -17,6 +17,7 @@
     "prebuild:prod:landing": "yarn clean:landing",
     "build:prod:landing": "yarn workspace @groupher/frontend-landing build:prod",
     "serve:prod:landing": "yarn workspace @groupher/frontend-landing cross-env NODE_ENV=production next start -p 3001",
+    "build:prod:route": "yarn workspace @groupher/frontend-route build",
     "dev.old": "next dev --turbo",
     "ci": "cross-env NODE_ENV=ci next dev",
     "update.version": "node -p \"'export const APP_VERSION = ' + JSON.stringify(require('./package.json').version)\" > config/version.ts",

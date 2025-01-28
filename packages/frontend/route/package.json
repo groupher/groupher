@@ -1,0 +1,14 @@
+{
+  "name": "@groupher/frontend-route",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "ci": "cross-env NODE_ENV=ci next dev",
+    "type-check": "tsc --noEmit",
+    "build": "cross-env NODE_ENV=production next build",
+    "start": "cross-env NODe_ENV=production next start -p 3000",
+    "dist": "next build && next export -o \"build\"",
+    "info": "next info"
+  }
+}

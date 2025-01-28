@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "https://landing.vercel.app"
+    },
+    {
+      "source": "/pricing",
+      "destination": "https://landing.vercel.app"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "https://main.vercel.app/$1"
+    }
+  ]
+}
