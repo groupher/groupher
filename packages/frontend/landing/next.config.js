@@ -2,5 +2,17 @@
 const withBaseConfig = require('../config/next.config')
 
 module.exports = withBaseConfig({
-  basePath: '/landing',
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'x-groupher-part',
+            value: 'landing',
+          },
+        ],
+      },
+    ]
+  },
 })

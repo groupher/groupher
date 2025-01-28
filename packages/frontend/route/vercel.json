@@ -1,11 +1,19 @@
 {
   "rewrites": [
-    { "source": "/landing/_next/static/:path*", "destination": "https://landing-project.vercel.app/_next/static/:path*" },
-    { "source": "/_next/static/:path*", "destination": "https://main-project.vercel.app/_next/static/:path*" },
-    { "source": "/", "destination": "https://landing-project.vercel.app" },
-    { "source": "/:path*", "destination": "https://main-project.vercel.app/:path*" }
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "x-groupher-part",
+          "value": "landing"
+        }
+      ],
+      "destination": "https://groupher-landing.vercel.app/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "https://groupher-main.vercel.app/:path*"
+    }
   ]
 }
-
-
-
