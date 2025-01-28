@@ -6,7 +6,7 @@
     },
     {
       "source": "/pricing",
-      "destination": "https://groupher-landing.vercel.app"
+      "destination": "https://groupher-landing.vercel.app/pricing"
     },
     {
       "source": "/(.*)",
