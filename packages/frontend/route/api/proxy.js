@@ -5,28 +5,54 @@ export const config = {
 }
 
 export default async function handler(request) {
-  console.log('Received request:', request.method, request.url)
-
   const url = new URL(request.url)
-  const targetUrl = new URL(url.pathname + url.search, 'https://groupher-landing.vercel.app')
+  const { pathname, search } = url
+
+  console.log('Received request:', request.method, pathname)
+
+  // 定义目标 URL 的基础路径
+  let targetBaseUrl
+
+  if (pathname === '/' || pathname === '/pricing') {
+    // 根路径或 /pricing，路由到 landing
+    targetBaseUrl = 'https://groupher-landing.vercel.app'
+  } else if (pathname.startsWith('/_next')) {
+    // 静态资源请求，判断来源
+    const referer = request.headers.get('referer') || ''
+    if (referer.includes('groupher-landing')) {
+      // 来自 landing 的静态资源
+      targetBaseUrl = 'https://groupher-landing.vercel.app'
+    } else {
+      // 默认路由到 main 的静态资源
+      targetBaseUrl = 'https://groupher-main.vercel.app'
+    }
+  } else {
+    // 其他路径，路由到 main
+    targetBaseUrl = 'https://groupher-main.vercel.app'
+  }
+
+  // 构建目标 URL
+  const targetUrl = new URL(pathname + search, targetBaseUrl)
 
   console.log('Proxying to:', targetUrl.toString())
 
-  // 记录请求头
-  console.log('Request headers:', Object.fromEntries(request.headers))
-
   try {
+    // 读取请求体
+    const body =
+      request.method === 'GET' || request.method === 'HEAD' ? undefined : await request.text()
+
+    // 复制请求头
+    const headers = new Headers(request.headers)
+
+    // 发起代理请求
     const response = await fetch(targetUrl, {
       method: request.method,
-      headers: request.headers,
-      body: request.body,
-      redirect: 'follow', // 允许跟随重定向
+      headers: headers,
+      body: body,
+      redirect: 'follow',
     })
 
     console.log('Received response:', response.status, response.statusText)
-
-    // 记录响应头
-    console.log('Response headers:', Object.fromEntries(response.headers))
 
     // 创建新的响应对象
     const newResponse = new NextResponse(response.body, {
@@ -40,15 +66,9 @@ export default async function handler(request) {
     newResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
     newResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
-    // 处理特定的内容类型
-    const contentType = response.headers.get('content-type')
-    if (contentType?.includes('application/javascript')) {
-      newResponse.headers.set('Content-Type', 'application/javascript')
-    }
-
     return newResponse
   } catch (error) {
     console.error('Proxy error:', error)
-    return new NextResponse(`Proxy error: ${error.message}`, { status: 500 })
+    return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
