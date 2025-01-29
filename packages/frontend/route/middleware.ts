@@ -10,6 +10,12 @@ export default function middleware(request: NextRequest) {
   const isLandingRequest =
     request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/landing/_next/static')
 
+  const isRouteRequest = request.nextUrl.pathname.startsWith('/route/_next/static')
+
+  if (isRouteRequest) {
+    console.log('## --->  route url: ', request.nextUrl.pathname)
+  }
+
   if (isLandingRequest) {
     return NextResponse.rewrite(new URL(pathname, LANDING_URL))
   }
