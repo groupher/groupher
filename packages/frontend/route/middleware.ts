@@ -10,7 +10,8 @@ export default function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const isLandingRequest = request.headers.get('x-groupher-part') === 'landing'
+  const isLandingRequest =
+    request.nextUrl.pathname === '/' || request.headers.get('x-groupher-part') === 'landing'
 
   console.log('## -> isLandingRequest:', isLandingRequest)
 
