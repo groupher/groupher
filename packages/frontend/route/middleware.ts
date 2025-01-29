@@ -5,15 +5,10 @@ const LANDING_URL = 'https://groupher-landing.vercel.app'
 const MAIN_URL = 'https://groupher-main.vercel.app'
 
 export default function middleware(request: NextRequest) {
-  console.log('## -> Middleware called for path:', request.nextUrl.pathname)
-  console.log('## -> Request headers:', request.headers)
-
   const { pathname } = request.nextUrl
 
   const isLandingRequest =
     request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/landing/_next/static')
-
-  console.log('## -> isLandingRequest:', isLandingRequest)
 
   if (isLandingRequest) {
     return NextResponse.rewrite(new URL(pathname, LANDING_URL))
