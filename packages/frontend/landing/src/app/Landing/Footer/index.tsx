@@ -1,5 +1,3 @@
-import Link from 'next/link'
-
 import { ROUTE } from '~/const/route'
 
 import Img from '~/Img'
@@ -22,9 +20,9 @@ export default () => {
         」交给 Groupher
       </div>
       <div className={s.buttons}>
-        <Link href={ROUTE.APPLY_COMMUNITY} className={s.linkable}>
+        <a href={ROUTE.APPLY_COMMUNITY} className={s.linkable}>
           <BorderButton space={8}>创建新社区</BorderButton>
-        </Link>
+        </a>
 
         <Button size="medium" ghost>
           预约演示
