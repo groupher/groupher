@@ -11,7 +11,7 @@ export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isLandingRequest =
-    request.nextUrl.pathname === '/' || request.headers.get('x-groupher-part') === 'landing'
+    request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/landing/_next/static')
 
   console.log('## -> isLandingRequest:', isLandingRequest)
 
