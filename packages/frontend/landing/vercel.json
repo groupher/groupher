@@ -1,0 +1,12 @@
+{
+  "routes": [
+    {
+      "src": "/landing/_next/static/(.*)",
+      "dest": "/_next/static/$1"
+    },
+    {
+      "src": "/landing/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
