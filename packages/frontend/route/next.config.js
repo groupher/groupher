@@ -1,4 +1,4 @@
-// next.config.js
-const withBaseConfig = require('../config/next.config')
+/** @type {import('next').NextConfig} */
+const nextConfig = {}
 
-module.exports = withBaseConfig()
+module.exports = nextConfig
