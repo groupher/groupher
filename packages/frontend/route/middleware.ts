@@ -12,6 +12,8 @@ export default function middleware(request: NextRequest) {
 
   const isRouteRequest = request.nextUrl.pathname.startsWith('/route/_next/static')
 
+  console.log('## ---> pathname: ', request.nextUrl.pathname)
+
   if (isRouteRequest) {
     console.log('## --->  route url: ', request.nextUrl.pathname)
   }
