@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export const runtime = 'edge'
-
 const LANDING_URL = 'https://groupher-landing.vercel.app'
 const MAIN_URL = 'https://groupher-main.vercel.app'
 
@@ -21,5 +19,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|favicon.ico).*)', '/'],
+  matcher: '/:path*',
 }
