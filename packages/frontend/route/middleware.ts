@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+export const runtime = 'edge'
+
 const LANDING_URL = 'https://groupher-landing.vercel.app'
 const MAIN_URL = 'https://groupher-main.vercel.app'
 
 export default function middleware(request: NextRequest) {
+  console.log('Middleware called for path:', request.nextUrl.pathname)
+
   const { pathname } = request.nextUrl
 
   const isLandingRequest = request.headers.get('x-groupher-part') === 'landing'
