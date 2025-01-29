@@ -2,7 +2,18 @@
   "rewrites": [
     {
       "source": "/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "x-groupher-part",
+          "value": "landing"
+        }
+      ],
       "destination": "https://groupher-landing.vercel.app/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "https://groupher-main.vercel.app/:path*"
     }
   ]
 }

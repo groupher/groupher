@@ -1,0 +1,14 @@
+{
+  "name": "@groupher/frontend-route",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "ci": "cross-env NODE_ENV=ci next dev",
+    "build": "cross-env NODE_ENV=production next build",
+    "start": "cross-env NODe_ENV=production next start",
+    "info": "next info",
+    "clean": "shjs ./utils/scripts/clean.js",
+    "gen": "plop --plopfile ./utils/scripts/generators/index.js"
+  }
+}
