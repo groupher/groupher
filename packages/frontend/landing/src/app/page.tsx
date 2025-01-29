@@ -1,13 +1,13 @@
 // https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config
 export const dynamic = 'force-static'
 
-import Landing from './Landing'
+// import Landing from './Landing'
 
 export default () => {
   return (
     <>
-      <h2>from landing repo</h2>
-      <Landing />
+      <h2>from landing repo real</h2>
+      {/* <Landing /> */}
     </>
   )
 }
