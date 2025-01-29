@@ -1,5 +1,4 @@
 import { type FC, useState } from 'react'
-import Link from 'next/link'
 
 import { ROUTE } from '~/const/route'
 import useSession from '~/hooks/useSession'
@@ -28,14 +27,14 @@ const HomeHeader: FC = () => {
 
   return (
     <div className={s.wrapper}>
-      <Link href="/" className={s.brand}>
+      <a href="/" className={s.brand}>
         <CommunityBrand landingBrand />
-      </Link>
+      </a>
       <div className={s.links}>
         <Tooltip
           content={
             <div className={cn(s.panel, 'w-52 mt-1 mb-1.5')}>
-              <Link className={cn(s.menuBar, '!items-start')} href={`/${ROUTE.HOME}`}>
+              <a className={cn(s.menuBar, '!items-start')} href={`/${ROUTE.HOME}`}>
                 <div className={cn(s.menuIconBox, s.purpleBg)}>
                   <DiscussSVG className={cn(s.menuIcon, s.purpleIcon)} />
                 </div>
@@ -43,11 +42,8 @@ const HomeHeader: FC = () => {
                   <div className={cn(s.menuTitle, 'bold-sm')}>讨论区</div>
                   <div className={s.menuDesc}>功能需求，问题上报，常规讨论等</div>
                 </div>
-              </Link>
-              <Link
-                className={cn(s.menuBar, '!items-start')}
-                href={`/${ROUTE.HOME}/${ROUTE.KANBAN}`}
-              >
+              </a>
+              <a className={cn(s.menuBar, '!items-start')} href={`/${ROUTE.HOME}/${ROUTE.KANBAN}`}>
                 <div className={cn(s.menuIconBox, s.blueBg)}>
                   <KanbanSVG className={cn(s.menuIcon, 'rotate-180', s.blueIcon)} />
                 </div>
@@ -55,8 +51,8 @@ const HomeHeader: FC = () => {
                   <div className={cn(s.menuTitle, 'bold-sm')}>看板</div>
                   <div className={s.menuDesc}>开发计划，产品路线图</div>
                 </div>
-              </Link>
-              <Link
+              </a>
+              <a
                 className={cn(s.menuBar, '!items-start')}
                 href={`/${ROUTE.HOME}/${ROUTE.CHANGELOG}`}
               >
@@ -67,8 +63,8 @@ const HomeHeader: FC = () => {
                   <div className={cn(s.menuTitle, 'bold-sm')}>更新日志</div>
                   <div className={s.menuDesc}>产品更新详情，历史版本发布记录。</div>
                 </div>
-              </Link>
-              <Link className={cn(s.menuBar, '!items-start')} href={`/${ROUTE.HOME}/${ROUTE.HELP}`}>
+              </a>
+              <a className={cn(s.menuBar, '!items-start')} href={`/${ROUTE.HOME}/${ROUTE.HELP}`}>
                 <div className={cn(s.menuIconBox, s.cyanBg)}>
                   <BookSVG className={cn(s.menuIcon, 'size-5', s.cyanIcon)} />
                 </div>
@@ -76,7 +72,7 @@ const HomeHeader: FC = () => {
                   <div className={cn(s.menuTitle, 'bold-sm')}>帮助文档</div>
                   <div className={s.menuDesc}>常见问题，使用引导，开发指南等</div>
                 </div>
-              </Link>
+              </a>
             </div>
           }
           placement="bottom"
@@ -91,30 +87,30 @@ const HomeHeader: FC = () => {
           </div>
         </Tooltip>
 
-        <Link className={s.linkItem} href={`/${ROUTE.HOME}`}>
+        <a className={s.linkItem} href={`/${ROUTE.HOME}`}>
           社区
-        </Link>
-        <Link className={s.linkItem} href={`/${ROUTE.HOME}/${ROUTE.KANBAN}`}>
+        </a>
+        <a className={s.linkItem} href={`/${ROUTE.HOME}/${ROUTE.KANBAN}`}>
           开发计划
-        </Link>
-        <Link className={s.linkItem} href={`/${ROUTE.PRICE}`}>
+        </a>
+        <a className={s.linkItem} href={`/${ROUTE.PRICE}`}>
           价格
-        </Link>
+        </a>
         <Tooltip
           content={
             <div className={s.panel}>
-              <Link className={s.menuBar} href={`/${ROUTE.HOME}`}>
+              <a className={s.menuBar} href={`/${ROUTE.HOME}`}>
                 <div className={s.menuTitle}>团队博客</div>
-              </Link>
-              <Link className={s.menuBar} href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`}>
+              </a>
+              <a className={s.menuBar} href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`}>
                 <div className={s.menuTitle}>帮助文档</div>
-              </Link>
-              <Link className={s.menuBar} href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`}>
+              </a>
+              <a className={s.menuBar} href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`}>
                 <div className={s.menuTitle}>更新日志</div>
-              </Link>
-              <Link className={s.menuBar} href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`}>
+              </a>
+              <a className={s.menuBar} href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`}>
                 <div className={s.menuTitle}>自定义</div>
-              </Link>
+              </a>
             </div>
           }
           placement="bottom"
@@ -134,10 +130,10 @@ const HomeHeader: FC = () => {
       <div className={s.extraInfo}>
         <ThemeSwitch />
         <div className={s.divider} />
-        <Link className={s.requestDemoLink} href={`/${ROUTE.BOOK_DEMO}`}>
+        <a className={s.requestDemoLink} href={`/${ROUTE.BOOK_DEMO}`}>
           <DemoSVG className={s.demoIcon} />
           <div>预约演示</div>
-        </Link>
+        </a>
       </div>
     </div>
   )

@@ -4,8 +4,6 @@
  * LandingPage
  */
 
-import Link from 'next/link'
-
 import { ROUTE } from '~/const/route'
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/LinkOutside'
@@ -34,9 +32,15 @@ export default () => {
           <HomeHeader />
           <div className={s.githubInfo}>
             <GithubSVG className={s.githubIcon} style={s.githubIconStyle} />
-            <Link href="/" target="_blank" className={s.githubText} style={s.textGradientStyle}>
+            <a
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              className={s.githubText}
+              style={s.textGradientStyle}
+            >
               Github
-            </Link>
+            </a>
           </div>
           <h1 className={s.title}>让你的产品听见用户的声音</h1>
           <div className={s.desc}>
@@ -44,24 +48,24 @@ export default () => {
           </div>
 
           <div className={s.buttonGroup}>
-            <Link href={ROUTE.APPLY_COMMUNITY} className={s.linkable}>
+            <a href={ROUTE.APPLY_COMMUNITY} className={s.linkable}>
               <BorderButton space={8} className="bold-sm">
                 开始使用
               </BorderButton>
-            </Link>
+            </a>
 
             <Tooltip
               content={
                 <div className={s.demoPanel}>
-                  <Link href={`/${ROUTE.HOME}`} className={s.demoItem}>
+                  <a href={`/${ROUTE.HOME}`} className={s.demoItem}>
                     <div className={s.demoItemTitle}>官方社区</div>
                     <LinkSVG className={s.outLink} />
-                  </Link>
-                  <Link href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`} className={s.demoItem}>
+                  </a>
+                  <a href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`} className={s.demoItem}>
                     <div className={s.demoItemTitle}>管理后台</div>
 
                     <LinkSVG className={s.outLink} />
-                  </Link>
+                  </a>
                 </div>
               }
               placement="bottom"
