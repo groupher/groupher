@@ -3,10 +3,39 @@ import type { TColorName } from '~/spec'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
+import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 
 export { cn } from '~/css'
 
-import { getGithubGradient } from '../../../../src/app/Landing/salon/metric'
+// TODO: move to @groupher-share
+export const getGithubGradient = (wallpaper: string): string => {
+  switch (wallpaper) {
+    case GRADIENT_WALLPAPER_NAME.PINK: {
+      return 'linear-gradient(64deg, #2f2f2f 60%, #211227e0 100%)'
+    }
+
+    case GRADIENT_WALLPAPER_NAME.GREEN: {
+      return 'linear-gradient(64deg, #2b2b29 60%, #0e230fe0 100%)'
+    }
+
+    case GRADIENT_WALLPAPER_NAME.ORANGE: {
+      return 'linear-gradient(64deg, #2f2f2f 60%, #271512e0 100%)'
+    }
+
+    case GRADIENT_WALLPAPER_NAME.BLUE:
+    case GRADIENT_WALLPAPER_NAME.PURPLE: {
+      return 'linear-gradient(64deg, #2f2f2f 20%, #0c1d2ee0 100%)'
+    }
+
+    case GRADIENT_WALLPAPER_NAME.GREY: {
+      return 'linear-gradient(64deg, #2f2f2f 60%, #272524e0 100%)'
+    }
+
+    default: {
+      return 'linear-gradient(64deg, #2f2f2f 60%, #271512e0 100%)'
+    }
+  }
+}
 
 export default () => {
   const { isLightTheme } = useTheme()

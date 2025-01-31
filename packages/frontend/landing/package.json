@@ -14,8 +14,8 @@
     "clean": "shjs ./utils/scripts/clean.js",
     "gen": "plop --plopfile ./utils/scripts/generators/index.js",
     "analyze": "cross-env ANALYZE=true next build",
-    "lint": "./node_modules/.bin/biome lint src/**/*.{ts,tsx}",
-    "format:staged": "./node_modules/.bin/biome format ./src",
+    "lint": "biome lint src/**/*.{ts,tsx}",
+    "format": "biome format ./src",
     "clean:up": "rm -rf *.tsbuildinfo",
     "test": "cross-env NOD_ENV=test jest --config .jest.config.js",
     "test:dev": "cross-env NODE_ENV=test jest --config .jest.config.js",
@@ -26,5 +26,11 @@
     "cy:run:free": "./node_modules/.bin/cypress run",
     "test:ci": "start-server-and-test ci http://localhost:3000 cy:run:free",
     "coveralls": "cat ./coverage/lcov.info | coveralls"
+  },
+  "lint-staged": {
+    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
+  },
+  "dependencies": {
+    "@groupher/frontend-config": "1.0.0"
   }
 }

@@ -25,7 +25,7 @@ const useLongPress = (callback: () => void, ms = 500) => {
   const [startLongPress, setStartLongPress] = useState(false)
 
   useEffect(() => {
-    let timerId
+    let timerId: NodeJS.Timeout | undefined
     if (startLongPress) {
       timerId = setTimeout(callback, ms)
     } else {

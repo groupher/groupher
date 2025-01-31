@@ -8,7 +8,12 @@
     "build": "cross-env NODE_ENV=production next build",
     "start": "cross-env NODe_ENV=production next start",
     "info": "next info",
+    "lint": "echo 'skip link'",
+    "format": "echo 'skip format'",
     "clean": "shjs ./utils/scripts/clean.js",
     "gen": "plop --plopfile ./utils/scripts/generators/index.js"
+  },
+  "lint-staged": {
+    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
   }
 }
