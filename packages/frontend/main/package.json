@@ -25,5 +25,8 @@
     "cy:run:free": "./node_modules/.bin/cypress run",
     "test:ci": "start-server-and-test ci http://localhost:3000 cy:run:free",
     "coveralls": "cat ./coverage/lcov.info | coveralls"
+  },
+  "dependencies": {
+    "@groupher/frontend-config": "1.0.0"
   }
 }

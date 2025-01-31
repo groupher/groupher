@@ -1,7 +1,10 @@
 {
-  "extends": "../config/tsconfig.json",
+  "extends": "@groupher/frontend-config/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@groupher/frontend-config": ["../config"] // 这里指向 config 项目的路径
+    }
   },
   "include": ["next-env.d.ts", "**/*.tsx", "**/*.ts", ".next/types/**/*.ts"]
 }
