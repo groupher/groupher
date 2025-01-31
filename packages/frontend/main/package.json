@@ -14,7 +14,6 @@
     "gen": "plop --plopfile ./utils/scripts/generators/index.js",
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "biome lint src/**/*.{ts,tsx} ",
-    "format2": "biome format ./src",
     "format": "biome check --apply-unsafe --organize-imports-enabled=false --formatter-enabled=true --linter-enabled=false './src'",
     "clean:up": "rm -rf *.tsbuildinfo",
     "test": "cross-env NOD_ENV=test jest --config .jest.config.js",
