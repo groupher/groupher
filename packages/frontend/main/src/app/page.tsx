@@ -4,7 +4,7 @@ export const dynamic = 'force-static'
 export default () => {
   return (
     <>
-      <h2>some thing wrong with proxy</h2>
+      <h2>some thing wrong with proxy.</h2>
       <p>landing should serve by landing repo</p>
     </>
   )
