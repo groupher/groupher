@@ -61,7 +61,7 @@
       "~/SvgIcons/*": ["src/widgets/SvgIcons/*"],
       "~/icons": ["src/widgets/Icons"],
       "~/icons/*": ["src/widgets/Icons/*"],
-      "@groupher/frontend-config": ["./config"]
+      "@groupher/frontend-config": ["./config2"]
     },
     "plugins": [
       {
