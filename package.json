@@ -68,7 +68,8 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn workspaces run lint-staged"
+      "pre-commit": "yarn workspaces run format && yarn workspaces run lint-staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   },
   "dependencies": {
