@@ -5,7 +5,7 @@ import useWallpaper from '~/hooks/useWallpaper'
 import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 import useTwBelt from '~/hooks/useTwBelt'
 
-// TODO: move this with landing to @groupher/ftontend-shared
+// TODO: move this with landing to @groupher/ftontend-shared.
 export const getPathGradient = (wallpaper: string): string => {
   if (!includes(wallpaper, keys(GRADIENT_WALLPAPER))) {
     return '#f2bc5a,#f76b6b'
