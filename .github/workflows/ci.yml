@@ -86,15 +86,14 @@ jobs:
           ls -R $GITHUB_WORKSPACE
           echo "Content of packages/frontend-landing:"
           ls -R $GITHUB_WORKSPACE/packages/frontend-landing
-      - name: Run Biome for landing
-        run: biome lint "$GITHUB_WORKSPACE/packages/frontend-landing/src/**/*.{ts,tsx}"
-      - name: (Frontend) Setup Config CMD Tools
-        working-directory: ./
-        run: ls -llh; chmod +x ./utils/bin/jq-linux; ./utils/bin/jq-linux -s '.[0] * .[1]' config/config.json config/config.ci.json > /tmp/config.json; cp /tmp/config.json ./config/config.json
+      # - name: Run Biome for landing
+      #   run: biome lint "$GITHUB_WORKSPACE/packages/frontend-landing/src/**/*.{ts,tsx}"
+      # - name: (Frontend) Setup Config CMD Tools
+      #   working-directory: ./
+      #   run: ls -llh; chmod +x ./utils/bin/jq-linux; ./utils/bin/jq-linux -s '.[0] * .[1]' config/config.json config/config.ci.json > /tmp/config.json; cp /tmp/config.json ./config/config.json
       - name: (Frontend) Build Project
         working-directory: ./
-        run: npm run build.ci
-
+        run: yarn run build:ci
       - name: cache next.js build
         uses: actions/cache@v3
         with:

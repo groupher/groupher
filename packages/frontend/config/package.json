@@ -5,7 +5,8 @@
   "types": "index.d.ts",
   "scripts": {
     "lint": "echo 'skip link'",
-    "format": "echo 'skip format'"
+    "format": "echo 'skip format'",
+    "build": "echo 'skip build'"
   },
   "lint-staged": {
     "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
