@@ -78,12 +78,8 @@ jobs:
         uses: biomejs/setup-biome@v2
         with:
           version: latest
-      - name: List directory structure
-        run: ls -R
-      - name: List directory structure landing
-        run: ls -R ./packages/frontend/landing
-      - name: Run Biome
-        run: npm run lint
+      - name: Run Biome for landing
+        run: yarn workspace @groupher/frontend-landing run lint
       - name: (Frontend) Setup Config CMD Tools
         working-directory: ./
         run: ls -llh; chmod +x ./utils/bin/jq-linux; ./utils/bin/jq-linux -s '.[0] * .[1]' config/config.json config/config.ci.json > /tmp/config.json; cp /tmp/config.json ./config/config.json
