@@ -78,14 +78,6 @@ jobs:
         uses: biomejs/setup-biome@v2
         with:
           version: latest
-      - name: Check directory structure
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-          echo "List of directories in GITHUB_WORKSPACE:"
-          ls -R $GITHUB_WORKSPACE
-          echo "Content of packages/frontend-landing:"
-          ls -R $GITHUB_WORKSPACE/packages/frontend-landing
       # - name: Run Biome for landing
       #   run: biome lint "$GITHUB_WORKSPACE/packages/frontend-landing/src/**/*.{ts,tsx}"
       # - name: (Frontend) Setup Config CMD Tools
