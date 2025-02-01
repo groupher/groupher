@@ -80,6 +80,8 @@ jobs:
           version: latest
       - name: List directory structure
         run: ls -R
+      - name: List directory structure landing
+        run: ls -R ./packages/frontend/landing
       - name: Run Biome
         run: npm run lint
       - name: (Frontend) Setup Config CMD Tools
