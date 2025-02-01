@@ -78,6 +78,8 @@ jobs:
         uses: biomejs/setup-biome@v2
         with:
           version: latest
+      - name: List directory structure
+        run: ls -R
       - name: Run Biome
         run: npm run lint
       - name: (Frontend) Setup Config CMD Tools
