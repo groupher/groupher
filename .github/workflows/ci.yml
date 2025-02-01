@@ -81,7 +81,7 @@ jobs:
       #   with:
       #     version: 1.4.1
       - name: Run Biome
-        run: node_modules/.bin/biome lint src/**/*.{ts,tsx}
+        run: npm run lint
       - name: (Frontend) Setup Config CMD Tools
         working-directory: ./
         run: ls -llh; chmod +x ./utils/bin/jq-linux; ./utils/bin/jq-linux -s '.[0] * .[1]' config/config.json config/config.ci.json > /tmp/config.json; cp /tmp/config.json ./config/config.json
