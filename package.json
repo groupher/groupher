@@ -38,7 +38,7 @@
     "serve.prod": "cross-env NODe_ENV=production next start -p 3000",
     "dist": "next build && next export -o \"build\"",
     "info": "next info",
-    "clean": "shjs ./utils/scripts/clean.js",
+    "clean": "rimraf *.tsbuildinfo frontend/**/*.tsbuildinfo",
     "gen": "plop --plopfile ./utils/scripts/generators/index.js",
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "yarn workspaces run lint",
@@ -58,10 +58,9 @@
     "node": "22.x"
   },
   "private": true,
-  "workspaces": {
-    "packages": ["packages/frontend/*"],
-    "nohoist": ["**/biome", "**/biome/**"]
-  },
+  "workspaces": [
+    "frontend/*"
+  ],
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"

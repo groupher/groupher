@@ -79,7 +79,7 @@ jobs:
         with:
           version: latest
       # - name: Run Biome for landing
-      #   run: biome lint "$GITHUB_WORKSPACE/packages/frontend-landing/src/**/*.{ts,tsx}"
+      #   run: biome lint "$GITHUB_WORKSPACE/frontend-landing/src/**/*.{ts,tsx}"
       # - name: (Frontend) Setup Config CMD Tools
       #   working-directory: ./
       #   run: ls -llh; chmod +x ./utils/bin/jq-linux; ./utils/bin/jq-linux -s '.[0] * .[1]' config/config.json config/config.ci.json > /tmp/config.json; cp /tmp/config.json ./config/config.json
