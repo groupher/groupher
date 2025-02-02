@@ -28,7 +28,7 @@
     "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "lint-staged": {
-    "**/*.ts?(x)": "echo 'skip'"
+    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
   },
   "dependencies": {
     "@groupher/frontend-config": "1.0.0"
