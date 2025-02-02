@@ -70,37 +70,22 @@ jobs:
       - name: (Frontend) setup node env
         uses: actions/setup-node@v2
         with:
-          node-version: "20.3.1"
+          node-version: "22.13.0"
       - name: (Frontend) Install Packages
         working-directory: ./
         run: npm install --legacy-peer-deps
-      # - name: Checkout
-      #   uses: actions/checkout@v4
-      # - name: Setup Biome
-      #   uses: biomejs/setup-biome@v1
-      #   with:
-      #     version: 1.4.1
-      - name: Run Biome
-        run: node_modules/.bin/biome lint src/**/*.{ts,tsx}
-      - name: (Frontend) Setup Config CMD Tools
-        working-directory: ./
-        run: ls -llh; chmod +x ./utils/bin/jq-linux; ./utils/bin/jq-linux -s '.[0] * .[1]' config/config.json config/config.ci.json > /tmp/config.json; cp /tmp/config.json ./config/config.json
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+      # - name: Run Biome for landing
+      #   run: biome lint "$GITHUB_WORKSPACE/frontend-landing/src/**/*.{ts,tsx}"
+      # - name: (Frontend) Setup Config CMD Tools
+      #   working-directory: ./
+      #   run: ls -llh; chmod +x ./utils/bin/jq-linux; ./utils/bin/jq-linux -s '.[0] * .[1]' config/config.json config/config.ci.json > /tmp/config.json; cp /tmp/config.json ./config/config.json
       - name: (Frontend) Build Project
         working-directory: ./
-        run: npm run build.ci
-
-      - name: cache next.js build
-        uses: actions/cache@v3
-        with:
-          # See here for caching with `yarn` https://github.com/actions/cache/blob/main/examples.md#node---yarn or you can leverage caching with actions/setup-node https://github.com/actions/setup-node
-          path: |
-            ~/.npm
-            ${{ github.workspace }}/.next/cache
-          # Generate a new cache whenever packages or source files change.
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          # If source files changed but packages didn't, rebuild from a prior cache.
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+        run: yarn run build:ci
       # - name: (Frontend) Run e2e Tests
       #   working-directory: ./frontend_server
       #   run: npm run test:ci

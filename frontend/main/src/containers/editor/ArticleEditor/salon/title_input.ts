@@ -1,0 +1,18 @@
+import useTwBelt from '~/hooks/useTwBelt'
+
+export default () => {
+  const { cn, fg } = useTwBelt()
+
+  return {
+    wrapper: cn('column items-center w-full'),
+    input: cn('w-10/12 block border-none', fg('text.title')),
+    inputer: cn(
+      'w-full block rounded-none border-none bg-transparent',
+      'pl-3 pb-1 h-14 text-2xl leading-normal',
+      'hover:border-none focus:border-none focus:shadow-none',
+      fg('text.title'),
+      '[&::placeholder]:text-2xl [&::placeholder]:opacity-60',
+      `[&::placeholder]:${fg('text.title')}`,
+    ),
+  }
+}

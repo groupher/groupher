@@ -1,0 +1,13 @@
+{
+  "routes": [
+    {
+      "src": "/landing/_next/static/(.*)",
+      "dest": "/_next/static/$1"
+    },
+    {
+      "src": "/landing/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "ignoreCommand": "git diff HEAD^ HEAD --quiet ."
+}

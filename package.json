@@ -1,27 +1,48 @@
 {
-  "name": "groupher_web",
+  "name": "@groupher/root",
   "version": "1.2.50",
   "license": "Apache License 2.0",
   "scripts": {
-    "dev": "next dev --turbo",
+    "info:main": "yarn workspace @groupher/frontend-main next info",
+    "clean:main": "yarn workspace @groupher/frontend-main rimraf .next",
+    "clean:route": "yarn workspace @groupher/frontend-route rimraf .next",
+    "clean:landing": "yarn workspace @groupher/frontend-landing rimraf .next",
+    "predev:main": "yarn clean:main",
+    "dev:main": "yarn workspace @groupher/frontend-main dev",
+    "prebuild:prod:main": "yarn clean:main",
+    "build:prod:main": "yarn workspace @groupher/frontend-main build",
+    "serve:prod:main": "yarn workspace @groupher/frontend-main cross-env NODE_ENV=production next start -p 3000",
+    "info:landing": "yarn workspace @groupher/frontend-landing next info",
+    "predev:landing": "yarn clean:landing",
+    "dev:landing": "yarn workspace @groupher/frontend-landing dev",
+    "prebuild:prod:landing": "yarn clean:landing",
+    "build:prod:landing": "yarn workspace @groupher/frontend-landing build",
+    "serve:prod:landing": "yarn workspace @groupher/frontend-landing cross-env NODE_ENV=production next start -p 3001",
+    "prebuild:prod:route": "yarn clean:route",
+    "build:prod:route": "yarn workspace @groupher/frontend-route build",
+    "serve:prod:route": "yarn workspace @groupher/frontend-route cross-env NODE_ENV=production next start -p 3001",
+    "dev.old": "next dev --turbo",
     "ci": "cross-env NODE_ENV=ci next dev",
     "update.version": "node -p \"'export const APP_VERSION = ' + JSON.stringify(require('./package.json').version)\" > config/version.ts",
     "type-check": "tsc --noEmit",
-    "build": "next build",
+    "build": "yarn workspaces run build",
+    "dev": "next dev",
+    "start": "next start",
     "build:clean": "run-s dist clean",
     "build.prod": "cross-env NODE_ENV=production next build",
     "build.dev": "cross-env NODE_ENV=dev next build",
-    "build.ci": "cross-env NODE_ENV=ci next build",
+    "build.ci.old": "cross-env NODE_ENV=ci next build",
+    "build:ci": "yarn workspaces run build",
     "serve": "cross-env NODE_ENV=production next start -p ${SERVE_PORT}",
     "serve.dev": "cross-env NODE_ENV=dev next start -p ${SERVE_PORT}",
     "serve.prod": "cross-env NODe_ENV=production next start -p 3000",
     "dist": "next build && next export -o \"build\"",
     "info": "next info",
-    "clean": "shjs ./utils/scripts/clean.js",
+    "clean": "rimraf *.tsbuildinfo frontend/**/*.tsbuildinfo",
     "gen": "plop --plopfile ./utils/scripts/generators/index.js",
     "analyze": "cross-env ANALYZE=true next build",
-    "lint": "./node_modules/.bin/biome lint src/**/*.{ts,tsx}",
-    "format:staged": "./node_modules/.bin/biome format ./src",
+    "lint": "yarn workspaces run lint",
+    "format": "yarn workspaces run lint format",
     "clean:up": "rm -rf *.tsbuildinfo",
     "test": "cross-env NOD_ENV=test jest --config .jest.config.js",
     "test:dev": "cross-env NODE_ENV=test jest --config .jest.config.js",
@@ -34,15 +55,23 @@
     "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   },
+  "private": true,
+  "workspaces": [
+    "frontend/*"
+  ],
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
   },
-  "lint-staged": {
-    "**/*.ts?(x)": "tsc-files --noEmit"
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn workspaces run format && yarn workspaces run lint-staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "post-commit": "yarn clean"
+    }
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.8.0",
@@ -97,6 +126,7 @@
     "remarkable": "2.0.0",
     "remarkable-emoji": "^0.1.3",
     "remarkable-mentions": "^0.1.0",
+    "rimraf": "^6.0.1",
     "rsuite-table": "^5.10.6",
     "sanitize-html": "^2.5.2",
     "sentry-testkit": "^2.1.0",
