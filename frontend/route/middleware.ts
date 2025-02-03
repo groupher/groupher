@@ -4,7 +4,13 @@ import type { NextRequest } from 'next/server'
 const LANDING_SITE = process.env.LANDING_SITE || 'https://landing.groupher.com'
 const MAIN_SITE = process.env.MAIN_SITE || 'https://main.groupher.com'
 
-const LANDING_STATIC_SIGN = new URL(LANDING_SITE).hostname.split('.')[0]
+const getLandingStaticSign = (url) => {
+  const subdomain = new URL(url).hostname.split('.')[0]
+
+  return `/${subdomain}/_next/static`
+}
+
+const LANDING_STATIC_SIGN = getLandingStaticSign(LANDING_SITE)
 
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
