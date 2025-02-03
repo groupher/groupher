@@ -1,9 +1,13 @@
 'use client'
 
-// https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config
-export const dynamic = 'force-static'
+import dynamic from 'next/dynamic'
 
-import CommunityEditor from '~/containers/editor/CommunityEditor'
+import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+
+const CommunityEditor = dynamic(() => import('~/containers/editor/CommunityEditor'), {
+  loading: () => <LavaLampLoading />,
+  ssr: false,
+})
 
 const ApplyCommunity = () => {
   return <CommunityEditor />
