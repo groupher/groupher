@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for groupher-server on 2024-03-03T20:11:00+08:00
+# fly.toml app configuration file generated for groupher-api on 2025-02-05T16:01:26+08:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
 app = 'groupher-api'
-primary_region = 'hkg'
+primary_region = 'nrt'
 kill_signal = 'SIGTERM'
 
 [build]
