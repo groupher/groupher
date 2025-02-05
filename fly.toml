@@ -3,7 +3,7 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'groupher-server'
+app = 'groupher-api'
 primary_region = 'hkg'
 kill_signal = 'SIGTERM'
 
@@ -13,7 +13,7 @@ kill_signal = 'SIGTERM'
   release_command = '/app/bin/migrate'
 
 [env]
-  PHX_HOST = 'groupher-server.fly.dev'
+  PHX_HOST = 'groupher-api.fly.dev'
   PORT = '8080'
 
 [http_service]
