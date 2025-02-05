@@ -24,3 +24,26 @@ bun.lockb
 *.tsbuildinfo
 .VSCodeCounter/
 .deepseekrc
+
+# App artifacts
+backend/_build
+backend/db
+backend/deps
+backend/*.ez
+
+# Generated on crash by the VM
+backend/erl_crash.dump
+
+# Files matching config/*.secret.exs pattern contain sensitive
+# data and you should not commit them into version control.
+#
+# Alternatively, you may comment the line below and commit the
+# secrets files as long as you replace their contents by environment
+# variables.
+backend/config/*.secret.exs
+backend/config/_tmp.exs
+backend/_tuts/
+.agignore
+backend/docs/draft.ex
+backend/cover/excoveralls.html
+backend/.elixir_ls/
