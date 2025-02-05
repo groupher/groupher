@@ -1,0 +1,19 @@
+defmodule GroupherServer.Repo.Migrations.AddPrefixToConstents do
+  use Ecto.Migration
+
+  def up do
+    execute "ALTER TABLE public.communities_join_blogs SET SCHEMA cms"
+    execute "ALTER TABLE public.communities_join_docs SET SCHEMA cms"
+    execute "ALTER TABLE public.communities_join_changelogs SET SCHEMA cms"
+
+    execute "ALTER TABLE public.articles_join_tags SET SCHEMA cms"
+  end
+
+  def down do
+    execute "ALTER TABLE cms.communities_join_blogs SET SCHEMA public"
+    execute "ALTER TABLE cms.communities_join_docs SET SCHEMA public"
+    execute "ALTER TABLE cms.communities_join_changelogs SET SCHEMA public"
+
+    execute "ALTER TABLE cms.articles_join_tags SET SCHEMA public"
+  end
+end
