@@ -1,7 +1,7 @@
 # fly.toml app configuration file generated for groupher-api on 2025-02-05T16:01:26+08:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
+# groupher-api.fly.dev
 
 app = 'groupher-api'
 primary_region = 'nrt'
@@ -13,7 +13,7 @@ kill_signal = 'SIGTERM'
   release_command = '/app/bin/migrate'
 
 [env]
-  PHX_HOST = 'groupher-api.fly.dev'
+  PHX_HOST = 'api.groupher.com'
   PORT = '8080'
 
 [http_service]
