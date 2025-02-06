@@ -30,6 +30,7 @@ import Footer from './Footer'
 
 import useSalon from './salon'
 
+// TODO: move to const later
 const faqs = [
   {
     title: 'Groupher 是免费的吗',
