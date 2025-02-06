@@ -64,7 +64,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          repository: "groupher/groupher_web"
+          repository: "groupher/groupher"
           path: "./"
       - name: (Frontend) setup node env
         uses: actions/setup-node@v2
