@@ -1,4 +1,4 @@
-name: CI
+name: Build frontend repos
 
 on:
   push:
