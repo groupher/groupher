@@ -2,11 +2,8 @@ name: Build frontend repos
 
 on:
   push:
-    branches: [dev]
-  pull_request:
-    branches: [master, dev]
-  paths:
-    - "frontend/**" # only trigger when this dir changes
+    paths:
+      - "frontend/**" # only trigger when this dir changes
 
 jobs:
   e2e-test:
