@@ -2,7 +2,7 @@ name: Deploy API server to Fly.io
 on:
   push:
     branches:
-      - dev
+      - [dev, auto-deploy-to-fly]
     paths:
       - "backend/**" # only trigger when this dir changes
 
