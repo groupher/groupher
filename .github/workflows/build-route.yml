@@ -1,0 +1,38 @@
+name: Build frontend route
+
+on:
+  push:
+    paths:
+      - "frontend/route/**" # only trigger when this dir changes
+
+jobs:
+  build:
+    name: Build route
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          repository: "groupher/groupher"
+          path: "./"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "22.13.0"
+
+      - name: Install Packages
+        run: npm install --legacy-peer-deps
+
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+
+      # - name: Run Biome for route
+      #   run: biome lint "$GITHUB_WORKSPACE/frontend-route/src/**/*.{ts,tsx}"
+
+      - name: Build Project
+        run: yarn run build:prod:route

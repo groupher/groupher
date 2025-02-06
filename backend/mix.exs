@@ -6,7 +6,7 @@ defmodule GroupherServer.Mixfile do
   def project do
     [
       app: :groupher_server,
-      version: "2.1.6",
+      version: "2.1.9",
       elixir: "~> 1.9",
       elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: [plt_add_deps: :transitive, ignore_warnings: ".dialyzer_ignore.exs"],
