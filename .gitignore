@@ -5,6 +5,8 @@ node_modules/
 npm-debug.log
 build
 
+frontend/**/out/
+
 coverage/
 .coveralls.yml
 yarn-error.log

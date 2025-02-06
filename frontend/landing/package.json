@@ -8,7 +8,7 @@
     "type-check": "tsc --noEmit",
     "build-old": "next build",
     "build": "cross-env NODE_ENV=production next build",
-    "start": "cross-env NODe_ENV=production next start -p 3000",
+    "start": "next start",
     "dist": "next build && next export -o \"build\"",
     "info": "next info",
     "clean": "shjs ./utils/scripts/clean.js",
