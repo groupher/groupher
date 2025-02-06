@@ -1,8 +1,11 @@
 name: Deploy API server to Fly.io
 on:
   push:
-    branches: [dev, auto-deploy-to-fly]
-    paths: "backend/**" # only trigger when this dir changes
+    branches:
+      - dev
+      - auto-deploy-to-fly
+    paths:
+      - "backend/**" # only trigger when this dir changes
 
 jobs:
   deploy:
