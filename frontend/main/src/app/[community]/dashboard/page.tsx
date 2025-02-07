@@ -1,9 +1,16 @@
 'use client'
 
-import Overview from '~/containers//thread/DashboardThread/Overview'
+import dynamic from 'next/dynamic'
 
-const DashboardOverviewPage = () => {
+import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+
+const Overview = dynamic(() => import('~/containers//thread/DashboardThread/Overview'), {
+  loading: () => <LavaLampLoading />,
+  ssr: false,
+})
+
+const Page = () => {
   return <Overview />
 }
 
-export default DashboardOverviewPage
+export default Page

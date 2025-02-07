@@ -15,6 +15,16 @@ help:
 	$(call github.help)
 	@echo "\n"
 
+
+fe.build.main:
+	yarn run build:prod:main
+
+fe.build.prod.main: 
+	yarn run build:prod:main
+
+fe.serve.main: 
+	yarn run serve:prod:main
+
 init:
 	npm install
 
