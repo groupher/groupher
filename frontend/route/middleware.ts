@@ -5,7 +5,7 @@ import { includes, startsWith } from 'ramda'
 
 const LANDING_SITE = process.env.LANDING_SITE || 'https://landing.groupher.com'
 const MAIN_SITE = process.env.MAIN_SITE || 'https://main.groupher.com'
-const STATIC_PATHS = ['/', '/pricing']
+const STATIC_PATHS = ['/', '/pricing', '/book-demo']
 
 const getNextStaticSign = (url) => {
   const subdomain = new URL(url).hostname.split('.')[0]

@@ -8,7 +8,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 const baseConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: false,
   experimental: {
     scrollRestoration: true,
     optimizePackageImports: ['ramda'],
@@ -17,33 +17,6 @@ const baseConfig = {
 
   async headers() {
     return [
-      {
-        source: '/',
-        headers: [
-          {
-            key: 'cache-control',
-            value: 's-maxage=600, stale-while-revalidate=30',
-          },
-        ],
-      },
-      {
-        source: '/pricing',
-        headers: [
-          {
-            key: 'cache-control',
-            value: 's-maxage=600, stale-while-revalidate=30',
-          },
-        ],
-      },
-      {
-        source: '/book-demo',
-        headers: [
-          {
-            key: 'cache-control',
-            value: 's-maxage=600, stale-while-revalidate=30',
-          },
-        ],
-      },
       {
         source: '/oops',
         headers: [
