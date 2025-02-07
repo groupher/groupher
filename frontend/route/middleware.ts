@@ -15,13 +15,22 @@ const getNextStaticSign = (url) => {
 
 const LANDING_STATIC_SIGN = getNextStaticSign(LANDING_SITE)
 
+/**
+ * @description
+ * Check if the page is a static page from groupher landing.
+ * @param {NextRequest} request - The request object.
+ * @returns {boolean} - If the page is a static page from groupher landing.
+ */
+const checkStaticPage = (pathname: string): boolean => {
+  return includes(pathname, STATIC_PATHS) || startsWith(LANDING_STATIC_SIGN, pathname)
+}
+
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  const isStaticRequest =
-    includes(pathname, STATIC_PATHS) || startsWith(LANDING_STATIC_SIGN, pathname)
+  const isStaticPage = checkStaticPage(pathname)
 
-  if (isStaticRequest) {
+  if (isStaticPage) {
     return NextResponse.rewrite(new URL(pathname, LANDING_SITE))
   }
 
