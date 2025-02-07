@@ -27,6 +27,12 @@ bun.lockb
 .VSCodeCounter/
 .deepseekrc
 
+frontend/**/public/workbox-*.js
+frontend/**/public/sw.js
+frontend/**/public/worker-*.js
+frontend/**/public/fallback-*.js
+frontend/**/public/*.js.map
+
 # App artifacts
 backend/_build
 backend/db
