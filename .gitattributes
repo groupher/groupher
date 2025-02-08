@@ -1,0 +1,6 @@
+*.json linguist-documentation
+*.config.js linguist-documentation
+*.ts linguist-language=TypeScript
+*.tsx linguist-language=TypeScript
+*.js.map linguist-generated
+*.js linguist-generated
