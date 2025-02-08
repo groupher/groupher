@@ -62,6 +62,5 @@
   "//--- contact configs ---//": "",
   "EMAIL_SUPPORT": "groupher@outlook.com",
   "BEIAN_ADDR": "http://beian.miit.gov.cn",
-  "BEIAN_TEXT": "",
-  "/// GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql"
+  "BEIAN_TEXT": ""
 }
