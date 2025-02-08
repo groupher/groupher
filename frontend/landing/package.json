@@ -12,7 +12,6 @@
     "dist": "next build && next export -o \"build\"",
     "info": "next info",
     "clean": "shjs ./utils/scripts/clean.js",
-    "gen": "plop --plopfile ./utils/scripts/generators/index.js",
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "biome lint src/**/*.{ts,tsx}",
     "format": "biome format ./src",
