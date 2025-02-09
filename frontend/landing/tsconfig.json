@@ -6,7 +6,9 @@
       "~/icons": ["../shared/Icons"],
       "~/icons/*": ["../shared/Icons/*"],
       "~/widgets/*": ["../shared/widgets/*"],
-      "~/Img": ["../shared/widgets/Img"]
+      "~/Img": ["../shared/widgets/Img"],
+      "~/const": ["../shared/constant/"],
+      "~/const/*": ["../shared/constant/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.tsx", "**/*.ts", ".next/types/**/*.ts"]
