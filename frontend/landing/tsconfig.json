@@ -1,7 +1,12 @@
 {
-  "extends": "../config/tsconfig.json",
+  "extends": "@groupher/frontend-config/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "~/icons": ["../shared/Icons"],
+      "~/icons/*": ["../shared/Icons/*"],
+      "~/widgets/*": ["../shared/widgets/*"]
+    }
   },
   "include": ["next-env.d.ts", "**/*.tsx", "**/*.ts", ".next/types/**/*.ts"]
 }
