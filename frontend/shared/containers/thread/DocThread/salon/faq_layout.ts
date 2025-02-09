@@ -1,0 +1,16 @@
+import type { TSpace } from '~/spec'
+
+import useBase from '.'
+
+import useTwBelt from '~/hooks/useTwBelt'
+
+type TProps = TSpace
+
+export default ({ ...spacing }: TProps) => {
+  const { cn, margin } = useTwBelt()
+  const base = useBase()
+
+  return {
+    wrapper: cn(base.main, 'column-center w-full border-r-none', margin(spacing)),
+  }
+}

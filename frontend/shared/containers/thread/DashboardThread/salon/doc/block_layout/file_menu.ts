@@ -1,0 +1,12 @@
+import useTwBelt from '~/hooks/useTwBelt'
+
+export default () => {
+  const { cn, fg, fill } = useTwBelt()
+
+  return {
+    wrapper: cn('column p-1.5 w-24'),
+    item: 'group row-center-between',
+    title: cn('text-xs', fg('text.title')),
+    transforIcon: cn('text-xs size-3', fill('text.digest')),
+  }
+}

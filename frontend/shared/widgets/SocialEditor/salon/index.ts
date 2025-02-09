@@ -1,7 +1,7 @@
 import type { TSpace } from '~/spec'
 import { SOCIAL_LIST } from '~/const/social'
 
-import TikTokSVG from '~/widgets/Icons/social/TikTok'
+import TikTokSVG from '~/icons/social/TikTok'
 import EmailSVG from '~/icons/social/Email'
 import WeChatSVG from '~/icons/social/WeChat'
 import TwitterSVG from '~/icons/TwitterX'
