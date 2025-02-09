@@ -5,7 +5,8 @@
     "paths": {
       "~/icons": ["../shared/Icons"],
       "~/icons/*": ["../shared/Icons/*"],
-      "~/widgets/*": ["../shared/widgets/*"]
+      "~/widgets/*": ["../shared/widgets/*"],
+      "~/Img": ["../shared/widgets/Img"]
     }
   },
   "include": ["next-env.d.ts", "**/*.tsx", "**/*.ts", ".next/types/**/*.ts"]
