@@ -4,25 +4,13 @@
  *
  */
 
-import { type FC, type ReactNode, lazy, Suspense } from 'react'
-
-import Mushroom from '~/containers/Mushroom'
-
-// import Broadcast from '~/widgets/Broadcast'
-// import ModeLine from '~/containers/unit/ModeLine'
-
-// import DashboardAlert from './DashboardAlert'
-// import CustomScroller from '~/widgets/CustomScroller'
+import type { FC, ReactNode } from 'react'
 
 import SEO from './SEO'
 import Wallpaper from './Wallpaper'
 import Main from './Main'
 
 import useSalon from './salon'
-
-const Addon = lazy(() => import('./Addon'))
-
-// let DashboardAlert = null
 
 type TProps = {
   children: ReactNode
@@ -46,10 +34,6 @@ const GlobalLayout: FC<TProps> = ({ children }) => {
 
   return (
     <>
-      <Mushroom />
-      <Suspense fallback={null}>
-        <Addon />
-      </Suspense>
       <div className={s.skeleton}>
         <Wallpaper />
         <div className={s.scrollWrapper}>
@@ -60,9 +44,6 @@ const GlobalLayout: FC<TProps> = ({ children }) => {
           </div>
         </div>
       </div>
-
-      {/* <DashboardAlert /> */}
-      {/* {showDashboardAlertUI && <DashboardAlert />} */}
     </>
   )
 }
