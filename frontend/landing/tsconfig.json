@@ -3,7 +3,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "~/containers/*": ["src/containers/*"],
       "~/services": ["src/services"],
       "~/services/*": ["src/services/*"],
       "~/hooks": ["src/hooks"],
@@ -39,10 +38,10 @@
       "~/css": ["utils/css"],
       "~/css/*": ["utils/css/*"],
       "~/schemas": ["src/schemas"],
-      "~/spec": ["src/spec"],
-      "~/SvgIcons/*": ["src/widgets/SvgIcons/*"],
+      "~/spec": ["../shared/spec"],
       "~/icons": ["../shared/Icons"],
       "~/icons/*": ["../shared/Icons/*"],
+      "~/containers/*": ["../shared/containers/*"],
       "~/widgets/*": ["../shared/widgets/*"],
       "~/Img": ["../shared/widgets/Img"],
       "~/const": ["../shared/constant/"],

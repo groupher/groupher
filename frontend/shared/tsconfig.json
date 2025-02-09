@@ -3,7 +3,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "~/containers/*": ["./containers/*"],
       "~/hooks": ["./hooks"],
       "~/hooks/*": ["./hooks/*"],
       "~/utils": ["./utils"],
@@ -36,6 +35,8 @@
       "~/spec": ["./spec"],
       "~/icons": ["./Icons"],
       "~/icons/*": ["./Icons/*"],
+      "~/containers": ["./containers"],
+      "~/containers/*": ["./containers/*"],
       "~/widgets/*": ["./widgets/*"],
       "~/Img": ["./widgets/Img"],
       "~/const": ["./constant/"],
