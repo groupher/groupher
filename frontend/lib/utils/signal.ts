@@ -215,7 +215,7 @@ export const viewingChanged = (article: TArticle | null): void => {
  * - 如果已经在子社区，只需要重新加载数据
  * - 如果在其他页面，那么需要重新请求页面
  */
-export const changeToCommunity = (slug = ''): void => {
+export const changeToCommunity = (_slug = ''): void => {
   console.log('## ## changeToCommunity')
 }
 
