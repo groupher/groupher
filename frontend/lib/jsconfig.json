@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "noUnusedLocals": true,
+    "paths": {
+      "~/containers/*": ["./containers/*"],
+      "~/widgets/*": ["./widgets/*"],
+      "~/services": ["./services"],
+      "~/services/*": ["./services/*"],
+      "~/const": ["utils/constant"],
+      "~/const/*": ["utils/constant/*"],
+      "~/hooks": ["./hooks"],
+      "~/hooks/*": ["./hooks/*"],
+      "~/config": ["config"],
+      "~/stores/*": ["./stores/*"],
+      "~/utils": ["utils"],
+      "~/utils/*": ["utils/*"],
+      "~/server": ["utils/api"],
+      "~/server/*": ["utils/api/*"],
+      "~/css": ["utils/css"],
+      "~/css/*": ["utils/css/*"],
+      "~/schemas": ["./schemas"],
+      "~/Img": ["./widgets/Img"],
+      "~/SvgIcons/*": ["./widgets/SvgIcons/*"],
+      "~/icons/*": ["./widgets/icons/*"],
+      "~/i18n": ["i18n"]
+    }
+  },
+  "exclude": ["node_modules"]
+}

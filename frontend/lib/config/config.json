@@ -1,0 +1,66 @@
+{
+  "//--- general configs ---//": "",
+  "DEFAULT_THEME": "light",
+  "SENIOR_AMOUNT_THRESHOLD": 51.2,
+  "SPONSOR_AMOUNT_THRESHOLD": 3999,
+  "PAGE_SIZE": {
+    "S": 10,
+    "D": 20,
+    "M": 30,
+    "L": 40
+  },
+  "WORD_LIMIT": {
+    "COMMENT": 300
+  },
+  "AVATARS_LIST_LENGTH": {
+    "POSTS": 4,
+    "COMMENTS": 5
+  },
+  "TAG_COLORS": [
+    "RED",
+    "ORANGE",
+    "YELLOW",
+    "GREEN",
+    "CYAN",
+    "BLUE",
+    "PURPLE",
+    "PINK",
+    "GREY"
+  ],
+  "TAG_COLOR_ORDER": {
+    "red": 0,
+    "orange": 1,
+    "yellow": 2,
+    "green": 3,
+    "cyan": 4,
+    "blue": 5,
+    "purple": 6,
+    "dodgerblue": 7,
+    "yellowgreen": 8,
+    "brown": 9,
+    "cadetblue": 10,
+    "grey": 11
+  },
+  "//--- endpoint configs ---//": "",
+  "ASSETS_ENDPOINT": "https://static.groupher.com",
+  "ICON": "https://static.groupher.com/icons/static",
+  "ICON_BASE": "https://static.groupher.com/icons",
+  "ICON_CMD": "https://static.groupher.com/icons/cmd",
+  "DEFAULT_ICON": "https://static.groupher.com/icons/cmd/cheatsheet.svg",
+  "DEFAULT_USER_AVATAR": "https://static.groupher.com/icons/cmd/alien_user3.svg",
+  "// GRAPHQL_ENDPOINT": "http://localhost:4001/graphiql",
+  "GRAPHQL_ENDPOINT": "http://127.0.0.1:4001/graphiql",
+  "SITE_URL": "https://groupher.com",
+  "SITE_NAME": "Groupher",
+  "SITE_SLOGAN": "让你的产品听见用户的声音。互动讨论、看板、更新日志、帮助文档多合一，收集整理用户用户反馈，助你打造更好的产品。",
+  "SITE_URL_SHORT": "https://groupher.com",
+  "GITHUB": "https://github.com/groupher",
+  "GITHUB_WEB_ADDR": "https://github.com/groupher/groupher_web",
+  "ABOUT_LINK": "/w/5",
+  "ISSUE_ADDR": "https://github.com/groupher/groupher_web/issues",
+  "MENTION_USER_ADDR": "https://groupher.com/users/",
+  "//--- contact configs ---//": "",
+  "EMAIL_SUPPORT": "groupher@outlook.com",
+  "BEIAN_ADDR": "http://beian.miit.gov.cn",
+  "BEIAN_TEXT": ""
+}
