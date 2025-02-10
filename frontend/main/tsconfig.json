@@ -8,6 +8,8 @@
       "~/config": ["config"],
       "~/stores/*": ["../lib/stores/*"],
       "~/stores": ["../lib/stores"],
+      "~/substore/*": ["../lib/stores/*"],
+      "~/substore": ["../lib/stores"],
       "~/utils": ["../lib/utils"],
       "~/utils/*": ["../lib/utils/*"],
       "~/server": ["../lib/utils/api"],
