@@ -1,12 +1,12 @@
 import type { TLocale } from '~/spec'
 
-import type { TStore as TLocaleStore } from './locale/spec'
-import type { TStore as TViewingStore } from './viewing/spec'
-import type { TStore as TArticlesStore } from './articles/spec'
-import type { TStore as TAccountStore } from './account/spec'
-import type { TStore as TThemeStore } from './theme/spec'
-import type { TStore as TDashbaordStore } from './dashboard/spec'
-import type { TStore as TWallpaperStore } from './wallpaper/spec'
+import type { TStore as TLocaleStore } from '~/stores/locale/spec'
+import type { TStore as TViewingStore } from '~/stores/viewing/spec'
+import type { TStore as TArticlesStore } from '~/stores/articles/spec'
+import type { TStore as TAccountStore } from '~/stores/account/spec'
+import type { TStore as TThemeStore } from '~/stores/theme/spec'
+import type { TStore as TDashbaordStore } from '~/stores/dashboard/spec'
+import type { TStore as TWallpaperStore } from '~/stores/wallpaper/spec'
 
 export type TRootStore = {
   locale: TLocaleStore

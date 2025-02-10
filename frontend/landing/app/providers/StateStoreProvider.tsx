@@ -4,8 +4,6 @@ import type { ReactNode } from 'react'
 
 import { HOME_COMMUNITY } from '~/const/name'
 
-import { StoreContext, useStore } from '../stores'
-
 import {
   useI18n,
   useThemeFromURL,
@@ -22,6 +20,8 @@ import {
   useGroupedKanbanPosts,
   useFilterSearchParams,
 } from '../queries'
+
+import { StoreContext, useStore } from '../../stores'
 
 export default ({ children }: { children: ReactNode }) => {
   const metric = useMetric()

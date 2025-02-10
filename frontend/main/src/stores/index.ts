@@ -8,13 +8,13 @@ import type { TRootStore } from './spec'
 import THEME from '~/const/theme'
 import { LOCALE } from '~/const/i18n'
 
-import setupLocale from './locale'
-import setupTheme from './theme'
-import setupAccount from './account'
-import setupArticles from './articles'
-import setupViewing from './viewing'
-import setupDashboard from './dashboard'
-import setupWallpaper from './wallpaper'
+import setupLocale from '~/stores/locale'
+import setupTheme from '~/stores/theme'
+import setupAccount from '~/stores/account'
+import setupArticles from '~/stores/articles'
+import setupViewing from '~/stores/viewing'
+import setupDashboard from '~/stores/dashboard'
+import setupWallpaper from '~/stores/wallpaper'
 
 const INITIAL_STATE = {
   theme: THEME.LIGHT,
