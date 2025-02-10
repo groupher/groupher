@@ -19,8 +19,6 @@
     "paths": {
       "~/containers/*": ["src/containers/*"],
       "~/widgets/*": ["src/widgets/*"],
-      "~/services": ["src/services"],
-      "~/services/*": ["src/services/*"],
       "~/const": ["utils/constant/"],
       "~/const/*": ["utils/constant/*"],
       "~/hooks": ["src/hooks"],
