@@ -4,7 +4,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "lint": "echo 'skip link'",
+    "lint": "biome lint **/*.{ts,tsx} ",
     "format": "echo 'skip format'",
     "build": "echo 'skip build'"
   },
