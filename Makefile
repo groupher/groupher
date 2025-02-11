@@ -15,6 +15,12 @@ before_action:
 fe.install:
 	yarn install
 
+fe.dev.landing:
+	yarn run dev:landing
+
+fe.dev.main:
+	yarn run dev:main
+
 fe.build.main:
 	yarn run build:prod:main
 
