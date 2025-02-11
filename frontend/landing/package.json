@@ -10,6 +10,7 @@
     "build": "cross-env NODE_ENV=production next build",
     "start": "next start",
     "dist": "next build && next export -o \"build\"",
+    "serve": "serve out",
     "info": "next info",
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "biome lint app/**/*.{ts,tsx}",
@@ -25,5 +26,8 @@
   },
   "dependencies": {
     "@groupher/frontend-config": "1.0.0"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
   }
 }

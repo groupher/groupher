@@ -5,7 +5,7 @@ const { colors, screens, safelist, plugins } = require('./tailwind.include')
 module.exports = {
   content: [
     // but remove it will cause @tailwindcss/typography issue
-    './src/**/*.{js,ts,jsx,tsx}',
+    // './src/**/*.{js,ts,jsx,tsx}',
     '**/*.{js,ts,jsx,tsx}',
     // './src/**/salon/**/*.ts',
   ],

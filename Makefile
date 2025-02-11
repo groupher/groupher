@@ -21,11 +21,14 @@ fe.dev.landing:
 fe.dev.main:
 	yarn run dev:main
 
+fe.build.landing:
+	yarn run build:prod:landing
+
 fe.build.main:
 	yarn run build:prod:main
 
-fe.build.prod.main: 
-	yarn run build:prod:main
+fe.serve.landing: 
+	yarn run serve:prod:landing
 
 fe.serve.main: 
 	yarn run serve:prod:main

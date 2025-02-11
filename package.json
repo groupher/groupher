@@ -18,7 +18,7 @@
     "dev:landing": "yarn workspace @groupher/frontend-landing dev",
     "prebuild:prod:landing": "yarn clean:landing",
     "build:prod:landing": "yarn workspace @groupher/frontend-landing build",
-    "serve:prod:landing": "yarn workspace @groupher/frontend-landing cross-env NODE_ENV=production next start -p 3001",
+    "serve:prod:landing": "yarn workspace @groupher/frontend-landing serve",
     "prebuild:prod:route": "yarn clean:route",
     "build:prod:route": "yarn workspace @groupher/frontend-route build",
     "serve:prod:route": "yarn workspace @groupher/frontend-route cross-env NODE_ENV=production next start -p 3001",
