@@ -22,7 +22,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <html lang="en">
-      <body>
+      <body className="debug">
         <GraphQLProvider>
           <StateStoreProvider>
             <GlobalLayout>{children}</GlobalLayout>

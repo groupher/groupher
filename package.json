@@ -90,6 +90,7 @@
     "@vercel/speed-insights": "^1.0.10",
     "accept-language-parser": "^1.5.0",
     "chalk": "^2.4.1",
+    "clsx": "^2.1.1",
     "cross-env": "^7.0.2",
     "framer-motion": "^11.11.11",
     "graphql": "^16.6.0",
@@ -137,6 +138,8 @@
     "sonner": "^1.0.0",
     "store": "^2.0.12",
     "stringz": "^2.0.0",
+    "tailwind-merge": "^2.4.0",
+    "tailwindcss": "^3.4.4",
     "tailwindcss-animated": "^1.1.2",
     "timeago-react": "^3.0.5",
     "tinykeys": "^2.1.0",
@@ -144,9 +147,7 @@
     "typewriter-effect": "^2.19.0",
     "urql": "^4.2.0",
     "use-debounce": "^10.0.4",
-    "valtio": "^2.1.2",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^2.4.0"
+    "valtio": "^2.1.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
@@ -172,7 +173,6 @@
     "postcss": "^8.4.39",
     "react-test-renderer": "18.2.0",
     "start-server-and-test": "1.12.1",
-    "tailwindcss": "^3.4.4",
     "tsc-files": "^1.1.4",
     "type-fest": "^2.19.0",
     "typescript": "^5.3.3"

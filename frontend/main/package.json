@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "ci": "cross-env NODE_ENV=ci next dev",
     "type-check": "tsc --noEmit",
     "build": "cross-env NODE_ENV=production next build",
     "start": "cross-env NODe_ENV=production next start -p 3000",
@@ -30,6 +29,7 @@
     "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
   },
   "dependencies": {
-    "@groupher/frontend-config": "1.0.0"
+    "@groupher/frontend-config": "1.0.0",
+    "@groupher/frontend-lib": "1.0.0"
   }
 }
