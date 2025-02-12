@@ -5,15 +5,15 @@ on:
       - dev
       - auto-deploy-to-fly
     paths:
-      - "backend/**" # only trigger when this dir changes
+      - "backend/main/**" # only trigger when this dir changes
 
 jobs:
   deploy:
-    name: Deploy backend
+    name: Deploy backend api
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: backend/main
 
     steps:
       - uses: actions/checkout@v3
@@ -27,13 +27,13 @@ jobs:
       - name: Cache deps
         uses: actions/cache@v3
         with:
-          path: backend/deps
+          path: backend/main/deps
           key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock') }}
 
       - name: Cache build
         uses: actions/cache@v3
         with:
-          path: backend/_build
+          path: backend/main/_build
           key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock') }}
 
       - name: Install dependencies
