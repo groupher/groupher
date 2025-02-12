@@ -1,1 +1,1 @@
-module.exports = require('@groupher/frontend-lib/postcss.config.js')
+module.exports = require('@groupher/frontend-core/postcss.config.js')

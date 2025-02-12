@@ -30,6 +30,6 @@
   },
   "dependencies": {
     "@groupher/frontend-config": "1.0.0",
-    "@groupher/frontend-lib": "1.0.0"
+    "@groupher/frontend-core": "1.0.0"
   }
 }

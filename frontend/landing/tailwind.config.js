@@ -1,4 +1,4 @@
 /** @type {import('tailwindcss').Config} */
 
-// module.exports = require('@groupher/frontend-lib/tailwind.config')
-module.exports = require('../lib/tailwind.config')
+// module.exports = require('@groupher/frontend-core/tailwind.config')
+module.exports = require('../core/tailwind.config')

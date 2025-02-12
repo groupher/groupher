@@ -7,7 +7,7 @@ module.exports = {
     // but remove it will cause @tailwindcss/typography issue
     // './src/**/*.{js,ts,jsx,tsx}',
     '**/*.{js,ts,jsx,tsx}',
-    '../lib/**/*.{js,ts,jsx,tsx}',
+    '../core/**/*.{js,ts,jsx,tsx}',
     // './src/**/salon/**/*.ts',
   ],
   theme: {
