@@ -36,43 +36,43 @@ fe.serve.main:
 # backend
 # mix ecto.setup
 be.install:
-	cd ./backend && mix deps.get 
+	cd ./backend/main && mix deps.get 
 
 be.start:
-	cd ./backend && MIX_ENV=mock mix phx.server
+	cd ./backend/main && MIX_ENV=mock mix phx.server
 
 be.mock.start: 
-	cd ./backend && MIX_ENV=mock mix phx.server
+	cd ./backend/main && MIX_ENV=mock mix phx.server
 
 be.migrate:
-	cd ./backend && mix ecto.migrate && cd ..
+	cd ./backend/main && mix ecto.migrate && cd -
 
 be.migrate.prod:
-	cd ./backend && MIX_ENV=prod mix ecto.migrate && cd ..
+	cd ./backend/main && MIX_ENV=prod mix ecto.migrate && cd -
 
 be.migrate.mock:
-	cd ./backend && MIX_ENV=mock mix ecto.migrate && cd ..
+	cd ./backend/main && MIX_ENV=mock mix ecto.migrate && cd -
 
 be.migrate.dev:
-	cd ./backend && MIX_ENV=dev mix ecto.migrate && cd ..
+	cd ./backend/main && MIX_ENV=dev mix ecto.migrate && cd -
 
 be.migrate.test:
-	cd ./backend && MIX_ENV=test mix ecto.migrate && cd ..
+	cd ./backend/main && MIX_ENV=test mix ecto.migrate && cd -
 
 be.rollback:
-	cd ./backend && mix ecto.rollback && cd..
+	cd ./backend/main && mix ecto.rollback && cd -
 
 be.rollback.mock:
-	cd ./backend && MIX_ENV=mock mix ecto.rollback && cd ..
+	cd ./backend/main && MIX_ENV=mock mix ecto.rollback && cd -
 be.rollback.test:
-	cd ./backend && MIX_ENV=test mix ecto.rollback && cd ..
+	cd ./backend/main && MIX_ENV=test mix ecto.rollback && cd -
 
 be.rollback.dev:
-	cd ./backend && MIX_ENV=dev mix ecto.rollback && cd ..
+	cd ./backend/main && MIX_ENV=dev mix ecto.rollback && cd -
 
 
 be.deploy:
-	cd ./backend && fly deploy && cd ..
+	cd ./backend/main && fly deploy && cd -
 
 # dev: before_action
 # 	@$(JSON_CLI) -s '.[0] * .[1]' config/config.json config/config.dev.json > /tmp/config.json
