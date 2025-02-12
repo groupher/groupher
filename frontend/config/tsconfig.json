@@ -60,10 +60,6 @@
     },
     "plugins": [
       {
-        "name": "typescript-styled-plugin",
-        "validate": false
-      },
-      {
         "name": "next"
       }
     ],

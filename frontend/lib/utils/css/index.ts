@@ -1,9 +1,3 @@
-/*
- *
- * common styles used in styled-component
- *
- */
-
 import { twMerge } from 'tailwind-merge'
 import { clsx, type ClassValue } from 'clsx'
 
