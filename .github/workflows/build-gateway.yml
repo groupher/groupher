@@ -1,13 +1,13 @@
-name: Build frontend route
+name: Build frontend gateway
 
 on:
   push:
     paths:
-      - "frontend/route/**" # only trigger when this dir changes
+      - "frontend/gateway/**" # only trigger when this dir changes
 
 jobs:
   build:
-    name: Build route
+    name: Build gateway
     runs-on: ubuntu-latest
 
     steps:
@@ -31,8 +31,8 @@ jobs:
         with:
           version: latest
 
-      # - name: Run Biome for route
-      #   run: biome lint "$GITHUB_WORKSPACE/frontend-route/src/**/*.{ts,tsx}"
+      # - name: Run Biome for gateway
+      #   run: biome lint "$GITHUB_WORKSPACE/frontend-gateway/src/**/*.{ts,tsx}"
 
       - name: Build Project
-        run: yarn run build:prod:route
+        run: yarn run build:prod:gateway
