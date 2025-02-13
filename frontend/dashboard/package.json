@@ -1,0 +1,34 @@
+{
+  "name": "@groupher/frontend-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "type-check": "tsc --noEmit",
+    "build": "cross-env NODE_ENV=production next build",
+    "start": "cross-env NODe_ENV=production next start -p 3000",
+    "dist": "next build && next export -o \"build\"",
+    "info": "next info",
+    "clean": "shjs ./utils/scripts/clean.js",
+    "analyze": "cross-env ANALYZE=true next build",
+    "lint": "biome lint src/**/*.{ts,tsx} ",
+    "format": "biome format ./src",
+    "clean:up": "rm -rf *.tsbuildinfo",
+    "test": "cross-env NOD_ENV=test jest --config .jest.config.js",
+    "test:dev": "cross-env NODE_ENV=test jest --config .jest.config.js",
+    "test:watch": "npm run test -- --watch",
+    "test:cover": "npm run test -- --coverage",
+    "test:e2e": "./node_modules/.bin/cypress open",
+    "cy:run": "./node_modules/.bin/cypress run --key 60eb2dd7-724d-4b39-bd12-f434f3465866 --record",
+    "cy:run:free": "./node_modules/.bin/cypress run",
+    "test:ci": "start-server-and-test ci http://localhost:3000 cy:run:free",
+    "coveralls": "cat ./coverage/lcov.info | coveralls"
+  },
+  "lint-staged": {
+    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
+  },
+  "dependencies": {
+    "@groupher/frontend-config": "1.0.0",
+    "@groupher/frontend-core": "1.0.0"
+  }
+}
