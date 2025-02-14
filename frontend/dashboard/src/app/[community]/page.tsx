@@ -1,18 +1,7 @@
 'use client'
 
-import useIsSidebarLayout from '~/hooks/useIsSidebarLayout'
-
-import PostThread from '~/containers//thread/PostThread'
-
 const CommunityPostPage = () => {
-  const isSidebarLayout = useIsSidebarLayout()
-
-  return (
-    <>
-      {isSidebarLayout && <div className="mb-8" />}
-      <PostThread />
-    </>
-  )
+  return <h2>served from dashboard app</h2>
 }
 
 export default CommunityPostPage
