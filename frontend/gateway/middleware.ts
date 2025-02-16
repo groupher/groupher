@@ -26,6 +26,8 @@ const isDashboardRoute = (pathname: string, host: string): boolean => {
   }
 
   const pathParts = pathname.split('/').filter(Boolean)
+  console.log('## pathParts: ', pathParts)
+
   if (pathParts.length >= 2 && pathParts[1] === 'dashboard') {
     return true
   }
@@ -37,9 +39,10 @@ export default function middleware(request: NextRequest) {
   const url = request.nextUrl
   const { pathname, host } = url
 
-  // 检查是否为 dashboard 路由
+  console.log('## url: ', url)
+  console.log('## isDashboardRoute: ', isDashboardRoute(pathname, host))
+
   if (isDashboardRoute(pathname, host)) {
-    // 如果是 dashboard 路由，重写到 dashboard 项目
     return NextResponse.rewrite(new URL(pathname, DASHBOARD_SITE))
   }
 
