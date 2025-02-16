@@ -22,6 +22,9 @@ const isLandingStaticRoute = (pathname: string): boolean => {
 }
 
 const isDashboardStaticRoute = (pathname: string): boolean => {
+  console.log('## isDashboardStaticRoute pathname: ', pathname)
+  console.log('## DASHBOARD_STATIC_SIGN: ', DASHBOARD_STATIC_SIGN)
+
   return startsWith(DASHBOARD_STATIC_SIGN, pathname)
 }
 
@@ -60,6 +63,8 @@ export default function middleware(request: NextRequest) {
   if (isDashboardStaticRoute(pathname)) {
     return NextResponse.rewrite(new URL(pathname + search, DASHBOARD_SITE))
   }
+
+  console.log('## isLandingStaticRoute(pathname): ', isLandingStaticRoute(pathname))
 
   // 检查是否是 landing 静态资源
   if (isLandingStaticRoute(pathname)) {
