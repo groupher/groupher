@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-import { startsWith } from 'ramda'
+import { includes, startsWith } from 'ramda'
 
 const LANDING_SITE = process.env.LANDING_SITE || 'https://landing.groupher.com'
 const MAIN_SITE = process.env.MAIN_SITE || 'https://main.groupher.com'
 const DASHBOARD_SITE = process.env.DASHBOARD_SITE || 'https://dashboard.groupher.com'
 
 const DASHBOARD_DOMAIN = 'dashboard'
+
+const STATIC_PATHS = ['/', '/pricing', '/book-demo']
 
 const getNextStaticSign = (url) => {
   const subdomain = new URL(url).hostname.split('.')[0]
@@ -65,6 +67,11 @@ export default function middleware(request: NextRequest) {
   }
 
   console.log('## isLandingStaticRoute(pathname): ', isLandingStaticRoute(pathname))
+  console.log('## includes(pathname, STATIC_PATHS): ', includes(pathname, STATIC_PATHS))
+
+  if (includes(pathname, STATIC_PATHS)) {
+    return NextResponse.rewrite(new URL(pathname + search, LANDING_SITE))
+  }
 
   // 检查是否是 landing 静态资源
   if (isLandingStaticRoute(pathname)) {
