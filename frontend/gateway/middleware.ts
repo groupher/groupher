@@ -1,85 +1,37 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-import { includes, startsWith } from 'ramda'
+import { includes } from 'ramda'
 
-const LANDING_SITE = process.env.LANDING_SITE || 'https://landing.groupher.com'
-const MAIN_SITE = process.env.MAIN_SITE || 'https://main.groupher.com'
-const DASHBOARD_SITE = process.env.DASHBOARD_SITE || 'https://dashboard.groupher.com'
-
-const DASHBOARD_DOMAIN = 'dashboard'
-
-const STATIC_PATHS = ['/', '/pricing', '/book-demo']
-
-const getNextStaticSign = (url) => {
-  const subdomain = new URL(url).hostname.split('.')[0]
-  return `/${subdomain}/_next/static`
-}
-
-const LANDING_STATIC_SIGN = getNextStaticSign(LANDING_SITE)
-const DASHBOARD_STATIC_SIGN = getNextStaticSign(DASHBOARD_SITE)
-
-const isLandingStaticRoute = (pathname: string): boolean => {
-  return startsWith(LANDING_STATIC_SIGN, pathname)
-}
-
-const isDashboardStaticRoute = (pathname: string): boolean => {
-  console.log('## isDashboardStaticRoute pathname: ', pathname)
-  console.log('## DASHBOARD_STATIC_SIGN: ', DASHBOARD_STATIC_SIGN)
-
-  return startsWith(DASHBOARD_STATIC_SIGN, pathname)
-}
-
-const isDashboardRoute = (pathname: string, host: string): boolean => {
-  if (host.startsWith(`${DASHBOARD_DOMAIN}.`)) {
-    return true
-  }
-
-  const pathParts = pathname.split('/').filter(Boolean)
-  console.log('## pathParts: ', pathParts)
-
-  if (pathParts.length >= 2 && pathParts[1] === 'dashboard') {
-    return true
-  }
-
-  return false
-}
+import {
+  SITE,
+  STATIC_PATHS,
+  isLandingStaticRoute,
+  isDashboardStaticRoute,
+  isDashboardRoute,
+  getDashboardUrl,
+} from './utils'
 
 export default function middleware(request: NextRequest) {
   const url = request.nextUrl
   const { pathname, host, search } = url
 
-  console.log('## url: ', url)
-  console.log('## isDashboardRoute: ', isDashboardRoute(pathname, host))
+  const fullPath = pathname + search
 
-  // 检查是否是 dashboard 路由
   if (isDashboardRoute(pathname, host)) {
-    const dashboardPath = pathname
-      .split('/')
-      .filter((part) => part !== 'dashboard')
-      .join('/')
-    return NextResponse.rewrite(new URL(dashboardPath + search, DASHBOARD_SITE))
+    const dashboardUrl = getDashboardUrl(pathname, host, search)
+    return NextResponse.rewrite(dashboardUrl)
   }
 
-  // 检查是否是 dashboard 静态资源
   if (isDashboardStaticRoute(pathname)) {
-    return NextResponse.rewrite(new URL(pathname + search, DASHBOARD_SITE))
+    return NextResponse.rewrite(new URL(fullPath, SITE.DASHBOARD))
   }
 
-  console.log('## isLandingStaticRoute(pathname): ', isLandingStaticRoute(pathname))
-  console.log('## includes(pathname, STATIC_PATHS): ', includes(pathname, STATIC_PATHS))
-
-  if (includes(pathname, STATIC_PATHS)) {
-    return NextResponse.rewrite(new URL(pathname + search, LANDING_SITE))
+  if (includes(pathname, STATIC_PATHS) || isLandingStaticRoute(pathname)) {
+    return NextResponse.rewrite(new URL(fullPath, SITE.LANDING))
   }
 
-  // 检查是否是 landing 静态资源
-  if (isLandingStaticRoute(pathname)) {
-    return NextResponse.rewrite(new URL(pathname + search, LANDING_SITE))
-  }
-
-  // 所有其他情况重写到主站点
-  return NextResponse.rewrite(new URL(pathname + search, MAIN_SITE))
+  return NextResponse.rewrite(new URL(fullPath, SITE.MAIN))
 }
 
 export const config = {
