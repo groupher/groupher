@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/next'
+// import { Analytics } from '@vercel/analytics/react'
+// import { SpeedInsights } from '@vercel/speed-insights/next'
 
 import '../salon/global.css'
 
@@ -28,8 +28,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <GlobalLayout>{children}</GlobalLayout>
           </StateStoreProvider>
         </GraphQLProvider>
-        <Analytics />
-        <SpeedInsights />
+        {/* <Analytics /> */}
+        {/* <SpeedInsights /> */}
       </body>
     </html>
   )
