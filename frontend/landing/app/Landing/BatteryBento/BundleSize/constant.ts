@@ -5,8 +5,8 @@ const ICON_ASSET = '/landing/products'
 export const PRODUCTS = [
   {
     title: 'Groupher',
-    size: '413 KB',
-    sizeNum: 413,
+    size: '398 KB',
+    sizeNum: 398,
     icon: `${ICON_ASSET}/groupher.png`,
     iconSize: 'size-3.5',
   },
