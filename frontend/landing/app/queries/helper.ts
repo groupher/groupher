@@ -72,8 +72,9 @@ export const useSkipStaticQuery = (): boolean => {
 
 export const useCommunityParam = (): string => {
   const params = useParams()
+  const pathname = usePathname()
 
-  return useMemo(() => parseCommunity(params.community as string), [params])
+  return useMemo(() => parseCommunity(pathname, params.community as string), [params, pathname])
 }
 
 export const useThreadParam = (): string => {
@@ -113,15 +114,18 @@ export const usePagedArticlesParams = (): TPagedArticlesParams => {
  */
 export const useArticleParams = (): TArticleParams => {
   const params = useParams()
+  const pathname = usePathname()
 
   return {
-    community: useMemo(() => parseCommunity(params.community as string), [params]),
+    community: useMemo(
+      () => parseCommunity(pathname, params.community as string),
+      [params, pathname],
+    ),
     id: params.id as string,
   }
 }
 
-export const parseCommunity = (communityPath: string): string => {
-  const pathname = usePathname()
+export const parseCommunity = (pathname: string, communityPath: string): string => {
   if (pathname === ROUTE.APPLY_COMMUNITY) return HCN
 
   if (!communityPath) return null // HCN
