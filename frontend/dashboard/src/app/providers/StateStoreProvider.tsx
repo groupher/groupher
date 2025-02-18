@@ -20,7 +20,7 @@ import {
   usePagedChangelogs,
   useGroupedKanbanPosts,
   useFilterSearchParams,
-} from '../queries'
+} from '~/utils/ssr/queries'
 
 export default ({ children }: { children: ReactNode }) => {
   const metric = useMetric()
