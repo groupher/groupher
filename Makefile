@@ -41,6 +41,19 @@ be.install:
 be.start:
 	cd ./backend/main && MIX_ENV=mock mix phx.server
 
+
+# work around, see: https://elixirforum.com/t/mix-test-file-watch/12298/2
+# mix test --listen-on-stdin --stale --trace --only wip
+
+# test.watch not work now, see: https://github.com/lpil/mix-test.watch/issues/116
+# mix test.watch --only wip --stale
+be.watch.wip:
+	cd ./backend/main && mix test --listen-on-stdin --stale --only wip
+	
+be.watch.wip2:
+	mix test --listen-on-stdin --stale --only wip2
+	# mix test.watch --only wip2
+
 be.mock.start: 
 	cd ./backend/main && MIX_ENV=mock mix phx.server
 

@@ -4,7 +4,6 @@ defmodule GroupherServer.CMS do
   [CMS]: post, job, ...
   [CRUD]: create, update, delete ...
   """
-
   alias GroupherServer.CMS.Delegate
 
   alias Delegate.{
@@ -198,6 +197,10 @@ defmodule GroupherServer.CMS do
   defdelegate paged_comments_participants(thread, content_id, filters), to: CommentCRUD
 
   defdelegate create_comment(thread, article_id, args, user), to: CommentCRUD
+
+  defdelegate create_comment2(community_slug, thread, article_inner_id, args, user),
+    to: CommentCRUD
+
   defdelegate update_comment(comment, content), to: CommentCRUD
   defdelegate delete_comment(comment), to: CommentCRUD
   defdelegate mark_comment_solution(comment, user), to: CommentCRUD

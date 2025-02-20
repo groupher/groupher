@@ -37,7 +37,20 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     }
   }
   """
+  @tag :wip
   test "can get basic comments state", ~m(guest_conn user_conn post user)a do
+    IO.inspect(post.original_community_slug, label: "the post community_slug")
+    IO.inspect(post.inner_id, label: "post inner_id")
+
+    test =
+      CMS.create_comment2(
+        post.original_community_slug,
+        :post,
+        post.inner_id,
+        mock_comment(),
+        user
+      )
+
     {:ok, _comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
 
     variables = %{id: post.id, thread: "POST"}

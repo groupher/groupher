@@ -6,6 +6,7 @@ defmodule Helper.ORM do
   import Helper.Utils, only: [done: 1, done: 3, strip_struct: 1, get_config: 2]
   import ShortMaps
 
+  import GroupherServer.CMS.Helper.Matcher
   import Helper.ErrorHandler
 
   alias Helper.Types, as: T
@@ -407,6 +408,16 @@ defmodule Helper.ORM do
     |> preload(moderators: :user)
     |> Repo.one()
     |> done
+  end
+
+  # TODO: add unit test for it
+  def find_article(original_community_slug, thread, inner_id, opts \\ []) do
+    preload = Keyword.get(opts, :preload, [])
+    query = ~m(original_community_slug inner_id)a
+
+    with {:ok, info} <- match(thread) do
+      find_by(info.model, query, preload: preload)
+    end
   end
 
   defp extract_article_info(reaction, threads) do

@@ -577,7 +577,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-    @tag :wip
     test "can get opengraph info by url", ~m(user)a do
       user_conn = simu_conn(:user, user)
 

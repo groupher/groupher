@@ -26,7 +26,6 @@ defmodule GroupherServer.Test.CMS.Community do
   end
 
   describe "[cms community curd]" do
-    @tag :wip
     test "new created community should have default threads & locale", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
       {:ok, community} = CMS.create_community(community_attrs)
@@ -42,7 +41,6 @@ defmodule GroupherServer.Test.CMS.Community do
       assert community.threads |> length == 5
     end
 
-    @tag :wip
     test "delated community should delete all related threads", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
       {:ok, community} = CMS.create_community(community_attrs)
@@ -60,7 +58,6 @@ defmodule GroupherServer.Test.CMS.Community do
       assert all_threads.total_count == 0
     end
 
-    @tag :wip
     test "delated community should delete all related articles", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
       {:ok, community} = CMS.create_community(community_attrs)
@@ -90,7 +87,6 @@ defmodule GroupherServer.Test.CMS.Community do
       {:error, _} = ORM.find(Blog, blog.id)
     end
 
-    @tag :wip
     test "delated community should delete post also belongs to other community", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
       community2_attrs = mock_attrs(:community, %{slug: "ts", user_id: user.id})
@@ -109,7 +105,6 @@ defmodule GroupherServer.Test.CMS.Community do
       {:error, _} = ORM.find(Post, post.id)
     end
 
-    @tag :wip
     test "delated community should not delete post when the mirrored community is deleted",
          ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})

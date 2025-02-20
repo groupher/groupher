@@ -307,14 +307,31 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     |> Repo.all()
   end
 
+  def create_comment2(community_slug, thread, article_inner_id, body, %User{} = user) do
+    with {:ok, info} <- match(thread) do
+      article =
+        ORM.find_article(community_slug, thread, article_inner_id,
+          preload: [[author: :user], :original_community]
+        )
+
+      IO.inspect(article, label: "find_by article")
+    end
+  end
+
   @doc """
   creates a comment for article like psot, job ...
   """
-  def create_comment(thread, article_id, body, %User{} = user) do
+  def create_comment(thread, article_inner_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
-           ORM.find(info.model, article_id, preload: [[author: :user], :original_community]),
+           ORM.find(info.model, article_inner_id, preload: [[author: :user], :original_community]),
          true <- can_comment?(article, user) do
+      # IO.inspect(article, label: "find article")
+      # IO.inspect(info, label: "find info")
+
+      # find_article(community_id, thread, article_inner_id)
+      # IO.inspect , label: "find by article_inner_id"
+
       Multi.new()
       |> Multi.run(:create_comment, fn _, _ ->
         do_create_comment(body, info.foreign_key, article, user)
