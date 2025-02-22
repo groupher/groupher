@@ -124,5 +124,12 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert not match?(%Ecto.Association.NotLoaded{}, article.original_community)
       assert article.original_community.title == community.title
     end
+
+    @tag :wip
+    test "should have error code if not found", %{community: community} do
+      {:error, reason} = ORM.find_article(community.slug, :post, 3845)
+
+      assert reason |> Keyword.get(:code) == ecode(:article_not_found)
+    end
   end
 end

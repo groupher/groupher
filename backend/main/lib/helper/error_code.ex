@@ -63,6 +63,7 @@ defmodule Helper.ErrorCode do
   # def ecode(:already_solved), do: @article_base + 10
   def ecode(:already_upvoted), do: @article_base + 14
   def ecode(:pending), do: @article_base + 15
+  def ecode(:article_not_found), do: @article_base + 16
 
   def ecode(:community_root_only), do: @community_base + 1
   def ecode(:passport_community_not_match), do: @community_base + 2
