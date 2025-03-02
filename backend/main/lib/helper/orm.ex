@@ -234,13 +234,15 @@ defmodule Helper.ORM do
   end
 
   @doc """
-  NOTE: this should be use together with passport_loader etc Middleware
-  DO NOT use it directly
+  strict mode is default, need model to have a update_changeset
+  non-strict mode is used mostly in tests
   """
   def update(content, attrs) do
-    content
-    |> content.__struct__.update_changeset(attrs)
-    |> Repo.update()
+    content |> content.__struct__.update_changeset(attrs) |> Repo.update()
+  end
+
+  def update(content, attrs, strict: false) do
+    content |> Ecto.Changeset.change(attrs) |> Repo.update()
   end
 
   @doc """

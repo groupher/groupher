@@ -51,8 +51,7 @@ be.watch.wip:
 	cd ./backend/main && mix test --listen-on-stdin --stale --only wip
 	
 be.watch.wip2:
-	mix test --listen-on-stdin --stale --only wip2
-	# mix test.watch --only wip2
+	cd ./backend/main && mix test --listen-on-stdin --stale --only wip2
 
 be.mock.start: 
 	cd ./backend/main && MIX_ENV=mock mix phx.server

@@ -34,8 +34,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     }
   }
   """
-
-  test "basic graphql query on post with logined user",
+  test "basic graphql query on post with logged user",
        ~m(user_conn community user post_attrs)a do
     {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 

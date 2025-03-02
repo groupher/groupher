@@ -13,14 +13,20 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
 
-    {:ok, ~m(user user2 post)a}
+    {:ok, community} = db_insert(:community)
+    post_attrs = mock_attrs(:post, %{community_id: community.id, author: %{user: user}})
+    {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+
+    {:ok, ~m(user user2 community post)a}
   end
 
   describe "[basic article comment replies]" do
-    test "exsit comment can be reply", ~m(post user user2)a do
-      {:ok, parent_comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "exsit comment can be reply", ~m(community post user user2)a do
+      {:ok, parent_comment} =
+        CMS.create_comment2(community.slug, :post, post.inner_id, mock_comment(), user)
+
       {:ok, replyed_comment} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
       assert replyed_comment.reply_to.id == parent_comment.id
 
@@ -29,76 +35,83 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
       assert exist_in?(replyed_comment, parent_comment.replies)
     end
 
-    test "deleted comment can not be reply", ~m(post user user2)a do
-      {:ok, parent_comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "deleted comment can not be reply", ~m(community post user user2)a do
+      {:ok, parent_comment} =
+        CMS.create_comment2(community.slug, :post, post.inner_id, mock_comment(), user)
+
       {:ok, _} = CMS.delete_comment(parent_comment)
 
       {:error, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
     end
 
-    test "multi reply should belong to one parent comment", ~m(post user user2)a do
-      {:ok, parent_comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "multi reply should belong to one parent comment", ~m(community post user user2)a do
+      {:ok, parent_comment} =
+        CMS.create_comment2(community.slug, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, replyed_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
-
-      {:ok, replyed_comment_2} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_2} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
-      assert exist_in?(replyed_comment_1, parent_comment.replies)
-      assert exist_in?(replyed_comment_2, parent_comment.replies)
+      assert exist_in?(replied_comment_1, parent_comment.replies)
+      assert exist_in?(replied_comment_2, parent_comment.replies)
     end
 
+    @tag :wip
     test "reply to reply inside a comment should belong same parent comment",
-         ~m(post user user2)a do
-      {:ok, parent_comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+         ~m(community post user user2)a do
+      {:ok, parent_comment} =
+        CMS.create_comment2(community.slug, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, replyed_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
-
-      {:ok, replyed_comment_2} = CMS.reply_comment(replyed_comment_1.id, mock_comment(), user2)
-
-      {:ok, replyed_comment_3} = CMS.reply_comment(replyed_comment_2.id, mock_comment(), user)
+      {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_2} = CMS.reply_comment(replied_comment_1.id, mock_comment(), user2)
+      {:ok, replyed_comment_3} = CMS.reply_comment(replied_comment_2.id, mock_comment(), user)
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
-      assert exist_in?(replyed_comment_1, parent_comment.replies)
-      assert exist_in?(replyed_comment_2, parent_comment.replies)
+      assert exist_in?(replied_comment_1, parent_comment.replies)
+      assert exist_in?(replied_comment_2, parent_comment.replies)
       assert exist_in?(replyed_comment_3, parent_comment.replies)
 
-      {:ok, replyed_comment_1} = ORM.find(Comment, replyed_comment_1.id)
-      {:ok, replyed_comment_2} = ORM.find(Comment, replyed_comment_2.id)
+      {:ok, replied_comment_1} = ORM.find(Comment, replied_comment_1.id)
+      {:ok, replied_comment_2} = ORM.find(Comment, replied_comment_2.id)
       {:ok, replyed_comment_3} = ORM.find(Comment, replyed_comment_3.id)
 
-      assert replyed_comment_1.reply_to_id == parent_comment.id
-      assert replyed_comment_2.reply_to_id == replyed_comment_1.id
-      assert replyed_comment_3.reply_to_id == replyed_comment_2.id
+      assert replied_comment_1.reply_to_id == parent_comment.id
+      assert replied_comment_2.reply_to_id == replied_comment_1.id
+      assert replyed_comment_3.reply_to_id == replied_comment_2.id
     end
 
+    @tag :wip
     test "reply to reply inside a comment should have is_reply_to_others flag in meta",
-         ~m(post user user2)a do
-      {:ok, parent_comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+         ~m(community post user user2)a do
+      {:ok, parent_comment} =
+        CMS.create_comment2(community.slug, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, replyed_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
-
-      {:ok, replyed_comment_2} = CMS.reply_comment(replyed_comment_1.id, mock_comment(), user2)
-
-      {:ok, replyed_comment_3} = CMS.reply_comment(replyed_comment_2.id, mock_comment(), user)
+      {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_2} = CMS.reply_comment(replied_comment_1.id, mock_comment(), user2)
+      {:ok, replyed_comment_3} = CMS.reply_comment(replied_comment_2.id, mock_comment(), user)
 
       {:ok, _parent_comment} = ORM.find(Comment, parent_comment.id)
 
-      {:ok, replyed_comment_1} = ORM.find(Comment, replyed_comment_1.id)
-      {:ok, replyed_comment_2} = ORM.find(Comment, replyed_comment_2.id)
+      {:ok, replied_comment_1} = ORM.find(Comment, replied_comment_1.id)
+      {:ok, replied_comment_2} = ORM.find(Comment, replied_comment_2.id)
       {:ok, replyed_comment_3} = ORM.find(Comment, replyed_comment_3.id)
 
-      assert not replyed_comment_1.meta.is_reply_to_others
-      assert replyed_comment_2.meta.is_reply_to_others
+      assert not replied_comment_1.meta.is_reply_to_others
+      assert replied_comment_2.meta.is_reply_to_others
       assert replyed_comment_3.meta.is_reply_to_others
     end
 
-    test "comment replies only contains @max_parent_replies_count replies", ~m(post user)a do
+    @tag :wip
+    test "comment replies only contains @max_parent_replies_count replies",
+         ~m(community post user)a do
       total_reply_count = @max_parent_replies_count + 1
 
-      {:ok, parent_comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+      {:ok, parent_comment} =
+        CMS.create_comment2(community.slug, :post, post.inner_id, mock_comment(), user)
 
       reply_comment_list =
         Enum.reduce(1..total_reply_count, [], fn n, acc ->
@@ -117,8 +130,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
       assert not exist_in?(List.last(reply_comment_list), parent_comment.replies)
     end
 
-    test "replyed user should appear in article comment participants", ~m(post user user2)a do
-      {:ok, parent_comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "replyed user should appear in article comment participants",
+         ~m(community post user user2)a do
+      {:ok, parent_comment} =
+        CMS.create_comment2(community.slug, :post, post.inner_id, mock_comment(), user)
+
       {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
 
       {:ok, article} = ORM.find(Post, post.id)
@@ -127,8 +144,11 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
       assert exist_in?(user2, article.comments_participants)
     end
 
-    test "replies count should inc by 1 after got replyed", ~m(post user user2)a do
-      {:ok, parent_comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "replies count should inc by 1 after got replyed", ~m(community post user user2)a do
+      {:ok, parent_comment} =
+        CMS.create_comment2(community.slug, :post, post.inner_id, mock_comment(), user)
+
       assert parent_comment.replies_count === 0
 
       {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
@@ -142,8 +162,11 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
   end
 
   describe "[paged article comment replies]" do
-    test "can get paged replies of a parent comment", ~m(post user)a do
-      {:ok, parent_comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "can get paged replies of a parent comment", ~m(community post user)a do
+      {:ok, parent_comment} =
+        CMS.create_comment2(community.slug, :post, post.inner_id, mock_comment(), user)
+
       {:ok, paged_replies} = CMS.paged_comment_replies(parent_comment.id, %{page: 1, size: 20})
       assert is_valid_pagination?(paged_replies, :raw, :empty)
 
@@ -168,14 +191,15 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
       assert exist_in?(Enum.at(reply_comment_list, 3), paged_replies.entries)
     end
 
-    test "can get reply_to info of a parent comment", ~m(post user)a do
+    @tag :wip
+    test "can get reply_to info of a parent comment", ~m(community post user)a do
       page_number = 1
       page_size = 10
 
-      {:ok, parent_comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+      {:ok, parent_comment} =
+        CMS.create_comment2(community.slug, :post, post.inner_id, mock_comment(), user)
 
       {:ok, reply_comment} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
-
       {:ok, reply_comment2} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
 
       {:ok, paged_comments} =

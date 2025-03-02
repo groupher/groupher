@@ -308,13 +308,43 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   end
 
   def create_comment2(community_slug, thread, article_inner_id, body, %User{} = user) do
-    with {:ok, info} <- match(thread) do
-      article =
-        ORM.find_article(community_slug, thread, article_inner_id,
-          preload: [[author: :user], :original_community]
-        )
-
-      IO.inspect(article, label: "find_by article")
+    with {:ok, info} <- match(thread),
+         {:ok, article} <-
+           ORM.find_article(community_slug, thread, article_inner_id,
+             preload: [[author: :user], :original_community]
+           ),
+         true <- can_comment?(article, user) do
+      Multi.new()
+      |> Multi.run(:create_comment, fn _, _ ->
+        do_create_comment(body, info.foreign_key, article, user)
+      end)
+      |> Multi.run(:update_comments_count, fn _, %{create_comment: comment} ->
+        update_comments_count(comment, :inc)
+      end)
+      |> Multi.run(:set_question_flag_ifneed, fn _, %{create_comment: comment} ->
+        set_question_flag_ifneed(article, comment)
+      end)
+      |> Multi.run(:add_participator, fn _, _ -> add_participant_to_article(article, user) end)
+      |> Multi.run(:update_article_active_timestamp, fn _, %{create_comment: comment} ->
+        case comment.author_id == article.author.user.id do
+          true -> {:ok, :pass}
+          false -> CMS.update_active_timestamp(thread, article)
+        end
+      end)
+      |> Multi.run(:after_hooks, fn _, %{create_comment: comment} ->
+        # comment this for test
+        # Hooks.SubscribeCommunity.handle(article.original_community, user)
+        Later.run({Hooks.Cite, :handle, [comment]})
+        Later.run({Hooks.Notify, :handle, [:comment, comment, user]})
+        Later.run({Hooks.Mention, :handle, [comment]})
+        Later.run({Hooks.Audition, :handle, [comment]})
+        Later.run({Hooks.SubscribeCommunity, :handle, [article.original_community, user]})
+      end)
+      |> Repo.transaction()
+      |> result()
+    else
+      false -> raise_error(:article_comments_locked, "this article is forbid comment")
+      {:error, error} -> {:error, error}
     end
   end
 
@@ -326,12 +356,6 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
          {:ok, article} <-
            ORM.find(info.model, article_inner_id, preload: [[author: :user], :original_community]),
          true <- can_comment?(article, user) do
-      # IO.inspect(article, label: "find article")
-      # IO.inspect(info, label: "find info")
-
-      # find_article(community_id, thread, article_inner_id)
-      # IO.inspect , label: "find by article_inner_id"
-
       Multi.new()
       |> Multi.run(:create_comment, fn _, _ ->
         do_create_comment(body, info.foreign_key, article, user)

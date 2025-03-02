@@ -243,15 +243,15 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
       assert random_comment.meta.is_legal
 
-      {:ok, replyed_comment_1} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
-      {:ok, replyed_comment_2} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_1} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_2} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
 
       variables = %{id: doc.id, thread: "DOC", filter: %{page: 1, size: page_size}}
       results = guest_conn |> query_result(@query, variables, "pagedComments")
       assert results["entries"] |> length == total_count
 
-      assert not exist_in?(replyed_comment_1, results["entries"])
-      assert not exist_in?(replyed_comment_2, results["entries"])
+      assert not exist_in?(replied_comment_1, results["entries"])
+      assert not exist_in?(replied_comment_2, results["entries"])
 
       random_comment = Enum.find(results["entries"], &(&1["id"] == to_string(random_comment.id)))
 
@@ -259,12 +259,12 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       assert random_comment["repliesCount"] == 2
 
       assert random_comment["replies"] |> List.first() |> Map.get("id") ==
-               to_string(replyed_comment_1.id)
+               to_string(replied_comment_1.id)
 
       assert not is_nil(random_comment["replies"] |> List.first() |> Map.get("replyTo"))
 
       assert random_comment["replies"] |> List.last() |> Map.get("id") ==
-               to_string(replyed_comment_2.id)
+               to_string(replied_comment_2.id)
     end
 
     test "timeline-mode paged comments", ~m(guest_conn doc user user2)a do
@@ -281,9 +281,9 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
 
-      {:ok, replyed_comment_1} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_1} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
 
-      {:ok, replyed_comment_2} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_2} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
 
       variables = %{
         id: doc.id,
@@ -295,8 +295,8 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       results = guest_conn |> query_result(@query, variables, "pagedComments")
       assert results["entries"] |> length == total_count + 2
 
-      assert exist_in?(replyed_comment_1, results["entries"])
-      assert exist_in?(replyed_comment_2, results["entries"])
+      assert exist_in?(replied_comment_1, results["entries"])
+      assert exist_in?(replied_comment_2, results["entries"])
 
       random_comment = Enum.find(results["entries"], &(&1["id"] == to_string(random_comment.id)))
       assert random_comment["replies"] |> length == 2
@@ -316,9 +316,9 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, parent_comment} =
         CMS.create_comment(:doc, doc.id, mock_comment("parent_comment"), user)
 
-      {:ok, replyed_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
 
-      {:ok, replyed_comment_2} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_2} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
 
       variables = %{
         id: doc.id,
@@ -329,20 +329,20 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
       results = guest_conn |> query_result(@query, variables, "pagedComments")
 
-      replyed_comment_1 =
-        Enum.find(results["entries"], &(&1["id"] == to_string(replyed_comment_1.id)))
+      replied_comment_1 =
+        Enum.find(results["entries"], &(&1["id"] == to_string(replied_comment_1.id)))
 
-      assert replyed_comment_1 |> get_in(["replyTo", "id"]) == to_string(parent_comment.id)
+      assert replied_comment_1 |> get_in(["replyTo", "id"]) == to_string(parent_comment.id)
 
-      assert replyed_comment_1 |> get_in(["replyTo", "author", "id"]) ==
+      assert replied_comment_1 |> get_in(["replyTo", "author", "id"]) ==
                to_string(parent_comment.author_id)
 
-      replyed_comment_2 =
-        Enum.find(results["entries"], &(&1["id"] == to_string(replyed_comment_2.id)))
+      replied_comment_2 =
+        Enum.find(results["entries"], &(&1["id"] == to_string(replied_comment_2.id)))
 
-      assert replyed_comment_2 |> get_in(["replyTo", "id"]) == to_string(parent_comment.id)
+      assert replied_comment_2 |> get_in(["replyTo", "id"]) == to_string(parent_comment.id)
 
-      assert replyed_comment_2 |> get_in(["replyTo", "author", "id"]) ==
+      assert replied_comment_2 |> get_in(["replyTo", "author", "id"]) ==
                to_string(parent_comment.author_id)
     end
 

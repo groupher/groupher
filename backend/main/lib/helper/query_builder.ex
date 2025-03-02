@@ -1,10 +1,9 @@
 defmodule Helper.QueryBuilder do
   @moduledoc """
-  handle common query pices across the project
+  handle common query picas across the project
   """
 
   import Ecto.Query, warn: false
-  alias GroupherServer.CMS
 
   alias Helper.Constant
 

@@ -97,7 +97,6 @@ defmodule GroupherServer.Test.Helper.ORM do
   end
 
   describe "[find article]" do
-    @tag :wip
     test "should find by default args", %{post: post, community: community} do
       {:ok, article} = ORM.find_article(community.slug, :post, post.inner_id)
 
@@ -110,7 +109,6 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert match?(%Ecto.Association.NotLoaded{}, article.author)
     end
 
-    @tag :wip
     test "should find by preload", %{post: post, community: community} do
       {:ok, article} =
         ORM.find_article(community.slug, :post, post.inner_id,
@@ -125,7 +123,6 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert article.original_community.title == community.title
     end
 
-    @tag :wip
     test "should have error code if not found", %{community: community} do
       {:error, reason} = ORM.find_article(community.slug, :post, 3845)
 

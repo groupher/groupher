@@ -5,7 +5,6 @@ defmodule GroupherServer.CMS.Model.CommunityJoinBlog do
   use Ecto.Schema
   use Accessible
 
-  import Ecto.Changeset
   import GroupherServer.CMS.Helper.Macros
 
   alias GroupherServer.CMS
