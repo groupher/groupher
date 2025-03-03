@@ -9,20 +9,120 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
-
     {:ok, community} = db_insert(:community)
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
+    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
     {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user2)
     {:ok, blog} = ORM.find(CMS.Model.Blog, blog.id, preload: [author: :user])
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
 
-    {:ok, ~m(user_conn guest_conn blog user user2)a}
+    {:ok, ~m(user_conn guest_conn community blog user user2)a}
   end
 
-  describe "[baisc article blog comment]" do
+  @query """
+  query($id: ID!, $thread: Thread) {
+    commentsState(id: $id, thread: $thread) {
+      totalCount
+      isViewerJoined
+      participantsCount
+
+      participants {
+        login
+        nickname
+        avatar
+      }
+    }
+  }
+  """
+  @tag :wip
+  test "can get basic comments state", ~m(guest_conn user_conn community blog user)a do
+    {:ok, _comment} =
+      CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+
+    variables = %{id: blog.id, thread: "BLOG"}
+    results = guest_conn |> query_result(@query, variables, "commentsState")
+
+    assert results["participantsCount"] == 1
+    assert results["totalCount"] == 1
+    assert not results["isViewerJoined"]
+    assert user_exist_in?(user, results["participants"])
+
+    results = user_conn |> query_result(@query, variables, "commentsState")
+    assert results["isViewerJoined"]
+  end
+
+  @query """
+  query($id: ID!) {
+    oneComment(id: $id) {
+      id
+      body
+      isArchived
+      archivedAt
+      viewerHasUpvoted
+      emotions {
+        downvoteCount
+        viewerHasDownvoteed
+      }
+    }
+  }
+  """
+  @tag :wip
+  test "can get one comment by id", ~m(guest_conn community blog user)a do
+    thread = :blog
+
+    {:ok, comment} =
+      CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
+    variables = %{id: comment.id}
+    results = guest_conn |> query_result(@query, variables, "oneComment")
+
+    assert results["id"] == to_string(comment.id)
+  end
+
+  @tag :wip
+  test "can get one comment by id with viewer states", ~m(user_conn community blog user)a do
+    thread = :blog
+
+    {:ok, comment} =
+      CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
+    {:ok, _} = CMS.upvote_comment(comment.id, user)
+    {:ok, _} = CMS.emotion_to_comment(comment.id, :downvote, user)
+
+    variables = %{id: comment.id}
+    results = user_conn |> query_result(@query, variables, "oneComment")
+
+    assert results["id"] == to_string(comment.id)
+    assert results["viewerHasUpvoted"]
+    assert results["emotions"]["viewerHasDownvoteed"]
+  end
+
+  describe "[basic article blog comment]" do
+    @query """
+    query($community: String!, $id: ID!) {
+      blog(community: $community, id: $id) {
+        id
+        title
+        isArchived
+        archivedAt
+      }
+    }
+    """
+    @tag :wip
+    test "guest user can get basic archive info", ~m(guest_conn community blog user)a do
+      thread = :blog
+
+      {:ok, _} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
+      variables = %{community: blog.original_community_slug, id: blog.inner_id}
+      results = guest_conn |> query_result(@query, variables, "blog")
+
+      assert not results["isArchived"]
+    end
+
     @query """
     query($community: String!, $id: ID!) {
       blog(community: $community, id: $id) {
@@ -36,19 +136,21 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       }
     }
     """
-
+    @tag :wip
     test "guest user can get comment participants after comment created",
-         ~m(guest_conn blog user user2)a do
+         ~m(guest_conn community blog user user2)a do
       total_count = 5
       thread = :blog
 
       Enum.reduce(1..total_count, [], fn _, acc ->
-        {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+        {:ok, comment} =
+          CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
 
         acc ++ [comment]
       end)
 
-      {:ok, _} = CMS.create_comment(thread, blog.id, mock_comment(), user2)
+      {:ok, _} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user2)
 
       variables = %{community: blog.original_community_slug, id: blog.inner_id}
       results = guest_conn |> query_result(@query, variables, "blog")
@@ -95,6 +197,9 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
             isArticleAuthor
             meta {
               isArticleAuthorUpvoted
+              isLegal
+              illegalReason
+              illegalWords
             }
             replyTo {
               id
@@ -110,6 +215,14 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
             replies {
               id
               bodyHtml
+              replyTo {
+                id
+                author {
+                  login
+                  nickname
+                }
+              }
+              repliesCount
               author {
                 id
                 login
@@ -124,22 +237,32 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
         }
     }
     """
-    test "list comments with default replies-mode", ~m(guest_conn blog user user2)a do
-      total_count = 10
+    @tag :wip
+    test "list comments with default replies-mode",
+         ~m(guest_conn community blog user user2)a do
+      total_count = 3
       page_size = 20
       thread = :blog
 
       all_comments =
         Enum.reduce(1..total_count, [], fn i, acc ->
-          {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment("comment #{i}"), user)
+          {:ok, comment} =
+            CMS.create_comment2(
+              community.slug,
+              thread,
+              blog.inner_id,
+              mock_comment("comment #{i}"),
+              user
+            )
 
           acc ++ [comment]
         end)
 
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
 
-      {:ok, replied_comment_1} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
+      assert random_comment.meta.is_legal
 
+      {:ok, replied_comment_1} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
       {:ok, replied_comment_2} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
 
       variables = %{id: blog.id, thread: "BLOG", filter: %{page: 1, size: page_size}}
@@ -150,24 +273,35 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert not exist_in?(replied_comment_2, results["entries"])
 
       random_comment = Enum.find(results["entries"], &(&1["id"] == to_string(random_comment.id)))
+
       assert random_comment["replies"] |> length == 2
       assert random_comment["repliesCount"] == 2
 
       assert random_comment["replies"] |> List.first() |> Map.get("id") ==
                to_string(replied_comment_1.id)
 
+      assert not is_nil(random_comment["replies"] |> List.first() |> Map.get("replyTo"))
+
       assert random_comment["replies"] |> List.last() |> Map.get("id") ==
                to_string(replied_comment_2.id)
     end
 
-    test "timeline-mode paged comments", ~m(guest_conn blog user user2)a do
+    @tag :wip
+    test "timeline-mode paged comments", ~m(guest_conn community blog user user2)a do
       total_count = 3
       page_size = 20
       thread = :blog
 
       all_comments =
         Enum.reduce(1..total_count, [], fn i, acc ->
-          {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment("comment #{i}"), user)
+          {:ok, comment} =
+            CMS.create_comment2(
+              community.slug,
+              thread,
+              blog.inner_id,
+              mock_comment("comment #{i}"),
+              user
+            )
 
           acc ++ [comment]
         end)
@@ -196,24 +330,44 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert random_comment["repliesCount"] == 2
     end
 
-    test "comment should have reply_to content if need", ~m(guest_conn blog user user2)a do
+    @tag :wip
+    test "comment should have reply_to content if need",
+         ~m(guest_conn community blog user user2)a do
       total_count = 2
       thread = :blog
 
       Enum.reduce(0..total_count, [], fn i, acc ->
-        {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment("comment #{i}"), user)
+        {:ok, comment} =
+          CMS.create_comment2(
+            community.slug,
+            thread,
+            blog.inner_id,
+            mock_comment("comment #{i}"),
+            user
+          )
 
         acc ++ [comment]
       end)
 
       {:ok, parent_comment} =
-        CMS.create_comment(:blog, blog.id, mock_comment("parent_comment"), user)
+        CMS.create_comment2(
+          community.slug,
+          :blog,
+          blog.inner_id,
+          mock_comment("parent_comment"),
+          user
+        )
 
       {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
-
       {:ok, replied_comment_2} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
 
-      variables = %{id: blog.id, thread: "BLOG", filter: %{page: 1, size: 10}, mode: "TIMELINE"}
+      variables = %{
+        id: blog.id,
+        thread: "BLOG",
+        filter: %{page: 1, size: 10},
+        mode: "TIMELINE"
+      }
+
       results = guest_conn |> query_result(@query, variables, "pagedComments")
 
       replied_comment_1 =
@@ -233,12 +387,15 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
                to_string(parent_comment.author_id)
     end
 
-    test "guest user can get paged comment for blog", ~m(guest_conn blog user)a do
+    @tag :wip
+    test "guest user can get paged comment for blog",
+         ~m(guest_conn community blog user)a do
       total_count = 30
       thread = :blog
 
       Enum.reduce(1..total_count, [], fn _, acc ->
-        {:ok, value} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+        {:ok, value} =
+          CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
 
         acc ++ [value]
       end)
@@ -250,23 +407,29 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert results["totalCount"] == total_count
     end
 
+    @tag :wip
     test "guest user can get paged comment with pinned comment in it",
-         ~m(guest_conn blog user)a do
+         ~m(guest_conn community blog user)a do
       total_count = 20
       thread = :blog
 
       Enum.reduce(1..total_count, [], fn _, acc ->
-        {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+        {:ok, comment} =
+          CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
 
         acc ++ [comment]
       end)
 
-      {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+      {:ok, comment} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
       {:ok, pinned_comment} = CMS.pin_comment(comment.id)
 
       Process.sleep(1000)
 
-      {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+      {:ok, comment} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
       {:ok, pinned_comment2} = CMS.pin_comment(comment.id)
 
       variables = %{id: blog.id, thread: "BLOG", filter: %{page: 1, size: 10}}
@@ -278,13 +441,17 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert results["totalCount"] == total_count + 2
     end
 
-    test "guest user can get paged comment with floor it", ~m(guest_conn blog user)a do
+    @tag :wip
+    test "guest user can get paged comment with floor it",
+         ~m(guest_conn community blog user)a do
       total_count = 5
       thread = :blog
       page_size = 10
 
       Enum.reduce(1..total_count, [], fn _, acc ->
-        {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+        {:ok, comment} =
+          CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
         Process.sleep(1000)
         acc ++ [comment]
       end)
@@ -296,15 +463,24 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert results["entries"] |> List.last() |> Map.get("floor") == 5
     end
 
-    test "the comments is loaded in default asc order", ~m(guest_conn blog user)a do
+    @tag :wip
+    test "the comments is loaded in default asc order",
+         ~m(guest_conn community blog user)a do
       page_size = 10
       thread = :blog
 
-      {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+      {:ok, comment} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
       Process.sleep(1000)
-      {:ok, _comment2} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+
+      {:ok, _comment2} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
       Process.sleep(1000)
-      {:ok, comment3} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+
+      {:ok, comment3} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
 
       variables = %{
         id: blog.id,
@@ -319,15 +495,24 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert List.last(results["entries"]) |> Map.get("id") == to_string(comment3.id)
     end
 
-    test "the comments can be loaded in desc order in timeline-mode", ~m(guest_conn blog user)a do
+    @tag :wip
+    test "the comments can be loaded in desc order in timeline-mode",
+         ~m(guest_conn community blog user)a do
       page_size = 10
       thread = :blog
 
-      {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+      {:ok, comment} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
       Process.sleep(1000)
-      {:ok, _comment2} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+
+      {:ok, _comment2} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
       Process.sleep(1000)
-      {:ok, comment3} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+
+      {:ok, comment3} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
 
       variables = %{
         id: blog.id,
@@ -342,20 +527,29 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert List.last(results["entries"]) |> Map.get("id") == to_string(comment.id)
     end
 
+    @tag :wip
     test "the comments can be loaded in desc order in replies-mode",
-         ~m(guest_conn blog user user2)a do
+         ~m(guest_conn community blog user user2)a do
       page_size = 10
       thread = :blog
 
-      {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+      {:ok, comment} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
       {:ok, _reply_comment} = CMS.reply_comment(comment.id, mock_comment(), user)
       {:ok, _reply_comment} = CMS.reply_comment(comment.id, mock_comment(), user2)
       Process.sleep(1000)
-      {:ok, comment2} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+
+      {:ok, comment2} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
       {:ok, _reply_comment} = CMS.reply_comment(comment2.id, mock_comment(), user)
       {:ok, _reply_comment} = CMS.reply_comment(comment2.id, mock_comment(), user2)
       Process.sleep(1000)
-      {:ok, comment3} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+
+      {:ok, comment3} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+
       {:ok, _reply_comment} = CMS.reply_comment(comment3.id, mock_comment(), user)
       {:ok, _reply_comment} = CMS.reply_comment(comment3.id, mock_comment(), user2)
 
@@ -371,14 +565,23 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert List.last(results["entries"]) |> Map.get("id") == to_string(comment.id)
     end
 
-    test "guest user can get paged comment with upvotes_count", ~m(guest_conn blog user user2)a do
+    @tag :wip
+    test "guest user can get paged comment with upvotes_count",
+         ~m(guest_conn community blog user user2)a do
       total_count = 10
       page_size = 10
       thread = :blog
 
       all_comment =
         Enum.reduce(1..total_count, [], fn i, acc ->
-          {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment("comment #{i}"), user)
+          {:ok, comment} =
+            CMS.create_comment2(
+              community.slug,
+              thread,
+              blog.inner_id,
+              mock_comment("comment #{i}"),
+              user
+            )
 
           Process.sleep(1000)
           acc ++ [comment]
@@ -399,8 +602,9 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert results["entries"] |> List.last() |> Map.get("upvotesCount") == 0
     end
 
+    @tag :wip
     test "article author upvote a comment can get is_article_author and/or is_article_author_upvoted flag",
-         ~m(guest_conn blog user)a do
+         ~m(guest_conn community blog user)a do
       total_count = 5
       page_size = 12
       thread = :blog
@@ -409,7 +613,14 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
 
       all_comments =
         Enum.reduce(0..total_count, [], fn i, acc ->
-          {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment("comment #{i}"), user)
+          {:ok, comment} =
+            CMS.create_comment2(
+              community.slug,
+              thread,
+              blog.inner_id,
+              mock_comment("comment #{i}"),
+              user
+            )
 
           acc ++ [comment]
         end)
@@ -417,7 +628,14 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
       {:ok, _} = CMS.upvote_comment(random_comment.id, author_user)
 
-      {:ok, author_comment} = CMS.create_comment(thread, blog.id, mock_comment(), author_user)
+      {:ok, author_comment} =
+        CMS.create_comment2(
+          community.slug,
+          thread,
+          blog.inner_id,
+          mock_comment(),
+          author_user
+        )
 
       {:ok, _} = CMS.upvote_comment(author_comment.id, author_user)
 
@@ -437,15 +655,23 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert the_random_comment |> get_in(["meta", "isArticleAuthorUpvoted"])
     end
 
+    @tag :wip
     test "guest user can get paged comment with emotions info",
-         ~m(guest_conn blog user user2)a do
+         ~m(guest_conn community blog user user2)a do
       total_count = 2
       page_size = 10
       thread = :blog
 
       all_comment =
         Enum.reduce(1..total_count, [], fn i, acc ->
-          {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment("comment #{i}"), user)
+          {:ok, comment} =
+            CMS.create_comment2(
+              community.slug,
+              thread,
+              blog.inner_id,
+              mock_comment("comment #{i}"),
+              user
+            )
 
           Process.sleep(1000)
           acc ++ [comment]
@@ -488,15 +714,23 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert user2.login in latest_beer_users_logins
     end
 
+    @tag :wip
     test "user make emotion can get paged comment with emotions has_motioned field",
-         ~m(user_conn blog user user2)a do
+         ~m(user_conn community blog user user2)a do
       total_count = 10
       page_size = 12
       thread = :blog
 
       all_comment =
         Enum.reduce(1..total_count, [], fn i, acc ->
-          {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment("comment #{i}"), user)
+          {:ok, comment} =
+            CMS.create_comment2(
+              community.slug,
+              thread,
+              blog.inner_id,
+              mock_comment("comment #{i}"),
+              user
+            )
 
           Process.sleep(1000)
           acc ++ [comment]
@@ -515,14 +749,22 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
              |> get_in(["emotions", "viewerHasDownvoteed"])
     end
 
-    test "comment should have viewer has upvoted flag", ~m(user_conn blog user)a do
+    @tag :wip
+    test "comment should have viewer has upvoted flag", ~m(user_conn community blog user)a do
       total_count = 10
       page_size = 12
       thread = :blog
 
       all_comments =
         Enum.reduce(0..total_count, [], fn i, acc ->
-          {:ok, comment} = CMS.create_comment(thread, blog.id, mock_comment("comment #{i}"), user)
+          {:ok, comment} =
+            CMS.create_comment2(
+              community.slug,
+              thread,
+              blog.inner_id,
+              mock_comment("comment #{i}"),
+              user
+            )
 
           acc ++ [comment]
         end)
@@ -555,21 +797,32 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
         }
     }
     """
-
-    test "guest user can get paged participants", ~m(guest_conn blog user)a do
+    @tag :wip
+    test "guest user can get paged participants", ~m(guest_conn community blog user)a do
       total_count = 30
       page_size = 10
       thread = "BLOG"
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, new_user} = db_insert(:user)
-        {:ok, comment} = CMS.create_comment(:blog, blog.id, mock_comment(), new_user)
+
+        {:ok, comment} =
+          CMS.create_comment2(
+            community.slug,
+            :blog,
+            blog.inner_id,
+            mock_comment(),
+            new_user
+          )
 
         acc ++ [comment]
       end)
 
-      {:ok, _comment} = CMS.create_comment(:blog, blog.id, mock_comment(), user)
-      {:ok, _comment} = CMS.create_comment(:blog, blog.id, mock_comment(), user)
+      {:ok, _comment} =
+        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+
+      {:ok, _comment} =
+        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
 
       variables = %{id: blog.id, thread: thread, filter: %{page: 1, size: page_size}}
 
@@ -620,14 +873,16 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
         }
     }
     """
-
-    test "guest user can get paged replies", ~m(guest_conn blog user user2)a do
+    @tag :wip
+    test "guest user can get paged replies", ~m(guest_conn community blog user user2)a do
       total_count = 2
       page_size = 10
       thread = :blog
 
       author_user = blog.author.user
-      {:ok, parent_comment} = CMS.create_comment(thread, blog.id, mock_comment(), user)
+
+      {:ok, parent_comment} =
+        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
 
       Enum.reduce(1..total_count, [], fn i, acc ->
         {:ok, reply_comment} =
