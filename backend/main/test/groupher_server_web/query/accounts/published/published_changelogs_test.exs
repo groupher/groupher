@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -6,9 +8,7 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
   @publish_count 10
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, changelog} = db_insert(:changelog)
-    {:ok, community} = db_insert(:community)
+    {community, changelog, _, user} = mock_article(:changelog)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
@@ -76,11 +76,14 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
       }
     }
     """
-
-    test "user can get paged published comments on changelog", ~m(guest_conn user changelog)a do
+    @tag :wip
+    test "user can get paged published comments on changelog",
+         ~m(guest_conn user community changelog)a do
       pub_comments =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
-          {:ok, comment} = CMS.create_comment(:changelog, changelog.id, mock_comment(), user)
+          {:ok, comment} =
+            CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+
           acc ++ [comment]
         end)
 

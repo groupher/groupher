@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Helper.OgInfo do
 
   alias Helper.OgInfo
 
-  describe "[oginfo test]" do
+  describe "[og-info test]" do
     test "can get valid open graph info with valid url.." do
       # Good example
       {:ok, ret} = OgInfo.get("https://www.ifanr.com/1561465")

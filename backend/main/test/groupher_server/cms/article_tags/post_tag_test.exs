@@ -7,13 +7,9 @@ defmodule GroupherServer.Test.CMS.ArticleTag.PostTag do
   alias Helper.ORM
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
-    {:ok, community} = db_insert(:community)
+    {community, post, post_attrs, user} = mock_article(:post)
     article_tag_attrs = mock_attrs(:article_tag)
     article_tag_attrs2 = mock_attrs(:article_tag)
-
-    post_attrs = mock_attrs(:post)
 
     {:ok, ~m(user community post post_attrs article_tag_attrs article_tag_attrs2)a}
   end
@@ -137,7 +133,7 @@ defmodule GroupherServer.Test.CMS.ArticleTag.PostTag do
   end
 
   describe "[create/update post with tags]" do
-    test "can create post with exsited article tags",
+    test "can create post with existed article tags",
          ~m(community user post_attrs article_tag_attrs article_tag_attrs2)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
       {:ok, article_tag2} = CMS.create_article_tag(community, :post, article_tag_attrs2, user)

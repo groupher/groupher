@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Accounts.Published.Changelog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.{Accounts, CMS}
@@ -8,32 +10,34 @@ defmodule GroupherServer.Test.Accounts.Published.Changelog do
   @publish_count 10
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, changelog, _, user} = mock_article(:changelog)
+
     {:ok, user2} = db_insert(:user)
-    {:ok, changelog} = db_insert(:changelog)
-    {:ok, community} = db_insert(:community)
     {:ok, community2} = db_insert(:community)
 
     {:ok, ~m(user user2 changelog community community2)a}
   end
 
-  describe "[publised changelogs]" do
-    test "create changelog should update user published meta", ~m(community user)a do
+  describe "[published changelogs]" do
+    @tag :wip
+    test "create changelog should update user published meta", ~m(community user2)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user2)
+      {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user2)
 
-      {:ok, user} = ORM.find(User, user.id)
+      {:ok, user} = ORM.find(User, user2.id)
       assert user.meta.published_changelogs_count == 2
     end
 
-    test "fresh user get empty paged published changelogs", ~m(user)a do
-      {:ok, results} = Accounts.paged_published_articles(user, :changelog, %{page: 1, size: 20})
+    @tag :wip
+    test "fresh user get empty paged published changelogs", ~m(user2)a do
+      {:ok, results} = Accounts.paged_published_articles(user2, :changelog, %{page: 1, size: 20})
 
       assert results |> is_valid_pagination?(:raw)
       assert results.total_count == 0
     end
 
+    @tag :wip
     test "user can get paged published changelogs", ~m(user user2 community community2)a do
       pub_changelogs =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
@@ -62,7 +66,7 @@ defmodule GroupherServer.Test.Accounts.Published.Changelog do
       {:ok, results} = Accounts.paged_published_articles(user, :changelog, %{page: 1, size: 20})
 
       assert results |> is_valid_pagination?(:raw)
-      assert results.total_count == @publish_count * 2
+      assert results.total_count == @publish_count * 2 + 1
 
       random_changelog_id = pub_changelogs |> Enum.random() |> Map.get(:id)
       random_changelog_id2 = pub_changelogs2 |> Enum.random() |> Map.get(:id)
@@ -71,12 +75,15 @@ defmodule GroupherServer.Test.Accounts.Published.Changelog do
     end
   end
 
-  describe "[publised changelog comments]" do
-    test "can get published article comments", ~m(changelog user)a do
+  describe "[published changelog comments]" do
+    @tag :wip
+    test "can get published article comments", ~m(community changelog user)a do
       total_count = 10
 
       Enum.reduce(1..total_count, [], fn _, acc ->
-        {:ok, comment} = CMS.create_comment(:changelog, changelog.id, mock_comment(), user)
+        {:ok, comment} =
+          CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+
         acc ++ [comment]
       end)
 

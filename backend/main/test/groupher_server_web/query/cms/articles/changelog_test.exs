@@ -1,17 +1,15 @@
 defmodule GroupherServer.Test.Query.Articles.Changelog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, changelog} = db_insert(:changelog)
-    {:ok, community} = db_insert(:community)
+    {community, changelog, changelog_attrs, user} = mock_article(:changelog)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
-
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
     {:ok, ~m(user_conn guest_conn changelog user community changelog_attrs)a}
   end

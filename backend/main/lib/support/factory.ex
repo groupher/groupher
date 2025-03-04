@@ -437,6 +437,7 @@ defmodule GroupherServer.Support.Factory do
   def mock_article(thread) do
     {:ok, user} = db_insert(:user)
     {:ok, community} = db_insert(:community)
+
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
     {:ok, article} = CMS.create_article(community, thread, attrs, user)
 

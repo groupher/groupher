@@ -1,17 +1,15 @@
 defmodule GroupherServer.Test.Query.Articles.Blog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, blog} = db_insert(:blog)
-    {:ok, community} = db_insert(:community)
+    {community, blog, blog_attrs, user} = mock_article(:blog)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
-
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
     {:ok, ~m(user_conn guest_conn blog user community blog_attrs)a}
   end
