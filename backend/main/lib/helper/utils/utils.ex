@@ -1,6 +1,6 @@
 defmodule Helper.Utils do
   @moduledoc """
-  unitil functions
+  until functions
   """
   import Ecto.Query, warn: false
   import Helper.ErrorHandler

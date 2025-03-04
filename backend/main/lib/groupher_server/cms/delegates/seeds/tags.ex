@@ -257,28 +257,6 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Tags do
 
   def get(_, :roadmap, :feedback), do: []
 
-  def get(_, :account, :blackhole) do
-    [
-      %{
-        title: "发传单",
-        slug: "flyers"
-      },
-      %{
-        title: "负能量",
-        slug: "negative"
-      },
-      %{
-        title: "滥用权限",
-        slug: "ugly"
-      },
-      %{
-        title: "无法无天",
-        slug: "law"
-      }
-    ]
-    |> Enum.map(fn attr -> Map.merge(%{thread: :account, color: random_color()}, attr) end)
-  end
-
   ## Feedback end
 
   ## 城市
@@ -432,7 +410,6 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Tags do
 
   ## 语言与框架 end
 
-  @doc "post thread of BLACK community"
   def get(%Community{slug: "blackhole"}, :post) do
     [
       %{
@@ -471,7 +448,6 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Tags do
     |> Enum.map(fn attr -> Map.merge(%{thread: :post, color: random_color()}, attr) end)
   end
 
-  @doc "post thread of MACKERS community"
   def get(%Community{slug: "makers"}, :post) do
     [
       %{
@@ -533,7 +509,6 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Tags do
     |> Enum.map(fn attr -> Map.merge(%{thread: :post, color: random_color()}, attr) end)
   end
 
-  @doc "post thread of ADWALL community"
   def get(%Community{slug: "adwall"}, :post) do
     [
       %{

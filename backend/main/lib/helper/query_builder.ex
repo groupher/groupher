@@ -24,7 +24,7 @@ defmodule Helper.QueryBuilder do
   end
 
   @doc """
-  inserted in latest x mounth
+  inserted in latest x month/days etc..
   """
   def recent_inserted(queryable, months: count) do
     end_of_today = Timex.now() |> Timex.end_of_day()
@@ -35,9 +35,6 @@ defmodule Helper.QueryBuilder do
     |> where([q], q.inserted_at <= ^end_of_today)
   end
 
-  @doc """
-  inserted in latest x days
-  """
   def recent_inserted(queryable, days: count) do
     end_of_today = Timex.now() |> Timex.end_of_day()
     x_days_ago = Timex.today() |> Timex.shift(days: -count) |> Timex.to_datetime()

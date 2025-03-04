@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.Query.Hooks.ChangelogCiting do
     }
     """
     @tag :wip2
-    test "should get paged cittings", ~m(guest_conn community changelog_attrs user)a do
+    test "should get paged cittings", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
 

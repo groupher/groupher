@@ -23,6 +23,7 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
 
   @doc """
   update user's contributes record
+  update community's contributes record
   """
   def make_contribute(%User{id: id}) do
     today = Timex.today() |> Date.to_iso8601()
@@ -44,9 +45,6 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
     end
   end
 
-  @doc """
-  update community's contributes record
-  """
   def make_contribute(%Community{id: id}) do
     today = Timex.today() |> Date.to_iso8601()
 
@@ -70,7 +68,7 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
   end
 
   @doc """
-  Returns the list of user_contribute by latest 6 days.
+  Returns the list of user_contribute/community_contribute by latest 6 days.
   """
   def list_contributes_digest(%User{id: id}) do
     user_id = integerfy(id)
@@ -84,9 +82,6 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
     |> done
   end
 
-  @doc """
-  Returns the list of community_contribute by latest 6 days.
-  """
   def list_contributes_digest(%Community{id: id}) do
     scope = Cache.get_scope(:community_contributes, id)
 

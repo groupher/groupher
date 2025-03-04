@@ -116,6 +116,7 @@ defmodule GroupherServer.Test.CMS do
   end
 
   describe "[cms community moderators]" do
+    @tag :wip2
     test "should have infinite passport count of root", ~m(user user2 community)a do
       role = "root"
       cur_user = user
@@ -125,9 +126,6 @@ defmodule GroupherServer.Test.CMS do
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
 
       assert moderator.passport_item_count == Certification.root_passport_item_count()
-
-      default_passport_item_count =
-        Certification.passport_rules(cms: "moderator") |> Map.keys() |> length
 
       new_community_rules =
         Certification.passport_rules(cms: "moderator")

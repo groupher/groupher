@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.Query.Hooks.PostCiting do
     }
     """
     @tag :wip2
-    test "should get paged cittings", ~m(guest_conn community post_attrs user)a do
+    test "should get paged cittings", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post2} = CMS.create_article(community, :post, post_attrs, user)
 

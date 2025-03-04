@@ -49,9 +49,6 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     end
   end
 
-  @doc """
-  list paged reports for article comemnts
-  """
   def paged_reports(%{content_type: :comment, content_id: content_id} = filter) do
     with {:ok, info} <- match(:comment) do
       query =

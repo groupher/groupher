@@ -10,27 +10,31 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
   @archive_threshold get_config(:article, :archive_threshold)
   @comment_archive_threshold Timex.shift(@now, @archive_threshold[:default])
 
-  @last_week Timex.shift(@now, days: -7, seconds: -1)
+  @last_year Timex.shift(@now, years: -1, seconds: -1)
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
+
+    {:ok, community} = db_insert(:community)
+    post_attrs = mock_attrs(:post, %{community_id: community.id, author: %{user: user}})
+    {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
     {:ok, comment_long_ago} =
       db_insert(:comment, %{
-        title: "last week",
-        inserted_at: DateTime.truncate(@last_week, :second)
+        title: "last year",
+        inserted_at: DateTime.truncate(@last_year, :second)
       })
 
-    {:ok, _} = CMS.create_comment(:post, post.id, mock_comment(), user)
-    {:ok, _} = CMS.create_comment(:post, post.id, mock_comment(), user)
-    {:ok, _} = CMS.create_comment(:post, post.id, mock_comment(), user)
-    {:ok, _} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    {:ok, _} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+    {:ok, _} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+    {:ok, _} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+    {:ok, _} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
 
     {:ok, ~m(comment_long_ago)a}
   end
 
   describe "[cms comment archive]" do
+    @tag :wip2
     test "can archive comments", ~m(comment_long_ago)a do
       {:ok, _} = CMS.archive_articles(:comment)
 
@@ -44,6 +48,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
       assert archived_comment.id == comment_long_ago.id
     end
 
+    @tag :wip2
     test "can not edit archived comment" do
       {:ok, _} = CMS.archive_articles(:comment)
 
@@ -57,6 +62,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
       assert reason |> is_error?(:archived)
     end
 
+    @tag :wip2
     test "can not delete archived comment" do
       {:ok, _} = CMS.archive_articles(:comment)
 

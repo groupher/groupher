@@ -254,7 +254,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   @doc """
   archive articles based on thread
-  called every day by scheuler job
+  called every day by scheduler job
   """
   def archive_articles(thread) do
     with {:ok, info} <- match(thread) do

@@ -1,7 +1,9 @@
 defmodule GroupherServer.Test.Query.CMS.ThirdPart do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
-  alias GroupherServer.Accounts.Model.User
+  # alias GroupherServer.Accounts.Model.User
   # alias GroupherServer.CMS
   # alias Helper.ORM
 

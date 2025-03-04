@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPost do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.{CMS}
+  # alias GroupherServer.{CMS}
   # alias CMS.Delegate.Hooks
   alias Helper.Constant
 

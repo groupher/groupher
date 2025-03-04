@@ -3,8 +3,8 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Prod.Turning do
   seeds data for init, should be called ONLY in new database, like migration
   """
 
-  import GroupherServer.Support.Factory
-  import Helper.Utils, only: [done: 1, get_config: 2]
+  # import GroupherServer.Support.Factory
+  # import Helper.Utils, only: [done: 1, get_config: 2]
   import Ecto.Query, warn: false
 
   import GroupherServer.CMS.Delegate.Seeds.Helper,
@@ -20,14 +20,13 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Prod.Turning do
 
   alias Helper.ORM
   alias GroupherServer.CMS
+  alias CMS.Model.Community
 
-  alias CMS.Model.{Community, Thread, Category, Post, Comment}
-
-  @article_threads get_config(:article, :threads)
+  # @article_threads get_config(:article, :threads)
   # categories
-  @community_types [:pl, :framework, :editor, :database, :devops, :city]
+  # @community_types [:pl, :framework, :editor, :database, :devops, :city]
 
-  @comment_emotions get_config(:article, :comment_emotions)
+  # @comment_emotions get_config(:article, :comment_emotions)
   # seed community
 
   def seed_home() do

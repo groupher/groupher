@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Comments.DocArchive do
+defmodule GroupherServer.Test.CMS.Comments.BlogArchive do
   @moduledoc false
   use GroupherServer.TestTools
   import Helper.Utils, only: [get_config: 2]
@@ -16,8 +16,8 @@ defmodule GroupherServer.Test.CMS.Comments.DocArchive do
     {:ok, user} = db_insert(:user)
 
     {:ok, community} = db_insert(:community)
-    doc_attrs = mock_attrs(:doc, %{community_id: community.id, author: %{user: user}})
-    {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+    blog_attrs = mock_attrs(:blog, %{community_id: community.id, author: %{user: user}})
+    {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
     {:ok, comment_long_ago} =
       db_insert(:comment, %{
@@ -26,16 +26,16 @@ defmodule GroupherServer.Test.CMS.Comments.DocArchive do
       })
 
     {:ok, _} =
-      CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
     {:ok, _} =
-      CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
     {:ok, _} =
-      CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
     {:ok, _} =
-      CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
     {:ok, ~m(comment_long_ago)a}
   end

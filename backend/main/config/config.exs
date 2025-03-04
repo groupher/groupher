@@ -114,9 +114,9 @@ config :groupher_server, :article,
   ],
   digest_length: 150,
   archive_threshold: %{
-    # for post, blog
-    default: [weeks: -1],
-    repo: [years: -99]
+    # for post, blog, will be archive after 3 months by default
+    default: [months: -3]
+    # changelog: [years: -99]
   }
 
 config :groupher_server, GroupherServerWeb.Gettext, default_locale: "zh_CN", locales: ~w(en zh_CN)

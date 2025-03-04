@@ -2,7 +2,7 @@ defmodule Helper.Converter.MdToEditor do
   @moduledoc """
   parse markdown ast to editor json data
 
-  NOTE: HTML is not parsed recursively or detected in all conditons right now, though GFM compliance is a goal.
+  NOTE: HTML is not parsed recursively or detected in all conditions right now, though GFM compliance is a goal.
 
   But for now the following holds:
   A HTML Block defined by a tag starting a line and the same tag starting a different line is parsed as one HTML AST node, marked with %{verbatim: true}
@@ -308,7 +308,7 @@ defmodule Helper.Converter.MdToEditor do
     end)
   end
 
-  # wrap the cotnent with html tag
+  # wrap the content with html tag
   defp wrap_with(content, "em"), do: "<i>#{parse_inline(content)}</i>"
 
   defp wrap_with(content, "code"),

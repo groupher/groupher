@@ -42,6 +42,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
 
   @default_read_opt [inc_views: true]
 
+  def read_community(slug, opt \\ @default_read_opt)
+
   def read_community(slug, %User{} = user) do
     read_community(slug, @default_read_opt) |> viewer_has_states(user)
   end
@@ -50,7 +52,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     read_community(slug, opt) |> viewer_has_states(user)
   end
 
-  def read_community(slug, opt \\ @default_read_opt), do: do_read_community(slug, opt)
+  def read_community(slug, opt), do: do_read_community(slug, opt)
 
   def paged_communities(filter, %User{meta: meta}) do
     with {:ok, paged_communities} <- paged_communities(filter) do
@@ -243,7 +245,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   end
 
   @doc """
-  update moderators_count of a community
+  update article_tags_count / thread / article_count / subscribers_count of a community
   """
   def update_community_count_field(%Community{} = community, user_id, :moderators_count, opt) do
     {:ok, moderators_count} =
@@ -264,9 +266,6 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     |> ORM.update_embed(:meta, meta, %{moderators_count: moderators_count})
   end
 
-  @doc """
-  update subscribers_count of a community
-  """
   def update_community_count_field(%Community{} = community, user_id, :subscribers_count, opt) do
     {:ok, subscribers_count} =
       from(s in CommunitySubscriber, where: s.community_id == ^community.id) |> ORM.count()
@@ -297,9 +296,6 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     |> ORM.update_meta(meta)
   end
 
-  @doc """
-  update article_tags_count of a community
-  """
   def update_community_count_field(%Community{} = community, :article_tags_count) do
     {:ok, article_tags_count} =
       from(t in ArticleTag, where: t.community_id == ^community.id)
@@ -317,9 +313,6 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
-  @doc """
-  update thread / article count in community meta
-  """
   def update_community_count_field(%Community{meta: nil, slug: slug}, thread) do
     with {:ok, community} = CMS.read_community(slug, inc_views: false) do
       update_community_count_field(community, thread)

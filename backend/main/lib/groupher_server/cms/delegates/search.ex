@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.Delegate.Search do
     end
   end
 
-  def search_communities(title, category, %User{meta: meta}) do
+  def search_communities(title, category, %User{meta: _}) do
     search_communities(title, category)
   end
 

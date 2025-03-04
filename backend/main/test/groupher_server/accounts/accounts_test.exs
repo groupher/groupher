@@ -2,7 +2,6 @@ defmodule GroupherServer.Test.Accounts do
   @moduledoc false
 
   use GroupherServer.TestTools
-  import Helper.Utils
 
   # TODO import Service.Utils move both helper and github
 
@@ -10,7 +9,7 @@ defmodule GroupherServer.Test.Accounts do
   alias Accounts.Model.User
 
   # @valid_user mock_attrs(:user)
-  @valid_github_profile mock_attrs(:github_profile) |> map_key_stringify
+  # @valid_github_profile mock_attrs(:github_profile) |> map_key_stringify
 
   describe "[update user]" do
     test "update user with valid attrs" do
@@ -32,6 +31,7 @@ defmodule GroupherServer.Test.Accounts do
       assert updated.sex == attrs.sex
     end
 
+    @tag :wip2
     test "update user social fields with valid attrs" do
       {:ok, user} = db_insert(:user)
 
