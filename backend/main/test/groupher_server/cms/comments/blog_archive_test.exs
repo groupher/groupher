@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogArchive do
   @last_year Timex.shift(@now, years: -1, seconds: -1)
 
   setup do
-    {community, blog, blog_attrs, user} = mock_article(:blog)
+    {community, blog, _, user} = mock_article(:blog)
 
     {:ok, comment_long_ago} =
       db_insert(:comment, %{

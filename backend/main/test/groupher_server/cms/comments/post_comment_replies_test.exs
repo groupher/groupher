@@ -11,7 +11,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
   @max_parent_replies_count Comment.max_parent_replies_count()
 
   setup do
-    {community, post, post_attrs, user} = mock_article(:post)
+    {community, post, _, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
 
     {:ok, ~m(user user2 community post)a}
@@ -23,12 +23,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
       {:ok, parent_comment} =
         CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, replyed_comment} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
-      assert replyed_comment.reply_to.id == parent_comment.id
+      {:ok, replied_comment} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
+      assert replied_comment.reply_to.id == parent_comment.id
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
-      assert exist_in?(replyed_comment, parent_comment.replies)
+      assert exist_in?(replied_comment, parent_comment.replies)
     end
 
     @tag :wip
@@ -63,21 +63,21 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
 
       {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
       {:ok, replied_comment_2} = CMS.reply_comment(replied_comment_1.id, mock_comment(), user2)
-      {:ok, replyed_comment_3} = CMS.reply_comment(replied_comment_2.id, mock_comment(), user)
+      {:ok, replied_comment_3} = CMS.reply_comment(replied_comment_2.id, mock_comment(), user)
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
       assert exist_in?(replied_comment_1, parent_comment.replies)
       assert exist_in?(replied_comment_2, parent_comment.replies)
-      assert exist_in?(replyed_comment_3, parent_comment.replies)
+      assert exist_in?(replied_comment_3, parent_comment.replies)
 
       {:ok, replied_comment_1} = ORM.find(Comment, replied_comment_1.id)
       {:ok, replied_comment_2} = ORM.find(Comment, replied_comment_2.id)
-      {:ok, replyed_comment_3} = ORM.find(Comment, replyed_comment_3.id)
+      {:ok, replied_comment_3} = ORM.find(Comment, replied_comment_3.id)
 
       assert replied_comment_1.reply_to_id == parent_comment.id
       assert replied_comment_2.reply_to_id == replied_comment_1.id
-      assert replyed_comment_3.reply_to_id == replied_comment_2.id
+      assert replied_comment_3.reply_to_id == replied_comment_2.id
     end
 
     @tag :wip
@@ -88,17 +88,17 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
 
       {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
       {:ok, replied_comment_2} = CMS.reply_comment(replied_comment_1.id, mock_comment(), user2)
-      {:ok, replyed_comment_3} = CMS.reply_comment(replied_comment_2.id, mock_comment(), user)
+      {:ok, replied_comment_3} = CMS.reply_comment(replied_comment_2.id, mock_comment(), user)
 
       {:ok, _parent_comment} = ORM.find(Comment, parent_comment.id)
 
       {:ok, replied_comment_1} = ORM.find(Comment, replied_comment_1.id)
       {:ok, replied_comment_2} = ORM.find(Comment, replied_comment_2.id)
-      {:ok, replyed_comment_3} = ORM.find(Comment, replyed_comment_3.id)
+      {:ok, replied_comment_3} = ORM.find(Comment, replied_comment_3.id)
 
       assert not replied_comment_1.meta.is_reply_to_others
       assert replied_comment_2.meta.is_reply_to_others
-      assert replyed_comment_3.meta.is_reply_to_others
+      assert replied_comment_3.meta.is_reply_to_others
     end
 
     @tag :wip
@@ -111,10 +111,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
 
       reply_comment_list =
         Enum.reduce(1..total_reply_count, [], fn n, acc ->
-          {:ok, replyed_comment} =
+          {:ok, replied_comment} =
             CMS.reply_comment(parent_comment.id, mock_comment("reply_content_#{n}"), user)
 
-          acc ++ [replyed_comment]
+          acc ++ [replied_comment]
         end)
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
     end
 
     @tag :wip
-    test "replyed user should appear in article comment participants",
+    test "replied user should appear in article comment participants",
          ~m(community post user user2)a do
       {:ok, parent_comment} =
         CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
@@ -141,7 +141,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
     end
 
     @tag :wip
-    test "replies count should inc by 1 after got replyed", ~m(community post user user2)a do
+    test "replies count should inc by 1 after got replied", ~m(community post user user2)a do
       {:ok, parent_comment} =
         CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
 
@@ -170,10 +170,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
 
       reply_comment_list =
         Enum.reduce(1..total_reply_count, [], fn n, acc ->
-          {:ok, replyed_comment} =
+          {:ok, replied_comment} =
             CMS.reply_comment(parent_comment.id, mock_comment("reply_content_#{n}"), user)
 
-          acc ++ [replyed_comment]
+          acc ++ [replied_comment]
         end)
 
       {:ok, paged_replies} = CMS.paged_comment_replies(parent_comment.id, %{page: 1, size: 20})

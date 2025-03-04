@@ -62,9 +62,6 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     end
   end
 
-  @doc """
-  list paged reports for article
-  """
   def paged_reports(%{content_type: thread, content_id: content_id} = filter)
       when thread in @article_threads do
     with {:ok, info} <- match(thread) do

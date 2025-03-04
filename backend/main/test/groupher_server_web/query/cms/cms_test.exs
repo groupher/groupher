@@ -465,7 +465,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "guest can get moderators count of a community", ~m(guest_conn community user)a do
       role = "moderator"
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
-      cur_user = user
 
       Enum.each(users, &CMS.add_moderator(community.slug, role, %User{id: &1.id}, user))
 
@@ -579,7 +578,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-    test "can get opengraph info by url", ~m(user)a do
+    test "can get open-graph info by url", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
       result =

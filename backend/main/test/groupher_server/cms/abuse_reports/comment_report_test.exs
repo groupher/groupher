@@ -6,14 +6,14 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
   alias GroupherServer.CMS
 
   setup do
-    {community, post, post_attrs, user} = mock_article(:post)
+    {community, post, _, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
 
     {:ok, ~m(user community user2 post)a}
   end
 
   describe "[article comment report/unreport]" do
-    @tag :wip2
+    @tag :wip
     test "report a comment should have a abuse report record", ~m(user community post)a do
       {:ok, comment} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
       {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
       assert List.first(report_cases).user.login == user.login
     end
 
-    @tag :wip2
+    @tag :wip
     test "different user report a comment should have same report with different report cases",
          ~m(user user2 community post)a do
       {:ok, comment} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
       assert List.last(report_cases).user.login == user2.login
     end
 
-    @tag :wip2
+    @tag :wip
     test "same user can not report a comment twice", ~m(user community post)a do
       {:ok, comment} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
       {:ok, comment} = CMS.report_comment(comment.id, mock_comment(), "attr", user)

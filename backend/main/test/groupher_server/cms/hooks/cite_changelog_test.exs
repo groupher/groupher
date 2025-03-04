@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
   @site_host get_config(:general, :site_host)
 
   setup do
-    {community, changelog, changelog_attrs, user} = mock_article(:changelog)
+    {community, changelog, _, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
 
     changelog_attrs = mock_attrs(:changelog, %{community_id: community.id, author: %{user: user}})

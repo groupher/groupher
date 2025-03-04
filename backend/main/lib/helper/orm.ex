@@ -84,7 +84,7 @@ defmodule Helper.ORM do
     |> Repo.get_by(clauses)
     |> case do
       nil ->
-        {:error, not_found_formater(queryable, clauses)}
+        {:error, not_found_formatter(queryable, clauses)}
 
       result ->
         {:ok, result}
@@ -97,7 +97,7 @@ defmodule Helper.ORM do
     |> Repo.get_by(clauses)
     |> case do
       nil ->
-        {:error, not_found_formater(queryable, clauses)}
+        {:error, not_found_formatter(queryable, clauses)}
 
       result ->
         {:ok, result}
@@ -105,7 +105,7 @@ defmodule Helper.ORM do
   end
 
   @doc """
-  return pageinated Data required by filter
+  return paginated Data required by filter
   """
   # TODO: find article not mark_delete by default
   def find_all(queryable, %{page: page, size: size} = filter) do
@@ -115,10 +115,6 @@ defmodule Helper.ORM do
     |> done()
   end
 
-  @doc """
-  return  Data required by filter
-  """
-  # TODO: find article not in mark_delete by default
   def find_all(queryable, filter) do
     queryable |> QueryBuilder.filter_pack(filter) |> Repo.all() |> done()
   end

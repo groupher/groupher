@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
   alias Helper.ORM
 
   setup do
-    {community, post, post_attrs, user} = mock_article(:post)
+    {community, post, _, user} = mock_article(:post)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)

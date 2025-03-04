@@ -87,7 +87,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   @doc "fold a comment"
   def fold_comment(%Comment{} = comment, %User{} = _user), do: do_fold_comment(comment, true)
 
-  @doc "fold a comment by id"
   def fold_comment(comment_id, %User{} = _user) do
     with {:ok, comment} <- ORM.find(Comment, comment_id) do
       do_fold_comment(comment, true)
@@ -101,7 +100,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
-  @doc "reply to exsiting comment"
+  @doc "reply to existing comment"
   def reply_comment(comment_id, body, %User{} = user) do
     with {:ok, target_comment} <-
            ORM.find_by(Comment, %{id: comment_id, is_deleted: false}),
@@ -114,40 +113,40 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
       |> Multi.run(:create_reply_comment, fn _, _ ->
         do_create_comment(body, info.foreign_key, article, user)
       end)
-      |> Multi.run(:update_comments_count, fn _, %{create_reply_comment: replyed_comment} ->
-        update_comments_count(replyed_comment, :inc)
+      |> Multi.run(:update_comments_count, fn _, %{create_reply_comment: replied_comment} ->
+        update_comments_count(replied_comment, :inc)
       end)
-      |> Multi.run(:create_comment_reply, fn _, %{create_reply_comment: replyed_comment} ->
+      |> Multi.run(:create_comment_reply, fn _, %{create_reply_comment: replied_comment} ->
         CommentReply
-        |> ORM.create(%{comment_id: replyed_comment.id, reply_to_id: replying_comment.id})
+        |> ORM.create(%{comment_id: replied_comment.id, reply_to_id: replying_comment.id})
       end)
       |> Multi.run(:add_participator, fn _, _ ->
         add_participant_to_article(article, user)
       end)
-      |> Multi.run(:set_meta_flag, fn _, %{create_reply_comment: replyed_comment} ->
-        update_reply_to_others_state(parent_comment, replying_comment, replyed_comment)
+      |> Multi.run(:set_meta_flag, fn _, %{create_reply_comment: replied_comment} ->
+        update_reply_to_others_state(parent_comment, replying_comment, replied_comment)
       end)
-      |> Multi.run(:add_reply_to, fn _, %{create_reply_comment: replyed_comment} ->
-        replyed_comment
+      |> Multi.run(:add_reply_to, fn _, %{create_reply_comment: replied_comment} ->
+        replied_comment
         |> Repo.preload(:reply_to)
         |> Ecto.Changeset.change()
         |> Ecto.Changeset.put_assoc(:reply_to, replying_comment)
         |> Repo.update()
       end)
-      |> Multi.run(:add_replies_ifneed, fn _, %{add_reply_to: replyed_comment} ->
-        add_replies_ifneed(parent_comment, replyed_comment)
+      |> Multi.run(:add_replies_ifneed, fn _, %{add_reply_to: replied_comment} ->
+        add_replies_ifneed(parent_comment, replied_comment)
       end)
-      |> Multi.run(:inc_replies_count, fn _, %{add_reply_to: replyed_comment} ->
+      |> Multi.run(:inc_replies_count, fn _, %{add_reply_to: replied_comment} ->
         filter = %{page: 1, size: 1}
 
         with {:ok, paged_replies} <- paged_comment_replies(parent_comment.id, filter),
              {:ok, _} <- ORM.update(parent_comment, %{replies_count: paged_replies.total_count}) do
-          {:ok, replyed_comment}
+          {:ok, replied_comment}
         end
       end)
-      |> Multi.run(:after_hooks, fn _, %{add_reply_to: replyed_comment} ->
-        Later.run({Hooks.Notify, :handle, [:reply, replyed_comment, user]})
-        Later.run({Hooks.Mention, :handle, [replyed_comment]})
+      |> Multi.run(:after_hooks, fn _, %{add_reply_to: replied_comment} ->
+        Later.run({Hooks.Notify, :handle, [:reply, replied_comment, user]})
+        Later.run({Hooks.Mention, :handle, [replied_comment]})
       end)
       |> Repo.transaction()
       |> result()
@@ -305,12 +304,12 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   # "加载更多" 的逻辑使用另外的 paged 接口从 CommentReply 表中查询
   defp add_replies_ifneed(
          %Comment{replies: replies} = parent_comment,
-         %Comment{} = replyed_comment
+         %Comment{} = replied_comment
        )
        when length(replies) < @max_parent_replies_count do
     new_replies =
       replies
-      |> List.insert_at(length(replies), replyed_comment)
+      |> List.insert_at(length(replies), replied_comment)
       |> Enum.slice(0, @max_parent_replies_count)
 
     ORM.update_embed(parent_comment, :replies, new_replies)
@@ -365,7 +364,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
 
   # used in replies mode, for those reply to other user in replies box (for frontend)
   # 用于回复模式，指代这条回复是回复“回复列表其他人的” （方便前端展示）
-  defp update_reply_to_others_state(parent_comment, replying_comment, replyed_comment) do
+  defp update_reply_to_others_state(parent_comment, replying_comment, replied_comment) do
     replying_comment = replying_comment |> Repo.preload(:author)
     parent_comment = parent_comment |> Repo.preload(:author)
     is_reply_to_others = parent_comment.author.id !== replying_comment.author.id
@@ -373,11 +372,11 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     case is_reply_to_others do
       true ->
         new_meta =
-          replyed_comment.meta
+          replied_comment.meta
           |> Map.from_struct()
           |> Map.merge(%{is_reply_to_others: is_reply_to_others})
 
-        ORM.update(replyed_comment, %{meta: new_meta})
+        ORM.update(replied_comment, %{meta: new_meta})
 
       false ->
         {:ok, :pass}

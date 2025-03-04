@@ -13,14 +13,14 @@ defmodule GroupherServer.Test.CMS.PostArchive do
                             @archive_threshold[:post] || @archive_threshold[:default]
                           )
 
-  @last_week Timex.shift(@now, days: -7, seconds: -1)
+  @last_year Timex.shift(@now, years: -1, seconds: -1)
 
   setup do
     {:ok, user} = db_insert(:user)
     # {:ok, post} = db_insert(:post)
     {:ok, community} = db_insert(:community)
 
-    {:ok, post_long_ago} = db_insert(:post, %{title: "last week", inserted_at: @last_week})
+    {:ok, post_long_ago} = db_insert(:post, %{title: "last week", inserted_at: @last_year})
     db_insert_multi(:post, 5)
 
     {:ok, ~m(user community post_long_ago)a}
@@ -40,6 +40,7 @@ defmodule GroupherServer.Test.CMS.PostArchive do
       assert archived_post.id == post_long_ago.id
     end
 
+    @tag :wip
     test "can not edit archived post" do
       {:ok, _} = CMS.archive_articles(:post)
 
@@ -53,6 +54,7 @@ defmodule GroupherServer.Test.CMS.PostArchive do
       assert reason |> is_error?(:archived)
     end
 
+    @tag :wip
     test "can not delete archived post" do
       {:ok, _} = CMS.archive_articles(:post)
 

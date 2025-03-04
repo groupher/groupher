@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPost do
   end
 
   describe "[audit post basic]" do
-    # test "ugly words shoud get audit", ~m(user community  post_attrs)a do
+    # test "ugly words should get audit", ~m(user community  post_attrs)a do
     #   body = mock_rich_text("M卖批, 这也太操蛋了, 党中央")
 
     #   post_attrs = post_attrs |> Map.merge(%{body: body})
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPost do
     #   assert post.meta.illegal_words == ["党中央", "操蛋", "卖批"]
     # end
 
-    # test "normal words shoud not get audit", ~m(user community  post_attrs)a do
+    # test "normal words should not get audit", ~m(user community  post_attrs)a do
     #   body = mock_rich_text("世界属于三体")
 
     #   post_attrs = post_attrs |> Map.merge(%{body: body})

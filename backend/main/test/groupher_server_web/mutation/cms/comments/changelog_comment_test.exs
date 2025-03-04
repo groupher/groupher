@@ -9,9 +9,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
   alias Helper.ORM
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-    {:ok, changelog} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
+    {community, changelog, _, user} = mock_article(:changelog)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)

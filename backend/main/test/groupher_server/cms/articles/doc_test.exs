@@ -284,7 +284,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
       {:ok, doc1} = ORM.find(Doc, doc1.id)
       {:ok, doc2} = ORM.find(Doc, doc2.id)
-      {:ok, doc3} = ORM.find(Doc, doc3.id)
+      {:ok, _doc3} = ORM.find(Doc, doc3.id)
 
       assert doc1.mark_delete == false
       assert doc2.mark_delete == false

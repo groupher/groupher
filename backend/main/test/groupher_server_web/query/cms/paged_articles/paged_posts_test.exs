@@ -135,7 +135,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       {:ok, _} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user)
       {:ok, _} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user2)
-      {:ok, post} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user3)
+      {:ok, _} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user3)
 
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
       first_post = results["entries"] |> List.first()

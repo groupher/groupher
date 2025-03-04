@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocPendingFlag do
   @audit_illegal Constant.CMS.pending(:illegal)
 
   setup do
-    {community, doc, doc_attrs, user} = mock_article(:doc)
+    {community, doc, _, user} = mock_article(:doc)
 
     guest_conn = simu_conn(:guest)
 

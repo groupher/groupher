@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
   @site_host get_config(:general, :site_host)
 
   setup do
-    {community, blog, blog_attrs, user} = mock_article(:blog)
+    {community, blog, _, user} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)
 
     blog_attrs = mock_attrs(:blog, %{community_id: community.id, author: %{user: user}})

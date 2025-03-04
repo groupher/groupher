@@ -287,7 +287,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
 
       {:ok, blog1} = ORM.find(Blog, blog1.id)
       {:ok, blog2} = ORM.find(Blog, blog2.id)
-      {:ok, blog3} = ORM.find(Blog, blog3.id)
+      {:ok, _blog3} = ORM.find(Blog, blog3.id)
 
       assert blog1.mark_delete == false
       assert blog2.mark_delete == false

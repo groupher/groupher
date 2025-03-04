@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   @pinned_comment_limit Comment.pinned_comment_limit()
 
   setup do
-    {community, doc, doc_attrs, user} = mock_article(:doc)
+    {community, doc, _, user} = mock_article(:doc)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 

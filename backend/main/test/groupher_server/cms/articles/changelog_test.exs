@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.Articles.Changelog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Helper.Utils, only: [get_config: 2]
@@ -302,7 +304,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
       {:ok, changelog1} = ORM.find(Changelog, changelog1.id)
       {:ok, changelog2} = ORM.find(Changelog, changelog2.id)
-      {:ok, changelog3} = ORM.find(Changelog, changelog3.id)
+      {:ok, _changelog3} = ORM.find(Changelog, changelog3.id)
 
       assert changelog1.mark_delete == false
       assert changelog2.mark_delete == false

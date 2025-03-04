@@ -72,20 +72,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
     handle(article)
   end
 
-  @doc """
-  return fmt like:
-  [
-    %{
-      block_linker: ["block-ZgKJs"],
-      cited_by_id: 190057,
-      cited_by_type: :post,
-      artiment: #loaded,
-      post_id: 190059,
-      user_id: 1413053
-    }
-    ...
-  ]
-  """
   defp parse_cited_per_block(artiment, %{"id" => block_id, "data" => %{"text" => text}}) do
     links = Floki.find(text, "a[href]")
 

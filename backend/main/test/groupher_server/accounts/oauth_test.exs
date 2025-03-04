@@ -95,12 +95,12 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       user_login = @valid_twitter_profile["login"]
       github_provider = @valid_github_profile |> Map.put("login", user_login)
       {:ok, _} = Accounts.signin_oauth(github_provider)
-      {:ok, res} = Accounts.link_oauth(user_login, @valid_twitter_profile)
+      {:ok, _} = Accounts.link_oauth(user_login, @valid_twitter_profile)
 
       {:ok, providers} = ORM.find_all(OauthProvider, %{page: 1, size: 10})
       assert providers.total_count == 2
 
-      {:ok, res} = Accounts.unlink_oauth(user_login, @valid_twitter_profile)
+      {:ok, _} = Accounts.unlink_oauth(user_login, @valid_twitter_profile)
 
       {:ok, providers} = ORM.find_all(OauthProvider, %{page: 1, size: 10})
       assert providers.total_count == 1
