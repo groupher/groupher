@@ -27,25 +27,29 @@ if ! git ls-files --error-unmatch "$package_path" > /dev/null 2>&1; then
   exit 1
 fi
 
-# 检查文件是否在 Git 历史记录中
-if ! git log -1 -- "$package_path" > /dev/null 2>&1; then
-  echo "File is newly added, triggering build."
+# 获取当前版本的 version 字段
+current_version=$(grep -E '"version":' "$package_path" | awk '{print $2}' | tr -d '",')
+echo "Current version: $current_version"
+
+# 获取上一次提交的 version 字段（如果存在）
+if git log -1 -- "$package_path" > /dev/null 2>&1; then
+  previous_version=$(git show HEAD^:"$package_path" 2>/dev/null | grep -E '"version":' | awk '{print $2}' | tr -d '",')
+  if [ -z "$previous_version" ]; then
+    echo "File is newly added or not in previous commit, triggering build."
+    exit 1
+  fi
+  echo "Previous version: $previous_version"
+else
+  echo "File is not in Git history, triggering build."
   exit 1
 fi
 
 # 检查 version 字段是否变更
-if git diff --quiet HEAD^ HEAD -- "$package_path"; then
-  echo "No changes in $package_path, skipping build."
-  exit 0
+if [ "$current_version" != "$previous_version" ]; then
+  echo "Version change detected in $package_path (from $previous_version to $current_version), triggering build."
+  exit 1
 else
-  old_version=$(git show HEAD^:"$package_path" | grep -E '"version":' | awk '{print $2}' | tr -d '",')
-  new_version=$(git show HEAD:"$package_path" | grep -E '"version":' | awk '{print $2}' | tr -d '",')
-  if [ "$old_version" != "$new_version" ]; then
-    echo "Version change detected in $package_path (from $old_version to $new_version), triggering build."
-    exit 1
-  else
-    echo "No version change in $package_path, skipping build."
-    exit 0
-  fi
+  echo "No version change in $package_path, skipping build."
+  exit 0
 fi
 
