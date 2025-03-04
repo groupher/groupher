@@ -1,4 +1,5 @@
 defmodule GroupherServer.Test.ThirdPart do
+  @moduledoc false
   use GroupherServer.TestTools
 
   # alias GroupherServer.CMS

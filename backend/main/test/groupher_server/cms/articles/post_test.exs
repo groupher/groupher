@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
   alias EditorToHTML.{Class, Validator}
-  alias CMS.Model.{Author, ArticleDocument, Community, Post, PostDocument, CommunitySubscriber}
+  alias CMS.Model.{Author, ArticleDocument, Community, Post, PostDocument}
 
   @root_class Class.article()
   @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert post.original_community_id == community.id
     end
 
-    test "created post should have a acitve_at field, same with inserted_at",
+    test "created post should have a active_at field, same with inserted_at",
          ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
@@ -189,7 +189,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert post.viewer_has_reported
     end
 
-    test "add user to cms authors, if the user is not exsit in cms authors",
+    test "add user to cms authors, if the user is not exist in cms authors",
          ~m(user community post_attrs)a do
       assert {:error, _} = ORM.find_by(Author, user_id: user.id)
 
@@ -198,11 +198,11 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert author.user_id == user.id
     end
 
-    test "create post with an non-exsit community fails", ~m(user)a do
-      invalid_attrs = mock_attrs(:post, %{community_id: non_exsit_id()})
-      ivalid_community = %Community{id: non_exsit_id(), slug: non_exsit_slug()}
+    test "create post with an non-exist community fails", ~m(user)a do
+      invalid_attrs = mock_attrs(:post, %{community_id: non_exist_id()})
+      invalid_community = %Community{id: non_exist_id(), slug: non_exist_slug()}
 
-      assert {:error, _} = CMS.create_article(ivalid_community, :post, invalid_attrs, user)
+      assert {:error, _} = CMS.create_article(invalid_community, :post, invalid_attrs, user)
     end
   end
 

@@ -23,7 +23,7 @@ defmodule GroupherServerWeb.Test.Controller.OG do
     assert Map.has_key?(image, "url")
   end
 
-  test "should return valid structure & error msg when query domain is not exsit" do
+  test "should return valid structure & error msg when query domain is not exist" do
     conn = build_conn()
 
     res = get(conn, "/api/og-info", %{url: "https://jfiel.com"})

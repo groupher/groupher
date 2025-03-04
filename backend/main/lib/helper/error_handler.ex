@@ -5,13 +5,13 @@ defmodule Helper.ErrorHandler do
   """
   alias GroupherServerWeb.Gettext, as: Translator
 
-  def not_found_formater(queryable, id) when is_integer(id) or is_binary(id) do
+  def not_found_formatter(queryable, id) when is_integer(id) or is_binary(id) do
     model = queryable |> to_string |> String.split(".") |> List.last()
 
     Translator |> Gettext.dgettext("404", "#{model}(%{id}) not found", id: id)
   end
 
-  def not_found_formater(queryable, clauses) do
+  def not_found_formatter(queryable, clauses) do
     model = queryable |> to_string |> String.split(".") |> List.last()
 
     detail =

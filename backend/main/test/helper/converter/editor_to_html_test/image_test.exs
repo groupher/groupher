@@ -153,7 +153,7 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Image do
       assert Utils.str_occurence(converted, gallery_mini_image_class) == length(mock_images(9))
     end
 
-    test "edit exsit block will not change id value" do
+    test "edit exist block will not change id value" do
       editor_json =
         set_items(
           "gallery",
@@ -166,13 +166,13 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Image do
               "caption" => "this is a caption 1"
             }
           end),
-          "block-id-exsit"
+          "block-id-exist"
         )
 
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, ~s(id="block-id-exsit")) == 1
+      assert Utils.str_occurence(converted, ~s(id="block-id-exist")) == 1
     end
 
     test "invalid mode parse should raise error message" do

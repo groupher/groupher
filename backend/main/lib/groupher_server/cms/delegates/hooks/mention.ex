@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Mention do
     |> Enum.uniq()
   end
 
-  # make sure mention user is exsit and not author self
+  # make sure mention user is exist and not author self
   # 确保 mention 的用户是存在的, 并且不是在提及自己
   defp parse_mention_user_id(artiment, {_, _, [user_login]}) do
     with {:ok, author} <- author_of(artiment),

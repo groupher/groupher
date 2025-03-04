@@ -57,7 +57,7 @@ defmodule GroupherServerWeb.Context do
 
         {:error, _} ->
           {:error,
-           "user is not exsit, try revoke token, or if you in dev env run the seeds first."}
+           "user is not exist, try revoke token, or if you in dev env run the seeds first."}
       end
     end
   end

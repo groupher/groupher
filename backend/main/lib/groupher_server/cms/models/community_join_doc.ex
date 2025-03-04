@@ -5,9 +5,6 @@ defmodule GroupherServer.CMS.Model.CommunityJoinDoc do
   use Ecto.Schema
   use Accessible
 
-  # import Ecto.Changeset
-  # import GroupherServer.CMS.Helper.Macros
-
   alias GroupherServer.CMS
   alias CMS.Model.{Community, Doc}
   alias Helper.Constant.DBPrefix

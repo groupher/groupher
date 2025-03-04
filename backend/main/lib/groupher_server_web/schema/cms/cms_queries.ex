@@ -39,7 +39,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:slug, non_null(:string))
 
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.is_community_exist?/3)
+      resolve(&R.CMS.community_exist?/3)
     end
 
     @desc "communities with pagination info"

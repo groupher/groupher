@@ -29,7 +29,9 @@ defmodule GroupherServerWeb.Middleware.PassportLoader do
     end
   end
 
-  @doc "load community"
+  @doc """
+  load related community / article
+  """
   def call(%{context: %{cur_user: _}, arguments: arguments} = resolution, source: :community) do
     case ORM.find(Community, arguments.community_id) do
       {:ok, community} ->
@@ -40,7 +42,6 @@ defmodule GroupherServerWeb.Middleware.PassportLoader do
     end
   end
 
-  @doc "load article comment"
   def call(%{context: %{cur_user: _}, arguments: %{id: id}} = resolution, source: :comment) do
     case ORM.find(Comment, id, preload: :author) do
       {:ok, comment} ->

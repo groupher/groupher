@@ -6,12 +6,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
   alias GroupherServer.CMS
 
   setup do
-    {:ok, changelog} = db_insert(:changelog)
-    {:ok, user} = db_insert(:user)
+    {community, changelog, changelog_attrs, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
     guest_conn = simu_conn(:guest)
 
@@ -94,8 +90,11 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
       assert results["totalCount"] == 1
     end
 
-    test "support comment", ~m(guest_conn changelog user)a do
-      {:ok, comment} = CMS.create_comment(:changelog, changelog.id, mock_comment(), user)
+    @tag :wip
+    test "support comment", ~m(guest_conn community changelog user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+
       {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
 
       variables = %{filter: %{content_type: "COMMENT", page: 1, size: 10}}

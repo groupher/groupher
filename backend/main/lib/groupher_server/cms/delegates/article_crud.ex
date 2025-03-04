@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @article_state Constant.CMS.article_state()
 
   @doc """
-  read articles for un-logined user
+  read articles for un-logged user
   """
   def read_article(community_slug, thread, inner_id) when thread in @article_threads do
     with {:ok, article} <- if_article_legal(community_slug, thread, inner_id) do
@@ -254,7 +254,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   @doc """
   archive articles based on thread
-  called every day by scheuler job
+  called every day by scheduler job
   """
   def archive_articles(thread) do
     with {:ok, info} <- match(thread) do
@@ -401,12 +401,12 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end
   end
 
-  def create_article(%Community{slug: cslug}, thread, attrs, %User{id: uid}) do
+  def create_article(%Community{slug: community_slug}, thread, attrs, %User{id: uid}) do
     attrs = atom_values_to_upcase(attrs)
 
     with {:ok, author} <- ensure_author_exists(%User{id: uid}),
          {:ok, info} <- match(thread),
-         {:ok, community} <- CMS.read_community(cslug, inc_views: false) do
+         {:ok, community} <- CMS.read_community(community_slug, inc_views: false) do
       Multi.new()
       |> Multi.run(:create_article, fn _, _ ->
         do_create_article(info.model, attrs, author, community)
@@ -669,7 +669,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @spec ensure_author_exists(User.t()) :: {:ok, User.t()}
   def ensure_author_exists(%User{} = user) do
     # unique_constraint: avoid race conditions, make sure user_id unique
-    # foreign_key_constraint: check foreign key: user_id exsit or not
+    # foreign_key_constraint: check foreign key: user_id exist or not
     # see alos no_assoc_constraint in https://hexdocs.pm/ecto/Ecto.Changeset.html
     case ORM.find_by(Author, user_id: user.id) do
       {:ok, author} ->

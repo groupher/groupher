@@ -1,4 +1,5 @@
 defmodule GroupherServer.Test.CMS.Hooks.MentionInBlog do
+  @moduledoc false
   use GroupherServer.TestTools
 
   import GroupherServer.CMS.Delegate.Helper, only: [preload_author: 1]
@@ -9,20 +10,16 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInBlog do
   @article_mention_class "cdx-mention"
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, blog, blog_attrs, user} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
-    {:ok, blog} = db_insert(:blog)
-
-    {:ok, community} = db_insert(:community)
-
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
     {:ok, ~m(user user2 user3 community blog blog_attrs)a}
   end
 
   describe "[mention in blog basic]" do
-    test "mention multi user in blog should work", ~m(user user2 user3 community  blog_attrs)a do
+    test "mention multi user in blog should work",
+         ~m(user user2 user3 community  blog_attrs)a do
       body =
         mock_rich_text(
           ~s(hi <div class=#{@article_mention_class}>#{user2.login}</div>, and <div class=#{@article_mention_class}>#{user3.login}</div>),
@@ -33,7 +30,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInBlog do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog} = preload_author(blog)
 
-      {:ok, _result} = Hooks.Mention.handle(blog)
+      {:ok, _} = Hooks.Mention.handle(blog)
 
       {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
 
@@ -54,14 +51,17 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInBlog do
       assert mention.user.login == blog.author.user.login
     end
 
-    test "mention in blog's comment should work", ~m(user user2 blog)a do
+    @tag :wip
+    test "mention in blog's comment should work", ~m(user user2 community blog)a do
       comment_body =
         mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user2.login}</div>))
 
-      {:ok, comment} = CMS.create_comment(:blog, blog.id, comment_body, user)
+      {:ok, comment} =
+        CMS.create_comment2(community, :blog, blog.inner_id, comment_body, user)
+
       {:ok, comment} = preload_author(comment)
 
-      {:ok, _result} = Hooks.Mention.handle(comment)
+      {:ok, _} = Hooks.Mention.handle(comment)
       {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
@@ -73,7 +73,9 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInBlog do
       assert mention.user.login == comment.author.login
     end
 
-    test "can not mention author self in blog or comment", ~m(community user blog_attrs)a do
+    @tag :wip
+    test "can not mention author self in blog or comment",
+         ~m(community user blog_attrs)a do
       body = mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))
       blog_attrs = blog_attrs |> Map.merge(%{body: body})
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -84,9 +86,10 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInBlog do
       comment_body =
         mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))
 
-      {:ok, comment} = CMS.create_comment(:blog, blog.id, comment_body, user)
+      {:ok, comment} =
+        CMS.create_comment2(community, :blog, blog.inner_id, comment_body, user)
 
-      {:ok, _result} = Hooks.Mention.handle(comment)
+      {:ok, _} = Hooks.Mention.handle(comment)
       {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
 
       assert result.total_count == 0

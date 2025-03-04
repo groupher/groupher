@@ -2,7 +2,6 @@ defmodule GroupherServer.CMS.Delegate.Search do
   @moduledoc """
   search for community, post, job ...
   """
-
   import Helper.Utils, only: [done: 1, ensure: 2]
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.Matcher
@@ -24,6 +23,15 @@ defmodule GroupherServer.CMS.Delegate.Search do
     do_search_communities(Community, title)
   end
 
+  def search_communities(title, category) do
+    from(
+      c in Community,
+      join: cat in assoc(c, :categories),
+      where: cat.slug == ^category
+    )
+    |> do_search_communities(title)
+  end
+
   def search_communities(title, %User{meta: meta}) do
     with {:ok, communities} <- do_search_communities(Community, title) do
       user_meta = ensure(meta, @default_user_meta)
@@ -39,17 +47,8 @@ defmodule GroupherServer.CMS.Delegate.Search do
     end
   end
 
-  def search_communities(title, category, %User{meta: meta}) do
+  def search_communities(title, category, %User{meta: _}) do
     search_communities(title, category)
-  end
-
-  def search_communities(title, category) do
-    from(
-      c in Community,
-      join: cat in assoc(c, :categories),
-      where: cat.slug == ^category
-    )
-    |> do_search_communities(title)
   end
 
   defp do_search_communities(queryable, title) do

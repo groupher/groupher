@@ -8,9 +8,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
   alias Helper.ORM
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-    {:ok, post} = CMS.create_article(community, :post, mock_attrs(:post), user)
+    {community, post, _, user} = mock_article(:post)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)

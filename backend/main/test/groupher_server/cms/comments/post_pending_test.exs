@@ -12,18 +12,18 @@ defmodule GroupherServer.Test.CMS.Comments.PostPending do
   @audit_illegal Constant.CMS.pending(:illegal)
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {community, post, _, user} = mock_article(:post)
 
-    {:ok, post} = db_insert(:post)
     guest_conn = simu_conn(:guest)
 
     {:ok, ~m(guest_conn community user post)a}
   end
 
-  describe "[pending post comemnt flags]" do
-    test "pending post comment can set/unset pending", ~m(post user)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+  describe "[pending post comment flags]" do
+    @tag :wip
+    test "pending post comment can set/unset pending", ~m(community post user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{
@@ -46,8 +46,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostPending do
       assert comment.pending == @audit_legal
     end
 
-    test "pending post-comment's meta should have info", ~m(post user)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "pending post-comment's meta should have info", ~m(community post user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{

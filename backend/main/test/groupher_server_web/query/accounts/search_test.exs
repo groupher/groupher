@@ -43,8 +43,8 @@ defmodule GroupherServer.Test.Query.Accounts.Search do
       assert results["entries"] |> Enum.any?(&(&1["nickname"] == "javascript"))
     end
 
-    test "search non-exsit user should get empty pagi data", ~m(guest_conn)a do
-      variables = %{name: "non-exsit"}
+    test "search non-exist user should get empty pagi data", ~m(guest_conn)a do
+      variables = %{name: "non-exist"}
       results = guest_conn |> query_result(@query, variables, "searchUsers")
 
       assert results["totalCount"] == 0

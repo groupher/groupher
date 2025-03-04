@@ -23,7 +23,6 @@ defmodule GroupherServer.Test.Query.Hooks.ChangelogCiting do
   end
 
   describe "[query paged_changelogs filter pagination]" do
-    # id
     @query """
     query($content: Content!, $id: ID!, $filter: PagiFilter!) {
       pagedCitingContents(id: $id, content: $content, filter: $filter) {
@@ -44,17 +43,13 @@ defmodule GroupherServer.Test.Query.Hooks.ChangelogCiting do
       }
     }
     """
+    @tag :wip
+    test "should get paged cittings", ~m(guest_conn community user)a do
+      changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
+      {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
-    test "should get paged cittings", ~m(guest_conn community changelog_attrs user)a do
-      {:ok, changelog2} = db_insert(:changelog)
-
-      {:ok, comment} =
-        CMS.create_comment(
-          :changelog,
-          changelog2.id,
-          mock_comment(~s(the <a href=#{@site_host}/changelog/#{changelog2.id} />)),
-          user
-        )
+      body = mock_comment(~s(the <a href=#{@site_host}/changelog/#{changelog2.id} />))
+      {:ok, comment} = CMS.create_comment2(community, :changelog, changelog2.inner_id, body, user)
 
       body =
         mock_rich_text(

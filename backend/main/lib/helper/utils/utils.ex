@@ -1,6 +1,6 @@
 defmodule Helper.Utils do
   @moduledoc """
-  unitil functions
+  until functions
   """
   import Ecto.Query, warn: false
   import Helper.ErrorHandler
@@ -74,7 +74,7 @@ defmodule Helper.Utils do
   def done({:ok, _}, with: result), do: {:ok, result}
   def done({:error, reason}, with: _result), do: {:error, reason}
 
-  def done(nil, queryable, id), do: {:error, not_found_formater(queryable, id)}
+  def done(nil, queryable, id), do: {:error, not_found_formatter(queryable, id)}
   def done(result, _, _), do: {:ok, result}
 
   # for delete_all, update_all

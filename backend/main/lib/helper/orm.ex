@@ -6,7 +6,8 @@ defmodule Helper.ORM do
   import Helper.Utils, only: [done: 1, done: 3, strip_struct: 1, get_config: 2]
   import ShortMaps
 
-  import Helper.ErrorHandler
+  import GroupherServer.CMS.Helper.Matcher
+  import Helper.{ErrorHandler, ErrorCode}
 
   alias Helper.Types, as: T
   alias GroupherServer.Repo
@@ -83,7 +84,7 @@ defmodule Helper.ORM do
     |> Repo.get_by(clauses)
     |> case do
       nil ->
-        {:error, not_found_formater(queryable, clauses)}
+        {:error, not_found_formatter(queryable, clauses)}
 
       result ->
         {:ok, result}
@@ -96,7 +97,7 @@ defmodule Helper.ORM do
     |> Repo.get_by(clauses)
     |> case do
       nil ->
-        {:error, not_found_formater(queryable, clauses)}
+        {:error, not_found_formatter(queryable, clauses)}
 
       result ->
         {:ok, result}
@@ -104,7 +105,7 @@ defmodule Helper.ORM do
   end
 
   @doc """
-  return pageinated Data required by filter
+  return paginated Data required by filter
   """
   # TODO: find article not mark_delete by default
   def find_all(queryable, %{page: page, size: size} = filter) do
@@ -114,10 +115,6 @@ defmodule Helper.ORM do
     |> done()
   end
 
-  @doc """
-  return  Data required by filter
-  """
-  # TODO: find article not in mark_delete by default
   def find_all(queryable, filter) do
     queryable |> QueryBuilder.filter_pack(filter) |> Repo.all() |> done()
   end
@@ -233,13 +230,15 @@ defmodule Helper.ORM do
   end
 
   @doc """
-  NOTE: this should be use together with passport_loader etc Middleware
-  DO NOT use it directly
+  strict mode is default, need model to have a update_changeset
+  non-strict mode is used mostly in tests
   """
   def update(content, attrs) do
-    content
-    |> content.__struct__.update_changeset(attrs)
-    |> Repo.update()
+    content |> content.__struct__.update_changeset(attrs) |> Repo.update()
+  end
+
+  def update(content, attrs, strict: false) do
+    content |> Ecto.Changeset.change(attrs) |> Repo.update()
   end
 
   @doc """
@@ -407,6 +406,18 @@ defmodule Helper.ORM do
     |> preload(moderators: :user)
     |> Repo.one()
     |> done
+  end
+
+  def find_article(original_community_slug, thread, inner_id, opts \\ []) do
+    preload = Keyword.get(opts, :preload, [])
+    query = ~m(original_community_slug inner_id)a
+
+    with {:ok, info} <- match(thread) do
+      case find_by(info.model, query, preload: preload) do
+        {:ok, result} -> {:ok, result}
+        {:error, _} -> raise_error(:article_not_found, "article not found")
+      end
+    end
   end
 
   defp extract_article_info(reaction, threads) do

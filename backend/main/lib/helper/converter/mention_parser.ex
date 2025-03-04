@@ -6,7 +6,7 @@ defmodule Helper.Converter.MentionParser do
 
   # @mention_regex ~r/@[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@?[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*/u
   # see: https://github.com/regexhq/mentions-regex/blob/master/index.js#L21
-  # in elixir regex shoud replace \ with \\
+  # in elixir regex should replace \ with \\
   # see http://developerworks.github.io/2015/01/02/elixir-regex/
   @mention_regex ~r/(?:^|[^a-zA-Z0-9_＠!@#$%&*])(?:(?:@|＠)(?!\/))([a-zA-Z0-9\/_.]{1,15})(?:\b(?!@|＠)|$)/
 

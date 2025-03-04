@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import GroupherServer.CMS.Delegate.Helper, only: [preload_author: 1]
@@ -7,27 +9,27 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
   alias CMS.Delegate.Hooks
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, blog, _, user} = mock_article(:blog)
+
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
+    {:ok, comment} =
+      CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-    {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-    {:ok, comment} = CMS.create_comment(:blog, blog.id, mock_comment(), user)
-
-    {:ok, ~m(user2 user3 blog comment)a}
+    {:ok, ~m(user2 user3 community blog comment)a}
   end
 
   describe "[upvote notify]" do
+    @tag :wip
     test "upvote hook should work on blog", ~m(user2 blog)a do
       {:ok, blog} = preload_author(blog)
 
       {:ok, article} = CMS.upvote_article(:blog, blog.id, user2)
       Hooks.Notify.handle(:upvote, article, user2)
 
-      {:ok, notifications} = Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -67,7 +69,8 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
       {:ok, article} = CMS.undo_upvote_article(:blog, blog.id, user2)
       Hooks.Notify.handle(:undo, :upvote, article, user2)
 
-      {:ok, notifications} = Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -95,7 +98,8 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
       {:ok, _} = CMS.collect_article(:blog, blog.id, user2)
       Hooks.Notify.handle(:collect, blog, user2)
 
-      {:ok, notifications} = Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -116,20 +120,26 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
       {:ok, _} = CMS.undo_upvote_article(:blog, blog.id, user2)
       Hooks.Notify.handle(:undo, :collect, blog, user2)
 
-      {:ok, notifications} = Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
   end
 
   describe "[comment notify]" do
-    test "blog author should get notify after some one comment on it", ~m(user2 blog)a do
+    @tag :wip
+    test "blog author should get notify after some one comment on it",
+         ~m(user2 community blog)a do
       {:ok, blog} = preload_author(blog)
 
-      {:ok, comment} = CMS.create_comment(:blog, blog.id, mock_comment(), user2)
+      {:ok, comment} =
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user2)
+
       Hooks.Notify.handle(:comment, comment, user2)
 
-      {:ok, notifications} = Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -141,13 +151,17 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
       assert user_exist_in?(user2, notify.from_users)
     end
 
-    test "blog comment author should get notify after some one reply it", ~m(user2 user3 blog)a do
+    @tag :wip
+    test "blog comment author should get notify after some one reply it",
+         ~m(user2 user3 community blog)a do
       {:ok, blog} = preload_author(blog)
 
-      {:ok, comment} = CMS.create_comment(:blog, blog.id, mock_comment(), user2)
-      {:ok, replyed_comment} = CMS.reply_comment(comment.id, mock_comment(), user3)
+      {:ok, comment} =
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user2)
 
-      Hooks.Notify.handle(:reply, replyed_comment, user3)
+      {:ok, replied_comment} = CMS.reply_comment(comment.id, mock_comment(), user3)
+
+      Hooks.Notify.handle(:reply, replied_comment, user3)
 
       comment = Repo.preload(comment, :author)
       {:ok, notifications} = Delivery.fetch(:notification, comment.author, %{page: 1, size: 20})
@@ -159,7 +173,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
       assert notify.action == "REPLY"
       assert notify.thread == "BLOG"
       assert notify.article_id == blog.id
-      assert notify.comment_id == replyed_comment.id
+      assert notify.comment_id == replied_comment.id
 
       assert notify.user_id == comment.author_id
       assert user_exist_in?(user3, notify.from_users)

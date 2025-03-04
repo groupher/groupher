@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Artilces.ChangelogPin do
+defmodule GroupherServer.Test.CMS.Articles.ChangelogPin do
   @moduledoc false
 
   use GroupherServer.TestTools
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.CMS.Artilces.ChangelogPin do
       assert reason |> Keyword.get(:code) == ecode(:too_much_pinned_article)
     end
 
-    test "can not pin a non-exsit changelog", ~m(community)a do
+    test "can not pin a non-exist changelog", ~m(community)a do
       assert {:error, _} = CMS.pin_article(:changelog, 8848, community.id)
     end
 

@@ -48,9 +48,6 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Domain do
     end
   end
 
-  @doc """
-  seed community for blackhole
-  """
   def seed_community(:blackhole) do
     with {:error, _} <- ORM.find_by(Community, %{slug: "blackhole"}),
          {:ok, bot} <- seed_bot(),
@@ -73,9 +70,6 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Domain do
     end
   end
 
-  @doc """
-  seed community for feedback
-  """
   def seed_community(:feedback) do
     with {:error, _} <- ORM.find_by(Community, %{slug: "feedback"}),
          {:ok, bot} <- seed_bot(),

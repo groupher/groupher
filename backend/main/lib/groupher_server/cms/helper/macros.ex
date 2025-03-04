@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
   @moduledoc """
   macros for define article related fields in CMS models
   """
-  import Helper.Utils, only: [get_config: 2, plural: 1]
+  import Helper.Utils, only: [get_config: 2]
 
   alias GroupherServer.{CMS, Accounts}
 

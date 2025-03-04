@@ -5,9 +5,6 @@ defmodule GroupherServer.CMS.Model.CommunityJoinPost do
   use Ecto.Schema
   use Accessible
 
-  import Ecto.Changeset
-  import GroupherServer.CMS.Helper.Macros
-
   alias GroupherServer.CMS
   alias CMS.Model.{Community, Post}
   alias Helper.Constant.DBPrefix

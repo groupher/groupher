@@ -1,0 +1,40 @@
+name: run unit tests
+on:
+  push:
+    paths:
+      - "backend/main/**" # only trigger when this dir changes
+
+jobs:
+  deploy:
+    name: Deploy backend api
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/main
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: "25.0"
+          elixir-version: "1.15.7"
+
+      - name: Cache deps
+        uses: actions/cache@v3
+        with:
+          path: backend/main/deps
+          key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock') }}
+
+      - name: Cache build
+        uses: actions/cache@v3
+        with:
+          path: backend/main/_build
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock') }}
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run tests
+        run: mix test

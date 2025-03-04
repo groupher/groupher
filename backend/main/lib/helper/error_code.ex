@@ -24,7 +24,7 @@ defmodule Helper.ErrorCode do
   # default errors
   def ecode(:custom), do: @default_base + 1
   def ecode(:pagination), do: @default_base + 2
-  def ecode(:not_exsit), do: @default_base + 3
+  def ecode(:not_exist), do: @default_base + 3
   def ecode(:already_did), do: @default_base + 4
   def ecode(:self_conflict), do: @default_base + 5
   def ecode(:react_fails), do: @default_base + 6
@@ -63,6 +63,7 @@ defmodule Helper.ErrorCode do
   # def ecode(:already_solved), do: @article_base + 10
   def ecode(:already_upvoted), do: @article_base + 14
   def ecode(:pending), do: @article_base + 15
+  def ecode(:article_not_found), do: @article_base + 16
 
   def ecode(:community_root_only), do: @community_base + 1
   def ecode(:passport_community_not_match), do: @community_base + 2

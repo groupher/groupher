@@ -4,13 +4,11 @@ defmodule GroupherServer.CMS do
   [CMS]: post, job, ...
   [CRUD]: create, update, delete ...
   """
-
   alias GroupherServer.CMS.Delegate
 
   alias Delegate.{
     AbuseReport,
     ArticleCRUD,
-    BlogCRUD,
     ArticleCommunity,
     ArticleEmotion,
     CitedArtiment,
@@ -20,7 +18,6 @@ defmodule GroupherServer.CMS do
     CommentAction,
     CommentEmotion,
     ArticleTag,
-    CommunitySync,
     CommunityCRUD,
     CommunityOperation,
     PassportCRUD,
@@ -43,10 +40,10 @@ defmodule GroupherServer.CMS do
   defdelegate delete_community(community), to: CommunityCRUD
   defdelegate apply_community(args), to: CommunityCRUD
   defdelegate update_community(community, args), to: CommunityCRUD
-  defdelegate update_dashboard(comunity, key, args), to: CommunityCRUD
+  defdelegate update_dashboard(community, key, args), to: CommunityCRUD
   defdelegate approve_community_apply(community), to: CommunityCRUD
   defdelegate deny_community_apply(id), to: CommunityCRUD
-  defdelegate is_community_exist?(slug), to: CommunityCRUD
+  defdelegate community_exist?(slug), to: CommunityCRUD
   defdelegate has_pending_community_apply?(user), to: CommunityCRUD
 
   # TODO: delete after prod seed
@@ -194,10 +191,10 @@ defmodule GroupherServer.CMS do
 
   defdelegate paged_comment_replies(comment_id, filters), to: CommentCRUD
   defdelegate paged_comment_replies(comment_id, filters, user), to: CommentCRUD
-
   defdelegate paged_comments_participants(thread, content_id, filters), to: CommentCRUD
-
   defdelegate create_comment(thread, article_id, args, user), to: CommentCRUD
+  defdelegate create_comment2(community, thread, inner_id, args, user), to: CommentCRUD
+
   defdelegate update_comment(comment, content), to: CommentCRUD
   defdelegate delete_comment(comment), to: CommentCRUD
   defdelegate mark_comment_solution(comment, user), to: CommentCRUD

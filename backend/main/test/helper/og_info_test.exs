@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Helper.OgInfo do
 
   alias Helper.OgInfo
 
-  describe "[oginfo test]" do
+  describe "[og-info test]" do
     test "can get valid open graph info with valid url.." do
       # Good example
       {:ok, ret} = OgInfo.get("https://www.ifanr.com/1561465")
@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.Helper.OgInfo do
       assert not is_nil(ret.site_name)
     end
 
-    test "shoud fmt site_info for sspai.com" do
+    test "should fmt site_info for sspai.com" do
       {:ok, ret} = OgInfo.get("https://sspai.com/post/82704")
 
       assert not is_nil(ret.title)
@@ -22,7 +22,8 @@ defmodule GroupherServer.Test.Helper.OgInfo do
       assert ret.site_name == "少数派"
     end
 
-    test "shoud add site_info for 36kr.com cuz it missing it" do
+    @tag :wip
+    test "should add site_info for 36kr.com cuz it missing it" do
       {:ok, ret} = OgInfo.get("https://36kr.com/p/2421145363096585")
 
       assert not is_nil(ret.title)

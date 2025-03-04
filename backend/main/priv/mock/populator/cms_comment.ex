@@ -16,14 +16,12 @@ defmodule GroupherServer.Mock.CMS.Comment do
   # }
   # end
 
-
-
   def gen() do
     {:ok, user} = ORM.find(User, 1)
-    IO.inspect  user, label: "got user"
+    IO.inspect(user, label: "got user")
     {:ok, post} = ORM.find(Post, 21)
-    IO.inspect  post, label: "got post"
+    IO.inspect(post, label: "got post")
 
-    {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    # {:ok, comment} = CMS.create_comment2(:post, post.id, mock_comment(), user)
   end
 end

@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Accounts.Published.Blog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.{Accounts, CMS}
@@ -8,32 +10,34 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
   @publish_count 10
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, blog, _, user} = mock_article(:blog)
+
     {:ok, user2} = db_insert(:user)
-    {:ok, blog} = db_insert(:blog)
-    {:ok, community} = db_insert(:community)
     {:ok, community2} = db_insert(:community)
 
     {:ok, ~m(user user2 blog community community2)a}
   end
 
-  describe "[publised blogs]" do
-    test "create blog should update user published meta", ~m(community user)a do
+  describe "[published blogs]" do
+    @tag :wip
+    test "create blog should update user published meta", ~m(community user2)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-      {:ok, _blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _blog} = CMS.create_article(community, :blog, blog_attrs, user)
+      {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user2)
+      {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user2)
 
-      {:ok, user} = ORM.find(User, user.id)
+      {:ok, user} = ORM.find(User, user2.id)
       assert user.meta.published_blogs_count == 2
     end
 
-    test "fresh user get empty paged published blogs", ~m(user)a do
-      {:ok, results} = Accounts.paged_published_articles(user, :blog, %{page: 1, size: 20})
+    @tag :wip
+    test "fresh user get empty paged published blogs", ~m(user2)a do
+      {:ok, results} = Accounts.paged_published_articles(user2, :blog, %{page: 1, size: 20})
 
       assert results |> is_valid_pagination?(:raw)
       assert results.total_count == 0
     end
 
+    @tag :wip
     test "user can get paged published blogs", ~m(user user2 community community2)a do
       pub_blogs =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
@@ -62,7 +66,7 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
       {:ok, results} = Accounts.paged_published_articles(user, :blog, %{page: 1, size: 20})
 
       assert results |> is_valid_pagination?(:raw)
-      assert results.total_count == @publish_count * 2
+      assert results.total_count == @publish_count * 2 + 1
 
       random_blog_id = pub_blogs |> Enum.random() |> Map.get(:id)
       random_blog_id2 = pub_blogs2 |> Enum.random() |> Map.get(:id)
@@ -71,12 +75,15 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
     end
   end
 
-  describe "[publised blog comments]" do
-    test "can get published article comments", ~m(blog user)a do
+  describe "[published blog comments]" do
+    @tag :wip
+    test "can get published article comments", ~m(community blog user)a do
       total_count = 10
 
       Enum.reduce(1..total_count, [], fn _, acc ->
-        {:ok, comment} = CMS.create_comment(:blog, blog.id, mock_comment(), user)
+        {:ok, comment} =
+          CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
+
         acc ++ [comment]
       end)
 

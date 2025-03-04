@@ -1,17 +1,15 @@
 defmodule GroupherServer.Test.Query.Articles.Post do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
-    {:ok, community} = db_insert(:community)
+    {community, post, post_attrs, user} = mock_article(:post)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
-
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
 
     {:ok, ~m(user_conn guest_conn post user community post_attrs)a}
   end
@@ -34,8 +32,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     }
   }
   """
-
-  test "basic graphql query on post with logined user",
+  test "basic graphql query on post with logged user",
        ~m(user_conn community user post_attrs)a do
     {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 

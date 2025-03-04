@@ -7,12 +7,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   alias Accounts.Model.User
   alias CMS.Model.{Category, Community, CommunityModerator, Passport}
 
-  alias Helper.{Certification, ORM, Constant}
+  alias Helper.{ORM, Constant}
 
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)
 
-  @default_root_rules Certification.passport_rules(cms: "root")
+  # @default_root_rules Certification.passport_rules(cms: "root")
 
   setup do
     {:ok, category} = db_insert(:category)
@@ -371,7 +371,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     test "delete non-exist community fails" do
       rule_conn = simu_conn(:user, cms: %{"community.delete" => true})
-      assert rule_conn |> mutation_get_error?(@delete_community_query, %{id: non_exsit_id()})
+      assert rule_conn |> mutation_get_error?(@delete_community_query, %{id: non_exist_id()})
     end
   end
 
@@ -623,9 +623,9 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert user.subscribed_communities_count == 1
     end
 
-    test "login user subscribe non-exsit community fails", ~m(user)a do
+    test "login user subscribe non-exist community fails", ~m(user)a do
       login_conn = simu_conn(:user, user)
-      variables = %{communityId: non_exsit_id()}
+      variables = %{communityId: non_exist_id()}
 
       assert login_conn |> mutation_get_error?(@subscribe_query, variables, ecode(:changeset))
     end

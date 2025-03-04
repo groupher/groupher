@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Artilces.DocPin do
+defmodule GroupherServer.Test.CMS.Articles.DocPin do
   @moduledoc false
 
   use GroupherServer.TestTools
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.CMS.Artilces.DocPin do
       assert reason |> Keyword.get(:code) == ecode(:too_much_pinned_article)
     end
 
-    test "can not pin a non-exsit doc", ~m(community)a do
+    test "can not pin a non-exist doc", ~m(community)a do
       assert {:error, _} = CMS.pin_article(:doc, 8848, community.id)
     end
 

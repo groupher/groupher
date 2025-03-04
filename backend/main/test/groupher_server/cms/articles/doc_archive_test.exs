@@ -13,14 +13,13 @@ defmodule GroupherServer.Test.CMS.DocArchive do
                            @archive_threshold[:doc] || @archive_threshold[:default]
                          )
 
-  @last_week Timex.shift(@now, days: -7, seconds: -1)
+  @last_year Timex.shift(@now, years: -1, seconds: -1)
 
   setup do
     {:ok, user} = db_insert(:user)
-    # {:ok, doc} = db_insert(:doc)
     {:ok, community} = db_insert(:community)
 
-    {:ok, doc_long_ago} = db_insert(:doc, %{title: "last week", inserted_at: @last_week})
+    {:ok, doc_long_ago} = db_insert(:doc, %{title: "last week", inserted_at: @last_year})
 
     db_insert_multi(:doc, 5)
 

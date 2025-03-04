@@ -8,11 +8,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.PostReport do
   alias CMS.Model.Post
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, _, post_attrs, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
 
     {:ok, ~m(user user2 community post_attrs)a}
   end

@@ -1,4 +1,5 @@
 defmodule GroupherServer.Test.CMS.Search do
+  @moduledoc false
   use GroupherServer.TestTools
 
   # alias Helper.ORM
@@ -53,8 +54,8 @@ defmodule GroupherServer.Test.CMS.Search do
       assert searched.entries |> Enum.any?(&(&1.title == "javascript"))
     end
 
-    test "search non exsit community should get empty pagi data" do
-      {:ok, searched} = CMS.search_communities("non-exsit")
+    test "search non exist community should get empty pagi data" do
+      {:ok, searched} = CMS.search_communities("non-exist")
       assert searched |> is_valid_pagination?(:raw, :empty)
     end
   end
@@ -103,8 +104,8 @@ defmodule GroupherServer.Test.CMS.Search do
       assert searched.entries |> Enum.any?(&(&1.title == "javascript"))
     end
 
-    test "search non exsit community should get empty pagi data" do
-      {:ok, searched} = CMS.search_communities("non-exsit")
+    test "search non exist community should get empty pagi data" do
+      {:ok, searched} = CMS.search_communities("non-exist")
       assert searched |> is_valid_pagination?(:raw, :empty)
     end
   end

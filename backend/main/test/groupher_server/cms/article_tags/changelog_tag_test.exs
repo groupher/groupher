@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -6,13 +8,10 @@ defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
   alias Helper.{ORM}
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, changelog} = db_insert(:changelog)
-    {:ok, community} = db_insert(:community)
+    {community, changelog, changelog_attrs, user} = mock_article(:changelog)
+
     article_tag_attrs = mock_attrs(:article_tag)
     article_tag_attrs2 = mock_attrs(:article_tag)
-
-    changelog_attrs = mock_attrs(:changelog)
 
     {:ok, ~m(user community changelog changelog_attrs article_tag_attrs article_tag_attrs2)a}
   end
@@ -41,10 +40,10 @@ defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
       assert article_tag.title == "new title"
     end
 
-    test "create article tag with non-exsit community fails", ~m(article_tag_attrs user)a do
+    test "create article tag with non-exist community fails", ~m(article_tag_attrs user)a do
       assert {:error, _} =
                CMS.create_article_tag(
-                 %Community{slug: non_exsit_slug()},
+                 %Community{slug: non_exist_slug()},
                  :changelog,
                  article_tag_attrs,
                  user
@@ -89,7 +88,7 @@ defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
   end
 
   describe "[create/update changelog with tags]" do
-    test "can create changelog with exsited article tags",
+    test "can create changelog with existed article tags",
          ~m(community user changelog_attrs article_tag_attrs article_tag_attrs2)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
 

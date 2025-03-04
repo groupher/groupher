@@ -5,9 +5,7 @@ defmodule GroupherServer.CMS.Helper.Loader do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-
   alias CMS.Model.{Author, CommunityThread}
-  alias Helper.QueryBuilder
 
   def data, do: Dataloader.Ecto.new(Repo, query: &query/2)
 

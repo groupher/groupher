@@ -13,14 +13,13 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
                             @archive_threshold[:blog] || @archive_threshold[:default]
                           )
 
-  @last_week Timex.shift(@now, days: -7, seconds: -1)
+  @last_year Timex.shift(@now, years: -1, seconds: -1)
 
   setup do
     {:ok, user} = db_insert(:user)
-    # {:ok, blog} = db_insert(:blog)
     {:ok, community} = db_insert(:community)
 
-    {:ok, blog_long_ago} = db_insert(:blog, %{title: "last week", inserted_at: @last_week})
+    {:ok, blog_long_ago} = db_insert(:blog, %{title: "last week", inserted_at: @last_year})
 
     db_insert_multi(:blog, 5)
 
@@ -54,6 +53,7 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
       assert reason |> is_error?(:archived)
     end
 
+    @tag :wip
     test "can not delete archived blog" do
       {:ok, _} = CMS.archive_articles(:blog)
 

@@ -74,8 +74,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.deny_community_apply(id)
   end
 
-  def is_community_exist?(_root, %{slug: slug}, _) do
-    CMS.is_community_exist?(slug)
+  def community_exist?(_root, %{slug: slug}, _) do
+    CMS.community_exist?(slug)
   end
 
   def has_pending_community_apply?(_root, _, %{context: %{cur_user: user}}) do

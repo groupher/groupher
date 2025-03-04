@@ -8,11 +8,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
   alias CMS.Model.Changelog
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, _, changelog_attrs, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
     {:ok, ~m(user user2 community changelog_attrs)a}
   end

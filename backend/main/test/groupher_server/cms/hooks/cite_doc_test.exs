@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.Hooks.CiteDoc do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Helper.Utils, only: [get_config: 2]
@@ -12,23 +14,22 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteDoc do
   @site_host get_config(:general, :site_host)
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, doc, _, user} = mock_article(:doc)
     {:ok, user2} = db_insert(:user)
-    {:ok, doc} = db_insert(:doc)
-    {:ok, doc2} = db_insert(:doc)
+
+    doc_attrs = mock_attrs(:doc, %{community_id: community.id, author: %{user: user}})
+    {:ok, doc2} = CMS.create_article(community, :doc, doc_attrs, user)
+
     {:ok, doc3} = db_insert(:doc)
     {:ok, doc4} = db_insert(:doc)
     {:ok, doc5} = db_insert(:doc)
-
-    {:ok, community} = db_insert(:community)
-
-    doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
     {:ok, ~m(user user2 community doc doc2 doc3 doc4 doc5 doc_attrs)a}
   end
 
   describe "[cite basic]" do
-    test "cited multi doc should work", ~m(user community doc2 doc3 doc4 doc5 doc_attrs)a do
+    test "cited multi doc should work",
+         ~m(user community doc2 doc3 doc4 doc5 doc_attrs)a do
       body =
         mock_rich_text(
           ~s(the <a href=#{@site_host}/doc/#{doc2.id} /> and <a href=#{@site_host}/doc/#{doc2.id}>same la</a> is awesome, the <a href=#{@site_host}/doc/#{doc3.id}></a> is awesome too.),
@@ -69,8 +70,16 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteDoc do
       assert doc.meta.citing_count == 0
     end
 
-    test "cited comment itself should not work", ~m(user doc)a do
-      {:ok, cited_comment} = CMS.create_comment(:doc, doc.id, mock_rich_text("hello"), user)
+    @tag :wip
+    test "cited comment itself should not work", ~m(user community doc)a do
+      {:ok, cited_comment} =
+        CMS.create_comment2(
+          community.slug,
+          :doc,
+          doc.inner_id,
+          mock_rich_text("hello"),
+          user
+        )
 
       {:ok, comment} =
         CMS.update_comment(
@@ -86,8 +95,17 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteDoc do
       assert cited_comment.meta.citing_count == 0
     end
 
-    test "can cite doc's comment in doc", ~m(community user doc doc2 doc_attrs)a do
-      {:ok, comment} = CMS.create_comment(:doc, doc.id, mock_rich_text("hello"), user)
+    @tag :wip
+    test "can cite doc's comment in doc",
+         ~m(user community doc doc2 doc_attrs)a do
+      {:ok, comment} =
+        CMS.create_comment2(
+          community.slug,
+          :doc,
+          doc.inner_id,
+          mock_rich_text("hello"),
+          user
+        )
 
       body =
         mock_rich_text(~s(the <a href=#{@site_host}/doc/#{doc2.id}?comment_id=#{comment.id} />))
@@ -107,15 +125,24 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteDoc do
       assert cited_content.cited_by_type == "COMMENT"
     end
 
-    test "can cite a comment in a comment", ~m(user doc)a do
-      {:ok, cited_comment} = CMS.create_comment(:doc, doc.id, mock_rich_text("hello"), user)
+    @tag :wip
+    test "can cite a comment in a comment", ~m(user community doc)a do
+      {:ok, cited_comment} =
+        CMS.create_comment2(
+          community.slug,
+          :doc,
+          doc.inner_id,
+          mock_rich_text("hello"),
+          user
+        )
 
       comment_body =
         mock_rich_text(
           ~s(the <a href=#{@site_host}/doc/#{doc.id}?comment_id=#{cited_comment.id} />)
         )
 
-      {:ok, comment} = CMS.create_comment(:doc, doc.id, comment_body, user)
+      {:ok, comment} =
+        CMS.create_comment2(community, :doc, doc.inner_id, comment_body, user)
 
       Hooks.Cite.handle(comment)
 
@@ -128,7 +155,9 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteDoc do
       assert cited_content.cited_by_type == "COMMENT"
     end
 
-    test "can cited doc inside a comment", ~m(user doc doc2 doc3 doc4 doc5)a do
+    @tag :wip
+    test "can cited doc inside a comment",
+         ~m(user community doc doc2 doc3 doc4 doc5)a do
       comment_body =
         mock_rich_text(
           ~s(the <a href=#{@site_host}/doc/#{doc2.id} /> and <a href=#{@site_host}/doc/#{doc2.id}>same la</a> is awesome, the <a href=#{@site_host}/doc/#{doc3.id}></a> is awesome too.),
@@ -136,11 +165,15 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteDoc do
           ~s(the paragraph 2 <a href=#{@site_host}/doc/#{doc2.id} class=#{doc2.title}> again</a>, the paragraph 2 <a href=#{@site_host}/doc/#{doc4.id}> again</a>, the paragraph 2 <a href=#{@site_host}/doc/#{doc5.id}> again</a>)
         )
 
-      {:ok, comment} = CMS.create_comment(:doc, doc.id, comment_body, user)
+      {:ok, comment} =
+        CMS.create_comment2(community, :doc, doc.inner_id, comment_body, user)
+
       Hooks.Cite.handle(comment)
 
       comment_body = mock_rich_text(~s(the <a href=#{@site_host}/doc/#{doc3.id} />))
-      {:ok, comment} = CMS.create_comment(:doc, doc.id, comment_body, user)
+
+      {:ok, comment} =
+        CMS.create_comment2(community, :doc, doc.inner_id, comment_body, user)
 
       Hooks.Cite.handle(comment)
 
@@ -157,11 +190,13 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteDoc do
   end
 
   describe "[cite pagi]" do
+    @tag :wip
     test "can get paged cited articles.", ~m(user community doc2 doc_attrs)a do
       {:ok, comment} =
-        CMS.create_comment(
+        CMS.create_comment2(
+          community.slug,
           :doc,
-          doc2.id,
+          doc2.inner_id,
           mock_comment(~s(the <a href=#{@site_host}/doc/#{doc2.id} />)),
           user
         )
@@ -220,7 +255,8 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteDoc do
 
       body = mock_rich_text(~s(the <a href=#{@site_host}/doc/#{doc2.id} />))
 
-      {:ok, doc} = CMS.create_article(community, :doc, Map.merge(doc_attrs, %{body: body}), user)
+      {:ok, doc} =
+        CMS.create_article(community, :doc, Map.merge(doc_attrs, %{body: body}), user)
 
       Hooks.Cite.handle(doc)
 
@@ -236,7 +272,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteDoc do
       assert result.total_count == 2
 
       result_doc = result.entries |> List.first()
-      result_comment = result.entries |> Enum.at(2)
       result_blog = result.entries |> List.last()
 
       assert result_doc.id == doc.id

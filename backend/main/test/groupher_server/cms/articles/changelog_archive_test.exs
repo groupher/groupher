@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.CMS.ChangelogArchive do
                                  @archive_threshold[:changelog] || @archive_threshold[:default]
                                )
 
-  @last_week Timex.shift(@now, days: -7, seconds: -1)
+  @last_year Timex.shift(@now, years: -1, seconds: -1)
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.CMS.ChangelogArchive do
     {:ok, community} = db_insert(:community)
 
     {:ok, changelog_long_ago} =
-      db_insert(:changelog, %{title: "last week", inserted_at: @last_week})
+      db_insert(:changelog, %{title: "last week", inserted_at: @last_year})
 
     db_insert_multi(:changelog, 5)
 

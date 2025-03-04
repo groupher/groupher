@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     }
     """
 
-    test "create changelog with valid attrs and make sure author exsit" do
+    test "create changelog with valid attrs and make sure author exist" do
       {:ok, user} = db_insert(:user)
       user_conn = simu_conn(:user, user)
 

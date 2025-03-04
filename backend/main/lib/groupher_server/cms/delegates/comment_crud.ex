@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Model.{Post, Comment, PinnedComment, Embeds}
+  alias CMS.Model.{Post, Comment, PinnedComment, Embeds, Community}
 
   alias CMS.Delegate.Hooks
   alias Helper.{Later, ORM, QueryBuilder, Converter, Constant}
@@ -106,9 +106,6 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     do_paged_comment(thread, article_id, filters, where_query, user)
   end
 
-  @doc """
-  [replies-mode] list paged article comments
-  """
   def paged_comments(thread, article_id, filters, :replies, user) do
     where_query =
       dynamic(
@@ -307,13 +304,58 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     |> Repo.all()
   end
 
-  @doc """
-  creates a comment for article like psot, job ...
-  """
-  def create_comment(thread, article_id, body, %User{} = user) do
+  def create_comment2(%Community{slug: community_slug}, thread, inner_id, body, %User{} = user) do
+    create_comment2(community_slug, thread, inner_id, body, %User{} = user)
+  end
+
+  def create_comment2(community_slug, thread, inner_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
-           ORM.find(info.model, article_id, preload: [[author: :user], :original_community]),
+           ORM.find_article(community_slug, thread, inner_id,
+             preload: [[author: :user], :original_community]
+           ),
+         true <- can_comment?(article, user) do
+      Multi.new()
+      |> Multi.run(:create_comment, fn _, _ ->
+        do_create_comment(body, info.foreign_key, article, user)
+      end)
+      |> Multi.run(:update_comments_count, fn _, %{create_comment: comment} ->
+        update_comments_count(comment, :inc)
+      end)
+      |> Multi.run(:set_question_flag_ifneed, fn _, %{create_comment: comment} ->
+        set_question_flag_ifneed(article, comment)
+      end)
+      |> Multi.run(:add_participator, fn _, _ -> add_participant_to_article(article, user) end)
+      |> Multi.run(:update_article_active_timestamp, fn _, %{create_comment: comment} ->
+        case comment.author_id == article.author.user.id do
+          true -> {:ok, :pass}
+          false -> CMS.update_active_timestamp(thread, article)
+        end
+      end)
+      |> Multi.run(:after_hooks, fn _, %{create_comment: comment} ->
+        # comment this for test
+        # Hooks.SubscribeCommunity.handle(article.original_community, user)
+        Later.run({Hooks.Cite, :handle, [comment]})
+        Later.run({Hooks.Notify, :handle, [:comment, comment, user]})
+        Later.run({Hooks.Mention, :handle, [comment]})
+        Later.run({Hooks.Audition, :handle, [comment]})
+        Later.run({Hooks.SubscribeCommunity, :handle, [article.original_community, user]})
+      end)
+      |> Repo.transaction()
+      |> result()
+    else
+      false -> raise_error(:article_comments_locked, "this article is forbid comment")
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  @doc """
+  creates a comment for article like post, job ...
+  """
+  def create_comment(thread, inner_id, body, %User{} = user) do
+    with {:ok, info} <- match(thread),
+         {:ok, article} <-
+           ORM.find(info.model, inner_id, preload: [[author: :user], :original_community]),
          true <- can_comment?(article, user) do
       Multi.new()
       |> Multi.run(:create_comment, fn _, _ ->

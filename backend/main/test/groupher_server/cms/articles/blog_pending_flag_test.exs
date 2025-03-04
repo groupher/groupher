@@ -1,4 +1,5 @@
 defmodule GroupherServer.Test.CMS.BlogPendingFlag do
+  @moduledoc false
   use GroupherServer.TestTools
 
   alias GroupherServer.{Accounts, CMS, Repo}

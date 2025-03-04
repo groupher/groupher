@@ -23,7 +23,6 @@ defmodule GroupherServer.Test.Query.Hooks.DocCiting do
   end
 
   describe "[query paged_docs filter pagination]" do
-    # id
     @query """
     query($content: Content!, $id: ID!, $filter: PagiFilter!) {
       pagedCitingContents(id: $id, content: $content, filter: $filter) {
@@ -44,17 +43,13 @@ defmodule GroupherServer.Test.Query.Hooks.DocCiting do
       }
     }
     """
+    @tag :wip
+    test "should get paged cittings", ~m(guest_conn community user)a do
+      doc_attrs = mock_attrs(:doc, %{community_id: community.id})
+      {:ok, doc2} = CMS.create_article(community, :doc, doc_attrs, user)
 
-    test "should get paged cittings", ~m(guest_conn community doc_attrs user)a do
-      {:ok, doc2} = db_insert(:doc)
-
-      {:ok, comment} =
-        CMS.create_comment(
-          :doc,
-          doc2.id,
-          mock_comment(~s(the <a href=#{@site_host}/doc/#{doc2.id} />)),
-          user
-        )
+      body = mock_comment(~s(the <a href=#{@site_host}/doc/#{doc2.id} />))
+      {:ok, comment} = CMS.create_comment2(community, :doc, doc2.inner_id, body, user)
 
       body =
         mock_rich_text(

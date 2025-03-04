@@ -48,10 +48,10 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
       assert user_conn |> mutation_get_error?(@query, variables, ecode(:self_conflict))
     end
 
-    test "login user follow no-exsit cuser fails", ~m(user_conn)a do
-      variables = %{login: non_exsit_login()}
+    test "login user follow no-exist user fails", ~m(user_conn)a do
+      variables = %{login: non_exist_login()}
 
-      assert user_conn |> mutation_get_error?(@query, variables, ecode(:not_exsit))
+      assert user_conn |> mutation_get_error?(@query, variables, ecode(:not_exist))
     end
 
     test "unauth user follow other user fails", ~m(guest_conn)a do
@@ -70,7 +70,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
 
     test "login user can undo follow other user", ~m(user_conn user)a do
       {:ok, user2} = db_insert(:user)
-      {:ok, _followeer} = user |> Accounts.follow(user2)
+      {:ok, _} = user |> Accounts.follow(user2)
 
       {:ok, found} = User |> ORM.find(user2.id, preload: :followers)
       assert found |> Map.get(:followers) |> length == 1

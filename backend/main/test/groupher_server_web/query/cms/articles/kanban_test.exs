@@ -1,22 +1,19 @@
 defmodule GroupherServer.Test.Query.Articles.Kanban do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
-
   alias Helper.Constant
 
   @article_cat Constant.CMS.article_cat()
   @article_state Constant.CMS.article_state()
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
-    {:ok, community} = db_insert(:community)
+    {community, post, post_attrs, user} = mock_article(:post)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
-
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
 
     {:ok, ~m(user_conn guest_conn post user community post_attrs)a}
   end

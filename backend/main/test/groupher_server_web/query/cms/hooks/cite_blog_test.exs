@@ -1,11 +1,10 @@
-defmodule GroupherServer.Test.Query.Hooks.CiteBlog do
+defmodule GroupherServer.Test.Query.Hooks.BlogCiting do
   @moduledoc false
 
   use GroupherServer.TestTools
   import Helper.Utils, only: [get_config: 2]
 
   alias GroupherServer.CMS
-
   alias CMS.Delegate.Hooks
 
   @site_host get_config(:general, :site_host)
@@ -23,7 +22,6 @@ defmodule GroupherServer.Test.Query.Hooks.CiteBlog do
   end
 
   describe "[query paged_blogs filter pagination]" do
-    # id
     @query """
     query($content: Content!, $id: ID!, $filter: PagiFilter!) {
       pagedCitingContents(id: $id, content: $content, filter: $filter) {
@@ -44,17 +42,13 @@ defmodule GroupherServer.Test.Query.Hooks.CiteBlog do
       }
     }
     """
+    @tag :wip
+    test "should get paged cittings", ~m(guest_conn community user)a do
+      blog_attrs = mock_attrs(:blog, %{community_id: community.id})
+      {:ok, blog2} = CMS.create_article(community, :blog, blog_attrs, user)
 
-    test "should get paged cittings", ~m(guest_conn community blog_attrs user)a do
-      {:ok, blog2} = db_insert(:blog)
-
-      {:ok, comment} =
-        CMS.create_comment(
-          :blog,
-          blog2.id,
-          mock_comment(~s(the <a href=#{@site_host}/blog/#{blog2.id} />)),
-          user
-        )
+      body = mock_comment(~s(the <a href=#{@site_host}/blog/#{blog2.id} />))
+      {:ok, comment} = CMS.create_comment2(community, :blog, blog2.inner_id, body, user)
 
       body =
         mock_rich_text(

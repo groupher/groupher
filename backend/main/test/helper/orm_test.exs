@@ -4,18 +4,21 @@ defmodule GroupherServer.Test.Helper.ORM do
   # TODO import Service.Utils move both helper and github
   import GroupherServer.Support.Factory
 
-  alias GroupherServer.CMS.Model.{Post, Author}
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS
+  alias CMS.Model.{Post, Author}
   alias Helper.ORM
 
   @posts_count 20
-  @post_clauses %{title: "hello groupher"}
 
   setup do
     db_insert_multi(:post, @posts_count)
-    {:ok, post} = db_insert(:post, @post_clauses)
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = db_insert(:community)
+    post_attrs = mock_attrs(:post, %{community_id: community.id})
+    {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
-    {:ok, post: post}
+    {:ok, post: post, community: community}
   end
 
   describe "[find/x find_by]" do
@@ -53,10 +56,11 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert %User{} = found.author.user
     end
 
-    test "find_by/2 should find a target by given clauses" do
-      {:ok, found} = ORM.find_by(Post, @post_clauses)
+    test "find_by/2 should find a target by given clauses", %{post: post} do
+      post_clauses = %{title: post.title}
+      {:ok, found} = ORM.find_by(Post, post_clauses)
 
-      assert found.title == @post_clauses.title
+      assert found.title == post_clauses.title
     end
   end
 
@@ -89,6 +93,40 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert result.page_number == 4
       assert result.entries |> List.first() == "i-91"
       assert result.entries |> List.last() == "i-100"
+    end
+  end
+
+  describe "[find article]" do
+    test "should find by default args", %{post: post, community: community} do
+      {:ok, article} = ORM.find_article(community.slug, :post, post.inner_id)
+
+      assert article.title == post.title
+      assert article.id == post.id
+      assert article.inner_id == post.inner_id
+      assert article.original_community_slug == community.slug
+
+      assert match?(%Ecto.Association.NotLoaded{}, article.original_community)
+      assert match?(%Ecto.Association.NotLoaded{}, article.author)
+    end
+
+    test "should find by preload", %{post: post, community: community} do
+      {:ok, article} =
+        ORM.find_article(community.slug, :post, post.inner_id,
+          preload: [[author: :user], :original_community]
+        )
+
+      assert article.id == post.id
+      assert article.inner_id == post.inner_id
+      assert article.original_community_slug == community.slug
+
+      assert not match?(%Ecto.Association.NotLoaded{}, article.original_community)
+      assert article.original_community.title == community.title
+    end
+
+    test "should have error code if not found", %{community: community} do
+      {:error, reason} = ORM.find_article(community.slug, :post, 3845)
+
+      assert reason |> Keyword.get(:code) == ecode(:article_not_found)
     end
   end
 end

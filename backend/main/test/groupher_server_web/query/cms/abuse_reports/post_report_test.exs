@@ -6,12 +6,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
   alias GroupherServer.CMS
 
   setup do
-    {:ok, post} = db_insert(:post)
-    {:ok, user} = db_insert(:user)
+    {community, post, post_attrs, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
 
     guest_conn = simu_conn(:guest)
 
@@ -91,8 +87,10 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
       assert results["totalCount"] == 1
     end
 
-    test "support comment", ~m(guest_conn post user)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    test "support comment", ~m(guest_conn community post user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+
       {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
 
       variables = %{filter: %{content_type: "COMMENT", page: 1, size: 10}}

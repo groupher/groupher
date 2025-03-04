@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.{Accounts, CMS}
@@ -10,18 +12,18 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
   @audit_illegal Constant.CMS.pending(:illegal)
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {community, changelog, _, user} = mock_article(:changelog)
 
-    {:ok, changelog} = db_insert(:changelog)
     guest_conn = simu_conn(:guest)
 
     {:ok, ~m(guest_conn community user changelog)a}
   end
 
-  describe "[pending changelog comemnt flags]" do
-    test "pending changelog comment can set/unset pending", ~m(changelog user)a do
-      {:ok, comment} = CMS.create_comment(:changelog, changelog.id, mock_comment(), user)
+  describe "[pending changelog comment flags]" do
+    @tag :wip
+    test "pending changelog comment can set/unset pending", ~m(community changelog user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{
@@ -44,8 +46,10 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
       assert comment.pending == @audit_legal
     end
 
-    test "pending changelog-comment's meta should have info", ~m(changelog user)a do
-      {:ok, comment} = CMS.create_comment(:changelog, changelog.id, mock_comment(), user)
+    @tag :wip
+    test "pending changelog-comment's meta should have info", ~m(community changelog user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{

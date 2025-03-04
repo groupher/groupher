@@ -3,13 +3,13 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Delegate.Hooks
-  alias Helper.Constant
+  # alias GroupherServer.CMS
+  # alias CMS.Delegate.Hooks
+  # alias Helper.Constant
 
-  @audit_legal Constant.CMS.pending(:legal)
-  @audit_illegal Constant.CMS.pending(:illegal)
-  @audit_failed Constant.CMS.pending(:audit_failed)
+  # @audit_legal Constant.CMS.pending(:legal)
+  # @audit_illegal Constant.CMS.pending(:illegal)
+  # @audit_failed Constant.CMS.pending(:audit_failed)
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -19,8 +19,8 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
   end
 
   describe "[audit post basic]" do
-    # test "ugly words shoud get audit", ~m(user post)a do
-    #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment("M卖批, 这也太操蛋了, 党中央"), user)
+    # test "ugly words should get audit", ~m(user post)a do
+    #   {:ok, comment} = CMS.create_comment2(:post, post.id, mock_comment("M卖批, 这也太操蛋了, 党中央"), user)
 
     #   Hooks.Audition.handle(comment)
     #   {:ok, comment} = ORM.find(CMS.Model.Comment, comment.id)
@@ -31,8 +31,8 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
     #   assert comment.meta.illegal_words == ["党中央", "操蛋", "卖批"]
     # end
 
-    # test "normal words shoud not get audit", ~m(user post)a do
-    #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment("世界属于三体"), user)
+    # test "normal words should not get audit", ~m(user post)a do
+    #   {:ok, comment} = CMS.create_comment2(:post, post.id, mock_comment("世界属于三体"), user)
 
     #   Hooks.Audition.handle(comment)
     #   {:ok, comment} = ORM.find(CMS.Model.Comment, comment.id)
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
     # end
 
     # test "failed audit should have falied state", ~m(user post)a do
-    #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment("世界属于三体"), user)
+    #   {:ok, comment} = CMS.create_comment2(:post, post.id, mock_comment("世界属于三体"), user)
 
     #   Hooks.Audition.handle_edge(comment)
 
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
     # end
 
     # test "can handle paged audit failed comments", ~m(user post)a do
-    #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment("世界属于三体"), user)
+    #   {:ok, comment} = CMS.create_comment2(:post, post.id, mock_comment("世界属于三体"), user)
     #   CMS.set_article_audit_failed(comment, %{})
 
     #   {:ok, paged_comments} = CMS.paged_audit_failed_comments(%{page: 1, size: 30})

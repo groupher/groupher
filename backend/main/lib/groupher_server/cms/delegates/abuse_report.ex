@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   ]
 
   @doc """
-  list paged reports for article comemnts
+  list paged reports for article comments
   """
   def paged_reports(%{content_type: :account, content_id: content_id} = filter) do
     with {:ok, info} <- match(:account) do
@@ -49,9 +49,6 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     end
   end
 
-  @doc """
-  list paged reports for article comemnts
-  """
   def paged_reports(%{content_type: :comment, content_id: content_id} = filter) do
     with {:ok, info} <- match(:comment) do
       query =
@@ -65,9 +62,6 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     end
   end
 
-  @doc """
-  list paged reports for article
-  """
   def paged_reports(%{content_type: thread, content_id: content_id} = filter)
       when thread in @article_threads do
     with {:ok, info} <- match(thread) do

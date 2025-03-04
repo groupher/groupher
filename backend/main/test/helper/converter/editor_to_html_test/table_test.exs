@@ -103,7 +103,7 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Table do
       assert Utils.str_occurence(converted, @class["td_stripe"]) == 3
     end
 
-    test "edit exsit block will not change id value" do
+    test "edit exist block will not change id value" do
       editor_json =
         set_items(
           4,

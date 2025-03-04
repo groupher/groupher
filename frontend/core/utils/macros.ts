@@ -1,5 +1,5 @@
 // // those are not REAL macros, but some shared GraphQL response hanlder snippets
-// // NOTE: for consistency, function name shoud start with "match"
+// // NOTE: for consistency, function name should start with "match"
 
 // import type { TThread } from '~/spec'
 // import { map, values, flatten } from 'ramda'
