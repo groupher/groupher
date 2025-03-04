@@ -185,7 +185,6 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       {:ok, comment} =
         CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
 
-      # {:ok, comment} = CMS.create_comment(:changelog, changelog.id, mock_comment(), user)
       {:ok, updated_comment} = CMS.update_comment(comment, mock_comment("updated content"))
 
       assert updated_comment.body_html |> String.contains?(~s(updated content</p>))

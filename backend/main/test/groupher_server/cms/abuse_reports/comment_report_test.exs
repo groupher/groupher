@@ -6,17 +6,17 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
   alias GroupherServer.CMS
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, post, post_attrs, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
 
-    {:ok, ~m(user user2 post)a}
+    {:ok, ~m(user community user2 post)a}
   end
 
   describe "[article comment report/unreport]" do
-    test "report a comment should have a abuse report record", ~m(user post)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
-      {:ok, _comment} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
+    @tag :wip2
+    test "report a comment should have a abuse report record", ~m(user community post)a do
+      {:ok, comment} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -30,9 +30,10 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
       assert List.first(report_cases).user.login == user.login
     end
 
+    @tag :wip2
     test "different user report a comment should have same report with different report cases",
-         ~m(user user2 post)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+         ~m(user user2 community post)a do
+      {:ok, comment} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
       {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
       {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user2)
 
@@ -50,8 +51,9 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
       assert List.last(report_cases).user.login == user2.login
     end
 
-    test "same user can not report a comment twice", ~m(user post)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip2
+    test "same user can not report a comment twice", ~m(user community post)a do
+      {:ok, comment} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
       {:ok, comment} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
       assert {:error, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
     end

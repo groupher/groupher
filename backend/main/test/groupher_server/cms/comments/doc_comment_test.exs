@@ -265,32 +265,6 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert List.first(comment.upvotes).user_id == user.id
     end
 
-    # pls uncomment the comment_action:L194
-    # test "should auto subscribe community upvote a doc comment", ~m(user doc)a do
-    #   {:error, _subscriber} =
-    #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: doc.original_community_id,
-    #       user_id: user.id
-    #     })
-
-    #   {:ok, comment} = CMS.create_comment(:doc, doc.id, mock_comment(), user)
-    #   CMS.upvote_comment(comment.id, user)
-
-    #   {:ok, subscriber} =
-    #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: doc.original_community_id,
-    #       user_id: user.id
-    #     })
-
-    #   assert subscriber.user_id === user.id
-    #   assert subscriber.community_id === doc.original_community_id
-
-    #   {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
-
-    #   assert 1 == length(comment.upvotes)
-    #   assert List.first(comment.upvotes).user_id == user.id
-    # end
-
     @tag :wip
     test "user can upvote a doc comment twice is fine", ~m(community user doc)a do
       {:ok, comment} =

@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import GroupherServer.CMS.Delegate.Helper, only: [preload_author: 1]
@@ -7,17 +9,13 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
   alias CMS.Delegate.Hooks
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, post, _, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
+    {:ok, comment} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
 
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
-    {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-    {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
-
-    {:ok, ~m(user2 user3 post comment)a}
+    {:ok, ~m(user2 user3 community post comment)a}
   end
 
   describe "[upvote notify]" do
@@ -123,10 +121,12 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
   end
 
   describe "[comment notify]" do
-    test "post author should get notify after some one comment on it", ~m(user2 post)a do
+    @tag :wip2
+    test "post author should get notify after some one comment on it",
+         ~m(user2 community post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user2)
+      {:ok, comment} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user2)
       Hooks.Notify.handle(:comment, comment, user2)
 
       {:ok, notifications} = Delivery.fetch(:notification, post.author.user, %{page: 1, size: 20})
@@ -141,13 +141,15 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
       assert user_exist_in?(user2, notify.from_users)
     end
 
-    test "post comment author should get notify after some one reply it", ~m(user2 user3 post)a do
+    @tag :wip2
+    test "post comment author should get notify after some one reply it",
+         ~m(user2 user3 community post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user2)
-      {:ok, replyed_comment} = CMS.reply_comment(comment.id, mock_comment(), user3)
+      {:ok, comment} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user2)
+      {:ok, replied_comment} = CMS.reply_comment(comment.id, mock_comment(), user3)
 
-      Hooks.Notify.handle(:reply, replyed_comment, user3)
+      Hooks.Notify.handle(:reply, replied_comment, user3)
 
       comment = Repo.preload(comment, :author)
       {:ok, notifications} = Delivery.fetch(:notification, comment.author, %{page: 1, size: 20})
@@ -159,7 +161,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
       assert notify.action == "REPLY"
       assert notify.thread == "POST"
       assert notify.article_id == post.id
-      assert notify.comment_id == replyed_comment.id
+      assert notify.comment_id == replied_comment.id
 
       assert notify.user_id == comment.author_id
       assert user_exist_in?(user3, notify.from_users)
