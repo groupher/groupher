@@ -8,5 +8,8 @@
       "src": "/landing/(.*)",
       "dest": "/$1"
     }
-  ]
+  ],
+  "build": {
+    "command": "bash ../scripts/check-version.sh landing"
+  }
 }
