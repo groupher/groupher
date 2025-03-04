@@ -1,9 +1,6 @@
-name: Deploy API server to Fly.io
+name: run unit tests
 on:
   push:
-    branches:
-      - dev
-      - main
     paths:
       - "backend/main/**" # only trigger when this dir changes
 
@@ -39,10 +36,5 @@ jobs:
       - name: Install dependencies
         run: mix deps.get
 
-      - name: Setup Flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Deploy to Fly.io
-        run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Run tests
+        run: mix test
