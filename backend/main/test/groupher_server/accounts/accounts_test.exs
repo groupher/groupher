@@ -1,10 +1,12 @@
 defmodule GroupherServer.Test.Accounts do
+  @moduledoc false
+
   use GroupherServer.TestTools
-  # TODO import Service.Utils move both helper and github
   import Helper.Utils
 
-  alias GroupherServer.Accounts
+  # TODO import Service.Utils move both helper and github
 
+  alias GroupherServer.Accounts
   alias Accounts.Model.User
 
   # @valid_user mock_attrs(:user)

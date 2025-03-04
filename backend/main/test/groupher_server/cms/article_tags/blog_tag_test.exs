@@ -1,4 +1,5 @@
 defmodule GroupherServer.Test.CMS.ArticleTag.BlogTag do
+  @moduledoc false
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -41,10 +42,10 @@ defmodule GroupherServer.Test.CMS.ArticleTag.BlogTag do
       assert article_tag.title == "new title"
     end
 
-    test "create article tag with non-exsit community fails", ~m(article_tag_attrs user)a do
+    test "create article tag with non-exist community fails", ~m(article_tag_attrs user)a do
       assert {:error, _} =
                CMS.create_article_tag(
-                 %Community{slug: non_exsit_slug()},
+                 %Community{slug: non_exist_slug()},
                  :blog,
                  article_tag_attrs,
                  user

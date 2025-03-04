@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     {:ok, ~m(user_conn guest_conn user user2 user3)a}
   end
 
-  describe "[account get acheiveements]" do
+  describe "[account get achievements]" do
     @query """
     query($login: String!) {
       user(login: $login) {
@@ -171,7 +171,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       assert results["achievement"] |> Map.get("reputation") == @collect_weight
     end
 
-    test "minus user's acheiveements after user's post's collect cancled", ~m(guest_conn)a do
+    test "minus user's achievements after user's post's collect canaled", ~m(guest_conn)a do
       total_count = 10
       {:ok, post} = db_insert(:post)
       {:ok, users} = db_insert_multi(:user, total_count)

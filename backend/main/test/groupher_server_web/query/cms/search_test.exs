@@ -48,8 +48,8 @@ defmodule GroupherServer.Test.Query.CMS.Search do
       assert results["entries"] |> Enum.any?(&(&1["title"] == "javascript"))
     end
 
-    test "search non-exsit post should get empty pagi data", ~m(guest_conn)a do
-      variables = %{title: "non-exsit"}
+    test "search non-exist post should get empty pagi data", ~m(guest_conn)a do
+      variables = %{title: "non-exist"}
       results = guest_conn |> query_result(@query, variables, "searchPosts")
 
       assert results["totalCount"] == 0
@@ -97,8 +97,8 @@ defmodule GroupherServer.Test.Query.CMS.Search do
       assert results["entries"] |> Enum.any?(&(&1["title"] == "cool-pl"))
     end
 
-    test "search non-exsit community should get empty pagi data", ~m(guest_conn)a do
-      variables = %{title: "non-exsit"}
+    test "search non-exist community should get empty pagi data", ~m(guest_conn)a do
+      variables = %{title: "non-exist"}
       results = guest_conn |> query_result(@query, variables, "searchCommunities")
 
       assert results["totalCount"] == 0

@@ -1,4 +1,5 @@
 defmodule GroupherServer.Test.CMS.Passport do
+  @moduledoc false
   use GroupherServer.TestTools
 
   alias GroupherServer.Accounts.Model.User
@@ -31,7 +32,7 @@ defmodule GroupherServer.Test.CMS.Passport do
       assert is_map(rules.moderator)
     end
 
-    test "can insert valid nested passport stucture", ~m(user)a do
+    test "can insert valid nested passport structure", ~m(user)a do
       {:ok, passport} = CMS.stamp_passport(@valid_passport_rules, user)
 
       assert passport.user_id == user.id
@@ -69,8 +70,8 @@ defmodule GroupherServer.Test.CMS.Passport do
       assert {:ok, %{}} = CMS.get_passport(user)
     end
 
-    test "get a non-exsit user's passport fails" do
-      assert {:error, _} = CMS.get_passport(%User{id: non_exsit_id()})
+    test "get a non-exist user's passport fails" do
+      assert {:error, _} = CMS.get_passport(%User{id: non_exist_id()})
     end
 
     test "list passport by key", ~m(user user2)a do
@@ -85,9 +86,9 @@ defmodule GroupherServer.Test.CMS.Passport do
 
     test "list passport by invalid key get []", ~m(user)a do
       {:ok, _} = CMS.stamp_passport(@valid_passport_rules, user)
-      {:ok, []} = CMS.paged_passports("javascript", "non-exsit")
+      {:ok, []} = CMS.paged_passports("javascript", "non-exist")
 
-      {:ok, []} = CMS.paged_passports("non-exsit", "non-exsit")
+      {:ok, []} = CMS.paged_passports("non-exist", "non-exist")
     end
 
     test "can ease a rule in passport", ~m(user)a do
@@ -100,7 +101,7 @@ defmodule GroupherServer.Test.CMS.Passport do
     end
 
     test "can ease a rule in passport by community slug", ~m(user)a do
-      multl_rules = %{
+      multi_rules = %{
         "javascript" => %{
           "post.article.delete" => true,
           "post.tag.edit" => true
@@ -111,7 +112,7 @@ defmodule GroupherServer.Test.CMS.Passport do
         }
       }
 
-      {:ok, passport} = CMS.stamp_passport(multl_rules, user)
+      {:ok, passport} = CMS.stamp_passport(multi_rules, user)
       assert passport.rules |> get_in(["javascript", "post.article.delete"]) == true
 
       {:ok, passport_after} = CMS.erase_passport(["javascript"], user)
@@ -121,12 +122,12 @@ defmodule GroupherServer.Test.CMS.Passport do
              }
     end
 
-    test "erase a no-exsit rule in passport is ok", ~m(user)a do
+    test "erase a no-exist rule in passport is ok", ~m(user)a do
       {:ok, _} = CMS.stamp_passport(@valid_passport_rules, user)
 
-      {:ok, _} = CMS.erase_passport(["javascript", "non-exsit"], user)
-      {:ok, _} = CMS.erase_passport(["non-exsit", "post.article.delete"], user)
-      {:ok, _} = CMS.erase_passport(["non-exsit", "non-exsit"], user)
+      {:ok, _} = CMS.erase_passport(["javascript", "non-exist"], user)
+      {:ok, _} = CMS.erase_passport(["non-exist", "post.article.delete"], user)
+      {:ok, _} = CMS.erase_passport(["non-exist", "non-exist"], user)
     end
   end
 end

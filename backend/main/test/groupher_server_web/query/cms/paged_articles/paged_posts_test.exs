@@ -100,12 +100,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["id"] > post.id
     end
 
+    @tag :wip
     test "upvotes_count order should work", ~m(guest_conn post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
 
       {:ok, _} = CMS.upvote_article(:post, post_last_week.id, user)
       {:ok, _} = CMS.upvote_article(:post, post_last_week.id, user2)
-      {:ok, postbb} = CMS.upvote_article(:post, post_last_week.id, user3)
+      {:ok, _} = CMS.upvote_article(:post, post_last_week.id, user3)
 
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
       first_post = results["entries"] |> List.first()
@@ -113,12 +114,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["upvotesCount"] === 3
     end
 
+    @tag :wip2
     test "comments_count order should work", ~m(guest_conn post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
 
-      {:ok, _comment} = CMS.create_comment(:post, post_last_week.id, mock_comment(), user)
-      {:ok, _comment} = CMS.create_comment(:post, post_last_week.id, mock_comment(), user2)
-      {:ok, _comment} = CMS.create_comment(:post, post_last_week.id, mock_comment(), user3)
+      {:ok, _} = CMS.create_comment(:post, post_last_week.id, mock_comment(), user)
+      {:ok, _} = CMS.create_comment(:post, post_last_week.id, mock_comment(), user2)
+      {:ok, _} = CMS.create_comment(:post, post_last_week.id, mock_comment(), user3)
 
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
       first_post = results["entries"] |> List.first()

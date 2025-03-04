@@ -23,9 +23,9 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
 
   describe "[basic article comment replies]" do
     @tag :wip
-    test "exsit comment can be reply", ~m(community blog user user2)a do
+    test "exist comment can be reply", ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, replyed_comment} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
       assert replyed_comment.reply_to.id == parent_comment.id
@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
     @tag :wip
     test "deleted comment can not be reply", ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.delete_comment(parent_comment)
 
@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
     @tag :wip
     test "multi reply should belong to one parent comment", ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
       {:ok, replied_comment_2} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
     test "reply to reply inside a comment should belong same parent comment",
          ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
       {:ok, replied_comment_2} = CMS.reply_comment(replied_comment_1.id, mock_comment(), user2)
@@ -88,7 +88,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
     test "reply to reply inside a comment should have is_reply_to_others flag in meta",
          ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
       {:ok, replied_comment_2} = CMS.reply_comment(replied_comment_1.id, mock_comment(), user2)
@@ -111,7 +111,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       total_reply_count = @max_parent_replies_count + 1
 
       {:ok, parent_comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       reply_comment_list =
         Enum.reduce(1..total_reply_count, [], fn n, acc ->
@@ -134,7 +134,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
     test "replyed user should appear in article comment participants",
          ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
 
@@ -147,7 +147,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
     @tag :wip
     test "replies count should inc by 1 after got replyed", ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       assert parent_comment.replies_count === 0
 
@@ -165,7 +165,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
     @tag :wip
     test "can get paged replies of a parent comment", ~m(community blog user)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, paged_replies} = CMS.paged_comment_replies(parent_comment.id, %{page: 1, size: 20})
       assert is_valid_pagination?(paged_replies, :raw, :empty)
@@ -197,7 +197,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       page_size = 10
 
       {:ok, parent_comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, reply_comment} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
       {:ok, reply_comment2} = CMS.reply_comment(parent_comment.id, mock_comment(), user)

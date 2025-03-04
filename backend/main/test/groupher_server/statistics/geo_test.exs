@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.Statistics.Geo do
     end
 
     test "inc with invalid city fails" do
-      assert {:error, _} = Statistics.inc_count("not_exsit")
+      assert {:error, _} = Statistics.inc_count("not_exist")
     end
   end
 

@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert doc.original_community_id == community.id
     end
 
-    test "created doc should have a acitve_at field, same with inserted_at",
+    test "created doc should have a active_at field, same with inserted_at",
          ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
@@ -171,7 +171,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert doc.viewer_has_reported
     end
 
-    test "add user to cms authors, if the user is not exsit in cms authors",
+    test "add user to cms authors, if the user is not exist in cms authors",
          ~m(user community doc_attrs)a do
       assert {:error, _} = ORM.find_by(Author, user_id: user.id)
 
@@ -180,11 +180,11 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert author.user_id == user.id
     end
 
-    test "create doc with an non-exsit community fails", ~m(user)a do
-      invalid_attrs = mock_attrs(:doc, %{community_id: non_exsit_id()})
-      ivalid_community = %Community{id: non_exsit_id(), slug: non_exsit_slug()}
+    test "create doc with an non-exist community fails", ~m(user)a do
+      invalid_attrs = mock_attrs(:doc, %{community_id: non_exist_id()})
+      invalid_community = %Community{id: non_exist_id(), slug: non_exist_slug()}
 
-      assert {:error, _} = CMS.create_article(ivalid_community, :doc, invalid_attrs, user)
+      assert {:error, _} = CMS.create_article(invalid_community, :doc, invalid_attrs, user)
     end
   end
 

@@ -52,9 +52,9 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
 
   def read_community(slug, opt \\ @default_read_opt), do: do_read_community(slug, opt)
 
-  def paged_communities(filter, %User{id: user_id, meta: meta}) do
-    with {:ok, paged_communtiies} <- paged_communities(filter) do
-      %{entries: entries} = paged_communtiies
+  def paged_communities(filter, %User{meta: meta}) do
+    with {:ok, paged_communities} <- paged_communities(filter) do
+      %{entries: entries} = paged_communities
 
       entries =
         Enum.map(entries, fn community ->
@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
           %{community | viewer_has_subscribed: viewer_has_subscribed}
         end)
 
-      %{paged_communtiies | entries: entries} |> done
+      %{paged_communities | entries: entries} |> done
     end
   end
 
@@ -192,7 +192,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   check if community exist
   """
-  def is_community_exist?(slug) do
+  def community_exist?(slug) do
     case ORM.find_by(Community, slug: slug) do
       {:ok, _} -> {:ok, %{exist: true}}
       {:error, _} -> {:ok, %{exist: false}}

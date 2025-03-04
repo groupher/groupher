@@ -47,6 +47,9 @@ be.start:
 
 # test.watch not work now, see: https://github.com/lpil/mix-test.watch/issues/116
 # mix test.watch --only wip --stale
+be.test:
+	cd ./backend/main && mix test
+
 be.watch.wip:
 	cd ./backend/main && mix test --listen-on-stdin --stale --only wip
 	

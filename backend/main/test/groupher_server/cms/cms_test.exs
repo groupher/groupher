@@ -98,7 +98,7 @@ defmodule GroupherServer.Test.CMS do
       assert thread.title == title
     end
 
-    test "create thread with exsit title fails" do
+    test "create thread with exist title fails" do
       title = "POST"
       slug = title
       {:ok, _} = CMS.create_thread(~m(title slug)a)

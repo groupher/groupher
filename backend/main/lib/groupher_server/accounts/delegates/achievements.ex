@@ -1,8 +1,8 @@
 defmodule GroupherServer.Accounts.Delegate.Achievements do
   @moduledoc """
   user achievements related
-  acheiveements formula:
-  1. create content been upvoteed by other user + 1
+  achievements formula:
+  1. create content been upvoted by other user + 1
   2. create content been watched by other user + 1
   3. create content been colleced by other user + 2
   4. followed by other user + 3

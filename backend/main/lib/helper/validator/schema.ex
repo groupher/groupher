@@ -1,6 +1,6 @@
 defmodule Helper.Validator.Schema do
   @moduledoc """
-  validate json data by given schema, mostly used in editorjs validator
+  validate json data by given schema, mostly used in editors validator
 
   currently support boolean / string / number / enum
   """
@@ -141,13 +141,13 @@ defmodule Helper.Validator.Schema do
   # main type end
 
   # error for option
-  defp match(field, value, type, [option]) when is_tuple(option) do
+  defp match(field, value, type, [option]) when is_tuple(option) and tuple_size(option) == 2 do
     # 如果这里不判断的话会和下面的 match 冲突，是否有更好的写法？
     case option_valid?(type, option) do
       true ->
         error(field, value, type)
 
-      # unknow option or option not valid
+      # unknown option or option not valid
       false ->
         {k, v} = option
         error(field, value, option: "#{to_string(k)}: #{to_string(v)}")

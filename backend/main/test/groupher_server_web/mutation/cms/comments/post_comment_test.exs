@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Comments.PostComment do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -9,7 +11,10 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = db_insert(:community)
-    {:ok, post} = CMS.create_article(community, :post, mock_attrs(:post), user)
+
+    {:ok, community} = db_insert(:community)
+    post_attrs = mock_attrs(:post, %{community_id: community.id, author: %{user: user}})
+    {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -27,7 +32,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    test "write article comment to a exsit post", ~m(post user_conn)a do
+    test "write article comment to a exist post", ~m(post user_conn)a do
       variables = %{thread: "POST", id: post.id, body: mock_comment()}
 
       result = user_conn |> mutation_result(@write_comment_query, variables, "createComment")
@@ -44,8 +49,11 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    test "login user can reply to a comment", ~m(post user user_conn)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "login user can reply to a comment", ~m(community post user user_conn)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+
       variables = %{id: comment.id, body: mock_comment("reply comment")}
 
       result = user_conn |> mutation_result(@reply_comment_query, variables, "replyComment")
@@ -62,10 +70,12 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
+    @tag :wip
+    test "only owner can update a exist comment",
+         ~m(community post user guest_conn user_conn owner_conn)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
 
-    test "only owner can update a exsit comment",
-         ~m(post user guest_conn user_conn owner_conn)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
       variables = %{id: comment.id, body: mock_comment("updated comment")}
 
       assert user_conn |> mutation_get_error?(@update_comment_query, variables, ecode(:passport))
@@ -87,9 +97,12 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    test "only owner can delete a exsit comment",
-         ~m(post user guest_conn user_conn owner_conn)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "only owner can delete a exist comment",
+         ~m(community post user guest_conn user_conn owner_conn)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+
       variables = %{id: comment.id}
 
       assert user_conn |> mutation_get_error?(@delete_comment_query, variables, ecode(:passport))
@@ -114,9 +127,12 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
+    @tag :wip
+    test "login user can upvote a exist post comment",
+         ~m(community post user guest_conn user_conn)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
 
-    test "login user can upvote a exsit post comment", ~m(post user guest_conn user_conn)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
       variables = %{id: comment.id}
 
       assert guest_conn
@@ -138,9 +154,12 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
+    @tag :wip
+    test "login user can undo upvote a exist post comment",
+         ~m(community post user guest_conn user_conn)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
 
-    test "login user can undo upvote a exsit post comment", ~m(post user guest_conn user_conn)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
       variables = %{id: comment.id}
       user_conn |> mutation_result(@upvote_comment_query, variables, "upvoteComment")
 
@@ -172,8 +191,11 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    test "login user can emotion to a comment", ~m(post user user_conn)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "login user can emotion to a comment", ~m(community post user user_conn)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+
       variables = %{id: comment.id, emotion: "BEER"}
 
       comment =
@@ -198,8 +220,11 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    test "login user can undo emotion to a comment", ~m(post user owner_conn)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "login user can undo emotion to a comment", ~m(community post user owner_conn)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+
       {:ok, _} = CMS.emotion_to_comment(comment.id, :beer, user)
 
       variables = %{id: comment.id, emotion: "BEER"}
@@ -280,9 +305,10 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-
-    test "can pin a post's comment", ~m(owner_conn post user)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "can pin a post's comment", ~m(owner_conn community post user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
 
       variables = %{id: comment.id}
       result = owner_conn |> mutation_result(@query, variables, "pinComment")
@@ -291,8 +317,11 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert result["isPinned"]
     end
 
-    test "unauth user fails.", ~m(guest_conn post user)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "unauth user fails.", ~m(guest_conn community post user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+
       variables = %{id: comment.id}
 
       assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
@@ -306,9 +335,11 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
+    @tag :wip
+    test "can undo pin a post's comment", ~m(owner_conn community post user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
 
-    test "can undo pin a post's comment", ~m(owner_conn post user)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
       {:ok, _} = CMS.pin_comment(comment.id)
 
       variables = %{id: comment.id}
@@ -318,8 +349,11 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert not result["isPinned"]
     end
 
-    test "unauth user undo fails.", ~m(guest_conn post user)a do
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    @tag :wip
+    test "unauth user undo fails.", ~m(guest_conn community post user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+
       {:ok, _} = CMS.pin_comment(comment.id)
       variables = %{id: comment.id}
 
@@ -337,11 +371,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-
-    test "questioner can mark a post comment as solution", ~m(post)a do
+    @tag :wip
+    test "questioner can mark a post comment as solution", ~m(community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), post_author)
+
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), post_author)
 
       questioner_conn = simu_conn(:user, post_author)
 
@@ -353,10 +389,14 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert result["isSolution"]
     end
 
-    test "other user can not mark a post comment as solution", ~m(guest_conn user_conn post)a do
+    @tag :wip
+    test "other user can not mark a post comment as solution",
+         ~m(guest_conn user_conn community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), post_author)
+
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), post_author)
 
       variables = %{id: comment.id}
       assert user_conn |> mutation_get_error?(@query, variables, ecode(:require_questioner))
@@ -372,11 +412,14 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-
-    test "questioner can undo mark a post comment as solution", ~m(post)a do
+    @tag :wip
+    test "questioner can undo mark a post comment as solution", ~m(community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), post_author)
+
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), post_author)
+
       {:ok, comment} = CMS.mark_comment_solution(comment.id, post_author)
 
       questioner_conn = simu_conn(:user, post_author)
@@ -388,11 +431,14 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert not result["isSolution"]
     end
 
+    @tag :wip
     test "other user can not undo mark a post comment as solution",
-         ~m(guest_conn user_conn post)a do
+         ~m(guest_conn user_conn community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
-      {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), post_author)
+
+      {:ok, comment} =
+        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), post_author)
 
       variables = %{id: comment.id}
       assert user_conn |> mutation_get_error?(@query, variables, ecode(:require_questioner))

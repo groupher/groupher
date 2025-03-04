@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.Delegate.Document do
     create(article, attrs)
   end
 
-  #  for create artilce step in Multi.new
+  #  for create article step in Multi.new
   def create(article, %{body: body}) do
     with {:ok, article_thread} <- thread_of(article, :upcase),
          false <- article_document_exist(article),
@@ -115,7 +115,7 @@ defmodule GroupherServer.CMS.Delegate.Document do
   end
 
   @doc """
-  remove article document foever
+  remove article document forever
   """
   def remove(thread, id) do
     thread = thread |> to_string |> String.upcase()

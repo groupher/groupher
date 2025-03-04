@@ -125,7 +125,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert Map.equal?(Jason.decode!(results["cmsPassportString"]), @valid_rules)
     end
 
-    test "login user can get empty if cms_passport not exsit", ~m(user)a do
+    test "login user can get empty if cms_passport not exist", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
       results = user_conn |> query_result(@query, %{login: user.login}, "user")

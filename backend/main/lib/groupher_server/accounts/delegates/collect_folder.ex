@@ -239,7 +239,7 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
 
     query
     |> filter_thread_ifneed(filter)
-    # delete thread in filter for now, otherwise it will crash querybuilder, because thread not exsit on CollectFolder
+    # delete thread in filter for now, otherwise it will crash querybuilder, because thread not exist on CollectFolder
     |> QueryBuilder.filter_pack(filter |> Map.delete(:thread))
     |> ORM.paginator(page: page, size: size)
     |> done()

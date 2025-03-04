@@ -41,8 +41,8 @@ defmodule GroupherServer.Test.Accounts.Customization do
       assert result.content_hover == false
     end
 
-    test "user set non exsit customization fails", ~m(user)a do
-      {:error, _} = Accounts.set_customization(user, :non_exsit, true)
+    test "user set non exist customization fails", ~m(user)a do
+      {:error, _} = Accounts.set_customization(user, :non_exist, true)
     end
 
     # test "user set advance customization without payment fails", ~m(user)a do

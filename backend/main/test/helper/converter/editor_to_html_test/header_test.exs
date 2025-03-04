@@ -81,7 +81,7 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Header do
       assert Utils.str_occurence(converted, @class["footer_title"]) == 1
     end
 
-    test "edit exsit block will not change id value" do
+    test "edit exist block will not change id value" do
       editor_json =
         set_data(
           %{

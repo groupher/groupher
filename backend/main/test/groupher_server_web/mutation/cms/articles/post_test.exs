@@ -104,7 +104,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       }
     }
     """
-    test "create post with valid attrs and make sure author exsit" do
+    test "create post with valid attrs and make sure author exist" do
       {:ok, user} = db_insert(:user)
       user_conn = simu_conn(:user, user)
 

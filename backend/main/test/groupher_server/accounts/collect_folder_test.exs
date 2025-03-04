@@ -118,7 +118,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
   end
 
   describe "[add/remove from collect]" do
-    test "can add post to exsit colect-folder", ~m(user post)a do
+    test "can add post to exist colect-folder", ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
 
       {:ok, folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
@@ -161,7 +161,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert result.total_count == 1
     end
 
-    test "can remove post to exsit colect-folder", ~m(user post post2)a do
+    test "can remove post to exist colect-folder", ~m(user post post2)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
       {:ok, _folder} = Accounts.add_to_collect(:post, post2.id, folder.id, user)
@@ -176,7 +176,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert result.entries |> List.first() |> Map.get(:id) == post2.id
     end
 
-    test "can remove post to exsit colect-folder should update article collect meta",
+    test "can remove post to exist colect-folder should update article collect meta",
          ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, folder2} = Accounts.create_collect_folder(%{title: "test folder2"}, user)
@@ -214,7 +214,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert result.total_count == 0
     end
 
-    test "add post to exsit colect-folder should update meta", ~m(user post post2)a do
+    test "add post to exist colect-folder should update meta", ~m(user post post2)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
 
       {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
@@ -227,7 +227,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert folder.meta.post_count == 1
     end
 
-    test "remove post to exsit colect-folder should update meta", ~m(user post post2)a do
+    test "remove post to exist colect-folder should update meta", ~m(user post post2)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
       {:ok, _folder} = Accounts.add_to_collect(:post, post2.id, folder.id, user)

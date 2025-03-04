@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Model.{Post, Comment, PinnedComment, Embeds}
+  alias CMS.Model.{Post, Comment, PinnedComment, Embeds, Community}
 
   alias CMS.Delegate.Hooks
   alias Helper.{Later, ORM, QueryBuilder, Converter, Constant}
@@ -106,9 +106,6 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     do_paged_comment(thread, article_id, filters, where_query, user)
   end
 
-  @doc """
-  [replies-mode] list paged article comments
-  """
   def paged_comments(thread, article_id, filters, :replies, user) do
     where_query =
       dynamic(
@@ -307,10 +304,14 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     |> Repo.all()
   end
 
-  def create_comment2(community_slug, thread, article_inner_id, body, %User{} = user) do
+  def create_comment2(%Community{slug: community_slug}, thread, inner_id, body, %User{} = user) do
+    create_comment2(community_slug, thread, inner_id, body, %User{} = user)
+  end
+
+  def create_comment2(community_slug, thread, inner_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
-           ORM.find_article(community_slug, thread, article_inner_id,
+           ORM.find_article(community_slug, thread, inner_id,
              preload: [[author: :user], :original_community]
            ),
          true <- can_comment?(article, user) do
@@ -349,12 +350,12 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   end
 
   @doc """
-  creates a comment for article like psot, job ...
+  creates a comment for article like post, job ...
   """
-  def create_comment(thread, article_inner_id, body, %User{} = user) do
+  def create_comment(thread, inner_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
-           ORM.find(info.model, article_inner_id, preload: [[author: :user], :original_community]),
+           ORM.find(info.model, inner_id, preload: [[author: :user], :original_community]),
          true <- can_comment?(article, user) do
       Multi.new()
       |> Multi.run(:create_comment, fn _, _ ->

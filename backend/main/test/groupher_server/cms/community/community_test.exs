@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Community do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
-  alias CMS.Model.{Community, Thread, Post, Changelog, Blog, CommunityThread}
+  alias CMS.Model.{Community, Post, Changelog, Blog, CommunityThread}
 
   alias Helper.{Constant, ORM}
 
@@ -105,7 +105,7 @@ defmodule GroupherServer.Test.CMS.Community do
       {:error, _} = ORM.find(Post, post.id)
     end
 
-    test "delated community should not delete post when the mirrored community is deleted",
+    test "deleted community should not delete post when the mirrored community is deleted",
          ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
       community2_attrs = mock_attrs(:community, %{slug: "ts", user_id: user.id})

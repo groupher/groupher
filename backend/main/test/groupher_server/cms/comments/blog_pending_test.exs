@@ -1,29 +1,33 @@
-defmodule GroupherServer.Test.CMS.Comments.BlogPending do
+defmodule GroupherServer.Test.CMS.Comments.BlogPendingFlag do
   @moduledoc false
 
   use GroupherServer.TestTools
 
   alias GroupherServer.{Accounts, CMS}
+  alias Helper.{Constant, ORM}
   alias Accounts.Model.User
   alias CMS.Model.Comment
-  alias Helper.{Constant, ORM}
 
   @audit_legal Constant.CMS.pending(:legal)
   @audit_illegal Constant.CMS.pending(:illegal)
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
 
-    {:ok, blog} = db_insert(:blog)
+    {:ok, community} = db_insert(:community)
+    blog_attrs = mock_attrs(:blog, %{community_id: community.id, author: %{user: user}})
+    {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
+
     guest_conn = simu_conn(:guest)
 
     {:ok, ~m(guest_conn community user blog)a}
   end
 
-  describe "[pending blog comemnt flags]" do
-    test "pending blog comment can set/unset pending", ~m(blog user)a do
-      {:ok, comment} = CMS.create_comment(:blog, blog.id, mock_comment(), user)
+  describe "[pending blog comment flags]" do
+    @tag :wip
+    test "pending blog comment can set/unset pending", ~m(community blog user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{
@@ -46,8 +50,10 @@ defmodule GroupherServer.Test.CMS.Comments.BlogPending do
       assert comment.pending == @audit_legal
     end
 
-    test "pending blog-comment's meta should have info", ~m(blog user)a do
-      {:ok, comment} = CMS.create_comment(:blog, blog.id, mock_comment(), user)
+    @tag :wip
+    test "pending blog-comment's meta should have info", ~m(community blog user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{

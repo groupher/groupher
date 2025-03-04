@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     }
     """
 
-    test "create doc with valid attrs and make sure author exsit" do
+    test "create doc with valid attrs and make sure author exist" do
       {:ok, user} = db_insert(:user)
       user_conn = simu_conn(:user, user)
 

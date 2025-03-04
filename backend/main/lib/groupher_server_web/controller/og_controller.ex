@@ -70,7 +70,7 @@ defmodule GroupherServerWeb.Controller.OG do
     json(conn, %{
       success: 0,
       meta: %{
-        title: "domain-not-exsit",
+        title: "domain-not-exist",
         description: "--",
         image: %{
           url: nil

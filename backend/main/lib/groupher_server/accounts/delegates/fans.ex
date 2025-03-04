@@ -49,7 +49,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
       |> result()
     else
       false -> {:error, [message: "can't follow yourself", code: ecode(:self_conflict)]}
-      {:error, reason} -> {:error, [message: reason, code: ecode(:not_exsit)]}
+      {:error, reason} -> {:error, [message: reason, code: ecode(:not_exist)]}
     end
   end
 
@@ -80,7 +80,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
       |> result()
     else
       false -> {:error, [message: "can't undo follow yourself", code: ecode(:self_conflict)]}
-      {:error, reason} -> {:error, [message: reason, code: ecode(:not_exsit)]}
+      {:error, reason} -> {:error, [message: reason, code: ecode(:not_exist)]}
     end
   end
 

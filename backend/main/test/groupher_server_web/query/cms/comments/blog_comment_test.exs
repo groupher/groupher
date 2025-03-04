@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
   @tag :wip
   test "can get basic comments state", ~m(guest_conn user_conn community blog user)a do
     {:ok, _comment} =
-      CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+      CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
     variables = %{id: blog.id, thread: "BLOG"}
     results = guest_conn |> query_result(@query, variables, "commentsState")
@@ -73,7 +73,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
     thread = :blog
 
     {:ok, comment} =
-      CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+      CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
     variables = %{id: comment.id}
     results = guest_conn |> query_result(@query, variables, "oneComment")
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
     thread = :blog
 
     {:ok, comment} =
-      CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+      CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
     {:ok, _} = CMS.upvote_comment(comment.id, user)
     {:ok, _} = CMS.emotion_to_comment(comment.id, :downvote, user)
@@ -115,7 +115,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       thread = :blog
 
       {:ok, _} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       variables = %{community: blog.original_community_slug, id: blog.inner_id}
       results = guest_conn |> query_result(@query, variables, "blog")
@@ -144,13 +144,13 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+          CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
         acc ++ [comment]
       end)
 
       {:ok, _} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user2)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user2)
 
       variables = %{community: blog.original_community_slug, id: blog.inner_id}
       results = guest_conn |> query_result(@query, variables, "blog")
@@ -395,7 +395,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, value} =
-          CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+          CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
         acc ++ [value]
       end)
@@ -415,20 +415,20 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+          CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
         acc ++ [comment]
       end)
 
       {:ok, comment} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       {:ok, pinned_comment} = CMS.pin_comment(comment.id)
 
       Process.sleep(1000)
 
       {:ok, comment} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       {:ok, pinned_comment2} = CMS.pin_comment(comment.id)
 
@@ -450,7 +450,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+          CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
         Process.sleep(1000)
         acc ++ [comment]
@@ -470,17 +470,17 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       thread = :blog
 
       {:ok, comment} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       Process.sleep(1000)
 
       {:ok, _comment2} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       Process.sleep(1000)
 
       {:ok, comment3} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       variables = %{
         id: blog.id,
@@ -502,17 +502,17 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       thread = :blog
 
       {:ok, comment} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       Process.sleep(1000)
 
       {:ok, _comment2} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       Process.sleep(1000)
 
       {:ok, comment3} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       variables = %{
         id: blog.id,
@@ -534,21 +534,21 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       thread = :blog
 
       {:ok, comment} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       {:ok, _reply_comment} = CMS.reply_comment(comment.id, mock_comment(), user)
       {:ok, _reply_comment} = CMS.reply_comment(comment.id, mock_comment(), user2)
       Process.sleep(1000)
 
       {:ok, comment2} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       {:ok, _reply_comment} = CMS.reply_comment(comment2.id, mock_comment(), user)
       {:ok, _reply_comment} = CMS.reply_comment(comment2.id, mock_comment(), user2)
       Process.sleep(1000)
 
       {:ok, comment3} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       {:ok, _reply_comment} = CMS.reply_comment(comment3.id, mock_comment(), user)
       {:ok, _reply_comment} = CMS.reply_comment(comment3.id, mock_comment(), user2)
@@ -819,10 +819,10 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       end)
 
       {:ok, _comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _comment} =
-        CMS.create_comment2(community.slug, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       variables = %{id: blog.id, thread: thread, filter: %{page: 1, size: page_size}}
 
@@ -882,7 +882,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       author_user = blog.author.user
 
       {:ok, parent_comment} =
-        CMS.create_comment2(community.slug, thread, blog.inner_id, mock_comment(), user)
+        CMS.create_comment2(community, thread, blog.inner_id, mock_comment(), user)
 
       Enum.reduce(1..total_count, [], fn i, acc ->
         {:ok, reply_comment} =

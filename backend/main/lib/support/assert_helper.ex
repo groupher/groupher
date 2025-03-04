@@ -15,11 +15,11 @@ defmodule GroupherServer.Test.AssertHelper do
   @inner_page_size get_config(:general, :inner_page_size)
 
   @doc """
-  used for non exsit id
+  used for non exist id
   """
-  def non_exsit_id, do: 15_982_398_614
-  def non_exsit_slug, do: "no-exist"
-  def non_exsit_login, do: "15_982_398_614"
+  def non_exist_id, do: 15_982_398_614
+  def non_exist_slug, do: "no-exist"
+  def non_exist_login, do: "15_982_398_614"
   # def page_size, do: @page_size
 
   def is_error?(reason, code) when is_list(reason) and is_atom(code) do
@@ -187,7 +187,7 @@ defmodule GroupherServer.Test.AssertHelper do
   defp log_debug_info(res, :debug), do: IO.inspect(res, label: "debug")
   defp log_debug_info(res, _), do: res
 
-  @doc "check id is exsit in list of Map<id: xxx> structure"
+  @doc "check id is exist in list of Map<id: xxx> structure"
   @spec exist_in?(Map.t(), [Map.t()]) :: boolean
   def exist_in?(%{id: id}, list) when is_list(list) do
     list

@@ -3,13 +3,13 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Delegate.Hooks
-  alias Helper.Constant
+  # alias GroupherServer.CMS
+  # alias CMS.Delegate.Hooks
+  # alias Helper.Constant
 
-  @audit_legal Constant.CMS.pending(:legal)
-  @audit_illegal Constant.CMS.pending(:illegal)
-  @audit_failed Constant.CMS.pending(:audit_failed)
+  # @audit_legal Constant.CMS.pending(:legal)
+  # @audit_illegal Constant.CMS.pending(:illegal)
+  # @audit_failed Constant.CMS.pending(:audit_failed)
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
   end
 
   describe "[audit post basic]" do
-    # test "ugly words shoud get audit", ~m(user post)a do
+    # test "ugly words should get audit", ~m(user post)a do
     #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment("M卖批, 这也太操蛋了, 党中央"), user)
 
     #   Hooks.Audition.handle(comment)
@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
     #   assert comment.meta.illegal_words == ["党中央", "操蛋", "卖批"]
     # end
 
-    # test "normal words shoud not get audit", ~m(user post)a do
+    # test "normal words should not get audit", ~m(user post)a do
     #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment("世界属于三体"), user)
 
     #   Hooks.Audition.handle(comment)

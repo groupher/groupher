@@ -6,12 +6,12 @@ defmodule GroupherServer.Test.Query.AbuseReports.BlogReport do
   alias GroupherServer.CMS
 
   setup do
-    {:ok, blog} = db_insert(:blog)
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
 
     {:ok, community} = db_insert(:community)
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
+    blog_attrs = mock_attrs(:blog, %{community_id: community.id, author: %{user: user}})
+    {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
     guest_conn = simu_conn(:guest)
 
@@ -57,7 +57,6 @@ defmodule GroupherServer.Test.Query.AbuseReports.BlogReport do
       }
     }
     """
-
     test "should get pagination info", ~m(guest_conn community blog_attrs user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog2} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -94,8 +93,11 @@ defmodule GroupherServer.Test.Query.AbuseReports.BlogReport do
       assert results["totalCount"] == 1
     end
 
-    test "support comment", ~m(guest_conn blog user)a do
-      {:ok, comment} = CMS.create_comment(:blog, blog.id, mock_comment(), user)
+    @tag :wip
+    test "support comment", ~m(guest_conn community blog user)a do
+      {:ok, comment} =
+        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
+
       {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
 
       variables = %{filter: %{content_type: "COMMENT", page: 1, size: 10}}

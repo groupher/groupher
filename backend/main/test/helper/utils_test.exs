@@ -196,7 +196,7 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
       assert String.match?(uid_str, ~r/[0-9]/) == false
     end
 
-    test "exsit id will stay the same" do
+    test "exist id will stay the same" do
       assert "exsit_id" == Utils.uid(:html, %{"id" => "exsit_id"})
     end
   end
