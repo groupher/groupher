@@ -13,11 +13,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogArchive do
   @last_year Timex.shift(@now, years: -1, seconds: -1)
 
   setup do
-    {:ok, user} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id, author: %{user: user}})
-    {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+    {community, changelog, changelog_attrs, user} = mock_article(:changelog)
 
     {:ok, comment_long_ago} =
       db_insert(:comment, %{
@@ -41,7 +37,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogArchive do
   end
 
   describe "[cms comment archive]" do
-    @tag :wip2
+    @tag :wip
     test "can archive comments", ~m(comment_long_ago)a do
       {:ok, _} = CMS.archive_articles(:comment)
 
@@ -55,7 +51,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogArchive do
       assert archived_comment.id == comment_long_ago.id
     end
 
-    @tag :wip2
+    @tag :wip
     test "can not edit archived comment" do
       {:ok, _} = CMS.archive_articles(:comment)
 
@@ -69,7 +65,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogArchive do
       assert reason |> is_error?(:archived)
     end
 
-    @tag :wip2
+    @tag :wip
     test "can not delete archived comment" do
       {:ok, _} = CMS.archive_articles(:comment)
 

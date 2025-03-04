@@ -14,12 +14,8 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
   @site_host get_config(:general, :site_host)
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, post, post_attrs, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    post_attrs = mock_attrs(:post, %{community_id: community.id, author: %{user: user}})
-    {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
     post_attrs = mock_attrs(:post, %{community_id: community.id, author: %{user: user}})
     {:ok, post2} = CMS.create_article(community, :post, post_attrs, user)
@@ -28,12 +24,11 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
     {:ok, post4} = db_insert(:post)
     {:ok, post5} = db_insert(:post)
 
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
-
     {:ok, ~m(user user2 community post post2 post3 post4 post5 post_attrs)a}
   end
 
   describe "[cite basic]" do
+    @tag :wip
     test "cited multi post should work", ~m(user community post2 post3 post4 post5 post_attrs)a do
       body =
         mock_rich_text(
@@ -63,6 +58,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
       assert post5.meta.citing_count == 1
     end
 
+    @tag :wip
     test "cited post itself should not work", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
@@ -234,6 +230,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
   end
 
   describe "[cross cite]" do
+    @tag :wip
     test "can citing multi type thread and comment in one time", ~m(user community post2)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
@@ -257,7 +254,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
       assert result.total_count == 2
 
       result_post = result.entries |> List.first()
-      result_comment = result.entries |> Enum.at(2)
       result_blog = result.entries |> List.last()
 
       assert result_post.id == post.id

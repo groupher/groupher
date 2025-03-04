@@ -17,13 +17,10 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
   @pinned_comment_limit Comment.pinned_comment_limit()
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, changelog, changelog_attrs, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id, author: %{user: user}})
-    {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
     {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: [author: :user])
 
     cur_date = DateTime.utc_now() |> DateTime.to_date()
@@ -48,26 +45,6 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       assert state.participants |> length == 1
       assert not state.is_viewer_joined
     end
-
-    # pls uncomment the comment_crud:L338
-    # test "should subscribe community if not", ~m(user changelog)a do
-    #   {:error, _subscriber} =
-    #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: changelog.original_community_id,
-    #       user_id: user.id
-    #     })
-
-    #   {:ok, _} = CMS.create_comment(:changelog, changelog.id, mock_comment(), user)
-
-    #   {:ok, subscriber} =
-    #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: changelog.original_community_id,
-    #       user_id: user.id
-    #     })
-
-    #   assert subscriber.user_id === user.id
-    #   assert subscriber.community_id === changelog.original_community_id
-    # end
 
     @tag :wip
     test "can get viewer joined state", ~m(community user changelog)a do

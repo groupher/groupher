@@ -6,12 +6,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
   alias GroupherServer.CMS
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, changelog, changelog_attrs, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id, author: %{user: user}})
-    {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
     guest_conn = simu_conn(:guest)
 

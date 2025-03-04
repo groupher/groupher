@@ -430,4 +430,16 @@ defmodule GroupherServer.Support.Factory do
 
     Delivery.send(:notify, notify_attrs, from_user)
   end
+
+  @doc """
+  mock article with default output format
+  """
+  def mock_article(thread) do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = db_insert(:community)
+    attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
+    {:ok, article} = CMS.create_article(community, thread, attrs, user)
+
+    {community, article, attrs, user}
+  end
 end

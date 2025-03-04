@@ -17,13 +17,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   @pinned_comment_limit Comment.pinned_comment_limit()
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, doc, doc_attrs, user} = mock_article(:doc)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
-    doc_attrs = mock_attrs(:doc, %{community_id: community.id, author: %{user: user}})
-    {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
     {:ok, doc} = ORM.find(Doc, doc.id, preload: [author: :user])
 
     cur_date = DateTime.utc_now() |> DateTime.to_date()
@@ -48,26 +45,6 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert state.participants |> length == 1
       assert not state.is_viewer_joined
     end
-
-    # pls uncomment the comment_crud:L338
-    # test "should subscribe community if not", ~m(user doc)a do
-    #   {:error, _subscriber} =
-    #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: doc.original_community_id,
-    #       user_id: user.id
-    #     })
-
-    #   {:ok, _} = CMS.create_comment(:doc, doc.id, mock_comment(), user)
-
-    #   {:ok, subscriber} =
-    #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: doc.original_community_id,
-    #       user_id: user.id
-    #     })
-
-    #   assert subscriber.user_id === user.id
-    #   assert subscriber.community_id === doc.original_community_id
-    # end
 
     @tag :wip
     test "can get viewer joined state", ~m(community user doc)a do
@@ -208,7 +185,6 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       {:ok, comment} =
         CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
 
-      # {:ok, comment} = CMS.create_comment(:doc, doc.id, mock_comment(), user)
       {:ok, updated_comment} = CMS.update_comment(comment, mock_comment("updated content"))
 
       assert updated_comment.body_html |> String.contains?(~s(updated content</p>))
@@ -535,25 +511,6 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   end
 
   describe "[article comment report/unreport]" do
-    #
-    # test "user can report a comment", ~m(user doc)a do
-    #   {:ok, comment} = CMS.create_comment(:doc, doc.id, mock_comment(), user)
-    #   {:ok, comment} = ORM.find(Comment, comment.id)
-
-    #   {:ok, comment} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
-    #   {:ok, comment} = ORM.find(Comment, comment.id)
-    # end
-
-    #
-    # test "user can unreport a comment", ~m(user doc)a do
-    #   {:ok, comment} = CMS.create_comment(:doc, doc.id, mock_comment(), user)
-    #   {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
-    #   {:ok, comment} = ORM.find(Comment, comment.id)
-
-    #   {:ok, _} = CMS.undo_report_comment(comment.id, user)
-    #   {:ok, comment} = ORM.find(Comment, comment.id)
-    # end
-
     @tag :wip
     test "can undo a report with other user report it too", ~m(community user user2 doc)a do
       {:ok, comment} =

@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Query.Hooks.DocCiting do
       }
     }
     """
-    @tag :wip2
+    @tag :wip
     test "should get paged cittings", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, doc2} = CMS.create_article(community, :doc, doc_attrs, user)

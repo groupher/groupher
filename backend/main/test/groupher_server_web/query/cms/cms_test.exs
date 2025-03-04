@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Query.CMS.Basic do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.Accounts.Model.User

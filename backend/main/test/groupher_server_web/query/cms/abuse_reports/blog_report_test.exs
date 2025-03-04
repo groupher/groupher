@@ -6,12 +6,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.BlogReport do
   alias GroupherServer.CMS
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, blog, blog_attrs, user} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id, author: %{user: user}})
-    {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
     guest_conn = simu_conn(:guest)
 

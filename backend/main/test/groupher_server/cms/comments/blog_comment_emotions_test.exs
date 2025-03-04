@@ -11,13 +11,9 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentEmotions do
   @default_emotions Embeds.CommentEmotion.default_emotions()
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, blog, blog_attrs, user} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id, author: %{user: user}})
-    {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
     {:ok, ~m(community blog user user2 user3)a}
   end
@@ -126,27 +122,6 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentEmotions do
       assert parent_emotion.viewer_has_downvoteed
       assert reply_emotion.viewer_has_downvoteed
     end
-
-    # pls uncomment the comment_emotion:L56
-    # test "should subscribe community if need", ~m(blog user user2)a do
-    #   {:error, _subscriber} =
-    #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: blog.original_community_id,
-    #       user_id: user.id
-    #     })
-
-    #   {:ok, comment} = CMS.create_comment(:blog, blog.id, mock_comment(), user)
-    #   {:ok, _} = CMS.emotion_to_comment(comment.id, :downvote, user)
-
-    #   {:ok, subscriber} =
-    #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: blog.original_community_id,
-    #       user_id: user.id
-    #     })
-
-    #   assert subscriber.user_id === user.id
-    #   assert subscriber.community_id === blog.original_community_id
-    # end
   end
 
   describe "[basic article comment emotion]" do

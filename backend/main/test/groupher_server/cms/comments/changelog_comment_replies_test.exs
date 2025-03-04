@@ -11,12 +11,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
   @max_parent_replies_count Comment.max_parent_replies_count()
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, changelog, changelog_attrs, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id, author: %{user: user}})
-    {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
     {:ok, ~m(user user2 community changelog)a}
   end

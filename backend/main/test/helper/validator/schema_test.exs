@@ -8,11 +8,11 @@ defmodule GroupherServer.Test.Helper.Validator.Schema do
   describe "[basic schema]" do
     test "string with options" do
       schema = %{"text" => [:string, required: false]}
-      data = %{"no_exsit" => "text"}
+      data = %{"no_exist" => "text"}
       assert {:ok, _} = Schema.cast(schema, data)
 
       schema = %{"text" => [:string, required: true]}
-      data = %{"no_exsit" => "text"}
+      data = %{"no_exist" => "text"}
       {:error, error} = Schema.cast(schema, data)
       assert [%{field: "text", message: "should be: string", value: nil}] == error
 
@@ -31,12 +31,12 @@ defmodule GroupherServer.Test.Helper.Validator.Schema do
       assert [%{field: "text", message: "min size: 5", value: "text"}] === error
 
       schema = %{"text" => [:string, min: 5]}
-      data = %{"no_exsit" => "text"}
+      data = %{"no_exist" => "text"}
       {:error, error} = Schema.cast(schema, data)
       assert [%{field: "text", message: "should be: string", value: nil}] == error
 
       schema = %{"text" => [:string, required: true, min: 5]}
-      data = %{"no_exsit" => "text"}
+      data = %{"no_exist" => "text"}
       {:error, error} = Schema.cast(schema, data)
       assert [%{field: "text", message: "should be: string", value: nil}] == error
 
@@ -58,11 +58,11 @@ defmodule GroupherServer.Test.Helper.Validator.Schema do
 
     test "number with options" do
       schema = %{"text" => [:number, required: false]}
-      data = %{"no_exsit" => 1}
+      data = %{"no_exist" => 1}
       assert {:ok, _} = Schema.cast(schema, data)
 
       schema = %{"text" => [:number, required: true]}
-      data = %{"no_exsit" => 1}
+      data = %{"no_exist" => 1}
       {:error, error} = Schema.cast(schema, data)
       assert error == [%{field: "text", message: "should be: number", value: nil}]
 
@@ -81,12 +81,12 @@ defmodule GroupherServer.Test.Helper.Validator.Schema do
       assert error == [%{field: "text", message: "min size: 5", value: 4}]
 
       schema = %{"text" => [:number, min: 5]}
-      data = %{"no_exsit" => 4}
+      data = %{"no_exist" => 4}
       {:error, error} = Schema.cast(schema, data)
       assert error == [%{field: "text", message: "should be: number", value: nil}]
 
       schema = %{"text" => [:number, required: true, min: 5]}
-      data = %{"no_exsit" => 1}
+      data = %{"no_exist" => 1}
       {:error, error} = Schema.cast(schema, data)
       assert error == [%{field: "text", message: "should be: number", value: nil}]
     end
@@ -115,11 +115,11 @@ defmodule GroupherServer.Test.Helper.Validator.Schema do
 
     test "list with options" do
       schema = %{"text" => [:list, required: false]}
-      data = %{"no_exsit" => []}
+      data = %{"no_exist" => []}
       assert {:ok, _} = Schema.cast(schema, data)
 
       schema = %{"text" => [:list, required: true]}
-      data = %{"no_exsit" => []}
+      data = %{"no_exist" => []}
       {:error, error} = Schema.cast(schema, data)
       assert error == [%{field: "text", message: "should be: list", value: nil}]
 
@@ -149,11 +149,11 @@ defmodule GroupherServer.Test.Helper.Validator.Schema do
 
     test "boolean with options" do
       schema = %{"text" => [:boolean, required: false]}
-      data = %{"no_exsit" => false}
+      data = %{"no_exist" => false}
       assert {:ok, _} = Schema.cast(schema, data)
 
       schema = %{"text" => [:boolean, required: true]}
-      data = %{"no_exsit" => false}
+      data = %{"no_exist" => false}
       {:error, error} = Schema.cast(schema, data)
       assert [%{field: "text", message: "should be: boolean", value: nil}] == error
 
@@ -164,11 +164,11 @@ defmodule GroupherServer.Test.Helper.Validator.Schema do
 
     test "enum with options" do
       schema = %{"text" => [enum: [1, 2, 3], required: false]}
-      data = %{"no_exsit" => false}
+      data = %{"no_exist" => false}
       assert {:ok, _} = Schema.cast(schema, data)
 
       schema = %{"text" => [enum: [1, 2, 3], required: true]}
-      data = %{"no_exsit" => false}
+      data = %{"no_exist" => false}
       {:error, error} = Schema.cast(schema, data)
       assert [%{field: "text", message: "should be: 1 | 2 | 3"}] == error
 

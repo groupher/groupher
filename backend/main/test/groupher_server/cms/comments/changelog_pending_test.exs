@@ -12,11 +12,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
   @audit_illegal Constant.CMS.pending(:illegal)
 
   setup do
-    {:ok, user} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id, author: %{user: user}})
-    {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+    {community, changelog, changelog_attrs, user} = mock_article(:changelog)
 
     guest_conn = simu_conn(:guest)
 

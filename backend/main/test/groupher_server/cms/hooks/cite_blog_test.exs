@@ -14,12 +14,8 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
   @site_host get_config(:general, :site_host)
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, blog, blog_attrs, user} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id, author: %{user: user}})
-    {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
     blog_attrs = mock_attrs(:blog, %{community_id: community.id, author: %{user: user}})
     {:ok, blog2} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -27,8 +23,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
     {:ok, blog3} = db_insert(:blog)
     {:ok, blog4} = db_insert(:blog)
     {:ok, blog5} = db_insert(:blog)
-
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
     {:ok, ~m(user user2 community blog blog2 blog3 blog4 blog5 blog_attrs)a}
   end
@@ -255,9 +249,10 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
   end
 
   describe "[cross cite]" do
+    @tag :wip
     test "can citing multi type thread and comment in one time", ~m(user community blog2)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-      blog_attrs = mock_attrs(:blog, %{community_id: community.id})
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
 
       body = mock_rich_text(~s(the <a href=#{@site_host}/blog/#{blog2.id} />))
 
@@ -268,23 +263,23 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
 
       Process.sleep(1000)
 
-      {:ok, blog} =
-        CMS.create_article(community, :blog, Map.merge(blog_attrs, %{body: body}), user)
+      {:ok, post} =
+        CMS.create_article(community, :post, Map.merge(post_attrs, %{body: body}), user)
 
-      Hooks.Cite.handle(blog)
+      Hooks.Cite.handle(post)
 
       {:ok, result} = CMS.paged_citing_contents("BLOG", blog2.id, %{page: 1, size: 10})
 
       assert result.total_count == 2
 
       result_blog = result.entries |> List.first()
-      result_blog = result.entries |> List.last()
+      result_post = result.entries |> List.last()
 
       assert result_blog.id == blog.id
       assert result_blog.thread == :blog
 
-      assert result_blog.id == blog.id
-      assert result_blog.thread == :blog
+      assert result_post.id == post.id
+      assert result_post.thread == :post
     end
   end
 end

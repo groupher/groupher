@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.CMS do
   end
 
   describe "[cms community moderators]" do
-    @tag :wip2
+    @tag :wip
     test "should have infinite passport count of root", ~m(user user2 community)a do
       role = "root"
       cur_user = user

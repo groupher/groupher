@@ -14,12 +14,8 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
   @site_host get_config(:general, :site_host)
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, changelog, changelog_attrs, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id, author: %{user: user}})
-    {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
     changelog_attrs = mock_attrs(:changelog, %{community_id: community.id, author: %{user: user}})
     {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -27,8 +23,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
     {:ok, changelog3} = db_insert(:changelog)
     {:ok, changelog4} = db_insert(:changelog)
     {:ok, changelog5} = db_insert(:changelog)
-
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
     {:ok,
      ~m(user user2 community changelog changelog2 changelog3 changelog4 changelog5 changelog_attrs)a}
@@ -258,6 +252,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
   end
 
   describe "[cross cite]" do
+    @tag :wip
     test "can citing multi type thread and comment in one time", ~m(user community changelog2)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})

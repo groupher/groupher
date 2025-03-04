@@ -114,7 +114,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["upvotesCount"] === 3
     end
 
-    @tag :wip2
+    @tag :wip
     test "comments_count order should work", ~m(guest_conn post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
 

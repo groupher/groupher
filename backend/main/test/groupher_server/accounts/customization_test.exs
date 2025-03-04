@@ -61,10 +61,10 @@ defmodule GroupherServer.Test.Accounts.Customization do
       assert result.sidebar_layout == %{hello: :world}
       assert result.sidebar_communities_index == %{javascript: 1, elixir: 2}
 
-      assert {:error, _result} =
-               Accounts.set_customization(user, %{content_divider: true, no_exsit: true})
+      assert {:error, _} =
+               Accounts.set_customization(user, %{content_divider: true, no_exist: true})
 
-      assert {:error, _result} = Accounts.set_customization(user, %{})
+      assert {:error, _} = Accounts.set_customization(user, %{})
     end
   end
 end
