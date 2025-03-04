@@ -33,11 +33,13 @@ echo "Current version: $current_version"
 
 # 获取上一次提交的 version 字段（如果存在）
 if git log -1 -- "$package_path" > /dev/null 2>&1; then
-  previous_version=$(git show HEAD^:"$package_path" 2>/dev/null | grep -E '"version":' | awk '{print $2}' | tr -d '",')
-  if [ -z "$previous_version" ]; then
+  # 获取上一次提交的文件内容
+  previous_content=$(git show HEAD^:"$package_path" 2>/dev/null)
+  if [ -z "$previous_content" ]; then
     echo "File is newly added or not in previous commit, triggering build."
     exit 1
   fi
+  previous_version=$(echo "$previous_content" | grep -E '"version":' | awk '{print $2}' | tr -d '",')
   echo "Previous version: $previous_version"
 else
   echo "File is not in Git history, triggering build."
