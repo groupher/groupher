@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
   """
   @tag :wip
   test "can get basic comments state", ~m(guest_conn user_conn community blog user)a do
-    {:ok, _comment} =
+    {:ok, _} =
       CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
     variables = %{id: blog.id, thread: "BLOG"}
@@ -818,10 +818,10 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
         acc ++ [comment]
       end)
 
-      {:ok, _comment} =
+      {:ok, _} =
         CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, _comment} =
+      {:ok, _} =
         CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
 
       variables = %{id: blog.id, thread: thread, filter: %{page: 1, size: page_size}}

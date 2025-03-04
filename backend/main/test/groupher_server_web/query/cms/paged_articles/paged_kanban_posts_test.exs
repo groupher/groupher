@@ -71,16 +71,16 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     test "should get grouped paged posts", ~m(guest_conn user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
-      {:ok, _post} = CMS.set_post_cat(post, @article_cat.feature)
-      {:ok, _post} = CMS.set_post_state(post, @article_state.todo)
+      {:ok, _} = CMS.set_post_cat(post, @article_cat.feature)
+      {:ok, _} = CMS.set_post_state(post, @article_state.todo)
 
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, _post} = CMS.set_post_cat(post, @article_cat.bug)
-      {:ok, _post} = CMS.set_post_state(post, @article_state.wip)
+      {:ok, _} = CMS.set_post_cat(post, @article_cat.bug)
+      {:ok, _} = CMS.set_post_state(post, @article_state.wip)
 
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, _post} = CMS.set_post_cat(post, @article_cat.feature)
-      {:ok, _post} = CMS.set_post_state(post, @article_state.done)
+      {:ok, _} = CMS.set_post_cat(post, @article_cat.feature)
+      {:ok, _} = CMS.set_post_state(post, @article_state.done)
 
       variables = %{community: community.slug}
       results = guest_conn |> query_result(@query, variables, "groupedKanbanPosts")
@@ -114,16 +114,16 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
 
     test "can get paged kanban posts", ~m(guest_conn user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, _post} = CMS.set_post_cat(post, @article_cat.feature)
-      {:ok, _post} = CMS.set_post_state(post, @article_state.todo)
+      {:ok, _} = CMS.set_post_cat(post, @article_cat.feature)
+      {:ok, _} = CMS.set_post_state(post, @article_state.todo)
 
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, _post} = CMS.set_post_cat(post, @article_cat.bug)
-      {:ok, _post} = CMS.set_post_state(post, @article_state.wip)
+      {:ok, _} = CMS.set_post_cat(post, @article_cat.bug)
+      {:ok, _} = CMS.set_post_state(post, @article_state.wip)
 
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, _post} = CMS.set_post_cat(post, @article_cat.feature)
-      {:ok, _post} = CMS.set_post_state(post, @article_state.done)
+      {:ok, _} = CMS.set_post_cat(post, @article_cat.feature)
+      {:ok, _} = CMS.set_post_state(post, @article_state.done)
 
       variables = %{
         community: community.slug,

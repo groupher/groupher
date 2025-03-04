@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
   """
   @tag :wip
   test "can get basic comments state", ~m(guest_conn user_conn community changelog user)a do
-    {:ok, _comment} =
+    {:ok, _} =
       CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
 
     variables = %{id: changelog.id, thread: "CHANGELOG"}
@@ -818,10 +818,10 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         acc ++ [comment]
       end)
 
-      {:ok, _comment} =
+      {:ok, _} =
         CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
 
-      {:ok, _comment} =
+      {:ok, _} =
         CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       variables = %{id: changelog.id, thread: thread, filter: %{page: 1, size: page_size}}

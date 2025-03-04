@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.Statistics.PublishThrottle do
   test "user first create content should add fresh throttle record.", ~m(community)a do
     {:ok, user} = db_insert(:user)
     post_attrs = mock_attrs(:post, %{community_id: community.id})
-    {:ok, _post} = CMS.create_article(community, :post, post_attrs, user)
+    {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
 
     {:ok, pt_record} = PublishThrottle |> ORM.find_by(user_id: user.id)
 
@@ -28,8 +28,8 @@ defmodule GroupherServer.Test.Statistics.PublishThrottle do
     {:ok, user} = db_insert(:user)
     post_attrs = mock_attrs(:post, %{community_id: community.id})
     post_attrs2 = mock_attrs(:post, %{community_id: community.id})
-    {:ok, _post} = CMS.create_article(community, :post, post_attrs, user)
-    {:ok, _post} = CMS.create_article(community, :post, post_attrs2, user)
+    {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
+    {:ok, _} = CMS.create_article(community, :post, post_attrs2, user)
 
     {:ok, pt_record} = PublishThrottle |> ORM.find_by(user_id: user.id)
 
