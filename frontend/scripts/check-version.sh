@@ -1,7 +1,4 @@
 #!/bin/bash
-# 通用脚本：检查指定子应用的 package.json 版本是否变更
-# 使用方法：bash check-version.sh <子应用名称>
-
 # 获取子应用名称
 subapp_name=$1
 if [ -z "$subapp_name" ]; then
@@ -10,15 +7,33 @@ if [ -z "$subapp_name" ]; then
   exit 1
 fi
 
-cd "$(dirname "$0")/.." || exit 1
+# 定位到项目根目录
+project_root=$(cd "$(dirname "$0")/../.." && pwd)
+echo "Project root directory: $project_root"
 
-package_path="$subapp_name/package.json"
+# 子应用的 package.json 路径
+package_path="$project_root/frontend/$subapp_name/package.json"
+echo "Checking package.json at: $package_path"
 
+# 检查 package.json 是否存在
 if [ ! -f "$package_path" ]; then
   echo "Error: $package_path does not exist."
   exit 1
 fi
 
+# 检查文件是否被 Git 跟踪
+if ! git ls-files --error-unmatch "$package_path" > /dev/null 2>&1; then
+  echo "File is not tracked by Git, triggering build."
+  exit 1
+fi
+
+# 检查文件是否在 Git 历史记录中
+if ! git log -1 -- "$package_path" > /dev/null 2>&1; then
+  echo "File is newly added, triggering build."
+  exit 1
+fi
+
+# 检查 version 字段是否变更
 if git diff --quiet HEAD^ HEAD -- "$package_path"; then
   echo "No changes in $package_path, skipping build."
   exit 0
@@ -33,3 +48,4 @@ else
     exit 0
   fi
 fi
+
