@@ -452,7 +452,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert first_blog["id"] == to_string(blog_last_week.id)
     end
 
-    @tag :wip
     test "comment on very old blog have no effect",
          ~m(guest_conn community blog_last_year user2)a do
       variables = %{filter: %{page: 1, size: 20}}

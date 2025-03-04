@@ -541,6 +541,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
+    @tag :wip
     test "auth user can update moderator to community", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
