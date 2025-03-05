@@ -8,5 +8,6 @@
       "src": "/dashboard/(.*)",
       "dest": "/$1"
     }
-  ]
+  ],
+  "ignoreCommand": "../scripts/skip-build.sh"
 }

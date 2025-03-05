@@ -1,5 +1,5 @@
 {
-  "version": 2,
-  "builds": [{ "src": "package.json", "use": "@vercel/next" }]
+	"version": 2,
+	"builds": [{ "src": "package.json", "use": "@vercel/next" }],
+	"ignoreCommand": "../scripts/skip-build.sh"
 }
-

@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "frontend/dashboard/**" # only trigger when this dir changes
+      - "!frontend/dashboard/vercel.json"
 
 jobs:
   build:
