@@ -9,5 +9,5 @@
       "dest": "/$1"
     }
   ],
-  "ignoreBuildStep": true
+  "ignoreCommand": "exit 0"
 }
