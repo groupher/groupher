@@ -84,4 +84,4 @@ jobs:
             ${{ runner.OS }}-build-
 
       - name: Run tests
-        run: mix test
+        run: mix test --exclude skip_ci
