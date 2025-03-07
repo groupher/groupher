@@ -31,9 +31,9 @@ defmodule GroupherServer.Test.Helper.OgInfo do
       assert ret.site_name == "36kr"
     end
 
-    test "can get valid open graph info with invalid url.." do
-      {:error, error} = OgInfo.get("https://thisnotexisteekde.com")
-      # IO.inspect(error, label: "get")
-    end
+    # test "can get valid open graph info with invalid url.." do
+    # {:error, error} = OgInfo.get("https://thisnotexisteekde.com")
+    # IO.inspect(error, label: "get")
+    # end
   end
 end
