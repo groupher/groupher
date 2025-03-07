@@ -19,7 +19,6 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
   end
 
   describe "[published blogs]" do
-    @tag :wip
     test "create blog should update user published meta", ~m(community user2)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user2)
@@ -29,7 +28,6 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
       assert user.meta.published_blogs_count == 2
     end
 
-    @tag :wip
     test "fresh user get empty paged published blogs", ~m(user2)a do
       {:ok, results} = Accounts.paged_published_articles(user2, :blog, %{page: 1, size: 20})
 
@@ -76,7 +74,6 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
   end
 
   describe "[published blog comments]" do
-    @tag :wip
     test "can get published article comments", ~m(community blog user)a do
       total_count = 10
 

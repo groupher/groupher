@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
   import Helper.Utils, only: [get_config: 2]
 
-  alias Helper.{Constant, ORM}
+  alias Helper.ORM
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.Changelog
 
@@ -100,7 +100,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["id"] > changelog.id
     end
 
-    @tag :wip
     test "upvotes_count order should work",
          ~m(guest_conn changelog_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
@@ -115,7 +114,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["upvotesCount"] === 3
     end
 
-    @tag :wip
     test "comments_count order should work",
          ~m(guest_conn community changelog_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
@@ -394,7 +392,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert results |> Map.get("totalCount") == expect_count
     end
 
-    @tag :wip2
     test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")
@@ -422,7 +419,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       }
     }
     """
-    @tag :wip
+
     test "latest commented changelog should appear on top",
          ~m(guest_conn community changelog_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -449,7 +446,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["id"] == to_string(changelog_last_week.id)
     end
 
-    @tag :wip
     test "comment on very old changelog have no effect",
          ~m(guest_conn community changelog_last_year user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -466,7 +462,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["id"] !== to_string(changelog_last_year.id)
     end
 
-    @tag :wip
     test "latest changelog author commented changelog have no effect",
          ~m(guest_conn community changelog_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}

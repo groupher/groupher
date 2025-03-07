@@ -31,7 +31,6 @@ defmodule GroupherServer.Test.Accounts do
       assert updated.sex == attrs.sex
     end
 
-    @tag :wip
     test "update user social fields with valid attrs" do
       {:ok, user} = db_insert(:user)
 

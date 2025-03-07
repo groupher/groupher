@@ -40,7 +40,6 @@ defmodule GroupherServer.Test.CMS.PostArchive do
       assert archived_post.id == post_long_ago.id
     end
 
-    @tag :wip
     test "can not edit archived post" do
       {:ok, _} = CMS.archive_articles(:post)
 
@@ -54,7 +53,6 @@ defmodule GroupherServer.Test.CMS.PostArchive do
       assert reason |> is_error?(:archived)
     end
 
-    @tag :wip
     test "can not delete archived post" do
       {:ok, _} = CMS.archive_articles(:post)
 

@@ -32,7 +32,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[comments state]" do
-    @tag :wip
     test "can get basic state", ~m(community user post)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -66,7 +65,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     #   assert subscriber.community_id === post.original_community_id
     # end
 
-    @tag :wip
     test "can get viewer joined state", ~m(community user post)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -79,7 +77,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert state.is_viewer_joined
     end
 
-    @tag :wip
     test "can get viewer joined state 2", ~m(community user user2 user3 post)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user2)
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user3)
@@ -94,7 +91,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[basic article comment]" do
-    @tag :wip
     test "post are supported by article comment.", ~m(user community post)a do
       {:ok, post_comment_1} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -108,7 +104,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert exist_in?(post_comment_2, post.comments)
     end
 
-    @tag :wip
     test "comment should have default meta after create", ~m(user post community)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -116,7 +111,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert comment.meta |> Map.from_struct() |> Map.delete(:id) == @default_comment_meta
     end
 
-    @tag :wip
     test "create comment should update active timestamp of post", ~m(community post user2)a do
       Process.sleep(1000)
 
@@ -129,7 +123,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert post_after.active_at > post.inserted_at
     end
 
-    @tag :wip
     test "post author create comment will not update active timestamp", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -144,7 +137,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert post.active_at == post.inserted_at
     end
 
-    @tag :wip
     test "old posts will not update active after comment created", ~m(community user cur_date)a do
       active_period_days = @active_period[:post] || @active_period[:default]
       # inserted_at =
@@ -176,7 +168,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert post.active_at |> DateTime.to_unix() !== cur_date
     end
 
-    @tag :wip
     test "comment can be updated", ~m(community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -189,7 +180,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[article comment floor]" do
-    @tag :wip
     test "comment will have a floor number after created", ~m(community post user)a do
       {:ok, post_comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -206,7 +196,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[article comment participator for post]" do
-    @tag :wip
     test "post will have participator after comment created", ~m(community post user)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
@@ -216,7 +205,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert participator.id == user.id
     end
 
-    @tag :wip
     test "psot participator will not contains same user", ~m(community post user)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -226,7 +214,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert 1 == length(post.comments_participants)
     end
 
-    @tag :wip
     test "recent comment user should appear at first of the psot participants",
          ~m(community user user2 post)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -241,7 +228,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[article comment upvotes]" do
-    @tag :wip
     test "user can upvote a post comment", ~m(community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -280,7 +266,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     #   assert List.first(comment.upvotes).user_id == user.id
     # end
 
-    @tag :wip
     test "user can upvote a post comment twice is fine", ~m(community user post)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -292,7 +277,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert 1 == length(comment.upvotes)
     end
 
-    @tag :wip
     test "article author upvote post comment will have flag", ~m(community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -305,7 +289,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert comment.meta.is_article_author_upvoted
     end
 
-    @tag :wip
     test "user upvote post comment will add id to upvoted_user_ids", ~m(community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -315,7 +298,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert user.id in comment.meta.upvoted_user_ids
     end
 
-    @tag :wip
     test "user undo upvote post comment will remove id from upvoted_user_ids",
          ~m(community post user user2)a do
       {:ok, comment} =
@@ -333,7 +315,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert user2.id not in comment.meta.upvoted_user_ids
     end
 
-    @tag :wip
     test "user upvote a already-upvoted comment fails", ~m(community user post)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -342,7 +323,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:error, _} = CMS.upvote_comment(comment.id, user)
     end
 
-    @tag :wip
     test "upvote comment should inc the comment's upvotes_count",
          ~m(community post user user2)a do
       {:ok, comment} =
@@ -358,7 +338,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert comment.upvotes_count == 2
     end
 
-    @tag :wip
     test "user can undo upvote a post comment", ~m(community user post)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -372,7 +351,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert 0 == comment.upvotes_count
     end
 
-    @tag :wip
     test "user can undo upvote a post comment with no upvote", ~m(community user post)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -384,7 +362,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert 0 == comment.upvotes_count
     end
 
-    @tag :wip
     test "upvote comment should update embeded replies too",
          ~m(community post user user2 user3)a do
       {:ok, parent_comment} =
@@ -416,7 +393,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[article comment fold/unfold]" do
-    @tag :wip
     test "user can fold a comment", ~m(community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -433,7 +409,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert post.meta.folded_comment_count == 1
     end
 
-    @tag :wip
     test "user can unfold a comment", ~m(community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -453,7 +428,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[article comment pin/unpin]" do
-    @tag :wip
     test "user can pin a comment", ~m(community user post)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -471,7 +445,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert pined_record.post_id == post.id
     end
 
-    @tag :wip
     test "user can unpin a comment", ~m(community user post)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -483,7 +456,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert {:error, _} = PinnedComment |> ORM.find_by(%{comment_id: comment.id})
     end
 
-    @tag :wip
     test "pinned comments has a limit for each article", ~m(community user post)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -516,7 +488,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     #   {:ok, comment} = ORM.find(Comment, comment.id)
     # end
 
-    @tag :wip
     test "can undo a report with other user report it too", ~m(community user user2 post)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -545,7 +516,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
     end
 
-    @tag :wip
     test "report user < @report_threshold_for_fold will not fold comment",
          ~m(community user post)a do
       {:ok, comment} =
@@ -562,7 +532,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert not comment.is_folded
     end
 
-    @tag :wip
     test "report user > @report_threshold_for_fold will cause comment fold",
          ~m(community user post)a do
       {:ok, comment} =
@@ -581,7 +550,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "paged article comments" do
-    @tag :wip
     test "can load paged comments participants of a article", ~m(community user post)a do
       total_count = 30
       page_size = 10
@@ -609,7 +577,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert results.total_count == total_count + 1
     end
 
-    @tag :wip
     test "paged article comments folded flag should be false", ~m(community user post)a do
       total_count = 30
       page_number = 1
@@ -640,7 +607,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert total_count == paged_comments.total_count
     end
 
-    @tag :wip
     test "paged article comments should contains pinned comments at top position.",
          ~m(community user post)a do
       total_count = 20
@@ -677,7 +643,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert paged_comments.total_count == total_count + 2
     end
 
-    @tag :wip
     test "only page 1 have pinned coments",
          ~m(community user post)a do
       total_count = 20
@@ -714,7 +679,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert paged_comments.total_count == total_count
     end
 
-    @tag :wip
     test "paged article comments should not contains folded and repoted comments",
          ~m(community user post)a do
       total_count = 15
@@ -754,7 +718,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert total_count - 3 == paged_comments.total_count
     end
 
-    @tag :wip
     test "can loaded paged folded comment", ~m(community user post)a do
       total_count = 10
       page_number = 1
@@ -788,7 +751,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[article comment delete]" do
-    @tag :wip
     test "delete comment still exist in paged list and content is gone",
          ~m(community user post)a do
       total_count = 10
@@ -820,7 +782,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert deleted_comment.body_html == @delete_hint
     end
 
-    @tag :wip
     test "delete comment still update article's comments_count field",
          ~m(community user post)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -842,7 +803,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert post.comments_count == 4
     end
 
-    @tag :wip
     test "delete comment still delete pinned record if needed", ~m(community user post)a do
       total_count = 10
 
@@ -865,7 +825,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[article comment info]" do
-    @tag :wip
     test "author of the article comment a comment should have flag", ~m(community post user2)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user2)
@@ -882,7 +841,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[lock/unlock post comment]" do
-    @tag :wip
     test "locked post can not be comment", ~m(community user post)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
       {:ok, _} = CMS.lock_article_comments(:post, post.id)
@@ -896,7 +854,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
     end
 
-    @tag :wip
     test "locked post can not by reply", ~m(community user post)a do
       {:ok, parent_comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -914,7 +871,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[article comment qa type]" do
-    @tag :wip
     test "create comment for normal post should have default qa flags", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -926,7 +882,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert not post_comment.is_solution
     end
 
-    @tag :wip
     test "create comment for question post should have flags", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, cat: @article_cat.question})
 
@@ -941,7 +896,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert post_comment.is_for_question
     end
 
-    @tag :wip
     test "update comment with is_question should batch update exist comments is_for_question field",
          ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
@@ -977,7 +931,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert not comment3.is_for_question
     end
 
-    @tag :wip
     test "can mark a comment as solution", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -998,7 +951,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert post.solution_digest == comment.body_html
     end
 
-    @tag :wip
     test "non-post-author can not mark a comment as solution", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -1015,7 +967,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       reason |> is_error?(:require_questioner)
     end
 
-    @tag :wip
     test "can undo mark a comment as solution", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -1035,7 +986,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert post.state == @article_state.default
     end
 
-    @tag :wip
     test "non-post-author can not undo mark a comment as solution", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -1052,7 +1002,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       reason |> is_error?(:require_questioner)
     end
 
-    @tag :wip
     test "can only mark one best comment as solution", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -1077,7 +1026,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert answers |> List.first() |> Map.get(:id) == comment2.id
     end
 
-    @tag :wip
     test "update a solution should also update post's solution digest", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -1107,7 +1055,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   end
 
   describe "[update user info in comments_participants]" do
-    @tag :wip
     test "basic find", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)

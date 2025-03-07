@@ -90,7 +90,6 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
       assert results["totalCount"] == 1
     end
 
-    @tag :wip
     test "support comment", ~m(guest_conn community changelog user)a do
       {:ok, comment} =
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)

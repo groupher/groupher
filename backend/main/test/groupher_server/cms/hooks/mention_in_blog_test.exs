@@ -51,7 +51,6 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInBlog do
       assert mention.user.login == blog.author.user.login
     end
 
-    @tag :wip
     test "mention in blog's comment should work", ~m(user user2 community blog)a do
       comment_body =
         mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user2.login}</div>))
@@ -73,7 +72,6 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInBlog do
       assert mention.user.login == comment.author.login
     end
 
-    @tag :wip
     test "can not mention author self in blog or comment",
          ~m(community user blog_attrs)a do
       body = mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))

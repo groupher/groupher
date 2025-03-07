@@ -20,7 +20,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostPending do
   end
 
   describe "[pending post comment flags]" do
-    @tag :wip
     test "pending post comment can set/unset pending", ~m(community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -46,7 +45,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostPending do
       assert comment.pending == @audit_legal
     end
 
-    @tag :wip
     test "pending post-comment's meta should have info", ~m(community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)

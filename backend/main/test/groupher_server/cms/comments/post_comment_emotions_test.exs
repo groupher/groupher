@@ -19,7 +19,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
   end
 
   describe "[emotion in paged article comment]" do
-    @tag :wip
     test "login user should got viewer has emotioned status", ~m(community post user)a do
       total_count = 0
       page_number = 10
@@ -63,7 +62,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert target.emotions.viewer_has_popcorned
     end
 
-    @tag :wip
     test "emotioned comment should return valid viewer_has status",
          ~m(community post user user2)a do
       total_count = 3
@@ -86,7 +84,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert comment.emotions.viewer_has_beered == true
     end
 
-    @tag :wip
     test "nested reply should have viewer emotion status in replies mode",
          ~m(community post user)a do
       {:ok, parent_comment} =
@@ -131,7 +128,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
   end
 
   describe "[basic article comment emotion]" do
-    @tag :wip
     test "comment has default emotions after created", ~m(community post user)a do
       {:ok, parent_comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -142,7 +138,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert @default_emotions == emotions
     end
 
-    @tag :wip
     test "can make emotion to comment", ~m(community post user user2)a do
       {:ok, parent_comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -157,7 +152,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
-    @tag :wip
     test "can undo emotion to comment", ~m(community post user user2)a do
       {:ok, parent_comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -180,7 +174,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert not user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
-    @tag :wip
     test "same user make same emotion to same comment.", ~m(community post user)a do
       {:ok, parent_comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -194,7 +187,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert user_exist_in?(user, parent_comment.emotions.latest_downvote_users)
     end
 
-    @tag :wip
     test "same user same emotion to same comment only have one user_emotion record",
          ~m(community post user)a do
       {:ok, parent_comment} =
@@ -215,7 +207,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert record.heart
     end
 
-    @tag :wip
     test "different user can make same emotions on same comment",
          ~m(community post user user2 user3)a do
       {:ok, parent_comment} =
@@ -233,7 +224,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert user_exist_in?(user3, emotions.latest_beer_users)
     end
 
-    @tag :wip
     test "same user can make differcent emotions on same comment", ~m(community post user)a do
       {:ok, parent_comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)

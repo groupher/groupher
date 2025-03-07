@@ -89,7 +89,6 @@ defmodule GroupherServer.Test.Query.AbuseReports.BlogReport do
       assert results["totalCount"] == 1
     end
 
-    @tag :wip
     test "support comment", ~m(guest_conn community blog user)a do
       {:ok, comment} =
         CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)

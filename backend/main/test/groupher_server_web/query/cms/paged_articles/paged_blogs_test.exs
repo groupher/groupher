@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
   import Helper.Utils, only: [get_config: 2]
 
-  alias Helper.{Constant, ORM}
+  alias Helper.ORM
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.Blog
 
@@ -100,7 +100,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert first_blog["id"] > blog.id
     end
 
-    @tag :wip
     test "upvotes_count order should work",
          ~m(guest_conn blog_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
@@ -115,7 +114,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert first_blog["upvotesCount"] === 3
     end
 
-    @tag :wip
     test "comments_count order should work",
          ~m(guest_conn community blog_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
@@ -394,7 +392,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert results |> Map.get("totalCount") == expect_count
     end
 
-    @tag :wip2
     test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> query_result(@query, variables, "pagedBlogs")
@@ -422,7 +419,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       }
     }
     """
-    @tag :wip
+
     test "latest commented blog should appear on top",
          ~m(guest_conn community blog_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -469,7 +466,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert first_blog["id"] !== to_string(blog_last_year.id)
     end
 
-    @tag :wip
     test "latest blog author commented blog have no effect",
          ~m(guest_conn community blog_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}

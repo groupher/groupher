@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "write article comment to a exist post", ~m(community post user_conn)a do
       variables = %{
         community: community.slug,
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "login user can reply to a comment", ~m(community post user user_conn)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -71,7 +71,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "only owner can update a exist comment",
          ~m(community post user guest_conn user_conn owner_conn)a do
       {:ok, comment} =
@@ -98,7 +98,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "only owner can delete a exist comment",
          ~m(community post user guest_conn user_conn owner_conn)a do
       {:ok, comment} =
@@ -128,7 +128,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "login user can upvote a exist post comment",
          ~m(community post user guest_conn user_conn)a do
       {:ok, comment} =
@@ -155,7 +155,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "login user can undo upvote a exist post comment",
          ~m(community post user guest_conn user_conn)a do
       {:ok, comment} =
@@ -192,7 +192,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "login user can emotion to a comment", ~m(community post user user_conn)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -221,7 +221,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "login user can undo emotion to a comment", ~m(community post user owner_conn)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -306,7 +306,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "can pin a post's comment", ~m(owner_conn community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -318,7 +318,6 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert result["isPinned"]
     end
 
-    @tag :wip
     test "unauth user fails.", ~m(guest_conn community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -336,7 +335,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "can undo pin a post's comment", ~m(owner_conn community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -350,7 +349,6 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert not result["isPinned"]
     end
 
-    @tag :wip
     test "unauth user undo fails.", ~m(guest_conn community post user)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -372,7 +370,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "questioner can mark a post comment as solution", ~m(community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
@@ -390,7 +388,6 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert result["isSolution"]
     end
 
-    @tag :wip
     test "other user can not mark a post comment as solution",
          ~m(guest_conn user_conn community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
@@ -413,7 +410,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-    @tag :wip
+
     test "questioner can undo mark a post comment as solution", ~m(community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
@@ -432,7 +429,6 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert not result["isSolution"]
     end
 
-    @tag :wip
     test "other user can not undo mark a post comment as solution",
          ~m(guest_conn user_conn community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])

@@ -104,7 +104,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["id"] > post.id
     end
 
-    @tag :wip
     test "upvotes_count order should work", ~m(guest_conn post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
 
@@ -118,7 +117,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["upvotesCount"] === 3
     end
 
-    @tag :wip
     test "comments_count order should work",
          ~m(guest_conn community post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
@@ -455,7 +453,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       }
     }
     """
-    @tag :wip
+
     test "latest commented post should appear on top",
          ~m(guest_conn community post_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -476,7 +474,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["id"] == to_string(post_last_week.id)
     end
 
-    @tag :wip
     test "comment on very old post have no effect",
          ~m(guest_conn community post_last_year user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -491,7 +488,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["id"] !== to_string(post_last_year.id)
     end
 
-    @tag :wip
     test "latest post author commented post have no effect",
          ~m(guest_conn community post_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}

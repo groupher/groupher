@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
       }
     }
     """
-    @tag :wip
+
     test "user can get paged published comments on changelog",
          ~m(guest_conn user community changelog)a do
       pub_comments =

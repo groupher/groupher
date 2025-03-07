@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
   import Helper.Utils, only: [get_config: 2]
 
-  alias Helper.{Constant, ORM}
+  alias Helper.ORM
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.Doc
 
@@ -99,7 +99,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["id"] > doc.id
     end
 
-    @tag :wip
     test "upvotes_count order should work",
          ~m(guest_conn doc_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
@@ -114,7 +113,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["upvotesCount"] === 3
     end
 
-    @tag :wip
     test "comments_count order should work",
          ~m(guest_conn community doc_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
@@ -393,7 +391,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert results |> Map.get("totalCount") == expect_count
     end
 
-    @tag :wip2
     test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> query_result(@query, variables, "pagedDocs")
@@ -421,7 +418,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       }
     }
     """
-    @tag :wip
+
     test "latest commented doc should appear on top",
          ~m(guest_conn community doc_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -444,7 +441,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["id"] == to_string(doc_last_week.id)
     end
 
-    @tag :wip
     test "comment on very old doc have no effect",
          ~m(guest_conn community doc_last_year user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -465,7 +461,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["id"] !== to_string(doc_last_year.id)
     end
 
-    @tag :wip
     test "latest doc author commented doc have no effect",
          ~m(guest_conn community doc_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}

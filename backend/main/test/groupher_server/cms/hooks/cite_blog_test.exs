@@ -70,7 +70,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
       assert blog.meta.citing_count == 0
     end
 
-    @tag :wip
     test "cited comment itself should not work", ~m(user community blog)a do
       {:ok, cited_comment} =
         CMS.create_comment(
@@ -95,7 +94,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
       assert cited_comment.meta.citing_count == 0
     end
 
-    @tag :wip
     test "can cite blog's comment in blog",
          ~m(user community blog blog2 blog_attrs)a do
       {:ok, comment} =
@@ -125,7 +123,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
       assert cited_content.cited_by_type == "COMMENT"
     end
 
-    @tag :wip
     test "can cite a comment in a comment", ~m(user community blog)a do
       {:ok, cited_comment} =
         CMS.create_comment(
@@ -155,7 +152,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
       assert cited_content.cited_by_type == "COMMENT"
     end
 
-    @tag :wip
     test "can cited blog inside a comment",
          ~m(user community blog blog2 blog3 blog4 blog5)a do
       comment_body =
@@ -190,7 +186,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
   end
 
   describe "[cite pagi]" do
-    @tag :wip
     test "can get paged cited articles.", ~m(user community blog2 blog_attrs)a do
       {:ok, comment} =
         CMS.create_comment(
@@ -249,7 +244,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
   end
 
   describe "[cross cite]" do
-    @tag :wip
     test "can citing multi type thread and comment in one time", ~m(user community blog2)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       post_attrs = mock_attrs(:post, %{community_id: community.id})

@@ -22,7 +22,6 @@ defmodule GroupherServer.Test.Helper.OgInfo do
       assert ret.site_name == "少数派"
     end
 
-    @tag :wip
     test "should add site_info for 36kr.com cuz it missing it" do
       {:ok, ret} = OgInfo.get("https://36kr.com/p/2421145363096585")
 

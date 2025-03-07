@@ -90,7 +90,6 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       assert results["totalCount"] == 1
     end
 
-    @tag :wip
     test "support comment", ~m(guest_conn community doc user)a do
       {:ok, comment} =
         CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
