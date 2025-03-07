@@ -425,12 +425,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results |> Map.get("totalCount") == expect_count
     end
 
+    @tag :wip
     test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
 
-      # TODO, fix later
-      # assert results |> Map.get("totalCount") == @today_count
+      assert results |> Map.get("totalCount") == @today_count
     end
 
     test "THIS_MONTH option should work", ~m(guest_conn post_last_month)a do
