@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
-  import Helper.Utils, only: [get_config: 2, done: 1, strip_struct: 1]
+  import Helper.Utils, only: [get_config: 2, done: 1, strip_struct: 1, past_verb: 1]
 
   alias Helper.{ORM, QueryBuilder}
   alias GroupherServer.{Accounts, Repo, CMS}
@@ -109,8 +109,8 @@ defmodule GroupherServer.CMS.Delegate.Helper do
     update_viewed_status =
       emotions
       |> Enum.reduce([], fn emotion, acc ->
-        already_emotioned = user_in_logins?(artiment.emotions[:"#{emotion}_user_logins"], user)
-        acc ++ ["viewer_has_#{emotion}ed": already_emotioned]
+        already_emoted = user_in_logins?(artiment.emotions[:"#{emotion}_user_logins"], user)
+        acc ++ ["viewer_has_#{emotion}ed": already_emoted]
       end)
       |> Enum.into(%{})
 
@@ -128,7 +128,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   end
 
   @doc """
-  update emotions field for boty article and comment
+  update emotions field for body article and comment
   """
   def update_emotions_field(artiment, emotion, status, user) do
     %{user_count: user_count, user_list: user_list} = status
@@ -224,17 +224,18 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   end
 
   @doc """
-  add or remove artilce's reaction users is list history
+  add or remove article's reaction users is list history
   e.g:
   add/remove user_id to upvoted_user_ids in article meta
   """
   @spec update_article_reaction_user_list(
-          :upvot | :collect,
+          :upvote | :collect,
           T.article_common(),
           User.t(),
           :add | :remove
         ) :: T.article_common()
   def update_article_reaction_user_list(action, %{meta: nil} = article, %User{} = user, opt) do
+    action = past_verb(action)
     cur_user_ids = []
     cur_users = []
 
@@ -252,17 +253,19 @@ defmodule GroupherServer.CMS.Delegate.Helper do
 
     meta =
       @default_article_meta
-      |> Map.merge(%{"#{action}ed_user_ids": updated_user_ids})
-      |> Map.merge(%{"latest_#{action}ed_users": updated_users})
+      |> Map.merge(%{"#{action}_user_ids": updated_user_ids})
+      |> Map.merge(%{"latest_#{action}_users": updated_users})
 
     ORM.update_meta(article, meta)
   end
 
   def update_article_reaction_user_list(action, article, %User{} = user, opt) do
-    cur_user_ids = get_in(article, [:meta, :"#{action}ed_user_ids"])
+    action = past_verb(action)
+
+    cur_user_ids = get_in(article, [:meta, :"#{action}_user_ids"])
 
     cur_users =
-      get_in(article, [:meta, :"latest_#{action}ed_users"]) |> Enum.map(&strip_struct(&1))
+      get_in(article, [:meta, :"latest_#{action}_users"]) |> Enum.map(&strip_struct(&1))
 
     updated_user_ids =
       case opt do
@@ -280,8 +283,8 @@ defmodule GroupherServer.CMS.Delegate.Helper do
 
     meta =
       article.meta
-      |> Map.merge(%{"#{action}ed_user_ids": updated_user_ids})
-      |> Map.merge(%{"latest_#{action}ed_users": updated_users})
+      |> Map.merge(%{"#{action}_user_ids": updated_user_ids})
+      |> Map.merge(%{"latest_#{action}_users": updated_users})
 
     ORM.update_meta(article, meta)
   end

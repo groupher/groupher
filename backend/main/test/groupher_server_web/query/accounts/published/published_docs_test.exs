@@ -74,12 +74,12 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Docs do
       }
     }
     """
-    @tag :wip
+
     test "user can get paged published comments on doc", ~m(guest_conn user community doc)a do
       pub_comments =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+            CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
           acc ++ [comment]
         end)

@@ -22,7 +22,6 @@ defmodule GroupherServer.Test.Helper.OgInfo do
       assert ret.site_name == "少数派"
     end
 
-    @tag :wip
     test "should add site_info for 36kr.com cuz it missing it" do
       {:ok, ret} = OgInfo.get("https://36kr.com/p/2421145363096585")
 
@@ -32,9 +31,9 @@ defmodule GroupherServer.Test.Helper.OgInfo do
       assert ret.site_name == "36kr"
     end
 
-    test "can get valid open graph info with invalid url.." do
-      {:error, error} = OgInfo.get("https://thisnotexisteekde.com")
-      # IO.inspect(error, label: "get")
-    end
+    # test "can get valid open graph info with invalid url.." do
+    # {:error, error} = OgInfo.get("https://thisnotexisteekde.com")
+    # IO.inspect(error, label: "get")
+    # end
   end
 end

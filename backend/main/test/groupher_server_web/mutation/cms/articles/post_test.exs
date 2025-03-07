@@ -301,7 +301,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert result["copyRight"] == variables.copyRight
     end
 
-    @tag :wip
     test "update post article tags should be overwrite old ones",
          ~m(owner_conn community post user)a do
       article_tag_attrs = mock_attrs(:article_tag)

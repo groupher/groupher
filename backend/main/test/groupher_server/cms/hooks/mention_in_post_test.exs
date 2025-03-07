@@ -52,12 +52,11 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInPost do
       assert mention.user.login == post.author.user.login
     end
 
-    @tag :wip
     test "mention in post's comment should work", ~m(user user2 community post)a do
       comment_body =
         mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user2.login}</div>))
 
-      {:ok, comment} = CMS.create_comment2(community, :post, post.inner_id, comment_body, user)
+      {:ok, comment} = CMS.create_comment(community, :post, post.inner_id, comment_body, user)
       {:ok, comment} = preload_author(comment)
 
       {:ok, _} = Hooks.Mention.handle(comment)
@@ -72,7 +71,6 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInPost do
       assert mention.user.login == comment.author.login
     end
 
-    @tag :wip
     test "can not mention author self in post or comment", ~m(community user post_attrs)a do
       body = mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))
       post_attrs = post_attrs |> Map.merge(%{body: body})
@@ -84,7 +82,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInPost do
       comment_body =
         mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))
 
-      {:ok, comment} = CMS.create_comment2(community, :post, post.inner_id, comment_body, user)
+      {:ok, comment} = CMS.create_comment(community, :post, post.inner_id, comment_body, user)
 
       {:ok, _} = Hooks.Mention.handle(comment)
       {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})

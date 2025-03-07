@@ -18,10 +18,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
   end
 
   describe "[basic article comment replies]" do
-    @tag :wip
     test "exist comment can be reply", ~m(community changelog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, replied_comment} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
       assert replied_comment.reply_to.id == parent_comment.id
@@ -31,20 +30,18 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
       assert exist_in?(replied_comment, parent_comment.replies)
     end
 
-    @tag :wip
     test "deleted comment can not be reply", ~m(community changelog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.delete_comment(parent_comment)
 
       {:error, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
     end
 
-    @tag :wip
     test "multi reply should belong to one parent comment", ~m(community changelog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
       {:ok, replied_comment_2} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
@@ -55,11 +52,10 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
       assert exist_in?(replied_comment_2, parent_comment.replies)
     end
 
-    @tag :wip
     test "reply to reply inside a comment should belong same parent comment",
          ~m(community changelog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
       {:ok, replied_comment_2} = CMS.reply_comment(replied_comment_1.id, mock_comment(), user2)
@@ -80,11 +76,10 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
       assert replied_comment_3.reply_to_id == replied_comment_2.id
     end
 
-    @tag :wip
     test "reply to reply inside a comment should have is_reply_to_others flag in meta",
          ~m(community changelog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, replied_comment_1} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
       {:ok, replied_comment_2} = CMS.reply_comment(replied_comment_1.id, mock_comment(), user2)
@@ -101,13 +96,12 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
       assert replied_comment_3.meta.is_reply_to_others
     end
 
-    @tag :wip
     test "comment replies only contains @max_parent_replies_count replies",
          ~m(community changelog user)a do
       total_reply_count = @max_parent_replies_count + 1
 
       {:ok, parent_comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       reply_comment_list =
         Enum.reduce(1..total_reply_count, [], fn n, acc ->
@@ -126,11 +120,10 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
       assert not exist_in?(List.last(reply_comment_list), parent_comment.replies)
     end
 
-    @tag :wip
     test "replied user should appear in article comment participants",
          ~m(community changelog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user2)
 
@@ -140,10 +133,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
       assert exist_in?(user2, article.comments_participants)
     end
 
-    @tag :wip
     test "replies count should inc by 1 after got replied", ~m(community changelog user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       assert parent_comment.replies_count === 0
 
@@ -158,10 +150,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
   end
 
   describe "[paged article comment replies]" do
-    @tag :wip
     test "can get paged replies of a parent comment", ~m(community changelog user)a do
       {:ok, parent_comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, paged_replies} = CMS.paged_comment_replies(parent_comment.id, %{page: 1, size: 20})
       assert is_valid_pagination?(paged_replies, :raw, :empty)
@@ -187,13 +178,12 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
       assert exist_in?(Enum.at(reply_comment_list, 3), paged_replies.entries)
     end
 
-    @tag :wip
     test "can get reply_to info of a parent comment", ~m(community changelog user)a do
       page_number = 1
       page_size = 10
 
       {:ok, parent_comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, reply_comment} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
       {:ok, reply_comment2} = CMS.reply_comment(parent_comment.id, mock_comment(), user)

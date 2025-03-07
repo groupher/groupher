@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.Articles.Post do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Helper.Utils, only: [get_config: 2]
@@ -302,7 +304,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
       {:ok, post1} = ORM.find(Post, post1.id)
       {:ok, post2} = ORM.find(Post, post2.id)
-      {:ok, post3} = ORM.find(Post, post3.id)
+      # {:ok, } = ORM.find(Post, post3.id)
 
       assert post1.mark_delete == false
       assert post2.mark_delete == false

@@ -254,7 +254,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   @doc """
   archive articles based on thread
-  called every day by scheduler job
+  called every day by scheuler job
   """
   def archive_articles(thread) do
     with {:ok, info} <- match(thread) do
@@ -377,7 +377,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   end
 
   defp do_mark_viewer_has_states(meta, %User{id: user_id}) do
-    # TODO: 根据是否付费进一步判断
     # user_is_member = true
     %{
       viewer_has_collected: Enum.member?(meta.collected_user_ids, user_id),
@@ -642,7 +641,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   remove article forever
   """
-  def delete_article(article, reason \\ @remove_article_hint) do
+  def delete_article(article, _reason \\ @remove_article_hint) do
     article = Repo.preload(article, [:communities, [author: :user]])
     {:ok, thread} = thread_of(article)
 
@@ -661,7 +660,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       # for those history & test setup case
       {:ok, :pass}
     end)
-    # TODO: notify author
     |> Repo.transaction()
     |> result()
   end
@@ -913,7 +911,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   defp result({:ok, %{update_edit_status: result}}), do: {:ok, result}
   defp result({:ok, %{update_article: result}}), do: {:ok, result}
-  defp result({:ok, %{update_articles: result}}), do: {:ok, %{done: true}}
+  defp result({:ok, %{update_articles: _result}}), do: {:ok, %{done: true}}
   defp result({:ok, %{delete_article: result}}), do: {:ok, result}
   # NOTE:  for read article, order is import
   defp result({:ok, %{set_viewer_has_states: result}}), do: result |> done()

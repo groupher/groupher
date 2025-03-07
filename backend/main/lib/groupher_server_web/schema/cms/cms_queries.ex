@@ -101,7 +101,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.paged_article_tags/3)
     end
 
-    @desc "got basic commnets state"
+    @desc "got basic comments state"
     field :comments_state, :comments_list_state do
       arg(:id, non_null(:id))
       arg(:thread, :thread, default_value: :post)
@@ -110,7 +110,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.comments_state/3)
     end
 
-    @desc "got spec commnet by id"
+    @desc "got spec comment by id"
     field :one_comment, :comment do
       arg(:id, non_null(:id))
 
@@ -194,7 +194,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.paged_kanban_posts/3)
     end
 
-    # this query is only use to pass the graphql type spec, real logic is in fronten
+    # this query is only use to pass the graphql type spec, real logic is in fronted
     field :client_i18n, :client_locale do
       arg(:locale, :string)
 
@@ -203,7 +203,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     article_search_queries()
 
-    article_reacted_users_query(:upvot, &R.CMS.upvoted_users/3)
+    article_reacted_users_query(:upvote, &R.CMS.upvoted_users/3)
     article_reacted_users_query(:collect, &R.CMS.collected_users/3)
 
     article_queries()

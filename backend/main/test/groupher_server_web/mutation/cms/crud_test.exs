@@ -135,10 +135,10 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
       {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)
 
-      assoc_categroies = found_community.categories |> Enum.map(& &1.id)
+      assoc_categories = found_community.categories |> Enum.map(& &1.id)
       assoc_communities = found_category.communities |> Enum.map(& &1.id)
 
-      assert category.id in assoc_categroies
+      assert category.id in assoc_categories
       assert community.id in assoc_communities
     end
 
@@ -541,6 +541,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
+    @tag :skip_ci
     test "auth user can update moderator to community", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user

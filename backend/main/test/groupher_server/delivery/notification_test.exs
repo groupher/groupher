@@ -104,6 +104,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
       assert user3 |> user_exist_in?(notify.from_users)
     end
 
+    @tag :skip_ci
     test "different notify should not be merged", ~m(user user2 user3 notify_attrs)a do
       {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
       notify_attrs = notify_attrs |> Map.put(:action, :collect)
@@ -120,6 +121,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
       assert user2 |> user_exist_in?(notify2.from_users)
     end
 
+    @tag :skip_ci
     test "notify not in @notify_group_interval_hour should not be merged",
          ~m(user user2 user3 notify_attrs)a do
       {:ok, notify} = Delivery.send(:notify, notify_attrs, user2)

@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
   import Helper.Utils, only: [get_config: 2]
 
-  alias Helper.Constant
+  alias Helper.{Constant, ORM}
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.Post
 
@@ -27,19 +27,23 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   @total_count @today_count + @last_week_count + @last_month_count + @last_year_count
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, post, _, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
+    {:ok, post_last_week} =
+      ORM.update(post, %{title: "last week", inserted_at: @last_week, active_at: @last_week},
+        strict: false
+      )
 
     {:ok, post_last_month} = db_insert(:post, %{title: "last month", inserted_at: @last_month})
 
-    {:ok, post_last_week} =
-      db_insert(:post, %{title: "last week", inserted_at: @last_week, active_at: @last_week})
+    {community, post, _, user} = mock_article(:post, community, user)
 
     {:ok, post_last_year} =
-      db_insert(:post, %{title: "last year", inserted_at: @last_year, active_at: @last_year})
+      ORM.update(post, %{title: "last year", inserted_at: @last_year, active_at: @last_year},
+        strict: false
+      )
 
     db_insert_multi(:post, @today_count)
 
@@ -100,7 +104,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["id"] > post.id
     end
 
-    @tag :wip
     test "upvotes_count order should work", ~m(guest_conn post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
 
@@ -114,13 +117,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["upvotesCount"] === 3
     end
 
-    @tag :wip
-    test "comments_count order should work", ~m(guest_conn post_last_week user user2 user3)a do
+    test "comments_count order should work",
+         ~m(guest_conn community post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
+      post_id = post_last_week.inner_id
 
-      {:ok, _} = CMS.create_comment(:post, post_last_week.id, mock_comment(), user)
-      {:ok, _} = CMS.create_comment(:post, post_last_week.id, mock_comment(), user2)
-      {:ok, _} = CMS.create_comment(:post, post_last_week.id, mock_comment(), user3)
+      {:ok, _} = CMS.create_comment(community, :post, post_id, mock_comment(), user)
+      {:ok, _} = CMS.create_comment(community, :post, post_id, mock_comment(), user2)
+      {:ok, _} = CMS.create_comment(community, :post, post_id, mock_comment(), user3)
 
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
       first_post = results["entries"] |> List.first()
@@ -146,8 +150,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     test "should get valid cat & state", ~m(guest_conn post_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}
 
-      {:ok, _post} = CMS.set_post_cat(post_last_week, @article_cat.feature)
-      {:ok, _post} = CMS.set_post_state(post_last_week, @article_state.wip)
+      {:ok, _} = CMS.set_post_cat(post_last_week, @article_cat.feature)
+      {:ok, _} = CMS.set_post_state(post_last_week, @article_state.wip)
 
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
 
@@ -156,8 +160,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     end
 
     test "should get valid cat & state by filter", ~m(guest_conn post_last_week)a do
-      {:ok, _post} = CMS.set_post_cat(post_last_week, @article_cat.feature)
-      {:ok, _post} = CMS.set_post_state(post_last_week, @article_state.wip)
+      {:ok, _} = CMS.set_post_cat(post_last_week, @article_cat.feature)
+      {:ok, _} = CMS.set_post_state(post_last_week, @article_state.wip)
 
       variables = %{filter: %{page: 1, size: 20, cat: "feature"}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
@@ -185,7 +189,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       {:ok, community} = db_insert(:community)
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       Process.sleep(2000)
-      {:ok, _post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
 
       variables = %{filter: %{page: 1, size: 10}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
@@ -220,9 +224,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       {:ok, community} = db_insert(:community)
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, _post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
       post_attrs2 = mock_attrs(:post, %{community_id: community.id})
-      {:ok, _post} = CMS.create_article(community, :post, post_attrs2, user)
+      {:ok, _} = CMS.create_article(community, :post, post_attrs2, user)
 
       variables = %{filter: %{page: 1, size: 10, community: community.slug}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
@@ -290,7 +294,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
     test "should have a active_at same with inserted_at", ~m(guest_conn user)a do
       {:ok, community} = db_insert(:community)
-      {:ok, _post} = CMS.create_article(community, :post, mock_attrs(:post), user)
+      {:ok, _} = CMS.create_article(community, :post, mock_attrs(:post), user)
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
@@ -425,8 +429,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
 
-      # TODO, fix later
-      # assert results |> Map.get("totalCount") == @today_count
+      assert results |> Map.get("totalCount") == @today_count
     end
 
     test "THIS_MONTH option should work", ~m(guest_conn post_last_month)a do
@@ -449,7 +452,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       }
     }
     """
-    test "latest commented post should appear on top", ~m(guest_conn post_last_week user)a do
+
+    test "latest commented post should appear on top",
+         ~m(guest_conn community post_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
       entries = results["entries"]
@@ -457,7 +462,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["id"] !== to_string(post_last_week.id)
 
       Process.sleep(1500)
-      {:ok, _comment} = CMS.create_comment(:post, post_last_week.id, mock_comment(), user)
+
+      {:ok, _} =
+        CMS.create_comment(community, :post, post_last_week.inner_id, mock_comment(), user2)
 
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
       entries = results["entries"]
@@ -466,10 +473,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["id"] == to_string(post_last_week.id)
     end
 
-    test "comment on very old post have no effect", ~m(guest_conn post_last_year user)a do
+    test "comment on very old post have no effect",
+         ~m(guest_conn community post_last_year user2)a do
       variables = %{filter: %{page: 1, size: 20}}
 
-      {:ok, _comment} = CMS.create_comment(:post, post_last_year.id, mock_comment(), user)
+      {:ok, _} =
+        CMS.create_comment(community, :post, post_last_year.inner_id, mock_comment(), user2)
 
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
       entries = results["entries"]
@@ -478,16 +487,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["id"] !== to_string(post_last_year.id)
     end
 
-    test "latest post author commented post have no effect", ~m(guest_conn post_last_week)a do
+    test "latest post author commented post have no effect",
+         ~m(guest_conn community post_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}
+      {:ok, post} = ORM.find(Post, post_last_week.id, preload: [author: :user])
 
-      {:ok, _comment} =
-        CMS.create_comment(
-          :post,
-          post_last_week.id,
-          mock_comment(),
-          post_last_week.author.user
-        )
+      {:ok, _} =
+        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post.author.user)
 
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
       entries = results["entries"]

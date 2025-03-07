@@ -118,9 +118,9 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     0..Enum.random(1..5)
     |> Enum.each(fn _ ->
       text = Faker.Lorem.sentence(20)
-      {:ok, comment} = CMS.create_comment(thread, article_id, mock_comment(text), user)
-      seed_comment_emotions(comment)
-      seed_comment_replies(comment)
+      # {:ok, comment} = CMS.create_comment(thread, article_id, mock_comment(text), user)
+      # seed_comment_emotions(comment)
+      # seed_comment_replies(comment)
     end)
   end
 

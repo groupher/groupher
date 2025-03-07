@@ -106,7 +106,7 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
 
       CollectFolder |> ORM.create(args)
     else
-      {:ok, folder} -> raise_error(:already_exsit, "#{folder.title} already exsits")
+      {:ok, folder} -> raise_error(:already_exist, "#{folder.title} already exsits")
     end
   end
 

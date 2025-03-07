@@ -12,7 +12,7 @@ defmodule GroupherServerWeb.Resolvers.Statistics do
     Statistics.list_contributes_digest(%Community{id: id})
   end
 
-  def make_contrubute(_root, %{user_id: user_id}, _info) do
+  def make_contribute(_root, %{user_id: user_id}, _info) do
     Statistics.make_contribute(%User{id: user_id})
   end
 

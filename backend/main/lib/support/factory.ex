@@ -443,4 +443,11 @@ defmodule GroupherServer.Support.Factory do
 
     {community, article, attrs, user}
   end
+
+  def mock_article(thread, %Community{} = community, %User{} = user) do
+    attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
+    {:ok, article} = CMS.create_article(community, thread, attrs, user)
+
+    {community, article, attrs, user}
+  end
 end

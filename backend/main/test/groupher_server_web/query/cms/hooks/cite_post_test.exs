@@ -11,10 +11,7 @@ defmodule GroupherServer.Test.Query.Hooks.PostCiting do
   @site_host get_config(:general, :site_host)
 
   setup do
-    {:ok, post} = db_insert(:post)
     {:ok, user} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
     {:ok, community} = db_insert(:community)
 
     post_attrs = mock_attrs(:post, %{community_id: community.id})
@@ -46,13 +43,13 @@ defmodule GroupherServer.Test.Query.Hooks.PostCiting do
       }
     }
     """
-    @tag :wip
+
     test "should get paged cittings", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post2} = CMS.create_article(community, :post, post_attrs, user)
 
       body = mock_comment(~s(the <a href=#{@site_host}/post/#{post2.id} />))
-      {:ok, comment} = CMS.create_comment2(community, :post, post2.inner_id, body, user)
+      {:ok, comment} = CMS.create_comment(community, :post, post2.inner_id, body, user)
 
       body =
         mock_rich_text(

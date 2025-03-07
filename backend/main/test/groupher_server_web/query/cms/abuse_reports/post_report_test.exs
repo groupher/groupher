@@ -89,7 +89,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
 
     test "support comment", ~m(guest_conn community post user)a do
       {:ok, comment} =
-        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
 

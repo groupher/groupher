@@ -28,11 +28,11 @@ defmodule Helper.ErrorCode do
   def ecode(:already_did), do: @default_base + 4
   def ecode(:self_conflict), do: @default_base + 5
   def ecode(:react_fails), do: @default_base + 6
-  def ecode(:already_exsit), do: @default_base + 7
+  def ecode(:already_exist), do: @default_base + 7
   def ecode(:update_fails), do: @default_base + 8
   def ecode(:delete_fails), do: @default_base + 9
   def ecode(:create_fails), do: @default_base + 10
-  def ecode(:exsit_pending_bill), do: @default_base + 11
+  def ecode(:exist_pending_bill), do: @default_base + 11
   def ecode(:bill_state), do: @default_base + 12
   def ecode(:bill_action), do: @default_base + 13
   def ecode(:editor_data_parse), do: @default_base + 14
@@ -41,7 +41,7 @@ defmodule Helper.ErrorCode do
   def ecode(:oauth_trust_code), do: @default_base + 17
   def ecode(:oauth_unlink), do: @default_base + 18
   # throttle
-  def ecode(:throttle_inverval), do: @throttle_base + 1
+  def ecode(:throttle_interval), do: @throttle_base + 1
   def ecode(:throttle_hour), do: @throttle_base + 2
   def ecode(:throttle_day), do: @throttle_base + 3
   # comment
@@ -57,7 +57,7 @@ defmodule Helper.ErrorCode do
   def ecode(:undo_sink_old_article), do: @article_base + 7
   def ecode(:article_comments_locked), do: @article_base + 8
   def ecode(:require_questioner), do: @article_base + 9
-  def ecode(:cite_artilce), do: @article_base + 10
+  def ecode(:cite_article), do: @article_base + 10
   def ecode(:archived), do: @article_base + 11
   def ecode(:invalid_blog_title), do: @article_base + 13
   # def ecode(:already_solved), do: @article_base + 10

@@ -10,7 +10,7 @@ Enum.reduce(1..15, [], fn _, acc ->
   unique_num = System.unique_integer([:positive, :monotonic])
 
   # {:ok, value} =
-  #   CMS.create_comment2(
+  #   CMS.create_comment(
   #     :post,
   #     :comment,
   #     post.id,

@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {:ok, _folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:error, reason} = Accounts.create_collect_folder(%{title: "test folder"}, user)
 
-      assert reason |> is_error?(:already_exsit)
+      assert reason |> is_error?(:already_exist)
     end
 
     test "user can delete a empty collect folder", ~m(user)a do

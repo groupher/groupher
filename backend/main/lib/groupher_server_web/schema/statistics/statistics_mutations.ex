@@ -5,10 +5,10 @@ defmodule GroupherServerWeb.Schema.Statistics.Mutations do
   use Helper.GqlSchemaSuite
 
   object :statistics_mutations do
-    field :make_contrubute, :user_contribute do
+    field :make_contribute, :user_contribute do
       arg(:user_id, non_null(:id))
 
-      resolve(&R.Statistics.make_contrubute/3)
+      resolve(&R.Statistics.make_contribute/3)
     end
   end
 end

@@ -52,13 +52,12 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInChangelog do
       assert mention.user.login == changelog.author.user.login
     end
 
-    @tag :wip
     test "mention in changelog's comment should work", ~m(user user2 community changelog)a do
       comment_body =
         mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user2.login}</div>))
 
       {:ok, comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, comment_body, user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, comment_body, user)
 
       {:ok, comment} = preload_author(comment)
 
@@ -74,7 +73,6 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInChangelog do
       assert mention.user.login == comment.author.login
     end
 
-    @tag :wip
     test "can not mention author self in changelog or comment",
          ~m(community user changelog_attrs)a do
       body = mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))
@@ -88,7 +86,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInChangelog do
         mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))
 
       {:ok, comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, comment_body, user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, comment_body, user)
 
       {:ok, _} = Hooks.Mention.handle(comment)
       {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})

@@ -55,6 +55,18 @@ defmodule Helper.Utils do
   def plural(thread), do: :"#{thread}s"
 
   @doc """
+  not general, only used in this project
+  """
+  def past_verb(word) do
+    word_str = if is_atom(word), do: Atom.to_string(word), else: word
+
+    case word_str do
+      "upvote" -> "upvoted"
+      _ -> "#{word_str}ed"
+    end
+  end
+
+  @doc """
   like || in javascript
   """
   def ensure(nil, default_data), do: default_data

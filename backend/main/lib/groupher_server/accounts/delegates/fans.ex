@@ -173,7 +173,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
 
   def mark_viewer_follow_status({:error, reason}), do: {:error, reason}
 
-  defp do_mark_viewer_has_states(user_id, %User{meta: nil}) do
+  defp do_mark_viewer_has_states(_user_id, %User{meta: nil}) do
     %{viewer_been_followed: false, viewer_has_followed: false}
   end
 

@@ -4,7 +4,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   import ShortMaps
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, FrontDesk}
 
   alias Helper.{ORM, OgInfo, Constant}
   alias Accounts.Model.User
@@ -425,8 +425,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.paged_comments_participants(thread, id, filter)
   end
 
-  def create_comment(_root, ~m(thread id body)a, %{context: %{cur_user: user}}) do
-    CMS.create_comment(thread, id, body, user)
+  def create_comment(_root, ~m(community thread id body)a, %{context: %{cur_user: user}}) do
+    with {:ok, community} <- FrontDesk.info(:community, community) do
+      CMS.create_comment(community, thread, id, body, user)
+    end
   end
 
   def update_comment(_root, ~m(body passport_source)a, _info) do
@@ -507,13 +509,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # ##############################################
   # counts just for manngers to use in admin site ..
   # ##############################################
-  def threads_count(root, _, _) do
-    CMS.count(%Community{id: root.id}, :threads)
-  end
+  def threads_count(root, _, _), do: CMS.count(%Community{id: root.id}, :threads)
 
-  def article_tags_count(root, _, _) do
-    CMS.count(%Community{id: root.id}, :article_tags)
-  end
+  def article_tags_count(root, _, _), do: CMS.count(%Community{id: root.id}, :article_tags)
 
   # OSS token
   def upload_tokens(_root, _, _) do

@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Payment do
     test "create bill record with previous record unhandled fails", ~m(user valid_attrs)a do
       {:ok, _record} = Payment.create_record(user, valid_attrs)
       {:error, reason} = Payment.create_record(user, valid_attrs)
-      assert reason |> Keyword.get(:code) == ecode(:exsit_pending_bill)
+      assert reason |> Keyword.get(:code) == ecode(:exist_pending_bill)
     end
 
     test "record state can be update", ~m(user valid_attrs)a do

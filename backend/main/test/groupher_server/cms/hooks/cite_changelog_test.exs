@@ -71,10 +71,9 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
       assert changelog.meta.citing_count == 0
     end
 
-    @tag :wip
     test "cited comment itself should not work", ~m(user community changelog)a do
       {:ok, cited_comment} =
-        CMS.create_comment2(
+        CMS.create_comment(
           community.slug,
           :changelog,
           changelog.inner_id,
@@ -96,11 +95,10 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
       assert cited_comment.meta.citing_count == 0
     end
 
-    @tag :wip
     test "can cite changelog's comment in changelog",
          ~m(user community changelog changelog2 changelog_attrs)a do
       {:ok, comment} =
-        CMS.create_comment2(
+        CMS.create_comment(
           community.slug,
           :changelog,
           changelog.inner_id,
@@ -128,10 +126,9 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
       assert cited_content.cited_by_type == "COMMENT"
     end
 
-    @tag :wip
     test "can cite a comment in a comment", ~m(user community changelog)a do
       {:ok, cited_comment} =
-        CMS.create_comment2(
+        CMS.create_comment(
           community.slug,
           :changelog,
           changelog.inner_id,
@@ -145,7 +142,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
         )
 
       {:ok, comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, comment_body, user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, comment_body, user)
 
       Hooks.Cite.handle(comment)
 
@@ -158,7 +155,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
       assert cited_content.cited_by_type == "COMMENT"
     end
 
-    @tag :wip
     test "can cited changelog inside a comment",
          ~m(user community changelog changelog2 changelog3 changelog4 changelog5)a do
       comment_body =
@@ -169,14 +165,14 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
         )
 
       {:ok, comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, comment_body, user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, comment_body, user)
 
       Hooks.Cite.handle(comment)
 
       comment_body = mock_rich_text(~s(the <a href=#{@site_host}/changelog/#{changelog3.id} />))
 
       {:ok, comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, comment_body, user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, comment_body, user)
 
       Hooks.Cite.handle(comment)
 
@@ -193,10 +189,9 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
   end
 
   describe "[cite pagi]" do
-    @tag :wip
     test "can get paged cited articles.", ~m(user community changelog2 changelog_attrs)a do
       {:ok, comment} =
-        CMS.create_comment2(
+        CMS.create_comment(
           community.slug,
           :changelog,
           changelog2.inner_id,
@@ -252,7 +247,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
   end
 
   describe "[cross cite]" do
-    @tag :wip
     test "can citing multi type thread and comment in one time", ~m(user community changelog2)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})

@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
       {:ok, article_tag2} = CMS.create_article_tag(community, :post, article_tag_attrs2, user)
 
-      {:ok, _post} = CMS.set_article_tag(:post, post.id, article_tag.id)
+      {:ok, _} = CMS.set_article_tag(:post, post.id, article_tag.id)
       {:ok, post} = CMS.set_article_tag(:post, post.id, article_tag2.id)
 
       assert post.article_tags |> length == 2

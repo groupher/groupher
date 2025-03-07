@@ -28,7 +28,6 @@ defmodule GroupherServer.Test.Accounts.Published.Post do
       assert user.meta.published_posts_count == 2
     end
 
-    @tag :wip
     test "fresh user get empty paged published posts", ~m(user2)a do
       {:ok, results} = Accounts.paged_published_articles(user2, :post, %{page: 1, size: 20})
 
@@ -36,7 +35,6 @@ defmodule GroupherServer.Test.Accounts.Published.Post do
       assert results.total_count == 0
     end
 
-    @tag :wip
     test "user can get paged published posts", ~m(user user2 community community2)a do
       pub_posts =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
@@ -75,13 +73,12 @@ defmodule GroupherServer.Test.Accounts.Published.Post do
   end
 
   describe "[published post comments]" do
-    @tag :wip
     test "can get published article comments", ~m(community post user)a do
       total_count = 10
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+          CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
         acc ++ [comment]
       end)

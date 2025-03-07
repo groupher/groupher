@@ -53,7 +53,6 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
       assert reason |> is_error?(:archived)
     end
 
-    @tag :wip
     test "can not delete archived blog" do
       {:ok, _} = CMS.archive_articles(:blog)
 

@@ -5,23 +5,13 @@ on:
       - "backend/main/**" # only trigger when this dir changes
 
 jobs:
-  deploy:
-    name: Deploy backend api
+  setup:
+    name: Setup environment
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend/main
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: groupher_server_test
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-    
+
     steps:
       - uses: actions/checkout@v3
 
@@ -36,15 +26,62 @@ jobs:
         with:
           path: backend/main/deps
           key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-mix-
 
       - name: Cache build
         uses: actions/cache@v3
         with:
           path: backend/main/_build
           key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
 
       - name: Install dependencies
         run: mix deps.get
 
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    needs: setup
+    defaults:
+      run:
+        working-directory: backend/main
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: groupher_server_test
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: "25.0"
+          elixir-version: "1.15.7"
+
+      - name: Restore cached deps
+        uses: actions/cache@v3
+        with:
+          path: backend/main/deps
+          key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-mix-
+
+      - name: Restore cached build
+        uses: actions/cache@v3
+        with:
+          path: backend/main/_build
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+
       - name: Run tests
-        run: mix test
+        run: mix test --exclude skip_ci

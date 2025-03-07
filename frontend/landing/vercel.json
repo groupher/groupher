@@ -8,5 +8,6 @@
       "src": "/landing/(.*)",
       "dest": "/$1"
     }
-  ]
+  ],
+  "ignoreCommand": "../scripts/skip-build.sh"
 }

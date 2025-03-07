@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
 
   describe "[audit post basic]" do
     # test "ugly words should get audit", ~m(user post)a do
-    #   {:ok, comment} = CMS.create_comment2(:post, post.id, mock_comment("M卖批, 这也太操蛋了, 党中央"), user)
+    #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment("M卖批, 这也太操蛋了, 党中央"), user)
 
     #   Hooks.Audition.handle(comment)
     #   {:ok, comment} = ORM.find(CMS.Model.Comment, comment.id)
@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
     # end
 
     # test "normal words should not get audit", ~m(user post)a do
-    #   {:ok, comment} = CMS.create_comment2(:post, post.id, mock_comment("世界属于三体"), user)
+    #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment("世界属于三体"), user)
 
     #   Hooks.Audition.handle(comment)
     #   {:ok, comment} = ORM.find(CMS.Model.Comment, comment.id)
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
     # end
 
     # test "failed audit should have falied state", ~m(user post)a do
-    #   {:ok, comment} = CMS.create_comment2(:post, post.id, mock_comment("世界属于三体"), user)
+    #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment("世界属于三体"), user)
 
     #   Hooks.Audition.handle_edge(comment)
 
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPostComment do
     # end
 
     # test "can handle paged audit failed comments", ~m(user post)a do
-    #   {:ok, comment} = CMS.create_comment2(:post, post.id, mock_comment("世界属于三体"), user)
+    #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment("世界属于三体"), user)
     #   CMS.set_article_audit_failed(comment, %{})
 
     #   {:ok, paged_comments} = CMS.paged_audit_failed_comments(%{page: 1, size: 30})
