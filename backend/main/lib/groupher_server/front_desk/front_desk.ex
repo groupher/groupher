@@ -4,8 +4,8 @@ defmodule GroupherServer.FrontDesk do
   make sure the underline delegates are using model instead of refetch from DB
 
   those can be use both in function and middleware
+  # TODO: bring cache in
   """
-
   alias GroupherServer.CMS.Model.Community
   alias Helper.ORM
   alias GroupherServer.CMS

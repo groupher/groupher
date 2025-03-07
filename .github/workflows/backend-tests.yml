@@ -11,16 +11,6 @@ jobs:
     defaults:
       run:
         working-directory: backend/main
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: groupher_server_test
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - uses: actions/checkout@v3
@@ -57,13 +47,13 @@ jobs:
   test:
     name: Run tests
     runs-on: ubuntu-latest
-    needs: setup 
+    needs: setup  # 依赖 setup 作业
     defaults:
       run:
         working-directory: backend/main
     strategy:
       matrix:
-        retry: [1, 2, 3]  # retry 3 times
+        retry: [1, 2, 3]  # 重试 3 次
     services:
       postgres:
         image: postgres:15
