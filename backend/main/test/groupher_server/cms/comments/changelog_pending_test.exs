@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
     @tag :wip
     test "pending changelog comment can set/unset pending", ~m(community changelog user)a do
       {:ok, comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
     @tag :wip
     test "pending changelog-comment's meta should have info", ~m(community changelog user)a do
       {:ok, comment} =
-        CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{

@@ -74,7 +74,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
     @tag :wip
     test "cited comment itself should not work", ~m(user community post)a do
       {:ok, cited_comment} =
-        CMS.create_comment2(community, :post, post.inner_id, mock_rich_text("hello"), user)
+        CMS.create_comment(community, :post, post.inner_id, mock_rich_text("hello"), user)
 
       {:ok, comment} =
         CMS.update_comment(
@@ -93,7 +93,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
     @tag :wip
     test "can cite post's comment in post", ~m(community user post post2 post_attrs)a do
       {:ok, comment} =
-        CMS.create_comment2(community, :post, post.inner_id, mock_rich_text("hello"), user)
+        CMS.create_comment(community, :post, post.inner_id, mock_rich_text("hello"), user)
 
       body =
         mock_rich_text(~s(the <a href=#{@site_host}/post/#{post2.id}?comment_id=#{comment.id} />))
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
     @tag :wip
     test "can cite a comment in a comment", ~m(user community post)a do
       {:ok, cited_comment} =
-        CMS.create_comment2(community, :post, post.inner_id, mock_rich_text("hello"), user)
+        CMS.create_comment(community, :post, post.inner_id, mock_rich_text("hello"), user)
 
       comment_body =
         mock_rich_text(
@@ -124,7 +124,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
         )
 
       {:ok, comment} =
-        CMS.create_comment2(community, :post, post.inner_id, comment_body, user)
+        CMS.create_comment(community, :post, post.inner_id, comment_body, user)
 
       Hooks.Cite.handle(comment)
 
@@ -147,14 +147,14 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
         )
 
       {:ok, comment} =
-        CMS.create_comment2(community, :post, post.inner_id, comment_body, user)
+        CMS.create_comment(community, :post, post.inner_id, comment_body, user)
 
       Hooks.Cite.handle(comment)
 
       comment_body = mock_rich_text(~s(the <a href=#{@site_host}/post/#{post3.id} />))
 
       {:ok, comment} =
-        CMS.create_comment2(community, :post, post.inner_id, comment_body, user)
+        CMS.create_comment(community, :post, post.inner_id, comment_body, user)
 
       Hooks.Cite.handle(comment)
 
@@ -174,7 +174,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
     @tag :wip
     test "can get paged cited articles.", ~m(user community post2 post_attrs)a do
       {:ok, comment} =
-        CMS.create_comment2(
+        CMS.create_comment(
           community,
           :post,
           post2.inner_id,

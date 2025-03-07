@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
       assert results.total_count == 0
     end
 
-    @tag :wip
+    @tag :wip3
     test "user can get paged published blogs", ~m(user user2 community community2)a do
       pub_blogs =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
@@ -82,7 +82,7 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
+          CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
         acc ++ [comment]
       end)

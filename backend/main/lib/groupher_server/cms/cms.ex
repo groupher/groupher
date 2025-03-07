@@ -192,8 +192,7 @@ defmodule GroupherServer.CMS do
   defdelegate paged_comment_replies(comment_id, filters), to: CommentCRUD
   defdelegate paged_comment_replies(comment_id, filters, user), to: CommentCRUD
   defdelegate paged_comments_participants(thread, content_id, filters), to: CommentCRUD
-  defdelegate create_comment(thread, article_id, args, user), to: CommentCRUD
-  defdelegate create_comment2(community, thread, inner_id, args, user), to: CommentCRUD
+  defdelegate create_comment(community, thread, inner_id, args, user), to: CommentCRUD
 
   defdelegate update_comment(comment, content), to: CommentCRUD
   defdelegate delete_comment(comment), to: CommentCRUD

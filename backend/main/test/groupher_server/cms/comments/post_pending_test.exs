@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostPending do
     @tag :wip
     test "pending post comment can set/unset pending", ~m(community post user)a do
       {:ok, comment} =
-        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostPending do
     @tag :wip
     test "pending post-comment's meta should have info", ~m(community post user)a do
       {:ok, comment} =
-        CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{

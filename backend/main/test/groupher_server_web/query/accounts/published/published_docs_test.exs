@@ -79,7 +79,7 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Docs do
       pub_comments =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+            CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
           acc ++ [comment]
         end)

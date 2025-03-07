@@ -248,6 +248,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
   defp result({:ok, %{update_cited_info: result}}), do: {:ok, result}
 
   defp result({:error, :update_cited_info, _result, _steps}) do
-    {:error, [message: "cited article", code: ecode(:cite_artilce)]}
+    {:error, [message: "cited article", code: ecode(:cite_article)]}
   end
 end

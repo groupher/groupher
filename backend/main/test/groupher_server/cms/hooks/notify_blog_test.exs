@@ -15,7 +15,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
     {:ok, user3} = db_insert(:user)
 
     {:ok, comment} =
-      CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
+      CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
     {:ok, ~m(user2 user3 community blog comment)a}
   end
@@ -134,7 +134,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
       {:ok, blog} = preload_author(blog)
 
       {:ok, comment} =
-        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user2)
+        CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user2)
 
       Hooks.Notify.handle(:comment, comment, user2)
 
@@ -157,7 +157,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
       {:ok, blog} = preload_author(blog)
 
       {:ok, comment} =
-        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user2)
+        CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user2)
 
       {:ok, replied_comment} = CMS.reply_comment(comment.id, mock_comment(), user3)
 

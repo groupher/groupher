@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogPendingFlag do
     @tag :wip
     test "pending blog comment can set/unset pending", ~m(community blog user)a do
       {:ok, comment} =
-        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogPendingFlag do
     @tag :wip
     test "pending blog-comment's meta should have info", ~m(community blog user)a do
       {:ok, comment} =
-        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{

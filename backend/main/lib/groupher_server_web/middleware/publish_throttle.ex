@@ -31,7 +31,7 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
     else
       {:error, :interval_check} ->
         resolution
-        |> handle_absinthe_error("throttle_interval", ecode(:throttle_inverval))
+        |> handle_absinthe_error("throttle_interval", ecode(:throttle_interval))
 
       {:error, :hour_limit_check} ->
         resolution

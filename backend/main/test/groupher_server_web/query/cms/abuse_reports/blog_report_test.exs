@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.BlogReport do
     @tag :wip
     test "support comment", ~m(guest_conn community blog user)a do
       {:ok, comment} =
-        CMS.create_comment2(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
 

@@ -9,9 +9,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.Blog
 
-  @article_cat Constant.CMS.article_cat()
-  @article_state Constant.CMS.article_state()
-
   @page_size get_config(:general, :page_size)
 
   @now Timex.now()
@@ -124,9 +121,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
       blog_id = blog_last_week.inner_id
 
-      {:ok, _} = CMS.create_comment2(community, :blog, blog_id, mock_comment(), user)
-      {:ok, _} = CMS.create_comment2(community, :blog, blog_id, mock_comment(), user2)
-      {:ok, _} = CMS.create_comment2(community, :blog, blog_id, mock_comment(), user3)
+      {:ok, _} = CMS.create_comment(community, :blog, blog_id, mock_comment(), user)
+      {:ok, _} = CMS.create_comment(community, :blog, blog_id, mock_comment(), user2)
+      {:ok, _} = CMS.create_comment(community, :blog, blog_id, mock_comment(), user3)
 
       results = guest_conn |> query_result(@query, variables, "pagedBlogs")
       first_blog = results["entries"] |> List.first()
@@ -397,12 +394,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert results |> Map.get("totalCount") == expect_count
     end
 
+    @tag :wip2
     test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> query_result(@query, variables, "pagedBlogs")
 
-      # TODO, fix later
-      # assert results |> Map.get("totalCount") == @today_count
+      assert results |> Map.get("totalCount") == @today_count
     end
 
     test "THIS_MONTH option should work", ~m(guest_conn blog_last_month)a do
@@ -437,7 +434,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       Process.sleep(1500)
 
       {:ok, _} =
-        CMS.create_comment2(
+        CMS.create_comment(
           community,
           :blog,
           blog_last_week.inner_id,
@@ -457,7 +454,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       variables = %{filter: %{page: 1, size: 20}}
 
       {:ok, _} =
-        CMS.create_comment2(
+        CMS.create_comment(
           community,
           :blog,
           blog_last_year.inner_id,
@@ -479,7 +476,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       {:ok, blog} = ORM.find(Blog, blog_last_week.id, preload: [author: :user])
 
       {:ok, _} =
-        CMS.create_comment2(
+        CMS.create_comment(
           community,
           :blog,
           blog.inner_id,

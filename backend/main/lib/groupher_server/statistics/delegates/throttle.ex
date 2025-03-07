@@ -40,8 +40,8 @@ defmodule GroupherServer.Statistics.Delegate.Throttle do
   # auto run check for same hour / day
   def load_throttle_record(%User{id: user_id}) do
     with {:ok, record} <- PublishThrottle |> ORM.find_by(~m(user_id)a) do
-      date_count = if is_same_day?(record.publish_date), do: record.date_count, else: 0
-      hour_count = if is_same_hour?(record.publish_hour), do: record.hour_count, else: 0
+      date_count = if same_day?(record.publish_date), do: record.date_count, else: 0
+      hour_count = if same_hour?(record.publish_hour), do: record.hour_count, else: 0
 
       case date_count !== 0 or hour_count !== 0 do
         true ->
@@ -60,17 +60,17 @@ defmodule GroupherServer.Statistics.Delegate.Throttle do
     end
   end
 
-  defp is_same_day?(datetime) do
+  defp same_day?(datetime) do
     datetime |> Timex.to_date() |> Timex.equal?(Timex.to_date(Timex.now()))
   end
 
-  defp is_same_hour?(datetime) do
+  defp same_hour?(datetime) do
     {_date, {record_hour, _min, _sec}} = datetime |> Timex.to_erl()
     {_date, {cur_hour, _min, _sec}} = Timex.now() |> Timex.to_erl()
 
     same_hour? = record_hour == cur_hour
 
-    is_same_day?(datetime) and same_hour?
+    same_day?(datetime) and same_hour?
   end
 
   # NOTE: the mock_xxx  is only use for test

@@ -2,7 +2,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
   @moduledoc """
   common fields
   """
-  import Helper.Utils, only: [get_config: 2, plural: 1]
+  import Helper.Utils, only: [get_config: 2, plural: 1, past_verb: 1]
 
   alias GroupherServerWeb.Middleware, as: M
   alias GroupherServerWeb.Resolvers, as: R
@@ -75,8 +75,8 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
 
   defmacro article_reacted_users_query(action, resolver) do
     quote do
-      @desc unquote("get paged #{action}ed users of an article")
-      field unquote(:"#{action}ed_users"), :paged_users do
+      @desc unquote("get paged #{past_verb(action)} users of an article")
+      field unquote(:"#{past_verb(action)}_users"), :paged_users do
         arg(:id, non_null(:id))
         arg(:thread, :thread, default_value: :post)
         arg(:filter, non_null(:pagi_filter))

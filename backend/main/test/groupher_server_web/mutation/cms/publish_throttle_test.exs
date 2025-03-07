@@ -84,7 +84,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     assert created |> Map.has_key?("id")
   end
 
-  test "user create multi content with invalid inverval time", ~m(community)a do
+  test "user create multi content with invalid interval time", ~m(community)a do
     {:ok, user} = db_insert(:user)
     user_conn = simu_conn(:user, user)
     variables = mock_attrs(:post) |> Map.merge(%{communityId: community.id})
@@ -93,7 +93,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     assert created |> Map.has_key?("id")
 
     assert user_conn
-           |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_inverval))
+           |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_interval))
 
     Statistics.mock_throttle_attr(
       :last_publish_time,
@@ -102,7 +102,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_inverval))
+           |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_interval))
   end
 
   test "user create multi content with invalid hour_count fails", ~m(community)a do

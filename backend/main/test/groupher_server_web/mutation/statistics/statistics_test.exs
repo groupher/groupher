@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Statistics do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.Statistics
@@ -7,13 +9,13 @@ defmodule GroupherServer.Test.Mutation.Statistics do
   alias Helper.ORM
 
   setup do
+    {community, post, post_attr, user} = mock_article(:post)
+    {:ok, user2} = db_insert(:user)
+
     guest_conn = simu_conn(:guest)
-    {:ok, user} = db_insert(:user)
-    user_conn = simu_conn(:user, user)
+    user_conn = simu_conn(:user, user2)
 
-    {:ok, community} = db_insert(:community)
-
-    {:ok, ~m(guest_conn user_conn community user)a}
+    {:ok, ~m(guest_conn user_conn community post user user2 post_attr)a}
   end
 
   describe "[statistics user_contribute] " do
@@ -35,20 +37,29 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       }
     }
     """
-    test "user should have contribute list after create a post", ~m(user_conn user community)a do
-      post_attr = mock_attrs(:post)
-      variables = post_attr |> Map.merge(%{communityId: community.id})
+    @tag :wip2
+    test "user should have contribute list after create a post",
+         ~m(user_conn user2 community post_attr)a do
+      variables = %{
+        title: post_attr.title,
+        body: post_attr.body,
+        communityId: community.id
+      }
 
       user_conn |> mutation_result(@create_post_query, variables, "createPost")
 
-      {:ok, contributes} = ORM.find_by(UserContribute, user_id: user.id)
+      {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1
     end
 
+    @tag :wip
     test "community should have contribute list after create a post",
-         ~m(user_conn community)a do
-      post_attr = mock_attrs(:post)
-      variables = post_attr |> Map.merge(%{communityId: community.id})
+         ~m(user_conn community post_attr)a do
+      variables = %{
+        title: post_attr.title,
+        body: post_attr.body,
+        communityId: community.id
+      }
 
       user_conn |> mutation_result(@create_post_query, variables, "createPost")
 
@@ -83,40 +94,45 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       }
     }
     """
-
-    test "user should have contribute list after create a blog", ~m(user_conn user community)a do
+    @tag :wip2
+    test "user should have contribute list after create a blog", ~m(user_conn user2 community)a do
       blog_attr = mock_attrs(:blog)
       variables = blog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
 
       user_conn |> mutation_result(@create_blog_query, variables, "createBlog")
 
-      {:ok, contributes} = ORM.find_by(UserContribute, user_id: user.id)
+      {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1
     end
 
     @write_comment_query """
-    mutation($thread: Thread!, $id: ID!, $body: String!) {
-      createComment(thread: $thread, id: $id, body: $body) {
+    mutation($community: String!, $thread: Thread!, $id: ID!, $body: String!) {
+      createComment(community: $community, thread: $thread, id: $id, body: $body) {
         id
         bodyHtml
       }
     }
     """
+    test "user should have contribute list after create a comment",
+         ~m(user_conn community post user2)a do
+      variables = %{
+        community: community.slug,
+        thread: "POST",
+        id: post.inner_id,
+        body: mock_comment()
+      }
 
-    test "user should have contribute list after create a comment", ~m(user_conn user)a do
-      {:ok, post} = db_insert(:post)
-      variables = %{thread: "POST", id: post.id, body: mock_comment()}
       user_conn |> mutation_result(@write_comment_query, variables, "createComment")
 
-      {:ok, contributes} = ORM.find_by(UserContribute, user_id: user.id)
+      {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1
     end
   end
 
-  describe "[statistics mutaion user_contribute] " do
+  describe "[statistics mutation user_contribute] " do
     @query """
     mutation($userId: ID!) {
-      makeContrubute(userId: $userId) {
+      makeContribute(userId: $userId) {
         date
         count
       }
@@ -126,7 +142,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
          ~m(guest_conn user)a do
       variables = %{userId: user.id}
       assert {:error, _} = ORM.find_by(UserContribute, user_id: user.id)
-      results = guest_conn |> mutation_result(@query, variables, "makeContrubute")
+      results = guest_conn |> mutation_result(@query, variables, "makeContribute")
       assert {:ok, _} = ORM.find_by(UserContribute, user_id: user.id)
 
       assert ["count", "date"] == results |> Map.keys()
@@ -136,8 +152,8 @@ defmodule GroupherServer.Test.Mutation.Statistics do
 
     test "makeContribute to same user should update contribute count", ~m(guest_conn user)a do
       variables = %{userId: user.id}
-      guest_conn |> mutation_result(@query, variables, "makeContrubute")
-      results = guest_conn |> mutation_result(@query, variables, "makeContrubute")
+      guest_conn |> mutation_result(@query, variables, "makeContribute")
+      results = guest_conn |> mutation_result(@query, variables, "makeContribute")
       assert ["count", "date"] == results |> Map.keys()
       assert results["date"] == Timex.today() |> Date.to_iso8601()
       assert results["count"] == 2

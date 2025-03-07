@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedBlogs do
     }
     """
 
-    test "both login and unlogin user can get one's paged upvoteded blogs",
+    test "both login and unlogin user can get one's paged upvoted blogs",
          ~m(user_conn guest_conn blogs)a do
       {:ok, user} = db_insert(:user)
 
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedBlogs do
       assert results2["totalCount"] == @total_count
     end
 
-    test "if no thread filter will get alll paged upvoteded articles",
+    test "if no thread filter will get all paged upvoted articles",
          ~m(guest_conn blogs)a do
       {:ok, user} = db_insert(:user)
 

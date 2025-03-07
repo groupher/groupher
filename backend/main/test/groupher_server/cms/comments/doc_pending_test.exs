@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocPendingFlag do
     @tag :wip
     test "pending doc comment can set/unset pending", ~m(community doc user)a do
       {:ok, comment} =
-        CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocPendingFlag do
     @tag :wip
     test "pending doc-comment's meta should have info", ~m(community doc user)a do
       {:ok, comment} =
-        CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
       {:ok, _} =
         CMS.set_comment_illegal(comment.id, %{

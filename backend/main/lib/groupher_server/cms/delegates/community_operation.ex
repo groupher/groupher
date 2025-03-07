@@ -190,7 +190,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   end
 
   # this is for first init when create community
-  defp user_is_root?(%Community{moderators: []}, %User{} = cur_user), do: {:ok, true}
+  defp user_is_root?(%Community{moderators: []}, %User{} = _cur_user), do: {:ok, true}
 
   defp user_is_root?(%Community{moderators: moderators}, %User{} = cur_user) do
     moderators

@@ -22,16 +22,16 @@ defmodule GroupherServer.Test.CMS.Comments.DocArchive do
       })
 
     {:ok, _} =
-      CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
     {:ok, _} =
-      CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
     {:ok, _} =
-      CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
     {:ok, _} =
-      CMS.create_comment2(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
     {:ok, ~m(comment_long_ago)a}
   end

@@ -37,7 +37,7 @@ defmodule GroupherServer.Payment.Delegate.CRUD do
     with {:ok, user} <- ORM.find(User, user_id) do
       case ORM.find_by(BillRecord, user_id: user.id, state: "pending") do
         {:ok, _record} ->
-          {:error, [message: "you have pending bill", code: ecode(:exsit_pending_bill)]}
+          {:error, [message: "you have pending bill", code: ecode(:exist_pending_bill)]}
 
         {:error, _} ->
           do_create_record(user, attrs)

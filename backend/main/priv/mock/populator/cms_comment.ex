@@ -22,6 +22,6 @@ defmodule GroupherServer.Mock.CMS.Comment do
     {:ok, post} = ORM.find(Post, 21)
     IO.inspect(post, label: "got post")
 
-    # {:ok, comment} = CMS.create_comment2(:post, post.id, mock_comment(), user)
+    # {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
   end
 end

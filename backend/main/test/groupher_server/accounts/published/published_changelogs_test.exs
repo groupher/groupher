@@ -82,7 +82,7 @@ defmodule GroupherServer.Test.Accounts.Published.Changelog do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.create_comment2(community, :changelog, changelog.inner_id, mock_comment(), user)
+          CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
         acc ++ [comment]
       end)

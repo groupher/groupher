@@ -21,10 +21,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
         inserted_at: DateTime.truncate(@last_year, :second)
       })
 
-    {:ok, _} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
-    {:ok, _} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
-    {:ok, _} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
-    {:ok, _} = CMS.create_comment2(community, :post, post.inner_id, mock_comment(), user)
+    {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+    {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+    {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+    {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
     {:ok, ~m(comment_long_ago)a}
   end
