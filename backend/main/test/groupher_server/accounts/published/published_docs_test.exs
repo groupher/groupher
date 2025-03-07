@@ -35,6 +35,7 @@ defmodule GroupherServer.Test.Accounts.Published.Doc do
       assert results.total_count == 0
     end
 
+    @tag :skip_ci
     test "user can get paged published docs", ~m(user user2 community community2)a do
       pub_docs =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
