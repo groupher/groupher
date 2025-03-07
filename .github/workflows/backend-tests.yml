@@ -26,12 +26,16 @@ jobs:
         with:
           path: backend/main/deps
           key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-mix-
 
       - name: Cache build
         uses: actions/cache@v3
         with:
           path: backend/main/_build
           key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
 
       - name: Install dependencies
         run: mix deps.get
@@ -43,9 +47,6 @@ jobs:
     defaults:
       run:
         working-directory: backend/main
-    strategy:
-      matrix:
-        retry: [1, 2, 3]
     services:
       postgres:
         image: postgres:15

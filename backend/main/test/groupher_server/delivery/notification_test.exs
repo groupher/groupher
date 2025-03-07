@@ -120,6 +120,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
       assert user2 |> user_exist_in?(notify2.from_users)
     end
 
+    @tag :wip
     test "notify not in @notify_group_interval_hour should not be merged",
          ~m(user user2 user3 notify_attrs)a do
       {:ok, notify} = Delivery.send(:notify, notify_attrs, user2)

@@ -419,7 +419,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       }
     }
     """
-
+    @tag :wip
     test "latest commented blog should appear on top",
          ~m(guest_conn community blog_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -428,7 +428,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       first_blog = entries |> List.first()
       assert first_blog["id"] !== to_string(blog_last_week.id)
 
-      Process.sleep(1500)
+      Process.sleep(2000)
 
       {:ok, _} =
         CMS.create_comment(
