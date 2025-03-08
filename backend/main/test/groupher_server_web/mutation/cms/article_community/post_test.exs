@@ -79,7 +79,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       }
     }
     """
-
     test "auth user can unmirror post to a community", ~m(post)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -116,7 +115,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       }
     }
     """
-
     test "auth user can mirror post home", ~m(post)a do
       {:ok, home_community} = db_insert(:community, %{slug: "home"})
 

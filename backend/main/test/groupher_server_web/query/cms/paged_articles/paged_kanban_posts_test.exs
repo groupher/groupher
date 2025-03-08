@@ -111,7 +111,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
       }
     }
     """
-
     test "can get paged kanban posts", ~m(guest_conn user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, _} = CMS.set_post_cat(post, @article_cat.feature)

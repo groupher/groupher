@@ -243,7 +243,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
        }
     }
     """
-
     test "filter community should get docs which belongs to that community",
          ~m(guest_conn user)a do
       {:ok, community} = db_insert(:community)
@@ -320,7 +319,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       }
     }
     """
-
     test "has_xxx state should work", ~m(user)a do
       user_conn = simu_conn(:user, user)
       {:ok, community} = db_insert(:community)
@@ -418,7 +416,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       }
     }
     """
-
     test "latest commented doc should appear on top",
          ~m(guest_conn community doc_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}

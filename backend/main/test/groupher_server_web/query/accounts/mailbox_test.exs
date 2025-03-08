@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Query.Accounts.Mailbox do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   setup do
@@ -25,7 +27,6 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
       }
     }
     """
-
     test "auth user can get it's own default mailbox status", ~m(user_conn user)a do
       results = user_conn |> query_result(@query, %{login: user.login}, "user")
       mailbox = results["mailbox"]
@@ -87,19 +88,18 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
       }
     }
     """
-
     test "can get paged mentions", ~m(user_conn user user2)a do
       mock_mention_for(user, user2)
 
-      varibles = %{filter: %{page: 1, size: 20}}
-      results = user_conn |> query_result(@query, varibles, "pagedMentions")
+      variables = %{filter: %{page: 1, size: 20}}
+      results = user_conn |> query_result(@query, variables, "pagedMentions")
 
       assert results |> is_valid_pagination?
       mention = results["entries"] |> List.first()
       assert user2.login == mention |> get_in(["user", "login"])
 
-      varibles = %{filter: %{page: 1, size: 20, read: true}}
-      results = user_conn |> query_result(@query, varibles, "pagedMentions")
+      variables = %{filter: %{page: 1, size: 20, read: true}}
+      results = user_conn |> query_result(@query, variables, "pagedMentions")
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 0
@@ -128,18 +128,17 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
       }
     }
     """
-
     test "can get paged notifications", ~m(user_conn user user2)a do
       mock_notification_for(user, user2)
 
-      varibles = %{filter: %{page: 1, size: 20}}
-      results = user_conn |> query_result(@query, varibles, "pagedNotifications")
+      variables = %{filter: %{page: 1, size: 20}}
+      results = user_conn |> query_result(@query, variables, "pagedNotifications")
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 1
 
-      varibles = %{filter: %{page: 1, size: 20, read: true}}
-      results = user_conn |> query_result(@query, varibles, "pagedNotifications")
+      variables = %{filter: %{page: 1, size: 20, read: true}}
+      results = user_conn |> query_result(@query, variables, "pagedNotifications")
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 0

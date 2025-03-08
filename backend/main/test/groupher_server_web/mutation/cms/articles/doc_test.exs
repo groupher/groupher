@@ -48,7 +48,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       }
     }
     """
-
     test "create doc with valid attrs and make sure author exist" do
       {:ok, user} = db_insert(:user)
       user_conn = simu_conn(:user, user)
@@ -143,7 +142,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       }
     }
     """
-
     test "delete a doc by doc's owner", ~m(owner_conn doc)a do
       deleted = owner_conn |> mutation_result(@query, %{id: doc.id}, "deleteDoc")
 
@@ -210,7 +208,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       }
     }
     """
-
     test "update a doc without login user fails", ~m(guest_conn doc)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 

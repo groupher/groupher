@@ -29,7 +29,6 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.DocReindexTag do
       }
     }
     """
-
     test "auth user can reindex tags in given group", ~m(community article_tag_attrs user)a do
       attrs = Map.merge(article_tag_attrs, %{group: "group1"})
 

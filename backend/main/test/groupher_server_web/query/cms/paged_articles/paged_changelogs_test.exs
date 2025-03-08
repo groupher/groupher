@@ -244,7 +244,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
        }
     }
     """
-
     test "filter community should get changelogs which belongs to that community",
          ~m(guest_conn user)a do
       {:ok, community} = db_insert(:community)
@@ -321,7 +320,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       }
     }
     """
-
     test "has_xxx state should work", ~m(user)a do
       user_conn = simu_conn(:user, user)
       {:ok, community} = db_insert(:community)
@@ -419,7 +417,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       }
     }
     """
-
     test "latest commented changelog should appear on top",
          ~m(guest_conn community changelog_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}

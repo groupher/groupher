@@ -25,7 +25,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
       }
     }
     """
-
     test "login user can report a changelog", ~m(community changelog_attrs user user_conn)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
@@ -43,7 +42,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
       }
     }
     """
-
     test "login user can undo report a changelog",
          ~m(community changelog_attrs user user_conn)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)

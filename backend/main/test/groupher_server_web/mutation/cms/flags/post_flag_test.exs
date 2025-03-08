@@ -126,7 +126,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
-
     test "auth user can batch mark delete posts", ~m(community post post2 post3)a do
       variables = %{
         community: community.slug,
@@ -156,7 +155,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
-
     test "auth user can batch undo mark delete posts", ~m(community post post2 post3)a do
       CMS.batch_mark_delete_articles(community.slug, :post, [
         post.inner_id,
@@ -251,7 +249,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
-
     test "auth user can undo pin post", ~m(community post)a do
       variables = %{id: post.id, communityId: community.id}
 

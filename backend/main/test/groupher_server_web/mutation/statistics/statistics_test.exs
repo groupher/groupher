@@ -37,7 +37,6 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       }
     }
     """
-
     test "user should have contribute list after create a post",
          ~m(user_conn user2 community post_attr)a do
       variables = %{
@@ -93,7 +92,6 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       }
     }
     """
-
     test "user should have contribute list after create a blog", ~m(user_conn user2 community)a do
       blog_attr = mock_attrs(:blog)
       variables = blog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key

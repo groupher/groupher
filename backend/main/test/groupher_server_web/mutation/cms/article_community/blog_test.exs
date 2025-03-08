@@ -79,7 +79,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
       }
     }
     """
-
     test "auth user can unmirror blog to a community", ~m(blog)a do
       passport_rules = %{"blog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)

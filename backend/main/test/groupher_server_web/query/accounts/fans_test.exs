@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Query.Account.Fans do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.Accounts
@@ -70,7 +72,6 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       }
     }
     """
-
     test "login user can get it's own paged followings", ~m(user_conn user)a do
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
 
@@ -78,9 +79,9 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       {:ok, user3} = db_insert(:user)
       {:ok, user4} = db_insert(:user)
 
-      {:ok, _followeer} = user |> Accounts.follow(user2)
-      {:ok, _followeer} = user |> Accounts.follow(user3)
-      {:ok, _followeer} = user |> Accounts.follow(user4)
+      {:ok, _} = user |> Accounts.follow(user2)
+      {:ok, _} = user |> Accounts.follow(user3)
+      {:ok, _} = user |> Accounts.follow(user4)
 
       results = user_conn |> query_result(@query, variables, "pagedFollowings")
 
@@ -124,9 +125,9 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       end)
 
       variables = %{login: user.login}
-      resolts = user_conn |> query_result(@query, variables, "user")
+      results = user_conn |> query_result(@query, variables, "user")
 
-      assert resolts |> Map.get("followersCount") == total_count
+      assert results |> Map.get("followersCount") == total_count
     end
 
     @query """
@@ -150,8 +151,8 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       {:ok, _} = user2 |> Accounts.follow(user3)
 
       variables = %{login: user.login}
-      resolts = user_conn |> query_result(@query, variables, "user")
-      assert resolts |> Map.get("followingsCount") == total_count
+      results = user_conn |> query_result(@query, variables, "user")
+      assert results |> Map.get("followingsCount") == total_count
     end
 
     @query """
@@ -162,19 +163,18 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       }
     }
     """
-
     test "login user can check if 'i' has followed this user", ~m(user_conn user)a do
       {:ok, user2} = db_insert(:user)
 
       variables = %{login: user2.login}
-      resolts = user_conn |> query_result(@query, variables, "user")
-      assert resolts |> Map.get("viewerHasFollowed") == false
+      results = user_conn |> query_result(@query, variables, "user")
+      assert results |> Map.get("viewerHasFollowed") == false
 
       {:ok, _} = user |> Accounts.follow(user2)
       variables = %{login: user2.login}
-      resolts = user_conn |> query_result(@query, variables, "user")
+      results = user_conn |> query_result(@query, variables, "user")
 
-      assert resolts |> Map.get("viewerHasFollowed") == true
+      assert results |> Map.get("viewerHasFollowed") == true
     end
 
     @query """
@@ -185,21 +185,20 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       }
     }
     """
-
     test "login user can check if 'i' was been followed", ~m(user)a do
       {:ok, user2} = db_insert(:user)
       user_conn = simu_conn(:user, user2)
 
       variables = %{login: user.login}
-      resolts = user_conn |> query_result(@query, variables, "user")
-      assert resolts |> Map.get("viewerBeenFollowed") == false
+      results = user_conn |> query_result(@query, variables, "user")
+      assert results |> Map.get("viewerBeenFollowed") == false
 
       {:ok, _} = Accounts.follow(user, user2)
       variables = %{login: user.login}
 
-      resolts = user_conn |> query_result(@query, variables, "user")
+      results = user_conn |> query_result(@query, variables, "user")
 
-      assert resolts |> Map.get("viewerBeenFollowed") == true
+      assert results |> Map.get("viewerBeenFollowed") == true
     end
   end
 end

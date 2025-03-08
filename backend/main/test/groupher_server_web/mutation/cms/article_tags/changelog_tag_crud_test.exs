@@ -39,7 +39,6 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleArticleTags.ChangelogTagCRUD d
       }
     }
     """
-
     test "create tag with valid attrs, has default CHANGELOG thread and default changelogs",
          ~m(community)a do
       variables = %{
@@ -115,7 +114,6 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleArticleTags.ChangelogTagCRUD d
       }
     }
     """
-
     test "auth user can update a tag", ~m(article_tag_attrs community user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
 
@@ -148,7 +146,6 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleArticleTags.ChangelogTagCRUD d
       }
     }
     """
-
     test "auth user can delete tag", ~m(article_tag_attrs community user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
 

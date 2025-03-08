@@ -142,7 +142,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       }
     }
     """
-
     test "delete a blog by blog's owner", ~m(owner_conn blog)a do
       deleted = owner_conn |> mutation_result(@query, %{id: blog.id}, "deleteBlog")
 

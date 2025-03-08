@@ -109,7 +109,6 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       }
     }
     """
-
     test "guest user can get basic archive info", ~m(guest_conn community doc user)a do
       thread = :doc
 
@@ -135,7 +134,6 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       }
     }
     """
-
     test "guest user can get comment participants after comment created",
          ~m(guest_conn community doc user user2)a do
       total_count = 5
@@ -236,7 +234,6 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         }
     }
     """
-
     test "list comments with default replies-mode",
          ~m(guest_conn community doc user user2)a do
       total_count = 3
@@ -783,7 +780,6 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         }
     }
     """
-
     test "guest user can get paged participants", ~m(guest_conn community doc user)a do
       total_count = 30
       page_size = 10
@@ -859,7 +855,6 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         }
     }
     """
-
     test "guest user can get paged replies", ~m(guest_conn community doc user user2)a do
       total_count = 2
       page_size = 10

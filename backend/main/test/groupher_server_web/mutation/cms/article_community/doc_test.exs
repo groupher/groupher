@@ -24,7 +24,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       }
     }
     """
-
     test "auth user can mirror a doc to other community", ~m(doc)a do
       passport_rules = %{"doc.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -81,7 +80,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       }
     }
     """
-
     test "auth user can unmirror doc to a community", ~m(doc)a do
       passport_rules = %{"doc.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -118,7 +116,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       }
     }
     """
-
     test "auth user can mirror doc home", ~m(doc)a do
       {:ok, home_community} = db_insert(:community, %{slug: "home"})
 
@@ -141,7 +138,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       }
     }
     """
-
     test "auth user can move doc to blackhole", ~m(doc)a do
       {:ok, blackhole_community} = db_insert(:community, %{slug: "blackhole"})
 
@@ -165,7 +161,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       }
     }
     """
-
     test "auth user can move doc to other community", ~m(doc)a do
       passport_rules = %{"doc.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)

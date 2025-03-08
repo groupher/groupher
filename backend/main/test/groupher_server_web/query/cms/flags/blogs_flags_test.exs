@@ -51,7 +51,6 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
       }
     }
     """
-
     test "pending blog should not see in paged query",
          ~m(guest_conn community blog_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -92,7 +91,6 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
       }
     }
     """
-
     test "if have pinned blogs, the pinned blogs should at the top of entries",
          ~m(guest_conn community blog_m)a do
       variables = %{filter: %{community: community.slug}}

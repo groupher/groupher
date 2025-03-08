@@ -30,7 +30,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       }
     }
     """
-
     test "auth user can markDelete blog", ~m(blog)a do
       variables = %{id: blog.id}
 
@@ -78,7 +77,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       }
     }
     """
-
     test "auth user can undo markDelete blog", ~m(blog)a do
       variables = %{id: blog.id}
 
@@ -128,7 +126,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       }
     }
     """
-
     test "auth user can batch mark delete blogs",
          ~m(community blog blog2 blog3)a do
       variables = %{
@@ -159,7 +156,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       }
     }
     """
-
     test "auth user can batch undo mark delete blogs",
          ~m(community blog blog2 blog3)a do
       CMS.batch_mark_delete_articles(community.slug, :blog, [
@@ -195,7 +191,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       }
     }
     """
-
     test "auth user can pin blog", ~m(community blog)a do
       variables = %{id: blog.id, communityId: community.id}
 

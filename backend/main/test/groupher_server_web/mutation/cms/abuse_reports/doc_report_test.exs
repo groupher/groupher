@@ -25,7 +25,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
       }
     }
     """
-
     test "login user can report a doc", ~m(community doc_attrs user user_conn)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
@@ -43,7 +42,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
       }
     }
     """
-
     test "login user can undo report a doc",
          ~m(community doc_attrs user user_conn)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)

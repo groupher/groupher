@@ -195,7 +195,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       }
     }
     """
-
     test "delete a post by post's owner", ~m(owner_conn post)a do
       deleted = owner_conn |> mutation_result(@query, %{id: post.id}, "deletePost")
 

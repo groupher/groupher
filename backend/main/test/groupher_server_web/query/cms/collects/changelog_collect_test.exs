@@ -35,7 +35,6 @@ defmodule GroupherServer.Test.Query.Collects.ChangelogCollect do
       }
     }
     """
-
     test "guest can get collected users list after collect a changelog",
          ~m(guest_conn changelog user user2)a do
       {:ok, _} = CMS.collect_article(:changelog, changelog.id, user)

@@ -244,7 +244,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
        }
     }
     """
-
     test "filter community should get blogs which belongs to that community",
          ~m(guest_conn user)a do
       {:ok, community} = db_insert(:community)
@@ -321,7 +320,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       }
     }
     """
-
     test "has_xxx state should work", ~m(user)a do
       user_conn = simu_conn(:user, user)
       {:ok, community} = db_insert(:community)

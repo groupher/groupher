@@ -24,7 +24,6 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
       }
     }
     """
-
     test "login user can sink a changelog", ~m(community changelog)a do
       variables = %{id: changelog.id, communityId: community.id}
       passport_rules = %{community.slug => %{"changelog.sink" => true}}
@@ -51,7 +50,6 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
       }
     }
     """
-
     test "login user can undo sink to a changelog", ~m(community changelog)a do
       variables = %{id: changelog.id, communityId: community.id}
 

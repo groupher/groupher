@@ -24,7 +24,6 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       }
     }
     """
-
     test "login user can sink a doc", ~m(community doc)a do
       variables = %{id: doc.id, communityId: community.id}
       passport_rules = %{community.slug => %{"doc.sink" => true}}
@@ -51,7 +50,6 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       }
     }
     """
-
     test "login user can undo sink to a doc", ~m(community doc)a do
       variables = %{id: doc.id, communityId: community.id}
 

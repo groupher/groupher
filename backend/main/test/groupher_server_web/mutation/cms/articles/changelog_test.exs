@@ -48,7 +48,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       }
     }
     """
-
     test "create changelog with valid attrs and make sure author exist" do
       {:ok, user} = db_insert(:user)
       user_conn = simu_conn(:user, user)
@@ -145,7 +144,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       }
     }
     """
-
     test "delete a changelog by changelog's owner", ~m(owner_conn changelog)a do
       deleted = owner_conn |> mutation_result(@query, %{id: changelog.id}, "deleteChangelog")
 
@@ -213,7 +211,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       }
     }
     """
-
     test "update a changelog without login user fails", ~m(guest_conn changelog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 

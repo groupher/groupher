@@ -27,8 +27,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-
-    test "can check if user has penging apply", ~m(user)a do
+    test "can check if user has pending apply", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
       check_state =
@@ -56,7 +55,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-
     test "can check if a community is exist", ~m(user)a do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
 
@@ -512,7 +510,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-
     test "guest can get subscribers count of a community", ~m(guest_conn community)a do
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
 

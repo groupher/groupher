@@ -99,7 +99,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     assert results["emotions"]["viewerHasDownvoteed"]
   end
 
-  describe "[baisc article post comment]" do
+  describe "[basic article post comment]" do
     @query """
     query($community: String!, $id: ID!) {
       post(community: $community, id: $id) {
@@ -110,7 +110,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       }
     }
     """
-
     test "guest user can get basic archive info", ~m(guest_conn community post user)a do
       thread = :post
       {:ok, _} = CMS.create_comment(community, thread, post.inner_id, mock_comment(), user)
@@ -134,7 +133,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       }
     }
     """
-
     test "guest user can get comment participants after comment created",
          ~m(guest_conn community post user user2)a do
       total_count = 5
@@ -234,7 +232,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         }
     }
     """
-
     test "list comments with default replies-mode", ~m(guest_conn community post user user2)a do
       total_count = 3
       page_size = 20
@@ -814,7 +811,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         }
     }
     """
-
     test "guest user can get paged participants", ~m(guest_conn community post user)a do
       total_count = 30
       page_size = 10
@@ -884,7 +880,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         }
     }
     """
-
     test "guest user can get paged replies", ~m(guest_conn community post user user2)a do
       total_count = 2
       page_size = 10

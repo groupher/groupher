@@ -27,7 +27,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
       }
     }
     """
-
     test "login user can upvote a doc", ~m(user_conn user doc)a do
       variables = %{id: doc.id}
       created = user_conn |> mutation_result(@query, variables, "upvoteDoc")
@@ -54,7 +53,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
       }
     }
     """
-
     test "login user can undo upvote to a doc", ~m(user_conn doc user)a do
       {:ok, _} = CMS.upvote_article(:doc, doc.id, user)
 

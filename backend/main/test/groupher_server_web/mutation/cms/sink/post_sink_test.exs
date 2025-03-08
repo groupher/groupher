@@ -50,7 +50,6 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       }
     }
     """
-
     test "login user can undo sink to a post", ~m(community post)a do
       variables = %{id: post.id, communityId: community.id}
 

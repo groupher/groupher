@@ -22,7 +22,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
       }
     }
     """
-
     test "login user can upvote a blog", ~m(user_conn blog)a do
       variables = %{id: blog.id}
       created = user_conn |> mutation_result(@query, variables, "upvoteBlog")
@@ -44,7 +43,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
       }
     }
     """
-
     test "login user can undo upvote to a blog", ~m(user_conn blog user)a do
       {:ok, _} = CMS.upvote_article(:blog, blog.id, user)
 

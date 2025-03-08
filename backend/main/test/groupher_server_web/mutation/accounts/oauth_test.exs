@@ -32,7 +32,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       }
     }
     """
-
     test "can signin oauth with github", ~m(guest_conn)a do
       variables = %{
         provider: @valid_github_profile,
@@ -63,7 +62,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       }
     }
     """
-
     test "can link oauth with twitter", ~m(user_conn user)a do
       github_provider = @valid_github_profile |> Map.put("login", user.login)
 
@@ -108,7 +106,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       }
     }
     """
-
     test "can unlink oauth with provider", ~m(user_conn user)a do
       github_provider = @valid_github_profile |> Map.put("login", user.login)
       twitter_provider = @valid_twitter_profile |> Map.put("login", user.login)

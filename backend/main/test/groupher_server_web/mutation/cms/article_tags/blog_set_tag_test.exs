@@ -31,7 +31,6 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.BlogSetTag do
       }
     }
     """
-
     test "auth user can set a valid tag to blog",
          ~m(community blog article_tag_attrs user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :blog, article_tag_attrs, user)
@@ -61,7 +60,6 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.BlogSetTag do
       }
     }
     """
-
     test "can unset tag to a blog",
          ~m(community blog article_tag_attrs article_tag_attrs2 user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :blog, article_tag_attrs, user)

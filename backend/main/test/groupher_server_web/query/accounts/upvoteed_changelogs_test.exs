@@ -29,7 +29,6 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedChangelogs do
       }
     }
     """
-
     test "both login and unlogin user can get one's paged upvoted changelogs",
          ~m(user_conn guest_conn changelogs)a do
       {:ok, user} = db_insert(:user)

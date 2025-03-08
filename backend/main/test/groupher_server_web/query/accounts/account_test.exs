@@ -250,8 +250,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       }
     }
     """
-
-    test "guest user can get paged default subscrubed communities with empty args",
+    test "guest user can get paged default subscribed communities with empty args",
          ~m(guest_conn)a do
       {:ok, _} = db_insert_multi(:community, 25)
 

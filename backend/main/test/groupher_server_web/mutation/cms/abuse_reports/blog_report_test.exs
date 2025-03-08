@@ -25,7 +25,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.BlogReport do
       }
     }
     """
-
     test "login user can report a blog", ~m(community blog_attrs user user_conn)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
@@ -43,7 +42,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.BlogReport do
       }
     }
     """
-
     test "login user can undo report a blog", ~m(community blog_attrs user user_conn)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 

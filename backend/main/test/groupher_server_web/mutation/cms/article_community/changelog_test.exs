@@ -24,7 +24,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-
     test "auth user can mirror a changelog to other community", ~m(changelog)a do
       passport_rules = %{"changelog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -81,7 +80,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-
     test "auth user can unmirror changelog to a community", ~m(changelog)a do
       passport_rules = %{"changelog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -118,7 +116,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-
     test "auth user can mirror changelog home", ~m(changelog)a do
       {:ok, home_community} = db_insert(:community, %{slug: "home"})
 
@@ -141,7 +138,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-
     test "auth user can move changelog to blackhole", ~m(changelog)a do
       {:ok, blackhole_community} = db_insert(:community, %{slug: "blackhole"})
 
@@ -167,7 +163,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-
     test "auth user can move changelog to other community", ~m(changelog)a do
       passport_rules = %{"changelog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)

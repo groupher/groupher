@@ -51,7 +51,6 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       }
     }
     """
-
     test "pending doc should not see in paged query",
          ~m(guest_conn community doc_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -92,7 +91,6 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       }
     }
     """
-
     test "if have pinned docs, the pinned docs should at the top of entries",
          ~m(guest_conn community doc_m)a do
       variables = %{filter: %{community: community.slug}}
