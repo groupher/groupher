@@ -14,10 +14,10 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   alias GroupherServer.FrontDesk
 
   def call(
-        %{context: _, arguments: %{community: community_slug} = arguments} = resolution,
+        %{context: _, arguments: %{community: slug} = arguments} = resolution,
         :community
       ) do
-    case FrontDesk.info(:community, community_slug) do
+    case FrontDesk.info(:community, slug) do
       {:ok, community} ->
         %{resolution | arguments: Map.put(arguments, :community, community)}
 
