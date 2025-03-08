@@ -4,7 +4,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   import ShortMaps
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, FrontDesk}
+  alias GroupherServer.{Accounts, CMS}
 
   alias Helper.{ORM, OgInfo, Constant}
   alias Accounts.Model.User
@@ -426,9 +426,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def create_comment(_root, ~m(community thread id body)a, %{context: %{cur_user: user}}) do
-    with {:ok, community} <- FrontDesk.info(:community, community) do
-      CMS.create_comment(community, thread, id, body, user)
-    end
+    CMS.create_comment(community, thread, id, body, user)
   end
 
   def update_comment(_root, ~m(body passport_source)a, _info) do

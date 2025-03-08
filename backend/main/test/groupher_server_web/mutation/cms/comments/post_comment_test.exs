@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
     }
     """
-
+    @tag :wip
     test "write article comment to a exist post", ~m(community post user_conn)a do
       variables = %{
         community: community.slug,

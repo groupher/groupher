@@ -419,7 +419,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       }
     }
     """
-    @tag :wip
     test "latest commented blog should appear on top",
          ~m(guest_conn community blog_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
