@@ -123,8 +123,6 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.paged_reports(filter)
   end
 
-  # TODO: login only
-
   def create_article(_root, ~m(community_id thread)a = args, %{context: %{cur_user: user}}) do
     CMS.create_article(%Community{id: community_id}, thread, args, user)
   end

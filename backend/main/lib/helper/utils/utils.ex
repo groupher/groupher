@@ -23,9 +23,9 @@ defmodule Helper.Utils do
   defdelegate map_atom_value(attrs, opt), to: Utils.Map
 
   # String Utils
-  defdelegate stringfy(str), to: Utils.String
+  defdelegate stringify(str), to: Utils.String
   defdelegate count_words(str), to: Utils.String
-  defdelegate str_occurence(string, substr), to: Utils.String
+  defdelegate str_occurrence(string, substr), to: Utils.String
 
   defdelegate thread_of(artiment, opt), to: CMS.Delegate.Helper
 
@@ -78,24 +78,24 @@ defmodule Helper.Utils do
   def done(false), do: {:error, false}
   def done(true), do: {:ok, true}
   def done(nil), do: {:error, "record not found."}
-  def done([]), do: {:ok, []}
+  def done({n, nil}) when is_integer(n), do: {:ok, %{done: true}}
   def done(:ok), do: {:ok, :pass}
+  def done([]), do: {:ok, []}
+  def done(result), do: {:ok, result}
   def done(nil, :boolean), do: {:ok, false}
   def done(_, :boolean), do: {:ok, true}
   def done(nil, err_msg), do: {:error, err_msg}
   def done({:ok, _}, with: result), do: {:ok, result}
   def done({:error, reason}, with: _result), do: {:error, reason}
 
+  def done({:ok, result}, :trans), do: result
   def done(nil, queryable, id), do: {:error, not_found_formatter(queryable, id)}
   def done(result, _, _), do: {:ok, result}
 
   # for delete_all, update_all
   # see: https://groups.google.com/forum/#!topic/elixir-ecto/1g5Pp6ceqFE
   # def done({0, nil}), do: {:error, %{done: false}}
-  def done({n, nil}) when is_integer(n), do: {:ok, %{done: true}}
   # def done({n, nil}, extra: extra) when is_integer(n), do: {:ok, %{done: true}}
-
-  def done(result), do: {:ok, result}
 
   def done_and_cache(result, pool, scope, expire_sec: expire_sec) do
     with {:ok, res} <- done(result) do
@@ -160,7 +160,7 @@ defmodule Helper.Utils do
     %{entries: [], total_count: 0, page_size: 0, total_pages: 1, page_number: 1}
   end
 
-  @spec large_than(String.t() | Integer.t(), Integer.t()) :: true | false
+  @spec large_than(String.t() | integer(), integer()) :: true | false
   def large_than(value, target) when is_binary(value) and is_integer(target) do
     String.length(value) >= target
   end
@@ -169,7 +169,7 @@ defmodule Helper.Utils do
     value >= target
   end
 
-  @spec large_than(String.t() | Integer.t(), Integer.t(), :no_equal) :: true | false
+  @spec large_than(String.t() | integer(), integer(), :no_equal) :: true | false
   def large_than(value, target, :no_equal) when is_binary(value) and is_integer(target) do
     String.length(value) > target
   end
@@ -178,7 +178,7 @@ defmodule Helper.Utils do
     value > target
   end
 
-  @spec less_than(String.t() | Integer.t(), Integer.t()) :: true | false
+  @spec less_than(String.t() | integer(), integer()) :: true | false
   def less_than(value, target) when is_binary(value) and is_integer(target) do
     String.length(value) <= target
   end
@@ -187,7 +187,7 @@ defmodule Helper.Utils do
     value <= target
   end
 
-  @spec less_than(String.t() | Integer.t(), Integer.t(), :no_equal) :: true | false
+  @spec less_than(String.t() | integer(), integer(), :no_equal) :: true | false
   def less_than(value, target, :no_equal) when is_binary(value) and is_integer(target) do
     String.length(value) < target
   end
@@ -239,7 +239,7 @@ defmodule Helper.Utils do
     Nanoid.generate(str_len, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
   end
 
-  @doc "html uniq id generator for editorjs"
+  @doc "html uniq id generator for editor.js"
   @spec uid(:html, map) :: String.t()
   def uid(:html, %{"id" => id}) when g_none_empty_str(id), do: id
 

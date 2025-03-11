@@ -141,8 +141,8 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
 
   describe "[sub str occurence]" do
     test "normal occurence case" do
-      assert 2 == Utils.str_occurence("foo bar foobar", "foo")
-      assert 0 == Utils.str_occurence("hello world", "foo")
+      assert 2 == Utils.str_occurrence("foo bar foobar", "foo")
+      assert 0 == Utils.str_occurrence("hello world", "foo")
     end
   end
 

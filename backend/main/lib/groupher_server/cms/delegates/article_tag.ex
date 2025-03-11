@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   end
 
   # check if the tag to be set is in same community & thread
-  defp is_article_tag_in_some_thread?(article_tag_ids, filter) do
+  defp article_tag_in_same_thread?(article_tag_ids, filter) do
     with {:ok, paged_article_tags} <- paged_article_tags(filter) do
       domain_tags_ids = Enum.map(paged_article_tags.entries, &to_string(&1.id))
       article_tag_ids = Enum.map(article_tag_ids, &to_string(&1))
@@ -124,7 +124,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
       }) do
     check_filter = %{page: 1, size: 100, community_id: cid, thread: thread}
 
-    with true <- is_article_tag_in_some_thread?(article_tag_ids, check_filter),
+    with true <- article_tag_in_same_thread?(article_tag_ids, check_filter),
          {:ok, article} <- do_overwrite_article_tags(article, []),
          {:ok, related_tags} = find_article_related_tags(article_tag_ids) do
       do_overwrite_article_tags(article, related_tags)
@@ -140,8 +140,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
         article_tags: article_tag_ids
       }) do
     check_filter = %{page: 1, size: 100, community_id: cid, thread: thread}
+    ## TODO: lock article_join_tags
 
-    with true <- is_article_tag_in_some_thread?(article_tag_ids, check_filter),
+    with true <- article_tag_in_same_thread?(article_tag_ids, check_filter),
          Enum.each(article_tag_ids, &set_article_tag(thread, article, &1))
          |> done do
       {:ok, article}

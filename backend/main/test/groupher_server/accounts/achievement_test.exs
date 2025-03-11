@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Accounts.Achievement do
     end
   end
 
-  describe "[Accounts Achievement funtion]" do
+  describe "[Accounts Achievement function]" do
     test "Accounts.achieve should inc / dec achievement by parts", ~m(user)a do
       user |> Accounts.achieve(:inc, :follow)
       user |> Accounts.achieve(:inc, :upvote)

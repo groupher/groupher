@@ -14,4 +14,8 @@ defmodule GroupherServer.FrontDesk do
   def info(:community, slug) when is_binary(slug) do
     ORM.find_by(Community, %{slug: slug})
   end
+
+  def info(:community, slug, :live) when is_binary(slug) do
+    ORM.find_by(Community, %{slug: slug})
+  end
 end

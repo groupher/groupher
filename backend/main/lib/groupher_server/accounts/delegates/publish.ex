@@ -13,7 +13,7 @@ defmodule GroupherServer.Accounts.Delegate.Publish do
   @default_meta Embeds.UserMeta.default_meta()
 
   @doc """
-  get paged published contets of a user
+  get paged published contents of a user
   """
   def paged_published_articles(%User{id: user_id}, thread, filter) do
     CMS.paged_published_articles(thread, filter, user_id)

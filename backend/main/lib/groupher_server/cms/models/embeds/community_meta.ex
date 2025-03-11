@@ -55,12 +55,12 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
       |> Enum.reduce([], &(&2 ++ ["#{plural(&1)}_count": 0]))
       |> Enum.into(%{})
 
-    threads_inner_id_indexs =
+    threads_inner_id_indexes =
       @article_threads
       |> Enum.reduce([], &(&2 ++ ["#{plural(&1)}_inner_id_index": 0]))
       |> Enum.into(%{})
 
-    @general_options |> Map.merge(threads_counts) |> Map.merge(threads_inner_id_indexs)
+    @general_options |> Map.merge(threads_counts) |> Map.merge(threads_inner_id_indexes)
   end
 
   embedded_schema do

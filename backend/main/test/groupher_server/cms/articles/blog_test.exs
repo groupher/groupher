@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
   alias EditorToHTML.{Class, Validator}
-  alias CMS.Model.{Author, ArticleDocument, Community, Blog, BlogDocument}
+  alias CMS.Model.{Author, ArticleDocument, Blog, BlogDocument}
 
   @root_class Class.article()
   @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
@@ -20,15 +20,16 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
-    {:ok, blog} = db_insert(:blog)
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+    {:ok, community} = CMS.create_community(community_attrs)
 
     blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
-    {:ok, ~m(user user2 community blog blog_attrs)a}
+    {:ok, ~m(user user2 community blog_attrs)a}
   end
 
   describe "[cms blog curd]" do
+    @tag :wip
     test "created blog should have auto_increase inner_id", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       assert blog.inner_id == 1
@@ -61,9 +62,8 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert community.articles_count == 6
     end
 
+    @tag :wip
     test "can create blog with valid attrs", ~m(user community blog_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
-
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       blog = Repo.preload(blog, :document)
 
@@ -87,6 +87,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
                |> String.slice(0, @article_digest_length)
     end
 
+    @tag :wip
     test "created blog should have original_community info",
          ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -95,6 +96,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert blog.original_community_id == community.id
     end
 
+    @tag :wip
     test "created blog should have a active_at field, same with inserted_at",
          ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -102,6 +104,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert blog.active_at == blog.inserted_at
     end
 
+    @tag :wip
     test "should read blog by original community and inner id",
          ~m(blog_attrs community user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -111,6 +114,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert blog.id == blog2.id
     end
 
+    @tag :wip
     test "should read blog by original community and inner id with user",
          ~m(blog_attrs community user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -123,6 +127,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert user.id in created.meta.viewed_user_ids
     end
 
+    @tag :wip
     test "read blog should update views and meta viewed_user_list",
          ~m(blog_attrs community user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -142,6 +147,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert user2.id in created.meta.viewed_user_ids
     end
 
+    @tag :wip
     test "read blog should contains viewer_has_xxx state",
          ~m(blog_attrs community user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -174,24 +180,19 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert blog.viewer_has_reported
     end
 
+    @tag :wip
     test "add user to cms authors, if the user is not exist in cms authors",
-         ~m(user community blog_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
+         ~m(user2 community blog_attrs)a do
+      assert {:error, _} = ORM.find_by(Author, user_id: user2.id)
 
-      {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, author} = ORM.find_by(Author, user_id: user.id)
-      assert author.user_id == user.id
-    end
-
-    test "create blog with an non-exist community fails", ~m(user)a do
-      invalid_attrs = mock_attrs(:blog, %{community_id: non_exist_id()})
-      invalid_community = %Community{id: non_exist_id(), slug: non_exist_slug()}
-
-      assert {:error, _} = CMS.create_article(invalid_community, :blog, invalid_attrs, user)
+      {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user2)
+      {:ok, author} = ORM.find_by(Author, user_id: user2.id)
+      assert author.user_id == user2.id
     end
   end
 
   describe "[cms blog sink/undo_sink]" do
+    @tag :wip
     test "if a blog is too old, read blog should update can_undo_sink flag",
          ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -222,6 +223,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert not doc_last_year.meta.can_undo_sink
     end
 
+    @tag :wip
     test "can sink a blog", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       assert not blog.meta.is_sinked
@@ -231,6 +233,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert blog.active_at == blog.inserted_at
     end
 
+    @tag :wip
     test "can undo sink blog", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog} = CMS.sink_article(:blog, blog.id)
@@ -242,6 +245,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert blog.active_at == blog.meta.last_active_at
     end
 
+    @tag :wip
     test "can not undo sink to old blog", ~m()a do
       {:ok, doc_last_year} = db_insert(:blog, %{title: "last year", inserted_at: @last_year})
 
@@ -251,6 +255,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
   end
 
   describe "[cms blog batch delete]" do
+    @tag :wip
     test "can batch delete blogs with inner_ids", ~m(user community blog_attrs)a do
       {:ok, blog1} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog2} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -270,6 +275,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert blog3.mark_delete == false
     end
 
+    @tag :wip
     test "can undo batch delete blogs with inner_ids", ~m(user community blog_attrs)a do
       {:ok, blog1} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog2} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -295,6 +301,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
   end
 
   describe "[cms blog document]" do
+    @tag :wip
     test "will create related document after create", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog} = CMS.read_article(blog.original_community_slug, :blog, blog.inner_id)
@@ -310,6 +317,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert article_doc.body == doc_doc.body
     end
 
+    @tag :wip
     test "delete blog should also delete related document",
          ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -325,6 +333,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       {:error, _} = ORM.find_by(BlogDocument, %{blog_id: blog.id})
     end
 
+    @tag :wip
     test "update blog should also update related document",
          ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)

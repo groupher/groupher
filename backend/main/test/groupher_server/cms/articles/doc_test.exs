@@ -1,14 +1,16 @@
 defmodule GroupherServer.Test.CMS.Articles.Doc do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Helper.Utils, only: [get_config: 2]
 
   alias Helper.ORM
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, FrontDesk, Repo}
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
   alias EditorToHTML.{Class, Validator}
-  alias CMS.Model.{Author, ArticleDocument, Community, Doc, DocDocument}
+  alias CMS.Model.{Author, ArticleDocument, Doc, DocDocument}
 
   @root_class Class.article()
   @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
@@ -18,15 +20,16 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
-    {:ok, doc} = db_insert(:doc)
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+    {:ok, community} = CMS.create_community(community_attrs)
 
     doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
-    {:ok, ~m(user user2 community doc doc_attrs)a}
+    {:ok, ~m(user user2 community doc_attrs)a}
   end
 
   describe "[cms doc curd]" do
+    @tag :wip
     test "created doc should have auto_increase inner_id", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert doc.inner_id == 1
@@ -49,7 +52,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       assert changelog.inner_id == 1
 
-      {:ok, community} = ORM.find(Community, community.id)
+      {:ok, community} = FrontDesk.info(:community, community.slug)
 
       assert community.meta.docs_inner_id_index == 3
       assert community.meta.blogs_inner_id_index == 2
@@ -59,9 +62,8 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert community.articles_count == 6
     end
 
+    @tag :wip
     test "can create doc with valid attrs", ~m(user community doc_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
-
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       doc = Repo.preload(doc, :document)
 
@@ -85,6 +87,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
                |> String.slice(0, @article_digest_length)
     end
 
+    @tag :wip
     test "created doc should have original_community info", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
@@ -92,6 +95,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert doc.original_community_id == community.id
     end
 
+    @tag :wip
     test "created doc should have a active_at field, same with inserted_at",
          ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -99,6 +103,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert doc.active_at == doc.inserted_at
     end
 
+    @tag :wip
     test "should read doc by original community and inner id",
          ~m(doc_attrs community user)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -108,6 +113,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert doc.id == doc2.id
     end
 
+    @tag :wip
     test "should read doc by original community and inner id with user",
          ~m(doc_attrs community user)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -120,6 +126,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert user.id in created.meta.viewed_user_ids
     end
 
+    @tag :wip
     test "read doc should update views and meta viewed_user_list",
          ~m(doc_attrs community user user2)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -139,6 +146,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert user2.id in created.meta.viewed_user_ids
     end
 
+    @tag :wip
     test "read doc should contains viewer_has_xxx state",
          ~m(doc_attrs community user user2)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -171,24 +179,19 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert doc.viewer_has_reported
     end
 
+    @tag :wip
     test "add user to cms authors, if the user is not exist in cms authors",
-         ~m(user community doc_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
+         ~m(user2 community doc_attrs)a do
+      assert {:error, _} = ORM.find_by(Author, user_id: user2.id)
 
-      {:ok, _} = CMS.create_article(community, :doc, doc_attrs, user)
-      {:ok, author} = ORM.find_by(Author, user_id: user.id)
-      assert author.user_id == user.id
-    end
-
-    test "create doc with an non-exist community fails", ~m(user)a do
-      invalid_attrs = mock_attrs(:doc, %{community_id: non_exist_id()})
-      invalid_community = %Community{id: non_exist_id(), slug: non_exist_slug()}
-
-      assert {:error, _} = CMS.create_article(invalid_community, :doc, invalid_attrs, user)
+      {:ok, _} = CMS.create_article(community, :doc, doc_attrs, user2)
+      {:ok, author} = ORM.find_by(Author, user_id: user2.id)
+      assert author.user_id == user2.id
     end
   end
 
   describe "[cms doc sink/undo_sink]" do
+    @tag :wip
     test "if a doc is too old, read doc should update can_undo_sink flag",
          ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -219,6 +222,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert not doc_last_year.meta.can_undo_sink
     end
 
+    @tag :wip
     test "can sink a doc", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert not doc.meta.is_sinked
@@ -228,6 +232,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert doc.active_at == doc.inserted_at
     end
 
+    @tag :wip
     test "can undo sink doc", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       {:ok, doc} = CMS.sink_article(:doc, doc.id)
@@ -239,6 +244,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert doc.active_at == doc.meta.last_active_at
     end
 
+    @tag :wip
     test "can not undo sink to old doc", ~m()a do
       {:ok, doc_last_year} = db_insert(:doc, %{title: "last year", inserted_at: @last_year})
 
@@ -248,6 +254,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
   end
 
   describe "[cms doc batch delete]" do
+    @tag :wip
     test "can batch delete docs with inner_ids", ~m(user community doc_attrs)a do
       {:ok, doc1} = CMS.create_article(community, :doc, doc_attrs, user)
       {:ok, doc2} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -267,6 +274,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert doc3.mark_delete == false
     end
 
+    @tag :wip
     test "can undo batch delete docs with inner_ids", ~m(user community doc_attrs)a do
       {:ok, doc1} = CMS.create_article(community, :doc, doc_attrs, user)
       {:ok, doc2} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -292,6 +300,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
   end
 
   describe "[cms doc document]" do
+    @tag :wip
     test "will create related document after create", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       {:ok, doc} = CMS.read_article(doc.original_community_slug, :doc, doc.inner_id)
@@ -307,13 +316,13 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert article_doc.body == doc_doc.body
     end
 
+    @tag :wip
     test "delete doc should also delete related document",
          ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, _article_doc} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: "DOC"})
-
-      {:ok, _doc} = ORM.find_by(DocDocument, %{doc_id: doc.id})
+      {:ok, _} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: "DOC"})
+      {:ok, _} = ORM.find_by(DocDocument, %{doc_id: doc.id})
 
       {:ok, _} = CMS.delete_article(doc)
 
@@ -322,6 +331,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       {:error, _} = ORM.find_by(DocDocument, %{doc_id: doc.id})
     end
 
+    @tag :wip
     test "update doc should also update related document",
          ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)

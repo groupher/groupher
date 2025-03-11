@@ -69,12 +69,12 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.People do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, @class["gallery_previewer_wrapper"]) == 1
-      assert Utils.str_occurence(converted, @class["gallery_previewer_item"]) == 3
-      assert Utils.str_occurence(converted, @class["gallery_previewer_active_item"]) == 1
-      assert Utils.str_occurence(converted, @class["gallery_card_wrapper"]) == 2
+      assert Utils.str_occurrence(converted, @class["gallery_previewer_wrapper"]) == 1
+      assert Utils.str_occurrence(converted, @class["gallery_previewer_item"]) == 3
+      assert Utils.str_occurrence(converted, @class["gallery_previewer_active_item"]) == 1
+      assert Utils.str_occurrence(converted, @class["gallery_card_wrapper"]) == 2
 
-      assert Utils.str_occurence(converted, mock_image()) == 4
+      assert Utils.str_occurrence(converted, mock_image()) == 4
     end
 
     test "one people should not have previewer bar" do
@@ -101,17 +101,17 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.People do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, @class["gallery_previewer_wrapper"]) == 0
-      assert Utils.str_occurence(converted, @class["gallery_card_wrapper"]) == 1
-      assert Utils.str_occurence(converted, @class["gallery_avatar"]) == 1
+      assert Utils.str_occurrence(converted, @class["gallery_previewer_wrapper"]) == 0
+      assert Utils.str_occurrence(converted, @class["gallery_card_wrapper"]) == 1
+      assert Utils.str_occurrence(converted, @class["gallery_avatar"]) == 1
 
-      assert Utils.str_occurence(converted, @class["gallery_intro_title"]) == 1
-      assert Utils.str_occurence(converted, @class["gallery_intro_bio"]) == 1
-      assert Utils.str_occurence(converted, @class["gallery_intro_desc"]) == 1
+      assert Utils.str_occurrence(converted, @class["gallery_intro_title"]) == 1
+      assert Utils.str_occurrence(converted, @class["gallery_intro_bio"]) == 1
+      assert Utils.str_occurrence(converted, @class["gallery_intro_desc"]) == 1
 
-      assert Utils.str_occurence(converted, @class["gallery_social_icon"]) == 2
+      assert Utils.str_occurrence(converted, @class["gallery_social_icon"]) == 2
 
-      assert Utils.str_occurence(converted, mock_image()) == 1
+      assert Utils.str_occurrence(converted, mock_image()) == 1
     end
   end
 end

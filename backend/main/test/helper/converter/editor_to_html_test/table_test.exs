@@ -97,10 +97,10 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Table do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, "id=") == 1
+      assert Utils.str_occurrence(converted, "id=") == 1
 
-      assert Utils.str_occurence(converted, @class["th_header"]) == 4
-      assert Utils.str_occurence(converted, @class["td_stripe"]) == 3
+      assert Utils.str_occurrence(converted, @class["th_header"]) == 4
+      assert Utils.str_occurrence(converted, @class["td_stripe"]) == 3
     end
 
     test "edit exist block will not change id value" do
@@ -128,7 +128,7 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Table do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, ~s(id="block-id-exist")) == 1
+      assert Utils.str_occurrence(converted, ~s(id="block-id-exist")) == 1
     end
 
     test "invalid table field parse should raise error message" do

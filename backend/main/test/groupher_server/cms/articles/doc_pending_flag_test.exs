@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.DocPendingFlag do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.{Accounts, CMS, Repo}
@@ -13,10 +15,11 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
 
-    {:ok, community2} = db_insert(:community)
-    CMS.create_article(community2, :doc, mock_attrs(:doc), user)
+    {:ok, community} = mock_community(user)
+    {:ok, community2} = mock_community(user)
+
+    {_, _, _, _} = mock_article(:doc, community2, user)
 
     docs =
       Enum.reduce(1..@total_count, [], fn _, acc ->
@@ -93,6 +96,7 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
       {:ok, _} = CMS.read_article(docs_m.original_community_slug, :doc, docs_m.inner_id)
     end
 
+    @tag :wip2
     test "pending doc's meta should have info", ~m(docs_m)a do
       {:ok, _} = CMS.read_article(docs_m.original_community_slug, :doc, docs_m.inner_id)
 

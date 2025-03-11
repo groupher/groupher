@@ -319,17 +319,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       }
     }
     """
-    test "has_xxx state should work", ~m(user)a do
+    @tag :wip2
+    test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
-      {:ok, community} = db_insert(:community)
 
       {:ok, doc} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
-      {:ok, _doc2} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
-      {:ok, _doc3} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
+      {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
+      {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
       variables = %{filter: %{community: community.slug}}
       results = user_conn |> query_result(@query, variables, "pagedDocs")
-      assert results["totalCount"] == 3
+      assert results["totalCount"] == 5
 
       the_doc = Enum.find(results["entries"], &(&1["id"] == to_string(doc.id)))
       assert not the_doc["viewerHasViewed"]

@@ -3,19 +3,19 @@ defmodule Helper.Utils.String do
   string utils
   """
 
-  def stringfy(v) when is_binary(v), do: v
-  def stringfy(v) when is_integer(v), do: to_string(v)
-  def stringfy(v) when is_atom(v), do: to_string(v)
-  def stringfy(v), do: v
+  def stringify(v) when is_binary(v), do: v
+  def stringify(v) when is_integer(v), do: to_string(v)
+  def stringify(v) when is_atom(v), do: to_string(v)
+  def stringify(v), do: v
 
   # see https://stackoverflow.com/a/49558074/4050784
-  @spec str_occurence(String.t(), String.t()) :: Integer.t()
-  def str_occurence(string, substr) when is_binary(string) and is_binary(substr) do
+  @spec str_occurrence(String.t(), String.t()) :: Integer.t()
+  def str_occurrence(string, substr) when is_binary(string) and is_binary(substr) do
     len = string |> String.split(substr) |> length()
     len - 1
   end
 
-  def str_occurence(_, _), do: "must be strings"
+  def str_occurrence(_, _), do: "must be strings"
 
   @doc """
   ["a", "b", "c", "c"] => %{"a" => 1, "b" => 1, "c" => 2}

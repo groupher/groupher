@@ -320,17 +320,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       }
     }
     """
-    test "has_xxx state should work", ~m(user)a do
+    @tag :wip2
+    test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
-      {:ok, community} = db_insert(:community)
 
       {:ok, blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
-      {:ok, _blog2} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
-      {:ok, _blog3} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
+      {:ok, _} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
+      {:ok, _} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 
       variables = %{filter: %{community: community.slug}}
       results = user_conn |> query_result(@query, variables, "pagedBlogs")
-      assert results["totalCount"] == 3
+      assert results["totalCount"] == 5
 
       the_blog = Enum.find(results["entries"], &(&1["id"] == to_string(blog.id)))
       assert not the_blog["viewerHasViewed"]

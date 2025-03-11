@@ -46,11 +46,11 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Quote do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, "id=") == 1
+      assert Utils.str_occurrence(converted, "id=") == 1
 
-      assert Utils.str_occurence(converted, @class["short_wrapper"]) == 1
-      assert Utils.str_occurence(converted, "</blockquote>") == 1
-      assert Utils.str_occurence(converted, @class["caption"]) == 0
+      assert Utils.str_occurrence(converted, @class["short_wrapper"]) == 1
+      assert Utils.str_occurrence(converted, "</blockquote>") == 1
+      assert Utils.str_occurrence(converted, @class["caption"]) == 0
     end
 
     test "long quote parse should work" do
@@ -58,9 +58,9 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Quote do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, @class["long_wrapper"]) == 1
-      assert Utils.str_occurence(converted, "</blockquote>") == 1
-      assert Utils.str_occurence(converted, @class["caption_text"]) == 1
+      assert Utils.str_occurrence(converted, @class["long_wrapper"]) == 1
+      assert Utils.str_occurrence(converted, "</blockquote>") == 1
+      assert Utils.str_occurrence(converted, @class["caption_text"]) == 1
     end
 
     test "long quote without caption parse should work" do
@@ -68,9 +68,9 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Quote do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, @class["long_wrapper"]) == 1
-      assert Utils.str_occurence(converted, "</blockquote>") == 1
-      assert Utils.str_occurence(converted, @class["caption_text"]) == 0
+      assert Utils.str_occurrence(converted, @class["long_wrapper"]) == 1
+      assert Utils.str_occurrence(converted, "</blockquote>") == 1
+      assert Utils.str_occurrence(converted, @class["caption_text"]) == 0
     end
 
     test "long quote without empty caption parse should work" do
@@ -78,9 +78,9 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Quote do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, @class["long_wrapper"]) == 1
-      assert Utils.str_occurence(converted, "</blockquote>") == 1
-      assert Utils.str_occurence(converted, @class["caption_text"]) == 0
+      assert Utils.str_occurrence(converted, @class["long_wrapper"]) == 1
+      assert Utils.str_occurrence(converted, "</blockquote>") == 1
+      assert Utils.str_occurrence(converted, @class["caption_text"]) == 0
     end
 
     test "invalid quote should have invalid hint" do

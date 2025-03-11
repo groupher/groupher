@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -6,10 +8,11 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
   alias CMS.Model.Post
 
   setup do
+    {community, post, _, user} = mock_article(:post)
+
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
-    {:ok, community} = db_insert(:community)
+
     {:ok, community2} = db_insert(:community)
     {:ok, community3} = db_insert(:community)
 
@@ -19,7 +22,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
   end
 
   describe "[article mirror/move]" do
-    test "created post has origial community info", ~m(user community post_attrs)a do
+    test "created post has original community info", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = ORM.find(Post, post.id, preload: :original_community)
 
@@ -62,6 +65,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       assert exist_in?(community2, post.communities)
     end
 
+    @tag :wip2
     test "post move to other community with new tag", ~m(user community community2 post_attrs)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)

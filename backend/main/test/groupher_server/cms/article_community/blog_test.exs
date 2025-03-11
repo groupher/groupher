@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -6,10 +8,8 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
   alias CMS.Model.Blog
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, blog, _, user} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)
-    {:ok, blog} = db_insert(:blog)
-    {:ok, community} = db_insert(:community)
     {:ok, community2} = db_insert(:community)
     {:ok, community3} = db_insert(:community)
 
@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
   end
 
   describe "[article mirror/move]" do
-    test "created blog has origial community info", ~m(user community blog_attrs)a do
+    test "created blog has original community info", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog} = ORM.find(Blog, blog.id, preload: :original_community)
 

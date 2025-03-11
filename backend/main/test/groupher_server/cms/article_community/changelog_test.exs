@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -6,10 +8,8 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
   alias CMS.Model.Changelog
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, changelog, _, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
-    {:ok, changelog} = db_insert(:changelog)
-    {:ok, community} = db_insert(:community)
     {:ok, community2} = db_insert(:community)
     {:ok, community3} = db_insert(:community)
 
@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
   end
 
   describe "[article mirror/move]" do
-    test "created changelog has origial community info", ~m(user community changelog_attrs)a do
+    test "created changelog has original community info", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :original_community)
 

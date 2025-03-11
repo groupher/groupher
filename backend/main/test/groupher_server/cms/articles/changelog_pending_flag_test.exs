@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.{Accounts, CMS, Repo}
@@ -13,10 +15,11 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
 
-    {:ok, community2} = db_insert(:community)
-    CMS.create_article(community2, :changelog, mock_attrs(:changelog), user)
+    {:ok, community} = mock_community(user)
+    {:ok, community2} = mock_community(user)
+
+    {_, _, _, _} = mock_article(:changelog, community2, user)
 
     changelogs =
       Enum.reduce(1..@total_count, [], fn _, acc ->

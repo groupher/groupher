@@ -57,9 +57,9 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Header do
       {:ok, editor_string} = Jason.encode(@editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, "header1 content") == 1
-      assert Utils.str_occurence(converted, "header2 content") == 1
-      assert Utils.str_occurence(converted, "header3 content") == 1
+      assert Utils.str_occurrence(converted, "header1 content") == 1
+      assert Utils.str_occurrence(converted, "header2 content") == 1
+      assert Utils.str_occurrence(converted, "header3 content") == 1
     end
 
     test "full header parse should work" do
@@ -75,10 +75,10 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Header do
       {:ok, converted} = Parser.to_html(editor_string)
 
       # header_class = @class["header"]
-      assert Utils.str_occurence(converted, "id=") == 1
-      # assert Utils.str_occurence(converted, header_class) == 1
-      assert Utils.str_occurence(converted, @class["eyebrow_title"]) == 1
-      assert Utils.str_occurence(converted, @class["footer_title"]) == 1
+      assert Utils.str_occurrence(converted, "id=") == 1
+      # assert Utils.str_occurrence(converted, header_class) == 1
+      assert Utils.str_occurrence(converted, @class["eyebrow_title"]) == 1
+      assert Utils.str_occurrence(converted, @class["footer_title"]) == 1
     end
 
     test "edit exist block will not change id value" do
@@ -110,8 +110,8 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Header do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, @class["eyebrow_title"]) == 1
-      assert Utils.str_occurence(converted, @class["footer_title"]) == 0
+      assert Utils.str_occurrence(converted, @class["eyebrow_title"]) == 1
+      assert Utils.str_occurrence(converted, @class["footer_title"]) == 0
 
       editor_json =
         set_data(%{
@@ -123,8 +123,8 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Header do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, @class["eyebrow_title"]) == 0
-      assert Utils.str_occurence(converted, @class["footer_title"]) == 1
+      assert Utils.str_occurrence(converted, @class["eyebrow_title"]) == 0
+      assert Utils.str_occurrence(converted, @class["footer_title"]) == 1
     end
 
     test "wrong header format data should have invalid hint" do

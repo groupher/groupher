@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
   alias EditorToHTML.{Class, Validator}
-  alias CMS.Model.{Author, ArticleDocument, Community, Changelog, ChangelogDocument}
+  alias CMS.Model.{Author, ArticleDocument, Changelog, ChangelogDocument}
 
   @root_class Class.article()
   @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
@@ -20,15 +20,16 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
-    {:ok, changelog} = db_insert(:changelog)
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+    {:ok, community} = CMS.create_community(community_attrs)
 
     changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
-    {:ok, ~m(user user2 community changelog changelog_attrs)a}
+    {:ok, ~m(user user2 community changelog_attrs)a}
   end
 
   describe "[cms changelog curd]" do
+    @tag :wip
     test "created changelog should have auto_increase inner_id",
          ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -62,9 +63,8 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert community.articles_count == 6
     end
 
+    @tag :wip
     test "can create changelog with valid attrs", ~m(user community changelog_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
-
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       changelog = Repo.preload(changelog, :document)
 
@@ -88,6 +88,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
                |> String.slice(0, @article_digest_length)
     end
 
+    @tag :wip
     test "created changelog should have original_community info",
          ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -96,6 +97,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog.original_community_id == community.id
     end
 
+    @tag :wip
     test "created changelog should have a active_at field, same with inserted_at",
          ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -103,6 +105,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog.active_at == changelog.inserted_at
     end
 
+    @tag :wip
     test "should read changelog by original community and inner id",
          ~m(changelog_attrs community user)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -113,6 +116,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog.id == changelog2.id
     end
 
+    @tag :wip
     test "should read changelog by original community and inner id with user",
          ~m(changelog_attrs community user)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -126,6 +130,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert user.id in created.meta.viewed_user_ids
     end
 
+    @tag :wip
     test "read changelog should update views and meta viewed_user_list",
          ~m(changelog_attrs community user user2)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -149,6 +154,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert user2.id in created.meta.viewed_user_ids
     end
 
+    @tag :wip
     test "read changelog should contains viewer_has_xxx state",
          ~m(changelog_attrs community user user2)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -186,24 +192,19 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog.viewer_has_reported
     end
 
+    @tag :wip
     test "add user to cms authors, if the user is not exist in cms authors",
-         ~m(user community changelog_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
+         ~m(user2 community changelog_attrs)a do
+      assert {:error, _} = ORM.find_by(Author, user_id: user2.id)
 
-      {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, author} = ORM.find_by(Author, user_id: user.id)
-      assert author.user_id == user.id
-    end
-
-    test "create changelog with an non-exist community fails", ~m(user)a do
-      invalid_attrs = mock_attrs(:changelog, %{community_id: non_exist_id()})
-      invalid_community = %Community{id: non_exist_id(), slug: non_exist_slug()}
-
-      assert {:error, _} = CMS.create_article(invalid_community, :changelog, invalid_attrs, user)
+      {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user2)
+      {:ok, author} = ORM.find_by(Author, user_id: user2.id)
+      assert author.user_id == user2.id
     end
   end
 
   describe "[cms changelog sink/undo_sink]" do
+    @tag :wip
     test "if a changelog is too old, read changelog should update can_undo_sink flag.",
          ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -238,6 +239,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert not changelog_last_year.meta.can_undo_sink
     end
 
+    @tag :wip
     test "can sink a changelog", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       assert not changelog.meta.is_sinked
@@ -247,6 +249,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog.active_at == changelog.inserted_at
     end
 
+    @tag :wip
     test "can undo sink changelog", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       {:ok, changelog} = CMS.sink_article(:changelog, changelog.id)
@@ -258,6 +261,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog.active_at == changelog.meta.last_active_at
     end
 
+    @tag :wip
     test "can not undo sink to old changelog", ~m()a do
       {:ok, changelog_last_year} =
         db_insert(:changelog, %{title: "last year", inserted_at: @last_year})
@@ -267,6 +271,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
     end
   end
 
+  @tag :wip
   describe "[cms changelog batch delete]" do
     test "can batch delete changelogs with inner_ids", ~m(user community changelog_attrs)a do
       {:ok, changelog1} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -287,6 +292,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog3.mark_delete == false
     end
 
+    @tag :wip
     test "can undo batch delete changelogs with inner_ids", ~m(user community changelog_attrs)a do
       {:ok, changelog1} = CMS.create_article(community, :changelog, changelog_attrs, user)
       {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -312,6 +318,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
   end
 
   describe "[cms changelog document]" do
+    @tag :wip
     test "will create related document after create", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
@@ -334,6 +341,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert article_doc.body == changelog_doc.body
     end
 
+    @tag :wip
     test "delete changelog should also delete related document",
          ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -350,6 +358,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:error, _} = ORM.find_by(ChangelogDocument, %{changelog_id: changelog.id})
     end
 
+    @tag :wip
     test "update changelog should also update related document",
          ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)

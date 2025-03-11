@@ -80,7 +80,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     with {:ok, community} <- do_create_community(args),
          {:ok, _} <- init_community_root(community.slug, args.user_id),
          {:ok, threads} = create_default_threads_ifneed() do
-      Enum.map(threads, fn thread ->
+      Enum.each(threads, fn thread ->
         CMS.set_thread(community, thread)
       end)
 
@@ -292,14 +292,12 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     thread_inner_id_key = :"#{plural(thread)}_inner_id_index"
     meta = community_meta |> Map.put(thread_inner_id_key, inner_id) |> strip_struct
 
-    community
-    |> ORM.update_meta(meta)
+    community |> ORM.update_meta(meta)
   end
 
   def update_community_count_field(%Community{} = community, :article_tags_count) do
     {:ok, article_tags_count} =
-      from(t in ArticleTag, where: t.community_id == ^community.id)
-      |> ORM.count()
+      from(t in ArticleTag, where: t.community_id == ^community.id) |> ORM.count()
 
     community
     |> Ecto.Changeset.change(%{article_tags_count: article_tags_count})
