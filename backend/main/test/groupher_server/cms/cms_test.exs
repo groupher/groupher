@@ -10,7 +10,6 @@ defmodule GroupherServer.Test.CMS do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
-    # {:ok, community} = db_insert(:community)
 
     community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
     {:ok, community} = CMS.create_community(community_attrs)

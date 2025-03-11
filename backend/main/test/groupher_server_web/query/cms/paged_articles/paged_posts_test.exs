@@ -184,9 +184,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["totalCount"] == 1
     end
 
-    test "should get valid thread document", ~m(guest_conn)a do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "should get valid thread document", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       Process.sleep(2000)
       {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
@@ -199,8 +198,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert not is_nil(get_in(post, ["document", "bodyHtml"]))
     end
 
-    test "support article_tag filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "support article_tag filter", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
@@ -220,9 +219,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert exist_in?(article_tag, post["articleTags"])
     end
 
-    test "support community filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
-
+    @tag :wip2
+    test "support community filter", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
       post_attrs2 = mock_attrs(:post, %{community_id: community.id})
@@ -232,7 +230,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
 
       post = results["entries"] |> List.first()
-      assert results["totalCount"] == 2
+      assert results["totalCount"] == 4
       assert exist_in?(%{id: to_string(community.id)}, post["communities"])
     end
 
@@ -279,20 +277,20 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
        }
     }
     """
+    @tag :wip2
     test "filter community should get posts which belongs to that community",
-         ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+         ~m(guest_conn community user)a do
       {:ok, post} = CMS.create_article(community, :post, mock_attrs(:post), user)
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
 
-      assert length(results["entries"]) == 1
+      assert length(results["entries"]) == 3
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(post.id)))
     end
 
-    test "should have a active_at same with inserted_at", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} = CMS.create_article(community, :post, mock_attrs(:post), user)
 
       variables = %{filter: %{community: community.slug}}

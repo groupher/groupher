@@ -13,10 +13,8 @@ defmodule GroupherServer.Test.Helper.ORM do
 
   setup do
     db_insert_multi(:post, @posts_count)
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
-    {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+
+    {community, post, _, user} = mock_article(:post)
 
     {:ok, post: post, community: community}
   end

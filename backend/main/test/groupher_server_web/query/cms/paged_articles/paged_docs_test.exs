@@ -163,8 +163,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert not is_nil(get_in(doc, ["document", "bodyHtml"]))
     end
 
-    test "support article_tag filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "support article_tag filter", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
@@ -255,8 +255,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(doc.id)))
     end
 
-    test "should have a active_at same with inserted_at", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
       variables = %{filter: %{community: community.slug}}

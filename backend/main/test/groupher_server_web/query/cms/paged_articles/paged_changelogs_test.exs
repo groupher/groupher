@@ -149,9 +149,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["views"] > last_changelog["views"]
     end
 
-    test "should get valid thread document", ~m(guest_conn)a do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "should get valid thread document", ~m(guest_conn user community)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       Process.sleep(2000)
       {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -164,8 +163,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert not is_nil(get_in(changelog, ["document", "bodyHtml"]))
     end
 
-    test "support article_tag filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "support article_tag filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
@@ -185,9 +184,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert exist_in?(article_tag, changelog["articleTags"])
     end
 
-    test "support community filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
-
+    @tag :wip2
+    test "support community filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user)
       changelog_attrs2 = mock_attrs(:changelog, %{community_id: community.id})
@@ -197,7 +195,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")
 
       changelog = results["entries"] |> List.first()
-      assert results["totalCount"] == 2
+      assert results["totalCount"] == 4
       assert exist_in?(%{id: to_string(community.id)}, changelog["communities"])
     end
 

@@ -8,9 +8,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.ChangelogSetTag do
   alias CMS.Model.Changelog
 
   setup do
-    {:ok, changelog} = db_insert(:changelog)
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {community, changelog, _, user} = mock_article(:changelog)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -31,6 +29,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.ChangelogSetTag do
       }
     }
     """
+    @tag :wip2
     test "auth user can set a valid tag to changelog",
          ~m(community changelog article_tag_attrs user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
