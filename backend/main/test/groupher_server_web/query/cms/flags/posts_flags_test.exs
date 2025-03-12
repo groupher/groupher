@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Query.Flags.PostsFlags do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Helper.Utils, only: [get_config: 2]
@@ -14,9 +16,6 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
-
-    {:ok, community2} = db_insert(:community)
-    CMS.create_article(community2, :post, mock_attrs(:post), user)
 
     posts =
       Enum.reduce(1..@total_count, [], fn _, acc ->
