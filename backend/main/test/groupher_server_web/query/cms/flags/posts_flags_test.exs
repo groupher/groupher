@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     {:ok, community2} = db_insert(:community)
     CMS.create_article(community2, :post, mock_attrs(:post), user)

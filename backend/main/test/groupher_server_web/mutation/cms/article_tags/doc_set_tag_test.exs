@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.DocSetTag do
   setup do
     {:ok, doc} = db_insert(:doc)
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)

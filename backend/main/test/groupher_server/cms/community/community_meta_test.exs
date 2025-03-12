@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
     {:ok, community2} = db_insert(:community)
     {:ok, community3} = db_insert(:community)
 

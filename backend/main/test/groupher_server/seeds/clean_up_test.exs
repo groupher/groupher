@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.Seeds.CleanUp do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     post_attrs = mock_attrs(:post, %{community_id: community.id})
 

@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.CMS.Articles.ChangelogPin do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     {:ok, changelog} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
 

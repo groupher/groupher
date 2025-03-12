@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     {:ok, post} = CMS.create_article(community, :post, mock_attrs(:post), user)
 

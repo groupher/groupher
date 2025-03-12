@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogEmotion do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 

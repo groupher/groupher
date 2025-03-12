@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogEmotion do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 

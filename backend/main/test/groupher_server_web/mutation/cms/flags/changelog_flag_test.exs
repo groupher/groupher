@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     {:ok, changelog} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
     {:ok, changelog2} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
