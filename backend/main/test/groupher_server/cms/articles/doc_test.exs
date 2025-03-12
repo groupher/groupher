@@ -10,35 +10,30 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
   alias EditorToHTML.{Class, Validator}
-  alias CMS.Model.{Author, ArticleDocument, Doc, DocDocument}
+  alias CMS.Model.{Author, ArticleDocument, Doc, Community, DocDocument}
 
   @root_class Class.article()
   @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, _, doc_attrs, user} = mock_article(:doc)
     {:ok, user2} = db_insert(:user)
-
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-    {:ok, community} = CMS.create_community(community_attrs)
-
-    doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
     {:ok, ~m(user user2 community doc_attrs)a}
   end
 
   describe "[cms doc curd]" do
-    @tag :wip
+    @tag :wip2
     test "created doc should have auto_increase inner_id", ~m(user community doc_attrs)a do
-      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      assert doc.inner_id == 1
-
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert doc.inner_id == 2
 
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert doc.inner_id == 3
+
+      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+      assert doc.inner_id == 4
 
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
@@ -54,12 +49,12 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
       {:ok, community} = FrontDesk.info(:community, community.slug)
 
-      assert community.meta.docs_inner_id_index == 3
+      assert community.meta.docs_inner_id_index == 4
       assert community.meta.blogs_inner_id_index == 2
       assert community.meta.changelogs_inner_id_index == 1
       assert community.meta.posts_inner_id_index == 0
 
-      assert community.articles_count == 6
+      assert community.articles_count == 7
     end
 
     @tag :wip

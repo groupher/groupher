@@ -10,36 +10,31 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
   alias EditorToHTML.{Class, Validator}
-  alias CMS.Model.{Author, ArticleDocument, Changelog, ChangelogDocument}
+  alias CMS.Model.{Author, ArticleDocument, Changelog, Community, ChangelogDocument}
 
   @root_class Class.article()
   @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, _, changelog_attrs, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
-
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-    {:ok, community} = CMS.create_community(community_attrs)
-
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
     {:ok, ~m(user user2 community changelog_attrs)a}
   end
 
   describe "[cms changelog curd]" do
-    @tag :wip
+    @tag :wip2
     test "created changelog should have auto_increase inner_id",
          ~m(user community changelog_attrs)a do
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      assert changelog.inner_id == 1
-
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       assert changelog.inner_id == 2
 
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       assert changelog.inner_id == 3
+
+      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      assert changelog.inner_id == 4
 
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
@@ -55,12 +50,12 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
       {:ok, community} = ORM.find(Community, community.id)
 
-      assert community.meta.changelogs_inner_id_index == 3
+      assert community.meta.changelogs_inner_id_index == 4
       assert community.meta.blogs_inner_id_index == 2
       assert community.meta.posts_inner_id_index == 1
       assert community.meta.docs_inner_id_index == 0
 
-      assert community.articles_count == 6
+      assert community.articles_count == 7
     end
 
     @tag :wip
