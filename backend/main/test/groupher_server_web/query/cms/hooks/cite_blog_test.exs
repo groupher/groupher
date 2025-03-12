@@ -10,11 +10,7 @@ defmodule GroupherServer.Test.Query.Hooks.BlogCiting do
   @site_host get_config(:general, :site_host)
 
   setup do
-    {:ok, blog} = db_insert(:blog)
-    {:ok, user} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
+    {community, blog, blog_attrs, user} = mock_article(:blog)
 
     guest_conn = simu_conn(:guest)
 

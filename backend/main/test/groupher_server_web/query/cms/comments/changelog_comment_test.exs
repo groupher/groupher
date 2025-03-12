@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
     {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user2)

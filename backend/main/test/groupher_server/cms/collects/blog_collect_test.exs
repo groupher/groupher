@@ -8,8 +8,8 @@ defmodule GroupherServer.Test.Collect.Blog do
 
   setup do
     {:ok, user} = db_insert(:user)
+    {:ok, community} = mock_community(user)
     {:ok, user2} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
 
     blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 

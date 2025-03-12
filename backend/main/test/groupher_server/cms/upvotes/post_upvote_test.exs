@@ -6,8 +6,9 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
 
   setup do
     {:ok, user} = db_insert(:user)
+    {:ok, community} = mock_community(user)
+
     {:ok, user2} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
 
     post_attrs = mock_attrs(:post, %{community_id: community.id})
 
@@ -72,6 +73,7 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert user2.id in article.meta.upvoted_user_ids
     end
 
+    @tag :wip2
     test "post meta history should be updated after undo upvote",
          ~m(user user2 community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)

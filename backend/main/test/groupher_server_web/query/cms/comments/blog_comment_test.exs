@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     blog_attrs = mock_attrs(:blog, %{community_id: community.id})
     {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user2)
