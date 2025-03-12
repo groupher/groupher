@@ -57,8 +57,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post2} = CMS.create_article(community, :post, post_attrs, user)
 
-      {:ok, _report} = CMS.report_article(:post, post.id, "reason", "attr_info", user)
-      {:ok, _report} = CMS.report_article(:post, post2.id, "reason", "attr_info", user2)
+      {:ok, _} = CMS.report_article(:post, post.id, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(:post, post2.id, "reason", "attr_info", user2)
 
       variables = %{filter: %{content_type: "POST", page: 1, size: 10}}
       results = guest_conn |> query_result(@query, variables, "pagedAbuseReports")
@@ -71,8 +71,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
       {:ok, post} = db_insert(:post)
       {:ok, post2} = db_insert(:post)
 
-      {:ok, _report} = CMS.report_article(:post, post.id, "reason", "attr_info", user)
-      {:ok, _report} = CMS.report_article(:post, post2.id, "reason", "attr_info", user2)
+      {:ok, _} = CMS.report_article(:post, post.id, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(:post, post2.id, "reason", "attr_info", user2)
 
       variables = %{filter: %{content_type: "POST", content_id: post.id, page: 1, size: 10}}
       results = guest_conn |> query_result(@query, variables, "pagedAbuseReports")

@@ -57,8 +57,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.BlogReport do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog2} = CMS.create_article(community, :blog, blog_attrs, user)
 
-      {:ok, _report} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
-      {:ok, _report} = CMS.report_article(:blog, blog2.id, "reason", "attr_info", user2)
+      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(:blog, blog2.id, "reason", "attr_info", user2)
 
       variables = %{filter: %{content_type: "BLOG", page: 1, size: 10}}
       results = guest_conn |> query_result(@query, variables, "pagedAbuseReports")
@@ -71,8 +71,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.BlogReport do
       {:ok, blog} = db_insert(:blog)
       {:ok, blog2} = db_insert(:blog)
 
-      {:ok, _report} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
-      {:ok, _report} = CMS.report_article(:blog, blog2.id, "reason", "attr_info", user2)
+      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(:blog, blog2.id, "reason", "attr_info", user2)
 
       variables = %{
         filter: %{content_type: "BLOG", content_id: blog.id, page: 1, size: 10}

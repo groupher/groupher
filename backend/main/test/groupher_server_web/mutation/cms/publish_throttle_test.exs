@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.PublishThrottle do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Helper.Utils, only: [get_config: 2]
@@ -14,7 +16,8 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
   setup do
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
-    {:ok, community} = db_insert(:community)
+
+    {:ok, community} = mock_community()
 
     {:ok, ~m(user_conn guest_conn community)a}
   end
@@ -44,7 +47,8 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     assert created |> Map.has_key?("id")
   end
 
-  test "user create 2 content with valid inverval time success", ~m(community)a do
+  @tag :wip2
+  test "user create 2 content with valid interval time success", ~m(community)a do
     {:ok, user} = db_insert(:user)
     user_conn = simu_conn(:user, user)
 
@@ -62,7 +66,8 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     assert created |> Map.has_key?("id")
   end
 
-  test "root create multi content with invalid inverval time success", ~m(community)a do
+  @tag :wip2
+  test "root create multi content with invalid interval time success", ~m(community)a do
     {:ok, user} = db_insert(:user)
     passport_rules = %{"root" => true}
     rule_conn = simu_conn(:user, cms: passport_rules)
@@ -105,6 +110,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_interval))
   end
 
+  @tag :wip2
   test "user create multi content with invalid hour_count fails", ~m(community)a do
     {:ok, user} = db_insert(:user)
     user_conn = simu_conn(:user, user)
@@ -129,6 +135,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_hour))
   end
 
+  @tag :wip2
   test "user create multi content with valid hour count success in next hour", ~m(community)a do
     {:ok, user} = db_insert(:user)
     user_conn = simu_conn(:user, user)
