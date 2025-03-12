@@ -149,7 +149,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert first_blog["views"] > last_blog["views"]
     end
 
-    @tag :wip2
+    @tag :wip
     test "should get valid thread document", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       Process.sleep(2000)
@@ -163,7 +163,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert not is_nil(get_in(blog, ["document", "bodyHtml"]))
     end
 
-    @tag :wip2
+    @tag :wip
     test "support article_tag filter", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -184,7 +184,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert exist_in?(article_tag, blog["articleTags"])
     end
 
-    @tag :wip2
+    @tag :wip
     test "support community filter", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -242,7 +242,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
        }
     }
     """
-    @tag :wip2
+    @tag :wip
     test "filter community should get blogs which belongs to that community",
          ~m(guest_conn community user)a do
       {:ok, blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
@@ -254,7 +254,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(blog.id)))
     end
 
-    @tag :wip2
+    @tag :wip
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 
@@ -318,7 +318,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       }
     }
     """
-    @tag :wip2
+    @tag :wip
     test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 

@@ -117,7 +117,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-    @tag :wip2
+    @tag :wip
     test "auth user can mirror changelog home", ~m(user changelog)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 

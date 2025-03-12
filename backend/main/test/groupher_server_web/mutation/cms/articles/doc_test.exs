@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       }
     }
     """
-    @tag :wip2
+    @tag :wip
     test "create doc with valid attrs and make sure author exist",
          ~m(user_conn community user)a do
       # {:ok, user} = db_insert(:user)
@@ -90,7 +90,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert exist_in?(%{id: article_tag.id}, doc.article_tags)
     end
 
-    @tag :wip2
+    @tag :wip
     test "create doc should escape xss attracts", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string()})
       variables = doc_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert not String.contains?(body_html, "script")
     end
 
-    @tag :wip2
+    @tag :wip
     test "create doc should escape xss attracts 2", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string(:safe)})
       variables = doc_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
@@ -115,7 +115,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
 
-    @tag :wip2
+    @tag :wip
     test "create doc with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc)

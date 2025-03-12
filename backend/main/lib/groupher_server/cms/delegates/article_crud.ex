@@ -16,7 +16,8 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       get_config: 2,
       ensure: 2,
       module_to_upcase: 1,
-      atom_values_to_upcase: 1
+      atom_values_to_upcase: 1,
+      use_transaction: 1
     ]
 
   import GroupherServer.CMS.Delegate.Helper, only: [mark_viewer_emotion_states: 2, thread_of: 1]
@@ -406,7 +407,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
     with {:ok, author} <- ensure_author_exists(user),
          {:ok, info} <- match(thread) do
-      Repo.transaction(fn ->
+      use_transaction(fn ->
         {:ok, community} = ORM.lock_community(community)
 
         Multi.new()

@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
   end
 
   describe "[cms blog curd]" do
-    @tag :wip2
+    @tag :wip
     test "created blog should have auto_increase inner_id", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       assert blog.inner_id == 2

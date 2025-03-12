@@ -64,7 +64,7 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert @default_emotions == emotions
     end
 
-    @tag :wip2
+    @tag :wip
     test "can make emotion to blog", ~m(community blog_attrs user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert not user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
-    @tag :wip2
+    @tag :wip
     test "same user make same emotion to same blog.", ~m(community blog_attrs user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 

@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
   alias Helper.ORM
   alias GroupherServer.CMS
 
-  alias CMS.Model.{Embeds, Author, Changelog}
+  alias CMS.Model.{Embeds, Changelog}
 
   @default_article_meta Embeds.ArticleMeta.default_meta()
 
@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
   end
 
   describe "[cms changelog meta info]" do
-    @tag :wip2
+    @tag :wip
     test "can get default meta info", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       {:ok, changelog} = ORM.find_by(Changelog, id: changelog.id)

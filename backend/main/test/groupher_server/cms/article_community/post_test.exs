@@ -65,7 +65,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       assert exist_in?(community2, post.communities)
     end
 
-    @tag :wip2
+    @tag :wip
     test "post move to other community with new tag", ~m(user community community2 post_attrs)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)
@@ -180,7 +180,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       assert reason |> is_error?(:mirror_article)
     end
 
-    @tag :wip2
+    @tag :wip
     test "post can be mirror to home", ~m(community post_attrs user)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 
@@ -209,7 +209,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       assert paged_articles.total_count === 1
     end
 
-    @tag :wip2
+    @tag :wip
     test "post can be mirror to home with tags", ~m(community post_attrs user)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 

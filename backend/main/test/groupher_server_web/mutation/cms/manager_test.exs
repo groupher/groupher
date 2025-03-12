@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       }
     }
     """
-    @tag :wip2
+    @tag :wip
     test "root can markDelete a post", ~m(community user post)a do
       variables = %{id: post.id}
 

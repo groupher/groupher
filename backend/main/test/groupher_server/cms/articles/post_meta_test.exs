@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.PostMeta do
   alias Helper.ORM
   alias GroupherServer.CMS
 
-  alias CMS.Model.{Embeds, Author, Post}
+  alias CMS.Model.{Embeds, Post}
 
   @default_article_meta Embeds.ArticleMeta.default_meta()
 
@@ -19,9 +19,8 @@ defmodule GroupherServer.Test.CMS.PostMeta do
   end
 
   describe "[cms post meta info]" do
+    @tag :wip
     test "can get default meta info", ~m(user community post_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
-
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = ORM.find_by(Post, id: post.id)
       meta = post.meta |> Map.from_struct() |> Map.delete(:id)

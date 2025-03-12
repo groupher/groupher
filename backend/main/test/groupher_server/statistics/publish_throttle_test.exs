@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Statistics.PublishThrottle do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -6,15 +8,17 @@ defmodule GroupherServer.Test.Statistics.PublishThrottle do
   alias Statistics.Model.PublishThrottle
 
   setup do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = mock_comment(user)
+
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
-    {:ok, community} = db_insert(:community)
 
-    {:ok, ~m(user_conn guest_conn community)a}
+    {:ok, ~m(user_conn guest_conn community user)a}
   end
 
-  test "user first create content should add fresh throttle record.", ~m(community)a do
-    {:ok, user} = db_insert(:user)
+  @tag :wip
+  test "user first create content should add fresh throttle record.", ~m(community user)a do
     post_attrs = mock_attrs(:post, %{community_id: community.id})
     {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
 

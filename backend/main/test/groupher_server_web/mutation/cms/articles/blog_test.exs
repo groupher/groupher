@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       }
     }
     """
-    @tag :wip2
+    @tag :wip
     test "create blog with valid attrs and make sure author exist",
          ~m(user_conn user community)a do
       blog_attr = mock_attrs(:blog) |> Map.merge(%{linkAddr: "https://helloworld"})
@@ -71,7 +71,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
     end
 
-    @tag :wip2
+    @tag :wip
     test "create blog with valid tags id list", ~m(user_conn user community)a do
       article_tag_attrs = mock_attrs(:article_tag)
       {:ok, article_tag} = CMS.create_article_tag(community, :blog, article_tag_attrs, user)
@@ -88,7 +88,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert exist_in?(%{id: article_tag.id}, blog.article_tags)
     end
 
-    @tag :wip2
+    @tag :wip
     test "create blog should escape xss attracts", ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string()})
       variables = blog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
@@ -99,7 +99,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert not String.contains?(body_html, "script")
     end
 
-    @tag :wip2
+    @tag :wip
     test "create blog should escape xss attracts 2", ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string(:safe)})
       variables = blog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
@@ -113,7 +113,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
 
-    @tag :wip2
+    @tag :wip
     test "create blog with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog)

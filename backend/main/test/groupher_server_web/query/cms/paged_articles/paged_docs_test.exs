@@ -148,7 +148,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["views"] > last_doc["views"]
     end
 
-    @tag :wip2
+    @tag :wip
     test "should get valid thread document", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       Process.sleep(2000)
@@ -162,7 +162,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert not is_nil(get_in(doc, ["document", "bodyHtml"]))
     end
 
-    @tag :wip2
+    @tag :wip
     test "support article_tag filter", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -183,7 +183,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert exist_in?(article_tag, doc["articleTags"])
     end
 
-    @tag :wip2
+    @tag :wip
     test "support community filter", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -252,7 +252,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(doc.id)))
     end
 
-    @tag :wip2
+    @tag :wip
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
@@ -316,7 +316,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       }
     }
     """
-    @tag :wip2
+    @tag :wip
     test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 

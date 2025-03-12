@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
       }
     }
     """
-    @tag :wip2
+    @tag :wip
     test "login user can report a post", ~m(community post_attrs user user_conn)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 

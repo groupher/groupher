@@ -20,11 +20,12 @@ defmodule GroupherServer.Test.CMS.Articles.BlogPin do
   end
 
   describe "[cms blog pin]" do
+    @tag :wip
     test "can pin a blog", ~m(community blog)a do
       {:ok, _} = CMS.pin_article(:blog, blog.id, community.id)
-      {:ok, pind_article} = ORM.find_by(PinnedArticle, %{blog_id: blog.id})
+      {:ok, pinned_article} = ORM.find_by(PinnedArticle, %{blog_id: blog.id})
 
-      assert pind_article.blog_id == blog.id
+      assert pinned_article.blog_id == blog.id
     end
 
     test "one community & thread can only pin certern count of blog", ~m(community user)a do
@@ -45,6 +46,7 @@ defmodule GroupherServer.Test.CMS.Articles.BlogPin do
       assert {:error, _} = CMS.pin_article(:blog, 8848, community.id)
     end
 
+    @tag :wip
     test "can undo pin to a blog", ~m(community blog)a do
       {:ok, _} = CMS.pin_article(:blog, blog.id, community.id)
 

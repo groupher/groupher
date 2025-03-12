@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
   end
 
   describe "[cms changelog curd]" do
-    @tag :wip2
+    @tag :wip
     test "created changelog should have auto_increase inner_id",
          ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)

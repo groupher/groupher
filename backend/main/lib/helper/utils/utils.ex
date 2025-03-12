@@ -8,7 +8,7 @@ defmodule Helper.Utils do
 
   import Helper.Validator.Guards, only: [g_none_empty_str: 1]
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, Repo}
   alias Helper.{Cache, Utils}
 
   # Map utils
@@ -89,6 +89,7 @@ defmodule Helper.Utils do
   def done({:error, reason}, with: _result), do: {:error, reason}
 
   def done({:ok, result}, :trans), do: result
+  def done({:error, reason}, :trans), do: throw({:error, reason})
   def done(nil, queryable, id), do: {:error, not_found_formatter(queryable, id)}
   def done(result, _, _), do: {:ok, result}
 
@@ -255,5 +256,21 @@ defmodule Helper.Utils do
   """
   def get_host_from_url(url) do
     URI.parse(url).host
+  end
+
+  # Repo.transaction will rewrite error to {:error, :rollback}, so if we want to return error with
+  # details context, need use try catch
+  def use_transaction(fun) do
+    try do
+      Repo.transaction(fn ->
+        case fun.() do
+          {:ok, result} -> result
+          {:error, reason} -> throw({:error, reason})
+          value -> value
+        end
+      end)
+    catch
+      {:error, reason} -> {:error, reason}
+    end
   end
 end
