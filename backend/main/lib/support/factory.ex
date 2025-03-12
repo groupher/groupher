@@ -438,8 +438,8 @@ defmodule GroupherServer.Support.Factory do
     CMS.create_community(community_attrs)
   end
 
-  def mock_community(%User{} = user) do
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+  def mock_community(%User{} = user, attrs \\ %{}) do
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id}) |> Map.merge(attrs)
 
     CMS.create_community(community_attrs)
   end

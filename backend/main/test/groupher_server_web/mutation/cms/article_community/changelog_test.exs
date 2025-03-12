@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -6,14 +8,13 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
   alias CMS.Model.Changelog
 
   setup do
-    {:ok, changelog} = db_insert(:changelog)
-    {:ok, community} = db_insert(:community)
+    {community, changelog, _, user} = mock_article(:changelog)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
     owner_conn = simu_conn(:owner, changelog)
 
-    {:ok, ~m(user_conn guest_conn owner_conn community changelog)a}
+    {:ok, ~m(user_conn guest_conn owner_conn community changelog user)a}
   end
 
   describe "[mirror/unmirror/move changelog to/from community]" do
@@ -116,8 +117,9 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-    test "auth user can mirror changelog home", ~m(changelog)a do
-      {:ok, home_community} = db_insert(:community, %{slug: "home"})
+    @tag :wip2
+    test "auth user can mirror changelog home", ~m(user changelog)a do
+      {:ok, home_community} = mock_community(user, %{slug: "home"})
 
       variables = %{id: changelog.id, thread: "CHANGELOG"}
 

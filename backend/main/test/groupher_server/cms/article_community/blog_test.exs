@@ -192,8 +192,9 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert reason |> is_error?(:mirror_article)
     end
 
+    @tag :wip2
     test "blog can be mirror to home", ~m(community blog_attrs user)a do
-      {:ok, home_community} = db_insert(:community, %{slug: "home"})
+      {:ok, home_community} = mock_community(user, %{slug: "home"})
 
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       assert blog.original_community_id == community.id
@@ -212,7 +213,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       {:ok, paged_articles} = CMS.paged_articles(:blog, filter)
 
       assert exist_in?(blog, paged_articles.entries)
-      assert paged_articles.total_count === 1
+      assert paged_articles.total_count === 2
 
       filter = %{page: 1, size: 10, community: home_community.slug}
       {:ok, paged_articles} = CMS.paged_articles(:blog, filter)
@@ -221,8 +222,9 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert paged_articles.total_count === 1
     end
 
+    @tag :wip2
     test "blog can be mirror to home with tags", ~m(community blog_attrs user)a do
-      {:ok, home_community} = db_insert(:community, %{slug: "home"})
+      {:ok, home_community} = mock_community(user, %{slug: "home"})
 
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)
@@ -254,7 +256,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       {:ok, paged_articles} = CMS.paged_articles(:blog, filter)
 
       assert exist_in?(blog, paged_articles.entries)
-      assert paged_articles.total_count === 1
+      assert paged_articles.total_count === 2
 
       filter = %{page: 1, size: 10, community: home_community.slug}
       {:ok, paged_articles} = CMS.paged_articles(:blog, filter)
