@@ -7,13 +7,8 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
   alias GroupherServer.CMS
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, changelog, _, user} = mock_article(:changelog, preload: [author: :user])
     {:ok, user2} = db_insert(:user)
-    {:ok, community} = mock_community(user)
-
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-    {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user2)
-    {:ok, changelog} = ORM.find(CMS.Model.Changelog, changelog.id, preload: [author: :user])
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
@@ -589,8 +584,9 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       assert results["entries"] |> List.last() |> Map.get("upvotesCount") == 0
     end
 
+    @tag :wip2
     test "article author upvote a comment can get is_article_author and/or is_article_author_upvoted flag",
-         ~m(guest_conn community changelog user)a do
+         ~m(guest_conn community changelog user user2)a do
       total_count = 5
       page_size = 12
       thread = :changelog
@@ -605,7 +601,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
               thread,
               changelog.inner_id,
               mock_comment("comment #{i}"),
-              user
+              user2
             )
 
           acc ++ [comment]

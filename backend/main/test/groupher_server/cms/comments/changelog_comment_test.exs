@@ -17,11 +17,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
   @pinned_comment_limit Comment.pinned_comment_limit()
 
   setup do
-    {community, changelog, _, user} = mock_article(:changelog)
+    {community, changelog, _, user} = mock_article(:changelog, preload: [author: :user])
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
-
-    {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: [author: :user])
 
     cur_date = DateTime.utc_now() |> DateTime.to_date()
 

@@ -11,6 +11,8 @@ defmodule GroupherServer.Support.Factory do
   alias GroupherServer.{Accounts, CMS, Delivery}
   alias Accounts.Model.User
 
+  alias Helper.ORM
+
   alias CMS.Model.{
     Author,
     Category,
@@ -457,6 +459,18 @@ defmodule GroupherServer.Support.Factory do
     {:ok, article} = CMS.create_article(community, thread, attrs, user)
 
     {community, article, attrs, user}
+  end
+
+  def mock_article(thread, preload: []), do: mock_article(thread)
+
+  def mock_article(thread, preload: preload) do
+    {community, article, attrs, user} = mock_article(thread)
+
+    with {:ok, info} <- match(thread) do
+      {:ok, preload_article} = ORM.find(info.model, article.id, preload: preload)
+
+      {community, preload_article, attrs, user}
+    end
   end
 
   def mock_article(thread, %Community{} = community, %User{} = user) do

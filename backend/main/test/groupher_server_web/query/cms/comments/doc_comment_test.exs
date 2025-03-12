@@ -3,12 +3,10 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
   alias GroupherServer.CMS
 
   setup do
-    {community, doc, _, user} = mock_article(:doc)
-    {:ok, doc} = ORM.find(CMS.Model.Doc, doc.id, preload: [author: :user])
+    {community, doc, _, user} = mock_article(:doc, preload: [author: :user])
 
     {:ok, user2} = db_insert(:user)
 
@@ -586,8 +584,9 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       assert results["entries"] |> List.last() |> Map.get("upvotesCount") == 0
     end
 
+    @tag :wip2
     test "article author upvote a comment can get is_article_author and/or is_article_author_upvoted flag",
-         ~m(guest_conn community doc user)a do
+         ~m(guest_conn community doc user user2)a do
       total_count = 5
       page_size = 12
       thread = :doc
@@ -602,7 +601,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
               thread,
               doc.inner_id,
               mock_comment("comment #{i}"),
-              user
+              user2
             )
 
           acc ++ [comment]

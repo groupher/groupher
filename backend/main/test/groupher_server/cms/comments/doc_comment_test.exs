@@ -17,11 +17,9 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   @pinned_comment_limit Comment.pinned_comment_limit()
 
   setup do
-    {community, doc, _, user} = mock_article(:doc)
+    {community, doc, _, user} = mock_article(:doc, preload: [author: :user])
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
-
-    {:ok, doc} = ORM.find(Doc, doc.id, preload: [author: :user])
 
     cur_date = DateTime.utc_now() |> DateTime.to_date()
 
