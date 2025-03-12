@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.CMS.Manager do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -6,12 +8,10 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
   alias Helper.ORM
 
   setup do
-    {:ok, post} = db_insert(:post)
+    {community, post, _, user} = mock_article(:post)
     # {:ok, category} = db_insert(:category)
-    {:ok, community} = db_insert(:community)
     # {:ok, thread} = db_insert(:thread)
     {:ok, tag} = db_insert(:article_tag, %{community: community})
-    {:ok, user} = db_insert(:user)
 
     user_conn = simu_conn(:user)
     guest_conn = simu_conn(:guest)
@@ -28,10 +28,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       }
     }
     """
-    test "root can markDelete a post", ~m(community user)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-
+    @tag :wip2
+    test "root can markDelete a post", ~m(community user post)a do
       variables = %{id: post.id}
 
       passport_rules = %{"root" => true}

@@ -5,12 +5,13 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
   alias GroupherServer.CMS
 
   setup do
-    guest_conn = simu_conn(:guest)
-    {:ok, community} = db_insert(:community)
     {:ok, user} = db_insert(:user)
+    {:ok, community} = mock_community(user)
 
     article_tag_attrs = mock_attrs(:article_tag)
     article_tag_attrs2 = mock_attrs(:article_tag)
+
+    guest_conn = simu_conn(:guest)
 
     {:ok, ~m(guest_conn community article_tag_attrs article_tag_attrs2 user)a}
   end

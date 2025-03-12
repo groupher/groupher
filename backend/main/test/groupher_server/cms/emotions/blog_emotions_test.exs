@@ -11,12 +11,9 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
   @default_emotions Embeds.ArticleEmotion.default_emotions()
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {community, blog, blog_attrs, _} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
-
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
     {:ok, ~m(user user2 user3 community blog_attrs)a}
   end
@@ -67,6 +64,7 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert @default_emotions == emotions
     end
 
+    @tag :wip2
     test "can make emotion to blog", ~m(community blog_attrs user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
@@ -96,6 +94,7 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert not user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
+    @tag :wip2
     test "same user make same emotion to same blog.", ~m(community blog_attrs user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
