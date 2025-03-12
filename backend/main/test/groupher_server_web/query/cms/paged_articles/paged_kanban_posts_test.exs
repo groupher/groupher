@@ -14,9 +14,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
   @page_size get_config(:general, :page_size)
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
+    {community, _, post_attrs, user} = mock_article(:post)
 
     guest_conn = simu_conn(:guest)
 

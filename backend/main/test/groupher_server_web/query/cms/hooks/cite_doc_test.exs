@@ -11,11 +11,7 @@ defmodule GroupherServer.Test.Query.Hooks.DocCiting do
   @site_host get_config(:general, :site_host)
 
   setup do
-    {:ok, doc} = db_insert(:doc)
-    {:ok, user} = db_insert(:user)
-
-    {:ok, community} = db_insert(:community)
-    doc_attrs = mock_attrs(:doc, %{community_id: community.id})
+    {community, doc, doc_attrs, user} = mock_article(:doc)
 
     guest_conn = simu_conn(:guest)
 

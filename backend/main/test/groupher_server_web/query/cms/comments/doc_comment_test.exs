@@ -7,13 +7,10 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
   alias GroupherServer.CMS
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, user2} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    doc_attrs = mock_attrs(:doc, %{community_id: community.id})
-    {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user2)
+    {community, doc, _, user} = mock_article(:doc)
     {:ok, doc} = ORM.find(CMS.Model.Doc, doc.id, preload: [author: :user])
+
+    {:ok, user2} = db_insert(:user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)

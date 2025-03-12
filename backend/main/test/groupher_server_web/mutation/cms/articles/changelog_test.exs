@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Articles.Changelog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -7,11 +9,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
   alias CMS.Model.{Changelog, Author}
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-    {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+    {community, changelog, _, user} = mock_article(:changelog)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -48,11 +46,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       }
     }
     """
-    test "create changelog with valid attrs and make sure author exist" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
+    test "create changelog with valid attrs and make sure author exist",
+         ~m(user_conn community user)a do
       changelog_attr = mock_attrs(:changelog) |> Map.merge(%{linkAddr: "https://helloworld"})
 
       # body = """
@@ -93,12 +88,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       assert exist_in?(%{id: article_tag.id}, changelog.article_tags)
     end
 
-    test "create changelog should excape xss attracts" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    @tag :wip2
+    test "create changelog should escape xss attracts", ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string()})
       variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
       result = user_conn |> mutation_result(@create_changelog_query, variables, "createChangelog")
@@ -108,12 +99,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       assert not String.contains?(body_html, "script")
     end
 
-    test "create changelog should excape xss attracts 2" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    @tag :wip2
+    test "create changelog should escape xss attracts 2", ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string(:safe)})
       variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
       result = user_conn |> mutation_result(@create_changelog_query, variables, "createChangelog")
@@ -126,11 +113,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
 
-    test "create changelog with missing non_null field should get 200 error" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "create changelog with missing non_null field should get 200 error",
+         ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog)
       variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
 

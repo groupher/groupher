@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Articles.Doc do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -7,11 +9,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
   alias CMS.Model.{Doc, Author}
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    doc_attrs = mock_attrs(:doc, %{community_id: community.id})
-    {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+    {community, doc, _, user} = mock_article(:doc)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -48,11 +46,12 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       }
     }
     """
-    test "create doc with valid attrs and make sure author exist" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
+    @tag :wip2
+    test "create doc with valid attrs and make sure author exist",
+         ~m(user_conn community user)a do
+      # {:ok, user} = db_insert(:user)
+      # user_conn = simu_conn(:user, user)
 
-      {:ok, community} = db_insert(:community)
       doc_attr = mock_attrs(:doc) |> Map.merge(%{linkAddr: "https://helloworld"})
 
       # body = """
@@ -91,12 +90,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert exist_in?(%{id: article_tag.id}, doc.article_tags)
     end
 
-    test "create doc should excape xss attracts" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    @tag :wip2
+    test "create doc should escape xss attracts", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string()})
       variables = doc_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
       result = user_conn |> mutation_result(@create_doc_query, variables, "createDoc")
@@ -106,12 +101,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert not String.contains?(body_html, "script")
     end
 
-    test "create doc should excape xss attracts 2" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    @tag :wip2
+    test "create doc should escape xss attracts 2", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string(:safe)})
       variables = doc_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
       result = user_conn |> mutation_result(@create_doc_query, variables, "createDoc")
@@ -124,11 +115,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
 
-    test "create doc with missing non_null field should get 200 error" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "create doc with missing non_null field should get 200 error",
+         ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc)
       variables = doc_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
 

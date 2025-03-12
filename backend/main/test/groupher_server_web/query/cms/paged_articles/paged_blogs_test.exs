@@ -149,9 +149,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert first_blog["views"] > last_blog["views"]
     end
 
-    test "should get valid thread document", ~m(guest_conn)a do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "should get valid thread document", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       Process.sleep(2000)
       {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -185,9 +184,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert exist_in?(article_tag, blog["articleTags"])
     end
 
-    test "support community filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
-
+    @tag :wip2
+    test "support community filter", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user)
       blog_attrs2 = mock_attrs(:blog, %{community_id: community.id})
@@ -197,7 +195,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       results = guest_conn |> query_result(@query, variables, "pagedBlogs")
 
       blog = results["entries"] |> List.first()
-      assert results["totalCount"] == 2
+      assert results["totalCount"] == 4
       assert exist_in?(%{id: to_string(community.id)}, blog["communities"])
     end
 
@@ -244,15 +242,15 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
        }
     }
     """
+    @tag :wip2
     test "filter community should get blogs which belongs to that community",
-         ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+         ~m(guest_conn community user)a do
       {:ok, blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> query_result(@query, variables, "pagedBlogs")
 
-      assert length(results["entries"]) == 1
+      assert length(results["entries"]) == 3
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(blog.id)))
     end
 

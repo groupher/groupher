@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Articles.Post do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -7,11 +9,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
   alias CMS.Model.{Post, Author}
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
-    {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+    {community, post, _, user} = mock_article(:post)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -104,11 +102,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       }
     }
     """
-    test "create post with valid attrs and make sure author exist" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "create post with valid attrs and make sure author exist",
+         ~m(user_conn user community)a do
       post_attr = mock_attrs(:post) |> Map.merge(%{linkAddr: "https://helloworld"})
 
       # body = """
@@ -145,12 +141,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert exist_in?(%{id: article_tag.id}, post.article_tags)
     end
 
-    test "create post should excape xss attracts" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    @tag :wip2
+    test "create post should escape xss attracts", ~m(user_conn community)a do
       post_attr = mock_attrs(:post, %{body: mock_xss_string()})
       variables = post_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
       result = user_conn |> mutation_result(@create_post_query, variables, "createPost")
@@ -160,12 +152,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert not String.contains?(body_html, "script")
     end
 
-    test "create post should excape xss attracts 2" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    @tag :wip2
+    test "create post should escape xss attracts 2", ~m(user_conn community)a do
       post_attr = mock_attrs(:post, %{body: mock_xss_string(:safe)})
       variables = post_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
       result = user_conn |> mutation_result(@create_post_query, variables, "createPost")
@@ -177,11 +165,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
-    test "create post with missing non_null field should get 200 error" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
+    @tag :wip2
+    test "create post with missing non_null field should get 200 error",
+         ~m(user_conn community)a do
       post_attr = mock_attrs(:post)
       variables = post_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
 
