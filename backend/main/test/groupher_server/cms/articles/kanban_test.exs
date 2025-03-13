@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.Articles.Kanban do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -10,12 +12,9 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
   @article_state Constant.CMS.article_state()
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, user2} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
-    {:ok, community} = db_insert(:community)
+    {community, post, post_attrs, user} = mock_article(:post)
 
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
+    {:ok, user2} = db_insert(:user)
 
     {:ok, ~m(user user2 community post post_attrs)a}
   end
@@ -33,6 +32,7 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
       assert kanban.state == nil
     end
 
+    @tag :wip2
     test "can set cat of a post", ~m(user community post_attrs)a do
       {:ok, kanban} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = CMS.set_post_cat(kanban, @article_cat.feature)

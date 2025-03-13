@@ -136,6 +136,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert {:error, _} = ORM.find(Blog, deleted["id"])
     end
 
+    @tag :wip2
     test "can delete a blog by auth user", ~m(blog)a do
       blog = blog |> Repo.preload(:communities)
       belongs_community_title = blog.communities |> List.first() |> Map.get(:title)

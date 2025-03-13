@@ -35,6 +35,7 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
       assert results.total_count == 0
     end
 
+    @tag :wip2
     test "user can get paged published blogs", ~m(user user2 community community2)a do
       pub_blogs =
         Enum.reduce(1..@publish_count, [], fn _, acc ->

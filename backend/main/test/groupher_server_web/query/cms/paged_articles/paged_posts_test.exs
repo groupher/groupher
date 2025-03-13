@@ -412,6 +412,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["entries"] |> Enum.any?(&(&1["id"] != post_last_year.id))
     end
 
+    @tag :wip2
     test "TODAY option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "TODAY"}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
