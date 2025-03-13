@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -7,10 +9,8 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
   alias Helper.ORM
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = mock_community(user)
+    {community, blog, _, user} = mock_article(:blog)
 
-    {:ok, blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
     {:ok, blog2} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
     {:ok, blog3} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 

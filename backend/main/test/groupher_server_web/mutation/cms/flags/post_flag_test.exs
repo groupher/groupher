@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -7,10 +9,8 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
   alias Helper.ORM
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = mock_community(user)
+    {community, post, _, user} = mock_article(:post)
 
-    {:ok, post} = CMS.create_article(community, :post, mock_attrs(:post), user)
     {:ok, post2} = CMS.create_article(community, :post, mock_attrs(:post), user)
     {:ok, post3} = CMS.create_article(community, :post, mock_attrs(:post), user)
 
@@ -30,6 +30,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
+    @tag :wip2
     test "auth user can markDelete post", ~m(post)a do
       variables = %{id: post.id}
 

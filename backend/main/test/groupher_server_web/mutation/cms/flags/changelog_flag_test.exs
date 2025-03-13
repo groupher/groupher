@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -7,10 +9,8 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
   alias Helper.ORM
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = mock_community(user)
+    {community, changelog, _, user} = mock_article(:changelog)
 
-    {:ok, changelog} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
     {:ok, changelog2} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
     {:ok, changelog3} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
 

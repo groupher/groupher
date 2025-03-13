@@ -550,6 +550,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert results.total_count == total_count + 1
     end
 
+    @tag :wip2
     test "paged article comments folded flag should be false", ~m(community user doc)a do
       total_count = 30
       page_number = 1

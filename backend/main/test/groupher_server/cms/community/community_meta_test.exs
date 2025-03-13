@@ -15,8 +15,8 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
-    {:ok, community2} = db_insert(:community)
-    {:ok, community3} = db_insert(:community)
+    {:ok, community2} = mock_community()
+    {:ok, community3} = mock_community()
 
     community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
 
@@ -31,13 +31,16 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
                @default_meta |> Map.merge(%{moderators_ids: [community.user_id]})
     end
 
-    test "update legacy community should add default meta", ~m(community)a do
+    @tag :wip2
+    test "update legacy community should add default meta" do
+      {:ok, community} = db_insert(:community)
       assert is_nil(community.meta)
 
       {:ok, community} = CMS.update_community(community.id, %{title: "new title"})
       assert community.meta |> strip_struct == @default_meta
     end
 
+    @tag :wip2
     test "create a post should inc posts_count in meta",
          ~m(user community community2 community3)a do
       post_attrs = mock_attrs(:post)
