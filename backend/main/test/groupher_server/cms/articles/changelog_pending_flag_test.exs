@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
   end
 
   describe "[pending changelogs flags]" do
-    @tag :wip2
+    @tag :wip
     test "pending changelog can not be read", ~m(changelog_m)a do
       {:ok, _} =
         CMS.read_article(changelog_m.original_community_slug, :changelog, changelog_m.inner_id)

@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
       assert report.article.thread == "BLOG"
     end
 
-    @tag :wip2
+    @tag :wip
     test "report a blog should have a abuse report record",
          ~m(community user blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)

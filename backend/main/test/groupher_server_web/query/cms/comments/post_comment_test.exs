@@ -622,9 +622,9 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       assert results["entries"] |> List.last() |> Map.get("upvotesCount") == 0
     end
 
-    @tag :wip2
+    @tag :wip
     test "article author upvote a comment can get is_article_author and/or is_article_author_upvoted flag",
-         ~m(guest_conn community post user user2)a do
+         ~m(guest_conn community post user2)a do
       total_count = 5
       page_size = 12
       thread = :post

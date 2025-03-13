@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.Statistics.PublishThrottle do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = mock_comment(user)
+    {:ok, community} = mock_community(user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.Statistics.PublishThrottle do
     {:ok, ~m(user_conn guest_conn community user)a}
   end
 
-  @tag :wip
+  @tag :wip2
   test "user first create content should add fresh throttle record.", ~m(community user)a do
     post_attrs = mock_attrs(:post, %{community_id: community.id})
     {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
@@ -28,6 +28,7 @@ defmodule GroupherServer.Test.Statistics.PublishThrottle do
     assert pt_record.hour_count == 1
   end
 
+  @tag :wip2
   test "user create 2 content should update throttle record.", ~m(community)a do
     {:ok, user} = db_insert(:user)
     post_attrs = mock_attrs(:post, %{community_id: community.id})

@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     assert created |> Map.has_key?("id")
   end
 
-  @tag :wip2
+  @tag :wip
   test "user create 2 content with valid interval time success", ~m(community)a do
     {:ok, user} = db_insert(:user)
     user_conn = simu_conn(:user, user)
@@ -66,7 +66,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     assert created |> Map.has_key?("id")
   end
 
-  @tag :wip2
+  @tag :wip
   test "root create multi content with invalid interval time success", ~m(community)a do
     {:ok, user} = db_insert(:user)
     passport_rules = %{"root" => true}
@@ -110,7 +110,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_interval))
   end
 
-  @tag :wip2
+  @tag :wip
   test "user create multi content with invalid hour_count fails", ~m(community)a do
     {:ok, user} = db_insert(:user)
     user_conn = simu_conn(:user, user)
@@ -135,7 +135,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_hour))
   end
 
-  @tag :wip2
+  @tag :wip
   test "user create multi content with valid hour count success in next hour", ~m(community)a do
     {:ok, user} = db_insert(:user)
     user_conn = simu_conn(:user, user)

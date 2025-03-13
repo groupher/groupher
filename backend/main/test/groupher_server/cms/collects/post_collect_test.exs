@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Collect.Post do
       assert article.collects_count == 2
     end
 
-    @tag :wip2
+    @tag :wip
     test "post can be undo collect && collects_count should dec by 1",
          ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)

@@ -20,19 +20,20 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
   end
 
   describe "[cms kanban curd]" do
+    @tag :wip
     test "can create kanban post should have default cat & state",
-         ~m(user community post_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
+         ~m(user2 community post_attrs)a do
+      assert {:error, _} = ORM.find_by(Author, user_id: user2.id)
 
       kanban_attrs = post_attrs
 
-      {:ok, kanban} = CMS.create_article(community, :post, kanban_attrs, user)
+      {:ok, kanban} = CMS.create_article(community, :post, kanban_attrs, user2)
 
       assert kanban.cat == nil
       assert kanban.state == nil
     end
 
-    @tag :wip2
+    @tag :wip
     test "can set cat of a post", ~m(user community post_attrs)a do
       {:ok, kanban} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = CMS.set_post_cat(kanban, @article_cat.feature)
@@ -47,13 +48,14 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
       assert post.state == "TODO"
     end
 
-    test "can create kanban post with valid attrs", ~m(user community post_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
+    @tag :wip
+    test "can create kanban post with valid attrs", ~m(user2 community post_attrs)a do
+      assert {:error, _} = ORM.find_by(Author, user_id: user2.id)
 
       kanban_attrs =
         post_attrs |> Map.merge(%{cat: @article_cat.feature, state: @article_state.done})
 
-      {:ok, kanban} = CMS.create_article(community, :post, kanban_attrs, user)
+      {:ok, kanban} = CMS.create_article(community, :post, kanban_attrs, user2)
 
       assert kanban.cat == @article_cat.feature
       assert kanban.state == @article_state.done

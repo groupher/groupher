@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
-    @tag :wip2
+    @tag :wip
     test "auth user can markDelete post", ~m(post)a do
       variables = %{id: post.id}
 
