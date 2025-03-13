@@ -29,7 +29,6 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.ChangelogSetTag do
       }
     }
     """
-    @tag :wip
     test "auth user can set a valid tag to changelog",
          ~m(community changelog article_tag_attrs user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)

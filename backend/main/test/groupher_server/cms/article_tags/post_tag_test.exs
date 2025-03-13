@@ -147,7 +147,6 @@ defmodule GroupherServer.Test.CMS.ArticleTag.PostTag do
       assert exist_in?(article_tag2, post.article_tags)
     end
 
-    @tag :wip
     test "can not create post with other community's article tags",
          ~m(community user post_attrs article_tag_attrs article_tag_attrs2)a do
       {:ok, community2} = mock_community()

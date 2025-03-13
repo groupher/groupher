@@ -116,7 +116,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       }
     }
     """
-    @tag :wip
     test "auth user can mirror post home", ~m(post user)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 

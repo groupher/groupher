@@ -203,7 +203,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       assert reason |> is_error?(:mirror_article)
     end
 
-    @tag :wip
     test "changelog can be mirror to home", ~m(community changelog_attrs user)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 
@@ -234,7 +233,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       assert paged_articles.total_count === 1
     end
 
-    @tag :wip
     test "changelog can be mirror to home with tags", ~m(community changelog_attrs user)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 

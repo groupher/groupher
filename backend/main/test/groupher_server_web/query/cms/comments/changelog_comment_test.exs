@@ -584,7 +584,6 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       assert results["entries"] |> List.last() |> Map.get("upvotesCount") == 0
     end
 
-    @tag :wip
     test "article author upvote a comment can get is_article_author and/or is_article_author_upvoted flag",
          ~m(guest_conn community changelog user user2)a do
       total_count = 5

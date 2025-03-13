@@ -96,7 +96,6 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
       {:ok, _} = CMS.read_article(docs_m.original_community_slug, :doc, docs_m.inner_id)
     end
 
-    @tag :wip
     test "pending doc's meta should have info", ~m(docs_m)a do
       {:ok, _} = CMS.read_article(docs_m.original_community_slug, :doc, docs_m.inner_id)
 

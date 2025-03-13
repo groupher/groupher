@@ -19,7 +19,6 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
   end
 
   describe "[cms changelog meta info]" do
-    @tag :wip
     test "can get default meta info", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       {:ok, changelog} = ORM.find_by(Changelog, id: changelog.id)

@@ -19,7 +19,6 @@ defmodule GroupherServer.Test.CMS.BlogMeta do
   end
 
   describe "[cms blog meta info]" do
-    @tag :wip
     test "can get default meta info", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog} = ORM.find_by(Blog, id: blog.id)

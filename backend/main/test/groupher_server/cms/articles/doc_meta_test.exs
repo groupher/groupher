@@ -19,7 +19,6 @@ defmodule GroupherServer.Test.CMS.DocMeta do
   end
 
   describe "[cms doc meta info]" do
-    @tag :wip
     test "can get default meta info", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       {:ok, doc} = ORM.find_by(Doc, id: doc.id)

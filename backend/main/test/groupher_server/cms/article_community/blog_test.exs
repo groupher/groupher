@@ -192,7 +192,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert reason |> is_error?(:mirror_article)
     end
 
-    @tag :wip
     test "blog can be mirror to home", ~m(community blog_attrs user)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 
@@ -222,7 +221,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert paged_articles.total_count === 1
     end
 
-    @tag :wip
     test "blog can be mirror to home with tags", ~m(community blog_attrs user)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 

@@ -199,7 +199,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert reason |> is_error?(:mirror_article)
     end
 
-    @tag :wip
     test "doc can be mirror to home", ~m(community doc_attrs user)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 
@@ -230,7 +229,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert paged_articles.total_count === 1
     end
 
-    @tag :wip
     test "doc can be mirror to home with tags", ~m(community doc_attrs user)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 

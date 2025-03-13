@@ -149,7 +149,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["views"] > last_changelog["views"]
     end
 
-    @tag :wip
     test "should get valid thread document", ~m(guest_conn user community)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       Process.sleep(2000)
@@ -163,7 +162,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert not is_nil(get_in(changelog, ["document", "bodyHtml"]))
     end
 
-    @tag :wip
     test "support article_tag filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -184,7 +182,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert exist_in?(article_tag, changelog["articleTags"])
     end
 
-    @tag :wip
     test "support community filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -242,7 +239,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
        }
     }
     """
-    @tag :wip
     test "filter community should get changelogs which belongs to that community",
          ~m(guest_conn community user)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
@@ -255,7 +251,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(changelog.id)))
     end
 
-    @tag :wip
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
 
@@ -319,7 +314,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       }
     }
     """
-    @tag :wip
     test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
       {:ok, changelog} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
@@ -372,7 +366,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       }
     }
     """
-    @tag :wip
     test "THIS_YEAR option should work", ~m(guest_conn changelog_last_year)a do
       variables = %{filter: %{when: "THIS_YEAR"}}
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")

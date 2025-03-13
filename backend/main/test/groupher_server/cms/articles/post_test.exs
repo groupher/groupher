@@ -24,7 +24,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
   end
 
   describe "[cms post curd]" do
-    @tag :wip
     test "created post should have auto_increase inner_id", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       assert post.inner_id == 2
@@ -57,7 +56,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert community.articles_count == 7
     end
 
-    @tag :wip
     test "can create post with valid attrs", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       post = Repo.preload(post, :document)
@@ -82,7 +80,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
                |> String.slice(0, @article_digest_length)
     end
 
-    @tag :wip
     test "created post should have original_community info", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
@@ -90,7 +87,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert post.original_community_id == community.id
     end
 
-    @tag :wip
     test "created post should have a active_at field, same with inserted_at",
          ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -98,7 +94,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert post.active_at == post.inserted_at
     end
 
-    @tag :wip
     test "should read post by original community and inner id",
          ~m(post_attrs community user)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -108,7 +103,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert post.id == post2.id
     end
 
-    @tag :wip
     test "should read post by original community and inner id with user",
          ~m(post_attrs community user)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -121,7 +115,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert user.id in created.meta.viewed_user_ids
     end
 
-    @tag :wip
     test "read post should update views and meta viewed_user_list",
          ~m(post_attrs community user user2)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -161,7 +154,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
     #   assert community.subscribers_count == 1
     # end
 
-    @tag :wip
     test "read post should contains viewer_has_xxx state", ~m(post_attrs community user user2)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user)
@@ -193,7 +185,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert post.viewer_has_reported
     end
 
-    @tag :wip
     test "add user to cms authors, if the user is not exist in cms authors",
          ~m(user2 community post_attrs)a do
       assert {:error, _} = ORM.find_by(Author, user_id: user2.id)
@@ -205,7 +196,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
   end
 
   describe "[cms post sink/undo_sink]" do
-    @tag :wip
     test "if a post is too old, read post should update can_undo_sink flag",
          ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -236,7 +226,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert not post_last_year.meta.can_undo_sink
     end
 
-    @tag :wip
     test "can sink a post", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       assert not post.meta.is_sinked
@@ -246,7 +235,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert post.active_at == post.inserted_at
     end
 
-    @tag :wip
     test "can undo sink post", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = CMS.sink_article(:post, post.id)
@@ -258,7 +246,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert post.active_at == post.meta.last_active_at
     end
 
-    @tag :wip
     test "can not undo sink to old post", ~m()a do
       {:ok, post_last_year} = db_insert(:post, %{title: "last year", inserted_at: @last_year})
 
@@ -268,7 +255,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
   end
 
   describe "[cms post batch delete]" do
-    @tag :wip
     test "can batch delete posts with inner_ids", ~m(user community post_attrs)a do
       {:ok, post1} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post2} = CMS.create_article(community, :post, post_attrs, user)
@@ -288,7 +274,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert post3.mark_delete == false
     end
 
-    @tag :wip
     test "can undo batch delete posts with inner_ids", ~m(user community post_attrs)a do
       {:ok, post1} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post2} = CMS.create_article(community, :post, post_attrs, user)
@@ -314,7 +299,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
   end
 
   describe "[cms post document]" do
-    @tag :wip
     test "will create related document after create", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = CMS.read_article(post.original_community_slug, :post, post.inner_id)
@@ -329,7 +313,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert article_doc.body == post_doc.body
     end
 
-    @tag :wip
     test "delete post should also delete related document", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, _article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: "POST"})
@@ -342,7 +325,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:error, _} = ORM.find_by(PostDocument, %{post_id: post.id})
     end
 
-    @tag :wip
     test "update post should also update related document", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 

@@ -88,7 +88,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       assert exist_in?(%{id: article_tag.id}, changelog.article_tags)
     end
 
-    @tag :wip
     test "create changelog should escape xss attracts", ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string()})
       variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
@@ -99,7 +98,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       assert not String.contains?(body_html, "script")
     end
 
-    @tag :wip
     test "create changelog should escape xss attracts 2", ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string(:safe)})
       variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
@@ -113,7 +111,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
 
-    @tag :wip
     test "create changelog with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog)

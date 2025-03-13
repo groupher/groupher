@@ -102,7 +102,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       }
     }
     """
-    @tag :wip
     test "create post with valid attrs and make sure author exist",
          ~m(user_conn user community)a do
       post_attr = mock_attrs(:post) |> Map.merge(%{linkAddr: "https://helloworld"})
@@ -141,7 +140,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert exist_in?(%{id: article_tag.id}, post.article_tags)
     end
 
-    @tag :wip
     test "create post should escape xss attracts", ~m(user_conn community)a do
       post_attr = mock_attrs(:post, %{body: mock_xss_string()})
       variables = post_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
@@ -152,7 +150,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert not String.contains?(body_html, "script")
     end
 
-    @tag :wip
     test "create post should escape xss attracts 2", ~m(user_conn community)a do
       post_attr = mock_attrs(:post, %{body: mock_xss_string(:safe)})
       variables = post_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
@@ -165,7 +162,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
-    @tag :wip
     test "create post with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       post_attr = mock_attrs(:post)
