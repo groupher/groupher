@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       }
     }
     """
-    test "root can markDelete a post", ~m(community user post)a do
+    test "root can markDelete a post", ~m(community post)a do
       variables = %{id: post.id}
 
       passport_rules = %{"root" => true}

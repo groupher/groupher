@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
     test "create post should escape xss attracts", ~m(user_conn community)a do
       post_attr = mock_attrs(:post, %{body: mock_xss_string()})
-      variables = post_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
+      variables = post_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
       result = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
       {:ok, post} = ORM.find(Post, result["id"], preload: :document)
       body_html = post |> get_in([:document, :body_html])

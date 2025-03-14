@@ -277,7 +277,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
     test "can undo batch delete posts with inner_ids", ~m(user community post_attrs)a do
       {:ok, post1} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post2} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, post3} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, _post3} = CMS.create_article(community, :post, post_attrs, user)
 
       CMS.batch_mark_delete_articles(community.slug, :post, [
         post1.inner_id,
