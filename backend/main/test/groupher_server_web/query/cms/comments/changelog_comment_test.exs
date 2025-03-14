@@ -584,7 +584,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
     end
 
     test "article author upvote a comment can get is_article_author and/or is_article_author_upvoted flag",
-         ~m(guest_conn community changelog user user2)a do
+         ~m(guest_conn community changelog user2)a do
       total_count = 5
       page_size = 12
       thread = :changelog

@@ -579,9 +579,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "can get open-graph info by url", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
-      result =
-        user_conn
-        |> query_result(@check_community_pending_query, %{}, "hasPendingCommunityApply")
+      user_conn
+      |> query_result(@check_community_pending_query, %{}, "hasPendingCommunityApply")
 
       variables = %{url: "https://www.ifanr.com/1561465"}
 

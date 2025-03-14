@@ -10,7 +10,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
   setup do
     {community, post, _, user} = mock_article(:post)
 
-    {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
 
     {:ok, community2} = db_insert(:community)
