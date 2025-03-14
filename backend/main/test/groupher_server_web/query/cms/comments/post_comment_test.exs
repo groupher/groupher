@@ -237,7 +237,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         Enum.reduce(1..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               post.inner_id,
               mock_comment("comment #{i}"),
@@ -284,7 +284,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         Enum.reduce(1..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               post.inner_id,
               mock_comment("comment #{i}"),
@@ -597,7 +597,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         Enum.reduce(1..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               post.inner_id,
               mock_comment("comment #{i}"),
@@ -635,7 +635,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         Enum.reduce(0..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               post.inner_id,
               mock_comment("comment #{i}"),
@@ -680,7 +680,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         Enum.reduce(1..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               post.inner_id,
               mock_comment("comment #{i}"),
@@ -738,7 +738,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         Enum.reduce(1..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               post.inner_id,
               mock_comment("comment #{i}"),
@@ -771,7 +771,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         Enum.reduce(0..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               post.inner_id,
               mock_comment("comment #{i}"),
