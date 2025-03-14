@@ -1,5 +1,6 @@
 defmodule GroupherServer.Test.CMS.BlogPendingFlag do
   @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.{Accounts, CMS, Repo}
@@ -14,10 +15,10 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
+    {:ok, community2} = mock_community(user)
 
-    {:ok, community2} = db_insert(:community)
-    CMS.create_article(community2, :blog, mock_attrs(:blog), user)
+    {_, _, _, _} = mock_article(:doc, community2, user)
 
     blogs =
       Enum.reduce(1..@total_count, [], fn _, acc ->

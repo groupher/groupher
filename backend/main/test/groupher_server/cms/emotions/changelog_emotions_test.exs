@@ -11,12 +11,9 @@ defmodule GroupherServer.Test.CMS.Emotions.ChangelogEmotions do
   @default_emotions Embeds.ArticleEmotion.default_emotions()
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {community, _, changelog_attrs, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
-
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
     {:ok, ~m(user user2 user3 community changelog_attrs)a}
   end

@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.ChangelogReindexTag do
   setup do
     {:ok, changelog} = db_insert(:changelog)
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -29,7 +29,6 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.ChangelogReindexTag do
       }
     }
     """
-
     test "auth user can reindex tags in given group", ~m(community article_tag_attrs user)a do
       attrs = Map.merge(article_tag_attrs, %{group: "group1"})
 

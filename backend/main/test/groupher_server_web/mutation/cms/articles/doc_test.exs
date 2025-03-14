@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Articles.Doc do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -7,11 +9,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
   alias CMS.Model.{Doc, Author}
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    doc_attrs = mock_attrs(:doc, %{community_id: community.id})
-    {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+    {community, doc, _, user} = mock_article(:doc)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -21,39 +19,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
   end
 
   describe "[mutation doc curd]" do
-    @create_doc_query """
-    mutation(
-      $title: String!
-      $body: String!
-      $communityId: ID!
-      $articleTags: [ID]
-      $linkAddr: String
-    ) {
-      createDoc(
-        title: $title
-        body: $body
-        communityId: $communityId
-        articleTags: $articleTags
-        linkAddr: $linkAddr
-      ) {
-        id
-        title
-        linkAddr
-        document {
-          bodyHtml
-        }
-        originalCommunity {
-          id
-        }
-      }
-    }
-    """
+    test "create doc with valid attrs and make sure author exist",
+         ~m(user_conn community user)a do
+      # {:ok, user} = db_insert(:user)
+      # user_conn = simu_conn(:user, user)
 
-    test "create doc with valid attrs and make sure author exist" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
       doc_attr = mock_attrs(:doc) |> Map.merge(%{linkAddr: "https://helloworld"})
 
       # body = """
@@ -63,9 +33,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       {"time":1639375020110,"blocks":[{"type":"list","data":{"mode":"unordered_list","items":[{"text":"CP 的图标是字母 C (Coder / China) 和 Planet 的意象结合，斜向的条饰灵感来自于 NASA Logo 上的 red chevron。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0},{"text":"所有的 Upvote 的图标都是小火箭，点击它会有一个起飞的动画 — 虽然它目前看起来像爆炸。。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0}]}}],"version":"2.19.38"}
       """
 
-      variables = doc_attr |> Map.merge(%{communityId: community.id, body: body})
+      variables = doc_attr |> Map.merge(%{community: community.slug, body: body})
 
-      created = user_conn |> mutation_result(@create_doc_query, variables, "createDoc")
+      created = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
 
       {:ok, doc} = ORM.find(Doc, created["id"])
 
@@ -83,39 +53,29 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       doc_attr = mock_attrs(:doc)
 
       variables =
-        doc_attr |> Map.merge(%{communityId: community.id, articleTags: [article_tag.id]})
+        doc_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
-      created = user_conn |> mutation_result(@create_doc_query, variables, "createDoc")
+      created = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
 
       {:ok, doc} = ORM.find(Doc, created["id"], preload: :article_tags)
 
       assert exist_in?(%{id: article_tag.id}, doc.article_tags)
     end
 
-    test "create doc should excape xss attracts" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    test "create doc should escape xss attracts", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string()})
-      variables = doc_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_doc_query, variables, "createDoc")
+      variables = doc_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
+      result = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
       {:ok, doc} = ORM.find(Doc, result["id"], preload: :document)
       body_html = doc |> get_in([:document, :body_html])
 
       assert not String.contains?(body_html, "script")
     end
 
-    test "create doc should excape xss attracts 2" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    test "create doc should escape xss attracts 2", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string(:safe)})
-      variables = doc_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_doc_query, variables, "createDoc")
+      variables = doc_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
+      result = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
       {:ok, doc} = ORM.find(Doc, result["id"], preload: :document)
       body_html = doc |> get_in([:document, :body_html])
 
@@ -125,15 +85,12 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
 
-    test "create doc with missing non_null field should get 200 error" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
+    test "create doc with missing non_null field should get 200 error",
+         ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc)
-      variables = doc_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
+      variables = doc_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
-      assert user_conn |> mutation_get_error?(@create_doc_query, variables)
+      assert user_conn |> mutation_get_error?(Schema.m(:create_doc), variables)
     end
 
     @query """
@@ -143,7 +100,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       }
     }
     """
-
     test "delete a doc by doc's owner", ~m(owner_conn doc)a do
       deleted = owner_conn |> mutation_result(@query, %{id: doc.id}, "deleteDoc")
 
@@ -210,7 +166,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       }
     }
     """
-
     test "update a doc without login user fails", ~m(guest_conn doc)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 

@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Helper.ORM do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   # TODO import Service.Utils move both helper and github
@@ -13,10 +15,8 @@ defmodule GroupherServer.Test.Helper.ORM do
 
   setup do
     db_insert_multi(:post, @posts_count)
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
-    {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+
+    {community, post, _, user} = mock_article(:post)
 
     {:ok, post: post, community: community}
   end
@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert %Author{} = found.author
     end
 
-    test "find/3 with preload can preload muilt fields", %{post: post} do
+    test "find/3 with preload can preload multi fields", %{post: post} do
       {:ok, found} = ORM.find(Post, post.id, preload: [:author, :article_tags, :communities])
       assert %Author{} = found.author
       assert %Ecto.Association.NotLoaded{} != found.article_tags

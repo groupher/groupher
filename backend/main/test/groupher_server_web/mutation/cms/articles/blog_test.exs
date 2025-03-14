@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Articles.Blog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -7,11 +9,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
   alias CMS.Model.{Blog, Author}
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-    {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
+    {community, blog, _, user} = mock_article(:blog)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -21,38 +19,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
   end
 
   describe "[mutation blog curd]" do
-    @create_blog_query """
-    mutation(
-      $title: String!
-      $body: String!
-      $communityId: ID!
-      $articleTags: [ID]
-      $linkAddr: String
-    ) {
-      createBlog(
-        title: $title
-        body: $body
-        communityId: $communityId
-        articleTags: $articleTags
-        linkAddr: $linkAddr
-      ) {
-        id
-        title
-        linkAddr
-        document {
-          bodyHtml
-        }
-        originalCommunity {
-          id
-        }
-      }
-    }
-    """
-    test "create blog with valid attrs and make sure author exist" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
+    test "create blog with valid attrs and make sure author exist",
+         ~m(user_conn user community)a do
       blog_attr = mock_attrs(:blog) |> Map.merge(%{linkAddr: "https://helloworld"})
 
       # body = """
@@ -62,9 +30,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       {"time":1639375020110,"blocks":[{"type":"list","data":{"mode":"unordered_list","items":[{"text":"CP 的图标是字母 C (Coder / China) 和 Planet 的意象结合，斜向的条饰灵感来自于 NASA Logo 上的 red chevron。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0},{"text":"所有的 Upvote 的图标都是小火箭，点击它会有一个起飞的动画 — 虽然它目前看起来像爆炸。。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0}]}}],"version":"2.19.38"}
       """
 
-      variables = blog_attr |> Map.merge(%{communityId: community.id, body: body})
+      variables = blog_attr |> Map.merge(%{community: community.slug, body: body})
 
-      created = user_conn |> mutation_result(@create_blog_query, variables, "createBlog")
+      created = user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
 
       {:ok, blog} = ORM.find(Blog, created["id"])
 
@@ -82,39 +50,29 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       blog_attr = mock_attrs(:blog)
 
       variables =
-        blog_attr |> Map.merge(%{communityId: community.id, articleTags: [article_tag.id]})
+        blog_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
-      created = user_conn |> mutation_result(@create_blog_query, variables, "createBlog")
+      created = user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
 
       {:ok, blog} = ORM.find(Blog, created["id"], preload: :article_tags)
 
       assert exist_in?(%{id: article_tag.id}, blog.article_tags)
     end
 
-    test "create blog should excape xss attracts" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    test "create blog should escape xss attracts", ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string()})
-      variables = blog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_blog_query, variables, "createBlog")
+      variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
+      result = user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
       {:ok, blog} = ORM.find(Blog, result["id"], preload: :document)
       body_html = blog |> get_in([:document, :body_html])
 
       assert not String.contains?(body_html, "script")
     end
 
-    test "create blog should excape xss attracts 2" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    test "create blog should escape xss attracts 2", ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string(:safe)})
-      variables = blog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_blog_query, variables, "createBlog")
+      variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
+      result = user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
       {:ok, blog} = ORM.find(Blog, result["id"], preload: :document)
       body_html = blog |> get_in([:document, :body_html])
 
@@ -124,15 +82,12 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
 
-    test "create blog with missing non_null field should get 200 error" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
+    test "create blog with missing non_null field should get 200 error",
+         ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog)
       variables = blog_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
 
-      assert user_conn |> mutation_get_error?(@create_blog_query, variables)
+      assert user_conn |> mutation_get_error?(Schema.m(:create_blog), variables)
     end
 
     @query """
@@ -142,7 +97,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       }
     }
     """
-
     test "delete a blog by blog's owner", ~m(owner_conn blog)a do
       deleted = owner_conn |> mutation_result(@query, %{id: blog.id}, "deleteBlog")
 

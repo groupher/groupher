@@ -148,9 +148,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["views"] > last_doc["views"]
     end
 
-    test "should get valid thread document", ~m(guest_conn)a do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = db_insert(:community)
+    test "should get valid thread document", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       Process.sleep(2000)
       {:ok, _} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -163,8 +161,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert not is_nil(get_in(doc, ["document", "bodyHtml"]))
     end
 
-    test "support article_tag filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+    test "support article_tag filter", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
@@ -184,9 +181,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert exist_in?(article_tag, doc["articleTags"])
     end
 
-    test "support community filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
-
+    test "support community filter", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :doc, doc_attrs, user)
       doc_attrs2 = mock_attrs(:doc, %{community_id: community.id})
@@ -196,7 +191,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       results = guest_conn |> query_result(@query, variables, "pagedDocs")
 
       doc = results["entries"] |> List.first()
-      assert results["totalCount"] == 2
+      assert results["totalCount"] == 4
       assert exist_in?(%{id: to_string(community.id)}, doc["communities"])
     end
 
@@ -243,21 +238,18 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
        }
     }
     """
-
     test "filter community should get docs which belongs to that community",
-         ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+         ~m(guest_conn community user)a do
       {:ok, doc} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> query_result(@query, variables, "pagedDocs")
 
-      assert length(results["entries"]) == 1
+      assert length(results["entries"]) == 3
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(doc.id)))
     end
 
-    test "should have a active_at same with inserted_at", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+    test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
       variables = %{filter: %{community: community.slug}}
@@ -320,18 +312,16 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       }
     }
     """
-
-    test "has_xxx state should work", ~m(user)a do
+    test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
-      {:ok, community} = db_insert(:community)
 
       {:ok, doc} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
-      {:ok, _doc2} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
-      {:ok, _doc3} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
+      {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
+      {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
       variables = %{filter: %{community: community.slug}}
       results = user_conn |> query_result(@query, variables, "pagedDocs")
-      assert results["totalCount"] == 3
+      assert results["totalCount"] == 5
 
       the_doc = Enum.find(results["entries"], &(&1["id"] == to_string(doc.id)))
       assert not the_doc["viewerHasViewed"]
@@ -418,7 +408,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       }
     }
     """
-
     test "latest commented doc should appear on top",
          ~m(guest_conn community doc_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}

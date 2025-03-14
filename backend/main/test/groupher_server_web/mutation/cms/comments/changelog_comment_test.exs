@@ -27,7 +27,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "write article comment to a exist changelog", ~m(community changelog user_conn)a do
       variables = %{
         community: community.slug,
@@ -50,7 +49,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "login user can reply to a comment", ~m(community changelog user user_conn)a do
       {:ok, comment} =
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
@@ -71,7 +69,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "only owner can update a exist comment",
          ~m(community changelog user guest_conn user_conn owner_conn)a do
       {:ok, comment} =
@@ -98,7 +95,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "only owner can delete a exist comment",
          ~m(community changelog user guest_conn user_conn owner_conn)a do
       {:ok, comment} =
@@ -128,7 +124,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "login user can upvote a exist changelog comment",
          ~m(community changelog user guest_conn user_conn)a do
       {:ok, comment} =
@@ -155,7 +150,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "login user can undo upvote a exist changelog comment",
          ~m(community changelog user guest_conn user_conn)a do
       {:ok, comment} =
@@ -192,7 +186,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "login user can emotion to a comment", ~m(community changelog user user_conn)a do
       {:ok, comment} =
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
@@ -221,7 +214,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "login user can undo emotion to a comment", ~m(community changelog user owner_conn)a do
       {:ok, comment} =
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
@@ -247,7 +239,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "can lock a changelog's comment", ~m(community changelog)a do
       variables = %{id: changelog.id, communityId: community.id}
       passport_rules = %{community.slug => %{"changelog.lock_comment" => true}}
@@ -273,7 +264,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "can undo lock a changelog's comment", ~m(community changelog)a do
       {:ok, _} = CMS.lock_article_comments(:changelog, changelog.id)
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
@@ -306,7 +296,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "can pin a changelog's comment", ~m(owner_conn community changelog user)a do
       {:ok, comment} =
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
@@ -335,7 +324,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
     }
     """
-
     test "can undo pin a changelog's comment", ~m(owner_conn community changelog user)a do
       {:ok, comment} =
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)

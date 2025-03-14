@@ -292,7 +292,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       }
     }
     """
-
     test "update community dashboard rss info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
 

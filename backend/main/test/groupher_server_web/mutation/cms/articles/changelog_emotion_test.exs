@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogEmotion do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
@@ -32,7 +32,6 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogEmotion do
       }
     }
     """
-
     test "login user can emotion to a changelog", ~m(community changelog_attrs user user_conn)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
@@ -58,7 +57,6 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogEmotion do
       }
     }
     """
-
     test "login user can undo emotion to a changelog",
          ~m(community changelog_attrs user owner_conn)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)

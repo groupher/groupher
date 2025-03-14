@@ -5,14 +5,13 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
   alias Helper.ORM
   alias GroupherServer.CMS
 
-  alias CMS.Model.{Embeds, Author, Changelog}
+  alias CMS.Model.{Embeds, Changelog}
 
   @default_article_meta Embeds.ArticleMeta.default_meta()
 
   setup do
     {:ok, user} = db_insert(:user)
-    # {:ok, changelog} = db_insert(:changelog)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
@@ -21,8 +20,6 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
 
   describe "[cms changelog meta info]" do
     test "can get default meta info", ~m(user community changelog_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
-
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       {:ok, changelog} = ORM.find_by(Changelog, id: changelog.id)
       meta = changelog.meta |> Map.from_struct() |> Map.delete(:id)

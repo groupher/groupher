@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -7,10 +9,8 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
   alias Helper.ORM
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {community, doc, _, user} = mock_article(:doc)
 
-    {:ok, doc} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
     {:ok, doc2} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
     {:ok, doc3} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
@@ -30,7 +30,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       }
     }
     """
-
     test "auth user can markDelete doc", ~m(doc)a do
       variables = %{id: doc.id}
 
@@ -78,7 +77,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       }
     }
     """
-
     test "auth user can undo markDelete doc", ~m(doc)a do
       variables = %{id: doc.id}
 
@@ -129,7 +127,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       }
     }
     """
-
     test "auth user can batch mark delete docs", ~m(community doc doc2 doc3)a do
       variables = %{
         community: community.slug,
@@ -159,7 +156,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       }
     }
     """
-
     test "auth user can batch undo mark delete docs", ~m(community doc doc2 doc3)a do
       CMS.batch_mark_delete_articles(community.slug, :doc, [
         doc.inner_id,
@@ -194,7 +190,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       }
     }
     """
-
     test "auth user can pin doc", ~m(community doc)a do
       variables = %{id: doc.id, communityId: community.id}
 
@@ -223,7 +218,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       }
     }
     """
-
     test "auth user can undo pin doc", ~m(community doc)a do
       variables = %{id: doc.id, communityId: community.id}
 

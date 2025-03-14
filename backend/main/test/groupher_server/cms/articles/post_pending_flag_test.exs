@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.PostPendingFlag do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.{Accounts, CMS, Repo}
@@ -12,10 +14,10 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
+    {:ok, community2} = mock_community(user)
 
-    {:ok, community2} = db_insert(:community)
-    CMS.create_article(community2, :post, mock_attrs(:post), user)
+    {_, _, _, _} = mock_article(:post, community2, user)
 
     posts =
       Enum.reduce(1..@total_count, [], fn _, acc ->

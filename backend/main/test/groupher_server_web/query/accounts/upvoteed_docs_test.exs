@@ -29,7 +29,6 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedDocs do
       }
     }
     """
-
     test "both login and unlogin user can get one's paged upvoted docs",
          ~m(user_conn guest_conn docs)a do
       {:ok, user} = db_insert(:user)

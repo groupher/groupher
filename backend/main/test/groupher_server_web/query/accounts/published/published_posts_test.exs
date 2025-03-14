@@ -34,7 +34,6 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Posts do
       }
     }
     """
-
     test "can get published posts", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
 
@@ -76,7 +75,6 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Posts do
       }
     }
     """
-
     test "user can get paged published comments on post", ~m(guest_conn user community post)a do
       pub_comments =
         Enum.reduce(1..@publish_count, [], fn _, acc ->

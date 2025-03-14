@@ -283,7 +283,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-
     test "update community with valid attrs", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
       variables = %{id: community.id, title: "new title"}

@@ -17,11 +17,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
   @pinned_comment_limit Comment.pinned_comment_limit()
 
   setup do
-    {community, changelog, _, user} = mock_article(:changelog)
+    {community, changelog, _, user} = mock_article(:changelog, preload: [author: :user])
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
-
-    {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: [author: :user])
 
     cur_date = DateTime.utc_now() |> DateTime.to_date()
 
@@ -492,7 +490,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       assert Enum.any?(report.report_cases, &(&1.user.login == user.login))
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
 
-      {:ok, _report} = CMS.undo_report_article(:comment, comment.id, user)
+      {:ok, _} = CMS.undo_report_article(:comment, comment.id, user)
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)

@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.CMS.DocArchive do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     {:ok, doc_long_ago} = db_insert(:doc, %{title: "last week", inserted_at: @last_year})
 

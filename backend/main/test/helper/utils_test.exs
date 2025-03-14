@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Helper.UtilsTest do
+  @moduledoc false
+
   use GroupherServerWeb.ConnCase, async: true
 
   alias GroupherServer.CMS.Model.Post
@@ -139,10 +141,10 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
     end
   end
 
-  describe "[sub str occurence]" do
-    test "normal occurence case" do
-      assert 2 == Utils.str_occurence("foo bar foobar", "foo")
-      assert 0 == Utils.str_occurence("hello world", "foo")
+  describe "[sub str occurrence]" do
+    test "normal occurrence case" do
+      assert 2 == Utils.str_occurrence("foo bar foobar", "foo")
+      assert 0 == Utils.str_occurrence("hello world", "foo")
     end
   end
 
@@ -186,7 +188,7 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
       assert String.length(uid_str) == 5
     end
 
-    test "should gen uniq id with lengh of 5" do
+    test "should gen uniq id with length of 5" do
       uid_str = Utils.uid(:html, "what_ever")
       assert String.length(uid_str) == 5
     end
@@ -197,7 +199,7 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
     end
 
     test "exist id will stay the same" do
-      assert "exsit_id" == Utils.uid(:html, %{"id" => "exsit_id"})
+      assert "exist_id" == Utils.uid(:html, %{"id" => "exist_id"})
     end
   end
 

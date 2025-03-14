@@ -30,7 +30,6 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       }
     }
     """
-
     test "login user can create collect folder", ~m(user_conn)a do
       variables = %{title: "test folder", desc: "cool folder"}
       created = user_conn |> mutation_result(@query, variables, "createCollectFolder")

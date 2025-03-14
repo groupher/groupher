@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.BlogReport do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
@@ -25,7 +25,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.BlogReport do
       }
     }
     """
-
     test "login user can report a blog", ~m(community blog_attrs user user_conn)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
@@ -43,7 +42,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.BlogReport do
       }
     }
     """
-
     test "login user can undo report a blog", ~m(community blog_attrs user user_conn)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 

@@ -9,13 +9,15 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   import Helper.Utils,
     only: [
       done: 1,
+      done: 2,
       pick_by: 2,
       plural: 1,
       module_to_atom: 1,
       get_config: 2,
       ensure: 2,
       module_to_upcase: 1,
-      atom_values_to_upcase: 1
+      atom_values_to_upcase: 1,
+      use_transaction: 1
     ]
 
   import GroupherServer.CMS.Delegate.Helper, only: [mark_viewer_emotion_states: 2, thread_of: 1]
@@ -390,68 +392,72 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   Creates a article
 
   ## Examples
-
   iex> create_article(community, :post, %{title: ...}, user)
   {:ok, %Post{}}
   """
-  def create_article(%Community{slug: nil, id: id}, thread, attrs, user) do
-    with {:ok, community} <- ORM.find(Community, id) do
-      create_article(community, thread, attrs, user)
-    end
-  end
 
-  def create_article(%Community{slug: community_slug}, thread, attrs, %User{id: uid}) do
+  # def create_article(%Community{slug: nil, id: id}, thread, attrs, user) do
+  #   with {:ok, community} <- ORM.find(Community, id) do
+  #     create_article(community, thread, attrs, user)
+  #   end
+  # end
+
+  def create_article(%Community{} = community, thread, attrs, %User{} = user) do
     attrs = atom_values_to_upcase(attrs)
 
-    with {:ok, author} <- ensure_author_exists(%User{id: uid}),
-         {:ok, info} <- match(thread),
-         {:ok, community} <- CMS.read_community(community_slug, inc_views: false) do
-      Multi.new()
-      |> Multi.run(:create_article, fn _, _ ->
-        do_create_article(info.model, attrs, author, community)
+    with {:ok, author} <- ensure_author_exists(user),
+         {:ok, info} <- match(thread) do
+      use_transaction(fn ->
+        {:ok, community} = ORM.lock_community(community)
+
+        Multi.new()
+        |> Multi.run(:create_article, fn _, _ ->
+          do_create_article(info.model, attrs, author, community)
+        end)
+        |> Multi.run(:create_document, fn _, %{create_article: article} ->
+          Document.create(article, attrs)
+        end)
+        |> Multi.run(:mirror_article, fn _, %{create_article: article} ->
+          ArticleCommunity.mirror_article(thread, article.id, community.id)
+        end)
+        |> Multi.run(:set_article_tags, fn _, %{create_article: article} ->
+          ArticleTag.set_article_tags(community, thread, article, attrs)
+        end)
+        |> Multi.run(:set_active_at_timestamp, fn _, %{create_article: article} ->
+          ORM.update(article, %{active_at: article.inserted_at})
+        end)
+        |> Multi.run(:update_community_article_count, fn _, _ ->
+          CommunityCRUD.update_community_count_field(community, thread)
+        end)
+        |> Multi.run(:update_community_inner_id, fn _,
+                                                    %{
+                                                      create_article: article,
+                                                      update_community_article_count: community
+                                                    } ->
+          CommunityCRUD.update_community_inner_id(community, thread, article)
+        end)
+        |> Multi.run(:update_user_published_meta, fn _, _ ->
+          Accounts.update_published_states(user.id, thread)
+        end)
+        |> Multi.run(:after_hooks, fn _, %{create_article: article} ->
+          Later.run({Hooks.Cite, :handle, [article]})
+          Later.run({Hooks.Mention, :handle, [article]})
+          Later.run({Hooks.Audition, :handle, [article]})
+          Later.run({__MODULE__, :notify_admin_new_article, [article]})
+        end)
+        |> Multi.run(:log_action, fn _, _ ->
+          Statistics.log_publish_action(user)
+        end)
+        |> Repo.transaction()
+        |> result()
+        |> done(:trans)
       end)
-      |> Multi.run(:create_document, fn _, %{create_article: article} ->
-        Document.create(article, attrs)
-      end)
-      |> Multi.run(:mirror_article, fn _, %{create_article: article} ->
-        ArticleCommunity.mirror_article(thread, article.id, community.id)
-      end)
-      |> Multi.run(:set_article_tags, fn _, %{create_article: article} ->
-        ArticleTag.set_article_tags(community, thread, article, attrs)
-      end)
-      |> Multi.run(:set_active_at_timestamp, fn _, %{create_article: article} ->
-        ORM.update(article, %{active_at: article.inserted_at})
-      end)
-      |> Multi.run(:update_community_article_count, fn _, _ ->
-        CommunityCRUD.update_community_count_field(community, thread)
-      end)
-      |> Multi.run(:update_community_inner_id, fn _,
-                                                  %{
-                                                    create_article: article,
-                                                    update_community_article_count: community
-                                                  } ->
-        CommunityCRUD.update_community_inner_id(community, thread, article)
-      end)
-      |> Multi.run(:update_user_published_meta, fn _, _ ->
-        Accounts.update_published_states(uid, thread)
-      end)
-      |> Multi.run(:after_hooks, fn _, %{create_article: article} ->
-        Later.run({Hooks.Cite, :handle, [article]})
-        Later.run({Hooks.Mention, :handle, [article]})
-        Later.run({Hooks.Audition, :handle, [article]})
-        Later.run({__MODULE__, :notify_admin_new_article, [article]})
-      end)
-      |> Multi.run(:log_action, fn _, _ ->
-        Statistics.log_publish_action(%User{id: uid})
-      end)
-      |> Repo.transaction()
-      |> result()
     end
   end
 
   @doc """
   notify(email) admin about new article
-  NOTE:  this method should NOT be pravite, because this method
+  NOTE:  this method should NOT be private, because this method
   will be called outside this module
   """
   def notify_admin_new_article(%{id: id} = result) do
@@ -559,7 +565,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   end
 
   @doc """
-  mark delete falst for an anticle
+  mark delete false for an article
   """
   def mark_delete_article(thread, id) do
     with {:ok, info} <- match(thread),
@@ -580,7 +586,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   end
 
   @doc """
-  undo mark delete falst for an anticle
+  undo mark delete false for an article
   """
   def undo_mark_delete_article(thread, id) do
     with {:ok, info} <- match(thread),
@@ -664,11 +670,11 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     |> result()
   end
 
-  @spec ensure_author_exists(User.t()) :: {:ok, User.t()}
+  @spec ensure_author_exists(User.t()) :: {:ok, Author.t()}
   def ensure_author_exists(%User{} = user) do
     # unique_constraint: avoid race conditions, make sure user_id unique
     # foreign_key_constraint: check foreign key: user_id exist or not
-    # see alos no_assoc_constraint in https://hexdocs.pm/ecto/Ecto.Changeset.html
+    # see also no_assoc_constraint in https://hexdocs.pm/ecto/Ecto.Changeset.html
     case ORM.find_by(Author, user_id: user.id) do
       {:ok, author} ->
         {:ok, author}
@@ -680,13 +686,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
         |> Ecto.Changeset.foreign_key_constraint(:user_id)
         |> Repo.insert()
     end
-
-    # %Author{user_id: user.id}
-    # |> Ecto.Changeset.change()
-    # |> Ecto.Changeset.unique_constraint(:user_id)
-    # |> Ecto.Changeset.foreign_key_constraint(:user_id)
-    # |> Repo.insert()
-    # |> handle_existing_author()
   end
 
   # defp handle_existing_author({:ok, author}), do: {:ok, author}
@@ -784,8 +783,8 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   defp if_article_legal(article), do: {:ok, article}
 
-  defp add_pin_articles_ifneed(articles, querable, %{community: community} = filter) do
-    thread = module_to_atom(querable)
+  defp add_pin_articles_ifneed(articles, queryable, %{community: community} = filter) do
+    thread = module_to_atom(queryable)
 
     with true <- should_add_pin?(filter),
          true <- 1 == Map.get(articles, :page_number),
@@ -803,7 +802,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end
   end
 
-  defp add_pin_articles_ifneed(articles, _querable, _filter), do: articles
+  defp add_pin_articles_ifneed(articles, _queryable, _filter), do: articles
 
   # if filter contains like: tags, sort.., then don't add pin article
   defp should_add_pin?(%{page: 1, sort: :desc_active} = filter) do
@@ -827,17 +826,17 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     normal_count = non_pinned_articles |> Map.get(:total_count)
 
     # remote the pinned article from normal_entries (if have)
-    pind_ids = pick_by(pinned_entries, :id)
-    normal_entries = Enum.reject(normal_entries, &(&1.id in pind_ids))
+    pinned_ids = pick_by(pinned_entries, :id)
+    normal_entries = Enum.reject(normal_entries, &(&1.id in pinned_ids))
 
     non_pinned_articles
     |> Map.put(:entries, pinned_entries ++ normal_entries)
     # those two are equals
-    # |> Map.put(:total_count, pind_count + normal_count - pind_count)
+    # |> Map.put(:total_count, pinned_count + normal_count - pinned_count)
     |> Map.put(:total_count, normal_count)
   end
 
-  #  for create artilce step in Multi.new
+  #  for create article step in Multi.new
   defp do_create_article(
          model,
          %{body: _body} = attrs,
@@ -845,8 +844,8 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
          %Community{} = community
        ) do
     %{id: community_id, meta: community_meta, slug: community_slug} = community
-
     threads_name = model |> module_to_atom |> plural
+
     inner_id = community_meta |> Map.get(:"#{threads_name}_inner_id_index")
 
     meta = @default_article_meta |> Map.merge(%{thread: module_to_upcase(model)})
@@ -871,7 +870,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   defp do_update_article(article, attrs), do: ORM.update(article, attrs)
 
-  # is update or create article with body field, parsed and extand it into attrs
+  # is update or create article with body field, parsed and expand it into attrs
   defp add_digest_attrs(%{body: body} = attrs) when not is_nil(body) do
     with {:ok, parsed} <- Converter.Article.parse_body(body),
          {:ok, digest} <- Converter.Article.parse_digest(parsed.body_map) do

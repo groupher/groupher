@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Query.Flags.PostsFlags do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Helper.Utils, only: [get_config: 2]
@@ -13,10 +15,7 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    {:ok, community2} = db_insert(:community)
-    CMS.create_article(community2, :post, mock_attrs(:post), user)
+    {:ok, community} = mock_community(user)
 
     posts =
       Enum.reduce(1..@total_count, [], fn _, acc ->
@@ -51,7 +50,6 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
       }
     }
     """
-
     test "pending post should not see in paged query", ~m(guest_conn community post_m)a do
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")

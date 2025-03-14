@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
 

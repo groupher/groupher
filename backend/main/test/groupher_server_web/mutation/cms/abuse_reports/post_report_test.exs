@@ -1,11 +1,13 @@
 defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     post_attrs = mock_attrs(:post, %{community_id: community.id})
 
@@ -25,7 +27,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
       }
     }
     """
-
     test "login user can report a post", ~m(community post_attrs user user_conn)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
@@ -43,7 +44,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
       }
     }
     """
-
     test "login user can undo report a post", ~m(community post_attrs user user_conn)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 

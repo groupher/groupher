@@ -6,38 +6,33 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
   import Helper.Utils, only: [get_config: 2]
 
   alias Helper.ORM
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, FrontDesk, Repo}
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
   alias EditorToHTML.{Class, Validator}
-  alias CMS.Model.{Author, ArticleDocument, Community, Post, PostDocument}
+  alias CMS.Model.{Author, ArticleDocument, Post, PostDocument}
 
   @root_class Class.article()
   @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, _, post_attrs, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, post} = db_insert(:post)
-    {:ok, community} = db_insert(:community)
-
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
-
-    {:ok, ~m(user user2 community post post_attrs)a}
+    {:ok, ~m(user user2 community post_attrs)a}
   end
 
   describe "[cms post curd]" do
     test "created post should have auto_increase inner_id", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      assert post.inner_id == 1
-
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       assert post.inner_id == 2
 
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       assert post.inner_id == 3
+
+      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      assert post.inner_id == 4
 
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
@@ -51,18 +46,17 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       assert changelog.inner_id == 1
 
-      {:ok, community} = ORM.find(Community, community.id)
+      {:ok, community} = FrontDesk.info(:community, community.slug)
 
-      assert community.meta.posts_inner_id_index == 3
+      assert community.meta.posts_inner_id_index == 4
       assert community.meta.blogs_inner_id_index == 2
       assert community.meta.changelogs_inner_id_index == 1
       assert community.meta.docs_inner_id_index == 0
 
-      assert community.articles_count == 6
+      assert community.articles_count == 7
     end
 
     test "can create post with valid attrs", ~m(user community post_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       post = Repo.preload(post, :document)
 
@@ -192,19 +186,12 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
     end
 
     test "add user to cms authors, if the user is not exist in cms authors",
-         ~m(user community post_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
+         ~m(user2 community post_attrs)a do
+      assert {:error, _} = ORM.find_by(Author, user_id: user2.id)
 
-      {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, author} = ORM.find_by(Author, user_id: user.id)
-      assert author.user_id == user.id
-    end
-
-    test "create post with an non-exist community fails", ~m(user)a do
-      invalid_attrs = mock_attrs(:post, %{community_id: non_exist_id()})
-      invalid_community = %Community{id: non_exist_id(), slug: non_exist_slug()}
-
-      assert {:error, _} = CMS.create_article(invalid_community, :post, invalid_attrs, user)
+      {:ok, _} = CMS.create_article(community, :post, post_attrs, user2)
+      {:ok, author} = ORM.find_by(Author, user_id: user2.id)
+      assert author.user_id == user2.id
     end
   end
 
@@ -290,7 +277,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
     test "can undo batch delete posts with inner_ids", ~m(user community post_attrs)a do
       {:ok, post1} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post2} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, post3} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, _post3} = CMS.create_article(community, :post, post_attrs, user)
 
       CMS.batch_mark_delete_articles(community.slug, :post, [
         post1.inner_id,

@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.Statistics do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     {:ok, ~m(user community)a}
   end

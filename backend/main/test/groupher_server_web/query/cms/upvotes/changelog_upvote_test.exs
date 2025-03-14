@@ -35,7 +35,6 @@ defmodule GroupherServer.Test.Query.Upvotes.ChangelogUpvote do
       }
     }
     """
-
     test "guest can get upvoted users list after upvote to a changelog",
          ~m(guest_conn changelog user user2)a do
       {:ok, _} = CMS.upvote_article(:changelog, changelog.id, user)

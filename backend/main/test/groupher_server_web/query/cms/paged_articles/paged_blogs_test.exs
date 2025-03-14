@@ -149,9 +149,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert first_blog["views"] > last_blog["views"]
     end
 
-    test "should get valid thread document", ~m(guest_conn)a do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = db_insert(:community)
+    test "should get valid thread document", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       Process.sleep(2000)
       {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -164,8 +162,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert not is_nil(get_in(blog, ["document", "bodyHtml"]))
     end
 
-    test "support article_tag filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+    test "support article_tag filter", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
@@ -185,9 +182,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert exist_in?(article_tag, blog["articleTags"])
     end
 
-    test "support community filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
-
+    test "support community filter", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user)
       blog_attrs2 = mock_attrs(:blog, %{community_id: community.id})
@@ -197,7 +192,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       results = guest_conn |> query_result(@query, variables, "pagedBlogs")
 
       blog = results["entries"] |> List.first()
-      assert results["totalCount"] == 2
+      assert results["totalCount"] == 4
       assert exist_in?(%{id: to_string(community.id)}, blog["communities"])
     end
 
@@ -244,21 +239,18 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
        }
     }
     """
-
     test "filter community should get blogs which belongs to that community",
-         ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+         ~m(guest_conn community user)a do
       {:ok, blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> query_result(@query, variables, "pagedBlogs")
 
-      assert length(results["entries"]) == 1
+      assert length(results["entries"]) == 3
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(blog.id)))
     end
 
-    test "should have a active_at same with inserted_at", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+    test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 
       variables = %{filter: %{community: community.slug}}
@@ -321,18 +313,16 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       }
     }
     """
-
-    test "has_xxx state should work", ~m(user)a do
+    test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
-      {:ok, community} = db_insert(:community)
 
       {:ok, blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
-      {:ok, _blog2} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
-      {:ok, _blog3} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
+      {:ok, _} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
+      {:ok, _} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 
       variables = %{filter: %{community: community.slug}}
       results = user_conn |> query_result(@query, variables, "pagedBlogs")
-      assert results["totalCount"] == 3
+      assert results["totalCount"] == 5
 
       the_blog = Enum.find(results["entries"], &(&1["id"] == to_string(blog.id)))
       assert not the_blog["viewerHasViewed"]
@@ -419,7 +409,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       }
     }
     """
-    @tag :wip
     test "latest commented blog should appear on top",
          ~m(guest_conn community blog_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}

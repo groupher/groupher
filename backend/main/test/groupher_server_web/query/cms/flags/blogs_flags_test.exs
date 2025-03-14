@@ -1,4 +1,5 @@
 defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
+  @moduledoc false
   use GroupherServer.TestTools
 
   import Helper.Utils, only: [get_config: 2]
@@ -13,10 +14,7 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    {:ok, community2} = db_insert(:community)
-    CMS.create_article(community2, :blog, mock_attrs(:blog), user)
+    {:ok, community} = mock_community(user)
 
     blogs =
       Enum.reduce(1..@total_count, [], fn _, acc ->
@@ -51,7 +49,6 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
       }
     }
     """
-
     test "pending blog should not see in paged query",
          ~m(guest_conn community blog_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -92,7 +89,6 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
       }
     }
     """
-
     test "if have pinned blogs, the pinned blogs should at the top of entries",
          ~m(guest_conn community blog_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -113,7 +109,7 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
       assert entries_first["isPinned"] == true
     end
 
-    test "pind blogs should not appear when page > 1", ~m(guest_conn community)a do
+    test "pinned blogs should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
       results = guest_conn |> query_result(@query, variables, "pagedBlogs")
       assert results |> is_valid_pagination?

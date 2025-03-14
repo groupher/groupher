@@ -29,7 +29,6 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedBlogs do
       }
     }
     """
-
     test "both login and unlogin user can get one's paged upvoted blogs",
          ~m(user_conn guest_conn blogs)a do
       {:ok, user} = db_insert(:user)

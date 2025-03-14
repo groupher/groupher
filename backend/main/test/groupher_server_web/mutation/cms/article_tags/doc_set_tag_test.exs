@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.DocSetTag do
   setup do
     {:ok, doc} = db_insert(:doc)
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -31,7 +31,6 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.DocSetTag do
       }
     }
     """
-
     test "auth user can set a valid tag to doc",
          ~m(community doc article_tag_attrs user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
@@ -61,7 +60,6 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.DocSetTag do
       }
     }
     """
-
     test "can unset tag to a doc",
          ~m(community doc article_tag_attrs article_tag_attrs2 user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)

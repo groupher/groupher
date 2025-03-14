@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -6,10 +8,10 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
   alias CMS.Model.Post
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, post, _, user} = mock_article(:post)
+
     {:ok, user2} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
-    {:ok, community} = db_insert(:community)
+
     {:ok, community2} = db_insert(:community)
     {:ok, community3} = db_insert(:community)
 
@@ -19,7 +21,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
   end
 
   describe "[article mirror/move]" do
-    test "created post has origial community info", ~m(user community post_attrs)a do
+    test "created post has original community info", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = ORM.find(Post, post.id, preload: :original_community)
 
@@ -177,7 +179,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
     end
 
     test "post can be mirror to home", ~m(community post_attrs user)a do
-      {:ok, home_community} = db_insert(:community, %{slug: "home"})
+      {:ok, home_community} = mock_community(user, %{slug: "home"})
 
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       assert post.original_community_id == community.id
@@ -195,7 +197,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       {:ok, paged_articles} = CMS.paged_articles(:post, filter)
 
       assert exist_in?(post, paged_articles.entries)
-      assert paged_articles.total_count === 1
+      assert paged_articles.total_count === 2
 
       filter = %{page: 1, size: 10, community: home_community.slug}
       {:ok, paged_articles} = CMS.paged_articles(:post, filter)
@@ -205,7 +207,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
     end
 
     test "post can be mirror to home with tags", ~m(community post_attrs user)a do
-      {:ok, home_community} = db_insert(:community, %{slug: "home"})
+      {:ok, home_community} = mock_community(user, %{slug: "home"})
 
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)
@@ -237,7 +239,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       {:ok, paged_articles} = CMS.paged_articles(:post, filter)
 
       assert exist_in?(post, paged_articles.entries)
-      assert paged_articles.total_count === 1
+      assert paged_articles.total_count === 2
 
       filter = %{page: 1, size: 10, community: home_community.slug}
       {:ok, paged_articles} = CMS.paged_articles(:post, filter)

@@ -35,7 +35,6 @@ defmodule GroupherServer.Test.Query.Collects.BlogCollect do
       }
     }
     """
-
     test "guest can get collected users list after collect a blog",
          ~m(guest_conn blog user user2)a do
       {:ok, _} = CMS.collect_article(:blog, blog.id, user)

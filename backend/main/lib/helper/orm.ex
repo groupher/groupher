@@ -242,7 +242,7 @@ defmodule Helper.ORM do
   end
 
   @doc """
-  find and update sourc
+  find and update source
   """
   def find_update(queryable, id, attrs), do: do_find_update(queryable, id, attrs)
   def find_update(queryable, %{id: id} = attrs), do: do_find_update(queryable, id, attrs)
@@ -404,6 +404,14 @@ defmodule Helper.ORM do
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
     |> preload(moderators: :user)
+    |> Repo.one()
+    |> done
+  end
+
+  def lock_community(%Community{id: id}) do
+    Community
+    |> where(id: ^id)
+    |> lock("FOR UPDATE")
     |> Repo.one()
     |> done
   end

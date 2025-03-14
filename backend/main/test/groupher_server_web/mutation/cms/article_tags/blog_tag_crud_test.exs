@@ -39,7 +39,6 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleArticleTags.BlogTagCRUD do
       }
     }
     """
-
     test "create tag with valid attrs, has default BLOG thread and default blogs",
          ~m(community)a do
       variables = %{

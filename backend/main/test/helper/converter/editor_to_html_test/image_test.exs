@@ -44,17 +44,17 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Image do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, "<img") == 1
-      assert Utils.str_occurence(converted, "width:368px") == 1
-      assert Utils.str_occurence(converted, "height:552px") == 1
+      assert Utils.str_occurrence(converted, "<img") == 1
+      assert Utils.str_occurrence(converted, "width:368px") == 1
+      assert Utils.str_occurrence(converted, "height:552px") == 1
 
       single_image_wrapper_class = @class["single_image_wrapper"]
-      assert Utils.str_occurence(converted, single_image_wrapper_class) == 1
+      assert Utils.str_occurrence(converted, single_image_wrapper_class) == 1
 
       image_caption_class = @class["image_caption"]
-      assert Utils.str_occurence(converted, image_caption_class) == 1
+      assert Utils.str_occurrence(converted, image_caption_class) == 1
       # one for display otherone is used in lightbox
-      assert Utils.str_occurence(converted, "this is a caption") == 2
+      assert Utils.str_occurrence(converted, "this is a caption") == 2
     end
 
     test "single image parse should work without wight && height" do
@@ -71,12 +71,12 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Image do
       {:ok, converted} = Parser.to_html(editor_string)
 
       # unordered_list_prefix_class = @class["unordered_list_prefix"]
-      assert Utils.str_occurence(converted, "<img") == 1
-      assert Utils.str_occurence(converted, "width:") == 0
-      assert Utils.str_occurence(converted, "height:") == 0
+      assert Utils.str_occurrence(converted, "<img") == 1
+      assert Utils.str_occurrence(converted, "width:") == 0
+      assert Utils.str_occurrence(converted, "height:") == 0
 
       single_image_wrapper_class = @class["single_image_wrapper"]
-      assert Utils.str_occurence(converted, single_image_wrapper_class) == 1
+      assert Utils.str_occurrence(converted, single_image_wrapper_class) == 1
     end
 
     test "single image parse should work without caption" do
@@ -92,15 +92,15 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Image do
       {:ok, converted} = Parser.to_html(editor_string)
 
       # unordered_list_prefix_class = @class["unordered_list_prefix"]
-      assert Utils.str_occurence(converted, "<img") == 1
-      assert Utils.str_occurence(converted, "width:") == 0
-      assert Utils.str_occurence(converted, "height:") == 0
+      assert Utils.str_occurrence(converted, "<img") == 1
+      assert Utils.str_occurrence(converted, "width:") == 0
+      assert Utils.str_occurrence(converted, "height:") == 0
 
       single_image_wrapper_class = @class["single_image_wrapper"]
-      assert Utils.str_occurence(converted, single_image_wrapper_class) == 1
+      assert Utils.str_occurrence(converted, single_image_wrapper_class) == 1
 
       image_caption_class = @class["image_caption"]
-      assert Utils.str_occurence(converted, image_caption_class) == 0
+      assert Utils.str_occurrence(converted, image_caption_class) == 0
     end
 
     test "jiugongge image parse should work" do
@@ -124,8 +124,8 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Image do
       jiugongge_image_wrapper_class = @class["jiugongge_image_wrapper"]
       jiugongge_image_class = @class["jiugongge_image"]
 
-      assert Utils.str_occurence(converted, jiugongge_image_wrapper_class) == 1
-      assert Utils.str_occurence(converted, jiugongge_image_class) == length(mock_images(9))
+      assert Utils.str_occurrence(converted, jiugongge_image_wrapper_class) == 1
+      assert Utils.str_occurrence(converted, jiugongge_image_class) == length(mock_images(9))
     end
 
     test "gallery image parse should work" do
@@ -149,8 +149,8 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Image do
       gallery_image_class = @class["gallery_image"]
       gallery_mini_image_class = @class["gallery_image"]
 
-      assert Utils.str_occurence(converted, gallery_image_class) == length(mock_images(9))
-      assert Utils.str_occurence(converted, gallery_mini_image_class) == length(mock_images(9))
+      assert Utils.str_occurrence(converted, gallery_image_class) == length(mock_images(9))
+      assert Utils.str_occurrence(converted, gallery_mini_image_class) == length(mock_images(9))
     end
 
     test "edit exist block will not change id value" do
@@ -172,7 +172,7 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Image do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, ~s(id="block-id-exist")) == 1
+      assert Utils.str_occurrence(converted, ~s(id="block-id-exist")) == 1
     end
 
     test "invalid mode parse should raise error message" do

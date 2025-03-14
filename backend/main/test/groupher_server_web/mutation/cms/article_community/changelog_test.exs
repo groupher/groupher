@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -6,14 +8,13 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
   alias CMS.Model.Changelog
 
   setup do
-    {:ok, changelog} = db_insert(:changelog)
-    {:ok, community} = db_insert(:community)
+    {community, changelog, _, user} = mock_article(:changelog)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
     owner_conn = simu_conn(:owner, changelog)
 
-    {:ok, ~m(user_conn guest_conn owner_conn community changelog)a}
+    {:ok, ~m(user_conn guest_conn owner_conn community changelog user)a}
   end
 
   describe "[mirror/unmirror/move changelog to/from community]" do
@@ -24,7 +25,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-
     test "auth user can mirror a changelog to other community", ~m(changelog)a do
       passport_rules = %{"changelog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -81,7 +81,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-
     test "auth user can unmirror changelog to a community", ~m(changelog)a do
       passport_rules = %{"changelog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -118,9 +117,8 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-
-    test "auth user can mirror changelog home", ~m(changelog)a do
-      {:ok, home_community} = db_insert(:community, %{slug: "home"})
+    test "auth user can mirror changelog home", ~m(user changelog)a do
+      {:ok, home_community} = mock_community(user, %{slug: "home"})
 
       variables = %{id: changelog.id, thread: "CHANGELOG"}
 
@@ -141,7 +139,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-
     test "auth user can move changelog to blackhole", ~m(changelog)a do
       {:ok, blackhole_community} = db_insert(:community, %{slug: "blackhole"})
 
@@ -167,7 +164,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
     }
     """
-
     test "auth user can move changelog to other community", ~m(changelog)a do
       passport_rules = %{"changelog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)

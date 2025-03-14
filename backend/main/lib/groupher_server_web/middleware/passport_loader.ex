@@ -83,7 +83,7 @@ defmodule GroupherServerWeb.Middleware.PassportLoader do
     end
   end
 
-  # 取得 article 里面的 conmunities 字段
+  # 取得 article 里面的 communities 字段
   defp assign_article_communities_info(resolution, article) do
     arguments = resolution.arguments |> Map.merge(%{passport_communities: article.communities})
     %{resolution | arguments: arguments}

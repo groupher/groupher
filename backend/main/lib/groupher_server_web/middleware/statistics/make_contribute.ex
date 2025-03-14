@@ -3,10 +3,11 @@
 # see https://hexdocs.pm/absinthe/Absinthe.Middleware.html#content
 # ---
 defmodule GroupherServerWeb.Middleware.Statistics.MakeContribute do
+  @moduledoc false
+
   @behaviour Absinthe.Middleware
   # google: must appear in the GROUP BY clause or be used in an aggregate function
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Community
   alias GroupherServer.Statistics
 
   def call(%{errors: errors} = resolution, _) when length(errors) > 0, do: resolution
@@ -22,13 +23,13 @@ defmodule GroupherServerWeb.Middleware.Statistics.MakeContribute do
         if :user in threads, do: Statistics.make_contribute(%User{id: cur_user.id})
 
         if :community in threads,
-          do: Statistics.make_contribute(%Community{id: arguments.community_id})
+          do: Statistics.make_contribute(arguments.community)
 
       false ->
         if :user == threads, do: Statistics.make_contribute(%User{id: cur_user.id})
 
         if :community == threads,
-          do: Statistics.make_contribute(%Community{id: arguments.community_id})
+          do: Statistics.make_contribute(arguments.community)
     end
 
     resolution

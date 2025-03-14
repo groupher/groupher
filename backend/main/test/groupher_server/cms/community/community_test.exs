@@ -13,9 +13,7 @@ defmodule GroupherServer.Test.CMS.Community do
 
   setup do
     {:ok, user} = db_insert(:user)
-
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-    {:ok, community} = CMS.create_community(community_attrs)
+    {:ok, community} = mock_community(user)
 
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
@@ -41,7 +39,7 @@ defmodule GroupherServer.Test.CMS.Community do
       assert community.threads |> length == 5
     end
 
-    test "delated community should delete all related threads", ~m(user)a do
+    test "deleted community should delete all related threads", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
       {:ok, community} = CMS.create_community(community_attrs)
 

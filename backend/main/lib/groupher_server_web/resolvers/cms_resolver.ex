@@ -4,7 +4,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   import ShortMaps
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, FrontDesk}
+  alias GroupherServer.{Accounts, CMS}
 
   alias Helper.{ORM, OgInfo, Constant}
   alias Accounts.Model.User
@@ -123,10 +123,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.paged_reports(filter)
   end
 
-  # TODO: login only
-
-  def create_article(_root, ~m(community_id thread)a = args, %{context: %{cur_user: user}}) do
-    CMS.create_article(%Community{id: community_id}, thread, args, user)
+  def create_article(_root, ~m(community thread)a = args, %{context: %{cur_user: user}}) do
+    CMS.create_article(community, thread, args, user)
   end
 
   def update_article(_root, %{passport_source: article} = args, _info) do
@@ -426,9 +424,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def create_comment(_root, ~m(community thread id body)a, %{context: %{cur_user: user}}) do
-    with {:ok, community} <- FrontDesk.info(:community, community) do
-      CMS.create_comment(community, thread, id, body, user)
-    end
+    CMS.create_comment(community, thread, id, body, user)
   end
 
   def update_comment(_root, ~m(body passport_source)a, _info) do

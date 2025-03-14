@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -6,10 +8,8 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
   alias CMS.Model.Changelog
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, changelog, _, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
-    {:ok, changelog} = db_insert(:changelog)
-    {:ok, community} = db_insert(:community)
     {:ok, community2} = db_insert(:community)
     {:ok, community3} = db_insert(:community)
 
@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
   end
 
   describe "[article mirror/move]" do
-    test "created changelog has origial community info", ~m(user community changelog_attrs)a do
+    test "created changelog has original community info", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :original_community)
 
@@ -204,7 +204,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
     end
 
     test "changelog can be mirror to home", ~m(community changelog_attrs user)a do
-      {:ok, home_community} = db_insert(:community, %{slug: "home"})
+      {:ok, home_community} = mock_community(user, %{slug: "home"})
 
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       assert changelog.original_community_id == community.id
@@ -224,7 +224,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       {:ok, paged_articles} = CMS.paged_articles(:changelog, filter)
 
       assert exist_in?(changelog, paged_articles.entries)
-      assert paged_articles.total_count === 1
+      assert paged_articles.total_count === 2
 
       filter = %{page: 1, size: 10, community: home_community.slug}
       {:ok, paged_articles} = CMS.paged_articles(:changelog, filter)
@@ -234,7 +234,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
     end
 
     test "changelog can be mirror to home with tags", ~m(community changelog_attrs user)a do
-      {:ok, home_community} = db_insert(:community, %{slug: "home"})
+      {:ok, home_community} = mock_community(user, %{slug: "home"})
 
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)
@@ -269,7 +269,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       {:ok, paged_articles} = CMS.paged_articles(:changelog, filter)
 
       assert exist_in?(changelog, paged_articles.entries)
-      assert paged_articles.total_count === 1
+      assert paged_articles.total_count === 2
 
       filter = %{page: 1, size: 10, community: home_community.slug}
       {:ok, paged_articles} = CMS.paged_articles(:changelog, filter)

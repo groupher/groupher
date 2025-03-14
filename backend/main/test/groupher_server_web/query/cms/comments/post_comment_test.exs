@@ -8,13 +8,9 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
   alias Helper.ORM
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, user2} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {community, post, _, user} = mock_article(:post, preload: [author: :user])
 
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
-    {:ok, post} = CMS.create_article(community, :post, post_attrs, user2)
-    {:ok, post} = ORM.find(CMS.Model.Post, post.id, preload: [author: :user])
+    {:ok, user2} = db_insert(:user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
@@ -99,7 +95,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     assert results["emotions"]["viewerHasDownvoteed"]
   end
 
-  describe "[baisc article post comment]" do
+  describe "[basic article post comment]" do
     @query """
     query($community: String!, $id: ID!) {
       post(community: $community, id: $id) {
@@ -110,7 +106,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       }
     }
     """
-
     test "guest user can get basic archive info", ~m(guest_conn community post user)a do
       thread = :post
       {:ok, _} = CMS.create_comment(community, thread, post.inner_id, mock_comment(), user)
@@ -134,7 +129,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       }
     }
     """
-
     test "guest user can get comment participants after comment created",
          ~m(guest_conn community post user user2)a do
       total_count = 5
@@ -234,7 +228,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         }
     }
     """
-
     test "list comments with default replies-mode", ~m(guest_conn community post user user2)a do
       total_count = 3
       page_size = 20
@@ -630,7 +623,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     end
 
     test "article author upvote a comment can get is_article_author and/or is_article_author_upvoted flag",
-         ~m(guest_conn community post user)a do
+         ~m(guest_conn community post user2)a do
       total_count = 5
       page_size = 12
       thread = :post
@@ -645,7 +638,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               thread,
               post.inner_id,
               mock_comment("comment #{i}"),
-              user
+              user2
             )
 
           acc ++ [comment]
@@ -671,6 +664,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       the_random_comment =
         Enum.find(results["entries"], &(&1["id"] == to_string(random_comment.id)))
 
+      #
       assert not the_random_comment["isArticleAuthor"]
       assert the_random_comment |> get_in(["meta", "isArticleAuthorUpvoted"])
     end
@@ -814,7 +808,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         }
     }
     """
-
     test "guest user can get paged participants", ~m(guest_conn community post user)a do
       total_count = 30
       page_size = 10
@@ -884,7 +877,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         }
     }
     """
-
     test "guest user can get paged replies", ~m(guest_conn community post user user2)a do
       total_count = 2
       page_size = 10

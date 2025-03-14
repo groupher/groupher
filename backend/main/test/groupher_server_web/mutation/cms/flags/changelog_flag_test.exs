@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -7,10 +9,8 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
   alias Helper.ORM
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {community, changelog, _, user} = mock_article(:changelog)
 
-    {:ok, changelog} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
     {:ok, changelog2} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
     {:ok, changelog3} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
 
@@ -30,7 +30,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       }
     }
     """
-
     test "auth user can markDelete changelog", ~m(changelog)a do
       variables = %{id: changelog.id}
 
@@ -78,7 +77,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       }
     }
     """
-
     test "auth user can undo markDelete changelog", ~m(changelog)a do
       variables = %{id: changelog.id}
 
@@ -129,7 +127,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       }
     }
     """
-
     test "auth user can batch mark delete changelogs",
          ~m(community changelog changelog2 changelog3)a do
       variables = %{
@@ -160,7 +157,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       }
     }
     """
-
     test "auth user can batch undo mark delete changelogs",
          ~m(community changelog changelog2 changelog3)a do
       CMS.batch_mark_delete_articles(community.slug, :changelog, [
@@ -196,7 +192,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       }
     }
     """
-
     test "auth user can pin changelog", ~m(community changelog)a do
       variables = %{id: changelog.id, communityId: community.id}
 
@@ -225,7 +220,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       }
     }
     """
-
     test "auth user can undo pin changelog", ~m(community changelog)a do
       variables = %{id: changelog.id, communityId: community.id}
 

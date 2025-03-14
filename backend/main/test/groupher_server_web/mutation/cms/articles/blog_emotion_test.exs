@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogEmotion do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
@@ -32,8 +32,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogEmotion do
       }
     }
     """
-
-    test "login user can emotion to a pblog", ~m(community blog_attrs user user_conn)a do
+    test "login user can emotion to a blog", ~m(community blog_attrs user user_conn)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
       variables = %{id: blog.id, emotion: "BEER"}
@@ -58,7 +57,6 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogEmotion do
       }
     }
     """
-
     test "login user can undo emotion to a blog", ~m(community blog_attrs user owner_conn)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :beer, user)

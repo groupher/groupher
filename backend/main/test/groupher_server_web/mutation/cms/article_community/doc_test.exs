@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -6,14 +8,13 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
   alias CMS.Model.Doc
 
   setup do
-    {:ok, doc} = db_insert(:doc)
-    {:ok, community} = db_insert(:community)
+    {community, doc, _, user} = mock_article(:doc)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
     owner_conn = simu_conn(:owner, doc)
 
-    {:ok, ~m(user_conn guest_conn owner_conn community doc)a}
+    {:ok, ~m(user_conn guest_conn owner_conn community doc user)a}
   end
 
   describe "[mirror/unmirror/move doc to/from community]" do
@@ -24,7 +25,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       }
     }
     """
-
     test "auth user can mirror a doc to other community", ~m(doc)a do
       passport_rules = %{"doc.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -81,7 +81,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       }
     }
     """
-
     test "auth user can unmirror doc to a community", ~m(doc)a do
       passport_rules = %{"doc.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -118,9 +117,8 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       }
     }
     """
-
-    test "auth user can mirror doc home", ~m(doc)a do
-      {:ok, home_community} = db_insert(:community, %{slug: "home"})
+    test "auth user can mirror doc home", ~m(user doc)a do
+      {:ok, home_community} = mock_community(user, %{slug: "home"})
 
       variables = %{id: doc.id, thread: "DOC"}
 
@@ -141,7 +139,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       }
     }
     """
-
     test "auth user can move doc to blackhole", ~m(doc)a do
       {:ok, blackhole_community} = db_insert(:community, %{slug: "blackhole"})
 
@@ -165,7 +162,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       }
     }
     """
-
     test "auth user can move doc to other community", ~m(doc)a do
       passport_rules = %{"doc.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)

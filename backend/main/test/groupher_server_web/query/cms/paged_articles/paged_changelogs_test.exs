@@ -149,9 +149,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["views"] > last_changelog["views"]
     end
 
-    test "should get valid thread document", ~m(guest_conn)a do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = db_insert(:community)
+    test "should get valid thread document", ~m(guest_conn user community)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       Process.sleep(2000)
       {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -164,8 +162,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert not is_nil(get_in(changelog, ["document", "bodyHtml"]))
     end
 
-    test "support article_tag filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+    test "support article_tag filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
@@ -185,9 +182,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert exist_in?(article_tag, changelog["articleTags"])
     end
 
-    test "support community filter", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
-
+    test "support community filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user)
       changelog_attrs2 = mock_attrs(:changelog, %{community_id: community.id})
@@ -197,7 +192,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")
 
       changelog = results["entries"] |> List.first()
-      assert results["totalCount"] == 2
+      assert results["totalCount"] == 4
       assert exist_in?(%{id: to_string(community.id)}, changelog["communities"])
     end
 
@@ -244,21 +239,19 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
        }
     }
     """
-
     test "filter community should get changelogs which belongs to that community",
-         ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+         ~m(guest_conn community user)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")
 
-      assert length(results["entries"]) == 1
+      # other 2 is in setup
+      assert length(results["entries"]) == 3
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(changelog.id)))
     end
 
-    test "should have a active_at same with inserted_at", ~m(guest_conn user)a do
-      {:ok, community} = db_insert(:community)
+    test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
 
       variables = %{filter: %{community: community.slug}}
@@ -321,18 +314,15 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       }
     }
     """
-
-    test "has_xxx state should work", ~m(user)a do
+    test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
-      {:ok, community} = db_insert(:community)
-
       {:ok, changelog} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
-      {:ok, _changelog2} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
-      {:ok, _changelog3} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
+      {:ok, _} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
+      {:ok, _} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
 
       variables = %{filter: %{community: community.slug}}
       results = user_conn |> query_result(@query, variables, "pagedChangelogs")
-      assert results["totalCount"] == 3
+      assert results["totalCount"] == 5
 
       the_changelog = Enum.find(results["entries"], &(&1["id"] == to_string(changelog.id)))
       assert not the_changelog["viewerHasViewed"]
@@ -419,7 +409,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       }
     }
     """
-
     test "latest commented changelog should appear on top",
          ~m(guest_conn community changelog_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}

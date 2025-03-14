@@ -1,6 +1,6 @@
 defmodule GroupherServer.TestTools do
   @moduledoc """
-  helper for reduce import mudules in test files
+  helper for reduce import modules in test files
   """
   use ExUnit.CaseTemplate
 
@@ -16,6 +16,8 @@ defmodule GroupherServer.TestTools do
       import Helper.Utils, only: [camelize_map_key: 1, camelize_map_key: 2]
 
       import ShortMaps
+
+      alias GroupherServer.Test.Helper.Schema
     end
   end
 end

@@ -38,7 +38,6 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       }
     }
     """
-
     test "empty user should get empty achievement", ~m(guest_conn user)a do
       variables = %{login: user.login}
 
@@ -156,7 +155,6 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       }
     }
     """
-
     test "inc user's achievement after user's post got collected", ~m(guest_conn user)a do
       {:ok, post} = db_insert(:post)
       {:ok, _article_collect} = CMS.collect_article(:post, post.id, user)

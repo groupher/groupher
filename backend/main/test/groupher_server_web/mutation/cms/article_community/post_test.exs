@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -6,14 +8,13 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
   alias CMS.Model.Post
 
   setup do
-    {:ok, post} = db_insert(:post)
-    {:ok, community} = db_insert(:community)
+    {community, post, _, user} = mock_article(:post)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
     owner_conn = simu_conn(:owner, post)
 
-    {:ok, ~m(user_conn guest_conn owner_conn community post)a}
+    {:ok, ~m(user_conn guest_conn owner_conn community post user)a}
   end
 
   describe "[mirror/unmirror/move post to/from community]" do
@@ -79,7 +80,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       }
     }
     """
-
     test "auth user can unmirror post to a community", ~m(post)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -116,9 +116,8 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       }
     }
     """
-
-    test "auth user can mirror post home", ~m(post)a do
-      {:ok, home_community} = db_insert(:community, %{slug: "home"})
+    test "auth user can mirror post home", ~m(post user)a do
+      {:ok, home_community} = mock_community(user, %{slug: "home"})
 
       variables = %{id: post.id, thread: "POST"}
 

@@ -24,7 +24,16 @@ config :groupher_server, GroupherServer.Repo,
   password: "postgres",
   database: "groupher_server_test",
   hostname: "localhost",
-  pool_size: 50,
+  pool_size: 20,
+  # 设置查询超时时间为 60 秒
+  timeout: 60_000,
+  # 设置从连接池获取连接的超时时间为 10 秒
+  pool_timeout: 10_000,
+  # 设置连接所有权超时时间为 60 秒
+  ownership_timeout: 60_000,
+  # 设置队列目标为 5000
+  queue_target: 5_000,
+  queue_interval: 1_000,
   pool: Ecto.Adapters.SQL.Sandbox
 
 config :groupher_server, :github_oauth,

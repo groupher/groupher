@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -7,10 +9,8 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
   alias Helper.ORM
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {community, post, _, user} = mock_article(:post)
 
-    {:ok, post} = CMS.create_article(community, :post, mock_attrs(:post), user)
     {:ok, post2} = CMS.create_article(community, :post, mock_attrs(:post), user)
     {:ok, post3} = CMS.create_article(community, :post, mock_attrs(:post), user)
 
@@ -126,7 +126,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
-
     test "auth user can batch mark delete posts", ~m(community post post2 post3)a do
       variables = %{
         community: community.slug,
@@ -156,7 +155,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
-
     test "auth user can batch undo mark delete posts", ~m(community post post2 post3)a do
       CMS.batch_mark_delete_articles(community.slug, :post, [
         post.inner_id,
@@ -251,7 +249,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
-
     test "auth user can undo pin post", ~m(community post)a do
       variables = %{id: post.id, communityId: community.id}
 

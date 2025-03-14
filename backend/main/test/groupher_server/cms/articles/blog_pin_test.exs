@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.CMS.Articles.BlogPin do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     {:ok, blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 
@@ -22,9 +22,9 @@ defmodule GroupherServer.Test.CMS.Articles.BlogPin do
   describe "[cms blog pin]" do
     test "can pin a blog", ~m(community blog)a do
       {:ok, _} = CMS.pin_article(:blog, blog.id, community.id)
-      {:ok, pind_article} = ORM.find_by(PinnedArticle, %{blog_id: blog.id})
+      {:ok, pinned_article} = ORM.find_by(PinnedArticle, %{blog_id: blog.id})
 
-      assert pind_article.blog_id == blog.id
+      assert pinned_article.blog_id == blog.id
     end
 
     test "one community & thread can only pin certern count of blog", ~m(community user)a do

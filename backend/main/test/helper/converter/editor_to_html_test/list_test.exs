@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.List do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, @class["unordered_list_prefix"]) == 3
+      assert Utils.str_occurrence(converted, @class["unordered_list_prefix"]) == 3
     end
 
     test "basic order list parse should work" do
@@ -100,9 +100,9 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.List do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, "id=") == 1
+      assert Utils.str_occurrence(converted, "id=") == 1
 
-      assert Utils.str_occurence(converted, @class["order_list_prefix"]) == 3
+      assert Utils.str_occurrence(converted, @class["order_list_prefix"]) == 3
     end
 
     test "edit exist block will not change id value" do
@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.List do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, ~s(id="block-id-exist")) == 1
+      assert Utils.str_occurrence(converted, ~s(id="block-id-exist")) == 1
     end
 
     test "basic checklist parse should work" do
@@ -171,7 +171,7 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.List do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, @class["checklist_checkbox_checked"]) == 1
+      assert Utils.str_occurrence(converted, @class["checklist_checkbox_checked"]) == 1
     end
 
     test "checklist without label parse should work" do
@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.List do
       {:ok, editor_string} = Jason.encode(editor_json)
       {:ok, converted} = Parser.to_html(editor_string)
 
-      assert Utils.str_occurence(converted, @class["label"]) == 0
+      assert Utils.str_occurrence(converted, @class["label"]) == 0
     end
 
     test "invalid list mode parse should raise error message" do

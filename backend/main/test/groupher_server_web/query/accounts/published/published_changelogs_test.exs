@@ -34,7 +34,6 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
       }
     }
     """
-
     test "can get published changelogs", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
@@ -76,7 +75,6 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
       }
     }
     """
-
     test "user can get paged published comments on changelog",
          ~m(guest_conn user community changelog)a do
       pub_comments =

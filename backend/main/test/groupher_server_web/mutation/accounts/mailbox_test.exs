@@ -58,7 +58,6 @@ defmodule GroupherServer.Test.Mutaion.Accounts.Mailbox do
       }
     }
     """
-
     test "can mark read all mentions", ~m(user_conn user user2 user3)a do
       {:ok, _} = mock_mention_for(user, user2)
       {:ok, _} = mock_mention_for(user, user3)

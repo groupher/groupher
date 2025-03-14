@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Query.Flags.DocsFlags do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Helper.Utils, only: [get_config: 2]
@@ -13,10 +15,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    {:ok, community2} = db_insert(:community)
-    CMS.create_article(community2, :doc, mock_attrs(:doc), user)
+    {:ok, community} = mock_community(user)
 
     docs =
       Enum.reduce(1..@total_count, [], fn _, acc ->
@@ -51,7 +50,6 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       }
     }
     """
-
     test "pending doc should not see in paged query",
          ~m(guest_conn community doc_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -92,7 +90,6 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       }
     }
     """
-
     test "if have pinned docs, the pinned docs should at the top of entries",
          ~m(guest_conn community doc_m)a do
       variables = %{filter: %{community: community.slug}}

@@ -11,6 +11,8 @@ defmodule GroupherServer.Support.Factory do
   alias GroupherServer.{Accounts, CMS, Delivery}
   alias Accounts.Model.User
 
+  alias Helper.ORM
+
   alias CMS.Model.{
     Author,
     Category,
@@ -431,17 +433,44 @@ defmodule GroupherServer.Support.Factory do
     Delivery.send(:notify, notify_attrs, from_user)
   end
 
+  def mock_community() do
+    {:ok, user} = db_insert(:user)
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+
+    CMS.create_community(community_attrs)
+  end
+
+  def mock_community(%User{} = user, attrs \\ %{}) do
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id}) |> Map.merge(attrs)
+
+    CMS.create_community(community_attrs)
+  end
+
   @doc """
   mock article with default output format
   """
   def mock_article(thread) do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+    {:ok, community} = CMS.create_community(community_attrs)
 
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
     {:ok, article} = CMS.create_article(community, thread, attrs, user)
 
     {community, article, attrs, user}
+  end
+
+  def mock_article(thread, preload: []), do: mock_article(thread)
+
+  def mock_article(thread, preload: preload) do
+    {community, article, attrs, user} = mock_article(thread)
+
+    with {:ok, info} <- match(thread) do
+      {:ok, preload_article} = ORM.find(info.model, article.id, preload: preload)
+
+      {community, preload_article, attrs, user}
+    end
   end
 
   def mock_article(thread, %Community{} = community, %User{} = user) do

@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS.Articles.Kanban do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS
@@ -10,24 +12,21 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
   @article_state Constant.CMS.article_state()
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, user2} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
-    {:ok, community} = db_insert(:community)
+    {community, post, post_attrs, user} = mock_article(:post)
 
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
+    {:ok, user2} = db_insert(:user)
 
     {:ok, ~m(user user2 community post post_attrs)a}
   end
 
   describe "[cms kanban curd]" do
     test "can create kanban post should have default cat & state",
-         ~m(user community post_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
+         ~m(user2 community post_attrs)a do
+      assert {:error, _} = ORM.find_by(Author, user_id: user2.id)
 
       kanban_attrs = post_attrs
 
-      {:ok, kanban} = CMS.create_article(community, :post, kanban_attrs, user)
+      {:ok, kanban} = CMS.create_article(community, :post, kanban_attrs, user2)
 
       assert kanban.cat == nil
       assert kanban.state == nil
@@ -47,13 +46,13 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
       assert post.state == "TODO"
     end
 
-    test "can create kanban post with valid attrs", ~m(user community post_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
+    test "can create kanban post with valid attrs", ~m(user2 community post_attrs)a do
+      assert {:error, _} = ORM.find_by(Author, user_id: user2.id)
 
       kanban_attrs =
         post_attrs |> Map.merge(%{cat: @article_cat.feature, state: @article_state.done})
 
-      {:ok, kanban} = CMS.create_article(community, :post, kanban_attrs, user)
+      {:ok, kanban} = CMS.create_article(community, :post, kanban_attrs, user2)
 
       assert kanban.cat == @article_cat.feature
       assert kanban.state == @article_state.done

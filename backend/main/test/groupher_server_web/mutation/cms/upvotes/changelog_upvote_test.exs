@@ -27,7 +27,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
       }
     }
     """
-
     test "login user can upvote a changelog", ~m(user_conn user changelog)a do
       variables = %{id: changelog.id}
       created = user_conn |> mutation_result(@query, variables, "upvoteChangelog")
@@ -54,7 +53,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
       }
     }
     """
-
     test "login user can undo upvote to a changelog", ~m(user_conn changelog user)a do
       {:ok, _} = CMS.upvote_article(:changelog, changelog.id, user)
 

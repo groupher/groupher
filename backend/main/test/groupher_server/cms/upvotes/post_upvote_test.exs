@@ -6,8 +6,9 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
 
   setup do
     {:ok, user} = db_insert(:user)
+    {:ok, community} = mock_community(user)
+
     {:ok, user2} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
 
     post_attrs = mock_attrs(:post, %{community_id: community.id})
 

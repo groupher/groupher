@@ -24,7 +24,6 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       }
     }
     """
-
     test "login user can sink a blog", ~m(community blog)a do
       variables = %{id: blog.id, communityId: community.id}
       passport_rules = %{community.slug => %{"blog.sink" => true}}
@@ -51,7 +50,6 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       }
     }
     """
-
     test "login user can undo sink to a blog", ~m(community blog)a do
       variables = %{id: blog.id, communityId: community.id}
 

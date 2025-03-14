@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     post_attrs = mock_attrs(:post, %{community_id: community.id})
 
@@ -32,7 +32,6 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       }
     }
     """
-
     test "login user can emotion to a ppost", ~m(community post_attrs user user_conn)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
@@ -58,7 +57,6 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       }
     }
     """
-
     test "login user can undo emotion to a post", ~m(community post_attrs user owner_conn)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, _} = CMS.emotion_to_article(:post, post.id, :beer, user)

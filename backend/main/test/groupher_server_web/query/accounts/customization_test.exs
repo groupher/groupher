@@ -30,7 +30,6 @@ defmodule GroupherServer.Test.Query.Account.Customization do
       }
     }
     """
-
     test "user can have default customization configs", ~m(user_conn user)a do
       results = user_conn |> query_result(@query, %{login: user.login}, "user")
 

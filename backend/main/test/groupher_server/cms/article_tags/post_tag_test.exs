@@ -149,7 +149,7 @@ defmodule GroupherServer.Test.CMS.ArticleTag.PostTag do
 
     test "can not create post with other community's article tags",
          ~m(community user post_attrs article_tag_attrs article_tag_attrs2)a do
-      {:ok, community2} = db_insert(:community)
+      {:ok, community2} = mock_community()
       {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
       {:ok, article_tag2} = CMS.create_article_tag(community2, :post, article_tag_attrs2, user)
 

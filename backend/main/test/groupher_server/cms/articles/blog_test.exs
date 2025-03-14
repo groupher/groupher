@@ -10,34 +10,29 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
   alias EditorToHTML.{Class, Validator}
-  alias CMS.Model.{Author, ArticleDocument, Community, Blog, BlogDocument}
+  alias CMS.Model.{Author, ArticleDocument, Blog, Community, BlogDocument}
 
   @root_class Class.article()
   @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, _, blog_attrs, user} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
-    {:ok, blog} = db_insert(:blog)
-
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-
-    {:ok, ~m(user user2 community blog blog_attrs)a}
+    {:ok, ~m(user user2 community blog_attrs)a}
   end
 
   describe "[cms blog curd]" do
     test "created blog should have auto_increase inner_id", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      assert blog.inner_id == 1
-
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       assert blog.inner_id == 2
 
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       assert blog.inner_id == 3
+
+      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
+      assert blog.inner_id == 4
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
@@ -53,17 +48,15 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
 
       {:ok, community} = ORM.find(Community, community.id)
 
-      assert community.meta.blogs_inner_id_index == 3
+      assert community.meta.blogs_inner_id_index == 4
       assert community.meta.posts_inner_id_index == 2
       assert community.meta.changelogs_inner_id_index == 1
       assert community.meta.docs_inner_id_index == 0
 
-      assert community.articles_count == 6
+      assert community.articles_count == 7
     end
 
     test "can create blog with valid attrs", ~m(user community blog_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
-
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       blog = Repo.preload(blog, :document)
 
@@ -175,19 +168,12 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
     end
 
     test "add user to cms authors, if the user is not exist in cms authors",
-         ~m(user community blog_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
+         ~m(user2 community blog_attrs)a do
+      assert {:error, _} = ORM.find_by(Author, user_id: user2.id)
 
-      {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, author} = ORM.find_by(Author, user_id: user.id)
-      assert author.user_id == user.id
-    end
-
-    test "create blog with an non-exist community fails", ~m(user)a do
-      invalid_attrs = mock_attrs(:blog, %{community_id: non_exist_id()})
-      invalid_community = %Community{id: non_exist_id(), slug: non_exist_slug()}
-
-      assert {:error, _} = CMS.create_article(invalid_community, :blog, invalid_attrs, user)
+      {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user2)
+      {:ok, author} = ORM.find_by(Author, user_id: user2.id)
+      assert author.user_id == user2.id
     end
   end
 

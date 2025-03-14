@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Articles.Changelog do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.ORM
@@ -7,11 +9,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
   alias CMS.Model.{Changelog, Author}
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-    {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+    {community, changelog, _, user} = mock_article(:changelog)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -21,39 +19,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
   end
 
   describe "[mutation changelog curd]" do
-    @create_changelog_query """
-    mutation(
-      $title: String!
-      $body: String!
-      $communityId: ID!
-      $articleTags: [ID]
-      $linkAddr: String
-    ) {
-      createChangelog(
-        title: $title
-        body: $body
-        communityId: $communityId
-        articleTags: $articleTags
-        linkAddr: $linkAddr
-      ) {
-        id
-        title
-        linkAddr
-        document {
-          bodyHtml
-        }
-        originalCommunity {
-          id
-        }
-      }
-    }
-    """
-
-    test "create changelog with valid attrs and make sure author exist" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
+    test "create changelog with valid attrs and make sure author exist",
+         ~m(user_conn community user)a do
       changelog_attr = mock_attrs(:changelog) |> Map.merge(%{linkAddr: "https://helloworld"})
 
       # body = """
@@ -63,10 +30,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       {"time":1639375020110,"blocks":[{"type":"list","data":{"mode":"unordered_list","items":[{"text":"CP 的图标是字母 C (Coder / China) 和 Planet 的意象结合，斜向的条饰灵感来自于 NASA Logo 上的 red chevron。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0},{"text":"所有的 Upvote 的图标都是小火箭，点击它会有一个起飞的动画 — 虽然它目前看起来像爆炸。。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0}]}}],"version":"2.19.38"}
       """
 
-      variables = changelog_attr |> Map.merge(%{communityId: community.id, body: body})
+      variables = changelog_attr |> Map.merge(%{community: community.slug, body: body})
 
       created =
-        user_conn |> mutation_result(@create_changelog_query, variables, "createChangelog")
+        user_conn
+        |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
 
       {:ok, changelog} = ORM.find(Changelog, created["id"])
 
@@ -84,40 +52,36 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       changelog_attr = mock_attrs(:changelog)
 
       variables =
-        changelog_attr |> Map.merge(%{communityId: community.id, articleTags: [article_tag.id]})
+        changelog_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
       created =
-        user_conn |> mutation_result(@create_changelog_query, variables, "createChangelog")
+        user_conn |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
 
       {:ok, changelog} = ORM.find(Changelog, created["id"], preload: :article_tags)
 
       assert exist_in?(%{id: article_tag.id}, changelog.article_tags)
     end
 
-    test "create changelog should excape xss attracts" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    test "create changelog should escape xss attracts", ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string()})
-      variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_changelog_query, variables, "createChangelog")
+      variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
+
+      result =
+        user_conn |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
+
       {:ok, changelog} = ORM.find(Changelog, result["id"], preload: :document)
       body_html = changelog |> get_in([:document, :body_html])
 
       assert not String.contains?(body_html, "script")
     end
 
-    test "create changelog should excape xss attracts 2" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
-
+    test "create changelog should escape xss attracts 2", ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string(:safe)})
-      variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_changelog_query, variables, "createChangelog")
+      variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
+
+      result =
+        user_conn |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
+
       {:ok, changelog} = ORM.find(Changelog, result["id"], preload: :document)
       body_html = changelog |> get_in([:document, :body_html])
 
@@ -127,15 +91,12 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
 
-    test "create changelog with missing non_null field should get 200 error" do
-      {:ok, user} = db_insert(:user)
-      user_conn = simu_conn(:user, user)
-
-      {:ok, community} = db_insert(:community)
+    test "create changelog with missing non_null field should get 200 error",
+         ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog)
-      variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
+      variables = changelog_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
-      assert user_conn |> mutation_get_error?(@create_changelog_query, variables)
+      assert user_conn |> mutation_get_error?(Schema.m(:create_changelog), variables)
     end
 
     @query """
@@ -145,7 +106,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       }
     }
     """
-
     test "delete a changelog by changelog's owner", ~m(owner_conn changelog)a do
       deleted = owner_conn |> mutation_result(@query, %{id: changelog.id}, "deleteChangelog")
 
@@ -213,7 +173,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       }
     }
     """
-
     test "update a changelog without login user fails", ~m(guest_conn changelog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 

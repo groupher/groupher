@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocEmotion do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
@@ -32,7 +32,6 @@ defmodule GroupherServer.Test.Mutation.Articles.DocEmotion do
       }
     }
     """
-
     test "login user can emotion to a doc", ~m(community doc_attrs user user_conn)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
@@ -58,7 +57,6 @@ defmodule GroupherServer.Test.Mutation.Articles.DocEmotion do
       }
     }
     """
-
     test "login user can undo emotion to a doc",
          ~m(community doc_attrs user owner_conn)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)

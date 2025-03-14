@@ -55,7 +55,7 @@ defmodule GroupherServerWeb.Schema do
     import_fields(:statistics_mutations)
     # cms
     import_fields(:cms_mutation_community)
-    import_fields(:cms_opertion_mutations)
+    import_fields(:cms_operation_mutations)
 
     import_article_fields(:mutations)
 

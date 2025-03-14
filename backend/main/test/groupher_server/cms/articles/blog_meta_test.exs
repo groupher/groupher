@@ -5,14 +5,13 @@ defmodule GroupherServer.Test.CMS.BlogMeta do
   alias Helper.ORM
   alias GroupherServer.CMS
 
-  alias CMS.Model.{Embeds, Author, Blog}
+  alias CMS.Model.{Embeds, Blog}
 
   @default_article_meta Embeds.ArticleMeta.default_meta()
 
   setup do
     {:ok, user} = db_insert(:user)
-    # {:ok, blog} = db_insert(:blog)
-    {:ok, community} = db_insert(:community)
+    {:ok, community} = mock_community(user)
 
     blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
@@ -21,8 +20,6 @@ defmodule GroupherServer.Test.CMS.BlogMeta do
 
   describe "[cms blog meta info]" do
     test "can get default meta info", ~m(user community blog_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
-
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog} = ORM.find_by(Blog, id: blog.id)
       meta = blog.meta |> Map.from_struct() |> Map.delete(:id)

@@ -3,17 +3,11 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
   alias GroupherServer.CMS
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, blog, _, user} = mock_article(:blog, preload: [author: :user])
     {:ok, user2} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-    {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user2)
-    {:ok, blog} = ORM.find(CMS.Model.Blog, blog.id, preload: [author: :user])
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
@@ -109,7 +103,6 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       }
     }
     """
-
     test "guest user can get basic archive info", ~m(guest_conn community blog user)a do
       thread = :blog
 
@@ -135,7 +128,6 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       }
     }
     """
-
     test "guest user can get comment participants after comment created",
          ~m(guest_conn community blog user user2)a do
       total_count = 5
@@ -236,7 +228,6 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
         }
     }
     """
-
     test "list comments with default replies-mode",
          ~m(guest_conn community blog user user2)a do
       total_count = 3
@@ -593,7 +584,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
     end
 
     test "article author upvote a comment can get is_article_author and/or is_article_author_upvoted flag",
-         ~m(guest_conn community blog user)a do
+         ~m(guest_conn community blog user2)a do
       total_count = 5
       page_size = 12
       thread = :blog
@@ -608,7 +599,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
               thread,
               blog.inner_id,
               mock_comment("comment #{i}"),
-              user
+              user2
             )
 
           acc ++ [comment]
@@ -783,7 +774,6 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
         }
     }
     """
-
     test "guest user can get paged participants", ~m(guest_conn community blog user)a do
       total_count = 30
       page_size = 10
@@ -859,7 +849,6 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
         }
     }
     """
-
     test "guest user can get paged replies", ~m(guest_conn community blog user user2)a do
       total_count = 2
       page_size = 10

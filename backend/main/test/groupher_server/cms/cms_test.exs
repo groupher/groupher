@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.CMS do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.Accounts.Model.User
@@ -10,10 +12,8 @@ defmodule GroupherServer.Test.CMS do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
-    # {:ok, community} = db_insert(:community)
 
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-    {:ok, community} = CMS.create_community(community_attrs)
+    {:ok, community} = mock_community(user)
 
     {:ok, category} = db_insert(:category)
 
@@ -269,12 +269,12 @@ defmodule GroupherServer.Test.CMS do
       cur_user = user
       {:ok, _} = CMS.add_moderator(community.slug, role, user2, cur_user)
 
-      {:ok, moderatorss} = CommunityModerator |> ORM.find_all(%{page: 1, size: 10})
+      {:ok, moderators} = CommunityModerator |> ORM.find_all(%{page: 1, size: 10})
 
-      assert moderatorss.total_count == 2
+      assert moderators.total_count == 2
 
-      moderator_user = moderatorss.entries |> Enum.at(0)
-      moderator_user2 = moderatorss.entries |> Enum.at(1)
+      moderator_user = moderators.entries |> Enum.at(0)
+      moderator_user2 = moderators.entries |> Enum.at(1)
 
       assert user.id == moderator_user.user_id
       assert user2.id == moderator_user2.user_id

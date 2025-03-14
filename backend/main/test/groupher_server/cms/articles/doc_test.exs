@@ -1,41 +1,38 @@
 defmodule GroupherServer.Test.CMS.Articles.Doc do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Helper.Utils, only: [get_config: 2]
 
   alias Helper.ORM
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, FrontDesk, Repo}
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
   alias EditorToHTML.{Class, Validator}
-  alias CMS.Model.{Author, ArticleDocument, Community, Doc, DocDocument}
+  alias CMS.Model.{Author, ArticleDocument, Doc, Community, DocDocument}
 
   @root_class Class.article()
   @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, _, doc_attrs, user} = mock_article(:doc)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
-    {:ok, doc} = db_insert(:doc)
-
-    doc_attrs = mock_attrs(:doc, %{community_id: community.id})
-
-    {:ok, ~m(user user2 community doc doc_attrs)a}
+    {:ok, ~m(user user2 community doc_attrs)a}
   end
 
   describe "[cms doc curd]" do
     test "created doc should have auto_increase inner_id", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      assert doc.inner_id == 1
-
-      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert doc.inner_id == 2
 
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert doc.inner_id == 3
+
+      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+      assert doc.inner_id == 4
 
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
@@ -49,19 +46,17 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       assert changelog.inner_id == 1
 
-      {:ok, community} = ORM.find(Community, community.id)
+      {:ok, community} = FrontDesk.info(:community, community.slug)
 
-      assert community.meta.docs_inner_id_index == 3
+      assert community.meta.docs_inner_id_index == 4
       assert community.meta.blogs_inner_id_index == 2
       assert community.meta.changelogs_inner_id_index == 1
       assert community.meta.posts_inner_id_index == 0
 
-      assert community.articles_count == 6
+      assert community.articles_count == 7
     end
 
     test "can create doc with valid attrs", ~m(user community doc_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
-
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       doc = Repo.preload(doc, :document)
 
@@ -172,19 +167,12 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
     end
 
     test "add user to cms authors, if the user is not exist in cms authors",
-         ~m(user community doc_attrs)a do
-      assert {:error, _} = ORM.find_by(Author, user_id: user.id)
+         ~m(user2 community doc_attrs)a do
+      assert {:error, _} = ORM.find_by(Author, user_id: user2.id)
 
-      {:ok, _} = CMS.create_article(community, :doc, doc_attrs, user)
-      {:ok, author} = ORM.find_by(Author, user_id: user.id)
-      assert author.user_id == user.id
-    end
-
-    test "create doc with an non-exist community fails", ~m(user)a do
-      invalid_attrs = mock_attrs(:doc, %{community_id: non_exist_id()})
-      invalid_community = %Community{id: non_exist_id(), slug: non_exist_slug()}
-
-      assert {:error, _} = CMS.create_article(invalid_community, :doc, invalid_attrs, user)
+      {:ok, _} = CMS.create_article(community, :doc, doc_attrs, user2)
+      {:ok, author} = ORM.find_by(Author, user_id: user2.id)
+      assert author.user_id == user2.id
     end
   end
 
@@ -311,9 +299,8 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
          ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, _article_doc} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: "DOC"})
-
-      {:ok, _doc} = ORM.find_by(DocDocument, %{doc_id: doc.id})
+      {:ok, _} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: "DOC"})
+      {:ok, _} = ORM.find_by(DocDocument, %{doc_id: doc.id})
 
       {:ok, _} = CMS.delete_article(doc)
 

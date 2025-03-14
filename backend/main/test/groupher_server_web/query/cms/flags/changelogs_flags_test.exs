@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Helper.Utils, only: [get_config: 2]
@@ -13,10 +15,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
-
-    {:ok, community2} = db_insert(:community)
-    CMS.create_article(community2, :changelog, mock_attrs(:changelog), user)
+    {:ok, community} = mock_community(user)
 
     changelogs =
       Enum.reduce(1..@total_count, [], fn _, acc ->
@@ -51,7 +50,6 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       }
     }
     """
-
     test "pending changelog should not see in paged query",
          ~m(guest_conn community changelog_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -92,7 +90,6 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       }
     }
     """
-
     test "if have pinned changelogs, the pinned changelogs should at the top of entries",
          ~m(guest_conn community changelog_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -113,7 +110,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       assert entries_first["isPinned"] == true
     end
 
-    test "pind changelogs should not appear when page > 1", ~m(guest_conn community)a do
+    test "pinned changelogs should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")
       assert results |> is_valid_pagination?
