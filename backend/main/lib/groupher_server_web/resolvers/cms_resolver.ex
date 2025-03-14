@@ -123,8 +123,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.paged_reports(filter)
   end
 
-  def create_article(_root, ~m(community_id thread)a = args, %{context: %{cur_user: user}}) do
-    CMS.create_article(%Community{id: community_id}, thread, args, user)
+  def create_article(_root, ~m(community thread)a = args, %{context: %{cur_user: user}}) do
+    CMS.create_article(community, thread, args, user)
   end
 
   def update_article(_root, %{passport_source: article} = args, _info) do

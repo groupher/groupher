@@ -19,33 +19,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
   end
 
   describe "[mutation doc curd]" do
-    @create_doc_query """
-    mutation(
-      $title: String!
-      $body: String!
-      $communityId: ID!
-      $articleTags: [ID]
-      $linkAddr: String
-    ) {
-      createDoc(
-        title: $title
-        body: $body
-        communityId: $communityId
-        articleTags: $articleTags
-        linkAddr: $linkAddr
-      ) {
-        id
-        title
-        linkAddr
-        document {
-          bodyHtml
-        }
-        originalCommunity {
-          id
-        }
-      }
-    }
-    """
+    @tag :wip
     test "create doc with valid attrs and make sure author exist",
          ~m(user_conn community user)a do
       # {:ok, user} = db_insert(:user)
@@ -60,9 +34,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       {"time":1639375020110,"blocks":[{"type":"list","data":{"mode":"unordered_list","items":[{"text":"CP 的图标是字母 C (Coder / China) 和 Planet 的意象结合，斜向的条饰灵感来自于 NASA Logo 上的 red chevron。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0},{"text":"所有的 Upvote 的图标都是小火箭，点击它会有一个起飞的动画 — 虽然它目前看起来像爆炸。。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0}]}}],"version":"2.19.38"}
       """
 
-      variables = doc_attr |> Map.merge(%{communityId: community.id, body: body})
+      variables = doc_attr |> Map.merge(%{community: community.slug, body: body})
 
-      created = user_conn |> mutation_result(@create_doc_query, variables, "createDoc")
+      created = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
 
       {:ok, doc} = ORM.find(Doc, created["id"])
 
@@ -73,6 +47,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
     end
 
+    @tag :wip
     test "create doc with valid tags id list", ~m(user_conn user community)a do
       article_tag_attrs = mock_attrs(:article_tag)
       {:ok, article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
@@ -80,29 +55,31 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       doc_attr = mock_attrs(:doc)
 
       variables =
-        doc_attr |> Map.merge(%{communityId: community.id, articleTags: [article_tag.id]})
+        doc_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
-      created = user_conn |> mutation_result(@create_doc_query, variables, "createDoc")
+      created = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
 
       {:ok, doc} = ORM.find(Doc, created["id"], preload: :article_tags)
 
       assert exist_in?(%{id: article_tag.id}, doc.article_tags)
     end
 
+    @tag :wip
     test "create doc should escape xss attracts", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string()})
-      variables = doc_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_doc_query, variables, "createDoc")
+      variables = doc_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
+      result = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
       {:ok, doc} = ORM.find(Doc, result["id"], preload: :document)
       body_html = doc |> get_in([:document, :body_html])
 
       assert not String.contains?(body_html, "script")
     end
 
+    @tag :wip
     test "create doc should escape xss attracts 2", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string(:safe)})
-      variables = doc_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_doc_query, variables, "createDoc")
+      variables = doc_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
+      result = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
       {:ok, doc} = ORM.find(Doc, result["id"], preload: :document)
       body_html = doc |> get_in([:document, :body_html])
 
@@ -112,12 +89,13 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
 
+    @tag :wip
     test "create doc with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc)
-      variables = doc_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
+      variables = doc_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
-      assert user_conn |> mutation_get_error?(@create_doc_query, variables)
+      assert user_conn |> mutation_get_error?(Schema.m(:create_doc), variables)
     end
 
     @query """

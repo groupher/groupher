@@ -13,13 +13,13 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
       arg(:body, non_null(:string))
       arg(:link_addr, :string)
       arg(:copy_right, :string)
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :changelog)
       arg(:article_tags, list_of(:id))
 
       middleware(M.Authorize, :login)
-      # middleware(M.PublishThrottle)
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
+      middleware(M.FrontDesk, :community)
       resolve(&R.CMS.create_article/3)
       middleware(M.Statistics.MakeContribute, for: [:user, :community])
     end

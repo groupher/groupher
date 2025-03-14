@@ -24,8 +24,6 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
       {:error, err_msg} ->
         resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
     end
-
-    resolution
   end
 
   def call(
@@ -39,8 +37,6 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
       {:error, err_msg} ->
         resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
     end
-
-    resolution
   end
 
   def call(resolution, _), do: resolution

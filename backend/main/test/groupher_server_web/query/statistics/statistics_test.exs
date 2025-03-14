@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Query.Statistics do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias Helper.GeoPool

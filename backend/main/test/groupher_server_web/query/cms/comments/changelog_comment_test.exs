@@ -3,7 +3,6 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
   alias GroupherServer.CMS
 
   setup do

@@ -11,7 +11,6 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
   @throttle_interval get_config(:general, :publish_throttle_interval_minutes)
   @hour_limit get_config(:general, :publish_throttle_hour_limit)
   @day_total get_config(:general, :publish_throttle_day_limit)
-  # alias Helper.ORM
 
   setup do
     guest_conn = simu_conn(:guest)
@@ -22,28 +21,13 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     {:ok, ~m(user_conn guest_conn community)a}
   end
 
-  @create_post_query """
-  mutation(
-    $title: String!
-    $body: String!
-    $communityId: ID!
-  ) {
-    createPost(
-      title: $title
-      body: $body
-      communityId: $communityId
-    ) {
-      title
-      id
-    }
-  }
-  """
+  @tag :wip
   test "user first create content should success", ~m(community)a do
     {:ok, user} = db_insert(:user)
     user_conn = simu_conn(:user, user)
 
-    variables = mock_attrs(:post) |> Map.merge(%{communityId: community.id})
-    created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+    variables = mock_attrs(:post) |> Map.merge(%{community: community.slug})
+    created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
   end
 
@@ -52,7 +36,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     user_conn = simu_conn(:user, user)
 
     variables = mock_attrs(:post) |> Map.merge(%{communityId: community.id})
-    created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
 
     Statistics.mock_throttle_attr(
@@ -61,7 +45,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
       minutes: -@throttle_interval
     )
 
-    created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
   end
 
@@ -71,10 +55,10 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     rule_conn = simu_conn(:user, cms: passport_rules)
     variables = mock_attrs(:post) |> Map.merge(%{communityId: community.id})
 
-    created = rule_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = rule_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
 
-    created = rule_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = rule_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
 
     Statistics.mock_throttle_attr(
@@ -83,7 +67,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
       minutes: -(@throttle_interval - 1)
     )
 
-    created = rule_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = rule_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
   end
 
@@ -92,11 +76,11 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     user_conn = simu_conn(:user, user)
     variables = mock_attrs(:post) |> Map.merge(%{communityId: community.id})
 
-    created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
 
     assert user_conn
-           |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_interval))
+           |> mutation_get_error?(Schema.m(:create_post), variables, ecode(:throttle_interval))
 
     Statistics.mock_throttle_attr(
       :last_publish_time,
@@ -105,7 +89,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_interval))
+           |> mutation_get_error?(Schema.m(:create_post), variables, ecode(:throttle_interval))
   end
 
   test "user create multi content with invalid hour_count fails", ~m(community)a do
@@ -113,7 +97,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     user_conn = simu_conn(:user, user)
 
     variables = mock_attrs(:post) |> Map.merge(%{communityId: community.id})
-    created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
 
     Statistics.mock_throttle_attr(
@@ -129,7 +113,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_hour))
+           |> mutation_get_error?(Schema.m(:create_post), variables, ecode(:throttle_hour))
   end
 
   test "user create multi content with valid hour count success in next hour", ~m(community)a do
@@ -137,7 +121,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     user_conn = simu_conn(:user, user)
 
     variables = mock_attrs(:post) |> Map.merge(%{communityId: community.id})
-    created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
 
     Statistics.mock_throttle_attr(
@@ -153,7 +137,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_hour))
+           |> mutation_get_error?(Schema.m(:create_post), variables, ecode(:throttle_hour))
 
     Statistics.mock_throttle_attr(
       :publish_hour,
@@ -161,7 +145,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
       hours: -1
     )
 
-    created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
   end
 
@@ -170,7 +154,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     user_conn = simu_conn(:user, user)
 
     variables = mock_attrs(:post) |> Map.merge(%{communityId: community.id})
-    created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
 
     Statistics.mock_throttle_attr(
@@ -186,7 +170,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_day))
+           |> mutation_get_error?(Schema.m(:create_post), variables, ecode(:throttle_day))
   end
 
   test "user create multi content with valid day count success in next day", ~m(community)a do
@@ -194,7 +178,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     user_conn = simu_conn(:user, user)
 
     variables = mock_attrs(:post) |> Map.merge(%{communityId: community.id})
-    created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
 
     Statistics.mock_throttle_attr(
@@ -210,7 +194,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(@create_post_query, variables, ecode(:throttle_day))
+           |> mutation_get_error?(Schema.m(:create_post), variables, ecode(:throttle_day))
 
     Statistics.mock_throttle_attr(
       :publish_date,
@@ -218,7 +202,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
       days: -2
     )
 
-    created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+    created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
     assert created |> Map.has_key?("id")
   end
 end

@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.Helper.Cache do
   @pool :common
 
   describe "[cache test]" do
-    test "cache get unexsit key should get nil" do
+    test "cache get un-exist key should get nil" do
       assert {:error, nil} = Cache.get(@pool, "no exist")
       assert {:error, nil} = Cache.get(@pool, :no_exist)
     end

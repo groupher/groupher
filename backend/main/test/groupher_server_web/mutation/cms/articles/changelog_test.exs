@@ -19,33 +19,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
   end
 
   describe "[mutation changelog curd]" do
-    @create_changelog_query """
-    mutation(
-      $title: String!
-      $body: String!
-      $communityId: ID!
-      $articleTags: [ID]
-      $linkAddr: String
-    ) {
-      createChangelog(
-        title: $title
-        body: $body
-        communityId: $communityId
-        articleTags: $articleTags
-        linkAddr: $linkAddr
-      ) {
-        id
-        title
-        linkAddr
-        document {
-          bodyHtml
-        }
-        originalCommunity {
-          id
-        }
-      }
-    }
-    """
+    @tag :wip
     test "create changelog with valid attrs and make sure author exist",
          ~m(user_conn community user)a do
       changelog_attr = mock_attrs(:changelog) |> Map.merge(%{linkAddr: "https://helloworld"})
@@ -57,10 +31,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       {"time":1639375020110,"blocks":[{"type":"list","data":{"mode":"unordered_list","items":[{"text":"CP 的图标是字母 C (Coder / China) 和 Planet 的意象结合，斜向的条饰灵感来自于 NASA Logo 上的 red chevron。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0},{"text":"所有的 Upvote 的图标都是小火箭，点击它会有一个起飞的动画 — 虽然它目前看起来像爆炸。。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0}]}}],"version":"2.19.38"}
       """
 
-      variables = changelog_attr |> Map.merge(%{communityId: community.id, body: body})
+      variables = changelog_attr |> Map.merge(%{community: community.slug, body: body})
 
       created =
-        user_conn |> mutation_result(@create_changelog_query, variables, "createChangelog")
+        user_conn
+        |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
 
       {:ok, changelog} = ORM.find(Changelog, created["id"])
 
@@ -71,6 +46,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
     end
 
+    @tag :wip
     test "create changelog with valid tags id list", ~m(user_conn user community)a do
       article_tag_attrs = mock_attrs(:article_tag)
       {:ok, article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
@@ -78,30 +54,38 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       changelog_attr = mock_attrs(:changelog)
 
       variables =
-        changelog_attr |> Map.merge(%{communityId: community.id, articleTags: [article_tag.id]})
+        changelog_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
       created =
-        user_conn |> mutation_result(@create_changelog_query, variables, "createChangelog")
+        user_conn |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
 
       {:ok, changelog} = ORM.find(Changelog, created["id"], preload: :article_tags)
 
       assert exist_in?(%{id: article_tag.id}, changelog.article_tags)
     end
 
+    @tag :wip
     test "create changelog should escape xss attracts", ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string()})
-      variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_changelog_query, variables, "createChangelog")
+      variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
+
+      result =
+        user_conn |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
+
       {:ok, changelog} = ORM.find(Changelog, result["id"], preload: :document)
       body_html = changelog |> get_in([:document, :body_html])
 
       assert not String.contains?(body_html, "script")
     end
 
+    @tag :wip
     test "create changelog should escape xss attracts 2", ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string(:safe)})
-      variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_changelog_query, variables, "createChangelog")
+      variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
+
+      result =
+        user_conn |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
+
       {:ok, changelog} = ORM.find(Changelog, result["id"], preload: :document)
       body_html = changelog |> get_in([:document, :body_html])
 
@@ -114,9 +98,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     test "create changelog with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog)
-      variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
+      variables = changelog_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
-      assert user_conn |> mutation_get_error?(@create_changelog_query, variables)
+      assert user_conn |> mutation_get_error?(Schema.m(:create_changelog), variables)
     end
 
     @query """

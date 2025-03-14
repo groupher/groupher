@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       }
     }
     """
-    test "can set cat for a exsiting post", ~m(community)a do
+    test "can set cat for a existing post", ~m(community)a do
       {:ok, user} = db_insert(:user)
       user_conn = simu_conn(:user, user)
 
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       }
     }
     """
-    test "can set state for a exsiting post", ~m(community)a do
+    test "can set state for a existing post", ~m(community)a do
       {:ok, user} = db_insert(:user)
       user_conn = simu_conn(:user, user)
 
@@ -75,33 +75,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
   end
 
   describe "[mutation post curd]" do
-    @create_post_query """
-    mutation(
-      $title: String!
-      $body: String!
-      $communityId: ID!
-      $articleTags: [ID]
-      $linkAddr: String
-    ) {
-      createPost(
-        title: $title
-        body: $body
-        communityId: $communityId
-        articleTags: $articleTags
-        linkAddr: $linkAddr
-      ) {
-        id
-        title
-        linkAddr
-        document {
-          bodyHtml
-        }
-        originalCommunity {
-          id
-        }
-      }
-    }
-    """
+    @tag :wip
     test "create post with valid attrs and make sure author exist",
          ~m(user_conn user community)a do
       post_attr = mock_attrs(:post) |> Map.merge(%{linkAddr: "https://helloworld"})
@@ -113,8 +87,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       {"time":1639375020110,"blocks":[{"type":"list","data":{"mode":"unordered_list","items":[{"text":"CP 的图标是字母 C (Coder / China) 和 Planet 的意象结合，斜向的条饰灵感来自于 NASA Logo 上的 red chevron。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0},{"text":"所有的 Upvote 的图标都是小火箭，点击它会有一个起飞的动画 — 虽然它目前看起来像爆炸。。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0}]}}],"version":"2.19.38"}
       """
 
-      variables = post_attr |> Map.merge(%{communityId: community.id, body: body})
-      created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+      variables = post_attr |> Map.merge(%{community: community.slug, body: body})
+
+      created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
 
       {:ok, post} = ORM.find(Post, created["id"])
 
@@ -134,7 +109,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       variables =
         post_attr |> Map.merge(%{communityId: community.id, articleTags: [article_tag.id]})
 
-      created = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+      created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
       {:ok, post} = ORM.find(Post, created["id"], preload: :article_tags)
 
       assert exist_in?(%{id: article_tag.id}, post.article_tags)
@@ -143,7 +118,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
     test "create post should escape xss attracts", ~m(user_conn community)a do
       post_attr = mock_attrs(:post, %{body: mock_xss_string()})
       variables = post_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+      result = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
       {:ok, post} = ORM.find(Post, result["id"], preload: :document)
       body_html = post |> get_in([:document, :body_html])
 
@@ -153,7 +128,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
     test "create post should escape xss attracts 2", ~m(user_conn community)a do
       post_attr = mock_attrs(:post, %{body: mock_xss_string(:safe)})
       variables = post_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
-      result = user_conn |> mutation_result(@create_post_query, variables, "createPost")
+      result = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
       {:ok, post} = ORM.find(Post, result["id"], preload: :document)
       body_html = post |> get_in([:document, :body_html])
 
@@ -167,7 +142,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       post_attr = mock_attrs(:post)
       variables = post_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
 
-      assert user_conn |> mutation_get_error?(@create_post_query, variables)
+      assert user_conn |> mutation_get_error?(Schema.m(:create_post), variables)
     end
 
     @query """

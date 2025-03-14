@@ -19,33 +19,16 @@ defmodule GroupherServer.Test.Mutation.Statistics do
   end
 
   describe "[statistics user_contribute] " do
-    @create_post_query """
-    mutation(
-      $title: String!
-      $body: String!
-      $communityId: ID!
-      $articleTags: [ID]
-    ) {
-      createPost(
-        title: $title
-        body: $body
-        communityId: $communityId
-        articleTags: $articleTags
-      ) {
-        title
-        id
-      }
-    }
-    """
+    @tag :wip
     test "user should have contribute list after create a post",
          ~m(user_conn user2 community post_attr)a do
       variables = %{
         title: post_attr.title,
         body: post_attr.body,
-        communityId: community.id
+        community: community.slug
       }
 
-      user_conn |> mutation_result(@create_post_query, variables, "createPost")
+      user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
 
       {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1
@@ -59,44 +42,18 @@ defmodule GroupherServer.Test.Mutation.Statistics do
         communityId: community.id
       }
 
-      user_conn |> mutation_result(@create_post_query, variables, "createPost")
+      user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
 
       {:ok, contributes} = ORM.find_by(CommunityContribute, community_id: community.id)
       assert contributes.count == 1
     end
 
-    @create_blog_query """
-    mutation(
-      $title: String!
-      $body: String!
-      $communityId: ID!
-      $articleTags: [ID]
-      $linkAddr: String
-    ) {
-      createBlog(
-        title: $title
-        body: $body
-        communityId: $communityId
-        articleTags: $articleTags
-        linkAddr: $linkAddr
-      ) {
-        id
-        title
-        linkAddr
-        document {
-          bodyHtml
-        }
-        originalCommunity {
-          id
-        }
-      }
-    }
-    """
+    @tag :wip
     test "user should have contribute list after create a blog", ~m(user_conn user2 community)a do
       blog_attr = mock_attrs(:blog)
-      variables = blog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
+      variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      user_conn |> mutation_result(@create_blog_query, variables, "createBlog")
+      user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
 
       {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1

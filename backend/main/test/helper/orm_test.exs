@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Helper.ORM do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   # TODO import Service.Utils move both helper and github
@@ -40,7 +42,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert %Author{} = found.author
     end
 
-    test "find/3 with preload can preload muilt fields", %{post: post} do
+    test "find/3 with preload can preload multi fields", %{post: post} do
       {:ok, found} = ORM.find(Post, post.id, preload: [:author, :article_tags, :communities])
       assert %Author{} = found.author
       assert %Ecto.Association.NotLoaded{} != found.article_tags

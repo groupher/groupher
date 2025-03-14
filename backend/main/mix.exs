@@ -43,7 +43,7 @@ defmodule GroupherServer.Mixfile do
   end
 
   # Specifies which paths to compile per environment.
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(:test), do: ["lib", "test"]
   defp elixirc_paths(:mock), do: ["lib", "priv/mock", "test/support"]
   defp elixirc_paths(_), do: ["lib", "test/support"]
 

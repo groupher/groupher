@@ -4,7 +4,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
   """
   use Helper.GqlSchemaSuite
 
-  object :cms_opertion_mutations do
+  object :cms_operation_mutations do
     @desc "set category to a community"
     field :set_category, :community do
       arg(:community_id, non_null(:id))
