@@ -11,7 +11,7 @@ defmodule GroupherServer.Test.CMS.Emotions.PostEmotions do
   @default_emotions Embeds.ArticleEmotion.default_emotions()
 
   setup do
-    {community, post, post_attrs, user} = mock_article(:post)
+    {community, _, post_attrs, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 

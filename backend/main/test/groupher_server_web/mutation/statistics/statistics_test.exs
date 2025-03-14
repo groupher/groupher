@@ -19,7 +19,6 @@ defmodule GroupherServer.Test.Mutation.Statistics do
   end
 
   describe "[statistics user_contribute] " do
-    @tag :wip
     test "user should have contribute list after create a post",
          ~m(user_conn user2 community post_attr)a do
       variables = %{
@@ -39,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       variables = %{
         title: post_attr.title,
         body: post_attr.body,
-        communityId: community.id
+        community: community.slug
       }
 
       user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
@@ -48,7 +47,6 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       assert contributes.count == 1
     end
 
-    @tag :wip
     test "user should have contribute list after create a blog", ~m(user_conn user2 community)a do
       blog_attr = mock_attrs(:blog)
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key

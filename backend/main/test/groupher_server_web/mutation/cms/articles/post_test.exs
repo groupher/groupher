@@ -75,7 +75,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
   end
 
   describe "[mutation post curd]" do
-    @tag :wip
     test "create post with valid attrs and make sure author exist",
          ~m(user_conn user community)a do
       post_attr = mock_attrs(:post) |> Map.merge(%{linkAddr: "https://helloworld"})
@@ -107,7 +106,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       post_attr = mock_attrs(:post)
 
       variables =
-        post_attr |> Map.merge(%{communityId: community.id, articleTags: [article_tag.id]})
+        post_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
       created = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
       {:ok, post} = ORM.find(Post, created["id"], preload: :article_tags)
@@ -127,7 +126,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
     test "create post should escape xss attracts 2", ~m(user_conn community)a do
       post_attr = mock_attrs(:post, %{body: mock_xss_string(:safe)})
-      variables = post_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
+      variables = post_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
       result = user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
       {:ok, post} = ORM.find(Post, result["id"], preload: :document)
       body_html = post |> get_in([:document, :body_html])

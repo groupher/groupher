@@ -19,7 +19,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
   end
 
   describe "[mutation blog curd]" do
-    @tag :wip
     test "create blog with valid attrs and make sure author exist",
          ~m(user_conn user community)a do
       blog_attr = mock_attrs(:blog) |> Map.merge(%{linkAddr: "https://helloworld"})
@@ -51,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       blog_attr = mock_attrs(:blog)
 
       variables =
-        blog_attr |> Map.merge(%{communityId: community.id, articleTags: [article_tag.id]})
+        blog_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
       created = user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
 
@@ -62,7 +61,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
     test "create blog should escape xss attracts", ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string()})
-      variables = blog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
+      variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
       result = user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
       {:ok, blog} = ORM.find(Blog, result["id"], preload: :document)
       body_html = blog |> get_in([:document, :body_html])
@@ -72,7 +71,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
     test "create blog should escape xss attracts 2", ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string(:safe)})
-      variables = blog_attr |> Map.merge(%{communityId: community.id}) |> camelize_map_key
+      variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
       result = user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
       {:ok, blog} = ORM.find(Blog, result["id"], preload: :document)
       body_html = blog |> get_in([:document, :body_html])
