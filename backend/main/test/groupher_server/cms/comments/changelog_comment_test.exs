@@ -120,7 +120,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       {:ok, _} =
         CMS.create_comment(
-          community.slug,
+          community,
           :changelog,
           changelog.inner_id,
           mock_comment(),
@@ -876,7 +876,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       {:ok, comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :changelog,
           changelog.inner_id,
           mock_comment(),
@@ -928,7 +928,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       {:ok, _} =
         CMS.create_comment(
-          community.slug,
+          community,
           :changelog,
           changelog.inner_id,
           mock_comment("solution"),

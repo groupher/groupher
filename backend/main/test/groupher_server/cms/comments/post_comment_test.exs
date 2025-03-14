@@ -642,7 +642,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert paged_comments.total_count == total_count + 2
     end
 
-    test "only page 1 have pinned coments",
+    test "only page 1 have pinned comments",
          ~m(community user post)a do
       total_count = 20
       page_number = 2
@@ -1034,7 +1034,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       {:ok, comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :post,
           post.inner_id,
           mock_comment("solution"),

@@ -339,7 +339,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
 
       {:ok, parent_comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :blog,
           blog.inner_id,
           mock_comment("parent_comment"),
@@ -610,7 +610,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
 
       {:ok, author_comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           thread,
           blog.inner_id,
           mock_comment(),
