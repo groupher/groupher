@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
   alias EditorToHTML.{Class, Validator}
-  alias CMS.Model.{Author, ArticleDocument, Blog, BlogDocument}
+  alias CMS.Model.{Author, ArticleDocument, Blog, Community, BlogDocument}
 
   @root_class Class.article()
   @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)

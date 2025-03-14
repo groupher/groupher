@@ -605,7 +605,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert total_count == paged_comments.total_count
     end
 
-    @tag :wip
     test "paged article comments should contains pinned comments at top position.",
          ~m(community user post)a do
       total_count = 20

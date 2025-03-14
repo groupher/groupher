@@ -317,7 +317,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       assert random_comment["repliesCount"] == 2
     end
 
-    @tag :wip
     test "comment should have reply_to content if need",
          ~m(guest_conn community post user user2)a do
       total_count = 2

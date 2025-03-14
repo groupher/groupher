@@ -123,7 +123,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip
     test "auth user can set a category to a community" do
       {:ok, community} = mock_community()
       {:ok, category} = db_insert(:category)
@@ -151,7 +150,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip
     test "auth user can unset a category to a community" do
       {:ok, community} = mock_community()
       {:ok, category} = db_insert(:category)
@@ -173,7 +171,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert community.id not in assoc_communities
     end
 
-    @tag :wip
     test "unauth user set/unset category fails", ~m(user_conn guest_conn)a do
       {:ok, community} = db_insert(:community)
       {:ok, category} = db_insert(:category)

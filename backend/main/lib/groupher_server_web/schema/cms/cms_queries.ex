@@ -175,6 +175,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     field :grouped_kanban_posts, :grouped_posts do
       arg(:community, non_null(:string))
 
+      middleware(M.FrontDesk, :community)
       resolve(&R.CMS.grouped_kanban_posts/3)
     end
 
