@@ -203,7 +203,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert participator.id == user.id
     end
 
-    test "psot participator will not contains same user", ~m(community post user)a do
+    test "post participator will not contains same user", ~m(community post user)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
@@ -360,7 +360,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert 0 == comment.upvotes_count
     end
 
-    test "upvote comment should update embeded replies too",
+    test "upvote comment should update embedded replies too",
          ~m(community post user user2 user3)a do
       {:ok, parent_comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -605,6 +605,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert total_count == paged_comments.total_count
     end
 
+    @tag :wip
     test "paged article comments should contains pinned comments at top position.",
          ~m(community user post)a do
       total_count = 20

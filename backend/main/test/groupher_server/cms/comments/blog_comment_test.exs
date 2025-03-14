@@ -527,7 +527,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
         {:ok, comment} =
           CMS.create_comment(
-            community.slug,
+            community,
             :blog,
             blog.inner_id,
             mock_comment(),
@@ -595,7 +595,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
           CMS.create_comment(
-            community.slug,
+            community,
             :blog,
             blog.inner_id,
             mock_comment(),
@@ -637,7 +637,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
           CMS.create_comment(
-            community.slug,
+            community,
             :blog,
             blog.inner_id,
             mock_comment(),
