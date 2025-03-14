@@ -226,12 +226,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.update_category(~m(%Category id title)a)
   end
 
-  def set_category(_root, ~m(community_id category_id)a, %{context: %{cur_user: _}}) do
-    CMS.set_category(%Community{id: community_id}, %Category{id: category_id})
+  def set_category(_root, ~m(community category_id)a, %{context: %{cur_user: _}}) do
+    CMS.set_category(community, %Category{id: category_id})
   end
 
-  def unset_category(_root, ~m(community_id category_id)a, %{context: %{cur_user: _}}) do
-    CMS.unset_category(%Community{id: community_id}, %Category{id: category_id})
+  def unset_category(_root, ~m(community category_id)a, %{context: %{cur_user: _}}) do
+    CMS.unset_category(community, %Category{id: category_id})
   end
 
   # #######################

@@ -7,22 +7,24 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
   object :cms_operation_mutations do
     @desc "set category to a community"
     field :set_category, :community do
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:category_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, claim: "cms->category.set")
+      middleware(M.FrontDesk, :community)
 
       resolve(&R.CMS.set_category/3)
     end
 
     @desc "unset category to a community"
     field :unset_category, :community do
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:category_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, claim: "cms->category.unset")
+      middleware(M.FrontDesk, :community)
 
       resolve(&R.CMS.unset_category/3)
     end
