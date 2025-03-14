@@ -305,10 +305,6 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   end
 
   def create_comment(%Community{slug: community_slug}, thread, article_id, body, %User{} = user) do
-    create_comment(community_slug, thread, article_id, body, %User{} = user)
-  end
-
-  def create_comment(community_slug, thread, article_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
            ORM.find_article(community_slug, thread, article_id,
