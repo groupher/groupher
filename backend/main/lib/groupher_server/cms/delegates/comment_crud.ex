@@ -357,7 +357,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     do: raise_error(:archived, "comment is archived, can not be edit or delete")
 
   @doc """
-  update a comment for article like psot, job ...
+  update a comment for article like post, job ...
   """
   # 如果是 solution, 那么要更新对应的 post 的 solution_digest
   def update_comment(%Comment{is_solution: true} = comment, body) do

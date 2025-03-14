@@ -212,7 +212,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert 1 == length(post.comments_participants)
     end
 
-    test "recent comment user should appear at first of the psot participants",
+    test "recent comment user should appear at first of the post participants",
          ~m(community user user2 post)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user2)

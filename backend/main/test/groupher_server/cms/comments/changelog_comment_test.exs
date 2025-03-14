@@ -208,7 +208,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       assert participator.id == user.id
     end
 
-    test "psot participator will not contains same user", ~m(community changelog user)a do
+    test "post participator will not contains same user", ~m(community changelog user)a do
       {:ok, _} =
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
@@ -220,7 +220,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       assert 1 == length(changelog.comments_participants)
     end
 
-    test "recent comment user should appear at first of the psot participants",
+    test "recent comment user should appear at first of the post participants",
          ~m(community user user2 changelog)a do
       {:ok, _} =
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
