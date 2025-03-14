@@ -158,11 +158,10 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   get grouped kanban posts for a community, only for first load of kanban page
   """
-  def grouped_kanban_posts(community_slug) do
+  def grouped_kanban_posts(%Community{} = community) do
     filter = %{page: 1, size: 20}
 
-    with {:ok, community} <- ORM.find_by(Community, slug: community_slug),
-         {:ok, paged_todo} <-
+    with {:ok, paged_todo} <-
            paged_kanban_posts(community, Map.merge(filter, %{state: @article_state.todo})),
          {:ok, paged_wip} <-
            paged_kanban_posts(community, Map.merge(filter, %{state: @article_state.wip})),
@@ -201,12 +200,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     |> ORM.paginator(~m(page size)a)
     |> convert_paged_cat_state_if_need()
     |> done()
-  end
-
-  def paged_kanban_posts(community_slug, filter) do
-    with {:ok, community} <- ORM.find_by(Community, slug: community_slug) do
-      paged_kanban_posts(community, filter)
-    end
   end
 
   @doc "paged published articles for accounts"

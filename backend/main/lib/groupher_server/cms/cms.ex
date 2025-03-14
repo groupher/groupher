@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS do
 
   defdelegate paged_articles(thread, filter), to: ArticleCRUD
   defdelegate paged_articles(thread, filter, user), to: ArticleCRUD
-  defdelegate grouped_kanban_posts(community_id), to: ArticleCRUD
+  defdelegate grouped_kanban_posts(community), to: ArticleCRUD
   defdelegate paged_kanban_posts(community_slug, filter), to: ArticleCRUD
 
   defdelegate paged_published_articles(thread, filter, user), to: ArticleCRUD

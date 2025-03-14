@@ -120,7 +120,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       {:ok, _} =
         CMS.create_comment(
-          community.slug,
+          community,
           :doc,
           doc.inner_id,
           mock_comment(),
@@ -208,7 +208,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert participator.id == user.id
     end
 
-    test "psot participator will not contains same user", ~m(community doc user)a do
+    test "post participator will not contains same user", ~m(community doc user)a do
       {:ok, _} =
         CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
@@ -220,7 +220,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert 1 == length(doc.comments_participants)
     end
 
-    test "recent comment user should appear at first of the psot participants",
+    test "recent comment user should appear at first of the post participants",
          ~m(community user user2 doc)a do
       {:ok, _} =
         CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
@@ -527,7 +527,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
         {:ok, comment} =
           CMS.create_comment(
-            community.slug,
+            community,
             :doc,
             doc.inner_id,
             mock_comment(),
@@ -559,7 +559,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               :doc,
               doc.inner_id,
               mock_comment(),
@@ -595,7 +595,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
           CMS.create_comment(
-            community.slug,
+            community,
             :doc,
             doc.inner_id,
             mock_comment(),
@@ -637,7 +637,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
           CMS.create_comment(
-            community.slug,
+            community,
             :doc,
             doc.inner_id,
             mock_comment(),
@@ -680,7 +680,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               :doc,
               doc.inner_id,
               mock_comment(),
@@ -724,7 +724,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               :doc,
               doc.inner_id,
               mock_comment(),
@@ -764,7 +764,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               :doc,
               doc.inner_id,
               mock_comment(),
@@ -825,7 +825,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               :doc,
               doc.inner_id,
               mock_comment(),
@@ -857,7 +857,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       {:ok, comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :doc,
           doc.inner_id,
           mock_comment(),
@@ -909,7 +909,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       {:ok, _} =
         CMS.create_comment(
-          community.slug,
+          community,
           :doc,
           doc.inner_id,
           mock_comment("solution"),

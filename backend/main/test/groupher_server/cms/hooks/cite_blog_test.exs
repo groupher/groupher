@@ -73,7 +73,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
     test "cited comment itself should not work", ~m(user community blog)a do
       {:ok, cited_comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :blog,
           blog.inner_id,
           mock_rich_text("hello"),
@@ -98,7 +98,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
          ~m(user community blog blog2 blog_attrs)a do
       {:ok, comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :blog,
           blog.inner_id,
           mock_rich_text("hello"),
@@ -126,7 +126,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
     test "can cite a comment in a comment", ~m(user community blog)a do
       {:ok, cited_comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :blog,
           blog.inner_id,
           mock_rich_text("hello"),
@@ -189,7 +189,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
     test "can get paged cited articles.", ~m(user community blog2 blog_attrs)a do
       {:ok, comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :blog,
           blog2.inner_id,
           mock_comment(~s(the <a href=#{@site_host}/blog/#{blog2.id} />)),

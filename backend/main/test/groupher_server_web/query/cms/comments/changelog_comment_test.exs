@@ -238,7 +238,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         Enum.reduce(1..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               changelog.inner_id,
               mock_comment("comment #{i}"),
@@ -285,7 +285,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         Enum.reduce(1..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               changelog.inner_id,
               mock_comment("comment #{i}"),
@@ -327,7 +327,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       Enum.reduce(0..total_count, [], fn i, acc ->
         {:ok, comment} =
           CMS.create_comment(
-            community.slug,
+            community,
             thread,
             changelog.inner_id,
             mock_comment("comment #{i}"),
@@ -339,7 +339,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       {:ok, parent_comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :changelog,
           changelog.inner_id,
           mock_comment("parent_comment"),
@@ -557,7 +557,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         Enum.reduce(1..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               changelog.inner_id,
               mock_comment("comment #{i}"),
@@ -595,7 +595,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         Enum.reduce(0..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               changelog.inner_id,
               mock_comment("comment #{i}"),
@@ -610,7 +610,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       {:ok, author_comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           thread,
           changelog.inner_id,
           mock_comment(),
@@ -645,7 +645,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         Enum.reduce(1..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               changelog.inner_id,
               mock_comment("comment #{i}"),
@@ -703,7 +703,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         Enum.reduce(1..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               changelog.inner_id,
               mock_comment("comment #{i}"),
@@ -736,7 +736,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         Enum.reduce(0..total_count, [], fn i, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               thread,
               changelog.inner_id,
               mock_comment("comment #{i}"),
@@ -784,7 +784,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
         {:ok, comment} =
           CMS.create_comment(
-            community.slug,
+            community,
             :changelog,
             changelog.inner_id,
             mock_comment(),

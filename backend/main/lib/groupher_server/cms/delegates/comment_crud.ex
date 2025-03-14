@@ -305,10 +305,6 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   end
 
   def create_comment(%Community{slug: community_slug}, thread, article_id, body, %User{} = user) do
-    create_comment(community_slug, thread, article_id, body, %User{} = user)
-  end
-
-  def create_comment(community_slug, thread, article_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
            ORM.find_article(community_slug, thread, article_id,
@@ -361,7 +357,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     do: raise_error(:archived, "comment is archived, can not be edit or delete")
 
   @doc """
-  update a comment for article like psot, job ...
+  update a comment for article like post, job ...
   """
   # 如果是 solution, 那么要更新对应的 post 的 solution_digest
   def update_comment(%Comment{is_solution: true} = comment, body) do

@@ -203,7 +203,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert participator.id == user.id
     end
 
-    test "psot participator will not contains same user", ~m(community post user)a do
+    test "post participator will not contains same user", ~m(community post user)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
@@ -212,7 +212,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert 1 == length(post.comments_participants)
     end
 
-    test "recent comment user should appear at first of the psot participants",
+    test "recent comment user should appear at first of the post participants",
          ~m(community user user2 post)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user2)
@@ -360,7 +360,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert 0 == comment.upvotes_count
     end
 
-    test "upvote comment should update embeded replies too",
+    test "upvote comment should update embedded replies too",
          ~m(community post user user2 user3)a do
       {:ok, parent_comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -641,7 +641,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert paged_comments.total_count == total_count + 2
     end
 
-    test "only page 1 have pinned coments",
+    test "only page 1 have pinned comments",
          ~m(community user post)a do
       total_count = 20
       page_number = 2
@@ -1033,7 +1033,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       {:ok, comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :post,
           post.inner_id,
           mock_comment("solution"),

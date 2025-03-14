@@ -74,7 +74,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
     test "cited comment itself should not work", ~m(user community changelog)a do
       {:ok, cited_comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :changelog,
           changelog.inner_id,
           mock_rich_text("hello"),
@@ -99,7 +99,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
          ~m(user community changelog changelog2 changelog_attrs)a do
       {:ok, comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :changelog,
           changelog.inner_id,
           mock_rich_text("hello"),
@@ -129,7 +129,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
     test "can cite a comment in a comment", ~m(user community changelog)a do
       {:ok, cited_comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :changelog,
           changelog.inner_id,
           mock_rich_text("hello"),
@@ -192,7 +192,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
     test "can get paged cited articles.", ~m(user community changelog2 changelog_attrs)a do
       {:ok, comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :changelog,
           changelog2.inner_id,
           mock_comment(~s(the <a href=#{@site_host}/changelog/#{changelog2.id} />)),

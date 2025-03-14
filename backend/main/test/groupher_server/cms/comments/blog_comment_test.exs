@@ -120,7 +120,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
       {:ok, _} =
         CMS.create_comment(
-          community.slug,
+          community,
           :blog,
           blog.inner_id,
           mock_comment(),
@@ -208,7 +208,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       assert participator.id == user.id
     end
 
-    test "psot participator will not contains same user", ~m(community blog user)a do
+    test "post participator will not contains same user", ~m(community blog user)a do
       {:ok, _} =
         CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
@@ -220,7 +220,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       assert 1 == length(blog.comments_participants)
     end
 
-    test "recent comment user should appear at first of the psot participants",
+    test "recent comment user should appear at first of the post participants",
          ~m(community user user2 blog)a do
       {:ok, _} =
         CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
@@ -527,7 +527,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
         {:ok, comment} =
           CMS.create_comment(
-            community.slug,
+            community,
             :blog,
             blog.inner_id,
             mock_comment(),
@@ -559,7 +559,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               :blog,
               blog.inner_id,
               mock_comment(),
@@ -595,7 +595,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
           CMS.create_comment(
-            community.slug,
+            community,
             :blog,
             blog.inner_id,
             mock_comment(),
@@ -637,7 +637,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
           CMS.create_comment(
-            community.slug,
+            community,
             :blog,
             blog.inner_id,
             mock_comment(),
@@ -680,7 +680,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               :blog,
               blog.inner_id,
               mock_comment(),
@@ -724,7 +724,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               :blog,
               blog.inner_id,
               mock_comment(),
@@ -764,7 +764,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               :blog,
               blog.inner_id,
               mock_comment(),
@@ -825,7 +825,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
             CMS.create_comment(
-              community.slug,
+              community,
               :blog,
               blog.inner_id,
               mock_comment(),
@@ -857,7 +857,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
       {:ok, comment} =
         CMS.create_comment(
-          community.slug,
+          community,
           :blog,
           blog.inner_id,
           mock_comment(),
@@ -909,7 +909,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
       {:ok, _} =
         CMS.create_comment(
-          community.slug,
+          community,
           :blog,
           blog.inner_id,
           mock_comment("solution"),

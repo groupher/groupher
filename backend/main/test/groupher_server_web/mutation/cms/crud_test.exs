@@ -111,8 +111,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     @set_category_query """
-    mutation($categoryId: ID! $communityId: ID!) {
-      setCategory(categoryId: $categoryId, communityId: $communityId) {
+    mutation($categoryId: ID! $community: String!) {
+      setCategory(categoryId: $categoryId, community: $community) {
         id
         title
 
@@ -124,11 +124,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     }
     """
     test "auth user can set a category to a community" do
-      {:ok, community} = db_insert(:community)
+      {:ok, community} = mock_community()
       {:ok, category} = db_insert(:category)
 
       rule_conn = simu_conn(:user, cms: %{"category.set" => true})
-      variables = %{communityId: community.id, categoryId: category.id}
+      variables = %{community: community.slug, categoryId: category.id}
 
       rule_conn |> mutation_result(@set_category_query, variables, "setCategory")
 
@@ -143,31 +143,31 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     @unset_category_query """
-    mutation($categoryId: ID! $communityId: ID!) {
-      unsetCategory(categoryId: $categoryId, communityId: $communityId) {
+    mutation($categoryId: ID! $community: String!) {
+      unsetCategory(categoryId: $categoryId, community: $community) {
         id
         title
       }
     }
     """
     test "auth user can unset a category to a community" do
-      {:ok, community} = db_insert(:community)
+      {:ok, community} = mock_community()
       {:ok, category} = db_insert(:category)
 
-      {:ok, _} = CMS.set_category(%Community{id: community.id}, %Category{id: category.id})
+      {:ok, _} = CMS.set_category(community, %Category{id: category.id})
 
       rule_conn = simu_conn(:user, cms: %{"category.unset" => true})
-      variables = %{communityId: community.id, categoryId: category.id}
+      variables = %{community: community.slug, categoryId: category.id}
 
       rule_conn |> mutation_result(@unset_category_query, variables, "setCategory")
 
       {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
       {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)
 
-      assoc_categroies = found_community.categories |> Enum.map(& &1.id)
+      assoc_categories = found_community.categories |> Enum.map(& &1.id)
       assoc_communities = found_category.communities |> Enum.map(& &1.id)
 
-      assert category.id not in assoc_categroies
+      assert category.id not in assoc_categories
       assert community.id not in assoc_communities
     end
 
@@ -176,7 +176,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, category} = db_insert(:category)
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
-      variables = %{communityId: community.id, categoryId: category.id}
+      variables = %{community: community.slug, categoryId: category.id}
 
       assert user_conn |> mutation_get_error?(@set_category_query, variables, ecode(:passport))
 
