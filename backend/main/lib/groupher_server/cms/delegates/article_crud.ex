@@ -202,12 +202,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     |> done()
   end
 
-  # def paged_kanban_posts(community_slug, filter) do
-  #   with {:ok, community} <- ORM.find_by(Community, slug: community_slug) do
-  #     paged_kanban_posts(community, filter)
-  #   end
-  # end
-
   @doc "paged published articles for accounts"
   def paged_published_articles(thread, filter, user_id) do
     %{page: page, size: size} = filter

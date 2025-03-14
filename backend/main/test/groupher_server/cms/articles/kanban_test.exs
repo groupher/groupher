@@ -77,13 +77,13 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
       {:ok, _} = CMS.create_article(community, :post, kanban_attrs, user)
 
       {:ok, paged_todo_posts} =
-        CMS.paged_kanban_posts(community.slug, %{state: @article_state.todo, page: 1, size: 20})
+        CMS.paged_kanban_posts(community, %{state: @article_state.todo, page: 1, size: 20})
 
       {:ok, paged_wip_posts} =
-        CMS.paged_kanban_posts(community.slug, %{state: @article_state.wip, page: 1, size: 20})
+        CMS.paged_kanban_posts(community, %{state: @article_state.wip, page: 1, size: 20})
 
       {:ok, paged_done_posts} =
-        CMS.paged_kanban_posts(community.slug, %{state: @article_state.done, page: 1, size: 20})
+        CMS.paged_kanban_posts(community, %{state: @article_state.done, page: 1, size: 20})
 
       assert paged_todo_posts |> is_valid_pagination?(:raw)
       assert paged_wip_posts |> is_valid_pagination?(:raw)
@@ -103,7 +103,7 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
     end
 
     test "can get default empty grouped kanban posts", ~m(community)a do
-      {:ok, grouped_kanban_posts} = CMS.grouped_kanban_posts(community.slug)
+      {:ok, grouped_kanban_posts} = CMS.grouped_kanban_posts(community)
 
       assert grouped_kanban_posts.todo |> is_valid_pagination?(:raw)
       assert grouped_kanban_posts.wip |> is_valid_pagination?(:raw)
@@ -140,7 +140,7 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
       {:ok, _} = CMS.create_article(community, :post, kanban_attrs, user)
       {:ok, _} = CMS.create_article(community, :post, kanban_attrs, user)
 
-      {:ok, grouped_kanban_posts} = CMS.grouped_kanban_posts(community.slug)
+      {:ok, grouped_kanban_posts} = CMS.grouped_kanban_posts(community)
 
       assert grouped_kanban_posts.todo |> is_valid_pagination?(:raw)
       assert grouped_kanban_posts.wip |> is_valid_pagination?(:raw)

@@ -192,6 +192,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:community, non_null(:string))
       arg(:filter, non_null(:paged_kanban_posts_filter))
 
+      middleware(M.FrontDesk, :community)
       resolve(&R.CMS.paged_kanban_posts/3)
     end
 
