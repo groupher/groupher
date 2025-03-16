@@ -2,11 +2,6 @@ defmodule GroupherServer.Test.CMS.PostMeta do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-
-  alias CMS.Model.{Embeds, Post}
-
   @default_article_meta Embeds.ArticleMeta.default_meta()
 
   setup do

@@ -1,10 +1,11 @@
 defmodule GroupherServer.Test.Delivery.Notification do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [get_config: 2]
 
-  alias GroupherServer.{Delivery, Repo}
+  alias GroupherServer.Delivery
 
   @notify_group_interval_hour get_config(:general, :notify_group_interval_hour)
 

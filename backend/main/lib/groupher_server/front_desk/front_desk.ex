@@ -15,7 +15,10 @@ defmodule GroupherServer.FrontDesk do
     ORM.find_by(Community, %{slug: slug})
   end
 
-  def info(:community, slug, :live) when is_binary(slug) do
-    ORM.find_by(Community, %{slug: slug})
+  def info(:article, community, thread, inner_id) when is_binary(community) do
+    # ORM.find_article(community_slug, thread, article_id,
+    #   preload: [[author: :user], :original_community]
+    # )
+    ORM.find_article(community, thread, inner_id)
   end
 end

@@ -2,9 +2,7 @@ defmodule GroupherServer.Test.CMS.ArticleTag.BlogTag do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Model.{Community, ArticleTag, Blog}
-  alias Helper.{ORM}
+  alias CMS.Model.ArticleTag
 
   setup do
     {community, blog, blog_attrs, user} = mock_article(:blog)

@@ -6,42 +6,41 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   import Ecto.Query, warn: false
 
   import Helper.ErrorCode
-  import Helper.Utils, only: [done: 1]
+  import Helper.Utils, only: [done: 1, thread_of: 1]
   import GroupherServer.CMS.Helper.Matcher
 
-  alias Helper.Types, as: T
   alias Helper.ORM
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.{Embeds, Community, PinnedArticle}
-  alias CMS.Delegate.{ArticleTag}
+  alias CMS.Delegate.ArticleTag
 
   alias Ecto.Multi
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
-  @spec pin_article(T.article_thread(), Integer.t(), Integer.t()) :: {:ok, PinnedArticle.t()}
-  def pin_article(thread, article_id, community_id) do
-    with {:ok, info} <- match(thread),
-         args <- pack_pin_args(thread, article_id, community_id),
-         {:ok, _} <- check_pinned_article_count(args.community_id, thread),
+  def pin_article(%Community{} = community, article) do
+    {:ok, thread} = thread_of(article)
+    args = pack_pin_args(community, thread, article.id)
+
+    with {:ok, thread} <- thread_of(article),
+         args <- pack_pin_args(community, thread, article.id),
+         {:ok, _} <- check_pinned_article_count(community, thread),
          {:ok, _} <- ORM.create(PinnedArticle, args) do
-      ORM.find(info.model, article_id)
+      {:ok, article}
     end
   end
 
-  @spec undo_pin_article(T.article_thread(), Integer.t(), Integer.t()) :: {:ok, PinnedArticle.t()}
-  def undo_pin_article(thread, article_id, community_id) do
-    with {:ok, info} <- match(thread),
-         args <- pack_pin_args(thread, article_id, community_id) do
-      ORM.findby_delete(PinnedArticle, args)
-      ORM.find(info.model, article_id)
+  def undo_pin_article(%Community{} = community, article) do
+    with {:ok, thread} <- thread_of(article),
+         args <- pack_pin_args(community, thread, article.id),
+         {:ok, _} <- ORM.findby_delete(PinnedArticle, args) do
+      {:ok, article}
     end
   end
 
-  defp pack_pin_args(thread, article_id, community_id) do
-    with {:ok, info} <- match(thread),
-         {:ok, community} <- ORM.find(Community, community_id) do
+  defp pack_pin_args(%Community{} = community, thread, article_id) do
+    with {:ok, info} <- match(thread) do
       thread = thread |> to_string |> String.upcase()
 
       Map.put(
@@ -191,7 +190,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
     ORM.update_meta(content, meta)
   end
 
-  # for test or exsiting articles
+  # for test or existing articles
   def update_edit_status(%{meta: nil} = content) do
     meta = Embeds.ArticleMeta.default_meta() |> Map.merge(%{is_edited: true})
 
@@ -200,12 +199,12 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
 
   def update_edit_status(content, _), do: {:ok, content}
 
-  # check if the thread has aready enough pinned articles
-  defp check_pinned_article_count(community_id, thread) do
+  # check if the thread has already enough pinned articles
+  defp check_pinned_article_count(%Community{} = community, thread) do
     thread = thread |> to_string |> String.upcase()
 
     query =
-      from(p in PinnedArticle, where: p.community_id == ^community_id and p.thread == ^thread)
+      from(p in PinnedArticle, where: p.community_id == ^community.id and p.thread == ^thread)
 
     pinned_articles = query |> Repo.all()
 

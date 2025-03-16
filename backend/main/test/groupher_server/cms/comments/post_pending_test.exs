@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostPending do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
-  alias CMS.Model.Comment
-  alias Helper.{Constant, ORM}
-
   @audit_legal Constant.CMS.pending(:legal)
   @audit_illegal Constant.CMS.pending(:illegal)
 

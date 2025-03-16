@@ -3,10 +3,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-
-  alias CMS.Model.{Comment, Embeds, CommentUserEmotion}
+  alias CMS.Model.CommentUserEmotion
 
   @default_emotions Embeds.CommentEmotion.default_emotions()
 

@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
-  alias CMS.Model.Community
-  alias Helper.ORM
-
   setup do
     {:ok, category} = db_insert(:category)
     {:ok, community} = db_insert(:community)

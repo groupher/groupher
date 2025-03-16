@@ -3,12 +3,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteBlog do
 
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [get_config: 2]
-
-  alias Helper.ORM
-  alias GroupherServer.CMS
-
-  alias CMS.Model.{Blog, Comment, CitedArtiment}
+  alias CMS.Model.{CitedArtiment}
   alias CMS.Delegate.Hooks
 
   @site_host get_config(:general, :site_host)

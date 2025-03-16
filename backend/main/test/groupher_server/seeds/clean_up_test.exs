@@ -2,13 +2,8 @@ defmodule GroupherServer.Test.Seeds.CleanUp do
   @moduledoc false
   use GroupherServer.TestTools
 
-  # alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-
-  alias CMS.Model.{ArticleTag, Post}
+  alias CMS.Model.ArticleTag
   # alias CMS.Delegate.SeedsConfig
-
-  alias Helper.ORM
 
   setup do
     {:ok, user} = db_insert(:user)

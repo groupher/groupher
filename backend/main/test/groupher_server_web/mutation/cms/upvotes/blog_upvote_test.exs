@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {:ok, blog} = db_insert(:blog)
     {:ok, user} = db_insert(:user)

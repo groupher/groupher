@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Accounts.Published.Docs do
-  use GroupherServer.TestTools
+  @moduledoc false
 
-  alias GroupherServer.CMS
+  use GroupherServer.TestTools
 
   @publish_count 10
 

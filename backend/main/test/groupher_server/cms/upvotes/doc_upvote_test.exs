@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.Upvotes.DocUpvote do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)

@@ -3,9 +3,9 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
 
   use GroupherServer.TestTools
 
-  import GroupherServer.CMS.Delegate.Helper, only: [preload_author: 1]
+  import Helper.Utils, only: [preload_author: 1]
 
-  alias GroupherServer.{CMS, Delivery, Repo}
+  alias GroupherServer.Delivery
   alias CMS.Delegate.Hooks
 
   setup do

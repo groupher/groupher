@@ -3,11 +3,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
-  alias CMS.Model.{Category, Community, CommunityModerator, Passport}
-
-  alias Helper.{ORM, Constant}
+  alias CMS.Model.{Category, CommunityModerator, Passport}
 
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)

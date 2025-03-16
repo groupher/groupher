@@ -3,11 +3,14 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   CRUD and operations for article comments
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, ensure: 2, strip_struct: 1, get_config: 2]
+
+  import Helper.Utils,
+    only: [done: 1, ensure: 2, strip_struct: 1, get_config: 2, article_of: 1, thread_of: 1]
+
   import Helper.ErrorCode
 
   import GroupherServer.CMS.Delegate.Helper,
-    only: [mark_viewer_emotion_states: 2, article_of: 1, thread_of: 1, sync_embed_replies: 1]
+    only: [mark_viewer_emotion_states: 2, sync_embed_replies: 1]
 
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps

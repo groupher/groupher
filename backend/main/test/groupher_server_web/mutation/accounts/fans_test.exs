@@ -1,9 +1,7 @@
 defmodule GroupherServer.Test.Mutation.Accounts.Fans do
-  use GroupherServer.TestTools
+  @moduledoc false
 
-  alias Helper.ORM
-  alias GroupherServer.Accounts
-  alias Accounts.Model.User
+  use GroupherServer.TestTools
 
   setup do
     {:ok, user} = db_insert(:user)

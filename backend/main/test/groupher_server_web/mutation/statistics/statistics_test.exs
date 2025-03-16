@@ -5,8 +5,6 @@ defmodule GroupherServer.Test.Mutation.Statistics do
 
   alias GroupherServer.Statistics
   alias Statistics.Model.{CommunityContribute, UserContribute}
-  # alias GroupherServer.Accounts.Model.User
-  alias Helper.ORM
 
   setup do
     {community, post, post_attr, user} = mock_article(:post)

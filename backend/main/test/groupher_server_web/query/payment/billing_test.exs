@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.Query.Payment.Basic do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
-  # alias Helper.ORM
   alias GroupherServer.Payment
 
   setup do

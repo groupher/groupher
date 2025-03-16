@@ -2,7 +2,6 @@ defmodule GroupherServer.Test.Accounts.Utils do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.Accounts
   alias Helper.Cache
 
   @cache_pool :user_login

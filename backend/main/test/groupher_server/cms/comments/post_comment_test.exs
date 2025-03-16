@@ -2,12 +2,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   @moduledoc false
 
   use GroupherServer.TestTools
-  import Helper.Utils, only: [get_config: 2]
 
-  alias Helper.{Constant, ORM}
-  alias GroupherServer.{Accounts, CMS, Repo}
-  alias Accounts.Model.User
-  alias CMS.Model.{Comment, PinnedComment, Embeds, Post}
+  alias CMS.Model.PinnedComment
 
   @article_cat Constant.CMS.article_cat()
   @article_state Constant.CMS.article_state()

@@ -2,9 +2,6 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
   @moduledoc false
   use GroupherServer.TestTools
 
-  # alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-
   setup do
     guest_conn = simu_conn(:guest)
     {:ok, user} = db_insert(:user)

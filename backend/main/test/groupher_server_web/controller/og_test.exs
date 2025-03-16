@@ -1,6 +1,6 @@
 defmodule GroupherServerWeb.Test.Controller.OG do
   @moduledoc """
-  test open-graph fether
+  test open-graph feather
   """
   use GroupherServer.TestTools
 

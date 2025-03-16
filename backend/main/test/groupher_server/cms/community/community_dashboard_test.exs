@@ -3,10 +3,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Model.{Community, CommunityDashboard}
-
-  alias Helper.ORM
+  alias CMS.Model.CommunityDashboard
 
   @default_dashboard CommunityDashboard.default()
 

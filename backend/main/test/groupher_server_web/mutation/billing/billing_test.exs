@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Payment.Basic do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Helper.Utils

@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {community, doc, _, user} = mock_article(:doc, preload: [author: :user])
 

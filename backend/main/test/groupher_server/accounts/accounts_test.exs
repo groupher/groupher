@@ -5,9 +5,6 @@ defmodule GroupherServer.Test.Accounts do
 
   # TODO import Service.Utils move both helper and github
 
-  alias GroupherServer.Accounts
-  alias Accounts.Model.User
-
   # @valid_user mock_attrs(:user)
   # @valid_github_profile mock_attrs(:github_profile) |> map_key_stringify
 

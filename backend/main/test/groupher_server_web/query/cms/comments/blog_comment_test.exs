@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {community, blog, _, user} = mock_article(:blog, preload: [author: :user])
     {:ok, user2} = db_insert(:user)

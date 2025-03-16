@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Model.{Community, Blog}
-
-  alias Helper.ORM
-
   setup do
     {community, blog, _, user} = mock_article(:blog)
 
@@ -212,20 +207,21 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     end
 
     @query """
-    mutation($id: ID!, $communityId: ID!){
-      undoPinBlog(id: $id, communityId: $communityId) {
+    mutation($id: ID!, $community: String!){
+      undoPinBlog(id: $id, community: $community) {
         id
         isPinned
       }
     }
     """
+    @tag :wip
     test "auth user can undo pin blog", ~m(community blog)a do
-      variables = %{id: blog.id, communityId: community.id}
+      variables = %{id: blog.inner_id, community: community.slug}
 
       passport_rules = %{community.slug => %{"blog.undo_pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      CMS.pin_article(:blog, blog.id, community.id)
+      CMS.pin_article(community, blog)
       updated = rule_conn |> mutation_result(@query, variables, "undoPinBlog")
 
       assert updated["id"] == to_string(blog.id)

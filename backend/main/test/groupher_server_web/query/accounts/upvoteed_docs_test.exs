@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedDocs do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   @total_count 20
 
   setup do

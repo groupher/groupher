@@ -1,11 +1,8 @@
 defmodule GroupherServer.Test.Query.Account.Basic do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [get_config: 2]
-
-  alias Helper.ORM
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
   alias CMS.Model.CommunitySubscriber
 
   @default_subscribed_communities get_config(:general, :default_subscribed_communities)

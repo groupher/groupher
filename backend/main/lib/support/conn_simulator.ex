@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.ConnSimulator do
   import Phoenix.ConnTest, only: [build_conn: 0]
   import Plug.Conn, only: [put_req_header: 3]
 
-  import GroupherServer.CMS.Delegate.Helper, only: [author_of: 1]
+  import Helper.Utils, only: [author_of: 1]
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User

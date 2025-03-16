@@ -3,10 +3,7 @@ defmodule GroupherServer.Test.CMS.Articles.ChangelogPin do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-
-  alias CMS.Model.{Community, PinnedArticle}
+  alias CMS.Model.PinnedArticle
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
@@ -20,37 +17,36 @@ defmodule GroupherServer.Test.CMS.Articles.ChangelogPin do
   end
 
   describe "[cms changelog pin]" do
+    @tag :wip
     test "can pin a changelog", ~m(community changelog)a do
-      {:ok, _} = CMS.pin_article(:changelog, changelog.id, community.id)
-      {:ok, pind_article} = ORM.find_by(PinnedArticle, %{changelog_id: changelog.id})
+      {:ok, _} = CMS.pin_article(community, changelog)
+      {:ok, pinned_article} = ORM.find_by(PinnedArticle, %{changelog_id: changelog.id})
 
-      assert pind_article.changelog_id == changelog.id
+      assert pinned_article.changelog_id == changelog.id
     end
 
-    test "one community & thread can only pin certern count of changelog", ~m(community user)a do
+    @tag :wip
+    test "one community & thread can only pin certain count of changelog", ~m(community user)a do
       Enum.reduce(1..@max_pinned_article_count_per_thread, [], fn _, acc ->
         {:ok, new_changelog} =
           CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
 
-        {:ok, _} = CMS.pin_article(:changelog, new_changelog.id, community.id)
+        {:ok, _} = CMS.pin_article(community, new_changelog)
         acc
       end)
 
       {:ok, new_changelog} =
         CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
 
-      {:error, reason} = CMS.pin_article(:changelog, new_changelog.id, community.id)
+      {:error, reason} = CMS.pin_article(community, new_changelog)
       assert reason |> Keyword.get(:code) == ecode(:too_much_pinned_article)
     end
 
-    test "can not pin a non-exist changelog", ~m(community)a do
-      assert {:error, _} = CMS.pin_article(:changelog, 8848, community.id)
-    end
-
+    @tag :wip
     test "can undo pin to a changelog", ~m(community changelog)a do
-      {:ok, _} = CMS.pin_article(:changelog, changelog.id, community.id)
+      {:ok, _} = CMS.pin_article(community, changelog)
 
-      assert {:ok, _unpinned} = CMS.undo_pin_article(:changelog, changelog.id, community.id)
+      assert {:ok, _unpinned} = CMS.undo_pin_article(community, changelog)
 
       assert {:error, _} = ORM.find_by(PinnedArticle, %{changelog_id: changelog.id})
     end

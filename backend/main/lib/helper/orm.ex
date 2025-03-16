@@ -67,7 +67,7 @@ defmodule Helper.ORM do
   end
 
   @doc """
-  simular to Repo.get/3, with standard result/error handle
+  similar to Repo.get/3, with standard result/error handle
   """
   @spec find(Ecto.Queryable.t(), SpecType.id()) :: {:ok, any()} | {:error, String.t()}
   def find(queryable, id) do
@@ -77,7 +77,7 @@ defmodule Helper.ORM do
   end
 
   @doc """
-  simular to Repo.get_by/3, with standard result/error handle
+  similar to Repo.get_by/3, with standard result/error handle
   """
   def find_by(queryable, clauses) do
     queryable

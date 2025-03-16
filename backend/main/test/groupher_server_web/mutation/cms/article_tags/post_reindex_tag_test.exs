@@ -3,9 +3,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.PostReindexTag do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
   alias CMS.Model.ArticleTag
-  alias Helper.ORM
 
   setup do
     {:ok, post} = db_insert(:post)

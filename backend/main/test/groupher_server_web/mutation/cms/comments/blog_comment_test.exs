@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Model.Blog
-
-  alias Helper.ORM
-
   setup do
     {community, blog, _, user} = mock_article(:blog)
 

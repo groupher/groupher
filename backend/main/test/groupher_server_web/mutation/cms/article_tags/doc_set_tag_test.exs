@@ -3,9 +3,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.DocSetTag do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
   alias GroupherServer.CMS
-  alias CMS.Model.Doc
 
   setup do
     {:ok, doc} = db_insert(:doc)

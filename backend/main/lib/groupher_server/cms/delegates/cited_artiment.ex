@@ -9,10 +9,10 @@ defmodule GroupherServer.CMS.Delegate.CitedArtiment do
       done: 1,
       get_config: 2,
       atom_values_to_upcase: 1,
-      to_upcase: 1
+      to_upcase: 1,
+      thread_of: 1,
+      article_of: 1
     ]
-
-  import GroupherServer.CMS.Delegate.Helper, only: [thread_of: 1, article_of: 1]
 
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Delegate.CitedArtiment do
     |> done
   end
 
-  @doc "delete all records before insert_all, this will dynamiclly update"
+  @doc "delete all records before insert_all, this will dynamically update"
   # those cited info when update article
   # 插入引用记录之前先全部清除，这样可以在更新文章的时候自动计算引用信息
   def batch_delete_by(%Comment{} = comment) do

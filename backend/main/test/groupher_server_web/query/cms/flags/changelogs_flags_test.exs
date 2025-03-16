@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
 
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.CMS
-  alias Helper.{Constant, ORM}
-
   @total_count 35
   @page_size get_config(:general, :page_size)
 
@@ -90,6 +85,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       }
     }
     """
+    @tag :wip
     test "if have pinned changelogs, the pinned changelogs should at the top of entries",
          ~m(guest_conn community changelog_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -100,7 +96,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       assert results["pageSize"] == @page_size
       assert results["totalCount"] == @total_count
 
-      {:ok, _} = CMS.pin_article(:changelog, changelog_m.id, community.id)
+      {:ok, _} = CMS.pin_article(community, changelog_m)
 
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")
       entries_first = results["entries"] |> List.first()
@@ -110,14 +106,15 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       assert entries_first["isPinned"] == true
     end
 
+    @tag :wip
     test "pinned changelogs should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")
       assert results |> is_valid_pagination?
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("id")
-
-      {:ok, _} = CMS.pin_article(:changelog, random_id, community.id)
+      {:ok, changelog} = ORM.find(Changelog, random_id)
+      {:ok, _} = CMS.pin_article(community, changelog)
 
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")
 

@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.{Accounts, CMS, Repo}
-  alias Accounts.Model.User
-  alias CMS.Model.Blog
-  alias Helper.{Constant, ORM}
-
   @total_count 35
 
   @audit_legal Constant.CMS.pending(:legal)

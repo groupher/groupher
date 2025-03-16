@@ -1,12 +1,11 @@
 defmodule GroupherServer.Test.Accounts.Oauth do
+  @moduledoc false
+
   use GroupherServer.TestTools
   # TODO import Service.Utils move both helper and github
   import Helper.Utils
 
-  alias Helper.ORM
-  alias GroupherServer.Accounts
-
-  alias Accounts.Model.{User, OauthProvider}
+  alias Accounts.Model.OauthProvider
 
   # @valid_user mock_attrs(:user)
   @valid_github_profile mock_attrs(:oauth_profile) |> map_key_stringify

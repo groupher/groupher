@@ -2,9 +2,6 @@ defmodule GroupherServer.Test.Query.Hooks.DocCiting do
   @moduledoc false
 
   use GroupherServer.TestTools
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.CMS
 
   alias CMS.Delegate.Hooks
 

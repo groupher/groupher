@@ -3,14 +3,10 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [get_config: 2]
-
-  alias Helper.ORM
-  alias GroupherServer.{CMS, FrontDesk, Repo}
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
   alias EditorToHTML.{Class, Validator}
-  alias CMS.Model.{Author, ArticleDocument, Post, PostDocument}
+  alias CMS.Model.{ArticleDocument, PostDocument}
 
   @root_class Class.article()
   @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)

@@ -2,9 +2,6 @@ defmodule GroupherServer.Test.CMS.Search do
   @moduledoc false
   use GroupherServer.TestTools
 
-  # alias Helper.ORM
-  alias GroupherServer.CMS
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, _community} = db_insert(:community, %{title: "react"})

@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.Helper.Converter.HtmlSanitizer do
   # alias Helper.RichTextParser, as: Parser
   alias Helper.Converter.HtmlSanitizer, as: Sanitizer
 
-  describe "[snaitizer test]" do
+  describe "[sanitizer test]" do
     test "should strip p h4-6 etc tags" do
       html =
         "<form>hello</form><h4>1</h4><h5>2</h5><h6>3</h6><h4>4</h4><h5>5</h5><h6>6</h6><h1>world</h1><h2>world2</h2><h3>world3</h3>"

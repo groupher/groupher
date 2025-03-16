@@ -3,9 +3,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.{Accounts, CMS}
-
   alias CMS.Model.ArticleCollect
   alias Accounts.Model.Embeds
 

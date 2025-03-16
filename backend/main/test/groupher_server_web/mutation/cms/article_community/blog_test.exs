@@ -1,9 +1,7 @@
 defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
-  use GroupherServer.TestTools
+  @moduledoc false
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-  alias CMS.Model.Blog
+  use GroupherServer.TestTools
 
   setup do
     {:ok, blog} = db_insert(:blog)

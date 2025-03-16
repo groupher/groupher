@@ -3,12 +3,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [get_config: 2]
-
-  alias Helper.ORM
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.Blog
-
   @page_size get_config(:general, :page_size)
 
   @now Timex.now()

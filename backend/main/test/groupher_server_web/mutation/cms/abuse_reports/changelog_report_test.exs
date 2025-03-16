@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
-  use GroupherServer.TestTools
+  @moduledoc false
 
-  alias GroupherServer.CMS
+  use GroupherServer.TestTools
 
   setup do
     {:ok, user} = db_insert(:user)

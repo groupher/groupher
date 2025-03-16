@@ -2,9 +2,6 @@ defmodule GroupherServer.Test.CMS.Passport do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-
   setup do
     {:ok, [user, user2]} = db_insert_multi(:user, 2)
     {:ok, ~m(user user2)a}

@@ -1,10 +1,8 @@
 defmodule GroupherServer.Test.Accounts.Achievement do
+  @moduledoc false
   use GroupherServer.TestTools
-  import Helper.Utils, only: [get_config: 2]
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.{User, Achievement}
-  alias Helper.ORM
+  alias Accounts.Model.Achievement
 
   @follow_weight get_config(:general, :user_achieve_follow_weight)
   @collect_weight get_config(:general, :user_achieve_collect_weight)

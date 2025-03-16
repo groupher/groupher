@@ -3,10 +3,12 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   CRUD and operations for article comments
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2, ensure: 2]
+
+  import Helper.Utils,
+    only: [done: 1, strip_struct: 1, get_config: 2, ensure: 2, article_of: 1, thread_of: 1]
 
   import GroupherServer.CMS.Delegate.Helper,
-    only: [article_of: 1, thread_of: 1, sync_embed_replies: 1]
+    only: [sync_embed_replies: 1]
 
   import Helper.ErrorCode
 

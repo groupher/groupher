@@ -1,9 +1,11 @@
 defmodule GroupherServer.Test.Accounts.Mailbox do
+  @moduledoc false
+
   use GroupherServer.TestTools
   # TODO import Service.Utils move both helper and github
   # import Helper.Utils
 
-  alias GroupherServer.{Accounts, Delivery}
+  alias GroupherServer.Delivery
 
   @default_mailbox_status Accounts.Model.Embeds.UserMailbox.default_status()
 

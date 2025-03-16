@@ -3,10 +3,6 @@ defmodule GroupherServer.Test.Accounts.Published.Changelog do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
-  alias Helper.ORM
-
   @publish_count 10
 
   setup do

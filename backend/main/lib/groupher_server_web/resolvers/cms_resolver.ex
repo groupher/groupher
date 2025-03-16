@@ -138,12 +138,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # article actions
   # #######################
-  def pin_article(_root, ~m(id community_id thread)a, _info) do
-    CMS.pin_article(thread, id, community_id)
-  end
+  def pin_article(_root, ~m(community article)a, _info), do: CMS.pin_article(community, article)
 
-  def undo_pin_article(_root, ~m(id community_id thread)a, _info) do
-    CMS.undo_pin_article(thread, id, community_id)
+  def undo_pin_article(_root, ~m(community article)a, _info) do
+    CMS.undo_pin_article(community, article)
   end
 
   def mark_delete_article(_root, ~m(id thread)a, _info) do

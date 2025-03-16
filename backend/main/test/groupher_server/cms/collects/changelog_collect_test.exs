@@ -2,10 +2,6 @@ defmodule GroupherServer.Test.Collect.Changelog do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-  alias CMS.Model.Changelog
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)

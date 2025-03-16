@@ -27,7 +27,13 @@ defmodule Helper.Utils do
   defdelegate count_words(str), to: Utils.String
   defdelegate str_occurrence(string, substr), to: Utils.String
 
+  defdelegate preload_author(artiment), to: CMS.Delegate.Helper
+  defdelegate thread_of(artiment), to: CMS.Delegate.Helper
   defdelegate thread_of(artiment, opt), to: CMS.Delegate.Helper
+  defdelegate author_of(artiment), to: CMS.Delegate.Helper
+
+  defdelegate article_of(comment), to: CMS.Delegate.Helper
+  defdelegate mark_viewer_emotion_states(paged_artiments, user), to: CMS.Delegate.Helper
 
   def get_config(section, key, app \\ :groupher_server)
 

@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
 
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.CMS
-  alias Helper.{Constant, ORM}
-
   @total_count 35
   @page_size get_config(:general, :page_size)
 
@@ -90,6 +85,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       }
     }
     """
+    @tag :wip
     test "if have pinned docs, the pinned docs should at the top of entries",
          ~m(guest_conn community doc_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -100,7 +96,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       assert results["pageSize"] == @page_size
       assert results["totalCount"] == @total_count
 
-      {:ok, _} = CMS.pin_article(:doc, doc_m.id, community.id)
+      {:ok, _} = CMS.pin_article(community, doc_m)
 
       results = guest_conn |> query_result(@query, variables, "pagedDocs")
       entries_first = results["entries"] |> List.first()
@@ -110,14 +106,15 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       assert entries_first["isPinned"] == true
     end
 
-    test "pind docs should not appear when page > 1", ~m(guest_conn community)a do
+    @tag :wip
+    test "pinned docs should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
       results = guest_conn |> query_result(@query, variables, "pagedDocs")
       assert results |> is_valid_pagination?
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("id")
-
-      {:ok, _} = CMS.pin_article(:doc, random_id, community.id)
+      {:ok, doc} = ORM.find(Doc, random_id)
+      {:ok, _} = CMS.pin_article(community, doc)
 
       results = guest_conn |> query_result(@query, variables, "pagedDocs")
 

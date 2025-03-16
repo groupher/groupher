@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {community, changelog, changelog_attrs, user} = mock_article(:changelog)
 

@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
 
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.CMS
-  alias Helper.Constant
-
   @article_cat Constant.CMS.article_cat()
   @article_state Constant.CMS.article_state()
 

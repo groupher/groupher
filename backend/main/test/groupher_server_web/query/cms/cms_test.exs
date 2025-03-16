@@ -3,10 +3,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias CMS.Model.{Community, Category}
-  alias Helper.ORM
+  alias CMS.Model.Category
 
   setup do
     guest_conn = simu_conn(:guest)

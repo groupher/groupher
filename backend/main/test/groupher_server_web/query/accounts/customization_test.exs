@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Query.Account.Customization do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.Accounts.Model.Customization

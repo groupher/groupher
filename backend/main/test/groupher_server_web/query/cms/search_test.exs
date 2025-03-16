@@ -1,8 +1,7 @@
 defmodule GroupherServer.Test.Query.CMS.Search do
-  use GroupherServer.TestTools
+  @moduledoc false
 
-  # alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  use GroupherServer.TestTools
 
   setup do
     guest_conn = simu_conn(:guest)

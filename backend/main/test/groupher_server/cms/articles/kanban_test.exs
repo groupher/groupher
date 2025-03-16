@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias Helper.{Constant, ORM}
-
-  alias CMS.Model.Author
-
   @article_cat Constant.CMS.article_cat()
   @article_state Constant.CMS.article_state()
 

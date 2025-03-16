@@ -3,12 +3,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [get_config: 2]
-
-  alias Helper.{Constant, ORM}
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.Post
-
   @article_cat Constant.CMS.article_cat()
   @article_state Constant.CMS.article_state()
 

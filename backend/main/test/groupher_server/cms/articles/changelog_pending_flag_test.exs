@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.{Accounts, CMS, Repo}
-  alias Accounts.Model.User
-  alias CMS.Model.Changelog
-  alias Helper.{Constant, ORM}
-
   @total_count 35
 
   @audit_legal Constant.CMS.pending(:legal)

@@ -5,7 +5,6 @@ defmodule GroupherServer.Test.Mailer do
   use GroupherServer.TestTools
   use Bamboo.Test
 
-  import Helper.Utils, only: [get_config: 2]
   @support_email get_config(:system_emails, :support_email)
 
   describe "basic email" do

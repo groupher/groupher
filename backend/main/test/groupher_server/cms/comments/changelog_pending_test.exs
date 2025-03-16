@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Helper.{Constant, ORM}
-  alias Accounts.Model.User
-  alias CMS.Model.Comment
-
   @audit_legal Constant.CMS.pending(:legal)
   @audit_illegal Constant.CMS.pending(:illegal)
 

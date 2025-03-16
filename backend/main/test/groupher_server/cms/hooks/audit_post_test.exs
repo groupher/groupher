@@ -3,9 +3,7 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPost do
 
   use GroupherServer.TestTools
 
-  # alias GroupherServer.{CMS}
   # alias CMS.Delegate.Hooks
-  alias Helper.Constant
 
   @audit_legal Constant.CMS.pending(:legal)
   @audit_illegal Constant.CMS.pending(:illegal)

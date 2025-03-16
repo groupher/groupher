@@ -2,11 +2,6 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Model.Blog
-
-  alias Helper.ORM
-
   setup do
     {community, blog, _, user} = mock_article(:blog)
 

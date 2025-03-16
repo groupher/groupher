@@ -1,4 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Articles.BlogEmotion do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.CMS

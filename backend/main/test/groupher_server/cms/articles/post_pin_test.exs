@@ -3,10 +3,7 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-
-  alias CMS.Model.{Community, PinnedArticle}
+  alias CMS.Model.PinnedArticle
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
@@ -20,34 +17,32 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
   end
 
   describe "[cms post pin]" do
+    @tag :wip
     test "can pin a post", ~m(community post)a do
-      {:ok, _} = CMS.pin_article(:post, post.id, community.id)
-      {:ok, pind_article} = ORM.find_by(PinnedArticle, %{post_id: post.id})
+      {:ok, _} = CMS.pin_article(community, post)
+      {:ok, pinned_article} = ORM.find_by(PinnedArticle, %{post_id: post.id})
 
-      assert pind_article.post_id == post.id
+      assert pinned_article.post_id == post.id
     end
 
-    test "one community & thread can only pin certern count of post", ~m(community user)a do
+    @tag :wip
+    test "one community & thread can only pin certain count of post", ~m(community user)a do
       Enum.reduce(1..@max_pinned_article_count_per_thread, [], fn _, acc ->
         {:ok, new_post} = CMS.create_article(community, :post, mock_attrs(:post), user)
-        {:ok, _} = CMS.pin_article(:post, new_post.id, community.id)
+        {:ok, _} = CMS.pin_article(community, new_post)
         acc
       end)
 
       {:ok, new_post} = CMS.create_article(community, :post, mock_attrs(:post), user)
-      {:error, reason} = CMS.pin_article(:post, new_post.id, community.id)
+      {:error, reason} = CMS.pin_article(community, new_post)
       assert reason |> Keyword.get(:code) == ecode(:too_much_pinned_article)
     end
 
-    test "can not pin a non-exist post", ~m(community)a do
-      assert {:error, _} = CMS.pin_article(:post, 8848, community.id)
-    end
-
+    @tag :wip
     test "can undo pin to a post", ~m(community post)a do
-      {:ok, _} = CMS.pin_article(:post, post.id, community.id)
+      {:ok, _} = CMS.pin_article(community, post)
 
-      assert {:ok, _unpinned} = CMS.undo_pin_article(:post, post.id, community.id)
-
+      assert {:ok, _unpinned} = CMS.undo_pin_article(community, post)
       assert {:error, _} = ORM.find_by(PinnedArticle, %{post_id: post.id})
     end
   end

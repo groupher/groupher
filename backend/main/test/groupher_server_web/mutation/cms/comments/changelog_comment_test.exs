@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Model.Changelog
-
-  alias Helper.ORM
-
   setup do
     {community, changelog, _, user} = mock_article(:changelog)
 
