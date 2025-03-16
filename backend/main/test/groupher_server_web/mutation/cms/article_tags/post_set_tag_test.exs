@@ -3,10 +3,6 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.PostSetTag do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-  alias CMS.Model.Post
-
   setup do
     {:ok, post} = db_insert(:post)
     {:ok, user} = db_insert(:user)

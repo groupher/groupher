@@ -1,9 +1,7 @@
 defmodule GroupherServer.Test.Query.CMS.GEO do
+  @moduledoc false
+
   use GroupherServer.TestTools
-
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.CMS
 
   @remote_ip get_config(:test, :remote_ip)
 

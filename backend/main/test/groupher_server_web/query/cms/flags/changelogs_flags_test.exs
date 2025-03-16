@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
 
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.CMS
-  alias Helper.{Constant, ORM}
-
   @total_count 35
   @page_size get_config(:general, :page_size)
 
@@ -100,7 +95,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       assert results["pageSize"] == @page_size
       assert results["totalCount"] == @total_count
 
-      {:ok, _} = CMS.pin_article(:changelog, changelog_m.id, community.id)
+      {:ok, _} = CMS.pin_article(community, changelog_m)
 
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")
       entries_first = results["entries"] |> List.first()
@@ -116,8 +111,8 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       assert results |> is_valid_pagination?
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("id")
-
-      {:ok, _} = CMS.pin_article(:changelog, random_id, community.id)
+      {:ok, changelog} = ORM.find(Changelog, random_id)
+      {:ok, _} = CMS.pin_article(community, changelog)
 
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")
 

@@ -3,10 +3,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-  alias CMS.Model.Blog
-
   setup do
     {community, blog, _, user} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)

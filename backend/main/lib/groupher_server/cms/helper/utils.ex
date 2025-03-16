@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Helper.Utils do
   @article_fields @article_threads |> Enum.map(&:"#{&1}_id")
 
   @doc """
-  foreign_key_constraint for artilces thread
+  foreign_key_constraint for articles thread
 
   e.g
   foreign_key_constraint(struct, :post_id)

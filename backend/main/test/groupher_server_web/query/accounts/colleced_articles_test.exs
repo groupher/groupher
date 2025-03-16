@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
-  use GroupherServer.TestTools
+  @moduledoc false
 
-  alias GroupherServer.Accounts
+  use GroupherServer.TestTools
 
   @total_count 20
 

@@ -17,10 +17,11 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       ensure: 2,
       module_to_upcase: 1,
       atom_values_to_upcase: 1,
-      use_transaction: 1
+      use_transaction: 1,
+      mark_viewer_emotion_states: 2,
+      thread_of: 1
     ]
 
-  import GroupherServer.CMS.Delegate.Helper, only: [mark_viewer_emotion_states: 2, thread_of: 1]
   import Helper.ErrorCode
   import ShortMaps
 

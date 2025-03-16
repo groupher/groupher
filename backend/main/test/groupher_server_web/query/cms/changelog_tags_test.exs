@@ -2,7 +2,6 @@ defmodule GroupherServer.Test.Query.CMS.ChangelogTags do
   @moduledoc false
 
   use GroupherServer.TestTools
-  alias GroupherServer.CMS
 
   setup do
     guest_conn = simu_conn(:guest)

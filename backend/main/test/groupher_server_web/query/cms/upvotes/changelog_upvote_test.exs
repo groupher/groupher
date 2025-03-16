@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.Query.Upvotes.ChangelogUpvote do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {:ok, changelog} = db_insert(:changelog)
     {:ok, user} = db_insert(:user)

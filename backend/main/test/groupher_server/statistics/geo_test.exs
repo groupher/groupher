@@ -1,7 +1,9 @@
 defmodule GroupherServer.Test.Statistics.Geo do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
-  alias Helper.{ORM, GeoPool}
+  alias Helper.GeoPool
   alias GroupherServer.Statistics
   alias Statistics.Model.UserGeoInfo
 

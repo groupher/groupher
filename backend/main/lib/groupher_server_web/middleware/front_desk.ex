@@ -27,12 +27,15 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   end
 
   def call(
-        %{context: _, arguments: %{community: slug} = arguments} = resolution,
-        community: :live
+        %{
+          context: _,
+          arguments: %{community: community, thread: thread, id: inner_id} = arguments
+        } = resolution,
+        :article
       ) do
-    case FrontDesk.info(:community, slug, :live) do
-      {:ok, community} ->
-        %{resolution | arguments: Map.put(arguments, :community, community)}
+    case FrontDesk.info(:article, community.slug, thread, inner_id) do
+      {:ok, article} ->
+        %{resolution | arguments: Map.put(arguments, :article, article)}
 
       {:error, err_msg} ->
         resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))

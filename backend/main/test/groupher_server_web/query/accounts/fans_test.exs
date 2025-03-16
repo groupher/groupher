@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.Query.Account.Fans do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.Accounts
-
   setup do
     {:ok, user} = db_insert(:user)
     guest_conn = simu_conn(:guest)

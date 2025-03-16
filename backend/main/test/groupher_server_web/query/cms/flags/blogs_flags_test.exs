@@ -1,11 +1,7 @@
 defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
   @moduledoc false
+
   use GroupherServer.TestTools
-
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.CMS
-  alias Helper.{Constant, ORM}
 
   @total_count 35
   @page_size get_config(:general, :page_size)
@@ -99,7 +95,7 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
       assert results["pageSize"] == @page_size
       assert results["totalCount"] == @total_count
 
-      {:ok, _} = CMS.pin_article(:blog, blog_m.id, community.id)
+      {:ok, _} = CMS.pin_article(community, blog_m)
 
       results = guest_conn |> query_result(@query, variables, "pagedBlogs")
       entries_first = results["entries"] |> List.first()
@@ -115,9 +111,8 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
       assert results |> is_valid_pagination?
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("id")
-
-      {:ok, _} = CMS.pin_article(:blog, random_id, community.id)
-
+      {:ok, blog} = ORM.find(Blog, random_id)
+      {:ok, _} = CMS.pin_article(community, blog)
       results = guest_conn |> query_result(@query, variables, "pagedBlogs")
 
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))

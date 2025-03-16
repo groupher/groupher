@@ -4,7 +4,6 @@ defmodule GroupherServer.Test.Query.Statistics do
   use GroupherServer.TestTools
 
   alias Helper.GeoPool
-  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.Statistics
 
   setup do

@@ -3,10 +3,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleArticleTags.PostTagCRUD do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
   alias CMS.Model.ArticleTag
-
-  alias Helper.ORM
 
   setup do
     {:ok, community} = db_insert(:community)

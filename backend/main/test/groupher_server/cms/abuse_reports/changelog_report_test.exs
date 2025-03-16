@@ -3,10 +3,6 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-  alias CMS.Model.Changelog
-
   setup do
     {community, _, changelog_attrs, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)

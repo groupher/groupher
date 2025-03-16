@@ -3,10 +3,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Model.Post
-  alias Helper.ORM
-
   setup do
     {community, post, _, user} = mock_article(:post)
     # {:ok, category} = db_insert(:category)

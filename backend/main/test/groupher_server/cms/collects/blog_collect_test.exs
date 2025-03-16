@@ -2,10 +2,6 @@ defmodule GroupherServer.Test.Collect.Blog do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-  alias CMS.Model.Blog
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)

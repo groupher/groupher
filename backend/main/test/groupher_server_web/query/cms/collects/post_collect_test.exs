@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.Query.Collects.PostCollect do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {:ok, post} = db_insert(:post)
     {:ok, user} = db_insert(:user)

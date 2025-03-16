@@ -1,9 +1,7 @@
 defmodule GroupherServer.Test.Accounts.Customization do
-  use GroupherServer.TestTools
+  @moduledoc false
 
-  alias GroupherServer.Accounts
-  # import Helper.Utils
-  # alias GroupherServer.{Accounts}
+  use GroupherServer.TestTools
 
   setup do
     {:ok, user} = db_insert(:user)

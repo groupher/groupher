@@ -147,8 +147,8 @@ defmodule GroupherServer.CMS do
 
   # ArticleCommunity
   # >> set flag on article, like: pin / unpin article
-  defdelegate pin_article(thread, id, community_id), to: ArticleCommunity
-  defdelegate undo_pin_article(thread, id, community_id), to: ArticleCommunity
+  defdelegate pin_article(community, article), to: ArticleCommunity
+  defdelegate undo_pin_article(community, article), to: ArticleCommunity
 
   # >> community: set / unset
   defdelegate mirror_article(thread, article_id, community_id), to: ArticleCommunity

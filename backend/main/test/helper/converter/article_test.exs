@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Helper.Converter.Article do
 
   alias Helper.Converter.{Article, EditorToHTML}
 
-  describe "[snaitizer test]" do
+  describe "[sanitizer test]" do
     test "parse_body should return valid format" do
       body = """
       {

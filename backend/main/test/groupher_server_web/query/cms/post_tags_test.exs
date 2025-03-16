@@ -2,7 +2,6 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
   @moduledoc false
 
   use GroupherServer.TestTools
-  alias GroupherServer.CMS
 
   setup do
     {:ok, user} = db_insert(:user)

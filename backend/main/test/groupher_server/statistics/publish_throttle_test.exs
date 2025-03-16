@@ -3,7 +3,6 @@ defmodule GroupherServer.Test.Statistics.PublishThrottle do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
   alias GroupherServer.{CMS, Statistics}
   alias Statistics.Model.PublishThrottle
 

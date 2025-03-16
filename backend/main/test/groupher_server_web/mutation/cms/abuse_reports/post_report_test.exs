@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)

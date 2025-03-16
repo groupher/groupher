@@ -1,7 +1,9 @@
 defmodule GroupherServer.Test.Accounts.Hooks.Notify do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
-  alias GroupherServer.{Accounts, Delivery}
+  alias GroupherServer.Delivery
   alias Accounts.Delegate.Hooks
 
   setup do

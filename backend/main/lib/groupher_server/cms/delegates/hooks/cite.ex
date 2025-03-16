@@ -29,10 +29,9 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
   """
 
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [get_config: 2]
 
   import GroupherServer.CMS.Helper.Matcher
-  import GroupherServer.CMS.Delegate.Helper, only: [preload_author: 1, thread_of: 1]
+  import Helper.Utils, only: [preload_author: 1, thread_of: 1, get_config: 2]
   import GroupherServer.CMS.Delegate.Hooks.Helper, only: [merge_same_block_linker: 2]
 
   import Helper.ErrorCode

@@ -1,10 +1,6 @@
 defmodule GroupherServer.Test.CMS.Comments.BlogArchive do
   @moduledoc false
   use GroupherServer.TestTools
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.Comment
 
   @now Timex.now() |> DateTime.truncate(:second)
   @archive_threshold get_config(:article, :archive_threshold)

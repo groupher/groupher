@@ -1,9 +1,7 @@
 defmodule GroupherServer.Test.Accounts.Fans do
-  use GroupherServer.TestTools
+  @moduledoc false
 
-  alias Helper.ORM
-  alias GroupherServer.Accounts
-  alias Accounts.Model.User
+  use GroupherServer.TestTools
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -15,7 +13,7 @@ defmodule GroupherServer.Test.Accounts.Fans do
     test "user can follow other user", ~m(user)a do
       {:ok, user2} = db_insert(:user)
 
-      {:ok, _followeer} = user |> Accounts.follow(user2)
+      {:ok, _} = user |> Accounts.follow(user2)
       {:ok, found} = User |> ORM.find(user2.id, preload: :followers)
 
       assert found |> Map.get(:followers) |> Enum.any?(&(&1.follower_id == user.id))

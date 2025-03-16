@@ -3,9 +3,7 @@ defmodule GroupherServer.Test.CMS.ArticleTag.DocTag do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Model.{Community, ArticleTag, Doc}
-  alias Helper.{ORM}
+  alias CMS.Model.ArticleTag
 
   setup do
     {community, doc, doc_attrs, user} = mock_article(:doc)

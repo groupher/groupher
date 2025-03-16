@@ -5,12 +5,6 @@ defmodule GroupherServer.Test.CMS.AbuseReports.AccountReport do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-  alias GroupherServer.Accounts
-
-  alias Accounts.Model.User
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)

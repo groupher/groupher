@@ -1,10 +1,6 @@
 defmodule GroupherServer.Test.CMS.ChangelogArchive do
   @moduledoc false
   use GroupherServer.TestTools
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.Changelog
 
   @now Timex.now()
   @archive_threshold get_config(:article, :archive_threshold)

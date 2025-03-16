@@ -2,9 +2,7 @@ defmodule GroupherServer.Test.Query.Hooks.BlogCiting do
   @moduledoc false
 
   use GroupherServer.TestTools
-  import Helper.Utils, only: [get_config: 2]
 
-  alias GroupherServer.CMS
   alias CMS.Delegate.Hooks
 
   @site_host get_config(:general, :site_host)

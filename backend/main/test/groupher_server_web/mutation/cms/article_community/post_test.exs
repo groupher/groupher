@@ -3,10 +3,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-  alias CMS.Model.Post
-
   setup do
     {community, post, _, user} = mock_article(:post)
 

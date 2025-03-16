@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.Delivery.Mention do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   import Ecto.Query, warn: false
-  # import Helper.Utils
 
   alias GroupherServer.Delivery
 

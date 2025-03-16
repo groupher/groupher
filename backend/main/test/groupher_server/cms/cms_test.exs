@@ -3,11 +3,8 @@ defmodule GroupherServer.Test.CMS do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias CMS.Model.{Category, Community, CommunityModerator}
-
-  alias Helper.{Certification, ORM}
+  alias CMS.Model.{Category, CommunityModerator}
+  alias Helper.Certification
 
   setup do
     {:ok, user} = db_insert(:user)

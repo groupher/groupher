@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {community, post, _, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)

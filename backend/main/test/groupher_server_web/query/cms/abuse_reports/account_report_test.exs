@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.Query.AbuseReports.AccountReport do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)

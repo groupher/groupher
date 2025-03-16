@@ -2,12 +2,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
   @moduledoc false
 
   use GroupherServer.TestTools
-  import Helper.Utils, only: [get_config: 2]
-
-  alias Helper.ORM
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
-  alias CMS.Model.{Comment, PinnedComment, Embeds, Changelog}
+  alias CMS.Model.PinnedComment
 
   @active_period get_config(:article, :active_period_days)
 

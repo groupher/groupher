@@ -2,11 +2,7 @@ defmodule GroupherServer.Test.CMS.Community do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias CMS.Model.{Community, Post, Changelog, Blog, CommunityThread}
-
-  alias Helper.{Constant, ORM}
+  alias CMS.Model.CommunityThread
 
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)

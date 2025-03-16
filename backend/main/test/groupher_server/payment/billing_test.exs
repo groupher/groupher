@@ -1,10 +1,8 @@
 defmodule GroupherServer.Test.Payment do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [get_config: 2]
-
-  alias Helper.ORM
-  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.Payment
 
   @senior_amount_threshold get_config(:general, :senior_amount_threshold)

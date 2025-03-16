@@ -1,4 +1,6 @@
-defmodule GroupherServer.Test.Mutaion.Accounts.Mailbox do
+defmodule GroupherServer.Test.Mutation.Accounts.Mailbox do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
   alias GroupherServer.Delivery

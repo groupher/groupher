@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Model.{Community, Changelog}
-
-  alias Helper.ORM
-
   setup do
     {community, changelog, _, user} = mock_article(:changelog)
 
@@ -186,14 +181,14 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
     end
 
     @query """
-    mutation($id: ID!, $communityId: ID!){
-      pinChangelog(id: $id, communityId: $communityId) {
+    mutation($id: ID!, $community: String!){
+      pinChangelog(id: $id, community: $community) {
         id
       }
     }
     """
     test "auth user can pin changelog", ~m(community changelog)a do
-      variables = %{id: changelog.id, communityId: community.id}
+      variables = %{id: changelog.inner_id, community: community.slug}
 
       passport_rules = %{community.slug => %{"changelog.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -204,7 +199,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
     end
 
     test "unauth user pin changelog fails", ~m(user_conn guest_conn community changelog)a do
-      variables = %{id: changelog.id, communityId: community.id}
+      variables = %{id: changelog.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
@@ -213,27 +208,27 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
     end
 
     @query """
-    mutation($id: ID!, $communityId: ID!){
-      undoPinChangelog(id: $id, communityId: $communityId) {
+    mutation($id: ID!, $community: String!){
+      undoPinChangelog(id: $id, community: $community) {
         id
         isPinned
       }
     }
     """
     test "auth user can undo pin changelog", ~m(community changelog)a do
-      variables = %{id: changelog.id, communityId: community.id}
+      variables = %{id: changelog.inner_id, community: community.slug}
 
       passport_rules = %{community.slug => %{"changelog.undo_pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      CMS.pin_article(:changelog, changelog.id, community.id)
+      CMS.pin_article(community, changelog)
       updated = rule_conn |> mutation_result(@query, variables, "undoPinChangelog")
 
       assert updated["id"] == to_string(changelog.id)
     end
 
     test "unauth user undo pin changelog fails", ~m(user_conn guest_conn community changelog)a do
-      variables = %{id: changelog.id, communityId: community.id}
+      variables = %{id: changelog.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))

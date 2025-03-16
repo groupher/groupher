@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
-  alias GroupherServer.CMS
-
-  alias CMS.Model.{Comment, Post}
-
   @max_parent_replies_count Comment.max_parent_replies_count()
 
   setup do

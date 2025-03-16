@@ -2,11 +2,6 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-  alias CMS.Model.Changelog
-
-  alias Helper.ORM
-
   setup do
     {community, changelog, _, user} = mock_article(:changelog)
 

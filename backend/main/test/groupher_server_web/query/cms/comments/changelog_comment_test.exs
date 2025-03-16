@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {community, changelog, _, user} = mock_article(:changelog, preload: [author: :user])
     {:ok, user2} = db_insert(:user)

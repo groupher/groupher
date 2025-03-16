@@ -5,11 +5,6 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
 
   import Helper.Utils, only: [strip_struct: 1]
 
-  alias GroupherServer.CMS
-  alias CMS.Model.{Community, Embeds}
-
-  alias Helper.{ORM}
-
   @default_meta Embeds.CommunityMeta.default_meta()
 
   setup do

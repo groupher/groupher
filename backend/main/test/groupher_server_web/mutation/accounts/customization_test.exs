@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.Mutation.Account.Customization do
+  @moduledoc false
+
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [get_config: 2]
   @max_page_size get_config(:general, :page_size)
 
   setup do

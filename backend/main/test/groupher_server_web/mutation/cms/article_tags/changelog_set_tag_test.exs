@@ -3,9 +3,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.ChangelogSetTag do
 
   use GroupherServer.TestTools
 
-  alias Helper.ORM
   alias GroupherServer.CMS
-  alias CMS.Model.Changelog
 
   setup do
     {community, changelog, _, user} = mock_article(:changelog)
