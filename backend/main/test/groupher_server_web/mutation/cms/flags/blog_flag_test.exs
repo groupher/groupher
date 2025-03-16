@@ -180,14 +180,14 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     end
 
     @query """
-    mutation($id: ID!, $communityId: ID!){
-      pinBlog(id: $id, communityId: $communityId) {
+    mutation($id: ID!, $community: String!){
+      pinBlog(id: $id, community: $community) {
         id
       }
     }
     """
     test "auth user can pin blog", ~m(community blog)a do
-      variables = %{id: blog.id, communityId: community.id}
+      variables = %{id: blog.inner_id, community: community.slug}
 
       passport_rules = %{community.slug => %{"blog.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     end
 
     test "unauth user pin blog fails", ~m(user_conn guest_conn community blog)a do
-      variables = %{id: blog.id, communityId: community.id}
+      variables = %{id: blog.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
@@ -228,7 +228,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     end
 
     test "unauth user undo pin blog fails", ~m(user_conn guest_conn community blog)a do
-      variables = %{id: blog.id, communityId: community.id}
+      variables = %{id: blog.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))

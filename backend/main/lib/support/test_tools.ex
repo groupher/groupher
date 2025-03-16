@@ -13,7 +13,9 @@ defmodule GroupherServer.TestTools do
       import GroupherServer.Test.AssertHelper
       import Ecto.Query, warn: false
       import Helper.ErrorCode
-      import Helper.Utils, only: [camelize_map_key: 1, camelize_map_key: 2, get_config: 2]
+
+      import Helper.Utils,
+        only: [camelize_map_key: 1, camelize_map_key: 2, get_config: 2, preload_author: 1]
 
       import ShortMaps
 

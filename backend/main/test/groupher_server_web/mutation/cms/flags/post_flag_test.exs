@@ -262,7 +262,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     end
 
     test "unauth user undo pin post fails", ~m(user_conn guest_conn community post)a do
-      variables = %{id: post.id, communityId: community.id}
+      variables = %{id: post.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))

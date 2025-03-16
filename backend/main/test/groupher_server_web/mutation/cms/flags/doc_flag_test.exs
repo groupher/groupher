@@ -179,14 +179,14 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
     end
 
     @query """
-    mutation($id: ID!, $communityId: ID!){
-      pinDoc(id: $id, communityId: $communityId) {
+    mutation($id: ID!, $community: String!){
+      pinDoc(id: $id, community: $community) {
         id
       }
     }
     """
     test "auth user can pin doc", ~m(community doc)a do
-      variables = %{id: doc.id, communityId: community.id}
+      variables = %{id: doc.inner_id, community: community.slug}
 
       passport_rules = %{community.slug => %{"doc.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -197,7 +197,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
     end
 
     test "unauth user pin doc fails", ~m(user_conn guest_conn community doc)a do
-      variables = %{id: doc.id, communityId: community.id}
+      variables = %{id: doc.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
@@ -226,8 +226,9 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert updated["id"] == to_string(doc.id)
     end
 
+    @tag :wip2
     test "unauth user undo pin doc fails", ~m(user_conn guest_conn community doc)a do
-      variables = %{id: doc.id, communityId: community.id}
+      variables = %{id: doc.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))

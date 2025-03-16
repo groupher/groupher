@@ -2,9 +2,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInChangelog do
   @moduledoc false
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [preload_author: 1]
-
-  alias GroupherServer.CMS
+  alias GroupherServer.Delivery
   alias CMS.Delegate.Hooks
 
   @article_mention_class "cdx-mention"
