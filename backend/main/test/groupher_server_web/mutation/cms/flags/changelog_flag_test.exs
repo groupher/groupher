@@ -215,7 +215,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       }
     }
     """
-    @tag :wip
     test "auth user can undo pin changelog", ~m(community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
 

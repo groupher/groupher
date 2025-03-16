@@ -85,7 +85,6 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       }
     }
     """
-    @tag :wip
     test "if have pinned changelogs, the pinned changelogs should at the top of entries",
          ~m(guest_conn community changelog_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -106,7 +105,6 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       assert entries_first["isPinned"] == true
     end
 
-    @tag :wip
     test "pinned changelogs should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
       results = guest_conn |> query_result(@query, variables, "pagedChangelogs")

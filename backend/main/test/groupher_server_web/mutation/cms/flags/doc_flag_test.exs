@@ -213,7 +213,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       }
     }
     """
-    @tag :wip
     test "auth user can undo pin doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
@@ -226,7 +225,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert updated["id"] == to_string(doc.id)
     end
 
-    @tag :wip2
     test "unauth user undo pin doc fails", ~m(user_conn guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})

@@ -72,7 +72,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
-    @tag :wip
     test "auth user can undo markDelete post", ~m(post)a do
       variables = %{id: post.id}
 
@@ -185,7 +184,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
-    @tag :wip
     test "auth user can pin post", ~m(community post)a do
       variables = %{id: post.inner_id, community: community.slug}
 
@@ -197,7 +195,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       assert updated["id"] == to_string(post.id)
     end
 
-    @tag :wip
     test "unauth user pin post fails", ~m(user_conn guest_conn community post)a do
       variables = %{id: post.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
@@ -215,7 +212,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
-    @tag :wip
     test "can get pin state for article query", ~m(community user guest_conn)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -248,7 +244,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       }
     }
     """
-    @tag :wip
     test "auth user can undo pin post", ~m(community post)a do
       variables = %{id: post.inner_id, community: community.slug}
 

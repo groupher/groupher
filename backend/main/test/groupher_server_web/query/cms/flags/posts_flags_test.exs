@@ -84,7 +84,6 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
       }
     }
     """
-    @tag :wip
     test "if have pinned posts, the pinned posts should at the top of entries",
          ~m(guest_conn community post_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -105,7 +104,6 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
       assert entries_first["isPinned"] == true
     end
 
-    @tag :wip
     test "pinned posts should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
