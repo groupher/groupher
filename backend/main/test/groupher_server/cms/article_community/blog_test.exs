@@ -98,6 +98,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert exist_in?(article_tag2, blog.article_tags)
     end
 
+    @tag :wip
     test "blog can be mirror to other community",
          ~m(user community community2 blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -107,7 +108,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
 
       assert exist_in?(community, blog.communities)
 
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community2.id)
+      {:ok, _} = CMS.mirror_article(community2, blog)
 
       {:ok, blog} = ORM.find(Blog, blog.id, preload: :communities)
       assert blog.communities |> length == 2
@@ -116,6 +117,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert exist_in?(community2, blog.communities)
     end
 
+    @tag :wip
     test "blog can be mirror to other community with tags",
          ~m(user community community2 blog_attrs)a do
       article_tag_attrs = mock_attrs(:article_tag)
@@ -127,7 +129,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
       {:ok, _} =
-        CMS.mirror_article(:blog, blog.id, community2.id, [
+        CMS.mirror_article(community2, blog, [
           article_tag.id,
           article_tag2.id
         ])
@@ -139,11 +141,12 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert exist_in?(article_tag2, blog.article_tags)
     end
 
+    @tag :wip
     test "blog can be unmirror from community",
          ~m(user community community2 community3 blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community2.id)
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community3.id)
+      {:ok, _} = CMS.mirror_article(community2, blog)
+      {:ok, _} = CMS.mirror_article(community3, blog)
 
       {:ok, blog} = ORM.find(Blog, blog.id, preload: :communities)
       assert blog.communities |> length == 3
@@ -155,6 +158,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert not exist_in?(community3, blog.communities)
     end
 
+    @tag :wip
     test "blog can be unmirror from community with tags",
          ~m(user community community2 community3 blog_attrs)a do
       article_tag_attrs2 = mock_attrs(:article_tag)
@@ -165,8 +169,8 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       {:ok, article_tag3} = CMS.create_article_tag(community3, :blog, article_tag_attrs3, user)
 
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community2.id, [article_tag2.id])
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community3.id, [article_tag3.id])
+      {:ok, _} = CMS.mirror_article(community2, blog, [article_tag2.id])
+      {:ok, _} = CMS.mirror_article(community3, blog, [article_tag3.id])
 
       {:ok, _} = CMS.unmirror_article(:blog, blog.id, community3.id)
       {:ok, blog} = ORM.find(Blog, blog.id, preload: :article_tags)
@@ -175,11 +179,12 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert not exist_in?(article_tag3, blog.article_tags)
     end
 
+    @tag :wip
     test "blog can not unmirror from original community",
          ~m(user community community2 community3 blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community2.id)
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community3.id)
+      {:ok, _} = CMS.mirror_article(community2, blog)
+      {:ok, _} = CMS.mirror_article(community3, blog)
 
       {:ok, blog} = ORM.find(Blog, blog.id, preload: :communities)
       assert blog.communities |> length == 3

@@ -15,18 +15,26 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
 
   describe "[mirror/unmirror/move post to/from community]" do
     @mirror_article_query """
-    mutation($id: ID!, $thread: Thread, $communityId: ID!) {
-      mirrorArticle(id: $id, thread: $thread, communityId: $communityId) {
+    mutation($id: ID!, $thread: Thread, $community: String!, $targetCommunity: String!) {
+      mirrorArticle(id: $id, thread: $thread, community: $community, targetCommunity: $targetCommunity) {
         id
       }
     }
     """
-    test "auth user can mirror a post to other community", ~m(post)a do
+    @tag :wip
+    test "auth user can mirror a post to other community", ~m(community post)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      {:ok, community} = db_insert(:community)
-      variables = %{id: post.id, thread: "POST", communityId: community.id}
+      {:ok, community2} = mock_community()
+
+      variables = %{
+        id: post.inner_id,
+        thread: "POST",
+        community: community.slug,
+        targetCommunity: community2.slug
+      }
+
       rule_conn |> mutation_result(@mirror_article_query, variables, "mirrorArticle")
       {:ok, found} = ORM.find(Post, post.id, preload: :communities)
 

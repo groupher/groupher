@@ -115,12 +115,15 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
     @desc "mirror article to other community"
     field :mirror_article, :article do
       arg(:id, non_null(:id))
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
+      arg(:target_community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
       arg(:article_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, claim: "cms->t?.community.mirror")
+      middleware(M.FrontDesk, :target_community)
+      middleware(M.FrontDesk, :article)
       resolve(&R.CMS.mirror_article/3)
     end
 

@@ -13,27 +13,42 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   alias GroupherServer.FrontDesk
 
-  def call(
-        %{context: _, arguments: %{community: slug} = arguments} = resolution,
-        :community
-      ) do
+  def call(%{arguments: %{community: slug}} = resolution, :community) do
+    fetch_community(resolution, slug)
+  end
+
+  def call(%{arguments: %{target_community: slug}} = resolution, :target_community) do
+    fetch_community(resolution, slug, :target_community)
+  end
+
+  def call(%{arguments: %{community: community}} = resolution, :article)
+      when is_binary(community) do
+    fetch_article(resolution, community)
+  end
+
+  def call(%{arguments: %{community: community}} = resolution, :article) do
+    fetch_article(resolution, community.slug)
+  end
+
+  def call(resolution, _), do: resolution
+
+  defp fetch_community(%{arguments: arguments} = resolution, slug, community_key \\ :community) do
     case FrontDesk.info(:community, slug) do
       {:ok, community} ->
-        %{resolution | arguments: Map.put(arguments, :community, community)}
+        %{resolution | arguments: Map.put(arguments, community_key, community)}
 
       {:error, err_msg} ->
         resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
     end
   end
 
-  def call(
-        %{
-          context: _,
-          arguments: %{community: community, thread: thread, id: inner_id} = arguments
-        } = resolution,
-        :article
-      ) do
-    case FrontDesk.info(:article, community.slug, thread, inner_id) do
+  defp fetch_article(
+         %{
+           arguments: %{thread: thread, id: inner_id} = arguments
+         } = resolution,
+         community
+       ) do
+    case FrontDesk.info(:article, community, thread, inner_id) do
       {:ok, article} ->
         %{resolution | arguments: Map.put(arguments, :article, article)}
 
@@ -41,6 +56,4 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
     end
   end
-
-  def call(resolution, _), do: resolution
 end

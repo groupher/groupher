@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.CMS.Community do
       assert all_threads.total_count == 0
     end
 
-    test "delated community should delete all related articles", ~m(user)a do
+    test "deleted community should delete all related articles", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
       {:ok, community} = CMS.create_community(community_attrs)
 
@@ -81,7 +81,8 @@ defmodule GroupherServer.Test.CMS.Community do
       {:error, _} = ORM.find(Blog, blog.id)
     end
 
-    test "delated community should delete post also belongs to other community", ~m(user)a do
+    @tag :wip
+    test "deleted community should delete post also belongs to other community", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
       community2_attrs = mock_attrs(:community, %{slug: "ts", user_id: user.id})
 
@@ -91,7 +92,7 @@ defmodule GroupherServer.Test.CMS.Community do
       post_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.mirror_article(:post, post.id, community2.id)
+      {:ok, _} = CMS.mirror_article(community2, post)
 
       {:ok, _} = CMS.delete_community(community.slug)
       {:error, _} = ORM.find(Community, community.id)
@@ -99,6 +100,7 @@ defmodule GroupherServer.Test.CMS.Community do
       {:error, _} = ORM.find(Post, post.id)
     end
 
+    @tag :wip
     test "deleted community should not delete post when the mirrored community is deleted",
          ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
@@ -110,7 +112,7 @@ defmodule GroupherServer.Test.CMS.Community do
       post_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.mirror_article(:post, post.id, community2.id)
+      {:ok, _} = CMS.mirror_article(community2, post)
 
       {:ok, _} = CMS.delete_community(community2.slug)
       {:error, _} = ORM.find(Community, community2.id)

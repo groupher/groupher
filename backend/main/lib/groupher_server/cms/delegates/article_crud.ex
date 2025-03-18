@@ -412,7 +412,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
           Document.create(article, attrs)
         end)
         |> Multi.run(:mirror_article, fn _, %{create_article: article} ->
-          ArticleCommunity.mirror_article(thread, article.id, community.id)
+          ArticleCommunity.mirror_article(community, article)
         end)
         |> Multi.run(:set_article_tags, fn _, %{create_article: article} ->
           ArticleTag.set_article_tags(community, thread, article, attrs)

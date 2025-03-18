@@ -102,6 +102,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert exist_in?(article_tag2, doc.article_tags)
     end
 
+    @tag :wip
     test "doc can be mirror to other community",
          ~m(user community community2 doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -111,7 +112,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
 
       assert exist_in?(community, doc.communities)
 
-      {:ok, _} = CMS.mirror_article(:doc, doc.id, community2.id)
+      {:ok, _} = CMS.mirror_article(community2, doc)
 
       {:ok, doc} = ORM.find(Doc, doc.id, preload: :communities)
       assert doc.communities |> length == 2
@@ -120,6 +121,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert exist_in?(community2, doc.communities)
     end
 
+    @tag :wip
     test "doc can be mirror to other community with tags",
          ~m(user community community2 doc_attrs)a do
       article_tag_attrs = mock_attrs(:article_tag)
@@ -132,7 +134,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
       {:ok, _} =
-        CMS.mirror_article(:doc, doc.id, community2.id, [
+        CMS.mirror_article(community2, doc, [
           article_tag.id,
           article_tag2.id
         ])
@@ -144,11 +146,12 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert exist_in?(article_tag2, doc.article_tags)
     end
 
+    @tag :wip
     test "doc can be unmirror from community",
          ~m(user community community2 community3 doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      {:ok, _} = CMS.mirror_article(:doc, doc.id, community2.id)
-      {:ok, _} = CMS.mirror_article(:doc, doc.id, community3.id)
+      {:ok, _} = CMS.mirror_article(community2, doc)
+      {:ok, _} = CMS.mirror_article(community3, doc)
 
       {:ok, doc} = ORM.find(Doc, doc.id, preload: :communities)
       assert doc.communities |> length == 3
@@ -160,6 +163,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert not exist_in?(community3, doc.communities)
     end
 
+    @tag :wip
     test "doc can be unmirror from community with tags",
          ~m(user community community2 community3 doc_attrs)a do
       article_tag_attrs2 = mock_attrs(:article_tag)
@@ -172,8 +176,8 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
         CMS.create_article_tag(community3, :doc, article_tag_attrs3, user)
 
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      {:ok, _} = CMS.mirror_article(:doc, doc.id, community2.id, [article_tag2.id])
-      {:ok, _} = CMS.mirror_article(:doc, doc.id, community3.id, [article_tag3.id])
+      {:ok, _} = CMS.mirror_article(community2, doc, [article_tag2.id])
+      {:ok, _} = CMS.mirror_article(community3, doc, [article_tag3.id])
 
       {:ok, _} = CMS.unmirror_article(:doc, doc.id, community3.id)
       {:ok, doc} = ORM.find(Doc, doc.id, preload: :article_tags)
@@ -182,11 +186,12 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert not exist_in?(article_tag3, doc.article_tags)
     end
 
+    @tag :wip
     test "doc can not unmirror from original community",
          ~m(user community community2 community3 doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      {:ok, _} = CMS.mirror_article(:doc, doc.id, community2.id)
-      {:ok, _} = CMS.mirror_article(:doc, doc.id, community3.id)
+      {:ok, _} = CMS.mirror_article(community2, doc)
+      {:ok, _} = CMS.mirror_article(community3, doc)
 
       {:ok, doc} = ORM.find(Doc, doc.id, preload: :communities)
       assert doc.communities |> length == 3

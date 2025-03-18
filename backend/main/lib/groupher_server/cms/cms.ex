@@ -151,8 +151,8 @@ defmodule GroupherServer.CMS do
   defdelegate undo_pin_article(community, article), to: ArticleCommunity
 
   # >> community: set / unset
-  defdelegate mirror_article(thread, article_id, community_id), to: ArticleCommunity
-  defdelegate mirror_article(thread, article_id, community_id, article_ids), to: ArticleCommunity
+  defdelegate mirror_article(target_community, article), to: ArticleCommunity
+  defdelegate mirror_article(target_community, article, article_ids), to: ArticleCommunity
   defdelegate unmirror_article(thread, article_id, community_id), to: ArticleCommunity
   defdelegate move_article(thread, article_id, community_id), to: ArticleCommunity
   defdelegate move_article(thread, article_id, community_id, article_ids), to: ArticleCommunity

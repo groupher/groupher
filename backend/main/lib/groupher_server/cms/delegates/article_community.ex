@@ -20,9 +20,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
   def pin_article(%Community{} = community, article) do
-    {:ok, thread} = thread_of(article)
-    args = pack_pin_args(community, thread, article.id)
-
     with {:ok, thread} <- thread_of(article),
          args <- pack_pin_args(community, thread, article.id),
          {:ok, _} <- check_pinned_article_count(community, thread),
@@ -58,19 +55,21 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   @doc """
   mirror article to other community
   """
-  def mirror_article(thread, article_id, community_id, article_tag_ids \\ []) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, article_id, preload: :communities),
-         {:ok, community} <- ORM.find(Community, community_id) do
+  def mirror_article(%Community{} = target_community, article, article_tag_ids \\ []) do
+    article = Repo.preload(article, :communities)
+
+    with {:ok, thread} <- thread_of(article) do
       Multi.new()
       |> Multi.run(:mirror_target_community, fn _, _ ->
         article
         |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_assoc(:communities, article.communities ++ [community])
+        |> Ecto.Changeset.put_assoc(:communities, article.communities ++ [target_community])
         |> Repo.update()
       end)
       |> Multi.run(:set_target_tags, fn _, %{mirror_target_community: article} ->
-        ArticleTag.set_article_tags(community, thread, article, %{article_tags: article_tag_ids})
+        ArticleTag.set_article_tags(target_community, thread, article, %{
+          article_tags: article_tag_ids
+        })
       end)
       |> Repo.transaction()
       |> result()

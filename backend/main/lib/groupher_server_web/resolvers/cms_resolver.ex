@@ -364,8 +364,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def paged_community_subscribers(_root, _args, _info), do: {:error, "invalid args"}
 
-  def mirror_article(_root, ~m(thread id community_id)a, _info) do
-    CMS.mirror_article(thread, id, community_id)
+  def mirror_article(_root, ~m(target_community article)a, _info) do
+    CMS.mirror_article(target_community, article)
   end
 
   def unmirror_article(_root, ~m(thread id community_id)a, _info) do
@@ -385,7 +385,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   # #######################
-  # comemnts ..
+  # comments ..
   # #######################
   def comments_state(_root, ~m(thread id)a, %{context: %{cur_user: user}}) do
     CMS.comments_state(thread, id, user)
