@@ -106,7 +106,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert exist_in?(article_tag2, doc.article_tags)
     end
 
-    @tag :wip
     test "doc can be mirror to other community",
          ~m(user community community2 doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -200,7 +199,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert reason |> is_error?(:mirror_article)
     end
 
-    @tag :wip
     test "doc can be mirror to home", ~m(community home_community doc_attrs user)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert doc.original_community_id == community.id
@@ -229,7 +227,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert paged_articles.total_count === 1
     end
 
-    @tag :wip
     test "doc can be mirror to home with tags", ~m(community home_community doc_attrs user)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)
@@ -271,7 +268,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert paged_articles.total_count === 1
     end
 
-    @tag :wip
     test "doc can be move to blackhole", ~m(community blackhole doc_attrs user)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert doc.original_community_id == community.id
@@ -293,7 +289,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert paged_articles.total_count === 1
     end
 
-    @tag :wip
     test "doc can be move to blackhole with tags", ~m(community blackhole doc_attrs user)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)

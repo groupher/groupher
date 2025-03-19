@@ -174,7 +174,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       assert reason |> is_error?(:mirror_article)
     end
 
-    @tag :wip
     test "post can be mirror to home", ~m(community home_community post_attrs user)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       assert post.original_community_id == community.id
@@ -201,7 +200,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       assert paged_articles.total_count === 1
     end
 
-    @tag :wip
     test "post can be mirror to home with tags", ~m(community home_community post_attrs user)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)
@@ -242,7 +240,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       assert paged_articles.total_count === 1
     end
 
-    @tag :wip
     test "post can be move to blackhole", ~m(community blackhole post_attrs user)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       assert post.original_community_id == community.id
@@ -262,7 +259,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       assert paged_articles.total_count === 1
     end
 
-    @tag :wip
     test "post can be move to blackhole with tags", ~m(community blackhole post_attrs user)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)
