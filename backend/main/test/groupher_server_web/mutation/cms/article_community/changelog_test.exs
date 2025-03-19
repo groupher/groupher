@@ -161,7 +161,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
     end
 
     test "auth user can move changelog to other community",
-         ~m(community community2 community3 changelog)a do
+         ~m(community community2 changelog)a do
       passport_rules = %{"changelog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 

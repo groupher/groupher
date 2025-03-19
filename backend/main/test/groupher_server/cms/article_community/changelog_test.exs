@@ -162,7 +162,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
     end
 
     test "changelog can be unmirror from community with tags",
-         ~m(user community community2 changelog_attrs)a do
+         ~m(user community community2 community3 changelog_attrs)a do
       article_tag_attrs2 = mock_attrs(:article_tag)
       article_tag_attrs3 = mock_attrs(:article_tag)
 

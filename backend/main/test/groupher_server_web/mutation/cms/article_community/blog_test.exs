@@ -158,8 +158,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
       assert blog.original_community.id == blackhole.id
     end
 
-    test "auth user can move blog to other community",
-         ~m(community community2 community3 blog)a do
+    test "auth user can move blog to other community", ~m(community community2 blog)a do
       passport_rules = %{"blog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
