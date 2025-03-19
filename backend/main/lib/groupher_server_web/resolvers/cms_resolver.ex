@@ -326,20 +326,20 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # community subscribe ..
   # #######################
-  def subscribe_community(_root, ~m(community_id)a, %{context: ~m(cur_user remote_ip)a}) do
-    CMS.subscribe_community(%Community{id: community_id}, cur_user, remote_ip)
+  def subscribe_community(_root, ~m(community)a, %{context: ~m(cur_user remote_ip)a}) do
+    CMS.subscribe_community(community, cur_user, remote_ip)
   end
 
-  def subscribe_community(_root, ~m(community_id)a, %{context: %{cur_user: cur_user}}) do
-    CMS.subscribe_community(%Community{id: community_id}, cur_user)
+  def subscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
+    CMS.subscribe_community(community, cur_user)
   end
 
-  def unsubscribe_community(_root, ~m(community_id)a, %{context: ~m(cur_user remote_ip)a}) do
-    CMS.unsubscribe_community(%Community{id: community_id}, cur_user, remote_ip)
+  def unsubscribe_community(_root, ~m(community)a, %{context: ~m(cur_user remote_ip)a}) do
+    CMS.unsubscribe_community(community, cur_user, remote_ip)
   end
 
-  def unsubscribe_community(_root, ~m(community_id)a, %{context: %{cur_user: cur_user}}) do
-    CMS.unsubscribe_community(%Community{id: community_id}, cur_user)
+  def unsubscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
+    CMS.unsubscribe_community(community, cur_user)
   end
 
   def paged_community_subscribers(_root, ~m(id filter)a, %{context: %{cur_user: cur_user}}) do

@@ -120,9 +120,9 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
       end
     end)
 
-    exist_threas = @community_default_threads |> Enum.map(&to_string(&1))
+    exist_threads = @community_default_threads |> Enum.map(&to_string(&1))
 
-    from(t in Thread, where: t.slug in ^exist_threas) |> Repo.all() |> done
+    from(t in Thread, where: t.slug in ^exist_threads) |> Repo.all() |> done
   end
 
   @doc """
@@ -247,7 +247,12 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   update article_tags_count / thread / article_count / subscribers_count of a community
   """
-  def update_community_count_field(%Community{} = community, user_id, :moderators_count, opt) do
+  def update_community_count_field(
+        %Community{} = community,
+        %User{} = user,
+        :moderators_count,
+        opt
+      ) do
     {:ok, moderators_count} =
       from(s in CommunityModerator, where: s.community_id == ^community.id)
       |> ORM.count()
@@ -256,8 +261,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
 
     moderators_ids =
       case opt do
-        :inc -> (community_meta.moderators_ids ++ [user_id]) |> Enum.uniq()
-        :dec -> (community_meta.moderators_ids -- [user_id]) |> Enum.uniq()
+        :inc -> (community_meta.moderators_ids ++ [user.id]) |> Enum.uniq()
+        :dec -> (community_meta.moderators_ids -- [user.id]) |> Enum.uniq()
       end
 
     meta = community_meta |> Map.put(:moderators_ids, moderators_ids) |> strip_struct
@@ -266,7 +271,12 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     |> ORM.update_embed(:meta, meta, %{moderators_count: moderators_count})
   end
 
-  def update_community_count_field(%Community{} = community, user_id, :subscribers_count, opt) do
+  def update_community_count_field(
+        %Community{} = community,
+        %User{} = user,
+        :subscribers_count,
+        opt
+      ) do
     {:ok, subscribers_count} =
       from(s in CommunitySubscriber, where: s.community_id == ^community.id) |> ORM.count()
 
@@ -274,8 +284,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
 
     subscribed_user_ids =
       case opt do
-        :inc -> (community_meta.subscribed_user_ids ++ [user_id]) |> Enum.uniq()
-        :dec -> (community_meta.subscribed_user_ids -- [user_id]) |> Enum.uniq()
+        :inc -> (community_meta.subscribed_user_ids ++ [user.id]) |> Enum.uniq()
+        :dec -> (community_meta.subscribed_user_ids -- [user.id]) |> Enum.uniq()
       end
 
     meta = community_meta |> Map.put(:subscribed_user_ids, subscribed_user_ids) |> strip_struct

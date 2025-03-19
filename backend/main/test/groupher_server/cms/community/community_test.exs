@@ -187,6 +187,7 @@ defmodule GroupherServer.Test.CMS.Community do
       assert community.views == 0
     end
 
+    @tag :wip
     test "read subscribed community should have a flag", ~m(community user user2)a do
       {:ok, _} = CMS.subscribe_community(community, user)
 

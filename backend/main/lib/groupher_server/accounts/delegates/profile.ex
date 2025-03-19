@@ -80,26 +80,24 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
   @doc """
   update user's subscribed communities count
   """
-  def update_subscribe_state(user_id) do
-    with {:ok, user} <- ORM.find(User, user_id) do
-      query =
-        from(s in CommunitySubscriber,
-          where: s.user_id == ^user.id,
-          join: c in assoc(s, :community),
-          select: c.id
-        )
-
-      subscribed_communities_ids = query |> Repo.all()
-      subscribed_communities_count = subscribed_communities_ids |> length
-
-      user_meta = ensure(user.meta, @default_user_meta)
-      meta = %{user_meta | subscribed_communities_ids: subscribed_communities_ids}
-
-      user
-      |> ORM.update_meta(meta,
-        changes: %{subscribed_communities_count: subscribed_communities_count}
+  def update_subscribe_state(%User{} = user) do
+    query =
+      from(s in CommunitySubscriber,
+        where: s.user_id == ^user.id,
+        join: c in assoc(s, :community),
+        select: c.id
       )
-    end
+
+    subscribed_communities_ids = query |> Repo.all()
+    subscribed_communities_count = subscribed_communities_ids |> length
+
+    user_meta = ensure(user.meta, @default_user_meta)
+    meta = %{user_meta | subscribed_communities_ids: subscribed_communities_ids}
+
+    user
+    |> ORM.update_meta(meta,
+      changes: %{subscribed_communities_count: subscribed_communities_count}
+    )
   end
 
   @doc """

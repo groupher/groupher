@@ -11,7 +11,6 @@ defmodule GroupherServer.Test.CMS do
     {:ok, user2} = db_insert(:user)
 
     {:ok, community} = mock_community(user)
-
     {:ok, category} = db_insert(:category)
 
     {:ok, ~m(user user2 community category)a}
@@ -106,6 +105,7 @@ defmodule GroupherServer.Test.CMS do
     test "can set a thread to community", ~m(community)a do
       title = "POST"
       slug = title
+
       {:ok, thread} = CMS.create_thread(~m(title slug)a)
       {:ok, ret_community} = CMS.set_thread(community, thread)
 

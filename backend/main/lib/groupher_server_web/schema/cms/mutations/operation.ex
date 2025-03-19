@@ -59,17 +59,21 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "subscribe a community so it can appear in sidebar"
     field :subscribe_community, :community do
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+
       resolve(&R.CMS.subscribe_community/3)
     end
 
     @desc "unsubscribe a community"
     field :unsubscribe_community, :community do
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+
       resolve(&R.CMS.unsubscribe_community/3)
     end
 

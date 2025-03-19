@@ -16,8 +16,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
 
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-    {:ok, community} = CMS.create_community(community_attrs)
+    {:ok, community} = mock_community(user)
 
     user_conn = simu_conn(:user)
     user_conn2 = simu_conn(:user)
@@ -595,25 +594,27 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
   describe "[mutation cms subscribes]" do
     @subscribe_query """
-    mutation($communityId: ID!){
-      subscribeCommunity(communityId: $communityId) {
+    mutation($community: String!){
+      subscribeCommunity(community: $community) {
         id
       }
     }
     """
+    @tag :wip
     test "login user can subscribe community", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
-      variables = %{communityId: community.id}
+      variables = %{community: community.slug}
       created = login_conn |> mutation_result(@subscribe_query, variables, "subscribeCommunity")
 
       assert created["id"] == to_string(community.id)
     end
 
+    @tag :wip
     test "subscribe should update user's subscribed count", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
-      variables = %{communityId: community.id}
+      variables = %{community: community.slug}
       login_conn |> mutation_result(@subscribe_query, variables, "subscribeCommunity")
 
       {:ok, user} = ORM.find(User, user.id)
