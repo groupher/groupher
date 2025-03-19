@@ -79,53 +79,52 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   @doc """
   unmirror article to a community
   """
-  def unmirror_article(thread, article_id, community_id) do
-    preload = [:communities, :original_community, :article_tags]
+  def unmirror_article(%Community{} = target_community, article) do
+    article = Repo.preload(article, [:communities, :original_community, :article_tags])
 
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, article_id, preload: preload),
-         {:ok, community} <- ORM.find(Community, community_id) do
-      case article.original_community.id == community.id do
-        true ->
-          raise_error(:mirror_article, "can not unmirror original_community")
+    case article.original_community.id == target_community.id do
+      true ->
+        raise_error(:mirror_article, "can not unmirror original_community")
 
-        false ->
-          article_tags = tags_without_community(article, community)
+      false ->
+        article_tags = tags_without_community(article, target_community)
 
-          article
-          |> Ecto.Changeset.change()
-          |> Ecto.Changeset.put_assoc(:communities, article.communities -- [community])
-          |> Ecto.Changeset.put_assoc(:article_tags, article_tags)
-          |> Repo.update()
-      end
+        article
+        |> Ecto.Changeset.change()
+        |> Ecto.Changeset.put_assoc(
+          :communities,
+          Enum.reject(article.communities, &(&1.slug == target_community.slug))
+        )
+        |> Ecto.Changeset.put_assoc(:article_tags, article_tags)
+        |> Repo.update()
     end
   end
 
   @doc """
   move article original community to other community
   """
-  def move_article(thread, article_id, community_id, article_tag_ids \\ []) do
-    preload = [:communities, :original_community, :article_tags]
+  def move_article(%Community{} = target_community, article, article_tag_ids \\ []) do
+    article = Repo.preload(article, [:communities, :original_community, :article_tags])
 
-    with {:ok, info} <- match(thread),
-         {:ok, community} <- ORM.find(Community, community_id),
-         {:ok, article} <- ORM.find(info.model, article_id, preload: preload) do
+    with {:ok, thread} <- thread_of(article) do
       original_community = article.original_community
 
       Multi.new()
       |> Multi.run(:move_article, fn _, _ ->
-        communities = (article.communities -- [original_community]) ++ [community]
+        communities = (article.communities -- [original_community]) ++ [target_community]
         article_tags = tags_without_community(article, original_community)
 
         article
         |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_change(:original_community_id, community.id)
+        |> Ecto.Changeset.put_change(:original_community_id, target_community.id)
         |> Ecto.Changeset.put_assoc(:communities, communities)
         |> Ecto.Changeset.put_assoc(:article_tags, article_tags)
         |> Repo.update()
       end)
       |> Multi.run(:set_target_tags, fn _, %{move_article: article} ->
-        ArticleTag.set_article_tags(community, thread, article, %{article_tags: article_tag_ids})
+        ArticleTag.set_article_tags(target_community, thread, article, %{
+          article_tags: article_tag_ids
+        })
       end)
       |> Repo.transaction()
       |> result()
@@ -135,7 +134,28 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   @doc """
   shortcut for mirror article to home page
   """
-  def mirror_to_home(thread, article_id, article_tag_ids \\ []) do
+  def mirror_to_home(%Community{} = home_community, article, article_tag_ids \\ []) do
+    article = Repo.preload(article, [:communities, :article_tags])
+
+    with {:ok, thread} <- thread_of(article) do
+      Multi.new()
+      |> Multi.run(:set_community, fn _, _ ->
+        article
+        |> Ecto.Changeset.change()
+        |> Ecto.Changeset.put_assoc(:communities, article.communities ++ [home_community])
+        |> Repo.update()
+      end)
+      |> Multi.run(:set_target_tags, fn _, %{set_community: article} ->
+        ArticleTag.set_article_tags(home_community, thread, article, %{
+          article_tags: article_tag_ids
+        })
+      end)
+      |> Repo.transaction()
+      |> result()
+    end
+  end
+
+  def mirror_to_home2(thread, article_id, article_tag_ids \\ []) do
     preload = [:communities, :article_tags]
 
     with {:ok, info} <- match(thread),
@@ -159,23 +179,23 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   @doc """
   shortcut for move article to blackhole
   """
-  def move_to_blackhole(thread, article_id, article_tag_ids \\ []) do
-    preload = [:communities, :original_community, :article_tags]
+  def move_to_blackhole(%Community{} = blackhole, article, article_tag_ids \\ []) do
+    article = Repo.preload(article, [:communities, :original_community, :article_tags])
 
-    with {:ok, info} <- match(thread),
-         {:ok, community} <- ORM.find_by(Community, %{slug: "blackhole"}),
-         {:ok, article} <- ORM.find(info.model, article_id, preload: preload) do
+    with {:ok, thread} <- thread_of(article) do
       Multi.new()
       |> Multi.run(:set_community, fn _, _ ->
         article
         |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_change(:original_community_id, community.id)
-        |> Ecto.Changeset.put_assoc(:communities, [community])
+        |> Ecto.Changeset.put_change(:original_community_id, blackhole.id)
+        |> Ecto.Changeset.put_assoc(:communities, [blackhole])
         |> Ecto.Changeset.put_assoc(:article_tags, [])
         |> Repo.update()
       end)
       |> Multi.run(:set_target_tags, fn _, %{set_community: article} ->
-        ArticleTag.set_article_tags(community, thread, article, %{article_tags: article_tag_ids})
+        ArticleTag.set_article_tags(blackhole, thread, article, %{
+          article_tags: article_tag_ids
+        })
       end)
       |> Repo.transaction()
       |> result()

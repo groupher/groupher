@@ -440,6 +440,7 @@ defmodule GroupherServer.Support.Factory do
     CMS.create_community(community_attrs)
   end
 
+  @spec mock_community(GroupherServer.Accounts.Model.User.t(), map()) :: any()
   def mock_community(%User{} = user, attrs \\ %{}) do
     community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id}) |> Map.merge(attrs)
 

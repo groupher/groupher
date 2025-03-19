@@ -6,8 +6,8 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
   setup do
     {community, doc, _, user} = mock_article(:doc)
     {:ok, user2} = db_insert(:user)
-    {:ok, community2} = db_insert(:community)
-    {:ok, community3} = db_insert(:community)
+    {:ok, community2} = mock_community()
+    {:ok, community3} = mock_community()
 
     doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert doc.original_community_id == community.id
 
-      {:ok, _} = CMS.move_article(:doc, doc.id, community2.id)
+      {:ok, _} = CMS.move_article(community2, doc)
 
       {:ok, doc} =
         ORM.find(Doc, doc.id, preload: [:original_community, :communities])
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert doc.article_tags |> length == 2
       assert doc.original_community_id == community.id
 
-      {:ok, _} = CMS.move_article(:doc, doc.id, community2.id)
+      {:ok, _} = CMS.move_article(community2, doc)
 
       {:ok, doc} =
         ORM.find(Doc, doc.id, preload: [:original_community, :communities, :article_tags])
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert doc.article_tags |> length == 3
 
       {:ok, _} =
-        CMS.move_article(:doc, doc.id, community2.id, [
+        CMS.move_article(community2, doc, [
           article_tag.id,
           article_tag2.id
         ])
@@ -102,7 +102,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert exist_in?(article_tag2, doc.article_tags)
     end
 
-    @tag :wip
     test "doc can be mirror to other community",
          ~m(user community community2 doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -121,7 +120,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert exist_in?(community2, doc.communities)
     end
 
-    @tag :wip
     test "doc can be mirror to other community with tags",
          ~m(user community community2 doc_attrs)a do
       article_tag_attrs = mock_attrs(:article_tag)
@@ -146,7 +144,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert exist_in?(article_tag2, doc.article_tags)
     end
 
-    @tag :wip
     test "doc can be unmirror from community",
          ~m(user community community2 community3 doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -156,14 +153,13 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       {:ok, doc} = ORM.find(Doc, doc.id, preload: :communities)
       assert doc.communities |> length == 3
 
-      {:ok, _} = CMS.unmirror_article(:doc, doc.id, community3.id)
+      {:ok, _} = CMS.unmirror_article(community3, doc)
       {:ok, doc} = ORM.find(Doc, doc.id, preload: :communities)
       assert doc.communities |> length == 2
 
       assert not exist_in?(community3, doc.communities)
     end
 
-    @tag :wip
     test "doc can be unmirror from community with tags",
          ~m(user community community2 community3 doc_attrs)a do
       article_tag_attrs2 = mock_attrs(:article_tag)
@@ -179,14 +175,13 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       {:ok, _} = CMS.mirror_article(community2, doc, [article_tag2.id])
       {:ok, _} = CMS.mirror_article(community3, doc, [article_tag3.id])
 
-      {:ok, _} = CMS.unmirror_article(:doc, doc.id, community3.id)
+      {:ok, _} = CMS.unmirror_article(community3, doc)
       {:ok, doc} = ORM.find(Doc, doc.id, preload: :article_tags)
 
       assert exist_in?(article_tag2, doc.article_tags)
       assert not exist_in?(article_tag3, doc.article_tags)
     end
 
-    @tag :wip
     test "doc can not unmirror from original community",
          ~m(user community community2 community3 doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -196,7 +191,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       {:ok, doc} = ORM.find(Doc, doc.id, preload: :communities)
       assert doc.communities |> length == 3
 
-      {:error, reason} = CMS.unmirror_article(:doc, doc.id, community.id)
+      {:error, reason} = CMS.unmirror_article(community, doc)
       assert reason |> is_error?(:mirror_article)
     end
 

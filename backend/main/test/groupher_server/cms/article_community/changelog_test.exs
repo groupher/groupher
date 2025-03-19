@@ -6,8 +6,9 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
   setup do
     {community, changelog, _, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
-    {:ok, community2} = db_insert(:community)
-    {:ok, community3} = db_insert(:community)
+
+    {:ok, community2} = mock_community(user)
+    {:ok, community3} = mock_community(user)
 
     changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
@@ -27,7 +28,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       assert changelog.original_community_id == community.id
 
-      {:ok, _} = CMS.move_article(:changelog, changelog.id, community2.id)
+      {:ok, _} = CMS.move_article(community2, changelog)
 
       {:ok, changelog} =
         ORM.find(Changelog, changelog.id, preload: [:original_community, :communities])
@@ -53,7 +54,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       assert changelog.article_tags |> length == 2
       assert changelog.original_community_id == community.id
 
-      {:ok, _} = CMS.move_article(:changelog, changelog.id, community2.id)
+      {:ok, _} = CMS.move_article(community2, changelog)
 
       {:ok, changelog} =
         ORM.find(Changelog, changelog.id,
@@ -87,11 +88,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: [:article_tags])
       assert changelog.article_tags |> length == 3
 
-      {:ok, _} =
-        CMS.move_article(:changelog, changelog.id, community2.id, [
-          article_tag.id,
-          article_tag2.id
-        ])
+      {:ok, _} = CMS.move_article(community2, changelog, [article_tag.id, article_tag2.id])
 
       {:ok, changelog} =
         ORM.find(Changelog, changelog.id,
@@ -106,7 +103,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       assert exist_in?(article_tag2, changelog.article_tags)
     end
 
-    @tag :wip
     test "changelog can be mirror to other community",
          ~m(user community community2 changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -125,7 +121,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       assert exist_in?(community2, changelog.communities)
     end
 
-    @tag :wip
     test "changelog can be mirror to other community with tags",
          ~m(user community community2 changelog_attrs)a do
       article_tag_attrs = mock_attrs(:article_tag)
@@ -150,7 +145,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       assert exist_in?(article_tag2, changelog.article_tags)
     end
 
-    @tag :wip
     test "changelog can be unmirror from community",
          ~m(user community community2 community3 changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -160,16 +154,15 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :communities)
       assert changelog.communities |> length == 3
 
-      {:ok, _} = CMS.unmirror_article(:changelog, changelog.id, community3.id)
+      {:ok, _} = CMS.unmirror_article(community3, changelog)
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :communities)
       assert changelog.communities |> length == 2
 
       assert not exist_in?(community3, changelog.communities)
     end
 
-    @tag :wip
     test "changelog can be unmirror from community with tags",
-         ~m(user community community2 community3 changelog_attrs)a do
+         ~m(user community community2 changelog_attrs)a do
       article_tag_attrs2 = mock_attrs(:article_tag)
       article_tag_attrs3 = mock_attrs(:article_tag)
 
@@ -183,14 +176,13 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       {:ok, _} = CMS.mirror_article(community2, changelog, [article_tag2.id])
       {:ok, _} = CMS.mirror_article(community3, changelog, [article_tag3.id])
 
-      {:ok, _} = CMS.unmirror_article(:changelog, changelog.id, community3.id)
+      {:ok, _} = CMS.unmirror_article(community3, changelog)
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :article_tags)
 
       assert exist_in?(article_tag2, changelog.article_tags)
       assert not exist_in?(article_tag3, changelog.article_tags)
     end
 
-    @tag :wip
     test "changelog can not unmirror from original community",
          ~m(user community community2 community3 changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -200,7 +192,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :communities)
       assert changelog.communities |> length == 3
 
-      {:error, reason} = CMS.unmirror_article(:changelog, changelog.id, community.id)
+      {:error, reason} = CMS.unmirror_article(community, changelog)
       assert reason |> is_error?(:mirror_article)
     end
 

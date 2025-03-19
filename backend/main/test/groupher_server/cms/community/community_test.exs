@@ -81,7 +81,6 @@ defmodule GroupherServer.Test.CMS.Community do
       {:error, _} = ORM.find(Blog, blog.id)
     end
 
-    @tag :wip
     test "deleted community should delete post also belongs to other community", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
       community2_attrs = mock_attrs(:community, %{slug: "ts", user_id: user.id})
@@ -100,7 +99,6 @@ defmodule GroupherServer.Test.CMS.Community do
       {:error, _} = ORM.find(Post, post.id)
     end
 
-    @tag :wip
     test "deleted community should not delete post when the mirrored community is deleted",
          ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})

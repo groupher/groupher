@@ -134,7 +134,7 @@ defmodule Helper.ORM do
     end
   end
 
-  # content counld be article/community
+  # content could be article/community
   def read(content, inc: :views) do
     content |> inc_views_count(content.__struct__) |> done()
   end

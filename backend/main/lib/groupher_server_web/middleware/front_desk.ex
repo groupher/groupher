@@ -17,6 +17,10 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     fetch_community(resolution, slug)
   end
 
+  def call(resolution, target_community: slug) when is_atom(slug) do
+    fetch_community(resolution, to_string(slug), :target_community)
+  end
+
   def call(%{arguments: %{target_community: slug}} = resolution, :target_community) do
     fetch_community(resolution, slug, :target_community)
   end
