@@ -364,28 +364,28 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def paged_community_subscribers(_root, _args, _info), do: {:error, "invalid args"}
 
-  def mirror_article(_root, ~m(thread id community_id)a, _info) do
-    CMS.mirror_article(thread, id, community_id)
+  def mirror_article(_root, ~m(target_community article article_tags)a, _info) do
+    CMS.mirror_article(target_community, article, article_tags)
   end
 
-  def unmirror_article(_root, ~m(thread id community_id)a, _info) do
-    CMS.unmirror_article(thread, id, community_id)
+  def unmirror_article(_root, ~m(target_community article)a, _info) do
+    CMS.unmirror_article(target_community, article)
   end
 
-  def move_article(_root, ~m(thread id community_id article_tags)a, _info) do
-    CMS.move_article(thread, id, community_id, article_tags)
+  def move_article(_root, ~m(target_community article article_tags)a, _info) do
+    CMS.move_article(target_community, article, article_tags)
   end
 
-  def mirror_to_home(_root, ~m(thread id article_tags)a, _info) do
-    CMS.mirror_to_home(thread, id, article_tags)
+  def mirror_to_home(_root, ~m(target_community article article_tags)a, _info) do
+    CMS.mirror_to_home(target_community, article, article_tags)
   end
 
-  def move_to_blackhole(_root, ~m(thread id article_tags)a, _info) do
-    CMS.move_to_blackhole(thread, id, article_tags)
+  def move_to_blackhole(_root, ~m(target_community article article_tags)a, _info) do
+    CMS.move_to_blackhole(target_community, article, article_tags)
   end
 
   # #######################
-  # comemnts ..
+  # comments ..
   # #######################
   def comments_state(_root, ~m(thread id)a, %{context: %{cur_user: user}}) do
     CMS.comments_state(thread, id, user)

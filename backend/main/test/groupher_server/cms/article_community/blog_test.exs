@@ -6,12 +6,17 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
   setup do
     {community, blog, _, user} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)
-    {:ok, community2} = db_insert(:community)
-    {:ok, community3} = db_insert(:community)
+
+    {:ok, home_community} = mock_community(user, %{slug: "home"})
+    {:ok, blackhole} = mock_community(user, %{slug: "blackhole"})
+
+    {:ok, community2} = mock_community(user)
+    {:ok, community3} = mock_community(user)
 
     blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
-    {:ok, ~m(user user2 community community2 community3 blog blog_attrs)a}
+    {:ok,
+     ~m(user user2 community community2 community3 home_community blackhole blog blog_attrs)a}
   end
 
   describe "[article mirror/move]" do
@@ -27,7 +32,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       assert blog.original_community_id == community.id
 
-      {:ok, _} = CMS.move_article(:blog, blog.id, community2.id)
+      {:ok, _} = CMS.move_article(community2, blog)
 
       {:ok, blog} = ORM.find(Blog, blog.id, preload: [:original_community, :communities])
 
@@ -51,7 +56,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert blog.article_tags |> length == 2
       assert blog.original_community_id == community.id
 
-      {:ok, _} = CMS.move_article(:blog, blog.id, community2.id)
+      {:ok, _} = CMS.move_article(community2, blog)
 
       {:ok, blog} =
         ORM.find(Blog, blog.id, preload: [:original_community, :communities, :article_tags])
@@ -81,11 +86,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       {:ok, blog} = ORM.find(Blog, blog.id, preload: [:article_tags])
       assert blog.article_tags |> length == 3
 
-      {:ok, _} =
-        CMS.move_article(:blog, blog.id, community2.id, [
-          article_tag.id,
-          article_tag2.id
-        ])
+      {:ok, _} = CMS.move_article(community2, blog, [article_tag.id, article_tag2.id])
 
       {:ok, blog} =
         ORM.find(Blog, blog.id, preload: [:original_community, :communities, :article_tags])
@@ -107,7 +108,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
 
       assert exist_in?(community, blog.communities)
 
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community2.id)
+      {:ok, _} = CMS.mirror_article(community2, blog)
 
       {:ok, blog} = ORM.find(Blog, blog.id, preload: :communities)
       assert blog.communities |> length == 2
@@ -127,7 +128,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
       {:ok, _} =
-        CMS.mirror_article(:blog, blog.id, community2.id, [
+        CMS.mirror_article(community2, blog, [
           article_tag.id,
           article_tag2.id
         ])
@@ -142,13 +143,13 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
     test "blog can be unmirror from community",
          ~m(user community community2 community3 blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community2.id)
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community3.id)
+      {:ok, _} = CMS.mirror_article(community2, blog)
+      {:ok, _} = CMS.mirror_article(community3, blog)
 
       {:ok, blog} = ORM.find(Blog, blog.id, preload: :communities)
       assert blog.communities |> length == 3
 
-      {:ok, _} = CMS.unmirror_article(:blog, blog.id, community3.id)
+      {:ok, _} = CMS.unmirror_article(community3, blog)
       {:ok, blog} = ORM.find(Blog, blog.id, preload: :communities)
       assert blog.communities |> length == 2
 
@@ -161,14 +162,13 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       article_tag_attrs3 = mock_attrs(:article_tag)
 
       {:ok, article_tag2} = CMS.create_article_tag(community2, :blog, article_tag_attrs2, user)
-
       {:ok, article_tag3} = CMS.create_article_tag(community3, :blog, article_tag_attrs3, user)
 
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community2.id, [article_tag2.id])
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community3.id, [article_tag3.id])
+      {:ok, _} = CMS.mirror_article(community2, blog, [article_tag2.id])
+      {:ok, _} = CMS.mirror_article(community3, blog, [article_tag3.id])
 
-      {:ok, _} = CMS.unmirror_article(:blog, blog.id, community3.id)
+      {:ok, _} = CMS.unmirror_article(community3, blog)
       {:ok, blog} = ORM.find(Blog, blog.id, preload: :article_tags)
 
       assert exist_in?(article_tag2, blog.article_tags)
@@ -178,23 +178,21 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
     test "blog can not unmirror from original community",
          ~m(user community community2 community3 blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community2.id)
-      {:ok, _} = CMS.mirror_article(:blog, blog.id, community3.id)
+      {:ok, _} = CMS.mirror_article(community2, blog)
+      {:ok, _} = CMS.mirror_article(community3, blog)
 
       {:ok, blog} = ORM.find(Blog, blog.id, preload: :communities)
       assert blog.communities |> length == 3
 
-      {:error, reason} = CMS.unmirror_article(:blog, blog.id, community.id)
+      {:error, reason} = CMS.unmirror_article(community, blog)
       assert reason |> is_error?(:mirror_article)
     end
 
-    test "blog can be mirror to home", ~m(community blog_attrs user)a do
-      {:ok, home_community} = mock_community(user, %{slug: "home"})
-
+    test "blog can be mirror to home", ~m(community home_community blog_attrs user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       assert blog.original_community_id == community.id
 
-      {:ok, _} = CMS.mirror_to_home(:blog, blog.id)
+      {:ok, _} = CMS.mirror_to_home(home_community, blog)
 
       {:ok, blog} = ORM.find(Blog, blog.id, preload: [:original_community, :communities])
 
@@ -217,9 +215,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert paged_articles.total_count === 1
     end
 
-    test "blog can be mirror to home with tags", ~m(community blog_attrs user)a do
-      {:ok, home_community} = mock_community(user, %{slug: "home"})
-
+    test "blog can be mirror to home with tags", ~m(community home_community blog_attrs user)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)
 
@@ -231,7 +227,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       assert blog.original_community_id == community.id
 
-      {:ok, _} = CMS.mirror_to_home(:blog, blog.id, [article_tag0.id, article_tag.id])
+      {:ok, _} = CMS.mirror_to_home(home_community, blog, [article_tag0.id, article_tag.id])
 
       {:ok, blog} =
         ORM.find(Blog, blog.id, preload: [:original_community, :communities, :article_tags])
@@ -259,55 +255,51 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert paged_articles.total_count === 1
     end
 
-    test "blog can be move to blackhole", ~m(community blog_attrs user)a do
-      {:ok, blackhole_community} = db_insert(:community, %{slug: "blackhole"})
-
+    test "blog can be move to blackhole", ~m(community blackhole blog_attrs user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       assert blog.original_community_id == community.id
 
-      {:ok, _} = CMS.move_to_blackhole(:blog, blog.id)
+      {:ok, _} = CMS.move_to_blackhole(blackhole, blog)
 
       {:ok, blog} = ORM.find(Blog, blog.id, preload: [:original_community, :communities])
 
-      assert blog.original_community.id == blackhole_community.id
+      assert blog.original_community.id == blackhole.id
       assert blog.communities |> length == 1
 
-      assert exist_in?(blackhole_community, blog.communities)
+      assert exist_in?(blackhole, blog.communities)
 
-      filter = %{page: 1, size: 10, community: blackhole_community.slug}
+      filter = %{page: 1, size: 10, community: blackhole.slug}
       {:ok, paged_articles} = CMS.paged_articles(:blog, filter)
 
       assert exist_in?(blog, paged_articles.entries)
       assert paged_articles.total_count === 1
     end
 
-    test "blog can be move to blackhole with tags", ~m(community blog_attrs user)a do
-      {:ok, blackhole_community} = db_insert(:community, %{slug: "blackhole"})
-
+    test "blog can be move to blackhole with tags", ~m(community blackhole blog_attrs user)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)
 
       {:ok, article_tag0} =
-        CMS.create_article_tag(blackhole_community, :blog, article_tag_attrs0, user)
+        CMS.create_article_tag(blackhole, :blog, article_tag_attrs0, user)
 
       {:ok, article_tag} =
-        CMS.create_article_tag(blackhole_community, :blog, article_tag_attrs, user)
+        CMS.create_article_tag(blackhole, :blog, article_tag_attrs, user)
 
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, _} = CMS.set_article_tag(:blog, blog.id, article_tag0.id)
 
       assert blog.original_community_id == community.id
 
-      {:ok, _} = CMS.move_to_blackhole(:blog, blog.id, [article_tag.id])
+      {:ok, _} = CMS.move_to_blackhole(blackhole, blog, [article_tag.id])
 
       {:ok, blog} =
         ORM.find(Blog, blog.id, preload: [:original_community, :communities, :article_tags])
 
-      assert blog.original_community.id == blackhole_community.id
+      assert blog.original_community.id == blackhole.id
       assert blog.communities |> length == 1
       assert blog.article_tags |> length == 1
 
-      assert exist_in?(blackhole_community, blog.communities)
+      assert exist_in?(blackhole, blog.communities)
       assert exist_in?(article_tag, blog.article_tags)
     end
   end
