@@ -65,10 +65,10 @@ defmodule GroupherServer.Test.CMS do
       {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
       {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)
 
-      assoc_categroies = found_community.categories |> Enum.map(& &1.id)
+      assoc_categories = found_community.categories |> Enum.map(& &1.id)
       assoc_communities = found_category.communities |> Enum.map(& &1.id)
 
-      assert category.id in assoc_categroies
+      assert category.id in assoc_categories
       assert community.id in assoc_communities
     end
 
@@ -79,10 +79,10 @@ defmodule GroupherServer.Test.CMS do
       {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
       {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)
 
-      assoc_categroies = found_community.categories |> Enum.map(& &1.id)
+      assoc_categories = found_community.categories |> Enum.map(& &1.id)
       assoc_communities = found_category.communities |> Enum.map(& &1.id)
 
-      assert category.id not in assoc_categroies
+      assert category.id not in assoc_categories
       assert community.id not in assoc_communities
     end
   end
@@ -102,6 +102,7 @@ defmodule GroupherServer.Test.CMS do
       assert {:error, _error} = CMS.create_thread(~m(title slug)a)
     end
 
+    @tag :wip
     test "can set a thread to community", ~m(community)a do
       title = "POST"
       slug = title

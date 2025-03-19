@@ -34,6 +34,10 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     fetch_article(resolution, community.slug)
   end
 
+  def call(%{arguments: %{thread_id: thread_id}} = resolution, :thread) do
+    fetch_thread(resolution, thread_id)
+  end
+
   def call(resolution, _), do: resolution
 
   defp fetch_community(%{arguments: arguments} = resolution, slug, community_key \\ :community) do
@@ -55,6 +59,16 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     case FrontDesk.info(:article, community, thread, inner_id) do
       {:ok, article} ->
         %{resolution | arguments: Map.put(arguments, :article, article)}
+
+      {:error, err_msg} ->
+        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+    end
+  end
+
+  defp fetch_thread(%{arguments: arguments} = resolution, thread_id) do
+    case FrontDesk.info(:thread, thread_id) do
+      {:ok, community} ->
+        %{resolution | arguments: Map.put(arguments, :thread, community)}
 
       {:error, err_msg} ->
         resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))

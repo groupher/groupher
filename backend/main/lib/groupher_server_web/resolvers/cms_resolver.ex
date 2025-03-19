@@ -240,13 +240,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def create_thread(_root, ~m(title slug index)a, _info),
     do: CMS.create_thread(~m(title slug index)a)
 
-  def set_thread(_root, ~m(community_id thread_id)a, _info) do
-    CMS.set_thread(%Community{id: community_id}, %Thread{id: thread_id})
-  end
+  def set_thread(_root, ~m(community thread)a, _info), do: CMS.set_thread(community, thread)
 
-  def unset_thread(_root, ~m(community_id thread_id)a, _info) do
-    CMS.unset_thread(%Community{id: community_id}, %Thread{id: thread_id})
-  end
+  def unset_thread(_root, ~m(community thread)a, _info), do: CMS.unset_thread(community, thread)
 
   # #######################
   # moderators ..

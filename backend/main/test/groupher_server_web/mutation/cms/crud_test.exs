@@ -403,8 +403,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     @query """
-    mutation($communityId: ID!, $threadId: ID!){
-      setThread(communityId: $communityId, threadId: $threadId) {
+    mutation($community: String!, $threadId: ID!){
+      setThread(community: $community, threadId: $threadId) {
         id
         threads {
           title
@@ -412,11 +412,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
+    @tag :wip
     test "auth user can add thread to community", ~m(user community)a do
       title = "other"
       slug = "OTHER"
       {:ok, thread} = CMS.create_thread(~m(title slug)a)
-      variables = %{threadId: thread.id, communityId: community.id}
+      variables = %{threadId: thread.id, community: community.slug}
 
       passport_rules = %{community.title => %{"thread.set" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
@@ -428,8 +429,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     @query """
-    mutation($communityId: ID!, $threadId: ID!){
-      unsetThread(communityId: $communityId, threadId: $threadId) {
+    mutation($community: String!, $threadId: ID!){
+      unsetThread(community: $community, threadId: $threadId) {
         id
         threads {
           title
@@ -437,12 +438,13 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
+    @tag :wip
     test "auth user can remove thread from community", ~m(user community thread)a do
       CMS.set_thread(community, thread)
       {:ok, found_community} = Community |> ORM.find(community.id, preload: :threads)
 
       assert found_community.threads |> Enum.any?(&(&1.thread_id == thread.id))
-      variables = %{threadId: thread.id, communityId: community.id}
+      variables = %{threadId: thread.id, community: community.slug}
 
       passport_rules = %{community.title => %{"thread.unset" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)

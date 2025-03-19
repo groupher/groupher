@@ -9,7 +9,7 @@ defmodule GroupherServer.FrontDesk do
   alias GroupherServer.CMS.Model.Community
   alias Helper.ORM
   alias GroupherServer.CMS
-  alias CMS.Model.{Community}
+  alias CMS.Model.{Community, Thread}
 
   def info(:community, slug) when is_binary(slug) do
     ORM.find_by(Community, %{slug: slug})
@@ -17,5 +17,9 @@ defmodule GroupherServer.FrontDesk do
 
   def info(:article, community, thread, inner_id) when is_binary(community) do
     ORM.find_article(community, thread, inner_id)
+  end
+
+  def info(:thread, thread_id) do
+    ORM.find(Thread, thread_id)
   end
 end

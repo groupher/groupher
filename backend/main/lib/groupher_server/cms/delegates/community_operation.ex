@@ -49,8 +49,9 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   set to thread to a community
   """
-  def set_thread(%Community{id: community_id}, %Thread{id: thread_id}) do
-    with {:ok, community_thread} <- CommunityThread |> ORM.create(~m(community_id thread_id)a) do
+  def set_thread(%Community{} = community, %Thread{} = thread) do
+    with {:ok, community_thread} <-
+           ORM.create(CommunityThread, %{community_id: community.id, thread_id: thread.id}) do
       Community |> ORM.find(community_thread.community_id)
     end
   end
@@ -58,9 +59,9 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   unset to thread to a community
   """
-  def unset_thread(%Community{id: community_id}, %Thread{id: thread_id}) do
+  def unset_thread(%Community{} = community, %Thread{} = thread) do
     with {:ok, community_thread} <-
-           CommunityThread |> ORM.findby_delete!(~m(community_id thread_id)a) do
+           ORM.findby_delete!(CommunityThread, %{community_id: community.id, thread_id: thread.id}) do
       Community |> ORM.find(community_thread.community_id)
     end
   end
