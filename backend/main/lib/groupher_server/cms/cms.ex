@@ -160,8 +160,8 @@ defmodule GroupherServer.CMS do
   defdelegate move_to_blackhole(target_community, article, article_ids), to: ArticleCommunity
   defdelegate move_to_blackhole(target_community, article), to: ArticleCommunity
 
-  defdelegate mirror_to_home(home_community, article), to: ArticleCommunity
-  defdelegate mirror_to_home(home_community, article, article_ids), to: ArticleCommunity
+  defdelegate mirror_to_home(target_community, article), to: ArticleCommunity
+  defdelegate mirror_to_home(target_community, article, article_ids), to: ArticleCommunity
 
   defdelegate emotion_to_article(thread, article_id, args, user), to: ArticleEmotion
   defdelegate undo_emotion_to_article(thread, article_id, args, user), to: ArticleEmotion

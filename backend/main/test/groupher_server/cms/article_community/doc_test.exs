@@ -6,12 +6,16 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
   setup do
     {community, doc, _, user} = mock_article(:doc)
     {:ok, user2} = db_insert(:user)
+
+    {:ok, home_community} = mock_community(user, %{slug: "home"})
+    {:ok, blackhole} = mock_community(user, %{slug: "blackhole"})
+
     {:ok, community2} = mock_community()
     {:ok, community3} = mock_community()
 
     doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
-    {:ok, ~m(user user2 community community2 community3 doc doc_attrs)a}
+    {:ok, ~m(user user2 community community2 community3 home_community blackhole doc doc_attrs)a}
   end
 
   describe "[article mirror/move]" do
@@ -102,6 +106,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert exist_in?(article_tag2, doc.article_tags)
     end
 
+    @tag :wip
     test "doc can be mirror to other community",
          ~m(user community community2 doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -195,13 +200,12 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert reason |> is_error?(:mirror_article)
     end
 
-    test "doc can be mirror to home", ~m(community doc_attrs user)a do
-      {:ok, home_community} = mock_community(user, %{slug: "home"})
-
+    @tag :wip
+    test "doc can be mirror to home", ~m(community home_community doc_attrs user)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert doc.original_community_id == community.id
 
-      {:ok, _} = CMS.mirror_to_home(:doc, doc.id)
+      {:ok, _} = CMS.mirror_to_home(home_community, doc)
 
       {:ok, doc} =
         ORM.find(Doc, doc.id, preload: [:original_community, :communities])
@@ -225,9 +229,8 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert paged_articles.total_count === 1
     end
 
-    test "doc can be mirror to home with tags", ~m(community doc_attrs user)a do
-      {:ok, home_community} = mock_community(user, %{slug: "home"})
-
+    @tag :wip
+    test "doc can be mirror to home with tags", ~m(community home_community doc_attrs user)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)
 
@@ -240,7 +243,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert doc.original_community_id == community.id
 
-      {:ok, _} = CMS.mirror_to_home(:doc, doc.id, [article_tag0.id, article_tag.id])
+      {:ok, _} = CMS.mirror_to_home(home_community, doc, [article_tag0.id, article_tag.id])
 
       {:ok, doc} =
         ORM.find(Doc, doc.id, preload: [:original_community, :communities, :article_tags])
@@ -268,56 +271,54 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Doc do
       assert paged_articles.total_count === 1
     end
 
-    test "doc can be move to blackhole", ~m(community doc_attrs user)a do
-      {:ok, blackhole_community} = db_insert(:community, %{slug: "blackhole"})
-
+    @tag :wip
+    test "doc can be move to blackhole", ~m(community blackhole doc_attrs user)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert doc.original_community_id == community.id
 
-      {:ok, _} = CMS.move_to_blackhole(:doc, doc.id)
+      {:ok, _} = CMS.move_to_blackhole(blackhole, doc)
 
       {:ok, doc} =
         ORM.find(Doc, doc.id, preload: [:original_community, :communities])
 
-      assert doc.original_community.id == blackhole_community.id
+      assert doc.original_community.id == blackhole.id
       assert doc.communities |> length == 1
 
-      assert exist_in?(blackhole_community, doc.communities)
+      assert exist_in?(blackhole, doc.communities)
 
-      filter = %{page: 1, size: 10, community: blackhole_community.slug}
+      filter = %{page: 1, size: 10, community: blackhole.slug}
       {:ok, paged_articles} = CMS.paged_articles(:doc, filter)
 
       assert exist_in?(doc, paged_articles.entries)
       assert paged_articles.total_count === 1
     end
 
-    test "doc can be move to blackhole with tags", ~m(community doc_attrs user)a do
-      {:ok, blackhole_community} = db_insert(:community, %{slug: "blackhole"})
-
+    @tag :wip
+    test "doc can be move to blackhole with tags", ~m(community blackhole doc_attrs user)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)
 
       {:ok, article_tag0} =
-        CMS.create_article_tag(blackhole_community, :doc, article_tag_attrs0, user)
+        CMS.create_article_tag(blackhole, :doc, article_tag_attrs0, user)
 
       {:ok, article_tag} =
-        CMS.create_article_tag(blackhole_community, :doc, article_tag_attrs, user)
+        CMS.create_article_tag(blackhole, :doc, article_tag_attrs, user)
 
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       {:ok, _} = CMS.set_article_tag(:doc, doc.id, article_tag0.id)
 
       assert doc.original_community_id == community.id
 
-      {:ok, _} = CMS.move_to_blackhole(:doc, doc.id, [article_tag.id])
+      {:ok, _} = CMS.move_to_blackhole(blackhole, doc, [article_tag.id])
 
       {:ok, doc} =
         ORM.find(Doc, doc.id, preload: [:original_community, :communities, :article_tags])
 
-      assert doc.original_community.id == blackhole_community.id
+      assert doc.original_community.id == blackhole.id
       assert doc.communities |> length == 1
       assert doc.article_tags |> length == 1
 
-      assert exist_in?(blackhole_community, doc.communities)
+      assert exist_in?(blackhole, doc.communities)
       assert exist_in?(article_tag, doc.article_tags)
     end
   end
