@@ -11,14 +11,15 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
 
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
 
     {:ok, ~m(user community  community_attrs)a}
   end
 
   describe "[community dashboard base info]" do
-    test "created community should have default dashboard.", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "created community should have default dashboard.", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
       assert find_community.dashboard.base_info.homepage == @default_dashboard.base_info.homepage
@@ -32,8 +33,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert not is_nil(find_community.dashboard)
     end
 
-    test "can update base info in community dashboard", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "can update base info in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :base_info, %{
@@ -47,8 +49,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert find_community.dashboard.base_info.slug == "groupher"
     end
 
-    test "update baseinfo should update community's related fields", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "update base info should update community's related fields", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :base_info, %{
@@ -62,8 +65,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert community.slug == "new slug"
     end
 
-    test "update baseinfo logo should remove _tmp prefix", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "update base info logo should remove _tmp prefix", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :base_info, %{
@@ -77,9 +81,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert community.favicon == "ugc/2023-10-14/73l5_groupher.png"
     end
 
-    # test "update baseinfo logo should skip persist when not in ugc/_tmp prefix",
-    #      ~m(community_attrs)a do
-    #   {:ok, community} = CMS.create_community(community_attrs)
+    # test "update base info logo should skip persist when not in ugc/_tmp prefix",
+    #      ~m(community_attrs user)a do
+    #   {:ok, community} = CMS.create_community(community_attrs, user)
 
     #   {:ok, _} =
     #     CMS.update_dashboard(community.slug, :base_info, %{
@@ -93,8 +97,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
     #   assert community.dashboard.base_info.favicon == "ugc/2023-10-14/73l5_groupher.png"
     # end
 
-    test "can update seo in community dashboard", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "can update seo in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :seo, %{
@@ -108,8 +113,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert find_community.dashboard.seo.og_description == "forum sass provider"
     end
 
-    test "can update wallpaper in community dashboard", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "can update wallpaper in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :wallpaper, %{
@@ -125,8 +131,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert find_community.dashboard.wallpaper.has_blur == true
     end
 
-    test "can update layout in community dashboard", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "can update layout in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :layout, %{
@@ -140,8 +147,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert find_community.dashboard.layout.changelog_layout == "full"
     end
 
-    test "can update rss in community dashboard", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "can update rss in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :rss, %{
@@ -155,8 +163,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert find_community.dashboard.rss.rss_feed_count == 25
     end
 
-    test "can update alias in community dashboard", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "can update alias in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :name_alias, [
@@ -178,8 +187,10 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert first.group == "group"
     end
 
-    test "should overwirte all alias in community dashboard everytime", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "should overwrite all alias in community dashboard every time",
+         ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :name_alias, [
@@ -224,8 +235,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert third.slug == "raw3"
     end
 
-    test "can update header links in community dashboard", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "can update header links in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :header_links, [
@@ -250,9 +262,10 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert first.group_index == 1
     end
 
-    test "should overwirte all header links in community dashboard everytime",
-         ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "should overwrite all header links in community dashboard every time",
+         ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :header_links, [
@@ -307,8 +320,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert third.title == "title3"
     end
 
-    test "can update footer links in community dashboard", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "can update footer links in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :footer_links, [
@@ -331,9 +345,10 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert first.group == "group"
     end
 
-    test "should overwirte all footer links in community dashboard everytime",
-         ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "should overwrite all footer links in community dashboard every time",
+         ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :footer_links, [
@@ -386,8 +401,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert third.group_index == 3
     end
 
-    test "can update media reports in community dashboard", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "can update media reports in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :media_reports, [
@@ -409,9 +425,10 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert first.url == "https://whatever.com"
     end
 
-    test "should overwirte all media reportss in community dashboard everytime",
-         ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "should overwrite all media reports in community dashboard every time",
+         ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :media_reports, [
@@ -453,8 +470,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert first.title == "report title 2"
     end
 
-    test "can update faqs in community dashboard", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "can update faqs in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :faqs, [
@@ -473,9 +491,10 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert first.body == "this is body"
     end
 
-    test "should overwirte all faqs in community dashboard everytime",
-         ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "should overwrite all faqs in community dashboard every time",
+         ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :faqs, [
@@ -518,8 +537,9 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert third.body == "this is body"
     end
 
-    test "can update social links in community dashboard", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "can update social links in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :social_links, [
@@ -537,9 +557,10 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert first.link == "https://link.com"
     end
 
-    test "should overwirte all social links in community dashboard everytime",
-         ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    @tag :wip
+    test "should overwrite all social links in community dashboard every time",
+         ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
         CMS.update_dashboard(community.slug, :social_links, [

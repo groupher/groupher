@@ -37,9 +37,10 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert updated["markDelete"] == true
     end
 
+    @tag :wip
     test "mark delete blog should update blog's communities meta count", ~m(user)a do
-      community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community)
+      {:ok, community} = CMS.create_community(community_attrs, user)
       {:ok, blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 
       {:ok, community} = ORM.find(Community, community.id)
@@ -86,9 +87,10 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert updated["markDelete"] == false
     end
 
+    @tag :wip
     test "undo mark delete blog should update blog's communities meta count", ~m(user)a do
-      community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community)
+      {:ok, community} = CMS.create_community(community_attrs, user)
       {:ok, blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 
       {:ok, _} = CMS.mark_delete_article(:blog, blog.id)

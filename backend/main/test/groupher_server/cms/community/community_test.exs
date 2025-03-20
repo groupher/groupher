@@ -20,9 +20,10 @@ defmodule GroupherServer.Test.CMS.Community do
   end
 
   describe "[cms community curd]" do
+    @tag :wip
     test "new created community should have default threads & locale", ~m(user)a do
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, all_threads} =
         ORM.find_all(CommunityThread, %{page: 1, size: 20, community_id: community.id})
@@ -35,9 +36,10 @@ defmodule GroupherServer.Test.CMS.Community do
       assert community.threads |> length == 5
     end
 
+    @tag :wip
     test "deleted community should delete all related threads", ~m(user)a do
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, all_threads} =
         ORM.find_all(CommunityThread, %{page: 1, size: 20, community_id: community.id})
@@ -52,9 +54,10 @@ defmodule GroupherServer.Test.CMS.Community do
       assert all_threads.total_count == 0
     end
 
+    @tag :wip
     test "deleted community should delete all related articles", ~m(user)a do
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -81,12 +84,13 @@ defmodule GroupherServer.Test.CMS.Community do
       {:error, _} = ORM.find(Blog, blog.id)
     end
 
+    @tag :wip
     test "deleted community should delete post also belongs to other community", ~m(user)a do
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      community2_attrs = mock_attrs(:community, %{slug: "ts", user_id: user.id})
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      community2_attrs = mock_attrs(:community, %{slug: "ts"})
 
-      {:ok, community} = CMS.create_community(community_attrs)
-      {:ok, community2} = CMS.create_community(community2_attrs)
+      {:ok, community} = CMS.create_community(community_attrs, user)
+      {:ok, community2} = CMS.create_community(community2_attrs, user)
 
       post_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -99,13 +103,14 @@ defmodule GroupherServer.Test.CMS.Community do
       {:error, _} = ORM.find(Post, post.id)
     end
 
+    @tag :wip
     test "deleted community should not delete post when the mirrored community is deleted",
          ~m(user)a do
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      community2_attrs = mock_attrs(:community, %{slug: "ts", user_id: user.id})
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      community2_attrs = mock_attrs(:community, %{slug: "ts"})
 
-      {:ok, community} = CMS.create_community(community_attrs)
-      {:ok, community2} = CMS.create_community(community2_attrs)
+      {:ok, community} = CMS.create_community(community_attrs, user)
+      {:ok, community2} = CMS.create_community(community2_attrs, user)
 
       post_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -138,9 +143,10 @@ defmodule GroupherServer.Test.CMS.Community do
     #   assert {:ok, _} = CMS.read_community(community.slug)
     # end
 
+    @tag :wip
     test "apply community can set root user by default", ~m(user)a do
-      attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, community} = CMS.apply_community(attrs)
+      attrs = mock_attrs(:community)
+      {:ok, community} = CMS.apply_community(attrs, user)
 
       {:ok, community} = ORM.find(Community, community.id, preload: [moderators: :user])
       moderator_user = community.moderators |> Enum.at(0)
@@ -148,17 +154,19 @@ defmodule GroupherServer.Test.CMS.Community do
       assert moderator_user.user_id == user.id
     end
 
+    @tag :wip
     test "apply can be deny", ~m(user)a do
-      attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, community} = CMS.apply_community(attrs)
+      attrs = mock_attrs(:community)
+      {:ok, community} = CMS.apply_community(attrs, user)
       {:ok, community} = CMS.deny_community_apply(community.id)
 
       {:error, _} = ORM.find(Community, community.id)
     end
 
+    @tag :wip
     test "user can query has pending apply or not", ~m(user user2)a do
-      attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, _community} = CMS.apply_community(attrs)
+      attrs = mock_attrs(:community)
+      {:ok, _community} = CMS.apply_community(attrs, user)
 
       {:ok, state} = CMS.has_pending_community_apply?(user)
       assert state.exist

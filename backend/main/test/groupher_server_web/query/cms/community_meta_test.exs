@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
     guest_conn = simu_conn(:guest)
     {:ok, user} = db_insert(:user)
 
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
 
     {:ok, ~m(guest_conn community_attrs user)a}
   end
@@ -27,9 +27,10 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
       }
     }
     """
+    @tag :wip
     test "community have valid [thread]s_count in meta info",
          ~m(guest_conn community_attrs user)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} = CMS.create_article(community, :post, mock_attrs(:post), user)
       {:ok, _} = CMS.create_article(community, :post, mock_attrs(:post), user)

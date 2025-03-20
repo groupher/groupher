@@ -10,8 +10,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
 
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-    {:ok, community} = CMS.create_community(community_attrs)
+    community_attrs = mock_attrs(:community)
+    {:ok, community} = CMS.create_community(community_attrs, user)
 
     {:ok, ~m(guest_conn community user user2)a}
   end
@@ -52,6 +52,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
+    @tag :wip
     test "can check if a community is exist", ~m(user)a do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
 
@@ -65,8 +66,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       assert not check_state["exist"]
 
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      {:ok, _community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      {:ok, _community} = CMS.create_community(community_attrs, user)
 
       check_state =
         rule_conn
@@ -413,10 +414,11 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
+    @tag :wip
     test "user can get community info without args fails", ~m(guest_conn user)a do
-      community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+      community_attrs = mock_attrs(:community)
 
-      {:ok, community} = CMS.create_community(community_attrs)
+      {:ok, community} = CMS.create_community(community_attrs, user)
       {:ok, _} = CMS.update_dashboard(community.slug, :seo, %{og_title: "groupher"})
       {:ok, _} = CMS.update_dashboard(community.slug, :layout, %{post_layout: "new layout"})
 

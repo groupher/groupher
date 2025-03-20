@@ -435,15 +435,15 @@ defmodule GroupherServer.Support.Factory do
 
   def mock_community() do
     {:ok, user} = db_insert(:user)
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
 
-    CMS.create_community(community_attrs)
+    CMS.create_community(community_attrs, user)
   end
 
   def mock_community(%User{} = user, attrs \\ %{}) do
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id}) |> Map.merge(attrs)
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user: user}) |> Map.merge(attrs)
 
-    CMS.create_community(community_attrs)
+    CMS.create_community(community_attrs, user)
   end
 
   @doc """
@@ -452,8 +452,8 @@ defmodule GroupherServer.Support.Factory do
   def mock_article(thread) do
     {:ok, user} = db_insert(:user)
 
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-    {:ok, community} = CMS.create_community(community_attrs)
+    community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
+    {:ok, community} = CMS.create_community(community_attrs, user)
 
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
     {:ok, article} = CMS.create_article(community, thread, attrs, user)

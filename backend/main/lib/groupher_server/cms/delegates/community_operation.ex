@@ -103,26 +103,32 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   set a community moderator
   """
-  def add_moderator(community_slug, role, %User{} = user, %User{} = cur_user) do
-    with {:ok, community} <- ORM.find_community(community_slug),
-         {:ok, true} <- user_is_root?(community, cur_user) do
+  def add_moderator(%Community{} = community, role, %User{} = target_user, %User{} = cur_user) do
+    community = Repo.preload(community, :moderators)
+
+    with {:ok, true} <- user_is_root?(community, cur_user) do
       Multi.new()
       |> Multi.insert(
         :insert_moderator,
         CommunityModerator.changeset(%CommunityModerator{}, %{
-          user_id: user.id,
+          user_id: target_user.id,
           community_id: community.id,
           role: role
         })
       )
       |> Multi.run(:update_community_count, fn _, _ ->
-        CommunityCRUD.update_community_count_field(community, user, :moderators_count, :inc)
+        CommunityCRUD.update_community_count_field(
+          community,
+          target_user,
+          :moderators_count,
+          :inc
+        )
       end)
       |> Multi.run(:stamp_passport, fn _, %{insert_moderator: community_moderator} ->
         rules = Certification.passport_rules(cms: role)
 
-        update_passport_item_count(community_moderator, community_slug, user.id, rules)
-        PassportCRUD.stamp_passport(rules, user)
+        update_passport_item_count(community_moderator, community, target_user, rules)
+        PassportCRUD.stamp_passport(rules, target_user)
       end)
       |> Repo.transaction()
       |> result()

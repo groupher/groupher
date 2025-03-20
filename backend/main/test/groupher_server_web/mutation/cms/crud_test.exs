@@ -480,6 +480,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
+    @tag :wip2
     test "auth user can add moderator to community", ~m(user user2 community)a do
       role = "moderator"
 

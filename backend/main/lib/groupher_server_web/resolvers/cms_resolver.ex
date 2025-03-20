@@ -32,8 +32,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def create_community(_root, args, %{context: %{cur_user: user}}) do
-    args = args |> Map.merge(%{user_id: user.id})
-    CMS.create_community(args)
+    CMS.create_community(args, user)
   end
 
   def update_community(_root, args, _info) do
@@ -258,9 +257,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def add_moderator(_root, ~m(community user role)a, %{context: %{cur_user: cur_user}}) do
-    with {:ok, target_user} <- ORM.find_user(user) do
-      CMS.add_moderator(community, role, %User{id: target_user.id}, cur_user)
-    end
+    CMS.add_moderator(community, role, user, cur_user)
   end
 
   def remove_moderator(_root, ~m(community user)a, %{context: %{cur_user: cur_user}}) do

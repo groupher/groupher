@@ -36,9 +36,9 @@ defmodule GroupherServer.CMS do
 
   defdelegate paged_communities(filter, user), to: CommunityCRUD
   defdelegate paged_communities(filter), to: CommunityCRUD
-  defdelegate create_community(args), to: CommunityCRUD
+  defdelegate create_community(args, user), to: CommunityCRUD
   defdelegate delete_community(community), to: CommunityCRUD
-  defdelegate apply_community(args), to: CommunityCRUD
+  defdelegate apply_community(args, user), to: CommunityCRUD
   defdelegate update_community(community, args), to: CommunityCRUD
   defdelegate update_dashboard(community, key, args), to: CommunityCRUD
   defdelegate approve_community_apply(community), to: CommunityCRUD
@@ -75,7 +75,7 @@ defmodule GroupherServer.CMS do
   defdelegate set_category(community, category), to: CommunityOperation
   defdelegate unset_category(community, category), to: CommunityOperation
   # >> moderator
-  defdelegate add_moderator(community, role, user, cur_user), to: CommunityOperation
+  defdelegate add_moderator(community, role, target_user, cur_user), to: CommunityOperation
   defdelegate remove_moderator(community, user, cur_user), to: CommunityOperation
   defdelegate update_moderator_passport(community, role, user, cur_user), to: CommunityOperation
 

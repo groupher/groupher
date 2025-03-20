@@ -76,9 +76,9 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   create a community
   """
-  def create_community(args) do
-    with {:ok, community} <- do_create_community(args),
-         {:ok, _} <- init_community_root(community.slug, args.user_id),
+  def create_community(args, %User{} = user) do
+    with {:ok, community} <- do_create_community(args, user),
+         {:ok, _} <- init_community_root(community, user),
          {:ok, threads} = create_default_threads_ifneed() do
       Enum.each(threads, fn thread ->
         CMS.set_thread(community, thread)
@@ -94,8 +94,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
-  defp do_create_community(%{user_id: user_id} = args) do
-    with {:ok, author} <- ensure_author_exists(%User{id: user_id}) do
+  defp do_create_community(args, %User{} = user) do
+    with {:ok, author} <- ensure_author_exists(%User{id: user.id}) do
       args =
         args |> Map.merge(%{user_id: author.user_id}) |> Map.merge(@default_community_settings)
 
@@ -103,8 +103,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
-  defp init_community_root(community_slug, user_id, role \\ "root") do
-    CMS.add_moderator(community_slug, role, %User{id: user_id}, %User{id: user_id})
+  defp init_community_root(%Community{} = community, %User{} = user, role \\ "root") do
+    CMS.add_moderator(community, role, user, user)
   end
 
   def create_default_threads_ifneed() do
@@ -218,8 +218,9 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     |> done
   end
 
-  def apply_community(args) do
-    with {:ok, community} <- create_community(Map.merge(args, %{pending: @community_applying})) do
+  def apply_community(args, %User{} = user) do
+    with {:ok, community} <-
+           create_community(Map.merge(args, %{pending: @community_applying}), user) do
       apply_msg = Map.get(args, :apply_msg, "")
       apply_category = Map.get(args, :apply_category, @default_apply_category)
 
