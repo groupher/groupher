@@ -24,7 +24,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-    @tag :wip
     test "can check if user has pending apply", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
@@ -53,7 +52,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-    @tag :wip
     test "can check if a community is exist", ~m(user)a do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
 
@@ -415,7 +413,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-    @tag :wip
     test "user can get community info without args fails", ~m(guest_conn user)a do
       community_attrs = mock_attrs(:community)
 
@@ -460,7 +457,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-    @tag :wip
     test "guest can get moderators count of a community", ~m(guest_conn community user)a do
       role = "moderator"
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
@@ -488,7 +484,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-    @tag :wip
     test "guest user can get paged moderators", ~m(guest_conn user community)a do
       role = "moderator"
       {:ok, users} = db_insert_multi(:user, 25)

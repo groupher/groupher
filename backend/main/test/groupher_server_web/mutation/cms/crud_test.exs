@@ -278,7 +278,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip
     test "update community with valid attrs", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
       variables = %{community: community.slug, title: "new title"}
@@ -291,7 +290,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert updated["title"] == variables.title
     end
 
-    @tag :wip2
     test "update community with empty attrs return the same", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
       variables = %{community: community.slug}
@@ -413,7 +411,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip
     test "auth user can add thread to community", ~m(user community)a do
       title = "other"
       slug = "OTHER"
@@ -439,7 +436,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip
     test "auth user can remove thread from community", ~m(user community thread)a do
       CMS.set_thread(community, thread)
       {:ok, found_community} = Community |> ORM.find(community.id, preload: :threads)
@@ -482,7 +478,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip
     test "auth user can add moderator to community", ~m(user user2 community)a do
       role = "moderator"
 
@@ -503,7 +498,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip
     test "auth user can unset moderator AND passport from community", ~m(user community user2)a do
       role = "moderator"
 
@@ -604,7 +598,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip
     test "login user can subscribe community", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
@@ -614,7 +607,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert created["id"] == to_string(community.id)
     end
 
-    @tag :wip
     test "subscribe should update user's subscribed count", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
@@ -626,7 +618,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert user.subscribed_communities_count == 1
     end
 
-    @tag :wip
     test "login user subscribe non-exist community fails", ~m(user)a do
       login_conn = simu_conn(:user, user)
       variables = %{community: non_exist_slug()}
@@ -634,14 +625,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert login_conn |> mutation_get_error?(@subscribe_query, variables, ecode(:not_exist))
     end
 
-    @tag :wip
     test "guest user subscribe community fails", ~m(guest_conn community)a do
       variables = %{community: community.slug}
 
       assert guest_conn |> mutation_get_error?(@subscribe_query, variables, ecode(:account_login))
     end
 
-    @tag :wip
     test "subscribed community should inc it's own geo info", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
@@ -662,7 +651,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip
     test "login user can unsubscribe community", ~m(user community)a do
       {:ok, cur_subscribers} =
         CMS.community_members(:subscribers, community, %{page: 1, size: 10})
@@ -689,7 +677,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert false == cur_subscribers.entries |> Enum.any?(&(&1.id == user.id))
     end
 
-    @tag :wip
     test "unsubscribe should update user's subscribed count", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
@@ -711,7 +698,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert user_conn |> mutation_get_error?(@unsubscribe_query, variables)
     end
 
-    @tag :wip
     test "guest user unsubscribe community fails", ~m(guest_conn community)a do
       variables = %{community: community.slug}
 
@@ -719,7 +705,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_get_error?(@unsubscribe_query, variables, ecode(:account_login))
     end
 
-    @tag :wip
     test "unsubscribed community should dec it's own geo info", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
@@ -767,7 +752,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip
     test "apply a community should have default root user", ~m(user_conn)a do
       variables = mock_attrs(:community, %{locale: "it"})
       created = user_conn |> mutation_result(@apply_community_query, variables, "applyCommunity")
@@ -789,7 +773,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip
     test "can approve a community apply2", ~m(user_conn)a do
       variables = mock_attrs(:community)
       created = user_conn |> mutation_result(@apply_community_query, variables, "applyCommunity")

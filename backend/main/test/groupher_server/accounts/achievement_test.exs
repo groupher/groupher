@@ -25,7 +25,6 @@ defmodule GroupherServer.Test.Accounts.Achievement do
       assert results.total_count == 0
     end
 
-    @tag :wip
     test "community moderator should get a editable community list",
          ~m(user user2 user3)a do
       community_attrs = mock_attrs(:community)

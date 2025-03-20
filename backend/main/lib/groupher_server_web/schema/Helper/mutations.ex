@@ -2,7 +2,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
   @moduledoc """
   general mutations used for articles
 
-  can not dedefine private macros, see:
+  can not define private macros, see:
   https://github.com/elixir-lang/elixir/issues/3887
 
   e.g:

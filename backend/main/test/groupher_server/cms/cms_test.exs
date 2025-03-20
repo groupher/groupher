@@ -101,7 +101,6 @@ defmodule GroupherServer.Test.CMS do
       assert {:error, _error} = CMS.create_thread(~m(title slug)a)
     end
 
-    @tag :wip
     test "can set a thread to community", ~m(community)a do
       title = "POST"
       slug = title
@@ -114,7 +113,6 @@ defmodule GroupherServer.Test.CMS do
   end
 
   describe "[cms community moderators]" do
-    @tag :wip
     test "should have infinite passport count of root", ~m(user user2 community)a do
       role = "root"
       cur_user = user
@@ -146,7 +144,6 @@ defmodule GroupherServer.Test.CMS do
       assert moderator.passport_item_count == Certification.root_passport_item_count()
     end
 
-    @tag :wip
     test "should have passport count of community after add moderator",
          ~m(user user2 community)a do
       role = "moderator"
@@ -202,7 +199,6 @@ defmodule GroupherServer.Test.CMS do
       assert moderator.passport_item_count == default_passport_item_count + 2
     end
 
-    @tag :wip
     test "can update passport of community moderator", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
@@ -224,7 +220,6 @@ defmodule GroupherServer.Test.CMS do
       assert get_in(passport, ["#{community.slug}", "post.tag.edit"])
     end
 
-    @tag :wip
     test "can not update passport of other community moderator", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
@@ -244,7 +239,6 @@ defmodule GroupherServer.Test.CMS do
       assert reason[:code] == ecode(:passport_community_not_match)
     end
 
-    @tag :wip
     test "can not update multi community passport", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
@@ -267,7 +261,6 @@ defmodule GroupherServer.Test.CMS do
       assert reason[:code] == ecode(:one_community_only)
     end
 
-    @tag :wip
     test "can add multi moderators to a community", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
@@ -284,7 +277,6 @@ defmodule GroupherServer.Test.CMS do
       assert user2.id == moderator_user2.user_id
     end
 
-    @tag :wip
     test "can add moderator to a community, moderator has default passport",
          ~m(user user2 community)a do
       role = "moderator"
@@ -302,7 +294,6 @@ defmodule GroupherServer.Test.CMS do
       assert Map.equal?(related_rules, user_passport)
     end
 
-    @tag :wip
     test "user can get paged-moderators of a community", ~m(user community)a do
       {:ok, users} = db_insert_multi(:user, 25)
       role = "moderator"

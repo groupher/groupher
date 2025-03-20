@@ -66,7 +66,6 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       assert results |> is_valid_pagination?(:empty)
     end
 
-    @tag :wip
     test "can get user's  communities list when user is editor",
          ~m(guest_conn user user2 user3)a do
       community_attrs = mock_attrs(:community)

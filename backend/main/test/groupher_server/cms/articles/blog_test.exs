@@ -204,7 +204,6 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert not doc_last_year.meta.can_undo_sink
     end
 
-    @tag :wip2
     test "can sink a blog", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       assert not blog.meta.is_sinked
@@ -214,7 +213,6 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert blog.active_at == blog.inserted_at
     end
 
-    @tag :wip2
     test "can undo sink blog", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog} = CMS.sink_article(blog)
@@ -226,7 +224,6 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert blog.active_at == blog.meta.last_active_at
     end
 
-    @tag :wip2
     test "can not undo sink to old blog", ~m()a do
       {:ok, doc_last_year} = db_insert(:blog, %{title: "last year", inserted_at: @last_year})
 

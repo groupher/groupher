@@ -37,7 +37,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       assert updated["markDelete"] == true
     end
 
-    @tag :wip
     test "mark delete post should update post's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
@@ -87,7 +86,6 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       assert updated["markDelete"] == false
     end
 
-    @tag :wip
     test "undo mark delete post should update post's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)

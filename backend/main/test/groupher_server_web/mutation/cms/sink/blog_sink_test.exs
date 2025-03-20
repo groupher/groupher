@@ -12,7 +12,6 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
   end
 
   describe "[blog sink]" do
-    @tag :wip2
     test "login user can sink a blog", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"blog.sink" => true}}
@@ -26,7 +25,6 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       assert blog.active_at == blog.inserted_at
     end
 
-    @tag :wip2
     test "unauth user sink a blog fails", ~m(guest_conn community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 
@@ -41,7 +39,6 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       }
     }
     """
-    @tag :wip2
     test "login user can undo sink to a blog", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 
@@ -60,7 +57,6 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       assert not blog.meta.is_sinked
     end
 
-    @tag :wip2
     test "unauth user undo sink a blog fails", ~m(guest_conn community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 

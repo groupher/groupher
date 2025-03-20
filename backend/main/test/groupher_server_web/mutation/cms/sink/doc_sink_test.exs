@@ -12,7 +12,6 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
   end
 
   describe "[doc sink]" do
-    @tag :wip2
     test "login user can sink a doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"doc.sink" => true}}
@@ -26,7 +25,6 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       assert doc.active_at == doc.inserted_at
     end
 
-    @tag :wip2
     test "unauth user sink a doc fails", ~m(guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
@@ -41,7 +39,6 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       }
     }
     """
-    @tag :wip2
     test "login user can undo sink to a doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
@@ -56,7 +53,6 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       assert not doc.meta.is_sinked
     end
 
-    @tag :wip2
     test "unauth user undo sink a doc fails", ~m(guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 

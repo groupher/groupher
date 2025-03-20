@@ -220,7 +220,6 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert not changelog_last_year.meta.can_undo_sink
     end
 
-    @tag :wip2
     test "can sink a changelog", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       assert not changelog.meta.is_sinked
@@ -230,7 +229,6 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog.active_at == changelog.inserted_at
     end
 
-    @tag :wip2
     test "can undo sink changelog", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       {:ok, changelog} = CMS.sink_article(changelog)
@@ -242,7 +240,6 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog.active_at == changelog.meta.last_active_at
     end
 
-    @tag :wip2
     test "can not undo sink to old changelog", ~m()a do
       {:ok, changelog_last_year} =
         db_insert(:changelog, %{title: "last year", inserted_at: @last_year})

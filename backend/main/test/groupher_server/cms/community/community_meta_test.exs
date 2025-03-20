@@ -19,7 +19,6 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
   end
 
   describe "[article count meta]" do
-    @tag :wip
     test "created community should have default meta ", ~m(community_attrs user)a do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
@@ -27,7 +26,6 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
                @default_meta |> Map.merge(%{moderators_ids: [community.user_id]})
     end
 
-    @tag :wip
     test "update legacy community should add default meta" do
       {:ok, community} = db_insert(:community)
       assert is_nil(community.meta)
