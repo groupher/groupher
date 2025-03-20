@@ -687,10 +687,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert false == cur_subscribers.entries |> Enum.any?(&(&1.id == user.id))
     end
 
+    @tag :wip
     test "unsubscribe should update user's subscribed count", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
-      variables = %{communityId: community.id}
+      variables = %{community: community.slug}
       login_conn |> mutation_result(@subscribe_query, variables, "subscribeCommunity")
 
       {:ok, user} = ORM.find(User, user.id)
@@ -708,8 +709,9 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert user_conn |> mutation_get_error?(@unsubscribe_query, variables)
     end
 
+    @tag :wip
     test "guest user unsubscribe community fails", ~m(guest_conn community)a do
-      variables = %{communityId: community.id}
+      variables = %{community: community.slug}
 
       assert guest_conn
              |> mutation_get_error?(@unsubscribe_query, variables, ecode(:account_login))
