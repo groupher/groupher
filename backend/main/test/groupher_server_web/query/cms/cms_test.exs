@@ -420,19 +420,19 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       community_attrs = mock_attrs(:community)
 
       {:ok, community} = CMS.create_community(community_attrs, user)
-      {:ok, _} = CMS.update_dashboard(community.slug, :seo, %{og_title: "groupher"})
-      {:ok, _} = CMS.update_dashboard(community.slug, :layout, %{post_layout: "new layout"})
+      {:ok, _} = CMS.update_dashboard(community, :seo, %{og_title: "groupher"})
+      {:ok, _} = CMS.update_dashboard(community, :layout, %{post_layout: "new layout"})
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :layout, %{kanban_bg_colors: ["GREEN", "RED"]})
+        CMS.update_dashboard(community, :layout, %{kanban_bg_colors: ["GREEN", "RED"]})
 
-      {:ok, _} = CMS.update_dashboard(community.slug, :base_info, %{favicon: "new favicon"})
-
-      {:ok, _} =
-        CMS.update_dashboard(community.slug, :rss, %{rss_feed_type: "digest", rss_feed_count: 50})
+      {:ok, _} = CMS.update_dashboard(community, :base_info, %{favicon: "new favicon"})
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :name_alias, [%{slug: "slug 0", name: "name 0"}])
+        CMS.update_dashboard(community, :rss, %{rss_feed_type: "digest", rss_feed_count: 50})
+
+      {:ok, _} =
+        CMS.update_dashboard(community, :name_alias, [%{slug: "slug 0", name: "name 0"}])
 
       variables = %{slug: community.slug}
 

@@ -128,38 +128,29 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   update community
   """
-  def update_community(id, args) do
-    with {:ok, community} <- ORM.find(Community, id) do
-      case community.meta do
-        nil -> ORM.update(community, args |> Map.merge(%{meta: @default_meta}))
-        _ -> ORM.update(community, args)
-      end
+  def update_community(%Community{} = community, args) do
+    case community.meta do
+      nil -> ORM.update(community, args |> Map.merge(%{meta: @default_meta}))
+      _ -> ORM.update(community, args)
     end
   end
 
   @doc """
   update dashboard settings of a community
   """
-  def update_dashboard(community_slug, :base_info, args) do
+  def update_dashboard(%Community{} = community, :base_info, args) do
     main_fields =
       Map.take(args, [:title, :locale, :desc, :logo, :favicon, :slug, :homepage])
       |> OSS.persist_file(:logo)
       |> OSS.persist_file(:favicon)
 
-    with {:ok, community} <- ORM.find_by(Community, slug: community_slug),
-         {:ok, community} <- update_community_if_need(community, main_fields) do
+    with {:ok, community} <- update_community_if_need(community, main_fields) do
       do_update_dashboard(community, :base_info, Map.merge(args, main_fields))
     end
   end
 
   def update_dashboard(%Community{} = community, key, args) do
     do_update_dashboard(community, key, args)
-  end
-
-  def update_dashboard(community_slug, key, args) do
-    with {:ok, community} <- ORM.find_by(Community, slug: community_slug) do
-      do_update_dashboard(community, key, args)
-    end
   end
 
   # see https://elixirforum.com/t/pattern-match-on-empty-maps/33259/5

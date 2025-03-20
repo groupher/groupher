@@ -270,17 +270,18 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     @update_community_query """
-    mutation($id: ID!, $title: String, $desc: String, $logo: String) {
-      updateCommunity(id: $id, title: $title, desc: $desc, logo: $logo) {
+    mutation($community: String!, $title: String, $desc: String, $logo: String) {
+      updateCommunity(community: $community, title: $title, desc: $desc, logo: $logo) {
         id
         title
         desc
       }
     }
     """
+    @tag :wip
     test "update community with valid attrs", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
-      variables = %{id: community.id, title: "new title"}
+      variables = %{community: community.slug, title: "new title"}
 
       updated =
         rule_conn |> mutation_result(@update_community_query, variables, "updateCommunity")

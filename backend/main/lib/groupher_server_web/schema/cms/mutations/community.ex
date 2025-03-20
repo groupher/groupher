@@ -1,6 +1,6 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
   @moduledoc """
-  CMS mations for community
+  CMS methods for community
   """
   use Helper.GqlSchemaSuite
 
@@ -22,7 +22,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "update a community"
     field :update_community, :community do
-      arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:title, :string)
       arg(:desc, :string)
       arg(:slug, :string)
@@ -31,6 +31,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, claim: "cms->community.update")
+      middleware(M.FrontDesk, :community)
 
       resolve(&R.CMS.update_community/3)
     end

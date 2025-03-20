@@ -35,8 +35,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.create_community(args, user)
   end
 
-  def update_community(_root, args, _info) do
-    CMS.update_community(args.id, args)
+  def update_community(_root, %{community: community} = args, _info) do
+    CMS.update_community(community, args)
   end
 
   def update_dashboard(_root, %{dashboard_section: key, community: community} = args, _info) do

@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :base_info, %{
+        CMS.update_dashboard(community, :base_info, %{
           homepage: "https://groupher.com",
           slug: "groupher"
         })
@@ -54,7 +54,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :base_info, %{
+        CMS.update_dashboard(community, :base_info, %{
           title: "new title",
           slug: "new slug"
         })
@@ -70,7 +70,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :base_info, %{
+        CMS.update_dashboard(community, :base_info, %{
           logo: "ugc/_tmp/2023-10-14/73l5_groupher.png",
           favicon: "ugc/_tmp/2023-10-14/73l5_groupher.png"
         })
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
     #   {:ok, community} = CMS.create_community(community_attrs, user)
 
     #   {:ok, _} =
-    #     CMS.update_dashboard(community.slug, :base_info, %{
+    #     CMS.update_dashboard(community, :base_info, %{
     #       logo: "ugc/2023-10-14/73l5_groupher.png",
     #       favicon: "ugc/2023-10-14/73l5_groupher.png"
     #     })
@@ -102,7 +102,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :seo, %{
+        CMS.update_dashboard(community, :seo, %{
           og_title: "groupher",
           og_description: "forum sass provider"
         })
@@ -118,7 +118,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :wallpaper, %{
+        CMS.update_dashboard(community, :wallpaper, %{
           wallpaper_type: "custom",
           wallpaper: "orange",
           has_blur: true
@@ -136,7 +136,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :layout, %{
+        CMS.update_dashboard(community, :layout, %{
           post_layout: "upvote_first",
           changelog_layout: "full"
         })
@@ -152,7 +152,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :rss, %{
+        CMS.update_dashboard(community, :rss, %{
           rss_feed_type: "full",
           rss_feed_count: 25
         })
@@ -168,7 +168,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :name_alias, [
+        CMS.update_dashboard(community, :name_alias, [
           %{
             slug: "slug",
             name: "name",
@@ -193,7 +193,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :name_alias, [
+        CMS.update_dashboard(community, :name_alias, [
           %{
             slug: "slug",
             name: "name",
@@ -219,7 +219,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert second.slug == "raw2"
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :name_alias, [
+        CMS.update_dashboard(community, :name_alias, [
           %{
             slug: "raw3",
             name: "name3",
@@ -240,7 +240,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :header_links, [
+        CMS.update_dashboard(community, :header_links, [
           %{
             title: "title",
             link: "link",
@@ -268,7 +268,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :header_links, [
+        CMS.update_dashboard(community, :header_links, [
           %{
             title: "title",
             link: "link",
@@ -302,7 +302,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert second.group_index == 2
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :header_links, [
+        CMS.update_dashboard(community, :header_links, [
           %{
             title: "title3",
             link: "link3",
@@ -325,7 +325,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :footer_links, [
+        CMS.update_dashboard(community, :footer_links, [
           %{
             title: "title",
             link: "link",
@@ -351,7 +351,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :footer_links, [
+        CMS.update_dashboard(community, :footer_links, [
           %{
             title: "title",
             link: "link",
@@ -381,7 +381,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert second.title == "title2"
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :footer_links, [
+        CMS.update_dashboard(community, :footer_links, [
           %{
             title: "title3",
             link: "link3",
@@ -406,7 +406,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :media_reports, [
+        CMS.update_dashboard(community, :media_reports, [
           %{
             title: "report title",
             favicon: "https://favicon.com",
@@ -431,7 +431,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :media_reports, [
+        CMS.update_dashboard(community, :media_reports, [
           %{
             title: "report title",
             favicon: "https://favicon.com",
@@ -447,7 +447,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert first.title == "report title"
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :media_reports, [
+        CMS.update_dashboard(community, :media_reports, [
           %{
             title: "report title 2",
             favicon: "https://favicon.com",
@@ -475,7 +475,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :faqs, [
+        CMS.update_dashboard(community, :faqs, [
           %{
             title: "xx is yy ?",
             index: 0,
@@ -497,7 +497,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :faqs, [
+        CMS.update_dashboard(community, :faqs, [
           %{
             title: "xx is yy ?",
             index: 0,
@@ -521,7 +521,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert second.title == "xx is yy 2 ?"
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :faqs, [
+        CMS.update_dashboard(community, :faqs, [
           %{
             title: "xx is zz ?",
             index: 0,
@@ -542,7 +542,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :social_links, [
+        CMS.update_dashboard(community, :social_links, [
           %{
             type: "twitter",
             link: "https://link.com"
@@ -563,7 +563,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :social_links, [
+        CMS.update_dashboard(community, :social_links, [
           %{
             type: "twitter",
             link: "https://link.com"
@@ -585,7 +585,7 @@ defmodule GroupherServer.Test.Community.CommunityDashboard do
       assert second.type == "zhihu"
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :social_links, [
+        CMS.update_dashboard(community, :social_links, [
           %{
             type: "wechat",
             link: "https://wechat.com"
