@@ -61,8 +61,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def delete_community(_root, %{id: id}, _info), do: Community |> ORM.find_delete!(id)
 
   def apply_community(_root, args, %{context: %{cur_user: user}}) do
-    args = args |> Map.merge(%{user_id: user.id})
-    CMS.apply_community(args)
+    CMS.apply_community(args, user)
   end
 
   def approve_community_apply(_root, %{community: community}, _) do

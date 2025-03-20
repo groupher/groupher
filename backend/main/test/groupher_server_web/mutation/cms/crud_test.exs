@@ -624,23 +624,26 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert user.subscribed_communities_count == 1
     end
 
+    @tag :wip
     test "login user subscribe non-exist community fails", ~m(user)a do
       login_conn = simu_conn(:user, user)
-      variables = %{communityId: non_exist_id()}
+      variables = %{community: non_exist_slug()}
 
-      assert login_conn |> mutation_get_error?(@subscribe_query, variables, ecode(:changeset))
+      assert login_conn |> mutation_get_error?(@subscribe_query, variables, ecode(:not_exist))
     end
 
+    @tag :wip
     test "guest user subscribe community fails", ~m(guest_conn community)a do
-      variables = %{communityId: community.id}
+      variables = %{community: community.slug}
 
       assert guest_conn |> mutation_get_error?(@subscribe_query, variables, ecode(:account_login))
     end
 
+    @tag :wip
     test "subscribed community should inc it's own geo info", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
-      variables = %{communityId: community.id}
+      variables = %{community: community.slug}
       _created = login_conn |> mutation_result(@subscribe_query, variables, "subscribeCommunity")
       {:ok, community} = Community |> ORM.find(community.id)
 
@@ -651,27 +654,28 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     @unsubscribe_query """
-    mutation($communityId: ID!){
-      unsubscribeCommunity(communityId: $communityId) {
+    mutation($community: String!){
+      unsubscribeCommunity(community: $community) {
         id
       }
     }
     """
+    @tag :wip
     test "login user can unsubscribe community", ~m(user community)a do
       {:ok, cur_subscribers} =
-        CMS.community_members(:subscribers, %Community{id: community.id}, %{page: 1, size: 10})
+        CMS.community_members(:subscribers, community, %{page: 1, size: 10})
 
       assert false == cur_subscribers.entries |> Enum.any?(&(&1.id == user.id))
 
       {:ok, record} = CMS.subscribe_community(community, user)
 
       {:ok, cur_subscribers} =
-        CMS.community_members(:subscribers, %Community{id: community.id}, %{page: 1, size: 10})
+        CMS.community_members(:subscribers, community, %{page: 1, size: 10})
 
       assert true == cur_subscribers.entries |> Enum.any?(&(&1.id == user.id))
       login_conn = simu_conn(:user, user)
 
-      variables = %{communityId: community.id}
+      variables = %{community: community.slug}
 
       result =
         login_conn |> mutation_result(@unsubscribe_query, variables, "unsubscribeCommunity")
@@ -711,10 +715,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_get_error?(@unsubscribe_query, variables, ecode(:account_login))
     end
 
+    @tag :wip
     test "unsubscribed community should dec it's own geo info", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
-      variables = %{communityId: community.id}
+      variables = %{community: community.slug}
       _created = login_conn |> mutation_result(@subscribe_query, variables, "subscribeCommunity")
       {:ok, community} = Community |> ORM.find(community.id)
 
@@ -723,7 +728,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       assert update_geo_city["value"] == 1
 
-      variables = %{communityId: community.id}
+      variables = %{community: community.slug}
       login_conn |> mutation_result(@unsubscribe_query, variables, "unsubscribeCommunity")
 
       {:ok, community} = Community |> ORM.find(community.id)
@@ -758,6 +763,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
+    @tag :wip
     test "apply a community should have default root user", ~m(user_conn)a do
       variables = mock_attrs(:community, %{locale: "it"})
       created = user_conn |> mutation_result(@apply_community_query, variables, "applyCommunity")
@@ -779,6 +785,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
+    @tag :wip
     test "can approve a community apply2", ~m(user_conn)a do
       variables = mock_attrs(:community)
       created = user_conn |> mutation_result(@apply_community_query, variables, "applyCommunity")
