@@ -11,7 +11,6 @@ defmodule GroupherServer.Test.CMS do
     {:ok, user2} = db_insert(:user)
 
     {:ok, community} = mock_community(user)
-
     {:ok, category} = db_insert(:category)
 
     {:ok, ~m(user user2 community category)a}
@@ -65,10 +64,10 @@ defmodule GroupherServer.Test.CMS do
       {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
       {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)
 
-      assoc_categroies = found_community.categories |> Enum.map(& &1.id)
+      assoc_categories = found_community.categories |> Enum.map(& &1.id)
       assoc_communities = found_category.communities |> Enum.map(& &1.id)
 
-      assert category.id in assoc_categroies
+      assert category.id in assoc_categories
       assert community.id in assoc_communities
     end
 
@@ -79,10 +78,10 @@ defmodule GroupherServer.Test.CMS do
       {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
       {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)
 
-      assoc_categroies = found_community.categories |> Enum.map(& &1.id)
+      assoc_categories = found_community.categories |> Enum.map(& &1.id)
       assoc_communities = found_category.communities |> Enum.map(& &1.id)
 
-      assert category.id not in assoc_categroies
+      assert category.id not in assoc_categories
       assert community.id not in assoc_communities
     end
   end
@@ -105,6 +104,7 @@ defmodule GroupherServer.Test.CMS do
     test "can set a thread to community", ~m(community)a do
       title = "POST"
       slug = title
+
       {:ok, thread} = CMS.create_thread(~m(title slug)a)
       {:ok, ret_community} = CMS.set_thread(community, thread)
 
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.CMS do
     test "should have infinite passport count of root", ~m(user user2 community)a do
       role = "root"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
 
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
@@ -136,7 +136,7 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:ok, _} =
-        CMS.update_moderator_passport(community.slug, new_passport_rules, user2, cur_user)
+        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
@@ -148,7 +148,7 @@ defmodule GroupherServer.Test.CMS do
          ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
 
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
@@ -171,7 +171,7 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:ok, _} =
-        CMS.update_moderator_passport(community.slug, new_passport_rules, user2, cur_user)
+        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
@@ -191,7 +191,7 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:ok, _} =
-        CMS.update_moderator_passport(community.slug, new_passport_rules, user2, cur_user)
+        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
@@ -202,7 +202,7 @@ defmodule GroupherServer.Test.CMS do
     test "can update passport of community moderator", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
 
       new_passport_rules = %{
         "#{community.slug}" => %{
@@ -212,7 +212,7 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:ok, _} =
-        CMS.update_moderator_passport(community.slug, new_passport_rules, user2, cur_user)
+        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       {:ok, passport} = CMS.get_passport(user2)
 
@@ -223,7 +223,7 @@ defmodule GroupherServer.Test.CMS do
     test "can not update passport of other community moderator", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
 
       {:ok, other_community} = db_insert(:community)
 
@@ -234,7 +234,7 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:error, reason} =
-        CMS.update_moderator_passport(community.slug, new_passport_rules, user2, cur_user)
+        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       assert reason[:code] == ecode(:passport_community_not_match)
     end
@@ -242,7 +242,7 @@ defmodule GroupherServer.Test.CMS do
     test "can not update multi community passport", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
 
       {:ok, other_community} = db_insert(:community)
 
@@ -256,7 +256,7 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:error, reason} =
-        CMS.update_moderator_passport(community.slug, new_passport_rules, user2, cur_user)
+        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       assert reason[:code] == ecode(:one_community_only)
     end
@@ -264,7 +264,7 @@ defmodule GroupherServer.Test.CMS do
     test "can add multi moderators to a community", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
 
       {:ok, moderators} = CommunityModerator |> ORM.find_all(%{page: 1, size: 10})
 
@@ -282,7 +282,7 @@ defmodule GroupherServer.Test.CMS do
       role = "moderator"
       cur_user = user
 
-      {:ok, _} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
 
       related_rules = Certification.passport_rules(cms: role)
 
@@ -299,7 +299,7 @@ defmodule GroupherServer.Test.CMS do
       role = "moderator"
       cur_user = user
 
-      Enum.each(users, &CMS.add_moderator(community.slug, role, %User{id: &1.id}, cur_user))
+      Enum.each(users, &CMS.add_moderator(community, role, %User{id: &1.id}, cur_user))
 
       filter = %{page: 1, size: 10}
       {:ok, results} = CMS.community_members(:moderators, %Community{id: community.id}, filter)

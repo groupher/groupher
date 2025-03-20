@@ -21,8 +21,8 @@ defmodule GroupherServer.Test.CMS.Community do
 
   describe "[cms community curd]" do
     test "new created community should have default threads & locale", ~m(user)a do
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, all_threads} =
         ORM.find_all(CommunityThread, %{page: 1, size: 20, community_id: community.id})
@@ -36,8 +36,8 @@ defmodule GroupherServer.Test.CMS.Community do
     end
 
     test "deleted community should delete all related threads", ~m(user)a do
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       {:ok, all_threads} =
         ORM.find_all(CommunityThread, %{page: 1, size: 20, community_id: community.id})
@@ -53,8 +53,8 @@ defmodule GroupherServer.Test.CMS.Community do
     end
 
     test "deleted community should delete all related articles", ~m(user)a do
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -82,11 +82,11 @@ defmodule GroupherServer.Test.CMS.Community do
     end
 
     test "deleted community should delete post also belongs to other community", ~m(user)a do
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      community2_attrs = mock_attrs(:community, %{slug: "ts", user_id: user.id})
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      community2_attrs = mock_attrs(:community, %{slug: "ts"})
 
-      {:ok, community} = CMS.create_community(community_attrs)
-      {:ok, community2} = CMS.create_community(community2_attrs)
+      {:ok, community} = CMS.create_community(community_attrs, user)
+      {:ok, community2} = CMS.create_community(community2_attrs, user)
 
       post_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -101,11 +101,11 @@ defmodule GroupherServer.Test.CMS.Community do
 
     test "deleted community should not delete post when the mirrored community is deleted",
          ~m(user)a do
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      community2_attrs = mock_attrs(:community, %{slug: "ts", user_id: user.id})
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      community2_attrs = mock_attrs(:community, %{slug: "ts"})
 
-      {:ok, community} = CMS.create_community(community_attrs)
-      {:ok, community2} = CMS.create_community(community2_attrs)
+      {:ok, community} = CMS.create_community(community_attrs, user)
+      {:ok, community2} = CMS.create_community(community2_attrs, user)
 
       post_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -122,7 +122,7 @@ defmodule GroupherServer.Test.CMS.Community do
   describe "[cms community apply]" do
     # test "apply a community should have pending and can not be read", ~m(user)a do
     #   attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id, apply_msg: "apply msg"})
-    #   {:ok, community} = CMS.apply_community(attrs)
+    #   {:ok, community} = CMS.apply_community(attrs, user)
 
     #   assert community.meta.apply_msg == "apply msg"
     #   assert community.meta.apply_category == "PUBLIC"
@@ -139,8 +139,8 @@ defmodule GroupherServer.Test.CMS.Community do
     # end
 
     test "apply community can set root user by default", ~m(user)a do
-      attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, community} = CMS.apply_community(attrs)
+      attrs = mock_attrs(:community)
+      {:ok, community} = CMS.apply_community(attrs, user)
 
       {:ok, community} = ORM.find(Community, community.id, preload: [moderators: :user])
       moderator_user = community.moderators |> Enum.at(0)
@@ -149,16 +149,16 @@ defmodule GroupherServer.Test.CMS.Community do
     end
 
     test "apply can be deny", ~m(user)a do
-      attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, community} = CMS.apply_community(attrs)
+      attrs = mock_attrs(:community)
+      {:ok, community} = CMS.apply_community(attrs, user)
       {:ok, community} = CMS.deny_community_apply(community.id)
 
       {:error, _} = ORM.find(Community, community.id)
     end
 
     test "user can query has pending apply or not", ~m(user user2)a do
-      attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, _community} = CMS.apply_community(attrs)
+      attrs = mock_attrs(:community)
+      {:ok, _community} = CMS.apply_community(attrs, user)
 
       {:ok, state} = CMS.has_pending_community_apply?(user)
       assert state.exist
@@ -203,7 +203,7 @@ defmodule GroupherServer.Test.CMS.Community do
     test "read moderatorable community should have a flag", ~m(community user user2 user3)a do
       role = "moderator"
       cur_user = user
-      {:ok, community} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, community} = CMS.add_moderator(community, role, user2, cur_user)
 
       {:ok, community} = CMS.read_community(community.slug, user2)
       assert community.viewer_is_moderator
@@ -241,7 +241,7 @@ defmodule GroupherServer.Test.CMS.Community do
       cur_user = user
 
       role = "moderator"
-      {:ok, community} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, community} = CMS.add_moderator(community, role, user2, cur_user)
 
       assert community.moderators_count == 2
       assert user.id in community.meta.moderators_ids
@@ -252,7 +252,7 @@ defmodule GroupherServer.Test.CMS.Community do
       role = "moderator"
       cur_user = user
 
-      {:ok, community} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, community} = CMS.add_moderator(community, role, user2, cur_user)
       assert community.moderators_count == 2
 
       {:ok, community} = CMS.remove_moderator(community.slug, user2, cur_user)

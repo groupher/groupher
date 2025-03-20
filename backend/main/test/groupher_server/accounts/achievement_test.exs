@@ -27,17 +27,17 @@ defmodule GroupherServer.Test.Accounts.Achievement do
 
     test "community moderator should get a editable community list",
          ~m(user user2 user3)a do
-      community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community)
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
-      community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user2.id})
-      {:ok, community2} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community)
+      {:ok, community2} = CMS.create_community(community_attrs, user2)
 
       role = "moderator"
 
-      {:ok, _} = CMS.add_moderator(community.slug, role, user3, user)
-      {:ok, _} = CMS.add_moderator(community2.slug, role, user3, user2)
-      {:ok, _} = CMS.add_moderator(community.slug, role, user2, user)
+      {:ok, _} = CMS.add_moderator(community, role, user3, user)
+      {:ok, _} = CMS.add_moderator(community2, role, user3, user2)
+      {:ok, _} = CMS.add_moderator(community, role, user2, user)
 
       {:ok, moderatorable_communities} =
         Accounts.paged_moderatorable_communities(user3, %{page: 1, size: 20})

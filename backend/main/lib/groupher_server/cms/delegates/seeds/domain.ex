@@ -39,11 +39,11 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Domain do
         user_id: bot.id
       }
 
-      {:ok, community} = CMS.create_community(args)
+      # {:ok, community} = CMS.create_community(args)
       # threadify_communities([community], threads.entries)
-      tagfy_threads([community], threads.entries, bot, :home)
+      # tagfy_threads([community], threads.entries, bot, :home)
 
-      {:ok, community}
+      # {:ok, community}
       # home 不设置分类，比较特殊
     end
   end

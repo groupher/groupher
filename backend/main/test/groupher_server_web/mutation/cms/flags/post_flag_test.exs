@@ -38,8 +38,8 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     end
 
     test "mark delete post should update post's communities meta count", ~m(user)a do
-      community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community)
+      {:ok, community} = CMS.create_community(community_attrs, user)
       {:ok, post} = CMS.create_article(community, :post, mock_attrs(:post), user)
 
       {:ok, community} = ORM.find(Community, community.id)
@@ -87,8 +87,8 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     end
 
     test "undo mark delete post should update post's communities meta count", ~m(user)a do
-      community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community)
+      {:ok, community} = CMS.create_community(community_attrs, user)
       {:ok, post} = CMS.create_article(community, :post, mock_attrs(:post), user)
 
       {:ok, _} = CMS.mark_delete_article(:post, post.id)

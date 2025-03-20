@@ -10,8 +10,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
 
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-    {:ok, community} = CMS.create_community(community_attrs)
+    community_attrs = mock_attrs(:community)
+    {:ok, community} = CMS.create_community(community_attrs, user)
 
     {:ok, ~m(guest_conn community user user2)a}
   end
@@ -33,8 +33,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       assert not check_state["exist"]
 
-      attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, _community} = CMS.apply_community(attrs)
+      attrs = mock_attrs(:community)
+      {:ok, _community} = CMS.apply_community(attrs, user)
 
       user_conn = simu_conn(:user, user)
 
@@ -65,8 +65,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       assert not check_state["exist"]
 
-      community_attrs = mock_attrs(:community, %{slug: "elixir", user_id: user.id})
-      {:ok, _community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community, %{slug: "elixir"})
+      {:ok, _community} = CMS.create_community(community_attrs, user)
 
       check_state =
         rule_conn
@@ -414,22 +414,22 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     }
     """
     test "user can get community info without args fails", ~m(guest_conn user)a do
-      community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+      community_attrs = mock_attrs(:community)
 
-      {:ok, community} = CMS.create_community(community_attrs)
-      {:ok, _} = CMS.update_dashboard(community.slug, :seo, %{og_title: "groupher"})
-      {:ok, _} = CMS.update_dashboard(community.slug, :layout, %{post_layout: "new layout"})
-
-      {:ok, _} =
-        CMS.update_dashboard(community.slug, :layout, %{kanban_bg_colors: ["GREEN", "RED"]})
-
-      {:ok, _} = CMS.update_dashboard(community.slug, :base_info, %{favicon: "new favicon"})
+      {:ok, community} = CMS.create_community(community_attrs, user)
+      {:ok, _} = CMS.update_dashboard(community, :seo, %{og_title: "groupher"})
+      {:ok, _} = CMS.update_dashboard(community, :layout, %{post_layout: "new layout"})
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :rss, %{rss_feed_type: "digest", rss_feed_count: 50})
+        CMS.update_dashboard(community, :layout, %{kanban_bg_colors: ["GREEN", "RED"]})
+
+      {:ok, _} = CMS.update_dashboard(community, :base_info, %{favicon: "new favicon"})
 
       {:ok, _} =
-        CMS.update_dashboard(community.slug, :name_alias, [%{slug: "slug 0", name: "name 0"}])
+        CMS.update_dashboard(community, :rss, %{rss_feed_type: "digest", rss_feed_count: 50})
+
+      {:ok, _} =
+        CMS.update_dashboard(community, :name_alias, [%{slug: "slug 0", name: "name 0"}])
 
       variables = %{slug: community.slug}
 
@@ -461,7 +461,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       role = "moderator"
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
 
-      Enum.each(users, &CMS.add_moderator(community.slug, role, %User{id: &1.id}, user))
+      Enum.each(users, &CMS.add_moderator(community, role, %User{id: &1.id}, user))
 
       variables = %{slug: community.slug}
       results = guest_conn |> query_result(@query, variables, "community")
@@ -489,7 +489,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, users} = db_insert_multi(:user, 25)
 
       cur_user = user
-      Enum.each(users, &CMS.add_moderator(community.slug, role, %User{id: &1.id}, cur_user))
+      Enum.each(users, &CMS.add_moderator(community, role, %User{id: &1.id}, cur_user))
 
       variables = %{id: community.id, filter: %{page: 1, size: 10}}
       results = guest_conn |> query_result(@query, variables, "pagedCommunityModerators")

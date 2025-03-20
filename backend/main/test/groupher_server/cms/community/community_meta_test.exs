@@ -13,14 +13,14 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
     {:ok, community2} = mock_community()
     {:ok, community3} = mock_community()
 
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
+    community_attrs = mock_attrs(:community)
 
     {:ok, ~m(user community community2 community3 community_attrs)a}
   end
 
   describe "[article count meta]" do
-    test "created community should have default meta ", ~m(community_attrs)a do
-      {:ok, community} = CMS.create_community(community_attrs)
+    test "created community should have default meta ", ~m(community_attrs user)a do
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
       assert community.meta |> strip_struct ==
                @default_meta |> Map.merge(%{moderators_ids: [community.user_id]})
@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
       {:ok, community} = db_insert(:community)
       assert is_nil(community.meta)
 
-      {:ok, community} = CMS.update_community(community.id, %{title: "new title"})
+      {:ok, community} = CMS.update_community(community, %{title: "new title"})
       assert community.meta |> strip_struct == @default_meta
     end
 

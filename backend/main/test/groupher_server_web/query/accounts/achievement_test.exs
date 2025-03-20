@@ -68,15 +68,15 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
 
     test "can get user's  communities list when user is editor",
          ~m(guest_conn user user2 user3)a do
-      community_attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, community} = CMS.create_community(community_attrs)
+      community_attrs = mock_attrs(:community)
+      {:ok, community} = CMS.create_community(community_attrs, user)
 
-      community_attrs2 = mock_attrs(:community) |> Map.merge(%{user_id: user2.id})
-      {:ok, community2} = CMS.create_community(community_attrs2)
+      community_attrs2 = mock_attrs(:community)
+      {:ok, community2} = CMS.create_community(community_attrs2, user2)
 
       role = "moderator"
-      {:ok, _} = CMS.add_moderator(community.slug, role, user3, user)
-      {:ok, _} = CMS.add_moderator(community2.slug, role, user3, user2)
+      {:ok, _} = CMS.add_moderator(community, role, user3, user)
+      {:ok, _} = CMS.add_moderator(community2, role, user3, user2)
 
       variables = %{login: user3.login, filter: %{page: 1, size: 20}}
       results = guest_conn |> query_result(@query, variables, "moderatorableCommunities")

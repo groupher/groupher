@@ -32,24 +32,25 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def create_community(_root, args, %{context: %{cur_user: user}}) do
-    args = args |> Map.merge(%{user_id: user.id})
-    CMS.create_community(args)
+    CMS.create_community(args, user)
   end
 
-  def update_community(_root, args, _info) do
-    CMS.update_community(args.id, args)
+  def update_community(_root, %{community: community} = args, _info) do
+    CMS.update_community(community, args)
   end
 
-  def update_dashboard(_root, %{dashboard_section: key, community: community} = args, _info) do
+  def update_dashboard(_root, %{community: community, dashboard_section: key} = args, _info) do
+    special_keys = [
+      :header_links,
+      :footer_links,
+      :name_alias,
+      :social_links,
+      :media_reports,
+      :faqs
+    ]
+
     dashboard_args =
-      case key in [
-             :header_links,
-             :footer_links,
-             :name_alias,
-             :social_links,
-             :media_reports,
-             :faqs
-           ] do
+      case key in special_keys do
         true -> Map.drop(args, [:community, :dashboard_section]) |> Map.get(key)
         false -> Map.drop(args, [:community, :dashboard_section])
       end
@@ -62,8 +63,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def delete_community(_root, %{id: id}, _info), do: Community |> ORM.find_delete!(id)
 
   def apply_community(_root, args, %{context: %{cur_user: user}}) do
-    args = args |> Map.merge(%{user_id: user.id})
-    CMS.apply_community(args)
+    CMS.apply_community(args, user)
   end
 
   def approve_community_apply(_root, %{community: community}, _) do
@@ -182,8 +182,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.undo_lock_article_comments(thread, id)
   end
 
-  def sink_article(_root, ~m(id thread)a, _info), do: CMS.sink_article(thread, id)
-  def undo_sink_article(_root, ~m(id thread)a, _info), do: CMS.undo_sink_article(thread, id)
+  def sink_article(_root, ~m(article)a, _info), do: CMS.sink_article(article)
+  def undo_sink_article(_root, ~m(article)a, _info), do: CMS.undo_sink_article(article)
 
   def upvote_article(_root, ~m(id thread)a, %{context: %{cur_user: user}}) do
     CMS.upvote_article(thread, id, user)
@@ -240,13 +240,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def create_thread(_root, ~m(title slug index)a, _info),
     do: CMS.create_thread(~m(title slug index)a)
 
-  def set_thread(_root, ~m(community_id thread_id)a, _info) do
-    CMS.set_thread(%Community{id: community_id}, %Thread{id: thread_id})
-  end
+  def set_thread(_root, ~m(community thread)a, _info), do: CMS.set_thread(community, thread)
 
-  def unset_thread(_root, ~m(community_id thread_id)a, _info) do
-    CMS.unset_thread(%Community{id: community_id}, %Thread{id: thread_id})
-  end
+  def unset_thread(_root, ~m(community thread)a, _info), do: CMS.unset_thread(community, thread)
 
   # #######################
   # moderators ..
@@ -262,9 +258,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def add_moderator(_root, ~m(community user role)a, %{context: %{cur_user: cur_user}}) do
-    with {:ok, target_user} <- ORM.find_user(user) do
-      CMS.add_moderator(community, role, %User{id: target_user.id}, cur_user)
-    end
+    CMS.add_moderator(community, role, user, cur_user)
   end
 
   def remove_moderator(_root, ~m(community user)a, %{context: %{cur_user: cur_user}}) do
@@ -330,20 +324,20 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # community subscribe ..
   # #######################
-  def subscribe_community(_root, ~m(community_id)a, %{context: ~m(cur_user remote_ip)a}) do
-    CMS.subscribe_community(%Community{id: community_id}, cur_user, remote_ip)
+  def subscribe_community(_root, ~m(community)a, %{context: ~m(cur_user remote_ip)a}) do
+    CMS.subscribe_community(community, cur_user, remote_ip)
   end
 
-  def subscribe_community(_root, ~m(community_id)a, %{context: %{cur_user: cur_user}}) do
-    CMS.subscribe_community(%Community{id: community_id}, cur_user)
+  def subscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
+    CMS.subscribe_community(community, cur_user)
   end
 
-  def unsubscribe_community(_root, ~m(community_id)a, %{context: ~m(cur_user remote_ip)a}) do
-    CMS.unsubscribe_community(%Community{id: community_id}, cur_user, remote_ip)
+  def unsubscribe_community(_root, ~m(community)a, %{context: ~m(cur_user remote_ip)a}) do
+    CMS.unsubscribe_community(community, cur_user, remote_ip)
   end
 
-  def unsubscribe_community(_root, ~m(community_id)a, %{context: %{cur_user: cur_user}}) do
-    CMS.unsubscribe_community(%Community{id: community_id}, cur_user)
+  def unsubscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
+    CMS.unsubscribe_community(community, cur_user)
   end
 
   def paged_community_subscribers(_root, ~m(id filter)a, %{context: %{cur_user: cur_user}}) do

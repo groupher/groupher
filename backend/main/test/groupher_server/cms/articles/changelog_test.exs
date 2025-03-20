@@ -224,18 +224,18 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       assert not changelog.meta.is_sinked
 
-      {:ok, changelog} = CMS.sink_article(:changelog, changelog.id)
+      {:ok, changelog} = CMS.sink_article(changelog)
       assert changelog.meta.is_sinked
       assert changelog.active_at == changelog.inserted_at
     end
 
     test "can undo sink changelog", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, changelog} = CMS.sink_article(:changelog, changelog.id)
+      {:ok, changelog} = CMS.sink_article(changelog)
       assert changelog.meta.is_sinked
       assert changelog.meta.last_active_at == changelog.active_at
 
-      {:ok, changelog} = CMS.undo_sink_article(:changelog, changelog.id)
+      {:ok, changelog} = CMS.undo_sink_article(changelog)
       assert not changelog.meta.is_sinked
       assert changelog.active_at == changelog.meta.last_active_at
     end
@@ -244,7 +244,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog_last_year} =
         db_insert(:changelog, %{title: "last year", inserted_at: @last_year})
 
-      {:error, reason} = CMS.undo_sink_article(:changelog, changelog_last_year.id)
+      {:error, reason} = CMS.undo_sink_article(changelog_last_year)
       is_error?(reason, :undo_sink_old_article)
     end
   end

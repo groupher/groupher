@@ -31,41 +31,49 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "bind a thread to a exist community"
     field :set_thread, :community do
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:thread_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.PassportLoader, source: :community)
       middleware(M.Passport, claim: "cms->c?->thread.set")
+      middleware(M.FrontDesk, :community)
+      middleware(M.FrontDesk, :thread)
 
       resolve(&R.CMS.set_thread/3)
     end
 
     @desc "remove a thread from a exist community, thread content is not delete"
     field :unset_thread, :community do
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:thread_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.PassportLoader, source: :community)
       middleware(M.Passport, claim: "cms->c?->thread.unset")
+      middleware(M.FrontDesk, :community)
+      middleware(M.FrontDesk, :thread)
 
       resolve(&R.CMS.unset_thread/3)
     end
 
     @desc "subscribe a community so it can appear in sidebar"
     field :subscribe_community, :community do
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+
       resolve(&R.CMS.subscribe_community/3)
     end
 
     @desc "unsubscribe a community"
     field :unsubscribe_community, :community do
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+
       resolve(&R.CMS.unsubscribe_community/3)
     end
 

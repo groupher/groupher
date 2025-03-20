@@ -76,9 +76,9 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   create a community
   """
-  def create_community(args) do
-    with {:ok, community} <- do_create_community(args),
-         {:ok, _} <- init_community_root(community.slug, args.user_id),
+  def create_community(args, %User{} = user) do
+    with {:ok, community} <- do_create_community(args, user),
+         {:ok, _} <- init_community_root(community, user),
          {:ok, threads} = create_default_threads_ifneed() do
       Enum.each(threads, fn thread ->
         CMS.set_thread(community, thread)
@@ -94,8 +94,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
-  defp do_create_community(%{user_id: user_id} = args) do
-    with {:ok, author} <- ensure_author_exists(%User{id: user_id}) do
+  defp do_create_community(args, %User{} = user) do
+    with {:ok, author} <- ensure_author_exists(%User{id: user.id}) do
       args =
         args |> Map.merge(%{user_id: author.user_id}) |> Map.merge(@default_community_settings)
 
@@ -103,8 +103,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
-  defp init_community_root(community_slug, user_id, role \\ "root") do
-    CMS.add_moderator(community_slug, role, %User{id: user_id}, %User{id: user_id})
+  defp init_community_root(%Community{} = community, %User{} = user, role \\ "root") do
+    CMS.add_moderator(community, role, user, user)
   end
 
   def create_default_threads_ifneed() do
@@ -120,46 +120,37 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
       end
     end)
 
-    exist_threas = @community_default_threads |> Enum.map(&to_string(&1))
+    exist_threads = @community_default_threads |> Enum.map(&to_string(&1))
 
-    from(t in Thread, where: t.slug in ^exist_threas) |> Repo.all() |> done
+    from(t in Thread, where: t.slug in ^exist_threads) |> Repo.all() |> done
   end
 
   @doc """
   update community
   """
-  def update_community(id, args) do
-    with {:ok, community} <- ORM.find(Community, id) do
-      case community.meta do
-        nil -> ORM.update(community, args |> Map.merge(%{meta: @default_meta}))
-        _ -> ORM.update(community, args)
-      end
+  def update_community(%Community{} = community, args) do
+    case community.meta do
+      nil -> ORM.update(community, args |> Map.merge(%{meta: @default_meta}))
+      _ -> ORM.update(community, args)
     end
   end
 
   @doc """
   update dashboard settings of a community
   """
-  def update_dashboard(community_slug, :base_info, args) do
+  def update_dashboard(%Community{} = community, :base_info, args) do
     main_fields =
       Map.take(args, [:title, :locale, :desc, :logo, :favicon, :slug, :homepage])
       |> OSS.persist_file(:logo)
       |> OSS.persist_file(:favicon)
 
-    with {:ok, community} <- ORM.find_by(Community, slug: community_slug),
-         {:ok, community} <- update_community_if_need(community, main_fields) do
+    with {:ok, community} <- update_community_if_need(community, main_fields) do
       do_update_dashboard(community, :base_info, Map.merge(args, main_fields))
     end
   end
 
   def update_dashboard(%Community{} = community, key, args) do
     do_update_dashboard(community, key, args)
-  end
-
-  def update_dashboard(community_slug, key, args) do
-    with {:ok, community} <- ORM.find_by(Community, slug: community_slug) do
-      do_update_dashboard(community, key, args)
-    end
   end
 
   # see https://elixirforum.com/t/pattern-match-on-empty-maps/33259/5
@@ -218,8 +209,9 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     |> done
   end
 
-  def apply_community(args) do
-    with {:ok, community} <- create_community(Map.merge(args, %{pending: @community_applying})) do
+  def apply_community(args, %User{} = user) do
+    with {:ok, community} <-
+           create_community(Map.merge(args, %{pending: @community_applying}), user) do
       apply_msg = Map.get(args, :apply_msg, "")
       apply_category = Map.get(args, :apply_category, @default_apply_category)
 
@@ -247,7 +239,12 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   update article_tags_count / thread / article_count / subscribers_count of a community
   """
-  def update_community_count_field(%Community{} = community, user_id, :moderators_count, opt) do
+  def update_community_count_field(
+        %Community{} = community,
+        %User{} = user,
+        :moderators_count,
+        opt
+      ) do
     {:ok, moderators_count} =
       from(s in CommunityModerator, where: s.community_id == ^community.id)
       |> ORM.count()
@@ -256,8 +253,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
 
     moderators_ids =
       case opt do
-        :inc -> (community_meta.moderators_ids ++ [user_id]) |> Enum.uniq()
-        :dec -> (community_meta.moderators_ids -- [user_id]) |> Enum.uniq()
+        :inc -> (community_meta.moderators_ids ++ [user.id]) |> Enum.uniq()
+        :dec -> (community_meta.moderators_ids -- [user.id]) |> Enum.uniq()
       end
 
     meta = community_meta |> Map.put(:moderators_ids, moderators_ids) |> strip_struct
@@ -266,7 +263,12 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     |> ORM.update_embed(:meta, meta, %{moderators_count: moderators_count})
   end
 
-  def update_community_count_field(%Community{} = community, user_id, :subscribers_count, opt) do
+  def update_community_count_field(
+        %Community{} = community,
+        %User{} = user,
+        :subscribers_count,
+        opt
+      ) do
     {:ok, subscribers_count} =
       from(s in CommunitySubscriber, where: s.community_id == ^community.id) |> ORM.count()
 
@@ -274,8 +276,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
 
     subscribed_user_ids =
       case opt do
-        :inc -> (community_meta.subscribed_user_ids ++ [user_id]) |> Enum.uniq()
-        :dec -> (community_meta.subscribed_user_ids -- [user_id]) |> Enum.uniq()
+        :inc -> (community_meta.subscribed_user_ids ++ [user.id]) |> Enum.uniq()
+        :dec -> (community_meta.subscribed_user_ids -- [user.id]) |> Enum.uniq()
       end
 
     meta = community_meta |> Map.put(:subscribed_user_ids, subscribed_user_ids) |> strip_struct

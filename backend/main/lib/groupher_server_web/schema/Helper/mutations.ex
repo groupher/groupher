@@ -2,7 +2,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
   @moduledoc """
   general mutations used for articles
 
-  can not dedefine private macros, see:
+  can not define private macros, see:
   https://github.com/elixir-lang/elixir/issues/3887
 
   e.g:
@@ -269,24 +269,28 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("sink a #{thread}")
       field unquote(:"sink_#{thread}"), :article do
         arg(:id, non_null(:id))
-        arg(:community_id, non_null(:id))
+        arg(:community, non_null(:string))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
         middleware(M.PassportLoader, source: :community)
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.sink"))
+        middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.sink_article/3)
       end
 
       @desc unquote("undo sink to #{thread}")
       field unquote(:"undo_sink_#{thread}"), :article do
         arg(:id, non_null(:id))
-        arg(:community_id, non_null(:id))
+        arg(:community, non_null(:string))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
         middleware(M.PassportLoader, source: :community)
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.undo_sink"))
+        middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.undo_sink_article/3)
       end
     end

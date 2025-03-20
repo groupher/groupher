@@ -526,21 +526,18 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   sink article
   """
-  def sink_article(thread, id) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id) do
-      meta = Map.merge(article.meta, %{is_sinked: true, last_active_at: article.active_at})
-      ORM.update_meta(article, meta, changes: %{active_at: article.inserted_at})
-    end
+  def sink_article(article) do
+    meta = Map.merge(article.meta, %{is_sinked: true, last_active_at: article.active_at})
+    ORM.update_meta(article, meta, changes: %{active_at: article.inserted_at})
   end
 
   @doc """
   undo sink article
   """
-  def undo_sink_article(thread, id) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id),
-         true <- in_active_period?(thread, article) do
+  def undo_sink_article(article) do
+    thread = thread_of(article)
+
+    with true <- in_active_period?(thread, article) do
       meta = Map.merge(article.meta, %{is_sinked: false})
       ORM.update_meta(article, meta, changes: %{active_at: meta.last_active_at})
     else

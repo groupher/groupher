@@ -1,5 +1,5 @@
 defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
-  @moduledoc false
+  @modulechangelog false
   use GroupherServer.TestTools
 
   setup do
@@ -12,19 +12,12 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
   end
 
   describe "[changelog sink]" do
-    @query """
-    mutation($id: ID!, $communityId: ID!){
-      sinkChangelog(id: $id, communityId: $communityId) {
-        id
-      }
-    }
-    """
     test "login user can sink a changelog", ~m(community changelog)a do
-      variables = %{id: changelog.id, communityId: community.id}
+      variables = %{id: changelog.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"changelog.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result = rule_conn |> mutation_result(@query, variables, "sinkChangelog")
+      result = rule_conn |> mutation_result(Schema.m(:sink_changelog), variables, "sinkChangelog")
       assert result["id"] == to_string(changelog.id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
@@ -33,9 +26,10 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
     end
 
     test "unauth user sink a changelog fails", ~m(guest_conn community changelog)a do
-      variables = %{id: changelog.id, communityId: community.id}
+      variables = %{id: changelog.inner_id, community: community.slug}
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn
+             |> mutation_get_error?(Schema.m(:sink_changelog), variables, ecode(:account_login))
     end
 
     @query """
@@ -46,13 +40,17 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
     }
     """
     test "login user can undo sink to a changelog", ~m(community changelog)a do
-      variables = %{id: changelog.id, communityId: community.id}
+      variables = %{id: changelog.inner_id, community: community.slug}
 
       passport_rules = %{community.slug => %{"changelog.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      {:ok, _} = CMS.sink_article(:changelog, changelog.id)
-      updated = rule_conn |> mutation_result(@query, variables, "undoSinkChangelog")
+      {:ok, _} = CMS.sink_article(changelog)
+
+      updated =
+        rule_conn
+        |> mutation_result(Schema.m(:undo_sink_changelog), variables, "undoSinkChangelog")
+
       assert updated["id"] == to_string(changelog.id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
@@ -60,9 +58,14 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
     end
 
     test "unauth user undo sink a changelog fails", ~m(guest_conn community changelog)a do
-      variables = %{id: changelog.id, communityId: community.id}
+      variables = %{id: changelog.inner_id, community: community.slug}
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn
+             |> mutation_get_error?(
+               Schema.m(:undo_sink_changelog),
+               variables,
+               ecode(:account_login)
+             )
     end
   end
 end

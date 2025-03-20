@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.Helper.ORM do
   setup do
     db_insert_multi(:post, @posts_count)
 
-    {community, post, _, user} = mock_article(:post)
+    {community, post, _, _user} = mock_article(:post)
 
     {:ok, post: post, community: community}
   end
