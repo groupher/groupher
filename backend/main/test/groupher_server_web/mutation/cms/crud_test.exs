@@ -291,9 +291,10 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert updated["title"] == variables.title
     end
 
+    @tag :wip2
     test "update community with empty attrs return the same", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
-      variables = %{id: community.id}
+      variables = %{community: community.slug}
 
       updated =
         rule_conn

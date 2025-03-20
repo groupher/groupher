@@ -39,16 +39,18 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.update_community(community, args)
   end
 
-  def update_dashboard(_root, %{dashboard_section: key, community: community} = args, _info) do
+  def update_dashboard(_root, %{community: community, dashboard_section: key} = args, _info) do
+    special_keys = [
+      :header_links,
+      :footer_links,
+      :name_alias,
+      :social_links,
+      :media_reports,
+      :faqs
+    ]
+
     dashboard_args =
-      case key in [
-             :header_links,
-             :footer_links,
-             :name_alias,
-             :social_links,
-             :media_reports,
-             :faqs
-           ] do
+      case key in special_keys do
         true -> Map.drop(args, [:community, :dashboard_section]) |> Map.get(key)
         false -> Map.drop(args, [:community, :dashboard_section])
       end

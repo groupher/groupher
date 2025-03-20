@@ -35,6 +35,8 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
 
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
+      middleware(M.FrontDesk, :community)
+
       resolve(&R.CMS.update_dashboard/3)
     end
 
