@@ -45,6 +45,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     assert created |> Map.has_key?("id")
   end
 
+  @tag :wip
   test "root create multi content with invalid interval time success", ~m(community)a do
     {:ok, user} = db_insert(:user)
     passport_rules = %{"root" => true}

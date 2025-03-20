@@ -45,7 +45,7 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
     end
   end
 
-  def make_contribute(%Community{id: id}) do
+  def make_contribute(%Community{id: id} = community) do
     today = Timex.today() |> Date.to_iso8601()
 
     Multi.new()
@@ -61,7 +61,7 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
         |> do_get_contributes()
         |> to_counts_digest(days: @community_contribute_days)
 
-      CommunityCRUD.update_community(id, %{contributes_digest: contributes_digest})
+      CommunityCRUD.update_community(community, %{contributes_digest: contributes_digest})
     end)
     |> Repo.transaction()
     |> result()

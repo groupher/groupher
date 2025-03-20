@@ -27,11 +27,12 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
                @default_meta |> Map.merge(%{moderators_ids: [community.user_id]})
     end
 
+    @tag :wip
     test "update legacy community should add default meta" do
       {:ok, community} = db_insert(:community)
       assert is_nil(community.meta)
 
-      {:ok, community} = CMS.update_community(community.id, %{title: "new title"})
+      {:ok, community} = CMS.update_community(community, %{title: "new title"})
       assert community.meta |> strip_struct == @default_meta
     end
 
