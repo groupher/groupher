@@ -6,6 +6,16 @@ defmodule GroupherServer.Test.Helper.Schema do
   def m(:create_blog), do: create_article(:blog)
   def m(:create_doc), do: create_article(:doc)
 
+  def m(:sink_post), do: sink_article(:post)
+  def m(:sink_changelog), do: sink_article(:changelog)
+  def m(:sink_blog), do: sink_article(:blog)
+  def m(:sink_doc), do: sink_article(:doc)
+
+  def m(:undo_sink_post), do: undo_sink_article(:post)
+  def m(:undo_sink_changelog), do: undo_sink_article(:changelog)
+  def m(:undo_sink_blog), do: undo_sink_article(:blog)
+  def m(:undo_sink_doc), do: undo_sink_article(:doc)
+
   def m(:mirror_article) do
     """
     mutation($id: ID!, $thread: Thread, $community: String!, $targetCommunity: String!, $articleTags: [ID]) {
@@ -50,6 +60,30 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($community: String!, $thread: Thread, $id: ID!, $articleTags: [ID]) {
       moveToBlackhole(community: $community, thread: $thread, id: $id, articleTags: $articleTags) {
+        id
+      }
+    }
+    """
+  end
+
+  defp sink_article(thread) do
+    thread = thread |> Atom.to_string() |> String.capitalize()
+
+    """
+    mutation($id: ID!, $community: String!){
+      sink#{thread}(id: $id, community: $community) {
+        id
+      }
+    }
+    """
+  end
+
+  defp undo_sink_article(thread) do
+    thread = thread |> Atom.to_string() |> String.capitalize()
+
+    """
+    mutation($id: ID!, $community: String!){
+      undoSink#{thread}(id: $id, community: $community) {
         id
       }
     }

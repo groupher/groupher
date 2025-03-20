@@ -121,8 +121,8 @@ defmodule GroupherServer.CMS do
   defdelegate set_post_state(post, state), to: ArticleCRUD
 
   defdelegate update_active_timestamp(thread, article), to: ArticleCRUD
-  defdelegate sink_article(thread, id), to: ArticleCRUD
-  defdelegate undo_sink_article(thread, id), to: ArticleCRUD
+  defdelegate sink_article(article), to: ArticleCRUD
+  defdelegate undo_sink_article(article), to: ArticleCRUD
 
   defdelegate archive_articles(thread), to: ArticleCRUD
   defdelegate batch_mark_delete_articles(community, thread, id_list), to: ArticleCRUD

@@ -182,8 +182,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.undo_lock_article_comments(thread, id)
   end
 
-  def sink_article(_root, ~m(id thread)a, _info), do: CMS.sink_article(thread, id)
-  def undo_sink_article(_root, ~m(id thread)a, _info), do: CMS.undo_sink_article(thread, id)
+  def sink_article(_root, ~m(article)a, _info), do: CMS.sink_article(article)
+  def undo_sink_article(_root, ~m(article)a, _info), do: CMS.undo_sink_article(article)
 
   def upvote_article(_root, ~m(id thread)a, %{context: %{cur_user: user}}) do
     CMS.upvote_article(thread, id, user)

@@ -203,30 +203,33 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert not doc_last_year.meta.can_undo_sink
     end
 
+    @tag :wip2
     test "can sink a doc", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       assert not doc.meta.is_sinked
 
-      {:ok, doc} = CMS.sink_article(:doc, doc.id)
+      {:ok, doc} = CMS.sink_article(doc)
       assert doc.meta.is_sinked
       assert doc.active_at == doc.inserted_at
     end
 
+    @tag :wip2
     test "can undo sink doc", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      {:ok, doc} = CMS.sink_article(:doc, doc.id)
+      {:ok, doc} = CMS.sink_article(doc)
       assert doc.meta.is_sinked
       assert doc.meta.last_active_at == doc.active_at
 
-      {:ok, doc} = CMS.undo_sink_article(:doc, doc.id)
+      {:ok, doc} = CMS.undo_sink_article(doc)
       assert not doc.meta.is_sinked
       assert doc.active_at == doc.meta.last_active_at
     end
 
+    @tag :wip2
     test "can not undo sink to old doc", ~m()a do
       {:ok, doc_last_year} = db_insert(:doc, %{title: "last year", inserted_at: @last_year})
 
-      {:error, reason} = CMS.undo_sink_article(:doc, doc_last_year.id)
+      {:error, reason} = CMS.undo_sink_article(doc_last_year)
       is_error?(reason, :undo_sink_old_article)
     end
   end
