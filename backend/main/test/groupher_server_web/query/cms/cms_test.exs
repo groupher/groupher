@@ -24,6 +24,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
+    @tag :wip
     test "can check if user has pending apply", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
@@ -33,8 +34,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       assert not check_state["exist"]
 
-      attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id})
-      {:ok, _community} = CMS.apply_community(attrs)
+      attrs = mock_attrs(:community)
+      {:ok, _community} = CMS.apply_community(attrs, user)
 
       user_conn = simu_conn(:user, user)
 
@@ -459,11 +460,12 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
+    @tag :wip
     test "guest can get moderators count of a community", ~m(guest_conn community user)a do
       role = "moderator"
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
 
-      Enum.each(users, &CMS.add_moderator(community.slug, role, %User{id: &1.id}, user))
+      Enum.each(users, &CMS.add_moderator(community, role, %User{id: &1.id}, user))
 
       variables = %{slug: community.slug}
       results = guest_conn |> query_result(@query, variables, "community")
@@ -486,12 +488,13 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
+    @tag :wip
     test "guest user can get paged moderators", ~m(guest_conn user community)a do
       role = "moderator"
       {:ok, users} = db_insert_multi(:user, 25)
 
       cur_user = user
-      Enum.each(users, &CMS.add_moderator(community.slug, role, %User{id: &1.id}, cur_user))
+      Enum.each(users, &CMS.add_moderator(community, role, %User{id: &1.id}, cur_user))
 
       variables = %{id: community.id, filter: %{page: 1, size: 10}}
       results = guest_conn |> query_result(@query, variables, "pagedCommunityModerators")

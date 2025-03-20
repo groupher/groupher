@@ -67,10 +67,10 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
     end
   end
 
-  defp update_passport_item_count(%Community{slug: slug} = community, %User{} = user, rules) do
+  defp update_passport_item_count(%Community{} = community, %User{} = user, rules) do
     with {:ok, community_moderator} <-
            ORM.find_by(CommunityModerator, %{community_id: community.id, user_id: user.id}) do
-      update_passport_item_count(community_moderator, slug, user.id, rules)
+      update_passport_item_count(community_moderator, community, user, rules)
     end
   end
 
@@ -85,14 +85,14 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
 
   defp update_passport_item_count(
          %CommunityModerator{} = moderator,
-         community_slug,
+         %Community{} = community,
          %User{} = user,
          rules
        ) do
-    case Map.has_key?(rules, community_slug) do
+    case Map.has_key?(rules, community.slug) do
       true ->
         {:ok, passport_rules} = PassportCRUD.get_passport(user)
-        passport_item_count = get_in(passport_rules, [community_slug]) |> Map.keys() |> length
+        passport_item_count = get_in(passport_rules, [community.slug]) |> Map.keys() |> length
         moderator |> ORM.update(%{passport_item_count: passport_item_count})
 
       false ->
@@ -142,14 +142,18 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   update community moderator
   """
-  def update_moderator_passport(community_slug, rules, %User{} = user, %User{} = cur_user) do
-    with {:ok, community} <- ORM.find_community(community_slug),
-         {:ok, true} <- user_is_root?(community, cur_user),
-         {:ok, :match} <- match_passport_community(community_slug, rules),
-         {:ok, _} <- PassportCRUD.stamp_passport(rules, user) do
-      update_passport_item_count(community, user, rules)
+  def update_moderator_passport(
+        %Community{} = community,
+        rules,
+        %User{} = target_user,
+        %User{} = cur_user
+      ) do
+    with {:ok, true} <- user_is_root?(community, cur_user),
+         {:ok, :match} <- match_passport_community(community.slug, rules),
+         {:ok, _} <- PassportCRUD.stamp_passport(rules, target_user) do
+      update_passport_item_count(community, target_user, rules)
 
-      CMS.read_community(community_slug, inc_views: false)
+      CMS.read_community(community.slug, inc_views: false)
     else
       {:error, false} ->
         {:error,
@@ -158,7 +162,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
       {:error, :passport_community_not_match} ->
         {:error,
          [
-           message: "can only update passport in #{community_slug}",
+           message: "can only update passport in #{community.slug}",
            code: ecode(:passport_community_not_match)
          ]}
 
@@ -174,21 +178,27 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   unset a community moderator
   """
-  def remove_moderator(community_slug, %User{id: user_id}, %User{} = cur_user) do
+  def remove_moderator(community_slug, %User{} = target_user, %User{} = cur_user) do
     with {:ok, community} <- ORM.find_community(community_slug),
          {:ok, true} <- user_is_root?(community, cur_user) do
-      community_id = community.id
-
       Multi.new()
       |> Multi.run(:stamp_passport, fn _, _ ->
-        PassportCRUD.erase_passport([community_slug], %User{id: user_id})
+        PassportCRUD.erase_passport([community_slug], target_user)
       end)
       |> Multi.run(:delete_moderator, fn _, _ ->
-        ORM.findby_delete!(CommunityModerator, ~m(user_id community_id)a)
+        ORM.findby_delete!(CommunityModerator, %{
+          user_id: target_user.id,
+          community_id: community.id
+        })
       end)
       |> Multi.run(:update_community_count, fn _, _ ->
-        with {:ok, community} <- ORM.find(Community, community_id) do
-          CommunityCRUD.update_community_count_field(community, user_id, :moderators_count, :dec)
+        with {:ok, community} <- ORM.find(Community, community.id) do
+          CommunityCRUD.update_community_count_field(
+            community,
+            target_user,
+            :moderators_count,
+            :dec
+          )
         end
       end)
       |> Repo.transaction()

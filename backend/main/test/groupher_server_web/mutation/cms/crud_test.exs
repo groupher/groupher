@@ -480,7 +480,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    @tag :wip2
+    @tag :wip
     test "auth user can add moderator to community", ~m(user user2 community)a do
       role = "moderator"
 
@@ -501,11 +501,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
+    @tag :wip
     test "auth user can unset moderator AND passport from community", ~m(user community user2)a do
       role = "moderator"
 
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
 
       assert {:ok, _} =
                CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
@@ -543,7 +544,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       role = "moderator"
       cur_user = user
 
-      {:ok, _} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
 
       passport_rules = %{"moderator.update" => true}
       rule_conn = simu_conn(:user, user2, cms: passport_rules)

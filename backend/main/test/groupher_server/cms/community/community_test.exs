@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.CMS.Community do
   describe "[cms community apply]" do
     # test "apply a community should have pending and can not be read", ~m(user)a do
     #   attrs = mock_attrs(:community) |> Map.merge(%{user_id: user.id, apply_msg: "apply msg"})
-    #   {:ok, community} = CMS.apply_community(attrs)
+    #   {:ok, community} = CMS.apply_community(attrs, user)
 
     #   assert community.meta.apply_msg == "apply msg"
     #   assert community.meta.apply_category == "PUBLIC"
@@ -209,10 +209,11 @@ defmodule GroupherServer.Test.CMS.Community do
       assert user2.id not in community.meta.subscribed_user_ids
     end
 
+    @tag :wip
     test "read moderatorable community should have a flag", ~m(community user user2 user3)a do
       role = "moderator"
       cur_user = user
-      {:ok, community} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, community} = CMS.add_moderator(community, role, user2, cur_user)
 
       {:ok, community} = CMS.read_community(community.slug, user2)
       assert community.viewer_is_moderator
@@ -246,22 +247,24 @@ defmodule GroupherServer.Test.CMS.Community do
   end
 
   describe "[cms community moderator]" do
+    @tag :wip
     test "can add moderator to a community", ~m(user user2 community)a do
       cur_user = user
 
       role = "moderator"
-      {:ok, community} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, community} = CMS.add_moderator(community, role, user2, cur_user)
 
       assert community.moderators_count == 2
       assert user.id in community.meta.moderators_ids
       assert user2.id in community.meta.moderators_ids
     end
 
+    @tag :wip
     test "can unset moderator to a community", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
 
-      {:ok, community} = CMS.add_moderator(community.slug, role, user2, cur_user)
+      {:ok, community} = CMS.add_moderator(community, role, user2, cur_user)
       assert community.moderators_count == 2
 
       {:ok, community} = CMS.remove_moderator(community.slug, user2, cur_user)
