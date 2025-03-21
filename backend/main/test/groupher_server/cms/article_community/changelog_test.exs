@@ -41,6 +41,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       assert exist_in?(community2, changelog.communities)
     end
 
+    @tag :wip
     test "tags should be clean after changelog move to other community",
          ~m(user community community2 changelog_attrs)a do
       article_tag_attrs = mock_attrs(:article_tag)
@@ -52,8 +53,8 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       {:ok, article_tag2} =
         CMS.create_article_tag(community, :changelog, article_tag_attrs2, user)
 
-      {:ok, _} = CMS.set_article_tag(:changelog, changelog.id, article_tag.id)
-      {:ok, changelog} = CMS.set_article_tag(:changelog, changelog.id, article_tag2.id)
+      {:ok, _} = CMS.set_article_tag(changelog, article_tag.id)
+      {:ok, changelog} = CMS.set_article_tag(changelog, article_tag2.id)
 
       assert changelog.article_tags |> length == 2
       assert changelog.original_community_id == community.id
@@ -70,6 +71,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       assert exist_in?(community2, changelog.communities)
     end
 
+    @tag :wip
     test "changelog move to other community with new tag",
          ~m(user community community2 changelog_attrs)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
@@ -85,9 +87,9 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
         CMS.create_article_tag(community2, :changelog, article_tag_attrs2, user)
 
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, _} = CMS.set_article_tag(:changelog, changelog.id, article_tag0.id)
-      {:ok, _} = CMS.set_article_tag(:changelog, changelog.id, article_tag.id)
-      {:ok, _} = CMS.set_article_tag(:changelog, changelog.id, article_tag2.id)
+      {:ok, _} = CMS.set_article_tag(changelog, article_tag0.id)
+      {:ok, _} = CMS.set_article_tag(changelog, article_tag.id)
+      {:ok, _} = CMS.set_article_tag(changelog, article_tag2.id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: [:article_tags])
       assert changelog.article_tags |> length == 3
@@ -293,6 +295,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       assert paged_articles.total_count === 1
     end
 
+    @tag :wip
     test "changelog can be move to blackhole with tags",
          ~m(community blackhole changelog_attrs user)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
@@ -305,7 +308,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
         CMS.create_article_tag(blackhole, :changelog, article_tag_attrs, user)
 
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, _} = CMS.set_article_tag(:changelog, changelog.id, article_tag0.id)
+      {:ok, _} = CMS.set_article_tag(changelog, article_tag0.id)
 
       assert changelog.original_community_id == community.id
 

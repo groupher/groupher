@@ -191,13 +191,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert not is_nil(get_in(post, ["document", "bodyHtml"]))
     end
 
+    @tag :wip
     test "support article_tag filter", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
       article_tag_attrs = mock_attrs(:article_tag)
       {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
-      {:ok, _} = CMS.set_article_tag(:post, post.id, article_tag.id)
+      {:ok, _} = CMS.set_article_tag(post, article_tag.id)
 
       variables = %{filter: %{page: 1, size: 10, article_tag: article_tag.slug}}
       results = guest_conn |> query_result(@query, variables, "pagedPosts")

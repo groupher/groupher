@@ -143,7 +143,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
     ## TODO: lock article_join_tags
 
     with true <- article_tag_in_same_thread?(article_tag_ids, check_filter),
-         Enum.each(article_tag_ids, &set_article_tag(thread, article, &1))
+         Enum.each(article_tag_ids, &set_article_tag(article, &1))
          |> done do
       {:ok, article}
     else
@@ -157,18 +157,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   @doc """
   set article a tag
   """
-  def set_article_tag(thread, article_id, tag_id) when g_is_id(article_id) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <-
-           ORM.find(info.model, article_id, preload: :article_tags),
-         {:ok, article_tag} <- ORM.find(ArticleTag, tag_id) do
-      do_update_article_tags_assoc(article, article_tag, :add)
-    end
-  end
-
-  def set_article_tag(_thread, article, tag_id) do
-    article = Repo.preload(article, :article_tags)
-
+  def set_article_tag(article, tag_id) do
     with {:ok, article_tag} <- ORM.find(ArticleTag, tag_id) do
       do_update_article_tags_assoc(article, article_tag, :add)
     end
@@ -177,16 +166,15 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   @doc """
   unset article a tag
   """
-  def unset_article_tag(thread, article_id, tag_id) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <-
-           ORM.find(info.model, article_id, preload: :article_tags),
-         {:ok, article_tag} <- ORM.find(ArticleTag, tag_id) do
+  def unset_article_tag(article, tag_id) do
+    with {:ok, article_tag} <- ORM.find(ArticleTag, tag_id) do
       do_update_article_tags_assoc(article, article_tag, :remove)
     end
   end
 
   defp do_update_article_tags_assoc(article, %ArticleTag{} = tag, opt) do
+    article = Repo.preload(article, :article_tags)
+
     article_tags =
       case opt do
         :add -> (article.article_tags ++ [tag]) |> Enum.uniq_by(& &1.id)

@@ -104,13 +104,14 @@ defmodule GroupherServer.Test.CMS.ArticleTag.PostTag do
       assert {:error, _} = ORM.find(ArticleTag, article_tag.id)
     end
 
+    @tag :wip
     test "assoc tag should be delete after tag deleted",
          ~m(community post article_tag_attrs article_tag_attrs2 user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
       {:ok, article_tag2} = CMS.create_article_tag(community, :post, article_tag_attrs2, user)
 
-      {:ok, post} = CMS.set_article_tag(:post, post.id, article_tag.id)
-      {:ok, post} = CMS.set_article_tag(:post, post.id, article_tag2.id)
+      {:ok, post} = CMS.set_article_tag(post, article_tag.id)
+      {:ok, post} = CMS.set_article_tag(post, article_tag2.id)
 
       {:ok, post} = ORM.find(Post, post.id, preload: :article_tags)
       assert exist_in?(article_tag, post.article_tags)
@@ -159,34 +160,36 @@ defmodule GroupherServer.Test.CMS.ArticleTag.PostTag do
   end
 
   describe "[post tag set /unset]" do
+    @tag :wip
     test "can set a tag ", ~m(community post article_tag_attrs article_tag_attrs2 user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
       {:ok, article_tag2} = CMS.create_article_tag(community, :post, article_tag_attrs2, user)
 
-      {:ok, post} = CMS.set_article_tag(:post, post.id, article_tag.id)
+      {:ok, post} = CMS.set_article_tag(post, article_tag.id)
       assert post.article_tags |> length == 1
       assert exist_in?(article_tag, post.article_tags)
 
-      {:ok, post} = CMS.set_article_tag(:post, post.id, article_tag2.id)
+      {:ok, post} = CMS.set_article_tag(post, article_tag2.id)
       assert post.article_tags |> length == 2
       assert exist_in?(article_tag, post.article_tags)
       assert exist_in?(article_tag2, post.article_tags)
 
-      {:ok, post} = CMS.unset_article_tag(:post, post.id, article_tag.id)
+      {:ok, post} = CMS.unset_article_tag(post, article_tag.id)
       assert post.article_tags |> length == 1
       assert not exist_in?(article_tag, post.article_tags)
       assert exist_in?(article_tag2, post.article_tags)
 
-      {:ok, post} = CMS.unset_article_tag(:post, post.id, article_tag2.id)
+      {:ok, post} = CMS.unset_article_tag(post, article_tag2.id)
       assert post.article_tags |> length == 0
       assert not exist_in?(article_tag, post.article_tags)
       assert not exist_in?(article_tag2, post.article_tags)
     end
 
+    @tag :wip
     test "can not set dup tag ", ~m(community post article_tag_attrs user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
-      {:ok, post} = CMS.set_article_tag(:post, post.id, article_tag.id)
-      {:ok, post} = CMS.set_article_tag(:post, post.id, article_tag.id)
+      {:ok, post} = CMS.set_article_tag(post, article_tag.id)
+      {:ok, post} = CMS.set_article_tag(post, article_tag.id)
 
       assert post.article_tags |> length == 1
     end
