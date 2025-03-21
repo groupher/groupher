@@ -226,7 +226,6 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
   end
 
   describe "[article comment lock/unlock]" do
-    @tag :wip
     test "can lock a doc's comment", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"doc.lock_comment" => true}}
@@ -241,7 +240,6 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
       assert doc.meta.is_comment_locked
     end
 
-    @tag :wip
     test "unauth user fails", ~m(guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
@@ -253,7 +251,6 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              )
     end
 
-    @tag :wip
     test "can undo lock a doc's comment", ~m(community doc)a do
       {:ok, _} = CMS.lock_article_comments(doc)
       {:ok, doc} = ORM.find(Doc, doc.id)
@@ -273,7 +270,6 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
       assert not doc.meta.is_comment_locked
     end
 
-    @tag :wip
     test "unauth user undo fails", ~m(guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 

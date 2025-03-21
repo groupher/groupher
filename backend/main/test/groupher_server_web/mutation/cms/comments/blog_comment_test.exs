@@ -226,7 +226,6 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
   end
 
   describe "[article comment lock/unlock]" do
-    @tag :wip
     test "can lock a blog's comment", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"blog.lock_comment" => true}}
@@ -242,7 +241,6 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
       assert blog.meta.is_comment_locked
     end
 
-    @tag :wip
     test "unauth user fails", ~m(guest_conn community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 
@@ -254,7 +252,6 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              )
     end
 
-    @tag :wip
     test "can undo lock a blog's comment", ~m(community blog)a do
       {:ok, _} = CMS.lock_article_comments(blog)
       {:ok, blog} = ORM.find(Blog, blog.id)
@@ -278,7 +275,6 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
       assert not blog.meta.is_comment_locked
     end
 
-    @tag :wip
     test "unauth user undo fails", ~m(guest_conn community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 

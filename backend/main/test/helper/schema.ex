@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.Helper.Schema do
   @moduledoc false
 
   def m(:create_article, thread) do
-    thread = thread |> Atom.to_string() |> String.capitalize()
-
     """
     mutation(
       $title: String!
