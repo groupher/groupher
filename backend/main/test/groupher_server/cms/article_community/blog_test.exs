@@ -50,8 +50,8 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
 
       {:ok, article_tag2} = CMS.create_article_tag(community, :blog, article_tag_attrs2, user)
 
-      {:ok, _} = CMS.set_article_tag(:blog, blog.id, article_tag.id)
-      {:ok, blog} = CMS.set_article_tag(:blog, blog.id, article_tag2.id)
+      {:ok, _} = CMS.set_article_tag(blog, article_tag.id)
+      {:ok, blog} = CMS.set_article_tag(blog, article_tag2.id)
 
       assert blog.article_tags |> length == 2
       assert blog.original_community_id == community.id
@@ -79,9 +79,9 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       {:ok, article_tag2} = CMS.create_article_tag(community2, :blog, article_tag_attrs2, user)
 
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.set_article_tag(:blog, blog.id, article_tag0.id)
-      {:ok, _} = CMS.set_article_tag(:blog, blog.id, article_tag.id)
-      {:ok, _} = CMS.set_article_tag(:blog, blog.id, article_tag2.id)
+      {:ok, _} = CMS.set_article_tag(blog, article_tag0.id)
+      {:ok, _} = CMS.set_article_tag(blog, article_tag.id)
+      {:ok, _} = CMS.set_article_tag(blog, article_tag2.id)
 
       {:ok, blog} = ORM.find(Blog, blog.id, preload: [:article_tags])
       assert blog.article_tags |> length == 3
@@ -286,7 +286,7 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
         CMS.create_article_tag(blackhole, :blog, article_tag_attrs, user)
 
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.set_article_tag(:blog, blog.id, article_tag0.id)
+      {:ok, _} = CMS.set_article_tag(blog, article_tag0.id)
 
       assert blog.original_community_id == community.id
 

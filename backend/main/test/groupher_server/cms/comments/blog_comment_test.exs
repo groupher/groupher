@@ -624,7 +624,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       assert paged_comments.total_count == total_count + 2
     end
 
-    test "only page 1 have pinned coments",
+    test "only page 1 have pinned comments",
          ~m(community user blog)a do
       total_count = 20
       page_number = 2
@@ -666,7 +666,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       assert paged_comments.total_count == total_count
     end
 
-    test "paged article comments should not contains folded and repoted comments",
+    test "paged article comments should not contains folded and reported comments",
          ~m(community user blog)a do
       total_count = 15
       page_number = 1

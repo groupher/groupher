@@ -16,6 +16,27 @@ defmodule GroupherServer.Test.Helper.Schema do
   def m(:undo_sink_blog), do: undo_sink_article(:blog)
   def m(:undo_sink_doc), do: undo_sink_article(:doc)
 
+  def m(:set_article_tag) do
+    """
+    mutation($id: ID!, $thread: Thread, $articleTagId: ID!, $community: String!) {
+      setArticleTag(id: $id, thread: $thread, articleTagId: $articleTagId, community: $community) {
+        id
+      }
+    }
+    """
+  end
+
+  def m(:unset_article_tag) do
+    """
+    mutation($id: ID!, $thread: Thread, $articleTagId: ID!, $community: String!) {
+      unsetArticleTag(id: $id, thread: $thread, articleTagId: $articleTagId, community: $community) {
+        id
+        title
+      }
+    }
+    """
+  end
+
   def m(:mirror_article) do
     """
     mutation($id: ID!, $thread: Thread, $community: String!, $targetCommunity: String!, $articleTags: [ID]) {

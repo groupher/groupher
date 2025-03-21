@@ -64,8 +64,8 @@ defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
       {:ok, article_tag2} =
         CMS.create_article_tag(community, :changelog, article_tag_attrs2, user)
 
-      {:ok, changelog} = CMS.set_article_tag(:changelog, changelog.id, article_tag.id)
-      {:ok, changelog} = CMS.set_article_tag(:changelog, changelog.id, article_tag2.id)
+      {:ok, changelog} = CMS.set_article_tag(changelog, article_tag.id)
+      {:ok, changelog} = CMS.set_article_tag(changelog, article_tag2.id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :article_tags)
       assert exist_in?(article_tag, changelog.article_tags)
@@ -126,21 +126,21 @@ defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
       {:ok, article_tag2} =
         CMS.create_article_tag(community, :changelog, article_tag_attrs2, user)
 
-      {:ok, changelog} = CMS.set_article_tag(:changelog, changelog.id, article_tag.id)
+      {:ok, changelog} = CMS.set_article_tag(changelog, article_tag.id)
       assert changelog.article_tags |> length == 1
       assert exist_in?(article_tag, changelog.article_tags)
 
-      {:ok, changelog} = CMS.set_article_tag(:changelog, changelog.id, article_tag2.id)
+      {:ok, changelog} = CMS.set_article_tag(changelog, article_tag2.id)
       assert changelog.article_tags |> length == 2
       assert exist_in?(article_tag, changelog.article_tags)
       assert exist_in?(article_tag2, changelog.article_tags)
 
-      {:ok, changelog} = CMS.unset_article_tag(:changelog, changelog.id, article_tag.id)
+      {:ok, changelog} = CMS.unset_article_tag(changelog, article_tag.id)
       assert changelog.article_tags |> length == 1
       assert not exist_in?(article_tag, changelog.article_tags)
       assert exist_in?(article_tag2, changelog.article_tags)
 
-      {:ok, changelog} = CMS.unset_article_tag(:changelog, changelog.id, article_tag2.id)
+      {:ok, changelog} = CMS.unset_article_tag(changelog, article_tag2.id)
       assert changelog.article_tags |> length == 0
       assert not exist_in?(article_tag, changelog.article_tags)
       assert not exist_in?(article_tag2, changelog.article_tags)
@@ -148,8 +148,8 @@ defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
 
     test "can not set dup tag ", ~m(community changelog article_tag_attrs user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
-      {:ok, changelog} = CMS.set_article_tag(:changelog, changelog.id, article_tag.id)
-      {:ok, changelog} = CMS.set_article_tag(:changelog, changelog.id, article_tag.id)
+      {:ok, changelog} = CMS.set_article_tag(changelog, article_tag.id)
+      {:ok, changelog} = CMS.set_article_tag(changelog, article_tag.id)
 
       assert changelog.article_tags |> length == 1
     end

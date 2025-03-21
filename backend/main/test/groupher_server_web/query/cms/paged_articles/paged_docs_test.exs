@@ -161,7 +161,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
       article_tag_attrs = mock_attrs(:article_tag)
       {:ok, article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
-      {:ok, _} = CMS.set_article_tag(:doc, doc.id, article_tag.id)
+      {:ok, _} = CMS.set_article_tag(doc, article_tag.id)
 
       variables = %{filter: %{page: 1, size: 10, article_tag: article_tag.slug}}
       results = guest_conn |> query_result(@query, variables, "pagedDocs")

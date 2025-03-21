@@ -62,8 +62,8 @@ defmodule GroupherServer.Test.CMS.ArticleTag.BlogTag do
 
       {:ok, article_tag2} = CMS.create_article_tag(community, :blog, article_tag_attrs2, user)
 
-      {:ok, blog} = CMS.set_article_tag(:blog, blog.id, article_tag.id)
-      {:ok, blog} = CMS.set_article_tag(:blog, blog.id, article_tag2.id)
+      {:ok, blog} = CMS.set_article_tag(blog, article_tag.id)
+      {:ok, blog} = CMS.set_article_tag(blog, article_tag2.id)
 
       {:ok, blog} = ORM.find(Blog, blog.id, preload: :article_tags)
       assert exist_in?(article_tag, blog.article_tags)
@@ -119,21 +119,21 @@ defmodule GroupherServer.Test.CMS.ArticleTag.BlogTag do
 
       {:ok, article_tag2} = CMS.create_article_tag(community, :blog, article_tag_attrs2, user)
 
-      {:ok, blog} = CMS.set_article_tag(:blog, blog.id, article_tag.id)
+      {:ok, blog} = CMS.set_article_tag(blog, article_tag.id)
       assert blog.article_tags |> length == 1
       assert exist_in?(article_tag, blog.article_tags)
 
-      {:ok, blog} = CMS.set_article_tag(:blog, blog.id, article_tag2.id)
+      {:ok, blog} = CMS.set_article_tag(blog, article_tag2.id)
       assert blog.article_tags |> length == 2
       assert exist_in?(article_tag, blog.article_tags)
       assert exist_in?(article_tag2, blog.article_tags)
 
-      {:ok, blog} = CMS.unset_article_tag(:blog, blog.id, article_tag.id)
+      {:ok, blog} = CMS.unset_article_tag(blog, article_tag.id)
       assert blog.article_tags |> length == 1
       assert not exist_in?(article_tag, blog.article_tags)
       assert exist_in?(article_tag2, blog.article_tags)
 
-      {:ok, blog} = CMS.unset_article_tag(:blog, blog.id, article_tag2.id)
+      {:ok, blog} = CMS.unset_article_tag(blog, article_tag2.id)
       assert blog.article_tags |> length == 0
       assert not exist_in?(article_tag, blog.article_tags)
       assert not exist_in?(article_tag2, blog.article_tags)
@@ -141,8 +141,8 @@ defmodule GroupherServer.Test.CMS.ArticleTag.BlogTag do
 
     test "can not set dup tag ", ~m(community blog article_tag_attrs user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :blog, article_tag_attrs, user)
-      {:ok, blog} = CMS.set_article_tag(:blog, blog.id, article_tag.id)
-      {:ok, blog} = CMS.set_article_tag(:blog, blog.id, article_tag.id)
+      {:ok, blog} = CMS.set_article_tag(blog, article_tag.id)
+      {:ok, blog} = CMS.set_article_tag(blog, article_tag.id)
 
       assert blog.article_tags |> length == 1
     end

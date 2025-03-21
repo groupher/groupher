@@ -82,11 +82,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:id, non_null(:id))
       arg(:article_tag_id, non_null(:id))
       # community_id only use for passport check
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
       middleware(M.PassportLoader, source: :community)
+      middleware(M.FrontDesk, :article)
       middleware(M.Passport, claim: "cms->c?->t?.article_tag.set")
 
       resolve(&R.CMS.set_article_tag/3)
@@ -96,11 +97,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
     field :unset_article_tag, :article_tag do
       arg(:id, non_null(:id))
       arg(:article_tag_id, non_null(:id))
-      arg(:community_id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
       middleware(M.PassportLoader, source: :community)
+      middleware(M.FrontDesk, :article)
       middleware(M.Passport, claim: "cms->c?->t?.article_tag.unset")
 
       resolve(&R.CMS.unset_article_tag/3)

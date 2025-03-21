@@ -303,12 +303,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.delete_article_tag(id)
   end
 
-  def set_article_tag(_root, ~m(id thread article_tag_id)a, _info) do
-    CMS.set_article_tag(thread, id, article_tag_id)
+  def set_article_tag(_root, ~m(article article_tag_id)a, _info) do
+    CMS.set_article_tag(article, article_tag_id)
   end
 
-  def unset_article_tag(_root, ~m(id thread article_tag_id)a, _info) do
-    CMS.unset_article_tag(thread, id, article_tag_id)
+  def unset_article_tag(_root, ~m(article article_tag_id)a, _info) do
+    CMS.unset_article_tag(article, article_tag_id)
   end
 
   def paged_article_tags(_root, %{filter: filter}, _info) do

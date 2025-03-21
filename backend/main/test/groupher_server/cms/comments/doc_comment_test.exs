@@ -666,7 +666,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert paged_comments.total_count == total_count
     end
 
-    test "paged article comments should not contains folded and repoted comments",
+    test "paged article comments should not contains folded and reported comments",
          ~m(community user doc)a do
       total_count = 15
       page_number = 1
