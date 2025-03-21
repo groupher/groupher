@@ -191,7 +191,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert not is_nil(get_in(post, ["document", "bodyHtml"]))
     end
 
-    @tag :wip
     test "support article_tag filter", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)

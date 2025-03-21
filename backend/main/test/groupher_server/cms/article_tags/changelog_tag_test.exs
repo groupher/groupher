@@ -57,7 +57,6 @@ defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
       assert {:error, _} = ORM.find(ArticleTag, article_tag.id)
     end
 
-    @tag :wip
     test "assoc tag should be delete after tag deleted",
          ~m(community changelog article_tag_attrs article_tag_attrs2 user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
@@ -121,7 +120,6 @@ defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
   end
 
   describe "[changelog tag set /unset]" do
-    @tag :wip
     test "can set a tag ", ~m(community changelog article_tag_attrs article_tag_attrs2 user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
 
@@ -148,7 +146,6 @@ defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
       assert not exist_in?(article_tag2, changelog.article_tags)
     end
 
-    @tag :wip
     test "can not set dup tag ", ~m(community changelog article_tag_attrs user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
       {:ok, changelog} = CMS.set_article_tag(changelog, article_tag.id)

@@ -40,7 +40,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert exist_in?(community2, blog.communities)
     end
 
-    @tag :wip
     test "tags should be clean after blog move to other community",
          ~m(user community community2 blog_attrs)a do
       article_tag_attrs = mock_attrs(:article_tag)
@@ -67,7 +66,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert exist_in?(community2, blog.communities)
     end
 
-    @tag :wip
     test "blog move to other community with new tag",
          ~m(user community community2 blog_attrs)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
@@ -277,7 +275,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Blog do
       assert paged_articles.total_count === 1
     end
 
-    @tag :wip
     test "blog can be move to blackhole with tags", ~m(community blackhole blog_attrs user)a do
       article_tag_attrs0 = mock_attrs(:article_tag)
       article_tag_attrs = mock_attrs(:article_tag)

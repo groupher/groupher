@@ -18,7 +18,6 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.PostSetTag do
   end
 
   describe "[mutation post tag]" do
-    @tag :wip
     test "auth user can set a valid tag to post", ~m(community post article_tag_attrs user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
 
@@ -39,7 +38,6 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.PostSetTag do
       assert article_tag.id in assoc_tags
     end
 
-    @tag :wip
     test "can unset tag to a post",
          ~m(community post article_tag_attrs article_tag_attrs2 user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)

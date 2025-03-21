@@ -156,7 +156,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert not is_nil(get_in(changelog, ["document", "bodyHtml"]))
     end
 
-    @tag :wip
     test "support article_tag filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)

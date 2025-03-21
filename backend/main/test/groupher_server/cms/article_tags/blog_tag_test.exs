@@ -56,7 +56,6 @@ defmodule GroupherServer.Test.CMS.ArticleTag.BlogTag do
       assert {:error, _} = ORM.find(ArticleTag, article_tag.id)
     end
 
-    @tag :wip
     test "assoc tag should be delete after tag deleted",
          ~m(community blog article_tag_attrs article_tag_attrs2 user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :blog, article_tag_attrs, user)
@@ -115,7 +114,6 @@ defmodule GroupherServer.Test.CMS.ArticleTag.BlogTag do
   end
 
   describe "[blog tag set /unset]" do
-    @tag :wip
     test "can set a tag ", ~m(community blog article_tag_attrs article_tag_attrs2 user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :blog, article_tag_attrs, user)
 
@@ -141,7 +139,6 @@ defmodule GroupherServer.Test.CMS.ArticleTag.BlogTag do
       assert not exist_in?(article_tag2, blog.article_tags)
     end
 
-    @tag :wip
     test "can not set dup tag ", ~m(community blog article_tag_attrs user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :blog, article_tag_attrs, user)
       {:ok, blog} = CMS.set_article_tag(blog, article_tag.id)
