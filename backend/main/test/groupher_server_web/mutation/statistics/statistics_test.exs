@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
         community: community.slug
       }
 
-      user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
+      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
 
       {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
         community: community.slug
       }
 
-      user_conn |> mutation_result(Schema.m(:create_post), variables, "createPost")
+      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
 
       {:ok, contributes} = ORM.find_by(CommunityContribute, community_id: community.id)
       assert contributes.count == 1
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       blog_attr = mock_attrs(:blog)
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
+      user_conn |> mutation_result(Schema.m(:create_article, :blog), variables, "createBlog")
 
       {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1

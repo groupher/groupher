@@ -204,8 +204,8 @@ defmodule GroupherServer.CMS do
   defdelegate upvote_comment(comment_id, user), to: CommentAction
   defdelegate undo_upvote_comment(comment_id, user), to: CommentAction
   defdelegate reply_comment(comment_id, args, user), to: CommentAction
-  defdelegate lock_article_comments(thread, article_id), to: CommentAction
-  defdelegate undo_lock_article_comments(thread, article_id), to: CommentAction
+  defdelegate lock_article_comments(article), to: CommentAction
+  defdelegate undo_lock_article_comments(article), to: CommentAction
 
   defdelegate pin_comment(comment_id), to: CommentAction
   defdelegate undo_pin_comment(comment_id), to: CommentAction

@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       passport_rules = %{community.slug => %{"post.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result = rule_conn |> mutation_result(Schema.m(:sink_post), variables, "sinkPost")
+      result = rule_conn |> mutation_result(Schema.m(:sink_article, :post), variables, "sinkPost")
       assert result["id"] == to_string(post.id)
 
       {:ok, post} = ORM.find(Post, post.id)
@@ -29,7 +29,11 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       variables = %{id: post.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(Schema.m(:sink_post), variables, ecode(:account_login))
+             |> mutation_get_error?(
+               Schema.m(:sink_article, :post),
+               variables,
+               ecode(:account_login)
+             )
     end
 
     @query """
@@ -46,7 +50,11 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       {:ok, _} = CMS.sink_article(post)
-      updated = rule_conn |> mutation_result(Schema.m(:undo_sink_post), variables, "undoSinkPost")
+
+      updated =
+        rule_conn
+        |> mutation_result(Schema.m(:undo_sink_article, :post), variables, "undoSinkPost")
+
       assert updated["id"] == to_string(post.id)
 
       {:ok, post} = ORM.find(Post, post.id)
@@ -57,7 +65,11 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       variables = %{id: post.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(Schema.m(:undo_sink_post), variables, ecode(:account_login))
+             |> mutation_get_error?(
+               Schema.m(:undo_sink_article, :post),
+               variables,
+               ecode(:account_login)
+             )
     end
   end
 end

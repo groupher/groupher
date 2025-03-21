@@ -27,7 +27,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
       variables = blog_attr |> Map.merge(%{community: community.slug, body: body})
 
-      created = user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
+      created =
+        user_conn |> mutation_result(Schema.m(:create_article, :blog), variables, "createBlog")
 
       {:ok, blog} = ORM.find(Blog, created["id"])
 
@@ -47,7 +48,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       variables =
         blog_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
-      created = user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
+      created =
+        user_conn |> mutation_result(Schema.m(:create_article, :blog), variables, "createBlog")
 
       {:ok, blog} = ORM.find(Blog, created["id"], preload: :article_tags)
 
@@ -57,7 +59,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     test "create blog should escape xss attracts", ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string()})
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
-      result = user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
+
+      result =
+        user_conn |> mutation_result(Schema.m(:create_article, :blog), variables, "createBlog")
+
       {:ok, blog} = ORM.find(Blog, result["id"], preload: :document)
       body_html = blog |> get_in([:document, :body_html])
 
@@ -67,7 +72,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     test "create blog should escape xss attracts 2", ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string(:safe)})
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
-      result = user_conn |> mutation_result(Schema.m(:create_blog), variables, "createBlog")
+
+      result =
+        user_conn |> mutation_result(Schema.m(:create_article, :blog), variables, "createBlog")
+
       {:ok, blog} = ORM.find(Blog, result["id"], preload: :document)
       body_html = blog |> get_in([:document, :body_html])
 
@@ -82,7 +90,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       blog_attr = mock_attrs(:blog)
       variables = blog_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
 
-      assert user_conn |> mutation_get_error?(Schema.m(:create_blog), variables)
+      assert user_conn |> mutation_get_error?(Schema.m(:create_article, :blog), variables)
     end
 
     @query """

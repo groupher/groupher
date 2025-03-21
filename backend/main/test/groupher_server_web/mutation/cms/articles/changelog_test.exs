@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       created =
         user_conn
-        |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
+        |> mutation_result(Schema.m(:create_article, :changelog), variables, "createChangelog")
 
       {:ok, changelog} = ORM.find(Changelog, created["id"])
 
@@ -50,7 +50,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         changelog_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
       created =
-        user_conn |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
+        user_conn
+        |> mutation_result(Schema.m(:create_article, :changelog), variables, "createChangelog")
 
       {:ok, changelog} = ORM.find(Changelog, created["id"], preload: :article_tags)
 
@@ -62,7 +63,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
       result =
-        user_conn |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
+        user_conn
+        |> mutation_result(Schema.m(:create_article, :changelog), variables, "createChangelog")
 
       {:ok, changelog} = ORM.find(Changelog, result["id"], preload: :document)
       body_html = changelog |> get_in([:document, :body_html])
@@ -75,7 +77,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
       result =
-        user_conn |> mutation_result(Schema.m(:create_changelog), variables, "createChangelog")
+        user_conn
+        |> mutation_result(Schema.m(:create_article, :changelog), variables, "createChangelog")
 
       {:ok, changelog} = ORM.find(Changelog, result["id"], preload: :document)
       body_html = changelog |> get_in([:document, :body_html])
@@ -91,7 +94,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       changelog_attr = mock_attrs(:changelog)
       variables = changelog_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
-      assert user_conn |> mutation_get_error?(Schema.m(:create_changelog), variables)
+      assert user_conn |> mutation_get_error?(Schema.m(:create_article, :changelog), variables)
     end
 
     @query """

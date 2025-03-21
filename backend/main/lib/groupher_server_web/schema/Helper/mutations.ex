@@ -91,6 +91,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.pin"))
         middleware(M.FrontDesk, :community)
         middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.pin_article/3)
       end
 
@@ -105,6 +106,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.undo_pin"))
         middleware(M.FrontDesk, :community)
         middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.undo_pin_article/3)
       end
     end
@@ -309,24 +311,28 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("lock comment of a #{thread}")
       field unquote(:"lock_#{thread}_comment"), :article do
         arg(:id, non_null(:id))
-        arg(:community_id, non_null(:id))
+        arg(:community, non_null(:string))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
         middleware(M.PassportLoader, source: :community)
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.lock_comment"))
+        middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.lock_article_comments/3)
       end
 
       @desc unquote("undo lock to a #{thread}")
       field unquote(:"undo_lock_#{thread}_comment"), :article do
         arg(:id, non_null(:id))
-        arg(:community_id, non_null(:id))
+        arg(:community, non_null(:string))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
         middleware(M.PassportLoader, source: :community)
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.undo_lock_comment"))
+        middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.undo_lock_article_comments/3)
       end
     end

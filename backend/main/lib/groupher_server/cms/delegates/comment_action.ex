@@ -245,25 +245,19 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   end
 
   @doc "lock comment of a article"
-  def lock_article_comments(thread, id) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id) do
-      article_meta = ensure(article.meta, @default_article_meta)
-      meta = Map.merge(article_meta, %{is_comment_locked: true})
+  def lock_article_comments(article) do
+    article_meta = ensure(article.meta, @default_article_meta)
+    meta = Map.merge(article_meta, %{is_comment_locked: true})
 
-      ORM.update_meta(article, meta)
-    end
+    ORM.update_meta(article, meta)
   end
 
   @doc "undo lock comment of a article"
-  def undo_lock_article_comments(thread, id) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id) do
-      article_meta = ensure(article.meta, @default_article_meta)
-      meta = Map.merge(article_meta, %{is_comment_locked: false})
+  def undo_lock_article_comments(article) do
+    article_meta = ensure(article.meta, @default_article_meta)
+    meta = Map.merge(article_meta, %{is_comment_locked: false})
 
-      ORM.update_meta(article, meta)
-    end
+    ORM.update_meta(article, meta)
   end
 
   # do (un)fold and update folded count in article meta

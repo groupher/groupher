@@ -30,7 +30,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
 
       variables = doc_attr |> Map.merge(%{community: community.slug, body: body})
 
-      created = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
+      created =
+        user_conn |> mutation_result(Schema.m(:create_article, :doc), variables, "createDoc")
 
       {:ok, doc} = ORM.find(Doc, created["id"])
 
@@ -50,7 +51,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       variables =
         doc_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
-      created = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
+      created =
+        user_conn |> mutation_result(Schema.m(:create_article, :doc), variables, "createDoc")
 
       {:ok, doc} = ORM.find(Doc, created["id"], preload: :article_tags)
 
@@ -60,7 +62,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     test "create doc should escape xss attracts", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string()})
       variables = doc_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
-      result = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
+
+      result =
+        user_conn |> mutation_result(Schema.m(:create_article, :doc), variables, "createDoc")
+
       {:ok, doc} = ORM.find(Doc, result["id"], preload: :document)
       body_html = doc |> get_in([:document, :body_html])
 
@@ -70,7 +75,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     test "create doc should escape xss attracts 2", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string(:safe)})
       variables = doc_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
-      result = user_conn |> mutation_result(Schema.m(:create_doc), variables, "createDoc")
+
+      result =
+        user_conn |> mutation_result(Schema.m(:create_article, :doc), variables, "createDoc")
+
       {:ok, doc} = ORM.find(Doc, result["id"], preload: :document)
       body_html = doc |> get_in([:document, :body_html])
 
@@ -85,7 +93,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       doc_attr = mock_attrs(:doc)
       variables = doc_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
-      assert user_conn |> mutation_get_error?(Schema.m(:create_doc), variables)
+      assert user_conn |> mutation_get_error?(Schema.m(:create_article, :doc), variables)
     end
 
     @query """

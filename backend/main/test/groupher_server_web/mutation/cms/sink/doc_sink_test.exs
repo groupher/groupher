@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       passport_rules = %{community.slug => %{"doc.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result = rule_conn |> mutation_result(Schema.m(:sink_doc), variables, "sinkDoc")
+      result = rule_conn |> mutation_result(Schema.m(:sink_article, :doc), variables, "sinkDoc")
       assert result["id"] == to_string(doc.id)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
@@ -29,7 +29,11 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       variables = %{id: doc.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(Schema.m(:sink_doc), variables, ecode(:account_login))
+             |> mutation_get_error?(
+               Schema.m(:sink_article, :doc),
+               variables,
+               ecode(:account_login)
+             )
     end
 
     @query """
@@ -46,7 +50,10 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       {:ok, _} = CMS.sink_article(doc)
-      updated = rule_conn |> mutation_result(Schema.m(:undo_sink_doc), variables, "undoSinkDoc")
+
+      updated =
+        rule_conn |> mutation_result(Schema.m(:undo_sink_article, :doc), variables, "undoSinkDoc")
+
       assert updated["id"] == to_string(doc.id)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
@@ -57,7 +64,11 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       variables = %{id: doc.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(Schema.m(:undo_sink_doc), variables, ecode(:account_login))
+             |> mutation_get_error?(
+               Schema.m(:undo_sink_article, :doc),
+               variables,
+               ecode(:account_login)
+             )
     end
   end
 end
