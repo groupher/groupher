@@ -882,18 +882,18 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
     end
 
+    @tag :wip
     test "locked blog can not by reply", ~m(community user blog)a do
       {:ok, parent_comment} =
         CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
-
       {:ok, _} = CMS.lock_article_comments(blog)
 
       {:error, reason} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
       assert reason |> is_error?(:article_comments_locked)
 
-      {:ok, _} = CMS.undo_lock_article_comments(blog)
+      {:ok, blog} = CMS.undo_lock_article_comments(blog)
       {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
     end
   end
