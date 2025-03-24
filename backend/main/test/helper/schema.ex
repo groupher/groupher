@@ -31,6 +31,36 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def m(:upvote_article, thread) do
+    """
+    mutation($id: ID!, $community: String!) {
+      upvote#{t(thread)}(id: $id, community: $community) {
+        id
+        meta {
+          latestUpvotedUsers {
+            login
+          }
+        }
+      }
+    }
+    """
+  end
+
+  def m(:undo_upvote_article, thread) do
+    """
+    mutation($id: ID!, $community: String!) {
+      undoUpvote#{t(thread)}(id: $id, community: $community) {
+        id
+        meta {
+          latestUpvotedUsers {
+            login
+          }
+        }
+      }
+    }
+    """
+  end
+
   def m(:sink_article, thread) do
     """
     mutation($id: ID!, $community: String!){

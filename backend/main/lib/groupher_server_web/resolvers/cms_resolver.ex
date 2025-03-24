@@ -184,12 +184,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def sink_article(_root, ~m(article)a, _info), do: CMS.sink_article(article)
   def undo_sink_article(_root, ~m(article)a, _info), do: CMS.undo_sink_article(article)
 
-  def upvote_article(_root, ~m(id thread)a, %{context: %{cur_user: user}}) do
-    CMS.upvote_article(thread, id, user)
+  def upvote_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
+    CMS.upvote_article(article, user)
   end
 
-  def undo_upvote_article(_root, ~m(id thread)a, %{context: %{cur_user: user}}) do
-    CMS.undo_upvote_article(thread, id, user)
+  def undo_upvote_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
+    CMS.undo_upvote_article(article, user)
   end
 
   def upvoted_users(_root, ~m(id thread filter)a, _info) do
