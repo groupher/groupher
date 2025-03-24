@@ -76,7 +76,7 @@ defmodule Helper.Utils do
   like || in javascript
   """
   def ensure(nil, default_data), do: default_data
-  def ensure(data, _default_value), do: data
+  def ensure(data, _), do: data
 
   @doc """
   handle General {:ok, ..} or {:error, ..} return

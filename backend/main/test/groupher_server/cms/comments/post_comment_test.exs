@@ -837,14 +837,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[lock/unlock post comment]" do
     test "locked post can not be comment", ~m(community user post)a do
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-      {:ok, _} = CMS.lock_article_comments(:post, post.id)
+      {:ok, _} = CMS.lock_article_comments(post)
 
       {:error, reason} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       assert reason |> is_error?(:article_comments_locked)
 
-      {:ok, _} = CMS.undo_lock_article_comments(:post, post.id)
+      {:ok, _} = CMS.undo_lock_article_comments(post)
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
     end
 
@@ -854,12 +854,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
 
-      {:ok, _} = CMS.lock_article_comments(:post, post.id)
+      {:ok, _} = CMS.lock_article_comments(post)
 
       {:error, reason} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
       assert reason |> is_error?(:article_comments_locked)
 
-      {:ok, _} = CMS.undo_lock_article_comments(:post, post.id)
+      {:ok, _} = CMS.undo_lock_article_comments(post)
       {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
     end
   end

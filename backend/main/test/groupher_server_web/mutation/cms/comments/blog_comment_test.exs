@@ -226,49 +226,49 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
   end
 
   describe "[article comment lock/unlock]" do
-    @query """
-    mutation($id: ID!, $communityId: ID!){
-      lockBlogComment(id: $id, communityId: $communityId) {
-        id
-        title
-      }
-    }
-    """
     test "can lock a blog's comment", ~m(community blog)a do
-      variables = %{id: blog.id, communityId: community.id}
+      variables = %{id: blog.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"blog.lock_comment" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result = rule_conn |> mutation_result(@query, variables, "lockBlogComment")
+      result =
+        rule_conn
+        |> mutation_result(Schema.m(:lock_comment, :blog), variables, "lockBlogComment")
+
       assert result["id"] == to_string(blog.id)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
       assert blog.meta.is_comment_locked
     end
 
-    test "unauth user  fails", ~m(guest_conn community blog)a do
-      variables = %{id: blog.id, communityId: community.id}
+    test "unauth user fails", ~m(guest_conn community blog)a do
+      variables = %{id: blog.inner_id, community: community.slug}
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn
+             |> mutation_get_error?(
+               Schema.m(:lock_comment, :blog),
+               variables,
+               ecode(:account_login)
+             )
     end
 
-    @query """
-    mutation($id: ID!, $communityId: ID!){
-      undoLockBlogComment(id: $id, communityId: $communityId) {
-        id
-      }
-    }
-    """
     test "can undo lock a blog's comment", ~m(community blog)a do
-      {:ok, _} = CMS.lock_article_comments(:blog, blog.id)
+      {:ok, _} = CMS.lock_article_comments(blog)
       {:ok, blog} = ORM.find(Blog, blog.id)
       assert blog.meta.is_comment_locked
 
-      variables = %{id: blog.id, communityId: community.id}
+      variables = %{id: blog.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"blog.undo_lock_comment" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result = rule_conn |> mutation_result(@query, variables, "undoLockBlogComment")
+      result =
+        rule_conn
+        |> mutation_result(
+          Schema.m(:unlock_comment, :blog),
+          variables,
+          "undoLockBlogComment"
+        )
+
       assert result["id"] == to_string(blog.id)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
@@ -276,9 +276,14 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
     end
 
     test "unauth user undo fails", ~m(guest_conn community blog)a do
-      variables = %{id: blog.id, communityId: community.id}
+      variables = %{id: blog.inner_id, community: community.slug}
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn
+             |> mutation_get_error?(
+               Schema.m(:unlock_comment, :blog),
+               variables,
+               ecode(:account_login)
+             )
     end
   end
 

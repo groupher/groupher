@@ -1,20 +1,78 @@
 defmodule GroupherServer.Test.Helper.Schema do
   @moduledoc false
 
-  def m(:create_post), do: create_article(:post)
-  def m(:create_changelog), do: create_article(:changelog)
-  def m(:create_blog), do: create_article(:blog)
-  def m(:create_doc), do: create_article(:doc)
+  def m(:create_article, thread) do
+    """
+    mutation(
+      $title: String!
+      $body: String!
+      $community: String!
+      $articleTags: [ID]
+      $linkAddr: String
+    ) {
+      create#{t(thread)}(
+        title: $title
+        body: $body
+        community: $community
+        articleTags: $articleTags
+        linkAddr: $linkAddr
+      ) {
+        id
+        title
+        linkAddr
+        document {
+          bodyHtml
+        }
+        originalCommunity {
+          id
+        }
+      }
+    }
+    """
+  end
 
-  def m(:sink_post), do: sink_article(:post)
-  def m(:sink_changelog), do: sink_article(:changelog)
-  def m(:sink_blog), do: sink_article(:blog)
-  def m(:sink_doc), do: sink_article(:doc)
+  def m(:sink_article, thread) do
+    """
+    mutation($id: ID!, $community: String!){
+      sink#{t(thread)}(id: $id, community: $community) {
+        id
+      }
+    }
+    """
+  end
 
-  def m(:undo_sink_post), do: undo_sink_article(:post)
-  def m(:undo_sink_changelog), do: undo_sink_article(:changelog)
-  def m(:undo_sink_blog), do: undo_sink_article(:blog)
-  def m(:undo_sink_doc), do: undo_sink_article(:doc)
+  def m(:undo_sink_article, thread) do
+    """
+    mutation($id: ID!, $community: String!){
+      undoSink#{t(thread)}(id: $id, community: $community) {
+        id
+      }
+    }
+    """
+  end
+
+  def m(:lock_comment, thread) do
+    """
+    mutation($id: ID!, $community: String!) {
+      lock#{t(thread)}Comment(id: $id, community: $community) {
+        id
+        title
+      }
+    }
+    """
+  end
+
+  def m(:unlock_comment, thread) do
+    thread = thread |> Atom.to_string() |> String.capitalize()
+
+    """
+    mutation($id: ID!, $community: String!){
+      undoLock#{thread}Comment(id: $id, community: $community) {
+        id
+      }
+    }
+    """
+  end
 
   def m(:set_article_tag) do
     """
@@ -87,59 +145,5 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
-  defp sink_article(thread) do
-    thread = thread |> Atom.to_string() |> String.capitalize()
-
-    """
-    mutation($id: ID!, $community: String!){
-      sink#{thread}(id: $id, community: $community) {
-        id
-      }
-    }
-    """
-  end
-
-  defp undo_sink_article(thread) do
-    thread = thread |> Atom.to_string() |> String.capitalize()
-
-    """
-    mutation($id: ID!, $community: String!){
-      undoSink#{thread}(id: $id, community: $community) {
-        id
-      }
-    }
-    """
-  end
-
-  defp create_article(thread) do
-    thread = thread |> Atom.to_string() |> String.capitalize()
-
-    """
-    mutation(
-      $title: String!
-      $body: String!
-      $community: String!
-      $articleTags: [ID]
-      $linkAddr: String
-    ) {
-      create#{thread}(
-        title: $title
-        body: $body
-        community: $community
-        articleTags: $articleTags
-        linkAddr: $linkAddr
-      ) {
-        id
-        title
-        linkAddr
-        document {
-          bodyHtml
-        }
-        originalCommunity {
-          id
-        }
-      }
-    }
-    """
-  end
+  defp t(thread), do: thread |> Atom.to_string() |> String.capitalize()
 end

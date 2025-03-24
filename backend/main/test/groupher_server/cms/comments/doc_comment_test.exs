@@ -869,14 +869,14 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       {:ok, _} =
         CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.lock_article_comments(:doc, doc.id)
+      {:ok, _} = CMS.lock_article_comments(doc)
 
       {:error, reason} =
         CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
       assert reason |> is_error?(:article_comments_locked)
 
-      {:ok, _} = CMS.undo_lock_article_comments(:doc, doc.id)
+      {:ok, _} = CMS.undo_lock_article_comments(doc)
 
       {:ok, _} =
         CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
@@ -888,12 +888,12 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
 
-      {:ok, _} = CMS.lock_article_comments(:doc, doc.id)
+      {:ok, _} = CMS.lock_article_comments(doc)
 
       {:error, reason} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
       assert reason |> is_error?(:article_comments_locked)
 
-      {:ok, _} = CMS.undo_lock_article_comments(:doc, doc.id)
+      {:ok, _} = CMS.undo_lock_article_comments(doc)
       {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
     end
   end

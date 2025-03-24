@@ -5,7 +5,15 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   import Ecto.Query, warn: false
 
   import Helper.Utils,
-    only: [done: 1, strip_struct: 1, get_config: 2, ensure: 2, article_of: 1, thread_of: 1]
+    only: [
+      done: 1,
+      strip_struct: 1,
+      get_config: 2,
+      ensure: 2,
+      article_of: 1,
+      thread_of: 1,
+      use_transaction: 1
+    ]
 
   import GroupherServer.CMS.Delegate.Helper,
     only: [sync_embed_replies: 1]
@@ -104,8 +112,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
 
   @doc "reply to existing comment"
   def reply_comment(comment_id, body, %User{} = user) do
-    with {:ok, target_comment} <-
-           ORM.find_by(Comment, %{id: comment_id, is_deleted: false}),
+    with {:ok, target_comment} <- ORM.find_by(Comment, %{id: comment_id, is_deleted: false}),
          replying_comment <- Repo.preload(target_comment, reply_to: :author),
          {thread, article} <- get_article(replying_comment),
          true <- can_comment?(article, user),
@@ -245,25 +252,26 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   end
 
   @doc "lock comment of a article"
-  def lock_article_comments(thread, id) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id) do
-      article_meta = ensure(article.meta, @default_article_meta)
-      meta = Map.merge(article_meta, %{is_comment_locked: true})
+  def lock_article_comments(article) do
+    article_meta = ensure(article.meta, @default_article_meta)
+    meta = Map.merge(article_meta, %{is_comment_locked: true})
 
+    use_transaction(fn ->
+      {:ok, article} = ORM.lock_article(article)
       ORM.update_meta(article, meta)
-    end
+    end)
   end
 
   @doc "undo lock comment of a article"
-  def undo_lock_article_comments(thread, id) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id) do
-      article_meta = ensure(article.meta, @default_article_meta)
-      meta = Map.merge(article_meta, %{is_comment_locked: false})
+  def undo_lock_article_comments(article) do
+    article_meta = ensure(article.meta, @default_article_meta)
+    meta = Map.merge(article_meta, %{is_comment_locked: false})
+
+    use_transaction(fn ->
+      {:ok, article} = ORM.lock_article(article)
 
       ORM.update_meta(article, meta)
-    end
+    end)
   end
 
   # do (un)fold and update folded count in article meta

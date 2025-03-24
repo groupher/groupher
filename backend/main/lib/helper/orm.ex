@@ -40,7 +40,7 @@ defmodule Helper.ORM do
   end
 
   # NOTE: should have limit length for list, otherwise it will cause mem issues
-  @doc "simu paginator in normal list, used for embeds_many etc"
+  @doc "simulate paginator in normal list, used for embeds_many etc"
   def embeds_paginator(list, %{page: page, size: size} = _filter) when is_list(list) do
     chunked_list = Enum.chunk_every(list, size)
 
@@ -57,7 +57,7 @@ defmodule Helper.ORM do
   end
 
   @doc """
-  wrap Repo.get with preload and result/errer format handle
+  wrap Repo.get with preload and result/error format handle
   """
   def find(queryable, id, preload: preload) do
     queryable
@@ -411,6 +411,14 @@ defmodule Helper.ORM do
   def lock_community(%Community{id: id}) do
     Community
     |> where(id: ^id)
+    |> lock("FOR UPDATE")
+    |> Repo.one()
+    |> done
+  end
+
+  def lock_article(article) do
+    article.__struct__
+    |> where(id: ^article.id)
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> done
