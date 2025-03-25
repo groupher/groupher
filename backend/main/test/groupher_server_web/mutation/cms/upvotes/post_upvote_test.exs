@@ -12,18 +12,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
   end
 
   describe "[post upvote]" do
-    @query """
-    mutation($id: ID!, $community: String!) {
-      upvotePost(id: $id, community: $community) {
-        id
-        meta {
-          latestUpvotedUsers {
-            login
-          }
-        }
-      }
-    }
-    """
     @tag :wip
     test "login user can upvote a post", ~m(user_conn community post user)a do
       variables = %{id: post.inner_id, community: community.slug}
@@ -47,18 +35,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
              )
     end
 
-    @query """
-    mutation($id: ID!) {
-      undoUpvotePost(id: $id) {
-        id
-        meta {
-          latestUpvotedUsers {
-            login
-          }
-        }
-      }
-    }
-    """
     @tag :wip
     test "login user can undo upvote to a post", ~m(user_conn community post user)a do
       {:ok, _} = CMS.upvote_article(post, user)
