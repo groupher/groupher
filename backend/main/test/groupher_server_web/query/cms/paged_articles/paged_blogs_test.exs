@@ -330,7 +330,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
       {:ok, _} = CMS.upvote_article(blog, user)
       {:ok, _} = CMS.collect_article(blog, user)
-      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
 
       results = user_conn |> query_result(@query, variables, "pagedBlogs")
 

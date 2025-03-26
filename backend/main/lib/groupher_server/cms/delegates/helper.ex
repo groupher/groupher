@@ -229,12 +229,6 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   e.g:
   add/remove user_id to upvoted_user_ids in article meta
   """
-  @spec update_article_reaction_user_list(
-          :upvote | :collect,
-          T.article_common(),
-          User.t(),
-          :add | :remove
-        ) :: T.article_common()
   def update_article_reaction_user_list(action, %{meta: nil} = article, %User{} = user, opt) do
     action = past_verb(action)
     cur_user_ids = []

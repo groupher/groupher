@@ -95,7 +95,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
     test "collect hook should work on blog", ~m(user2 blog)a do
       {:ok, blog} = preload_author(blog)
 
-      {:ok, _} = CMS.collect_article(:blog, blog.id, user2)
+      {:ok, _} = CMS.collect_article(blog, user2)
       Hooks.Notify.handle(:collect, blog, user2)
 
       {:ok, notifications} =

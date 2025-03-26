@@ -35,8 +35,8 @@ defmodule GroupherServer.Test.Query.Collects.DocCollect do
     """
     test "guest can get collected users list after collect a doc",
          ~m(guest_conn doc user user2)a do
-      {:ok, _} = CMS.collect_article(:doc, doc.id, user)
-      {:ok, _} = CMS.collect_article(:doc, doc.id, user2)
+      {:ok, _} = CMS.collect_article(doc, user)
+      {:ok, _} = CMS.collect_article(doc, user2)
 
       variables = %{id: doc.id, thread: "DOC", filter: %{page: 1, size: 20}}
       results = guest_conn |> query_result(@query, variables, "collectedUsers")

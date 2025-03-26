@@ -35,8 +35,8 @@ defmodule GroupherServer.Test.Query.Collects.PostCollect do
     """
     test "guest can get collected users list after collect a post",
          ~m(guest_conn post user user2)a do
-      {:ok, _} = CMS.collect_article(:post, post.id, user)
-      {:ok, _} = CMS.collect_article(:post, post.id, user2)
+      {:ok, _} = CMS.collect_article(post, user)
+      {:ok, _} = CMS.collect_article(post, user2)
 
       variables = %{id: post.id, thread: "POST", filter: %{page: 1, size: 20}}
       results = guest_conn |> query_result(@query, variables, "collectedUsers")

@@ -17,13 +17,13 @@ defmodule GroupherServer.Test.Collect.Doc do
          ~m(user user2 community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, article_collect} = CMS.collect_article(:doc, doc.id, user)
+      {:ok, article_collect} = CMS.collect_article(doc, user)
       {:ok, article} = ORM.find(Doc, article_collect.doc_id)
 
       assert article.id == doc.id
       assert article.collects_count == 1
 
-      {:ok, article_collect} = CMS.collect_article(:doc, doc.id, user2)
+      {:ok, article_collect} = CMS.collect_article(doc, user2)
       {:ok, article} = ORM.find(Doc, article_collect.doc_id)
 
       assert article.collects_count == 2
@@ -33,12 +33,12 @@ defmodule GroupherServer.Test.Collect.Doc do
          ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, article_collect} = CMS.collect_article(:doc, doc.id, user)
+      {:ok, article_collect} = CMS.collect_article(doc, user)
       {:ok, article} = ORM.find(Doc, article_collect.doc_id)
       assert article.id == doc.id
       assert article.collects_count == 1
 
-      {:ok, article_collect} = CMS.undo_collect_article(:doc, doc.id, user)
+      {:ok, article_collect} = CMS.undo_collect_article(doc, user)
       {:ok, article} = ORM.find(Doc, article_collect.doc_id)
       assert article.collects_count == 0
     end
@@ -46,10 +46,10 @@ defmodule GroupherServer.Test.Collect.Doc do
     test "can get collect_users", ~m(user user2 community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, _article} = CMS.collect_article(:doc, doc.id, user)
-      {:ok, _article} = CMS.collect_article(:doc, doc.id, user2)
+      {:ok, _article} = CMS.collect_article(doc, user)
+      {:ok, _article} = CMS.collect_article(doc, user2)
 
-      {:ok, users} = CMS.collected_users(:doc, doc.id, %{page: 1, size: 2})
+      {:ok, users} = CMS.collected_users(doc, %{page: 1, size: 2})
 
       assert users |> is_valid_pagination?(:raw)
       assert user_exist_in?(user, users.entries)
@@ -58,12 +58,12 @@ defmodule GroupherServer.Test.Collect.Doc do
 
     test "doc meta history should be updated", ~m(user user2 community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      {:ok, _} = CMS.collect_article(:doc, doc.id, user)
+      {:ok, _} = CMS.collect_article(doc, user)
 
       {:ok, article} = ORM.find(Doc, doc.id)
       assert user.id in article.meta.collected_user_ids
 
-      {:ok, _} = CMS.collect_article(:doc, doc.id, user2)
+      {:ok, _} = CMS.collect_article(doc, user2)
       {:ok, article} = ORM.find(Doc, doc.id)
 
       assert user.id in article.meta.collected_user_ids
@@ -73,18 +73,18 @@ defmodule GroupherServer.Test.Collect.Doc do
     test "doc meta history should be updated after undo collect",
          ~m(user user2 community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      {:ok, _} = CMS.collect_article(:doc, doc.id, user)
-      {:ok, _} = CMS.collect_article(:doc, doc.id, user2)
+      {:ok, _} = CMS.collect_article(doc, user)
+      {:ok, _} = CMS.collect_article(doc, user2)
 
       {:ok, article} = ORM.find(Doc, doc.id)
       assert user.id in article.meta.collected_user_ids
       assert user2.id in article.meta.collected_user_ids
 
-      {:ok, _} = CMS.undo_collect_article(:doc, doc.id, user2)
+      {:ok, _} = CMS.undo_collect_article(doc, user2)
       {:ok, article} = ORM.find(Doc, doc.id)
       assert user2.id not in article.meta.collected_user_ids
 
-      {:ok, _} = CMS.undo_collect_article(:doc, doc.id, user)
+      {:ok, _} = CMS.undo_collect_article(doc, user)
       {:ok, article} = ORM.find(Doc, doc.id)
       assert user.id not in article.meta.collected_user_ids
       assert user2.id not in article.meta.collected_user_ids

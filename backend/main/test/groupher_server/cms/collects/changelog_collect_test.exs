@@ -17,13 +17,13 @@ defmodule GroupherServer.Test.Collect.Changelog do
          ~m(user user2 community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
-      {:ok, article_collect} = CMS.collect_article(:changelog, changelog.id, user)
+      {:ok, article_collect} = CMS.collect_article(changelog, user)
       {:ok, article} = ORM.find(Changelog, article_collect.changelog_id)
 
       assert article.id == changelog.id
       assert article.collects_count == 1
 
-      {:ok, article_collect} = CMS.collect_article(:changelog, changelog.id, user2)
+      {:ok, article_collect} = CMS.collect_article(changelog, user2)
       {:ok, article} = ORM.find(Changelog, article_collect.changelog_id)
 
       assert article.collects_count == 2
@@ -33,12 +33,12 @@ defmodule GroupherServer.Test.Collect.Changelog do
          ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
-      {:ok, article_collect} = CMS.collect_article(:changelog, changelog.id, user)
+      {:ok, article_collect} = CMS.collect_article(changelog, user)
       {:ok, article} = ORM.find(Changelog, article_collect.changelog_id)
       assert article.id == changelog.id
       assert article.collects_count == 1
 
-      {:ok, article_collect} = CMS.undo_collect_article(:changelog, changelog.id, user)
+      {:ok, article_collect} = CMS.undo_collect_article(changelog, user)
       {:ok, article} = ORM.find(Changelog, article_collect.changelog_id)
       assert article.collects_count == 0
     end
@@ -46,10 +46,10 @@ defmodule GroupherServer.Test.Collect.Changelog do
     test "can get collect_users", ~m(user user2 community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
-      {:ok, _article} = CMS.collect_article(:changelog, changelog.id, user)
-      {:ok, _article} = CMS.collect_article(:changelog, changelog.id, user2)
+      {:ok, _article} = CMS.collect_article(changelog, user)
+      {:ok, _article} = CMS.collect_article(changelog, user2)
 
-      {:ok, users} = CMS.collected_users(:changelog, changelog.id, %{page: 1, size: 2})
+      {:ok, users} = CMS.collected_users(changelog, %{page: 1, size: 2})
 
       assert users |> is_valid_pagination?(:raw)
       assert user_exist_in?(user, users.entries)
@@ -58,12 +58,12 @@ defmodule GroupherServer.Test.Collect.Changelog do
 
     test "changelog meta history should be updated", ~m(user user2 community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, _} = CMS.collect_article(:changelog, changelog.id, user)
+      {:ok, _} = CMS.collect_article(changelog, user)
 
       {:ok, article} = ORM.find(Changelog, changelog.id)
       assert user.id in article.meta.collected_user_ids
 
-      {:ok, _} = CMS.collect_article(:changelog, changelog.id, user2)
+      {:ok, _} = CMS.collect_article(changelog, user2)
       {:ok, article} = ORM.find(Changelog, changelog.id)
 
       assert user.id in article.meta.collected_user_ids
@@ -73,18 +73,18 @@ defmodule GroupherServer.Test.Collect.Changelog do
     test "changelog meta history should be updated after undo collect",
          ~m(user user2 community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, _} = CMS.collect_article(:changelog, changelog.id, user)
-      {:ok, _} = CMS.collect_article(:changelog, changelog.id, user2)
+      {:ok, _} = CMS.collect_article(changelog, user)
+      {:ok, _} = CMS.collect_article(changelog, user2)
 
       {:ok, article} = ORM.find(Changelog, changelog.id)
       assert user.id in article.meta.collected_user_ids
       assert user2.id in article.meta.collected_user_ids
 
-      {:ok, _} = CMS.undo_collect_article(:changelog, changelog.id, user2)
+      {:ok, _} = CMS.undo_collect_article(changelog, user2)
       {:ok, article} = ORM.find(Changelog, changelog.id)
       assert user2.id not in article.meta.collected_user_ids
 
-      {:ok, _} = CMS.undo_collect_article(:changelog, changelog.id, user)
+      {:ok, _} = CMS.undo_collect_article(changelog, user)
       {:ok, article} = ORM.find(Changelog, changelog.id)
       assert user.id not in article.meta.collected_user_ids
       assert user2.id not in article.meta.collected_user_ids

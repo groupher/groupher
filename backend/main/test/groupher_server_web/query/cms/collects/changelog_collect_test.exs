@@ -35,8 +35,8 @@ defmodule GroupherServer.Test.Query.Collects.ChangelogCollect do
     """
     test "guest can get collected users list after collect a changelog",
          ~m(guest_conn changelog user user2)a do
-      {:ok, _} = CMS.collect_article(:changelog, changelog.id, user)
-      {:ok, _} = CMS.collect_article(:changelog, changelog.id, user2)
+      {:ok, _} = CMS.collect_article(changelog, user)
+      {:ok, _} = CMS.collect_article(changelog, user2)
 
       variables = %{id: changelog.id, thread: "CHANGELOG", filter: %{page: 1, size: 20}}
       results = guest_conn |> query_result(@query, variables, "collectedUsers")

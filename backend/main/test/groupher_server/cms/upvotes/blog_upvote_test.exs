@@ -80,10 +80,10 @@ defmodule GroupherServer.Test.Upvotes.BlogUpvote do
       assert user.id in article.meta.upvoted_user_ids
       assert user2.id in article.meta.upvoted_user_ids
 
-      {:ok, article} = CMS.undo_upvote_article(:blog, blog.id, user2)
+      {:ok, article} = CMS.undo_upvote_article(blog, user2)
       assert user2.id not in article.meta.upvoted_user_ids
 
-      {:ok, article} = CMS.undo_upvote_article(:blog, blog.id, user)
+      {:ok, article} = CMS.undo_upvote_article(blog, user)
       assert user.id not in article.meta.upvoted_user_ids
     end
   end

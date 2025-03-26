@@ -90,7 +90,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
     test "collect hook should work on post", ~m(user2 post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, _} = CMS.collect_article(:post, post.id, user2)
+      {:ok, _} = CMS.collect_article(post, user2)
       Hooks.Notify.handle(:collect, post, user2)
 
       {:ok, notifications} = Delivery.fetch(:notification, post.author.user, %{page: 1, size: 20})

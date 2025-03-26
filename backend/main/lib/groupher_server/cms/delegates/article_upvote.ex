@@ -28,6 +28,12 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
   def upvoted_users(article, filter), do: load_reaction_users(ArticleUpvote, article, filter)
 
   @doc "upvote to a article-like content"
+  def upvote_article(%{author: %Ecto.Association.NotLoaded{}} = article, %User{} = user) do
+    article
+    |> Repo.preload(author: :user)
+    |> upvote_article(user)
+  end
+
   def upvote_article(article, %User{} = user) do
     with {:ok, thread} = thread_of(article),
          {:ok, info} <- match(thread) do

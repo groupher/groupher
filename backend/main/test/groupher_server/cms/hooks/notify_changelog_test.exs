@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyChangelog do
     test "collect hook should work on changelog", ~m(user2 changelog)a do
       {:ok, changelog} = preload_author(changelog)
 
-      {:ok, _} = CMS.collect_article(:changelog, changelog.id, user2)
+      {:ok, _} = CMS.collect_article(changelog, user2)
       Hooks.Notify.handle(:collect, changelog, user2)
 
       {:ok, notifications} =
