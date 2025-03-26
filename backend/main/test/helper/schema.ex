@@ -24,6 +24,29 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def q(:collected_users) do
+    """
+    query(
+      $id: ID!
+      $community: String!
+      $thread: Thread
+      $filter: PagiFilter!
+    ) {
+      collectedUsers(id: $id, community: $community, thread: $thread, filter: $filter) {
+        entries {
+          login
+          avatar
+          nickname
+        }
+        totalPages
+        totalCount
+        pageSize
+        pageNumber
+      }
+    }
+    """
+  end
+
   def m(:create_article, thread) do
     """
     mutation(

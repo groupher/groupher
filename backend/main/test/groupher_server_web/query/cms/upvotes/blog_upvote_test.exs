@@ -13,7 +13,6 @@ defmodule GroupherServer.Test.Query.Upvotes.BlogUpvote do
   end
 
   describe "[upvoted users]" do
-    @tag :wip
     test "guest can get upvoted users list after upvote to a blog",
          ~m(guest_conn community blog user user2)a do
       {:ok, _} = CMS.upvote_article(blog, user)

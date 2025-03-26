@@ -119,7 +119,6 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       "postCount" => 0,
       "blogCount" => 0
     }
-    @tag :wip2
     test "user can add a post to collect folder", ~m(user user_conn community post)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.create_collect_folder(args, user)
@@ -185,7 +184,6 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       }
     }
     """
-    @tag :wip
     test "user can remove a post from collect folder", ~m(user user_conn community post)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.create_collect_folder(args, user)
@@ -204,7 +202,6 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       assert result["totalCount"] == 0
     end
 
-    @tag :wip
     test "user can remove a blog from collect folder", ~m(user user_conn community blog)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.create_collect_folder(args, user)

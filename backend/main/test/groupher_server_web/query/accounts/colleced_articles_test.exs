@@ -76,7 +76,6 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
     }
   }
   """
-  @tag :wip
   test "can get paged articles inside a collect-folder", ~m(user_conn guest_conn user posts)a do
     {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
 
@@ -101,7 +100,6 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
     assert results == results2
   end
 
-  @tag :wip
   test "can not get collect-folder articles when folder is private", ~m(guest_conn posts)a do
     {:ok, user2} = db_insert(:user)
     {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder", private: true}, user2)
@@ -115,7 +113,6 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
     assert guest_conn |> query_get_error?(@query, variables, ecode(:private_collect_folder))
   end
 
-  @tag :wip
   test "owner can get collect-folder articles when folder is private",
        ~m(user_conn user posts)a do
     {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder", private: true}, user)

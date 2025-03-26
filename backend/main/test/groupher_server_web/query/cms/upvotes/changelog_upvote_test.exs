@@ -13,7 +13,6 @@ defmodule GroupherServer.Test.Query.Upvotes.ChangelogUpvote do
   end
 
   describe "[upvoted users]" do
-    @tag :wip
     test "guest can get upvoted users list after upvote to a changelog",
          ~m(guest_conn community changelog user user2)a do
       {:ok, _} = CMS.upvote_article(changelog, user)

@@ -11,7 +11,6 @@ defmodule GroupherServer.Test.Collect.Post do
   end
 
   describe "[cms post collect]" do
-    @tag :wip
     test "post can be collect && collects_count should inc by 1",
          ~m(user user2 community post)a do
       {:ok, article_collect} = CMS.collect_article(post, user)
@@ -26,7 +25,6 @@ defmodule GroupherServer.Test.Collect.Post do
       assert article.collects_count == 2
     end
 
-    @tag :wip
     test "post can be undo collect && collects_count should dec by 1",
          ~m(user community post)a do
       {:ok, _} = CMS.collect_article(post, user)
@@ -40,7 +38,6 @@ defmodule GroupherServer.Test.Collect.Post do
       assert article.collects_count == 0
     end
 
-    @tag :wip
     test "can get collect_users", ~m(user user2 community post)a do
       {:ok, _} = CMS.collect_article(post, user)
       {:ok, _} = CMS.collect_article(post, user2)
@@ -52,7 +49,6 @@ defmodule GroupherServer.Test.Collect.Post do
       assert user_exist_in?(user2, users.entries)
     end
 
-    @tag :wip
     test "post meta history should be updated", ~m(user user2 community post)a do
       {:ok, _} = CMS.collect_article(post, user)
 
@@ -66,7 +62,6 @@ defmodule GroupherServer.Test.Collect.Post do
       assert user2.id in post.meta.collected_user_ids
     end
 
-    @tag :wip
     test "post meta history should be updated after undo collect",
          ~m(user user2 community post)a do
       {:ok, _} = CMS.collect_article(post, user)

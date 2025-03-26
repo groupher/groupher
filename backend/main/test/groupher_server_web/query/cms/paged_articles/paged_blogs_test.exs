@@ -94,7 +94,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert first_blog["id"] > blog.id
     end
 
-    @tag :wip
     test "upvotes_count order should work",
          ~m(guest_conn blog_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}

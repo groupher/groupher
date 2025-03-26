@@ -10,7 +10,6 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
   end
 
   describe "[cms post upvote]" do
-    @tag :wip
     test "post can be upvote && upvotes_count should inc by 1",
          ~m(user user2 community post)a do
       {:ok, article} = CMS.upvote_article(post, user)
@@ -21,7 +20,6 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert article.upvotes_count == 2
     end
 
-    @tag :wip
     test "upvote a already upvoted post is fine", ~m(user community post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       {:error, _error} = CMS.upvote_article(post, user)
@@ -29,7 +27,6 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert article.upvotes_count == 1
     end
 
-    @tag :wip
     test "post can be undo upvote && upvotes_count should dec by 1",
          ~m(user user2 community post)a do
       {:ok, article} = CMS.upvote_article(post, user)
@@ -40,7 +37,6 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert article.upvotes_count == 0
     end
 
-    @tag :wip
     test "can get upvotes_users", ~m(user user2 community post)a do
       {:ok, _article} = CMS.upvote_article(post, user)
       {:ok, _article} = CMS.upvote_article(post, user2)
@@ -52,7 +48,6 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert user_exist_in?(user2, users.entries)
     end
 
-    @tag :wip2
     test "post meta history should be updated after upvote",
          ~m(user user2 community post)a do
       {:ok, article} = CMS.upvote_article(post, user)
@@ -65,7 +60,6 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert user2.id in post.meta.upvoted_user_ids
     end
 
-    @tag :wip2
     test "post meta history should be updated after undo upvote",
          ~m(user user2 community post)a do
       {:ok, _} = CMS.upvote_article(post, user)

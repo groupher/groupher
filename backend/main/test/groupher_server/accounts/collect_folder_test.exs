@@ -44,7 +44,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert {:error, _} = ORM.find(ArticleCollect, folder.id)
     end
 
-    @tag :wip
     test "user can not delete a non-empty collect folder", ~m(post user)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
@@ -64,7 +63,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert result.total_count == 2
     end
 
-    @tag :wip
     test "user can get public collect-folder list by thread", ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, _folder} = Accounts.create_collect_folder(%{title: "test folder2"}, user)
@@ -117,7 +115,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
   end
 
   describe "[add/remove from collect]" do
-    @tag :wip
     test "can add post to exist collect-folder", ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
 
@@ -128,7 +125,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert folder.collects |> List.first() |> Map.get(:post_id) == post.id
     end
 
-    @tag :wip
     test "can not collect some article in one collect-folder", ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, folder} = Accounts.add_to_collect(post, folder.id, user)
@@ -137,7 +133,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert reason |> is_error?(:already_collected_in_folder)
     end
 
-    @tag :wip
     test "collect-folder should in article_collect's meta info too", ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, folder} = Accounts.add_to_collect(post, folder.id, user)
@@ -148,7 +143,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert article_collect_folder.id == folder.id
     end
 
-    @tag :wip
     test "one article collected in different collect-folder should only have one article-collect record",
          ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
@@ -164,7 +158,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert result.total_count == 1
     end
 
-    @tag :wip
     test "can remove post to exist collect-folder", ~m(user post post2)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
@@ -180,7 +173,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert result.entries |> List.first() |> Map.get(:id) == post2.id
     end
 
-    @tag :wip
     test "can remove post to exist collect-folder should update article collect meta",
          ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
@@ -219,7 +211,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert result.total_count == 0
     end
 
-    @tag :wip
     test "add post to exist collect-folder should update meta", ~m(user post post2)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
 
@@ -233,7 +224,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert folder.meta.post_count == 1
     end
 
-    @tag :wip
     test "remove post to exist collect-folder should update meta", ~m(user post post2)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
@@ -247,7 +237,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert not folder.meta.has_post
     end
 
-    @tag :wip
     test "can get articles of a collect folder", ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
@@ -263,7 +252,6 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert collect_post.title == post.title
     end
 
-    @tag :wip
     test "can not get articles of a private collect folder if not owner",
          ~m(user user2 post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder", private: true}, user)

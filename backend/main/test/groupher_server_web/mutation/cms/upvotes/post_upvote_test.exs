@@ -12,7 +12,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
   end
 
   describe "[post upvote]" do
-    @tag :wip
     test "login user can upvote a post", ~m(user_conn community post user)a do
       variables = %{id: post.inner_id, community: community.slug}
 
@@ -23,7 +22,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       assert created["id"] == to_string(post.id)
     end
 
-    @tag :wip
     test "unauth user upvote a post fails", ~m(guest_conn community post)a do
       variables = %{id: post.inner_id, community: community.slug}
 
@@ -35,7 +33,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
              )
     end
 
-    @tag :wip
     test "login user can undo upvote to a post", ~m(user_conn community post user)a do
       {:ok, _} = CMS.upvote_article(post, user)
 
@@ -49,7 +46,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       assert updated["id"] == to_string(post.id)
     end
 
-    @tag :wip
     test "unauth user undo upvote a post fails", ~m(guest_conn community post)a do
       variables = %{id: post.inner_id, community: community.slug}
 

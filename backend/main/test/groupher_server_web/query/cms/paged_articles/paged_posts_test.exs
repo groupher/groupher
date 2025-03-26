@@ -342,7 +342,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       }
     }
     """
-    @tag :wip2
     test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 

@@ -12,7 +12,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
   end
 
   describe "[doc upvote]" do
-    @tag :wip
     test "login user can upvote a doc", ~m(user_conn community doc user)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
@@ -24,7 +23,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
       assert created["id"] == to_string(doc.id)
     end
 
-    @tag :wip
     test "unauth user upvote a doc fails", ~m(guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
@@ -36,7 +34,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
              )
     end
 
-    @tag :wip
     test "login user can undo upvote to a doc", ~m(user_conn community doc user)a do
       {:ok, _} = CMS.upvote_article(doc, user)
 
@@ -54,7 +51,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
       assert updated["id"] == to_string(doc.id)
     end
 
-    @tag :wip
     test "unauth user undo upvote a doc fails", ~m(guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 

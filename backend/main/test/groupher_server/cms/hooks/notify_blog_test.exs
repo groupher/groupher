@@ -40,7 +40,6 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
       assert user_exist_in?(user2, notify.from_users)
     end
 
-    @tag :wip
     test "upvote hook should work on blog comment", ~m(user2 blog comment)a do
       {:ok, comment} = CMS.upvote_comment(comment.id, user2)
       {:ok, comment} = preload_author(comment)
