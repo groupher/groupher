@@ -9,7 +9,7 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
   alias Helper.QueryBuilder
 
   import Helper.ErrorCode
-  import Helper.Utils, only: [done: 1, get_config: 2]
+  import Helper.Utils, only: [done: 1, get_config: 2, thread_of: 1]
 
   import ShortMaps
 
@@ -135,21 +135,21 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
   @doc """
   add article from collect folder
   """
-  @spec add_to_collect(T.article_thread(), T.id(), T.id(), User.t()) :: {:ok, CollectFolder.t()}
-  def add_to_collect(thread, article_id, folder_id, %User{id: cur_user_id} = user) do
-    with {:ok, folder} <- ORM.find(CollectFolder, folder_id),
-         {:ok, _} <- article_not_collect_in_folder(thread, article_id, folder.collects),
+  def add_to_collect(article, folder_id, %User{} = user) do
+    with {:ok, thread} <- thread_of(article),
+         {:ok, folder} <- ORM.find(CollectFolder, folder_id),
+         {:ok, _} <- article_not_collect_in_folder(article, folder.collects),
          # 是否是该 folder 的 owner ?
-         true <- cur_user_id == folder.user_id do
+         true <- user.id == folder.user_id do
       Multi.new()
       |> Multi.run(:add_article_collect, fn _, _ ->
-        CMS.collect_article_ifneed(thread, article_id, user)
+        CMS.collect_article_ifneed(article, user)
       end)
       |> Multi.run(:add_to_collect_folder, fn _, %{add_article_collect: article_collect} ->
         collects = [article_collect] ++ folder.collects
         update_folder_meta(thread, collects, folder)
       end)
-      # order is important, otherwise the foler in article_collect is not the latest
+      # order is important, otherwise the folder in article_collect is not the latest
       |> Multi.run(:set_article_collect_folder, fn _,
                                                    %{
                                                      add_article_collect: article_collect,
@@ -165,22 +165,21 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
   @doc """
   remove article from collect folder
   """
-  @spec remove_from_collect(T.article_thread(), T.id(), T.id(), User.t()) ::
-          {:ok, CollectFolder.t()}
-  def remove_from_collect(thread, article_id, folder_id, %User{id: cur_user_id} = user) do
-    with {:ok, folder} <- ORM.find(CollectFolder, folder_id),
+  def remove_from_collect(article, folder_id, %User{} = user) do
+    with {:ok, thread} <- thread_of(article),
+         {:ok, folder} <- ORM.find(CollectFolder, folder_id),
          # 是否是该 folder 的 owner ?
-         true <- cur_user_id == folder.user_id do
+         true <- user.id == folder.user_id do
       Multi.new()
       |> Multi.run(:del_article_collect, fn _, _ ->
-        CMS.undo_collect_article_ifneed(thread, article_id, user)
+        CMS.undo_collect_article_ifneed(article, user)
       end)
       |> Multi.run(:rm_from_collect_folder, fn _, %{del_article_collect: article_collect} ->
         # 不能用 -- 语法，因为两个结构体的 meta 信息不同，摔。
         collects = Enum.reject(folder.collects, &(&1.id == article_collect.id))
         update_folder_meta(thread, collects, folder)
       end)
-      # order is important, otherwise the foler in article_collect is not the latest
+      # order is important, otherwise the folder in article_collect is not the latest
       |> Multi.run(:unset_article_collect_folder, fn _,
                                                      %{
                                                        del_article_collect: article_collect,
@@ -218,13 +217,12 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
   end
 
   # check if the article is already in this folder
-  @spec article_not_collect_in_folder(T.article_thread(), T.id(), [ArticleCollect.t()]) ::
-          T.done()
-  defp article_not_collect_in_folder(thread, article_id, collects) do
-    with {:ok, info} <- match(thread) do
+  defp article_not_collect_in_folder(article, collects) do
+    with {:ok, thread} <- thread_of(article),
+         {:ok, info} <- match(thread) do
       already_collected =
         Enum.any?(collects, fn c ->
-          article_id == Map.get(c, info.foreign_key)
+          article.id == Map.get(c, info.foreign_key)
         end)
 
       case already_collected do

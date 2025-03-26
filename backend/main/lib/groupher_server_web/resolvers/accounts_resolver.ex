@@ -149,14 +149,14 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
     Accounts.delete_collect_folder(id)
   end
 
-  def add_to_collect(_root, ~m(thread article_id folder_id)a, %{context: %{cur_user: cur_user}}) do
-    Accounts.add_to_collect(thread, article_id, folder_id, cur_user)
+  def add_to_collect(_root, ~m(article folder_id)a, %{context: %{cur_user: cur_user}}) do
+    Accounts.add_to_collect(article, folder_id, cur_user)
   end
 
-  def remove_from_collect(_root, ~m(thread article_id folder_id)a, %{
+  def remove_from_collect(_root, ~m(article folder_id)a, %{
         context: %{cur_user: cur_user}
       }) do
-    Accounts.remove_from_collect(thread, article_id, folder_id, cur_user)
+    Accounts.remove_from_collect(article, folder_id, cur_user)
   end
 
   def paged_collect_folders(_root, ~m(login filter)a, %{context: %{cur_user: cur_user}}) do
