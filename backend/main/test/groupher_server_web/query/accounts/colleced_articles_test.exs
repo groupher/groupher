@@ -76,12 +76,11 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
     }
   }
   """
-
   test "can get paged articles inside a collect-folder", ~m(user_conn guest_conn user posts)a do
     {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
 
     Enum.each(posts, fn post ->
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
     end)
 
     post1 = Enum.at(posts, 0)
@@ -106,7 +105,7 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
     {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder", private: true}, user2)
 
     Enum.each(posts, fn post ->
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user2)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user2)
     end)
 
     variables = %{folderId: folder.id, filter: %{page: 1, size: 20}}
@@ -119,7 +118,7 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
     {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder", private: true}, user)
 
     Enum.each(posts, fn post ->
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
     end)
 
     variables = %{folderId: folder.id, filter: %{page: 1, size: 20}}

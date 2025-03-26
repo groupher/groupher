@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
 
     test "user can not delete a non-empty collect folder", ~m(post user)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
 
       {:error, reason} = Accounts.delete_collect_folder(folder.id)
 
@@ -67,7 +67,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, _folder} = Accounts.create_collect_folder(%{title: "test folder2"}, user)
 
-      {:ok, folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
+      {:ok, folder} = Accounts.add_to_collect(post, folder.id, user)
 
       {:ok, result} = Accounts.paged_collect_folders(user.id, %{thread: :post, page: 1, size: 20})
 
@@ -115,10 +115,10 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
   end
 
   describe "[add/remove from collect]" do
-    test "can add post to exist colect-folder", ~m(user post)a do
+    test "can add post to exist collect-folder", ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
 
-      {:ok, folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
+      {:ok, folder} = Accounts.add_to_collect(post, folder.id, user)
 
       assert folder.total_count == 1
       assert folder.collects |> length == 1
@@ -127,15 +127,15 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
 
     test "can not collect some article in one collect-folder", ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
-      {:ok, folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
-      {:error, reason} = Accounts.add_to_collect(:post, post.id, folder.id, user)
+      {:ok, folder} = Accounts.add_to_collect(post, folder.id, user)
+      {:error, reason} = Accounts.add_to_collect(post, folder.id, user)
 
       assert reason |> is_error?(:already_collected_in_folder)
     end
 
-    test "colect-folder should in article_collect's meta info too", ~m(user post)a do
+    test "collect-folder should in article_collect's meta info too", ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
-      {:ok, folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
+      {:ok, folder} = Accounts.add_to_collect(post, folder.id, user)
 
       collect_in_folder = folder.collects |> List.first()
       {:ok, article_collect} = ORM.find(ArticleCollect, collect_in_folder.id)
@@ -148,8 +148,8 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, folder2} = Accounts.create_collect_folder(%{title: "test folder2"}, user)
 
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder2.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder2.id, user)
 
       {:ok, result} = ORM.find_all(ArticleCollect, %{page: 1, size: 10})
       article_collect = result.entries |> List.first()
@@ -158,12 +158,12 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert result.total_count == 1
     end
 
-    test "can remove post to exist colect-folder", ~m(user post post2)a do
+    test "can remove post to exist collect-folder", ~m(user post post2)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post2.id, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post2, folder.id, user)
 
-      {:ok, _} = Accounts.remove_from_collect(:post, post.id, folder.id, user)
+      {:ok, _} = Accounts.remove_from_collect(post, folder.id, user)
 
       {:ok, result} =
         Accounts.paged_collect_folder_articles(folder.id, %{page: 1, size: 10}, user)
@@ -173,15 +173,15 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert result.entries |> List.first() |> Map.get(:id) == post2.id
     end
 
-    test "can remove post to exist colect-folder should update article collect meta",
+    test "can remove post to exist collect-folder should update article collect meta",
          ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, folder2} = Accounts.create_collect_folder(%{title: "test folder2"}, user)
 
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder2.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder2.id, user)
 
-      {:ok, _} = Accounts.remove_from_collect(:post, post.id, folder.id, user)
+      {:ok, _} = Accounts.remove_from_collect(post, folder.id, user)
 
       {:ok, result} = ORM.find_all(ArticleCollect, %{page: 1, size: 10})
 
@@ -196,50 +196,50 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
       {:ok, folder2} = Accounts.create_collect_folder(%{title: "test folder2"}, user)
 
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder2.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder2.id, user)
 
-      {:ok, _} = Accounts.remove_from_collect(:post, post.id, folder.id, user)
+      {:ok, _} = Accounts.remove_from_collect(post, folder.id, user)
 
       {:ok, result} = ORM.find_all(ArticleCollect, %{page: 1, size: 10})
       article_collect = result.entries |> List.first()
 
       assert article_collect.collect_folders |> length == 1
 
-      {:ok, _} = Accounts.remove_from_collect(:post, post.id, folder.id, user)
+      {:ok, _} = Accounts.remove_from_collect(post, folder.id, user)
       {:ok, result} = ORM.find_all(ArticleCollect, %{page: 1, size: 10})
       assert result.total_count == 0
     end
 
-    test "add post to exist colect-folder should update meta", ~m(user post post2)a do
+    test "add post to exist collect-folder should update meta", ~m(user post post2)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
 
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post2.id, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post2, folder.id, user)
 
-      {:ok, folder} = Accounts.remove_from_collect(:post, post.id, folder.id, user)
+      {:ok, folder} = Accounts.remove_from_collect(post, folder.id, user)
 
       assert folder.meta.has_post
 
       assert folder.meta.post_count == 1
     end
 
-    test "remove post to exist colect-folder should update meta", ~m(user post post2)a do
+    test "remove post to exist collect-folder should update meta", ~m(user post post2)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post2.id, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post2, folder.id, user)
 
-      {:ok, folder} = Accounts.remove_from_collect(:post, post.id, folder.id, user)
+      {:ok, folder} = Accounts.remove_from_collect(post, folder.id, user)
       assert folder.meta.has_post
 
-      {:ok, folder} = Accounts.remove_from_collect(:post, post2.id, folder.id, user)
+      {:ok, folder} = Accounts.remove_from_collect(post2, folder.id, user)
 
       assert not folder.meta.has_post
     end
 
     test "can get articles of a collect folder", ~m(user post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
 
       {:ok, result} =
         Accounts.paged_collect_folder_articles(folder.id, %{page: 1, size: 10}, user)
@@ -255,7 +255,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
     test "can not get articles of a private collect folder if not owner",
          ~m(user user2 post)a do
       {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder", private: true}, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
 
       {:ok, result} =
         Accounts.paged_collect_folder_articles(folder.id, %{page: 1, size: 10}, user)

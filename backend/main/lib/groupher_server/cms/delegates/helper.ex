@@ -23,7 +23,26 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   @supported_comment_emotions get_config(:article, :comment_emotions)
 
   def preload_author(%Comment{} = comment), do: Repo.preload(comment, :author) |> done
-  def preload_author(article), do: Repo.preload(article, author: :user) |> done
+
+  def preload_author(article) do
+    case article do
+      %{author: %Ecto.Association.NotLoaded{}} ->
+        Repo.preload(article, author: :user)
+
+      %{author: %{user: %Ecto.Association.NotLoaded{}}} ->
+        Repo.preload(article, author: :user)
+
+      %{author: nil} ->
+        article
+
+      %{author: %{user: _}} ->
+        article
+
+      _ ->
+        Repo.preload(article, author: :user)
+    end
+    |> done
+  end
 
   @doc "get author of article or comment"
   def author_of(%Comment{} = comment) do
@@ -185,12 +204,13 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   @doc """
   paged [reaction] users list
   """
-  def load_reaction_users(queryable, thread, article_id, filter) do
+  def load_reaction_users(queryable, article, filter) do
+    {:ok, thread} = thread_of(article)
     %{page: page, size: size} = filter
 
     with {:ok, info} <- match(thread) do
       queryable
-      |> where([u], field(u, ^info.foreign_key) == ^article_id)
+      |> where([u], field(u, ^info.foreign_key) == ^article.id)
       |> QueryBuilder.load_inner_users(filter)
       |> ORM.paginator(~m(page size)a)
       |> done()
@@ -228,12 +248,6 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   e.g:
   add/remove user_id to upvoted_user_ids in article meta
   """
-  @spec update_article_reaction_user_list(
-          :upvote | :collect,
-          T.article_common(),
-          User.t(),
-          :add | :remove
-        ) :: T.article_common()
   def update_article_reaction_user_list(action, %{meta: nil} = article, %User{} = user, opt) do
     action = past_verb(action)
     cur_user_ids = []

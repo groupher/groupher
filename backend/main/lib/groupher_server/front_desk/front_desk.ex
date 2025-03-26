@@ -20,6 +20,7 @@ defmodule GroupherServer.FrontDesk do
   def info(:user, login), do: ORM.find_by(User, %{login: login})
 
   def info(:article, community, thread, inner_id) when is_binary(community) do
-    ORM.find_article(community, thread, inner_id)
+    preload = [[author: :user], :original_community]
+    ORM.find_article(community, thread, inner_id, preload: preload)
   end
 end

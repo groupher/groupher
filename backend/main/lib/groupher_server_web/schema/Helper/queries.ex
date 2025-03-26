@@ -78,10 +78,13 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
       @desc unquote("get paged #{past_verb(action)} users of an article")
       field unquote(:"#{past_verb(action)}_users"), :paged_users do
         arg(:id, non_null(:id))
+        arg(:community, non_null(:string))
         arg(:thread, :thread, default_value: :post)
         arg(:filter, non_null(:pagi_filter))
 
         middleware(M.PageSizeProof)
+        middleware(M.FrontDesk, :article)
+
         resolve(unquote(resolver))
       end
     end

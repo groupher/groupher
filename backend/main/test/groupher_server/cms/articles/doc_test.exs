@@ -151,8 +151,9 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert not doc.viewer_has_upvoted
       assert not doc.viewer_has_reported
 
-      {:ok, _} = CMS.upvote_article(:doc, doc.id, user)
-      {:ok, _} = CMS.collect_article(:doc, doc.id, user)
+      {:ok, _} = CMS.upvote_article(doc, user)
+      {:ok, doc} = ORM.find(Doc, doc.id)
+      {:ok, _} = CMS.collect_article(doc, user)
       {:ok, _} = CMS.report_article(:doc, doc.id, "reason", "attr_info", user)
 
       {:ok, doc} = CMS.read_article(doc.original_community_slug, :doc, doc.inner_id, user)

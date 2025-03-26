@@ -163,8 +163,9 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert not changelog.viewer_has_upvoted
       assert not changelog.viewer_has_reported
 
-      {:ok, _} = CMS.upvote_article(:changelog, changelog.id, user)
-      {:ok, _} = CMS.collect_article(:changelog, changelog.id, user)
+      {:ok, _} = CMS.upvote_article(changelog, user)
+      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      {:ok, _} = CMS.collect_article(changelog, user)
       {:ok, _} = CMS.report_article(:changelog, changelog.id, "reason", "attr_info", user)
 
       {:ok, changelog} =

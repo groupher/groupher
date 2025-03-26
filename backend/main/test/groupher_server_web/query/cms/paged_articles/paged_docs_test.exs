@@ -97,9 +97,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
          ~m(guest_conn doc_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
 
-      {:ok, _} = CMS.upvote_article(:doc, doc_last_week.id, user)
-      {:ok, _} = CMS.upvote_article(:doc, doc_last_week.id, user2)
-      {:ok, _} = CMS.upvote_article(:doc, doc_last_week.id, user3)
+      {:ok, _} = CMS.upvote_article(doc_last_week, user)
+      {:ok, _} = CMS.upvote_article(doc_last_week, user2)
+      {:ok, _} = CMS.upvote_article(doc_last_week, user3)
 
       results = guest_conn |> query_result(@query, variables, "pagedDocs")
       first_doc = results["entries"] |> List.first()
@@ -326,8 +326,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, _} =
         CMS.read_article(doc.original_community_slug, :doc, doc.inner_id, user)
 
-      {:ok, _} = CMS.upvote_article(:doc, doc.id, user)
-      {:ok, _} = CMS.collect_article(:doc, doc.id, user)
+      {:ok, _} = CMS.upvote_article(doc, user)
+      {:ok, _} = CMS.collect_article(doc, user)
       {:ok, _} = CMS.report_article(:doc, doc.id, "reason", "attr_info", user)
 
       results = user_conn |> query_result(@query, variables, "pagedDocs")

@@ -38,8 +38,8 @@ defmodule GroupherServer.Accounts do
   defdelegate create_collect_folder(attrs, user), to: CollectFolder
   defdelegate update_collect_folder(id, attrs), to: CollectFolder
   defdelegate delete_collect_folder(id), to: CollectFolder
-  defdelegate add_to_collect(thread, article_id, folder_id, user), to: CollectFolder
-  defdelegate remove_from_collect(thread, article_id, folder_id, user), to: CollectFolder
+  defdelegate add_to_collect(article, folder_id, user), to: CollectFolder
+  defdelegate remove_from_collect(article, folder_id, user), to: CollectFolder
 
   # achievement
   defdelegate achieve(user, operation, key), to: Achievements

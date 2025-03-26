@@ -3,68 +3,63 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
   use GroupherServer.TestTools
 
   setup do
-    {:ok, changelog} = db_insert(:changelog)
-    {:ok, user} = db_insert(:user)
+    {community, changelog, _, user} = mock_article(:changelog, preload: [author: :user])
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
 
-    {:ok, ~m(user_conn guest_conn changelog user)a}
+    {:ok, ~m(user_conn guest_conn community changelog user)a}
   end
 
   describe "[changelog upvote]" do
-    @query """
-    mutation($id: ID!) {
-      upvoteChangelog(id: $id) {
-        id
-        meta {
-          latestUpvotedUsers {
-            login
-          }
-        }
-      }
-    }
-    """
-    test "login user can upvote a changelog", ~m(user_conn user changelog)a do
-      variables = %{id: changelog.id}
-      created = user_conn |> mutation_result(@query, variables, "upvoteChangelog")
+    test "login user can upvote a changelog", ~m(user_conn community changelog user)a do
+      variables = %{id: changelog.inner_id, community: community.slug}
+
+      created =
+        user_conn
+        |> mutation_result(Schema.m(:upvote_article, :changelog), variables, "upvoteChangelog")
 
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
       assert created["id"] == to_string(changelog.id)
     end
 
-    test "unauth user upvote a changelog fails", ~m(guest_conn changelog)a do
-      variables = %{id: changelog.id}
+    test "unauth user upvote a changelog fails", ~m(guest_conn community changelog)a do
+      variables = %{id: changelog.inner_id, community: community.slug}
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn
+             |> mutation_get_error?(
+               Schema.m(:upvote_article, :changelog),
+               variables,
+               ecode(:account_login)
+             )
     end
 
-    @query """
-    mutation($id: ID!) {
-      undoUpvoteChangelog(id: $id) {
-        id
-        meta {
-          latestUpvotedUsers {
-            login
-          }
-        }
-      }
-    }
-    """
-    test "login user can undo upvote to a changelog", ~m(user_conn changelog user)a do
-      {:ok, _} = CMS.upvote_article(:changelog, changelog.id, user)
+    test "login user can undo upvote to a changelog", ~m(user_conn community changelog user)a do
+      {:ok, _} = CMS.upvote_article(changelog, user)
 
-      variables = %{id: changelog.id}
-      updated = user_conn |> mutation_result(@query, variables, "undoUpvoteChangelog")
+      variables = %{id: changelog.inner_id, community: community.slug}
+
+      updated =
+        user_conn
+        |> mutation_result(
+          Schema.m(:undo_upvote_article, :changelog),
+          variables,
+          "undoUpvoteChangelog"
+        )
 
       assert not user_exist_in?(user, get_in(updated, ["meta", "latestUpvotedUsers"]))
       assert updated["id"] == to_string(changelog.id)
     end
 
-    test "unauth user undo upvote a changelog fails", ~m(guest_conn changelog)a do
-      variables = %{id: changelog.id}
+    test "unauth user undo upvote a changelog fails", ~m(guest_conn community changelog)a do
+      variables = %{id: changelog.inner_id, community: community.slug}
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn
+             |> mutation_get_error?(
+               Schema.m(:undo_upvote_article, :changelog),
+               variables,
+               ecode(:account_login)
+             )
     end
   end
 end

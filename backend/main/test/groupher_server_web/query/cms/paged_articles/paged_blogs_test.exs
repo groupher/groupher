@@ -98,9 +98,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
          ~m(guest_conn blog_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
 
-      {:ok, _} = CMS.upvote_article(:blog, blog_last_week.id, user)
-      {:ok, _} = CMS.upvote_article(:blog, blog_last_week.id, user2)
-      {:ok, _} = CMS.upvote_article(:blog, blog_last_week.id, user3)
+      {:ok, _} = CMS.upvote_article(blog_last_week, user)
+      {:ok, _} = CMS.upvote_article(blog_last_week, user2)
+      {:ok, _} = CMS.upvote_article(blog_last_week, user3)
 
       results = guest_conn |> query_result(@query, variables, "pagedBlogs")
       first_blog = results["entries"] |> List.first()
@@ -327,8 +327,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       {:ok, _} =
         CMS.read_article(blog.original_community_slug, :blog, blog.inner_id, user)
 
-      {:ok, _} = CMS.upvote_article(:blog, blog.id, user)
-      {:ok, _} = CMS.collect_article(:blog, blog.id, user)
+      {:ok, _} = CMS.upvote_article(blog, user)
+      {:ok, _} = CMS.collect_article(blog, user)
       {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
 
       results = user_conn |> query_result(@query, variables, "pagedBlogs")

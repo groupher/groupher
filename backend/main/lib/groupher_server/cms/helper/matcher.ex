@@ -6,10 +6,18 @@ defmodule GroupherServer.CMS.Helper.Matcher do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.MatcherMacros
 
+  import Helper.Utils, only: [thread_of: 1]
+
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
   alias CMS.Model.Comment
+
+  def match(%{} = article) do
+    {:ok, thread} = thread_of(article)
+
+    match(thread)
+  end
 
   def match(:account) do
     {:ok,

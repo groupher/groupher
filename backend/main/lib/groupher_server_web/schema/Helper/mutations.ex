@@ -54,8 +54,11 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       field unquote(:"upvote_#{thread}"), :article do
         arg(:id, non_null(:id))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
+        arg(:community, non_null(:string))
 
         middleware(M.Authorize, :login)
+        middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.upvote_article/3)
       end
 
@@ -63,8 +66,11 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       field unquote(:"undo_upvote_#{thread}"), :article do
         arg(:id, non_null(:id))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
+        arg(:community, non_null(:string))
 
         middleware(M.Authorize, :login)
+        middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.undo_upvote_article/3)
       end
     end

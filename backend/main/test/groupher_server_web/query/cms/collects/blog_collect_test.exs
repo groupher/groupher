@@ -1,45 +1,34 @@
 defmodule GroupherServer.Test.Query.Collects.BlogCollect do
   @moduledoc false
+
   use GroupherServer.TestTools
 
   setup do
-    {:ok, blog} = db_insert(:blog)
-    {:ok, user} = db_insert(:user)
+    {community, blog, _, user} = mock_article(:blog)
+
     {:ok, user2} = db_insert(:user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
 
-    {:ok, ~m(user_conn guest_conn user user2 blog)a}
+    {:ok, ~m(user_conn guest_conn community user user2 blog)a}
   end
 
   describe "[collect users]" do
-    @query """
-    query(
-      $id: ID!
-      $thread: Thread
-      $filter: PagiFilter!
-    ) {
-      collectedUsers(id: $id, thread: $thread, filter: $filter) {
-        entries {
-          login
-          avatar
-          nickname
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
     test "guest can get collected users list after collect a blog",
-         ~m(guest_conn blog user user2)a do
-      {:ok, _} = CMS.collect_article(:blog, blog.id, user)
-      {:ok, _} = CMS.collect_article(:blog, blog.id, user2)
+         ~m(guest_conn community blog user user2)a do
+      {:ok, _} = CMS.collect_article(blog, user)
+      {:ok, _} = CMS.collect_article(blog, user2)
 
-      variables = %{id: blog.id, thread: "BLOG", filter: %{page: 1, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "collectedUsers")
+      variables = %{
+        id: blog.inner_id,
+        community: community.slug,
+        thread: "BLOG",
+        filter: %{page: 1, size: 20}
+      }
+
+      results =
+        guest_conn |> query_result(Schema.q(:collected_users), variables, "collectedUsers")
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 2

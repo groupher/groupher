@@ -1,6 +1,52 @@
 defmodule GroupherServer.Test.Helper.Schema do
   @moduledoc false
 
+  def q(:upvoted_users) do
+    """
+    query(
+      $id: ID!
+      $community: String!
+      $thread: Thread
+      $filter: PagiFilter!
+    ) {
+      upvotedUsers(id: $id, community: $community, thread: $thread, filter: $filter) {
+        entries {
+          login
+          avatar
+          nickname
+        }
+        totalPages
+        totalCount
+        pageSize
+        pageNumber
+      }
+    }
+    """
+  end
+
+  def q(:collected_users) do
+    """
+    query(
+      $id: ID!
+      $community: String!
+      $thread: Thread
+      $filter: PagiFilter!
+    ) {
+      collectedUsers(id: $id, community: $community, thread: $thread, filter: $filter) {
+        entries {
+          login
+          avatar
+          nickname
+        }
+        totalPages
+        totalCount
+        pageSize
+        pageNumber
+      }
+    }
+    """
+  end
+
   def m(:create_article, thread) do
     """
     mutation(
@@ -25,6 +71,36 @@ defmodule GroupherServer.Test.Helper.Schema do
         }
         originalCommunity {
           id
+        }
+      }
+    }
+    """
+  end
+
+  def m(:upvote_article, thread) do
+    """
+    mutation($id: ID!, $community: String!) {
+      upvote#{t(thread)}(id: $id, community: $community) {
+        id
+        meta {
+          latestUpvotedUsers {
+            login
+          }
+        }
+      }
+    }
+    """
+  end
+
+  def m(:undo_upvote_article, thread) do
+    """
+    mutation($id: ID!, $community: String!) {
+      undoUpvote#{t(thread)}(id: $id, community: $community) {
+        id
+        meta {
+          latestUpvotedUsers {
+            login
+          }
         }
       }
     }

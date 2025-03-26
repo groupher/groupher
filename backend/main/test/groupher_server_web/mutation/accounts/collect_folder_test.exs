@@ -6,14 +6,13 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
   alias CMS.Model.ArticleCollect
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
-    {:ok, blog} = db_insert(:blog)
+    {community, post, _, user} = mock_article(:post)
+    {_, blog, _, _} = mock_article(:blog, community, user)
 
     user_conn = simu_conn(:user, user)
     guest_conn = simu_conn(:guest)
 
-    {:ok, ~m(user_conn guest_conn user post blog)a}
+    {:ok, ~m(user_conn guest_conn user community post blog)a}
   end
 
   describe "[Accounts CollectFolder CRUD]" do
@@ -98,8 +97,8 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
 
   describe "[Accounts CollectFolder add/remove]" do
     @query """
-    mutation($articleId: ID!, $folderId: ID!, $thread: Thread) {
-      addToCollect(articleId: $articleId, folderId: $folderId, thread: $thread) {
+    mutation($id: ID!, $folderId: ID!, $community: String!, $thread: Thread) {
+      addToCollect(id: $id, folderId: $folderId, community: $community, thread: $thread) {
         id
         title
         totalCount
@@ -120,11 +119,17 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       "postCount" => 0,
       "blogCount" => 0
     }
-    test "user can add a post to collect folder", ~m(user user_conn post)a do
+    test "user can add a post to collect folder", ~m(user user_conn community post)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.create_collect_folder(args, user)
 
-      variables = %{articleId: post.id, folderId: folder.id, thread: "POST"}
+      variables = %{
+        id: post.inner_id,
+        folderId: folder.id,
+        community: community.slug,
+        thread: "POST"
+      }
+
       folder = user_conn |> mutation_result(@query, variables, "addToCollect")
 
       assert folder["totalCount"] == 1
@@ -141,11 +146,17 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       assert folder_in_article_collect.meta.post_count == 1
     end
 
-    test "user can add a blog to collect folder", ~m(user user_conn blog)a do
+    test "user can add a blog to collect folder", ~m(user user_conn community blog)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.create_collect_folder(args, user)
 
-      variables = %{articleId: blog.id, folderId: folder.id, thread: "BLOG"}
+      variables = %{
+        id: blog.inner_id,
+        community: community.slug,
+        folderId: folder.id,
+        thread: "BLOG"
+      }
+
       folder = user_conn |> mutation_result(@query, variables, "addToCollect")
 
       assert folder["totalCount"] == 1
@@ -163,8 +174,8 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
     end
 
     @query """
-    mutation($articleId: ID!, $folderId: ID!, $thread: Thread) {
-      removeFromCollect(articleId: $articleId, folderId: $folderId, thread: $thread) {
+    mutation($id: ID!, $community: String!, $folderId: ID!, $thread: Thread) {
+      removeFromCollect(id: $id, community: $community, folderId: $folderId, thread: $thread) {
         id
         title
         totalCount
@@ -179,24 +190,36 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       }
     }
     """
-    test "user can remove a post from collect folder", ~m(user user_conn post)a do
+    test "user can remove a post from collect folder", ~m(user user_conn community post)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.create_collect_folder(args, user)
-      {:ok, _folder} = Accounts.add_to_collect(:post, post.id, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
 
-      variables = %{articleId: post.id, folderId: folder.id, thread: "POST"}
+      variables = %{
+        id: post.inner_id,
+        folderId: folder.id,
+        community: community.slug,
+        thread: "POST"
+      }
+
       result = user_conn |> mutation_result(@query, variables, "removeFromCollect")
 
       assert result["meta"] == @meta
       assert result["totalCount"] == 0
     end
 
-    test "user can remove a blog from collect folder", ~m(user user_conn blog)a do
+    test "user can remove a blog from collect folder", ~m(user user_conn community blog)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.create_collect_folder(args, user)
-      {:ok, _folder} = Accounts.add_to_collect(:blog, blog.id, folder.id, user)
+      {:ok, _folder} = Accounts.add_to_collect(blog, folder.id, user)
 
-      variables = %{articleId: blog.id, folderId: folder.id, thread: "BLOG"}
+      variables = %{
+        id: blog.inner_id,
+        folderId: folder.id,
+        community: community.slug,
+        thread: "BLOG"
+      }
+
       result = user_conn |> mutation_result(@query, variables, "removeFromCollect")
 
       assert result["meta"] == @meta

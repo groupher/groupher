@@ -152,8 +152,9 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert not blog.viewer_has_upvoted
       assert not blog.viewer_has_reported
 
-      {:ok, _} = CMS.upvote_article(:blog, blog.id, user)
-      {:ok, _} = CMS.collect_article(:blog, blog.id, user)
+      {:ok, _} = CMS.upvote_article(blog, user)
+      {:ok, blog} = ORM.find(Blog, blog.id)
+      {:ok, _} = CMS.collect_article(blog, user)
       {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
 
       {:ok, blog} = CMS.read_article(blog.original_community_slug, :blog, blog.inner_id, user)
