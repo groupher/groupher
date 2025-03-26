@@ -150,6 +150,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
     #   assert community.subscribers_count == 1
     # end
 
+    @tag :wip
     test "read post should contains viewer_has_xxx state", ~m(post_attrs community user user2)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user)
@@ -171,6 +172,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert not post.viewer_has_reported
 
       {:ok, _} = CMS.upvote_article(post, user)
+      {:ok, post} = ORM.find(Post, post.id)
       {:ok, _} = CMS.collect_article(post, user)
       {:ok, _} = CMS.report_article(:post, post.id, "reason", "attr_info", user)
 

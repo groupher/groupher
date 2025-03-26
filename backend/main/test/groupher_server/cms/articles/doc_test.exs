@@ -130,6 +130,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert user2.id in created.meta.viewed_user_ids
     end
 
+    @tag :wip
     test "read doc should contains viewer_has_xxx state",
          ~m(doc_attrs community user user2)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -152,6 +153,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert not doc.viewer_has_reported
 
       {:ok, _} = CMS.upvote_article(doc, user)
+      {:ok, doc} = ORM.find(Doc, doc.id)
       {:ok, _} = CMS.collect_article(doc, user)
       {:ok, _} = CMS.report_article(:doc, doc.id, "reason", "attr_info", user)
 

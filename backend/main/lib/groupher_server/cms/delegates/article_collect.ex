@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   """
   import GroupherServer.CMS.Helper.Matcher
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, thread_of: 1]
+  import Helper.Utils, only: [done: 1, thread_of: 1, preload_author: 1]
 
   import GroupherServer.CMS.Delegate.Helper,
     only: [
@@ -31,13 +31,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   @doc """
   collect an article
   """
-  def collect_article(%{author: %Ecto.Association.NotLoaded{}} = article, %User{} = user) do
-    article
-    |> Repo.preload(author: :user)
-    |> collect_article(user)
-  end
-
   def collect_article(article, %User{} = user) do
+    {:ok, article} = preload_author(article)
+
     with {:ok, thread} <- thread_of(article),
          {:ok, info} <- match(thread) do
       Multi.new()
@@ -68,13 +64,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   # 如果是同一篇文章，只创建一次，collect_article 不创建记录，只是后续设置不同的收藏夹即可
   # 如果是第一次收藏，那么才创建文章收藏记录
   # 避免因为同一篇文章在不同收藏夹内造成的统计和用户成就系统的混乱
-  def collect_article_ifneed(%{author: %Ecto.Association.NotLoaded{}} = article, %User{} = user) do
-    article
-    |> Repo.preload(author: :user)
-    |> collect_article_ifneed(user)
-  end
-
   def collect_article_ifneed(article, %User{} = user) do
+    {:ok, article} = preload_author(article)
+
     with {:ok, thread} <- thread_of(article),
          findby_args <- collection_findby_args(thread, article.id, user.id) do
       already_collected = ORM.find_by(ArticleCollect, findby_args)
@@ -86,13 +78,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
     end
   end
 
-  def undo_collect_article(%{author: %Ecto.Association.NotLoaded{}} = article, %User{} = user) do
-    article
-    |> Repo.preload(author: :user)
-    |> undo_collect_article(user)
-  end
-
   def undo_collect_article(article, %User{} = user) do
+    {:ok, article} = preload_author(article)
+
     with {:ok, thread} <- thread_of(article),
          {:ok, info} <- match(thread) do
       Multi.new()
