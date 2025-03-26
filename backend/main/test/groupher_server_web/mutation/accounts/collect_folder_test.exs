@@ -146,11 +146,17 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       assert folder_in_article_collect.meta.post_count == 1
     end
 
-    test "user can add a blog to collect folder", ~m(user user_conn blog)a do
+    test "user can add a blog to collect folder", ~m(user user_conn community blog)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.create_collect_folder(args, user)
 
-      variables = %{articleId: blog.id, folderId: folder.id, thread: "BLOG"}
+      variables = %{
+        id: blog.inner_id,
+        community: community.slug,
+        folderId: folder.id,
+        thread: "BLOG"
+      }
+
       folder = user_conn |> mutation_result(@query, variables, "addToCollect")
 
       assert folder["totalCount"] == 1
