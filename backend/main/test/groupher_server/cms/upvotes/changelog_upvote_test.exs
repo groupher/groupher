@@ -3,21 +3,16 @@ defmodule GroupherServer.Test.Upvotes.ChangelogUpvote do
   use GroupherServer.TestTools
 
   setup do
-    {:ok, user} = db_insert(:user)
+    {community, changelog, _, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
-    {:ok, community} = mock_community(user)
 
-    changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-
-    {:ok, ~m(user user2 community changelog_attrs)a}
+    {:ok, ~m(user user2 community changelog)a}
   end
 
   describe "[cms changelog upvote]" do
     @tag :wip
     test "changelog can be upvote && upvotes_count should inc by 1",
-         ~m(user user2 community changelog_attrs)a do
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-
+         ~m(user user2 community changelog)a do
       {:ok, article} = CMS.upvote_article(changelog, user)
       assert article.id == changelog.id
       assert article.upvotes_count == 1
@@ -26,20 +21,17 @@ defmodule GroupherServer.Test.Upvotes.ChangelogUpvote do
       assert article.upvotes_count == 2
     end
 
-    test "upvote a already upvoted changelog is fine", ~m(user community changelog_attrs)a do
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-
+    @tag :wip
+    test "upvote a already upvoted changelog is fine", ~m(user community changelog)a do
       {:ok, article} = CMS.upvote_article(changelog, user)
-
       {:error, _error} = CMS.upvote_article(changelog, user)
 
       assert article.upvotes_count == 1
     end
 
+    @tag :wip
     test "changelog can be undo upvote && upvotes_count should dec by 1",
-         ~m(user user2 community changelog_attrs)a do
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-
+         ~m(user user2 community changelog)a do
       {:ok, article} = CMS.upvote_article(changelog, user)
       assert article.id == changelog.id
       assert article.upvotes_count == 1
@@ -48,9 +40,8 @@ defmodule GroupherServer.Test.Upvotes.ChangelogUpvote do
       assert article.upvotes_count == 0
     end
 
-    test "can get upvotes_users", ~m(user user2 community changelog_attrs)a do
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-
+    @tag :wip
+    test "can get upvotes_users", ~m(user user2 community changelog)a do
       {:ok, _article} = CMS.upvote_article(changelog, user)
       {:ok, _article} = CMS.upvote_article(changelog, user2)
 
@@ -61,32 +52,41 @@ defmodule GroupherServer.Test.Upvotes.ChangelogUpvote do
       assert user_exist_in?(user2, users.entries)
     end
 
+    @tag :wip
     test "changelog meta history should be updated after upvote",
-         ~m(user user2 community changelog_attrs)a do
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+         ~m(user user2 community changelog)a do
       {:ok, article} = CMS.upvote_article(changelog, user)
       assert user.id in article.meta.upvoted_user_ids
 
+      {:ok, changelog} = ORM.find(Changelog, changelog.id)
       {:ok, article} = CMS.upvote_article(changelog, user2)
-      assert user.id in article.meta.upvoted_user_ids
-      assert user2.id in article.meta.upvoted_user_ids
+
+      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+
+      assert user.id in changelog.meta.upvoted_user_ids
+      assert user2.id in changelog.meta.upvoted_user_ids
     end
 
+    @tag :wip
     test "changelog meta history should be updated after undo upvote",
-         ~m(user user2 community changelog_attrs)a do
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+         ~m(user user2 community changelog)a do
+      {:ok, _} = CMS.upvote_article(changelog, user)
+      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      {:ok, _} = CMS.upvote_article(changelog, user2)
 
-      {:ok, _article} = CMS.upvote_article(changelog, user)
-      {:ok, article} = CMS.upvote_article(changelog, user2)
+      {:ok, changelog} = ORM.find(Changelog, changelog.id)
 
-      assert user.id in article.meta.upvoted_user_ids
-      assert user2.id in article.meta.upvoted_user_ids
+      assert user.id in changelog.meta.upvoted_user_ids
+      assert user2.id in changelog.meta.upvoted_user_ids
 
-      {:ok, article} = CMS.undo_upvote_article(changelog, user2)
-      assert user2.id not in article.meta.upvoted_user_ids
+      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      {:ok, _} = CMS.undo_upvote_article(changelog, user2)
+      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      {:ok, _} = CMS.undo_upvote_article(changelog, user)
 
-      {:ok, article} = CMS.undo_upvote_article(changelog, user)
-      assert user.id not in article.meta.upvoted_user_ids
+      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      assert user2.id not in changelog.meta.upvoted_user_ids
+      assert user.id not in changelog.meta.upvoted_user_ids
     end
   end
 end

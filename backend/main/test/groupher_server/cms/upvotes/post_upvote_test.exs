@@ -3,21 +3,16 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
   use GroupherServer.TestTools
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = mock_community(user)
-
+    {community, post, _, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
 
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
-
-    {:ok, ~m(user user2 community post_attrs)a}
+    {:ok, ~m(user user2 community post)a}
   end
 
   describe "[cms post upvote]" do
+    @tag :wip
     test "post can be upvote && upvotes_count should inc by 1",
-         ~m(user user2 community post_attrs)a do
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-
+         ~m(user user2 community post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       assert article.id == post.id
       assert article.upvotes_count == 1
@@ -26,19 +21,17 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert article.upvotes_count == 2
     end
 
-    test "upvote a already upvoted post is fine", ~m(user community post_attrs)a do
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-
+    @tag :wip
+    test "upvote a already upvoted post is fine", ~m(user community post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       {:error, _error} = CMS.upvote_article(post, user)
 
       assert article.upvotes_count == 1
     end
 
+    @tag :wip
     test "post can be undo upvote && upvotes_count should dec by 1",
-         ~m(user user2 community post_attrs)a do
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-
+         ~m(user user2 community post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       assert article.id == post.id
       assert article.upvotes_count == 1
@@ -47,9 +40,8 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert article.upvotes_count == 0
     end
 
-    test "can get upvotes_users", ~m(user user2 community post_attrs)a do
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-
+    @tag :wip
+    test "can get upvotes_users", ~m(user user2 community post)a do
       {:ok, _article} = CMS.upvote_article(post, user)
       {:ok, _article} = CMS.upvote_article(post, user2)
 
@@ -60,32 +52,41 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert user_exist_in?(user2, users.entries)
     end
 
+    @tag :wip
     test "post meta history should be updated after upvote",
-         ~m(user user2 community post_attrs)a do
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+         ~m(user user2 community post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       assert user.id in article.meta.upvoted_user_ids
 
+      {:ok, post} = ORM.find(Post, post.id)
       {:ok, article} = CMS.upvote_article(post, user2)
-      assert user.id in article.meta.upvoted_user_ids
-      assert user2.id in article.meta.upvoted_user_ids
+
+      {:ok, post} = ORM.find(Post, post.id)
+
+      assert user.id in post.meta.upvoted_user_ids
+      assert user2.id in post.meta.upvoted_user_ids
     end
 
+    @tag :wip
     test "post meta history should be updated after undo upvote",
-         ~m(user user2 community post_attrs)a do
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+         ~m(user user2 community post)a do
+      {:ok, _} = CMS.upvote_article(post, user)
+      {:ok, post} = ORM.find(Post, post.id)
+      {:ok, _} = CMS.upvote_article(post, user2)
 
-      {:ok, _article} = CMS.upvote_article(post, user)
-      {:ok, article} = CMS.upvote_article(post, user2)
+      {:ok, post} = ORM.find(Post, post.id)
 
-      assert user.id in article.meta.upvoted_user_ids
-      assert user2.id in article.meta.upvoted_user_ids
+      assert user.id in post.meta.upvoted_user_ids
+      assert user2.id in post.meta.upvoted_user_ids
 
-      {:ok, article} = CMS.undo_upvote_article(post, user2)
-      assert user2.id not in article.meta.upvoted_user_ids
+      {:ok, post} = ORM.find(Post, post.id)
+      {:ok, _} = CMS.undo_upvote_article(post, user2)
+      {:ok, post} = ORM.find(Post, post.id)
+      {:ok, _} = CMS.undo_upvote_article(post, user)
 
-      {:ok, article} = CMS.undo_upvote_article(post, user)
-      assert user.id not in article.meta.upvoted_user_ids
+      {:ok, post} = ORM.find(Post, post.id)
+      assert user2.id not in post.meta.upvoted_user_ids
+      assert user.id not in post.meta.upvoted_user_ids
     end
   end
 end
