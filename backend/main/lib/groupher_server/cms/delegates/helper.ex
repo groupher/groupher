@@ -185,12 +185,13 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   @doc """
   paged [reaction] users list
   """
-  def load_reaction_users(queryable, thread, article_id, filter) do
+  def load_reaction_users(queryable, article, filter) do
+    {:ok, thread} = thread_of(article)
     %{page: page, size: size} = filter
 
     with {:ok, info} <- match(thread) do
       queryable
-      |> where([u], field(u, ^info.foreign_key) == ^article_id)
+      |> where([u], field(u, ^info.foreign_key) == ^article.id)
       |> QueryBuilder.load_inner_users(filter)
       |> ORM.paginator(~m(page size)a)
       |> done()

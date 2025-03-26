@@ -101,9 +101,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     test "upvotes_count order should work", ~m(guest_conn post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
 
-      {:ok, _} = CMS.upvote_article(:post, post_last_week.id, user)
-      {:ok, _} = CMS.upvote_article(:post, post_last_week.id, user2)
-      {:ok, _} = CMS.upvote_article(:post, post_last_week.id, user3)
+      {:ok, _} = CMS.upvote_article(post_last_week, user)
+      {:ok, _} = CMS.upvote_article(post_last_week, user2)
+      {:ok, _} = CMS.upvote_article(post_last_week, user3)
 
       results = guest_conn |> query_result(@query, variables, "pagedPosts")
       first_post = results["entries"] |> List.first()
@@ -360,8 +360,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert not the_post["viewerHasReported"]
 
       {:ok, _} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user)
-      {:ok, _} = CMS.upvote_article(:post, post.id, user)
-      {:ok, _} = CMS.collect_article(:post, post.id, user)
+      {:ok, _} = CMS.upvote_article(post, user)
+      {:ok, _} = CMS.collect_article(post, user)
       {:ok, _} = CMS.report_article(:post, post.id, "reason", "attr_info", user)
 
       results = user_conn |> query_result(@query, variables, "pagedPosts")

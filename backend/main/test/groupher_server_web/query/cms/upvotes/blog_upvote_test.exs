@@ -1,28 +1,28 @@
-defmodule GroupherServer.Test.Query.Upvotes.PostUpvote do
+defmodule GroupherServer.Test.Query.Upvotes.BlogUpvote do
   @moduledoc false
   use GroupherServer.TestTools
 
   setup do
-    {community, post, _, user} = mock_article(:post, preload: [author: :user])
+    {community, blog, _, user} = mock_article(:blog, preload: [author: :user])
     {:ok, user2} = db_insert(:user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
 
-    {:ok, ~m(user_conn guest_conn user user2 community post)a}
+    {:ok, ~m(user_conn guest_conn user user2 community blog)a}
   end
 
   describe "[upvoted users]" do
     @tag :wip
-    test "guest can get upvoted users list after upvote to a post",
-         ~m(guest_conn community post user user2)a do
-      {:ok, _} = CMS.upvote_article(post, user)
-      {:ok, _} = CMS.upvote_article(post, user2)
+    test "guest can get upvoted users list after upvote to a blog",
+         ~m(guest_conn community blog user user2)a do
+      {:ok, _} = CMS.upvote_article(blog, user)
+      {:ok, _} = CMS.upvote_article(blog, user2)
 
       variables = %{
-        id: post.inner_id,
+        id: blog.inner_id,
         community: community.slug,
-        thread: "POST",
+        thread: "BLOG",
         filter: %{page: 1, size: 20}
       }
 

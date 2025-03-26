@@ -133,14 +133,14 @@ defmodule GroupherServer.CMS do
   defdelegate upvote_article(article, user), to: ArticleUpvote
   defdelegate undo_upvote_article(article, user), to: ArticleUpvote
 
-  defdelegate upvoted_users(thread, article_id, filter), to: ArticleUpvote
+  defdelegate upvoted_users(article, filter), to: ArticleUpvote
 
   defdelegate collect_article(thread, article_id, user), to: ArticleCollect
   defdelegate collect_article_ifneed(thread, article_id, user), to: ArticleCollect
 
   defdelegate undo_collect_article(thread, article_id, user), to: ArticleCollect
   defdelegate undo_collect_article_ifneed(thread, article_id, user), to: ArticleCollect
-  defdelegate collected_users(thread, article_id, filter), to: ArticleCollect
+  defdelegate collected_users(article, filter), to: ArticleCollect
 
   defdelegate set_collect_folder(collect, folder), to: ArticleCollect
   defdelegate undo_set_collect_folder(collect, folder), to: ArticleCollect

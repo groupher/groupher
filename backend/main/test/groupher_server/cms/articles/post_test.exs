@@ -137,8 +137,8 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
     #     ORM.find_by(CommunitySubscriber, %{community_id: community.id, user_id: user.id})
 
     #   {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-    #   {:ok, _} = CMS.upvote_article(:post, post.id, user)
-    #   {:error, _} = CMS.upvote_article(:post, post.id, user)
+    #   {:ok, _} = CMS.upvote_article(post, user)
+    #   {:error, _} = CMS.upvote_article(post, user)
 
     #   {:ok, subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{community_id: community.id, user_id: user.id})
@@ -170,8 +170,8 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert not post.viewer_has_upvoted
       assert not post.viewer_has_reported
 
-      {:ok, _} = CMS.upvote_article(:post, post.id, user)
-      {:ok, _} = CMS.collect_article(:post, post.id, user)
+      {:ok, _} = CMS.upvote_article(post, user)
+      {:ok, _} = CMS.collect_article(post, user)
       {:ok, _} = CMS.report_article(:post, post.id, "reason", "attr_info", user)
 
       {:ok, post} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user)

@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
 
   describe "[user upvoted articles]" do
     test "user can get paged upvoted common articles", ~m(user post)a do
-      {:ok, _} = CMS.upvote_article(:post, post.id, user)
+      {:ok, _} = CMS.upvote_article(post, user)
 
       filter = %{page: 1, size: 20}
       {:ok, articles} = Accounts.paged_upvoted_articles(user.id, filter)
@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
     end
 
     test "user can get paged upvoted posts by thread filter", ~m(user post)a do
-      {:ok, _} = CMS.upvote_article(:post, post.id, user)
+      {:ok, _} = CMS.upvote_article(post, user)
 
       filter = %{thread: :post, page: 1, size: 20}
       {:ok, articles} = Accounts.paged_upvoted_articles(user.id, filter)

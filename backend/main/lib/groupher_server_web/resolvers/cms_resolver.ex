@@ -192,12 +192,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.undo_upvote_article(article, user)
   end
 
-  def upvoted_users(_root, ~m(id thread filter)a, _info) do
-    CMS.upvoted_users(thread, id, filter)
+  def upvoted_users(_root, ~m(article filter)a, _info) do
+    CMS.upvoted_users(article, filter)
   end
 
-  def collected_users(_root, ~m(id thread filter)a, _info) do
-    CMS.collected_users(thread, id, filter)
+  def collected_users(_root, ~m(article filter)a, _info) do
+    CMS.collected_users(article, filter)
   end
 
   def emotion_to_article(_root, ~m(id thread emotion)a, %{context: %{cur_user: user}}) do

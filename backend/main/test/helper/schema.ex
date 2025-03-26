@@ -1,6 +1,29 @@
 defmodule GroupherServer.Test.Helper.Schema do
   @moduledoc false
 
+  def q(:upvoted_users) do
+    """
+    query(
+      $id: ID!
+      $community: String!
+      $thread: Thread
+      $filter: PagiFilter!
+    ) {
+      upvotedUsers(id: $id, community: $community, thread: $thread, filter: $filter) {
+        entries {
+          login
+          avatar
+          nickname
+        }
+        totalPages
+        totalCount
+        pageSize
+        pageNumber
+      }
+    }
+    """
+  end
+
   def m(:create_article, thread) do
     """
     mutation(

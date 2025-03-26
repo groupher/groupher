@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
 
   import GroupherServer.CMS.Delegate.Helper,
     only: [
-      load_reaction_users: 4,
+      load_reaction_users: 3,
       update_article_reactions_count: 4,
       update_article_reaction_user_list: 4
     ]
@@ -26,9 +26,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   @doc """
   get paged collected users
   """
-  def collected_users(thread, article_id, filter) do
-    load_reaction_users(ArticleCollect, thread, article_id, filter)
-  end
+  def collected_users(article, filter), do: load_reaction_users(ArticleCollect, article, filter)
 
   @doc """
   collect an article

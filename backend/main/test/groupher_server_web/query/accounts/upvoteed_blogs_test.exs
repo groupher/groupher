@@ -27,12 +27,12 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedBlogs do
       }
     }
     """
-    test "both login and unlogin user can get one's paged upvoted blogs",
+    test "both login and un-login user can get one's paged upvoted blogs",
          ~m(user_conn guest_conn blogs)a do
       {:ok, user} = db_insert(:user)
 
       Enum.each(blogs, fn blog ->
-        {:ok, _} = CMS.upvote_article(:blog, blog.id, user)
+        {:ok, _} = CMS.upvote_article(blog, user)
       end)
 
       variables = %{
@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedBlogs do
       {:ok, user} = db_insert(:user)
 
       Enum.each(blogs, fn blog ->
-        {:ok, _} = CMS.upvote_article(:blog, blog.id, user)
+        {:ok, _} = CMS.upvote_article(blog, user)
       end)
 
       variables = %{

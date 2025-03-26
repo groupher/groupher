@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyDoc do
     test "upvote hook should work on doc", ~m(user2 doc)a do
       {:ok, doc} = preload_author(doc)
 
-      {:ok, article} = CMS.upvote_article(:doc, doc.id, user2)
+      {:ok, article} = CMS.upvote_article(doc, user2)
       Hooks.Notify.handle(:upvote, article, user2)
 
       {:ok, notifications} =
@@ -62,10 +62,10 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyDoc do
     test "undo upvote hook should work on doc", ~m(user2 doc)a do
       {:ok, doc} = preload_author(doc)
 
-      {:ok, article} = CMS.upvote_article(:doc, doc.id, user2)
+      {:ok, article} = CMS.upvote_article(doc, user2)
       Hooks.Notify.handle(:upvote, article, user2)
 
-      {:ok, article} = CMS.undo_upvote_article(:doc, doc.id, user2)
+      {:ok, article} = CMS.undo_upvote_article(doc, user2)
       Hooks.Notify.handle(:undo, :upvote, article, user2)
 
       {:ok, notifications} =
@@ -113,10 +113,10 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyDoc do
     test "undo collect hook should work on doc", ~m(user2 doc)a do
       {:ok, doc} = preload_author(doc)
 
-      {:ok, _} = CMS.upvote_article(:doc, doc.id, user2)
+      {:ok, _} = CMS.upvote_article(doc, user2)
       Hooks.Notify.handle(:collect, doc, user2)
 
-      {:ok, _} = CMS.undo_upvote_article(:doc, doc.id, user2)
+      {:ok, _} = CMS.undo_upvote_article(doc, user2)
       Hooks.Notify.handle(:undo, :collect, doc, user2)
 
       {:ok, notifications} =
