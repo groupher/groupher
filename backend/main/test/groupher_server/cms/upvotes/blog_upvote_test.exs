@@ -52,13 +52,12 @@ defmodule GroupherServer.Test.Upvotes.BlogUpvote do
       assert user_exist_in?(user2, users.entries)
     end
 
-    @tag :wip
+    @tag :wip2
     test "blog meta history should be updated after upvote",
          ~m(user user2 community blog)a do
       {:ok, article} = CMS.upvote_article(blog, user)
       assert user.id in article.meta.upvoted_user_ids
 
-      {:ok, blog} = ORM.find(Blog, blog.id)
       {:ok, article} = CMS.upvote_article(blog, user2)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
@@ -67,11 +66,10 @@ defmodule GroupherServer.Test.Upvotes.BlogUpvote do
       assert user2.id in blog.meta.upvoted_user_ids
     end
 
-    @tag :wip
+    @tag :wip2
     test "blog meta history should be updated after undo upvote",
          ~m(user user2 community blog)a do
       {:ok, _} = CMS.upvote_article(blog, user)
-      {:ok, blog} = ORM.find(Blog, blog.id)
       {:ok, _} = CMS.upvote_article(blog, user2)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
@@ -79,9 +77,7 @@ defmodule GroupherServer.Test.Upvotes.BlogUpvote do
       assert user.id in blog.meta.upvoted_user_ids
       assert user2.id in blog.meta.upvoted_user_ids
 
-      {:ok, blog} = ORM.find(Blog, blog.id)
       {:ok, _} = CMS.undo_upvote_article(blog, user2)
-      {:ok, blog} = ORM.find(Blog, blog.id)
       {:ok, _} = CMS.undo_upvote_article(blog, user)
 
       {:ok, blog} = ORM.find(Blog, blog.id)

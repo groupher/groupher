@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
   """
   import GroupherServer.CMS.Helper.Matcher
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, thread_of: 1, thread_of: 2, preload_author: 1]
+  import Helper.Utils, only: [done: 1, thread_of: 2]
   import Helper.ErrorCode
 
   import GroupherServer.CMS.Delegate.Helper,
@@ -29,10 +29,8 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
 
   @doc "upvote to a article-like content"
   def upvote_article(article, %User{} = user) do
-    {:ok, article} = preload_author(article)
-
-    with {:ok, thread} = thread_of(article),
-         {:ok, info} <- match(thread) do
+    with {:ok, info} <- match(article),
+         {:ok, article} <- ORM.find_article(info.model, article.id) do
       Multi.new()
       |> Multi.run(:update_upvotes_count, fn _, _ ->
         update_article_reactions_count(info, article, :upvotes_count, :inc)
@@ -66,10 +64,8 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
 
   @doc "upvote to a article-like content"
   def undo_upvote_article(article, %User{id: user_id} = from_user) do
-    {:ok, article} = preload_author(article)
-
-    with {:ok, thread} = thread_of(article),
-         {:ok, info} <- match(thread) do
+    with {:ok, info} <- match(article),
+         {:ok, article} <- ORM.find_article(info.model, article.id) do
       Multi.new()
       |> Multi.run(:update_upvotes_count, fn _, _ ->
         update_article_reactions_count(info, article, :upvotes_count, :dec)

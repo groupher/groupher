@@ -342,6 +342,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       }
     }
     """
+    @tag :wip2
     test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
@@ -362,11 +363,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       {:ok, _} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user)
       {:ok, _} = CMS.upvote_article(post, user)
       {:ok, _} = CMS.collect_article(post, user)
+      {:ok, post} = ORM.find(Post, post.id)
       {:ok, _} = CMS.report_article(:post, post.id, "reason", "attr_info", user)
 
       results = user_conn |> query_result(@query, variables, "pagedPosts")
 
       the_post = Enum.find(results["entries"], &(&1["id"] == to_string(post.id)))
+
       assert the_post["viewerHasViewed"]
       assert the_post["viewerHasUpvoted"]
       assert the_post["viewerHasCollected"]

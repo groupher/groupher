@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.Collect.Changelog do
       assert article.collects_count == 2
     end
 
-    @tag :wip
+    @tag :wip2
     test "changelog can be undo collect && collects_count should dec by 1",
          ~m(user community changelog)a do
       {:ok, _} = CMS.collect_article(changelog, user)

@@ -97,8 +97,8 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
 
   describe "[Accounts CollectFolder add/remove]" do
     @query """
-    mutation($articleId: ID!, $folderId: ID!, $thread: Thread) {
-      addToCollect(articleId: $articleId, folderId: $folderId, thread: $thread) {
+    mutation($id: ID!, $folderId: ID!, $community: String!, $thread: Thread) {
+      addToCollect(id: $id, folderId: $folderId, community: $community, thread: $thread) {
         id
         title
         totalCount
@@ -119,11 +119,18 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       "postCount" => 0,
       "blogCount" => 0
     }
-    test "user can add a post to collect folder", ~m(user user_conn post)a do
+    @tag :wip2
+    test "user can add a post to collect folder", ~m(user user_conn community post)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.create_collect_folder(args, user)
 
-      variables = %{articleId: post.id, folderId: folder.id, thread: "POST"}
+      variables = %{
+        id: post.inner_id,
+        folderId: folder.id,
+        community: community.slug,
+        thread: "POST"
+      }
+
       folder = user_conn |> mutation_result(@query, variables, "addToCollect")
 
       assert folder["totalCount"] == 1

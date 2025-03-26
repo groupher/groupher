@@ -52,26 +52,23 @@ defmodule GroupherServer.Test.Upvotes.ChangelogUpvote do
       assert user_exist_in?(user2, users.entries)
     end
 
-    @tag :wip
+    @tag :wip2
     test "changelog meta history should be updated after upvote",
          ~m(user user2 community changelog)a do
       {:ok, article} = CMS.upvote_article(changelog, user)
       assert user.id in article.meta.upvoted_user_ids
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
       {:ok, article} = CMS.upvote_article(changelog, user2)
-
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
 
       assert user.id in changelog.meta.upvoted_user_ids
       assert user2.id in changelog.meta.upvoted_user_ids
     end
 
-    @tag :wip
+    @tag :wip2
     test "changelog meta history should be updated after undo upvote",
          ~m(user user2 community changelog)a do
       {:ok, _} = CMS.upvote_article(changelog, user)
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
       {:ok, _} = CMS.upvote_article(changelog, user2)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
@@ -79,9 +76,7 @@ defmodule GroupherServer.Test.Upvotes.ChangelogUpvote do
       assert user.id in changelog.meta.upvoted_user_ids
       assert user2.id in changelog.meta.upvoted_user_ids
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
       {:ok, _} = CMS.undo_upvote_article(changelog, user2)
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
       {:ok, _} = CMS.undo_upvote_article(changelog, user)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)

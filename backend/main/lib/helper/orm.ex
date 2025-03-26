@@ -424,6 +424,8 @@ defmodule Helper.ORM do
     |> done
   end
 
+  def find_article(model, id), do: find(model, id, preload: [author: :user])
+
   def find_article(original_community_slug, thread, inner_id, opts \\ []) do
     preload = Keyword.get(opts, :preload, [])
     query = ~m(original_community_slug inner_id)a
