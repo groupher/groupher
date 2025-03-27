@@ -14,7 +14,6 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
   end
 
   describe "[post emotion]" do
-    @tag :wip
     test "login user can emotion to a post", ~m(community post user_conn)a do
       variables = %{id: post.inner_id, community: community.slug, emotion: "BEER"}
 
@@ -26,7 +25,6 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       assert get_in(article, ["emotions", "viewerHasBeered"])
     end
 
-    @tag :wip
     test "login user can undo emotion to a post", ~m(community post user owner_conn)a do
       {:ok, _} = CMS.emotion_to_article(post, :beer, user)
 

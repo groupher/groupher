@@ -16,7 +16,6 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
   end
 
   describe "[emotion in paged blogs]" do
-    @tag :wip
     test "login user should got viewer has emotioned status",
          ~m(community blog_attrs user)a do
       total_count = 10
@@ -62,7 +61,6 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert @default_emotions == emotions
     end
 
-    @tag :wip
     test "can make emotion to blog", ~m(community blog_attrs user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
@@ -76,7 +74,6 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
-    @tag :wip
     test "can undo emotion to blog", ~m(community blog_attrs user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
@@ -93,7 +90,6 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert not user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
-    @tag :wip
     test "same user make same emotion to same blog.", ~m(community blog_attrs user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
@@ -106,7 +102,6 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert user_exist_in?(user, blog.emotions.latest_downvote_users)
     end
 
-    @tag :wip
     test "same user same emotion to same blog only have one user_emotion record",
          ~m(community blog_attrs user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -126,7 +121,6 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert record.heart
     end
 
-    @tag :wip
     test "different user can make same emotions on same blog",
          ~m(community blog_attrs user user2 user3)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -143,7 +137,6 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert user_exist_in?(user3, emotions.latest_beer_users)
     end
 
-    @tag :wip
     test "same user can make different emotions on same blog",
          ~m(community blog_attrs user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
