@@ -163,8 +163,8 @@ defmodule GroupherServer.CMS do
   defdelegate mirror_to_home(target_community, article), to: ArticleCommunity
   defdelegate mirror_to_home(target_community, article, article_ids), to: ArticleCommunity
 
-  defdelegate emotion_to_article(thread, article_id, args, user), to: ArticleEmotion
-  defdelegate undo_emotion_to_article(thread, article_id, args, user), to: ArticleEmotion
+  defdelegate emotion_to_article(article, args, user), to: ArticleEmotion
+  defdelegate undo_emotion_to_article(article, args, user), to: ArticleEmotion
 
   # Comment CRUD
 

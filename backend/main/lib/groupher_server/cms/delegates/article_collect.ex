@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   """
   import GroupherServer.CMS.Helper.Matcher
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, thread_of: 1, thread_of: 2]
+  import Helper.Utils, only: [done: 1, thread_of: 2]
 
   import GroupherServer.CMS.Delegate.Helper,
     only: [
