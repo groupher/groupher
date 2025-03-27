@@ -16,6 +16,7 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
   end
 
   describe "[emotion in paged blogs]" do
+    @tag :wip
     test "login user should got viewer has emotioned status",
          ~m(community blog_attrs user)a do
       total_count = 10
@@ -30,9 +31,9 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
 
       random_blog = all_blogs |> Enum.at(3)
 
-      {:ok, _} = CMS.emotion_to_article(:blog, random_blog.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:blog, random_blog.id, :beer, user)
-      {:ok, _} = CMS.emotion_to_article(:blog, random_blog.id, :popcorn, user)
+      {:ok, _} = CMS.emotion_to_article(random_blog, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(random_blog, :beer, user)
+      {:ok, _} = CMS.emotion_to_article(random_blog, :popcorn, user)
 
       {:ok, paged_articles} =
         CMS.paged_articles(:blog, %{page: page_number, size: page_size}, user)
@@ -61,11 +62,12 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert @default_emotions == emotions
     end
 
+    @tag :wip
     test "can make emotion to blog", ~m(community blog_attrs user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :downvote, user2)
+      {:ok, _} = CMS.emotion_to_article(blog, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :downvote, user2)
 
       {:ok, %{emotions: emotions}} = ORM.find(Blog, blog.id)
 
@@ -74,14 +76,15 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
+    @tag :wip
     test "can undo emotion to blog", ~m(community blog_attrs user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :downvote, user2)
+      {:ok, _} = CMS.emotion_to_article(blog, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :downvote, user2)
 
-      {:ok, _} = CMS.undo_emotion_to_article(:blog, blog.id, :downvote, user)
-      {:ok, _} = CMS.undo_emotion_to_article(:blog, blog.id, :downvote, user2)
+      {:ok, _} = CMS.undo_emotion_to_article(blog, :downvote, user)
+      {:ok, _} = CMS.undo_emotion_to_article(blog, :downvote, user2)
 
       {:ok, %{emotions: emotions}} = ORM.find(Blog, blog.id)
 
@@ -90,11 +93,12 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert not user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
+    @tag :wip
     test "same user make same emotion to same blog.", ~m(community blog_attrs user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :downvote, user)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
 
@@ -102,30 +106,34 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert user_exist_in?(user, blog.emotions.latest_downvote_users)
     end
 
+    @tag :wip
     test "same user same emotion to same blog only have one user_emotion record",
          ~m(community blog_attrs user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :heart, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :heart, user)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
 
       {:ok, records} = ORM.find_all(ArticleUserEmotion, %{page: 1, size: 10})
       assert records.total_count == 1
 
-      {:ok, record} = ORM.find_by(ArticleUserEmotion, %{blog_id: blog.id, user_id: user.id})
+      {:ok, record} =
+        ORM.find_by(ArticleUserEmotion, %{blog_id: blog.id, user_id: user.id})
+
       assert record.downvote
       assert record.heart
     end
 
+    @tag :wip
     test "different user can make same emotions on same blog",
          ~m(community blog_attrs user user2 user3)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :beer, user)
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :beer, user2)
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :beer, user3)
+      {:ok, _} = CMS.emotion_to_article(blog, :beer, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :beer, user2)
+      {:ok, _} = CMS.emotion_to_article(blog, :beer, user3)
 
       {:ok, %{emotions: emotions}} = ORM.find(Blog, blog.id)
 
@@ -135,14 +143,16 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert user_exist_in?(user3, emotions.latest_beer_users)
     end
 
-    test "same user can make differcent emotions on same blog", ~m(community blog_attrs user)a do
+    @tag :wip
+    test "same user can make different emotions on same blog",
+         ~m(community blog_attrs user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :beer, user)
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :heart, user)
-      {:ok, _} = CMS.emotion_to_article(:blog, blog.id, :orz, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :beer, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :heart, user)
+      {:ok, _} = CMS.emotion_to_article(blog, :orz, user)
 
       {:ok, %{emotions: emotions}} = ORM.find(Blog, blog.id)
 

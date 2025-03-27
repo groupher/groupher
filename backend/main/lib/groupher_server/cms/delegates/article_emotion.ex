@@ -5,6 +5,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.Matcher
 
+  import Helper.Utils, only: [thread_of: 1]
   import GroupherServer.CMS.Delegate.Helper, only: [update_emotions_field: 4]
 
   alias Helper.ORM
@@ -19,14 +20,14 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
   @type t_mention_status :: %{user_list: t_user_list, user_count: Integer.t()}
 
   @doc "make emotion to a comment"
-  def emotion_to_article(thread, article_id, emotion, %User{} = user) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, article_id, preload: :author) do
+  def emotion_to_article(article, emotion, %User{} = user) do
+    with {:ok, info} <- match(article),
+         {:ok, article} <- ORM.find_article(info.model, article.id) do
       Multi.new()
       |> Multi.run(:create_user_emotion, fn _, _ ->
         target =
           %{recived_user_id: article.author.user_id, user_id: user.id}
-          |> Map.put(info.foreign_key, article_id)
+          |> Map.put(info.foreign_key, article.id)
 
         args = Map.put(target, :"#{emotion}", true)
 
@@ -36,7 +37,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
         end
       end)
       |> Multi.run(:query_emotion_status, fn _, _ ->
-        query_emotion_status(thread, article.id, emotion)
+        query_emotion_status(article, emotion)
       end)
       |> Multi.run(:update_emotions_field, fn _, %{query_emotion_status: status} ->
         update_emotions_field(article, emotion, status, user)
@@ -46,14 +47,14 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
     end
   end
 
-  def undo_emotion_to_article(thread, article_id, emotion, %User{} = user) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, article_id, preload: :author) do
+  def undo_emotion_to_article(article, emotion, %User{} = user) do
+    with {:ok, info} <- match(article),
+         {:ok, article} <- ORM.find_article(info.model, article.id) do
       Multi.new()
       |> Multi.run(:update_user_emotion, fn _, _ ->
         target =
           %{recived_user_id: article.author.user_id, user_id: user.id}
-          |> Map.put(info.foreign_key, article_id)
+          |> Map.put(info.foreign_key, article.id)
 
         case ORM.find_by(ArticleUserEmotion, target) do
           {:ok, article_user_emotion} ->
@@ -67,7 +68,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
         end
       end)
       |> Multi.run(:query_emotion_status, fn _, _ ->
-        query_emotion_status(thread, article.id, emotion)
+        query_emotion_status(article, emotion)
       end)
       |> Multi.run(:update_emotions_field, fn _, %{query_emotion_status: status} ->
         update_emotions_field(article, emotion, status, user)
@@ -78,8 +79,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
   end
 
   # @spec query_emotion_status(Comment.t(), Atom.t()) :: {:ok, t_mention_status}
-  defp query_emotion_status(thread, article_id, emotion) do
-    with {:ok, info} <- match(thread) do
+  defp query_emotion_status(article, emotion) do
+    with {:ok, thread} <- thread_of(article),
+         {:ok, info} <- match(thread) do
       # 每次被 emotion 动作触发后重新查询，主要原因
       # 1.并发下保证数据准确，类似 views 阅读数的统计
       # 2. 前端使用 nickname 而非 login 展示，如果用户改了 nickname, 可以"自动纠正"
@@ -87,7 +89,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
         from(a in ArticleUserEmotion,
           join: user in User,
           on: a.user_id == user.id,
-          where: field(a, ^info.foreign_key) == ^article_id,
+          where: field(a, ^info.foreign_key) == ^article.id,
           where: field(a, ^emotion) == true,
           select: %{login: user.login, nickname: user.nickname}
         )

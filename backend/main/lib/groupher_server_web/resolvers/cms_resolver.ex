@@ -200,12 +200,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.collected_users(article, filter)
   end
 
-  def emotion_to_article(_root, ~m(id thread emotion)a, %{context: %{cur_user: user}}) do
-    CMS.emotion_to_article(thread, id, emotion, user)
+  def emotion_to_article(_root, ~m(article emotion)a, %{context: %{cur_user: user}}) do
+    CMS.emotion_to_article(article, emotion, user)
   end
 
-  def undo_emotion_to_article(_root, ~m(id thread emotion)a, %{context: %{cur_user: user}}) do
-    CMS.undo_emotion_to_article(thread, id, emotion, user)
+  def undo_emotion_to_article(_root, ~m(article emotion)a, %{context: %{cur_user: user}}) do
+    CMS.undo_emotion_to_article(article, emotion, user)
   end
 
   # #######################

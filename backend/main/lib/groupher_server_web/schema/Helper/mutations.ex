@@ -214,9 +214,12 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       field unquote(:"emotion_to_#{thread}"), unquote(thread) do
         arg(:id, non_null(:id))
         arg(:emotion, non_null(:article_emotion))
+        arg(:community, non_null(:string))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
+        middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.emotion_to_article/3)
       end
 
@@ -224,9 +227,12 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       field unquote(:"undo_emotion_to_#{thread}"), unquote(thread) do
         arg(:id, non_null(:id))
         arg(:emotion, non_null(:article_emotion))
+        arg(:community, non_null(:string))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
+        middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.undo_emotion_to_article/3)
       end
     end

@@ -47,6 +47,42 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def m(:emotion_article, thread) do
+    """
+    mutation($id: ID!, $community: String!, $emotion: ArticleEmotion!) {
+      emotionTo#{t(thread)}(id: $id, community: $community, emotion: $emotion) {
+        id
+        emotions {
+          beerCount
+          viewerHasBeered
+          latestBeerUsers {
+            login
+            nickname
+          }
+        }
+      }
+    }
+    """
+  end
+
+  def m(:undo_emotion_article, thread) do
+    """
+    mutation($id: ID!, $community: String!, $emotion: ArticleEmotion!) {
+      undoEmotionTo#{t(thread)}(id: $id, community: $community, emotion: $emotion) {
+        id
+        emotions {
+          beerCount
+          viewerHasBeered
+          latestBeerUsers {
+            login
+            nickname
+          }
+        }
+      }
+    }
+    """
+  end
+
   def m(:create_article, thread) do
     """
     mutation(

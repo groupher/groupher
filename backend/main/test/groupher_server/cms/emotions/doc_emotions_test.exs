@@ -16,6 +16,7 @@ defmodule GroupherServer.Test.CMS.Emotions.DocEmotions do
   end
 
   describe "[emotion in paged docs]" do
+    @tag :wip
     test "login user should got viewer has emotioned status",
          ~m(community doc_attrs user)a do
       total_count = 10
@@ -30,9 +31,9 @@ defmodule GroupherServer.Test.CMS.Emotions.DocEmotions do
 
       random_doc = all_docs |> Enum.at(3)
 
-      {:ok, _} = CMS.emotion_to_article(:doc, random_doc.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:doc, random_doc.id, :beer, user)
-      {:ok, _} = CMS.emotion_to_article(:doc, random_doc.id, :popcorn, user)
+      {:ok, _} = CMS.emotion_to_article(random_doc, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(random_doc, :beer, user)
+      {:ok, _} = CMS.emotion_to_article(random_doc, :popcorn, user)
 
       {:ok, paged_articles} =
         CMS.paged_articles(:doc, %{page: page_number, size: page_size}, user)
@@ -61,11 +62,12 @@ defmodule GroupherServer.Test.CMS.Emotions.DocEmotions do
       assert @default_emotions == emotions
     end
 
+    @tag :wip
     test "can make emotion to doc", ~m(community doc_attrs user user2)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :downvote, user2)
+      {:ok, _} = CMS.emotion_to_article(doc, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :downvote, user2)
 
       {:ok, %{emotions: emotions}} = ORM.find(Doc, doc.id)
 
@@ -74,14 +76,15 @@ defmodule GroupherServer.Test.CMS.Emotions.DocEmotions do
       assert user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
+    @tag :wip
     test "can undo emotion to doc", ~m(community doc_attrs user user2)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :downvote, user2)
+      {:ok, _} = CMS.emotion_to_article(doc, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :downvote, user2)
 
-      {:ok, _} = CMS.undo_emotion_to_article(:doc, doc.id, :downvote, user)
-      {:ok, _} = CMS.undo_emotion_to_article(:doc, doc.id, :downvote, user2)
+      {:ok, _} = CMS.undo_emotion_to_article(doc, :downvote, user)
+      {:ok, _} = CMS.undo_emotion_to_article(doc, :downvote, user2)
 
       {:ok, %{emotions: emotions}} = ORM.find(Doc, doc.id)
 
@@ -90,11 +93,12 @@ defmodule GroupherServer.Test.CMS.Emotions.DocEmotions do
       assert not user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
+    @tag :wip
     test "same user make same emotion to same doc.", ~m(community doc_attrs user)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :downvote, user)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
 
@@ -102,31 +106,34 @@ defmodule GroupherServer.Test.CMS.Emotions.DocEmotions do
       assert user_exist_in?(user, doc.emotions.latest_downvote_users)
     end
 
+    @tag :wip
     test "same user same emotion to same doc only have one user_emotion record",
          ~m(community doc_attrs user)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :heart, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :heart, user)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
 
       {:ok, records} = ORM.find_all(ArticleUserEmotion, %{page: 1, size: 10})
       assert records.total_count == 1
 
-      {:ok, record} = ORM.find_by(ArticleUserEmotion, %{doc_id: doc.id, user_id: user.id})
+      {:ok, record} =
+        ORM.find_by(ArticleUserEmotion, %{doc_id: doc.id, user_id: user.id})
 
       assert record.downvote
       assert record.heart
     end
 
+    @tag :wip
     test "different user can make same emotions on same doc",
          ~m(community doc_attrs user user2 user3)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :beer, user)
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :beer, user2)
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :beer, user3)
+      {:ok, _} = CMS.emotion_to_article(doc, :beer, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :beer, user2)
+      {:ok, _} = CMS.emotion_to_article(doc, :beer, user3)
 
       {:ok, %{emotions: emotions}} = ORM.find(Doc, doc.id)
 
@@ -136,15 +143,16 @@ defmodule GroupherServer.Test.CMS.Emotions.DocEmotions do
       assert user_exist_in?(user3, emotions.latest_beer_users)
     end
 
-    test "same user can make differcent emotions on same doc",
+    @tag :wip
+    test "same user can make different emotions on same doc",
          ~m(community doc_attrs user)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :beer, user)
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :heart, user)
-      {:ok, _} = CMS.emotion_to_article(:doc, doc.id, :orz, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :downvote, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :beer, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :heart, user)
+      {:ok, _} = CMS.emotion_to_article(doc, :orz, user)
 
       {:ok, %{emotions: emotions}} = ORM.find(Doc, doc.id)
 
