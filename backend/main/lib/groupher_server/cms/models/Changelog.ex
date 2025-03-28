@@ -36,17 +36,17 @@ defmodule GroupherServer.CMS.Model.Changelog do
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
     |> cast_embed(:meta, required: false, with: &Embeds.ArticleMeta.changeset/2)
-    |> generl_changeset
+    |> geneal_changeset
   end
 
   @doc false
   def update_changeset(%Changelog{} = changelog, attrs) do
     changelog
     |> cast(attrs, @optional_fields ++ @required_fields)
-    |> generl_changeset
+    |> geneal_changeset
   end
 
-  defp generl_changeset(changeset) do
+  defp geneal_changeset(changeset) do
     changeset
     |> validate_length(:title, min: 3, max: 100)
     |> cast_embed(:emotions, with: &Embeds.ArticleEmotion.changeset/2)

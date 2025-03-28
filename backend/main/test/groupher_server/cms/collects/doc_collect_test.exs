@@ -3,16 +3,15 @@ defmodule GroupherServer.Test.Collect.Doc do
   use GroupherServer.TestTools
 
   setup do
-    {community, doc, _, user} = mock_article(:doc)
+    {_, doc, _, user} = mock_article(:doc)
 
     {:ok, user2} = db_insert(:user)
 
-    {:ok, ~m(user user2 community doc)a}
+    {:ok, ~m(user user2 doc)a}
   end
 
   describe "[cms doc collect]" do
-    test "doc can be collect && collects_count should inc by 1",
-         ~m(user user2 community doc)a do
+    test "doc can be collect && collects_count should inc by 1", ~m(user user2 doc)a do
       {:ok, article_collect} = CMS.collect_article(doc, user)
       {:ok, article} = ORM.find(Doc, article_collect.doc_id)
 
@@ -25,8 +24,7 @@ defmodule GroupherServer.Test.Collect.Doc do
       assert article.collects_count == 2
     end
 
-    test "doc can be undo collect && collects_count should dec by 1",
-         ~m(user community doc)a do
+    test "doc can be undo collect && collects_count should dec by 1", ~m(user doc)a do
       {:ok, _} = CMS.collect_article(doc, user)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
@@ -38,7 +36,7 @@ defmodule GroupherServer.Test.Collect.Doc do
       assert article.collects_count == 0
     end
 
-    test "can get collect_users", ~m(user user2 community doc)a do
+    test "can get collect_users", ~m(user user2 doc)a do
       {:ok, _} = CMS.collect_article(doc, user)
       {:ok, _} = CMS.collect_article(doc, user2)
 
@@ -49,7 +47,7 @@ defmodule GroupherServer.Test.Collect.Doc do
       assert user_exist_in?(user2, users.entries)
     end
 
-    test "doc meta history should be updated", ~m(user user2 community doc)a do
+    test "doc meta history should be updated", ~m(user user2 doc)a do
       {:ok, _} = CMS.collect_article(doc, user)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
@@ -62,8 +60,7 @@ defmodule GroupherServer.Test.Collect.Doc do
       assert user2.id in doc.meta.collected_user_ids
     end
 
-    test "doc meta history should be updated after undo collect",
-         ~m(user user2 community doc)a do
+    test "doc meta history should be updated after undo collect", ~m(user user2 doc)a do
       {:ok, _} = CMS.collect_article(doc, user)
       {:ok, doc} = ORM.find(Doc, doc.id)
       {:ok, _} = CMS.collect_article(doc, user2)

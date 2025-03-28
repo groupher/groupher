@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   """
   def collect_article(article, %User{} = user) do
     with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id) do
+         {:ok, article} <- ORM.reload(article) do
       Multi.new()
       |> Multi.run(:inc_author_achieve, fn _, _ ->
         Accounts.achieve(article.author.user, :inc, :collect)
@@ -64,7 +64,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   # 避免因为同一篇文章在不同收藏夹内造成的统计和用户成就系统的混乱
   def collect_article_ifneed(article, %User{} = user) do
     with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id),
+         {:ok, article} <- ORM.reload(article),
          findby_args <- collection_findby_args(article, user.id) do
       already_collected = ORM.find_by(ArticleCollect, findby_args)
 
@@ -77,7 +77,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
 
   def undo_collect_article(article, %User{} = user) do
     with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id) do
+         {:ok, article} <- ORM.reload(article) do
       Multi.new()
       |> Multi.run(:dec_author_achieve, fn _, _ ->
         Accounts.achieve(article.author.user, :dec, :collect)

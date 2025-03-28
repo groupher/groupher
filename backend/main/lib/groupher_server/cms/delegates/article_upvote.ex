@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
   @doc "upvote to a article-like content"
   def upvote_article(article, %User{} = user) do
     with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id) do
+         {:ok, article} <- ORM.reload(article) do
       Multi.new()
       |> Multi.run(:update_upvotes_count, fn _, _ ->
         update_article_reactions_count(info, article, :upvotes_count, :inc)
@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
   @doc "upvote to a article-like content"
   def undo_upvote_article(article, %User{id: user_id} = from_user) do
     with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id) do
+         {:ok, article} <- ORM.reload(article) do
       Multi.new()
       |> Multi.run(:update_upvotes_count, fn _, _ ->
         update_article_reactions_count(info, article, :upvotes_count, :dec)

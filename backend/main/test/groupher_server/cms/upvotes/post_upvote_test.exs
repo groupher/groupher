@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
          ~m(user user2 community post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       assert user.id in article.meta.upvoted_user_ids
-      {:ok, article} = CMS.upvote_article(post, user2)
+      {:ok, _} = CMS.upvote_article(post, user2)
 
       {:ok, post} = ORM.find(Post, post.id)
 

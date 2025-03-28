@@ -3,16 +3,16 @@ defmodule GroupherServer.Test.Collect.Changelog do
   use GroupherServer.TestTools
 
   setup do
-    {community, changelog, _, user} = mock_article(:changelog)
+    {_, changelog, _, user} = mock_article(:changelog)
 
     {:ok, user2} = db_insert(:user)
 
-    {:ok, ~m(user user2 community changelog)a}
+    {:ok, ~m(user user2 changelog)a}
   end
 
   describe "[cms changelog collect]" do
     test "changelog can be collect && collects_count should inc by 1",
-         ~m(user user2 community changelog)a do
+         ~m(user user2 changelog)a do
       {:ok, article_collect} = CMS.collect_article(changelog, user)
       {:ok, article} = ORM.find(Changelog, article_collect.changelog_id)
 
@@ -25,8 +25,7 @@ defmodule GroupherServer.Test.Collect.Changelog do
       assert article.collects_count == 2
     end
 
-    test "changelog can be undo collect && collects_count should dec by 1",
-         ~m(user community changelog)a do
+    test "changelog can be undo collect && collects_count should dec by 1", ~m(user changelog)a do
       {:ok, _} = CMS.collect_article(changelog, user)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
@@ -38,7 +37,7 @@ defmodule GroupherServer.Test.Collect.Changelog do
       assert article.collects_count == 0
     end
 
-    test "can get collect_users", ~m(user user2 community changelog)a do
+    test "can get collect_users", ~m(user user2 changelog)a do
       {:ok, _} = CMS.collect_article(changelog, user)
       {:ok, _} = CMS.collect_article(changelog, user2)
 
@@ -49,7 +48,7 @@ defmodule GroupherServer.Test.Collect.Changelog do
       assert user_exist_in?(user2, users.entries)
     end
 
-    test "changelog meta history should be updated", ~m(user user2 community changelog)a do
+    test "changelog meta history should be updated", ~m(user user2 changelog)a do
       {:ok, _} = CMS.collect_article(changelog, user)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
@@ -63,7 +62,7 @@ defmodule GroupherServer.Test.Collect.Changelog do
     end
 
     test "changelog meta history should be updated after undo collect",
-         ~m(user user2 community changelog)a do
+         ~m(user user2 changelog)a do
       {:ok, _} = CMS.collect_article(changelog, user)
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
       {:ok, _} = CMS.collect_article(changelog, user2)
