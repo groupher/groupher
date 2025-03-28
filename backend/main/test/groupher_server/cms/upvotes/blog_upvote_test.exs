@@ -3,15 +3,14 @@ defmodule GroupherServer.Test.Upvotes.BlogUpvote do
   use GroupherServer.TestTools
 
   setup do
-    {community, blog, _, user} = mock_article(:blog)
+    {_, blog, _, user} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, ~m(user user2 community blog)a}
+    {:ok, ~m(user user2 blog)a}
   end
 
   describe "[cms blog upvote]" do
-    test "blog can be upvote && upvotes_count should inc by 1",
-         ~m(user user2 community blog)a do
+    test "blog can be upvote && upvotes_count should inc by 1", ~m(user user2 blog)a do
       {:ok, article} = CMS.upvote_article(blog, user)
       assert article.id == blog.id
       assert article.upvotes_count == 1
@@ -20,15 +19,14 @@ defmodule GroupherServer.Test.Upvotes.BlogUpvote do
       assert article.upvotes_count == 2
     end
 
-    test "upvote a already upvoted blog is fine", ~m(user community blog)a do
+    test "upvote a already upvoted blog is fine", ~m(user blog)a do
       {:ok, article} = CMS.upvote_article(blog, user)
       {:error, _error} = CMS.upvote_article(blog, user)
 
       assert article.upvotes_count == 1
     end
 
-    test "blog can be undo upvote && upvotes_count should dec by 1",
-         ~m(user user2 community blog)a do
+    test "blog can be undo upvote && upvotes_count should dec by 1", ~m(user user2 blog)a do
       {:ok, article} = CMS.upvote_article(blog, user)
       assert article.id == blog.id
       assert article.upvotes_count == 1
@@ -37,7 +35,7 @@ defmodule GroupherServer.Test.Upvotes.BlogUpvote do
       assert article.upvotes_count == 0
     end
 
-    test "can get upvotes_users", ~m(user user2 community blog)a do
+    test "can get upvotes_users", ~m(user user2 blog)a do
       {:ok, _article} = CMS.upvote_article(blog, user)
       {:ok, _article} = CMS.upvote_article(blog, user2)
 
@@ -48,8 +46,7 @@ defmodule GroupherServer.Test.Upvotes.BlogUpvote do
       assert user_exist_in?(user2, users.entries)
     end
 
-    test "blog meta history should be updated after upvote",
-         ~m(user user2 community blog)a do
+    test "blog meta history should be updated after upvote", ~m(user user2 blog)a do
       {:ok, article} = CMS.upvote_article(blog, user)
       assert user.id in article.meta.upvoted_user_ids
 
@@ -61,8 +58,7 @@ defmodule GroupherServer.Test.Upvotes.BlogUpvote do
       assert user2.id in blog.meta.upvoted_user_ids
     end
 
-    test "blog meta history should be updated after undo upvote",
-         ~m(user user2 community blog)a do
+    test "blog meta history should be updated after undo upvote", ~m(user user2 blog)a do
       {:ok, _} = CMS.upvote_article(blog, user)
       {:ok, _} = CMS.upvote_article(blog, user2)
 
