@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
   """
   import GroupherServer.CMS.Helper.Matcher
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, thread_of: 2, use_transaction: 1]
+  import Helper.Utils, only: [done: 1, thread_of: 2]
   import Helper.ErrorCode
 
   import GroupherServer.CMS.Delegate.Helper,
@@ -57,40 +57,11 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
     end)
   end
 
-  def upvote_article2(article, %User{} = user) do
-    use_transaction(fn ->
-      with {:ok, info} <- match(article),
-           {:ok, article} <- ORM.lock_article(article, author: :user) do
-        Multi.new()
-        |> Multi.run(:update_upvotes_count, fn _, _ ->
-          update_article_reactions_count(info, article, :upvotes_count, :inc)
-        end)
-        |> Multi.run(:update_reaction_user_list, fn _, %{update_upvotes_count: article} ->
-          update_article_reaction_user_list(:upvote, article, user, :add)
-        end)
-        |> Multi.run(:add_achievement, fn _, _ ->
-          achiever_id = article.author.user_id
-          Accounts.achieve(%User{id: achiever_id}, :inc, :upvote)
-        end)
-        |> Multi.run(:create_upvote, fn _, %{update_reaction_user_list: article} ->
-          create_upvote(article, info, user)
-        end)
-        |> Multi.run(:after_hooks, fn _, _ ->
-          # comment this for test
-          # Hooks.SubscribeCommunity.handle(article.original_community, from_user)
-          Later.run({Hooks.Notify, :handle, [:upvote, article, user]})
-          Later.run({Hooks.SubscribeCommunity, :handle, [article.original_community, user]})
-        end)
-        |> Repo.transaction()
-        |> result()
-      end
-    end)
-  end
-
   @doc "upvote to a article-like content"
   def undo_upvote_article(article, %User{id: user_id} = from_user) do
-    with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.reload(article) do
+    {:ok, info} = match(article)
+
+    Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:update_upvotes_count, fn _, _ ->
         update_article_reactions_count(info, article, :upvotes_count, :dec)
@@ -109,7 +80,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
   defp create_upvote(article, info, user) do

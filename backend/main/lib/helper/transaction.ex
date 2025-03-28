@@ -1,25 +1,24 @@
 defmodule Helper.Transaction do
   @moduledoc """
-  增强版锁事务工具，提供：
-  - 多资源顺序锁定
-  - 完整错误堆栈捕获
-  - 自动事务管理
+  Enhanced transaction utility providing:
+  - Multi-resource sequential locking
+  - Complete error stack capture
+  - Automatic transaction management
   """
 
   @doc """
-  锁定资源并执行事务（保留详细错误）
+  Lock resources and execute transaction (preserves detailed errors)
 
-  ## 示例
+  ## Examples
       Transaction.locking([article, user], fn [locked_article, locked_user] ->
-        # 业务逻辑可以返回:
+        # Business logic can return:
         # - {:ok, result}
         # - {:error, reason}
-        # - 直接值
+        # - raw value
       end)
   """
 
   import Ecto.Query, warn: false
-
   alias GroupherServer.Repo
 
   @spec locking(any() | [any()], (any() -> any())) :: {:ok, any()} | {:error, any()}
@@ -60,8 +59,10 @@ defmodule Helper.Transaction do
     end
   end
 
+  # Generates consistent sort key for resources to prevent deadlocks
   defp resource_sort_key(%struct{} = resource), do: {struct.__schema__(:source), resource.id}
 
+  # Special locking for articles with inner_id (includes author preload)
   defp lock_resource(%{inner_id: _} = article) do
     article.__struct__
     |> where(id: ^article.id)
@@ -73,6 +74,7 @@ defmodule Helper.Transaction do
       throw({:error, {:resource_not_found, article.__struct__}})
   end
 
+  # Generic resource locking
   defp lock_resource(resource) do
     resource.__struct__
     |> where(id: ^resource.id)

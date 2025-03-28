@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   import Helper.ErrorCode
   import ShortMaps
 
-  alias Helper.{Later, ORM, QueryBuilder, Converter, Constant}
+  alias Helper.{Later, ORM, QueryBuilder, Converter, Constant, Transaction}
   alias GroupherServer.{Accounts, CMS, Email, Repo, Statistics}
 
   alias Accounts.Model.User
@@ -401,9 +401,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
     with {:ok, author} <- ensure_author_exists(user),
          {:ok, info} <- match(thread) do
-      use_transaction(fn ->
-        {:ok, community} = ORM.lock_community(community)
-
+      Transaction.locking(community, fn community ->
         Multi.new()
         |> Multi.run(:create_article, fn _, _ ->
           do_create_article(info.model, attrs, author, community)
