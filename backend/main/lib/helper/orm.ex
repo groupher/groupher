@@ -416,9 +416,10 @@ defmodule Helper.ORM do
     |> done
   end
 
-  def lock_article(article) do
+  def lock_article(article, preload \\ []) do
     article.__struct__
     |> where(id: ^article.id)
+    |> preload(^preload)
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> done

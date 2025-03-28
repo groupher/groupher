@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   CRUD and operations for article comments
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2]
+  import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2, thread_of: 1]
 
   import GroupherServer.CMS.Delegate.Helper, only: [sync_embed_replies: 1]
 
@@ -134,11 +134,12 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   @doc """
   report article content
   """
-  def report_article(thread, article_id, reason, attr, %User{} = user) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, article_id) do
+  def report_article(article, reason, attr, %User{} = user) do
+    with {:ok, info} <- match(article),
+         {:ok, article} <- ORM.reload(article) do
       Multi.new()
       |> Multi.run(:create_abuse_report, fn _, _ ->
+        {:ok, thread} = thread_of(article)
         create_report(thread, article.id, reason, attr, user)
       end)
       |> Multi.run(:update_report_meta, fn _, _ ->
@@ -201,7 +202,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     query
     |> QueryBuilder.filter_pack(filter)
     |> ORM.paginator(~m(page size)a)
-    |> reports_formater(thread)
+    |> reports_formatter(thread)
     |> done()
   end
 
@@ -308,7 +309,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     end
   end
 
-  defp reports_formater(%{entries: entries} = paged_reports, :account) do
+  defp reports_formatter(%{entries: entries} = paged_reports, :account) do
     paged_reports
     |> Map.put(
       :entries,
@@ -319,7 +320,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     )
   end
 
-  defp reports_formater(%{entries: entries} = paged_reports, :comment) do
+  defp reports_formatter(%{entries: entries} = paged_reports, :comment) do
     paged_reports
     |> Map.put(
       :entries,
@@ -330,7 +331,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     )
   end
 
-  defp reports_formater(%{entries: entries} = paged_reports, thread)
+  defp reports_formatter(%{entries: entries} = paged_reports, thread)
        when thread in @article_threads do
     paged_reports
     |> Map.put(
