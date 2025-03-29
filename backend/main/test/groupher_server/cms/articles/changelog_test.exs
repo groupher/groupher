@@ -138,6 +138,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert user2.id in created.meta.viewed_user_ids
     end
 
+    @tag :wip
     test "read changelog should contains viewer_has_xxx state",
          ~m(changelog_attrs community user user2)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -166,7 +167,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, _} = CMS.upvote_article(changelog, user)
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
       {:ok, _} = CMS.collect_article(changelog, user)
-      {:ok, _} = CMS.report_article(:changelog, changelog.id, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
 
       {:ok, changelog} =
         CMS.read_article(changelog.original_community_slug, :changelog, changelog.inner_id, user)

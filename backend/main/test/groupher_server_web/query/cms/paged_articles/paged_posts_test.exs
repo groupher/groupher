@@ -342,6 +342,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       }
     }
     """
+    @tag :wip
     test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
@@ -363,7 +364,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       {:ok, _} = CMS.upvote_article(post, user)
       {:ok, _} = CMS.collect_article(post, user)
       {:ok, post} = ORM.find(Post, post.id)
-      {:ok, _} = CMS.report_article(:post, post.id, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(post, "reason", "attr_info", user)
 
       results = user_conn |> query_result(@query, variables, "pagedPosts")
 

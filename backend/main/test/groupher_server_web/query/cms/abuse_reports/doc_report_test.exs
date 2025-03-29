@@ -51,12 +51,13 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       }
     }
     """
+    @tag :wip
     test "should get pagination info", ~m(guest_conn community doc_attrs user user2)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       {:ok, doc2} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.report_article(:doc, doc.id, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(:doc, doc2.id, "reason", "attr_info", user2)
+      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(doc2, "reason", "attr_info", user2)
 
       variables = %{filter: %{content_type: "DOC", page: 1, size: 10}}
       results = guest_conn |> query_result(@query, variables, "pagedAbuseReports")
@@ -65,12 +66,13 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       assert results["totalCount"] == 2
     end
 
-    test "support search with id", ~m(guest_conn user user2)a do
-      {:ok, doc} = db_insert(:doc)
-      {:ok, doc2} = db_insert(:doc)
+    @tag :wip
+    test "support search with id", ~m(guest_conn community doc_attrs user user2)a do
+      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+      {:ok, doc2} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.report_article(:doc, doc.id, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(:doc, doc2.id, "reason", "attr_info", user2)
+      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(doc2, "reason", "attr_info", user2)
 
       variables = %{
         filter: %{content_type: "DOC", content_id: doc.id, page: 1, size: 10}

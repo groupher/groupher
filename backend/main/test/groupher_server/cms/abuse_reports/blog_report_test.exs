@@ -4,17 +4,17 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
   use GroupherServer.TestTools
 
   setup do
-    {community, _, blog_attrs, user} = mock_article(:blog)
+    {community, blog, _, user} = mock_article(:blog)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, ~m(user user2 community blog_attrs)a}
+    {:ok, ~m(user user2 community blog)a}
   end
 
   describe "[article blog report/unreport]" do
-    test "list article reports should work", ~m(community user user2 blog_attrs)a do
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user2)
+    @tag :wip
+    test "list article reports should work", ~m(community user user2 blog)a do
+      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user2)
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -24,10 +24,9 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
       assert report.article.thread == "BLOG"
     end
 
-    test "report a blog should have a abuse report record",
-         ~m(community user blog_attrs)a do
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
+    @tag :wip
+    test "report a blog should have a abuse report record", ~m(community user blog)a do
+      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user)
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -45,10 +44,10 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
       assert user.id in blog.meta.reported_user_ids
     end
 
-    test "can undo a report", ~m(community user blog_attrs)a do
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
-      {:ok, _} = CMS.undo_report_article(:blog, blog.id, user)
+    @tag :wip
+    test "can undo a report", ~m(community user blog)a do
+      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user)
+      {:ok, _} = CMS.undo_report_article(blog, user)
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -58,11 +57,11 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
       assert user.id not in blog.meta.reported_user_ids
     end
 
-    test "can undo a existed report", ~m(community user user2 blog_attrs)a do
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user2)
-      {:ok, _} = CMS.undo_report_article(:blog, blog.id, user)
+    @tag :wip
+    test "can undo a existed report", ~m(community user user2 blog)a do
+      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user2)
+      {:ok, _} = CMS.undo_report_article(blog, user)
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -74,11 +73,10 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
       assert user.id not in blog.meta.reported_user_ids
     end
 
-    test "can undo a report with other user report it too",
-         ~m(community user user2 blog_attrs)a do
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user2)
+    @tag :wip
+    test "can undo a report with other user report it too", ~m(community user user2 blog)a do
+      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user2)
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -89,7 +87,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
       assert Enum.any?(report.report_cases, &(&1.user.login == user.login))
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
 
-      {:ok, _} = CMS.undo_report_article(:blog, blog.id, user)
+      {:ok, _} = CMS.undo_report_article(blog, user)
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -100,13 +98,11 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
     end
 
+    @tag :wip
     test "different user report a comment should have same report with different report cases",
-         ~m(community user user2 blog_attrs)a do
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-
-      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
-
-      {:ok, _} = CMS.report_article(:blog, blog.id, "reason2", "attr_info 2", user2)
+         ~m(community user user2 blog)a do
+      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(blog, "reason2", "attr_info 2", user2)
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -122,12 +118,11 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
       assert List.last(report_cases).user.login == user2.login
     end
 
-    test "same user can not report a comment twice", ~m(community blog_attrs user)a do
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
+    @tag :wip
+    test "same user can not report a comment twice", ~m(community blog user)a do
+      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user)
 
-      {:ok, _} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
-
-      assert {:error, _report} = CMS.report_article(:blog, blog.id, "reason", "attr_info", user)
+      assert {:error, _report} = CMS.report_article(blog, "reason", "attr_info", user)
     end
   end
 end

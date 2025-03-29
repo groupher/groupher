@@ -51,12 +51,13 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
       }
     }
     """
+    @tag :wip
     test "should get pagination info", ~m(guest_conn community changelog_attrs user user2)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
-      {:ok, _} = CMS.report_article(:changelog, changelog.id, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(:changelog, changelog2.id, "reason", "attr_info", user2)
+      {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(changelog2, "reason", "attr_info", user2)
 
       variables = %{filter: %{content_type: "CHANGELOG", page: 1, size: 10}}
       results = guest_conn |> query_result(@query, variables, "pagedAbuseReports")
@@ -65,12 +66,13 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
       assert results["totalCount"] == 2
     end
 
-    test "support search with id", ~m(guest_conn user user2)a do
-      {:ok, changelog} = db_insert(:changelog)
-      {:ok, changelog2} = db_insert(:changelog)
+    @tag :wip
+    test "support search with id", ~m(guest_conn community changelog_attrs user user2)a do
+      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
-      {:ok, _} = CMS.report_article(:changelog, changelog.id, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(:changelog, changelog2.id, "reason", "attr_info", user2)
+      {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(changelog2, "reason", "attr_info", user2)
 
       variables = %{
         filter: %{content_type: "CHANGELOG", content_id: changelog.id, page: 1, size: 10}

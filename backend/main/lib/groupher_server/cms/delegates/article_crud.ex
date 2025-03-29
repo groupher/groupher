@@ -17,7 +17,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       ensure: 2,
       module_to_upcase: 1,
       atom_values_to_upcase: 1,
-      use_transaction: 1,
       mark_viewer_emotion_states: 2,
       thread_of: 1
     ]
@@ -47,7 +46,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @article_threads get_config(:article, :threads)
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
-  @default_community_meta Embeds.CommunityMeta.default_meta()
   @default_article_meta Embeds.ArticleMeta.default_meta()
   @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
   @remove_article_hint "The content does not comply with the community norms"
