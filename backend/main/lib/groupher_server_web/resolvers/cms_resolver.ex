@@ -160,12 +160,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.undo_mark_delete_article(thread, id)
   end
 
-  def report_article(_root, ~m(thread id reason attr)a, %{context: %{cur_user: user}}) do
-    CMS.report_article(thread, id, reason, attr, user)
+  def report_article(_root, ~m(article reason attr)a, %{context: %{cur_user: user}}) do
+    CMS.report_article(article, reason, attr, user)
   end
 
-  def undo_report_article(_root, ~m(thread id)a, %{context: %{cur_user: user}}) do
-    CMS.undo_report_article(thread, id, user)
+  def undo_report_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
+    CMS.undo_report_article(article, user)
   end
 
   def paged_citing_contents(_root, ~m(content id filter)a, _info) do

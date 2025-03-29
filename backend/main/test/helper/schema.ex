@@ -175,12 +175,32 @@ defmodule GroupherServer.Test.Helper.Schema do
   end
 
   def m(:unlock_comment, thread) do
-    thread = thread |> Atom.to_string() |> String.capitalize()
-
     """
     mutation($id: ID!, $community: String!){
-      undoLock#{thread}Comment(id: $id, community: $community) {
+      undoLock#{t(thread)}Comment(id: $id, community: $community) {
         id
+      }
+    }
+    """
+  end
+
+  def m(:report_article, thread) do
+    """
+    mutation($id: ID!, $community: String!, $reason: String!, $attr: String) {
+      report#{t(thread)}(id: $id, community: $community, reason: $reason, attr: $attr) {
+        id
+        title
+      }
+    }
+    """
+  end
+
+  def m(:undo_report_article, thread) do
+    """
+    mutation($id: ID!, $community: String!) {
+      undoReport#{t(thread)}(id: $id, community: $community) {
+        id
+        title
       }
     }
     """
