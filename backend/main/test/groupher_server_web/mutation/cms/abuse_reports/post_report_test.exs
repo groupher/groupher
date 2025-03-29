@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
       variables = %{id: post.id, reason: "reason"}
-      article = user_conn |> mutation_result(@report_query, variables, "reportPost")
+      article = user_conn |> gq_mutation(@report_query, variables)
 
       assert article["id"] == to_string(post.id)
     end
@@ -46,13 +46,13 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
       variables = %{id: post.id, reason: "reason"}
-      article = user_conn |> mutation_result(@report_query, variables, "reportPost")
+      article = user_conn |> gq_mutation(@report_query, variables)
 
       assert article["id"] == to_string(post.id)
 
       variables = %{id: post.id}
 
-      article = user_conn |> mutation_result(@undo_report_query, variables, "undoReportPost")
+      article = user_conn |> gq_mutation(@undo_report_query, variables)
       assert article["id"] == to_string(post.id)
     end
   end

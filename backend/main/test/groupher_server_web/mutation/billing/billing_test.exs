@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Payment.Basic do
     """
     test "auth user can create bill", ~m(user_conn valid_attrs)a do
       variables = valid_attrs |> camelize_map_key(:upcase)
-      created = user_conn |> mutation_result(@create_query, variables, "createBill")
+      created = user_conn |> gq_mutation(@create_query, variables)
 
       assert created["amount"] == @senior_amount_threshold
       assert created["state"] == "pending"
@@ -71,7 +71,7 @@ defmodule GroupherServer.Test.Mutation.Payment.Basic do
 
       passport_rules = %{"system_accountant" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
-      updated = rule_conn |> mutation_result(@update_query, variables, "updateBillState")
+      updated = rule_conn |> gq_mutation(@update_query, variables)
 
       assert updated["id"] == to_string(record.id)
       assert updated["state"] == "done"

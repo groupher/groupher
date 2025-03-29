@@ -68,7 +68,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       updated =
         rule_conn
-        |> mutation_result(@update_info_query, variables, "updateDashboardBaseInfo")
+        |> gq_mutation(@update_info_query, variables)
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
@@ -100,7 +100,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
       variables = %{community: community.slug, ogTitle: "new title", seoEnable: false}
 
-      updated = rule_conn |> mutation_result(@update_seo_query, variables, "updateDashboardSeo")
+      updated = rule_conn |> gq_mutation(@update_seo_query, variables)
 
       assert get_in(updated, ["dashboard", "seo", "seoEnable"]) == false
 
@@ -152,7 +152,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       updated =
         rule_conn
-        |> mutation_result(@update_wallpaper_query, variables, "updateDashboardWallpaper")
+        |> gq_mutation(@update_wallpaper_query, variables)
 
       assert get_in(updated, ["dashboard", "wallpaper", "wallpaper"]) == "orange"
 
@@ -174,7 +174,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       variables = %{community: community.slug, post: false, changelog: true}
 
       updated =
-        rule_conn |> mutation_result(@update_enable_query, variables, "updateDashboardEnable")
+        rule_conn |> gq_mutation(@update_enable_query, variables)
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
@@ -225,7 +225,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       updated =
         rule_conn
-        |> mutation_result(@update_layout_query, variables, "updateDashboardLayout")
+        |> gq_mutation(@update_layout_query, variables)
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
@@ -257,7 +257,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       updated =
         rule_conn
-        |> mutation_result(@update_layout_query, variables, "updateDashboardLayout")
+        |> gq_mutation(@update_layout_query, variables)
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
@@ -271,7 +271,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       updated =
         rule_conn
-        |> mutation_result(@update_layout_query, variables, "updateDashboardLayout")
+        |> gq_mutation(@update_layout_query, variables)
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
@@ -298,7 +298,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       updated =
         rule_conn
-        |> mutation_result(@update_seo_query, variables, "updateDashboardRss")
+        |> gq_mutation(@update_seo_query, variables)
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
@@ -331,7 +331,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       updated =
         rule_conn
-        |> mutation_result(@update_alias_query, variables, "updateDashboardNameAlias")
+        |> gq_mutation(@update_alias_query, variables)
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
@@ -375,7 +375,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       updated =
         rule_conn
-        |> mutation_result(@update_header_links_query, variables, "updateDashboardHeaderLinks")
+        |> gq_mutation(@update_header_links_query, variables)
 
       assert updated["dashboard"]["headerLinks"] |> List.first() |> Map.get("groupIndex") == 1
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
@@ -421,7 +421,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       updated =
         rule_conn
-        |> mutation_result(@update_footer_links_query, variables, "updateDashboardFooterLinks")
+        |> gq_mutation(@update_footer_links_query, variables)
 
       assert updated["dashboard"]["footerLinks"] |> List.first() |> Map.get("groupIndex") == 1
 
@@ -462,13 +462,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         ]
       }
 
-      updated =
-        rule_conn
-        |> mutation_result(
-          @update_social_links_query,
-          variables,
-          "updateDashboardSocialLinks"
-        )
+      updated = rule_conn |> gq_mutation(@update_social_links_query, variables)
 
       assert updated["dashboard"]["socialLinks"] |> List.first() |> Map.get("type") == "twitter"
 
@@ -508,9 +502,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         ]
       }
 
-      updated =
-        rule_conn
-        |> mutation_result(@update_media_reports_query, variables, "updateDashboardMediaReports")
+      updated = rule_conn |> gq_mutation(@update_media_reports_query, variables)
 
       assert updated["dashboard"]["mediaReports"] |> List.first() |> Map.get("title") == "title"
 
@@ -551,13 +543,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         ]
       }
 
-      updated =
-        rule_conn
-        |> mutation_result(
-          @update_faqs_query,
-          variables,
-          "updateDashboardFaqs"
-        )
+      updated = rule_conn |> gq_mutation(@update_faqs_query, variables)
 
       assert updated["dashboard"]["faqs"] |> List.first() |> Map.get("title") == "title"
 

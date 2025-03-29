@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
       variables = %{id: post.id, cat: "FEATURE"}
-      created = user_conn |> mutation_result(@set_cat_query, variables, "setPostCat")
+      created = user_conn |> gq_mutation(@set_cat_query, variables)
 
       assert "FEATURE" == created["cat"]
     end
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
       variables = %{id: post.id, state: "DONE"}
-      created = user_conn |> mutation_result(@set_state_query, variables, "setPostState")
+      created = user_conn |> gq_mutation(@set_state_query, variables)
 
       assert "DONE" == created["state"]
     end
@@ -83,8 +83,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       variables = post_attr |> Map.merge(%{community: community.slug, body: body})
 
-      created =
-        user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+      created =user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
       {:ok, post} = ORM.find(Post, created["id"])
 
@@ -104,8 +103,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       variables =
         post_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
-      created =
-        user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+      created =user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
       {:ok, post} = ORM.find(Post, created["id"], preload: :article_tags)
 
@@ -116,8 +114,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       post_attr = mock_attrs(:post, %{body: mock_xss_string()})
       variables = post_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      result =
-        user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+      result =user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
       {:ok, post} = ORM.find(Post, result["id"], preload: :document)
       body_html = post |> get_in([:document, :body_html])
@@ -129,8 +126,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       post_attr = mock_attrs(:post, %{body: mock_xss_string(:safe)})
       variables = post_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      result =
-        user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+      result =user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
       {:ok, post} = ORM.find(Post, result["id"], preload: :document)
       body_html = post |> get_in([:document, :body_html])
@@ -156,7 +152,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
     }
     """
     test "delete a post by post's owner", ~m(owner_conn post)a do
-      deleted = owner_conn |> mutation_result(@query, %{id: post.id}, "deletePost")
+      deleted = owner_conn |> gq_mutation(@query, %{id: post.id})
 
       assert deleted["id"] == to_string(post.id)
       assert {:error, _} = ORM.find(Post, deleted["id"])
@@ -167,7 +163,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       belongs_community_title = post.communities |> List.first() |> Map.get(:title)
       rule_conn = simu_conn(:user, cms: %{belongs_community_title => %{"post.delete" => true}})
 
-      deleted = rule_conn |> mutation_result(@query, %{id: post.id}, "deletePost")
+      deleted = rule_conn |> gq_mutation(@query, %{id: post.id})
 
       assert deleted["id"] == to_string(post.id)
       assert {:error, _} = ORM.find(Post, deleted["id"])
@@ -185,7 +181,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       # assert conn |> mutation_get_error?(@query, %{id: post.id})
 
-      deleted = rule_conn |> mutation_result(@query, %{id: post.id}, "deletePost")
+      deleted = rule_conn |> gq_mutation(@query, %{id: post.id})
 
       assert deleted["id"] == to_string(post.id)
     end
@@ -248,7 +244,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
         articleTags: [article_tag.id]
       }
 
-      result = owner_conn |> mutation_result(@query, variables, "updatePost")
+      result = owner_conn |> gq_mutation(@query, variables)
       assert result["title"] == variables.title
 
       assert result["articleTags"] |> List.first() |> get_in(["id"]) == to_string(article_tag.id)
@@ -275,7 +271,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
         articleTags: [article_tag.id, article_tag2.id]
       }
 
-      result = owner_conn |> mutation_result(@query, variables, "updatePost")
+      result = owner_conn |> gq_mutation(@query, variables)
 
       assert result["articleTags"] |> length == 2
       assert result["articleTags"] |> List.first() |> get_in(["id"]) == to_string(article_tag.id)
@@ -286,7 +282,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
         articleTags: [article_tag2.id, article_tag3.id]
       }
 
-      result = owner_conn |> mutation_result(@query, variables, "updatePost")
+      result = owner_conn |> gq_mutation(@query, variables)
 
       assert result["articleTags"] |> length == 2
       assert result["articleTags"] |> List.first() |> get_in(["id"]) == to_string(article_tag2.id)
@@ -303,7 +299,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
         body: mock_rich_text("updated body #{unique_num}")
       }
 
-      updated_post = owner_conn |> mutation_result(@query, variables, "updatePost")
+      updated_post = owner_conn |> gq_mutation(@query, variables)
 
       assert true == updated_post["meta"]["isEdited"]
     end
@@ -324,7 +320,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
         body: mock_rich_text("updated body #{unique_num}")
       }
 
-      updated_post = rule_conn |> mutation_result(@query, variables, "updatePost")
+      updated_post = rule_conn |> gq_mutation(@query, variables)
 
       assert updated_post["id"] == to_string(post.id)
     end

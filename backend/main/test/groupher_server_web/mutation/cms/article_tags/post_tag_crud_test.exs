@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleArticleTags.PostTagCRUD do
       passport_rules = %{community.title => %{"post.article_tag.create" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      created = rule_conn |> mutation_result(@create_tag_query, variables, "createArticleTag")
+      created = rule_conn |> gq_mutation(@create_tag_query, variables)
 
       belong_community = created["community"]
 
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleArticleTags.PostTagCRUD do
       passport_rules = %{community.title => %{"post.article_tag.create" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      created = rule_conn |> mutation_result(@create_tag_query, variables, "createArticleTag")
+      created = rule_conn |> gq_mutation(@create_tag_query, variables)
 
       assert created["extra"] == ["menuID", "menuID2"]
     end
@@ -131,7 +131,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleArticleTags.PostTagCRUD do
       passport_rules = %{community.title => %{"post.article_tag.update" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@update_tag_query, variables, "updateArticleTag")
+      updated = rule_conn |> gq_mutation(@update_tag_query, variables)
 
       assert updated["color"] == "YELLOW"
       assert updated["title"] == "new title"
@@ -158,7 +158,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleArticleTags.PostTagCRUD do
           cms: %{community.title => %{"post.article_tag.delete" => true}}
         )
 
-      deleted = rule_conn |> mutation_result(@delete_tag_query, variables, "deleteArticleTag")
+      deleted = rule_conn |> gq_mutation(@delete_tag_query, variables)
 
       assert deleted["id"] == to_string(article_tag.id)
     end

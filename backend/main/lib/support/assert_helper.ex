@@ -96,13 +96,13 @@ defmodule GroupherServer.Test.AssertHelper do
   @doc """
   simulate the Graphiql mutate operation
   """
-  def mutation_result(conn, query, variables, key, flag \\ false) do
+  def gq_mutation(conn, query, variables, flag \\ false) do
     conn
     |> post("/graphiql", query: query, variables: variables)
     |> json_response(200)
     |> log_debug_info(flag)
     |> Map.get("data")
-    |> Map.get(key)
+    |> Map.get(get_operation_name(query))
   end
 
   def get_operation_name(query) when is_binary(query) do
@@ -142,15 +142,6 @@ defmodule GroupherServer.Test.AssertHelper do
           _ -> nil
         end
     end
-  end
-
-  def mutation_result2(conn, query, variables, flag \\ false) do
-    conn
-    |> post("/graphiql", query: query, variables: variables)
-    |> json_response(200)
-    |> log_debug_info(flag)
-    |> Map.get("data")
-    |> Map.get(get_operation_name(query))
   end
 
   @doc """

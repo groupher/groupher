@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
         targetCommunity: community2.slug
       }
 
-      rule_conn |> mutation_result(Schema.m(:mirror_article), variables, "mirrorArticle")
+      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
       {:ok, found} = ORM.find(Doc, doc.id, preload: :communities)
 
       assoc_communities = found.communities |> Enum.map(& &1.id)
@@ -71,7 +71,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
         targetCommunity: community2.slug
       }
 
-      rule_conn |> mutation_result(Schema.m(:mirror_article), variables, "mirrorArticle")
+      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
       variables = %{
         id: doc.inner_id,
@@ -80,7 +80,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
         targetCommunity: community3.slug
       }
 
-      rule_conn |> mutation_result(Schema.m(:mirror_article), variables, "mirrorArticle")
+      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
       {:ok, found} = ORM.find(Doc, doc.id, preload: :communities)
 
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
         targetCommunity: community2.slug
       }
 
-      rule_conn |> mutation_result(Schema.m(:mirror_article), variables, "mirrorArticle")
+      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
       variables2 = %{
         id: doc.inner_id,
@@ -110,7 +110,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
         targetCommunity: community3.slug
       }
 
-      rule_conn |> mutation_result(Schema.m(:mirror_article), variables2, "mirrorArticle")
+      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables2)
 
       {:ok, found} = ORM.find(Doc, doc.id, preload: :communities)
 
@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       passport_rules = %{"doc.community.unmirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> mutation_result(Schema.m(:unmirror_article), variables, "unmirrorArticle")
+      rule_conn |> gq_mutation(Schema.m(:unmirror_article), variables)
       {:ok, found} = ORM.find(Doc, doc.id, preload: :communities)
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community2.id not in assoc_communities
@@ -136,7 +136,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       passport_rules = %{"homemirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> mutation_result(Schema.m(:mirror_to_home), variables, "mirrorToHome")
+      rule_conn |> gq_mutation(Schema.m(:mirror_to_home), variables)
 
       {:ok, doc} = ORM.find(Doc, doc.id, preload: [:communities, :article_tags])
 
@@ -149,7 +149,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       passport_rules = %{"blackeye" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> mutation_result(Schema.m(:move_to_blackhole), variables, "moveToBlackhole")
+      rule_conn |> gq_mutation(Schema.m(:move_to_blackhole), variables)
 
       {:ok, doc} =
         ORM.find(Doc, doc.id, preload: [:original_community, :communities, :article_tags])
@@ -168,7 +168,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
         targetCommunity: community2.slug
       }
 
-      rule_conn |> mutation_result(Schema.m(:mirror_article), variables, "mirrorArticle")
+      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
       {:ok, found} =
         ORM.find(Doc, doc.id, preload: [:original_community, :communities])
@@ -193,7 +193,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
         articleTags: [article_tag.id]
       }
 
-      rule_conn |> mutation_result(Schema.m(:move_article), variables, "moveArticle")
+      rule_conn |> gq_mutation(Schema.m(:move_article), variables)
 
       {:ok, found} =
         ORM.find(Doc, doc.id, preload: [:original_community, :communities, :article_tags])

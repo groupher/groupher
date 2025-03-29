@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.Account.Customization do
     }
     """
     test "user can set customization", ~m(user_conn)a do
-      # ownd_conn = simu_conn(:user, user)
+      # owned_conn = simu_conn(:user, user)
       variables = %{
         customization: %{
           bannerLayout: "BRIEF",
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Account.Customization do
         sidebarCommunitiesIndex: [%{community: "javascript", index: 1}]
       }
 
-      result = user_conn |> mutation_result(@query, variables, "setCustomization")
+      result = user_conn |> gq_mutation(@query, variables)
 
       assert result["customization"]["bannerLayout"] == "brief"
       assert result["customization"]["contentDivider"] == true
@@ -80,21 +80,21 @@ defmodule GroupherServer.Test.Mutation.Account.Customization do
         }
       }
 
-      user_conn |> mutation_result(@query, variables, "setCustomization")
+      user_conn |> gq_mutation(@query, variables)
 
       variables = %{filter: %{page: 1}}
       results = user_conn |> query_result(@paged_posts_query, variables, "pagedPosts")
       assert results["pageSize"] == @max_page_size
     end
 
-    test "set single customization should merge not overwright other settings", ~m(user_conn)a do
+    test "set single customization should merge not overweight other settings", ~m(user_conn)a do
       variables = %{
         customization: %{
           bannerLayout: "BRIEF"
         }
       }
 
-      result = user_conn |> mutation_result(@query, variables, "setCustomization")
+      result = user_conn |> gq_mutation(@query, variables)
       assert result["customization"]["bannerLayout"] == "brief"
 
       variables = %{
@@ -103,7 +103,7 @@ defmodule GroupherServer.Test.Mutation.Account.Customization do
         }
       }
 
-      result = user_conn |> mutation_result(@query, variables, "setCustomization")
+      result = user_conn |> gq_mutation(@query, variables)
       assert result["customization"]["bannerLayout"] == "brief"
       assert result["customization"]["displayDensity"] == "25"
     end

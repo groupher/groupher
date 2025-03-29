@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       passport_rules = %{"root" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "markDeletePost")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(post.id)
       assert updated["markDelete"] == true
@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       passport_rules = %{"root" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      deleted = rule_conn |> mutation_result(@query, %{id: post.id}, "deletePost")
+      deleted = rule_conn |> gq_mutation(@query, %{id: post.id})
 
       assert deleted["id"] == to_string(post.id)
       assert {:error, _} = ORM.find(Post, deleted["id"])

@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
 
       article =
         user_conn
-        |> mutation_result2(Schema.m(:report_article, :doc), variables)
+        |> gq_mutation(Schema.m(:report_article, :doc), variables)
 
       assert article["id"] == to_string(doc.id)
     end
@@ -29,22 +29,13 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
     test "login user can undo report a doc", ~m(community doc user user_conn)a do
       variables = %{id: doc.inner_id, reason: "reason", community: community.slug}
 
-      article =
-        user_conn
-        |> mutation_result2(Schema.m(:report_article, :doc), variables)
+      article = user_conn |> gq_mutation(Schema.m(:report_article, :doc), variables)
 
       assert article["id"] == to_string(doc.id)
 
       variables = %{id: doc.inner_id, community: community.slug}
 
-      article =
-        user_conn
-        |> mutation_result(
-          Schema.m(:undo_report_article, :doc),
-          variables,
-          "undoReportDoc"
-        )
-
+      article = user_conn |> gq_mutation(Schema.m(:undo_report_article, :doc), variables)
       assert article["id"] == to_string(doc.id)
     end
   end

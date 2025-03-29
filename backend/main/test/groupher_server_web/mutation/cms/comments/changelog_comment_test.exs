@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         body: mock_comment()
       }
 
-      result = user_conn |> mutation_result(@write_comment_query, variables, "createComment")
+      result = user_conn |> gq_mutation(@write_comment_query, variables)
 
       assert result["bodyHtml"] |> String.contains?(~s(<p id=))
       assert result["bodyHtml"] |> String.contains?(~s(comment</p>))
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
       variables = %{id: comment.id, body: mock_comment("reply comment")}
 
-      result = user_conn |> mutation_result(@reply_comment_query, variables, "replyComment")
+      result = user_conn |> gq_mutation(@reply_comment_query, variables)
 
       assert result["bodyHtml"] |> String.contains?(~s(<p id=))
       assert result["bodyHtml"] |> String.contains?(~s(reply comment</p>))
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       assert guest_conn
              |> mutation_get_error?(@update_comment_query, variables, ecode(:account_login))
 
-      result = owner_conn |> mutation_result(@update_comment_query, variables, "updateComment")
+      result = owner_conn |> gq_mutation(@update_comment_query, variables)
 
       assert result["bodyHtml"] |> String.contains?(~s(<p id=))
       assert result["bodyHtml"] |> String.contains?(~s(updated comment</p>))
@@ -102,7 +102,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       assert guest_conn
              |> mutation_get_error?(@delete_comment_query, variables, ecode(:account_login))
 
-      deleted = owner_conn |> mutation_result(@delete_comment_query, variables, "deleteComment")
+      deleted = owner_conn |> gq_mutation(@delete_comment_query, variables)
 
       assert deleted["id"] == to_string(comment.id)
       assert deleted["isDeleted"]
@@ -129,7 +129,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       assert guest_conn
              |> mutation_get_error?(@upvote_comment_query, variables, ecode(:account_login))
 
-      result = user_conn |> mutation_result(@upvote_comment_query, variables, "upvoteComment")
+      result = user_conn |> gq_mutation(@upvote_comment_query, variables)
 
       assert result["id"] == to_string(comment.id)
       assert result["upvotesCount"] == 1
@@ -151,14 +151,12 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       variables = %{id: comment.id}
-      user_conn |> mutation_result(@upvote_comment_query, variables, "upvoteComment")
+      user_conn |> gq_mutation(@upvote_comment_query, variables)
 
       assert guest_conn
              |> mutation_get_error?(@undo_upvote_comment_query, variables, ecode(:account_login))
 
-      result =
-        user_conn
-        |> mutation_result(@undo_upvote_comment_query, variables, "undoUpvoteComment")
+      result = user_conn |> gq_mutation(@undo_upvote_comment_query, variables)
 
       assert result["upvotesCount"] == 0
       assert not result["viewerHasUpvoted"]
@@ -187,8 +185,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
       variables = %{id: comment.id, emotion: "BEER"}
 
-      comment =
-        user_conn |> mutation_result(@emotion_comment_query, variables, "emotionToComment")
+      comment = user_conn |> gq_mutation(@emotion_comment_query, variables)
 
       assert comment |> get_in(["emotions", "beerCount"]) == 1
       assert get_in(comment, ["emotions", "viewerHasBeered"])
@@ -218,7 +215,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       variables = %{id: comment.id, emotion: "BEER"}
 
       comment =
-        owner_conn |> mutation_result(@emotion_comment_query, variables, "undoEmotionToComment")
+        owner_conn |> gq_mutation(@emotion_comment_query, variables)
 
       assert comment |> get_in(["emotions", "beerCount"]) == 0
       assert not get_in(comment, ["emotions", "viewerHasBeered"])
@@ -231,10 +228,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       passport_rules = %{community.slug => %{"changelog.lock_comment" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result =
-        rule_conn
-        |> mutation_result(Schema.m(:lock_comment, :changelog), variables, "lockChangelogComment")
-
+      result = rule_conn |> gq_mutation(Schema.m(:lock_comment, :changelog), variables)
       assert result["id"] == to_string(changelog.id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
@@ -261,14 +255,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       passport_rules = %{community.slug => %{"changelog.undo_lock_comment" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result =
-        rule_conn
-        |> mutation_result(
-          Schema.m(:unlock_comment, :changelog),
-          variables,
-          "undoLockChangelogComment"
-        )
-
+      result = rule_conn |> gq_mutation(Schema.m(:unlock_comment, :changelog), variables)
       assert result["id"] == to_string(changelog.id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
@@ -301,7 +288,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       variables = %{id: comment.id}
-      result = owner_conn |> mutation_result(@query, variables, "pinComment")
+      result = owner_conn |> gq_mutation(@query, variables)
 
       assert result["id"] == to_string(comment.id)
       assert result["isPinned"]
@@ -331,7 +318,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       {:ok, _} = CMS.pin_comment(comment.id)
 
       variables = %{id: comment.id}
-      result = owner_conn |> mutation_result(@query, variables, "undoPinComment")
+      result = owner_conn |> gq_mutation(@query, variables)
 
       assert result["id"] == to_string(comment.id)
       assert not result["isPinned"]

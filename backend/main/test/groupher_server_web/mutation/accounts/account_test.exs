@@ -35,8 +35,9 @@ defmodule GroupherServer.Test.Mutation.Account.Basic do
       }
     }
     """
+    @tag :wip2
     test "user can update it's own profile", ~m(user)a do
-      ownd_conn = simu_conn(:user, user)
+      owned_conn = simu_conn(:user, user)
 
       variables = %{
         profile: %{
@@ -55,7 +56,7 @@ defmodule GroupherServer.Test.Mutation.Account.Basic do
         }
       }
 
-      updated = ownd_conn |> mutation_result(@update_query, variables, "updateProfile")
+      updated = owned_conn |> gq_mutation(@update_query, variables)
 
       assert updated["avatar"] == "new avatar"
       assert updated["nickname"] == "new nickname"

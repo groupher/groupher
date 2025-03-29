@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
         community: community.slug
       }
 
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+      user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
       {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
         community: community.slug
       }
 
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+      user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
       {:ok, contributes} = ORM.find_by(CommunityContribute, community_id: community.id)
       assert contributes.count == 1
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       blog_attr = mock_attrs(:blog)
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      user_conn |> mutation_result(Schema.m(:create_article, :blog), variables, "createBlog")
+      user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
 
       {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1
@@ -72,7 +72,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
         body: mock_comment()
       }
 
-      user_conn |> mutation_result(@write_comment_query, variables, "createComment")
+      user_conn |> gq_mutation(@write_comment_query, variables)
 
       {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1
@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
          ~m(guest_conn user)a do
       variables = %{userId: user.id}
       assert {:error, _} = ORM.find_by(UserContribute, user_id: user.id)
-      results = guest_conn |> mutation_result(@query, variables, "makeContribute")
+      results = guest_conn |> gq_mutation(@query, variables)
       assert {:ok, _} = ORM.find_by(UserContribute, user_id: user.id)
 
       assert ["count", "date"] == results |> Map.keys()
@@ -102,8 +102,8 @@ defmodule GroupherServer.Test.Mutation.Statistics do
 
     test "makeContribute to same user should update contribute count", ~m(guest_conn user)a do
       variables = %{userId: user.id}
-      guest_conn |> mutation_result(@query, variables, "makeContribute")
-      results = guest_conn |> mutation_result(@query, variables, "makeContribute")
+      guest_conn |> gq_mutation(@query, variables)
+      results = guest_conn |> gq_mutation(@query, variables)
       assert ["count", "date"] == results |> Map.keys()
       assert results["date"] == Timex.today() |> Date.to_iso8601()
       assert results["count"] == 2

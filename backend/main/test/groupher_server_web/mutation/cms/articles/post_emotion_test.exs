@@ -17,9 +17,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     test "login user can emotion to a post", ~m(community post user_conn)a do
       variables = %{id: post.inner_id, community: community.slug, emotion: "BEER"}
 
-      article =
-        user_conn
-        |> mutation_result(Schema.m(:emotion_article, :post), variables, "emotionToPost")
+      article = user_conn |> gq_mutation(Schema.m(:emotion_article, :post), variables)
 
       assert article |> get_in(["emotions", "beerCount"]) == 1
       assert get_in(article, ["emotions", "viewerHasBeered"])
@@ -30,13 +28,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
       variables = %{id: post.inner_id, community: community.slug, emotion: "BEER"}
 
-      article =
-        owner_conn
-        |> mutation_result(
-          Schema.m(:undo_emotion_article, :post),
-          variables,
-          "undoEmotionToPost"
-        )
+      article = owner_conn |> gq_mutation(Schema.m(:undo_emotion_article, :post), variables)
 
       assert article |> get_in(["emotions", "beerCount"]) == 0
       assert not get_in(article, ["emotions", "viewerHasBeered"])

@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
         oauthTrustCode: @oauth_trust_code
       }
 
-      ret = guest_conn |> mutation_result(@query, variables, "signinOauth")
+      ret = guest_conn |> gq_mutation(@query, variables)
 
       assert ret["user"]["login"] == @valid_github_profile.login
     end
@@ -69,7 +69,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
         oauthTrustCode: @oauth_trust_code
       }
 
-      ret = user_conn |> mutation_result(@query, variables, "linkOauth")
+      ret = user_conn |> gq_mutation(@query, variables)
 
       assert ret["user"]["login"] == user.login
     end
@@ -117,7 +117,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
         oauthTrustCode: @oauth_trust_code
       }
 
-      ret = user_conn |> mutation_result(@query, variables, "unlinkOauth")
+      ret = user_conn |> gq_mutation(@query, variables)
 
       assert ret["login"] == user.login
     end

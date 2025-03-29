@@ -15,9 +15,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
     test "login user can upvote a blog", ~m(user_conn community blog user)a do
       variables = %{id: blog.inner_id, community: community.slug}
 
-      created =
-        user_conn
-        |> mutation_result(Schema.m(:upvote_article, :blog), variables, "upvoteBlog")
+      created = user_conn |> gq_mutation(Schema.m(:upvote_article, :blog), variables)
 
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
       assert created["id"] == to_string(blog.id)
@@ -39,13 +37,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
 
       variables = %{id: blog.inner_id, community: community.slug}
 
-      updated =
-        user_conn
-        |> mutation_result(
-          Schema.m(:undo_upvote_article, :blog),
-          variables,
-          "undoUpvoteBlog"
-        )
+      updated = user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :blog), variables)
 
       assert not user_exist_in?(user, get_in(updated, ["meta", "latestUpvotedUsers"]))
       assert updated["id"] == to_string(blog.id)

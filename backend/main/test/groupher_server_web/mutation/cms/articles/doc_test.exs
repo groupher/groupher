@@ -30,9 +30,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
 
       variables = doc_attr |> Map.merge(%{community: community.slug, body: body})
 
-      created =
-        user_conn |> mutation_result(Schema.m(:create_article, :doc), variables, "createDoc")
-
+      created = user_conn |> gq_mutation(Schema.m(:create_article, :doc), variables)
       {:ok, doc} = ORM.find(Doc, created["id"])
 
       assert created["id"] == to_string(doc.id)
@@ -51,8 +49,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       variables =
         doc_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
-      created =
-        user_conn |> mutation_result(Schema.m(:create_article, :doc), variables, "createDoc")
+      created = user_conn |> gq_mutation(Schema.m(:create_article, :doc), variables)
 
       {:ok, doc} = ORM.find(Doc, created["id"], preload: :article_tags)
 
@@ -63,8 +60,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string()})
       variables = doc_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      result =
-        user_conn |> mutation_result(Schema.m(:create_article, :doc), variables, "createDoc")
+      result = user_conn |> gq_mutation(Schema.m(:create_article, :doc), variables)
 
       {:ok, doc} = ORM.find(Doc, result["id"], preload: :document)
       body_html = doc |> get_in([:document, :body_html])
@@ -76,8 +72,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string(:safe)})
       variables = doc_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      result =
-        user_conn |> mutation_result(Schema.m(:create_article, :doc), variables, "createDoc")
+      result = user_conn |> gq_mutation(Schema.m(:create_article, :doc), variables)
 
       {:ok, doc} = ORM.find(Doc, result["id"], preload: :document)
       body_html = doc |> get_in([:document, :body_html])
@@ -104,7 +99,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     }
     """
     test "delete a doc by doc's owner", ~m(owner_conn doc)a do
-      deleted = owner_conn |> mutation_result(@query, %{id: doc.id}, "deleteDoc")
+      deleted = owner_conn |> gq_mutation(@query, %{id: doc.id})
 
       assert deleted["id"] == to_string(doc.id)
       assert {:error, _} = ORM.find(Doc, deleted["id"])
@@ -116,7 +111,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
 
       rule_conn = simu_conn(:user, cms: %{belongs_community_title => %{"doc.delete" => true}})
 
-      deleted = rule_conn |> mutation_result(@query, %{id: doc.id}, "deleteDoc")
+      deleted = rule_conn |> gq_mutation(@query, %{id: doc.id})
 
       assert deleted["id"] == to_string(doc.id)
       assert {:error, _} = ORM.find(Doc, deleted["id"])
@@ -134,7 +129,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
 
       # assert conn |> mutation_get_error?(@query, %{id: doc.id})
 
-      deleted = rule_conn |> mutation_result(@query, %{id: doc.id}, "deleteDoc")
+      deleted = rule_conn |> gq_mutation(@query, %{id: doc.id})
 
       assert deleted["id"] == to_string(doc.id)
     end
@@ -191,7 +186,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
         body: mock_rich_text("updated body #{unique_num}")
       }
 
-      result = owner_conn |> mutation_result(@query, variables, "updateDoc")
+      result = owner_conn |> gq_mutation(@query, variables)
       assert result["title"] == variables.title
 
       assert result
@@ -211,7 +206,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
         body: mock_rich_text("updated body #{unique_num}")
       }
 
-      updated_doc = owner_conn |> mutation_result(@query, variables, "updateDoc")
+      updated_doc = owner_conn |> gq_mutation(@query, variables)
 
       assert true == updated_doc["meta"]["isEdited"]
     end
@@ -232,7 +227,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
         body: mock_rich_text("updated body #{unique_num}")
       }
 
-      updated_doc = rule_conn |> mutation_result(@query, variables, "updateDoc")
+      updated_doc = rule_conn |> gq_mutation(@query, variables)
 
       assert updated_doc["id"] == to_string(doc.id)
     end
