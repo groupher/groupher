@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
 
       article =
         user_conn
-        |> mutation_result(Schema.m(:report_article, :doc), variables, "reportDoc")
+        |> mutation_result2(Schema.m(:report_article, :doc), variables)
 
       assert article["id"] == to_string(doc.id)
     end
@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
 
       article =
         user_conn
-        |> mutation_result(Schema.m(:report_article, :doc), variables, "reportDoc")
+        |> mutation_result2(Schema.m(:report_article, :doc), variables)
 
       assert article["id"] == to_string(doc.id)
 

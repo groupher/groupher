@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.AssertHelper do
   end
 
   @doc """
-  simulate the Graphiql murate operation
+  simulate the Graphiql mutate operation
   """
   def mutation_result(conn, query, variables, key, flag \\ false) do
     conn
@@ -103,6 +103,54 @@ defmodule GroupherServer.Test.AssertHelper do
     |> log_debug_info(flag)
     |> Map.get("data")
     |> Map.get(key)
+  end
+
+  def get_operation_name(query) when is_binary(query) do
+    # 移除注释和换行，简化处理
+    normalized =
+      query
+      # 移除注释
+      |> String.replace(~r/#[^\n]*/, "")
+      # 替换换行为空格
+      |> String.replace("\n", " ")
+      |> String.trim()
+
+    # 更通用的正则表达式，处理多种情况：
+    # 1. 有操作类型(query/mutation)和操作名
+    # 2. 有操作类型但无操作名
+    # 3. 无操作类型(简写语法)
+    # 4. 有别名的情况
+    regex = ~r/
+      (?:query|mutation)\s+
+      (?:[a-zA-Z0-9_]+\s*)?
+      (?:\([^)]*\)\s*)?
+      (?:\:\s*[a-zA-Z0-9_]+\s*)?
+      \{\s*
+      (?:[a-zA-Z0-9_]+\s*\:\s*)?
+      ([a-zA-Z0-9_]+)
+      \s*\(?
+    /x
+
+    case Regex.run(regex, normalized) do
+      [_, operation_name] ->
+        operation_name
+
+      _ ->
+        # 如果没有匹配到，尝试简写语法(只有 { operation { ... } })
+        case Regex.run(~r/\{\s*([a-zA-Z0-9_]+)\s*\(?/, normalized) do
+          [_, operation_name] -> operation_name
+          _ -> nil
+        end
+    end
+  end
+
+  def mutation_result2(conn, query, variables, flag \\ false) do
+    conn
+    |> post("/graphiql", query: query, variables: variables)
+    |> json_response(200)
+    |> log_debug_info(flag)
+    |> Map.get("data")
+    |> Map.get(get_operation_name(query))
   end
 
   @doc """
