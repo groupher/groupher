@@ -88,7 +88,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
+      {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
 
       variables = %{filter: %{content_type: "COMMENT", page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)

@@ -171,11 +171,11 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   end
 
   @doc "report a comment"
-  def report_comment(comment_id, reason, attr, %User{} = user) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id) do
+  def report_comment(%Comment{} = comment, reason, attr, %User{} = user) do
+    Transaction.locking(comment, fn comment ->
       Multi.new()
       |> Multi.run(:create_abuse_report, fn _, _ ->
-        create_report(:comment, comment_id, reason, attr, user)
+        create_report(:comment, comment.id, reason, attr, user)
       end)
       |> Multi.run(:update_report_meta, fn _, _ ->
         {:ok, info} = match(:comment)
@@ -191,26 +191,37 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
-  defp do_undo_report_comment(thread, article_id, %User{} = user) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, article_id) do
+  # defp do_undo_report_comment(thread, article_id, %User{} = user) do
+  #   with {:ok, info} <- match(thread),
+  #        {:ok, article} <- ORM.find(info.model, article_id) do
+  #     Multi.new()
+  #     |> Multi.run(:delete_abuse_report, fn _, _ ->
+  #       delete_report(thread, article.id, user)
+  #     end)
+  #     |> Multi.run(:update_report_meta, fn _, _ ->
+  #       update_report_meta(info, article)
+  #     end)
+  #     |> Repo.transaction()
+  #     |> result()
+  #   end
+  # end
+
+  def undo_report_comment(%Comment{} = comment, %User{} = user) do
+    Transaction.locking(comment, fn comment ->
       Multi.new()
       |> Multi.run(:delete_abuse_report, fn _, _ ->
-        delete_report(thread, article.id, user)
+        delete_report(:comment, comment.id, user)
       end)
       |> Multi.run(:update_report_meta, fn _, _ ->
-        update_report_meta(info, article)
+        {:ok, info} = match(:comment)
+        update_report_meta(info, comment)
       end)
       |> Repo.transaction()
       |> result()
-    end
-  end
-
-  def undo_report_comment(comment_id, %User{} = user) do
-    do_undo_report_comment(:comment, comment_id, user)
+    end)
   end
 
   defp do_paged_reports(query, thread, filter) do

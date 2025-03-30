@@ -468,17 +468,17 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
     #   {:ok, comment} = ORM.find(Comment, comment.id)
 
-    #   {:ok, comment} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
+    #   {:ok, comment} = CMS.report_comment(comment, mock_comment(), "attr", user)
     #   {:ok, comment} = ORM.find(Comment, comment.id)
     # end
 
     #
     # test "user can unreport a comment", ~m(user post)a do
     #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
-    #   {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
+    #   {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
     #   {:ok, comment} = ORM.find(Comment, comment.id)
 
-    #   {:ok, _} = CMS.undo_report_comment(comment.id, user)
+    #   {:ok, _} = CMS.undo_report_comment(comment, user)
     #   {:ok, comment} = ORM.find(Comment, comment.id)
     # end
 
@@ -486,8 +486,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
-      {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user2)
+      {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
+      {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user2)
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -519,7 +519,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       Enum.reduce(1..(@report_threshold_for_fold - 1), [], fn _, _acc ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
+        {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
       end)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -535,7 +535,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       Enum.reduce(1..(@report_threshold_for_fold + 1), [], fn _, _acc ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
+        {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
       end)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
