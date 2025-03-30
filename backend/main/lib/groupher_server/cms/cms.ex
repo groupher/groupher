@@ -223,8 +223,8 @@ defmodule GroupherServer.CMS do
   # TODO: move report to abuse report module
   defdelegate report_article(article, reason, attr, user), to: AbuseReport
   defdelegate report_comment(comment, reason, attr, user), to: AbuseReport
-  defdelegate report_account(account_id, reason, attr, user), to: AbuseReport
-  defdelegate undo_report_account(account_id, user), to: AbuseReport
+  defdelegate report_account(account, reason, attr, user), to: AbuseReport
+  defdelegate undo_report_account(account, user), to: AbuseReport
   defdelegate undo_report_article(article, user), to: AbuseReport
   defdelegate paged_reports(filter), to: AbuseReport
   defdelegate undo_report_comment(comment, user), to: AbuseReport

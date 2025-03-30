@@ -97,9 +97,10 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   @doc """
   report an account
   """
-  def report_account(account_id, reason, attr, user) when is_integer(account_id) do
-    with {:ok, info} <- match(:account),
-         {:ok, account} <- ORM.find(info.model, account_id) do
+  def report_account(%User{} = account, reason, attr, %User{} = user) do
+    {:ok, info} = match(:account)
+
+    Transaction.locking(account, fn account ->
       Multi.new()
       |> Multi.run(:create_abuse_report, fn _, _ ->
         create_report(:account, account.id, reason, attr, user)
@@ -109,15 +110,16 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
   @doc """
   undo report article content
   """
-  def undo_report_account(account_id, %User{} = user) do
-    with {:ok, info} <- match(:account),
-         {:ok, account} <- ORM.find(info.model, account_id) do
+  def undo_report_account(%User{} = account, %User{} = user) do
+    {:ok, info} = match(:account)
+
+    Transaction.locking(account, fn account ->
       Multi.new()
       |> Multi.run(:delete_abuse_report, fn _, _ ->
         delete_report(:account, account.id, user)
@@ -127,7 +129,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
   @doc """
