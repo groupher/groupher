@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
   import Helper.Utils, only: [thread_of: 1]
   import GroupherServer.CMS.Delegate.Helper, only: [update_emotions_field: 4]
 
-  alias Helper.ORM
+  alias Helper.{Transaction, ORM}
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -21,8 +21,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
 
   @doc "make emotion to a comment"
   def emotion_to_article(article, emotion, %User{} = user) do
-    with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.reload(article) do
+    {:ok, info} = match(article)
+
+    Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:create_user_emotion, fn _, _ ->
         target =
@@ -44,12 +45,13 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
       end)
       |> Repo.transaction()
       |> update_emotions_field_result
-    end
+    end)
   end
 
   def undo_emotion_to_article(article, emotion, %User{} = user) do
-    with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.reload(article) do
+    {:ok, info} = match(article)
+
+    Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:update_user_emotion, fn _, _ ->
         target =
@@ -75,7 +77,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
       end)
       |> Repo.transaction()
       |> update_emotions_field_result
-    end
+    end)
   end
 
   # @spec query_emotion_status(Comment.t(), Atom.t()) :: {:ok, t_mention_status}
