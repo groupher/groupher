@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.Query.Statistics do
   """
   describe "[statistics geo info]" do
     test "should get cities geo infos", ~m(guest_conn)a do
-      result = guest_conn |> query_result(@query, %{}, "citiesGeoInfo")
+      result = guest_conn |> gq_query(@query)
       assert result["entries"] == []
       assert result["totalCount"] == 0
 
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.Query.Statistics do
       {:ok, _} = Statistics.inc_count("成都")
       {:ok, _} = Statistics.inc_count("广州")
 
-      result = guest_conn |> query_result(@query, %{}, "citiesGeoInfo")
+      result = guest_conn |> gq_query(@query)
       assert result["totalCount"] == 2
 
       assert result["entries"] |> Enum.any?(&(&1["city"] == "成都"))
@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.Query.Statistics do
     }
     """
     test "every body can get online status", ~m(guest_conn)a do
-      result = guest_conn |> query_result(@query, %{}, "onlineStatus")
+      result = guest_conn |> gq_query(@query)
       assert result["realtimeVisitors"] |> is_number
     end
 
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.Query.Statistics do
       passport_rules = %{"root" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result = rule_conn |> query_result(@query, %{}, "countStatus")
+      result = rule_conn |> gq_query(@query)
       assert result["postsCount"] == 0
     end
   end

@@ -172,21 +172,21 @@ defmodule GroupherServer.Test.AssertHelper do
     |> Map.has_key?("errors")
   end
 
-  def query_result(conn, query, variables, key, flag \\ false) do
+  def gq_query(conn, query, variables, flag \\ false) do
     conn
     |> post("/graphiql", query: query, variables: variables)
     |> json_response(200)
     |> log_debug_info(flag)
     |> Map.get("data")
-    |> Map.get(key)
+    |> Map.get(get_operation_name(query))
   end
 
-  def query_result(conn, query, key) do
+  def gq_query(conn, query) do
     conn
     |> post("/graphiql", query: query, variables: %{})
     |> json_response(200)
     |> Map.get("data")
-    |> Map.get(key)
+    |> Map.get(get_operation_name(query))
   end
 
   def query_get_error?(conn, query, variables) do

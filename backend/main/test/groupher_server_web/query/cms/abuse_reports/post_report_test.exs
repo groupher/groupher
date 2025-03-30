@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
       {:ok, _} = CMS.report_article(post2, "reason", "attr_info", user2)
 
       variables = %{filter: %{content_type: "POST", page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedAbuseReports")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 2
@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
       {:ok, _} = CMS.report_article(post2, "reason", "attr_info", user2)
 
       variables = %{filter: %{content_type: "POST", content_id: post.id, page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedAbuseReports")
+      results = guest_conn |> gq_query(@query, variables)
 
       report = results["entries"] |> List.first()
 
@@ -93,7 +93,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
       {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
 
       variables = %{filter: %{content_type: "COMMENT", page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedAbuseReports")
+      results = guest_conn |> gq_query(@query, variables)
 
       report = results["entries"] |> List.first()
       report_case = get_in(report, ["reportCases"])

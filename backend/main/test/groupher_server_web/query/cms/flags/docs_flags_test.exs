@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
     test "pending doc should not see in paged query",
          ~m(guest_conn community doc_m)a do
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == @total_count
 
@@ -62,7 +62,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       {:ok, doc_m} = ORM.find(CMS.Model.Doc, doc_m.id)
       assert doc_m.pending == @audit_illegal
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       assert results["totalCount"] == @total_count - 1
     end
   end
@@ -89,7 +89,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
          ~m(guest_conn community doc_m)a do
       variables = %{filter: %{community: community.slug}}
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert results["pageSize"] == @page_size
@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
 
       {:ok, _} = CMS.pin_article(community, doc_m)
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       entries_first = results["entries"] |> List.first()
 
       assert results["totalCount"] == @total_count
@@ -107,14 +107,14 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
 
     test "pinned docs should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       assert results |> is_valid_pagination?
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("id")
       {:ok, doc} = ORM.find(Doc, random_id)
       {:ok, _} = CMS.pin_article(community, doc)
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
     end
@@ -122,12 +122,12 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
     test "if have trashed docs, the mark deleted docs should not appears in result",
          ~m(guest_conn community)a do
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("id")
       {:ok, _} = CMS.mark_delete_article(:doc, random_id)
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
       assert results["totalCount"] == @total_count - 1

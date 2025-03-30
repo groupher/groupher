@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Query.Upvotes.PostUpvote do
         filter: %{page: 1, size: 20}
       }
 
-      results = guest_conn |> query_result(Schema.q(:upvoted_users), variables, "upvotedUsers")
+      results = guest_conn |> gq_query(Schema.q(:upvoted_users), variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 2

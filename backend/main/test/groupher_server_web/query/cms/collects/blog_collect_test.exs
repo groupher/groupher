@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Query.Collects.BlogCollect do
       }
 
       results =
-        guest_conn |> query_result(Schema.q(:collected_users), variables, "collectedUsers")
+        guest_conn |> gq_query(Schema.q(:collected_users), variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 2

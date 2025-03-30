@@ -40,8 +40,8 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedDocs do
         filter: %{thread: "DOC", page: 1, size: 20}
       }
 
-      results = user_conn |> query_result(@query, variables, "pagedUpvotedArticles")
-      results2 = guest_conn |> query_result(@query, variables, "pagedUpvotedArticles")
+      results = user_conn |> gq_query(@query, variables)
+      results2 = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == @total_count
       assert results2["totalCount"] == @total_count
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedDocs do
         filter: %{page: 1, size: 20}
       }
 
-      results = guest_conn |> query_result(@query, variables, "pagedUpvotedArticles")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == @total_count
     end

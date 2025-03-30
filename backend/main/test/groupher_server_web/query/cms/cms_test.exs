@@ -27,9 +27,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "can check if user has pending apply", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
-      check_state =
-        user_conn
-        |> query_result(@check_community_pending_query, %{}, "hasPendingCommunityApply")
+      check_state = user_conn |> gq_query(@check_community_pending_query)
 
       assert not check_state["exist"]
 
@@ -37,10 +35,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, _community} = CMS.apply_community(attrs, user)
 
       user_conn = simu_conn(:user, user)
-
-      check_state =
-        user_conn
-        |> query_result(@check_community_pending_query, %{}, "hasPendingCommunityApply")
+      check_state = user_conn |> gq_query(@check_community_pending_query)
 
       assert check_state["exist"]
     end
@@ -55,23 +50,14 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "can check if a community is exist", ~m(user)a do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
 
-      check_state =
-        rule_conn
-        |> query_result(
-          @check_community_exist_query,
-          %{slug: "elixir"},
-          "isCommunityExist"
-        )
+      check_state = rule_conn |> gq_query(@check_community_exist_query, %{slug: "elixir"})
 
       assert not check_state["exist"]
 
       community_attrs = mock_attrs(:community, %{slug: "elixir"})
       {:ok, _community} = CMS.create_community(community_attrs, user)
 
-      check_state =
-        rule_conn
-        |> query_result(@check_community_exist_query, %{slug: "elixir"}, "isCommunityExist")
-
+      check_state = rule_conn |> gq_query(@check_community_exist_query, %{slug: "elixir"})
       assert check_state["exist"]
     end
   end
@@ -97,11 +83,11 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, community} = db_insert(:community)
 
       variables = %{slug: community.slug}
-      guest_conn |> query_result(@query, variables, "community")
+      guest_conn |> gq_query(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.views == 1
-      guest_conn |> query_result(@query, variables, "community")
+      guest_conn |> gq_query(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.views == 2
@@ -111,11 +97,11 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, community} = db_insert(:community)
 
       variables = %{slug: community.slug, incViews: false}
-      guest_conn |> query_result(@query, variables, "community")
+      guest_conn |> gq_query(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.views == 0
-      guest_conn |> query_result(@query, variables, "community")
+      guest_conn |> gq_query(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.views == 0
@@ -125,10 +111,10 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, _community} = db_insert(:community, %{slug: "kubernetes", aka: "k8s"})
 
       variables = %{slug: "k8s"}
-      aka_results = guest_conn |> query_result(@query, variables, "community")
+      aka_results = guest_conn |> gq_query(@query, variables)
 
       variables = %{slug: "kubernetes"}
-      results = guest_conn |> query_result(@query, variables, "community")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["id"] == aka_results["id"]
     end
@@ -141,7 +127,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       end)
 
       variables = %{slug: community.slug}
-      results = guest_conn |> query_result(@query, variables, "community")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["threadsCount"] == 10
     end
@@ -153,7 +139,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, _article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
 
       variables = %{slug: community.slug}
-      results = guest_conn |> query_result(@query, variables, "community")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["articleTagsCount"] == 2
     end
@@ -167,7 +153,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       end)
 
       variables = %{slug: community.slug}
-      results = guest_conn |> query_result(@query, variables, "community")
+      results = guest_conn |> gq_query(@query, variables)
 
       first_idx = results["threads"] |> List.first() |> Map.get("index")
       last_idx = results["threads"] |> List.last() |> Map.get("index")
@@ -202,7 +188,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       variables = %{filter: %{page: 1, size: 20}}
       user_conn = simu_conn(:user, user)
-      results = user_conn |> query_result(@query, variables, "pagedCommunities")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> Enum.any?(&(&1["viewerHasSubscribed"] == true))
     end
@@ -211,7 +197,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, _communities} = db_insert_multi(:community, 5)
 
       variables = %{filter: %{page: 1, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "pagedCommunities")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       # 1 is for setup community
@@ -221,7 +207,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "community has default index = 100000", ~m(guest_conn)a do
       {:ok, _communities} = db_insert_multi(:community, 5)
       variables = %{filter: %{page: 1, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "pagedCommunities")
+      results = guest_conn |> gq_query(@query, variables)
 
       results["entries"] |> Enum.all?(fn x -> x["index"] == 100_000 end)
     end
@@ -242,7 +228,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       CMS.set_category(%Community{id: communityn.id}, %Category{id: category2.id})
 
       variables = %{filter: %{page: 1, size: 20, category: category1.slug}}
-      results = guest_conn |> query_result(@query, variables, "pagedCommunities")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"]
              |> List.first()
@@ -252,7 +238,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert results["totalCount"] == 1
 
       variables = %{filter: %{page: 1, size: 20, category: category2.slug}}
-      results = guest_conn |> query_result(@query, variables, "pagedCommunities")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == 2
 
@@ -262,7 +248,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
              |> Enum.any?(&(&1["id"] == to_string(category2.id)))
 
       variables = %{filter: %{page: 1, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "pagedCommunities")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == 10 + 1
     end
@@ -289,7 +275,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, _threads} = db_insert_multi(:thread, 5)
 
       variables = %{filter: %{page: 1, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "pagedThreads")
+      results = guest_conn |> gq_query(@query, variables)
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 10
     end
@@ -298,14 +284,14 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, _threads} = db_insert_multi(:thread, 10)
 
       variables = %{filter: %{page: 1, size: 20, sort: "DESC_INDEX"}}
-      results = guest_conn |> query_result(@query, variables, "pagedThreads")
+      results = guest_conn |> gq_query(@query, variables)
       first_idx = results["entries"] |> List.first() |> Map.get("index")
       last_idx = results["entries"] |> List.last() |> Map.get("index")
 
       assert first_idx > last_idx
 
       variables = %{filter: %{page: 1, size: 20, sort: "ASC_INDEX"}}
-      results = guest_conn |> query_result(@query, variables, "pagedThreads")
+      results = guest_conn |> gq_query(@query, variables)
       first_idx = results["entries"] |> List.first() |> Map.get("index")
       last_idx = results["entries"] |> List.last() |> Map.get("index")
 
@@ -343,7 +329,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       {:ok, _} = CMS.create_category(~m(title slug)a, %User{id: user.id})
 
-      results = guest_conn |> query_result(@query, variables, "pagedCategories")
+      results = guest_conn |> gq_query(@query, variables)
       author = results["entries"] |> List.first() |> Map.get("author")
 
       assert results |> is_valid_pagination?
@@ -359,7 +345,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       {:ok, _} = CMS.set_category(%Community{id: community.id}, %Category{id: category.id})
 
-      results = guest_conn |> query_result(@query, variables, "pagedCategories")
+      results = guest_conn |> gq_query(@query, variables)
       contain_communities = results["entries"] |> List.first() |> Map.get("communities")
 
       assert contain_communities |> List.first() |> Map.get("id") == to_string(community.id)
@@ -433,7 +419,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       variables = %{slug: community.slug}
 
-      results = guest_conn |> query_result(@query, variables, "community")
+      results = guest_conn |> gq_query(@query, variables)
       assert get_in(results, ["dashboard", "seo", "ogTitle"]) == "groupher"
       assert get_in(results, ["dashboard", "layout", "postLayout"]) == "new layout"
       assert get_in(results, ["dashboard", "layout", "kanbanBgColors"]) == ["GREEN", "RED"]
@@ -464,7 +450,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       Enum.each(users, &CMS.add_moderator(community, role, %User{id: &1.id}, user))
 
       variables = %{slug: community.slug}
-      results = guest_conn |> query_result(@query, variables, "community")
+      results = guest_conn |> gq_query(@query, variables)
       moderators_count = results["moderatorsCount"]
 
       assert results["id"] == to_string(community.id)
@@ -492,7 +478,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       Enum.each(users, &CMS.add_moderator(community, role, %User{id: &1.id}, cur_user))
 
       variables = %{id: community.id, filter: %{page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedCommunityModerators")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
     end
@@ -513,7 +499,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       Enum.each(users, &CMS.subscribe_community(community, %User{id: &1.id}))
 
       variables = %{slug: community.slug}
-      results = guest_conn |> query_result(@query, variables, "community")
+      results = guest_conn |> gq_query(@query, variables)
       subscribers_count = results["subscribersCount"]
 
       assert subscribers_count == assert_v(:inner_page_size)
@@ -543,7 +529,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       )
 
       variables = %{id: community.id, filter: %{page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedCommunitySubscribers")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
     end
@@ -557,7 +543,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       )
 
       variables = %{community: community.slug, filter: %{page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedCommunitySubscribers")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
     end
@@ -577,11 +563,11 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       user_conn = simu_conn(:user, user)
 
       user_conn
-      |> query_result(@check_community_pending_query, %{}, "hasPendingCommunityApply")
+      |> gq_query(@check_community_pending_query)
 
       variables = %{url: "https://www.ifanr.com/1561465"}
 
-      results = user_conn |> query_result(@query, variables, "openGraphInfo")
+      results = user_conn |> gq_query(@query, variables)
 
       assert not is_nil(results["title"])
       assert not is_nil(results["favicon"])
@@ -598,7 +584,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
   """
   test "fake client i18n test", ~m(guest_conn)a do
     variables = %{locale: "en"}
-    results = guest_conn |> query_result(@query, variables, "clientI18n")
+    results = guest_conn |> gq_query(@query, variables)
 
     assert results["locale"] == "__ignore_this__"
   end

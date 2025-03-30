@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.Query.Hooks.BlogCiting do
       Hooks.Cite.handle(blog_y)
 
       variables = %{content: "BLOG", id: blog2.id, filter: %{page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedCitingContents")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 3

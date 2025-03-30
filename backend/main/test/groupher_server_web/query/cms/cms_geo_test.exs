@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Query.CMS.GEO do
   """
   test "empty community should get empty geo info", ~m(guest_conn community)a do
     variables = %{id: community.id}
-    results = guest_conn |> query_result(@query, variables, "communityGeoInfo")
+    results = guest_conn |> gq_query(@query, variables)
 
     assert results == []
   end
@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.Query.CMS.GEO do
     {:ok, _record} = CMS.subscribe_community(community, user, @remote_ip)
 
     variables = %{id: community.id}
-    results = guest_conn |> query_result(@query, variables, "communityGeoInfo")
+    results = guest_conn |> gq_query(@query, variables)
 
     assert results |> List.first() |> Map.get("value") == 1
     assert results |> List.first() |> Map.get("city") == "成都"

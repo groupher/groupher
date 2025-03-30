@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.Query.CMS.DocTags do
          ~m(guest_conn community article_tag_attrs user)a do
       variables = %{}
       {:ok, _article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
-      results = guest_conn |> query_result(@query, variables, "pagedArticleTags")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 1
@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.Query.CMS.DocTags do
       {:ok, _article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
 
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> query_result(@query, variables, "pagedArticleTags")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 1
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Query.CMS.DocTags do
       {:ok, article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
 
       variables = %{filter: %{community: community.slug, thread: "DOC"}}
-      results = guest_conn |> query_result(@query, variables, "pagedArticleTags")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == 1
 

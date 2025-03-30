@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
     }
     """
     test "auth user can get it's own default mailbox status", ~m(user_conn user)a do
-      results = user_conn |> query_result(@query, %{login: user.login}, "user")
+      results = user_conn |> gq_query(@query, %{login: user.login})
       mailbox = results["mailbox"]
 
       assert mailbox["isEmpty"] == true
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
          ~m(user_conn user user2)a do
       {:ok, _} = mock_mention_for(user, user2)
 
-      results = user_conn |> query_result(@query, %{login: user.login}, "user")
+      results = user_conn |> gq_query(@query, %{login: user.login})
       mailbox = results["mailbox"]
 
       assert mailbox["isEmpty"] == false
@@ -54,7 +54,7 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
          ~m(user_conn user user2)a do
       mock_notification_for(user, user2)
 
-      results = user_conn |> query_result(@query, %{login: user.login}, "user")
+      results = user_conn |> gq_query(@query, %{login: user.login})
       mailbox = results["mailbox"]
 
       assert mailbox["isEmpty"] == false
@@ -92,14 +92,14 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
       mock_mention_for(user, user2)
 
       variables = %{filter: %{page: 1, size: 20}}
-      results = user_conn |> query_result(@query, variables, "pagedMentions")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       mention = results["entries"] |> List.first()
       assert user2.login == mention |> get_in(["user", "login"])
 
       variables = %{filter: %{page: 1, size: 20, read: true}}
-      results = user_conn |> query_result(@query, variables, "pagedMentions")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 0
@@ -132,13 +132,13 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
       mock_notification_for(user, user2)
 
       variables = %{filter: %{page: 1, size: 20}}
-      results = user_conn |> query_result(@query, variables, "pagedNotifications")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 1
 
       variables = %{filter: %{page: 1, size: 20, read: true}}
-      results = user_conn |> query_result(@query, variables, "pagedNotifications")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 0

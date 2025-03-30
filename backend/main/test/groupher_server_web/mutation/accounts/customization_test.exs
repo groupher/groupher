@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.Mutation.Account.Customization do
       user_conn |> gq_mutation(@query, variables)
 
       variables = %{filter: %{page: 1}}
-      results = user_conn |> query_result(@paged_posts_query, variables, "pagedPosts")
+      results = user_conn |> gq_query(@paged_posts_query, variables)
       assert results["pageSize"] == @max_page_size
     end
 

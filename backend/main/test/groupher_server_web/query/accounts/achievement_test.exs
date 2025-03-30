@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     test "empty user should get empty achievement", ~m(guest_conn user)a do
       variables = %{login: user.login}
 
-      results = guest_conn |> query_result(@query, variables, "user")
+      results = guest_conn |> gq_query(@query, variables)
       assert results["achievement"] !== nil
     end
   end
@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     """
     test "can get user's empty editable communities list", ~m(guest_conn user)a do
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "moderatorableCommunities")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?(:empty)
     end
@@ -79,7 +79,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       {:ok, _} = CMS.add_moderator(community2, role, user3, user2)
 
       variables = %{login: user3.login, filter: %{page: 1, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "moderatorableCommunities")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == 2
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(community.id)))
@@ -111,7 +111,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       user3 |> Accounts.follow(user4)
 
       variables = %{login: user2.login}
-      results = guest_conn |> query_result(@query, variables, "user")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("followersCount") == 2
       assert results["achievement"] |> Map.get("reputation") == 2 * @follow_weight
@@ -129,7 +129,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       ramdom_fan |> Accounts.undo_follow(user)
 
       variables = %{login: user.login}
-      results = guest_conn |> query_result(@query, variables, "user")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("followersCount") == total_count - 1
 
@@ -159,7 +159,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       author_user_login = post.author.user.login
 
       variables = %{login: author_user_login}
-      results = guest_conn |> query_result(@query, variables, "user")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["achievement"] |> Map.get("articlesCollectsCount") == 1
       assert results["achievement"] |> Map.get("reputation") == @collect_weight
@@ -181,7 +181,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       {:ok, _article_collect} = CMS.undo_collect_article(post, user)
 
       variables = %{login: author_user_login}
-      results = guest_conn |> query_result(@query, variables, "user")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["achievement"] |> Map.get("articlesCollectsCount") == total_count - 1
 

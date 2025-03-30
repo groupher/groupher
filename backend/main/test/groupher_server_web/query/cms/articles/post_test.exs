@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
     variables = %{community: post.original_community_slug, id: post.inner_id}
-    results = user_conn |> query_result(@query, variables, "post")
+    results = user_conn |> gq_query(@query, variables)
 
     assert results["id"] == to_string(post.id)
     assert results["originalCommunitySlug"] == post.original_community_slug
@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
     variables = %{community: post.original_community_slug, id: post.inner_id}
-    results = guest_conn |> query_result(@query, variables, "post")
+    results = guest_conn |> gq_query(@query, variables)
 
     assert results["id"] == to_string(post.id)
     assert is_valid_kv?(results, "title", :string)
@@ -66,13 +66,13 @@ defmodule GroupherServer.Test.Query.Articles.Post do
   test "pending state should in meta", ~m(guest_conn user_conn community user post_attrs)a do
     {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
     variables = %{community: post.original_community_slug, id: post.inner_id}
-    results = user_conn |> query_result(@query, variables, "post")
+    results = user_conn |> gq_query(@query, variables)
 
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
 
-    results = guest_conn |> query_result(@query, variables, "post")
+    results = guest_conn |> gq_query(@query, variables)
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
@@ -84,7 +84,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
         illegal_words: ["some-word"]
       })
 
-    results = user_conn |> query_result(@query, variables, "post")
+    results = user_conn |> gq_query(@query, variables)
 
     assert not get_in(results, ["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]

@@ -55,7 +55,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.AccountReport do
       {:ok, _} = CMS.report_article(:account, user.id, "reason", "attr_info", user2)
 
       variables = %{filter: %{content_type: "ACCOUNT", page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedAbuseReports")
+      results = guest_conn |> gq_query(@query, variables)
 
       report = results["entries"] |> List.first()
       assert results |> is_valid_pagination?

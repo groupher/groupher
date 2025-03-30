@@ -451,7 +451,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     """
     test "can get all passport rules", ~m(user)a do
       rule_conn = simu_conn(:user, user)
-      result = rule_conn |> query_result(@all_rules_query, %{}, "allPassportRules")
+      result = rule_conn |> gq_query(@all_rules_query)
 
       assert is_binary(result["root"])
       assert is_binary(result["moderator"])

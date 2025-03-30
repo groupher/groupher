@@ -29,13 +29,13 @@ defmodule GroupherServer.Test.Query.Accounts.Search do
     """
     test "search user by full nickname should valid paged communities", ~m(guest_conn)a do
       variables = %{name: "react"}
-      results = guest_conn |> query_result(@query, variables, "searchUsers")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == 1
       assert results["entries"] |> Enum.any?(&(&1["nickname"] == "react"))
 
       variables = %{name: "java"}
-      results = guest_conn |> query_result(@query, variables, "searchUsers")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == 2
       assert results["entries"] |> Enum.any?(&(&1["nickname"] == "java"))
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.Query.Accounts.Search do
 
     test "search non-exist user should get empty pagi data", ~m(guest_conn)a do
       variables = %{name: "non-exist"}
-      results = guest_conn |> query_result(@query, variables, "searchUsers")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == 0
       assert results["entries"] == []
