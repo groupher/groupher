@@ -451,7 +451,6 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
   end
 
   describe "[article comment report/unreport]" do
-    @tag :wip
     test "can undo a report with other user report it too", ~m(community user user2 blog)a do
       {:ok, comment} =
         CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)

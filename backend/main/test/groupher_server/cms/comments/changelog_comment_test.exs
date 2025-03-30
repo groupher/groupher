@@ -469,7 +469,6 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
     #   {:ok, comment} = ORM.find(Comment, comment.id)
     # end
 
-    @tag :wip
     test "can undo a report with other user report it too", ~m(community user user2 changelog)a do
       {:ok, comment} =
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)

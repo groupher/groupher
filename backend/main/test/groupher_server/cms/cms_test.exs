@@ -261,7 +261,6 @@ defmodule GroupherServer.Test.CMS do
       assert reason[:code] == ecode(:one_community_only)
     end
 
-    @tag :wip
     test "can add multi moderators to a community", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user

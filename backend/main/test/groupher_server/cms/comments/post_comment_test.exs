@@ -482,7 +482,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     #   {:ok, comment} = ORM.find(Comment, comment.id)
     # end
 
-    @tag :wip
     test "can undo a report with other user report it too", ~m(community user user2 post)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
