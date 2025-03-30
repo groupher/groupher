@@ -4,55 +4,32 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
   use GroupherServer.TestTools
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = mock_community(user)
-
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
+    {community, post, _, user} = mock_article(:post)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
     owner_conn = simu_conn(:user, user)
 
-    {:ok, ~m(user_conn user guest_conn owner_conn community post_attrs)a}
+    {:ok, ~m(user_conn user guest_conn owner_conn community post)a}
   end
 
   describe "[post report/undo_report]" do
-    @report_query """
-    mutation($id: ID!, $reason: String!, $attr: String) {
-      reportPost(id: $id, reason: $reason, attr: $attr) {
-        id
-        title
-      }
-    }
-    """
-    test "login user can report a post", ~m(community post_attrs user user_conn)a do
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-
-      variables = %{id: post.id, reason: "reason"}
-      article = user_conn |> mutation_result(@report_query, variables, "reportPost")
+    test "login user can report a post", ~m(community post user user_conn)a do
+      variables = %{id: post.inner_id, community: community.slug, reason: "reason"}
+      article = user_conn |> gq_mutation(Schema.m(:report_article, :post), variables)
 
       assert article["id"] == to_string(post.id)
     end
 
-    @undo_report_query """
-    mutation($id: ID!) {
-      undoReportPost(id: $id) {
-        id
-        title
-      }
-    }
-    """
-    test "login user can undo report a post", ~m(community post_attrs user user_conn)a do
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-
-      variables = %{id: post.id, reason: "reason"}
-      article = user_conn |> mutation_result(@report_query, variables, "reportPost")
+    test "login user can undo report a post", ~m(community post user user_conn)a do
+      variables = %{id: post.inner_id, community: community.slug, reason: "reason"}
+      article = user_conn |> gq_mutation(Schema.m(:report_article, :post), variables)
 
       assert article["id"] == to_string(post.id)
 
-      variables = %{id: post.id}
+      variables = %{id: post.inner_id, community: community.slug}
 
-      article = user_conn |> mutation_result(@undo_report_query, variables, "undoReportPost")
+      article = user_conn |> gq_mutation(Schema.m(:undo_report_article, :post), variables)
       assert article["id"] == to_string(post.id)
     end
   end

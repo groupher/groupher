@@ -24,8 +24,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     variables = mock_attrs(:post) |> Map.merge(%{community: community.slug})
 
-    created =
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+    created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
     assert created |> Map.has_key?("id")
   end
@@ -36,8 +35,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     variables = mock_attrs(:post) |> Map.merge(%{community: community.slug})
 
-    created =
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+    created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
     assert created |> Map.has_key?("id")
 
@@ -47,8 +45,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
       minutes: -@throttle_interval
     )
 
-    created =
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+    created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
     assert created |> Map.has_key?("id")
   end
@@ -59,14 +56,10 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     rule_conn = simu_conn(:user, cms: passport_rules)
     variables = mock_attrs(:post) |> Map.merge(%{community: community.slug})
 
-    created =
-      rule_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
-
+    created = rule_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
     assert created |> Map.has_key?("id")
 
-    created =
-      rule_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
-
+    created = rule_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
     assert created |> Map.has_key?("id")
 
     Statistics.mock_throttle_attr(
@@ -75,9 +68,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
       minutes: -(@throttle_interval - 1)
     )
 
-    created =
-      rule_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
-
+    created = rule_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
     assert created |> Map.has_key?("id")
   end
 
@@ -87,7 +78,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     variables = mock_attrs(:post) |> Map.merge(%{community: community.slug})
 
     created =
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+      user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
     assert created |> Map.has_key?("id")
 
@@ -118,8 +109,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     variables = mock_attrs(:post) |> Map.merge(%{community: community.slug})
 
-    created =
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+    created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
     assert created |> Map.has_key?("id")
 
@@ -149,8 +139,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     variables = mock_attrs(:post) |> Map.merge(%{community: community.slug})
 
-    created =
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+    created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
     assert created |> Map.has_key?("id")
 
@@ -180,7 +169,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     created =
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+      user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
     assert created |> Map.has_key?("id")
   end
@@ -192,7 +181,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     variables = mock_attrs(:post) |> Map.merge(%{community: community.slug})
 
     created =
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+      user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
     assert created |> Map.has_key?("id")
 
@@ -222,8 +211,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     variables = mock_attrs(:post) |> Map.merge(%{community: community.slug})
 
-    created =
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+    created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
     assert created |> Map.has_key?("id")
 
@@ -252,8 +240,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
       days: -2
     )
 
-    created =
-      user_conn |> mutation_result(Schema.m(:create_article, :post), variables, "createPost")
+    created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
     assert created |> Map.has_key?("id")
   end

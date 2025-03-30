@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       passport_rules = %{"blog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "markDeleteBlog")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(blog.id)
       assert updated["markDelete"] == true
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       passport_rules = %{"blog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> mutation_result(@query, variables, "markDeleteBlog")
+      rule_conn |> gq_mutation(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.blogs_count == 0
@@ -80,7 +80,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       passport_rules = %{"blog.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "undoMarkDeleteBlog")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(blog.id)
       assert updated["markDelete"] == false
@@ -99,7 +99,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       variables = %{id: blog.id}
       passport_rules = %{"blog.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
-      rule_conn |> mutation_result(@query, variables, "undoMarkDeleteBlog")
+      rule_conn |> gq_mutation(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.blogs_count == 1
@@ -131,7 +131,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       passport_rules = %{"blog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "batchMarkDeleteBlogs")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["done"] == true
 
@@ -166,7 +166,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       passport_rules = %{"blog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "batchUndoMarkDeleteBlogs")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["done"] == true
 
@@ -192,7 +192,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       passport_rules = %{community.slug => %{"blog.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "pinBlog")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(blog.id)
     end
@@ -221,7 +221,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       CMS.pin_article(community, blog)
-      updated = rule_conn |> mutation_result(@query, variables, "undoPinBlog")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(blog.id)
     end

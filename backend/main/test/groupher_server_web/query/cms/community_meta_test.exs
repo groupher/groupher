@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
       {:ok, _} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 
       variables = %{slug: community.slug}
-      results = guest_conn |> query_result(@query, variables, "community")
+      results = guest_conn |> gq_query(@query, variables)
 
       meta = results["meta"]
       assert results["articlesCount"] == 8

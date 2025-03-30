@@ -34,14 +34,14 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
     variables = %{id: changelog.id, thread: "CHANGELOG"}
-    results = guest_conn |> query_result(@query, variables, "commentsState")
+    results = guest_conn |> gq_query(@query, variables)
 
     assert results["participantsCount"] == 1
     assert results["totalCount"] == 1
     assert not results["isViewerJoined"]
     assert user_exist_in?(user, results["participants"])
 
-    results = user_conn |> query_result(@query, variables, "commentsState")
+    results = user_conn |> gq_query(@query, variables)
     assert results["isViewerJoined"]
   end
 
@@ -68,7 +68,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       CMS.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
 
     variables = %{id: comment.id}
-    results = guest_conn |> query_result(@query, variables, "oneComment")
+    results = guest_conn |> gq_query(@query, variables)
 
     assert results["id"] == to_string(comment.id)
   end
@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
     {:ok, _} = CMS.emotion_to_comment(comment.id, :downvote, user)
 
     variables = %{id: comment.id}
-    results = user_conn |> query_result(@query, variables, "oneComment")
+    results = user_conn |> gq_query(@query, variables)
 
     assert results["id"] == to_string(comment.id)
     assert results["viewerHasUpvoted"]
@@ -108,7 +108,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         CMS.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
 
       variables = %{community: changelog.original_community_slug, id: changelog.inner_id}
-      results = guest_conn |> query_result(@query, variables, "changelog")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert not results["isArchived"]
     end
@@ -142,7 +142,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         CMS.create_comment(community, thread, changelog.inner_id, mock_comment(), user2)
 
       variables = %{community: changelog.original_community_slug, id: changelog.inner_id}
-      results = guest_conn |> query_result(@query, variables, "changelog")
+      results = guest_conn |> gq_query(@query, variables)
 
       comments_participants = results["commentsParticipants"]
       comments_participants_count = results["commentsParticipantsCount"]
@@ -254,7 +254,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       {:ok, replied_comment_2} = CMS.reply_comment(random_comment.id, mock_comment(), user2)
 
       variables = %{id: changelog.id, thread: "CHANGELOG", filter: %{page: 1, size: page_size}}
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
       assert results["entries"] |> length == total_count
 
       assert not exist_in?(replied_comment_1, results["entries"])
@@ -306,7 +306,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         filter: %{page: 1, size: page_size}
       }
 
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
       assert results["entries"] |> length == total_count + 2
 
       assert exist_in?(replied_comment_1, results["entries"])
@@ -354,7 +354,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         mode: "TIMELINE"
       }
 
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
 
       replied_comment_1 =
         Enum.find(results["entries"], &(&1["id"] == to_string(replied_comment_1.id)))
@@ -386,7 +386,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       end)
 
       variables = %{id: changelog.id, thread: "CHANGELOG", filter: %{page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == total_count
@@ -417,7 +417,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       {:ok, pinned_comment2} = CMS.pin_comment(comment.id)
 
       variables = %{id: changelog.id, thread: "CHANGELOG", filter: %{page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> List.first() |> Map.get("id") == to_string(pinned_comment2.id)
       assert results["entries"] |> Enum.at(1) |> Map.get("id") == to_string(pinned_comment.id)
@@ -440,7 +440,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       end)
 
       variables = %{id: changelog.id, thread: "CHANGELOG", filter: %{page: 1, size: page_size}}
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> List.first() |> Map.get("floor") == 1
       assert results["entries"] |> List.last() |> Map.get("floor") == 5
@@ -471,7 +471,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         mode: "TIMELINE"
       }
 
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert List.first(results["entries"]) |> Map.get("id") == to_string(comment.id)
       assert List.last(results["entries"]) |> Map.get("id") == to_string(comment3.id)
@@ -502,7 +502,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         mode: "TIMELINE"
       }
 
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert List.first(results["entries"]) |> Map.get("id") == to_string(comment3.id)
       assert List.last(results["entries"]) |> Map.get("id") == to_string(comment.id)
@@ -539,7 +539,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         filter: %{page: 1, size: page_size, sort: "DESC_INSERTED"}
       }
 
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert List.first(results["entries"]) |> Map.get("id") == to_string(comment3.id)
       assert List.last(results["entries"]) |> Map.get("id") == to_string(comment.id)
@@ -573,7 +573,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       {:ok, _} = CMS.upvote_comment(upvote_comment2.id, user2)
 
       variables = %{id: changelog.id, thread: "CHANGELOG", filter: %{page: 1, size: page_size}}
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> Enum.at(3) |> Map.get("upvotesCount") == 1
       assert results["entries"] |> Enum.at(4) |> Map.get("upvotesCount") == 2
@@ -618,7 +618,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       {:ok, _} = CMS.upvote_comment(author_comment.id, author_user)
 
       variables = %{id: changelog.id, thread: "CHANGELOG", filter: %{page: 1, size: page_size}}
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
 
       the_author_comment =
         Enum.find(results["entries"], &(&1["id"] == to_string(author_comment.id)))
@@ -662,7 +662,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       {:ok, _} = CMS.emotion_to_comment(comment2.id, :beer, user2)
 
       variables = %{id: changelog.id, thread: "CHANGELOG", filter: %{page: 1, size: page_size}}
-      results = guest_conn |> query_result(@query, variables, "pagedComments")
+      results = guest_conn |> gq_query(@query, variables)
 
       comment_emotion =
         Enum.find(results["entries"], &(&1["id"] == to_string(comment.id))) |> Map.get("emotions")
@@ -719,7 +719,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       {:ok, _} = CMS.emotion_to_comment(comment2.id, :downvote, user2)
 
       variables = %{id: changelog.id, thread: "CHANGELOG", filter: %{page: 1, size: page_size}}
-      results = user_conn |> query_result(@query, variables, "pagedComments")
+      results = user_conn |> gq_query(@query, variables)
 
       assert Enum.find(results["entries"], &(&1["id"] == to_string(comment.id)))
              |> get_in(["emotions", "viewerHasDownvoteed"])
@@ -749,7 +749,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       {:ok, _} = CMS.upvote_comment(random_comment.id, user)
 
       variables = %{id: changelog.id, thread: "CHANGELOG", filter: %{page: 1, size: page_size}}
-      results = user_conn |> query_result(@query, variables, "pagedComments")
+      results = user_conn |> gq_query(@query, variables)
 
       upvoted_comment = Enum.find(results["entries"], &(&1["id"] == to_string(random_comment.id)))
 
@@ -800,7 +800,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       variables = %{id: changelog.id, thread: thread, filter: %{page: 1, size: page_size}}
 
-      results = guest_conn |> query_result(@query, variables, "pagedCommentsParticipants")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == total_count + 1
@@ -868,7 +868,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         CMS.reply_comment(parent_comment.id, mock_comment("author reply"), author_user)
 
       variables = %{id: parent_comment.id, filter: %{page: 1, size: page_size}}
-      results = guest_conn |> query_result(@query, variables, "pagedCommentReplies")
+      results = guest_conn |> gq_query(@query, variables)
 
       author_reply_comment =
         Enum.find(results["entries"], &(&1["id"] == to_string(author_reply_comment.id)))

@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     """
     test "guest user can get specific user's info by user's id", ~m(guest_conn user)a do
       variables = %{login: user.login}
-      results = guest_conn |> query_result(@query, variables, "user")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert not is_nil(results["meta"])
 
@@ -66,14 +66,14 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
     test "user should have default contributes", ~m(guest_conn user_conn user)a do
       variables = %{login: user.login}
-      results = guest_conn |> query_result(@query, variables, "user")
+      results = guest_conn |> gq_query(@query, variables)
 
       contributes = results["contributes"]
 
       assert contributes["records"] == []
       assert contributes["totalCount"] == 0
 
-      results = user_conn |> query_result(@query, variables, "user")
+      results = user_conn |> gq_query(@query, variables)
 
       contributes = results["contributes"]
 
@@ -82,7 +82,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     end
 
     test "login user can get it's own profile", ~m(user_conn user)a do
-      results = user_conn |> query_result(@query, %{login: user.login}, "user")
+      results = user_conn |> gq_query(@query, %{login: user.login})
       assert results["id"] == to_string(user.id)
     end
 
@@ -91,14 +91,14 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert target_user.views == 0
 
       variables = %{login: user.login}
-      results = guest_conn |> query_result(@query, variables, "user")
+      results = guest_conn |> gq_query(@query, variables)
       assert results["views"] == 1
     end
 
     test "login newbie user can get own empty cms_passport", ~m(user)a do
       user_conn = simu_conn(:user, user)
       variables = %{login: user.login}
-      results = user_conn |> query_result(@query, variables, "user")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results["cmsPassport"] == %{}
       assert results["cmsPassportString"] == "{}"
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
       {:ok, _} = CMS.stamp_passport(@valid_rules, user)
 
-      results = user_conn |> query_result(@query, %{login: user.login}, "user")
+      results = user_conn |> gq_query(@query, %{login: user.login})
 
       assert Map.equal?(results["cmsPassport"], @valid_rules)
       assert Map.equal?(Jason.decode!(results["cmsPassportString"]), @valid_rules)
@@ -125,7 +125,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     test "login user can get empty if cms_passport not exist", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
-      results = user_conn |> query_result(@query, %{login: user.login}, "user")
+      results = user_conn |> gq_query(@query, %{login: user.login})
 
       assert %{} == results["cmsPassport"]
       assert "{}" == results["cmsPassportString"]
@@ -151,7 +151,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     test "guest user can get paged users", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 10}}
 
-      results = guest_conn |> query_result(@query, variables, "pagedUsers")
+      results = guest_conn |> gq_query(@query, variables)
       assert results |> is_valid_pagination?()
     end
 
@@ -164,7 +164,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       {:ok, _} = Accounts.follow(user, user2)
       {:ok, _} = Accounts.follow(user3, user)
 
-      results = user_conn |> query_result(@query, variables, "pagedUsers")
+      results = user_conn |> gq_query(@query, variables)
       assert results |> is_valid_pagination?()
 
       entries = results["entries"]
@@ -188,7 +188,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     test "can get all cms rules with valid structure", ~m(user)a do
       user_conn = simu_conn(:user, user)
       variables = %{}
-      results = user_conn |> query_result(@query, variables, "allPassportRulesString")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results |> Map.has_key?("cms")
       cms_rules = results["cms"]
@@ -212,24 +212,24 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       }
     }
     """
-    test "guest user can get paged default subscrubed communities", ~m(guest_conn)a do
+    test "guest user can get paged default subscribed communities", ~m(guest_conn)a do
       {:ok, _} = db_insert_multi(:community, 25)
       {:ok, _} = db_insert(:community, %{slug: "home"})
 
       variables = %{filter: %{page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "subscribedCommunities")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert @default_subscribed_communities == results["pageSize"]
     end
 
-    test "guest user can get paged default subscrubed communities with home included",
+    test "guest user can get paged default subscribed communities with home included",
          ~m(guest_conn)a do
       {:ok, _} = db_insert_multi(:community, 25)
       {:ok, _} = db_insert(:community, %{slug: "home"})
 
       variables = %{filter: %{page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "subscribedCommunities")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> Enum.any?(&(&1["slug"] == "home"))
     end
@@ -252,7 +252,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       {:ok, _} = db_insert_multi(:community, 25)
 
       variables = %{filter: %{page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "subscribedCommunities")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert @default_subscribed_communities == results["pageSize"]
@@ -271,14 +271,14 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     }
     """
     test "guest user should get false sessionState", ~m(guest_conn)a do
-      results = guest_conn |> query_result(@query, %{}, "sessionState")
+      results = guest_conn |> gq_query(@query)
       assert results["isValid"] == false
       assert results["user"] == nil
     end
 
     test "login user should get true sessionState", ~m(user)a do
       user_conn = simu_conn(:user, user)
-      results = user_conn |> query_result(@query, %{}, "sessionState")
+      results = user_conn |> gq_query(@query)
 
       assert results["isValid"] == true
       assert results["user"] |> Map.get("id") == to_string(user.id)
@@ -286,7 +286,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
     test "user with invalid token get false sessionState" do
       user_conn = simu_conn(:invalid_token)
-      results = user_conn |> query_result(@query, %{}, "sessionState")
+      results = user_conn |> gq_query(@query)
 
       assert results["isValid"] == false
       assert results["user"] == nil
@@ -296,7 +296,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       {:ok, community} = db_insert(:community, %{slug: "home"})
 
       user_conn = simu_conn(:user, user)
-      _results = user_conn |> query_result(@query, %{}, "sessionState")
+      _results = user_conn |> gq_query(@query)
 
       {:ok, record} =
         ORM.find_by(CommunitySubscriber, %{community_id: community.id, user_id: user.id})

@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.Query.Payment.Basic do
       {:ok, _record} = Payment.create_record(user, valid_attrs)
 
       variables = %{filter: %{page: 1, size: 20}}
-      results = user_conn |> query_result(@query, variables, "pagedBillRecords")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
     end

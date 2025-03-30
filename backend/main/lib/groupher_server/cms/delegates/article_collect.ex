@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
     ]
 
   # import Helper.ErrorCode
-  alias Helper.{ORM, Later}
+  alias Helper.{ORM, Later, Transaction}
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -32,8 +32,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   collect an article
   """
   def collect_article(article, %User{} = user) do
-    with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id) do
+    {:ok, info} = match(article)
+
+    Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:inc_author_achieve, fn _, _ ->
         Accounts.achieve(article.author.user, :inc, :collect)
@@ -55,7 +56,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
   # 用于在收藏时，用户添加文章到不同的收藏夹中的情况
@@ -63,21 +64,19 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   # 如果是第一次收藏，那么才创建文章收藏记录
   # 避免因为同一篇文章在不同收藏夹内造成的统计和用户成就系统的混乱
   def collect_article_ifneed(article, %User{} = user) do
-    with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id),
-         findby_args <- collection_findby_args(article, user.id) do
-      already_collected = ORM.find_by(ArticleCollect, findby_args)
+    findby_args = collection_findby_args(article, user.id)
+    already_collected = ORM.find_by(ArticleCollect, findby_args)
 
-      case already_collected do
-        {:ok, article_collect} -> {:ok, article_collect}
-        {:error, _} -> collect_article(article, user)
-      end
+    case already_collected do
+      {:ok, article_collect} -> {:ok, article_collect}
+      {:error, _} -> collect_article(article, user)
     end
   end
 
   def undo_collect_article(article, %User{} = user) do
-    with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id) do
+    {:ok, info} = match(article)
+
+    Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:dec_author_achieve, fn _, _ ->
         Accounts.achieve(article.author.user, :dec, :collect)
@@ -98,7 +97,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
   def undo_collect_article_ifneed(
@@ -111,8 +110,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   end
 
   def undo_collect_article_ifneed(article, %User{} = user) do
-    with findby_args <- collection_findby_args(article, user.id),
-         {:ok, article_collect} = ORM.find_by(ArticleCollect, findby_args) do
+    findby_args = collection_findby_args(article, user.id)
+
+    with {:ok, article_collect} = ORM.find_by(ArticleCollect, findby_args) do
       case article_collect.collect_folders |> length <= 1 do
         true -> undo_collect_article(article, user)
         false -> {:ok, article_collect}
@@ -140,10 +140,10 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   end
 
   defp collection_findby_args(article, user_id) do
-    with {:ok, info} <- match(article),
-         {:ok, thread} = thread_of(article, :upcase) do
-      %{thread: thread, user_id: user_id} |> Map.put(info.foreign_key, article.id)
-    end
+    {:ok, info} = match(article)
+    {:ok, thread} = thread_of(article, :upcase)
+
+    %{thread: thread, user_id: user_id} |> Map.put(info.foreign_key, article.id)
   end
 
   #############

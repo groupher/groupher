@@ -74,7 +74,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
     """
     test "should get pagination info", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
       assert results["pageSize"] == 10
@@ -88,7 +88,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       first_doc = results["entries"] |> List.first()
       assert first_doc["id"] > doc.id
     end
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, _} = CMS.upvote_article(doc_last_week, user2)
       {:ok, _} = CMS.upvote_article(doc_last_week, user3)
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       first_doc = results["entries"] |> List.first()
 
       assert first_doc["upvotesCount"] === 3
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, _} = CMS.create_comment(community, :doc, doc_id, mock_comment(), user2)
       {:ok, _} = CMS.create_comment(community, :doc, doc_id, mock_comment(), user3)
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       first_doc = results["entries"] |> List.first()
       assert first_doc["commentsCount"] === 3
     end
@@ -136,7 +136,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, _} =
         CMS.read_article(doc.original_community_slug, :doc, doc.inner_id, user3)
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       first_doc = results["entries"] |> List.first()
       last_doc = results["entries"] |> List.last()
       assert first_doc["views"] > last_doc["views"]
@@ -148,7 +148,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, _} = CMS.create_article(community, :doc, doc_attrs, user)
 
       variables = %{filter: %{page: 1, size: 10}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       doc = results["entries"] |> List.first()
 
@@ -164,10 +164,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, _} = CMS.set_article_tag(doc, article_tag.id)
 
       variables = %{filter: %{page: 1, size: 10, article_tag: article_tag.slug}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       variables = %{filter: %{page: 1, size: 10, article_tags: [article_tag.slug]}}
-      results2 = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results2 = guest_conn |> gq_query(@query, variables)
       assert results == results2
 
       doc = results["entries"] |> List.first()
@@ -182,7 +182,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, _} = CMS.create_article(community, :doc, doc_attrs2, user)
 
       variables = %{filter: %{page: 1, size: 10, community: community.slug}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       doc = results["entries"] |> List.first()
       assert results["totalCount"] == 4
@@ -204,7 +204,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
     test "pagination should have default page and size arg", ~m(guest_conn)a do
       variables = %{filter: %{}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       assert results |> is_valid_pagination?
       assert results["pageSize"] == @page_size
       assert results["totalCount"] == @total_count
@@ -237,7 +237,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, doc} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert length(results["entries"]) == 3
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(doc.id)))
@@ -247,7 +247,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       doc = results["entries"] |> List.first()
 
       assert doc["inserted_at"] == doc["active_at"]
@@ -255,7 +255,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
     test "filter sort should have default :desc_active", ~m(guest_conn)a do
       variables = %{filter: %{}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       active_timestamps = results["entries"] |> Enum.map(& &1["activeAt"])
 
       {:ok, first_inserted_time, 0} = active_timestamps |> List.first() |> DateTime.from_iso8601()
@@ -278,7 +278,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       most_views_doc = Doc |> order_by(desc: :views) |> limit(1) |> Repo.one()
       variables = %{filter: %{sort: "MOST_VIEWS"}}
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       find_doc = results |> Map.get("entries") |> hd
 
       # assert find_doc["id"] == most_views_doc |> Map.get(:id) |> to_string
@@ -314,7 +314,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
       variables = %{filter: %{community: community.slug}}
-      results = user_conn |> query_result(@query, variables, "pagedDocs")
+      results = user_conn |> gq_query(@query, variables)
       assert results["totalCount"] == 5
 
       the_doc = Enum.find(results["entries"], &(&1["id"] == to_string(doc.id)))
@@ -328,9 +328,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
       {:ok, _} = CMS.upvote_article(doc, user)
       {:ok, _} = CMS.collect_article(doc, user)
-      {:ok, _} = CMS.report_article(:doc, doc.id, "reason", "attr_info", user)
+      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
 
-      results = user_conn |> query_result(@query, variables, "pagedDocs")
+      results = user_conn |> gq_query(@query, variables)
 
       the_doc = Enum.find(results["entries"], &(&1["id"] == to_string(doc.id)))
       assert the_doc["viewerHasViewed"]
@@ -361,14 +361,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
     """
     test "THIS_YEAR option should work", ~m(guest_conn doc_last_year)a do
       variables = %{filter: %{when: "THIS_YEAR"}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> Enum.any?(&(&1["id"] != doc_last_year.id))
     end
 
     test "TODAY option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "TODAY"}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       expect_count = @total_count - @last_year_count - @last_month_count - @last_week_count
 
@@ -377,14 +377,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
     test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("totalCount") == @today_count
     end
 
     test "THIS_MONTH option should work", ~m(guest_conn doc_last_month)a do
       variables = %{filter: %{when: "THIS_MONTH"}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> Enum.any?(&(&1["id"] != doc_last_month.id))
     end
@@ -405,7 +405,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
     test "latest commented doc should appear on top",
          ~m(guest_conn community doc_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       entries = results["entries"]
       first_doc = entries |> List.first()
       assert first_doc["id"] !== to_string(doc_last_week.id)
@@ -417,7 +417,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, _} =
         CMS.create_comment(community, :doc, doc_id, mock_comment(), user2)
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       entries = results["entries"]
       first_doc = entries |> List.first()
 
@@ -437,7 +437,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
           user2
         )
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       entries = results["entries"]
       first_doc = entries |> List.first()
 
@@ -458,7 +458,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
           doc.author.user
         )
 
-      results = guest_conn |> query_result(@query, variables, "pagedDocs")
+      results = guest_conn |> gq_query(@query, variables)
       entries = results["entries"]
       first_doc = entries |> List.first()
 

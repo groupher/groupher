@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       variables = mock_attrs(:category, %{user_id: user.id})
       rule_conn = simu_conn(:user, cms: %{"category.create" => true})
 
-      created = rule_conn |> mutation_result(@create_category_query, variables, "createCategory")
+      created = rule_conn |> gq_mutation(@create_category_query, variables)
       # author = created["author"]
       assert created["title"] == variables.title
     end
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"category.delete" => true})
 
       variables = %{id: category.id}
-      deleted = rule_conn |> mutation_result(@delete_category_query, variables, "deleteCategory")
+      deleted = rule_conn |> gq_mutation(@delete_category_query, variables)
 
       assert deleted["id"] == to_string(category.id)
     end
@@ -77,7 +77,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"category.update" => true})
       variables = %{id: category.id, title: "new title"}
 
-      updated = rule_conn |> mutation_result(@update_category_query, variables, "updateCategory")
+      updated = rule_conn |> gq_mutation(@update_category_query, variables)
       assert updated["title"] == "new title"
     end
 
@@ -125,7 +125,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"category.set" => true})
       variables = %{community: community.slug, categoryId: category.id}
 
-      rule_conn |> mutation_result(@set_category_query, variables, "setCategory")
+      rule_conn |> gq_mutation(@set_category_query, variables)
 
       {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
       {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)
@@ -154,7 +154,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"category.unset" => true})
       variables = %{community: community.slug, categoryId: category.id}
 
-      rule_conn |> mutation_result(@unset_category_query, variables, "setCategory")
+      rule_conn |> gq_mutation(@unset_category_query, variables)
 
       {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
       {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)
@@ -213,7 +213,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       variables = mock_attrs(:community, %{locale: "zh"})
 
       created =
-        rule_conn |> mutation_result(@create_community_query, variables, "createCommunity")
+        rule_conn |> gq_mutation(@create_community_query, variables)
 
       {:ok, found} = Community |> ORM.find(created["id"])
       assert created["id"] == to_string(found.id)
@@ -224,8 +224,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
       variables = mock_attrs(:community)
 
-      created =
-        rule_conn |> mutation_result(@create_community_query, variables, "createCommunity")
+      created = rule_conn |> gq_mutation(@create_community_query, variables)
 
       assert created["threads"] == [
                %{"index" => 0, "slug" => "post", "title" => "post"},
@@ -239,9 +238,9 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "can create community with some title, different slug" do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
       variables = mock_attrs(:community, %{title: "elixir", slug: "elixir1"})
-      rule_conn |> mutation_result(@create_community_query, variables, "createCommunity")
+      rule_conn |> gq_mutation(@create_community_query, variables)
       variables = mock_attrs(:community, %{title: "elixir", slug: "elixir2"})
-      rule_conn |> mutation_result(@create_community_query, variables, "createCommunity")
+      rule_conn |> gq_mutation(@create_community_query, variables)
 
       {:ok, community} = Community |> ORM.find_by(%{slug: "elixir1"})
       assert community.title == "elixir"
@@ -254,17 +253,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
       variables = mock_attrs(:community, %{title: "elixir1", slug: "elixir"})
 
-      first =
-        rule_conn
-        |> mutation_result(@create_community_query, variables, "createCommunity")
-
+      first = rule_conn |> gq_mutation(@create_community_query, variables)
       assert not is_nil(first)
 
       variables = mock_attrs(:community, %{title: "elixir2", slug: "elixir"})
-
-      last =
-        rule_conn
-        |> mutation_result(@create_community_query, variables, "createCommunity")
+      last = rule_conn |> gq_mutation(@create_community_query, variables)
 
       assert is_nil(last)
     end
@@ -282,8 +275,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
       variables = %{community: community.slug, title: "new title"}
 
-      updated =
-        rule_conn |> mutation_result(@update_community_query, variables, "updateCommunity")
+      updated = rule_conn |> gq_mutation(@update_community_query, variables)
 
       {:ok, found} = Community |> ORM.find(updated["id"])
       assert updated["id"] == to_string(found.id)
@@ -294,9 +286,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
       variables = %{community: community.slug}
 
-      updated =
-        rule_conn
-        |> mutation_result(@update_community_query, variables, "updateCommunity")
+      updated = rule_conn |> gq_mutation(@update_community_query, variables)
 
       {:ok, found} = Community |> ORM.find(updated["id"])
       assert updated["id"] == to_string(found.id)
@@ -342,8 +332,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       variables = %{id: community.id}
       rule_conn = simu_conn(:user, cms: %{"community.delete" => true})
 
-      deleted =
-        rule_conn |> mutation_result(@delete_community_query, variables, "deleteCommunity")
+      deleted = rule_conn |> gq_mutation(@delete_community_query, variables)
 
       assert deleted["id"] == to_string(community.id)
       assert {:error, _} = ORM.find(Community, community.id)
@@ -385,7 +374,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       passport_rules = %{"thread.create" => true}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
-      result = rule_conn |> mutation_result(@query, variables, "createThread")
+      result = rule_conn |> gq_mutation(@query, variables)
 
       assert result["title"] == title
     end
@@ -420,7 +409,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       passport_rules = %{community.title => %{"thread.set" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
-      result = rule_conn |> mutation_result(@query, variables, "setThread")
+      result = rule_conn |> gq_mutation(@query, variables)
 
       assert result["threads"] |> Enum.at(1) |> Map.get("title") == title
       assert result["id"] == to_string(community.id)
@@ -446,7 +435,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       passport_rules = %{community.title => %{"thread.unset" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
-      result = rule_conn |> mutation_result(@query, variables, "unsetThread")
+      result = rule_conn |> gq_mutation(@query, variables)
       assert result["threads"] |> Enum.count() == 5
     end
   end
@@ -462,7 +451,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     """
     test "can get all passport rules", ~m(user)a do
       rule_conn = simu_conn(:user, user)
-      result = rule_conn |> query_result(@all_rules_query, %{}, "allPassportRules")
+      result = rule_conn |> gq_query(@all_rules_query)
 
       assert is_binary(result["root"])
       assert is_binary(result["moderator"])
@@ -486,7 +475,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       variables = %{user: user2.login, community: community.slug, role: role}
 
-      result = rule_conn |> mutation_result(@set_moderator_query, variables, "addModerator")
+      result = rule_conn |> gq_mutation(@set_moderator_query, variables)
 
       assert result["slug"] == community.slug
     end
@@ -514,7 +503,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       variables = %{user: user2.login, community: community.slug}
 
-      rule_conn |> mutation_result(@unset_moderator_query, variables, "removeModerator")
+      rule_conn |> gq_mutation(@unset_moderator_query, variables)
 
       assert {:error, _} =
                CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
@@ -565,9 +554,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
                ecode(:community_root_only)
              )
 
-      result =
-        root_rule_conn
-        |> mutation_result(@update_moderator_query, variables, "updateModeratorPassport")
+      result = root_rule_conn |> gq_mutation(@update_moderator_query, variables)
 
       {:ok, user2_passport} = CMS.get_passport(%User{id: user2.id})
       assert get_in(user2_passport, ["#{community.slug}", "post.tag.edit"])
@@ -602,7 +589,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       login_conn = simu_conn(:user, user)
 
       variables = %{community: community.slug}
-      created = login_conn |> mutation_result(@subscribe_query, variables, "subscribeCommunity")
+      created = login_conn |> gq_mutation(@subscribe_query, variables)
 
       assert created["id"] == to_string(community.id)
     end
@@ -611,7 +598,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       login_conn = simu_conn(:user, user)
 
       variables = %{community: community.slug}
-      login_conn |> mutation_result(@subscribe_query, variables, "subscribeCommunity")
+      login_conn |> gq_mutation(@subscribe_query, variables)
 
       {:ok, user} = ORM.find(User, user.id)
 
@@ -635,7 +622,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       login_conn = simu_conn(:user, user)
 
       variables = %{community: community.slug}
-      _created = login_conn |> mutation_result(@subscribe_query, variables, "subscribeCommunity")
+      _created = login_conn |> gq_mutation(@subscribe_query, variables)
       {:ok, community} = Community |> ORM.find(community.id)
 
       geo_info_data = community.geo_info |> Map.get("data")
@@ -667,8 +654,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       variables = %{community: community.slug}
 
-      result =
-        login_conn |> mutation_result(@unsubscribe_query, variables, "unsubscribeCommunity")
+      result = login_conn |> gq_mutation(@unsubscribe_query, variables)
 
       {:ok, cur_subscribers} =
         CMS.community_members(:subscribers, %Community{id: community.id}, %{page: 1, size: 10})
@@ -681,12 +667,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       login_conn = simu_conn(:user, user)
 
       variables = %{community: community.slug}
-      login_conn |> mutation_result(@subscribe_query, variables, "subscribeCommunity")
+      login_conn |> gq_mutation(@subscribe_query, variables)
 
       {:ok, user} = ORM.find(User, user.id)
       assert user.subscribed_communities_count == 1
 
-      login_conn |> mutation_result(@unsubscribe_query, variables, "unsubscribeCommunity")
+      login_conn |> gq_mutation(@unsubscribe_query, variables)
 
       {:ok, user} = ORM.find(User, user.id)
       assert user.subscribed_communities_count == 0
@@ -709,7 +695,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       login_conn = simu_conn(:user, user)
 
       variables = %{community: community.slug}
-      _created = login_conn |> mutation_result(@subscribe_query, variables, "subscribeCommunity")
+      _created = login_conn |> gq_mutation(@subscribe_query, variables)
       {:ok, community} = Community |> ORM.find(community.id)
 
       geo_info_data = community.geo_info |> Map.get("data")
@@ -718,7 +704,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert update_geo_city["value"] == 1
 
       variables = %{community: community.slug}
-      login_conn |> mutation_result(@unsubscribe_query, variables, "unsubscribeCommunity")
+      login_conn |> gq_mutation(@unsubscribe_query, variables)
 
       {:ok, community} = Community |> ORM.find(community.id)
 
@@ -754,7 +740,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     """
     test "apply a community should have default root user", ~m(user_conn)a do
       variables = mock_attrs(:community, %{locale: "it"})
-      created = user_conn |> mutation_result(@apply_community_query, variables, "applyCommunity")
+      created = user_conn |> gq_mutation(@apply_community_query, variables)
 
       {:ok, found} = Community |> ORM.find(created["id"])
       assert created["id"] == to_string(found.id)
@@ -775,13 +761,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     """
     test "can approve a community apply2", ~m(user_conn)a do
       variables = mock_attrs(:community)
-      created = user_conn |> mutation_result(@apply_community_query, variables, "applyCommunity")
+      created = user_conn |> gq_mutation(@apply_community_query, variables)
 
       variables = %{community: created["slug"]}
       rule_conn = simu_conn(:user, cms: %{"community.apply.approve" => true})
 
-      rule_conn
-      |> mutation_result(@approve_community_query, variables, "approveCommunityApply")
+      rule_conn |> gq_mutation(@approve_community_query, variables)
 
       {:ok, found} = Community |> ORM.find(created["id"])
       assert found.pending == @community_normal
@@ -797,14 +782,13 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     """
     test "can deny a community apply", ~m(user_conn)a do
       variables = mock_attrs(:community)
-      created = user_conn |> mutation_result(@apply_community_query, variables, "applyCommunity")
+      created = user_conn |> gq_mutation(@apply_community_query, variables)
       assert {:ok, _} = Community |> ORM.find(created["id"])
 
       variables = %{id: created["id"]}
       rule_conn = simu_conn(:user, cms: %{"community.apply.deny" => true})
 
-      rule_conn
-      |> mutation_result(@deny_community_query, variables, "denyCommunityApply")
+      rule_conn |> gq_mutation(@deny_community_query, variables)
 
       assert {:error, _} = Community |> ORM.find(created["id"])
     end

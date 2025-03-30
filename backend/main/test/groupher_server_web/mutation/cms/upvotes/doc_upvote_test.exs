@@ -15,9 +15,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
     test "login user can upvote a doc", ~m(user_conn community doc user)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
-      created =
-        user_conn
-        |> mutation_result(Schema.m(:upvote_article, :doc), variables, "upvoteDoc")
+      created = user_conn |> gq_mutation(Schema.m(:upvote_article, :doc), variables)
 
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
       assert created["id"] == to_string(doc.id)
@@ -39,13 +37,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
 
       variables = %{id: doc.inner_id, community: community.slug}
 
-      updated =
-        user_conn
-        |> mutation_result(
-          Schema.m(:undo_upvote_article, :doc),
-          variables,
-          "undoUpvoteDoc"
-        )
+      updated = user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :doc), variables)
 
       assert not user_exist_in?(user, get_in(updated, ["meta", "latestUpvotedUsers"]))
       assert updated["id"] == to_string(doc.id)

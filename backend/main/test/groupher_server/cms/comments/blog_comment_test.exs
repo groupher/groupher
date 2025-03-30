@@ -455,8 +455,8 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, comment} =
         CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
-      {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user2)
+      {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
+      {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user2)
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -467,7 +467,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       assert Enum.any?(report.report_cases, &(&1.user.login == user.login))
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
 
-      {:ok, _} = CMS.undo_report_article(:comment, comment.id, user)
+      {:ok, _} = CMS.undo_report_comment(comment, user)
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -481,14 +481,13 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
     test "report user < @report_threshold_for_fold will not fold comment",
          ~m(community user blog)a do
-      {:ok, comment} =
-        CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+      {:ok, comment} = CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       assert not comment.is_folded
 
       Enum.reduce(1..(@report_threshold_for_fold - 1), [], fn _, _acc ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
+        {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
       end)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -504,7 +503,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
       Enum.reduce(1..(@report_threshold_for_fold + 1), [], fn _, _acc ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
+        {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
       end)
 
       {:ok, comment} = ORM.find(Comment, comment.id)

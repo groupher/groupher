@@ -3,15 +3,14 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   CRUD and operations for article comments
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2]
+  import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2, thread_of: 1]
 
   import GroupherServer.CMS.Delegate.Helper, only: [sync_embed_replies: 1]
 
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
 
-  alias Helper.ORM
-  alias Helper.QueryBuilder
+  alias Helper.{ORM, Transaction, QueryBuilder}
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -98,9 +97,10 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   @doc """
   report an account
   """
-  def report_account(account_id, reason, attr, user) do
-    with {:ok, info} <- match(:account),
-         {:ok, account} <- ORM.find(info.model, account_id) do
+  def report_account(%User{} = account, reason, attr, %User{} = user) do
+    {:ok, info} = match(:account)
+
+    Transaction.locking(account, fn account ->
       Multi.new()
       |> Multi.run(:create_abuse_report, fn _, _ ->
         create_report(:account, account.id, reason, attr, user)
@@ -110,15 +110,16 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
   @doc """
   undo report article content
   """
-  def undo_report_account(account_id, %User{} = user) do
-    with {:ok, info} <- match(:account),
-         {:ok, account} <- ORM.find(info.model, account_id) do
+  def undo_report_account(%User{} = account, %User{} = user) do
+    {:ok, info} = match(:account)
+
+    Transaction.locking(account, fn account ->
       Multi.new()
       |> Multi.run(:delete_abuse_report, fn _, _ ->
         delete_report(:account, account.id, user)
@@ -128,17 +129,19 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
   @doc """
   report article content
   """
-  def report_article(thread, article_id, reason, attr, %User{} = user) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, article_id) do
+  def report_article(article, reason, attr, %User{} = user) do
+    {:ok, info} = match(article)
+
+    Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:create_abuse_report, fn _, _ ->
+        {:ok, thread} = thread_of(article)
         create_report(thread, article.id, reason, attr, user)
       end)
       |> Multi.run(:update_report_meta, fn _, _ ->
@@ -146,15 +149,17 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
   @doc """
   undo report article content
   """
-  def undo_report_article(thread, article_id, %User{} = user) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, article_id) do
+  def undo_report_article(article, %User{} = user) do
+    {:ok, thread} = thread_of(article)
+    {:ok, info} = match(thread)
+
+    Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:delete_abuse_report, fn _, _ ->
         delete_report(thread, article.id, user)
@@ -164,15 +169,15 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
   @doc "report a comment"
-  def report_comment(comment_id, reason, attr, %User{} = user) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id) do
+  def report_comment(%Comment{} = comment, reason, attr, %User{} = user) do
+    Transaction.locking(comment, fn comment ->
       Multi.new()
       |> Multi.run(:create_abuse_report, fn _, _ ->
-        create_report(:comment, comment_id, reason, attr, user)
+        create_report(:comment, comment.id, reason, attr, user)
       end)
       |> Multi.run(:update_report_meta, fn _, _ ->
         {:ok, info} = match(:comment)
@@ -188,11 +193,22 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
-  def undo_report_comment(comment_id, %User{} = user) do
-    undo_report_article(:comment, comment_id, user)
+  def undo_report_comment(%Comment{} = comment, %User{} = user) do
+    Transaction.locking(comment, fn comment ->
+      Multi.new()
+      |> Multi.run(:delete_abuse_report, fn _, _ ->
+        delete_report(:comment, comment.id, user)
+      end)
+      |> Multi.run(:update_report_meta, fn _, _ ->
+        {:ok, info} = match(:comment)
+        update_report_meta(info, comment)
+      end)
+      |> Repo.transaction()
+      |> result()
+    end)
   end
 
   defp do_paged_reports(query, thread, filter) do
@@ -201,7 +217,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     query
     |> QueryBuilder.filter_pack(filter)
     |> ORM.paginator(~m(page size)a)
-    |> reports_formater(thread)
+    |> reports_formatter(thread)
     |> done()
   end
 
@@ -308,7 +324,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     end
   end
 
-  defp reports_formater(%{entries: entries} = paged_reports, :account) do
+  defp reports_formatter(%{entries: entries} = paged_reports, :account) do
     paged_reports
     |> Map.put(
       :entries,
@@ -319,7 +335,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     )
   end
 
-  defp reports_formater(%{entries: entries} = paged_reports, :comment) do
+  defp reports_formatter(%{entries: entries} = paged_reports, :comment) do
     paged_reports
     |> Map.put(
       :entries,
@@ -330,7 +346,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     )
   end
 
-  defp reports_formater(%{entries: entries} = paged_reports, thread)
+  defp reports_formatter(%{entries: entries} = paged_reports, thread)
        when thread in @article_threads do
     paged_reports
     |> Map.put(

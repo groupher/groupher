@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       passport_rules = %{"post.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "markDeletePost")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(post.id)
       assert updated["markDelete"] == true
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       passport_rules = %{"post.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> mutation_result(@query, variables, "markDeletePost")
+      rule_conn |> gq_mutation(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.posts_count == 0
@@ -80,7 +80,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       passport_rules = %{"post.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "undoMarkDeletePost")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(post.id)
       assert updated["markDelete"] == false
@@ -99,7 +99,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       variables = %{id: post.id}
       passport_rules = %{"post.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
-      rule_conn |> mutation_result(@query, variables, "undoMarkDeletePost")
+      rule_conn |> gq_mutation(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.posts_count == 1
@@ -130,7 +130,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       passport_rules = %{"post.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "batchMarkDeletePosts")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["done"] == true
 
@@ -164,7 +164,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       passport_rules = %{"post.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "batchUndoMarkDeletePosts")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["done"] == true
 
@@ -190,7 +190,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       passport_rules = %{community.slug => %{"post.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "pinPost")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(post.id)
     end
@@ -219,20 +219,20 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
 
       variables = %{id: post.inner_id, community: community.slug}
       rule_conn = simu_conn(:user)
-      ret = rule_conn |> mutation_result(@query, variables, "post")
+      ret = rule_conn |> gq_mutation(@query, variables)
       assert ret["isPinned"] == true
 
-      ret = guest_conn |> mutation_result(@query, variables, "post")
+      ret = guest_conn |> gq_mutation(@query, variables)
       assert ret["isPinned"] == true
 
       {:ok, _} = CMS.undo_pin_article(community, post)
 
       variables = %{id: post.inner_id, community: community.slug}
       rule_conn = simu_conn(:user)
-      ret = rule_conn |> mutation_result(@query, variables, "post")
+      ret = rule_conn |> gq_mutation(@query, variables)
       assert ret["isPinned"] == false
 
-      ret = guest_conn |> mutation_result(@query, variables, "post")
+      ret = guest_conn |> gq_mutation(@query, variables)
       assert ret["isPinned"] == false
     end
 
@@ -251,7 +251,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       {:ok, _} = CMS.pin_article(community, post)
-      updated = rule_conn |> mutation_result(@query, variables, "undoPinPost")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(post.id)
     end

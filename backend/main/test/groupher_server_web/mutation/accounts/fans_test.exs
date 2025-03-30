@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
       {:ok, user2} = db_insert(:user)
 
       variables = %{login: user2.login}
-      followed = user_conn |> mutation_result(@query, variables, "follow")
+      followed = user_conn |> gq_mutation(@query, variables)
 
       assert followed["id"] == to_string(user2.id)
       assert followed["viewerHasFollowed"] == false
@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
       {:ok, user2} = db_insert(:user)
 
       variables = %{login: user2.login}
-      followed = user_conn |> mutation_result(@query, variables, "follow")
+      followed = user_conn |> gq_mutation(@query, variables)
       assert followed["id"] == to_string(user2.id)
 
       assert user_conn |> mutation_get_error?(@query, variables, ecode(:already_did))
@@ -73,7 +73,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
       assert found |> Map.get(:followers) |> length == 1
 
       variables = %{login: user2.login}
-      result = user_conn |> mutation_result(@query, variables, "undoFollow")
+      result = user_conn |> gq_mutation(@query, variables)
 
       assert result["id"] == to_string(user2.id)
 

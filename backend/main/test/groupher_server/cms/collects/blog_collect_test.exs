@@ -3,16 +3,15 @@ defmodule GroupherServer.Test.Collect.Blog do
   use GroupherServer.TestTools
 
   setup do
-    {community, blog, _, user} = mock_article(:blog)
+    {_, blog, _, user} = mock_article(:blog)
 
     {:ok, user2} = db_insert(:user)
 
-    {:ok, ~m(user user2 community blog)a}
+    {:ok, ~m(user user2 blog)a}
   end
 
   describe "[cms blog collect]" do
-    test "blog can be collect && collects_count should inc by 1",
-         ~m(user user2 community blog)a do
+    test "blog can be collect && collects_count should inc by 1", ~m(user user2 blog)a do
       {:ok, article_collect} = CMS.collect_article(blog, user)
       {:ok, article} = ORM.find(Blog, article_collect.blog_id)
 
@@ -25,8 +24,7 @@ defmodule GroupherServer.Test.Collect.Blog do
       assert article.collects_count == 2
     end
 
-    test "blog can be undo collect && collects_count should dec by 1",
-         ~m(user community blog)a do
+    test "blog can be undo collect && collects_count should dec by 1", ~m(user blog)a do
       {:ok, _} = CMS.collect_article(blog, user)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
@@ -38,7 +36,7 @@ defmodule GroupherServer.Test.Collect.Blog do
       assert article.collects_count == 0
     end
 
-    test "can get collect_users", ~m(user user2 community blog)a do
+    test "can get collect_users", ~m(user user2 blog)a do
       {:ok, _} = CMS.collect_article(blog, user)
       {:ok, _} = CMS.collect_article(blog, user2)
 
@@ -49,7 +47,7 @@ defmodule GroupherServer.Test.Collect.Blog do
       assert user_exist_in?(user2, users.entries)
     end
 
-    test "blog meta history should be updated", ~m(user user2 community blog)a do
+    test "blog meta history should be updated", ~m(user user2 blog)a do
       {:ok, _} = CMS.collect_article(blog, user)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
@@ -62,8 +60,7 @@ defmodule GroupherServer.Test.Collect.Blog do
       assert user2.id in blog.meta.collected_user_ids
     end
 
-    test "blog meta history should be updated after undo collect",
-         ~m(user user2 community blog)a do
+    test "blog meta history should be updated after undo collect", ~m(user user2 blog)a do
       {:ok, _} = CMS.collect_article(blog, user)
       {:ok, blog} = ORM.find(Blog, blog.id)
       {:ok, _} = CMS.collect_article(blog, user2)

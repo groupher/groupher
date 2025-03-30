@@ -62,7 +62,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.ChangelogReindexTag do
         ]
       }
 
-      rule_conn |> mutation_result(@query, variables, "reindexTagsInGroup")
+      rule_conn |> gq_mutation(@query, variables)
 
       {:ok, article_tag1_after} = ORM.find(ArticleTag, article_tag1.id)
       {:ok, article_tag2_after} = ORM.find(ArticleTag, article_tag2.id)

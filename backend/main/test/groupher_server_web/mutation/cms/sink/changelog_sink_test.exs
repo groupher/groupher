@@ -17,9 +17,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
       passport_rules = %{community.slug => %{"changelog.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result =
-        rule_conn
-        |> mutation_result(Schema.m(:sink_article, :changelog), variables, "sinkChangelog")
+      result = rule_conn |> gq_mutation(Schema.m(:sink_article, :changelog), variables)
 
       assert result["id"] == to_string(changelog.id)
 
@@ -54,13 +52,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
 
       {:ok, _} = CMS.sink_article(changelog)
 
-      updated =
-        rule_conn
-        |> mutation_result(
-          Schema.m(:undo_sink_article, :changelog),
-          variables,
-          "undoSinkChangelog"
-        )
+      updated = rule_conn |> gq_mutation(Schema.m(:undo_sink_article, :changelog), variables)
 
       assert updated["id"] == to_string(changelog.id)
 

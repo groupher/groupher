@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       passport_rules = %{"doc.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "markDeleteDoc")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(doc.id)
       assert updated["markDelete"] == true
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       passport_rules = %{"doc.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> mutation_result(@query, variables, "markDeleteDoc")
+      rule_conn |> gq_mutation(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.docs_count == 0
@@ -80,7 +80,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       passport_rules = %{"doc.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "undoMarkDeleteDoc")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(doc.id)
       assert updated["markDelete"] == false
@@ -100,7 +100,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       variables = %{id: doc.id}
       passport_rules = %{"doc.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
-      rule_conn |> mutation_result(@query, variables, "undoMarkDeleteDoc")
+      rule_conn |> gq_mutation(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.docs_count == 1
@@ -131,7 +131,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       passport_rules = %{"doc.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "batchMarkDeleteDocs")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["done"] == true
 
@@ -165,7 +165,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       passport_rules = %{"doc.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "batchUndoMarkDeleteDocs")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["done"] == true
 
@@ -191,7 +191,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       passport_rules = %{community.slug => %{"doc.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "pinDoc")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(doc.id)
     end
@@ -220,7 +220,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       {:ok, _} = CMS.pin_article(community, doc)
-      updated = rule_conn |> mutation_result(@query, variables, "undoPinDoc")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(doc.id)
     end

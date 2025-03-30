@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
     {:ok, post} = CMS.create_article(community, :post, kanban_attrs, user)
 
     variables = %{community: post.original_community_slug, id: post.inner_id}
-    result = user_conn |> query_result(@query, variables, "post")
+    result = user_conn |> gq_query(@query, variables)
 
     assert result["id"] == to_string(post.id)
     assert result["cat"] == "FEATURE"

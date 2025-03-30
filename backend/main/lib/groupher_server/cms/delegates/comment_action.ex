@@ -11,8 +11,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
       get_config: 2,
       ensure: 2,
       article_of: 1,
-      thread_of: 1,
-      use_transaction: 1
+      thread_of: 1
     ]
 
   import GroupherServer.CMS.Delegate.Helper,
@@ -32,7 +31,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   import GroupherServer.CMS.Helper.Matcher
 
   alias Helper.Types, as: T
-  alias Helper.{ORM, Later}
+  alias Helper.{ORM, Later, Transaction}
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -256,8 +255,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     article_meta = ensure(article.meta, @default_article_meta)
     meta = Map.merge(article_meta, %{is_comment_locked: true})
 
-    use_transaction(fn ->
-      {:ok, article} = ORM.lock_article(article)
+    Transaction.locking(article, fn article ->
       ORM.update_meta(article, meta)
     end)
   end
@@ -267,9 +265,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     article_meta = ensure(article.meta, @default_article_meta)
     meta = Map.merge(article_meta, %{is_comment_locked: false})
 
-    use_transaction(fn ->
-      {:ok, article} = ORM.lock_article(article)
-
+    Transaction.locking(article, fn article ->
       ORM.update_meta(article, meta)
     end)
   end

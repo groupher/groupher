@@ -16,7 +16,6 @@ defmodule GroupherServer.Test.CMS.Emotions.ChangelogEmotions do
   end
 
   describe "[emotion in paged changelogs]" do
-    @tag :wip
     test "login user should got viewer has emotioned status",
          ~m(community changelog_attrs user)a do
       total_count = 10
@@ -62,7 +61,6 @@ defmodule GroupherServer.Test.CMS.Emotions.ChangelogEmotions do
       assert @default_emotions == emotions
     end
 
-    @tag :wip
     test "can make emotion to changelog", ~m(community changelog_attrs user user2)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
@@ -76,7 +74,6 @@ defmodule GroupherServer.Test.CMS.Emotions.ChangelogEmotions do
       assert user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
-    @tag :wip
     test "can undo emotion to changelog", ~m(community changelog_attrs user user2)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
@@ -93,7 +90,6 @@ defmodule GroupherServer.Test.CMS.Emotions.ChangelogEmotions do
       assert not user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
-    @tag :wip
     test "same user make same emotion to same changelog.", ~m(community changelog_attrs user)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
@@ -106,7 +102,6 @@ defmodule GroupherServer.Test.CMS.Emotions.ChangelogEmotions do
       assert user_exist_in?(user, changelog.emotions.latest_downvote_users)
     end
 
-    @tag :wip
     test "same user same emotion to same changelog only have one user_emotion record",
          ~m(community changelog_attrs user)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -126,7 +121,6 @@ defmodule GroupherServer.Test.CMS.Emotions.ChangelogEmotions do
       assert record.heart
     end
 
-    @tag :wip
     test "different user can make same emotions on same changelog",
          ~m(community changelog_attrs user user2 user3)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -143,7 +137,6 @@ defmodule GroupherServer.Test.CMS.Emotions.ChangelogEmotions do
       assert user_exist_in?(user3, emotions.latest_beer_users)
     end
 
-    @tag :wip
     test "same user can make different emotions on same changelog",
          ~m(community changelog_attrs user)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)

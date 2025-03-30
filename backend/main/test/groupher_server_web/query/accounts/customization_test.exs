@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Query.Account.Customization do
     }
     """
     test "user can have default customization configs", ~m(user_conn user)a do
-      results = user_conn |> query_result(@query, %{login: user.login}, "user")
+      results = user_conn |> gq_query(@query, %{login: user.login})
 
       assert results["id"] == to_string(user.id)
       assert results["customization"]["theme"] == Customization.default() |> Map.get(:theme)

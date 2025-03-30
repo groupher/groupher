@@ -15,9 +15,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
     test "login user can upvote a changelog", ~m(user_conn community changelog user)a do
       variables = %{id: changelog.inner_id, community: community.slug}
 
-      created =
-        user_conn
-        |> mutation_result(Schema.m(:upvote_article, :changelog), variables, "upvoteChangelog")
+      created = user_conn |> gq_mutation(Schema.m(:upvote_article, :changelog), variables)
 
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
       assert created["id"] == to_string(changelog.id)
@@ -40,12 +38,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
       variables = %{id: changelog.inner_id, community: community.slug}
 
       updated =
-        user_conn
-        |> mutation_result(
-          Schema.m(:undo_upvote_article, :changelog),
-          variables,
-          "undoUpvoteChangelog"
-        )
+        user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :changelog), variables)
 
       assert not user_exist_in?(user, get_in(updated, ["meta", "latestUpvotedUsers"]))
       assert updated["id"] == to_string(changelog.id)

@@ -17,7 +17,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       ensure: 2,
       module_to_upcase: 1,
       atom_values_to_upcase: 1,
-      use_transaction: 1,
       mark_viewer_emotion_states: 2,
       thread_of: 1
     ]
@@ -25,7 +24,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   import Helper.ErrorCode
   import ShortMaps
 
-  alias Helper.{Later, ORM, QueryBuilder, Converter, Constant}
+  alias Helper.{Later, ORM, QueryBuilder, Converter, Constant, Transaction}
   alias GroupherServer.{Accounts, CMS, Email, Repo, Statistics}
 
   alias Accounts.Model.User
@@ -47,7 +46,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @article_threads get_config(:article, :threads)
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
-  @default_community_meta Embeds.CommunityMeta.default_meta()
   @default_article_meta Embeds.ArticleMeta.default_meta()
   @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
   @remove_article_hint "The content does not comply with the community norms"
@@ -401,9 +399,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
     with {:ok, author} <- ensure_author_exists(user),
          {:ok, info} <- match(thread) do
-      use_transaction(fn ->
-        {:ok, community} = ORM.lock_community(community)
-
+      Transaction.locking(community, fn community ->
         Multi.new()
         |> Multi.run(:create_article, fn _, _ ->
           do_create_article(info.model, attrs, author, community)

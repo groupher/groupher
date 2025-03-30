@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.ChangelogSetTag do
         community: community.slug
       }
 
-      rule_conn |> mutation_result(Schema.m(:set_article_tag), variables, "setArticleTag")
+      rule_conn |> gq_mutation(Schema.m(:set_article_tag), variables)
       {:ok, found} = ORM.find(Changelog, changelog.id, preload: :article_tags)
 
       assoc_tags = found.article_tags |> Enum.map(& &1.id)
@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.ChangelogSetTag do
         community: community.slug
       }
 
-      rule_conn |> mutation_result(Schema.m(:unset_article_tag), variables, "unsetArticleTag")
+      rule_conn |> gq_mutation(Schema.m(:unset_article_tag), variables)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :article_tags)
       assoc_tags = changelog.article_tags |> Enum.map(& &1.id)

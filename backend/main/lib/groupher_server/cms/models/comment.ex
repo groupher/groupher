@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.Model.Comment do
     |> cast_embed(:emotions, required: true, with: &Embeds.CommentEmotion.changeset/2)
     |> cast_embed(:meta, required: true, with: &Embeds.CommentMeta.changeset/2)
     |> validate_required(@required_fields)
-    |> generl_changeset
+    |> geneal_changeset
   end
 
   # @doc false
@@ -111,10 +111,10 @@ defmodule GroupherServer.CMS.Model.Comment do
     comment
     |> cast(attrs, @required_fields ++ @updatable_fields ++ @article_fields)
     |> cast_embed(:meta, required: true, with: &Embeds.CommentMeta.changeset/2)
-    |> generl_changeset
+    |> geneal_changeset
   end
 
-  defp generl_changeset(content) do
+  defp geneal_changeset(content) do
     content
     |> foreign_key_constraint(:author_id)
     |> articles_foreign_key_constraint

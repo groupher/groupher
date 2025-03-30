@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       passport_rules = %{"changelog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "markDeleteChangelog")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(changelog.id)
       assert updated["markDelete"] == true
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       passport_rules = %{"changelog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> mutation_result(@query, variables, "markDeleteChangelog")
+      rule_conn |> gq_mutation(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.changelogs_count == 0
@@ -80,7 +80,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       passport_rules = %{"changelog.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "undoMarkDeleteChangelog")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(changelog.id)
       assert updated["markDelete"] == false
@@ -100,7 +100,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       variables = %{id: changelog.id}
       passport_rules = %{"changelog.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
-      rule_conn |> mutation_result(@query, variables, "undoMarkDeleteChangelog")
+      rule_conn |> gq_mutation(@query, variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.changelogs_count == 1
@@ -132,7 +132,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       passport_rules = %{"changelog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "batchMarkDeleteChangelogs")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["done"] == true
 
@@ -167,7 +167,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       passport_rules = %{"changelog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "batchUndoMarkDeleteChangelogs")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["done"] == true
 
@@ -193,7 +193,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       passport_rules = %{community.slug => %{"changelog.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> mutation_result(@query, variables, "pinChangelog")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(changelog.id)
     end
@@ -222,7 +222,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       CMS.pin_article(community, changelog)
-      updated = rule_conn |> mutation_result(@query, variables, "undoPinChangelog")
+      updated = rule_conn |> gq_mutation(@query, variables)
 
       assert updated["id"] == to_string(changelog.id)
     end

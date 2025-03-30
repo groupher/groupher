@@ -39,8 +39,8 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
     {:ok, _folder} = Accounts.create_collect_folder(%{title: "test folder2"}, user)
 
     variables = %{login: user.login, filter: %{page: 1, size: 20}}
-    results = user_conn |> query_result(@query, variables, "pagedCollectFolders")
-    results2 = guest_conn |> query_result(@query, variables, "pagedCollectFolders")
+    results = user_conn |> gq_query(@query, variables)
+    results2 = guest_conn |> gq_query(@query, variables)
 
     assert results["totalCount"] == 2
     assert results2["totalCount"] == 2
@@ -55,8 +55,8 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
     {:ok, _folder} = Accounts.create_collect_folder(%{title: "test folder2"}, user)
 
     variables = %{login: user.login, filter: %{page: 1, size: 20}}
-    results = user_conn |> query_result(@query, variables, "pagedCollectFolders")
-    results2 = guest_conn |> query_result(@query, variables, "pagedCollectFolders")
+    results = user_conn |> gq_query(@query, variables)
+    results2 = guest_conn |> gq_query(@query, variables)
 
     assert results["totalCount"] == 2
     assert results2["totalCount"] == 1
@@ -89,8 +89,8 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
 
     variables = %{folderId: folder.id, filter: %{page: 1, size: 20}}
 
-    results = user_conn |> query_result(@query, variables, "pagedCollectedArticles")
-    results2 = guest_conn |> query_result(@query, variables, "pagedCollectedArticles")
+    results = user_conn |> gq_query(@query, variables)
+    results2 = guest_conn |> gq_query(@query, variables)
 
     assert results["totalCount"] == @total_count
     assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(post1.id)))
@@ -123,7 +123,7 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
 
     variables = %{folderId: folder.id, filter: %{page: 1, size: 20}}
 
-    results = user_conn |> query_result(@query, variables, "pagedCollectedArticles")
+    results = user_conn |> gq_query(@query, variables)
 
     assert results["totalCount"] == @total_count
   end

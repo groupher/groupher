@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.DocSetTag do
         community: community.slug
       }
 
-      rule_conn |> mutation_result(Schema.m(:set_article_tag), variables, "setArticleTag")
+      rule_conn |> gq_mutation(Schema.m(:set_article_tag), variables)
       {:ok, found} = ORM.find(Doc, doc.id, preload: :article_tags)
 
       assoc_tags = found.article_tags |> Enum.map(& &1.id)
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.DocSetTag do
         community: community.slug
       }
 
-      rule_conn |> mutation_result(Schema.m(:unset_article_tag), variables, "unsetArticleTag")
+      rule_conn |> gq_mutation(Schema.m(:unset_article_tag), variables)
 
       {:ok, doc} = ORM.find(Doc, doc.id, preload: :article_tags)
       assoc_tags = doc.article_tags |> Enum.map(& &1.id)

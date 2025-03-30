@@ -27,9 +27,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       variables = changelog_attr |> Map.merge(%{community: community.slug, body: body})
 
-      created =
-        user_conn
-        |> mutation_result(Schema.m(:create_article, :changelog), variables, "createChangelog")
+      created = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
 
       {:ok, changelog} = ORM.find(Changelog, created["id"])
 
@@ -49,9 +47,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       variables =
         changelog_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
 
-      created =
-        user_conn
-        |> mutation_result(Schema.m(:create_article, :changelog), variables, "createChangelog")
+      created = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
 
       {:ok, changelog} = ORM.find(Changelog, created["id"], preload: :article_tags)
 
@@ -62,9 +58,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string()})
       variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      result =
-        user_conn
-        |> mutation_result(Schema.m(:create_article, :changelog), variables, "createChangelog")
+      result = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
 
       {:ok, changelog} = ORM.find(Changelog, result["id"], preload: :document)
       body_html = changelog |> get_in([:document, :body_html])
@@ -76,9 +70,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string(:safe)})
       variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      result =
-        user_conn
-        |> mutation_result(Schema.m(:create_article, :changelog), variables, "createChangelog")
+      result = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
 
       {:ok, changelog} = ORM.find(Changelog, result["id"], preload: :document)
       body_html = changelog |> get_in([:document, :body_html])
@@ -105,7 +97,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     }
     """
     test "delete a changelog by changelog's owner", ~m(owner_conn changelog)a do
-      deleted = owner_conn |> mutation_result(@query, %{id: changelog.id}, "deleteChangelog")
+      deleted = owner_conn |> gq_mutation(@query, %{id: changelog.id})
 
       assert deleted["id"] == to_string(changelog.id)
       assert {:error, _} = ORM.find(Changelog, deleted["id"])
@@ -118,7 +110,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       rule_conn =
         simu_conn(:user, cms: %{belongs_community_title => %{"changelog.delete" => true}})
 
-      deleted = rule_conn |> mutation_result(@query, %{id: changelog.id}, "deleteChangelog")
+      deleted = rule_conn |> gq_mutation(@query, %{id: changelog.id})
 
       assert deleted["id"] == to_string(changelog.id)
       assert {:error, _} = ORM.find(Changelog, deleted["id"])
@@ -136,7 +128,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       # assert conn |> mutation_get_error?(@query, %{id: changelog.id})
 
-      deleted = rule_conn |> mutation_result(@query, %{id: changelog.id}, "deleteChangelog")
+      deleted = rule_conn |> gq_mutation(@query, %{id: changelog.id})
 
       assert deleted["id"] == to_string(changelog.id)
     end
@@ -193,7 +185,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         body: mock_rich_text("updated body #{unique_num}")
       }
 
-      result = owner_conn |> mutation_result(@query, variables, "updateChangelog")
+      result = owner_conn |> gq_mutation(@query, variables)
       assert result["title"] == variables.title
 
       assert result
@@ -213,7 +205,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         body: mock_rich_text("updated body #{unique_num}")
       }
 
-      updated_changelog = owner_conn |> mutation_result(@query, variables, "updateChangelog")
+      updated_changelog = owner_conn |> gq_mutation(@query, variables)
 
       assert true == updated_changelog["meta"]["isEdited"]
     end
@@ -234,7 +226,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         body: mock_rich_text("updated body #{unique_num}")
       }
 
-      updated_changelog = rule_conn |> mutation_result(@query, variables, "updateChangelog")
+      updated_changelog = rule_conn |> gq_mutation(@query, variables)
 
       assert updated_changelog["id"] == to_string(changelog.id)
     end

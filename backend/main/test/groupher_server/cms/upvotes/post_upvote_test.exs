@@ -3,15 +3,14 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
   use GroupherServer.TestTools
 
   setup do
-    {community, post, _, user} = mock_article(:post)
+    {_, post, _, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, ~m(user user2 community post)a}
+    {:ok, ~m(user user2 post)a}
   end
 
   describe "[cms post upvote]" do
-    test "post can be upvote && upvotes_count should inc by 1",
-         ~m(user user2 community post)a do
+    test "post can be upvote && upvotes_count should inc by 1", ~m(user user2 post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       assert article.id == post.id
       assert article.upvotes_count == 1
@@ -20,15 +19,14 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert article.upvotes_count == 2
     end
 
-    test "upvote a already upvoted post is fine", ~m(user community post)a do
+    test "upvote a already upvoted post is fine", ~m(user post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       {:error, _error} = CMS.upvote_article(post, user)
 
       assert article.upvotes_count == 1
     end
 
-    test "post can be undo upvote && upvotes_count should dec by 1",
-         ~m(user user2 community post)a do
+    test "post can be undo upvote && upvotes_count should dec by 1", ~m(user user2 post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       assert article.id == post.id
       assert article.upvotes_count == 1
@@ -37,9 +35,9 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert article.upvotes_count == 0
     end
 
-    test "can get upvotes_users", ~m(user user2 community post)a do
-      {:ok, _article} = CMS.upvote_article(post, user)
-      {:ok, _article} = CMS.upvote_article(post, user2)
+    test "can get upvotes_users", ~m(user user2 post)a do
+      {:ok, _} = CMS.upvote_article(post, user)
+      {:ok, _} = CMS.upvote_article(post, user2)
 
       {:ok, users} = CMS.upvoted_users(post, %{page: 1, size: 2})
 
@@ -48,11 +46,10 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert user_exist_in?(user2, users.entries)
     end
 
-    test "post meta history should be updated after upvote",
-         ~m(user user2 community post)a do
+    test "post meta history should be updated after upvote", ~m(user user2 post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       assert user.id in article.meta.upvoted_user_ids
-      {:ok, article} = CMS.upvote_article(post, user2)
+      {:ok, _} = CMS.upvote_article(post, user2)
 
       {:ok, post} = ORM.find(Post, post.id)
 
@@ -60,8 +57,7 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert user2.id in post.meta.upvoted_user_ids
     end
 
-    test "post meta history should be updated after undo upvote",
-         ~m(user user2 community post)a do
+    test "post meta history should be updated after undo upvote", ~m(user user2 post)a do
       {:ok, _} = CMS.upvote_article(post, user)
       {:ok, post} = ORM.find(Post, post.id)
       {:ok, _} = CMS.upvote_article(post, user2)

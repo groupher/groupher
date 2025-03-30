@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       {:ok, _} = Accounts.follow(user3, user)
 
       user_conn = simu_conn(:user, user)
-      results = user_conn |> query_result(@query, variables, "pagedFollowers")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("totalCount") == 2
       entries = results |> Map.get("entries")
@@ -48,10 +48,10 @@ defmodule GroupherServer.Test.Query.Account.Fans do
 
     test "login user can get other user's paged followers", ~m(guest_conn user)a do
       {:ok, user2} = db_insert(:user)
-      {:ok, _followeer} = user |> Accounts.follow(user2)
+      {:ok, _} = user |> Accounts.follow(user2)
 
       variables = %{login: user2.login, filter: %{page: 1, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "pagedFollowers")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("totalCount") == 1
       entries = results |> Map.get("entries")
@@ -81,7 +81,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       {:ok, _} = user |> Accounts.follow(user3)
       {:ok, _} = user |> Accounts.follow(user4)
 
-      results = user_conn |> query_result(@query, variables, "pagedFollowings")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("totalCount") == 3
 
@@ -100,7 +100,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       {:ok, _followeer} = user |> Accounts.follow(user2)
 
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "pagedFollowings")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("totalCount") == 1
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(user2.id)))
@@ -123,7 +123,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       end)
 
       variables = %{login: user.login}
-      results = user_conn |> query_result(@query, variables, "user")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("followersCount") == total_count
     end
@@ -149,7 +149,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       {:ok, _} = user2 |> Accounts.follow(user3)
 
       variables = %{login: user.login}
-      results = user_conn |> query_result(@query, variables, "user")
+      results = user_conn |> gq_query(@query, variables)
       assert results |> Map.get("followingsCount") == total_count
     end
 
@@ -165,12 +165,12 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       {:ok, user2} = db_insert(:user)
 
       variables = %{login: user2.login}
-      results = user_conn |> query_result(@query, variables, "user")
+      results = user_conn |> gq_query(@query, variables)
       assert results |> Map.get("viewerHasFollowed") == false
 
       {:ok, _} = user |> Accounts.follow(user2)
       variables = %{login: user2.login}
-      results = user_conn |> query_result(@query, variables, "user")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("viewerHasFollowed") == true
     end
@@ -188,13 +188,13 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       user_conn = simu_conn(:user, user2)
 
       variables = %{login: user.login}
-      results = user_conn |> query_result(@query, variables, "user")
+      results = user_conn |> gq_query(@query, variables)
       assert results |> Map.get("viewerBeenFollowed") == false
 
       {:ok, _} = Accounts.follow(user, user2)
       variables = %{login: user.login}
 
-      results = user_conn |> query_result(@query, variables, "user")
+      results = user_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("viewerBeenFollowed") == true
     end

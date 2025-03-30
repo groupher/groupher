@@ -455,8 +455,8 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       {:ok, comment} =
         CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
-      {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user2)
+      {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
+      {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user2)
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -467,7 +467,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert Enum.any?(report.report_cases, &(&1.user.login == user.login))
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
 
-      {:ok, _} = CMS.undo_report_article(:comment, comment.id, user)
+      {:ok, _} = CMS.undo_report_comment(comment, user)
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -488,7 +488,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       Enum.reduce(1..(@report_threshold_for_fold - 1), [], fn _, _acc ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
+        {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
       end)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -504,7 +504,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       Enum.reduce(1..(@report_threshold_for_fold + 1), [], fn _, _acc ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.report_comment(comment.id, mock_comment(), "attr", user)
+        {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
       end)
 
       {:ok, comment} = ORM.find(Comment, comment.id)

@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
 
   # import Helper.ErrorCode
 
-  alias Helper.{ORM, Later}
+  alias Helper.{ORM, Later, Transaction}
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -29,8 +29,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
 
   @doc "upvote to a article-like content"
   def upvote_article(article, %User{} = user) do
-    with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id) do
+    {:ok, info} = match(article)
+
+    Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:update_upvotes_count, fn _, _ ->
         update_article_reactions_count(info, article, :upvotes_count, :inc)
@@ -43,13 +44,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
         Accounts.achieve(%User{id: achiever_id}, :inc, :upvote)
       end)
       |> Multi.run(:create_upvote, fn _, %{update_reaction_user_list: article} ->
-        {:ok, thread} = thread_of(article, :upcase)
-        args = Map.put(%{user_id: user.id, thread: thread}, info.foreign_key, article.id)
-
-        case ORM.create(ArticleUpvote, args) do
-          {:ok, _} -> article |> done
-          _ -> {:error, [message: "viewer already upvoted", code: ecode(:already_upvoted)]}
-        end
+        create_upvote(article, info, user)
       end)
       |> Multi.run(:after_hooks, fn _, _ ->
         # comment this for test
@@ -59,13 +54,14 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
   @doc "upvote to a article-like content"
   def undo_upvote_article(article, %User{id: user_id} = from_user) do
-    with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id) do
+    {:ok, info} = match(article)
+
+    Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:update_upvotes_count, fn _, _ ->
         update_article_reactions_count(info, article, :upvotes_count, :dec)
@@ -84,6 +80,16 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
       end)
       |> Repo.transaction()
       |> result()
+    end)
+  end
+
+  defp create_upvote(article, info, user) do
+    {:ok, thread} = thread_of(article, :upcase)
+    args = Map.put(%{user_id: user.id, thread: thread}, info.foreign_key, article.id)
+
+    case ORM.create(ArticleUpvote, args) do
+      {:ok, _} -> article |> done
+      _ -> {:error, [message: "viewer already upvoted", code: ecode(:already_upvoted)]}
     end
   end
 

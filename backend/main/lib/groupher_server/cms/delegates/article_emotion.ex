@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
   @doc "make emotion to a comment"
   def emotion_to_article(article, emotion, %User{} = user) do
     with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id) do
+         {:ok, article} <- ORM.reload(article) do
       Multi.new()
       |> Multi.run(:create_user_emotion, fn _, _ ->
         target =
@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
 
   def undo_emotion_to_article(article, emotion, %User{} = user) do
     with {:ok, info} <- match(article),
-         {:ok, article} <- ORM.find_article(info.model, article.id) do
+         {:ok, article} <- ORM.reload(article) do
       Multi.new()
       |> Multi.run(:update_user_emotion, fn _, _ ->
         target =

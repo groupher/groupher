@@ -254,8 +254,11 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:reason, non_null(:string))
         arg(:attr, :string, default_value: "")
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
+        arg(:community, non_null(:string))
 
         middleware(M.Authorize, :login)
+        middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.report_article/3)
       end
 
@@ -263,8 +266,11 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       field unquote(:"undo_report_#{thread}"), unquote(thread) do
         arg(:id, non_null(:id))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
+        arg(:community, non_null(:string))
 
         middleware(M.Authorize, :login)
+        middleware(M.FrontDesk, :article)
+
         resolve(&R.CMS.undo_report_article/3)
       end
     end

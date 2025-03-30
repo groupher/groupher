@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
     """
     test "login user can create collect folder", ~m(user_conn)a do
       variables = %{title: "test folder", desc: "cool folder"}
-      created = user_conn |> mutation_result(@query, variables, "createCollectFolder")
+      created = user_conn |> gq_mutation(@query, variables)
       {:ok, found} = CollectFolder |> ORM.find(created |> Map.get("id"))
 
       assert created |> Map.get("id") == to_string(found.id)
@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
 
     test "login user can create private collect folder", ~m(user_conn)a do
       variables = %{title: "test folder", desc: "cool folder", private: true}
-      created = user_conn |> mutation_result(@query, variables, "createCollectFolder")
+      created = user_conn |> gq_mutation(@query, variables)
       {:ok, found} = CollectFolder |> ORM.find(created |> Map.get("id"))
 
       assert created |> Map.get("id") == to_string(found.id)
@@ -70,7 +70,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       {:ok, folder} = Accounts.create_collect_folder(args, user)
 
       variables = %{id: folder.id, title: "new title", desc: "new desc", private: true}
-      updated = user_conn |> mutation_result(@query, variables, "updateCollectFolder")
+      updated = user_conn |> gq_mutation(@query, variables)
 
       assert updated["desc"] == "new desc"
       assert updated["private"] == true
@@ -90,7 +90,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       {:ok, folder} = Accounts.create_collect_folder(args, user)
 
       variables = %{id: folder.id}
-      user_conn |> mutation_result(@query, variables, "deleteCollectFolder")
+      user_conn |> gq_mutation(@query, variables)
       assert {:error, _} = CollectFolder |> ORM.find(folder.id)
     end
   end
@@ -130,7 +130,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
         thread: "POST"
       }
 
-      folder = user_conn |> mutation_result(@query, variables, "addToCollect")
+      folder = user_conn |> gq_mutation(@query, variables)
 
       assert folder["totalCount"] == 1
       assert folder["lastUpdated"] != nil
@@ -157,7 +157,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
         thread: "BLOG"
       }
 
-      folder = user_conn |> mutation_result(@query, variables, "addToCollect")
+      folder = user_conn |> gq_mutation(@query, variables)
 
       assert folder["totalCount"] == 1
       assert folder["lastUpdated"] != nil
@@ -202,7 +202,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
         thread: "POST"
       }
 
-      result = user_conn |> mutation_result(@query, variables, "removeFromCollect")
+      result = user_conn |> gq_mutation(@query, variables)
 
       assert result["meta"] == @meta
       assert result["totalCount"] == 0
@@ -220,7 +220,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
         thread: "BLOG"
       }
 
-      result = user_conn |> mutation_result(@query, variables, "removeFromCollect")
+      result = user_conn |> gq_mutation(@query, variables)
 
       assert result["meta"] == @meta
       assert result["totalCount"] == 0

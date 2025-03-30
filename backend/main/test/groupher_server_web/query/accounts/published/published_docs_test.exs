@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Docs do
       {:ok, doc2} = CMS.create_article(community, :doc, doc_attrs, user)
 
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
-      results = guest_conn |> query_result(@query, variables, "pagedPublishedDocs")
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(doc.id)))
       assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(doc2.id)))
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Docs do
 
       variables = %{login: user.login, thread: "DOC", filter: %{page: 1, size: 20}}
 
-      results = guest_conn |> query_result(@query, variables, "pagedPublishedComments")
+      results = guest_conn |> gq_query(@query, variables)
 
       entries = results["entries"]
       assert results |> is_valid_pagination?
