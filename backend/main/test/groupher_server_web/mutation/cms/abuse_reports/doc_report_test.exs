@@ -14,7 +14,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
   end
 
   describe "[doc report/undo_report]" do
-    @tag :wip
     test "login user can report a doc", ~m(community doc user user_conn)a do
       variables = %{id: doc.inner_id, community: community.slug, reason: "reason"}
 
@@ -25,7 +24,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
       assert article["id"] == to_string(doc.id)
     end
 
-    @tag :wip
     test "login user can undo report a doc", ~m(community doc user user_conn)a do
       variables = %{id: doc.inner_id, reason: "reason", community: community.slug}
 

@@ -145,7 +145,7 @@ defmodule GroupherServer.Test.AssertHelper do
   end
 
   @doc """
-  check if Graphiql murate get error
+  check if Graphiql mutate get error
   """
   def mutation_get_error?(conn, query, variables, flag \\ false)
 
@@ -197,7 +197,7 @@ defmodule GroupherServer.Test.AssertHelper do
   end
 
   @doc """
-  check if Graphiql murate get error
+  check if Graphiql query get error
   """
   def query_get_error?(conn, query, variables, code) when is_integer(code) do
     resp =

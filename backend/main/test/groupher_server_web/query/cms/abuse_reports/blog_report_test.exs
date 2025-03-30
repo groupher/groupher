@@ -51,7 +51,6 @@ defmodule GroupherServer.Test.Query.AbuseReports.BlogReport do
       }
     }
     """
-    @tag :wip
     test "should get pagination info", ~m(guest_conn community blog_attrs user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog2} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -66,7 +65,6 @@ defmodule GroupherServer.Test.Query.AbuseReports.BlogReport do
       assert results["totalCount"] == 2
     end
 
-    @tag :wip
     test "support search with id", ~m(guest_conn community blog_attrs user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog2} = CMS.create_article(community, :blog, blog_attrs, user)

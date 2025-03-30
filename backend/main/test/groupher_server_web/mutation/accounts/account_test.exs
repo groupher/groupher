@@ -35,7 +35,6 @@ defmodule GroupherServer.Test.Mutation.Account.Basic do
       }
     }
     """
-    @tag :wip2
     test "user can update it's own profile", ~m(user)a do
       owned_conn = simu_conn(:user, user)
 

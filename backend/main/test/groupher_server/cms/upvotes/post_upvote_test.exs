@@ -10,7 +10,6 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
   end
 
   describe "[cms post upvote]" do
-    @tag :wip
     test "post can be upvote && upvotes_count should inc by 1", ~m(user user2 post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       assert article.id == post.id
@@ -20,7 +19,6 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert article.upvotes_count == 2
     end
 
-    @tag :wip
     test "upvote a already upvoted post is fine", ~m(user post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       {:error, _error} = CMS.upvote_article(post, user)
@@ -28,7 +26,6 @@ defmodule GroupherServer.Test.Upvotes.PostUpvote do
       assert article.upvotes_count == 1
     end
 
-    @tag :wip
     test "post can be undo upvote && upvotes_count should dec by 1", ~m(user user2 post)a do
       {:ok, article} = CMS.upvote_article(post, user)
       assert article.id == post.id

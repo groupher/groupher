@@ -26,7 +26,6 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       }
     }
     """
-    @tag :wip2
     test "login user can create collect folder", ~m(user_conn)a do
       variables = %{title: "test folder", desc: "cool folder"}
       created = user_conn |> gq_mutation(@query, variables)
@@ -36,7 +35,6 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       assert created["lastUpdated"] != nil
     end
 
-    @tag :wip2
     test "login user can create private collect folder", ~m(user_conn)a do
       variables = %{title: "test folder", desc: "cool folder", private: true}
       created = user_conn |> gq_mutation(@query, variables)
@@ -67,7 +65,6 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       }
     }
     """
-    @tag :wip2
     test "login user can update own collect folder", ~m(user_conn user)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.create_collect_folder(args, user)
@@ -88,7 +85,6 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       }
     }
     """
-    @tag :wip2
     test "login user can delete own collect folder", ~m(user_conn user)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.create_collect_folder(args, user)

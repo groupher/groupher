@@ -14,7 +14,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.BlogReport do
   end
 
   describe "[blog report/undo_report]" do
-    @tag :wip
     test "login user can report a blog", ~m(community blog user user_conn)a do
       variables = %{id: blog.inner_id, community: community.slug, reason: "reason"}
 
@@ -22,7 +21,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.BlogReport do
       assert article["id"] == to_string(blog.id)
     end
 
-    @tag :wip
     test "login user can undo report a blog", ~m(community blog user user_conn)a do
       variables = %{id: blog.inner_id, reason: "reason", community: community.slug}
 

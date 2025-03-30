@@ -131,9 +131,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert user2.id in created.meta.viewed_user_ids
     end
 
-    @tag :wip
-    test "read blog should contains viewer_has_xxx state",
-         ~m(blog_attrs community user user2)a do
+    test "read blog should contains viewer_has_xxx state", ~m(blog_attrs community user user2)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
       {:ok, blog} = CMS.read_article(blog.original_community_slug, :blog, blog.inner_id, user)
 

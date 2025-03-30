@@ -14,7 +14,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
   end
 
   describe "[changelog report/undo_report]" do
-    @tag :wip
     test "login user can report a changelog", ~m(community changelog user user_conn)a do
       variables = %{id: changelog.inner_id, community: community.slug, reason: "reason"}
 
@@ -22,7 +21,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
       assert article["id"] == to_string(changelog.id)
     end
 
-    @tag :wip
     test "login user can undo report a changelog", ~m(community changelog user user_conn)a do
       variables = %{id: changelog.inner_id, reason: "reason", community: community.slug}
 

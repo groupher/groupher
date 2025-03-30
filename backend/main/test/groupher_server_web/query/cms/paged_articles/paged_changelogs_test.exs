@@ -308,7 +308,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       }
     }
     """
-    @tag :wip
     test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
       {:ok, changelog} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)

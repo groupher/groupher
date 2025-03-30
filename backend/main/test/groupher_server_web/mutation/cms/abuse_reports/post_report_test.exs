@@ -14,7 +14,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
   end
 
   describe "[post report/undo_report]" do
-    @tag :wip2
     test "login user can report a post", ~m(community post user user_conn)a do
       variables = %{id: post.inner_id, community: community.slug, reason: "reason"}
       article = user_conn |> gq_mutation(Schema.m(:report_article, :post), variables)
@@ -22,7 +21,6 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
       assert article["id"] == to_string(post.id)
     end
 
-    @tag :wip2
     test "login user can undo report a post", ~m(community post user user_conn)a do
       variables = %{id: post.inner_id, community: community.slug, reason: "reason"}
       article = user_conn |> gq_mutation(Schema.m(:report_article, :post), variables)
