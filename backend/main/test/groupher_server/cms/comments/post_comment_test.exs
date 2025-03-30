@@ -482,6 +482,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     #   {:ok, comment} = ORM.find(Comment, comment.id)
     # end
 
+    @tag :wip
     test "can undo a report with other user report it too", ~m(community user user2 post)a do
       {:ok, comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -498,7 +499,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert Enum.any?(report.report_cases, &(&1.user.login == user.login))
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
 
-      {:ok, _} = CMS.undo_report_article(:comment, comment.id, user)
+      {:ok, _} = CMS.undo_report_comment(comment, user)
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)

@@ -451,6 +451,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
   end
 
   describe "[article comment report/unreport]" do
+    @tag :wip
     test "can undo a report with other user report it too", ~m(community user user2 blog)a do
       {:ok, comment} =
         CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
@@ -467,7 +468,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       assert Enum.any?(report.report_cases, &(&1.user.login == user.login))
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
 
-      {:ok, _} = CMS.undo_report_article(comment, user)
+      {:ok, _} = CMS.undo_report_comment(comment, user)
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.paged_reports(filter)
@@ -481,8 +482,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
     test "report user < @report_threshold_for_fold will not fold comment",
          ~m(community user blog)a do
-      {:ok, comment} =
-        CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+      {:ok, comment} = CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       assert not comment.is_folded
 
