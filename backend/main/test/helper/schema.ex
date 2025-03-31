@@ -117,12 +117,13 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!) {
       upvote#{t(thread)}(id: $id, community: $community) {
-        id
+        innerId
         meta {
           latestUpvotedUsers {
             login
           }
         }
+        upvotesCount
       }
     }
     """

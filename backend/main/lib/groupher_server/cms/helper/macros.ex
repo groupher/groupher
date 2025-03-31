@@ -241,7 +241,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
         :communities,
         Community,
         # NOTE: can not use "communities_join_[article]s" here because it need to set schema_prefix
-        # unfortunatelly, we need to manually default community_join_[article]
+        # unfortunately, we need to manually default community_join_[article]
         # join_through: unquote("communities_join_#{plural(thread)}"),
         join_through:
           unquote(Module.concat(CMS.Model, "CommunityJoin#{Recase.to_title(to_string(thread))}")),
