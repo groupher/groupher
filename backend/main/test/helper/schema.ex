@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Helper.Schema do
   @moduledoc false
 
-  def q(:paged_articles, thread) do
+  def q(:paged_articles, thread, extra \\ "") do
     """
     query($filter: Paged#{t(thread)}sFilter!) {
       paged#{t(thread)}s(filter: $filter) {
@@ -37,6 +37,7 @@ defmodule GroupherServer.Test.Helper.Schema do
           }
           insertedAt
           activeAt
+          #{extra}
         }
         totalPages
         totalCount
