@@ -223,13 +223,14 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
   end
 
   describe "[article comment lock/unlock]" do
+    @tag :wip
     test "can lock a changelog's comment", ~m(community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"changelog.lock_comment" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(Schema.m(:lock_comment, :changelog), variables)
-      assert result["id"] == to_string(changelog.id)
+      assert result["innerId"] == to_string(changelog.inner_id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
       assert changelog.meta.is_comment_locked

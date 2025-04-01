@@ -1,6 +1,52 @@
 defmodule GroupherServer.Test.Helper.Schema do
   @moduledoc false
 
+  def q(:paged_articles, thread) do
+    """
+    query($filter: Paged#{t(thread)}sFilter!) {
+      paged#{t(thread)}s(filter: $filter) {
+        entries {
+          innerId
+          title
+          views
+          upvotesCount
+          commentsCount
+          viewerHasCollected
+          viewerHasUpvoted
+          viewerHasViewed
+          viewerHasReported
+          meta {
+            latestUpvotedUsers {
+              login
+            }
+          }
+          author {
+            id
+            nickname
+            avatar
+          }
+          document {
+            bodyHtml
+          }
+          communities {
+            id
+            slug
+          }
+          articleTags {
+            id
+          }
+          insertedAt
+          activeAt
+        }
+        totalPages
+        totalCount
+        pageSize
+        pageNumber
+      }
+    }
+    """
+  end
+
   def q(:upvoted_users) do
     """
     query(
