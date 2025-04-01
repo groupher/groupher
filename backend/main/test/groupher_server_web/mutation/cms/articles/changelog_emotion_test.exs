@@ -14,6 +14,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogEmotion do
   end
 
   describe "[changelog emotion]" do
+    @tag :wip
     test "login user can emotion to a changelog", ~m(community changelog user_conn)a do
       variables = %{id: changelog.inner_id, community: community.slug, emotion: "BEER"}
 

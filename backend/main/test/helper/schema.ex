@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!, $emotion: ArticleEmotion!) {
       emotionTo#{t(thread)}(id: $id, community: $community, emotion: $emotion) {
-        id
+        innerId
         emotions {
           beerCount
           viewerHasBeered
@@ -69,7 +69,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!, $emotion: ArticleEmotion!) {
       undoEmotionTo#{t(thread)}(id: $id, community: $community, emotion: $emotion) {
-        id
+        innerId
         emotions {
           beerCount
           viewerHasBeered
