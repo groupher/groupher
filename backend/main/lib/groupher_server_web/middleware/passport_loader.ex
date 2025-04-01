@@ -4,7 +4,6 @@ defmodule GroupherServerWeb.Middleware.PassportLoader do
   """
   @behaviour Absinthe.Middleware
 
-  import GroupherServer.CMS.Helper.Matcher
   import Helper.Utils
   import Helper.ErrorCode
 
@@ -56,15 +55,20 @@ defmodule GroupherServerWeb.Middleware.PassportLoader do
 
   # def call(%{context: %{cur_user: cur_user}, arguments: %{id: id}} = resolution, [source: .., base: ..]) do
   # Loader 应该使用 Map 作为参数，以方便模式匹配
-  def call(%{context: %{cur_user: _}, arguments: %{id: id}} = resolution, source: thread) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id, preload: [:author, :communities]) do
-      resolution
-      |> assign_owner_info(:article, article)
-      |> assign_source(article)
-      |> assign_article_communities_info(article)
-    else
-      {:error, err_msg} -> handle_absinthe_error(resolution, err_msg, ecode(:passport))
+  def call(%{context: %{cur_user: _}, arguments: %{community: community, id: id}} = resolution,
+        source: thread
+      ) do
+    # with {:ok, info} <- match(thread),
+    #  {:ok, article} <- ORM.find(info.model, id, preload: [:author, :communities]) do
+    case ORM.find_article(community, thread, id, preload: [:author, :communities]) do
+      {:ok, article} ->
+        resolution
+        |> assign_owner_info(:article, article)
+        |> assign_source(article)
+        |> assign_article_communities_info(article)
+
+      {:error, err_msg} ->
+        handle_absinthe_error(resolution, err_msg, ecode(:passport))
     end
   end
 

@@ -147,9 +147,9 @@ defmodule GroupherServer.Test.AssertHelper do
   @doc """
   check if Graphiql mutate get error
   """
-  def mutation_get_error?(conn, query, variables, flag \\ false)
+  def mutation_error?(conn, query, variables, flag \\ false)
 
-  def mutation_get_error?(conn, query, variables, code) when is_integer(code) do
+  def mutation_error?(conn, query, variables, code) when is_integer(code) do
     resp =
       conn
       |> post("/graphiql", query: query, variables: variables)
@@ -164,7 +164,7 @@ defmodule GroupherServer.Test.AssertHelper do
     end
   end
 
-  def mutation_get_error?(conn, query, variables, flag) do
+  def mutation_error?(conn, query, variables, flag) do
     conn
     |> post("/graphiql", query: query, variables: variables)
     |> json_response(200)

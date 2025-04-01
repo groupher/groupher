@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
 
     test "unauth user create category fails", ~m(guest_conn)a do
       variables = %{title: "test folder"}
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
 
     @query """

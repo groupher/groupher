@@ -425,7 +425,13 @@ defmodule Helper.ORM do
     |> done
   end
 
-  def find_article(original_community_slug, thread, inner_id, opts \\ []) do
+  def find_article(community_or_slug, thread, inner_id, opts \\ [])
+
+  def find_article(%Community{} = community, thread, inner_id, opts) do
+    find_article(community.slug, thread, inner_id, opts)
+  end
+
+  def find_article(original_community_slug, thread, inner_id, opts) do
     preload = Keyword.get(opts, :preload, [])
     query = ~m(original_community_slug inner_id)a
 

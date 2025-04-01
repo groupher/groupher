@@ -73,7 +73,7 @@ defmodule GroupherServer.Test.Mutation.Account.Basic do
         }
       }
 
-      assert guest_conn |> mutation_get_error?(@update_query, variables, ecode(:account_login))
+      assert guest_conn |> mutation_error?(@update_query, variables, ecode(:account_login))
     end
   end
 end

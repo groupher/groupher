@@ -27,16 +27,19 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
     @desc "update a cms/changelog"
     field :update_changelog, :changelog do
       arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:title, :string)
       arg(:body, :string)
       arg(:digest, :string)
       arg(:copy_right, :string)
       arg(:link_addr, :string)
       arg(:article_tags, list_of(:id))
+      arg(:thread, :thread, default_value: :changelog)
 
       middleware(M.Authorize, :login)
       middleware(M.PassportLoader, source: :changelog)
       middleware(M.Passport, claim: "owner;cms->c?->changelog.edit")
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.update_article/3)
     end

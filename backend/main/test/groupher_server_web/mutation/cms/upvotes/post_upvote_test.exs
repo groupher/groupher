@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       variables = %{id: post.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:upvote_article, :post),
                variables,
                ecode(:account_login)
@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       variables = %{id: post.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:undo_upvote_article, :post),
                variables,
                ecode(:account_login)

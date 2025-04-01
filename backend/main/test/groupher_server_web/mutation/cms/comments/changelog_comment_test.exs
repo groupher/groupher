@@ -71,10 +71,10 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
       variables = %{id: comment.id, body: mock_comment("updated comment")}
 
-      assert user_conn |> mutation_get_error?(@update_comment_query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@update_comment_query, variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(@update_comment_query, variables, ecode(:account_login))
+             |> mutation_error?(@update_comment_query, variables, ecode(:account_login))
 
       result = owner_conn |> gq_mutation(@update_comment_query, variables)
 
@@ -97,10 +97,10 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
       variables = %{id: comment.id}
 
-      assert user_conn |> mutation_get_error?(@delete_comment_query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@delete_comment_query, variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(@delete_comment_query, variables, ecode(:account_login))
+             |> mutation_error?(@delete_comment_query, variables, ecode(:account_login))
 
       deleted = owner_conn |> gq_mutation(@delete_comment_query, variables)
 
@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       variables = %{id: comment.id}
 
       assert guest_conn
-             |> mutation_get_error?(@upvote_comment_query, variables, ecode(:account_login))
+             |> mutation_error?(@upvote_comment_query, variables, ecode(:account_login))
 
       result = user_conn |> gq_mutation(@upvote_comment_query, variables)
 
@@ -154,7 +154,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       user_conn |> gq_mutation(@upvote_comment_query, variables)
 
       assert guest_conn
-             |> mutation_get_error?(@undo_upvote_comment_query, variables, ecode(:account_login))
+             |> mutation_error?(@undo_upvote_comment_query, variables, ecode(:account_login))
 
       result = user_conn |> gq_mutation(@undo_upvote_comment_query, variables)
 
@@ -239,7 +239,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       variables = %{id: changelog.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:lock_comment, :changelog),
                variables,
                ecode(:account_login)
@@ -266,7 +266,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       variables = %{id: changelog.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:unlock_comment, :changelog),
                variables,
                ecode(:account_login)
@@ -300,7 +300,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
       variables = %{id: comment.id}
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
 
     @query """
@@ -331,7 +331,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       {:ok, _} = CMS.pin_comment(comment.id)
       variables = %{id: comment.id}
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
   end
 end

@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
         oauthTrustCode: "whatever"
       }
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:oauth_trust_code))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:oauth_trust_code))
     end
 
     @query """
@@ -82,7 +82,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
         oauthTrustCode: @oauth_trust_code
       }
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
 
     test "can not link oauth with un-trust code", ~m(user_conn user)a do
@@ -93,7 +93,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
         oauthTrustCode: "whatever"
       }
 
-      assert user_conn |> mutation_get_error?(@query, variables, ecode(:oauth_trust_code))
+      assert user_conn |> mutation_error?(@query, variables, ecode(:oauth_trust_code))
     end
 
     ##
@@ -134,7 +134,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
         oauthTrustCode: @oauth_trust_code
       }
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
   end
 end

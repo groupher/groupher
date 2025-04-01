@@ -99,13 +99,48 @@ defmodule GroupherServer.Test.Helper.Schema do
         articleTags: $articleTags
         linkAddr: $linkAddr
       ) {
-        id
+        innerId
         title
         linkAddr
         document {
           bodyHtml
         }
         originalCommunity {
+          id
+        }
+      }
+    }
+    """
+  end
+
+  def m(:delate_article, thread) do
+    """
+    mutation($community: String!, $id: ID!){
+      delete#{t(thread)}(community: $community, id: $id) {
+        innerId
+      }
+    }
+    """
+  end
+
+  def m(:update_article, thread) do
+    """
+    mutation($id: ID!, $community: String!, $title: String, $body: String, $copyRight: String, $articleTags: [ID]){
+      update#{t(thread)}(id: $id, community: $community, title: $title, body: $body, copyRight: $copyRight, articleTags: $articleTags) {
+        innerId
+        title
+        document {
+          bodyHtml
+        }
+        copyRight
+        meta {
+          isEdited
+        }
+        commentsParticipants {
+          id
+          nickname
+        }
+        articleTags {
           id
         }
       }
@@ -133,7 +168,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!) {
       undoUpvote#{t(thread)}(id: $id, community: $community) {
-        id
+        innerId
         meta {
           latestUpvotedUsers {
             login
@@ -148,7 +183,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!){
       sink#{t(thread)}(id: $id, community: $community) {
-        id
+        innerId
       }
     }
     """
@@ -158,7 +193,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!){
       undoSink#{t(thread)}(id: $id, community: $community) {
-        id
+        innerId
       }
     }
     """
@@ -189,7 +224,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!, $reason: String!, $attr: String) {
       report#{t(thread)}(id: $id, community: $community, reason: $reason, attr: $attr) {
-        id
+        innerId
         title
       }
     }
@@ -200,7 +235,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!) {
       undoReport#{t(thread)}(id: $id, community: $community) {
-        id
+        innerId
         title
       }
     }
@@ -211,7 +246,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $thread: Thread, $articleTagId: ID!, $community: String!) {
       setArticleTag(id: $id, thread: $thread, articleTagId: $articleTagId, community: $community) {
-        id
+        innerId
       }
     }
     """
@@ -221,7 +256,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $thread: Thread, $articleTagId: ID!, $community: String!) {
       unsetArticleTag(id: $id, thread: $thread, articleTagId: $articleTagId, community: $community) {
-        id
+        innerId
         title
       }
     }
@@ -232,7 +267,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $thread: Thread, $community: String!, $targetCommunity: String!, $articleTags: [ID]) {
         mirrorArticle(id: $id, thread: $thread, community: $community, targetCommunity: $targetCommunity, articleTags: $articleTags) {
-          id
+          innerId
         }
       }
     """
@@ -242,7 +277,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $thread: Thread, $community: String!, $targetCommunity: String!) {
       unmirrorArticle(id: $id, thread: $thread, community: $community, targetCommunity: $targetCommunity) {
-        id
+        innerId
       }
     }
     """
@@ -252,7 +287,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!, $thread: Thread, $articleTags: [ID]) {
       mirrorToHome(id: $id, community: $community, thread: $thread, articleTags: $articleTags) {
-        id
+        innerId
       }
     }
     """
@@ -262,7 +297,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($community: String!, $thread: Thread, $targetCommunity: String!, $id: ID!, $articleTags: [ID]) {
       moveArticle(id: $id, thread: $thread, community: $community, targetCommunity: $targetCommunity, articleTags: $articleTags) {
-        id
+        innerId
       }
     }
     """
@@ -272,7 +307,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($community: String!, $thread: Thread, $id: ID!, $articleTags: [ID]) {
       moveToBlackhole(community: $community, thread: $thread, id: $id, articleTags: $articleTags) {
-        id
+        innerId
       }
     }
     """

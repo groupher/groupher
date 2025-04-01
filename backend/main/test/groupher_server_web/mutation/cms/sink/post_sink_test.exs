@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       variables = %{id: post.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:sink_article, :post),
                variables,
                ecode(:account_login)
@@ -62,7 +62,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       variables = %{id: post.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:undo_sink_article, :post),
                variables,
                ecode(:account_login)

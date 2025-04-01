@@ -59,9 +59,9 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       variables = %{id: doc.id}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
-      assert rule_conn |> mutation_get_error?(@query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@query, variables, ecode(:passport))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
+      assert rule_conn |> mutation_error?(@query, variables, ecode(:passport))
     end
 
     @query """
@@ -110,9 +110,9 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       variables = %{id: doc.id}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
-      assert rule_conn |> mutation_get_error?(@query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@query, variables, ecode(:passport))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
+      assert rule_conn |> mutation_error?(@query, variables, ecode(:passport))
     end
 
     @query """
@@ -200,9 +200,9 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       variables = %{id: doc.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
-      assert rule_conn |> mutation_get_error?(@query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@query, variables, ecode(:passport))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
+      assert rule_conn |> mutation_error?(@query, variables, ecode(:passport))
     end
 
     @query """
@@ -229,9 +229,9 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       variables = %{id: doc.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
-      assert rule_conn |> mutation_get_error?(@query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@query, variables, ecode(:passport))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
+      assert rule_conn |> mutation_error?(@query, variables, ecode(:passport))
     end
   end
 end

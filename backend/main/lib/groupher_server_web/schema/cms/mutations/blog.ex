@@ -27,16 +27,19 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
     @desc "update a cms/blog"
     field :update_blog, :blog do
       arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:title, :string)
       arg(:body, :string)
       arg(:digest, :string)
       arg(:copy_right, :string)
       arg(:link_addr, :string)
       arg(:article_tags, list_of(:id))
+      arg(:thread, :thread, default_value: :blog)
 
       middleware(M.Authorize, :login)
       middleware(M.PassportLoader, source: :blog)
       middleware(M.Passport, claim: "owner;cms->c?->blog.edit")
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.update_article/3)
     end

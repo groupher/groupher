@@ -190,10 +190,13 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("delete a #{thread}, not delete")
       field unquote(:"delete_#{thread}"), unquote(thread) do
         arg(:id, non_null(:id))
+        arg(:community, non_null(:string))
+        arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
         middleware(M.PassportLoader, source: unquote(thread))
         middleware(M.Passport, claim: unquote("owner;cms->c?->#{to_string(thread)}.delete"))
+        middleware(M.FrontDesk, :article)
 
         resolve(&R.CMS.delete_article/3)
       end

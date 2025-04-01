@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     assert created |> Map.has_key?("id")
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_interval)
@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_interval)
@@ -126,7 +126,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_hour)
@@ -156,7 +156,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_hour)
@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_day)
@@ -228,7 +228,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_day)

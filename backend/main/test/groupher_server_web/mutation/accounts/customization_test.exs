@@ -121,8 +121,8 @@ defmodule GroupherServer.Test.Mutation.Account.Customization do
         }
       }
 
-      assert user_conn |> mutation_get_error?(@query, variables1)
-      assert user_conn |> mutation_get_error?(@query, variables2)
+      assert user_conn |> mutation_error?(@query, variables1)
+      assert user_conn |> mutation_error?(@query, variables2)
     end
 
     test "unlogin user set customization fails", ~m(guest_conn)a do
@@ -132,7 +132,7 @@ defmodule GroupherServer.Test.Mutation.Account.Customization do
         }
       }
 
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
   end
 end

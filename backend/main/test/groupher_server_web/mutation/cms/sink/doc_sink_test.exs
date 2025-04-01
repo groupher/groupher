@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       variables = %{id: doc.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:sink_article, :doc),
                variables,
                ecode(:account_login)
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       variables = %{id: doc.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:undo_sink_article, :doc),
                variables,
                ecode(:account_login)
