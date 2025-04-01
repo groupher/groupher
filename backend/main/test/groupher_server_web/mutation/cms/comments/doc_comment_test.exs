@@ -244,6 +244,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              )
     end
 
+    @tag :wip
     test "can undo lock a doc's comment", ~m(community doc)a do
       {:ok, _} = CMS.lock_article_comments(doc)
       {:ok, doc} = ORM.find(Doc, doc.id)
@@ -255,7 +256,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
       result = rule_conn |> gq_mutation(Schema.m(:unlock_comment, :doc), variables)
 
-      assert result["id"] == to_string(doc.id)
+      assert result["innerId"] == to_string(doc.inner_id)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
       assert not doc.meta.is_comment_locked

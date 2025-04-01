@@ -203,7 +203,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!) {
       lock#{t(thread)}Comment(id: $id, community: $community) {
-        id
+        innerId
         title
       }
     }
@@ -214,7 +214,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!){
       undoLock#{t(thread)}Comment(id: $id, community: $community) {
-        id
+        innerId
       }
     }
     """

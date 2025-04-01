@@ -222,13 +222,14 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
   end
 
   describe "[article comment lock/unlock]" do
+    @tag :wip
     test "can lock a blog's comment", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"blog.lock_comment" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(Schema.m(:lock_comment, :blog), variables)
-      assert result["id"] == to_string(blog.id)
+      assert result["innerId"] == to_string(blog.inner_id)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
       assert blog.meta.is_comment_locked
@@ -245,6 +246,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              )
     end
 
+    @tag :wip
     test "can undo lock a blog's comment", ~m(community blog)a do
       {:ok, _} = CMS.lock_article_comments(blog)
       {:ok, blog} = ORM.find(Blog, blog.id)
@@ -256,7 +258,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
       result = rule_conn |> gq_mutation(Schema.m(:unlock_comment, :blog), variables)
 
-      assert result["id"] == to_string(blog.id)
+      assert result["innerId"] == to_string(blog.inner_id)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
       assert not blog.meta.is_comment_locked
@@ -283,6 +285,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
       }
     }
     """
+    @tag :wip
     test "can pin a blog's comment", ~m(owner_conn community blog user)a do
       {:ok, comment} =
         CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)

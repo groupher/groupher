@@ -246,6 +246,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
              )
     end
 
+    @tag :wip
     test "can undo lock a changelog's comment", ~m(community changelog)a do
       {:ok, _} = CMS.lock_article_comments(changelog)
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
@@ -256,7 +257,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(Schema.m(:unlock_comment, :changelog), variables)
-      assert result["id"] == to_string(changelog.id)
+      assert result["innerId"] == to_string(changelog.inner_id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
       assert not changelog.meta.is_comment_locked
