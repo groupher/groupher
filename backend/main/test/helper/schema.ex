@@ -70,6 +70,28 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def m(:pin_article, thread) do
+    """
+    mutation($id: ID!, $community: String!){
+      pin#{t(thread)}(id: $id, community: $community) {
+        innerId
+        isPinned
+      }
+    }
+    """
+  end
+
+  def m(:undo_pin_article, thread) do
+    """
+    mutation($id: ID!, $community: String!){
+      undoPin#{t(thread)}(id: $id, community: $community) {
+        innerId
+        isPinned
+      }
+    }
+    """
+  end
+
   def q(:collected_users) do
     """
     query(
@@ -159,7 +181,49 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
-  def m(:delate_article, thread) do
+  def m(:mark_delete_article, thread) do
+    """
+    mutation($community: String!, $id: ID!){
+      markDelete#{t(thread)}(community: $community, id: $id) {
+        innerId
+        markDelete
+      }
+    }
+    """
+  end
+
+  def m(:undo_mark_delete_article, thread) do
+    """
+    mutation($community: String!, $id: ID!){
+      undoMarkDelete#{t(thread)}(community: $community, id: $id) {
+        innerId
+        markDelete
+      }
+    }
+    """
+  end
+
+  def m(:batch_mark_delete_article, thread) do
+    """
+    mutation($community: String!, $ids: [ID]!){
+      batchMarkDelete#{t(thread)}s(community: $community, ids: $ids) {
+        done
+      }
+    }
+    """
+  end
+
+  def m(:batch_undo_mark_delete_article, thread) do
+    """
+    mutation($community: String!, $ids: [ID]!){
+      batchUndoMarkDelete#{t(thread)}s(community: $community, ids: $ids) {
+        done
+      }
+    }
+    """
+  end
+
+  def m(:delete_article, thread) do
     """
     mutation($community: String!, $id: ID!){
       delete#{t(thread)}(community: $community, id: $id) {

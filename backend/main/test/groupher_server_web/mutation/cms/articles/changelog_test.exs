@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     @tag :wip
     test "delete a changelog by changelog's owner", ~m(owner_conn community changelog)a do
       variables = %{community: community.slug, id: changelog.inner_id}
-      result = owner_conn |> gq_mutation(Schema.m(:delate_article, :changelog), variables)
+      result = owner_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
       assert {:error, _} = ORM.find_article(community, :changelog, result["innerId"])
@@ -112,7 +112,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         simu_conn(:user, cms: %{belongs_community_title => %{"changelog.delete" => true}})
 
       variables = %{community: community.slug, id: changelog.inner_id}
-      result = rule_conn |> gq_mutation(Schema.m(:delate_article, :changelog), variables)
+      result = rule_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
       assert {:error, _} = ORM.find_article(community, :changelog, result["innerId"])
@@ -124,7 +124,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:delate_article, :changelog),
+               Schema.m(:delete_article, :changelog),
                variables,
                ecode(:account_login)
              )
@@ -138,7 +138,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{community: community.slug, id: changelog.inner_id}
-      result = rule_conn |> gq_mutation(Schema.m(:delate_article, :changelog), variables)
+      result = rule_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
     end
@@ -147,7 +147,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     test "unauth user delete changelog fails", ~m(user_conn guest_conn community changelog)a do
       variables = %{community: community.slug, id: changelog.inner_id}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
-      schema = Schema.m(:delate_article, :changelog)
+      schema = Schema.m(:delete_article, :changelog)
 
       assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
       assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))

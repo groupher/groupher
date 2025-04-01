@@ -554,30 +554,33 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   mark delete false for an article
   """
-  def mark_delete_article(thread, id) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id, preload: :communities),
-         false <- article.is_archived do
-      Multi.new()
-      |> Multi.run(:update_article, fn _, _ ->
-        ORM.update(article, %{mark_delete: true})
-      end)
-      |> Multi.run(:update_community_article_count, fn _, _ ->
-        CommunityCRUD.update_community_count_field(article.communities, thread)
-      end)
-      |> Repo.transaction()
-      |> result()
-    else
-      true -> raise_error(:archived, "article is archived, can not be edit or delete")
-    end
+  def mark_delete_article(article) do
+    {:ok, thread} = thread_of(article)
+
+    Transaction.locking(article, fn article ->
+      with false <- article.is_archived do
+        Multi.new()
+        |> Multi.run(:update_article, fn _, _ ->
+          ORM.update(article, %{mark_delete: true})
+        end)
+        |> Multi.run(:update_community_article_count, fn _, _ ->
+          CommunityCRUD.update_community_count_field(article.communities, thread)
+        end)
+        |> Repo.transaction()
+        |> result()
+      else
+        true -> raise_error(:archived, "article is archived, can not be edit or delete")
+      end
+    end)
   end
 
   @doc """
   undo mark delete false for an article
   """
-  def undo_mark_delete_article(thread, id) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id, preload: :communities) do
+  def undo_mark_delete_article(article) do
+    {:ok, thread} = thread_of(article)
+
+    Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:update_article, fn _, _ ->
         ORM.update(article, %{mark_delete: false})
@@ -587,7 +590,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       end)
       |> Repo.transaction()
       |> result()
-    end
+    end)
   end
 
   @doc """

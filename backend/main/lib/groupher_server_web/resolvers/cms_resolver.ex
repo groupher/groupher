@@ -144,8 +144,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.undo_pin_article(community, article)
   end
 
-  def mark_delete_article(_root, ~m(id thread)a, _info) do
-    CMS.mark_delete_article(thread, id)
+  def mark_delete_article(_root, ~m(article)a, _info) do
+    CMS.mark_delete_article(article)
   end
 
   def batch_mark_delete_articles(_root, ~m(community thread ids)a, _info) do
@@ -156,8 +156,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.batch_undo_mark_delete_articles(community, thread, ids)
   end
 
-  def undo_mark_delete_article(_root, ~m(id thread)a, _info) do
-    CMS.undo_mark_delete_article(thread, id)
+  def undo_mark_delete_article(_root, ~m(article)a, _info) do
+    CMS.undo_mark_delete_article(article)
   end
 
   def report_article(_root, ~m(article reason attr)a, %{context: %{cur_user: user}}) do

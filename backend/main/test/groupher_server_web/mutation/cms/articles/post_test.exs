@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
     @tag :wip
     test "delete a post by post's owner", ~m(owner_conn community post)a do
       variables = %{community: community.slug, id: post.inner_id}
-      result = owner_conn |> gq_mutation(Schema.m(:delate_article, :post), variables)
+      result = owner_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
 
       assert result["innerId"] == to_string(post.inner_id)
       assert {:error, _} = ORM.find_article(community, :post, result["innerId"])
@@ -104,7 +104,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       rule_conn = simu_conn(:user, cms: %{belongs_community_title => %{"post.delete" => true}})
 
       variables = %{community: community.slug, id: post.inner_id}
-      result = rule_conn |> gq_mutation(Schema.m(:delate_article, :post), variables)
+      result = rule_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
 
       assert result["innerId"] == to_string(post.inner_id)
       assert {:error, _} = ORM.find_article(community, :post, result["innerId"])
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:delate_article, :post),
+               Schema.m(:delete_article, :post),
                variables,
                ecode(:account_login)
              )
@@ -130,7 +130,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{community: community.slug, id: post.inner_id}
-      result = rule_conn |> gq_mutation(Schema.m(:delate_article, :post), variables)
+      result = rule_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
 
       assert result["innerId"] == to_string(post.inner_id)
     end
@@ -139,7 +139,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
     test "unauth user delete post fails", ~m(user_conn guest_conn community post)a do
       variables = %{community: community.slug, id: post.inner_id}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
-      schema = Schema.m(:delate_article, :post)
+      schema = Schema.m(:delete_article, :post)
 
       assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
       assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))

@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     @tag :wip
     test "delete a doc by doc's owner", ~m(owner_conn community doc)a do
       variables = %{community: community.slug, id: doc.inner_id}
-      result = owner_conn |> gq_mutation(Schema.m(:delate_article, :doc), variables)
+      result = owner_conn |> gq_mutation(Schema.m(:delete_article, :doc), variables)
 
       assert result["innerId"] == to_string(doc.inner_id)
       assert {:error, _} = ORM.find_article(community, :doc, result["innerId"])
@@ -112,7 +112,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
         simu_conn(:user, cms: %{belongs_community_title => %{"doc.delete" => true}})
 
       variables = %{community: community.slug, id: doc.inner_id}
-      result = rule_conn |> gq_mutation(Schema.m(:delate_article, :doc), variables)
+      result = rule_conn |> gq_mutation(Schema.m(:delete_article, :doc), variables)
 
       assert result["innerId"] == to_string(doc.inner_id)
       assert {:error, _} = ORM.find_article(community, :doc, result["innerId"])
@@ -124,7 +124,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:delate_article, :doc),
+               Schema.m(:delete_article, :doc),
                variables,
                ecode(:account_login)
              )
@@ -138,7 +138,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{community: community.slug, id: doc.inner_id}
-      result = rule_conn |> gq_mutation(Schema.m(:delate_article, :doc), variables)
+      result = rule_conn |> gq_mutation(Schema.m(:delete_article, :doc), variables)
 
       assert result["innerId"] == to_string(doc.inner_id)
     end
@@ -147,7 +147,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     test "unauth user delete doc fails", ~m(user_conn guest_conn community doc)a do
       variables = %{community: community.slug, id: doc.inner_id}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
-      schema = Schema.m(:delate_article, :doc)
+      schema = Schema.m(:delete_article, :doc)
 
       assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
       assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))

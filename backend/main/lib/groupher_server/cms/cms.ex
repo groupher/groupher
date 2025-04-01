@@ -112,8 +112,8 @@ defmodule GroupherServer.CMS do
   defdelegate create_article(community, thread, attrs, user), to: ArticleCRUD
   defdelegate update_article(article, attrs), to: ArticleCRUD
 
-  defdelegate mark_delete_article(thread, id), to: ArticleCRUD
-  defdelegate undo_mark_delete_article(thread, id), to: ArticleCRUD
+  defdelegate mark_delete_article(article), to: ArticleCRUD
+  defdelegate undo_mark_delete_article(article), to: ArticleCRUD
   defdelegate delete_article(article), to: ArticleCRUD
   defdelegate delete_article(article, reason), to: ArticleCRUD
 

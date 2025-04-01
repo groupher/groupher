@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
 
-  alias Helper.{ORM, QueryBuilder, OSS, Constant}
+  alias Helper.{ORM, QueryBuilder, OSS, Constant, Transaction}
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -330,8 +330,10 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
 
       meta = Map.put(community.meta, :"#{plural(thread)}_count", thread_article_count)
 
-      community
-      |> ORM.update_meta(meta, changes: %{articles_count: recount_articles_count(meta)})
+      Transaction.locking(community, fn community ->
+        community
+        |> ORM.update_meta(meta, changes: %{articles_count: recount_articles_count(meta)})
+      end)
     end
   end
 
