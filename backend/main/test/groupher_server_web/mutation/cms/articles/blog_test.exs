@@ -14,26 +14,23 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
   end
 
   describe "[mutation blog curd]" do
+    @tag :wip
     test "create blog with valid attrs and make sure author exist",
          ~m(user_conn user community)a do
       blog_attr = mock_attrs(:blog) |> Map.merge(%{linkAddr: "https://helloworld"})
 
-      # body = """
-      # {"time":1639375020110,"blocks":[{"type":"list","data":{"mode":"unordered_list","items":[{"text":"CP 的图标是字母 C (Coder / China) 和 Planet 的意象结合，斜向的条饰灵感来自于 NASA Logo 上的 \"red chevron\"。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0},{"text":"所有的 Upvote 的图标都是小火箭，点击它会有一个起飞的动画 — 虽然它目前看起来像爆炸。。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0}]}}],"version":"2.19.38"}
-      # """
       body = """
       {"time":1639375020110,"blocks":[{"type":"list","data":{"mode":"unordered_list","items":[{"text":"CP 的图标是字母 C (Coder / China) 和 Planet 的意象结合，斜向的条饰灵感来自于 NASA Logo 上的 red chevron。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0},{"text":"所有的 Upvote 的图标都是小火箭，点击它会有一个起飞的动画 — 虽然它目前看起来像爆炸。。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0}]}}],"version":"2.19.38"}
       """
 
       variables = blog_attr |> Map.merge(%{community: community.slug, body: body})
+      result = user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
 
-      created = user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
+      {:ok, blog} = ORM.find_article(community, :blog, result["innerId"])
 
-      {:ok, blog} = ORM.find(Blog, created["id"])
-
-      assert created["id"] == to_string(blog.id)
-      assert created["originalCommunity"]["id"] == to_string(community.id)
-      assert created["linkAddr"] == "https://helloworld"
+      assert result["innerId"] == to_string(blog.inner_id)
+      assert result["originalCommunity"]["id"] == to_string(community.id)
+      assert result["linkAddr"] == "https://helloworld"
 
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
     end
