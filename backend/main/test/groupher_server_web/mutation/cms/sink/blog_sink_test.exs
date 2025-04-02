@@ -1,5 +1,5 @@
 defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
-  @moduleblog false
+  @moduledoc false
   use GroupherServer.TestTools
 
   setup do
@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(Schema.m(:sink_article, :blog), variables)
-      assert result["id"] == to_string(blog.id)
+      assert result["innerId"] == to_string(blog.inner_id)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
       assert blog.meta.is_sinked
@@ -29,20 +29,13 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       variables = %{id: blog.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:sink_article, :blog),
                variables,
                ecode(:account_login)
              )
     end
 
-    @query """
-    mutation($id: ID!, $communityId: ID!){
-      undoSinkBlog(id: $id, communityId: $communityId) {
-        id
-      }
-    }
-    """
     test "login user can undo sink to a blog", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 
@@ -53,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
 
       updated = rule_conn |> gq_mutation(Schema.m(:undo_sink_article, :blog), variables)
 
-      assert updated["id"] == to_string(blog.id)
+      assert updated["innerId"] == to_string(blog.inner_id)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
       assert not blog.meta.is_sinked
@@ -63,7 +56,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       variables = %{id: blog.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:undo_sink_article, :blog),
                variables,
                ecode(:account_login)

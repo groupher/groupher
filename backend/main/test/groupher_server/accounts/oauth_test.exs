@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert {:error, _} = ORM.find_by(User, nickname: @valid_github_profile["login"])
       assert {:error, _} = ORM.find_by(OauthProvider, login: @valid_github_profile["login"])
 
-      {:ok, sigin_res} = Accounts.signin_oauth(@valid_github_profile)
+      {:ok, signin_res} = Accounts.signin_oauth(@valid_github_profile)
 
       assert {:ok, user} =
                ORM.find_by(User, %{login: @valid_github_profile["login"]}, preload: :social)
@@ -42,15 +42,15 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert oauth_provider.login == @valid_github_profile["login"]
       assert oauth_provider.user_id == user.id
 
-      assert sigin_res |> Map.has_key?(:user)
-      assert sigin_res |> Map.has_key?(:token)
+      assert signin_res |> Map.has_key?(:user)
+      assert signin_res |> Map.has_key?(:token)
     end
 
     test "existing user can signin" do
-      {:ok, sigin_res} = Accounts.signin_oauth(@valid_github_profile)
+      {:ok, signin_res} = Accounts.signin_oauth(@valid_github_profile)
 
-      assert sigin_res |> Map.has_key?(:user)
-      assert sigin_res |> Map.has_key?(:token)
+      assert signin_res |> Map.has_key?(:user)
+      assert signin_res |> Map.has_key?(:token)
     end
 
     test "existing user can signin multiple times" do
@@ -62,8 +62,8 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert {:ok, 1} == ORM.count(OauthProvider)
     end
 
-    test "existing non-exsiting user fails" do
-      {:ok, _sigin_res} =
+    test "existing non-existing user fails" do
+      {:ok, _signin_res} =
         Accounts.signin_oauth(@valid_github_profile)
 
       {:error, _res} =

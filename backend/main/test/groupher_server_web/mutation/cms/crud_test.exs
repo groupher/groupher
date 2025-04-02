@@ -85,24 +85,24 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       variables = mock_attrs(:category, %{user_id: user.id})
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@create_category_query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@create_category_query, variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(@create_category_query, variables, ecode(:account_login))
+             |> mutation_error?(@create_category_query, variables, ecode(:account_login))
 
-      assert rule_conn |> mutation_get_error?(@create_category_query, variables, ecode(:passport))
+      assert rule_conn |> mutation_error?(@create_category_query, variables, ecode(:passport))
     end
 
     test "unauth user update category fails", ~m(category user_conn guest_conn)a do
       variables = %{id: category.id, title: "new title"}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@update_category_query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@update_category_query, variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(@update_category_query, variables, ecode(:account_login))
+             |> mutation_error?(@update_category_query, variables, ecode(:account_login))
 
-      assert rule_conn |> mutation_get_error?(@update_category_query, variables, ecode(:passport))
+      assert rule_conn |> mutation_error?(@update_category_query, variables, ecode(:passport))
     end
 
     @set_category_query """
@@ -173,19 +173,19 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
       variables = %{community: community.slug, categoryId: category.id}
 
-      assert user_conn |> mutation_get_error?(@set_category_query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@set_category_query, variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(@set_category_query, variables, ecode(:account_login))
+             |> mutation_error?(@set_category_query, variables, ecode(:account_login))
 
-      assert rule_conn |> mutation_get_error?(@set_category_query, variables, ecode(:passport))
+      assert rule_conn |> mutation_error?(@set_category_query, variables, ecode(:passport))
 
-      assert user_conn |> mutation_get_error?(@unset_category_query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@unset_category_query, variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(@unset_category_query, variables, ecode(:account_login))
+             |> mutation_error?(@unset_category_query, variables, ecode(:account_login))
 
-      assert rule_conn |> mutation_get_error?(@unset_category_query, variables, ecode(:passport))
+      assert rule_conn |> mutation_error?(@unset_category_query, variables, ecode(:passport))
     end
   end
 
@@ -298,13 +298,13 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
-             |> mutation_get_error?(@create_community_query, variables, ecode(:passport))
+             |> mutation_error?(@create_community_query, variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(@create_community_query, variables, ecode(:account_login))
+             |> mutation_error?(@create_community_query, variables, ecode(:account_login))
 
       assert rule_conn
-             |> mutation_get_error?(@create_community_query, variables, ecode(:passport))
+             |> mutation_error?(@create_community_query, variables, ecode(:passport))
     end
 
     test "create duplicated community fails", %{community: community} do
@@ -318,7 +318,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
 
       assert rule_conn
-             |> mutation_get_error?(@create_community_query, variables, ecode(:changeset))
+             |> mutation_error?(@create_community_query, variables, ecode(:changeset))
     end
 
     @delete_community_query """
@@ -343,18 +343,18 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
-             |> mutation_get_error?(@create_community_query, variables, ecode(:passport))
+             |> mutation_error?(@create_community_query, variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(@create_community_query, variables, ecode(:account_login))
+             |> mutation_error?(@create_community_query, variables, ecode(:account_login))
 
       assert rule_conn
-             |> mutation_get_error?(@create_community_query, variables, ecode(:passport))
+             |> mutation_error?(@create_community_query, variables, ecode(:passport))
     end
 
     test "delete non-exist community fails" do
       rule_conn = simu_conn(:user, cms: %{"community.delete" => true})
-      assert rule_conn |> mutation_get_error?(@delete_community_query, %{id: non_exist_id()})
+      assert rule_conn |> mutation_error?(@delete_community_query, %{id: non_exist_id()})
     end
   end
 
@@ -385,9 +385,9 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       variables = ~m(title slug)a
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
-      assert rule_conn |> mutation_get_error?(@query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@query, variables, ecode(:passport))
+      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
+      assert rule_conn |> mutation_error?(@query, variables, ecode(:passport))
     end
 
     @query """
@@ -548,7 +548,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       variables = %{user: user2.login, community: community.slug, rules: new_passport_rules}
 
       assert rule_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                @update_moderator_query,
                variables,
                ecode(:community_root_only)
@@ -568,12 +568,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       variables = %{user: user.login, community: community.slug, role: role}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@set_moderator_query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@set_moderator_query, variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(@set_moderator_query, variables, ecode(:account_login))
+             |> mutation_error?(@set_moderator_query, variables, ecode(:account_login))
 
-      assert rule_conn |> mutation_get_error?(@set_moderator_query, variables, ecode(:passport))
+      assert rule_conn |> mutation_error?(@set_moderator_query, variables, ecode(:passport))
     end
   end
 
@@ -609,13 +609,13 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       login_conn = simu_conn(:user, user)
       variables = %{community: non_exist_slug()}
 
-      assert login_conn |> mutation_get_error?(@subscribe_query, variables, ecode(:not_exist))
+      assert login_conn |> mutation_error?(@subscribe_query, variables, ecode(:not_exist))
     end
 
     test "guest user subscribe community fails", ~m(guest_conn community)a do
       variables = %{community: community.slug}
 
-      assert guest_conn |> mutation_get_error?(@subscribe_query, variables, ecode(:account_login))
+      assert guest_conn |> mutation_error?(@subscribe_query, variables, ecode(:account_login))
     end
 
     test "subscribed community should inc it's own geo info", ~m(user community)a do
@@ -681,14 +681,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "other login user unsubscribe community fails", ~m(user_conn community)a do
       variables = %{communityId: community.id}
 
-      assert user_conn |> mutation_get_error?(@unsubscribe_query, variables)
+      assert user_conn |> mutation_error?(@unsubscribe_query, variables)
     end
 
     test "guest user unsubscribe community fails", ~m(guest_conn community)a do
       variables = %{community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(@unsubscribe_query, variables, ecode(:account_login))
+             |> mutation_error?(@unsubscribe_query, variables, ecode(:account_login))
     end
 
     test "unsubscribed community should dec it's own geo info", ~m(user community)a do

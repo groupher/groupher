@@ -27,16 +27,19 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
     @desc "update a cms/post"
     field :update_post, :post do
       arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:title, :string)
       arg(:body, :string)
       arg(:digest, :string)
       arg(:copy_right, :string)
       arg(:link_addr, :string)
       arg(:article_tags, list_of(:id))
+      arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
       middleware(M.PassportLoader, source: :post)
       middleware(M.Passport, claim: "owner;cms->c?->post.edit")
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.update_article/3)
     end
@@ -44,11 +47,14 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
     @desc "set cat for a post"
     field :set_post_cat, :post do
       arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:cat, non_null(:article_cat_enum))
+      arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
       middleware(M.PassportLoader, source: :post)
       middleware(M.Passport, claim: "owner;cms->c?->post.edit")
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.set_post_cat/3)
     end
@@ -56,11 +62,14 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
     @desc "set cat for a post"
     field :set_post_state, :post do
       arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:state, non_null(:article_state_enum))
+      arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
       middleware(M.PassportLoader, source: :post)
       middleware(M.Passport, claim: "owner;cms->c?->post.edit")
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.set_post_state/3)
     end

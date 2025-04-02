@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(Schema.m(:sink_article, :doc), variables)
-      assert result["id"] == to_string(doc.id)
+      assert result["innerId"] == to_string(doc.inner_id)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
       assert doc.meta.is_sinked
@@ -29,20 +29,13 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       variables = %{id: doc.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:sink_article, :doc),
                variables,
                ecode(:account_login)
              )
     end
 
-    @query """
-    mutation($id: ID!, $communityId: ID!){
-      undoSinkDoc(id: $id, communityId: $communityId) {
-        id
-      }
-    }
-    """
     test "login user can undo sink to a doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
@@ -53,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
 
       updated = rule_conn |> gq_mutation(Schema.m(:undo_sink_article, :doc), variables)
 
-      assert updated["id"] == to_string(doc.id)
+      assert updated["innerId"] == to_string(doc.inner_id)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
       assert not doc.meta.is_sinked
@@ -63,7 +56,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       variables = %{id: doc.inner_id, community: community.slug}
 
       assert guest_conn
-             |> mutation_get_error?(
+             |> mutation_error?(
                Schema.m(:undo_sink_article, :doc),
                variables,
                ecode(:account_login)

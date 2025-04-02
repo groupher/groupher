@@ -95,12 +95,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.read_article(community, thread, id)
   end
 
-  def set_post_cat(_root, %{passport_source: post, cat: cat}, _info) do
-    CMS.set_post_cat(post, Map.get(@article_cat, cat))
+  def set_post_cat(_root, %{article: article, cat: cat}, _info) do
+    CMS.set_post_cat(article, Map.get(@article_cat, cat))
   end
 
-  def set_post_state(_root, %{passport_source: post, state: state}, _info) do
-    CMS.set_post_state(post, Map.get(@article_state, state))
+  def set_post_state(_root, %{article: article, state: state}, _info) do
+    CMS.set_post_state(article, Map.get(@article_state, state))
   end
 
   def paged_articles(_root, ~m(thread filter)a, %{context: %{cur_user: user}}) do
@@ -127,11 +127,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.create_article(community, thread, args, user)
   end
 
-  def update_article(_root, %{passport_source: article} = args, _info) do
+  def update_article(_root, %{article: article} = args, _info) do
     CMS.update_article(article, args)
   end
 
-  def delete_article(_root, %{passport_source: article}, _info) do
+  def delete_article(_root, %{article: article}, _info) do
     CMS.delete_article(article)
   end
 
@@ -144,8 +144,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.undo_pin_article(community, article)
   end
 
-  def mark_delete_article(_root, ~m(id thread)a, _info) do
-    CMS.mark_delete_article(thread, id)
+  def mark_delete_article(_root, ~m(article)a, _info) do
+    CMS.mark_delete_article(article)
   end
 
   def batch_mark_delete_articles(_root, ~m(community thread ids)a, _info) do
@@ -156,8 +156,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.batch_undo_mark_delete_articles(community, thread, ids)
   end
 
-  def undo_mark_delete_article(_root, ~m(id thread)a, _info) do
-    CMS.undo_mark_delete_article(thread, id)
+  def undo_mark_delete_article(_root, ~m(article)a, _info) do
+    CMS.undo_mark_delete_article(article)
   end
 
   def report_article(_root, ~m(article reason attr)a, %{context: %{cur_user: user}}) do

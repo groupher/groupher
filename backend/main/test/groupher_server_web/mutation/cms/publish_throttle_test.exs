@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
   end
 
   test "user create 2 content with valid interval time success", ~m(community)a do
@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
 
     Statistics.mock_throttle_attr(
       :last_publish_time,
@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
   end
 
   test "root create multi content with invalid interval time success", ~m(community)a do
@@ -57,10 +57,10 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     variables = mock_attrs(:post) |> Map.merge(%{community: community.slug})
 
     created = rule_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
 
     created = rule_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
 
     Statistics.mock_throttle_attr(
       :last_publish_time,
@@ -69,7 +69,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     created = rule_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
   end
 
   test "user create multi content with invalid interval time", ~m(community)a do
@@ -80,10 +80,10 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     created =
       user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_interval)
@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_interval)
@@ -111,7 +111,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
 
     Statistics.mock_throttle_attr(
       :last_publish_time,
@@ -126,7 +126,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_hour)
@@ -141,7 +141,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
 
     Statistics.mock_throttle_attr(
       :last_publish_time,
@@ -156,7 +156,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_hour)
@@ -171,7 +171,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     created =
       user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
   end
 
   test "user create multi content with invalid day_count fails", ~m(community)a do
@@ -183,7 +183,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     created =
       user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
 
     Statistics.mock_throttle_attr(
       :last_publish_time,
@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_day)
@@ -213,7 +213,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
 
     Statistics.mock_throttle_attr(
       :last_publish_time,
@@ -228,7 +228,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     )
 
     assert user_conn
-           |> mutation_get_error?(
+           |> mutation_error?(
              Schema.m(:create_article, :post),
              variables,
              ecode(:throttle_day)
@@ -242,6 +242,6 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
   end
 end

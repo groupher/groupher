@@ -28,27 +28,10 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
   end
 
   describe "[pending blogs flags]" do
-    @query """
-    query($filter: PagedBlogsFilter!) {
-      pagedBlogs(filter: $filter) {
-        entries {
-          id
-          pending
-          communities {
-            slug
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
     test "pending blog should not see in paged query",
          ~m(guest_conn community blog_m)a do
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
 
       assert results["totalCount"] == @total_count
 
@@ -59,37 +42,20 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
           illegal_words: ["some-word"]
         })
 
-      {:ok, blog_m} = ORM.find(CMS.Model.Blog, blog_m.id)
+      {:ok, blog_m} = ORM.find_article(community, :blog, blog_m.inner_id)
       assert blog_m.pending == @audit_illegal
 
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
       assert results["totalCount"] == @total_count - 1
     end
   end
 
   describe "[pinned blogs flags]" do
-    @query """
-    query($filter: PagedBlogsFilter!) {
-      pagedBlogs(filter: $filter) {
-        entries {
-          id
-          isPinned
-          communities {
-            slug
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
     test "if have pinned blogs, the pinned blogs should at the top of entries",
          ~m(guest_conn community blog_m)a do
       variables = %{filter: %{community: community.slug}}
 
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
 
       assert results |> is_valid_pagination?
       assert results["pageSize"] == @page_size
@@ -97,23 +63,23 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
 
       {:ok, _} = CMS.pin_article(community, blog_m)
 
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
       entries_first = results["entries"] |> List.first()
 
       assert results["totalCount"] == @total_count
-      assert entries_first["id"] == to_string(blog_m.id)
+      assert entries_first["innerId"] == to_string(blog_m.inner_id)
       assert entries_first["isPinned"] == true
     end
 
     test "pinned blogs should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
       assert results |> is_valid_pagination?
 
-      random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("id")
-      {:ok, blog} = ORM.find(Blog, random_id)
+      random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
+      {:ok, blog} = ORM.find_article(community, :blog, random_id)
       {:ok, _} = CMS.pin_article(community, blog)
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
 
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
     end
@@ -121,14 +87,15 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
     test "if have trashed blogs, the mark deleted blogs should not appears in result",
          ~m(guest_conn community)a do
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
 
-      random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("id")
-      {:ok, _} = CMS.mark_delete_article(:blog, random_id)
+      random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
+      {:ok, random_blog} = ORM.find_article(community, :blog, random_id)
+      {:ok, _} = CMS.mark_delete_article(random_blog)
 
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
+      assert results["entries"] |> Enum.any?(&(&1["innerId"] !== random_id))
       assert results["totalCount"] == @total_count - 1
     end
   end

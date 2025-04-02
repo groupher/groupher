@@ -684,7 +684,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
 
   defp set_question_flag_ifneed(_, comment), do: {:ok, comment}
 
-  # batch update is_solution flag for artilce comment
+  # batch update is_solution flag for article comment
   defp batch_update_solution_flag(%Post{} = post, is_question) do
     from(c in Comment,
       where: c.post_id == ^post.id,

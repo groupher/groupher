@@ -17,23 +17,16 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
   end
 
   describe "[mutation doc flag curd]" do
-    @query """
-    mutation($id: ID!){
-      markDeleteDoc(id: $id) {
-        id
-        markDelete
-      }
-    }
-    """
-    test "auth user can markDelete doc", ~m(doc)a do
-      variables = %{id: doc.id}
+    test "auth user can markDelete doc", ~m(community doc)a do
+      variables = %{id: doc.inner_id, community: community.slug}
 
       passport_rules = %{"doc.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> gq_mutation(@query, variables)
+      updated =
+        rule_conn |> gq_mutation(Schema.m(:mark_delete_article, :doc), variables)
 
-      assert updated["id"] == to_string(doc.id)
+      assert updated["innerId"] == to_string(doc.inner_id)
       assert updated["markDelete"] == true
     end
 
@@ -45,84 +38,76 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.docs_count == 1
 
-      variables = %{id: doc.id}
+      variables = %{id: doc.inner_id, community: community.slug}
       passport_rules = %{"doc.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> gq_mutation(@query, variables)
+      rule_conn |> gq_mutation(Schema.m(:mark_delete_article, :doc), variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.docs_count == 0
     end
 
-    test "unauth user markDelete doc fails", ~m(user_conn guest_conn doc)a do
-      variables = %{id: doc.id}
+    test "unauth user markDelete doc fails",
+         ~m(user_conn guest_conn community doc)a do
+      variables = %{id: doc.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
-      assert rule_conn |> mutation_get_error?(@query, variables, ecode(:passport))
+      schema = Schema.m(:mark_delete_article, :doc)
+
+      assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
+      assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))
+      assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
     end
 
-    @query """
-    mutation($id: ID!){
-      undoMarkDeleteDoc(id: $id) {
-        id
-        markDelete
-      }
-    }
-    """
-    test "auth user can undo markDelete doc", ~m(doc)a do
-      variables = %{id: doc.id}
+    test "auth user can undo markDelete doc", ~m(community doc)a do
+      variables = %{id: doc.inner_id, community: community.slug}
 
-      {:ok, _} = CMS.mark_delete_article(:doc, doc.id)
+      {:ok, _} = CMS.mark_delete_article(doc)
 
       passport_rules = %{"doc.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> gq_mutation(@query, variables)
+      updated =
+        rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :doc), variables)
 
-      assert updated["id"] == to_string(doc.id)
+      assert updated["innerId"] == to_string(doc.inner_id)
       assert updated["markDelete"] == false
     end
 
-    test "undo mark delete doc should update doc's communities meta count",
-         ~m(user)a do
+    test "undo mark delete doc should update doc's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
       {:ok, doc} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
-      {:ok, _} = CMS.mark_delete_article(:doc, doc.id)
+      {:ok, _} = CMS.mark_delete_article(doc)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.docs_count == 0
 
-      variables = %{id: doc.id}
+      variables = %{id: doc.inner_id, community: community.slug}
       passport_rules = %{"doc.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
-      rule_conn |> gq_mutation(@query, variables)
+      rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :doc), variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.docs_count == 1
     end
 
-    test "unauth user undo markDelete doc fails", ~m(user_conn guest_conn doc)a do
-      variables = %{id: doc.id}
+    test "unauth user undo markDelete doc fails",
+         ~m(user_conn guest_conn community doc)a do
+      variables = %{id: doc.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
-      assert rule_conn |> mutation_get_error?(@query, variables, ecode(:passport))
+      schema = Schema.m(:undo_mark_delete_article, :doc)
+
+      assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
+      assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))
+      assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
     end
 
-    @query """
-    mutation($community: String!, $ids: [ID]!){
-      batchMarkDeleteDocs(community: $community, ids: $ids) {
-        done
-      }
-    }
-    """
-    test "auth user can batch mark delete docs", ~m(community doc doc2 doc3)a do
+    test "auth user can batch mark delete docs",
+         ~m(community doc doc2 doc3)a do
       variables = %{
         community: community.slug,
         ids: [doc.inner_id, doc2.inner_id]
@@ -131,8 +116,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       passport_rules = %{"doc.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> gq_mutation(@query, variables)
-
+      updated = rule_conn |> gq_mutation(Schema.m(:batch_mark_delete_article, :doc), variables)
       assert updated["done"] == true
 
       {:ok, doc} = ORM.find(Doc, doc.id)
@@ -144,14 +128,8 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert doc3.mark_delete == false
     end
 
-    @query """
-    mutation($community: String!, $ids: [ID]!){
-      batchUndoMarkDeleteDocs(community: $community, ids: $ids) {
-        done
-      }
-    }
-    """
-    test "auth user can batch undo mark delete docs", ~m(community doc doc2 doc3)a do
+    test "auth user can batch undo mark delete docs",
+         ~m(community doc doc2 doc3)a do
       CMS.batch_mark_delete_articles(community.slug, :doc, [
         doc.inner_id,
         doc2.inner_id
@@ -165,7 +143,8 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       passport_rules = %{"doc.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> gq_mutation(@query, variables)
+      updated =
+        rule_conn |> gq_mutation(Schema.m(:batch_undo_mark_delete_article, :doc), variables)
 
       assert updated["done"] == true
 
@@ -178,60 +157,71 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert doc3.mark_delete == false
     end
 
-    @query """
-    mutation($id: ID!, $community: String!){
-      pinDoc(id: $id, community: $community) {
-        id
-      }
-    }
-    """
     test "auth user can pin doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
       passport_rules = %{community.slug => %{"doc.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> gq_mutation(@query, variables)
+      updated = rule_conn |> gq_mutation(Schema.m(:pin_article, :doc), variables)
 
-      assert updated["id"] == to_string(doc.id)
+      assert updated["innerId"] == to_string(doc.inner_id)
     end
 
     test "unauth user pin doc fails", ~m(user_conn guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
-      assert rule_conn |> mutation_get_error?(@query, variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(Schema.m(:pin_article, :doc), variables, ecode(:passport))
+
+      assert guest_conn
+             |> mutation_error?(
+               Schema.m(:pin_article, :doc),
+               variables,
+               ecode(:account_login)
+             )
+
+      assert rule_conn
+             |> mutation_error?(Schema.m(:pin_article, :doc), variables, ecode(:passport))
     end
 
-    @query """
-    mutation($id: ID!, $community: String!){
-      undoPinDoc(id: $id, community: $community) {
-        id
-        isPinned
-      }
-    }
-    """
     test "auth user can undo pin doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
       passport_rules = %{community.slug => %{"doc.undo_pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      {:ok, _} = CMS.pin_article(community, doc)
-      updated = rule_conn |> gq_mutation(@query, variables)
+      CMS.pin_article(community, doc)
+      updated = rule_conn |> gq_mutation(Schema.m(:undo_pin_article, :doc), variables)
 
-      assert updated["id"] == to_string(doc.id)
+      assert updated["innerId"] == to_string(doc.inner_id)
     end
 
     test "unauth user undo pin doc fails", ~m(user_conn guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@query, variables, ecode(:passport))
-      assert guest_conn |> mutation_get_error?(@query, variables, ecode(:account_login))
-      assert rule_conn |> mutation_get_error?(@query, variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(
+               Schema.m(:undo_pin_article, :doc),
+               variables,
+               ecode(:passport)
+             )
+
+      assert guest_conn
+             |> mutation_error?(
+               Schema.m(:undo_pin_article, :doc),
+               variables,
+               ecode(:account_login)
+             )
+
+      assert rule_conn
+             |> mutation_error?(
+               Schema.m(:undo_pin_article, :doc),
+               variables,
+               ecode(:passport)
+             )
     end
   end
 end

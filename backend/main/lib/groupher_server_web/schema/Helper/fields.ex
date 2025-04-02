@@ -14,10 +14,9 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   @comment_emotions get_config(:article, :comment_emotions)
   @article_threads get_config(:article, :threads)
 
-  @doc "general article fields for grqphql resolve fields"
+  @doc "general article fields for GraphQL resolve fields"
   defmacro general_article_fields() do
     quote do
-      field(:id, :id)
       field(:inner_id, :id)
       field(:title, :string)
       field(:document, :thread_document, resolve: dataloader(CMS, :document))

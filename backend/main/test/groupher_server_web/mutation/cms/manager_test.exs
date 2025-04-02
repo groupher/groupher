@@ -16,41 +16,27 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
   end
 
   describe "root mutation" do
-    @query """
-    mutation($id: ID!){
-      markDeletePost(id: $id) {
-        id
-        markDelete
-      }
-    }
-    """
-    test "root can markDelete a post", ~m(post)a do
-      variables = %{id: post.id}
+    test "root can markDelete a post", ~m(community post)a do
+      variables = %{community: community.slug, id: post.inner_id}
 
       passport_rules = %{"root" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> gq_mutation(@query, variables)
+      updated = rule_conn |> gq_mutation(Schema.m(:mark_delete_article, :post), variables)
 
-      assert updated["id"] == to_string(post.id)
+      assert updated["innerId"] == to_string(post.inner_id)
       assert updated["markDelete"] == true
     end
 
-    @query """
-    mutation($id: ID!){
-      deletePost(id: $id) {
-        id
-      }
-    }
-    """
-    test "root can delete a post", ~m(post)a do
+    test "root can delete a post", ~m(community post)a do
       passport_rules = %{"root" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      deleted = rule_conn |> gq_mutation(@query, %{id: post.id})
+      variables = %{community: community.slug, id: post.inner_id}
+      deleted = rule_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
 
-      assert deleted["id"] == to_string(post.id)
-      assert {:error, _} = ORM.find(Post, deleted["id"])
+      assert deleted["innerId"] == to_string(post.inner_id)
+      assert {:error, _} = ORM.find_article(community, :post, deleted["innerId"])
     end
   end
 end

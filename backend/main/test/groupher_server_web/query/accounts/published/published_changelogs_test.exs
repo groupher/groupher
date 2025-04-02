@@ -15,23 +15,6 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
   end
 
   describe "[published changelogs]" do
-    @query """
-    query($login: String!, $filter: PagiFilter!) {
-      pagedPublishedChangelogs(login: $login, filter: $filter) {
-        entries {
-          id
-          title
-          author {
-            id
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
     test "can get published changelogs", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
@@ -39,40 +22,14 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
       {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_published_articles, :changelog), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(changelog.id)))
-      assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(changelog2.id)))
+      assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(changelog.inner_id)))
+      assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(changelog2.inner_id)))
     end
   end
 
   describe "[account published comments on changelog]" do
-    @query """
-    query($login: String!, $thread: Thread, $filter: PagiFilter!) {
-      pagedPublishedComments(login: $login, thread: $thread, filter: $filter) {
-        entries {
-          id
-          bodyHtml
-          author {
-            id
-          }
-          article {
-            id
-            title
-            thread
-            author {
-              nickname
-              login
-            }
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
     test "user can get paged published comments on changelog",
          ~m(guest_conn user community changelog)a do
       pub_comments =
@@ -86,8 +43,7 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
       random_comment_id = pub_comments |> Enum.random() |> Map.get(:id) |> to_string
 
       variables = %{login: user.login, thread: "CHANGELOG", filter: %{page: 1, size: 20}}
-
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_published_comments), variables)
 
       entries = results["entries"]
       assert results |> is_valid_pagination?

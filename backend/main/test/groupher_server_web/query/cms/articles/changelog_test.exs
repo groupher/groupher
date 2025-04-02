@@ -12,33 +12,14 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     {:ok, ~m(user_conn guest_conn changelog user community changelog_attrs)a}
   end
 
-  @query """
-  query($community: String!, $id: ID!) {
-    changelog(community: $community, id: $id) {
-      id
-      title
-      innerId
-      originalCommunitySlug
-      meta {
-        isEdited
-        isLegal
-        illegalReason
-        illegalWords
-      }
-      isArchived
-      archivedAt
-    }
-  }
-  """
-
-  test "basic graphql query on changelog with logined user",
+  test "basic graphql query on changelog with login user",
        ~m(user_conn community user changelog_attrs)a do
     {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
     variables = %{community: changelog.original_community_slug, id: changelog.inner_id}
-    results = user_conn |> gq_query(@query, variables)
+    results = user_conn |> gq_query(Schema.q(:article, :changelog), variables)
 
-    assert results["id"] == to_string(changelog.id)
+    assert results["innerId"] == to_string(changelog.inner_id)
     assert results["originalCommunitySlug"] == changelog.original_community_slug
 
     assert is_valid_kv?(results, "title", :string)
@@ -49,31 +30,29 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
              "illegalWords" => [],
              "isLegal" => true
            }
-
-    assert length(Map.keys(results)) == 7
   end
 
-  test "basic graphql query on changelog with stranger(unloged user)",
+  test "basic graphql query on changelog with stranger(un-login user)",
        ~m(guest_conn community changelog_attrs user)a do
     {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
     variables = %{community: changelog.original_community_slug, id: changelog.inner_id}
-    results = guest_conn |> gq_query(@query, variables)
+    results = guest_conn |> gq_query(Schema.q(:article, :changelog), variables)
 
-    assert results["id"] == to_string(changelog.id)
+    assert results["innerId"] == to_string(changelog.inner_id)
     assert is_valid_kv?(results, "title", :string)
   end
 
   test "pending state should in meta", ~m(guest_conn user_conn community user changelog_attrs)a do
     {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
     variables = %{community: changelog.original_community_slug, id: changelog.inner_id}
-    results = user_conn |> gq_query(@query, variables)
+    results = user_conn |> gq_query(Schema.q(:article, :changelog), variables)
 
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
 
-    results = guest_conn |> gq_query(@query, variables)
+    results = guest_conn |> gq_query(Schema.q(:article, :changelog), variables)
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
@@ -85,7 +64,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
         illegal_words: ["some-word"]
       })
 
-    results = user_conn |> gq_query(@query, variables)
+    results = user_conn |> gq_query(Schema.q(:article, :changelog), variables)
 
     assert not get_in(results, ["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]

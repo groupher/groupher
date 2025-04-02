@@ -14,7 +14,8 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   """
   interface :article do
     # article 所包含的共同字段
-    field(:id, :id)
+    # field(:id, :id)
+    field(:inner_id, :id)
     field(:title, :string)
     field(:views, :integer)
     field(:upvotes_count, :integer)

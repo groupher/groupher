@@ -4,14 +4,14 @@ defmodule GroupherServer.Test.CMS.AbuseReports.PostReport do
   use GroupherServer.TestTools
 
   setup do
-    {community, post, _, user} = mock_article(:post)
+    {_, post, _, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, ~m(user user2 community post)a}
+    {:ok, ~m(user user2 post)a}
   end
 
   describe "[article post report/unreport]" do
-    test "list article reports should work", ~m(community user user2 post)a do
+    test "list article reports should work", ~m(user user2 post)a do
       {:ok, _} = CMS.report_article(post, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(post, "reason", "attr_info", user2)
 
@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.PostReport do
       assert report.article.thread == "POST"
     end
 
-    test "report a post should have a abuse report record", ~m(community user post)a do
+    test "report a post should have a abuse report record", ~m(user post)a do
       {:ok, _} = CMS.report_article(post, "reason", "attr_info", user)
 
       filter = %{content_type: :post, content_id: post.id, page: 1, size: 20}
@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.PostReport do
       assert user.id in post.meta.reported_user_ids
     end
 
-    test "can undo a report", ~m(community user post)a do
+    test "can undo a report", ~m(user post)a do
       {:ok, _} = CMS.report_article(post, "reason", "attr_info", user)
       {:ok, _} = CMS.undo_report_article(post, user)
 
@@ -54,7 +54,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.PostReport do
       assert user.id not in post.meta.reported_user_ids
     end
 
-    test "can undo a existed report", ~m(community user user2 post)a do
+    test "can undo a existed report", ~m(user user2 post)a do
       {:ok, _} = CMS.report_article(post, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(post, "reason", "attr_info", user2)
       {:ok, _} = CMS.undo_report_article(post, user)
@@ -69,7 +69,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.PostReport do
       assert user.id not in post.meta.reported_user_ids
     end
 
-    test "can undo a report with other user report it too", ~m(community user user2 post)a do
+    test "can undo a report with other user report it too", ~m(user user2 post)a do
       {:ok, _} = CMS.report_article(post, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(post, "reason", "attr_info", user2)
 
@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.PostReport do
     end
 
     test "different user report a comment should have same report with different report cases",
-         ~m(community user user2 post)a do
+         ~m(user user2 post)a do
       {:ok, _} = CMS.report_article(post, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(post, "reason2", "attr_info 2", user2)
 
@@ -112,7 +112,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.PostReport do
       assert List.last(report_cases).user.login == user2.login
     end
 
-    test "same user can not report a comment twice", ~m(community post user)a do
+    test "same user can not report a comment twice", ~m(post user)a do
       {:ok, _} = CMS.report_article(post, "reason", "attr_info", user)
       assert {:error, _report} = CMS.report_article(post, "reason", "attr_info", user)
     end

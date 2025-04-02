@@ -72,7 +72,7 @@ defmodule GroupherServer.CMS.Delegate.Document do
   @doc """
   update both article and thread document
   """
-  def update(article, %{body: body} = attrs) when not is_nil(body) do
+  def update(article, %{body: body}) when not is_nil(body) do
     with {:ok, article_thread} <- thread_of(article, :upcase),
          {:ok, article_doc} <- find_article_document(article_thread, article),
          {:ok, thread_doc} <- find_thread_document(article_thread, article),

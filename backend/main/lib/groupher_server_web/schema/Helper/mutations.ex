@@ -131,10 +131,12 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("mark delete a #{thread} type article, aka soft-delete")
       field unquote(:"mark_delete_#{thread}"), unquote(thread) do
         arg(:id, non_null(:id))
+        arg(:community, non_null(:string))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
         middleware(M.Passport, claim: unquote("cms->#{to_string(thread)}.mark_delete"))
+        middleware(M.FrontDesk, :article)
 
         resolve(&R.CMS.mark_delete_article/3)
       end
@@ -143,9 +145,11 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       field unquote(:"undo_mark_delete_#{thread}"), unquote(thread) do
         arg(:id, non_null(:id))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
+        arg(:community, non_null(:string))
 
         middleware(M.Authorize, :login)
         middleware(M.Passport, claim: unquote("cms->#{to_string(thread)}.undo_mark_delete"))
+        middleware(M.FrontDesk, :article)
 
         resolve(&R.CMS.undo_mark_delete_article/3)
       end
@@ -190,10 +194,13 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("delete a #{thread}, not delete")
       field unquote(:"delete_#{thread}"), unquote(thread) do
         arg(:id, non_null(:id))
+        arg(:community, non_null(:string))
+        arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
         middleware(M.PassportLoader, source: unquote(thread))
         middleware(M.Passport, claim: unquote("owner;cms->c?->#{to_string(thread)}.delete"))
+        middleware(M.FrontDesk, :article)
 
         resolve(&R.CMS.delete_article/3)
       end

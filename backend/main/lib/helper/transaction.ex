@@ -66,7 +66,7 @@ defmodule Helper.Transaction do
   defp lock_resource(%{inner_id: _} = article) do
     article.__struct__
     |> where(id: ^article.id)
-    |> preload(author: :user)
+    |> preload([:communities, author: :user])
     |> lock("FOR UPDATE")
     |> Repo.one!()
   rescue

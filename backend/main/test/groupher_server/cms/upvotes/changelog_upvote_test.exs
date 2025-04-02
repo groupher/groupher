@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.Upvotes.ChangelogUpvote do
       {:ok, article} = CMS.upvote_article(changelog, user)
       assert user.id in article.meta.upvoted_user_ids
 
-      {:ok, article} = CMS.upvote_article(changelog, user2)
+      {:ok, _} = CMS.upvote_article(changelog, user2)
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
 
       assert user.id in changelog.meta.upvoted_user_ids

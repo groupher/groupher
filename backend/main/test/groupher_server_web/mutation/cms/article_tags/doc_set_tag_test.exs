@@ -44,7 +44,6 @@ defmodule GroupherServer.Test.Mutation.ArticleTags.DocSetTag do
     test "can unset tag to a doc",
          ~m(community doc article_tag_attrs article_tag_attrs2 user)a do
       {:ok, article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
-
       {:ok, article_tag2} = CMS.create_article_tag(community, :doc, article_tag_attrs2, user)
 
       {:ok, _} = CMS.set_article_tag(doc, article_tag.id)

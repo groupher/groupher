@@ -1,6 +1,207 @@
 defmodule GroupherServer.Test.Helper.Schema do
   @moduledoc false
 
+  def q(key, thread, extra \\ "")
+
+  def q(:article, thread, extra) do
+    """
+    query($community: String!, $id: ID!) {
+      #{thread}(community: $community, id: $id) {
+        title
+        innerId
+        originalCommunitySlug
+        meta {
+          isEdited
+          isLegal
+          illegalReason
+          illegalWords
+        }
+        commentsParticipants {
+          id
+          nickname
+        }
+        commentsParticipantsCount
+        isArchived
+        archivedAt
+        #{extra}
+      }
+    }
+    """
+  end
+
+  def q(:paged_articles, thread, extra) do
+    """
+    query($filter: Paged#{t(thread)}sFilter!) {
+      paged#{t(thread)}s(filter: $filter) {
+        entries {
+          innerId
+          title
+          views
+          upvotesCount
+          commentsCount
+          viewerHasCollected
+          viewerHasUpvoted
+          viewerHasViewed
+          viewerHasReported
+          isPinned
+          pending
+          meta {
+            latestUpvotedUsers {
+              login
+            }
+          }
+          author {
+            id
+            nickname
+            avatar
+          }
+          document {
+            bodyHtml
+          }
+          communities {
+            id
+            slug
+          }
+          articleTags {
+            id
+          }
+          insertedAt
+          activeAt
+          #{extra}
+        }
+        totalPages
+        totalCount
+        pageSize
+        pageNumber
+      }
+    }
+    """
+  end
+
+  def q(:paged_published_articles, thread, extra) do
+    """
+    query($login: String!, $filter: PagiFilter!) {
+      pagedPublished#{t(thread)}s(login: $login, filter: $filter) {
+        entries {
+          innerId
+          title
+          author {
+            id
+          }
+          #{extra}
+        }
+        totalPages
+        totalCount
+        pageSize
+        pageNumber
+      }
+    }
+    """
+  end
+
+  def q(:paged_published_comments) do
+    """
+    query($login: String!, $thread: Thread, $filter: PagiFilter!) {
+      pagedPublishedComments(login: $login, thread: $thread, filter: $filter) {
+        entries {
+          id
+          bodyHtml
+          author {
+            id
+          }
+          article {
+            id
+            title
+            thread
+            author {
+              nickname
+              login
+            }
+          }
+        }
+        totalPages
+        totalCount
+        pageSize
+        pageNumber
+      }
+    }
+    """
+  end
+
+  def q(:paged_citing_contents) do
+    """
+    query($content: Content!, $id: ID!, $filter: PagiFilter!) {
+      pagedCitingContents(id: $id, content: $content, filter: $filter) {
+        entries {
+          id
+          title
+          user {
+            login
+            nickname
+            avatar
+          }
+          commentId
+        }
+        totalPages
+        totalCount
+        pageSize
+        pageNumber
+      }
+    }
+    """
+  end
+
+  def m(:pin_article, thread) do
+    """
+    mutation($id: ID!, $community: String!){
+      pin#{t(thread)}(id: $id, community: $community) {
+        innerId
+        isPinned
+      }
+    }
+    """
+  end
+
+  def m(:undo_pin_article, thread) do
+    """
+    mutation($id: ID!, $community: String!){
+      undoPin#{t(thread)}(id: $id, community: $community) {
+        innerId
+        isPinned
+      }
+    }
+    """
+  end
+
+  def q(:search_articles, thread, extra) do
+    """
+    query($title: String!) {
+      search#{t(thread)}s(title: $title) {
+        entries {
+          innerId
+          title
+          #{extra}
+        }
+        totalCount
+      }
+    }
+    """
+  end
+
+  def q(:search_communities) do
+    """
+    query($title: String!, $category: String) {
+      searchCommunities(title: $title, category: $category) {
+        entries {
+          id
+          title
+        }
+        totalCount
+      }
+    }
+    """
+  end
+
   def q(:upvoted_users) do
     """
     query(
@@ -51,7 +252,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!, $emotion: ArticleEmotion!) {
       emotionTo#{t(thread)}(id: $id, community: $community, emotion: $emotion) {
-        id
+        innerId
         emotions {
           beerCount
           viewerHasBeered
@@ -69,7 +270,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!, $emotion: ArticleEmotion!) {
       undoEmotionTo#{t(thread)}(id: $id, community: $community, emotion: $emotion) {
-        id
+        innerId
         emotions {
           beerCount
           viewerHasBeered
@@ -99,7 +300,7 @@ defmodule GroupherServer.Test.Helper.Schema do
         articleTags: $articleTags
         linkAddr: $linkAddr
       ) {
-        id
+        innerId
         title
         linkAddr
         document {
@@ -113,16 +314,94 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def m(:mark_delete_article, thread) do
+    """
+    mutation($community: String!, $id: ID!){
+      markDelete#{t(thread)}(community: $community, id: $id) {
+        innerId
+        markDelete
+      }
+    }
+    """
+  end
+
+  def m(:undo_mark_delete_article, thread) do
+    """
+    mutation($community: String!, $id: ID!){
+      undoMarkDelete#{t(thread)}(community: $community, id: $id) {
+        innerId
+        markDelete
+      }
+    }
+    """
+  end
+
+  def m(:batch_mark_delete_article, thread) do
+    """
+    mutation($community: String!, $ids: [ID]!){
+      batchMarkDelete#{t(thread)}s(community: $community, ids: $ids) {
+        done
+      }
+    }
+    """
+  end
+
+  def m(:batch_undo_mark_delete_article, thread) do
+    """
+    mutation($community: String!, $ids: [ID]!){
+      batchUndoMarkDelete#{t(thread)}s(community: $community, ids: $ids) {
+        done
+      }
+    }
+    """
+  end
+
+  def m(:delete_article, thread) do
+    """
+    mutation($community: String!, $id: ID!){
+      delete#{t(thread)}(community: $community, id: $id) {
+        innerId
+      }
+    }
+    """
+  end
+
+  def m(:update_article, thread) do
+    """
+    mutation($id: ID!, $community: String!, $title: String, $body: String, $copyRight: String, $articleTags: [ID]){
+      update#{t(thread)}(id: $id, community: $community, title: $title, body: $body, copyRight: $copyRight, articleTags: $articleTags) {
+        innerId
+        title
+        document {
+          bodyHtml
+        }
+        copyRight
+        meta {
+          isEdited
+        }
+        commentsParticipants {
+          id
+          nickname
+        }
+        articleTags {
+          id
+        }
+      }
+    }
+    """
+  end
+
   def m(:upvote_article, thread) do
     """
     mutation($id: ID!, $community: String!) {
       upvote#{t(thread)}(id: $id, community: $community) {
-        id
+        innerId
         meta {
           latestUpvotedUsers {
             login
           }
         }
+        upvotesCount
       }
     }
     """
@@ -132,7 +411,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!) {
       undoUpvote#{t(thread)}(id: $id, community: $community) {
-        id
+        innerId
         meta {
           latestUpvotedUsers {
             login
@@ -147,7 +426,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!){
       sink#{t(thread)}(id: $id, community: $community) {
-        id
+        innerId
       }
     }
     """
@@ -157,7 +436,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!){
       undoSink#{t(thread)}(id: $id, community: $community) {
-        id
+        innerId
       }
     }
     """
@@ -167,7 +446,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!) {
       lock#{t(thread)}Comment(id: $id, community: $community) {
-        id
+        innerId
         title
       }
     }
@@ -178,7 +457,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!){
       undoLock#{t(thread)}Comment(id: $id, community: $community) {
-        id
+        innerId
       }
     }
     """
@@ -188,7 +467,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!, $reason: String!, $attr: String) {
       report#{t(thread)}(id: $id, community: $community, reason: $reason, attr: $attr) {
-        id
+        innerId
         title
       }
     }
@@ -199,7 +478,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!) {
       undoReport#{t(thread)}(id: $id, community: $community) {
-        id
+        innerId
         title
       }
     }
@@ -231,7 +510,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $thread: Thread, $community: String!, $targetCommunity: String!, $articleTags: [ID]) {
         mirrorArticle(id: $id, thread: $thread, community: $community, targetCommunity: $targetCommunity, articleTags: $articleTags) {
-          id
+          innerId
         }
       }
     """
@@ -241,7 +520,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $thread: Thread, $community: String!, $targetCommunity: String!) {
       unmirrorArticle(id: $id, thread: $thread, community: $community, targetCommunity: $targetCommunity) {
-        id
+        innerId
       }
     }
     """
@@ -251,7 +530,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $community: String!, $thread: Thread, $articleTags: [ID]) {
       mirrorToHome(id: $id, community: $community, thread: $thread, articleTags: $articleTags) {
-        id
+        innerId
       }
     }
     """
@@ -261,7 +540,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($community: String!, $thread: Thread, $targetCommunity: String!, $id: ID!, $articleTags: [ID]) {
       moveArticle(id: $id, thread: $thread, community: $community, targetCommunity: $targetCommunity, articleTags: $articleTags) {
-        id
+        innerId
       }
     }
     """
@@ -271,7 +550,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($community: String!, $thread: Thread, $id: ID!, $articleTags: [ID]) {
       moveToBlackhole(community: $community, thread: $thread, id: $id, articleTags: $articleTags) {
-        id
+        innerId
       }
     }
     """

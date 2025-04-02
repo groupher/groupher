@@ -12,33 +12,14 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
     {:ok, ~m(user_conn guest_conn doc user community doc_attrs)a}
   end
 
-  @query """
-  query($community: String!, $id: ID!) {
-    doc(community: $community, id: $id) {
-      id
-      title
-      innerId
-      originalCommunitySlug
-      meta {
-        isEdited
-        isLegal
-        illegalReason
-        illegalWords
-      }
-      isArchived
-      archivedAt
-    }
-  }
-  """
-
-  test "basic graphql query on doc with logined user",
+  test "basic graphql query on doc with login user",
        ~m(user_conn community user doc_attrs)a do
     {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
     variables = %{community: doc.original_community_slug, id: doc.inner_id}
-    results = user_conn |> gq_query(@query, variables)
+    results = user_conn |> gq_query(Schema.q(:article, :doc), variables)
 
-    assert results["id"] == to_string(doc.id)
+    assert results["innerId"] == to_string(doc.inner_id)
     assert results["originalCommunitySlug"] == doc.original_community_slug
 
     assert is_valid_kv?(results, "title", :string)
@@ -49,31 +30,29 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
              "illegalWords" => [],
              "isLegal" => true
            }
-
-    assert length(Map.keys(results)) == 7
   end
 
-  test "basic graphql query on doc with stranger(unloged user)",
+  test "basic graphql query on doc with stranger(un-login user)",
        ~m(guest_conn community doc_attrs user)a do
     {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
     variables = %{community: doc.original_community_slug, id: doc.inner_id}
-    results = guest_conn |> gq_query(@query, variables)
+    results = guest_conn |> gq_query(Schema.q(:article, :doc), variables)
 
-    assert results["id"] == to_string(doc.id)
+    assert results["innerId"] == to_string(doc.inner_id)
     assert is_valid_kv?(results, "title", :string)
   end
 
   test "pending state should in meta", ~m(guest_conn user_conn community user doc_attrs)a do
     {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
     variables = %{community: doc.original_community_slug, id: doc.inner_id}
-    results = user_conn |> gq_query(@query, variables)
+    results = user_conn |> gq_query(Schema.q(:article, :doc), variables)
 
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
 
-    results = guest_conn |> gq_query(@query, variables)
+    results = guest_conn |> gq_query(Schema.q(:article, :doc), variables)
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
@@ -85,7 +64,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
         illegal_words: ["some-word"]
       })
 
-    results = user_conn |> gq_query(@query, variables)
+    results = user_conn |> gq_query(Schema.q(:article, :doc), variables)
 
     assert not get_in(results, ["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]

@@ -1,6 +1,6 @@
 defmodule GroupherServerWeb.Schema do
   @moduledoc """
-  scham index
+  schema index for all modules
   """
   use Absinthe.Schema
   import GroupherServerWeb.Schema.Helper.Imports

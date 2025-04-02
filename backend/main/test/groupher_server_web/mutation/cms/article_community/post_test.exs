@@ -52,13 +52,13 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
-             |> mutation_get_error?(Schema.m(:mirror_article), variables, ecode(:passport))
+             |> mutation_error?(Schema.m(:mirror_article), variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(Schema.m(:mirror_article), variables, ecode(:account_login))
+             |> mutation_error?(Schema.m(:mirror_article), variables, ecode(:account_login))
 
       assert rule_conn
-             |> mutation_get_error?(Schema.m(:mirror_article), variables, ecode(:passport))
+             |> mutation_error?(Schema.m(:mirror_article), variables, ecode(:passport))
     end
 
     test "auth user can mirror multi post to other communities",

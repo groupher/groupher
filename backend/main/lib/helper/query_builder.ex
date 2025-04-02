@@ -196,11 +196,11 @@ defmodule Helper.QueryBuilder do
 
   def handle_community_relate_logic(queryable, filter) do
     Enum.reduce(filter, queryable, fn
-      {:category, catetory_slug}, queryable ->
+      {:category, category_slug}, queryable ->
         from(
           q in queryable,
           join: t in assoc(q, :categories),
-          where: t.slug == ^catetory_slug
+          where: t.slug == ^category_slug
         )
 
       {:thread, thread}, queryable ->

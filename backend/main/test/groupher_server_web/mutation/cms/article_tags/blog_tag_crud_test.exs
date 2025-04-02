@@ -92,12 +92,12 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleArticleTags.BlogTagCRUD do
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@create_tag_query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@create_tag_query, variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(@create_tag_query, variables, ecode(:account_login))
+             |> mutation_error?(@create_tag_query, variables, ecode(:account_login))
 
-      assert rule_conn |> mutation_get_error?(@create_tag_query, variables, ecode(:passport))
+      assert rule_conn |> mutation_error?(@create_tag_query, variables, ecode(:passport))
     end
 
     @update_tag_query """
@@ -165,12 +165,12 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleArticleTags.BlogTagCRUD do
       variables = %{id: article_tag.id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_get_error?(@delete_tag_query, variables, ecode(:passport))
+      assert user_conn |> mutation_error?(@delete_tag_query, variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_get_error?(@delete_tag_query, variables, ecode(:account_login))
+             |> mutation_error?(@delete_tag_query, variables, ecode(:account_login))
 
-      assert rule_conn |> mutation_get_error?(@delete_tag_query, variables, ecode(:passport))
+      assert rule_conn |> mutation_error?(@delete_tag_query, variables, ecode(:passport))
     end
   end
 end

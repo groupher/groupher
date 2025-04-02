@@ -15,18 +15,7 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
     {:ok, ~m(user_conn guest_conn post user community post_attrs)a}
   end
 
-  @query """
-  query($community: String!, $id: ID!) {
-    post(community: $community, id: $id) {
-      id
-      title
-      cat
-      state
-    }
-  }
-  """
-
-  test "basic graphql query on kanban post with logined user",
+  test "basic graphql query on kanban post with login user",
        ~m(user_conn community user post_attrs)a do
     kanban_attrs =
       post_attrs |> Map.merge(%{cat: @article_cat.feature, state: @article_state.todo})
@@ -34,9 +23,9 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
     {:ok, post} = CMS.create_article(community, :post, kanban_attrs, user)
 
     variables = %{community: post.original_community_slug, id: post.inner_id}
-    result = user_conn |> gq_query(@query, variables)
+    result = user_conn |> gq_query(Schema.q(:article, :post, "cat state"), variables)
 
-    assert result["id"] == to_string(post.id)
+    assert result["innerId"] == to_string(post.inner_id)
     assert result["cat"] == "FEATURE"
     assert result["state"] == "TODO"
   end

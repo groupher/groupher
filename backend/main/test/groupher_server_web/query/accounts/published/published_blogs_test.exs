@@ -15,23 +15,6 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Blogs do
   end
 
   describe "[published blogs]" do
-    @query """
-    query($login: String!, $filter: PagiFilter!) {
-      pagedPublishedBlogs(login: $login, filter: $filter) {
-        entries {
-          id
-          title
-          author {
-            id
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
     test "can get published blogs", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
@@ -39,39 +22,14 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Blogs do
       {:ok, blog2} = CMS.create_article(community, :blog, blog_attrs, user)
 
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_published_articles, :blog), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(blog.id)))
-      assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(blog2.id)))
+      assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(blog.inner_id)))
+      assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(blog2.inner_id)))
     end
   end
 
   describe "[account published comments on blog]" do
-    @query """
-    query($login: String!, $thread: Thread, $filter: PagiFilter!) {
-      pagedPublishedComments(login: $login, thread: $thread, filter: $filter) {
-        entries {
-          id
-          bodyHtml
-          author {
-            id
-          }
-          article {
-            id
-            title
-            author {
-              nickname
-              login
-            }
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
     test "user can get paged published comments on blog", ~m(guest_conn user community blog)a do
       pub_comments =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
@@ -84,8 +42,7 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Blogs do
       random_comment_id = pub_comments |> Enum.random() |> Map.get(:id) |> to_string
 
       variables = %{login: user.login, thread: "BLOG", filter: %{page: 1, size: 20}}
-
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_published_comments), variables)
 
       entries = results["entries"]
       assert results |> is_valid_pagination?
