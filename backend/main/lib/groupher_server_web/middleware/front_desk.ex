@@ -13,6 +13,10 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   alias GroupherServer.FrontDesk
 
+  def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
+    resolution
+  end
+
   def call(%{arguments: %{community: slug}} = resolution, :community) do
     fetch_community(resolution, slug)
   end

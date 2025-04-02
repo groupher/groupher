@@ -21,6 +21,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
       assert created["innerId"] == to_string(blog.inner_id)
     end
 
+    @tag :wip
     test "unauth user upvote a blog fails", ~m(guest_conn community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 
