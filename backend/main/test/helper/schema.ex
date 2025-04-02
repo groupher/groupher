@@ -99,6 +99,21 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def q(:search_articles, thread, extra) do
+    """
+    query($title: String!) {
+      search#{t(thread)}s(title: $title) {
+        entries {
+          innerId
+          title
+          #{extra}
+        }
+        totalCount
+      }
+    }
+    """
+  end
+
   def q(:paged_published_comments) do
     """
     query($login: String!, $thread: Thread, $filter: PagiFilter!) {
@@ -146,43 +161,6 @@ defmodule GroupherServer.Test.Helper.Schema do
         totalCount
         pageSize
         pageNumber
-      }
-    }
-    """
-  end
-
-  def m(:pin_article, thread) do
-    """
-    mutation($id: ID!, $community: String!){
-      pin#{t(thread)}(id: $id, community: $community) {
-        innerId
-        isPinned
-      }
-    }
-    """
-  end
-
-  def m(:undo_pin_article, thread) do
-    """
-    mutation($id: ID!, $community: String!){
-      undoPin#{t(thread)}(id: $id, community: $community) {
-        innerId
-        isPinned
-      }
-    }
-    """
-  end
-
-  def q(:search_articles, thread, extra) do
-    """
-    query($title: String!) {
-      search#{t(thread)}s(title: $title) {
-        entries {
-          innerId
-          title
-          #{extra}
-        }
-        totalCount
       }
     }
     """
@@ -243,6 +221,28 @@ defmodule GroupherServer.Test.Helper.Schema do
         totalCount
         pageSize
         pageNumber
+      }
+    }
+    """
+  end
+
+  def m(:pin_article, thread) do
+    """
+    mutation($id: ID!, $community: String!){
+      pin#{t(thread)}(id: $id, community: $community) {
+        innerId
+        isPinned
+      }
+    }
+    """
+  end
+
+  def m(:undo_pin_article, thread) do
+    """
+    mutation($id: ID!, $community: String!){
+      undoPin#{t(thread)}(id: $id, community: $community) {
+        innerId
+        isPinned
       }
     }
     """

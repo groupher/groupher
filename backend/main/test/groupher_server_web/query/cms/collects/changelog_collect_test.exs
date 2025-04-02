@@ -15,6 +15,7 @@ defmodule GroupherServer.Test.Query.Collects.ChangelogCollect do
   end
 
   describe "[collect users]" do
+    @tag :wip2
     test "guest can get collected users list after collect a changelog",
          ~m(guest_conn community changelog user user2)a do
       {:ok, _} = CMS.collect_article(changelog, user)

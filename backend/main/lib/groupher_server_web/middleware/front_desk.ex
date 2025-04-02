@@ -84,6 +84,20 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     end
   end
 
+  defp fetch_article(
+         %{arguments: %{thread: thread, id: inner_id} = arguments} = resolution,
+         community
+       ) do
+    case FrontDesk.info(:article, community, thread, inner_id) do
+      {:ok, article} ->
+        updated_arguments = arguments |> Map.put(:article, article)
+        %{resolution | arguments: updated_arguments}
+
+      {:error, err_msg} ->
+        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+    end
+  end
+
   defp fetch_thread(%{arguments: arguments} = resolution, thread_id) do
     case FrontDesk.info(:thread, thread_id) do
       {:ok, community} ->
