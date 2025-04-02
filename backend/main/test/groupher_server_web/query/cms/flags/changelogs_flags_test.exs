@@ -28,27 +28,11 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
   end
 
   describe "[pending changelogs flags]" do
-    @query """
-    query($filter: PagedChangelogsFilter!) {
-      pagedChangelogs(filter: $filter) {
-        entries {
-          id
-          pending
-          communities {
-            slug
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @tag :wip
     test "pending changelog should not see in paged query",
          ~m(guest_conn community changelog_m)a do
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
 
       assert results["totalCount"] == @total_count
 
@@ -59,37 +43,21 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
           illegal_words: ["some-word"]
         })
 
-      {:ok, changelog_m} = ORM.find(CMS.Model.Changelog, changelog_m.id)
+      {:ok, changelog_m} = ORM.find_article(community, :changelog, changelog_m.inner_id)
       assert changelog_m.pending == @audit_illegal
 
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
       assert results["totalCount"] == @total_count - 1
     end
   end
 
   describe "[pinned changelogs flags]" do
-    @query """
-    query($filter: PagedChangelogsFilter!) {
-      pagedChangelogs(filter: $filter) {
-        entries {
-          id
-          isPinned
-          communities {
-            slug
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @tag :wip
     test "if have pinned changelogs, the pinned changelogs should at the top of entries",
          ~m(guest_conn community changelog_m)a do
       variables = %{filter: %{community: community.slug}}
 
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
 
       assert results |> is_valid_pagination?
       assert results["pageSize"] == @page_size
@@ -97,39 +65,41 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
 
       {:ok, _} = CMS.pin_article(community, changelog_m)
 
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
       entries_first = results["entries"] |> List.first()
 
       assert results["totalCount"] == @total_count
-      assert entries_first["id"] == to_string(changelog_m.id)
+      assert entries_first["innerId"] == to_string(changelog_m.inner_id)
       assert entries_first["isPinned"] == true
     end
 
+    @tag :wip
     test "pinned changelogs should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
       assert results |> is_valid_pagination?
 
-      random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("id")
-      {:ok, changelog} = ORM.find(Changelog, random_id)
+      random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
+      {:ok, changelog} = ORM.find_article(community, :changelog, random_id)
       {:ok, _} = CMS.pin_article(community, changelog)
-
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
 
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
     end
 
+    @tag :wip
     test "if have trashed changelogs, the mark deleted changelogs should not appears in result",
          ~m(guest_conn community)a do
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
 
-      random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("id")
-      {:ok, _} = CMS.mark_delete_article(:changelog, random_id)
+      random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
+      {:ok, random_changelog} = ORM.find_article(community, :changelog, random_id)
+      {:ok, _} = CMS.mark_delete_article(random_changelog)
 
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
+      assert results["entries"] |> Enum.any?(&(&1["innerId"] !== random_id))
       assert results["totalCount"] == @total_count - 1
     end
   end

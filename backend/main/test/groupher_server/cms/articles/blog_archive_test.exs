@@ -32,8 +32,8 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
         |> Repo.all()
 
       assert length(archived_blogs) == 1
-      archived_changelog = archived_blogs |> List.first()
-      assert archived_changelog.id == blog_long_ago.id
+      archived_blog = archived_blogs |> List.first()
+      assert archived_blog.id == blog_long_ago.id
     end
 
     test "can not edit archived blog" do
@@ -44,11 +44,12 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
         |> where([article], article.inserted_at < ^@blog_archive_threshold)
         |> Repo.all()
 
-      archived_changelog = archived_blogs |> List.first()
-      {:error, reason} = CMS.update_article(archived_changelog, %{"title" => "new title"})
+      archived_blog = archived_blogs |> List.first()
+      {:error, reason} = CMS.update_article(archived_blog, %{"title" => "new title"})
       assert reason |> is_error?(:archived)
     end
 
+    @tag :wip
     test "can not delete archived blog" do
       {:ok, _} = CMS.archive_articles(:blog)
 
@@ -57,9 +58,9 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
         |> where([article], article.inserted_at < ^@blog_archive_threshold)
         |> Repo.all()
 
-      archived_changelog = archived_blogs |> List.first()
+      archived_blog = archived_blogs |> List.first()
 
-      {:error, reason} = CMS.mark_delete_article(:blog, archived_changelog.id)
+      {:error, reason} = CMS.mark_delete_article(archived_blog)
       assert reason |> is_error?(:archived)
     end
   end

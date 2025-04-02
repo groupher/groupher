@@ -59,7 +59,7 @@ defmodule GroupherServer.Test.CMS.PostArchive do
 
       archived_post = archived_posts |> List.first()
 
-      {:error, reason} = CMS.mark_delete_article(:post, archived_post.id)
+      {:error, reason} = CMS.mark_delete_article(archived_post)
       assert reason |> is_error?(:archived)
     end
   end

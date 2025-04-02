@@ -133,6 +133,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            )
   end
 
+  @tag :wip
   test "user create multi content with valid hour count success in next hour", ~m(community)a do
     {:ok, user} = db_insert(:user)
     user_conn = simu_conn(:user, user)
@@ -141,7 +142,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
 
     Statistics.mock_throttle_attr(
       :last_publish_time,
@@ -171,7 +172,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     created =
       user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-    assert created |> Map.has_key?("id")
+    assert created |> Map.has_key?("innerId")
   end
 
   test "user create multi content with invalid day_count fails", ~m(community)a do

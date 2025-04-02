@@ -15,6 +15,8 @@ defmodule GroupherServer.Test.Helper.Schema do
           viewerHasUpvoted
           viewerHasViewed
           viewerHasReported
+          isPinned
+          pending
           meta {
             latestUpvotedUsers {
               login
