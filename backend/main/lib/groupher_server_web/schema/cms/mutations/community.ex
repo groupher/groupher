@@ -128,7 +128,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:role, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :community)
       middleware(M.Passport, claim: "cms->moderator.set")
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :user)
@@ -143,7 +142,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:user, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :community)
       middleware(M.Passport, claim: "cms->moderator.unset")
 
       resolve(&R.CMS.remove_moderator/3)
@@ -156,8 +154,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:rules, non_null(:json))
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :community)
-      # middleware(M.Passport, claim: "cms->moderator.update")
+      middleware(M.Passport, claim: "cms->moderator.update")
 
       resolve(&R.CMS.update_moderator_passport/3)
     end
@@ -175,7 +172,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:icon, :string)
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :community)
       middleware(M.Passport, claim: "cms->c?->t?.article_tag.create")
 
       resolve(&R.CMS.create_article_tag/3)
@@ -196,8 +192,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:icon, :string)
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :community)
-      # middleware(M.Passport, claim: "cms->c?->t?.article_tag.update")
+      middleware(M.Passport, claim: "cms->c?->t?.article_tag.update")
 
       resolve(&R.CMS.update_article_tag/3)
     end
@@ -209,7 +204,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :community)
       middleware(M.Passport, claim: "cms->c?->t?.article_tag.delete")
 
       resolve(&R.CMS.delete_article_tag/3)

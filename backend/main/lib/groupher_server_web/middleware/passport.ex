@@ -42,6 +42,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
         } = resolution,
         claim: "cms->c?->t?." <> _rest = claim
       ) do
+    IO.inspect("----> hit me ???")
     resolution |> check_passport_stamp(claim)
   end
 
@@ -68,23 +69,12 @@ defmodule GroupherServerWeb.Middleware.Passport do
   def call(
         %{
           context: %{cur_user: %{cur_passport: _}},
-          arguments: %{passport_community: _}
+          arguments: %{passport_communities: _}
         } = resolution,
         claim: "owner;" <> claim
       ) do
     resolution |> check_passport_stamp(claim)
   end
-
-  # def call(
-  #       %{
-  #         context: %{cur_user: %{cur_passport: _}},
-  #         arguments: %{passport_communities: _}
-  #       } = resolution,
-  #       claim: "owner;" <> claim
-  #     ) do
-  #   IO.inspect("---> hit me 3")
-  #   resolution |> check_passport_stamp(claim)
-  # end
 
   def call(
         %{context: %{cur_user: %{cur_passport: _}}} = resolution,
@@ -155,7 +145,6 @@ defmodule GroupherServerWeb.Middleware.Passport do
   defp cp_check(resolution, claim) do
     cur_passport = resolution.context.cur_user.cur_passport
 
-    # community_title = resolution.arguments.passport_communities |> List.first() |> Map.get(:title)
     community_slug = resolution.arguments.passport_communities |> List.first() |> Map.get(:slug)
     thread = resolution.arguments.thread |> to_string
 
@@ -176,10 +165,21 @@ defmodule GroupherServerWeb.Middleware.Passport do
     end
   end
 
-  defp community_check(resolution, claim) do
+  defp community_check(
+         %{
+           arguments: %{passport_communities: passport_communities}
+         } = resolution,
+         claim
+       ) do
+    do_community_check(resolution, passport_communities, claim)
+  end
+
+  defp community_check(%{arguments: %{community: community}} = resolution, claim) do
+    do_community_check(resolution, [community], claim)
+  end
+
+  defp do_community_check(resolution, communities, claim) do
     cur_passport = resolution.context.cur_user.cur_passport
-    # communities = resolution.arguments.passport_communities
-    communities = [resolution.arguments.passport_community]
 
     result =
       communities

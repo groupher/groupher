@@ -222,6 +222,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
   end
 
   describe "[article comment lock/unlock]" do
+    @tag :wip2
     test "can lock a blog's comment", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"blog.lock_comment" => true}}
@@ -245,6 +246,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              )
     end
 
+    @tag :wip2
     test "can undo lock a blog's comment", ~m(community blog)a do
       {:ok, _} = CMS.lock_article_comments(blog)
       {:ok, blog} = ORM.find(Blog, blog.id)

@@ -73,9 +73,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
           arguments
           |> Map.put(:article, article)
           |> Map.put(:passport_is_owner, passport_is_owner)
-          |> Map.put(:passport_community, article.original_community_slug)
-
-        # |> Map.put(:passport_communities, [article.original_community_slug])
+          |> Map.put(:passport_communities, [article.original_community_slug])
 
         %{resolution | arguments: updated_arguments}
 
