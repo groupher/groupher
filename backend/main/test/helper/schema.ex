@@ -78,19 +78,46 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
-  def q(:upvoted_users) do
+  def q(:paged_published_articles, thread, extra) do
     """
-    query(
-      $id: ID!
-      $community: String!
-      $thread: Thread
-      $filter: PagiFilter!
-    ) {
-      upvotedUsers(id: $id, community: $community, thread: $thread, filter: $filter) {
+    query($login: String!, $filter: PagiFilter!) {
+      pagedPublished#{t(thread)}s(login: $login, filter: $filter) {
         entries {
-          login
-          avatar
-          nickname
+          innerId
+          title
+          author {
+            id
+          }
+          #{extra}
+        }
+        totalPages
+        totalCount
+        pageSize
+        pageNumber
+      }
+    }
+    """
+  end
+
+  def q(:paged_published_comments) do
+    """
+    query($login: String!, $thread: Thread, $filter: PagiFilter!) {
+      pagedPublishedComments(login: $login, thread: $thread, filter: $filter) {
+        entries {
+          id
+          bodyHtml
+          author {
+            id
+          }
+          article {
+            id
+            title
+            thread
+            author {
+              nickname
+              login
+            }
+          }
         }
         totalPages
         totalCount
@@ -118,6 +145,58 @@ defmodule GroupherServer.Test.Helper.Schema do
       undoPin#{t(thread)}(id: $id, community: $community) {
         innerId
         isPinned
+      }
+    }
+    """
+  end
+
+  def q(:search_articles, thread, extra) do
+    """
+    query($title: String!) {
+      search#{t(thread)}s(title: $title) {
+        entries {
+          innerId
+          title
+          #{extra}
+        }
+        totalCount
+      }
+    }
+    """
+  end
+
+  def q(:search_communities) do
+    """
+    query($title: String!, $category: String) {
+      searchCommunities(title: $title, category: $category) {
+        entries {
+          id
+          title
+        }
+        totalCount
+      }
+    }
+    """
+  end
+
+  def q(:upvoted_users) do
+    """
+    query(
+      $id: ID!
+      $community: String!
+      $thread: Thread
+      $filter: PagiFilter!
+    ) {
+      upvotedUsers(id: $id, community: $community, thread: $thread, filter: $filter) {
+        entries {
+          login
+          avatar
+          nickname
+        }
+        totalPages
+        totalCount
+        pageSize
+        pageNumber
       }
     }
     """
