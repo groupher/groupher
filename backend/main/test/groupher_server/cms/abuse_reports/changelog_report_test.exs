@@ -4,14 +4,14 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
   use GroupherServer.TestTools
 
   setup do
-    {community, changelog, _, user} = mock_article(:changelog)
+    {_, changelog, _, user} = mock_article(:changelog)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, ~m(user user2 community changelog)a}
+    {:ok, ~m(user user2 changelog)a}
   end
 
   describe "[article changelog report/un-report]" do
-    test "list article reports should work", ~m(community user user2 changelog)a do
+    test "list article reports should work", ~m(user user2 changelog)a do
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user2)
 
@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
       assert report.article.thread == "CHANGELOG"
     end
 
-    test "report a changelog should have a abuse report record", ~m(community user changelog)a do
+    test "report a changelog should have a abuse report record", ~m(user changelog)a do
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
 
       filter = %{content_type: :changelog, content_id: changelog.id, page: 1, size: 20}
@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
       assert user.id in changelog.meta.reported_user_ids
     end
 
-    test "can undo a report", ~m(community user changelog)a do
+    test "can undo a report", ~m(user changelog)a do
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
       {:ok, _} = CMS.undo_report_article(changelog, user)
 
@@ -54,7 +54,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
       assert user.id not in changelog.meta.reported_user_ids
     end
 
-    test "can undo a existed report", ~m(community user user2 changelog)a do
+    test "can undo a existed report", ~m(user user2 changelog)a do
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user2)
       {:ok, _} = CMS.undo_report_article(changelog, user)
@@ -69,7 +69,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
       assert user.id not in changelog.meta.reported_user_ids
     end
 
-    test "can undo a report with other user report it too", ~m(community user user2 changelog)a do
+    test "can undo a report with other user report it too", ~m(user user2 changelog)a do
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user2)
 
@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
     end
 
     test "different user report a comment should have same report with different report cases",
-         ~m(community user user2 changelog)a do
+         ~m(user user2 changelog)a do
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(changelog, "reason2", "attr_info 2", user2)
 
@@ -112,7 +112,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
       assert List.last(report_cases).user.login == user2.login
     end
 
-    test "same user can not report a comment twice", ~m(community changelog user)a do
+    test "same user can not report a comment twice", ~m(changelog user)a do
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
 
       assert {:error, _report} = CMS.report_article(changelog, "reason", "attr_info", user)

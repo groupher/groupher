@@ -21,7 +21,6 @@ defmodule GroupherServer.Test.Query.CMS.Search do
   end
 
   describe "[cms search post query]" do
-    @tag :wip
     test "search post by full title should valid paged communities", ~m(guest_conn)a do
       variables = %{title: "react"}
       results = guest_conn |> gq_query(Schema.q(:search_articles, :post), variables)
@@ -37,7 +36,6 @@ defmodule GroupherServer.Test.Query.CMS.Search do
       assert results["entries"] |> Enum.any?(&(&1["title"] == "javascript"))
     end
 
-    @tag :wip
     test "search non-exist post should get empty pagi data", ~m(guest_conn)a do
       variables = %{title: "non-exist"}
       results = guest_conn |> gq_query(Schema.q(:search_articles, :post), variables)
@@ -48,7 +46,6 @@ defmodule GroupherServer.Test.Query.CMS.Search do
   end
 
   describe "[cms search community query]" do
-    @tag :wip
     test "search community by full title should valid paged communities", ~m(guest_conn)a do
       variables = %{title: "react"}
       results = guest_conn |> gq_query(Schema.q(:search_communities), variables)

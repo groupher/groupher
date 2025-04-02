@@ -15,7 +15,6 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Blogs do
   end
 
   describe "[published blogs]" do
-    @tag :wip
     test "can get published blogs", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 

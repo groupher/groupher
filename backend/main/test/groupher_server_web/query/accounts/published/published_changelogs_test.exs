@@ -15,7 +15,6 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
   end
 
   describe "[published changelogs]" do
-    @tag :wip
     test "can get published changelogs", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 

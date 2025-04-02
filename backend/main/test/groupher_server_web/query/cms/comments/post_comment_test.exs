@@ -92,7 +92,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
   end
 
   describe "[basic article post comment]" do
-    @tag :wip
     test "guest user can get basic archive info", ~m(guest_conn community post user)a do
       thread = :post
       {:ok, _} = CMS.create_comment(community, thread, post.inner_id, mock_comment(), user)
@@ -103,7 +102,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       assert not results["isArchived"]
     end
 
-    @tag :wip
     test "guest user can get comment participants after comment created",
          ~m(guest_conn community post user user2)a do
       total_count = 5

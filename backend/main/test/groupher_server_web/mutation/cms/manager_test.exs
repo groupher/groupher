@@ -16,7 +16,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
   end
 
   describe "root mutation" do
-    @tag :wip
     test "root can markDelete a post", ~m(community post)a do
       variables = %{community: community.slug, id: post.inner_id}
 
@@ -29,7 +28,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       assert updated["markDelete"] == true
     end
 
-    @tag :wip
     test "root can delete a post", ~m(community post)a do
       passport_rules = %{"root" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)

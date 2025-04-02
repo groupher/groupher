@@ -59,7 +59,6 @@ defmodule GroupherServer.Test.Mutation.Account.Customization do
       assert result["customization"]["displayDensity"] == "25"
     end
 
-    @tag :wip
     test "PageSizeProof middleware should lint c11n displayDensity size", ~m(user)a do
       user_conn = simu_conn(:user, user)
       db_insert_multi(:post, 50)

@@ -30,7 +30,6 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Posts do
   end
 
   describe "[account published comments on post]" do
-    @tag :wip
     test "user can get paged published comments on post", ~m(guest_conn user community post)a do
       pub_comments =
         Enum.reduce(1..@publish_count, [], fn _, acc ->

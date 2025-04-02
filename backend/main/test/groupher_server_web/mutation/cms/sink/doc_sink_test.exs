@@ -12,7 +12,6 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
   end
 
   describe "[doc sink]" do
-    @tag :wip
     test "login user can sink a doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"doc.sink" => true}}

@@ -220,7 +220,6 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
   end
 
   describe "[article comment lock/unlock]" do
-    @tag :wip
     test "can lock a doc's comment", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"doc.lock_comment" => true}}
