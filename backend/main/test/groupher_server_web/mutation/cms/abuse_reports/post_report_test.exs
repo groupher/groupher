@@ -18,19 +18,19 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
       variables = %{id: post.inner_id, community: community.slug, reason: "reason"}
       article = user_conn |> gq_mutation(Schema.m(:report_article, :post), variables)
 
-      assert article["id"] == to_string(post.id)
+      assert article["innerId"] == to_string(post.inner_id)
     end
 
     test "login user can undo report a post", ~m(community post user_conn)a do
       variables = %{id: post.inner_id, community: community.slug, reason: "reason"}
       article = user_conn |> gq_mutation(Schema.m(:report_article, :post), variables)
 
-      assert article["id"] == to_string(post.id)
+      assert article["innerId"] == to_string(post.inner_id)
 
       variables = %{id: post.inner_id, community: community.slug}
 
       article = user_conn |> gq_mutation(Schema.m(:undo_report_article, :post), variables)
-      assert article["id"] == to_string(post.id)
+      assert article["innerId"] == to_string(post.inner_id)
     end
   end
 end

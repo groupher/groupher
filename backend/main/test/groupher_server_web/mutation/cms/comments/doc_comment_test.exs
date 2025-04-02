@@ -220,6 +220,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
   end
 
   describe "[article comment lock/unlock]" do
+    @tag :wip
     test "can lock a doc's comment", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"doc.lock_comment" => true}}
@@ -227,7 +228,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
       result = rule_conn |> gq_mutation(Schema.m(:lock_comment, :doc), variables)
 
-      assert result["id"] == to_string(doc.id)
+      assert result["innerId"] == to_string(doc.inner_id)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
       assert doc.meta.is_comment_locked

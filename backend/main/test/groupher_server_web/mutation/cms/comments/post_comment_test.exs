@@ -229,7 +229,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       result = rule_conn |> gq_mutation(Schema.m(:lock_comment, :post), variables)
 
-      assert result["id"] == to_string(post.id)
+      assert result["innerId"] == to_string(post.inner_id)
 
       {:ok, post} = ORM.find(Post, post.id)
       assert post.meta.is_comment_locked

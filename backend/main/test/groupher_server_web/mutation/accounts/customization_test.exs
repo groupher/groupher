@@ -59,17 +59,7 @@ defmodule GroupherServer.Test.Mutation.Account.Customization do
       assert result["customization"]["displayDensity"] == "25"
     end
 
-    @paged_posts_query """
-    query($filter: PagedPostsFilter!) {
-      pagedPosts(filter: $filter) {
-        entries {
-          id
-        }
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @tag :wip
     test "PageSizeProof middleware should lint c11n displayDensity size", ~m(user)a do
       user_conn = simu_conn(:user, user)
       db_insert_multi(:post, 50)
@@ -83,7 +73,7 @@ defmodule GroupherServer.Test.Mutation.Account.Customization do
       user_conn |> gq_mutation(@query, variables)
 
       variables = %{filter: %{page: 1}}
-      results = user_conn |> gq_query(@paged_posts_query, variables)
+      results = user_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
       assert results["pageSize"] == @max_page_size
     end
 
