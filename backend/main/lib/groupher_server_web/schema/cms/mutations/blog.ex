@@ -37,9 +37,9 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
       arg(:thread, :thread, default_value: :blog)
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :blog)
-      middleware(M.Passport, claim: "owner;cms->c?->blog.edit")
       middleware(M.FrontDesk, :article)
+      # middleware(M.PassportLoader, source: :blog)
+      middleware(M.Passport, claim: "owner;cms->c?->blog.edit")
 
       resolve(&R.CMS.update_article/3)
     end

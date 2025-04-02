@@ -56,13 +56,24 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   defp fetch_article(
          %{
+           context: %{cur_user: cur_user},
            arguments: %{thread: thread, id: inner_id} = arguments
          } = resolution,
          community
        ) do
     case FrontDesk.info(:article, community, thread, inner_id) do
       {:ok, article} ->
-        %{resolution | arguments: Map.put(arguments, :article, article)}
+        passport_is_owner = article.author.user.id == cur_user.id
+
+        updated_arguments =
+          arguments
+          |> Map.put(:article, article)
+          |> Map.put(:passport_is_owner, passport_is_owner)
+          |> Map.put(:passport_community, article.original_community_slug)
+
+        # |> Map.put(:passport_communities, [article.original_community_slug])
+
+        %{resolution | arguments: updated_arguments}
 
       {:error, err_msg} ->
         resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
