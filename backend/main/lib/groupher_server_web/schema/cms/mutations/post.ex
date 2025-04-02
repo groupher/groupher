@@ -37,7 +37,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
-      # middleware(M.PassportLoader, source: :post)
       middleware(M.FrontDesk, :article)
       middleware(M.Passport, claim: "owner;cms->c?->post.edit")
 
@@ -52,7 +51,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
-      # middleware(M.PassportLoader, source: :post)
       middleware(M.FrontDesk, :article)
       middleware(M.Passport, claim: "owner;cms->c?->post.edit")
 
@@ -67,7 +65,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
-      # middleware(M.PassportLoader, source: :post)
       middleware(M.FrontDesk, :article)
       middleware(M.Passport, claim: "owner;cms->c?->post.edit")
 

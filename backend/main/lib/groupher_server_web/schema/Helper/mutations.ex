@@ -196,7 +196,6 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
-        # middleware(M.PassportLoader, source: unquote(thread))
         middleware(M.FrontDesk, :article)
         middleware(M.Passport, claim: unquote("owner;cms->c?->#{to_string(thread)}.delete"))
 

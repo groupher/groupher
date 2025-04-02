@@ -42,7 +42,6 @@ defmodule GroupherServerWeb.Middleware.Passport do
         } = resolution,
         claim: "cms->c?->t?." <> _rest = claim
       ) do
-    IO.inspect("----> hit me ???")
     resolution |> check_passport_stamp(claim)
   end
 
@@ -164,15 +163,6 @@ defmodule GroupherServerWeb.Middleware.Passport do
         |> handle_absinthe_error("PassportError 3: Passport not qualified.", ecode(:passport))
     end
   end
-
-  # defp community_check(
-  #        %{
-  #          arguments: %{passport_communities: passport_communities}
-  #        } = resolution,
-  #        claim
-  #      ) do
-  #   do_community_check(resolution, passport_communities, claim)
-  # end
 
   defp community_check(%{arguments: %{community: community}} = resolution, claim) do
     do_community_check(resolution, [community], claim)
