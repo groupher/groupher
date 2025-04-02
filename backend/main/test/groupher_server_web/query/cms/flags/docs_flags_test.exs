@@ -28,7 +28,6 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
   end
 
   describe "[pending docs flags]" do
-    @tag :wip
     test "pending doc should not see in paged query",
          ~m(guest_conn community doc_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -52,7 +51,6 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
   end
 
   describe "[pinned docs flags]" do
-    @tag :wip
     test "if have pinned docs, the pinned docs should at the top of entries",
          ~m(guest_conn community doc_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -73,7 +71,6 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       assert entries_first["isPinned"] == true
     end
 
-    @tag :wip
     test "pinned docs should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
@@ -87,7 +84,6 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
     end
 
-    @tag :wip
     test "if have trashed docs, the mark deleted docs should not appears in result",
          ~m(guest_conn community)a do
       variables = %{filter: %{community: community.slug}}

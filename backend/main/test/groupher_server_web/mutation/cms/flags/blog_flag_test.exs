@@ -17,7 +17,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
   end
 
   describe "[mutation blog flag curd]" do
-    @tag :wip
     test "auth user can markDelete blog", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 
@@ -31,7 +30,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert updated["markDelete"] == true
     end
 
-    @tag :wip
     test "mark delete blog should update blog's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
@@ -50,7 +48,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert community.meta.blogs_count == 0
     end
 
-    @tag :wip
     test "unauth user markDelete blog fails",
          ~m(user_conn guest_conn community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
@@ -63,7 +60,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
     end
 
-    @tag :wip
     test "auth user can undo markDelete blog", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 
@@ -79,7 +75,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert updated["markDelete"] == false
     end
 
-    @tag :wip
     test "undo mark delete blog should update blog's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
@@ -99,7 +94,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert community.meta.blogs_count == 1
     end
 
-    @tag :wip
     test "unauth user undo markDelete blog fails",
          ~m(user_conn guest_conn community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
@@ -112,7 +106,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
     end
 
-    @tag :wip
     test "auth user can batch mark delete blogs",
          ~m(community blog blog2 blog3)a do
       variables = %{
@@ -135,7 +128,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert blog3.mark_delete == false
     end
 
-    @tag :wip
     test "auth user can batch undo mark delete blogs",
          ~m(community blog blog2 blog3)a do
       CMS.batch_mark_delete_articles(community.slug, :blog, [
@@ -165,7 +157,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert blog3.mark_delete == false
     end
 
-    @tag :wip
     test "auth user can pin blog", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 
@@ -177,7 +168,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert updated["innerId"] == to_string(blog.inner_id)
     end
 
-    @tag :wip
     test "unauth user pin blog fails", ~m(user_conn guest_conn community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
@@ -196,7 +186,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
              |> mutation_error?(Schema.m(:pin_article, :blog), variables, ecode(:passport))
     end
 
-    @tag :wip
     test "auth user can undo pin blog", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 
@@ -209,7 +198,6 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       assert updated["innerId"] == to_string(blog.inner_id)
     end
 
-    @tag :wip
     test "unauth user undo pin blog fails", ~m(user_conn guest_conn community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})

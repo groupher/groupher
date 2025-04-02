@@ -52,7 +52,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   end
 
   describe "[query paged_changelogs filter pagination]" do
-    @tag :wip
     test "should get pagination info", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
@@ -63,7 +62,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert results["entries"] |> List.first() |> Map.get("articleTags") |> is_list
     end
 
-    @tag :wip
     test "publish order should work", ~m(guest_conn community user)a do
       variables = %{filter: %{page: 1, size: 20, order: "publish"}}
 
@@ -75,7 +73,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["innerId"] > changelog.inner_id
     end
 
-    @tag :wip
     test "upvotes_count order should work",
          ~m(guest_conn changelog_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
@@ -90,7 +87,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["upvotesCount"] === 3
     end
 
-    @tag :wip
     test "comments_count order should work",
          ~m(guest_conn community changelog_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
@@ -105,7 +101,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["commentsCount"] === 3
     end
 
-    @tag :wip
     test "views order should work", ~m(guest_conn community user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "views"}}
 
@@ -127,7 +122,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["views"] > last_changelog["views"]
     end
 
-    @tag :wip
     test "should get valid thread document", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       Process.sleep(2000)
@@ -141,7 +135,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert not is_nil(get_in(changelog, ["document", "bodyHtml"]))
     end
 
-    @tag :wip
     test "support article_tag filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -162,7 +155,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert exist_in?(article_tag, changelog["articleTags"])
     end
 
-    @tag :wip
     test "support community filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -177,7 +169,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert exist_in?(%{id: to_string(community.id)}, changelog["communities"])
     end
 
-    @tag :wip
     test "request large size fails", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 200}}
 
@@ -208,7 +199,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
              )
     end
 
-    @tag :wip
     test "pagination should have default page and size arg", ~m(guest_conn)a do
       variables = %{filter: %{}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
@@ -219,7 +209,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   end
 
   describe "[query paged_changelogs filter sort]" do
-    @tag :wip
     test "filter community should get changelogs which belongs to that community",
          ~m(guest_conn community user)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
@@ -231,7 +220,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(changelog.inner_id)))
     end
 
-    @tag :wip
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
 
@@ -242,7 +230,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert changelog["inserted_at"] == changelog["active_at"]
     end
 
-    @tag :wip
     test "filter sort should have default :desc_active", ~m(guest_conn)a do
       variables = %{filter: %{}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
@@ -254,7 +241,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    @tag :wip
     test "filter sort MOST_VIEWS should work", ~m(guest_conn)a do
       most_views_changelog = Changelog |> order_by(desc: :views) |> limit(1) |> Repo.one()
       variables = %{filter: %{sort: "MOST_VIEWS"}}
@@ -268,7 +254,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   end
 
   describe "[query paged_changelogs filter has_xxx]" do
-    @tag :wip
     test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
@@ -314,7 +299,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   test: FILTER when [TODAY] [THIS_WEEK] [THIS_MONTH] [THIS_YEAR]
   """
   describe "[query paged_changelogs filter when]" do
-    @tag :wip
     test "THIS_YEAR option should work", ~m(guest_conn changelog_last_year)a do
       variables = %{filter: %{when: "THIS_YEAR"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
@@ -322,7 +306,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert results["entries"] |> Enum.any?(&(&1["id"] != changelog_last_year.id))
     end
 
-    @tag :wip
     test "TODAY option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "TODAY"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
@@ -332,7 +315,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert results |> Map.get("totalCount") == expect_count
     end
 
-    @tag :wip
     test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
@@ -340,7 +322,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert results |> Map.get("totalCount") == @today_count
     end
 
-    @tag :wip
     test "THIS_MONTH option should work", ~m(guest_conn changelog_last_month)a do
       variables = %{filter: %{when: "THIS_MONTH"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
@@ -350,7 +331,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   end
 
   describe "[paged changelogs active_at]" do
-    @tag :wip
     test "latest commented changelog should appear on top",
          ~m(guest_conn community changelog_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -378,7 +358,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["innerId"] == to_string(changelog_last_week.inner_id)
     end
 
-    @tag :wip
     test "comment on very old changelog have no effect",
          ~m(guest_conn community changelog_last_year user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -399,7 +378,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["innerId"] !== to_string(changelog_last_year.inner_id)
     end
 
-    @tag :wip
     test "latest changelog author commented changelog have no effect",
          ~m(guest_conn community changelog_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}

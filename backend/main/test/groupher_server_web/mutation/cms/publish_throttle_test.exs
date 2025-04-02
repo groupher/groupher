@@ -29,7 +29,6 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     assert created |> Map.has_key?("innerId")
   end
 
-  @tag :wip
   test "user create 2 content with valid interval time success", ~m(community)a do
     {:ok, user} = db_insert(:user)
     user_conn = simu_conn(:user, user)
@@ -134,7 +133,6 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            )
   end
 
-  @tag :wip
   test "user create multi content with valid hour count success in next hour", ~m(community)a do
     {:ok, user} = db_insert(:user)
     user_conn = simu_conn(:user, user)

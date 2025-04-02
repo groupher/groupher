@@ -20,7 +20,6 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
   end
 
   describe "[article mirror/move]" do
-    @tag :wip
     test "created post has original community info", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = ORM.find(Post, post.id, preload: :original_community)

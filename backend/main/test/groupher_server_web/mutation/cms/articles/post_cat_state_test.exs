@@ -30,7 +30,6 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
       }
     }
     """
-    @tag :wip
     test "can set cat for a existing post", ~m(user_conn community post)a do
       variables = %{id: post.inner_id, cat: "FEATURE", community: community.slug}
       created = user_conn |> gq_mutation(@set_cat_query, variables)
@@ -54,7 +53,6 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
       }
     }
     """
-    @tag :wip
     test "can set state for a existing post", ~m(user_conn community post)a do
       variables = %{id: post.inner_id, state: "DONE", community: community.slug}
       created = user_conn |> gq_mutation(@set_state_query, variables)

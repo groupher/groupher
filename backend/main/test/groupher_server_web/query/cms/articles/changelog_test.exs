@@ -12,7 +12,6 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     {:ok, ~m(user_conn guest_conn changelog user community changelog_attrs)a}
   end
 
-  @tag :wip
   test "basic graphql query on changelog with login user",
        ~m(user_conn community user changelog_attrs)a do
     {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -33,7 +32,6 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
            }
   end
 
-  @tag :wip
   test "basic graphql query on changelog with stranger(un-login user)",
        ~m(guest_conn community changelog_attrs user)a do
     {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
@@ -45,7 +43,6 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     assert is_valid_kv?(results, "title", :string)
   end
 
-  @tag :wip
   test "pending state should in meta", ~m(guest_conn user_conn community user changelog_attrs)a do
     {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
     variables = %{community: changelog.original_community_slug, id: changelog.inner_id}

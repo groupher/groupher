@@ -14,7 +14,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
   end
 
   describe "[mutation doc curd]" do
-    @tag :wip
     test "create doc with valid attrs and make sure author exist",
          ~m(user_conn user community)a do
       doc_attr = mock_attrs(:doc) |> Map.merge(%{linkAddr: "https://helloworld"})
@@ -35,7 +34,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
     end
 
-    @tag :wip
     test "create doc with valid tags id list", ~m(user_conn user community)a do
       article_tag_attrs = mock_attrs(:article_tag)
       {:ok, article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
@@ -53,7 +51,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert exist_in?(%{id: article_tag.id}, doc.article_tags)
     end
 
-    @tag :wip
     test "create doc should escape xss attracts", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string()})
       variables = doc_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
@@ -68,7 +65,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert not String.contains?(body_html, "script")
     end
 
-    @tag :wip
     test "create doc should escape xss attracts 2", ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc, %{body: mock_xss_string(:safe)})
       variables = doc_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
@@ -85,7 +81,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
 
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
-    @tag :wip
     test "create doc with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc)
@@ -94,7 +89,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert user_conn |> mutation_error?(Schema.m(:create_article, :doc), variables)
     end
 
-    @tag :wip
     test "delete a doc by doc's owner", ~m(owner_conn community doc)a do
       variables = %{community: community.slug, id: doc.inner_id}
       result = owner_conn |> gq_mutation(Schema.m(:delete_article, :doc), variables)
@@ -103,7 +97,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert {:error, _} = ORM.find_article(community, :doc, result["innerId"])
     end
 
-    @tag :wip
     test "can delete a doc by auth user", ~m(community doc)a do
       doc = doc |> Repo.preload(:communities)
       belongs_community_title = doc.communities |> List.first() |> Map.get(:title)
@@ -118,7 +111,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert {:error, _} = ORM.find_article(community, :doc, result["innerId"])
     end
 
-    @tag :wip
     test "delete a doc without login user fails", ~m(guest_conn community doc)a do
       variables = %{community: community.slug, id: doc.inner_id}
 
@@ -130,7 +122,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
              )
     end
 
-    @tag :wip
     test "login user with auth passport delete a doc", ~m(community doc)a do
       doc = doc |> Repo.preload(:communities)
       doc_communities_0 = doc.communities |> List.first() |> Map.get(:title)
@@ -143,7 +134,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert result["innerId"] == to_string(doc.inner_id)
     end
 
-    @tag :wip
     test "unauth user delete doc fails", ~m(user_conn guest_conn community doc)a do
       variables = %{community: community.slug, id: doc.inner_id}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
@@ -154,7 +144,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
     end
 
-    @tag :wip
     test "update a doc without login user fails", ~m(guest_conn community doc)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
@@ -173,7 +162,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
              )
     end
 
-    @tag :wip
     test "doc can be update by owner", ~m(owner_conn community doc user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
@@ -199,7 +187,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
              |> String.contains?(~s(updated body #{unique_num}))
     end
 
-    @tag :wip
     test "update doc article tags should be overwrite old ones",
          ~m(owner_conn community doc user)a do
       article_tag_attrs = mock_attrs(:article_tag)
@@ -239,7 +226,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert result["articleTags"] |> List.last() |> get_in(["id"]) == to_string(article_tag3.id)
     end
 
-    @tag :wip
     test "update doc with valid attrs should have is_edited meta info update",
          ~m(owner_conn community doc)a do
       unique_num = System.unique_integer([:positive, :monotonic])
@@ -257,7 +243,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert true == updated_doc["meta"]["isEdited"]
     end
 
-    @tag :wip
     test "login user with auth passport update a doc", ~m(community doc)a do
       doc = doc |> Repo.preload(:communities)
       belongs_community_title = doc.communities |> List.first() |> Map.get(:title)
@@ -280,7 +265,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       assert updated_doc["innerId"] == to_string(doc.inner_id)
     end
 
-    @tag :wip
     test "unauth user update doc fails", ~m(user_conn guest_conn community doc)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 

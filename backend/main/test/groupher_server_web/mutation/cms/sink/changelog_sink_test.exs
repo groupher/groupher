@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
 
       result = rule_conn |> gq_mutation(Schema.m(:sink_article, :changelog), variables)
 
-      assert result["id"] == to_string(changelog.id)
+      assert result["innerId"] == to_string(changelog.inner_id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
       assert changelog.meta.is_sinked
@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
 
       updated = rule_conn |> gq_mutation(Schema.m(:undo_sink_article, :changelog), variables)
 
-      assert updated["id"] == to_string(changelog.id)
+      assert updated["innerId"] == to_string(changelog.inner_id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
       assert not changelog.meta.is_sinked

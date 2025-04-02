@@ -28,7 +28,6 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
   end
 
   describe "[pending posts flags]" do
-    @tag :wip
     test "pending post should not see in paged query",
          ~m(guest_conn community post_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -52,7 +51,6 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
   end
 
   describe "[pinned posts flags]" do
-    @tag :wip
     test "if have pinned posts, the pinned posts should at the top of entries",
          ~m(guest_conn community post_m)a do
       variables = %{filter: %{community: community.slug}}
@@ -73,7 +71,6 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
       assert entries_first["isPinned"] == true
     end
 
-    @tag :wip
     test "pinned posts should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
@@ -87,7 +84,6 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
     end
 
-    @tag :wip
     test "if have trashed posts, the mark deleted posts should not appears in result",
          ~m(guest_conn community)a do
       variables = %{filter: %{community: community.slug}}

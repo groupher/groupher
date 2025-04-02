@@ -17,7 +17,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
   end
 
   describe "[mutation changelog flag curd]" do
-    @tag :wip
     test "auth user can markDelete changelog", ~m(community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
 
@@ -31,7 +30,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert updated["markDelete"] == true
     end
 
-    @tag :wip
     test "mark delete changelog should update changelog's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
@@ -50,7 +48,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert community.meta.changelogs_count == 0
     end
 
-    @tag :wip
     test "unauth user markDelete changelog fails",
          ~m(user_conn guest_conn community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
@@ -63,7 +60,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
     end
 
-    @tag :wip
     test "auth user can undo markDelete changelog", ~m(community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
 
@@ -79,7 +75,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert updated["markDelete"] == false
     end
 
-    @tag :wip
     test "undo mark delete changelog should update changelog's communities meta count",
          ~m(user)a do
       community_attrs = mock_attrs(:community)
@@ -100,7 +95,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert community.meta.changelogs_count == 1
     end
 
-    @tag :wip
     test "unauth user undo markDelete changelog fails",
          ~m(user_conn guest_conn community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
@@ -113,7 +107,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
     end
 
-    @tag :wip
     test "auth user can batch mark delete changelogs",
          ~m(community changelog changelog2 changelog3)a do
       variables = %{
@@ -138,7 +131,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert changelog3.mark_delete == false
     end
 
-    @tag :wip
     test "auth user can batch undo mark delete changelogs",
          ~m(community changelog changelog2 changelog3)a do
       CMS.batch_mark_delete_articles(community.slug, :changelog, [
@@ -168,7 +160,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert changelog3.mark_delete == false
     end
 
-    @tag :wip
     test "auth user can pin changelog", ~m(community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
 
@@ -180,7 +171,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert updated["innerId"] == to_string(changelog.inner_id)
     end
 
-    @tag :wip
     test "unauth user pin changelog fails", ~m(user_conn guest_conn community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
@@ -199,7 +189,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
              |> mutation_error?(Schema.m(:pin_article, :changelog), variables, ecode(:passport))
     end
 
-    @tag :wip
     test "auth user can undo pin changelog", ~m(community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
 
@@ -212,7 +201,6 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert updated["innerId"] == to_string(changelog.inner_id)
     end
 
-    @tag :wip
     test "unauth user undo pin changelog fails", ~m(user_conn guest_conn community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})

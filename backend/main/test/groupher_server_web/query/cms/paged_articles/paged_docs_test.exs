@@ -51,7 +51,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
   end
 
   describe "[query paged_docs filter pagination]" do
-    @tag :wip
     test "should get pagination info", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
@@ -62,7 +61,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert results["entries"] |> List.first() |> Map.get("articleTags") |> is_list
     end
 
-    @tag :wip
     test "publish order should work", ~m(guest_conn community user)a do
       variables = %{filter: %{page: 1, size: 20, order: "publish"}}
 
@@ -74,7 +72,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["innerId"] > doc.inner_id
     end
 
-    @tag :wip
     test "upvotes_count order should work",
          ~m(guest_conn doc_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
@@ -89,7 +86,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["upvotesCount"] === 3
     end
 
-    @tag :wip
     test "comments_count order should work",
          ~m(guest_conn community doc_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
@@ -104,7 +100,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["commentsCount"] === 3
     end
 
-    @tag :wip
     test "views order should work", ~m(guest_conn community user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "views"}}
 
@@ -126,7 +121,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["views"] > last_doc["views"]
     end
 
-    @tag :wip
     test "should get valid thread document", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       Process.sleep(2000)
@@ -140,7 +134,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert not is_nil(get_in(doc, ["document", "bodyHtml"]))
     end
 
-    @tag :wip
     test "support article_tag filter", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -161,7 +154,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert exist_in?(article_tag, doc["articleTags"])
     end
 
-    @tag :wip
     test "support community filter", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :doc, doc_attrs, user)
@@ -176,7 +168,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert exist_in?(%{id: to_string(community.id)}, doc["communities"])
     end
 
-    @tag :wip
     test "request large size fails", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 200}}
 
@@ -207,7 +198,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
              )
     end
 
-    @tag :wip
     test "pagination should have default page and size arg", ~m(guest_conn)a do
       variables = %{filter: %{}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
@@ -218,7 +208,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
   end
 
   describe "[query paged_docs filter sort]" do
-    @tag :wip
     test "filter community should get docs which belongs to that community",
          ~m(guest_conn community user)a do
       {:ok, doc} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
@@ -230,7 +219,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(doc.inner_id)))
     end
 
-    @tag :wip
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
 
@@ -241,7 +229,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert doc["inserted_at"] == doc["active_at"]
     end
 
-    @tag :wip
     test "filter sort should have default :desc_active", ~m(guest_conn)a do
       variables = %{filter: %{}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
@@ -253,7 +240,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    @tag :wip
     test "filter sort MOST_VIEWS should work", ~m(guest_conn)a do
       most_views_doc = Doc |> order_by(desc: :views) |> limit(1) |> Repo.one()
       variables = %{filter: %{sort: "MOST_VIEWS"}}
@@ -267,7 +253,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
   end
 
   describe "[query paged_docs filter has_xxx]" do
-    @tag :wip
     test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
@@ -313,7 +298,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
   test: FILTER when [TODAY] [THIS_WEEK] [THIS_MONTH] [THIS_YEAR]
   """
   describe "[query paged_docs filter when]" do
-    @tag :wip
     test "THIS_YEAR option should work", ~m(guest_conn doc_last_year)a do
       variables = %{filter: %{when: "THIS_YEAR"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
@@ -321,7 +305,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert results["entries"] |> Enum.any?(&(&1["id"] != doc_last_year.id))
     end
 
-    @tag :wip
     test "TODAY option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "TODAY"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
@@ -331,7 +314,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert results |> Map.get("totalCount") == expect_count
     end
 
-    @tag :wip
     test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
@@ -339,7 +321,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert results |> Map.get("totalCount") == @today_count
     end
 
-    @tag :wip
     test "THIS_MONTH option should work", ~m(guest_conn doc_last_month)a do
       variables = %{filter: %{when: "THIS_MONTH"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
@@ -349,7 +330,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
   end
 
   describe "[paged docs active_at]" do
-    @tag :wip
     test "latest commented doc should appear on top",
          ~m(guest_conn community doc_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -377,7 +357,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["innerId"] == to_string(doc_last_week.inner_id)
     end
 
-    @tag :wip
     test "comment on very old doc have no effect",
          ~m(guest_conn community doc_last_year user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -398,7 +377,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert first_doc["innerId"] !== to_string(doc_last_year.inner_id)
     end
 
-    @tag :wip
     test "latest doc author commented doc have no effect",
          ~m(guest_conn community doc_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}

@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(Schema.m(:sink_article, :blog), variables)
-      assert result["id"] == to_string(blog.id)
+      assert result["innerId"] == to_string(blog.inner_id)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
       assert blog.meta.is_sinked
@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
 
       updated = rule_conn |> gq_mutation(Schema.m(:undo_sink_article, :blog), variables)
 
-      assert updated["id"] == to_string(blog.id)
+      assert updated["innerId"] == to_string(blog.inner_id)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
       assert not blog.meta.is_sinked

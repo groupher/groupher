@@ -17,7 +17,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
   end
 
   describe "[mutation doc flag curd]" do
-    @tag :wip
     test "auth user can markDelete doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
@@ -31,7 +30,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert updated["markDelete"] == true
     end
 
-    @tag :wip
     test "mark delete doc should update doc's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
@@ -50,7 +48,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert community.meta.docs_count == 0
     end
 
-    @tag :wip
     test "unauth user markDelete doc fails",
          ~m(user_conn guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
@@ -63,7 +60,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
     end
 
-    @tag :wip
     test "auth user can undo markDelete doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
@@ -79,7 +75,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert updated["markDelete"] == false
     end
 
-    @tag :wip
     test "undo mark delete doc should update doc's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
@@ -99,7 +94,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert community.meta.docs_count == 1
     end
 
-    @tag :wip
     test "unauth user undo markDelete doc fails",
          ~m(user_conn guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
@@ -112,7 +106,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
     end
 
-    @tag :wip
     test "auth user can batch mark delete docs",
          ~m(community doc doc2 doc3)a do
       variables = %{
@@ -135,7 +128,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert doc3.mark_delete == false
     end
 
-    @tag :wip
     test "auth user can batch undo mark delete docs",
          ~m(community doc doc2 doc3)a do
       CMS.batch_mark_delete_articles(community.slug, :doc, [
@@ -165,7 +157,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert doc3.mark_delete == false
     end
 
-    @tag :wip
     test "auth user can pin doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
@@ -177,7 +168,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert updated["innerId"] == to_string(doc.inner_id)
     end
 
-    @tag :wip
     test "unauth user pin doc fails", ~m(user_conn guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
@@ -196,7 +186,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
              |> mutation_error?(Schema.m(:pin_article, :doc), variables, ecode(:passport))
     end
 
-    @tag :wip
     test "auth user can undo pin doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
@@ -209,7 +198,6 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       assert updated["innerId"] == to_string(doc.inner_id)
     end
 
-    @tag :wip
     test "unauth user undo pin doc fails", ~m(user_conn guest_conn community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})

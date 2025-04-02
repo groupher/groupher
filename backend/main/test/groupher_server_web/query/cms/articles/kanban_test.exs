@@ -15,7 +15,6 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
     {:ok, ~m(user_conn guest_conn post user community post_attrs)a}
   end
 
-  @tag :wip
   test "basic graphql query on kanban post with login user",
        ~m(user_conn community user post_attrs)a do
     kanban_attrs =

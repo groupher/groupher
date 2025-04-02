@@ -223,7 +223,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
   end
 
   describe "[article comment lock/unlock]" do
-    @tag :wip
     test "can lock a changelog's comment", ~m(community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"changelog.lock_comment" => true}}
@@ -247,7 +246,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
              )
     end
 
-    @tag :wip
     test "can undo lock a changelog's comment", ~m(community changelog)a do
       {:ok, _} = CMS.lock_article_comments(changelog)
       {:ok, changelog} = ORM.find(Changelog, changelog.id)

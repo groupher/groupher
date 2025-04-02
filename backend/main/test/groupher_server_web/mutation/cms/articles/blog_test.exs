@@ -14,7 +14,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
   end
 
   describe "[mutation blog curd]" do
-    @tag :wip
     test "create blog with valid attrs and make sure author exist",
          ~m(user_conn user community)a do
       blog_attr = mock_attrs(:blog) |> Map.merge(%{linkAddr: "https://helloworld"})
@@ -35,7 +34,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
     end
 
-    @tag :wip
     test "create blog with valid tags id list", ~m(user_conn user community)a do
       article_tag_attrs = mock_attrs(:article_tag)
       {:ok, article_tag} = CMS.create_article_tag(community, :blog, article_tag_attrs, user)
@@ -53,7 +51,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert exist_in?(%{id: article_tag.id}, blog.article_tags)
     end
 
-    @tag :wip
     test "create blog should escape xss attracts", ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string()})
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
@@ -68,7 +65,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert not String.contains?(body_html, "script")
     end
 
-    @tag :wip
     test "create blog should escape xss attracts 2", ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string(:safe)})
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
@@ -85,7 +81,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
-    @tag :wip
     test "create blog with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog)
@@ -94,7 +89,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert user_conn |> mutation_error?(Schema.m(:create_article, :blog), variables)
     end
 
-    @tag :wip
     test "delete a blog by blog's owner", ~m(owner_conn community blog)a do
       variables = %{community: community.slug, id: blog.inner_id}
       result = owner_conn |> gq_mutation(Schema.m(:delete_article, :blog), variables)
@@ -103,7 +97,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert {:error, _} = ORM.find_article(community, :blog, result["innerId"])
     end
 
-    @tag :wip
     test "can delete a blog by auth user", ~m(community blog)a do
       blog = blog |> Repo.preload(:communities)
       belongs_community_title = blog.communities |> List.first() |> Map.get(:title)
@@ -118,7 +111,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert {:error, _} = ORM.find_article(community, :blog, result["innerId"])
     end
 
-    @tag :wip
     test "delete a blog without login user fails", ~m(guest_conn community blog)a do
       variables = %{community: community.slug, id: blog.inner_id}
 
@@ -130,7 +122,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
              )
     end
 
-    @tag :wip
     test "login user with auth passport delete a blog", ~m(community blog)a do
       blog = blog |> Repo.preload(:communities)
       blog_communities_0 = blog.communities |> List.first() |> Map.get(:title)
@@ -143,7 +134,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert result["innerId"] == to_string(blog.inner_id)
     end
 
-    @tag :wip
     test "unauth user delete blog fails", ~m(user_conn guest_conn community blog)a do
       variables = %{community: community.slug, id: blog.inner_id}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
@@ -154,7 +144,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
     end
 
-    @tag :wip
     test "update a blog without login user fails", ~m(guest_conn community blog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
@@ -173,7 +162,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
              )
     end
 
-    @tag :wip
     test "blog can be update by owner", ~m(owner_conn community blog user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
@@ -199,7 +187,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
              |> String.contains?(~s(updated body #{unique_num}))
     end
 
-    @tag :wip
     test "update blog article tags should be overwrite old ones",
          ~m(owner_conn community blog user)a do
       article_tag_attrs = mock_attrs(:article_tag)
@@ -239,7 +226,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert result["articleTags"] |> List.last() |> get_in(["id"]) == to_string(article_tag3.id)
     end
 
-    @tag :wip
     test "update blog with valid attrs should have is_edited meta info update",
          ~m(owner_conn community blog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
@@ -257,7 +243,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert true == updated_blog["meta"]["isEdited"]
     end
 
-    @tag :wip
     test "login user with auth passport update a blog", ~m(community blog)a do
       blog = blog |> Repo.preload(:communities)
       belongs_community_title = blog.communities |> List.first() |> Map.get(:title)
@@ -280,7 +265,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert updated_blog["innerId"] == to_string(blog.inner_id)
     end
 
-    @tag :wip
     test "unauth user update blog fails", ~m(user_conn guest_conn community blog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 

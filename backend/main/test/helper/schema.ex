@@ -16,6 +16,11 @@ defmodule GroupherServer.Test.Helper.Schema do
           illegalReason
           illegalWords
         }
+        commentsParticipants {
+          id
+          nickname
+        }
+        commentsParticipantsCount
         isArchived
         archivedAt
         #{extra}
@@ -382,7 +387,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $thread: Thread, $articleTagId: ID!, $community: String!) {
       setArticleTag(id: $id, thread: $thread, articleTagId: $articleTagId, community: $community) {
-        innerId
+        id
       }
     }
     """
@@ -392,7 +397,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
     mutation($id: ID!, $thread: Thread, $articleTagId: ID!, $community: String!) {
       unsetArticleTag(id: $id, thread: $thread, articleTagId: $articleTagId, community: $community) {
-        innerId
+        id
         title
       }
     }

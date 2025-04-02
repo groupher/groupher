@@ -13,7 +13,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
   end
 
   describe "[post upvote]" do
-    @tag :wip
     test "login user can upvote a post", ~m(user_conn user2_conn community post user)a do
       variables = %{id: post.inner_id, community: community.slug}
 
@@ -45,7 +44,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       updated = user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :post), variables)
 
       assert not user_exist_in?(user, get_in(updated, ["meta", "latestUpvotedUsers"]))
-      assert updated["id"] == to_string(post.id)
+      assert updated["innerId"] == to_string(post.inner_id)
     end
 
     test "unauth user undo upvote a post fails", ~m(guest_conn community post)a do

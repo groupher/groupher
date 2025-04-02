@@ -12,13 +12,14 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
   end
 
   describe "[doc sink]" do
+    @tag :wip
     test "login user can sink a doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
       passport_rules = %{community.slug => %{"doc.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(Schema.m(:sink_article, :doc), variables)
-      assert result["id"] == to_string(doc.id)
+      assert result["innerId"] == to_string(doc.inner_id)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
       assert doc.meta.is_sinked
@@ -46,7 +47,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
 
       updated = rule_conn |> gq_mutation(Schema.m(:undo_sink_article, :doc), variables)
 
-      assert updated["id"] == to_string(doc.id)
+      assert updated["innerId"] == to_string(doc.inner_id)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
       assert not doc.meta.is_sinked

@@ -55,7 +55,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   end
 
   describe "[query paged_posts filter pagination]" do
-    @tag :wip
     test "should get pagination info", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
@@ -66,7 +65,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["entries"] |> List.first() |> Map.get("articleTags") |> is_list
     end
 
-    @tag :wip
     test "publish order should work", ~m(guest_conn community user)a do
       variables = %{filter: %{page: 1, size: 20, order: "publish"}}
 
@@ -78,7 +76,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["id"] > post.id
     end
 
-    @tag :wip
     test "upvotes_count order should work", ~m(guest_conn post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
 
@@ -92,7 +89,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["upvotesCount"] === 3
     end
 
-    @tag :wip
     test "comments_count order should work",
          ~m(guest_conn community post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
@@ -107,7 +103,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["commentsCount"] === 3
     end
 
-    @tag :wip
     test "views order should work", ~m(guest_conn community user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "views"}}
 
@@ -124,7 +119,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["views"] > last_post["views"]
     end
 
-    @tag :wip
     test "should get valid cat & state", ~m(guest_conn post_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}
 
@@ -137,7 +131,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["entries"] |> Enum.any?(&(&1["state"] == "WIP"))
     end
 
-    @tag :wip
     test "should get valid cat & state by filter", ~m(guest_conn post_last_week)a do
       {:ok, _} = CMS.set_post_cat(post_last_week, @article_cat.feature)
       {:ok, _} = CMS.set_post_state(post_last_week, @article_state.wip)
@@ -163,7 +156,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["totalCount"] == 1
     end
 
-    @tag :wip
     test "should get valid thread document", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       Process.sleep(2000)
@@ -177,7 +169,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert not is_nil(get_in(post, ["document", "bodyHtml"]))
     end
 
-    @tag :wip
     test "support article_tag filter", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -198,7 +189,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert exist_in?(article_tag, post["articleTags"])
     end
 
-    @tag :wip
     test "support community filter", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
@@ -213,7 +203,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert exist_in?(%{id: to_string(community.id)}, post["communities"])
     end
 
-    @tag :wip
     test "request large size fails", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 200}}
 
@@ -221,7 +210,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
              |> query_get_error?(Schema.q(:paged_articles, :post), variables, ecode(:pagination))
     end
 
-    @tag :wip
     test "request 0 or neg-size fails", ~m(guest_conn)a do
       variables_0 = %{filter: %{page: 1, size: 0}}
       variables_neg_1 = %{filter: %{page: 1, size: -1}}
@@ -241,7 +229,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
              )
     end
 
-    @tag :wip
     test "pagination should have default page and size arg", ~m(guest_conn)a do
       variables = %{filter: %{}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
@@ -252,7 +239,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   end
 
   describe "[query paged_posts filter sort]" do
-    @tag :wip
     test "filter community should get posts which belongs to that community",
          ~m(guest_conn community user)a do
       {:ok, post} = CMS.create_article(community, :post, mock_attrs(:post), user)
@@ -264,7 +250,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(post.inner_id)))
     end
 
-    @tag :wip
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} = CMS.create_article(community, :post, mock_attrs(:post), user)
 
@@ -275,7 +260,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert post["inserted_at"] == post["active_at"]
     end
 
-    @tag :wip
     test "filter sort should have default :desc_active", ~m(guest_conn)a do
       variables = %{filter: %{}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
@@ -287,7 +271,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    @tag :wip
     test "filter sort MOST_VIEWS should work", ~m(guest_conn)a do
       most_views_post = Post |> order_by(desc: :views) |> limit(1) |> Repo.one()
       variables = %{filter: %{sort: "MOST_VIEWS"}}
@@ -301,7 +284,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   end
 
   describe "[query paged_posts filter has_xxx]" do
-    @tag :wip
     test "has_xxx state should work", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
@@ -343,7 +325,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   test: FILTER when [TODAY] [THIS_WEEK] [THIS_MONTH] [THIS_YEAR]
   """
   describe "[query paged_posts filter when]" do
-    @tag :wip
     test "THIS_YEAR option should work", ~m(guest_conn post_last_year)a do
       variables = %{filter: %{when: "THIS_YEAR"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
@@ -351,7 +332,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["entries"] |> Enum.any?(&(&1["innerId"] != post_last_year.inner_id))
     end
 
-    @tag :wip
     test "TODAY option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "TODAY"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
@@ -361,7 +341,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results |> Map.get("totalCount") == expect_count
     end
 
-    @tag :wip
     test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
@@ -369,7 +348,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results |> Map.get("totalCount") == @today_count
     end
 
-    @tag :wip
     test "THIS_MONTH option should work", ~m(guest_conn post_last_month)a do
       variables = %{filter: %{when: "THIS_MONTH"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
@@ -379,7 +357,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   end
 
   describe "[paged posts active_at]" do
-    @tag :wip
     test "latest commented post should appear on top",
          ~m(guest_conn community post_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -400,7 +377,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["innerId"] == to_string(post_last_week.inner_id)
     end
 
-    @tag :wip
     test "comment on very old post have no effect",
          ~m(guest_conn community post_last_year user2)a do
       variables = %{filter: %{page: 1, size: 20}}
@@ -415,7 +391,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["innerId"] !== to_string(post_last_year.inner_id)
     end
 
-    @tag :wip
     test "latest post author commented post have no effect",
          ~m(guest_conn community post_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}

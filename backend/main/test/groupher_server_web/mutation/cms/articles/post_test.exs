@@ -14,7 +14,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
   end
 
   describe "[mutation post curd]" do
-    @tag :wip
     test "create post with valid attrs and make sure author exist",
          ~m(user_conn user community)a do
       post_attr = mock_attrs(:post) |> Map.merge(%{linkAddr: "https://helloworld"})
@@ -35,7 +34,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
     end
 
-    @tag :wip
     test "create post with valid tags id list", ~m(user_conn user community)a do
       article_tag_attrs = mock_attrs(:article_tag)
       {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
@@ -52,7 +50,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert exist_in?(%{id: article_tag.id}, post.article_tags)
     end
 
-    @tag :wip
     test "create post should escape xss attracts", ~m(user_conn community)a do
       post_attr = mock_attrs(:post, %{body: mock_xss_string()})
       variables = post_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
@@ -65,7 +62,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert not String.contains?(body_html, "script")
     end
 
-    @tag :wip
     test "create post should escape xss attracts 2", ~m(user_conn community)a do
       post_attr = mock_attrs(:post, %{body: mock_xss_string(:safe)})
       variables = post_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
@@ -88,7 +84,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert user_conn |> mutation_error?(Schema.m(:create_article, :post), variables)
     end
 
-    @tag :wip
     test "delete a post by post's owner", ~m(owner_conn community post)a do
       variables = %{community: community.slug, id: post.inner_id}
       result = owner_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
@@ -97,7 +92,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert {:error, _} = ORM.find_article(community, :post, result["innerId"])
     end
 
-    @tag :wip
     test "can delete a post by auth user", ~m(community post)a do
       post = post |> Repo.preload(:communities)
       belongs_community_title = post.communities |> List.first() |> Map.get(:title)
@@ -110,7 +104,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert {:error, _} = ORM.find_article(community, :post, result["innerId"])
     end
 
-    @tag :wip
     test "delete a post without login user fails", ~m(guest_conn community post)a do
       variables = %{community: community.slug, id: post.inner_id}
 
@@ -122,7 +115,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
              )
     end
 
-    @tag :wip
     test "login user with auth passport delete a post", ~m(community post)a do
       post = post |> Repo.preload(:communities)
       post_communities_0 = post.communities |> List.first() |> Map.get(:title)
@@ -135,7 +127,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert result["innerId"] == to_string(post.inner_id)
     end
 
-    @tag :wip
     test "unauth user delete post fails", ~m(user_conn guest_conn community post)a do
       variables = %{community: community.slug, id: post.inner_id}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
@@ -146,7 +137,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
     end
 
-    @tag :wip
     test "update a post without login user fails", ~m(guest_conn community post)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
@@ -165,7 +155,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
              )
     end
 
-    @tag :wip
     test "post can be update by owner", ~m(owner_conn community post user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
@@ -194,7 +183,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert result["copyRight"] == variables.copyRight
     end
 
-    @tag :wip
     test "update post article tags should be overwrite old ones",
          ~m(owner_conn community post user)a do
       article_tag_attrs = mock_attrs(:article_tag)
@@ -230,7 +218,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert result["articleTags"] |> List.last() |> get_in(["id"]) == to_string(article_tag3.id)
     end
 
-    @tag :wip
     test "update post with valid attrs should have is_edited meta info update",
          ~m(owner_conn community post)a do
       unique_num = System.unique_integer([:positive, :monotonic])
@@ -247,7 +234,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert true == updated_post["meta"]["isEdited"]
     end
 
-    @tag :wip
     test "login user with auth passport update a post", ~m(community post)a do
       post = post |> Repo.preload(:communities)
       belongs_community_title = post.communities |> List.first() |> Map.get(:title)
@@ -269,7 +255,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert updated_post["innerId"] == to_string(post.inner_id)
     end
 
-    @tag :wip
     test "unauth user update post fails", ~m(user_conn guest_conn community post)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 

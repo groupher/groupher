@@ -244,7 +244,6 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              )
     end
 
-    @tag :wip
     test "can undo lock a doc's comment", ~m(community doc)a do
       {:ok, _} = CMS.lock_article_comments(doc)
       {:ok, doc} = ORM.find(Doc, doc.id)

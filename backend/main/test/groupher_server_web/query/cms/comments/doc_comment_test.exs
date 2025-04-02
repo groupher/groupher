@@ -92,16 +92,6 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
   end
 
   describe "[basic article doc comment]" do
-    @query """
-    query($community: String!, $id: ID!) {
-      doc(community: $community, id: $id) {
-        id
-        title
-        isArchived
-        archivedAt
-      }
-    }
-    """
     test "guest user can get basic archive info", ~m(guest_conn community doc user)a do
       thread = :doc
 
@@ -109,24 +99,11 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.create_comment(community, thread, doc.inner_id, mock_comment(), user)
 
       variables = %{community: doc.original_community_slug, id: doc.inner_id}
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:article, :doc), variables)
 
       assert not results["isArchived"]
     end
 
-    @query """
-    query($community: String!, $id: ID!) {
-      doc(community: $community, id: $id) {
-        id
-        title
-        commentsParticipants {
-          id
-          nickname
-        }
-        commentsParticipantsCount
-      }
-    }
-    """
     test "guest user can get comment participants after comment created",
          ~m(guest_conn community doc user user2)a do
       total_count = 5
@@ -143,7 +120,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.create_comment(community, thread, doc.inner_id, mock_comment(), user2)
 
       variables = %{community: doc.original_community_slug, id: doc.inner_id}
-      results = guest_conn |> gq_query(@query, variables)
+      results = guest_conn |> gq_query(Schema.q(:article, :doc), variables)
 
       comments_participants = results["commentsParticipants"]
       comments_participants_count = results["commentsParticipantsCount"]

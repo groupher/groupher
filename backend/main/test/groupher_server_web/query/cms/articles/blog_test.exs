@@ -12,7 +12,6 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     {:ok, ~m(user_conn guest_conn blog user community blog_attrs)a}
   end
 
-  @tag :wip
   test "basic graphql query on blog with login user",
        ~m(user_conn community user blog_attrs)a do
     {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -33,7 +32,6 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
            }
   end
 
-  @tag :wip
   test "basic graphql query on blog with stranger(un-login user)",
        ~m(guest_conn community blog_attrs user)a do
     {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
@@ -45,7 +43,6 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     assert is_valid_kv?(results, "title", :string)
   end
 
-  @tag :wip
   test "pending state should in meta", ~m(guest_conn user_conn community user blog_attrs)a do
     {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
     variables = %{community: blog.original_community_slug, id: blog.inner_id}
