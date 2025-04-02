@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
     {:ok, ~m(user user2 community changelog)a}
   end
 
-  describe "[article changelog report/unreport]" do
+  describe "[article changelog report/un-report]" do
     test "list article reports should work", ~m(community user user2 changelog)a do
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user2)

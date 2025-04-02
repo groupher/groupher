@@ -36,13 +36,6 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
              )
     end
 
-    @query """
-    mutation($id: ID!, $communityId: ID!){
-      undoSinkPost(id: $id, communityId: $communityId) {
-        id
-      }
-    }
-    """
     test "login user can undo sink to a post", ~m(community post)a do
       variables = %{id: post.inner_id, community: community.slug}
 

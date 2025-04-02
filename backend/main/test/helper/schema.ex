@@ -1,7 +1,30 @@
 defmodule GroupherServer.Test.Helper.Schema do
   @moduledoc false
 
-  def q(:paged_articles, thread, extra \\ "") do
+  def q(key, thread, extra \\ "")
+
+  def q(:article, thread, extra) do
+    """
+    query($community: String!, $id: ID!) {
+      #{thread}(community: $community, id: $id) {
+        title
+        innerId
+        originalCommunitySlug
+        meta {
+          isEdited
+          isLegal
+          illegalReason
+          illegalWords
+        }
+        isArchived
+        archivedAt
+        #{extra}
+      }
+    }
+    """
+  end
+
+  def q(:paged_articles, thread, extra) do
     """
     query($filter: Paged#{t(thread)}sFilter!) {
       paged#{t(thread)}s(filter: $filter) {

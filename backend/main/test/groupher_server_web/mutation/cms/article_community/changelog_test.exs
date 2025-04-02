@@ -1,5 +1,5 @@
 defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
-  @modulechangelog false
+  @moduledoc false
 
   use GroupherServer.TestTools
 

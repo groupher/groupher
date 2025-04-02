@@ -1,5 +1,5 @@
 defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
-  @moduleblog false
+  @moduledoc false
 
   use GroupherServer.TestTools
 

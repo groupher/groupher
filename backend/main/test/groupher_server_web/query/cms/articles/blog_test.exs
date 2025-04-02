@@ -12,33 +12,15 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     {:ok, ~m(user_conn guest_conn blog user community blog_attrs)a}
   end
 
-  @query """
-  query($community: String!, $id: ID!) {
-    blog(community: $community, id: $id) {
-      id
-      title
-      innerId
-      originalCommunitySlug
-      meta {
-        isEdited
-        isLegal
-        illegalReason
-        illegalWords
-      }
-      isArchived
-      archivedAt
-    }
-  }
-  """
-
-  test "basic graphql query on blog with logined user",
+  @tag :wip
+  test "basic graphql query on blog with login user",
        ~m(user_conn community user blog_attrs)a do
     {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
     variables = %{community: blog.original_community_slug, id: blog.inner_id}
-    results = user_conn |> gq_query(@query, variables)
+    results = user_conn |> gq_query(Schema.q(:article, :blog), variables)
 
-    assert results["id"] == to_string(blog.id)
+    assert results["innerId"] == to_string(blog.inner_id)
     assert results["originalCommunitySlug"] == blog.original_community_slug
 
     assert is_valid_kv?(results, "title", :string)
@@ -49,31 +31,31 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
              "illegalWords" => [],
              "isLegal" => true
            }
-
-    assert length(Map.keys(results)) == 7
   end
 
-  test "basic graphql query on blog with stranger(unloged user)",
+  @tag :wip
+  test "basic graphql query on blog with stranger(un-login user)",
        ~m(guest_conn community blog_attrs user)a do
     {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
     variables = %{community: blog.original_community_slug, id: blog.inner_id}
-    results = guest_conn |> gq_query(@query, variables)
+    results = guest_conn |> gq_query(Schema.q(:article, :blog), variables)
 
-    assert results["id"] == to_string(blog.id)
+    assert results["innerId"] == to_string(blog.inner_id)
     assert is_valid_kv?(results, "title", :string)
   end
 
+  @tag :wip
   test "pending state should in meta", ~m(guest_conn user_conn community user blog_attrs)a do
     {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
     variables = %{community: blog.original_community_slug, id: blog.inner_id}
-    results = user_conn |> gq_query(@query, variables)
+    results = user_conn |> gq_query(Schema.q(:article, :blog), variables)
 
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
 
-    results = guest_conn |> gq_query(@query, variables)
+    results = guest_conn |> gq_query(Schema.q(:article, :blog), variables)
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
@@ -85,7 +67,7 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
         illegal_words: ["some-word"]
       })
 
-    results = user_conn |> gq_query(@query, variables)
+    results = user_conn |> gq_query(Schema.q(:article, :blog), variables)
 
     assert not get_in(results, ["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]

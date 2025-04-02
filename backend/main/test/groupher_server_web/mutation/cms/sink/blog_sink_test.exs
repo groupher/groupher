@@ -1,5 +1,5 @@
 defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
-  @moduleblog false
+  @moduledoc false
   use GroupherServer.TestTools
 
   setup do
@@ -36,13 +36,6 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
              )
     end
 
-    @query """
-    mutation($id: ID!, $communityId: ID!){
-      undoSinkBlog(id: $id, communityId: $communityId) {
-        id
-      }
-    }
-    """
     test "login user can undo sink to a blog", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 

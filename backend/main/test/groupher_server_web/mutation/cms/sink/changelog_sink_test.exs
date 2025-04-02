@@ -1,5 +1,5 @@
 defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
-  @modulechangelog false
+  @moduledoc false
   use GroupherServer.TestTools
 
   setup do
@@ -37,13 +37,6 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
              )
     end
 
-    @query """
-    mutation($id: ID!, $communityId: ID!){
-      undoSinkChangelog(id: $id, communityId: $communityId) {
-        id
-      }
-    }
-    """
     test "login user can undo sink to a changelog", ~m(community changelog)a do
       variables = %{id: changelog.inner_id, community: community.slug}
 
