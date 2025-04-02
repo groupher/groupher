@@ -59,7 +59,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
   def call(
         %{
           context: %{cur_user: %{cur_passport: _}},
-          arguments: %{passport_communities: _}
+          arguments: %{community: _}
         } = resolution,
         claim: "cms->c?->" <> _rest = claim
       ) do
@@ -69,7 +69,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
   def call(
         %{
           context: %{cur_user: %{cur_passport: _}},
-          arguments: %{passport_communities: _}
+          arguments: %{community: _}
         } = resolution,
         claim: "owner;" <> claim
       ) do
@@ -145,12 +145,12 @@ defmodule GroupherServerWeb.Middleware.Passport do
   defp cp_check(resolution, claim) do
     cur_passport = resolution.context.cur_user.cur_passport
 
-    community_slug = resolution.arguments.passport_communities |> List.first() |> Map.get(:slug)
+    # community_slug = resolution.arguments.passport_communities |> List.first() |> Map.get(:slug)
+    community_slug = resolution.arguments.community
     thread = resolution.arguments.thread |> to_string
 
     path =
       claim
-      # |> String.replace("c?", community_title)
       |> String.replace("c?", community_slug)
       |> String.replace("t?", thread)
       |> String.split("->")
@@ -165,14 +165,14 @@ defmodule GroupherServerWeb.Middleware.Passport do
     end
   end
 
-  defp community_check(
-         %{
-           arguments: %{passport_communities: passport_communities}
-         } = resolution,
-         claim
-       ) do
-    do_community_check(resolution, passport_communities, claim)
-  end
+  # defp community_check(
+  #        %{
+  #          arguments: %{passport_communities: passport_communities}
+  #        } = resolution,
+  #        claim
+  #      ) do
+  #   do_community_check(resolution, passport_communities, claim)
+  # end
 
   defp community_check(%{arguments: %{community: community}} = resolution, claim) do
     do_community_check(resolution, [community], claim)
