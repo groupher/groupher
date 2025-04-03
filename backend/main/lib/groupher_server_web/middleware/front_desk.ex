@@ -38,17 +38,11 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     fetch_article(resolution, community.slug)
   end
 
-  def call(resolution, :comment) do
-    fetch_comment(resolution)
-  end
+  def call(resolution, :comment), do: fetch_comment(resolution)
 
-  def call(%{arguments: %{thread_id: thread_id}} = resolution, :thread) do
-    fetch_thread(resolution, thread_id)
-  end
+  def call(resolution, :thread), do: fetch_thread(resolution)
 
-  def call(%{arguments: %{user: user}} = resolution, :user) do
-    fetch_user(resolution, user)
-  end
+  def call(resolution, :user), do: fetch_user(resolution)
 
   def call(resolution, _), do: resolution
 
@@ -104,7 +98,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
        ) do
     case FrontDesk.info(:comment, id) do
       {:ok, comment} ->
-        passport_is_owner = comment.author.user.id == cur_user.id
+        passport_is_owner = comment.author.id == cur_user.id
 
         updated_arguments =
           arguments
@@ -129,7 +123,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     end
   end
 
-  defp fetch_thread(%{arguments: arguments} = resolution, thread_id) do
+  defp fetch_thread(%{arguments: %{thread_id: thread_id} = arguments} = resolution) do
     case FrontDesk.info(:thread, thread_id) do
       {:ok, community} ->
         %{resolution | arguments: Map.put(arguments, :thread, community)}
@@ -139,7 +133,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     end
   end
 
-  defp fetch_user(%{arguments: arguments} = resolution, user) do
+  defp fetch_user(%{arguments: %{user: user} = arguments} = resolution) do
     case FrontDesk.info(:user, user) do
       {:ok, user} ->
         %{resolution | arguments: Map.put(arguments, :user, user)}

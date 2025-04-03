@@ -155,7 +155,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
              )
     end
 
-    @tag :wip
     test "post can be update by owner", ~m(owner_conn community post user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
@@ -234,7 +233,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert true == updated_post["meta"]["isEdited"]
     end
 
-    @tag :wip
     test "login user with auth passport update a post", ~m(community post)a do
       post = post |> Repo.preload(:communities)
       belongs_community_title = post.communities |> List.first() |> Map.get(:title)

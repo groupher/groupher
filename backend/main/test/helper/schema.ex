@@ -556,5 +556,131 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def m(:create_comment) do
+    """
+    mutation($community: String!, $thread: Thread!, $id: ID!, $body: String!) {
+      createComment(community: $community, thread: $thread, id: $id, body: $body) {
+        id
+        bodyHtml
+      }
+    }
+    """
+  end
+
+  def m(:update_comment) do
+    """
+    mutation($id: ID!, $body: String!) {
+      updateComment(id: $id, body: $body) {
+        id
+        bodyHtml
+      }
+    }
+    """
+  end
+
+  def m(:delete_comment) do
+    """
+    mutation($id: ID!) {
+      deleteComment(id: $id) {
+        id
+        isDeleted
+      }
+    }
+    """
+  end
+
+  def m(:reply_comment) do
+    """
+    mutation($id: ID!, $body: String!) {
+      replyComment(id: $id, body: $body) {
+        id
+        bodyHtml
+      }
+    }
+    """
+  end
+
+  def m(:upvote_comment) do
+    """
+    mutation($id: ID!) {
+      upvoteComment(id: $id) {
+        id
+        upvotesCount
+        viewerHasUpvoted
+      }
+    }
+    """
+  end
+
+  def m(:undo_upvote_comment) do
+    """
+    mutation($id: ID!) {
+      undoUpvoteComment(id: $id) {
+        id
+        upvotesCount
+        viewerHasUpvoted
+      }
+    }
+    """
+  end
+
+  def m(:pin_comment) do
+    """
+    mutation($id: ID!){
+      pinComment(id: $id) {
+        id
+        isPinned
+      }
+    }
+    """
+  end
+
+  def m(:undo_pin_comment) do
+    """
+    mutation($id: ID!){
+      undoPinComment(id: $id) {
+        id
+        isPinned
+      }
+    }
+    """
+  end
+
+  def m(:emotion_to_comment) do
+    """
+    mutation($id: ID!, $emotion: CommentEmotion!) {
+      emotionToComment(id: $id, emotion: $emotion) {
+        id
+        emotions {
+          beerCount
+          viewerHasBeered
+          latestBeerUsers {
+            login
+            nickname
+          }
+        }
+      }
+    }
+    """
+  end
+
+  def m(:undo_emotion_to_comment) do
+    """
+    mutation($id: ID!, $emotion: CommentEmotion!) {
+      undoEmotionToComment(id: $id, emotion: $emotion) {
+        id
+        emotions {
+          beerCount
+          viewerHasBeered
+          latestBeerUsers {
+            login
+            nickname
+          }
+        }
+      }
+    }
+    """
+  end
+
   defp t(thread), do: thread |> Atom.to_string() |> String.capitalize()
 end
