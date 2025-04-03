@@ -38,6 +38,10 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     fetch_article(resolution, community.slug)
   end
 
+  def call(resolution, :comment) do
+    fetch_comment(resolution)
+  end
+
   def call(%{arguments: %{thread_id: thread_id}} = resolution, :thread) do
     fetch_thread(resolution, thread_id)
   end
@@ -88,6 +92,36 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     case FrontDesk.info(:article, community, thread, inner_id) do
       {:ok, article} ->
         updated_arguments = arguments |> Map.put(:article, article)
+        %{resolution | arguments: updated_arguments}
+
+      {:error, err_msg} ->
+        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+    end
+  end
+
+  defp fetch_comment(
+         %{context: %{cur_user: cur_user}, arguments: %{id: id} = arguments} = resolution
+       ) do
+    case FrontDesk.info(:comment, id) do
+      {:ok, comment} ->
+        passport_is_owner = comment.author.user.id == cur_user.id
+
+        updated_arguments =
+          arguments
+          |> Map.put(:comment, comment)
+          |> Map.put(:passport_is_owner, passport_is_owner)
+
+        %{resolution | arguments: updated_arguments}
+
+      {:error, err_msg} ->
+        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+    end
+  end
+
+  defp fetch_comment(%{arguments: %{id: id} = arguments} = resolution) do
+    case FrontDesk.info(:comment, id) do
+      {:ok, comment} ->
+        updated_arguments = arguments |> Map.put(:comment, comment)
         %{resolution | arguments: updated_arguments}
 
       {:error, err_msg} ->
