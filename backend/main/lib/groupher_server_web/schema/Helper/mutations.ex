@@ -93,7 +93,6 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
-        middleware(M.PassportLoader, source: :community)
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.pin"))
         middleware(M.FrontDesk, :community)
         middleware(M.FrontDesk, :article)
@@ -108,7 +107,6 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
-        middleware(M.PassportLoader, source: :community)
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.undo_pin"))
         middleware(M.FrontDesk, :community)
         middleware(M.FrontDesk, :article)
@@ -198,9 +196,8 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
-        middleware(M.PassportLoader, source: unquote(thread))
-        middleware(M.Passport, claim: unquote("owner;cms->c?->#{to_string(thread)}.delete"))
         middleware(M.FrontDesk, :article)
+        middleware(M.Passport, claim: unquote("owner;cms->c?->#{to_string(thread)}.delete"))
 
         resolve(&R.CMS.delete_article/3)
       end
@@ -300,7 +297,6 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
-        middleware(M.PassportLoader, source: :community)
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.sink"))
         middleware(M.FrontDesk, :article)
 
@@ -314,7 +310,6 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
-        middleware(M.PassportLoader, source: :community)
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.undo_sink"))
         middleware(M.FrontDesk, :article)
 
@@ -340,7 +335,6 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
-        middleware(M.PassportLoader, source: :community)
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.lock_comment"))
         middleware(M.FrontDesk, :article)
 
@@ -354,7 +348,6 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
-        middleware(M.PassportLoader, source: :community)
         middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.undo_lock_comment"))
         middleware(M.FrontDesk, :article)
 

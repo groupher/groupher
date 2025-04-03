@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Upvotes.DocUpvote do
       {:ok, article} = CMS.upvote_article(doc, user)
       assert user.id in article.meta.upvoted_user_ids
 
-      {:ok, article} = CMS.upvote_article(doc, user2)
+      {:ok, _} = CMS.upvote_article(doc, user2)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
 

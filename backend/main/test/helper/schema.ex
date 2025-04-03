@@ -99,6 +99,21 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def q(:search_articles, thread, extra) do
+    """
+    query($title: String!) {
+      search#{t(thread)}s(title: $title) {
+        entries {
+          innerId
+          title
+          #{extra}
+        }
+        totalCount
+      }
+    }
+    """
+  end
+
   def q(:paged_published_comments) do
     """
     query($login: String!, $thread: Thread, $filter: PagiFilter!) {
@@ -146,43 +161,6 @@ defmodule GroupherServer.Test.Helper.Schema do
         totalCount
         pageSize
         pageNumber
-      }
-    }
-    """
-  end
-
-  def m(:pin_article, thread) do
-    """
-    mutation($id: ID!, $community: String!){
-      pin#{t(thread)}(id: $id, community: $community) {
-        innerId
-        isPinned
-      }
-    }
-    """
-  end
-
-  def m(:undo_pin_article, thread) do
-    """
-    mutation($id: ID!, $community: String!){
-      undoPin#{t(thread)}(id: $id, community: $community) {
-        innerId
-        isPinned
-      }
-    }
-    """
-  end
-
-  def q(:search_articles, thread, extra) do
-    """
-    query($title: String!) {
-      search#{t(thread)}s(title: $title) {
-        entries {
-          innerId
-          title
-          #{extra}
-        }
-        totalCount
       }
     }
     """
@@ -243,6 +221,28 @@ defmodule GroupherServer.Test.Helper.Schema do
         totalCount
         pageSize
         pageNumber
+      }
+    }
+    """
+  end
+
+  def m(:pin_article, thread) do
+    """
+    mutation($id: ID!, $community: String!){
+      pin#{t(thread)}(id: $id, community: $community) {
+        innerId
+        isPinned
+      }
+    }
+    """
+  end
+
+  def m(:undo_pin_article, thread) do
+    """
+    mutation($id: ID!, $community: String!){
+      undoPin#{t(thread)}(id: $id, community: $community) {
+        innerId
+        isPinned
       }
     }
     """
@@ -551,6 +551,132 @@ defmodule GroupherServer.Test.Helper.Schema do
     mutation($community: String!, $thread: Thread, $id: ID!, $articleTags: [ID]) {
       moveToBlackhole(community: $community, thread: $thread, id: $id, articleTags: $articleTags) {
         innerId
+      }
+    }
+    """
+  end
+
+  def m(:create_comment) do
+    """
+    mutation($community: String!, $thread: Thread!, $id: ID!, $body: String!) {
+      createComment(community: $community, thread: $thread, id: $id, body: $body) {
+        id
+        bodyHtml
+      }
+    }
+    """
+  end
+
+  def m(:update_comment) do
+    """
+    mutation($id: ID!, $body: String!) {
+      updateComment(id: $id, body: $body) {
+        id
+        bodyHtml
+      }
+    }
+    """
+  end
+
+  def m(:delete_comment) do
+    """
+    mutation($id: ID!) {
+      deleteComment(id: $id) {
+        id
+        isDeleted
+      }
+    }
+    """
+  end
+
+  def m(:reply_comment) do
+    """
+    mutation($id: ID!, $body: String!) {
+      replyComment(id: $id, body: $body) {
+        id
+        bodyHtml
+      }
+    }
+    """
+  end
+
+  def m(:upvote_comment) do
+    """
+    mutation($id: ID!) {
+      upvoteComment(id: $id) {
+        id
+        upvotesCount
+        viewerHasUpvoted
+      }
+    }
+    """
+  end
+
+  def m(:undo_upvote_comment) do
+    """
+    mutation($id: ID!) {
+      undoUpvoteComment(id: $id) {
+        id
+        upvotesCount
+        viewerHasUpvoted
+      }
+    }
+    """
+  end
+
+  def m(:pin_comment) do
+    """
+    mutation($id: ID!){
+      pinComment(id: $id) {
+        id
+        isPinned
+      }
+    }
+    """
+  end
+
+  def m(:undo_pin_comment) do
+    """
+    mutation($id: ID!){
+      undoPinComment(id: $id) {
+        id
+        isPinned
+      }
+    }
+    """
+  end
+
+  def m(:emotion_to_comment) do
+    """
+    mutation($id: ID!, $emotion: CommentEmotion!) {
+      emotionToComment(id: $id, emotion: $emotion) {
+        id
+        emotions {
+          beerCount
+          viewerHasBeered
+          latestBeerUsers {
+            login
+            nickname
+          }
+        }
+      }
+    }
+    """
+  end
+
+  def m(:undo_emotion_to_comment) do
+    """
+    mutation($id: ID!, $emotion: CommentEmotion!) {
+      undoEmotionToComment(id: $id, emotion: $emotion) {
+        id
+        emotions {
+          beerCount
+          viewerHasBeered
+          latestBeerUsers {
+            login
+            nickname
+          }
+        }
       }
     }
     """

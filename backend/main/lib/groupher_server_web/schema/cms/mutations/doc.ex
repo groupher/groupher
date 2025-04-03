@@ -37,9 +37,8 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Doc do
       arg(:thread, :thread, default_value: :doc)
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :doc)
-      middleware(M.Passport, claim: "owner;cms->c?->doc.edit")
       middleware(M.FrontDesk, :article)
+      middleware(M.Passport, claim: "owner;cms->c?->doc.edit")
 
       resolve(&R.CMS.update_article/3)
     end

@@ -165,7 +165,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
         id: post.inner_id,
         community: community.slug,
         title: "updated title #{unique_num}",
-        # body: mock_rich_text("updated body #{unique_num}"),,
         body: mock_rich_text("updated body #{unique_num}"),
         copyRight: "translate",
         articleTags: [article_tag.id]

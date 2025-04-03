@@ -35,7 +35,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:thread_id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :community)
       middleware(M.Passport, claim: "cms->c?->thread.set")
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :thread)
@@ -49,7 +48,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:thread_id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :community)
       middleware(M.Passport, claim: "cms->c?->thread.unset")
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :thread)
@@ -86,9 +84,8 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :community)
-      middleware(M.FrontDesk, :article)
       middleware(M.Passport, claim: "cms->c?->t?.article_tag.set")
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.set_article_tag/3)
     end
@@ -101,9 +98,8 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :community)
-      middleware(M.FrontDesk, :article)
       middleware(M.Passport, claim: "cms->c?->t?.article_tag.unset")
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.unset_article_tag/3)
     end
@@ -116,8 +112,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:tags, list_of(:article_tag_index))
 
       middleware(M.Authorize, :login)
-      middleware(M.PassportLoader, source: :community)
-      # middleware(M.Passport, claim: "cms->c?->t?.article_tag.update")
+      middleware(M.Passport, claim: "cms->c?->t?.article_tag.update")
 
       resolve(&R.CMS.reindex_tags_in_group/3)
     end

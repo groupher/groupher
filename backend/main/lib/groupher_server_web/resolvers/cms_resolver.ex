@@ -418,13 +418,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.create_comment(community, thread, id, body, user)
   end
 
-  def update_comment(_root, ~m(body passport_source)a, _info) do
-    comment = passport_source
+  def update_comment(_root, ~m(body comment)a, _info) do
     CMS.update_comment(comment, body)
   end
 
-  def delete_comment(_root, ~m(passport_source)a, _info) do
-    comment = passport_source
+  def delete_comment(_root, ~m(comment)a, _info) do
     CMS.delete_comment(comment)
   end
 
