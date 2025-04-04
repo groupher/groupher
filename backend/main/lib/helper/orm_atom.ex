@@ -131,7 +131,7 @@ defmodule Helper.ORMAtom do
   end
 
   def update_meta(queryable, changes) when is_map(changes) do
-    changes = ensure_datetime(queryable, changes)
+    changes = ensure_datetime(queryable, strip_struct(changes))
 
     with {:ok, schema_module, id} <- extract_schema_and_id(queryable),
          {:ok, dynamic_updates} <- build_dynamic_updates(changes),

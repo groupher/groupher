@@ -150,8 +150,8 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, ret} = ORM.inc(post, :upvotes_count)
       assert ret.upvotes_count == 1
 
-      {:ok, ret} = ORM.dec(post, :upvotes_count)
-      {:ok, ret} = ORM.dec(post, :upvotes_count)
+      {:ok, _} = ORM.dec(post, :upvotes_count)
+      {:ok, _} = ORM.dec(post, :upvotes_count)
       {:ok, ret} = ORM.dec(post, :upvotes_count)
 
       assert ret.upvotes_count == 0
@@ -190,7 +190,6 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert ret.meta.thread == "POST2"
     end
 
-    @tag :wip
     test "update meta should effect inserted_at", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)

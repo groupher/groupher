@@ -30,7 +30,6 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogArchive do
   end
 
   describe "[cms comment archive]" do
-    @tag :wip
     test "can archive comments", ~m(comment_long_ago)a do
       {:ok, _} = CMS.archive_articles(:comment)
 

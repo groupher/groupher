@@ -210,11 +210,34 @@ defmodule Helper.Utils do
   @doc """
   convert struct to normal map and remove :id field
   """
-  def strip_struct(struct) when is_struct(struct) do
-    struct |> Map.from_struct() |> Map.delete(:id) |> Map.delete(:__meta__)
+
+  # def strip_struct(struct) when is_struct(struct) do
+  #   struct |> Map.from_struct() |> Map.delete(:id) |> Map.delete(:__meta__)
+  # end
+  # def strip_struct(map) when is_map(map), do: map
+
+  def strip_struct(%DateTime{} = datetime), do: datetime
+
+  def strip_struct(data) when is_map(data) do
+    # 如果是 struct（但不是 DateTime），先转换为 map
+    data =
+      if Map.has_key?(data, :__struct__) do
+        Map.from_struct(data)
+      else
+        data
+      end
+
+    # 递归处理所有值
+    Enum.reduce(data, %{}, fn {k, v}, acc ->
+      Map.put(acc, k, strip_struct(v))
+    end)
   end
 
-  def strip_struct(map) when is_map(map), do: map
+  def strip_struct(data) when is_list(data) do
+    Enum.map(data, &strip_struct/1)
+  end
+
+  def strip_struct(data), do: data
 
   @doc """
   get upcase name of a module, most used for store thread in DB

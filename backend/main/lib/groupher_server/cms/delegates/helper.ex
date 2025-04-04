@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
-  import Helper.Utils, only: [get_config: 2, done: 1, strip_struct: 1, past_verb: 1]
+  import Helper.Utils, only: [get_config: 2, done: 1, past_verb: 1]
 
   alias Helper.{ORM, QueryBuilder}
   alias GroupherServer.{Accounts, Repo, CMS}
@@ -277,8 +277,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
     action = past_verb(action)
     cur_user_ids = get_in(article, [:meta, :"#{action}_user_ids"])
 
-    cur_users =
-      get_in(article, [:meta, :"latest_#{action}_users"]) |> Enum.map(&strip_struct(&1))
+    cur_users = get_in(article, [:meta, :"latest_#{action}_users"])
 
     updated_user_ids =
       case opt do
@@ -296,7 +295,6 @@ defmodule GroupherServer.CMS.Delegate.Helper do
 
     meta =
       article.meta
-      |> strip_struct()
       |> Map.merge(%{"#{action}_user_ids": updated_user_ids})
       |> Map.merge(%{"latest_#{action}_users": updated_users})
 

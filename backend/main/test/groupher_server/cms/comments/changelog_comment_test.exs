@@ -148,7 +148,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       #####
       inserted_at =
-        Timex.shift(Timex.now(), days: -(active_period_days + 1)) |> Timex.to_datetime()
+        Timex.shift(Timex.now(), days: -(active_period_days + 1))
+        |> DateTime.truncate(:second)
+        |> Timex.to_datetime()
 
       changelog_attrs = mock_attrs(:changelog)
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)

@@ -20,7 +20,6 @@ defmodule GroupherServer.Test.CMS.DocArchive do
   end
 
   describe "[cms doc archive]" do
-    @tag :wip
     test "can archive docs", ~m(doc_long_ago)a do
       {:ok, _} = CMS.archive_articles(:doc)
 

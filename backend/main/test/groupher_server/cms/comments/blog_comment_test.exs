@@ -149,7 +149,9 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
       #####
       inserted_at =
-        Timex.shift(Timex.now(), days: -(active_period_days + 1)) |> Timex.to_datetime()
+        Timex.shift(Timex.now(), days: -(active_period_days + 1))
+        |> DateTime.truncate(:second)
+        |> Timex.to_datetime()
 
       blog_attrs = mock_attrs(:blog)
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
