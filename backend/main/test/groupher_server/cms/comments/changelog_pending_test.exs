@@ -40,7 +40,6 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
       assert comment.pending == @audit_legal
     end
 
-    @tag :wip2
     test "pending changelog-comment's meta should have info", ~m(community changelog user)a do
       {:ok, comment} =
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)

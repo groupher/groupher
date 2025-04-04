@@ -91,13 +91,8 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
     subscribed_communities_ids = query |> Repo.all()
     subscribed_communities_count = subscribed_communities_ids |> length
 
-    user_meta = ensure(user.meta, @default_user_meta)
-    meta = %{user_meta | subscribed_communities_ids: subscribed_communities_ids}
-
-    user
-    |> ORM.update_meta(meta,
-      changes: %{subscribed_communities_count: subscribed_communities_count}
-    )
+    {:ok, user} = ORM.update(user, %{subscribed_communities_count: subscribed_communities_count})
+    ORM.update_meta(user, %{subscribed_communities_ids: subscribed_communities_ids})
   end
 
   @doc """
