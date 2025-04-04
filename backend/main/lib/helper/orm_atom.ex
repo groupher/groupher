@@ -5,6 +5,8 @@ defmodule Helper.ORMAtom do
   """
 
   import Ecto.Query, warn: false
+  import Helper.Utils, only: [strip_struct: 1]
+
   alias GroupherServer.Repo
 
   @doc """
@@ -99,6 +101,10 @@ defmodule Helper.ORMAtom do
         "stats.visits" => 42
       })
   """
+  def update_meta(queryable, changes) when is_struct(changes) do
+    update_meta(queryable, changes |> strip_struct)
+  end
+
   def update_meta(queryable, changes) when is_map(changes) do
     changes = ensure_datetime(queryable, changes)
 

@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
       done: 1,
       strip_struct: 1,
       get_config: 2,
-      ensure: 2,
+      ensure: 3,
       article_of: 1,
       thread_of: 1
     ]
@@ -252,8 +252,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
 
   @doc "lock comment of a article"
   def lock_article_comments(article) do
-    article_meta = ensure(article.meta, @default_article_meta)
-    meta = Map.merge(article_meta, %{is_comment_locked: true})
+    meta = ensure(article.meta, %{is_comment_locked: true}, :article)
 
     Transaction.locking(article, fn article ->
       ORM.update_meta(article, meta)
@@ -262,8 +261,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
 
   @doc "undo lock comment of a article"
   def undo_lock_article_comments(article) do
-    article_meta = ensure(article.meta, @default_article_meta)
-    meta = Map.merge(article_meta, %{is_comment_locked: false})
+    meta = ensure(article.meta, %{is_comment_locked: false}, :article)
 
     Transaction.locking(article, fn article ->
       ORM.update_meta(article, meta)
