@@ -35,14 +35,13 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply, Embeds}
+  alias CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply}
   alias CMS.Delegate.Hooks
 
   alias Ecto.Multi
 
   @article_threads get_config(:article, :threads)
 
-  @default_article_meta Embeds.ArticleMeta.default_meta()
   @max_parent_replies_count Comment.max_parent_replies_count()
   @pinned_comment_limit Comment.pinned_comment_limit()
 

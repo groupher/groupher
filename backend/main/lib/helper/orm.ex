@@ -285,27 +285,6 @@ defmodule Helper.ORM do
     queryable |> Repo.aggregate(:count) |> done
   end
 
-  @doc """
-  update meta info for article / comment
-  """
-  def update_meta2(queryable, meta, changes: changes) when is_map(changes) do
-    meta = meta |> strip_struct
-
-    queryable
-    |> Ecto.Changeset.change(changes)
-    |> Ecto.Changeset.put_embed(:meta, meta)
-    |> Repo.update()
-  end
-
-  def update_meta2(queryable, meta) do
-    meta = meta |> strip_struct
-
-    queryable
-    |> Ecto.Changeset.change(%{})
-    |> Ecto.Changeset.put_embed(:meta, meta)
-    |> Repo.update()
-  end
-
   def update_dashboard(%CommunityDashboard{} = community_dashboard, field, args)
       when field in [
              # those fields are array maps
