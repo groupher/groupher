@@ -190,6 +190,26 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert ret.meta.thread == "POST2"
     end
 
+    @tag :wip
+    test "update meta should effect inserted_at", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+
+      {:ok, ret} =
+        ORM.update_meta(post, %{
+          is_edited: true,
+          citing_count: 20
+        })
+
+      assert ret.inserted_at == post.inserted_at
+
+      {:ok, fresh_post} = ORM.find(Post, post.id)
+      assert post.id == fresh_post.id
+
+      assert ret.inserted_at == fresh_post.inserted_at
+      assert post.inserted_at == fresh_post.inserted_at
+    end
+
     test "update meta should work with edge cases", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)

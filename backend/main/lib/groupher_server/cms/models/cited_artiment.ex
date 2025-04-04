@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Model.CitedArtiment do
 
     field(:block_linker, {:array, :string})
     # content.block_linker = ["block-eee_block-bbb", "block-eee_block-bbb"]
-    timestamps()
+    timestamps(type: :utc_datetime)
   end
 
   @doc false

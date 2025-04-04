@@ -9,7 +9,8 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
   alias CMS.Model.{ArticleDocument, PostDocument}
 
   @root_class Class.article()
-  @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
+  # @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3)
+  #            |> DateTime.truncate(:second)
   @article_digest_length get_config(:article, :digest_length)
 
   setup do

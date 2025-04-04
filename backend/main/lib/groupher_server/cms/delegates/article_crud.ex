@@ -9,7 +9,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   import Helper.Utils,
     only: [
       done: 1,
-      done: 2,
       pick_by: 2,
       plural: 1,
       module_to_atom: 1,
@@ -440,7 +439,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
         end)
         |> Repo.transaction()
         |> result()
-        |> done(:trans)
       end)
     end
   end
@@ -833,7 +831,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     |> Map.put(:total_count, normal_count)
   end
 
-  #  for create article step in Multi.new
   defp do_create_article(
          model,
          %{body: _body} = attrs,

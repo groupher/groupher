@@ -2,11 +2,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
   @moduledoc false
   use GroupherServer.TestTools
 
-  @now Timex.now() |> DateTime.truncate(:second)
   @archive_threshold get_config(:article, :archive_threshold)
   @comment_archive_threshold Timex.shift(@now, @archive_threshold[:default])
-
-  @last_year Timex.shift(@now, years: -1, seconds: -1)
 
   setup do
     {community, post, _, user} = mock_article(:post)

@@ -215,14 +215,14 @@ defmodule GroupherServer.CMS.Helper.Macros do
       viewer_has_fields()
       comment_fields()
 
-      field(:active_at, :utc_datetime_usec)
+      field(:active_at, :utc_datetime)
 
       field(:is_archived, :boolean)
-      field(:archived_at, :utc_datetime_usec)
+      field(:archived_at, :utc_datetime)
 
       field(:pending, :integer, default: 0)
 
-      timestamps()
+      timestamps(type: :utc_datetime)
     end
   end
 

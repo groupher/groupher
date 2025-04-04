@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Model.Blog do
   alias GroupherServer.CMS
   alias CMS.Model.Embeds
 
-  @timestamps_opts [type: :utc_datetime_usec]
+  @timestamps_opts [type: :utc_datetime]
 
   @required_fields ~w(title digest)a
   @article_cast_fields general_article_cast_fields()

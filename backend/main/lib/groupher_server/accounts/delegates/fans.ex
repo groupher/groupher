@@ -104,12 +104,12 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
 
       Multi.new()
       |> Multi.run(:update_follower_meta, fn _, _ ->
-        ORM.update(target_user, %{followers_count: length(follower_user_ids)})
         ORM.update_meta(target_user, %{follower_user_ids: follower_user_ids})
+        ORM.update(target_user, %{followers_count: length(follower_user_ids)})
       end)
       |> Multi.run(:update_following_meta, fn _, _ ->
-        ORM.update(target_user, %{followings_count: length(following_user_ids)})
         ORM.update_meta(user, %{following_user_ids: following_user_ids})
+        ORM.update(target_user, %{followings_count: length(following_user_ids)})
       end)
       |> Repo.transaction()
       |> result()

@@ -2,14 +2,11 @@ defmodule GroupherServer.Test.CMS.DocArchive do
   @moduledoc false
   use GroupherServer.TestTools
 
-  @now Timex.now()
   @archive_threshold get_config(:article, :archive_threshold)
   @doc_archive_threshold Timex.shift(
                            @now,
                            @archive_threshold[:doc] || @archive_threshold[:default]
                          )
-
-  @last_year Timex.shift(@now, years: -1, seconds: -1)
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -23,6 +20,7 @@ defmodule GroupherServer.Test.CMS.DocArchive do
   end
 
   describe "[cms doc archive]" do
+    @tag :wip
     test "can archive docs", ~m(doc_long_ago)a do
       {:ok, _} = CMS.archive_articles(:doc)
 
