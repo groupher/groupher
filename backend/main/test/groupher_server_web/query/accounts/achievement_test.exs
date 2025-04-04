@@ -117,6 +117,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       assert results["achievement"] |> Map.get("reputation") == 2 * @follow_weight
     end
 
+    @tag :wip
     test "minus user's achievement after user get undo followed", ~m(guest_conn user)a do
       total_count = 10
       {:ok, users} = db_insert_multi(:user, total_count)
@@ -125,8 +126,8 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
         {:ok, _} = fan |> Accounts.follow(user)
       end)
 
-      ramdom_fan = users |> Enum.shuffle() |> List.first()
-      ramdom_fan |> Accounts.undo_follow(user)
+      random_fan = users |> Enum.shuffle() |> List.first()
+      random_fan |> Accounts.undo_follow(user)
 
       variables = %{login: user.login}
       results = guest_conn |> gq_query(@query, variables)

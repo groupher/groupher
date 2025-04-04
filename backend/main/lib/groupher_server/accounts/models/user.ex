@@ -27,7 +27,7 @@ defmodule GroupherServer.Accounts.Model.User do
   @schema_prefix DBPrefix.account()
 
   @required_fields ~w(login avatar)a
-  @optional_fields ~w(nickname bio shortbio remote_ip sex location email subscribed_communities_count)a
+  @optional_fields ~w(nickname bio shortbio remote_ip sex location email subscribed_communities_count followers_count followings_count)a
 
   @type t :: %User{}
   schema "users" do
