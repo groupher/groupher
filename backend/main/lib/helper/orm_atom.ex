@@ -8,9 +8,12 @@ defmodule Helper.ORMAtom do
   import Helper.Utils, only: [strip_struct: 1]
 
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.Model.Community
 
   @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
+  @default_community_meta CMS.Model.Embeds.CommunityMeta.default_meta()
 
   @doc """
   increase by 1 for given field
@@ -108,8 +111,14 @@ defmodule Helper.ORMAtom do
     update_meta(queryable, changes |> strip_struct)
   end
 
-  def update_meta(%Accounts.Model.User{meta: nil} = queryable, changes) when is_map(changes) do
+  def update_meta(%User{meta: nil} = queryable, changes) when is_map(changes) do
     with {:ok, user} <- fill_default_meta(queryable, @default_user_meta) do
+      update_meta(user, changes)
+    end
+  end
+
+  def update_meta(%Community{meta: nil} = queryable, changes) when is_map(changes) do
+    with {:ok, user} <- fill_default_meta(queryable, @default_community_meta) do
       update_meta(user, changes)
     end
   end

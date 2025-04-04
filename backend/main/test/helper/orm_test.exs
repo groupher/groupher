@@ -131,7 +131,6 @@ defmodule GroupherServer.Test.Helper.ORM do
   end
 
   describe "inc/dec" do
-    @tag :wip
     test "inc/dec should work", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -144,7 +143,6 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert ret.upvotes_count == 1
     end
 
-    @tag :wip
     test "dec should below 0", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -161,7 +159,6 @@ defmodule GroupherServer.Test.Helper.ORM do
   end
 
   describe "update meta" do
-    @tag :wip
     test "update meta should work with user", ~m(community user)a do
       {:ok, ret} =
         ORM.update_meta(user, %{
@@ -171,7 +168,6 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert ret.meta.follower_user_ids == [2, 3, 5]
     end
 
-    @tag :wip
     test "update meta should work with post", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
@@ -194,7 +190,6 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert ret.meta.thread == "POST2"
     end
 
-    @tag :wip
     test "update meta should work with edge cases", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)

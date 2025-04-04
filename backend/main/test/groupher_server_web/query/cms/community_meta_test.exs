@@ -27,6 +27,7 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
       }
     }
     """
+    @tag :wip
     test "community have valid [thread]s_count in meta info",
          ~m(guest_conn community_attrs user)a do
       {:ok, community} = CMS.create_community(community_attrs, user)
@@ -47,6 +48,7 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
       results = guest_conn |> gq_query(@query, variables)
 
       meta = results["meta"]
+
       assert results["articlesCount"] == 8
       assert meta["postsCount"] == 2
       assert meta["changelogsCount"] == 2

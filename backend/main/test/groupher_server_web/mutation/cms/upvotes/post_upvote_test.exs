@@ -13,7 +13,6 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
   end
 
   describe "[post upvote]" do
-    @tag :wip
     test "tmp login user can upvote a post", ~m(user_conn user2_conn community post user)a do
       variables = %{id: post.inner_id, community: community.slug}
 
