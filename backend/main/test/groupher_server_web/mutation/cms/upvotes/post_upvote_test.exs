@@ -13,6 +13,18 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
   end
 
   describe "[post upvote]" do
+    @tag :wip
+    test "tmp login user can upvote a post", ~m(user_conn user2_conn community post user)a do
+      variables = %{id: post.inner_id, community: community.slug}
+
+      _created = user_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
+      created = user2_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
+      assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
+
+      assert created["innerId"] == to_string(post.inner_id)
+      assert created["upvotesCount"] == 2
+    end
+
     test "login user can upvote a post", ~m(user_conn user2_conn community post user)a do
       variables = %{id: post.inner_id, community: community.slug}
 

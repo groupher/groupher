@@ -222,7 +222,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   e.g:
   inc/dec upvotes_count of article
   """
-  def update_article_reactions_count(info, article, field, opt) do
+  def update_article_reactions_count2(info, article, field, opt) do
     schema =
       case field do
         :upvotes_count -> ArticleUpvote
@@ -275,7 +275,6 @@ defmodule GroupherServer.CMS.Delegate.Helper do
 
   def update_article_reaction_user_list(action, article, %User{} = user, opt) do
     action = past_verb(action)
-
     cur_user_ids = get_in(article, [:meta, :"#{action}_user_ids"])
 
     cur_users =
@@ -297,6 +296,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
 
     meta =
       article.meta
+      |> strip_struct()
       |> Map.merge(%{"#{action}_user_ids": updated_user_ids})
       |> Map.merge(%{"latest_#{action}_users": updated_users})
 

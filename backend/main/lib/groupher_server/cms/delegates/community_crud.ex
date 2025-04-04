@@ -332,7 +332,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
 
       Transaction.locking(community, fn community ->
         community
-        |> ORM.update_meta(meta, changes: %{articles_count: recount_articles_count(meta)})
+        # |> ORM.update_meta(meta, changes: %{articles_count: recount_articles_count(meta)})
+        |> ORM.update_meta(%{articles_count: recount_articles_count(meta)})
       end)
     end
   end

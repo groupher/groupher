@@ -16,7 +16,14 @@ defmodule Helper.ORM do
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias GroupherServer.Accounts.Model.User
 
+  alias Helper.ORMAtom
+
   @article_threads get_config(:article, :threads)
+
+  defdelegate update_meta(queryable, changes), to: ORMAtom
+  defdelegate inc(table, id, field), to: ORMAtom
+  defdelegate inc(queryable, field), to: ORMAtom
+  defdelegate dec(queryable, field), to: ORMAtom
 
   @doc """
   offset-limit based pagination
@@ -309,7 +316,7 @@ defmodule Helper.ORM do
   @doc """
   update meta info for article / comment
   """
-  def update_meta(queryable, meta, changes: changes) when is_map(changes) do
+  def update_meta2(queryable, meta, changes: changes) when is_map(changes) do
     meta = meta |> strip_struct
 
     queryable
@@ -318,7 +325,7 @@ defmodule Helper.ORM do
     |> Repo.update()
   end
 
-  def update_meta(queryable, meta) do
+  def update_meta2(queryable, meta) do
     meta = meta |> strip_struct
 
     queryable
@@ -441,6 +448,48 @@ defmodule Helper.ORM do
         {:error, _} -> raise_error(:article_not_found, "article not found")
       end
     end
+  end
+
+  @doc """
+  原子更新 meta 字段（支持嵌套路径）
+
+  ## 参数
+  - `table`: 表名（原子），如 `:posts`
+  - `id`: 记录ID
+  - `updates`: 要更新的键值对，例如:
+    - `%{upvoted_user_ids: [1,2,3], "stats.weekly" => 100}`
+  """
+  def update_meta2(table, id, updates) when is_map(updates) do
+    # 动态构建 JSONB 更新语句
+    {set_expr, params} =
+      updates
+      |> Enum.reduce({"meta", []}, fn {key, value}, {expr, params} ->
+        path = String.replace(to_string(key), ".", ",")
+
+        # 判断值的类型，决定是否需要 JSON 编码
+        {param, cast} =
+          cond do
+            is_binary(value) -> {value, ""}
+            is_number(value) -> {value, ""}
+            is_boolean(value) -> {value, ""}
+            is_list(value) -> {value, ""}
+            is_map(value) -> {Jason.encode!(value), "::jsonb"}
+            true -> {Jason.encode!(value), "::jsonb"}
+          end
+
+        new_expr =
+          "jsonb_set(COALESCE(#{expr}, '{}'::jsonb), '{#{path}}', $#{length(params) + 1}#{cast})"
+
+        {new_expr, [param | params]}
+      end)
+
+    query = """
+    UPDATE #{table}
+    SET meta = #{set_expr}
+    WHERE id = $#{length(params) + 1}
+    """
+
+    Repo.query(query, Enum.reverse(params) ++ [id])
   end
 
   defp extract_article_info(reaction, threads) do
