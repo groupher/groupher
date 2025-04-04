@@ -7,7 +7,10 @@ defmodule Helper.ORMAtom do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [strip_struct: 1]
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
+  @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
 
   @doc """
   increase by 1 for given field
@@ -105,6 +108,19 @@ defmodule Helper.ORMAtom do
     update_meta(queryable, changes |> strip_struct)
   end
 
+  def update_meta(%Accounts.Model.User{meta: nil} = queryable, changes) when is_map(changes) do
+    with {:ok, user} <- fill_default_meta(queryable, @default_user_meta) do
+      update_meta(user, changes)
+    end
+  end
+
+  # for general article with nil meta
+  def update_meta(%{meta: nil} = queryable, changes) when is_map(changes) do
+    with {:ok, user} <- fill_default_meta(queryable, @default_article_meta) do
+      update_meta(user, changes)
+    end
+  end
+
   def update_meta(queryable, changes) when is_map(changes) do
     changes = ensure_datetime(queryable, changes)
 
@@ -115,6 +131,13 @@ defmodule Helper.ORMAtom do
     else
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp fill_default_meta(queryable, default_meta) do
+    queryable
+    |> Ecto.Changeset.change(%{})
+    |> Ecto.Changeset.put_embed(:meta, default_meta)
+    |> Repo.update()
   end
 
   defp ensure_datetime(queryable, %{last_active_at: nil} = changes) do
@@ -156,7 +179,6 @@ defmodule Helper.ORMAtom do
   defp execute_update(schema_module, primary_key, id, dynamic_updates) do
     # 先构建基础查询
     query = from(r in schema_module)
-
     # 添加WHERE条件
     query = where(query, [r], field(r, ^primary_key) == ^id)
     query = update(query, [r], set: [meta: ^dynamic_updates])

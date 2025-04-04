@@ -162,7 +162,17 @@ defmodule GroupherServer.Test.Helper.ORM do
 
   describe "update meta" do
     @tag :wip
-    test "update meta should work", ~m(community user)a do
+    test "update meta should work with user", ~m(community user)a do
+      {:ok, ret} =
+        ORM.update_meta(user, %{
+          follower_user_ids: [2, 3, 5]
+        })
+
+      assert ret.meta.follower_user_ids == [2, 3, 5]
+    end
+
+    @tag :wip
+    test "update meta should work with post", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 

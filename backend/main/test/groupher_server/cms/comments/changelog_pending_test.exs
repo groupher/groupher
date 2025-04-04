@@ -40,6 +40,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
       assert comment.pending == @audit_legal
     end
 
+    @tag :wip2
     test "pending changelog-comment's meta should have info", ~m(community changelog user)a do
       {:ok, comment} =
         CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
@@ -59,6 +60,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
       assert comment.meta.illegal_words == ["some-word"]
 
       {:ok, user} = ORM.find(User, comment.author_id)
+
       assert user.meta.has_illegal_comments
       assert user.meta.illegal_comments == ["/changelog/#{changelog.id}/comment/#{comment.id}"]
 
