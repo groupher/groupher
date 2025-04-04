@@ -150,7 +150,7 @@ defmodule Helper.ORMAtom do
   end
 
   defp ensure_datetime(queryable, %{last_active_at: nil} = changes) do
-    %{changes | last_active_at: queryable.updated_at}
+    %{changes | last_active_at: queryable.inserted_at}
   end
 
   defp ensure_datetime(_queryable, changes), do: changes
@@ -195,8 +195,11 @@ defmodule Helper.ORMAtom do
     query = select(query, [r], r)
 
     case Repo.update_all(query, []) do
-      {1, [record]} -> {:ok, record}
-      {0, []} -> {:error, :not_found}
+      {1, [record]} ->
+        {:ok, record}
+
+      {0, []} ->
+        {:error, :not_found}
     end
   end
 
