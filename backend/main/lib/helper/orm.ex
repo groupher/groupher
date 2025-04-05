@@ -16,7 +16,13 @@ defmodule Helper.ORM do
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias GroupherServer.Accounts.Model.User
 
+  alias Helper.ORMAtom
+
   @article_threads get_config(:article, :threads)
+
+  defdelegate update_meta(queryable, changes), to: ORMAtom
+  defdelegate inc(queryable, field), to: ORMAtom
+  defdelegate dec(queryable, field), to: ORMAtom
 
   @doc """
   offset-limit based pagination
@@ -149,33 +155,6 @@ defmodule Helper.ORM do
     put_in(content.views, result)
   end
 
-  @doc "safe increase field(must be integer) by 1"
-  def inc_field(queryable, content, field) do
-    {1, [updated_count]} =
-      Repo.update_all(
-        from(c in queryable,
-          where: c.id == ^content.id,
-          select: field(c, ^field)
-        ),
-        inc: ["#{field}": 1]
-      )
-
-    put_in(content[field], updated_count) |> done
-  end
-
-  def dec_field(queryable, content, field) do
-    {1, [updated_count]} =
-      Repo.update_all(
-        from(c in queryable,
-          where: c.id == ^content.id,
-          select: field(c, ^field)
-        ),
-        inc: ["#{field}": -1]
-      )
-
-    put_in(content[field], Enum.max([0, updated_count])) |> done
-  end
-
   @doc "mark read as true for all"
   def mark_read_all(queryable) do
     queryable
@@ -304,27 +283,6 @@ defmodule Helper.ORM do
 
   def count(queryable) do
     queryable |> Repo.aggregate(:count) |> done
-  end
-
-  @doc """
-  update meta info for article / comment
-  """
-  def update_meta(queryable, meta, changes: changes) when is_map(changes) do
-    meta = meta |> strip_struct
-
-    queryable
-    |> Ecto.Changeset.change(changes)
-    |> Ecto.Changeset.put_embed(:meta, meta)
-    |> Repo.update()
-  end
-
-  def update_meta(queryable, meta) do
-    meta = meta |> strip_struct
-
-    queryable
-    |> Ecto.Changeset.change(%{})
-    |> Ecto.Changeset.put_embed(:meta, meta)
-    |> Repo.update()
   end
 
   def update_dashboard(%CommunityDashboard{} = community_dashboard, field, args)

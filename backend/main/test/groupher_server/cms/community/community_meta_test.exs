@@ -22,8 +22,8 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
     test "created community should have default meta ", ~m(community_attrs user)a do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
-      assert community.meta |> strip_struct ==
-               @default_meta |> Map.merge(%{moderators_ids: [community.user_id]})
+      assert strip_struct(community.meta) ==
+               Map.merge(@default_meta, %{moderators_ids: [community.user_id]})
     end
 
     test "update legacy community should add default meta" do
@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
       assert is_nil(community.meta)
 
       {:ok, community} = CMS.update_community(community, %{title: "new title"})
-      assert community.meta |> strip_struct == @default_meta
+      assert strip_struct(community.meta) == @default_meta
     end
 
     test "create a post should inc posts_count in meta",

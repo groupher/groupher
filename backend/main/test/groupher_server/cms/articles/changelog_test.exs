@@ -9,7 +9,6 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
   alias CMS.Model.{ArticleDocument, ChangelogDocument}
 
   @root_class Class.article()
-  @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
   @article_digest_length get_config(:article, :digest_length)
 
   setup do

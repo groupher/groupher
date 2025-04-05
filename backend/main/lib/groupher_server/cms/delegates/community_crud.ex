@@ -257,10 +257,12 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         :dec -> (community_meta.moderators_ids -- [user.id]) |> Enum.uniq()
       end
 
-    meta = community_meta |> Map.put(:moderators_ids, moderators_ids) |> strip_struct
+    # meta = community_meta |> Map.put(:moderators_ids, moderators_ids) |> strip_struct
+    # community
+    # |> ORM.update_embed(:meta, meta, %{moderators_count: moderators_count})
 
-    community
-    |> ORM.update_embed(:meta, meta, %{moderators_count: moderators_count})
+    {:ok, community} = ORM.update_meta(community, %{moderators_ids: moderators_ids})
+    community |> ORM.update(%{moderators_count: moderators_count})
   end
 
   def update_community_count_field(
@@ -269,9 +271,6 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         :subscribers_count,
         opt
       ) do
-    {:ok, subscribers_count} =
-      from(s in CommunitySubscriber, where: s.community_id == ^community.id) |> ORM.count()
-
     community_meta = if is_nil(community.meta), do: @default_meta, else: community.meta
 
     subscribed_user_ids =
@@ -280,10 +279,12 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         :dec -> (community_meta.subscribed_user_ids -- [user.id]) |> Enum.uniq()
       end
 
-    meta = community_meta |> Map.put(:subscribed_user_ids, subscribed_user_ids) |> strip_struct
+    {:ok, community} = ORM.update_meta(community, %{subscribed_user_ids: subscribed_user_ids})
 
-    community
-    |> ORM.update_embed(:meta, meta, %{subscribers_count: subscribers_count})
+    case opt do
+      :inc -> ORM.inc(community, :subscribers_count)
+      :dec -> ORM.dec(community, :subscribers_count)
+    end
   end
 
   def update_community_inner_id(
@@ -313,12 +314,6 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
-  def update_community_count_field(%Community{meta: nil, slug: slug}, thread) do
-    with {:ok, community} = CMS.read_community(slug, inc_views: false) do
-      update_community_count_field(community, thread)
-    end
-  end
-
   def update_community_count_field(%Community{} = community, thread) do
     with {:ok, info} <- match(thread) do
       {:ok, thread_article_count} =
@@ -331,8 +326,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
       meta = Map.put(community.meta, :"#{plural(thread)}_count", thread_article_count)
 
       Transaction.locking(community, fn community ->
-        community
-        |> ORM.update_meta(meta, changes: %{articles_count: recount_articles_count(meta)})
+        {:ok, community} = ORM.update_meta(community, meta)
+        ORM.update(community, %{articles_count: recount_articles_count(community.meta)})
       end)
     end
   end

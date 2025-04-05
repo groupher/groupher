@@ -59,6 +59,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
       assert comment.meta.illegal_words == ["some-word"]
 
       {:ok, user} = ORM.find(User, comment.author_id)
+
       assert user.meta.has_illegal_comments
       assert user.meta.illegal_comments == ["/changelog/#{changelog.id}/comment/#{comment.id}"]
 

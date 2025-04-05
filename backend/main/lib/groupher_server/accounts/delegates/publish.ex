@@ -27,7 +27,6 @@ defmodule GroupherServer.Accounts.Delegate.Publish do
 
     with {:ok, user} <- ORM.find(User, user_id),
          {:ok, paged_articles} <- CMS.paged_published_articles(thread, filter, user_id) do
-      #
       user_meta = ensure(user.meta, @default_meta)
       meta = Map.put(user_meta, :"published_#{plural(thread)}_count", paged_articles.total_count)
 

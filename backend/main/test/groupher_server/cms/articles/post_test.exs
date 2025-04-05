@@ -9,7 +9,8 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
   alias CMS.Model.{ArticleDocument, PostDocument}
 
   @root_class Class.article()
-  @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3, seconds: -1)
+  # @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3)
+  #            |> DateTime.truncate(:second)
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
@@ -299,6 +300,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
     test "will create related document after create", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = CMS.read_article(post.original_community_slug, :post, post.inner_id)
+
       assert not is_nil(post.document.body_html)
       {:ok, post} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user)
       assert not is_nil(post.document.body_html)

@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
-  import Helper.Utils, only: [get_config: 2, done: 1, strip_struct: 1, past_verb: 1]
+  import Helper.Utils, only: [get_config: 2, done: 1, past_verb: 1]
 
   alias Helper.{ORM, QueryBuilder}
   alias GroupherServer.{Accounts, Repo, CMS}
@@ -218,32 +218,6 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   end
 
   @doc """
-  update the [reaction]s_count for article
-  e.g:
-  inc/dec upvotes_count of article
-  """
-  def update_article_reactions_count(info, article, field, opt) do
-    schema =
-      case field do
-        :upvotes_count -> ArticleUpvote
-        :collects_count -> ArticleCollect
-      end
-
-    {:ok, cur_count} =
-      from(u in schema, where: field(u, ^info.foreign_key) == ^article.id) |> ORM.count()
-
-    case opt do
-      :inc ->
-        new_count = Enum.max([0, cur_count])
-        ORM.update(article, Map.put(%{}, field, new_count + 1))
-
-      :dec ->
-        new_count = Enum.max([1, cur_count])
-        ORM.update(article, Map.put(%{}, field, new_count - 1))
-    end
-  end
-
-  @doc """
   add or remove article's reaction users is list history
   e.g:
   add/remove user_id to upvoted_user_ids in article meta
@@ -275,11 +249,9 @@ defmodule GroupherServer.CMS.Delegate.Helper do
 
   def update_article_reaction_user_list(action, article, %User{} = user, opt) do
     action = past_verb(action)
-
     cur_user_ids = get_in(article, [:meta, :"#{action}_user_ids"])
 
-    cur_users =
-      get_in(article, [:meta, :"latest_#{action}_users"]) |> Enum.map(&strip_struct(&1))
+    cur_users = get_in(article, [:meta, :"latest_#{action}_users"])
 
     updated_user_ids =
       case opt do

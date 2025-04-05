@@ -2,14 +2,11 @@ defmodule GroupherServer.Test.CMS.ChangelogArchive do
   @moduledoc false
   use GroupherServer.TestTools
 
-  @now Timex.now()
   @archive_threshold get_config(:article, :archive_threshold)
   @changelog_archive_threshold Timex.shift(
                                  @now,
                                  @archive_threshold[:changelog] || @archive_threshold[:default]
                                )
-
-  @last_year Timex.shift(@now, years: -1, seconds: -1)
 
   setup do
     {:ok, user} = db_insert(:user)

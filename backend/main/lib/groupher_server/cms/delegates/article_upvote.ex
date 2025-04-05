@@ -10,7 +10,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
   import GroupherServer.CMS.Delegate.Helper,
     only: [
       load_reaction_users: 3,
-      update_article_reactions_count: 4,
       update_article_reaction_user_list: 4
     ]
 
@@ -34,7 +33,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
     Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:update_upvotes_count, fn _, _ ->
-        update_article_reactions_count(info, article, :upvotes_count, :inc)
+        ORM.inc(article, :upvotes_count)
       end)
       |> Multi.run(:update_reaction_user_list, fn _, %{update_upvotes_count: article} ->
         update_article_reaction_user_list(:upvote, article, user, :add)
@@ -64,7 +63,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
     Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:update_upvotes_count, fn _, _ ->
-        update_article_reactions_count(info, article, :upvotes_count, :dec)
+        ORM.dec(article, :upvotes_count)
       end)
       |> Multi.run(:update_reaction_user_list, fn _, %{update_upvotes_count: article} ->
         update_article_reaction_user_list(:upvote, article, from_user, :remove)

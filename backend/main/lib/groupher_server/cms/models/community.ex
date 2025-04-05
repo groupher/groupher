@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Model.Community do
 
   @required_fields ~w(title desc user_id logo slug)a
   # @required_fields ~w(title desc user_id)a
-  @optional_fields ~w(favicon label geo_info index aka contributes_digest pending locale homepage)a
+  @optional_fields ~w(favicon label geo_info index aka contributes_digest pending locale homepage articles_count moderators_count subscribers_count)a
 
   def max_pinned_article_count_per_thread, do: @max_pinned_article_count_per_thread
 

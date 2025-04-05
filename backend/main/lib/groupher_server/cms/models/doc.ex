@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   @schema_prefix DBPrefix.cms()
 
-  @timestamps_opts [type: :utc_datetime_usec]
+  @timestamps_opts [type: :utc_datetime]
 
   @required_fields ~w(title digest)a
   @article_cast_fields general_article_cast_fields()

@@ -9,7 +9,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   import Helper.Utils,
     only: [
       done: 1,
-      done: 2,
       pick_by: 2,
       plural: 1,
       module_to_atom: 1,
@@ -440,7 +439,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
         end)
         |> Repo.transaction()
         |> result()
-        |> done(:trans)
       end)
     end
   end
@@ -523,8 +521,15 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   sink article
   """
   def sink_article(article) do
-    meta = Map.merge(article.meta, %{is_sinked: true, last_active_at: article.active_at})
-    ORM.update_meta(article, meta, changes: %{active_at: article.inserted_at})
+    %{inserted_at: inserted_at} = article
+
+    with {:ok, article} <-
+           ORM.update_meta(article, %{
+             is_sinked: true,
+             last_active_at: inserted_at
+           }) do
+      ORM.update(article, %{active_at: inserted_at})
+    end
   end
 
   @doc """
@@ -533,9 +538,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   def undo_sink_article(article) do
     thread = thread_of(article)
 
-    with true <- in_active_period?(thread, article) do
-      meta = Map.merge(article.meta, %{is_sinked: false})
-      ORM.update_meta(article, meta, changes: %{active_at: meta.last_active_at})
+    with true <- in_active_period?(thread, article),
+         {:ok, article} <- ORM.update_meta(article, %{is_sinked: false}) do
+      ORM.update(article, %{active_at: article.meta.last_active_at})
     else
       false -> raise_error(:undo_sink_old_article, "can not undo sink old article")
     end
@@ -707,10 +712,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       end
     end)
     |> Multi.run(:update_article_meta, fn _, %{add_pinned_flag: article} ->
-      article_meta = ensure(article.meta, @default_article_meta)
-      meta = Map.merge(article_meta, %{can_undo_sink: in_active_period?(thread, article)})
-
-      ORM.update_meta(article, meta)
+      # article_meta = ensure(article.meta, @default_article_meta)
+      # meta = Map.merge(article_meta, %{can_undo_sink: in_active_period?(thread, article)})
+      ORM.update_meta(article, %{can_undo_sink: in_active_period?(thread, article)})
     end)
     |> Repo.transaction()
     |> result()
@@ -826,7 +830,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     |> Map.put(:total_count, normal_count)
   end
 
-  #  for create article step in Multi.new
   defp do_create_article(
          model,
          %{body: _body} = attrs,

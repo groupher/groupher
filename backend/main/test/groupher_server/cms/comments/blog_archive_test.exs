@@ -2,11 +2,8 @@ defmodule GroupherServer.Test.CMS.Comments.BlogArchive do
   @moduledoc false
   use GroupherServer.TestTools
 
-  @now Timex.now() |> DateTime.truncate(:second)
   @archive_threshold get_config(:article, :archive_threshold)
   @comment_archive_threshold Timex.shift(@now, @archive_threshold[:default])
-
-  @last_year Timex.shift(@now, years: -1, seconds: -1)
 
   setup do
     {community, blog, _, user} = mock_article(:blog)
@@ -14,7 +11,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogArchive do
     {:ok, comment_long_ago} =
       db_insert(:comment, %{
         title: "last week",
-        inserted_at: DateTime.truncate(@last_year, :second)
+        inserted_at: @last_year
       })
 
     {:ok, _} =

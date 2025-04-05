@@ -125,8 +125,8 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
         {:ok, _} = fan |> Accounts.follow(user)
       end)
 
-      ramdom_fan = users |> Enum.shuffle() |> List.first()
-      ramdom_fan |> Accounts.undo_follow(user)
+      random_fan = users |> Enum.shuffle() |> List.first()
+      random_fan |> Accounts.undo_follow(user)
 
       variables = %{login: user.login}
       results = guest_conn |> gq_query(@query, variables)

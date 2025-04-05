@@ -47,6 +47,7 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
       results = guest_conn |> gq_query(@query, variables)
 
       meta = results["meta"]
+
       assert results["articlesCount"] == 8
       assert meta["postsCount"] == 2
       assert meta["changelogsCount"] == 2

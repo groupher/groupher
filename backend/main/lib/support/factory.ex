@@ -102,7 +102,7 @@ defmodule GroupherServer.Support.Factory do
         mock(:community)
       ],
       emotions: @default_emotions,
-      active_at: Timex.shift(Timex.now(), seconds: -1),
+      active_at: Timex.shift(Timex.now(), seconds: -1) |> DateTime.truncate(:second),
       pending: 0
     }
   end
@@ -126,7 +126,7 @@ defmodule GroupherServer.Support.Factory do
         mock(:community)
       ],
       emotions: @default_emotions,
-      active_at: Timex.shift(Timex.now(), seconds: -1),
+      active_at: Timex.shift(Timex.now(), seconds: -1) |> DateTime.truncate(:second),
       pending: 0
     }
   end
@@ -150,7 +150,7 @@ defmodule GroupherServer.Support.Factory do
         mock(:community)
       ],
       emotions: @default_emotions,
-      active_at: Timex.shift(Timex.now(), seconds: -1),
+      active_at: Timex.shift(Timex.now(), seconds: -1) |> DateTime.truncate(:second),
       pending: 0
     }
   end
@@ -172,7 +172,7 @@ defmodule GroupherServer.Support.Factory do
         mock(:community)
       ],
       emotions: @default_emotions,
-      active_at: Timex.shift(Timex.now(), seconds: +1),
+      active_at: Timex.shift(Timex.now(), seconds: +1) |> DateTime.truncate(:second),
       pending: 0
     }
   end

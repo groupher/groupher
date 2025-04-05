@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
 
   @schema_prefix DBPrefix.cms()
 
-  @timestamps_opts [type: :utc_datetime_usec]
+  @timestamps_opts [type: :utc_datetime]
 
   @max_body_length get_config(:article, :max_length)
   @min_body_length get_config(:article, :min_length)
@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
     field(:body_html, :string)
     # TODO: 分词数据
 
-    timestamps()
+    timestamps(type: :utc_datetime)
   end
 
   @doc false

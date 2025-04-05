@@ -5,11 +5,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
   @page_size get_config(:general, :page_size)
 
-  @now Timex.now()
-  @last_week Timex.shift(Timex.beginning_of_week(@now), days: -1, seconds: -1)
-  @last_month Timex.shift(Timex.beginning_of_month(@now), days: -1, seconds: -1)
-  @last_year Timex.shift(Timex.beginning_of_year(@now), days: -3, seconds: -1)
-
   @today_count 3
   @last_week_count 1
   @last_month_count 1

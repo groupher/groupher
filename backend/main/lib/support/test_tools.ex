@@ -25,6 +25,17 @@ defmodule GroupherServer.TestTools do
       alias CMS.Model.{Community, Author, Post, Changelog, Blog, Doc, Embeds, Comment}
 
       alias GroupherServer.Accounts.Model.User
+
+      @now Timex.now() |> DateTime.truncate(:second)
+
+      @last_week Timex.shift(Timex.beginning_of_week(@now), days: -1)
+                 |> DateTime.truncate(:second)
+
+      @last_month Timex.beginning_of_month(Timex.shift(@now, months: -1))
+                  |> DateTime.truncate(:second)
+
+      @last_year Timex.end_of_year(Timex.shift(@now, years: -1))
+                 |> DateTime.truncate(:second)
     end
   end
 end

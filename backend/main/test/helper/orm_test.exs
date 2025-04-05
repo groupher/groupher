@@ -16,9 +16,9 @@ defmodule GroupherServer.Test.Helper.ORM do
   setup do
     db_insert_multi(:post, @posts_count)
 
-    {community, post, _, _user} = mock_article(:post)
+    {community, post, _, user} = mock_article(:post)
 
-    {:ok, post: post, community: community}
+    {:ok, ~m(user post community)a}
   end
 
   describe "[find/x find_by]" do
@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Helper.ORM do
   end
 
   describe "[find article]" do
-    test "should find by default args", %{post: post, community: community} do
+    test "should find by default args", ~m(community post)a do
       {:ok, article} = ORM.find_article(community.slug, :post, post.inner_id)
 
       assert article.title == post.title
@@ -109,7 +109,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert match?(%Ecto.Association.NotLoaded{}, article.author)
     end
 
-    test "should find by preload", %{post: post, community: community} do
+    test "should find by preload", ~m(community post)a do
       {:ok, article} =
         ORM.find_article(community.slug, :post, post.inner_id,
           preload: [[author: :user], :original_community]
@@ -123,10 +123,102 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert article.original_community.title == community.title
     end
 
-    test "should have error code if not found", %{community: community} do
+    test "should have error code if not found", ~m(community)a do
       {:error, reason} = ORM.find_article(community.slug, :post, 3845)
 
       assert reason |> Keyword.get(:code) == ecode(:article_not_found)
+    end
+  end
+
+  describe "inc/dec" do
+    test "inc/dec should work", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+
+      {:ok, _} = ORM.inc(post, :upvotes_count)
+      {:ok, ret} = ORM.inc(post, :upvotes_count)
+      assert ret.upvotes_count == 2
+
+      {:ok, ret} = ORM.dec(post, :upvotes_count)
+      assert ret.upvotes_count == 1
+    end
+
+    test "dec should below 0", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+
+      {:ok, ret} = ORM.inc(post, :upvotes_count)
+      assert ret.upvotes_count == 1
+
+      {:ok, _} = ORM.dec(post, :upvotes_count)
+      {:ok, _} = ORM.dec(post, :upvotes_count)
+      {:ok, ret} = ORM.dec(post, :upvotes_count)
+
+      assert ret.upvotes_count == 0
+    end
+  end
+
+  describe "update meta" do
+    test "update meta should work with user", ~m(community user)a do
+      {:ok, ret} =
+        ORM.update_meta(user, %{
+          follower_user_ids: [2, 3, 5]
+        })
+
+      assert ret.meta.follower_user_ids == [2, 3, 5]
+    end
+
+    test "update meta should work with post", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+
+      {:ok, ret} =
+        ORM.update_meta(post, %{
+          is_edited: true,
+          thread: "POST2",
+          citing_count: 20,
+          is_comment_locked: true,
+          upvoted_user_ids: [2, 3, 5],
+          last_active_at: post.inserted_at
+        })
+
+      assert ret.meta.is_edited == true
+      assert ret.meta.is_comment_locked == true
+      assert ret.meta.upvoted_user_ids == [2, 3, 5]
+      assert ret.meta.citing_count == 20
+      assert ret.meta.last_active_at == post.inserted_at
+      assert ret.meta.thread == "POST2"
+    end
+
+    test "update meta should effect inserted_at", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+
+      {:ok, ret} =
+        ORM.update_meta(post, %{
+          is_edited: true,
+          citing_count: 20
+        })
+
+      assert ret.inserted_at == post.inserted_at
+
+      {:ok, fresh_post} = ORM.find(Post, post.id)
+      assert post.id == fresh_post.id
+
+      assert ret.inserted_at == fresh_post.inserted_at
+      assert post.inserted_at == fresh_post.inserted_at
+    end
+
+    test "update meta should work with edge cases", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+
+      {:ok, ret} =
+        ORM.update_meta(post, %{
+          last_active_at: nil
+        })
+
+      assert ret.meta.last_active_at == post.updated_at
     end
   end
 end

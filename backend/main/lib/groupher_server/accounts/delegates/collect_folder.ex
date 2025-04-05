@@ -207,13 +207,13 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
       folder.meta
       |> Map.merge(threads_flag_map)
       |> Map.merge(thread_count_map)
-      |> Map.from_struct()
-      |> Map.delete(:id)
+
+    {:ok, folder} = ORM.update_meta(folder, meta)
 
     folder
     |> Ecto.Changeset.change(%{total_count: total_count, last_updated: last_updated})
     |> Ecto.Changeset.put_embed(:collects, collects)
-    |> ORM.update_meta(meta)
+    |> Repo.update()
   end
 
   # check if the article is already in this folder

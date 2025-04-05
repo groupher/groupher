@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.ChangelogDocument do
   alias CMS.Model.Changelog
 
   @schema_prefix DBPrefix.cms()
-  @timestamps_opts [type: :utc_datetime_usec]
+  @timestamps_opts [type: :utc_datetime]
 
   @max_body_length get_config(:article, :max_length)
   @min_body_length get_config(:article, :min_length)

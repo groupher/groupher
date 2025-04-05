@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
       done: 1,
       strip_struct: 1,
       get_config: 2,
-      ensure: 2,
+      ensure: 3,
       article_of: 1,
       thread_of: 1
     ]
@@ -23,7 +23,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     only: [
       add_participant_to_article: 2,
       do_create_comment: 4,
-      update_comments_count: 2,
       can_comment?: 2,
       paged_comment_replies: 2
     ]
@@ -35,14 +34,13 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply, Embeds}
+  alias CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply}
   alias CMS.Delegate.Hooks
 
   alias Ecto.Multi
 
   @article_threads get_config(:article, :threads)
 
-  @default_article_meta Embeds.ArticleMeta.default_meta()
   @max_parent_replies_count Comment.max_parent_replies_count()
   @pinned_comment_limit Comment.pinned_comment_limit()
 
@@ -122,7 +120,8 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
         do_create_comment(body, info.foreign_key, article, user)
       end)
       |> Multi.run(:update_comments_count, fn _, %{create_reply_comment: replied_comment} ->
-        update_comments_count(replied_comment, :inc)
+        {:ok, article} = article_of(replied_comment)
+        ORM.inc(article, :comments_count)
       end)
       |> Multi.run(:create_comment_reply, fn _, %{create_reply_comment: replied_comment} ->
         CommentReply
@@ -176,10 +175,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
         update_upvoted_user_list(comment, user_id, :add)
       end)
       |> Multi.run(:inc_upvotes_count, fn _, %{add_upvoted_user: comment} ->
-        {:ok, upvotes_count} =
-          from(c in CommentUpvote, where: c.comment_id == ^comment.id) |> ORM.count()
-
-        ORM.update(comment, %{upvotes_count: upvotes_count})
+        ORM.inc(comment, :upvotes_count)
       end)
       |> Multi.run(:check_article_author_upvoted, fn _, %{inc_upvotes_count: comment} ->
         update_article_author_upvoted_info(comment, user_id)
@@ -221,10 +217,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
         update_upvoted_user_list(comment, user_id, :remove)
       end)
       |> Multi.run(:desc_upvotes_count, fn _, %{remove_upvoted_user: comment} ->
-        {:ok, upvotes_count} =
-          from(c in CommentUpvote, where: c.comment_id == ^comment_id) |> ORM.count()
-
-        ORM.update(comment, %{upvotes_count: Enum.max([upvotes_count, 0])})
+        ORM.dec(comment, :upvotes_count)
       end)
       |> Multi.run(:unset_article_author_upvoted, fn _, %{desc_upvotes_count: updated_comment} ->
         meta = updated_comment.meta |> Map.put(:is_article_author_upvoted, false)
@@ -252,8 +245,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
 
   @doc "lock comment of a article"
   def lock_article_comments(article) do
-    article_meta = ensure(article.meta, @default_article_meta)
-    meta = Map.merge(article_meta, %{is_comment_locked: true})
+    meta = ensure(article.meta, %{is_comment_locked: true}, :article)
 
     Transaction.locking(article, fn article ->
       ORM.update_meta(article, meta)
@@ -262,8 +254,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
 
   @doc "undo lock comment of a article"
   def undo_lock_article_comments(article) do
-    article_meta = ensure(article.meta, @default_article_meta)
-    meta = Map.merge(article_meta, %{is_comment_locked: false})
+    meta = ensure(article.meta, %{is_comment_locked: false}, :article)
 
     Transaction.locking(article, fn article ->
       ORM.update_meta(article, meta)

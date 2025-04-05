@@ -594,7 +594,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert created["id"] == to_string(community.id)
     end
 
-    test "subscribe should update user's subscribed count", ~m(user community)a do
+    test "subscribe should update user's subscribed count.", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
       variables = %{community: community.slug}

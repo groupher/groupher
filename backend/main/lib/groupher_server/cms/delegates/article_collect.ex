@@ -9,7 +9,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   import GroupherServer.CMS.Delegate.Helper,
     only: [
       load_reaction_users: 3,
-      update_article_reactions_count: 4,
       update_article_reaction_user_list: 4
     ]
 
@@ -40,7 +39,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
         Accounts.achieve(article.author.user, :inc, :collect)
       end)
       |> Multi.run(:inc_article_collects_count, fn _, _ ->
-        update_article_reactions_count(info, article, :collects_count, :inc)
+        ORM.inc(article, :collects_count)
       end)
       |> Multi.run(:update_article_reaction_user_list, fn _, _ ->
         update_article_reaction_user_list(:collect, article, user, :add)
@@ -82,7 +81,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
         Accounts.achieve(article.author.user, :dec, :collect)
       end)
       |> Multi.run(:inc_article_collects_count, fn _, _ ->
-        update_article_reactions_count(info, article, :collects_count, :dec)
+        ORM.dec(article, :collects_count)
       end)
       |> Multi.run(:update_article_reaction_user_list, fn _, _ ->
         update_article_reaction_user_list(:collect, article, user, :remove)
