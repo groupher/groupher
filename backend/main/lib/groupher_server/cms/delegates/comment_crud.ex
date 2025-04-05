@@ -472,7 +472,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     Multi.new()
     |> Multi.run(:update_comments_count, fn _, _ ->
       {:ok, article} = article_of(comment)
-      ORM.desc(article, :comments_count)
+      ORM.dec(article, :comments_count)
     end)
     |> Multi.run(:remove_pined_comment, fn _, _ ->
       ORM.findby_delete(PinnedComment, %{comment_id: comment.id})
