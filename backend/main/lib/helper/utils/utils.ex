@@ -222,7 +222,7 @@ defmodule Helper.Utils do
     # 如果是 struct（但不是 DateTime），先转换为 map
     data =
       if Map.has_key?(data, :__struct__) do
-        Map.from_struct(data)
+        Map.from_struct(data) |> Map.delete(:id)
       else
         data
       end
