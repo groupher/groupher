@@ -19,7 +19,6 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
   end
 
   describe "[article count meta]" do
-    @tag :wip
     test "created community should have default meta ", ~m(community_attrs user)a do
       {:ok, community} = CMS.create_community(community_attrs, user)
 

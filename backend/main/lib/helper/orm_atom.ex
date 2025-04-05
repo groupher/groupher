@@ -133,13 +133,40 @@ defmodule Helper.ORMAtom do
   def update_meta(queryable, changes) when is_map(changes) do
     changes = ensure_datetime(queryable, strip_struct(changes))
 
+    # the later update_all in execute_update will lose all preloaded data, so keep it before it
+    preloaded = get_preloaded(queryable)
+
     with {:ok, schema_module, id} <- extract_schema_and_id(queryable),
          {:ok, dynamic_updates} <- build_dynamic_updates(changes),
-         {:ok, primary_key} <- get_primary_key(schema_module) do
-      execute_update(schema_module, primary_key, id, dynamic_updates)
+         {:ok, primary_key} <- get_primary_key(schema_module),
+         {:ok, updated} <- execute_update(schema_module, primary_key, id, dynamic_updates) do
+      {:ok, merge_preloaded(updated, preloaded)}
     else
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp get_preloaded(%{__struct__: schema} = struct) do
+    struct
+    |> Map.take(schema.__schema__(:associations))
+    |> Enum.filter(fn {_, value} ->
+      # 严格检查：必须是已加载的关联或 embed 结构
+      case value do
+        %Ecto.Association.NotLoaded{} -> false
+        _ -> Ecto.assoc_loaded?(value) || is_struct(value)
+      end
+    end)
+    |> Enum.into(%{})
+  end
+
+  defp merge_preloaded(updated, preloaded_data) do
+    Enum.reduce(preloaded_data, updated, fn {key, value}, acc ->
+      if Map.has_key?(acc, key) do
+        Map.put(acc, key, value)
+      else
+        acc
+      end
+    end)
   end
 
   defp fill_default_meta(queryable, default_meta) do

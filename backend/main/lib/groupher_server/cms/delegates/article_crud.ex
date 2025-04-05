@@ -712,10 +712,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       end
     end)
     |> Multi.run(:update_article_meta, fn _, %{add_pinned_flag: article} ->
-      article_meta = ensure(article.meta, @default_article_meta)
-      meta = Map.merge(article_meta, %{can_undo_sink: in_active_period?(thread, article)})
-
-      ORM.update_meta(article, meta)
+      # article_meta = ensure(article.meta, @default_article_meta)
+      # meta = Map.merge(article_meta, %{can_undo_sink: in_active_period?(thread, article)})
+      ORM.update_meta(article, %{can_undo_sink: in_active_period?(thread, article)})
     end)
     |> Repo.transaction()
     |> result()
