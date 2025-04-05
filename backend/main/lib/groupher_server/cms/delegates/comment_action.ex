@@ -23,7 +23,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     only: [
       add_participant_to_article: 2,
       do_create_comment: 4,
-      update_comments_count: 2,
       can_comment?: 2,
       paged_comment_replies: 2
     ]
@@ -121,7 +120,8 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
         do_create_comment(body, info.foreign_key, article, user)
       end)
       |> Multi.run(:update_comments_count, fn _, %{create_reply_comment: replied_comment} ->
-        update_comments_count(replied_comment, :inc)
+        {:ok, article} = article_of(replied_comment)
+        ORM.inc(article, :comments_count)
       end)
       |> Multi.run(:create_comment_reply, fn _, %{create_reply_comment: replied_comment} ->
         CommentReply
@@ -175,10 +175,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
         update_upvoted_user_list(comment, user_id, :add)
       end)
       |> Multi.run(:inc_upvotes_count, fn _, %{add_upvoted_user: comment} ->
-        {:ok, upvotes_count} =
-          from(c in CommentUpvote, where: c.comment_id == ^comment.id) |> ORM.count()
-
-        ORM.update(comment, %{upvotes_count: upvotes_count})
+        ORM.inc(comment, :upvotes_count)
       end)
       |> Multi.run(:check_article_author_upvoted, fn _, %{inc_upvotes_count: comment} ->
         update_article_author_upvoted_info(comment, user_id)
@@ -220,10 +217,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
         update_upvoted_user_list(comment, user_id, :remove)
       end)
       |> Multi.run(:desc_upvotes_count, fn _, %{remove_upvoted_user: comment} ->
-        {:ok, upvotes_count} =
-          from(c in CommentUpvote, where: c.comment_id == ^comment_id) |> ORM.count()
-
-        ORM.update(comment, %{upvotes_count: Enum.max([upvotes_count, 0])})
+        ORM.dec(comment, :upvotes_count)
       end)
       |> Multi.run(:unset_article_author_upvoted, fn _, %{desc_upvotes_count: updated_comment} ->
         meta = updated_comment.meta |> Map.put(:is_article_author_upvoted, false)

@@ -271,9 +271,6 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         :subscribers_count,
         opt
       ) do
-    {:ok, subscribers_count} =
-      from(s in CommunitySubscriber, where: s.community_id == ^community.id) |> ORM.count()
-
     community_meta = if is_nil(community.meta), do: @default_meta, else: community.meta
 
     subscribed_user_ids =
@@ -282,12 +279,12 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         :dec -> (community_meta.subscribed_user_ids -- [user.id]) |> Enum.uniq()
       end
 
-    # meta = community_meta |> Map.put(:subscribed_user_ids, subscribed_user_ids) |> strip_struct
-    # community
-    # |> ORM.update_embed(:meta, meta, %{subscribers_count: subscribers_count})
-
     {:ok, community} = ORM.update_meta(community, %{subscribed_user_ids: subscribed_user_ids})
-    community |> ORM.update(%{subscribers_count: subscribers_count})
+
+    case opt do
+      :inc -> ORM.inc(community, :subscribers_count)
+      :dec -> ORM.dec(community, :subscribers_count)
+    end
   end
 
   def update_community_inner_id(

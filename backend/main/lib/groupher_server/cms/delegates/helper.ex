@@ -218,32 +218,6 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   end
 
   @doc """
-  update the [reaction]s_count for article
-  e.g:
-  inc/dec upvotes_count of article
-  """
-  def update_article_reactions_count2(info, article, field, opt) do
-    schema =
-      case field do
-        :upvotes_count -> ArticleUpvote
-        :collects_count -> ArticleCollect
-      end
-
-    {:ok, cur_count} =
-      from(u in schema, where: field(u, ^info.foreign_key) == ^article.id) |> ORM.count()
-
-    case opt do
-      :inc ->
-        new_count = Enum.max([0, cur_count])
-        ORM.update(article, Map.put(%{}, field, new_count + 1))
-
-      :dec ->
-        new_count = Enum.max([1, cur_count])
-        ORM.update(article, Map.put(%{}, field, new_count - 1))
-    end
-  end
-
-  @doc """
   add or remove article's reaction users is list history
   e.g:
   add/remove user_id to upvoted_user_ids in article meta

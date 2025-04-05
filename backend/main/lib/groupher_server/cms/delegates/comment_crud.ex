@@ -319,7 +319,8 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
         do_create_comment(body, info.foreign_key, article, user)
       end)
       |> Multi.run(:update_comments_count, fn _, %{create_comment: comment} ->
-        update_comments_count(comment, :inc)
+        {:ok, article} = article_of(comment)
+        ORM.inc(article, :comments_count)
       end)
       |> Multi.run(:set_question_flag_ifneed, fn _, %{create_comment: comment} ->
         set_question_flag_ifneed(article, comment)
@@ -470,7 +471,8 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   def delete_comment(%Comment{} = comment) do
     Multi.new()
     |> Multi.run(:update_comments_count, fn _, _ ->
-      update_comments_count(comment, :dec)
+      {:ok, article} = article_of(comment)
+      ORM.desc(article, :comments_count)
     end)
     |> Multi.run(:remove_pined_comment, fn _, _ ->
       ORM.findby_delete(PinnedComment, %{comment_id: comment.id})
@@ -501,26 +503,6 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   end
 
   def add_participant_to_article(_, _), do: {:ok, :pass}
-
-  # update comment's parent article's comments total count
-  @spec update_comments_count(Comment.t(), :inc | :dec) :: Comment.t()
-  def update_comments_count(%Comment{} = comment, opt) do
-    with {:ok, article} <- article_of(comment),
-         {:ok, article_thread} <- thread_of(article) do
-      foreign_key = :"#{article_thread}_id"
-
-      {:ok, cur_count} =
-        from(c in Comment, where: field(c, ^foreign_key) == ^article.id)
-        |> ORM.count()
-
-      # dec 是 comment 还没有删除的时候的操作，和 inc 不同
-      # 因为 dec 操作如果放在 delete 后面，那么 update 会失败
-      case opt do
-        :inc -> ORM.update(article, %{comments_count: cur_count})
-        :dec -> ORM.update(article, %{comments_count: Enum.max([1, cur_count]) - 1})
-      end
-    end
-  end
 
   @doc """
   create article comment for parent or reply
