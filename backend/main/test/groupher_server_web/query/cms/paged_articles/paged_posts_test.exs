@@ -16,16 +16,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   @total_count @today_count + @last_week_count + @last_month_count + @last_year_count
 
   setup do
-    {community, post, _, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
+
+    {community, post, _, user} = mock_article(:post)
 
     {:ok, post_last_week} =
       ORM.update(post, %{title: "last week", inserted_at: @last_week, active_at: @last_week},
         strict: false
       )
 
-    {_, post, _, _} = mock_article(:post)
+    {_, post, _, _} = mock_article(:post, community, user)
 
     {:ok, post_last_month} =
       ORM.update(
@@ -34,7 +35,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
         strict: false
       )
 
-    {community, post, _, user} = mock_article(:post, community, user)
+    {_, post, _, _} = mock_article(:post, community, user)
 
     {:ok, post_last_year} =
       ORM.update(post, %{title: "last year", inserted_at: @last_year, active_at: @last_year},
@@ -336,8 +337,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results |> Map.get("totalCount") == expect_count
     end
 
-    @tag :wip2
-    test "THIS_WEEK option should work", ~m(guest_conn)a do
+    @tag :wip
+    test "THIS_WEEK option should work.", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
 

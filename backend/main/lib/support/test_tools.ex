@@ -30,10 +30,11 @@ defmodule GroupherServer.TestTools do
 
       @last_week Timex.shift(Timex.beginning_of_week(@now), days: -1)
                  |> DateTime.truncate(:second)
-      @last_month Timex.shift(Timex.beginning_of_month(@now), days: -1)
+
+      @last_month Timex.beginning_of_month(Timex.shift(@now, months: -1))
                   |> DateTime.truncate(:second)
 
-      @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3)
+      @last_year Timex.end_of_year(Timex.shift(@now, years: -1))
                  |> DateTime.truncate(:second)
     end
   end

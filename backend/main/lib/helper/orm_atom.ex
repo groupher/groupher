@@ -150,7 +150,6 @@ defmodule Helper.ORMAtom do
     struct
     |> Map.take(schema.__schema__(:associations))
     |> Enum.filter(fn {_, value} ->
-      # 严格检查：必须是已加载的关联或 embed 结构
       case value do
         %Ecto.Association.NotLoaded{} -> false
         _ -> Ecto.assoc_loaded?(value) || is_struct(value)
