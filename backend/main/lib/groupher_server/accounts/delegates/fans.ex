@@ -109,7 +109,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
       end)
       |> Multi.run(:update_following_meta, fn _, _ ->
         ORM.update_meta(user, %{following_user_ids: following_user_ids})
-        ORM.update(target_user, %{followings_count: length(following_user_ids)})
+        ORM.update(user, %{followings_count: length(following_user_ids)})
       end)
       |> Repo.transaction()
       |> result()
