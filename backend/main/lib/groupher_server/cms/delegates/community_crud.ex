@@ -4,8 +4,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   """
   import Ecto.Query, warn: false
 
-  import Helper.Utils,
-    only: [done: 1, strip_struct: 1, get_config: 2, plural: 1, ensure: 2]
+  import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2, plural: 1]
 
   import GroupherServer.CMS.Delegate.ArticleCRUD, only: [ensure_author_exists: 1]
   import GroupherServer.CMS.Helper.Matcher
@@ -34,7 +33,6 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @article_threads get_config(:article, :threads)
   @community_default_threads get_config(:general, :community_default_threads)
 
-  @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)
 
@@ -129,7 +127,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   update community
   """
   def update_community(%Community{} = community, args) do
-    with {:ok, community} <- fill_meta(community) do
+    with {:ok, community} <- ORM.fill_meta(community) do
       ORM.update(community, args)
     end
   end
@@ -260,7 +258,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         :subscribers_count,
         opt
       ) do
-    with {:ok, community} <- fill_meta(community) do
+    with {:ok, community} <- ORM.fill_meta(community) do
       subscribed_user_ids =
         case opt do
           :inc -> (community.meta.subscribed_user_ids ++ [user.id]) |> Enum.uniq()
@@ -334,16 +332,14 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     load_community_members(community, CommunityModerator, filters)
   end
 
-  def community_members(:subscribers, %Community{id: id} = community, filters, %User{meta: meta})
+  def community_members(:subscribers, %Community{id: id} = community, filters, %User{} = user)
       when not is_nil(id) do
     with {:ok, members} <- community_members(:subscribers, community, filters) do
-      user_meta = ensure(meta, @default_user_meta)
-
       %{entries: entries} = members
 
       entries =
         Enum.map(entries, fn member ->
-          %{member | viewer_has_followed: member.id in user_meta.following_user_ids}
+          %{member | viewer_has_followed: member.id in user.meta.following_user_ids}
         end)
 
       %{members | entries: entries} |> done
@@ -423,7 +419,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   defp do_read_community(slug, opt) do
     with {:ok, community} <- ORM.find_community(slug),
          {:ok, community} <- ensure_community_with_dashboard(community),
-         {:ok, community} <- fill_meta(community),
+         {:ok, community} <- ORM.fill_meta(community),
          {:ok, community} <- read_moderators(community) do
       case get_in(opt, [:inc_views]) do
         true -> ORM.inc(community, :views)
@@ -431,12 +427,6 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
       end
     end
   end
-
-  defp fill_meta(%Community{meta: nil} = community) do
-    ORM.update_meta(community, @default_meta)
-  end
-
-  defp fill_meta(%Community{} = community), do: {:ok, community}
 
   defp read_moderators(%Community{} = community) do
     community |> Map.merge(%{moderators: community.moderators}) |> done

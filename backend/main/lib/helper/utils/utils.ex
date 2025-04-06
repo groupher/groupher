@@ -73,12 +73,6 @@ defmodule Helper.Utils do
   end
 
   @doc """
-  like || in javascript
-  """
-  def ensure(nil, default_data), do: default_data
-  def ensure(data, _), do: data
-
-  @doc """
   handle General {:ok, ..} or {:error, ..} return
   """
   def done(false), do: {:error, false}
