@@ -84,7 +84,6 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       results = user_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("totalCount") == 3
-
       entries = results |> Map.get("entries")
 
       assert entries |> List.first() |> Map.get("viewerHasFollowed")

@@ -11,7 +11,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   alias Helper.{ORM, QueryBuilder, Later, SpecType}
   alias GroupherServer.{Accounts, Repo}
 
-  alias Accounts.Model.{User, Embeds, UserFollower, UserFollowing}
+  alias Accounts.Model.{User, UserFollower, UserFollowing}
   alias Accounts.Delegate.Hooks
 
   alias Ecto.Multi
@@ -22,6 +22,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   @spec follow(User.t(), User.t()) :: {:ok, User.t()} | SpecType.gq_error()
   def follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
+         {:ok, user} <- FrontDesk.info(:user, user.id),
          {:ok, target_user} <- FrontDesk.info(:user, follower.id) do
       Multi.new()
       |> Multi.insert(
@@ -58,6 +59,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   @spec undo_follow(User.t(), User.t()) :: {:ok, User.t()} | SpecType.gq_error()
   def undo_follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
+         {:ok, user} <- FrontDesk.info(:user, user.id),
          {:ok, target_user} <- FrontDesk.info(:user, follower.id) do
       Multi.new()
       |> Multi.run(:delete_follower, fn _, _ ->
@@ -100,12 +102,14 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
 
       Multi.new()
       |> Multi.run(:update_follower_meta, fn _, _ ->
+        {:ok, target_user} =
+          ORM.update(target_user, %{followers_count: length(follower_user_ids)})
+
         ORM.update_meta(target_user, %{follower_user_ids: follower_user_ids})
-        ORM.update(target_user, %{followers_count: length(follower_user_ids)})
       end)
       |> Multi.run(:update_following_meta, fn _, _ ->
+        {:ok, user} = ORM.update(user, %{followings_count: length(following_user_ids)})
         ORM.update_meta(user, %{following_user_ids: following_user_ids})
-        ORM.update(user, %{followings_count: length(following_user_ids)})
       end)
       |> Repo.transaction()
       |> result()
@@ -170,6 +174,9 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   end
 
   defp do_mark_viewer_has_states(user_id, %User{meta: meta}) do
+    IO.inspect(meta.following_user_ids, label: "meta.following_user_ids")
+    IO.inspect(meta.follower_user_ids, label: "meta.follower_user_ids")
+
     %{
       viewer_been_followed: Enum.member?(meta.follower_user_ids, user_id),
       viewer_has_followed: Enum.member?(meta.following_user_ids, user_id)
