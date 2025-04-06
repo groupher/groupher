@@ -9,11 +9,12 @@ defmodule Helper.ORMAtom do
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.Model.Community
+  alias CMS.Model.{Community, Comment}
 
   @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
   @default_community_meta CMS.Model.Embeds.CommunityMeta.default_meta()
+  @default_comment_meta CMS.Model.Embeds.CommentMeta.default_meta()
 
   @doc """
   increase by 1 for given field
@@ -27,49 +28,6 @@ defmodule Helper.ORMAtom do
   """
   def dec(queryable, field) when is_atom(field) do
     update_counter(queryable, field, "- 1", safeguard: true)
-  end
-
-  defp update_counter(queryable, field, operation, opts \\ []) do
-    schema_module = queryable.__struct__
-    table = schema_module.__schema__(:source)
-
-    prefix =
-      case schema_module.__schema__(:prefix) do
-        nil -> ""
-        prefix -> "#{prefix}."
-      end
-
-    full_table = "#{prefix}#{table}"
-    id = queryable.id
-    safeguard = Keyword.get(opts, :safeguard, false)
-
-    operation_expr =
-      if safeguard do
-        "GREATEST(#{field} #{operation}, 0)"
-      else
-        "#{field} #{operation}"
-      end
-
-    # SET #{field} = #{field} + 1
-    # SET #{field} = GREATEST(#{field} - 1, 0)
-    Repo.query(
-      """
-      UPDATE #{full_table}
-      SET #{field} = #{operation_expr}
-      WHERE id = $1
-      RETURNING #{field}
-      """,
-      [id]
-    )
-    |> case do
-      {:ok, %Postgrex.Result{rows: [[new_val]]}} ->
-        changeset = Ecto.Changeset.change(queryable, %{field => new_val})
-        updated = Ecto.Changeset.apply_changes(changeset)
-        {:ok, updated}
-
-      error ->
-        error
-    end
   end
 
   @doc """
@@ -111,22 +69,9 @@ defmodule Helper.ORMAtom do
     update_meta(queryable, changes |> strip_struct)
   end
 
-  def update_meta(%User{meta: nil} = queryable, changes) when is_map(changes) do
-    with {:ok, user} <- fill_default_meta(queryable, @default_user_meta) do
-      update_meta(user, changes)
-    end
-  end
-
-  def update_meta(%Community{meta: nil} = queryable, changes) when is_map(changes) do
-    with {:ok, user} <- fill_default_meta(queryable, @default_community_meta) do
-      update_meta(user, changes)
-    end
-  end
-
-  # for general article with nil meta
   def update_meta(%{meta: nil} = queryable, changes) when is_map(changes) do
-    with {:ok, user} <- fill_default_meta(queryable, @default_article_meta) do
-      update_meta(user, changes)
+    with {:ok, queryable} <- fill_meta(queryable) do
+      update_meta(queryable, changes)
     end
   end
 
@@ -143,6 +88,67 @@ defmodule Helper.ORMAtom do
       {:ok, merge_preloaded(updated, preloaded)}
     else
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def fill_meta(%User{meta: nil} = user) do
+    fill_default_meta(user, @default_user_meta)
+  end
+
+  def fill_meta(%Community{meta: nil} = community) do
+    fill_default_meta(community, @default_community_meta)
+  end
+
+  def fill_meta(%Comment{meta: nil} = community) do
+    fill_default_meta(community, @default_comment_meta)
+  end
+
+  def fill_meta(%{meta: nil} = article) do
+    fill_default_meta(article, @default_article_meta)
+  end
+
+  def fill_meta(queryable), do: {:ok, queryable}
+
+  defp update_counter(queryable, field, operation, opts \\ []) do
+    schema_module = queryable.__struct__
+    table = schema_module.__schema__(:source)
+
+    prefix =
+      case schema_module.__schema__(:prefix) do
+        nil -> ""
+        prefix -> "#{prefix}."
+      end
+
+    full_table = "#{prefix}#{table}"
+    id = queryable.id
+    safeguard = Keyword.get(opts, :safeguard, false)
+
+    operation_expr =
+      if safeguard do
+        "GREATEST(#{field} #{operation}, 0)"
+      else
+        "#{field} #{operation}"
+      end
+
+    # SET #{field} = #{field} + 1
+    # SET #{field} = GREATEST(#{field} - 1, 0)
+    Repo.query(
+      """
+      UPDATE #{full_table}
+      SET #{field} = #{operation_expr}
+      WHERE id = $1
+      RETURNING #{field}
+      """,
+      [id]
+    )
+    |> case do
+      {:ok, %Postgrex.Result{rows: [[new_val]]}} ->
+        changeset = Ecto.Changeset.change(queryable, %{field => new_val})
+        updated = Ecto.Changeset.apply_changes(changeset)
+        {:ok, updated}
+
+      error ->
+        error
     end
   end
 
@@ -236,4 +242,11 @@ defmodule Helper.ORMAtom do
   defp prepare_json_value(value) when is_struct(value, DateTime), do: value
   defp prepare_json_value(value) when is_map(value), do: Jason.encode!(value)
   defp prepare_json_value(value), do: Jason.encode!(value)
+
+  defp fill_default_meta(queryable, default_meta) do
+    queryable
+    |> Ecto.Changeset.change(%{})
+    |> Ecto.Changeset.put_embed(:meta, default_meta)
+    |> Repo.update()
+  end
 end

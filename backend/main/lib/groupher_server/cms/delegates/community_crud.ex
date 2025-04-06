@@ -4,8 +4,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   """
   import Ecto.Query, warn: false
 
-  import Helper.Utils,
-    only: [done: 1, strip_struct: 1, get_config: 2, plural: 1, ensure: 2]
+  import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2, plural: 1]
 
   import GroupherServer.CMS.Delegate.ArticleCRUD, only: [ensure_author_exists: 1]
   import GroupherServer.CMS.Helper.Matcher
@@ -34,7 +33,6 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @article_threads get_config(:article, :threads)
   @community_default_threads get_config(:general, :community_default_threads)
 
-  @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)
 
@@ -129,9 +127,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   update community
   """
   def update_community(%Community{} = community, args) do
-    case community.meta do
-      nil -> ORM.update(community, args |> Map.merge(%{meta: @default_meta}))
-      _ -> ORM.update(community, args)
+    with {:ok, community} <- ORM.fill_meta(community) do
+      ORM.update(community, args)
     end
   end
 
@@ -245,24 +242,14 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         :moderators_count,
         opt
       ) do
-    {:ok, moderators_count} =
-      from(s in CommunityModerator, where: s.community_id == ^community.id)
-      |> ORM.count()
-
-    community_meta = if is_nil(community.meta), do: @default_meta, else: community.meta
-
     moderators_ids =
       case opt do
-        :inc -> (community_meta.moderators_ids ++ [user.id]) |> Enum.uniq()
-        :dec -> (community_meta.moderators_ids -- [user.id]) |> Enum.uniq()
+        :inc -> (community.meta.moderators_ids ++ [user.id]) |> Enum.uniq()
+        :dec -> (community.meta.moderators_ids -- [user.id]) |> Enum.uniq()
       end
 
-    # meta = community_meta |> Map.put(:moderators_ids, moderators_ids) |> strip_struct
-    # community
-    # |> ORM.update_embed(:meta, meta, %{moderators_count: moderators_count})
-
     {:ok, community} = ORM.update_meta(community, %{moderators_ids: moderators_ids})
-    community |> ORM.update(%{moderators_count: moderators_count})
+    ORM.update(community, %{moderators_count: length(moderators_ids)})
   end
 
   def update_community_count_field(
@@ -271,31 +258,27 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         :subscribers_count,
         opt
       ) do
-    community_meta = if is_nil(community.meta), do: @default_meta, else: community.meta
+    with {:ok, community} <- ORM.fill_meta(community) do
+      subscribed_user_ids =
+        case opt do
+          :inc -> (community.meta.subscribed_user_ids ++ [user.id]) |> Enum.uniq()
+          :dec -> (community.meta.subscribed_user_ids -- [user.id]) |> Enum.uniq()
+        end
 
-    subscribed_user_ids =
-      case opt do
-        :inc -> (community_meta.subscribed_user_ids ++ [user.id]) |> Enum.uniq()
-        :dec -> (community_meta.subscribed_user_ids -- [user.id]) |> Enum.uniq()
-      end
-
-    {:ok, community} = ORM.update_meta(community, %{subscribed_user_ids: subscribed_user_ids})
-
-    case opt do
-      :inc -> ORM.inc(community, :subscribers_count)
-      :dec -> ORM.dec(community, :subscribers_count)
+      {:ok, community} = ORM.update_meta(community, %{subscribed_user_ids: subscribed_user_ids})
+      ORM.update(community, %{subscribers_count: length(subscribed_user_ids)})
     end
   end
 
   def update_community_inner_id(
         %Community{meta: community_meta} = community,
         thread,
-        %{inner_id: inner_id}
+        %{inner_id: inner_id} = article
       ) do
     thread_inner_id_key = :"#{plural(thread)}_inner_id_index"
     meta = community_meta |> Map.put(thread_inner_id_key, inner_id) |> strip_struct
 
-    community |> ORM.update_meta(meta)
+    ORM.update_meta(community, meta)
   end
 
   def update_community_count_field(%Community{} = community, :article_tags_count) do
@@ -349,16 +332,14 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     load_community_members(community, CommunityModerator, filters)
   end
 
-  def community_members(:subscribers, %Community{id: id} = community, filters, %User{meta: meta})
+  def community_members(:subscribers, %Community{id: id} = community, filters, %User{} = user)
       when not is_nil(id) do
     with {:ok, members} <- community_members(:subscribers, community, filters) do
-      user_meta = ensure(meta, @default_user_meta)
-
       %{entries: entries} = members
 
       entries =
         Enum.map(entries, fn member ->
-          %{member | viewer_has_followed: member.id in user_meta.following_user_ids}
+          %{member | viewer_has_followed: member.id in user.meta.following_user_ids}
         end)
 
       %{members | entries: entries} |> done
@@ -438,7 +419,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   defp do_read_community(slug, opt) do
     with {:ok, community} <- ORM.find_community(slug),
          {:ok, community} <- ensure_community_with_dashboard(community),
-         {:ok, community} <- fill_meta(community),
+         {:ok, community} <- ORM.fill_meta(community),
          {:ok, community} <- read_moderators(community) do
       case get_in(opt, [:inc_views]) do
         true -> ORM.inc(community, :views)
@@ -446,12 +427,6 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
       end
     end
   end
-
-  defp fill_meta(%Community{meta: nil} = community) do
-    ORM.update_meta(community, @default_meta)
-  end
-
-  defp fill_meta(%Community{} = community), do: {:ok, community}
 
   defp read_moderators(%Community{} = community) do
     community |> Map.merge(%{moderators: community.moderators}) |> done

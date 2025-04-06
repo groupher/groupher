@@ -4,9 +4,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   """
   import Ecto.Query, warn: false
 
-  import Helper.Utils,
-    only: [done: 1, ensure: 2, strip_struct: 1, get_config: 2, article_of: 1, thread_of: 1]
-
+  import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2, article_of: 1]
   import Helper.ErrorCode
 
   import GroupherServer.CMS.Delegate.Helper,
@@ -15,6 +13,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
 
+  alias GroupherServer.FrontDesk
   alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
 
@@ -215,22 +214,16 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     end)
     |> Multi.run(:update_comment_meta, fn _, %{update_pending_state: comment} ->
       legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
-      comment_meta = ensure(comment.meta, @default_comment_meta)
-      meta = Map.merge(comment_meta, legal_state)
 
-      ORM.update_meta(comment, meta)
+      ORM.update_meta(comment, legal_state)
     end)
     |> Multi.run(:update_author_meta, fn _, _ ->
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- ORM.find(User, comment.author_id) do
-        user_meta = ensure(user.meta, @default_user_meta)
-        illegal_comments = user_meta.illegal_comments ++ illegal_comments
+      with {:ok, user} <- FrontDesk.info(:user, comment.author_id) do
+        illegal_comments = user.meta.illegal_comments ++ illegal_comments
 
-        meta =
-          Map.merge(user_meta, %{has_illegal_comments: true, illegal_comments: illegal_comments})
-
-        ORM.update_meta(user, meta)
+        ORM.update_meta(user, %{has_illegal_comments: true, illegal_comments: illegal_comments})
       end
     end)
     |> Repo.transaction()
@@ -250,26 +243,19 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     end)
     |> Multi.run(:update_comment_meta, fn _, %{update_pending_state: comment} ->
       legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
-      comment_meta = ensure(comment.meta, @default_comment_meta)
-      meta = Map.merge(comment_meta, legal_state)
-
-      ORM.update_meta(comment, meta)
+      ORM.update_meta(comment, legal_state)
     end)
     |> Multi.run(:update_author_meta, fn _, _ ->
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- ORM.find(User, comment.author_id) do
-        user_meta = ensure(user.meta, @default_user_meta)
-        illegal_comments = user_meta.illegal_comments -- illegal_comments
+      with {:ok, user} <- FrontDesk.info(:user, comment.author_id) do
+        illegal_comments = user.meta.illegal_comments -- illegal_comments
         has_illegal_comments = not Enum.empty?(illegal_comments)
 
-        meta = %{
-          user_meta
-          | has_illegal_comments: has_illegal_comments,
-            illegal_comments: illegal_comments
-        }
-
-        ORM.update_meta(user, meta)
+        ORM.update_meta(user, %{
+          has_illegal_comments: has_illegal_comments,
+          illegal_comments: illegal_comments
+        })
       end
     end)
     |> Repo.transaction()
@@ -352,9 +338,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   @doc "check is article can be comment or not"
   # TODO: check if use is in author's block list?
   def can_comment?(article, _user) do
-    article_meta = ensure(article.meta, @default_article_meta)
-
-    not article_meta.is_comment_locked
+    not article.meta.is_comment_locked
   end
 
   def update_comment(%{is_archived: true}, _body),
