@@ -85,29 +85,31 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
 
   # update follow in user meta
   defp update_user_follow_info(%User{} = target_user, %User{} = user, opt) do
-    follower_user_ids =
-      case opt do
-        :add -> (target_user.meta.follower_user_ids ++ [user.id]) |> Enum.uniq()
-        :remove -> (target_user.meta.follower_user_ids -- [user.id]) |> Enum.uniq()
-      end
+    with {:ok, user} <- ORM.fill_meta(user) do
+      follower_user_ids =
+        case opt do
+          :add -> (target_user.meta.follower_user_ids ++ [user.id]) |> Enum.uniq()
+          :remove -> (target_user.meta.follower_user_ids -- [user.id]) |> Enum.uniq()
+        end
 
-    following_user_ids =
-      case opt do
-        :add -> (user.meta.following_user_ids ++ [target_user.id]) |> Enum.uniq()
-        :remove -> (user.meta.following_user_ids -- [target_user.id]) |> Enum.uniq()
-      end
+      following_user_ids =
+        case opt do
+          :add -> (user.meta.following_user_ids ++ [target_user.id]) |> Enum.uniq()
+          :remove -> (user.meta.following_user_ids -- [target_user.id]) |> Enum.uniq()
+        end
 
-    Multi.new()
-    |> Multi.run(:update_follower_meta, fn _, _ ->
-      ORM.update_meta(target_user, %{follower_user_ids: follower_user_ids})
-      ORM.update(target_user, %{followers_count: length(follower_user_ids)})
-    end)
-    |> Multi.run(:update_following_meta, fn _, _ ->
-      ORM.update_meta(user, %{following_user_ids: following_user_ids})
-      ORM.update(user, %{followings_count: length(following_user_ids)})
-    end)
-    |> Repo.transaction()
-    |> result()
+      Multi.new()
+      |> Multi.run(:update_follower_meta, fn _, _ ->
+        ORM.update_meta(target_user, %{follower_user_ids: follower_user_ids})
+        ORM.update(target_user, %{followers_count: length(follower_user_ids)})
+      end)
+      |> Multi.run(:update_following_meta, fn _, _ ->
+        ORM.update_meta(user, %{following_user_ids: following_user_ids})
+        ORM.update(user, %{followings_count: length(following_user_ids)})
+      end)
+      |> Repo.transaction()
+      |> result()
+    end
   end
 
   @doc """
