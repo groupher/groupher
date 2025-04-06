@@ -252,7 +252,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         end
 
       {:ok, community} = ORM.update_meta(community, %{moderators_ids: moderators_ids})
-      ORM.inc(community, :moderators_count)
+      ORM.update(community, %{moderators_count: length(moderators_ids)})
     end
   end
 
@@ -270,11 +270,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         end
 
       {:ok, community} = ORM.update_meta(community, %{subscribed_user_ids: subscribed_user_ids})
-
-      case opt do
-        :inc -> ORM.inc(community, :subscribers_count)
-        :dec -> ORM.dec(community, :subscribers_count)
-      end
+      ORM.update(community, %{subscribers_count: length(subscribed_user_ids)})
     end
   end
 

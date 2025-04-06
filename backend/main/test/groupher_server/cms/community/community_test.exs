@@ -248,6 +248,7 @@ defmodule GroupherServer.Test.CMS.Community do
       assert user2.id in community.meta.moderators_ids
     end
 
+    @tag :wip
     test "can unset moderator to a community", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
