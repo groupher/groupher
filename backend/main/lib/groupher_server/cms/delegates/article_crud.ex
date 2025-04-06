@@ -639,7 +639,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       CommunityCRUD.update_community_count_field(article.communities, thread)
     end)
     |> Multi.run(:update_user_published_meta, fn _, _ ->
-      Accounts.update_published_states(article.author.user.id, thread)
+      Accounts.update_published_states(article.author.user, thread)
     end)
     |> Multi.run(:delete_document, fn _, _ ->
       Document.remove(thread, article.id)

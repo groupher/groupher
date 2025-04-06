@@ -159,7 +159,6 @@ defmodule GroupherServer.Test.Helper.ORM do
   end
 
   describe "update meta" do
-    @tag :wip
     test "update meta should fill default meta info if need" do
       {:ok, community} = db_insert(:community)
       {:ok, user} = db_insert(:user)

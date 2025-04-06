@@ -122,6 +122,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
              )
     end
 
+    @tag :wip
     test "login user with auth passport delete a blog", ~m(community blog)a do
       blog = blog |> Repo.preload(:communities)
       blog_communities_0 = blog.communities |> List.first() |> Map.get(:title)
