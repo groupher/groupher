@@ -3,7 +3,7 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
   accounts profile
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, keys_to_atoms: 1, get_config: 2, ensure: 2]
+  import Helper.Utils, only: [done: 1, keys_to_atoms: 1, get_config: 2]
   import ShortMaps
   import Helper.ErrorCode
 
