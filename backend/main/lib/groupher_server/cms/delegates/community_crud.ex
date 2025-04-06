@@ -244,16 +244,14 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         :moderators_count,
         opt
       ) do
-    with {:ok, community} <- fill_meta(community) do
-      moderators_ids =
-        case opt do
-          :inc -> (community.meta.moderators_ids ++ [user.id]) |> Enum.uniq()
-          :dec -> (community.meta.moderators_ids -- [user.id]) |> Enum.uniq()
-        end
+    moderators_ids =
+      case opt do
+        :inc -> (community.meta.moderators_ids ++ [user.id]) |> Enum.uniq()
+        :dec -> (community.meta.moderators_ids -- [user.id]) |> Enum.uniq()
+      end
 
-      {:ok, community} = ORM.update_meta(community, %{moderators_ids: moderators_ids})
-      ORM.update(community, %{moderators_count: length(moderators_ids)})
-    end
+    {:ok, community} = ORM.update_meta(community, %{moderators_ids: moderators_ids})
+    ORM.update(community, %{moderators_count: length(moderators_ids)})
   end
 
   def update_community_count_field(

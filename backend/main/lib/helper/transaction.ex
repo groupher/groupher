@@ -1,13 +1,13 @@
 defmodule Helper.Transaction do
   @moduledoc """
   Enhanced transaction utility providing:
-  - Multi-resource sequential locking
+  - Multi-queryable sequential locking
   - Complete error stack capture
   - Automatic transaction management
   """
 
   @doc """
-  Lock resources and execute transaction (preserves detailed errors)
+  Lock queryable and execute transaction (preserves detailed errors)
 
   ## Examples
       Transaction.locking([article, user], fn [locked_article, locked_user] ->
@@ -22,10 +22,10 @@ defmodule Helper.Transaction do
   alias GroupherServer.Repo
 
   @spec locking(any() | [any()], (any() -> any())) :: {:ok, any()} | {:error, any()}
-  def locking(resource, fun) when not is_list(resource) do
+  def locking(queryable, fun) when not is_list(queryable) do
     try do
       Repo.transaction(fn ->
-        locked = lock_resource(resource)
+        locked = lock_queryable(queryable)
 
         case fun.(locked) do
           {:ok, result} -> result
@@ -39,13 +39,13 @@ defmodule Helper.Transaction do
     end
   end
 
-  def locking(resources, fun) when is_list(resources) do
+  def locking(queryable, fun) when is_list(queryable) do
     try do
       Repo.transaction(fn ->
         locked_resources =
-          resources
+          queryable
           |> Enum.sort_by(&resource_sort_key/1)
-          |> Enum.map(&lock_resource/1)
+          |> Enum.map(&lock_queryable/1)
 
         case fun.(locked_resources) do
           {:ok, result} -> result
@@ -59,11 +59,11 @@ defmodule Helper.Transaction do
     end
   end
 
-  # Generates consistent sort key for resources to prevent deadlocks
-  defp resource_sort_key(%struct{} = resource), do: {struct.__schema__(:source), resource.id}
+  # Generates consistent sort key for queryable to prevent deadlocks
+  defp resource_sort_key(%struct{} = queryable), do: {struct.__schema__(:source), queryable.id}
 
   # Special locking for articles with inner_id (includes author preload)
-  defp lock_resource(%{inner_id: _} = article) do
+  defp lock_queryable(%{inner_id: _} = article) do
     article.__struct__
     |> where(id: ^article.id)
     |> preload([:communities, author: :user])
@@ -74,14 +74,14 @@ defmodule Helper.Transaction do
       throw({:error, {:resource_not_found, article.__struct__}})
   end
 
-  # Generic resource locking
-  defp lock_resource(resource) do
-    resource.__struct__
-    |> where(id: ^resource.id)
+  # Generic queryable locking
+  defp lock_queryable(queryable) do
+    queryable.__struct__
+    |> where(id: ^queryable.id)
     |> lock("FOR UPDATE")
     |> Repo.one!()
   rescue
     Ecto.NoResultsError ->
-      throw({:error, {:resource_not_found, resource.__struct__}})
+      throw({:error, {:resource_not_found, queryable.__struct__}})
   end
 end

@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   import Helper.Utils, only: [done: 1]
   import Helper.ErrorCode
 
-  alias Helper.{Certification, IP2City, ORM}
+  alias Helper.{Certification, IP2City, ORM, Transaction}
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -107,31 +107,33 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
     community = Repo.preload(community, :moderators)
 
     with {:ok, true} <- user_is_root?(community, cur_user) do
-      Multi.new()
-      |> Multi.insert(
-        :insert_moderator,
-        CommunityModerator.changeset(%CommunityModerator{}, %{
-          user_id: target_user.id,
-          community_id: community.id,
-          role: role
-        })
-      )
-      |> Multi.run(:update_community_count, fn _, _ ->
-        CommunityCRUD.update_community_count_field(
-          community,
-          target_user,
-          :moderators_count,
-          :inc
+      Transaction.locking(community, fn community ->
+        Multi.new()
+        |> Multi.insert(
+          :insert_moderator,
+          CommunityModerator.changeset(%CommunityModerator{}, %{
+            user_id: target_user.id,
+            community_id: community.id,
+            role: role
+          })
         )
-      end)
-      |> Multi.run(:stamp_passport, fn _, %{insert_moderator: community_moderator} ->
-        rules = Certification.passport_rules(cms: role)
+        |> Multi.run(:update_community_count, fn _, _ ->
+          CommunityCRUD.update_community_count_field(
+            community,
+            target_user,
+            :moderators_count,
+            :inc
+          )
+        end)
+        |> Multi.run(:stamp_passport, fn _, %{insert_moderator: community_moderator} ->
+          rules = Certification.passport_rules(cms: role)
 
-        update_passport_item_count(community_moderator, community, target_user, rules)
-        PassportCRUD.stamp_passport(rules, target_user)
+          update_passport_item_count(community_moderator, community, target_user, rules)
+          PassportCRUD.stamp_passport(rules, target_user)
+        end)
+        |> Repo.transaction()
+        |> result()
       end)
-      |> Repo.transaction()
-      |> result()
     else
       {:error, false} ->
         {:error,

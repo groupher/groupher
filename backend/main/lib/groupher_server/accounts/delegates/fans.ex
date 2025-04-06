@@ -174,9 +174,6 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   end
 
   defp do_mark_viewer_has_states(user_id, %User{meta: meta}) do
-    IO.inspect(meta.following_user_ids, label: "meta.following_user_ids")
-    IO.inspect(meta.follower_user_ids, label: "meta.follower_user_ids")
-
     %{
       viewer_been_followed: Enum.member?(meta.follower_user_ids, user_id),
       viewer_has_followed: Enum.member?(meta.following_user_ids, user_id)
