@@ -129,9 +129,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   update community
   """
   def update_community(%Community{} = community, args) do
-    case community.meta do
-      nil -> ORM.update(community, args |> Map.merge(%{meta: @default_meta}))
-      _ -> ORM.update(community, args)
+    with {:ok, community} <- fill_meta(community) do
+      ORM.update(community, args)
     end
   end
 
@@ -245,24 +244,16 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         :moderators_count,
         opt
       ) do
-    {:ok, moderators_count} =
-      from(s in CommunityModerator, where: s.community_id == ^community.id)
-      |> ORM.count()
+    with {:ok, community} <- fill_meta(community) do
+      moderators_ids =
+        case opt do
+          :inc -> (community.meta.moderators_ids ++ [user.id]) |> Enum.uniq()
+          :dec -> (community.meta.moderators_ids -- [user.id]) |> Enum.uniq()
+        end
 
-    community_meta = if is_nil(community.meta), do: @default_meta, else: community.meta
-
-    moderators_ids =
-      case opt do
-        :inc -> (community_meta.moderators_ids ++ [user.id]) |> Enum.uniq()
-        :dec -> (community_meta.moderators_ids -- [user.id]) |> Enum.uniq()
-      end
-
-    # meta = community_meta |> Map.put(:moderators_ids, moderators_ids) |> strip_struct
-    # community
-    # |> ORM.update_embed(:meta, meta, %{moderators_count: moderators_count})
-
-    {:ok, community} = ORM.update_meta(community, %{moderators_ids: moderators_ids})
-    community |> ORM.update(%{moderators_count: moderators_count})
+      {:ok, community} = ORM.update_meta(community, %{moderators_ids: moderators_ids})
+      ORM.inc(community, :moderators_count)
+    end
   end
 
   def update_community_count_field(
@@ -271,31 +262,31 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
         :subscribers_count,
         opt
       ) do
-    community_meta = if is_nil(community.meta), do: @default_meta, else: community.meta
+    with {:ok, community} <- fill_meta(community) do
+      subscribed_user_ids =
+        case opt do
+          :inc -> (community.meta.subscribed_user_ids ++ [user.id]) |> Enum.uniq()
+          :dec -> (community.meta.subscribed_user_ids -- [user.id]) |> Enum.uniq()
+        end
 
-    subscribed_user_ids =
+      {:ok, community} = ORM.update_meta(community, %{subscribed_user_ids: subscribed_user_ids})
+
       case opt do
-        :inc -> (community_meta.subscribed_user_ids ++ [user.id]) |> Enum.uniq()
-        :dec -> (community_meta.subscribed_user_ids -- [user.id]) |> Enum.uniq()
+        :inc -> ORM.inc(community, :subscribers_count)
+        :dec -> ORM.dec(community, :subscribers_count)
       end
-
-    {:ok, community} = ORM.update_meta(community, %{subscribed_user_ids: subscribed_user_ids})
-
-    case opt do
-      :inc -> ORM.inc(community, :subscribers_count)
-      :dec -> ORM.dec(community, :subscribers_count)
     end
   end
 
   def update_community_inner_id(
         %Community{meta: community_meta} = community,
         thread,
-        %{inner_id: inner_id}
+        %{inner_id: inner_id} = article
       ) do
     thread_inner_id_key = :"#{plural(thread)}_inner_id_index"
     meta = community_meta |> Map.put(thread_inner_id_key, inner_id) |> strip_struct
 
-    community |> ORM.update_meta(meta)
+    ORM.update_meta(community, meta)
   end
 
   def update_community_count_field(%Community{} = community, :article_tags_count) do

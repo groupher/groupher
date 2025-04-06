@@ -23,6 +23,7 @@ defmodule Helper.ORM do
   defdelegate update_meta(queryable, changes), to: ORMAtom
   defdelegate inc(queryable, field), to: ORMAtom
   defdelegate dec(queryable, field), to: ORMAtom
+  defdelegate fill_meta(queryable), to: ORMAtom
 
   @doc """
   offset-limit based pagination

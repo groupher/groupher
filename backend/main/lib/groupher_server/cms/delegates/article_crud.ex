@@ -13,7 +13,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       plural: 1,
       module_to_atom: 1,
       get_config: 2,
-      ensure: 2,
       module_to_upcase: 1,
       atom_values_to_upcase: 1,
       mark_viewer_emotion_states: 2,
@@ -23,6 +22,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   import Helper.ErrorCode
   import ShortMaps
 
+  alias GroupherServer.FrontDesk
   alias Helper.{Later, ORM, QueryBuilder, Converter, Constant, Transaction}
   alias GroupherServer.{Accounts, CMS, Email, Repo, Statistics}
 
@@ -46,7 +46,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
   @default_article_meta Embeds.ArticleMeta.default_meta()
-  @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
   @remove_article_hint "The content does not comply with the community norms"
 
   @audit_legal Constant.CMS.pending(:legal)
@@ -75,12 +74,11 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       end)
       |> Multi.run(:set_viewer_has_states, fn _, %{normal_read: article} ->
         article = Repo.preload(article, :original_community)
-        article_meta = ensure(article.meta, @default_article_meta)
 
         viewer_has_states = %{
-          viewer_has_collected: user_id in article_meta.collected_user_ids,
-          viewer_has_upvoted: user_id in article_meta.upvoted_user_ids,
-          viewer_has_reported: user_id in article_meta.reported_user_ids
+          viewer_has_collected: user_id in article.meta.collected_user_ids,
+          viewer_has_upvoted: user_id in article.meta.upvoted_user_ids,
+          viewer_has_reported: user_id in article.meta.reported_user_ids
         }
 
         article
@@ -287,23 +285,16 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end)
     |> Multi.run(:update_article_meta, fn _, %{update_pending_state: article} ->
       legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
-      article_meta = ensure(article.meta, @default_article_meta)
-      meta = Map.merge(article_meta, legal_state)
-
-      ORM.update_meta(article, meta)
+      ORM.update_meta(article, legal_state)
     end)
     |> Multi.run(:update_author_meta, fn _, _ ->
       article = Repo.preload(article, :author)
       illegal_articles = Map.get(audit_state, :illegal_articles, [])
 
-      with {:ok, user} <- ORM.find(User, article.author.user_id) do
-        user_meta = ensure(user.meta, @default_user_meta)
-        illegal_articles = user_meta.illegal_articles ++ illegal_articles
+      with {:ok, user} <- FrontDesk.info(:user, article.author.user_id) do
+        illegal_articles = user.meta.illegal_articles ++ illegal_articles
 
-        meta =
-          Map.merge(user_meta, %{has_illegal_articles: true, illegal_articles: illegal_articles})
-
-        ORM.update_meta(user, meta)
+        ORM.update_meta(user, %{has_illegal_articles: true, illegal_articles: illegal_articles})
       end
     end)
     |> Repo.transaction()
@@ -324,27 +315,21 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end)
     |> Multi.run(:update_article_meta, fn _, %{update_pending_state: article} ->
       legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
-      article_meta = ensure(article.meta, @default_article_meta)
-      meta = Map.merge(article_meta, legal_state)
 
-      ORM.update_meta(article, meta)
+      ORM.update_meta(article, legal_state)
     end)
     |> Multi.run(:update_author_meta, fn _, _ ->
       article = Repo.preload(article, :author)
       illegal_articles = Map.get(audit_state, :illegal_articles, [])
 
-      with {:ok, user} <- ORM.find(User, article.author.user_id) do
-        user_meta = ensure(user.meta, @default_user_meta)
-        illegal_articles = user_meta.illegal_articles -- illegal_articles
+      with {:ok, user} <- FrontDesk.info(:user, article.author.user_id) do
+        illegal_articles = user.meta.illegal_articles -- illegal_articles
         has_illegal_articles = not Enum.empty?(illegal_articles)
 
-        meta =
-          Map.merge(user_meta, %{
-            has_illegal_articles: has_illegal_articles,
-            illegal_articles: illegal_articles
-          })
-
-        ORM.update_meta(user, meta)
+        ORM.update_meta(user, %{
+          has_illegal_articles: has_illegal_articles,
+          illegal_articles: illegal_articles
+        })
       end
     end)
     |> Repo.transaction()
@@ -426,7 +411,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
           CommunityCRUD.update_community_inner_id(community, thread, article)
         end)
         |> Multi.run(:update_user_published_meta, fn _, _ ->
-          Accounts.update_published_states(user.id, thread)
+          Accounts.update_published_states(user, thread)
         end)
         |> Multi.run(:after_hooks, fn _, %{create_article: article} ->
           Later.run({Hooks.Cite, :handle, [article]})
@@ -702,8 +687,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       end
     end)
     |> Multi.run(:update_article_meta, fn _, %{add_pinned_flag: article} ->
-      # article_meta = ensure(article.meta, @default_article_meta)
-      # meta = Map.merge(article_meta, %{can_undo_sink: in_active_period?(thread, article)})
       ORM.update_meta(article, %{can_undo_sink: in_active_period?(thread, article)})
     end)
     |> Repo.transaction()
@@ -828,7 +811,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
        ) do
     %{id: community_id, meta: community_meta, slug: community_slug} = community
     threads_name = model |> module_to_atom |> plural
-
     inner_id = community_meta |> Map.get(:"#{threads_name}_inner_id_index")
 
     meta = @default_article_meta |> Map.merge(%{thread: module_to_upcase(model)})
@@ -864,13 +846,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   end
 
   defp add_digest_attrs(attrs), do: attrs
-
-  defp update_viewed_user_list(%{meta: nil} = article, user_id) do
-    new_ids = Enum.uniq([user_id] ++ @default_article_meta.viewed_user_ids)
-    meta = @default_article_meta |> Map.merge(%{viewed_user_ids: new_ids})
-
-    ORM.update_meta(article, meta)
-  end
 
   defp update_viewed_user_list(%{meta: meta} = article, user_id) do
     user_not_viewed = not Enum.member?(meta.viewed_user_ids, user_id)

@@ -11,8 +11,6 @@ defmodule Helper.Utils do
   alias GroupherServer.{CMS, Repo}
   alias Helper.{Cache, Utils}
 
-  @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
-
   # Map utils
   defdelegate atom_values_to_upcase(map), to: Utils.Map
   defdelegate map_key_stringify(map), to: Utils.Map
@@ -79,8 +77,6 @@ defmodule Helper.Utils do
   """
   def ensure(nil, default_data), do: default_data
   def ensure(data, _), do: data
-  def ensure(nil, changes, :article), do: Map.merge(@default_article_meta, changes)
-  def ensure(data, changes, :article), do: changes
 
   @doc """
   handle General {:ok, ..} or {:error, ..} return

@@ -3,10 +3,11 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   user followers / following related
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, ensure: 2]
+  import Helper.Utils, only: [done: 1]
   import Helper.ErrorCode
   import ShortMaps
 
+  alias GroupherServer.FrontDesk
   alias Helper.{ORM, QueryBuilder, Later, SpecType}
   alias GroupherServer.{Accounts, Repo}
 
@@ -15,15 +16,13 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
 
   alias Ecto.Multi
 
-  @default_user_meta Embeds.UserMeta.default_meta()
-
   @doc """
   follow a user
   """
   @spec follow(User.t(), User.t()) :: {:ok, User.t()} | SpecType.gq_error()
   def follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
-         {:ok, target_user} <- ORM.find(User, follower.id) do
+         {:ok, target_user} <- FrontDesk.info(:user, follower.id) do
       Multi.new()
       |> Multi.insert(
         :create_follower,
@@ -37,7 +36,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
         })
       )
       |> Multi.run(:update_user_follow_info, fn _, _ ->
-        update_user_follow_info(target_user, user.id, :add)
+        update_user_follow_info(target_user, user, :add)
       end)
       |> Multi.run(:add_achievement, fn _, _ ->
         Accounts.achieve(%User{id: target_user.id}, :inc, :follow)
@@ -59,7 +58,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   @spec undo_follow(User.t(), User.t()) :: {:ok, User.t()} | SpecType.gq_error()
   def undo_follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
-         {:ok, target_user} <- ORM.find(User, follower.id) do
+         {:ok, target_user} <- FrontDesk.info(:user, follower.id) do
       Multi.new()
       |> Multi.run(:delete_follower, fn _, _ ->
         ORM.findby_delete!(UserFollower, %{user_id: target_user.id, follower_id: user.id})
@@ -68,7 +67,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
         ORM.findby_delete!(UserFollowing, %{user_id: user.id, following_id: target_user.id})
       end)
       |> Multi.run(:update_user_follow_info, fn _, _ ->
-        update_user_follow_info(target_user, user.id, :remove)
+        update_user_follow_info(target_user, user, :remove)
       end)
       |> Multi.run(:minus_achievement, fn _, _ ->
         Accounts.achieve(%User{id: target_user.id}, :dec, :follow)
@@ -85,35 +84,30 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   end
 
   # update follow in user meta
-  defp update_user_follow_info(%User{} = target_user, user_id, opt) do
-    with {:ok, user} <- ORM.find(User, user_id) do
-      target_user_meta = ensure(target_user.meta, @default_user_meta)
-      user_meta = ensure(user.meta, @default_user_meta)
+  defp update_user_follow_info(%User{} = target_user, %User{} = user, opt) do
+    follower_user_ids =
+      case opt do
+        :add -> (target_user.meta.follower_user_ids ++ [user.id]) |> Enum.uniq()
+        :remove -> (target_user.meta.follower_user_ids -- [user.id]) |> Enum.uniq()
+      end
 
-      follower_user_ids =
-        case opt do
-          :add -> (target_user_meta.follower_user_ids ++ [user_id]) |> Enum.uniq()
-          :remove -> (target_user_meta.follower_user_ids -- [user_id]) |> Enum.uniq()
-        end
+    following_user_ids =
+      case opt do
+        :add -> (user.meta.following_user_ids ++ [target_user.id]) |> Enum.uniq()
+        :remove -> (user.meta.following_user_ids -- [target_user.id]) |> Enum.uniq()
+      end
 
-      following_user_ids =
-        case opt do
-          :add -> (user_meta.following_user_ids ++ [target_user.id]) |> Enum.uniq()
-          :remove -> (user_meta.following_user_ids -- [target_user.id]) |> Enum.uniq()
-        end
-
-      Multi.new()
-      |> Multi.run(:update_follower_meta, fn _, _ ->
-        ORM.update_meta(target_user, %{follower_user_ids: follower_user_ids})
-        ORM.update(target_user, %{followers_count: length(follower_user_ids)})
-      end)
-      |> Multi.run(:update_following_meta, fn _, _ ->
-        ORM.update_meta(user, %{following_user_ids: following_user_ids})
-        ORM.update(user, %{followings_count: length(following_user_ids)})
-      end)
-      |> Repo.transaction()
-      |> result()
-    end
+    Multi.new()
+    |> Multi.run(:update_follower_meta, fn _, _ ->
+      ORM.update_meta(target_user, %{follower_user_ids: follower_user_ids})
+      ORM.update(target_user, %{followers_count: length(follower_user_ids)})
+    end)
+    |> Multi.run(:update_following_meta, fn _, _ ->
+      ORM.update_meta(user, %{following_user_ids: following_user_ids})
+      ORM.update(user, %{followings_count: length(following_user_ids)})
+    end)
+    |> Repo.transaction()
+    |> result()
   end
 
   @doc """

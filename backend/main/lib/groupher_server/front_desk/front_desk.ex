@@ -13,17 +13,36 @@ defmodule GroupherServer.FrontDesk do
   alias Accounts.Model.User
 
   def info(:community, slug) when is_binary(slug) do
-    ORM.find_by(Community, %{slug: slug})
+    with {:ok, community} <- ORM.find_by(Community, %{slug: slug}) do
+      ORM.fill_meta(community)
+    end
   end
 
   def info(:thread, thread_id), do: ORM.find(Thread, thread_id)
-  def info(:user, id) when is_integer(id), do: ORM.find(User, id)
-  def info(:user, login), do: ORM.find_by(User, %{login: login})
 
-  def info(:comment, id), do: ORM.find(Comment, id, preload: :author)
+  def info(:user, id) when is_integer(id) do
+    with {:ok, user} <- ORM.find(User, id) do
+      ORM.fill_meta(user)
+    end
+  end
+
+  def info(:user, login) do
+    with {:ok, user} <- ORM.find_by(User, %{login: login}) do
+      ORM.fill_meta(user)
+    end
+  end
+
+  def info(:comment, id) do
+    with {:ok, comment} <- ORM.find(Comment, id, preload: :author) do
+      ORM.fill_meta(comment)
+    end
+  end
 
   def info(:article, community, thread, inner_id) when is_binary(community) do
     preload = [[author: :user], :original_community]
-    ORM.find_article(community, thread, inner_id, preload: preload)
+
+    with {:ok, article} <- ORM.find_article(community, thread, inner_id, preload: preload) do
+      ORM.fill_meta(article)
+    end
   end
 end
