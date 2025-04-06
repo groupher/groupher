@@ -125,36 +125,6 @@ defmodule Helper.ORM do
     queryable |> QueryBuilder.filter_pack(filter) |> Repo.all() |> done()
   end
 
-  @doc """
-  Require queryable has a views fields to count the views of the queryable Modal
-  """
-  def read(queryable, id, inc: :views) when is_number(id) or is_binary(id) do
-    with {:ok, result} <- find(queryable, id) do
-      result |> inc_views_count(queryable) |> done()
-    end
-  end
-
-  def read_by(queryable, clauses, inc: :views) do
-    with {:ok, result} <- find_by(queryable, clauses) do
-      result |> inc_views_count(queryable) |> done()
-    end
-  end
-
-  # content could be article/community
-  def read(content, inc: :views) do
-    content |> inc_views_count(content.__struct__) |> done()
-  end
-
-  defp inc_views_count(content, queryable) do
-    {1, [result]} =
-      Repo.update_all(
-        from(p in queryable, where: p.id == ^content.id, select: p.views),
-        inc: [views: 1]
-      )
-
-    put_in(content.views, result)
-  end
-
   @doc "mark read as true for all"
   def mark_read_all(queryable) do
     queryable

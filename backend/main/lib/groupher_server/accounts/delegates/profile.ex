@@ -3,7 +3,7 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
   accounts profile
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, keys_to_atoms: 1, get_config: 2, ensure: 2]
+  import Helper.Utils, only: [done: 1, keys_to_atoms: 1, get_config: 2]
   import ShortMaps
   import Helper.ErrorCode
 
@@ -20,8 +20,8 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
   @default_user_meta Embeds.UserMeta.default_meta()
   @default_subscribed_communities get_config(:general, :default_subscribed_communities)
 
-  def read_user(login) when is_binary(login) do
-    with {:ok, user} <- ORM.read_by(User, %{login: login}, inc: :views),
+  def read_user(%User{} = user) do
+    with {:ok, user} <- ORM.inc(user, :views),
          {:ok, user} <- assign_meta_ifneed(user) do
       case user.contributes do
         nil -> assign_default_contributes(user)
@@ -30,10 +30,10 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
     end
   end
 
-  def read_user(login, %User{meta: nil}), do: read_user(login)
+  def read_user(%User{} = user, %User{meta: nil}), do: read_user(user)
 
-  def read_user(login, %User{} = cur_user) do
-    with {:ok, user} <- read_user(login) do
+  def read_user(%User{} = user, %User{} = cur_user) do
+    with {:ok, user} <- read_user(user) do
       # Ta 关注了你
       viewer_been_followed = user.id in cur_user.meta.follower_user_ids
       # 正在关注

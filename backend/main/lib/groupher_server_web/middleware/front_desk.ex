@@ -133,6 +133,16 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     end
   end
 
+  defp fetch_user(%{arguments: %{login: login} = arguments} = resolution) do
+    case FrontDesk.info(:user, login) do
+      {:ok, user} ->
+        %{resolution | arguments: Map.put(arguments, :user, user)}
+
+      {:error, err_msg} ->
+        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+    end
+  end
+
   defp fetch_user(%{arguments: %{user: user} = arguments} = resolution) do
     case FrontDesk.info(:user, user) do
       {:ok, user} ->
