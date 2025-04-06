@@ -683,20 +683,10 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end
   end
 
-  # defp handle_existing_author({:ok, author}), do: {:ok, author}
-
-  # defp handle_existing_author({:error, %Ecto.Changeset{changes: %{user_id: user_id}}}) do
-  #   ORM.find_by(Author, user_id: user_id)
-  # end
-
-  # defp handle_existing_author({:error, changeset}) do
-  #   ORM.find_by(Author, user_id: changeset.data.user_id)
-  # end
-
   defp do_read_article(article, community_slug, thread) do
     Multi.new()
     |> Multi.run(:inc_views, fn _, _ ->
-      ORM.read(article, inc: :views)
+      ORM.inc(article, :views)
     end)
     |> Multi.run(:load_html, fn _, %{inc_views: article} ->
       article |> Repo.preload(:document) |> done

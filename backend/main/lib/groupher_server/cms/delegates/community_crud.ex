@@ -441,7 +441,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
          {:ok, community} <- fill_meta(community),
          {:ok, community} <- read_moderators(community) do
       case get_in(opt, [:inc_views]) do
-        true -> ORM.read(community, inc: :views)
+        true -> ORM.inc(community, :views)
         false -> {:ok, community}
       end
     end

@@ -21,7 +21,8 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
   @default_subscribed_communities get_config(:general, :default_subscribed_communities)
 
   def read_user(login) when is_binary(login) do
-    with {:ok, user} <- ORM.read_by(User, %{login: login}, inc: :views),
+    with {:ok, user} <- ORM.find_by(User, %{login: login}),
+         {:ok, user} <- ORM.inc(user, :views),
          {:ok, user} <- assign_meta_ifneed(user) do
       case user.contributes do
         nil -> assign_default_contributes(user)
