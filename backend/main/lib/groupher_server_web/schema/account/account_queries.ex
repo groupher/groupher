@@ -17,6 +17,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
     @desc "get user by id"
     field :user, :user do
       arg(:login, non_null(:string))
+      middleware(M.FrontDesk, :user)
 
       resolve(&R.Accounts.user/3)
     end

@@ -10,11 +10,11 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   alias Accounts.Model.User
   alias Helper.Certification
 
-  def user(_root, %{login: login}, %{context: %{cur_user: cur_user}}) do
-    Accounts.read_user(login, cur_user)
+  def user(_root, %{user: user}, %{context: %{cur_user: cur_user}}) do
+    Accounts.read_user(user, cur_user)
   end
 
-  def user(_root, %{login: login}, _info), do: Accounts.read_user(login)
+  def user(_root, %{user: user}, _info), do: Accounts.read_user(user)
   def user(_root, _args, _info), do: raise_error(:account_login, "need user login name")
 
   def paged_users(_root, ~m(filter)a, %{context: %{cur_user: cur_user}}) do

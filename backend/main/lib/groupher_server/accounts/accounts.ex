@@ -16,7 +16,7 @@ defmodule GroupherServer.Accounts do
 
   # profile
   defdelegate read_user(user), to: Profile
-  defdelegate read_user(login, user), to: Profile
+  defdelegate read_user(user, cur_user), to: Profile
   defdelegate paged_users(filter), to: Profile
   defdelegate paged_users(filter, user), to: Profile
 
