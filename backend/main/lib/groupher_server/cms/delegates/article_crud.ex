@@ -494,7 +494,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   def update_active_timestamp(thread, article) do
     # @article_active_period
     # 1. 超过时限不更新
-    # 2. 已经沉默的不更新, is_sinked
+    # 2. 已经沉默的不更新, is_sunk
     with true <- in_active_period?(thread, article) do
       ORM.update(article, %{active_at: DateTime.utc_now()})
     else
@@ -510,7 +510,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
     with {:ok, article} <-
            ORM.update_meta(article, %{
-             is_sinked: true,
+             is_sunk: true,
              last_active_at: inserted_at
            }) do
       ORM.update(article, %{active_at: inserted_at})
@@ -524,7 +524,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     thread = thread_of(article)
 
     with true <- in_active_period?(thread, article),
-         {:ok, article} <- ORM.update_meta(article, %{is_sinked: false}) do
+         {:ok, article} <- ORM.update_meta(article, %{is_sunk: false}) do
       ORM.update(article, %{active_at: article.meta.last_active_at})
     else
       false -> raise_error(:undo_sink_old_article, "can not undo sink old article")
