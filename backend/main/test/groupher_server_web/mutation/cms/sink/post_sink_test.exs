@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       assert result["innerId"] == to_string(post.inner_id)
 
       {:ok, post} = ORM.find(Post, post.id)
-      assert post.meta.is_sinked
+      assert post.meta.is_sunk
       assert post.active_at == post.inserted_at
     end
 
@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       assert updated["innerId"] == to_string(post.inner_id)
 
       {:ok, post} = ORM.find(Post, post.id)
-      assert not post.meta.is_sinked
+      assert not post.meta.is_sunk
     end
 
     test "unauth user undo sink a post fails", ~m(guest_conn community post)a do

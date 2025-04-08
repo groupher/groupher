@@ -205,21 +205,21 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
     test "can sink a doc", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      assert not doc.meta.is_sinked
+      assert not doc.meta.is_sunk
 
       {:ok, doc} = CMS.sink_article(doc)
-      assert doc.meta.is_sinked
+      assert doc.meta.is_sunk
       assert doc.active_at == doc.inserted_at
     end
 
     test "can undo sink doc", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
       {:ok, doc} = CMS.sink_article(doc)
-      assert doc.meta.is_sinked
+      assert doc.meta.is_sunk
       assert doc.meta.last_active_at == doc.active_at
 
       {:ok, doc} = CMS.undo_sink_article(doc)
-      assert not doc.meta.is_sinked
+      assert not doc.meta.is_sunk
       assert doc.active_at == doc.meta.last_active_at
     end
 

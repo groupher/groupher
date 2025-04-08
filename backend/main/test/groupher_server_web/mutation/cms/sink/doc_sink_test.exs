@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       assert result["innerId"] == to_string(doc.inner_id)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
-      assert doc.meta.is_sinked
+      assert doc.meta.is_sunk
       assert doc.active_at == doc.inserted_at
     end
 
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       assert updated["innerId"] == to_string(doc.inner_id)
 
       {:ok, doc} = ORM.find(Doc, doc.id)
-      assert not doc.meta.is_sinked
+      assert not doc.meta.is_sunk
     end
 
     test "unauth user undo sink a doc fails", ~m(guest_conn community doc)a do

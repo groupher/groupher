@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       assert result["innerId"] == to_string(blog.inner_id)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
-      assert blog.meta.is_sinked
+      assert blog.meta.is_sunk
       assert blog.active_at == blog.inserted_at
     end
 
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       assert updated["innerId"] == to_string(blog.inner_id)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
-      assert not blog.meta.is_sinked
+      assert not blog.meta.is_sunk
     end
 
     test "unauth user undo sink a blog fails", ~m(guest_conn community blog)a do

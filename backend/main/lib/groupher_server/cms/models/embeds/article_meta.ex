@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
 
   alias GroupherServer.CMS.Model.Embeds
 
-  @optional_fields ~w(thread is_edited is_comment_locked upvoted_user_ids collected_user_ids viewed_user_ids comments_participant_user_ids reported_user_ids reported_count is_sinked can_undo_sink last_active_at is_legal illegal_reason illegal_words)a
+  @optional_fields ~w(thread is_edited is_comment_locked upvoted_user_ids collected_user_ids viewed_user_ids comments_participant_user_ids reported_user_ids reported_count is_sunk can_undo_sink last_active_at is_legal illegal_reason illegal_words)a
 
   @doc "for test usage"
   def default_meta() do
@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
       reported_user_ids: [],
       comments_participant_user_ids: [],
       reported_count: 0,
-      is_sinked: false,
+      is_sunk: false,
       can_undo_sink: true,
       last_active_at: nil,
       citing_count: 0,
@@ -51,7 +51,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
 
     field(:comments_participant_user_ids, {:array, :integer}, default: [])
 
-    field(:is_sinked, :boolean, default: false)
+    field(:is_sunk, :boolean, default: false)
     field(:can_undo_sink, :boolean, default: false)
     # if undo_sink, can recover last active_at from here
     field(:last_active_at, :utc_datetime, default: nil)

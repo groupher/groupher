@@ -222,21 +222,21 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
     test "can sink a changelog", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      assert not changelog.meta.is_sinked
+      assert not changelog.meta.is_sunk
 
       {:ok, changelog} = CMS.sink_article(changelog)
-      assert changelog.meta.is_sinked
+      assert changelog.meta.is_sunk
       assert changelog.active_at == changelog.inserted_at
     end
 
     test "can undo sink changelog", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       {:ok, changelog} = CMS.sink_article(changelog)
-      assert changelog.meta.is_sinked
+      assert changelog.meta.is_sunk
       assert changelog.meta.last_active_at == changelog.active_at
 
       {:ok, changelog} = CMS.undo_sink_article(changelog)
-      assert not changelog.meta.is_sinked
+      assert not changelog.meta.is_sunk
       assert changelog.active_at == changelog.meta.last_active_at
     end
 

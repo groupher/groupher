@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
       assert result["innerId"] == to_string(changelog.inner_id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
-      assert changelog.meta.is_sinked
+      assert changelog.meta.is_sunk
       assert changelog.active_at == changelog.inserted_at
     end
 
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
       assert updated["innerId"] == to_string(changelog.inner_id)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
-      assert not changelog.meta.is_sinked
+      assert not changelog.meta.is_sunk
     end
 
     test "unauth user undo sink a changelog fails", ~m(guest_conn community changelog)a do

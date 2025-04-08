@@ -226,21 +226,21 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
     test "can sink a post", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      assert not post.meta.is_sinked
+      assert not post.meta.is_sunk
 
       {:ok, post} = CMS.sink_article(post)
-      assert post.meta.is_sinked
+      assert post.meta.is_sunk
       assert post.active_at == post.inserted_at
     end
 
     test "can undo sink post", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, post} = CMS.sink_article(post)
-      assert post.meta.is_sinked
+      assert post.meta.is_sunk
       assert post.meta.last_active_at == post.active_at
 
       {:ok, post} = CMS.undo_sink_article(post)
-      assert not post.meta.is_sinked
+      assert not post.meta.is_sunk
       assert post.active_at == post.meta.last_active_at
     end
 
