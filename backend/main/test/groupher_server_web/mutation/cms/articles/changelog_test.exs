@@ -84,7 +84,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     test "create changelog with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       changelog_attr = mock_attrs(:changelog)
-      variables = changelog_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
+      variables = changelog_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
       assert user_conn |> mutation_error?(Schema.m(:create_article, :changelog), variables)
     end

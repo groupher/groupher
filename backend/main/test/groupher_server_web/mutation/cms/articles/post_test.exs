@@ -79,7 +79,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
     test "create post with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       post_attr = mock_attrs(:post)
-      variables = post_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
+      variables = post_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
       assert user_conn |> mutation_error?(Schema.m(:create_article, :post), variables)
     end
