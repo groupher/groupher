@@ -48,10 +48,10 @@ export default (): TRet => {
   const loadArticle = (): void => {
     const userHasLogin = account.isLogin
     // 需要在 drawer 那里改动以后才能使用这个参数
-    // const { originalCommunitySlug, innerId, meta } = article
-    // const { originalCommunitySlug, meta } = article
+    // const { communitySlug, innerId, meta } = article
+    // const { communitySlug, meta } = article
 
-    // const vaparams = { community: originalCommunitySlug, id: innerId, userHasLogin }
+    // const vaparams = { community: communitySlug, id: innerId, userHasLogin }
     const params = { community: community.slug, id: 21, userHasLogin }
 
     setLoading(true)

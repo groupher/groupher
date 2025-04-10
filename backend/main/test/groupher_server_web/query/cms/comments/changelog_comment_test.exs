@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       {:ok, _} =
         CMS.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
 
-      variables = %{community: changelog.original_community_slug, id: changelog.inner_id}
+      variables = %{community: changelog.community_slug, id: changelog.inner_id}
       results = guest_conn |> gq_query(Schema.q(:article, :changelog), variables)
 
       assert not results["isArchived"]
@@ -118,7 +118,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       {:ok, _} =
         CMS.create_comment(community, thread, changelog.inner_id, mock_comment(), user2)
 
-      variables = %{community: changelog.original_community_slug, id: changelog.inner_id}
+      variables = %{community: changelog.community_slug, id: changelog.inner_id}
       results = guest_conn |> gq_query(Schema.q(:article, :changelog), variables)
 
       comments_participants = results["commentsParticipants"]

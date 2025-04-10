@@ -154,9 +154,9 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       rule_conn |> gq_mutation(Schema.m(:move_to_blackhole), variables)
 
       {:ok, post} =
-        ORM.find(Post, post.id, preload: [:original_community, :communities, :article_tags])
+        ORM.find(Post, post.id, preload: [:community, :communities, :article_tags])
 
-      assert post.original_community.id == blackhole.id
+      assert post.community.id == blackhole.id
     end
 
     test "auth user can move post to other community", ~m(community community2 post)a do
@@ -171,14 +171,14 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       }
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
-      {:ok, found} = ORM.find(Post, post.id, preload: [:original_community, :communities])
+      {:ok, found} = ORM.find(Post, post.id, preload: [:community, :communities])
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community.id in assoc_communities
 
       passport_rules = %{"post.community.move" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      pre_original_community_id = found.original_community.id
+      pre_community_id = found.community.id
 
       article_tag_attrs = mock_attrs(:article_tag)
       {:ok, user} = db_insert(:user)
@@ -195,18 +195,18 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       rule_conn |> gq_mutation(Schema.m(:move_article), variables)
 
       {:ok, found} =
-        ORM.find(Post, post.id, preload: [:original_community, :communities, :article_tags])
+        ORM.find(Post, post.id, preload: [:community, :communities, :article_tags])
 
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assoc_article_tags = found.article_tags |> Enum.map(& &1.id)
 
-      assert pre_original_community_id not in assoc_communities
+      assert pre_community_id not in assoc_communities
       assert community2.id in assoc_communities
-      assert community2.id == found.original_community_id
+      assert community2.id == found.community_id
 
       assert article_tag.id in assoc_article_tags
 
-      assert found.original_community.id == community2.id
+      assert found.community.id == community2.id
     end
   end
 end

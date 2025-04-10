@@ -10,7 +10,7 @@ const useIsArticleViewing = (article: TArticle): boolean => {
 
   // const { id, community } = viewingArticle
 
-  // if (!(article.innerId === id && community === article.originalCommunitySlug)) return false
+  // if (!(article.innerId === id && community === article.communitySlug)) return false
 
   return true
 }

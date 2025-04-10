@@ -17,24 +17,24 @@ defmodule GroupherServer.CMS.Delegate.Hooks.SubscribeCommunity do
 
   def handle(%Comment{post_id: post_id}, %User{} = user) when not is_nil(post_id) do
     with {:ok, article} <- comment_parent_article(Post, post_id) do
-      CommunityOperation.subscribe_community_ifnot(article.original_community, user)
+      CommunityOperation.subscribe_community_ifnot(article.community, user)
     end
   end
 
   def handle(%Comment{changelog_id: changelog_id}, %User{} = user)
       when not is_nil(changelog_id) do
     with {:ok, article} <- comment_parent_article(Changelog, changelog_id) do
-      CommunityOperation.subscribe_community_ifnot(article.original_community, user)
+      CommunityOperation.subscribe_community_ifnot(article.community, user)
     end
   end
 
   def handle(%Comment{blog_id: blog_id}, %User{} = user) when not is_nil(blog_id) do
     with {:ok, article} <- comment_parent_article(Blog, blog_id) do
-      CommunityOperation.subscribe_community_ifnot(article.original_community, user)
+      CommunityOperation.subscribe_community_ifnot(article.community, user)
     end
   end
 
   defp comment_parent_article(article, id) do
-    ORM.find(article, id, preload: [[author: :user], :original_community])
+    ORM.find(article, id, preload: [[author: :user], :community])
   end
 end

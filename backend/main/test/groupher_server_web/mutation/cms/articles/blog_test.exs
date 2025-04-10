@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       {:ok, blog} = ORM.find_article(community, :blog, result["innerId"])
 
       assert result["innerId"] == to_string(blog.inner_id)
-      assert result["originalCommunity"]["id"] == to_string(community.id)
+      assert result["community"]["id"] == to_string(community.id)
       assert result["linkAddr"] == "https://helloworld"
 
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
@@ -84,7 +84,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     test "create blog with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog)
-      variables = blog_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
+      variables = blog_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
       assert user_conn |> mutation_error?(Schema.m(:create_article, :blog), variables)
     end

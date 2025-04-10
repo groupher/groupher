@@ -42,8 +42,8 @@ type TBaseArticle = {
   isPinned?: boolean
   author?: TAccount
   upvotesCount?: number
-  originalCommunity?: TCommunity
-  originalCommunitySlug?: string
+  community?: TCommunity
+  communitySlug?: string
   communities?: TCommunity[]
   commentsParticipants?: TUser[]
   commentsParticipantsCount?: number

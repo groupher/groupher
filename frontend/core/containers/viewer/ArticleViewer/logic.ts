@@ -26,9 +26,9 @@
 //   markLoading()
 
 //   // const userHasLogin = false
-//   // const { originalCommunitySlug, innerId, meta } = store.viewingArticle
+//   // const { communitySlug, innerId, meta } = store.viewingArticle
 
-//   // const variables = { community: originalCommunitySlug, id: innerId, userHasLogin }
+//   // const variables = { community: communitySlug, id: innerId, userHasLogin }
 
 //   // sr71$.query(S.getArticle(meta.thread), variables)
 // }

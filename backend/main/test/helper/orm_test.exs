@@ -103,24 +103,24 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert article.title == post.title
       assert article.id == post.id
       assert article.inner_id == post.inner_id
-      assert article.original_community_slug == community.slug
+      assert article.community_slug == community.slug
 
-      assert match?(%Ecto.Association.NotLoaded{}, article.original_community)
+      assert match?(%Ecto.Association.NotLoaded{}, article.community)
       assert match?(%Ecto.Association.NotLoaded{}, article.author)
     end
 
     test "should find by preload", ~m(community post)a do
       {:ok, article} =
         ORM.find_article(community.slug, :post, post.inner_id,
-          preload: [[author: :user], :original_community]
+          preload: [[author: :user], :community]
         )
 
       assert article.id == post.id
       assert article.inner_id == post.inner_id
-      assert article.original_community_slug == community.slug
+      assert article.community_slug == community.slug
 
-      assert not match?(%Ecto.Association.NotLoaded{}, article.original_community)
-      assert article.original_community.title == community.title
+      assert not match?(%Ecto.Association.NotLoaded{}, article.community)
+      assert article.community.title == community.title
     end
 
     test "should have error code if not found", ~m(community)a do

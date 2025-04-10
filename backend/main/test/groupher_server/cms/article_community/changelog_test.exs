@@ -22,22 +22,22 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
   describe "[article mirror/move]" do
     test "created changelog has original community info", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :original_community)
+      {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :community)
 
-      assert changelog.original_community_id == community.id
+      assert changelog.community_id == community.id
     end
 
     test "changelog can be move to other community",
          ~m(user community community2 changelog_attrs)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      assert changelog.original_community_id == community.id
+      assert changelog.community_id == community.id
 
       {:ok, _} = CMS.move_article(community2, changelog)
 
       {:ok, changelog} =
-        ORM.find(Changelog, changelog.id, preload: [:original_community, :communities])
+        ORM.find(Changelog, changelog.id, preload: [:community, :communities])
 
-      assert changelog.original_community.id == community2.id
+      assert changelog.community.id == community2.id
       assert exist_in?(community2, changelog.communities)
     end
 
@@ -56,17 +56,15 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       {:ok, changelog} = CMS.set_article_tag(changelog, article_tag2.id)
 
       assert changelog.article_tags |> length == 2
-      assert changelog.original_community_id == community.id
+      assert changelog.community_id == community.id
 
       {:ok, _} = CMS.move_article(community2, changelog)
 
       {:ok, changelog} =
-        ORM.find(Changelog, changelog.id,
-          preload: [:original_community, :communities, :article_tags]
-        )
+        ORM.find(Changelog, changelog.id, preload: [:community, :communities, :article_tags])
 
       assert changelog.article_tags |> length == 0
-      assert changelog.original_community.id == community2.id
+      assert changelog.community.id == community2.id
       assert exist_in?(community2, changelog.communities)
     end
 
@@ -95,11 +93,9 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       {:ok, _} = CMS.move_article(community2, changelog, [article_tag.id, article_tag2.id])
 
       {:ok, changelog} =
-        ORM.find(Changelog, changelog.id,
-          preload: [:original_community, :communities, :article_tags]
-        )
+        ORM.find(Changelog, changelog.id, preload: [:community, :communities, :article_tags])
 
-      assert changelog.original_community.id == community2.id
+      assert changelog.community.id == community2.id
       assert changelog.article_tags |> length == 2
 
       assert not exist_in?(article_tag0, changelog.article_tags)
@@ -202,14 +198,14 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
 
     test "changelog can be mirror to home", ~m(community home_community changelog_attrs user)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      assert changelog.original_community_id == community.id
+      assert changelog.community_id == community.id
 
       {:ok, _} = CMS.mirror_to_home(home_community, changelog)
 
       {:ok, changelog} =
-        ORM.find(Changelog, changelog.id, preload: [:original_community, :communities])
+        ORM.find(Changelog, changelog.id, preload: [:community, :communities])
 
-      assert changelog.original_community_id == community.id
+      assert changelog.community_id == community.id
       assert changelog.communities |> length == 2
 
       assert exist_in?(community, changelog.communities)
@@ -240,16 +236,14 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
         CMS.create_article_tag(home_community, :changelog, article_tag_attrs, user)
 
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      assert changelog.original_community_id == community.id
+      assert changelog.community_id == community.id
 
       {:ok, _} = CMS.mirror_to_home(home_community, changelog, [article_tag0.id, article_tag.id])
 
       {:ok, changelog} =
-        ORM.find(Changelog, changelog.id,
-          preload: [:original_community, :communities, :article_tags]
-        )
+        ORM.find(Changelog, changelog.id, preload: [:community, :communities, :article_tags])
 
-      assert changelog.original_community_id == community.id
+      assert changelog.community_id == community.id
       assert changelog.communities |> length == 2
 
       assert exist_in?(community, changelog.communities)
@@ -274,14 +268,14 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
 
     test "changelog can be move to blackhole", ~m(community blackhole changelog_attrs user)a do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      assert changelog.original_community_id == community.id
+      assert changelog.community_id == community.id
 
       {:ok, _} = CMS.move_to_blackhole(blackhole, changelog)
 
       {:ok, changelog} =
-        ORM.find(Changelog, changelog.id, preload: [:original_community, :communities])
+        ORM.find(Changelog, changelog.id, preload: [:community, :communities])
 
-      assert changelog.original_community.id == blackhole.id
+      assert changelog.community.id == blackhole.id
       assert changelog.communities |> length == 1
 
       assert exist_in?(blackhole, changelog.communities)
@@ -307,16 +301,14 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Changelog do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
       {:ok, _} = CMS.set_article_tag(changelog, article_tag0.id)
 
-      assert changelog.original_community_id == community.id
+      assert changelog.community_id == community.id
 
       {:ok, _} = CMS.move_to_blackhole(blackhole, changelog, [article_tag.id])
 
       {:ok, changelog} =
-        ORM.find(Changelog, changelog.id,
-          preload: [:original_community, :communities, :article_tags]
-        )
+        ORM.find(Changelog, changelog.id, preload: [:community, :communities, :article_tags])
 
-      assert changelog.original_community.id == blackhole.id
+      assert changelog.community.id == blackhole.id
       assert changelog.communities |> length == 1
       assert changelog.article_tags |> length == 1
 

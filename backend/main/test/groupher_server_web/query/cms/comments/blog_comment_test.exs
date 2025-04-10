@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       {:ok, _} =
         CMS.create_comment(community, thread, blog.inner_id, mock_comment(), user)
 
-      variables = %{community: blog.original_community_slug, id: blog.inner_id}
+      variables = %{community: blog.community_slug, id: blog.inner_id}
       results = guest_conn |> gq_query(Schema.q(:article, :blog), variables)
 
       assert not results["isArchived"]
@@ -118,7 +118,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       {:ok, _} =
         CMS.create_comment(community, thread, blog.inner_id, mock_comment(), user2)
 
-      variables = %{community: blog.original_community_slug, id: blog.inner_id}
+      variables = %{community: blog.community_slug, id: blog.inner_id}
       results = guest_conn |> gq_query(Schema.q(:article, :blog), variables)
 
       comments_participants = results["commentsParticipants"]

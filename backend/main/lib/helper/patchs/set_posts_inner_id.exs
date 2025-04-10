@@ -13,10 +13,10 @@ alias GroupherServer.CMS.Model.Post
   |> ORM.find_all(%{page: 1, size: 100})
 
 Enum.each(all_posts.entries, fn post ->
-  post = Repo.preload(post, :original_community)
+  post = Repo.preload(post, :community)
 
-  inner_id = post.original_community.meta.posts_inner_id_index + 1
+  inner_id = post.community.meta.posts_inner_id_index + 1
 
   ORM.update(post, %{inner_id: inner_id})
-  CommunityCRUD.update_community_inner_id(post.original_community, :post, %{inner_id: inner_id})
+  CommunityCRUD.update_community_inner_id(post.community, :post, %{inner_id: inner_id})
 end)

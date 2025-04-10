@@ -103,13 +103,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
 
       {:ok, _} =
-        CMS.read_article(changelog.original_community_slug, :changelog, changelog.inner_id, user)
+        CMS.read_article(changelog.community_slug, :changelog, changelog.inner_id, user)
 
       {:ok, _} =
-        CMS.read_article(changelog.original_community_slug, :changelog, changelog.inner_id, user2)
+        CMS.read_article(changelog.community_slug, :changelog, changelog.inner_id, user2)
 
       {:ok, _} =
-        CMS.read_article(changelog.original_community_slug, :changelog, changelog.inner_id, user3)
+        CMS.read_article(changelog.community_slug, :changelog, changelog.inner_id, user3)
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
@@ -269,7 +269,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert not the_changelog["viewerHasReported"]
 
       {:ok, _} =
-        CMS.read_article(changelog.original_community_slug, :changelog, changelog.inner_id, user)
+        CMS.read_article(changelog.community_slug, :changelog, changelog.inner_id, user)
 
       {:ok, _} = CMS.upvote_article(changelog, user)
       {:ok, _} = CMS.collect_article(changelog, user)

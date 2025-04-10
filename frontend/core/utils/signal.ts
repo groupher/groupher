@@ -202,7 +202,7 @@ export const multiClick = (
 export const viewingChanged = (article: TArticle | null): void => {
   if (article) {
     // @ts-ignore
-    BStore.set('viewingArticle', { community: article.originalCommunitySlug, id: article.innerId })
+    BStore.set('viewingArticle', { community: article.communitySlug, id: article.innerId })
   } else {
     BStore.set('viewingArticle', null)
   }

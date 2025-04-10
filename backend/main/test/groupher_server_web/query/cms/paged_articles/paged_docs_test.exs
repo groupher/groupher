@@ -102,13 +102,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
 
       {:ok, _} =
-        CMS.read_article(doc.original_community_slug, :doc, doc.inner_id, user)
+        CMS.read_article(doc.community_slug, :doc, doc.inner_id, user)
 
       {:ok, _} =
-        CMS.read_article(doc.original_community_slug, :doc, doc.inner_id, user2)
+        CMS.read_article(doc.community_slug, :doc, doc.inner_id, user2)
 
       {:ok, _} =
-        CMS.read_article(doc.original_community_slug, :doc, doc.inner_id, user3)
+        CMS.read_article(doc.community_slug, :doc, doc.inner_id, user3)
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
@@ -268,7 +268,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert not the_doc["viewerHasReported"]
 
       {:ok, _} =
-        CMS.read_article(doc.original_community_slug, :doc, doc.inner_id, user)
+        CMS.read_article(doc.community_slug, :doc, doc.inner_id, user)
 
       {:ok, _} = CMS.upvote_article(doc, user)
       {:ok, _} = CMS.collect_article(doc, user)

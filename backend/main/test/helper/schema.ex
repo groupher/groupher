@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.Helper.Schema do
       #{thread}(community: $community, id: $id) {
         title
         innerId
-        originalCommunitySlug
+        communitySlug
         meta {
           isEdited
           isLegal
@@ -306,7 +306,7 @@ defmodule GroupherServer.Test.Helper.Schema do
         document {
           bodyHtml
         }
-        originalCommunity {
+        community {
           id
         }
       }

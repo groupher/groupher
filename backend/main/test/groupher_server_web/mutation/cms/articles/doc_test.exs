@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       {:ok, doc} = ORM.find_article(community, :doc, result["innerId"])
 
       assert result["innerId"] == to_string(doc.inner_id)
-      assert result["originalCommunity"]["id"] == to_string(community.id)
+      assert result["community"]["id"] == to_string(community.id)
       assert result["linkAddr"] == "https://helloworld"
 
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
@@ -84,7 +84,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     test "create doc with missing non_null field should get 200 error",
          ~m(user_conn community)a do
       doc_attr = mock_attrs(:doc)
-      variables = doc_attr |> Map.merge(%{communityId: community.id}) |> Map.delete(:title)
+      variables = doc_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
       assert user_conn |> mutation_error?(Schema.m(:create_article, :doc), variables)
     end
