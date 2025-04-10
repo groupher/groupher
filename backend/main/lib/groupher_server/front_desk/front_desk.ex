@@ -39,7 +39,7 @@ defmodule GroupherServer.FrontDesk do
   end
 
   def info(:article, community, thread, inner_id) when is_binary(community) do
-    preload = [[author: :user], :original_community]
+    preload = [[author: :user], :community]
 
     with {:ok, article} <- ORM.find_article(community, thread, inner_id, preload: preload) do
       ORM.fill_meta(article)

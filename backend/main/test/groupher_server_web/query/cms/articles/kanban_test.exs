@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
 
     {:ok, post} = CMS.create_article(community, :post, kanban_attrs, user)
 
-    variables = %{community: post.original_community_slug, id: post.inner_id}
+    variables = %{community: post.community_slug, id: post.inner_id}
     result = user_conn |> gq_query(Schema.q(:article, :post, "cat state"), variables)
 
     assert result["innerId"] == to_string(post.inner_id)

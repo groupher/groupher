@@ -73,7 +73,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
         update_viewed_user_list(article, user_id)
       end)
       |> Multi.run(:set_viewer_has_states, fn _, %{normal_read: article} ->
-        article = Repo.preload(article, :original_community)
+        article = Repo.preload(article, :community)
 
         viewer_has_states = %{
           viewer_has_collected: user_id in article.meta.collected_user_ids,
@@ -187,7 +187,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     flags = %{
       mark_delete: false,
       pending: :legal,
-      original_community_id: community.id,
+      community_id: community.id,
       state: state
     }
 
@@ -435,7 +435,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   """
   def notify_admin_new_article(%{id: id} = result) do
     target = result.__struct__
-    preload = [:original_community, author: :user]
+    preload = [:community, author: :user]
 
     with {:ok, article} <- ORM.find(target, id, preload: preload) do
       info = %{
@@ -443,7 +443,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
         title: article.title,
         digest: Map.get(article, :digest, article.title),
         author_name: article.author.user.nickname,
-        community_slug: article.original_community.slug,
+        community_slug: article.community.slug,
         type:
           result.__struct__ |> to_string |> String.split(".") |> List.last() |> String.downcase()
       }
@@ -470,7 +470,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end)
     |> Multi.run(:set_article_tags, fn _, %{update_article: article} ->
       ArticleTag.overwrite_article_tags(
-        %Community{id: article.original_community_id},
+        %Community{id: article.community_id},
         article.meta.thread,
         article,
         %{article_tags: Map.get(attrs, :article_tags, [])}
@@ -601,7 +601,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     with {:ok, info} <- match(thread) do
       batch_query =
         info.model
-        |> where([article], article.original_community_slug == ^community)
+        |> where([article], article.community_slug == ^community)
         |> where([article], article.inner_id in ^inner_id_list)
 
       Multi.new()
@@ -695,7 +695,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   defp if_article_legal(community_slug, thread, inner_id, user)
        when thread in @article_threads do
-    clauses = %{original_community_slug: community_slug, inner_id: inner_id}
+    clauses = %{community_slug: community_slug, inner_id: inner_id}
 
     with {:ok, info} <- match(thread),
          {:ok, article} <- ORM.find_by(info.model, clauses, preload: :author) do
@@ -705,7 +705,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   defp if_article_legal(community_slug, thread, inner_id)
        when thread in @article_threads do
-    clauses = %{original_community_slug: community_slug, inner_id: inner_id}
+    clauses = %{community_slug: community_slug, inner_id: inner_id}
 
     with {:ok, info} <- match(thread),
          {:ok, article} <- ORM.find_by(info.model, clauses) do
@@ -820,8 +820,8 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       |> model.changeset(attrs |> Map.merge(%{inner_id: inner_id + 1}))
       |> Ecto.Changeset.put_change(:emotions, @default_emotions)
       |> Ecto.Changeset.put_change(:author_id, author_id)
-      |> Ecto.Changeset.put_change(:original_community_id, community_id)
-      |> Ecto.Changeset.put_change(:original_community_slug, community_slug)
+      |> Ecto.Changeset.put_change(:community_id, community_id)
+      |> Ecto.Changeset.put_change(:community_slug, community_slug)
       |> Ecto.Changeset.put_embed(:meta, meta)
       |> Repo.insert()
     end

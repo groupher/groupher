@@ -11,7 +11,7 @@ const groupedKanbanPosts = gql`
           cat
           state
           title
-          originalCommunitySlug
+          communitySlug
           meta {
             thread
           }
@@ -28,7 +28,7 @@ const groupedKanbanPosts = gql`
           cat
           state
           title
-          originalCommunitySlug
+          communitySlug
           meta {
             thread
           }
@@ -45,7 +45,7 @@ const groupedKanbanPosts = gql`
           cat
           state
           title
-          originalCommunitySlug
+          communitySlug
           meta {
             thread
           }

@@ -360,9 +360,9 @@ defmodule Helper.ORM do
     find_article(community.slug, thread, inner_id, opts)
   end
 
-  def find_article(original_community_slug, thread, inner_id, opts) do
+  def find_article(community_slug, thread, inner_id, opts) do
     preload = Keyword.get(opts, :preload, [])
-    query = ~m(original_community_slug inner_id)a
+    query = ~m(community_slug inner_id)a
 
     with {:ok, info} <- match(thread) do
       case find_by(info.model, query, preload: preload) do

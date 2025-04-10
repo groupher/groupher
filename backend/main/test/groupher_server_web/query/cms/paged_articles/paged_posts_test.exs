@@ -105,9 +105,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user)
-      {:ok, _} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user2)
-      {:ok, _} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user3)
+      {:ok, _} = CMS.read_article(post.community_slug, :post, post.inner_id, user)
+      {:ok, _} = CMS.read_article(post.community_slug, :post, post.inner_id, user2)
+      {:ok, _} = CMS.read_article(post.community_slug, :post, post.inner_id, user3)
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
       first_post = results["entries"] |> List.first()
@@ -297,7 +297,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert not the_post["viewerHasCollected"]
       assert not the_post["viewerHasReported"]
 
-      {:ok, _} = CMS.read_article(post.original_community_slug, :post, post.inner_id, user)
+      {:ok, _} = CMS.read_article(post.community_slug, :post, post.inner_id, user)
       {:ok, _} = CMS.upvote_article(post, user)
       {:ok, _} = CMS.collect_article(post, user)
       {:ok, post} = ORM.find(Post, post.id)

@@ -198,7 +198,7 @@ const post = gql`
         ${F.author}
       }
 
-      originalCommunity {
+      community {
         ${F.community}
       }
 
@@ -234,7 +234,7 @@ const job = gql`
         ${F.author}
       }
 
-      originalCommunity {
+      community {
         ${F.community}
       }
 
@@ -265,7 +265,7 @@ const radar = gql`
       archivedAt
       isArchived
 
-      originalCommunity {
+      community {
         ${F.community}
       }
 

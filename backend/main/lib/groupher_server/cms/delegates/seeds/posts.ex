@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Articles do
   def seed_articles(community_slug, thread) do
     with {:ok, community} <- ORM.find_by(Community, slug: community_slug),
          {:ok, user} <- ORM.find(User, 1) do
-      attrs = mock_attrs(thread, %{community_id: community.id, original_community: community})
+      attrs = mock_attrs(thread, %{community_id: community.id, community: community})
       CMS.create_article(community, thread, attrs, user)
     end
   end

@@ -83,7 +83,7 @@ export const author = `
 export const article = `
   id
   innerId
-  originalCommunitySlug
+  communitySlug
   isPinned
   title
   insertedAt
@@ -97,7 +97,7 @@ export const article = `
   author {
     ${author}
   }
-  originalCommunity {
+  community {
     ${community}
   }
   communities {
@@ -271,10 +271,10 @@ export const commentParent = `
   author {
     ${author}
   }
-  communities {
+  community {
     ${community}
   }
-  originalCommunity {
+  communities {
     ${community}
   }
 `

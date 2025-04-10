@@ -63,7 +63,7 @@ export const groupedKanbanPosts = `
           cat
           state
           title
-          originalCommunitySlug
+          communitySlug
           meta {
             thread
           }
@@ -80,7 +80,7 @@ export const groupedKanbanPosts = `
           cat
           state
           title
-          originalCommunitySlug
+          communitySlug
           meta {
             thread
           }
@@ -97,7 +97,7 @@ export const groupedKanbanPosts = `
           cat
           state
           title
-          originalCommunitySlug
+          communitySlug
           meta {
             thread
           }

@@ -158,7 +158,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
 
   def clean_up_articles(%Community{} = community, :post) do
     Post
-    |> join(:inner, [p], c in assoc(p, :original_community))
+    |> join(:inner, [p], c in assoc(p, :community))
     |> where([p, c], c.id == ^community.id)
     |> ORM.delete_all(:if_exist)
     |> done

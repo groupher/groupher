@@ -7,14 +7,14 @@ alias GroupherServer.CMS.Model.Post
 
 {:ok, all_posts} =
   Post
-  |> where([p], is_nil(p.original_community_slug))
+  |> where([p], is_nil(p.community_slug))
   |> ORM.find_all(%{page: 1, size: 100})
 
 Enum.each(all_posts.entries, fn post ->
-  post = Repo.preload(post, :original_community)
+  post = Repo.preload(post, :community)
 
-  case post.original_community_slug do
-    nil -> ORM.update(post, %{original_community_slug: post.original_community.slug})
+  case post.community_slug do
+    nil -> ORM.update(post, %{community_slug: post.community.slug})
     _ -> {:ok, :pass}
   end
 end)

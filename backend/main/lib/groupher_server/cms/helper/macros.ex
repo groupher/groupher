@@ -128,7 +128,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
       :title,
       :digest,
       :link_addr,
-      :original_community_id,
+      :community_id,
       :comments_count,
       :comments_participants_count,
       :upvotes_count,
@@ -163,7 +163,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
   add(:emotions, :map)
 
   # for :original_community
-  add(:original_community_id, references(:communities, on_delete: :delete_all))
+  add(:community_id, references(:communities, on_delete: :delete_all))
 
   # for :upvote and :collect
   add(:upvotes_count, :integer, default: 0)
@@ -208,8 +208,8 @@ defmodule GroupherServer.CMS.Helper.Macros do
       embeds_one(:meta, Embeds.ArticleMeta, on_replace: :update)
       embeds_one(:emotions, Embeds.ArticleEmotion, on_replace: :update)
 
-      belongs_to(:original_community, Community)
-      field(:original_community_slug, :string)
+      belongs_to(:community, Community)
+      field(:community_slug, :string)
 
       upvote_and_collect_fields()
       viewer_has_fields()

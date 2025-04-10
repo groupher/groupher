@@ -80,11 +80,11 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   unmirror article to a community
   """
   def unmirror_article(%Community{} = target_community, article) do
-    article = Repo.preload(article, [:communities, :original_community, :article_tags])
+    article = Repo.preload(article, [:communities, :community, :article_tags])
 
-    case article.original_community.id == target_community.id do
+    case article.community.id == target_community.id do
       true ->
-        raise_error(:mirror_article, "can not unmirror original_community")
+        raise_error(:mirror_article, "can not unmirror original community")
 
       false ->
         article_tags = tags_without_community(article, target_community)
@@ -104,10 +104,10 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   move article original community to other community
   """
   def move_article(%Community{} = target_community, article, article_tag_ids \\ []) do
-    article = Repo.preload(article, [:communities, :original_community, :article_tags])
+    article = Repo.preload(article, [:communities, :community, :article_tags])
 
     with {:ok, thread} <- thread_of(article) do
-      original_community = article.original_community
+      original_community = article.community
 
       Multi.new()
       |> Multi.run(:move_article, fn _, _ ->
@@ -116,7 +116,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
 
         article
         |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_change(:original_community_id, target_community.id)
+        |> Ecto.Changeset.put_change(:community_id, target_community.id)
         |> Ecto.Changeset.put_assoc(:communities, communities)
         |> Ecto.Changeset.put_assoc(:article_tags, article_tags)
         |> Repo.update()
@@ -180,14 +180,14 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   shortcut for move article to blackhole
   """
   def move_to_blackhole(%Community{} = blackhole, article, article_tag_ids \\ []) do
-    article = Repo.preload(article, [:communities, :original_community, :article_tags])
+    article = Repo.preload(article, [:communities, :community, :article_tags])
 
     with {:ok, thread} <- thread_of(article) do
       Multi.new()
       |> Multi.run(:set_community, fn _, _ ->
         article
         |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_change(:original_community_id, blackhole.id)
+        |> Ecto.Changeset.put_change(:community_id, blackhole.id)
         |> Ecto.Changeset.put_assoc(:communities, [blackhole])
         |> Ecto.Changeset.put_assoc(:article_tags, [])
         |> Repo.update()

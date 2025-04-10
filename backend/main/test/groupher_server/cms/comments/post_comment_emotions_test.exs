@@ -106,7 +106,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
     # test "should subscribe community if need", ~m(post user user2)a do
     #   {:error, _subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: post.original_community_id,
+    #       community_id: post.community_id,
     #       user_id: user.id
     #     })
 
@@ -115,12 +115,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
 
     #   {:ok, subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: post.original_community_id,
+    #       community_id: post.community_id,
     #       user_id: user.id
     #     })
 
     #   assert subscriber.user_id === user.id
-    #   assert subscriber.community_id === post.original_community_id
+    #   assert subscriber.community_id === post.community_id
     # end
   end
 

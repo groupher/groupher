@@ -297,7 +297,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
            ORM.find_article(community_slug, thread, article_id,
-             preload: [[author: :user], :original_community]
+             preload: [[author: :user], :community]
            ),
          true <- can_comment?(article, user) do
       Multi.new()
@@ -320,12 +320,12 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
       end)
       |> Multi.run(:after_hooks, fn _, %{create_comment: comment} ->
         # comment this for test
-        # Hooks.SubscribeCommunity.handle(article.original_community, user)
+        # Hooks.SubscribeCommunity.handle(article.community, user)
         Later.run({Hooks.Cite, :handle, [comment]})
         Later.run({Hooks.Notify, :handle, [:comment, comment, user]})
         Later.run({Hooks.Mention, :handle, [comment]})
         Later.run({Hooks.Audition, :handle, [comment]})
-        Later.run({Hooks.SubscribeCommunity, :handle, [article.original_community, user]})
+        Later.run({Hooks.SubscribeCommunity, :handle, [article.community, user]})
       end)
       |> Repo.transaction()
       |> result()

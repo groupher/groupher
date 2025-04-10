@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       {:ok, blog} = ORM.find_article(community, :blog, result["innerId"])
 
       assert result["innerId"] == to_string(blog.inner_id)
-      assert result["originalCommunity"]["id"] == to_string(community.id)
+      assert result["community"]["id"] == to_string(community.id)
       assert result["linkAddr"] == "https://helloworld"
 
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)

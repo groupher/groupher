@@ -28,7 +28,7 @@ export default () => {
 
   const s = useSalon({ isPinned })
 
-  const backUrl = `/${article.originalCommunitySlug}/${ARTICLE_THREAD.POST}`
+  const backUrl = `/${article.communitySlug}/${ARTICLE_THREAD.POST}`
 
   return (
     <div className={s.wrapper}>

@@ -96,7 +96,7 @@ defmodule GroupherServer.Support.Factory do
       author: mock(:author),
       # views: Enum.random(0..2000),
       views: 0,
-      original_community: mock(:community),
+      community: mock(:community),
       communities: [
         mock(:community),
         mock(:community)
@@ -120,7 +120,7 @@ defmodule GroupherServer.Support.Factory do
       author: mock(:author),
       # views: Enum.random(0..2000),
       views: 0,
-      original_community: mock(:community),
+      community: mock(:community),
       communities: [
         mock(:community),
         mock(:community)
@@ -144,7 +144,7 @@ defmodule GroupherServer.Support.Factory do
       author: mock(:author),
       # views: Enum.random(0..2000),
       views: 0,
-      original_community: mock(:community),
+      community: mock(:community),
       communities: [
         mock(:community),
         mock(:community)
@@ -167,7 +167,7 @@ defmodule GroupherServer.Support.Factory do
       author: mock(:author),
       # views: Enum.random(0..2000),
       views: 0,
-      original_community: mock(:community),
+      community: mock(:community),
       communities: [
         mock(:community)
       ],

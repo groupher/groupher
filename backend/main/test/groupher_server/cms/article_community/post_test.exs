@@ -22,19 +22,19 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
   describe "[article mirror/move]" do
     test "created post has original community info", ~m(user community post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, post} = ORM.find(Post, post.id, preload: :original_community)
+      {:ok, post} = ORM.find(Post, post.id, preload: :community)
 
-      assert post.original_community_id == community.id
+      assert post.community_id == community.id
     end
 
     test "post can be move to other community", ~m(user community community2 post_attrs)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      assert post.original_community_id == community.id
+      assert post.community_id == community.id
 
       {:ok, _} = CMS.move_article(community2, post)
-      {:ok, post} = ORM.find(Post, post.id, preload: [:original_community, :communities])
+      {:ok, post} = ORM.find(Post, post.id, preload: [:community, :communities])
 
-      assert post.original_community.id == community2.id
+      assert post.community.id == community2.id
       assert exist_in?(community2, post.communities)
     end
 
@@ -51,15 +51,15 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       {:ok, post} = CMS.set_article_tag(post, article_tag2.id)
 
       assert post.article_tags |> length == 2
-      assert post.original_community_id == community.id
+      assert post.community_id == community.id
 
       {:ok, _} = CMS.move_article(community2, post)
 
       {:ok, post} =
-        ORM.find(Post, post.id, preload: [:original_community, :communities, :article_tags])
+        ORM.find(Post, post.id, preload: [:community, :communities, :article_tags])
 
       assert post.article_tags |> length == 0
-      assert post.original_community.id == community2.id
+      assert post.community.id == community2.id
       assert exist_in?(community2, post.communities)
     end
 
@@ -83,9 +83,9 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       {:ok, _} = CMS.move_article(community2, post, [article_tag.id, article_tag2.id])
 
       {:ok, post} =
-        ORM.find(Post, post.id, preload: [:original_community, :communities, :article_tags])
+        ORM.find(Post, post.id, preload: [:community, :communities, :article_tags])
 
-      assert post.original_community.id == community2.id
+      assert post.community.id == community2.id
       assert post.article_tags |> length == 2
 
       assert not exist_in?(article_tag0, post.article_tags)
@@ -176,12 +176,12 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
 
     test "post can be mirror to home", ~m(community home_community post_attrs user)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      assert post.original_community_id == community.id
+      assert post.community_id == community.id
 
       {:ok, _} = CMS.mirror_to_home(home_community, post)
-      {:ok, post} = ORM.find(Post, post.id, preload: [:original_community, :communities])
+      {:ok, post} = ORM.find(Post, post.id, preload: [:community, :communities])
 
-      assert post.original_community_id == community.id
+      assert post.community_id == community.id
       assert post.communities |> length == 2
 
       assert exist_in?(community, post.communities)
@@ -210,14 +210,14 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       {:ok, article_tag} = CMS.create_article_tag(home_community, :post, article_tag_attrs, user)
 
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      assert post.original_community_id == community.id
+      assert post.community_id == community.id
 
       {:ok, _} = CMS.mirror_to_home(home_community, post, [article_tag0.id, article_tag.id])
 
       {:ok, post} =
-        ORM.find(Post, post.id, preload: [:original_community, :communities, :article_tags])
+        ORM.find(Post, post.id, preload: [:community, :communities, :article_tags])
 
-      assert post.original_community_id == community.id
+      assert post.community_id == community.id
       assert post.communities |> length == 2
 
       assert exist_in?(community, post.communities)
@@ -242,12 +242,12 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
 
     test "post can be move to blackhole", ~m(community blackhole post_attrs user)a do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      assert post.original_community_id == community.id
+      assert post.community_id == community.id
 
       {:ok, _} = CMS.move_to_blackhole(blackhole, post)
-      {:ok, post} = ORM.find(Post, post.id, preload: [:original_community, :communities])
+      {:ok, post} = ORM.find(Post, post.id, preload: [:community, :communities])
 
-      assert post.original_community.id == blackhole.id
+      assert post.community.id == blackhole.id
       assert post.communities |> length == 1
 
       assert exist_in?(blackhole, post.communities)
@@ -272,14 +272,14 @@ defmodule GroupherServer.Test.CMS.ArticleCommunity.Post do
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
       {:ok, _} = CMS.set_article_tag(post, article_tag0.id)
 
-      assert post.original_community_id == community.id
+      assert post.community_id == community.id
 
       {:ok, _} = CMS.move_to_blackhole(blackhole, post, [article_tag.id])
 
       {:ok, post} =
-        ORM.find(Post, post.id, preload: [:original_community, :communities, :article_tags])
+        ORM.find(Post, post.id, preload: [:community, :communities, :article_tags])
 
-      assert post.original_community.id == blackhole.id
+      assert post.community.id == blackhole.id
       assert post.communities |> length == 1
       assert post.article_tags |> length == 1
 

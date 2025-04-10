@@ -1,5 +1,5 @@
 /*
- * ChankgelogLayout
+ * Changelog Layout
  */
 
 import type { FC } from 'react'
@@ -29,7 +29,7 @@ const ChangelogLayout: FC<TProps> = ({ article }) => {
   const router = useRouter()
   const { innerId, author, title } = article
 
-  const backUrl = `/${article.originalCommunitySlug}/${ARTICLE_THREAD.CHANGELOG}`
+  const backUrl = `/${article.communitySlug}/${ARTICLE_THREAD.CHANGELOG}`
 
   return (
     <div className={s.wrapper}>

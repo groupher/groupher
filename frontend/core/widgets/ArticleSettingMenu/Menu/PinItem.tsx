@@ -26,8 +26,8 @@ export default () => {
 
   const handlePin = useCallback(() => {
     const action = !pin
-      ? pinPost({ id: article.id, communityId: article.originalCommunity.id })
-      : undoPinPost({ id: article.id, communityId: article.originalCommunity.id })
+      ? pinPost({ id: article.id, communityId: article.community.id })
+      : undoPinPost({ id: article.id, communityId: article.community.id })
 
     action.then((result) => {
       if (result.error) {

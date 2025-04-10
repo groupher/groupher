@@ -16,11 +16,11 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
        ~m(user_conn community user blog_attrs)a do
     {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
-    variables = %{community: blog.original_community_slug, id: blog.inner_id}
+    variables = %{community: blog.community_slug, id: blog.inner_id}
     results = user_conn |> gq_query(Schema.q(:article, :blog), variables)
 
     assert results["innerId"] == to_string(blog.inner_id)
-    assert results["originalCommunitySlug"] == blog.original_community_slug
+    assert results["communitySlug"] == blog.community_slug
 
     assert is_valid_kv?(results, "title", :string)
 
@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
        ~m(guest_conn community blog_attrs user)a do
     {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 
-    variables = %{community: blog.original_community_slug, id: blog.inner_id}
+    variables = %{community: blog.community_slug, id: blog.inner_id}
     results = guest_conn |> gq_query(Schema.q(:article, :blog), variables)
 
     assert results["innerId"] == to_string(blog.inner_id)
@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
 
   test "pending state should in meta", ~m(guest_conn user_conn community user blog_attrs)a do
     {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-    variables = %{community: blog.original_community_slug, id: blog.inner_id}
+    variables = %{community: blog.community_slug, id: blog.inner_id}
     results = user_conn |> gq_query(Schema.q(:article, :blog), variables)
 
     assert results |> get_in(["meta", "isLegal"])

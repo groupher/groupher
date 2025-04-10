@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     # test "should subscribe community if not", ~m(user post)a do
     #   {:error, _subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: post.original_community_id,
+    #       community_id: post.community_id,
     #       user_id: user.id
     #     })
 
@@ -51,12 +51,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     #   {:ok, subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: post.original_community_id,
+    #       community_id: post.community_id,
     #       user_id: user.id
     #     })
 
     #   assert subscriber.user_id === user.id
-    #   assert subscriber.community_id === post.original_community_id
+    #   assert subscriber.community_id === post.community_id
     # end
 
     test "can get viewer joined state", ~m(community user post)a do
@@ -240,7 +240,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     # test "should auto subscribe community upvote a post comment", ~m(user post)a do
     #   {:error, _subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: post.original_community_id,
+    #       community_id: post.community_id,
     #       user_id: user.id
     #     })
 
@@ -249,12 +249,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     #   {:ok, subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: post.original_community_id,
+    #       community_id: post.community_id,
     #       user_id: user.id
     #     })
 
     #   assert subscriber.user_id === user.id
-    #   assert subscriber.community_id === post.original_community_id
+    #   assert subscriber.community_id === post.community_id
 
     #   {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
 

@@ -214,11 +214,11 @@ defmodule Helper.QueryBuilder do
           where: t.id == ^community_id
         )
 
-      {:original_community_id, original_community_id}, queryable ->
+      {:community_id, community_id}, queryable ->
         from(
           q in queryable,
-          join: t in assoc(q, :original_community),
-          where: t.id == ^original_community_id
+          join: t in assoc(q, :community),
+          where: t.id == ^community_id
         )
 
       {:community_slug, community_slug}, queryable ->

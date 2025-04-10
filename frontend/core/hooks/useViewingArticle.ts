@@ -15,11 +15,10 @@ type TRet = {
 export const parseArticleLink = (article: TArticle): string => {
   if (!article?.meta?.thread) return ''
 
-  const { meta, originalCommunity, innerId } = article
-  const community = originalCommunity.slug
+  const { meta, community, innerId } = article
   const thread = meta.thread.toLowerCase()
 
-  return `${SITE_URL}/${community}/${thread}/${innerId}`
+  return `${SITE_URL}/${community.slug}/${thread}/${innerId}`
 }
 
 export default (): TRet => {

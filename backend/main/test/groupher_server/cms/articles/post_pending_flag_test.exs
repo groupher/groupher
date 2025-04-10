@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
 
   describe "[pending posts flags]" do
     test "pending post can not be read", ~m(post_m)a do
-      {:ok, _} = CMS.read_article(post_m.original_community_slug, :post, post_m.inner_id)
+      {:ok, _} = CMS.read_article(post_m.community_slug, :post, post_m.inner_id)
 
       {:ok, _} =
         CMS.set_article_illegal(:post, post_m.id, %{
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
       {:ok, post_m} = ORM.find(CMS.Model.Post, post_m.id)
       assert post_m.pending == @audit_illegal
 
-      {:error, reason} = CMS.read_article(post_m.original_community_slug, :post, post_m.inner_id)
+      {:error, reason} = CMS.read_article(post_m.community_slug, :post, post_m.inner_id)
       assert reason |> is_error?(:pending)
     end
 
@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.read_article(post.original_community_slug, :post, post.inner_id)
+      {:ok, _} = CMS.read_article(post.community_slug, :post, post.inner_id)
 
       {:ok, _} =
         CMS.set_article_illegal(:post, post.id, %{
@@ -62,20 +62,20 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
         })
 
       {:ok, post_read} =
-        CMS.read_article(post.original_community_slug, :post, post.inner_id, user)
+        CMS.read_article(post.community_slug, :post, post.inner_id, user)
 
       assert post_read.id == post.id
 
       {:ok, user2} = db_insert(:user)
 
       {:error, reason} =
-        CMS.read_article(post.original_community_slug, :post, post.inner_id, user2)
+        CMS.read_article(post.community_slug, :post, post.inner_id, user2)
 
       assert reason |> is_error?(:pending)
     end
 
     test "pending post can set/unset pending", ~m(post_m)a do
-      {:ok, _} = CMS.read_article(post_m.original_community_slug, :post, post_m.inner_id)
+      {:ok, _} = CMS.read_article(post_m.community_slug, :post, post_m.inner_id)
 
       {:ok, _} =
         CMS.set_article_illegal(:post, post_m.id, %{
@@ -92,11 +92,11 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
       {:ok, post_m} = ORM.find(CMS.Model.Post, post_m.id)
       assert post_m.pending == @audit_legal
 
-      {:ok, _} = CMS.read_article(post_m.original_community_slug, :post, post_m.inner_id)
+      {:ok, _} = CMS.read_article(post_m.community_slug, :post, post_m.inner_id)
     end
 
     test "pending post's meta should have info", ~m(post_m)a do
-      {:ok, _} = CMS.read_article(post_m.original_community_slug, :post, post_m.inner_id)
+      {:ok, _} = CMS.read_article(post_m.community_slug, :post, post_m.inner_id)
 
       {:ok, _} =
         CMS.set_article_illegal(:post, post_m.id, %{
