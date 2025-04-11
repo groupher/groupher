@@ -81,7 +81,6 @@ export const author = `
   shortbio
 `
 export const article = `
-  id
   innerId
   communitySlug
   isPinned
@@ -145,7 +144,6 @@ export const pageArticleMeta = `
   }
 `
 export const post = `
-  id
   innerId
   title
   insertedAt
@@ -288,9 +286,9 @@ export const pagi = `
 export const getUpvote = (thread, withLatestUser = false) => {
   if (withLatestUser) {
     return gql`
-    mutation ($id: ID!) {
-      upvote${titleCase(thread)}(id: $id) {
-        id
+    mutation ($id: ID!, $community: String!) {
+      upvote${titleCase(thread)}(id: $id, $community: $community) {
+        innerId
         upvotesCount
         meta {
           latestUpvotedUsers {
@@ -302,9 +300,9 @@ export const getUpvote = (thread, withLatestUser = false) => {
   `
   }
   return gql`
-    mutation ($id: ID!) {
-      upvote${titleCase(thread)}(id: $id) {
-        id
+    mutation ($id: ID!, $community: String!) {
+      upvote${titleCase(thread)}(id: $id, $community: $community) {
+        innerId
         upvotesCount
       }
     }
@@ -314,9 +312,9 @@ export const getUpvote = (thread, withLatestUser = false) => {
 export const getUndoUpvote = (thread, withLatestUser = false) => {
   if (withLatestUser) {
     return gql`
-    mutation ($id: ID!) {
-      undoUpvote${titleCase(thread)}(id: $id) {
-        id
+    mutation ($id: ID!, $community: String!) {
+      undoUpvote${titleCase(thread)}(id: $id, $community: $community) {
+        innerId
         upvotesCount
         meta {
           latestUpvotedUsers {
@@ -328,9 +326,9 @@ export const getUndoUpvote = (thread, withLatestUser = false) => {
   `
   }
   return gql`
-    mutation ($id: ID!) {
-      undoUpvote${titleCase(thread)}(id: $id) {
-        id
+    mutation ($id: ID!, $community: String!) {
+      undoUpvote${titleCase(thread)}(id: $id, $community: $community) {
+        innerId
         upvotesCount
       }
     }
