@@ -21,7 +21,7 @@ import METRIC from '~/const/metric'
 
 import { P } from '~/schemas'
 import { GRAPHQL_ENDPOINT } from '~/config'
-import { parseDashboard, parseWallpaper } from '~/utils/ssr/helper3'
+import { parseWallpaper, parseDashboard } from '~/utils/ssr/helper'
 import { extractQueryName } from '~/utils/graphql'
 
 export const gqFetch = async (query, variables) => {

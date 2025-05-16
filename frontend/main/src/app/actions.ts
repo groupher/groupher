@@ -13,7 +13,7 @@ import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 
 import { P } from '~/schemas'
 import { GRAPHQL_ENDPOINT } from '~/config'
-import { parseDashboard, parseWallpaper } from '~/utils/ssr/helper3'
+import { parseDashboard, parseWallpaper } from '~/utils/ssr/helper'
 
 import { unstable_cache } from 'next/cache'
 
@@ -44,22 +44,6 @@ export const gqFetch = async (
       tags: options?.tags,
     },
   )()
-}
-
-export const gqFetch2 = async (query, variables, revalidate = 60) => {
-  return await fetch(GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      query,
-      variables,
-    }),
-    next: {
-      revalidate,
-    },
-  })
 }
 
 const ARTICLES_FILTER = {

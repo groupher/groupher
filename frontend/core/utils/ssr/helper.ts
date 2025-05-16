@@ -1,7 +1,4 @@
-import { useMemo } from 'react'
-
 import { reject, includes, values, isEmpty, mergeRight } from 'ramda'
-import { useParams, usePathname } from 'next/navigation'
 
 import type {
   TCommunity,
@@ -15,10 +12,10 @@ import type {
   TDashboardLayoutRoute,
   TDashboardAliasRoute,
   TPagedArticlesParams,
-  TArticleParams,
-  TPathQuery,
   TParsedWallpaper,
   TParseDashboard,
+  // TArticleParams,
+  // TPathQuery,
 } from '~/spec'
 import { BUILDIN_ALIAS } from '~/const/name'
 import { PAGE_COLOR_DEFAULT } from '~/const/colors'
@@ -49,32 +46,11 @@ export const commonRes = (result): TGQSSRResult => {
   }
 }
 
-export const useCommunityParam = (): string => {
-  const params = useParams()
-  const pathname = usePathname()
-
-  return useMemo(() => parseCommunity(pathname, params.community as string), [params, pathname])
-}
-
-export const useThreadParam = (): string => {
-  const pathname = usePathname()
-
-  return useMemo(() => parseThread(pathname), [pathname])
-}
-
-export const useIdParam = (): string => {
-  const params = useParams()
-
-  return useMemo(() => params.id as string, [params])
-}
-
 /**
  * common url filter logic for all paged articles queries
  */
-export const usePagedArticlesParams = (): TPagedArticlesParams => {
-  // const searchParams = useSearchParams()
-  const searchParams = new Map()
-  const community = useCommunityParam()
+export const usePagedArticlesParams = (searchParams: URLSearchParams): TPagedArticlesParams => {
+  const community = 'home'
 
   const filter = reject(nilOrEmpty)({
     community,
@@ -87,22 +63,6 @@ export const usePagedArticlesParams = (): TPagedArticlesParams => {
   }) as TPagedArticlesParams
 
   return mergeRight(ARTICLES_FILTER, filter)
-}
-
-/**
- * common url filter logic for all paged articles queries
- */
-export const useArticleParams = (): TArticleParams => {
-  const params = useParams()
-  const pathname = usePathname()
-
-  return {
-    community: useMemo(
-      () => parseCommunity(pathname, params.community as string),
-      [params, pathname],
-    ),
-    id: params.id as string,
-  }
 }
 
 export const parseCommunity = (pathname: string, communityPath: string): string => {
@@ -267,43 +227,5 @@ export const parseDashboard = (community: TCommunity, pathname: string): TParseD
       ...fieldsObj,
     },
     ...parseDashboardThread(pathname),
-  }
-}
-
-export const usePathCheck = (type?: TPathQuery, curThread?: TThread): boolean => {
-  const pathname = usePathname()
-  const thread = curThread || useThreadParam()
-
-  // avoid .image like query
-  if (!pathname || pathname.includes('.') || pathname.startsWith('_')) return false
-
-  switch (type) {
-    // match：/[community]/[thread] 或 /[community]/[thread]?query
-    case 'pagedDocs':
-    case 'pagedChangelogs':
-    case 'pagedBlogs':
-    case 'pagedPosts':
-      // console.warn('## checking type: ', type)
-      // console.warn('## checking thread: ', thread)
-      // console.warn('## checking pathname: ', pathname)
-      // console.info('## result: ', new RegExp(`^\\/[^\\/]+\\/${thread}(\\/|\\?|$)`).test(pathname))
-      return new RegExp(`^\\/[^\\/]+\\/${thread}(\\/|\\?|$)`).test(pathname)
-
-    // match：/[community]/[thread]/id 或 /[community]/[thread]/id?query
-    case 'doc':
-    case 'changelog':
-    case 'blog':
-    case 'post':
-      return new RegExp(`^\\/[^\\/]+\\/${thread}\\/[^\\/]+(\\/|\\?|$)`).test(pathname)
-
-    case 'kanbanPosts': {
-      return thread === THREAD.KANBAN
-    }
-    case 'tags': {
-      return ['post', 'doc', 'changelog', 'blog'].includes(thread)
-    }
-
-    default:
-      return true
   }
 }
