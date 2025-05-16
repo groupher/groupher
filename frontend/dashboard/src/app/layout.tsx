@@ -1,33 +1,43 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
+import { headers } from 'next/headers'
 
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 
-import '../salon/global.css'
+import StoreProvider from '~/stores/provider'
+import { GlobalLayout, GraphQLProvider, getSSRInitData, parseRouteInfo } from '~/providers'
 
-import { GraphQLProvider, StateStoreProvider, GlobalLayout } from './providers'
+import '../salon/global.css'
 
 export const metadata: Metadata = {
   title: 'Groupher | 让你的产品听见用户的声音',
   description: '讨论区、看板、更新日志、帮助文档多合一，收集沉淀用户反馈，助你打造更好的产品。',
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  // const token = cookies().get('jwtToken')?.value || null
-
-  // NOTE: SessionProvider is not nessary, just can not use useSession in component, which
-  // has wired behavior for query /sesssion mutiple times.
-  // import { SessionProvider } from 'next-auth/react'
-  // <SessionProvider refetchOnWindowFocus={false}></SessionProvider>
+const InitDataLoader = async ({ children }) => {
+  const headersList = await headers()
+  const routeInfo = headersList.get('x-route')
+  const urlInfo = parseRouteInfo(routeInfo)
+  const initData = await getSSRInitData(urlInfo)
 
   return (
+    <GraphQLProvider>
+      <StoreProvider initData={initData}>{children}</StoreProvider>
+    </GraphQLProvider>
+  )
+}
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
     <html lang="en">
-      <body className="debug">
-        <GraphQLProvider>
-          <StateStoreProvider>
+      <body>
+        <Suspense fallback={<h1>todo...</h1>}>
+          {/* @ts-ignore */}
+          <InitDataLoader>
             <GlobalLayout>{children}</GlobalLayout>
-          </StateStoreProvider>
-        </GraphQLProvider>
+          </InitDataLoader>
+        </Suspense>
         <Analytics />
         <SpeedInsights />
       </body>

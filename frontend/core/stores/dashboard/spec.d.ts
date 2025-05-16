@@ -38,6 +38,7 @@ import type {
   TOverview,
   TPagedArticles,
   TPagedCommunities,
+  TModerator,
 } from '~/spec'
 
 import type {
@@ -51,12 +52,6 @@ import type {
 } from '~/const/route'
 
 export type { TRootStore } from '../spec'
-
-type TModerator = {
-  passportItemCount: number
-  role: string
-  user: TUser
-}
 
 type TFile = {
   index: number
@@ -177,7 +172,7 @@ export type TSettingsFields = {
   widgetsType: TWidgetType
 }
 
-export type TInitState = Partial<TSettingsFields>
+export type TInit = Partial<TSettingsFields>
 
 export type TStore = TSettingsFields & {
   initFilled: boolean

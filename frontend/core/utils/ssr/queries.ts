@@ -1,5 +1,5 @@
 /**
- * for reault returned by urql, ref:
+ * for result returned by urql, ref:
  * https://formidable.com/open-source/urql/docs/api/urql/#usequery
  * https://formidable.com/open-source/urql/docs/api/core/#operationresult
  */
@@ -8,11 +8,11 @@ import { useMemo } from 'react'
 import { values, includes } from 'ramda'
 
 import { useQuery } from '@urql/next'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 
 // import LangParser from 'accept-language-parser'
 
-import type { TCommunity, TMetric, TThemeName } from '~/spec'
+import type { TCommunity, TMetric, TThemeName, TParsedWallpaper, TParseDashboard } from '~/spec'
 import { P } from '~/schemas'
 import { THREAD, ARTICLE_THREAD } from '~/const/thread'
 import { ROUTE } from '~/const/route'
@@ -30,21 +30,17 @@ import type {
   TPagedPostsRes,
   TGroupedKanbanPostsRes,
   TPagedChangelogsRes,
-  TParsedWallpaper,
-  TParseDashboard,
   TFilterSearchParams,
   TUseI18n,
 } from './spec'
 
 import {
   commonRes,
+  usePathCheck,
   usePagedArticlesParams,
   useArticleParams,
   useCommunityParam,
   useThreadParam,
-  useIsFrameworkQuery,
-  useSkipStaticQuery,
-  useIdParam,
   //
   parseWallpaper,
   parseDashboard,
@@ -53,15 +49,17 @@ import {
 export { parseCommunity, useThreadParam } from './helper'
 
 export const useThemeFromURL = (): TThemeName => {
-  const searchParams = useSearchParams()
-  const theme = searchParams.get('theme')
+  return THEME.LIGHT
 
-  return useMemo(() => {
-    if (theme === THEME.DARK) {
-      return THEME.DARK
-    }
-    return THEME.LIGHT
-  }, [theme]) // 依赖项是 theme，只有 theme 变化时才重新计算
+  // const searchParams = useSearchParams()
+  // const theme = searchParams.get('theme')
+
+  // return useMemo(() => {
+  //   if (theme === THEME.DARK) {
+  //     return THEME.DARK
+  //   }
+  //   return THEME.LIGHT
+  // }, [theme])
 }
 
 /**
@@ -71,20 +69,16 @@ export const useThemeFromURL = (): TThemeName => {
  */
 export const useI18n = (): TUseI18n => {
   const locale = useParseLang()
-  const skipLandingQuery = useSkipStaticQuery()
-  // const searchParams = useSearchParams()
-  // console.log('## ## data: ', data)
-
+  const matched = usePathCheck()
   // NOTE: put this parser into frontend maybe ?
   // const lang = LangParser.parse('zh-CN,zh;q=0.9,en;q=0.8,ja;q=0.7,it;q=0.6,fr;q=0.5,zh-TW;q=0.4')
   // console.log('## ## lang: ', lang)
-
   const [result] = useQuery({
     query: i18nQuery,
     // TODO: use community.locale or search lang query
     variables: { locale },
     // pause: false,
-    pause: skipLandingQuery,
+    pause: !matched,
   })
 
   return useMemo(() => {
@@ -94,18 +88,6 @@ export const useI18n = (): TUseI18n => {
     }
   }, [locale, result.data])
 }
-
-// export const useThemeFromURL = (): TThemeName => {
-//   const searchParams = useSearchParams()
-//   const theme = searchParams.get('theme')
-//   console.log('## ## geting theme from url')
-
-//   if (theme === THEME.DARK) {
-//     return THEME.DARK
-//   }
-
-//   return THEME.LIGHT
-// }
 
 export const useMetric = (): TMetric => {
   const pathname = usePathname()
@@ -130,7 +112,7 @@ export const useMetric = (): TMetric => {
 
 export const useCommunity = (): TCommunityRes => {
   const slug = useCommunityParam()
-  const skipLandingQuery = useSkipStaticQuery()
+  const matched = usePathCheck('community')
 
   const [result] = useQuery({
     query: P.community,
@@ -138,7 +120,7 @@ export const useCommunity = (): TCommunityRes => {
       slug,
       userHasLogin: false,
     },
-    pause: skipLandingQuery,
+    pause: !matched,
   })
 
   return {
@@ -149,7 +131,7 @@ export const useCommunity = (): TCommunityRes => {
 
 export const useTags = (): TTagsRes => {
   const community = useCommunityParam()
-  const skipLandingQuery = useSkipStaticQuery()
+  const matched = usePathCheck('tags')
   const thread = useThreadParam()
 
   const [result] = useQuery({
@@ -157,7 +139,7 @@ export const useTags = (): TTagsRes => {
     variables: {
       filter: { community, thread: thread.toUpperCase() },
     },
-    pause: !(!skipLandingQuery && includes(thread, values(ARTICLE_THREAD))),
+    pause: !matched,
   })
 
   return {
@@ -168,14 +150,31 @@ export const useTags = (): TTagsRes => {
 
 export const usePagedPosts = (): TPagedPostsRes => {
   const filter = usePagedArticlesParams()
-  const thread = useThreadParam()
-  const skipLandingQuery = useSkipStaticQuery()
-  const id = useIdParam()
+  const matched = usePathCheck('pagedPosts')
 
   const [result] = useQuery({
     query: P.pagedPosts,
     variables: { filter, userHasLogin: false },
-    pause: !(!skipLandingQuery && thread === THREAD.POST && !id),
+    pause: !matched,
+  })
+
+  return {
+    ...commonRes(result),
+    pagedPosts: result.data?.pagedPosts,
+  }
+}
+
+export const usePagedPosts2 = (): TPagedPostsRes => {
+  const filter = {
+    community: 'home',
+    page: 1,
+    size: 20,
+  }
+
+  const [result] = useQuery({
+    query: P.pagedPosts,
+    variables: { filter, userHasLogin: false },
+    pause: false,
   })
 
   return {
@@ -186,13 +185,13 @@ export const usePagedPosts = (): TPagedPostsRes => {
 
 export const usePagedChangelogs = (): TPagedChangelogsRes => {
   const filter = usePagedArticlesParams()
-  const skipLandingQuery = useSkipStaticQuery()
-  const thread = useThreadParam()
+  const matched = usePathCheck('pagedChangelogs', 'changelog')
+  console.log('## usePagedChangelogs matched? ', matched)
 
   const [result] = useQuery({
     query: P.pagedChangelogs,
     variables: { filter, userHasLogin: false },
-    pause: !(!skipLandingQuery && thread === THREAD.CHANGELOG),
+    pause: !matched,
   })
 
   return {
@@ -203,13 +202,12 @@ export const usePagedChangelogs = (): TPagedChangelogsRes => {
 
 export const usePost = (): TPostRes => {
   const { community, id } = useArticleParams()
-  const skipLandingQuery = useSkipStaticQuery()
-  const thread = useThreadParam()
+  const matched = usePathCheck('post')
 
   const [result] = useQuery({
     query: P.post,
     variables: { community, id, userHasLogin: false },
-    pause: !(!skipLandingQuery && thread === THREAD.POST && id),
+    pause: !matched,
   })
 
   return {
@@ -220,13 +218,12 @@ export const usePost = (): TPostRes => {
 
 export const useChangelog = (): TChangelogRes => {
   const { community, id } = useArticleParams()
-  const skipLandingQuery = useSkipStaticQuery()
-  const thread = useThreadParam()
+  const matched = usePathCheck('changelog')
 
   const [result] = useQuery({
     query: P.changelog,
     variables: { community, id, userHasLogin: false },
-    pause: !(!skipLandingQuery && thread === THREAD.CHANGELOG && id),
+    pause: !matched,
   })
 
   return {
@@ -237,13 +234,12 @@ export const useChangelog = (): TChangelogRes => {
 
 export const useGroupedKanbanPosts = (): TGroupedKanbanPostsRes => {
   const community = useCommunityParam()
-  const skipLandingQuery = useSkipStaticQuery()
-  const thread = useThreadParam()
+  const matched = usePathCheck('kanbanPosts')
 
   const [result] = useQuery({
     query: P.groupedKanbanPosts,
     variables: { community, userHasLogin: false },
-    pause: !(!skipLandingQuery && thread === THREAD.KANBAN),
+    pause: !matched,
   })
 
   return {
@@ -256,35 +252,18 @@ export const useGroupedKanbanPosts = (): TGroupedKanbanPostsRes => {
  * wallpaper related settings for all page
  */
 export const useWallpaper = (community: TCommunity): TParsedWallpaper => {
-  const isStaticQuery = useIsFrameworkQuery()
+  const matched = usePathCheck()
 
   // @ts-ignore
-  return !isStaticQuery ? parseWallpaper(community) : {}
+  return matched ? parseWallpaper(community) : {}
 }
 
-/**
- * general dashboard settings for all page
- */
-// export const useDashboard = (community: TCommunity): TParseDashboard => {
-//   const isStaticQuery = useIsFrameworkQuery()
-//   const pathname = usePathname()
-
-//   // @ts-ignore
-//   if (isStaticQuery || !community) return {}
-
-//   return parseDashboard(community, pathname)
-// }
-
 export const useDashboard = (community: TCommunity): TParseDashboard => {
-  const isStaticQuery = useIsFrameworkQuery()
+  const matched = usePathCheck()
   const pathname = usePathname()
 
-  return useMemo(() => {
-    // 如果是静态查询或者 community 不存在，直接返回空对象
-    if (isStaticQuery || !community) return {}
-
-    return parseDashboard(community, pathname)
-  }, [community, isStaticQuery, pathname]) as TParseDashboard // 当这些值变化时，才重新计算结果
+  // @ts-ignore
+  return matched ? parseDashboard(community, pathname) : {}
 }
 
 /**
@@ -293,7 +272,7 @@ export const useDashboard = (community: TCommunity): TParseDashboard => {
  */
 
 export const useFilterSearchParams = (): TFilterSearchParams => {
-  const searchParams = useSearchParams()
+  const searchParams = new Map() // useSearchParams()
 
   return useMemo(() => {
     const filter = {
@@ -313,22 +292,3 @@ export const useFilterSearchParams = (): TFilterSearchParams => {
     return filter
   }, [searchParams]) // useMemo依赖于searchParams对象
 }
-
-// export const useFilterSearchParams = (): TFilterSearchParams => {
-//   const searchParams = useSearchParams()
-//   const filter = {
-//     activeCat: null,
-//     activeState: null,
-//     activeOrder: null,
-//   }
-
-//   const cat = searchParams.get(URL_PARAM.CAT)?.toUpperCase()
-//   const state = searchParams.get(URL_PARAM.STATE)?.toUpperCase()
-//   const order = searchParams.get(URL_PARAM.ORDER)?.toUpperCase()
-
-//   if (includes(cat, values(ARTICLE_CAT))) filter.activeCat = cat
-//   if (includes(state, values(ARTICLE_STATE))) filter.activeState = state
-//   if (includes(order, values(ARTICLE_ORDER))) filter.activeOrder = order
-
-//   return filter
-// }

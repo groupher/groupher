@@ -1,11 +1,21 @@
 'use client'
 
+import useLinkMount from '~/hooks/useLinkMount'
 import useIsSidebarLayout from '~/hooks/useIsSidebarLayout'
+import useViewing from '~/hooks/useViewing'
+import { THREAD } from '~/const/thread'
 
 import PostThread from '~/containers//thread/PostThread'
 
-const CommunityPostPage = () => {
+export default () => {
   const isSidebarLayout = useIsSidebarLayout()
+  const { setActiveThread } = useViewing()
+
+  const loader = () => {
+    console.warn('## -> load real post data in client!')
+    setActiveThread(THREAD.POST)
+  }
+  useLinkMount(loader)
 
   return (
     <>
@@ -14,5 +24,3 @@ const CommunityPostPage = () => {
     </>
   )
 }
-
-export default CommunityPostPage

@@ -481,7 +481,6 @@
 }
 
 .tippy-box {
-  border: 1px solid;
   border-radius: 4px;
   transition: all .2s ease-in-out !important;
 }
@@ -489,7 +488,6 @@
 /* wechat brower not support backdrop-filter well */
 @supports (-webkit-backdrop-filter:none) or (backdrop-filter:none) {
   .tippy-box {
-    border: 1px solid;
     border-radius: 4px;
     transition: all .2s ease-in-out !important;
   }

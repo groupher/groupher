@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 
 import { EMAIL_SUPPORT } from '~/config'
@@ -6,10 +8,10 @@ import { COLOR_NAME } from '~/const/colors'
 import CoffeeSVG from '~/icons/CoffeeDuo'
 
 import useHover from '~/hooks/useHover'
-import useThemeData from '~/hooks/useThemeData'
+// import useThemeData from '~/hooks/useThemeData'
 
 import Img from '~/Img'
-import AnimatedCount from '~/widgets/AnimatedCount'
+// import AnimatedCount from '~/widgets/AnimatedCount'
 import Button from '~/widgets/Buttons/Button'
 
 import Feature from './Feature'
@@ -26,7 +28,7 @@ export default ({ layout = 'page' }: TProps) => {
   const s = useSalon()
 
   const [paidHoveredRef, paidHovered] = useHover<HTMLDivElement>()
-  const themeData = useThemeData()
+  // const themeData = useThemeData()
 
   return (
     <div className={cn(s.wrapper, layout === 'modal' && 'scale-95 mb-0')}>
@@ -62,7 +64,7 @@ export default ({ layout = 'page' }: TProps) => {
         <div ref={paidHoveredRef} className={s.column}>
           <div className={s.gradientOrange} />
           <Img
-            src="landing/catpaw.png"
+            src="/landing/catpaw.png"
             className={cn(
               s.catPawImg,
               paidHovered ? 'top-36 -left-1 mt-1' : 'top-20 left-2.5 -mt-3',
@@ -74,20 +76,20 @@ export default ({ layout = 'page' }: TProps) => {
           <div className={s.price}>
             <span className={s.priceUnit}>¥</span>
             <div className={s.priceNum}>
-              <AnimatedCount
+              {/* <AnimatedCount
                 count={paidHovered ? 9 : 0}
                 forceColor={themeData.article.title}
                 left={2}
                 top={-0.5}
                 size="huge"
-              />
+              /> */}
               <div className="opacity-35">.</div>
-              <AnimatedCount
+              {/* <AnimatedCount
                 count={paidHovered ? 9 : 0}
                 forceColor={themeData.article.title}
                 top={0.5}
                 size="large"
-              />
+              /> */}
             </div>
             <div className={s.priceDesc}>元/月</div>
           </div>

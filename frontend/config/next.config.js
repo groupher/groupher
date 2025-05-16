@@ -7,26 +7,11 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 /** @type {import('next').NextConfig} */
 const baseConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   productionBrowserSourceMaps: false,
   experimental: {
+    dynamicIO: true, // fur use cache
     scrollRestoration: true,
     optimizePackageImports: ['ramda'],
-    missingSuspenseWithCSRBailout: false,
-  },
-
-  async headers() {
-    return [
-      {
-        source: '/oops',
-        headers: [
-          {
-            key: 'cache-control',
-            value: 's-maxage=6000, stale-while-revalidate=30',
-          },
-        ],
-      },
-    ]
   },
 }
 

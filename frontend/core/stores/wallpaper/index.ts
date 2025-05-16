@@ -4,7 +4,7 @@ import { mergeLeft, mergeDeepRight } from 'ramda'
 import type { TWallpaperGradientDir } from '~/spec'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 
-import type { TStore, TInitState } from './spec'
+import type { TStore, TInit } from './spec'
 
 export const INITIAL_WALLPAPER_STATE = {
   customWallpaper: null,
@@ -20,9 +20,9 @@ export const INITIAL_WALLPAPER_STATE = {
   uploadBgImage: '',
 }
 
-export default (initState: TInitState = {}): TStore => {
+export default (init: TInit = {}): TStore => {
   const store = proxy(
-    mergeLeft(initState, {
+    mergeLeft(init, {
       ...INITIAL_WALLPAPER_STATE,
       // for edit/rollback in dashboard
       original: INITIAL_WALLPAPER_STATE,

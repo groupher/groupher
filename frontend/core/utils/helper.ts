@@ -258,20 +258,6 @@ export const daysBetween = (date1, date2) => {
   return Math.round(differenceMs / ONE_DAY)
 }
 
-// birthday is a Date
-const calculateAge = (birthday) => {
-  const ageDifMs = Date.now() - birthday.getTime()
-  const ageDate = new Date(ageDifMs) // miliseconds from epoch
-  return Math.abs(ageDate.getUTCFullYear() - 1970)
-}
-
-export const siteBirthDay = (birthday: string): string => {
-  const year = calculateAge(new Date(birthday))
-  const days = daysBetween(new Date(birthday), Date.now()) - 365 * year
-
-  return `${year}年${days}天`
-}
-
 /**
  * check if article state is one of the rejected states
  */

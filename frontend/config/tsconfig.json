@@ -56,7 +56,9 @@
       "~/widgets/*": ["../core/widgets/*"],
       "~/Img": ["../core/widgets/Img"],
       "~/const": ["../core/constant/"],
-      "~/const/*": ["../core/constant/*"]
+      "~/const/*": ["../core/constant/*"],
+      "~/providers": ["../core/providers/"],
+      "~/providers/*": ["../core/providers/*"]
     },
     "plugins": [
       {

@@ -58,7 +58,7 @@ const LazyLoadImg: FC<TProps> = ({
   }, [])
 
   const handleError = useCallback(() => {
-    console.error('## lazy image load.: ', src)
+    console.warn('lazy image load.: ', src)
     setLoadError(true)
     setImgLoaded(false)
     setOver(true)

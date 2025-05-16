@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 
-import { reject, includes, values, isEmpty, mergeRight, startsWith } from 'ramda'
-import { useParams, useSearchParams, usePathname } from 'next/navigation'
+import { reject, includes, values, isEmpty, mergeRight } from 'ramda'
+import { useParams, usePathname } from 'next/navigation'
 
 import type {
   TCommunity,
@@ -16,6 +16,9 @@ import type {
   TDashboardAliasRoute,
   TPagedArticlesParams,
   TArticleParams,
+  TPathQuery,
+  TParsedWallpaper,
+  TParseDashboard,
 } from '~/spec'
 import { BUILDIN_ALIAS } from '~/const/name'
 import { PAGE_COLOR_DEFAULT } from '~/const/colors'
@@ -25,7 +28,6 @@ import URL_PARAM from '~/const/url_param'
 import { nilOrEmpty } from '~/validator'
 import {
   ROUTE,
-  STATIC_ROUTES,
   DASHBOARD_ROUTE,
   DASHBOARD_BASEINFO_ROUTE,
   DASHBOARD_SEO_ROUTE,
@@ -36,7 +38,7 @@ import {
 } from '~/const/route'
 import { removeEmptyValuesFromObject } from '~/helper'
 
-import type { TGQSSRResult, TParsedWallpaper, TParseDashboard, TDashboardTab } from './spec'
+import type { TGQSSRResult, TDashboardTab } from './spec'
 import { ARTICLES_FILTER } from './constant'
 
 export const commonRes = (result): TGQSSRResult => {
@@ -45,29 +47,6 @@ export const commonRes = (result): TGQSSRResult => {
     error: result.error,
     stale: result.stale,
   }
-}
-
-export const useIsFrameworkQuery = (): boolean => {
-  const pathname = usePathname()
-
-  // return startsWith('/_next', pathname) || startsWith('/_vercel', pathname)
-  return (
-    startsWith('/_next', pathname) || startsWith('/_vercel', pathname)
-    // startsWith('/api', pathname)
-  )
-}
-
-export const useIsStaticPages = (): boolean => {
-  const pathname = usePathname()
-
-  return includes(pathname, STATIC_ROUTES)
-}
-
-export const useSkipStaticQuery = (): boolean => {
-  const isFrameworkQuery = useIsFrameworkQuery()
-  const isStaticPages = useIsStaticPages()
-
-  return isFrameworkQuery || isStaticPages
 }
 
 export const useCommunityParam = (): string => {
@@ -93,7 +72,8 @@ export const useIdParam = (): string => {
  * common url filter logic for all paged articles queries
  */
 export const usePagedArticlesParams = (): TPagedArticlesParams => {
-  const searchParams = useSearchParams()
+  // const searchParams = useSearchParams()
+  const searchParams = new Map()
   const community = useCommunityParam()
 
   const filter = reject(nilOrEmpty)({
@@ -129,7 +109,6 @@ export const parseCommunity = (pathname: string, communityPath: string): string 
   if (pathname === ROUTE.APPLY_COMMUNITY) return HCN
 
   if (!communityPath) return null // HCN
-  if (communityPath === '_next') return null
 
   return communityPath
 }
@@ -288,5 +267,43 @@ export const parseDashboard = (community: TCommunity, pathname: string): TParseD
       ...fieldsObj,
     },
     ...parseDashboardThread(pathname),
+  }
+}
+
+export const usePathCheck = (type?: TPathQuery, curThread?: TThread): boolean => {
+  const pathname = usePathname()
+  const thread = curThread || useThreadParam()
+
+  // avoid .image like query
+  if (!pathname || pathname.includes('.') || pathname.startsWith('_')) return false
+
+  switch (type) {
+    // match：/[community]/[thread] 或 /[community]/[thread]?query
+    case 'pagedDocs':
+    case 'pagedChangelogs':
+    case 'pagedBlogs':
+    case 'pagedPosts':
+      // console.warn('## checking type: ', type)
+      // console.warn('## checking thread: ', thread)
+      // console.warn('## checking pathname: ', pathname)
+      // console.info('## result: ', new RegExp(`^\\/[^\\/]+\\/${thread}(\\/|\\?|$)`).test(pathname))
+      return new RegExp(`^\\/[^\\/]+\\/${thread}(\\/|\\?|$)`).test(pathname)
+
+    // match：/[community]/[thread]/id 或 /[community]/[thread]/id?query
+    case 'doc':
+    case 'changelog':
+    case 'blog':
+    case 'post':
+      return new RegExp(`^\\/[^\\/]+\\/${thread}\\/[^\\/]+(\\/|\\?|$)`).test(pathname)
+
+    case 'kanbanPosts': {
+      return thread === THREAD.KANBAN
+    }
+    case 'tags': {
+      return ['post', 'doc', 'changelog', 'blog'].includes(thread)
+    }
+
+    default:
+      return true
   }
 }

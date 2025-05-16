@@ -23,6 +23,7 @@ type THeaderLinks = {
 export default (): THeaderLinks => {
   const store = useSubStore('dashboard')
   const viewingCommunity = useViewingCommunity()
+
   const community = viewingCommunity.slug
 
   const { headerLinks } = store

@@ -1,5 +1,4 @@
 import { type FC, lazy, Suspense } from 'react'
-import TimeAgo from 'timeago-react'
 
 import type { TPost } from '~/spec'
 import { previewArticle } from '~/signal'
@@ -9,6 +8,7 @@ import { THREAD } from '~/const/thread'
 import { BANNER_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
 
+import TimeAgo from '~/widgets/TimeAgo'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import ArticleReadLabel from '~/widgets/ArticleReadLabel'
 import Tooltip from '~/widgets/Tooltip'

@@ -38,7 +38,6 @@ const RealAvatar: FC<TProps> = ({
       <Tooltip
         content={<UserCard user={user} />}
         delay={0}
-        contentHeight={getAvatarSize(size, 'number') as string}
         placement={popCardPlacement}
         interactive={false}
       >

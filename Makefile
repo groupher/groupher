@@ -15,23 +15,35 @@ before_action:
 fe.install:
 	yarn install
 
+# landing
 fe.dev.landing:
 	yarn run dev:landing
-
-fe.dev.main:
-	yarn run dev:main
 
 fe.build.landing:
 	yarn run build:prod:landing
 
-fe.build.main:
-	yarn run build:prod:main
-
 fe.serve.landing: 
 	yarn run serve:prod:landing
 
+# main
+fe.dev.main:
+	yarn run dev:main
+
+fe.build.main:
+	yarn run build:prod:main
+
 fe.serve.main: 
 	yarn run serve:prod:main
+
+# dashboard
+fe.dev.dashboard:
+	yarn run dev:dashboard
+
+fe.build.dashboard:
+	yarn run build:prod:dashboard
+
+fe.serve.dashboard: 
+	yarn run serve:prod:dashboard
 
 # backend
 # mix ecto.setup

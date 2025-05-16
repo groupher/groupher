@@ -8,7 +8,6 @@ import BStore from '~/utils/bstore'
 
 export default (): TAccount => {
   const { isLogin, setSession, accountInfo } = useSubStore('account')
-
   const [isLinkClickListenerAdded, setIsLinkClickListenerAdded] = useState(false)
 
   /**

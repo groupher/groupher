@@ -1,10 +1,5 @@
-export type TArticleThread =
-  | 'post'
-  // for groupher
-  | 'changelog'
-  | 'kanban'
-  | 'doc'
-  | 'about'
+export type TArticleListThread = 'post' | 'changelog' | 'kanban' | 'doc'
+export type TArticleThread = TArticleListThread | 'about'
 
 export type TThread = TArticleThread | 'dashboard' | 'kanban' | 'team' | 'account'
 

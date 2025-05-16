@@ -60,3 +60,7 @@ export type TWallpaperData = {
 
   customColor: string
 }
+
+export type TParsedWallpaper = TWallpaperData & {
+  initWallpaper: TWallpaperData
+}

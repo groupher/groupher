@@ -392,7 +392,7 @@ try {
       passiveArg = { passive: true }
     },
   })
-  if (Global.addEventListener) {
+  if (Global?.addEventListener) {
     Global.addEventListener('testPassive', null, opts)
     Global.removeEventListener('testPassive', null, opts)
   }

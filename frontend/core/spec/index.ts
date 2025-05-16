@@ -35,6 +35,7 @@ export type { TTheme, TThemeMap, TThemeName } from './theme'
 export type { TAccount, TUser, TPagedUsers, TSimpleUser, TMembership } from './account'
 export type {
   TCommunity,
+  TCommunityInfo,
   TModerator,
   TPagedCommunities,
   TTag,
@@ -44,7 +45,7 @@ export type {
   TCategory,
 } from './community'
 
-export type { TThread, TArticleThread, TCommunityThread } from './thread'
+export type { TThread, TArticleListThread, TArticleThread, TCommunityThread } from './thread'
 
 export type {
   TID,
@@ -124,6 +125,7 @@ export type {
   TDashboard,
   TOverview,
   TEditFunc,
+  TParseDashboard,
 } from './dashboard'
 
 export type {
@@ -189,6 +191,7 @@ export type {
   TCustomWallpaper,
   TWallpaperInfo,
   TWallpaperData,
+  TParsedWallpaper,
 } from './wallpaper'
 
 export type { TColorName, TPrimaryColor, TColor } from './color'
@@ -242,3 +245,23 @@ interface IWindow extends Window {
 }
 
 export type TWindow = IWindow | null
+
+export type TPathQuery =
+  | 'pagedDocs'
+  | 'pagedChangelogs'
+  | 'pagedBlogs'
+  | 'pagedPosts'
+  | 'doc'
+  | 'changelog'
+  | 'blog'
+  | 'post'
+  | 'community'
+  | 'tags'
+  | 'kanbanPosts'
+
+export type TSearchParams = { [key: string]: string | string[] | undefined }
+
+export type TUrlInfo = {
+  pathname: string
+  searchParams: URLSearchParams
+}
