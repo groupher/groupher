@@ -23,6 +23,8 @@ import { P } from '~/schemas'
 import { GRAPHQL_ENDPOINT } from '~/config'
 import { parseWallpaper, parseDashboard } from '~/utils/ssr/helper'
 import { extractQueryName } from '~/utils/graphql'
+import { loadLocaleFile } from '~/i18n'
+import { LOCALE } from '~/const/i18n'
 
 export const gqFetch = async (query, variables) => {
   return await fetch(GRAPHQL_ENDPOINT, {
@@ -165,11 +167,13 @@ export const getSSRInitData = async (urlInfo: TUrlInfo): Promise<TRootStoreInit>
 
   const { schema } = getPagedQuery(community$, thread$)
 
+  const locale = LOCALE.EN
   // const community = await getCommunity(community$)
-  const [communityInfo, pagedArticles, tags] = await Promise.all([
+  const [communityInfo, pagedArticles, tags, localeData] = await Promise.all([
     getCommunity(community$, pathname),
     getPagedArticles(community$, thread$),
     getTags(community$, thread$),
+    loadLocaleFile(LOCALE.EN),
   ])
 
   const { community, dashboard, wallpaper } = communityInfo
@@ -177,8 +181,8 @@ export const getSSRInitData = async (urlInfo: TUrlInfo): Promise<TRootStoreInit>
 
   const initState = {
     theme,
-    // locale,
-    // localeData,
+    locale,
+    localeData: JSON.stringify(localeData),
     articles: {},
     viewing: {
       metric,
@@ -208,7 +212,6 @@ export const getSSRLandingData = async (): Promise<TRootStoreInit> => {
   const communityInfo = await getCommunity(community$, '/')
 
   const { community, dashboard, wallpaper } = communityInfo
-  // console.log('## pagedArticles got in server: ', pagedArticles)
 
   const initState = {
     theme: THEME.LIGHT,
