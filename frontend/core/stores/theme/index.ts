@@ -5,9 +5,9 @@ import type { TThemeMap, TThemeName } from '~/spec'
 import THEME from '~/const/theme'
 import { themeSkins } from '~/utils/themes'
 
-import type { TStore } from './spec'
+import type { TStore, TInit } from './spec'
 
-export default (theme: TThemeName = THEME.LIGHT): TStore => {
+export default (theme: TInit = THEME.LIGHT): TStore => {
   const store = proxy({
     theme,
 

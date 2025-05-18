@@ -6,7 +6,7 @@ import BStore from '~/utils/bstore'
 import { GRAPHQL_ENDPOINT, PAGE_SIZE } from '~/config'
 import { isString } from './validator'
 
-// for client(widgest most) only
+// for client(widget most) only
 export const buildGQClient = (): ReturnType<typeof makeGQClient> => {
   return makeGQClient(BStore.get('token'))
 }
@@ -70,4 +70,27 @@ export const atomizeValues = (_obj: Record<string, string>): Record<string, stri
 // currently the simple later is fine
 export const later = (func, time = 200): ReturnType<typeof setTimeout> => {
   return setTimeout(func, time)
+}
+
+const normalizeGQLQuery = (query: string): string => {
+  query = query.replace(/#.*?(\n|$)/g, '')
+  query = query.replace(/"""[\s\S]*?"""/g, '')
+  query = query.replace(/\s+/g, ' ').trim()
+  query = query.replace(/^(query|mutation|subscription)(?=[^\s])/, '$1 ')
+
+  return query
+}
+
+export const extractQueryName = (schema: string): string | null => {
+  const normalized = normalizeGQLQuery(schema)
+
+  const namedQueryRegex = /^(query|mutation|subscription)\s+(\w+)\s*(?:\(|\{)/
+  const namedMatch = normalized.match(namedQueryRegex)
+  if (namedMatch) return namedMatch[2]
+
+  const anonymousRegex = /^(query|mutation|subscription)\s*(?:\([^)]*\))?\s*\{\s*(\w+)/
+  const anonymousMatch = normalized.match(anonymousRegex)
+  if (anonymousMatch) return anonymousMatch[2]
+
+  return null
 }

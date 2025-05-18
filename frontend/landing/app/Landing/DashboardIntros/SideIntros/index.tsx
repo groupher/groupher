@@ -31,7 +31,7 @@ export default ({ tab }: TProps) => {
       </div>
 
       {intro.items.map((item) => (
-        <FeatItem key={tab} text={item} color={color} />
+        <FeatItem key={item} text={item} color={color} />
       ))}
 
       <div className={s.footer}>

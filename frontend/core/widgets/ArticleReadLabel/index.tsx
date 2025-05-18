@@ -6,8 +6,9 @@ import type { FC } from 'react'
 import dynamic from 'next/dynamic'
 
 import type { TSpace } from '~/spec'
+// import RealLabel from './RealLabel'
 
-export const RealLabel = dynamic(() => import('./RealLabel'), {
+const RealLabel = dynamic(() => import('./RealLabel'), {
   ssr: false,
 })
 

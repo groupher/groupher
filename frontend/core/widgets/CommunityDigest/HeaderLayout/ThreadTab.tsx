@@ -33,7 +33,7 @@ const ThreadTab: FC<TProps> = ({ ...spacing }) => {
             key={item.slug}
             className={cn(s.title, active && s.titleActive)}
             href={`/${community.slug}/${item.slug}`}
-            prefetch={false}
+            prefetch={true}
           >
             {item.title}
           </Link>

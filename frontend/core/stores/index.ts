@@ -1,9 +1,9 @@
 'use client'
 
-import { createContext } from 'react'
+import { createContext, useContext } from 'react'
 import { proxy } from 'valtio'
 
-import type { TRootStore } from './spec'
+import type { TRootStore, TRootStoreInit } from './spec'
 
 import THEME from '~/const/theme'
 import { LOCALE } from '~/const/i18n'
@@ -16,6 +16,8 @@ import setupViewing from './viewing'
 import setupDashboard from './dashboard'
 import setupWallpaper from './wallpaper'
 
+export { default as StoreProvider } from './provider'
+
 const INITIAL_STATE = {
   theme: THEME.LIGHT,
   locale: LOCALE.EN,
@@ -26,7 +28,7 @@ const INITIAL_STATE = {
   articles: {},
 }
 
-const setupRootStore = (init = INITIAL_STATE): TRootStore => {
+export const setupRootStore = (init: TRootStoreInit = INITIAL_STATE): TRootStore => {
   return proxy({
     locale: setupLocale(init.locale, init.localeData),
     account: setupAccount(),
@@ -38,11 +40,12 @@ const setupRootStore = (init = INITIAL_STATE): TRootStore => {
   })
 }
 
-export const StoreContext = createContext(setupRootStore())
+export const StoreContext = createContext<TRootStore | null>(null)
 
-export const useStore = (initState) => {
-  // see details: https://valtio.pmnd.rs/docs/how-tos/how-to-use-with-context
-  // return useRef(proxy(setupRootStore(initState))).current
-  // do not use useRef above, otherwise the useStore will not update in some cases
-  return setupRootStore(initState)
+export const useStore = () => {
+  const store = useContext(StoreContext)
+  if (!store) {
+    throw new Error('useStore must be used within a StoreProvider')
+  }
+  return store
 }

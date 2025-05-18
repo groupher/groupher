@@ -5,6 +5,7 @@ import type { TFAQSection } from './article'
 import type { TUser } from './account'
 
 import type { TSettingField } from '~/stores/dashboard/spec'
+import type { TModerator } from './community'
 
 export type TTagLayout = 'hash' | 'dot'
 export type TAvatarLayout = 'circle' | 'square'
@@ -62,7 +63,7 @@ export type TDashboard = {
     footerLayout: TFooterLayout
   }
 
-  moderators?: TUser[]
+  moderators?: TModerator[]
 
   rss?: {
     rssFeedType: TRSSType
@@ -82,6 +83,10 @@ export type TDashboard = {
 
   pageBg?: string
   pageBgDark?: string
+}
+
+export type TParseDashboard = TDashboard & {
+  original: TDashboard
 }
 
 export type TBroadcastConfig = {

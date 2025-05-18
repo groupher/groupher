@@ -21,7 +21,11 @@
       "~/Img": ["../core/widgets/Img"],
       "~/SvgIcons/*": ["../core/widgets/SvgIcons/*"],
       "~/icons/*": ["../core/widgets/icons/*"],
-      "~/i18n": ["i18n"]
+      "~/i18n": ["i18n"],
+      "~/providers": ["../core/providers"],
+      "~/providers/*": ["../core/providers/*"],
+      "~/middlewares": ["../core/middlewares"],
+      "~/middlewares/*": ["../core/middlewares/*"]
     }
   },
   "exclude": ["node_modules"]

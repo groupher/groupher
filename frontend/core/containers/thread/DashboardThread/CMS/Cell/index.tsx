@@ -1,7 +1,7 @@
 // import type { FC } from 'react'
 
 import { Cell } from 'rsuite-table'
-import TimeAgo from 'timeago-react'
+import TimeAgo from '~/widgets/TimeAgo'
 import Link from 'next/link'
 
 import { previewArticle } from '~/signal'

@@ -11,7 +11,7 @@ import useLayout from '~/hooks/useLayout'
 
 import PostItem from '~/widgets/PostItem'
 import MasonryCards from '~/widgets/MasonryCards'
-// import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
 import useSalon from './salon/article_list'
 
@@ -26,14 +26,14 @@ export default () => {
 
   const { entries } = pagedPosts
 
-  // if (resState === TYPE.RES_STATE.LOADING && entries.length === 0) {
-  //   return <LavaLampLoading top={20} left={30} />
-  // }
+  if (resState === TYPE.RES_STATE.LOADING && entries.length === 0) {
+    return <LavaLampLoading top={20} left={30} />
+  }
 
   // 加入 length 的判断是因为 Graphql 客户端如果有缓存的话会导致 RES_STATE 没有更新（因为没有请求）
   if (
-    (resState === TYPE.RES_STATE.EMPTY && entries.length === 0) ||
-    (resState === TYPE.RES_STATE.DONE && entries.length === 0)
+    (resState === TYPE.RES_STATE.EMPTY && entries?.length === 0) ||
+    (resState === TYPE.RES_STATE.DONE && entries?.length === 0)
   ) {
     return (
       <Suspense fallback={null}>
@@ -47,7 +47,7 @@ export default () => {
       <div className={s.cards}>
         <MasonryCards column={2}>
           {entries.map((entry) => (
-            <PostItem key={entry.id} article={entry} layout={postLayout} />
+            <PostItem key={entry.innerId} article={entry} layout={postLayout} />
           ))}
         </MasonryCards>
       </div>
@@ -56,8 +56,8 @@ export default () => {
 
   return (
     <>
-      {entries.map((entry) => (
-        <PostItem key={entry.id} article={entry} layout={postLayout} />
+      {entries?.map((entry) => (
+        <PostItem key={entry.innerId} article={entry} layout={postLayout} />
       ))}
     </>
   )

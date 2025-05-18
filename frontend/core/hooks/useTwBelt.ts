@@ -51,7 +51,7 @@ type TRet = {
   sexyBorder: (turn?: number) => string
   sexyVBorder: (turn: number, classNames?: string) => string
   avatar: (level?: 'md' | 'sm' | '') => string
-  gradiientBar: (color: TColorName) => string
+  gradientBar: (color: TColorName) => string
   breakOut: (type?: TBreakOut) => string
   vividDark: () => string
   dimDark: (level?: TDimLevel) => string
@@ -266,7 +266,7 @@ export default (): TRet => {
     return 'circle'
   }
 
-  const gradiientBar = (color: TColorName): string => {
+  const gradientBar = (color: TColorName): string => {
     return `bg-gradient-to-r from-rainbow-${color.toLocaleLowerCase()}Bg to-transparent`
   }
 
@@ -418,7 +418,7 @@ export default (): TRet => {
     sexyBorder,
     sexyVBorder,
     avatar,
-    gradiientBar,
+    gradientBar,
     breakOut,
     vividDark,
     menu,

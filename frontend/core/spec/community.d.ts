@@ -1,6 +1,8 @@
 import type { TPagi, TID } from './utils'
 import type { TSimpleUse } from './account'
 import type { TDashboard } from './dashboard'
+import type { TParseDashboard } from './dashboard'
+import type { TParsedWallpaper } from './wallpaper'
 
 type TMeta = {
   postsCount: number
@@ -37,6 +39,12 @@ export type TCommunity = {
 
   // TODO:
   dashboard?: TDashboard
+}
+
+export type TCommunityInfo = {
+  community: TCommunity
+  dashboard?: TParseDashboard
+  wallpaper?: TParsedWallpaper
 }
 
 export type TPagedCommunities = {

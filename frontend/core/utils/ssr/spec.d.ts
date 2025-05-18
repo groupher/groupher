@@ -56,10 +56,6 @@ export type TGQSSRResult = {
   stale: boolean
 }
 
-export type TParsedWallpaper = TWallpaperData & {
-  initWallpaper: TWallpaperData
-}
-
 export type TTagsFilter = {
   community?: string
   thread?: string
@@ -73,10 +69,6 @@ export type TDashboardTab = {
   broadcastTab?: TDashboardBroadcastRoute
   layoutTab?: TDashboardLayoutRoute
   aliasTab?: TDashboardAliasRoute
-}
-
-export type TParseDashboard = TDashboard & {
-  original: TDashboard
 }
 
 export type TFilterSearchParams = {

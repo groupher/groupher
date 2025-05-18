@@ -85,12 +85,14 @@ export const config = {
       if (error) return false
       console.log('## ## got server response: ', data)
 
+      // @ts-ignore
       cookies().set({
         name: OAUTH.USER_KEY,
         value: JSON.stringify(data.signinOauth.user),
         path: '/',
       })
 
+      // @ts-ignore
       cookies().set({
         name: OAUTH.TOKEN_KEY,
         value: data.signinOauth.token,

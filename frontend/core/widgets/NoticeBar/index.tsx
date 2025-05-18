@@ -6,7 +6,7 @@
 
 import type { FC } from 'react'
 import Link from 'next/link'
-import TimeAgo from 'timeago-react'
+import TimeAgo from '~/widgets/TimeAgo'
 
 import type { TSpace } from '~/spec'
 

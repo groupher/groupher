@@ -21,4 +21,4 @@ export type TStore = TWallpaperState & {
   commit: (patch: Partial<TStore>) => void
 }
 
-export type TInitState = Partial<TStore>
+export type TInit = Partial<TStore>

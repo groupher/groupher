@@ -1,11 +1,10 @@
-import { useContext } from 'react'
 import { useSnapshot } from 'valtio'
 
-import { StoreContext } from '~/stores'
-import type { TTreeStoreKey, TTreeStore, TRootStore } from '~/stores/spec'
+import { useStore } from '~/stores'
+import type { TTreeStoreKey, TTreeStore } from '~/stores/spec'
 
 export default <K extends TTreeStoreKey>(tree: K): TTreeStore<K> => {
-  const root = useContext(StoreContext) as TRootStore
+  const root = useStore() // 使用新的 useStore 而不是直接 useContext
   const snap = useSnapshot(root)
 
   // @ts-ignore

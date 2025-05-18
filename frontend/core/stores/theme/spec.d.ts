@@ -7,3 +7,5 @@ export type TStore = {
   change: (theme: TThemeName) => void
   toggle: () => void
 }
+
+export type TInit = TThemeName

@@ -1,7 +1,4 @@
-import { useMemo } from 'react'
-
-import { reject, includes, values, isEmpty, mergeRight, startsWith } from 'ramda'
-import { useParams, useSearchParams, usePathname } from 'next/navigation'
+import { reject, includes, values, isEmpty, mergeRight } from 'ramda'
 
 import type {
   TCommunity,
@@ -15,7 +12,10 @@ import type {
   TDashboardLayoutRoute,
   TDashboardAliasRoute,
   TPagedArticlesParams,
-  TArticleParams,
+  TParsedWallpaper,
+  TParseDashboard,
+  // TArticleParams,
+  // TPathQuery,
 } from '~/spec'
 import { BUILDIN_ALIAS } from '~/const/name'
 import { PAGE_COLOR_DEFAULT } from '~/const/colors'
@@ -25,7 +25,6 @@ import URL_PARAM from '~/const/url_param'
 import { nilOrEmpty } from '~/validator'
 import {
   ROUTE,
-  STATIC_ROUTES,
   DASHBOARD_ROUTE,
   DASHBOARD_BASEINFO_ROUTE,
   DASHBOARD_SEO_ROUTE,
@@ -36,7 +35,7 @@ import {
 } from '~/const/route'
 import { removeEmptyValuesFromObject } from '~/helper'
 
-import type { TGQSSRResult, TParsedWallpaper, TParseDashboard, TDashboardTab } from './spec'
+import type { TGQSSRResult, TDashboardTab } from './spec'
 import { ARTICLES_FILTER } from './constant'
 
 export const commonRes = (result): TGQSSRResult => {
@@ -47,54 +46,11 @@ export const commonRes = (result): TGQSSRResult => {
   }
 }
 
-export const useIsFrameworkQuery = (): boolean => {
-  const pathname = usePathname()
-
-  // return startsWith('/_next', pathname) || startsWith('/_vercel', pathname)
-  return (
-    startsWith('/_next', pathname) || startsWith('/_vercel', pathname)
-    // startsWith('/api', pathname)
-  )
-}
-
-export const useIsStaticPages = (): boolean => {
-  const pathname = usePathname()
-
-  return includes(pathname, STATIC_ROUTES)
-}
-
-export const useSkipStaticQuery = (): boolean => {
-  const isFrameworkQuery = useIsFrameworkQuery()
-  const isStaticPages = useIsStaticPages()
-
-  return isFrameworkQuery || isStaticPages
-}
-
-export const useCommunityParam = (): string => {
-  const params = useParams()
-  const pathname = usePathname()
-
-  return useMemo(() => parseCommunity(pathname, params.community as string), [params, pathname])
-}
-
-export const useThreadParam = (): string => {
-  const pathname = usePathname()
-
-  return useMemo(() => parseThread(pathname), [pathname])
-}
-
-export const useIdParam = (): string => {
-  const params = useParams()
-
-  return useMemo(() => params.id as string, [params])
-}
-
 /**
  * common url filter logic for all paged articles queries
  */
-export const usePagedArticlesParams = (): TPagedArticlesParams => {
-  const searchParams = useSearchParams()
-  const community = useCommunityParam()
+export const usePagedArticlesParams = (searchParams: URLSearchParams): TPagedArticlesParams => {
+  const community = 'home'
 
   const filter = reject(nilOrEmpty)({
     community,
@@ -109,27 +65,10 @@ export const usePagedArticlesParams = (): TPagedArticlesParams => {
   return mergeRight(ARTICLES_FILTER, filter)
 }
 
-/**
- * common url filter logic for all paged articles queries
- */
-export const useArticleParams = (): TArticleParams => {
-  const params = useParams()
-  const pathname = usePathname()
-
-  return {
-    community: useMemo(
-      () => parseCommunity(pathname, params.community as string),
-      [params, pathname],
-    ),
-    id: params.id as string,
-  }
-}
-
 export const parseCommunity = (pathname: string, communityPath: string): string => {
   if (pathname === ROUTE.APPLY_COMMUNITY) return HCN
 
   if (!communityPath) return null // HCN
-  if (communityPath === '_next') return null
 
   return communityPath
 }

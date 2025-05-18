@@ -1,3 +1,4 @@
+'use client'
 /*
  *
  * ClassicSidebar
@@ -7,7 +8,6 @@
  */
 
 import { lazy, Suspense } from 'react'
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
 
 import useTrans from '~/hooks/useTrans'
@@ -19,7 +19,6 @@ import { refreshArticles, callGEditor, callSyncSelector, listUsers } from '~/sig
 import { mockUsers } from '~/mock'
 
 import ImgFallback from '~/widgets/ImgFallback'
-// import Sticky from '~/widgets/Sticky'
 import GetMe from '~/widgets/GetMe'
 import SocialBanner from '~/widgets/SocialBanner'
 import Img from '~/Img'
@@ -31,7 +30,6 @@ import TagsBar from '~/containers/unit/TagsBar'
 import CommunityBrief from './CommunityBrief'
 import useSalon from '../salon/thread_sidebar'
 
-const Sticky = dynamic(() => import('~/widgets/Sticky'), { ssr: false })
 const UniBar = lazy(() => import('~/widgets/UniBar'))
 
 export default () => {
@@ -45,63 +43,61 @@ export default () => {
 
   return (
     <div className={s.wrapper} data-test-id="thread-sidebar">
-      <Sticky offsetTop={0}>
-        <div className={s.stickyWrapper}>
-          <div className={s.showArea}>
-            <SocialBanner />
-            <div className={s.desc}>{curCommunity.desc}</div>
-            <div className={s.homeLinks}>
-              <LinkSVG className={s.linkIcon} />
-              <Link href={curCommunity.homepage} className={s.link}>
-                {curCommunity.homepage}
-              </Link>
-              <div className="grow" />
+      <div className={s.stickyWrapper}>
+        <div className={s.showArea}>
+          <SocialBanner />
+          <div className={s.desc}>{curCommunity.desc}</div>
+          <div className={s.homeLinks}>
+            <LinkSVG className={s.linkIcon} />
+            <Link href={curCommunity.homepage} className={s.link}>
+              {curCommunity.homepage}
+            </Link>
+            <div className="grow" />
 
-              <GetMe />
-            </div>
-
-            <h3 className={s.title}>{t('team.member', 'titleCase')}</h3>
-            <div className="mt-6" />
-
-            <div className={s.joiners}>
-              {mockUsers(5).map((user) => (
-                <Img
-                  key={user.login}
-                  className={s.joinAvatar}
-                  src={user.avatar}
-                  fallback={<ImgFallback size={6} right={2} user={user} />}
-                />
-              ))}
-              <div className={s.moreNum} onClick={() => listUsers('drawer')}>
-                +2
-              </div>
-            </div>
+            <GetMe />
           </div>
 
-          <div className={s.publish}>
-            <PublishButton
-              text="参与讨论"
-              onMenuSelect={(cat) => {
-                callGEditor()
-                setTimeout(() => callSyncSelector({ cat, tag: activeTag }), 500)
-              }}
-            />
-          </div>
+          <h3 className={s.title}>{t('team.member', 'titleCase')}</h3>
+          <div className="mt-6" />
 
-          <CommunityBrief />
-          {!showCommunityBadge && <div className={s.divider} />}
-
-          <div className={s.tagsBar}>
-            <TagsBar onSelect={() => refreshArticles()} />
-          </div>
-
-          <Suspense fallback={null}>
-            <div className={s.unibarWrapper}>
-              <UniBar />
+          <div className={s.joiners}>
+            {mockUsers(5).map((user) => (
+              <Img
+                key={user.login}
+                className={s.joinAvatar}
+                src={user.avatar}
+                fallback={<ImgFallback size={6} right={2} user={user} />}
+              />
+            ))}
+            <div className={s.moreNum} onClick={() => listUsers('drawer')}>
+              +2
             </div>
-          </Suspense>
+          </div>
         </div>
-      </Sticky>
+
+        <div className={s.publish}>
+          <PublishButton
+            text="参与讨论"
+            onMenuSelect={(cat) => {
+              callGEditor()
+              setTimeout(() => callSyncSelector({ cat, tag: activeTag }), 500)
+            }}
+          />
+        </div>
+
+        <CommunityBrief />
+        {!showCommunityBadge && <div className={s.divider} />}
+
+        <div className={s.tagsBar}>
+          <TagsBar onSelect={() => refreshArticles()} />
+        </div>
+
+        <Suspense fallback={null}>
+          <div className={s.unibarWrapper}>
+            <UniBar />
+          </div>
+        </Suspense>
+      </div>
     </div>
   )
 }

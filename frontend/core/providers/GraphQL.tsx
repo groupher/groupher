@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * this is for Graphql feching data on page load
+ * this is for Graphql fetching data on page load
  */
 
 import { type FC, type ReactNode, useMemo } from 'react'

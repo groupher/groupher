@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import TimeAgo from 'timeago-react'
+import TimeAgo from '~/widgets/TimeAgo'
 
 import type { TPost } from '~/spec'
 import { UPVOTE_LAYOUT } from '~/const/layout'

@@ -1,6 +1,6 @@
 // this is tmp, use react-i18n .. later
 
-import { useSearchParams } from 'next/navigation'
+// import { useSearchParams } from 'next/navigation'
 
 import type { TLocale } from '~/spec'
 import { LOCALE } from '~/const/i18n'
@@ -18,8 +18,13 @@ export const i18nQuery = `
 `
 
 export const useParseLang = (): TLocale => {
-  const searchParams = useSearchParams()
+  // const searchParams = useSearchParams()
 
+  // return (searchParams.get('lang') || LOCALE.EN) as TLocale
+  return LOCALE.EN
+}
+
+export const useParseLang2 = (searchParams: URLSearchParams): TLocale => {
   return (searchParams.get('lang') || LOCALE.EN) as TLocale
 }
 

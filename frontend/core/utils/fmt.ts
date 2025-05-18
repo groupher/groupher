@@ -115,18 +115,6 @@ export const daysBetween = (date1, date2) => {
 }
 
 // birthday is a Date
-const calculateAge = (birthday) => {
-  const ageDifMs = Date.now() - birthday.getTime()
-  const ageDate = new Date(ageDifMs) // miliseconds from epoch
-  return Math.abs(ageDate.getUTCFullYear() - 1970)
-}
-
-export const siteBirthDay = (birthday: string): string => {
-  const year = calculateAge(new Date(birthday))
-  const days = daysBetween(new Date(birthday), Date.now()) - 365 * year
-
-  return `${year}年${days}天`
-}
 
 type TCovert = 'titleCase' | 'upperCase' | null
 const doCovert = (value: string, opt: TCovert): string => {

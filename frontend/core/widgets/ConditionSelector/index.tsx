@@ -1,3 +1,5 @@
+'use client'
+
 import { type FC, useState, useRef } from 'react'
 
 import type { TSpace, TTooltipPlacement, TConditionMode, TButtonPrefix } from '~/spec'
