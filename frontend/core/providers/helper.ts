@@ -20,24 +20,11 @@ import THEME from '~/const/theme'
 import METRIC from '~/const/metric'
 
 import { P } from '~/schemas'
-import { GRAPHQL_ENDPOINT } from '~/config'
+import { gqFetch } from '~/utils/ssr/helper'
 import { parseWallpaper, parseDashboard } from '~/utils/ssr/helper'
 import { extractQueryName } from '~/utils/graphql'
 import { loadLocaleFile } from '~/i18n'
 import { LOCALE } from '~/const/i18n'
-
-export const gqFetch = async (query, variables) => {
-  return await fetch(GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      query,
-      variables,
-    }),
-  })
-}
 
 export const ARTICLES_FILTER = {
   community: HCN,
@@ -209,7 +196,10 @@ export const getSSRLandingData = async (): Promise<TRootStoreInit> => {
   const community$ = 'home'
 
   // const community = await getCommunity(community$)
-  const communityInfo = await getCommunity(community$, '/')
+  const response = await gqFetch(P.community, { slug: community$, userHasLogin: false })
+  const { data } = await response.json()
+
+  const communityInfo = data
 
   const { community, dashboard, wallpaper } = communityInfo
 

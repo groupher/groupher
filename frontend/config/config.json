@@ -49,7 +49,7 @@
   "DEFAULT_ICON": "https://static.groupher.com/icons/cmd/cheatsheet.svg",
   "DEFAULT_USER_AVATAR": "https://static.groupher.com/icons/cmd/alien_user3.svg",
   "// GRAPHQL_ENDPOINT": "http://localhost:4001/graphiql",
-  "GRAPHQL_ENDPOINT": "http://127.0.0.1:4001/graphiql",
+  "GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql",
   "SITE_URL": "https://groupher.com",
   "SITE_NAME": "Groupher",
   "SITE_SLOGAN": "让你的产品听见用户的声音。互动讨论、看板、更新日志、帮助文档多合一，收集整理用户用户反馈，助你打造更好的产品。",
