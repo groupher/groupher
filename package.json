@@ -105,7 +105,7 @@
     "markdown-to-jsx": "^7.5.0",
     "mastani-codehighlight": "0.0.7",
     "nanoid": "^3.1.12",
-    "next": "15.4.0-canary.37",
+    "next": "15.4.0-canary.41",
     "next-auth": "^5.0.0-beta.16",
     "next-compose-plugins": "^2.2.0",
     "overlayscrollbars": "^2.9.1",
