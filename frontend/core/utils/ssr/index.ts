@@ -18,7 +18,6 @@ import type {
   TParseDashboard,
   TPagedArticles,
 } from '~/spec'
-import { GRAPHQL_ENDPOINT } from '~/config'
 
 import { BUILDIN_ALIAS } from '~/const/name'
 import { PAGE_COLOR_DEFAULT } from '~/const/colors'
@@ -36,21 +35,9 @@ import { removeEmptyValuesFromObject } from '~/helper'
 
 import { P } from '~/schemas'
 import { extractQueryName } from '~/utils/graphql'
+import { gqFetch } from '~/utils/api'
 
 import type { TGQSSRResult, TDashboardTab } from './spec'
-
-export const gqFetch = async (query, variables) => {
-  return await fetch(GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      query,
-      variables,
-    }),
-  })
-}
 
 export const commonRes = (result): TGQSSRResult => {
   return {

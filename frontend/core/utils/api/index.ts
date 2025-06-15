@@ -2,6 +2,7 @@ import type { TThread } from '~/spec'
 import { plural } from '~/fmt'
 
 import { SEARCH_PARAM } from '~/const/url'
+import { GRAPHQL_ENDPOINT } from '~/config'
 
 import gqClient from './gq_client'
 
@@ -65,6 +66,19 @@ const clarify = (obj: TClarifyInput): TClarifyInput => {
   }
 
   return obj
+}
+
+export const gqFetch = async (query, variables) => {
+  return await fetch(GRAPHQL_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      variables,
+    }),
+  })
 }
 
 /**

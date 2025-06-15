@@ -37,7 +37,7 @@ export default function Layout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Suspense fallback={<h1>todo...</h1>}>
+        <Suspense fallback={<h1>...</h1>}>
           {/* @ts-ignore */}
           <InitDataLoader>
             <GlobalLayout>{children}</GlobalLayout>

@@ -1,8 +1,10 @@
+import { Suspense } from 'react'
+
 const NotFound = () => {
   return (
-    <div>
-      <h2>root Not found</h2>
-    </div>
+    <Suspense fallback={null}>
+      <h2>not found</h2>
+    </Suspense>
   )
 }
 
