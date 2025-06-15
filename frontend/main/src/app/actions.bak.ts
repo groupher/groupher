@@ -13,7 +13,7 @@ import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 
 import { P } from '~/schemas'
 import { GRAPHQL_ENDPOINT } from '~/config'
-import { parseDashboard, parseWallpaper } from '~/utils/ssr/helper'
+import { parseDashboard, parseWallpaper } from '~/utils/ssr'
 
 import { unstable_cache } from 'next/cache'
 

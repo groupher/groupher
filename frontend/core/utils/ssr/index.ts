@@ -1,4 +1,7 @@
-import { reject, includes, values, isEmpty, mergeRight } from 'ramda'
+import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
+import { reject, includes, isEmpty } from 'ramda'
+
+import { CACHE_TAG } from '~/const/cache'
 
 import type {
   TCommunity,
@@ -11,20 +14,16 @@ import type {
   TDashboardBroadcastRoute,
   TDashboardLayoutRoute,
   TDashboardAliasRoute,
-  TPagedArticlesParams,
   TParsedWallpaper,
   TParseDashboard,
+  TPagedArticles,
 } from '~/spec'
 import { GRAPHQL_ENDPOINT } from '~/config'
 
 import { BUILDIN_ALIAS } from '~/const/name'
 import { PAGE_COLOR_DEFAULT } from '~/const/colors'
 import { THREAD } from '~/const/thread'
-import { HCN } from '~/const/name'
-import URL_PARAM from '~/const/url_param'
-import { nilOrEmpty } from '~/validator'
 import {
-  ROUTE,
   DASHBOARD_ROUTE,
   DASHBOARD_BASEINFO_ROUTE,
   DASHBOARD_SEO_ROUTE,
@@ -35,8 +34,10 @@ import {
 } from '~/const/route'
 import { removeEmptyValuesFromObject } from '~/helper'
 
+import { P } from '~/schemas'
+import { extractQueryName } from '~/utils/graphql'
+
 import type { TGQSSRResult, TDashboardTab } from './spec'
-import { ARTICLES_FILTER } from './constant'
 
 export const gqFetch = async (query, variables) => {
   return await fetch(GRAPHQL_ENDPOINT, {
@@ -62,40 +63,21 @@ export const commonRes = (result): TGQSSRResult => {
 /**
  * common url filter logic for all paged articles queries
  */
-export const usePagedArticlesParams = (searchParams: URLSearchParams): TPagedArticlesParams => {
-  const community = 'home'
+// export const usePagedArticlesParams = (searchParams: URLSearchParams): TPagedArticlesParams => {
+//   const community = 'home'
 
-  const filter = reject(nilOrEmpty)({
-    community,
-    page: Number(searchParams.get(URL_PARAM.PAGE)) || 1,
-    size: 20,
-    articleTag: searchParams.get(URL_PARAM.TAG),
-    cat: searchParams.get(URL_PARAM.CAT),
-    state: searchParams.get(URL_PARAM.STATE),
-    order: searchParams.get(URL_PARAM.ORDER),
-  }) as TPagedArticlesParams
+//   const filter = reject(nilOrEmpty)({
+//     community,
+//     page: Number(searchParams.get(URL_PARAM.PAGE)) || 1,
+//     size: 20,
+//     articleTag: searchParams.get(URL_PARAM.TAG),
+//     cat: searchParams.get(URL_PARAM.CAT),
+//     state: searchParams.get(URL_PARAM.STATE),
+//     order: searchParams.get(URL_PARAM.ORDER),
+//   }) as TPagedArticlesParams
 
-  return mergeRight(ARTICLES_FILTER, filter)
-}
-
-export const parseCommunity = (pathname: string, communityPath: string): string => {
-  if (pathname === ROUTE.APPLY_COMMUNITY) return HCN
-
-  if (!communityPath) return null // HCN
-
-  return communityPath
-}
-
-/**
- * parse active thread from pathname
- */
-export const parseThread = (pathname: string): TThread | '' => {
-  const _thread = pathname.split('/')[2] as TThread
-
-  if (!includes(_thread, values(THREAD))) return THREAD.DASHBOARD
-
-  return _thread
-}
+//   return mergeRight(ARTICLES_FILTER, filter)
+// }
 
 export const parseWallpaper = (community: TCommunity): TParsedWallpaper => {
   // NOTE: if the backend is not ready, return default config
@@ -241,4 +223,72 @@ export const parseDashboard = (community: TCommunity, pathname: string): TParseD
     },
     ...parseDashboardThread(pathname),
   }
+}
+
+// used in server/api
+
+const hasArticles = (thread: TThread) => {
+  return [THREAD.POST, THREAD.CHANGELOG].includes(thread)
+}
+
+const getPagedQuery = (community: string, thread: TThread) => {
+  const filter = { community, page: 1 }
+
+  switch (thread) {
+    case THREAD.CHANGELOG: {
+      return { schema: P.pagedChangelogs, variables: { filter, userHasLogin: false } }
+    }
+    // P.groupedKanbanPosts
+
+    default: {
+      return { schema: P.pagedPosts, variables: { filter, userHasLogin: false } }
+    }
+  }
+}
+
+export const getPagedArticles = async (
+  community: string,
+  thread: TThread,
+): Promise<TPagedArticles | null> => {
+  'use cache'
+  cacheLife('minutes')
+  cacheTag(CACHE_TAG.articlesCache(community, thread))
+
+  if (!hasArticles(thread)) return null
+
+  const { schema, variables } = getPagedQuery(community, thread)
+  const response = await gqFetch(schema, variables)
+
+  const { data, errors } = await response.json()
+
+  if (errors) {
+    // console.log('## error in fetching', P.community)
+    console.log('## error details', errors)
+    return null
+  }
+
+  return data[extractQueryName(schema)]
+}
+
+export const getPagedTags = async (
+  community: string,
+  thread: TThread,
+): Promise<TPagedArticles | null> => {
+  'use cache'
+  cacheLife('hours')
+  cacheTag(CACHE_TAG.tagsCache(community, thread))
+
+  //  if (!hasArticles(thread)) return null
+
+  const response = await gqFetch(P.pagedArticleTags, { community, thread })
+  console.log('## got response: ', response)
+
+  const { data, errors } = await response.json()
+
+  if (errors) {
+    console.log('## error details', errors)
+    return null
+  }
+
+  return data[extractQueryName(P.pagedArticleTags)]
 }

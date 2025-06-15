@@ -1,7 +1,7 @@
 const NotFound = () => {
   return (
     <div>
-      <div>not found thread ?</div>
+      <div>not found thread -- ?</div>
     </div>
   )
 }

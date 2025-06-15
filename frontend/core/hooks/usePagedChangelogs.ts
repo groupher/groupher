@@ -1,7 +1,7 @@
 import { reject, mergeRight } from 'ramda'
 import { useSearchParams } from 'next/navigation'
 
-import type { TPagedChangelogs, TResState } from '~/spec'
+import type { TPagedChangelogs, TResState, TTag } from '~/spec'
 import useSubStore from '~/hooks/useSubStore'
 import { nilOrEmpty } from '~/validator'
 
@@ -15,10 +15,15 @@ type TPagedArticlesParams = {
   order?: string
 }
 
+export type TUpdate = {
+  pagedChangelogs: TPagedChangelogs
+  tags: TTag[]
+}
+
 type TRes = {
   resState: TResState
   pagedChangelogs: TPagedChangelogs
-  update: (pagedChangelogs: TPagedChangelogs) => void
+  update: (params: TUpdate) => void
   pagedParams: TPagedArticlesParams
 }
 
@@ -49,8 +54,9 @@ export default (): TRes => {
   // const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const update = (pagedChangelogs: TPagedChangelogs) => {
+  const update = ({ pagedChangelogs, tags }: TUpdate) => {
     articlesStore.commit({ pagedChangelogs })
+    viewingStore.commit({ tags })
   }
 
   const pagedParams = getArticlesParams(viewingStore.community.slug, searchParams)

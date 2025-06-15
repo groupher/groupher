@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 import StoreProvider from '~/stores/provider'
 import { GlobalLayout, GraphQLProvider, getSSRInitData, parseRouteInfo } from '~/providers'
@@ -20,7 +21,9 @@ export const metadata: Metadata = {
 const InitDataLoader = async ({ children }) => {
   const headersList = await headers()
   const routeInfo = headersList.get('x-route')
+  if (!routeInfo) return redirect('/404')
   const urlInfo = parseRouteInfo(routeInfo)
+
   const initData = await getSSRInitData(urlInfo)
 
   return (

@@ -11,7 +11,7 @@ import THEME from '~/const/theme'
 import METRIC from '~/const/metric'
 
 import { P } from '~/schemas'
-import { gqFetch } from '~/utils/ssr/helper'
+import { gqFetch } from '~/utils/ssr'
 
 import StoreProvider from '~/stores/provider'
 import GlobalLayout from '~/providers/GlobalLayout'
