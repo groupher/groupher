@@ -20,7 +20,7 @@ import type {
   TPagedTags,
 } from '~/spec'
 
-import { BUILDIN_ALIAS } from '~/const/name'
+import { BUILTIN_ALIAS } from '~/const/name'
 import { PAGE_COLOR_DEFAULT } from '~/const/colors'
 import { THREAD } from '~/const/thread'
 import {
@@ -87,7 +87,7 @@ const parseDashboardAlias = (nameAlias: TNameAlias[]): TNameAlias[] => {
   const changedAliasKeys = nameAlias.map((item) => item.original)
   const unChangedAlias = reject(
     (item: TNameAlias) => includes(item.original, changedAliasKeys),
-    BUILDIN_ALIAS,
+    BUILTIN_ALIAS,
   )
 
   return reject((item: TNameAlias) => item.slug === '', [...nameAlias, ...unChangedAlias])
