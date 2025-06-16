@@ -17,6 +17,7 @@ import type {
   TParsedWallpaper,
   TParseDashboard,
   TPagedArticles,
+  TPagedTags,
 } from '~/spec'
 
 import { BUILDIN_ALIAS } from '~/const/name'
@@ -260,7 +261,7 @@ export const getPagedArticles = async (
 export const getPagedTags = async (
   community: string,
   thread: TThread,
-): Promise<TPagedArticles | null> => {
+): Promise<TPagedTags | null> => {
   'use cache'
   cacheLife('hours')
   cacheTag(CACHE_TAG.tagsCache(community, thread))
