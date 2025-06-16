@@ -5,7 +5,7 @@ import { LOCALE } from '~/const/i18n'
 import { THREAD } from '~/const/thread'
 import SIZE from '~/const/size'
 import { COLOR_NAME, PAGE_COLOR_DEFAULT } from '~/const/colors'
-import { BUILDIN_ALIAS } from '~/const/name'
+import { BUILTIN_ALIAS } from '~/const/name'
 import { GLOW_OPACITY } from '~/const/glow_effect'
 import { CHANGE_MODE } from '~/const/mode'
 import { EMPTY_PAGED_COMMUNITIES, EMPTY_PAGED_ARTICLES } from '~/const/utils'
@@ -124,7 +124,7 @@ export const settingsFields: TSettingsFields = {
   tags: [],
   activeTagGroup: null,
   activeTagThread: THREAD.POST,
-  nameAlias: BUILDIN_ALIAS,
+  nameAlias: BUILTIN_ALIAS,
   enable: DEFAULT_ENABLE,
 
   faqSections: DEFAULT_FAQ_ITEMS,

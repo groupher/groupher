@@ -39,8 +39,7 @@ export type {
   TModerator,
   TPagedCommunities,
   TTag,
-  TNaviTag,
-  TFilterTag,
+  TPagedTags,
   TGroupedTags,
   TCategory,
 } from './community'

@@ -66,31 +66,11 @@ export type TTag = {
   updatedAt?: string
 }
 
-export type TFilterTag = {
-  id?: string
-  index?: number
-  slug: string
-  title?: string
-  color?: string
-  group?: string
-}
+export type TPagedTags = {
+  entries: TTag[]
+} & TPagi
 
 // for cool-guide, awesome sort thing
-export type TNaviTag = {
-  id: string
-  index?: number
-  slug: string
-  title?: string
-  color?: string
-  group?: string
-  //
-  icon?: string
-  childMenu?: TNaviTag[]
-  extra?: string[]
-  fixedIcon?: string
-  pinNumber?: number
-  displayType?: string
-}
 
 export type TGroupedTags = {
   [group: string]: TTag[]

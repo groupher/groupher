@@ -1,25 +1,38 @@
 'use client'
 
+import Link from 'next/link'
+
 import useLinkMount from '~/hooks/useLinkMount'
 import useIsSidebarLayout from '~/hooks/useIsSidebarLayout'
 import useViewing from '~/hooks/useViewing'
 import { THREAD } from '~/const/thread'
 
+import usePagedPosts, { type TUpdate } from '~/hooks/usePagedPosts'
+
 import PostThread from '~/containers//thread/PostThread'
+import { fetchArticlePageData } from '~/utils/ssr/api'
 
 export default () => {
   const isSidebarLayout = useIsSidebarLayout()
-  const { setActiveThread } = useViewing()
+  const { community, setActiveThread } = useViewing()
+  const { update } = usePagedPosts()
 
-  const loader = () => {
+  const loader = async () => {
     console.warn('## -> load real post data in client!')
+    const [pagedPosts, tags] = await fetchArticlePageData(community.slug, THREAD.POST)
+
+    update({ pagedPosts, tags } as TUpdate)
     setActiveThread(THREAD.POST)
   }
+
   useLinkMount(loader)
 
   return (
     <>
       {isSidebarLayout && <div className="mt-5" />}
+      <Link href="/home/post/3" scroll={false}>
+        show me
+      </Link>
       <PostThread />
     </>
   )

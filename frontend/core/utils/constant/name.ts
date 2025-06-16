@@ -14,7 +14,7 @@ export const ALIAS_GROUP = {
   OTHERS: DASHBOARD_ALIAS_ROUTE.OTHERS,
 }
 
-export const BUILDIN_ALIAS = [
+export const BUILTIN_ALIAS = [
   {
     slug: 'post',
     name: '讨论',

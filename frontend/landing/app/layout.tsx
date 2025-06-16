@@ -11,7 +11,7 @@ import THEME from '~/const/theme'
 import METRIC from '~/const/metric'
 
 import { P } from '~/schemas'
-import { gqFetch } from '~/utils/ssr/helper'
+import { gqFetch } from '~/utils/api'
 
 import StoreProvider from '~/stores/provider'
 import GlobalLayout from '~/providers/GlobalLayout'
@@ -58,7 +58,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <Suspense fallback={<h1>todo...</h1>}>
+        <Suspense fallback={<h1>...</h1>}>
           {/* @ts-ignore */}
           <InitDataLoader>
             <GlobalLayout>{children}</GlobalLayout>
