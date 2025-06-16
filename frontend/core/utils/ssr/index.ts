@@ -269,7 +269,6 @@ export const getPagedTags = async (
   //  if (!hasArticles(thread)) return null
 
   const response = await gqFetch(P.pagedArticleTags, { community, thread })
-  console.log('## got response: ', response)
 
   const { data, errors } = await response.json()
 

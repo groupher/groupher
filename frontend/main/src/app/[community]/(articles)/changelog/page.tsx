@@ -6,7 +6,7 @@ import usePagedChangelogs, { type TUpdate } from '~/hooks/usePagedChangelogs'
 import useLinkMount from '~/hooks/useLinkMount'
 import ChangelogThread from '~/containers/thread/ChangelogThread'
 import { THREAD } from '~/const/thread'
-import { fetchArticlePageData } from '~/utils/api'
+import { fetchArticlePageData } from '~/utils/ssr/api'
 
 const CommunityChangelogPage = () => {
   const { community, setActiveThread } = useViewing()

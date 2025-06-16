@@ -10,7 +10,7 @@ import { THREAD } from '~/const/thread'
 import usePagedPosts, { type TUpdate } from '~/hooks/usePagedPosts'
 
 import PostThread from '~/containers//thread/PostThread'
-import { fetchArticlePageData } from '~/utils/api'
+import { fetchArticlePageData } from '~/utils/ssr/api'
 
 export default () => {
   const isSidebarLayout = useIsSidebarLayout()

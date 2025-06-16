@@ -1,7 +1,3 @@
-import type { TThread } from '~/spec'
-import { plural } from '~/fmt'
-
-import { SEARCH_PARAM } from '~/const/url'
 import { GRAPHQL_ENDPOINT } from '~/config'
 
 import gqClient from './gq_client'
@@ -85,14 +81,16 @@ export const gqFetch = async (query, variables) => {
  * for client component to fetch  api
  */
 export async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`/api${path}`, options)
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`)
-  return res.json()
-}
+  // const res = await fetch(`/api${path}`, options)
+  // if (!res.ok) throw new Error(`Request failed: ${res.status}`)
+  // return res.json()
 
-export const fetchArticlePageData = async (community: string, thread: TThread) => {
-  return Promise.all([
-    fetchAPI(`/${plural(thread)}?${SEARCH_PARAM.COMMUNITY}=${community}`),
-    fetchAPI(`/tags?${SEARCH_PARAM.COMMUNITY}=${community}&${SEARCH_PARAM.THREAD}=${thread}`),
-  ])
+  const normalized = path.startsWith('/') ? path.slice(1) : path
+  const res = await fetch(`/api/${normalized}`, options)
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => '')
+    throw new Error(`Request failed ${res.status}: ${msg}`)
+  }
+  return res.json() as Promise<T>
 }
