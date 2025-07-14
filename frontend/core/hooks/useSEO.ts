@@ -8,5 +8,6 @@ import useSubStore from '~/hooks/useSubStore'
 export default (): TDashboardSEOConfig => {
   const store = useSubStore('dashboard')
 
+  // @ts-ignore
   return pick(SEO_KEYS, store)
 }

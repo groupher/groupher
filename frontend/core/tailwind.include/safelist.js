@@ -23,6 +23,7 @@ const GENERAL = [
   'shadow-md',
   'shadow-lg',
   'shadow-xl',
+  'shadow-drawer',
   'shape-shadow',
   //
   'hidden-panel',

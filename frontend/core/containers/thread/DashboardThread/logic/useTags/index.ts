@@ -55,6 +55,7 @@ export default (): TRet => {
   const moveTag2Bottom = (tag: TTag): void => moveTag2Edge(tag, 'bottom')
 
   return {
+    // @ts-ignore
     ...pick(exportState, store),
     ...drived,
     // actions

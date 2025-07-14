@@ -2,7 +2,7 @@ import type { TCustomWallpaper, TWallpaper, TWallpaperType, TWallpaperGradientDi
 
 export type TWallpaperState = {
   customWallpaper: TCustomWallpaper
-  customColorValue: strign
+  customColorValue: string
   wallpaper: string
   wallpaperType: TWallpaperType
 

@@ -43,53 +43,55 @@ export default () => {
 
   return (
     <div className={s.wrapper} data-test-id="thread-sidebar">
-      <div className={s.stickyWrapper}>
-        <div className={s.showArea}>
-          <SocialBanner />
-          <div className={s.desc}>{curCommunity.desc}</div>
-          <div className={s.homeLinks}>
-            <LinkSVG className={s.linkIcon} />
-            <Link href={curCommunity.homepage} className={s.link}>
-              {curCommunity.homepage}
-            </Link>
-            <div className="grow" />
+      <div className={s.innerWrapper}>
+        <div className={s.stickyWrapper}>
+          <div className={s.showArea}>
+            <SocialBanner />
+            <div className={s.desc}>{curCommunity.desc}</div>
+            <div className={s.homeLinks}>
+              <LinkSVG className={s.linkIcon} />
+              <Link href={curCommunity.homepage} className={s.link}>
+                {curCommunity.homepage}
+              </Link>
+              <div className="grow" />
 
-            <GetMe />
-          </div>
+              <GetMe />
+            </div>
 
-          <h3 className={s.title}>{t('team.member', 'titleCase')}</h3>
-          <div className="mt-6" />
+            <h3 className={s.title}>{t('team.member', 'titleCase')}</h3>
+            <div className="mt-6" />
 
-          <div className={s.joiners}>
-            {mockUsers(5).map((user) => (
-              <Img
-                key={user.login}
-                className={s.joinAvatar}
-                src={user.avatar}
-                fallback={<ImgFallback size={6} right={2} user={user} />}
-              />
-            ))}
-            <div className={s.moreNum} onClick={() => listUsers('drawer')}>
-              +2
+            <div className={s.joiners}>
+              {mockUsers(5).map((user) => (
+                <Img
+                  key={user.login}
+                  className={s.joinAvatar}
+                  src={user.avatar}
+                  fallback={<ImgFallback size={6} right={2} user={user} />}
+                />
+              ))}
+              <div className={s.moreNum} onClick={() => listUsers('drawer')}>
+                +2
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className={s.publish}>
-          <PublishButton
-            text="参与讨论"
-            onMenuSelect={(cat) => {
-              callGEditor()
-              setTimeout(() => callSyncSelector({ cat, tag: activeTag }), 500)
-            }}
-          />
-        </div>
+          <div className={s.publish}>
+            <PublishButton
+              text="参与讨论"
+              onMenuSelect={(cat) => {
+                callGEditor()
+                setTimeout(() => callSyncSelector({ cat, tag: activeTag }), 500)
+              }}
+            />
+          </div>
 
-        <CommunityBrief />
-        {!showCommunityBadge && <div className={s.divider} />}
+          <CommunityBrief />
+          {!showCommunityBadge && <div className={s.divider} />}
 
-        <div className={s.tagsBar}>
-          <TagsBar onSelect={() => refreshArticles()} />
+          <div className={s.tagsBar}>
+            <TagsBar onSelect={() => refreshArticles()} />
+          </div>
         </div>
 
         <Suspense fallback={null}>

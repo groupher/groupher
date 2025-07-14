@@ -17,7 +17,7 @@ import S from './schema'
 type TRet = {
   tab: TTab
   loading: boolean
-  // drived
+  // derived
   getWallpaper: () => TWallpaperData
   getIsTouched: () => boolean
   // actions
@@ -109,7 +109,7 @@ export default (): TRet => {
   return {
     tab,
     loading,
-    // drived
+    // drive
     getWallpaper,
     getIsTouched,
     //actions

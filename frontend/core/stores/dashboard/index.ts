@@ -1,5 +1,5 @@
 import { proxy } from 'valtio'
-import { mergeDeepRight, mergeLeft } from 'ramda'
+import { mergeDeepRight } from 'ramda'
 
 import { LOCALE } from '~/const/i18n'
 import { THREAD } from '~/const/thread'
@@ -148,65 +148,72 @@ export const settingsFields: TSettingsFields = {
 }
 
 export default (init: TInit = {}): TStore => {
-  const store = proxy(
-    mergeLeft(init, {
-      ...settingsFields,
-      initFilled: false,
-      // for edit/rollback in dashboard
-      original: settingsFields,
+  const initialStore: TStore = {
+    ...settingsFields,
+    ...init,
+    initFilled: false,
+    original: settingsFields,
 
-      savingField: null,
-      saving: false,
-      loading: false,
-      curTab: DASHBOARD_ROUTE.INFO,
-      baseInfoTab: DASHBOARD_BASEINFO_ROUTE.BASIC,
+    savingField: null,
+    saving: false,
+    loading: false,
+    curTab: DASHBOARD_ROUTE.INFO,
+    baseInfoTab: DASHBOARD_BASEINFO_ROUTE.BASIC,
 
-      aliasTab: DASHBOARD_ALIAS_ROUTE.THREAD,
-      seoTab: DASHBOARD_SEO_ROUTE.SEARCH_ENGINE,
-      docTab: DASHBOARD_DOC_ROUTE.TABLE,
-      layoutTab: DASHBOARD_LAYOUT_ROUTE.GENERAL,
-      broadcastTab: DASHBOARD_BROADCAST_ROUTE.GLOBAL,
+    aliasTab: DASHBOARD_ALIAS_ROUTE.THREAD,
+    seoTab: DASHBOARD_SEO_ROUTE.SEARCH_ENGINE,
+    docTab: DASHBOARD_DOC_ROUTE.TABLE,
+    layoutTab: DASHBOARD_LAYOUT_ROUTE.GENERAL,
+    broadcastTab: DASHBOARD_BROADCAST_ROUTE.GLOBAL,
 
-      // overview
-      overview: DEFAULT_OVERVIEW,
+    overview: DEFAULT_OVERVIEW,
 
-      // editing
-      editingTag: null,
-      settingTag: null,
-      editingAlias: null,
-      editingLink: null,
-      editingLinkMode: CHANGE_MODE.CREATE,
+    editingTag: null,
+    settingTag: null,
+    editingAlias: null,
+    editingLink: null,
+    editingLinkMode: CHANGE_MODE.CREATE,
 
-      editingGroup: null,
-      editingGroupIndex: null,
-      editingFAQIndex: null,
-      editingFAQ: null,
+    editingGroup: null,
+    editingGroupIndex: null,
+    editingFAQIndex: null,
+    editingFAQ: null,
 
-      queringMediaReportIndex: null,
+    queringMediaReportIndex: null,
 
-      // cms
-      batchSelectedIDs: [],
-      pagedCommunities: EMPTY_PAGED_COMMUNITIES,
-      pagedPosts: EMPTY_PAGED_ARTICLES,
-      pagedDocs: EMPTY_PAGED_ARTICLES,
-      pagedChangelogs: EMPTY_PAGED_ARTICLES,
+    batchSelectedIDs: [],
+    pagedCommunities: EMPTY_PAGED_COMMUNITIES,
+    pagedPosts: EMPTY_PAGED_ARTICLES,
+    pagedDocs: EMPTY_PAGED_ARTICLES,
+    pagedChangelogs: EMPTY_PAGED_ARTICLES,
 
-      // for global alert
-      demoAlertEnable: false,
+    demoAlertEnable: false,
+    activeModerator: null,
+    allModeratorRules: '{}',
+    allRootRules: '{}',
 
-      activeModerator: null,
-      allModeratorRules: '{}',
-      allRootRules: '{}',
+    // 修复：改用 initialStore 代替 store
+    commit: (patch: Partial<TStore>): void => {
+      Object.assign(initialStore, mergeDeepRight(initialStore, patch))
+    },
+    debug: () => {
+      initialStore.editingLink = null
+      initialStore.headerLinks = []
+    },
+  }
 
-      commit: (patch: Partial<TStore>): void => {
-        Object.assign(store, mergeDeepRight(store, patch))
-      },
-      debug: () => {
-        store.editingLink = null
-        store.headerLinks = []
-      },
-    }),
-  )
-
+  const store = proxy(initialStore)
   return store
+
+  // const store = proxy(
+  //   mergeLeft(init, {
+  //     ...settingsFields,
+  //     initFilled: false,
+  //     // for edit/rollback in dashboard
+  //     original: settingsFields,
+  //     // ..
+  //   }),
+  // )
+
+  // return store
 }

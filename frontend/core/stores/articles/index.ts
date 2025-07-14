@@ -35,7 +35,7 @@ export default (init: TInit = {}): TStore => {
         Object.assign(store, mergeDeepRight(store, patch))
       },
     }),
-  )
+  ) as TStore
 
   return store
 }

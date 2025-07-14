@@ -11,6 +11,7 @@ import {
 } from '~/const/route'
 import { COLOR_NAME } from '~/const/colors'
 import { ONE_LINK_GROUP } from '~/const/dashboard'
+import type { TSettingsFields } from '~/stores/dashboard/spec'
 
 import type { TSettingField, THeaderEditType, TFooterEditType } from './spec'
 
@@ -516,11 +517,18 @@ export const DEFAULT_LINK_ITEMS = [
   },
 ]
 
-export const BASEINFO_BASIC_KEYS = ['locale', 'title', 'desc', 'introduction', 'homepage', 'slug']
-export const BASEINFO_LOGOS_KEYS = ['logo', 'favicon']
-export const BASEINFO_OTHER_KEYS = ['city', 'techstack']
+export const BASEINFO_BASIC_KEYS: (keyof TSettingsFields)[] = [
+  'locale',
+  'title',
+  'desc',
+  'introduction',
+  'homepage',
+  'slug',
+]
+export const BASEINFO_LOGOS_KEYS: (keyof TSettingsFields)[] = ['logo', 'favicon']
+export const BASEINFO_OTHER_KEYS: (keyof TSettingsFields)[] = ['city', 'techstack']
 
-export const BASEINFO_KEYS = [
+export const BASEINFO_KEYS: (keyof TSettingsFields)[] = [
   ...BASEINFO_BASIC_KEYS,
   ...BASEINFO_LOGOS_KEYS,
   ...BASEINFO_OTHER_KEYS,

@@ -1,5 +1,5 @@
 import { proxy } from 'valtio'
-import { mergeLeft, mergeDeepRight } from 'ramda'
+import { mergeDeepRight } from 'ramda'
 
 import type { TWallpaperGradientDir } from '~/spec'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
@@ -16,22 +16,20 @@ export const INITIAL_WALLPAPER_STATE = {
   hasShadow: false,
   direction: 'bottom' as TWallpaperGradientDir,
   bgSize: 'cover',
-
   uploadBgImage: '',
 }
 
 export default (init: TInit = {}): TStore => {
-  const store = proxy(
-    mergeLeft(init, {
-      ...INITIAL_WALLPAPER_STATE,
-      // for edit/rollback in dashboard
-      original: INITIAL_WALLPAPER_STATE,
+  const initialStore: TStore = {
+    ...INITIAL_WALLPAPER_STATE, // 默认值
+    ...init, // 用户传入的覆盖值
+    original: INITIAL_WALLPAPER_STATE,
 
-      commit: (patch: Partial<TStore>): void => {
-        Object.assign(store, mergeDeepRight(store, patch))
-      },
-    }),
-  )
+    commit: (patch: Partial<TStore>): void => {
+      Object.assign(initialStore, mergeDeepRight(initialStore, patch))
+    },
+  }
 
+  const store = proxy(initialStore)
   return store
 }
