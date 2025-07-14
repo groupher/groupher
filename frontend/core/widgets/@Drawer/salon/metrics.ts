@@ -25,7 +25,6 @@ export const SWIPE_THRESHOLD = {
 
 const VIEWER_TYPES = reduce(
   concat,
-  // @ts-ignore
   [TYPE.DRAWER.MAILS_VIEW],
   keys(ARTICLE_THREAD).map((T) => [
     TYPE.DRAWER[`${T}_VIEW`],
@@ -35,7 +34,7 @@ const VIEWER_TYPES = reduce(
 )
 
 /**
- * viewer-mode is wider, for aritlce viewer, editor staff
+ * viewer-mode is wider, for article viewer, editor staff
  * normal-mode is for settings, user preview staff
  */
 export const isWideMode = (type: string): boolean => {

@@ -7151,7 +7151,7 @@ next-compose-plugins@^2.2.0:
   resolved "https://registry.npmmirror.com/next-compose-plugins/-/next-compose-plugins-2.2.1.tgz"
   integrity sha512-OjJ+fV15FXO2uQXQagLD4C0abYErBjyjE0I0FHpOEIB8upw0hg1ldFP6cqHTJBH1cZqy96OeR3u1dJ+Ez2D4Bg==
 
-next@15.4.0-canary.128:
+next@^15.4.0-canary.128:
   version "15.4.0-canary.128"
   resolved "https://registry.npmmirror.com/next/-/next-15.4.0-canary.128.tgz#6d2da0ae043c4ff116f7875822c430ef687aa080"
   integrity sha512-Oo1GjM7ToTkus3mEMnKI93NpFt3KgtTnVDyINHrvX/rjdtEHiabNQhgowOqv84h8uLfatV+vsy7gMkYR+UsV/A==
@@ -8164,6 +8164,13 @@ react-dom@^19.0.0-rc-f3e09d6328-20240612:
   integrity sha512-4GV5sHFG0e/0AD4X+ySy6UJd3jVl1iNsNHdpad0qhABJ11twS3TTBnseqsKurKcsNqCEFeGL3uLpVChpIO3QfQ==
   dependencies:
     scheduler "^0.25.0"
+
+react-error-boundary@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.npmmirror.com/react-error-boundary/-/react-error-boundary-6.0.0.tgz#a9e552146958fa77d873b587aa6a5e97544ee954"
+  integrity sha512-gdlJjD7NWr0IfkPlaREN2d9uUZUlksrfOx7SX62VRerwXbMY6ftGCIZua1VG1aXFNOimhISsTq+Owp725b9SiA==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
 
 react-flip-numbers@^3.0.8:
   version "3.0.9"

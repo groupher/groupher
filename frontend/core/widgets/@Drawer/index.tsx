@@ -21,7 +21,11 @@ export default function Drawer({ children }) {
   const router = useRouter()
   const type = TYPE.DRAWER.POST_VIEW
 
-  useEvent(EVENT.DRAWER.CONTENT_LOADED, () => contentRef.current.scrollTo({ top: 0 }))
+  useEvent(EVENT.DRAWER.CONTENT_LOADED, () => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0 })
+    }
+  })
 
   useEffect(() => {
     setVisible(true)

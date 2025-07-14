@@ -7,7 +7,6 @@ export const NARROW_HEIGHT_OFFSET = 25
 
 export const ARTICLE_VIEWER_TYPES = reduce(
   concat,
-  // @ts-ignore
   [],
   keys(ARTICLE_THREAD).map((T) => [TYPE.DRAWER[`${T}_VIEW`]]),
 )
