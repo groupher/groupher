@@ -1,10 +1,10 @@
 // app/post/layout.tsx
-export default ({ children, modal }) => {
+export default ({ children, previewer }) => {
   return (
     <div>
       {children}
 
-      {modal && <>{modal}</>}
+      {previewer && <>{previewer}</>}
     </div>
   )
 }

@@ -18,8 +18,9 @@ export default () => {
 
   return {
     wrapper: 'min-w-52 max-w-52 mt-5 relative',
-    stickyWrapper: 'relative min-h-screen sticky top-7',
-    showArea: cn('transition-opacity duration-200', {
+    innerWrapper: 'sticky top-0',
+    stickyWrapper: cn('min-h-screen sticky', badgeInView ? 'top-10' : 'top-0'),
+    showArea: cn('transition-opacity duration-100', {
       'opacity-100 ease-in max-h-auto': badgeInView,
       'opacity-0 max-h-16 duration-0': !badgeInView,
     }),
@@ -33,8 +34,8 @@ export default () => {
     joinAvatar: cn('size-6 mr-2', avatar()),
     tagsBar: cn('mt-6 max-w-48', isTabberLayout && 'mt-1'),
     unibarWrapper: cn(
-      'absolute bottom-0.5',
-      isHeaderLayout && (badgeInView ? 'mb-28 pb-2' : 'mb-10'),
+      'sticky bottom-8',
+      isHeaderLayout && badgeInView && 'mb-10',
       isTabberLayout && (isAtTop ? 'mb-80 pb-4' : 'mb-8'),
     ),
     //

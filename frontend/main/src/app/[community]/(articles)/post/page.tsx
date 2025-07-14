@@ -1,7 +1,5 @@
 'use client'
 
-import Link from 'next/link'
-
 import useLinkMount from '~/hooks/useLinkMount'
 import useIsSidebarLayout from '~/hooks/useIsSidebarLayout'
 import useViewing from '~/hooks/useViewing'
@@ -30,9 +28,6 @@ export default () => {
   return (
     <>
       {isSidebarLayout && <div className="mt-5" />}
-      <Link href="/home/post/3" scroll={false}>
-        show me
-      </Link>
       <PostThread />
     </>
   )

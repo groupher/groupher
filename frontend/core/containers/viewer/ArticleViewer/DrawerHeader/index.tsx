@@ -1,4 +1,4 @@
-import { closeDrawer } from '~/signal'
+import { useRouter } from 'next/navigation'
 
 import ArrowSVG from '~/icons/Arrow'
 import WarningSVG from '~/icons/Warning'
@@ -12,10 +12,11 @@ import useSalon, { cn } from '../salon/drawer_header'
 
 export default () => {
   const s = useSalon()
+  const router = useRouter()
 
   return (
     <div className={s.wrapper}>
-      <div className={s.backBtn} onClick={() => closeDrawer()}>
+      <div className={s.backBtn} onClick={() => router.back()}>
         <ArrowSVG className={s.icon} />
       </div>
       <div className="ml-1" />

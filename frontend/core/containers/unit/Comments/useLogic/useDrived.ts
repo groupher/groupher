@@ -61,6 +61,7 @@ export default (): TRet => {
         'showEditor',
         'showReplyEditor',
         'showUpdateEditor',
+        // @ts-ignore
         'submitState',
         'updateId',
       ],

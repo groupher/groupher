@@ -13,7 +13,7 @@ type TRet = {
 }
 
 export const parseArticleLink = (article: TArticle): string => {
-  if (!article?.meta?.thread) return ''
+  if (!article?.meta?.thread || !article.community) return ''
 
   const { meta, community, innerId } = article
   const thread = meta.thread.toLowerCase()

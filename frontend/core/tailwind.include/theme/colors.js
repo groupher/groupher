@@ -234,7 +234,7 @@ module.exports = {
     bottomBg: { DEFAULT: '#252325', dark: '#252325' },
   },
   drawer: {
-    mask: { DEFAULT: 'rgba(31, 34, 37, 0.15)', dark: 'rgb(31 34 37 / 41%)' },
+    mask: { DEFAULT: 'rgba(31, 34, 37, 0.15)', dark: 'rgb(21 21 21 / 72%)' },
     bg: { DEFAULT: lightTokens.contentBg, dark: '#252525' },
     shadow: {
       DEFAULT: '-8px 8px 20px 11px rgb(143 143 143 / 2%)',

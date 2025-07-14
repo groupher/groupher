@@ -100,6 +100,7 @@ export default (): TRet => {
       console.log('## TODO: set viewing')
     }
 
+    // @ts-ignore
     snap.commit({ visible: true, type, options: mergeRight(defaultOptions, options) })
     lockPage()
 

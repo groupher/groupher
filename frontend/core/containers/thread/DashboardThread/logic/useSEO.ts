@@ -22,7 +22,6 @@ export default (): TRet => {
   const { edit, anyChanged } = useHelper()
 
   // drived
-  // @ts-ignorei
   const getIsTouched = useCallback(() => anyChanged(SEO_KEYS), [store])
 
   const toggleSEO = (seoEnable: boolean): void => {

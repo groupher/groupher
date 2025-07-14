@@ -1,7 +1,7 @@
 import { type FC, lazy, Suspense } from 'react'
 
+import Link from 'next/link'
 import type { TPost } from '~/spec'
-import { previewArticle } from '~/signal'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 import useLayout from '~/hooks/useLayout'
 import { THREAD } from '~/const/thread'
@@ -55,17 +55,10 @@ const Header: FC<TProps> = ({ article }) => {
         </div>
       </div>
       <div className={s.main}>
-        <a
-          className={s.title}
-          onClick={(e) => {
-            e.preventDefault()
-            previewArticle(article)
-          }}
-          href={`/${slug}/${THREAD.POST}/${innerId}`}
-        >
+        <Link className={s.title} href={`/${slug}/${THREAD.POST}/${innerId}`} scroll={false}>
           <ArticleReadLabel viewed={article.viewerHasViewed} />
           {title}
-        </a>
+        </Link>
 
         {/*  @ts-ignore */}
         <TagsList items={articleTags} left={2} top="px" />

@@ -1,4 +1,6 @@
-export const SEO_OG_KEYS = [
+import type { TSEOFields } from '~/stores/dashboard/spec'
+
+export const SEO_OG_KEYS: TSEOFields[] = [
   'ogSiteName',
   'ogTitle',
   'ogDescription',
@@ -9,7 +11,7 @@ export const SEO_OG_KEYS = [
   // 'ogPublisher',
 ]
 
-export const SEO_TW_KEYS = [
+export const SEO_TW_KEYS: TSEOFields[] = [
   'twTitle',
   'twDescription',
   'twUrl',
@@ -20,4 +22,4 @@ export const SEO_TW_KEYS = [
   'twImageHeight',
 ]
 
-export const SEO_KEYS = ['seoEnable', ...SEO_OG_KEYS, ...SEO_TW_KEYS]
+export const SEO_KEYS: TSEOFields[] = ['seoEnable', ...SEO_OG_KEYS, ...SEO_TW_KEYS]

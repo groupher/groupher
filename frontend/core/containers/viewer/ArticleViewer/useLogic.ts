@@ -57,7 +57,7 @@ export default (): TRet => {
     setLoading(true)
     // query(S.getArticle(meta.thread), params).then((res) => {
     query(S.getArticle('post'), params).then((res) => {
-      // console.log('## getArticle: ', res)
+      console.log('## getArticle: ', res)
       handleArticleLoaded(res.post)
     })
   }
