@@ -1,10 +1,7 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-	"organizeImports": {
-		"enabled": false
-	},
+	"$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
 	"files": {
-		"ignore": ["./utils/pubsub.js", "**/*.css"]
+		"includes": ["**", "!./utils/pubsub.js", "!**/*.css"]
 	},
 	"linter": {
 		"enabled": true,
@@ -30,7 +27,8 @@
 				"noDelete":"off"
 			},
 			"style": {
-				"noParameterAssign": "warn"
+				"noParameterAssign": "warn",
+				"useImportType": "error"
 			},
 			"correctness": {
 				"useExhaustiveDependencies": "warn",
@@ -41,9 +39,6 @@
 				"noAutofocus": "off",
 				"useButtonType": "off",
 				"useKeyWithClickEvents": "off"
-			},
-			"nursery": {
-				"useComponentExportOnlyModules": "warn"
 			}
 		}
 	},
