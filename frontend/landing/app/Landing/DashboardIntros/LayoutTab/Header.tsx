@@ -18,7 +18,7 @@ const Header: FC<TProps> = ({ primaryColor, onPrimaryChange }) => {
       <ColorSelector
         activeColor={primaryColor}
         onChange={(color) => onPrimaryChange(color)}
-        placement="bottom-start"
+        placement='bottom-start'
         offset={[0, 0]}
       >
         <div className={s.colorBox}>
@@ -27,7 +27,7 @@ const Header: FC<TProps> = ({ primaryColor, onPrimaryChange }) => {
       </ColorSelector>
 
       <h3 className={s.title}>你的社区</h3>
-      <div className="grow" />
+      <div className='grow' />
       <div className={cn(s.bar, 'right-2 top-2')} />
     </div>
   )

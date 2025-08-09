@@ -5,11 +5,11 @@
 /* tailwind can't express those sexy border style, need global css */
 /* NOTE: please sync those values with real theme colors */
 :root {
-  --divider: #EAE9E9;
+  --divider: #eae9e9;
   --divider-dark: #3c3c3c;
 
-  --rainbow-custom: #94C37E;
-  --rainbow-custom-dark: #E08A85;
+  --rainbow-custom: #94c37e;
+  --rainbow-custom-dark: #e08a85;
 }
 
 @layer utilities {
@@ -442,7 +442,6 @@
     @apply border border-dashed;
     border-color: blue;
   }
-
 }
 
 /* third-part global styles */
@@ -510,4 +509,3 @@
 .lazy-load-image-background.blur.lazy-load-image-loaded {
   line-height: 0.8;
 }
-

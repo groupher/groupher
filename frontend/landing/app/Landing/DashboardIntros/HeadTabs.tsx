@@ -1,10 +1,8 @@
 // import Button from '~/widgets/Buttons/Button'
 
 import { DASHBOARD_ROUTE } from '~/const/route'
-
-import type { TIntroTab } from './spec'
-
 import useSalon, { cn } from '../salon/dashboard_intros/head_tabs'
+import type { TIntroTab } from './spec'
 
 type TProps = {
   tab: TIntroTab

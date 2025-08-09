@@ -1,17 +1,15 @@
-import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
 
-import StoreProvider from '~/stores/provider'
 import { GlobalLayout, GraphQLProvider, getSSRInitData, parseRouteInfo } from '~/providers'
+import StoreProvider from '~/stores/provider'
 
 // import { Analytics } from '@vercel/analytics/react'
 // import { SpeedInsights } from '@vercel/speed-insights/next'
 
 import '../salon/global.css'
-
-// export const dynamic = "force-static"
 
 export const metadata: Metadata = {
   title: 'Groupher | 让你的产品听见用户的声音',
@@ -35,7 +33,7 @@ const InitDataLoader = async ({ children }) => {
 
 export default function Layout({ children }) {
   return (
-    <html lang="en">
+    <html lang='en'>
       <body>
         <Suspense fallback={<h1>...</h1>}>
           {/* @ts-ignore */}

@@ -15,19 +15,19 @@ export default () => {
 
       <div className={s.footer}>
         <div className={s.logoBox}>
-          <Img src="/landing/seo/google.png" className={s.logo} />
+          <Img src='/landing/seo/google.png' className={s.logo} />
         </div>
         <div className={s.logoBox}>
-          <Img src="/landing/seo/baidu.png" className={s.logo} />
+          <Img src='/landing/seo/baidu.png' className={s.logo} />
         </div>
         <div className={s.logoBox}>
-          <Img src="/landing/seo/ms.png" className={s.logo} />
+          <Img src='/landing/seo/ms.png' className={s.logo} />
         </div>
 
         <div className={s.logoBox}>
-          <Img src="/landing/seo/duck.png" className={s.logo} />
+          <Img src='/landing/seo/duck.png' className={s.logo} />
         </div>
-        <div className="grow" />
+        <div className='grow' />
 
         <div className={s.hint}>OpenGraph</div>
       </div>

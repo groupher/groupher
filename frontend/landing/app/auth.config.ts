@@ -1,14 +1,12 @@
-import type { NextAuthConfig } from 'next-auth'
-import { cookies /* headers */ } from 'next/headers'
-import NextAuth from 'next-auth'
-
-import OAUTH from '~/const/oauth'
-
-import { GRAPHQL_ENDPOINT } from '~/config'
 import { cacheExchange, createClient, fetchExchange, gql } from '@urql/core'
 import { registerUrql } from '@urql/next/rsc'
-
+import { cookies /* headers */ } from 'next/headers'
+import type { NextAuthConfig } from 'next-auth'
+import NextAuth from 'next-auth'
 import Github from 'next-auth/providers/github'
+import { GRAPHQL_ENDPOINT } from '~/config'
+import OAUTH from '~/const/oauth'
+
 // import Google from 'next-auth/providers/google'
 
 const makeClient = () => {

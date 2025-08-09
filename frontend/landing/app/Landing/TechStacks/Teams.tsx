@@ -16,7 +16,7 @@ export default () => {
         <div className={s.count}>+32</div>
       </div>
 
-      <Facepile users={users} className="gap-x-2 opacity-80" />
+      <Facepile users={users} className='gap-x-2 opacity-80' />
     </div>
   )
 }

@@ -1,8 +1,8 @@
 import { ROUTE } from '~/const/route'
 
 import Img from '~/Img'
-import Button from '~/widgets/Buttons/Button'
 import BorderButton from '~/widgets/Buttons/BorderButton'
+import Button from '~/widgets/Buttons/Button'
 
 import useSalon from '../salon/footer'
 
@@ -11,7 +11,7 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <Img src="groupher.png" className={s.logo} />
+      <Img src='groupher.png' className={s.logo} />
 
       <h3 className={s.title}>节省团队宝贵时间</h3>
       <div className={s.desc}>
@@ -24,7 +24,7 @@ export default () => {
           <BorderButton space={8}>创建新社区</BorderButton>
         </a>
 
-        <Button size="medium" ghost>
+        <Button size='medium' ghost>
           预约演示
         </Button>
       </div>

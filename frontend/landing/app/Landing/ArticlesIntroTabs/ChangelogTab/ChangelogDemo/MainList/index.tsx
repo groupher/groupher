@@ -1,15 +1,12 @@
 import { COLOR_NAME } from '~/const/colors'
 
 import TagNode from '~/widgets/TagNode'
-
-import StarSVG from '../../../../salon/articles_intro_tabs/changelog_tab/Star'
-
-import CoverPreview from '../CoverPreview'
-import Footer from './Footer'
-
 import useSalon, {
   cn,
 } from '../../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/main_list'
+import StarSVG from '../../../../salon/articles_intro_tabs/changelog_tab/Star'
+import CoverPreview from '../CoverPreview'
+import Footer from './Footer'
 
 export default () => {
   const s = useSalon()
@@ -43,9 +40,9 @@ export default () => {
         <div className={s.bar} />
         <div className={cn(s.bar, 'w-28 opacity-20')} />
       </div>
-      <Footer upvotesCount={24} date="2013-12-01" />
+      <Footer upvotesCount={24} date='2013-12-01' />
       <div className={s.divider} />
-      <div className="opacity-75">
+      <div className='opacity-75'>
         <div className={s.header}>
           <div className={s.title}>
             AI 加持的文章搜索 <div className={s.version}>v1.9</div>
@@ -67,7 +64,7 @@ export default () => {
           <div className={cn(s.bar, 'w-32 opacity-25')} />
           <div className={cn(s.bar, 'w-28 opacity-20')} />
         </div>
-        <Footer upvotesCount={98} date="2013-11-26" />
+        <Footer upvotesCount={98} date='2013-11-26' />
       </div>
     </div>
   )

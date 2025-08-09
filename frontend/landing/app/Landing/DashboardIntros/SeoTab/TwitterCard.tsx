@@ -1,8 +1,8 @@
+import TwMarkSVG from '~/icons/BookMark'
 import CommentSVG from '~/icons/Comment'
 import HeartSVG from '~/icons/Heart'
 import RetweetSVG from '~/icons/Retweet'
 import ViewSVG from '~/icons/TwView'
-import TwMarkSVG from '~/icons/BookMark'
 import XSVG from '~/icons/X'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/seo_tab/twitter_card'
@@ -25,16 +25,16 @@ export default () => {
       <div className={s.footer}>
         <CommentSVG className={s.icon} />
         <div className={s.count}>12</div>
-        <div className="mr-9" />
+        <div className='mr-9' />
         <HeartSVG className={cn(s.icon, s.fillRed)} />
         <div className={s.count}>29</div>
-        <div className="mr-9" />
+        <div className='mr-9' />
         <RetweetSVG className={s.icon} />
         <div className={s.count}>8</div>
-        <div className="mr-9" />
+        <div className='mr-9' />
         <ViewSVG className={s.icon} />
         <div className={s.count}>248</div>
-        <div className="mr-9" />
+        <div className='mr-9' />
         <TwMarkSVG className={cn(s.icon, s.fillBlue)} />
       </div>
     </div>

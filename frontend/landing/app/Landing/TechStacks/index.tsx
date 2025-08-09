@@ -1,7 +1,7 @@
-import StackCard from './StackCard'
-import GithubCard from './GithubCard'
-
 import useSalon, { cn } from '../salon/tech_stacks'
+
+import GithubCard from './GithubCard'
+import StackCard from './StackCard'
 
 export default () => {
   const s = useSalon()
@@ -16,14 +16,14 @@ export default () => {
         <div className={s.inner}>
           <div className={s.innerBgWrapper}>
             <img
-              src="/cad-bg.png"
+              src='/cad-bg.png'
               className={cn(s.cadBg, 'left-0 w-8/12', s.cadDark)}
-              alt="card-bg"
+              alt='card-bg'
             />
             <img
-              src="/cad-bg.png"
+              src='/cad-bg.png'
               className={cn(s.cadBg, 'right-0 w-4/12 rotate-180', s.cadDark)}
-              alt="card-bg"
+              alt='card-bg'
             />
           </div>
           <StackCard />

@@ -1,18 +1,15 @@
-import PinSVG from '~/icons/Pin'
-import EditSVG from '~/icons/EditPen'
-import SlugSVG from '~/icons/Slug'
-import MergeSVG from '~/icons/Merge'
 import ArchivedSVG from '~/icons/Archived'
-import DeleteSVG from '~/icons/Trash'
-import LockSVG from '~/icons/LockLight'
 import ArrowSVG from '~/icons/ArrowSimple'
-import WipSVG from '~/icons/GtdWip'
-
 import LightSVG from '~/icons/ColorLight'
-
-import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/menu_card'
-
+import EditSVG from '~/icons/EditPen'
+import WipSVG from '~/icons/GtdWip'
 import HashTagBoldSVG from '~/icons/HashTag'
+import LockSVG from '~/icons/LockLight'
+import MergeSVG from '~/icons/Merge'
+import PinSVG from '~/icons/Pin'
+import SlugSVG from '~/icons/Slug'
+import DeleteSVG from '~/icons/Trash'
+import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/menu_card'
 
 export default () => {
   const s = useSalon()
@@ -22,35 +19,35 @@ export default () => {
       <div className={s.menuItem}>
         <EditSVG className={s.icon} />
         <div className={s.menuTitle}>修改标题</div>
-        <div className="grow" />
+        <div className='grow' />
         <ArrowSVG className={cn(s.icon, 'rotate-180')} />
       </div>
 
       <div className={s.menuItem}>
         <SlugSVG className={s.icon} />
         <div className={s.menuTitle}>设置 Slug</div>
-        <div className="grow" />
+        <div className='grow' />
         <ArrowSVG className={cn(s.icon, 'rotate-180')} />
       </div>
       <div className={s.divider} />
       <div className={s.menuItem}>
         <LightSVG className={s.icon} />
         <div className={s.menuTitle}>功能请求</div>
-        <div className="grow" />
+        <div className='grow' />
         <ArrowSVG className={cn(s.icon, 'rotate-180')} />
       </div>
 
       <div className={s.menuItem}>
         <WipSVG className={s.icon} />
         <div className={s.menuTitle}>进行中</div>
-        <div className="grow" />
+        <div className='grow' />
         <ArrowSVG className={cn(s.icon, 'rotate-180')} />
       </div>
 
       <div className={s.menuItem}>
         <HashTagBoldSVG className={s.tagIcon} />
         <div className={s.menuTitle}>标签</div>
-        <div className="grow" />
+        <div className='grow' />
         <ArrowSVG className={cn(s.icon, 'rotate-180')} />
       </div>
 
@@ -68,7 +65,7 @@ export default () => {
       <div className={s.menuItem}>
         <MergeSVG className={s.icon} />
         <div className={s.menuTitle}>合并</div>
-        <div className="grow" />
+        <div className='grow' />
         <ArrowSVG className={s.icon} />
       </div>
       <div className={s.menuItem}>

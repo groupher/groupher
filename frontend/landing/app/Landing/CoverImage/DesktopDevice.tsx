@@ -1,13 +1,11 @@
 import Typewriter from 'typewriter-effect'
 
 import { fmt2CompStyle } from '~/fmt'
-
+import useWallpaper from '~/hooks/useWallpaper'
 import LockSVG from '~/icons/Lock'
 
-import useWallpaper from '~/hooks/useWallpaper'
-
-import ImageSlider from './ImageSlider'
 import useSalon from '../salon/cover_image/desktop_device'
+import ImageSlider from './ImageSlider'
 
 export default () => {
   const s = useSalon()
@@ -19,7 +17,7 @@ export default () => {
         <div className={s.dot} />
         <div className={s.dot} />
         <div className={s.dot} />
-        <div className="grow" />
+        <div className='grow' />
         <div className={s.addrBar}>
           <LockSVG className={s.lock} />
           <div className={s.addtext}>https://</div>
@@ -35,7 +33,7 @@ export default () => {
             />
           </div>
         </div>
-        <div className="grow" />
+        <div className='grow' />
       </div>
       <div className={s.content}>
         <ImageSlider />

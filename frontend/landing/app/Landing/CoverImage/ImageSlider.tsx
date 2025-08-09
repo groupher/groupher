@@ -1,21 +1,16 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
-
-import { Carousel, Slide, Slider, SliderBarDotGroup } from 'react-scroll-snap-anime-slider'
 import { range } from 'ramda'
-import useInterval from '~/hooks/useInterval'
-
-import Img from '~/Img'
-
-import ArrowSVG from '~/icons/ArrowSimple'
-import ThemeRulerSVG from '~/icons/ThemeRuler'
-
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Carousel, Slide, Slider, SliderBarDotGroup } from 'react-scroll-snap-anime-slider'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
+import useInterval from '~/hooks/useInterval'
 import useLoaded from '~/hooks/useLoaded'
 import useTheme from '~/hooks/useTheme'
-
+import Img from '~/Img'
+import ArrowSVG from '~/icons/ArrowSimple'
+import ThemeRulerSVG from '~/icons/ThemeRuler'
+import useSalon from '../salon/cover_image/image_slider'
 import Scrollbar from './Scrollbar'
 import ScrollbarDark from './ScrollbarDark'
-import useSalon from '../salon/cover_image/image_slider'
 
 export const MAX_INTRO_IMAGES_COUNT = 5
 export const MAX_THEMES_COUNT = 5
@@ -99,13 +94,13 @@ export default () => {
   }, [themeIndex])
 
   return (
-    <div className={s.slideBox} onClick={() => toggleLoop(false)}>
+    <button className={s.slideBox} onClick={() => toggleLoop(false)}>
       {loaded && (
         <Carousel
           totalSlides={MAX_INTRO_IMAGES_COUNT}
           visibleSlides={VISIBLE_SLIDES}
           step={SLIDE_STEP}
-          slideMargin="20px"
+          slideMargin='20px'
           onSlide={({ currentSlide }) => {
             localCurrentSlide.index = currentSlide
           }}
@@ -114,15 +109,15 @@ export default () => {
             {range(0, MAX_INTRO_IMAGES_COUNT).map((_, i) => (
               <Slide key={i}>
                 <div className={s.slideImage}>
-                  {i !== 1 && <Img src={imgSrc} alt="cover page" className={s.coverImg} />}
-                  {i === 1 && <Img src={imgSrc2} alt="cover page" className={s.coverImg} />}
+                  {i !== 1 && <Img src={imgSrc} alt='cover page' className={s.coverImg} />}
+                  {i === 1 && <Img src={imgSrc2} alt='cover page' className={s.coverImg} />}
                   {/* <Img src={imgSrc} alt="cover page" className={s.coverImg} /> */}
                 </div>
               </Slide>
             ))}
           </Slider>
 
-          <div
+          <button
             className={s.leftNavi}
             onClick={() => {
               let targetSlideIndex = 0
@@ -139,9 +134,9 @@ export default () => {
             }}
           >
             <ArrowSVG className={s.leftArrow} />
-          </div>
+          </button>
 
-          <div
+          <button
             className={s.rightNavi}
             onClick={() => {
               let targetSlideIndex = 0
@@ -158,7 +153,7 @@ export default () => {
             }}
           >
             <ArrowSVG className={s.rightArrow} />
-          </div>
+          </button>
 
           {/* tmp solution due to the react version conflict, can't use hooks inside it */}
           {isLightTheme ? (
@@ -169,7 +164,7 @@ export default () => {
         </Carousel>
       )}
       {loaded && (
-        <div
+        <button
           className={s.themeSwitch}
           onClick={() => {
             if (themeIndex >= MAX_THEMES_COUNT) {
@@ -180,8 +175,8 @@ export default () => {
           }}
         >
           <ThemeRulerSVG className={s.themeIcon} />
-        </div>
+        </button>
       )}
-    </div>
+    </button>
   )
 }

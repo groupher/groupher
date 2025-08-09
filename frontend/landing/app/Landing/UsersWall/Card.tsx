@@ -16,7 +16,7 @@ const Card: FC<TProps> = ({ content, user, color }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.header}>
-        <img className={s.avatar} src={user.avatar} color={color} alt="user" />
+        <img className={s.avatar} src={user.avatar} color={color} alt='user' />
         <div className={s.nickname}>{user.nickname}</div>
       </div>
       {content}

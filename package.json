@@ -106,7 +106,7 @@
     "mastani-codehighlight": "0.0.7",
     "motion": "^12.18.1",
     "nanoid": "^3.1.12",
-    "next": "15.4.2-canary.18",
+    "next": "15.4.2-canary.34",
     "next-auth": "^5.0.0-beta.16",
     "next-compose-plugins": "^2.2.0",
     "overlayscrollbars": "^2.9.1",
@@ -160,7 +160,7 @@
     "zustand": "^5.0.4"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.1.2",
+    "@biomejs/biome": "2.1.4",
     "@cfaester/enzyme-adapter-react-18": "0.5.1",
     "@commitlint/cli": "^17.6.6",
     "@commitlint/config-conventional": "^8.2.0",
