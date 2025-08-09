@@ -1,13 +1,12 @@
 'use client'
 
-import useLinkMount from '~/hooks/useLinkMount'
-import useIsSidebarLayout from '~/hooks/useIsSidebarLayout'
-import useViewing from '~/hooks/useViewing'
 import { THREAD } from '~/const/thread'
+import PostThread from '~/containers//thread/PostThread'
+import useIsSidebarLayout from '~/hooks/useIsSidebarLayout'
+import useLinkMount from '~/hooks/useLinkMount'
 
 import usePagedPosts, { type TUpdate } from '~/hooks/usePagedPosts'
-
-import PostThread from '~/containers//thread/PostThread'
+import useViewing from '~/hooks/useViewing'
 import { fetchArticlePageData } from '~/utils/ssr/api'
 
 export default () => {
@@ -27,7 +26,7 @@ export default () => {
 
   return (
     <>
-      {isSidebarLayout && <div className="mt-5" />}
+      {isSidebarLayout && <div className='mt-5' />}
       <PostThread />
     </>
   )

@@ -19,7 +19,7 @@ const Block: FC<TProps> = ({ text, noDot = false, type = '' }) => {
       {type === 'online' && <PlaneSVG className={s.launchIcon} />}
       {type === 'giveup' && <GraveSVG className={s.graveIcon} />}
       {type === '' && (
-        <div className={s.buildIcon} role="img" aria-label="wip">
+        <div className={s.buildIcon} role='img' aria-label='wip'>
           🚧
         </div>
       )}

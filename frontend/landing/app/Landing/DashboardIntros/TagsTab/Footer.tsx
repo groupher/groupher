@@ -1,7 +1,6 @@
 import ClipSVG from '~/icons/Clip'
-
-import OptionArrowSVG from '~/icons/OptionArrow'
 import HashTagSVG from '~/icons/HashTag'
+import OptionArrowSVG from '~/icons/OptionArrow'
 
 import useSalon from '../../salon/dashboard_intros/tags_tab/footer'
 
@@ -19,7 +18,7 @@ export default () => {
           </div>
           <div className={s.item}>
             <div className={s.label}>标签样式</div>
-            <div className="row-center">
+            <div className='row-center'>
               <HashTagSVG className={s.hashTagIcon} />
               <div className={s.slash}>/</div>
               <div className={s.dotTag} />

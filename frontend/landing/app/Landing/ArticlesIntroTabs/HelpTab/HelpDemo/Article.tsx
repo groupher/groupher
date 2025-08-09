@@ -1,8 +1,8 @@
-import ShareSVG from '~/icons/Share'
+import ArrowSimple from '~/icons/ArrowSimple'
+import BadSVG from '~/icons/EmojiBad'
 import GoodSVG from '~/icons/EmojiGood'
 import SosoSVG from '~/icons/EmojiSoSo'
-import BadSVG from '~/icons/EmojiBad'
-import ArrowSimple from '~/icons/ArrowSimple'
+import ShareSVG from '~/icons/Share'
 
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/help_tab/help_demo/article'
 
@@ -40,7 +40,7 @@ export default () => {
         <div className={s.footer}>
           <ArrowSimple className={s.arrowIcon} />
           <div className={s.arrowText}>编辑目录</div>
-          <div className="grow" />
+          <div className='grow' />
           <div className={s.arrowText}>文档反馈</div>
           <ArrowSimple className={cn(s.arrowIcon, 'rotate-180')} />
         </div>

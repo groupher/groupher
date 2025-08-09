@@ -7,28 +7,26 @@
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
 
 import { ROUTE } from '~/const/route'
+import useTheme from '~/hooks/useTheme'
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/LinkOutside'
 import GithubSVG from '~/icons/social/Github'
 
-import useTheme from '~/hooks/useTheme'
-
-import Button from '~/widgets/Buttons/Button'
 import BorderButton from '~/widgets/Buttons/BorderButton'
-import Tooltip from '~/widgets/Tooltip'
+import Button from '~/widgets/Buttons/Button'
 import FaqList from '~/widgets/FaqList'
 import HomeHeader from '~/widgets/HomeHeader'
+import Tooltip from '~/widgets/Tooltip'
 
-import CoverImage from './CoverImage'
 import ArticlesIntroTabs from './ArticlesIntroTabs'
 import BatteryBento from './BatteryBento'
-import TechStacks from './TechStacks'
-import DashboardIntros from './DashboardIntros'
 import CompareDev from './CompareDev'
-import UsersWall from './UsersWall'
+import CoverImage from './CoverImage'
+import DashboardIntros from './DashboardIntros'
 import Footer from './Footer'
-
 import useSalon from './salon'
+import TechStacks from './TechStacks'
+import UsersWall from './UsersWall'
 
 // TODO: move to const later
 const faqs = [
@@ -69,7 +67,7 @@ export default () => {
   const { isLightTheme } = useTheme()
 
   return (
-    <div className={s.wrapper} data-testid="landing-page">
+    <div className={s.wrapper} data-testid='landing-page'>
       {/* <DashboardIntros /> */}
       {/* <PatternBg /> */}
       <div className={s.inner}>
@@ -79,9 +77,9 @@ export default () => {
           <div className={s.githubInfo}>
             <GithubSVG className={s.githubIcon} style={s.githubIconStyle} />
             <a
-              href="/"
-              target="_blank"
-              rel="noreferrer"
+              href='/'
+              target='_blank'
+              rel='noreferrer'
               className={s.githubText}
               style={s.textGradientStyle}
             >
@@ -95,7 +93,7 @@ export default () => {
 
           <div className={s.buttonGroup}>
             <a href={ROUTE.APPLY_COMMUNITY} className={s.linkable}>
-              <BorderButton space={8} className="bold-sm">
+              <BorderButton space={8} className='bold-sm'>
                 开始使用
               </BorderButton>
             </a>
@@ -114,18 +112,18 @@ export default () => {
                   </a>
                 </div>
               }
-              placement="bottom"
+              placement='bottom'
               delay={200}
               offset={[1, 5]}
             >
               <Button
-                size="medium"
+                size='medium'
                 ghost
                 noBorder
                 withSoftBg
                 className={isLightTheme && 'brightness-95'}
               >
-                <div className="ml-2" />
+                <div className='ml-2' />
                 在线体验 <ArrowSVG className={s.arrow} />
               </Button>
             </Tooltip>

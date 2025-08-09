@@ -1,16 +1,14 @@
-import { mockUsers } from '~/mock'
-
 import { COLOR_NAME } from '~/const/colors'
+import AuthSVG from '~/icons/Acount'
 import CurveLineSVG from '~/icons/CurveLine'
 import PostSVG from '~/icons/Post'
 import WebhookSVG from '~/icons/Webhook'
-import AuthSVG from '~/icons/Acount'
-
-import Facepile from '~/widgets/Facepile/LandingPage'
+import { mockUsers } from '~/mock'
+import ArticleCatState from '~/widgets/ArticleCatState'
 
 import Checker from '~/widgets/Checker'
-import ArticleCatState from '~/widgets/ArticleCatState'
 import CommentsCount from '~/widgets/CommentsCount'
+import Facepile from '~/widgets/Facepile/LandingPage'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/content_card'
 
@@ -65,12 +63,12 @@ export default () => {
         <div className={s.bar} />
       </div>
       <div className={cn(s.item, s.itemBlue, 'opacity-70 pl-6')}>
-        <Checker checked size="small" color={COLOR_NAME.BLUE} />
+        <Checker checked size='small' color={COLOR_NAME.BLUE} />
         <div className={s.title}>支持离线同步</div>
         <ArticleCatState left={2} right={3} />
-        <CommentsCount count={8} size="medium" left={3} right={4} />
+        <CommentsCount count={8} size='medium' left={3} right={4} />
 
-        <Facepile users={users} className="scale-90 -mt-0.5" />
+        <Facepile users={users} className='scale-90 -mt-0.5' />
       </div>
       <div className={s.item}>
         <div className={s.falseChecker} />

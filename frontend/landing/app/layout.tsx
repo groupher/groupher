@@ -1,20 +1,17 @@
-import { Suspense } from 'react'
-import type { Metadata } from 'next'
-
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
-
-import type { TRootStoreInit } from '~/stores/spec'
+import type { Metadata } from 'next'
+import { Suspense } from 'react'
+import METRIC from '~/const/metric'
 
 import { HCN } from '~/const/name'
 import THEME from '~/const/theme'
-import METRIC from '~/const/metric'
+import GlobalLayout from '~/providers/GlobalLayout'
 
 import { P } from '~/schemas'
-import { gqFetch } from '~/utils/api'
-
 import StoreProvider from '~/stores/provider'
-import GlobalLayout from '~/providers/GlobalLayout'
+import type { TRootStoreInit } from '~/stores/spec'
+import { gqFetch } from '~/utils/api'
 
 import '../salon/global.css'
 
@@ -56,7 +53,7 @@ const InitDataLoader = async ({ children }) => {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang='en'>
       <body>
         <Suspense fallback={<h1>...</h1>}>
           {/* @ts-ignore */}

@@ -1,29 +1,23 @@
 import type { FC } from 'react'
-
-import type { TArticleCat, TColorName } from '~/spec'
 import { ARTICLE_CAT } from '~/const/gtd'
-
 import Img from '~/Img'
-import { mockUsers } from '~/mock'
-
-import PinSVG from '~/icons/Pin'
-import TagSVG from '~/icons/HashTag'
-import TargetSVG from '~/icons/TargetBold'
-import ClipSVG from '~/icons/Clip'
-
-import LightSVG from '~/icons/Light'
 import BugSVG from '~/icons/Bug'
-import QuestionSVG from '~/icons/Question'
+import ClipSVG from '~/icons/Clip'
 import DiscussSVG from '~/icons/Discuss'
+import TagSVG from '~/icons/HashTag'
+import LightSVG from '~/icons/Light'
+import PinSVG from '~/icons/Pin'
+import QuestionSVG from '~/icons/Question'
+import TargetSVG from '~/icons/TargetBold'
 import ToolSVG from '~/icons/Tool'
+import { mockUsers } from '~/mock'
+import type { TArticleCat, TColorName } from '~/spec'
 
 import Facepile from '~/widgets/Facepile/LandingPage'
-
-import { METRIC } from '../constant'
-import UpdateCounter from './UpdateCounter'
-import SprintCounter from './SprintCounter'
-
 import useSalon, { cn } from '../../salon/compare_dev/our_way/node_block'
+import { METRIC } from '../constant'
+import SprintCounter from './SprintCounter'
+import UpdateCounter from './UpdateCounter'
 
 type TProps = {
   cat?: TArticleCat | 'DEFAULT'
@@ -58,7 +52,7 @@ const NodeBlock: FC<TProps> = ({
 
       {cat === ARTICLE_CAT.BUG && (
         <div className={cn(s.avatarGroup, 'top-4 right-4 rotate-6 opacity-65')}>
-          <Facepile users={users.slice(3, 5)} left={2} className="scale-90 gap-x-1" />
+          <Facepile users={users.slice(3, 5)} left={2} className='scale-90 gap-x-1' />
         </div>
       )}
 
@@ -70,7 +64,7 @@ const NodeBlock: FC<TProps> = ({
 
       {cat === ARTICLE_CAT.OTHER && (
         <div className={cn(s.avatarGroup, 'top-3.5 right-4 -rotate-3 opacity-65')}>
-          <Facepile users={users.slice(0, 2)} left={2} className="scale-90 gap-x-1" />
+          <Facepile users={users.slice(0, 2)} left={2} className='scale-90 gap-x-1' />
         </div>
       )}
 
@@ -91,14 +85,14 @@ const NodeBlock: FC<TProps> = ({
         <div className={cn(s.bar, 'w-24')} />
         <div className={cn(s.bar)} />
 
-        <div className="grow" />
+        <div className='grow' />
         <div className={s.footer}>
           {cat === 'DEFAULT' ? (
             <SprintCounter num={metric.upvoteNum + index + 20} />
           ) : (
             <UpdateCounter text={metric.upvoteText} num={metric.upvoteNum} color={bg} />
           )}
-          <div className="grow" />
+          <div className='grow' />
         </div>
       </div>
     </div>

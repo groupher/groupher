@@ -18,14 +18,14 @@ const PubSub = {
   publishSync: (message: TMessage, data?: any): boolean =>
     publish(message, data, true, PubSub.immediateExceptions),
   subscribe: (message: TMessage, func: TSubscriber): TToken | false => {
-    if (typeof func !== 'function') {
+    if (typeof func !== "function") {
       return false
     }
 
-    message = typeof message === 'symbol' ? message.toString() : message
+    message = typeof message === "symbol" ? message.toString() : message
 
     // message is not registered yet
-    if (!Object.prototype.hasOwnProperty.call(messages, message)) {
+    if (!Object.hasOwn(messages, message)) {
       messages[message] = {}
     }
 
@@ -51,7 +51,7 @@ const PubSub = {
   },
   clearSubscriptions: (topic: string): void => {
     for (const m in messages) {
-      if (Object.prototype.hasOwnProperty.call(messages, m) && m.indexOf(topic) === 0) {
+      if (Object.hasOwn(messages, m) && m.indexOf(topic) === 0) {
         delete messages[m]
       }
     }
@@ -59,7 +59,7 @@ const PubSub = {
   countSubscriptions: (topic: string): number => {
     let count = 0
     for (const m in messages) {
-      if (Object.prototype.hasOwnProperty.call(messages, m) && m.indexOf(topic) === 0) {
+      if (Object.hasOwn(messages, m) && m.indexOf(topic) === 0) {
         for (const _ in messages[m]) {
           count++
         }
@@ -71,7 +71,7 @@ const PubSub = {
   getSubscriptions: (topic: string): string[] => {
     const list: string[] = []
     for (const m in messages) {
-      if (Object.prototype.hasOwnProperty.call(messages, m) && m.indexOf(topic) === 0) {
+      if (Object.hasOwn(messages, m) && m.indexOf(topic) === 0) {
         list.push(m)
       }
     }
@@ -80,7 +80,7 @@ const PubSub = {
   unsubscribe: (value: TToken | TSubscriber | string): TToken | boolean => {
     const descendantTopicExists = (topic: string): boolean => {
       for (const m in messages) {
-        if (Object.prototype.hasOwnProperty.call(messages, m) && m.indexOf(topic) === 0) {
+        if (Object.hasOwn(messages, m) && m.indexOf(topic) === 0) {
           // a descendant of the topic exists:
           return true
         }
@@ -90,10 +90,9 @@ const PubSub = {
     }
 
     const isTopic =
-      typeof value === 'string' &&
-      (Object.prototype.hasOwnProperty.call(messages, value) || descendantTopicExists(value))
-    const isToken = !isTopic && typeof value === 'string'
-    const isFunction = typeof value === 'function'
+      typeof value === "string" && (Object.hasOwn(messages, value) || descendantTopicExists(value))
+    const isToken = !isTopic && typeof value === "string"
+    const isFunction = typeof value === "function"
     let result: TToken | boolean = false
 
     if (isTopic) {
@@ -102,7 +101,7 @@ const PubSub = {
     }
 
     for (const m in messages) {
-      if (Object.prototype.hasOwnProperty.call(messages, m)) {
+      if (Object.hasOwn(messages, m)) {
         const message = messages[m]
 
         if (isToken && message[value]) {
@@ -114,7 +113,7 @@ const PubSub = {
 
         if (isFunction) {
           for (const t in message) {
-            if (Object.prototype.hasOwnProperty.call(message, t) && message[t] === value) {
+            if (Object.hasOwn(message, t) && message[t] === value) {
               delete message[t]
               result = true
             }
@@ -129,7 +128,7 @@ const PubSub = {
 
 let messages: TMessages = {}
 let lastUid = -1
-const ALL_SUBSCRIBING_MSG = '*'
+const ALL_SUBSCRIBING_MSG = "*"
 
 /**
  * Check if an object has any keys
@@ -141,7 +140,7 @@ function hasKeys(obj: Record<string, any>): boolean {
 
   // eslint-disable-next-line no-restricted-syntax
   for (key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    if (Object.hasOwn(obj, key)) {
       return true
     }
   }
@@ -210,13 +209,13 @@ function deliverMessage(
     ? callSubscriberWithImmediateExceptions
     : callSubscriberWithDelayedExceptions
 
-  if (!Object.prototype.hasOwnProperty.call(messages, matchedMessage)) {
+  if (!Object.hasOwn(messages, matchedMessage)) {
     return
   }
 
   // eslint-disable-next-line no-restricted-syntax
   for (const s in subscribers) {
-    if (Object.prototype.hasOwnProperty.call(subscribers, s)) {
+    if (Object.hasOwn(subscribers, s)) {
       callSubscriber(subscribers[s], originalMessage, data)
     }
   }
@@ -236,7 +235,7 @@ function createDeliveryFunction(
 ): () => void {
   return function deliverNamespaced() {
     let topic = String(message)
-    let position = topic.lastIndexOf('.')
+    let position = topic.lastIndexOf(".")
 
     // deliver the message as it is now
     deliverMessage(message, message, data, immediateExceptions)
@@ -244,7 +243,7 @@ function createDeliveryFunction(
     // trim the hierarchy and deliver message to each level
     while (position !== -1) {
       topic = topic.substr(0, position)
-      position = topic.lastIndexOf('.')
+      position = topic.lastIndexOf(".")
       deliverMessage(message, topic, data, immediateExceptions)
     }
 
@@ -259,9 +258,7 @@ function createDeliveryFunction(
  */
 function hasDirectSubscribersFor(message: TMessage): boolean {
   const topic = String(message)
-  const found = Boolean(
-    Object.prototype.hasOwnProperty.call(messages, topic) && hasKeys(messages[topic]),
-  )
+  const found = Boolean(Object.hasOwn(messages, topic) && hasKeys(messages[topic]))
 
   return found
 }
@@ -274,11 +271,11 @@ function hasDirectSubscribersFor(message: TMessage): boolean {
 function messageHasSubscribers(message: TMessage): boolean {
   let topic = String(message)
   let found = hasDirectSubscribersFor(topic) || hasDirectSubscribersFor(ALL_SUBSCRIBING_MSG)
-  let position = topic.lastIndexOf('.')
+  let position = topic.lastIndexOf(".")
 
   while (!found && position !== -1) {
     topic = topic.substr(0, position)
-    position = topic.lastIndexOf('.')
+    position = topic.lastIndexOf(".")
     found = hasDirectSubscribersFor(topic)
   }
 
@@ -299,7 +296,7 @@ function publish(
   sync?: boolean,
   immediateExceptions?: boolean,
 ): boolean {
-  message = typeof message === 'symbol' ? message.toString() : message
+  message = typeof message === "symbol" ? message.toString() : message
 
   const deliver = createDeliveryFunction(message, data, immediateExceptions)
   const hasSubscribers = messageHasSubscribers(message)

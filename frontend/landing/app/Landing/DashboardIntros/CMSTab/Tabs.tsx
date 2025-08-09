@@ -1,6 +1,6 @@
-import TimeSVG from '~/icons/TimelineMode'
 import CategorySVG from '~/icons/Category'
 import WipSVG from '~/icons/GtdWip'
+import TimeSVG from '~/icons/TimelineMode'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/tabs'
 
@@ -21,13 +21,13 @@ export default () => {
         <div className={s.bottomGradient} />
         <TimeSVG className={s.icon} />
         <div className={s.title}>本周</div>
-        <div className="mr-2.5" />
+        <div className='mr-2.5' />
         <CategorySVG className={s.icon} />
         <div className={s.title}>功能请求</div>
-        <div className="mr-2.5" />
+        <div className='mr-2.5' />
         <WipSVG className={s.icon} />
         <div className={s.title}>进行中</div>
-        <div className="grow" />
+        <div className='grow' />
         <div className={s.title}>1 / 9</div>
       </div>
     </div>

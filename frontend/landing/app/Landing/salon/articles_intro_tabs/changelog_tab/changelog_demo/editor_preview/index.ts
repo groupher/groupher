@@ -1,6 +1,5 @@
-import useTwBelt from '~/hooks/useTwBelt'
-
 import { COLOR_NAME } from '~/const/colors'
+import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 

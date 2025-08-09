@@ -3,10 +3,9 @@ import { mockUsers } from '~/mock'
 
 import MasonryCards from '~/widgets/MasonryCards'
 
+import useSalon from '../salon/users_wall'
 import Card from './Card'
 import { P1, P2, P3 } from './Contents'
-
-import useSalon from '../salon/users_wall'
 
 const CardsList = () => {
   const users = mockUsers(10)

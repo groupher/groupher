@@ -1,10 +1,9 @@
-import { mockUsers } from '~/mock'
-
-import Facepile from '~/widgets/Facepile/LandingPage'
-
-import GtdWipSVG from '~/icons/GtdWip'
 import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
+
+import GtdWipSVG from '~/icons/GtdWip'
+import { mockUsers } from '~/mock'
+import Facepile from '~/widgets/Facepile/LandingPage'
 
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/kanban_tab/banner'
 
@@ -20,8 +19,8 @@ export default () => {
           <div className={cn(s.title, s.titleActrive)}>当前</div>
           <div className={cn(s.title, 'ml-1.5 mr-0.5 opacity-50')}>/</div>
           <div className={s.title}>中长期规划</div>
-          <div className="grow" />
-          <Facepile users={users} className="-mr-2 scale-75 gap-x-1 opacity-65" />
+          <div className='grow' />
+          <Facepile users={users} className='-mr-2 scale-75 gap-x-1 opacity-65' />
         </div>
         <div className={s.labelBar}>
           <div className={cn(s.item, 'left-1 bottom-0')}>

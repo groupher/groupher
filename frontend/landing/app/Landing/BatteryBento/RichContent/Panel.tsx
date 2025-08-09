@@ -1,11 +1,9 @@
 import type { FC } from 'react'
 
 import Img from '~/Img'
-
-import ToolBox from './ToolBox'
-import InlineToolBox from './InlineToolBox'
-
 import useSalon from '../../salon/battery_bento/rich_content/panel'
+import InlineToolBox from './InlineToolBox'
+import ToolBox from './ToolBox'
 
 type TProps = {
   hovering: boolean
@@ -25,7 +23,7 @@ const Panel: FC<TProps> = ({ hovering }) => {
         </div>
 
         <div className={s.text}>推进器设计有点问题：</div>
-        <Img src="landing/starship.png" className={s.pic} />
+        <Img src='landing/starship.png' className={s.pic} />
       </div>
     </div>
   )

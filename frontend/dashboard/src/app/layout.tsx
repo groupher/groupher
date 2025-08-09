@@ -1,12 +1,10 @@
-import { Suspense } from 'react'
-import type { Metadata } from 'next'
-import { headers } from 'next/headers'
-
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
-
-import StoreProvider from '~/stores/provider'
+import type { Metadata } from 'next'
+import { headers } from 'next/headers'
+import { Suspense } from 'react'
 import { GlobalLayout, GraphQLProvider, getSSRInitData, parseRouteInfo } from '~/providers'
+import StoreProvider from '~/stores/provider'
 
 import '../salon/global.css'
 
@@ -30,7 +28,7 @@ const InitDataLoader = async ({ children }) => {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang='en'>
       <body>
         <Suspense fallback={<h1>todo...</h1>}>
           {/* @ts-ignore */}

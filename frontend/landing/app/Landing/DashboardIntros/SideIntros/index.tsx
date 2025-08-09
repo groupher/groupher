@@ -1,11 +1,10 @@
 import ArrowLinker from '~/widgets/ArrowLinker'
 import Button from '~/widgets/Buttons/Button'
 
+import useSalon, { cn } from '../../salon/dashboard_intros/side_intros'
 import type { TIntroTab } from '../spec'
 import INTROS from './constant'
 import FeatItem from './FeatItem'
-
-import useSalon, { cn } from '../../salon/dashboard_intros/side_intros'
 
 type TProps = {
   tab: TIntroTab
@@ -35,11 +34,11 @@ export default ({ tab }: TProps) => {
       ))}
 
       <div className={s.footer}>
-        <Button color={color} ghost className="w-20">
+        <Button color={color} ghost className='w-20'>
           查看示例
         </Button>
 
-        <ArrowLinker href="/" color={color}>
+        <ArrowLinker href='/' color={color}>
           了解更多
         </ArrowLinker>
       </div>

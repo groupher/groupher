@@ -4,10 +4,8 @@ import { num2Percent } from '~/helper'
 import Img from '~/Img'
 
 import LoadingGapSVG from '~/icons/LoadingGap'
-
-import { PRODUCTS, MAX_SIZE } from './constant'
-
 import useSalon, { cn } from '../../salon/battery_bento/bundle_size/panel'
+import { MAX_SIZE, PRODUCTS } from './constant'
 
 type TProps = {
   hovering: boolean
@@ -30,7 +28,7 @@ const Panel: FC<TProps> = ({ hovering }) => {
               </div>
               <h4 className={cn(s.title, $good && s.textGreen)}>{item.title}</h4>
               {hovering && index > 3 && <LoadingGapSVG className={s.loading} />}
-              <div className="grow" />
+              <div className='grow' />
               <h4 className={cn(s.size, $good && s.textGreen, hovering && $suck && s.textRed)}>
                 {item.size}
               </h4>

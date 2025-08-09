@@ -1,13 +1,12 @@
-import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 
 import { ANCHOR } from '~/const/dom'
+import EVENT from '~/const/event'
 import TYPE from '~/const/type'
 import { lockPage, unlockPage } from '~/dom'
-
 import useDrawerOffset from '~/hooks/useDrawerOffset'
 import useEvent from '~/hooks/useEvent'
-import EVENT from '~/const/event'
 
 import Portal from '~/widgets/Portal'
 
@@ -52,7 +51,7 @@ export default function Drawer({ children }) {
           {children}
         </div>
       </div>
-      <div
+      <button
         className={cn(s.overlay, ANCHOR.GLOBAL_BLUR_CLASS)}
         style={s.overlayStyle}
         onClick={() => router.back()}

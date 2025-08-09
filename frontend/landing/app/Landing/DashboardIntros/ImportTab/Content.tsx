@@ -8,7 +8,7 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <div className={s.head}>
-        <Img src="groupher.png" className={s.logo} />
+        <Img src='groupher.png' className={s.logo} />
         <div className={s.title}>Groupher</div>
       </div>
 
