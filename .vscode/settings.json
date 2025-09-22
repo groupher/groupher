@@ -8,5 +8,7 @@
     "**/node_modules": true,
     "**/deps": true,
     "**/_build": true
-  }
+  },
+  "spellright.language": ["en"],
+  "spellright.documentTypes": ["markdown", "latex", "plaintext"]
 }

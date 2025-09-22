@@ -4,21 +4,20 @@
  *
  */
 
-import { type FC, useState, lazy, Suspense } from 'react'
 import copy from 'copy-to-clipboard'
-import QRCode from 'qrcode.react'
+import { QRCodeSVG } from 'qrcode.react'
 
-import type { TSpace } from '~/spec'
+import { type FC, lazy, Suspense, useState } from 'react'
 import useViewingArticle from '~/hooks/useViewingArticle'
-import { toast } from '~/signal'
-
 import LinkSVG from '~/icons/Link'
 import MoreSVG from '~/icons/ShareArrow'
-import WeiboRawSVG from '~/icons/social/WeiboRaw'
 import WeChatRawSVG from '~/icons/social/WeChatRaw'
+import WeiboRawSVG from '~/icons/social/WeiboRaw'
+import { toast } from '~/signal'
+import type { TSpace } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
-import { SITE_SHARE_TYPE, SHARE_TYPE } from './constant'
+import { SHARE_TYPE, SITE_SHARE_TYPE } from './constant'
 import { parseLinksData, toPlatform } from './helper'
 import useSalon, { cn } from './salon'
 
@@ -39,8 +38,8 @@ const Share: FC<TProps> = ({ modalOffset = '', ...spacing }) => {
 
   return (
     <div className={s.wrapper}>
-      <Tooltip content={<div className={s.linkTip}>复制链接</div>} placement="bottom" delay={500}>
-        <div
+      <Tooltip content={<div className={s.linkTip}>复制链接</div>} placement='bottom' delay={500}>
+        <button
           className={s.iconBox}
           onClick={() => {
             copy(articleLink)
@@ -48,18 +47,18 @@ const Share: FC<TProps> = ({ modalOffset = '', ...spacing }) => {
           }}
         >
           <LinkSVG className={cn(s.icon, 'size-6')} />
-        </div>
+        </button>
       </Tooltip>
 
       <Tooltip
         content={
           <div className={s.panel}>
-            <QRCode value={articleLink} size={120} />
+            <QRCodeSVG value={articleLink} size={120} />
 
             <div className={s.qrTip}>打开微信 &gt; 发现 &gt; 扫一扫，即可将本文分享到微信。</div>
           </div>
         }
-        placement="bottom"
+        placement='bottom'
         delay={200}
       >
         <div className={cn(s.iconBox, '-mt-px')}>
@@ -67,21 +66,21 @@ const Share: FC<TProps> = ({ modalOffset = '', ...spacing }) => {
         </div>
       </Tooltip>
 
-      <Tooltip content={<div className={s.linkTip}>分享到微博</div>} placement="bottom" delay={500}>
-        <div
+      <Tooltip content={<div className={s.linkTip}>分享到微博</div>} placement='bottom' delay={500}>
+        <button
           className={cn(s.iconBox, '-mt-0.5')}
           onClick={() => {
             toPlatform(article, SHARE_TYPE.WEIBO, articleLink)
           }}
         >
           <WeiboRawSVG className={cn(s.icon, 'size-5')} />
-        </div>
+        </button>
       </Tooltip>
 
-      <Tooltip content={<div className={s.linkTip}>更多分享</div>} placement="bottom" delay={500}>
-        <div className={s.iconBox} onClick={() => setShowMore(true)}>
+      <Tooltip content={<div className={s.linkTip}>更多分享</div>} placement='bottom' delay={500}>
+        <button className={s.iconBox} onClick={() => setShowMore(true)}>
           <MoreSVG className={cn(s.icon, 'size-5')} />
-        </div>
+        </button>
       </Tooltip>
 
       {showMore && (

@@ -6,8 +6,6 @@
 
 import type { FC } from 'react'
 
-import TheRichEditor from '@groupher/react-editor'
-
 import useSalon, { cn } from './salon'
 
 type TProps = {
@@ -33,12 +31,7 @@ const RichEditor: FC<TProps> = ({
       <div className={s.inner}>
         {/* {type !== 'comment' && <Options addon={addon} />} */}
         <div className={cn(s.editor, 'rich-editor')}>
-          <TheRichEditor
-            onData={onChange}
-            reinitKey={reinitKey}
-            data={JSON.parse(data || '{}')}
-            placeholder={placeholder}
-          />
+          <h2>Rich Editor</h2>
         </div>
       </div>
       {/* <EditorWrapper id="codex-editor" /> */}
