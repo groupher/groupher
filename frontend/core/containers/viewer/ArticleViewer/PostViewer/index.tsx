@@ -2,26 +2,23 @@
  * ArticleViewer
  */
 
-import { useCallback, useState, useEffect } from 'react'
-
-import { scrollDrawerToTop } from '~/dom'
+import RichEditor from '@groupher/rich-editor'
+import { useCallback, useEffect, useState } from 'react'
 import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
+import { scrollDrawerToTop } from '~/dom'
 
 import useBroadcast from '~/hooks/useBroadcast'
-
-import ArticleFooter from '~/widgets/ArticleFooter'
-import GotoTop from '~/widgets/GotoTop'
-import ViewportTracker from '~/widgets/ViewportTracker'
-import { ArticleContentLoading } from '~/widgets/Loading'
-import ArticeBody from '~/widgets/ArtimentBody'
 import ArticleBroadcast from '~/widgets/ArticleBroadcast'
-
+import ArticleFooter from '~/widgets/ArticleFooter'
+import ArticleBody from '~/widgets/ArtimentBody'
+import GotoTop from '~/widgets/GotoTop'
+import { ArticleContentLoading } from '~/widgets/Loading'
+import ViewportTracker from '~/widgets/ViewportTracker'
+import useSalon, { cn } from '../salon/post_viewer'
+import useLogic from '../useLogic'
+import ArticleInfo from './ArticleInfo'
 import FixedHeader from './FixedHeader'
 import Header from './Header'
-import ArticleInfo from './ArticleInfo'
-
-import useLogic from '../useLogic'
-import useSalon, { cn } from '../salon/post_viewer'
 
 export default () => {
   const s = useSalon()
@@ -46,6 +43,7 @@ export default () => {
     <>
       <FixedHeader article={article} visible={fixedHeaderVisible} footerVisible={footerVisible} />
       <Header article={article} />
+      <RichEditor />
       <div className={s.title}>
         <div className={s.titleText}>{article.title}</div>
         <div className={s.subTitle}>{article.innerId}</div>
@@ -55,7 +53,7 @@ export default () => {
       {loading && <ArticleContentLoading num={1} top={15} bottom={30} left={-25} />}
       {!loading && (
         <div className={s.bodyWrapper}>
-          <ArticeBody document={article.document} />
+          <ArticleBody document={article.document} />
         </div>
       )}
 
@@ -70,7 +68,7 @@ export default () => {
       <ArticleFooter />
       <ViewportTracker onEnter={showFooter} onLeave={hideFooter} />
       <div className={cn(s.gotoTop, fixedHeaderVisible ? 'visible' : 'invisible')}>
-        <GotoTop type="drawer" />
+        <GotoTop type='drawer' />
       </div>
     </>
   )
