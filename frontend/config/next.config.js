@@ -9,7 +9,7 @@ const baseConfig = {
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
   experimental: {
-    dynamicIO: true, // fur use cache
+    cacheComponents: true, // fur use cache
     scrollRestoration: true,
     optimizePackageImports: ['ramda'],
   },
