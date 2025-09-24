@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import { Suspense } from 'react'
 import { GlobalLayout, GraphQLProvider, getSSRInitData, parseRouteInfo } from '~/providers'
 import StoreProvider from '~/stores/provider'
+import { deepSanitize } from '~/utils/fmt'
 
 import '../salon/global.css'
 
@@ -13,29 +14,27 @@ export const metadata: Metadata = {
   description: '讨论区、看板、更新日志、帮助文档多合一，收集沉淀用户反馈，助你打造更好的产品。',
 }
 
-const InitDataLoader = async ({ children }) => {
+const StoreInitLoader = async ({ children }) => {
   const headersList = await headers()
   const routeInfo = headersList.get('x-route')
   const urlInfo = parseRouteInfo(routeInfo)
   const initData = await getSSRInitData(urlInfo)
 
-  return (
-    <GraphQLProvider>
-      <StoreProvider initData={initData}>{children}</StoreProvider>
-    </GraphQLProvider>
-  )
+  return <StoreProvider initData={deepSanitize(initData)}>{children}</StoreProvider>
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='en'>
       <body>
-        <Suspense fallback={<h1>todo...</h1>}>
-          {/* @ts-ignore */}
-          <InitDataLoader>
-            <GlobalLayout>{children}</GlobalLayout>
-          </InitDataLoader>
-        </Suspense>
+        <GraphQLProvider>
+          <Suspense fallback={<h1>todo...</h1>}>
+            {/* @ts-ignore */}
+            <StoreInitLoader>
+              <GlobalLayout>{children}</GlobalLayout>
+            </StoreInitLoader>
+          </Suspense>
+        </GraphQLProvider>
         <Analytics />
         <SpeedInsights />
       </body>

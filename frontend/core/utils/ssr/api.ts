@@ -1,9 +1,7 @@
-import type { TThread } from '~/spec'
-
 import { SEARCH_PARAM } from '~/const/url'
-
-import { fetchAPI } from '~/utils/api'
 import { plural } from '~/fmt'
+import type { TThread } from '~/spec'
+import { fetchAPI } from '~/utils/api'
 
 export const fetchArticlePageData = async (community: string, thread: TThread) => {
   return Promise.all([

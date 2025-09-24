@@ -1,44 +1,42 @@
 import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
-import { reject, includes, isEmpty } from 'ramda'
+import { includes, isEmpty, reject } from 'ramda'
 
 import { CACHE_TAG } from '~/const/cache'
-
-import type {
-  TCommunity,
-  TThread,
-  TNameAlias,
-  TDashboardPath,
-  TDashboardBaseInfoRoute,
-  TDashboardSEORoute,
-  TDashboardDocRoute,
-  TDashboardBroadcastRoute,
-  TDashboardLayoutRoute,
-  TDashboardAliasRoute,
-  TParsedWallpaper,
-  TParseDashboard,
-  TPagedArticles,
-  TPagedTags,
-} from '~/spec'
+import { PAGE_COLOR_DEFAULT } from '~/const/colors'
 
 import { BUILTIN_ALIAS } from '~/const/name'
-import { PAGE_COLOR_DEFAULT } from '~/const/colors'
-import { THREAD } from '~/const/thread'
 import {
-  DASHBOARD_ROUTE,
-  DASHBOARD_BASEINFO_ROUTE,
-  DASHBOARD_SEO_ROUTE,
-  DASHBOARD_DOC_ROUTE,
-  DASHBOARD_BROADCAST_ROUTE,
-  DASHBOARD_LAYOUT_ROUTE,
   DASHBOARD_ALIAS_ROUTE,
+  DASHBOARD_BASEINFO_ROUTE,
+  DASHBOARD_BROADCAST_ROUTE,
+  DASHBOARD_DOC_ROUTE,
+  DASHBOARD_LAYOUT_ROUTE,
+  DASHBOARD_ROUTE,
+  DASHBOARD_SEO_ROUTE,
 } from '~/const/route'
+import { THREAD } from '~/const/thread'
 import { removeEmptyValuesFromObject } from '~/helper'
-
 import { P } from '~/schemas'
-import { extractQueryName } from '~/utils/graphql'
+import type {
+  TCommunity,
+  TDashboardAliasRoute,
+  TDashboardBaseInfoRoute,
+  TDashboardBroadcastRoute,
+  TDashboardDocRoute,
+  TDashboardLayoutRoute,
+  TDashboardPath,
+  TDashboardSEORoute,
+  TNameAlias,
+  TPagedArticles,
+  TPagedTags,
+  TParseDashboard,
+  TParsedWallpaper,
+  TThread,
+} from '~/spec'
 import { gqFetch } from '~/utils/api'
+import { extractQueryName } from '~/utils/graphql'
 
-import type { TGQSSRResult, TDashboardTab } from './spec'
+import type { TDashboardTab, TGQSSRResult } from './spec'
 
 export const commonRes = (result): TGQSSRResult => {
   return {

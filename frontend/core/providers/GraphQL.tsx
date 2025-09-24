@@ -4,14 +4,12 @@
  * this is for Graphql fetching data on page load
  */
 
-import { type FC, type ReactNode, useMemo } from 'react'
-import { UrqlProvider, ssrExchange, cacheExchange, fetchExchange, createClient } from '@urql/next'
-
 import { makeResult } from '@urql/core'
-import { filter, pipe, merge, mergeMap, share, fromPromise } from 'wonka'
-
-import { loadLocaleFile } from '~/i18n'
+import { cacheExchange, createClient, fetchExchange, ssrExchange, UrqlProvider } from '@urql/next'
+import { type FC, type ReactNode, useMemo } from 'react'
+import { filter, fromPromise, merge, mergeMap, pipe, share } from 'wonka'
 import { GRAPHQL_ENDPOINT } from '~/config'
+import { loadLocaleFile } from '~/i18n'
 
 type TProps = {
   children: ReactNode

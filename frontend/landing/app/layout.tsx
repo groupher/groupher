@@ -13,6 +13,7 @@ import StoreProvider from '~/stores/provider'
 import type { TRootStoreInit } from '~/stores/spec'
 import { gqFetch } from '~/utils/api'
 
+import { deepSanitize } from '~/utils/fmt'
 import '../salon/global.css'
 
 export const metadata: Metadata = {
@@ -45,10 +46,10 @@ const getSSRLandingData = async (): Promise<TRootStoreInit> => {
   return initState
 }
 
-const InitDataLoader = async ({ children }) => {
+const StoreInitLoader = async ({ children }) => {
   const initData = await getSSRLandingData()
 
-  return <StoreProvider initData={initData}>{children}</StoreProvider>
+  return <StoreProvider initData={deepSanitize(initData)}>{children}</StoreProvider>
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -57,9 +58,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <Suspense fallback={<h1>...</h1>}>
           {/* @ts-ignore */}
-          <InitDataLoader>
+          <StoreInitLoader>
             <GlobalLayout>{children}</GlobalLayout>
-          </InitDataLoader>
+          </StoreInitLoader>
         </Suspense>
         <Analytics />
         <SpeedInsights />

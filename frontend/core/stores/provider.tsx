@@ -1,10 +1,8 @@
 'use client'
 
-import { useRef, type ReactNode } from 'react'
-
-import type { TRootStore, TRootStoreInit } from './spec'
-
+import { type ReactNode, useRef } from 'react'
 import { StoreContext, setupRootStore } from '.'
+import type { TRootStore, TRootStoreInit } from './spec'
 
 type TProps = {
   children: ReactNode

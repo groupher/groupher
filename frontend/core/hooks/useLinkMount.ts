@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 
 export default (loader: () => void) => {
   const pathname = usePathname()
