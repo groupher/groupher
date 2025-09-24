@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   description: '讨论区、看板、更新日志、帮助文档多合一，收集沉淀用户反馈，助你打造更好的产品。',
 }
 
+function deepSanitize(obj: any): any {
+  return JSON.parse(JSON.stringify(obj)) // 最彻底的净化方式
+}
+
 const InitDataLoader = async ({ children }) => {
   const headersList = await headers()
   const routeInfo = headersList.get('x-route')
@@ -26,12 +30,12 @@ const InitDataLoader = async ({ children }) => {
 
   return (
     <GraphQLProvider>
-      <StoreProvider initData={initData}>{children}</StoreProvider>
+      <StoreProvider initData={deepSanitize(initData)}>{children}</StoreProvider>
     </GraphQLProvider>
   )
 }
 
-export default function Layout({ children }) {
+export default async function Layout({ children }) {
   return (
     <html lang='en'>
       <body>
