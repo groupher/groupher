@@ -1,9 +1,9 @@
+'use client'
+
+import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+
 const NotFound = () => {
-  return (
-    <div>
-      <h2>root Not found</h2>
-    </div>
-  )
+  return <LavaLampLoading />
 }
 
 export default NotFound

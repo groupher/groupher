@@ -65,6 +65,8 @@ const clarify = (obj: TClarifyInput): TClarifyInput => {
 }
 
 export const gqFetch = async (query, variables) => {
+  console.log('## fetching from: ', GRAPHQL_ENDPOINT)
+
   return await fetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
     headers: {

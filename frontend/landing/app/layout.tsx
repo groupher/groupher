@@ -6,14 +6,13 @@ import METRIC from '~/const/metric'
 
 import { HCN } from '~/const/name'
 import THEME from '~/const/theme'
-import GlobalLayout from '~/providers/GlobalLayout'
+// import GlobalLayout from '~/providers/GlobalLayout'
 
 import { P } from '~/schemas'
 import StoreProvider from '~/stores/provider'
 import type { TRootStoreInit } from '~/stores/spec'
 import { gqFetch } from '~/utils/api'
 
-import { deepSanitize } from '~/utils/fmt'
 import '../salon/global.css'
 
 export const metadata: Metadata = {
@@ -26,6 +25,7 @@ const getSSRLandingData = async (): Promise<TRootStoreInit> => {
   const response = await gqFetch(P.community, { slug: HCN, userHasLogin: false })
   const { data } = await response.json()
 
+  console.log('## data: ', data)
   const communityInfo = data
 
   const { community, dashboard, wallpaper } = communityInfo
@@ -49,17 +49,17 @@ const getSSRLandingData = async (): Promise<TRootStoreInit> => {
 const StoreInitLoader = async ({ children }) => {
   const initData = await getSSRLandingData()
 
-  return <StoreProvider initData={deepSanitize(initData)}>{children}</StoreProvider>
+  return <StoreProvider initData={initData}>{children}</StoreProvider>
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='en'>
       <body>
-        <Suspense fallback={<h1>...</h1>}>
+        <Suspense fallback={<h1>loading...</h1>}>
           {/* @ts-ignore */}
           <StoreInitLoader>
-            <GlobalLayout>{children}</GlobalLayout>
+            <h2>{children}</h2>
           </StoreInitLoader>
         </Suspense>
         <Analytics />
