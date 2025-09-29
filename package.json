@@ -92,7 +92,7 @@
     "@fortawesome/free-regular-svg-icons": "^6.2.1",
     "@fortawesome/free-solid-svg-icons": "^6.2.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
-    "@groupher/rich-editor": "0.0.7",
+    "@groupher/rich-editor": "0.0.8",
     "@groupher/use-mobile-detect-hook": "^2.0.2",
     "@next/bundle-analyzer": "^12.3.4",
     "@tailwindcss/typography": "^0.5.13",
@@ -113,7 +113,7 @@
     "mastani-codehighlight": "0.0.7",
     "motion": "^12.18.1",
     "nanoid": "^3.1.12",
-    "next": "15.6.0-canary.25",
+    "next": "15.6.0-canary.32",
     "next-auth": "^5.0.0-beta.16",
     "next-compose-plugins": "^2.2.0",
     "overlayscrollbars": "^2.9.1",
@@ -163,7 +163,7 @@
     "typewriter-effect": "^2.19.0",
     "urql": "^4.2.0",
     "use-debounce": "^10.0.4",
-    "valtio": "^2.1.2",
+    "valtio": "2.1.7",
     "zustand": "^5.0.4"
   },
   "devDependencies": {

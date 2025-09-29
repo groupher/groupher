@@ -787,12 +787,34 @@
   resolved "https://registry.npmmirror.com/@graphql-typed-document-node/core/-/core-3.2.0.tgz#5f3d96ec6b2354ad6d8a28bf216a1d97b5426861"
   integrity sha512-mB9oAsNCm9aM3/SOv4YtBMqZbYj10R7dkq8byBqxGY/ncFwhf2oQzMV+LCRlWoDSEBJ3COiR1yeDvMtsoOsuFQ==
 
-"@groupher/rich-editor@0.0.7":
-  version "0.0.7"
-  resolved "https://registry.npmmirror.com/@groupher/rich-editor/-/rich-editor-0.0.7.tgz#053ce4de56cff153884579807e03e0cfae19dfeb"
-  integrity sha512-4DqB6gAqjJF6rU/ikuAhS2vfZM9TrN5lSd/PiurlYrwmXDXBuU/Mq26AdU5Yhnlwwfjrww8RmR6kzmSPMT/2BQ==
+"@groupher/rich-editor@0.0.8":
+  version "0.0.8"
+  resolved "https://registry.npmmirror.com/@groupher/rich-editor/-/rich-editor-0.0.8.tgz#4afdd40afe0ce0f0e85c425ecde19d08e0cc46eb"
+  integrity sha512-uAiw+0pjrezhxFDH18y22AkEQFbS54CCavfbSc/jzm5kc+6RFkzLMkjymb5xQaPcwH+FSpXfhZ8Nez6PTwcrVw==
   dependencies:
-    "@groupher/rich-editor" "^0.0.6"
+    "@groupher/rich-editor" "^0.0.7"
+    "@platejs/basic-nodes" "^49.0.0"
+    "@radix-ui/react-dropdown-menu" "^2.1.16"
+    "@radix-ui/react-separator" "^1.1.7"
+    "@radix-ui/react-slot" "^1.2.3"
+    "@radix-ui/react-toolbar" "^1.1.11"
+    "@radix-ui/react-tooltip" "^1.2.8"
+    "@tailwindcss/vite" "^4.1.12"
+    class-variance-authority "^0.7.1"
+    clsx "^2.1.1"
+    lucide-react "^0.542.0"
+    platejs "^49.2.21"
+    react "19.1.1"
+    react-dom "19.1.1"
+    tailwind-merge "^3.3.1"
+    tailwind-scrollbar-hide "^4.0.0"
+    tailwindcss "^4.1.12"
+
+"@groupher/rich-editor@^0.0.6":
+  version "0.0.6"
+  resolved "https://registry.npmmirror.com/@groupher/rich-editor/-/rich-editor-0.0.6.tgz#ca94ed27f2cfd315c67fab9547c7b3bb6b6190b8"
+  integrity sha512-/9uWxRMYw/qmIHtppcNsiY/CFt2fRvu5jiFS16MF/bZ4RMZ9H70B1YLsjqEsDrZlxzrTl2QdvN2ejGE78WJvLQ==
+  dependencies:
     "@platejs/basic-nodes" "^49.0.0"
     "@radix-ui/react-dropdown-menu" "^2.1.16"
     "@radix-ui/react-separator" "^1.1.7"
@@ -810,11 +832,12 @@
     tailwind-scrollbar-hide "^4.0.0"
     tailwindcss "^4.1.12"
 
-"@groupher/rich-editor@^0.0.6":
-  version "0.0.6"
-  resolved "https://registry.npmmirror.com/@groupher/rich-editor/-/rich-editor-0.0.6.tgz#ca94ed27f2cfd315c67fab9547c7b3bb6b6190b8"
-  integrity sha512-/9uWxRMYw/qmIHtppcNsiY/CFt2fRvu5jiFS16MF/bZ4RMZ9H70B1YLsjqEsDrZlxzrTl2QdvN2ejGE78WJvLQ==
+"@groupher/rich-editor@^0.0.7":
+  version "0.0.7"
+  resolved "https://registry.npmmirror.com/@groupher/rich-editor/-/rich-editor-0.0.7.tgz#053ce4de56cff153884579807e03e0cfae19dfeb"
+  integrity sha512-4DqB6gAqjJF6rU/ikuAhS2vfZM9TrN5lSd/PiurlYrwmXDXBuU/Mq26AdU5Yhnlwwfjrww8RmR6kzmSPMT/2BQ==
   dependencies:
+    "@groupher/rich-editor" "^0.0.6"
     "@platejs/basic-nodes" "^49.0.0"
     "@radix-ui/react-dropdown-menu" "^2.1.16"
     "@radix-ui/react-separator" "^1.1.7"
@@ -1265,50 +1288,50 @@
   dependencies:
     webpack-bundle-analyzer "4.3.0"
 
-"@next/env@15.6.0-canary.25":
-  version "15.6.0-canary.25"
-  resolved "https://registry.npmmirror.com/@next/env/-/env-15.6.0-canary.25.tgz#85449eb4f6114e59652233b12387d93690318241"
-  integrity sha512-W1+10IK1OTJw5c1arWM79Mm1eJ1+IIcgraYQLbg9qoRFMuZBKQOCVzkjiyiUpR52zj9EqZAHp1szVPdAWrpSHw==
+"@next/env@15.6.0-canary.32":
+  version "15.6.0-canary.32"
+  resolved "https://registry.npmmirror.com/@next/env/-/env-15.6.0-canary.32.tgz#3e0f5f93b6d8c038642c59e1cb065538de15d8cb"
+  integrity sha512-lGcRKxCjJQWV8hWZB2pn/k5Jt+ViRcll9mbrqBAMriWXGWiYlKP+T97kAhN28v7bUKWkTySSJgicr8KBAaPZIQ==
 
-"@next/swc-darwin-arm64@15.6.0-canary.25":
-  version "15.6.0-canary.25"
-  resolved "https://registry.npmmirror.com/@next/swc-darwin-arm64/-/swc-darwin-arm64-15.6.0-canary.25.tgz#53f69a41da2686cc0fe6856925be278549251cc3"
-  integrity sha512-OSy7DC+IMawSYxYiXcTl86LWiTNojPiCRbW6euCVQZ+4/l8ZkKWjGHDWFotNQUNIhp+npHqRkHZPRwi6LzULXg==
+"@next/swc-darwin-arm64@15.6.0-canary.32":
+  version "15.6.0-canary.32"
+  resolved "https://registry.npmmirror.com/@next/swc-darwin-arm64/-/swc-darwin-arm64-15.6.0-canary.32.tgz#0dbba5f664611d10009bfc07b0ed67a7813a967b"
+  integrity sha512-/3GoLmwnLYHPQhZw+6svOz7jxmQhvAfFqce9k4qmxMGarbenjRsdaiGeibh1kJM+8bAfa8haK1n9dEldecn/mA==
 
-"@next/swc-darwin-x64@15.6.0-canary.25":
-  version "15.6.0-canary.25"
-  resolved "https://registry.npmmirror.com/@next/swc-darwin-x64/-/swc-darwin-x64-15.6.0-canary.25.tgz#8133584a4a17909e1908c65614939159cabf78da"
-  integrity sha512-+oWutrT+ZtzxhHp8RQwfOgHmtB+xCpVvU7aD1kR9xWYyDJczWKDeKiK1yrFe6T1CtrYGvTLX/2aFD4bmBQHhxw==
+"@next/swc-darwin-x64@15.6.0-canary.32":
+  version "15.6.0-canary.32"
+  resolved "https://registry.npmmirror.com/@next/swc-darwin-x64/-/swc-darwin-x64-15.6.0-canary.32.tgz#0d59807eaf2bc34d3e04d20f59d205eba8a8697c"
+  integrity sha512-s0l7sWNRf59Tf3dh+u5VlkiA2vFe0yu+rjjSystMiTJkIBMfh0U7g/Yvte0G0i2gCLYhLt8uclVU/0ftbmfxhA==
 
-"@next/swc-linux-arm64-gnu@15.6.0-canary.25":
-  version "15.6.0-canary.25"
-  resolved "https://registry.npmmirror.com/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-15.6.0-canary.25.tgz#e71e62651ec943b055c0b081ceae253a68f01f93"
-  integrity sha512-6Bk72pglfeADUJcBrrvcnhGKGYRNwcmQ273j7MmwKRIvj6gnmhT9E64SvRut4+u+cd7aOsOZn09Y4crYSA/oLA==
+"@next/swc-linux-arm64-gnu@15.6.0-canary.32":
+  version "15.6.0-canary.32"
+  resolved "https://registry.npmmirror.com/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-15.6.0-canary.32.tgz#f0d8a088a4f197114f6b0994c2a84f8c09f62c9e"
+  integrity sha512-1V4sTwxtZ4bq9uq3hlgoAwvuXxJxMOcyKxAIJz88VpKAfGQBbMyTW00SxX8IPj13SJpL0tLrncOOgIZhehnK2Q==
 
-"@next/swc-linux-arm64-musl@15.6.0-canary.25":
-  version "15.6.0-canary.25"
-  resolved "https://registry.npmmirror.com/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-15.6.0-canary.25.tgz#3fbe16618e04d91d9da708d494d2a665818b68de"
-  integrity sha512-5XAcCfvC9t5/+GXNTuldPanYjkwSHv4LRhwdMs9JROkJeyp0pbyaTIUb+EMxTNK8DDr98Ky91maVacEqNka3hQ==
+"@next/swc-linux-arm64-musl@15.6.0-canary.32":
+  version "15.6.0-canary.32"
+  resolved "https://registry.npmmirror.com/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-15.6.0-canary.32.tgz#e4df1e84056f173d228ba1566374942f4fbfd46f"
+  integrity sha512-f9GkyXZxRFRtueDZeOBkqFqENNjC1M/b61YC6x1YFZEsX7wNvm2iNbgXZi5xsLp5njJ6vIYwhdhmcn/g9gxIwA==
 
-"@next/swc-linux-x64-gnu@15.6.0-canary.25":
-  version "15.6.0-canary.25"
-  resolved "https://registry.npmmirror.com/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-15.6.0-canary.25.tgz#ef1f3603ca1f87a8e0c3c69218b8e373a4f8694f"
-  integrity sha512-fjIcv64sd0yQIkG/yVmizM0BqYSoLXVbxtNW1PyjaHjKeDltKDoYxcfyH0dsR9UYvBCMjHV2B12DyqqHDehW9Q==
+"@next/swc-linux-x64-gnu@15.6.0-canary.32":
+  version "15.6.0-canary.32"
+  resolved "https://registry.npmmirror.com/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-15.6.0-canary.32.tgz#fa28668b5fd770c7306259a8d2e8d203a60100c2"
+  integrity sha512-mHUrKzCPQWWyU8xMXH+O6XqkG5Tlnd/c5bLO4noQHmFOLjBTQ/lloeM73iyd4hr2xyea+yI7//n5zoo6ejyo2g==
 
-"@next/swc-linux-x64-musl@15.6.0-canary.25":
-  version "15.6.0-canary.25"
-  resolved "https://registry.npmmirror.com/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-15.6.0-canary.25.tgz#d92a99f8d01c9dd716cc8812e1a651f40c71dd4d"
-  integrity sha512-Pi0hngSrbg08FDuurWvjhCXdP0WCe5nFPrNQdXR/lKvosm63Ghmlg1lSz+gJCJrL1n+gGhf81NRoNdKh9V6H2w==
+"@next/swc-linux-x64-musl@15.6.0-canary.32":
+  version "15.6.0-canary.32"
+  resolved "https://registry.npmmirror.com/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-15.6.0-canary.32.tgz#c3a8308e48f721591848ab76d8ca3ac68fbadf89"
+  integrity sha512-OqlE2b5tb8n+pnsSIlORjmKZaQ2U/MQbSLu/KCe1u+DXgdDn3Nax1adZAY8RnD0OI0d93Z6YQBKbBgvY7sTDyw==
 
-"@next/swc-win32-arm64-msvc@15.6.0-canary.25":
-  version "15.6.0-canary.25"
-  resolved "https://registry.npmmirror.com/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-15.6.0-canary.25.tgz#d7d320ff4b82470cbb48c4ee18ad1c7da055a27a"
-  integrity sha512-qfbTXHt4Lx2pR9hiFQSGA/K+g0cnObj5hRO7YAnIwzg+rsXyr0ryrS2M0upZN075pXsyW3/vqNemkYx86A+rDg==
+"@next/swc-win32-arm64-msvc@15.6.0-canary.32":
+  version "15.6.0-canary.32"
+  resolved "https://registry.npmmirror.com/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-15.6.0-canary.32.tgz#ccaf0080e4a25ff56c8083bc2e23c7ffd9546874"
+  integrity sha512-gHzcXc2SYvLJtsXSeu5sMiZ2GexIifwEbZ0iEInMemlQYr4R9KdqcAfzLuTZbKjVuXg5uFs4MAp3xzUSxpYkTQ==
 
-"@next/swc-win32-x64-msvc@15.6.0-canary.25":
-  version "15.6.0-canary.25"
-  resolved "https://registry.npmmirror.com/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-15.6.0-canary.25.tgz#2a8adad597707d32fda9ecbacd6dfd38c6d12914"
-  integrity sha512-y3hLsnkpgWCLmQ7D/BJj1qbk5Mvi6g+klvtalMR1kPXqAgsjeAqhwWhIHVP80D59n4i6fcT8A1sxARB4riJJNw==
+"@next/swc-win32-x64-msvc@15.6.0-canary.32":
+  version "15.6.0-canary.32"
+  resolved "https://registry.npmmirror.com/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-15.6.0-canary.32.tgz#22e678f0167afa5e2f002a5cdc2f21ee442624bb"
+  integrity sha512-FTG6Apukiss0uOpHMRb2m/GB5MoCON3Z1iZItA5mqAZHJZ/7cpvgmMd42D2yaDSB2GLbcPjnUXw6y2plUr9vog==
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -7334,25 +7357,25 @@ next-compose-plugins@^2.2.0:
   resolved "https://registry.npmmirror.com/next-compose-plugins/-/next-compose-plugins-2.2.1.tgz#020fc53f275a7e719d62521bef4300fbb6fde5ab"
   integrity sha512-OjJ+fV15FXO2uQXQagLD4C0abYErBjyjE0I0FHpOEIB8upw0hg1ldFP6cqHTJBH1cZqy96OeR3u1dJ+Ez2D4Bg==
 
-next@15.6.0-canary.25:
-  version "15.6.0-canary.25"
-  resolved "https://registry.npmmirror.com/next/-/next-15.6.0-canary.25.tgz#ff85d791931bff306651b8af1e3b8b1499d2edf1"
-  integrity sha512-KOCxCXTqa8pyLvFrKaf9w5INmjeDQdJil5quF1qvnTmntG10swmfNfvwy+aL9mdhyGFY1Y1xdnxK2BP7Gg7yfw==
+next@15.6.0-canary.32:
+  version "15.6.0-canary.32"
+  resolved "https://registry.npmmirror.com/next/-/next-15.6.0-canary.32.tgz#c4c41e8c4264923c7525598cef11e8a2bb886d6a"
+  integrity sha512-dPe9mN6912yycRaahAxJcRp9umRR9vZUIEem/w5qz8Lv1jnZWrPWGcou90cRCfzECphay1aBhWTBHOFnA7T50Q==
   dependencies:
-    "@next/env" "15.6.0-canary.25"
+    "@next/env" "15.6.0-canary.32"
     "@swc/helpers" "0.5.15"
     caniuse-lite "^1.0.30001579"
     postcss "8.4.31"
     styled-jsx "5.1.6"
   optionalDependencies:
-    "@next/swc-darwin-arm64" "15.6.0-canary.25"
-    "@next/swc-darwin-x64" "15.6.0-canary.25"
-    "@next/swc-linux-arm64-gnu" "15.6.0-canary.25"
-    "@next/swc-linux-arm64-musl" "15.6.0-canary.25"
-    "@next/swc-linux-x64-gnu" "15.6.0-canary.25"
-    "@next/swc-linux-x64-musl" "15.6.0-canary.25"
-    "@next/swc-win32-arm64-msvc" "15.6.0-canary.25"
-    "@next/swc-win32-x64-msvc" "15.6.0-canary.25"
+    "@next/swc-darwin-arm64" "15.6.0-canary.32"
+    "@next/swc-darwin-x64" "15.6.0-canary.32"
+    "@next/swc-linux-arm64-gnu" "15.6.0-canary.32"
+    "@next/swc-linux-arm64-musl" "15.6.0-canary.32"
+    "@next/swc-linux-x64-gnu" "15.6.0-canary.32"
+    "@next/swc-linux-x64-musl" "15.6.0-canary.32"
+    "@next/swc-win32-arm64-msvc" "15.6.0-canary.32"
+    "@next/swc-win32-x64-msvc" "15.6.0-canary.32"
     sharp "^0.34.4"
 
 nice-try@^1.0.4:
@@ -7920,7 +7943,7 @@ pkg-dir@^4.2.0:
   dependencies:
     find-up "^4.0.0"
 
-platejs@^49.2.12:
+platejs@^49.2.12, platejs@^49.2.21:
   version "49.2.21"
   resolved "https://registry.npmmirror.com/platejs/-/platejs-49.2.21.tgz#8d5171706d12c7089b5b4c9b62be1ab79274265c"
   integrity sha512-JK3W4WxEGOW7W+GHMH1Wro46mVfkbKgFlj0DrajDv4HmmK7FQVu9IkVdeR97IbimM76GafoHglbqlJrLM7CYIw==
@@ -10678,7 +10701,7 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "^3.0.0"
     spdx-expression-parse "^3.0.0"
 
-valtio@^2.1.2:
+valtio@2.1.7:
   version "2.1.7"
   resolved "https://registry.npmmirror.com/valtio/-/valtio-2.1.7.tgz#203396dd7be778d00dca03fd629ded1254178eeb"
   integrity sha512-DwJhCDpujuQuKdJ2H84VbTjEJJteaSmqsuUltsfbfdbotVfNeTE4K/qc/Wi57I9x8/2ed4JNdjEna7O6PfavRg==
