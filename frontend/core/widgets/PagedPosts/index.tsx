@@ -1,3 +1,5 @@
+'use client'
+
 /*
  *
  * PagedArticles
@@ -9,11 +11,10 @@ import { type FC, memo } from 'react'
 import EVENT from '~/const/event'
 
 import { send } from '~/signal'
+import Pagi from '~/widgets/Pagi'
 
 import PostList from './PostList'
 import useSalon from './salon'
-
-import Pagi from '~/widgets/Pagi'
 
 const PagedPosts: FC = () => {
   const s = useSalon()

@@ -6,7 +6,7 @@ import METRIC from '~/const/metric'
 
 import { HCN } from '~/const/name'
 import THEME from '~/const/theme'
-import GlobalLayout from '~/providers/GlobalLayout'
+// import GlobalLayout from '~/providers/GlobalLayout'
 
 import { P } from '~/schemas'
 import StoreProvider from '~/stores/provider'
@@ -25,6 +25,7 @@ const getSSRLandingData = async (): Promise<TRootStoreInit> => {
   const response = await gqFetch(P.community, { slug: HCN, userHasLogin: false })
   const { data } = await response.json()
 
+  console.log('## data: ', data)
   const communityInfo = data
 
   const { community, dashboard, wallpaper } = communityInfo
@@ -45,7 +46,7 @@ const getSSRLandingData = async (): Promise<TRootStoreInit> => {
   return initState
 }
 
-const InitDataLoader = async ({ children }) => {
+const StoreInitLoader = async ({ children }) => {
   const initData = await getSSRLandingData()
 
   return <StoreProvider initData={initData}>{children}</StoreProvider>
@@ -55,11 +56,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='en'>
       <body>
-        <Suspense fallback={<h1>...</h1>}>
+        <Suspense fallback={<h1>loading...</h1>}>
           {/* @ts-ignore */}
-          <InitDataLoader>
-            <GlobalLayout>{children}</GlobalLayout>
-          </InitDataLoader>
+          <StoreInitLoader>
+            <h2>{children}</h2>
+          </StoreInitLoader>
         </Suspense>
         <Analytics />
         <SpeedInsights />

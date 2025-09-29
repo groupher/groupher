@@ -7,9 +7,8 @@
  */
 
 import { useState } from 'react'
-
-import HomeHeader from '~/widgets/HomeHeader'
 import Button from '~/widgets/Buttons/Button'
+import HomeHeader from '~/widgets/HomeHeader'
 
 import useSalon, { cn } from './salon'
 
@@ -30,7 +29,7 @@ export default () => {
         <p className={s.p}>
           {showV && (
             <>
-              请添加微信：<span className="bold-sm">mydearxym</span>
+              请添加微信：<span className='bold-sm'>mydearxym</span>
             </>
           )}
           {!showV && (

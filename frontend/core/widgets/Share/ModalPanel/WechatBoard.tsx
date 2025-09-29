@@ -1,5 +1,5 @@
+import { QRCodeSVG } from 'qrcode.react'
 import { type FC, memo } from 'react'
-import QRCode from 'qrcode.react'
 
 import useSalon from '../salon/modal_panel/wechat_board'
 
@@ -9,7 +9,7 @@ const WechatBoard: FC = () => {
   return (
     <div className={s.wrapper}>
       <div className={s.qrCode}>
-        <QRCode value="hello world" size={100} />
+        <QRCodeSVG value='hello world' size={100} />
       </div>
       <div className={s.desc}>
         <div className={s.descTitle}>分享到微信</div>

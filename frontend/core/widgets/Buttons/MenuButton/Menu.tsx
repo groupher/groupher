@@ -1,13 +1,11 @@
-import { type FC, Fragment, memo } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 import { isEmpty } from 'ramda'
-import QRCode from 'qrcode.react'
-
-import type { TMenuOption } from '~/spec'
-
-import Img from '~/Img'
+import { type FC, Fragment, memo } from 'react'
 import { ICON } from '~/config'
 import SVG from '~/const/svg'
 import { cutRest } from '~/fmt'
+import Img from '~/Img'
+import type { TMenuOption } from '~/spec'
 
 import useSalon, { cn } from '../salon/menu_button/menu'
 
@@ -29,13 +27,13 @@ const OptionBlock = ({ item, onClick }) => {
     )
   }
   return (
-    <div className={s.block} onClick={onClick}>
+    <button className={s.block} onClick={onClick}>
       <div className={s.item}>
         {/* @ts-ignore */}
         <Icon className={s.icon} />
         <div className={s.title}>{cutRest(item.title, 50)}</div>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -56,7 +54,7 @@ const Menu: FC<TProps> = ({ options, extraOptions, onClick, panelMinWidth }) => 
           <OptionBlock item={item} onClick={() => onClick(item.key)} />
           {item.qrLink && (
             <div className={s.qrWrapper}>
-              <QRCode value={item.qrLink} size={72} />
+              <QRCodeSVG value={item.qrLink} size={72} />
             </div>
           )}
         </Fragment>

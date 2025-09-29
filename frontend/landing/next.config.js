@@ -7,7 +7,7 @@ module.exports = withBaseConfig({
   output: 'export',
   assetPrefix: process.env.NODE_ENV === 'production' ? '/landing' : '',
   experimental: {
-    dynamicIO: false, // fur use cache
+    cacheComponents: false, // fur use cache
     scrollRestoration: true,
     optimizePackageImports: ['ramda'],
   },

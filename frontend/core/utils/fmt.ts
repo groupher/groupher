@@ -1,11 +1,13 @@
 import { endsWith, includes } from 'ramda'
-import { limit, length } from 'stringz'
-
-import type { TArticleCat, TArticleState } from '~/spec'
-import { THREAD } from '~/const/thread'
+import { length, limit } from 'stringz'
 import { ARTICLE_CAT, ARTICLE_STATE } from '~/const/gtd'
+import { THREAD } from '~/const/thread'
+import type { TArticleCat, TArticleState } from '~/spec'
 
 import { isString } from './validator'
+
+// need this since "15.5.1-canary.10", otherwise will crash due to strict Serialization issue
+export const deepSanitize = (obj: any): any => JSON.parse(JSON.stringify(obj))
 
 /**
  * cut extra length of a string
