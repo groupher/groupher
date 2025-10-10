@@ -11,7 +11,7 @@ export default () => {
     backText: hoverable('fg'),
     backIcon: cn('size-3 mr-1.5', hoverable('icon')),
     //
-    title: cn('text-2xl mb-4 bold-sm max-w-[600px]', fg('article.title')),
+    title: cn('text-2xl mb-4 bold-sm max-w-[600px]', fg('text.title')),
     subTitle: cn(
       'inline-block text-lg ml-2.5 -mt-0.5 opacity-50',
       fg('text.digest'),

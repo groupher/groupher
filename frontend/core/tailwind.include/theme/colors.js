@@ -21,6 +21,20 @@ module.exports = {
     DEFAULT: '#ffffffd4', //lightTokens.bannerBg,
     dark: '#252526c2',
   },
+  // TODO: remove to article
+  text: {
+    title: { DEFAULT: colors.gray['800'], dark: colors.gray['100'] },
+    digest: { DEFAULT: colors.gray['500'], dark: colors.zinc['400'] },
+    hint: {
+      DEFAULT: colors.gray['400'],
+      dark: colors.zinc['500'],
+    },
+    invert: {
+      DEFAULT: colors.gray['100'],
+      dark: colors.gray['800'],
+    },
+    link: { DEFAULT: lightTokens.link, dark: darkTokens.link },
+  },
   link: { DEFAULT: lightTokens.link, dark: darkTokens.link },
   divider: { DEFAULT: lightTokens.border, dark: darkTokens.border },
   alphaBg: { DEFAULT: '#ffffff95', dark: '#31313194' },
@@ -108,32 +122,9 @@ module.exports = {
       dark: 'linear-gradient(53deg,#fffff37a 13%,rgb(255 244 140 / 25%) 100%)',
     },
   },
-  text: {
-    // title: { DEFAULT: lightTokens.threadTitle, dark: darkTokens.threadTitle },
-    title: { DEFAULT: colors.gray['800'], dark: colors.gray['100'] },
-    digest: { DEFAULT: colors.gray['500'], dark: colors.zinc['400'] },
-    hint: {
-      DEFAULT: colors.gray['400'],
-      dark: colors.zinc['500'],
-    },
-    invert: {
-      DEFAULT: colors.gray['100'],
-      dark: colors.gray['800'],
-    },
-    link: { DEFAULT: lightTokens.link, dark: darkTokens.link },
-  },
   dot: {
     DEFAULT: colors.slate['500'],
     dark: colors.slate['400'],
-  },
-  article: {
-    title: {
-      DEFAULT: lightTokens.threadTitle,
-      dark: darkTokens.threadTitle,
-    },
-    digest: { DEFAULT: lightTokens.descText, dark: darkTokens.descText },
-    info: { DEFAULT: lightTokens.actionText, dark: darkTokens.actionText },
-    link: { DEFAULT: lightTokens.link, dark: darkTokens.link },
   },
   drawer: {
     mask: { DEFAULT: 'rgba(31, 34, 37, 0.15)', dark: 'rgb(21 21 21 / 72%)' },

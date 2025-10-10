@@ -17,7 +17,7 @@ export default ({ isPinned }: TProps) => {
     //
     title: cn(
       'text-2xl mb-4 bold-sm max-w-[600px]',
-      fg('article.title'),
+      fg('text.title'),
       isPinned && primary('fg'),
       isPinned && 'brightness-110',
     ),

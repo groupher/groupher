@@ -10,6 +10,6 @@ export default () => {
     wrapperFold: cn('px-2.5 py-1 w-auto h-auto mb-0.5', bg('sandBox')),
     content: cn('row-center ml-2.5 text-sm', fg('text.digest')),
     reason: fg('text.title'),
-    botIcon: cn('size-4', fill('article.digest')),
+    botIcon: cn('size-4', fill('text.digest')),
   }
 }
