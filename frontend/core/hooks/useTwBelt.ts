@@ -1,19 +1,15 @@
-import { clsx, type ClassValue } from 'clsx'
-
-import { cn, zIndex as Z_INDEX } from '~/css'
-
-import type { TColorName, TSpace, TZIndexKey } from '~/spec'
+import { type ClassValue, clsx } from 'clsx'
 import { COLOR_NAME } from '~/const/colors'
-import type { TFlatThemeKey } from '~/utils/themes/skins'
-
-import twConfig from '~/const/twConfig.json'
-import { camelize } from '~/fmt'
-
 import METRIC from '~/const/metric'
-import useTheme from '~/hooks/useTheme'
-import useMetric from '~/hooks/useMetric'
+import twConfig from '~/const/twConfig.json'
+import { cn, zIndex as Z_INDEX } from '~/css'
+import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
+import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
+import useTheme from '~/hooks/useTheme'
+import type { TColorName, TSpace, TZIndexKey } from '~/spec'
+import type { TFlatThemeKey } from '~/utils/themes/skins'
 
 const containerConf = twConfig.container
 const borderSoftConf = twConfig.borderSoft
@@ -89,7 +85,7 @@ export default (): TRet => {
   const isBlackPrimary = primaryColor === COLOR_NAME.BLACK
 
   /**
-   * cover article.title -> article-title to match the tailwind csss varaible name
+   * cover article.title -> article-title to match the tailwind css vars name
    */
   const _theme = (key: TFlatThemeKey, prefix: string, switchBy?: TThemeSwitch) => {
     if (switchBy === 'dark') return `${prefix}-${key.replace(/\./g, '-')}-dark`

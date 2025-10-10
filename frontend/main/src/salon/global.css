@@ -1,15 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config "../../tailwind.config.js";
 
-/* tailwind can't express those sexy border style, need global css */
-/* NOTE: please sync those values with real theme colors */
+@import "tailwindcss";
+@import "tailwindcss-animated";
+
+@import "./safelist.css";
+@import "./colors.css";
+
 :root {
-  --divider: #EAE9E9;
-  --divider-dark: #3c3c3c;
-
-  --rainbow-custom: #94C37E;
-  --rainbow-custom-dark: #E08A85;
+  --rainbow-custom: #94c37e;
+  --rainbow-custom-dark: #e08a85;
 }
 
 @layer utilities {
@@ -50,7 +49,7 @@
   }
 
   .pointer {
-    @apply hover:cursor-pointer
+    @apply hover:cursor-pointer;
   }
 
   .font {
@@ -86,31 +85,31 @@
   }
 
   .smoky-40 {
-    @apply opacity-40 hover:opacity-100 cursor-pointer
+    @apply opacity-40 hover:opacity-100 cursor-pointer;
   }
 
   .smoky-65 {
-    @apply opacity-65 hover:opacity-100 cursor-pointer
+    @apply opacity-65 hover:opacity-100 cursor-pointer;
   }
 
   .smoky-80 {
-    @apply opacity-80 hover:opacity-100 cursor-pointer
+    @apply opacity-80 hover:opacity-100 cursor-pointer;
   }
 
   .smoky-90 {
-    @apply opacity-90 hover:opacity-100 cursor-pointer
+    @apply opacity-90 hover:opacity-100 cursor-pointer;
   }
 
   .group-smoky-0 {
-    @apply opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer
+    @apply opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer;
   }
 
   .group-smoky-65 {
-    @apply opacity-65 group-hover:opacity-100 transition-opacity cursor-pointer
+    @apply opacity-65 group-hover:opacity-100 transition-opacity cursor-pointer;
   }
 
   .group-smoky-80 {
-    @apply opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer
+    @apply opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer;
   }
 
   .article-hover-linear::before {
@@ -138,7 +137,7 @@
   }
 
   .saving-bar-right-linear {
-     background:linear-gradient(to right, #efefef78 45%, transparent);
+    background: linear-gradient(to right, #efefef78 45%, transparent);
   }
 
   .saving-bar-right-linear-dark {
@@ -164,7 +163,7 @@
   }
 
   .footer-inner-shadow {
-    box-shadow: rgb(241 241 241) 0px 0px 50px 0px inset;  
+    box-shadow: rgb(241 241 241) 0px 0px 50px 0px inset;
   }
 
   .footer-inner-shadow-dark {
@@ -172,10 +171,10 @@
   }
 
   .hover-underline {
-    @apply no-underline hover:underline
+    @apply no-underline hover:underline;
   }
 
- .sexy-border-20 {
+  .sexy-border-20 {
     border-image: linear-gradient(
       0.2turn,
       transparent,
@@ -276,7 +275,7 @@
   }
 
   .trans-jump {
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2)
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2);
   }
 
   .landing-gradient-purple {
@@ -291,10 +290,10 @@
   .landing-gradient-blue-dark {
     background: linear-gradient(#2f3e564d 0%, #252525 100%);
   }
-  .landing-gradient-green {  
-    background: linear-gradient(#F0F8EE 0%, rgb(255 255 255) 100%);
+  .landing-gradient-green {
+    background: linear-gradient(#f0f8ee 0%, rgb(255 255 255) 100%);
   }
-  .landing-gradient-green-dark {  
+  .landing-gradient-green-dark {
     background: linear-gradient(#272c25 0%, #252525 100%);
   }
   .landing-gradient-cyan {
@@ -310,7 +309,7 @@
     background: linear-gradient(#5536314d 0%, #252525 100%);
   }
   .landing-gradient-brown {
-    background: linear-gradient(rgb(231 206 195 / 12%) 0%, rgb(255 255 255) 100%);  
+    background: linear-gradient(rgb(231 206 195 / 12%) 0%, rgb(255 255 255) 100%);
   }
   .landing-gradient-brown-dark {
     background: linear-gradient(#ad91681f 0%, #252525 100%);
@@ -323,15 +322,15 @@
   }
 
   .gradient-purple {
-    background: linear-gradient(152deg,#faf5ff9c 0%,rgb(222 198 243) 100%);
+    background: linear-gradient(152deg, #faf5ff9c 0%, rgb(222 198 243) 100%);
   }
 
   .gradient-purple-dark {
-    background: linear-gradient(-149deg,#373439d4 0%,rgb(86 70 99) 100%);
+    background: linear-gradient(-149deg, #373439d4 0%, rgb(86 70 99) 100%);
   }
 
   .gradient-blue {
-    background: linear-gradient(310deg,#f6f3ff54 13%,rgb(209 237 255 / 83%) 100%);
+    background: linear-gradient(310deg, #f6f3ff54 13%, rgb(209 237 255 / 83%) 100%);
   }
 
   .gradient-blue-dark {
@@ -339,7 +338,7 @@
   }
 
   .gradient-green {
-    background: linear-gradient(28deg,#fffbf6 0%,rgb(216 240 221 / 80%) 100%);
+    background: linear-gradient(28deg, #fffbf6 0%, rgb(216 240 221 / 80%) 100%);
   }
 
   .gradient-green-dark {
@@ -347,7 +346,7 @@
   }
 
   .gradient-orange {
-    background: linear-gradient(244deg,#fffcf75e 0%,rgb(255 234 217 / 72%) 100%);
+    background: linear-gradient(244deg, #fffcf75e 0%, rgb(255 234 217 / 72%) 100%);
   }
 
   .gradient-orange-dark {
@@ -355,7 +354,7 @@
   }
 
   .gradient-brown {
-    background: linear-gradient(244deg, #fffcf75e 0%, #F0EFE9 100%);
+    background: linear-gradient(244deg, #fffcf75e 0%, #f0efe9 100%);
   }
 
   .gradient-brown-dark {
@@ -363,7 +362,7 @@
   }
 
   .gradient-pink {
-    background: linear-gradient(224deg ,#fde4ff24 0%,rgb(255 223 234 / 79%) 100%);
+    background: linear-gradient(224deg, #fde4ff24 0%, rgb(255 223 234 / 79%) 100%);
   }
 
   .gradient-pink-dark {
@@ -379,7 +378,7 @@
   }
 
   .gradient-black {
-    background: linear-gradient(25deg,#fafafaba 20%,#bdccce63 100%);
+    background: linear-gradient(25deg, #fafafaba 20%, #bdccce63 100%);
   }
 
   .gradient-black-dark {
@@ -387,7 +386,7 @@
   }
 
   .gradient-cyan {
-    background: linear-gradient(213deg,#fffff3ba 13%,#aff5ffc2 100%);
+    background: linear-gradient(213deg, #fffff3ba 13%, #aff5ffc2 100%);
   }
 
   .gradient-cyan-dark {
@@ -395,7 +394,7 @@
   }
 
   .gradient-yellow {
-    background: linear-gradient(150deg,#ffe5e529 20%,rgb(255 251 216 / 58%) 100%);
+    background: linear-gradient(150deg, #ffe5e529 20%, rgb(255 251 216 / 58%) 100%);
   }
 
   .gradient-yellow-dark {
@@ -411,11 +410,11 @@
   }
 
   .animation-fade-up {
-     @apply animate-fade-up animate-once animate-duration-200
+    @apply animate-fade-up animate-once animate-duration-200;
   }
 
   .animation-fade-down {
-     @apply animate-fade-down animate-once animate-duration-200
+    @apply animate-fade-down animate-once animate-duration-200;
   }
 
   .shape-shadow {
@@ -442,13 +441,12 @@
     @apply border border-dashed;
     border-color: blue;
   }
-
 }
 
 /* third-part global styles */
 .lazy-load-image-background.blur {
-    filter: blur(3px);
-  }
+  filter: blur(3px);
+}
 
 .lazy-load-image-background.blur.lazy-load-image-loaded {
   filter: blur(0);
@@ -463,9 +461,9 @@
   opacity: 1;
   transition: opacity 0.2s;
 }
-  
+
 .header-layout-community-brief {
-  .tippy-box[data-placement^=bottom][data-state='visible'] {
+  .tippy-box[data-placement^="bottom"][data-state="visible"] {
     transform: translateY(1px) !important;
   }
 }
@@ -482,27 +480,27 @@
 
 .tippy-box {
   border-radius: 4px;
-  transition: all .2s ease-in-out !important;
+  transition: all 0.2s ease-in-out !important;
 }
 
 /* wechat brower not support backdrop-filter well */
-@supports (-webkit-backdrop-filter:none) or (backdrop-filter:none) {
+@supports (-webkit-backdrop-filter: none) or (backdrop-filter: none) {
   .tippy-box {
     border-radius: 4px;
-    transition: all .2s ease-in-out !important;
+    transition: all 0.2s ease-in-out !important;
   }
 }
 
-.tippy-box[data-placement^=top][data-state='visible'] {
+.tippy-box[data-placement^="top"][data-state="visible"] {
   transform: translateY(-5px);
 }
-.tippy-box[data-placement^=bottom][data-state='visible'] {
+.tippy-box[data-placement^="bottom"][data-state="visible"] {
   transform: translateY(5px);
 }
-.tippy-box[data-placement^=left][data-state='visible'] {
+.tippy-box[data-placement^="left"][data-state="visible"] {
   transform: translateX(-5px);
 }
-.tippy-box[data-placement^=right][data-state='visible'] {
+.tippy-box[data-placement^="right"][data-state="visible"] {
   transform: translateX(5px);
 }
 
@@ -510,4 +508,3 @@
 .lazy-load-image-background.blur.lazy-load-image-loaded {
   line-height: 0.8;
 }
-

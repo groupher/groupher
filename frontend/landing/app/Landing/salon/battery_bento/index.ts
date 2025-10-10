@@ -1,7 +1,6 @@
-import type { TColorName } from '~/spec'
-
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TColorName } from '~/spec'
 
 export default () => {
   const { isDarkTheme } = useTheme()

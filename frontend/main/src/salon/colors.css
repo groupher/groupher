@@ -1,0 +1,5 @@
+@import './tokens.css';
+
+@utility color-test {
+  color: var(--color-divider);
+}

@@ -1,0 +1,241 @@
+@import "./color-tokens.css";
+
+@theme {
+  /* =========== 基础色 =========== */
+  --color-transparent: transparent;
+  --color-primary: rgb(var(--color-primary));
+  --color-html-bg: rgb(var(--color-html-bg));
+  --color-card: rgb(var(--color-card));
+  --color-card-alpha: #ffffffd4;
+  --color-body-bg: rgb(var(--color-body-bg));
+  --color-snack-bar: rgb(var(--color-snack-bar));
+
+  /* =========== 复合结构 =========== */
+  --color-error: {
+    title: rgb(var(--color-primary));
+    desc: rgb(var(--color-primary));
+    bg: rgb(var(--color-error-bg));
+  }
+
+  --color-text: {
+    title: rgb(var(--color-text-title));
+    digest: rgb(var(--color-text-digest));
+    hint: rgb(var(--color-text-hint));
+    invert: rgb(var(--color-text-invert));
+    link: rgb(var(--color-link));
+  }
+
+  --color-link: {
+    DEFAULT: rgb(var(--color-link));
+    hover: rgb(var(--color-link-hover));
+    active: rgb(var(--color-link-hover));
+  }
+
+  --color-article: {
+    title: rgb(var(--color-article-title));
+    digest: rgb(var(--color-article-digest));
+    info: rgb(var(--color-article-info));
+    link: rgb(var(--color-article-link));
+    card-shadow: 0 2px 40px 0 rgb(224 226 228 / 27%);
+    card-hover: #c1c1c1;
+  }
+
+  --color-comment: {
+    bg: rgb(var(--color-comment-bg));
+    icon: grey;
+    did-icon: orange;
+    title: grey;
+    username: #7fa7ac;
+    number: #efbc60;
+    floor: #8590a6;
+    reply: #93b3b5;
+    reply-bg: #f3f3f3;
+    placeholder: #8c94a3;
+    filter: grey;
+    filter-active: rgb(var(--color-primary));
+    action: rgb(var(--color-comment-action));
+    mention-text: #91a4b5;
+    mention-text-bg: #fcffdb;
+    mention-bg: #f9fcfc;
+    mention-border: rgb(var(--color-primary));
+    indent-line: #e7e9ed;
+    indent-active: #b5bccb;
+  }
+
+  --color-rainbow: {
+    /* 基础色（全部来自 token 原始值） */
+    red: rgb(var(--color-rainbow-red));
+    orange: rgba(var(--color-rainbow-orange));
+    brown: rgb(var(--color-rainbow-brown));
+    yellow: rgba(var(--color-rainbow-yellow));
+    green: rgb(var(--color-rainbow-green));
+    green-light: rgb(var(--color-rainbow-green-light));
+    cyan: rgb(var(--color-rainbow-cyan));
+    cyan-light: rgb(var(--color-rainbow-cyan-light));
+    blue: rgb(var(--color-rainbow-blue));
+    purple: rgb(var(--color-rainbow-purple));
+    pink: rgb(var(--color-rainbow-pink));
+    black: rgb(var(--color-rainbow-black));
+
+    /* 柔和色（保留原 HEX 值，因 token 未提供） */
+    red-soft: #FFEBEC;
+    orange-soft: #FEF7E8;
+    brown-soft: #FFF3DF;
+    yellow-soft: #FEFBE8;
+    green-soft: #EEFDD89C;
+    green-light-soft: #E3F3CC4A;
+    cyan-soft: #E1FCFF;
+    cyan-light-soft: #E1FCFF94;
+    blue-soft: #E7EDF7;
+    purple-soft: #F7D8FD38;
+    pink-soft: #FFD8EA59;
+    black-soft: #F4F4F4;
+  }
+
+  --color-gradient-bg: {
+    purple: linear-gradient(152deg, #faf5ff9c 0%, rgb(222 198 243) 100%);
+    blue: linear-gradient(310deg, #f6f3ff54 13%, rgb(209 237 255 / 83%) 100%);
+    green: linear-gradient(28deg, #fffbf6 0%, rgb(216 240 221 / 80%) 100%);
+    orange: linear-gradient(244deg, #fffcf75e 0%, rgb(255 234 217 / 72%) 100%);
+    pink: linear-gradient(224deg, #fde4ff24 0%, rgb(255 223 234 / 79%) 100%);
+    black: linear-gradient(25deg, #fafafaba 20%, #bdccce63 100%);
+    cyan: linear-gradient(213deg, #fffff3ba 13%, #aff5ffc2 100%);
+    yellow: linear-gradient(150deg, #ffe5e529 20%, rgb(255 251 216 / 58%) 100%);
+    global: linear-gradient(135deg, #6b8eff 0%, #00c1e0 50%, #5de2b1 100%);
+    global-reverse: linear-gradient(135deg, #5de2b1 0%, #00c1e0 50%, #6b8eff 100%);
+    global-dark: linear-gradient(135deg, #9b6bff 0%, #6b8eff 50%, #00a3c0 100%);
+    global-gray: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 50%, #f5f5f5 100%);
+  }
+
+  --color-drawer: {
+    mask: rgba(31, 34, 37, 0.15);
+    bg: rgb(var(--color-drawer-bg));
+    shadow: -8px 8px 20px 11px rgb(143 143 143 / 2%);
+    shadow-lite: -8px 8px 20px 11px rgb(143 143 143 / 2%);
+    closer-shadow: -7px 4px 20px 0px rgb(143 143 143 / 2%);
+    border: transparent;
+  }
+
+  --color-editor: {
+    title: #7ea9ad;
+    content: #a6bebf;
+    placeholder: #b3cfd0;
+    content-bg: #f9fcfc;
+    border: #d6d6d6;
+    border-active: rgb(var(--color-editor-border-active));
+    border-normal: #e2eaea;
+    footer: #a6bebf;
+  }
+
+  --color-button: {
+    primary: rgb(var(--color-primary));
+    toggle: white;
+    red-bg: #ffebee;
+    fg: white;
+    hover-bg: rgb(var(--color-primary));
+    upvote-border: #c5c5c5b0;
+  }
+
+  --color-navigator: {
+    active-bottom: rgb(var(--color-primary));
+    border-right: rgb(var(--color-navigator-border-right));
+    hover-bg: #eee;
+  }
+
+  --color-notice: {
+    bg: #fdf6e8;
+    icon: #a57a32;
+  }
+
+  --color-popover: {
+    bg: #fafafa;
+    border-color: #e9e9ea;
+    box-shadow: -3px 2px 20px 0px rgb(58 58 58 / 15%);
+    active-border: #70707094;
+  }
+
+  --color-tagger: {
+    text: #d2a05f;
+    bg: #fff2b3;
+    border: #fff2b3;
+    close-btn: #d2a05f;
+  }
+
+  --color-tabs: {
+    header-active: #eb6224;
+    header: #b5b5b5;
+    content-bg: #ffffff;
+    header-bg: #f7f9f9;
+    header-active-top: rgb(var(--color-primary));
+    border: #e8e8e8;
+    bottom-line: #e1e4e8;
+  }
+
+  --color-modal: {
+    bg: rgb(var(--color-modal-bg));
+    mask: rgba(31, 34, 37, 0.1);
+    border: rgb(var(--color-primary));
+    shadow: -2px 4px 20px 0px rgb(158 157 157 / 23%);
+    inner-select-bg: #e4eeed45;
+    sub-panel: #f5f5f5;
+  }
+
+  --color-form: {
+    input-bg: #ffffff95;
+    text: #88a4ad;
+    label: #88a4ad;
+    border: #b8c6c0;
+    shadow: rgba(184, 198, 192, 0.3);
+  }
+
+  --color-toast: {
+    bg: rgb(var(--color-toast-bg));
+    border: rgb(var(--color-toast-border));
+    title: rgb(var(--color-toast-title));
+  }
+
+  --color-table: {
+    header-bg: #f8f8f8;
+    head-title: #949494;
+    text: #949497;
+    border: #f0f0f0;
+    hover-bg: #fafbfc;
+  }
+
+  --color-dashboard: {
+    menu-cat: rgb(var(--color-dashboard-menu-cat));
+    menu-title: rgb(var(--color-dashboard-menu-title));
+    block-active-bg: #ffffff95;
+  }
+
+  /* =========== 独立变量 =========== */
+  --color-font: rgb(var(--color-font));
+  --color-black-active: #3171db;
+  --color-divider: rgb(var(--color-divider));
+  --color-alpha-bg: #ffffff95;
+  --color-alpha-bg2: #fffffff2;
+  --color-sand-box: #f9f9f9;
+  --color-hover-bg: rgb(var(--color-hover-bg));
+  --color-hover-active: white;
+  --color-menu-hover-bg: white;
+  --color-line-divider: #acacacc9;
+  --color-height-icon: #e48a3d;
+  --color-height-gradient: linear-gradient(90deg, rgb(243, 170, 0) 0%, rgb(228, 62, 41) 100%);
+  --color-text-badge: #e2e2e287;
+  --color-light-text: #999999;
+  --color-hint: rgb(var(--color-hint));
+  --color-dashboard-block-opacity: 0.65;
+  --color-content-bg: rgb(var(--color-content-bg));
+  --color-footer-bottom-bg: #252325;
+  --color-code-bg: rgb(var(--color-code-bg));
+  --color-tags-text: rgb(var(--color-tags-text));
+  --color-avatar-quote: #217470;
+  --color-avatar-shadow: 0px 0px 4px 0px rgb(0 0 0 / 50%) inset;
+  --color-toggle-shadow: 0 0 10px 0 rgb(185 185 185 / 25%) inset;
+  --color-toggle-ball: white;
+  --color-hidden-panel: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 1) 40%
+  );
+}

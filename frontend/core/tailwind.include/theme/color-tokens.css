@@ -1,0 +1,96 @@
+:root {
+  /* 基础色 */
+  --color-primary: 51 51 51;
+  --color-html-bg: 255 255 255;
+  --color-card: 255 255 255;
+  --color-card-alpha: 255 255 255 0.83;
+  --color-error-bg: 255 255 255;
+  --color-divider: 234 233 233;
+  --color-alpha-bg: 255 255 255 0.58;
+  --color-alpha-bg2: 255 255 255 0.95;
+  --color-sand-box: 249 249 249;
+  --color-hover-active: 255 255 255;
+  --color-menu-hover-bg: 255 255 255;
+  --color-line-divider: 172 172 172 0.79;
+  --color-hover-border: 239 239 239 0.47;
+  --color-body-bg: 255 255 255;
+  --color-text-badge: 226 226 226 0.53;
+  --color-light-text: 153 153 153;
+  --color-article-card-hover: 193 193 193;
+  --color-snack-bar: 82 82 82;
+
+  /* 文字色 */
+  --color-font: 51 51 51;
+  --color-link: 80 115 198;
+  --color-black-active: 49 113 219;
+  --color-link-hover: 80 115 198;
+  --color-text-title: 51 51 51;
+  --color-text-digest: 102 102 102;
+  --color-text-hint: 157 153 153;
+
+  /* 特殊色 */
+  --color-height-icon: 228 138 61;
+  --color-height-gradient: linear-gradient(90deg, rgb(243, 170, 0) 0%, rgb(228, 62, 41) 100%);
+
+  /* 彩虹色系 */
+  --color-rainbow-red: 202 95 77;
+  --color-rainbow-orange: 255 165 0;
+  --color-rainbow-brown: 141 105 30;
+  --color-rainbow-yellow: 199 185 109;
+  --color-rainbow-green: 105 148 17;
+  --color-rainbow-green-light: 121 208 143;
+  --color-rainbow-cyan: 36 135 140;
+  --color-rainbow-cyan-light: 0 181 204;
+  --color-rainbow-blue: 80 115 198;
+  --color-rainbow-purple: 125 81 158;
+  --color-rainbow-pink: 179 105 118;
+  --color-rainbow-black: 51 51 51;
+}
+
+/* 深色模式 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: 255 255 255;
+    --color-html-bg: 37 37 37;
+    --color-card: 37 37 37;
+    --color-card-alpha: 37 38 38 0.76;
+    --color-error-bg: 45 45 45;
+    --color-divider: 68 68 68;
+    --color-alpha-bg: 49 49 49 0.58;
+    --color-alpha-bg2: 28 28 28 0.72;
+    --color-sand-box: 49 48 48 0.35;
+    --color-hover-active: 63 63 63;
+    --color-menu-hover-bg: 239 239 239 0.47;
+    --color-line-divider: 90 90 90 0.79;
+    --color-hover-border: 57 57 57;
+    --color-body-bg: 30 30 30;
+    --color-text-badge: 226 226 226 0.53;
+    --color-light-text: 153 153 153;
+    --color-article-card-hover: 87 87 87;
+    --color-snack-bar: 180 180 180;
+
+    --color-font: 238 238 238;
+    --color-link: 58 126 199;
+    --color-black-active: 49 113 219;
+    --color-link-hover: 58 126 199;
+    --color-text-title: 238 238 238;
+    --color-text-digest: 170 170 170;
+    --color-text-hint: 157 153 153;
+
+    --color-height-icon: 228 138 61;
+    --color-height-gradient: linear-gradient(90deg, rgb(243, 170, 0) 0%, rgb(228, 62, 41) 100%);
+
+    --color-rainbow-red: 202 95 77;
+    --color-rainbow-orange: 255 165 0 0.78;
+    --color-rainbow-brown: 167 124 34;
+    --color-rainbow-yellow: 218 201 51 0.81;
+    --color-rainbow-green: 105 148 17;
+    --color-rainbow-green-light: 55 183 132;
+    --color-rainbow-cyan: 36 135 140;
+    --color-rainbow-cyan-light: 0 181 204;
+    --color-rainbow-blue: 58 126 199;
+    --color-rainbow-purple: 125 81 158;
+    --color-rainbow-pink: 179 105 118;
+    --color-rainbow-black: 78 78 78;
+  }
+}

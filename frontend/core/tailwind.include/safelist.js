@@ -116,10 +116,12 @@ const INPUTS = ['border-text-digest']
 const GROUP_HOVERS = ['text-text-title', 'fill-rainbow-red', 'fill-text-title', 'shadow-sm']
 const MENU_GROUP_HOVERS = ['text-rainbow-red', 'fill-rainbow-red', 'fill-text-title']
 
-const CONTAINERS = keys(container).map(
+const CONTAINERS_bak = keys(container).map(
   (c) =>
     `container-${c} w-[${container[c].width}] pl-${container[c].pl} pr-${container[c].pr} -ml-${container[c].pl} mr-${container[c].pr}`,
 )
+
+const CONTAINERS = keys(container).map((c) => `container-${c}`)
 
 const ROTATES = [6, 3, 2, 1, 1, 2, 3, 6, 2, 3, 1, 6]
 
@@ -185,6 +187,7 @@ module.exports = uniq([
   ...ROTATES.map((r) => `rotate-${r}`),
 
   ...CONTAINERS,
+  { pattern: /^container-/ }, // 双重保险
   ...UTILS,
   ...Z_INDEX_VALUES,
 ])
