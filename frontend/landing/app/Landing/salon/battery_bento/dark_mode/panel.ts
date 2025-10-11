@@ -31,7 +31,7 @@ export default () => {
     cardFooter: 'row-center mt-1 w-full',
     card: cn('column w-28 h-32 p-2.5 rounded-lg border trans-all-200', shadow('sm'), br('divider')),
     lightBg: cn('bg-card', !isLightTheme && dimDark()),
-    darkBg: bg('htmlBg', 'dark'),
+    darkBg: bg('container', 'dark'),
     lightText: 'text-text-title',
     darkText: fg('text.title', 'dark'),
 

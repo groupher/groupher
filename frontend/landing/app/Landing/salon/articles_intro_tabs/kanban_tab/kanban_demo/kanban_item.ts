@@ -10,7 +10,7 @@ export default () => {
   return {
     wrapper: cn(
       'column justify-between rounded-md h-16 px-2 py-1.5 border',
-      bg('htmlBg'),
+      bg('container'),
       br('divider'),
     ),
 

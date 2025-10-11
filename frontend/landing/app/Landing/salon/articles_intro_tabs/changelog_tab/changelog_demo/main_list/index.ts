@@ -10,7 +10,7 @@ export default () => {
     wrapper: cn(
       'column items-start relative mt-4 w-[348px] h-[460px] rounded-md border',
       'pl-10',
-      bg('htmlBg'),
+      bg('container'),
       br('divider'),
       shadow('sm'),
     ),

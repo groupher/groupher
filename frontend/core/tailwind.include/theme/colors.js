@@ -9,7 +9,7 @@ module.exports = {
     DEFAULT: 'transparent',
     dark: 'transparent',
   },
-  htmlBg: {
+  container: {
     DEFAULT: lightTokens.bannerBg,
     dark: darkTokens.bannerBg,
   },

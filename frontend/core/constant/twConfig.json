@@ -1,5 +1,5 @@
 {
-  "pageBgColor": {
+  "containerBgGroup": {
     "light": {
       "pure-white": "#fff",
       "solarized": "#FEF6E4",

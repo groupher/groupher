@@ -8,7 +8,7 @@ export default () => {
   return {
     wrapper: cn(
       'mt-10 w-44 h-auto mb-6 p-4 rounded-md border',
-      bg('htmlBg'),
+      bg('container'),
       br('divider'),
       shadow('sm'),
     ),

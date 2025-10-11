@@ -2,18 +2,16 @@
 
 import { createContext, useContext } from 'react'
 import { proxy } from 'valtio'
-
-import type { TRootStore, TRootStoreInit } from './spec'
-
-import THEME from '~/const/theme'
 import { LOCALE } from '~/const/i18n'
 
-import setupLocale from './locale'
-import setupTheme from './theme'
+import THEME from '~/const/theme'
 import setupAccount from './account'
 import setupArticles from './articles'
-import setupViewing from './viewing'
 import setupDashboard from './dashboard'
+import setupLocale from './locale'
+import type { TRootStore, TRootStoreInit } from './spec'
+import setupTheme from './theme'
+import setupViewing from './viewing'
 import setupWallpaper from './wallpaper'
 
 export { default as StoreProvider } from './provider'

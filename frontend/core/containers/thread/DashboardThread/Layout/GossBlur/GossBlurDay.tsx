@@ -6,10 +6,9 @@ import useWallpaper from '~/hooks/useWallpaper'
 import RangeSlider from '~/widgets/RangeSlider'
 
 import { SETTING_FIELD } from '../../constant'
-import SectionLabel from '../../SectionLabel'
-import SavingBar from '../../SavingBar'
-
 import useGossBlur from '../../logic/useGossBlur'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
 
 import useSalon, { cn } from '../../salon/layout/goss_blur'
 
@@ -22,14 +21,14 @@ export default () => {
   const themeData = useThemeData()
 
   const isTouched = getIsTouched()
-  const bgColor = `${blurRGB(themeData.htmlBg, gossBlur)}`
+  const bgColor = `${blurRGB(themeData.container, gossBlur)}`
 
   return (
     <div className={s.wrapper} key={wallpaper}>
       <SectionLabel
-        title="毛玻璃效果"
-        desc="主要页面的高斯模糊值，类似主流音乐播放器效果"
-        classNames="pr-8"
+        title='毛玻璃效果'
+        desc='主要页面的高斯模糊值，类似主流音乐播放器效果'
+        classNames='pr-8'
         withThemeSelect
       />
 
@@ -71,14 +70,14 @@ export default () => {
             top={5}
             min={50}
             max={100}
-            width="w-10/12"
-            unit="%"
+            width='w-10/12'
+            unit='%'
           />
         </ul>
       </div>
 
       <SavingBar
-        width="w-11/12"
+        width='w-11/12'
         isTouched={isTouched}
         field={SETTING_FIELD.GOSS_BLUR}
         loading={saving}

@@ -1,7 +1,7 @@
 /*
  * light mode
  */
-import { lighten, darken } from '~/utils/color'
+import { darken, lighten } from '~/utils/color'
 
 const primaryColor = '#333333' // '#000000'
 const bannerBg = '#fff'
@@ -20,7 +20,7 @@ const hint = '#9d9999'
 export default {
   transparent: '',
   primary: primaryColor,
-  htmlBg: bannerBg,
+  container: '',
   cardAlpha: '',
   card: '',
   loading: {

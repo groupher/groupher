@@ -1,45 +1,43 @@
-import { proxy } from 'valtio'
 import { mergeDeepRight } from 'ramda'
-
-import { LOCALE } from '~/const/i18n'
-import { THREAD } from '~/const/thread'
-import SIZE from '~/const/size'
-import { COLOR_NAME, PAGE_COLOR_DEFAULT } from '~/const/colors'
-import { BUILTIN_ALIAS } from '~/const/name'
+import { proxy } from 'valtio'
+import { COLOR_NAME, CONTAINER_BG_DEFAULT } from '~/const/colors'
+import { DEFAULT_ENABLE, INIT_KANBAN_COLORS, TW_CARD, WIDGET_TYPE } from '~/const/dashboard'
 import { GLOW_OPACITY } from '~/const/glow_effect'
-import { CHANGE_MODE } from '~/const/mode'
-import { EMPTY_PAGED_COMMUNITIES, EMPTY_PAGED_ARTICLES } from '~/const/utils'
-import { TW_CARD, WIDGET_TYPE, INIT_KANBAN_COLORS, DEFAULT_ENABLE } from '~/const/dashboard'
+import { LOCALE } from '~/const/i18n'
 import {
-  HEADER_LAYOUT,
-  FOOTER_LAYOUT,
-  POST_LAYOUT,
-  CHANGELOG_LAYOUT,
-  KANBAN_LAYOUT,
-  KANBAN_CARD_LAYOUT,
-  DOC_LAYOUT,
-  DOC_FAQ_LAYOUT,
-  TAG_LAYOUT,
   AVATAR_LAYOUT,
-  BRAND_LAYOUT,
   BANNER_LAYOUT,
-  TOPBAR_LAYOUT,
-  BROADCAST_LAYOUT,
+  BRAND_LAYOUT,
   BROADCAST_ARTICLE_LAYOUT,
+  BROADCAST_LAYOUT,
+  CHANGELOG_LAYOUT,
+  DOC_FAQ_LAYOUT,
+  DOC_LAYOUT,
+  FOOTER_LAYOUT,
+  HEADER_LAYOUT,
+  KANBAN_CARD_LAYOUT,
+  KANBAN_LAYOUT,
+  POST_LAYOUT,
   RSS_TYPE,
+  TAG_LAYOUT,
+  TOPBAR_LAYOUT,
 } from '~/const/layout'
+import { CHANGE_MODE } from '~/const/mode'
+import { BUILTIN_ALIAS } from '~/const/name'
 import {
-  DASHBOARD_ROUTE,
-  DASHBOARD_LAYOUT_ROUTE,
-  DASHBOARD_BASEINFO_ROUTE,
   DASHBOARD_ALIAS_ROUTE,
+  DASHBOARD_BASEINFO_ROUTE,
   DASHBOARD_BROADCAST_ROUTE,
-  DASHBOARD_SEO_ROUTE,
   DASHBOARD_DOC_ROUTE,
+  DASHBOARD_LAYOUT_ROUTE,
+  DASHBOARD_ROUTE,
+  DASHBOARD_SEO_ROUTE,
 } from '~/const/route'
-
-import type { TStore, TInit, TSettingsFields } from './spec'
-import { EMPTY_MEDIA_REPORT, DEFAULT_FAQ_ITEMS, DEFAULT_OVERVIEW } from './constant'
+import SIZE from '~/const/size'
+import { THREAD } from '~/const/thread'
+import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
+import { DEFAULT_FAQ_ITEMS, DEFAULT_OVERVIEW, EMPTY_MEDIA_REPORT } from './constant'
+import type { TInit, TSettingsFields, TStore } from './spec'
 
 export const settingsFields: TSettingsFields = {
   // baseInfo
@@ -59,8 +57,8 @@ export const settingsFields: TSettingsFields = {
   mediaReports: [EMPTY_MEDIA_REPORT],
 
   // page
-  pageBg: PAGE_COLOR_DEFAULT.light,
-  pageBgDark: PAGE_COLOR_DEFAULT.dark,
+  pageBg: CONTAINER_BG_DEFAULT.light,
+  pageBgDark: CONTAINER_BG_DEFAULT.dark,
 
   // seo
   seoEnable: true,

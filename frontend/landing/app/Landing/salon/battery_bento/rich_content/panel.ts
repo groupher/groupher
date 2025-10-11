@@ -9,7 +9,7 @@ export default () => {
     wrapper: cn('p-4 w-full h-80'),
     content: cn(
       'column items-start relative mt-2.5 rounded-md p-2.5 w-full h-5/6 border',
-      bg('htmlBg'),
+      bg('container'),
       br('divider'),
       shadow('sm'),
     ),

@@ -1,18 +1,16 @@
-import type { TColorName } from '~/spec'
-
-import { upperSnakeCase } from '~/fmt'
 import twConfig from '~/const/twConfig.json'
 
-const pageBgColor = twConfig.pageBgColor
+import { upperSnakeCase } from '~/fmt'
+import type { TColorName } from '~/spec'
 
-// 定义输入类型
+const CONTAINER_BG_GROUP = twConfig.containerBgGroup
+
 type TInputColorScheme = {
   [theme: string]: {
     [colorName: string]: string
   }
 }
 
-// 定义输出类型
 type TOutputColorScheme = {
   [theme: string]: {
     [colorName: string]: string
@@ -33,14 +31,14 @@ const generatePageBgColor = (input: TInputColorScheme): TOutputColorScheme => {
   return output
 }
 
-export const PAGE_COLOR_DEFAULT = {
+export const CONTAINER_BG_DEFAULT = {
   light: 'PURE_WHITE',
   dark: 'OUTER_SPACE',
 }
 
 export const PAGE_COLOR = generatePageBgColor({
-  light: pageBgColor.light,
-  dark: pageBgColor.dark,
+  light: CONTAINER_BG_GROUP.light,
+  dark: CONTAINER_BG_GROUP.dark,
 })
 
 export const COLOR_NAME = {

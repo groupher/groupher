@@ -1,6 +1,6 @@
+import { COLOR_NAME } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
-import { COLOR_NAME } from '~/const/colors'
 export { cn } from '~/css'
 
 export default () => {
@@ -11,7 +11,7 @@ export default () => {
       'column-align-both px-1.5 py-2 pb-0 rounded-t-xl z-50',
       'absolute left-4 ml-0.5',
       'brightness-150 trans-jump',
-      bg('htmlBg', 'dark'),
+      bg('container', 'dark'),
       shadow('md'),
     ),
     fillOrange: rainbow(COLOR_NAME.ORANGE, 'fill'),

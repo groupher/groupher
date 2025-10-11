@@ -12,13 +12,13 @@ export default () => {
   return {
     wrapper: cn(
       'column-center relative -ml-10 z-10 w-96 h-[480px] rounded-md gap-2.5',
-      bg('htmlBg'),
+      bg('container'),
       shadow('sm'),
     ),
     underPaper: cn(
       'absolute -top-0.5 -right-1 w-96 h-1/2 -z-10 rotate-3 border rounded-md',
       br('divider'),
-      bg('htmlBg'),
+      bg('container'),
       shadow('sm'),
     ),
     //
@@ -26,7 +26,7 @@ export default () => {
     inner: cn(
       'column-center w-full h-full z-10 px-4 py-8 pt-6 border rounded-md',
       br('divider'),
-      bg('htmlBg'),
+      bg('container'),
     ),
     content: 'column relative w-64',
     //
@@ -49,7 +49,7 @@ export default () => {
       isLightTheme ? 'opacity-25' : 'opacity-40',
       rainbow('CYAN', 'bg'),
     ),
-    slash: cn('absolute h-28 w-1 left-1/2 top-0 rotate-12', bg('htmlBg')),
+    slash: cn('absolute h-28 w-1 left-1/2 top-0 rotate-12', bg('container')),
     coverText: cn('text-lg absolute bold', fg('button.fg'), vividDark()),
     // comment
     commentDot: cn(

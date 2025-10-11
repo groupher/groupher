@@ -1,5 +1,5 @@
 @theme {
-  --color-htmlBg: #fff;
+  --color-container: #fff;
   --color-divider: #eae9e9;
 
   /* articles */
@@ -54,7 +54,7 @@
 /* dark mode */
 @layer theme {
   .dark {
-    --color-htmlBg: #222222;
+    --color-container: #222222;
 
     /* articles */
     --color-text-title: oklch(96.7% 0.003 264.542);

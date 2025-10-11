@@ -5,11 +5,9 @@
  */
 
 import type { FC, ReactNode } from 'react'
-
-import useTrans from '~/hooks/useTrans'
-
 import usePageBg from '~/hooks/usePageBg'
 import useTopbar from '~/hooks/useTopbar'
+import useTrans from '~/hooks/useTrans'
 
 // import Broadcast from '~/widgets/Broadcast'
 import Footer from '~/widgets/Footer'
@@ -30,6 +28,8 @@ const Main: FC<TProps> = ({ children }) => {
 
   const { hasTopbar } = useTopbar()
   const { background } = usePageBg()
+
+  console.log('## background: ', background)
   /**
    * this is tricy, when clientside changed locale, we force render hte entire app here
    * the action will make sure each component who use useTrans will not need to wrap with observer

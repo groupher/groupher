@@ -4,12 +4,12 @@ const { keys } = require('ramda')
 const { container: containerConf } = require('../../twConfig.json')
 
 module.exports = ({ addComponents, theme }) => {
-  console.log('## 加载 containers')
+  // console.log('## 加载 containers')
 
-  console.log('containerConf:', JSON.stringify(containerConf, null, 2))
+  // console.log('containerConf:', JSON.stringify(containerConf, null, 2))
 
-  console.log('theme(spacing.52):', theme('spacing.52'))
-  console.log('theme(screens.lg):', theme('screens.lg'))
+  // console.log('theme(spacing.52):', theme('spacing.52'))
+  // console.log('theme(screens.lg):', theme('screens.lg'))
 
   // example:
   // '.container-home': {

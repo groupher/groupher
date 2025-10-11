@@ -9,7 +9,7 @@ export default () => {
     wrapper: cn(
       'row h-40 w-[460px] rounded-lg absolute bottom-10 -left-5 z-30 p-1',
       shadow('sm'),
-      bg('htmlBg'),
+      bg('container'),
     ),
     inner: cn('row w-full h-full rounded-xl py-4 px-6', global('gradient-green')),
     left: 'w-1/2',
