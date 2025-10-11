@@ -25,7 +25,6 @@ const getSSRLandingData = async (): Promise<TRootStoreInit> => {
   const response = await gqFetch(P.community, { slug: HCN, userHasLogin: false })
   const { data } = await response.json()
 
-  console.log('## data: ', data)
   const communityInfo = data
 
   const { community, dashboard, wallpaper } = communityInfo
