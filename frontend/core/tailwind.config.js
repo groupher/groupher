@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 
-const { colors, screens, safelist, plugins } = require('./tailwind.include')
+const { colors, safelist } = require('./tailwind.include')
 
 module.exports = {
   content: [
@@ -12,7 +12,6 @@ module.exports = {
   ],
   theme: {
     colors,
-    screens,
     extend: {
       boxShadow: {
         sm: 'rgba(100, 100, 111, 0.1) 1px 2px 29px 0px',
@@ -49,9 +48,4 @@ module.exports = {
     },
   },
   safelist,
-  plugins: [
-    require('@tailwindcss/typography'),
-    require('tailwindcss-animated'),
-    plugins.containers,
-  ],
 }

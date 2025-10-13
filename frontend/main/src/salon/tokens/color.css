@@ -48,7 +48,7 @@
 
   --color-rainbow-black: #333333;
   --color-rainbow-blackBtn: oklch(27.8% 0.033 256.848); /* gray.800 */
-  --color-rainbow-blackSoft: #f4f4f4;
+  --color-rainbow-blackSoft: #f4f4f4; 
 }
 
 /* dark mode */

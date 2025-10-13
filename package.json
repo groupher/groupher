@@ -96,7 +96,7 @@
     "@groupher/use-mobile-detect-hook": "^2.0.2",
     "@next/bundle-analyzer": "^12.3.4",
     "@tailwindcss/postcss": "4.1.13",
-    "@tailwindcss/typography": "0.5.13",
+    "@tailwindcss/typography": "0.5.19",
     "@tippyjs/react": "^4.2.6",
     "@urql/core": "5.1.1",
     "@urql/next": "1.1.5",

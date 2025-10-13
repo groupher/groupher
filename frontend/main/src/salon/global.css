@@ -2,9 +2,13 @@
 
 @import "tailwindcss";
 @import "tailwindcss-animated";
+@plugin "@tailwindcss/typography";
 
-@import "./safelist.css";
-@import "./colors.css";
+@import "./tokens";
+
+@import "./safelist";
+@import "./colors";
+@import "./containers";
 
 :root {
   --rainbow-custom: #94c37e;
