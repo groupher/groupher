@@ -16,7 +16,7 @@ export default {
   // 版块
   HELP_CENTER: 'HELP_CENTER',
 
-  // eidtors
+  // editors
   COMMUNITY_EDITOR: 'COMMUNITY_EDITOR',
   ARTICLE_EDITOR: 'ARTICLE_EDITOR',
 } as Record<Uppercase<TMetric>, Uppercase<TMetric>>

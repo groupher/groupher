@@ -1,9 +1,8 @@
-import type { TSnakeUpperCase, TWallpaper, TWallpaperType, TWallpaperGradientDir } from '~/spec'
-import type { TWallpaperState } from '~/stores/wallpaper/spec'
+import type { TSnakeUpperCase, TWallpaper, TWallpaperGradientDir, TWallpaperType } from '~/spec'
 
 const DIR = '/wallpaper'
 
-export const WALLPAPER_STATE_KEYS: (keyof TWallpaperState)[] = [
+export const WALLPAPER_STATE_KEYS = [
   'customWallpaper',
   'customColorValue',
   'wallpaper',

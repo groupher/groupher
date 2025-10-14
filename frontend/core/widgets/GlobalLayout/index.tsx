@@ -4,7 +4,7 @@
  *
  */
 
-import { type FC, type ReactNode, lazy, Suspense } from 'react'
+import { type FC, lazy, type ReactNode, Suspense } from 'react'
 
 import Mushroom from '~/containers/Mushroom'
 
@@ -14,11 +14,10 @@ import Mushroom from '~/containers/Mushroom'
 // import DashboardAlert from './DashboardAlert'
 // import CustomScroller from '~/widgets/CustomScroller'
 
-import SEO from './SEO'
-import Wallpaper from './Wallpaper'
 import Main from './Main'
-
+import SEO from './SEO'
 import useSalon from './salon'
+import Wallpaper from './Wallpaper'
 
 const Addon = lazy(() => import('./Addon'))
 

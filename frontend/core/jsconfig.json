@@ -7,8 +7,8 @@
       "~/widgets/*": ["./widgets/*"],
       "~/services": ["./services"],
       "~/services/*": ["./services/*"],
-      "~/const": ["utils/constant"],
-      "~/const/*": ["utils/constant/*"],
+      "~/const": ["./constant"],
+      "~/const/*": ["./constant/*"],
       "~/hooks": ["./hooks"],
       "~/hooks/*": ["./hooks/*"],
       "~/config": ["config"],
@@ -23,7 +23,13 @@
       "~/Img": ["./widgets/Img"],
       "~/SvgIcons/*": ["./widgets/SvgIcons/*"],
       "~/icons/*": ["./widgets/icons/*"],
-      "~/i18n": ["i18n"]
+      "~/i18n": ["i18n"],
+      "~/providers": ["./providers"],
+      "~/providers/*": ["./providers/*"],
+      "~/middlewares": ["./middlewares"],
+      "~/middlewares/*": ["./middlewares/*"],
+      "~/tailwind": ["./tailwind"],
+      "~/tailwind/*": ["./tailwind/*"]
     }
   },
   "exclude": ["node_modules"]

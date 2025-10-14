@@ -13,7 +13,8 @@ import StoreProvider from '~/stores/provider'
 import type { TRootStoreInit } from '~/stores/spec'
 import { gqFetch } from '~/utils/api'
 
-import '../salon/global.css'
+import '~/tailwind/global.css'
+// import '../salon/global.css'
 
 export const metadata: Metadata = {
   title: 'Groupher | 让你的产品听见用户的声音',

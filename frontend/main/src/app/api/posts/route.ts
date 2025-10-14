@@ -1,7 +1,6 @@
 import type { NextRequest } from 'next/server'
-
-import { SEARCH_PARAM } from '~/const/url'
 import { THREAD } from '~/const/thread'
+import { SEARCH_PARAM } from '~/const/url'
 import { getPagedArticles } from '~/utils/ssr'
 
 export const GET = async (req: NextRequest) => {

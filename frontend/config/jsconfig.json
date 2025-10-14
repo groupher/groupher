@@ -25,7 +25,9 @@
       "~/providers": ["../core/providers"],
       "~/providers/*": ["../core/providers/*"],
       "~/middlewares": ["../core/middlewares"],
-      "~/middlewares/*": ["../core/middlewares/*"]
+      "~/middlewares/*": ["../core/middlewares/*"],
+      "~/tailwind": ["./tailwind"],
+      "~/tailwind/*": ["./tailwind/*"]
     }
   },
   "exclude": ["node_modules"]

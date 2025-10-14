@@ -1,5 +1,5 @@
 // next.config.js
-const withBaseConfig = require('../config/next.config')
+const withBaseConfig = require('../core/next.config')
 
 module.exports = withBaseConfig({
   // use dynamic IO & cache, so export disable for now

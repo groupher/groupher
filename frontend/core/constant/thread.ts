@@ -5,7 +5,6 @@ export const CARD_THREAD = {}
 export const ARTICLE_THREAD = {
   POST: 'post',
   CHANGELOG: 'changelog',
-  DOC: 'doc',
 } as Record<Uppercase<TArticleThread>, TArticleThread>
 
 export const THREAD = {
@@ -14,6 +13,7 @@ export const THREAD = {
   // for groupher
   KANBAN: 'kanban',
   CHANGELOG: 'changelog',
+  DOC: 'doc',
   ABOUT: 'about',
   DASHBOARD: 'dashboard',
 } as Record<Uppercase<TThread>, TThread>

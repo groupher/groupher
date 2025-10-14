@@ -9,7 +9,8 @@ import { deepSanitize } from '~/utils/fmt'
 // import { Analytics } from '@vercel/analytics/react'
 // import { SpeedInsights } from '@vercel/speed-insights/next'
 
-import '../salon/global.css'
+import '~/tailwind/global.css'
+// import '../salon/global.css'
 
 export const metadata: Metadata = {
   title: 'Groupher | 让你的产品听见用户的声音',
@@ -22,7 +23,6 @@ const StoreInitLoader = async ({ children }) => {
   if (!routeInfo) return redirect('/404')
 
   const urlInfo = parseRouteInfo(routeInfo)
-
   const initData = await getSSRInitData(urlInfo)
 
   return <StoreProvider initData={deepSanitize(initData)}>{children}</StoreProvider>

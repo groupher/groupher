@@ -27,10 +27,6 @@ module.exports = {
         modal: '-2px 4px 20px 0px rgb(158 157 157 / 23%)',
         'modal-dark': '-4px 5px 20px 5px rgb(21 21 21 / 47%)',
       },
-      // borderColor: (theme) => ({
-      // 'custom-light/35': `${theme('colors.rainbow.purple.light')}59`, // 35% 透明度
-      // 'rainbow-purple-dark/75': 'rgba(var(--rainbow-custom-dark), 0.75)',
-      // }),
       keyframes: {
         'loading-grow': {
           '0%': { transform: 'scale(0, 0)', opacity: '0' },

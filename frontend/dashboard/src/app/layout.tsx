@@ -7,7 +7,8 @@ import { GlobalLayout, GraphQLProvider, getSSRInitData, parseRouteInfo } from '~
 import StoreProvider from '~/stores/provider'
 import { deepSanitize } from '~/utils/fmt'
 
-import '../salon/global.css'
+import '~/tailwind/global.css'
+// import '../salon/global.css'
 
 export const metadata: Metadata = {
   title: 'Groupher | 让你的产品听见用户的声音',

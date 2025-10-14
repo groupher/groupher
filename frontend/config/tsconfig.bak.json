@@ -60,7 +60,9 @@
       "~/providers": ["../core/providers/"],
       "~/providers/*": ["../core/providers/*"],
       "~/middlewares": ["../core/middlewares/"],
-      "~/middlewares/*": ["../core/middlewares/*"]
+      "~/middlewares/*": ["../core/middlewares/*"],
+      "~/tailwind/*": ["../core/tailwind/*"],
+      "~/tailwind": ["../core/tailwind"]
     },
     "plugins": [
       {

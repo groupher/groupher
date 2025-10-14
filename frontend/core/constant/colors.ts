@@ -3,7 +3,7 @@ import twConfig from '~/const/twConfig.json'
 import { upperSnakeCase } from '~/fmt'
 import type { TColorName } from '~/spec'
 
-const CONTAINER_BG_GROUP = twConfig.containerBgGroup
+const pageBgColor = twConfig.pageBgColor
 
 type TInputColorScheme = {
   [theme: string]: {
@@ -37,8 +37,8 @@ export const CONTAINER_BG_DEFAULT = {
 }
 
 export const PAGE_COLOR = generatePageBgColor({
-  light: CONTAINER_BG_GROUP.light,
-  dark: CONTAINER_BG_GROUP.dark,
+  light: pageBgColor.light,
+  dark: pageBgColor.dark,
 })
 
 export const COLOR_NAME = {

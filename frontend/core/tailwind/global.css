@@ -1,4 +1,4 @@
-@config "../../tailwind.config.js";
+@config "../tailwind.config.js";
 
 @import "tailwindcss";
 @import "tailwindcss-animated";
@@ -512,3 +512,4 @@
 .lazy-load-image-background.blur.lazy-load-image-loaded {
   line-height: 0.8;
 }
+
