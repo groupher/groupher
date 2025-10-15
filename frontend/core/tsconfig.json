@@ -1,22 +1,7 @@
 {
+  "extends": "./tsconfig.app.json",
   "compilerOptions": {
-    "target": "ES2015",
-    "module": "esnext",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": false,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": false,
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "experimentalDecorators": true,
-    "noUnusedLocals": true,
     "baseUrl": ".",
-    // this is for core only, other sub-app need to define it in there own tsconfig
     "paths": {
       "~/config": ["./config"],
       "~/hooks": ["./hooks"],
@@ -65,14 +50,8 @@
       "~/middlewares/*": ["../core/middlewares/*"],
       "~/tailwind/*": ["./tailwind/*"],
       "~/tailwind": ["./tailwind"]
-    },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+    }
   },
   "include": ["next-env.d.ts", "**/*.tsx", "**/*.ts", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "**/*.test.ts"],
-  "removeComments": true
+  "exclude": ["node_modules", "**/*.test.ts"]
 }
