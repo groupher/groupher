@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "types": "index.d.ts",
+  "exports": {
+    "./tsconfig": "./tsconfig.app.json",
+    "./jsconfig": "./jsconfig.json",
+    "./tailwind.config": "./tailwind.config.js",
+    "./postcss.config": "./postcss.config.js"
+  },
   "scripts": {
     "lint": "biome lint **/*.{ts,tsx} ",
     "format": "echo 'skip format'",

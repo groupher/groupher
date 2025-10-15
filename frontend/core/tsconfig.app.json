@@ -15,7 +15,6 @@
     "jsx": "react-jsx",
     "experimentalDecorators": true,
     "noUnusedLocals": true,
-    "baseUrl": ".",
     "paths": {
       "~/hooks": ["../core/hooks"],
       "~/hooks/*": ["../core/hooks/*"],
