@@ -10,16 +10,19 @@
 @import "./colors";
 @import "./containers";
 
-:root {
-  --rainbow-custom: #94c37e;
-  --rainbow-custom-dark: #e08a85;
-}
+@layer base {
+  :root  {
+    text-autospace: normal;
+    --rainbow-custom: #94c37e;
+    --rainbow-custom-dark: #e08a85;
+  }
 
-@layer utilities {
   body {
     overflow-x: hidden;
   }
+}
 
+@layer utilities {
   .row {
     @apply flex flex-row;
   }
