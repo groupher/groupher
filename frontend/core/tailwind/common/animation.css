@@ -1,0 +1,29 @@
+@layer utilities {
+  @keyframes loading-grow {
+    0% {
+      transform: scale(0, 0);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1, 1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes loading-move {
+    0% {
+      transform: translateX(0px);
+    }
+    100% {
+      transform: translateX(80px);
+    }
+  }
+
+  .animate-loading-grow {
+    animation: loading-grow 1s linear infinite;
+  }
+
+  .animate-loading-move {
+    animation: loading-move 1s linear infinite;
+  }
+}
