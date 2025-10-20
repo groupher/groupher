@@ -18,7 +18,7 @@ type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 
 type TLinkColorPrefix = 'fg' | 'fill'
 type TBreakOut = 'footer' | 'header'
 type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon'
-type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'drawer' | 'modal'
+type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'card' | 'drawer' | 'modal'
 type TThemeSwitch = 'auto' | 'dark' | 'light'
 type TDimLevel = 'lg' | 'md' | 'sm'
 type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red' | 'fg' | 'fg-red'
@@ -333,8 +333,8 @@ export default (): TRet => {
     }
   }
 
-  const shadow = (size: TShadowType): string => {
-    return global(`shadow-${size}`)
+  const shadow = (metric: TShadowType): string => {
+    return global(`shadow-${metric}`)
   }
 
   const cut = (classnames: TCutWWidth = 'w-12'): string => {

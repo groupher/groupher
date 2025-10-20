@@ -1,30 +1,28 @@
-import { reject, mergeRight, isEmpty } from 'ramda'
-import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
-
+import { cacheLife, cacheTag } from 'next/cache'
+import { isEmpty, mergeRight, reject } from 'ramda'
+import { CACHE_TAG } from '~/const/cache'
+import { LOCALE } from '~/const/i18n'
+import METRIC from '~/const/metric'
+import { HCN } from '~/const/name'
+import THEME from '~/const/theme'
+import { THREAD } from '~/const/thread'
+import URL_PARAM from '~/const/url_param'
+import { loadLocaleFile } from '~/i18n'
+import { P } from '~/schemas'
 import type {
-  TThread,
-  TPagedArticles,
   TCommunityInfo,
-  TTag,
-  TUrlInfo,
-  TThemeName,
   TMetric,
+  TPagedArticles,
+  TTag,
+  TThemeName,
+  TThread,
+  TUrlInfo,
 } from '~/spec'
 import type { TRootStoreInit } from '~/stores/spec'
-import { nilOrEmpty } from '~/validator'
-import { CACHE_TAG } from '~/const/cache'
-import URL_PARAM from '~/const/url_param'
-import { HCN } from '~/const/name'
-import { THREAD } from '~/const/thread'
-import THEME from '~/const/theme'
-import METRIC from '~/const/metric'
-
-import { P } from '~/schemas'
 import { gqFetch } from '~/utils/api'
-import { parseWallpaper, parseDashboard } from '~/utils/ssr'
 import { extractQueryName } from '~/utils/graphql'
-import { loadLocaleFile } from '~/i18n'
-import { LOCALE } from '~/const/i18n'
+import { parseDashboard, parseWallpaper } from '~/utils/ssr'
+import { nilOrEmpty } from '~/validator'
 
 export const ARTICLES_FILTER = {
   community: HCN,

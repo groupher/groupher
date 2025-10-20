@@ -5,25 +5,24 @@
   /* articles */
   --color-text-title: oklch(27.8% 0.033 256.848); /* gray.800 */
   --color-text-digest: oklch(55.1% 0.027 264.364); /* gray.500 */
-  --color-link: #5073C6;
+  --color-link: #5073c6;
   --color-dot: oklch(55.4% 0.046 257.417); /* slate.500 */
 
   /* utils */
   --color-button-fg: white;
 
-
   /* rainbow colors  */
   --color-rainbow-red: #ca5f4d;
-  --color-rainbow-redSoft: #FFEBEC;
+  --color-rainbow-redSoft: #ffebec;
 
   --color-rainbow-orange: orange;
-  --color-rainbow-orangeSoft: #FEF7E8;
+  --color-rainbow-orangeSoft: #fef7e8;
 
   --color-rainbow-brown: #8d691e;
   --color-rainbow-brownSoft: #fff3df;
 
   --color-rainbow-yellow: #c7b96d;
-  --color-rainbow-yellowSoft: #FEFBE8;
+  --color-rainbow-yellowSoft: #fefbe8;
 
   --color-rainbow-green: #699411;
   --color-rainbow-greenSoft: #eefdd89c;
@@ -31,14 +30,14 @@
   --color-rainbow-greenLight: #79d08f;
   --color-rainbow-greenLightSoft: #e3f3cc4a;
 
-  --color-rainbow-cyan: #24878C;
+  --color-rainbow-cyan: #24878c;
   --color-rainbow-cyanSoft: #e1fcff;
 
-  --color-rainbow-cyanLight: #00B5CC;
+  --color-rainbow-cyanLight: #00b5cc;
   --color-rainbow-cyanLightSoft: #e1fcff94;
 
-  --color-rainbow-blue: #5073C6;
-  --color-rainbow-blueSoft: #E7EDF7;
+  --color-rainbow-blue: #5073c6;
+  --color-rainbow-blueSoft: #e7edf7;
 
   --color-rainbow-purple: #7d519e;
   --color-rainbow-purpleSoft: #f7d8fd38;
@@ -48,18 +47,18 @@
 
   --color-rainbow-black: #333333;
   --color-rainbow-blackBtn: oklch(27.8% 0.033 256.848); /* gray.800 */
-  --color-rainbow-blackSoft: #f4f4f4; 
+  --color-rainbow-blackSoft: #f4f4f4;
 }
 
 /* dark mode */
-@layer theme {
-  .dark {
+.dark {
+  @layer theme {
     --color-container: #222222;
 
     /* articles */
     --color-text-title: oklch(96.7% 0.003 264.542);
     --color-text-digest: oklch(70.5% 0.015 286.067);
-    --color-link: #6B97D4;
+    --color-link: #6b97d4;
     --color-dot: oklch(70.4% 0.04 256.788); /* slate.400 */
 
     /* utils */
@@ -81,13 +80,13 @@
     --color-rainbow-green: #699411;
     --color-rainbow-greenSoft: #4248374a;
 
-    --color-rainbow-greenLight: #37B784;
+    --color-rainbow-greenLight: #37b784;
     --color-rainbow-greenLightSoft: #69735a4a;
 
-    --color-rainbow-cyan: #24878C;
+    --color-rainbow-cyan: #24878c;
     --color-rainbow-cyanSoft: #2c3738;
 
-    --color-rainbow-cyanLight: #00B5CC;
+    --color-rainbow-cyanLight: #00b5cc;
     --color-rainbow-cyanLightSoft: #39494b94;
 
     --color-rainbow-blue: #3a7ec7;
