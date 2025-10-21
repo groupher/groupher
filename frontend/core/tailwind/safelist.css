@@ -3,4 +3,9 @@
 @source inline('container-{community,article,dashboard}');
 @source inline('text-text-{title,digest,hint} text-link bg-dot border-divider');
 @source inline('{fill,text}-button-fg');
+@source inline('{text,bg}-modal-bg bg-modal-mask');
 @source inline('{text,fill,bg}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');
+
+@source inline('hover:bg-hoverBg');
+/* TODO: move it to :root  */
+@source inline('z-[2992...3000] z-[10]');

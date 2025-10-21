@@ -10,7 +10,12 @@
   --color-dot: oklch(55.4% 0.046 257.417); /* slate.500 */
 
   /* utils */
+  --color-hoverBg: #efefef78;
   --color-button-fg: white;
+
+  /* modal */
+  --color-modal-bg: #fff;
+  --color-modal-mask: oklch(13.5% 0.02 260deg / 0.1);
 
   /* rainbow colors  */
   --color-rainbow-red: #ca5f4d;

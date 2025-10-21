@@ -11,19 +11,18 @@ export default () => {
   return {
     wrapper: cn(
       'relative mx-auto h-auto rounded-md min-h-72 border',
-      'animate-fade-up animate-duration-200',
       shadow('modal'),
       br('divider'),
       bg('modal.bg'),
     ),
     mask: cn(
-      'fixed overflow-auto top-0 right-0 bottom-0 left-0 transition-opacity	duration-1000',
+      'fixed overflow-auto top-0 right-0 bottom-0 left-0 transition-opacity	duration-200',
       bg('modal.mask'),
       zIndex('modalOverlay'),
     ),
     children: 'min-h-72 h-auto overflow-y-scroll',
     //
-    closeBox: cn('align-both size-7 absolute top-3.5 right-4', hoverable('bg')),
+    closeBox: cn('align-both size-7 absolute top-3.5 right-4 z-10', hoverable('bg')),
     closeIcon: cn('size-5', hoverable('icon'), zIndex('modalCloseBtn')),
     //
     glowLight: 'absolute w-full h-3/5 opacity-65 top-0 left-0 rotate-y-180',

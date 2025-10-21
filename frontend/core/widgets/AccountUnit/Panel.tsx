@@ -1,10 +1,8 @@
-import { type FC, useState } from 'react'
 import Link from 'next/link'
-
-import { signIn } from '~/oauth'
+import { type FC, useState } from 'react'
 import { titleCase } from '~/fmt'
-
 import useTrans from '~/hooks/useTrans'
+import { signIn } from '~/oauth'
 import Modal from '~/widgets/Modal'
 
 import { OAUTH_PROVIDERS } from './constant'
@@ -24,7 +22,7 @@ const Panel: FC<TProps> = ({ show, onClose }) => {
   const { t } = useTrans()
 
   return (
-    <Modal show={show} width="400px" onClose={() => onClose()} showCloseBtn>
+    <Modal show={show} width='400px' onClose={() => onClose()} showCloseBtn>
       <div className={s.wrapper}>
         {loadingProvider && (
           <>
@@ -39,7 +37,7 @@ const Panel: FC<TProps> = ({ show, onClose }) => {
             const Icon = SocialIcon[providerKey] || null
 
             return (
-              <div
+              <button
                 className={s.socialItem}
                 key={provider}
                 onClick={() => {
@@ -51,15 +49,15 @@ const Panel: FC<TProps> = ({ show, onClose }) => {
                   <Icon className={s.icon} />
                 </div>
                 {providerKey}
-              </div>
+              </button>
             )
           })}
         </div>
         <div className={s.footer}>
-          <Link href="/" className={s.link}>
+          <Link href='/' className={s.link}>
             {t('login.bind.hint')}
           </Link>
-          <Link href="/" className={s.link}>
+          <Link href='/' className={s.link}>
             {t('need.help')}
           </Link>
         </div>

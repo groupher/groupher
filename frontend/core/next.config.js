@@ -8,8 +8,8 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 const baseConfig = {
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
+  cacheComponents: true, // fur use cache
   experimental: {
-    cacheComponents: true, // fur use cache
     scrollRestoration: true,
     optimizePackageImports: ['ramda'],
   },
