@@ -1,34 +1,30 @@
 'use client'
+
 /*
  *
  * ClassicSidebar
- * common sidebar include community badge, publisher, tagsbar ads .. etc,
+ * common sidebar include community badge, publisher, tags-bar ads .. etc,
  * used for classic layout
  *
  */
 
-import { lazy, Suspense } from 'react'
 import Link from 'next/link'
-
-import useTrans from '~/hooks/useTrans'
-import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import { lazy, Suspense } from 'react'
+import TagsBar from '~/containers/unit/TagsBar'
 import useActiveTag from '~/hooks/useActiveTag'
-
-import { refreshArticles, callGEditor, callSyncSelector, listUsers } from '~/signal'
-import { mockUsers } from '~/mock'
-
-import ImgFallback from '~/widgets/ImgFallback'
-import GetMe from '~/widgets/GetMe'
-import SocialBanner from '~/widgets/SocialBanner'
+import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
+import useTrans from '~/hooks/useTrans'
+import useViewingCommunity from '~/hooks/useViewingCommunity'
 import Img from '~/Img'
 import LinkSVG from '~/icons/Link'
-
+import { mockUsers } from '~/mock'
+import { callGEditor, callSyncSelector, listUsers, refreshArticles } from '~/signal'
 import PublishButton from '~/widgets/Buttons/PublishButton'
-import TagsBar from '~/containers/unit/TagsBar'
-
-import CommunityBrief from './CommunityBrief'
+import GetMe from '~/widgets/GetMe'
+import ImgFallback from '~/widgets/ImgFallback'
+import SocialBanner from '~/widgets/SocialBanner'
 import useSalon from '../salon/thread_sidebar'
+import CommunityBrief from './CommunityBrief'
 
 const UniBar = lazy(() => import('~/widgets/UniBar'))
 
@@ -42,7 +38,7 @@ export default () => {
   const s = useSalon()
 
   return (
-    <div className={s.wrapper} data-test-id="thread-sidebar">
+    <div className={s.wrapper} data-test-id='thread-sidebar'>
       <div className={s.innerWrapper}>
         <div className={s.stickyWrapper}>
           <div className={s.showArea}>
@@ -53,13 +49,13 @@ export default () => {
               <Link href={curCommunity.homepage} className={s.link}>
                 {curCommunity.homepage}
               </Link>
-              <div className="grow" />
+              <div className='grow' />
 
               <GetMe />
             </div>
 
             <h3 className={s.title}>{t('team.member', 'titleCase')}</h3>
-            <div className="mt-6" />
+            <div className='mt-6' />
 
             <div className={s.joiners}>
               {mockUsers(5).map((user) => (
@@ -70,15 +66,15 @@ export default () => {
                   fallback={<ImgFallback size={6} right={2} user={user} />}
                 />
               ))}
-              <div className={s.moreNum} onClick={() => listUsers('drawer')}>
+              <button className={s.moreNum} onClick={() => listUsers('drawer')}>
                 +2
-              </div>
+              </button>
             </div>
           </div>
 
           <div className={s.publish}>
             <PublishButton
-              text="参与讨论"
+              text='参与讨论'
               onMenuSelect={(cat) => {
                 callGEditor()
                 setTimeout(() => callSyncSelector({ cat, tag: activeTag }), 500)

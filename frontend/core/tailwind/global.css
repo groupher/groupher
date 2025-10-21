@@ -5,7 +5,6 @@
 @plugin "@tailwindcss/typography";
 
 @import "./tokens";
-
 @import "./safelist";
 @import "./common";
 

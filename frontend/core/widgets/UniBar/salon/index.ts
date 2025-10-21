@@ -1,5 +1,5 @@
-import useTwBelt from '~/hooks/useTwBelt'
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
+import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
@@ -25,7 +25,7 @@ export default ({ expand }: TProps) => {
       expand ? 'h-60' : 'h-10', // add real menu height here
       br('divider'),
       bg('popover.bg'),
-      shadow('lg'),
+      shadow('card'),
     ),
     shadowMask: cn(
       'absolute -left-14 -bottom-7 w-64 h-28 circle -z-10 blur-sm',

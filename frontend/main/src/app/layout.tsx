@@ -10,7 +10,6 @@ import { deepSanitize } from '~/utils/fmt'
 // import { SpeedInsights } from '@vercel/speed-insights/next'
 
 import '~/tailwind/global.css'
-// import '../salon/global.css'
 
 export const metadata: Metadata = {
   title: 'Groupher | 让你的产品听见用户的声音',
