@@ -58,7 +58,7 @@ const RealModal: FC<TProps> = ({
   return (
     <Portal>
       <div
-        role='presentation' // 告诉屏幕阅读器：它是视觉层，不是可交互控件
+        role='presentation'
         aria-hidden='true'
         aria-label='Close modal'
         className={cn(s.mask, !show && 'opacity-0 -z-10')}

@@ -1,13 +1,12 @@
-import type { TSpace } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 type TProps = TSpace
 
 export { cn } from '~/css'
 
 export default ({ ...spacing }: TProps) => {
-  const { cn, fg, margin, br, bg, hoverable } = useTwBelt()
+  const { cn, fg, margin, br, bg, hover } = useTwBelt()
 
   return {
     wrapper: cn('row justify-center w-full', margin(spacing)),
@@ -27,8 +26,8 @@ export default ({ ...spacing }: TProps) => {
     ),
 
     //
-    arrowBlock: cn('align-both w-14 h-7', hoverable('bg')),
-    arrowIcon: cn('size-5', hoverable('icon')),
+    arrowBlock: cn('align-both w-14 h-7', hover('bg')),
+    arrowIcon: cn('size-5', hover('icon')),
     arrowDisabled: 'cursor-not-allowed',
     // ref: https://www.w3schools.com/howto/howto_css_hide_arrow_number.asp
     numInputer: cn(

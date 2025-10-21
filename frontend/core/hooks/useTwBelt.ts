@@ -55,7 +55,7 @@ type TRet = {
   shadow: (size: TShadowType) => string
   cut: (classname?: TCutWWidth) => string
   landingTitle: () => string
-  hoverable: (part: THoverPart) => string
+  hover: (part: THoverPart) => string
   zIndex: (key: TZIndexKey) => string
 
   isDarkBlack: boolean
@@ -350,7 +350,7 @@ export default (): TRet => {
     )
   }
 
-  const hoverable = (part: THoverPart): string => {
+  const hover = (part: THoverPart): string => {
     switch (part) {
       case 'bg': {
         return cn('group align-both rounded trans-all-100 pointer', `hover:${bg('hoverBg')}`)
@@ -424,7 +424,7 @@ export default (): TRet => {
     isBlackPrimary,
     landingTitle,
     dimDark,
-    hoverable,
+    hover,
     zIndex,
   }
 }

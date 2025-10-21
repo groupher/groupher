@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, hoverable } = useTwBelt()
+  const { cn, fg, hover } = useTwBelt()
 
   return {
     bodyWrapper: 'min-h-52 mt-6 mb-3.5',
@@ -18,7 +18,7 @@ export default () => {
     gotoTop: cn(
       'row-center items-end fixed bottom-10 right-6 size-9 smoky-80 z-30',
       'trans-all-200',
-      hoverable('bg'),
+      hover('bg'),
     ),
   }
 }

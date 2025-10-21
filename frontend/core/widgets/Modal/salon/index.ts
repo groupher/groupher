@@ -6,7 +6,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, bg, br, zIndex, hoverable, shadow } = useTwBelt()
+  const { cn, bg, br, zIndex, hover, shadow } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -22,8 +22,8 @@ export default () => {
     ),
     children: 'min-h-72 h-auto overflow-y-scroll',
     //
-    closeBox: cn('align-both size-7 absolute top-3.5 right-4 z-10', hoverable('bg')),
-    closeIcon: cn('size-5', hoverable('icon'), zIndex('modalCloseBtn')),
+    closeBox: cn('align-both size-7 absolute top-3.5 right-4 z-10', hover('bg')),
+    closeIcon: cn('size-5', hover('icon'), zIndex('modalCloseBtn')),
     //
     glowLight: 'absolute w-full h-3/5 opacity-65 top-0 left-0 rotate-y-180',
     glowLightStyle: (glowType, theme) => {

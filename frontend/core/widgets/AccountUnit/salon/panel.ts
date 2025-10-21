@@ -24,7 +24,7 @@ export default () => {
       `hover:${bg('hoverBg')}`,
       `hover:${fg('text.title')}`,
       'pointer',
-      // hoverable('bg')
+      // hover('bg')
     ),
     iconBox: 'align-both size-8',
     //

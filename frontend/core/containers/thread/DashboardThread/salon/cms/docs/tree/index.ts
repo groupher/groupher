@@ -3,12 +3,12 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, br, fill, hoverable } = useTwBelt()
+  const { cn, fg, br, fill, hover } = useTwBelt()
 
   return {
     wrapper: cn('row items-start mt-8 gap-x-14'),
     content: 'column',
-    folderWrapper: cn('row-center rounded', hoverable('bg')),
+    folderWrapper: cn('row-center rounded', hover('bg')),
     folderName: cn('row-center grow text-sm px-2.5 py-0.5 pl-4', fg('text.title')),
     //
     actionWrapper: 'row-center gap-x-1 group-smoky-0',

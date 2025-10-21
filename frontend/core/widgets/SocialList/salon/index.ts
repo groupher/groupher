@@ -1,15 +1,14 @@
-import type { TSpace } from '~/spec'
 import { SOCIAL_LIST } from '~/const/social'
-
-import TikTokSVG from '~/icons/social/TikTok'
-import EmailSVG from '~/icons/social/Email'
-import WeChatSVG from '~/icons/social/WeChat'
-import TwitterSVG from '~/icons/social/Twitter'
-import WeiboSVG from '~/icons/social/Weibo'
-import ZhihuSVG from '~/icons/social/Zhihu'
-import GithubSVG from '~/icons/social/Github'
 import BiliBiliSVG from '~/icons/social/BiliBili'
 import BossSVG from '~/icons/social/Boss'
+import EmailSVG from '~/icons/social/Email'
+import GithubSVG from '~/icons/social/Github'
+import TikTokSVG from '~/icons/social/TikTok'
+import TwitterSVG from '~/icons/social/Twitter'
+import WeChatSVG from '~/icons/social/WeChat'
+import WeiboSVG from '~/icons/social/Weibo'
+import ZhihuSVG from '~/icons/social/Zhihu'
+import type { TSpace } from '~/spec'
 // import LagouSVG from '~/icons/social/Lagou'
 
 import useTwBelt from '~/hooks/useTwBelt'
@@ -19,12 +18,12 @@ export { cn } from '~/css'
 type TProps = TSpace
 
 export default ({ ...spacing }: TProps) => {
-  const { cn, margin, hoverable } = useTwBelt()
+  const { cn, margin, hover } = useTwBelt()
 
   return {
     wrapper: cn('gap-3.5', margin(spacing)),
-    socialBox: cn('align-both size-5', hoverable('bg')),
-    icon: cn('size-4', hoverable('icon')),
+    socialBox: cn('align-both size-5', hover('bg')),
+    icon: cn('size-4', hover('icon')),
   }
 }
 
