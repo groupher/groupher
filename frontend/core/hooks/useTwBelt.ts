@@ -2,13 +2,13 @@ import { type ClassValue, clsx } from 'clsx'
 import { COLOR_NAME } from '~/const/colors'
 import METRIC from '~/const/metric'
 import twConfig from '~/const/twConfig.json'
-import { cn, zIndex as Z_INDEX } from '~/css'
+import { cn } from '~/css'
 import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
 import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useTheme from '~/hooks/useTheme'
-import type { TColorName, TSpace, TZIndexKey } from '~/spec'
+import type { TColorName, TSpace, TZIndexType } from '~/spec'
 import type { TFlatThemeKey } from '~/utils/themes/skins'
 
 const containerConf = twConfig.container
@@ -56,7 +56,7 @@ type TRet = {
   cut: (classname?: TCutWWidth) => string
   landingTitle: () => string
   hover: (part: THoverPart) => string
-  zIndex: (key: TZIndexKey) => string
+  zIndex: (key: TZIndexType) => string
 
   isDarkBlack: boolean
   isBlackPrimary: boolean
@@ -387,8 +387,8 @@ export default (): TRet => {
     }
   }
 
-  const zIndex = (key: TZIndexKey): string => {
-    return `z-[${Z_INDEX[key]}]`
+  const zIndex = (type: TZIndexType = 10): string => {
+    return `z-${type}`
   }
 
   return {

@@ -1,4 +1,4 @@
-import type { ReactNode, ChangeEvent } from 'react'
+import type { ChangeEvent, ReactNode } from 'react'
 // c# like
 export type Nullable<T> = T | null
 
@@ -236,3 +236,16 @@ export type TConditionMode = 'state' | 'cat' | 'order' | 'tag'
 export type TWidgetType = 'sidebar' | 'modal' | 'popup' | 'iframe' | 'link'
 
 export type TButtonPrefix = 'sort' | 'catetory' | 'status'
+
+export type TZIndexType =
+  | 'modal'
+  | 'popover'
+  | 'tooltip'
+  | 'modalOverlay'
+  | 'modalCloseBtn'
+  | 'drawer'
+  | 'drawerOverlay'
+  | 'sidebar'
+  | 'articleFixedHeader'
+  | 'header'
+  | 10
