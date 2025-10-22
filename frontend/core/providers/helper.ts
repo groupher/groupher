@@ -1,4 +1,5 @@
-import { cacheLife, cacheTag } from 'next/cache'
+// import { cacheLife, cacheTag } from 'next/cache'
+import { cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
 import { isEmpty, mergeRight, reject } from 'ramda'
 import { CACHE_TAG } from '~/const/cache'
 import { LOCALE } from '~/const/i18n'
@@ -75,6 +76,7 @@ export const getCommunity = async (
 
 export const getTags = async (community: string, thread: TThread): Promise<TTag[] | []> => {
   'use cache'
+  //
   cacheLife('days')
   cacheTag(CACHE_TAG.tagsCache(community, thread))
 

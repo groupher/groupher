@@ -1,18 +1,21 @@
-import { upvoteArticle } from '~/signal'
-import useViewingArticle from '~/hooks/useViewingArticle'
 import { UPVOTE_LAYOUT } from '~/const/layout'
-
+import useViewingArticle from '~/hooks/useViewingArticle'
 import Img from '~/Img'
-import Upvote from '~/widgets/Upvote'
+import { upvoteArticle } from '~/signal'
 import ArticleCatState from '~/widgets/ArticleCatState'
-import TagsList from '~/widgets/TagsList'
 import ReadableDate from '~/widgets/ReadableDate'
+import TagsList from '~/widgets/TagsList'
+import Upvote from '~/widgets/Upvote'
 
 import useSalon from '../salon/post/side_info'
 
 export default () => {
   const s = useSalon()
   const { article } = useViewingArticle()
+
+  if (!article) {
+    return <h1>Error article</h1>
+  }
 
   const { insertedAt, articleTags, upvotesCount, meta, viewerHasUpvoted, cat, state } = article
   const { latestUpvotedUsers } = meta
@@ -41,14 +44,14 @@ export default () => {
           ))}
         </div>
 
-        <div className="mb-6" />
+        <div className='mb-6' />
         <div className={s.label}>标签</div>
-        <TagsList items={articleTags} size="medium" left={1} max={20} bottom={2} />
+        <TagsList items={articleTags} size='medium' left={1} max={20} bottom={2} />
 
-        <div className="mb-6" />
+        <div className='mb-6' />
         <div className={s.label}>分类</div>
         <ArticleCatState cat={cat} state={state} smaller={false} />
-        <div className="mb-6" />
+        <div className='mb-6' />
 
         <div className={s.label}>发布时间</div>
         <div className={s.value}>

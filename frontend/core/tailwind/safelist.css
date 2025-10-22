@@ -9,3 +9,4 @@
 @source inline('hover:bg-hoverBg');
 @source inline('z-{modal,popover,tooltip,modalOverlay,modalCloseBtn,drawer,drawerOverlay,articleFixedHeader,header}');
 
+@source inline('debug');

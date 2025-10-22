@@ -83,9 +83,7 @@ export const gqFetch = async (query, variables) => {
  * for client component to fetch  api
  */
 export async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
-  // const res = await fetch(`/api${path}`, options)
-  // if (!res.ok) throw new Error(`Request failed: ${res.status}`)
-  // return res.json()
+  console.log('## fetchAPI: ', path)
 
   const normalized = path.startsWith('/') ? path.slice(1) : path
   const res = await fetch(`/api/${normalized}`, options)

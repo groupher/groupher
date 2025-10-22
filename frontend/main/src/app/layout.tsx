@@ -27,7 +27,7 @@ const StoreInitLoader = async ({ children }) => {
   return <StoreProvider initData={deepSanitize(initData)}>{children}</StoreProvider>
 }
 
-export default async function Layout({ children }) {
+export default function Layout({ children }) {
   return (
     <html lang='en'>
       <body>
