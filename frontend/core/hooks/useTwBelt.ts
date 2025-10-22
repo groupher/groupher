@@ -56,7 +56,7 @@ type TRet = {
   cut: (classname?: TCutWWidth) => string
   landingTitle: () => string
   hover: (part: THoverPart) => string
-  zIndex: (key: TZIndexType) => string
+  zIndex: (key: TZIndexType, visible?: boolean) => string
 
   isDarkBlack: boolean
   isBlackPrimary: boolean
@@ -387,7 +387,9 @@ export default (): TRet => {
     }
   }
 
-  const zIndex = (type: TZIndexType = 10): string => {
+  const zIndex = (type: TZIndexType, visible?: boolean): string => {
+    if (visible === false) return '-z-10'
+
     return `z-${type}`
   }
 

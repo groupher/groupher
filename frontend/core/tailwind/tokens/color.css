@@ -12,10 +12,15 @@
   /* utils */
   --color-hoverBg: #efefef78;
   --color-button-fg: white;
+  --color-card: #fff;
 
   /* modal */
   --color-modal-bg: #fff;
   --color-modal-mask: oklch(13.5% 0.02 260deg / 0.1);
+
+  /* drawer */
+  --color-drawer-mask: oklch(13.5% 0.02 260deg / 0.15);
+  /* --color-drawer-bg: #fff; */
 
   /* rainbow colors  */
   --color-rainbow-red: #ca5f4d;

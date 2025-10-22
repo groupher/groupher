@@ -28,7 +28,7 @@ const RealModal: FC<TProps> = ({
   offsetLeft,
   handleCloseModal,
 }) => {
-  const s = useSalon()
+  const s = useSalon({ visible: show })
 
   const { glowType } = useGlowLight()
   const { theme } = useTheme()
@@ -61,7 +61,7 @@ const RealModal: FC<TProps> = ({
         role='presentation'
         aria-hidden='true'
         aria-label='Close modal'
-        className={cn(s.mask, !show && 'opacity-0 -z-10')}
+        className={cn(s.mask, !show && 'opacity-0')}
         onClick={handleClose}
       >
         <div

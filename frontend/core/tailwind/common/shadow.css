@@ -6,5 +6,9 @@
   .shadow-modal {
     box-shadow: var(--shadow-modal);
   }
+
+  .shadow-drawer {
+    box-shadow: var(--shadow-drawer);
+  }
 }
 

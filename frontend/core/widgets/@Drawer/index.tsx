@@ -51,7 +51,10 @@ export default function Drawer({ children }) {
           {children}
         </div>
       </div>
-      <button
+      <div
+        role='presentation'
+        aria-hidden='true'
+        aria-label='drawer mask'
         className={cn(s.overlay, ANCHOR.GLOBAL_BLUR_CLASS)}
         style={s.overlayStyle}
         onClick={() => router.back()}

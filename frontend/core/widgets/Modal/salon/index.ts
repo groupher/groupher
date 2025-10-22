@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default () => {
+export default ({ visible }) => {
   const { cn, bg, br, zIndex, hover, shadow } = useTwBelt()
 
   return {
@@ -18,7 +18,7 @@ export default () => {
     mask: cn(
       'fixed overflow-auto top-0 right-0 bottom-0 left-0 transition-opacity	duration-200',
       bg('modal.mask'),
-      zIndex('modalOverlay'),
+      zIndex('modalOverlay', visible),
     ),
     children: 'min-h-72 h-auto overflow-y-scroll',
     //

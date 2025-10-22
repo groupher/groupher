@@ -27,10 +27,6 @@
     z-index: var(--z-drawerOverlay);
   }
 
-  .z-sidebar {
-    z-index: var(--z-sidebar);
-  }
-
   .z-articleFixedHeader {
     z-index: var(--z-articleFixedHeader);
   }
