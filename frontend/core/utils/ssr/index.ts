@@ -1,5 +1,5 @@
-// import { unstable_cache as cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
 import { cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
+// import { cacheLife, cacheTag } from 'next/cache'
 import { includes, isEmpty, reject } from 'ramda'
 
 import { CACHE_TAG } from '~/const/cache'
@@ -262,7 +262,6 @@ export const getPagedTags = async (
   thread: TThread,
 ): Promise<TPagedTags | null> => {
   'use cache'
-
   cacheLife('hours')
   cacheTag(CACHE_TAG.tagsCache(community, thread))
 
