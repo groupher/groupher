@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, bg, br, global, shadow } = useTwBelt()
+  const { cn, fg, bg, br, shadow } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -12,7 +12,7 @@ export default () => {
       br('divider'),
       shadow('sm'),
     ),
-    communityLogo: cn('size-5 rounded mr-1.5', global('gradient-orange')),
+    communityLogo: cn('size-5 rounded mr-1.5 gradient-orange'),
     title: cn('row-center text-sm', fg('text.title')),
     links: 'align-both -ml-2 gap-x-4',
     linkName: 'text-xs',

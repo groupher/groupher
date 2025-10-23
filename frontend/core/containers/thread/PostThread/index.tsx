@@ -7,15 +7,12 @@
 import { BANNER_LAYOUT } from '~/const/layout'
 
 import useLayout from '~/hooks/useLayout'
-
+import ArticlesFilter from '~/widgets/ArticlesFilter'
 // import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import PagedPosts from '~/widgets/PagedPosts'
 import TagNote from '~/widgets/TagNote'
-import ArticlesFilter from '~/widgets/ArticlesFilter'
-
-import ThreadSidebar from './ThreadSidebar'
-
 import useSalon from './salon'
+import ThreadSidebar from './ThreadSidebar'
 
 export default () => {
   const { bannerLayout } = useLayout()

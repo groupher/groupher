@@ -41,7 +41,8 @@
 				"noSvgWithoutTitle": "off",
 				"noAutofocus": "off",
 				"useButtonType": "off",
-				"useKeyWithClickEvents": "off"
+				"useKeyWithClickEvents": "off",
+				"noStaticElementInteractions": "warn"
 			}
 		}
 	},

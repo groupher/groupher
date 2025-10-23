@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, br, shadow, rainbow, global } = useTwBelt()
+  const { cn, fg, bg, br, shadow, rainbow } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -17,7 +17,7 @@ export default () => {
     ),
     item: cn('row-center h-12 w-full relative border-b border-dotted px-1', br('divider')),
     itemGrey: bg('sandBox'),
-    itemBlue: global('gradient-blue'),
+    itemBlue: 'gradient-blue',
     title: cn('text-xs line-clamp-1', fg('text.title')),
     //
     falseChecker: cn('size-3.5 border rounded ml-5', shadow('sm'), br('divider'), bg('card')),

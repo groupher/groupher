@@ -1,9 +1,8 @@
-import type { TColorName } from '~/spec'
+import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
-import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 
 export { cn } from '~/css'
 
@@ -39,7 +38,7 @@ export const getGithubGradient = (wallpaper: string): string => {
 
 export default () => {
   const { isLightTheme } = useTheme()
-  const { cn, global, bg, shadow, fill, rainbow } = useTwBelt()
+  const { cn, shadow, fill } = useTwBelt()
   const { wallpaper } = useWallpaper()
 
   return {
@@ -55,15 +54,10 @@ export default () => {
     realBg: cn(
       'absolute -top-12 -left-2 size-40 circle',
       'animate-spin animate-infinite animate-duration-[30000ms]',
-      global('gradient-purple'),
+      'gradient-purple',
       !isLightTheme && 'opacity-80',
     ),
 
-    darkButton: cn(
-      'column w-auto h-auto rounded-xl p-0.5 border-2',
-      bg('card', 'dark'),
-      rainbow(wallpaper as TColorName, 'border'),
-    ),
     backgroundStyle: { background: getGithubGradient(wallpaper) },
 
     arrow: cn(

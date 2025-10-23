@@ -7,7 +7,7 @@ type TProps = {
 }
 
 export default ({ showMore }: TProps) => {
-  const { cn, br, fill, primary, global } = useTwBelt()
+  const { cn, br, fill, primary } = useTwBelt()
 
   return {
     wrapper: cn('row wrap w-full h-full gap-3 mt-2.5 relative', showMore && 'mb-14'),
@@ -27,7 +27,7 @@ export default ({ showMore }: TProps) => {
     showMoreMask: cn(
       'align-both z-20 w-full -ml-2 trans-all-100',
       !showMore ? 'absolute bottom-0 h-14 -ml-4' : 'h-1',
-      !showMore && global('hidden-panel'),
+      !showMore && 'hidden-panel',
     ),
     showMoreIcon: cn('size-3.5 mr-1.5', fill('text.digest'), showMore ? 'rotate-90' : '-rotate-90'),
   }

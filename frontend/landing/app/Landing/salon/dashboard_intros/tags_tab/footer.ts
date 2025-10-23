@@ -3,7 +3,7 @@ import { COLOR_NAME } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, shadow, fg, bg, fill, global, rainbow } = useTwBelt()
+  const { cn, shadow, fg, bg, fill, rainbow } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -11,7 +11,7 @@ export default () => {
       shadow('sm'),
       bg('container'),
     ),
-    inner: cn('row w-full h-full rounded-xl py-4 px-6', global('gradient-green')),
+    inner: cn('row w-full h-full rounded-xl py-4 px-6 gradient-green'),
     left: 'w-1/2',
     right: 'w-1/2',
     item: 'row items-start h-8',

@@ -1,10 +1,10 @@
-import useTwBelt from '~/hooks/useTwBelt'
 import { COLOR_NAME } from '~/const/colors'
+import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, bg, br, shadow, rainbow, global, fill } = useTwBelt()
+  const { cn, bg, br, shadow, rainbow, fill } = useTwBelt()
 
   const boxBase = cn(
     'absolute border p-0.5 alian-both rounded-lg',
@@ -45,11 +45,11 @@ export default () => {
       br('divider'),
     ),
     pillHighlight: cn('h-36 mb-4 border-dashed', rainbow(COLOR_NAME.PURPLE, 'borderSoft')),
-    pillNormal: global('gradient-black'),
-    pillGadient: cn('absolute w-full h-full rotate-180', global('gradient-purple')),
-    pillGadient2: cn('absolute w-full h-full rotate-180', global('gradient-orange')),
-    pillGadient3: cn('absolute w-full h-full', global('gradient-red')),
-    pillGadient4: cn('absolute w-full h-full', global('gradient-blue')),
+    pillNormal: 'gradient-black',
+    pillGadient: cn('absolute w-full h-full rotate-180 gradient-purple'),
+    pillGadient2: cn('absolute w-full h-full rotate-180 gradient-orange'),
+    pillGadient3: cn('absolute w-full h-full gradient-red'),
+    pillGadient4: cn('absolute w-full h-full gradient-blue'),
     pillIcon: cn('size-5 absolute bottom-2 left-3.5', fill('text.digest')),
     pillHighlighIcon: cn(rainbow(COLOR_NAME.PURPLE, 'fill')),
 

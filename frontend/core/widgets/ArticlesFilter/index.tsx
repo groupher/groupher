@@ -4,21 +4,21 @@
  *
  */
 
-import type { TArticleCat, TArticleOrder, TArticleState } from '~/spec'
-import { refreshArticles, callGEditor, callSyncSelector } from '~/signal'
-import { PUBLISH_MODE } from '~/const/publish'
-import { CONDITION_MODE } from '~/const/mode'
-import TYPE from '~/const/type'
 import { BANNER_LAYOUT } from '~/const/layout'
+import { CONDITION_MODE } from '~/const/mode'
+import { PUBLISH_MODE } from '~/const/publish'
+import TYPE from '~/const/type'
+import useArticlesFilter from '~/hooks/useArticlesFilter'
+import useLayout from '~/hooks/useLayout'
 
 import usePagedPosts from '~/hooks/usePagedPosts'
-import useLayout from '~/hooks/useLayout'
-import useArticlesFilter from '~/hooks/useArticlesFilter'
+import { callGEditor, callSyncSelector, refreshArticles } from '~/signal'
+import type { TArticleCat, TArticleOrder, TArticleState } from '~/spec'
 
 import PublishButton from '~/widgets/Buttons/PublishButton'
 import ConditionSelector from '~/widgets/ConditionSelector'
-import SearchBox from '~/widgets/SearchBox'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import SearchBox from '~/widgets/SearchBox'
 
 import useSalon from './salon'
 
@@ -45,7 +45,7 @@ export default () => {
           refreshArticles()
         }}
         selected={!!activeOrder}
-        prefixIcon="sort"
+        prefixIcon='sort'
         right={0.5}
       />
       <ConditionSelector
@@ -56,7 +56,7 @@ export default () => {
           refreshArticles()
         }}
         selected={!!activeCat}
-        prefixIcon="catetory"
+        prefixIcon='catetory'
         right={0.5}
       />
       <ConditionSelector
@@ -67,26 +67,25 @@ export default () => {
           refreshArticles()
         }}
         selected={!!activeState}
-        prefixIcon="status"
+        prefixIcon='status'
       />
-      <div className="mr-2.5" />
-      <div className="grow" />
+      <div className='mr-2.5' />
+      <div className='grow' />
       {resState === TYPE.RES_STATE.LOADING && <LavaLampLoading right={28} left={10} />}
       {bannerLayout === BANNER_LAYOUT.SIDEBAR && <SearchBox />}
       {bannerLayout === BANNER_LAYOUT.SIDEBAR && (
         <PublishButton
-          text="参与讨论"
+          text='参与讨论'
           mode={PUBLISH_MODE.SIDEBAR_LAYOUT_HEADER}
           onMenuSelect={(cat) => {
             callGEditor()
             setTimeout(() => callSyncSelector({ cat }), 500)
           }}
           offset={[5, 5]}
-          placement="bottom"
+          placement='bottom'
           top={-1}
         />
       )}
-
       {bannerLayout === BANNER_LAYOUT.HEADER && <SearchBox right={-2} />}
       {bannerLayout === BANNER_LAYOUT.TABBER && <SearchBox right={6} />}
     </div>

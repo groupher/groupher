@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, bg, br, shadow, global } = useTwBelt()
+  const { cn, bg, br, shadow } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -14,6 +14,6 @@ export default () => {
     ),
     boards: 'row justify-center items-end w-full gap-x-7',
     board: cn('column gap-1.5 p-1.5 overflow-hidden w-52 h-80 rounded-lg', bg('hoverBg')),
-    boardHighlight: global('landing-gradient-blue'),
+    boardHighlight: 'landing-gradient-blue',
   }
 }

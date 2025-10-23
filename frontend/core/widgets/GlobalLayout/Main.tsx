@@ -29,6 +29,8 @@ const Main: FC<TProps> = ({ children }) => {
   const { hasTopbar } = useTopbar()
   const { background } = usePageBg()
 
+  console.log('## background: ', background)
+
   /**
    * this is tricy, when clientside changed locale, we force render hte entire app here
    * the action will make sure each component who use useTrans will not need to wrap with observer

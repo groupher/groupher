@@ -1,11 +1,9 @@
 import { proxy } from 'valtio'
-
-import type { TThemeMap, TThemeName } from '~/spec'
-
 import THEME from '~/const/theme'
+import type { TThemeMap, TThemeName } from '~/spec'
 import { themeSkins } from '~/utils/themes'
 
-import type { TStore, TInit } from './spec'
+import type { TInit, TStore } from './spec'
 
 export default (theme: TInit = THEME.LIGHT): TStore => {
   const store = proxy({

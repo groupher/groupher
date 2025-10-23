@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, rainbow, global, shadow, dimDark, linkable } = useTwBelt()
+  const { cn, fg, bg, rainbow, shadow, dimDark, linkable } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both w-full h-full mb-14 overflow-hidden'),
@@ -22,17 +22,14 @@ export default () => {
     //
     column:
       'group w-80 h-[680px] relative px-6 pt-5 rounded-t-3xl rounded-b-xl border border-transparent overflow-hidden',
-    gradientGreen: cn(
-      'absolute top-0 left-0 w-full h-full opacity-40 -z-10',
-      global('gradient-green'),
-    ),
+    gradientGreen: cn('absolute top-0 left-0 w-full h-full opacity-40 -z-10', 'gradient-green'),
     gradientOrange: cn(
       'absolute top-0 left-0 w-full h-full opacity-80 rotate-180 border border-dotted border-transparent -z-10',
-      global('gradient-orange'),
+      'gradient-orange',
     ),
     gradientPurple: cn(
       'absolute top-0 left-0 w-full h-full opacity-30 rotate-180 -z-10',
-      global('gradient-purple'),
+      'gradient-purple',
     ),
     board: cn(
       'w-72 h-[410px] mt-8 -ml-2 mb-5 px-4 py-5 z-30 rounded-t-xl rounded-b-xl',
@@ -51,7 +48,7 @@ export default () => {
     tryButton: 'absolute bottom-5 left-7',
     letsTalk: cn('row-center text-xl z-20 mt-3.5 mb-2.5', fg('text.title')),
     //
-    catPawImg: cn('absolute w-20 z-20 trans-jump', global('shape-shadow'), dimDark('lg')),
+    catPawImg: cn('absolute w-20 z-20 trans-jump shape-shadow', dimDark('lg')),
     catNote: cn('text-xs trans-jump z-10 ml-1', rainbow(COLOR_NAME.BROWN, 'fg')),
     //
     link: cn(linkable(), fg('link')),

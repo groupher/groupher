@@ -1,10 +1,8 @@
-import type { TSpace, TSizeTSM, TColorName } from '~/spec'
-
-import { getHeight, getPadding, getRouned, getFontSize } from './metircs/button'
-
+import { COLOR_NAME } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
-import { COLOR_NAME } from '~/const/colors'
+import type { TColorName, TSizeTSM, TSpace } from '~/spec'
+import { getFontSize, getHeight, getPadding, getRouned } from './metircs/button'
 
 export { cn } from '~/css'
 
@@ -82,7 +80,7 @@ export default ({
       color && ghost && rainbow(color, 'fg'),
       ghost && rainbow(color, 'borderSoft'),
       ghost && !color && isDarkBlack && br('text.hint'),
-      !ghost && !color && isDarkBlack && cn(fg('text.title', 'light')),
+      !ghost && !color && isDarkBlack && fg('text.title'),
       withSoftBg && color && rainbow(color, 'bgSoft'),
       withSoftBg && isLightTheme && !color && 'hover:brightness-95',
       withSoftBg && !color && bg('hoverBg'),

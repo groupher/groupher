@@ -1,13 +1,9 @@
 import type { FC } from 'react'
-
-import type { TPost } from '~/spec'
-
 import { previewArticle } from '~/signal'
-
-import Header from './Header'
-import Footer from './Footer'
-
+import type { TPost } from '~/spec'
 import useSalon from '../salon/quora_layout'
+import Footer from './Footer'
+import Header from './Header'
 
 type TProps = {
   article: TPost

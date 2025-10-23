@@ -9,7 +9,7 @@ type TProps = {
 
 export default ({ fold }: TProps) => {
   const { isLightTheme } = useTheme()
-  const { cn, fill, fg, bg, global, primary, vividDark, isDarkBlack } = useTwBelt()
+  const { cn, fill, fg, bg, primary, vividDark, isDarkBlack } = useTwBelt()
 
   return {
     wrapper: 'mb-4',
@@ -21,7 +21,7 @@ export default ({ fold }: TProps) => {
       !fold ? '-rotate-90' : 'rotate-180',
       fill('text.digest'),
     ),
-    menu: cn('ml-1.5 mt-2 border-l border-transparent', global('sexy-border-50')),
+    menu: cn('ml-1.5 mt-2 border-l border-transparent sexy-border-50'),
     item: cn(
       'block relative no-underline w-full text-sm px-1 py-1 pl-5 mt-1 mb-0 rounded-lg',
       `hover:${bg('hoverBg')}`,

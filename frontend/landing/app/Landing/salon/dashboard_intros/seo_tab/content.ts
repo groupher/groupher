@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, br, shadow, global, rainbow } = useTwBelt()
+  const { cn, fg, bg, br, shadow, rainbow } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -27,7 +27,7 @@ export default () => {
       'absolute top-24 left-1/2 -ml-7 z-20',
       'animate-bounce animate-infinite animate-duration-[4000ms] animate-ease-in-out',
       shadow('sm'),
-      global('gradient-cyan'),
+      'gradient-cyan',
     ),
     spiderSVG: cn('size-5 opacity-80', rainbow(COLOR_NAME.CYAN, 'fill')),
     //

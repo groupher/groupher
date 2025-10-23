@@ -8,7 +8,7 @@ type TProps = {
 }
 
 export default ({ expand }: TProps) => {
-  const { cn, br, fg, bg, fill, global, shadow } = useTwBelt()
+  const { cn, br, fg, bg, fill, shadow } = useTwBelt()
 
   const { inView: badgeInView } = useCommunityDigestViewport()
 
@@ -29,7 +29,7 @@ export default ({ expand }: TProps) => {
     ),
     shadowMask: cn(
       'absolute -left-14 -bottom-7 w-64 h-28 circle -z-10 blur-sm',
-      global('unibar-linear-mask'),
+      'unibar-linear-mask',
     ),
     topBox: cn(iconBox, badgeInView ? 'max-w-0' : 'max-w-6'),
     iconBox,
