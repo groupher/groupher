@@ -30,6 +30,12 @@
   --color-modal-bg: #fff;
   --color-modal-mask: oklch(13.5% 0.02 260deg / 0.1);
 
+  /* menu */
+  --color-menuHoverBg: white;
+
+  /* popover */
+  --color-popover-bg: #fafafa;
+
   /* drawer */
   --color-drawer-mask: oklch(13.5% 0.02 260deg / 0.15);
   /* --color-drawer-bg: #fff; */
@@ -171,6 +177,19 @@
     --footer-inner-shadow: inset 0 0 50px #1919198c;
     --hidden-panel: linear-gradient(oklch(0 0 0 / 0) 0%, oklch(0.23 0 0) 58%);
     --shape-shadow: drop-shadow(2px 4px 6px oklch(0.08 0 0));
+
+    /* modal */
+    --color-modal-bg: #222222;
+    --color-modal-mask: oklch(13.5% 0.02 260deg / 0.1);
+
+    /* menu */
+    --color-menuHoverBg: #42424259;
+
+    /* popover */
+    --color-popover-bg: #2e2e2ef0;
+
+    /* drawer */
+    --color-drawer-mask:rgb(21 21 21 / 72%);
 
     /* rainbow colors */
     --color-rainbow-red: #ca5f4d;

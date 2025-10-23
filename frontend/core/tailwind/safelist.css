@@ -3,10 +3,12 @@
 @source inline('container-{community,article,dashboard}');
 @source inline('text-text-{title,digest,hint} text-link bg-dot border-divider');
 @source inline('{fill,text}-button-fg bg-card');
-@source inline('{text,bg}-modal-bg bg-modal-mask bg-drawer-mask');
+@source inline('{text,bg}-modal-bg bg-modal-mask bg-drawer-mask bg-menuHoverBg');
 @source inline('{text,fill,bg}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');
 
-@source inline('hover:bg-hoverBg');
+@source inline('hover:bg-hoverBg hover:bg-menuHoverBg hover:text-text-title hover:border-divider');
 @source inline('z-{modal,popover,tooltip,modalOverlay,modalCloseBtn,drawer,drawerOverlay,articleFixedHeader,header}');
 
+@source inline('bg-popover-bg');
+@source inline('shadow-{xl,card}');
 @source inline('debug');
