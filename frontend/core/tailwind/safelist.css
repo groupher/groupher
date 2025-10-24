@@ -5,10 +5,10 @@
 @source inline('text-{text-title,text-digest,text-hint,link}');
 
 /* fill for icons */
-@source inline('fill-{text-title,text-digest,heightIcon,text-link}')
+@source inline('fill-{text-title,text-digest,heightIcon,text-link}');
 
 /* background */
-@source inline('bg-{dot,text-digest,text-link,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,popover-bg,menuHoverBg,alphaBg,snackBar,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}')
+@source inline('bg-{dot,text-digest,text-link,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,popover-bg,menuHoverBg,alphaBg,snackBar,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}');
 
 /* rainbow */
 @source inline('{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');
@@ -43,7 +43,7 @@
 @source inline('size-{1.5,2,2.5,3,3.5,4,5,6}');
 
 /* landing gradient */
-@source inline('{landing-gradient,gradient}-{purple,blue,pink,red,green,black,cyan,orange,yellow,brown}')
+@source inline('{landing-gradient,gradient}-{purple,blue,pink,red,green,black,cyan,orange,yellow,brown}');
 
 @source inline('size-{1.5,2,2.5,3,3.5,4,5,6}');
 
