@@ -1,14 +1,53 @@
 /* TODO: gen from js to include all safe-list class names */
 
+/* container  */
 @source inline('container-{community,article,dashboard}');
-@source inline('text-text-{title,digest,hint} text-link bg-dot border-divider');
-@source inline('{fill,text}-button-fg bg-card');
-@source inline('{text,bg}-modal-bg bg-modal-mask bg-drawer-mask bg-menuHoverBg');
-@source inline('{text,fill,bg}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');
+@source inline('text-{text-title,text-digest,text-hint,link}');
 
-@source inline('hover:bg-hoverBg hover:bg-menuHoverBg hover:text-text-title hover:border-divider');
+/* fill for icons */
+@source inline('fill-{text-title,text-digest,heightIcon,text-link}')
+
+/* background */
+@source inline('bg-{dot,text-digest,text-link,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,popover-bg,menuHoverBg,alphaBg,snackBar,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}')
+
+/* rainbow */
+@source inline('{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');
+
+/* z-index */
 @source inline('z-{modal,popover,tooltip,modalOverlay,modalCloseBtn,drawer,drawerOverlay,articleFixedHeader,header}');
 
-@source inline('bg-popover-bg bg-alphaBg');
-@source inline('shadow-{xl,md,card}');
-@source inline('debug');
+/* shadow  */
+@source inline('shadow-{sm,xl,md,card}');
+/* button */
+@source inline('{fill,text}-button-fg bg-button-{toggle} ');
+@source inline('{border,bg}-divider');
+
+/* editor */
+@source inline('border-text-digest');
+
+/* hover */
+@source inline('hover:{text,fill}-text-title');
+@source inline('hover:{border-divider,border-text-digest}');
+@source inline('hover:text-rainbow-red');
+@source inline('hover:bg-rainbow-{redBg,redSoftBg}');
+@source inline('hover:{bg-hoverBg,bg-menuHoverBg,bg-card,bg-alphaBg2}');
+@source inline('hover:shadow-sm');
+
+/* group hover */
+@source inline('group-hover:{text-text-title,fill-rainbow-red,fill-text-title,shadow-sm}');
+
+/* menu group hover */
+@source inline('group-hover/menubar:{text-rainbow-red,fill-rainbow-red,fill-text-title}');
+
+/* size */
+@source inline('size-{1.5,2,2.5,3,3.5,4,5,6}');
+
+/* landing gradient */
+@source inline('{landing-gradient,gradient}-{purple,blue,pink,red,green,black,cyan,orange,yellow,brown}')
+
+@source inline('size-{1.5,2,2.5,3,3.5,4,5,6}');
+
+/* utils */
+@source inline('debug debug-{b,g}');
+@source inline('border-transparent outline-none bg-none bg-transparent select-none hidden');
+@source inline('bg-gradient-to-r to-transparent saturate-150 brightness-125 touch-manipulation rounded-3xl hover-underline line-clamp-[15]');

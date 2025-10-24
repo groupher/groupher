@@ -27,6 +27,9 @@
   --shape-shadow: drop-shadow(2px 4px 6px oklch(0.85 0 0));
   --color-alphaBg: #ffffff95;
 
+  /* buttons */
+  --color-button-toggle: white;
+
   /* modal */
   --color-modal-bg: #fff;
   --color-modal-mask: oklch(13.5% 0.02 260deg / 0.1);
@@ -179,6 +182,9 @@
     --hidden-panel: linear-gradient(oklch(0 0 0 / 0) 0%, oklch(0.23 0 0) 58%);
     --shape-shadow: drop-shadow(2px 4px 6px oklch(0.08 0 0));
     --color-alphaBg: #31313194;
+
+    /* buttons */
+    --color-button-toggle: oklch(98.4% 0.003 247.858);
 
     /* modal */
     --color-modal-bg: #222222;
