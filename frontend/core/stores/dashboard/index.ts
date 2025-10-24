@@ -147,15 +147,13 @@ export const settingsFields: TSettingsFields = {
 
 export default (init: TInit = {}): TStore => {
   const initialStore: TStore = {
-    ...settingsFields,
-    ...init,
+    curTab: DASHBOARD_ROUTE.INFO,
     initFilled: false,
     original: settingsFields,
 
     savingField: null,
     saving: false,
     loading: false,
-    curTab: DASHBOARD_ROUTE.INFO,
     baseInfoTab: DASHBOARD_BASEINFO_ROUTE.BASIC,
 
     aliasTab: DASHBOARD_ALIAS_ROUTE.THREAD,
@@ -189,6 +187,9 @@ export default (init: TInit = {}): TStore => {
     activeModerator: null,
     allModeratorRules: '{}',
     allRootRules: '{}',
+
+    ...settingsFields,
+    ...init,
 
     // 修复：改用 initialStore 代替 store
     commit: (patch: Partial<TStore>): void => {

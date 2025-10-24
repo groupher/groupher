@@ -1,13 +1,10 @@
+import { mergeDeepRight, mergeLeft, mergeRight } from 'ramda'
 import { proxy } from 'valtio'
-import { mergeLeft, mergeDeepRight } from 'ramda'
-
-import { mergeRight } from 'ramda'
-
-import type { TCommunity } from '~/spec'
 import METRIC from '~/const/metric'
 import { ARTICLE_THREAD } from '~/const/thread'
+import type { TCommunity } from '~/spec'
 
-import type { TStore, TInit } from './spec'
+import type { TInit, TStore } from './spec'
 
 export default (init: TInit = {}): TStore => {
   const store = proxy(

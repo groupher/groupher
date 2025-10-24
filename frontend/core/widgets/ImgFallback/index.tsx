@@ -6,7 +6,7 @@
 
 import type { FC } from 'react'
 
-import type { TUser, TSpace } from '~/spec'
+import type { TSpace, TUser } from '~/spec'
 
 import Avatar from './Avatar'
 

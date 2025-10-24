@@ -1,12 +1,10 @@
 import { keys } from 'ramda'
 
 import Sticky from '~/widgets/Sticky'
-
-import type { TMenuGroup } from '../spec'
 import { MENU } from '../constant'
-
-import Group from './Group'
 import useSalon from '../salon/side_menu'
+import type { TMenuGroup } from '../spec'
+import Group from './Group'
 
 export default () => {
   const s = useSalon()

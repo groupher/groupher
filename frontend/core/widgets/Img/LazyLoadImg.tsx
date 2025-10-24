@@ -1,5 +1,5 @@
-import { type FC, type ReactNode, useState, useCallback } from 'react'
 import { pick } from 'ramda'
+import { type FC, type ReactNode, useCallback, useState } from 'react'
 
 import { LazyLoadImage } from 'react-lazy-load-image-component'
 
@@ -80,11 +80,11 @@ const LazyLoadImg: FC<TProps> = ({
     <div onClick={onClick} className={cn(s.normal, !imgLoaded && s.fallbackOffset)}>
       {!imgLoaded && <div className={s.fallback}>{fallback}</div>}
 
-      <div className="z-10">
+      <div className='z-10'>
         {checkError && (
           <img
             src={src}
-            alt=""
+            alt=''
             onLoad={handleLoad}
             onError={handleError}
             className={s.checkPixel}
@@ -96,7 +96,7 @@ const LazyLoadImg: FC<TProps> = ({
             className={className}
             src={src}
             alt={alt}
-            effect="blur"
+            effect='blur'
             visibleByDefault={visibleByDefault}
             onLoad={handleLoad}
             beforeLoad={handleBeforeLoad}

@@ -63,17 +63,17 @@
 @utility container-dashboard {
   margin-inline: auto;
   max-width: var(--container-dashboard-width);
-  padding-left: theme('spacing.4'); /* px-4 -> 16px default */
-  padding-right: theme('spacing.4');
+  padding-left: theme('spacing.20'); 
+  padding-right: theme('spacing.16');
 
   @media (min-width: theme('screens.lg')) {
-    padding-left: theme('spacing.4'); /* pl_lg: 16px */
-    padding-right: theme('spacing.3'); /* pr_lg: 12px */
+    padding-left: theme('spacing.20');
+    padding-right: theme('spacing.16');
   }
 
   @media (min-width: theme('screens.xl')) {
-    padding-left: theme('spacing.8'); /* pl: 32px */
-    padding-right: theme('spacing.7'); /* pr: 28px */
+    padding-left: theme('spacing.36');
+    padding-right: theme('spacing.12');
   }
 }
 

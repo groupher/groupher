@@ -107,7 +107,8 @@ const useThemeFromURL = async (searchParams: URLSearchParams): Promise<TThemeNam
   return THEME.LIGHT
 }
 
-export const useMetric = async (pathname): Promise<TMetric> => {
+const useMetric = async (pathname): Promise<TMetric> => {
+  console.log('## TODO: useMetric: ', pathname)
   // 'use cache'
   // const thread = parseThread(pathname)
   // const articleParams = useArticleParams()
@@ -124,7 +125,8 @@ export const useMetric = async (pathname): Promise<TMetric> => {
   //   return METRIC.DASHBOARD
   // }
 
-  return METRIC.COMMUNITY
+  // return METRIC.COMMUNITY
+  return METRIC.DASHBOARD
 }
 
 export const parseRouteInfo = (info: string): TUrlInfo => {

@@ -28,7 +28,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <html lang='en'>
       <body>
         <GraphQLProvider>
-          <Suspense fallback={<h1>todo...</h1>}>
+          <Suspense fallback={<h1>dashboard loading...</h1>}>
             {/* @ts-ignore */}
             <StoreInitLoader>
               <GlobalLayout>{children}</GlobalLayout>

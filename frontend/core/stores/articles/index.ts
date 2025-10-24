@@ -1,12 +1,11 @@
+import { has, mergeDeepRight, mergeLeft } from 'ramda'
 import { proxy } from 'valtio'
-import { mergeLeft, mergeDeepRight, has } from 'ramda'
-
-import type { TResState, TArticleFilter } from '~/spec'
-import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 import TYPE from '~/const/type'
 import URL_PARAM from '~/const/url_param'
+import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
+import type { TArticleFilter, TResState } from '~/spec'
 
-import type { TStore, TInit } from './spec'
+import type { TInit, TStore } from './spec'
 
 export default (init: TInit = {}): TStore => {
   const store = proxy(

@@ -1,10 +1,8 @@
 'use client'
 
-import { useRef, type ReactNode } from 'react'
-
-import type { TRootStore, TRootStoreInit } from './spec'
-
+import { type ReactNode, useRef } from 'react'
 import { StoreContext, setupRootStore } from '.'
+import type { TRootStore, TRootStoreInit } from './spec'
 
 type TProps = {
   children: ReactNode
@@ -18,7 +16,6 @@ export default ({ children, initData }: TProps) => {
 
   if (!storeRef.current) {
     storeRef.current = setupRootStore(initData)
-    // console.log('## after setup: ', storeRef.current)
   }
 
   return <StoreContext.Provider value={storeRef.current}>{children}</StoreContext.Provider>

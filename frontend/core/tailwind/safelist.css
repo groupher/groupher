@@ -9,6 +9,6 @@
 @source inline('hover:bg-hoverBg hover:bg-menuHoverBg hover:text-text-title hover:border-divider');
 @source inline('z-{modal,popover,tooltip,modalOverlay,modalCloseBtn,drawer,drawerOverlay,articleFixedHeader,header}');
 
-@source inline('bg-popover-bg');
-@source inline('shadow-{xl,card}');
+@source inline('bg-popover-bg bg-alphaBg');
+@source inline('shadow-{xl,md,card}');
 @source inline('debug');
