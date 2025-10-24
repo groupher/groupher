@@ -1,4 +1,4 @@
-import { mergeDeepRight, mergeLeft, mergeRight } from 'ramda'
+import { mergeRight } from 'ramda'
 import { proxy } from 'valtio'
 import METRIC from '~/const/metric'
 import { ARTICLE_THREAD } from '~/const/thread'
@@ -7,37 +7,37 @@ import type { TCommunity } from '~/spec'
 import type { TInit, TStore } from './spec'
 
 export default (init: TInit = {}): TStore => {
-  const store = proxy(
-    mergeLeft(init, {
-      metric: METRIC.COMMUNITY,
+  const initialStore: TStore = {
+    metric: METRIC.COMMUNITY,
 
-      user: init.user || null,
-      community: init.community || null,
-      post: init.post || null,
-      changelog: init.changelog || null,
-      activeThread: init.activeThread || ARTICLE_THREAD.POST,
+    user: init.user || null,
+    community: init.community || null,
+    post: init.post || null,
+    changelog: init.changelog || null,
+    activeThread: init.activeThread || ARTICLE_THREAD.POST,
 
-      tags: [],
-      activeTag: null,
+    tags: [],
+    activeTag: null,
 
-      // TOOD: remove?
-      viewingThread: null,
-      communityDigestInView: true,
+    // TOOD: remove?
+    viewingThread: null,
+    communityDigestInView: true,
 
-      // docs
-      isArticleLayout: false,
-      isFAQArticleLayout: true,
+    // docs
+    isArticleLayout: false,
+    isFAQArticleLayout: true,
+    ...init,
 
-      // actions
-      updateViewingCommunity(args: TCommunity): void {
-        store.community = mergeRight(store.community, args)
-      },
+    // actions
+    updateViewingCommunity(args: TCommunity): void {
+      store.community = mergeRight(store.community, args)
+    },
 
-      commit: (patch: Partial<TStore>): void => {
-        Object.assign(store, mergeDeepRight(store, patch))
-      },
-    }),
-  ) as TStore
+    commit: (patch: Partial<TStore>): void => {
+      Object.assign(store, patch)
+    },
+  }
 
+  const store = proxy(initialStore)
   return store
 }

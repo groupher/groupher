@@ -1,4 +1,3 @@
-import { mergeDeepRight } from 'ramda'
 import { proxy } from 'valtio'
 import { COLOR_NAME, CONTAINER_BG_DEFAULT } from '~/const/colors'
 import { DEFAULT_ENABLE, INIT_KANBAN_COLORS, TW_CARD, WIDGET_TYPE } from '~/const/dashboard'
@@ -147,7 +146,9 @@ export const settingsFields: TSettingsFields = {
 
 export default (init: TInit = {}): TStore => {
   const initialStore: TStore = {
+    ...settingsFields,
     curTab: DASHBOARD_ROUTE.INFO,
+
     initFilled: false,
     original: settingsFields,
 
@@ -188,31 +189,17 @@ export default (init: TInit = {}): TStore => {
     allModeratorRules: '{}',
     allRootRules: '{}',
 
-    ...settingsFields,
     ...init,
 
-    // 修复：改用 initialStore 代替 store
     commit: (patch: Partial<TStore>): void => {
-      Object.assign(initialStore, mergeDeepRight(initialStore, patch))
+      Object.assign(store, patch)
     },
     debug: () => {
-      initialStore.editingLink = null
-      initialStore.headerLinks = []
+      store.editingLink = null
+      store.headerLinks = []
     },
   }
 
   const store = proxy(initialStore)
   return store
-
-  // const store = proxy(
-  //   mergeLeft(init, {
-  //     ...settingsFields,
-  //     initFilled: false,
-  //     // for edit/rollback in dashboard
-  //     original: settingsFields,
-  //     // ..
-  //   }),
-  // )
-
-  // return store
 }

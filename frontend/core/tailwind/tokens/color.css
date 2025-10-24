@@ -17,9 +17,9 @@
   --unibar-linear-mask: radial-gradient(circle, oklch(1 0 0 / 0.63) 30%, oklch(0 0 0 / 0) 100%);
   --saving-bar-left-linear: linear-gradient(to left, oklch(0.94 0 0 / 0.47) 45%, oklch(0 0 0 / 0));
   --saving-bar-right-linear: linear-gradient(
-    to right,
-    oklch(0.37 0 0 / 0.35) 45%,
-    oklch(0 0 0 / 0)
+     to right,
+     oklch(0.94 0 0 / 0.47) 45%,
+     oklch(0 0 0 / 0)
   );
   --count-highlight: linear-gradient(90deg, oklch(0.79 0.16 82.5) 0%, oklch(0.63 0.23 32.8) 100%);
   --footer-inner-shadow: rgb(241 241 241) 0px 0px 50px 0px inset;
@@ -171,9 +171,9 @@
     );
     --saving-bar-right-linear: linear-gradient(
       to right,
-      oklch(0.94 0 0 / 0.47) 45%,
+      oklch(0.37 0 0 / 0.35) 45%,
       oklch(0 0 0 / 0)
-    );
+    ); 
     --count-highlight: linear-gradient(90deg, oklch(0.71 0.14 79.9) 0%, oklch(0.55 0.17 32.2) 100%);
     --footer-inner-shadow: inset 0 0 50px #1919198c;
     --hidden-panel: linear-gradient(oklch(0 0 0 / 0) 0%, oklch(0.23 0 0) 58%);

@@ -1,4 +1,3 @@
-import { mergeDeepRight } from 'ramda'
 import { proxy } from 'valtio'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import type { TWallpaperGradientDir } from '~/spec'
@@ -22,11 +21,11 @@ export default (init: TInit = {}): TStore => {
   const initialStore: TStore = {
     original: INITIAL_WALLPAPER_STATE,
 
-    ...INITIAL_WALLPAPER_STATE, // 默认值
-    ...init, // 用户传入的覆盖值
+    ...INITIAL_WALLPAPER_STATE,
+    ...init,
 
     commit: (patch: Partial<TStore>): void => {
-      Object.assign(initialStore, mergeDeepRight(initialStore, patch))
+      Object.assign(store, patch)
     },
   }
 
