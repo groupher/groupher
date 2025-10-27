@@ -10,9 +10,10 @@ export default () => {
     wrapper: cn(
       'column items-start relative mt-4 w-[348px] h-[460px] rounded-md border',
       'pl-10',
-      bg('container'),
-      br('divider'),
-      shadow('sm'),
+      br('rainbow.redSoft'),
+      // rainbow(COLOR_NAME.RED, 'borderSoft'),
+      bg('cardAlpha'),
+      shadow('card'),
     ),
     header: 'column w-48 mt-6 mb-2.5',
     title: cn('row-center text-base', fg('text.title')),

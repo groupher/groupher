@@ -12,9 +12,8 @@
  */
 
 import type { TFlattenObjectKeys } from '~/spec'
-
-import light from './light'
 import dark from './dark'
+import light from './light'
 
 const skinsData = {
   light,

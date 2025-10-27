@@ -8,8 +8,8 @@ export default () => {
   return {
     wrapper: cn(
       'absolute left-4 bottom-24 align-both gap-x-0.5 w-64 h-9 z-40 -mt-3.5 border rounded-md',
-      bg('container'),
-      br('divider'),
+      bg('card'),
+      br('rainbow.redSoft'),
       shadow('xl'),
     ),
     item: 'column-align-both size-8 mt-0.5',

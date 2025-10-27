@@ -8,9 +8,9 @@ export default () => {
   return {
     wrapper: cn(
       'column border w-7/12 h-4/6 mb-7 rounded-lg',
-      bg('container'),
-      br('divider'),
-      shadow('sm'),
+      bg('card'),
+      br('rainbow.blueSoft'),
+      shadow('card'),
     ),
     boards: 'row justify-center items-end w-full gap-x-7',
     board: cn('column gap-1.5 p-1.5 overflow-hidden w-52 h-80 rounded-lg', bg('hoverBg')),

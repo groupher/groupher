@@ -1,7 +1,7 @@
 /* TODO: gen from js to include all safe-list class names */
 
 /* container  */
-@source inline('container-{community,article,dashboard}');
+@source inline('container-{home,community,article,dashboard}');
 @source inline('text-{text-title,text-digest,text-hint,link}');
 
 /* fill for icons */
@@ -12,6 +12,8 @@
 
 /* rainbow */
 @source inline('{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');
+
+@source inline('border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,purple}/50');
 
 /* z-index */
 @source inline('z-{modal,popover,tooltip,modalOverlay,modalCloseBtn,drawer,drawerOverlay,articleFixedHeader,header}');
@@ -49,5 +51,6 @@
 
 /* utils */
 @source inline('debug debug-{b,g}');
+@source inline('border-dotted')
 @source inline('border-transparent outline-none bg-none bg-transparent select-none hidden');
 @source inline('bg-gradient-to-r to-transparent saturate-150 brightness-125 touch-manipulation rounded-3xl hover-underline line-clamp-[15]');

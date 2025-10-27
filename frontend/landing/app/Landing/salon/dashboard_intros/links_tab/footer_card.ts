@@ -8,7 +8,7 @@ export default () => {
       'row justify-between w-11/12 h-40 px-3.5 pb-0 pt-5 z-20 rounded-xl border',
       'absolute bottom-2 left-4',
       shadow('sm'),
-      bg('container'),
+      bg('card'),
       br('divider'),
     ),
     brand: 'w-1/3',

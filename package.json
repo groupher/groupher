@@ -168,7 +168,7 @@
     "zustand": "^5.0.4"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.1.4",
+    "@biomejs/biome": "2.3.0",
     "@cfaester/enzyme-adapter-react-18": "0.5.1",
     "@commitlint/cli": "^17.6.6",
     "@commitlint/config-conventional": "^8.2.0",

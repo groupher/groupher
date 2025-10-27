@@ -198,7 +198,7 @@ export type TStore = TSettingsFields & {
   editingFAQIndex: number | null
   editingFAQ: TFAQSection | null
 
-  queringMediaReportIndex: number
+  queryingMediaReportIndex: number
 
   // cms
   batchSelectedIDs: string[]
@@ -248,7 +248,7 @@ export type TDocSettings = {
 
 export type TBaseInfoSettings = {
   loading: boolean
-  queringMediaReportIndex: number | null
+  queryingMediaReportIndex: number | null
   saving: boolean
 
   favicon: string

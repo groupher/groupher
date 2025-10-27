@@ -19,7 +19,7 @@ export default (init: TInit = {}): TStore => {
     tags: [],
     activeTag: null,
 
-    // TOOD: remove?
+    // TODO: remove?
     viewingThread: null,
     communityDigestInView: true,
 

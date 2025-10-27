@@ -20,7 +20,7 @@ export default () => {
       'align-both text-sm min-w-20 h-8 px-3.5 rounded-xl border trans-all-100',
       `hover:${fg('text.title')}`,
       fg('text.digest'),
-      bg('container'),
+      bg('card'),
       br('divider'),
     ),
     purpleActive: cn(activeBtn, rainbow(COLOR_NAME.PURPLE, 'bg')),

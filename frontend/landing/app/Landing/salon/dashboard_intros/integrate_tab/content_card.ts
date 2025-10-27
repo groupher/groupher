@@ -9,7 +9,7 @@ export default () => {
       'absolute bottom-40 left-36',
       br('divider'),
       fg('text.digest'),
-      bg('container'),
+      bg('card'),
       shadow('md'),
     ),
   }

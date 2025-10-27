@@ -31,6 +31,23 @@ export const ARTICLES_FILTER = {
   size: 20,
 }
 
+export const LANDING_SSR_INFO = {
+  theme: THEME.LIGHT,
+  articles: {},
+  viewing: {
+    metric: METRIC.HOME,
+    community: {
+      slug: HCN,
+      homepage: '',
+      desc: '',
+      meta: { postsCount: 0, docsCount: 0, blogsCount: 0, changelogsCount: 0 },
+      dashboard: {},
+    },
+  },
+  wallpaper: undefined,
+  dashboard: undefined,
+} satisfies TRootStoreInit
+
 export const getArticlesParams = (community: string, urlInfo: TUrlInfo) => {
   const { searchParams } = urlInfo
 
@@ -96,7 +113,7 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
 
 // type TServerPostsPage = [community: TCommunity, pagedPosts: TPagedPosts, tags: TTag[]]
 
-const useThemeFromURL = async (searchParams: URLSearchParams): Promise<TThemeName> => {
+const useThemeFromURL = async (_searchParams: URLSearchParams): Promise<TThemeName> => {
   // 'use cache'
   // const theme = searchParams?.get('theme')
 
@@ -189,33 +206,6 @@ export const getSSRInitData = async (urlInfo: TUrlInfo): Promise<TRootStoreInit>
 
   if (!isEmpty(tags)) {
     initState.viewing.tags = tags
-  }
-
-  return initState
-}
-
-export const getSSRLandingData = async (): Promise<TRootStoreInit> => {
-  const community$ = 'home'
-
-  // const community = await getCommunity(community$)
-  const response = await gqFetch(P.community, { slug: community$, userHasLogin: false })
-  const { data } = await response.json()
-
-  const communityInfo = data
-
-  const { community, dashboard, wallpaper } = communityInfo
-
-  const initState = {
-    theme: THEME.LIGHT,
-    // locale,
-    // localeData,
-    articles: {},
-    viewing: {
-      metric: METRIC.COMMUNITY,
-      community,
-    },
-    wallpaper,
-    dashboard,
   }
 
   return initState

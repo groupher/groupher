@@ -9,7 +9,7 @@ export default () => {
     'row-center group w-36 min-w-36 h-9 rounded-lg -ml-2.5 pl-2.5 trans-all-200 border border-transparent pointer'
 
   return {
-    wrapper: cn(wrapper, `hover:${br('divider')}`, `hover:${bg('container')}`),
+    wrapper: cn(wrapper, `hover:${br('divider')}`, `hover:${bg('card')}`),
     panel: cn('border px-2 py-1 pr-0.5 w-40', br('divider')),
     brandPanel: cn(
       wrapper,

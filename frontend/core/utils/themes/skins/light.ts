@@ -59,53 +59,41 @@ export default {
   rainbow: {
     red: '#ca5f4d',
     redSoft: '#ffbfba3d',
-    redPale: 'linear-gradient(90deg, #fec0bb33 0%, #f8e4e226 100%)',
 
     orange: 'orange',
     orangeSoft: '#FEF7E8',
-    orangePale: 'linear-gradient(90deg, #fcb32d26 0%, #f5dfb726 100%)',
 
     brown: '#8d691e',
     brownSoft: '#fff3df',
-    brownPale: 'linear-gradient(90deg, #cf806921 0%, #dbd0d01c 100%)',
 
     yellow: '#c7b96d',
     yellowSoft: '#FEFBE8',
-    yellowPale: 'linear-gradient(90deg, #fffde5 0%, rgb(255 252 241 / 37%) 100%)',
 
     green: '#699411',
     greenSoft: '#eefdd89c',
-    greenPale: 'linear-gradient(90deg, #e3f3cc4a 0%, #f2ffe05c 100%)',
 
     greenLight: '#79d08f',
     greenLightSoft: '#e3f3cc4a',
-    greenLightPale: 'linear-gradient(90deg, #e3f3cc4a 0%, #f2ffe05c 100%)',
 
     cyan: '#24878C',
     cyanSoft: '#e1fcff',
-    cyanPale: 'linear-gradient(90deg, #e1fcff94 0%, #e1fcff5e 100%)',
 
     // naming, fix later
     cyanLight: '#00B5CC',
     cyanLightSoft: '#e1fcff94',
-    cyanLightPale: '#e1fcff94',
 
     blue: '#5073C6',
     blueSoft: '#E7EDF7',
-    bluePale: 'linear-gradient(90deg, #f3f7ff 0%, #f5f8ffb5 100%);',
 
     purple: '#7d519e',
     purpleSoft: '#f7d8fd38',
-    purplePale: 'linear-gradient(90deg, #f7d8fd38 0%, #f5e5f838 100%)',
 
     pink: '#b36976',
     pinkSoft: '#ffd8ea59',
-    pinkPale: '#ffd8ea59',
 
     black: '#333333',
     blackBtn: '',
     blackSoft: '#f4f4f4',
-    blackPale: '#f4f4f4',
   },
   shadow: {
     md: 'rgba(0, 0, 0, 0.03) 0px 6px 24px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px;',

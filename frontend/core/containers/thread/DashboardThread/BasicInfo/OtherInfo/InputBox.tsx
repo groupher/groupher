@@ -1,23 +1,18 @@
 import type { FC } from 'react'
-
-import type { TMediaReport } from '~/spec'
-
 import DeleteSVG from '~/icons/DeleteSolid'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import type { TMediaReport } from '~/spec'
 import Input from '~/widgets/Input'
-
-import MediaPreview from './MediaPreview'
-
+import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import useBaseInfo from '../../logic/useBaseInfo'
-
 import useSalon from '../../salon/basic_info/other_info/input_box'
+import MediaPreview from './MediaPreview'
 
 type TProps = {
   item: TMediaReport
-  queringMediaReportIndex: number | null
+  queryingMediaReportIndex: number | null
 }
 
-const InputBox: FC<TProps> = ({ item, queringMediaReportIndex }) => {
+const InputBox: FC<TProps> = ({ item, queryingMediaReportIndex }) => {
   const s = useSalon()
 
   const { index, editUrl, title } = item
@@ -25,8 +20,8 @@ const InputBox: FC<TProps> = ({ item, queringMediaReportIndex }) => {
 
   return (
     <div className={s.wrapper}>
-      {index !== null && queringMediaReportIndex === index && (
-        <LavaLampLoading size="tiny" top={-2} />
+      {index !== null && queryingMediaReportIndex === index && (
+        <LavaLampLoading size='tiny' top={-2} />
       )}
       {title && <MediaPreview item={item} />}
       <div className={s.inputWrapper}>
@@ -37,7 +32,7 @@ const InputBox: FC<TProps> = ({ item, queringMediaReportIndex }) => {
         />
         <DeleteSVG className={s.deleteIcon} onClick={() => removeMediaReport(index)} />
       </div>
-      {editUrl && <div className="mb-5" />}
+      {editUrl && <div className='mb-5' />}
       {!editUrl && <p>复制相关媒体报道的 URL 链接</p>}
     </div>
   )

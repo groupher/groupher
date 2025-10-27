@@ -10,7 +10,7 @@ export default () => {
       'absolute bottom-40 -right-16 w-44 h-20 p-2.5 z-50 rounded-xl text-xs',
       !isLightTheme && cn('border', br('divider')),
       fg('text.digest'),
-      bg('container'),
+      bg('card'),
       shadow('lg'),
     ),
 

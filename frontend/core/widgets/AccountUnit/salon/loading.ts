@@ -15,7 +15,7 @@ export default () => {
 
     maskCenter: cn(
       'w-[68%] h-20',
-      bg('container'),
+      bg('card'),
       'absolute left-[15%] bottom-[75px]',
       'rounded-lg',
       'opacity-80',
@@ -23,7 +23,7 @@ export default () => {
     ),
     maskTop: cn(
       'w-[90%] h-10',
-      bg('container'),
+      bg('card'),
       'absolute left-4 top-3',
       'rounded-lg',
       'opacity-70',
@@ -31,7 +31,7 @@ export default () => {
     ),
     maskBottom: cn(
       'w-[90%] h-10',
-      bg('container'),
+      bg('card'),
       'absolute left-4 bottom-4',
       'rounded-lg',
       'opacity-70',

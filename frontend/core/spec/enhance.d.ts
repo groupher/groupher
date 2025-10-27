@@ -2,9 +2,9 @@
 // see: https://github.com/sindresorhus/type-fest#template-literal-types
 
 export type {
-  ScreamingSnakeCase as TSnakeUpperCase,
   NegativeInteger as TNegativeInteger,
   NonNegativeInteger as TNonNegativeInteger,
+  ScreamingSnakeCase as TSnakeUpperCase,
   ValueOf as TValueOf,
 } from 'type-fest'
 

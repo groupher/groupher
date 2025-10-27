@@ -1,7 +1,6 @@
-import type { TPagi, TID } from './utils'
 import type { TSimpleUse } from './account'
-import type { TDashboard } from './dashboard'
-import type { TParseDashboard } from './dashboard'
+import type { TDashboard, TParseDashboard } from './dashboard'
+import type { TID, TPagi } from './utils'
 import type { TParsedWallpaper } from './wallpaper'
 
 type TMeta = {

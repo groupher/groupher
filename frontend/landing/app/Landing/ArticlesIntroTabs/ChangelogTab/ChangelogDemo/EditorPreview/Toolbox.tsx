@@ -1,10 +1,10 @@
-import RotateSVG from '~/icons/Rotate'
 import ArchSVG from '~/icons/Arch'
-import ShadowSVG from '~/icons/Shadow'
 import BlocksSVG from '~/icons/Blocks'
 import LightSVG from '~/icons/FlashLight'
-import RatioSVG from '~/icons/Ratio'
 import SizeSVG from '~/icons/ImageSize'
+import RatioSVG from '~/icons/Ratio'
+import RotateSVG from '~/icons/Rotate'
+import ShadowSVG from '~/icons/Shadow'
 
 import useSalon from '../../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/editor_preview/toolbox'
 

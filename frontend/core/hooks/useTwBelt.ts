@@ -12,7 +12,6 @@ import type { TColorName, TSpace, TZIndexType } from '~/spec'
 import type { TFlatThemeKey } from '~/utils/themes/skins'
 
 const containerConf = twConfig.container
-const borderSoftConf = twConfig.borderSoft
 
 type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 'decoration'
 type TLinkColorPrefix = 'fg' | 'fill'
@@ -127,13 +126,11 @@ export default (): TRet => {
     }
 
     if (prefix === 'borderSoft') {
-      const opacity = isLightTheme ? borderSoftConf.opacity : borderSoftConf.opacity_dark
-
       if (isDarkBlack && metric !== METRIC.HOME) {
         return 'border-text-hint'
       }
 
-      return `${prefix$}-${color$}/${opacity}`
+      return `${prefix$}-${color$}/50`
     }
 
     return `${prefix$}-${color$}`

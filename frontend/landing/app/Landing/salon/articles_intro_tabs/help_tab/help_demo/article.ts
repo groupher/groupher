@@ -12,21 +12,21 @@ export default () => {
   return {
     wrapper: cn(
       'column-center relative -ml-10 z-10 w-96 h-[480px] rounded-md gap-2.5',
-      bg('container'),
-      shadow('sm'),
+      bg('card'),
+      shadow('card'),
     ),
     underPaper: cn(
-      'absolute -top-0.5 -right-1 w-96 h-1/2 -z-10 rotate-3 border rounded-md',
-      br('divider'),
-      bg('container'),
-      shadow('sm'),
+      'absolute -top-0.5 -right-2 w-96 h-1/2 -z-10 rotate-3 border rounded-md',
+      br('rainbow.cyanSoft'),
+      bg('cardAlpha'),
+      shadow('card'),
     ),
     //
     title: cn('row-center text-base', fg('text.title')),
     inner: cn(
       'column-center w-full h-full z-10 px-4 py-8 pt-6 border rounded-md',
-      br('divider'),
-      bg('container'),
+      br('rainbow.cyanSoft'),
+      bg('card'),
     ),
     content: 'column relative w-64',
     //
@@ -36,7 +36,7 @@ export default () => {
     feedback: cn(
       'align-both gap-x-4 rounded-xl px-4 py-2 mt-4 w-32 border',
       br('divider'),
-      shadow('sm'),
+      shadow('card'),
     ),
     feedIcon: 'size-5 opacity-80',
     arrowIcon: cn('size-4 opacity-80', fill('text.digest')),
@@ -49,7 +49,7 @@ export default () => {
       isLightTheme ? 'opacity-25' : 'opacity-40',
       rainbow('CYAN', 'bg'),
     ),
-    slash: cn('absolute h-28 w-1 left-1/2 top-0 rotate-12', bg('container')),
+    slash: cn('absolute h-28 w-1 left-1/2 top-0 rotate-12', bg('card')),
     coverText: cn('text-lg absolute bold', fg('button.fg'), vividDark()),
     // comment
     commentDot: cn(

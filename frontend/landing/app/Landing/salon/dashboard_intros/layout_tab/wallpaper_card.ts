@@ -7,7 +7,7 @@ export default () => {
     wrapper: cn(
       'align-both w-[540px] h-[360px] rounded-2xl p-1.5',
       'absolute bottom-10 -left-14',
-      bg('container'),
+      bg('card'),
       shadow('sm'),
     ),
     background: cn('w-full h-full rounded-xl trans-all-200', dimDark()),
