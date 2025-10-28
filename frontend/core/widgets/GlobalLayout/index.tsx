@@ -26,11 +26,14 @@ const Addon = lazy(() => import('./Addon'))
 
 type TProps = {
   children: ReactNode
+  mainBlock?: FC<{ children: ReactNode }>
 }
 
-const GlobalLayout: FC<TProps> = ({ children }) => {
+const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
   const s = useSalon()
   const { theme } = useTheme()
+
+  const MainWrapper = mainBlock || Main
 
   // useSyncAccount()
   // const [showDashboardAlertUI, setShowDashboardAlertUI] = useState(false)
@@ -56,7 +59,7 @@ const GlobalLayout: FC<TProps> = ({ children }) => {
         <div className={s.scrollWrapper}>
           <div className={s.wrapper}>
             <SEO />
-            <Main>{children}</Main>
+            <MainWrapper>{children}</MainWrapper>
             {/* {isMobile && <ModeLine />} */}
           </div>
         </div>
