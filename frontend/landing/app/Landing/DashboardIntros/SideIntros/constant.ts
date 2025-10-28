@@ -1,13 +1,12 @@
 import { COLOR_NAME } from '~/const/colors'
 import { DASHBOARD_ROUTE } from '~/const/route'
-
-import LayoutSVG from '~/icons/Layout'
-import CMSSVG from '~/icons/CMS'
-import SpiderSVG from '~/icons/Spider'
-import HashTagBoldSVG from '~/icons/HashTagLight'
 import AdminSVG from '~/icons/Admin'
+import CMSSVG from '~/icons/CMS'
+import HashTagBoldSVG from '~/icons/HashTagLight'
 import IntroHeaderFooterSVG from '~/icons/IntroHeaderFooter'
 import IntroInoutSVG from '~/icons/IntroInout'
+import LayoutSVG from '~/icons/Layout'
+import SpiderSVG from '~/icons/Spider'
 
 export default {
   [DASHBOARD_ROUTE.LAYOUT]: {

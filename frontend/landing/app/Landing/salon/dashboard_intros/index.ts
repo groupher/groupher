@@ -22,7 +22,7 @@ export default ({ tab }: TProps) => {
     desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
     //
     content: 'column items-center relative w-full px-30 h-[720px] overflow-hidden',
-    inner: 'row-center-between w-8/12 h-full gap-x-10 pl-2 -mt-8',
+    inner: 'row-center-between w-10/12 h-full gap-x-10 -mt-8',
     graphDemo: 'align-both w-1/2 h-full mr-2',
 
     bgGradientPurple: cn(

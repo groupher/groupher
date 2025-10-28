@@ -51,6 +51,6 @@
 
 /* utils */
 @source inline('debug debug-{b,g}');
-@source inline('border-dotted')
+@source inline('border-dotted bold bold-{none,sm,lg}')
 @source inline('border-transparent outline-none bg-none bg-transparent select-none hidden');
 @source inline('bg-gradient-to-r to-transparent saturate-150 brightness-125 touch-manipulation rounded-3xl hover-underline line-clamp-[15]');

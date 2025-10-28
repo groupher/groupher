@@ -1,16 +1,12 @@
-import type { FC } from 'react'
 import { includes } from 'ramda'
-
-import type { TThread } from '~/spec'
-import { THREAD } from '~/const/thread'
+import type { FC } from 'react'
 import { COLOR_NAME } from '~/const/colors'
-
+import { THREAD } from '~/const/thread'
 import IntroArrowSVG from '~/icons/IntroArrow'
 import IntroSpinSVG from '~/icons/IntroSpin'
-
-import PreviewBars from './PreviewBars'
-
+import type { TThread } from '~/spec'
 import useSalon, { cn, ICON } from '../salon/articles_intro_tabs/tabs'
+import PreviewBars from './PreviewBars'
 
 const TAB_ITEMS = [
   {
