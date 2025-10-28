@@ -1,5 +1,5 @@
 @import "./utils";
-@import "./containers";
+@import "./container";
 @import "./shadow";
 @import "./animation";
 @import "./zindex";
