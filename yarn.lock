@@ -4626,15 +4626,6 @@ fragment-cache@^0.2.1:
   dependencies:
     map-cache "^0.2.2"
 
-framer-motion@^11.11.11:
-  version "11.18.2"
-  resolved "https://registry.npmmirror.com/framer-motion/-/framer-motion-11.18.2.tgz#0c6bd05677f4cfd3b3bdead4eb5ecdd5ed245718"
-  integrity sha512-5F5Och7wrvtLVElIpclDT0CBzMVg3dL22B64aZwHtsIY8RB4mXICLrkajK4G9R+ieSAGcgrLeae2SeUTg2pr6w==
-  dependencies:
-    motion-dom "^11.18.1"
-    motion-utils "^11.18.1"
-    tslib "^2.4.0"
-
 framer-motion@^12.23.15:
   version "12.23.15"
   resolved "https://registry.npmmirror.com/framer-motion/-/framer-motion-12.23.15.tgz#114a34e383d88beab66efd57a49ac8a6d7e35413"
@@ -7051,24 +7042,12 @@ moo@^0.5.0:
   resolved "https://registry.npmmirror.com/moo/-/moo-0.5.2.tgz#f9fe82473bc7c184b0d32e2215d3f6e67278733c"
   integrity sha512-iSAJLHYKnX41mKcJKjqvnAN9sf0LMDTXDEvFv+ffuRR9a1MIuXLjMNL6EsnDHSkKLTWNqQQ5uo61P4EbU4NU+Q==
 
-motion-dom@^11.18.1:
-  version "11.18.1"
-  resolved "https://registry.npmmirror.com/motion-dom/-/motion-dom-11.18.1.tgz#e7fed7b7dc6ae1223ef1cce29ee54bec826dc3f2"
-  integrity sha512-g76KvA001z+atjfxczdRtw/RXOM3OMSdd1f4DL77qCTF/+avrRJiawSG4yDibEQ215sr9kpinSlX2pCTJ9zbhw==
-  dependencies:
-    motion-utils "^11.18.1"
-
 motion-dom@^12.23.12:
   version "12.23.12"
   resolved "https://registry.npmmirror.com/motion-dom/-/motion-dom-12.23.12.tgz#87974046e7e61bc4932f36d35e8eab6bb6f3e434"
   integrity sha512-RcR4fvMCTESQBD/uKQe49D5RUeDOokkGRmz4ceaJKDBgHYtZtntC/s2vLvY38gqGaytinij/yi3hMcWVcEF5Kw==
   dependencies:
     motion-utils "^12.23.6"
-
-motion-utils@^11.18.1:
-  version "11.18.1"
-  resolved "https://registry.npmmirror.com/motion-utils/-/motion-utils-11.18.1.tgz#671227669833e991c55813cf337899f41327db5b"
-  integrity sha512-49Kt+HKjtbJKLtgO/LKj9Ld+6vw9BjH5d9sc40R/kVyH8GLAXgT42M2NnuPcJNuA3s9ZfZBUcwIgpmZWGEE+hA==
 
 motion-utils@^12.23.6:
   version "12.23.6"
