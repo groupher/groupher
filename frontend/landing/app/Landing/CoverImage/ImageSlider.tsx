@@ -18,7 +18,7 @@ export const MAX_THEMES_COUNT = 5
 // see: https://karanokara.github.io/react-scroll-snap-anime-slider/docs/component-api/carousel
 const VISIBLE_SLIDES = 1
 const SLIDE_STEP = 3
-const LOOP_TIMMER = 5000
+const LOOP_TIMER = 5000
 
 export default () => {
   const { loaded } = useLoaded()
@@ -52,7 +52,7 @@ export default () => {
         slider.slideTo(nextSlideIndex)
       }
     },
-    loopTimer ? LOOP_TIMMER : null,
+    loopTimer ? LOOP_TIMER : null,
   )
 
   useEffect(() => {
@@ -91,10 +91,16 @@ export default () => {
         return
       }
     }
-  }, [themeIndex])
+  }, [themeIndex, changeWallpaper, changePatternWallpaper])
 
   return (
-    <button className={s.slideBox} onClick={() => toggleLoop(false)}>
+    <div
+      role='presentation'
+      aria-hidden='true'
+      aria-label='current cover'
+      className={s.slideBox}
+      onClick={() => toggleLoop(false)}
+    >
       {loaded && (
         <Carousel
           totalSlides={MAX_INTRO_IMAGES_COUNT}
@@ -177,6 +183,6 @@ export default () => {
           <ThemeRulerSVG className={s.themeIcon} />
         </button>
       )}
-    </button>
+    </div>
   )
 }
