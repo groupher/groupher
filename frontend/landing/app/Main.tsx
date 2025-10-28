@@ -36,10 +36,8 @@ const Main: FC<TProps> = ({ children }) => {
   useEffect(() => {
     if (!mounted) return
 
-    const root = document.documentElement
-    const computed = getComputedStyle(root)
-    const tokenWidth =
-      parseInt(computed.getPropertyValue('--container-home-width'), 10) || DEFAULT_CONTAINER_WIDTH
+    /** tailwind 的 token 在这里获取不到 --container-home-width, 需要一个值相同的默认值 */
+    const tokenWidth = DEFAULT_CONTAINER_WIDTH
 
     const updateVars = () => {
       const vw = window.innerWidth
