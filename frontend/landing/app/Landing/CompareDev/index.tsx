@@ -1,10 +1,8 @@
 import CheckSVG from '~/icons/CheckBold'
 import CloseCrossSVG from '~/icons/CloseCross'
-
-import OurWay from './OurWay'
-import HighWay from './HighWay'
-
 import useSalon, { cn } from '../salon/compare_dev'
+import HighWay from './HighWay'
+import OurWay from './OurWay'
 
 export default () => {
   const s = useSalon()

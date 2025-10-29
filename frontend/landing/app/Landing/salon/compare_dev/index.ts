@@ -10,9 +10,9 @@ export default () => {
   const { cn, fg, br, rainbow, landingTitle } = useTwBelt()
 
   return {
-    wrapper: cn('column align-both w-full mt-36 mb-24'),
+    wrapper: cn('column align-both w-full mt-36'),
     slogan: 'column align-both mb-10',
-    tips: cn('text-xs border mb-2.5 px-3.5 py-0.5', fg('text.title'), br('divider')),
+    tips: cn('text-xs border mb-3 px-3.5 py-1.5 rounded-lg', fg('text.title'), br('divider')),
     title: landingTitle(),
     desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
     //

@@ -10,15 +10,18 @@ export default () => {
   const { cn, bg, fg, landingTitle, rainbow, vividDark, br } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both w-full relative mt-20'),
+    wrapper: cn('column-align-both w-full relative pt-32', 'landing-gradient-gray'),
     slogan: 'column align-both mb-16',
+    tips: cn(
+      'text-xs border mb-3 px-3.5 py-1.5 rounded-lg',
+      fg('text.title'),
+      br('divider'),
+      bg('card'),
+    ),
     title: landingTitle(),
     desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
-    //
-    wall: 'column-align-both relative w-full h-auto mt-6 debug',
-    //
     paper: cn(
-      'letter-paper column-align-both relative w-9/12 h-auto mt-12 px-4.5 border rounded-md',
+      'letter-paper column-align-both relative w-9/12 h-auto px-4.5 border rounded-md',
       bg('card'),
       br('divider'),
     ),
@@ -35,10 +38,5 @@ export default () => {
     yellowBg: cn('', rainbow(COLOR_NAME.YELLOW, 'bgSoft')),
     brownBg: cn('', rainbow(COLOR_NAME.BROWN, 'bgSoft')),
     cyanBg: cn('', rainbow(COLOR_NAME.CYAN, 'bgSoft')),
-    //
-    bgGradient: cn(
-      'absolute top-30 left-0 w-full h-full  transition-opacity duration-500 -z-10 border-b-none',
-      'landing-gradient-gray',
-    ),
   }
 }
