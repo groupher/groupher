@@ -2,14 +2,12 @@ import type { FC } from 'react'
 
 import THEME from '~/const/theme'
 import useTheme from '~/hooks/useTheme'
-
-import ArticleCard from './ArticleCard'
+import MoonSolidSVG from '~/icons/MoonSolid'
 
 import SunSVG from '~/icons/Sun'
 import SunSolidSVG from '~/icons/SunSolid'
-import MoonSolidSVG from '~/icons/MoonSolid'
-
 import useSalon, { cn } from '../../salon/battery_bento/dark_mode/panel'
+import ArticleCard from './ArticleCard'
 
 type TProps = {
   hovering: boolean
@@ -23,8 +21,8 @@ const Panel: FC<TProps> = ({ hovering }) => {
     return (
       <div className={s.wrapper}>
         <ArticleCard
-          hovering={hovering}
           className={cn('rounded-r-none', hovering ? '-mt-4' : '-mt-2')}
+          theme={THEME.LIGHT}
         />
         <div className={s.divideColumn} />
         <div className={cn(s.switchBox, hovering && 'rotate-180')}>
@@ -45,8 +43,8 @@ const Panel: FC<TProps> = ({ hovering }) => {
           </div>
         </div>
         <ArticleCard
-          hovering={!hovering}
           className={cn('rounded-l-none brightness-110', hovering ? 'mt-3' : 'mt-1')}
+          theme={THEME.DARK}
         />
       </div>
     )
@@ -55,8 +53,8 @@ const Panel: FC<TProps> = ({ hovering }) => {
   return (
     <div className={s.wrapper}>
       <ArticleCard
-        hovering={!hovering}
         className={cn('rounded-r-none', hovering ? '-mt-4' : '-mt-2')}
+        theme={THEME.DARK}
       />
       <div className={s.divideColumn} />
       <div className={cn(s.switchBox, hovering && 'rotate-180')}>
@@ -77,8 +75,8 @@ const Panel: FC<TProps> = ({ hovering }) => {
         </div>
       </div>
       <ArticleCard
-        hovering={hovering}
         className={cn('rounded-l-none', hovering ? 'mt-3' : 'mt-1')}
+        theme={THEME.LIGHT}
       />
     </div>
   )

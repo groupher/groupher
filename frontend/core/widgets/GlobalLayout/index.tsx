@@ -49,7 +49,7 @@ const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
   // }, [showDashboardAlert])
 
   return (
-    <div className={theme}>
+    <div data-theme={theme}>
       <Mushroom />
       <Suspense fallback={null}>
         <Addon />

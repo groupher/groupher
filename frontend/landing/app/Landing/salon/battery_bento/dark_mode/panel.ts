@@ -1,18 +1,16 @@
 import { COLOR_NAME } from '~/const/colors'
 
-import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { isLightTheme } = useTheme()
-  const { cn, fg, bg, br, fill, rainbow, shadow, dimDark } = useTwBelt()
+  const { cn, bg, br, fill, rainbow, shadow } = useTwBelt()
 
   return {
     wrapper: cn('align-both w-full h-72 relative mt-3'),
     divideColumn: cn(
-      'absolute left-30 top-3 w-1 h-40 rounded-md z-10 opacity-65 trans-all-200',
+      'absolute left-34 top-3 w-1 h-40 rounded-md z-10 opacity-65 trans-all-200',
       rainbow(COLOR_NAME.RED, 'bg'),
     ),
     //
@@ -30,15 +28,5 @@ export default () => {
     //
     cardFooter: 'row-center mt-1 w-full',
     card: cn('column w-28 h-32 p-2.5 rounded-lg border trans-all-200', shadow('sm'), br('divider')),
-    lightBg: cn('bg-card', !isLightTheme && dimDark()),
-    darkBg: bg('container', 'dark'),
-    lightText: 'text-text-title',
-    darkText: fg('text.title', 'dark'),
-
-    lightFill: 'fill-text-title',
-    darkFill: fill('text.title', 'dark'),
-
-    lightBox: 'bg-hoverBg',
-    darkBox: bg('hoverBg', 'dark'),
   }
 }
