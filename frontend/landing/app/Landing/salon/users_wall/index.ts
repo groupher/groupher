@@ -7,7 +7,7 @@ export { cn } from '~/css'
 
 export default () => {
   const { isDarkTheme } = useTheme()
-  const { cn, fg, landingTitle, rainbow, vividDark } = useTwBelt()
+  const { cn, bg, fg, landingTitle, rainbow, vividDark, br } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both w-full relative mt-20'),
@@ -15,8 +15,15 @@ export default () => {
     title: landingTitle(),
     desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
     //
-    wall: 'column-align-both relative w-full h-auto mt-6',
-    demoP: 'text-base leading-relaxed',
+    wall: 'column-align-both relative w-full h-auto mt-6 debug',
+    //
+    paper: cn(
+      'letter-paper column-align-both relative w-9/12 h-auto mt-12 px-4.5 border rounded-md',
+      bg('card'),
+      br('divider'),
+    ),
+    paperInner: cn('column-align-both pt-6 border-l border-r border-dashed', br('divider')),
+    demoP: 'text-base leading-loose',
     p: 'mt-2.5',
     highlight: cn('px-1 bold-sm rounded', fg('text.digest'), vividDark()),
     // colors
@@ -30,8 +37,8 @@ export default () => {
     cyanBg: cn('', rainbow(COLOR_NAME.CYAN, 'bgSoft')),
     //
     bgGradient: cn(
-      'size-96 circle absolute top-1/3 left-1/3 ml-10 blur-3xl',
-      rainbow(COLOR_NAME.ORANGE, 'bgSoft'),
+      'absolute top-30 left-0 w-full h-full  transition-opacity duration-500 -z-10 border-b-none',
+      'landing-gradient-gray',
     ),
   }
 }

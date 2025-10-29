@@ -14,6 +14,7 @@
     --color-hoverBg: #efefef78;
     --color-card: #fff;
     --color-cardAlpha: #ffffffd4;
+    --color-sandBox: #F9F9F9;
     --unibar-linear-mask: radial-gradient(circle, oklch(1 0 0 / 0.63) 30%, oklch(0 0 0 / 0) 100%);
     --saving-bar-left-linear: linear-gradient(
       to left,
@@ -88,6 +89,8 @@
     --color-rainbow-blackSoft: #f4f4f4;
 
     /* gradient colors */
+    
+    --landing-gradient-gray: linear-gradient(#FBFBFB 0%, transparent);
     --landing-gradient-purple: linear-gradient(oklch(0.94 0.03 303 / 0.3) 0%, white);
     --landing-gradient-blue: linear-gradient(oklch(0.97 0.03 255 / 0.82) 0%, white);
     --landing-gradient-green: linear-gradient(oklch(0.97 0.03 142) 0%, white 100%);
@@ -161,6 +164,7 @@
     --color-hoverBg: #42424259;
     --color-card: #252525;
     --color-cardAlpha: #252526c2;
+    --color-sandBox: #31303059;
     --unibar-linear-mask: radial-gradient(
       circle,
       oklch(0.31 0 0 / 0.63) 30%,
@@ -238,6 +242,7 @@
     --color-rainbow-blackSoft: #313131;
 
     /* gradient colors */
+    --landing-gradient-gray: linear-gradient(#2a2a2a 0%, transparent);
     --landing-gradient-purple: linear-gradient(oklch(0.34 0.03 310 / 0.3) 0%, oklch(0.23 0 0) 100%);
     --landing-gradient-blue: linear-gradient(oklch(0.37 0.04 260 / 0.3) 0%, oklch(0.23 0 0) 100%);
     --landing-gradient-green: linear-gradient(oklch(0.22 0.03 140) 0%, oklch(0.23 0 0) 100%);

@@ -1,12 +1,9 @@
-import type { TColorName } from '~/spec'
-import useWallpaper from '~/hooks/useWallpaper'
-
-import { getGithubGradient } from '../metric'
-
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
-
+import useWallpaper from '~/hooks/useWallpaper'
+import type { TColorName } from '~/spec'
 import useBase from '..'
+import { getGithubGradient } from '../metric'
 
 export default () => {
   const { cn, fill, bg, shadow, rainbow, dimDark } = useTwBelt()
@@ -17,7 +14,7 @@ export default () => {
   return {
     wrapper: cn(
       'column w-[340px] h-96 rounded-xl p-5 px-8 z-30 rotate-2 border-2',
-      bg('card', 'dark'),
+      bg('card'),
       isLightTheme ? shadow('xl') : shadow('sm'),
       rainbow(wallpaper as TColorName, 'border'),
       dimDark(),

@@ -88,6 +88,9 @@
   }
 
   /* === Landing gradients === */
+  .landing-gradient-gray {
+    background: var(--landing-gradient-gray);
+  }
   .landing-gradient-purple {
     background: var(--landing-gradient-purple);
   }

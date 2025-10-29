@@ -31,14 +31,16 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <div className={s.slogan}>
-        <h3 className={s.title}>被众多优秀开发者和团队青睐</h3>
+        <h3 className={s.title}>被众多优秀团队信赖</h3>
         <div className={s.desc}>从独立开发者到中小型创业团队，我们用产品力回报信任</div>
       </div>
 
       <div className={s.bgGradient} />
 
-      <div className={s.wall}>
-        <CardsList />
+      <div className={s.paper}>
+        <div className={s.paperInner}>
+          <CardsList />
+        </div>
       </div>
     </div>
   )

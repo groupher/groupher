@@ -1,9 +1,7 @@
-import useWallpaper from '~/hooks/useWallpaper'
-
-// import { getGlowOpacity, getGlowBackground, getPathGradient } from './metric'
-import { getPathGradient, getCursorGradient } from './metric'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import useWallpaper from '~/hooks/useWallpaper'
+// import { getGlowOpacity, getGlowBackground, getPathGradient } from './metric'
+import { getCursorGradient, getPathGradient } from './metric'
 
 export { cn } from '~/css'
 
@@ -33,7 +31,7 @@ export default () => {
     arrow: cn('size-3.5 rotate-180 ml-0.5', fill('text.digest')),
     //
     divider: cn('mb-20 mt-14', sexyBorder()),
-    faqWrapper: 'w-full mb-5 px-32',
+    faqWrapper: 'w-full mt-30 mb-5 px-32',
     //
     tryArrow: cn(
       'absolute -right-5 top-0.5 size-4 rotate-180 opacity-65 hidden group-hover:block trans-all-100',
