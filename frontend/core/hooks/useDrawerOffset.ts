@@ -1,5 +1,5 @@
-import useWindowResize from '~/hooks/useWindowResize'
 import twConfig from '~/const/twConfig.json'
+import useWindowResize from '~/hooks/useWindowResize'
 
 import useMetric from './useMetric'
 
