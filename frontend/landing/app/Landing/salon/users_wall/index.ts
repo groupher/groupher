@@ -12,7 +12,7 @@ export default () => {
   return {
     wrapper: cn('column-align-both w-full relative pt-32', 'landing-gradient-gray'),
     slogan: 'column align-both mb-16',
-    tips: cn(
+    topping: cn(
       'text-xs border mb-3 px-3.5 py-1.5 rounded-lg',
       fg('text.title'),
       br('divider'),

@@ -3,6 +3,7 @@ import twConfig from '~/const/twConfig.json'
 import { upperSnakeCase } from '~/fmt'
 import type { TColorName } from '~/spec'
 
+/** TODO: 把这些颜色移动到 token/colors 去，配合选择器同时d定制 title/digest/card 的颜色 */
 const pageBgColor = twConfig.pageBgColor
 
 type TInputColorScheme = {

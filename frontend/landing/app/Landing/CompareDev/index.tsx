@@ -10,7 +10,7 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <div className={s.slogan}>
-        <div className={s.tips}>It's should be Simple !</div>
+        <div className={s.topping}>It's should be Simple !</div>
         <h3 className={s.title}>上线、获取反馈、迭代</h3>
         <div className={s.desc}>将用户反馈融入开发流程，避免平行世界闭门造车</div>
       </div>

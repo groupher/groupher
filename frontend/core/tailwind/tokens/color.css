@@ -1,5 +1,4 @@
   @theme {
-    --color-container: #fff;
     --color-divider: #eae9e9;
 
     /* articles */
@@ -149,7 +148,6 @@
 
 @layer theme {
   [data-theme="dark"] {
-    --color-container: #222222;
     --color-divider: #3c3c3c;
 
     /* articles */
@@ -162,8 +160,8 @@
 
     /* utils */
     --color-hoverBg: #42424259;
-    --color-card: #252525;
-    --color-cardAlpha: #252526c2;
+    --color-card: #1e1e1e;
+    --color-cardAlpha: #1b1b1bb0;
     --color-sandBox: #31303059;
     --unibar-linear-mask: radial-gradient(
       circle,
@@ -242,12 +240,12 @@
     --color-rainbow-blackSoft: #313131;
 
     /* gradient colors */
-    --landing-gradient-gray: linear-gradient(#2a2a2a 0%, transparent);
-    --landing-gradient-purple: linear-gradient(oklch(0.34 0.03 310 / 0.3) 0%, oklch(0.23 0 0) 100%);
-    --landing-gradient-blue: linear-gradient(oklch(0.37 0.04 260 / 0.3) 0%, oklch(0.23 0 0) 100%);
-    --landing-gradient-green: linear-gradient(oklch(0.22 0.03 140) 0%, oklch(0.23 0 0) 100%);
-    --landing-gradient-cyan: linear-gradient(oklch(0.35 0.04 200 / 0.3) 0%, oklch(0.23 0 0) 100%);
-    --landing-gradient-red: linear-gradient(oklch(0.34 0.04 25 / 0.3) 0%, oklch(0.23 0 0) 100%);
+    --landing-gradient-gray: linear-gradient(#171717 0%, transparent);
+    --landing-gradient-purple: linear-gradient(oklch(0.34 0.03 310 / 0.3) 0%, #171717 100%);
+    --landing-gradient-blue: linear-gradient(oklch(0.37 0.04 260 / 0.3) 0%, #171717 100%);
+    --landing-gradient-green: linear-gradient(oklch(0.22 0.03 140) 0%, #171717 100%);
+    --landing-gradient-cyan: linear-gradient(oklch(0.35 0.04 200 / 0.3) 0%, #171717 100%);
+    --landing-gradient-red: linear-gradient(oklch(0.34 0.04 25 / 0.3) 0%, #171717 100%);
     --landing-gradient-brown: linear-gradient(oklch(0.55 0.08 60 / 0.12) 0%, oklch(0.23 0 0) 100%);
     --landing-gradient-yellow: linear-gradient(
       oklch(0.37 0.05 100 / 0.26) 0%,

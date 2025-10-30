@@ -31,7 +31,7 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <div className={s.slogan}>
-        <div className={s.tips}>Trust with 💗</div>
+        <div className={s.topping}>Trust with 💗</div>
         <h3 className={s.title}>被众多优秀团队信赖</h3>
         <div className={s.desc}>从独立开发者到中小型创业团队，我们用产品力回报信任</div>
       </div>

@@ -101,7 +101,7 @@ const Main: FC<TProps> = ({ children }) => {
   const effectiveMaxWidth = mounted && enabled ? maxWidth : '100%'
 
   return (
-    <motion.div
+    <motion.main
       key={locale}
       className={s.wrapper}
       style={{
@@ -114,7 +114,7 @@ const Main: FC<TProps> = ({ children }) => {
       <div className={s.body}>{children}</div>
       <Footer />
       <GlowBackground />
-    </motion.div>
+    </motion.main>
   )
 }
 

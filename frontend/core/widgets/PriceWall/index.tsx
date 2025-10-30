@@ -5,18 +5,13 @@ import Link from 'next/link'
 import { EMAIL_SUPPORT } from '~/config'
 
 import { COLOR_NAME } from '~/const/colors'
-import CoffeeSVG from '~/icons/CoffeeDuo'
-
 import useHover from '~/hooks/useHover'
-// import useThemeData from '~/hooks/useThemeData'
-
 import Img from '~/Img'
+import CoffeeSVG from '~/icons/CoffeeDuo'
 // import AnimatedCount from '~/widgets/AnimatedCount'
 import Button from '~/widgets/Buttons/Button'
-
+import { CUSTOM_PAN_ITEMS, FREE_PAN_ITEMS, PAID_PAN_ITEMS } from './constant'
 import Feature from './Feature'
-
-import { FREE_PAN_ITEMS, PAID_PAN_ITEMS, CUSTOM_PAN_ITEMS } from './constant'
 
 import useSalon, { cn } from './salon'
 
@@ -28,7 +23,6 @@ export default ({ layout = 'page' }: TProps) => {
   const s = useSalon()
 
   const [paidHoveredRef, paidHovered] = useHover<HTMLDivElement>()
-  // const themeData = useThemeData()
 
   return (
     <div className={cn(s.wrapper, layout === 'modal' && 'scale-95 mb-0')}>
@@ -38,9 +32,7 @@ export default ({ layout = 'page' }: TProps) => {
           <div className={s.bannerDesc}>无套路，无广告，持续迭代，开放透明</div>
         </>
       ) : (
-        <>
-          <div className={s.bannerNote}>请升级到高级版本解锁该功能 👇</div>
-        </>
+        <div className={s.bannerNote}>请升级到高级版本解锁该功能 👇</div>
       )}
 
       <div className={s.inner}>
@@ -64,12 +56,12 @@ export default ({ layout = 'page' }: TProps) => {
         <div ref={paidHoveredRef} className={s.column}>
           <div className={s.gradientOrange} />
           <Img
-            src="/landing/catpaw.png"
+            src='/landing/catpaw.png'
             className={cn(
               s.catPawImg,
               paidHovered ? 'top-36 -left-1 mt-1' : 'top-20 left-2.5 -mt-3',
             )}
-            alt="cat paw"
+            alt='cat paw'
           />
           <h4 className={cn(s.toppingTitle, s.fgBrown)}>如虎添翼</h4>
           <div className={s.desc}>您的产品已有一定规模，希望解锁社区更多功能获得进一步增长。</div>
@@ -83,7 +75,7 @@ export default ({ layout = 'page' }: TProps) => {
                 top={-0.5}
                 size="huge"
               /> */}
-              <div className="opacity-35">.</div>
+              <div className='opacity-35'>.</div>
               {/* <AnimatedCount
                 count={paidHovered ? 9 : 0}
                 forceColor={themeData.article.title}

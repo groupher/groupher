@@ -37,13 +37,13 @@ const Main: FC<TProps> = ({ children }) => {
   // const [showDashboardAlertUI, setShowDashboardAlertUI] = useState(false)
 
   return (
-    <div key={locale} className={s.wrapper} style={{ background }}>
+    <main key={locale} className={s.wrapper} style={{ background }}>
       {hasTopbar && <div className={s.topBar} />}
       {/* <Broadcast /> */}
       <div className={s.body}>{children}</div>
       <Footer />
       <GlowBackground />
-    </div>
+    </main>
   )
 }
 

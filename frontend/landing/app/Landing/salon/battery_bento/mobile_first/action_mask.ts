@@ -11,7 +11,7 @@ export default () => {
       'column-align-both px-1.5 py-2 pb-0 rounded-t-xl z-50',
       'absolute left-4 ml-0.5',
       'brightness-150 trans-jump',
-      bg('container'),
+      bg('card'),
       shadow('md'),
     ),
     fillOrange: rainbow(COLOR_NAME.ORANGE, 'fill'),
