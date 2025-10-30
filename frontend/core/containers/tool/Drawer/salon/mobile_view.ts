@@ -1,19 +1,16 @@
 import { useMemo } from 'react'
-import { zIndex } from '~/css'
-
-import type { TSwipeOption } from '../spec'
+import useTwBelt from '~/hooks/useTwBelt'
 import { NARROW_HEIGHT_OFFSET } from '../constant'
+import type { TSwipeOption } from '../spec'
 import {
-  getMobileTransform,
-  getMobileContentHeight,
   getContentLinearGradient,
   getDim,
-  isWideMode,
-  getDrawerWidth,
   getDrawerMinWidth,
+  getDrawerWidth,
+  getMobileContentHeight,
+  getMobileTransform,
+  isWideMode,
 } from './metrics'
-
-import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
@@ -26,7 +23,7 @@ type TProps = {
 }
 
 export default ({ visible, type, swipeUpY, swipeDownY, options }: TProps) => {
-  const { cn, bg, br, shadow } = useTwBelt()
+  const { cn, bg, br, shadow, zIndex } = useTwBelt()
 
   const drawerStyle = useMemo(
     () => ({
@@ -34,7 +31,7 @@ export default ({ visible, type, swipeUpY, swipeDownY, options }: TProps) => {
       transition: 'transform 850ms cubic-bezier(0.23, 1, 0.32, 1) 0ms',
       width: getDrawerWidth(type),
       minWidth: getDrawerMinWidth(type),
-      zIndex: visible ? zIndex.drawer : -1,
+      // zIndex: visible ? zIndex.drawer : -1,
       maxWidth: '985px',
       transitionDelay: '0s, 0s, 0.14s',
     }),
@@ -60,10 +57,11 @@ export default ({ visible, type, swipeUpY, swipeDownY, options }: TProps) => {
     overlay: cn(
       'fixed bottom-0 left-0 right-0 overflow-auto h-full w-full',
       visible ? cn('visible opacity-50', bg('drawer.mask')) : 'hidden',
+      zIndex('drawerOverlay'),
     ),
 
     overlayStyle: {
-      zIndex: zIndex.drawerOverlay,
+      // zIndex: zIndex.drawerOverlay,
       transition: 'visibility 0.1s ease-in, opacity 0.1s ease-in, background 0.1s ease-in',
     },
 
@@ -83,6 +81,7 @@ export default ({ visible, type, swipeUpY, swipeDownY, options }: TProps) => {
       br('divider'),
       isWideMode(type) ? 'top-0' : 'top-6',
       visible ? 'visible' : 'hidden',
+      zIndex('drawer', visible),
     ),
 
     drawerStyle,

@@ -1,18 +1,16 @@
-import { useState, useCallback } from 'react'
-import { pick, clone, equals } from 'ramda'
-
-import type { TWallpaperGradientDir, TWallpaperType, TWallpaperData } from '~/spec'
-import { WALLPAPER_TYPE, WALLPAPER_STATE_KEYS } from '~/const/wallpaper'
+import { clone, equals, pick } from 'ramda'
+import { useCallback, useState } from 'react'
+import { WALLPAPER_STATE_KEYS, WALLPAPER_TYPE } from '~/const/wallpaper'
+import useFullWallpaper from '~/hooks/useFullWallpaper'
 
 import useSubStore from '~/hooks/useSubStore'
-import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
-import { closeDrawer, toast } from '~/signal'
 import { mutate } from '~/server'
-
-import type { TTab } from './spec'
+import { closeDrawer, toast } from '~/signal'
+import type { TWallpaperData, TWallpaperGradientDir, TWallpaperType } from '~/spec'
 import { TAB } from './constant'
 import S from './schema'
+import type { TTab } from './spec'
 
 type TRet = {
   tab: TTab
@@ -48,7 +46,9 @@ export default (): TRet => {
   const [loading, setLoading] = useState(false)
 
   const getIsTouched = useCallback((): boolean => {
+    // @ts-ignore
     const original = pick(WALLPAPER_STATE_KEYS, store.original)
+    // @ts-ignore
     const current = pick(WALLPAPER_STATE_KEYS, store)
 
     return !equals(clone(original), clone(current))
@@ -59,12 +59,14 @@ export default (): TRet => {
     closeDrawer()
   }
 
+  // @ts-ignore
   const initRollback = (): void => store.commit({ original: pick(WALLPAPER_STATE_KEYS, store) })
   const rollbackWallpaper = (): void => store.commit({ ...store.original })
 
   const onSave = (): void => {
     setLoading(true)
     const community = curCommunity.slug
+    // @ts-ignore
     const params = { community, ...pick(WALLPAPER_STATE_KEYS, store) }
 
     mutate(S.updateDashboardWallpaper, params)
@@ -77,7 +79,6 @@ export default (): TRet => {
       .catch((err) => {
         console.error('## handle request error: ', err)
         setLoading(false)
-        alert(err)
       })
   }
 

@@ -7,6 +7,10 @@ export default ({ align }: TProps) => {
 
   return {
     wrapper: cn('row-center w-auto', align ? 'justify-center' : 'justify-end'),
-    cancelBtn: cn('text-xs mt-px break-keep', `hover:${fg('text.title')}`, fg('text.digest')),
+    cancelBtn: cn(
+      'text-xs mt-px break-keep pointer',
+      `hover:${fg('text.title')}`,
+      fg('text.digest'),
+    ),
   }
 }

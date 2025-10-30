@@ -7,7 +7,7 @@ export default () => {
   const s = useSalon()
 
   return (
-    <div className={s.wrapper} style={s.backgroundStyle}>
+    <div className={s.wrapper}>
       <GithubSVG className={s.githubIcon} />
 
       <div className={s.topping}>

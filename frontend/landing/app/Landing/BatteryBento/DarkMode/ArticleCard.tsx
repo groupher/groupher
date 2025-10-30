@@ -1,19 +1,19 @@
 import type { FC } from 'react'
 
 import UpvoteSVG from '~/icons/Upvote'
-
+import type { TThemeName } from '~/spec'
 import useSalon, { cn } from '../../salon/battery_bento/dark_mode/article_card'
 
 type TProps = {
-  hovering: boolean
   className?: string
+  theme?: TThemeName
 }
 
-const ArticleCard: FC<TProps> = ({ hovering, className = '' }) => {
-  const s = useSalon({ hovering })
+const ArticleCard: FC<TProps> = ({ className = '', theme }) => {
+  const s = useSalon()
 
   return (
-    <div className={cn(s.wrapper, className)}>
+    <div className={cn(s.wrapper, className)} data-theme={theme}>
       <h4 className={s.title}>AI 辅助总结</h4>
       <div className={s.codeBox}>
         <div className={s.codeItem}>

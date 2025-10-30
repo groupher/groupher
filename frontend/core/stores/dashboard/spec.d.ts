@@ -1,55 +1,50 @@
 import type {
-  TLocale,
-  TThemeMap,
-  TColorName,
-  TPostLayout,
-  TKanbanLayout,
-  TKanbanCardLayout,
-  TDocLayout,
-  TDocFAQLayout,
-  TTagLayout,
-  TBrandLayout,
-  TBannerLayout,
-  TChangeMode,
-  TTopbarLayout,
+  DASHBOARD_ALIAS_ROUTE,
+  DASHBOARD_BASEINFO_ROUTE,
+  DASHBOARD_BROADCAST_ROUTE,
+  DASHBOARD_DOC_ROUTE,
+  DASHBOARD_LAYOUT_ROUTE,
+  DASHBOARD_ROUTE,
+  DASHBOARD_SEO_ROUTE,
+} from '~/const/route'
+import type {
   TAvatarLayout,
-  THeaderLayout,
-  TFooterLayout,
-  TThemeName,
-  TEnableConfig,
-  TNameAlias,
-  TLinkItem,
-  TValueOf,
-  TTag,
-  TUser,
-  TThread,
-  TSizeSML,
-  TWidgetType,
-  TBroadcastLayout,
+  TBannerLayout,
+  TBrandLayout,
   TBroadcastArticleLayout,
+  TBroadcastLayout,
   TChangelogLayout,
-  TRSSType,
-  TSocialItem,
-  TMediaReport,
+  TChangeMode,
+  TColorName,
   TDashboardBaseInfoRoute,
-  TCommunityThread,
-  TCommunity,
+  TDocFAQLayout,
+  TDocLayout,
+  TEnableConfig,
   TFAQSection,
+  TFooterLayout,
+  THeaderLayout,
+  TKanbanCardLayout,
+  TKanbanLayout,
+  TLinkItem,
+  TLocale,
+  TMediaReport,
+  TModerator,
+  TNameAlias,
   TOverview,
   TPagedArticles,
   TPagedCommunities,
-  TModerator,
+  TPostLayout,
+  TRSSType,
+  TSizeSML,
+  TSocialItem,
+  TTag,
+  TTagLayout,
+  TThread,
+  TTopbarLayout,
+  TUser,
+  TValueOf,
+  TWidgetType,
 } from '~/spec'
-
-import type {
-  DASHBOARD_ROUTE,
-  DASHBOARD_LAYOUT_ROUTE,
-  DASHBOARD_BASEINFO_ROUTE,
-  DASHBOARD_ALIAS_ROUTE,
-  DASHBOARD_BROADCAST_ROUTE,
-  DASHBOARD_SEO_ROUTE,
-  DASHBOARD_DOC_ROUTE,
-} from '~/const/route'
 
 export type { TRootStore } from '../spec'
 
@@ -203,7 +198,7 @@ export type TStore = TSettingsFields & {
   editingFAQIndex: number | null
   editingFAQ: TFAQSection | null
 
-  queringMediaReportIndex: number
+  queryingMediaReportIndex: number
 
   // cms
   batchSelectedIDs: string[]
@@ -253,7 +248,7 @@ export type TDocSettings = {
 
 export type TBaseInfoSettings = {
   loading: boolean
-  queringMediaReportIndex: number | null
+  queryingMediaReportIndex: number | null
   saving: boolean
 
   favicon: string

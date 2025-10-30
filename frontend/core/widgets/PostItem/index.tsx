@@ -5,15 +5,13 @@
  */
 
 import type { FC } from 'react'
-
-import type { TPost, TPostLayout } from '~/spec'
 import { POST_LAYOUT } from '~/const/layout'
-
-import PHLayout from './PHLayout'
-import QuoraLayout from './QuoraLayout'
-import MinimalLayout from './MinimalLayout'
+import type { TPost, TPostLayout } from '~/spec'
 import CoverLayout from './CoverLayout'
 import MasonryLayout from './MasonryLayout'
+import MinimalLayout from './MinimalLayout'
+import PHLayout from './PHLayout'
+import QuoraLayout from './QuoraLayout'
 
 type TProps = {
   article: TPost

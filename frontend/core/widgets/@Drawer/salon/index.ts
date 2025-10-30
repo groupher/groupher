@@ -1,13 +1,10 @@
 export { cn } from '~/css'
 
 import { useMemo } from 'react'
-import { zIndex } from '~/css'
 import { pixelAdd } from '~/dom'
-
-import { NARROW_HEIGHT_OFFSET } from './constant'
-
 import useTwBelt from '~/hooks/useTwBelt'
-import { getDesktopTransform, isWideMode, getDrawerWidth, getDrawerMinWidth } from './metrics'
+import { NARROW_HEIGHT_OFFSET } from './constant'
+import { getDesktopTransform, getDrawerMinWidth, getDrawerWidth, isWideMode } from './metrics'
 
 type TProps = {
   visible: boolean
@@ -17,7 +14,7 @@ type TProps = {
 }
 
 export default ({ visible, type, rightOffset = '0px', fromContentEdge = true }: TProps) => {
-  const { cn, bg, br, shadow } = useTwBelt()
+  const { cn, bg, br, shadow, zIndex } = useTwBelt()
 
   const drawerStyle = useMemo(
     () => ({
@@ -27,8 +24,6 @@ export default ({ visible, type, rightOffset = '0px', fromContentEdge = true }: 
       right: isWideMode(type) ? rightOffset : pixelAdd(rightOffset, 30),
       width: getDrawerWidth(type),
       minWidth: getDrawerMinWidth(type),
-      zIndex: visible ? zIndex.drawer : -1,
-      // zIndex: zIndex.drawer,
       maxWidth: '985px',
       // transitionDelay: '0s, 0s, 0.14s',
       // transitionDelay: '0s, 0s, 0.14s',
@@ -39,14 +34,15 @@ export default ({ visible, type, rightOffset = '0px', fromContentEdge = true }: 
   return {
     wrapper: cn(
       'fixed top-0 right-0 z-50 flex items-center justify-center w-96 h-screen debug',
-      bg('htmlBg'),
+      bg('card'),
     ),
     overlay: cn(
       'fixed bottom-0 left-0 overflow-auto h-full w-full',
       visible ? cn('visible opacity-50', bg('drawer.mask')) : 'hidden',
+      zIndex('drawerOverlay', visible),
     ),
     overlayStyle: {
-      zIndex: zIndex.drawerOverlay,
+      // zIndex: zIndex.drawerOverlay,
       transition: 'visibility 0.1s ease-in, opacity 0.1s ease-in, background 0.1s ease-in',
     },
     drawerContent: cn(
@@ -63,6 +59,7 @@ export default ({ visible, type, rightOffset = '0px', fromContentEdge = true }: 
       'fixed row h-full will-change-transform box-border',
       isWideMode(type) ? 'top-0' : 'top-5',
       visible ? 'visible' : 'hidden',
+      zIndex('drawer', visible),
     ),
     drawerStyle,
   }

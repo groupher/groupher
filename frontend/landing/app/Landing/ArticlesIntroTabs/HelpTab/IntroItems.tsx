@@ -31,7 +31,9 @@ export default () => {
 
       <div className='grow' />
       <div className={cn(s.footer, 'mt-16')}>
-        <Button color={color}>查看示例</Button>
+        <Button color={color} ghost>
+          查看示例
+        </Button>
         <ArrowLinker href='/' color={color} className='py-2'>
           了解更多
         </ArrowLinker>

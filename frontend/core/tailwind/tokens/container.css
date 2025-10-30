@@ -1,0 +1,10 @@
+:root {
+  /* ===== containers ====== */
+  --container-home-width: 1420px;
+  --container-article-width: 1360px;
+  --container-community-width: 1360px;
+  --container-apply-community-width: 1460px;
+  --container-dashboard-width: 1400px;
+  --container-community-sidebar-width: 1280px;
+}
+

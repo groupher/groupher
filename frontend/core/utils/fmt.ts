@@ -94,7 +94,7 @@ export const upperSnakeCase = (str: string): string => {
 }
 
 /**
- *  camelize a string
+ * camelize a string
  * e.g: GREEN_APPLE -> greenApple
  */
 export const camelize = (str: string): string => {

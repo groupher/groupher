@@ -1,8 +1,9 @@
-import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
+import { cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
+// import { cacheLife, cacheTag } from 'next/cache'
 import { includes, isEmpty, reject } from 'ramda'
 
 import { CACHE_TAG } from '~/const/cache'
-import { PAGE_COLOR_DEFAULT } from '~/const/colors'
+import { CONTAINER_BG_DEFAULT } from '~/const/colors'
 
 import { BUILTIN_ALIAS } from '~/const/name'
 import {
@@ -198,8 +199,8 @@ export const parseDashboard = (community: TCommunity, pathname: string): TParseD
     footerLinks,
     moderators,
     mediaReports,
-    pageBg: pageBg || PAGE_COLOR_DEFAULT.light,
-    pageBgDark: pageBgDark || PAGE_COLOR_DEFAULT.dark,
+    pageBg: pageBg || CONTAINER_BG_DEFAULT.light,
+    pageBgDark: pageBgDark || CONTAINER_BG_DEFAULT.dark,
   })
 
   return {

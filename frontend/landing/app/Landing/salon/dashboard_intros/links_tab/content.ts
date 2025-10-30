@@ -5,13 +5,13 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, fill, global, br, shadow, rainbow } = useTwBelt()
+  const { cn, fg, bg, fill, br, shadow, rainbow } = useTwBelt()
 
   return {
     wrapper: cn('row w-full h-44 px-4 py-4 mt-20'),
     ogPanel: 'w-1/2 pl-2.5 relative',
     twPanel: 'w-1/2 pl-14 relative',
-    logo: cn('size-9 rounded mb-4 mt-2', global('gradient-orange')),
+    logo: cn('size-9 rounded mb-4 mt-2 gradient-orange'),
 
     title: cn('text-xs mb-1.5 mt-2.5', fg('text.title')),
     desc: cn('text-xs', fg('text.digest')),
@@ -22,11 +22,10 @@ export default () => {
     //
     bar: cn('w-10 h-1.5 opacity-15 rounded-md absolute', bg('text.digest')),
     editBox: cn(
-      'align-both size-9 rounded-2xl border',
-      'absolute top-48 left-48',
+      'align-both size-9 rounded-2xl border absolute top-48 left-48',
       br('divider'),
       shadow('sm'),
-      global('gradient-orange'),
+      'gradient-orange',
     ),
     editIcon: cn('size-4 opacity-65', rainbow(COLOR_NAME.BROWN, 'fill')),
   }

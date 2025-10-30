@@ -1,7 +1,7 @@
-import type { TSpace } from '~/spec'
+import { COLOR_NAME } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
-import { COLOR_NAME } from '~/const/colors'
+import type { TSpace } from '~/spec'
 
 export { cn } from '~/css'
 

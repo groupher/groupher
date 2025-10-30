@@ -6,6 +6,6 @@ export default () => {
   return {
     wrapper: 'row-center w-full h-12 mb-1.5',
     publishWrapper: 'row-center',
-    editedHint: cn('text-sm', fg('article.info'), 'before:content-["("] after:content-[")"]'),
+    editedHint: cn('text-sm', fg('link'), 'before:content-["("] after:content-[")"]'),
   }
 }

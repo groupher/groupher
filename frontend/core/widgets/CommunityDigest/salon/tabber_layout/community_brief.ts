@@ -6,7 +6,7 @@ export default () => {
   return {
     wrapper: 'relative mb-3',
     main: 'row relative',
-    logoBox: cn('size-24 align-both -mt-10 ml-3.5 rounded-lg border', bg('htmlBg'), br('divider')),
+    logoBox: cn('size-24 align-both -mt-10 ml-3.5 rounded-lg border', bg('card'), br('divider')),
     logo: cn('size-20'),
     communityInfo: cn('mt-4 grow'),
     title: cn('text-2xl ml-4 bold-sm', fg('text.title')),

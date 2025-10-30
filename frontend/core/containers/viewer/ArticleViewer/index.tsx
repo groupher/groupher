@@ -4,17 +4,16 @@
  *
  */
 import { useEffect } from 'react'
-
+import EVENT from '~/const/event'
 // import Comments from '~/containers/unit/Comments'
 import { send } from '~/signal'
-import EVENT from '~/const/event'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
 import DrawerHeader from './DrawerHeader'
-import Viewer from './Viewer'
+import useSalon from './salon'
 
 import useLogic from './useLogic'
-import useSalon from './salon'
+import Viewer from './Viewer'
 
 export default () => {
   const s = useSalon()

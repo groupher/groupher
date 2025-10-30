@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, hoverable } = useTwBelt()
+  const { cn, hover } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -9,8 +9,8 @@ export default () => {
       'hover:cursor-pointer',
       /* to aoid pointer status like hover conflict */
       // '[&_svg]:pointer-events-none',
-      hoverable('bg'),
+      hover('bg'),
     ),
-    downloadIcon: cn('size-4 -mr-px', hoverable('icon')),
+    downloadIcon: cn('size-4 -mr-px', hover('icon')),
   }
 }

@@ -13,7 +13,7 @@ export default () => {
     wrapper: cn('row-center w-full h-full overflow-hidden px-4 trans-all-200'),
     phone: cn(
       'column w-28 min-w-28 h-44 pl-2.5 border-4 rounded-t-xl mt-2 gap-y-1.5',
-      bg('htmlBg'),
+      bg('card'),
       shadow('sm'),
       isLightTheme ? br('text.digest') : br('divider'),
     ),

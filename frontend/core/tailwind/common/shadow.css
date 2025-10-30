@@ -1,0 +1,14 @@
+@layer utilities {
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-modal {
+    box-shadow: var(--shadow-modal);
+  }
+
+  .shadow-drawer {
+    box-shadow: var(--shadow-drawer);
+  }
+}
+

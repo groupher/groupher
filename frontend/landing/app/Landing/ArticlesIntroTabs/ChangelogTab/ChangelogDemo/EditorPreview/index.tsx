@@ -1,14 +1,11 @@
 import type { FC } from 'react'
-
-import TagNode from '~/widgets/TagNode'
 import { COLOR_NAME } from '~/const/colors'
-
-import Toolbox from './Toolbox'
-import CoverPreview from '../CoverPreview'
-
+import TagNode from '~/widgets/TagNode'
 import useSalon, {
   cn,
 } from '../../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/editor_preview'
+import CoverPreview from '../CoverPreview'
+import Toolbox from './Toolbox'
 
 const EditorPreview: FC = () => {
   const s = useSalon()
@@ -17,7 +14,7 @@ const EditorPreview: FC = () => {
     <div className={s.wrapper}>
       <div className={s.header}>
         <div className={s.title}>
-          船新封面图编辑器 <div className={s.version}>v2.0</div>
+          船新封面图编辑器2 <div className={s.version}>v2.0</div>
         </div>
 
         <div className={s.tags}>

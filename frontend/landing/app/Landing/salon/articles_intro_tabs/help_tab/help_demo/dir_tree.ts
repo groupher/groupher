@@ -8,9 +8,9 @@ export default () => {
   return {
     wrapper: cn(
       'mt-10 w-44 h-auto mb-6 p-4 rounded-md border',
-      bg('htmlBg'),
-      br('divider'),
-      shadow('sm'),
+      bg('cardAlpha'),
+      br('rainbow.cyanSoft'),
+      shadow('card'),
     ),
     pinnedItem: 'row-center mb-0.5',
     icon: cn('size-3 mr-1 -mt-1', fill('text.digest')),

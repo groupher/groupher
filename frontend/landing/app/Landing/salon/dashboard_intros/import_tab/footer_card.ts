@@ -10,7 +10,7 @@ export default () => {
 
     imcard: cn(
       'align-both w-60 h-14 gap-y-3 border rounded-2xl gap-x-4',
-      bg('htmlBg'),
+      bg('card'),
       br('divider'),
       shadow('sm'),
     ),

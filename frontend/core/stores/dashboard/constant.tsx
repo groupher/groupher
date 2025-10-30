@@ -1,17 +1,39 @@
-import type { TSnakeUpperCase, TWidgetType } from '~/spec'
-
+import { COLOR_NAME, CONTAINER_BG_DEFAULT } from '~/const/colors'
+import { DEFAULT_ENABLE } from '~/const/dashboard'
+import { GLOW_OPACITY } from '~/const/glow_effect'
+import { LOCALE } from '~/const/i18n'
 import {
-  DASHBOARD_ROUTE,
-  DASHBOARD_LAYOUT_ROUTE,
-  DASHBOARD_BROADCAST_ROUTE,
+  AVATAR_LAYOUT,
+  BANNER_LAYOUT,
+  BRAND_LAYOUT,
+  BROADCAST_ARTICLE_LAYOUT,
+  BROADCAST_LAYOUT,
+  CHANGELOG_LAYOUT,
+  DOC_FAQ_LAYOUT,
+  DOC_LAYOUT,
+  FOOTER_LAYOUT,
+  HEADER_LAYOUT,
+  KANBAN_CARD_LAYOUT,
+  KANBAN_LAYOUT,
+  POST_LAYOUT,
+  RSS_TYPE,
+  TAG_LAYOUT,
+  TOPBAR_LAYOUT,
+} from '~/const/layout'
+import { BUILTIN_ALIAS } from '~/const/name'
+import {
   DASHBOARD_ALIAS_ROUTE,
   DASHBOARD_BASEINFO_ROUTE,
-  DASHBOARD_SEO_ROUTE,
+  DASHBOARD_BROADCAST_ROUTE,
   DASHBOARD_DOC_ROUTE,
+  DASHBOARD_LAYOUT_ROUTE,
+  DASHBOARD_ROUTE,
+  DASHBOARD_SEO_ROUTE,
 } from '~/const/route'
-import { COLOR_NAME } from '~/const/colors'
-
-import type { TSettingField, THeaderEditType, TFooterEditType } from './spec'
+import SIZE from '~/const/size'
+import { THREAD } from '~/const/thread'
+import type { TSnakeUpperCase, TWidgetType } from '~/spec'
+import type { TFooterEditType, THeaderEditType, TSettingField, TSettingsFields } from './spec'
 
 // import { Icon } from './styles/side_menu'
 
@@ -606,3 +628,109 @@ export const DEFAULT_NEW_FAQ = {
 }
 
 export const INIT_KANBAN_COLORS = [COLOR_NAME.BLACK, COLOR_NAME.BLACK, COLOR_NAME.BLACK]
+
+export const SETTING_FIELDS: TSettingsFields = {
+  // baseInfo
+  favicon: '',
+  logo: '',
+  locale: LOCALE.EN,
+  title: '',
+  slug: '',
+  desc: '',
+  introduction: '',
+  homepage: '',
+  city: '',
+  techstack: '',
+
+  // social
+  socialLinks: [],
+  mediaReports: [EMPTY_MEDIA_REPORT],
+
+  // page
+  pageBg: CONTAINER_BG_DEFAULT.light,
+  pageBgDark: CONTAINER_BG_DEFAULT.dark,
+
+  // seo
+  seoEnable: true,
+  ogSiteName: '',
+  ogTitle: '',
+  ogDescription: '',
+  ogUrl: '',
+  ogImage: '',
+  ogLocale: '',
+  ogPublisher: '',
+
+  twTitle: '',
+  twDescription: '',
+  twUrl: '',
+  twCard: TW_CARD.SUMMARY,
+  twSite: '',
+  twImage: '',
+  twImageWidth: '',
+  twImageHeight: '',
+
+  // layout
+  primaryColor: COLOR_NAME.BLACK,
+  postLayout: POST_LAYOUT.QUORA,
+  kanbanLayout: KANBAN_LAYOUT.CLASSIC,
+  kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,
+  kanbanBgColors: INIT_KANBAN_COLORS,
+
+  docLayout: DOC_LAYOUT.CARDS,
+  docFaqLayout: DOC_FAQ_LAYOUT.COLLAPSE,
+  tagLayout: TAG_LAYOUT.HASH,
+  avatarLayout: AVATAR_LAYOUT.SQUARE,
+  brandLayout: BRAND_LAYOUT.BOTH,
+  bannerLayout: BANNER_LAYOUT.HEADER,
+  topbarLayout: TOPBAR_LAYOUT.NO,
+  topbarBg: COLOR_NAME.ORANGE,
+
+  broadcastLayout: BROADCAST_LAYOUT.DEFAULT,
+  broadcastBg: COLOR_NAME.BLACK,
+  broadcastEnable: false,
+
+  broadcastArticleLayout: BROADCAST_ARTICLE_LAYOUT.DEFAULT,
+  broadcastArticleBg: COLOR_NAME.RED,
+  broadcastArticleEnable: true,
+
+  changelogLayout: CHANGELOG_LAYOUT.CLASSIC,
+
+  // doc
+  docCategories: [],
+
+  // glow effect
+  glowType: '',
+  glowFixed: true,
+  glowOpacity: GLOW_OPACITY.NORMAL,
+
+  // goss blur
+  gossBlur: 100,
+  gossBlurDark: 100,
+
+  // contents
+  // tags
+  tags: [],
+  activeTagGroup: null,
+  activeTagThread: THREAD.POST,
+  nameAlias: BUILTIN_ALIAS,
+  enable: DEFAULT_ENABLE,
+
+  faqSections: DEFAULT_FAQ_ITEMS,
+  rssFeedType: RSS_TYPE.DIGEST,
+  rssFeedCount: 5,
+
+  headerLayout: HEADER_LAYOUT.CENTER,
+  footerLayout: FOOTER_LAYOUT.GROUP,
+
+  footerLinks: [],
+  headerLinks: [],
+
+  // moderators
+  moderators: [],
+
+  // widgets
+  widgetsPrimaryColor: COLOR_NAME.BLACK,
+  widgetsThreads: [THREAD.POST],
+  widgetsSize: SIZE.MEDIUM,
+  widgetsType: WIDGET_TYPE.SIDEBAR,
+}

@@ -1,0 +1,123 @@
+@layer utilities {
+  .row {
+    @apply flex flex-row;
+  }
+
+  .row-center {
+    @apply flex flex-row items-center;
+  }
+
+  .align-both {
+    @apply flex flex-row items-center justify-center;
+  }
+
+  .row-center-between {
+    @apply flex flex-row items-center justify-between;
+  }
+
+  .column {
+    @apply flex flex-col;
+  }
+
+  .column-center {
+    @apply flex flex-col items-center;
+  }
+
+  .column-align-both {
+    @apply flex flex-col items-center justify-center;
+  }
+
+  .wrap {
+    @apply flex-wrap;
+  }
+
+  .pointer {
+    @apply hover:cursor-pointer;
+  }
+
+  .font {
+    @apply text-base;
+  }
+
+  .bold-none {
+    @apply font-normal;
+  }
+
+  .bold {
+    @apply font-semibold;
+  }
+
+  .bold-sm {
+    @apply font-medium;
+  }
+
+  .bold-lg {
+    @apply font-bold;
+  }
+
+  .circle {
+    @apply rounded-full;
+  }
+
+  .trans-all-200 {
+    @apply transition-all duration-200;
+  }
+
+  .trans-all-100 {
+    @apply transition-all duration-100;
+  }
+
+  .smoky-40 {
+    @apply opacity-40 hover:opacity-100 cursor-pointer;
+  }
+
+  .smoky-65 {
+    @apply opacity-65 hover:opacity-100 cursor-pointer;
+  }
+
+  .smoky-80 {
+    @apply opacity-80 hover:opacity-100 cursor-pointer;
+  }
+
+  .smoky-90 {
+    @apply opacity-90 hover:opacity-100 cursor-pointer;
+  }
+
+  .group-smoky-0 {
+    @apply opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer;
+  }
+
+  .group-smoky-65 {
+    @apply opacity-65 group-hover:opacity-100 transition-opacity cursor-pointer;
+  }
+
+  .group-smoky-80 {
+    @apply opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer;
+  }
+
+  .hover-underline {
+    @apply no-underline hover:underline;
+  }
+
+  .animation-fade-up {
+    @apply animate-fade-up animate-once animate-duration-200;
+  }
+
+  .animation-fade-down {
+    @apply animate-fade-down animate-once animate-duration-200;
+  }
+
+  .debug {
+    @apply border border-dashed;
+    border-color: red;
+  }
+  .debug-g {
+    @apply border border-dashed;
+    border-color: #4d7c0f;
+  }
+  .debug-b {
+    @apply border border-dashed;
+    border-color: blue;
+  }
+}
+

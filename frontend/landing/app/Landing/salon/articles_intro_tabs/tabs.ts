@@ -1,12 +1,10 @@
-import { THREAD } from '~/const/thread'
 import { COLOR_NAME } from '~/const/colors'
-
-import DiscussSVG from '~/icons/DiscussSolid'
-import TadaSVG from '~/icons/Tada'
-import GuideSVG from '~/icons/Book'
-import KanbanSVG from '~/icons/Kanban'
-
+import { THREAD } from '~/const/thread'
 import useTwBelt from '~/hooks/useTwBelt'
+import GuideSVG from '~/icons/Book'
+import DiscussSVG from '~/icons/DiscussSolid'
+import KanbanSVG from '~/icons/Kanban'
+import TadaSVG from '~/icons/Tada'
 
 export { cn } from '~/css'
 
@@ -51,7 +49,7 @@ export default () => {
       `group-hover:${fg('text.title')}`,
       fg('text.digest'),
     ),
-    titleActive: cn('bold-sm', fg('text.title')),
+    titleActive: cn('bold', fg('text.title')),
 
     desc: cn('text-sm group-smoky-80', fg('text.digest')),
     descActive: '!opacity-100',

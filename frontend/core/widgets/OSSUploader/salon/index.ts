@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fill, bg, br, shadow, hoverable } = useTwBelt()
+  const { cn, fill, bg, br, shadow, hover } = useTwBelt()
 
   return {
     wrapper: cn('relative'),
@@ -18,9 +18,9 @@ export default () => {
       'size-4 align-both absolute -right-1 -top-1 z-10 border',
       br('divider'),
       shadow('md'),
-      hoverable('bg'),
+      hover('bg'),
       bg('card'),
     ),
-    crossIcon: cn('size-3.5', hoverable('icon-red')),
+    crossIcon: cn('size-3.5', hover('icon-red')),
   }
 }

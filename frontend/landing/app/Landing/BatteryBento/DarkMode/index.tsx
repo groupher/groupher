@@ -1,14 +1,10 @@
-import { useState, useEffect } from 'react'
-
-import StarSVG from '~/icons/Star'
-
+import { useEffect, useState } from 'react'
 import THEME from '~/const/theme'
 import useHover from '~/hooks/useHover'
 import useTheme from '~/hooks/useTheme'
-
-import Panel from './Panel'
-
+import StarSVG from '~/icons/Star'
 import useSalon, { cn } from '../../salon/battery_bento/dark_mode'
+import Panel from './Panel'
 
 export default () => {
   const [hoverIn, setHoverIn] = useState(false)

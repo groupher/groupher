@@ -1,5 +1,5 @@
-import useTwBelt from '~/hooks/useTwBelt'
 import useTopbar from '~/hooks/useTopbar'
+import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
 
 export default () => {

@@ -1,27 +1,21 @@
 /*
  * PublishButton
  */
-import { memo, type FC } from 'react'
-
-import type { TPublishMode, TArticleCat, TSpace, TTooltipPlacement } from '~/spec'
-
-import { PUBLISH_MODE } from '~/const/publish'
-import { POST_CAT_MENU_ITEMS } from '~/const/menu'
+import { type FC, memo } from 'react'
 import { ARTICLE_CAT } from '~/const/gtd'
-
+import { POST_CAT_MENU_ITEMS } from '~/const/menu'
+import { PUBLISH_MODE } from '~/const/publish'
 import useViewingThread from '~/hooks/useViewingThread'
-
 import ArrowSVG from '~/icons/ArrowSolid'
+import type { TArticleCat, TPublishMode, TSpace, TTooltipPlacement } from '~/spec'
 
 import Menu from '~/widgets/Menu'
-
+import Button from '../Button'
+import useSalon from '../salon/publish_button'
+import { getText } from './helper'
 // import { MORE_MENU } from './constant'
 import PostLayout from './PostLayout'
 import SidebarHeaderLayout from './SidebarHeaderLayout'
-import Button from '../Button'
-
-import { getText } from './helper'
-import useSalon from '../salon/publish_button'
 
 type TProps = {
   text?: string
@@ -62,7 +56,7 @@ const PublishButton: FC<TProps> = ({
           onSelect={(item) => onMenuSelect(item.key as TArticleCat)}
           popWidth={48}
         >
-          <Button className={s.arrowBtn} noLeftRouned noBorder>
+          <Button className={s.arrowBtn} noLeftRound noBorder>
             <ArrowSVG className={s.arrowIcon} />
           </Button>
         </Menu>

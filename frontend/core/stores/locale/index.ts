@@ -1,8 +1,6 @@
 import { proxy } from 'valtio'
-
-import type { TLocale } from '~/spec'
-
 import { LOCALE } from '~/const/i18n'
+import type { TLocale } from '~/spec'
 
 import type { TStore } from './spec'
 

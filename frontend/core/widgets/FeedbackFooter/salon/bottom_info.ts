@@ -5,7 +5,7 @@ export { cn } from '~/css'
 type TProps = { offsetRight: number; withLastUpdated: boolean }
 
 export default ({ offsetRight, withLastUpdated }: TProps) => {
-  const { cn, br, fg, hoverable } = useTwBelt()
+  const { cn, br, fg, hover } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -23,7 +23,7 @@ export default ({ offsetRight, withLastUpdated }: TProps) => {
     faces: cn('row-center gap-x-6'),
     facesSmall: 'gap-x-1.5 mr-0.5',
     //
-    iconBox: cn('size-8 align-both grayscale', hoverable('bg'), 'hover:grayscale-0'),
+    iconBox: cn('size-8 align-both grayscale', hover('bg'), 'hover:grayscale-0'),
     iconBoxActive: 'scale-110 grayscale-0',
 
     icon: 'size-6',

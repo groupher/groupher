@@ -1,16 +1,14 @@
-import { isEmpty, find, reject, filter, equals, mergeRight, startsWith } from 'ramda'
-
-import type { TMediaReport } from '~/spec'
-import { query } from '~/server'
-
+import { equals, filter, find, isEmpty, mergeRight, reject, startsWith } from 'ramda'
 import useSubStore from '~/hooks/useSubStore'
+import { query } from '~/server'
+import type { TMediaReport } from '~/spec'
 
 import { EMPTY_MEDIA_REPORT } from '../../constant'
 
 import S from '../../schema'
 
 export type TRet = {
-  queringMediaReportIndex: number | null
+  queryingMediaReportIndex: number | null
 
   mediaReports: TMediaReport[]
   isMediaReportsTouched: boolean
@@ -24,7 +22,7 @@ export type TRet = {
 export default (): TRet => {
   const store = useSubStore('dashboard')
 
-  const { mediaReports, original, queringMediaReportIndex } = store
+  const { mediaReports, original, queryingMediaReportIndex } = store
 
   const mediaReportsTouched = () => {
     const curValues = reject((item: TMediaReport) => !item.editUrl, mediaReports)
@@ -62,20 +60,20 @@ export default (): TRet => {
   }
 
   const handleOgQueryInfo = (data) => {
-    const { queringMediaReportIndex, mediaReports } = store
+    const { queryingMediaReportIndex, mediaReports } = store
 
     const restReports = reject(
-      (item: TMediaReport) => item.index === queringMediaReportIndex,
+      (item: TMediaReport) => item.index === queryingMediaReportIndex,
       mediaReports,
     )
     const report = find(
-      (item: TMediaReport) => item.index === queringMediaReportIndex,
+      (item: TMediaReport) => item.index === queryingMediaReportIndex,
       mediaReports,
     )
     const updatedReport = mergeRight(report, data)
 
     store.commit({
-      queringMediaReportIndex: null,
+      queryingMediaReportIndex: null,
       loading: false,
       mediaReports: [...restReports, updatedReport],
     })
@@ -85,7 +83,7 @@ export default (): TRet => {
     const { url, editUrl } = item
 
     if ((startsWith('https://', editUrl) || startsWith('http://', editUrl)) && url !== editUrl) {
-      store.queringMediaReportIndex = item.index
+      store.queryingMediaReportIndex = item.index
       store.loading = true
 
       const params = { url: editUrl.trim() }
@@ -93,7 +91,7 @@ export default (): TRet => {
         .then(({ openGraphInfo }) => handleOgQueryInfo(openGraphInfo))
         .catch((e) => {
           store.loading = false
-          store.queringMediaReportIndex = null
+          store.queryingMediaReportIndex = null
           console.error('## og info: ', e)
           alert('## queryOpenGraphInfo error')
         })
@@ -101,7 +99,7 @@ export default (): TRet => {
   }
 
   return {
-    queringMediaReportIndex,
+    queryingMediaReportIndex,
     mediaReports,
     isMediaReportsTouched: mediaReportsTouched(),
     addMediaReport,

@@ -1,10 +1,8 @@
-import { type FC, useEffect, useState, useCallback } from 'react'
-
+import { type FC, useCallback, useEffect, useState } from 'react'
+import { lockPage, toggleGlobalBlur, unlockPage } from '~/dom'
+import useGlowLight from '~/hooks/useGlowLight'
 import useShortcut from '~/hooks/useShortcut'
 import useTheme from '~/hooks/useTheme'
-import useGlowLight from '~/hooks/useGlowLight'
-
-import { toggleGlobalBlur, lockPage, unlockPage } from '~/dom'
 
 import CloseCrossSVG from '~/icons/CloseLight'
 import Portal from '~/widgets/Portal'
@@ -30,7 +28,7 @@ const RealModal: FC<TProps> = ({
   offsetLeft,
   handleCloseModal,
 }) => {
-  const s = useSalon()
+  const s = useSalon({ visible: show })
 
   const { glowType } = useGlowLight()
   const { theme } = useTheme()
@@ -59,9 +57,15 @@ const RealModal: FC<TProps> = ({
 
   return (
     <Portal>
-      <div className={cn(s.mask, !show && 'opacity-0 -z-10')} onClick={handleClose}>
+      <div
+        role='presentation'
+        aria-hidden='true'
+        aria-label='Close modal'
+        className={cn(s.mask, !show && 'opacity-0')}
+        onClick={handleClose}
+      >
         <div
-          className={s.wrapper}
+          className={cn(s.wrapper, show && 'animate-fade-up animate-duration-300')}
           style={{
             width,
             top: offsetTop,
@@ -69,18 +73,25 @@ const RealModal: FC<TProps> = ({
           }}
         >
           <div
+            role='presentation'
+            aria-hidden='true'
             onClick={(e) => e.stopPropagation()}
             className={s.glowLight}
             style={s.glowLightStyle(glowType, theme)}
           />
           <ViewportTracker onEnter={() => setVisibleOnPage(true)} />
           {showCloseBtn && (
-            <div className={s.closeBox} onKeyUp={handleClose}>
+            <button className={s.closeBox} onKeyUp={handleClose}>
               <CloseCrossSVG className={s.closeIcon} />
-            </div>
+            </button>
           )}
           {/* {showCloseBtn && <EscHint mode={mode}>Esc</EscHint>} */}
-          <div className={s.children} onClick={(e) => e.stopPropagation()}>
+          <div
+            role='presentation'
+            aria-hidden='true'
+            className={s.children}
+            onClick={(e) => e.stopPropagation()}
+          >
             {children}
           </div>
         </div>

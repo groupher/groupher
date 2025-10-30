@@ -1,7 +1,6 @@
-import type { TThread } from '~/spec'
 import { THREAD } from '~/const/thread'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TThread } from '~/spec'
 
 export { cn } from '~/css'
 
@@ -10,7 +9,7 @@ type TProps = {
 }
 
 export default ({ tab }: TProps) => {
-  const { cn, global } = useTwBelt()
+  const { cn } = useTwBelt()
 
   const bgGradient = cn(
     'absolute top-0 left-0 w-full h-full opacity-0 transition-opacity duration-700',
@@ -27,23 +26,15 @@ export default ({ tab }: TProps) => {
     ),
     bgGradientPurple: cn(
       bgGradient,
-      global('landing-gradient-purple'),
+      'landing-gradient-purple',
       tab === THREAD.POST && 'opacity-100',
     ),
-    bgGradientBlue: cn(
-      bgGradient,
-      global('landing-gradient-blue'),
-      tab === THREAD.KANBAN && 'opacity-100',
-    ),
+    bgGradientBlue: cn(bgGradient, 'landing-gradient-blue', tab === THREAD.KANBAN && 'opacity-100'),
     bgGradientRed: cn(
       bgGradient,
-      global('landing-gradient-red'),
+      'landing-gradient-red',
       tab === THREAD.CHANGELOG && 'opacity-100',
     ),
-    bgGradientCyan: cn(
-      bgGradient,
-      global('landing-gradient-cyan'),
-      tab === THREAD.DOC && 'opacity-100',
-    ),
+    bgGradientCyan: cn(bgGradient, 'landing-gradient-cyan', tab === THREAD.DOC && 'opacity-100'),
   }
 }

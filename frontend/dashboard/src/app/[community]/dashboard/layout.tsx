@@ -1,10 +1,8 @@
 'use client'
 
-import CommunityDigest from '~/widgets/CommunityDigest'
-
-import useSalon from './salon'
-
 import SideMenu from '~/containers/thread/DashboardThread/SideMenu'
+import CommunityDigest from '~/widgets/CommunityDigest'
+import useSalon from './salon'
 
 const Layout = ({ children }) => {
   const s = useSalon()

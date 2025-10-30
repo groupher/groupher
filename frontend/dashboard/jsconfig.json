@@ -1,5 +1,5 @@
 {
-  "extends": "../config/jsconfig.json",
+  "extends": "@groupher/frontend-core/jsconfig",
   "compilerOptions": {
     "baseUrl": "."
   }

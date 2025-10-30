@@ -1,0 +1,191 @@
+@layer utilities {
+  .article-hover-linear::before {
+    background: var(--article-hover-linear);
+  }
+
+  .unibar-linear-mask {
+    background: var(--unibar-linear-mask);
+  }
+
+  .saving-bar-left-linear {
+    background: var(--saving-bar-left-linear);
+  }
+
+  .saving-bar-right-linear {
+    background: var(--saving-bar-right-linear);
+  }
+
+  .clip-text {
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .count-highlight {
+    background: var(--count-highlight);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .footer-inner-shadow {
+    box-shadow: var(--footer-inner-shadow);
+  }
+
+  .sexy-border-20 {
+    border-image: linear-gradient(
+      0.2turn,
+      transparent,
+      var(--color-divider),
+      var(--color-divider),
+      var(--color-divider),
+      transparent
+    );
+    border-image-slice: 1;
+  }
+
+  .sexy-border-35 {
+    border-image: linear-gradient(
+      0.35turn,
+      transparent,
+      var(--color-divider),
+      var(--color-divider),
+      var(--color-divider),
+      transparent
+    );
+    border-image-slice: 1;
+  }
+
+  .sexy-border-40 {
+    border-image: linear-gradient(
+      0.4turn,
+      transparent,
+      var(--color-divider),
+      var(--color-divider),
+      var(--color-divider),
+      transparent
+    );
+    border-image-slice: 1;
+  }
+
+  .sexy-border-50 {
+    border-image: linear-gradient(
+      0.5turn,
+      transparent,
+      var(--color-divider),
+      var(--color-divider),
+      var(--color-divider),
+      transparent
+    );
+    border-image-slice: 1;
+  }
+
+  .text-shadow {
+    text-shadow: rgb(0 0 0 / 8%) 0px 10px 20px;
+  }
+
+  .trans-jump {
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+  }
+
+  /* === Landing gradients === */
+  .landing-gradient-gray {
+    background: var(--landing-gradient-gray);
+  }
+  .landing-gradient-purple {
+    background: var(--landing-gradient-purple);
+  }
+  .landing-gradient-blue {
+    background: var(--landing-gradient-blue);
+  }
+  .landing-gradient-green {
+    background: var(--landing-gradient-green);
+  }
+  .landing-gradient-cyan {
+    background: var(--landing-gradient-cyan);
+  }
+  .landing-gradient-red {
+    background: var(--landing-gradient-red);
+  }
+  .landing-gradient-brown {
+    background: var(--landing-gradient-brown);
+  }
+  .landing-gradient-yellow {
+    background: var(--landing-gradient-yellow);
+  }
+
+  /* === General gradients === */
+  .gradient-purple {
+    background: var(--gradient-purple);
+  }
+  .gradient-blue {
+    background: var(--gradient-blue);
+  }
+  .gradient-green {
+    background: var(--gradient-green);
+  }
+  .gradient-orange {
+    background: var(--gradient-orange);
+  }
+  .gradient-brown {
+    background: var(--gradient-brown);
+  }
+  .gradient-pink {
+    background: var(--gradient-pink);
+  }
+  .gradient-red {
+    background: var(--gradient-red);
+  }
+  .gradient-black {
+    background: var(--gradient-black);
+  }
+  .gradient-cyan {
+    background: var(--gradient-cyan);
+  }
+  .gradient-yellow {
+    background: var(--gradient-yellow);
+  }
+
+  .hidden-panel {
+    background: var(--hidden-panel);
+  }
+
+  .shape-shadow {
+    filter: var(--shape-shadow);
+  }
+
+  .animation-reverse {
+    animation-direction: reverse;
+  }
+
+  .tippy-box {
+    border-radius: 4px;
+    transition: all 0.2s ease-in-out !important;
+  }
+
+  /* wechat brower not support backdrop-filter well */
+  @supports (-webkit-backdrop-filter: none) or (backdrop-filter: none) {
+    .tippy-box {
+      border-radius: 4px;
+      transition: all 0.2s ease-in-out !important;
+    }
+  }
+
+  .tippy-box[data-placement^="top"][data-state="visible"] {
+    transform: translateY(-5px);
+  }
+  .tippy-box[data-placement^="bottom"][data-state="visible"] {
+    transform: translateY(5px);
+  }
+  .tippy-box[data-placement^="left"][data-state="visible"] {
+    transform: translateX(-5px);
+  }
+  .tippy-box[data-placement^="right"][data-state="visible"] {
+    transform: translateX(5px);
+  }
+
+  .header-layout-community-brief {
+    .tippy-box[data-placement^="bottom"][data-state="visible"] {
+      transform: translateY(1px) !important;
+    }
+  }
+}

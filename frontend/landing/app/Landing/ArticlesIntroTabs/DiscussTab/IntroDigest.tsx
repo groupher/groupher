@@ -1,6 +1,5 @@
-import IntroItems from './IntroItems'
-
 import useSalon from '../../salon/articles_intro_tabs/discuss_tab/intro_digest'
+import IntroItems from './IntroItems'
 
 export default () => {
   const s = useSalon()

@@ -4,7 +4,7 @@
  *
  */
 
-import { type FC, type ReactNode, memo } from 'react'
+import { type FC, memo, type ReactNode } from 'react'
 import Masonry from 'react-masonry-css'
 
 type TProps = {
@@ -17,8 +17,8 @@ const MasonryCards: FC<TProps> = ({ testid = 'masonry-cards', column = 2, childr
   return (
     <Masonry
       breakpointCols={column}
-      className="masonry-cards-grid"
-      columnClassName="masonry-cards-grid_column"
+      className='masonry-cards-grid'
+      columnClassName='masonry-cards-grid_column'
     >
       {children}
     </Masonry>

@@ -5,26 +5,25 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default () => {
-  const { cn, bg, br, zIndex, hoverable, shadow } = useTwBelt()
+export default ({ visible }) => {
+  const { cn, bg, br, zIndex, hover, shadow } = useTwBelt()
 
   return {
     wrapper: cn(
       'relative mx-auto h-auto rounded-md min-h-72 border',
-      'animate-fade-up animate-duration-200',
       shadow('modal'),
       br('divider'),
       bg('modal.bg'),
     ),
     mask: cn(
-      'fixed overflow-auto top-0 right-0 bottom-0 left-0 transition-opacity	duration-1000',
+      'fixed overflow-auto top-0 right-0 bottom-0 left-0 transition-opacity	duration-200',
       bg('modal.mask'),
-      zIndex('modalOverlay'),
+      zIndex('modalOverlay', visible),
     ),
     children: 'min-h-72 h-auto overflow-y-scroll',
     //
-    closeBox: cn('align-both size-7 absolute top-3.5 right-4', hoverable('bg')),
-    closeIcon: cn('size-5', hoverable('icon'), zIndex('modalCloseBtn')),
+    closeBox: cn('align-both size-7 absolute top-3.5 right-4 z-10', hover('bg')),
+    closeIcon: cn('size-5', hover('icon'), zIndex('modalCloseBtn')),
     //
     glowLight: 'absolute w-full h-3/5 opacity-65 top-0 left-0 rotate-y-180',
     glowLightStyle: (glowType, theme) => {

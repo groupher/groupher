@@ -4,7 +4,7 @@
  *
  */
 
-import { useRef, lazy, Suspense } from 'react'
+import { lazy, Suspense, useRef } from 'react'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
 import ArtimentBody from '~/widgets/ArtimentBody'
@@ -18,6 +18,10 @@ export const Comments = lazy(() => import('~/containers/unit/Comments'))
 export default () => {
   const ref = useRef()
   const { article } = useViewingArticle()
+
+  if (!article) {
+    return <h1>Error article</h1>
+  }
 
   const s = useSalon()
 

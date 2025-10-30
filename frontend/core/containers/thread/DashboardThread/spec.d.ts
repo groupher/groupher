@@ -1,46 +1,21 @@
 import type { ReactNode } from 'react'
 
 import type {
-  TWallpaper,
-  TCustomWallpaper,
-  TColorName,
-  TPostLayout,
-  TChangelogLayout,
-  THeaderLayout,
-  TFooterLayout,
-  TBrandLayout,
-  TTopbarLayout,
-  TBannerLayout,
-  TTag,
-  TThread,
-  TCommunityThread,
-  TSizeSML,
-  TDocLayout,
-  TDashboardPath,
-  TKanbanLayout,
-  TKanbanCardLayout,
-  TWallpaperInfo,
-  TAvatarLayout,
-  TUser,
-  TDashboardLayoutRoute,
-  TDashboardBaseInfoRoute,
-  TDashboardSEORoute,
-  TBroadcastConfig,
-  TDashboardBroadcastRoute,
-  TDashboardAliasRoute,
-  TLinkItem,
   TChangeMode,
-  TNameAlias,
-  TSocialItem,
-  TPagedArticles,
-  TID,
+  TColorName,
+  TCommunityThread,
+  TDashboardBaseInfoRoute,
   TDashboardDocRoute,
+  TDashboardPath,
   TFAQSection,
-  TPagedCommunities,
-  TModerator,
+  TFooterLayout,
+  THeaderLayout,
+  TID,
+  TLinkItem,
   TMediaReport,
-  TDashboardSEOConfig,
-  TTagLayout,
+  TPagedArticles,
+  TPagedCommunities,
+  TSocialItem,
 } from '~/spec'
 
 export { TNameAlias } from '~/spec'
@@ -97,7 +72,7 @@ export type TFooterSettings = {
 
 export type TBaseInfoSettings = {
   loading: boolean
-  queringMediaReportIndex: number | null
+  queryingMediaReportIndex: number | null
   saving: boolean
 
   favicon: string

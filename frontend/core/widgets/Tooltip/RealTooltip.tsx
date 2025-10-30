@@ -4,18 +4,18 @@
  * use custom animation Globally at GlobalStyle.ts
  */
 
-import { type FC, useState, useRef, useEffect } from 'react'
-import { hideAll } from 'tippy.js'
 import Tippy from '@tippyjs/react'
+import { type FC, useEffect, useRef, useState } from 'react'
+import { hideAll } from 'tippy.js'
 
-import { zIndex } from '~/css'
+// import { zIndex } from '~/css'
 import { isDescendant, isWechatBrower } from '~/dom'
 
 import useOutsideClick from '~/hooks/useOutsideClick'
 
 import type { TProps } from '.'
-import { FOOTER_BEHAVIOR } from './constant'
 import ConfirmFooter from './ConfirmFooter'
+import { FOOTER_BEHAVIOR } from './constant'
 
 import useSalon, { cn } from './salon'
 
@@ -51,6 +51,8 @@ const Tooltip: FC<TProps> = ({
 
   const PopoverContent = (
     <div
+      role='presentation'
+      aria-hidden='true'
       ref={contentRef}
       onClick={() => {
         if (hideOnClick) instance?.hide()
@@ -94,7 +96,7 @@ const Tooltip: FC<TProps> = ({
     content: PopoverContent,
     placement,
     hideOnClick,
-    zIndex: zIndex.popover,
+    zIndex: 3000, // zIndex.popover,
     active: true,
     delay: [delay, 0] as [number, number],
     offset,

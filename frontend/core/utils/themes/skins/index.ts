@@ -11,17 +11,12 @@
  * Earthsung https://atom.io/themes/earthsung-by-jackson-syntax
  */
 
-import type { TFlattenObjectKeys } from '~/spec'
-
-import light from './light'
 import dark from './dark'
+import light from './light'
 
 const skinsData = {
   light,
   dark,
 }
-
-// see https://www.raygesualdo.com/posts/flattening-object-keys-with-typescript-types
-export type TFlatThemeKey = TFlattenObjectKeys<typeof light>
 
 export default skinsData

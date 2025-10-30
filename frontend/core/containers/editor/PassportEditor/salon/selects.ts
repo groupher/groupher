@@ -10,6 +10,6 @@ export default () => {
     readonlyItem: cn('row-center w-1/2'),
     checkIcon: cn('size-3 mr-1.5', rainbow(COLOR_NAME.GREEN, 'fill')),
     rootCheckIcon: cn('size-3 mr-1.5', rainbow(COLOR_NAME.GREEN, 'fill')),
-    itemTitle: cn('line-clamp-1', fg('article.title')),
+    itemTitle: cn('line-clamp-1', fg('text.title')),
   }
 }

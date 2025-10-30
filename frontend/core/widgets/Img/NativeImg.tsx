@@ -1,4 +1,4 @@
-import { type FC, memo, useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
+import { type FC, memo, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 
 import useSalon, { cn } from './salon'
 
@@ -43,6 +43,8 @@ const NativeImg: FC<TProps> = ({
 
   const loaded = loadCheck && loadCheck2
 
+  if (!src) return null
+
   return (
     <>
       <img
@@ -51,7 +53,7 @@ const NativeImg: FC<TProps> = ({
         src={src}
         alt={alt}
         onClick={onClick}
-        loading="eager"
+        loading='eager'
         onLoad={() => handleOnLoad()}
         onError={() => handleOnError()}
       />

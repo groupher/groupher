@@ -1,0 +1,96 @@
+@utility container-home {
+  margin-inline: auto;
+  max-width: var(--container-home-width);
+  padding-left: theme('spacing.0');
+  padding-right: theme('spacing.0');
+}
+
+/* Article */
+@utility container-article {
+  margin-inline: auto;
+  max-width: var(--container-article-width);
+  padding-left: theme('spacing.5');   /* px-5 => spacing[5] */
+  padding-right: theme('spacing.5');
+
+  @media (min-width: theme('screens.lg')) {
+    padding-left: theme('spacing.5');
+    padding-right: theme('spacing.5');
+  }
+
+  @media (min-width: theme('screens.xl')) {
+    padding-left: theme('spacing.14'); /* xl px-14 */
+    padding-right: theme('spacing.14');
+  }
+}
+
+@utility container-community {
+  margin-inline: auto;
+  max-width: var(--container-community-width);
+  padding-left: theme('spacing.5');
+  padding-right: theme('spacing.5');
+
+  @media (min-width: theme('screens.lg')) {
+    padding-left: theme('spacing.5');
+    padding-right: theme('spacing.5');
+  }
+
+  @media (min-width: theme('screens.xl')) {
+    padding-left: theme('spacing.36');
+    padding-right: theme('spacing.36');
+  }
+}
+
+
+/* Apply community */
+@utility container-apply-community {
+  margin-inline: auto;
+  max-width: var(--container-apply-community-width);
+  padding-left: theme('spacing.5');
+  padding-right: theme('spacing.5');
+
+  @media (min-width: theme('screens.lg')) {
+    padding-left: theme('spacing.5');
+    padding-right: theme('spacing.5');
+  }
+
+  @media (min-width: theme('screens.xl')) {
+    padding-left: theme('spacing.8');  /* 32px */
+    padding-right: theme('spacing.7'); /* 28px */
+  }
+}
+
+/* Dashboard */
+@utility container-dashboard {
+  margin-inline: auto;
+  max-width: var(--container-dashboard-width);
+  padding-left: theme('spacing.20'); 
+  padding-right: theme('spacing.16');
+
+  @media (min-width: theme('screens.lg')) {
+    padding-left: theme('spacing.20');
+    padding-right: theme('spacing.16');
+  }
+
+  @media (min-width: theme('screens.xl')) {
+    padding-left: theme('spacing.36');
+    padding-right: theme('spacing.12');
+  }
+}
+
+/* Community sidebar */
+@utility container-community_sidebar {
+  margin-inline: auto;
+  max-width: var(--container-community-sidebar-width);
+  padding-left: theme('spacing.3'); /* 12px */
+  padding-right: theme('spacing.3');
+
+  @media (min-width: theme('screens.lg')) {
+    padding-left: theme('spacing.3');
+    padding-right: theme('spacing.3');
+  }
+
+  @media (min-width: theme('screens.xl')) {
+    padding-left: theme('spacing.5'); /* 20px */
+    padding-right: theme('spacing.5');
+  }
+}

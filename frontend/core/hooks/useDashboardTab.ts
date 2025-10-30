@@ -1,5 +1,5 @@
-import type { TDashboardPath } from '~/spec'
 import useSubStore from '~/hooks/useSubStore'
+import type { TDashboardPath } from '~/spec'
 
 type TRes = {
   curTab: TDashboardPath

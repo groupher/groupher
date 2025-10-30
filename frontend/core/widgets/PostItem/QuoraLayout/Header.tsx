@@ -1,19 +1,17 @@
-import { type FC, lazy, Suspense } from 'react'
-
 import Link from 'next/link'
-import type { TPost } from '~/spec'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-import useLayout from '~/hooks/useLayout'
-import { THREAD } from '~/const/thread'
+import { type FC, lazy, Suspense } from 'react'
 import { BANNER_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
-
-import TimeAgo from '~/widgets/TimeAgo'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import { THREAD } from '~/const/thread'
+import useLayout from '~/hooks/useLayout'
+import useViewingCommunity from '~/hooks/useViewingCommunity'
+import type { TPost } from '~/spec'
 import ArticleReadLabel from '~/widgets/ArticleReadLabel'
-import Tooltip from '~/widgets/Tooltip'
-import TagsList from '~/widgets/TagsList'
 import CommentsCount from '~/widgets/CommentsCount'
+import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import TagsList from '~/widgets/TagsList'
+import TimeAgo from '~/widgets/TimeAgo'
+import Tooltip from '~/widgets/Tooltip'
 
 import useSalon from '../salon/quora_layout/header'
 
@@ -42,16 +40,16 @@ const Header: FC<TProps> = ({ article }) => {
               <UserCard user={author} />
             </Suspense>
           }
-          placement="bottom-start"
+          placement='bottom-start'
           offset={[-5, 0]}
           delay={500}
         >
           <div className={s.author}>{author.nickname}</div>
         </Tooltip>
         <div className={s.dot} />
-        <div className="mr-0.5" />
+        <div className='mr-0.5' />
         <div className={s.publish}>
-          <TimeAgo datetime={insertedAt} locale="zh_CN" suppressHydrationWarning />
+          <TimeAgo datetime={insertedAt} locale='zh_CN' suppressHydrationWarning />
         </div>
       </div>
       <div className={s.main}>
@@ -61,8 +59,8 @@ const Header: FC<TProps> = ({ article }) => {
         </Link>
 
         {/*  @ts-ignore */}
-        <TagsList items={articleTags} left={2} top="px" />
-        <div className="grow" />
+        <TagsList items={articleTags} left={2} top='px' />
+        <div className='grow' />
         {commentsCount !== 0 && (
           <CommentsCount
             count={commentsCount}

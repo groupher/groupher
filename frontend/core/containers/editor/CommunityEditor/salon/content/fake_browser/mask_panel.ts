@@ -5,10 +5,10 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, global, fg, bg, rainbow, sexyBorder } = useTwBelt()
+  const { cn, fg, bg, rainbow, sexyBorder } = useTwBelt()
 
   return {
-    wrapper: cn('absolute left-0 -bottom-10 pt-16 w-[678px] h-48 px-24', global('hidden-panel')),
+    wrapper: cn('absolute left-0 -bottom-10 pt-16 w-[678px] h-48 px-24 hidden-panel'),
     item: cn('row-center mb-2', fg('text.digest')),
     inner: 'row wrap gap-y-2',
     dot: cn('size-1 circle mr-2', bg('text.digest')),

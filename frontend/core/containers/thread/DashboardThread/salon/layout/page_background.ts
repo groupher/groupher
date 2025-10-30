@@ -1,13 +1,12 @@
 import { keys } from 'ramda'
 
 import twConfig from '~/const/twConfig.json'
-
-import useTwBelt from '~/hooks/useTwBelt'
 import useTheme from '~/hooks/useTheme'
+import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-const pageBgColors = twConfig.pageBgColor
+const pageBgColors = twConfig.containerBgGroup
 
 export default () => {
   const { cn, shadow, br, fg, primary, isBlackPrimary } = useTwBelt()

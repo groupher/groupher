@@ -2,21 +2,18 @@
 
 import { usePathname } from 'next/navigation'
 import { includes } from 'ramda'
-
-import type { TMetric } from '~/spec'
+import { BANNER_LAYOUT } from '~/const/layout'
 
 import METRIC from '~/const/metric'
-import { BANNER_LAYOUT } from '~/const/layout'
 import { STATIC_ROUTES } from '~/const/route'
-
 import useSubStore from '~/hooks/useSubStore'
+import type { TMetric } from '~/spec'
 
 export default (): TMetric => {
   const store = useSubStore('viewing')
   const { bannerLayout } = useSubStore('dashboard')
 
   const pathname = usePathname()
-
   if (includes(pathname, STATIC_ROUTES)) {
     return METRIC.HOME
   }

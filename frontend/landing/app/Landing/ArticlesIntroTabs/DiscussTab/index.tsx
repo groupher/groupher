@@ -1,11 +1,9 @@
 import type { FC } from 'react'
 
 import type { TActive } from '~/spec'
-
-import IntroDigest from './IntroDigest'
-import DiscussDemo from './DiscussDemo'
-
 import useSalon, { cn } from '../../salon/articles_intro_tabs/discuss_tab'
+import DiscussDemo from './DiscussDemo'
+import IntroDigest from './IntroDigest'
 
 const DiscussFeat: FC<TActive> = ({ active }) => {
   const s = useSalon()

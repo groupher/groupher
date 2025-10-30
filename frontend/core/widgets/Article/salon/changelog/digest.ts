@@ -1,17 +1,17 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, hoverable, fg, avatar } = useTwBelt()
+  const { cn, hover, fg, avatar } = useTwBelt()
 
   return {
     wrapper: cn('row items-start justify-between w-full relative mt-12'),
     leftPart: 'grow max-w-[600px]',
     topping: 'align-both -ml-0.5 mb-4 pr-1 relative',
-    backBtn: cn('align-both px-2 py-0.5 rounded-xl', hoverable('bg')),
-    backText: hoverable('fg'),
-    backIcon: cn('size-3 mr-1.5', hoverable('icon')),
+    backBtn: cn('align-both px-2 py-0.5 rounded-xl', hover('bg')),
+    backText: hover('fg'),
+    backIcon: cn('size-3 mr-1.5', hover('icon')),
     //
-    title: cn('text-2xl mb-4 bold-sm max-w-[600px]', fg('article.title')),
+    title: cn('text-2xl mb-4 bold-sm max-w-[600px]', fg('text.title')),
     subTitle: cn(
       'inline-block text-lg ml-2.5 -mt-0.5 opacity-50',
       fg('text.digest'),

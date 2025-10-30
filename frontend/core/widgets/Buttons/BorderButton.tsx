@@ -1,11 +1,8 @@
 import type { ReactNode } from 'react'
-
-import ArrowSVG from '~/icons/ArrowSimple'
-
-import Button from './Button'
-
-import useSalon, { cn } from './salon/border_button'
 import useWallpaper from '~/hooks/useWallpaper'
+import ArrowSVG from '~/icons/ArrowSimple'
+import Button from './Button'
+import useSalon, { cn } from './salon/border_button'
 
 type TProps = {
   children: ReactNode

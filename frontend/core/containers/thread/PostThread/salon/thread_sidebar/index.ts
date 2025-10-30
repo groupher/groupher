@@ -1,9 +1,8 @@
 import { BANNER_LAYOUT } from '~/const/layout'
-
-import useTwBelt from '~/hooks/useTwBelt'
+import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 import useLayout from '~/hooks/useLayout'
 import useScroll from '~/hooks/useScroll'
-import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
+import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
   const { cn, fg, fill, avatar, sexyBorder, linkable, cut } = useTwBelt()
@@ -30,7 +29,7 @@ export default () => {
     linkIcon: cn('size-5 -ml-1 mr-1', fill('text.digest')),
     joiners: 'row mb-6',
     publish: cn('-ml-0.5 w-11/12', badgeInView ? 'block' : 'hidden', isTabberLayout && 'hidden'),
-    moreNum: cn('font ml-1 pointer', fg('text.digest'), `hover:${fg('article.title')}`),
+    moreNum: cn('font ml-1 pointer', fg('text.digest'), `hover:${fg('text.title')}`),
     joinAvatar: cn('size-6 mr-2', avatar()),
     tagsBar: cn('mt-6 max-w-48', isTabberLayout && 'mt-1'),
     unibarWrapper: cn(

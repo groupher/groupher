@@ -1,7 +1,6 @@
-import type { TThemeName } from '~/spec'
 import THEME from '~/const/theme'
-
 import useSubStore from '~/hooks/useSubStore'
+import type { TThemeName } from '~/spec'
 
 type TRet = {
   theme: TThemeName

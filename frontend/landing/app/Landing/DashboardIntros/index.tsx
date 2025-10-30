@@ -1,25 +1,19 @@
 import { useState } from 'react'
 
 import { DASHBOARD_ROUTE } from '~/const/route'
-
-import type { TIntroTab } from './spec'
-
-import HeadTabs from './HeadTabs'
-import SideIntros from './SideIntros'
-
-import LayoutTab from './LayoutTab'
-import SeoTab from './SeoTab'
-
-import CMSTab from './CMSTab'
-import TagsTab from './TagsTab'
-import AdminsTab from './AdminsTab'
-import LinksTab from './LinksTab'
-
-import IntegrateTab from './IntegrateTab'
-import ImportTab from './ImportTab'
-import TrendTab from './TrendTab'
-
 import useSalon from '../salon/dashboard_intros'
+import AdminsTab from './AdminsTab'
+import CMSTab from './CMSTab'
+import HeadTabs from './HeadTabs'
+import ImportTab from './ImportTab'
+import IntegrateTab from './IntegrateTab'
+import LayoutTab from './LayoutTab'
+import LinksTab from './LinksTab'
+import SeoTab from './SeoTab'
+import SideIntros from './SideIntros'
+import type { TIntroTab } from './spec'
+import TagsTab from './TagsTab'
+import TrendTab from './TrendTab'
 
 export default () => {
   const [tab, setTab] = useState<TIntroTab>(DASHBOARD_ROUTE.LAYOUT)

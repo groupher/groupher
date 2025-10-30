@@ -3,25 +3,21 @@
  */
 
 import { type FC, useEffect } from 'react'
-
-import type { TEditMode, TMetric } from '~/spec'
 import METRIC from '~/const/metric'
 import { CONDITION_MODE } from '~/const/mode'
-
+import type { TEditMode, TMetric } from '~/spec'
+import ArchiveAlert from '~/widgets/ArchiveAlert'
 // import RichEditor from '~/containers/editor/RichEditor'
 import ConditionSelector from '~/widgets/ConditionSelector'
-import ArchiveAlert from '~/widgets/ArchiveAlert'
 import NoticeBar from '~/widgets/NoticeBar'
 import TagSelector from '~/widgets/TagSelector'
 
 import ArticleCover from './ArticleCover'
-
-import TitleInput from './TitleInput'
 import Footer from './Footer'
-
+import useSalon from './salon'
+import TitleInput from './TitleInput'
 // import Settings from './Settings'
 import useLogic from './useLogic'
-import useSalon from './salon'
 
 type TProps = {
   metric?: TMetric
@@ -44,14 +40,11 @@ const ArticleEditor: FC<TProps> = ({ metric = METRIC.ARTICLE_EDITOR }) => {
     catOnChange,
     loadArticle,
     loadCommunity,
-    articleTags,
   } = useLogic()
 
   useEffect(() => {
     loadCommunity()
   }, [])
-
-  console.log('## articleTags: ', articleTags)
 
   useEffect(() => {
     if (mode === 'update') loadArticle()
@@ -73,7 +66,7 @@ const ArticleEditor: FC<TProps> = ({ metric = METRIC.ARTICLE_EDITOR }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.inner}>
-        {!allowEdit && <NoticeBar type="notice" content="只有作者可以编辑本内容。" left={5} />}
+        {!allowEdit && <NoticeBar type='notice' content='只有作者可以编辑本内容。' left={5} />}
         {isArchived && <ArchiveAlert date={archivedAt} top={3} bottom={4} left={5} />}
 
         <ArticleCover />

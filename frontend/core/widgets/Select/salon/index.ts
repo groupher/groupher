@@ -1,6 +1,5 @@
-import type { TSpace } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 export { cn } from '~/css'
 
@@ -16,7 +15,7 @@ export default ({ ...spacing }: TProps) => {
     optionTitleActive: fg('text.title'),
     optionDesc: cn('text-xs ml-4', fg('text.hint')),
     // custom components
-    menu: cn('mt-0', bg('htmlBg')),
+    menu: cn('mt-0', bg('card')),
     menuList: 'my-0 pb-px',
     control: cn('border', bg('alphaBg'), br('divider'), `hover:${br('text.digest')}`),
     option: cn('bg-transparent', `hover:${bg('hoverBg')}`),

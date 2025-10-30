@@ -23,7 +23,7 @@ export default () => {
       `focus:${br('text.digest')}`,
       `active:${br('text.digest')}`,
       br('divider'),
-      bg('htmlBg'),
+      bg('card'),
       fg('text.digest'),
     ),
   }

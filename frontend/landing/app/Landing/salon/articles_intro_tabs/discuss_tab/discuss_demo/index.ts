@@ -11,17 +11,17 @@ export default () => {
     wrapper: cn('row items-end relative'),
     listCard: cn(
       'relative h-96 p-6 rounded-xl mb-5 border',
-      shadow('sm'),
-      br('divider'),
+      shadow('card'),
+      br('rainbow.purpleSoft'),
       bg('cardAlpha'),
     ),
 
     // detail card
     detailCard: cn(
       'relative grow w-80 -ml-5 mt-4 p-8 pt-5 z-20 rounded-xl border',
-      bg('cardAlpha'),
-      br('divider'),
-      shadow('sm'),
+      shadow('card'),
+      br('rainbow.purpleSoft'),
+      bg('card'),
     ),
     header: 'row-center mb-2.5 scale-90 -ml-5',
     tagBox: cn('row-center border rounded-md px-1.5 py-0.5', br('divider')),

@@ -1,9 +1,7 @@
 import { DASHBOARD_ROUTE } from '~/const/route'
-
-import type { TIntroTab } from '../../DashboardIntros/spec'
-
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TIntroTab } from '../../DashboardIntros/spec'
 
 type TProps = {
   tab: TIntroTab
@@ -11,7 +9,7 @@ type TProps = {
 
 export default ({ tab }: TProps) => {
   const { isDarkTheme } = useTheme()
-  const { cn, fg, global, landingTitle } = useTwBelt()
+  const { cn, fg, landingTitle } = useTwBelt()
 
   const bgGradient = cn(
     'absolute top-0 left-0 w-full h-full opacity-0 transition-opacity duration-500 -z-10',
@@ -24,42 +22,42 @@ export default ({ tab }: TProps) => {
     desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
     //
     content: 'column items-center relative w-full px-30 h-[720px] overflow-hidden',
-    inner: 'row-center-between w-8/12 h-full gap-x-10 pl-2 -mt-8',
+    inner: 'row-center-between w-10/12 h-full gap-x-10 -mt-8',
     graphDemo: 'align-both w-1/2 h-full mr-2',
 
     bgGradientPurple: cn(
       bgGradient,
-      global('landing-gradient-purple'),
+      'landing-gradient-purple',
       tab === DASHBOARD_ROUTE.LAYOUT && 'opacity-100',
     ),
     bgGradientBlue: cn(
       bgGradient,
-      global('landing-gradient-blue'),
+      'landing-gradient-blue',
       tab === DASHBOARD_ROUTE.POST && 'opacity-100',
     ),
     bgGradientGreen: cn(
       bgGradient,
-      global('landing-gradient-green'),
+      'landing-gradient-green',
       tab === DASHBOARD_ROUTE.TAGS && 'opacity-100',
     ),
     bgGradientBrown: cn(
       bgGradient,
-      global('landing-gradient-brown'),
+      'landing-gradient-brown',
       tab === DASHBOARD_ROUTE.HEADER && 'opacity-100',
     ),
     bgGradientRed: cn(
       bgGradient,
-      global('landing-gradient-red'),
+      'landing-gradient-red',
       tab === DASHBOARD_ROUTE.ADMINS && 'opacity-100',
     ),
     bgGradientCyan: cn(
       bgGradient,
-      global('landing-gradient-cyan'),
+      'landing-gradient-cyan',
       tab === DASHBOARD_ROUTE.SEO && 'opacity-100',
     ),
     bgGradientYellow: cn(
       bgGradient,
-      global('landing-gradient-yellow'),
+      'landing-gradient-yellow',
       tab === DASHBOARD_ROUTE.INOUT && 'opacity-100',
     ),
   }

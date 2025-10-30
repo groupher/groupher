@@ -5,21 +5,18 @@
  */
 
 import type { FC, ReactNode } from 'react'
-
-import useTrans from '~/hooks/useTrans'
-
 import usePageBg from '~/hooks/usePageBg'
 import useTopbar from '~/hooks/useTopbar'
+import useTrans from '~/hooks/useTrans'
 
 // import Broadcast from '~/widgets/Broadcast'
 import Footer from '~/widgets/Footer'
 
-// import DashboardAlert from './DashboardAlert'
+// import DashboardAlert from './D
 // import CustomScroller from '~/widgets/CustomScroller'
 
-import GlowBackground from './GlowBackground'
-
-import useSalon from './salon/main'
+import GlowBackground from '~/widgets/GlobalLayout/GlowBackground'
+import useSalon from '~/widgets/GlobalLayout/salon/main'
 
 type TProps = {
   children: ReactNode
@@ -28,24 +25,24 @@ type TProps = {
 const Main: FC<TProps> = ({ children }) => {
   const s = useSalon()
 
-  const { hasTopbar } = useTopbar()
-  const { background } = usePageBg()
   /**
-   * this is tricy, when clientside changed locale, we force render hte entire app here
+   * this is tricky, when client-side changed locale, we force render hte entire app here
    * the action will make sure each component who use useTrans will not need to wrap with observer
    */
   const { locale } = useTrans()
 
+  const { hasTopbar } = useTopbar()
+  const { background } = usePageBg()
   // const [showDashboardAlertUI, setShowDashboardAlertUI] = useState(false)
 
   return (
-    <div key={locale} className={s.wrapper} style={{ background }}>
+    <main key={locale} className={s.wrapper} style={{ background }}>
       {hasTopbar && <div className={s.topBar} />}
       {/* <Broadcast /> */}
       <div className={s.body}>{children}</div>
       <Footer />
       <GlowBackground />
-    </div>
+    </main>
   )
 }
 

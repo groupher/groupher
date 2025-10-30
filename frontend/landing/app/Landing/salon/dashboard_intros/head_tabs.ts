@@ -17,10 +17,10 @@ export default () => {
   return {
     wrapper: cn('row-center-between wrap gap-x-3.5 gap-y-3 w-8/12 mb-10'),
     button: cn(
-      'align-both text-sm min-w-20 h-8 px-3.5 rounded-xl border trans-all-100',
+      'align-both text-sm min-w-20 h-8 px-3.5 rounded-xl border trans-all-100 pointer',
       `hover:${fg('text.title')}`,
       fg('text.digest'),
-      bg('htmlBg'),
+      bg('card'),
       br('divider'),
     ),
     purpleActive: cn(activeBtn, rainbow(COLOR_NAME.PURPLE, 'bg')),

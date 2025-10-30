@@ -1,7 +1,6 @@
 import type { FC } from 'react'
-
-import MenuItem from '~/widgets/MenuItem'
 import MENU from '~/const/menu'
+import MenuItem from '~/widgets/MenuItem'
 
 import useSalon from '../../salon/footer/editors/link_menu'
 
@@ -31,9 +30,9 @@ const GroupMenu: FC<TProps> = ({
 
   return (
     <div className={s.wrapper}>
-      {!isEdgeLeft && <MenuItem icon={MENU.ARROW_LEFT} title="左移" onClick={() => moveLeft()} />}
+      {!isEdgeLeft && <MenuItem icon={MENU.ARROW_LEFT} title='左移' onClick={() => moveLeft()} />}
       {!isEdgeRight && (
-        <MenuItem icon={MENU.ARROW_RIGHT} title="右移" onClick={() => moveRight()} />
+        <MenuItem icon={MENU.ARROW_RIGHT} title='右移' onClick={() => moveRight()} />
       )}
 
       {/* {!isEdgeLeft && (
@@ -44,7 +43,7 @@ const GroupMenu: FC<TProps> = ({
         <MenuItem icon={MENU.ARROW_TO_RIGHT} title="移至最后" onClick={() => moveEdgeRight()} />
       )} */}
 
-      <MenuItem icon={MENU.DELETE} title="删除" onClick={() => onDelete()} />
+      <MenuItem icon={MENU.DELETE} title='删除' onClick={() => onDelete()} />
     </div>
   )
 }

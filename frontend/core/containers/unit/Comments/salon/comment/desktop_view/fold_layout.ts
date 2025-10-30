@@ -4,10 +4,10 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fill, hoverable, avatar, fg, rainbow } = useTwBelt()
+  const { cn, fill, hover, avatar, fg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row-center relative py-2 px-1 -ml-2', hoverable('bg')),
+    wrapper: cn('row-center relative py-2 px-1 -ml-2', hover('bg')),
     expandIcon: cn('size-3.5 mr-3.5', fill('text.digest')),
     avatar: cn('size-4 mr-2.5', avatar()),
     createDate: cn(

@@ -1,18 +1,17 @@
-import type { TColorName } from '~/spec'
-
-import { upperSnakeCase } from '~/fmt'
 import twConfig from '~/const/twConfig.json'
 
+import { upperSnakeCase } from '~/fmt'
+import type { TColorName } from '~/spec'
+
+/** TODO: 把这些颜色移动到 token/colors 去，配合选择器同时d定制 title/digest/card 的颜色 */
 const pageBgColor = twConfig.pageBgColor
 
-// 定义输入类型
 type TInputColorScheme = {
   [theme: string]: {
     [colorName: string]: string
   }
 }
 
-// 定义输出类型
 type TOutputColorScheme = {
   [theme: string]: {
     [colorName: string]: string
@@ -33,7 +32,7 @@ const generatePageBgColor = (input: TInputColorScheme): TOutputColorScheme => {
   return output
 }
 
-export const PAGE_COLOR_DEFAULT = {
+export const CONTAINER_BG_DEFAULT = {
   light: 'PURE_WHITE',
   dark: 'OUTER_SPACE',
 }

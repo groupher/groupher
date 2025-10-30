@@ -1,12 +1,9 @@
 import Link from 'next/link'
-
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-import usePublicThreads from '~/hooks/usePublicThreads'
-import useLayout from '~/hooks/useLayout'
-
 import { BRAND_LAYOUT } from '~/const/layout'
-
 import { assetSrc } from '~/helper'
+import useLayout from '~/hooks/useLayout'
+import usePublicThreads from '~/hooks/usePublicThreads'
+import useViewingCommunity from '~/hooks/useViewingCommunity'
 // import { titleCase } from '~/fmt'
 
 import Img from '~/Img'
@@ -18,12 +15,11 @@ import AboutSVG from '~/icons/Info'
 // import ChangelogSVG from '~/icons/TadaRaw'
 
 import GithubSVG from '~/icons/Github8'
-import GlobalSVG from '~/icons/social/Global'
-import PlusSVG from '~/icons/PlusCircle'
-
 import OptionArrowSVG from '~/icons/OptionArrow'
-import Tooltip from '~/widgets/Tooltip'
+import PlusSVG from '~/icons/PlusCircle'
+import GlobalSVG from '~/icons/social/Global'
 import ImgFallback from '~/widgets/ImgFallback'
+import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from '../salon/dashboard_layout/community_brief'
 
@@ -40,7 +36,7 @@ export default () => {
         <Img
           className={s.logo}
           src={assetSrc(logo)}
-          fallback={<ImgFallback size={6} title={title} />}
+          fallback={<ImgFallback size={7} title={title} />}
         />
       )}
       {brandLayout !== BRAND_LAYOUT.LOGO && <div className={s.title}>{title}</div>}
@@ -70,35 +66,35 @@ export default () => {
             <Link className={cn(s.panelItem, s.outside)} href={dashboard.baseInfo.homepage}>
               <GlobalSVG className={s.icon} />
               <div>返回官网</div>
-              <div className="grow" />
+              <div className='grow' />
               <ArrowSVG className={s.arrowIcon} />
             </Link>
 
             <Link className={cn(s.panelItem, s.outside)} href={`/${slug}`}>
               <GithubSVG className={s.icon} />
               <div>Github</div>
-              <div className="grow" />
+              <div className='grow' />
               <ArrowSVG className={s.arrowIcon} />
             </Link>
 
             <div className={s.divider} />
-            <Link className={cn(s.panelItem, s.outside)} href="/apply/community">
+            <Link className={cn(s.panelItem, s.outside)} href='/apply/community'>
               <PlusSVG className={s.icon} />
               <div>新社区</div>
-              <div className="grow" />
+              <div className='grow' />
               <ArrowSVG className={s.arrowIcon} />
             </Link>
           </div>
         }
-        placement="bottom"
+        placement='bottom'
         hideOnClick={false}
         offset={[-7, -39]}
-        trigger="click"
+        trigger='click'
         noPadding
       >
         <div className={s.menuWrapper}>
           <div className={s.title}>管理后台</div>
-          <div className="mr-3" />
+          <div className='mr-3' />
           <OptionArrowSVG className={s.optArrowIcon} />
         </div>
       </Tooltip>

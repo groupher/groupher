@@ -1,14 +1,13 @@
+import useTwBelt from '~/hooks/useTwBelt'
+import DiscordSVG from '~/icons/social/Discord'
+import FacebookSVG from '~/icons/social/Facebook'
 import GithubSVG from '~/icons/social/Github'
 import GoogleSVG from '~/icons/social/Google'
-import FacebookSVG from '~/icons/social/Facebook'
-import TwitterSVG from '~/icons/social/Twitter'
-import DiscordSVG from '~/icons/social/Discord'
-import NotionSVG from '~/icons/social/Notion'
-import LinkedInSVG from '~/icons/social/LinkedIn'
-import TwitchSVG from '~/icons/social/Twitch'
 import LineSVG from '~/icons/social/Line'
-
-import useTwBelt from '~/hooks/useTwBelt'
+import LinkedInSVG from '~/icons/social/LinkedIn'
+import NotionSVG from '~/icons/social/Notion'
+import TwitchSVG from '~/icons/social/Twitch'
+import TwitterSVG from '~/icons/social/Twitter'
 
 export default () => {
   const { cn, fg, bg, br, linkable } = useTwBelt()
@@ -25,7 +24,7 @@ export default () => {
       `hover:${bg('hoverBg')}`,
       `hover:${fg('text.title')}`,
       'pointer',
-      // hoverable('bg')
+      // hover('bg')
     ),
     iconBox: 'align-both size-8',
     //

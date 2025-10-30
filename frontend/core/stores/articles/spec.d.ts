@@ -1,13 +1,4 @@
-import type {
-  TAccount,
-  TCommunity,
-  TUser,
-  TPagedArticles,
-  TArticleOrder,
-  TArticleCat,
-  TArticleState,
-  TResState,
-} from '~/spec'
+import type { TArticleCat, TArticleOrder, TArticleState, TPagedArticles, TResState } from '~/spec'
 
 export type TInit = {
   pagedPosts?: TPagedArticles

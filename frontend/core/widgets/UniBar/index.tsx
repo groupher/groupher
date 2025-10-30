@@ -1,29 +1,25 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
-/* eslint-disable react/jsx-no-comment-textnodes */
+/* eslint-disable react/jsx-no-comment-text nodes */
 /*
  */
 
-import { useState, useRef, useCallback } from 'react'
-
+import { useCallback, useRef, useState } from 'react'
+import { scrollToHeader } from '~/dom'
 import useOutsideClick from '~/hooks/useOutsideClick'
 import useTrans from '~/hooks/useTrans'
 
-import { scrollToHeader } from '~/dom'
-
 import ArrowTopSVG from '~/icons/Arrow2Top'
-import NotifySVG from '~/icons/Notify'
+import PeopleSVG from '~/icons/HeartPulse'
 import I18nSVG from '~/icons/I18n'
 import MoreSVG from '~/icons/menu/MoreL'
-import PeopleSVG from '~/icons/HeartPulse'
+import NotifySVG from '~/icons/Notify'
 
 import ThemeSwitch from '~/widgets/ThemeSwitch'
 import Tooltip from '~/widgets/Tooltip'
-
+import { MENU, TIP_OPTIONS } from './constant'
 import I18nPanel from './I18nPanel'
 import MorePanel from './MorePanel'
 import NotifyPanel from './NotifyPanel'
-
-import { MENU, TIP_OPTIONS } from './constant'
 import useSalon, { cn } from './salon'
 
 export default () => {
@@ -56,13 +52,13 @@ export default () => {
 
       <div className={s.buttonBar}>
         <Tooltip content={<div className={s.tipText}>{t('to.top')}</div>} {...TIP_OPTIONS}>
-          <div className={s.topBox} onClick={() => scrollToHeader()}>
+          <button className={s.topBox} onClick={() => scrollToHeader()}>
             <ArrowTopSVG className={s.icon} />
-          </div>
+          </button>
         </Tooltip>
 
         <Tooltip content={<div className={s.tipText}>{t('mention.msg')}</div>} {...TIP_OPTIONS}>
-          <div
+          <button
             className={cn(s.iconBox, menu === MENU.NOTIFY.key && s.iconActive)}
             onClick={() => {
               setMenu(MENU.NOTIFY.key)
@@ -70,24 +66,24 @@ export default () => {
             }}
           >
             <NotifySVG className={s.icon} />
-          </div>
+          </button>
         </Tooltip>
 
         <Tooltip content={<div className={s.tipText}>{t('active.users')}</div>} {...TIP_OPTIONS}>
-          <div
+          <button
             className={cn(s.iconBox, menu === MENU.PEOPLE.key && s.iconActive)}
             onClick={() => handleOpenMenu(MENU.PEOPLE.key)}
           >
             <PeopleSVG className={cn(s.icon, menu === MENU.PEOPLE.key && s.iconPeopleActive)} />
-          </div>
+          </button>
         </Tooltip>
         <Tooltip content={<div className={s.tipText}>{t('locale')}</div>} {...TIP_OPTIONS}>
-          <div
+          <button
             className={cn(s.iconBox, menu === MENU.I18N.key && s.iconActive)}
             onClick={() => handleOpenMenu(MENU.I18N.key)}
           >
             <I18nSVG className={s.iconI18n} />
-          </div>
+          </button>
         </Tooltip>
         <Tooltip content={<div className={s.tipText}>{t('theme')}</div>} {...TIP_OPTIONS}>
           <div className={s.iconBox}>
@@ -95,12 +91,12 @@ export default () => {
           </div>
         </Tooltip>
         <Tooltip content={<div className={s.tipText}>{t('more')}</div>} {...TIP_OPTIONS}>
-          <div
+          <button
             className={cn(s.iconBox, menu === MENU.MORE.key && s.iconActive)}
             onClick={() => handleOpenMenu(MENU.MORE.key)}
           >
             <MoreSVG className={s.icon} />
-          </div>
+          </button>
         </Tooltip>
       </div>
       <div className={s.shadowMask} />

@@ -1,36 +1,52 @@
-import { reject, mergeRight, isEmpty } from 'ramda'
-import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
-
+import { cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
+// import { cacheLife, cacheTag } from 'next/cache'
+import { isEmpty, mergeRight, reject } from 'ramda'
+import { CACHE_TAG } from '~/const/cache'
+import { LOCALE } from '~/const/i18n'
+import METRIC from '~/const/metric'
+import { HCN } from '~/const/name'
+import THEME from '~/const/theme'
+import { THREAD } from '~/const/thread'
+import URL_PARAM from '~/const/url_param'
+import { loadLocaleFile } from '~/i18n'
+import { P } from '~/schemas'
 import type {
-  TThread,
-  TPagedArticles,
   TCommunityInfo,
-  TTag,
-  TUrlInfo,
-  TThemeName,
   TMetric,
+  TPagedArticles,
+  TTag,
+  TThemeName,
+  TThread,
+  TUrlInfo,
 } from '~/spec'
 import type { TRootStoreInit } from '~/stores/spec'
-import { nilOrEmpty } from '~/validator'
-import { CACHE_TAG } from '~/const/cache'
-import URL_PARAM from '~/const/url_param'
-import { HCN } from '~/const/name'
-import { THREAD } from '~/const/thread'
-import THEME from '~/const/theme'
-import METRIC from '~/const/metric'
-
-import { P } from '~/schemas'
 import { gqFetch } from '~/utils/api'
-import { parseWallpaper, parseDashboard } from '~/utils/ssr'
 import { extractQueryName } from '~/utils/graphql'
-import { loadLocaleFile } from '~/i18n'
-import { LOCALE } from '~/const/i18n'
+import { parseDashboard, parseWallpaper } from '~/utils/ssr'
+import { nilOrEmpty } from '~/validator'
 
 export const ARTICLES_FILTER = {
   community: HCN,
   page: 1,
   size: 20,
 }
+
+export const LANDING_SSR_INFO = {
+  theme: THEME.LIGHT,
+  articles: {},
+  viewing: {
+    metric: METRIC.HOME,
+    community: {
+      slug: HCN,
+      homepage: '',
+      desc: '',
+      meta: { postsCount: 0, docsCount: 0, blogsCount: 0, changelogsCount: 0 },
+      dashboard: {},
+    },
+  },
+  wallpaper: undefined,
+  dashboard: undefined,
+} satisfies TRootStoreInit
 
 export const getArticlesParams = (community: string, urlInfo: TUrlInfo) => {
   const { searchParams } = urlInfo
@@ -77,6 +93,7 @@ export const getCommunity = async (
 
 export const getTags = async (community: string, thread: TThread): Promise<TTag[] | []> => {
   'use cache'
+  //
   cacheLife('days')
   cacheTag(CACHE_TAG.tagsCache(community, thread))
 
@@ -96,7 +113,7 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
 
 // type TServerPostsPage = [community: TCommunity, pagedPosts: TPagedPosts, tags: TTag[]]
 
-const useThemeFromURL = async (searchParams: URLSearchParams): Promise<TThemeName> => {
+const useThemeFromURL = async (_searchParams: URLSearchParams): Promise<TThemeName> => {
   // 'use cache'
   // const theme = searchParams?.get('theme')
 
@@ -107,7 +124,8 @@ const useThemeFromURL = async (searchParams: URLSearchParams): Promise<TThemeNam
   return THEME.LIGHT
 }
 
-export const useMetric = async (pathname): Promise<TMetric> => {
+const useMetric = async (pathname): Promise<TMetric> => {
+  console.log('## TODO: useMetric: ', pathname)
   // 'use cache'
   // const thread = parseThread(pathname)
   // const articleParams = useArticleParams()
@@ -124,7 +142,8 @@ export const useMetric = async (pathname): Promise<TMetric> => {
   //   return METRIC.DASHBOARD
   // }
 
-  return METRIC.COMMUNITY
+  // return METRIC.COMMUNITY
+  return METRIC.DASHBOARD
 }
 
 export const parseRouteInfo = (info: string): TUrlInfo => {
@@ -187,33 +206,6 @@ export const getSSRInitData = async (urlInfo: TUrlInfo): Promise<TRootStoreInit>
 
   if (!isEmpty(tags)) {
     initState.viewing.tags = tags
-  }
-
-  return initState
-}
-
-export const getSSRLandingData = async (): Promise<TRootStoreInit> => {
-  const community$ = 'home'
-
-  // const community = await getCommunity(community$)
-  const response = await gqFetch(P.community, { slug: community$, userHasLogin: false })
-  const { data } = await response.json()
-
-  const communityInfo = data
-
-  const { community, dashboard, wallpaper } = communityInfo
-
-  const initState = {
-    theme: THEME.LIGHT,
-    // locale,
-    // localeData,
-    articles: {},
-    viewing: {
-      metric: METRIC.COMMUNITY,
-      community,
-    },
-    wallpaper,
-    dashboard,
   }
 
   return initState

@@ -7,7 +7,7 @@ import { GlobalLayout, GraphQLProvider, getSSRInitData, parseRouteInfo } from '~
 import StoreProvider from '~/stores/provider'
 import { deepSanitize } from '~/utils/fmt'
 
-import '../salon/global.css'
+import '~/tailwind/global.css'
 
 export const metadata: Metadata = {
   title: 'Groupher | 让你的产品听见用户的声音',
@@ -28,7 +28,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <html lang='en'>
       <body>
         <GraphQLProvider>
-          <Suspense fallback={<h1>todo...</h1>}>
+          <Suspense fallback={<h1>dashboard loading...</h1>}>
             {/* @ts-ignore */}
             <StoreInitLoader>
               <GlobalLayout>{children}</GlobalLayout>

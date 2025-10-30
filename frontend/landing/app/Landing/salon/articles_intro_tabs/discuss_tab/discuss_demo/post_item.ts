@@ -1,10 +1,9 @@
+import { COLOR_NAME } from '~/const/colors'
+import useTwBelt from '~/hooks/useTwBelt'
 import type { TActive } from '~/spec'
 
-import { COLOR_NAME } from '~/const/colors'
-
-import useTwBelt from '~/hooks/useTwBelt'
-
 export { cn } from '~/css'
+
 type TProps = TActive
 
 export default ({ active }: TProps) => {
@@ -14,8 +13,8 @@ export default ({ active }: TProps) => {
     wrapper: cn('row h-12 px-1.5 py-1 mb-2.5'),
     upvote: cn(
       'column-align-both size-10 rounded-md border',
-      br('text.digest'),
-      shadow('sm'),
+      br('rainbow.purpleSoft'),
+      shadow('card'),
       !active && 'border-dotted',
       active && rainbow(COLOR_NAME.PURPLE, 'bgSoft'),
       active && rainbow(COLOR_NAME.PURPLE, 'borderSoft'),

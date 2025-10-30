@@ -1,3 +1,3 @@
 {
-  "extends": ["./frontend/config/biome.json"]
+  "extends": ["./frontend/core/biome.json"]
 }

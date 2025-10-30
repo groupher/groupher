@@ -1,18 +1,18 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, bg, br, global, shadow } = useTwBelt()
+  const { cn, fg, bg, br, shadow } = useTwBelt()
 
   return {
     wrapper: cn(
       'row justify-between w-11/12 h-40 px-3.5 pb-0 pt-5 z-20 rounded-xl border',
       'absolute bottom-2 left-4',
       shadow('sm'),
-      bg('htmlBg'),
+      bg('card'),
       br('divider'),
     ),
     brand: 'w-1/3',
-    communityLogo: cn('size-6 rounded mr-1.5 mt-0.5 mb-2', global('gradient-orange')),
+    communityLogo: cn('size-6 rounded mr-1.5 mt-0.5 mb-2 gradient-orange'),
     title: cn('row-center text-sm', fg('text.title')),
     desc: cn('row-center text-xs mt-1', fg('text.digest')),
     //

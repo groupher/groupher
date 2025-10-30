@@ -13,7 +13,7 @@ export default () => {
     wrapper: cn('column-align-both w-[1400px] h-auto mb-16 px-44'),
     inner: 'row wrap w-full h-auto relative',
     block: 'column w-1/3 h-48 px-10 py-5',
-    title: cn('text-base bold-sm mt-5 mb-1.5', fg('text.digest')),
+    title: cn('text-base mt-5 mb-1.5', fg('text.title')),
     desc: cn('text-sm', fg('text.digest')),
     //
     iconBox: 'align-both size-8',

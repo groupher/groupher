@@ -4,9 +4,10 @@
  *
  */
 
-import { type FC, type ReactNode, lazy, Suspense } from 'react'
+import { type FC, lazy, type ReactNode, Suspense } from 'react'
 
 import Mushroom from '~/containers/Mushroom'
+import useTheme from '~/hooks/useTheme'
 
 // import Broadcast from '~/widgets/Broadcast'
 // import ModeLine from '~/containers/unit/ModeLine'
@@ -14,11 +15,10 @@ import Mushroom from '~/containers/Mushroom'
 // import DashboardAlert from './DashboardAlert'
 // import CustomScroller from '~/widgets/CustomScroller'
 
-import SEO from './SEO'
-import Wallpaper from './Wallpaper'
 import Main from './Main'
-
+import SEO from './SEO'
 import useSalon from './salon'
+import Wallpaper from './Wallpaper'
 
 const Addon = lazy(() => import('./Addon'))
 
@@ -26,10 +26,14 @@ const Addon = lazy(() => import('./Addon'))
 
 type TProps = {
   children: ReactNode
+  mainBlock?: FC<{ children: ReactNode }>
 }
 
-const GlobalLayout: FC<TProps> = ({ children }) => {
+const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
   const s = useSalon()
+  const { theme } = useTheme()
+
+  const MainWrapper = mainBlock || Main
 
   // useSyncAccount()
   // const [showDashboardAlertUI, setShowDashboardAlertUI] = useState(false)
@@ -45,7 +49,7 @@ const GlobalLayout: FC<TProps> = ({ children }) => {
   // }, [showDashboardAlert])
 
   return (
-    <>
+    <div data-theme={theme}>
       <Mushroom />
       <Suspense fallback={null}>
         <Addon />
@@ -55,7 +59,7 @@ const GlobalLayout: FC<TProps> = ({ children }) => {
         <div className={s.scrollWrapper}>
           <div className={s.wrapper}>
             <SEO />
-            <Main>{children}</Main>
+            <MainWrapper>{children}</MainWrapper>
             {/* {isMobile && <ModeLine />} */}
           </div>
         </div>
@@ -63,7 +67,7 @@ const GlobalLayout: FC<TProps> = ({ children }) => {
 
       {/* <DashboardAlert /> */}
       {/* {showDashboardAlertUI && <DashboardAlert />} */}
-    </>
+    </div>
   )
 }
 

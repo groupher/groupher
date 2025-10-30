@@ -1,29 +1,22 @@
-import { clsx, type ClassValue } from 'clsx'
-
-import { cn, zIndex as Z_INDEX } from '~/css'
-
-import type { TColorName, TSpace, TZIndexKey } from '~/spec'
+import { type ClassValue, clsx } from 'clsx'
 import { COLOR_NAME } from '~/const/colors'
-import type { TFlatThemeKey } from '~/utils/themes/skins'
-
-import twConfig from '~/const/twConfig.json'
-import { camelize } from '~/fmt'
-
 import METRIC from '~/const/metric'
-import useTheme from '~/hooks/useTheme'
-import useMetric from '~/hooks/useMetric'
+import twConfig from '~/const/twConfig.json'
+import { cn } from '~/css'
+import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
+import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
+import useTheme from '~/hooks/useTheme'
+import type { TColorName, TFlatThemeKey, TSpace, TZIndexType } from '~/spec'
 
 const containerConf = twConfig.container
-const borderSoftConf = twConfig.borderSoft
 
 type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 'decoration'
 type TLinkColorPrefix = 'fg' | 'fill'
 type TBreakOut = 'footer' | 'header'
 type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon'
-type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'drawer' | 'modal'
-type TThemeSwitch = 'auto' | 'dark' | 'light'
+type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'card' | 'drawer' | 'modal'
 type TDimLevel = 'lg' | 'md' | 'sm'
 type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red' | 'fg' | 'fg-red'
 type TCutWWidth = `w-${number}` | `w-[${number}px]`
@@ -31,14 +24,12 @@ type TCutWWidth = `w-${number}` | `w-[${number}px]`
 type TRet = {
   cn: (...inputs: ClassValue[]) => string
   container: () => string
-  global: (className: string) => string
-  fg: (key: TFlatThemeKey, switchBy?: TThemeSwitch) => string
-  bg: (key: TFlatThemeKey, switchBy?: TThemeSwitch) => string
-  fill: (key: TFlatThemeKey, switchBy?: TThemeSwitch) => string
+  fg: (key: TFlatThemeKey) => string
+  bg: (key: TFlatThemeKey) => string
+  fill: (key: TFlatThemeKey) => string
   br: (key: TFlatThemeKey) => string
   rainbow: (color: TColorName, prefix?: TColorPrefix) => string
   rainbowSoft: (color: TColorName | string) => string
-  rainbowPale: (color: TColorName | string) => string
   primary: (prefix?: TColorPrefix) => string
   linker: (prefix?: TLinkColorPrefix) => string
   linkable: () => string
@@ -59,16 +50,16 @@ type TRet = {
   shadow: (size: TShadowType) => string
   cut: (classname?: TCutWWidth) => string
   landingTitle: () => string
-  hoverable: (part: THoverPart) => string
-  zIndex: (key: TZIndexKey) => string
+  hover: (part: THoverPart) => string
+  zIndex: (key: TZIndexType, visible?: boolean) => string
 
   isDarkBlack: boolean
   isBlackPrimary: boolean
 }
 
 /**
- * NOTE: the classNams returned from here, must me declared in the tailwind.config's safelist
- * even you return static strings, cauze those are consided as dynamic, and tailwind will not know them
+ * NOTE: the classNames returned from here, must me declared in the tailwind.config's safelist
+ * even you return static strings, cuz those are consider as dynamic, and tailwind will not know them
  */
 export default (): TRet => {
   const { isLightTheme } = useTheme()
@@ -89,27 +80,13 @@ export default (): TRet => {
   const isBlackPrimary = primaryColor === COLOR_NAME.BLACK
 
   /**
-   * cover article.title -> article-title to match the tailwind csss varaible name
+   * cover article.title -> article-title to match the tailwind css vars name
    */
-  const _theme = (key: TFlatThemeKey, prefix: string, switchBy?: TThemeSwitch) => {
-    if (switchBy === 'dark') return `${prefix}-${key.replace(/\./g, '-')}-dark`
-    if (switchBy === 'light') return `${prefix}-${key.replace(/\./g, '-')}`
+  const _theme = (key: TFlatThemeKey, prefix: string) => `${prefix}-${key.replace(/\./g, '-')}`
 
-    return isLightTheme
-      ? `${prefix}-${key.replace(/\./g, '-')}`
-      : `${prefix}-${key.replace(/\./g, '-')}-dark`
-  }
-
-  const global = (className: string) => (isLightTheme ? className : `${className}-dark`)
-  const fg = (key: TFlatThemeKey, switchBy: TThemeSwitch = 'auto') => {
-    return _theme(key, 'text', switchBy)
-  }
-  const bg = (key: TFlatThemeKey, switchBy: TThemeSwitch = 'auto') => {
-    return _theme(key, 'bg', switchBy)
-  }
-  const fill = (key: TFlatThemeKey, switchBy: TThemeSwitch = 'auto') => {
-    return _theme(key, 'fill', switchBy)
-  }
+  const fg = (key: TFlatThemeKey) => _theme(key, 'text')
+  const bg = (key: TFlatThemeKey) => _theme(key, 'bg')
+  const fill = (key: TFlatThemeKey) => _theme(key, 'fill')
   const br = (key: TFlatThemeKey) => _theme(key, 'border')
 
   const _rainbowalias = (prefix: TColorPrefix): string => {
@@ -144,22 +121,18 @@ export default (): TRet => {
         return bg('hoverBg')
       }
 
-      return isLightTheme ? `${prefix$}-${color$}Soft` : `${prefix$}-${color$}Soft-dark`
+      return `${prefix$}-${color$}Soft`
     }
 
     if (prefix === 'borderSoft') {
-      const opacity = isLightTheme ? borderSoftConf.opacity : borderSoftConf.opacity_dark
-
       if (isDarkBlack && metric !== METRIC.HOME) {
-        return 'border-text-hint-dark'
+        return 'border-text-hint'
       }
 
-      return isLightTheme
-        ? `${prefix$}-${color$}/${opacity}`
-        : `${prefix$}-${color$}-dark/${opacity}`
+      return `${prefix$}-${color$}/50`
     }
 
-    return isLightTheme ? `${prefix$}-${color$}` : `${prefix$}-${color$}-dark`
+    return `${prefix$}-${color$}`
   }
 
   const rainbowSoft = (color: TColorName | string): string => {
@@ -170,18 +143,7 @@ export default (): TRet => {
       return bg('hoverBg')
     }
 
-    return isLightTheme ? `${prefix$}-${color$}Soft` : `${prefix$}-${color$}Soft-dark`
-  }
-
-  const rainbowPale = (color: TColorName | string): string => {
-    const prefix$ = 'bg-rainbow'
-    const color$ = camelize(color)
-
-    if (color === COLOR_NAME.BLACK) {
-      return bg('hoverBg')
-    }
-
-    return isLightTheme ? `${prefix$}-${color$}Pale` : `${prefix$}-${color$}Pale-dark`
+    return `${prefix$}-${color$}Soft`
   }
 
   /**
@@ -251,11 +213,11 @@ export default (): TRet => {
   }
 
   const sexyBorder = (turn = 35): string => {
-    return cn('h-px w-full border-b', global(`sexy-border-${turn}`))
+    return cn('h-px w-full border-b', `sexy-border-${turn}`)
   }
 
   const sexyVBorder = (turn: number, classNames = ''): string => {
-    return cn('h-full w-px border-l', global(`sexy-border-${turn}`), classNames)
+    return cn('h-full w-px border-l', `sexy-border-${turn}`, classNames)
   }
 
   const avatar = (level = 'md') => {
@@ -277,13 +239,12 @@ export default (): TRet => {
 
     if (type === 'footer') {
       return cn(
-        'w-full',
+        'w-full footer-inner-shadow',
         `w-[${unit.width}]`,
         `-ml-${unit.pl}`,
         `mr-${unit.pr}`,
         `pl-${unit.pl}`,
         `pr-${unit.pr}`,
-        global('footer-inner-shadow'),
       )
     }
 
@@ -337,9 +298,7 @@ export default (): TRet => {
     }
   }
 
-  const shadow = (size: TShadowType): string => {
-    return global(`shadow-${size}`)
-  }
+  const shadow = (metric: TShadowType): string => `shadow-${metric}`
 
   const cut = (classnames: TCutWWidth = 'w-12'): string => {
     const maxWidth = classnames.replace('w-', 'max-w-')
@@ -347,14 +306,10 @@ export default (): TRet => {
   }
 
   const landingTitle = (): string => {
-    return cn(
-      'text-3xl bold-sm opacity-70',
-      fg('text.title'),
-      isLightTheme && global('text-shadow'),
-    )
+    return cn('text-3xl bold-sm opacity-70', fg('text.title'), isLightTheme && 'text-shadow')
   }
 
-  const hoverable = (part: THoverPart): string => {
+  const hover = (part: THoverPart): string => {
     switch (part) {
       case 'bg': {
         return cn('group align-both rounded trans-all-100 pointer', `hover:${bg('hoverBg')}`)
@@ -391,13 +346,14 @@ export default (): TRet => {
     }
   }
 
-  const zIndex = (key: TZIndexKey): string => {
-    return `z-[${Z_INDEX[key]}]`
+  const zIndex = (type: TZIndexType, visible?: boolean): string => {
+    if (visible === false) return '-z-10'
+
+    return `z-${type}`
   }
 
   return {
     cn,
-    global,
     container,
     fg,
     bg,
@@ -405,7 +361,6 @@ export default (): TRet => {
     br,
     rainbow,
     rainbowSoft,
-    rainbowPale,
     primary,
     linker,
     linkable,
@@ -428,7 +383,7 @@ export default (): TRet => {
     isBlackPrimary,
     landingTitle,
     dimDark,
-    hoverable,
+    hover,
     zIndex,
   }
 }

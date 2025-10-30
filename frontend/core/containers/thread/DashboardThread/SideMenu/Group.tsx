@@ -1,5 +1,5 @@
-import { type FC, useState } from 'react'
 import Link from 'next/link'
+import { type FC, useState } from 'react'
 
 import { DASHBOARD_ROUTE } from '~/const/route'
 
@@ -7,14 +7,12 @@ import useDashboardTab from '~/hooks/useDashboardTab'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 
 import ArrowSVG from '~/icons/ArrowSimple'
-import InfoSVG from '~/icons/Info'
-import PulseSVG from '~/icons/Pulse'
-import ManagementSVG from '~/icons/Management'
 import BindSVG from '~/icons/Bind'
-
-import type { TMenuGroup } from '../spec'
-
+import InfoSVG from '~/icons/Info'
+import ManagementSVG from '~/icons/Management'
+import PulseSVG from '~/icons/Pulse'
 import useSalon, { cn } from '../salon/side_menu/group'
+import type { TMenuGroup } from '../spec'
 
 type TProps = {
   group: TMenuGroup
@@ -22,6 +20,7 @@ type TProps = {
 
 const Group: FC<TProps> = ({ group }) => {
   const { curTab, changeTab } = useDashboardTab()
+
   const community = useViewingCommunity()
   const [fold, setFold] = useState(group.initFold)
 

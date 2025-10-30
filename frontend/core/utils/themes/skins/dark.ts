@@ -1,7 +1,7 @@
 /*
  * dark mode
  */
-import { lighten, darken } from '~/utils/color'
+import { darken, lighten } from '~/utils/color'
 
 const primaryColor = '#333333' // '#000000'
 const bannerBg = '#222222' //  '#161616'
@@ -20,7 +20,6 @@ const hint = '#9d9999'
 
 export default {
   primary: primaryColor,
-  htmlBg: bannerBg,
   loading: {
     basic: '#E0E0E0',
     animate: contentBg,

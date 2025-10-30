@@ -1,19 +1,17 @@
-import { SHARE_TYPE } from '../../constant'
-
+import useTwBelt from '~/hooks/useTwBelt'
+import CodeSVG from '~/icons/Code'
 import LinkSVG from '~/icons/Link'
 import EmailSVG from '~/icons/Mail'
+import DoubanSVG from '~/icons/social/Douban'
+import FacebookSVG from '~/icons/social/Facebook'
+import TelegramSVG from '~/icons/social/Telegram'
 import TwitterSVG from '~/icons/social/Twitter'
 import WeChatSVG from '~/icons/social/WeChat'
 import WeiboSVG from '~/icons/social/Weibo'
-import TelegramSVG from '~/icons/social/Telegram'
-import DoubanSVG from '~/icons/social/Douban'
-import FacebookSVG from '~/icons/social/Facebook'
-import CodeSVG from '~/icons/Code'
-
-import useTwBelt from '~/hooks/useTwBelt'
+import { SHARE_TYPE } from '../../constant'
 
 export default () => {
-  const { cn, fg, fill, cut, hoverable } = useTwBelt()
+  const { cn, fg, fill, cut, hover } = useTwBelt()
 
   return {
     wrapper: cn('px-5 pb-4 w-full min-h-44 trans-all-200'),
@@ -22,10 +20,10 @@ export default () => {
     article: cn('text-sm mx-1', cut('w-44'), fg('text.title')),
     inner: 'row wrap',
     //
-    media: cn('size-20 column-align-both', hoverable('bg')),
+    media: cn('size-20 column-align-both', hover('bg')),
     logoBox: 'size-8 align-both',
-    icon: cn('size-7', fill('text.digest'), hoverable('icon')),
-    title: cn('text-xs mt-1', hoverable('fg')),
+    icon: cn('size-7', fill('text.digest'), hover('icon')),
+    title: cn('text-xs mt-1', hover('fg')),
   }
 }
 

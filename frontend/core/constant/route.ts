@@ -1,11 +1,11 @@
 import type {
-  TDashboardPath,
-  TDashboardLayoutRoute,
-  TDashboardBroadcastRoute,
   TDashboardAliasRoute,
   TDashboardBaseInfoRoute,
-  TDashboardSEORoute,
+  TDashboardBroadcastRoute,
   TDashboardDocRoute,
+  TDashboardLayoutRoute,
+  TDashboardPath,
+  TDashboardSEORoute,
 } from '~/spec'
 
 export const NON_COMMUNITY_ROUTE = {
@@ -90,6 +90,7 @@ export const DASHBOARD_ALIAS_ROUTE = {
   OTHERS: 'others',
 } as Record<Uppercase<TDashboardAliasRoute>, TDashboardAliasRoute>
 
+// TODO: use safe route
 export const ROUTE = {
   BOOK_DEMO: 'book-demo',
   // NOTE: the lower-case is MUST

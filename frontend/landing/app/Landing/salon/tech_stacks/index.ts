@@ -1,5 +1,5 @@
-import useTwBelt from '~/hooks/useTwBelt'
 import useTheme from '~/hooks/useTheme'
+import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
@@ -22,6 +22,6 @@ export default () => {
     title: landingTitle(),
     desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
     cadBg: cn('absolute top-0 h-full object-cover z-10 opacity-60'),
-    cadDark: isDarkTheme && 'opacity-30',
+    cadDark: isDarkTheme && 'opacity-40',
   }
 }

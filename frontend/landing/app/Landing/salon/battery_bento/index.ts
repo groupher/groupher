@@ -1,11 +1,10 @@
-import type { TColorName } from '~/spec'
-
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TColorName } from '~/spec'
 
 export default () => {
   const { isDarkTheme } = useTheme()
-  const { cn, fg, global, rainbow, landingTitle } = useTwBelt()
+  const { cn, fg, rainbow, landingTitle } = useTwBelt()
 
   return {
     wrapper: cn('column-align-both w-full mt-32 mb-16'),
@@ -26,7 +25,7 @@ export default () => {
     gradient: (color: TColorName): string => {
       const color$ = color.toLowerCase()
 
-      return cn(global(`gradient-${color$}`), `hover:${rainbow(color, 'border')}`)
+      return cn(`gradient-${color$}`, `hover:${rainbow(color, 'border')}`)
     },
     introTitle: cn('text-base mb-1', fg('text.title')),
     introDesc: cn('text-sm break-all', fg('text.digest')),

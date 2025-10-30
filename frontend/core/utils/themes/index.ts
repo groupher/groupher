@@ -13,9 +13,8 @@
 
 import { path, split } from 'ramda'
 
-import type { TTheme } from '~/spec'
+import type { TFlatThemeKey, TTheme } from '~/spec'
 
-import type { TFlatThemeKey } from './skins'
 import skinsData from './skins'
 
 export const themeSkins = { ...skinsData }

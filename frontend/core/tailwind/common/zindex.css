@@ -1,0 +1,38 @@
+@layer utilities {
+   .z-modal {
+    z-index: var(--z-modal);
+  }
+
+  .z-popover {
+    z-index: var(--z-popover);
+  }
+
+  .z-tooltip {
+    z-index: var(--z-tooltip);
+  }
+
+  .z-modalOverlay {
+    z-index: var(--z-modalOverlay);
+  }
+
+  .z-modalCloseBtn {
+    z-index: var(--z-modalCloseBtn);
+  }
+
+  .z-drawer {
+    z-index: var(--z-drawer);
+  }
+
+  .z-drawerOverlay {
+    z-index: var(--z-drawerOverlay);
+  }
+
+  .z-articleFixedHeader {
+    z-index: var(--z-articleFixedHeader);
+  }
+
+  .z-header {
+    z-index: var(--z-header);
+  }
+}
+

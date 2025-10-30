@@ -1,10 +1,13 @@
 {
-  "extends": "@groupher/frontend-config/tsconfig.json",
+  "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "~/config": ["./config"],
       "~/hooks": ["./hooks"],
       "~/hooks/*": ["./hooks/*"],
+      "~/stores/*": ["./stores/*"],
+      "~/stores": ["./stores"],
       "~/utils": ["./utils"],
       "~/utils/*": ["./utils/*"],
       "~/server": ["./utils/api"],
@@ -41,11 +44,20 @@
       "~/Img": ["./widgets/Img"],
       "~/const": ["./constant/"],
       "~/const/*": ["./constant/*"],
-      "~/stores/*": ["./stores/*"],
-      "~/stores": ["./stores"],
-
-      "~/config": ["./config"]
+      "~/providers": ["../core/providers/"],
+      "~/providers/*": ["../core/providers/*"],
+      "~/middlewares": ["../core/middlewares/"],
+      "~/middlewares/*": ["../core/middlewares/*"],
+      "~/tailwind/*": ["./tailwind/*"],
+      "~/tailwind": ["./tailwind"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.tsx", "**/*.ts", ".next/types/**/*.ts"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.tsx",
+    "**/*.ts",
+    ".next/types/**/*.ts",
+    "../landing/app/Main.tsx"
+  ],
+  "exclude": ["node_modules", "**/*.test.ts"]
 }

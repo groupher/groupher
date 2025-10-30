@@ -5,7 +5,7 @@ export { cn } from '~/css'
 
 export default () => {
   const { isDarkTheme } = useTheme()
-  const { cn, fg, br, bg, shadow, global, vividDark } = useTwBelt()
+  const { cn, fg, br, bg, shadow, vividDark } = useTwBelt()
 
   return {
     wrapper: cn('column-alian-center w-full mt-4', fg('text.digest')),
@@ -33,7 +33,7 @@ export default () => {
     gradientBar: cn('absolute left-0 -top-px h-6 rounded-xl trans-all-200 overflow-hidden'),
     gradientBg: cn(
       'absolute top-0 left-0 w-full h-full',
-      global('gradient-purple'),
+      'gradient-purple',
       isDarkTheme && 'rotate-180',
       vividDark(),
     ),

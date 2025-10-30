@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "main": "index.js",
   "types": "index.d.ts",
+  "exports": {
+    "./tsconfig": "./tsconfig.app.json",
+    "./jsconfig": "./jsconfig.json",
+    "./tailwind.config": "./tailwind.config.js",
+    "./postcss.config": "./postcss.config.js",
+    "./biome": "./biome.json",
+    "./next.config": "./next.config.js"
+  },
   "scripts": {
     "lint": "biome lint **/*.{ts,tsx} ",
     "format": "echo 'skip format'",
@@ -10,8 +18,5 @@
   },
   "lint-staged": {
     "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
-  },
-  "dependencies": {
-    "@groupher/frontend-config": "1.0.0"
   }
 }

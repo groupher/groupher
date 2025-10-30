@@ -1,6 +1,6 @@
+import useTwBelt from '~/hooks/useTwBelt'
 import type { TSpace } from '~/spec'
 
-import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 type TProps = {
@@ -8,11 +8,11 @@ type TProps = {
 } & TSpace
 
 export default ({ isHighLight, ...spacing }: TProps) => {
-  const { cn, fg, fill, global, margin } = useTwBelt()
+  const { cn, fg, fill, margin } = useTwBelt()
 
   return {
     wrapper: cn('row-center', isHighLight ? fg('text.digest') : fg('text.hint'), margin(spacing)),
-    highLight: cn('bg-clip-text bold-sm', global('count-highlight')),
+    highLight: cn('bg-clip-text bold-sm count-highlight'),
     viewIcon: cn('size-3 mr-1', isHighLight ? fill('heightIcon') : fill('text.digest')),
     count: 'text-sm',
   }
