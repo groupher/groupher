@@ -8,8 +8,7 @@ import useAvatarLayout from '~/hooks/useAvatarLayout'
 import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useTheme from '~/hooks/useTheme'
-import type { TColorName, TSpace, TZIndexType } from '~/spec'
-import type { TFlatThemeKey } from '~/utils/themes/skins'
+import type { TColorName, TFlatThemeKey, TSpace, TZIndexType } from '~/spec'
 
 const containerConf = twConfig.container
 

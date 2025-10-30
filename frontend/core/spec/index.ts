@@ -127,7 +127,7 @@ export type {
   TSizeTSM,
 } from './size'
 export type { TAccountStore, TViewingStore } from './store'
-export type { TTheme, TThemeMap, TThemeName } from './theme'
+export type { TFlatThemeKey, TTheme, TThemeMap, TThemeName } from './theme'
 export type { TArticleListThread, TArticleThread, TCommunityThread, TThread } from './thread'
 export type {
   Nullable,

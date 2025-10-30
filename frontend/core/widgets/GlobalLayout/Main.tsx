@@ -15,9 +15,8 @@ import Footer from '~/widgets/Footer'
 // import DashboardAlert from './D
 // import CustomScroller from '~/widgets/CustomScroller'
 
-import GlowBackground from './GlowBackground'
-
-import useSalon from './salon/main'
+import GlowBackground from '~/widgets/GlobalLayout/GlowBackground'
+import useSalon from '~/widgets/GlobalLayout/salon/main'
 
 type TProps = {
   children: ReactNode
