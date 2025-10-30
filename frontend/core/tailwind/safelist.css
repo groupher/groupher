@@ -21,7 +21,7 @@
 /* shadow  */
 @source inline('shadow-{sm,xl,md,card}');
 /* button */
-@source inline('{fill,text}-button-fg bg-button-{toggle} ');
+@source inline('{fill,text}-button-fg bg-button-{toggle} text-button-blackFg');
 @source inline('{border,bg}-divider');
 
 /* editor */

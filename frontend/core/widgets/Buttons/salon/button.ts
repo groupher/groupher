@@ -2,7 +2,7 @@ import { COLOR_NAME } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName, TSizeTSM, TSpace } from '~/spec'
-import { getFontSize, getHeight, getPadding, getRouned } from './metircs/button'
+import { getFontSize, getHeight, getPadding, getRound } from './metircs/button'
 
 export { cn } from '~/css'
 
@@ -17,7 +17,7 @@ type TProps = {
   withSoftBg: boolean
   loading: boolean
   disabled: boolean
-  noLeftRouned: boolean
+  noLeftRound: boolean
   color?: TColorName | null
 } & TSpace
 
@@ -32,7 +32,7 @@ export default ({
   spaceY,
   disabled,
   loading,
-  noLeftRouned,
+  noLeftRound,
   color,
   ...spacing
 }: TProps) => {
@@ -45,7 +45,7 @@ export default ({
   return {
     wrapper: cn(
       common,
-      !ghost && !isRed && !noBorder && 'border border-4',
+      !ghost && !isRed && !noBorder && 'border-4',
       disabled && 'border-2',
       width,
       'rounded-xl',
@@ -59,13 +59,13 @@ export default ({
       'hover:brightness-110 active:brightness-95 trans-all-200',
       ghost && 'hover:brightness-125',
       noBorder && 'border-0',
-      getRouned(size),
+      getRound(size),
       getPadding(size),
       getHeight(size),
       space && `px-${space}`,
       spaceY && `py-${spaceY}`,
       getFontSize(size),
-      noLeftRouned && 'rounded-tl-none rounded-bl-none',
+      noLeftRound && 'rounded-tl-none rounded-bl-none',
       !ghost && primary('bg'),
       !ghost && isDarkBlack && bg('rainbow.blackBtn'),
       ghost && `hover:${primary('bgSoft')}`,
@@ -80,7 +80,7 @@ export default ({
       color && ghost && rainbow(color, 'fg'),
       ghost && rainbow(color, 'borderSoft'),
       ghost && !color && isDarkBlack && br('text.hint'),
-      !ghost && !color && isDarkBlack && fg('text.title'),
+      !ghost && !color && isDarkBlack && fg('button.blackFg'),
       withSoftBg && color && rainbow(color, 'bgSoft'),
       withSoftBg && isLightTheme && !color && 'hover:brightness-95',
       withSoftBg && !color && bg('hoverBg'),

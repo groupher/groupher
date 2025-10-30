@@ -20,7 +20,7 @@ export const getHeight = (size: string): string => {
   }
 }
 
-export const getRouned = (size: string): string => {
+export const getRound = (size: string): string => {
   switch (size) {
     case SIZE.TINY: {
       return 'rounded'

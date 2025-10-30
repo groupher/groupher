@@ -38,14 +38,14 @@ export const getGithubGradient = (wallpaper: string): string => {
 
 export default () => {
   const { isLightTheme } = useTheme()
-  const { cn, shadow, fill } = useTwBelt()
+  const { cn, shadow, fill, br } = useTwBelt()
   const { wallpaper } = useWallpaper()
 
   return {
     wrapper: cn('relative group'),
     button: cn(
       isLightTheme ? shadow('xl') : shadow('lg'),
-      !isLightTheme && 'border-2 border-text-digset',
+      !isLightTheme && cn('border-2', br('text.digest')),
     ),
     background: cn(
       'relative align-center rounded-xl overflow-hidden shadow-inner',
@@ -61,7 +61,7 @@ export default () => {
     backgroundStyle: { background: getGithubGradient(wallpaper) },
 
     arrow: cn(
-      'absolute right-3 top-3.5 size-4 rotate-180 hidden group-hover:block trans-all-100',
+      'absolute right-3 top-3 size-4.5 rotate-180 hidden group-hover:block trans-all-100',
       'z-20',
       isLightTheme && 'opacity-65',
       isLightTheme ? fill('button.fg') : fill('text.digest'),

@@ -1,7 +1,6 @@
 import type { FC, ReactNode } from 'react'
-
-import type { TColorName, TSizeTSM, TSpace } from '~/spec'
 import SIZE from '~/const/size'
+import type { TColorName, TSizeTSM, TSpace } from '~/spec'
 
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import useSalon, { cn } from './salon/button'
@@ -20,7 +19,7 @@ type TProps = {
   noBorder?: boolean
   withSoftBg?: boolean
   disabled?: boolean
-  noLeftRouned?: boolean
+  noLeftRound?: boolean
   color?: TColorName | null
   style?: any
 } & TSpace
@@ -39,7 +38,7 @@ const Button: FC<TProps> = ({
   noBorder = false,
   withSoftBg = false,
   disabled = false,
-  noLeftRouned = false,
+  noLeftRound = false,
   color = null,
   style = {},
   ...spacing
@@ -55,7 +54,7 @@ const Button: FC<TProps> = ({
     withSoftBg,
     disabled,
     loading,
-    noLeftRouned,
+    noLeftRound,
     color,
     ...spacing,
   })
@@ -69,7 +68,7 @@ const Button: FC<TProps> = ({
       onClick={() => !disabled && onClick()}
     >
       <div className={cn(s.inner, isRed && s.innerRed)}>
-        {loading && <LavaLampLoading size="small" />}
+        {loading && <LavaLampLoading size='small' />}
         {!loading && <div className={s.children}>{children}</div>}
       </div>
     </button>

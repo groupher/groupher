@@ -187,6 +187,7 @@ export default {
     toggle: 'white',
     redBg: '#fff9f8',
     fg: 'white',
+    blackFg: '',
     hoverBg: lighten(primaryColor, 10),
     upvoteBorder: '#c5c5c5b0',
   },
