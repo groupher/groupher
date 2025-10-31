@@ -1,14 +1,12 @@
 import type { FC } from 'react'
-
-import type { TSpace } from '~/spec'
-
 import GithubSVG from '~/icons/Github8'
-// import AppStoreSVG from '~/icons/AppStore'
-import TwitterSVG from '~/icons/TwitterX'
 import DiscordSVG from '~/icons/social/Discord'
 import TikTokSVG from '~/icons/social/TikTok'
 // import BiliBiliSVG from '~/icons/social/BiliBili'
 import WeChatSVG from '~/icons/social/WeChat'
+// import AppStoreSVG from '~/icons/AppStore'
+import TwitterSVG from '~/icons/TwitterX'
+import type { TSpace } from '~/spec'
 // import AppStoreSVG from '~/icons/social/AppStore'
 // import LagouSVG from '~/icons/social/Lagou'
 
