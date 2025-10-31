@@ -145,13 +145,11 @@ export default () => {
 
         <UsersWall />
 
-        <JoinOurCommunity />
-
         <div className={s.faqWrapper}>
           <FaqList layout={DOC_FAQ_LAYOUT.FLAT} large sections={faqs} />
         </div>
 
-        <div className={s.divider} />
+        <JoinOurCommunity />
 
         <Footer />
       </div>
