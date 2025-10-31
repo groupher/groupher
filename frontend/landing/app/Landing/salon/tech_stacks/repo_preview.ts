@@ -19,7 +19,7 @@ export default () => {
     infoDesc: cn('text-sm', fg('text.digest')),
     //
     langBar: 'w-full row-center -mt-2',
-    bar: 'h-1.5 brightness-90',
+    bar: 'h-1.5',
     bgPurple: rainbow(COLOR_NAME.PURPLE, 'bg'),
     bgBlue: rainbow(COLOR_NAME.BLUE, 'bg'),
     bgYellow: rainbow(COLOR_NAME.YELLOW, 'bg'),

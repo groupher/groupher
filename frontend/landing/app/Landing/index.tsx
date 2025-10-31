@@ -24,6 +24,7 @@ import CompareDev from './CompareDev'
 import CoverImage from './CoverImage'
 import DashboardIntros from './DashboardIntros'
 import Footer from './Footer'
+import JoinOurCommunity from './JoinOurCommunity'
 import useSalon from './salon'
 import TechStacks from './TechStacks'
 import UsersWall from './UsersWall'
@@ -148,7 +149,7 @@ export default () => {
           <FaqList layout={DOC_FAQ_LAYOUT.FLAT} large sections={faqs} />
         </div>
 
-        <div className={s.divider} />
+        <JoinOurCommunity />
 
         <Footer />
       </div>

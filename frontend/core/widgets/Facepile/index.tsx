@@ -4,21 +4,18 @@
  *
  */
 
-import { type FC, Suspense, lazy } from 'react'
-import { compose, not, isNil, filter, reverse as reverseFn, slice } from 'ramda'
-
-import type { TUser, TSpace } from '~/spec'
+import { compose, filter, isNil, not, reverse as reverseFn, slice } from 'ramda'
+import { type FC, lazy, Suspense } from 'react'
 import { AVATARS_LIST_LENGTH } from '~/config'
-
 import SIZE from '~/const/size'
+import type { TSpace, TUser } from '~/spec'
 
 import ImgFallback from '~/widgets/ImgFallback'
-
-import type { TAvatarSize } from './spec'
 import MoreItem from './MoreItem'
+import useSalon, { cn } from './salon'
 
 import { getAvatarSize } from './salon/metric'
-import useSalon from './salon'
+import type { TAvatarSize } from './spec'
 
 const RealAvatar = lazy(() => import('./RealAvatar'))
 
@@ -47,6 +44,7 @@ export type TProps = {
   reverse?: boolean
   popCardPlacement?: 'top' | 'bottom'
   noLazyLoad?: boolean
+  classNames?: string
 
   onUserSelect?: (user: TUser) => void
   onTotalSelect?: () => void
@@ -63,6 +61,7 @@ const Facepile: FC<TProps> = ({
   showMore = true,
   reverse = false,
   popCardPlacement = 'bottom',
+  classNames = '',
   ...spacing
 }) => {
   const totalCount = total || users.length
@@ -79,7 +78,7 @@ const Facepile: FC<TProps> = ({
   // delete restProps?.forwardRef
 
   return (
-    <ul className={s.wrapper}>
+    <ul className={cn(s.wrapper, classNames)}>
       {totalCount === 1 ? (
         <Suspense
           fallback={

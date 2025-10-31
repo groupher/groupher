@@ -39,7 +39,7 @@ type TRet = {
   margin: (spacing: TSpace) => string
   divider: () => string
   VDivider: () => string
-  sexyBorder: (turn?: number) => string
+  sexyBorder: (turn?: number, classNames?: string) => string
   sexyVBorder: (turn: number, classNames?: string) => string
   avatar: (level?: 'md' | 'sm' | '') => string
   gradientBar: (color: TColorName) => string
@@ -212,8 +212,8 @@ export default (): TRet => {
     return cn('w-px h-3 ml-1.5 mr-1.5', bg('text.digest'))
   }
 
-  const sexyBorder = (turn = 35): string => {
-    return cn('h-px w-full border-b', `sexy-border-${turn}`)
+  const sexyBorder = (turn = 35, classNames?: string): string => {
+    return cn('h-px w-full border-b', `sexy-border-${turn}`, classNames)
   }
 
   const sexyVBorder = (turn: number, classNames = ''): string => {

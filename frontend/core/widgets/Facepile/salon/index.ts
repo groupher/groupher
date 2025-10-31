@@ -1,10 +1,11 @@
+import useTwBelt from '~/hooks/useTwBelt'
 import type { TSpace } from '~/spec'
 
-import useTwBelt from '~/hooks/useTwBelt'
+export { cn } from '~/css'
 
-type TPRops = { total: number } & TSpace
+type TProps = { total: number } & TSpace
 
-export default ({ total, ...spacing }: TPRops) => {
+export default ({ total, ...spacing }: TProps) => {
   const { cn, margin, br } = useTwBelt()
 
   return {
