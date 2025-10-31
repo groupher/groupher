@@ -16,6 +16,7 @@ export default () => {
       </div>
       <div className={s.ourWall}>
         <div className={s.ourWallBg} />
+        <div className={s.greenDiffBar} />
 
         <div className={s.ourlabel}>
           <CheckSVG className={cn(s.checkIcon, s.fillGreen)} />
@@ -26,6 +27,8 @@ export default () => {
       </div>
       <div className={s.theirWall}>
         <div className={s.theirWallBg} />
+        <div className={s.redDiffBar} />
+
         <div className={s.theirlabel}>
           <CloseCrossSVG className={cn(s.checkIcon, s.fillRed)} />
           团队两行泪

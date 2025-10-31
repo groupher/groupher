@@ -18,6 +18,8 @@ export default () => {
     //
     ourWall: cn('relative column-align-both w-full h-auto pl-10 overflow-hidden'),
     ourWallBg: cn('absolute top-0 left-0 w-full h-full rotate-180 gradient-green'),
+    greenDiffBar: cn('diff-bar-green absolute left-0 top-0 w-7 h-full z-10 rounded-tr-lg'),
+    redDiffBar: cn('diff-bar-red absolute left-0 top-0 w-7 h-full z-10 rounded-br-lg'),
     ourlabel: cn(
       'row-center absolute right-16 top-0 text-lg px-3 py-1 rounded-b-xl',
       rainbow(COLOR_NAME.GREEN, 'bgSoft'),
@@ -25,7 +27,7 @@ export default () => {
     ),
 
     theirWall: cn('relative column-align-both w-full h-auto'),
-    theirWallBg: cn('absolute top-0 left-0 w-full h-full rotate-180 gradient-red'),
+    theirWallBg: cn('absolute top-0 left-0 w-full h-full gradient-red'),
     theirlabel: cn(
       'row-center absolute right-16 top-0 text-lg px-3 py-1 rounded-b-xl',
       rainbow(COLOR_NAME.RED, 'bgSoft'),
