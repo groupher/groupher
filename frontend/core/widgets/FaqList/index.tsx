@@ -5,14 +5,15 @@
  */
 
 import { type FC, memo } from 'react'
-
-import type { TArticle, TSpace, TDocFAQLayout, TFAQSection } from '~/spec'
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
+import type { TArticle, TDocFAQLayout, TFAQSection, TSpace } from '~/spec'
+
 // import { FAQ as DefaultFAQ } from '~/const/landingPage'
 
-import Flat from './Flat'
-import SearchHint from './SearchHint'
 import Collapse from './Collapse'
+import Flat from './Flat'
+import LeftRight from './LeftRight'
+import SearchHint from './SearchHint'
 
 import useSalon from './salon'
 
@@ -26,34 +27,34 @@ export type TProps = {
 
 const TEST_DATA = [
   {
-    title: 'sldkjfie 0',
+    title: '软件代码是开源的吗?',
     body: 'dlskdjslddslkdjsldksjdldsjdkc,nveekldj ldksjdldsjdkc,nveekldj end',
     index: 0,
   },
 
   {
-    title: 'sldkjfie 1',
+    title: '前后端技术栈是怎样的?',
     body: 'dlskdjslddslkdjsldksjdldsjdkc,nveekldj',
     index: 1,
   },
 
   {
-    title: 'sldkjfie 2',
+    title: '我可以部署在自己的服务器吗?',
     body: 'dlskdjslddslkdjsldksjdldsjdkc,nveekldj',
     index: 2,
   },
   {
-    title: 'sldkjfie 3',
+    title: '我想集成到自己的系统，有公开的 API 可以用吗?',
     body: 'dlskdjslddslkdjsldksjdldsjdkc,nveekldj',
     index: 3,
   },
   {
-    title: 'sldkjfie 4',
+    title: '可以设置多个管理员吗',
     body: 'dlskdjslddslkdjsldksjdldsjdkc,nveekldj',
     index: 4,
   },
   {
-    title: 'sldkjfie 5',
+    title: '免费额度多少',
     body: 'dlskdjslddslkdjsldksjdldsjdkc,nveekldj',
     index: 5,
   },
@@ -75,6 +76,7 @@ const FaqList: FC<TProps> = ({
       {layout === DOC_FAQ_LAYOUT.FLAT && <Flat sections={sections} large={large} />}
       {layout === DOC_FAQ_LAYOUT.SEARCH_HINT && <SearchHint sections={sections} />}
       {layout === DOC_FAQ_LAYOUT.COLLAPSE && <Collapse sections={sections} />}
+      {layout === DOC_FAQ_LAYOUT.LEFT_RIGHT && <LeftRight sections={sections} />}
     </div>
   )
 }

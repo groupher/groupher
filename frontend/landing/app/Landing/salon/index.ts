@@ -31,7 +31,7 @@ export default () => {
     arrow: cn('size-3.5 rotate-180 ml-0.5', fill('text.digest')),
     //
     divider: cn('mb-20 mt-14', sexyBorder()),
-    faqWrapper: 'w-full mt-30 mb-5 px-32',
+    faqWrapper: 'w-full mt-32 pl-52 pr-48',
     //
     tryArrow: cn(
       'absolute -right-5 top-0.5 size-4 rotate-180 opacity-65 hidden group-hover:block trans-all-100',

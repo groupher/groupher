@@ -2,7 +2,6 @@ import { ROUTE } from '~/const/route'
 
 import Img from '~/Img'
 import BorderButton from '~/widgets/Buttons/BorderButton'
-import Button from '~/widgets/Buttons/Button'
 
 import useSalon from '../salon/footer'
 
@@ -23,10 +22,6 @@ export default () => {
         <a href={ROUTE.APPLY_COMMUNITY} className={s.linkable}>
           <BorderButton space={8}>创建新社区</BorderButton>
         </a>
-
-        <Button size='medium' ghost>
-          预约演示
-        </Button>
       </div>
     </div>
   )
