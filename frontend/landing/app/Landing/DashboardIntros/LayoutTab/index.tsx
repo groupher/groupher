@@ -1,7 +1,6 @@
+import useSalon from '../../salon/dashboard_intros/layout_tab'
 import ContentCard from './ContentCard'
 import WallpaperCard from './WallpaperCard'
-
-import useSalon from '../../salon/dashboard_intros/layout_tab'
 
 export default () => {
   const s = useSalon()

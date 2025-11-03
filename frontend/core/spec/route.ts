@@ -16,7 +16,7 @@ export type TDashboardPath =
   | 'threads'
   | 'alias'
   | 'domain'
-  // analysis
+  | 'analysis'
   | 'trend'
   | 'log'
   | 'domain'

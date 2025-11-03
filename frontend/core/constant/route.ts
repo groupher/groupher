@@ -23,6 +23,7 @@ export const DASHBOARD_ROUTE = {
   ALIAS: 'alias',
   DOMAIN: 'domain',
   // analysis
+  ANALYSIS: 'analysis',
   TREND: 'trend',
   LOG: 'log',
   // --

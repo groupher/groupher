@@ -1,7 +1,7 @@
-// import Button from '~/widgets/Buttons/Button'
+import { keys } from 'ramda'
 
-import { DASHBOARD_ROUTE } from '~/const/route'
 import useSalon, { cn } from '../salon/dashboard_intros/head_tabs'
+import INTROS from './constant'
 import type { TIntroTab } from './spec'
 
 type TProps = {
@@ -10,54 +10,35 @@ type TProps = {
 }
 
 export default ({ tab, onChange }: TProps) => {
+  const tabKeys = keys(INTROS)
+
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
-      <button
-        className={cn(s.button, tab === DASHBOARD_ROUTE.LAYOUT && s.purpleActive)}
-        onClick={() => onChange(DASHBOARD_ROUTE.LAYOUT)}
-      >
-        布局 / 样式
-      </button>
-      <button
-        className={cn(s.button, tab === DASHBOARD_ROUTE.POST && s.blueActive)}
-        onClick={() => onChange(DASHBOARD_ROUTE.POST)}
-      >
-        内容管理
-      </button>
-      <button
-        className={cn(s.button, tab === DASHBOARD_ROUTE.SEO && s.cyanActive)}
-        onClick={() => onChange(DASHBOARD_ROUTE.SEO)}
-      >
-        SEO / RSS
-      </button>
-      <button
-        className={cn(s.button, tab === DASHBOARD_ROUTE.TAGS && s.greenActive)}
-        onClick={() => onChange(DASHBOARD_ROUTE.TAGS)}
-      >
-        标签设置
-      </button>
-      <button
-        className={cn(s.button, tab === DASHBOARD_ROUTE.ADMINS && s.redActive)}
-        onClick={() => onChange(DASHBOARD_ROUTE.ADMINS)}
-      >
-        权限管理
-      </button>
-      <button
-        className={cn(s.button, tab === DASHBOARD_ROUTE.HEADER && s.brownActive)}
-        onClick={() => onChange(DASHBOARD_ROUTE.HEADER)}
-      >
-        页头 / 页脚
-      </button>
-      <button
-        className={cn(s.button, tab === DASHBOARD_ROUTE.INOUT && s.yellowActive)}
-        onClick={() => onChange(DASHBOARD_ROUTE.INOUT)}
-      >
-        导入 / 通知
-      </button>
-      <button className={s.button}>嵌入集成</button>
-      <button className={s.button}>统计分析</button>
+      {tabKeys.map((tabKey) => {
+        const intro = INTROS[tabKey]
+        const { title, color, icon } = intro
+        const Icon = icon
+
+        const isActive = tabKey === tab
+
+        const activeColor = `${color.toLowerCase()}Active`
+        const iconBoxColor = `${color.toLowerCase()}IconBox`
+
+        return (
+          <button
+            key={tabKey}
+            className={cn(s.button, isActive && s[activeColor])}
+            onClick={() => onChange(tabKey as TIntroTab)}
+          >
+            <div className={cn(s.iconBox, s[iconBoxColor], isActive && 'opacity-60')}>
+              <Icon className={cn(s.icon)} />
+            </div>
+            {title}
+          </button>
+        )
+      })}
     </div>
   )
 }
