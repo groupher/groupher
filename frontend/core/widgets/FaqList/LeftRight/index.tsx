@@ -3,19 +3,18 @@ import { type FC, useCallback, useEffect, useState } from 'react'
 
 import type { TMenuOption } from '~/spec'
 import type { TProps as TIndex } from '..'
-import useSalon from '../salon/collapse'
-import Banner from './Banner'
+import useSalon from '../salon/left_right'
 import { DEFAULT_MENU, MENU } from './constant'
-import Footer from './Footer'
+import Left from './Left'
 import Section from './Section'
 
 type TProps = Pick<TIndex, 'sections'>
 
-const Collapse: FC<TProps> = ({ sections }) => {
+const LeftRight: FC<TProps> = ({ sections }) => {
   const s = useSalon()
 
   const [openedIndexes, setOpenedIndexes] = useState<number[]>([])
-  const [menuOptions, setMenuOptions] = useState<TMenuOption[]>(DEFAULT_MENU)
+  const [_menuOptions, setMenuOptions] = useState<TMenuOption[]>(DEFAULT_MENU)
 
   useEffect(() => {
     const articleIds = pluck('index', sections)
@@ -40,15 +39,15 @@ const Collapse: FC<TProps> = ({ sections }) => {
 
   return (
     <div className={s.wrapper}>
-      <Banner menuOptions={menuOptions} setOpenedIndexes={setOpenedIndexes} sections={sections} />
+      <Left />
 
-      {sections.map((item) => (
-        <Section key={item.index} item={item} openedIndexes={openedIndexes} toggle={toggle} />
-      ))}
-
-      <Footer />
+      <div className={s.sections}>
+        {sections.map((item) => (
+          <Section key={item.index} item={item} openedIndexes={openedIndexes} toggle={toggle} />
+        ))}
+      </div>
     </div>
   )
 }
 
-export default Collapse
+export default LeftRight

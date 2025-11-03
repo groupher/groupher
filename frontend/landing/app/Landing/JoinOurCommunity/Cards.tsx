@@ -16,7 +16,6 @@ export default () => {
         </div>
 
         <div className={s.title}>微信群</div>
-        <div className={s.desc}>在线客服, 紧急问题</div>
       </div>
       <div className={s.divider} />
       <div className={s.card}>
@@ -25,7 +24,6 @@ export default () => {
         </div>
 
         <div className={s.title}>Github</div>
-        <div className={s.desc}>前后端源代码</div>
       </div>
       <div className={s.divider} />
       <div className={s.card}>
@@ -34,7 +32,6 @@ export default () => {
         </div>
 
         <div className={s.title}>论坛</div>
-        <div className={s.desc}>建议, 报错，近况</div>
       </div>
       <div className={s.divider} />
       <div className={s.card}>
@@ -43,7 +40,6 @@ export default () => {
         </div>
 
         <div className={s.title}>Email</div>
-        <div className={s.desc}>官方邮件，可订阅</div>
       </div>
     </div>
   )

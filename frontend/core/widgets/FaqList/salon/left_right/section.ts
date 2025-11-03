@@ -5,10 +5,10 @@ type TProps = {
 }
 
 export default ({ isOpened }: TProps) => {
-  const { cn, cut, fg, fill, hover } = useTwBelt()
+  const { cn, cut, fg, hover, fill, br } = useTwBelt()
 
   return {
-    wrapper: cn('py-4 w-full'),
+    wrapper: cn('py-4 w-full border-b last:border-0', br('divider')),
     header: 'row-center-between pointer group hover:underline',
     title: cn(
       'text-lg bold-sm',

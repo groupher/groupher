@@ -146,7 +146,7 @@ export default () => {
         <UsersWall />
 
         <div className={s.faqWrapper}>
-          <FaqList layout={DOC_FAQ_LAYOUT.FLAT} large sections={faqs} />
+          <FaqList layout={DOC_FAQ_LAYOUT.LEFT_RIGHT} sections={faqs} />
         </div>
 
         <JoinOurCommunity />

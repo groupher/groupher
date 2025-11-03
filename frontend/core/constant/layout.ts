@@ -1,23 +1,23 @@
 import type {
-  TUpvoteLayout,
-  TDashboardLayout,
-  TTagLayout,
   TAvatarLayout,
-  TBrandLayout,
   TBannerLayout,
-  TTopbarLayout,
-  TBroadcastLayout,
+  TBrandLayout,
   TBroadcastArticleLayout,
-  TPostLayout,
-  TKanbanLayout,
-  TKanbanCardLayout,
+  TBroadcastLayout,
   TChangelogLayout,
-  TSnakeUpperCase,
-  TDocLayout,
+  TDashboardLayout,
   TDocFAQLayout,
+  TDocLayout,
   TFooterLayout,
   THeaderLayout,
+  TKanbanCardLayout,
+  TKanbanLayout,
+  TPostLayout,
   TRSSType,
+  TSnakeUpperCase,
+  TTagLayout,
+  TTopbarLayout,
+  TUpvoteLayout,
 } from '~/spec'
 
 export const UPVOTE_LAYOUT = {
@@ -109,6 +109,7 @@ export const DOC_FAQ_LAYOUT = {
   FLAT: 'flat',
   COLLAPSE: 'collapse',
   SEARCH_HINT: 'search_hint',
+  LEFT_RIGHT: 'left_right',
 } as Record<TSnakeUpperCase<TDocFAQLayout>, TDocFAQLayout>
 
 export const HEADER_LAYOUT = {
