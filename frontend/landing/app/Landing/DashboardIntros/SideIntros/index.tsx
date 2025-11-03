@@ -2,8 +2,8 @@ import ArrowLinker from '~/widgets/ArrowLinker'
 import Button from '~/widgets/Buttons/Button'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/side_intros'
+import INTROS from '../constant'
 import type { TIntroTab } from '../spec'
-import INTROS from './constant'
 import FeatItem from './FeatItem'
 
 type TProps = {

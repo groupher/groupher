@@ -1,34 +1,38 @@
 import { COLOR_NAME } from '~/const/colors'
-
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, bg, br, shadow, rainbow } = useTwBelt()
+  const { cn, fg, br, shadow, rainbow, rainbowSoft } = useTwBelt()
 
-  const activeBtn = cn(
-    'bold-sm opacity-90',
-    fg('button.fg'),
-    `hover:${fg('button.fg')}`,
-    shadow('sm'),
-  )
+  const activeBtn = cn(fg('text.title'), `hover:${fg('text.title')}`)
 
   return {
-    wrapper: cn('row-center-between wrap gap-x-3.5 gap-y-3 w-8/12 mb-10'),
+    wrapper: cn('align-both wrap gap-x-3.5 gap-y-4 w-8/12 mb-10'),
     button: cn(
-      'align-both text-sm min-w-20 h-8 px-3.5 rounded-xl border trans-all-100 pointer',
+      'align-both text-sm min-w-20 h-10 px-4.5 rounded-3xl border trans-all-100 pointer',
       `hover:${fg('text.title')}`,
       fg('text.digest'),
-      bg('card'),
       br('divider'),
     ),
-    purpleActive: cn(activeBtn, rainbow(COLOR_NAME.PURPLE, 'bg')),
-    blueActive: cn(activeBtn, rainbow(COLOR_NAME.BLUE, 'bg')),
-    cyanActive: cn(activeBtn, rainbow(COLOR_NAME.CYAN, 'bg')),
-    greenActive: cn(activeBtn, rainbow(COLOR_NAME.GREEN, 'bg')),
-    redActive: cn(activeBtn, rainbow(COLOR_NAME.RED, 'bg')),
-    brownActive: cn(activeBtn, rainbow(COLOR_NAME.BROWN, 'bg')),
-    yellowActive: cn(activeBtn, rainbow(COLOR_NAME.YELLOW, 'bg')),
+
+    iconBox: cn('size-6 align-both mr-3 rounded-md opacity-40', shadow('lg')),
+    icon: cn('size-4 fill-white'),
+    purpleIconBox: rainbow(COLOR_NAME.PURPLE, 'bg'),
+    blueIconBox: rainbow(COLOR_NAME.BLUE, 'bg'),
+    cyanIconBox: rainbow(COLOR_NAME.CYAN, 'bg'),
+    greenIconBox: rainbow(COLOR_NAME.GREEN, 'bg'),
+    redIconBox: rainbow(COLOR_NAME.RED, 'bg'),
+    brownIconBox: rainbow(COLOR_NAME.BROWN, 'bg'),
+    yellowIconBox: rainbow(COLOR_NAME.YELLOW, 'bg'),
+
+    purpleActive: cn(activeBtn, rainbowSoft(COLOR_NAME.PURPLE)),
+    blueActive: cn(activeBtn, rainbowSoft(COLOR_NAME.BLUE)),
+    cyanActive: cn(activeBtn, rainbowSoft(COLOR_NAME.CYAN)),
+    greenActive: cn(activeBtn, rainbowSoft(COLOR_NAME.GREEN)),
+    redActive: cn(activeBtn, rainbowSoft(COLOR_NAME.RED)),
+    brownActive: cn(activeBtn, rainbowSoft(COLOR_NAME.BROWN)),
+    yellowActive: cn(activeBtn, rainbowSoft(COLOR_NAME.YELLOW)),
   }
 }

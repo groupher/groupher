@@ -1,14 +1,12 @@
 import { useState } from 'react'
 
 import { COLOR_NAME } from '~/const/colors'
-
-import Header from './Header'
+import useSalon from '../../salon/dashboard_intros/layout_tab/content_card'
 import BannerTab from './BannerTab'
 
 import BrandLayout from './BrandLayout'
+import Header from './Header'
 import MainLayouts from './MainLayouts'
-
-import useSalon from '../../salon/dashboard_intros/layout_tab/content_card'
 
 export default () => {
   const s = useSalon()
