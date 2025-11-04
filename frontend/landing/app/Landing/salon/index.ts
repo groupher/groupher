@@ -13,7 +13,7 @@ export default () => {
     wrapper: cn('column-align-both relative h-full w-full overflow-hidden', container()),
     inner: 'column-align-both relative w-full h-full',
     banner: 'column-center relative w-full',
-    githubInfo: cn('row-center mb-3 hover:underline pointer', fg('text.digest')),
+    githubInfo: cn('row-center mt-12 mb-3 hover:underline pointer', fg('text.digest')),
     githubIcon: cn('size-4 mr-1.5'),
     githubText: 'clip-text bold text-base',
     githubIconStyle: { fill: getCursorGradient(wallpaper) },

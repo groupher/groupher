@@ -306,7 +306,11 @@ export default (): TRet => {
   }
 
   const landingTitle = (): string => {
-    return cn('text-3xl bold-sm opacity-70', fg('text.title'), isLightTheme && 'text-shadow')
+    return cn(
+      'text-3xl bold-sm opacity-70 dark:opacity-90',
+      fg('text.title'),
+      isLightTheme && 'text-shadow',
+    )
   }
 
   const hover = (part: THoverPart): string => {

@@ -1,4 +1,5 @@
 @layer utilities {
+
   .article-hover-linear::before {
     background: var(--article-hover-linear);
   }

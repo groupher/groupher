@@ -57,12 +57,10 @@ const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
       <div className={s.skeleton}>
         <Wallpaper />
         <div className={s.scrollWrapper}>
-          <div className={s.wrapper}>
-            <SEO />
-            <MainWrapper>{children}</MainWrapper>
-            {/* {isMobile && <ModeLine />} */}
-          </div>
+          <MainWrapper>{children}</MainWrapper>
+          {/* {isMobile && <ModeLine />} */}
         </div>
+        <SEO />
       </div>
 
       {/* <DashboardAlert /> */}

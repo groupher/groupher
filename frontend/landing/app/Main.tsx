@@ -8,6 +8,7 @@ import useTrans from '~/hooks/useTrans'
 import Footer from '~/widgets/Footer'
 import GlowBackground from '~/widgets/GlobalLayout/GlowBackground'
 import useSalon from '~/widgets/GlobalLayout/salon/main'
+import HomeHeader from '~/widgets/HomeHeader'
 
 const DEFAULT_CONTAINER_WIDTH = 1420
 
@@ -101,20 +102,25 @@ const Main: FC<TProps> = ({ children }) => {
   const effectiveMaxWidth = mounted && enabled ? maxWidth : '100%'
 
   return (
-    <motion.main
-      key={locale}
-      className={s.wrapper}
-      style={{
-        background,
-        maxWidth: effectiveMaxWidth,
-        transition: mounted && enabled ? 'max-width 0.15s ease-out' : undefined,
-      }}
-    >
-      {hasTopbar && <div className={s.topBar} />}
-      <div className={s.body}>{children}</div>
-      <Footer />
-      <GlowBackground />
-    </motion.main>
+    <>
+      <HomeHeader maxWidth={effectiveMaxWidth} sticky />
+      <motion.main
+        key={locale}
+        className={s.wrapper}
+        style={{
+          background,
+          maxWidth: effectiveMaxWidth,
+          transition: mounted && enabled ? 'max-width 0.15s ease-out' : undefined,
+        }}
+      >
+        <HomeHeader />
+        {hasTopbar && <div className={s.topBar} />}
+        <div className={s.body}>{children}</div>
+        <Footer />
+
+        <GlowBackground />
+      </motion.main>
+    </>
   )
 }
 

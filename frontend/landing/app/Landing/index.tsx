@@ -15,7 +15,6 @@ import GithubSVG from '~/icons/social/Github'
 import BorderButton from '~/widgets/Buttons/BorderButton'
 import Button from '~/widgets/Buttons/Button'
 import FaqList from '~/widgets/FaqList'
-import HomeHeader from '~/widgets/HomeHeader'
 import Tooltip from '~/widgets/Tooltip'
 
 import ArticlesIntroTabs from './ArticlesIntroTabs'
@@ -69,16 +68,16 @@ export default () => {
 
   return (
     <div className={s.wrapper} data-testid='landing-page'>
+      {/* <HomeHeader /> */}
       {/* <DashboardIntros /> */}
       {/* <PatternBg /> */}
       <div className={s.inner}>
         {/* <BgGlow wallpaper={wallpaper} /> */}
         <div className={s.banner}>
-          <HomeHeader />
           <div className={s.githubInfo}>
             <GithubSVG className={s.githubIcon} style={s.githubIconStyle} />
             <a
-              href='/'
+              href='https://github.com/groupher/groupher'
               target='_blank'
               rel='noreferrer'
               className={s.githubText}

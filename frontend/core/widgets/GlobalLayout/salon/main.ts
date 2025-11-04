@@ -12,7 +12,8 @@ export default () => {
     wrapper: cn(
       container(),
       'column relative w-full h-full min-h-fit',
-      'relative transition-transform transition-shadow backdrop-blur-2xl',
+      // NOTICE: this class will cause children's position fixed fail,
+      'transition-transform transition-shadow backdrop-blur-2xl',
       hasShadow && 'shadow-lg',
     ),
     topBar: cn(
