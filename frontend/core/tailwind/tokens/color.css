@@ -34,7 +34,7 @@
     /* buttons */
     --color-button-toggle: white;
     --color-button-fg: white;
-    --color-button-blackFg: red;
+    --color-button-blackFg: 'holder';
 
     /* modal */
     --color-modal-bg: #fff;
