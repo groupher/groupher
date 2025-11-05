@@ -1,14 +1,12 @@
-import type { TMetric, TGlowPosition } from '~/spec'
-
 import { GLOW_EFFECTS_DAY, GLOW_EFFECTS_NIGHT } from '~/const/glow_effect'
-import THEME from '~/const/theme'
 import METRIC from '~/const/metric'
-
+import THEME from '~/const/theme'
 import { fmtOpacity } from '~/fmt'
-import useTwBelt from '~/hooks/useTwBelt'
+import useGlowLight from '~/hooks/useGlowLight'
 import useMetric from '~/hooks/useMetric'
 import useTheme from '~/hooks/useTheme'
-import useGlowLight from '~/hooks/useGlowLight'
+import useTwBelt from '~/hooks/useTwBelt'
+import type { TGlowPosition, TMetric } from '~/spec'
 
 const getGlowPosition = (metric: TMetric, glowFixed: boolean): TGlowPosition => {
   if (metric === METRIC.HOME) {

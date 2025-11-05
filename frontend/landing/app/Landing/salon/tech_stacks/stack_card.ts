@@ -6,7 +6,7 @@ import { getCursorGradient } from '../metric'
 
 export default () => {
   const { isLightTheme } = useTheme()
-  const { cn, fg, bg, dimDark } = useTwBelt()
+  const { cn, bg, dimDark, landingTitle } = useTwBelt()
   const { wallpaper } = useWallpaper()
   const base = useBase()
 
@@ -17,7 +17,7 @@ export default () => {
       isLightTheme && bg('cardAlpha'),
     ),
     banner: 'w-auto mb-5 -mt-2',
-    title: cn('text-xl bold-sm mt-4', fg('text.title')),
+    title: cn(landingTitle(), 'text-xl bold-sm mt-4'),
     techs: cn('row wrap w-full -ml-1 mt-2 h-72 items-start gap-x-10 z-20', dimDark()),
     topping: cn('row-center -mt-1 mb-1.5 -ml-2 px-2.5 w-28', bg('card')),
     //

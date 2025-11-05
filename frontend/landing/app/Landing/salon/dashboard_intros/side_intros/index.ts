@@ -9,7 +9,7 @@ type TProps = {
 }
 
 export default ({ color }: TProps) => {
-  const { cn, fg, bg, rainbow, vividDark } = useTwBelt()
+  const { cn, fg, bg, rainbow, vividDark, landingTitle } = useTwBelt()
 
   return {
     wrapper: cn('column w-80 h-auto mt-12'),
@@ -19,7 +19,7 @@ export default ({ color }: TProps) => {
     // --
     iconBox: cn('size-12 align-both rounded-lg mb-5', bg('cardAlpha')),
     icon: cn('size-6 opacity-50', rainbow(color, 'fill'), vividDark()),
-    title: cn('text-2xl', fg('text.title')),
+    title: cn(landingTitle(), 'text-2xl'),
     desc: cn('text-base mt-1', fg('text.digest')),
 
     barDivider: cn('rounded-md h-px w-28 mt-5 opacity-25', rainbow(color, 'bg')),
