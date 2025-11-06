@@ -10760,7 +10760,7 @@ zustand-x@6.1.0:
     react-tracked "^1.7.11"
     use-sync-external-store "1.4.0"
 
-zustand@^5.0.4, zustand@^5.0.5:
+zustand@^5.0.5:
   version "5.0.8"
   resolved "https://registry.npmmirror.com/zustand/-/zustand-5.0.8.tgz#b998a0c088c7027a20f2709141a91cb07ac57f8a"
   integrity sha512-gyPKpIaxY9XcO2vSMrLbiER7QMAMGOQZVRdJ6Zi782jkbzZygq5GI9nG8g+sMgitRtndwaBSl7uiqC49o1SSiw==

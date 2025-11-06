@@ -17,7 +17,7 @@ type TProps = {
 
 /**
  * lazy load images like .jpg .jpeg .png  etc
- * the fallback is for the image offen block in china, like github avatars
+ * the fallback is for the image often block in china, like github avatars
  * fallback 常被用于图片间歇性被墙的情况，比如 github 头像等
  */
 const LazyLoadImg: FC<TProps> = ({
@@ -29,10 +29,9 @@ const LazyLoadImg: FC<TProps> = ({
   onClick,
   threshold = 200,
 }) => {
-  // @ts-ignore
+  // @ts-expect-error
   const fallbackOpt = pick(['size', 'left', 'right', 'top', 'bottom'], fallback?.props || {})
 
-  // @ts-ignore
   const s = useSalon({ ...fallbackOpt })
 
   const [imgLoaded, setImgLoaded] = useState(true)
@@ -55,14 +54,14 @@ const LazyLoadImg: FC<TProps> = ({
       setCheckError(false)
       setOver(true)
     }
-  }, [])
+  }, [over])
 
   const handleError = useCallback(() => {
     console.warn('lazy image load.: ', src)
     setLoadError(true)
     setImgLoaded(false)
     setOver(true)
-  }, [])
+  }, [src])
 
   if (!src) {
     return (
@@ -74,36 +73,28 @@ const LazyLoadImg: FC<TProps> = ({
   /**
    * CheckPixel is a workaround for lazy loading has no onError callback,
    * for most OSS providers the cache control is lager than 5 mins
-   * so on before load callback, we aetup a real img to track is onError mannually triggered
+   * so on before load callback, we setup a real img to track is onError manually triggered
    */
   return (
-    <div onClick={onClick} className={cn(s.normal, !imgLoaded && s.fallbackOffset)}>
+    <div onClick={onClick} className={cn(s.normal, 'z-10', !imgLoaded && s.fallbackOffset)}>
       {!imgLoaded && <div className={s.fallback}>{fallback}</div>}
 
-      <div className='z-10'>
-        {checkError && (
-          <img
-            src={src}
-            alt=''
-            onLoad={handleLoad}
-            onError={handleError}
-            className={s.checkPixel}
-          />
-        )}
+      {checkError && (
+        <img src={src} alt='' onLoad={handleLoad} onError={handleError} className={s.checkPixel} />
+      )}
 
-        {!loadError && (
-          <LazyLoadImage
-            className={className}
-            src={src}
-            alt={alt}
-            effect='blur'
-            visibleByDefault={visibleByDefault}
-            onLoad={handleLoad}
-            beforeLoad={handleBeforeLoad}
-            threshold={threshold}
-          />
-        )}
-      </div>
+      {!loadError && (
+        <LazyLoadImage
+          className={cn(className, 'flex-shrink-0')}
+          src={src}
+          alt={alt}
+          effect='blur'
+          visibleByDefault={visibleByDefault}
+          onLoad={handleLoad}
+          beforeLoad={handleBeforeLoad}
+          threshold={threshold}
+        />
+      )}
     </div>
   )
 }

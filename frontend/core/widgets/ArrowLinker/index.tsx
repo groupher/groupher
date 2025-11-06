@@ -4,12 +4,10 @@
  *
  */
 
-import type { FC, ReactNode } from 'react'
 import Link from 'next/link'
-
-import type { TColorName, TSpace } from '~/spec'
-
+import type { FC, ReactNode } from 'react'
 import ArrowSVG from '~/icons/ArrowUpRight'
+import type { TColorName, TSpace } from '~/spec'
 
 import useSalon, { cn } from './salon'
 
@@ -38,7 +36,7 @@ const ArrowLinker: FC<TProps> = ({
   const s = useSalon({ color, withSoftBg, ...spacing })
 
   return (
-    <Link href={href} target={target}>
+    <Link href={href} target={target} className='inline-block'>
       <div className={cn(s.wrapper, className)} data-testid={testid}>
         <div className={s.title}>{children}</div>
         <ArrowSVG className={s.arrowIcon} />

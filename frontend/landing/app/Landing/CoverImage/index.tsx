@@ -1,13 +1,12 @@
-import DesktopDevice from './DesktopDevice'
-
 import useSalon from '../salon/cover_image'
+import DesktopDevice from './DesktopDevice'
 
 export default () => {
   const s = useSalon()
 
   return (
-    <div className={s.wrapper}>
+    <section className={s.wrapper}>
       <DesktopDevice />
-    </div>
+    </section>
   )
 }

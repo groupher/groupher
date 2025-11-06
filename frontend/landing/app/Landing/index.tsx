@@ -144,9 +144,9 @@ export default () => {
 
         <UsersWall />
 
-        <div className={s.faqWrapper}>
+        <section className={s.faqWrapper}>
           <FaqList layout={DOC_FAQ_LAYOUT.LEFT_RIGHT} sections={faqs} />
-        </div>
+        </section>
 
         <JoinOurCommunity />
 

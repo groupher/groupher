@@ -1,21 +1,18 @@
 import { useState } from 'react'
-
-import type { TThread } from '~/spec'
 import { THREAD } from '~/const/thread'
-
-import Tabs from './Tabs'
-import Content from './Content'
-
+import type { TThread } from '~/spec'
 import useSalon from '../salon/articles_intro_tabs'
+import Content from './Content'
+import Tabs from './Tabs'
 
 export default () => {
   const s = useSalon()
   const [tab, setTab] = useState<TThread>(THREAD.POST)
 
   return (
-    <div className={s.wrapper}>
+    <section className={s.wrapper}>
       <Tabs tab={tab} onChange={(tab) => setTab(tab)} />
       <Content tab={tab} />
-    </div>
+    </section>
   )
 }

@@ -27,6 +27,7 @@ export default {
   hoverBg: '',
   hoverActive: '',
   menuHoverBg: '',
+  menuInvertBg: '',
   lineDivider: '',
   hoverBorder: '',
   linkHover: '',
