@@ -1,4 +1,4 @@
-import { motion, useAnimationControls } from 'motion/react'
+import { motion, type TargetAndTransition, useAnimationControls } from 'motion/react'
 import { type FC, useEffect } from 'react'
 
 import Img from '~/Img'
@@ -12,19 +12,22 @@ type TProps = {
   active?: boolean
 }
 
-// const CLICK_EFFECT = { scale: [1, 0.95, 1], transition: { duration: 0.2, ease: 'easeOut' } }
+const CLICK_EFFECT: TargetAndTransition = {
+  scale: [1, 0.95, 1],
+  transition: { duration: 0.2, ease: 'easeOut' },
+}
 
 const TechKey: FC<TProps> = ({ path, name, desc = '', iconSize = 'size-6', active = false }) => {
   const s = useSalon({ active })
   const controls = useAnimationControls()
 
   const handleClick = () => {
-    controls.start({ scale: [1, 0.95, 1], transition: { duration: 0.2, ease: 'easeOut' } })
+    controls.start(CLICK_EFFECT)
   }
 
   useEffect(() => {
     if (active) {
-      controls.start({ scale: [1, 0.95, 1], transition: { duration: 0.2, ease: 'easeOut' } })
+      controls.start(CLICK_EFFECT)
     }
   }, [active, controls])
 
