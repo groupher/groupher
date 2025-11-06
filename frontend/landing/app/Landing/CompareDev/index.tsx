@@ -8,7 +8,7 @@ export default () => {
   const s = useSalon()
 
   return (
-    <div className={s.wrapper}>
+    <section className={s.wrapper}>
       <div className={s.slogan}>
         <div className={s.topping}>It's should be Simple !</div>
         <h3 className={s.title}>上线、获取反馈、迭代</h3>
@@ -35,6 +35,6 @@ export default () => {
         </div>
         <HighWay />
       </div>
-    </div>
+    </section>
   )
 }

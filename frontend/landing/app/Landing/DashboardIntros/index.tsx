@@ -21,7 +21,7 @@ export default () => {
   const s = useSalon({ tab })
 
   return (
-    <div className={s.wrapper}>
+    <section className={s.wrapper}>
       <div className={s.slogan}>
         <h3 className={s.title}>完善的后台管理</h3>
         <div className={s.desc}>强大的自定义设置，满足你的品牌个性化及内容管理需要</div>
@@ -54,6 +54,6 @@ export default () => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   )
 }

@@ -42,6 +42,7 @@
 
     /* menu */
     --color-menuHoverBg: white;
+    --color-menuInvertBg: #262626;
 
     /* popover */
     --color-popover-bg: #fafafa;
@@ -196,6 +197,7 @@
 
     /* menu */
     --color-menuHoverBg: #42424259;
+    --color-menuInvertBg: #181818;
 
     /* popover */
     --color-popover-bg: #2e2e2ef0;

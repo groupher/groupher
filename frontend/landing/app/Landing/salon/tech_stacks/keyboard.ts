@@ -1,0 +1,16 @@
+import useTwBelt from '~/hooks/useTwBelt'
+
+export default () => {
+  const { cn, fg, dimDark } = useTwBelt()
+
+  return {
+    wrapper: cn('column relative h-full w-[1000px]'),
+    banner: 'w-auto ml-28 z-40',
+    bottom: 'w-auto ml-28 z-40 mt-4 -ml-2',
+    detail: cn('text-sm', fg('text.digest')),
+    title: cn(fg('text.title'), 'text-2xl bold-sm mt-2'),
+    desc: cn(fg('text.digest'), 'text-base mt-2'),
+    techs: cn('row wrap w-full h-auto items-start gap-x-2 gap-y-2 z-20 mt-6 mb-6', dimDark()),
+    topping: cn('row-center mb-1.5 w-28'),
+  }
+}

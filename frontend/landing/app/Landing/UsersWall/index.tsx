@@ -29,7 +29,7 @@ export default () => {
   const s = useSalon()
 
   return (
-    <div className={s.wrapper}>
+    <section className={s.wrapper}>
       <div className={s.slogan}>
         <div className={s.topping}>Trust with 💗</div>
         <h3 className={s.title}>被众多优秀团队信赖</h3>
@@ -41,6 +41,6 @@ export default () => {
           <CardsList />
         </div>
       </div>
-    </div>
+    </section>
   )
 }

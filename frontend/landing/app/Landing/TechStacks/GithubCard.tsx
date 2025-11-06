@@ -15,8 +15,8 @@ export default () => {
           OpenSource
         </div>
       </div>
-      <RepoPreview name='groupher_web' desc='groupher.com 前端代码，基于 next.js/tailwind 构建' />
-
+      <RepoPreview name='groupher' desc='由久经考验的开源技术栈构建，持续跟进业界趋势。' />
+      <RepoPreview name='groupher' desc='由久经考验的开源技术栈构建，持续跟进业界趋势。' />
       <Teams />
     </div>
   )

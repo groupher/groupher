@@ -1,21 +1,19 @@
-import MobileFirst from './MobileFirst'
-import BundleSize from './BundleSize'
-import RichContent from './RichContent'
-import DarkMode from './DarkMode'
-import Security from './Security'
-import Design from './Design'
-import Integration from './Integration'
-import Statistics from './Statistics'
-
-import GridBlocks from './GridBlocks'
-
 import useSalon from '../salon/battery_bento'
+import BundleSize from './BundleSize'
+import DarkMode from './DarkMode'
+import Design from './Design'
+import GridBlocks from './GridBlocks'
+import Integration from './Integration'
+import MobileFirst from './MobileFirst'
+import RichContent from './RichContent'
+import Security from './Security'
+import Statistics from './Statistics'
 
 export default () => {
   const s = useSalon()
 
   return (
-    <div className={s.wrapper}>
+    <section className={s.wrapper}>
       <section className={s.slogan}>
         <h3 className={s.title}>自带电池、开箱即用</h3>
         <div className={s.desc}>无需繁琐配置，即刻拥有功能完善的反馈社区</div>
@@ -36,6 +34,6 @@ export default () => {
       </div>
 
       <GridBlocks />
-    </div>
+    </section>
   )
 }

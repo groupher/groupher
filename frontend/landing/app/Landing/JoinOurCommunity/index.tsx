@@ -7,7 +7,7 @@ export default () => {
   const s = useSalon()
 
   return (
-    <div className={s.wrapper}>
+    <section className={s.wrapper}>
       <div className={s.divider} />
       <div className={s.paper}>
         <div className={s.slogan}>
@@ -18,6 +18,6 @@ export default () => {
         <Cards />
       </div>
       <div className={s.divider} />
-    </div>
+    </section>
   )
 }
