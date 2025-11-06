@@ -18,8 +18,15 @@ export default () => {
 
   useEffect(() => {
     if (!inView) return
+    const timers: NodeJS.Timeout[] = []
+
     for (let i = 0; i < techTotal; i++) {
-      setTimeout(() => setActiveCount(i + 1), i * STAGING_TIME)
+      timers.push(setTimeout(() => setActiveCount(i + 1), i * STAGING_TIME))
+    }
+    return () => {
+      for (const timer of timers) {
+        clearTimeout(timer)
+      }
     }
   }, [inView])
 

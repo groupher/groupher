@@ -24,7 +24,7 @@ const TechKey: FC<TProps> = ({ path, name, desc = '', iconSize = 'size-6', activ
     if (active) {
       controls.start({ scale: [1, 0.95, 1], transition: { duration: 0.2, ease: 'easeOut' } })
     }
-  }, [active, controls.start])
+  }, [active, controls])
 
   return (
     <motion.div className={s.wrapper} animate={controls} onClick={handleClick}>
