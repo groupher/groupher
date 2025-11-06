@@ -12,6 +12,8 @@ type TProps = {
   active?: boolean
 }
 
+// const CLICK_EFFECT = { scale: [1, 0.95, 1], transition: { duration: 0.2, ease: 'easeOut' } }
+
 const TechKey: FC<TProps> = ({ path, name, desc = '', iconSize = 'size-6', active = false }) => {
   const s = useSalon({ active })
   const controls = useAnimationControls()
