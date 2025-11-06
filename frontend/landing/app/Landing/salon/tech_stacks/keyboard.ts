@@ -5,8 +5,8 @@ export default () => {
 
   return {
     wrapper: cn('column relative h-full w-[1000px]'),
-    banner: 'w-auto ml-28 z-40',
-    bottom: 'w-auto ml-28 z-40 mt-4 -ml-2',
+    banner: 'w-auto ml-24 z-40',
+    bottom: 'w-auto ml-24 z-40 mt-4 -ml-2',
     detail: cn('text-sm', fg('text.digest')),
     title: cn(fg('text.title'), 'text-2xl bold-sm mt-2'),
     desc: cn(fg('text.digest'), 'text-base mt-2'),
