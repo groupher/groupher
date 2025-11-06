@@ -16,7 +16,7 @@ export default () => {
       'align-both justify-between relative w-full h-auto border border-l-none border-r-none',
       'pb-20 pt-12 px-4',
     ),
-    mask: 'z-30 absolute w-3/4 h-full left-0 opacity-20 pointer-events-none',
+    mask: 'z-30 absolute w-3/4 h-full left-0 opacity-20 pointer-events-none blur-xl',
     innerBgWrapper: cn(
       'absolute top-0 left-0 w-full h-full overflow-hidden rounded-xl pointer-events-none',
       isDarkTheme && 'invert',

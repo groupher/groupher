@@ -16,8 +16,7 @@ export default () => {
         <div
           className={s.mask}
           style={{
-            background:
-              'radial-gradient(circle at center, transparent 55% 0%, var(--color-menuInvertBg) 10%)',
+            background: 'radial-gradient(circle at center, transparent 50% 0%, black 10%)',
           }}
         />
         <div className={s.inner}>
