@@ -16,7 +16,7 @@ export default () => {
     ),
     inner: cn(
       'align-both justify-between relative w-full h-auto border',
-      'pb-20 pt-12 px-4',
+      'pb-14 pt-10 px-4',
       shadow('card'),
     ),
     mask: 'z-30 absolute w-3/4 h-full left-0 opacity-20 pointer-events-none blur-xl rounded-3xl',
