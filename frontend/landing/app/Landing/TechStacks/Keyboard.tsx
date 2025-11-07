@@ -34,7 +34,7 @@ export default () => {
     <div ref={ref} className={s.wrapper}>
       <div className={s.banner}>
         <div className={s.title}>开源技术栈</div>
-        <div className={s.desc}>由久经考验的开源技术栈构建，持续跟进业界趋势。</div>
+        <div className={s.desc}>由久经考验的开源技术栈驱动，并持续跟进业界最佳实践。</div>
       </div>
 
       <div className={s.techs}>

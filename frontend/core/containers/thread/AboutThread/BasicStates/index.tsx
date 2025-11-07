@@ -1,12 +1,11 @@
 import { type FC, memo } from 'react'
 
 import Trend from 'react-trend'
-
-import PostSVG from '~/icons/Post'
 import CommentSVG from '~/icons/Comment'
-import UserSVG from '~/icons/Users'
 import EmojiSVG from '~/icons/Heart'
+import PostSVG from '~/icons/Post'
 import PulseSVG from '~/icons/Pulse'
+import UserSVG from '~/icons/Users'
 
 import useSalon, { cn } from '../salon/basic_states'
 
@@ -30,7 +29,7 @@ const BasicStates: FC = () => {
             gradient={['yellowgreen', 'green']}
             radius={15}
             strokeWidth={1}
-            strokeLinecap="round"
+            strokeLinecap='round'
           />
         </div>
       </div>

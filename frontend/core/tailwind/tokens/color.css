@@ -303,6 +303,7 @@
   /* for reverse colors，for dark mode only, light is fine */
   [data-theme='dark'] [data-theme='light'] {
      --color-card: #fff;
+     --color-divider: #eae9e9;
      --color-text-title: oklch(27.8% 0.033 256.848); /* gray.800 */
      --color-text-digest: oklch(55.1% 0.027 264.364); /* gray.500 */
      --color-hoverBg: #efefef78;
