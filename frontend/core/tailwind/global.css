@@ -7,7 +7,6 @@
 @import "./tokens";
 @import "./safelist";
 @import "./common";
-@import "./landing";
 
 @layer base {
   :root {

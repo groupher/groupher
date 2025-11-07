@@ -7,6 +7,7 @@ import { GlobalLayout, LANDING_SSR_INFO } from '~/providers'
 import StoreProvider from '~/stores/provider'
 
 import '~/tailwind/global.css'
+import './Landing/salon/global.css'
 
 import Main from './Main'
 
