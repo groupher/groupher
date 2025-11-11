@@ -4,7 +4,6 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { LANDING_SSR_INFO } from '~/providers/constant'
 import GlobalLayout from '~/providers/GlobalLayout'
-
 import StoreProvider from '~/stores/provider'
 
 import '~/tailwind/global.css'

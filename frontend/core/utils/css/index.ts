@@ -11,4 +11,6 @@ import { twMerge } from 'tailwind-merge'
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
 
 export { theme } from '../themes'
+export { getGlobalCSSVar, setGlobalCSSVar } from './helper'
+// TODO: remove
 export { WIDTH } from './metric'

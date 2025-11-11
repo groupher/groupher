@@ -1,9 +1,9 @@
 import { upperSnakeCase } from '~/fmt'
 import type { TColorName } from '~/spec'
-import twConfig from '~/tailwind/metric.json'
+import { METRIC as TW_METRIC } from '~/tailwind/metric'
 
 /** TODO: 把这些颜色移动到 token/colors 去，配合选择器同时d定制 title/digest/card 的颜色 */
-const pageBgColor = twConfig.pageBgColor
+const pageBgColor = TW_METRIC.pageBgColor
 
 type TInputColorScheme = {
   [theme: string]: {
