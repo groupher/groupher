@@ -15,7 +15,7 @@ export default (): TMetric => {
 
   const pathname = usePathname()
   if (includes(pathname, STATIC_ROUTES)) {
-    return METRIC.HOME
+    return METRIC.LANDING
   }
 
   if (store.metric === METRIC.COMMUNITY && bannerLayout === BANNER_LAYOUT.SIDEBAR) {

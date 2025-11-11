@@ -1,5 +1,5 @@
-import twConfig from '~/const/twConfig.json'
 import useWindowResize from '~/hooks/useWindowResize'
+import twConfig from '~/tailwind/metric.json'
 
 import useMetric from './useMetric'
 

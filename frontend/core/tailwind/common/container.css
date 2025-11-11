@@ -1,6 +1,6 @@
-@utility container-home {
+@utility container-landing {
   margin-inline: auto;
-  max-width: var(--container-home-width);
+  max-width: var(--container-landing-width);
   padding-left: theme('spacing.0');
   padding-right: theme('spacing.0');
 }

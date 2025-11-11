@@ -1,31 +1,19 @@
 import { GLOW_EFFECTS_DAY, GLOW_EFFECTS_NIGHT } from '~/const/glow_effect'
-import METRIC from '~/const/metric'
 import THEME from '~/const/theme'
 import { fmtOpacity } from '~/fmt'
 import useGlowLight from '~/hooks/useGlowLight'
-import useMetric from '~/hooks/useMetric'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
-import type { TGlowPosition, TMetric } from '~/spec'
-
-const getGlowPosition = (metric: TMetric, glowFixed: boolean): TGlowPosition => {
-  if (metric === METRIC.HOME) {
-    return 'absolute'
-  }
-
-  return glowFixed ? 'fixed' : 'absolute'
-}
 
 export default () => {
   const { cn } = useTwBelt()
 
-  const metric = useMetric()
   const { theme } = useTheme()
 
   const { glowType, glowFixed, glowOpacity } = useGlowLight()
   const GLOW_EFFECTS = theme === THEME.LIGHT ? GLOW_EFFECTS_DAY : GLOW_EFFECTS_NIGHT
 
-  const glowPosition = getGlowPosition(metric, glowFixed)
+  const glowPosition = glowFixed ? 'fixed' : 'absolute'
   const isAbsolute = glowPosition === 'absolute'
 
   return {

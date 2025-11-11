@@ -37,7 +37,7 @@ const Main: FC<TProps> = ({ children }) => {
   useEffect(() => {
     if (!mounted) return
 
-    /** tailwind 的 token 在这里获取不到 --container-home-width, 需要一个值相同的默认值 */
+    /** tailwind 的 token 在这里获取不到 --container-landing-width, 需要一个值相同的默认值 */
     const tokenWidth = DEFAULT_CONTAINER_WIDTH
 
     const updateVars = () => {
@@ -49,7 +49,7 @@ const Main: FC<TProps> = ({ children }) => {
 
       // 初始顶部宽度为 100%
       if (scrollY.get() === 0) {
-        document.documentElement.style.setProperty('--container-home-width', `${vw}px`)
+        document.documentElement.style.setProperty('--container-landing-width', `${vw}px`)
       }
     }
 
@@ -93,7 +93,7 @@ const Main: FC<TProps> = ({ children }) => {
 
     const width = fromWidth + p * (toWidth - fromWidth)
     if (mounted) {
-      document.documentElement.style.setProperty('--container-home-width', `${width}px`)
+      document.documentElement.style.setProperty('--container-landing-width', `${width}px`)
     }
     return width
   })

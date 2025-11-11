@@ -1,10 +1,8 @@
-import { isEmpty } from 'ramda'
 import Link from 'next/link'
-
+import { isEmpty } from 'ramda'
+import { BEIAN_ADDR, BEIAN_TEXT } from '~/config'
 import METRIC from '~/const/metric'
 import useMetric from '~/hooks/useMetric'
-
-import { BEIAN_ADDR, BEIAN_TEXT } from '~/config'
 
 import useSalon from './salon/powerby_info'
 
@@ -14,10 +12,10 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      {metric !== METRIC.HOME && (
+      {metric !== METRIC.LANDING && (
         <div className={s.note}>
           由
-          <Link className={s.link} href="/">
+          <Link className={s.link} href='/'>
             Groupher
           </Link>
           提供服务
@@ -25,11 +23,11 @@ export default () => {
       )}
 
       <div className={s.bottom}>
-        {metric === METRIC.HOME && <div className={s.note}>Made in ChengDu</div>}
-        {metric === METRIC.HOME && <div className={s.lineDivider} />}
+        {metric === METRIC.LANDING && <div className={s.note}>Made in ChengDu</div>}
+        {metric === METRIC.LANDING && <div className={s.lineDivider} />}
         {!isEmpty(BEIAN_TEXT) && (
           <div className={s.note}>
-            <Link className={s.link} href={BEIAN_ADDR} target="_blank" prefetch={false}>
+            <Link className={s.link} href={BEIAN_ADDR} target='_blank' prefetch={false}>
               {BEIAN_TEXT}
             </Link>
           </div>

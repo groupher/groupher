@@ -1,7 +1,6 @@
 import { type ClassValue, clsx } from 'clsx'
 import { COLOR_NAME } from '~/const/colors'
 import METRIC from '~/const/metric'
-import twConfig from '~/const/twConfig.json'
 import { cn } from '~/css'
 import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
@@ -9,6 +8,7 @@ import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useTheme from '~/hooks/useTheme'
 import type { TColorName, TFlatThemeKey, TSpace, TZIndexType } from '~/spec'
+import twConfig from '~/tailwind/metric.json'
 
 const containerConf = twConfig.container
 
@@ -125,7 +125,7 @@ export default (): TRet => {
     }
 
     if (prefix === 'borderSoft') {
-      if (isDarkBlack && metric !== METRIC.HOME) {
+      if (isDarkBlack && metric !== METRIC.LANDING) {
         return 'border-text-hint'
       }
 

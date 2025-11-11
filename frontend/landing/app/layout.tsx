@@ -2,12 +2,12 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import { LANDING_SSR_INFO } from '~/providers/constant'
+import GlobalLayout from '~/providers/GlobalLayout'
 
-import { GlobalLayout, LANDING_SSR_INFO } from '~/providers'
 import StoreProvider from '~/stores/provider'
 
 import '~/tailwind/global.css'
-import './Landing/salon/global.css'
 
 import Main from './Main'
 

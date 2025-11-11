@@ -1,12 +1,12 @@
-import type { TGlowEffect } from '~/spec'
 import { includes } from 'ramda'
+import { GLOW_EFFECT_NAME, GLOW_OPACITY } from '~/const/glow_effect'
 
 import METRIC from '~/const/metric'
 import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
-import { GLOW_EFFECT_NAME, GLOW_OPACITY } from '~/const/glow_effect'
+import useMetric from '~/hooks/useMetric'
 
 import useSubStore from '~/hooks/useSubStore'
-import useMetric from '~/hooks/useMetric'
+import type { TGlowEffect } from '~/spec'
 
 export default (): TGlowEffect => {
   const dashboard = useSubStore('dashboard')
@@ -20,7 +20,7 @@ export default (): TGlowEffect => {
 
   if (
     includes(metric, [METRIC.APPLY_COMMUNITY]) ||
-    (metric === METRIC.HOME && wallpaper !== GRADIENT_WALLPAPER_NAME.PINK)
+    (metric === METRIC.LANDING && wallpaper !== GRADIENT_WALLPAPER_NAME.PINK)
   ) {
     return {
       glowType: null,
@@ -30,7 +30,7 @@ export default (): TGlowEffect => {
     }
   }
 
-  if (metric === METRIC.HOME && !glowType) {
+  if (metric === METRIC.LANDING && !glowType) {
     return {
       glowType: GLOW_EFFECT_NAME.ORANGE_PURPLE,
       glowFixed: false,

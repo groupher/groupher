@@ -7,7 +7,7 @@ export { cn } from '~/css'
 
 export default () => {
   const { isDarkTheme } = useTheme()
-  const { cn, fg, br, rainbow, landingTitle } = useTwBelt()
+  const { cn, fg, br, rainbow, rainbowSoft, landingTitle } = useTwBelt()
 
   return {
     wrapper: cn('column align-both w-full mt-36'),
@@ -26,8 +26,12 @@ export default () => {
       rainbow(COLOR_NAME.GREEN, 'fg'),
     ),
 
-    theirWall: cn('relative column-align-both w-full h-auto'),
-    theirWallBg: cn('absolute top-0 left-0 w-full h-full gradient-red'),
+    theirWall: cn('relative column-align-both w-full h-auto diff-area-red-stripes'),
+    theirWallBg: cn(
+      'absolute top-0 left-0 w-full h-full',
+      rainbowSoft(COLOR_NAME.RED),
+      isDarkTheme ? 'opacity-80' : 'opacity-40',
+    ),
     theirlabel: cn(
       'row-center absolute right-16 top-0 text-lg px-3 py-1 rounded-b-xl',
       rainbow(COLOR_NAME.RED, 'bgSoft'),

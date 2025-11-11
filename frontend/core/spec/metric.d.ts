@@ -1,5 +1,5 @@
 export type TMetric =
-  | 'HOME'
+  | 'LANDING'
   | 'COMMUNITY'
   | 'COMMUNITY_SIDEBAR'
   | 'DOC'
