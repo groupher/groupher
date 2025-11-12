@@ -32,7 +32,7 @@ export default () => {
   } = useSEO()
 
   switch (metric) {
-    case METRIC.HOME: {
+    case METRIC.LANDING: {
       const title = 'Groupher | 让你的产品听见用户的声音'
       const description = SITE_SLOGAN
 

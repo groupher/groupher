@@ -1,10 +1,18 @@
 :root {
   /* ===== containers ====== */
-  --container-home-width: 1420px;
+  --container-landing-width: 100vw;
+  --container-landing-width-init: 1425px;
   --container-article-width: 1360px;
   --container-community-width: 1360px;
   --container-apply-community-width: 1460px;
   --container-dashboard-width: 1400px;
   --container-community-sidebar-width: 1280px;
+}
+
+
+@media (min-width: 1680px) {
+  :root {
+    --container-landing-width-init: 1520px
+  }
 }
 

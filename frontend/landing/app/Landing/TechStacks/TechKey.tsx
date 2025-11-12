@@ -32,7 +32,17 @@ const TechKey: FC<TProps> = ({ path, name, desc = '', iconSize = 'size-6', activ
   }, [active, controls])
 
   return (
-    <motion.div className={s.wrapper} animate={controls} onClick={handleClick}>
+    <motion.div
+      role='button'
+      className={s.wrapper}
+      animate={controls}
+      onPointerDown={() => {
+        handleClick()
+        controls.start({ scale: 0.96 })
+      }}
+      onPointerUp={() => controls.start({ scale: 1 })}
+      onPointerLeave={() => controls.start({ scale: 1 })}
+    >
       <motion.div
         className={s.iconBox}
         animate={active ? { scale: [1, 1.2, 1] } : { scale: 1 }}

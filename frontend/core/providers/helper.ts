@@ -1,5 +1,4 @@
 import { cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
-// import { cacheLife, cacheTag } from 'next/cache'
 import { isEmpty, mergeRight, reject } from 'ramda'
 import { CACHE_TAG } from '~/const/cache'
 import { LOCALE } from '~/const/i18n'
@@ -30,23 +29,6 @@ export const ARTICLES_FILTER = {
   page: 1,
   size: 20,
 }
-
-export const LANDING_SSR_INFO = {
-  theme: THEME.LIGHT,
-  articles: {},
-  viewing: {
-    metric: METRIC.HOME,
-    community: {
-      slug: HCN,
-      homepage: '',
-      desc: '',
-      meta: { postsCount: 0, docsCount: 0, blogsCount: 0, changelogsCount: 0 },
-      dashboard: {},
-    },
-  },
-  wallpaper: undefined,
-  dashboard: undefined,
-} satisfies TRootStoreInit
 
 export const getArticlesParams = (community: string, urlInfo: TUrlInfo) => {
   const { searchParams } = urlInfo

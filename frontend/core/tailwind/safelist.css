@@ -1,7 +1,7 @@
 /* TODO: gen from js to include all safe-list class names */
 
 /* container  */
-@source inline('container-{home,community,article,dashboard}');
+@source inline('container-{landing,community,article,dashboard}');
 @source inline('text-{text-title,text-digest,text-hint,link}');
 
 /* fill for icons */

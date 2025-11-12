@@ -2,7 +2,7 @@ import type { TMetric } from '~/spec'
 // NOTE:  the value is mapping to @/utils/media's key
 // so do not change to lowercase etc...
 export default {
-  HOME: 'HOME',
+  LANDING: 'LANDING',
   COMMUNITY: 'COMMUNITY',
   COMMUNITY_SIDEBAR: 'COMMUNITY_SIDEBAR',
   DOC: 'DOC',
