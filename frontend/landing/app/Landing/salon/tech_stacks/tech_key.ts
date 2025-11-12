@@ -4,9 +4,10 @@ export { cn } from '~/css'
 
 type TProps = {
   active: boolean
+  name: string
 }
 
-export default ({ active }: TProps) => {
+export default ({ active, name }: TProps) => {
   const { cn, fg } = useTwBelt()
 
   return {
@@ -20,7 +21,20 @@ export default ({ active }: TProps) => {
       active ? 'saturate-100' : 'saturate-0',
     ),
     intro: cn('ml-2 text-xs', fg('text.digest')),
-    title: cn('text-sm bold mr-1', fg('text.title')),
+    title: cn(
+      'text-sm bold mr-1 group-hover:opacity-100',
+      fg('text.title'),
+      name === 'TypeScript' && 'group-hover:text-[#6eadf5]',
+      name === 'React' && 'group-hover:text-[#7AC2DD]',
+      name === 'PostgreSQL' && 'group-hover:text-[#40668E]',
+      name === 'Notes' && 'group-hover:text-[#F2D049]',
+      name === 'TailwindCSS' && 'group-hover:text-[#62BAF3]',
+      name === 'Slate' && 'group-hover:text-[#AFAFAF]',
+      name === 'Phoenix' && 'group-hover:text-[#EA5C29]',
+      name === 'GraphQL' && 'group-hover:text-[#f65ac4]',
+      name === 'Elixir' && 'group-hover:text-[#b16bb1]',
+      name === 'Next.js' && 'group-hover:text-white group-hover:bg-black',
+    ),
     techIcon: 'size-8 block',
   }
 }
