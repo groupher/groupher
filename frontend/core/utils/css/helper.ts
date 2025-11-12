@@ -4,7 +4,7 @@ export const getGlobalCSSVar = (key: string): string | null => {
   return val || null
 }
 
-export const setGlobalCSSVar = (key: string, value: string | number) => {
+export const setGlobalCSSVar = (key: string, value: string) => {
   if (typeof window === 'undefined') return
-  document.documentElement.style.setProperty(`--${key}`, String(value))
+  document.documentElement.style.setProperty(`--${key}`, value)
 }

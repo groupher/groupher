@@ -1,6 +1,6 @@
 :root {
   /* ===== containers ====== */
-  --container-landing-width: 1425px;
+  --container-landing-width: 100%;
   --container-landing-width-base: 1425px;
   --container-article-width: 1360px;
   --container-community-width: 1360px;
@@ -8,6 +8,7 @@
   --container-dashboard-width: 1400px;
   --container-community-sidebar-width: 1280px;
 }
+
 
 @media (min-width: 1680px) {
   :root {

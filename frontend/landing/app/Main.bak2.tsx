@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useScroll, useSpring, useTransform } from 'motion/react'
+import { motion, useMotionTemplate, useScroll, useSpring, useTransform } from 'motion/react'
 import { type FC, type ReactNode, useEffect, useState } from 'react'
 import usePageBg from '~/hooks/usePageBg'
 import useTopbar from '~/hooks/useTopbar'
@@ -34,6 +34,8 @@ const Main: FC<TProps> = ({ children }) => {
   useEffect(() => {
     // 改进后的核心函数： reliably 获取计算后的像素值
     const getConfiguredContainerWidth = (): number => {
+      // 在这里我们不需要 window 检查，因为 useEffect 只在客户端运行
+      // 读取 --container-landing-width-base 配置源
       const varValue = window
         .getComputedStyle(document.documentElement)
         .getPropertyValue('--container-landing-width-base')
@@ -41,6 +43,7 @@ const Main: FC<TProps> = ({ children }) => {
 
       let value = DEFAULT_CONTAINER_WIDTH
       if (varValue?.endsWith('px') || varValue?.endsWith('rem')) {
+        // 使用临时元素来确保 rem/em 被正确计算为 px 值
         const tempDiv = document.createElement('div')
         tempDiv.style.visibility = 'hidden'
         tempDiv.style.position = 'fixed'
@@ -54,25 +57,14 @@ const Main: FC<TProps> = ({ children }) => {
     }
 
     const updateVars = () => {
+      // 每次运行时都从 CSS 读取原始配置值
       const tokenWidth = getConfiguredContainerWidth()
+
       const vw = window.innerWidth
       const vh = window.innerHeight || 1
       setFromWidth(vw)
-      setToWidth(Math.min(tokenWidth, vw))
+      setToWidth(Math.min(tokenWidth, vw)) // 使用配置值作为目标宽度
       setScrollRange(vh)
-
-      // *** 关键修复 ***
-      // 在客户端接管后，立即设置正确的初始宽度，消除闪烁
-      if (typeof window !== 'undefined') {
-        if (scrollY.get() === 0) {
-          document.documentElement.style.setProperty('--container-landing-width', '100vw')
-        } else {
-          document.documentElement.style.setProperty(
-            '--container-landing-width',
-            `${Math.min(tokenWidth, vw)}px`,
-          )
-        }
-      }
     }
 
     updateVars()
@@ -82,7 +74,7 @@ const Main: FC<TProps> = ({ children }) => {
     const onResize = () => {
       if (raf !== null) cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
-        updateVars()
+        updateVars() // 窗口变化时执行，获取最新的响应式配置宽度
         raf = null
       })
     }
@@ -92,7 +84,7 @@ const Main: FC<TProps> = ({ children }) => {
       window.removeEventListener('resize', onResize)
       if (raf !== null) cancelAnimationFrame(raf)
     }
-  }, [scrollY.get]) // 依赖项数组为空
+  }, []) // 依赖项数组为空
 
   // ----------------------
   // scroll progress
@@ -107,35 +99,40 @@ const Main: FC<TProps> = ({ children }) => {
   // ----------------------
   // 宽度计算
   // ----------------------
-  useTransform(smoothProgress, (p) => {
+  const widthPx = useTransform(smoothProgress, (p) => {
+    // 确保只在客户端执行 DOM 操作
     if (typeof window !== 'undefined') {
+      // 如果在顶部，保持 100% 初始宽度
       if (scrollY.get() === 0) {
+        // 在顶部时，设置一个非常大的值来模拟 100vw，防止 container-landing 限制宽度
         document.documentElement.style.setProperty('--container-landing-width', '100vw')
-        return fromWidth
+        // setGlobalCSSVar('container-landing-width', '100vw')
+        return fromWidth // 返回 fromWidth 供 useMotionTemplate 使用（如果需要）
       }
     }
 
     const width = fromWidth + p * (toWidth - fromWidth)
 
+    // 确保只在客户端设置 CSS 变量
     if (typeof window !== 'undefined') {
       document.documentElement.style.setProperty('--container-landing-width', `${width}px`)
     }
+
+    // setGlobalCSSVar('container-landing-width', `${width}px`)
     return width
   })
 
-  // SSR 默认 100% 宽度。客户端接管后， maxWidth 接管
-  const effectiveMaxWidth =
-    typeof window === 'undefined' || !enabled ? '100%' : 'var(--container-landing-width)'
+  const maxWidth = useMotionTemplate`${widthPx}px`
+  const effectiveMaxWidth = enabled ? maxWidth : '100%'
 
   return (
     <>
       <HomeHeader maxWidth={effectiveMaxWidth} sticky />
       <motion.main
         key={locale}
-        className={`${s.wrapper} container-landing`}
+        className={s.wrapper}
         style={{
           background,
-          // maxWidth: effectiveMaxWidth, // 移除内联样式，依赖 container-landing 类
           transition: enabled ? 'max-width 0.15s ease-out' : undefined,
         }}
       >
