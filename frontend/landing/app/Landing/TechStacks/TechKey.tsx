@@ -18,7 +18,7 @@ const CLICK_EFFECT: TargetAndTransition = {
 }
 
 const TechKey: FC<TProps> = ({ path, name, desc = '', iconSize = 'size-6', active = false }) => {
-  const s = useSalon({ active })
+  const s = useSalon({ active, name })
   const controls = useAnimationControls()
 
   const handleClick = () => {
