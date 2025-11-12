@@ -1,9 +1,9 @@
 import useWindowResize from '~/hooks/useWindowResize'
-import twConfig from '~/tailwind/metric.json'
+import { TW_METRIC } from '~/tailwind'
 
 import useMetric from './useMetric'
 
-const Container = twConfig.container
+const Container = TW_METRIC.container
 
 type TRes = {
   rightOffset: string

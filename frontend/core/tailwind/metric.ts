@@ -1,4 +1,38 @@
 export const METRIC = {
+  // TODO: move bg values to css vars, just keep the keys name here for dashboard setting cards display
+  pageBgColorTODO: {
+    light: [
+      'pure-white',
+      'solarized',
+      'hacker news',
+      'light grey',
+      'floral-white',
+      'mint-white',
+      'pink',
+      'todo2',
+      'blue2',
+      'purple',
+      'todo',
+    ],
+    dark: [
+      'charcoal-gray',
+      'dark-slate-gray',
+      'outer-space',
+      'rich-black',
+      'coffee-bean',
+      'ubuntu',
+      'obsidian',
+      'solarized',
+      'black-chocolate',
+      'gunmetal',
+      'smoky-black',
+      'oxford-blue',
+      'eerie-black',
+      'daylight-green',
+      'jet-black',
+      'arsenic',
+    ],
+  },
   pageBgColor: {
     light: {
       'pure-white': '#fff',
@@ -36,6 +70,7 @@ export const METRIC = {
     opacity: 35,
     opacity_dark: 75,
   },
+  // remove it here
   container: {
     landing: {
       width: '1460px',
@@ -56,20 +91,4 @@ export const METRIC = {
       width: '1280px',
     },
   },
-}
-
-const containerToCSSVars = (container: Record<string, { width: string }>) => {
-  return Object.entries(container)
-    .map(([key, val]) => `--container-${key.replace(/_/g, '-')}-width: ${val.width};`)
-    .join(' ')
-}
-
-export const toCSSVars = (tokens = METRIC) => {
-  const cssParts: string[] = []
-
-  if (tokens.container) {
-    cssParts.push(containerToCSSVars(tokens.container))
-  }
-
-  return cssParts.join(' ')
 }

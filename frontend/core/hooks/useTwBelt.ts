@@ -8,9 +8,9 @@ import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useTheme from '~/hooks/useTheme'
 import type { TColorName, TFlatThemeKey, TSpace, TZIndexType } from '~/spec'
-import twConfig from '~/tailwind/metric.json'
+import { TW_METRIC } from '~/tailwind'
 
-const containerConf = twConfig.container
+const containerConf = TW_METRIC.container
 
 type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 'decoration'
 type TLinkColorPrefix = 'fg' | 'fill'

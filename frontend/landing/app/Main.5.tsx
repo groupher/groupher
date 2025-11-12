@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useMotionTemplate, useScroll, useSpring, useTransform } from 'motion/react'
-import { type FC, type ReactNode, useEffect, useState } from 'react'
+import { type FC, type ReactNode, useEffect, useLayoutEffect, useState } from 'react'
 import usePageBg from '~/hooks/usePageBg'
 import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
@@ -10,11 +10,10 @@ import GlowBackground from '~/widgets/GlobalLayout/GlowBackground'
 import useSalon from '~/widgets/GlobalLayout/salon/main'
 import HomeHeader from '~/widgets/HomeHeader'
 
-const DEFAULT_CONTAINER_WIDTH = 1420
+const DEFAULT_CONTAINER_WIDTH = 1425
+const LANDING_WIDTH_VAR = 'container-landing-width'
 
-type TProps = {
-  children: ReactNode
-}
+type TProps = { children: ReactNode }
 
 const Main: FC<TProps> = ({ children }) => {
   const s = useSalon()
@@ -25,50 +24,45 @@ const Main: FC<TProps> = ({ children }) => {
 
   const [fromWidth, setFromWidth] = useState(DEFAULT_CONTAINER_WIDTH)
   const [toWidth, setToWidth] = useState(DEFAULT_CONTAINER_WIDTH)
-  const [scrollRange, setScrollRange] = useState(0)
+  const [scrollRange, setScrollRange] = useState(DEFAULT_CONTAINER_WIDTH)
   const [enabled, setEnabled] = useState(false)
+
+  // ----------------------
+  // SSR 首帧宽度防闪烁
+  // ----------------------
+  useLayoutEffect(() => {
+    document.documentElement.style.setProperty(`--${LANDING_WIDTH_VAR}`, `${window.innerWidth}px`)
+  }, [])
 
   // ----------------------
   // 客户端初始化
   // ----------------------
   useEffect(() => {
-    // 改进后的核心函数： reliably 获取计算后的像素值
     const getConfiguredContainerWidth = (): number => {
-      // 创建一个临时元素，应用我们的 CSS 工具类
-      const tempDiv = document.createElement('div')
-      tempDiv.style.visibility = 'hidden'
-      tempDiv.style.position = 'fixed'
-      // *** 关键：读取 --container-landing-width-base ***
-      tempDiv.style.maxWidth = 'var(--container-landing-width-base)'
-      document.body.appendChild(tempDiv)
-
-      // 读取浏览器计算后的 max-width 像素值
-      const computedStyle = window.getComputedStyle(tempDiv)
-      const maxWidthValue = computedStyle.maxWidth
-
-      // 清理 DOM
-      document.body.removeChild(tempDiv)
-
-      let value = DEFAULT_CONTAINER_WIDTH
-      if (maxWidthValue?.endsWith('px')) {
-        value = parseFloat(maxWidthValue)
+      const varValue = window
+        .getComputedStyle(document.documentElement)
+        .getPropertyValue('--container-landing-width-init')
+        .trim()
+      let value = 1420
+      if (varValue?.endsWith('px') || varValue?.endsWith('rem')) {
+        const tempDiv = document.createElement('div')
+        tempDiv.style.visibility = 'hidden'
+        tempDiv.style.position = 'fixed'
+        tempDiv.style.maxWidth = varValue
+        document.body.appendChild(tempDiv)
+        value = parseFloat(window.getComputedStyle(tempDiv).maxWidth)
+        document.body.removeChild(tempDiv)
       }
-
-      console.log('## getConfiguredContainerWidth computed value: ', value)
       return value
     }
 
     const updateVars = () => {
-      // 每次运行时都从 CSS 读取原始配置值
       const tokenWidth = getConfiguredContainerWidth()
-
       const vw = window.innerWidth
       const vh = window.innerHeight || 1
       setFromWidth(vw)
       setToWidth(Math.min(tokenWidth, vw))
       setScrollRange(vh)
-
-      // 注意：这里我们不再劫持 CSS 变量，让动画去设置它
     }
 
     updateVars()
@@ -78,48 +72,42 @@ const Main: FC<TProps> = ({ children }) => {
     const onResize = () => {
       if (raf !== null) cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
-        updateVars() // 窗口变化时执行，获取最新的响应式配置宽度
+        updateVars()
         raf = null
       })
     }
-    window.addEventListener('resize', onResize)
 
+    window.addEventListener('resize', onResize)
     return () => {
       window.removeEventListener('resize', onResize)
       if (raf !== null) cancelAnimationFrame(raf)
     }
-  }, []) // 依赖项数组为空
+  }, [])
 
   // ----------------------
   // scroll progress
   // ----------------------
   const progress = useTransform(scrollY, [0, scrollRange], [0, 1], { clamp: true })
   const smoothProgress = useSpring(progress, {
-    stiffness: 150, // 越小越慢，越柔和
-    damping: 6, // 越小越有弹性
-    mass: 0.25, // 越大惯性越明显
+    stiffness: 150,
+    damping: 6,
+    mass: 0.25,
   })
 
   // ----------------------
   // 宽度计算
   // ----------------------
   const widthPx = useTransform(smoothProgress, (p) => {
-    // 如果在顶部，保持 100% 初始宽度
-    if (scrollY.get() === 0) {
-      return fromWidth
-    }
-
+    // 使用 Motion 计算宽度，不再硬写 100vw
     const width = fromWidth + p * (toWidth - fromWidth)
-
-    // 在这里，我们将动画值安全地设置给 --container-landing-width 渲染变量
     if (typeof window !== 'undefined') {
-      document.documentElement.style.setProperty('--container-landing-width', `${width}px`)
+      document.documentElement.style.setProperty(`--${LANDING_WIDTH_VAR}`, `${width}px`)
     }
     return width
   })
 
   const maxWidth = useMotionTemplate`${widthPx}px`
-  const effectiveMaxWidth = enabled ? maxWidth : '100%' // 移除 mounted 检查
+  const effectiveMaxWidth = enabled ? maxWidth : '100%'
 
   return (
     <>
@@ -129,15 +117,13 @@ const Main: FC<TProps> = ({ children }) => {
         className={s.wrapper}
         style={{
           background,
-          maxWidth: effectiveMaxWidth,
-          transition: enabled ? 'max-width 0.15s ease-out' : undefined, // 移除 mounted 检查
+          transition: enabled ? 'max-width 0.15s ease-out' : undefined,
         }}
       >
         <HomeHeader />
         {hasTopbar && <div className={s.topBar} />}
         <div className={s.body}>{children}</div>
         <Footer />
-
         <GlowBackground />
       </motion.main>
     </>

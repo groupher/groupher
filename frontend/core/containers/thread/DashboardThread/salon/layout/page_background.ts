@@ -1,11 +1,11 @@
 import { keys } from 'ramda'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
-import twConfig from '~/tailwind/metric.json'
+import { TW_METRIC } from '~/tailwind'
 
 export { cn } from '~/css'
 
-const pageBgColors = twConfig.pageBgColor
+const pageBgColors = TW_METRIC.pageBgColor
 
 export default () => {
   const { cn, shadow, br, fg, primary, isBlackPrimary } = useTwBelt()
