@@ -35,14 +35,17 @@ const Panel: FC<TProps> = ({ active, onMouseEnter, onMouseLeave }) => {
       initial={false}
       className={s.wrapper}
       animate={{
-        scaleY: active ? [0, 1.05, 1] : [1, 0.95, 0],
+        scaleY: active ? 1 : 0,
         opacity: active ? 1 : 0,
         pointerEvents: active ? 'auto' : 'none',
       }}
       transition={{
-        duration: 0.8,
-        ease: [0.22, 1, 0.36, 1],
+        type: 'spring',
+        damping: 24,
+        stiffness: 250,
+        when: active ? 'beforeChildren' : 'afterChildren',
       }}
+      style={{ transformOrigin: 'top' }}
     >
       <div className={s.inner}>
         <AnimatePresence mode='wait'>
