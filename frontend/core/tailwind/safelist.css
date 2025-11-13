@@ -32,11 +32,12 @@
 @source inline('hover:{border-divider,border-text-digest}');
 @source inline('hover:text-rainbow-red');
 @source inline('hover:bg-rainbow-{redBg,redSoftBg}');
-@source inline('hover:{bg-hoverBg,bg-menuHoverBg,bg-card,bg-alphaBg2}');
+@source inline('hover:{bg-hoverBg,bg-menuHoverBg,bg-sandBox,bg-card,bg-alphaBg2}');
 @source inline('hover:shadow-sm');
 
 /* group hover */
 @source inline('group-hover:{text-text-title,fill-rainbow-red,fill-text-title,shadow-sm}');
+@source inline('group-hover:{fill,text}-rainbow-{red,orange,yellow,green,cyan,blue,purple,pink}');
 
 /* menu group hover */
 @source inline('group-hover/menubar:{text-rainbow-red,fill-rainbow-red,fill-text-title}');

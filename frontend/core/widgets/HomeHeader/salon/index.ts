@@ -3,16 +3,35 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default () => {
-  const { cn, linkable, fg, bg, fill, hoverLink, hoverLinkIcon, VDivider, menu, rainbow, zIndex } =
-    useTwBelt()
+type TProps = {
+  extend?: boolean
+  isSticky?: boolean
+}
+
+export default ({ extend = false, isSticky = false }: TProps = {}) => {
+  const {
+    cn,
+    br,
+    linkable,
+    fg,
+    bg,
+    fill,
+    hoverLink,
+    hoverLinkIcon,
+    VDivider,
+    menu,
+    rainbow,
+    zIndex,
+  } = useTwBelt()
 
   return {
     wrapper: cn(
       'row-center-between w-full px-28 h-16 sticky top-0',
       'backdrop-blur-sm',
-      bg('cardAlpha'),
+      isSticky && 'border-b rounded-bl-2xl rounded-br-2xl',
+      extend ? bg('card') : bg('cardAlpha'),
       zIndex('header'),
+      br('divider'),
     ),
     brand: cn(linkable()),
     links: cn('row-center gap-x-6 ml-12 mt-px'),

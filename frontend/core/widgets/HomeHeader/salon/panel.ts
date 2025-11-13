@@ -7,12 +7,12 @@ export default () => {
 
   return {
     wrapper: cn(
-      'absolute left-0 top-full w-full origin-top overflow-hidden',
-      'backdrop-blur-sm border-b',
-      'header-panel-shadow',
-      bg('cardAlpha'),
+      'absolute left-0 top-full w-full h-auto pb-6 pt-4',
+      'border-b',
       zIndex('header'),
       br('divider'),
+      bg('card'),
     ),
+    inner: cn('backdrop-blur-sm w-full h-full'),
   }
 }

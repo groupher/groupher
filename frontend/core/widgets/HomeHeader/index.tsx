@@ -1,6 +1,6 @@
+import { useMotionValueEvent, useScroll } from 'motion/react'
 import Link from 'next/link'
 import { useRef, useState } from 'react'
-
 import { ROUTE } from '~/const/route'
 import useSession from '~/hooks/useSession'
 import DemoSVG from '~/icons/DemoTV'
@@ -12,9 +12,15 @@ import useSalon from './salon'
 
 const HOVER_DELAY = 120
 
-const HomeHeader = () => {
+export default () => {
   const [activeMenu, setActiveMenu] = useState('')
   const timerRef = useRef<number | null>(null)
+  const { scrollY } = useScroll()
+  const [isSticky, setIsSticky] = useState(false)
+
+  useMotionValueEvent(scrollY, 'change', (latest) => {
+    setIsSticky(latest > 0)
+  })
 
   const cancelClose = () => {
     if (timerRef.current) {
@@ -27,7 +33,7 @@ const HomeHeader = () => {
     timerRef.current = window.setTimeout(() => setActiveMenu(''), HOVER_DELAY)
   }
 
-  const s = useSalon()
+  const s = useSalon({ extend: !!activeMenu, isSticky })
 
   useSession()
 
@@ -47,5 +53,3 @@ const HomeHeader = () => {
     </header>
   )
 }
-
-export default HomeHeader
