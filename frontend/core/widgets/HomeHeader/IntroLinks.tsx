@@ -4,19 +4,20 @@ import { type FC, useState } from 'react'
 import { ROUTE } from '~/const/route'
 import useSession from '~/hooks/useSession'
 import ArrowSVG from '~/icons/ArrowSimple'
-import BookSVG from '~/icons/Book'
-import DiscussSVG from '~/icons/DiscussSolid'
-import KanbanSVG from '~/icons/Kanban'
-import ChangelogSVG from '~/icons/TadaRaw'
 import CommunityBrand from '~/widgets/CommunityBrand'
 import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from './salon'
 
-const HomeHeader: FC = () => {
+type TProps = {
+  activeMenu: string
+  setActiveMenu: (menu: string) => void
+}
+
+const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu }) => {
   const s = useSalon()
 
-  const [productActive, setProductActive] = useState(false)
+  const [_productActive, _setProductActive] = useState(false)
   const [moreActive, setMoreActive] = useState(false)
 
   useSession()
@@ -27,64 +28,23 @@ const HomeHeader: FC = () => {
         <CommunityBrand landingBrand />
       </Link>
       <div className={s.links}>
-        <Tooltip
-          content={
-            <div className={cn(s.panel, 'w-52 mt-1 mb-1.5')}>
-              <Link className={cn(s.menuBar, '!items-start')} href={`/${ROUTE.HOME}`}>
-                <div className={cn(s.menuIconBox, s.purpleBg)}>
-                  <DiscussSVG className={cn(s.menuIcon, s.purpleIcon)} />
-                </div>
-                <div>
-                  <div className={cn(s.menuTitle, 'bold-sm')}>讨论区</div>
-                  <div className={s.menuDesc}>功能需求，问题上报，常规讨论等</div>
-                </div>
-              </Link>
-              <Link
-                className={cn(s.menuBar, '!items-start')}
-                href={`/${ROUTE.HOME}/${ROUTE.KANBAN}`}
-              >
-                <div className={cn(s.menuIconBox, s.blueBg)}>
-                  <KanbanSVG className={cn(s.menuIcon, 'rotate-180', s.blueIcon)} />
-                </div>
-                <div>
-                  <div className={cn(s.menuTitle, 'bold-sm')}>看板</div>
-                  <div className={s.menuDesc}>开发计划，产品路线图</div>
-                </div>
-              </Link>
-              <Link
-                className={cn(s.menuBar, '!items-start')}
-                href={`/${ROUTE.HOME}/${ROUTE.CHANGELOG}`}
-              >
-                <div className={cn(s.menuIconBox, s.redBg)}>
-                  <ChangelogSVG className={cn(s.menuIcon, 'size-4', s.redIcon)} />
-                </div>
-                <div>
-                  <div className={cn(s.menuTitle, 'bold-sm')}>更新日志</div>
-                  <div className={s.menuDesc}>产品更新详情，历史版本发布记录。</div>
-                </div>
-              </Link>
-              <Link className={cn(s.menuBar, '!items-start')} href={`/${ROUTE.HOME}/${ROUTE.HELP}`}>
-                <div className={cn(s.menuIconBox, s.cyanBg)}>
-                  <BookSVG className={cn(s.menuIcon, 'size-5', s.cyanIcon)} />
-                </div>
-                <div>
-                  <div className={cn(s.menuTitle, 'bold-sm')}>帮助文档</div>
-                  <div className={s.menuDesc}>常见问题，使用引导，开发指南等</div>
-                </div>
-              </Link>
-            </div>
-          }
-          placement='bottom'
-          offset={[-5, 5]}
-          onShow={() => setProductActive(true)}
-          onHide={() => setProductActive(false)}
-          delay={100}
-          noPadding
+        <button
+          className={cn(s.stackLink, activeMenu === 'product' && s.linkActive)}
+          onMouseEnter={() => setActiveMenu('product')}
         >
-          <div className={cn(s.stackLink, productActive && s.linkActive)}>
-            产品 <ArrowSVG className={s.arrowIcon} />
-          </div>
-        </Tooltip>
+          产品 <ArrowSVG className={s.arrowIcon} />
+        </button>
+
+        <button
+          className={cn(s.stackLink, activeMenu === 'community' && s.linkActive)}
+          onMouseEnter={() => setActiveMenu('community')}
+        >
+          社区 <ArrowSVG className={s.arrowIcon} />
+        </button>
+
+        <button className={cn(s.stackLink)} onMouseEnter={() => setActiveMenu('')}>
+          测试链接
+        </button>
 
         <Link className={s.linkItem} href={`/${ROUTE.HOME}`}>
           社区
@@ -125,17 +85,8 @@ const HomeHeader: FC = () => {
           </div>
         </Tooltip>
       </div>
-
-      {/* <div className={s.extraInfo}>
-        <ThemeSwitch />
-        <div className={s.divider} />
-        <Link className={s.requestDemoLink} href={`/${ROUTE.BOOK_DEMO}`}>
-          <DemoSVG className={s.demoIcon} />
-          <div>预约演示</div>
-        </Link>
-      </div> */}
     </>
   )
 }
 
-export default HomeHeader
+export default IntroLinks
