@@ -1,6 +1,6 @@
 import { useMotionValueEvent, useScroll } from 'motion/react'
 import Link from 'next/link'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ROUTE } from '~/const/route'
 import useSession from '~/hooks/useSession'
 import DemoSVG from '~/icons/DemoTV'
@@ -18,6 +18,12 @@ export default () => {
   const timerRef = useRef<number | null>(null)
   const { scrollY } = useScroll()
   const [isSticky, setIsSticky] = useState(false)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current)
+    }
+  }, [])
 
   useMotionValueEvent(scrollY, 'change', (latest) => {
     setIsSticky(latest > 400)
