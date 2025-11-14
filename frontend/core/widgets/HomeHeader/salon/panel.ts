@@ -13,6 +13,5 @@ export default () => {
       br('divider'),
       bg('card'),
     ),
-    inner: cn('backdrop-blur-sm w-full h-full'),
   }
 }

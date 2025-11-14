@@ -18,7 +18,6 @@ const Panel: FC<TProps> = ({ active, onMouseEnter, onMouseLeave }) => {
   const s = useSalon()
   const ref = useRef<HTMLDivElement>(null)
 
-  // ✅ 这里可以用于 hover 容错
   useEffect(() => {
     const node = ref.current
     if (!node) return
@@ -48,23 +47,21 @@ const Panel: FC<TProps> = ({ active, onMouseEnter, onMouseLeave }) => {
       }}
       style={{ transformOrigin: 'top' }}
     >
-      <div className={s.inner}>
-        <AnimatePresence mode='wait'>
-          {active && (
-            <motion.div
-              key={active}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-            >
-              {active === HEAD_MENU.PRODUCT && <FeatureIntros />}
-              {active === HEAD_MENU.COMMUNITY && <CommunityIntros />}
-              {active === HEAD_MENU.DOCS && <DocsIntros />}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <AnimatePresence mode='wait'>
+        {active && (
+          <motion.div
+            key={active}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            {active === HEAD_MENU.PRODUCT && <FeatureIntros />}
+            {active === HEAD_MENU.COMMUNITY && <CommunityIntros />}
+            {active === HEAD_MENU.DOCS && <DocsIntros />}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }

@@ -39,7 +39,7 @@ export default () => {
   useSession()
 
   return (
-    <header className={s.wrapper}>
+    <header className={s.wrapper} onMouseLeave={scheduleClose}>
       <IntroLinks activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
       <Panel active={activeMenu} onMouseEnter={cancelClose} onMouseLeave={scheduleClose} />
 
