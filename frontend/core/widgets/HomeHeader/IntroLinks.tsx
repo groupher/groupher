@@ -1,12 +1,11 @@
 import Link from 'next/link'
-import { type FC, useState } from 'react'
+import type { FC } from 'react'
 
 import { ROUTE } from '~/const/route'
 import useSession from '~/hooks/useSession'
 import ArrowSVG from '~/icons/ArrowSimple'
 import CommunityBrand from '~/widgets/CommunityBrand'
-import Tooltip from '~/widgets/Tooltip'
-
+import { HEAD_MENU } from './constant'
 import useSalon, { cn } from './salon'
 
 type TProps = {
@@ -17,9 +16,6 @@ type TProps = {
 const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu }) => {
   const s = useSalon()
 
-  const [_productActive, _setProductActive] = useState(false)
-  const [moreActive, setMoreActive] = useState(false)
-
   useSession()
 
   return (
@@ -29,61 +25,36 @@ const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu }) => {
       </Link>
       <div className={s.links}>
         <button
-          className={cn(s.stackLink, activeMenu === 'product' && s.linkActive)}
-          onMouseEnter={() => setActiveMenu('product')}
+          className={cn(s.stackLink, activeMenu === HEAD_MENU.PRODUCT && s.linkActive)}
+          onMouseEnter={() => setActiveMenu(HEAD_MENU.PRODUCT)}
         >
           产品 <ArrowSVG className={s.arrowIcon} />
         </button>
 
         <button
-          className={cn(s.stackLink, activeMenu === 'community' && s.linkActive)}
-          onMouseEnter={() => setActiveMenu('community')}
+          className={cn(s.stackLink, activeMenu === HEAD_MENU.COMMUNITY && s.linkActive)}
+          onMouseEnter={() => setActiveMenu(HEAD_MENU.COMMUNITY)}
         >
           社区 <ArrowSVG className={s.arrowIcon} />
         </button>
 
-        <button className={cn(s.stackLink)} onMouseEnter={() => setActiveMenu('')}>
-          测试链接
+        <button
+          className={cn(s.stackLink, activeMenu === HEAD_MENU.DOCS && s.linkActive)}
+          onMouseEnter={() => setActiveMenu(HEAD_MENU.DOCS)}
+        >
+          文档 <ArrowSVG className={s.arrowIcon} />
         </button>
 
-        <Link className={s.linkItem} href={`/${ROUTE.HOME}`}>
-          社区
-        </Link>
-        <Link className={s.linkItem} href={`/${ROUTE.HOME}/${ROUTE.KANBAN}`}>
-          开发计划
-        </Link>
         <Link className={s.linkItem} href={`/${ROUTE.PRICE}`}>
           价格
         </Link>
-        <Tooltip
-          content={
-            <div className={s.panel}>
-              <Link className={s.menuBar} href={`/${ROUTE.HOME}`}>
-                <div className={s.menuTitle}>团队博客</div>
-              </Link>
-              <Link className={s.menuBar} href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`}>
-                <div className={s.menuTitle}>帮助文档</div>
-              </Link>
-              <Link className={s.menuBar} href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`}>
-                <div className={s.menuTitle}>更新日志</div>
-              </Link>
-              <Link className={s.menuBar} href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`}>
-                <div className={s.menuTitle}>自定义</div>
-              </Link>
-            </div>
-          }
-          placement='bottom'
-          trigger='mouseenter focus'
-          offset={[-5, 5]}
-          onShow={() => setMoreActive(true)}
-          onHide={() => setMoreActive(false)}
-          delay={100}
-          noPadding
+
+        <button
+          className={cn(s.stackLink, activeMenu === HEAD_MENU.ABOUT && s.linkActive)}
+          onMouseEnter={() => setActiveMenu(HEAD_MENU.ABOUT)}
         >
-          <div className={cn(s.stackLink, moreActive && s.linkActive)}>
-            了解更多 <ArrowSVG className={s.arrowIcon} />
-          </div>
-        </Tooltip>
+          关于 <ArrowSVG className={s.arrowIcon} />
+        </button>
       </div>
     </>
   )

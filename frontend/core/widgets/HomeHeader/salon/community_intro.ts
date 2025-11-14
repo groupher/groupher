@@ -4,21 +4,20 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fill, fg, menu, rainbow, vividDark } = useTwBelt()
+  const { cn, fill, fg, br, bg, menu, rainbow, vividDark } = useTwBelt()
 
-  const blockColor =
-    'absolute top-0 left-0 w-full h-full -z-10 opacity-60 group-hover:opacity-100 trans-all-100'
+  const blockColor = cn(
+    'absolute top-0 left-0 w-full h-full -z-10 opacity-80 group-hover:opacity-100 trans-all-100 border border-transparent',
+    `group-hover:${br('divider')}`,
+  )
 
   return {
     wrapper: cn('align-both w-full gap-x-4'),
     block: cn(
-      'group column relative min-w-60 w-60 h-28 px-3 py-4 rounded-md pointer overflow-hidden',
+      'group column relative min-w-52 w-52 h-28 px-3 py-4 rounded-md pointer overflow-hidden',
       'trans-all-200',
     ),
-    blockPurple: cn(blockColor, 'gradient-purple'),
-    blockBlue: cn(blockColor, 'gradient-blue'),
-    blockRed: cn(blockColor, 'gradient-red'),
-    blockCyan: cn(blockColor, 'gradient-cyan'),
+    blockGrey: cn(blockColor, bg('sandBox')),
     head: 'row-center',
 
     title: cn('text-base ml-2', fg('text.title'), vividDark()),

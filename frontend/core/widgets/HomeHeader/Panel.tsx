@@ -2,9 +2,10 @@
 
 import { AnimatePresence, motion } from 'motion/react'
 import { type FC, useEffect, useRef } from 'react'
-
+import CommunityIntros from './CommunityIntros'
+import { HEAD_MENU } from './constant'
+import DocsIntros from './DocsIntros'
 import FeatureIntros from './FeatureIntros'
-
 import useSalon from './salon/panel'
 
 type TProps = {
@@ -57,8 +58,9 @@ const Panel: FC<TProps> = ({ active, onMouseEnter, onMouseLeave }) => {
               exit={{ opacity: 0, y: -16 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              {active === 'product' && <FeatureIntros />}
-              {active === 'community' && <FeatureIntros />}
+              {active === HEAD_MENU.PRODUCT && <FeatureIntros />}
+              {active === HEAD_MENU.COMMUNITY && <CommunityIntros />}
+              {active === HEAD_MENU.DOCS && <DocsIntros />}
             </motion.div>
           )}
         </AnimatePresence>

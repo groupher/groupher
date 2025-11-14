@@ -4,24 +4,20 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fill, fg, menu, rainbow, vividDark } = useTwBelt()
-
-  const blockColor =
-    'absolute top-0 left-0 w-full h-full -z-10 opacity-60 group-hover:opacity-100 trans-all-100'
+  const { cn, fill, fg, br, menu, rainbow, vividDark } = useTwBelt()
 
   return {
     wrapper: cn('align-both w-full gap-x-4'),
     block: cn(
-      'group column relative min-w-60 w-60 h-28 px-3 py-4 rounded-md pointer overflow-hidden',
+      'group column -mt-4 relative min-w-52 w-52 h-32 px-3 py-2 rounded-md pointer overflow-hidden',
       'trans-all-200',
     ),
-    blockPurple: cn(blockColor, 'gradient-purple'),
-    blockBlue: cn(blockColor, 'gradient-blue'),
-    blockRed: cn(blockColor, 'gradient-red'),
-    blockCyan: cn(blockColor, 'gradient-cyan'),
     head: 'row-center',
 
-    title: cn('text-base ml-2', fg('text.title'), vividDark()),
+    title: cn('text-base', fg('text.title'), vividDark()),
+    content: cn('column gap-y-1 border-l pl-2 mt-2 ml-0.5', br('text.digest')),
+    item: cn('text-sm trans-all-200 line-clamp-1', fg('text.digest'), `hover:${fg('text.title')}`),
+    more: cn('text-xs mt-0.5 ml-0.5 trans-all-200', fg('link'), `hover:${fg('text.title')}`),
     desc: cn('text-sm mt-3 trans-all-200 line-clamp-2', fg('text.digest')),
 
     purple: `group-hover:${rainbow(COLOR_NAME.PURPLE, 'fg')}`,

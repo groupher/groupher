@@ -26,7 +26,7 @@ const FeatureIntros: FC = () => {
       <div className={cn(s.block)}>
         <div className={s.blockBlue} />
         <div className={s.head}>
-          <KanbanSVG className={cn(s.menuIcon, s.blueIcon)} />
+          <KanbanSVG className={cn(s.menuIcon, s.blueIcon, 'rotate-180')} />
           <div className={cn(s.title, s.blue)}>看板</div>
         </div>
         <div className={s.desc}>开发计划，产品路线图，反馈进度等。</div>

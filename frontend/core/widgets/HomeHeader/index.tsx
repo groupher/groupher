@@ -11,19 +11,16 @@ import IntroLinks from './IntroLinks'
 import Panel from './Panel'
 import useSalon, { cn } from './salon'
 
-const HOVER_DELAY = 120
+const HOVER_DELAY = 150
 
 export default () => {
   const [activeMenu, setActiveMenu] = useState('')
   const timerRef = useRef<number | null>(null)
   const { scrollY } = useScroll()
   const [isSticky, setIsSticky] = useState(false)
-  const [isCoverPassed, setIsCoverPassed] = useState(false)
 
   useMotionValueEvent(scrollY, 'change', (latest) => {
-    setIsSticky(latest > 0)
-
-    setIsCoverPassed(latest > 400)
+    setIsSticky(latest > 400)
   })
 
   const cancelClose = () => {
@@ -49,7 +46,7 @@ export default () => {
       <div className={s.extraInfo}>
         <ThemeSwitch />
         <div className={s.divider} />
-        {!isCoverPassed ? (
+        {!isSticky ? (
           <Link className={s.requestDemoLink} href={`/${ROUTE.BOOK_DEMO}`}>
             <DemoSVG className={s.demoIcon} />
             <div>预约演示</div>
