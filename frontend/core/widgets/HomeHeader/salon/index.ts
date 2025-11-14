@@ -3,31 +3,36 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default () => {
+type TProps = {
+  extend?: boolean
+  isSticky?: boolean
+}
+
+export default ({ extend = false, isSticky = false }: TProps = {}) => {
   const {
     cn,
+    br,
     linkable,
     fg,
     bg,
-    br,
     fill,
     hoverLink,
     hoverLinkIcon,
     VDivider,
     menu,
     rainbow,
-    shadow,
+    zIndex,
   } = useTwBelt()
 
   return {
-    stickyWrapper: cn(
-      'row-center-between fixed top-0 left-1/2 transform -translate-x-1/2 z-50',
-      'w-3/5 rounded-2xl rounded-tl-none rounded-tr-none h-12 pl-8 pr-2 backdrop-blur-2xl border',
+    wrapper: cn(
+      'row-center-between w-full px-28 h-16 sticky top-0',
+      'backdrop-blur-sm trans-all-200',
+      isSticky && 'border-b rounded-bl-2xl rounded-br-2xl',
+      extend ? bg('card') : bg('cardAlpha'),
+      zIndex('header'),
       br('divider'),
-      shadow('card'),
-      bg('cardAlpha'),
     ),
-    normal: cn('row-center-between w-full px-28 h-16'),
     brand: cn(linkable()),
     links: cn('row-center gap-x-6 ml-12 mt-px'),
     linkItem: hoverLink(),

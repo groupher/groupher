@@ -11,7 +11,7 @@ export default () => {
 
   return {
     wrapper: cn(
-      'row-center wrap absolute top-20 left-5 py-1 w-36 h-24 rounded-lg border z-50',
+      'row-center wrap absolute top-20 left-5 py-1 w-36 h-24 rounded-lg border z-30',
       br('divider'),
       bg('card'),
       shadow('sm'),

@@ -85,6 +85,16 @@
     }
   }
 
+  .header-panel-shadow {
+    box-shadow: 0px 16px 20px -4px #adadad17;
+  }
+
+  [data-theme="dark"] {
+    .header-panel-shadow {
+      box-shadow: 3px 10px 20px -4px #00000052;
+    }
+  }
+
   .keyboard-block {
     /* --key-bg-start-color: #0f0f0f;
      --key-bg-end-color: #181818; */

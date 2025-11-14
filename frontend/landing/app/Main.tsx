@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useMotionTemplate, useScroll, useSpring, useTransform } from 'motion/react'
+import { motion, useScroll, useSpring, useTransform } from 'motion/react'
 import { type FC, type ReactNode, useEffect, useState } from 'react'
 import usePageBg from '~/hooks/usePageBg'
 import useTopbar from '~/hooks/useTopbar'
@@ -98,7 +98,7 @@ const Main: FC<TProps> = ({ children }) => {
   // ----------------------
   // 宽度计算
   // ----------------------
-  const widthPx = useTransform(smoothProgress, (p) => {
+  useTransform(smoothProgress, (p) => {
     // 确保只在客户端执行 DOM 操作
     if (typeof window !== 'undefined') {
       if (scrollY.get() === 0) {
@@ -117,27 +117,21 @@ const Main: FC<TProps> = ({ children }) => {
     return width
   })
 
-  const maxWidth = useMotionTemplate`${widthPx}px`
-  const effectiveMaxWidth = enabled ? maxWidth : '100%'
-
   return (
-    <>
-      <HomeHeader maxWidth={effectiveMaxWidth} sticky />
-      <motion.main
-        key={locale}
-        className={s.wrapper}
-        style={{
-          background,
-          transition: enabled ? 'max-width 0.15s ease-out' : undefined,
-        }}
-      >
-        <HomeHeader />
-        {hasTopbar && <div className={s.topBar} />}
-        <div className={s.body}>{children}</div>
-        <Footer />
-        <GlowBackground />
-      </motion.main>
-    </>
+    <motion.main
+      key={locale}
+      className={s.wrapper}
+      style={{
+        background,
+        transition: enabled ? 'max-width 0.15s ease-out' : undefined,
+      }}
+    >
+      <HomeHeader />
+      {hasTopbar && <div className={s.topBar} />}
+      <div className={s.body}>{children}</div>
+      <Footer />
+      <GlowBackground />
+    </motion.main>
   )
 }
 

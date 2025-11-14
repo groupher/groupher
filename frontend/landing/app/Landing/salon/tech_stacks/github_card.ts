@@ -9,7 +9,7 @@ export default () => {
 
   return {
     wrapper: cn(
-      'column w-2/5 h-full pl-12 pr-16 z-40 border-l -ml-10 py-10',
+      'column w-2/5 h-full pl-12 pr-16 z-20 border-l -ml-10 py-10',
       br('divider'),
       bg('menuInvertBg'),
     ),

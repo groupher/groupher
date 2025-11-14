@@ -68,7 +68,6 @@ export default () => {
 
   return (
     <div className={s.wrapper} data-testid='landing-page'>
-      {/* <HomeHeader /> */}
       {/* <DashboardIntros /> */}
       {/* <PatternBg /> */}
       <div className={s.inner}>
