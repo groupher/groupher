@@ -45,7 +45,11 @@ const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu }) => {
           文档 <ArrowSVG className={s.arrowIcon} />
         </button>
 
-        <Link className={s.linkItem} href={`/${ROUTE.PRICE}`}>
+        <Link
+          className={s.linkItem}
+          href={`/${ROUTE.PRICE}`}
+          onMouseEnter={() => setActiveMenu('')}
+        >
           价格
         </Link>
 
