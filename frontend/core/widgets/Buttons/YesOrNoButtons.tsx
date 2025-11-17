@@ -34,10 +34,10 @@ const YesOrNoButton: FC<TProps> = ({
           {cancelText}
         </button>
       )}
-      <div className="ml-1.5 mr-2" />
+      <div className='ml-1.5 mr-2' />
       <Button
-        size="small"
-        type="primary"
+        size='small'
+        type='primary'
         loading={loading}
         disabled={disabled}
         noBorder

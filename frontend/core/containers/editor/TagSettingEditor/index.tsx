@@ -3,27 +3,22 @@
  *
  */
 
-import { type FC, useEffect } from 'react'
 import Link from 'next/link'
-
-import type { TChangeMode, TColorName, TSelectOption } from '~/spec'
-import { ROUTE } from '~/const/route'
-import { DRAWER_SCROLLER } from '~/const/dom'
+import { type FC, useEffect } from 'react'
 import { COLOR_NAME } from '~/const/colors'
-import { CHANGE_MODE } from '~/const/mode'
+import { DRAWER_SCROLLER } from '~/const/dom'
 import { POST_LAYOUT } from '~/const/layout'
-
-import Input from '~/widgets/Input'
+import { CHANGE_MODE } from '~/const/mode'
+import { ROUTE } from '~/const/route'
+import type { TChangeMode, TColorName, TSelectOption } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
-import Select from '~/widgets/Select'
 import CustomScroller from '~/widgets/CustomScroller'
-
-import PostLayout from './PostLayout'
+import Input from '~/widgets/Input'
+import Select from '~/widgets/Select'
 import Footer from './Footer'
-
-import useLogic from './useLogic'
-
+import PostLayout from './PostLayout'
 import useSalon, { cn } from './salon'
+import useLogic from './useLogic'
 
 type TProps = {
   mode?: TChangeMode
@@ -31,9 +26,7 @@ type TProps = {
 
 const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
   const s = useSalon()
-  const { initEditingTag, edit, editingTag, getCategory, getCategoryOptions } = useLogic()
-  const curCategory = getCategory()
-  const categoryOptions = getCategoryOptions()
+  const { initEditingTag, edit, editingTag, curCategory, categoryOptions } = useLogic()
 
   useEffect(() => {
     initEditingTag(mode)
@@ -43,21 +36,21 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
     <div className={s.wrapper}>
       <CustomScroller
         instanceKey={DRAWER_SCROLLER}
-        direction="vertical"
-        height="calc(100vh - 200px)"
-        barSize="small"
+        direction='vertical'
+        height='calc(100vh - 200px)'
+        barSize='small'
         showShadow={false}
         autoHide={false}
       >
         {mode === CHANGE_MODE.CREATE && (
           <>
-            <div className="mb-6" />
+            <div className='mb-6' />
             <div className={s.title}>标签名称</div>
             <div className={s.basicInfo}>
               <ColorSelector
                 activeColor={editingTag.color || COLOR_NAME.BLACK}
                 onChange={(color) => edit(color, 'color')}
-                placement="bottom-start"
+                placement='bottom-start'
                 offset={[0, 0]}
               >
                 <div className={s.dotSelector}>
@@ -79,30 +72,30 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
           </>
         )}
 
-        <div className="mb-6" />
+        <div className='mb-6' />
         <div className={s.title}>标签分组</div>
-        <div className="mb-1" />
+        <div className='mb-1' />
         <div className={s.selectorWrapper}>
           <Select
             value={curCategory}
             options={categoryOptions}
-            placeholder="请选择标签所在分组"
+            placeholder='请选择标签所在分组'
             onCreateOption={(value) => edit(value, 'group')}
             onChange={(option: TSelectOption) => edit(option.value, 'group')}
             creatable
           />
         </div>
-        <div className="mb-6" />
+        <div className='mb-6' />
         <div className={s.title}>标签说明</div>
-        <div className="mb-1" />
+        <div className='mb-1' />
         <Input
           className={s.inputer}
           value={editingTag?.desc}
-          placeholder="标签说明 (支持 Markdown 语法)"
-          behavior="textarea"
+          placeholder='标签说明 (支持 Markdown 语法)'
+          behavior='textarea'
           onChange={(e) => edit(e.target.value, 'desc')}
         />
-        <div className="mb-6" />
+        <div className='mb-6' />
         <div className={s.title}>标签布局</div>
         <div className={s.desc}>
           当选中该标签后，帖子列表将以此布局展示。所有标签默认的展示布局可在{' '}
@@ -111,7 +104,7 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
           </Link>
           中设置。{' '}
         </div>
-        <div className="mb-5" />
+        <div className='mb-5' />
         <PostLayout
           layout={editingTag?.layout || POST_LAYOUT.QUORA}
           onChange={(v) => edit(v, 'layout')}

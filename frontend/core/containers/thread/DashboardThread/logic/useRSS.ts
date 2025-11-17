@@ -1,8 +1,6 @@
-import { useCallback } from 'react'
 import { pick } from 'ramda'
-
-import type { TEditFunc } from '~/spec'
 import useSubStore from '~/hooks/useSubStore'
+import type { TEditFunc } from '~/spec'
 
 import useHelper from './useHelper'
 
@@ -10,7 +8,7 @@ type TRet = {
   rssFeedType: string
   rssFeedCount: number
   saving: boolean
-  getIsTouched: () => boolean
+  isTouched: boolean
   edit: TEditFunc
   rssOnSave: () => void
   rssOnCancel: () => void
@@ -20,10 +18,7 @@ export default (): TRet => {
   const store = useSubStore('dashboard')
   const { edit, isChanged } = useHelper()
 
-  const getIsTouched = useCallback(
-    () => isChanged('rssFeedType') || isChanged('rssFeedCount'),
-    [store],
-  )
+  const isTouched = isChanged('rssFeedType') || isChanged('rssFeedCount')
 
   const rssOnSave = (): void => {
     store.commit({ saving: true })
@@ -57,7 +52,7 @@ export default (): TRet => {
   return {
     edit,
     ...pick(['rssFeedType', 'rssFeedCount', 'saving'], store),
-    getIsTouched,
+    isTouched,
     rssOnSave,
     rssOnCancel,
   }

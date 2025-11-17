@@ -16,11 +16,10 @@ export default () => {
   const s = useSalon()
 
   const { wallpaper, background } = useWallpaper()
-  const { gossBlur, saving, getIsTouched, edit } = useGossBlur()
+  const { gossBlur, saving, isTouched, edit } = useGossBlur()
 
   const themeData = useThemeData()
 
-  const isTouched = getIsTouched()
   const bgColor = `${blurRGB(themeData.container, gossBlur)}`
 
   return (

@@ -1,19 +1,15 @@
 import type { FC } from 'react'
 
 import { SETTING_FIELD } from '../constant'
-
-import SavingBar from '../SavingBar'
-
-import Templates from './Templates'
-import Editor from './Editors'
-
 import useFooter from '../logic/useFooter'
+import SavingBar from '../SavingBar'
 import useSalon from '../salon/footer'
+import Editor from './Editors'
+import Templates from './Templates'
 
 const Footer: FC = () => {
   const s = useSalon()
-  const { saving, getIsTouched } = useFooter()
-  const isTouched = getIsTouched('footerLinks')
+  const { saving, isFooterLinksTouched: isTouched } = useFooter()
 
   return (
     <div className={s.wrapper}>
@@ -27,7 +23,7 @@ const Footer: FC = () => {
         isTouched={isTouched}
         loading={saving}
         top={10}
-        width="w-11/12"
+        width='w-11/12'
       />
     </div>
   )

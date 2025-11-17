@@ -1,18 +1,13 @@
 import { find } from 'ramda'
-
-import type { TSelectOption } from '~/spec'
 import { LANGS_OPTIONS } from '~/const/i18n'
-
-import Select from '~/widgets/Select'
+import type { TSelectOption } from '~/spec'
 import Input from '~/widgets/Input'
-
-import DangerZone from './DangerZone'
-
+import Select from '~/widgets/Select'
 import { SETTING_FIELD } from '../constant'
-import SavingBar from '../SavingBar'
 import useBaseInfo from '../logic/useBaseInfo'
-
+import SavingBar from '../SavingBar'
 import useSalon from '../salon/basic_info/base_info'
+import DangerZone from './DangerZone'
 
 export default () => {
   const { saving, locale, desc, title, slug, homepage, introduction, isTouched, edit } =
@@ -27,11 +22,10 @@ export default () => {
       <Select
         value={curLangOption}
         options={LANGS_OPTIONS}
-        placeholder="社区默认语言"
+        placeholder='社区默认语言'
         onChange={(option: TSelectOption) => edit(option.value, 'locale')}
-        top={10}
-        bottom={10}
-        right={8}
+        top={2.5}
+        bottom={5}
       />
       <p className={s.hint}>社区界面的默认语言</p>
 
@@ -41,12 +35,12 @@ export default () => {
         社区的 URL 地址段，填写后可通过 https://groupher.com/[slug] 或 https://[slug].groupher.com
         访问。
       </p>
-      <div className="mb-2.5" />
+      <div className='mb-2.5' />
 
       <div className={s.label}>社区名称</div>
       <Input value={title} className={s.input} onChange={(v) => edit(v, 'title')} />
 
-      <div className="mb-2.5" />
+      <div className='mb-2.5' />
 
       <div className={s.label}>官方主页</div>
       <Input value={homepage} className={s.input} onChange={(v) => edit(v, 'homepage')} />
@@ -54,17 +48,17 @@ export default () => {
 
       <div className={s.label}>社区简介</div>
       <Input
-        placeholder="一句话简介"
+        placeholder='一句话简介'
         value={desc}
         className={s.input}
         onChange={(v) => edit(v, 'desc')}
       />
-      <div className="mb-4" />
+      <div className='mb-4' />
 
       <div className={s.label}>关于社区</div>
       <Input
-        behavior="textarea"
-        placeholder="支持 Markdown 语法"
+        behavior='textarea'
+        placeholder='支持 Markdown 语法'
         className={s.input}
         value={introduction}
         onChange={(v) => edit(v, 'introduction')}
@@ -80,7 +74,7 @@ export default () => {
         />
       )}
 
-      <div className="mb-12" />
+      <div className='mb-12' />
       <DangerZone />
     </div>
   )

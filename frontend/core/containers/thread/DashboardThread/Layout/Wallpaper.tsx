@@ -23,7 +23,7 @@ export default () => {
   const themeData = useThemeData()
 
   const handleCallEditor = useCallback(() => callWallpaperEditor(), [])
-  const bgColor = `${blurRGB(themeData.container, gossBlur)}`
+  const bgColor = `${blurRGB(themeData.container || '#fff', gossBlur)}`
 
   return (
     <div className={s.wrapper}>

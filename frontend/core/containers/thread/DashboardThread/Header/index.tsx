@@ -1,25 +1,21 @@
 import type { FC } from 'react'
 
 import { SETTING_FIELD } from '../constant'
-
-import SavingBar from '../SavingBar'
-
-import Templates from './Templates'
-import Editor from './Editors'
-
 import useHeader from '../logic/useHeader'
+import SavingBar from '../SavingBar'
 import useSalon from '../salon/header'
+import Editor from './Editors'
+import Templates from './Templates'
 
 const Header: FC = () => {
   const s = useSalon()
 
-  const { saving, getIsTouched } = useHeader()
-  const isTouched = getIsTouched()
+  const { saving, isHeaderLinksTouched: isTouched } = useHeader()
 
   return (
     <div className={s.wrapper}>
       <Templates />
-      <div className="mt-4" />
+      <div className='mt-4' />
       <Editor />
 
       <SavingBar
@@ -27,7 +23,7 @@ const Header: FC = () => {
         isTouched={isTouched}
         loading={saving}
         top={10}
-        width="w-11/12"
+        width='w-11/12'
       />
     </div>
   )

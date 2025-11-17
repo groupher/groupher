@@ -1,13 +1,11 @@
-import { useCallback } from 'react'
 import { pick } from 'ramda'
-
+import useSubStore from '~/hooks/useSubStore'
 import type {
-  TBroadcastLayout,
   TBroadcastConfig,
+  TBroadcastLayout,
   TDashboardBroadcastRoute,
   TEditFunc,
 } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
 import { SETTING_FIELD } from '~/stores/dashboard/constant'
 
 import useHelper from './useHelper'
@@ -17,8 +15,8 @@ type TRet = TBroadcastConfig & {
   broadcastLayout: TBroadcastLayout
   broadcastTab: TDashboardBroadcastRoute
   saving: boolean
-  getIsTouched: () => boolean
-  getIsArticleTouched: () => boolean
+  isTouched: boolean
+  isArticleTouched: boolean
   changeEnable: (v: boolean) => void
   broadcastOnSave: (isArticle?: boolean) => void
   broadcastOnCancel: (isArticle?: boolean) => void
@@ -28,14 +26,8 @@ export default (): TRet => {
   const store = useSubStore('dashboard')
   const { edit, isChanged, onSave } = useHelper()
 
-  // drived
-  const getIsTouched = useCallback(() => {
-    return isChanged('broadcastLayout') || isChanged('broadcastBg')
-  }, [store])
-
-  const getIsArticleTouched = useCallback(() => {
-    return isChanged('broadcastArticleLayout') || isChanged('broadcastArticleBg')
-  }, [store])
+  const isTouched = isChanged('broadcastLayout') || isChanged('broadcastBg')
+  const isArticleTouched = isChanged('broadcastArticleLayout') || isChanged('broadcastArticleBg')
 
   const changeEnable = (v: boolean) => {
     store.commit({ broadcastEnable: v })
@@ -91,8 +83,8 @@ export default (): TRet => {
       ],
       store,
     ),
-    getIsTouched,
-    getIsArticleTouched,
+    isTouched,
+    isArticleTouched,
     changeEnable,
     broadcastOnSave,
     broadcastOnCancel,

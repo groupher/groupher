@@ -1,5 +1,5 @@
-import useTwBelt from '~/hooks/useTwBelt'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
+import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 

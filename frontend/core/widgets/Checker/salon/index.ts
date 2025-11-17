@@ -1,9 +1,7 @@
-import type { TColorName, TSizeSM, TSpace } from '~/spec'
 import SIZE from '~/const/size'
-
 import usePrimaryColor from '~/hooks/usePrimaryColor'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TColorName, TSizeSM, TSpace } from '~/spec'
 
 type TProps = {
   disabled: boolean

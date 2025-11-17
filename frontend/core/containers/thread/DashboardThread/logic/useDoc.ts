@@ -1,19 +1,16 @@
-import { useCallback } from 'react'
 import { pick } from 'ramda'
-
-import type { TDocLayout, TDocFAQLayout, TEditFunc } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
 import { COLOR_NAME } from '~/const/colors'
-
-import useHelper from './useHelper'
+import useSubStore from '~/hooks/useSubStore'
+import type { TDocFAQLayout, TDocLayout, TEditFunc } from '~/spec'
 import { DEFAULT_NEW_FAQ } from '../constant'
+import useHelper from './useHelper'
 
 type TRet = {
   docLayout: TDocLayout
   docFaqLayout: TDocFAQLayout
   saving: boolean
-  getIsTouched: () => boolean
-  getIsFaqTouched: () => boolean
+  isTouched: boolean
+  isFaqTouched: boolean
   edit: TEditFunc
 
   addFAQSection: () => void
@@ -42,15 +39,14 @@ export default (): TRet => {
     store.commit({ docCategories })
   }
 
-  // drived
-  const getIsTouched = useCallback(() => isChanged('docLayout'), [store])
-  const getIsFaqTouched = useCallback(() => isChanged('docFaqLayout'), [store])
+  const isTouched = isChanged('docLayout')
+  const isFaqTouched = isChanged('docFaqLayout')
 
   return {
     edit,
     ...pick(['docLayout', 'docFaqLayout', 'saving'], store),
-    getIsTouched,
-    getIsFaqTouched,
+    isTouched,
+    isFaqTouched,
     addFAQSection,
     addDocCategory,
   }

@@ -1,26 +1,22 @@
-import ColorSelector from '~/widgets/ColorSelector'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import Checker from '~/widgets/Checker'
-
-import SectionLabel from '../SectionLabel'
-import SavingBar from '../SavingBar'
-
+import ColorSelector from '~/widgets/ColorSelector'
 import { SETTING_FIELD } from '../constant'
-
 import usePrimaryColor from '../logic/usePrimaryColor'
+import SavingBar from '../SavingBar'
+import SectionLabel from '../SectionLabel'
 import useSalon, { cn } from '../salon/layout/primary_color'
 
 export default () => {
   const s = useSalon()
-  const { edit, primaryColor, getIsTouched, saving } = usePrimaryColor()
-  const isTouched = getIsTouched()
+  const { edit, primaryColor, isTouched, saving } = usePrimaryColor()
 
   return (
     <section className={s.wrapper}>
       <SectionLabel
-        title="主题色"
+        title='主题色'
         desc={
-          <div className="row">
+          <div className='row'>
             设置后会在常见组件，功能性文字等位置显示该个性化主题色。参考
             <ArrowButton left={1}>影响范围</ArrowButton>
           </div>
@@ -33,7 +29,7 @@ export default () => {
               <ColorSelector
                 activeColor={primaryColor}
                 onChange={(color) => edit(color, 'primaryColor')}
-                placement="right"
+                placement='right'
                 offset={[-1, 15]}
               >
                 <div className={s.colorBall} />
@@ -42,7 +38,7 @@ export default () => {
             <div className={s.title}>主题颜色</div>
           </div>
           <p className={s.desc}>作用于各类按钮, 标签组件，路由等高亮颜色</p>
-          <Checker checked size="small" top={6} left={2}>
+          <Checker checked size='small' top={6} left={2}>
             与副主题色同步
           </Checker>
 
@@ -50,7 +46,7 @@ export default () => {
             isTouched={isTouched}
             field={SETTING_FIELD.PRIMARY_COLOR}
             loading={saving}
-            width="w-11/12"
+            width='w-11/12'
             top={6}
           />
         </div>
@@ -61,7 +57,7 @@ export default () => {
               <ColorSelector
                 activeColor={primaryColor}
                 onChange={(color) => edit(color, 'primaryColor')}
-                placement="right"
+                placement='right'
                 offset={[-1, 15]}
               >
                 <div className={cn(s.colorBall, s.subColorBall)} />
@@ -77,7 +73,7 @@ export default () => {
         isTouched={isTouched}
         field={SETTING_FIELD.PRIMARY_COLOR}
         loading={saving}
-        width="w-11/12"
+        width='w-11/12'
         top={6}
       />
     </section>

@@ -1,15 +1,12 @@
-import { useCallback } from 'react'
-
-import type { TPostLayout, TEditFunc } from '~/spec'
-
 import useSubStore from '~/hooks/useSubStore'
+import type { TEditFunc, TPostLayout } from '~/spec'
 
 import useHelper from './useHelper'
 
 type TRet = {
   edit: TEditFunc
   layout: TPostLayout
-  getIsTouched: () => boolean
+  isTouched: boolean
   saving: boolean
 }
 
@@ -19,13 +16,12 @@ export default (): TRet => {
 
   const { postLayout, saving } = store
 
-  // drived
-  const getIsTouched = useCallback(() => isChanged('postLayout'), [store])
+  const isTouched = isChanged('postLayout')
 
   return {
     edit,
     layout: postLayout,
     saving,
-    getIsTouched,
+    isTouched,
   }
 }

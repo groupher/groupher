@@ -1,11 +1,9 @@
 import { KANBAN_LAYOUT } from '~/const/layout'
-
-import GlobalLayout from './GlobalLayout'
-import ItemCardLayout from './ItemCardLayout'
-import BgColorsSetter from './BgColorsSetter'
-
 import useKanban from '../../logic/useKanban'
 import useSalon from '../../salon/layout/kanban_layout'
+import BgColorsSetter from './BgColorsSetter'
+import GlobalLayout from './GlobalLayout'
+import ItemCardLayout from './ItemCardLayout'
 
 export default () => {
   const { kanbanLayout } = useKanban()
@@ -17,7 +15,7 @@ export default () => {
 
       {kanbanLayout === KANBAN_LAYOUT.CLASSIC && <ItemCardLayout />}
 
-      <div className="mt-12" />
+      <div className='mt-12' />
       <BgColorsSetter />
     </div>
   )

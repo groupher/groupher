@@ -1,8 +1,5 @@
-import { useCallback } from 'react'
-
-import type { TColorName, TEditFunc } from '~/spec'
-
 import useSubStore from '~/hooks/useSubStore'
+import type { TColorName, TEditFunc } from '~/spec'
 
 import useHelper from './useHelper'
 
@@ -10,7 +7,7 @@ type TRet = {
   edit: TEditFunc
   primaryColor: TColorName
   saving: boolean
-  getIsTouched: () => boolean
+  isTouched: boolean
 }
 
 export default (): TRet => {
@@ -19,13 +16,12 @@ export default (): TRet => {
 
   const { primaryColor, saving } = store
 
-  // drived
-  const getIsTouched = useCallback(() => isChanged('primaryColor'), [store])
+  const isTouched = isChanged('primaryColor')
 
   return {
     edit,
     primaryColor,
     saving,
-    getIsTouched,
+    isTouched,
   }
 }

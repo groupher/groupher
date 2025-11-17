@@ -1,7 +1,4 @@
-import { useEffect } from 'react'
-
 import { titleCaseHM, upperSnakeCase } from '~/fmt'
-import useCustomPrimary from '~/hooks/useCustomPrimary'
 import useTheme from '~/hooks/useTheme'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import { SETTING_FIELD } from '../constant'
@@ -11,19 +8,10 @@ import SectionLabel from '../SectionLabel'
 import useSalon, { cn } from '../salon/layout/page_background'
 
 export default () => {
-  const { rawBg, edit, getIsTouched, getIsDarkTouched, saving } = usePageBg()
-  const { setCSSVar } = useCustomPrimary()
-
-  useEffect(() => {
-    setTimeout(() => {
-      setCSSVar('--rainbow-custom-dark', '#0176F9')
-    }, 2000)
-  }, [])
+  const { rawBg, edit, isTouched, isDarkTouched, saving } = usePageBg()
 
   const s = useSalon()
   const { isLightTheme } = useTheme()
-  const isTouched = getIsTouched()
-  const isDarkTouched = getIsDarkTouched()
 
   return (
     <section className={s.wrapper}>

@@ -1,7 +1,5 @@
-import { useCallback } from 'react'
-
-import type { TEditFunc } from '~/spec'
 import useSubStore from '~/hooks/useSubStore'
+import type { TEditFunc } from '~/spec'
 
 import useHelper from './useHelper'
 
@@ -9,9 +7,9 @@ type TRet = {
   glowType: string
   glowFixed: boolean
   glowOpacity: string
-  getIsTouched: () => boolean
-  getIsGrowFixedTouched: () => boolean
-  getIsGrowOpacityTouched: () => boolean
+  isTouched: boolean
+  isGrowFixedTouched: boolean
+  isGrowOpacityTouched: boolean
   saving: boolean
   edit: TEditFunc
 }
@@ -22,9 +20,9 @@ export default (): TRet => {
 
   const { glowType, glowFixed, glowOpacity, saving } = store
 
-  const getIsTouched = useCallback(() => isChanged('glowType'), [store])
-  const getIsGrowFixedTouched = useCallback(() => isChanged('glowFixed'), [store])
-  const getIsGrowOpacityTouched = useCallback(() => isChanged('glowOpacity'), [store])
+  const isTouched = isChanged('glowType')
+  const isGrowFixedTouched = isChanged('glowFixed')
+  const isGrowOpacityTouched = isChanged('glowOpacity')
 
   return {
     edit,
@@ -32,8 +30,8 @@ export default (): TRet => {
     glowFixed,
     glowOpacity,
     saving,
-    getIsTouched,
-    getIsGrowFixedTouched,
-    getIsGrowOpacityTouched,
+    isTouched,
+    isGrowFixedTouched,
+    isGrowOpacityTouched,
   }
 }

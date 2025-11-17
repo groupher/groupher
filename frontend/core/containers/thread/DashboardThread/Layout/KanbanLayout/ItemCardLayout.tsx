@@ -1,31 +1,33 @@
 import { KANBAN_CARD_LAYOUT } from '~/const/layout'
-
-import UpvoteSVG from '~/icons/Upvote'
 import CommentSVG from '~/icons/Comment'
+import UpvoteSVG from '~/icons/Upvote'
 
 import CheckLabel from '~/widgets/CheckLabel'
 
 import { SETTING_FIELD } from '../../constant'
-import SectionLabel from '../../SectionLabel'
-import SavingBar from '../../SavingBar'
-
 import useKanban from '../../logic/useKanban'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
 import useSalon, { cn } from '../../salon/layout/kanban_layout/item_card_layout'
 
 export default () => {
   const s = useSalon()
 
-  const { kanbanCardLayout: cardLayout, getKanbanCardLayoutTouched, saving, edit } = useKanban()
-  const isTouched = getKanbanCardLayoutTouched()
+  const {
+    kanbanCardLayout: cardLayout,
+    isKanbanCardLayoutTouched: isTouched,
+    saving,
+    edit,
+  } = useKanban()
 
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title="看板卡片布局"
-        desc="「看板」卡片的显示样式，只在整体布局为「经典」时有效。"
+        title='看板卡片布局'
+        desc='「看板」卡片的显示样式，只在整体布局为「经典」时有效。'
       />
       <div className={s.select}>
-        <div
+        <button
           className={s.layout}
           onClick={() => edit(KANBAN_CARD_LAYOUT.SIMPLE, 'kanbanCardLayout')}
         >
@@ -38,9 +40,12 @@ export default () => {
             <CommentSVG className={cn(s.icon, 'size-3.5 bottom-3.5 left-12')} />
           </div>
 
-          <CheckLabel title="简洁" active={cardLayout === KANBAN_CARD_LAYOUT.SIMPLE} top={2} />
-        </div>
-        <div className={s.layout} onClick={() => edit(KANBAN_CARD_LAYOUT.FULL, 'kanbanCardLayout')}>
+          <CheckLabel title='简洁' active={cardLayout === KANBAN_CARD_LAYOUT.SIMPLE} top={2} />
+        </button>
+        <button
+          className={s.layout}
+          onClick={() => edit(KANBAN_CARD_LAYOUT.FULL, 'kanbanCardLayout')}
+        >
           <div className={cn(s.block, cardLayout === KANBAN_CARD_LAYOUT.FULL && s.blockActive)}>
             <div className={cn(s.bar, 'w-16')} />
             <div className={cn(s.bar, 'top-8 w-28 h-2.5 opacity-60')} />
@@ -56,8 +61,8 @@ export default () => {
 
             <div className={cn(s.bar, 'w-4 bottom-5 right-4 mt-1 opacity-20')} />
           </div>
-          <CheckLabel title="摘要" active={cardLayout === KANBAN_CARD_LAYOUT.FULL} top={2} />
-        </div>
+          <CheckLabel title='摘要' active={cardLayout === KANBAN_CARD_LAYOUT.FULL} top={2} />
+        </button>
       </div>
 
       <SavingBar

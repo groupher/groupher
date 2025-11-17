@@ -22,7 +22,7 @@ export default () => {
     themeGroup: 'row-center wrap gap-y-6 relative ml-4',
     block: cn(
       'group w-20 h-20 rounded-md -ml-4 border-2 px-2.5 py-2 trans-all-200',
-      'hover:rotate-1 hover:-mt-3  hover:z-10 hover:rotate-6 pointer',
+      'hover:-mt-3  hover:z-10 hover:rotate-6 pointer',
       shadow('lg'),
       br('divider'),
     ),

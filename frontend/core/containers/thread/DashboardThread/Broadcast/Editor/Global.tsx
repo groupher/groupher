@@ -1,13 +1,11 @@
-import ColorSelector from '~/widgets/ColorSelector'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
+import ColorSelector from '~/widgets/ColorSelector'
 import Input from '~/widgets/Input'
-
-import SectionLabel from '../../SectionLabel'
-import GlobalTemplate from '../Templates/Global'
-import SavingBar from '../../SavingBar'
-
 import useBroadcast from '../../logic/useBroadcast'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
 import useSalon from '../../salon/broadcast/editor/global'
+import GlobalTemplate from '../Templates/Global'
 
 export default () => {
   const {
@@ -16,17 +14,16 @@ export default () => {
     broadcastEnable,
     broadcastOnSave,
     broadcastOnCancel,
-    getIsTouched,
+    isTouched,
     edit,
     changeEnable,
   } = useBroadcast()
-  const isTouched = getIsTouched()
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title="开启横幅广播"
+        title='开启横幅广播'
         desc={<div className={s.enableDesc}>开启后，本社区内的所有页面顶部将展示广播信息</div>}
         addon={<ToggleSwitch checked={broadcastEnable} onChange={(v) => changeEnable(v)} />}
         bottom={5}
@@ -41,7 +38,7 @@ export default () => {
           <ColorSelector
             activeColor={broadcastBg}
             onChange={(color) => edit(color, 'broadcastBg')}
-            placement="right"
+            placement='right'
             offset={[-1, 15]}
           >
             <div className={s.colorBall} />
