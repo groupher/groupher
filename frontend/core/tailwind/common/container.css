@@ -64,20 +64,20 @@
   margin-inline: auto;
   max-width: var(--container-dashboard-width);
 
-  --container-px-left: theme('spacing.20');
-  --container-px-right: theme('spacing.16');
+  --container-pl: theme('spacing.20');
+  --container-pr: theme('spacing.16');
 
-  padding-left: var(--container-px-left);
-  padding-right: var(--container-px-right);
+  padding-left: var(--container-pl);
+  padding-right: var(--container-pr);
 
   @media (min-width: theme('screens.lg')) {
-    --container-px-left: theme('spacing.20');
-    --container-px-right: theme('spacing.16');
+    --container-pl: theme('spacing.20');
+    --container-pr: theme('spacing.16');
   }
 
   @media (min-width: theme('screens.xl')) {
-    --container-px-left: theme('spacing.36');
-    --container-px-right: theme('spacing.20');
+    --container-pl: theme('spacing.36');
+    --container-pr: theme('spacing.20');
   }
 }
 
@@ -101,6 +101,6 @@
 }
 
 @utility breakout-container {
-  margin-left: calc(var(--container-px-left, 0px) * -1);
-  margin-right: calc(var(--container-px-right, 0px) * -1);
+  margin-left: calc(var(--container-pl, 0px) * -1);
+  margin-right: calc(var(--container-pr, 0px) * -1);
 }
