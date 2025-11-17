@@ -8,13 +8,9 @@ import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useTheme from '~/hooks/useTheme'
 import type { TColorName, TFlatThemeKey, TSpace, TZIndexType } from '~/spec'
-import { TW_METRIC } from '~/tailwind'
-
-const containerConf = TW_METRIC.container
 
 type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 'decoration'
 type TLinkColorPrefix = 'fg' | 'fill'
-type TBreakOut = 'footer' | 'header'
 type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon'
 type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'card' | 'drawer' | 'modal'
 type TDimLevel = 'lg' | 'md' | 'sm'
@@ -43,7 +39,6 @@ type TRet = {
   sexyVBorder: (turn: number, classNames?: string) => string
   avatar: (level?: 'md' | 'sm' | '') => string
   gradientBar: (color: TColorName) => string
-  breakOut: (type?: TBreakOut) => string
   vividDark: () => string
   dimDark: (level?: TDimLevel) => string
   menu: (part: TMenuPart) => string
@@ -232,25 +227,6 @@ export default (): TRet => {
     return `bg-gradient-to-r from-rainbow-${color.toLocaleLowerCase()}Bg to-transparent`
   }
 
-  const breakOut = (type: TBreakOut = 'footer') => {
-    const curMetric = metric || METRIC.COMMUNITY
-
-    const unit = containerConf[curMetric.toLowerCase()]
-
-    if (type === 'footer') {
-      return cn(
-        'w-full footer-inner-shadow',
-        `w-[${unit.width}]`,
-        `-ml-${unit.pl}`,
-        `mr-${unit.pr}`,
-        `pl-${unit.pl}`,
-        `pr-${unit.pr}`,
-      )
-    }
-
-    return 'w-full'
-  }
-
   const vividDark = (): string => {
     if (!isLightTheme) return 'saturate-150 brightness-125'
 
@@ -378,7 +354,6 @@ export default (): TRet => {
     sexyVBorder,
     avatar,
     gradientBar,
-    breakOut,
     vividDark,
     menu,
     shadow,

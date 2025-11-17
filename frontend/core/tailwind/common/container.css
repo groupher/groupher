@@ -63,19 +63,24 @@
 @utility container-dashboard {
   margin-inline: auto;
   max-width: var(--container-dashboard-width);
-  padding-left: theme('spacing.20'); 
-  padding-right: theme('spacing.16');
+
+  --container-px-left: theme('spacing.20');
+  --container-px-right: theme('spacing.16');
+
+  padding-left: var(--container-px-left);
+  padding-right: var(--container-px-right);
 
   @media (min-width: theme('screens.lg')) {
-    padding-left: theme('spacing.20');
-    padding-right: theme('spacing.16');
+    --container-px-left: theme('spacing.20');
+    --container-px-right: theme('spacing.16');
   }
 
   @media (min-width: theme('screens.xl')) {
-    padding-left: theme('spacing.36');
-    padding-right: theme('spacing.12');
+    --container-px-left: theme('spacing.36');
+    --container-px-right: theme('spacing.20');
   }
 }
+
 
 /* Community sidebar */
 @utility container-community_sidebar {
@@ -93,4 +98,9 @@
     padding-left: theme('spacing.5'); /* 20px */
     padding-right: theme('spacing.5');
   }
+}
+
+@utility breakout-container {
+  margin-left: calc(var(--container-px-left) * -1);
+  margin-right: calc(var(--container-px-right) * -1);
 }

@@ -1,16 +1,13 @@
-import METRIC from '~/const/metric'
-import useMetric from '~/hooks/useMetric'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, breakOut } = useTwBelt()
-  const metric = useMetric()
+  const { cn, container } = useTwBelt()
 
   return {
     wrapper: cn(
-      'column-align-both min-h-14 mt-20 pt-14 pb-8',
-      breakOut(),
-      metric === METRIC.LANDING && 'px-32',
+      'column-align-both min-h-14 mt-20 pt-14 pb-8 footer-inner-shadow',
+      'breakout-container',
+      container(),
     ),
   }
 }

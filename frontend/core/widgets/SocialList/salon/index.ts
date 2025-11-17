@@ -21,7 +21,7 @@ export default ({ ...spacing }: TProps) => {
   const { cn, margin, hover } = useTwBelt()
 
   return {
-    wrapper: cn('gap-3.5', margin(spacing)),
+    wrapper: cn('row-center gap-3.5', margin(spacing)),
     socialBox: cn('align-both size-5', hover('bg')),
     icon: cn('size-4', hover('icon')),
   }
