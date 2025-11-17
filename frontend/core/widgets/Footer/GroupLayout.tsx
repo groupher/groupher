@@ -1,15 +1,14 @@
-import { keys } from 'ramda'
 import Link from 'next/link'
+import { keys } from 'ramda'
 
 import { DEME_SOCIALS } from '~/const/social'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import { assetSrc, groupByKey, sortByIndex } from '~/helper'
 import useFooterLinks from '~/hooks/useFooterLinks'
-
-import { assetSrc, sortByIndex, groupByKey } from '~/helper'
+import useViewingCommunity from '~/hooks/useViewingCommunity'
 
 import Img from '~/Img'
-import SocialList from '~/widgets/SocialList'
 import ImgFallback from '~/widgets/ImgFallback'
+import SocialList from '~/widgets/SocialList'
 
 import useSalon from './salon/group_layout'
 
@@ -19,7 +18,7 @@ export default () => {
   const { logo, desc, title } = useViewingCommunity()
   const { links } = useFooterLinks()
 
-  // @ts-ignore
+  // @ts-expect-error
   const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 
@@ -34,11 +33,10 @@ export default () => {
             noLazy
           />
           <p className={s.brandDesc}>{desc}</p>
-          <div className="grow" />
+          <div className='grow' />
 
-          <SocialList size="medium" selected={DEME_SOCIALS} top={10} />
+          <SocialList size='medium' selected={DEME_SOCIALS} top={10} />
         </div>
-
         {groupKeys.map((groupTitle: string) => {
           const curGroupLinks = groupedLinks[groupTitle]
 

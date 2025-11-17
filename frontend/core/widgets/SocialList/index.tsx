@@ -1,8 +1,7 @@
-import { type FC, memo } from 'react'
 import Link from 'next/link'
-
-import type { TSizeTSM, TSocialItem, TSpace } from '~/spec'
+import { type FC, memo } from 'react'
 import SIZE from '~/const/size'
+import type { TSizeTSM, TSocialItem, TSpace } from '~/spec'
 
 import useSalon, { cn, Icon } from './salon'
 
@@ -27,7 +26,7 @@ const SocialList: FC<TProps> = ({
       {selected.map((social) => {
         const SocialIcon = Icon[social.type]
         return (
-          <Link className={s.socialBox} key={social.type} href={social.link} target="_blank">
+          <Link className={s.socialBox} key={social.type} href={social.link} target='_blank'>
             <SocialIcon className={s.icon} />
           </Link>
         )
