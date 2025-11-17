@@ -1,16 +1,13 @@
-import { useCallback } from 'react'
-
-import type { TTopbarLayout, TColorName, TEditFunc } from '~/spec'
-
 import useSubStore from '~/hooks/useSubStore'
+import type { TColorName, TEditFunc, TTopbarLayout } from '~/spec'
 
 import useHelper from './useHelper'
 
 type TRet = {
   edit: TEditFunc
   layout: TTopbarLayout
-  getIsLayoutTouched: () => boolean
-  getIsBgTouched: () => boolean
+  isLayoutTouched: boolean
+  isBgTouched: boolean
   saving: boolean
   bg: TColorName
 }
@@ -25,15 +22,14 @@ export default (): TRet => {
 
   const { topbarLayout, topbarBg, saving } = store
 
-  // drived
-  const getIsLayoutTouched = useCallback(() => isChanged('topbarLayout'), [store])
-  const getIsBgTouched = useCallback(() => isChanged('topbarBg'), [store])
+  const isLayoutTouched = isChanged('topbarLayout')
+  const isBgTouched = isChanged('topbarBg')
 
   return {
     edit,
     layout: topbarLayout,
-    getIsLayoutTouched,
-    getIsBgTouched,
+    isLayoutTouched,
+    isBgTouched,
     bg: topbarBg,
     saving,
   }

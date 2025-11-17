@@ -1,17 +1,14 @@
-import { useState, useCallback } from 'react'
-import { uniq, reject, pluck } from 'ramda'
-
-import type { TTag, TEditValue, TChangeMode, TSelectOption } from '~/spec'
+import { pluck, reject, uniq } from 'ramda'
+import { useMemo, useState } from 'react'
 import EVENT from '~/const/event'
 import { CHANGE_MODE } from '~/const/mode'
-
-import { mutate } from '~/server'
-import { nilOrEmpty } from '~/validator'
-
-import { send, closeDrawer } from '~/signal'
-
 import useSubStore from '~/hooks/useSubStore'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
+import { mutate } from '~/server'
+
+import { closeDrawer, send } from '~/signal'
+import type { TChangeMode, TEditValue, TSelectOption, TTag } from '~/spec'
+import { nilOrEmpty } from '~/validator'
 
 import { DEFAULT_CREATE_TAG } from './constant'
 import S from './schema'
@@ -26,8 +23,8 @@ type TRet = {
   onDelete: (tag: TTag) => void
   onUpdate: () => void
   onCreate: () => void
-  getCategory: () => TSelectOption
-  getCategoryOptions: () => TSelectOption[]
+  curCategory: TSelectOption
+  categoryOptions: TSelectOption[]
 }
 
 export default (): TRet => {
@@ -100,8 +97,7 @@ export default (): TRet => {
     })
   }
 
-  // drived
-  const getCategory = useCallback((): TSelectOption => {
+  const curCategory = useMemo((): TSelectOption => {
     if (!editingTag) return { label: '', value: '' }
 
     const { group } = editingTag
@@ -112,7 +108,7 @@ export default (): TRet => {
     }
   }, [editingTag])
 
-  const getCategoryOptions = useCallback((): TSelectOption[] => {
+  const categoryOptions = useMemo((): TSelectOption[] => {
     if (!editingTag) return []
 
     const tagGroups = uniq(pluck('group', dashboard.tags))
@@ -148,8 +144,7 @@ export default (): TRet => {
     onUpdate,
     onCreate,
 
-    // drived
-    getCategory,
-    getCategoryOptions,
+    curCategory,
+    categoryOptions,
   }
 }

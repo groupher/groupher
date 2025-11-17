@@ -1,18 +1,15 @@
-import Button from '~/widgets/Buttons/Button'
-import Tabs from '~/widgets/Switcher/Tabs'
-import Radio from '~/widgets/Switcher/Radio'
-
-import Input from '~/widgets/Input'
 import ViewSVG from '~/icons/article/Viewed'
+import Button from '~/widgets/Buttons/Button'
+import Input from '~/widgets/Input'
+import Radio from '~/widgets/Switcher/Radio'
+import Tabs from '~/widgets/Switcher/Tabs'
 
 import { WIDGET_TYPES } from '../constant'
-
+import useWidgets from '../logic/useWidgets'
 import Portal from '../Portal'
+import useSalon from '../salon/widgets'
 import BaseSetting from './BaseSetting'
 import CodeArea from './CodeArea'
-
-import useWidgets from '../logic/useWidgets'
-import useSalon from '../salon/widgets'
 
 export default () => {
   const s = useSalon()
@@ -22,8 +19,8 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <Portal
-        title="网站插件"
-        desc="为您的主页添加社区，更新日志，看板等插件，让产品用户及时方便的了解最新动态。"
+        title='网站插件'
+        desc='为您的主页添加社区，更新日志，看板等插件，让产品用户及时方便的了解最新动态。'
       />
 
       <BaseSetting />
@@ -40,27 +37,27 @@ export default () => {
             }}
           />
         </div>
-        <Button size="small" space={8} ghost className="w-20">
+        <Button size='small' space={8} ghost className='w-20'>
           <ViewSVG className={s.viewIcon} />
           预览
         </Button>
       </div>
-      <div className="mt-4" />
+      <div className='mt-4' />
       <CodeArea />
       <div className={s.hint}>
         启用网站插件，请复制以上代码到您的站点源码中。如果团队中缺乏相关技术人员，请联系我们。
       </div>
 
-      <div className="mt-8" />
+      <div className='mt-8' />
 
       <div className={s.inputWrapper}>
-        <label className={s.inputLabel}>目标元素 ID:</label>
+        <div className={s.inputLabel}>目标元素 ID:</div>
         <Input className={s.input} />
       </div>
       <div className={s.inputWrapper}>
-        <label className={s.inputLabel}>组件尺寸:</label>
+        <div className={s.inputLabel}>组件尺寸:</div>
         <Radio
-          size="small"
+          size='small'
           items={[
             {
               value: '小',
@@ -77,7 +74,7 @@ export default () => {
               dimOnActive: true,
             },
           ]}
-          activeKey="1"
+          activeKey='1'
         />
       </div>
     </div>

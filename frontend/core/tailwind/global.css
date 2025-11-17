@@ -13,8 +13,6 @@
 @layer base {
   :root {
     text-autospace: normal;
-    --rainbow-custom: #94c37e;
-    --rainbow-custom-dark: #e08a85;
   }
 
   body {

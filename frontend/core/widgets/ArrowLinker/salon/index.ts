@@ -1,8 +1,8 @@
-import type { TColorName, TSpace } from '~/spec'
+import usePrimaryColor from '~/hooks/usePrimaryColor'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
-import usePrimaryColor from '~/hooks/usePrimaryColor'
+import type { TColorName, TSpace } from '~/spec'
 
 export { cn } from '~/css'
 

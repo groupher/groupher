@@ -1,9 +1,6 @@
-import { useCallback } from 'react'
-
-import type { TEditFunc } from '~/spec'
-
 import usePageBgCommon from '~/hooks/usePageBg'
 import useSubStore from '~/hooks/useSubStore'
+import type { TEditFunc } from '~/spec'
 
 import useHelper from './useHelper'
 
@@ -11,8 +8,8 @@ type TRet = {
   edit: TEditFunc
   rawBg: string
   saving: boolean
-  getIsTouched: () => boolean
-  getIsDarkTouched: () => boolean
+  isTouched: boolean
+  isDarkTouched: boolean
 }
 
 export default (): TRet => {
@@ -22,15 +19,14 @@ export default (): TRet => {
 
   const { saving } = store
 
-  // drived
-  const getIsTouched = useCallback(() => isChanged('pageBg'), [store])
-  const getIsDarkTouched = useCallback(() => isChanged('pageBgDark'), [store])
+  const isTouched = isChanged('pageBg')
+  const isDarkTouched = isChanged('pageBgDark')
 
   return {
     rawBg,
     edit,
     saving,
-    getIsTouched,
-    getIsDarkTouched,
+    isTouched,
+    isDarkTouched,
   }
 }

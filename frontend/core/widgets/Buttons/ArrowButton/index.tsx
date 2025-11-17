@@ -5,13 +5,10 @@
  */
 
 import type { FC, ReactNode } from 'react'
-
-import type { TColorName, TSpace } from '~/spec'
-
 import usePrimaryColor from '~/hooks/usePrimaryColor'
-
-import Arrow from './Arrow'
+import type { TColorName, TSpace } from '~/spec'
 import useSalon, { cn } from '../salon/arrow_button'
+import Arrow from './Arrow'
 
 export type TProps = {
   children?: ReactNode

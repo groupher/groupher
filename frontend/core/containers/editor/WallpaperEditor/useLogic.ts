@@ -1,5 +1,5 @@
 import { clone, equals, pick } from 'ramda'
-import { useCallback, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { WALLPAPER_STATE_KEYS, WALLPAPER_TYPE } from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 
@@ -17,7 +17,7 @@ type TRet = {
   loading: boolean
   // derived
   getWallpaper: () => TWallpaperData
-  getIsTouched: () => boolean
+  isTouched: boolean
   // actions
   initRollback: () => void
   rollbackWallpaper: () => void
@@ -45,10 +45,10 @@ export default (): TRet => {
   const [tab, setTab] = useState<TTab>(TAB.BUILDIN)
   const [loading, setLoading] = useState(false)
 
-  const getIsTouched = useCallback((): boolean => {
-    // @ts-ignore
+  const isTouched = useMemo((): boolean => {
+    // @ts-expect-error
     const original = pick(WALLPAPER_STATE_KEYS, store.original)
-    // @ts-ignore
+    // @ts-expect-error
     const current = pick(WALLPAPER_STATE_KEYS, store)
 
     return !equals(clone(original), clone(current))
@@ -59,14 +59,14 @@ export default (): TRet => {
     closeDrawer()
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   const initRollback = (): void => store.commit({ original: pick(WALLPAPER_STATE_KEYS, store) })
   const rollbackWallpaper = (): void => store.commit({ ...store.original })
 
   const onSave = (): void => {
     setLoading(true)
     const community = curCommunity.slug
-    // @ts-ignore
+    // @ts-expect-error
     const params = { community, ...pick(WALLPAPER_STATE_KEYS, store) }
 
     mutate(S.updateDashboardWallpaper, params)
@@ -112,7 +112,7 @@ export default (): TRet => {
     loading,
     // drive
     getWallpaper,
-    getIsTouched,
+    isTouched,
     //actions
     initRollback,
     rollbackWallpaper,

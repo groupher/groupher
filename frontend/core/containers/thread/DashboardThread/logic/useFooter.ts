@@ -1,10 +1,9 @@
-import type { TFooterLayout, TLinkItem, TEditFunc } from '~/spec'
-
 import useSubStore from '~/hooks/useSubStore'
+import type { TEditFunc, TFooterLayout, TLinkItem } from '~/spec'
 
 import type { TLinkState } from '../spec'
-import useLinks, { type TRet as TUserLinks } from './useLinks'
 import useHelper from './useHelper'
+import useLinks, { type TRet as TUserLinks } from './useLinks'
 
 type TRet = {
   footerLayout: TFooterLayout

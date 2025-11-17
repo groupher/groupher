@@ -5,25 +5,23 @@ import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
 
 import { SETTING_FIELD } from '../constant'
-import SectionLabel from '../SectionLabel'
-import SavingBar from '../SavingBar'
-
 import useChangelog from '../logic/useChangelog'
+import SavingBar from '../SavingBar'
+import SectionLabel from '../SectionLabel'
 import useSalon, { cn } from '../salon/layout/changelog_layout'
 
 export default () => {
   const s = useSalon()
-  const { edit, layout, getIsTouched, saving } = useChangelog()
-  const isTouched = getIsTouched()
+  const { edit, layout, isTouched, saving } = useChangelog()
 
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title="更新日志布局"
+        title='更新日志布局'
         desc={
           <>
             「更新日志」列表的默认展现形式，切换布局不影响已发布内容。
-            <div className="inline-flex">
+            <div className='inline-flex'>
               <ArrowButton
                 onClick={() => callDashboardDesc(DASHBOARD_DESC_LAYOUT.POST_LIST)}
                 fontSize={12}
@@ -35,7 +33,10 @@ export default () => {
         }
       />
       <div className={s.select}>
-        <div className={s.layout} onClick={() => edit(CHANGELOG_LAYOUT.CLASSIC, 'changelogLayout')}>
+        <button
+          className={s.layout}
+          onClick={() => edit(CHANGELOG_LAYOUT.CLASSIC, 'changelogLayout')}
+        >
           <div className={cn(s.block, layout === CHANGELOG_LAYOUT.CLASSIC && s.blockActive)}>
             <div className={cn(s.cover, 'left-16')} />
             <div className={cn(s.bar, 'h-2.5 top-28 left-16 ml-0.5 opacity-30')} />
@@ -47,9 +48,12 @@ export default () => {
             <div className={cn(s.bar, 'h-1.5 bottom-6 left-16 ml-0.5 mt-2 w-28 opacity-15')} />
           </div>
 
-          <CheckLabel title="经典模式" active={layout === CHANGELOG_LAYOUT.CLASSIC} top={4} />
-        </div>
-        <div className={s.layout} onClick={() => edit(CHANGELOG_LAYOUT.SIMPLE, 'changelogLayout')}>
+          <CheckLabel title='经典模式' active={layout === CHANGELOG_LAYOUT.CLASSIC} top={4} />
+        </button>
+        <button
+          className={s.layout}
+          onClick={() => edit(CHANGELOG_LAYOUT.SIMPLE, 'changelogLayout')}
+        >
           <div className={cn(s.block, layout === CHANGELOG_LAYOUT.SIMPLE && s.blockActive)}>
             <div className={cn(s.bar, 'h-1.5 w-7 top-5 mt-0.5 left-10 ml-0.5 opacity-20')} />
             <div className={cn(s.bar, 'h-2.5 top-5 left-24 ml-0.5 opacity-30')} />
@@ -72,15 +76,15 @@ export default () => {
             <div className={cn(s.bar, 'h-2.5 w-16 bottom-6 left-24 ml-0.5 opacity-30')} />
           </div>
 
-          <CheckLabel title="极简模式" active={layout === CHANGELOG_LAYOUT.SIMPLE} top={4} />
-        </div>
+          <CheckLabel title='极简模式' active={layout === CHANGELOG_LAYOUT.SIMPLE} top={4} />
+        </button>
       </div>
 
       <SavingBar
         isTouched={isTouched}
         field={SETTING_FIELD.CHANGELOG_LAYOUT}
         loading={saving}
-        width="w-11/12"
+        width='w-11/12'
         top={12}
       />
     </div>

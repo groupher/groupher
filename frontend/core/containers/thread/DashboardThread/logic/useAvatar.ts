@@ -1,14 +1,12 @@
-import { useCallback } from 'react'
-
-import type { TAvatarLayout, TEditFunc } from '~/spec'
 import useSubStore from '~/hooks/useSubStore'
+import type { TAvatarLayout, TEditFunc } from '~/spec'
 
 import useHelper from './useHelper'
 
 type TRet = {
   edit: TEditFunc
   layout: TAvatarLayout
-  getIsTouched: () => boolean
+  isTouched: boolean
   saving: boolean
 }
 
@@ -18,13 +16,12 @@ export default (): TRet => {
 
   const { avatarLayout, saving } = store
 
-  // drived
-  const getIsTouched = useCallback(() => isChanged('avatarLayout'), [store])
+  const isTouched = isChanged('avatarLayout')
 
   return {
     edit,
     layout: avatarLayout,
-    getIsTouched,
+    isTouched,
     saving,
   }
 }

@@ -13,13 +13,11 @@ import useSalon, { cn } from '../../salon/layout/goss_blur'
 export default () => {
   const s = useSalon()
 
-  const { gossBlurDark, saving, getIsDarkTouched, edit } = useGossBlur()
+  const { gossBlurDark, saving, isDarkTouched: isTouched, edit } = useGossBlur()
   const { wallpaper, background } = useWallpaper()
 
   const themeData = useThemeData()
-
   const bgColor = `${blurRGB(themeData.container, gossBlurDark)}`
-  const isTouched = getIsDarkTouched()
 
   return (
     <div className={s.wrapper} key={wallpaper}>

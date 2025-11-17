@@ -1,20 +1,17 @@
-import { useCallback } from 'react'
-
-import type { TCommunityThread } from '~/spec'
+import { useMemo } from 'react'
 import { publicThreads } from '~/helper'
-
 import useSubStore from '~/hooks/useSubStore'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
+import type { TCommunityThread } from '~/spec'
 
 import useHelper from '../useHelper'
 
-type TLinksType = 'headerLinks' | 'footerLinks'
-type TLayoutType = 'headerLayout' | 'footerLayout'
-
 export type TRet = {
-  getThreads: () => TCommunityThread[]
-  getIsTouched: (type?: TLinksType) => boolean
-  getIsLayoutTouched: (layout?: TLayoutType) => boolean
+  threads: TCommunityThread[]
+  isHeaderLinksTouched: boolean
+  isFooterLinksTouched: boolean
+  isHeaderLayoutTouched: boolean
+  isFooterLayoutTouched: boolean
 }
 
 export default (): TRet => {
@@ -24,27 +21,26 @@ export default (): TRet => {
 
   const { editingLink, enable, nameAlias } = store
 
-  const getThreads = useCallback(() => {
+  const threads = useMemo(() => {
     return publicThreads(community.threads, { enable, nameAlias })
   }, [community, enable, nameAlias])
 
-  const getIsTouched = useCallback(
-    (type: TLinksType = 'headerLinks'): boolean => {
-      return isChanged(type) && editingLink === null
-    },
-    [editingLink, isChanged],
-  )
+  const isFooterLinksTouched = useMemo((): boolean => {
+    return isChanged('footerLinks') && editingLink === null
+  }, [editingLink, isChanged])
 
-  const getIsLayoutTouched = useCallback(
-    (layout: TLayoutType = 'headerLayout') => {
-      return isChanged(layout)
-    },
-    [isChanged],
-  )
+  const isHeaderLinksTouched = useMemo((): boolean => {
+    return isChanged('headerLinks') && editingLink === null
+  }, [editingLink, isChanged])
+
+  const isHeaderLayoutTouched = isChanged('headerLayout')
+  const isFooterLayoutTouched = isChanged('footerLayout')
 
   return {
-    getThreads,
-    getIsTouched,
-    getIsLayoutTouched,
+    threads,
+    isHeaderLinksTouched,
+    isFooterLinksTouched,
+    isHeaderLayoutTouched,
+    isFooterLayoutTouched,
   }
 }

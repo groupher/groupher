@@ -207,7 +207,7 @@ export const aliasGTDDoneState = (cat: TArticleCat, state: TArticleState): strin
 
 const hex2RGB = (hex) => {
   const hexValues = hex
-    .replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (m, r, g, b) => `#${r}${r}${g}${g}${b}${b}`)
+    .replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (_m, r, g, b) => `#${r}${r}${g}${g}${b}${b}`)
     .substring(1)
     .match(/.{2}/g)
     .map((x) => Number.parseInt(x, 16))
@@ -220,6 +220,7 @@ const hex2RGB = (hex) => {
  * convert hex color to global goss blur if need
  */
 export const blurRGB = (hex, blur = 100) => {
+  if (hex === '') return '#fff'
   if (!blur || blur === 100) return hex
 
   return `rgb(${hex2RGB(hex)} / ${blur}%)`

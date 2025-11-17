@@ -1,25 +1,27 @@
 import { type FC, useState } from 'react'
 
 import { FOOTER_LAYOUT } from '~/const/layout'
-import Button from '~/widgets/Buttons/Button'
 import ArrowSVG from '~/icons/ArrowSimple'
+import Button from '~/widgets/Buttons/Button'
 
 import { SETTING_FIELD } from '../../constant'
-import SavingBar from '../../SavingBar'
-
-import Simple from './Simple'
-import Group from './Group'
-
 import useFooter from '../../logic/useFooter'
+import SavingBar from '../../SavingBar'
 import useSalon, { cn } from '../../salon/footer/templates'
+import Group from './Group'
+import Simple from './Simple'
 
 const Templates: FC = () => {
   const s = useSalon()
 
-  const { getIsLayoutTouched, footerLayout, saving, footerLinks, resetEditingLink } = useFooter()
+  const {
+    isFooterLayoutTouched: isLayoutTouched,
+    footerLayout,
+    saving,
+    footerLinks,
+    resetEditingLink,
+  } = useFooter()
   const [showAll, setShowAll] = useState<boolean>(false)
-
-  const isLayoutTouched = getIsLayoutTouched('footerLayout')
 
   return (
     <div className={s.wrapper}>
@@ -41,13 +43,13 @@ const Templates: FC = () => {
         onConfirm={() => setShowAll(false)}
         loading={saving}
         top={10}
-        width="w-11/12"
+        width='w-11/12'
       />
 
       {!isLayoutTouched && !saving && (
         <Button
-          size="small"
-          className="w-32"
+          size='small'
+          className='w-32'
           ghost
           noBorder
           onClick={() => {

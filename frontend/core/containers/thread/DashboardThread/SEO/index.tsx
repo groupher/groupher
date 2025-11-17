@@ -7,27 +7,23 @@ import useViewingCommunity from '~/hooks/useViewingCommunity'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 import { SEO_TABS, SETTING_FIELD } from '../constant'
-
-import SavingBar from '../SavingBar'
+import useSEO from '../logic/useSEO'
 import Portal from '../Portal'
+import SavingBar from '../SavingBar'
+import useSalon from '../salon/seo'
 import OpenGraph from './OpenGraph'
 import TwitterGraph from './TwitterGraph'
-
-import useSEO from '../logic/useSEO'
-import useSalon from '../salon/seo'
 
 export default () => {
   const s = useSalon()
 
   const router = useRouter()
   const curCommunity = useViewingCommunity()
-  const { seoTab, saving, getIsTouched, edit } = useSEO()
-
-  const isTouched = getIsTouched()
+  const { seoTab, saving, isTouched, edit } = useSEO()
 
   return (
     <div className={s.wrapper}>
-      <Portal title="SEO" desc="搜索引擎及社交媒体展示优化。" withDivider={false} />
+      <Portal title='SEO' desc='搜索引擎及社交媒体展示优化。' withDivider={false} />
 
       <div className={s.banner}>
         <div className={s.tabs}>
@@ -52,7 +48,7 @@ export default () => {
       {seoTab === DASHBOARD_SEO_ROUTE.SEARCH_ENGINE && <OpenGraph />}
       {seoTab === DASHBOARD_SEO_ROUTE.TWITTER && <TwitterGraph />}
 
-      <SavingBar field={SETTING_FIELD.SEO} isTouched={isTouched} loading={saving} width="7/12" />
+      <SavingBar field={SETTING_FIELD.SEO} isTouched={isTouched} loading={saving} width='7/12' />
     </div>
   )
 }

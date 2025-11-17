@@ -7,26 +7,23 @@ import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { LAYOUT_TABS } from '~/stores/dashboard/constant'
 
 import Tabs from '~/widgets/Switcher/Tabs'
-
+import useTab from '../logic/useTab'
 import Portal from '../Portal'
+import useSalon from '../salon/layout'
 import AvatarLayout from './AvatarLayout'
-import TagLayout from './TagLayout'
-import BrandLayout from './BrandLayout'
 import BannerLayout from './BannerLayout'
-import DocLayout from './DocLayout'
+import BrandLayout from './BrandLayout'
 import ChangelogLayout from './ChangelogLayout'
-import PostLayout from './PostLayout'
-import KanbanLayout from './KanbanLayout'
-import TopbarLayout from './TopbarLayout'
-
-import PrimaryColor from './PrimaryColor'
-import PageBackground from './PageBackground'
+import DocLayout from './DocLayout'
 import GlowLight from './GlowLight'
 import GossBlur from './GossBlur'
+import KanbanLayout from './KanbanLayout'
+import PageBackground from './PageBackground'
+import PostLayout from './PostLayout'
+import PrimaryColor from './PrimaryColor'
+import TagLayout from './TagLayout'
+import TopbarLayout from './TopbarLayout'
 import Wallpaper from './Wallpaper'
-
-import useTab from '../logic/useTab'
-import useSalon from '../salon/layout'
 
 export default () => {
   const curCommunity = useViewingCommunity()
@@ -37,7 +34,7 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <Portal title="布局与样式" desc="社区板块自定义布局与全局样式。" withDivider={false} />
+      <Portal title='布局与样式' desc='社区板块自定义布局与全局样式。' withDivider={false} />
       <div className={s.banner}>
         <div className={s.tabs}>
           <Tabs
