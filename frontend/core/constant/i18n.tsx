@@ -1,10 +1,9 @@
-import type { TLocale, TSelectOption } from '~/spec'
-
-import PandaSVG from '~/icons/Panda'
-import HuaSVG from '~/icons/Huaren'
 import GuardSVG from '~/icons/EnGuard'
+import HuaSVG from '~/icons/Huaren'
+import PandaSVG from '~/icons/Panda'
 import RussiaSVG from '~/icons/Russia'
 import SpainSVG from '~/icons/Spain'
+import type { TLocale, TSelectOption } from '~/spec'
 
 export const LOCALE = {
   EN: 'en',

@@ -33,13 +33,14 @@ type TProps = {
 } & TSpace
 
 const CustomOption = (props) => {
+  const s = useSalon({ ...props.spacing })
   const { label, icon } = props.data
   const Icon = icon || null
 
   return (
     <components.Option {...props}>
-      <div className="row">
-        {icon && <Icon />}
+      <div className='row'>
+        {icon && <Icon className={s.icon} />}
         <span>{label}</span>
       </div>
     </components.Option>
@@ -52,8 +53,8 @@ const CustomSingleValue = (props) => {
 
   return (
     <components.SingleValue {...props}>
-      <div className="row">
-        <div className="-ml-1">{icon && <Icon />}</div>
+      <div className='row'>
+        <div className='-ml-1'>{icon && <Icon />}</div>
         <span>{label}</span>
       </div>
     </components.SingleValue>
@@ -74,7 +75,6 @@ const Select: FC<TProps> = ({
   onCreateOption = console.log,
   ...spacing
 }) => {
-  // @ts-ignore
   const s = useSalon({ ...spacing })
 
   const baseProps = {

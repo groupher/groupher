@@ -15,6 +15,7 @@ export default ({ ...spacing }: TProps) => {
     optionTitleActive: fg('text.title'),
     optionDesc: cn('text-xs ml-4', fg('text.hint')),
     // custom components
+    icon: 'size-6 mr-2',
     menu: cn('mt-0', bg('card')),
     menuList: 'my-0 pb-px',
     control: cn('border', bg('alphaBg'), br('divider'), `hover:${br('text.digest')}`),

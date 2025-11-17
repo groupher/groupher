@@ -5,13 +5,13 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, rainbow, fg, bg, fill, br } = useTwBelt()
+  const { cn, rainbow, rainbowSoft, fg, bg, fill, br } = useTwBelt()
 
   return {
     wrapper: cn(
-      'column w-full border border-dashed rounded-2xl',
+      'column w-full border rounded-2xl',
       rainbow(COLOR_NAME.RED, 'borderSoft'),
-      bg('sandBox'),
+      rainbowSoft(COLOR_NAME.RED),
     ),
     dangerTitle: cn('text-base bold-sm mb-3.5 mt-3.5 ml-4', rainbow(COLOR_NAME.RED, 'fg')),
     item: cn('column items-start w-full py-6 px-4 border', br('divider'), bg('card')),
