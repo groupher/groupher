@@ -101,6 +101,6 @@
 }
 
 @utility breakout-container {
-  margin-left: calc(var(--container-px-left) * -1);
-  margin-right: calc(var(--container-px-right) * -1);
+  margin-left: calc(var(--container-px-left, 0px) * -1);
+  margin-right: calc(var(--container-px-right, 0px) * -1);
 }
