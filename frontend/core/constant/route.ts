@@ -13,6 +13,8 @@ export const NON_COMMUNITY_ROUTE = {
 }
 
 export const APPLY_COMMUNITY = '/apply/community'
+export const FEEDBACK = '/home/post?for=feedback'
+export const DOCS = '/home/doc'
 
 export const DASHBOARD_ROUTE = {
   OVERVIEW: 'dashboard',

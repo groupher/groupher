@@ -1,4 +1,5 @@
 import { ANCHOR } from '~/const/dom'
+import { DOCS, FEEDBACK } from '~/const/route'
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 import AccountUnit from '~/widgets/AccountUnit'
 import ArrowLinker from '~/widgets/ArrowLinker'
@@ -18,8 +19,10 @@ export default () => {
           <div className={s.baseInfo}>
             <CommunityBrief />
             <div className='grow' />
-            <ArrowLinker>反馈</ArrowLinker>
-            <ArrowLinker className='mr-4'>文档</ArrowLinker>
+            <ArrowLinker href={FEEDBACK}>反馈</ArrowLinker>
+            <ArrowLinker href={DOCS} className='mr-4'>
+              文档
+            </ArrowLinker>
             <AccountUnit />
           </div>
         </div>
