@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { BRAND_LAYOUT } from '~/const/layout'
 import { HOME_COMMUNITY } from '~/const/name'
+import { APPLY_COMMUNITY } from '~/const/route'
 import { THREAD } from '~/const/thread'
 import { assetSrc } from '~/helper'
 import useLayout from '~/hooks/useLayout'
@@ -59,7 +60,7 @@ export default () => {
             </Link>
 
             <div className={s.divider} />
-            <Link className={cn(s.panelItem, s.outside)} href='/apply/community'>
+            <Link className={cn(s.panelItem, s.outside)} href={APPLY_COMMUNITY}>
               <PlusSVG className={s.icon} />
               <div>新社区</div>
               <div className='grow' />
@@ -107,7 +108,7 @@ export default () => {
               )
             })}
 
-            <Link className={s.panelItem} href={`/${slug}/about`}>
+            <Link className={s.panelItem} href={`/${slug}/${THREAD.ABOUT}`}>
               <AboutSVG className={s.icon} />
               <div>关于</div>
             </Link>
