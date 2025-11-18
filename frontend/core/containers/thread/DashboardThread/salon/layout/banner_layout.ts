@@ -10,7 +10,7 @@ export default () => {
   return {
     wrapper: base.baseSection,
     select: cn('row-center wrap gap-8 w-full'),
-    layout: 'column-align-both group',
+    layout: cn('group button-reset column-align-both'),
     block: cn(base.blockBase, 'relative h-56'),
     blockActive: base.blockBaseActive,
     communityTitle: cn(

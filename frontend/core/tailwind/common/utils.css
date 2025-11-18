@@ -107,6 +107,10 @@
     @apply animate-fade-down animate-once animate-duration-200;
   }
 
+  .button-reset {
+    @apply text-left leading-none cursor-pointer;
+  }
+
   .debug {
     @apply border border-dashed;
     border-color: red;

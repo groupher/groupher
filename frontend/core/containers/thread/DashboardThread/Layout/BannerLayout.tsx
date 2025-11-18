@@ -32,7 +32,7 @@ export default () => {
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(BANNER_LAYOUT.HEADER, 'bannerLayout')}>
           <div className={cn(s.block, layout === BANNER_LAYOUT.HEADER && s.blockActive)}>
-            <h4 className={s.communityTitle}>{title}</h4>
+            <h4 className={cn(s.communityTitle)}>{title}</h4>
             <div className={cn(s.bar, 'left-28 top-5')} />
             <div className={cn(s.circle, 'right-5 top-5')} />
             <div className={cn(s.hDivider, 'mt-1.5 mb-5')} />
@@ -68,7 +68,7 @@ export default () => {
           </div>
           <CheckLabel title='经典' active={layout === BANNER_LAYOUT.HEADER} top={4} />
         </button>
-        <div className={s.layout} onClick={() => edit(BANNER_LAYOUT.TABBER, 'bannerLayout')}>
+        <button className={s.layout} onClick={() => edit(BANNER_LAYOUT.TABBER, 'bannerLayout')}>
           <div className={cn(s.block, layout === BANNER_LAYOUT.TABBER && s.blockActive)}>
             <div className={cn(s.bar, 'left-2.5 top-2 w-11/12 h-10 opacity-10')} />
             <div className={cn(s.bar, 'left-4 top-8 w-10 h-10 opacity-30')} />
@@ -97,8 +97,8 @@ export default () => {
             <div className={cn(s.bar, 'right-8 bottom-5 h-1 w-8 opacity-30')} />
           </div>
           <CheckLabel title='封面图' active={layout === BANNER_LAYOUT.TABBER} top={4} />
-        </div>
-        <div className={s.layout} onClick={() => edit(BANNER_LAYOUT.SIDEBAR, 'bannerLayout')}>
+        </button>
+        <button className={s.layout} onClick={() => edit(BANNER_LAYOUT.SIDEBAR, 'bannerLayout')}>
           <div className={cn(s.block, layout === BANNER_LAYOUT.SIDEBAR && s.blockActive)}>
             <h4 className={s.communityTitle}>{title}</h4>
             <div className={cn(s.bar, 'left-28 w-10 top-5')} />
@@ -138,7 +138,7 @@ export default () => {
             <div className={cn(s.bar, 'left-5 bottom-5 h-1 w-8 opacity-30')} />
           </div>
           <CheckLabel title='左右分栏' active={layout === BANNER_LAYOUT.SIDEBAR} top={4} />
-        </div>
+        </button>
       </div>
       <SavingBar
         isTouched={isTouched}
