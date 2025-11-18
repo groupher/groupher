@@ -5,13 +5,10 @@
  */
 
 import useAccount from '~/hooks/useAccount'
-
+import { STEP } from '../constant'
+import useLogic from '../useLogic'
 import SetupDomain from './SetupDomain'
 import SetupInfo from './SetupInfo'
-
-import { STEP } from '../constant'
-
-import useLogic from '../useLogic'
 
 export default () => {
   const { isLogin } = useAccount()
@@ -48,5 +45,5 @@ export default () => {
     }
   }
 
-  return <div className="justify-center row">{stepComp}</div>
+  return <div className='justify-center row'>{stepComp}</div>
 }

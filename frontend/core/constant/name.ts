@@ -1,10 +1,8 @@
 import { DASHBOARD_ALIAS_ROUTE } from './route'
 
-export const HCN = 'home'
-
 export const HOME_COMMUNITY = {
   home: 'groupher',
-  slug: HCN,
+  slug: 'home',
   logo: '/groupher.png',
 }
 

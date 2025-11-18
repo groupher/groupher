@@ -1,5 +1,5 @@
 import { ICON_BASE } from '~/config'
-import { HCN } from '~/const/name'
+import { HOME_COMMUNITY } from '~/const/name'
 
 import { ROUTE } from '~/const/route'
 
@@ -44,7 +44,7 @@ const COMMUNITY_INTRO = {
     demos: [
       {
         title: 'CP-feedback',
-        slug: HCN,
+        slug: HOME_COMMUNITY.slug,
       },
     ],
   },
@@ -88,7 +88,7 @@ const COMMUNITY_INTRO = {
     demos: [
       {
         title: 'Groupher',
-        slug: HCN,
+        slug: HOME_COMMUNITY.slug,
         logo: '',
       },
     ],

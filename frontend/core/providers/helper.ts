@@ -3,7 +3,7 @@ import { isEmpty, mergeRight, reject } from 'ramda'
 import { CACHE_TAG } from '~/const/cache'
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
-import { HCN } from '~/const/name'
+import { HOME_COMMUNITY } from '~/const/name'
 import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
 import URL_PARAM from '~/const/url_param'
@@ -25,7 +25,7 @@ import { parseDashboard, parseWallpaper } from '~/utils/ssr'
 import { nilOrEmpty } from '~/validator'
 
 export const ARTICLES_FILTER = {
-  community: HCN,
+  community: HOME_COMMUNITY.slug,
   page: 1,
   size: 20,
 }

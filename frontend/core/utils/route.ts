@@ -1,31 +1,30 @@
 import {
-  compose,
-  isEmpty,
-  head,
-  split,
-  reject,
-  prop,
-  pickBy,
-  endsWith,
-  slice,
   clone,
-  toUpper,
-  mergeRight,
+  compose,
+  endsWith,
+  head,
   includes,
+  isEmpty,
+  mergeRight,
+  pickBy,
+  prop,
+  reject,
+  slice,
+  split,
+  toUpper,
 } from 'ramda'
 
-import { HCN } from '~/const/name'
-import { THREAD } from '~/const/thread'
+import { HOME_COMMUNITY } from '~/const/name'
 import { ROUTE } from '~/const/route'
-
-import { nilOrEmpty } from './validator'
+import { THREAD } from '~/const/thread'
 import { Global } from './helper'
+import { nilOrEmpty } from './validator'
 
 // example: /getme/xxx?aa=bb&cc=dd
 const parseMainPath = compose(head, split('?'), head, reject(isEmpty), split('/'), prop('asPath'))
 
 // example: /xxx/getme?aa=bb&cc=dd
-// @ts-ignore
+// @ts-expect-error
 const parsePathList = compose(
   reject(isEmpty),
   split('/'),
@@ -40,7 +39,7 @@ const INDEX = ''
 const getMainPath = (args: any): string => {
   if (args.asPath === '/') return INDEX
 
-  // @ts-ignore
+  // @ts-expect-error
   return parseMainPath(args)
 }
 
@@ -48,7 +47,7 @@ const getSubPath = (args: any): string => {
   if (args.asPath === '/') return INDEX
 
   const asPathList = parsePathList(args)
-  // @ts-ignore
+  // @ts-expect-error
   const subPath = asPathList.length > 1 ? asPathList[1] : ''
 
   return subPath
@@ -58,7 +57,7 @@ const getThirdPath = (args: any): string => {
   if (args.asPath === '/') return INDEX
 
   const asPathList = parsePathList(args)
-  // @ts-ignore
+  // @ts-expect-error
   const subPath = asPathList.length > 2 ? asPathList[2] : ''
 
   return subPath
@@ -81,7 +80,7 @@ const parseSubDomain = (args: any): string => {
     }
   } else {
     // browser side
-    const domain = /:\/\/([^\/]+)/.exec(window.location.href)?.[1] ?? ''
+    const domain = /:\/\/([^/]+)/.exec(window.location.href)?.[1] ?? ''
     const domainList = domain.split('.')
 
     if (domainList.length >= 3) {
@@ -121,7 +120,7 @@ export const parseURL = (args: any): any => {
 }
 
 // --------------
-// @ts-ignore
+// @ts-expect-error
 export const getRoutePathList = compose(
   reject(isEmpty),
   split('/'),
@@ -136,7 +135,7 @@ const doGetRouteMainPath = compose(head, split('?'), head, reject(isEmpty), spli
 export const getRouteMainPath = (asPath: string): string => {
   if (asPath === '/') return ROUTE.HOME
 
-  // @ts-ignore
+  // @ts-expect-error
   return doGetRouteMainPath(asPath)
 }
 
@@ -191,7 +190,7 @@ export const akaTranslate = (communitySlug: string): string => {
 
     // 生产环境首页的诡异问题， fix later
     case 'index':
-      return HCN
+      return HOME_COMMUNITY.slug
 
     default:
       return communitySlug
@@ -204,7 +203,7 @@ const mergePagiQuery = (query: any = {}, opt: any = { pagi: 'string' }): any => 
   let defaultQuery = { page: '1', size: '20' }
 
   if (opt.pagi === 'number') {
-    // @ts-ignore
+    // @ts-expect-error
     defaultQuery = { page: 1, size: 20 }
   }
 
@@ -238,7 +237,7 @@ export const queryStringToJSON = (
 
 export const getParameterByName = (name: string): string | null => {
   const url = Global.location.href
-  const name$ = name.replace(/[\[\]]/g, '\\$&')
+  const name$ = name.replace(/[[\]]/g, '\\$&')
   const regex = new RegExp(`[?&]${name$}(=([^&#]*)|&|#|$)`)
   const results = regex.exec(url)
   if (!results) return null
@@ -248,7 +247,7 @@ export const getParameterByName = (name: string): string | null => {
 
 export const getQueryFromUrl = (name: string, url: string): string | null => {
   if (!url) url = window.location.href
-  const nameVal = name.replace(/[\[\]]/g, '\\$&')
+  const nameVal = name.replace(/[[\]]/g, '\\$&')
   const regex = new RegExp(`[?&]${nameVal}(=([^&#]*)|&|#|$)`)
   const results = regex.exec(url)
   if (!results) return null

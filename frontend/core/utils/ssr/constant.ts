@@ -1,5 +1,5 @@
+import { HOME_COMMUNITY } from '~/const/name'
 import { THREAD } from '~/const/thread'
-import { HCN } from '~/const/name'
 
 import type { TRequestPolicy } from './spec'
 
@@ -10,12 +10,12 @@ export const GQ_OPTION = {
 }
 
 export const TAGS_FILTER = {
-  community: HCN,
+  community: HOME_COMMUNITY.slug,
   thread: THREAD.POST.toUpperCase(),
 }
 
 export const ARTICLES_FILTER = {
-  community: HCN,
+  community: HOME_COMMUNITY.slug,
   page: 1,
   size: 20,
 }

@@ -1,9 +1,7 @@
 import { type FC, memo } from 'react'
-
-import type { TSpace } from '~/spec'
 import { HOME_COMMUNITY } from '~/const/name'
-
 import Img from '~/Img'
+import type { TSpace } from '~/spec'
 
 import useSalon from './salon'
 
