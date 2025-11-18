@@ -1,16 +1,18 @@
+import { COLOR_NAME } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, br, fill, menu, sexyBorder } = useTwBelt()
+  const { cn, fg, bg, br, fill, menu, sexyBorder, rainbow, rainbowSoft } = useTwBelt()
 
   return {
     wrapper: 'row-center group',
     logo: 'size-5',
     menuWrapper: cn(
-      'row-center trnas-all-200 h-8 w-auto rounded-lg border border-transparent pointer',
+      'row-center trans-all-200 h-8 w-auto rounded-lg border border-transparent pointer pl-2',
       `hover:${br('divider')}`,
+      `hover:${bg('card')}`,
     ),
     title: cn('row-center text-sm bold-sm ml-1.5 max-w-32 truncate', fg('text.digest')),
     slash: cn('text-xs ml-2 mr-1.5', fg('text.digest')),
@@ -25,5 +27,11 @@ export default () => {
     icon: cn('size-3.5 mr-3 pointer', fill('text.digest'), `group-hover:${fill('text.title')}`),
     //
     divider: cn(sexyBorder(), 'my-1.5'),
+    //
+    levelLabel: cn(
+      'text-xs px-2 ml-1.5 py-0.5 rounded-lg bold scale-90',
+      rainbowSoft(COLOR_NAME.BLUE),
+      rainbow(COLOR_NAME.BLUE, 'fg'),
+    ),
   }
 }

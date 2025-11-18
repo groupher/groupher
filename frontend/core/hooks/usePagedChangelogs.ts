@@ -1,12 +1,10 @@
-import { reject, mergeRight } from 'ramda'
 import { useSearchParams } from 'next/navigation'
-
-import type { TPagedChangelogs, TResState, TTag } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
-import { nilOrEmpty } from '~/validator'
-
-import { HCN } from '~/const/name'
+import { mergeRight, reject } from 'ramda'
+import { HOME_COMMUNITY } from '~/const/name'
 import URL_PARAM from '~/const/url_param'
+import useSubStore from '~/hooks/useSubStore'
+import type { TPagedChangelogs, TResState, TTag } from '~/spec'
+import { nilOrEmpty } from '~/validator'
 
 type TPagedArticlesParams = {
   community: string
@@ -28,7 +26,7 @@ type TRes = {
 }
 
 const ARTICLES_FILTER = {
-  community: HCN,
+  community: HOME_COMMUNITY.slug,
   page: 1,
   size: 20,
 }

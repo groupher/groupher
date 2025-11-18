@@ -1,12 +1,9 @@
 import { type FC, memo } from 'react'
-
-import { Trans } from '~/i18n'
 import Img from '~/Img'
-
-import communityIntros from '../communityIntros'
-import type { TCommunityType } from '../../spec'
-
+import { Trans } from '~/i18n'
 import useSalon, { cn } from '../../salon/content/fake_browser/content'
+import type { TCommunityType } from '../../spec'
+import communityIntros from '../communityIntros'
 
 type TProps = {
   title?: string
@@ -22,7 +19,7 @@ const Content: FC<TProps> = ({ title = '', desc = '', logo, communityType, onHov
   return (
     <div className={s.wrapper}>
       <div className={s.banner}>
-        <div className="row-center">
+        <div className='row-center'>
           {logo ? <Img src={logo} className={s.logo} /> : <div className={s.bar} />}
           {title ? (
             <div className={s.title}>{title}</div>
@@ -33,14 +30,14 @@ const Content: FC<TProps> = ({ title = '', desc = '', logo, communityType, onHov
         {communityType && (
           <div className={s.threads}>
             {communityIntros[communityType].threads.map((thread) => (
-              <div
+              <button
                 key={thread}
                 className={s.threadItem}
                 onMouseOver={() => onHoverThread(thread)}
                 onFocus={() => onHoverThread(thread)}
               >
                 {Trans(thread)}
-              </div>
+              </button>
             ))}
           </div>
         )}

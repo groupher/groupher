@@ -1,21 +1,14 @@
 import { useRouter } from 'next/navigation'
-
-import usePublicThreads from '~/hooks/usePublicThreads'
-import useViewingThread from '~/hooks/useViewingThread'
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
-
-import TabBar from '~/widgets/TabBar'
+import usePublicThreads from '~/hooks/usePublicThreads'
+import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useViewingThread from '~/hooks/useViewingThread'
 import CustomHeaderLinks from '~/widgets/CustomHeaderLinks'
+import TabBar from '~/widgets/TabBar'
 import ViewportTracker from '~/widgets/ViewportTracker'
-
-import CommunityBrief from './CommunityBrief'
-
 import useSalon from '../salon/tabber_layout'
-
-// 没有各种外链接，打赏信息等的官方社区
-// const NON_STANDARD_COMMUNITIES = [HCN, 'feedback']
+import CommunityBrief from './CommunityBrief'
 
 export default () => {
   const s = useSalon()

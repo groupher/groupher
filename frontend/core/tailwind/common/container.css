@@ -61,11 +61,11 @@
 
 /* Dashboard */
 @utility container-dashboard {
-  margin-inline: auto;
-  max-width: var(--container-dashboard-width);
-
   --container-pl: theme('spacing.20');
   --container-pr: theme('spacing.16');
+
+  margin-inline: auto;
+  max-width: var(--container-dashboard-width);
 
   padding-left: var(--container-pl);
   padding-right: var(--container-pr);

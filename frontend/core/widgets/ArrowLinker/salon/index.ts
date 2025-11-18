@@ -8,12 +8,13 @@ export { cn } from '~/css'
 
 type TProps = {
   color: TColorName | null
+  noColor: boolean
   withSoftBg: boolean
 } & TSpace
 
-export default ({ color, withSoftBg, ...spacing }: TProps) => {
+export default ({ color, noColor, withSoftBg, ...spacing }: TProps) => {
   const { isLightTheme } = useTheme()
-  const { cn, margin, primary, rainbow } = useTwBelt()
+  const { cn, fg, fill, margin, primary, rainbow } = useTwBelt()
 
   const primaryColor = usePrimaryColor()
 
@@ -30,10 +31,20 @@ export default ({ color, withSoftBg, ...spacing }: TProps) => {
       withSoftBg && !color && rainbow(primaryColor, 'bgSoft'),
       margin(spacing),
     ),
-    title: cn('text-sm', fgColor),
+    title: cn(
+      'text-sm',
+      noColor ? fg('text.digest') : fgColor,
+      noColor && `group-hover:${fg('text.title')}`,
+    ),
+    arrowIcon2: cn(
+      'size-3 ml-0.5 opacity-50 group-hover:opacity-100 group-hover:ml-1 group-hover:-mr-1 trans-all-100',
+      noColor ? fill('text.digest') : fillColor,
+    ),
     arrowIcon: cn(
-      'size-3 ml-0.5 opacity-50 group-hover:opacity-100 group-hover:ml-1 trans-all-100',
-      fillColor,
+      'size-3 ml-0.5 opacity-50 transition-all duration-150 ease-out',
+      'group-hover:opacity-100',
+      'group-hover:translate-x-1 group-hover:-translate-y-0.5',
+      noColor ? fill('text.digest') : fillColor,
     ),
   }
 }
