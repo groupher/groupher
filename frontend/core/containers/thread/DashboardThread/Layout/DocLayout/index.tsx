@@ -98,6 +98,15 @@ export default () => {
           </div>
           <CheckLabel title='铺开式' active={docFaqLayout === DOC_FAQ_LAYOUT.FLAT} top={4} />
         </button>
+        <button
+          className={s.layout}
+          onClick={() => edit(DOC_FAQ_LAYOUT.LEFT_RIGHT, 'docFaqLayout')}
+        >
+          <div className={cn(s.block, docFaqLayout === DOC_FAQ_LAYOUT.LEFT_RIGHT && s.blockActive)}>
+            <FaqTemplate layout={DOC_FAQ_LAYOUT.LEFT_RIGHT} />
+          </div>
+          <CheckLabel title='左右列' active={docFaqLayout === DOC_FAQ_LAYOUT.LEFT_RIGHT} top={4} />
+        </button>
       </div>
       <SavingBar
         isTouched={isFaqTouched}

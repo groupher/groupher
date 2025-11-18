@@ -1,7 +1,6 @@
 import type { FC } from 'react'
-
-import type { TDocFAQLayout } from '~/spec'
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
+import type { TDocFAQLayout } from '~/spec'
 
 import useSalon, { cn } from '../../salon/layout/doc_layout/faq_template'
 
@@ -27,6 +26,28 @@ const FaqTemplate: FC<TProps> = ({ layout }) => {
         <div className={cn(s.bar, 'h-1.5 top-36 mt-2 left-24 w-20')} />
         <div className={cn(s.bar, 'h-1.5 top-40 mt-2.5 left-24 w-14')} />
         <div className={cn(s.bar, 'h-1.5 top-44 mt-2.5 left-24 w-16 opacity-30')} />
+      </div>
+    )
+  }
+
+  if (layout === DOC_FAQ_LAYOUT.LEFT_RIGHT) {
+    return (
+      <div className={s.block}>
+        <div className={cn(s.faqTitle, 'top-8 left-7 -ml-1')}>常见问题</div>
+        <div className={cn(s.bar, 'h-1.5 top-14 left-6 w-16 opacity-20')} />
+        <div className={cn(s.bar, 'h-1.5 top-16 left-6 w-12 mt-1 opacity-10')} />
+
+        <div className={cn(s.bar, 'h-1.5 top-9 left-32 w-16')} />
+        <div className={cn(s.bar, 'h-1 top-12 mt-2 left-32 w-24 opacity-20')} />
+        <div className={cn(s.bar, 'h-1 top-16 mt-1.5 left-32 w-20 opacity-20')} />
+
+        <div className={cn(s.bar, 'h-1.5 top-20 mt-2 left-32 w-16')} />
+        <div className={cn(s.bar, 'h-1 top-24 mt-2 left-32 w-20 opacity-20')} />
+        <div className={cn(s.bar, 'h-1 top-28 mt-1.5 left-32 w-14 opacity-20')} />
+
+        <div className={cn(s.bar, 'h-1.5 top-32 mt-2 left-32 w-20')} />
+        <div className={cn(s.bar, 'h-1.5 top-36 mt-2.5 left-32 w-14')} />
+        <div className={cn(s.bar, 'h-1.5 top-40 mt-2.5 left-32 w-16 opacity-20')} />
       </div>
     )
   }
