@@ -8,7 +8,7 @@ export { cn } from '~/css'
 const pageBgColors = TW_METRIC.pageBgColor
 
 export default () => {
-  const { cn, shadow, br, fg, primary, isBlackPrimary } = useTwBelt()
+  const { cn, shadow, br, fg, bg, primary, isBlackPrimary } = useTwBelt()
   const { theme } = useTheme()
 
   return {
@@ -21,19 +21,22 @@ export default () => {
     wrapper: 'pb-7',
     themeGroup: 'row-center wrap gap-y-6 relative ml-4',
     block: cn(
-      'group w-20 h-20 rounded-md -ml-4 border-2 px-2.5 py-2 trans-all-200',
+      'column justify-between group w-28 h-36 rounded-md -ml-4 border border-dotted px-2 py-1.5 trans-all-200',
       'hover:-mt-3  hover:z-10 hover:rotate-6 pointer',
-      shadow('lg'),
+      shadow('sm'),
+      bg('card'),
       br('divider'),
     ),
+    blockInner: cn('relative w-full h-24 border rounded-sm', br('divider')),
     blockActive: cn(
-      'column w-28 h-24 z-10 -mt-2 rotate-3 border-b-8 rounded-lg hover:-mt-2',
+      'z-10 rotate-3 rounded-lg -mt-4 hover:-mt-2',
       primary('borderSoft'),
       isBlackPrimary && br('text.link'),
-      shadow('xl'),
+      shadow('lg'),
     ),
-    colorTitle: cn('text-xs grow', fg('text.digest')),
-    titleHint: cn('text-xs group-smoky-0', fg('text.digest')),
-    hex: cn('text-xs', fg('text.hint')),
+    footer: 'mt-2.5',
+    colorTitle: cn('text-xs', fg('text.title')),
+    hex: cn('text-xs scale-90 italic', fg('text.hint')),
+    checker: cn('absolute bottom-2 right-2 size-5', primary('fill')),
   }
 }
