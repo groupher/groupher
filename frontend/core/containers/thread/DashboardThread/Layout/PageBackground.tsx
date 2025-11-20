@@ -1,5 +1,6 @@
 import { titleCaseHM, upperSnakeCase } from '~/fmt'
 import useTheme from '~/hooks/useTheme'
+import CheckSVG from '~/icons/Check'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import { SETTING_FIELD } from '../constant'
 import usePageBg from '../logic/usePageBg'
@@ -37,14 +38,17 @@ export default () => {
             <button
               key={bg}
               className={cn(s.block, `rotate-${s.rotateAngle[index]}`, active && s.blockActive)}
-              style={{ backgroundColor: currentBg }}
               onClick={() => {
                 edit(upperSnakeCase(bg), isLightTheme ? 'pageBg' : 'pageBgDark')
               }}
             >
-              {!active && <div className={s.titleHint}>{bgTitle}</div>}
-              {active && <div className={s.colorTitle}>{bgTitle}</div>}
-              {active && <div className={s.hex}>{currentBg}</div>}
+              <div className={s.blockInner} style={{ backgroundColor: currentBg }}>
+                {active && <CheckSVG className={s.checker} />}
+              </div>
+              <div className={s.footer}>
+                <div className={s.colorTitle}>{bgTitle}</div>
+                <div className={s.hex}>{currentBg}</div>
+              </div>
             </button>
           )
         })}
