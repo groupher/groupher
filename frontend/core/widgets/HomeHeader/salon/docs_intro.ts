@@ -14,11 +14,10 @@ export default () => {
     ),
     head: 'row-center',
 
-    title: cn('text-base', fg('text.title'), vividDark()),
-    content: cn('column gap-y-1 border-l pl-2 mt-2 ml-0.5', br('text.digest')),
-    item: cn('text-sm trans-all-200 line-clamp-1', fg('text.digest'), `hover:${fg('text.title')}`),
+    title: cn('text-sm', fg('text.title'), vividDark()),
+    content: cn('column gap-y-1.5 border-l pl-2 mt-2.5 ml-0.5', br('text.digest')),
+    item: cn('text-xs trans-all-200 line-clamp-1', fg('text.digest'), `hover:${fg('text.title')}`),
     more: cn('text-xs mt-0.5 ml-0.5 trans-all-200', fg('link'), `hover:${fg('text.title')}`),
-    desc: cn('text-sm mt-3 trans-all-200 line-clamp-2', fg('text.digest')),
 
     purple: `group-hover:${rainbow(COLOR_NAME.PURPLE, 'fg')}`,
     blue: `group-hover:${rainbow(COLOR_NAME.BLUE, 'fg')}`,

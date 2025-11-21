@@ -29,7 +29,7 @@ export default ({ extend = false, isSticky = false }: TProps = {}) => {
       'row-center-between w-full px-28 h-16 sticky top-0',
       'backdrop-blur-sm trans-all-200',
       isSticky && 'border-b rounded-bl-2xl rounded-br-2xl',
-      extend ? bg('card') : bg('cardAlpha'),
+      extend ? bg('pageBg') : bg('cardAlpha'),
       zIndex('header'),
       br('divider'),
     ),

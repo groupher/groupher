@@ -11,7 +11,7 @@ export default () => {
       'header-panel-shadow',
       zIndex('header'),
       br('divider'),
-      bg('card'),
+      bg('pageBg'),
     ),
   }
 }

@@ -18,7 +18,7 @@ export default () => {
       isLightTheme ? 'opacity-30' : 'opacity-65',
       'absolute bottom-0 left-0',
       'group-hover:h-80 saturate-200 brightness-90',
-      'trans-jump',
+      'trans-jump !duration-500',
       shadow('sm'),
 
       rainbow(COLOR_NAME.RED, 'border'),

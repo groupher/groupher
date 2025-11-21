@@ -14,7 +14,7 @@
   [data-theme="dark"] {
     .letter-paper::before,
     .letter-paper::after {
-      background-image: radial-gradient(circle, #444444 4px, transparent 4px);
+      background-image: radial-gradient(circle, #2d2d2d 4px, transparent 4px);
     }
   }
 
