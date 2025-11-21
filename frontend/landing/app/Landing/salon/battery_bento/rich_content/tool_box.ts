@@ -10,7 +10,8 @@ export default () => {
   return {
     wrapper: cn(
       'absolute -right-1.5 top-10 w-28 h-28 px-1 pt-1 z-20 trans-all-200 rounded-md',
-      !isLightTheme && cn('border', br('divider')),
+      isLightTheme ? 'border' : 'border-2',
+      br('divider'),
       menu('bg'),
       shadow('xl'),
     ),

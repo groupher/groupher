@@ -1,8 +1,7 @@
 import type { FC } from 'react'
-
+import CodeSVG from '~/icons/editor/Code'
 import ImageSVG from '~/icons/editor/Image'
 import TitleSVG from '~/icons/editor/Title'
-import CodeSVG from '~/icons/editor/Code'
 import VideoSVG from '~/icons/social/BiliBili'
 
 import useSalon, { cn } from '../../salon/battery_bento/rich_content/tool_box'
