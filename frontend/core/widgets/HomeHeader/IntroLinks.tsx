@@ -11,36 +11,43 @@ import useSalon, { cn } from './salon'
 type TProps = {
   activeMenu: string
   setActiveMenu: (menu: string) => void
+  onLinkHover?: () => void // 新增 prop
 }
 
-const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu }) => {
+const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu, onLinkHover }) => {
   const s = useSalon()
 
   useSession()
 
+  const handleHover = (menu: string) => {
+    if (onLinkHover) onLinkHover()
+    setActiveMenu(menu)
+  }
+
   return (
     <>
-      <Link href='/' className={s.brand}>
+      <Link href='/' className={s.brand} onMouseEnter={onLinkHover}>
         <CommunityBrand landingBrand />
       </Link>
+
       <div className={s.links}>
         <button
           className={cn(s.stackLink, activeMenu === HEAD_MENU.PRODUCT && s.linkActive)}
-          onMouseEnter={() => setActiveMenu(HEAD_MENU.PRODUCT)}
+          onMouseEnter={() => handleHover(HEAD_MENU.PRODUCT)}
         >
           产品 <ArrowSVG className={s.arrowIcon} />
         </button>
 
         <button
           className={cn(s.stackLink, activeMenu === HEAD_MENU.COMMUNITY && s.linkActive)}
-          onMouseEnter={() => setActiveMenu(HEAD_MENU.COMMUNITY)}
+          onMouseEnter={() => handleHover(HEAD_MENU.COMMUNITY)}
         >
           社区 <ArrowSVG className={s.arrowIcon} />
         </button>
 
         <button
           className={cn(s.stackLink, activeMenu === HEAD_MENU.DOCS && s.linkActive)}
-          onMouseEnter={() => setActiveMenu(HEAD_MENU.DOCS)}
+          onMouseEnter={() => handleHover(HEAD_MENU.DOCS)}
         >
           文档 <ArrowSVG className={s.arrowIcon} />
         </button>
@@ -48,14 +55,14 @@ const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu }) => {
         <Link
           className={s.linkItem}
           href={`/${ROUTE.PRICE}`}
-          onMouseEnter={() => setActiveMenu('')}
+          onMouseEnter={() => handleHover('')}
         >
           价格
         </Link>
 
         <button
           className={cn(s.stackLink, activeMenu === HEAD_MENU.ABOUT && s.linkActive)}
-          onMouseEnter={() => setActiveMenu(HEAD_MENU.ABOUT)}
+          onMouseEnter={() => handleHover(HEAD_MENU.ABOUT)}
         >
           关于 <ArrowSVG className={s.arrowIcon} />
         </button>
@@ -65,3 +72,5 @@ const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu }) => {
 }
 
 export default IntroLinks
+
+

@@ -34,7 +34,7 @@ export default ({ extend = false, isSticky = false }: TProps = {}) => {
       br('divider'),
     ),
     brand: cn(linkable()),
-    links: cn('row-center gap-x-6 ml-12 mt-px'),
+    links: cn('row-center gap-x-6 ml-16 mt-px'),
     linkItem: hoverLink(),
     linkItemActive: fg('text.title'),
     stackLink: cn(hoverLink(), 'pl-3 hover:no-underline'),
