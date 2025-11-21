@@ -60,12 +60,12 @@ export default () => {
   useSession()
 
   return (
-    <header ref={headerRef}>
+    <header ref={headerRef} className={s.header}>
       <div
-        aria-hidden='true'
-        className={s.wrapper}
+        className={s.inner}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        aria-hidden='true'
       >
         <IntroLinks
           activeMenu={activeMenu}
