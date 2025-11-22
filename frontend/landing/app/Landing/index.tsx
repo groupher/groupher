@@ -91,18 +91,18 @@ export default () => {
           </div> */}
           <h1 className={s.title}>让你的产品听见用户的声音</h1>
           <div className={s.desc}>
-            <DiscussSVG className={cn(s.icon, s.purpleFill, '-mt-1 -rotate-6')} />
+            <DiscussSVG className={cn(s.icon, s.purpleFill, '-rotate-6')} />
             <span className={s.purpleText}>讨论区、</span>
             <span className={s.blueText}>
               <div className='inline-block -rotate-12'>
-                <KanbanSVG className={cn(s.icon, s.blueFill, '-mt-1 rotate-180')} />
+                <KanbanSVG className={cn(s.icon, s.blueFill, 'rotate-180')} />
               </div>
               看板、
             </span>
             <span className='inline-block mr-1 text-xl -rotate-12'>📝</span>
             <span className={s.redText}>更新日志、</span>
             <span className={cn(s.cyanText, 'mr-0.5')}>
-              <BookSVG className={cn(s.icon, s.cyanFill, '-mt-1 rotate-12')} />
+              <BookSVG className={cn(s.icon, s.cyanFill, 'rotate-12')} />
               帮助文档
             </span>
             多合一，收集沉淀

@@ -22,8 +22,8 @@ export default () => {
     githubText: 'clip-text bold text-base',
     githubIconStyle: { fill: getCursorGradient(wallpaper) },
     textGradientStyle: { background: `linear-gradient(to top, ${getPathGradient(wallpaper)})` },
-    title: cn(landingTitle(), 'text-4xl opacity-70 mb-4'),
-    icon: cn('size-6 inline-block mr-1'),
+    title: cn(landingTitle(), 'text-4xl opacity-70 mb-6'),
+    icon: cn('size-6 inline-block mr-1 -mt-1'),
     desc: cn('inline-flex items-center text-center text-lg', fg('text.digest')),
     //
     focus: cn('bold-sm', fg('text.title')),
