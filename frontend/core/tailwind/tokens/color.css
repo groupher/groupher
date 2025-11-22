@@ -164,7 +164,7 @@
     /* utils */
     --color-hoverBg: #42424259;
     --color-card: #161616; /* #1A1A1A, og: #1e1e1e; */
-    --color-cardAlpha: #1b1b1bb0;
+    --color-cardAlpha: #111111b5;
     --color-sandBox: #31303059;
     --unibar-linear-mask: radial-gradient(
       circle,

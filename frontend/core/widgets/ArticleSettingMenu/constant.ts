@@ -1,16 +1,14 @@
-import type { TSubMenu } from './spec'
-
 import { ARTICLE_CAT, ARTICLE_STATE } from '~/const/gtd'
+import BugSVG from '~/icons/ColorBug'
 
 import LightSVG from '~/icons/ColorLight'
-import QuestionSVG from '~/icons/Question'
-import BugSVG from '~/icons/ColorBug'
 import DiscussSVG from '~/icons/Discuss'
-
+import DoneSVG from '~/icons/GtdDone'
 import TodoSVG from '~/icons/GtdTodo'
 import WipSVG from '~/icons/GtdWip'
-import DoneSVG from '~/icons/GtdDone'
+import QuestionSVG from '~/icons/Question'
 import RejectSVG from '~/icons/Reject'
+import type { TSubMenu } from './spec'
 
 export const SUB_MENU_TYPE = {
   EDIT: 'edit',
