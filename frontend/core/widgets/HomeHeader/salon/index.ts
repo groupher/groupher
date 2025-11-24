@@ -34,7 +34,7 @@ export default ({ extend = false, isSticky = false }: TProps = {}) => {
     ),
     inner: cn('row-center-between w-full px-28 h-16'),
     brand: cn(linkable()),
-    links: cn('row-center gap-x-6 ml-16 mt-px'),
+    links: cn('row-center gap-x-4 ml-16 mt-px'),
     linkItem: hoverLink(),
     linkItemActive: fg('text.title'),
     stackLink: cn(hoverLink(), 'pl-3 hover:no-underline'),

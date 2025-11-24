@@ -176,11 +176,16 @@ export default (): TRet => {
   }
 
   const hoverLinkIcon = (size = 'size-3.5') => {
-    return cn(`${size}`, 'mr-1', `group-hover:${fill('text.title')}`, fill('text.digest'))
+    return cn(
+      `${size}`,
+      'mr-1 group-smoky-65',
+      `group-hover:${fill('text.title')}`,
+      fill('text.digest'),
+    )
   }
 
   /**
-   * this is not typo, cause the exsiting prama is `size`
+   * this is not typo, cause the existing param is `size`
    */
   const zise = (unit: number): string => clsx(`size-${unit}`)
 
