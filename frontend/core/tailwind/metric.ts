@@ -50,7 +50,7 @@ export const METRIC = {
     dark: {
       'charcoal-gray': '#121212',
       'dark-slate-gray': '#191919',
-      'outer-space': '#111111', // og: '#171717',
+      'outer-space': '#1E201F', // og: '#171717',
       'rich-black': '#0A0A0A',
       'coffee-bean': '#1B1B1B',
       ubuntu: '#240e1d',

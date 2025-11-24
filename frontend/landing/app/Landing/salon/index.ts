@@ -1,4 +1,5 @@
 import { COLOR_NAME } from '~/const'
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
 // import { getGlowOpacity, getGlowBackground, getPathGradient } from './metric'
@@ -7,7 +8,9 @@ import { getCursorGradient, getPathGradient } from './metric'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, fill, container, rainbow, linkable, menu, landingTitle, sexyBorder } = useTwBelt()
+  const { isLightTheme } = useTheme()
+  const { cn, fg, bg, fill, container, rainbow, linkable, menu, landingTitle, sexyBorder } =
+    useTwBelt()
   const { wallpaper } = useWallpaper()
 
   const colorText = 'grayscale-50 bold-sm'
@@ -22,11 +25,17 @@ export default () => {
     githubText: 'clip-text bold text-base',
     githubIconStyle: { fill: getCursorGradient(wallpaper) },
     textGradientStyle: { background: `linear-gradient(to top, ${getPathGradient(wallpaper)})` },
-    title: cn(landingTitle(), 'text-4xl opacity-70 mb-6'),
-    icon: cn('size-6 inline-block mr-1 -mt-1'),
+    title: cn(landingTitle(), 'text-5xl opacity-70 mb-6 mt-4'),
+    iconHead: 'opacity-80 row-center gap-x-4 relative mt-5 mb-4',
+    iconFootBar: cn(
+      'absolute bottom-2 w-60 h-4 -left-5 rounded-md',
+      bg('text.digest'),
+      isLightTheme ? 'opacity-10' : 'opacity-20',
+    ),
+    icon: cn('size-9 inline-block mr-1 -mt-1 z-20'),
     desc: cn('inline-flex items-center text-center text-lg', fg('text.digest')),
     //
-    focus: cn('bold-sm', fg('text.title')),
+    focus: cn('bold-sm mx-0.5', fg('text.title')),
     //
     purpleFill: cn(rainbow(COLOR_NAME.PURPLE, 'fill'), colorFill),
     blueFill: cn(rainbow(COLOR_NAME.BLUE, 'fill'), colorFill),

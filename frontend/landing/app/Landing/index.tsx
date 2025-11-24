@@ -89,23 +89,19 @@ export default () => {
               Github
             </a>
           </div> */}
+          <div className={s.iconHead}>
+            <DiscussSVG className={cn(s.icon, s.purpleFill, '-rotate-6')} />
+            <div className='inline-block -rotate-12'>
+              <KanbanSVG className={cn(s.icon, s.blueFill, 'rotate-180')} />
+            </div>
+            <span className='inline-block mr-1 text-3xl -rotate-12'>📝</span>
+            <BookSVG className={cn(s.icon, s.cyanFill, 'rotate-12')} />
+            <div className={s.iconFootBar} />
+          </div>
+
           <h1 className={s.title}>让你的产品听见用户的声音</h1>
           <div className={s.desc}>
-            <DiscussSVG className={cn(s.icon, s.purpleFill, '-rotate-6')} />
-            <span className={s.purpleText}>讨论区、</span>
-            <span className={s.blueText}>
-              <div className='inline-block -rotate-12'>
-                <KanbanSVG className={cn(s.icon, s.blueFill, 'rotate-180')} />
-              </div>
-              看板、
-            </span>
-            <span className='inline-block mr-1 text-xl -rotate-12'>📝</span>
-            <span className={s.redText}>更新日志、</span>
-            <span className={cn(s.cyanText, 'mr-0.5')}>
-              <BookSVG className={cn(s.icon, s.cyanFill, 'rotate-12')} />
-              帮助文档
-            </span>
-            多合一，收集沉淀
+            讨论区、看板、更新日志、文档多合一，收集沉淀
             <div className='inline-block ml-3'>
               <Facepile users={users} noLazyLoad showMore={false} />
             </div>

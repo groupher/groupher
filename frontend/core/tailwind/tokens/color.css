@@ -155,7 +155,7 @@
 
     /* articles */
     --color-text-title: oklch(96.7% 0.003 264.542);
-    --color-text-digest: oklch(70.5% 0.015 286.067);
+    --color-text-digest: #949494; /*oklch(70.5% 0.015 286.067);*/
     --color-text-hint: #9d9999;
     --color-link: #6b97d4;
     --color-dot: oklch(70.4% 0.04 256.788); /* slate.400 */
@@ -163,8 +163,8 @@
 
     /* utils */
     --color-hoverBg: #42424259;
-    --color-card: #161616; /* #1A1A1A, og: #1e1e1e; */
-    --color-cardAlpha: #111111b5;
+    --color-card: #252525; /* #1A1A1A, og: #1e1e1e; */
+    --color-cardAlpha: #1c1d1dd9; /*#111111b5;*/
     --color-sandBox: #31303059;
     --unibar-linear-mask: radial-gradient(
       circle,
@@ -244,7 +244,7 @@
     --color-rainbow-blackBtn: #e6e6e6;
     --color-rainbow-blackSoft: #313131;
 
-    --color-pageBg: #111111;
+    --color-pageBg: #1E201F;
 
     /* gradient colors */
     --landing-gradient-gray: linear-gradient(#171717 0%, transparent);
