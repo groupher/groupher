@@ -49,25 +49,35 @@ export default () => {
   return (
     <div ref={ref} className={s.wrapper}>
       {isDarkTheme && (
-        <motion.div
-          initial={{ clipPath: 'inset(0 0 100% 0)' }}
-          animate={{
-            clipPath: lightOn ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
-            opacity: lightOn ? 1 : 0,
-          }}
-          transition={{
-            clipPath: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
-            opacity: { duration: 0.2 },
-          }}
-          className='absolute -inset-x-[200px] -top-12 h-[500px] -left-5'
-          style={{
-            background:
-              'linear-gradient(to right, rgba(255, 99, 8, 0.1), rgb(255 238 229 / 27%), rgba(189, 201, 230, 0.1), rgba(151, 196, 255, 0.1), rgba(151, 196, 255, 0.1))',
-            mask: 'radial-gradient(ellipse at top, black, transparent 60%)',
-            WebkitMask: 'radial-gradient(ellipse at top, black, transparent 60%)',
-            pointerEvents: 'none',
-          }}
-        />
+        <>
+          <motion.div
+            initial={{
+              clipPath: 'inset(0 100% 0 0)',
+              opacity: 0,
+            }}
+            animate={{
+              clipPath: lightOn ? 'inset(0 0% 0 0)' : 'inset(0 100% 0 0)',
+              opacity: lightOn ? 0.4 : 0,
+            }}
+            transition={{
+              clipPath: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+              opacity: { duration: 0.1 },
+            }}
+            className={s.lightBlob}
+          />
+          <motion.div
+            initial={{ clipPath: 'inset(0 0 100% 0)' }}
+            animate={{
+              clipPath: lightOn ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
+              opacity: lightOn ? 1 : 0,
+            }}
+            transition={{
+              clipPath: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },
+              opacity: { duration: 0.25 },
+            }}
+            className={s.lightGlow}
+          />
+        </>
       )}
 
       <div className={s.banner}>

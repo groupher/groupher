@@ -134,6 +134,26 @@
       --key-bg-end-color 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   }
 
+  .keyboard-glow {
+    background: linear-gradient(
+      to right,
+      rgba(255, 99, 8, 0.1),
+      rgb(255 238 229 / 27%),
+      rgba(189, 201, 230, 0.1),
+      rgba(151, 196, 255, 0.1),
+      rgba(151, 196, 255, 0.1)
+    );
+
+    mask: radial-gradient(ellipse at top, black, transparent 60%);
+    -webkit-mask: radial-gradient(ellipse at top, black, transparent 60%);
+
+    pointer-events: none;
+
+    inset-inline: -200px; /* -inset-x-[200px] */
+    height: 500px;        /* h-[500px] */
+  }
+
+
   [data-theme="dark"] {
     .keyboard-block {
       --key-bg-start-color: #2d2c2c;

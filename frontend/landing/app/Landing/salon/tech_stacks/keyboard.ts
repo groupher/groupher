@@ -7,6 +7,7 @@ export default () => {
     wrapper: cn('column h-full w-[1000px] py-16'),
     lightBlob:
       'absolute inset-x-0 h-px top-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-40 w-[400px] left-[360px]',
+    lightGlow: 'absolute -top-12 -left-5 keyboard-glow',
     banner: 'w-auto ml-24 z-40',
     bottom: 'w-auto ml-24 z-40 mt-4 -ml-2',
     detail: cn('text-sm', fg('text.digest')),
