@@ -1,10 +1,12 @@
 import { COLOR_NAME } from '~/const/colors'
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fill, fg, br, menu, rainbow, vividDark } = useTwBelt()
+  const { isLightTheme } = useTheme()
+  const { cn, fill, fg, bg, menu, rainbow, vividDark } = useTwBelt()
 
   return {
     wrapper: cn('align-both w-full gap-x-4'),
@@ -15,8 +17,18 @@ export default () => {
     head: 'row-center',
 
     title: cn('text-sm', fg('text.title'), vividDark()),
-    content: cn('column gap-y-1.5 border-l pl-2 mt-2.5 ml-0.5', br('text.digest')),
-    item: cn('text-xs trans-all-200 line-clamp-1', fg('text.digest'), `hover:${fg('text.title')}`),
+    content: cn('column relative gap-y-1.5 pl-2.5 mt-2.5'),
+    contentBorder: cn(
+      'absolute left-0 top-0 h-full w-px',
+      bg('text.digest'),
+      isLightTheme ? 'opacity-30' : 'opacity-40',
+    ),
+    item: cn(
+      'text-xs trans-all-200 line-clamp-1',
+      fg('text.digest'),
+      `hover:${fg('text.title')}`,
+      'hover:opacity-80',
+    ),
     more: cn('text-xs mt-0.5 ml-0.5 trans-all-200', fg('link'), `hover:${fg('text.title')}`),
 
     purple: `group-hover:${rainbow(COLOR_NAME.PURPLE, 'fg')}`,

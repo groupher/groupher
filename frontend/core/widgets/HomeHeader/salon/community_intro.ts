@@ -4,7 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fill, fg,  menu, rainbow, vividDark } = useTwBelt()
+  const { cn, fill, fg, menu, rainbow, vividDark } = useTwBelt()
 
   return {
     wrapper: cn('align-both w-full gap-x-4'),
@@ -16,7 +16,12 @@ export default () => {
     head: 'row-center',
 
     title: cn('text-sm ml-2', fg('text.title'), vividDark()),
-    desc: cn('text-sm mt-3 trans-all-200 line-clamp-2', fg('text.digest'), `group-hover:${fg('text.title')}`),
+    desc: cn(
+      'text-sm mt-3 trans-all-200 line-clamp-2',
+      fg('text.digest'),
+      `group-hover:${fg('text.title')}`,
+      'group-hover:opacity-80',
+    ),
 
     purple: `group-hover:${rainbow(COLOR_NAME.PURPLE, 'fg')}`,
     blue: `group-hover:${rainbow(COLOR_NAME.BLUE, 'fg')}`,
