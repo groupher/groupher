@@ -1,26 +1,42 @@
-import { useInView } from 'motion/react'
+import { motion, useInView } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { COLOR_NAME } from '~/const/colors'
+import useTheme from '~/hooks/useTheme'
 import ArrowLinker from '~/widgets/ArrowLinker'
 import useSalon from '../salon/tech_stacks/keyboard'
 import HolderKey from './HolderKey'
 import TechKey from './TechKey'
 
 const STAGING_TIME = 200
+const TECH_TOTAL = 10
 
 export default () => {
   const s = useSalon()
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: false, margin: '-20% 0px' })
   const [activeCount, setActiveCount] = useState(0)
+  const { isDarkTheme } = useTheme()
 
-  const techTotal = 10
+  const [lightOn, setLightOn] = useState(false)
+
+  useEffect(() => {
+    if (!(isDarkTheme && inView)) {
+      setLightOn(false)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setLightOn(true)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [inView, isDarkTheme])
 
   useEffect(() => {
     if (!inView) return
     const timers: NodeJS.Timeout[] = []
 
-    for (let i = 0; i < techTotal; i++) {
+    for (let i = 0; i < TECH_TOTAL; i++) {
       timers.push(setTimeout(() => setActiveCount(i + 1), i * STAGING_TIME))
     }
     return () => {
@@ -32,6 +48,28 @@ export default () => {
 
   return (
     <div ref={ref} className={s.wrapper}>
+      {isDarkTheme && (
+        <motion.div
+          initial={{ clipPath: 'inset(0 0 100% 0)' }}
+          animate={{
+            clipPath: lightOn ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
+            opacity: lightOn ? 1 : 0,
+          }}
+          transition={{
+            clipPath: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+            opacity: { duration: 0.2 },
+          }}
+          className='absolute -inset-x-[200px] -top-12 h-[500px] -left-5'
+          style={{
+            background:
+              'linear-gradient(to right, rgba(255, 99, 8, 0.1), rgb(255 238 229 / 27%), rgba(189, 201, 230, 0.1), rgba(151, 196, 255, 0.1), rgba(151, 196, 255, 0.1))',
+            mask: 'radial-gradient(ellipse at top, black, transparent 60%)',
+            WebkitMask: 'radial-gradient(ellipse at top, black, transparent 60%)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
       <div className={s.banner}>
         <div className={s.title}>开源技术栈</div>
         <div className={s.desc}>由久经考验的开源技术栈驱动，并持续跟进业界最佳实践。</div>

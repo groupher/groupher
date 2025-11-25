@@ -95,6 +95,10 @@
     }
   }
 
+  .keyboard-wall {
+    background: #1d1d1d;
+  }
+
   .keyboard-block {
     /* --key-bg-start-color: #0f0f0f;
      --key-bg-end-color: #181818; */
@@ -134,6 +138,10 @@
     .keyboard-block {
       --key-bg-start-color: #2d2c2c;
       --key-bg-end-color: #212121;
+    }
+
+    .keyboard-wall {
+      background: #181818;
     }
   }
 }
