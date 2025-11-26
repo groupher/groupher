@@ -13,7 +13,7 @@ export default function useCSSVar(name: string, deps?: any[]): string {
 
     const computed = getComputedStyle(el).getPropertyValue(`--${name}`).trim()
     setVal(computed)
-  }, [theme, ...(deps || []), name])
+  }, [theme, name, deps])
 
   return val
 }

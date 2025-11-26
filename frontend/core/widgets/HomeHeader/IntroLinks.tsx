@@ -11,7 +11,7 @@ import useSalon, { cn } from './salon'
 type TProps = {
   activeMenu: string
   setActiveMenu: (menu: string) => void
-  onLinkHover?: () => void // 新增 prop
+  onLinkHover?: () => void
 }
 
 const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu, onLinkHover }) => {

@@ -12,7 +12,6 @@ export default () => {
       'group column relative min-w-52 w-52 h-28 px-3 py-4 rounded-md pointer overflow-hidden',
       'trans-all-200',
     ),
-    blockGrey: '', // cn(blockColor, bg('sandBox')),
     head: 'row-center',
 
     title: cn('text-sm ml-2', fg('text.title'), vividDark()),

@@ -16,7 +16,6 @@ const CommunityIntros: FC = () => {
   return (
     <div className={s.wrapper}>
       <div className={s.block}>
-        <div className={s.blockGrey} />
         <div className={s.head}>
           <PeopleSVG className={s.menuIcon} />
           <div className={s.title}>官方论坛</div>
@@ -25,7 +24,6 @@ const CommunityIntros: FC = () => {
       </div>
 
       <div className={s.block}>
-        <div className={s.blockGrey} />
         <div className={s.head}>
           <KanbanSVG className={cn(s.menuIcon, 'rotate-180')} />
           <div className={s.title}>开发进度</div>
@@ -34,7 +32,6 @@ const CommunityIntros: FC = () => {
       </div>
 
       <div className={s.block}>
-        <div className={s.blockGrey} />
         <div className={s.head}>
           <ChangelogSVG className={s.menuIcon} />
           <div className={s.title}>更新日志</div>
@@ -43,7 +40,6 @@ const CommunityIntros: FC = () => {
       </div>
 
       <div className={s.block}>
-        <div className={s.blockGrey} />
         <div className={s.head}>
           <GithubSVG className={s.menuIcon} />
           <div className={s.title}>Github</div>
@@ -52,7 +48,6 @@ const CommunityIntros: FC = () => {
       </div>
 
       <div className={s.block}>
-        <div className={s.blockGrey} />
         <div className={s.head}>
           <WeChatSVG className={s.menuIcon} />
           <div className={s.title}>微信群</div>
