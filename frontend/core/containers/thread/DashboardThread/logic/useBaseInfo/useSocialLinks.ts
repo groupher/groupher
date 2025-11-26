@@ -1,7 +1,6 @@
-import { isEmpty, reject, equals } from 'ramda'
-
+import { equals, isEmpty, reject } from 'ramda'
+import useDashboard from '~/hooks/useDashboard'
 import type { TSocialItem } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
 
 export type TRet = {
   socialLinks: TSocialItem[]
@@ -9,7 +8,7 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   const { socialLinks, original } = store
 

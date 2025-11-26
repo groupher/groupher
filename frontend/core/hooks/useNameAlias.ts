@@ -1,19 +1,15 @@
-import { useMemo } from 'react'
 import { filter } from 'ramda'
-
+import { useMemo } from 'react'
+import useDashboard from '~/hooks/useDashboard'
 import type { TNameAlias } from '~/spec'
 
-import useSubStore from '~/hooks/useSubStore'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-
 const useNameAlias = (group = 'kanban'): Record<string, TNameAlias> => {
-  const store = useSubStore('dashboard')
-  const community = useViewingCommunity()
+  const store = useDashboard()
 
   const alias = {}
   let aliasList = []
 
-  const curAlias = useMemo(() => store.nameAlias, [community])
+  const curAlias = useMemo(() => store.nameAlias, [store.nameAlias])
 
   // console.log('## cacle name alias, FIXME')
 

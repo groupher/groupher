@@ -6,12 +6,13 @@ import { BANNER_LAYOUT } from '~/const/layout'
 
 import METRIC from '~/const/metric'
 import { STATIC_ROUTES } from '~/const/route'
+import useDashboard from '~/hooks/useDashboard'
 import useSubStore from '~/hooks/useSubStore'
 import type { TMetric } from '~/spec'
 
 export default (): TMetric => {
   const store = useSubStore('viewing')
-  const { bannerLayout } = useSubStore('dashboard')
+  const { bannerLayout } = useDashboard()
 
   const pathname = usePathname()
   if (includes(pathname, STATIC_ROUTES)) {

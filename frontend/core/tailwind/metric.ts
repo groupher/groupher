@@ -1,38 +1,5 @@
 export const METRIC = {
-  // TODO: move bg values to css vars, just keep the keys name here for dashboard setting cards display
-  pageBgColorTODO: {
-    light: [
-      'pure-white',
-      'solarized',
-      'hacker news',
-      'light grey',
-      'floral-white',
-      'mint-white',
-      'pink',
-      'todo2',
-      'blue2',
-      'purple',
-      'todo',
-    ],
-    dark: [
-      'charcoal-gray',
-      'dark-slate-gray',
-      'outer-space',
-      'rich-black',
-      'coffee-bean',
-      'ubuntu',
-      'obsidian',
-      'solarized',
-      'black-chocolate',
-      'gunmetal',
-      'smoky-black',
-      'oxford-blue',
-      'eerie-black',
-      'daylight-green',
-      'jet-black',
-      'arsenic',
-    ],
-  },
+  /** can not move those values to CSS vars, cause the SSR will break when get it */
   pageBgColor: {
     light: {
       'pure-white': '#fff',
@@ -50,7 +17,7 @@ export const METRIC = {
     dark: {
       'charcoal-gray': '#121212',
       'dark-slate-gray': '#191919',
-      'outer-space': '#171717',
+      'outer-space': '#212121', // og: '#171717',
       'rich-black': '#0A0A0A',
       'coffee-bean': '#1B1B1B',
       ubuntu: '#240e1d',
@@ -65,10 +32,6 @@ export const METRIC = {
       'jet-black': '#161618',
       arsenic: '#11181C',
     },
-  },
-  borderSoft: {
-    opacity: 35,
-    opacity_dark: 75,
   },
   // remove it here
   container: {

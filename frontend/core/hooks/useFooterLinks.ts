@@ -1,5 +1,5 @@
-import type { TLinkItem, TFooterLayout } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
+import type { TFooterLayout, TLinkItem } from '~/spec'
 
 type TFooterLinks = {
   layout: TFooterLayout
@@ -7,7 +7,7 @@ type TFooterLinks = {
 }
 
 export default (): TFooterLinks => {
-  const { footerLayout, footerLinks } = useSubStore('dashboard')
+  const { footerLayout, footerLinks } = useDashboard()
 
   return {
     layout: footerLayout,

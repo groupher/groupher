@@ -8,6 +8,7 @@ export default {
   container: '',
   cardAlpha: '',
   card: '',
+  pageBg: '',
   loading: {
     basic: '',
     animate: '',

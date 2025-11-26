@@ -3,7 +3,7 @@ import { useCallback } from 'react'
 import type { TModerator, TUser } from '~/spec'
 
 import { sortByIndex } from '~/helper'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 
 type TRet = {
   getModerators: () => TModerator[]
@@ -12,7 +12,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   const { moderators, activeModerator } = store
 

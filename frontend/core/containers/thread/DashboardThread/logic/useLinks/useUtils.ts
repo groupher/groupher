@@ -1,15 +1,14 @@
 // logics for header & footer links
 
+import { clone, filter, find, findIndex, forEach, keys, reject, remove } from 'ramda'
 import { useEffect, useRef } from 'react'
-import { keys, findIndex, clone, remove, filter, reject, forEach, find } from 'ramda'
-
-import type { TLinkItem, TGroupedLinks } from '~/spec'
-import { sortByIndex, groupByKey } from '~/helper'
-import { ROUTE, DASHBOARD_ROUTE } from '~/const/route'
 import { MORE_GROUP } from '~/const/dashboard'
+import { DASHBOARD_ROUTE, ROUTE } from '~/const/route'
+import { groupByKey, sortByIndex } from '~/helper'
+import useDashboard from '~/hooks/useDashboard'
 
-import useSubStore from '~/hooks/useSubStore'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
+import type { TGroupedLinks, TLinkItem } from '~/spec'
 
 import { EMPTY_LINK_ITEM } from '../../constant'
 
@@ -27,7 +26,7 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const community = useViewingCommunity()
   const { curTab } = store
 
@@ -111,7 +110,7 @@ export default (): TRet => {
    * move group actions
    */
   const reindexGroup = (_targetLinks: TLinkItem[]): TLinkItem[] => {
-    // @ts-ignore
+    // @ts-expect-error
     const targetLinks = clone(sortByIndex(_targetLinks, 'groupIndex'))
 
     const _groupedLinks = groupByKey(targetLinks, 'group')
@@ -230,7 +229,7 @@ export default (): TRet => {
   const moveGroup = (group: string, opt: 'left' | 'right' | 'edge-left' | 'edge-right'): void => {
     const links = getLinks()
 
-    // @ts-ignore
+    // @ts-expect-error
     const _groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
     const groupKeys = keys(_groupedLinks) as string[]
 

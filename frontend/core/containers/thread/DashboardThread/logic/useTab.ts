@@ -1,8 +1,7 @@
 import { pick } from 'ramda'
+import useDashboard from '~/hooks/useDashboard'
 
 import type { TDashboardLayoutRoute, TDashboardPath, TEditFunc } from '~/spec'
-
-import useSubStore from '~/hooks/useSubStore'
 
 import useHelper from './useHelper'
 
@@ -14,7 +13,7 @@ type TRet = {
 
 export default (): TRet => {
   const { edit } = useHelper()
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   return {
     edit,

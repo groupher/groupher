@@ -1,9 +1,8 @@
+import useDashboard from '~/hooks/useDashboard'
 import type { TColorName } from '~/spec'
 
-import useSubStore from '~/hooks/useSubStore'
-
 export default (): TColorName[] => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   return store.kanbanBgColors
 }

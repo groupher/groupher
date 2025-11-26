@@ -4,37 +4,41 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fill, fg, menu, rainbow, vividDark } = useTwBelt()
+  const { cn, fill, bg, fg, menu, rainbow, rainbowSoft, vividDark } = useTwBelt()
 
-  const blockColor =
-    'absolute top-0 left-0 w-full h-full -z-10 opacity-60 group-hover:opacity-100 trans-all-100'
+  const blockBase = 'relative align-both size-12 min-w-12 mr-4 rounded-lg'
+  const blockBg = 'absolute top-0 left-0 w-full h-full rounded-lg trans-all-100'
+  const blockColor = cn(blockBg, 'opacity-0 group-hover:opacity-100')
+  const iconColor = 'group-hover:opacity-100 trans-all-100'
 
   return {
     wrapper: cn('align-both w-full gap-x-4'),
     block: cn(
-      'group column relative min-w-60 w-60 h-28 px-3 py-4 rounded-md pointer overflow-hidden',
+      'row group relative min-w-72 w-72 h-28 px-3 pt-5 rounded-md pointer overflow-hidden',
       'trans-all-200',
     ),
-    blockPurple: cn(blockColor, 'gradient-purple'),
-    blockBlue: cn(blockColor, 'gradient-blue'),
-    blockRed: cn(blockColor, 'gradient-red'),
-    blockCyan: cn(blockColor, 'gradient-cyan'),
-    head: 'row-center',
+    iconBlock: blockBase,
+    blockGrey: cn(blockBg, 'opacity-100 group-hover:opacity-0', bg('sandBox')),
+    blockPurple: cn(blockColor, rainbowSoft(COLOR_NAME.PURPLE)),
+    blockBlue: cn(blockColor, rainbowSoft(COLOR_NAME.BLUE)),
+    blockRed: cn(blockColor, rainbowSoft(COLOR_NAME.RED)),
+    blockCyan: cn(blockColor, rainbowSoft(COLOR_NAME.CYAN)),
+    head: 'column',
 
-    title: cn('text-base ml-2', fg('text.title'), vividDark()),
-    desc: cn('text-sm mt-3 trans-all-200 line-clamp-2', fg('text.digest')),
+    title: cn('text-sm', fg('text.title'), vividDark()),
+    desc: cn(
+      'text-sm mt-2 trans-all-200 line-clamp-2',
+      fg('text.digest'),
+      `group-hover:${fg('text.title')}`,
+      'group-hover:opacity-80',
+    ),
 
-    purple: `group-hover:${rainbow(COLOR_NAME.PURPLE, 'fg')}`,
-    blue: `group-hover:${rainbow(COLOR_NAME.BLUE, 'fg')}`,
-    red: `group-hover:${rainbow(COLOR_NAME.RED, 'fg')}`,
-    cyan: `group-hover:${rainbow(COLOR_NAME.CYAN, 'fg')}`,
+    purpleIcon: cn(iconColor, `group-hover:${rainbow(COLOR_NAME.PURPLE, 'fill')}`),
+    blueIcon: cn(iconColor, `group-hover:${rainbow(COLOR_NAME.BLUE, 'fill')}`),
+    redIcon: cn(iconColor, `group-hover:${rainbow(COLOR_NAME.RED, 'fill')}`),
+    cyanIcon: cn(iconColor, `group-hover:${rainbow(COLOR_NAME.CYAN, 'fill')}`),
 
-    purpleIcon: `group-hover:${rainbow(COLOR_NAME.PURPLE, 'fill')}`,
-    blueIcon: `group-hover:${rainbow(COLOR_NAME.BLUE, 'fill')}`,
-    redIcon: `group-hover:${rainbow(COLOR_NAME.RED, 'fill')}`,
-    cyanIcon: `group-hover:${rainbow(COLOR_NAME.CYAN, 'fill')}`,
-
-    menuIcon: cn('size-4.5', fill('text.digest')),
+    menuIcon: cn('size-6 z-10 opacity-65', fill('text.digest')),
     menuBarColumn: cn('column !items-start py-2'),
     menuTitle: cn(menu('title')),
     menuDesc: cn('text-xs mt-1 pr-1 opacity-80', fg('text.digest')),

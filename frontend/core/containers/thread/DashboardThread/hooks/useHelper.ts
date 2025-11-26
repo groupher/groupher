@@ -1,6 +1,5 @@
-import { equals, any } from 'ramda'
-
-import useSubStore from '~/hooks/useSubStore'
+import { any, equals } from 'ramda'
+import useDashboard from '~/hooks/useDashboard'
 
 import type { TSettingField } from '../spec'
 
@@ -11,7 +10,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const dashboard = useSubStore('dashboard')
+  const dashboard = useDashboard()
 
   const { original } = dashboard
 

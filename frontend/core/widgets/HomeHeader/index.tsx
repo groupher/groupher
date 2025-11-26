@@ -16,6 +16,8 @@ const HOVER_DELAY = 150
 export default () => {
   const [activeMenu, setActiveMenu] = useState('')
   const timerRef = useRef<number | null>(null)
+  const isInsideRef = useRef(false)
+  const headerRef = useRef<HTMLElement>(null)
   const { scrollY } = useScroll()
   const [isSticky, setIsSticky] = useState(false)
 
@@ -35,9 +37,22 @@ export default () => {
       timerRef.current = null
     }
   }
+
   const scheduleClose = () => {
-    if (timerRef.current) window.clearTimeout(timerRef.current)
-    timerRef.current = window.setTimeout(() => setActiveMenu(''), HOVER_DELAY)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = window.setTimeout(() => {
+      if (!isInsideRef.current) setActiveMenu('')
+    }, HOVER_DELAY)
+  }
+
+  const handleMouseEnter = () => {
+    isInsideRef.current = true
+    cancelClose()
+  }
+
+  const handleMouseLeave = () => {
+    isInsideRef.current = false
+    scheduleClose()
   }
 
   const s = useSalon({ extend: !!activeMenu, isSticky })
@@ -45,29 +60,45 @@ export default () => {
   useSession()
 
   return (
-    <header className={s.wrapper} onMouseLeave={scheduleClose}>
-      <IntroLinks activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
-      <Panel active={activeMenu} onMouseEnter={cancelClose} onMouseLeave={scheduleClose} />
+    <header ref={headerRef} className={s.header}>
+      <div
+        className={s.inner}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        aria-hidden='true'
+      >
+        <IntroLinks
+          activeMenu={activeMenu}
+          setActiveMenu={setActiveMenu}
+          onLinkHover={cancelClose}
+        />
 
-      <div className={s.extraInfo}>
-        <ThemeSwitch />
-        <div className={s.divider} />
-        {!isSticky ? (
-          <Link className={s.requestDemoLink} href={`/${ROUTE.BOOK_DEMO}`}>
-            <DemoSVG className={s.demoIcon} />
-            <div>预约演示</div>
-          </Link>
-        ) : (
-          <Link className={cn(s.requestDemoLink, 'scale-90')} href={`/${ROUTE.APPLY_COMMUNITY}`}>
-            <Button space={3} className='bold-sm'>
-              <span className='relative flex size-3 mr-2.5 brightness-125 scale-75'>
-                <span className='absolute inline-flex w-full h-full rounded-full opacity-80 animate-ping bg-rainbow-purpleSoft'></span>
-                <span className='relative inline-flex rounded-full size-3 bg-rainbow-purple'></span>
-              </span>
-              开始使用
-            </Button>
-          </Link>
-        )}
+        <Panel
+          active={activeMenu}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        />
+
+        <div className={s.extraInfo}>
+          <ThemeSwitch />
+          <div className={s.divider} />
+          {!isSticky ? (
+            <Link className={s.requestDemoLink} href={`/${ROUTE.BOOK_DEMO}`}>
+              <DemoSVG className={s.demoIcon} />
+              <div>预约演示</div>
+            </Link>
+          ) : (
+            <Link className={cn(s.requestDemoLink, 'scale-90')} href={`/${ROUTE.APPLY_COMMUNITY}`}>
+              <Button space={3} className='bold-sm'>
+                <span className='relative flex size-3 mr-2.5 brightness-125 scale-75'>
+                  <span className='absolute inline-flex w-full h-full rounded-full opacity-80 animate-ping bg-rainbow-purpleSoft'></span>
+                  <span className='relative inline-flex rounded-full size-3 bg-rainbow-purple'></span>
+                </span>
+                开始使用
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   )

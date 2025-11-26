@@ -1,15 +1,13 @@
 import { useEffect } from 'react'
-
-import type { TOverview, TCommunity } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-
+import useDashboard from '~/hooks/useDashboard'
 import useQuery from '~/hooks/useQuery'
+import useViewingCommunity from '~/hooks/useViewingCommunity'
+import type { TCommunity, TOverview } from '~/spec'
 
 import S from '../schema'
 
 export default (): TOverview => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const curCommunity = useViewingCommunity()
   const { overview } = store
 
@@ -32,7 +30,7 @@ export default (): TOverview => {
 
   useEffect(() => {
     if (data?.community) updateOverview(data.community)
-  }, [data])
-
+  }, [data]),
+    updateOverview
   return overview
 }

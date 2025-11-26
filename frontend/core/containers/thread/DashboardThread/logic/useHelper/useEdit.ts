@@ -3,7 +3,7 @@ import { has, omit, findIndex, update } from 'ramda'
 
 import type { TEditValue, TNameAlias, TEditFunc } from '~/spec'
 import { isObject } from '~/validator'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import BStore from '~/utils/bstore'
 
 import {
@@ -24,7 +24,7 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { mutation } = useMutation()
 
   const edit = useCallback((v: TEditValue, field: TSettingField): void => {

@@ -1,5 +1,5 @@
+import useDashboard from '~/hooks/useDashboard'
 import usePageBgCommon from '~/hooks/usePageBg'
-import useSubStore from '~/hooks/useSubStore'
 import type { TEditFunc } from '~/spec'
 
 import useHelper from './useHelper'
@@ -13,7 +13,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { isChanged, edit } = useHelper()
   const { rawBg } = usePageBgCommon()
 

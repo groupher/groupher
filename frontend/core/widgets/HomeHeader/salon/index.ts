@@ -25,16 +25,16 @@ export default ({ extend = false, isSticky = false }: TProps = {}) => {
   } = useTwBelt()
 
   return {
-    wrapper: cn(
-      'row-center-between w-full px-28 h-16 sticky top-0',
-      'backdrop-blur-sm trans-all-200',
+    header: cn(
+      'sticky top-0 backdrop-blur-sm trans-all-200',
       isSticky && 'border-b rounded-bl-2xl rounded-br-2xl',
-      extend ? bg('card') : bg('cardAlpha'),
+      extend ? bg('pageBg') : bg('cardAlpha'),
       zIndex('header'),
       br('divider'),
     ),
+    inner: cn('row-center-between w-full px-28 h-16'),
     brand: cn(linkable()),
-    links: cn('row-center gap-x-6 ml-12 mt-px'),
+    links: cn('row-center gap-x-4 ml-16 mt-px'),
     linkItem: hoverLink(),
     linkItemActive: fg('text.title'),
     stackLink: cn(hoverLink(), 'pl-3 hover:no-underline'),

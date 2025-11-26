@@ -1,10 +1,8 @@
 import { pick } from 'ramda'
-
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type { TSettingField } from '~/stores/dashboard/spec'
-
-import useHelper from '../useHelper'
 import { BASEINFO_LOGOS_KEYS } from '../../constant'
+import useHelper from '../useHelper'
 
 export type TRet = {
   favicon: string
@@ -13,7 +11,7 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { anyChanged } = useHelper()
 
   // TODO: handle image upload

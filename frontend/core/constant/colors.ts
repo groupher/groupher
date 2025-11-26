@@ -55,3 +55,6 @@ export const COLOR_NAME = {
   BLUE: 'BLUE',
   PURPLE: 'PURPLE',
 } as Record<TColorName, TColorName>
+
+// map to css var name in ~/tailwind/token/colors
+export const PAGE_BG_CSS_KEY = 'color-pageBg'

@@ -1,6 +1,7 @@
-import type { TDocFAQLayout, TDocLayout, TFAQSection } from '~/spec'
+import useDashboard from '~/hooks/useDashboard'
 
 import useSubStore from '~/hooks/useSubStore'
+import type { TDocFAQLayout, TDocLayout, TFAQSection } from '~/spec'
 
 type TRet = {
   isArticleLayout: boolean
@@ -14,7 +15,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const dashboard = useSubStore('dashboard')
+  const dashboard = useDashboard()
   const viewing = useSubStore('viewing')
 
   const gotoDetailLayout = (): void => {

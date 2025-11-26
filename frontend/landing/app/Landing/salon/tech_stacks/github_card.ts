@@ -1,17 +1,19 @@
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import useBase from '..'
 
 export { cn } from '~/css'
 
 export default () => {
+  const { isDarkTheme } = useTheme()
   const { cn, fg, fill, br, bg } = useTwBelt()
   const base = useBase()
 
   return {
     wrapper: cn(
-      'column w-2/5 h-full pl-12 pr-16 z-20 border-l -ml-10 py-10',
+      'column w-2/5 shrink-0 h-full pl-16 pr-16 z-20 border-l py-16 rounded-xl',
       br('divider'),
-      bg('menuInvertBg'),
+      isDarkTheme ? bg('pageBg') : bg('card'),
     ),
     topping: 'column mb-1.5',
     githubIcon: cn('size-40 absolute top-3 right-4 opacity-10', fill('text.digest')),

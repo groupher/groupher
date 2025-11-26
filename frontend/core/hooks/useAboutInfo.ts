@@ -1,6 +1,5 @@
-import type { TSocialItem, TMediaReport } from '~/spec'
-
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
+import type { TMediaReport, TSocialItem } from '~/spec'
 
 type TABoutInfo = {
   homepage: string | null
@@ -11,7 +10,7 @@ type TABoutInfo = {
 }
 
 export default (): TABoutInfo => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   const { homepage, city, techstack, socialLinks, mediaReports } = store
 

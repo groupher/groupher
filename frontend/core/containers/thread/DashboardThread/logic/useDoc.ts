@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
 import { COLOR_NAME } from '~/const/colors'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type { TDocFAQLayout, TDocLayout, TEditFunc } from '~/spec'
 import { DEFAULT_NEW_FAQ } from '../constant'
 import useHelper from './useHelper'
@@ -18,7 +18,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { isChanged, edit } = useHelper()
 
   const addFAQSection = (): void => {

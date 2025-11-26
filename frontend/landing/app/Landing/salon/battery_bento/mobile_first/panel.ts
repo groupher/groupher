@@ -20,7 +20,7 @@ export default () => {
     brand: cn('row-center mt-2 mb-3.5 text-xs scale-90 -ml-1', fg('text.digest')),
     logo: cn('size-3.5 rounded opacity-40 mr-1.5', rainbow(COLOR_NAME.ORANGE, 'bg')),
     item: 'row-center mb-0.5',
-    avtrar: 'size-3.5 rounded mt-0.5',
+    avatar: 'size-3.5 rounded mt-0.5',
     post: 'column ml-2.5 gap-y-1 mt-1',
     bar: cn('w-10 h-1 opacity-30 rounded-xl', bg('text.digest')),
   }

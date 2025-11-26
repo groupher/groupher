@@ -1,19 +1,17 @@
 // logics for header & footer links
+
+import { clone, filter, find, findIndex, reject } from 'ramda'
 import { useEffect, useRef } from 'react'
-import { find, findIndex, filter, reject, clone } from 'ramda'
 
-import { ONE_LINK_GROUP, MORE_GROUP } from '~/const/dashboard'
-import { DASHBOARD_ROUTE } from '~/const/route'
+import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import { CHANGE_MODE } from '~/const/mode'
-
+import { DASHBOARD_ROUTE } from '~/const/route'
+import useDashboard from '~/hooks/useDashboard'
 import type { TLinkItem } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
-
-import type { TMoveLinkDir } from '../../spec'
 import { EMPTY_LINK_ITEM } from '../../constant'
-
-import useUtils from './useUtils'
+import type { TMoveLinkDir } from '../../spec'
 import useDrived, { type TRet as TDrived } from './useDrived'
+import useUtils from './useUtils'
 
 export type TRet = {
   resetEditingLink: () => void
@@ -44,7 +42,7 @@ export type TRet = {
 } & TDrived
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   const storeRef = useRef(store)
 
@@ -224,7 +222,7 @@ export default (): TRet => {
   }
 
   const addHeaderLinkGroup = () => {
-    const time = new Date().getTime()
+    const time = Date.now()
 
     store.commit({ editingGroup: `${ONE_LINK_GROUP}_${time}` })
     // TMP

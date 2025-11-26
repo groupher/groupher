@@ -1,5 +1,5 @@
 import { pick } from 'ramda'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type {
   TBroadcastConfig,
   TBroadcastLayout,
@@ -23,7 +23,7 @@ type TRet = TBroadcastConfig & {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { edit, isChanged, onSave } = useHelper()
 
   const isTouched = isChanged('broadcastLayout') || isChanged('broadcastBg')

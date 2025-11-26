@@ -1,21 +1,18 @@
-import { includes, uniq, reject } from 'ramda'
+import { includes, reject, uniq } from 'ramda'
+import useDashboard from '~/hooks/useDashboard'
 
-import type {
-  TID,
-  TPagedArticles,
-  TDashboardDocRoute,
-  TPagedCommunities,
-  TFAQSection,
-  TArticleEntries,
-} from '~/spec'
-
-import useSubStore from '~/hooks/useSubStore'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { query } from '~/server'
-
-import useHelper from './useHelper'
-
+import type {
+  TArticleEntries,
+  TDashboardDocRoute,
+  TFAQSection,
+  TID,
+  TPagedArticles,
+  TPagedCommunities,
+} from '~/spec'
 import S from '../schema'
+import useHelper from './useHelper'
 
 type TRet = {
   loading: boolean
@@ -46,7 +43,7 @@ const assignChecked = (entries: TArticleEntries, batchSelectedIDs: TID[]): TArti
 }
 
 export default (): TRet => {
-  const dashboard = useSubStore('dashboard')
+  const dashboard = useDashboard()
   const curCommunity = useViewingCommunity()
   const { mapArrayChanged } = useHelper()
 
@@ -115,7 +112,7 @@ export default (): TRet => {
     batchSelectedIDs,
     pagedCommunities: {
       ...pagedCommunities,
-      // @ts-ignore
+      // @ts-expect-error
       entries: assignChecked(pagedCommunities.entries, batchSelectedIDs),
     },
     pagedPosts: {

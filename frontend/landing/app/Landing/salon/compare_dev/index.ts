@@ -17,7 +17,10 @@ export default () => {
     desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
     //
     ourWall: cn('relative column-align-both w-full h-auto pl-10 overflow-hidden'),
-    ourWallBg: cn('absolute top-0 left-0 w-full h-full rotate-180 gradient-green'),
+    ourWallBg: cn(
+      'absolute top-0 left-0 w-full h-full rotate-180 gradient-green',
+      isDarkTheme && 'opacity-30 rotate-180',
+    ),
     greenDiffBar: cn('diff-bar-green absolute left-0 top-0 w-7 h-full z-10 rounded-tr-lg'),
     redDiffBar: cn('diff-bar-red absolute left-0 top-0 w-7 h-full z-10 rounded-br-lg'),
     ourlabel: cn(

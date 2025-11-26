@@ -1,8 +1,8 @@
 import { CONTAINER_BG_DEFAULT, PAGE_COLOR } from '~/const/colors'
 
 import { blurRGB } from '~/fmt'
+import useDashboard from '~/hooks/useDashboard'
 import useGossBlur from '~/hooks/useGossBlur'
-import useSubStore from '~/hooks/useSubStore'
 import useTheme from '~/hooks/useTheme'
 
 type TRes = {
@@ -11,7 +11,7 @@ type TRes = {
 }
 
 export default (): TRes => {
-  const { pageBg, pageBgDark } = useSubStore('dashboard')
+  const { pageBg, pageBgDark } = useDashboard()
   const { isLightTheme } = useTheme()
 
   const gossBlur = useGossBlur()

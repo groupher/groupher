@@ -1,24 +1,21 @@
+import { equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
 import { useEffect, useRef } from 'react'
-import { includes, omit, values, update, findIndex, equals, keys, filter } from 'ramda'
-
-import type { TEditValue, TTag } from '~/spec'
 import { DASHBOARD_BASEINFO_ROUTE } from '~/const/route'
-import { toast } from '~/signal'
-
-import { mutate } from '~/server'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import useViewing from '~/hooks/useViewing'
 
-import type { TSettingField } from '~/stores/dashboard/spec'
-
+import { mutate } from '~/server'
+import { toast } from '~/signal'
+import type { TEditValue, TTag } from '~/spec'
 import {
-  SETTING_FIELD,
   BASEINFO_BASIC_KEYS,
-  BASEINFO_OTHER_KEYS,
-  SETTING_LAYOUT_FIELD,
-  SEO_KEYS,
   BASEINFO_KEYS,
+  BASEINFO_OTHER_KEYS,
+  SEO_KEYS,
+  SETTING_FIELD,
+  SETTING_LAYOUT_FIELD,
 } from '~/stores/dashboard/constant'
+import type { TSettingField } from '~/stores/dashboard/spec'
 import S from '../schema'
 
 type TRet = {
@@ -27,7 +24,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { updateViewingCommunity, community: curCommunity } = useViewing()
   const community = curCommunity.slug
   const storeRef = useRef(store)
@@ -115,6 +112,7 @@ export default (): TRet => {
       })
       .catch((err) => {
         console.error('## handle request error: ', err)
+        // biome-ignore lint/suspicious/noAlert: <explanation>
         alert(err)
       })
   }

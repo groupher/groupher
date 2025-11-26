@@ -25,7 +25,11 @@ export default () => {
       bg('card'),
       br('divider'),
     ),
-    paperInner: cn('column-align-both pt-6 border-l border-r border-dashed', br('divider')),
+    paperInner: cn(
+      'column-align-both pt-6 border-l border-r',
+      br('divider'),
+      !isDarkTheme && 'border-dashed',
+    ),
     demoP: 'text-base leading-loose',
     p: 'mt-2.5',
     highlight: cn('px-1 bold-sm rounded', fg('text.digest'), vividDark()),

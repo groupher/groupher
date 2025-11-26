@@ -1,5 +1,5 @@
 import { pick } from 'ramda'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type { TDashboardSEOConfig, TDashboardSEORoute, TEditFunc } from '~/spec'
 import { SEO_KEYS } from '../constant'
 import useHelper from './useHelper'
@@ -14,7 +14,7 @@ type TRet = TDashboardSEOConfig & {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { edit, anyChanged } = useHelper()
 
   const isTouched = anyChanged(SEO_KEYS)

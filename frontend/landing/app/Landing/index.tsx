@@ -9,11 +9,14 @@ import { DOC_FAQ_LAYOUT } from '~/const/layout'
 import { ROUTE } from '~/const/route'
 import useTheme from '~/hooks/useTheme'
 import ArrowSVG from '~/icons/ArrowSimple'
+import BookSVG from '~/icons/Book'
+import DiscussSVG from '~/icons/DiscussSolid'
+import KanbanSVG from '~/icons/Kanban'
 import LinkSVG from '~/icons/LinkOutside'
-import GithubSVG from '~/icons/social/Github'
-
+import { mockUsers } from '~/mock'
 import BorderButton from '~/widgets/Buttons/BorderButton'
 import Button from '~/widgets/Buttons/Button'
+import Facepile from '~/widgets/Facepile'
 import FaqList from '~/widgets/FaqList'
 import Tooltip from '~/widgets/Tooltip'
 
@@ -24,7 +27,7 @@ import CoverImage from './CoverImage'
 import DashboardIntros from './DashboardIntros'
 import Footer from './Footer'
 import JoinOurCommunity from './JoinOurCommunity'
-import useSalon from './salon'
+import useSalon, { cn } from './salon'
 import TechStacks from './TechStacks'
 import UsersWall from './UsersWall'
 
@@ -65,6 +68,7 @@ const faqs = [
 export default () => {
   const s = useSalon()
   const { isLightTheme } = useTheme()
+  const users = mockUsers(6)
 
   return (
     <div className={s.wrapper} data-testid='landing-page'>
@@ -73,7 +77,7 @@ export default () => {
       <div className={s.inner}>
         {/* <BgGlow wallpaper={wallpaper} /> */}
         <div className={s.banner}>
-          <div className={s.githubInfo}>
+          {/* <div className={s.githubInfo}>
             <GithubSVG className={s.githubIcon} style={s.githubIconStyle} />
             <a
               href='https://github.com/groupher/groupher'
@@ -84,10 +88,29 @@ export default () => {
             >
               Github
             </a>
+          </div> */}
+          <div className={s.iconHead}>
+            <DiscussSVG className={cn(s.icon, s.purpleFill, '-rotate-6')} />
+            <div className='inline-block -rotate-12'>
+              <KanbanSVG className={cn(s.icon, s.blueFill, 'rotate-180')} />
+            </div>
+            <span className='inline-block mr-1 text-3xl -rotate-12'>📝</span>
+            <BookSVG className={cn(s.icon, s.cyanFill, 'rotate-12')} />
+            <div className={s.iconFootBar} />
           </div>
+
           <h1 className={s.title}>让你的产品听见用户的声音</h1>
           <div className={s.desc}>
-            讨论区、看板、更新日志、帮助文档多合一，收集沉淀用户反馈，助你打造更好的产品
+            讨论区、看板、更新日志、文档多合一，收集沉淀
+            <div className='inline-block ml-3'>
+              <Facepile users={users} noLazyLoad showMore={false} />
+            </div>
+            反馈
+          </div>
+          <div className={cn(s.desc, 'mt-2')}>
+            与<span className='line-through px-0.5'>团队</span>
+            <span className={s.focus}>用户</span>
+            一起打造更好的产品
           </div>
 
           <div className={s.buttonGroup}>

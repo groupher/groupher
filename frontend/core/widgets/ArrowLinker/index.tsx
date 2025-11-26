@@ -29,7 +29,7 @@ const ArrowLinker: FC<TProps> = ({
   target = '_blank',
   bold = false,
   color = null,
-  noColor = true,
+  noColor = false,
   withSoftBg = false,
   className = '',
   children,

@@ -1,8 +1,8 @@
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type { TEnableConfig } from '~/spec'
 
 export default (): TEnableConfig => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   return store.enable
 }

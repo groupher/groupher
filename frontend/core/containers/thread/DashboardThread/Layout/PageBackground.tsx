@@ -29,10 +29,10 @@ export default () => {
       />
 
       <div className={s.themeGroup}>
-        {s.bgColors.map((bg, index) => {
+        {s.bgColorNames.map((bg, index) => {
           const bgTitle = titleCaseHM(bg)
-          const currentBg = s.bgColorsObj[bg]
-          const active = rawBg === currentBg
+          const backgroundColor = s.bgColorsObj[bg]
+          const active = rawBg === backgroundColor
 
           return (
             <button
@@ -42,12 +42,12 @@ export default () => {
                 edit(upperSnakeCase(bg), isLightTheme ? 'pageBg' : 'pageBgDark')
               }}
             >
-              <div className={s.blockInner} style={{ backgroundColor: currentBg }}>
+              <div className={s.blockInner} style={{ backgroundColor }}>
                 {active && <CheckSVG className={s.checker} />}
               </div>
               <div className={s.footer}>
                 <div className={s.colorTitle}>{bgTitle}</div>
-                <div className={s.hex}>{currentBg}</div>
+                <div className={s.hex}>{backgroundColor}</div>
               </div>
             </button>
           )

@@ -1,12 +1,10 @@
+import { filter, find, keys } from 'ramda'
 import { useCallback } from 'react'
-import { find, keys, filter } from 'ramda'
-
-import type { TLinkItem, THeaderLayout } from '~/spec'
 import { MORE_GROUP } from '~/const/dashboard'
-import { sortByIndex, groupByKey } from '~/helper'
-
-import useSubStore from '~/hooks/useSubStore'
+import { groupByKey, sortByIndex } from '~/helper'
+import useDashboard from '~/hooks/useDashboard'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
+import type { THeaderLayout, TLinkItem } from '~/spec'
 
 type TGroupInfo = {
   groupedLinks: Record<string, TLinkItem[]>
@@ -21,7 +19,7 @@ type THeaderLinks = {
 }
 
 export default (): THeaderLinks => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const viewingCommunity = useViewingCommunity()
 
   const community = viewingCommunity.slug
@@ -56,7 +54,7 @@ export default (): THeaderLinks => {
 
   const getGroupedLinks = useCallback(() => {
     const links = getCustomLinks()
-    // @ts-ignore
+    // @ts-expect-error
     const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group') as Record<
       string,
       TLinkItem[]

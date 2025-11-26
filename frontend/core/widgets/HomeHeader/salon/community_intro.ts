@@ -4,12 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fill, fg, br, bg, menu, rainbow, vividDark } = useTwBelt()
-
-  const blockColor = cn(
-    'absolute top-0 left-0 w-full h-full -z-10 opacity-80 group-hover:opacity-100 trans-all-100 border border-transparent',
-    `group-hover:${br('divider')}`,
-  )
+  const { cn, fill, fg, menu, rainbow, vividDark } = useTwBelt()
 
   return {
     wrapper: cn('align-both w-full gap-x-4'),
@@ -17,11 +12,15 @@ export default () => {
       'group column relative min-w-52 w-52 h-28 px-3 py-4 rounded-md pointer overflow-hidden',
       'trans-all-200',
     ),
-    blockGrey: cn(blockColor, bg('sandBox')),
     head: 'row-center',
 
-    title: cn('text-base ml-2', fg('text.title'), vividDark()),
-    desc: cn('text-sm mt-3 trans-all-200 line-clamp-2', fg('text.digest')),
+    title: cn('text-sm ml-2', fg('text.title'), vividDark()),
+    desc: cn(
+      'text-sm mt-3 trans-all-200 line-clamp-2',
+      fg('text.digest'),
+      `group-hover:${fg('text.title')}`,
+      'group-hover:opacity-80',
+    ),
 
     purple: `group-hover:${rainbow(COLOR_NAME.PURPLE, 'fg')}`,
     blue: `group-hover:${rainbow(COLOR_NAME.BLUE, 'fg')}`,

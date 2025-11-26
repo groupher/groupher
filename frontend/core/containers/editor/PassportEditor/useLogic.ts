@@ -1,16 +1,12 @@
-import { useState, useCallback } from 'react'
-
-import { find, reject, uniq, keys, forEach } from 'ramda'
-
-import type { TUser } from '~/spec'
-import { query, mutate } from '~/server'
-
+import { find, forEach, keys, reject, uniq } from 'ramda'
+import { useCallback, useState } from 'react'
 import EVENT from '~/const/event'
-import { send, closeDrawer } from '~/signal'
-
-import useSubStore from '~/hooks/useSubStore'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import useAccount from '~/hooks/useAccount'
+import useDashboard from '~/hooks/useDashboard'
+import useViewingCommunity from '~/hooks/useViewingCommunity'
+import { mutate, query } from '~/server'
+import { closeDrawer, send } from '~/signal'
+import type { TUser } from '~/spec'
 
 import S from './schema'
 
@@ -31,7 +27,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const dashbaord = useSubStore('dashboard')
+  const dashbaord = useDashboard()
   const curCommunity = useViewingCommunity()
   const account = useAccount()
   const [selectedRules, setSelectedRules] = useState([])
