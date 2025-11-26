@@ -1,10 +1,7 @@
-import { useCallback } from 'react'
-
 import { WIDTH } from '~/css'
 import { blurRGB } from '~/fmt'
+import useCSSVar from '~/hooks/useCssVar'
 import useGossBlur from '~/hooks/useGossBlur'
-
-import useThemeData from '~/hooks/useThemeData'
 import useWallpaper from '~/hooks/useWallpaper'
 import SettingSVG from '~/icons/Setting'
 import { callWallpaperEditor } from '~/signal'
@@ -19,11 +16,11 @@ export default () => {
 
   const gossBlur = useGossBlur()
   const { background } = useWallpaper()
+  const pageBg = useCSSVar('color-pageBg')
 
-  const themeData = useThemeData()
+  console.log('## pageBg: ', pageBg)
 
-  const handleCallEditor = useCallback(() => callWallpaperEditor(), [])
-  const bgColor = `${blurRGB(themeData.container || '#fff', gossBlur)}`
+  const bgColor = `${blurRGB(pageBg, gossBlur)}`
 
   return (
     <div className={s.wrapper}>
@@ -39,7 +36,7 @@ export default () => {
       />
 
       <div className={s.preview}>
-        <button className={s.hoverMask} onClick={handleCallEditor}>
+        <button className={s.hoverMask} onClick={() => callWallpaperEditor()}>
           <SettingSVG className={s.settingIcon} />
           <div className={cn(s.previewImage, 'group-hover:brightness-90')} style={{ background }} />
           <CheckLabel title='原图' top={4} active={false} />

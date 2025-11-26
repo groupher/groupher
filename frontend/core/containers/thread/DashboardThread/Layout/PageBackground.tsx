@@ -1,5 +1,4 @@
-import { getGlobalCSSVar } from '~/css'
-import { camelize, titleCaseHM, upperSnakeCase } from '~/fmt'
+import { titleCaseHM, upperSnakeCase } from '~/fmt'
 import useTheme from '~/hooks/useTheme'
 import CheckSVG from '~/icons/Check'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
@@ -13,7 +12,7 @@ export default () => {
   const { rawBg, edit, isTouched, isDarkTouched, saving } = usePageBg()
 
   const s = useSalon()
-  const { isLightTheme, theme } = useTheme()
+  const { isLightTheme } = useTheme()
 
   return (
     <section className={s.wrapper}>
@@ -31,13 +30,9 @@ export default () => {
 
       <div className={s.themeGroup}>
         {s.bgColorNames.map((bg, index) => {
-          const titleName = titleCaseHM(bg)
-          const title = camelize(bg)
-          const colorKey = `page-${theme}-${title}`
-          const backgroundColor = `var(--${colorKey}`
-          const currentBg = getGlobalCSSVar(colorKey)
-
-          const active = rawBg.toLowerCase() === currentBg.toLowerCase()
+          const bgTitle = titleCaseHM(bg)
+          const backgroundColor = s.bgColorsObj[bg]
+          const active = rawBg === backgroundColor
 
           return (
             <button
@@ -51,8 +46,8 @@ export default () => {
                 {active && <CheckSVG className={s.checker} />}
               </div>
               <div className={s.footer}>
-                <div className={s.colorTitle}>{titleName}</div>
-                <div className={s.hex}>{currentBg}</div>
+                <div className={s.colorTitle}>{bgTitle}</div>
+                <div className={s.hex}>{backgroundColor}</div>
               </div>
             </button>
           )

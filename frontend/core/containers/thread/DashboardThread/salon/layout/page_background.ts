@@ -1,21 +1,25 @@
+import { keys } from 'ramda'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import { TW_METRIC } from '~/tailwind'
 
 export { cn } from '~/css'
 
-const pageBgColors = TW_METRIC.pageBgColorTODO
+const pageBgColors = TW_METRIC.pageBgColor
+
+const ROTATE_ANGLES = [
+  6, 3, 2, 6, 12, 2, 3, 6, 12, 3, -2, 6, 12, 3, 2, -2, 6, 3, 12, 6, -3, 2, 3, 6, 12, 3, -2, 6, 12,
+  3, 2, -2,
+]
 
 export default () => {
   const { cn, shadow, br, fg, bg, primary, isBlackPrimary } = useTwBelt()
   const { theme } = useTheme()
 
   return {
-    bgColorNames: pageBgColors[theme],
-    rotateAngle: [
-      6, 3, 2, 6, 12, 2, 3, 6, 12, 3, -2, 6, 12, 3, 2, -2, 6, 3, 12, 6, -3, 2, 3, 6, 12, 3, -2, 6,
-      12, 3, 2, -2,
-    ],
+    bgColorNames: keys(pageBgColors[theme]),
+    bgColorsObj: pageBgColors[theme],
+    rotateAngle: ROTATE_ANGLES,
     wrapper: 'pb-7',
     themeGroup: 'row-center wrap gap-y-6 relative ml-4',
     block: cn(
