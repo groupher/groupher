@@ -244,10 +244,10 @@
     --color-rainbow-blackBtn: #e6e6e6;
     --color-rainbow-blackSoft: #313131;
 
-    --color-pageBg: #1E201F;
+    --color-pageBg: #212121;
 
     /* gradient colors */
-    --landing-gradient-gray: linear-gradient(#171717 0%, transparent);
+    --landing-gradient-gray: linear-gradient(var(--color-pageBg) 0%, transparent);
     --landing-gradient-purple: linear-gradient(oklch(0.34 0.03 310 / 0.3) 0%, var(--color-pageBg) 100%);
     --landing-gradient-blue: linear-gradient(oklch(0.37 0.04 260 / 0.3) 0%, var(--color-pageBg) 100%);
     --landing-gradient-green: linear-gradient(oklch(0.22 0.03 140) 0%, var(--color-pageBg) 100%);
@@ -256,19 +256,15 @@
     --landing-gradient-brown: linear-gradient(oklch(0.55 0.08 60 / 0.12) 0%, var(--color-pageBg) 100%);
     --landing-gradient-yellow: linear-gradient(oklch(0.37 0.05 100 / 0.26) 0%,var(--color-pageBg) 100%);
 
-    --gradient-purple: linear-gradient(-149deg, lab(13 5.65 -9.66 / 0.83) 0%, lab(35 8.03 -19.27) 100%); 
-    --gradient-blue: linear-gradient(310deg, lab(18 1.28 -13.12 / 0.75) 13%, lab(40 -6.85 -24.42 / 0.77) 100%);
-    --gradient-green: linear-gradient(237deg, lab(15 -0.98 2.62) 0%, lab(33 -16.43 16.2 / 0.8) 100%);
-    --gradient-orange: linear-gradient(
-      244deg,
-      oklch(0.29 0.03 90 / 0.45) 0%,
-      oklch(0.38 0.06 75 / 0.6) 100%
-    );
-    --gradient-brown: linear-gradient(244deg, lab(15 0.69 11.49 / 0.5) 0%, #5b433d 100%); 
-    --gradient-pink: linear-gradient(140deg, lab(18 17.99 -11.25 / 0.6) 0%, lab(26 31.33 -4.72 / 0.64) 100%);
+    --gradient-purple: linear-gradient(-149deg, lab(19 4.69 -8.17 / 0.54) 0%, lab(23 6.38 -15.24) 100%);
+    --gradient-blue: linear-gradient(310deg, lab(18 -3.07 -9.36 / 0.75) 13%, lab(32 -4.77 -14.65 / 0.77) 100%);
+    --gradient-green: linear-gradient(237deg, lab(31 -8.53 8.18 / 0.86) 0%, lab(15% -.98 2.62) 100%);
+    --gradient-orange: linear-gradient(244deg, lab(17.7486% .73266 12.2377 / .45) 0%, lab(32 4.75 17.42 / 0.6) 100%);
+    --gradient-brown: linear-gradient(244deg, lab(15% .69 11.49 / .5) 0%, #513d36e0 100%);
+    --gradient-pink: linear-gradient(140deg, lab(18 17.59 -11.01 / 0.6) 0%, lab(25 17.47 -3.38 / 0.64) 100%);
     --gradient-red: linear-gradient(6deg, oklch(0.22 0 0) 0%, oklch(0.38 0.08 30 / 0.79) 100%);
-    --gradient-black: linear-gradient(30deg, lab(10 0 0 / 0.73) 0%, lab(18 0 0 / 0.89) 100%);
-    --gradient-cyan: linear-gradient(310deg, lab(19 -14.63 -0.18 / 0.28) 13%, lab(58 -32.22 -13.23 / 0.46) 100%);
+    --gradient-black: linear-gradient(30deg, lab(21 0 0 / 0.73) 0%, lab(18% 0 0 / .89) 100%);
+    --gradient-cyan: linear-gradient(310deg, lab(22 -10.92 -0.37 / 0.42) 13%, lab(37 -16.03 -6.66 / 0.81) 100%);
     --gradient-yellow: linear-gradient(
       53deg,
       oklch(0.23 0.02 90 / 0.48) 13%,

@@ -2,7 +2,7 @@ import { pluck, reject, uniq } from 'ramda'
 import { useMemo, useState } from 'react'
 import EVENT from '~/const/event'
 import { CHANGE_MODE } from '~/const/mode'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { mutate } from '~/server'
 
@@ -28,7 +28,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const dashboard = useSubStore('dashboard')
+  const dashboard = useDashboard()
 
   const curCommunity = useViewingCommunity()
 

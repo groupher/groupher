@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { publicThreads } from '~/helper'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 import type { TCommunityThread } from '~/spec'
 
@@ -15,7 +15,7 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { isChanged } = useHelper()
   const community = useViewingCommunity()
 

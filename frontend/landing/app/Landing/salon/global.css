@@ -14,7 +14,7 @@
   [data-theme="dark"] {
     .letter-paper::before,
     .letter-paper::after {
-      background-image: radial-gradient(circle, #2d2d2d 4px, transparent 4px);
+      background-image: radial-gradient(circle, #323232 4px, transparent 4px);
     }
   }
 
@@ -81,7 +81,7 @@
 
   [data-theme="dark"] {
     .diff-area-red-stripes {
-      background: repeating-linear-gradient(245deg, #282222 0 10px, transparent 10px 20px);
+      background: repeating-linear-gradient(245deg, #352424 0 10px, #0000 10px 20px);
     }
   }
 

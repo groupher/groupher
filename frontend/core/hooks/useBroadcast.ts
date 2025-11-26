@@ -1,10 +1,10 @@
 import { pick } from 'ramda'
 
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type { TBroadcastConfig } from '~/spec'
 
 export default (): TBroadcastConfig => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   return pick(
     [

@@ -1,7 +1,6 @@
-import type { TAvatarLayout } from '~/spec'
 import { AVATAR_LAYOUT } from '~/const/layout'
-
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
+import type { TAvatarLayout } from '~/spec'
 
 type TRet = {
   avatarLayout: TAvatarLayout
@@ -9,7 +8,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   const { avatarLayout } = store
 

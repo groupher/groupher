@@ -1,10 +1,9 @@
-import useTheme from '~/hooks/useTheme'
 import THEME from '~/const/theme'
-
-import useSubstore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
+import useTheme from '~/hooks/useTheme'
 
 export default (): number => {
-  const store = useSubstore('dashboard')
+  const store = useDashboard()
   const { theme } = useTheme()
 
   const { gossBlur, gossBlurDark } = store

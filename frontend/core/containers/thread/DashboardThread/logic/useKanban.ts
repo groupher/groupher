@@ -1,5 +1,5 @@
 import { pick } from 'ramda'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type { TColorName, TEditFunc, TKanbanCardLayout, TKanbanLayout } from '~/spec'
 
 import useHelper from './useHelper'
@@ -18,7 +18,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { isChanged, edit } = useHelper()
 
   const isKanbanLayoutTouched = isChanged('kanbanLayout')

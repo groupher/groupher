@@ -1,5 +1,5 @@
 import { equals, filter, find, isEmpty, mergeRight, reject, startsWith } from 'ramda'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import { query } from '~/server'
 import type { TMediaReport } from '~/spec'
 
@@ -20,7 +20,7 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   const { mediaReports, original, queryingMediaReportIndex } = store
 
@@ -29,14 +29,14 @@ export default (): TRet => {
     const initValues = reject((item: TMediaReport) => !item.editUrl, original.mediaReports)
 
     const curValueTitles = filter((item: TMediaReport) => !isEmpty(item?.title), curValues)
-    const isCurAllvalid = curValueTitles.length !== 0 && curValueTitles.length === curValues.length
+    const isCurAllValid = curValueTitles.length !== 0 && curValueTitles.length === curValues.length
 
-    return isCurAllvalid && !equals(curValues, initValues)
+    return isCurAllValid && !equals(curValues, initValues)
   }
 
   const addMediaReport = (): void => {
     const { mediaReports } = store
-    const newReport = mergeRight(EMPTY_MEDIA_REPORT, { index: new Date().getTime() })
+    const newReport = mergeRight(EMPTY_MEDIA_REPORT, { index: Date.now() })
 
     store.mediaReports = [...mediaReports, newReport]
   }
@@ -93,6 +93,7 @@ export default (): TRet => {
           store.loading = false
           store.queryingMediaReportIndex = null
           console.error('## og info: ', e)
+          // biome-ignore lint/suspicious/noAlert: <explanation>
           alert('## queryOpenGraphInfo error')
         })
     }

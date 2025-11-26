@@ -1,4 +1,5 @@
-import { titleCaseHM, upperSnakeCase } from '~/fmt'
+import { getGlobalCSSVar } from '~/css'
+import { camelize, titleCaseHM, upperSnakeCase } from '~/fmt'
 import useTheme from '~/hooks/useTheme'
 import CheckSVG from '~/icons/Check'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
@@ -12,7 +13,7 @@ export default () => {
   const { rawBg, edit, isTouched, isDarkTouched, saving } = usePageBg()
 
   const s = useSalon()
-  const { isLightTheme } = useTheme()
+  const { isLightTheme, theme } = useTheme()
 
   return (
     <section className={s.wrapper}>
@@ -29,10 +30,14 @@ export default () => {
       />
 
       <div className={s.themeGroup}>
-        {s.bgColors.map((bg, index) => {
-          const bgTitle = titleCaseHM(bg)
-          const currentBg = s.bgColorsObj[bg]
-          const active = rawBg === currentBg
+        {s.bgColorNames.map((bg, index) => {
+          const titleName = titleCaseHM(bg)
+          const title = camelize(bg)
+          const colorKey = `page-${theme}-${title}`
+          const backgroundColor = `var(--${colorKey}`
+          const currentBg = getGlobalCSSVar(colorKey)
+
+          const active = rawBg.toLowerCase() === currentBg.toLowerCase()
 
           return (
             <button
@@ -42,11 +47,11 @@ export default () => {
                 edit(upperSnakeCase(bg), isLightTheme ? 'pageBg' : 'pageBgDark')
               }}
             >
-              <div className={s.blockInner} style={{ backgroundColor: currentBg }}>
+              <div className={s.blockInner} style={{ backgroundColor }}>
                 {active && <CheckSVG className={s.checker} />}
               </div>
               <div className={s.footer}>
-                <div className={s.colorTitle}>{bgTitle}</div>
+                <div className={s.colorTitle}>{titleName}</div>
                 <div className={s.hex}>{currentBg}</div>
               </div>
             </button>

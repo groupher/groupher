@@ -1,10 +1,8 @@
 import { pick } from 'ramda'
-
+import useDashboard from '~/hooks/useDashboard'
 import type { TSettingField } from '~/stores/dashboard/spec'
-import useSubStore from '~/hooks/useSubStore'
-
-import useHelper from '../useHelper'
 import { BASEINFO_BASIC_KEYS, BASEINFO_OTHER_KEYS } from '../../constant'
+import useHelper from '../useHelper'
 
 export type TRet = {
   favicon: string
@@ -22,7 +20,7 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { anyChanged } = useHelper()
 
   return {

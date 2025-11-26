@@ -1,16 +1,15 @@
 import { pick } from 'ramda'
-
+import useDashboard from '~/hooks/useDashboard'
 import type {
   TAvatarLayout,
   TBannerLayout,
   TBrandLayout,
   TChangelogLayout,
+  TKanbanCardLayout,
   TKanbanLayout,
   TPostLayout,
   TTagLayout,
-  TKanbanCardLayout,
 } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
 
 type TRet = {
   avatarLayout: TAvatarLayout
@@ -24,7 +23,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   return pick(
     [

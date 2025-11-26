@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { pick, isEmpty } from 'ramda'
 
 import type { TCommunity, TDashboardBaseInfoRoute, TEditFunc } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 import useQuery from '~/hooks/useQuery'
 
@@ -29,7 +29,7 @@ type TRet = TUseInfo &
   }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   const curCommunity = useViewingCommunity()
   const { edit } = useHelper()

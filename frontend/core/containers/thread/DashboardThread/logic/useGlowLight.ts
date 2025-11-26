@@ -1,4 +1,4 @@
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type { TEditFunc } from '~/spec'
 
 import useHelper from './useHelper'
@@ -15,7 +15,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { edit, isChanged } = useHelper()
 
   const { glowType, glowFixed, glowOpacity, saving } = store

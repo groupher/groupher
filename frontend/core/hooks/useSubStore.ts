@@ -7,6 +7,6 @@ export default <K extends TTreeStoreKey>(tree: K): TTreeStore<K> => {
   const root = useStore()
   const snap = useSnapshot(root)
 
-  // @ts-ignore
+  // @ts-expect-error
   return snap[tree]
 }

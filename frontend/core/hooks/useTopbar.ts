@@ -2,8 +2,8 @@ import { includes } from 'ramda'
 import { COLOR_NAME } from '~/const/colors'
 import { TOPBAR_LAYOUT } from '~/const/layout'
 import METRIC from '~/const/metric'
+import useDashboard from '~/hooks/useDashboard'
 import useMetric from '~/hooks/useMetric'
-import useSubStore from '~/hooks/useSubStore'
 import useTheme from '~/hooks/useTheme'
 import type { TColorName, TTopbarLayout } from '~/spec'
 
@@ -15,7 +15,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const metric = useMetric()
   const { isLightTheme } = useTheme()
 

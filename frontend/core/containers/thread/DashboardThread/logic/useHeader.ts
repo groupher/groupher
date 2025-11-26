@@ -1,5 +1,5 @@
 import { pick } from 'ramda'
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type { TEditFunc, THeaderLayout, TLinkItem } from '~/spec'
 
 import type { TLinkState } from '../spec'
@@ -14,7 +14,7 @@ type TRet = {
   TUserLinks
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const useLinksData = useLinks()
   const { edit } = useHelper()
 

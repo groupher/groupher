@@ -1,11 +1,9 @@
-import { pick, find, findIndex, reject } from 'ramda'
-
-import type { TDocFAQLayout, TEditFunc, TFAQSection } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
+import { find, findIndex, pick, reject } from 'ramda'
+import useDashboard from '~/hooks/useDashboard'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
-
-import useHelper from './useHelper'
+import type { TDocFAQLayout, TEditFunc, TFAQSection } from '~/spec'
 import { DEFAULT_NEW_FAQ, SETTING_FIELD } from '../constant'
+import useHelper from './useHelper'
 
 type TRet = {
   docFaqLayout: TDocFAQLayout
@@ -21,7 +19,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
   const { edit } = useHelper()
   const { faqSections } = store
   const curCommunity = useViewingCommunity()

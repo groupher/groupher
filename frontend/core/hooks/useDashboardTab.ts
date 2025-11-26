@@ -1,4 +1,4 @@
-import useSubStore from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type { TDashboardPath } from '~/spec'
 
 type TRes = {
@@ -7,7 +7,7 @@ type TRes = {
 }
 
 export default (): TRes => {
-  const store = useSubStore('dashboard')
+  const store = useDashboard()
 
   const changeTab = (curTab: TDashboardPath): void => {
     store.commit({ curTab })
