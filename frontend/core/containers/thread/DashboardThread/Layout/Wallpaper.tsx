@@ -1,3 +1,4 @@
+import { PAGE_BG_CSS_KEY } from '~/const/colors'
 import { WIDTH } from '~/css'
 import { blurRGB } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'
@@ -16,9 +17,7 @@ export default () => {
 
   const gossBlur = useGossBlur()
   const { background } = useWallpaper()
-  const pageBg = useCSSVar('color-pageBg')
-
-  console.log('## pageBg: ', pageBg)
+  const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
 
   const bgColor = `${blurRGB(pageBg, gossBlur)}`
 

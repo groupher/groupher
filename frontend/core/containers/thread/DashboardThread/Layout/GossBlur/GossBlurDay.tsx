@@ -1,6 +1,6 @@
+import { PAGE_BG_CSS_KEY } from '~/const/colors'
 import { blurRGB } from '~/fmt'
-
-import useThemeData from '~/hooks/useThemeData'
+import useCSSVar from '~/hooks/useCssVar'
 import useWallpaper from '~/hooks/useWallpaper'
 
 import RangeSlider from '~/widgets/RangeSlider'
@@ -18,9 +18,8 @@ export default () => {
   const { wallpaper, background } = useWallpaper()
   const { gossBlur, saving, isTouched, edit } = useGossBlur()
 
-  const themeData = useThemeData()
-
-  const bgColor = `${blurRGB(themeData.container, gossBlur)}`
+  const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
+  const bgColor = `${blurRGB(pageBg, gossBlur)}`
 
   return (
     <div className={s.wrapper} key={wallpaper}>
