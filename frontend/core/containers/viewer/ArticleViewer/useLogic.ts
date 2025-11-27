@@ -1,25 +1,23 @@
 import { useState } from 'react'
-
-import type { TArticle } from '~/spec'
+import useAccount from '~/hooks/useAccount'
 
 import useSubStore from '~/hooks/useSubStore'
 import useViewing from '~/hooks/useViewing'
-import useAccount from '~/hooks/useAccount'
-
 import { query } from '~/server'
+import type { TArticle, TArticleLoad } from '~/spec'
 
 import S from './schema'
 
 type TRet = {
   article: TArticle
   loading: boolean
-  loadArticle: () => void
+  loadArticle: (p: TArticleLoad) => void
 }
 
 export default (): TRet => {
   const viewing = useSubStore('viewing')
   const account = useAccount()
-  const { article, community } = useViewing()
+  const { article } = useViewing()
 
   const [loading, setLoading] = useState(false)
 
@@ -45,19 +43,17 @@ export default (): TRet => {
     }, 500)
   }
 
-  const loadArticle = (): void => {
+  const loadArticle = ({ community, thread, innerId }: TArticleLoad): void => {
     const userHasLogin = account.isLogin
     // 需要在 drawer 那里改动以后才能使用这个参数
+    // console.log("## load article: ", article)
     // const { communitySlug, innerId, meta } = article
     // const { communitySlug, meta } = article
-
-    // const vaparams = { community: communitySlug, id: innerId, userHasLogin }
-    const params = { community: community.slug, id: 21, userHasLogin }
+    const params = { community, id: innerId, userHasLogin }
 
     setLoading(true)
     // query(S.getArticle(meta.thread), params).then((res) => {
-    query(S.getArticle('post'), params).then((res) => {
-      console.log('## getArticle: ', res)
+    query(S.getArticle(thread), params).then((res) => {
       handleArticleLoaded(res.post)
     })
   }

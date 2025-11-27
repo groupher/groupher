@@ -178,6 +178,7 @@ export type {
   TView,
   TWidgetType,
   TZIndexType,
+  TArticleLoad
 } from './utils'
 export type {
   TCustomWallpaper,

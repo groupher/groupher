@@ -9,9 +9,9 @@ const baseConfig = {
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
   // turbopackFileSystemCaccheForDev: true,
-  // cacheComponents: true,
+  cacheComponents: true,
   experimental: {
-    cacheComponents: true,
+    // cacheComponents: true,
     scrollRestoration: true,
     // turbopackFileSystemCacheForDev: true,
     optimizePackageImports: ['ramda'],

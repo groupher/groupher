@@ -1,8 +1,15 @@
 import type { ChangeEvent, ReactNode } from 'react'
+import type { TArticleThread } from './thread'
 // c# like
 export type Nullable<T> = T | null
 
 export type TID = string
+
+export type TArticleLoad = {
+  community: string
+  thread: TArticleThread
+  innerId: number
+}
 
 export type TView = 'desktop' | 'mobile' | 'modeline' | 'drawer'
 
