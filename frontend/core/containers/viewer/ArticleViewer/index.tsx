@@ -1,23 +1,20 @@
 'use client'
 /*
- *
  * ArticleViewer
- *
  */
 import { useEffect } from 'react'
 import EVENT from '~/const/event'
 import Comments from '~/containers/unit/Comments'
 import { send } from '~/signal'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-
 import type { TArticleLoad } from '~/spec'
+import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import DrawerHeader from './DrawerHeader'
 import useSalon from './salon'
 
 import useLogic from './useLogic'
 import Viewer from './Viewer'
 
-type TProps = TArticleLoad 
+type TProps = TArticleLoad
 
 export default (props: TProps) => {
   const s = useSalon()
@@ -25,7 +22,7 @@ export default (props: TProps) => {
 
   useEffect(() => {
     loadArticle(props)
-  }, [])
+  }, [props, loadArticle])
 
   useEffect(() => {
     if (article) {
