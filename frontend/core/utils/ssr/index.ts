@@ -1,5 +1,4 @@
-import { cacheLife, unstable_cacheTag as cacheTag } from 'next/cache'
-// import { cacheLife, cacheTag } from 'next/cache'
+import { cacheLife, cacheTag } from 'next/cache'
 import { includes, isEmpty, reject } from 'ramda'
 
 import { CACHE_TAG } from '~/const/cache'

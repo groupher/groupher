@@ -1,27 +1,28 @@
+'use client'
 /*
- *
  * ArticleViewer
- *
  */
 import { useEffect } from 'react'
 import EVENT from '~/const/event'
-// import Comments from '~/containers/unit/Comments'
+import Comments from '~/containers/unit/Comments'
 import { send } from '~/signal'
+import type { TArticleLoad } from '~/spec'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-
 import DrawerHeader from './DrawerHeader'
 import useSalon from './salon'
 
 import useLogic from './useLogic'
 import Viewer from './Viewer'
 
-export default () => {
+type TProps = TArticleLoad
+
+export default (props: TProps) => {
   const s = useSalon()
   const { article, loadArticle } = useLogic()
 
   useEffect(() => {
-    loadArticle()
-  }, [])
+    loadArticle(props)
+  }, [props, loadArticle])
 
   useEffect(() => {
     if (article) {
@@ -37,8 +38,7 @@ export default () => {
       <Viewer article={article} />
 
       <div className={s.comments}>
-        <h3>TODO: comments (slow down the drawer)</h3>
-        {/* <Comments /> */}
+        <Comments />
       </div>
     </div>
   )

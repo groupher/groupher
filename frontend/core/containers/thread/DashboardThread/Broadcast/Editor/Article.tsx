@@ -17,13 +17,11 @@ export default () => {
     broadcastOnSave,
     broadcastOnCancel,
     broadcastArticleEnable,
-    getIsArticleTouched,
+    isArticleTouched,
     edit,
   } = useBroadcast()
 
   const s = useSalon()
-
-  const isArticleTouched = getIsArticleTouched()
 
   return (
     <div className={s.wrapper}>
