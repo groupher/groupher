@@ -11,7 +11,7 @@ import type { TColorName, TFlatThemeKey, TSpace, TZIndexType } from '~/spec'
 
 type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 'decoration'
 type TLinkColorPrefix = 'fg' | 'fill'
-type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon'
+type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon' | 'activeBox' | 'activeIcon'
 type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'card' | 'drawer' | 'modal'
 type TDimLevel = 'lg' | 'md' | 'sm'
 type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red' | 'fg' | 'fg-red'
@@ -269,6 +269,19 @@ export default (): TRet => {
       }
       case 'icon': {
         return cn('size-3 mr-2.5', fill('text.digest'), `group-hover/menubar:${fill('text.title')}`)
+      }
+      case 'activeBox': {
+        return cn(
+          'opacity-100 scale-100',
+          fg('text.title'),
+          fill('text.title'),
+          bg('menuHoverBg'),
+          br('divider'),
+          shadow('sm'),
+        )
+      }
+      case 'activeIcon': {
+        return cn(fill('text.title'))
       }
       case 'link': {
         return cn('size-3.5 opacity-0 group-hover/menubar:opacity-60', fill('text.digest'))

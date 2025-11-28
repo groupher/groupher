@@ -1,11 +1,12 @@
-import type { TSpace } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 type TProps = TSpace
 
+export { cn } from '~/css'
+
 export default ({ ...spacing }: TProps) => {
-  const { cn, bg, fill, margin } = useTwBelt()
+  const { cn, bg, fill, margin, menu } = useTwBelt()
 
   return {
     wrapper: cn('', margin(spacing)),
@@ -20,5 +21,10 @@ export default ({ ...spacing }: TProps) => {
       fill('text.digest'),
       `group-hover:${fill('text.title')}`,
     ),
+    selectWrapper: 'row-center gap-x-1 px-1',
+    selectBox: cn(menu('bar'), 'align-both size-8 m-0 p-0'),
+    selectIcon: cn(menu('icon'), 'size-6 m-0 opacity-80 scale-90'),
+    activeBox: cn(menu('activeBox')),
+    activeIcon: cn(menu('activeIcon')),
   }
 }

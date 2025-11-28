@@ -91,11 +91,9 @@ export default () => {
           </button>
         </Tooltip>
 
-        <Tooltip content={<div className={s.tipText}>{t('theme')}</div>} {...TIP_OPTIONS}>
-          <div className={s.iconBox}>
-            <ThemeSwitch />
-          </div>
-        </Tooltip>
+        <div className={s.iconBox}>
+          <ThemeSwitch />
+        </div>
 
         <Tooltip content={<div className={s.tipText}>{t('more')}</div>} {...TIP_OPTIONS}>
           <button
