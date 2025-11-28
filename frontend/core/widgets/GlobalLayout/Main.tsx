@@ -34,9 +34,11 @@ const Main: FC<TProps> = ({ children }) => {
   const { hasTopbar } = useTopbar()
   const { background } = usePageBg()
   // const [showDashboardAlertUI, setShowDashboardAlertUI] = useState(false)
+  console.log('## background: ', background)
+  // style={{ background }}
 
   return (
-    <main key={locale} className={s.wrapper} style={{ background }}>
+    <main key={locale} className={s.wrapper}>
       {hasTopbar && <div className={s.topBar} />}
       {/* <Broadcast /> */}
       <div className={s.body}>{children}</div>

@@ -1,39 +1,37 @@
 'use client'
 
 import { useEffect } from 'react'
-import THEME, { LOCAL_THEME_KEY } from '~/const/theme'
+import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
 import useTheme from '~/hooks/useTheme'
 
 export default function ThemeHydrator() {
-  const { change } = useTheme()
+  const { changeMode } = useTheme()
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     try {
       const stored = localStorage.getItem(LOCAL_THEME_KEY)
+      const isValid =
+        stored === THEME.DARK || stored === THEME.LIGHT || stored === THEME_MODE.SYSTEM
+      const mode = isValid ? stored : THEME_MODE.SYSTEM
 
-      if (stored === THEME.DARK || stored === THEME.LIGHT) {
-        change(stored)
-        document.documentElement.setAttribute('data-theme', stored)
-      } else {
+      changeMode(mode)
+
+      if (mode === THEME_MODE.SYSTEM) {
         const media = window.matchMedia('(prefers-color-scheme: dark)')
-
-        const applyTheme = (matches: boolean) => {
-          const systemTheme = matches ? THEME.DARK : THEME.LIGHT
-          change(THEME.SYSTEM)
-          document.documentElement.setAttribute('data-theme', systemTheme)
+        const listener = () => {
+          console.log('## listener called!')
+          if (localStorage.getItem(LOCAL_THEME_KEY) === THEME_MODE.SYSTEM) {
+            changeMode(THEME_MODE.SYSTEM)
+          }
         }
-
-        applyTheme(media.matches)
-
-        const listener = (e: MediaQueryListEvent) => {
-          applyTheme(e.matches)
-        }
-
         media.addEventListener('change', listener)
         return () => media.removeEventListener('change', listener)
       }
-    } catch {}
-  }, [change])
+    } catch {
+      changeMode(THEME_MODE.SYSTEM)
+    }
+  }, [])
 
   return null
 }

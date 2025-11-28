@@ -3,7 +3,7 @@
  */
 
 import type { FC } from 'react'
-import THEME from '~/const/theme'
+import { THEME_MODE } from '~/const/theme'
 import useTheme from '~/hooks/useTheme'
 import MoonSVG from '~/icons/Moon'
 import PlanetSVG from '~/icons/Planet'
@@ -25,28 +25,29 @@ export const TIP_OPTIONS = {
 
 const ThemeSwitch: FC<TProps> = ({ testid = 'theme-switch', ...spacing }) => {
   const s = useSalon({ ...spacing })
-  const { theme, toggle, change } = useTheme()
+  const { theme, themeMode, changeMode } = useTheme()
 
   return (
     <Tooltip
-      trigger='click'
       content={
         <div className={s.selectWrapper}>
           <button
-            className={cn(s.selectBox, theme === THEME.LIGHT && s.activeBox)}
-            onClick={() => toggle()}
+            className={cn(s.selectBox, themeMode === THEME_MODE.LIGHT && s.activeBox)}
+            onClick={() => changeMode(THEME_MODE.LIGHT)}
           >
-            <SunSVG className={cn(s.selectIcon, theme === THEME.LIGHT && s.activeIcon)} />
+            <SunSVG className={cn(s.selectIcon, themeMode === THEME_MODE.LIGHT && s.activeIcon)} />
           </button>
           <button
-            className={cn(s.selectBox, theme === THEME.DARK && s.activeBox)}
-            onClick={() => toggle()}
+            className={cn(s.selectBox, themeMode === THEME_MODE.DARK && s.activeBox)}
+            onClick={() => changeMode(THEME_MODE.DARK)}
           >
-            <MoonSVG className={cn(s.selectIcon, 'size-5', theme === THEME.DARK && s.activeIcon)} />
+            <MoonSVG
+              className={cn(s.selectIcon, 'size-5', themeMode === THEME_MODE.DARK && s.activeIcon)}
+            />
           </button>
           <button
-            className={cn(s.selectBox, theme === THEME.SYSTEM && s.activeBox)}
-            onClick={() => change(THEME.SYSTEM)}
+            className={cn(s.selectBox, themeMode === THEME_MODE.SYSTEM && s.activeBox)}
+            onClick={() => changeMode(THEME_MODE.SYSTEM)}
           >
             <PlanetSVG className={cn(s.selectIcon, 'size-5')} />
           </button>
@@ -62,9 +63,8 @@ const ThemeSwitch: FC<TProps> = ({ testid = 'theme-switch', ...spacing }) => {
           aria-label='auto'
           aria-live='polite'
         >
-          {theme === THEME.LIGHT && <SunSVG className={s.icon} />}
-          {theme === THEME.DARK && <MoonSVG className={s.icon} />}
-          {theme === THEME.SYSTEM && <PlanetSVG className={cn(s.icon, 'size-4')} />}
+          {theme === THEME_MODE.LIGHT && <SunSVG className={s.icon} />}
+          {theme === THEME_MODE.DARK && <MoonSVG className={s.icon} />}
         </button>
       </div>
     </Tooltip>

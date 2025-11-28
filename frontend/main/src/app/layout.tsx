@@ -5,6 +5,7 @@ import { Suspense } from 'react'
 import { GlobalLayout, GraphQLProvider, getSSRInitData, parseRouteInfo } from '~/providers'
 import StoreProvider from '~/stores/provider'
 import { deepSanitize } from '~/utils/fmt'
+import { ssrThemeInitScript } from '~/utils/ssr/script'
 
 // import { Analytics } from '@vercel/analytics/react'
 // import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -30,6 +31,10 @@ const StoreInitLoader = async ({ children }) => {
 export default function Layout({ children }) {
   return (
     <html lang='en'>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ssrThemeInitScript() }} />
+      </head>
+
       <body>
         <GraphQLProvider>
           <Suspense fallback={<h1>...</h1>}>
