@@ -1,9 +1,7 @@
-import type { TLocale } from '~/spec'
-import useChangeI18n from '~/hooks/useChangeI18n'
-
 import { LANGS_OPTIONS } from '~/const/i18n'
-
+import useChangeI18n from '~/hooks/useChangeI18n'
 import CheckSVG from '~/icons/Check'
+import type { TLocale } from '~/spec'
 
 import MenuBar from './MenuBar'
 
@@ -30,7 +28,7 @@ export default () => {
               <Icon />
             </div>
             {LANG.label}
-            <div className="grow" />
+            <div className='grow' />
             {LANG.value === locale && <CheckSVG className={s.checked} />}
           </MenuBar>
         )
