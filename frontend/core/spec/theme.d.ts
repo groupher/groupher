@@ -2,7 +2,7 @@ import type ColorTypes from '~/tailwind/tokens/color.type'
 import type DayTheme from '~/utils/themes/skins/light'
 import type { TFlattenObjectKeys } from './enhance'
 
-export type TThemeName = 'light' | 'dark'
+export type TThemeName = 'light' | 'dark' | 'system'
 
 // export type TTheme = ((obj: any) => unknown) | string
 export type TTheme = string

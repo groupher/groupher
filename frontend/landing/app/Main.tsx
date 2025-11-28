@@ -2,7 +2,6 @@
 
 import { motion, useScroll, useSpring, useTransform } from 'motion/react'
 import { type FC, type ReactNode, useEffect, useState } from 'react'
-import usePageBg from '~/hooks/usePageBg'
 import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
 import Footer from '~/widgets/Footer'
@@ -21,13 +20,12 @@ const Main: FC<TProps> = ({ children }) => {
   const s = useSalon()
   const { locale } = useTrans()
   const { hasTopbar } = useTopbar()
-  const { background } = usePageBg()
   const { scrollY } = useScroll()
 
   const [fromWidth, setFromWidth] = useState(DEFAULT_CONTAINER_WIDTH)
   const [toWidth, setToWidth] = useState(DEFAULT_CONTAINER_WIDTH)
   const [scrollRange, setScrollRange] = useState(0)
-  const [enabled, setEnabled] = useState(false)
+  const [_enabled, setEnabled] = useState(false)
 
   // ----------------------
   // 客户端初始化
@@ -118,14 +116,7 @@ const Main: FC<TProps> = ({ children }) => {
   })
 
   return (
-    <motion.main
-      key={locale}
-      className={s.wrapper}
-      style={{
-        background,
-        transition: enabled ? 'max-width 0.15s ease-out' : undefined,
-      }}
-    >
+    <motion.main key={locale} className={s.wrapper}>
       <HomeHeader />
       {hasTopbar && <div className={s.topBar} />}
       <div className={s.body}>{children}</div>

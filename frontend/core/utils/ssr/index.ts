@@ -3,7 +3,6 @@ import { includes, isEmpty, reject } from 'ramda'
 
 import { CACHE_TAG } from '~/const/cache'
 import { CONTAINER_BG_DEFAULT } from '~/const/colors'
-
 import { BUILTIN_ALIAS } from '~/const/name'
 import {
   DASHBOARD_ALIAS_ROUTE,
@@ -67,7 +66,7 @@ export const commonRes = (result): TGQSSRResult => {
 
 export const parseWallpaper = (community: TCommunity): TParsedWallpaper => {
   // NOTE: if the backend is not ready, return default config
-  // @ts-ignore
+  // @ts-expect-error
   if (!community) return {}
 
   const { dashboard } = community
@@ -164,7 +163,7 @@ const parseDashboardThread = (pathname: string): TDashboardTab => {
 
 export const parseDashboard = (community: TCommunity, pathname: string): TParseDashboard => {
   // NOTE: if the backend is not ready, return default config
-  // @ts-ignore
+  // @ts-expect-error
   if (!community) return {}
 
   const { dashboard, moderators } = community

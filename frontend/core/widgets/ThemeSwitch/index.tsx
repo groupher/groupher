@@ -25,7 +25,7 @@ export const TIP_OPTIONS = {
 
 const ThemeSwitch: FC<TProps> = ({ testid = 'theme-switch', ...spacing }) => {
   const s = useSalon({ ...spacing })
-  const { theme, toggle } = useTheme()
+  const { theme, toggle, change } = useTheme()
 
   return (
     <Tooltip
@@ -44,9 +44,12 @@ const ThemeSwitch: FC<TProps> = ({ testid = 'theme-switch', ...spacing }) => {
           >
             <MoonSVG className={cn(s.selectIcon, 'size-5', theme === THEME.DARK && s.activeIcon)} />
           </button>
-          <div className={s.selectBox}>
+          <button
+            className={cn(s.selectBox, theme === THEME.SYSTEM && s.activeBox)}
+            onClick={() => change(THEME.SYSTEM)}
+          >
             <PlanetSVG className={cn(s.selectIcon, 'size-5')} />
-          </div>
+          </button>
         </div>
       }
       {...TIP_OPTIONS}
@@ -59,7 +62,9 @@ const ThemeSwitch: FC<TProps> = ({ testid = 'theme-switch', ...spacing }) => {
           aria-label='auto'
           aria-live='polite'
         >
-          {theme === THEME.LIGHT ? <SunSVG className={s.icon} /> : <MoonSVG className={s.icon} />}
+          {theme === THEME.LIGHT && <SunSVG className={s.icon} />}
+          {theme === THEME.DARK && <MoonSVG className={s.icon} />}
+          {theme === THEME.SYSTEM && <PlanetSVG className={cn(s.icon, 'size-4')} />}
         </button>
       </div>
     </Tooltip>
