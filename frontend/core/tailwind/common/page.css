@@ -1,0 +1,85 @@
+:root {
+  .page-pureWhite {
+    --color-pageBg: var(--color-page-pureWhite);
+  }
+  .page-solarized {
+    --color-pageBg: var(--color-page-solarized);
+  }
+  .page-hackerNews {
+    --color-pageBg: var(--color-page-hackerNews);
+  }
+  .page-lightGrey {
+    --color-pageBg: var(--color-page-lightGrey);
+  }
+  .page-floralWhite {
+    --color-pageBg: var(--color-page-floralWhite);
+  }
+  .page-mintWhite {
+    --color-pageBg: var(--color-page-mintWhite);
+  }
+  .page-pink {
+    --color-pageBg: var(--color-page-pink);
+  }
+  .page-todo2 {
+    --color-pageBg: var(--color-page-todo2);
+  }
+  .page-blue2 {
+    --color-pageBg: var(--color-page-blue2);
+  }
+  .page-purple {
+    --color-pageBg: var(--color-page-purple);
+  }
+  .page-todo {
+    --color-pageBg: var(--color-page-todo);
+  }
+
+  /* dark themes */
+  .page-charcoalGray {
+    --color-pageBg: var(--color-page-charcoalGray);
+  }
+  .page-darkSlateGray {
+    --color-pageBg: var(--color-page-darkSlateGray);
+  }
+  .page-outerSpace {
+    --color-pageBg: var(--color-page-outerSpace);
+  }
+  .page-richBlack {
+    --color-pageBg: var(--color-page-richBlack);
+  }
+  .page-coffeeBean {
+    --color-pageBg: var(--color-page-coffeeBean);
+  }
+  .page-ubuntu {
+    --color-pageBg: var(--color-page-ubuntu);
+  }
+  .page-obsidian {
+    --color-pageBg: var(--color-page-obsidian);
+  }
+  .page-solarizedDark {
+    --color-pageBg: var(--color-page-solarizedDark);
+  }
+  .page-blackChocolate {
+    --color-pageBg: var(--color-page-blackChocolate);
+  }
+  .page-gunmetal {
+    --color-pageBg: var(--color-page-gunmetal);
+  }
+  .page-smokyBlack {
+    --color-pageBg: var(--color-page-smokyBlack);
+  }
+  .page-oxfordBlue {
+    --color-pageBg: var(--color-page-oxfordBlue);
+  }
+  .page-eerieBlack {
+    --color-pageBg: var(--color-page-eerieBlack);
+  }
+  .page-daylightGreen {
+    --color-pageBg: var(--color-page-daylightGreen);
+  }
+  .page-jetBlack {
+    --color-pageBg: var(--color-page-jetBlack);
+  }
+  .page-arsenic {
+    --color-pageBg: var(--color-page-arsenic);
+  } 
+}

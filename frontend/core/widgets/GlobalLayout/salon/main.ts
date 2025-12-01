@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
 
 export default () => {
-  const { cn, bg, rainbow, container, vividDark } = useTwBelt()
+  const { cn, bg, rainbow, container, vividDark, page } = useTwBelt()
 
   const { topbarBg, isDarkBlack } = useTopbar()
   const { hasShadow } = useWallpaper()
@@ -16,6 +16,7 @@ export default () => {
       'transition-transform transition-shadow backdrop-blur-2xl',
       hasShadow && 'shadow-lg',
       bg('pageBg'),
+      page(),
     ),
     topBar: cn(
       'h-0.5 w-full absolute top-0 left-0',

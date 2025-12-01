@@ -13,13 +13,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const {
-    theme,
-    themeMode,
-    change: changeTheme,
-    toggle,
-    changeMode: doChangeMode,
-  } = useSubStore('theme')
+  const { theme, themeMode, change: changeTheme, changeMode: doChangeMode } = useSubStore('theme')
 
   const resolveSystemTheme = () => {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -41,6 +35,15 @@ export default (): TRet => {
     if (mode === THEME_MODE.LIGHT) applyTheme(THEME.LIGHT)
     else if (mode === THEME_MODE.DARK) applyTheme(THEME.DARK)
     else applyTheme(resolveSystemTheme()) // SYSTEM 模式
+  }
+
+  const toggle = () => {
+    if (theme === THEME.DARK) {
+      applyTheme(THEME.LIGHT)
+      return
+    }
+
+    applyTheme(THEME.DARK)
   }
 
   return {

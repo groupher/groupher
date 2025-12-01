@@ -6,7 +6,6 @@ export type TStore = {
   // actions
   change: (theme: TThemeName) => void
   changeMode: (theme: TThemeMode) => void
-  toggle: () => void
 }
 
 export type TInit = TThemeName

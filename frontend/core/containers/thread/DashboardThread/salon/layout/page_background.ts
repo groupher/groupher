@@ -1,4 +1,3 @@
-import { keys } from 'ramda'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import { TW_METRIC } from '~/tailwind'
@@ -17,8 +16,7 @@ export default () => {
   const { theme } = useTheme()
 
   return {
-    bgColorNames: keys(pageBgColors[theme]),
-    bgColorsObj: pageBgColors[theme],
+    bgColorNames: pageBgColors[theme],
     rotateAngle: ROTATE_ANGLES,
     wrapper: 'pb-7',
     themeGroup: 'row-center wrap gap-y-6 relative ml-4',
@@ -40,5 +38,9 @@ export default () => {
     colorTitle: cn('text-xs', fg('text.title')),
     hex: cn('text-xs scale-90 italic', fg('text.hint')),
     checker: cn('absolute bottom-2 right-2 size-5', primary('fill')),
+    //
+    getPageClass: (pageName: string): string => {
+      return `page-${pageName}-card`
+    },
   }
 }

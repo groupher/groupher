@@ -17,10 +17,6 @@ export default (themeMode: TThemeMode = THEME_MODE.SYSTEM, theme: TInit = THEME.
     changeMode: (theme: TThemeMode): void => {
       store.themeMode = theme
     },
-
-    toggle: (): void => {
-      store.theme = store.theme === THEME.LIGHT ? THEME.DARK : THEME.LIGHT
-    },
   })
 
   return store

@@ -4,6 +4,7 @@ import METRIC from '~/const/metric'
 import { cn } from '~/css'
 import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
+import useDashboard from '~/hooks/useDashboard'
 import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useTheme from '~/hooks/useTheme'
@@ -47,6 +48,7 @@ type TRet = {
   landingTitle: () => string
   hover: (part: THoverPart) => string
   zIndex: (key: TZIndexType, visible?: boolean) => string
+  page: () => string
 
   isDarkBlack: boolean
   isBlackPrimary: boolean
@@ -60,8 +62,9 @@ export default (): TRet => {
   const { isLightTheme } = useTheme()
   const metric = useMetric()
   const { isSquare: isAvatarSquare } = useAvatarLayout()
-
+  const dashboard = useDashboard()
   const primaryColor = usePrimaryColor()
+  const { pageBg, pageBgDark } = dashboard
 
   const container = () => {
     return `container-${metric.toLowerCase()}`
@@ -350,6 +353,14 @@ export default (): TRet => {
     return `z-${type}`
   }
 
+  const page = (): string => {
+    if (isLightTheme) {
+      return `page-${camelize(pageBg)}`
+    }
+
+    return `page-${camelize(pageBgDark)}`
+  }
+
   return {
     cn,
     container,
@@ -382,5 +393,6 @@ export default (): TRet => {
     dimDark,
     hover,
     zIndex,
+    page,
   }
 }

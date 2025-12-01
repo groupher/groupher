@@ -1,9 +1,8 @@
-import { CONTAINER_BG_DEFAULT, PAGE_COLOR } from '~/const/colors'
-
+import { useEffect, useState } from 'react'
 import { blurRGB } from '~/fmt'
-import useDashboard from '~/hooks/useDashboard'
 import useGossBlur from '~/hooks/useGossBlur'
 import useTheme from '~/hooks/useTheme'
+import useTwBelt from '~/hooks/useTwBelt'
 
 type TRes = {
   background: string
@@ -11,19 +10,27 @@ type TRes = {
 }
 
 export default (): TRes => {
-  const { pageBg, pageBgDark } = useDashboard()
+  const { page } = useTwBelt()
   const { isLightTheme } = useTheme()
 
   const gossBlur = useGossBlur()
+  const pageBg = page()
 
-  const lightBg = PAGE_COLOR.light[pageBg] || PAGE_COLOR.light[CONTAINER_BG_DEFAULT.light]
-  const darkBg = PAGE_COLOR.dark[pageBgDark] || PAGE_COLOR.dark[CONTAINER_BG_DEFAULT.dark]
+  const [rawBg, setRawBg] = useState<string>(null)
+  const [background, setBackground] = useState<string>(null)
 
-  const rawBg = isLightTheme ? lightBg : darkBg
-  const background = `${blurRGB(rawBg, gossBlur)}`
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    const mainEl = document.querySelector('main')
+    if (!mainEl) return
 
-  return {
-    background,
-    rawBg,
-  }
+    const style = getComputedStyle(mainEl)
+    const pageBg = style.getPropertyValue('--color-pageBg').trim()
+    console.log('## pagebg style pageBg: ', pageBg)
+
+    setRawBg(pageBg)
+    setBackground(blurRGB(pageBg, gossBlur))
+  }, [gossBlur, pageBg, isLightTheme])
+
+  return { background, rawBg }
 }

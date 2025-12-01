@@ -8,7 +8,7 @@ import StoreProvider from '~/stores/provider'
 import { ssrThemeInitScript } from '~/utils/ssr/script'
 
 import '~/tailwind/global.css'
-import './Landing/salon/global.css'
+import './domain.css'
 
 import Main from './Main'
 
