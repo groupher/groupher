@@ -1,5 +1,5 @@
 import useSubState from '~/hooks/useSubStore'
-import type { TDashboardAliasRoute, TEditFunc, TNameAlias } from '~/spec'
+import type { TDsbAliasRoute, TEditFunc, TNameAlias } from '~/spec'
 import { FIELD } from '~/stores/dashboard/constant'
 
 import useHelper from './useHelper'
@@ -8,12 +8,12 @@ type TRet = {
   saving: boolean
   nameAlias: TNameAlias[]
   editingAlias: TNameAlias
-  aliasTab: TDashboardAliasRoute
+  aliasTab: TDsbAliasRoute
 
   updateEditingAlias: (alias: TNameAlias) => void
   edit: TEditFunc
   resetEdit: () => void
-  changeTab: (tab: TDashboardAliasRoute) => void
+  changeTab: (tab: TDsbAliasRoute) => void
 }
 
 export default (): TRet => {
@@ -26,7 +26,7 @@ export default (): TRet => {
     store.commit({ editingAlias: alias })
   }
 
-  const changeTab = (tab: TDashboardAliasRoute) => {
+  const changeTab = (tab: TDsbAliasRoute) => {
     store.commit({ aliasTab: tab })
   }
 

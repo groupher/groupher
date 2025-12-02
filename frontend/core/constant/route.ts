@@ -1,11 +1,11 @@
 import type {
-  TDashboardAliasRoute,
-  TDashboardBaseInfoRoute,
-  TDashboardBroadcastRoute,
-  TDashboardDocRoute,
-  TDashboardLayoutRoute,
-  TDashboardPath,
-  TDashboardSEORoute,
+  TDsbAliasRoute,
+  TDsbBaseInfoRoute,
+  TDsbBroadcastRoute,
+  TDsbDocRoute,
+  TDsbLayoutRoute,
+  TDsbPath,
+  TDsbSEORoute,
 } from '~/spec'
 
 export const NON_COMMUNITY_ROUTE = {
@@ -47,7 +47,7 @@ export const DSB_ROUTE = {
   ADMINS: 'admins',
   WIDGETS: 'widgets',
   INOUT: 'inout',
-} as Record<Uppercase<TDashboardPath>, TDashboardPath>
+} as Record<Uppercase<TDsbPath>, TDsbPath>
 
 export const DASHBORD_CMS_ROUTES = [
   DSB_ROUTE.POST,
@@ -61,19 +61,19 @@ export const DSB_BASEINFO_ROUTE = {
   SOCIAL: 'social',
   OTHER: 'other',
   LOGOS: 'logos',
-} as Record<Uppercase<TDashboardBaseInfoRoute>, TDashboardBaseInfoRoute>
+} as Record<Uppercase<TDsbBaseInfoRoute>, TDsbBaseInfoRoute>
 
 export const DSB_SEO_ROUTE = {
   SEARCH_ENGINE: 'search_engine',
   TWITTER: 'twitter',
-} as Record<Uppercase<TDashboardSEORoute>, TDashboardSEORoute>
+} as Record<Uppercase<TDsbSEORoute>, TDsbSEORoute>
 
 export const DSB_DOC_ROUTE = {
   TABLE: 'table',
   TREE: 'tree',
   COVER: 'cover',
   FAQ: 'faq',
-} as Record<Uppercase<TDashboardDocRoute>, TDashboardDocRoute>
+} as Record<Uppercase<TDsbDocRoute>, TDsbDocRoute>
 
 export const DSB_LAYOUT_ROUTE = {
   GENERAL: 'general',
@@ -82,18 +82,18 @@ export const DSB_LAYOUT_ROUTE = {
   KANBAN: 'kanban',
   CHANGELOG: 'changelog',
   DOC: 'doc',
-} as Record<Uppercase<TDashboardLayoutRoute>, TDashboardLayoutRoute>
+} as Record<Uppercase<TDsbLayoutRoute>, TDsbLayoutRoute>
 
 export const DSB_BROADCAST_ROUTE = {
   GLOBAL: 'global',
   ARTICLE: 'article',
-} as Record<Uppercase<TDashboardBroadcastRoute>, TDashboardBroadcastRoute>
+} as Record<Uppercase<TDsbBroadcastRoute>, TDsbBroadcastRoute>
 
 export const DSB_ALIAS_ROUTE = {
   THREAD: 'thread',
   KANBAN: 'kanban',
   OTHERS: 'others',
-} as Record<Uppercase<TDashboardAliasRoute>, TDashboardAliasRoute>
+} as Record<Uppercase<TDsbAliasRoute>, TDsbAliasRoute>
 
 // TODO: use safe route
 export const ROUTE = {

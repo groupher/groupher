@@ -61,9 +61,9 @@ export type {
   TBroadcastConf,
   TBroadcastLayout,
   TChangelogLayout,
-  TDashboard,
   TDocFAQLayout,
   TDocLayout,
+  TDsb,
   TDsdSEOConf,
   TDsdThreadConf,
   TEditFunc,
@@ -105,13 +105,13 @@ export type { TLocale, TTransKey } from './i18n'
 export type { TMenu } from './menu'
 export type { TMetric } from './metric'
 export type {
-  TDashboardAliasRoute,
-  TDashboardBaseInfoRoute,
-  TDashboardBroadcastRoute,
-  TDashboardDocRoute,
-  TDashboardLayoutRoute,
-  TDashboardPath,
-  TDashboardSEORoute,
+  TDsbAliasRoute,
+  TDsbBaseInfoRoute,
+  TDsbBroadcastRoute,
+  TDsbDocRoute,
+  TDsbLayoutRoute,
+  TDsbPath,
+  TDsbSEORoute,
   TPath,
 } from './route'
 export type {
@@ -139,8 +139,8 @@ export type {
   TCityOption,
   TCommunitySetterStyle,
   TConditionMode,
-  TDashboardLayout,
   TDirection,
+  TDsbLayout,
   TEditMode,
   TEditValue,
   TFlexRule,

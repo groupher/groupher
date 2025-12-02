@@ -1,3 +1,3 @@
-import type { TDashboardPath } from '~/spec'
+import type { TDsbPath } from '~/spec'
 
-export type TIntroTab = TDashboardPath | 'richeditor'
+export type TIntroTab = TDsbPath | 'richeditor'

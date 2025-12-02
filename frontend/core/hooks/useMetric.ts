@@ -10,26 +10,31 @@ import useDashboard from '~/hooks/useDashboard'
 import useSubStore from '~/hooks/useSubStore'
 import type { TMetric } from '~/spec'
 
-export default (): TMetric => {
+type TFmt = 'default' | 'lowercase'
+
+export default (fmt: TFmt = 'default'): TMetric => {
   const store = useSubStore('viewing')
   const { bannerLayout } = useDashboard()
 
   const pathname = usePathname()
+
+  let metric: TMetric
+
   if (includes(pathname, STATIC_ROUTES)) {
-    return METRIC.LANDING
+    metric = METRIC.LANDING
+  } else if (store.metric === METRIC.COMMUNITY && bannerLayout === BANNER_LAYOUT.SIDEBAR) {
+    metric = METRIC.COMMUNITY_SIDEBAR
+  } else if (store.metric === METRIC.DOC && bannerLayout === BANNER_LAYOUT.SIDEBAR) {
+    metric = METRIC.COMMUNITY_SIDEBAR
+  } else if (store.metric === METRIC.DOC && bannerLayout === BANNER_LAYOUT.TABBER) {
+    metric = METRIC.COMMUNITY
+  } else {
+    metric = store.metric as TMetric
   }
 
-  if (store.metric === METRIC.COMMUNITY && bannerLayout === BANNER_LAYOUT.SIDEBAR) {
-    return METRIC.COMMUNITY_SIDEBAR
+  if (fmt === 'lowercase') {
+    return metric.toLowerCase() as TMetric
   }
 
-  if (store.metric === METRIC.DOC && bannerLayout === BANNER_LAYOUT.SIDEBAR) {
-    return METRIC.COMMUNITY_SIDEBAR
-  }
-
-  if (store.metric === METRIC.DOC && bannerLayout === BANNER_LAYOUT.TABBER) {
-    return METRIC.COMMUNITY
-  }
-
-  return store.metric as TMetric
+  return metric
 }

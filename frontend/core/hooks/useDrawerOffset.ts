@@ -1,9 +1,7 @@
+import { getGlobalCSSVar } from '~/css'
 import useWindowResize from '~/hooks/useWindowResize'
-import { TW_METRIC } from '~/tailwind'
 
 import useMetric from './useMetric'
-
-const Container = TW_METRIC.container
 
 type TRes = {
   rightOffset: string
@@ -13,10 +11,12 @@ type TRes = {
  * NOTE: should use observer to wrap the component who use this hook
  */
 const useDrawerOffset = (): TRes => {
-  const metric = useMetric()
+  const metric = useMetric('lowercase')
   const { width: windowWidth } = useWindowResize()
 
-  const MAX_WIDTH = Number(Container[metric.toLowerCase()].width.slice(0, -2))
+  const containerWidth = getGlobalCSSVar(`container-${metric}-width`)
+
+  const MAX_WIDTH = Number(containerWidth.slice(0, -2))
 
   return {
     rightOffset: `${windowWidth <= MAX_WIDTH ? '0' : (windowWidth - MAX_WIDTH) / 2}px`,

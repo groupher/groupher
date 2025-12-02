@@ -196,7 +196,7 @@ export type TToastType = 'info' | 'error' | 'success'
 
 export type TPublishMode = 'default' | 'changelog' | 'help' | 'sidebar_layout_header'
 
-export type TDashboardLayout = 'post_list' | 'banner' | 'changelog_list'
+export type TDsbLayout = 'post_list' | 'banner' | 'changelog_list'
 
 export type TSocialType =
   | 'EMAIL'

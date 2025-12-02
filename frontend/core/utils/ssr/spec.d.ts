@@ -1,18 +1,16 @@
 import type {
+  TArticle,
   TCommunity,
-  TWallpaperData,
+  TDsbAliasRoute,
+  TDsbBaseInfoRoute,
+  TDsbBroadcastRoute,
+  TDsbDocRoute,
+  TDsbLayoutRoute,
+  TDsbPath,
+  TDsbSEORoute,
+  TLocale,
   TPagedArticles,
   TTag,
-  TDashboardPath,
-  TDashboardBaseInfoRoute,
-  TDashboardSEORoute,
-  TDashboardDocRoute,
-  TDashboardBroadcastRoute,
-  TDashboardLayoutRoute,
-  TDashboardAliasRoute,
-  TArticle,
-  TDashboard,
-  TLocale,
 } from '~/spec'
 
 export type TSessionRes = TGQSSRResult & {
@@ -61,14 +59,14 @@ export type TTagsFilter = {
   thread?: string
 }
 
-export type TDashboardTab = {
-  curTab: TDashboardPath
-  baseInfoTab?: TDashboardBaseInfoRoute
-  seoTab?: TDashboardSEORoute
-  docTab?: TDashboardDocRoute
-  broadcastTab?: TDashboardBroadcastRoute
-  layoutTab?: TDashboardLayoutRoute
-  aliasTab?: TDashboardAliasRoute
+export type TDsbTab = {
+  curTab: TDsbPath
+  baseInfoTab?: TDsbBaseInfoRoute
+  seoTab?: TDsbSEORoute
+  docTab?: TDsbDocRoute
+  broadcastTab?: TDsbBroadcastRoute
+  layoutTab?: TDsbLayoutRoute
+  aliasTab?: TDsbAliasRoute
 }
 
 export type TFilterSearchParams = {
