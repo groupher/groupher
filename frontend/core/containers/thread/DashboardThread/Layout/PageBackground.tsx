@@ -3,7 +3,7 @@ import { camelize, titleCaseHM, upperSnakeCase } from '~/fmt'
 import useTheme from '~/hooks/useTheme'
 import CheckSVG from '~/icons/Check'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import usePageBg from '../logic/usePageBg'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
@@ -41,7 +41,7 @@ export default () => {
               key={bg}
               className={cn(s.block, `rotate-${s.rotateAngle[index]}`, active && s.blockActive)}
               onClick={() => {
-                edit(upperSnakeCase(bg), isLightTheme ? 'pageBg' : 'pageBgDark')
+                edit(upperSnakeCase(bg), isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK)
               }}
             >
               <div className={cn(s.blockInner, s.getPageClass(pageName))}>
@@ -57,17 +57,11 @@ export default () => {
       </div>
 
       {isLightTheme ? (
-        <SavingBar
-          isTouched={isTouched}
-          field={SETTING_FIELD.PAGE_BG}
-          loading={saving}
-          top={10}
-          left={1}
-        />
+        <SavingBar isTouched={isTouched} field={FIELD.PAGE_BG} loading={saving} top={10} left={1} />
       ) : (
         <SavingBar
           isTouched={isDarkTouched}
-          field={SETTING_FIELD.PAGE_BG_DARK}
+          field={FIELD.PAGE_BG_DARK}
           loading={saving}
           top={10}
           left={1}

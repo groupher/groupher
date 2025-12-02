@@ -7,7 +7,7 @@ import { callDashboardDesc } from '~/signal'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
 
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import usePost from '../logic/usePost'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
@@ -111,7 +111,7 @@ export default () => {
       <SavingBar
         width='w-11/12'
         isTouched={isTouched}
-        field={SETTING_FIELD.POST_LAYOUT}
+        field={FIELD.POST_LAYOUT}
         loading={saving}
         top={20}
       />

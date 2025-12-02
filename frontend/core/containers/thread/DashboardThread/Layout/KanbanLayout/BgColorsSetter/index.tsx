@@ -10,7 +10,7 @@ import ResetSVG from '~/icons/Reset'
 
 import ColorSelector from '~/widgets/ColorSelector'
 
-import { SETTING_FIELD } from '../../../constant'
+import { FIELD } from '../../../constant'
 import useKanban from '../../../logic/useKanban'
 import SavingBar from '../../../SavingBar'
 import SectionLabel from '../../../SectionLabel'
@@ -99,7 +99,7 @@ export default () => {
 
       <SavingBar
         isTouched={isKanbanColorsTouched}
-        field={SETTING_FIELD.KANBAN_BG_COLORS}
+        field={FIELD.KANBAN_BG_COLORS}
         loading={saving}
         top={10}
       />

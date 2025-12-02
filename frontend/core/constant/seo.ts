@@ -1,3 +1,5 @@
+import type { TSettingField } from '~/stores/dashboard/spec'
+
 export const SEO_OG_KEYS = [
   'ogSiteName',
   'ogTitle',
@@ -7,7 +9,7 @@ export const SEO_OG_KEYS = [
   // not sync with backend, not not add
   // 'ogLocale',
   // 'ogPublisher',
-]
+] as const
 
 export const SEO_TW_KEYS = [
   'twTitle',
@@ -18,6 +20,10 @@ export const SEO_TW_KEYS = [
   'twImage',
   'twImageWidth',
   'twImageHeight',
-]
+] as const
 
-export const SEO_KEYS = ['seoEnable', ...SEO_OG_KEYS, ...SEO_TW_KEYS]
+export const SEO_KEYS = [
+  'seoEnable',
+  ...SEO_OG_KEYS,
+  ...SEO_TW_KEYS,
+] as const satisfies readonly TSettingField[]

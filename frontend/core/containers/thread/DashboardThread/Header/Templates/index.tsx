@@ -5,7 +5,7 @@ import { HEADER_LAYOUT } from '~/const/layout'
 import ArrowSVG from '~/icons/ArrowSimple'
 import Button from '~/widgets/Buttons/Button'
 
-import { SETTING_FIELD } from '../../constant'
+import { FIELD } from '../../constant'
 import useHeader from '../../logic/useHeader'
 import SavingBar from '../../SavingBar'
 import useSalon, { cn } from '../../salon/header/templates'
@@ -44,7 +44,7 @@ const Templates: FC = () => {
 
       <SavingBar
         isTouched={isLayoutTouched}
-        field={SETTING_FIELD.HEADER_LAYOUT}
+        field={FIELD.HEADER_LAYOUT}
         onConfirm={() => setShowAll(false)}
         loading={saving}
         top={10}

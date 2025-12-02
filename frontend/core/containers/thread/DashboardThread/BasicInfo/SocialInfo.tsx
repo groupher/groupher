@@ -1,9 +1,8 @@
 import SocialEditor from '~/widgets/SocialEditor'
 
-import { SETTING_FIELD } from '../constant'
-import SavingBar from '../SavingBar'
-
+import { FIELD } from '../constant'
 import useBaseInfo from '../logic/useBaseInfo'
+import SavingBar from '../SavingBar'
 import useSalon from '../salon/basic_info/base_info'
 
 export default () => {
@@ -15,14 +14,14 @@ export default () => {
       <SocialEditor
         value={socialLinks}
         onChange={(links) => {
-          // @ts-ignore
+          // @ts-expect-error
           edit(links, 'socialLinks')
         }}
       />
 
       <SavingBar
         isTouched={isSocialLinksTouched}
-        field={SETTING_FIELD.SOCIAL_LINKS}
+        field={FIELD.SOCIAL_LINKS}
         loading={saving}
         top={50}
       />

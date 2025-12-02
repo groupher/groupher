@@ -1,18 +1,15 @@
 import type { FC } from 'react'
 
 import type { TColorName, TTag } from '~/spec'
-
-import TagNode from '~/widgets/TagNode'
-import Input from '~/widgets/Input'
 import ColorSelector from '~/widgets/ColorSelector'
+import Input from '~/widgets/Input'
+import TagNode from '~/widgets/TagNode'
 
-import { SETTING_FIELD } from '../constant'
-
-import SavingBar from '../SavingBar'
-import TagAction from './TagAction'
-
+import { FIELD } from '../constant'
 import useTags from '../logic/useTags'
+import SavingBar from '../SavingBar'
 import useSalon, { cn } from '../salon/tags/tag_bar'
+import TagAction from './TagAction'
 
 export type TProps = {
   tag: TTag
@@ -32,12 +29,12 @@ const TagBar: FC<TProps> = ({ tag, isFirst, isLast, total }) => {
 
   return (
     <div key={tag.id} className={cn(s.wrapper, isEditMode && s.wrapperEdit)}>
-      <SavingBar isTouched={isEditMode} field={SETTING_FIELD.TAG}>
+      <SavingBar isTouched={isEditMode} field={FIELD.TAG}>
         {isEditMode ? (
           <ColorSelector
             activeColor={editingTag.color}
             onChange={(color) => editTag('editingTag', { ...editingTag, color })}
-            placement="bottom-start"
+            placement='bottom-start'
             offset={[-8, 0]}
           >
             <div className={s.dotSelector}>
@@ -60,7 +57,7 @@ const TagBar: FC<TProps> = ({ tag, isFirst, isLast, total }) => {
             {!activeTagGroup && <div className={s.catNote}>({tag.group})</div>}
           </div>
         )}
-        <div className="grow" />
+        <div className='grow' />
         {!isEditMode && <TagAction tag={tag} isFirst={isFirst} isLast={isLast} total={total} />}
       </SavingBar>
     </div>

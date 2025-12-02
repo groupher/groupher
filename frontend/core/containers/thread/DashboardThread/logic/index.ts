@@ -12,14 +12,14 @@
 // import type { TStore } from '../store'
 // import type { TSettingField } from '../spec'
 
-// import { SETTING_FIELD } from '../constant'
+// import { FIELD } from '../constant'
 // import { init as faqInit } from './faq'
 
 // import S from '../schema'
 
 // const { SR71, $solver, asyncRes, asyncErr } = asyncSuit
 // const sr71$ = new SR71({
-//   // @ts-ignore
+//   // @ts-expect-error
 //   receive: [EVENT.DRAWER.AFTER_CLOSE, EVENT.REFRESH_TAGS, EVENT.REFRESH_MODERATORS],
 // })
 
@@ -45,7 +45,7 @@
 
 // export const rssOnSave = (): void => {
 //   store.mark({ saving: true })
-//   const { RSS_FEED_TYPE, RSS_FEED_COUNT } = SETTING_FIELD
+//   const { RSS_FEED_TYPE, RSS_FEED_COUNT } = FIELD
 
 //   store.onSave(RSS_FEED_TYPE)
 //   store.onSave(RSS_FEED_COUNT)
@@ -64,7 +64,7 @@
 // }
 
 // export const rssOnCancel = (): void => {
-//   const { RSS_FEED_TYPE, RSS_FEED_COUNT } = SETTING_FIELD
+//   const { RSS_FEED_TYPE, RSS_FEED_COUNT } = FIELD
 
 //   store.rollbackEdit(RSS_FEED_TYPE)
 //   store.rollbackEdit(RSS_FEED_COUNT)
@@ -73,9 +73,9 @@
 // export const broadcastOnSave = (isArticle = false): void => {
 //   store.mark({ saving: true })
 //   // const layoutKey = !isArticle
-//   //   ? SETTING_FIELD.BROADCAST_LAYOUT
-//   //   : SETTING_FIELD.BROADCAST_ARTICLE_LAYOUT
-//   // const bgKey = !isArticle ? SETTING_FIELD.BROADCAST_BG : SETTING_FIELD.BROADCAST_ARTICLE_BG
+//   //   ? FIELD.BROADCAST_LAYOUT
+//   //   : FIELD.BROADCAST_ARTICLE_LAYOUT
+//   // const bgKey = !isArticle ? FIELD.BROADCAST_BG : FIELD.BROADCAST_ARTICLE_BG
 
 //   // store.onSave(layoutKey)
 //   // store.onSave(bgKey)
@@ -94,9 +94,9 @@
 
 // export const broadcastOnCancel = (isArticle = false): void => {
 //   const layoutKey = !isArticle
-//     ? SETTING_FIELD.BROADCAST_LAYOUT
-//     : SETTING_FIELD.BROADCAST_ARTICLE_LAYOUT
-//   const bgKey = !isArticle ? SETTING_FIELD.BROADCAST_BG : SETTING_FIELD.BROADCAST_ARTICLE_BG
+//     ? FIELD.BROADCAST_LAYOUT
+//     : FIELD.BROADCAST_ARTICLE_LAYOUT
+//   const bgKey = !isArticle ? FIELD.BROADCAST_BG : FIELD.BROADCAST_ARTICLE_BG
 
 //   store.rollbackEdit(layoutKey)
 //   store.rollbackEdit(bgKey)
@@ -108,7 +108,7 @@
 
 //   store.mark({
 //     faqSections: reject((faq: TFAQSection) => faq.index === index, toJS(faqSections)),
-//     savingField: SETTING_FIELD.FAQ_SECTION_DELETE,
+//     savingField: FIELD.FAQ_SECTION_DELETE,
 //   })
 //   sr71$.mutate(S.updateDashboardFaqs, { faqs: toJS(store.faqSections), community })
 // }
@@ -117,7 +117,7 @@
 // //   const { curCommunity } = store
 // //   const community = curCommunity.slug
 
-// //   if (field === SETTING_FIELD.MEDIA_REPORTS) {
+// //   if (field === FIELD.MEDIA_REPORTS) {
 // //     const { baseInfoSettings } = store
 // //     const { mediaReports } = baseInfoSettings
 
@@ -128,7 +128,7 @@
 // //     return
 // //   }
 
-// //   if (field === SETTING_FIELD.BASE_INFO) {
+// //   if (field === FIELD.BASE_INFO) {
 // //     const { baseInfoTab } = store
 
 // //     const params = {}
@@ -148,13 +148,13 @@
 // //     return
 // //   }
 
-// //   if (field === SETTING_FIELD.SOCIAL_LINKS) {
+// //   if (field === FIELD.SOCIAL_LINKS) {
 // //     const { socialLinks } = store.baseInfoSettings
 // //     sr71$.mutate(S.updateDashboardSocialLinks, { community, socialLinks })
 // //     return
 // //   }
 
-// //   if (field === SETTING_FIELD.SEO) {
+// //   if (field === FIELD.SEO) {
 // //     const params = {}
 // //     const { seoTab } = store
 
@@ -179,25 +179,25 @@
 // //     return
 // //   }
 
-// //   if (field === SETTING_FIELD.NAME_ALIAS) {
+// //   if (field === FIELD.NAME_ALIAS) {
 // //     const nameAlias = toJS(store.nameAlias)
 // //     sr71$.mutate(S.updateDashboardNameAlias, { community, nameAlias })
 // //     return
 // //   }
 
-// //   if (field === SETTING_FIELD.TAG) {
+// //   if (field === FIELD.TAG) {
 // //     console.log("## if it's here: ", field)
 // //     store.updateEditingTag()
 // //     sr71$.mutate(S.updateArticleTag, { ...toJS(store.editingTag), community })
 // //     return
 // //   }
 
-// //   if (field === SETTING_FIELD.FAQ_SECTIONS) {
+// //   if (field === FIELD.FAQ_SECTIONS) {
 // //     sr71$.mutate(S.updateDashboardFaqs, { faqs: toJS(store.faqSections), community })
 // //     return
 // //   }
 
-// //   if (field === SETTING_FIELD.FAQ_SECTION_ITEM) {
+// //   if (field === FIELD.FAQ_SECTION_ITEM) {
 // //     const { editingFAQ, faqSections } = store
 // //     const _editingFAQ = toJS(editingFAQ)
 // //     const _faqSections = toJS(faqSections)
@@ -212,7 +212,7 @@
 // //     return
 // //   }
 
-// //   if (field === SETTING_FIELD.FAQ_SECTION_ADD) {
+// //   if (field === FIELD.FAQ_SECTION_ADD) {
 // //     const { faqSections, editingFAQ } = store
 // //     const _faqSections = [...toJS(faqSections), toJS(editingFAQ)]
 
@@ -221,7 +221,7 @@
 // //     return
 // //   }
 
-// //   if (field === SETTING_FIELD.TAG_INDEX) {
+// //   if (field === FIELD.TAG_INDEX) {
 // //     const { activeTagThread, activeTagGroup: group, tags } = store
 // //     const thread = activeTagThread.toUpperCase()
 
@@ -322,14 +322,14 @@
 
 //   // let original
 
-//   // if (field === SETTING_FIELD.TAG_INDEX) {
+//   // if (field === FIELD.TAG_INDEX) {
 //   //   original = { ...store.original, tags: toJS(store.tags) }
-//   // } else if (includes(field, [SETTING_FIELD.FAQ_SECTION_ADD, SETTING_FIELD.FAQ_SECTION_DELETE])) {
+//   // } else if (includes(field, [FIELD.FAQ_SECTION_ADD, FIELD.FAQ_SECTION_DELETE])) {
 //   //   original = { ...store.original, faqSections: toJS(store.faqSections) }
-//   // } else if (field === SETTING_FIELD.TAG) {
+//   // } else if (field === FIELD.TAG) {
 //   //   store.updateEditingTag()
 //   //   original = { ...store.original }
-//   // } else if (field === SETTING_FIELD.BASE_INFO) {
+//   // } else if (field === FIELD.BASE_INFO) {
 //   //   const current = {}
 
 //   //   forEach((key) => {
@@ -337,7 +337,7 @@
 //   //   }, BASEINFO_KEYS)
 
 //   //   original = { ...store.original, ...current }
-//   // } else if (field === SETTING_FIELD.SEO) {
+//   // } else if (field === FIELD.SEO) {
 //   //   const current = {}
 
 //   //   forEach((key) => {
@@ -353,8 +353,8 @@
 
 //   // manually update in here not in store is because if this action fails,
 //   // store will rollback to previous value
-//   if (field === SETTING_FIELD.TAG) store.mark({ editingTag: null })
-//   if (field === SETTING_FIELD.NAME_ALIAS) store.mark({ editingAlias: null })
+//   if (field === FIELD.TAG) store.mark({ editingTag: null })
+//   if (field === FIELD.NAME_ALIAS) store.mark({ editingAlias: null })
 
 //   // avoid page component jump caused by saving state
 //   setTimeout(() => {

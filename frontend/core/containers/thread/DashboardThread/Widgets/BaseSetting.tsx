@@ -4,7 +4,7 @@ import { THREAD } from '~/const/thread'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import ColorSelector from '~/widgets/ColorSelector'
 
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useWidgets from '../logic/useWidgets'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
@@ -28,7 +28,7 @@ export default () => {
       <SectionLabel title='组件主题色' desc='默认与当前社区设置的主题色相一致。' />
       <SavingBar
         isTouched={isPrimaryColorTouched}
-        field={SETTING_FIELD.WIDGETS_PRIMARY_COLOR}
+        field={FIELD.WIDGETS_PRIMARY_COLOR}
         loading={saving}
         bottom={2}
       >
@@ -101,7 +101,7 @@ export default () => {
 
       <SavingBar
         isTouched={isThreadTouched}
-        field={SETTING_FIELD.WIDGETS_THREADS}
+        field={FIELD.WIDGETS_THREADS}
         loading={saving}
         top={10}
         bottom={10}

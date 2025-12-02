@@ -1,19 +1,18 @@
-import type { TSnakeUpperCase, TWidgetType } from '~/spec'
-
-import {
-  DASHBOARD_ROUTE,
-  DASHBOARD_LAYOUT_ROUTE,
-  DASHBOARD_BROADCAST_ROUTE,
-  DASHBOARD_ALIAS_ROUTE,
-  DASHBOARD_BASEINFO_ROUTE,
-  DASHBOARD_SEO_ROUTE,
-  DASHBOARD_DOC_ROUTE,
-} from '~/const/route'
 import { COLOR_NAME } from '~/const/colors'
 import { ONE_LINK_GROUP } from '~/const/dashboard'
+import {
+  DASHBOARD_ALIAS_ROUTE,
+  DASHBOARD_BASEINFO_ROUTE,
+  DASHBOARD_BROADCAST_ROUTE,
+  DASHBOARD_DOC_ROUTE,
+  DASHBOARD_LAYOUT_ROUTE,
+  DASHBOARD_ROUTE,
+  DASHBOARD_SEO_ROUTE,
+} from '~/const/route'
+import type { TSnakeUpperCase, TWidgetType } from '~/spec'
 import type { TSettingsFields } from '~/stores/dashboard/spec'
 
-import type { TSettingField, THeaderEditType, TFooterEditType } from './spec'
+import type { TFooterEditType, THeaderEditType, TSettingField } from './spec'
 
 export { SEO_KEYS, SEO_OG_KEYS, SEO_TW_KEYS } from '~/const/seo'
 
@@ -48,7 +47,7 @@ export const SETTING_LAYOUT_FIELD = {
   GOSS_BLUR_DARK: 'gossBlurDark',
 }
 
-export const SETTING_FIELD = {
+export const FIELD = {
   ...SETTING_LAYOUT_FIELD,
   BASE_INFO: 'baseInfo',
   MEDIA_REPORTS: 'mediaReports',
@@ -105,7 +104,7 @@ export const MENU = {
       {
         title: '别名',
         slug: DASHBOARD_ROUTE.ALIAS,
-        alias: SETTING_FIELD.NAME_ALIAS,
+        alias: FIELD.NAME_ALIAS,
       },
       {
         title: '管理员',

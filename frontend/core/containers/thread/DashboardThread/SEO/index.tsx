@@ -6,7 +6,7 @@ import VIEW from '~/const/view'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 import Tabs from '~/widgets/Switcher/Tabs'
 
-import { SEO_TABS, SETTING_FIELD } from '../constant'
+import { FIELD, SEO_TABS } from '../constant'
 import useSEO from '../logic/useSEO'
 import Portal from '../Portal'
 import SavingBar from '../SavingBar'
@@ -48,7 +48,7 @@ export default () => {
       {seoTab === DASHBOARD_SEO_ROUTE.SEARCH_ENGINE && <OpenGraph />}
       {seoTab === DASHBOARD_SEO_ROUTE.TWITTER && <TwitterGraph />}
 
-      <SavingBar field={SETTING_FIELD.SEO} isTouched={isTouched} loading={saving} width='7/12' />
+      <SavingBar field={FIELD.SEO} isTouched={isTouched} loading={saving} width='7/12' />
     </div>
   )
 }

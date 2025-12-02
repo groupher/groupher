@@ -1,18 +1,12 @@
-import { SETTING_FIELD } from '../constant'
-import SavingBar from '../SavingBar'
-
+import { FIELD } from '../constant'
 import useTags from '../logic/useTags'
+import SavingBar from '../SavingBar'
 
 export default () => {
   const { getTagsIndexTouched } = useTags()
   const isTouched = getTagsIndexTouched()
 
   return (
-    <SavingBar
-      isTouched={isTouched}
-      field={SETTING_FIELD.TAG_INDEX}
-      prefix="是否保存标签排序"
-      top={10}
-    />
+    <SavingBar isTouched={isTouched} field={FIELD.TAG_INDEX} prefix='是否保存标签排序' top={10} />
   )
 }

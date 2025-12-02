@@ -28,7 +28,6 @@ export default (): TRet => {
 
   return {
     edit,
-    // @ts-expect-error
     ...pick(SEO_KEYS, store),
     ...pick(['seoTab', 'loading', 'saving'], store),
     isTouched,

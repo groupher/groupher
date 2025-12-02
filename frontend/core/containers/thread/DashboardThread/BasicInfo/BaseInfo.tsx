@@ -3,7 +3,7 @@ import { LANGS_OPTIONS } from '~/const/i18n'
 import type { TSelectOption } from '~/spec'
 import Input from '~/widgets/Input'
 import Select from '~/widgets/Select'
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useBaseInfo from '../logic/useBaseInfo'
 import SavingBar from '../SavingBar'
 import useSalon from '../salon/basic_info/base_info'
@@ -66,12 +66,7 @@ export default () => {
 
       {/* avoid show savingbar when loading community info */}
       {title && (
-        <SavingBar
-          field={SETTING_FIELD.BASE_INFO}
-          isTouched={isTouched}
-          loading={saving}
-          top={30}
-        />
+        <SavingBar field={FIELD.BASE_INFO} isTouched={isTouched} loading={saving} top={30} />
       )}
 
       <div className='mb-12' />

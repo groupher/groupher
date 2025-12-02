@@ -4,7 +4,7 @@ import { callDashboardDesc } from '~/signal'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
 
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useBanner from '../logic/useBanner'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
@@ -142,7 +142,7 @@ export default () => {
       </div>
       <SavingBar
         isTouched={isTouched}
-        field={SETTING_FIELD.BANNER_LAYOUT}
+        field={FIELD.BANNER_LAYOUT}
         loading={saving}
         top={10}
         width='w-11/12'

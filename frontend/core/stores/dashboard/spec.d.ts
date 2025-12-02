@@ -266,6 +266,27 @@ export type TBaseInfoSettings = {
   mediaReports: TMediaReport[]
 }
 
+export type THeaderEditType = 'logo' | 'title'
+export type TFooterEditType = THeaderEditType | 'social'
+
+export type TChangeTagMode = 'settingTag' | 'editingTag'
+
+export type TSEOFields =
+  | 'seoEnable'
+  | 'ogSiteName'
+  | 'ogTitle'
+  | 'ogDescription'
+  | 'ogUrl'
+  | 'ogImage'
+  | 'twTitle'
+  | 'twDescription'
+  | 'twUrl'
+  | 'twCard'
+  | 'twSite'
+  | 'twImage'
+  | 'twImageWidth'
+  | 'twImageHeight'
+
 export type TSettingField =
   | 'baseInfo'
   | 'mediaReports'
@@ -341,25 +362,4 @@ export type TSettingField =
   | 'twCard'
   | 'pageBg'
   | 'pageBgDark'
-  | TSettingField
-
-export type THeaderEditType = 'logo' | 'title'
-export type TFooterEditType = THeaderEditType | 'social'
-
-export type TChangeTagMode = 'settingTag' | 'editingTag'
-
-export type TSEOFields =
-  | 'seoEnable'
-  | 'ogSiteName'
-  | 'ogTitle'
-  | 'ogDescription'
-  | 'ogUrl'
-  | 'ogImage'
-  | 'twTitle'
-  | 'twDescription'
-  | 'twUrl'
-  | 'twCard'
-  | 'twSite'
-  | 'twImage'
-  | 'twImageWidth'
-  | 'twImageHeight'
+  | TSEOFields

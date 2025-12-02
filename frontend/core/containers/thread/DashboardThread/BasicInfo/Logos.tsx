@@ -1,9 +1,8 @@
 import OSSUploader from '~/widgets/OSSUploader'
 
-import { SETTING_FIELD } from '../constant'
-import SavingBar from '../SavingBar'
-
+import { FIELD } from '../constant'
 import useBaseInfo from '../logic/useBaseInfo'
+import SavingBar from '../SavingBar'
 import useSalon from '../salon/basic_info/logos'
 
 export default () => {
@@ -19,7 +18,7 @@ export default () => {
         </OSSUploader>
       </div>
       <div className={s.desc}>上传 favicon, 仅支持 ico 格式，最大 10 KB。可选。</div>
-      <div className="mb-8" />
+      <div className='mb-8' />
       <h3 className={s.title}>LOGO</h3>
       <div className={s.logoBox}>
         <OSSUploader
@@ -32,12 +31,7 @@ export default () => {
       </div>
       <div className={s.desc}>上传社区 Logo, 支持常见图片格式，200 KB以内。可选。</div>
 
-      <SavingBar
-        field={SETTING_FIELD.BASE_INFO}
-        isTouched={isLogosTouched}
-        loading={saving}
-        top={10}
-      />
+      <SavingBar field={FIELD.BASE_INFO} isTouched={isLogosTouched} loading={saving} top={10} />
     </div>
   )
 }

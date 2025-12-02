@@ -5,7 +5,7 @@ import type { TSettingField } from '~/stores/dashboard/spec'
 
 export type TRet = {
   isChanged: (field: TSettingField) => boolean
-  anyChanged: (fields: TSettingField[]) => boolean
+  anyChanged: (fields: readonly TSettingField[]) => boolean
   mapArrayChanged: (key: string) => boolean
 }
 

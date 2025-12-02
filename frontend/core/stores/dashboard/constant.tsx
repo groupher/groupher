@@ -73,7 +73,7 @@ export const SETTING_LAYOUT_FIELD = {
   GOSS_BLUR_DARK: 'gossBlurDark',
 }
 
-export const SETTING_FIELD = {
+export const FIELD = {
   ...SETTING_LAYOUT_FIELD,
   BASE_INFO: 'baseInfo',
   MEDIA_REPORTS: 'mediaReports',
@@ -130,7 +130,7 @@ export const MENU = {
       {
         title: '别名',
         slug: DASHBOARD_ROUTE.ALIAS,
-        alias: SETTING_FIELD.NAME_ALIAS,
+        alias: FIELD.NAME_ALIAS,
       },
       {
         title: '管理员',
@@ -563,11 +563,14 @@ export const BASEINFO_BASIC_KEYS = [
   'introduction',
   'homepage',
   'slug',
-]
+] as const
 
-export const BASEINFO_OTHER_KEYS = ['city', 'techstack']
+export const BASEINFO_OTHER_KEYS = ['city', 'techstack'] as const
 
-export const BASEINFO_KEYS = [...BASEINFO_BASIC_KEYS, ...BASEINFO_OTHER_KEYS]
+export const BASEINFO_KEYS = [
+  ...BASEINFO_BASIC_KEYS,
+  ...BASEINFO_OTHER_KEYS,
+] as const satisfies readonly TSettingField[]
 
 export const HEADER_SETTING_KEYS = [
   'saving',

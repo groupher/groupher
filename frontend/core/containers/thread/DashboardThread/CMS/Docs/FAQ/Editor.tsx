@@ -3,10 +3,9 @@ import type { FC } from 'react'
 import type { TFAQSection } from '~/spec'
 import Input from '~/widgets/Input'
 
-import { SETTING_FIELD } from '../../../constant'
-import SavingBar from '../../../SavingBar'
-
+import { FIELD } from '../../../constant'
 import useFAQ from '../../../logic/useFAQ'
+import SavingBar from '../../../SavingBar'
 import useSalon from '../../../salon/cms/docs/faq/editor'
 
 type TProps = {
@@ -22,19 +21,19 @@ const Editor: FC<TProps> = ({ editingFAQ, addNew = false }) => {
     <div className={s.wrapper}>
       <Input
         className={s.titleInput}
-        placeholder="标题"
+        placeholder='标题'
         value={editingFAQ?.title}
         onChange={(e) => updateEditingFAQ({ ...editingFAQ, title: e.target.value })}
       />
       <Input
         className={s.bodyInput}
-        placeholder="内容 (支持 Markdown 语法)"
-        behavior="textarea"
+        placeholder='内容 (支持 Markdown 语法)'
+        behavior='textarea'
         value={editingFAQ?.body}
         onChange={(e) => updateEditingFAQ({ ...editingFAQ, body: e.target.value })}
       />
       <SavingBar
-        field={!addNew ? SETTING_FIELD.FAQ_SECTION_ITEM : SETTING_FIELD.FAQ_SECTION_ADD}
+        field={!addNew ? FIELD.FAQ_SECTION_ITEM : FIELD.FAQ_SECTION_ADD}
         onCancel={() => triggerEditFAQ(null)}
         bottom={30}
         isTouched

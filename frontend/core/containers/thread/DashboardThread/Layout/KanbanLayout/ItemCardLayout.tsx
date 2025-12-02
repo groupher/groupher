@@ -4,7 +4,7 @@ import UpvoteSVG from '~/icons/Upvote'
 
 import CheckLabel from '~/widgets/CheckLabel'
 
-import { SETTING_FIELD } from '../../constant'
+import { FIELD } from '../../constant'
 import useKanban from '../../logic/useKanban'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
@@ -65,12 +65,7 @@ export default () => {
         </button>
       </div>
 
-      <SavingBar
-        isTouched={isTouched}
-        field={SETTING_FIELD.KANBAN_CARD_LAYOUT}
-        loading={saving}
-        top={10}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.KANBAN_CARD_LAYOUT} loading={saving} top={10} />
     </div>
   )
 }

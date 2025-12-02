@@ -1,7 +1,6 @@
-import type { TDashboardAliasRoute, TNameAlias, TEditFunc } from '~/spec'
-
-import { SETTING_FIELD } from '~/stores/dashboard/constant'
 import useSubState from '~/hooks/useSubStore'
+import type { TDashboardAliasRoute, TEditFunc, TNameAlias } from '~/spec'
+import { FIELD } from '~/stores/dashboard/constant'
 
 import useHelper from './useHelper'
 
@@ -39,6 +38,6 @@ export default (): TRet => {
     changeTab,
     edit,
     updateEditingAlias,
-    resetEdit: () => resetEdit(SETTING_FIELD.NAME_ALIAS),
+    resetEdit: () => resetEdit(FIELD.NAME_ALIAS),
   }
 }

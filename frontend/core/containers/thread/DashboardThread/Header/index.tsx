@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useHeader from '../logic/useHeader'
 import SavingBar from '../SavingBar'
 import useSalon from '../salon/header'
@@ -19,7 +19,7 @@ const Header: FC = () => {
       <Editor />
 
       <SavingBar
-        field={SETTING_FIELD.HEADER_LINKS}
+        field={FIELD.HEADER_LINKS}
         isTouched={isTouched}
         loading={saving}
         top={10}
