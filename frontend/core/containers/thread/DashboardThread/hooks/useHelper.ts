@@ -1,11 +1,11 @@
 import { any, equals } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
 
-import type { TSettingField } from '../spec'
+import type { TDsbField } from '../spec'
 
 type TRet = {
-  isChanged: (field: TSettingField) => boolean
-  anyChanged: (fields: TSettingField[]) => boolean
+  isChanged: (field: TDsbField) => boolean
+  anyChanged: (fields: TDsbField[]) => boolean
   mapArrayChanged: (key: string) => boolean
 }
 
@@ -14,8 +14,8 @@ export default (): TRet => {
 
   const { original } = dashboard
 
-  const isChanged = (field: TSettingField): boolean => !equals(dashboard[field], original[field])
-  const anyChanged = (fields: TSettingField[]): boolean => any(isChanged)(fields)
+  const isChanged = (field: TDsbField): boolean => !equals(dashboard[field], original[field])
+  const anyChanged = (fields: TDsbField[]): boolean => any(isChanged)(fields)
 
   const mapArrayChanged = (key: string): boolean =>
     JSON.stringify(dashboard[key]) !== JSON.stringify(original[key])

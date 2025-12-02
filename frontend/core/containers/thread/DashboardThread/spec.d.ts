@@ -1,41 +1,10 @@
 import type { ReactNode } from 'react'
 
-import type {
-  TChangeMode,
-  TColorName,
-  TCommunityThread,
-  TDashboardBaseInfoRoute,
-  TDashboardDocRoute,
-  TDashboardPath,
-  TFAQSection,
-  TFooterLayout,
-  THeaderLayout,
-  TID,
-  TLinkItem,
-  TMediaReport,
-  TPagedArticles,
-  TPagedCommunities,
-  TSocialItem,
-} from '~/spec'
+import type { TChangeMode, TColorName, TDashboardPath, TLinkItem } from '~/spec'
 
 export { TNameAlias } from '~/spec'
 
 type TMenuGroupName = 'BASIC' | 'ANALYSIS' | 'CMS' | 'INTEGRATE'
-
-export type TCMSContents = {
-  loading: boolean
-  batchSelectedIDs: TID[]
-  docTab: TDashboardDocRoute
-
-  pagedPosts: TPagedArticles
-  pagedCommunities: TPagedCommunities
-  pagedDocs: TPagedArticles
-  pagedChangelogs: TPagedArticles
-
-  editingFAQ: TFAQSection
-  faqSections: TFAQSection[]
-  editingFAQIndex: number | null
-}
 
 export type TMenuGroup = {
   title: string
@@ -58,39 +27,7 @@ export type TLinkState = {
   editingGroupIndex: number | null
 }
 
-export type THeaderSettings = {
-  headerLayout: THeaderLayout
-  headerLinks: TLinkItem[]
-  threads: TCommunityThread[]
-} & TLinkState
-
-export type TFooterSettings = {
-  footerLayout: TFooterLayout
-  footerLinks: TLinkItem[]
-  threads: TCommunityThread[]
-} & TLinkState
-
-export type TBaseInfoSettings = {
-  loading: boolean
-  queryingMediaReportIndex: number | null
-  saving: boolean
-
-  favicon: string
-  logo: string
-  title: string
-  desc: string
-  introduction: string
-  homepage: string
-  slug: string
-  city: string
-  techstack: string
-
-  socialLinks: TSocialItem[]
-  baseInfoTab: TDashboardBaseInfoRoute
-  mediaReports: TMediaReport[]
-}
-
-export type TSettingField =
+export type TDsbField =
   | 'baseInfo'
   | 'mediaReports'
   | 'socialLinks'
@@ -171,10 +108,5 @@ export type TDocSettings = {
 
 export type THeaderEditType = 'logo' | 'title'
 export type TFooterEditType = THeaderEditType | 'social'
-
-export type TCurPageLinksKey = {
-  links: 'footerLinks' | 'headerLinks'
-  settings: 'footerSettings' | 'headerSettings'
-}
 
 export type TMoveLinkDir = 'up' | 'down' | 'top' | 'bottom'

@@ -10,9 +10,9 @@ import {
   DASHBOARD_SEO_ROUTE,
 } from '~/const/route'
 import type { TSnakeUpperCase, TWidgetType } from '~/spec'
-import type { TSettingsFields } from '~/stores/dashboard/spec'
+import type { TDsbFields } from '~/stores/dashboard/spec'
 
-import type { TFooterEditType, THeaderEditType, TSettingField } from './spec'
+import type { TDsbField, TFooterEditType, THeaderEditType } from './spec'
 
 export { SEO_KEYS, SEO_OG_KEYS, SEO_TW_KEYS } from '~/const/seo'
 
@@ -73,7 +73,7 @@ export const FIELD = {
   GOSS_BLUR: 'gossBlur',
   PAGE_BG: 'pageBg',
   PAGE_BG_DARK: 'pageBgDark',
-} as Record<TSnakeUpperCase<TSettingField>, TSettingField>
+} as Record<TSnakeUpperCase<TDsbField>, TDsbField>
 
 export const MENU = {
   BASIC: {
@@ -516,7 +516,7 @@ export const DEFAULT_LINK_ITEMS = [
   },
 ]
 
-export const BASEINFO_BASIC_KEYS: (keyof TSettingsFields)[] = [
+export const BASEINFO_BASIC_KEYS: (keyof TDsbFields)[] = [
   'locale',
   'title',
   'desc',
@@ -524,10 +524,10 @@ export const BASEINFO_BASIC_KEYS: (keyof TSettingsFields)[] = [
   'homepage',
   'slug',
 ]
-export const BASEINFO_LOGOS_KEYS: (keyof TSettingsFields)[] = ['logo', 'favicon']
-export const BASEINFO_OTHER_KEYS: (keyof TSettingsFields)[] = ['city', 'techstack']
+export const BASEINFO_LOGOS_KEYS: (keyof TDsbFields)[] = ['logo', 'favicon']
+export const BASEINFO_OTHER_KEYS: (keyof TDsbFields)[] = ['city', 'techstack']
 
-export const BASEINFO_KEYS: (keyof TSettingsFields)[] = [
+export const BASEINFO_KEYS: (keyof TDsbFields)[] = [
   ...BASEINFO_BASIC_KEYS,
   ...BASEINFO_LOGOS_KEYS,
   ...BASEINFO_OTHER_KEYS,

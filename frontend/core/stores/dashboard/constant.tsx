@@ -33,7 +33,7 @@ import {
 import SIZE from '~/const/size'
 import { THREAD } from '~/const/thread'
 import type { TSnakeUpperCase, TWidgetType } from '~/spec'
-import type { TFooterEditType, THeaderEditType, TSettingField, TSettingsFields } from './spec'
+import type { TDsbField, TDsbFields, TFooterEditType, THeaderEditType } from './spec'
 
 // import { Icon } from './styles/side_menu'
 
@@ -99,7 +99,7 @@ export const FIELD = {
   GOSS_BLUR: 'gossBlur',
   BROADCAST_ENABLE: 'broadcastEnable',
   ENABLE: 'enable',
-} as Record<TSnakeUpperCase<TSettingField>, TSettingField>
+} as Record<TSnakeUpperCase<TDsbField>, TDsbField>
 
 export const MENU = {
   BASIC: {
@@ -570,7 +570,7 @@ export const BASEINFO_OTHER_KEYS = ['city', 'techstack'] as const
 export const BASEINFO_KEYS = [
   ...BASEINFO_BASIC_KEYS,
   ...BASEINFO_OTHER_KEYS,
-] as const satisfies readonly TSettingField[]
+] as const satisfies readonly TDsbField[]
 
 export const HEADER_SETTING_KEYS = [
   'saving',
@@ -632,7 +632,7 @@ export const DEFAULT_NEW_FAQ = {
 
 export const INIT_KANBAN_COLORS = [COLOR_NAME.BLACK, COLOR_NAME.BLACK, COLOR_NAME.BLACK]
 
-export const SETTING_FIELDS: TSettingsFields = {
+export const SETTING_FIELDS: TDsbFields = {
   // baseInfo
   favicon: '',
   logo: '',

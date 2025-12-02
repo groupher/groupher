@@ -1,9 +1,9 @@
 import { pick } from 'ramda'
 
 import useDashboard from '~/hooks/useDashboard'
-import type { TBroadcastConfig } from '~/spec'
+import type { TBroadcastConf } from '~/spec'
 
-export default (): TBroadcastConfig => {
+export default (): TBroadcastConf => {
   const store = useDashboard()
 
   return pick(

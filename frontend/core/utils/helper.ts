@@ -6,7 +6,7 @@ import type {
   TArticleState,
   TColorName,
   TCommunityThread,
-  TDashboardThreadConfig,
+  TDsdThreadConf,
   TNameAlias,
   TWindow,
 } from '~/spec'
@@ -290,7 +290,7 @@ export const removeEmptyValuesFromObject = (object) => {
  */
 export const publicThreads = (
   threads: TCommunityThread[],
-  dashboardSettings: TDashboardThreadConfig,
+  dashboardSettings: TDsdThreadConf,
 ): TCommunityThread[] => {
   const { enable, nameAlias } = dashboardSettings
 

@@ -1,10 +1,10 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import type { TDashboardSEOConfig, TDashboardSEORoute, TEditFunc } from '~/spec'
+import type { TDashboardSEORoute, TDsdSEOConf, TEditFunc } from '~/spec'
 import { SEO_KEYS } from '../constant'
 import useHelper from './useHelper'
 
-type TRet = TDashboardSEOConfig & {
+type TRet = TDsdSEOConf & {
   edit: TEditFunc
   saving: boolean
   seoTab: TDashboardSEORoute

@@ -10,7 +10,7 @@
 // import { toast, errRescue } from '~/signal'
 
 // import type { TStore } from '../store'
-// import type { TSettingField } from '../spec'
+// import type { TDsbField } from '../spec'
 
 // import { FIELD } from '../constant'
 // import { init as faqInit } from './faq'
@@ -241,8 +241,8 @@
 // /**
 //  * rollback editing value to init value
 //  */
-// export const rollbackEdit = (field: TSettingField): void => store.rollbackEdit(field)
-// export const resetEdit = (field: TSettingField): void => store.resetEdit(field)
+// export const rollbackEdit = (field: TDsbField): void => store.rollbackEdit(field)
+// export const resetEdit = (field: TDsbField): void => store.resetEdit(field)
 // export const edit = (e: TEditValue, field: string): void => updateEditing(store, field, e)
 
 // export const reloadModerators = (): void => {
@@ -254,7 +254,7 @@
 // /**
 //  * save to server
 //  */
-// export const onSave = (field: TSettingField): void => {
+// export const onSave = (field: TDsbField): void => {
 //   alert('## onSave in logic, move to hooks')
 // }
 
@@ -365,7 +365,7 @@
 // const _handleError = () => {
 //   const field = store.savingField
 //   // store.mark({ saving: false, savingField: null })
-//   store.rollbackEdit(field as TSettingField)
+//   store.rollbackEdit(field as TDsbField)
 // }
 
 // const DataSolver = [

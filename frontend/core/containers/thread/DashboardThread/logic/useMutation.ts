@@ -15,7 +15,7 @@ import {
   SEO_KEYS,
   SETTING_LAYOUT_FIELD,
 } from '~/stores/dashboard/constant'
-import type { TSettingField } from '~/stores/dashboard/spec'
+import type { TDsbField } from '~/stores/dashboard/spec'
 import S from '../schema'
 
 type TRet = {
@@ -117,7 +117,7 @@ export default (): TRet => {
       })
   }
 
-  const mutation = (field: TSettingField, e: TEditValue): Promise<void> => {
+  const mutation = (field: TDsbField, e: TEditValue): Promise<void> => {
     if (field === FIELD.ENABLE) {
       const curEnable = storeRef.current.enable
       const initEnable = storeRef.current.original.enable

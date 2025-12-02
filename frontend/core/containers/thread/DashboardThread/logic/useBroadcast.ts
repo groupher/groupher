@@ -1,16 +1,11 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import type {
-  TBroadcastConfig,
-  TBroadcastLayout,
-  TDashboardBroadcastRoute,
-  TEditFunc,
-} from '~/spec'
+import type { TBroadcastConf, TBroadcastLayout, TDashboardBroadcastRoute, TEditFunc } from '~/spec'
 import { FIELD } from '~/stores/dashboard/constant'
 
 import useHelper from './useHelper'
 
-type TRet = TBroadcastConfig & {
+type TRet = TBroadcastConf & {
   edit: TEditFunc
   broadcastLayout: TBroadcastLayout
   broadcastTab: TDashboardBroadcastRoute

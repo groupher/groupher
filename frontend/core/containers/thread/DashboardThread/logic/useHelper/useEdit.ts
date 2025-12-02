@@ -3,16 +3,16 @@ import { useCallback } from 'react'
 import useDashboard from '~/hooks/useDashboard'
 import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
 import { BASEINFO_KEYS, DASHBOARD_DEMO_KEY, FIELD, SEO_KEYS } from '~/stores/dashboard/constant'
-import type { TSettingField } from '~/stores/dashboard/spec'
+import type { TDsbField } from '~/stores/dashboard/spec'
 import BStore from '~/utils/bstore'
 import { isObject } from '~/validator'
 import useMutation from '../useMutation'
 
 export type TRet = {
   edit: TEditFunc
-  rollbackEdit: (field: TSettingField) => void
-  resetEdit: (field: TSettingField) => void
-  onSave: (field: TSettingField) => void
+  rollbackEdit: (field: TDsbField) => void
+  resetEdit: (field: TDsbField) => void
+  onSave: (field: TDsbField) => void
 }
 
 export default (): TRet => {
@@ -20,7 +20,7 @@ export default (): TRet => {
   const { mutation } = useMutation()
 
   const edit = useCallback(
-    (v: TEditValue, field: TSettingField): void => {
+    (v: TEditValue, field: TDsbField): void => {
       let value = v
       if (isObject(v) && has('target', v)) {
         value = v.target.value
@@ -31,7 +31,7 @@ export default (): TRet => {
     [store.commit],
   )
 
-  const _rollbackByKeys = (keys: readonly TSettingField[]): void => {
+  const _rollbackByKeys = (keys: readonly TDsbField[]): void => {
     for (let i = 0; i < keys.length; i += 1) {
       const key = keys[i]
       const initValue = store.original[key]
@@ -48,7 +48,7 @@ export default (): TRet => {
     return targetIdx
   }
 
-  const rollbackEdit = (field: TSettingField): void => {
+  const rollbackEdit = (field: TDsbField): void => {
     if (field === FIELD.BASE_INFO) {
       _rollbackByKeys(BASEINFO_KEYS)
       return
@@ -101,7 +101,7 @@ export default (): TRet => {
     BStore.set(DASHBOARD_DEMO_KEY, JSON.stringify(saveSlf))
   }
 
-  const resetEdit = (field: TSettingField): void => {
+  const resetEdit = (field: TDsbField): void => {
     console.log('## resetEdit')
 
     if (field === FIELD.NAME_ALIAS) {
@@ -117,7 +117,7 @@ export default (): TRet => {
     // slf.mark({ demoAlertEnable: true })
   }
 
-  const onSave = (field: TSettingField): void => {
+  const onSave = (field: TDsbField): void => {
     console.log('## on save: ', field)
     store.commit({ saving: true, savingField: field })
 

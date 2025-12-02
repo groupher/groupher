@@ -1,4 +1,4 @@
-import type { TSettingField } from '~/stores/dashboard/spec'
+import type { TDsbField } from '~/stores/dashboard/spec'
 import type { TFAQSection } from './article'
 import type { TColorName } from './color'
 import type { TModerator } from './community'
@@ -34,12 +34,12 @@ export type TMediaReport = {
 }
 
 export type TDashboard = {
-  enable?: TEnableConfig
+  enable?: TEnableConf
   nameAlias?: TNameAlias[]
 
   socialLinks?: TSocialItem[]
   faqs?: TFAQSection[]
-  seo?: TDashboardSEOConfig
+  seo?: TDsdSEOConf
 
   layout?: {
     brandLayout: TBrandLayout
@@ -87,7 +87,7 @@ export type TParseDashboard = TDashboard & {
   original: TDashboard
 }
 
-export type TBroadcastConfig = {
+export type TBroadcastConf = {
   // banner
   broadcastLayout: TBroadcastLayout
   broadcastBg: TColorName
@@ -98,7 +98,7 @@ export type TBroadcastConfig = {
   broadcastArticleEnable: boolean
 }
 
-export type TEnableConfig = {
+export type TEnableConf = {
   post: boolean
   kanban: boolean
   changelog: boolean
@@ -121,12 +121,12 @@ export type TNameAlias = {
   group?: string
 }
 
-export type TDashboardThreadConfig = {
-  enable: TEnableConfig
+export type TDsdThreadConf = {
+  enable: TEnableConf
   nameAlias: TNameAlias[]
 }
 
-export type TDashboardSEOConfig = {
+export type TDsdSEOConf = {
   seoEnable: boolean
   ogSiteName: string
   ogTitle: string
@@ -154,4 +154,4 @@ export type TOverview = {
   docsCount: number
 }
 
-export type TEditFunc = (value: TEditValue, field: TSettingField) => void
+export type TEditFunc = (value: TEditValue, field: TDsbField) => void

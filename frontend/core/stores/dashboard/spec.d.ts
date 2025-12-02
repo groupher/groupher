@@ -16,10 +16,9 @@ import type {
   TChangelogLayout,
   TChangeMode,
   TColorName,
-  TDashboardBaseInfoRoute,
   TDocFAQLayout,
   TDocLayout,
-  TEnableConfig,
+  TEnableConf,
   TFAQSection,
   TFooterLayout,
   THeaderLayout,
@@ -62,7 +61,7 @@ type TGroupCategory = {
   files: TFile[]
 }
 
-export type TSettingsFields = {
+export type TDsbFields = {
   // baseInfo
   favicon: string
   logo: string
@@ -146,7 +145,7 @@ export type TSettingsFields = {
   activeTagGroup: string | null
   activeTagThread: string | null
   nameAlias: TNameAlias[]
-  enable: TEnableConfig
+  enable: TEnableConf
 
   faqSections: TFAQSection[]
   rssFeedType: TRSSType
@@ -167,11 +166,11 @@ export type TSettingsFields = {
   widgetsType: TWidgetType
 }
 
-export type TInit = Partial<TSettingsFields>
+export type TInit = Partial<TDsbFields>
 
-export type TStore = TSettingsFields & {
+export type TStore = TDsbFields & {
   initFilled: boolean
-  original: TSettingsFields
+  original: TDsbFields
 
   savingField: string | null
   saving: boolean
@@ -246,26 +245,6 @@ export type TDocSettings = {
   categories: TDocCategory[]
 }
 
-export type TBaseInfoSettings = {
-  loading: boolean
-  queryingMediaReportIndex: number | null
-  saving: boolean
-
-  favicon: string
-  logo: string
-  title: string
-  desc: string
-  introduction: string
-  homepage: string
-  slug: string
-  city: string
-  techstack: string
-
-  socialLinks: TSocialItem[]
-  baseInfoTab: TDashboardBaseInfoRoute
-  mediaReports: TMediaReport[]
-}
-
 export type THeaderEditType = 'logo' | 'title'
 export type TFooterEditType = THeaderEditType | 'social'
 
@@ -287,7 +266,7 @@ export type TSEOFields =
   | 'twImageWidth'
   | 'twImageHeight'
 
-export type TSettingField =
+export type TDsbField =
   | 'baseInfo'
   | 'mediaReports'
   | 'socialLinks'

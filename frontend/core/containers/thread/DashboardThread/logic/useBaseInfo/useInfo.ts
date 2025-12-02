@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import type { TSettingField } from '~/stores/dashboard/spec'
+import type { TDsbField } from '~/stores/dashboard/spec'
 import { BASEINFO_BASIC_KEYS, BASEINFO_OTHER_KEYS } from '../../constant'
 import useHelper from '../useHelper'
 
@@ -26,7 +26,7 @@ export default (): TRet => {
   return {
     ...pick(BASEINFO_BASIC_KEYS, store),
     ...pick(BASEINFO_OTHER_KEYS, store),
-    isTouched: anyChanged(BASEINFO_BASIC_KEYS as TSettingField[]),
+    isTouched: anyChanged(BASEINFO_BASIC_KEYS as TDsbField[]),
     isCityTouched: anyChanged(['city']),
   }
 }
