@@ -1,23 +1,15 @@
 import { cacheLife, cacheTag } from 'next/cache'
-import { isEmpty, mergeRight, reject } from 'ramda'
+import { includes, isEmpty, mergeRight, reject, values } from 'ramda'
 import { CACHE_TAG } from '~/const/cache'
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
 import { HOME_COMMUNITY } from '~/const/name'
-import THEME from '~/const/theme'
-import { THREAD } from '~/const/thread'
+import { ROUTE } from '~/const/route'
+import { ARTICLE_THREAD, THREAD } from '~/const/thread'
 import URL_PARAM from '~/const/url_param'
 import { loadLocaleFile } from '~/i18n'
 import { P } from '~/schemas'
-import type {
-  TCommunityInfo,
-  TMetric,
-  TPagedArticles,
-  TTag,
-  TThemeName,
-  TThread,
-  TUrlInfo,
-} from '~/spec'
+import type { TCommunityInfo, TMetric, TPagedArticles, TTag, TThread, TUrlInfo } from '~/spec'
 import type { TRootStoreInit } from '~/stores/spec'
 import { gqFetch } from '~/utils/api'
 import { extractQueryName } from '~/utils/graphql'
@@ -93,39 +85,45 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
   return data.pagedArticleTags.entries
 }
 
-// type TServerPostsPage = [community: TCommunity, pagedPosts: TPagedPosts, tags: TTag[]]
+/**
+ * Extract par:
+ * /:community/:thread
+ * /:community/:thread/:id
+ *
+ * community: string (any)
+ * thread: ARTICLE_THREAD | THREAD.DASHBOARD | others in future
+ * id: optional
+ */
+const parsePath = (pathname: string) => {
+  const segments = pathname.split('/').filter(Boolean)
 
-const useThemeFromURL = async (_searchParams: URLSearchParams): Promise<TThemeName> => {
-  // 'use cache'
-  // const theme = searchParams?.get('theme')
+  const community = segments[0] || null
+  const thread = segments[1] || null
+  const id = segments[2] || null
 
-  // if (theme === THEME.DARK) {
-  //   return THEME.DARK
-  // }
-
-  return THEME.LIGHT
+  return { community, thread, id }
 }
 
-const useMetric = async (pathname): Promise<TMetric> => {
-  console.log('## TODO: useMetric: ', pathname)
-  // 'use cache'
-  // const thread = parseThread(pathname)
-  // const articleParams = useArticleParams()
+export const useMetric = async (pathname: string): Promise<TMetric> => {
+  // --- Step 0: Special Routes ---
+  if (pathname === ROUTE.APPLY_COMMUNITY) {
+    return METRIC.APPLY_COMMUNITY
+  }
 
-  // if (includes(thread, values(ARTICLE_THREAD)) && articleParams.id) {
-  //   return METRIC.ARTICLE
-  // }
+  // --- Step 1: Parse path ---
+  const { thread, id } = parsePath(pathname)
 
-  // if (ROUTE.APPLY_COMMUNITY === pathname) {
-  //   return METRIC.APPLY_COMMUNITY
-  // }
+  // --- Step 2: If thread is dashboard ---
+  if (thread === THREAD.DASHBOARD) {
+    return METRIC.DASHBOARD
+  }
 
-  // if (thread === THREAD.DASHBOARD) {
-  //   return METRIC.DASHBOARD
-  // }
+  // --- Step 3: Article case ---
+  if (thread && includes(thread, values(ARTICLE_THREAD)) && id) {
+    return METRIC.ARTICLE
+  }
 
-  // return METRIC.COMMUNITY
-  return METRIC.DASHBOARD
+  return METRIC.COMMUNITY
 }
 
 export const parseRouteInfo = (info: string): TUrlInfo => {
@@ -146,11 +144,10 @@ const getPathSegment = (urlString: string, position: number): string | null => {
 }
 
 export const getSSRInitData = async (urlInfo: TUrlInfo): Promise<TRootStoreInit> => {
-  const { pathname, searchParams } = urlInfo
+  const { pathname } = urlInfo
   const community$ = getPathSegment(pathname, 0)
   const thread$ = getPathSegment(pathname, 1) as TThread
 
-  const theme = await useThemeFromURL(searchParams)
   const metric = await useMetric(pathname)
 
   const { schema } = getPagedQuery(community$, thread$)
@@ -168,7 +165,6 @@ export const getSSRInitData = async (urlInfo: TUrlInfo): Promise<TRootStoreInit>
   // console.log('## pagedArticles got in server: ', pagedArticles)
 
   const initState = {
-    theme,
     locale,
     localeData: JSON.stringify(localeData),
     articles: {},
