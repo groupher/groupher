@@ -8,7 +8,7 @@ export const SITE = {
   DASHBOARD: process.env.DASHBOARD_SITE || 'https://dashboard.groupher.com',
 }
 
-const DASHBOARD_DOMAIN = 'dashboard'
+const DSB_DOMAIN = 'dashboard'
 
 /**
  * Get the static asset path signature for a given site URL
@@ -54,7 +54,7 @@ export const isDashboardStaticRoute = (pathname: string): boolean => {
  * - isDashboardRoute('/organizations/settings/dashboard', 'www.example.com') => false
  */
 export const isDashboardRoute = (pathname: string, host: string): boolean => {
-  if (host.startsWith(`${DASHBOARD_DOMAIN}.`)) {
+  if (host.startsWith(`${DSB_DOMAIN}.`)) {
     return true
   }
 
@@ -76,7 +76,7 @@ export const isDashboardRoute = (pathname: string, host: string): boolean => {
  *   => new URL('/cps?page=1', 'https://dashboard.groupher.com')
  */
 export const getDashboardUrl = (pathname: string, host: string, search: string): URL => {
-  if (host.startsWith(`${DASHBOARD_DOMAIN}.`)) {
+  if (host.startsWith(`${DSB_DOMAIN}.`)) {
     // If it's already a dashboard subdomain, just rewrite to DASHBOARD_SITE
     return new URL(pathname + search, SITE.DASHBOARD)
   }

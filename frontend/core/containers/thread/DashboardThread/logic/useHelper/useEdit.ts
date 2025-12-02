@@ -1,43 +1,37 @@
+import { findIndex, has, omit, update } from 'ramda'
 import { useCallback } from 'react'
-import { has, omit, findIndex, update } from 'ramda'
-
-import type { TEditValue, TNameAlias, TEditFunc } from '~/spec'
-import { isObject } from '~/validator'
 import useDashboard from '~/hooks/useDashboard'
+import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
+import { BASEINFO_KEYS, DSB_DEMO_KEY, FIELD, SEO_KEYS } from '~/stores/dashboard/constant'
+import type { TDsbField } from '~/stores/dashboard/spec'
 import BStore from '~/utils/bstore'
-
-import {
-  DASHBOARD_DEMO_KEY,
-  SETTING_FIELD,
-  BASEINFO_KEYS,
-  SEO_KEYS,
-} from '~/stores/dashboard/constant'
-
-import type { TSettingField } from '~/stores/dashboard/spec'
+import { isObject } from '~/validator'
 import useMutation from '../useMutation'
 
 export type TRet = {
   edit: TEditFunc
-  rollbackEdit: (field: TSettingField) => void
-  resetEdit: (field: TSettingField) => void
-  onSave: (field: TSettingField) => void
+  rollbackEdit: (field: TDsbField) => void
+  resetEdit: (field: TDsbField) => void
+  onSave: (field: TDsbField) => void
 }
 
 export default (): TRet => {
   const store = useDashboard()
   const { mutation } = useMutation()
 
-  const edit = useCallback((v: TEditValue, field: TSettingField): void => {
-    let value = v
-    if (isObject(v) && has('target', v)) {
-      // @ts-ignore
-      value = v.target.value
-    }
+  const edit = useCallback(
+    (v: TEditValue, field: TDsbField): void => {
+      let value = v
+      if (isObject(v) && has('target', v)) {
+        value = v.target.value
+      }
 
-    store.commit({ [field]: value })
-  }, [])
+      store.commit({ [field]: value })
+    },
+    [store.commit],
+  )
 
-  const _rollbackByKeys = (keys: string[]): void => {
+  const _rollbackByKeys = (keys: readonly TDsbField[]): void => {
     for (let i = 0; i < keys.length; i += 1) {
       const key = keys[i]
       const initValue = store.original[key]
@@ -54,33 +48,33 @@ export default (): TRet => {
     return targetIdx
   }
 
-  const rollbackEdit = (field: TSettingField): void => {
-    if (field === SETTING_FIELD.BASE_INFO) {
+  const rollbackEdit = (field: TDsbField): void => {
+    if (field === FIELD.BASE_INFO) {
       _rollbackByKeys(BASEINFO_KEYS)
       return
     }
 
-    if (field === SETTING_FIELD.SEO) {
+    if (field === FIELD.SEO) {
       _rollbackByKeys(SEO_KEYS)
       return
     }
 
-    if (field === SETTING_FIELD.TAG) {
+    if (field === FIELD.TAG) {
       store.commit({ editingTag: null })
       return
     }
 
-    if (field === SETTING_FIELD.TAG_INDEX) {
+    if (field === FIELD.TAG_INDEX) {
       store.commit({ tags: store.original.tags })
       return
     }
 
-    if (field === SETTING_FIELD.FAQ_SECTIONS) {
+    if (field === FIELD.FAQ_SECTIONS) {
       store.commit({ faqSections: store.original.faqSections })
       return
     }
 
-    if (field === SETTING_FIELD.NAME_ALIAS) {
+    if (field === FIELD.NAME_ALIAS) {
       const targetIdx = _findAliasIdx()
       if (targetIdx < 0) return
 
@@ -104,13 +98,13 @@ export default (): TRet => {
       store,
     )
 
-    BStore.set(DASHBOARD_DEMO_KEY, JSON.stringify(saveSlf))
+    BStore.set(DSB_DEMO_KEY, JSON.stringify(saveSlf))
   }
 
-  const resetEdit = (field: TSettingField): void => {
+  const resetEdit = (field: TDsbField): void => {
     console.log('## resetEdit')
 
-    if (field === SETTING_FIELD.NAME_ALIAS) {
+    if (field === FIELD.NAME_ALIAS) {
       const targetIdx = _findAliasIdx()
       if (targetIdx < 0) return
 
@@ -123,7 +117,7 @@ export default (): TRet => {
     // slf.mark({ demoAlertEnable: true })
   }
 
-  const onSave = (field: TSettingField): void => {
+  const onSave = (field: TDsbField): void => {
     console.log('## on save: ', field)
     store.commit({ saving: true, savingField: field })
 

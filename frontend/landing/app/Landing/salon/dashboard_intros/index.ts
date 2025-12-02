@@ -1,4 +1,4 @@
-import { DASHBOARD_ROUTE } from '~/const/route'
+import { DSB_ROUTE } from '~/const/route'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TIntroTab } from '../../DashboardIntros/spec'
@@ -28,37 +28,33 @@ export default ({ tab }: TProps) => {
     bgGradientPurple: cn(
       bgGradient,
       'landing-gradient-purple',
-      tab === DASHBOARD_ROUTE.LAYOUT && 'opacity-100',
+      tab === DSB_ROUTE.LAYOUT && 'opacity-100',
     ),
     bgGradientBlue: cn(
       bgGradient,
       'landing-gradient-blue',
-      tab === DASHBOARD_ROUTE.POST && 'opacity-100',
+      tab === DSB_ROUTE.POST && 'opacity-100',
     ),
     bgGradientGreen: cn(
       bgGradient,
       'landing-gradient-green',
-      tab === DASHBOARD_ROUTE.TAGS && 'opacity-100',
+      tab === DSB_ROUTE.TAGS && 'opacity-100',
     ),
     bgGradientBrown: cn(
       bgGradient,
       'landing-gradient-brown',
-      tab === DASHBOARD_ROUTE.HEADER && 'opacity-100',
+      tab === DSB_ROUTE.HEADER && 'opacity-100',
     ),
     bgGradientRed: cn(
       bgGradient,
       'landing-gradient-red',
-      tab === DASHBOARD_ROUTE.ADMINS && 'opacity-100',
+      tab === DSB_ROUTE.ADMINS && 'opacity-100',
     ),
-    bgGradientCyan: cn(
-      bgGradient,
-      'landing-gradient-cyan',
-      tab === DASHBOARD_ROUTE.SEO && 'opacity-100',
-    ),
+    bgGradientCyan: cn(bgGradient, 'landing-gradient-cyan', tab === DSB_ROUTE.SEO && 'opacity-100'),
     bgGradientYellow: cn(
       bgGradient,
       'landing-gradient-yellow',
-      tab === DASHBOARD_ROUTE.INOUT && 'opacity-100',
+      tab === DSB_ROUTE.INOUT && 'opacity-100',
     ),
   }
 }

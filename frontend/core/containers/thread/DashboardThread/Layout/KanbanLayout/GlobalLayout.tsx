@@ -2,7 +2,7 @@ import { KANBAN_LAYOUT } from '~/const/layout'
 
 import CheckLabel from '~/widgets/CheckLabel'
 
-import { SETTING_FIELD } from '../../constant'
+import { FIELD } from '../../constant'
 import useKanban from '../../logic/useKanban'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
@@ -73,7 +73,7 @@ export default () => {
       <SavingBar
         width='w-11/12'
         isTouched={isTouched}
-        field={SETTING_FIELD.KANBAN_LAYOUT}
+        field={FIELD.KANBAN_LAYOUT}
         loading={saving}
         top={8}
         bottom={20}

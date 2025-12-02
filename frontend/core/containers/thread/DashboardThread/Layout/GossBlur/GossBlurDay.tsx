@@ -5,7 +5,7 @@ import useWallpaper from '~/hooks/useWallpaper'
 
 import RangeSlider from '~/widgets/RangeSlider'
 
-import { SETTING_FIELD } from '../../constant'
+import { FIELD } from '../../constant'
 import useGossBlur from '../../logic/useGossBlur'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
@@ -77,7 +77,7 @@ export default () => {
       <SavingBar
         width='w-11/12'
         isTouched={isTouched}
-        field={SETTING_FIELD.GOSS_BLUR}
+        field={FIELD.GOSS_BLUR}
         loading={saving}
         top={10}
       />

@@ -136,3 +136,7 @@ export const DEFAULT_LINK_ITEMS = [
     groupIndex: 2,
   },
 ]
+
+export const DSB = {
+  // all options
+}

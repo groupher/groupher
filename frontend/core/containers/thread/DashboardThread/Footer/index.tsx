@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useFooter from '../logic/useFooter'
 import SavingBar from '../SavingBar'
 import useSalon from '../salon/footer'
@@ -19,7 +19,7 @@ const Footer: FC = () => {
       <Editor />
 
       <SavingBar
-        field={SETTING_FIELD.FOOTER_LINKS}
+        field={FIELD.FOOTER_LINKS}
         isTouched={isTouched}
         loading={saving}
         top={10}

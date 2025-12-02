@@ -1,5 +1,5 @@
 {
-  "extends": "@groupher/frontend-core/tsconfig.json",
+  "extends": "@groupher/frontend-core/tsconfig",
   "compilerOptions": {
     "baseUrl": "."
   },

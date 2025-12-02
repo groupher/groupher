@@ -1,6 +1,6 @@
-import { concat, keys, reduce, includes } from 'ramda'
-import TYPE from '~/const/type'
+import { concat, includes, keys, reduce } from 'ramda'
 import { ARTICLE_THREAD } from '~/const/thread'
+import TYPE from '~/const/type'
 
 type Options = {
   position?: 'H' | 'M' | 'L'
@@ -39,9 +39,7 @@ const VIEWER_TYPES = reduce(
  */
 export const isWideMode = (type: string): boolean => {
   return (
-    includes(type, VIEWER_TYPES) ||
-    type === TYPE.DRAWER.DASHBOARD_DESC ||
-    type === TYPE.DRAWER.G_EDITOR
+    includes(type, VIEWER_TYPES) || type === TYPE.DRAWER.DSB_DESC || type === TYPE.DRAWER.G_EDITOR
   )
 }
 

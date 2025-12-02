@@ -3,7 +3,7 @@
 import { clone, filter, find, findIndex, forEach, keys, reject, remove } from 'ramda'
 import { useEffect, useRef } from 'react'
 import { MORE_GROUP } from '~/const/dashboard'
-import { DASHBOARD_ROUTE, ROUTE } from '~/const/route'
+import { DSB_ROUTE, ROUTE } from '~/const/route'
 import { groupByKey, sortByIndex } from '~/helper'
 import useDashboard from '~/hooks/useDashboard'
 
@@ -39,10 +39,10 @@ export default (): TRet => {
   const getLinks = (): TLinkItem[] => {
     const { curTab, headerLinks, footerLinks } = storeRef.current
 
-    return clone(curTab !== DASHBOARD_ROUTE.FOOTER ? headerLinks : footerLinks)
+    return clone(curTab !== DSB_ROUTE.FOOTER ? headerLinks : footerLinks)
   }
 
-  const linksKey = curTab !== DASHBOARD_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
+  const linksKey = curTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
 
   const emptyLinksIfNedd = (links: TLinkItem[]): TLinkItem[] => {
     if (linksKey === 'headerLinks' && links.length === 1 && links[0].group === MORE_GROUP) {

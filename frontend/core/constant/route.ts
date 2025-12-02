@@ -16,7 +16,7 @@ export const APPLY_COMMUNITY = '/apply/community'
 export const FEEDBACK = '/home/post?for=feedback'
 export const DOCS = '/home/doc'
 
-export const DASHBOARD_ROUTE = {
+export const DSB_ROUTE = {
   OVERVIEW: 'dashboard',
   DASHBOARD: 'dashboard',
   // basic-info
@@ -50,32 +50,32 @@ export const DASHBOARD_ROUTE = {
 } as Record<Uppercase<TDashboardPath>, TDashboardPath>
 
 export const DASHBORD_CMS_ROUTES = [
-  DASHBOARD_ROUTE.POST,
-  DASHBOARD_ROUTE.DOC,
-  DASHBOARD_ROUTE.CHANGELOG,
-  DASHBOARD_ROUTE.COMMUNITIES,
+  DSB_ROUTE.POST,
+  DSB_ROUTE.DOC,
+  DSB_ROUTE.CHANGELOG,
+  DSB_ROUTE.COMMUNITIES,
 ]
 
-export const DASHBOARD_BASEINFO_ROUTE = {
+export const DSB_BASEINFO_ROUTE = {
   BASIC: 'basic',
   SOCIAL: 'social',
   OTHER: 'other',
   LOGOS: 'logos',
 } as Record<Uppercase<TDashboardBaseInfoRoute>, TDashboardBaseInfoRoute>
 
-export const DASHBOARD_SEO_ROUTE = {
+export const DSB_SEO_ROUTE = {
   SEARCH_ENGINE: 'search_engine',
   TWITTER: 'twitter',
 } as Record<Uppercase<TDashboardSEORoute>, TDashboardSEORoute>
 
-export const DASHBOARD_DOC_ROUTE = {
+export const DSB_DOC_ROUTE = {
   TABLE: 'table',
   TREE: 'tree',
   COVER: 'cover',
   FAQ: 'faq',
 } as Record<Uppercase<TDashboardDocRoute>, TDashboardDocRoute>
 
-export const DASHBOARD_LAYOUT_ROUTE = {
+export const DSB_LAYOUT_ROUTE = {
   GENERAL: 'general',
   THEME: 'theme',
   POST: 'post',
@@ -84,12 +84,12 @@ export const DASHBOARD_LAYOUT_ROUTE = {
   DOC: 'doc',
 } as Record<Uppercase<TDashboardLayoutRoute>, TDashboardLayoutRoute>
 
-export const DASHBOARD_BROADCAST_ROUTE = {
+export const DSB_BROADCAST_ROUTE = {
   GLOBAL: 'global',
   ARTICLE: 'article',
 } as Record<Uppercase<TDashboardBroadcastRoute>, TDashboardBroadcastRoute>
 
-export const DASHBOARD_ALIAS_ROUTE = {
+export const DSB_ALIAS_ROUTE = {
   THREAD: 'thread',
   KANBAN: 'kanban',
   OTHERS: 'others',
@@ -114,7 +114,7 @@ export const ROUTE = {
   ...NON_COMMUNITY_ROUTE,
 
   DASHBOARD: {
-    ...DASHBOARD_ROUTE,
+    ...DSB_ROUTE,
   },
 }
 

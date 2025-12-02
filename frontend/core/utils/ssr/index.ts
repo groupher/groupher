@@ -5,13 +5,13 @@ import { CACHE_TAG } from '~/const/cache'
 import { CONTAINER_BG_DEFAULT } from '~/const/colors'
 import { BUILTIN_ALIAS } from '~/const/name'
 import {
-  DASHBOARD_ALIAS_ROUTE,
-  DASHBOARD_BASEINFO_ROUTE,
-  DASHBOARD_BROADCAST_ROUTE,
-  DASHBOARD_DOC_ROUTE,
-  DASHBOARD_LAYOUT_ROUTE,
-  DASHBOARD_ROUTE,
-  DASHBOARD_SEO_ROUTE,
+  DSB_ALIAS_ROUTE,
+  DSB_BASEINFO_ROUTE,
+  DSB_BROADCAST_ROUTE,
+  DSB_DOC_ROUTE,
+  DSB_LAYOUT_ROUTE,
+  DSB_ROUTE,
+  DSB_SEO_ROUTE,
 } from '~/const/route'
 import { THREAD } from '~/const/thread'
 import { removeEmptyValuesFromObject } from '~/helper'
@@ -98,12 +98,12 @@ const parseDashboardThread = (pathname: string): TDashboardTab => {
   const isOverviewThread = segments.length === 2
 
   if (segments[1] !== THREAD.DASHBOARD) {
-    return { curTab: DASHBOARD_ROUTE.OVERVIEW }
+    return { curTab: DSB_ROUTE.OVERVIEW }
   }
 
   if (segments[1] === THREAD.DASHBOARD && isOverviewThread) {
     return {
-      curTab: DASHBOARD_ROUTE.OVERVIEW as TDashboardPath,
+      curTab: DSB_ROUTE.OVERVIEW as TDashboardPath,
     }
   }
 
@@ -111,45 +111,45 @@ const parseDashboardThread = (pathname: string): TDashboardTab => {
   const dashLeaf = segments[3]
 
   switch (dashThread) {
-    case DASHBOARD_ROUTE.INFO: {
+    case DSB_ROUTE.INFO: {
       return {
-        curTab: DASHBOARD_ROUTE.INFO as TDashboardPath,
-        baseInfoTab: (dashLeaf || DASHBOARD_BASEINFO_ROUTE.BASIC) as TDashboardBaseInfoRoute,
+        curTab: DSB_ROUTE.INFO as TDashboardPath,
+        baseInfoTab: (dashLeaf || DSB_BASEINFO_ROUTE.BASIC) as TDashboardBaseInfoRoute,
       }
     }
 
-    case DASHBOARD_ROUTE.SEO: {
+    case DSB_ROUTE.SEO: {
       return {
-        curTab: DASHBOARD_ROUTE.SEO as TDashboardPath,
-        seoTab: (dashLeaf || DASHBOARD_SEO_ROUTE.SEARCH_ENGINE) as TDashboardSEORoute,
+        curTab: DSB_ROUTE.SEO as TDashboardPath,
+        seoTab: (dashLeaf || DSB_SEO_ROUTE.SEARCH_ENGINE) as TDashboardSEORoute,
       }
     }
 
-    case DASHBOARD_ROUTE.DOC: {
+    case DSB_ROUTE.DOC: {
       return {
-        curTab: DASHBOARD_ROUTE.DOC as TDashboardPath,
-        docTab: (dashLeaf || DASHBOARD_DOC_ROUTE.TABLE) as TDashboardDocRoute,
+        curTab: DSB_ROUTE.DOC as TDashboardPath,
+        docTab: (dashLeaf || DSB_DOC_ROUTE.TABLE) as TDashboardDocRoute,
       }
     }
 
-    case DASHBOARD_ROUTE.BROADCAST: {
+    case DSB_ROUTE.BROADCAST: {
       return {
-        curTab: DASHBOARD_ROUTE.BROADCAST as TDashboardPath,
-        broadcastTab: (dashLeaf || DASHBOARD_BROADCAST_ROUTE.GLOBAL) as TDashboardBroadcastRoute,
+        curTab: DSB_ROUTE.BROADCAST as TDashboardPath,
+        broadcastTab: (dashLeaf || DSB_BROADCAST_ROUTE.GLOBAL) as TDashboardBroadcastRoute,
       }
     }
 
-    case DASHBOARD_ROUTE.ALIAS: {
+    case DSB_ROUTE.ALIAS: {
       return {
-        curTab: DASHBOARD_ROUTE.ALIAS,
-        aliasTab: (dashLeaf || DASHBOARD_ALIAS_ROUTE.THREAD) as TDashboardAliasRoute,
+        curTab: DSB_ROUTE.ALIAS,
+        aliasTab: (dashLeaf || DSB_ALIAS_ROUTE.THREAD) as TDashboardAliasRoute,
       }
     }
 
-    case DASHBOARD_ROUTE.LAYOUT: {
+    case DSB_ROUTE.LAYOUT: {
       return {
-        curTab: DASHBOARD_ROUTE.LAYOUT,
-        layoutTab: (dashLeaf || DASHBOARD_LAYOUT_ROUTE.GENERAL) as TDashboardLayoutRoute,
+        curTab: DSB_ROUTE.LAYOUT,
+        layoutTab: (dashLeaf || DSB_LAYOUT_ROUTE.GENERAL) as TDashboardLayoutRoute,
       }
     }
 

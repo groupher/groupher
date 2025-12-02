@@ -1,6 +1,6 @@
 import { type FC, memo } from 'react'
 
-import type { TEnableConfig } from '~/spec'
+import type { TEnableConf } from '~/spec'
 
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 
@@ -8,7 +8,7 @@ import useEnable from '../logic/useEnable'
 import useSalon from '../salon/threads/doc_thread'
 
 type TProps = {
-  settings: TEnableConfig
+  settings: TEnableConf
 }
 
 const AboutThread: FC<TProps> = ({ settings }) => {
@@ -20,7 +20,7 @@ const AboutThread: FC<TProps> = ({ settings }) => {
       <section className={s.section}>
         <div className={s.header}>
           <h3 className={s.title}>技术栈</h3>
-          <div className="grow" />
+          <div className='grow' />
           <ToggleSwitch
             checked={settings.aboutTechstack}
             onChange={(c) => enableThread('aboutTechstack', c)}
@@ -32,7 +32,7 @@ const AboutThread: FC<TProps> = ({ settings }) => {
       <section className={s.section}>
         <div className={s.header}>
           <h4 className={s.title}>所在地</h4>
-          <div className="grow" />
+          <div className='grow' />
           <ToggleSwitch
             checked={settings.aboutLocation}
             onChange={(c) => enableThread('aboutLocation', c)}
@@ -44,7 +44,7 @@ const AboutThread: FC<TProps> = ({ settings }) => {
       <section className={s.section}>
         <div className={s.header}>
           <h4 className={s.title}>链接</h4>
-          <div className="grow" />
+          <div className='grow' />
           <ToggleSwitch
             checked={settings.aboutLinks}
             onChange={(c) => enableThread('aboutLinks', c)}
@@ -56,7 +56,7 @@ const AboutThread: FC<TProps> = ({ settings }) => {
       <section className={s.section}>
         <div className={s.header}>
           <h4 className={s.title}>媒体报道</h4>
-          <div className="grow" />
+          <div className='grow' />
           <ToggleSwitch
             checked={settings.aboutMediaReport}
             onChange={(c) => enableThread('aboutMediaReport', c)}

@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import type { TSettingField } from '~/stores/dashboard/spec'
+import type { TDsbField } from '~/stores/dashboard/spec'
 import { BASEINFO_LOGOS_KEYS } from '../../constant'
 import useHelper from '../useHelper'
 
@@ -18,6 +18,6 @@ export default (): TRet => {
 
   return {
     ...pick(BASEINFO_LOGOS_KEYS, store),
-    isLogosTouched: anyChanged(BASEINFO_LOGOS_KEYS as TSettingField[]),
+    isLogosTouched: anyChanged(BASEINFO_LOGOS_KEYS as TDsbField[]),
   }
 }

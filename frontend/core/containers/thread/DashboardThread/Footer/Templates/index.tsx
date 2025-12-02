@@ -4,7 +4,7 @@ import { FOOTER_LAYOUT } from '~/const/layout'
 import ArrowSVG from '~/icons/ArrowSimple'
 import Button from '~/widgets/Buttons/Button'
 
-import { SETTING_FIELD } from '../../constant'
+import { FIELD } from '../../constant'
 import useFooter from '../../logic/useFooter'
 import SavingBar from '../../SavingBar'
 import useSalon, { cn } from '../../salon/footer/templates'
@@ -39,7 +39,7 @@ const Templates: FC = () => {
 
       <SavingBar
         isTouched={isLayoutTouched}
-        field={SETTING_FIELD.FOOTER_LAYOUT}
+        field={FIELD.FOOTER_LAYOUT}
         onConfirm={() => setShowAll(false)}
         loading={saving}
         top={10}

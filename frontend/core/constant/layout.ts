@@ -92,7 +92,7 @@ export const CHANGELOG_LAYOUT = {
   SIMPLE: 'simple',
 } as Record<TSnakeUpperCase<TChangelogLayout>, TChangelogLayout>
 
-export const DASHBOARD_DESC_LAYOUT = {
+export const DSB_DESC_LAYOUT = {
   POST_LIST: 'post_list',
   BANNER: 'banner',
   CHANGELOG_LIST: 'changelog_list',

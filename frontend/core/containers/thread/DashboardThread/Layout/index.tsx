@@ -1,6 +1,6 @@
 import { useRouter } from 'next/navigation'
 
-import { DASHBOARD_LAYOUT_ROUTE } from '~/const/route'
+import { DSB_LAYOUT_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
 
 import useViewingCommunity from '~/hooks/useViewingCommunity'
@@ -43,7 +43,7 @@ export default () => {
             onChange={(tab) => {
               edit(tab, 'layoutTab')
               const targetPath =
-                tab === DASHBOARD_LAYOUT_ROUTE.GENERAL
+                tab === DSB_LAYOUT_ROUTE.GENERAL
                   ? `/${curCommunity.slug}/dashboard/layout`
                   : `/${curCommunity.slug}/dashboard/layout/${tab}`
 
@@ -55,7 +55,7 @@ export default () => {
         </div>
       </div>
 
-      {layoutTab === DASHBOARD_LAYOUT_ROUTE.GENERAL && (
+      {layoutTab === DSB_LAYOUT_ROUTE.GENERAL && (
         <>
           <BrandLayout />
           <div className={s.divider} />
@@ -69,7 +69,7 @@ export default () => {
         </>
       )}
 
-      {layoutTab === DASHBOARD_LAYOUT_ROUTE.THEME && (
+      {layoutTab === DSB_LAYOUT_ROUTE.THEME && (
         <>
           <PrimaryColor />
           <div className={s.divider} />
@@ -83,13 +83,13 @@ export default () => {
         </>
       )}
 
-      {layoutTab === DASHBOARD_LAYOUT_ROUTE.POST && <PostLayout />}
+      {layoutTab === DSB_LAYOUT_ROUTE.POST && <PostLayout />}
 
-      {layoutTab === DASHBOARD_LAYOUT_ROUTE.KANBAN && <KanbanLayout />}
+      {layoutTab === DSB_LAYOUT_ROUTE.KANBAN && <KanbanLayout />}
 
-      {layoutTab === DASHBOARD_LAYOUT_ROUTE.CHANGELOG && <ChangelogLayout />}
+      {layoutTab === DSB_LAYOUT_ROUTE.CHANGELOG && <ChangelogLayout />}
 
-      {layoutTab === DASHBOARD_LAYOUT_ROUTE.DOC && <DocLayout />}
+      {layoutTab === DSB_LAYOUT_ROUTE.DOC && <DocLayout />}
     </div>
   )
 }

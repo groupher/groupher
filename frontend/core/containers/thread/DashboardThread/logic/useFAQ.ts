@@ -2,7 +2,7 @@ import { find, findIndex, pick, reject } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 import type { TDocFAQLayout, TEditFunc, TFAQSection } from '~/spec'
-import { DEFAULT_NEW_FAQ, SETTING_FIELD } from '../constant'
+import { DEFAULT_NEW_FAQ, FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -48,7 +48,7 @@ export default (): TRet => {
 
     store.commit({
       faqSections: reject((faq: TFAQSection) => faq.index === index, faqSections),
-      savingField: SETTING_FIELD.FAQ_SECTION_DELETE,
+      savingField: FIELD.FAQ_SECTION_DELETE,
     })
     const params = { faqs: store.faqSections, community }
 

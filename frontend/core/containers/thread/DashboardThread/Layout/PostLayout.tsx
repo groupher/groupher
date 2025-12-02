@@ -1,4 +1,4 @@
-import { DASHBOARD_DESC_LAYOUT, POST_LAYOUT } from '~/const/layout'
+import { DSB_DESC_LAYOUT, POST_LAYOUT } from '~/const/layout'
 import CommentSVG from '~/icons/Comment'
 
 import UpvoteSVG from '~/icons/Upvote'
@@ -7,7 +7,7 @@ import { callDashboardDesc } from '~/signal'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
 
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import usePost from '../logic/usePost'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
@@ -25,7 +25,7 @@ export default () => {
           <>
             「讨论区」列表的默认布局，切换布局不影响已发布内容。
             <div className={s.inline}>
-              <ArrowButton onClick={() => callDashboardDesc(DASHBOARD_DESC_LAYOUT.POST_LIST)}>
+              <ArrowButton onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)}>
                 查看示例
               </ArrowButton>
             </div>
@@ -111,7 +111,7 @@ export default () => {
       <SavingBar
         width='w-11/12'
         isTouched={isTouched}
-        field={SETTING_FIELD.POST_LAYOUT}
+        field={FIELD.POST_LAYOUT}
         loading={saving}
         top={20}
       />

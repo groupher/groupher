@@ -3,7 +3,7 @@ import ClossSVG from '~/icons/CloseLight'
 
 import DLightSVG from '~/icons/DLight'
 import Radio from '~/widgets/Switcher/Radio'
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useGlowLight from '../logic/useGlowLight'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
@@ -55,7 +55,7 @@ export default () => {
 
       <SavingBar
         isTouched={isTouched}
-        field={SETTING_FIELD.GLOW_TYPE}
+        field={FIELD.GLOW_TYPE}
         loading={saving}
         top={10}
         width='w-11/12'
@@ -65,7 +65,7 @@ export default () => {
 
       <SavingBar
         isTouched={isGrowFixedTouched}
-        field={SETTING_FIELD.GLOW_FIXED}
+        field={FIELD.GLOW_FIXED}
         loading={saving}
         width='w-11/12'
       >
@@ -94,7 +94,7 @@ export default () => {
       {glowType !== '' && (
         <SavingBar
           isTouched={isGrowOpacityTouched}
-          field={SETTING_FIELD.GLOW_OPACITY}
+          field={FIELD.GLOW_OPACITY}
           loading={saving}
           width='88%'
           top={-8}

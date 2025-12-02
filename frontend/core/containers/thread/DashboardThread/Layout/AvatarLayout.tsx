@@ -2,7 +2,7 @@ import { AVATAR_LAYOUT } from '~/const/layout'
 
 import CheckLabel from '~/widgets/CheckLabel'
 
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useAvatar from '../logic/useAvatar'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
@@ -48,7 +48,7 @@ export default () => {
       </div>
       <SavingBar
         isTouched={isTouched}
-        field={SETTING_FIELD.AVATAR_LAYOUT}
+        field={FIELD.AVATAR_LAYOUT}
         loading={saving}
         width='w-10/12'
         top={8}

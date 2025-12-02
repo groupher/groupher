@@ -1,16 +1,11 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import type {
-  TBroadcastConfig,
-  TBroadcastLayout,
-  TDashboardBroadcastRoute,
-  TEditFunc,
-} from '~/spec'
-import { SETTING_FIELD } from '~/stores/dashboard/constant'
+import type { TBroadcastConf, TBroadcastLayout, TDashboardBroadcastRoute, TEditFunc } from '~/spec'
+import { FIELD } from '~/stores/dashboard/constant'
 
 import useHelper from './useHelper'
 
-type TRet = TBroadcastConfig & {
+type TRet = TBroadcastConf & {
   edit: TEditFunc
   broadcastLayout: TBroadcastLayout
   broadcastTab: TDashboardBroadcastRoute
@@ -31,16 +26,16 @@ export default (): TRet => {
 
   const changeEnable = (v: boolean) => {
     store.commit({ broadcastEnable: v })
-    setTimeout(() => onSave(SETTING_FIELD.BROADCAST_ENABLE))
+    setTimeout(() => onSave(FIELD.BROADCAST_ENABLE))
   }
 
   const broadcastOnSave = (isArticle = false): void => {
     console.log('## broadcastOnSave: ', isArticle)
     store.commit({ saving: true })
     // const layoutKey = !isArticle
-    //   ? SETTING_FIELD.BROADCAST_LAYOUT
-    //   : SETTING_FIELD.BROADCAST_ARTICLE_LAYOUT
-    // const bgKey = !isArticle ? SETTING_FIELD.BROADCAST_BG : SETTING_FIELD.BROADCAST_ARTICLE_BG
+    //   ? FIELD.BROADCAST_LAYOUT
+    //   : FIELD.BROADCAST_ARTICLE_LAYOUT
+    // const bgKey = !isArticle ? FIELD.BROADCAST_BG : FIELD.BROADCAST_ARTICLE_BG
 
     // store.onSave(layoutKey)
     // store.onSave(bgKey)
@@ -60,9 +55,9 @@ export default (): TRet => {
   const broadcastOnCancel = (isArticle = false): void => {
     console.log('## broadcastOnCancel: ', isArticle)
     // const layoutKey = !isArticle
-    //   ? SETTING_FIELD.BROADCAST_LAYOUT
-    //   : SETTING_FIELD.BROADCAST_ARTICLE_LAYOUT
-    // const bgKey = !isArticle ? SETTING_FIELD.BROADCAST_BG : SETTING_FIELD.BROADCAST_ARTICLE_BG
+    //   ? FIELD.BROADCAST_LAYOUT
+    //   : FIELD.BROADCAST_ARTICLE_LAYOUT
+    // const bgKey = !isArticle ? FIELD.BROADCAST_BG : FIELD.BROADCAST_ARTICLE_BG
 
     // store.rollbackEdit(layoutKey)
     // store.rollbackEdit(bgKey)

@@ -1,18 +1,16 @@
-import type { FC } from 'react'
-
-import type { TFAQSection } from '~/spec'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
+import type { FC } from 'react'
+import type { TFAQSection } from '~/spec'
 
 import Markdown from '~/widgets/Markdown'
 
-import { SETTING_FIELD } from '../../../constant'
+import { FIELD } from '../../../constant'
 
 import SavingBar from '../../../SavingBar'
-import Editor from './Editor'
+import useSalon from '../../../salon/cms/docs/faq'
 import Adder from './Adder'
 import Block from './Block'
-
-import useSalon from '../../../salon/cms/docs/faq'
+import Editor from './Editor'
 
 export type TProps = {
   sections: TFAQSection[]
@@ -49,8 +47,8 @@ const FAQ: FC<TProps> = ({ sections, editingFAQIndex, editingFAQ, isTouched }) =
           {!showAdder && !isTouched && <Adder />}
 
           <SavingBar
-            field={SETTING_FIELD.FAQ_SECTIONS}
-            prefix="是否保存排序"
+            field={FIELD.FAQ_SECTIONS}
+            prefix='是否保存排序'
             isTouched={isTouched}
             top={30}
           />

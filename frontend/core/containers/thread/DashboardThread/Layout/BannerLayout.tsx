@@ -1,10 +1,10 @@
-import { BANNER_LAYOUT, DASHBOARD_DESC_LAYOUT } from '~/const/layout'
+import { BANNER_LAYOUT, DSB_DESC_LAYOUT } from '~/const/layout'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { callDashboardDesc } from '~/signal'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
 
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useBanner from '../logic/useBanner'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
@@ -23,7 +23,7 @@ export default () => {
         desc={
           <div className='row-center'>
             整体页面的 Header 布局，适用于除文章页的所有页面。
-            <ArrowButton onClick={() => callDashboardDesc(DASHBOARD_DESC_LAYOUT.POST_LIST)}>
+            <ArrowButton onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)}>
               查看示例
             </ArrowButton>
           </div>
@@ -142,7 +142,7 @@ export default () => {
       </div>
       <SavingBar
         isTouched={isTouched}
-        field={SETTING_FIELD.BANNER_LAYOUT}
+        field={FIELD.BANNER_LAYOUT}
         loading={saving}
         top={10}
         width='w-11/12'

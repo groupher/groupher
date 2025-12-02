@@ -23,7 +23,7 @@ export default (): TRet => {
   const rssOnSave = (): void => {
     store.commit({ saving: true })
     console.log('## rssOnSave')
-    // const { RSS_FEED_TYPE, RSS_FEED_COUNT } = SETTING_FIELD
+    // const { RSS_FEED_TYPE, RSS_FEED_COUNT } = FIELD
 
     // store.onSave(RSS_FEED_TYPE)
     // store.onSave(RSS_FEED_COUNT)
@@ -43,7 +43,7 @@ export default (): TRet => {
 
   const rssOnCancel = (): void => {
     console.log('## rssOnCancel')
-    // const { RSS_FEED_TYPE, RSS_FEED_COUNT } = SETTING_FIELD
+    // const { RSS_FEED_TYPE, RSS_FEED_COUNT } = FIELD
 
     // store.rollbackEdit(RSS_FEED_TYPE)
     // store.rollbackEdit(RSS_FEED_COUNT)

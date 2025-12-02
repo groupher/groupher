@@ -1,10 +1,10 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import type { TDashboardSEOConfig, TDashboardSEORoute, TEditFunc } from '~/spec'
+import type { TDashboardSEORoute, TDsdSEOConf, TEditFunc } from '~/spec'
 import { SEO_KEYS } from '../constant'
 import useHelper from './useHelper'
 
-type TRet = TDashboardSEOConfig & {
+type TRet = TDsdSEOConf & {
   edit: TEditFunc
   saving: boolean
   seoTab: TDashboardSEORoute
@@ -28,7 +28,6 @@ export default (): TRet => {
 
   return {
     edit,
-    // @ts-expect-error
     ...pick(SEO_KEYS, store),
     ...pick(['seoTab', 'loading', 'saving'], store),
     isTouched,

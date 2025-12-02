@@ -4,15 +4,12 @@ import ArrowSVG from '~/icons/ArrowSolid'
 import AddButton from '~/widgets/Buttons/AddButton'
 import Input from '~/widgets/Input'
 
-import { SETTING_FIELD, BUILDIN_ALIAS_SUGGESTIONS } from '../constant'
-import Suggestion from './Suggestion'
-import SavingBar from '../SavingBar'
-
-import type { TNameAlias } from '../spec'
-
+import { BUILDIN_ALIAS_SUGGESTIONS, FIELD } from '../constant'
 import useAlias from '../logic/useAlias'
-
+import SavingBar from '../SavingBar'
 import useSalon, { cn } from '../salon/alias/item'
+import type { TNameAlias } from '../spec'
+import Suggestion from './Suggestion'
 
 type TProps = {
   alias: TNameAlias
@@ -29,7 +26,7 @@ const Item: FC<TProps> = ({ alias }) => {
     <div className={s.wrapper}>
       <div className={s.header}>
         {isEditMode ? (
-          <SavingBar isTouched field={SETTING_FIELD.NAME_ALIAS}>
+          <SavingBar isTouched field={FIELD.NAME_ALIAS}>
             <div className={s.inputWrapper}>
               <Input
                 className={s.input}
@@ -63,7 +60,7 @@ const Item: FC<TProps> = ({ alias }) => {
           <>
             <AddButton
               top={10}
-              icon="edit"
+              icon='edit'
               dimWhenIdle
               right={4}
               onClick={() => updateEditingAlias(alias)}
@@ -85,7 +82,7 @@ const Item: FC<TProps> = ({ alias }) => {
             )}
           </>
         )}
-        <div className="grow" />
+        <div className='grow' />
       </div>
     </div>
   )

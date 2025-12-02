@@ -1,10 +1,10 @@
-import { DASHBOARD_DESC_LAYOUT, TOPBAR_LAYOUT } from '~/const/layout'
+import { DSB_DESC_LAYOUT, TOPBAR_LAYOUT } from '~/const/layout'
 import { callDashboardDesc } from '~/signal'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
 import ColorSelector from '~/widgets/ColorSelector'
 
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useTopbar from '../logic/useTopbar'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
@@ -24,7 +24,7 @@ export default () => {
             全局 Topbar 的样式。
             <div className='inline-block'>
               <ArrowButton
-                onClick={() => callDashboardDesc(DASHBOARD_DESC_LAYOUT.POST_LIST)}
+                onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)}
                 fontSize={12}
               >
                 查看示例
@@ -53,7 +53,7 @@ export default () => {
 
       <SavingBar
         isTouched={isLayoutTouched}
-        field={SETTING_FIELD.TOPBAR_LAYOUT}
+        field={FIELD.TOPBAR_LAYOUT}
         loading={saving}
         top={10}
       />
@@ -62,7 +62,7 @@ export default () => {
       {layout === TOPBAR_LAYOUT.YES && (
         <SavingBar
           isTouched={isBgTouched}
-          field={SETTING_FIELD.TOPBAR_BG}
+          field={FIELD.TOPBAR_BG}
           loading={saving}
           left={-10}
           top={30}

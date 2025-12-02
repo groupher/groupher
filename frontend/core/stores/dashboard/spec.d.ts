@@ -1,11 +1,11 @@
 import type {
-  DASHBOARD_ALIAS_ROUTE,
-  DASHBOARD_BASEINFO_ROUTE,
-  DASHBOARD_BROADCAST_ROUTE,
-  DASHBOARD_DOC_ROUTE,
-  DASHBOARD_LAYOUT_ROUTE,
-  DASHBOARD_ROUTE,
-  DASHBOARD_SEO_ROUTE,
+  DSB_ALIAS_ROUTE,
+  DSB_BASEINFO_ROUTE,
+  DSB_BROADCAST_ROUTE,
+  DSB_DOC_ROUTE,
+  DSB_LAYOUT_ROUTE,
+  DSB_ROUTE,
+  DSB_SEO_ROUTE,
 } from '~/const/route'
 import type {
   TAvatarLayout,
@@ -16,10 +16,9 @@ import type {
   TChangelogLayout,
   TChangeMode,
   TColorName,
-  TDashboardBaseInfoRoute,
   TDocFAQLayout,
   TDocLayout,
-  TEnableConfig,
+  TEnableConf,
   TFAQSection,
   TFooterLayout,
   THeaderLayout,
@@ -62,7 +61,7 @@ type TGroupCategory = {
   files: TFile[]
 }
 
-export type TSettingsFields = {
+export type TDsbFields = {
   // baseInfo
   favicon: string
   logo: string
@@ -146,7 +145,7 @@ export type TSettingsFields = {
   activeTagGroup: string | null
   activeTagThread: string | null
   nameAlias: TNameAlias[]
-  enable: TEnableConfig
+  enable: TEnableConf
 
   faqSections: TFAQSection[]
   rssFeedType: TRSSType
@@ -167,23 +166,23 @@ export type TSettingsFields = {
   widgetsType: TWidgetType
 }
 
-export type TInit = Partial<TSettingsFields>
+export type TInit = Partial<TDsbFields>
 
-export type TStore = TSettingsFields & {
+export type TStore = TDsbFields & {
   initFilled: boolean
-  original: TSettingsFields
+  original: TDsbFields
 
   savingField: string | null
   saving: boolean
   loading: boolean
 
-  curTab: TValueOf<typeof DASHBOARD_ROUTE>
-  baseInfoTab: TValueOf<typeof DASHBOARD_BASEINFO_ROUTE>
-  aliasTab: TValueOf<typeof DASHBOARD_ALIAS_ROUTE>
-  seoTab: TValueOf<typeof DASHBOARD_SEO_ROUTE>
-  docTab: TValueOf<typeof DASHBOARD_DOC_ROUTE>
-  layoutTab: TValueOf<typeof DASHBOARD_LAYOUT_ROUTE>
-  broadcastTab: TValueOf<typeof DASHBOARD_BROADCAST_ROUTE>
+  curTab: TValueOf<typeof DSB_ROUTE>
+  baseInfoTab: TValueOf<typeof DSB_BASEINFO_ROUTE>
+  aliasTab: TValueOf<typeof DSB_ALIAS_ROUTE>
+  seoTab: TValueOf<typeof DSB_SEO_ROUTE>
+  docTab: TValueOf<typeof DSB_DOC_ROUTE>
+  layoutTab: TValueOf<typeof DSB_LAYOUT_ROUTE>
+  broadcastTab: TValueOf<typeof DSB_BROADCAST_ROUTE>
 
   overview: TOverview
 
@@ -246,27 +245,28 @@ export type TDocSettings = {
   categories: TDocCategory[]
 }
 
-export type TBaseInfoSettings = {
-  loading: boolean
-  queryingMediaReportIndex: number | null
-  saving: boolean
+export type THeaderEditType = 'logo' | 'title'
+export type TFooterEditType = THeaderEditType | 'social'
 
-  favicon: string
-  logo: string
-  title: string
-  desc: string
-  introduction: string
-  homepage: string
-  slug: string
-  city: string
-  techstack: string
+export type TChangeTagMode = 'settingTag' | 'editingTag'
 
-  socialLinks: TSocialItem[]
-  baseInfoTab: TDashboardBaseInfoRoute
-  mediaReports: TMediaReport[]
-}
+export type TSEOFields =
+  | 'seoEnable'
+  | 'ogSiteName'
+  | 'ogTitle'
+  | 'ogDescription'
+  | 'ogUrl'
+  | 'ogImage'
+  | 'twTitle'
+  | 'twDescription'
+  | 'twUrl'
+  | 'twCard'
+  | 'twSite'
+  | 'twImage'
+  | 'twImageWidth'
+  | 'twImageHeight'
 
-export type TSettingField =
+export type TDsbField =
   | 'baseInfo'
   | 'mediaReports'
   | 'socialLinks'
@@ -341,25 +341,4 @@ export type TSettingField =
   | 'twCard'
   | 'pageBg'
   | 'pageBgDark'
-  | TSettingField
-
-export type THeaderEditType = 'logo' | 'title'
-export type TFooterEditType = THeaderEditType | 'social'
-
-export type TChangeTagMode = 'settingTag' | 'editingTag'
-
-export type TSEOFields =
-  | 'seoEnable'
-  | 'ogSiteName'
-  | 'ogTitle'
-  | 'ogDescription'
-  | 'ogUrl'
-  | 'ogImage'
-  | 'twTitle'
-  | 'twDescription'
-  | 'twUrl'
-  | 'twCard'
-  | 'twSite'
-  | 'twImage'
-  | 'twImageWidth'
-  | 'twImageHeight'
+  | TSEOFields

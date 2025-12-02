@@ -4,7 +4,7 @@ import useViewingCommunity from '~/hooks/useViewingCommunity'
 import BrandSVG from '~/icons/Brand'
 import CheckLabel from '~/widgets/CheckLabel'
 
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useBrand from '../logic/useBrand'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
@@ -52,7 +52,7 @@ export default () => {
       </div>
       <SavingBar
         isTouched={isTouched}
-        field={SETTING_FIELD.BRAND_LAYOUT}
+        field={FIELD.BRAND_LAYOUT}
         loading={saving}
         top={10}
         left={1}

@@ -1,6 +1,6 @@
 import { equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
 import { useEffect, useRef } from 'react'
-import { DASHBOARD_BASEINFO_ROUTE } from '~/const/route'
+import { DSB_BASEINFO_ROUTE } from '~/const/route'
 import useDashboard from '~/hooks/useDashboard'
 import useViewing from '~/hooks/useViewing'
 
@@ -11,11 +11,11 @@ import {
   BASEINFO_BASIC_KEYS,
   BASEINFO_KEYS,
   BASEINFO_OTHER_KEYS,
+  FIELD,
   SEO_KEYS,
-  SETTING_FIELD,
   SETTING_LAYOUT_FIELD,
 } from '~/stores/dashboard/constant'
-import type { TSettingField } from '~/stores/dashboard/spec'
+import type { TDsbField } from '~/stores/dashboard/spec'
 import S from '../schema'
 
 type TRet = {
@@ -62,15 +62,15 @@ export default (): TRet => {
     console.log('## done field: ', field)
     let original = { ...store.original, [field]: store[field] }
 
-    if (field === SETTING_FIELD.TAG_INDEX) {
+    if (field === FIELD.TAG_INDEX) {
       original = { ...store.original, tags: store.tags }
     }
 
-    if (includes(field, [SETTING_FIELD.FAQ_SECTION_ADD, SETTING_FIELD.FAQ_SECTION_DELETE])) {
+    if (includes(field, [FIELD.FAQ_SECTION_ADD, FIELD.FAQ_SECTION_DELETE])) {
       original = { ...store.original, faqSections: store.faqSections }
     }
 
-    if (field === SETTING_FIELD.BASE_INFO) {
+    if (field === FIELD.BASE_INFO) {
       const current = {}
 
       for (const key of BASEINFO_KEYS) {
@@ -79,12 +79,12 @@ export default (): TRet => {
       original = { ...store.original, ...current }
     }
 
-    if (field === SETTING_FIELD.TAG) {
+    if (field === FIELD.TAG) {
       const updatedTags = mergeBackEditingTag()
       original = { ...store.original, tags: updatedTags }
     }
 
-    if (field === SETTING_FIELD.SEO) {
+    if (field === FIELD.SEO) {
       const current = {}
 
       for (const key of SEO_KEYS) {
@@ -117,8 +117,8 @@ export default (): TRet => {
       })
   }
 
-  const mutation = (field: TSettingField, e: TEditValue): Promise<void> => {
-    if (field === SETTING_FIELD.ENABLE) {
+  const mutation = (field: TDsbField, e: TEditValue): Promise<void> => {
+    if (field === FIELD.ENABLE) {
       const curEnable = storeRef.current.enable
       const initEnable = storeRef.current.original.enable
 
@@ -137,7 +137,7 @@ export default (): TRet => {
       return
     }
 
-    if (field === SETTING_FIELD.BROADCAST_ENABLE) {
+    if (field === FIELD.BROADCAST_ENABLE) {
       const params = {
         community,
         broadcastEnable: storeRef.current.broadcastEnable,
@@ -146,7 +146,7 @@ export default (): TRet => {
       return
     }
 
-    if (field === SETTING_FIELD.MEDIA_REPORTS) {
+    if (field === FIELD.MEDIA_REPORTS) {
       const { mediaReports } = store
 
       const params = {
@@ -158,30 +158,30 @@ export default (): TRet => {
       return
     }
 
-    if (field === SETTING_FIELD.HEADER_LINKS) {
+    if (field === FIELD.HEADER_LINKS) {
       const { headerLinks } = storeRef.current
 
       handleMutation(S.updateDashboardHeaderLinks, { community, headerLinks })
       return
     }
 
-    if (field === SETTING_FIELD.FOOTER_LINKS) {
+    if (field === FIELD.FOOTER_LINKS) {
       const { footerLinks } = store
       handleMutation(S.updateDashboardFooterLinks, { community, footerLinks })
       return
     }
 
-    if (field === SETTING_FIELD.BASE_INFO) {
+    if (field === FIELD.BASE_INFO) {
       const { baseInfoTab } = store
 
       const params = { community }
-      if (baseInfoTab === DASHBOARD_BASEINFO_ROUTE.BASIC) {
+      if (baseInfoTab === DSB_BASEINFO_ROUTE.BASIC) {
         for (const key of BASEINFO_BASIC_KEYS) {
           params[key] = store[key]
         }
       }
 
-      if (baseInfoTab === DASHBOARD_BASEINFO_ROUTE.OTHER) {
+      if (baseInfoTab === DSB_BASEINFO_ROUTE.OTHER) {
         for (const key of BASEINFO_OTHER_KEYS) {
           params[key] = store[key]
         }
@@ -193,7 +193,7 @@ export default (): TRet => {
       return
     }
 
-    if (field === SETTING_FIELD.SOCIAL_LINKS) {
+    if (field === FIELD.SOCIAL_LINKS) {
       const { socialLinks } = store
       const params = { community, socialLinks }
 
@@ -201,17 +201,17 @@ export default (): TRet => {
       return
     }
 
-    // if (field === SETTING_FIELD.SEO) {
+    // if (field === FIELD.SEO) {
     //   const params = {}
     //   const { seoTab } = store
 
-    //   if (seoTab === DASHBOARD_SEO_ROUTE.SEARCH_ENGINE) {
+    //   if (seoTab === DSB_SEO_ROUTE.SEARCH_ENGINE) {
     //     forEach((key) => {
     //       params[key] = store[key]
     //     }, SEO_OG_KEYS)
     //   }
 
-    //   if (seoTab === DASHBOARD_SEO_ROUTE.TWITTER) {
+    //   if (seoTab === DSB_SEO_ROUTE.TWITTER) {
     //     forEach((key) => {
     //       params[key] = store[key]
     //     }, SEO_TW_KEYS)
@@ -221,7 +221,7 @@ export default (): TRet => {
     //   return
     // }
 
-    if (field === SETTING_FIELD.NAME_ALIAS) {
+    if (field === FIELD.NAME_ALIAS) {
       const { nameAlias } = storeRef.current
       const params = { community, nameAlias }
 
@@ -229,7 +229,7 @@ export default (): TRet => {
       return
     }
 
-    if (field === SETTING_FIELD.TAG) {
+    if (field === FIELD.TAG) {
       const { editingTag } = storeRef.current
       const params = { ...editingTag, community }
 
@@ -237,7 +237,7 @@ export default (): TRet => {
       return
     }
 
-    if (field === SETTING_FIELD.TAG_INDEX) {
+    if (field === FIELD.TAG_INDEX) {
       const { activeTagThread, activeTagGroup: group, tags } = store
       const thread = activeTagThread.toUpperCase()
 
@@ -251,12 +251,12 @@ export default (): TRet => {
       return
     }
 
-    // if (field === SETTING_FIELD.FAQ_SECTIONS) {
+    // if (field === FIELD.FAQ_SECTIONS) {
     //   sr71$.mutate(S.updateDashboardFaqs, { faqs: toJS(store.faqSections), community })
     //   return
     // }
 
-    // if (field === SETTING_FIELD.FAQ_SECTION_ITEM) {
+    // if (field === FIELD.FAQ_SECTION_ITEM) {
     //   const { editingFAQ, faqSections } = store
     //   const _editingFAQ = toJS(editingFAQ)
     //   const _faqSections = toJS(faqSections)
@@ -271,7 +271,7 @@ export default (): TRet => {
     //   return
     // }
 
-    // if (field === SETTING_FIELD.FAQ_SECTION_ADD) {
+    // if (field === FIELD.FAQ_SECTION_ADD) {
     //   const { faqSections, editingFAQ } = store
     //   const _faqSections = [...toJS(faqSections), toJS(editingFAQ)]
 

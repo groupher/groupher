@@ -1,10 +1,10 @@
-import { CHANGELOG_LAYOUT, DASHBOARD_DESC_LAYOUT } from '~/const/layout'
+import { CHANGELOG_LAYOUT, DSB_DESC_LAYOUT } from '~/const/layout'
 import { callDashboardDesc } from '~/signal'
 
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
 
-import { SETTING_FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useChangelog from '../logic/useChangelog'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
@@ -23,7 +23,7 @@ export default () => {
             「更新日志」列表的默认展现形式，切换布局不影响已发布内容。
             <div className='inline-flex'>
               <ArrowButton
-                onClick={() => callDashboardDesc(DASHBOARD_DESC_LAYOUT.POST_LIST)}
+                onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)}
                 fontSize={12}
               >
                 查看示例
@@ -82,7 +82,7 @@ export default () => {
 
       <SavingBar
         isTouched={isTouched}
-        field={SETTING_FIELD.CHANGELOG_LAYOUT}
+        field={FIELD.CHANGELOG_LAYOUT}
         loading={saving}
         width='w-11/12'
         top={12}

@@ -1,15 +1,14 @@
 import type { FC } from 'react'
 import 'rsuite-table/dist/css/rsuite-table.css'
 
-import { DASHBOARD_ROUTE } from '~/const/route'
+import { DSB_ROUTE } from '~/const/route'
 
 import useTabInfo from '../logic/useTab'
 import useSalon from '../salon/cms'
-
-import Posts from './Posts'
-import Communities from './Communities'
 import Changelogs from './Changelogs'
+import Communities from './Communities'
 import Docs from './Docs'
+import Posts from './Posts'
 
 import '../salon/cms/global.css'
 
@@ -20,19 +19,19 @@ const CMS: FC = () => {
   const { curTab: route } = useTabInfo()
 
   switch (route) {
-    case DASHBOARD_ROUTE.COMMUNITIES: {
+    case DSB_ROUTE.COMMUNITIES: {
       contents = <Communities />
       break
     }
-    case DASHBOARD_ROUTE.POST: {
+    case DSB_ROUTE.POST: {
       contents = <Posts />
       break
     }
-    case DASHBOARD_ROUTE.CHANGELOG: {
+    case DSB_ROUTE.CHANGELOG: {
       contents = <Changelogs />
       break
     }
-    case DASHBOARD_ROUTE.DOC: {
+    case DSB_ROUTE.DOC: {
       contents = <Docs />
       break
     }
