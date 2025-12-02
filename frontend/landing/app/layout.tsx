@@ -5,9 +5,10 @@ import { Suspense } from 'react'
 import { LANDING_SSR_INFO } from '~/providers/constant'
 import GlobalLayout from '~/providers/GlobalLayout'
 import StoreProvider from '~/stores/provider'
+import { ssrThemeInitScript } from '~/utils/ssr/script'
 
 import '~/tailwind/global.css'
-import './Landing/salon/global.css'
+import './domain.css'
 
 import Main from './Main'
 
@@ -19,6 +20,10 @@ export const metadata: Metadata = {
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='en'>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ssrThemeInitScript() }} />
+      </head>
+
       <body>
         <Suspense fallback={<h3>loading...</h3>}>
           <StoreProvider initData={LANDING_SSR_INFO}>

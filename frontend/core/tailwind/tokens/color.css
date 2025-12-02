@@ -168,7 +168,7 @@
     --color-sandBox: #31303059;
     --unibar-linear-mask: radial-gradient(
       circle,
-      oklch(0.31 0 0 / 0.63) 30%,
+      var(--color-pageBg) 30%,
       oklch(0 0 0 / 0) 100%
     );
     --saving-bar-left-linear: linear-gradient(

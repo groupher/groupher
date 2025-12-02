@@ -1,10 +1,11 @@
-import type { TThemeName } from '~/spec'
+import type { TThemeMode, TThemeName } from '~/spec'
 
 export type TStore = {
   theme: TThemeName
+  themeMode: TThemeMode
   // actions
   change: (theme: TThemeName) => void
-  toggle: () => void
+  changeMode: (theme: TThemeMode) => void
 }
 
 export type TInit = TThemeName

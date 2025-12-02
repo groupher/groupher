@@ -1,17 +1,15 @@
-import { find, propEq, keys, sort, uniq, tap, includes, remove, isEmpty, startsWith } from 'ramda'
-
+import { find, includes, isEmpty, keys, propEq, remove, sort, startsWith, tap, uniq } from 'ramda'
+import { ASSETS_ENDPOINT, TAG_COLOR_ORDER } from '~/config'
+import { COLOR_NAME } from '~/const/colors'
+import { ARTICLE_STATE } from '~/const/gtd'
 import type {
-  TWindow,
   TArticleState,
   TColorName,
   TCommunityThread,
-  TNameAlias,
   TDashboardThreadConfig,
+  TNameAlias,
+  TWindow,
 } from '~/spec'
-
-import { ASSETS_ENDPOINT, TAG_COLOR_ORDER } from '~/config'
-import { ARTICLE_STATE } from '~/const/gtd'
-import { COLOR_NAME } from '~/const/colors'
 
 type TSORTABLE_ITEMS = {
   color?: string
@@ -84,7 +82,7 @@ export const extractMentions = (str: string): string[] => {
 
   let matches = str.match(mentionsRegex)
   if (matches?.length) {
-    // @ts-ignore
+    // @ts-expect-error
     matches = matches.map((match) => {
       return match.slice(1)
     })
@@ -115,7 +113,7 @@ export const extractAttachments = (str: string): string[] => {
 
 // checkout if the site is running on cypress container
 export const isCypressRunning = (): boolean => {
-  // @ts-ignore
+  // @ts-expect-error
   if (typeof window !== 'undefined') return !!window.Cypress
 
   return false
@@ -217,7 +215,6 @@ export const groupByKey = (array, key) => {
   return array.reduce((hash, obj) => {
     if (obj[key] === undefined) return hash
     return Object.assign(hash, {
-      // @ts-ignore
       [obj[key]]: (hash[obj[key]] || []).concat(obj),
     })
   }, {})
@@ -277,7 +274,7 @@ export const removeEmptyValuesFromObject = (object) => {
   const newObject = {}
 
   for (const key in object) {
-    if (Object.prototype.hasOwnProperty.call(object, key)) {
+    if (Object.hasOwn(object, key)) {
       const value = object[key]
       if (value !== null && value !== undefined) {
         newObject[key] = value

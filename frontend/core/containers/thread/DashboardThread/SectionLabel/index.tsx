@@ -1,9 +1,8 @@
 import type { FC, ReactNode } from 'react'
 
 import type { TSpace } from '~/spec'
-
-import ThemeSelect from './ThemeSelect'
 import useSalon, { cn } from '../salon/section_label'
+import ThemeSelect from './ThemeSelect'
 
 type TProps = {
   title: string
@@ -32,11 +31,11 @@ const SectionLabel: FC<TProps> = ({
           {title}
           {withThemeSelect && (
             <>
-              <div className="grow" /> <ThemeSelect />
+              <div className='grow' /> <ThemeSelect />
             </>
           )}
         </h3>
-        <div className="grow" />
+        <div className='grow' />
         {addon}
       </div>
       {desc && <div className={s.desc}>{desc}</div>}

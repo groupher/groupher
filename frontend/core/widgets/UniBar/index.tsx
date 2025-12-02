@@ -1,7 +1,5 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
-/* eslint-disable react/jsx-no-comment-text nodes */
-/*
- */
+/* eslint-disable react/jsx-no-comment-text-nodes */
 
 import { useCallback, useRef, useState } from 'react'
 import { scrollToHeader } from '~/dom'
@@ -23,7 +21,7 @@ import NotifyPanel from './NotifyPanel'
 import useSalon, { cn } from './salon'
 
 export default () => {
-  const ref = useRef(null)
+  const ref = useRef<HTMLDivElement>(null)
   const { t } = useTrans()
 
   const [expand, setExpand] = useState(false)
@@ -34,21 +32,30 @@ export default () => {
     setMenu(MENU.DEFAULT.key)
   })
 
-  const handleOpenMenu = useCallback((menuKey: string) => {
-    setMenu(menuKey)
+  const handleOpenMenu = useCallback(
+    (menuKey: string) => {
+      if (expand) {
+        setMenu(MENU.DEFAULT.key)
+        setTimeout(() => setExpand(false), 0)
+        return
+      }
 
-    setTimeout(() => setExpand(true))
-  }, [])
+      setMenu(menuKey)
+      setTimeout(() => setExpand(true), 0)
+    },
+    [expand],
+  )
 
   const s = useSalon({ expand })
 
-  // $menuHeight={MENU[menu].height}
-
   return (
     <div ref={ref} className={s.wrapper}>
-      {menu === MENU.I18N.key && <I18nPanel />}
-      {menu === MENU.MORE.key && <MorePanel />}
-      {menu === MENU.NOTIFY.key && <NotifyPanel />}
+      <div className={s.panelWrapper}>
+        {menu === MENU.I18N.key && <I18nPanel />}
+        {menu === MENU.MORE.key && <MorePanel />}
+        {menu === MENU.NOTIFY.key && <NotifyPanel />}
+        {menu === MENU.PEOPLE.key && <div className={s.mockPeoplePanel}>Active users…</div>}
+      </div>
 
       <div className={s.buttonBar}>
         <Tooltip content={<div className={s.tipText}>{t('to.top')}</div>} {...TIP_OPTIONS}>
@@ -60,10 +67,7 @@ export default () => {
         <Tooltip content={<div className={s.tipText}>{t('mention.msg')}</div>} {...TIP_OPTIONS}>
           <button
             className={cn(s.iconBox, menu === MENU.NOTIFY.key && s.iconActive)}
-            onClick={() => {
-              setMenu(MENU.NOTIFY.key)
-              setExpand(true)
-            }}
+            onClick={() => handleOpenMenu(MENU.NOTIFY.key)}
           >
             <NotifySVG className={s.icon} />
           </button>
@@ -77,6 +81,7 @@ export default () => {
             <PeopleSVG className={cn(s.icon, menu === MENU.PEOPLE.key && s.iconPeopleActive)} />
           </button>
         </Tooltip>
+
         <Tooltip content={<div className={s.tipText}>{t('locale')}</div>} {...TIP_OPTIONS}>
           <button
             className={cn(s.iconBox, menu === MENU.I18N.key && s.iconActive)}
@@ -85,11 +90,11 @@ export default () => {
             <I18nSVG className={s.iconI18n} />
           </button>
         </Tooltip>
-        <Tooltip content={<div className={s.tipText}>{t('theme')}</div>} {...TIP_OPTIONS}>
-          <div className={s.iconBox}>
-            <ThemeSwitch />
-          </div>
-        </Tooltip>
+
+        <div className={s.iconBox}>
+          <ThemeSwitch />
+        </div>
+
         <Tooltip content={<div className={s.tipText}>{t('more')}</div>} {...TIP_OPTIONS}>
           <button
             className={cn(s.iconBox, menu === MENU.MORE.key && s.iconActive)}
@@ -99,6 +104,7 @@ export default () => {
           </button>
         </Tooltip>
       </div>
+
       <div className={s.shadowMask} />
     </div>
   )

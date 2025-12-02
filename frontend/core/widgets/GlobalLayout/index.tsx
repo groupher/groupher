@@ -7,7 +7,7 @@
 import { type FC, lazy, type ReactNode, Suspense } from 'react'
 
 import Mushroom from '~/containers/Mushroom'
-import useTheme from '~/hooks/useTheme'
+import ThemeMonitor from './ThemeMonitor'
 
 // import Broadcast from '~/widgets/Broadcast'
 // import ModeLine from '~/containers/unit/ModeLine'
@@ -31,8 +31,6 @@ type TProps = {
 
 const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
   const s = useSalon()
-  const { theme } = useTheme()
-
   const MainWrapper = mainBlock || Main
 
   // useSyncAccount()
@@ -49,7 +47,7 @@ const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
   // }, [showDashboardAlert])
 
   return (
-    <div data-theme={theme}>
+    <>
       <Mushroom />
       <Suspense fallback={null}>
         <Addon />
@@ -63,9 +61,11 @@ const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
         <SEO />
       </div>
 
+      <ThemeMonitor />
+
       {/* <DashboardAlert /> */}
       {/* {showDashboardAlertUI && <DashboardAlert />} */}
-    </div>
+    </>
   )
 }
 

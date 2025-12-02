@@ -4,6 +4,7 @@ import METRIC from '~/const/metric'
 import { cn } from '~/css'
 import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
+import useDashboard from '~/hooks/useDashboard'
 import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useTheme from '~/hooks/useTheme'
@@ -11,7 +12,7 @@ import type { TColorName, TFlatThemeKey, TSpace, TZIndexType } from '~/spec'
 
 type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 'decoration'
 type TLinkColorPrefix = 'fg' | 'fill'
-type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon'
+type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon' | 'activeBox' | 'activeIcon'
 type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'card' | 'drawer' | 'modal'
 type TDimLevel = 'lg' | 'md' | 'sm'
 type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red' | 'fg' | 'fg-red'
@@ -47,6 +48,7 @@ type TRet = {
   landingTitle: () => string
   hover: (part: THoverPart) => string
   zIndex: (key: TZIndexType, visible?: boolean) => string
+  page: () => string
 
   isDarkBlack: boolean
   isBlackPrimary: boolean
@@ -60,8 +62,9 @@ export default (): TRet => {
   const { isLightTheme } = useTheme()
   const metric = useMetric()
   const { isSquare: isAvatarSquare } = useAvatarLayout()
-
+  const dashboard = useDashboard()
   const primaryColor = usePrimaryColor()
+  const { pageBg, pageBgDark } = dashboard
 
   const container = () => {
     return `container-${metric.toLowerCase()}`
@@ -270,6 +273,19 @@ export default (): TRet => {
       case 'icon': {
         return cn('size-3 mr-2.5', fill('text.digest'), `group-hover/menubar:${fill('text.title')}`)
       }
+      case 'activeBox': {
+        return cn(
+          'opacity-100 scale-100',
+          fg('text.title'),
+          fill('text.title'),
+          bg('menuHoverBg'),
+          br('divider'),
+          shadow('sm'),
+        )
+      }
+      case 'activeIcon': {
+        return cn(fill('text.title'))
+      }
       case 'link': {
         return cn('size-3.5 opacity-0 group-hover/menubar:opacity-60', fill('text.digest'))
       }
@@ -337,6 +353,14 @@ export default (): TRet => {
     return `z-${type}`
   }
 
+  const page = (): string => {
+    if (isLightTheme) {
+      return `page-${camelize(pageBg)}`
+    }
+
+    return `page-${camelize(pageBgDark)}`
+  }
+
   return {
     cn,
     container,
@@ -369,5 +393,6 @@ export default (): TRet => {
     dimDark,
     hover,
     zIndex,
+    page,
   }
 }

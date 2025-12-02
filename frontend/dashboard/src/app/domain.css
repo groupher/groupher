@@ -1,0 +1,85 @@
+@layer components {
+  .page-pureWhite-card {
+    background-color: var(--color-page-pureWhite);
+  }
+  .page-solarized-card {
+    background-color: var(--color-page-solarized);
+  }
+  .page-hackerNews-card {
+    background-color: var(--color-page-hackerNews);
+  }
+  .page-lightGrey-card {
+    background-color: var(--color-page-lightGrey);
+  }
+  .page-floralWhite-card {
+    background-color: var(--color-page-floralWhite);
+  }
+  .page-mintWhite-card {
+    background-color: var(--color-page-mintWhite);
+  }
+  .page-pink-card {
+    background-color: var(--color-page-pink);
+  }
+  .page-todo2-card {
+    background-color: var(--color-page-todo2);
+  }
+  .page-blue2-card {
+    background-color: var(--color-page-blue2);
+  }
+  .page-purple-card {
+    background-color: var(--color-page-purple);
+  }
+  .page-todo-card {
+    background-color: var(--color-page-todo);
+  }
+
+  /* dark theme cards */
+  .page-charcoalGray-card {
+    background-color: var(--color-page-charcoalGray);
+  }
+  .page-darkSlateGray-card {
+    background-color: var(--color-page-darkSlateGray);
+  }
+  .page-outerSpace-card {
+    background-color: var(--color-page-outerSpace);
+  }
+  .page-richBlack-card {
+    background-color: var(--color-page-richBlack);
+  }
+  .page-coffeeBean-card {
+    background-color: var(--color-page-coffeeBean);
+  }
+  .page-ubuntu-card {
+    background-color: var(--color-page-ubuntu);
+  }
+  .page-obsidian-card {
+    background-color: var(--color-page-obsidian);
+  }
+  .page-solarizedDark-card {
+    background-color: var(--color-page-solarizedDark);
+  }
+  .page-blackChocolate-card {
+    background-color: var(--color-page-blackChocolate);
+  }
+  .page-gunmetal-card {
+    background-color: var(--color-page-gunmetal);
+  }
+  .page-smokyBlack-card {
+    background-color: var(--color-page-smokyBlack);
+  }
+  .page-oxfordBlue-card {
+    background-color: var(--color-page-oxfordBlue);
+  }
+  .page-eerieBlack-card {
+    background-color: var(--color-page-eerieBlack);
+  }
+  .page-daylightGreen-card {
+    background-color: var(--color-page-daylightGreen);
+  }
+  .page-jetBlack-card {
+    background-color: var(--color-page-jetBlack);
+  }
+  .page-arsenic-card {
+    background-color: var(--color-page-arsenic);
+  }
+}

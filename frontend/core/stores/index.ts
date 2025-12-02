@@ -4,7 +4,7 @@ import { createContext, useContext } from 'react'
 import { proxy } from 'valtio'
 import { LOCALE } from '~/const/i18n'
 
-import THEME from '~/const/theme'
+import THEME, { THEME_MODE } from '~/const/theme'
 import setupAccount from './account'
 import setupArticles from './articles'
 import setupDashboard from './dashboard'
@@ -18,6 +18,7 @@ export { default as StoreProvider } from './provider'
 
 const INITIAL_STATE = {
   theme: THEME.LIGHT,
+  themeMode: THEME_MODE.SYSTEM,
   locale: LOCALE.EN,
   localeData: '{}',
   viewing: {},
@@ -30,7 +31,7 @@ export const setupRootStore = (init: TRootStoreInit = INITIAL_STATE): TRootStore
   return proxy({
     locale: setupLocale(init.locale, init.localeData),
     account: setupAccount(),
-    theme: setupTheme(init.theme),
+    theme: setupTheme(init.themeMode, init.theme),
     viewing: setupViewing(init.viewing),
     articles: setupArticles(init.articles),
     dashboard: setupDashboard(init.dashboard),

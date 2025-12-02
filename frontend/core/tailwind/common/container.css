@@ -35,8 +35,8 @@
   }
 
   @media (min-width: theme('screens.xl')) {
-    padding-left: theme('spacing.36');
-    padding-right: theme('spacing.36');
+    padding-left: theme('spacing.40');
+    padding-right: theme('spacing.40');
   }
 }
 

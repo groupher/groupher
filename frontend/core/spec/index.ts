@@ -127,11 +127,12 @@ export type {
   TSizeTSM,
 } from './size'
 export type { TAccountStore, TViewingStore } from './store'
-export type { TFlatThemeKey, TTheme, TThemeMap, TThemeName } from './theme'
+export type { TFlatThemeKey, TTheme, TThemeMap, TThemeMode, TThemeName } from './theme'
 export type { TArticleListThread, TArticleThread, TCommunityThread, TThread } from './thread'
 export type {
   Nullable,
   TActive,
+  TArticleLoad,
   TAttInfo,
   TButtonPrefix,
   TChangeMode,
@@ -178,7 +179,6 @@ export type {
   TView,
   TWidgetType,
   TZIndexType,
-  TArticleLoad
 } from './utils'
 export type {
   TCustomWallpaper,

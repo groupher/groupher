@@ -1,11 +1,9 @@
 import METRIC from '~/const/metric'
 import { HOME_COMMUNITY } from '~/const/name'
-import THEME from '~/const/theme'
 
 import type { TRootStoreInit } from '~/stores/spec'
 
 export const LANDING_SSR_INFO = {
-  theme: THEME.LIGHT,
   articles: {},
   viewing: {
     metric: METRIC.LANDING,

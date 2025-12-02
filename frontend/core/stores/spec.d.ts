@@ -1,4 +1,4 @@
-import type { TLocale } from '~/spec'
+import type { TLocale, TThemeMode } from '~/spec'
 import type { TStore as TAccountStore } from './account/spec'
 import type { TInit as TArticlesInit, TStore as TArticlesStore } from './articles/spec'
 import type { TInit as TDashboardInit, TStore as TDashboardStore } from './dashboard/spec'
@@ -22,6 +22,7 @@ export type TTreeStore<K extends TTreeStoreKey> = TRootStore[K]
 
 export type TRootStoreInit = {
   theme?: TThemeInit
+  themeMode?: TThemeMode
   locale?: TLocale
   localeData?: string
   viewing?: TViewingInit

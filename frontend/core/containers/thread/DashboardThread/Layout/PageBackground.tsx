@@ -1,4 +1,5 @@
-import { titleCaseHM, upperSnakeCase } from '~/fmt'
+import { getGlobalCSSVar } from '~/css'
+import { camelize, titleCaseHM, upperSnakeCase } from '~/fmt'
 import useTheme from '~/hooks/useTheme'
 import CheckSVG from '~/icons/Check'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
@@ -31,8 +32,9 @@ export default () => {
       <div className={s.themeGroup}>
         {s.bgColorNames.map((bg, index) => {
           const bgTitle = titleCaseHM(bg)
-          const backgroundColor = s.bgColorsObj[bg]
-          const active = rawBg === backgroundColor
+          const pageName = camelize(bg)
+          const bgVal = getGlobalCSSVar(`color-page-${pageName}`)
+          const active = rawBg === bgVal && !!rawBg
 
           return (
             <button
@@ -42,12 +44,12 @@ export default () => {
                 edit(upperSnakeCase(bg), isLightTheme ? 'pageBg' : 'pageBgDark')
               }}
             >
-              <div className={s.blockInner} style={{ backgroundColor }}>
+              <div className={cn(s.blockInner, s.getPageClass(pageName))}>
                 {active && <CheckSVG className={s.checker} />}
               </div>
               <div className={s.footer}>
                 <div className={s.colorTitle}>{bgTitle}</div>
-                <div className={s.hex}>{backgroundColor}</div>
+                <div className={s.hex}>{bgVal}</div>
               </div>
             </button>
           )
@@ -61,7 +63,6 @@ export default () => {
           loading={saving}
           top={10}
           left={1}
-          width='w-11/12'
         />
       ) : (
         <SavingBar
@@ -70,7 +71,6 @@ export default () => {
           loading={saving}
           top={10}
           left={1}
-          width='w-11/12'
         />
       )}
     </section>
