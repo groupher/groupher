@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import { DASHBOARD_ROUTE } from '~/const/route'
+import { DSB_ROUTE } from '~/const/route'
 import useSalon from '../salon/dashboard_intros'
 import AdminsTab from './AdminsTab'
 import CMSTab from './CMSTab'
@@ -16,7 +16,7 @@ import TagsTab from './TagsTab'
 import TrendTab from './TrendTab'
 
 export default () => {
-  const [tab, setTab] = useState<TIntroTab>(DASHBOARD_ROUTE.LAYOUT)
+  const [tab, setTab] = useState<TIntroTab>(DSB_ROUTE.LAYOUT)
 
   const s = useSalon({ tab })
 
@@ -42,15 +42,15 @@ export default () => {
           <div className={s.bgGradientYellow} />
 
           <div className={s.graphDemo}>
-            {tab === DASHBOARD_ROUTE.LAYOUT && <LayoutTab />}
-            {tab === DASHBOARD_ROUTE.SEO && <SeoTab />}
-            {tab === DASHBOARD_ROUTE.POST && <CMSTab />}
-            {tab === DASHBOARD_ROUTE.TAGS && <TagsTab />}
-            {tab === DASHBOARD_ROUTE.ADMINS && <AdminsTab />}
-            {tab === DASHBOARD_ROUTE.HEADER && <LinksTab />}
-            {tab === DASHBOARD_ROUTE.WIDGETS && <IntegrateTab />}
-            {tab === DASHBOARD_ROUTE.INOUT && <ImportTab />}
-            {tab === DASHBOARD_ROUTE.TREND && <TrendTab />}
+            {tab === DSB_ROUTE.LAYOUT && <LayoutTab />}
+            {tab === DSB_ROUTE.SEO && <SeoTab />}
+            {tab === DSB_ROUTE.POST && <CMSTab />}
+            {tab === DSB_ROUTE.TAGS && <TagsTab />}
+            {tab === DSB_ROUTE.ADMINS && <AdminsTab />}
+            {tab === DSB_ROUTE.HEADER && <LinksTab />}
+            {tab === DSB_ROUTE.WIDGETS && <IntegrateTab />}
+            {tab === DSB_ROUTE.INOUT && <ImportTab />}
+            {tab === DSB_ROUTE.TREND && <TrendTab />}
           </div>
         </div>
       </div>

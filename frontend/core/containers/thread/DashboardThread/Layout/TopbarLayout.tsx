@@ -1,4 +1,4 @@
-import { DASHBOARD_DESC_LAYOUT, TOPBAR_LAYOUT } from '~/const/layout'
+import { DSB_DESC_LAYOUT, TOPBAR_LAYOUT } from '~/const/layout'
 import { callDashboardDesc } from '~/signal'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
@@ -24,7 +24,7 @@ export default () => {
             全局 Topbar 的样式。
             <div className='inline-block'>
               <ArrowButton
-                onClick={() => callDashboardDesc(DASHBOARD_DESC_LAYOUT.POST_LIST)}
+                onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)}
                 fontSize={12}
               >
                 查看示例

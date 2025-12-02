@@ -1,7 +1,7 @@
-import type { FC } from 'react'
 import { useRouter } from 'next/navigation'
+import type { FC } from 'react'
 
-import { DASHBOARD_ALIAS_ROUTE } from '~/const/route'
+import { DSB_ALIAS_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
 
 import { groupByKey } from '~/helper'
@@ -9,13 +9,11 @@ import useViewingCommunity from '~/hooks/useViewingCommunity'
 
 import Tabs from '~/widgets/Switcher/Tabs'
 
-import { ALIAS_TABS, ALIAS_GROUP } from '../constant'
-
-import Portal from '../Portal'
-import Item from './Item'
-
+import { ALIAS_GROUP, ALIAS_TABS } from '../constant'
 import useAlias from '../logic/useAlias'
+import Portal from '../Portal'
 import useSalon from '../salon/alias'
+import Item from './Item'
 
 const Alias: FC = () => {
   const s = useSalon()
@@ -32,8 +30,8 @@ const Alias: FC = () => {
   return (
     <div className={s.wrapper}>
       <Portal
-        title="别名设置"
-        desc="覆盖社区内默认的板块，组件，提示信息等名称，注意对应的路由不会改变。"
+        title='别名设置'
+        desc='覆盖社区内默认的板块，组件，提示信息等名称，注意对应的路由不会改变。'
         withDivider={false}
       />
       <div className={s.banner}>
@@ -44,7 +42,7 @@ const Alias: FC = () => {
             onChange={(tab) => {
               changeTab(tab)
               const targetPath =
-                tab === DASHBOARD_ALIAS_ROUTE.THREAD
+                tab === DSB_ALIAS_ROUTE.THREAD
                   ? `/${curCommunity.slug}/dashboard/alias`
                   : `/${curCommunity.slug}/dashboard/alias/${tab}`
 

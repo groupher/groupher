@@ -1,6 +1,6 @@
 import { useRouter } from 'next/navigation'
 
-import { DASHBOARD_SEO_ROUTE } from '~/const/route'
+import { DSB_SEO_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
 
 import useViewingCommunity from '~/hooks/useViewingCommunity'
@@ -33,7 +33,7 @@ export default () => {
             onChange={(tab) => {
               edit(tab, 'seoTab')
               const targetPath =
-                tab === DASHBOARD_SEO_ROUTE.SEARCH_ENGINE
+                tab === DSB_SEO_ROUTE.SEARCH_ENGINE
                   ? `/${curCommunity.slug}/dashboard/seo`
                   : `/${curCommunity.slug}/dashboard/seo/${tab}`
 
@@ -45,8 +45,8 @@ export default () => {
         </div>
       </div>
 
-      {seoTab === DASHBOARD_SEO_ROUTE.SEARCH_ENGINE && <OpenGraph />}
-      {seoTab === DASHBOARD_SEO_ROUTE.TWITTER && <TwitterGraph />}
+      {seoTab === DSB_SEO_ROUTE.SEARCH_ENGINE && <OpenGraph />}
+      {seoTab === DSB_SEO_ROUTE.TWITTER && <TwitterGraph />}
 
       <SavingBar field={FIELD.SEO} isTouched={isTouched} loading={saving} width='7/12' />
     </div>

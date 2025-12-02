@@ -1,4 +1,4 @@
-import { DASHBOARD_DESC_LAYOUT, DOC_FAQ_LAYOUT, DOC_LAYOUT } from '~/const/layout'
+import { DOC_FAQ_LAYOUT, DOC_LAYOUT, DSB_DESC_LAYOUT } from '~/const/layout'
 import { callDashboardDesc } from '~/signal'
 
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
@@ -24,10 +24,7 @@ export default () => {
         desc={
           <div className='inline-flex'>
             全部文档的目录布局。
-            <ArrowButton
-              onClick={() => callDashboardDesc(DASHBOARD_DESC_LAYOUT.POST_LIST)}
-              fontSize={12}
-            >
+            <ArrowButton onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)} fontSize={12}>
               查看示例
             </ArrowButton>
           </div>
@@ -76,10 +73,7 @@ export default () => {
         desc={
           <div className='inline-flex'>
             当前设置仅针对常见问题的展示样式。
-            <ArrowButton
-              onClick={() => callDashboardDesc(DASHBOARD_DESC_LAYOUT.POST_LIST)}
-              fontSize={12}
-            >
+            <ArrowButton onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)} fontSize={12}>
               查看示例
             </ArrowButton>
           </div>

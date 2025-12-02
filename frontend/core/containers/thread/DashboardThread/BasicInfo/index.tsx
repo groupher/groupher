@@ -1,22 +1,19 @@
 import { useRouter } from 'next/navigation'
 
-import { DASHBOARD_BASEINFO_ROUTE } from '~/const/route'
+import { DSB_BASEINFO_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
 
 import useViewingCommunity from '~/hooks/useViewingCommunity'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 import { BASEINFO_TABS } from '../constant'
-
+import useBaseInfo from '../logic/useBaseInfo'
 import Portal from '../Portal'
-
+import useSalon from '../salon/basic_info'
 import BaseInfo from './BaseInfo'
 import Logos from './Logos'
-import SocialInfo from './SocialInfo'
 import OtherInfo from './OtherInfo'
-
-import useBaseInfo from '../logic/useBaseInfo'
-import useSalon from '../salon/basic_info'
+import SocialInfo from './SocialInfo'
 
 export default () => {
   const s = useSalon()
@@ -28,8 +25,8 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <Portal
-        title="社区信息"
-        desc="社区基本信息，社交媒体，关于页面主要信息等。"
+        title='社区信息'
+        desc='社区基本信息，社交媒体，关于页面主要信息等。'
         withDivider={false}
       />
 
@@ -39,10 +36,10 @@ export default () => {
             items={BASEINFO_TABS}
             activeKey={baseInfoTab}
             onChange={(tab) => {
-              // @ts-ignore
+              // @ts-expect-error
               edit(tab, 'baseInfoTab')
               const targetPath =
-                tab === DASHBOARD_BASEINFO_ROUTE.BASIC
+                tab === DSB_BASEINFO_ROUTE.BASIC
                   ? `/${curCommunity.slug}/dashboard/info`
                   : `/${curCommunity.slug}/dashboard/info/${tab}`
 
@@ -54,10 +51,10 @@ export default () => {
         </div>
       </div>
 
-      {baseInfoTab === DASHBOARD_BASEINFO_ROUTE.BASIC && <BaseInfo />}
-      {baseInfoTab === DASHBOARD_BASEINFO_ROUTE.LOGOS && <Logos />}
-      {baseInfoTab === DASHBOARD_BASEINFO_ROUTE.SOCIAL && <SocialInfo />}
-      {baseInfoTab === DASHBOARD_BASEINFO_ROUTE.OTHER && <OtherInfo />}
+      {baseInfoTab === DSB_BASEINFO_ROUTE.BASIC && <BaseInfo />}
+      {baseInfoTab === DSB_BASEINFO_ROUTE.LOGOS && <Logos />}
+      {baseInfoTab === DSB_BASEINFO_ROUTE.SOCIAL && <SocialInfo />}
+      {baseInfoTab === DSB_BASEINFO_ROUTE.OTHER && <OtherInfo />}
     </div>
   )
 }

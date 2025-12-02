@@ -1,13 +1,10 @@
 import Link from 'next/link'
-
+import { DSB_ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
-
-import { DASHBOARD_ROUTE } from '~/const/route'
-
+import LinkSVG from '~/icons/ArrowUpRight'
 import ReportSVG from '~/icons/Report'
 import SettingSVG from '~/icons/Setting'
-import LinkSVG from '~/icons/ArrowUpRight'
 
 import HomeLogo from '~/widgets/HomeLogo'
 
@@ -21,13 +18,13 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <Link href={`/${slug}/${DASHBOARD_ROUTE.OVERVIEW}`} className={s.linkable}>
+      <Link href={`/${slug}/${DSB_ROUTE.OVERVIEW}`} className={s.linkable}>
         <MenuBar>
           <div className={s.iconBox}>
             <SettingSVG className={s.dashboardIcon} />
           </div>
           {t('dashboard')}
-          <div className="grow" />
+          <div className='grow' />
           <LinkSVG className={s.linkIcon} />
         </MenuBar>
       </Link>

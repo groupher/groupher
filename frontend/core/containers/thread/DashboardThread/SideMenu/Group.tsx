@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { type FC, useState } from 'react'
 
-import { DASHBOARD_ROUTE } from '~/const/route'
+import { DSB_ROUTE } from '~/const/route'
 
 import useDashboardTab from '~/hooks/useDashboardTab'
 import useViewingCommunity from '~/hooks/useViewingCommunity'
@@ -42,7 +42,7 @@ const Group: FC<TProps> = ({ group }) => {
       {!fold && (
         <div className={s.menu}>
           {group.children.map((item) => {
-            const subPath = item.slug === DASHBOARD_ROUTE.DASHBOARD ? '' : item.slug
+            const subPath = item.slug === DSB_ROUTE.DASHBOARD ? '' : item.slug
             const isActive = item.slug === curTab
 
             return (
@@ -50,7 +50,7 @@ const Group: FC<TProps> = ({ group }) => {
                 key={item.slug}
                 className={cn(s.item, isActive && s.itemActive)}
                 onClick={() => changeTab(item.slug)}
-                href={`/${community.slug}/${DASHBOARD_ROUTE.DASHBOARD}/${subPath}`}
+                href={`/${community.slug}/${DSB_ROUTE.DASHBOARD}/${subPath}`}
               >
                 {isActive && <div className={s.itemActiveBar} />}
 

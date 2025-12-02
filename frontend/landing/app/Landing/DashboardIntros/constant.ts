@@ -1,5 +1,5 @@
 import { COLOR_NAME } from '~/const/colors'
-import { DASHBOARD_ROUTE } from '~/const/route'
+import { DSB_ROUTE } from '~/const/route'
 import AdminSVG from '~/icons/Admin'
 import CMSSVG from '~/icons/CMS'
 import HashTagBoldSVG from '~/icons/HashTagLight'
@@ -9,7 +9,7 @@ import LayoutSVG from '~/icons/Layout'
 import SpiderSVG from '~/icons/Spider'
 
 export default {
-  [DASHBOARD_ROUTE.LAYOUT]: {
+  [DSB_ROUTE.LAYOUT]: {
     title: '布局 & 样式',
     desc: '社区与内容展示的各种个性化设置',
     color: COLOR_NAME.PURPLE,
@@ -26,7 +26,7 @@ export default {
     ],
   },
 
-  [DASHBOARD_ROUTE.POST]: {
+  [DSB_ROUTE.POST]: {
     title: '内容管理',
     desc: '社区内容管理，文章状态设置',
     color: COLOR_NAME.BLUE,
@@ -43,7 +43,7 @@ export default {
     ],
   },
 
-  [DASHBOARD_ROUTE.SEO]: {
+  [DSB_ROUTE.SEO]: {
     title: 'SEO / RSS',
     desc: '搜索引擎/社交媒体/RSS 优化及设置',
     color: COLOR_NAME.CYAN,
@@ -60,7 +60,7 @@ export default {
     ],
   },
 
-  [DASHBOARD_ROUTE.TAGS]: {
+  [DSB_ROUTE.TAGS]: {
     title: '标签设置',
     desc: '标签增改，样式等相关设置',
     color: COLOR_NAME.GREEN,
@@ -76,7 +76,7 @@ export default {
     ],
   },
 
-  [DASHBOARD_ROUTE.ADMINS]: {
+  [DSB_ROUTE.ADMINS]: {
     title: '管理员 & 权限',
     desc: '社区管理员设置，操作权限相关',
     color: COLOR_NAME.RED,
@@ -93,7 +93,7 @@ export default {
     ],
   },
 
-  [DASHBOARD_ROUTE.HEADER]: {
+  [DSB_ROUTE.HEADER]: {
     title: '页头 & 页脚',
     desc: '链接及分组管理，展示模板设置',
     color: COLOR_NAME.BROWN,
@@ -109,7 +109,7 @@ export default {
     ],
   },
 
-  [DASHBOARD_ROUTE.INOUT]: {
+  [DSB_ROUTE.INOUT]: {
     title: '导入 & 通知',
     desc: '三方平台导入内容 / 信息通知',
     color: COLOR_NAME.YELLOW,
@@ -127,7 +127,7 @@ export default {
     ],
   },
 
-  [DASHBOARD_ROUTE.WIDGETS]: {
+  [DSB_ROUTE.WIDGETS]: {
     title: '嵌入集成',
     desc: '三方平台导入内容 / 信息通知',
     color: COLOR_NAME.YELLOW,
@@ -145,7 +145,7 @@ export default {
     ],
   },
 
-  [DASHBOARD_ROUTE.ANALYSIS]: {
+  [DSB_ROUTE.ANALYSIS]: {
     title: '统计分析',
     desc: '三方平台导入内容 / 信息通知',
     color: COLOR_NAME.YELLOW,

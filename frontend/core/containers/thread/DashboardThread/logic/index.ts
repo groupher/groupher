@@ -132,13 +132,13 @@
 // //     const { baseInfoTab } = store
 
 // //     const params = {}
-// //     if (baseInfoTab === DASHBOARD_BASEINFO_ROUTE.BASIC) {
+// //     if (baseInfoTab === DSB_BASEINFO_ROUTE.BASIC) {
 // //       forEach((key) => {
 // //         params[key] = store[key]
 // //       }, BASEINFO_BASIC_KEYS)
 // //     }
 
-// //     if (baseInfoTab === DASHBOARD_BASEINFO_ROUTE.OTHER) {
+// //     if (baseInfoTab === DSB_BASEINFO_ROUTE.OTHER) {
 // //       forEach((key) => {
 // //         params[key] = store[key]
 // //       }, BASEINFO_OTHER_KEYS)
@@ -158,13 +158,13 @@
 // //     const params = {}
 // //     const { seoTab } = store
 
-// //     if (seoTab === DASHBOARD_SEO_ROUTE.SEARCH_ENGINE) {
+// //     if (seoTab === DSB_SEO_ROUTE.SEARCH_ENGINE) {
 // //       forEach((key) => {
 // //         params[key] = store[key]
 // //       }, SEO_OG_KEYS)
 // //     }
 
-// //     if (seoTab === DASHBOARD_SEO_ROUTE.TWITTER) {
+// //     if (seoTab === DSB_SEO_ROUTE.TWITTER) {
 // //       forEach((key) => {
 // //         params[key] = store[key]
 // //       }, SEO_TW_KEYS)

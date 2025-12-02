@@ -1,13 +1,13 @@
 import { COLOR_NAME } from '~/const/colors'
 import { ONE_LINK_GROUP } from '~/const/dashboard'
 import {
-  DASHBOARD_ALIAS_ROUTE,
-  DASHBOARD_BASEINFO_ROUTE,
-  DASHBOARD_BROADCAST_ROUTE,
-  DASHBOARD_DOC_ROUTE,
-  DASHBOARD_LAYOUT_ROUTE,
-  DASHBOARD_ROUTE,
-  DASHBOARD_SEO_ROUTE,
+  DSB_ALIAS_ROUTE,
+  DSB_BASEINFO_ROUTE,
+  DSB_BROADCAST_ROUTE,
+  DSB_DOC_ROUTE,
+  DSB_LAYOUT_ROUTE,
+  DSB_ROUTE,
+  DSB_SEO_ROUTE,
 } from '~/const/route'
 import type { TSnakeUpperCase, TWidgetType } from '~/spec'
 import type { TDsbFields } from '~/stores/dashboard/spec'
@@ -83,44 +83,44 @@ export const MENU = {
     children: [
       {
         title: '概览',
-        slug: DASHBOARD_ROUTE.DASHBOARD,
+        slug: DSB_ROUTE.DASHBOARD,
       },
       {
         title: '基本信息',
-        slug: DASHBOARD_ROUTE.INFO,
+        slug: DSB_ROUTE.INFO,
       },
       {
         title: 'SEO',
-        slug: DASHBOARD_ROUTE.SEO,
+        slug: DSB_ROUTE.SEO,
       },
       {
         title: '社区板块',
-        slug: DASHBOARD_ROUTE.THREADS,
+        slug: DSB_ROUTE.THREADS,
       },
       {
         title: '布局与样式',
-        slug: DASHBOARD_ROUTE.LAYOUT,
+        slug: DSB_ROUTE.LAYOUT,
       },
       {
         title: '别名',
-        slug: DASHBOARD_ROUTE.ALIAS,
+        slug: DSB_ROUTE.ALIAS,
         alias: FIELD.NAME_ALIAS,
       },
       {
         title: '管理员',
-        slug: DASHBOARD_ROUTE.ADMINS,
+        slug: DSB_ROUTE.ADMINS,
       },
       {
         title: '页眉',
-        slug: DASHBOARD_ROUTE.HEADER,
+        slug: DSB_ROUTE.HEADER,
       },
       {
         title: '页脚',
-        slug: DASHBOARD_ROUTE.FOOTER,
+        slug: DSB_ROUTE.FOOTER,
       },
       {
         title: '导入/导出',
-        slug: DASHBOARD_ROUTE.INOUT,
+        slug: DSB_ROUTE.INOUT,
       },
     ],
   },
@@ -132,35 +132,35 @@ export const MENU = {
     children: [
       {
         title: '社区',
-        slug: DASHBOARD_ROUTE.COMMUNITIES,
+        slug: DSB_ROUTE.COMMUNITIES,
       },
       {
         title: '标签',
-        slug: DASHBOARD_ROUTE.TAGS,
+        slug: DSB_ROUTE.TAGS,
       },
       {
         title: '帖子',
-        slug: DASHBOARD_ROUTE.POST,
+        slug: DSB_ROUTE.POST,
       },
       {
         title: '更新日志',
-        slug: DASHBOARD_ROUTE.CHANGELOG,
+        slug: DSB_ROUTE.CHANGELOG,
       },
       {
         title: '帮助台',
-        slug: DASHBOARD_ROUTE.DOC,
+        slug: DSB_ROUTE.DOC,
       },
       {
         title: '广播',
-        slug: DASHBOARD_ROUTE.BROADCAST,
+        slug: DSB_ROUTE.BROADCAST,
       },
       {
         title: '小黑屋',
-        slug: DASHBOARD_ROUTE.BLACKHOUSE,
+        slug: DSB_ROUTE.BLACKHOUSE,
       },
       {
         title: 'RSS',
-        slug: DASHBOARD_ROUTE.RSS,
+        slug: DSB_ROUTE.RSS,
       },
     ],
   },
@@ -172,11 +172,11 @@ export const MENU = {
     children: [
       {
         title: '趋势',
-        slug: DASHBOARD_ROUTE.TREND,
+        slug: DSB_ROUTE.TREND,
       },
       {
         title: '日志',
-        slug: DASHBOARD_ROUTE.LOG,
+        slug: DSB_ROUTE.LOG,
       },
     ],
   },
@@ -188,24 +188,24 @@ export const MENU = {
     children: [
       {
         title: '自定义域名',
-        slug: DASHBOARD_ROUTE.DOMAIN,
+        slug: DSB_ROUTE.DOMAIN,
       },
       {
         title: '外部应用',
-        slug: DASHBOARD_ROUTE.THIRD_PART,
+        slug: DSB_ROUTE.THIRD_PART,
       },
       {
         title: '网站插件',
-        slug: DASHBOARD_ROUTE.WIDGETS,
+        slug: DSB_ROUTE.WIDGETS,
       },
     ],
   },
 }
 
 export const ALIAS_GROUP = {
-  THREAD: DASHBOARD_ALIAS_ROUTE.THREAD,
-  KANBAN: DASHBOARD_ALIAS_ROUTE.KANBAN,
-  OTHERS: DASHBOARD_ALIAS_ROUTE.OTHERS,
+  THREAD: DSB_ALIAS_ROUTE.THREAD,
+  KANBAN: DSB_ALIAS_ROUTE.KANBAN,
+  OTHERS: DSB_ALIAS_ROUTE.OTHERS,
 }
 
 export const BUILDIN_ALIAS_SUGGESTIONS = {
@@ -272,83 +272,83 @@ export const FOOTER_EDIT_TYPE = {
 export const BASEINFO_TABS = [
   {
     title: '基本信息',
-    slug: DASHBOARD_BASEINFO_ROUTE.BASIC,
+    slug: DSB_BASEINFO_ROUTE.BASIC,
   },
   {
     title: 'Logo',
-    slug: DASHBOARD_BASEINFO_ROUTE.LOGOS,
+    slug: DSB_BASEINFO_ROUTE.LOGOS,
   },
   {
     title: '社交媒体',
-    slug: DASHBOARD_BASEINFO_ROUTE.SOCIAL,
+    slug: DSB_BASEINFO_ROUTE.SOCIAL,
   },
   {
     title: '其他',
-    slug: DASHBOARD_BASEINFO_ROUTE.OTHER,
+    slug: DSB_BASEINFO_ROUTE.OTHER,
   },
 ]
 
 export const SEO_TABS = [
   {
     title: '搜索引擎',
-    slug: DASHBOARD_SEO_ROUTE.SEARCH_ENGINE,
+    slug: DSB_SEO_ROUTE.SEARCH_ENGINE,
   },
   {
     title: 'Twitter',
-    slug: DASHBOARD_SEO_ROUTE.TWITTER,
+    slug: DSB_SEO_ROUTE.TWITTER,
   },
 ]
 
 export const LAYOUT_TABS = [
   {
     title: '全局',
-    slug: DASHBOARD_LAYOUT_ROUTE.GENERAL,
+    slug: DSB_LAYOUT_ROUTE.GENERAL,
   },
   {
     title: '讨论区',
-    slug: DASHBOARD_LAYOUT_ROUTE.POST,
+    slug: DSB_LAYOUT_ROUTE.POST,
   },
   {
     title: '看板',
-    slug: DASHBOARD_LAYOUT_ROUTE.KANBAN,
+    slug: DSB_LAYOUT_ROUTE.KANBAN,
   },
   {
     title: '更新日志',
-    slug: DASHBOARD_LAYOUT_ROUTE.CHANGELOG,
+    slug: DSB_LAYOUT_ROUTE.CHANGELOG,
   },
   {
     title: '帮助台',
-    slug: DASHBOARD_LAYOUT_ROUTE.DOC,
+    slug: DSB_LAYOUT_ROUTE.DOC,
   },
 ]
 
 export const BROADCAST_TABS = [
   {
     title: '站顶横幅',
-    slug: DASHBOARD_BROADCAST_ROUTE.GLOBAL,
+    slug: DSB_BROADCAST_ROUTE.GLOBAL,
   },
   {
     title: '帖子页脚',
-    slug: DASHBOARD_BROADCAST_ROUTE.ARTICLE,
+    slug: DSB_BROADCAST_ROUTE.ARTICLE,
   },
 ]
 
 export const DOC_TABS = [
   {
     title: '概览',
-    slug: DASHBOARD_DOC_ROUTE.TABLE,
+    slug: DSB_DOC_ROUTE.TABLE,
   },
   {
     title: '目录编排',
-    slug: DASHBOARD_DOC_ROUTE.TREE,
+    slug: DSB_DOC_ROUTE.TREE,
   },
   {
     title: '封面图标',
-    slug: DASHBOARD_DOC_ROUTE.COVER,
+    slug: DSB_DOC_ROUTE.COVER,
   },
   {
     title: '常见问题',
-    slug: DASHBOARD_DOC_ROUTE.FAQ,
+    slug: DSB_DOC_ROUTE.FAQ,
   },
 ]
 
@@ -372,15 +372,15 @@ export const TW_CARD_OPTIONS = [
 export const ALIAS_TABS = [
   {
     title: '板块入口',
-    slug: DASHBOARD_ALIAS_ROUTE.THREAD,
+    slug: DSB_ALIAS_ROUTE.THREAD,
   },
   {
     title: '看板',
-    slug: DASHBOARD_ALIAS_ROUTE.KANBAN,
+    slug: DSB_ALIAS_ROUTE.KANBAN,
   },
   {
     title: '其他',
-    slug: DASHBOARD_ALIAS_ROUTE.OTHERS,
+    slug: DSB_ALIAS_ROUTE.OTHERS,
   },
 ]
 

@@ -1,4 +1,4 @@
-import { CHANGELOG_LAYOUT, DASHBOARD_DESC_LAYOUT } from '~/const/layout'
+import { CHANGELOG_LAYOUT, DSB_DESC_LAYOUT } from '~/const/layout'
 import { callDashboardDesc } from '~/signal'
 
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
@@ -23,7 +23,7 @@ export default () => {
             「更新日志」列表的默认展现形式，切换布局不影响已发布内容。
             <div className='inline-flex'>
               <ArrowButton
-                onClick={() => callDashboardDesc(DASHBOARD_DESC_LAYOUT.POST_LIST)}
+                onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)}
                 fontSize={12}
               >
                 查看示例

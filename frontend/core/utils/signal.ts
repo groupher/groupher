@@ -1,27 +1,25 @@
 // eslint-disable-next-line import/no-unresolved
 import { toast as hotToast } from 'sonner'
-
-import type {
-  TToastType,
-  TAttInfo,
-  TPaymentUsage,
-  TWindow,
-  TGQLError,
-  TArticle,
-  TCommunity,
-  TThread,
-  TTag,
-  TCommunitySetterStyle,
-  TReportType,
-  TArticlePubSelector,
-} from '~/spec'
+import EVENT from '~/const/event'
 import { THREAD } from '~/const/thread'
 import TYPE from '~/const/type'
-import EVENT from '~/const/event'
-
-import PubSub from './pubsub'
+import type {
+  TArticle,
+  TArticlePubSelector,
+  TAttInfo,
+  TCommunity,
+  TCommunitySetterStyle,
+  TGQLError,
+  TPaymentUsage,
+  TReportType,
+  TTag,
+  TThread,
+  TToastType,
+  TWindow,
+} from '~/spec'
 import BStore from './bstore'
 import { scrollToHeader } from './dom'
+import PubSub from './pubsub'
 
 export const Global: TWindow = typeof window !== 'undefined' ? window : null
 
@@ -134,7 +132,7 @@ export const callWallpaperEditor = (): void => {
 }
 
 export const callDashboardDesc = (data): void => {
-  send(EVENT.DRAWER.OPEN, { type: TYPE.DRAWER.DASHBOARD_DESC, data })
+  send(EVENT.DRAWER.OPEN, { type: TYPE.DRAWER.DSB_DESC, data })
 }
 
 export const callSubscriber = (): void => {
@@ -201,7 +199,7 @@ export const multiClick = (
  */
 export const viewingChanged = (article: TArticle | null): void => {
   if (article) {
-    // @ts-ignore
+    // @ts-expect-error
     BStore.set('viewingArticle', { community: article.communitySlug, id: article.innerId })
   } else {
     BStore.set('viewingArticle', null)

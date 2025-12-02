@@ -1,4 +1,4 @@
-import { mergeRight, keys, reduce } from 'ramda'
+import { keys, mergeRight, reduce } from 'ramda'
 
 import type { TArticleThread } from '~/spec'
 
@@ -34,7 +34,7 @@ const TYPE = {
     ACCOUNT_EDIT: 'ACCOUNT_EDIT',
 
     MAILS_VIEW: 'MAILS_VIEW',
-    DASHBOARD_DESC: 'DASHBOARD_DESC',
+    DSB_DESC: 'DSB_DESC',
 
     G_EDITOR: 'G_EDITOR',
     ...DRAWER_ARTICLE_CRUD,

@@ -1,6 +1,6 @@
 import { equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
 import { useEffect, useRef } from 'react'
-import { DASHBOARD_BASEINFO_ROUTE } from '~/const/route'
+import { DSB_BASEINFO_ROUTE } from '~/const/route'
 import useDashboard from '~/hooks/useDashboard'
 import useViewing from '~/hooks/useViewing'
 
@@ -175,13 +175,13 @@ export default (): TRet => {
       const { baseInfoTab } = store
 
       const params = { community }
-      if (baseInfoTab === DASHBOARD_BASEINFO_ROUTE.BASIC) {
+      if (baseInfoTab === DSB_BASEINFO_ROUTE.BASIC) {
         for (const key of BASEINFO_BASIC_KEYS) {
           params[key] = store[key]
         }
       }
 
-      if (baseInfoTab === DASHBOARD_BASEINFO_ROUTE.OTHER) {
+      if (baseInfoTab === DSB_BASEINFO_ROUTE.OTHER) {
         for (const key of BASEINFO_OTHER_KEYS) {
           params[key] = store[key]
         }
@@ -205,13 +205,13 @@ export default (): TRet => {
     //   const params = {}
     //   const { seoTab } = store
 
-    //   if (seoTab === DASHBOARD_SEO_ROUTE.SEARCH_ENGINE) {
+    //   if (seoTab === DSB_SEO_ROUTE.SEARCH_ENGINE) {
     //     forEach((key) => {
     //       params[key] = store[key]
     //     }, SEO_OG_KEYS)
     //   }
 
-    //   if (seoTab === DASHBOARD_SEO_ROUTE.TWITTER) {
+    //   if (seoTab === DSB_SEO_ROUTE.TWITTER) {
     //     forEach((key) => {
     //       params[key] = store[key]
     //     }, SEO_TW_KEYS)

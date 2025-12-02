@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import { CHANGE_MODE } from '~/const/mode'
-import { DASHBOARD_ROUTE } from '~/const/route'
+import { DSB_ROUTE } from '~/const/route'
 import useDashboard from '~/hooks/useDashboard'
 import type { TLinkItem } from '~/spec'
 import { EMPTY_LINK_ITEM } from '../../constant'
@@ -65,7 +65,7 @@ export default (): TRet => {
   const drived = useDrived()
 
   const { curTab } = store
-  const linksKey = curTab !== DASHBOARD_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
+  const linksKey = curTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
 
   const updateInGroup = (link: TLinkItem): void => {
     store.commit({ editingLink: link, editingLinkMode: CHANGE_MODE.UPDATE })

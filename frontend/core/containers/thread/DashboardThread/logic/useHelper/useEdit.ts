@@ -2,7 +2,7 @@ import { findIndex, has, omit, update } from 'ramda'
 import { useCallback } from 'react'
 import useDashboard from '~/hooks/useDashboard'
 import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
-import { BASEINFO_KEYS, DASHBOARD_DEMO_KEY, FIELD, SEO_KEYS } from '~/stores/dashboard/constant'
+import { BASEINFO_KEYS, DSB_DEMO_KEY, FIELD, SEO_KEYS } from '~/stores/dashboard/constant'
 import type { TDsbField } from '~/stores/dashboard/spec'
 import BStore from '~/utils/bstore'
 import { isObject } from '~/validator'
@@ -98,7 +98,7 @@ export default (): TRet => {
       store,
     )
 
-    BStore.set(DASHBOARD_DEMO_KEY, JSON.stringify(saveSlf))
+    BStore.set(DSB_DEMO_KEY, JSON.stringify(saveSlf))
   }
 
   const resetEdit = (field: TDsbField): void => {

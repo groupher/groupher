@@ -1,11 +1,11 @@
 import type {
-  DASHBOARD_ALIAS_ROUTE,
-  DASHBOARD_BASEINFO_ROUTE,
-  DASHBOARD_BROADCAST_ROUTE,
-  DASHBOARD_DOC_ROUTE,
-  DASHBOARD_LAYOUT_ROUTE,
-  DASHBOARD_ROUTE,
-  DASHBOARD_SEO_ROUTE,
+  DSB_ALIAS_ROUTE,
+  DSB_BASEINFO_ROUTE,
+  DSB_BROADCAST_ROUTE,
+  DSB_DOC_ROUTE,
+  DSB_LAYOUT_ROUTE,
+  DSB_ROUTE,
+  DSB_SEO_ROUTE,
 } from '~/const/route'
 import type {
   TAvatarLayout,
@@ -176,13 +176,13 @@ export type TStore = TDsbFields & {
   saving: boolean
   loading: boolean
 
-  curTab: TValueOf<typeof DASHBOARD_ROUTE>
-  baseInfoTab: TValueOf<typeof DASHBOARD_BASEINFO_ROUTE>
-  aliasTab: TValueOf<typeof DASHBOARD_ALIAS_ROUTE>
-  seoTab: TValueOf<typeof DASHBOARD_SEO_ROUTE>
-  docTab: TValueOf<typeof DASHBOARD_DOC_ROUTE>
-  layoutTab: TValueOf<typeof DASHBOARD_LAYOUT_ROUTE>
-  broadcastTab: TValueOf<typeof DASHBOARD_BROADCAST_ROUTE>
+  curTab: TValueOf<typeof DSB_ROUTE>
+  baseInfoTab: TValueOf<typeof DSB_BASEINFO_ROUTE>
+  aliasTab: TValueOf<typeof DSB_ALIAS_ROUTE>
+  seoTab: TValueOf<typeof DSB_SEO_ROUTE>
+  docTab: TValueOf<typeof DSB_DOC_ROUTE>
+  layoutTab: TValueOf<typeof DSB_LAYOUT_ROUTE>
+  broadcastTab: TValueOf<typeof DSB_BROADCAST_ROUTE>
 
   overview: TOverview
 

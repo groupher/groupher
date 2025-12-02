@@ -15,9 +15,9 @@ export {
   BRAND_LAYOUT,
   BROADCAST_LAYOUT,
   CHANGELOG_LAYOUT,
-  DASHBOARD_DESC_LAYOUT,
   DOC_FAQ_LAYOUT,
   DOC_LAYOUT,
+  DSB_DESC_LAYOUT,
   FOOTER_LAYOUT,
   KANBAN_CARD_LAYOUT,
   POST_LAYOUT,
@@ -28,7 +28,7 @@ export { default as METRIC } from './metric'
 export { PAYMENT_METHOD, PAYMENT_USAGE } from './payment'
 export { default as RECIPE } from './recipe'
 export { REPORT, REPORT_TYPE } from './report'
-export { DASHBOARD_ROUTE, NON_COMMUNITY_ROUTE, ROUTE } from './route'
+export { DSB_ROUTE, NON_COMMUNITY_ROUTE, ROUTE } from './route'
 export { default as SIZE } from './size'
 export { default as SVG } from './svg'
 export { ARTICLE_THREAD, CARD_THREAD, THREAD } from './thread'

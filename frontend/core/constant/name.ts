@@ -1,4 +1,4 @@
-import { DASHBOARD_ALIAS_ROUTE } from './route'
+import { DSB_ALIAS_ROUTE } from './route'
 
 export const HOME_COMMUNITY = {
   home: 'groupher',
@@ -7,9 +7,9 @@ export const HOME_COMMUNITY = {
 }
 
 export const ALIAS_GROUP = {
-  THREAD: DASHBOARD_ALIAS_ROUTE.THREAD,
-  KANBAN: DASHBOARD_ALIAS_ROUTE.KANBAN,
-  OTHERS: DASHBOARD_ALIAS_ROUTE.OTHERS,
+  THREAD: DSB_ALIAS_ROUTE.THREAD,
+  KANBAN: DSB_ALIAS_ROUTE.KANBAN,
+  OTHERS: DSB_ALIAS_ROUTE.OTHERS,
 }
 
 export const BUILTIN_ALIAS = [

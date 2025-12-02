@@ -1,4 +1,4 @@
-import { DASHBOARD_DESC_LAYOUT, POST_LAYOUT } from '~/const/layout'
+import { DSB_DESC_LAYOUT, POST_LAYOUT } from '~/const/layout'
 import CommentSVG from '~/icons/Comment'
 
 import UpvoteSVG from '~/icons/Upvote'
@@ -25,7 +25,7 @@ export default () => {
           <>
             「讨论区」列表的默认布局，切换布局不影响已发布内容。
             <div className={s.inline}>
-              <ArrowButton onClick={() => callDashboardDesc(DASHBOARD_DESC_LAYOUT.POST_LIST)}>
+              <ArrowButton onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)}>
                 查看示例
               </ArrowButton>
             </div>
