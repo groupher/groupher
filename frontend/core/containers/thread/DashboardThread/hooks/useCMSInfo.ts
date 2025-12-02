@@ -5,7 +5,7 @@ import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { query } from '~/server'
 import type {
   TArticleEntries,
-  TDashboardDocRoute,
+  TDsbDocRoute,
   TFAQSection,
   TID,
   TPagedArticles,
@@ -17,7 +17,7 @@ import useHelper from './useHelper'
 type TRet = {
   loading: boolean
   batchSelectedIDs: TID[]
-  docTab: TDashboardDocRoute
+  docTab: TDsbDocRoute
 
   pagedPosts: TPagedArticles
   pagedCommunities: TPagedCommunities

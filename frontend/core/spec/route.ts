@@ -1,11 +1,11 @@
-export type TDashboardBaseInfoRoute = 'basic' | 'social' | 'logos' | 'other'
-export type TDashboardSEORoute = 'search_engine' | 'twitter'
-export type TDashboardDocRoute = 'table' | 'tree' | 'cover' | 'faq'
-export type TDashboardLayoutRoute = 'general' | 'theme' | 'post' | 'kanban' | 'changelog' | 'doc'
-export type TDashboardBroadcastRoute = 'global' | 'article'
-export type TDashboardAliasRoute = 'thread' | 'kanban' | 'others'
+export type TDsbBaseInfoRoute = 'basic' | 'social' | 'logos' | 'other'
+export type TDsbSEORoute = 'search_engine' | 'twitter'
+export type TDsbDocRoute = 'table' | 'tree' | 'cover' | 'faq'
+export type TDsbLayoutRoute = 'general' | 'theme' | 'post' | 'kanban' | 'changelog' | 'doc'
+export type TDsbBroadcastRoute = 'global' | 'article'
+export type TDsbAliasRoute = 'thread' | 'kanban' | 'others'
 
-export type TDashboardPath =
+export type TDsbPath =
   | 'overview'
   | 'dashboard'
   // basic-info
@@ -47,5 +47,5 @@ export type TPath =
   | 'about'
   | 'user'
   | {
-      DASHBOARD: TDashboardPath
+      DASHBOARD: TDsbPath
     }

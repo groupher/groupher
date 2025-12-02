@@ -5,9 +5,9 @@ import type {
   TBroadcastArticleLayout,
   TBroadcastLayout,
   TChangelogLayout,
-  TDashboardLayout,
   TDocFAQLayout,
   TDocLayout,
+  TDsbLayout,
   TFooterLayout,
   THeaderLayout,
   TKanbanCardLayout,
@@ -96,7 +96,7 @@ export const DSB_DESC_LAYOUT = {
   POST_LIST: 'post_list',
   BANNER: 'banner',
   CHANGELOG_LIST: 'changelog_list',
-} as Record<TSnakeUpperCase<TDashboardLayout>, TDashboardLayout>
+} as Record<TSnakeUpperCase<TDsbLayout>, TDsbLayout>
 
 export const DOC_LAYOUT = {
   BLOCKS: 'blocks',

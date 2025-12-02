@@ -1,20 +1,17 @@
+import { isEmpty, pick } from 'ramda'
 import { useEffect } from 'react'
-import { pick, isEmpty } from 'ramda'
-
-import type { TCommunity, TDashboardBaseInfoRoute, TEditFunc } from '~/spec'
 import useDashboard from '~/hooks/useDashboard'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import useQuery from '~/hooks/useQuery'
-
-import useHelper from '../useHelper'
+import useViewingCommunity from '~/hooks/useViewingCommunity'
+import type { TCommunity, TDsbBaseInfoRoute, TEditFunc } from '~/spec'
 import { BASEINFO_KEYS } from '../../constant'
 import S from '../../schema'
-
+import useHelper from '../useHelper'
+import useDangerZone, { type TRet as TUseDangerZone } from './useDangerZone'
 import useInfo, { type TRet as TUseInfo } from './useInfo'
 import useLogos, { type TRet as TUseLogos } from './useLogos'
-import useSocialLinks, { type TRet as TUseSocialLinks } from './useSocialLinks'
 import useMediaReports, { type TRet as TUseMediaReports } from './useMediaReports'
-import useDangerZone, { type TRet as TUseDangerZone } from './useDangerZone'
+import useSocialLinks, { type TRet as TUseSocialLinks } from './useSocialLinks'
 
 type TRet = TUseInfo &
   TUseLogos &
@@ -24,7 +21,7 @@ type TRet = TUseInfo &
     loading: boolean
     saving: boolean
 
-    baseInfoTab: TDashboardBaseInfoRoute
+    baseInfoTab: TDsbBaseInfoRoute
     edit: TEditFunc
   }
 
@@ -44,15 +41,6 @@ export default (): TRet => {
     slug: curCommunity.slug,
     incViews: false,
   })
-
-  useEffect(() => {
-    if (data?.community && !store.initFilled) {
-      store.commit({ initFilled: true })
-      // to avoid hooks rerender which update baseinfo
-      updateBaseInfo(data.community)
-    }
-    return () => store.commit({ initFilled: false })
-  }, [data])
 
   const updateBaseInfo = (community: TCommunity): void => {
     const { dashboard } = community
@@ -76,6 +64,20 @@ export default (): TRet => {
     const original = { ...store.original, ...updates, mediaReports: initMediaReports }
     store.commit({ ...updates, mediaReports: initMediaReports, original })
   }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    if (data?.community && !store.initFilled) {
+      store.commit({ initFilled: true })
+      // to avoid hooks rerender which update baseinfo
+      updateBaseInfo(data.community)
+    }
+    return () => store.commit({ initFilled: false })
+  }, [
+    data,
+    store.initFilled,
+    store.commit, // to avoid hooks rerender which update baseinfo
+  ])
 
   return {
     edit,

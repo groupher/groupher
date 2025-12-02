@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import type { TBroadcastConf, TBroadcastLayout, TDashboardBroadcastRoute, TEditFunc } from '~/spec'
+import type { TBroadcastConf, TBroadcastLayout, TDsbBroadcastRoute, TEditFunc } from '~/spec'
 import { FIELD } from '~/stores/dashboard/constant'
 
 import useHelper from './useHelper'
@@ -8,7 +8,7 @@ import useHelper from './useHelper'
 type TRet = TBroadcastConf & {
   edit: TEditFunc
   broadcastLayout: TBroadcastLayout
-  broadcastTab: TDashboardBroadcastRoute
+  broadcastTab: TDsbBroadcastRoute
   saving: boolean
   isTouched: boolean
   isArticleTouched: boolean

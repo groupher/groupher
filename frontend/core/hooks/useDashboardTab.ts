@@ -1,15 +1,15 @@
 import useDashboard from '~/hooks/useDashboard'
-import type { TDashboardPath } from '~/spec'
+import type { TDsbPath } from '~/spec'
 
 type TRes = {
-  curTab: TDashboardPath
-  changeTab: (curTab: TDashboardPath) => void
+  curTab: TDsbPath
+  changeTab: (curTab: TDsbPath) => void
 }
 
 export default (): TRes => {
   const store = useDashboard()
 
-  const changeTab = (curTab: TDashboardPath): void => {
+  const changeTab = (curTab: TDsbPath): void => {
     store.commit({ curTab })
   }
 

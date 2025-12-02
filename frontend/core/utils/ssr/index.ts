@@ -18,13 +18,13 @@ import { removeEmptyValuesFromObject } from '~/helper'
 import { P } from '~/schemas'
 import type {
   TCommunity,
-  TDashboardAliasRoute,
-  TDashboardBaseInfoRoute,
-  TDashboardBroadcastRoute,
-  TDashboardDocRoute,
-  TDashboardLayoutRoute,
-  TDashboardPath,
-  TDashboardSEORoute,
+  TDsbAliasRoute,
+  TDsbBaseInfoRoute,
+  TDsbBroadcastRoute,
+  TDsbDocRoute,
+  TDsbLayoutRoute,
+  TDsbPath,
+  TDsbSEORoute,
   TNameAlias,
   TPagedArticles,
   TPagedTags,
@@ -35,7 +35,7 @@ import type {
 import { gqFetch } from '~/utils/api'
 import { extractQueryName } from '~/utils/graphql'
 
-import type { TDashboardTab, TGQSSRResult } from './spec'
+import type { TDsbTab, TGQSSRResult } from './spec'
 
 export const commonRes = (result): TGQSSRResult => {
   return {
@@ -93,7 +93,7 @@ const parseDashboardAlias = (nameAlias: TNameAlias[]): TNameAlias[] => {
 /**
  * parse the dashboard's cutTab & sub tab from pathname
  */
-const parseDashboardThread = (pathname: string): TDashboardTab => {
+const parseDashboardThread = (pathname: string): TDsbTab => {
   const segments = reject(isEmpty, pathname.split('/'))
   const isOverviewThread = segments.length === 2
 
@@ -103,7 +103,7 @@ const parseDashboardThread = (pathname: string): TDashboardTab => {
 
   if (segments[1] === THREAD.DASHBOARD && isOverviewThread) {
     return {
-      curTab: DSB_ROUTE.OVERVIEW as TDashboardPath,
+      curTab: DSB_ROUTE.OVERVIEW as TDsbPath,
     }
   }
 
@@ -113,49 +113,49 @@ const parseDashboardThread = (pathname: string): TDashboardTab => {
   switch (dashThread) {
     case DSB_ROUTE.INFO: {
       return {
-        curTab: DSB_ROUTE.INFO as TDashboardPath,
-        baseInfoTab: (dashLeaf || DSB_BASEINFO_ROUTE.BASIC) as TDashboardBaseInfoRoute,
+        curTab: DSB_ROUTE.INFO as TDsbPath,
+        baseInfoTab: (dashLeaf || DSB_BASEINFO_ROUTE.BASIC) as TDsbBaseInfoRoute,
       }
     }
 
     case DSB_ROUTE.SEO: {
       return {
-        curTab: DSB_ROUTE.SEO as TDashboardPath,
-        seoTab: (dashLeaf || DSB_SEO_ROUTE.SEARCH_ENGINE) as TDashboardSEORoute,
+        curTab: DSB_ROUTE.SEO as TDsbPath,
+        seoTab: (dashLeaf || DSB_SEO_ROUTE.SEARCH_ENGINE) as TDsbSEORoute,
       }
     }
 
     case DSB_ROUTE.DOC: {
       return {
-        curTab: DSB_ROUTE.DOC as TDashboardPath,
-        docTab: (dashLeaf || DSB_DOC_ROUTE.TABLE) as TDashboardDocRoute,
+        curTab: DSB_ROUTE.DOC as TDsbPath,
+        docTab: (dashLeaf || DSB_DOC_ROUTE.TABLE) as TDsbDocRoute,
       }
     }
 
     case DSB_ROUTE.BROADCAST: {
       return {
-        curTab: DSB_ROUTE.BROADCAST as TDashboardPath,
-        broadcastTab: (dashLeaf || DSB_BROADCAST_ROUTE.GLOBAL) as TDashboardBroadcastRoute,
+        curTab: DSB_ROUTE.BROADCAST as TDsbPath,
+        broadcastTab: (dashLeaf || DSB_BROADCAST_ROUTE.GLOBAL) as TDsbBroadcastRoute,
       }
     }
 
     case DSB_ROUTE.ALIAS: {
       return {
         curTab: DSB_ROUTE.ALIAS,
-        aliasTab: (dashLeaf || DSB_ALIAS_ROUTE.THREAD) as TDashboardAliasRoute,
+        aliasTab: (dashLeaf || DSB_ALIAS_ROUTE.THREAD) as TDsbAliasRoute,
       }
     }
 
     case DSB_ROUTE.LAYOUT: {
       return {
         curTab: DSB_ROUTE.LAYOUT,
-        layoutTab: (dashLeaf || DSB_LAYOUT_ROUTE.GENERAL) as TDashboardLayoutRoute,
+        layoutTab: (dashLeaf || DSB_LAYOUT_ROUTE.GENERAL) as TDsbLayoutRoute,
       }
     }
 
     default: {
       return {
-        curTab: dashThread as TDashboardPath,
+        curTab: dashThread as TDsbPath,
       }
     }
   }

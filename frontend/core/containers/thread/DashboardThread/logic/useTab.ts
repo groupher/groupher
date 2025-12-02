@@ -1,14 +1,14 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
 
-import type { TDashboardLayoutRoute, TDashboardPath, TEditFunc } from '~/spec'
+import type { TDsbLayoutRoute, TDsbPath, TEditFunc } from '~/spec'
 
 import useHelper from './useHelper'
 
 type TRet = {
   edit: TEditFunc
-  layoutTab: TDashboardLayoutRoute
-  curTab: TDashboardPath
+  layoutTab: TDsbLayoutRoute
+  curTab: TDsbPath
 }
 
 export default (): TRet => {

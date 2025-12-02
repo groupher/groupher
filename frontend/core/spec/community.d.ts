@@ -1,5 +1,5 @@
 import type { TSimpleUse } from './account'
-import type { TDashboard, TParseDashboard } from './dashboard'
+import type { TDsb, TParseDashboard } from './dashboard'
 import type { TID, TPagi } from './utils'
 import type { TParsedWallpaper } from './wallpaper'
 
@@ -37,7 +37,7 @@ export type TCommunity = {
   views?: number
 
   // TODO:
-  dashboard?: TDashboard
+  dashboard?: TDsb
 }
 
 export type TCommunityInfo = {

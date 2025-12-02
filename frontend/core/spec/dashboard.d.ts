@@ -33,7 +33,7 @@ export type TMediaReport = {
   editUrl?: string
 }
 
-export type TDashboard = {
+export type TDsb = {
   enable?: TEnableConf
   nameAlias?: TNameAlias[]
 
@@ -83,8 +83,8 @@ export type TDashboard = {
   pageBgDark?: string
 }
 
-export type TParseDashboard = TDashboard & {
-  original: TDashboard
+export type TParseDashboard = TDsb & {
+  original: TDsb
 }
 
 export type TBroadcastConf = {

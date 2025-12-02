@@ -1,7 +1,7 @@
 import type { TLocale, TThemeMode } from '~/spec'
 import type { TStore as TAccountStore } from './account/spec'
 import type { TInit as TArticlesInit, TStore as TArticlesStore } from './articles/spec'
-import type { TInit as TDashboardInit, TStore as TDashboardStore } from './dashboard/spec'
+import type { TInit as TDsbInit, TStore as TDsbStore } from './dashboard/spec'
 import type { TStore as TLocaleStore } from './locale/spec'
 import type { TInit as TThemeInit, TStore as TThemeStore } from './theme/spec'
 import type { TInit as TViewingInit, TStore as TViewingStore } from './viewing/spec'
@@ -13,7 +13,7 @@ export type TRootStore = {
   viewing: TViewingStore
   articles: TArticlesStore
   account: TAccountStore
-  dashboard: TDashboardStore
+  dashboard: TDsbStore
   wallpaper: TWallpaperStore
 }
 
@@ -27,6 +27,6 @@ export type TRootStoreInit = {
   localeData?: string
   viewing?: TViewingInit
   articles?: TArticlesInit
-  dashboard?: TDashboardInit
+  dashboard?: TDsbInit
   wallpaper?: TWallpaperInit
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import type { TChangeMode, TColorName, TDashboardPath, TLinkItem } from '~/spec'
+import type { TChangeMode, TColorName, TDsbPath, TLinkItem } from '~/spec'
 
 export { TNameAlias } from '~/spec'
 
@@ -13,7 +13,7 @@ export type TMenuGroup = {
   children: TMenuItem[]
 }
 
-type TMenuItem = { title: string; slug: TDashboardPath; alias?: string }
+type TMenuItem = { title: string; slug: TDsbPath; alias?: string }
 
 export type TMenu = {
   [k: TMenuGroupName]: TMenuGroup
