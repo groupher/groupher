@@ -26,7 +26,6 @@ export default (): TRes => {
 
     const style = getComputedStyle(mainEl)
     const pageBg = style.getPropertyValue('--color-pageBg').trim()
-    console.log('## pagebg style pageBg: ', pageBg)
 
     setRawBg(pageBg)
     setBackground(blurRGB(pageBg, gossBlur))

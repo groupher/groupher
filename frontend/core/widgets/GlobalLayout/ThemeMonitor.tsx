@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
 import useTheme from '~/hooks/useTheme'
 
-export default function ThemeHydrator() {
+export default function ThemeMonitor() {
   const { changeMode } = useTheme()
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -20,7 +20,6 @@ export default function ThemeHydrator() {
       if (mode === THEME_MODE.SYSTEM) {
         const media = window.matchMedia('(prefers-color-scheme: dark)')
         const listener = () => {
-          console.log('## listener called!')
           if (localStorage.getItem(LOCAL_THEME_KEY) === THEME_MODE.SYSTEM) {
             changeMode(THEME_MODE.SYSTEM)
           }

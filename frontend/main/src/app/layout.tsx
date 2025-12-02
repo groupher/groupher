@@ -25,7 +25,6 @@ const StoreInitLoader = async ({ children }) => {
   const urlInfo = parseRouteInfo(routeInfo)
   const initData = await getSSRInitData(urlInfo)
 
-  console.log('## [layout.tsx] initData:', initData.viewing.metric)
   return <StoreProvider initData={deepSanitize(initData)}>{children}</StoreProvider>
 }
 

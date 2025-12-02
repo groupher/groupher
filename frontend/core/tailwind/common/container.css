@@ -28,18 +28,15 @@
   max-width: var(--container-community-width);
   padding-left: theme('spacing.5');
   padding-right: theme('spacing.5');
-    border: 2px solid blue;
 
   @media (min-width: theme('screens.lg')) {
     padding-left: theme('spacing.5');
     padding-right: theme('spacing.5');
-    border: 2px solid tomato;
   }
 
   @media (min-width: theme('screens.xl')) {
     padding-left: theme('spacing.40');
     padding-right: theme('spacing.40');
-    border: 2px solid green;
   }
 }
 
