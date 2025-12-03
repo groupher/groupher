@@ -20,18 +20,18 @@ export const COLOR_NAME = {
 export const PAGE_BG_CSS_KEY = 'color-pageBg'
 
 export const PAGE_BG_DEFAULT = {
-  [THEME.LIGHT]: 'pure-white',
-  [THEME.DARK]: 'outer-space',
+  [THEME.LIGHT]: 'pure white',
+  [THEME.DARK]: 'outer space',
 }
 
 export const PAGE_COLORS = {
   [THEME.LIGHT]: [
-    'pure-white',
+    'pure white',
     'solarized',
     'hacker news',
     'light grey',
-    'floral-white',
-    'mint-white',
+    'floral white',
+    'mint white',
     'pink',
     'todo2',
     'blue2',
@@ -39,21 +39,21 @@ export const PAGE_COLORS = {
     'todo',
   ],
   [THEME.DARK]: [
-    'charcoal-gray',
-    'dark-slate-gray',
-    'outer-space',
-    'rich-black',
-    'coffee-bean',
+    'charcoal gray',
+    'dark slate gray',
+    'outer space',
+    'rich black',
+    'coffee bean',
     'ubuntu',
     'obsidian',
-    'solarized',
-    'black-chocolate',
+    'solarized dark',
+    'black chocolate',
     'gunmetal',
-    'smoky-black',
-    'oxford-blue',
-    'eerie-black',
-    'daylight-green',
-    'jet-black',
+    'smoky black',
+    'oxford blue',
+    'eerie black',
+    'daylight green',
+    'jet black',
     'arsenic',
   ],
 }

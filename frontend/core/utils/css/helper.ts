@@ -1,4 +1,4 @@
-export const getGlobalCSSVar = (key: string): string | null => {
+export const getCSSVar = (key: string): string | null => {
   if (typeof window === 'undefined') return null
   const val = getComputedStyle(document.documentElement).getPropertyValue(`--${key}`).trim()
   return val || null
