@@ -2,7 +2,7 @@ import { cacheLife, cacheTag } from 'next/cache'
 import { includes, isEmpty, reject } from 'ramda'
 
 import { CACHE_TAG } from '~/const/cache'
-import { CONTAINER_BG_DEFAULT } from '~/const/colors'
+import { PAGE_BG_DEFAULT } from '~/const/colors'
 import { BUILTIN_ALIAS } from '~/const/name'
 import {
   DSB_ALIAS_ROUTE,
@@ -13,6 +13,7 @@ import {
   DSB_ROUTE,
   DSB_SEO_ROUTE,
 } from '~/const/route'
+import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
 import { removeEmptyValuesFromObject } from '~/helper'
 import { P } from '~/schemas'
@@ -197,8 +198,8 @@ export const parseDashboard = (community: TCommunity, pathname: string): TParseD
     footerLinks,
     moderators,
     mediaReports,
-    pageBg: pageBg || CONTAINER_BG_DEFAULT.light,
-    pageBgDark: pageBgDark || CONTAINER_BG_DEFAULT.dark,
+    pageBg: pageBg || PAGE_BG_DEFAULT[THEME.LIGHT],
+    pageBgDark: pageBgDark || PAGE_BG_DEFAULT[THEME.DARK],
   })
 
   return {

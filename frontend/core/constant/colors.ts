@@ -1,9 +1,5 @@
+import THEME from '~/const/theme'
 import type { TColorName } from '~/spec'
-
-export const CONTAINER_BG_DEFAULT = {
-  light: 'PURE_WHITE',
-  dark: 'OUTER_SPACE',
-}
 
 export const COLOR_NAME = {
   BLACK: 'BLACK',
@@ -22,3 +18,42 @@ export const COLOR_NAME = {
 
 // map to css var name in ~/tailwind/token/colors
 export const PAGE_BG_CSS_KEY = 'color-pageBg'
+
+export const PAGE_BG_DEFAULT = {
+  [THEME.LIGHT]: 'pure-white',
+  [THEME.DARK]: 'outer-space',
+}
+
+export const PAGE_COLORS = {
+  [THEME.LIGHT]: [
+    'pure-white',
+    'solarized',
+    'hacker news',
+    'light grey',
+    'floral-white',
+    'mint-white',
+    'pink',
+    'todo2',
+    'blue2',
+    'purple',
+    'todo',
+  ],
+  [THEME.DARK]: [
+    'charcoal-gray',
+    'dark-slate-gray',
+    'outer-space',
+    'rich-black',
+    'coffee-bean',
+    'ubuntu',
+    'obsidian',
+    'solarized',
+    'black-chocolate',
+    'gunmetal',
+    'smoky-black',
+    'oxford-blue',
+    'eerie-black',
+    'daylight-green',
+    'jet-black',
+    'arsenic',
+  ],
+}

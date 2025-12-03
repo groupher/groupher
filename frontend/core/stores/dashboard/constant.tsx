@@ -1,4 +1,4 @@
-import { COLOR_NAME, CONTAINER_BG_DEFAULT } from '~/const/colors'
+import { COLOR_NAME, PAGE_BG_DEFAULT } from '~/const/colors'
 import { DEFAULT_ENABLE } from '~/const/dashboard'
 import { GLOW_OPACITY } from '~/const/glow_effect'
 import { LOCALE } from '~/const/i18n'
@@ -31,6 +31,7 @@ import {
   DSB_SEO_ROUTE,
 } from '~/const/route'
 import SIZE from '~/const/size'
+import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
 import type { TSnakeUpperCase, TWidgetType } from '~/spec'
 import type { TDsbField, TDsbFields, TFooterEditType, THeaderEditType } from './spec'
@@ -650,8 +651,8 @@ export const SETTING_FIELDS: TDsbFields = {
   mediaReports: [EMPTY_MEDIA_REPORT],
 
   // page
-  pageBg: CONTAINER_BG_DEFAULT.light,
-  pageBgDark: CONTAINER_BG_DEFAULT.dark,
+  pageBg: PAGE_BG_DEFAULT[THEME.LIGHT],
+  pageBgDark: PAGE_BG_DEFAULT[THEME.DARK],
 
   // seo
   seoEnable: true,
