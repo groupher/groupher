@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 // 允许的参数白名单
 const ALLOWED_SEARCH_PARAMS = ['page', 'sort', 'filter', 'tab'] // 按需扩展
 
-export function urlPeekMiddleware(request: NextRequest) {
+export function urlPeekProxy(request: NextRequest) {
   const url = request.nextUrl
 
   if (url.pathname.startsWith('/_next/') || url.pathname.includes('.')) {

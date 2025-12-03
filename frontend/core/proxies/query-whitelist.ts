@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
 // 白名单参数数组
 const ALLOWED_PARAMS = ['theme']
 
-export function queryWhitelistMiddleware(req: NextRequest) {
+export function queryWhitelistProxy(req: NextRequest) {
   const url = new URL(req.url)
   let hasUnallowedParams = false
 

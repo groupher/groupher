@@ -1,19 +1,13 @@
 import type { NextRequest } from 'next/server'
-import { avoidScanMiddleware } from '~/proxies/avoid-scan'
+import { avoidScanProxy } from '~/proxies/avoid-scan'
 import { applyProxy } from '~/proxies/helper'
-import { oopsMiddleware } from '~/proxies/oops'
-// import { themeMiddleware } from './middlewares/theme'
-import { queryWhitelistMiddleware } from '~/proxies/query-whitelist'
-import { urlPeekMiddleware } from '~/proxies/url-peek'
+import { oopsProxy } from '~/proxies/oops'
+import { queryWhitelistProxy } from '~/proxies/query-whitelist'
+import { urlPeekProxy } from '~/proxies/url-peek'
 
 export function proxy(request: NextRequest) {
   // proxy in this array will be applied in order
-  const proxyFunctions = [
-    avoidScanMiddleware,
-    oopsMiddleware,
-    queryWhitelistMiddleware,
-    urlPeekMiddleware,
-  ]
+  const proxyFunctions = [avoidScanProxy, oopsProxy, queryWhitelistProxy, urlPeekProxy]
 
   return applyProxy(proxyFunctions, request)
 }
