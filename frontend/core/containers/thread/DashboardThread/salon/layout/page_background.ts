@@ -1,10 +1,8 @@
+import { PAGE_COLORS } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
-import { TW_METRIC } from '~/tailwind'
 
 export { cn } from '~/css'
-
-const pageBgColors = TW_METRIC.pageBgColor
 
 const ROTATE_ANGLES = [
   6, 3, 2, 6, 12, 2, 3, 6, 12, 3, -2, 6, 12, 3, 2, -2, 6, 3, 12, 6, -3, 2, 3, 6, 12, 3, -2, 6, 12,
@@ -16,7 +14,7 @@ export default () => {
   const { theme } = useTheme()
 
   return {
-    bgColorNames: pageBgColors[theme],
+    bgColorNames: PAGE_COLORS[theme],
     rotateAngle: ROTATE_ANGLES,
     wrapper: 'pb-7',
     themeGroup: 'row-center wrap gap-y-6 relative ml-4',
