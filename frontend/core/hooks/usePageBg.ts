@@ -13,7 +13,7 @@ export default (): TRes => {
   const { page } = useTwBelt()
   const { isLightTheme } = useTheme()
 
-  const gossBlur = useGaussBlur()
+  const gaussBlur = useGaussBlur()
   const pageBg = page()
 
   const [rawBg, setRawBg] = useState<string>(null)
@@ -28,8 +28,8 @@ export default (): TRes => {
     const pageBg = style.getPropertyValue('--color-pageBg').trim()
 
     setRawBg(pageBg)
-    setBackground(blurRGB(pageBg, gossBlur))
-  }, [gossBlur, pageBg, isLightTheme])
+    setBackground(blurRGB(pageBg, gaussBlur))
+  }, [gaussBlur, pageBg, isLightTheme])
 
   return { background, rawBg }
 }

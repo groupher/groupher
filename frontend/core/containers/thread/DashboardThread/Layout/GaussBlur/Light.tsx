@@ -16,10 +16,10 @@ export default () => {
   const s = useSalon()
 
   const { wallpaper, background } = useWallpaper()
-  const { gossBlur, saving, isTouched, edit } = useGaussBlur()
+  const { gaussBlur, saving, isTouched, edit } = useGaussBlur()
 
   const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
-  const bgColor = `${blurRGB(pageBg, gossBlur)}`
+  const bgColor = `${blurRGB(pageBg, gaussBlur)}`
 
   return (
     <div className={s.wrapper} key={wallpaper}>
@@ -63,8 +63,8 @@ export default () => {
 
           <br />
           <RangeSlider
-            value={gossBlur}
-            onChange={(v) => edit(v, 'gossBlur')}
+            value={gaussBlur}
+            onChange={(v) => edit(v, FIELD.GAUSS_BLUR)}
             top={5}
             min={50}
             max={100}
@@ -77,7 +77,7 @@ export default () => {
       <SavingBar
         width='w-11/12'
         isTouched={isTouched}
-        field={FIELD.GOSS_BLUR}
+        field={FIELD.GAUSS_BLUR}
         loading={saving}
         top={10}
       />

@@ -15,11 +15,11 @@ import useSalon, { cn } from '../salon/layout/wallpaper'
 export default () => {
   const s = useSalon()
 
-  const gossBlur = useGaussBlur()
+  const gaussBlur = useGaussBlur()
   const { background } = useWallpaper()
   const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
 
-  const bgColor = `${blurRGB(pageBg, gossBlur)}`
+  const bgColor = `${blurRGB(pageBg, gaussBlur)}`
 
   return (
     <div className={s.wrapper}>

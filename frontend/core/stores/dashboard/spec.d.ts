@@ -135,9 +135,9 @@ export type TDsbFields = {
   glowFixed: boolean
   glowOpacity: string
 
-  // goss blur
-  gossBlur: int
-  gossBlurDark: int
+  // gauss blur
+  gaussBlur: int
+  gaussBlurDark: int
 
   // contents
   // tags
@@ -295,8 +295,8 @@ export type TDsbField =
   | 'glowType'
   | 'glowFixed'
   | 'glowOpacity'
-  | 'gossBlur'
-  | 'gossBlurDark'
+  | 'gaussBlur'
+  | 'gaussBlurDark'
   | 'headerLinks'
   | 'footerLinks'
   | 'docLayout'

@@ -15,8 +15,8 @@ import BannerLayout from './BannerLayout'
 import BrandLayout from './BrandLayout'
 import ChangelogLayout from './ChangelogLayout'
 import DocLayout from './DocLayout'
+import GaussBlur from './GaussBlur'
 import GlowLight from './GlowLight'
-import GossBlur from './GossBlur'
 import KanbanLayout from './KanbanLayout'
 import PageBackground from './PageBackground'
 import PostLayout from './PostLayout'
@@ -77,7 +77,7 @@ export default () => {
           <div className={s.divider} />
           <Wallpaper />
           <div className={s.divider} />
-          <GossBlur />
+          <GaussBlur />
           <div className={s.divider} />
           <GlowLight />
         </>

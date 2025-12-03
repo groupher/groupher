@@ -99,8 +99,8 @@ export const community = `
           glowType
           glowFixed
           glowOpacity
-          gossBlur
-          gossBlurDark
+          gaussBlur
+          gaussBlurDark
           broadcastEnable
         } 
 

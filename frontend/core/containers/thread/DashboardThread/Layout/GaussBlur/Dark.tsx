@@ -14,11 +14,11 @@ import useSalon, { cn } from '../../salon/layout/gauss_blur'
 export default () => {
   const s = useSalon()
 
-  const { gossBlurDark, saving, isDarkTouched: isTouched, edit } = useGaussBlur()
+  const { gaussBlurDark, saving, isDarkTouched: isTouched, edit } = useGaussBlur()
   const { wallpaper, background } = useWallpaper()
 
   const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
-  const bgColor = `${blurRGB(pageBg, gossBlurDark)}`
+  const bgColor = `${blurRGB(pageBg, gaussBlurDark)}`
 
   return (
     <div className={s.wrapper} key={wallpaper}>
@@ -62,8 +62,8 @@ export default () => {
 
           <br />
           <RangeSlider
-            value={gossBlurDark}
-            onChange={(v) => edit(v, 'gossBlurDark')}
+            value={gaussBlurDark}
+            onChange={(v) => edit(v, FIELD.GAUSS_BLUR_DARK)}
             top={5}
             min={50}
             max={100}
@@ -76,7 +76,7 @@ export default () => {
       <SavingBar
         width='96%'
         isTouched={isTouched}
-        field={FIELD.GOSS_BLUR_DARK}
+        field={FIELD.GAUSS_BLUR_DARK}
         loading={saving}
         top={20}
       />
