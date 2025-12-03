@@ -6,7 +6,7 @@ import useWallpaper from '~/hooks/useWallpaper'
 import RangeSlider from '~/widgets/RangeSlider'
 
 import { FIELD } from '../../constant'
-import useGossBlur from '../../logic/useGossBlur'
+import useGaussBlur from '../../logic/useGaussBlur'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 
@@ -16,7 +16,7 @@ export default () => {
   const s = useSalon()
 
   const { wallpaper, background } = useWallpaper()
-  const { gossBlur, saving, isTouched, edit } = useGossBlur()
+  const { gossBlur, saving, isTouched, edit } = useGaussBlur()
 
   const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
   const bgColor = `${blurRGB(pageBg, gossBlur)}`

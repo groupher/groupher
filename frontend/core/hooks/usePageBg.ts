@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { blurRGB } from '~/fmt'
-import useGossBlur from '~/hooks/useGossBlur'
+import useGaussBlur from '~/hooks/useGaussBlur'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -13,7 +13,7 @@ export default (): TRes => {
   const { page } = useTwBelt()
   const { isLightTheme } = useTheme()
 
-  const gossBlur = useGossBlur()
+  const gossBlur = useGaussBlur()
   const pageBg = page()
 
   const [rawBg, setRawBg] = useState<string>(null)

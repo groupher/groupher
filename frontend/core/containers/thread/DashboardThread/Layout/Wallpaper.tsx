@@ -2,7 +2,7 @@ import { PAGE_BG_CSS_KEY } from '~/const/colors'
 import { WIDTH } from '~/css'
 import { blurRGB } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'
-import useGossBlur from '~/hooks/useGossBlur'
+import useGaussBlur from '~/hooks/useGaussBlur'
 import useWallpaper from '~/hooks/useWallpaper'
 import SettingSVG from '~/icons/Setting'
 import { callWallpaperEditor } from '~/signal'
@@ -15,7 +15,7 @@ import useSalon, { cn } from '../salon/layout/wallpaper'
 export default () => {
   const s = useSalon()
 
-  const gossBlur = useGossBlur()
+  const gossBlur = useGaussBlur()
   const { background } = useWallpaper()
   const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
 
