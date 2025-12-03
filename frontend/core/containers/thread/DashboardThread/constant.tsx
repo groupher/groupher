@@ -43,8 +43,8 @@ export const SETTING_LAYOUT_FIELD = {
   GLOW_TYPE: 'glowType',
   GLOW_FIXED: 'glowFixed',
   GLOW_OPACITY: 'glowOpacity',
-  GOSS_BLUR: 'gossBlur',
-  GOSS_BLUR_DARK: 'gossBlurDark',
+  GAUSS_BLUR: 'gaussBlur',
+  GAUSS_BLUR_DARK: 'gaussBlurDark',
 }
 
 export const FIELD = {
@@ -70,7 +70,6 @@ export const FIELD = {
   GLOW_TYPE: 'glowType',
   GLOW_FIXED: 'glowFixed',
   GLOW_OPACITY: 'glowOpacity',
-  GOSS_BLUR: 'gossBlur',
   PAGE_BG: 'pageBg',
   PAGE_BG_DARK: 'pageBgDark',
 } as Record<TSnakeUpperCase<TDsbField>, TDsbField>
@@ -532,28 +531,6 @@ export const BASEINFO_KEYS: (keyof TDsbFields)[] = [
   ...BASEINFO_LOGOS_KEYS,
   ...BASEINFO_OTHER_KEYS,
 ]
-
-// export const UI_KEYS = [
-//   'layoutTab',
-//   'primaryColor',
-//   'brandLayout',
-//   'tagLayout',
-//   'avatarLayout',
-//   'bannerLayout',
-//   'topbarLayout',
-//   'topbarBg',
-//   'postLayout',
-//   'kanbanLayout',
-//   'kanbanCardLayout',
-//   'docLayout',
-//   'docFaqLayout',
-//   'changelogLayout',
-//   'glowFixed',
-//   'glowType',
-//   'glowOpacity',
-//   'gossBlur',
-//   'gossBlurDark',
-// ]
 
 // export const BROADCAST_KEYS = [
 //   'broadcastTab',

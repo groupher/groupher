@@ -1,4 +1,4 @@
-import { getGlobalCSSVar } from '~/css'
+import { getCSSVar } from '~/css'
 import useWindowResize from '~/hooks/useWindowResize'
 
 import useMetric from './useMetric'
@@ -14,7 +14,7 @@ const useDrawerOffset = (): TRes => {
   const metric = useMetric('lowercase')
   const { width: windowWidth } = useWindowResize()
 
-  const containerWidth = getGlobalCSSVar(`container-${metric}-width`)
+  const containerWidth = getCSSVar(`container-${metric}-width`)
 
   const MAX_WIDTH = Number(containerWidth.slice(0, -2))
 

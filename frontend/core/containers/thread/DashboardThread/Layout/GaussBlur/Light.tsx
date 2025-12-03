@@ -2,28 +2,29 @@ import { PAGE_BG_CSS_KEY } from '~/const/colors'
 import { blurRGB } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'
 import useWallpaper from '~/hooks/useWallpaper'
+
 import RangeSlider from '~/widgets/RangeSlider'
 
 import { FIELD } from '../../constant'
-import useGossBlur from '../../logic/useGossBlur'
+import useGaussBlur from '../../logic/useGaussBlur'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 
-import useSalon, { cn } from '../../salon/layout/goss_blur'
+import useSalon, { cn } from '../../salon/layout/gauss_blur'
 
 export default () => {
   const s = useSalon()
 
-  const { gossBlurDark, saving, isDarkTouched: isTouched, edit } = useGossBlur()
   const { wallpaper, background } = useWallpaper()
+  const { gaussBlur, saving, isTouched, edit } = useGaussBlur()
 
   const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
-  const bgColor = `${blurRGB(pageBg, gossBlurDark)}`
+  const bgColor = `${blurRGB(pageBg, gaussBlur)}`
 
   return (
     <div className={s.wrapper} key={wallpaper}>
       <SectionLabel
-        title='毛玻璃效果 (dark)'
+        title='毛玻璃效果'
         desc='主要页面的高斯模糊值，类似主流音乐播放器效果'
         classNames='pr-8'
         withThemeSelect
@@ -62,8 +63,8 @@ export default () => {
 
           <br />
           <RangeSlider
-            value={gossBlurDark}
-            onChange={(v) => edit(v, 'gossBlurDark')}
+            value={gaussBlur}
+            onChange={(v) => edit(v, FIELD.GAUSS_BLUR)}
             top={5}
             min={50}
             max={100}
@@ -74,11 +75,11 @@ export default () => {
       </div>
 
       <SavingBar
-        width='96%'
+        width='w-11/12'
         isTouched={isTouched}
-        field={FIELD.GOSS_BLUR_DARK}
+        field={FIELD.GAUSS_BLUR}
         loading={saving}
-        top={20}
+        top={10}
       />
     </div>
   )

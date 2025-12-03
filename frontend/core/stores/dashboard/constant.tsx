@@ -46,7 +46,7 @@ export const ALIGN_HEADER_OFFSET = '100px'
 export const DSB_DEMO_KEY = 'dashboard_demo'
 
 // do not change, it's map to GQ endpoint updateDashboardLayout
-export const SETTING_LAYOUT_FIELD = {
+export const LAYOUT_FIELD = {
   PRIMARY_COLOR: 'primaryColor',
   POST_LAYOUT: 'postLayout',
   KANBAN_LAYOUT: 'kanbanLayout',
@@ -70,12 +70,12 @@ export const SETTING_LAYOUT_FIELD = {
   GLOW_TYPE: 'glowType',
   GLOW_FIXED: 'glowFixed',
   GLOW_OPACITY: 'glowOpacity',
-  GOSS_BLUR: 'gossBlur',
-  GOSS_BLUR_DARK: 'gossBlurDark',
+  GAUSS_BLUR: 'gaussBlur',
+  GAUSS_BLUR_DARK: 'gaussBlurDark',
 }
 
 export const FIELD = {
-  ...SETTING_LAYOUT_FIELD,
+  ...LAYOUT_FIELD,
   BASE_INFO: 'baseInfo',
   MEDIA_REPORTS: 'mediaReports',
   SEO: 'seo',
@@ -97,7 +97,6 @@ export const FIELD = {
   GLOW_TYPE: 'glowType',
   GLOW_FIXED: 'glowFixed',
   GLOW_OPACITY: 'glowOpacity',
-  GOSS_BLUR: 'gossBlur',
   BROADCAST_ENABLE: 'broadcastEnable',
   ENABLE: 'enable',
 } as Record<TSnakeUpperCase<TDsbField>, TDsbField>
@@ -593,38 +592,6 @@ export const FOOTER_SETTING_KEYS = [
   'editingGroupIndex',
 ]
 
-// export const UI_KEYS = [
-//   'layoutTab',
-//   'primaryColor',
-//   'brandLayout',
-//   'tagLayout',
-//   'avatarLayout',
-//   'bannerLayout',
-//   'topbarLayout',
-//   'topbarBg',
-//   'postLayout',
-//   'kanbanLayout',
-//   'kanbanCardLayout',
-//   'docLayout',
-//   'docFaqLayout',
-//   'changelogLayout',
-//   'glowFixed',
-//   'glowType',
-//   'glowOpacity',
-//   'gossBlur',
-//   'gossBlurDark',
-// ]
-
-// export const BROADCAST_KEYS = [
-//   'broadcastTab',
-//   'broadcastLayout',
-//   'broadcastBg',
-//   'broadcastEnable',
-//   'broadcastArticleLayout',
-//   'broadcastArticleBg',
-//   'broadcastArticleEnable',
-// ]
-
 export const DEFAULT_NEW_FAQ = {
   title: '',
   body: '',
@@ -707,9 +674,9 @@ export const SETTING_FIELDS: TDsbFields = {
   glowFixed: true,
   glowOpacity: GLOW_OPACITY.NORMAL,
 
-  // goss blur
-  gossBlur: 100,
-  gossBlurDark: 100,
+  // gauss blur
+  gaussBlur: 100,
+  gaussBlurDark: 100,
 
   // contents
   // tags

@@ -1,5 +1,5 @@
 import { gql } from 'urql'
-import { P, F } from '~/schemas'
+import { F, P } from '~/schemas'
 
 const { pagedPosts, pagedChangelogs } = P
 
@@ -175,8 +175,8 @@ const updateDashboardLayout = gql`
     $glowType: String
     $glowFixed: Boolean
     $glowOpacity: String
-    $gossBlur: Int
-    $gossBlurDark: Int
+    $gaussBlur: Int
+    $gaussBlurDark: Int
     $brandLayout: String
     $bannerLayout: String
     $changelogLayout: String
@@ -200,8 +200,8 @@ const updateDashboardLayout = gql`
       glowType: $glowType
       glowFixed: $glowFixed
       glowOpacity: $glowOpacity
-      gossBlur: $gossBlur
-      gossBlurDark: $gossBlurDark
+      gaussBlur: $gaussBlur
+      gaussBlurDark: $gaussBlurDark
       brandLayout: $brandLayout
       bannerLayout: $bannerLayout
       changelogLayout: $changelogLayout

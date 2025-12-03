@@ -41,7 +41,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     ]
   end
 
-  # note: write kanban_bg_colors rules by itsef
+  # note: write kanban_bg_colors rules by itself
   def macro_schema(:layout) do
     # manually add this:
     # [:kanban_bg_colors, {:array, :string}, []],
@@ -74,8 +74,8 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:glow_opacity, :string, ""],
 
       ## blur
-      [:goss_blur, :integer, 100],
-      [:goss_blur_dark, :integer, 100]
+      [:gauss_blur, :integer, 100],
+      [:gauss_blur_dark, :integer, 100]
     ]
   end
 

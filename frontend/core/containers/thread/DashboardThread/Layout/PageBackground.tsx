@@ -1,4 +1,4 @@
-import { getGlobalCSSVar } from '~/css'
+import { getCSSVar } from '~/css'
 import { camelize, titleCaseHM, upperSnakeCase } from '~/fmt'
 import useTheme from '~/hooks/useTheme'
 import CheckSVG from '~/icons/Check'
@@ -33,7 +33,7 @@ export default () => {
         {s.bgColorNames.map((bg, index) => {
           const bgTitle = titleCaseHM(bg)
           const pageName = camelize(bg)
-          const bgVal = getGlobalCSSVar(`color-page-${pageName}`)
+          const bgVal = getCSSVar(`color-page-${pageName}`)
           const active = rawBg === bgVal && !!rawBg
 
           return (

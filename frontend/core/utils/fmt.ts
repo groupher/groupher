@@ -54,7 +54,7 @@ export const prettyNum = (num: number, digits = 1): string => {
 }
 
 /**
- * number with commas foramt
+ * number with commas format
  * @see @link https://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
  *
  * @param {*} x
@@ -64,7 +64,7 @@ export const numberWithCommas = (x: number): string => {
 }
 
 /**
- *  titlize a string
+ *  title case a string
  */
 export const titleCase = (str: string): string => {
   return str.replace(/\w\S*/g, (t) => {
@@ -217,7 +217,7 @@ const hex2RGB = (hex) => {
 }
 
 /**
- * convert hex color to global goss blur if need
+ * convert hex color to global gauss blur if need
  */
 export const blurRGB = (hex, blur = 100) => {
   if (hex === '') return '#fff'
@@ -227,7 +227,7 @@ export const blurRGB = (hex, blur = 100) => {
 }
 
 /**
- * fomrat opacity to tw style
+ * format opacity to tw style
  * e.g: '0.65' => 65 '1' => 100
  */
 export const fmtOpacity = (str): number => {

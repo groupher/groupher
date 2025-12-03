@@ -6,7 +6,7 @@ export default (): number => {
   const store = useDashboard()
   const { theme } = useTheme()
 
-  const { gossBlur, gossBlurDark } = store
+  const { gaussBlur, gaussBlurDark } = store
 
-  return theme === THEME.LIGHT ? gossBlur : gossBlurDark
+  return theme === THEME.LIGHT ? gaussBlur : gaussBlurDark
 }

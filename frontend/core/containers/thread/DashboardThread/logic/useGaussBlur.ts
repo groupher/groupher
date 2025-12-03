@@ -6,8 +6,8 @@ import useHelper from './useHelper'
 
 type TRet = {
   edit: TEditFunc
-  gossBlur: number
-  gossBlurDark: number
+  gaussBlur: number
+  gaussBlurDark: number
   saving: boolean
   isTouched: boolean
   isDarkTouched: boolean
@@ -17,12 +17,12 @@ export default (): TRet => {
   const store = useDashboard()
   const { isChanged, edit } = useHelper()
 
-  const isTouched = isChanged('gossBlur')
-  const isDarkTouched = isChanged('gossBlurDark')
+  const isTouched = isChanged('gaussBlur')
+  const isDarkTouched = isChanged('gaussBlurDark')
 
   return {
     edit,
-    ...pick(['gossBlur', 'gossBlurDark', 'saving'], store),
+    ...pick(['gaussBlur', 'gaussBlurDark', 'saving'], store),
     isTouched,
     isDarkTouched,
   }

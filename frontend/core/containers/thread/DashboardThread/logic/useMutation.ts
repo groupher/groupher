@@ -12,8 +12,8 @@ import {
   BASEINFO_KEYS,
   BASEINFO_OTHER_KEYS,
   FIELD,
+  LAYOUT_FIELD,
   SEO_KEYS,
-  SETTING_LAYOUT_FIELD,
 } from '~/stores/dashboard/constant'
 import type { TDsbField } from '~/stores/dashboard/spec'
 import S from '../schema'
@@ -280,7 +280,7 @@ export default (): TRet => {
     //   return
     // }
 
-    if (includes(field, values(SETTING_LAYOUT_FIELD))) {
+    if (includes(field, values(LAYOUT_FIELD))) {
       handleMutation(S.updateDashboardLayout, { community, [field]: e })
       return
     }
