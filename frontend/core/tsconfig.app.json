@@ -58,8 +58,8 @@
       "~/const/*": ["../core/constant/*"],
       "~/providers": ["../core/providers/"],
       "~/providers/*": ["../core/providers/*"],
-      "~/middlewares": ["../core/middlewares/"],
-      "~/middlewares/*": ["../core/middlewares/*"],
+      "~/proxies": ["../core/proxies/"],
+      "~/proxies/*": ["../core/proxies/*"],
       "~/tailwind/*": ["../core/tailwind/*"],
       "~/tailwind": ["../core/tailwind"]
     },
