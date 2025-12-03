@@ -10,7 +10,7 @@ import useGaussBlur from '../../logic/useGaussBlur'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 
-import useSalon, { cn } from '../../salon/layout/goss_blur'
+import useSalon, { cn } from '../../salon/layout/gauss_blur'
 
 export default () => {
   const s = useSalon()
