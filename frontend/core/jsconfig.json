@@ -26,8 +26,8 @@
       "~/i18n": ["i18n"],
       "~/providers": ["./providers"],
       "~/providers/*": ["./providers/*"],
-      "~/middlewares": ["./middlewares"],
-      "~/middlewares/*": ["./middlewares/*"],
+      "~/proxies": ["./middlewares"],
+      "~/proxies/*": ["./middlewares/*"],
       "~/tailwind": ["./tailwind"],
       "~/tailwind/*": ["./tailwind/*"]
     }

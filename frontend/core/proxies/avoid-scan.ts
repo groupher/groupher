@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 import { ROUTE } from '~/const/route'
 
-export function avoidScanMiddleware(req: NextRequest) {
+export function avoidScanProxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // 检查pathname是否以.php或.php7结束
