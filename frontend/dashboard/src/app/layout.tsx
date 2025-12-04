@@ -6,6 +6,7 @@ import { Suspense } from 'react'
 import { GlobalLayout, GraphQLProvider, getSSRInitData, parseRouteInfo } from '~/providers'
 import StoreProvider from '~/stores/provider'
 import { deepSanitize } from '~/utils/fmt'
+import { ssrThemeInitScript } from '~/utils/ssr/script'
 
 import '~/tailwind/global.css'
 import './domain.css'
@@ -26,7 +27,11 @@ const StoreInitLoader = async ({ children }) => {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='en'>
+    <html lang='en' suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ssrThemeInitScript() }} />
+      </head>
+
       <body>
         <GraphQLProvider>
           <Suspense fallback={<h1>dashboard loading...</h1>}>

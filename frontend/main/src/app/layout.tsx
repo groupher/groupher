@@ -30,11 +30,10 @@ const StoreInitLoader = async ({ children }) => {
 
 export default function Layout({ children }) {
   return (
-    <html lang='en'>
+    <html lang='en' suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: ssrThemeInitScript() }} />
       </head>
-
       <body>
         <GraphQLProvider>
           <Suspense fallback={<h1>...</h1>}>

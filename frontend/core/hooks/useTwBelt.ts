@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from 'clsx'
+import { useEffect, useState } from 'react'
 import { COLOR_NAME } from '~/const/colors'
 import METRIC from '~/const/metric'
 import { cn } from '~/css'
@@ -59,6 +60,12 @@ type TRet = {
  * even you return static strings, cuz those are consider as dynamic, and tailwind will not know them
  */
 export default (): TRet => {
+  const [_isOnClient, setIsOnClient] = useState(false)
+
+  useEffect(() => {
+    setIsOnClient(true)
+  }, [])
+
   const { isLightTheme } = useTheme()
   const metric = useMetric()
   const { isSquare: isAvatarSquare } = useAvatarLayout()
@@ -353,12 +360,12 @@ export default (): TRet => {
     return `z-${type}`
   }
 
+  /**
+   * page bg is confirmed by CSS rules in tailwind/common/page.css
+   * cuz store/theme will cause flash since is init on client side
+   */
   const page = (): string => {
-    if (isLightTheme) {
-      return `page-${camelize(pageBg)}`
-    }
-
-    return `page-${camelize(pageBgDark)}`
+    return `page-${camelize(pageBg)} page-${camelize(pageBgDark)}`
   }
 
   return {

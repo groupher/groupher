@@ -42,7 +42,7 @@ const Tooltip: FC<TProps> = ({
   const [active, setActive] = useState(false)
   const [, setWechatEnv] = useState(false)
 
-  const contentRef = useRef()
+  const contentRef = useRef(null)
 
   useEffect(() => {
     // the wechat's env support backdrop-filter like a shit
@@ -72,7 +72,7 @@ const Tooltip: FC<TProps> = ({
     </div>
   )
 
-  const ref = useRef()
+  const ref = useRef(null)
 
   useOutsideClick(ref, (e) => {
     if (!instance) return false
@@ -121,7 +121,7 @@ const Tooltip: FC<TProps> = ({
     },
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   props = visible === null ? props : { ...props, visible }
 
   return !noPadding ? (
