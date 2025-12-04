@@ -23,7 +23,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: "22.13.0"
-          cache: "yarn"
 
       - name: Install Yarn Dependencies
         run: |
