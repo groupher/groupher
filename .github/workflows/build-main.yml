@@ -28,7 +28,7 @@ jobs:
       - name: Install Yarn Dependencies
         run: |
           corepack enable
-          yarn install --immutable # 使用 --immutable 来确保 lockfile 没有被意外修改，这在 CI 中是最佳实践
+          yarn install --immutable
 
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
