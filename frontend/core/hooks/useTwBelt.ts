@@ -353,12 +353,12 @@ export default (): TRet => {
     return `z-${type}`
   }
 
+  /**
+   * page bg is confirmed by CSS rules in tailwind/common/page.css
+   * cuz store/theme will cause flash since is init on client side
+   */
   const page = (): string => {
-    if (isLightTheme) {
-      return `page-${camelize(pageBg)}`
-    }
-
-    return `page-${camelize(pageBgDark)}`
+    return `page-${camelize(pageBg)} page-${camelize(pageBgDark)}`
   }
 
   return {

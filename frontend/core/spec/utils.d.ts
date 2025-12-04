@@ -143,7 +143,7 @@ export type TSubmitState = {
 export type TSelectOption = {
   value: string
   label: string
-  icon?: ReactNode
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
   desc?: string
 }
 

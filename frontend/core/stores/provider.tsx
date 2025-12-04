@@ -10,7 +10,7 @@ type TProps = {
 }
 
 export default ({ children, initData }: TProps) => {
-  const storeRef = useRef<TRootStore>()
+  const storeRef = useRef<TRootStore | null>(null)
 
   if (!storeRef.current) {
     storeRef.current = setupRootStore(initData)

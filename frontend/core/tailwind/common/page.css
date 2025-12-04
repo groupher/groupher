@@ -1,4 +1,4 @@
-:root {
+html[data-theme="light"] {
   .page-pureWhite {
     --color-pageBg: var(--color-page-pureWhite);
   }
@@ -20,9 +20,6 @@
   .page-pink {
     --color-pageBg: var(--color-page-pink);
   }
-  .page-todo2 {
-    --color-pageBg: var(--color-page-todo2);
-  }
   .page-blue2 {
     --color-pageBg: var(--color-page-blue2);
   }
@@ -32,8 +29,12 @@
   .page-todo {
     --color-pageBg: var(--color-page-todo);
   }
+  .page-todo2 {
+    --color-pageBg: var(--color-page-todo2);
+  }
+}
 
-  /* dark themes */
+html[data-theme="dark"] {
   .page-charcoalGray {
     --color-pageBg: var(--color-page-charcoalGray);
   }

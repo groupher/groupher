@@ -3,6 +3,14 @@ node_modules/
 npm-debug.log
 build
 
+# Yarn Berry
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
 frontend/**/out/
 
 coverage/
@@ -10,22 +18,24 @@ coverage/
 yarn-error.log
 .env.local
 schema.graphql
-cypress//integration/examples
-.DS_Store
 
+# Cypress (Cypress 8.x)
+cypress/integration/examples/
+
+.DS_Store
 cypress/videos/*
-tsconfig.tsbuildinfopublic/sw.js
-public/sw.js
-public/sw.js.map
-public/workbox-*
+
+# build artifacts
 tsconfig.tsbuildinfo
 bun.lockb
 *.tsbuildinfo
 .VSCodeCounter/
 .deepseekrc
 
+# SW / Worker outputs for monorepo frontend
 frontend/**/public/workbox-*.js
 frontend/**/public/sw.js
+frontend/**/public/sw.js.map
 frontend/**/public/worker-*.js
 frontend/**/public/fallback-*.js
 frontend/**/public/*.js.map
@@ -36,17 +46,13 @@ backend/main/db
 backend/main/deps
 backend/main/*.ez
 
-# Generated on crash by the VM
+# Crash logs
 backend/main/erl_crash.dump
 
-# Files matching config/*.secret.exs pattern contain sensitive
-# data and you should not commit them into version control.
-#
-# Alternatively, you may comment the line below and commit the
-# secrets files as long as you replace their contents by environment
-# variables.
+# Secrets
 backend/main/config/*.secret.exs
 backend/main/config/_tmp.exs
+
 backend/main/_tuts/
 .agignore
 backend/main/docs/draft.ex

@@ -5,6 +5,7 @@ import GlobalLayoutWrapper from '~/widgets/GlobalLayout'
 
 type TProps = {
   mainBlock?: FC<{ children: ReactNode }>
+  children?: ReactNode
 }
 
 const GlobalLayout: FC<TProps> = ({ children, mainBlock = undefined }) => {
