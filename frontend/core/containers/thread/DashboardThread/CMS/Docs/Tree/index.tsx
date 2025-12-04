@@ -1,19 +1,15 @@
 import { type FC, useEffect, useRef } from 'react'
 import { type CursorProps, type NodeApi, type NodeRendererProps, Tree } from 'react-arborist'
-
-import type { TPagedArticles } from '~/spec'
+import ArrowSVG from '~/icons/ArrowSimple'
 
 import DragSVG from '~/icons/Dragble'
-import ArrowSVG from '~/icons/ArrowSimple'
-import DeleteSVG from '~/icons/Trash'
 import EditSVG from '~/icons/EditPen'
-
-import { treeData, type TTreeItem } from '../treeData'
-
+import DeleteSVG from '~/icons/Trash'
+import type { TPagedArticles } from '~/spec'
+import useSalon, { cn } from '../../../salon/cms/docs/tree'
+import { type TTreeItem, treeData } from '../treeData'
 import Actions from './Actions'
 import Note from './Note'
-
-import useSalon, { cn } from '../../../salon/cms/docs/tree'
 
 type TProps = {
   pagedDocs: TPagedArticles
@@ -23,7 +19,7 @@ type TProps = {
 
 const TreeView: FC<TProps> = ({ pagedDocs }) => {
   const s = useSalon()
-  const treeRef = useRef()
+  const treeRef = useRef(null)
   console.log('## pagedDocs: ', pagedDocs)
 
   useEffect(() => {
@@ -121,7 +117,7 @@ function FolderArrow({ node }: { node: NodeApi<TTreeItem> }) {
 function Input({ node }: { node: NodeApi<TTreeItem> }) {
   return (
     <input
-      type="text"
+      type='text'
       defaultValue={node.data.name}
       onFocus={(e) => e.currentTarget.select()}
       onBlur={() => node.reset()}
@@ -135,7 +131,6 @@ function Input({ node }: { node: NodeApi<TTreeItem> }) {
 
 const Cursor: FC<CursorProps> = ({ top, left }) => {
   const s = useSalon()
-  // @ts-ignore
   return (
     <div
       className={s.customCursor}

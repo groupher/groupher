@@ -16,7 +16,7 @@ import useSalon from '../salon/post/content'
 export const Comments = lazy(() => import('~/containers/unit/Comments'))
 
 export default () => {
-  const ref = useRef()
+  const ref = useRef(null)
   const { article } = useViewingArticle()
 
   if (!article) {

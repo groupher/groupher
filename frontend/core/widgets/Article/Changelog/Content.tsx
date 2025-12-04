@@ -4,7 +4,7 @@
  *
  */
 
-import { type FC, lazy, useRef, Suspense } from 'react'
+import { type FC, lazy, Suspense, useRef } from 'react'
 
 import type { TChangelog } from '~/spec'
 
@@ -23,7 +23,7 @@ type TProps = {
 const Content: FC<TProps> = ({ article }) => {
   const s = useSalon()
 
-  const ref = useRef()
+  const ref = useRef(null)
 
   return (
     <div className={s.wrapper}>

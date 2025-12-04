@@ -1,5 +1,4 @@
 import { type ClassValue, clsx } from 'clsx'
-import { useEffect, useState } from 'react'
 import { COLOR_NAME } from '~/const/colors'
 import METRIC from '~/const/metric'
 import { cn } from '~/css'
@@ -60,12 +59,6 @@ type TRet = {
  * even you return static strings, cuz those are consider as dynamic, and tailwind will not know them
  */
 export default (): TRet => {
-  const [_isOnClient, setIsOnClient] = useState(false)
-
-  useEffect(() => {
-    setIsOnClient(true)
-  }, [])
-
   const { isLightTheme } = useTheme()
   const metric = useMetric()
   const { isSquare: isAvatarSquare } = useAvatarLayout()
