@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  // suppressHydrationWarning is for ignore the mismatch of theme mode between server and client when SSR
   return (
     <html lang='en' suppressHydrationWarning>
       <head>

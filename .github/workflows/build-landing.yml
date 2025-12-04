@@ -24,8 +24,10 @@ jobs:
         with:
           node-version: "22.13.0"
 
-      - name: Install Packages
-        run: npm install --legacy-peer-deps
+      - name: Install Yarn Dependencies
+        run: |
+          corepack enable
+          yarn install --immutable
 
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
