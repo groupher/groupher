@@ -23,17 +23,19 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: "22.13.0"
+          cache: "yarn"
 
-      - name: Install Packages
-        run: npm install --legacy-peer-deps
+      - name: Install Yarn Dependencies
+        run: |
+          corepack enable
+          yarn install --immutable # 使用 --immutable 来确保 lockfile 没有被意外修改，这在 CI 中是最佳实践
 
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
         with:
           version: latest
 
-      # - name: Run Biome for main
-      #   run: biome lint "$GITHUB_WORKSPACE/frontend-main/src/**/*.{ts,tsx}"
+      # ... (其他步骤，例如 Biome lint)
 
       - name: Build Project
         run: yarn run build:prod:main
