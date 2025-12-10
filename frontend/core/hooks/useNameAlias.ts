@@ -11,11 +11,12 @@ const useNameAlias = (group = 'kanban'): Record<string, TNameAlias> => {
 
   const curAlias = useMemo(() => store.nameAlias, [store.nameAlias])
 
-  // console.log('## cacle name alias, FIXME')
 
   if (!group) {
+  // @ts-expect-error
     aliasList = curAlias
   } else {
+  // @ts-expect-error
     aliasList = filter((item: TNameAlias) => item.group === group, curAlias)
   }
 

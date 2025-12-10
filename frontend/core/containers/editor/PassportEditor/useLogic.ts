@@ -2,8 +2,8 @@ import { find, forEach, keys, reject, uniq } from 'ramda'
 import { useCallback, useState } from 'react'
 import EVENT from '~/const/event'
 import useAccount from '~/hooks/useAccount'
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { mutate, query } from '~/server'
 import { closeDrawer, send } from '~/signal'
 import type { TUser } from '~/spec'
@@ -27,12 +27,12 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const dashbaord = useDashboard()
-  const curCommunity = useViewingCommunity()
+  const dashboard = useDashboard()
+  const curCommunity = useCommunity()
   const account = useAccount()
   const [selectedRules, setSelectedRules] = useState([])
 
-  const { activeModerator, allRootRules, allModeratorRules } = dashbaord
+  const { activeModerator, allRootRules, allModeratorRules } = dashboard
 
   const toggleCheck = (rule: string, checked: boolean): void => {
     const _selectedRules = checked
@@ -64,7 +64,7 @@ export default (): TRet => {
     query(S.allPassportRules).then((res) => {
       const { moderator, root } = res.allPassportRules
 
-      dashbaord.commit({ allRootRules: root, allModeratorRules: moderator })
+      dashboard.commit({ allRootRules: root, allModeratorRules: moderator })
     })
   }
 
@@ -93,7 +93,6 @@ export default (): TRet => {
     )
   }
 
-  // drived
   const getIsActiveModeratorRoot = useCallback((): boolean => {
     const curModerators = curCommunity.moderators
     const curRoot = find((moderator) => moderator.role === 'root', curModerators)
@@ -105,6 +104,7 @@ export default (): TRet => {
     const curModerators = curCommunity.moderators
     const curRoot = find((moderator) => moderator.role === 'root', curModerators)
 
+    // @ts-expect-error
     return curRoot.user.login === account.login
   }, [curCommunity, account])
 
@@ -126,7 +126,7 @@ export default (): TRet => {
     loadAllPassportRules,
     updatePassport,
 
-    // drived
+    // TODO:
     getRules,
     getIsActiveModeratorRoot,
     getIsCurUserModeratorRoot,

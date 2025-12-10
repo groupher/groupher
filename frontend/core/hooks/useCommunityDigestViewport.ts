@@ -1,4 +1,4 @@
-import useSubStore from '~/hooks/useSubStore'
+import useGeneral from '~/hooks/useGeneral'
 
 type TRet = {
   enterView: () => void
@@ -7,7 +7,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('viewing')
+  const store = useGeneral()
 
   return {
     enterView: (): void => store.commit({ communityDigestInView: true }),

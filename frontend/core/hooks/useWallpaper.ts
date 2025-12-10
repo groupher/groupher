@@ -1,23 +1,22 @@
+import { clone, forEach, keys } from 'ramda'
 import { useMemo } from 'react'
-import { keys, clone, forEach } from 'ramda'
 
-import { WALLPAPER_TYPE, GRADIENT_WALLPAPER, PATTERN_WALLPAPER } from '~/const/wallpaper'
-
+import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
 import type {
-  TWallpaperFmt,
-  TWallpaperGradientDir,
   TCustomWallpaper,
-  TWallpaperPic,
+  TWallpaperFmt,
   TWallpaperGradient,
+  TWallpaperGradientDir,
+  TWallpaperPic,
 } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
+import useWallpaperDomain from '~/stores/wallpaper.domain/hooks'
 
 import { parseWallpaper } from '~/wallpaper'
 
 type TRet = { wallpaper: string; hasShadow: boolean } & TWallpaperFmt
 
 export default (): TRet => {
-  const store = useSubStore('wallpaper')
+  const store = useWallpaperDomain()
 
   const { wallpaper, hasPattern, hasBlur, hasShadow, direction, customColorValue, wallpaperType } =
     store

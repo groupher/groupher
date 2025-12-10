@@ -1,27 +1,23 @@
-import { type FC, Fragment, useState } from 'react'
 import Link from 'next/link'
-import { keys, startsWith, filter } from 'ramda'
-
-import type { TLinkItem } from '~/spec'
+import { filter, keys, startsWith } from 'ramda'
+import { type FC, Fragment, useState } from 'react'
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
-import { sortByIndex, groupByKey } from '~/helper'
+import { groupByKey, sortByIndex } from '~/helper'
 import useAccount from '~/hooks/useAccount'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-
-import MoreSVG from '~/icons/menu/MoreL'
-import LinkSVG from '~/icons/Link'
+import useCommunity from '~/hooks/useCommunity'
 import ArrowSVG from '~/icons/ArrowSimple'
+import LinkSVG from '~/icons/Link'
+import MoreSVG from '~/icons/menu/MoreL'
+import type { TLinkItem } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
-
-import type { TProps, TLinkGroup } from './spec'
-
 import useSalon, { cn } from './salon/sidebar_layout'
+import type { TLinkGroup, TProps } from './spec'
 
 const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath }) => {
   const s = useSalon()
 
   const [menuOpen, setMenuOpen] = useState(false)
-  const { slug } = useViewingCommunity()
+  const { slug } = useCommunity()
 
   if (!showMoreFold) return null
 
@@ -46,8 +42,8 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
       }
       onHide={() => setMenuOpen(false)}
       onShow={() => setMenuOpen(true)}
-      trigger="click"
-      placement="bottom"
+      trigger='click'
+      placement='bottom'
       offset={[-14, 5]}
     >
       {/* @ts-ignore */}
@@ -66,7 +62,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
 
   const _links = filter((item) => item.title !== '', links)
 
-  // @ts-ignore
+  // @ts-expect-error
   const groupedLinks = groupByKey(sortByIndex(_links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 

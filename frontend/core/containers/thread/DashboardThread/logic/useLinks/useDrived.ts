@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { publicThreads } from '~/helper'
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import type { TCommunityThread } from '~/spec'
 
 import useHelper from '../useHelper'
@@ -17,11 +17,12 @@ export type TRet = {
 export default (): TRet => {
   const store = useDashboard()
   const { isChanged } = useHelper()
-  const community = useViewingCommunity()
+  const community = useCommunity()
 
   const { editingLink, enable, nameAlias } = store
 
   const threads = useMemo(() => {
+    // @ts-expect-error
     return publicThreads(community.threads, { enable, nameAlias })
   }, [community, enable, nameAlias])
 

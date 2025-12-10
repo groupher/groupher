@@ -1,16 +1,12 @@
 import { ANCHOR } from '~/const/dom'
-import useHeaderLinks from '~/hooks/useHeaderLinks'
-import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
-
 import { HEADER_LAYOUT } from '~/const/layout'
-
-import ViewportTracker from '~/widgets/ViewportTracker'
+import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
+import useHeaderLinks from '~/hooks/useHeaderLinks'
 import AccountUnit from '~/widgets/AccountUnit'
-
-import ThreadTab from './ThreadTab'
-import CommunityBrief from './CommunityBrief'
-
+import ViewportTracker from '~/widgets/ViewportTracker'
 import useSalon, { cn } from '../salon/header_layout'
+import CommunityBrief from './CommunityBrief'
+import ThreadTab from './ThreadTab'
 
 export default () => {
   const s = useSalon()
@@ -22,8 +18,7 @@ export default () => {
     <>
       <div id={ANCHOR.GLOBAL_HEADER_ID} className={cn(s.wrapper, 'header-layout-community-brief')}>
         <CommunityBrief />
-
-        {layout === HEADER_LAYOUT.RIGHT && <div className="grow" />}
+        {layout === HEADER_LAYOUT.RIGHT && <div className='grow' />}
         <ThreadTab right={layout === HEADER_LAYOUT.RIGHT ? 20 : 0} />
         {/* <GithubItem href="/">
                 <img
@@ -33,7 +28,7 @@ export default () => {
               </GithubItem> */}
         <AccountUnit />
       </div>
-      <ViewportTracker onEnter={enterView} onLeave={leaveView} rootMargin="-20px" />
+      <ViewportTracker onEnter={enterView} onLeave={leaveView} rootMargin='-20px' />
     </>
   )
 }

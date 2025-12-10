@@ -5,12 +5,12 @@ import METRIC from '~/const/metric'
 import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 import useDashboard from '~/hooks/useDashboard'
 import useMetric from '~/hooks/useMetric'
-import useSubStore from '~/hooks/useSubStore'
+import useWallpaper from '~/hooks/useWallpaper'
 import type { TGlowEffect } from '~/spec'
 
 export default (): TGlowEffect => {
   const dashboard = useDashboard()
-  const { wallpaper } = useSubStore('wallpaper')
+  const { wallpaper } = useWallpaper()
 
   const metric = useMetric()
 

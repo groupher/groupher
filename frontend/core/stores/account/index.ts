@@ -33,7 +33,7 @@ export default (): TStore => {
       // TODO: refactor
       try {
         store.user = user
-      } catch (e) {
+      } catch (_e) {
         store.user = {}
       }
     },

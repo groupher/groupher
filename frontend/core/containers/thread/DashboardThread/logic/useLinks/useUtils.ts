@@ -5,9 +5,8 @@ import { useEffect, useRef } from 'react'
 import { MORE_GROUP } from '~/const/dashboard'
 import { DSB_ROUTE, ROUTE } from '~/const/route'
 import { groupByKey, sortByIndex } from '~/helper'
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import type { TGroupedLinks, TLinkItem } from '~/spec'
 
 import { EMPTY_LINK_ITEM } from '../../constant'
@@ -27,7 +26,7 @@ export type TRet = {
 
 export default (): TRet => {
   const store = useDashboard()
-  const community = useViewingCommunity()
+  const community = useCommunity()
   const { curTab } = store
 
   const storeRef = useRef(store)

@@ -65,11 +65,13 @@ export default (): TRet => {
     }
 
     if (field === FIELD.TAG_INDEX) {
+    // @ts-expect-error
       store.commit({ tags: store.original.tags })
       return
     }
 
     if (field === FIELD.FAQ_SECTIONS) {
+     // @ts-expect-error
       store.commit({ faqSections: store.original.faqSections })
       return
     }

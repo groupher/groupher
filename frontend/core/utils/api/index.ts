@@ -22,7 +22,7 @@ export const mutate = (schema, variables) => {
     .then((res) => {
       console.log('## got res: ', res)
       if (res.error) {
-        // @ts-ignore
+        // @ts-expect-error
         console.log('## error code: ', res.error.graphQLErrors[0].originalError.code)
         throw res.error
       }
@@ -65,8 +65,6 @@ const clarify = (obj: TClarifyInput): TClarifyInput => {
 }
 
 export const gqFetch = async (query, variables) => {
-  console.log('## fetching from: ', GRAPHQL_ENDPOINT)
-
   return await fetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
     headers: {

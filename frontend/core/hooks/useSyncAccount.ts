@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
-
-import type { TAccount, TSimpleUser } from '~/spec'
 import OAUTH from '~/const/oauth'
-import useSubStore from '~/hooks/useSubStore'
 import { debounce } from '~/helper'
+import useAccount from '~/hooks/useAccount'
+import type { TAccount, TSimpleUser } from '~/spec'
 import BStore from '~/utils/bstore'
 
 export default (): TAccount => {
-  const { isLogin, setSession, accountInfo } = useSubStore('account')
+  const { isLogin, setSession, accountInfo } = useAccount()
   const [isLinkClickListenerAdded, setIsLinkClickListenerAdded] = useState(false)
 
   /**
@@ -40,10 +39,12 @@ export default (): TAccount => {
     }
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     syncAccountInfo()
-  }, [isLogin])
+  }, [])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!isLinkClickListenerAdded) {
       document.addEventListener('click', handleLinkClick)

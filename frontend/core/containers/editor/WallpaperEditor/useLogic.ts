@@ -1,10 +1,9 @@
 import { clone, equals, pick } from 'ramda'
 import { useMemo, useState } from 'react'
 import { WALLPAPER_STATE_KEYS, WALLPAPER_TYPE } from '~/const/wallpaper'
+import useCommunity from '~/hooks/useCommunity'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
-
 import useSubStore from '~/hooks/useSubStore'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { mutate } from '~/server'
 import { closeDrawer, toast } from '~/signal'
 import type { TWallpaperData, TWallpaperGradientDir, TWallpaperType } from '~/spec'
@@ -39,7 +38,7 @@ type TRet = {
 
 export default (): TRet => {
   const store = useSubStore('wallpaper')
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
   const { getWallpaper } = useFullWallpaper()
 
   const [tab, setTab] = useState<TTab>(TAB.BUILDIN)

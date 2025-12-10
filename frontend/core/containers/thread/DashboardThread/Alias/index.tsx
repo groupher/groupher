@@ -5,7 +5,7 @@ import { DSB_ALIAS_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
 
 import { groupByKey } from '~/helper'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
 
 import Tabs from '~/widgets/Switcher/Tabs'
 
@@ -18,7 +18,7 @@ import Item from './Item'
 const Alias: FC = () => {
   const s = useSalon()
   const router = useRouter()
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
   const { nameAlias, aliasTab, changeTab } = useAlias()
 
   const groupedAlias = groupByKey(nameAlias, 'group')

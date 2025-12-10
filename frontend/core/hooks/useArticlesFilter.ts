@@ -1,6 +1,5 @@
-import type { TArticleFilter, TArticleCat, TArticleState, TArticleOrder } from '~/spec'
-
-import useSubStore from '~/hooks/useSubStore'
+import useArticles from '~/hooks/useArticles'
+import type { TArticleCat, TArticleFilter, TArticleOrder, TArticleState } from '~/spec'
 
 type TRes = {
   cat: TArticleCat
@@ -10,7 +9,7 @@ type TRes = {
 }
 
 export default (): TRes => {
-  const articles = useSubStore('articles')
+  const articles = useArticles()
   const { activeOrder: order, activeState: state, activeCat: cat, updateActiveFilter } = articles
 
   return {

@@ -1,11 +1,9 @@
-import { useCallback } from 'react'
-import type { TTag, TGroupedTags } from '~/spec'
-
 import { findIndex } from 'ramda'
-import { getParameterByName } from '~/utils/route'
+import { useCallback } from 'react'
 import { groupByKey } from '~/helper'
-
-import useSubStore from '~/hooks/useSubStore'
+import useArticles from '~/hooks/useArticles'
+import type { TGroupedTags, TTag } from '~/spec'
+import { getParameterByName } from '~/utils/route'
 
 type TRet = {
   tags: TTag[]
@@ -18,7 +16,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubStore('viewing')
+  const store = useArticles()
   const { tags, activeTag } = store
 
   const getGroupedTags = useCallback((): TGroupedTags => groupByKey(tags, 'group'), [tags])
@@ -30,6 +28,7 @@ export default (): TRet => {
     const idx = findIndex((t) => t.slug === tagOnURL, tags)
     if (idx < 0) return
 
+    // @ts-expect-error
     onTagSelect(tags[idx])
   }
 
@@ -38,7 +37,9 @@ export default (): TRet => {
   }
 
   return {
+    // @ts-expect-error
     tags,
+    // @ts-expect-error
     activeTag,
     onTagSelect,
     getGroupedTags,

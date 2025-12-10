@@ -1,12 +1,11 @@
-import { reject, filter, findIndex, remove, clone } from 'ramda'
-
-import type { TTag, TThread } from '~/spec'
+import { clone, filter, findIndex, reject, remove } from 'ramda'
 import { THREAD } from '~/const/thread'
 import { sortByIndex } from '~/helper'
+import useCommunity from '~/hooks/useCommunity'
 
 import useSubState from '~/hooks/useSubStore'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { query } from '~/server'
+import type { TTag, TThread } from '~/spec'
 
 import S from '../../schema'
 
@@ -18,7 +17,7 @@ type TRet = {
 
 export default (): TRet => {
   const store = useSubState('dashboard')
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
 
   const { original } = store
 

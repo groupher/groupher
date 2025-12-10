@@ -1,14 +1,14 @@
 import { useEffect } from 'react'
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import useQuery from '~/hooks/useQuery'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import type { TCommunity, TOverview } from '~/spec'
 
 import S from '../schema'
 
 export default (): TOverview => {
   const store = useDashboard()
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
   const { overview } = store
 
   const { data } = useQuery(S.communityOverview, {
@@ -20,6 +20,7 @@ export default (): TOverview => {
     const { meta, views, subscribersCount } = community
 
     store.commit({
+      // @ts-expect-error
       overview: {
         views,
         subscribersCount,
@@ -30,7 +31,7 @@ export default (): TOverview => {
 
   useEffect(() => {
     if (data?.community) updateOverview(data.community)
-  }, [data]),
+  }, [data, updateOverview]),
     updateOverview
   return overview
 }

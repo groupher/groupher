@@ -2,8 +2,8 @@ import { equals, filter, find, includes, pluck, propEq, reject, uniq } from 'ram
 import { useCallback } from 'react'
 import { THREAD } from '~/const/thread'
 import { sortByIndex } from '~/helper'
+import useCommunity from '~/hooks/useCommunity'
 import useSubState from '~/hooks/useSubStore'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
 
 export type TRet = {
@@ -16,7 +16,7 @@ export type TRet = {
 
 export default (): TRet => {
   const store = useSubState('dashboard')
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
 
   const { tags, original, activeTagThread, activeTagGroup, nameAlias, tagLayout } = store
 

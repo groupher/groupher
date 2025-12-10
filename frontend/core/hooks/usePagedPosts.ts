@@ -1,5 +1,6 @@
+import useArticles from '~/hooks/useArticles'
+import useGeneral from '~/hooks/useGeneral'
 import type { TPagedPosts, TResState, TTag } from '~/spec'
-import useSubStore from '~/hooks/useSubStore'
 
 export type TUpdate = {
   pagedPosts: TPagedPosts
@@ -13,8 +14,8 @@ type TRes = {
 }
 
 export default (): TRes => {
-  const articlesStore = useSubStore('articles')
-  const viewingStore = useSubStore('viewing')
+  const articlesStore = useArticles()
+  const viewingStore = useGeneral()
   const { pagedPosts, resState } = articlesStore
 
   const update = ({ pagedPosts, tags }: TUpdate) => {
@@ -24,6 +25,7 @@ export default (): TRes => {
 
   return {
     resState,
+    // @ts-expect-error
     pagedPosts,
     update,
   }

@@ -1,14 +1,10 @@
 import type { FC } from 'react'
-
-import type { TSpace } from '~/spec'
-import { assetSrc } from '~/helper'
-
 import { BRAND_LAYOUT } from '~/const/layout'
-
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import { assetSrc } from '~/helper'
+import useCommunity from '~/hooks/useCommunity'
 import useLayout from '~/hooks/useLayout'
-
 import Img from '~/Img'
+import type { TSpace } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from './salon'
@@ -21,7 +17,7 @@ type TProps = {
 const CommunityBrand: FC<TProps> = ({ className = '', landingBrand = false, ...spacing }) => {
   const s = useSalon({ className, ...spacing })
 
-  const { logo, title } = useViewingCommunity()
+  const { logo, title } = useCommunity()
   const { brandLayout } = useLayout()
 
   const landingLogo = '/groupher.png'

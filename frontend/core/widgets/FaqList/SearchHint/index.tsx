@@ -1,22 +1,19 @@
 import type { FC } from 'react'
-
-import { mockHelpCats } from '~/mock'
 import { THREAD } from '~/const/thread'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
+import { mockHelpCats } from '~/mock'
 
 import ArrowLinker from '~/widgets/ArrowLinker'
-
-import CatSection from './CatSection'
-import useSalon from '../salon/search_hint'
-
 import type { TProps as TIndex } from '..'
+import useSalon from '../salon/search_hint'
+import CatSection from './CatSection'
 
 type TProps = Pick<TIndex, 'sections'>
 
 const SearchHint: FC<TProps> = ({ sections }) => {
   const s = useSalon()
 
-  const community = useViewingCommunity()
+  const community = useCommunity()
   const cats = mockHelpCats()
 
   return (

@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation'
 import { DSB_SEO_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
 
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 import { FIELD, SEO_TABS } from '../constant'
@@ -18,7 +18,7 @@ export default () => {
   const s = useSalon()
 
   const router = useRouter()
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
   const { seoTab, saving, isTouched, edit } = useSEO()
 
   return (

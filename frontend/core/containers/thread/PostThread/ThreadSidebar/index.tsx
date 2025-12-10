@@ -12,9 +12,9 @@ import Link from 'next/link'
 import { lazy, Suspense } from 'react'
 import TagsBar from '~/containers/unit/TagsBar'
 import useActiveTag from '~/hooks/useActiveTag'
+import useCommunity from '~/hooks/useCommunity'
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 import useTrans from '~/hooks/useTrans'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import Img from '~/Img'
 import LinkSVG from '~/icons/Link'
 import { mockUsers } from '~/mock'
@@ -30,7 +30,7 @@ const UniBar = lazy(() => import('~/widgets/UniBar'))
 
 export default () => {
   const { t } = useTrans()
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
 
   const { inView: showCommunityBadge } = useCommunityDigestViewport()
   const activeTag = useActiveTag()

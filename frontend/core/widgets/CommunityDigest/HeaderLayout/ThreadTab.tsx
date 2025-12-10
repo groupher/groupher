@@ -1,12 +1,10 @@
-import type { FC } from 'react'
 import Link from 'next/link'
-
-import type { TSpace } from '~/spec'
-
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-import usePublicThreads from '~/hooks/usePublicThreads'
+import type { FC } from 'react'
+import useCommunity from '~/hooks/useCommunity'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
+import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
+import type { TSpace } from '~/spec'
 
 import CustomHeaderLinks from '~/widgets/CustomHeaderLinks'
 
@@ -17,7 +15,7 @@ type TProps = TSpace
 const ThreadTab: FC<TProps> = ({ ...spacing }) => {
   const s = useSalon({ ...spacing })
 
-  const community = useViewingCommunity()
+  const community = useCommunity()
   const { getCustomLinks } = useHeaderLinks()
   const threads = usePublicThreads()
   const activeThread = useViewingThread()

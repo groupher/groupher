@@ -1,6 +1,6 @@
 import { find, findIndex, pick, reject } from 'ramda'
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import type { TDocFAQLayout, TEditFunc, TFAQSection } from '~/spec'
 import { DEFAULT_NEW_FAQ, FIELD } from '../constant'
 import useHelper from './useHelper'
@@ -22,7 +22,7 @@ export default (): TRet => {
   const store = useDashboard()
   const { edit } = useHelper()
   const { faqSections } = store
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
 
   const addFAQSection = (): void => {
     const index = faqSections.length
@@ -47,6 +47,7 @@ export default (): TRet => {
     const community = curCommunity.slug
 
     store.commit({
+      // @ts-expect-error
       faqSections: reject((faq: TFAQSection) => faq.index === index, faqSections),
       savingField: FIELD.FAQ_SECTION_DELETE,
     })
@@ -67,12 +68,16 @@ export default (): TRet => {
     const targetIndex = opt === 'up' ? curIndex - 1 : curIndex + 1
 
     const tmp = _faqSections[targetIndex]
+      // @ts-expect-error
     _faqSections[targetIndex] = _faqSections[curIndex]
+      // @ts-expect-error
     _faqSections[curIndex] = tmp
 
+      // @ts-expect-error
     store.commit({ faqSections: _faqSections })
 
     setTimeout(() => {
+      // @ts-expect-error
       store.commit({ faqSections: _reindex(_faqSections) })
     })
   }

@@ -1,9 +1,10 @@
 import { isEmpty, pick } from 'ramda'
 import { useEffect } from 'react'
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import useQuery from '~/hooks/useQuery'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import type { TCommunity, TDsbBaseInfoRoute, TEditFunc } from '~/spec'
+import type { TDsbFields } from '~/stores/dashboard/spec'
 import { BASEINFO_KEYS } from '../../constant'
 import S from '../../schema'
 import useHelper from '../useHelper'
@@ -28,7 +29,7 @@ type TRet = TUseInfo &
 export default (): TRet => {
   const store = useDashboard()
 
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
   const { edit } = useHelper()
 
   const useInfoData = useInfo()
@@ -61,8 +62,13 @@ export default (): TRet => {
       }))
     }
 
-    const original = { ...store.original, ...updates, mediaReports: initMediaReports }
-    store.commit({ ...updates, mediaReports: initMediaReports, original })
+    const original = {
+      ...store.original,
+      ...updates,
+      mediaReports: initMediaReports,
+    }
+
+    store.commit({ ...updates, mediaReports: initMediaReports, original: original as TDsbFields })
   }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>

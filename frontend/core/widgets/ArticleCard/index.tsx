@@ -1,15 +1,13 @@
-import type { FC } from 'react'
 import Link from 'next/link'
-
-import type { TArticle } from '~/spec'
+import type { FC } from 'react'
 import { THREAD } from '~/const/thread'
 import { cutRest } from '~/fmt'
+import useCommunity from '~/hooks/useCommunity'
 import { previewArticle } from '~/signal'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-
-import ArticleReadLabel from '~/widgets/ArticleReadLabel'
-import ArticlePinLabel from '~/widgets/ArticlePinLabel'
+import type { TArticle } from '~/spec'
 import ArticleImgWindow from '~/widgets/ArticleImgWindow'
+import ArticlePinLabel from '~/widgets/ArticlePinLabel'
+import ArticleReadLabel from '~/widgets/ArticleReadLabel'
 
 import Footer from './Footer'
 
@@ -22,7 +20,7 @@ export type TProps = {
 const ArticleCard: FC<TProps> = ({ data }) => {
   const s = useSalon()
 
-  const { slug } = useViewingCommunity()
+  const { slug } = useCommunity()
   const { innerId, title, digest, isPinned, viewerHasViewed } = data
 
   return (
@@ -35,7 +33,7 @@ const ArticleCard: FC<TProps> = ({ data }) => {
         <ArticleReadLabel viewed={viewerHasViewed} top={0} right={0} />
       </div>
 
-      <div className="mt-1" />
+      <div className='mt-1' />
       <Link
         className={s.titleLink}
         onClick={(e) => {
@@ -49,10 +47,10 @@ const ArticleCard: FC<TProps> = ({ data }) => {
 
       <div onClick={() => previewArticle(data)}>{cutRest(digest, 150)}</div>
 
-      <div className="mt-1" />
+      <div className='mt-1' />
       <ArticleImgWindow />
-      <div className="mt-4" />
-      <div className="grow" />
+      <div className='mt-4' />
+      <div className='grow' />
       <Footer data={data} />
     </div>
   )

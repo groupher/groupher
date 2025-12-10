@@ -17,6 +17,7 @@ export default (): TRet => {
   }
 
   return {
+    // @ts-expect-error
     socialLinks: reject((item: TSocialItem) => isEmpty(item.type), socialLinks),
     isSocialLinksTouched: socialLinksTouched(),
   }

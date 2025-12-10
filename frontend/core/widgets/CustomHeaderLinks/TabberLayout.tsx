@@ -1,19 +1,15 @@
-import { type FC, Fragment, useState } from 'react'
-import { keys, startsWith, filter } from 'ramda'
 import Link from 'next/link'
-
-import type { TLinkItem } from '~/spec'
+import { filter, keys, startsWith } from 'ramda'
+import { type FC, Fragment, useState } from 'react'
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
-import { sortByIndex, groupByKey } from '~/helper'
+import { groupByKey, sortByIndex } from '~/helper'
 import useAccount from '~/hooks/useAccount'
-
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/Link'
+import type { TLinkItem } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
-
-import type { TProps, TLinkGroup } from './spec'
-
 import useSalon, { cn } from './salon/tabber_layout'
+import type { TLinkGroup, TProps } from './spec'
 
 const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
   const s = useSalon()
@@ -34,8 +30,8 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
       }
       onHide={() => setMenuOpen(false)}
       onShow={() => setMenuOpen(true)}
-      trigger="click"
-      placement="bottom"
+      trigger='click'
+      placement='bottom'
       offset={[8, 5]}
     >
       <div className={cn(s.groupItem, menuOpen && s.groupItemActive)}>
@@ -52,7 +48,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
 
   const _links = filter((item) => item.title !== '', links)
 
-  // @ts-ignore
+  // @ts-expect-error
   const groupedLinks = groupByKey(sortByIndex(_links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 

@@ -6,16 +6,15 @@
  *
  */
 
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-import { assetSrc } from '~/utils/helper'
-
-import ImgFallback from '~/widgets/ImgFallback'
+import useCommunity from '~/hooks/useCommunity'
 import Img from '~/Img'
+import { assetSrc } from '~/utils/helper'
+import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from '../salon/thread_sidebar/community_brief'
 
 export default () => {
-  const { logo, title, meta, subscribersCount } = useViewingCommunity()
+  const { logo, title, meta, subscribersCount } = useCommunity()
 
   const s = useSalon()
 
@@ -33,7 +32,7 @@ export default () => {
         <div className={s.row}>
           <div className={s.label}>关注</div>
           <div className={s.count}>{subscribersCount}</div>
-          <div className="mr-4" />
+          <div className='mr-4' />
           <div className={s.label}>帖子</div>
           <div className={s.count}>{meta?.postsCount}</div>
         </div>

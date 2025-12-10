@@ -1,22 +1,18 @@
-import { type FC, useState, useEffect } from 'react'
-import { includes, reject, uniq, equals } from 'ramda'
-import { useQuery, useMutation } from 'urql'
-
-import type { TColorName, TID, TTag } from '~/spec'
-import { toast, updateViewingArticle } from '~/signal'
+import { equals, includes, reject, uniq } from 'ramda'
+import { type FC, useEffect, useState } from 'react'
+import { useMutation, useQuery } from 'urql'
 // import { mockTags } from '~/mock'
 import { THREAD } from '~/const/thread'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
 import useViewingArticle from '~/hooks/useViewingArticle'
-
-import TagNode from '~/widgets/TagNode'
+import { toast, updateViewingArticle } from '~/signal'
+import type { TColorName, TID, TTag } from '~/spec'
 import Checker from '~/widgets/Checker'
-
-import S from '../schema'
-import Footer from './Footer'
-import useTouched from '../useTouched'
-
+import TagNode from '~/widgets/TagNode'
 import useSalon from '../salon/sub_menu/tags_setting'
+import S from '../schema'
+import useTouched from '../useTouched'
+import Footer from './Footer'
 
 type TProps = {
   onBack: () => void
@@ -28,7 +24,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   const [checked, setChecked] = useState([])
   const { touched, setTouched, resetTouched } = useTouched()
 
-  const community = useViewingCommunity()
+  const community = useCommunity()
   const { article } = useViewingArticle()
 
   const [result] = useQuery({
@@ -81,8 +77,8 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
         >
           <TagNode dotSize={2.5} color={item.color as TColorName} hashSize={3.5} />
           <div className={s.title}>{item.title}</div>
-          <div className="grow" />
-          <Checker size="small" checked={includes(item.id, checked)} />
+          <div className='grow' />
+          <Checker size='small' checked={includes(item.id, checked)} />
         </div>
       ))}
 

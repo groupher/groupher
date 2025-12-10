@@ -4,14 +4,12 @@
  * TagsBar
  */
 
-import { type FC, useEffect } from 'react'
 import { keys, reverse } from 'ramda'
-
-import GobackTag from './GobackTag'
+import { type FC, useEffect } from 'react'
 import Folder from './Folder'
-
-import useLogic from './useLogic'
+import GobackTag from './GobackTag'
 import useSalon from './salon'
+import useLogic from './useLogic'
 
 type TProps = {
   onSelect: () => void
@@ -32,7 +30,7 @@ const TagsBar: FC<TProps> = ({ onSelect }) => {
 
   useEffect(() => {
     syncActiveTagFromURL()
-  }, [])
+  }, [syncActiveTagFromURL])
 
   const groupedTags = getGroupedTags()
   const groupsKeys = reverse(keys(groupedTags)) as string[]

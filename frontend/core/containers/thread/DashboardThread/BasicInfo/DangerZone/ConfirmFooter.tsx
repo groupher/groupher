@@ -1,11 +1,8 @@
 import { type FC, useState } from 'react'
-
+import useCommunity from '~/hooks/useCommunity'
 import type { TSpace } from '~/spec'
-
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-
-import Input from '~/widgets/Input'
 import Button from '~/widgets/Buttons/Button'
+import Input from '~/widgets/Input'
 
 import useBaseInfo from '../../logic/useBaseInfo'
 import useSalon from '../../salon/basic_info/danger_zone/confirm_footer'
@@ -20,7 +17,7 @@ const ConfirmFooter: FC<TProps> = ({ testid = '', ...spacing }) => {
   const { deleteCommunity } = useBaseInfo()
 
   const [msg, setMsg] = useState('')
-  const { slug } = useViewingCommunity()
+  const { slug } = useCommunity()
 
   return (
     <div className={s.wrapper}>
@@ -30,7 +27,7 @@ const ConfirmFooter: FC<TProps> = ({ testid = '', ...spacing }) => {
       </div>
       <Input className={s.input} onChange={(e) => setMsg(e.target.value)} value={msg} autoFocus />
       <Button
-        type="red"
+        type='red'
         top={14}
         bottom={18}
         disabled={msg !== slug}

@@ -2,8 +2,8 @@ import { pluck, reject, uniq } from 'ramda'
 import { useMemo, useState } from 'react'
 import EVENT from '~/const/event'
 import { CHANGE_MODE } from '~/const/mode'
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { mutate } from '~/server'
 
 import { closeDrawer, send } from '~/signal'
@@ -29,8 +29,9 @@ type TRet = {
 
 export default (): TRet => {
   const dashboard = useDashboard()
+  const {tags, settingTag, activeTagThread} = dashboard
 
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
 
   const [editingTag, setEditingTag] = useState<TTag | null>(null)
   const [mode, setMode] = useState(CHANGE_MODE.UPDATE)
@@ -41,7 +42,8 @@ export default (): TRet => {
     if (mode === CHANGE_MODE.CREATE) {
       setEditingTag(DEFAULT_CREATE_TAG)
     } else {
-      setEditingTag(dashboard.settingTag)
+      // @ts-expect-error
+      setEditingTag(settingTag)
     }
   }
 
@@ -72,7 +74,7 @@ export default (): TRet => {
       ...editingTag,
       slug: editingTag.title,
       community: curCommunity.slug,
-      thread: dashboard.activeTagThread,
+      thread: activeTagThread,
     }
 
     mutate(S.updateArticleTag, params).then((res) => {
@@ -88,7 +90,7 @@ export default (): TRet => {
       ...editingTag,
       slug: editingTag.title,
       community: curCommunity.slug,
-      thread: dashboard.activeTagThread,
+      thread: activeTagThread,
     }
 
     mutate(S.createArticleTag, params).then((res) => {
@@ -111,7 +113,7 @@ export default (): TRet => {
   const categoryOptions = useMemo((): TSelectOption[] => {
     if (!editingTag) return []
 
-    const tagGroups = uniq(pluck('group', dashboard.tags))
+    const tagGroups = uniq(pluck('group', tags))
 
     const existOptions = tagGroups.map((cat) => ({
       label: cat,

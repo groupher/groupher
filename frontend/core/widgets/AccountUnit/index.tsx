@@ -27,9 +27,7 @@ type TProps = {
 const AccountUnit: FC<TProps> = ({ withName = false, ...spacing }) => {
   const s = useSalon({ ...spacing })
   useSyncAccount()
-  const user = useAccount()
-
-  const { isLogin, nickname } = user
+  const {isLogin, user} = useAccount()
   const { bannerLayout } = useLayout()
 
   const [showPanel, setShowPanel] = useState(false)
@@ -46,7 +44,7 @@ const AccountUnit: FC<TProps> = ({ withName = false, ...spacing }) => {
         </div>
       )}
       {!isLogin && withName && <div className={s.nickname}>未登入</div>}
-      {isLogin && withName && <div className={s.nickname}>{nickname}</div>}
+      {isLogin && withName && <div className={s.nickname}>{user?.nickname}</div>}
       {bannerLayout === BANNER_LAYOUT.SIDEBAR && <div className="grow" />}
       <Panel show={showPanel} onClose={() => setShowPanel(false)} />
     </div>

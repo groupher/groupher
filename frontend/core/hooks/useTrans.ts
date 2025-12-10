@@ -1,9 +1,8 @@
 import { useCallback, useMemo } from 'react'
 
 import { titleCase } from '~/fmt'
-
-import useSubStore from '~/hooks/useSubStore'
 import type { TLocale, TTransKey } from '~/spec'
+import useLocale from '~/stores/locale.domain/hooks'
 
 type TFmt = 'titleCase' | null
 
@@ -13,7 +12,7 @@ type TRet = {
 }
 
 const useTrans = (): TRet => {
-  const { locale, localeData } = useSubStore('locale')
+  const { locale, localeData } = useLocale()
 
   const localeJson = useMemo(() => JSON.parse(localeData), [localeData])
 

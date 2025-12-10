@@ -1,17 +1,13 @@
+import { keys, mergeDeepRight, pick } from 'ramda'
 import { useCallback } from 'react'
-import { pick, keys, mergeDeepRight } from 'ramda'
 import { proxy, useSnapshot } from 'valtio'
-
-import type { TSubmitState, TEditMode, TTag, TCommunity, TGroupedTags, TArticleCat } from '~/spec'
 import { ARTICLE_CAT } from '~/const/gtd'
+import useCommunity from '~/hooks/useCommunity'
 
 import { query } from '~/server'
-
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-
-import type { TEditData, TStore } from './spec'
-
+import type { TArticleCat, TCommunity, TEditMode, TGroupedTags, TSubmitState, TTag } from '~/spec'
 import S from './schema'
+import type { TEditData, TStore } from './spec'
 
 type TRet = {
   onCancel: () => void
@@ -88,7 +84,7 @@ const store = proxy<TStore>({
 
 export default (): TRet => {
   const snap = useSnapshot(store)
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
 
   const onPublish = (): void => {
     console.log('## onPublish')
@@ -114,9 +110,9 @@ export default (): TRet => {
     const tagsIds = snap.articleTags.map((t) => t.id)
     const baseFields = ['title', 'body', 'copyRight', 'isQuestion', 'linkAddr']
 
-    // @ts-ignore
+    // @ts-expect-error
     return { ...pick(baseFields, snap), articleTags: tagsIds }
-  }, [])
+  }, [snap.articleTags])
 
   const catOnChange = (activeCat: TArticleCat): void => store.commit({ activeCat })
   const onTagSelect = (activeTag: TTag): void => snap.commit({ activeTag })
@@ -160,7 +156,7 @@ export default (): TRet => {
     })
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   return {
     ...pick(keys(snap), snap),
     onPublish,

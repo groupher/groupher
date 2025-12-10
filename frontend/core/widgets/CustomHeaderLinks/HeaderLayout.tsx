@@ -1,25 +1,21 @@
-import { type FC, Fragment, useState } from 'react'
-import { startsWith } from 'ramda'
 import Link from 'next/link'
-
-import type { TLinkItem } from '~/spec'
+import { startsWith } from 'ramda'
+import { type FC, Fragment, useState } from 'react'
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import useAccount from '~/hooks/useAccount'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
-
 import ArrowSVG from '~/icons/ArrowSimple'
+import type { TLinkItem } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
-
-import type { TProps, TLinkGroup } from './spec'
-
 import useSalon, { cn } from './salon/header_layout'
+import type { TLinkGroup, TProps } from './spec'
 
 const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath }) => {
   const s = useSalon()
 
   const [menuOpen, setMenuOpen] = useState(false)
-  const { slug } = useViewingCommunity()
+  const { slug } = useCommunity()
 
   if (!showMoreFold) return null
 
@@ -46,7 +42,7 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
       onHide={() => setMenuOpen(false)}
       onShow={() => setMenuOpen(true)}
       hideOnClick={false}
-      placement="bottom"
+      placement='bottom'
       offset={[8, 5]}
     >
       {/* @ts-ignore */}

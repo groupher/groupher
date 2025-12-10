@@ -3,8 +3,8 @@ import { keys } from 'ramda'
 
 import { DEME_SOCIALS } from '~/const/social'
 import { assetSrc, groupByKey, sortByIndex } from '~/helper'
+import useCommunity from '~/hooks/useCommunity'
 import useFooterLinks from '~/hooks/useFooterLinks'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 
 import Img from '~/Img'
 import ImgFallback from '~/widgets/ImgFallback'
@@ -15,7 +15,7 @@ import useSalon from './salon/group_layout'
 export default () => {
   const s = useSalon()
 
-  const { logo, desc, title } = useViewingCommunity()
+  const { logo, desc, title } = useCommunity()
   const { links } = useFooterLinks()
 
   // @ts-expect-error

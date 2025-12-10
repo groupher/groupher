@@ -47,6 +47,7 @@ export default (): TRet => {
     const restReports = reject((item: TMediaReport) => item.index === index, mediaReports)
     const report = find((item: TMediaReport) => item.index === index, mediaReports)
 
+    // @ts-expect-error
     report.editUrl = url
 
     store.mediaReports = [...restReports, report]
@@ -56,6 +57,7 @@ export default (): TRet => {
     const { mediaReports } = store
     const newReports = reject((item: TMediaReport) => item.index === index, mediaReports)
 
+    // @ts-expect-error
     store.commit({ mediaReports: newReports })
   }
 
@@ -101,6 +103,7 @@ export default (): TRet => {
 
   return {
     queryingMediaReportIndex,
+    // @ts-expect-error
     mediaReports,
     isMediaReportsTouched: mediaReportsTouched(),
     addMediaReport,

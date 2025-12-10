@@ -3,17 +3,18 @@
  * CommunityDigest
  *
  */
-import { Fragment } from 'react'
+
 import { usePathname } from 'next/navigation'
+import { Fragment } from 'react'
 
 import { BANNER_LAYOUT } from '~/const/layout'
 // import { ROUTE } from '~/const/route'
 import useLayout from '~/hooks/useLayout'
 
 import DashboardLayout from './DashboardLayout'
+import HeaderLayout from './HeaderLayout'
 import SidebarLayout from './SidebarLayout'
 import TabberLayout from './TabberLayout'
-import HeaderLayout from './HeaderLayout'
 
 export default () => {
   // const router = useRouter()

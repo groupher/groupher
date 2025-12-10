@@ -1,15 +1,12 @@
 import type { FC } from 'react'
-
-import type { TPost } from '~/spec'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import SIZE from '~/const/size'
 import { THREAD } from '~/const/thread'
-
+import useCommunity from '~/hooks/useCommunity'
 import { previewArticle } from '~/signal'
+import type { TPost } from '~/spec'
 import ArticleReadLabel from '~/widgets/ArticleReadLabel'
-
-import TagsList from '~/widgets/TagsList'
 import CommentsCount from '~/widgets/CommentsCount'
+import TagsList from '~/widgets/TagsList'
 
 import useSalon from '../salon/minimal_layout/header'
 
@@ -19,7 +16,7 @@ type TProps = {
 
 const Header: FC<TProps> = ({ article }) => {
   const s = useSalon()
-  const { slug } = useViewingCommunity()
+  const { slug } = useCommunity()
   const { innerId, title, commentsCount, articleTags } = article
 
   return (
@@ -38,7 +35,7 @@ const Header: FC<TProps> = ({ article }) => {
         </a>
         {/*  @ts-ignore */}
         <TagsList items={articleTags} left={1} />
-        <div className="grow" />
+        <div className='grow' />
         {commentsCount !== 0 && <CommentsCount count={commentsCount} size={SIZE.MEDIUM} />}
       </div>
     </article>

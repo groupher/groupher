@@ -1,20 +1,18 @@
 import Link from 'next/link'
 
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
+import useHeaderLinks from '~/hooks/useHeaderLinks'
 import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
-import useHeaderLinks from '~/hooks/useHeaderLinks'
 
 import CustomHeaderLinks from '~/widgets/CustomHeaderLinks'
-
-import ThreadIcon from './ThreadIcon'
-
 import useSalon, { cn } from '../salon/sidebar_layout/main_menu'
+import ThreadIcon from './ThreadIcon'
 
 export default () => {
   const s = useSalon()
 
-  const community = useViewingCommunity()
+  const community = useCommunity()
   const communityPath = community?.slug
 
   const publicThreads = usePublicThreads()

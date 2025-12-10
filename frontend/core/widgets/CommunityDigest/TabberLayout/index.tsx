@@ -1,8 +1,8 @@
 import { useRouter } from 'next/navigation'
+import useCommunity from '~/hooks/useCommunity'
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import usePublicThreads from '~/hooks/usePublicThreads'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import useViewingThread from '~/hooks/useViewingThread'
 import CustomHeaderLinks from '~/widgets/CustomHeaderLinks'
 import TabBar from '~/widgets/TabBar'
@@ -17,7 +17,7 @@ export default () => {
   const { enterView, leaveView } = useCommunityDigestViewport()
   const publicThreads = usePublicThreads()
   const activeThread = useViewingThread()
-  const community = useViewingCommunity()
+  const community = useCommunity()
   const { getCustomLinks } = useHeaderLinks()
 
   const customLinks = getCustomLinks()

@@ -115,7 +115,7 @@
     "mastani-codehighlight": "0.0.7",
     "motion": "^12.18.1",
     "nanoid": "^3.1.12",
-    "next": "16.1.0-canary.4",
+    "next": "v16.1.0-canary.16",
     "next-auth": "^5.0.0-beta.16",
     "next-compose-plugins": "^2.2.0",
     "overlayscrollbars": "^2.9.1",
@@ -165,7 +165,8 @@
     "typewriter-effect": "^2.19.0",
     "urql": "^4.2.0",
     "use-debounce": "^10.0.4",
-    "valtio": "2.1.7"
+    "valtio": "2.1.7",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.0",
@@ -188,6 +189,7 @@
     "lint-staged": "^15.2.0",
     "npm-run-all": "^4.1.1",
     "postcss": "^8.4.39",
+    "react-json-view-lite": "^2.5.0",
     "react-test-renderer": "18.2.0",
     "start-server-and-test": "1.12.1",
     "tsc-files": "^1.1.4",

@@ -1,20 +1,17 @@
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 import { BANNER_LAYOUT, BRAND_LAYOUT } from '~/const/layout'
 import { THREAD } from '~/const/thread'
-import { assetSrc } from '~/helper'
 import { prettyURL } from '~/fmt'
-
-import LinkSVG from '~/icons/Link'
-
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-import useViewingThread from '~/hooks/useViewingThread'
+import { assetSrc } from '~/helper'
+import useCommunity from '~/hooks/useCommunity'
 import useLayout from '~/hooks/useLayout'
-
+import useViewingThread from '~/hooks/useViewingThread'
 import Img from '~/Img'
-import ImgFallback from '~/widgets/ImgFallback'
+import LinkSVG from '~/icons/Link'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
+import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from '../salon/sidebar_layout/community_brief'
 
@@ -22,7 +19,7 @@ export default () => {
   const s = useSalon()
 
   const router = useRouter()
-  const { logo, slug, title, desc, dashboard } = useViewingCommunity()
+  const { logo, slug, title, desc, dashboard } = useCommunity()
   const activeThread = useViewingThread()
   const { bannerLayout, brandLayout } = useLayout()
 

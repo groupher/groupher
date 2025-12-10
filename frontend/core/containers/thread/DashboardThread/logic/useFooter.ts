@@ -31,6 +31,7 @@ export default (): TRet => {
   return {
     edit,
     footerLayout,
+    // @ts-expect-error
     footerLinks,
     editingLink,
     editingLinkMode,

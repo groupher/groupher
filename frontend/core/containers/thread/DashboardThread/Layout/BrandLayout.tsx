@@ -1,5 +1,5 @@
 import { BRAND_LAYOUT } from '~/const/layout'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
 
 import BrandSVG from '~/icons/Brand'
 import CheckLabel from '~/widgets/CheckLabel'
@@ -13,7 +13,7 @@ import useSalon, { cn } from '../salon/layout/brand_layout'
 export default () => {
   const s = useSalon()
 
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
   const { edit, layout, isTouched, saving } = useBrand()
 
   return (

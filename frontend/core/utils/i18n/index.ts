@@ -2,8 +2,8 @@
 
 // import { useSearchParams } from 'next/navigation'
 
-import type { TLocale } from '~/spec'
 import { LOCALE } from '~/const/i18n'
+import type { TLocale } from '~/spec'
 
 /**
  * this query is used for GraphQL, which will be intercepted by frontend

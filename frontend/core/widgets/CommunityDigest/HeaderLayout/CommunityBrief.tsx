@@ -1,18 +1,17 @@
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
+import useDashboard from '~/hooks/useDashboard'
 import useHover from '~/hooks/useHover'
-
-import OptionArrowSVG from '~/icons/OptionArrow'
 import ArrowSVG from '~/icons/ArrowUpRight'
 import DiscussSVG from '~/icons/Discuss'
 import GithubSVG from '~/icons/Github8'
-import GlobalSVG from '~/icons/social/Global'
+import OptionArrowSVG from '~/icons/OptionArrow'
 import PlusSVG from '~/icons/PlusCircle'
-
-import Tooltip from '~/widgets/Tooltip'
+import GlobalSVG from '~/icons/social/Global'
 import CommunityBrand from '~/widgets/CommunityBrand'
+import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from '../salon/header_layout/community_brief'
 
@@ -20,7 +19,8 @@ export default () => {
   const s = useSalon()
 
   const [disableTippyJump, setDisableTippyJump] = useState(false)
-  const { slug, dashboard } = useViewingCommunity()
+  const { slug } = useCommunity()
+  const dashboard = useDashboard()
 
   const [ref, isHovering] = useHover<HTMLDivElement>()
 
@@ -46,7 +46,7 @@ export default () => {
             <div className={s.menuTitle}>社区主页</div>
           </Link>
 
-          <Link className={s.menuItem} href={dashboard?.baseInfo.homepage}>
+          <Link className={s.menuItem} href={dashboard?.homepage}>
             <div className={s.menuIconBox}>
               <GlobalSVG className={s.menuIcon} />
             </div>
@@ -63,7 +63,7 @@ export default () => {
           </Link>
 
           <div className={s.divider} />
-          <Link className={s.menuItem} href="/apply/community">
+          <Link className={s.menuItem} href='/apply/community'>
             <div className={s.menuIconBox}>
               <PlusSVG className={s.menuIcon} />
             </div>
@@ -72,10 +72,10 @@ export default () => {
           </Link>
         </div>
       }
-      placement="bottom"
+      placement='bottom'
       hideOnClick={false}
       offset={[-3, -48]}
-      trigger="click"
+      trigger='click'
       onHide={() => setDisableTippyJump(false)}
       noPadding
     >

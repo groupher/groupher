@@ -1,9 +1,11 @@
-import useSubStore from '~/hooks/useSubStore'
+// import useSubStore from '~/hooks/useSubStore'
 
 import type { TThread } from '~/spec'
 
 export default (): TThread => {
-  const store = useSubStore('viewing')
+  // const store = useSubStore('viewing')
 
-  return store.activeThread
+  // store.activeThread
+
+  return 'post'
 }

@@ -4,22 +4,19 @@
  *
  */
 
-import type { FC } from 'react'
 import Link from 'next/link'
-
-import type { TSpace } from '~/spec'
-import useAccount from '~/hooks/useAccount'
-
+import type { FC } from 'react'
 import { ROUTE } from '~/const/route'
-import { signOut } from '~/oauth'
-
+import useAccount from '~/hooks/useAccount'
 import Img from '~/Img'
-import SettingSVG from '~/icons/Setting'
 import AddSVG from '~/icons/Add'
-import LogoutSVG from '~/icons/Logout'
 import CmdSVG from '~/icons/Cmd'
-import Tooltip from '~/widgets/Tooltip'
+import LogoutSVG from '~/icons/Logout'
+import SettingSVG from '~/icons/Setting'
+import { signOut } from '~/oauth'
+import type { TSpace } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
+import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from './salon/logged_in_account'
 
@@ -30,15 +27,15 @@ type TProps = {
 const LoggedInAccount: FC<TProps> = () => {
   const s = useSalon()
 
-  const user = useAccount()
-  const { avatar } = user
+  const { user } = useAccount()
+  const { avatar, nickname } = user
 
   return (
     <Tooltip
       content={
         <div className={s.panel}>
           <div className={s.baseInfo}>
-            <div className={s.userName}>{user.nickname}</div>
+            <div className={s.userName}>{nickname}</div>
             <div className={s.loginBy}>via Github</div>
           </div>
           <div className={s.menuBar}>
@@ -70,8 +67,8 @@ const LoggedInAccount: FC<TProps> = () => {
           </div>
         </div>
       }
-      placement="bottom-end"
-      trigger="click"
+      placement='bottom-end'
+      trigger='click'
       noPadding
     >
       <Img src={avatar} fallback={<ImgFallback size={5} user={user} />} className={s.avatar} />

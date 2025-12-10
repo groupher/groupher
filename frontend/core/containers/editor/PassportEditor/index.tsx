@@ -5,19 +5,18 @@
 
 import { type FC, useEffect } from 'react'
 
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
 
 import Button from '~/widgets/Buttons/Button'
 
 import Selects from './Selects'
-
-import useLogic from './useLogic'
 import useSalon from './salon'
+import useLogic from './useLogic'
 
 const PassportEditor: FC = () => {
   const s = useSalon()
 
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
 
   useEffect(() => {
     loadAllPassportRules()
@@ -57,7 +56,7 @@ const PassportEditor: FC = () => {
 
       {!readonly && (
         <div className={s.footer}>
-          <Button type="red" ghost>
+          <Button type='red' ghost>
             删除管理员
           </Button>
           <Button onClick={() => updatePassport()}>更新权限</Button>

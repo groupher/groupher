@@ -1,10 +1,8 @@
 import type { FC } from 'react'
-
-import type { TPost } from '~/spec'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { THREAD } from '~/const/thread'
-
+import useCommunity from '~/hooks/useCommunity'
 import { previewArticle } from '~/signal'
+import type { TPost } from '~/spec'
 import ArticleReadLabel from '~/widgets/ArticleReadLabel'
 import TagsList from '~/widgets/TagsList'
 
@@ -16,7 +14,7 @@ type TProps = {
 
 const Header: FC<TProps> = ({ article }) => {
   const { innerId, title, articleTags } = article
-  const { slug } = useViewingCommunity()
+  const { slug } = useCommunity()
   const s = useSalon()
 
   return (
