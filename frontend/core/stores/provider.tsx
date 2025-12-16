@@ -4,7 +4,7 @@ import AccountStoreProvider from '~/stores/account/provider'
 import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
 import GeneralStoreProvider from '~/stores/general/provider'
-import ThemeStoreProvider from '~/stores/theme.domain/provider'
+import ThemeStoreProvider from '~/stores/theme/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper.domain/provider'
 
 type TCommunityInfoProvider = {
