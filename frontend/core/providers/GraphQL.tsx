@@ -26,13 +26,11 @@ const localServeExchange = ({ forward }) => {
 
     const interceptedOps$ = pipe(
       sharedOps$,
-      // @ts-ignore
       filter(({ variables }) => Object.keys(variables).length === 1 && variables?.locale),
       mergeMap((operation) =>
         fromPromise(
-          // @ts-ignore
           loadLocaleFile(operation.variables?.locale).then((result) =>
-            // @ts-ignore
+            // @ts-expect-error
             makeResult(operation, { data: result }),
           ),
         ),
@@ -41,7 +39,7 @@ const localServeExchange = ({ forward }) => {
 
     const forwardOps$ = pipe(
       sharedOps$,
-      // @ts-ignore
+      // @ts-expect-error
       filter((operation) => !operation.variables?.locale),
       forward,
     )
@@ -52,10 +50,10 @@ const localServeExchange = ({ forward }) => {
 
 const GraphQLProvider: FC<TProps> = ({ children }) => {
   const [client, ssr] = useMemo(() => {
-    const ssr = ssrExchange()
+    const ssr = ssrExchange({ isClient: true })
     const client = createClient({
       url: GRAPHQL_ENDPOINT,
-      // @ts-ignore
+      // @ts-expect-error
       exchanges: [cacheExchange, ssr, localServeExchange, fetchExchange],
       suspense: true,
 

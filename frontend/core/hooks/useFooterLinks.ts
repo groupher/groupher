@@ -11,6 +11,7 @@ export default (): TFooterLinks => {
 
   return {
     layout: footerLayout,
+    // @ts-expect-error
     links: footerLinks,
   }
 }

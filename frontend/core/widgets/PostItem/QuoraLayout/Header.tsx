@@ -3,8 +3,8 @@ import { type FC, lazy, Suspense } from 'react'
 import { BANNER_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
 import { THREAD } from '~/const/thread'
+import useCommunity from '~/hooks/useCommunity'
 import useLayout from '~/hooks/useLayout'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import type { TPost } from '~/spec'
 import ArticleReadLabel from '~/widgets/ArticleReadLabel'
 import CommentsCount from '~/widgets/CommentsCount'
@@ -22,7 +22,7 @@ type TProps = {
 }
 
 const Header: FC<TProps> = ({ article }) => {
-  const { slug } = useViewingCommunity()
+  const { slug } = useCommunity()
   const { bannerLayout } = useLayout()
   const { isPinned } = article
 

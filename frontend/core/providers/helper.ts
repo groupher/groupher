@@ -143,6 +143,21 @@ const getPathSegment = (urlString: string, position: number): string | null => {
   }
 }
 
+export const getCommunityInfo = async (community$: string): Promise<TCommunityInfo> => {
+  const communityInfo = await getCommunity(community$, '/home/post')
+
+  const { community, dashboard, wallpaper } = communityInfo
+  // console.log('## pagedArticles got in server: ', pagedArticles)
+
+  const initState = {
+    community,
+    wallpaper,
+    dashboard,
+  }
+
+  return initState
+}
+
 export const getSSRInitData = async (urlInfo: TUrlInfo): Promise<TRootStoreInit> => {
   const { pathname } = urlInfo
   const community$ = getPathSegment(pathname, 0)

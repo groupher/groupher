@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { DSB_ROUTE } from '~/const/route'
+import useCommunity from '~/hooks/useCommunity'
 import useTrans from '~/hooks/useTrans'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import LinkSVG from '~/icons/ArrowUpRight'
 import ReportSVG from '~/icons/Report'
 import SettingSVG from '~/icons/Setting'
@@ -13,7 +13,7 @@ import useSalon from './salon/more_panel'
 
 export default () => {
   const s = useSalon()
-  const { slug } = useViewingCommunity()
+  const { slug } = useCommunity()
   const { t } = useTrans()
 
   return (

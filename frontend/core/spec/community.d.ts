@@ -4,10 +4,10 @@ import type { TID, TPagi } from './utils'
 import type { TParsedWallpaper } from './wallpaper'
 
 type TMeta = {
-  postsCount: number
-  docsCount: number
-  blogsCount: number
-  changelogsCount: number
+  postsCount?: number
+  docsCount?: number
+  blogsCount?: number
+  changelogsCount?: number
 }
 
 export type TModerator = {

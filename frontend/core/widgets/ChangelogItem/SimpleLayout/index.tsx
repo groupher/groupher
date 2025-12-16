@@ -4,22 +4,19 @@
  *
  */
 
-import { type FC, memo } from 'react'
 import Link from 'next/link'
-
-import type { TChangelog } from '~/spec'
-import { previewArticle } from '~/signal'
+import { type FC, memo } from 'react'
 import { THREAD } from '~/const/thread'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-
+import useCommunity from '~/hooks/useCommunity'
 import ShareSVG from '~/icons/Share'
-
-import TagsList from '~/widgets/TagsList'
-import EmotionSelector from '~/widgets/EmotionSelector'
+import { previewArticle } from '~/signal'
+import type { TChangelog } from '~/spec'
 import CommentsCount from '~/widgets/CommentsCount'
+import EmotionSelector from '~/widgets/EmotionSelector'
 import ReadableDate from '~/widgets/ReadableDate'
+import TagsList from '~/widgets/TagsList'
 
-import { demoTags, demoEmotion } from '../constant'
+import { demoEmotion, demoTags } from '../constant'
 
 import useSalon from '../salon/simple_layout/article_layout'
 
@@ -29,7 +26,7 @@ type TProps = {
 
 const SimpleLayout: FC<TProps> = ({ article }) => {
   const s = useSalon()
-  const { slug } = useViewingCommunity()
+  const { slug } = useCommunity()
 
   return (
     <div className={s.wrapper}>
@@ -50,7 +47,7 @@ const SimpleLayout: FC<TProps> = ({ article }) => {
           <div className={s.version}>v3.21</div>
         </Link>
         <div className={s.tags}>
-          <TagsList items={demoTags} size="small" />
+          <TagsList items={demoTags} size='small' />
         </div>
         <div className={s.body}>
           这次俄乌冲突出现侮辱乌女性的评论就是1450干的，刷完评论就截图转发外网，成为外媒攻击中国人的“口实”。
@@ -59,8 +56,8 @@ const SimpleLayout: FC<TProps> = ({ article }) => {
         </div>
         <div className={s.footer}>
           <EmotionSelector emotions={demoEmotion} isLegal />
-          <div className="grow" />
-          <CommentsCount count={article.commentsCount} size="medium" right={15} />
+          <div className='grow' />
+          <CommentsCount count={article.commentsCount} size='medium' right={15} />
           <ShareSVG className={s.shareIcon} />
         </div>
       </div>

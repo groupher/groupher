@@ -4,9 +4,9 @@ import { HOME_COMMUNITY } from '~/const/name'
 import { APPLY_COMMUNITY } from '~/const/route'
 import { THREAD } from '~/const/thread'
 import { assetSrc } from '~/helper'
+import useCommunity from '~/hooks/useCommunity'
 import useLayout from '~/hooks/useLayout'
 import usePublicThreads from '~/hooks/usePublicThreads'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 
 import Img from '~/Img'
 import ArrowSVG from '~/icons/ArrowUpRight'
@@ -29,7 +29,7 @@ export default () => {
   const s = useSalon()
 
   const threads = usePublicThreads()
-  const { title, logo, slug, dashboard } = useViewingCommunity()
+  const { title, logo, slug, dashboard } = useCommunity()
   const { brandLayout } = useLayout()
 
   return (

@@ -4,27 +4,23 @@
  *
  */
 
-import { type FC, memo } from 'react'
 import Link from 'next/link'
-
-import type { TChangelog } from '~/spec'
-
-import { previewArticle } from '~/signal'
+import { type FC, memo } from 'react'
 import { THREAD } from '~/const/thread'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-
+import useCommunity from '~/hooks/useCommunity'
 import ShareSVG from '~/icons/Share'
+import { previewArticle } from '~/signal'
+import type { TChangelog } from '~/spec'
+import CommentsCount from '~/widgets/CommentsCount'
 import CoverImage from '~/widgets/CoverImage'
 import EmotionSelector from '~/widgets/EmotionSelector'
-import CommentsCount from '~/widgets/CommentsCount'
 import ReadableDate from '~/widgets/ReadableDate'
 
-import { demoTags, demoEmotion } from '../constant'
+import { demoEmotion, demoTags } from '../constant'
 
 import SolidTagList from '../SolidTagList'
-import Author from './Author'
-
 import useSalon from '../salon/classic_layout/article_layout'
+import Author from './Author'
 
 type TProps = {
   article: TChangelog
@@ -32,7 +28,7 @@ type TProps = {
 
 const ClassicLayout: FC<TProps> = ({ article }) => {
   const s = useSalon()
-  const { slug } = useViewingCommunity()
+  const { slug } = useCommunity()
 
   return (
     <div className={s.wrapper}>
@@ -63,8 +59,8 @@ const ClassicLayout: FC<TProps> = ({ article }) => {
         <Author user={article.author} />
         <div className={s.footer}>
           <EmotionSelector emotions={demoEmotion} isLegal />
-          <div className="grow" />
-          <CommentsCount count={article.commentsCount} size="medium" right={15} />
+          <div className='grow' />
+          <CommentsCount count={article.commentsCount} size='medium' right={15} />
           <ShareSVG className={s.shareIcon} />
         </div>
       </div>

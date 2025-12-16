@@ -1,5 +1,5 @@
-import type { TActive, TColor } from '~/spec'
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TActive, TColor } from '~/spec'
 
 type TProps = TActive & TColor
 

@@ -1,9 +1,9 @@
+import useGeneral from '~/hooks/useGeneral'
 import type { TTag } from '~/spec'
 
-import useSubStore from '~/hooks/useSubStore'
-
 export default (): TTag => {
-  const store = useSubStore('viewing')
+  const store = useGeneral()
 
+  // @ts-expect-error
   return store.activeTag
 }

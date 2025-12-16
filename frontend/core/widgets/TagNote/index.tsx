@@ -5,11 +5,10 @@
  *
  */
 
-import type { TColorName } from '~/spec'
-
 import useActiveTag from '~/hooks/useActiveTag'
-import TagNode from '~/widgets/TagNode'
+import type { TColorName } from '~/spec'
 import Markdown from '~/widgets/Markdown'
+import TagNode from '~/widgets/TagNode'
 
 import useSalon from './salon'
 
@@ -35,7 +34,7 @@ export default () => {
           <div className={s.title}>{tag.title}</div>
         </div>
       </div>
-      <Markdown className="-ml-3.5 scale-95">{tag.desc || ''}</Markdown>
+      <Markdown className='-ml-3.5 scale-95'>{tag.desc || ''}</Markdown>
     </div>
   )
 }

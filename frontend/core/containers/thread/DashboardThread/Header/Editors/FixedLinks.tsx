@@ -1,11 +1,9 @@
-import type { FC } from 'react'
 import { reject } from 'ramda'
-
-import type { TCommunityThread } from '~/spec'
+import type { FC } from 'react'
 import { ROUTE } from '~/const/route'
-
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
 import ArrowSVG from '~/icons/ArrowSimple'
+import type { TCommunityThread } from '~/spec'
 
 import useSalon from '../../salon/header/editors/fixed_links'
 
@@ -15,7 +13,7 @@ type TProps = {
 
 const FixedLinks: FC<TProps> = ({ isAboutLinkFold }) => {
   const s = useSalon()
-  const { slug, threads } = useViewingCommunity()
+  const { slug, threads } = useCommunity()
 
   return (
     <div>

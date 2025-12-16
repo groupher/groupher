@@ -1,6 +1,6 @@
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
-import useSubStore from '~/hooks/useSubStore'
 import type { TThemeMode, TThemeName } from '~/spec'
+import useThemeDomain from '~/stores/theme.domain/hooks'
 
 type TRet = {
   theme: TThemeName
@@ -13,7 +13,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const { theme, themeMode, change: changeTheme, changeMode: doChangeMode } = useSubStore('theme')
+  const { theme, themeMode, change: changeTheme, changeMode: doChangeMode } = useThemeDomain()
 
   const resolveSystemTheme = () => {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches

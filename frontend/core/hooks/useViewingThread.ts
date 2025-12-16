@@ -1,9 +1,9 @@
-import useSubStore from '~/hooks/useSubStore'
+import useGeneral from '~/hooks/useGeneral'
 
 import type { TThread } from '~/spec'
 
 export default (): TThread => {
-  const store = useSubStore('viewing')
+  const store = useGeneral()
 
   return store.activeThread
 }

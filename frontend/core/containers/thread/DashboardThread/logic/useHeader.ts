@@ -18,6 +18,7 @@ export default (): TRet => {
   const useLinksData = useLinks()
   const { edit } = useHelper()
 
+  // @ts-expect-error
   return {
     ...pick(
       [

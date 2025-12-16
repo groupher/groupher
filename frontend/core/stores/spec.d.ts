@@ -1,3 +1,4 @@
+import type { Snapshot } from 'valtio'
 import type { TLocale, TThemeMode } from '~/spec'
 import type { TStore as TAccountStore } from './account/spec'
 import type { TInit as TArticlesInit, TStore as TArticlesStore } from './articles/spec'
@@ -8,7 +9,7 @@ import type { TInit as TViewingInit, TStore as TViewingStore } from './viewing/s
 import type { TInit as TWallpaperInit, TStore as TWallpaperStore } from './wallpaper/spec'
 
 export type TRootStore = {
-  locale: TLocaleStore
+  locale?: TLocaleStore
   theme: TThemeStore
   viewing: TViewingStore
   articles: TArticlesStore
@@ -30,3 +31,5 @@ export type TRootStoreInit = {
   dashboard?: TDsbInit
   wallpaper?: TWallpaperInit
 }
+
+export type TRootStoreSnapshot = Snapshot<TRootStore>

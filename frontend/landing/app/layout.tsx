@@ -2,15 +2,15 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { LANDING_SSR_INFO } from '~/providers/constant'
+import { LANDING_COMMUNITY } from '~/const/name'
 import GlobalLayout from '~/providers/GlobalLayout'
-import StoreProvider from '~/stores/provider'
+import LocaleStoreProvider from '~/stores/locale.domain/provider'
+import { CommunityInfoProvider } from '~/stores/provider.landing'
 import { ssrThemeInitScript } from '~/utils/ssr/script'
+import Main from './Main'
 
 import '~/tailwind/global.css'
 import './domain.css'
-
-import Main from './Main'
 
 export const metadata: Metadata = {
   title: 'Groupher | 让你的产品听见用户的声音',
@@ -18,22 +18,24 @@ export const metadata: Metadata = {
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  // suppressHydrationWarning is for ignore the mismatch of theme mode between server and client when SSR
   return (
-    <html lang='en' suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: ssrThemeInitScript() }} />
-      </head>
+    <Suspense fallback={null}>
+      <html lang='en' suppressHydrationWarning>
+        <head>
+          <script dangerouslySetInnerHTML={{ __html: ssrThemeInitScript() }} />
+        </head>
 
-      <body>
-        <Suspense fallback={<h3>loading...</h3>}>
-          <StoreProvider initData={LANDING_SSR_INFO}>
-            <GlobalLayout mainBlock={Main}>{children}</GlobalLayout>
-          </StoreProvider>
-        </Suspense>
-        <Analytics />
-        <SpeedInsights />
-      </body>
-    </html>
+        <body>
+          <LocaleStoreProvider initData={{ locale: 'en', localeData: JSON.stringify('{}') }}>
+            <CommunityInfoProvider initData={LANDING_COMMUNITY}>
+              <GlobalLayout mainBlock={Main}>{children}</GlobalLayout>
+            </CommunityInfoProvider>
+          </LocaleStoreProvider>
+
+          <Analytics />
+          <SpeedInsights />
+        </body>
+      </html>
+    </Suspense>
   )
 }

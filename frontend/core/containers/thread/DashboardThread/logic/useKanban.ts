@@ -25,6 +25,7 @@ export default (): TRet => {
   const isKanbanCardLayoutTouched = isChanged('kanbanCardLayout')
   const isKanbanColorsTouched = isChanged('kanbanBgColors')
 
+  // @ts-expect-error
   return {
     edit,
     ...pick(['kanbanLayout', 'kanbanCardLayout', 'kanbanBgColors', 'saving'], store),

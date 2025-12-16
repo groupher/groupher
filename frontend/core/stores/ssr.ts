@@ -1,5 +1,3 @@
-'use client'
-
 import { proxy } from 'valtio'
 import { LOCALE } from '~/const/i18n'
 
@@ -26,6 +24,9 @@ const INITIAL_STATE = {
   articles: {},
 }
 
+// general: theme, locale
+// articles: list of articles
+// article: single article detail
 export const setupRootStore = (init: TRootStoreInit = INITIAL_STATE): TRootStore => {
   return proxy({
     locale: setupLocale(init.locale, init.localeData),

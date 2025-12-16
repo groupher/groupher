@@ -2,8 +2,8 @@ import { equals, filter, find, includes, pluck, propEq, reject, uniq } from 'ram
 import { useCallback } from 'react'
 import { THREAD } from '~/const/thread'
 import { sortByIndex } from '~/helper'
-import useSubState from '~/hooks/useSubStore'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
+import useDashboard from '~/hooks/useDashboard'
 import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
 
 export type TRet = {
@@ -15,8 +15,8 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubState('dashboard')
-  const curCommunity = useViewingCommunity()
+  const store = useDashboard()
+  const curCommunity = useCommunity()
 
   const { tags, original, activeTagThread, activeTagGroup, nameAlias, tagLayout } = store
 
@@ -24,9 +24,11 @@ export default (): TRet => {
     const selectedThread = (activeTagThread || '').toUpperCase()
 
     const filterdTagsByGroup = activeTagGroup
-      ? filter((t: TTag) => t.group === activeTagGroup, tags)
+      ? // @ts-expect-error
+        filter((t: TTag) => t.group === activeTagGroup, tags)
       : tags
 
+    // @ts-expect-error
     return filter((t: TTag) => t.thread === selectedThread, filterdTagsByGroup)
   }, [tags, activeTagThread, activeTagGroup])
 
@@ -53,10 +55,12 @@ export default (): TRet => {
   }, [tagLayout, original.tagLayout])
 
   const getTagsIndexTouched = useCallback((): boolean => {
+    // @ts-expect-error
     return !equals(sortByIndex(tags, 'id'), sortByIndex(original.tags || [], 'id'))
   }, [tags, original.tags])
 
   return {
+    // @ts-expect-error
     getTags,
     getGroups,
     getThreads,

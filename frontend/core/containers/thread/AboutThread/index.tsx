@@ -1,20 +1,18 @@
+'use client'
+
 /* *
  * AboutThread
- *
  */
 
 import type { FC } from 'react'
-
-import useViewingCommunity from '~/hooks/useViewingCommunity'
-import useLayout from '~/hooks/useLayout'
 import { BANNER_LAYOUT } from '~/const/layout'
+import useCommunity from '~/hooks/useCommunity'
+import useLayout from '~/hooks/useLayout'
 
 import Markdown from '~/widgets/Markdown'
-
-import Members from './Members'
 import BasicStates from './BasicStates'
-
 import ExtraInfo from './ExtraInfo'
+import Members from './Members'
 import Sidebar from './Sidebar'
 
 import useSalon, { cn } from './salon'
@@ -32,7 +30,7 @@ const AboutThreadContainer: FC<TProps> = ({ isSidebarLayout = false }) => {
   const s = useSalon({ isSidebarLayout })
 
   const { bannerLayout } = useLayout()
-  const community = useViewingCommunity()
+  const community = useCommunity()
 
   return (
     <div className={s.wrapper}>
@@ -53,6 +51,7 @@ const AboutThreadContainer: FC<TProps> = ({ isSidebarLayout = false }) => {
         </div>
 
         <div className={cn(s.intro, s.members)}>
+          {/* @ts-ignore */}
           <Members moderators={community.moderators} />
         </div>
       </div>

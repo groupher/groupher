@@ -1,14 +1,11 @@
-import type { FC } from 'react'
-import { keys } from 'ramda'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-
-import type { TActive, TLinkItem } from '~/spec'
-import { sortByIndex, groupByKey } from '~/helper'
-
+import { keys } from 'ramda'
+import type { FC } from 'react'
 import { FOOTER_LAYOUT } from '~/const/layout'
 import { DEME_SOCIALS } from '~/const/social'
-
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import { groupByKey, sortByIndex } from '~/helper'
+import useCommunity from '~/hooks/useCommunity'
+import type { TActive, TLinkItem } from '~/spec'
 
 import CommunityBrand from '~/widgets/CommunityBrand'
 import SocialList from '~/widgets/SocialList'
@@ -23,12 +20,12 @@ type TProps = {
 const Group: FC<TProps> = ({ links, active }) => {
   const s = useSalon()
 
-  const { desc } = useViewingCommunity()
+  const { desc } = useCommunity()
   const { edit } = useFooter()
   const [animateRef] = useAutoAnimate()
   const [groupAnimateRef] = useAutoAnimate()
 
-  // @ts-ignore
+  // @ts-expect-error
   const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 
@@ -38,9 +35,9 @@ const Group: FC<TProps> = ({ links, active }) => {
       onClick={() => edit(FOOTER_LAYOUT.GROUP, 'footerLayout')}
     >
       <div className={s.left}>
-        <CommunityBrand className="-ml-1 scale-90" />
+        <CommunityBrand className='-ml-1 scale-90' />
         <div className={s.desc}>{desc}</div>
-        <SocialList top={20} left={-5} size="tiny" selected={DEME_SOCIALS} />
+        <SocialList top={20} left={-5} size='tiny' selected={DEME_SOCIALS} />
       </div>
 
       <div className={s.right} ref={groupAnimateRef}>

@@ -2,7 +2,7 @@ import { useRouter } from 'next/navigation'
 
 import { DSB_DOC_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
 
 import Tabs from '~/widgets/Switcher/Tabs'
 import { DOC_TABS } from '../../constant'
@@ -30,7 +30,7 @@ export default () => {
   } = useCMSInfo()
 
   const router = useRouter()
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
 
   return (
     <div className={s.wrapper}>

@@ -1,7 +1,6 @@
 import { includes, reject, uniq } from 'ramda'
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import { query } from '~/server'
 import type {
   TArticleEntries,
@@ -44,7 +43,7 @@ const assignChecked = (entries: TArticleEntries, batchSelectedIDs: TID[]): TArti
 
 export default (): TRet => {
   const dashboard = useDashboard()
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
   const { mapArrayChanged } = useHelper()
 
   const {
@@ -109,6 +108,7 @@ export default (): TRet => {
     loading,
     docTab,
     editingFAQIndex,
+    // @ts-expect-error
     batchSelectedIDs,
     pagedCommunities: {
       ...pagedCommunities,
@@ -117,17 +117,20 @@ export default (): TRet => {
     },
     pagedPosts: {
       ...pagedPosts,
+    // @ts-expect-error
       entries: assignChecked(pagedPosts.entries, batchSelectedIDs),
     },
     pagedDocs: {
       ...pagedDocs,
+    // @ts-expect-error
       entries: assignChecked(pagedDocs.entries, batchSelectedIDs),
     },
     pagedChangelogs: {
       ...pagedChangelogs,
+    // @ts-expect-error
       entries: assignChecked(pagedChangelogs.entries, batchSelectedIDs),
     },
-
+    // @ts-expect-error
     faqSections,
     editingFAQ,
     isFaqSectionsTouched: mapArrayChanged('faqSections'),

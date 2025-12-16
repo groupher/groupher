@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import useAccount from '~/hooks/useAccount'
 
-import useSubStore from '~/hooks/useSubStore'
+import useGeneral from '~/hooks/useGeneral'
 import useViewing from '~/hooks/useViewing'
 import { query } from '~/server'
 import type { TArticle, TArticleLoad } from '~/spec'
@@ -15,7 +15,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const viewing = useSubStore('viewing')
+  const viewing = useGeneral()
   const account = useAccount()
   const { article } = useViewing()
 

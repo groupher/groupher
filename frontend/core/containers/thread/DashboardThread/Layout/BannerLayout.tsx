@@ -1,5 +1,5 @@
 import { BANNER_LAYOUT, DSB_DESC_LAYOUT } from '~/const/layout'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
 import { callDashboardDesc } from '~/signal'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
@@ -14,7 +14,7 @@ export default () => {
   const s = useSalon()
 
   const { edit, layout, isTouched, saving } = useBanner()
-  const { title } = useViewingCommunity()
+  const { title } = useCommunity()
 
   return (
     <div className={s.wrapper}>

@@ -1,13 +1,13 @@
 import { useSnapshot } from 'valtio'
-
-import type { TScrollDirection } from '~/spec'
 import { APP_VERSION } from '~/config'
-// import useViewingCommunity from '~/hooks/useViewingCommunity'
+import type { TScrollDirection } from '~/spec'
+// import useCommunity from '~/hooks/useCommunity'
 // import useViewingThread from '~/hooks/useViewingThread'
 
 import { Global } from '~/helper'
 
 import store from './store'
+
 // import S from './schema'
 
 type TRet = {
@@ -19,7 +19,7 @@ type TRet = {
 
 export default (): TRet => {
   const snap = useSnapshot(store)
-  // const curCommunity = useViewingCommunity()
+  // const curCommunity = useCommunity()
   // const curThread = useViewingThread()
 
   const onPageScrollDirhange = (bodyScrollDirection: TScrollDirection): void => {

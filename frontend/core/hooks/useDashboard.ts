@@ -1,3 +1,1 @@
-import useSubStore from '~/hooks/useSubStore'
-
-export default () => useSubStore('dashboard')
+export { default } from '~/stores/dashboard.domain/hooks'

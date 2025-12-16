@@ -2,8 +2,8 @@ import { filter, find, keys } from 'ramda'
 import { useCallback } from 'react'
 import { MORE_GROUP } from '~/const/dashboard'
 import { groupByKey, sortByIndex } from '~/helper'
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import type { THeaderLayout, TLinkItem } from '~/spec'
 
 type TGroupInfo = {
@@ -20,7 +20,7 @@ type THeaderLinks = {
 
 export default (): THeaderLinks => {
   const store = useDashboard()
-  const viewingCommunity = useViewingCommunity()
+  const viewingCommunity = useCommunity()
 
   const community = viewingCommunity.slug
 
@@ -69,7 +69,9 @@ export default (): THeaderLinks => {
 
   return {
     layout: store.headerLayout,
+    // @ts-expect-error
     links: headerLinks,
+    // @ts-expect-error
     getCustomLinks,
     getGroupedLinks,
   }

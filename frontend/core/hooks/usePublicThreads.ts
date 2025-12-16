@@ -1,14 +1,13 @@
 import { find, propEq, reject } from 'ramda'
 import { THREAD } from '~/const/thread'
 import { sortByIndex } from '~/helper'
-
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 import type { TCommunityThread, TLinkItem, TNameAlias } from '~/spec'
 
 export default (): TCommunityThread[] => {
   const dashboard = useDashboard()
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
 
   // const { enable, nameAliasData } = store.dashboardThread
 

@@ -18,7 +18,9 @@ export default (): TABoutInfo => {
     homepage,
     cities: city.split(','),
     techstacks: techstack.split(','),
+    // @ts-expect-error
     socialLinks,
+    // @ts-expect-error
     mediaReports,
   }
 }

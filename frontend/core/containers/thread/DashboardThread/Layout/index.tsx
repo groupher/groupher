@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation'
 import { DSB_LAYOUT_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
 
-import useViewingCommunity from '~/hooks/useViewingCommunity'
+import useCommunity from '~/hooks/useCommunity'
 import { LAYOUT_TABS } from '~/stores/dashboard/constant'
 
 import Tabs from '~/widgets/Switcher/Tabs'
@@ -26,7 +26,7 @@ import TopbarLayout from './TopbarLayout'
 import Wallpaper from './Wallpaper'
 
 export default () => {
-  const curCommunity = useViewingCommunity()
+  const curCommunity = useCommunity()
   const router = useRouter()
 
   const s = useSalon()

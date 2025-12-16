@@ -2,9 +2,8 @@ import Link from 'next/link'
 import { type FC, useState } from 'react'
 
 import { DSB_ROUTE } from '~/const/route'
-
+import useCommunity from '~/hooks/useCommunity'
 import useDashboardTab from '~/hooks/useDashboardTab'
-import useViewingCommunity from '~/hooks/useViewingCommunity'
 
 import ArrowSVG from '~/icons/ArrowSimple'
 import BindSVG from '~/icons/Bind'
@@ -21,7 +20,7 @@ type TProps = {
 const Group: FC<TProps> = ({ group }) => {
   const { curTab, changeTab } = useDashboardTab()
 
-  const community = useViewingCommunity()
+  const community = useCommunity()
   const [fold, setFold] = useState(group.initFold)
 
   const s = useSalon({ fold })

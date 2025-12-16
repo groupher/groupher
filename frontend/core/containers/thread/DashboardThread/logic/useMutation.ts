@@ -2,7 +2,7 @@ import { equals, filter, findIndex, includes, keys, omit, update, values } from 
 import { useEffect, useRef } from 'react'
 import { DSB_BASEINFO_ROUTE } from '~/const/route'
 import useDashboard from '~/hooks/useDashboard'
-import useViewing from '~/hooks/useViewing'
+import useViewing from '~/hooks/useGeneral'
 
 import { mutate } from '~/server'
 import { toast } from '~/signal'
@@ -52,8 +52,10 @@ export default (): TRet => {
     }
 
     // store.commit({ editingTag: null })
+    // @ts-expect-error
     store.commit({ tags: updatedTags, editingTag: null })
 
+    // @ts-expect-error
     return updatedTags
   }
 
@@ -93,6 +95,7 @@ export default (): TRet => {
       original = { ...store.original, ...current }
     }
 
+    // @ts-expect-error
     store.commit({ original })
 
     // avoid page component jump caused by saving state

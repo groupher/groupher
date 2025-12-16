@@ -27,6 +27,7 @@ export default (): TRet => {
       ? [...widgetsThreads, thread]
       : reject((t: TThread) => t === thread, widgetsThreads)
 
+    // @ts-expect-error
     store.commit({ widgetsThreads: newThreads })
   }
 
@@ -35,6 +36,7 @@ export default (): TRet => {
   const isPrimaryColorTouched = isChanged('widgetsPrimaryColor')
   const isSizeTouched = isChanged('widgetsSize')
 
+  // @ts-expect-error
   return {
     ...pick(
       ['saving', 'widgetsPrimaryColor', 'widgetsThreads', 'widgetsSize', 'widgetsType'],

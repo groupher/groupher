@@ -6,7 +6,7 @@
     "dev": "next dev --turbo",
     "type-check": "tsc --noEmit",
     "build": "cross-env NODE_ENV=production next build --turbopack",
-    "start": "cross-env NODe_ENV=production next start -p 3000",
+    "start": "cross-env NODE_ENV=production next start -p 3000",
     "dist": "next build && next export -o \"build\"",
     "info": "next info",
     "clean": "shjs ./utils/scripts/clean.js",

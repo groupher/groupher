@@ -1,4 +1,4 @@
-import useSubState from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type { TEnableConf } from '~/spec'
 import { FIELD } from '~/stores/dashboard/constant'
 
@@ -10,7 +10,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubState('dashboard')
+  const store = useDashboard()
   const { onSave } = useHelper()
 
   const { enable } = store

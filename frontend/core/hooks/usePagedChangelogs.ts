@@ -2,7 +2,8 @@ import { useSearchParams } from 'next/navigation'
 import { mergeRight, reject } from 'ramda'
 import { HOME_COMMUNITY } from '~/const/name'
 import URL_PARAM from '~/const/url_param'
-import useSubStore from '~/hooks/useSubStore'
+import useArticles from '~/hooks/useArticles'
+import useGeneral from '~/hooks/useGeneral'
 import type { TPagedChangelogs, TResState, TTag } from '~/spec'
 import { nilOrEmpty } from '~/validator'
 
@@ -45,8 +46,8 @@ const getArticlesParams = (community: string, searchParams: URLSearchParams) => 
 }
 
 export default (): TRes => {
-  const articlesStore = useSubStore('articles')
-  const viewingStore = useSubStore('viewing')
+  const articlesStore = useArticles()
+  const viewingStore = useGeneral()
   const { pagedChangelogs, resState } = articlesStore
 
   // const pathname = usePathname()
@@ -61,6 +62,7 @@ export default (): TRes => {
 
   return {
     resState,
+    // @ts-expect-error
     pagedChangelogs,
     update,
     pagedParams,

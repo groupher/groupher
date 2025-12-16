@@ -1,13 +1,11 @@
 import { pick } from 'ramda'
-
-import type { TTag, TThread, TEditFunc, TTagLayout } from '~/spec'
+import useDashboard from '~/hooks/useDashboard'
+import type { TEditFunc, TTag, TTagLayout, TThread } from '~/spec'
 import type { TChangeTagMode } from '~/stores/dashboard/spec'
-import useSubState from '~/hooks/useSubStore'
 
 import useHelper from '../useHelper'
-
-import useUtils from './useUtils'
 import useDrived, { type TRet as TDrived } from './useDrived'
+import useUtils from './useUtils'
 
 type TRet = {
   loading: boolean
@@ -30,7 +28,7 @@ type TRet = {
 } & TDrived
 
 export default (): TRet => {
-  const store = useSubState('dashboard')
+  const store = useDashboard()
   const { edit } = useHelper()
   const drived = useDrived()
   const { loadTags, moveTag, moveTag2Edge } = useUtils()
@@ -54,8 +52,9 @@ export default (): TRet => {
   const moveTag2Top = (tag: TTag): void => moveTag2Edge(tag, 'top')
   const moveTag2Bottom = (tag: TTag): void => moveTag2Edge(tag, 'bottom')
 
+  // @ts-expect-error
   return {
-    // @ts-ignore
+    // @ts-expect-error
     ...pick(exportState, store),
     ...drived,
     // actions
