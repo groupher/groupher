@@ -1,4 +1,4 @@
-import type { TDsbField } from '~/stores/dashboard/spec'
+import type { TDsbField } from '~/stores/dashboard.domain/spec'
 import type { TFAQSection } from './article'
 import type { TColorName } from './color'
 import type { TModerator } from './community'

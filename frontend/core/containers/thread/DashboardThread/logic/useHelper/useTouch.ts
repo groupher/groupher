@@ -1,7 +1,7 @@
 import { any, equals } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
 
-import type { TDsbField } from '~/stores/dashboard/spec'
+import type { TDsbField } from '~/stores/dashboard.domain/spec'
 
 export type TRet = {
   isChanged: (field: TDsbField) => boolean

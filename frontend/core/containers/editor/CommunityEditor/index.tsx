@@ -5,21 +5,19 @@
  */
 
 import { useEffect } from 'react'
-
-import Header from './Header'
 import Banner from './Banner'
 import Content from './Content'
-
-import useLogic from './useLogic'
+import Header from './Header'
 import useSalon from './salon'
+// import useLogic from './useLogic'
 
 export default () => {
   const s = useSalon()
-  const { checkPendingApply } = useLogic()
+  // const { checkPendingApply } = useLogic()
 
   useEffect(() => {
     // checkPendingApply()
-  }, [checkPendingApply])
+  }, [])
 
   return (
     <div className={s.wrapper}>

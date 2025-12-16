@@ -4,7 +4,7 @@ import { DSB_LAYOUT_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
 
 import useCommunity from '~/hooks/useCommunity'
-import { LAYOUT_TABS } from '~/stores/dashboard/constant'
+import { LAYOUT_TABS } from '~/stores/dashboard.domain/constant'
 
 import Tabs from '~/widgets/Switcher/Tabs'
 import useTab from '../logic/useTab'

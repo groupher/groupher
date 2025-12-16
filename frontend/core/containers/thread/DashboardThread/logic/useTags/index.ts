@@ -1,7 +1,7 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
 import type { TEditFunc, TTag, TTagLayout, TThread } from '~/spec'
-import type { TChangeTagMode } from '~/stores/dashboard/spec'
+import type { TChangeTagMode } from '~/stores/dashboard.domain/spec'
 
 import useHelper from '../useHelper'
 import useDrived, { type TRet as TDrived } from './useDrived'

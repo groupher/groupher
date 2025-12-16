@@ -2,7 +2,6 @@ import { GlobalLayout } from '~/providers'
 import { getCommunityInfo, getLocaleData } from '~/providers/domain'
 import LocaleStoreProvider from '~/stores/locale.domain/provider'
 import { CommunityInfoProvider } from '~/stores/provider.domain'
-import Client from './Client'
 
 export default async ({ children, params }) => {
   const params$ = await params
@@ -15,9 +14,7 @@ export default async ({ children, params }) => {
   return (
     <LocaleStoreProvider initData={{ locale: 'en', localeData: JSON.stringify(localeData) }}>
       <CommunityInfoProvider initData={community}>
-        <GlobalLayout>
-          <Client>{children}</Client>
-        </GlobalLayout>
+        <GlobalLayout>{children}</GlobalLayout>
       </CommunityInfoProvider>
     </LocaleStoreProvider>
   )

@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import type { TDsbField } from '~/stores/dashboard/spec'
+import type { TDsbField } from '~/stores/dashboard.domain/spec'
 import { BASEINFO_BASIC_KEYS, BASEINFO_OTHER_KEYS } from '../../constant'
 import useHelper from '../useHelper'
 

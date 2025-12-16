@@ -2,8 +2,8 @@ import { findIndex, has, omit, update } from 'ramda'
 import { useCallback } from 'react'
 import useDashboard from '~/hooks/useDashboard'
 import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
-import { BASEINFO_KEYS, DSB_DEMO_KEY, FIELD, SEO_KEYS } from '~/stores/dashboard/constant'
-import type { TDsbField } from '~/stores/dashboard/spec'
+import { BASEINFO_KEYS, DSB_DEMO_KEY, FIELD, SEO_KEYS } from '~/stores/dashboard.domain/constant'
+import type { TDsbField } from '~/stores/dashboard.domain/spec'
 import BStore from '~/utils/bstore'
 import { isObject } from '~/validator'
 import useMutation from '../useMutation'
@@ -65,13 +65,13 @@ export default (): TRet => {
     }
 
     if (field === FIELD.TAG_INDEX) {
-    // @ts-expect-error
+      // @ts-expect-error
       store.commit({ tags: store.original.tags })
       return
     }
 
     if (field === FIELD.FAQ_SECTIONS) {
-     // @ts-expect-error
+      // @ts-expect-error
       store.commit({ faqSections: store.original.faqSections })
       return
     }

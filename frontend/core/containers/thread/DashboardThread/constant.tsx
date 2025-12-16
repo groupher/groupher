@@ -10,7 +10,7 @@ import {
   DSB_SEO_ROUTE,
 } from '~/const/route'
 import type { TSnakeUpperCase, TWidgetType } from '~/spec'
-import type { TDsbFields } from '~/stores/dashboard/spec'
+import type { TDsbFields } from '~/stores/dashboard.domain/spec'
 
 import type { TDsbField, TFooterEditType, THeaderEditType } from './spec'
 
