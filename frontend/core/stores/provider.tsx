@@ -5,7 +5,7 @@ import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
 import GeneralStoreProvider from '~/stores/general/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
-import WallpaperStoreProvider from '~/stores/wallpaper.domain/provider'
+import WallpaperStoreProvider from '~/stores/wallpaper/provider'
 
 type TCommunityInfoProvider = {
   children: React.ReactNode

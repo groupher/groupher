@@ -1,1 +1,1 @@
-export { default } from '~/stores/wallpaper.domain/hooks'
+export { default } from '~/stores/wallpaper/hooks'

@@ -1,4 +1,4 @@
-import type { TCustomWallpaper, TWallpaper, TWallpaperType, TWallpaperGradientDir } from '~/spec'
+import type { TCustomWallpaper, TWallpaperGradientDir, TWallpaperType } from '~/spec'
 
 export type TWallpaperState = {
   customWallpaper: TCustomWallpaper
