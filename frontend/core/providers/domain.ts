@@ -8,21 +8,20 @@ import type { TCommunityInfo, TPagedPosts, TTag, TThread } from '~/spec'
 import { gqFetch } from '~/utils/api'
 import { parseDashboard, parseWallpaper } from '~/utils/ssr'
 
-export const getCommunity = async (
-  community: string,
-  pathname: string,
-): Promise<TCommunityInfo> => {
+const getCommunity = async (community: string, pathname: string): Promise<TCommunityInfo> => {
   'use cache'
   cacheLife('days')
   cacheTag(CACHE_TAG.communityCache(community))
 
+  console.log('## getCommunity community: ', community)
   const response = await gqFetch(P.community, { slug: community, userHasLogin: false })
 
   const { data, errors } = await response.json()
 
   if (errors) {
     // console.log('## error in fetching', P.community)
-    console.log('## error details', errors)
+    console.log('## error details 1', errors)
+    console.log('## error details 1', errors[0].locations)
     return {
       community: { slug: '' },
     }
@@ -92,8 +91,6 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
     console.log('## error details', errors)
     return []
   }
-
-  console.log('## data.pagedArticleTags.entries: ', data.pagedArticleTags.entries)
 
   return data.pagedArticleTags.entries
 }

@@ -1,4 +1,4 @@
-import useSubStore from '~/hooks/useSubStore'
+import useArticles from '~/hooks/useArticles'
 import type { TPagedPosts, TResState } from '~/spec'
 
 type TRes = {
@@ -9,12 +9,15 @@ type TRes = {
 }
 
 export default (): TRes => {
-  const { todo, wip, done, resState } = useSubStore('articles')
+  const { todo, wip, done, resState } = useArticles()
 
   return {
     resState,
+    // @ts-expect-error
     todo,
+    // @ts-expect-error
     wip,
+    // @ts-expect-error
     done,
   }
 }

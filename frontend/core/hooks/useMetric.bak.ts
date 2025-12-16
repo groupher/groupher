@@ -7,13 +7,13 @@ import { BANNER_LAYOUT } from '~/const/layout'
 import METRIC from '~/const/metric'
 import { STATIC_ROUTES } from '~/const/route'
 import useDashboard from '~/hooks/useDashboard'
-import useSubStore from '~/hooks/useSubStore'
+import useGeneral from '~/hooks/useGeneral'
 import type { TMetric } from '~/spec'
 
 type TFmt = 'default' | 'lowercase'
 
 export default (fmt: TFmt = 'default'): TMetric => {
-  const store = useSubStore('viewing')
+  const store = useGeneral()
   const { bannerLayout } = useDashboard()
 
   const pathname = usePathname()

@@ -50,7 +50,7 @@ const localServeExchange = ({ forward }) => {
 
 const GraphQLProvider: FC<TProps> = ({ children }) => {
   const [client, ssr] = useMemo(() => {
-    const ssr = ssrExchange()
+    const ssr = ssrExchange({ isClient: true })
     const client = createClient({
       url: GRAPHQL_ENDPOINT,
       // @ts-expect-error

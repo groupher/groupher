@@ -1,6 +1,7 @@
 import { clone, forEach, keys } from 'ramda'
 import { useCallback } from 'react'
 import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
+import useSubStore from '~/hooks/useSubStore'
 import type {
   TWallpaper,
   TWallpaperData,
@@ -8,7 +9,6 @@ import type {
   TWallpaperGradientDir,
   TWallpaperPic,
 } from '~/spec'
-import useWallpaperDomain from '~/stores/wallpaper.domain/hooks'
 
 type TRet = {
   wallpaper: string
@@ -20,7 +20,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useWallpaperDomain()
+  const store = useSubStore('wallpaper')
 
   const getGradientWallpapers = useCallback((): Record<string, TWallpaper> => {
     const wallpapers = clone(GRADIENT_WALLPAPER)

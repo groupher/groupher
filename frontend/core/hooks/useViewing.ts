@@ -1,7 +1,6 @@
-import type { TArticle, TCommunity, TThread } from '~/spec'
-
-import useSubStore from '~/hooks/useSubStore'
+import useGeneral from '~/hooks/useGeneral'
 import useViewingArticle from '~/hooks/useViewingArticle'
+import type { TArticle, TCommunity, TThread } from '~/spec'
 
 type TRet = {
   article: TArticle
@@ -11,7 +10,7 @@ type TRet = {
 }
 
 export default (): TRet | null => {
-  const viewingStore = useSubStore('viewing')
+  const viewingStore = useGeneral()
   const { article } = useViewingArticle()
   const { community, updateViewingCommunity } = viewingStore
 
@@ -21,6 +20,7 @@ export default (): TRet | null => {
 
   return {
     article,
+    // @ts-expect-error
     community,
     updateViewingCommunity,
     setActiveThread,

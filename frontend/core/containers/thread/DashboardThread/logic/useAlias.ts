@@ -1,4 +1,4 @@
-import useSubState from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import type { TDsbAliasRoute, TEditFunc, TNameAlias } from '~/spec'
 import { FIELD } from '~/stores/dashboard/constant'
 
@@ -17,7 +17,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubState('dashboard')
+  const store = useDashboard()
   const { edit, resetEdit } = useHelper()
 
   const { aliasTab, editingAlias, nameAlias, saving } = store
@@ -33,6 +33,7 @@ export default (): TRet => {
   return {
     aliasTab,
     editingAlias,
+    // @ts-expect-error
     nameAlias,
     saving,
     changeTab,

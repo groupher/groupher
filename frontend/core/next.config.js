@@ -8,11 +8,15 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 const baseConfig = {
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
-  turbopackFileSystemCaccheForDev: true,
   cacheComponents: true,
   experimental: {
+    // Enable filesystem caching for `next dev`
+    turbopackFileSystemCacheForDev: true,
+    // Enable filesystem caching for `next build`
+    turbopackFileSystemCacheForBuild: true,
     scrollRestoration: true,
     optimizePackageImports: ['ramda'],
+    browserDebugInfoInTerminal: true,
   },
 }
 

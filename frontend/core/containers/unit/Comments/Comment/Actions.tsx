@@ -42,7 +42,7 @@ const Actions: FC<TProps> = ({ data }) => {
 
   let extraOptions = []
 
-  if (data.author.login === accountInfo?.login) {
+  if (data.author.login === accountInfo?.user.login) {
     extraOptions = [
       {
         key: 'edit',

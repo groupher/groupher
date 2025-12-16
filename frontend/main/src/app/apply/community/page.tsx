@@ -1,16 +1,10 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-
-const CommunityEditor = dynamic(() => import('~/containers/editor/CommunityEditor'), {
-  loading: () => <LavaLampLoading />,
-  ssr: false,
-})
+// import CommunityEditor from '~/containers/editor/CommunityEditor'
 
 const ApplyCommunity = () => {
-  return <CommunityEditor />
+  // return <CommunityEditor />
+  return <h1>CommunityEditor</h1>
 }
 
 export default ApplyCommunity

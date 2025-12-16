@@ -1,14 +1,10 @@
-'use client'
-
-import METRIC from '~/const/metric'
+import useGeneral from '~/hooks/useGeneral'
 import type { TMetric } from '~/spec'
 
 type TFmt = 'default' | 'lowercase'
 
 export default (fmt: TFmt = 'default'): TMetric => {
-  let metric: TMetric
-
-  metric = METRIC.COMMUNITY
+  const { metric } = useGeneral()
 
   if (fmt === 'lowercase') {
     return metric.toLowerCase() as TMetric

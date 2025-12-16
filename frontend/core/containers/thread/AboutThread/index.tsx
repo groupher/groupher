@@ -1,6 +1,7 @@
+'use client'
+
 /* *
  * AboutThread
- *
  */
 
 import type { FC } from 'react'

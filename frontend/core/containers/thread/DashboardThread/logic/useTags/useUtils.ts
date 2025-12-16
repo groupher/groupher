@@ -3,7 +3,7 @@ import { THREAD } from '~/const/thread'
 import { sortByIndex } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
 
-import useSubState from '~/hooks/useSubStore'
+import useDashboard from '~/hooks/useDashboard'
 import { query } from '~/server'
 import type { TTag, TThread } from '~/spec'
 
@@ -16,7 +16,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useSubState('dashboard')
+  const store = useDashboard()
   const curCommunity = useCommunity()
 
   const { original } = store
@@ -32,6 +32,7 @@ export default (): TRet => {
     store.commit({ loading: true })
     query(S.pagedArticleTags, params).then((data) => {
       const tags = data.pagedArticleTags.entries
+      // @ts-expect-error
       store.commit({ tags, original: { ...original, tags }, loading: false })
     })
   }
@@ -42,7 +43,9 @@ export default (): TRet => {
     const { tags } = store
     const { group } = tag
 
+    // @ts-expect-error
     const groupTags = clone(sortByIndex(filter((item: TTag) => item.group === group, tags)))
+    // @ts-expect-error
     const restTags = reject((item: TTag) => item.group === group, tags)
     const tagIndex = findIndex((item: TTag) => item.id === tag.id, groupTags)
 
@@ -63,7 +66,9 @@ export default (): TRet => {
     const { tags } = store
     const { group } = tag
 
+    // @ts-expect-error
     const groupTags = filter((item: TTag) => item.group === group, tags)
+    // @ts-expect-error
     const restTags = reject((item: TTag) => item.group === group, tags)
 
     const curTagItemIndex = findIndex((item: TTag) => item.id === tag.id, groupTags)
@@ -74,6 +79,7 @@ export default (): TRet => {
         ? [curTagItem, ...remove(curTagItemIndex, 1, groupTags)]
         : [...remove(curTagItemIndex, 1, groupTags), curTagItem]
 
+    // @ts-expect-error
     store.commit({ tags: [...restTags, ..._reindex(newTags)] })
   }
 

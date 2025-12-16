@@ -7,7 +7,7 @@
     "ci": "cross-env NODE_ENV=ci next dev",
     "type-check": "tsc --noEmit",
     "build-old": "next build",
-    "build": "cross-env NODE_ENV=production next build --turbopack",
+    "build": "cross-env NODE_ENV=production next build",
     "start": "next start",
     "dist": "next build && next export -o \"build\"",
     "serve": "serve out",

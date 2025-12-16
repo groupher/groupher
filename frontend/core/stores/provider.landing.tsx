@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import METRIC from '~/const/metric'
 import type { TCommunity } from '~/spec'
 import AccountStoreProvider from '~/stores/account.domain/provider'
 import CommunityStoreProvider from '~/stores/community/provider'
@@ -20,7 +21,7 @@ export const CommunityInfoProvider: FC<TCommunityInfoProvider> = ({ children, in
       <AccountStoreProvider>
         <CommunityStoreProvider initData={{ ...base }}>
           <DashboardStoreProvider initData={{ ...dashboard }}>
-            <GeneralStoreProvider>
+            <GeneralStoreProvider initData={{ metric: METRIC.LANDING }}>
               <WallpaperStoreProvider>{children}</WallpaperStoreProvider>
             </GeneralStoreProvider>
           </DashboardStoreProvider>

@@ -23,7 +23,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dashboard = useDashboard()
 
   return pick(
     [
@@ -36,6 +36,6 @@ export default (): TRet => {
       'kanbanCardLayout',
       'changelogLayout',
     ],
-    store,
+    dashboard,
   )
 }

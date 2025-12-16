@@ -1,6 +1,6 @@
 import useDashboard from '~/hooks/useDashboard'
+import useGeneral from '~/hooks/useGeneral'
 
-import useSubStore from '~/hooks/useSubStore'
 import type { TDocFAQLayout, TDocLayout, TFAQSection } from '~/spec'
 
 type TRet = {
@@ -16,7 +16,7 @@ type TRet = {
 
 export default (): TRet => {
   const dashboard = useDashboard()
-  const viewing = useSubStore('viewing')
+  const viewing = useGeneral()
 
   const gotoDetailLayout = (): void => {
     viewing.commit({ isArticleLayout: true, isFAQArticleLayout: false })
