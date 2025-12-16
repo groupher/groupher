@@ -21,6 +21,9 @@ export default (init: TInit = {}): TStore => {
     activeCat: null,
     activeState: null,
 
+    tags: [],
+    activeTag: null,
+
     resState: TYPE.RES_STATE.EMPTY as TResState,
 
     updateActiveFilter(filter: TArticleFilter): void {

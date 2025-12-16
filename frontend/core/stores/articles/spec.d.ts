@@ -1,4 +1,11 @@
-import type { TArticleCat, TArticleOrder, TArticleState, TPagedArticles, TResState } from '~/spec'
+import type {
+  TArticleCat,
+  TArticleOrder,
+  TArticleState,
+  TPagedArticles,
+  TResState,
+  TTag,
+} from '~/spec'
 
 export type TInit = {
   pagedPosts?: TPagedArticles
@@ -8,7 +15,11 @@ export type TInit = {
   todo?: TPagedArticles
   wip?: TPagedArticles
   done?: TPagedArticles
+
+  tags?: TTag[]
+  activeTag?: TTag | null
 }
+
 export type TStore = TInit & {
   activeOrder: TArticleOrder | null
   activeCat: TArticleCat | null

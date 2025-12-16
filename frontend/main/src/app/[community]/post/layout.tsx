@@ -1,6 +1,6 @@
 import { THREAD } from '~/const/thread'
 import { getPagedPosts, getTags } from '~/providers/domain'
-import ArticlesStoreProvider from '~/stores/articles.domain/provider'
+import ArticlesStoreProvider from '~/stores/articles/provider'
 
 // app/post/layout.tsx
 export default async ({ children, previewer, params }) => {
