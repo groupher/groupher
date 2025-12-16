@@ -1,4 +1,4 @@
-import type { TDsbField } from '~/stores/dashboard.domain/spec'
+import type { TDsbField } from '~/stores/dashboard/spec'
 
 export const SEO_OG_KEYS = [
   'ogSiteName',

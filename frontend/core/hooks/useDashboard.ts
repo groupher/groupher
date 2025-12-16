@@ -1,1 +1,1 @@
-export { default } from '~/stores/dashboard.domain/hooks'
+export { default } from '~/stores/dashboard/hooks'

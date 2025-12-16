@@ -14,8 +14,8 @@ import {
   FIELD,
   LAYOUT_FIELD,
   SEO_KEYS,
-} from '~/stores/dashboard.domain/constant'
-import type { TDsbField } from '~/stores/dashboard.domain/spec'
+} from '~/stores/dashboard/constant'
+import type { TDsbField } from '~/stores/dashboard/spec'
 import S from '../schema'
 
 type TRet = {

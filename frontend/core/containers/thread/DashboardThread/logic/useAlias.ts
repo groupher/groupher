@@ -1,6 +1,6 @@
 import useDashboard from '~/hooks/useDashboard'
 import type { TDsbAliasRoute, TEditFunc, TNameAlias } from '~/spec'
-import { FIELD } from '~/stores/dashboard.domain/constant'
+import { FIELD } from '~/stores/dashboard/constant'
 
 import useHelper from './useHelper'
 
