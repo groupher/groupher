@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react'
 
 import { titleCase } from '~/fmt'
 import type { TLocale, TTransKey } from '~/spec'
-import useLocale from '~/stores/locale.domain/hooks'
+import useLocale from '~/stores/locale/hooks'
 
 type TFmt = 'titleCase' | null
 

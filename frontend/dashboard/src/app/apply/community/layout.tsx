@@ -1,6 +1,6 @@
 import { GlobalLayout } from '~/providers'
 import { getCommunityInfo, getLocaleData } from '~/providers/domain'
-import LocaleStoreProvider from '~/stores/locale.domain/provider'
+import LocaleStoreProvider from '~/stores/locale/provider'
 import { CommunityInfoProvider } from '~/stores/provider'
 
 export default async ({ children, params }) => {
