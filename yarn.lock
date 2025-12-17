@@ -1097,6 +1097,7 @@ __metadata:
   resolution: "@groupher/frontend-landing@workspace:frontend/landing"
   dependencies:
     "@groupher/frontend-core": "npm:1.0.0"
+    cross-env: "npm:^10.1.0"
     serve: "npm:^14.2.4"
   languageName: unknown
   linkType: soft
