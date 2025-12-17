@@ -9,5 +9,6 @@
       "dest": "/$1"
     }
   ],
+  "buildCommand": "yarn workspace @groupher/frontend-landing build",
   "ignoreCommand": "../scripts/build.sh"
 }
