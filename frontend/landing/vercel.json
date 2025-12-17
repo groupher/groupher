@@ -9,6 +9,6 @@
       "dest": "/$1"
     }
   ],
-  "outputDirectory": "frontend/landing/.next",
+  "outputDirectory": "./frontend/landing/.next",
   "ignoreCommand": "frontend/scripts/build.sh"
 }
