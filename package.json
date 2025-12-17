@@ -61,7 +61,7 @@
     "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "engines": {
-    "node": "22.x"
+    "node": "24.x"
   },
   "private": true,
   "workspaces": {
