@@ -1,10 +1,13 @@
-import Trend from 'react-trend'
+import dynamic from 'next/dynamic'
+
 import { COLOR_NAME } from '~/const/colors'
 import GithubSVG from '~/icons/social/Github'
 import ArrowLinker from '~/widgets/ArrowLinker'
 import useSalon, { cn } from '../salon/tech_stacks/github_card'
 import LangBars from './LangBars'
 import Teams from './Teams'
+
+const Trend: any = dynamic(() => import('react-trend'), { ssr: false })
 
 export default () => {
   const s = useSalon()

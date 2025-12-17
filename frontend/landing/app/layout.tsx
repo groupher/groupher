@@ -2,11 +2,12 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import METRIC from '~/const/metric'
 import { LANDING_COMMUNITY } from '~/const/name'
 import GlobalLayout from '~/providers/GlobalLayout'
-import LocaleStoreProvider from '~/stores/locale/provider'
-import { CommunityInfoProvider } from '~/stores/provider.landing'
+import MainProvider from '~/stores/provider'
 import { ssrThemeInitScript } from '~/utils/ssr/script'
+
 import Main from './Main'
 
 import '~/tailwind/global.css'
@@ -19,23 +20,19 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={null}>
-      <html lang='en' suppressHydrationWarning>
-        <head>
-          <script dangerouslySetInnerHTML={{ __html: ssrThemeInitScript() }} />
-        </head>
-
+    <html lang='en' suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ssrThemeInitScript() }} />
+      </head>
+      <Suspense fallback={null}>
         <body>
-          <LocaleStoreProvider initData={{ locale: 'en', localeData: JSON.stringify('{}') }}>
-            <CommunityInfoProvider initData={LANDING_COMMUNITY}>
-              <GlobalLayout mainBlock={Main}>{children}</GlobalLayout>
-            </CommunityInfoProvider>
-          </LocaleStoreProvider>
-
+          <MainProvider initData={LANDING_COMMUNITY} noAccount metric={METRIC.LANDING}>
+            <GlobalLayout mainBlock={Main}>{children}</GlobalLayout>
+          </MainProvider>
           <Analytics />
           <SpeedInsights />
         </body>
-      </html>
-    </Suspense>
+      </Suspense>
+    </html>
   )
 }
