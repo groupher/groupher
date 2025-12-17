@@ -14,10 +14,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   // suppressHydrationWarning is for ignore the mismatch of theme mode between server and client when SSR
   return (
     <html lang='en' suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ssrThemeInitScript() }} />
+      </head>
       <Suspense fallback={null}>
-        <head>
-          <script dangerouslySetInnerHTML={{ __html: ssrThemeInitScript() }} />
-        </head>
         <body>{children}</body>
       </Suspense>
     </html>

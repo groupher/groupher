@@ -9,5 +9,5 @@
       "dest": "/$1"
     }
   ],
-  "ignoreCommand": "../scripts/skip-build.sh"
+  "ignoreCommand": "../scripts/build.sh"
 }

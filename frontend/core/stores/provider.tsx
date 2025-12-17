@@ -19,6 +19,11 @@ type TCommunityInfoProvider = {
   metric?: TMetric
 }
 
+const AccountWrapper: FC<{ children: React.ReactNode; noAccount: boolean }> = ({
+  children,
+  noAccount,
+}) => (noAccount ? children : <AccountStoreProvider>{children}</AccountStoreProvider>)
+
 const CommunityInfoProvider: FC<TCommunityInfoProvider> = ({
   children,
   initData,
@@ -29,13 +34,10 @@ const CommunityInfoProvider: FC<TCommunityInfoProvider> = ({
 }) => {
   const { dashboard, ...base } = initData
 
-  const AccountWrapper: FC<{ children: React.ReactNode }> = ({ children }) =>
-    noAccount ? children : <AccountStoreProvider>{children}</AccountStoreProvider>
-
   return (
     <ThemeStoreProvider>
       <LocaleStoreProvider initData={{ locale, localeData }}>
-        <AccountWrapper>
+        <AccountWrapper noAccount={noAccount}>
           <CommunityStoreProvider initData={{ ...base }}>
             <DashboardStoreProvider initData={{ ...dashboard }}>
               <GeneralStoreProvider initData={{ metric }}>

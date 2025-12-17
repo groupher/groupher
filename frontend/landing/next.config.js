@@ -6,7 +6,7 @@ module.exports = withBaseConfig({
   // or use output but find a way to not use cache staff
   output: 'export',
   assetPrefix: process.env.NODE_ENV === 'production' ? '/landing' : '',
-  cacheComponents: false, // fur use cache
+  cacheComponents: false, // no need for landing
   experimental: {
     scrollRestoration: true,
     optimizePackageImports: ['ramda'],
