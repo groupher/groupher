@@ -11,4 +11,17 @@ module.exports = withBaseConfig({
     scrollRestoration: true,
     optimizePackageImports: ['ramda'],
   },
+
+  async rewrites() {
+    return [
+      {
+        source: '/landing/_next/static/:path*',
+        destination: '/_next/static/:path*',
+      },
+      {
+        source: '/landing/:path*',
+        destination: '/:path*',
+      },
+    ]
+  },
 })
