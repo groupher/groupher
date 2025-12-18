@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "--> VERCEL_PROJECT_NAME=$VERCEL_PROJECT_NAME"
