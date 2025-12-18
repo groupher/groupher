@@ -12,7 +12,12 @@ echo "🔹 Commit message: $COMMIT_MSG"
 
 echo "🔹 debug 00"
 # 提取所有 deploy 标签
-DEPLOY_LABELS=$(echo "$COMMIT_MSG" | grep -oP '\[deploy:\K[^\]]+')
+# DEPLOY_LABELS=$(echo "$COMMIT_MSG" | grep -oP '\[deploy:\K[^\]]+')
+DEPLOY_LABELS=()
+while [[ "$COMMIT_MSG" =~ \[deploy:([^\]]+)\] ]]; do
+  DEPLOY_LABELS+=("${BASH_REMATCH[1]}")
+  COMMIT_MSG=${COMMIT_MSG#*${BASH_REMATCH[0]}}
+done
 echo "🔹 debug 0"
 DEPLOY_APPS=()
 echo "🔹 debug 1"
