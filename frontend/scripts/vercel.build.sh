@@ -10,6 +10,7 @@ echo "🔹 Current app: $APP_NAME"
 COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
 echo "🔹 Commit message: $COMMIT_MSG"
 
+echo "🔹 debug 00"
 # 提取所有 deploy 标签
 DEPLOY_LABELS=$(echo "$COMMIT_MSG" | grep -oP '\[deploy:\K[^\]]+')
 echo "🔹 debug 0"
