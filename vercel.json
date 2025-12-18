@@ -1,0 +1,3 @@
+{
+  "ignoreCommand": "bash frontend/scripts/vercel.ignore.sh"
+}
