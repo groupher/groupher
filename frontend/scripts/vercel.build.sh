@@ -12,8 +12,11 @@ echo "🔹 Commit message: $COMMIT_MSG"
 
 # 提取所有 deploy 标签
 DEPLOY_LABELS=$(echo "$COMMIT_MSG" | grep -oP '\[deploy:\K[^\]]+')
+echo "🔹 debug 0"
 DEPLOY_APPS=()
+echo "🔹 debug 1"
 for label in $DEPLOY_LABELS; do
+ echo "🔹 debug 2"
   IFS=',' read -ra apps <<< "$label"
   for app in "${apps[@]}"; do
     app_trimmed=$(echo "$app" | xargs)
@@ -21,6 +24,7 @@ for label in $DEPLOY_LABELS; do
   done
 done
 
+echo "🔹 debug 3"
 SHOULD_DEPLOY=false
 for app in "${DEPLOY_APPS[@]}"; do
   if [ "$app" = "$APP_NAME" ]; then
@@ -29,6 +33,7 @@ for app in "${DEPLOY_APPS[@]}"; do
   fi
 done
 
+echo "🔹 debug 4"
 # 执行或跳过
 if [ "$SHOULD_DEPLOY" = true ]; then
   echo "✅ Deploy switch ON for app: $APP_NAME"
@@ -41,5 +46,6 @@ else
   echo "⏭️ Deploy switch OFF for app: $APP_NAME — skipping build"
 fi
 
+echo "🔹 debug 5"
 # 最终保证 exit 0
 exit 0
