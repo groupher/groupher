@@ -5,13 +5,9 @@ PROJECT_NAME="${VERCEL_PROJECT_NAME:-}"
 APP_NAME="${PROJECT_NAME##*-}"
 APP_NAME="${APP_NAME:-$CURRENT_APP}"
 
-if [ -z "$APP_NAME" ]; then
-  echo "❌ Cannot determine current app. Set VERCEL_PROJECT_NAME or CURRENT_APP."
-  exit 1
-fi
+echo "🔹 Current app: $APP_NAME"
 
 COMMIT_MSG=$(git log -1 --pretty=%B)
-echo "🔹 Current app: $APP_NAME"
 echo "🔹 Commit message: $COMMIT_MSG"
 
 # 提取所有 deploy 标签
@@ -34,15 +30,19 @@ for app in "${DEPLOY_APPS[@]}"; do
 done
 
 # ---------------------------
-# 安全执行 build 或跳过
+# 运行构建或安全跳过
 # ---------------------------
 if [ "$SHOULD_DEPLOY" = true ]; then
   echo "✅ Deploy switch ON for app: $APP_NAME"
-  echo "🏗️  Running build..."
   yarn workspace @groupher/frontend-$APP_NAME build
-  echo "🎉 Build finished for $APP_NAME"
+  BUILD_EXIT_CODE=$?
+  if [ $BUILD_EXIT_CODE -ne 0 ]; then
+    echo "❌ Build failed for $APP_NAME"
+    exit $BUILD_EXIT_CODE
+  fi
 else
-  echo "⏭️  Deploy switch OFF for app: $APP_NAME — skipping build"
-  # 🚨 非零 exit 码会让 Vercel fail，必须显式 exit 0
-  exit 0
+  echo "⏭️ Deploy switch OFF for app: $APP_NAME — skipping build"
 fi
+
+# 脚本最终 exit 0，保证 Vercel 不因跳过报错
+exit 0
