@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+
+echo "GIT DIR CHECK:"
+ls -la .git || echo "No .git folder, git commands will fail"
+
 set -e
 
 PROJECT_NAME="${VERCEL_PROJECT_NAME:-}"
