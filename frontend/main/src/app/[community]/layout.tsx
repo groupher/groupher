@@ -1,7 +1,7 @@
+import { LOCALE } from '~/const/i18n'
 import { GlobalLayout } from '~/providers'
 import { getCommunityInfo, getLocaleData } from '~/providers/domain'
-import LocaleStoreProvider from '~/stores/locale/provider'
-import CommunityInfoProvider from '~/stores/provider'
+import MainProvider from '~/stores/provider'
 import Client from './Client'
 
 export default async ({ children, params }) => {
@@ -13,12 +13,10 @@ export default async ({ children, params }) => {
   // console.log('## got community$ in layout: ', community)
 
   return (
-    <LocaleStoreProvider initData={{ locale: 'en', localeData: JSON.stringify(localeData) }}>
-      <CommunityInfoProvider initData={community}>
-        <GlobalLayout>
-          <Client>{children}</Client>
-        </GlobalLayout>
-      </CommunityInfoProvider>
-    </LocaleStoreProvider>
+    <MainProvider initData={community} locale={LOCALE.EN} localeData={JSON.stringify(localeData)}>
+      <GlobalLayout>
+        <Client>{children}</Client>
+      </GlobalLayout>
+    </MainProvider>
   )
 }

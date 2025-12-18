@@ -1,9 +1,9 @@
 import { equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
 import { useEffect, useRef } from 'react'
 import { DSB_BASEINFO_ROUTE } from '~/const/route'
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import useViewing from '~/hooks/useGeneral'
-
 import { mutate } from '~/server'
 import { toast } from '~/signal'
 import type { TEditValue, TTag } from '~/spec'
@@ -25,8 +25,8 @@ type TRet = {
 
 export default (): TRet => {
   const store = useDashboard()
-  const { updateViewingCommunity, community: curCommunity } = useViewing()
-  const community = curCommunity.slug
+  const { slug: community } = useCommunity()
+  const { updateViewingCommunity } = useViewing()
   const storeRef = useRef(store)
 
   // get latest store, for those state not in UI render cycle

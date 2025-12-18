@@ -1,8 +1,10 @@
-import { GlobalLayout } from '~/providers'
+import { LOCALE } from '~/const/i18n'
+import METRIC from '~/const/metric'
+import { GlobalLayout, GraphQLProvider } from '~/providers'
 import { getCommunityInfo, getLocaleData } from '~/providers/domain'
-import LocaleStoreProvider from '~/stores/locale/provider'
-import CommunityInfoProvider from '~/stores/provider'
+import MainProvider from '~/stores/provider'
 import Client from './Client'
+import RouteSync from './RouteSync'
 
 export default async ({ children, params }) => {
   const params$ = await params
@@ -13,12 +15,18 @@ export default async ({ children, params }) => {
   // console.log('## got community$ in layout: ', community)
 
   return (
-    <LocaleStoreProvider initData={{ locale: 'en', localeData: JSON.stringify(localeData) }}>
-      <CommunityInfoProvider initData={community}>
+    <MainProvider
+      initData={community}
+      locale={LOCALE.EN}
+      metric={METRIC.DASHBOARD}
+      localeData={JSON.stringify(localeData)}
+    >
+      <GraphQLProvider>
         <GlobalLayout>
           <Client>{children}</Client>
+          <RouteSync />
         </GlobalLayout>
-      </CommunityInfoProvider>
-    </LocaleStoreProvider>
+      </GraphQLProvider>
+    </MainProvider>
   )
 }

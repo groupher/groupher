@@ -8,11 +8,11 @@ import S from '../schema'
 
 export default (): TOverview => {
   const store = useDashboard()
-  const curCommunity = useCommunity()
+  const { slug } = useCommunity()
   const { overview } = store
 
   const { data } = useQuery(S.communityOverview, {
-    slug: curCommunity.slug,
+    slug,
     incViews: false,
   })
 
@@ -29,9 +29,10 @@ export default (): TOverview => {
     })
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (data?.community) updateOverview(data.community)
-  }, [data, updateOverview]),
-    updateOverview
+  }, [data])
+
   return overview
 }
