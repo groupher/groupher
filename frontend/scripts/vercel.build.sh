@@ -5,7 +5,7 @@ PROJECT_NAME="${VERCEL_PROJECT_NAME:-}"
 APP_NAME="${PROJECT_NAME##*-}"
 APP_NAME="${APP_NAME:-$CURRENT_APP}"
 
-echo "🔹 Current app: $APP_NAME"
+echo "🔹 Current building app: $APP_NAME"
 
 COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
 echo "🔹 Commit message: $COMMIT_MSG"
