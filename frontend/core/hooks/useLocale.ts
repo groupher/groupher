@@ -1,1 +1,1 @@
-export { default } from '~/stores/locale.domain/hooks'
+export { default } from '~/stores/locale/hooks'

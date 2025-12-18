@@ -1,20 +1,54 @@
-'use client'
+import type { FC } from 'react'
+import { LOCALE } from '~/const/i18n'
+import METRIC from '~/const/metric'
+import type { TCommunity, TLocale, TMetric } from '~/spec'
+import AccountStoreProvider from '~/stores/account/provider'
+import CommunityStoreProvider from '~/stores/community/provider'
+import DashboardStoreProvider from '~/stores/dashboard/provider'
+import GeneralStoreProvider from '~/stores/general/provider'
+import LocaleStoreProvider from '~/stores/locale/provider'
+import ThemeStoreProvider from '~/stores/theme/provider'
+import WallpaperStoreProvider from '~/stores/wallpaper/provider'
 
-import { type ReactNode, useRef } from 'react'
-import { StoreContext, setupRootStore } from '.'
-import type { TRootStore, TRootStoreInit } from './spec'
-
-type TProps = {
-  children: ReactNode
-  initData: TRootStoreInit
+type TCommunityInfoProvider = {
+  children: React.ReactNode
+  initData: TCommunity
+  locale?: TLocale
+  localeData?: string
+  noAccount?: boolean
+  metric?: TMetric
 }
 
-export default ({ children, initData }: TProps) => {
-  const storeRef = useRef<TRootStore | null>(null)
+const AccountWrapper: FC<{ children: React.ReactNode; noAccount: boolean }> = ({
+  children,
+  noAccount,
+}) => (noAccount ? children : <AccountStoreProvider>{children}</AccountStoreProvider>)
 
-  if (!storeRef.current) {
-    storeRef.current = setupRootStore(initData)
-  }
+const CommunityInfoProvider: FC<TCommunityInfoProvider> = ({
+  children,
+  initData,
+  locale = LOCALE.EN,
+  localeData = '{}',
+  noAccount = false,
+  metric = METRIC.COMMUNITY,
+}) => {
+  const { dashboard, ...base } = initData
 
-  return <StoreContext.Provider value={storeRef.current}>{children}</StoreContext.Provider>
+  return (
+    <ThemeStoreProvider>
+      <LocaleStoreProvider initData={{ locale, localeData }}>
+        <AccountWrapper noAccount={noAccount}>
+          <CommunityStoreProvider initData={{ ...base }}>
+            <DashboardStoreProvider initData={{ ...dashboard }}>
+              <GeneralStoreProvider initData={{ metric }}>
+                <WallpaperStoreProvider>{children}</WallpaperStoreProvider>
+              </GeneralStoreProvider>
+            </DashboardStoreProvider>
+          </CommunityStoreProvider>
+        </AccountWrapper>
+      </LocaleStoreProvider>
+    </ThemeStoreProvider>
+  )
 }
+
+export default CommunityInfoProvider

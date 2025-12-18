@@ -9,6 +9,7 @@ export default (): TStore => {
   const store = proxy({
     user: null,
     userSubscribedCommunities: null,
+    isModerator: false,
 
     // views
     get isLogin(): boolean {

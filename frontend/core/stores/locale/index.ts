@@ -2,9 +2,9 @@ import { proxy } from 'valtio'
 import { LOCALE } from '~/const/i18n'
 import type { TLocale } from '~/spec'
 
-import type { TStore } from './spec'
+import type { TInit, TStore } from './spec'
 
-export default (locale: TLocale = LOCALE.EN, localeData = '{}'): TStore => {
+export default ({ locale = LOCALE.EN, localeData = '{}' }: TInit): TStore => {
   const store = proxy({
     locale,
     localeData,

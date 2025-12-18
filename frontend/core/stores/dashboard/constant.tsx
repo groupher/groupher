@@ -600,7 +600,7 @@ export const DEFAULT_NEW_FAQ = {
 
 export const INIT_KANBAN_COLORS = [COLOR_NAME.BLACK, COLOR_NAME.BLACK, COLOR_NAME.BLACK]
 
-export const SETTING_FIELDS: TDsbFields = {
+export const FIELDS: TDsbFields = {
   // baseInfo
   favicon: '',
   logo: '',

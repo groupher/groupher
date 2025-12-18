@@ -45,8 +45,6 @@ import type {
   TWidgetType,
 } from '~/spec'
 
-export type { TRootStore } from '../spec'
-
 type TFile = {
   index: number
   name: string

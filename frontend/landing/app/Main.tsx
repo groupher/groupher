@@ -82,8 +82,8 @@ const Main: FC<TProps> = ({ children }) => {
   // ----------------------
   const progress = useTransform(scrollY, [0, scrollRange], [0, 1], { clamp: true })
   const smoothProgress = useSpring(progress, {
-    stiffness: 150, // 越小越慢，越柔和
-    damping: 6, // 越小越有弹性
+    stiffness: 120, // 越小越慢，越柔和
+    damping: 10, // 越小越有弹性
     mass: 0.25, // 越大惯性越明显
   })
 

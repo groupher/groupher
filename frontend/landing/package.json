@@ -6,7 +6,6 @@
     "dev": "next dev --turbo",
     "ci": "cross-env NODE_ENV=ci next dev",
     "type-check": "tsc --noEmit",
-    "build-old": "next build",
     "build": "cross-env NODE_ENV=production next build",
     "start": "next start",
     "dist": "next build && next export -o \"build\"",
@@ -28,6 +27,7 @@
     "@groupher/frontend-core": "1.0.0"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "serve": "^14.2.4"
   }
 }

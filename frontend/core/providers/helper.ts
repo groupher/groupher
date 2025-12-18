@@ -1,18 +1,14 @@
 import { cacheLife, cacheTag } from 'next/cache'
-import { includes, isEmpty, mergeRight, reject, values } from 'ramda'
+import { includes, mergeRight, reject, values } from 'ramda'
 import { CACHE_TAG } from '~/const/cache'
-import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
 import { HOME_COMMUNITY } from '~/const/name'
 import { ROUTE } from '~/const/route'
 import { ARTICLE_THREAD, THREAD } from '~/const/thread'
 import URL_PARAM from '~/const/url_param'
-import { loadLocaleFile } from '~/i18n'
 import { P } from '~/schemas'
-import type { TCommunityInfo, TMetric, TPagedArticles, TTag, TThread, TUrlInfo } from '~/spec'
-import type { TRootStoreInit } from '~/stores/spec'
+import type { TCommunityInfo, TMetric, TTag, TThread, TUrlInfo } from '~/spec'
 import { gqFetch } from '~/utils/api'
-import { extractQueryName } from '~/utils/graphql'
 import { parseDashboard, parseWallpaper } from '~/utils/ssr'
 import { nilOrEmpty } from '~/validator'
 
@@ -132,17 +128,6 @@ export const parseRouteInfo = (info: string): TUrlInfo => {
   return { pathname: parsed.pathname, searchParams: new URLSearchParams(parsed.search) }
 }
 
-const getPathSegment = (urlString: string, position: number): string | null => {
-  try {
-    const url = new URL(urlString, 'http://groupher.com')
-    const segments = url.pathname.split('/').filter((segment) => segment !== '')
-    return segments[position] || null
-  } catch (e) {
-    console.error('Invalid URL:', e)
-    return null
-  }
-}
-
 export const getCommunityInfo = async (community$: string): Promise<TCommunityInfo> => {
   const communityInfo = await getCommunity(community$, '/home/post')
 
@@ -158,94 +143,9 @@ export const getCommunityInfo = async (community$: string): Promise<TCommunityIn
   return initState
 }
 
-export const getSSRInitData = async (urlInfo: TUrlInfo): Promise<TRootStoreInit> => {
-  const { pathname } = urlInfo
-  const community$ = getPathSegment(pathname, 0)
-  const thread$ = getPathSegment(pathname, 1) as TThread
-
-  const metric = await useMetric(pathname)
-
-  const { schema } = getPagedQuery(community$, thread$)
-
-  const locale = LOCALE.EN
-  // const community = await getCommunity(community$)
-  const [communityInfo, pagedArticles, tags, localeData] = await Promise.all([
-    getCommunity(community$, pathname),
-    getPagedArticles(community$, thread$),
-    getTags(community$, thread$),
-    loadLocaleFile(LOCALE.EN),
-  ])
-
-  const { community, dashboard, wallpaper } = communityInfo
-  // console.log('## pagedArticles got in server: ', pagedArticles)
-
-  const initState = {
-    locale,
-    localeData: JSON.stringify(localeData),
-    articles: {},
-    viewing: {
-      metric,
-      community,
-      tags: [],
-      activeThread: thread$,
-    },
-    wallpaper,
-    dashboard,
-  }
-
-  if (pagedArticles !== null) {
-    initState.articles[extractQueryName(schema)] = pagedArticles
-  }
-
-  if (!isEmpty(tags)) {
-    initState.viewing.tags = tags
-  }
-
-  return initState
-}
-
-const getPagedQuery = (community: string, thread: TThread) => {
-  const filter = { community, page: 1 }
-
-  switch (thread) {
-    case THREAD.CHANGELOG: {
-      return { schema: P.pagedChangelogs, variables: { filter, userHasLogin: false } }
-    }
-    // P.groupedKanbanPosts
-
-    default: {
-      return { schema: P.pagedPosts, variables: { filter, userHasLogin: false } }
-    }
-  }
-}
-
 /**
  * check if thread has articles, some thread like about has no articles/tags to fetch
  */
 const hasArticles = (thread: TThread) => {
   return [THREAD.POST, THREAD.CHANGELOG].includes(thread)
-}
-
-const getPagedArticles = async (
-  community: string,
-  thread: TThread,
-): Promise<TPagedArticles | null> => {
-  'use cache'
-  cacheLife('minutes')
-  cacheTag(CACHE_TAG.articlesCache(community, thread))
-
-  if (!hasArticles(thread)) return null
-
-  const { schema, variables } = getPagedQuery(community, thread)
-  const response = await gqFetch(schema, variables)
-
-  const { data, errors } = await response.json()
-
-  if (errors) {
-    // console.log('## error in fetching', P.community)
-    console.log('## error details', errors)
-    return null
-  }
-
-  return data[extractQueryName(schema)]
 }

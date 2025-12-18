@@ -1,24 +1,24 @@
-'use client'
+import { GlobalLayout } from '~/providers'
+import { getCommunityInfo, getLocaleData } from '~/providers/domain'
+import LocaleStoreProvider from '~/stores/locale/provider'
+import CommunityInfoProvider from '~/stores/provider'
+import Client from './Client'
 
-import SideMenu from '~/containers/thread/DashboardThread/SideMenu'
-import CommunityDigest from '~/widgets/CommunityDigest'
-import useSalon from './salon'
+export default async ({ children, params }) => {
+  const params$ = await params
 
-const Layout = ({ children }) => {
-  const s = useSalon()
+  const { community } = await getCommunityInfo(params$.community)
+  const localeData = await getLocaleData()
+  // console.log('## localeData: ', localeData)
+  // console.log('## got community$ in layout: ', community)
 
   return (
-    <div className={s.wrapper}>
-      <CommunityDigest />
-
-      <div className={s.inner}>
-        <div className={s.content}>
-          <SideMenu />
-          <div className={s.main}>{children}</div>
-        </div>
-      </div>
-    </div>
+    <LocaleStoreProvider initData={{ locale: 'en', localeData: JSON.stringify(localeData) }}>
+      <CommunityInfoProvider initData={community}>
+        <GlobalLayout>
+          <Client>{children}</Client>
+        </GlobalLayout>
+      </CommunityInfoProvider>
+    </LocaleStoreProvider>
   )
 }
-
-export default Layout

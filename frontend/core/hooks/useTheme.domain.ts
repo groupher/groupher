@@ -1,1 +1,1 @@
-export { default } from '~/stores/theme.domain/hooks'
+export { default } from '~/stores/theme/hooks'

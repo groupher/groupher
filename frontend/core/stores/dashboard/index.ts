@@ -10,16 +10,18 @@ import {
   DSB_SEO_ROUTE,
 } from '~/const/route'
 import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
-import { DEFAULT_OVERVIEW, SETTING_FIELDS } from './constant'
-import type { TInit, TStore } from './spec'
+import { DEFAULT_OVERVIEW, FIELDS } from './constant'
+import type { TDsbFields, TInit, TStore } from './spec'
 
 export default (init: TInit = {}): TStore => {
   const states = Object.assign(
     {
-      ...SETTING_FIELDS,
+      ...FIELDS,
+
+      // UI status
       curTab: DSB_ROUTE.INFO,
       initFilled: false,
-      original: SETTING_FIELDS,
+      original: FIELDS as TDsbFields,
       savingField: null,
       saving: false,
       loading: false,
