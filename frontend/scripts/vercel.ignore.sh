@@ -1,18 +1,38 @@
 #!/usr/bin/env bash
-# frontend/scripts/vercel.ignore.sh
 
-# 获取 commit message
+# -------------------------------------------------------------
+# VERCEL IGNORE SCRIPT
+#
+# Checks the latest commit message for [deploy:<app>] tags.
+# Decides whether to skip the build or let Vercel run it.
+#
+# Flow:
+#   +-----------------------+
+#   | Latest Commit Message |
+#   +-----------------------+
+#               |
+#               v
+#   +----------------------------+
+#   | Contains [deploy:app]?    |
+#   +----------------------------+
+#       |                |
+#      Yes              No
+#       |                |
+#       v                v
+# Run Build Command    Skip Build
+# (exit 1)             (exit 0)
+# -------------------------------------------------------------
+
+# check commit message
 COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
 
-# 遍历项目名列表
-APPS=("landing" "dashboard" "main" "core")
+APPS=("landing" "dashboard" "main" "gateway")
 
-# 默认跳过
+# skip by default
 SKIP_BUILD=true
 
 for APP in "${APPS[@]}"; do
-  if echo "$COMMIT_MSG" | grep -q "\[deploy:$APP\]"; then
-    # 发现有 deploy 标签 → 不跳过
+  if echo "$COMMIT_MSG" | grep -iq "\[deploy:$APP\]"; then
     SKIP_BUILD=false
     break
   fi
@@ -20,8 +40,8 @@ done
 
 if [ "$SKIP_BUILD" = true ]; then
   echo "⏭️ No deploy label found, skipping build"
-  exit 0  # Vercel 会跳过 Build Command
+  exit 0
 else
   echo "✅ Deploy label found, running build"
-  exit 1  # Vercel 执行 Build Command
+  exit 1
 fi

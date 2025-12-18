@@ -1,4 +1,28 @@
 #!/usr/bin/env bash
+
+# -------------------------------------------------------------
+# VERCEL BUILD SCRIPT
+#
+# Builds the current app workspace.
+# Only runs if ignoreCommand allowed it.
+#
+# Flow:
+#   +-----------------------+
+#   | Vercel runs Build Cmd |
+#   +-----------------------+
+#               |
+#               v
+#   +------------------------+
+#   | Yarn Workspace Build   |
+#   | @groupher/frontend-$APP|
+#   +------------------------+
+#       |            |
+#   Success        Fail
+#       |            |
+#       v            v
+#  🎉 Build Done   ❌ Exit 1
+# -------------------------------------------------------------
+
 set -e
 
 PROJECT_NAME="${VERCEL_PROJECT_NAME:-}"
