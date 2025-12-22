@@ -19,7 +19,7 @@ export default () => {
   const s = useSalon()
 
   const router = useRouter()
-  const curCommunity = useCommunity()
+  const { slug } = useCommunity()
   const { baseInfoTab, edit } = useBaseInfo()
 
   return (
@@ -36,12 +36,13 @@ export default () => {
             items={BASEINFO_TABS}
             activeKey={baseInfoTab}
             onChange={(tab) => {
+              // TODO: use Route.push to change the url, then the url will be sync to store by hook
               // @ts-expect-error
               edit(tab, 'baseInfoTab')
               const targetPath =
                 tab === DSB_BASEINFO_ROUTE.BASIC
-                  ? `/${curCommunity.slug}/dashboard/info`
-                  : `/${curCommunity.slug}/dashboard/info/${tab}`
+                  ? `/${slug}/dashboard/info`
+                  : `/${slug}/dashboard/info/${tab}`
 
               router.push(targetPath)
             }}

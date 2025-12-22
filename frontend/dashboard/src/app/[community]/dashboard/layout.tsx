@@ -4,7 +4,6 @@ import { GlobalLayout, GraphQLProvider } from '~/providers'
 import { getCommunityInfo, getLocaleData } from '~/providers/domain'
 import MainProvider from '~/stores/provider'
 import Client from './Client'
-import RouteSync from './RouteSync'
 
 export default async ({ children, params }) => {
   const params$ = await params
@@ -24,7 +23,6 @@ export default async ({ children, params }) => {
       <GraphQLProvider>
         <GlobalLayout>
           <Client>{children}</Client>
-          <RouteSync />
         </GlobalLayout>
       </GraphQLProvider>
     </MainProvider>

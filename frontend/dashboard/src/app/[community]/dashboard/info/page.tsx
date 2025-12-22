@@ -1,6 +1,6 @@
 'use client'
 
-import BasicInfo from '~/containers//thread/DashboardThread/BasicInfo'
+import BasicInfo from '~/containers//thread/DashboardThread/BasicInfo/BaseInfo'
 
 const DashboardInfoPage = () => {
   return <BasicInfo />
