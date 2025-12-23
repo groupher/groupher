@@ -8,14 +8,9 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon from '~/containers/thread/DashboardThread/salon/layout'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import useDSBRouteTabSync from '~/hooks/useDSBRouteTabSync'
-import type { TDsbLayoutRoute } from '~/spec'
+import useDSBRouteTabSync, { isRouteOf } from '~/hooks/useDSBRouteTabSync'
 import { LAYOUT_TABS } from '~/stores/dashboard/constant'
 import Tabs from '~/widgets/Switcher/Tabs'
-
-const pathValidator = (value: string): value is TDsbLayoutRoute => {
-  return Object.values(DSB_LAYOUT_ROUTE).includes(value as TDsbLayoutRoute)
-}
 
 export default ({ children }) => {
   const { slug } = useCommunity()
@@ -25,7 +20,7 @@ export default ({ children }) => {
   useDSBRouteTabSync({
     tab: 'layoutTab',
     defaultTab: DSB_LAYOUT_ROUTE.GENERAL,
-    pathValidator,
+    validator: isRouteOf(DSB_LAYOUT_ROUTE),
   })
 
   const s = useSalon()

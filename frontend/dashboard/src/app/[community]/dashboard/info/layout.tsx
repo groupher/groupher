@@ -12,7 +12,7 @@ import useDSBRouteTabSync from '~/hooks/useDSBRouteTabSync'
 import type { TDsbBaseInfoRoute } from '~/spec'
 import Tabs from '~/widgets/Switcher/Tabs'
 
-const pathValidator = (value: string): value is TDsbBaseInfoRoute => {
+const validator = (value: string): value is TDsbBaseInfoRoute => {
   return Object.values(DSB_BASEINFO_ROUTE).includes(value as TDsbBaseInfoRoute)
 }
 
@@ -26,7 +26,7 @@ export default ({ children }) => {
   useDSBRouteTabSync({
     tab: 'baseInfoTab',
     defaultTab: DSB_BASEINFO_ROUTE.BASIC,
-    pathValidator,
+    validator,
   })
 
   return (

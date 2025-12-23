@@ -1,9 +1,7 @@
 'use client'
 
-import SEO from '~/containers//thread/DashboardThread/SEO'
+import TwitterGraph from '~/containers/thread/DashboardThread/SEO/TwitterGraph'
 
-const DashboardSeoPage = () => {
-  return <SEO />
+export default () => {
+  return <TwitterGraph />
 }
-
-export default DashboardSeoPage

@@ -1,25 +1,30 @@
+'use client'
+
 import { useRouter } from 'next/navigation'
 
 import { DSB_SEO_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
-
+import { FIELD, SEO_TABS } from '~/containers/thread/DashboardThread/constant'
+import useSEO from '~/containers/thread/DashboardThread/logic/useSEO'
+import Portal from '~/containers/thread/DashboardThread/Portal'
+import SavingBar from '~/containers/thread/DashboardThread/SavingBar'
+import useSalon from '~/containers/thread/DashboardThread/salon/seo'
 import useCommunity from '~/hooks/useCommunity'
+import useDSBRouteTabSync, { isRouteOf } from '~/hooks/useDSBRouteTabSync'
 import Tabs from '~/widgets/Switcher/Tabs'
 
-import { FIELD, SEO_TABS } from '../constant'
-import useSEO from '../logic/useSEO'
-import Portal from '../Portal'
-import SavingBar from '../SavingBar'
-import useSalon from '../salon/seo'
-import OpenGraph from './OpenGraph'
-import TwitterGraph from './TwitterGraph'
-
-export default () => {
+export default ({ children }) => {
   const s = useSalon()
+
+  useDSBRouteTabSync({
+    tab: 'seoTab',
+    defaultTab: DSB_SEO_ROUTE.SEARCH_ENGINE,
+    validator: isRouteOf(DSB_SEO_ROUTE),
+  })
 
   const router = useRouter()
   const curCommunity = useCommunity()
-  const { seoTab, saving, isTouched, edit } = useSEO()
+  const { seoTab, saving, isTouched } = useSEO()
 
   return (
     <div className={s.wrapper}>
@@ -31,7 +36,6 @@ export default () => {
             items={SEO_TABS}
             activeKey={seoTab}
             onChange={(tab) => {
-              edit(tab, 'seoTab')
               const targetPath =
                 tab === DSB_SEO_ROUTE.SEARCH_ENGINE
                   ? `/${curCommunity.slug}/dashboard/seo`
@@ -45,8 +49,7 @@ export default () => {
         </div>
       </div>
 
-      {seoTab === DSB_SEO_ROUTE.SEARCH_ENGINE && <OpenGraph />}
-      {seoTab === DSB_SEO_ROUTE.TWITTER && <TwitterGraph />}
+      {children}
 
       <SavingBar field={FIELD.SEO} isTouched={isTouched} loading={saving} width='7/12' />
     </div>

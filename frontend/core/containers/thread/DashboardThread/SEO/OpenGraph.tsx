@@ -1,12 +1,10 @@
+import ArrowLinker from '~/widgets/ArrowLinker'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import Input from '~/widgets/Input'
-import ArrowLinker from '~/widgets/ArrowLinker'
-
-import SectionLabel from '../SectionLabel'
-import SearchEnginePreview from './SearchEnginePreview'
-
 import useSEO from '../logic/useSEO'
+import SectionLabel from '../SectionLabel'
 import useSalon from '../salon/seo/open_graph'
+import SearchEnginePreview from './SearchEnginePreview'
 
 /*
  see: https://mintlify.com/docs/settings/seo for details
@@ -20,11 +18,11 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title="允许搜索引擎收录"
+        title='允许搜索引擎收录'
         desc={
           <div className={s.enableDesc}>
             请确保你知道该操作的含义，
-            <ArrowLinker href="https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=zh-cn">
+            <ArrowLinker href='https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=zh-cn'>
               实现原理
             </ArrowLinker>
           </div>
@@ -34,20 +32,46 @@ export default () => {
       {seoEnable && (
         <>
           <SearchEnginePreview />
-          <label className={s.label}>og:site_name</label>
-          <Input className={s.input} value={ogSiteName} onChange={(e) => edit(e, 'ogSiteName')} />
-          <label className={s.label}>og:title</label>
-          <Input className={s.input} value={ogTitle} onChange={(e) => edit(e, 'ogTitle')} />
-          <label className={s.label}>og:description</label>
+          <label className={s.label} htmlFor='og-site-name'>
+            og:site_name
+          </label>
           <Input
+            id='og-site-name'
+            className={s.input}
+            value={ogSiteName}
+            onChange={(e) => edit(e, 'ogSiteName')}
+          />
+          <label className={s.label} htmlFor='og-title'>
+            og:title
+          </label>
+          <Input
+            id='og-title'
+            className={s.input}
+            value={ogTitle}
+            onChange={(e) => edit(e, 'ogTitle')}
+          />
+          <label className={s.label} htmlFor='og-description'>
+            og:description
+          </label>
+          <Input
+            id='og-description'
             className={s.input}
             value={ogDescription}
             onChange={(e) => edit(e, 'ogDescription')}
           />
-          <label className={s.label}>og:url</label>
-          <Input className={s.input} value={ogUrl} onChange={(e) => edit(e, 'ogUrl')} />
-          <label className={s.label}>og:image</label>
-          <Input className={s.input} value={ogImage} onChange={(e) => edit(e, 'ogImage')} />
+          <label className={s.label} htmlFor='og-url'>
+            og:url
+          </label>
+          <Input id='og-url' className={s.input} value={ogUrl} onChange={(e) => edit(e, 'ogUrl')} />
+          <label className={s.label} htmlFor='og-image'>
+            og:image
+          </label>
+          <Input
+            id='og-image'
+            className={s.input}
+            value={ogImage}
+            onChange={(e) => edit(e, 'ogImage')}
+          />
         </>
       )}
     </div>
