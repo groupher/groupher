@@ -1,9 +1,7 @@
 'use client'
 
-import Broadcast from '~/containers//thread/DashboardThread/Broadcast'
+import ArticleEditor from '~/containers//thread/DashboardThread/Broadcast/Editor/Article'
 
-const DashboardBroadcastPage = () => {
-  return <Broadcast />
+export default () => {
+  return <ArticleEditor />
 }
-
-export default DashboardBroadcastPage

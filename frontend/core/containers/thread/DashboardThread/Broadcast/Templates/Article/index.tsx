@@ -4,12 +4,10 @@ import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
 
 import ArrowSVG from '~/icons/ArrowSimple'
 import Button from '~/widgets/Buttons/Button'
-
-import Simple from './Simple'
-import Default from './Default'
-
 import useBroadcast from '../../../logic/useBroadcast'
 import useSalon, { cn } from '../../../salon/broadcast/templates/article'
+import Default from './Default'
+import Simple from './Simple'
 
 export default () => {
   const s = useSalon()
@@ -32,7 +30,7 @@ export default () => {
         </>
       )}
 
-      <Button size="small" ghost noBorder onClick={() => setShowAll(!showAll)}>
+      <Button size='small' ghost noBorder onClick={() => setShowAll(!showAll)}>
         {showAll ? '收起' : '更换模板'}
         <ArrowSVG className={cn(s.arrow, showAll ? 'rotate-90' : 'rotate-180')} />
       </Button>

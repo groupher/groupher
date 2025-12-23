@@ -17,7 +17,7 @@ const Center: FC<TProps> = ({ onSelect = null }) => {
   const active = broadcastArticleLayout === BROADCAST_ARTICLE_LAYOUT.SIMPLE
 
   return (
-    <div
+    <button
       className={cn(s.wrapper, active && s.active)}
       onClick={() => {
         edit(BROADCAST_ARTICLE_LAYOUT.SIMPLE, 'broadcastArticleLayout')
@@ -30,9 +30,9 @@ const Center: FC<TProps> = ({ onSelect = null }) => {
       <div className={cn(s.bar, 'h-2 w-7/12 opacity-15 mt-4')} />
       <div className={cn(s.bar, 'h-2 w-7/12 opacity-10 mt-4')} />
 
-      <div className="mt-7" />
+      <div className='mt-7' />
       <ArticleBroadcast color={broadcastArticleBg} simple />
-    </div>
+    </button>
   )
 }
 

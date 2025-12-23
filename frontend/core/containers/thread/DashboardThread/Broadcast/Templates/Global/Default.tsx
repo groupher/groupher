@@ -19,7 +19,7 @@ const Default: FC<TProps> = ({ onSelect = null }) => {
   const active = broadcastLayout === BROADCAST_LAYOUT.DEFAULT
 
   return (
-    <div
+    <button
       className={cn(s.wrapper, active && s.active)}
       onClick={() => {
         edit(BROADCAST_LAYOUT.DEFAULT, 'broadcastLayout')
@@ -29,11 +29,11 @@ const Default: FC<TProps> = ({ onSelect = null }) => {
       <div className={s.notifyBar}>
         <NotifySVG className={s.icon} />
         <div className={cn(s.bar, 'w-32 ml-2')} />
-        <div className="grow" />
+        <div className='grow' />
         <div className={cn(s.bar, 'w-14 mr-1')} />
         <CrossSVG className={s.icon} />
       </div>
-    </div>
+    </button>
   )
 }
 
