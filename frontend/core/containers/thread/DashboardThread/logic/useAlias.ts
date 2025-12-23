@@ -13,7 +13,6 @@ type TRet = {
   updateEditingAlias: (alias: TNameAlias) => void
   edit: TEditFunc
   resetEdit: () => void
-  changeTab: (tab: TDsbAliasRoute) => void
 }
 
 export default (): TRet => {
@@ -26,17 +25,12 @@ export default (): TRet => {
     store.commit({ editingAlias: alias })
   }
 
-  const changeTab = (tab: TDsbAliasRoute) => {
-    store.commit({ aliasTab: tab })
-  }
-
   return {
     aliasTab,
     editingAlias,
     // @ts-expect-error
     nameAlias,
     saving,
-    changeTab,
     edit,
     updateEditingAlias,
     resetEdit: () => resetEdit(FIELD.NAME_ALIAS),

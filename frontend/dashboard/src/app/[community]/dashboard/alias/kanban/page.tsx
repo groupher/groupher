@@ -1,9 +1,21 @@
 'use client'
 
-import Alias from '~/containers//thread/DashboardThread/Alias'
+import { ALIAS_GROUP } from '~/containers/thread/DashboardThread//constant'
+import Item from '~/containers/thread/DashboardThread/Alias/Item'
+import useAlias from '~/containers/thread/DashboardThread/logic/useAlias'
+import { groupByKey } from '~/helper'
 
-const DashboardAliasPage = () => {
-  return <Alias />
+export default () => {
+  const { nameAlias } = useAlias()
+  const groupedAlias = groupByKey(nameAlias, 'group')
+
+  const items = groupedAlias[ALIAS_GROUP.KANBAN] || []
+
+  return (
+    <>
+      {items.map((item) => (
+        <Item key={item.slug} alias={item} />
+      ))}
+    </>
+  )
 }
-
-export default DashboardAliasPage
