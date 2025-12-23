@@ -20,7 +20,7 @@ const Center: FC<TProps> = ({ onSelect = null }) => {
   const active = broadcastLayout === BROADCAST_LAYOUT.CENTER
 
   return (
-    <div
+    <button
       className={cn(s.wrapper, active && s.active)}
       onClick={() => {
         edit(BROADCAST_LAYOUT.CENTER, 'broadcastLayout')
@@ -28,14 +28,14 @@ const Center: FC<TProps> = ({ onSelect = null }) => {
       }}
     >
       <div className={s.notifyBar}>
-        <div className="grow" />
+        <div className='grow' />
         <NotifySVG className={s.icon} />
         <div className={cn(s.bar, 'w-32 ml-2')} />
         <div className={cn(s.bar, 'w-10 ml-3')} />
-        <div className="grow" />
+        <div className='grow' />
         <CrossSVG className={s.icon} />
       </div>
-    </div>
+    </button>
   )
 }
 

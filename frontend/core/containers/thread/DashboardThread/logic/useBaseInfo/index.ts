@@ -27,9 +27,8 @@ type TRet = TUseInfo &
   }
 
 export default (): TRet => {
-  const store = useDashboard()
-
-  const curCommunity = useCommunity()
+  const dashboard = useDashboard()
+  const { slug } = useCommunity()
   const { edit } = useHelper()
 
   const useInfoData = useInfo()
@@ -39,16 +38,17 @@ export default (): TRet => {
   const useDangerZoneData = useDangerZone()
 
   const { data } = useQuery(S.communityBaseInfo, {
-    slug: curCommunity.slug,
+    slug,
     incViews: false,
   })
 
   const updateBaseInfo = (community: TCommunity): void => {
-    const { dashboard } = community
-    const { baseInfo, mediaReports } = dashboard
+    const { dashboard: dashboard$ } = community
+    const { baseInfo, mediaReports } = dashboard$
 
     const updates = BASEINFO_KEYS.reduce((acc, key) => {
       acc[key] = baseInfo[key]
+
       return acc
     }, {})
 
@@ -63,31 +63,30 @@ export default (): TRet => {
     }
 
     const original = {
-      ...store.original,
+      ...dashboard.original,
       ...updates,
       mediaReports: initMediaReports,
     }
 
-    store.commit({ ...updates, mediaReports: initMediaReports, original: original as TDsbFields })
+    dashboard.commit({
+      ...updates,
+      mediaReports: initMediaReports,
+      original: original as TDsbFields,
+    })
   }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (data?.community && !store.initFilled) {
-      store.commit({ initFilled: true })
+    if (data?.community && !dashboard.initFilled) {
+      dashboard.commit({ initFilled: true })
       // to avoid hooks rerender which update baseinfo
       updateBaseInfo(data.community)
     }
-    return () => store.commit({ initFilled: false })
-  }, [
-    data,
-    store.initFilled,
-    store.commit, // to avoid hooks rerender which update baseinfo
-  ])
+  }, [dashboard.initFilled])
 
   return {
     edit,
-    ...pick(['baseInfoTab', 'loading', 'saving'], store),
+    ...pick(['baseInfoTab', 'loading', 'saving'], dashboard),
     ...useInfoData,
     ...useLogosData,
     ...useSocialLinksData,

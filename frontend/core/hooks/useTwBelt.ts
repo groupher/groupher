@@ -87,7 +87,7 @@ export default (): TRet => {
   const fill = (key: TFlatThemeKey) => _theme(key, 'fill')
   const br = (key: TFlatThemeKey) => _theme(key, 'border')
 
-  const _rainbowalias = (prefix: TColorPrefix): string => {
+  const _rainbowAlias = (prefix: TColorPrefix): string => {
     switch (prefix) {
       case 'fg': {
         return 'text-rainbow'
@@ -111,7 +111,7 @@ export default (): TRet => {
    * use in theme balls and all kinks of gradients
    */
   const rainbow = (color: TColorName, prefix = 'fg'): string => {
-    const prefix$ = _rainbowalias(prefix as TColorPrefix)
+    const prefix$ = _rainbowAlias(prefix as TColorPrefix)
     const color$ = camelize(color)
 
     if (prefix === 'bgSoft') {

@@ -1,9 +1,7 @@
 'use client'
 
-import Broadcast from '~/containers//thread/DashboardThread/Broadcast'
+import GlobalEditor from '~/containers//thread/DashboardThread/Broadcast/Editor/Global'
 
-const DashboardBroadcastPage = () => {
-  return <Broadcast />
+export default () => {
+  return <GlobalEditor />
 }
-
-export default DashboardBroadcastPage

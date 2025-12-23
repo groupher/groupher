@@ -3,7 +3,7 @@ import { type FC, useState } from 'react'
 
 import { DSB_ROUTE } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
-import useDashboardTab from '~/hooks/useDashboardTab'
+import useDashboard from '~/hooks/useDashboard'
 
 import ArrowSVG from '~/icons/ArrowSimple'
 import BindSVG from '~/icons/Bind'
@@ -18,7 +18,7 @@ type TProps = {
 }
 
 const Group: FC<TProps> = ({ group }) => {
-  const { curTab, changeTab } = useDashboardTab()
+  const { curTab } = useDashboard()
 
   const community = useCommunity()
   const [fold, setFold] = useState(group.initFold)
@@ -27,7 +27,7 @@ const Group: FC<TProps> = ({ group }) => {
 
   return (
     <div className={s.wrapper}>
-      <div className={s.folder} onClick={() => setFold(!fold)}>
+      <button className={s.folder} onClick={() => setFold(!fold)}>
         <div className={s.iconBox}>
           {group.icon === 'basic' && <InfoSVG className={s.menuIcon} />}
           {group.icon === 'cms' && <ManagementSVG className={cn(s.menuIcon, 'size-4 -mt-px')} />}
@@ -36,7 +36,7 @@ const Group: FC<TProps> = ({ group }) => {
         </div>
         <h3 className={s.title}>{group.title}</h3>
         <ArrowSVG className={s.arrowIcon} />
-      </div>
+      </button>
 
       {!fold && (
         <div className={s.menu}>
@@ -48,7 +48,6 @@ const Group: FC<TProps> = ({ group }) => {
               <Link
                 key={item.slug}
                 className={cn(s.item, isActive && s.itemActive)}
-                onClick={() => changeTab(item.slug)}
                 href={`/${community.slug}/${DSB_ROUTE.DASHBOARD}/${subPath}`}
               >
                 {isActive && <div className={s.itemActiveBar} />}

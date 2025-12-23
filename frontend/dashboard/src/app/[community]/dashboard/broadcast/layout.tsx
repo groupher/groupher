@@ -1,23 +1,29 @@
+'use client'
+
 import { useRouter } from 'next/navigation'
 
 import { DSB_BROADCAST_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
-
+import { BROADCAST_TABS } from '~/containers//thread/DashboardThread/constant'
+import Portal from '~/containers//thread/DashboardThread/Portal'
+import useSalon from '~/containers//thread/DashboardThread/salon/broadcast'
 import useCommunity from '~/hooks/useCommunity'
+import useDashboard from '~/hooks/useDashboard'
+import useSyncDSBRoute2Tab, { isRouteOf } from '~/hooks/useSyncDSBRoute2Tab'
 import Tabs from '~/widgets/Switcher/Tabs'
 
-import { BROADCAST_TABS } from '../constant'
-import useBroadcast from '../logic/useBroadcast'
-import Portal from '../Portal'
-import useSalon from '../salon/broadcast'
-import Editor from './Editor'
-
-export default () => {
+export default ({ children }) => {
   const s = useSalon()
+
+  useSyncDSBRoute2Tab({
+    tab: 'broadcastTab',
+    defaultTab: DSB_BROADCAST_ROUTE.GLOBAL,
+    validator: isRouteOf(DSB_BROADCAST_ROUTE),
+  })
 
   const router = useRouter()
   const curCommunity = useCommunity()
-  const { broadcastTab, edit } = useBroadcast()
+  const { broadcastTab } = useDashboard()
 
   return (
     <div className={s.wrapper}>
@@ -29,7 +35,6 @@ export default () => {
             items={BROADCAST_TABS}
             activeKey={broadcastTab}
             onChange={(tab) => {
-              edit(tab, 'broadcastTab')
               const targetPath =
                 tab === DSB_BROADCAST_ROUTE.GLOBAL
                   ? `/${curCommunity.slug}/dashboard/broadcast`
@@ -43,9 +48,7 @@ export default () => {
         </div>
       </div>
 
-      <div className={s.content}>
-        <Editor />
-      </div>
+      <div className={s.content}>{children}</div>
     </div>
   )
 }

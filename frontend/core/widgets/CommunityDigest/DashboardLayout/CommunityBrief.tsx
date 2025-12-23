@@ -5,6 +5,7 @@ import { APPLY_COMMUNITY } from '~/const/route'
 import { THREAD } from '~/const/thread'
 import { assetSrc } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
+import useDashboard from '~/hooks/useDashboard'
 import useLayout from '~/hooks/useLayout'
 import usePublicThreads from '~/hooks/usePublicThreads'
 
@@ -29,7 +30,8 @@ export default () => {
   const s = useSalon()
 
   const threads = usePublicThreads()
-  const { title, logo, slug, dashboard } = useCommunity()
+  const { title, logo, slug } = useCommunity()
+  const dashboard = useDashboard()
   const { brandLayout } = useLayout()
 
   return (
@@ -45,7 +47,7 @@ export default () => {
       <Tooltip
         content={
           <div className={s.topPanel}>
-            <Link className={cn(s.panelItem, s.outside)} href={dashboard.baseInfo.homepage}>
+            <Link className={cn(s.panelItem, s.outside)} href={dashboard.homepage}>
               <GlobalSVG className={s.icon} />
               <div>返回官网</div>
               <div className='grow' />

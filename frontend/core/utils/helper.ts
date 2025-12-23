@@ -329,3 +329,30 @@ export const assetPath = (url: string): string => {
 
   return splitUrl.join('')
 }
+
+/**
+ * Creates a type-safe predicate that checks whether a string value
+ * belongs to a predefined set of allowed values.
+ *
+ * This is a low-level, generic utility. It does not assume where the
+ * values come from (enum, const array, runtime config, etc.).
+ *
+ * Typical use cases:
+ * - Validating route segments
+ * - Validating query params
+ * - Narrowing string unions at runtime
+ *
+ * @example
+ * const isTab = isOneOf(['general', 'advanced'] as const)
+ *
+ * if (isTab(value)) {
+ *   // value is now typed as 'general' | 'advanced'
+ * }
+ */
+export const isOneOf = <const T extends readonly string[]>(candidates: T) => {
+  const set = new Set(candidates)
+
+  return (value: string): value is T[number] => {
+    return set.has(value)
+  }
+}

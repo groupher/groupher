@@ -1,31 +1,28 @@
+'use client'
+
 import { useRouter } from 'next/navigation'
-import type { FC } from 'react'
 
 import { DSB_ALIAS_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
-
-import { groupByKey } from '~/helper'
+import { ALIAS_TABS } from '~/containers/thread/DashboardThread//constant'
+import Portal from '~/containers/thread/DashboardThread//Portal'
+import useSalon from '~/containers/thread/DashboardThread//salon/alias'
+import useAlias from '~/containers/thread/DashboardThread/logic/useAlias'
 import useCommunity from '~/hooks/useCommunity'
-
+import useSyncDSBRoute2Tab, { isRouteOf } from '~/hooks/useSyncDSBRoute2Tab'
 import Tabs from '~/widgets/Switcher/Tabs'
 
-import { ALIAS_GROUP, ALIAS_TABS } from '../constant'
-import useAlias from '../logic/useAlias'
-import Portal from '../Portal'
-import useSalon from '../salon/alias'
-import Item from './Item'
-
-const Alias: FC = () => {
+export default ({ children }) => {
   const s = useSalon()
   const router = useRouter()
   const curCommunity = useCommunity()
-  const { nameAlias, aliasTab, changeTab } = useAlias()
+  const { aliasTab } = useAlias()
 
-  const groupedAlias = groupByKey(nameAlias, 'group')
-
-  const generalAlias = groupedAlias[ALIAS_GROUP.THREAD] || []
-  const kanbanAlias = groupedAlias[ALIAS_GROUP.KANBAN] || []
-  const othersAlias = groupedAlias[ALIAS_GROUP.OTHERS] || []
+  useSyncDSBRoute2Tab({
+    tab: 'aliasTab',
+    defaultTab: DSB_ALIAS_ROUTE.THREAD,
+    validator: isRouteOf(DSB_ALIAS_ROUTE),
+  })
 
   return (
     <div className={s.wrapper}>
@@ -40,7 +37,6 @@ const Alias: FC = () => {
             items={ALIAS_TABS}
             activeKey={aliasTab}
             onChange={(tab) => {
-              changeTab(tab)
               const targetPath =
                 tab === DSB_ALIAS_ROUTE.THREAD
                   ? `/${curCommunity.slug}/dashboard/alias`
@@ -53,15 +49,7 @@ const Alias: FC = () => {
           />
         </div>
       </div>
-
-      {aliasTab === ALIAS_GROUP.THREAD &&
-        generalAlias.map((item) => <Item key={item.slug} alias={item} />)}
-      {aliasTab === ALIAS_GROUP.KANBAN &&
-        kanbanAlias.map((item) => <Item key={item.slug} alias={item} />)}
-      {aliasTab === ALIAS_GROUP.OTHERS &&
-        othersAlias.map((item) => <Item key={item.slug} alias={item} />)}
+      {children}
     </div>
   )
 }
-
-export default Alias

@@ -174,7 +174,7 @@ export type TStore = TDsbFields & {
   saving: boolean
   loading: boolean
 
-  curTab: TValueOf<typeof DSB_ROUTE>
+  curTab: TValueOf<typeof DSB_ROUTE> | null
   baseInfoTab: TValueOf<typeof DSB_BASEINFO_ROUTE>
   aliasTab: TValueOf<typeof DSB_ALIAS_ROUTE>
   seoTab: TValueOf<typeof DSB_SEO_ROUTE>

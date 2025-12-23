@@ -1,9 +1,7 @@
 'use client'
 
-import Layout from '~/containers//thread/DashboardThread/Layout'
+import Layout from '~/containers//thread/DashboardThread/Layout/ChangelogLayout'
 
-const DashboardLayoutPage = () => {
+export default () => {
   return <Layout />
 }
-
-export default DashboardLayoutPage

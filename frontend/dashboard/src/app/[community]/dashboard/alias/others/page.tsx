@@ -9,7 +9,7 @@ export default () => {
   const { nameAlias } = useAlias()
   const groupedAlias = groupByKey(nameAlias, 'group')
 
-  const items = groupedAlias[ALIAS_GROUP.THREAD] || []
+  const items = groupedAlias[ALIAS_GROUP.OTHERS] || []
 
   return (
     <>

@@ -6,7 +6,6 @@ import {
   DSB_BROADCAST_ROUTE,
   DSB_DOC_ROUTE,
   DSB_LAYOUT_ROUTE,
-  DSB_ROUTE,
   DSB_SEO_ROUTE,
 } from '~/const/route'
 import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
@@ -19,7 +18,7 @@ export default (init: TInit = {}): TStore => {
       ...FIELDS,
 
       // UI status
-      curTab: DSB_ROUTE.INFO,
+      curTab: null,
       initFilled: false,
       original: FIELDS as TDsbFields,
       savingField: null,

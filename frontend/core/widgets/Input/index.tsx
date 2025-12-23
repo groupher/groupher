@@ -4,14 +4,13 @@
  *
  */
 
-import { type FC, useCallback } from 'react'
 import { pickBy } from 'ramda'
+import { type FC, useCallback } from 'react'
 
 import Img from '~/Img'
 import { nilOrEmpty } from '~/validator'
-
-import Textarea from './Textarea'
 import useSalon, { cn } from './salon'
+import Textarea from './Textarea'
 
 type TProps = {
   testid?: string
@@ -26,6 +25,7 @@ type TProps = {
   autoFocus?: boolean
   disableEnter?: boolean
   className?: string
+  id?: string | null
 
   onFocus?: (e) => void
   onBlur?: (e) => void
@@ -35,6 +35,7 @@ type TProps = {
 
 const Input: FC<TProps> = ({
   behavior = 'default',
+  id = null,
   onChange = null,
   onEnter = null,
   onFocus = null,
@@ -79,14 +80,15 @@ const Input: FC<TProps> = ({
           !nilOrEmpty(suffixIcon) && 'pr-7',
           className,
         )}
+        id={id ?? undefined}
         onChange={handleOnChange}
         onKeyDown={handleOnKeydown}
         onFocus={handleOnFocus}
         onBlur={handleOnBlur}
-        spellCheck="false"
+        spellCheck='false'
         // biome-ignore lint/a11y/noAutofocus: <explanation>
         autoFocus={autoFocus}
-        // @ts-ignore
+        // @ts-expect-error
         {...validProps}
       />
       <div className={cn(s.suffix, nilOrEmpty(suffixIcon) && 'hidden')}>

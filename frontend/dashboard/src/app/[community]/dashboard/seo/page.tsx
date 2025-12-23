@@ -1,9 +1,7 @@
 'use client'
 
-import SEO from '~/containers//thread/DashboardThread/SEO'
+import OpenGraph from '~/containers/thread/DashboardThread/SEO/OpenGraph'
 
-const DashboardSeoPage = () => {
-  return <SEO />
+export default () => {
+  return <OpenGraph />
 }
-
-export default DashboardSeoPage
