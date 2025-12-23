@@ -8,7 +8,7 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon from '~/containers/thread/DashboardThread/salon/basic_info'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import useDSBRouteTabSync from '~/hooks/useDSBRouteTabSync'
+import useSyncDSBRoute2Tab from '~/hooks/useSyncDSBRoute2Tab'
 import type { TDsbBaseInfoRoute } from '~/spec'
 import Tabs from '~/widgets/Switcher/Tabs'
 
@@ -23,7 +23,7 @@ export default ({ children }) => {
   const { slug } = useCommunity()
   const { baseInfoTab } = useDashboard()
 
-  useDSBRouteTabSync({
+  useSyncDSBRoute2Tab({
     tab: 'baseInfoTab',
     defaultTab: DSB_BASEINFO_ROUTE.BASIC,
     validator,

@@ -10,13 +10,13 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import SavingBar from '~/containers/thread/DashboardThread/SavingBar'
 import useSalon from '~/containers/thread/DashboardThread/salon/seo'
 import useCommunity from '~/hooks/useCommunity'
-import useDSBRouteTabSync, { isRouteOf } from '~/hooks/useDSBRouteTabSync'
+import useSyncDSBRoute2Tab, { isRouteOf } from '~/hooks/useSyncDSBRoute2Tab'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 export default ({ children }) => {
   const s = useSalon()
 
-  useDSBRouteTabSync({
+  useSyncDSBRoute2Tab({
     tab: 'seoTab',
     defaultTab: DSB_SEO_ROUTE.SEARCH_ENGINE,
     validator: isRouteOf(DSB_SEO_ROUTE),

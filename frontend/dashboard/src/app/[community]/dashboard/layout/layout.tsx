@@ -8,7 +8,7 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon from '~/containers/thread/DashboardThread/salon/layout'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import useDSBRouteTabSync, { isRouteOf } from '~/hooks/useDSBRouteTabSync'
+import useSyncDSBRoute2Tab, { isRouteOf } from '~/hooks/useSyncDSBRoute2Tab'
 import { LAYOUT_TABS } from '~/stores/dashboard/constant'
 import Tabs from '~/widgets/Switcher/Tabs'
 
@@ -17,7 +17,7 @@ export default ({ children }) => {
   const { layoutTab } = useDashboard()
   const router = useRouter()
 
-  useDSBRouteTabSync({
+  useSyncDSBRoute2Tab({
     tab: 'layoutTab',
     defaultTab: DSB_LAYOUT_ROUTE.GENERAL,
     validator: isRouteOf(DSB_LAYOUT_ROUTE),
