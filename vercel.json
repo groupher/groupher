@@ -1,4 +1,3 @@
 {
-  "ignoreCommand.bak": "bash frontend/scripts/vercel.ignore.sh",
   "ignoreCommand": "pwd && ls -R . | sed 's/^/>> /'"
 }
