@@ -1,6 +1,7 @@
 import { range } from 'ramda'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Carousel, Slide, Slider, SliderBarDotGroup } from 'react-scroll-snap-anime-slider'
+import APP from '~/const/app'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useInterval from '~/hooks/useInterval'
 import useLoaded from '~/hooks/useLoaded'
@@ -30,8 +31,8 @@ export default () => {
   const [curImageIndex, setCurImageIndex] = useState(0)
   const [themeIndex, setThemeIndex] = useState(0)
 
-  const [imgSrc, setImgSrc] = useState('/landing/intro/home.webp')
-  const [imgSrc2, _] = useState('/landing/intro/home-dark.webp')
+  const [imgSrc, setImgSrc] = useState(`/${APP.LANDING}/intro/home.webp`)
+  const [imgSrc2, _] = useState(`/${APP.LANDING}/intro/home-dark.webp`)
   const s = useSalon()
 
   const { isLightTheme } = useTheme()
@@ -56,7 +57,9 @@ export default () => {
   )
 
   useEffect(() => {
-    setImgSrc(isLightTheme ? '/landing/intro/home.webp' : '/landing/intro/home-dark.webp')
+    setImgSrc(
+      isLightTheme ? `/${APP.LANDING}/intro/home.webp` : `/${APP.LANDING}/intro/home-dark.webp`,
+    )
   }, [isLightTheme])
 
   useEffect(() => {
