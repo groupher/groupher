@@ -1,5 +1,5 @@
+import APP from '~/const/app'
 import Img from '~/Img'
-
 import useSalon from '../../salon/dashboard_intros/seo_tab/article_card'
 
 export default () => {
@@ -8,12 +8,12 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <div className={s.header}>
-        <Img src='/landing/seo/wechat.png' className={s.brand} />
-        <Img src='/landing/seo/zhihu.png' className={s.brand} />
-        <Img src='/landing/seo/xhs.png' className={s.brand} />
-        <Img src='/landing/seo/medium.png' className={s.brand} />
-        <Img src='/landing/seo/discord.png' className={s.brand} />
-        <Img src='/landing/seo/tg.png' className={s.brand} />
+        <Img src={`/${APP.LANDING}/seo/wechat.png`} className={s.brand} />
+        <Img src={`/${APP.LANDING}/seo/zhihu.png`} className={s.brand} />
+        <Img src={`/${APP.LANDING}/seo/xhs.png`} className={s.brand} />
+        <Img src={`/${APP.LANDING}/seo/medium.png`} className={s.brand} />
+        <Img src={`/${APP.LANDING}/seo/discord.png`} className={s.brand} />
+        <Img src={`/${APP.LANDING}/seo/tg.png`} className={s.brand} />
         <div className='grow' />
       </div>
       <div className={s.title}>Motojie - (摩界)</div>

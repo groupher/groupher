@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import APP from '~/const/app'
 import ArtSVG from '~/icons/Art'
 import MusicSVG from '~/icons/Music'
 import RocketSVG from '~/icons/Rocket'
@@ -24,7 +25,7 @@ export default ({ type, current }: TProps) => {
       <div className={cn(s.wrapper, current === type && s.active)}>
         <div className={cn(s.cinemaImage, 'w-28')}>
           <Image
-            src='/landing/apply/cinema4d.webp'
+            src={`/${APP.LANDING}/apply/cinema4d.webp`}
             width={200}
             height={200}
             className={cn(s.image, 'opacity-80')}
@@ -34,7 +35,7 @@ export default ({ type, current }: TProps) => {
 
         <div className={s.codeImage}>
           <Image
-            src='/landing/apply/code.png'
+            src={`/${APP.LANDING}/apply/code.png`}
             width={200}
             height={200}
             className={cn(s.image, 'opacity-65')}
@@ -44,7 +45,7 @@ export default ({ type, current }: TProps) => {
 
         <div className={s.adminsImage}>
           <Image
-            src='/landing/apply/admins.png'
+            src={`/${APP.LANDING}/apply/admins.png`}
             width={200}
             height={200}
             className={cn(s.image, 'opacity-65')}
@@ -63,7 +64,7 @@ export default ({ type, current }: TProps) => {
 
         <div className={cn(s.gameBox, 'bottom-3 left-4 rotate-12')}>
           <Image
-            src='/landing/apply/game-controller.png'
+            src={`/${APP.LANDING}/apply/game-controller.png`}
             width={200}
             height={200}
             className={cn(s.gameImage, 'opacity-65')}
@@ -73,7 +74,7 @@ export default ({ type, current }: TProps) => {
 
         <div className={cn(s.gameBox, 'right-4 h-32 w-20')}>
           <Image
-            src='/landing/apply/game-man.png'
+            src={`/${APP.LANDING}/apply/game-man.png`}
             width={240}
             height={500}
             className={cn(s.gameImage, 'opacity-65')}
@@ -89,7 +90,7 @@ export default ({ type, current }: TProps) => {
       <div className={cn(s.wrapper, current === type && s.active)}>
         <div className={cn(s.teachImage, 'w-28')}>
           <Image
-            src='/landing/apply/blackboard.png'
+            src={`/${APP.LANDING}/apply/blackboard.png`}
             width={200}
             height={200}
             className={cn(s.image, 'opacity-80')}
@@ -99,7 +100,7 @@ export default ({ type, current }: TProps) => {
 
         <div className={cn(s.chartImage, 'w-28')}>
           <Image
-            src='/landing/apply/chart.png'
+            src={`/${APP.LANDING}/apply/chart.png`}
             width={200}
             height={200}
             className={cn(s.image, 'opacity-80')}

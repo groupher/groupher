@@ -1,5 +1,5 @@
+import APP from '~/const/app'
 import Img from '~/Img'
-
 import useSalon from '../../salon/dashboard_intros/seo_tab/web_card'
 
 export default () => {
@@ -15,17 +15,17 @@ export default () => {
 
       <div className={s.footer}>
         <div className={s.logoBox}>
-          <Img src='/landing/seo/google.png' className={s.logo} />
+          <Img src={`/${APP.LANDING}/seo/google.png`} className={s.logo} />
         </div>
         <div className={s.logoBox}>
-          <Img src='/landing/seo/baidu.png' className={s.logo} />
+          <Img src={`/${APP.LANDING}/seo/baidu.png`} className={s.logo} />
         </div>
         <div className={s.logoBox}>
-          <Img src='/landing/seo/ms.png' className={s.logo} />
+          <Img src={`/${APP.LANDING}/seo/ms.png`} className={s.logo} />
         </div>
 
         <div className={s.logoBox}>
-          <Img src='/landing/seo/duck.png' className={s.logo} />
+          <Img src={`/${APP.LANDING}/seo/duck.png`} className={s.logo} />
         </div>
         <div className='grow' />
 

@@ -1,14 +1,13 @@
 import { startsWith } from 'ramda'
+import APP from '~/const/app'
 
 export const STATIC_PATHS = ['/', '/pricing', '/book-demo']
 
 export const SITE = {
-  LANDING: process.env.LANDING_SITE || 'https://landing.groupher.com',
-  MAIN: process.env.MAIN_SITE || 'https://main.groupher.com',
-  DASHBOARD: process.env.DASHBOARD_SITE || 'https://dashboard.groupher.com',
+  LANDING: process.env.LANDING_SITE || `https://${APP.LANDING}.groupher.com`,
+  MAIN: process.env.MAIN_SITE || `https://${APP.MAIN}.groupher.com`,
+  DASHBOARD: process.env.DASHBOARD_SITE || `https://${APP.DASHBOARD}.groupher.com`,
 }
-
-const DSB_DOMAIN = 'dashboard'
 
 /**
  * Get the static asset path signature for a given site URL
@@ -54,7 +53,7 @@ export const isDashboardStaticRoute = (pathname: string): boolean => {
  * - isDashboardRoute('/organizations/settings/dashboard', 'www.example.com') => false
  */
 export const isDashboardRoute = (pathname: string, host: string): boolean => {
-  if (host.startsWith(`${DSB_DOMAIN}.`)) {
+  if (host.startsWith(`${APP.DASHBOARD}.`)) {
     return true
   }
 
@@ -76,7 +75,7 @@ export const isDashboardRoute = (pathname: string, host: string): boolean => {
  *   => new URL('/cps?page=1', 'https://dashboard.groupher.com')
  */
 export const getDashboardUrl = (pathname: string, host: string, search: string): URL => {
-  if (host.startsWith(`${DSB_DOMAIN}.`)) {
+  if (host.startsWith(`${APP.DASHBOARD}.`)) {
     // If it's already a dashboard subdomain, just rewrite to DASHBOARD_SITE
     return new URL(pathname + search, SITE.DASHBOARD)
   }
