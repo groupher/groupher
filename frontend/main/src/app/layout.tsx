@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   description: '讨论区、看板、更新日志、帮助文档多合一，收集沉淀用户反馈，助你打造更好的产品。',
 }
 
+// deploy trigger
 export default function Layout({ children }) {
   return <RootLayoutShell>{children}</RootLayoutShell>
 }
