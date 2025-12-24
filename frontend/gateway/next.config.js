@@ -5,7 +5,7 @@ const nextConfig = {
   images: {
     disableStaticImages: true,
   },
-  turbopack: false,
+  turbopack: {},
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
