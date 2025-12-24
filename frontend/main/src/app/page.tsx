@@ -2,7 +2,7 @@
 export default () => {
   return (
     <>
-      <h2>some thing wrong with proxy.</h2>
+      <h2>this is main app.</h2>
       <p>landing should serve by landing repo.</p>
     </>
   )
