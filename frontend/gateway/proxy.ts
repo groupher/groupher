@@ -12,6 +12,7 @@ import {
   STATIC_PATHS,
 } from './utils'
 
+// chore: trigger
 export default function proxy(request: NextRequest) {
   const url = request.nextUrl
   const { pathname, host, search } = url
