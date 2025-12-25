@@ -1,5 +1,3 @@
-'use client'
-
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
 import type { TThemeMode, TThemeName } from '~/spec'
 import useThemeDomain from '~/stores/theme/hooks'
