@@ -21,6 +21,10 @@ export default ({ ...spacing }: TProps) => {
       fill('text.digest'),
       `group-hover:${fill('text.title')}`,
     ),
+    iconBox: cn(
+      'size-6 align-both pointer rounded border border-transparent',
+      `hover:${bg('hoverBg')}`,
+    ),
     selectWrapper: 'row-center gap-x-1 px-1',
     selectBox: cn(menu('bar'), 'align-both size-8 m-0 p-0'),
     selectIcon: cn(menu('icon'), 'size-6 m-0 opacity-80 scale-90'),
