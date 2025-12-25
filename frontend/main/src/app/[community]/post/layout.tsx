@@ -8,7 +8,7 @@ export default async ({ children, previewer, params }) => {
 
   const pagedPosts = await getPagedPosts(params$.community)
   const tags = await getTags(params$.community, THREAD.POST)
-  console.log('## got posts: ', pagedPosts)
+  // console.log('## got posts: ', pagedPosts)
   // console.log('## got tags: ', tags)
 
   return (
