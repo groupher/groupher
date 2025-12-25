@@ -15,11 +15,9 @@ import type { TSpace } from '~/spec'
 
 import useSalon, { cn } from './salon'
 
-type TProps = {
-  testid?: string
-} & TSpace
+type TProps = TSpace
 
-const ThemeSwitch: FC<TProps> = ({ testid = 'theme-switch', ...spacing }) => {
+const ThemeSwitch: FC<TProps> = ({ ...spacing }) => {
   const s = useSalon({ ...spacing })
   const { themeMode, changeMode } = useTheme()
   const { getNextThemeMode, getAriaLabel } = useThemeLoop()

@@ -16,7 +16,6 @@ export default () => {
     } else if (themeMode === THEME_MODE.DARK) {
       loopRef.current = [THEME_MODE.DARK, THEME_MODE.LIGHT, THEME_MODE.SYSTEM]
     } else {
-      // 初始是 SYSTEM 时，根据当前实际 theme 决定去向
       if (theme === THEME.DARK) {
         loopRef.current = [THEME_MODE.SYSTEM, THEME_MODE.LIGHT, THEME_MODE.DARK]
       } else {
