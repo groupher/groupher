@@ -1,18 +1,14 @@
-import { type FC, Fragment } from 'react'
+import { useAutoAnimate } from '@formkit/auto-animate/react'
 import Link from 'next/link'
 import { keys, startsWith } from 'ramda'
-import { useAutoAnimate } from '@formkit/auto-animate/react'
-
-import type { TLinkItem } from '~/spec'
+import { type FC, Fragment } from 'react'
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
-import { sortByIndex, groupByKey } from '~/helper'
-
+import { groupByKey, sortByIndex } from '~/helper'
 import ArrowSVG from '~/icons/ArrowSimple'
+import type { TLinkItem } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
-
-import type { TProps, TLinkGroup } from './spec'
-
 import useSalon from './salon/header_template'
+import type { TLinkGroup, TProps } from './spec'
 
 const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
   const s = useSalon()
@@ -30,7 +26,7 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
           ))}
         </div>
       }
-      placement="bottom"
+      placement='bottom'
       offset={[-5, 5]}
     >
       <div className={s.groupItem}>
@@ -45,7 +41,6 @@ const CustomHeaderLinks: FC<TProps> = ({ links }) => {
 
   const [animateRef] = useAutoAnimate()
 
-  // @ts-ignore
   const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 

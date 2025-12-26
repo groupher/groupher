@@ -57,7 +57,6 @@ export default (): TRet => {
     const { mediaReports } = store
     const newReports = reject((item: TMediaReport) => item.index === index, mediaReports)
 
-    // @ts-expect-error
     store.commit({ mediaReports: newReports })
   }
 

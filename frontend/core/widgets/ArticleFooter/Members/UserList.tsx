@@ -1,14 +1,13 @@
 import type { FC } from 'react'
-
-import type { TUser } from '~/spec'
 import Img from '~/Img'
+import type { TUser } from '~/spec'
 
 import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from '../salon/user_list'
 
 type TProps = {
-  users: TUser[]
+  users: readonly TUser[]
 }
 
 const UserList: FC<TProps> = ({ users }) => {

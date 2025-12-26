@@ -8,7 +8,7 @@ import useSalon, { cn, Icon } from './salon'
 type TProps = {
   size?: TSizeTSM
   testid?: string
-  selected?: TSocialItem[]
+  selected?: readonly TSocialItem[]
 } & TSpace
 
 const SocialList: FC<TProps> = ({

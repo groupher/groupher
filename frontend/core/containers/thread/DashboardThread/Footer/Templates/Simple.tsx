@@ -1,12 +1,10 @@
-import type { FC } from 'react'
-import { keys } from 'ramda'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-
-import type { TActive, TLinkItem } from '~/spec'
-import { sortByIndex, groupByKey } from '~/helper'
-
+import { keys } from 'ramda'
+import type { FC } from 'react'
 import { FOOTER_LAYOUT } from '~/const/layout'
 import { DEME_SOCIALS } from '~/const/social'
+import { groupByKey, sortByIndex } from '~/helper'
+import type { TActive, TLinkItem } from '~/spec'
 
 import CommunityBrand from '~/widgets/CommunityBrand'
 import SocialList from '~/widgets/SocialList'
@@ -15,7 +13,7 @@ import useFooter from '../../logic/useFooter'
 import useSalon, { cn } from '../../salon/footer/templates/simple'
 
 type TProps = {
-  links: TLinkItem[]
+  links: readonly TLinkItem[]
 } & TActive
 
 const Simple: FC<TProps> = ({ links, active }) => {
@@ -25,16 +23,15 @@ const Simple: FC<TProps> = ({ links, active }) => {
 
   const [animateRef] = useAutoAnimate()
 
-  // @ts-ignore
   const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 
   return (
-    <div
+    <button
       className={cn(s.wrapper, active && s.active)}
       onClick={() => edit(FOOTER_LAYOUT.SIMPLE, 'footerLayout')}
     >
-      <CommunityBrand className="scale-95" />
+      <CommunityBrand className='scale-95' />
 
       <div className={s.center} ref={animateRef}>
         {groupedLinks[groupKeys[0]].map((item) => (
@@ -44,9 +41,9 @@ const Simple: FC<TProps> = ({ links, active }) => {
         ))}
       </div>
       <div className={s.right}>
-        <SocialList top={0} size="tiny" selected={DEME_SOCIALS} />
+        <SocialList top={0} size='tiny' selected={DEME_SOCIALS} />
       </div>
-    </div>
+    </button>
   )
 }
 

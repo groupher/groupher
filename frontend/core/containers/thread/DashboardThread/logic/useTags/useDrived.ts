@@ -7,7 +7,7 @@ import useDashboard from '~/hooks/useDashboard'
 import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
 
 export type TRet = {
-  getTags: () => TTag[]
+  getTags: () => readonly TTag[]
   getGroups: () => string[]
   getThreads: () => TCommunityThread[]
   getTagLayoutTouched: () => boolean
@@ -58,7 +58,6 @@ export default (): TRet => {
   }, [tags, original.tags])
 
   return {
-    // @ts-expect-error
     getTags,
     getGroups,
     getThreads,

@@ -29,7 +29,7 @@ export default () => {
       <div className={s.divider} />
       <div className={cn(s.block, isEmpty(socialLinks) && 'hidden')}>
         <h4 className={s.title}>关注我们</h4>
-        <SocialList size="small" selected={socialLinks} left={-10} top={12} />
+        <SocialList size='small' selected={socialLinks} left={-10} top={12} />
       </div>
 
       <div className={cn(s.block, noMediaReports && 'hidden')}>

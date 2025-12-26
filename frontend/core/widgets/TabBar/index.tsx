@@ -3,13 +3,11 @@
  */
 
 import { type FC, memo } from 'react'
-
-import type { TSizeSM, TThread } from '~/spec'
+import { ANCHOR } from '~/const/dom'
 import SIZE from '~/const/size'
 import { THREAD } from '~/const/thread'
-import { ANCHOR } from '~/const/dom'
-
 import { sortByIndex } from '~/helper'
+import type { TSizeSM, TThread } from '~/spec'
 
 import NormalView from './NormalView'
 
@@ -30,11 +28,13 @@ const TabBar: FC<TProps> = ({
   size = SIZE.MEDIUM,
   withIcon = false,
 }) => {
+  // @ts-expect-error
   const sortedSource = sortByIndex(source)
 
   return (
     <div id={ANCHOR.GLOBAL_TABBER_ID}>
       <NormalView
+        // @ts-expect-error
         source={sortedSource}
         active={active}
         onChange={onChange}

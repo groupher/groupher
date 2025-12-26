@@ -13,7 +13,7 @@ import Block from './Block'
 import Editor from './Editor'
 
 export type TProps = {
-  sections: TFAQSection[]
+  sections: readonly TFAQSection[]
   editingFAQIndex: number | null
   editingFAQ: TFAQSection
   isTouched: boolean
