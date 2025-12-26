@@ -1,4 +1,4 @@
-import { includes, isEmpty, keys, remove, sort, startsWith, tap, uniq } from 'ramda'
+import { includes, isEmpty, keys, remove, sort, startsWith, uniq } from 'ramda'
 import { ASSETS_ENDPOINT, TAG_COLOR_ORDER } from '~/config'
 import { COLOR_NAME } from '~/const/colors'
 import { ARTICLE_STATE } from '~/const/gtd'
@@ -39,30 +39,6 @@ export function sortByIndex<T>(source: readonly T[], key?: PropertyKey): T[] {
 
   return sort((a, b) => (a as any)[sortKey] - (b as any)[sortKey], source)
 }
-
-export const sortByIndex2 = <T, K extends keyof T>(source: readonly T[], key: K): T[] => {
-  if (isEmpty(source)) return []
-
-  return sort((a, b) => (a[key] as number) - (b[key] as number), source)
-}
-
-// export const sortByIndex = (source: TSORTABLE_ITEMS, key = 'index'): TSORTABLE_ITEMS => {
-//   if (isEmpty(source)) return []
-
-//   return sort((a, b) => a[key] - b[key], source)
-// }
-
-/* eslint-disable */
-const log =
-  (...args) =>
-  (data) => {
-    console.log.apply(null, args.concat([data]))
-    return data
-  }
-/* eslint-enable */
-
-// reference: https://blog.carbonfive.com/2017/12/20/easy-pipeline-debugging-with-curried-console-log/
-export const Rlog = (arg = 'Rlog: ') => tap(log(arg))
 
 /**
  * count both chinese-word and english-words
@@ -217,9 +193,6 @@ export const findDeepMatch = (data, key, value) => {
 /**
  * groupByKey
  * see @link: https://stackoverflow.com/a/47385953/4050784
- * NOTE: type this is diffcult for me, need help
- * 有人能做得来这个类型体操吗。。。
- *
  * @param {Array} - array
  * @param {String} - key
  * @returns {Object}
@@ -227,9 +200,9 @@ export const findDeepMatch = (data, key, value) => {
 export const groupByKey = (array, key) => {
   return array.reduce((hash, obj) => {
     if (obj[key] === undefined) return hash
-    return Object.assign(hash, {
-      [obj[key]]: (hash[obj[key]] || []).concat(obj),
-    })
+    const groupKey = obj[key]
+    hash[groupKey] = (hash[groupKey] || []).concat(obj)
+    return hash
   }, {})
 }
 
