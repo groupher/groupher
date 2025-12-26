@@ -57,7 +57,7 @@ export default (): TRet => {
     doMoveLink,
     doMoveLink2Edge,
     reindexGroup,
-    emptyLinksIfNedd,
+    emptyLinksIfNeed,
     confirmGroupAdd,
     confirmGroupUpdate,
     // keepMoreGroup2EndIfNeed,
@@ -73,10 +73,10 @@ export default (): TRet => {
 
   const add2Group = (group: string, index: number): void => {
     const links = getLinks()
-    const grouplinks = filter((link: TLinkItem) => link.group === group, links)
+    const groupLinks = filter((link: TLinkItem) => link.group === group, links)
 
-    if (grouplinks.length <= 0) return
-    const { groupIndex } = grouplinks[0]
+    if (groupLinks.length <= 0) return
+    const { groupIndex } = groupLinks[0]
 
     const newItem = {
       ...EMPTY_LINK_ITEM,
@@ -100,7 +100,7 @@ export default (): TRet => {
       links,
     )
 
-    linksAfter = emptyLinksIfNedd(linksAfter)
+    linksAfter = emptyLinksIfNeed(linksAfter)
 
     store.commit({
       [linksKey]: reindex(linksAfter),
@@ -111,7 +111,7 @@ export default (): TRet => {
     const links = getLinks()
     let linksAfter = reject((link: TLinkItem) => link.groupIndex === groupIndex, links)
 
-    linksAfter = emptyLinksIfNedd(linksAfter)
+    linksAfter = emptyLinksIfNeed(linksAfter)
 
     store.commit({
       [linksKey]: reindexGroup(linksAfter),
@@ -132,12 +132,12 @@ export default (): TRet => {
       links,
     )
 
-    linksAfter = emptyLinksIfNedd(linksAfter)
+    linksAfter = emptyLinksIfNeed(linksAfter)
 
     store.commit({
       [linksKey]: linksAfter,
       editingLink: null,
-      original: { ...original, [linksKey]: linksAfter, tags: [...original.tags] },
+      original: { ...original, [linksKey]: linksAfter },
     })
   }
 
