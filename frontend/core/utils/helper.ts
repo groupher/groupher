@@ -31,13 +31,8 @@ type NumericKeys<T> = {
 }[keyof T]
 
 export function sortByIndex<T extends { index: number }>(source: readonly T[]): T[]
-
 export function sortByIndex<T, K extends NumericKeys<T>>(source: readonly T[], key: K): T[]
-
-export function sortByIndex<T>(
-  source: readonly T[],
-  key?: PropertyKey, // ✅ 注意这里
-): T[] {
+export function sortByIndex<T>(source: readonly T[], key?: PropertyKey): T[] {
   if (isEmpty(source)) return []
 
   const sortKey = key ?? 'index'
@@ -315,7 +310,7 @@ export const publicThreads = (
   const enabledThreads = sortByIndex(
     threads
       .filter((thread) => enable[thread.slug] && thread.index !== undefined)
-      .map((thread) => ({ ...thread, index: thread.index! })), // 类型断言 safe
+      .map((thread) => ({ ...thread, index: thread.index! })),
   )
 
   const mappedThreads = enabledThreads.map((pThread) => {
