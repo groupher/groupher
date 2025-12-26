@@ -5,33 +5,34 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ARTICLE_THREAD } from '~/const/thread'
-import useViewingArticle from '~/hooks/useViewingArticle'
+import useArticle from '~/hooks/useArticle'
 
 import Img from '~/Img'
 import ArrowSVG from '~/icons/Arrow'
 
 // import ArchivedSign from '~/widgets/ArchivedSign'
 
+import type { TPost } from '~/spec'
 import ArticleBaseStats from '~/widgets/ArticleBaseStats'
 import ArticlePinLabel from '~/widgets/ArticlePinLabel'
 import ArticleSettingMenu from '~/widgets/ArticleSettingMenu'
 import Share from '~/widgets/Share'
-
 import useSalon from '../salon/post/digest'
 
 export default () => {
   const router = useRouter()
-  const { article } = useViewingArticle()
+  const { post } = useArticle()
 
-  if (!article) {
+  if (!post) {
     return <h1>Error article</h1>
   }
+  console.log('## get post: ', post)
 
-  const { innerId, author, title, isPinned } = article
+  const { innerId, author, title, isPinned } = post
 
   const s = useSalon({ isPinned })
 
-  const backUrl = `/${article.communitySlug}/${ARTICLE_THREAD.POST}`
+  const backUrl = `/${post.communitySlug}/${ARTICLE_THREAD.POST}`
 
   return (
     <div className={s.wrapper}>
@@ -56,7 +57,7 @@ export default () => {
             <Img src={author.avatar} className={s.avatar} />
             {author.nickname}
           </Link>
-          <ArticleBaseStats article={article} right={2} />
+          <ArticleBaseStats article={post as TPost} right={2} />
         </div>
       </div>
     </div>

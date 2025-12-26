@@ -4,7 +4,7 @@ import { LOCALE } from '~/const/i18n'
 import { THREAD } from '~/const/thread'
 import { loadLocaleFile } from '~/i18n'
 import { P } from '~/schemas'
-import type { TCommunityInfo, TPagedPosts, TTag, TThread } from '~/spec'
+import type { TCommunityInfo, TPagedPosts, TPost, TTag, TThread } from '~/spec'
 import { gqFetch } from '~/utils/api'
 import { parseDashboard, parseWallpaper } from '~/utils/ssr'
 
@@ -93,4 +93,25 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
   }
 
   return data.pagedArticleTags.entries
+}
+
+export const getPost = async (community: string, id: string): Promise<TPost | null> => {
+  // 'use cache'
+  // cacheLife('minutes')
+  // cacheTag(CACHE_TAG.articlesCache(community, THREAD.POST))
+  const response = await gqFetch(P.post, {
+    community,
+    id,
+    userHasLogin: false,
+  })
+
+  const { data, errors } = await response.json()
+
+  if (errors) {
+    // console.log('## error in fetching', P.community)
+    console.log('## error details', errors)
+    return null
+  }
+
+  return data.post
 }

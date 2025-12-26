@@ -6,7 +6,7 @@ import useHelper from './useHelper'
 type TRet = {
   saving: boolean
   widgetsPrimaryColor: TColorName
-  widgetsThreads: TThread[]
+  widgetsThreads: readonly TThread[]
   widgetsSize: TSizeSML
   widgetsType: TWidgetType
   threadOnChange: (checked: boolean, thread: TThread) => void
@@ -27,7 +27,6 @@ export default (): TRet => {
       ? [...widgetsThreads, thread]
       : reject((t: TThread) => t === thread, widgetsThreads)
 
-    // @ts-expect-error
     store.commit({ widgetsThreads: newThreads })
   }
 
@@ -36,7 +35,6 @@ export default (): TRet => {
   const isPrimaryColorTouched = isChanged('widgetsPrimaryColor')
   const isSizeTouched = isChanged('widgetsSize')
 
-  // @ts-expect-error
   return {
     ...pick(
       ['saving', 'widgetsPrimaryColor', 'widgetsThreads', 'widgetsSize', 'widgetsType'],

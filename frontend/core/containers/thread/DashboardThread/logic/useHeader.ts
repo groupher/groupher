@@ -8,7 +8,7 @@ import useLinks, { type TRet as TUserLinks } from './useLinks'
 
 type TRet = {
   headerLayout: THeaderLayout
-  headerLinks: TLinkItem[]
+  headerLinks: readonly TLinkItem[]
   edit: TEditFunc
 } & TLinkState &
   TUserLinks
@@ -18,7 +18,6 @@ export default (): TRet => {
   const useLinksData = useLinks()
   const { edit } = useHelper()
 
-  // @ts-expect-error
   return {
     ...pick(
       [

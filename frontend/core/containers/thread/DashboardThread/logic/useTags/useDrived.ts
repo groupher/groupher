@@ -7,7 +7,7 @@ import useDashboard from '~/hooks/useDashboard'
 import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
 
 export type TRet = {
-  getTags: () => TTag[]
+  getTags: () => readonly TTag[]
   getGroups: () => string[]
   getThreads: () => TCommunityThread[]
   getTagLayoutTouched: () => boolean
@@ -23,13 +23,11 @@ export default (): TRet => {
   const getTags = useCallback(() => {
     const selectedThread = (activeTagThread || '').toUpperCase()
 
-    const filterdTagsByGroup = activeTagGroup
-      ? // @ts-expect-error
-        filter((t: TTag) => t.group === activeTagGroup, tags)
+    const filteredTagsByGroup = activeTagGroup
+      ? filter((t: TTag) => t.group === activeTagGroup, tags)
       : tags
 
-    // @ts-expect-error
-    return filter((t: TTag) => t.thread === selectedThread, filterdTagsByGroup)
+    return filter((t: TTag) => t.thread === selectedThread, filteredTagsByGroup)
   }, [tags, activeTagThread, activeTagGroup])
 
   const getGroups = useCallback((): string[] => uniq(pluck('group', tags)), [tags])
@@ -60,7 +58,6 @@ export default (): TRet => {
   }, [tags, original.tags])
 
   return {
-    // @ts-expect-error
     getTags,
     getGroups,
     getThreads,

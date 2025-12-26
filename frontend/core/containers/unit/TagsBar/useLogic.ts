@@ -6,7 +6,7 @@ import type { TGroupedTags, TTag } from '~/spec'
 import { getParameterByName } from '~/utils/route'
 
 type TRet = {
-  tags: TTag[]
+  tags: readonly TTag[]
   onTagSelect: (tag: TTag) => void
   syncActiveTagFromURL: () => void
   activeTag: TTag | null
@@ -28,7 +28,6 @@ export default (): TRet => {
     const idx = findIndex((t) => t.slug === tagOnURL, tags)
     if (idx < 0) return
 
-    // @ts-expect-error
     onTagSelect(tags[idx])
   }
 
@@ -37,9 +36,7 @@ export default (): TRet => {
   }
 
   return {
-    // @ts-expect-error
     tags,
-    // @ts-expect-error
     activeTag,
     onTagSelect,
     getGroupedTags,

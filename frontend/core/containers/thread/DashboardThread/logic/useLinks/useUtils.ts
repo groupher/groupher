@@ -19,7 +19,7 @@ export type TRet = {
   doMoveLink: (link: TLinkItem, opt: 'up' | 'down') => void
   doMoveLink2Edge: (link: TLinkItem, opt: 'top' | 'bottom') => void
   reindexGroup: (_targetLinks: TLinkItem[]) => TLinkItem[]
-  emptyLinksIfNedd: (links: TLinkItem[]) => TLinkItem[]
+  emptyLinksIfNeed: (links: TLinkItem[]) => TLinkItem[]
   confirmGroupAdd: () => void
   confirmGroupUpdate: () => void
 }
@@ -43,7 +43,7 @@ export default (): TRet => {
 
   const linksKey = curTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
 
-  const emptyLinksIfNedd = (links: TLinkItem[]): TLinkItem[] => {
+  const emptyLinksIfNeed = (links: TLinkItem[]): TLinkItem[] => {
     if (linksKey === 'headerLinks' && links.length === 1 && links[0].group === MORE_GROUP) {
       return []
     }
@@ -108,8 +108,7 @@ export default (): TRet => {
   /**
    * move group actions
    */
-  const reindexGroup = (_targetLinks: TLinkItem[]): TLinkItem[] => {
-    // @ts-expect-error
+  const reindexGroup = (_targetLinks: readonly TLinkItem[]): TLinkItem[] => {
     const targetLinks = clone(sortByIndex(_targetLinks, 'groupIndex'))
 
     const _groupedLinks = groupByKey(targetLinks, 'group')
@@ -228,7 +227,6 @@ export default (): TRet => {
   const moveGroup = (group: string, opt: 'left' | 'right' | 'edge-left' | 'edge-right'): void => {
     const links = getLinks()
 
-    // @ts-expect-error
     const _groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
     const groupKeys = keys(_groupedLinks) as string[]
 
@@ -283,7 +281,7 @@ export default (): TRet => {
     doMoveLink,
     doMoveLink2Edge,
     reindexGroup,
-    emptyLinksIfNedd,
+    emptyLinksIfNeed,
     confirmGroupAdd,
     confirmGroupUpdate,
   }

@@ -1,20 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useMutation } from 'urql'
-
-import { toast, updateViewingArticle } from '~/signal'
-import useViewingArticle from '~/hooks/useViewingArticle'
-
+import useArticle from '~/hooks/useArticle'
 import PinSVG from '~/icons/Pin'
-import UnPinSVG from '~/icons/UnPin'
 import SpinSVG from '~/icons/Spin'
-
-import S from '../schema'
+import UnPinSVG from '~/icons/UnPin'
+import { toast, updateViewingArticle } from '~/signal'
 import useSalon from '../salon/menu'
+import S from '../schema'
 
 export default () => {
   const s = useSalon()
 
-  const { article } = useViewingArticle()
+  const { article } = useArticle()
   const [result, pinPost] = useMutation(S.pinPost)
   const [_result2, undoPinPost] = useMutation(S.undoPinPost)
 
@@ -22,7 +19,7 @@ export default () => {
 
   useEffect(() => {
     setPin(article.isPinned)
-  }, [])
+  }, [article.isPinned])
 
   const handlePin = useCallback(() => {
     const action = !pin
@@ -41,11 +38,11 @@ export default () => {
   }, [pin, article, pinPost, undoPinPost])
 
   return (
-    <div className={s.menuItem} onClick={handlePin}>
+    <button className={s.menuItem} onClick={handlePin}>
       {pin ? <UnPinSVG className={s.icon} /> : <PinSVG className={s.icon} />}
       {pin ? '取消置顶' : '置顶'}
-      <div className="grow" />
+      <div className='grow' />
       {result.fetching && <SpinSVG className={s.icon} />}
-    </div>
+    </button>
   )
 }

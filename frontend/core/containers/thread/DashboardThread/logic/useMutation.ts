@@ -52,10 +52,8 @@ export default (): TRet => {
     }
 
     // store.commit({ editingTag: null })
-    // @ts-expect-error
     store.commit({ tags: updatedTags, editingTag: null })
 
-    // @ts-expect-error
     return updatedTags
   }
 
@@ -95,7 +93,6 @@ export default (): TRet => {
       original = { ...store.original, ...current }
     }
 
-    // @ts-expect-error
     store.commit({ original })
 
     // avoid page component jump caused by saving state

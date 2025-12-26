@@ -36,7 +36,6 @@ export default (): TRet => {
       files: [],
     })
 
-    // @ts-expect-error
     store.commit({ docCategories })
   }
 

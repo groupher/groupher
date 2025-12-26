@@ -15,10 +15,12 @@ export default (): TCommunityThread[] => {
   const enabledThreads = sortByIndex(threads.filter((thread) => dashboard.enable[thread.slug]))
 
   const mappedThreads = enabledThreads.map((pThread) => {
+    // @ts-expect-error
     const aliasItem = find(propEq(pThread.slug, 'slug'))(dashboard.nameAlias) as TNameAlias
 
     return {
       ...pThread,
+      // @ts-expect-error
       title: aliasItem?.name || pThread.title,
     }
   })

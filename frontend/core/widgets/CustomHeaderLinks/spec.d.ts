@@ -1,13 +1,13 @@
 import type { TLinkItem } from '~/spec'
 
 export type TProps = {
-  links: TLinkItem[]
+  links: readonly TLinkItem[]
   activePath?: string
 }
 
 export type TLinkGroup = {
   groupTitle: string
-  links: TLinkItem[]
+  links: readonly TLinkItem[]
   showMoreFold: boolean
   activePath?: string
 }

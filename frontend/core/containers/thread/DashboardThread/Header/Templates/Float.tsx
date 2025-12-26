@@ -1,12 +1,10 @@
-import type { FC } from 'react'
 import { reject } from 'ramda'
-
-import type { TActive, TCommunityThread, TLinkItem } from '~/spec'
-
-import { THREAD } from '~/const/thread'
+import type { FC } from 'react'
 import { HEADER_LAYOUT } from '~/const/layout'
 
+import { THREAD } from '~/const/thread'
 import AccountSVG from '~/icons/Acount'
+import type { TActive, TCommunityThread, TLinkItem } from '~/spec'
 import CommunityBrand from '~/widgets/CommunityBrand'
 import CustomHeaderLinks from '~/widgets/CustomHeaderLinks/HeaderTemplate'
 
@@ -14,8 +12,8 @@ import useHeader from '../../logic/useHeader'
 import useSalon, { cn } from '../../salon/header/templates/float'
 
 type TProps = {
-  threads: TCommunityThread[]
-  links: TLinkItem[]
+  threads: readonly TCommunityThread[]
+  links: readonly TLinkItem[]
 } & TActive
 
 const Float: FC<TProps> = ({ active, threads, links }) => {
@@ -28,12 +26,12 @@ const Float: FC<TProps> = ({ active, threads, links }) => {
     : threads
 
   return (
-    <div
+    <button
       className={cn(s.wrapper, active && s.active)}
       onClick={() => edit(HEADER_LAYOUT.FLOAT, 'headerLayout')}
     >
       <div className={s.left}>
-        <CommunityBrand className="-ml-1 scale-90" />
+        <CommunityBrand className='-ml-1 scale-90' />
       </div>
       <div className={s.center}>
         {_threads.map((thread: TCommunityThread) => (
@@ -45,7 +43,7 @@ const Float: FC<TProps> = ({ active, threads, links }) => {
         <CustomHeaderLinks links={links} />
       </div>
       <AccountSVG className={s.accountIcon} />
-    </div>
+    </button>
   )
 }
 

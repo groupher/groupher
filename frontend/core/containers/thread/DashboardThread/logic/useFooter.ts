@@ -7,7 +7,7 @@ import useLinks, { type TRet as TUserLinks } from './useLinks'
 
 type TRet = {
   footerLayout: TFooterLayout
-  footerLinks: TLinkItem[]
+  footerLinks: readonly TLinkItem[]
   edit: TEditFunc
 } & TLinkState &
   TUserLinks
@@ -31,7 +31,6 @@ export default (): TRet => {
   return {
     edit,
     footerLayout,
-    // @ts-expect-error
     footerLinks,
     editingLink,
     editingLinkMode,

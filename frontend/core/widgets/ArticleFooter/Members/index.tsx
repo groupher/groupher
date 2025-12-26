@@ -1,7 +1,6 @@
 import useViewingArticle from '~/hooks/useViewingArticle'
-
-import UserList from './UserList'
 import useSalon from '../salon/members'
+import UserList from './UserList'
 
 export default () => {
   const s = useSalon()
@@ -13,7 +12,7 @@ export default () => {
     <div className={s.wrapper}>
       <div className={s.title}>赞同 ({upvotesCount})</div>
       <UserList users={meta.latestUpvotedUsers} />
-      <div className="mb-5" />
+      <div className='mb-5' />
       <div className={s.title}>参与评论 ({commentsParticipantsCount})</div>
       <UserList users={commentsParticipants} />
     </div>

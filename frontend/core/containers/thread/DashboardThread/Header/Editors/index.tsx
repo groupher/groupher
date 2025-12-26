@@ -43,7 +43,6 @@ const Editor: FC = () => {
   const isAboutLinkFold =
     length(filter((item) => item.title !== '' && item.group !== MORE_GROUP, links)) >= 1
 
-  // @ts-expect-error
   const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks) as string[]
 

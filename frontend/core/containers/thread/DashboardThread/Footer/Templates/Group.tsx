@@ -14,7 +14,7 @@ import useFooter from '../../logic/useFooter'
 import useSalon, { cn } from '../../salon/footer/templates/group'
 
 type TProps = {
-  links: TLinkItem[]
+  links: readonly TLinkItem[]
 } & TActive
 
 const Group: FC<TProps> = ({ links, active }) => {
@@ -25,12 +25,11 @@ const Group: FC<TProps> = ({ links, active }) => {
   const [animateRef] = useAutoAnimate()
   const [groupAnimateRef] = useAutoAnimate()
 
-  // @ts-expect-error
   const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 
   return (
-    <div
+    <button
       className={cn(s.wrapper, active && s.active)}
       onClick={() => edit(FOOTER_LAYOUT.GROUP, 'footerLayout')}
     >
@@ -57,7 +56,7 @@ const Group: FC<TProps> = ({ links, active }) => {
           )
         })}
       </div>
-    </div>
+    </button>
   )
 }
 

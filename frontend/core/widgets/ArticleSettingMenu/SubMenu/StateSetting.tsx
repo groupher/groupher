@@ -1,25 +1,20 @@
-import { type FC, useState, useEffect } from 'react'
+import { type FC, useEffect, useState } from 'react'
 import { useMutation } from 'urql'
-
-import { Trans } from '~/i18n'
-import useViewingArticle from '~/hooks/useViewingArticle'
+import { ARTICLE_STATE } from '~/const/gtd'
+import { POST_STATE_MENU_ITEMS } from '~/const/menu'
+import { aliasGTDDoneState } from '~/fmt'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useNameAlias from '~/hooks/useNameAlias'
-
-import { ICON } from '../constant'
+import useViewingArticle from '~/hooks/useViewingArticle'
+import { Trans } from '~/i18n'
 import CheckSVG from '~/icons/CheckBold'
-
-import { POST_STATE_MENU_ITEMS } from '~/const/menu'
-import { ARTICLE_STATE } from '~/const/gtd'
 import { toast, updateViewingArticle } from '~/signal'
-import { aliasGTDDoneState } from '~/fmt'
-
+import { ICON } from '../constant'
+import { getGTDColor } from '../helper'
+import useSalon, { cn } from '../salon/sub_menu/state_setting'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'
-import { getGTDColor } from '../helper'
-
-import useSalon, { cn } from '../salon/sub_menu/state_setting'
 
 type TProps = {
   onBack: () => void
@@ -39,7 +34,7 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
 
   useEffect(() => {
     setState(article.state)
-  }, [])
+  }, [article.state])
 
   const handleState = () => {
     const params = { id: article.id, state }
@@ -62,10 +57,10 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
       {POST_STATE_MENU_ITEMS.map((item, index) => {
         const TheIcon = ICON[item.key] || ICON[ARTICLE_STATE.REJECT]
         const active = item.key === state
-        const color = getGTDColor(item.key, bgColors)
+        const color = getGTDColor(item.key, [...bgColors])
 
         return (
-          <div
+          <button
             key={item.key}
             className={cn(
               s.item,
@@ -87,14 +82,12 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
               )}
             />
             <div className={cn(s.title, active && s.titleActive)}>
-              {article.state === ARTICLE_STATE.DONE ? (
-                <>{Trans(aliasGTDDoneState(article.cat, item.key))}</>
-              ) : (
-                <>{kanbanAlias[ARTICLE_STATE[item.key].toLowerCase()]?.name || Trans(item.key)}</>
-              )}
+              {article.state === ARTICLE_STATE.DONE
+                ? Trans(aliasGTDDoneState(article.cat, item.key))
+                : kanbanAlias[ARTICLE_STATE[item.key].toLowerCase()]?.name || Trans(item.key)}
             </div>
             {active && <CheckSVG className={s.checkIcon} />}
-          </div>
+          </button>
         )
       })}
 

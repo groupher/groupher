@@ -56,7 +56,7 @@ type TGroupCategory = {
   name: string
   index: number
   color: TColorName
-  files: TFile[]
+  files: readonly TFile[]
 }
 
 export type TDsbFields = {
@@ -73,8 +73,8 @@ export type TDsbFields = {
   techstack: string
 
   // social
-  socialLinks: TSocialItem[]
-  mediaReports: TMediaReport[]
+  socialLinks: readonly TSocialItem[]
+  mediaReports: readonly TMediaReport[]
 
   // page
   pageBg: string
@@ -104,7 +104,7 @@ export type TDsbFields = {
   postLayout: TPostLayout
   kanbanLayout: TKanbanLayout
   kanbanCardLayout: TKanbanCardLayout
-  kanbanBgColors: TColorName[]
+  kanbanBgColors: readonly TColorName[]
 
   docLayout: TDocLayout
   docFaqLayout: TDocFAQLayout
@@ -126,7 +126,7 @@ export type TDsbFields = {
   changelogLayout: TChangelogLayout
 
   // doc
-  docCategories: TGroupCategory[]
+  docCategories: readonly TGroupCategory[]
 
   // glow effect
   glowType: string
@@ -139,27 +139,27 @@ export type TDsbFields = {
 
   // contents
   // tags
-  tags: TTag[]
+  tags: readonly TTag[]
   activeTagGroup: string | null
   activeTagThread: string | null
-  nameAlias: TNameAlias[]
+  nameAlias: readonly TNameAlias[]
   enable: TEnableConf
 
-  faqSections: TFAQSection[]
+  faqSections: readonly TFAQSection[]
   rssFeedType: TRSSType
   rssFeedCount: number
 
   headerLayout: THeaderLayout
   footerLayout: TFooterLayout
 
-  footerLinks: TLinkItem[]
-  headerLinks: TLinkItem[]
+  footerLinks: readonly TLinkItem[]
+  headerLinks: readonly TLinkItem[]
 
-  moderators: TModerator[]
+  moderators: readonly TModerator[]
 
   // widgets
   widgetsPrimaryColor: TColorName
-  widgetsThreads: TThread[]
+  widgetsThreads: readonly TThread[]
   widgetsSize: TSizeSML
   widgetsType: TWidgetType
 }
@@ -198,7 +198,7 @@ export type TStore = TDsbFields & {
   queryingMediaReportIndex: number
 
   // cms
-  batchSelectedIDs: string[]
+  batchSelectedIDs: readonly string[]
   pagedCommunities: TPagedCommunities
   pagedPosts: TPagedArticles
   pagedDocs: TPagedArticles
@@ -236,11 +236,11 @@ type TDocCategory = {
   name: string
   index: number
   color: TColorName
-  files: TDocFile[]
+  files: readonly TDocFile[]
 }
 
 export type TDocSettings = {
-  categories: TDocCategory[]
+  categories: readonly TDocCategory[]
 }
 
 export type THeaderEditType = 'logo' | 'title'

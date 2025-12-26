@@ -18,7 +18,6 @@ export default () => {
   const { logo, desc, title } = useCommunity()
   const { links } = useFooterLinks()
 
-  // @ts-expect-error
   const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 

@@ -13,11 +13,8 @@ export default (): TRes => {
 
   return {
     resState,
-    // @ts-expect-error
     todo,
-    // @ts-expect-error
     wip,
-    // @ts-expect-error
     done,
   }
 }

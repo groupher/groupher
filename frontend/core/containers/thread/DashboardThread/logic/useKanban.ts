@@ -12,7 +12,7 @@ type TRet = {
   isKanbanCardLayoutTouched: boolean
   isKanbanColorsTouched: boolean
 
-  kanbanBgColors: TColorName[]
+  kanbanBgColors: readonly TColorName[]
   saving: boolean
   edit: TEditFunc
 }
@@ -25,7 +25,6 @@ export default (): TRet => {
   const isKanbanCardLayoutTouched = isChanged('kanbanCardLayout')
   const isKanbanColorsTouched = isChanged('kanbanBgColors')
 
-  // @ts-expect-error
   return {
     edit,
     ...pick(['kanbanLayout', 'kanbanCardLayout', 'kanbanBgColors', 'saving'], store),

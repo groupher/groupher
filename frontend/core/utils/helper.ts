@@ -1,15 +1,8 @@
-import { find, includes, isEmpty, keys, propEq, remove, sort, startsWith, tap, uniq } from 'ramda'
+import { includes, isEmpty, keys, remove, sort, startsWith, uniq } from 'ramda'
 import { ASSETS_ENDPOINT, TAG_COLOR_ORDER } from '~/config'
 import { COLOR_NAME } from '~/const/colors'
 import { ARTICLE_STATE } from '~/const/gtd'
-import type {
-  TArticleState,
-  TColorName,
-  TCommunityThread,
-  TDsdThreadConf,
-  TNameAlias,
-  TWindow,
-} from '~/spec'
+import type { TArticleState, TColorName, TCommunityThread, TDsdThreadConf, TWindow } from '~/spec'
 
 type TSORTABLE_ITEMS = {
   color?: string
@@ -33,23 +26,19 @@ export const sortByColor = (source: TSORTABLE_ITEMS): TSORTABLE_ITEMS =>
 /**
  * sort the array by it's index
  */
-export const sortByIndex = (source: TSORTABLE_ITEMS, key = 'index'): TSORTABLE_ITEMS => {
+type NumericKeys<T> = {
+  [K in keyof T]: T[K] extends number ? K : never
+}[keyof T]
+
+export function sortByIndex<T extends { index: number }>(source: readonly T[]): T[]
+export function sortByIndex<T, K extends NumericKeys<T>>(source: readonly T[], key: K): T[]
+export function sortByIndex<T>(source: readonly T[], key?: PropertyKey): T[] {
   if (isEmpty(source)) return []
 
-  return sort((a, b) => a[key] - b[key], source)
+  const sortKey = key ?? 'index'
+
+  return sort((a, b) => (a as any)[sortKey] - (b as any)[sortKey], source)
 }
-
-/* eslint-disable */
-const log =
-  (...args) =>
-  (data) => {
-    console.log.apply(null, args.concat([data]))
-    return data
-  }
-/* eslint-enable */
-
-// reference: https://blog.carbonfive.com/2017/12/20/easy-pipeline-debugging-with-curried-console-log/
-export const Rlog = (arg = 'Rlog: ') => tap(log(arg))
 
 /**
  * count both chinese-word and english-words
@@ -204,9 +193,6 @@ export const findDeepMatch = (data, key, value) => {
 /**
  * groupByKey
  * see @link: https://stackoverflow.com/a/47385953/4050784
- * NOTE: type this is diffcult for me, need help
- * 有人能做得来这个类型体操吗。。。
- *
  * @param {Array} - array
  * @param {String} - key
  * @returns {Object}
@@ -214,9 +200,9 @@ export const findDeepMatch = (data, key, value) => {
 export const groupByKey = (array, key) => {
   return array.reduce((hash, obj) => {
     if (obj[key] === undefined) return hash
-    return Object.assign(hash, {
-      [obj[key]]: (hash[obj[key]] || []).concat(obj),
-    })
+    const groupKey = obj[key]
+    hash[groupKey] = (hash[groupKey] || []).concat(obj)
+    return hash
   }, {})
 }
 
@@ -294,10 +280,14 @@ export const publicThreads = (
 ): TCommunityThread[] => {
   const { enable, nameAlias } = dashboardSettings
 
-  const enabledThreads = sortByIndex(threads.filter((thread) => enable[thread.slug]))
+  const enabledThreads = sortByIndex(
+    threads
+      .filter((thread) => enable[thread.slug] && thread.index !== undefined)
+      .map((thread) => ({ ...thread, index: thread.index! })),
+  )
 
   const mappedThreads = enabledThreads.map((pThread) => {
-    const aliasItem = find(propEq(pThread.slug, 'slug'))(nameAlias) as TNameAlias
+    const aliasItem = nameAlias.find((alias) => alias.slug === pThread.slug)
 
     return {
       ...pThread,
@@ -309,7 +299,7 @@ export const publicThreads = (
 }
 
 /**
- * for combine OSS endpoing with path
+ * for combine OSS endpoint with path
  */
 export const assetSrc = (path: string): string => {
   if (!path) return ''

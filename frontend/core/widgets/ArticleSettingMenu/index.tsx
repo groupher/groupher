@@ -6,11 +6,9 @@
 
 import { type FC, useState } from 'react'
 import { Provider } from 'urql'
-import client from '~/server/gq_client'
-
-import type { TSpace } from '~/spec'
-
 import SettingSVG from '~/icons/Setting'
+import client from '~/server/gq_client'
+import type { TSpace } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
 import Menu from './Menu'
@@ -43,7 +41,7 @@ const ArticleSettingMenu: FC<TProps> = ({ testid = 'article-setting-menu', ...sp
         <Tooltip
           visible={visible}
           content={<Menu onSubMenuToggle={(t) => setSubMenuOpen(t)} onClose={doClose} />}
-          placement="bottom-end"
+          placement='bottom-end'
           hideOnClick={false}
           offset={[0, 10]}
           onShow={() => {
@@ -54,7 +52,7 @@ const ArticleSettingMenu: FC<TProps> = ({ testid = 'article-setting-menu', ...sp
             if (subMenuOpen) return
             doClose()
           }}
-          trigger="click"
+          trigger='click'
           noPadding
         >
           <div className={cn(s.settingBox, menuOpen && s.settingBoxActive)}>

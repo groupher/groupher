@@ -1,4 +1,4 @@
-import { filter, find, keys } from 'ramda'
+import { filter, find } from 'ramda'
 import { useCallback } from 'react'
 import { MORE_GROUP } from '~/const/dashboard'
 import { groupByKey, sortByIndex } from '~/helper'
@@ -13,8 +13,8 @@ type TGroupInfo = {
 
 type THeaderLinks = {
   layout: THeaderLayout
-  links: TLinkItem[]
-  getCustomLinks: () => TLinkItem[]
+  links: readonly TLinkItem[]
+  getCustomLinks: () => readonly TLinkItem[]
   getGroupedLinks: () => TGroupInfo
 }
 
@@ -54,12 +54,12 @@ export default (): THeaderLinks => {
 
   const getGroupedLinks = useCallback(() => {
     const links = getCustomLinks()
-    // @ts-expect-error
-    const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group') as Record<
-      string,
-      TLinkItem[]
-    >
-    const groupKeys = keys(groupedLinks)
+    const groupedLinks = groupByKey(
+      sortByIndex(links as (TLinkItem & { groupIndex: number })[], 'groupIndex'),
+      'group',
+    )
+
+    const groupKeys = Object.keys(groupedLinks) as string[]
 
     return {
       groupedLinks,
@@ -69,9 +69,7 @@ export default (): THeaderLinks => {
 
   return {
     layout: store.headerLayout,
-    // @ts-expect-error
     links: headerLinks,
-    // @ts-expect-error
     getCustomLinks,
     getGroupedLinks,
   }

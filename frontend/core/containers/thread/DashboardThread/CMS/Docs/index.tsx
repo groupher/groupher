@@ -55,7 +55,11 @@ export default () => {
 
       {docTab === DSB_DOC_ROUTE.TREE && <TreeView pagedDocs={pagedDocs} />}
       {docTab === DSB_DOC_ROUTE.TABLE && (
-        <TableView pagedDocs={pagedDocs} loading={loading} batchSelectedIDs={batchSelectedIDs} />
+        <TableView
+          pagedDocs={pagedDocs}
+          loading={loading}
+          batchSelectedIDs={[...batchSelectedIDs]}
+        />
       )}
       {docTab === DSB_DOC_ROUTE.COVER && <Cover />}
       {docTab === DSB_DOC_ROUTE.FAQ && (

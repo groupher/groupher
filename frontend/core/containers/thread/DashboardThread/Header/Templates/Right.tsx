@@ -1,21 +1,19 @@
-import type { FC } from 'react'
 import { reject } from 'ramda'
-
-import type { TActive, TCommunityThread, TLinkItem } from '~/spec'
-import { THREAD } from '~/const/thread'
+import type { FC } from 'react'
 import { HEADER_LAYOUT } from '~/const/layout'
-
+import { THREAD } from '~/const/thread'
 import AccountSVG from '~/icons/Acount'
-import CustomHeaderLinks from '~/widgets/CustomHeaderLinks/HeaderTemplate'
+import type { TActive, TCommunityThread, TLinkItem } from '~/spec'
 import CommunityBrand from '~/widgets/CommunityBrand'
+import CustomHeaderLinks from '~/widgets/CustomHeaderLinks/HeaderTemplate'
 
 import useHeader from '../../logic/useHeader'
 
 import useSalon, { cn } from '../../salon/header/templates/right'
 
 type TProps = {
-  threads: TCommunityThread[]
-  links: TLinkItem[]
+  threads: readonly TCommunityThread[]
+  links: readonly TLinkItem[]
 } & TActive
 
 const Right: FC<TProps> = ({ active, threads, links }) => {
@@ -28,7 +26,7 @@ const Right: FC<TProps> = ({ active, threads, links }) => {
     : threads
 
   return (
-    <div
+    <button
       className={cn(s.wrapper, active && s.active)}
       onClick={() => edit(HEADER_LAYOUT.RIGHT, 'headerLayout')}
     >
@@ -47,7 +45,7 @@ const Right: FC<TProps> = ({ active, threads, links }) => {
 
         <AccountSVG className={s.accountIcon} />
       </div>
-    </div>
+    </button>
   )
 }
 

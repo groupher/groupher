@@ -47,7 +47,6 @@ export default (): TRet => {
     const community = curCommunity.slug
 
     store.commit({
-      // @ts-expect-error
       faqSections: reject((faq: TFAQSection) => faq.index === index, faqSections),
       savingField: FIELD.FAQ_SECTION_DELETE,
     })
@@ -57,27 +56,23 @@ export default (): TRet => {
     // sr71$.mutate(S.updateDashboardFaqs, { faqs: store.faqSections, community })
   }
 
-  const moveUpFAQ = (faqSection: TFAQSection): void => _moveFAQ(faqSection, 'up')
-  const moveDownFAQ = (faqSection: TFAQSection): void => _moveFAQ(faqSection, 'down')
+  const moveUpFAQ = (faqSection: TFAQSection): void => moveFAQ(faqSection, 'up')
+  const moveDownFAQ = (faqSection: TFAQSection): void => moveFAQ(faqSection, 'down')
 
-  const _moveFAQ = (faqSection: TFAQSection, opt: 'up' | 'down'): void => {
+  const moveFAQ = (faqSection: TFAQSection, opt: 'up' | 'down'): void => {
     const { faqSections } = store
-    const _faqSections = faqSections
+    const _faqSections = [...faqSections]
 
     const curIndex = findIndex((item: TFAQSection) => item.index === faqSection.index, _faqSections)
     const targetIndex = opt === 'up' ? curIndex - 1 : curIndex + 1
 
     const tmp = _faqSections[targetIndex]
-      // @ts-expect-error
     _faqSections[targetIndex] = _faqSections[curIndex]
-      // @ts-expect-error
     _faqSections[curIndex] = tmp
 
-      // @ts-expect-error
     store.commit({ faqSections: _faqSections })
 
     setTimeout(() => {
-      // @ts-expect-error
       store.commit({ faqSections: _reindex(_faqSections) })
     })
   }

@@ -13,6 +13,7 @@ const NormalView: FC<TProps> = ({ source, active, onChange, size, withIcon }) =>
 
   return (
     <Tabs
+      // @ts-expect-error
       items={sortByIndex(items)}
       activeKey={active}
       onChange={onChange}

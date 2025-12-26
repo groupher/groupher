@@ -1,20 +1,17 @@
-import { type FC, useState, useRef, useEffect } from 'react'
 import { findIndex, reverse } from 'ramda'
-
-import type { TTag } from '~/spec'
+import { type FC, useEffect, useRef, useState } from 'react'
 import { sortByColor } from '~/helper'
-
 import ArrowSVG from '~/icons/ArrowSimple'
 import MoreSVG from '~/icons/menu/MoreL'
-
-import TagItem from './TagItem'
+import type { TTag } from '~/spec'
 import useSalon from './salon/folder'
+import TagItem from './TagItem'
 
 type TProps = {
   title: string
-  allTags: TTag[]
+  allTags: readonly TTag[]
   activeTag: TTag
-  groupTags: TTag[]
+  groupTags: readonly TTag[]
   maxDisplayCount: number
   totalCountThrold: number
 
@@ -38,7 +35,7 @@ const Folder: FC<TProps> = ({
   const [isFolderOpen, toggleFolder] = useState(true)
   const [curDisplayCount, setCurDisplayCount] = useState(initDisplayCount)
 
-  const sortedTags = reverse(sortByColor(groupTags))
+  const sortedTags = reverse(sortByColor([...groupTags]))
   const isActiveTagInFolder = findIndex((item: TTag) => item.id === activeTag?.id, groupTags) >= 0
 
   const subToggleRef = useRef(null)
@@ -50,11 +47,11 @@ const Folder: FC<TProps> = ({
     if (subToggleRef && isActiveTagInFolder) {
       setCurDisplayCount(groupTags.length)
     }
-  }, [subToggleRef, isActiveTagInFolder, groupTags])
+  }, [isActiveTagInFolder, groupTags])
 
   return (
     <>
-      <div
+      <button
         className={s.header}
         onClick={() => {
           toggleFolder(!isFolderOpen)
@@ -75,7 +72,7 @@ const Folder: FC<TProps> = ({
           {!isFolderOpen && <div className={s.count}>{sortedTags.length}</div>}
         </div>
         {!isFolderOpen && isActiveTagInFolder && <TagItem tag={activeTag} active />}
-      </div>
+      </button>
 
       <div className={s.content}>
         {sortedTags.slice(0, curDisplayCount).map((tag) => (
@@ -87,7 +84,7 @@ const Folder: FC<TProps> = ({
           />
         ))}
         {needSubToggle && (
-          <div
+          <button
             className={s.subToggle}
             ref={subToggleRef}
             onClick={() => {
@@ -100,7 +97,7 @@ const Folder: FC<TProps> = ({
             <div className={s.subToggleTitle}>
               {curDisplayCount === maxDisplayCount ? '展开' : '收起'}
             </div>
-          </div>
+          </button>
         )}
       </div>
     </>

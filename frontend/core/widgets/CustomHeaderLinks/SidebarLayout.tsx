@@ -62,7 +62,6 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
 
   const _links = filter((item) => item.title !== '', links)
 
-  // @ts-expect-error
   const groupedLinks = groupByKey(sortByIndex(_links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 

@@ -1,16 +1,14 @@
-import type { FC } from 'react'
-
 import Link from 'next/link'
+import type { FC } from 'react'
+import { sortByIndex } from '~/helper'
 import Img from '~/Img'
 import ArrowSVG from '~/icons/ArrowUpRight'
-
 import type { TMediaReport } from '~/spec'
-import { sortByIndex } from '~/helper'
 
 import useSalon from './salon/media_reports'
 
 type TProps = {
-  items: TMediaReport[]
+  items: readonly TMediaReport[]
 }
 
 const MediaReports: FC<TProps> = ({ items }) => {
@@ -30,7 +28,7 @@ const MediaReports: FC<TProps> = ({ items }) => {
               <div className={s.siteName}>{siteName}</div>
             </div>
 
-            <Link href={url} target="_blank" className={s.title}>
+            <Link href={url} target='_blank' className={s.title}>
               {title}
             </Link>
             <div className={s.arrowBox}>

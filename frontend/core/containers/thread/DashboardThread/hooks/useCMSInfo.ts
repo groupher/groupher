@@ -2,20 +2,13 @@ import { includes, reject, uniq } from 'ramda'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import { query } from '~/server'
-import type {
-  TArticleEntries,
-  TDsbDocRoute,
-  TFAQSection,
-  TID,
-  TPagedArticles,
-  TPagedCommunities,
-} from '~/spec'
+import type { TDsbDocRoute, TFAQSection, TID, TPagedArticles, TPagedCommunities } from '~/spec'
 import S from '../schema'
 import useHelper from './useHelper'
 
 type TRet = {
   loading: boolean
-  batchSelectedIDs: TID[]
+  batchSelectedIDs: readonly TID[]
   docTab: TDsbDocRoute
 
   pagedPosts: TPagedArticles
@@ -24,7 +17,7 @@ type TRet = {
   pagedChangelogs: TPagedArticles
 
   editingFAQ: TFAQSection
-  faqSections: TFAQSection[]
+  faqSections: readonly TFAQSection[]
   editingFAQIndex: number | null
 
   batchSelect: (id: TID, selected?: boolean) => void
@@ -34,10 +27,13 @@ type TRet = {
   isFaqSectionsTouched: boolean
 }
 
-const assignChecked = (entries: TArticleEntries, batchSelectedIDs: TID[]): TArticleEntries => {
-  return entries.map((article) => ({
-    ...article,
-    _checked: includes(article.id, batchSelectedIDs),
+const assignChecked = <T extends { id?: TID }>(
+  entries: readonly T[],
+  batchSelectedIDs: readonly TID[],
+): readonly (T & { _checked: boolean })[] => {
+  return entries.map((item) => ({
+    ...item,
+    _checked: includes(item.id, batchSelectedIDs),
   }))
 }
 
@@ -108,29 +104,23 @@ export default (): TRet => {
     loading,
     docTab,
     editingFAQIndex,
-    // @ts-expect-error
     batchSelectedIDs,
     pagedCommunities: {
       ...pagedCommunities,
-      // @ts-expect-error
       entries: assignChecked(pagedCommunities.entries, batchSelectedIDs),
     },
     pagedPosts: {
       ...pagedPosts,
-    // @ts-expect-error
       entries: assignChecked(pagedPosts.entries, batchSelectedIDs),
     },
     pagedDocs: {
       ...pagedDocs,
-    // @ts-expect-error
       entries: assignChecked(pagedDocs.entries, batchSelectedIDs),
     },
     pagedChangelogs: {
       ...pagedChangelogs,
-    // @ts-expect-error
       entries: assignChecked(pagedChangelogs.entries, batchSelectedIDs),
     },
-    // @ts-expect-error
     faqSections,
     editingFAQ,
     isFaqSectionsTouched: mapArrayChanged('faqSections'),
