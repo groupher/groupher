@@ -25,7 +25,6 @@ const Group: FC<TProps> = ({ links, active }) => {
   const [animateRef] = useAutoAnimate()
   const [groupAnimateRef] = useAutoAnimate()
 
-  // @ts-expect-error
   const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 

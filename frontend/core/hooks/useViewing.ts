@@ -20,7 +20,6 @@ export default (): TRet | null => {
 
   return {
     article,
-    // @ts-expect-error
     community,
     updateViewingCommunity,
     setActiveThread,

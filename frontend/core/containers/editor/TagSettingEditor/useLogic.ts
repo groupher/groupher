@@ -29,7 +29,7 @@ type TRet = {
 
 export default (): TRet => {
   const dashboard = useDashboard()
-  const {tags, settingTag, activeTagThread} = dashboard
+  const { tags, settingTag, activeTagThread } = dashboard
 
   const curCommunity = useCommunity()
 
@@ -42,7 +42,6 @@ export default (): TRet => {
     if (mode === CHANGE_MODE.CREATE) {
       setEditingTag(DEFAULT_CREATE_TAG)
     } else {
-      // @ts-expect-error
       setEditingTag(settingTag)
     }
   }
@@ -134,7 +133,7 @@ export default (): TRet => {
     }
 
     return reject((opt: TSelectOption) => nilOrEmpty(opt.value), uniq(retOptions))
-  }, [dashboard, editingTag])
+  }, [editingTag, tags])
 
   return {
     mode,

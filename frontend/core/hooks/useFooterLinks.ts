@@ -3,7 +3,7 @@ import type { TFooterLayout, TLinkItem } from '~/spec'
 
 type TFooterLinks = {
   layout: TFooterLayout
-  links: TLinkItem[]
+  links: readonly TLinkItem[]
 }
 
 export default (): TFooterLinks => {
@@ -11,7 +11,6 @@ export default (): TFooterLinks => {
 
   return {
     layout: footerLayout,
-    // @ts-expect-error
     links: footerLinks,
   }
 }

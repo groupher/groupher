@@ -6,7 +6,7 @@ import useHelper from './useHelper'
 
 type TRet = {
   saving: boolean
-  nameAlias: TNameAlias[]
+  nameAlias: readonly TNameAlias[]
   editingAlias: TNameAlias
   aliasTab: TDsbAliasRoute
 
@@ -28,7 +28,6 @@ export default (): TRet => {
   return {
     aliasTab,
     editingAlias,
-    // @ts-expect-error
     nameAlias,
     saving,
     edit,

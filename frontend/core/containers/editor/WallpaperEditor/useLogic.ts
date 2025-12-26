@@ -45,9 +45,7 @@ export default (): TRet => {
   const [loading, setLoading] = useState(false)
 
   const isTouched = useMemo((): boolean => {
-    // @ts-expect-error
     const original = pick(WALLPAPER_STATE_KEYS, store.original)
-    // @ts-expect-error
     const current = pick(WALLPAPER_STATE_KEYS, store)
 
     return !equals(clone(original), clone(current))
@@ -65,7 +63,6 @@ export default (): TRet => {
   const onSave = (): void => {
     setLoading(true)
     const community = curCommunity.slug
-    // @ts-expect-error
     const params = { community, ...pick(WALLPAPER_STATE_KEYS, store) }
 
     mutate(S.updateDashboardWallpaper, params)

@@ -1,36 +1,36 @@
 /*
  *
- * NOTE: well, this is not real GraphQL-Fragments, just some comment pices
- * used across the containers / pages, it's enoungh for now
+ * NOTE: well, this is not real GraphQL-Fragments, just some comment pice
+ * used across the containers / pages, it's enough for now
  *
- * the reason is graphql-request semms not support gql`` tag , which is used
+ * the reason is graphql-request seams not support gql`` tag , which is used
  * by fragment staff, it hurt me so bad
  *
  */
 
 import {
-  community,
+  achievement,
   article,
   articleDetail,
-  pageArticleMeta,
   author,
-  tag,
-  user,
-  userSocial,
   c11n,
-  achievement,
-  userBackgrounds,
-  userContributes,
   comment,
   commentFields,
-  emotionQuery,
   commentParent,
-  pagi,
-  getUpvote,
-  getUndoUpvote,
+  community,
   customLink,
-  wallpaper,
+  emotionQuery,
+  getUndoUpvote,
+  getUpvote,
+  pageArticleMeta,
+  pagi,
   seo,
+  tag,
+  user,
+  userBackgrounds,
+  userContributes,
+  userSocial,
+  wallpaper,
 } from './base'
 
 import { pagedPosts } from './paged'

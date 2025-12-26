@@ -1,8 +1,8 @@
-import type { TColor } from './color'
 import type { TCommunity, TTag } from '.'
-import type { TUser, TAccount, TSimpleUser } from './account'
-import type { TID } from './utils'
+import type { TAccount, TSimpleUser, TUser } from './account'
+import type { TColor } from './color'
 import type { TEmotion } from './emotion'
+import type { TID } from './utils'
 
 export type TArticleTitle = { $isPinned?: boolean; viewerHasViewed?: boolean } & TColor
 
@@ -14,10 +14,10 @@ export type TArticleMeta = {
   isCommentLocked?: boolean
   isEdited?: boolean
   lastActiveAt?: string
-  latestUpvotedUsers?: TUser[]
+  latestUpvotedUsers?: readonly TUser[]
   isLegal?: boolean
-  illegalReason?: string[]
-  illegalWords?: string[]
+  illegalReason?: readonly string[]
+  illegalWords?: readonly string[]
 }
 
 export type TDocument = {
@@ -44,8 +44,8 @@ type TBaseArticle = {
   upvotesCount?: number
   community?: TCommunity
   communitySlug?: string
-  communities?: TCommunity[]
-  commentsParticipants?: TUser[]
+  communities?: readonly TCommunity[]
+  commentsParticipants?: readonly TUser[]
   commentsParticipantsCount?: number
   insertedAt?: string
   updatedAt?: string
@@ -53,7 +53,7 @@ type TBaseArticle = {
   viewerHasCollected?: boolean
   viewerHasUpvoted?: boolean
   commentsCount?: number
-  articleTags?: TTag[]
+  articleTags?: readonly TTag[]
   meta?: TArticleMeta
   document?: TDocument
   linkAddr?: string
@@ -107,18 +107,18 @@ type TPagi = {
 }
 
 export type TPagedPosts = {
-  entries: TPost[]
+  entries: readonly TPost[]
 } & TPagi
 
 export type TPagedChangelogs = {
-  entries: TChangelog[]
+  entries: readonly TChangelog[]
 } & TPagi
 
 export type TPagedDocs = {
-  entries: TChangelog[]
+  entries: readonly TDoc[]
 } & TPagi
 
-export type TArticleEntries = TPost[] | TChangelog[] | TDoc[]
+export type TArticleEntries = readonly TPost[] | readonly TChangelog[] | readonly TDoc[]
 export type TPagedArticles = {
   entries: TArticleEntries
 } & TPagi

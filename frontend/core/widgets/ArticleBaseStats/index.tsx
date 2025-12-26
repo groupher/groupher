@@ -5,12 +5,10 @@
  */
 
 import type { FC } from 'react'
-
-import type { TArticle, TContainer, TSpace } from '~/spec'
 import { scrollToComments } from '~/dom'
-
 import ViewSVG from '~/icons/article/Viewed'
 import CommentSVG from '~/icons/Comment'
+import type { TArticle, TContainer, TSpace } from '~/spec'
 
 import useSalon from './salon'
 

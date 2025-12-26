@@ -35,10 +35,10 @@ export type TMediaReport = {
 
 export type TDsb = {
   enable?: TEnableConf
-  nameAlias?: TNameAlias[]
+  nameAlias?: readonly TNameAlias[]
 
-  socialLinks?: TSocialItem[]
-  faqs?: TFAQSection[]
+  socialLinks?: readonly TSocialItem[]
+  faqs?: readonly TFAQSection[]
   seo?: TDsdSEOConf
 
   layout?: {
@@ -55,21 +55,21 @@ export type TDsb = {
     docFaqLayout: TDocFaqLayout
     postLayout: TPostLayout
     kanbanCardLayout: TKanbanCardLayout
-    kanbanBgColors: TColorName[]
+    kanbanBgColors: readonly TColorName[]
     changelogLayout: TChangelogLayout
     headerLayout: THeaderLayout
     footerLayout: TFooterLayout
   }
 
-  moderators?: TModerator[]
+  moderators?: readonly TModerator[]
 
   rss?: {
     rssFeedType: TRSSType
     rssFeedCount: number
   }
 
-  headerLinks?: TLinkItem[]
-  footerLinks?: TLinkItem[]
+  headerLinks?: readonly TLinkItem[]
+  footerLinks?: readonly TLinkItem[]
 
   wallpaper?: TWallpaperData
   baseInfo?: {
@@ -77,7 +77,7 @@ export type TDsb = {
     bio?: string
     homepage?: string
   }
-  mediaReports?: TMediaReport[]
+  mediaReports?: readonly TMediaReport[]
 
   pageBg?: string
   pageBgDark?: string

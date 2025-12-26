@@ -23,13 +23,11 @@ export default (): TRet => {
   const getTags = useCallback(() => {
     const selectedThread = (activeTagThread || '').toUpperCase()
 
-    const filterdTagsByGroup = activeTagGroup
-      ? // @ts-expect-error
-        filter((t: TTag) => t.group === activeTagGroup, tags)
+    const filteredTagsByGroup = activeTagGroup
+      ? filter((t: TTag) => t.group === activeTagGroup, tags)
       : tags
 
-    // @ts-expect-error
-    return filter((t: TTag) => t.thread === selectedThread, filterdTagsByGroup)
+    return filter((t: TTag) => t.thread === selectedThread, filteredTagsByGroup)
   }, [tags, activeTagThread, activeTagGroup])
 
   const getGroups = useCallback((): string[] => uniq(pluck('group', tags)), [tags])

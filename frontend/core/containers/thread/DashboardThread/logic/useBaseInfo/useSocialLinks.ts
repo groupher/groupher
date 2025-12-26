@@ -3,7 +3,7 @@ import useDashboard from '~/hooks/useDashboard'
 import type { TSocialItem } from '~/spec'
 
 export type TRet = {
-  socialLinks: TSocialItem[]
+  socialLinks: readonly TSocialItem[]
   isSocialLinksTouched: boolean
 }
 
@@ -17,7 +17,6 @@ export default (): TRet => {
   }
 
   return {
-    // @ts-expect-error
     socialLinks: reject((item: TSocialItem) => isEmpty(item.type), socialLinks),
     isSocialLinksTouched: socialLinksTouched(),
   }

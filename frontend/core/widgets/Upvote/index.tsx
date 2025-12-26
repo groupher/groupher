@@ -5,19 +5,17 @@
  */
 
 import { type FC, memo } from 'react'
-
-import type { TUser, TUpvoteLayout, TSpace } from '~/spec'
 import { UPVOTE_LAYOUT } from '~/const/layout'
-
-import DefaultLayout from './DefaultLayout'
+import type { TSpace, TUpvoteLayout, TUser } from '~/spec'
 import ArticleLayout from './ArticleLayout'
-import GeneralLayout from './GeneralLayout'
-import FixedHeaderLayout from './FixedHeaderLayout'
 import CommentLayout from './CommentLayout'
-import PostMinimalLayout from './PostMinimalLayout'
+import DefaultLayout from './DefaultLayout'
+import FixedHeaderLayout from './FixedHeaderLayout'
+import GeneralLayout from './GeneralLayout'
 import PostListLayout from './PostListLayout'
-import StickerLayout from './StickerLayout'
+import PostMinimalLayout from './PostMinimalLayout'
 import SimpleLayout from './SimpleLayout'
+import StickerLayout from './StickerLayout'
 
 import useSalon from './salon'
 
@@ -28,7 +26,7 @@ type TProps = {
   avatarsRowLimit?: number
   viewerHasUpvoted?: boolean
   alias?: string // 觉得很赞(default), 觉得很酷(works), 学到了(blog), 感兴趣(meetup), 有意思(Radar)
-  avatarList?: TUser[]
+  avatarList?: readonly TUser[]
   onAction?: (did: boolean) => void
 } & TSpace
 

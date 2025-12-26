@@ -62,7 +62,6 @@ export default (): TRes => {
 
   return {
     resState,
-    // @ts-expect-error
     pagedChangelogs,
     update,
     pagedParams,

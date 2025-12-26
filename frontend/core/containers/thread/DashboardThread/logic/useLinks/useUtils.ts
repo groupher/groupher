@@ -108,8 +108,7 @@ export default (): TRet => {
   /**
    * move group actions
    */
-  const reindexGroup = (_targetLinks: TLinkItem[]): TLinkItem[] => {
-    // @ts-expect-error
+  const reindexGroup = (_targetLinks: readonly TLinkItem[]): TLinkItem[] => {
     const targetLinks = clone(sortByIndex(_targetLinks, 'groupIndex'))
 
     const _groupedLinks = groupByKey(targetLinks, 'group')
@@ -228,7 +227,6 @@ export default (): TRet => {
   const moveGroup = (group: string, opt: 'left' | 'right' | 'edge-left' | 'edge-right'): void => {
     const links = getLinks()
 
-    // @ts-expect-error
     const _groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
     const groupKeys = keys(_groupedLinks) as string[]
 

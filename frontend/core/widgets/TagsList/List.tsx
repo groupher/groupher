@@ -1,14 +1,11 @@
-import type { TColorName } from '~/spec'
-
 import { sortByColor } from '~/helper'
 import { Trans } from '~/i18n'
+import type { TColorName } from '~/spec'
 
 import TagNode from '~/widgets/TagNode'
-
-import { getDotSize, getIconSize, getDotMargin, getHashMargin } from './salon/metric'
-import useSalon from './salon'
-
 import type { TProps as TBase } from '.'
+import useSalon from './salon'
+import { getDotMargin, getDotSize, getHashMargin, getIconSize } from './salon/metric'
 
 type TProps = TBase & { withTitle?: boolean }
 
@@ -22,7 +19,7 @@ export default ({ items, max, size, withTitle = true, ...spacing }: TProps) => {
 
   return (
     <>
-      {sortByColor(items)
+      {sortByColor([...items])
         .slice(0, max)
         .map((tag) => (
           <div className={s.tag} key={tag.slug}>

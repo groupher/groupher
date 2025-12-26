@@ -3,9 +3,8 @@
  */
 
 import type { FC } from 'react'
-
-import type { TTag, TSizeTSM, TSpace } from '~/spec'
 import SIZE from '~/const/size'
+import type { TSizeTSM, TSpace, TTag } from '~/spec'
 
 import Tooltip from '~/widgets/Tooltip'
 
@@ -15,7 +14,7 @@ import List from './List'
 import useSalon from './salon'
 
 export type TProps = {
-  items: TTag[]
+  items: readonly TTag[]
   max?: number
   size?: TSizeTSM
 } & TSpace
@@ -36,7 +35,7 @@ const TagsList: FC<TProps> = ({ items, max = 3, size = SIZE.TINY, ...spacing }) 
   return (
     <div className={s.wrapper}>
       <Tooltip
-        placement="bottom"
+        placement='bottom'
         content={
           <div className={s.popover}>
             <List items={items} size={size} max={max} {...spacing} />

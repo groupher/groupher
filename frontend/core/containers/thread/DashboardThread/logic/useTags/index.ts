@@ -52,7 +52,6 @@ export default (): TRet => {
   const moveTag2Top = (tag: TTag): void => moveTag2Edge(tag, 'top')
   const moveTag2Bottom = (tag: TTag): void => moveTag2Edge(tag, 'bottom')
 
-  // @ts-expect-error
   return {
     // @ts-expect-error
     ...pick(exportState, store),

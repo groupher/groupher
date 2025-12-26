@@ -1,27 +1,22 @@
-import { type FC, memo, useState, useRef } from 'react'
+import { type FC, memo, useRef, useState } from 'react'
 
 import useOutsideClick from '~/hooks/useOutsideClick'
-
-import EditSVG from '~/icons/EditPen'
-import SlugSVG from '~/icons/Slug'
-import MergeSVG from '~/icons/Merge'
 import ArchivedSVG from '~/icons/Archived'
-import DeleteSVG from '~/icons/Trash'
-import LockSVG from '~/icons/LockLight'
 import ArrowSVG from '~/icons/ArrowSimple'
+import EditSVG from '~/icons/EditPen'
+import LockSVG from '~/icons/LockLight'
+import MergeSVG from '~/icons/Merge'
 import ArticleMirror from '~/icons/MirrorShoe'
-
-import type { TSubMenu } from '../spec'
+import SlugSVG from '~/icons/Slug'
+import DeleteSVG from '~/icons/Trash'
 import { SUB_MENU_TYPE } from '../constant'
-
 import SubMenu from '../SubMenu'
-
+import useSalon, { cn } from '../salon/menu'
+import type { TSubMenu } from '../spec'
 import CatItem from './CatItem'
-import TagsItem from './TagsItem'
 import PinItem from './PinItem'
 import StateItem from './StateItem'
-
-import useSalon, { cn } from '../salon/menu'
+import TagsItem from './TagsItem'
 
 type TProps = {
   onSubMenuToggle: (t: boolean) => void
@@ -66,14 +61,14 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
           <div className={s.menuItem} onClick={() => openSubMenu(SUB_MENU_TYPE.EDIT)}>
             <EditSVG className={s.icon} />
             <div className={s.menuTitle}>修改标题</div>
-            <div className="grow" />
+            <div className='grow' />
             <ArrowSVG className={cn(s.icon, 'rotate-180')} />
           </div>
 
           <div className={s.menuItem} onClick={() => openSubMenu(SUB_MENU_TYPE.SLUG)}>
             <SlugSVG className={s.icon} />
             <div className={s.menuTitle}>设置路径</div>
-            <div className="grow" />
+            <div className='grow' />
             <ArrowSVG className={cn(s.icon, 'rotate-180')} />
           </div>
           <div className={s.divider} />
@@ -89,7 +84,7 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
           <div className={s.menuItem}>
             <MergeSVG className={s.icon} />
             <div className={s.menuTitle}>合并</div>
-            <div className="grow" />
+            <div className='grow' />
             <ArrowSVG className={cn(s.icon, 'rotate-180')} />
           </div>
           <div className={s.menuItem}>
@@ -99,7 +94,7 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
           <div className={s.menuItem} onClick={() => openSubMenu(SUB_MENU_TYPE.MIRROR)}>
             <ArticleMirror className={s.icon} />
             <div className={s.menuTitle}>镜像:Groupher</div>
-            <div className="grow" />
+            <div className='grow' />
             <ArrowSVG className={cn(s.icon, 'rotate-180')} />
           </div>
           <div className={cn(s.menuItem, s.menuItemDanger)}>

@@ -13,7 +13,7 @@ export const WALLPAPER_STATE_KEYS = [
   'direction',
   'bgSize',
   // 'uploadBgImage',
-]
+] as const
 
 export const WALLPAPER_TYPE = {
   PATTERN: 'pattern',

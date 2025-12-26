@@ -5,8 +5,8 @@ type TABoutInfo = {
   homepage: string | null
   cities: string[]
   techstacks: string[]
-  socialLinks: TSocialItem[]
-  mediaReports: TMediaReport[]
+  socialLinks: readonly TSocialItem[]
+  mediaReports: readonly TMediaReport[]
 }
 
 export default (): TABoutInfo => {
@@ -18,9 +18,7 @@ export default (): TABoutInfo => {
     homepage,
     cities: city.split(','),
     techstacks: techstack.split(','),
-    // @ts-expect-error
     socialLinks,
-    // @ts-expect-error
     mediaReports,
   }
 }

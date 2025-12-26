@@ -4,13 +4,11 @@
  *
  */
 
-import { type FC, memo, useState, useCallback, useEffect, Fragment } from 'react'
-import { keys, includes, reject, findIndex, update } from 'ramda'
-
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-
-import type { TSocialType, TSocialItem, TSpace } from '~/spec'
+import { findIndex, includes, keys, reject, update } from 'ramda'
+import { type FC, Fragment, memo, useCallback, useEffect, useState } from 'react'
 import { SOCIAL_LIST } from '~/const/social'
+import type { TSocialItem, TSocialType, TSpace } from '~/spec'
 
 import InputBar from './InputBar'
 
@@ -20,8 +18,8 @@ type TProps = {
   testid?: string
   width?: string
   withTitle?: boolean
-  value?: TSocialItem[]
-  onChange?: (items: TSocialItem[]) => void
+  value?: readonly TSocialItem[]
+  onChange?: (items: readonly TSocialItem[]) => void
 } & TSpace
 
 const SocialEditor: FC<TProps> = ({
@@ -38,7 +36,7 @@ const SocialEditor: FC<TProps> = ({
   const [selected, setSelected] = useState<TSocialItem[]>([{ type: SOCIAL_LIST.EMAIL, link: '' }])
 
   useEffect(() => {
-    setSelected(value)
+    setSelected([...value])
   }, [value])
 
   const removeSocial = useCallback(
@@ -67,7 +65,7 @@ const SocialEditor: FC<TProps> = ({
     <div className={s.wrapper} data-testid={testid}>
       {withTitle && <div className={s.label}>社交平台账号</div>}
 
-      <div className="mt-2" />
+      <div className='mt-2' />
       <div className={s.hint}>
         点击选择社交平台，相关信息会展示在讨论区主页，页脚以及社区关于页面。
       </div>

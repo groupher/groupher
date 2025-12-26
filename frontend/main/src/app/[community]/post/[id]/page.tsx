@@ -1,3 +1,7 @@
+'use client'
+
+import Post from '~/widgets/Article/Post'
+
 export default () => {
-  return <h1>ArticlePost </h1>
+  return <Post />
 }

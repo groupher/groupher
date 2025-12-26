@@ -27,13 +27,13 @@ export type TCommunity = {
   subscribersCount?: number
   articlesCount?: number
   viewerHasSubscribed?: boolean
-  contributesDigest?: number[]
+  contributesDigest?: readonly number[]
   moderatorsCount?: number
   desc?: string
   meta?: TMeta
-  threads?: TCommunityThread[]
+  threads?: readonly TCommunityThread[]
   pending?: number
-  moderators?: TModerator[]
+  moderators?: readonly TModerator[]
   views?: number
 
   // TODO:
@@ -47,7 +47,7 @@ export type TCommunityInfo = {
 }
 
 export type TPagedCommunities = {
-  entries: TCommunity[]
+  entries: readonly TCommunity[]
 } & TPagi
 
 export type TTag = {

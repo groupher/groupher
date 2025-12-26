@@ -17,7 +17,6 @@ import type {
   TToastType,
   TWindow,
 } from '~/spec'
-import BStore from './bstore'
 import { scrollToHeader } from './dom'
 import PubSub from './pubsub'
 
@@ -84,7 +83,7 @@ export const updateViewingArticle = (article: TArticle): void => {
 
 export const refreshArticles = (): void => send(EVENT.REFRESH_ARTICLES)
 /**
- * hepler for call the JoinModal Container to show wechatQRCode or mail scriscribe list etc ..
+ * helper for call the JoinModal Container to show wechatQRCode or mail subscribe list etc ..
  *
  */
 export const joinUS = (type?: string, data = {}): void => {
@@ -195,30 +194,7 @@ export const multiClick = (
 }
 
 /**
- * handle user account state change
- */
-export const viewingChanged = (article: TArticle | null): void => {
-  if (article) {
-    // @ts-expect-error
-    BStore.set('viewingArticle', { community: article.communitySlug, id: article.innerId })
-  } else {
-    BStore.set('viewingArticle', null)
-  }
-  // see: https://stackoverflow.com/a/55349670/4050784
-  Global.dispatchEvent(new Event(EVENT.VIEWING_CHANGED))
-}
-
-/**
- * 跳转到某个社区
- * - 如果已经在子社区，只需要重新加载数据
- * - 如果在其他页面，那么需要重新请求页面
- */
-export const changeToCommunity = (_slug = ''): void => {
-  console.log('## ## changeToCommunity')
-}
-
-/**
- * send preview article singal to Drawer
+ * send preview article signal to Drawer
  */
 export const previewArticle = (article: TArticle): void => {
   const type = TYPE.DRAWER[`${article.meta.thread}_VIEW`]

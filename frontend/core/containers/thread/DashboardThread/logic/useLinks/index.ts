@@ -137,8 +137,7 @@ export default (): TRet => {
     store.commit({
       [linksKey]: linksAfter,
       editingLink: null,
-      // @ts-expect-error
-      original: { ...original, [linksKey]: linksAfter },
+      original: { ...original, [linksKey]: linksAfter, tags: [...original.tags] },
     })
   }
 

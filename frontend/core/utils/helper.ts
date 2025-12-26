@@ -1,15 +1,8 @@
-import { find, includes, isEmpty, keys, propEq, remove, sort, startsWith, tap, uniq } from 'ramda'
+import { includes, isEmpty, keys, remove, sort, startsWith, tap, uniq } from 'ramda'
 import { ASSETS_ENDPOINT, TAG_COLOR_ORDER } from '~/config'
 import { COLOR_NAME } from '~/const/colors'
 import { ARTICLE_STATE } from '~/const/gtd'
-import type {
-  TArticleState,
-  TColorName,
-  TCommunityThread,
-  TDsdThreadConf,
-  TNameAlias,
-  TWindow,
-} from '~/spec'
+import type { TArticleState, TColorName, TCommunityThread, TDsdThreadConf, TWindow } from '~/spec'
 
 type TSORTABLE_ITEMS = {
   color?: string
@@ -33,11 +26,36 @@ export const sortByColor = (source: TSORTABLE_ITEMS): TSORTABLE_ITEMS =>
 /**
  * sort the array by it's index
  */
-export const sortByIndex = (source: TSORTABLE_ITEMS, key = 'index'): TSORTABLE_ITEMS => {
+type NumericKeys<T> = {
+  [K in keyof T]: T[K] extends number ? K : never
+}[keyof T]
+
+export function sortByIndex<T extends { index: number }>(source: readonly T[]): T[]
+
+export function sortByIndex<T, K extends NumericKeys<T>>(source: readonly T[], key: K): T[]
+
+export function sortByIndex<T>(
+  source: readonly T[],
+  key?: PropertyKey, // ✅ 注意这里
+): T[] {
   if (isEmpty(source)) return []
 
-  return sort((a, b) => a[key] - b[key], source)
+  const sortKey = key ?? 'index'
+
+  return sort((a, b) => (a as any)[sortKey] - (b as any)[sortKey], source)
 }
+
+export const sortByIndex2 = <T, K extends keyof T>(source: readonly T[], key: K): T[] => {
+  if (isEmpty(source)) return []
+
+  return sort((a, b) => (a[key] as number) - (b[key] as number), source)
+}
+
+// export const sortByIndex = (source: TSORTABLE_ITEMS, key = 'index'): TSORTABLE_ITEMS => {
+//   if (isEmpty(source)) return []
+
+//   return sort((a, b) => a[key] - b[key], source)
+// }
 
 /* eslint-disable */
 const log =
@@ -294,10 +312,14 @@ export const publicThreads = (
 ): TCommunityThread[] => {
   const { enable, nameAlias } = dashboardSettings
 
-  const enabledThreads = sortByIndex(threads.filter((thread) => enable[thread.slug]))
+  const enabledThreads = sortByIndex(
+    threads
+      .filter((thread) => enable[thread.slug] && thread.index !== undefined)
+      .map((thread) => ({ ...thread, index: thread.index! })), // 类型断言 safe
+  )
 
   const mappedThreads = enabledThreads.map((pThread) => {
-    const aliasItem = find(propEq(pThread.slug, 'slug'))(nameAlias) as TNameAlias
+    const aliasItem = nameAlias.find((alias) => alias.slug === pThread.slug)
 
     return {
       ...pThread,
@@ -309,7 +331,7 @@ export const publicThreads = (
 }
 
 /**
- * for combine OSS endpoing with path
+ * for combine OSS endpoint with path
  */
 export const assetSrc = (path: string): string => {
   if (!path) return ''
