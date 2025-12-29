@@ -13,7 +13,7 @@ type TProps = {
   activeTag: TTag
   groupTags: readonly TTag[]
   maxDisplayCount: number
-  totalCountThrold: number
+  totalCountThreshold: number
 
   onSelect: (tag?: TTag) => void
 }
@@ -24,11 +24,11 @@ const Folder: FC<TProps> = ({
   allTags,
   activeTag,
   maxDisplayCount,
-  totalCountThrold,
+  totalCountThreshold,
   onSelect,
 }) => {
   // 决定是否显示 '展示更多' 的时候参考标签总数
-  const needSubToggle = allTags?.length > totalCountThrold && groupTags.length > maxDisplayCount
+  const needSubToggle = allTags?.length > totalCountThreshold && groupTags.length > maxDisplayCount
 
   const initDisplayCount = needSubToggle ? maxDisplayCount : groupTags.length
 

@@ -7,7 +7,7 @@
 import { keys, reverse } from 'ramda'
 import { type FC, useEffect } from 'react'
 import Folder from './Folder'
-import GobackTag from './GobackTag'
+import GoBackTag from './GobackTag'
 import useSalon from './salon'
 import useLogic from './useLogic'
 
@@ -22,23 +22,23 @@ const TagsBar: FC<TProps> = ({ onSelect }) => {
     tags,
     activeTag,
     maxDisplayCount,
-    totalCountThrold,
-    getGroupedTags,
+    totalCountThreshold,
+    groupedTags,
     onTagSelect,
     syncActiveTagFromURL,
   } = useLogic()
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     syncActiveTagFromURL()
-  }, [syncActiveTagFromURL])
+  }, [])
 
-  const groupedTags = getGroupedTags()
   const groupsKeys = reverse(keys(groupedTags)) as string[]
 
   return (
     <div className={s.wrapper}>
       {activeTag?.title && (
-        <GobackTag
+        <GoBackTag
           onSelect={(tag) => {
             onTagSelect(tag)
             onSelect?.()
@@ -53,7 +53,7 @@ const TagsBar: FC<TProps> = ({ onSelect }) => {
           allTags={tags}
           activeTag={activeTag}
           maxDisplayCount={maxDisplayCount}
-          totalCountThrold={totalCountThrold}
+          totalCountThreshold={totalCountThreshold}
           onSelect={(tag) => {
             onTagSelect(tag)
             onSelect?.()
