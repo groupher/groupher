@@ -8,23 +8,21 @@ import useTags from '../logic/useTags'
 import TagBar from './TagBar'
 
 export default () => {
-  const { loading, loadTags, getTags } = useTags()
+  const { loading, loadTags, tags } = useTags()
   const [animateRef] = useAutoAnimate()
 
-  const tags = getTags()
-
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     loadTags()
-  }, [loadTags])
+  }, [])
 
   return (
     <div ref={animateRef}>
       {loading && <LavaLampLoading bottom={10} />}
 
-      {/* @ts-ignore */}
       {sortByIndex(tags).map((tag, index) => (
         <TagBar
-          key={tag.index}
+          key={tag.id}
           tag={tag as TTag}
           isFirst={index === 0}
           isLast={index === tags.length - 1}

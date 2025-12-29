@@ -1,18 +1,14 @@
 import type { FC } from 'react'
-
-import { callTagEditEditor } from '~/signal'
-
-import Tooltip from '~/widgets/Tooltip'
-import MoreSVG from '~/icons/menu/MoreL'
-import EditSVG from '~/icons/EditPen'
 import ArrowSVG from '~/icons/Arrow'
+import EditSVG from '~/icons/EditPen'
+import MoreSVG from '~/icons/menu/MoreL'
 import SettingSVG from '~/icons/Setting'
-
-import ActionMenu from './ActionMenu'
+import { callTagEditEditor } from '~/signal'
+import Tooltip from '~/widgets/Tooltip'
 import useTags from '../logic/useTags'
-import type { TProps as TTagBarProps } from './TagBar'
-
 import useSalon, { cn } from '../salon/tags/tag_action'
+import ActionMenu from './ActionMenu'
+import type { TProps as TTagBarProps } from './TagBar'
 
 type TProps = Omit<TTagBarProps, 'settingTag'>
 
@@ -72,8 +68,8 @@ const TagAction: FC<TProps> = ({ tag, isFirst, isLast, total }) => {
               }}
             />
           }
-          placement="bottom-end"
-          trigger="mouseenter focus"
+          placement='bottom-end'
+          trigger='mouseenter focus'
           offset={[4, 0]}
           delay={300}
           hideOnClick
