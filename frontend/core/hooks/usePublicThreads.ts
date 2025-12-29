@@ -19,6 +19,7 @@ export default (): TCommunityThread[] => {
     const aliasItem = find(propEq(pThread.slug, 'slug'))(dashboard.nameAlias) as TNameAlias
 
     return {
+      // @ts-expect-error
       ...pThread,
       // @ts-expect-error
       title: aliasItem?.name || pThread.title,

@@ -20,7 +20,6 @@ export default () => {
           添加
         </AddButton>
       </div>
-      {/* @ts-ignore */}
       {sortByIndex(mediaReports).map((item: TMediaReport) => (
         <InputBox
           key={item.index}

@@ -1,43 +1,58 @@
 import { includes, isEmpty, keys, remove, sort, startsWith, uniq } from 'ramda'
-import { ASSETS_ENDPOINT, TAG_COLOR_ORDER } from '~/config'
+import { ASSETS_ENDPOINT } from '~/config'
 import { COLOR_NAME } from '~/const/colors'
 import { ARTICLE_STATE } from '~/const/gtd'
 import type { TArticleState, TColorName, TCommunityThread, TDsdThreadConf, TWindow } from '~/spec'
 
-type TSORTABLE_ITEMS = {
-  color?: string
-  index?: number
-  groupIndex?: number
-  id?: string
-  title?: string
-  slug: string
-  logo?: string
-  group?: string
-}[]
-
 export const Global: TWindow = typeof window !== 'undefined' ? window : null
 
 /**
- * sort the array by it's color
+ * Safely extract a numeric value from an object by key.
+ *
+ * - If the property is `undefined` or missing, it falls back to `0`
+ * - Non-number values will be coerced via `Number(...)`
+ *
+ * This helper intentionally centralizes the only required type assertion,
+ * keeping `sortByIndex` itself free of `any`.
  */
-export const sortByColor = (source: TSORTABLE_ITEMS): TSORTABLE_ITEMS =>
-  sort((t1, t2) => TAG_COLOR_ORDER[t1.color] - TAG_COLOR_ORDER[t2.color], source)
+const getNumeric = <T, K extends keyof T>(obj: T, key: K): number => {
+  return Number((obj as Record<K, unknown>)[key] ?? 0)
+}
 
 /**
- * sort the array by it's index
+ * Sort a readonly list of objects by a numeric field.
+ *
+ * - By default, it sorts by the `index` field
+ * - A custom key can be provided (e.g. `id`)
+ * - The field may be optional; `undefined` values are treated as `0`
+ *
+ * The function is designed for real-world data models where
+ * numeric fields are often optional and cannot be fully enforced
+ * at the type level.
+ *
+ * @example
+ * ```ts
+ * type Tag = {
+ *   index?: number
+ *   id?: number
+ *   title: string
+ * }
+ *
+ * const tags: readonly Tag[] = [...]
+ *
+ * sortByIndex(tags)
+ * // → sorted by `index`
+ *
+ * sortByIndex(tags, 'id')
+ * // → sorted by `id`
+ * ```
  */
-type NumericKeys<T> = {
-  [K in keyof T]: T[K] extends number ? K : never
-}[keyof T]
-
-export function sortByIndex<T extends { index: number }>(source: readonly T[]): T[]
-export function sortByIndex<T, K extends NumericKeys<T>>(source: readonly T[], key: K): T[]
-export function sortByIndex<T>(source: readonly T[], key?: PropertyKey): T[] {
+export const sortByIndex = <T, K extends keyof T>(source: readonly T[], key?: K): T[] => {
   if (isEmpty(source)) return []
 
-  const sortKey = key ?? 'index'
+  const sortKey = (key ?? 'index') as K
 
-  return sort((a, b) => (a as any)[sortKey] - (b as any)[sortKey], source)
+  return sort((a, b) => getNumeric(a, sortKey) - getNumeric(b, sortKey), source)
 }
 
 /**

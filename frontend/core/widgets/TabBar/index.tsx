@@ -28,13 +28,11 @@ const TabBar: FC<TProps> = ({
   size = SIZE.MEDIUM,
   withIcon = false,
 }) => {
-  // @ts-expect-error
   const sortedSource = sortByIndex(source)
 
   return (
     <div id={ANCHOR.GLOBAL_TABBER_ID}>
       <NormalView
-        // @ts-expect-error
         source={sortedSource}
         active={active}
         onChange={onChange}

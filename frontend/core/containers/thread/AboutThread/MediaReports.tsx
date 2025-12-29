@@ -16,7 +16,6 @@ const MediaReports: FC<TProps> = ({ items }) => {
 
   return (
     <>
-      {/* @ts-ignore */}
       {sortByIndex(items).map((item: TMediaReport) => {
         const { index, favicon, title, url, siteName } = item
         if (!title) return null

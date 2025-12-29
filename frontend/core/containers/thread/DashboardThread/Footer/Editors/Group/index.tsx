@@ -1,22 +1,16 @@
-import type { FC } from 'react'
-import { keys } from 'ramda'
-
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-
-import type { TLinkItem } from '~/spec'
+import { keys } from 'ramda'
+import type { FC } from 'react'
+import { groupByKey, sortByIndex } from '~/helper'
 
 import PlusSVG from '~/icons/Plus'
+import type { TLinkItem } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
-
-import { sortByIndex, groupByKey } from '~/helper'
-
-import LinkEditor from '../LinkEditor'
-import GroupInputer from '../GroupInputer'
-
-import GroupHead from './GroupHead'
-
 import useFooter from '../../../logic/useFooter'
 import useSalon from '../../../salon/footer/editors/group'
+import GroupInputer from '../GroupInputer'
+import LinkEditor from '../LinkEditor'
+import GroupHead from './GroupHead'
 
 const Group: FC = () => {
   const s = useSalon()
@@ -42,7 +36,6 @@ const Group: FC = () => {
   const [animateRef] = useAutoAnimate()
   const [groupAnimateRef] = useAutoAnimate()
 
-  // @ts-ignore
   const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 
@@ -57,7 +50,7 @@ const Group: FC = () => {
             onCancel={cancelGroupChange}
           />
         ) : (
-          <Button size="small" className="w-40" ghost space={4} onClick={() => triggerGroupAdd()}>
+          <Button size='small' className='w-40' ghost space={4} onClick={() => triggerGroupAdd()}>
             <PlusSVG className={s.plusIcon} />
             添加分组
           </Button>
@@ -98,11 +91,11 @@ const Group: FC = () => {
 
               {!editingLink && (
                 <Button
-                  size="small"
+                  size='small'
                   ghost
                   space={4}
                   onClick={() => add2Group(groupKey, curGroupLinks.length)}
-                  className="w-24"
+                  className='w-24'
                 >
                   <PlusSVG className={s.plusIcon} />
                   链接

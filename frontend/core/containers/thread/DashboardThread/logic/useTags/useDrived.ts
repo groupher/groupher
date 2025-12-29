@@ -53,7 +53,6 @@ export default (): TRet => {
   }, [tagLayout, original.tagLayout])
 
   const getTagsIndexTouched = useCallback((): boolean => {
-    // @ts-expect-error
     return !equals(sortByIndex(tags, 'id'), sortByIndex(original.tags || [], 'id'))
   }, [tags, original.tags])
 
