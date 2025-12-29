@@ -1,17 +1,13 @@
-import type { FC } from 'react'
-import { keys } from 'ramda'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-
-import type { TLinkItem } from '~/spec'
-import { sortByIndex, groupByKey } from '~/helper'
-
+import { keys } from 'ramda'
+import type { FC } from 'react'
+import { groupByKey, sortByIndex } from '~/helper'
 import PlusSVG from '~/icons/Plus'
+import type { TLinkItem } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
-
-import LinkEditor from '../LinkEditor'
-
 import useFooter from '../../../logic/useFooter'
 import useSalon from '../../../salon/footer/editors/simple'
+import LinkEditor from '../LinkEditor'
 
 const Simple: FC = () => {
   const s = useSalon()
@@ -19,7 +15,6 @@ const Simple: FC = () => {
 
   const { footerLinks: links, editingLink, editingLinkMode, add2Group } = useFooter()
 
-  // @ts-ignore
   const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks) as string[]
 
@@ -36,11 +31,11 @@ const Simple: FC = () => {
 
         {!editingLink && (
           <Button
-            size="small"
+            size='small'
             ghost
             space={8}
             onClick={() => add2Group(groupKeys[0], groupedLinks[groupKeys[0]].length)}
-            className="mt-6 w-28"
+            className='mt-6 w-28'
           >
             <PlusSVG className={s.icon} />
             链接

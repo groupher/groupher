@@ -18,7 +18,6 @@ export default (): TRet => {
 
   // drived
   const getModerators = useCallback(() => {
-    // @ts-ignore
     return sortByIndex(moderators, 'passportItemCount').reverse() as TModerator[]
   }, [store])
 

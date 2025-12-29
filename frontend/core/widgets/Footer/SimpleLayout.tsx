@@ -1,11 +1,9 @@
 import Link from 'next/link'
 import { keys } from 'ramda'
-
-import type { TLinkItem } from '~/spec'
-import useFooterLinks from '~/hooks/useFooterLinks'
 import { DEME_SOCIALS } from '~/const/social'
-
-import { sortByIndex, groupByKey } from '~/helper'
+import { groupByKey, sortByIndex } from '~/helper'
+import useFooterLinks from '~/hooks/useFooterLinks'
+import type { TLinkItem } from '~/spec'
 
 import SocialList from '~/widgets/SocialList'
 
@@ -15,13 +13,12 @@ export default () => {
   const s = useSalon()
   const { links } = useFooterLinks()
 
-  // @ts-ignore
   const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
   const groupKeys = keys(groupedLinks)
 
   return (
     <div className={s.wrapper}>
-      <Link className={s.brandLink} href="/">
+      <Link className={s.brandLink} href='/'>
         Groupher
       </Link>
       <div className={s.linksInfo}>
