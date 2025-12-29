@@ -39,55 +39,6 @@ export const sortById = (items: readonly TSortableItem[]) => sortByKey(items, 'i
 export const sortByGroupIndex = (items: readonly TSortableItem[]) => sortByKey(items, 'groupIndex')
 
 /**
- * Safely extract a numeric value from an object by key.
- *
- * - If the property is `undefined` or missing, it falls back to `0`
- * - Non-number values will be coerced via `Number(...)`
- *
- * This helper intentionally centralizes the only required type assertion,
- * keeping `sortByIndex` itself free of `any`.
- */
-const getNumeric = <T, K extends keyof T>(obj: T, key: K): number => {
-  return Number((obj as Record<K, unknown>)[key] ?? 0)
-}
-
-/**
- * Sort a readonly list of objects by a numeric field.
- *
- * - By default, it sorts by the `index` field
- * - A custom key can be provided (e.g. `id`)
- * - The field may be optional; `undefined` values are treated as `0`
- *
- * The function is designed for real-world data models where
- * numeric fields are often optional and cannot be fully enforced
- * at the type level.
- *
- * @example
- * ```ts
- * type Tag = {
- *   index?: number
- *   id?: number
- *   title: string
- * }
- *
- * const tags: readonly Tag[] = [...]
- *
- * sortByIndex(tags)
- * // → sorted by `index`
- *
- * sortByIndex(tags, 'id')
- * // → sorted by `id`
- * ```
- */
-export const sortByIndex2 = <T, K extends keyof T>(source: readonly T[], key?: K): T[] => {
-  if (isEmpty(source)) return []
-
-  const sortKey = (key ?? 'index') as K
-
-  return sort((a, b) => getNumeric(a, sortKey) - getNumeric(b, sortKey), source)
-}
-
-/**
  * count both chinese-word and english-words
  * @see @link https://stackoverflow.com/questions/20396456/how-to-do-word-counts-for-a-mixture-of-english-and-chinese-in-javascript
  *
