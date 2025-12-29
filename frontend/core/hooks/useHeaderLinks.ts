@@ -1,7 +1,7 @@
 import { filter, find } from 'ramda'
 import { useCallback } from 'react'
 import { MORE_GROUP } from '~/const/dashboard'
-import { groupByKey, sortByIndex } from '~/helper'
+import { groupByKey, sortByGroupIndex } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import type { THeaderLayout, TLinkItem } from '~/spec'
@@ -55,7 +55,7 @@ export default (): THeaderLinks => {
   const getGroupedLinks = useCallback(() => {
     const links = getCustomLinks()
     const groupedLinks = groupByKey(
-      sortByIndex(links as (TLinkItem & { groupIndex: number })[], 'groupIndex'),
+      sortByGroupIndex(links as (TLinkItem & { groupIndex: number })[]),
       'group',
     )
 

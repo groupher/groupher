@@ -1,7 +1,7 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { keys } from 'ramda'
 import type { FC } from 'react'
-import { groupByKey, sortByIndex } from '~/helper'
+import { groupByKey, sortByGroupIndex } from '~/helper'
 
 import PlusSVG from '~/icons/Plus'
 import type { TLinkItem } from '~/spec'
@@ -36,7 +36,7 @@ const Group: FC = () => {
   const [animateRef] = useAutoAnimate()
   const [groupAnimateRef] = useAutoAnimate()
 
-  const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
+  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
   const groupKeys = keys(groupedLinks)
 
   return (

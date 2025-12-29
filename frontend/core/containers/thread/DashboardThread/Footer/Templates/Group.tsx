@@ -3,7 +3,7 @@ import { keys } from 'ramda'
 import type { FC } from 'react'
 import { FOOTER_LAYOUT } from '~/const/layout'
 import { DEME_SOCIALS } from '~/const/social'
-import { groupByKey, sortByIndex } from '~/helper'
+import { groupByKey, sortByGroupIndex } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
 import type { TActive, TLinkItem } from '~/spec'
 
@@ -25,7 +25,7 @@ const Group: FC<TProps> = ({ links, active }) => {
   const [animateRef] = useAutoAnimate()
   const [groupAnimateRef] = useAutoAnimate()
 
-  const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
+  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
   const groupKeys = keys(groupedLinks)
 
   return (

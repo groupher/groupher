@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { keys } from 'ramda'
 import { DEME_SOCIALS } from '~/const/social'
-import { groupByKey, sortByIndex } from '~/helper'
+import { groupByKey, sortByGroupIndex } from '~/helper'
 import useFooterLinks from '~/hooks/useFooterLinks'
 import type { TLinkItem } from '~/spec'
 
@@ -13,7 +13,7 @@ export default () => {
   const s = useSalon()
   const { links } = useFooterLinks()
 
-  const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
+  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
   const groupKeys = keys(groupedLinks)
 
   return (

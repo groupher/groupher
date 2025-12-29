@@ -1,7 +1,7 @@
 import { equals, filter, find, includes, pluck, propEq, reject, uniq } from 'ramda'
 import { useCallback } from 'react'
 import { THREAD } from '~/const/thread'
-import { sortByIndex } from '~/helper'
+import { sortById } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
@@ -53,7 +53,7 @@ export default (): TRet => {
   }, [tagLayout, original.tagLayout])
 
   const getTagsIndexTouched = useCallback((): boolean => {
-    return !equals(sortByIndex(tags, 'id'), sortByIndex(original.tags || [], 'id'))
+    return !equals(sortById(tags), sortById(original.tags || []))
   }, [tags, original.tags])
 
   return {

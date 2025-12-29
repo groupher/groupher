@@ -4,7 +4,7 @@ import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { filter, keys, length, startsWith } from 'ramda'
 import type { FC } from 'react'
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
-import { groupByKey, sortByIndex } from '~/helper'
+import { groupByKey, sortByGroupIndex } from '~/helper'
 import PlusSVG from '~/icons/Plus'
 import type { TLinkItem } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
@@ -43,7 +43,7 @@ const Editor: FC = () => {
   const isAboutLinkFold =
     length(filter((item) => item.title !== '' && item.group !== MORE_GROUP, links)) >= 1
 
-  const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
+  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
   const groupKeys = keys(groupedLinks) as string[]
 
   return (

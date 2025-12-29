@@ -6,6 +6,38 @@ import type { TArticleState, TColorName, TCommunityThread, TDsdThreadConf, TWind
 
 export const Global: TWindow = typeof window !== 'undefined' ? window : null
 
+type TSortableItem = {
+  color?: string
+  index?: number
+  groupIndex?: number
+  id?: string
+  title?: string
+  slug?: string
+  logo?: string
+  group?: string
+}
+
+export const sortByKey = <T, K extends keyof T>(source: readonly T[], key: K): T[] => {
+  if (isEmpty(source)) return []
+
+  const sortKey = key
+
+  return sort((a, b) => {
+    const av = a[sortKey]
+    const bv = b[sortKey]
+
+    if (av == null) return 1
+    if (bv == null) return -1
+
+    return av > bv ? 1 : av < bv ? -1 : 0
+  }, source)
+}
+
+export const sortByColor = (items: readonly TSortableItem[]) => sortByKey(items, 'color')
+export const sortByIndex = (items: readonly TSortableItem[]) => sortByKey(items, 'index')
+export const sortById = (items: readonly TSortableItem[]) => sortByKey(items, 'id')
+export const sortByGroupIndex = (items: readonly TSortableItem[]) => sortByKey(items, 'groupIndex')
+
 /**
  * Safely extract a numeric value from an object by key.
  *
@@ -47,7 +79,7 @@ const getNumeric = <T, K extends keyof T>(obj: T, key: K): number => {
  * // → sorted by `id`
  * ```
  */
-export const sortByIndex = <T, K extends keyof T>(source: readonly T[], key?: K): T[] => {
+export const sortByIndex2 = <T, K extends keyof T>(source: readonly T[], key?: K): T[] => {
   if (isEmpty(source)) return []
 
   const sortKey = (key ?? 'index') as K

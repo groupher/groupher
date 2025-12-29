@@ -54,7 +54,7 @@ export type TTag = {
   id?: string
   index?: number
   title?: string
-  slug: string
+  slug?: string
   layout?: string
   desc?: string
   thread?: string

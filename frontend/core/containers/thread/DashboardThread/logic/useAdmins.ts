@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 
 import type { TModerator, TUser } from '~/spec'
 
-import { sortByIndex } from '~/helper'
+import { sortByKey } from '~/helper'
 import useDashboard from '~/hooks/useDashboard'
 
 type TRet = {
@@ -18,7 +18,7 @@ export default (): TRet => {
 
   // drived
   const getModerators = useCallback(() => {
-    return sortByIndex(moderators, 'passportItemCount').reverse() as TModerator[]
+    return sortByKey(moderators, 'passportItemCount').reverse() as TModerator[]
   }, [store])
 
   const setActiveSettingAdmin = (user: TUser): void => store.commit({ activeModerator: user })

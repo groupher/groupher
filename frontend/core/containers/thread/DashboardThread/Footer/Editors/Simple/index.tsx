@@ -1,7 +1,7 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { keys } from 'ramda'
 import type { FC } from 'react'
-import { groupByKey, sortByIndex } from '~/helper'
+import { groupByKey, sortByGroupIndex } from '~/helper'
 import PlusSVG from '~/icons/Plus'
 import type { TLinkItem } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
@@ -15,7 +15,7 @@ const Simple: FC = () => {
 
   const { footerLinks: links, editingLink, editingLinkMode, add2Group } = useFooter()
 
-  const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
+  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
   const groupKeys = keys(groupedLinks) as string[]
 
   return (

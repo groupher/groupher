@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { keys, startsWith } from 'ramda'
 import { type FC, Fragment } from 'react'
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
-import { groupByKey, sortByIndex } from '~/helper'
+import { groupByKey, sortByGroupIndex } from '~/helper'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TLinkItem } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
@@ -41,7 +41,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links }) => {
 
   const [animateRef] = useAutoAnimate()
 
-  const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
+  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
   const groupKeys = keys(groupedLinks)
 
   return (
