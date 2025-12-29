@@ -3,7 +3,7 @@
  */
 
 import RichEditor from '@groupher/rich-editor'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
 import { scrollDrawerToTop } from '~/dom'
 
@@ -33,11 +33,11 @@ export default () => {
     scrollDrawerToTop()
   }, [])
 
-  const hideFixedHeader = useCallback(() => setFixedHeaderVisible(false), [])
-  const showFixedHeader = useCallback(() => setFixedHeaderVisible(true), [])
+  const hideFixedHeader = () => setFixedHeaderVisible(false)
+  const showFixedHeader = () => setFixedHeaderVisible(true)
 
-  const hideFooter = useCallback(() => setFooterVisible(false), [])
-  const showFooter = useCallback(() => setFooterVisible(true), [])
+  const hideFooter = () => setFooterVisible(false)
+  const showFooter = () => setFooterVisible(true)
 
   return (
     <>

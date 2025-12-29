@@ -1,5 +1,4 @@
-import { clone, forEach, keys } from 'ramda'
-import { useCallback } from 'react'
+import { clone, keys } from 'ramda'
 import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
 import useWallpaperDomain from '~/hooks/useWallpaper.domain'
 import type {
@@ -22,35 +21,27 @@ type TRet = {
 export default (): TRet => {
   const store = useWallpaperDomain()
 
-  const getGradientWallpapers = useCallback((): Record<string, TWallpaper> => {
+  const getGradientWallpapers = (): Record<string, TWallpaper> => {
     const wallpapers = clone(GRADIENT_WALLPAPER)
-    const paperKeys = keys(GRADIENT_WALLPAPER)
-
-    forEach((key) => {
+    for (const key of keys(GRADIENT_WALLPAPER)) {
       const wallpaperObj = wallpapers[key] as TWallpaperGradient
-      const { hasPattern, hasBlur, direction } = store
-
-      wallpaperObj.hasPattern = hasPattern
-      wallpaperObj.hasBlur = hasBlur
-      wallpaperObj.direction = direction as TWallpaperGradientDir
-    }, paperKeys)
-
+      wallpaperObj.hasPattern = store.hasPattern
+      wallpaperObj.hasBlur = store.hasBlur
+      wallpaperObj.direction = store.direction as TWallpaperGradientDir
+    }
     return wallpapers
-  }, [store])
+  }
 
-  const getPatternWallpapers = useCallback((): Record<string, TWallpaper> => {
+  const getPatternWallpapers = (): Record<string, TWallpaper> => {
     const wallpapers = clone(PATTERN_WALLPAPER)
-    const paperKeys = keys(PATTERN_WALLPAPER)
-
-    forEach((key) => {
+    for (const key of keys(PATTERN_WALLPAPER)) {
       const wallpaperObj = wallpapers[key] as TWallpaperPic
       wallpaperObj.hasBlur = store.hasBlur
-    }, paperKeys)
-
+    }
     return wallpapers
-  }, [store])
+  }
 
-  const getWallpaper = useCallback((): TWallpaperData => {
+  const getWallpaper = (): TWallpaperData => {
     const {
       customColorValue,
       direction,
@@ -72,7 +63,7 @@ export default (): TRet => {
       customColor: customColorValue,
       direction,
     }
-  }, [store, getGradientWallpapers, getPatternWallpapers])
+  }
 
   const changeWallpaper = (wallpaper: string): void => store.commit({ wallpaper })
 

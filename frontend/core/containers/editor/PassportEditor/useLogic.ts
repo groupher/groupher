@@ -1,5 +1,5 @@
 import { find, forEach, keys, reject, uniq } from 'ramda'
-import { useCallback, useState } from 'react'
+import { useMemo, useState } from 'react'
 import EVENT from '~/const/event'
 import useAccount from '~/hooks/useAccount'
 import useCommunity from '~/hooks/useCommunity'
@@ -19,11 +19,11 @@ type TRet = {
   toggleCheck: (rule: string, checked: boolean) => void
   loadAllPassportRules: () => void
   updatePassport: () => void
-  // drived
-  getRules: () => string
-  getIsActiveModeratorRoot: () => boolean
-  getIsCurUserModeratorRoot: () => boolean
-  getIsReadonly: () => boolean
+
+  rules: string
+  isActiveModeratorRoot: boolean
+  isCurUserModeratorRoot: boolean
+  isReadonly: boolean
 }
 
 export default (): TRet => {
@@ -93,28 +93,23 @@ export default (): TRet => {
     )
   }
 
-  const getIsActiveModeratorRoot = useCallback((): boolean => {
-    const curModerators = curCommunity.moderators
-    const curRoot = find((moderator) => moderator.role === 'root', curModerators)
+  const isActiveModeratorRoot = useMemo(() => {
+    const curRoot = find((moderator) => moderator.role === 'root', curCommunity.moderators)
+    return curRoot?.user.login === activeModerator?.login
+  }, [activeModerator, curCommunity.moderators])
 
-    return curRoot.user.login === activeModerator?.login
-  }, [activeModerator, curCommunity])
+  const isCurUserModeratorRoot = useMemo(() => {
+    const curRoot = find((moderator) => moderator.role === 'root', curCommunity.moderators)
+    return curRoot?.user.login === account.user.login
+  }, [account.user.login, curCommunity.moderators])
 
-  const getIsCurUserModeratorRoot = useCallback((): boolean => {
-    const curModerators = curCommunity.moderators
-    const curRoot = find((moderator) => moderator.role === 'root', curModerators)
+  const rules = useMemo(() => {
+    return isActiveModeratorRoot ? allRootRules : allModeratorRules
+  }, [isActiveModeratorRoot, allRootRules, allModeratorRules])
 
-    // @ts-expect-error
-    return curRoot.user.login === account.login
-  }, [curCommunity, account])
-
-  const getRules = useCallback((): string => {
-    return getIsActiveModeratorRoot() ? allRootRules : allModeratorRules
-  }, [getIsActiveModeratorRoot, allRootRules, allModeratorRules])
-
-  const getIsReadonly = useCallback((): boolean => {
-    return getIsActiveModeratorRoot() || !getIsCurUserModeratorRoot()
-  }, [getIsCurUserModeratorRoot, getIsActiveModeratorRoot])
+  const isReadonly = useMemo(() => {
+    return isActiveModeratorRoot || !isCurUserModeratorRoot
+  }, [isActiveModeratorRoot, isCurUserModeratorRoot])
 
   return {
     selectedRules,
@@ -127,9 +122,9 @@ export default (): TRet => {
     updatePassport,
 
     // TODO:
-    getRules,
-    getIsActiveModeratorRoot,
-    getIsCurUserModeratorRoot,
-    getIsReadonly,
+    rules,
+    isActiveModeratorRoot,
+    isCurUserModeratorRoot,
+    isReadonly,
   }
 }

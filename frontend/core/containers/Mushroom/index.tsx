@@ -1,9 +1,8 @@
 'use client'
 
-import { type FC, useEffect, useCallback } from 'react'
-
-import useViewingThread from '~/hooks/useViewingThread'
+import { type FC, useCallback, useEffect } from 'react'
 import { THREAD } from '~/const/thread'
+import useViewingThread from '~/hooks/useViewingThread'
 
 import useLogic from './useLogic'
 
@@ -25,7 +24,7 @@ const Mushroom: FC = () => {
     initAppVersion()
 
     /**
-     * this event is only hanle brower back/forward, current behavior is like producthunt
+     * this event is only handle browser back/forward, current behavior is like product-hunt
      */
     window.addEventListener('popstate', handleBrowserPopChange)
 
@@ -34,7 +33,7 @@ const Mushroom: FC = () => {
     }
   }, [handleBrowserPopChange, initAppVersion])
 
-  return <></>
+  return null
 }
 
 export default Mushroom

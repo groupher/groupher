@@ -18,6 +18,7 @@ const PassportEditor: FC = () => {
 
   const curCommunity = useCommunity()
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     loadAllPassportRules()
   }, [])
@@ -26,15 +27,10 @@ const PassportEditor: FC = () => {
     activeModerator,
     loadAllPassportRules,
     updatePassport,
-    getIsActiveModeratorRoot,
-    getIsCurUserModeratorRoot,
-    getIsReadonly,
+    isActiveModeratorRoot,
+    isCurUserModeratorRoot,
+    isReadonly,
   } = useLogic()
-
-  const isActiveModeratorRoot = getIsActiveModeratorRoot()
-  const isCurUserModeratorRoot = getIsCurUserModeratorRoot()
-
-  const readonly = getIsReadonly()
 
   if (!activeModerator) return null
 
@@ -54,7 +50,7 @@ const PassportEditor: FC = () => {
       <Selects />
       <div className={s.divider} />
 
-      {!readonly && (
+      {!isReadonly && (
         <div className={s.footer}>
           <Button type='red' ghost>
             删除管理员

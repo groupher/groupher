@@ -1,10 +1,8 @@
-import { proxy } from 'valtio'
 import { mergeDeepRight } from 'ramda'
-
-import type { TStore } from './spec'
+import { proxy } from 'valtio'
 import { EMPTY_PAGED_COMMENTS } from '~/const/utils'
-
-import { MODE, EDIT_MODE, API_MODE } from '../constant'
+import { API_MODE, EDIT_MODE, MODE } from '../constant'
+import type { TStore } from './spec'
 
 const store = proxy<TStore>({
   mode: MODE.REPLIES,
@@ -24,7 +22,7 @@ const store = proxy<TStore>({
   updateId: null,
   updateBody: '{}',
   // reply comment
-  // parrent comment of current reply
+  // parent comment of current reply
   replyToComment: null,
   replyBody: '{}',
   // content input of current reply comment editor

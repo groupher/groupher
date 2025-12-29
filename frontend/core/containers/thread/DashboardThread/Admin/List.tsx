@@ -1,9 +1,7 @@
-import { callPassportEditor } from '~/signal'
-
 import ArrowSVG from '~/icons/ArrowSimple'
-
-import Button from '~/widgets/Buttons/Button'
+import { callPassportEditor } from '~/signal'
 import AdminAvatar from '~/widgets/AdminAvatar'
+import Button from '~/widgets/Buttons/Button'
 
 import useAdmins from '../logic/useAdmins'
 
@@ -11,9 +9,7 @@ import useSalon, { cn } from '../salon/admin/list'
 
 export default () => {
   const s = useSalon()
-  const { getModerators, activeModerator, setActiveSettingAdmin } = useAdmins()
-
-  const moderators = getModerators()
+  const { moderators, activeModerator, setActiveSettingAdmin } = useAdmins()
 
   return (
     <div className={s.wrapper}>
@@ -29,17 +25,17 @@ export default () => {
                 <div className={s.name}>{user.nickname}</div>
                 <div className={s.login}>@{user.login}</div>
                 {role === 'root' && <div className={s.rootSign}>root</div>}
-                <div className="grow" />
+                <div className='grow' />
                 <Button
                   top={1}
-                  className="w-28"
+                  className='w-28'
                   onClick={() => {
                     setActiveSettingAdmin(user)
                     callPassportEditor()
                   }}
                   ghost
                   noBorder
-                  size="small"
+                  size='small'
                 >
                   {role === 'root' ? <>全部权限</> : <>{passportItemCount} 项权限</>}
                   <ArrowSVG className={s.arrowIcon} />
