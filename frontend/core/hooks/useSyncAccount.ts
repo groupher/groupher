@@ -1,13 +1,12 @@
-import { useEffect, useState } from 'react'
 import OAUTH from '~/const/oauth'
 import { debounce } from '~/helper'
 import useAccount from '~/hooks/useAccount'
+import useMount from '~/hooks/useMount'
 import type { TAccount, TSimpleUser } from '~/spec'
 import BStore from '~/utils/bstore'
 
 export default (): TAccount => {
   const { isLogin, setSession, accountInfo } = useAccount()
-  const [isLinkClickListenerAdded, setIsLinkClickListenerAdded] = useState(false)
 
   /**
    * TODO: handle token expired situation
@@ -39,22 +38,15 @@ export default (): TAccount => {
     }
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    syncAccountInfo()
-  }, [])
+  useMount(syncAccountInfo)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    if (!isLinkClickListenerAdded) {
-      document.addEventListener('click', handleLinkClick)
-      setIsLinkClickListenerAdded(true)
-    }
+  useMount(() => {
+    document.addEventListener('click', handleLinkClick)
+
     return () => {
       document.removeEventListener('click', handleLinkClick)
-      setIsLinkClickListenerAdded(false)
     }
-  }, [])
+  })
 
   return accountInfo
 }

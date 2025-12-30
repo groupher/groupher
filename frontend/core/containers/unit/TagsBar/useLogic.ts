@@ -1,5 +1,5 @@
 import { findIndex } from 'ramda'
-import { useCallback } from 'react'
+import { useMemo } from 'react'
 import { groupByKey } from '~/helper'
 import useArticles from '~/hooks/useArticles'
 import type { TGroupedTags, TTag } from '~/spec'
@@ -7,19 +7,26 @@ import { getParameterByName } from '~/utils/route'
 
 type TRet = {
   tags: readonly TTag[]
+  activeTag: TTag | null
+
+  groupedTags: TGroupedTags
   onTagSelect: (tag: TTag) => void
   syncActiveTagFromURL: () => void
-  activeTag: TTag | null
-  getGroupedTags: () => TGroupedTags
+
   maxDisplayCount: number
-  totalCountThrold: number
+  totalCountThreshold: number
 }
 
 export default (): TRet => {
   const store = useArticles()
   const { tags, activeTag } = store
 
-  const getGroupedTags = useCallback((): TGroupedTags => groupByKey(tags, 'group'), [tags])
+  // derived data
+  const groupedTags = useMemo<TGroupedTags>(() => {
+    return groupByKey(tags, 'group')
+  }, [tags])
+
+  const onTagSelect = (tag: TTag): void => store.commit({ activeTag: tag })
 
   const syncActiveTagFromURL = (): void => {
     const tagOnURL = getParameterByName('tag')
@@ -31,17 +38,15 @@ export default (): TRet => {
     onTagSelect(tags[idx])
   }
 
-  const onTagSelect = (tag: TTag): void => {
-    store.commit({ activeTag: tag })
-  }
-
   return {
     tags,
     activeTag,
+
+    groupedTags,
     onTagSelect,
-    getGroupedTags,
     syncActiveTagFromURL,
+
     maxDisplayCount: 3,
-    totalCountThrold: 10,
+    totalCountThreshold: 10,
   }
 }

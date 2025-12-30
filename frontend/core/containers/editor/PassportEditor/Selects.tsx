@@ -1,26 +1,21 @@
-import { keys, includes } from 'ramda'
+import { includes, keys } from 'ramda'
 
 import { Trans } from '~/i18n/dashboard'
-
-import RootCheckSVG from '~/icons/CheckCircle'
 import CheckSVG from '~/icons/Check'
+import RootCheckSVG from '~/icons/CheckCircle'
 import Checker from '~/widgets/Checker'
-
-import useLogic from './useLogic'
 import useSalon from './salon/selects'
+import useLogic from './useLogic'
 
 export default () => {
   const s = useSalon()
 
-  const { getRules, allModeratorRules, selectedRules, getIsReadonly, toggleCheck } = useLogic()
-  const rules = getRules()
+  const { rules, allModeratorRules, selectedRules, isReadonly, toggleCheck } = useLogic()
 
   const optionsJson = JSON.parse(rules)
   const optionKeys = keys(optionsJson)
 
-  const readonly = getIsReadonly()
-
-  if (readonly) {
+  if (isReadonly) {
     const moderatorKeys = keys(JSON.parse(allModeratorRules))
 
     return (
@@ -51,7 +46,7 @@ export default () => {
           <div className={s.item} key={ruleKey}>
             <Checker
               checked={includes(ruleKey, selectedRules)}
-              size="small"
+              size='small'
               onChange={(checked) => toggleCheck(ruleKey, checked)}
             >
               <div className={s.itemTitle}>{Trans(ruleKey)}</div>

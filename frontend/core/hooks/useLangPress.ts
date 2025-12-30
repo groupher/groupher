@@ -1,5 +1,5 @@
 // see https://stackoverflow.com/questions/48048957/react-long-press-event
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 
 /**
  *
@@ -37,12 +37,8 @@ const useLongPress = (callback: () => void, ms = 500) => {
     }
   }, [callback, ms, startLongPress])
 
-  const start = useCallback(() => {
-    setStartLongPress(true)
-  }, [])
-  const stop = useCallback(() => {
-    setStartLongPress(false)
-  }, [])
+  const start = () => setStartLongPress(true)
+  const stop = () => setStartLongPress(false)
 
   return {
     onMouseDown: start,

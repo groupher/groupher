@@ -2,20 +2,17 @@
 /*
  * OSSUploader
  */
-import { type FC, type ReactNode, useState, useEffect, useRef, useCallback } from 'react'
+
 import Script from 'next/script'
-
-import uid from '~/utils/uid'
+import { type FC, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { assetPath } from '~/helper'
-
 import CrossSVG from '~/icons/CloseCross'
-import UploadSVG from '~/icons/Upload'
 import TurboSVG from '~/icons/Turbo'
-
+import UploadSVG from '~/icons/Upload'
+import uid from '~/utils/uid'
+import { applyUploadTokensIfNeed, handleUploadFile, initOSSClient } from './helper'
 import PreviewBlock from './PreviewBlock'
-
 import useSalon, { cn } from './salon'
-import { initOSSClient, handleUploadFile, applyUploadTokensIfNeed } from './helper'
 
 type TProps = {
   children: ReactNode
@@ -59,21 +56,16 @@ const OSSUploader: FC<TProps> = ({
     }
   }, [loaded])
 
-  const onStart = useCallback(() => {
-    setLoading(true)
-  }, [])
+  const onStart = () => setLoading(true)
 
-  const onDone = useCallback(
-    (url) => {
-      setLoading(false)
-      // console.log('## ## url: ', url)
-      // console.log('## ## asset url: ', assetPath(url))
-      onUploadDone(assetPath(url))
-    },
-    [onUploadDone],
-  )
+  const onDone = (url) => {
+    setLoading(false)
+    // console.log('## ## url: ', url)
+    // console.log('## ## asset url: ', assetPath(url))
+    onUploadDone(assetPath(url))
+  }
 
-  const onError = useCallback((msg) => {
+  const onError = useCallback((_msg) => {
     setLoading(false)
   }, [])
 
@@ -83,7 +75,7 @@ const OSSUploader: FC<TProps> = ({
   return (
     <div className={s.wrapper}>
       <Script
-        src="https://gosspublic.alicdn.com/aliyun-oss-sdk-6.18.1.min.js"
+        src='https://gosspublic.alicdn.com/aliyun-oss-sdk-6.18.1.min.js'
         onLoad={() => setOnLoad(true)}
       />
 
@@ -97,7 +89,7 @@ const OSSUploader: FC<TProps> = ({
         <input
           className={s.inputFile}
           id={`file-${uniqueId}`}
-          type="file"
+          type='file'
           name={`file-${uniqueId}`}
           accept={fileType}
           onChange={(e) => handleUploadFile(ossClient, e, filePrefix, callbacks)}
@@ -107,7 +99,7 @@ const OSSUploader: FC<TProps> = ({
           className={cn(s.label, loading && 'brightness-75')}
           htmlFor={`file-${uniqueId}`}
         >
-          {showPreview ? <PreviewBlock url={previewUrl} /> : <>{children}</>}
+          {showPreview ? <PreviewBlock url={previewUrl} /> : children}
         </label>
 
         {!loading && (

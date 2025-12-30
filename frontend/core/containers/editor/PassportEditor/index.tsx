@@ -3,12 +3,11 @@
  *
  */
 
-import { type FC, useEffect } from 'react'
+import type { FC } from 'react'
 
 import useCommunity from '~/hooks/useCommunity'
-
+import useMount from '~/hooks/useMount'
 import Button from '~/widgets/Buttons/Button'
-
 import Selects from './Selects'
 import useSalon from './salon'
 import useLogic from './useLogic'
@@ -18,23 +17,16 @@ const PassportEditor: FC = () => {
 
   const curCommunity = useCommunity()
 
-  useEffect(() => {
-    loadAllPassportRules()
-  }, [])
-
   const {
     activeModerator,
     loadAllPassportRules,
     updatePassport,
-    getIsActiveModeratorRoot,
-    getIsCurUserModeratorRoot,
-    getIsReadonly,
+    isActiveModeratorRoot,
+    isCurUserModeratorRoot,
+    isReadonly,
   } = useLogic()
 
-  const isActiveModeratorRoot = getIsActiveModeratorRoot()
-  const isCurUserModeratorRoot = getIsCurUserModeratorRoot()
-
-  const readonly = getIsReadonly()
+  useMount(loadAllPassportRules)
 
   if (!activeModerator) return null
 
@@ -54,7 +46,7 @@ const PassportEditor: FC = () => {
       <Selects />
       <div className={s.divider} />
 
-      {!readonly && (
+      {!isReadonly && (
         <div className={s.footer}>
           <Button type='red' ghost>
             删除管理员

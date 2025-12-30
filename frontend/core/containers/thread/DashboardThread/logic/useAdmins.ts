@@ -1,30 +1,26 @@
-import { useCallback } from 'react'
-
+import { useMemo } from 'react'
+import { sortByKey } from '~/helper'
+import useDashboard from '~/hooks/useDashboard'
 import type { TModerator, TUser } from '~/spec'
 
-import { sortByIndex } from '~/helper'
-import useDashboard from '~/hooks/useDashboard'
-
 type TRet = {
-  getModerators: () => TModerator[]
+  moderators: TModerator[]
   activeModerator: TUser | null
   setActiveSettingAdmin: (user: TUser) => void
 }
 
 export default (): TRet => {
   const store = useDashboard()
+  const { moderators: originalModerators, activeModerator } = store
 
-  const { moderators, activeModerator } = store
-
-  // drived
-  const getModerators = useCallback(() => {
-    return sortByIndex(moderators, 'passportItemCount').reverse() as TModerator[]
-  }, [store])
+  const moderators = useMemo(() => {
+    return sortByKey(originalModerators, 'passportItemCount').reverse() as TModerator[]
+  }, [originalModerators])
 
   const setActiveSettingAdmin = (user: TUser): void => store.commit({ activeModerator: user })
 
   return {
-    getModerators,
+    moderators,
     activeModerator,
     setActiveSettingAdmin,
   }

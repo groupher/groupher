@@ -4,7 +4,7 @@ import { clone, filter, find, findIndex, forEach, keys, reject, remove } from 'r
 import { useEffect, useRef } from 'react'
 import { MORE_GROUP } from '~/const/dashboard'
 import { DSB_ROUTE, ROUTE } from '~/const/route'
-import { groupByKey, sortByIndex } from '~/helper'
+import { groupByKey, sortByGroupIndex } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import type { TGroupedLinks, TLinkItem } from '~/spec'
@@ -109,7 +109,7 @@ export default (): TRet => {
    * move group actions
    */
   const reindexGroup = (_targetLinks: readonly TLinkItem[]): TLinkItem[] => {
-    const targetLinks = clone(sortByIndex(_targetLinks, 'groupIndex'))
+    const targetLinks = clone(sortByGroupIndex(_targetLinks))
 
     const _groupedLinks = groupByKey(targetLinks, 'group')
     const groupKeys = keys(_groupedLinks) as string[]
@@ -227,7 +227,7 @@ export default (): TRet => {
   const moveGroup = (group: string, opt: 'left' | 'right' | 'edge-left' | 'edge-right'): void => {
     const links = getLinks()
 
-    const _groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
+    const _groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
     const groupKeys = keys(_groupedLinks) as string[]
 
     const groupedLinks = reindexByGroup(groupKeys, _groupedLinks)

@@ -1,7 +1,6 @@
 import type { FC } from 'react'
-
-import MenuItem from '~/widgets/MenuItem'
 import MENU from '~/const/menu'
+import MenuItem from '~/widgets/MenuItem'
 
 import useSalon from '../salon/tags/action_menu'
 
@@ -28,14 +27,14 @@ const LinkMenu: FC<TProps> = ({
   return (
     <div className={s.wrapper}>
       {activeTagGroup && !isFirst && (
-        <MenuItem icon={MENU.ARROW_TO_TOP} title="移至最前" onClick={() => move2Top()} />
+        <MenuItem icon={MENU.ARROW_TO_TOP} title='移至最前' onClick={() => move2Top()} />
       )}
 
       {activeTagGroup && !isLast && (
-        <MenuItem icon={MENU.ARROW_TO_BOTTOM} title="移至最后" onClick={() => move2Bottom()} />
+        <MenuItem icon={MENU.ARROW_TO_BOTTOM} title='移至最后' onClick={() => move2Bottom()} />
       )}
 
-      <MenuItem icon={MENU.SETTING} title="高级设置" onClick={() => onSetting()} />
+      <MenuItem icon={MENU.SETTING} title='高级设置' onClick={() => onSetting()} />
     </div>
   )
 }

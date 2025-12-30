@@ -4,12 +4,11 @@
  *
  */
 
+import { keys, reverse } from 'ramda'
 import { type FC, memo } from 'react'
-import { reverse, keys } from 'ramda'
-
-import type { TSpace } from '~/spec'
 import { groupByKey } from '~/helper'
 import { mockTags } from '~/mock'
+import type { TSpace } from '~/spec'
 
 import Folder from './Folder'
 
@@ -39,7 +38,7 @@ const FileTree: FC<TProps> = ({ onSelect, ...spacing }) => {
           allTags={tagsData}
           activeTag={activeTagData}
           maxDisplayCount={3}
-          totalCountThrold={10}
+          totalCountThreshold={10}
           onSelect={() => {
             // onTagSelect(tag)
             onSelect?.()

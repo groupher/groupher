@@ -4,7 +4,7 @@ import type { TEditFunc, TTag, TTagLayout, TThread } from '~/spec'
 import type { TChangeTagMode } from '~/stores/dashboard/spec'
 
 import useHelper from '../useHelper'
-import useDrived, { type TRet as TDrived } from './useDrived'
+import useDerived, { type TRet as TDrived } from './useDerived'
 import useUtils from './useUtils'
 
 type TRet = {
@@ -30,7 +30,8 @@ type TRet = {
 export default (): TRet => {
   const store = useDashboard()
   const { edit } = useHelper()
-  const drived = useDrived()
+  const derived = useDerived()
+
   const { loadTags, moveTag, moveTag2Edge } = useUtils()
 
   const exportState = [
@@ -55,7 +56,7 @@ export default (): TRet => {
   return {
     // @ts-expect-error
     ...pick(exportState, store),
-    ...drived,
+    ...derived,
     // actions
     changeThread,
     editTag,

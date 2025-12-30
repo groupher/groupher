@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { filter, keys, startsWith } from 'ramda'
 import { type FC, Fragment, useState } from 'react'
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
-import { groupByKey, sortByIndex } from '~/helper'
+import { groupByKey, sortByGroupIndex } from '~/helper'
 import useAccount from '~/hooks/useAccount'
 import useCommunity from '~/hooks/useCommunity'
 import ArrowSVG from '~/icons/ArrowSimple'
@@ -62,7 +62,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
 
   const _links = filter((item) => item.title !== '', links)
 
-  const groupedLinks = groupByKey(sortByIndex(_links, 'groupIndex'), 'group')
+  const groupedLinks = groupByKey(sortByGroupIndex(_links), 'group')
   const groupKeys = keys(groupedLinks)
 
   return (

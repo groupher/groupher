@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { keys } from 'ramda'
 
 import { DEME_SOCIALS } from '~/const/social'
-import { assetSrc, groupByKey, sortByIndex } from '~/helper'
+import { assetSrc, groupByKey, sortByGroupIndex } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
 import useFooterLinks from '~/hooks/useFooterLinks'
 
@@ -18,7 +18,7 @@ export default () => {
   const { logo, desc, title } = useCommunity()
   const { links } = useFooterLinks()
 
-  const groupedLinks = groupByKey(sortByIndex(links, 'groupIndex'), 'group')
+  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
   const groupKeys = keys(groupedLinks)
 
   return (

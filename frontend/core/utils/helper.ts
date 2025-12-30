@@ -6,54 +6,37 @@ import type { TArticleState, TColorName, TCommunityThread, TDsdThreadConf, TWind
 
 export const Global: TWindow = typeof window !== 'undefined' ? window : null
 
-/**
- * Safely extract a numeric value from an object by key.
- *
- * - If the property is `undefined` or missing, it falls back to `0`
- * - Non-number values will be coerced via `Number(...)`
- *
- * This helper intentionally centralizes the only required type assertion,
- * keeping `sortByIndex` itself free of `any`.
- */
-const getNumeric = <T, K extends keyof T>(obj: T, key: K): number => {
-  return Number((obj as Record<K, unknown>)[key] ?? 0)
+type TSortableItem = {
+  color?: string
+  index?: number
+  groupIndex?: number
+  id?: string
+  title?: string
+  slug?: string
+  logo?: string
+  group?: string
 }
 
-/**
- * Sort a readonly list of objects by a numeric field.
- *
- * - By default, it sorts by the `index` field
- * - A custom key can be provided (e.g. `id`)
- * - The field may be optional; `undefined` values are treated as `0`
- *
- * The function is designed for real-world data models where
- * numeric fields are often optional and cannot be fully enforced
- * at the type level.
- *
- * @example
- * ```ts
- * type Tag = {
- *   index?: number
- *   id?: number
- *   title: string
- * }
- *
- * const tags: readonly Tag[] = [...]
- *
- * sortByIndex(tags)
- * // → sorted by `index`
- *
- * sortByIndex(tags, 'id')
- * // → sorted by `id`
- * ```
- */
-export const sortByIndex = <T, K extends keyof T>(source: readonly T[], key?: K): T[] => {
+export const sortByKey = <T, K extends keyof T>(source: readonly T[], key: K): T[] => {
   if (isEmpty(source)) return []
 
-  const sortKey = (key ?? 'index') as K
+  const sortKey = key
 
-  return sort((a, b) => getNumeric(a, sortKey) - getNumeric(b, sortKey), source)
+  return sort((a, b) => {
+    const av = a[sortKey]
+    const bv = b[sortKey]
+
+    if (av == null) return 1
+    if (bv == null) return -1
+
+    return av > bv ? 1 : av < bv ? -1 : 0
+  }, source)
 }
+
+export const sortByColor = (items: readonly TSortableItem[]) => sortByKey(items, 'color')
+export const sortByIndex = (items: readonly TSortableItem[]) => sortByKey(items, 'index')
+export const sortById = (items: readonly TSortableItem[]) => sortByKey(items, 'id')
+export const sortByGroupIndex = (items: readonly TSortableItem[]) => sortByKey(items, 'groupIndex')
 
 /**
  * count both chinese-word and english-words
