@@ -3,7 +3,7 @@ import { mergeRight, reject } from 'ramda'
 import { HOME_COMMUNITY } from '~/const/name'
 import URL_PARAM from '~/const/url_param'
 import useArticleList from '~/hooks/useArticleList'
-import useGeneral from '~/hooks/useGeneral'
+import useCommunity from '~/hooks/useCommunity'
 import type { TPagedChangelogs, TResState, TTag } from '~/spec'
 import { nilOrEmpty } from '~/validator'
 
@@ -46,19 +46,18 @@ const getArticlesParams = (community: string, searchParams: URLSearchParams) => 
 }
 
 export default (): TRes => {
-  const articlesStore = useArticleList()
-  const viewingStore = useGeneral()
-  const { pagedChangelogs, resState } = articlesStore
+  const articleList = useArticleList()
+  const { slug } = useCommunity()
+  const { pagedChangelogs, resState } = articleList
 
   // const pathname = usePathname()
   const searchParams = useSearchParams()
 
   const update = ({ pagedChangelogs, tags }: TUpdate) => {
-    articlesStore.commit({ pagedChangelogs })
-    viewingStore.commit({ tags })
+    articleList.commit({ pagedChangelogs, tags })
   }
 
-  const pagedParams = getArticlesParams(viewingStore.community.slug, searchParams)
+  const pagedParams = getArticlesParams(slug, searchParams)
 
   return {
     resState,

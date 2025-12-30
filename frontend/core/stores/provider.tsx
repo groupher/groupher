@@ -5,7 +5,6 @@ import type { TCommunity, TLocale, TMetric } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
 import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
-import GeneralStoreProvider from '~/stores/general/provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
@@ -39,10 +38,8 @@ const MainProvider: FC<TProps> = ({
       <LocaleStoreProvider initData={{ locale, localeData }}>
         <AccountWrapper noAccount={noAccount}>
           <CommunityStoreProvider initData={{ ...base }}>
-            <DashboardStoreProvider initData={{ ...dashboard }}>
-              <GeneralStoreProvider initData={{ metric }}>
-                <WallpaperStoreProvider>{children}</WallpaperStoreProvider>
-              </GeneralStoreProvider>
+            <DashboardStoreProvider initData={{ ...dashboard, metric }}>
+              <WallpaperStoreProvider>{children}</WallpaperStoreProvider>
             </DashboardStoreProvider>
           </CommunityStoreProvider>
         </AccountWrapper>

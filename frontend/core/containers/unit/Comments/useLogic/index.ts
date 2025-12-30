@@ -1,18 +1,16 @@
 //
 
+import { equals, isEmpty, keys, pick, reject } from 'ramda'
 import { useSnapshot } from 'valtio'
-import { isEmpty, pick, keys, reject, equals } from 'ramda'
 
-import type { TID, TComment } from '~/spec'
+import type { TComment, TID } from '~/spec'
 import BStore from '~/utils/bstore'
 
 import type { TMode } from '../spec'
-
-import store from './store'
 import type { TStore } from './spec'
-
-import useQuery, { type TRet as TQuery } from './useQuery'
+import store from './store'
 import useDrived, { type TRet as TDrived } from './useDrived'
+import useQuery, { type TRet as TQuery } from './useQuery'
 
 type TRet = {
   onModeChange: (mode: TMode) => void
@@ -123,7 +121,7 @@ export default (): TRet => {
     expandAllComments,
     closeReplyEditor,
     ...pick(keys(snap), snap),
-    // @ts-ignore
+    // @ts-expect-error
     replyToComment: {
       ...snap.replyToComment,
     },

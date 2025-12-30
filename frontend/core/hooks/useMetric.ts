@@ -1,10 +1,10 @@
-import useGeneral from '~/hooks/useGeneral'
+import useDashboard from '~/hooks/useDashboard'
 import type { TMetric } from '~/spec'
 
 type TFmt = 'default' | 'lowercase'
 
 export default (fmt: TFmt = 'default'): TMetric => {
-  const { metric } = useGeneral()
+  const { metric } = useDashboard()
 
   if (fmt === 'lowercase') {
     return metric.toLowerCase() as TMetric

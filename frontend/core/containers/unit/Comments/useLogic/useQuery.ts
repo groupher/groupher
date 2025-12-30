@@ -1,25 +1,23 @@
 import { useSnapshot } from 'valtio'
-
-import type { TID, TComment, TEmotionType } from '~/spec'
 import { ANCHOR } from '~/const/dom'
-import useViewingArticle from '~/hooks/useViewingArticle'
-import { query, mutate } from '~/server'
-import { titleCase } from '~/fmt'
-import uid from '~/utils/uid'
 import { scrollIntoEle } from '~/dom'
+import { titleCase } from '~/fmt'
+import useViewingArticle from '~/hooks/useViewingArticle'
+import { mutate, query } from '~/server'
+import type { TComment, TEmotionType, TID } from '~/spec'
+import uid from '~/utils/uid'
 
 import { API_MODE, EDIT_MODE } from '../constant'
 import S from '../schema'
-
-import useHelper from './useHelper'
 import store from './store'
+import useHelper from './useHelper'
 
 //
 export type TRet = {
   loadComments: (page?: number) => void
   loadCommentReplies: (id: TID) => void
   loadCommentsState: () => void
-  loadPublishedComemnts: () => void
+  loadPublishedComments: () => void
   openUpdateEditor: (comment: TComment) => void
   onPageChange: (page: number) => void
   onMentionSearch: (name: string) => void
@@ -51,7 +49,7 @@ export default (): TRet => {
     })
   }
 
-  const loadPublishedComemnts = (page = 1): void => {
+  const loadPublishedComments = (_page = 1): void => {
     console.log('## TODO')
   }
 
@@ -112,13 +110,13 @@ export default (): TRet => {
       snap.commit({ needRefreshState: false })
       loadComments(page)
     } else {
-      loadPublishedComemnts(page)
+      loadPublishedComments(page)
     }
 
     scrollIntoEle(ANCHOR.COMMENTS_ID)
   }
 
-  const onMentionSearch = (name: string): void => {
+  const onMentionSearch = (_name: string): void => {
     console.log('## TODO: onMentionSearch')
     // if (name?.length >= 1) {
     //   query(S.searchUsers, { name })
@@ -146,7 +144,7 @@ export default (): TRet => {
     if (viewerHasEmotioned) {
       // instantFresh
       const emotionInfo = {
-        // @ts-ignore
+        // @ts-expect-error
         [`${name}Count`]: comment.emotions[`${name}Count`] - 1,
         [`viewerHas${titleCase(name)}ed`]: false,
       }
@@ -156,7 +154,7 @@ export default (): TRet => {
       })
     } else {
       const emotionInfo = {
-        // @ts-ignore
+        // @ts-expect-error
         [`${name}Count`]: comment.emotions[`${name}Count`] + 1,
         [`viewerHas${titleCase(name)}ed`]: true,
       }
@@ -236,7 +234,7 @@ export default (): TRet => {
     loadComments,
     loadCommentReplies,
     loadCommentsState,
-    loadPublishedComemnts,
+    loadPublishedComments,
     openUpdateEditor,
     onPageChange,
     onMentionSearch,

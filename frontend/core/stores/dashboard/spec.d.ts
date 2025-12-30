@@ -164,9 +164,10 @@ export type TDsbFields = {
   widgetsType: TWidgetType
 }
 
-export type TInit = Partial<TDsbFields>
+export type TInit = { metric?: TMetric } & Partial<TDsbFields>
 
 export type TStore = TDsbFields & {
+  metric?: TMetric
   initFilled: boolean
   original: TDsbFields
 

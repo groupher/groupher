@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import METRIC from '~/const/metric'
 import { LANDING_COMMUNITY } from '~/const/name'
-import GlobalLayout from '~/providers/GlobalLayout'
+import GlobalProvider from '~/providers/Global'
 import MainProvider from '~/stores/provider'
 import { ssrThemeInitScript } from '~/utils/ssr/script'
 
@@ -27,7 +27,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <Suspense fallback={null}>
         <body>
           <MainProvider initData={LANDING_COMMUNITY} noAccount metric={METRIC.LANDING}>
-            <GlobalLayout mainBlock={Main}>{children}</GlobalLayout>
+            <GlobalProvider mainBlock={Main}>{children}</GlobalProvider>
           </MainProvider>
           <Analytics />
           <SpeedInsights />

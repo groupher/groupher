@@ -1,8 +1,9 @@
-import useGeneral from '~/hooks/useGeneral'
+import useArticleList from '~/hooks/useArticleList'
+
 import type { TTag } from '~/spec'
 
 export default (): TTag => {
-  const store = useGeneral()
+  const articleList$ = useArticleList()
 
-  return store.activeTag
+  return articleList$.activeTag
 }

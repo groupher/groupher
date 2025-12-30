@@ -2,8 +2,6 @@
 
 import BookDemo from '~/widgets/BookDemo'
 
-const BookDemoPage = () => {
+export default () => {
   return <BookDemo />
 }
-
-export default BookDemoPage
