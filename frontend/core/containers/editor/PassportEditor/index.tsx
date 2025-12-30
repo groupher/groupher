@@ -3,12 +3,11 @@
  *
  */
 
-import { type FC, useEffect } from 'react'
+import type { FC } from 'react'
 
 import useCommunity from '~/hooks/useCommunity'
-
+import useMount from '~/hooks/useMount'
 import Button from '~/widgets/Buttons/Button'
-
 import Selects from './Selects'
 import useSalon from './salon'
 import useLogic from './useLogic'
@@ -18,11 +17,6 @@ const PassportEditor: FC = () => {
 
   const curCommunity = useCommunity()
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    loadAllPassportRules()
-  }, [])
-
   const {
     activeModerator,
     loadAllPassportRules,
@@ -31,6 +25,8 @@ const PassportEditor: FC = () => {
     isCurUserModeratorRoot,
     isReadonly,
   } = useLogic()
+
+  useMount(loadAllPassportRules)
 
   if (!activeModerator) return null
 

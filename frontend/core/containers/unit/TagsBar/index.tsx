@@ -5,7 +5,8 @@
  */
 
 import { keys, reverse } from 'ramda'
-import { type FC, useEffect } from 'react'
+import type { FC } from 'react'
+import useMount from '~/hooks/useMount'
 import Folder from './Folder'
 import GoBackTag from './GobackTag'
 import useSalon from './salon'
@@ -28,10 +29,7 @@ const TagsBar: FC<TProps> = ({ onSelect }) => {
     syncActiveTagFromURL,
   } = useLogic()
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    syncActiveTagFromURL()
-  }, [])
+  useMount(syncActiveTagFromURL)
 
   const groupsKeys = reverse(keys(groupedTags)) as string[]
 
