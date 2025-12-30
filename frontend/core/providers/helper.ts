@@ -122,12 +122,6 @@ export const useMetric = async (pathname: string): Promise<TMetric> => {
   return METRIC.COMMUNITY
 }
 
-export const parseRouteInfo = (info: string): TUrlInfo => {
-  const parsed = JSON.parse(info)
-
-  return { pathname: parsed.pathname, searchParams: new URLSearchParams(parsed.search) }
-}
-
 export const getCommunityInfo = async (community$: string): Promise<TCommunityInfo> => {
   const communityInfo = await getCommunity(community$, '/home/post')
 

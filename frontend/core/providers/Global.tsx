@@ -1,7 +1,7 @@
 'use client'
 
 import type { FC, ReactNode } from 'react'
-import RealGlobalLayout from '~/widgets/GlobalLayout'
+import GlobalLayout from '~/widgets/GlobalLayout'
 
 type TProps = {
   mainBlock?: FC<{ children: ReactNode }>
@@ -9,5 +9,5 @@ type TProps = {
 }
 
 export default ({ children, mainBlock = undefined }: TProps) => {
-  return <RealGlobalLayout mainBlock={mainBlock}>{children}</RealGlobalLayout>
+  return <GlobalLayout mainBlock={mainBlock}>{children}</GlobalLayout>
 }

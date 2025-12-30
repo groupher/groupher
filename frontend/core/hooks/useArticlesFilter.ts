@@ -1,4 +1,4 @@
-import useArticles from '~/hooks/useArticles'
+import useArticleList from '~/hooks/useArticleList'
 import type { TArticleCat, TArticleFilter, TArticleOrder, TArticleState } from '~/spec'
 
 type TRes = {
@@ -9,8 +9,8 @@ type TRes = {
 }
 
 export default (): TRes => {
-  const articles = useArticles()
-  const { activeOrder: order, activeState: state, activeCat: cat, updateActiveFilter } = articles
+  const store = useArticleList()
+  const { activeOrder: order, activeState: state, activeCat: cat, updateActiveFilter } = store
 
   return {
     order,

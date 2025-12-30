@@ -2,7 +2,7 @@ import { findIndex, includes, values } from 'ramda'
 import { ARTICLE_THREAD } from '~/const/thread'
 import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 import { plural } from '~/fmt'
-import useArticles from '~/hooks/useArticles'
+import useArticleList from '~/hooks/useArticleList'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import useViewingThread from '~/hooks/useViewingThread'
 import type { TArticle } from '~/spec'
@@ -13,7 +13,7 @@ type TRes = {
 }
 
 export default (): TRes => {
-  const articles = useArticles()
+  const articles = useArticleList()
   const curThread = useViewingThread()
   const { article: viewingArticle } = useViewingArticle()
 

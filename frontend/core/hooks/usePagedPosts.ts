@@ -1,4 +1,4 @@
-import useArticles from '~/hooks/useArticles'
+import useArticleList from '~/hooks/useArticleList'
 import useGeneral from '~/hooks/useGeneral'
 import type { TPagedPosts, TResState, TTag } from '~/spec'
 
@@ -14,7 +14,7 @@ type TRes = {
 }
 
 export default (): TRes => {
-  const articlesStore = useArticles()
+  const articlesStore = useArticleList()
   const viewingStore = useGeneral()
   const { pagedPosts, resState } = articlesStore
 
