@@ -5,9 +5,11 @@ import type {
   TPagedArticles,
   TResState,
   TTag,
+  TThread,
 } from '~/spec'
 
 export type TInit = {
+  thread?: TThread | null
   pagedPosts?: TPagedArticles
   pagedChangelogs?: TPagedArticles
 

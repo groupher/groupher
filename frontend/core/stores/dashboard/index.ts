@@ -1,4 +1,5 @@
 import { proxy } from 'valtio'
+import METRIC from '~/const/metric'
 import { CHANGE_MODE } from '~/const/mode'
 import {
   DSB_ALIAS_ROUTE,
@@ -15,6 +16,7 @@ import type { TDsbFields, TInit, TStore } from './spec'
 export default (init: TInit = {}): TStore => {
   const states = Object.assign(
     {
+      metric: METRIC.COMMUNITY,
       ...FIELDS,
 
       // UI status

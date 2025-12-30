@@ -1,5 +1,5 @@
-import { proxy } from 'valtio'
 import { mergeDeepRight } from 'ramda'
+import { proxy } from 'valtio'
 
 import type { TStore } from './spec'
 

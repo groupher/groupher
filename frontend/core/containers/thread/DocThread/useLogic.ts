@@ -1,5 +1,5 @@
+import useArticle from '~/hooks/useArticle'
 import useDashboard from '~/hooks/useDashboard'
-import useGeneral from '~/hooks/useGeneral'
 
 import type { TDocFAQLayout, TDocLayout, TFAQSection } from '~/spec'
 
@@ -16,24 +16,24 @@ type TRet = {
 
 export default (): TRet => {
   const dashboard = useDashboard()
-  const viewing = useGeneral()
+  const article$ = useArticle()
 
   const gotoDetailLayout = (): void => {
-    viewing.commit({ isArticleLayout: true, isFAQArticleLayout: false })
+    article$.commit({ isArticleLayout: true, isFAQArticleLayout: false })
   }
 
   const gotoFAQDetailLayout = (): void => {
     // store.mark({ isArticleLayout: true, isFAQArticleLayout: true })
-    viewing.commit({ isArticleLayout: true, isFAQArticleLayout: true })
+    article$.commit({ isArticleLayout: true, isFAQArticleLayout: true })
   }
 
   const back2Layout = (): void => {
-    viewing.commit({ isArticleLayout: false, isFAQArticleLayout: false })
+    article$.commit({ isArticleLayout: false, isFAQArticleLayout: false })
   }
 
   return {
-    isArticleLayout: viewing.isArticleLayout,
-    isFAQArticleLayout: viewing.isFAQArticleLayout,
+    isArticleLayout: article$.isArticleLayout,
+    isFAQArticleLayout: article$.isFAQArticleLayout,
     layout: dashboard.docLayout,
     faqLayout: dashboard.docFaqLayout,
     faqSections: [],

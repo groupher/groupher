@@ -9,6 +9,7 @@ import type { TInit, TStore } from './spec'
 
 export default (init: TInit = {}): TStore => {
   const initialStore: TStore = {
+    thread: null,
     pagedPosts: EMPTY_PAGED_ARTICLES,
     pagedChangelogs: EMPTY_PAGED_ARTICLES,
 

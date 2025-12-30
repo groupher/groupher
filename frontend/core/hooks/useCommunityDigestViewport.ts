@@ -1,4 +1,4 @@
-import useGeneral from '~/hooks/useGeneral'
+import useCommunity from '~/hooks/useCommunity'
 
 type TRet = {
   enterView: () => void
@@ -7,12 +7,11 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useGeneral()
+  const community$ = useCommunity()
 
   return {
-    enterView: (): void => store.commit({ communityDigestInView: true }),
-    leaveView: (): void => store.commit({ communityDigestInView: false }),
-
-    inView: store.communityDigestInView,
+    enterView: (): void => community$.commit({ communityDigestInView: true }),
+    leaveView: (): void => community$.commit({ communityDigestInView: false }),
+    inView: community$.communityDigestInView,
   }
 }

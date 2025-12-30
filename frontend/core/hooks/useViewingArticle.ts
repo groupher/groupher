@@ -1,9 +1,5 @@
-import { includes, values } from 'ramda'
-import { useMemo } from 'react'
-
 import { SITE_URL } from '~/config'
-import { ARTICLE_THREAD } from '~/const/thread'
-import useGeneral from '~/hooks/useGeneral'
+import useArticle from '~/hooks/useArticle'
 import type { TArticle } from '~/spec'
 
 type TRet = {
@@ -21,16 +17,8 @@ export const parseArticleLink = (article: TArticle): string => {
 }
 
 export default (): TRet => {
-  const store = useGeneral()
-
-  const article = useMemo((): TArticle => {
-    const curThread = store.activeThread
-
-    if (includes(curThread, values(ARTICLE_THREAD))) {
-      return store[curThread]
-    }
-    return {}
-  }, [store])
+  const article$ = useArticle()
+  const { article } = article$
 
   return {
     article,

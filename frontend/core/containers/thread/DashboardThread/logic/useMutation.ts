@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react'
 import { DSB_BASEINFO_ROUTE } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import useViewing from '~/hooks/useGeneral'
 import { mutate } from '~/server'
 import { toast } from '~/signal'
 import type { TEditValue, TTag } from '~/spec'
@@ -24,24 +23,25 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
-  const { slug: community } = useCommunity()
-  const { updateViewingCommunity } = useViewing()
-  const storeRef = useRef(store)
+  const dashboard$ = useDashboard()
+  const community$ = useCommunity()
+  const storeRef = useRef(dashboard$)
+
+  const { slug: community } = community$
 
   // get latest store, for those state not in UI render cycle
   useEffect(() => {
-    storeRef.current = store
-  }, [store])
+    storeRef.current = dashboard$
+  }, [dashboard$])
 
   const _findTagIdx = (): number => {
-    const { tags, editingTag } = store
+    const { tags, editingTag } = dashboard$
     const targetIdx = findIndex((item: TTag) => item.id === editingTag.id, tags)
     return targetIdx
   }
 
   const mergeBackEditingTag = (): TTag[] => {
-    const { editingTag, tags } = store
+    const { editingTag, tags } = dashboard$
     const targetIdx = _findTagIdx()
 
     if (targetIdx < 0) return
@@ -52,7 +52,7 @@ export default (): TRet => {
     }
 
     // store.commit({ editingTag: null })
-    store.commit({ tags: updatedTags, editingTag: null })
+    dashboard$.commit({ tags: updatedTags, editingTag: null })
 
     return updatedTags
   }
@@ -60,43 +60,42 @@ export default (): TRet => {
   const _handleDone = () => {
     const field = storeRef.current.savingField
     console.log('## done field: ', field)
-    let original = { ...store.original, [field]: store[field] }
+    let original = { ...dashboard$.original, [field]: dashboard$[field] }
 
     if (field === FIELD.TAG_INDEX) {
-      original = { ...store.original, tags: store.tags }
+      original = { ...dashboard$.original, tags: dashboard$.tags }
     }
 
     if (includes(field, [FIELD.FAQ_SECTION_ADD, FIELD.FAQ_SECTION_DELETE])) {
-      original = { ...store.original, faqSections: store.faqSections }
+      original = { ...dashboard$.original, faqSections: dashboard$.faqSections }
     }
 
     if (field === FIELD.BASE_INFO) {
       const current = {}
 
       for (const key of BASEINFO_KEYS) {
-        current[key] = store[key]
+        current[key] = dashboard$[key]
       }
-      original = { ...store.original, ...current }
+      original = { ...dashboard$.original, ...current }
     }
 
     if (field === FIELD.TAG) {
       const updatedTags = mergeBackEditingTag()
-      original = { ...store.original, tags: updatedTags }
+      original = { ...dashboard$.original, tags: updatedTags }
     }
 
     if (field === FIELD.SEO) {
       const current = {}
 
       for (const key of SEO_KEYS) {
-        current[key] = store[key]
+        current[key] = dashboard$[key]
       }
-      original = { ...store.original, ...current }
+      original = { ...dashboard$.original, ...current }
     }
 
-    store.commit({ original })
-
+    dashboard$.commit({ original })
     // avoid page component jump caused by saving state
-    setTimeout(() => store.commit({ saving: false, savingField: null }), 800)
+    setTimeout(() => dashboard$.commit({ saving: false, savingField: null }), 800)
   }
 
   /**
@@ -147,7 +146,7 @@ export default (): TRet => {
     }
 
     if (field === FIELD.MEDIA_REPORTS) {
-      const { mediaReports } = store
+      const { mediaReports } = dashboard$
 
       const params = {
         community,
@@ -166,35 +165,35 @@ export default (): TRet => {
     }
 
     if (field === FIELD.FOOTER_LINKS) {
-      const { footerLinks } = store
+      const { footerLinks } = dashboard$
       handleMutation(S.updateDashboardFooterLinks, { community, footerLinks })
       return
     }
 
     if (field === FIELD.BASE_INFO) {
-      const { baseInfoTab } = store
+      const { baseInfoTab } = dashboard$
 
       const params = { community }
       if (baseInfoTab === DSB_BASEINFO_ROUTE.BASIC) {
         for (const key of BASEINFO_BASIC_KEYS) {
-          params[key] = store[key]
+          params[key] = dashboard$[key]
         }
       }
 
       if (baseInfoTab === DSB_BASEINFO_ROUTE.OTHER) {
         for (const key of BASEINFO_OTHER_KEYS) {
-          params[key] = store[key]
+          params[key] = dashboard$[key]
         }
       }
 
       handleMutation(S.updateDashboardBaseInfo, params, (data) =>
-        updateViewingCommunity(data.updateDashboardBaseInfo),
+        community$.commit({ ...data.updateDashboardBaseInfo }),
       )
       return
     }
 
     if (field === FIELD.SOCIAL_LINKS) {
-      const { socialLinks } = store
+      const { socialLinks } = dashboard$
       const params = { community, socialLinks }
 
       handleMutation(S.updateDashboardSocialLinks, params)
@@ -238,7 +237,7 @@ export default (): TRet => {
     }
 
     if (field === FIELD.TAG_INDEX) {
-      const { activeTagThread, activeTagGroup: group, tags } = store
+      const { activeTagThread, activeTagGroup: group, tags } = dashboard$
       const thread = activeTagThread.toUpperCase()
 
       const tagIndex = tags.map((item) => ({

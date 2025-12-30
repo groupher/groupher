@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import useAccount from '~/hooks/useAccount'
-
-import useGeneral from '~/hooks/useGeneral'
-import useViewing from '~/hooks/useViewing'
+import useArticle from '~/hooks/useArticle'
 import { query } from '~/server'
 import type { TArticle, TArticleLoad } from '~/spec'
 
@@ -15,9 +13,9 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const viewing = useGeneral()
+  const article$ = useArticle()
   const account = useAccount()
-  const { article } = useViewing()
+  const { article } = article$
 
   const [loading, setLoading] = useState(false)
 
@@ -28,7 +26,7 @@ export default (): TRet => {
     // const { document, ...restArticle } = article
     // store.mark({ document })
     // store.setViewing({ [thread]: mergeRight(store.viewingArticle, restArticle) })
-    viewing.commit({ [thread]: article })
+    article$.commit({ [thread]: article })
 
     setTimeout(() => {
       // console.log('## todo: sync article in list')

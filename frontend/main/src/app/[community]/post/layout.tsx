@@ -11,13 +11,10 @@ export default async ({ children, previewer, params }) => {
   // console.log('## got posts: ', pagedPosts)
   // console.log('## got tags: ', tags)
 
+  const initData = { pagedPosts, tags, thread: THREAD.POST }
+
   return (
-    <ArticleListStoreProvider
-      initData={{
-        pagedPosts,
-        tags: [...tags],
-      }}
-    >
+    <ArticleListStoreProvider initData={initData}>
       <div>
         {children}
 

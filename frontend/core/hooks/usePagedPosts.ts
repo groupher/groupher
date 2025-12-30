@@ -1,5 +1,4 @@
 import useArticleList from '~/hooks/useArticleList'
-import useGeneral from '~/hooks/useGeneral'
 import type { TPagedPosts, TResState, TTag } from '~/spec'
 
 export type TUpdate = {
@@ -14,13 +13,11 @@ type TRes = {
 }
 
 export default (): TRes => {
-  const articlesStore = useArticleList()
-  const viewingStore = useGeneral()
-  const { pagedPosts, resState } = articlesStore
+  const articleList$ = useArticleList()
+  const { pagedPosts, resState } = articleList$
 
   const update = ({ pagedPosts, tags }: TUpdate) => {
-    articlesStore.commit({ pagedPosts })
-    viewingStore.commit({ tags })
+    articleList$.commit({ pagedPosts, tags })
   }
 
   return {
