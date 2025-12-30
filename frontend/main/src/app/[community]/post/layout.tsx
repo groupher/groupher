@@ -1,6 +1,6 @@
 import { THREAD } from '~/const/thread'
-import { getPagedPosts, getTags } from '~/providers/domain'
-import ArticlesStoreProvider from '~/stores/articles/provider'
+import { getPagedPosts, getTags } from '~/providers/ssr'
+import ArticleListStoreProvider from '~/stores/articleList/provider'
 
 // app/post/layout.tsx
 export default async ({ children, previewer, params }) => {
@@ -12,7 +12,7 @@ export default async ({ children, previewer, params }) => {
   // console.log('## got tags: ', tags)
 
   return (
-    <ArticlesStoreProvider
+    <ArticleListStoreProvider
       initData={{
         pagedPosts,
         tags: [...tags],
@@ -23,6 +23,6 @@ export default async ({ children, previewer, params }) => {
 
         {previewer && <>{previewer}</>}
       </div>
-    </ArticlesStoreProvider>
+    </ArticleListStoreProvider>
   )
 }

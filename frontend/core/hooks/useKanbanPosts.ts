@@ -1,4 +1,4 @@
-import useArticles from '~/hooks/useArticles'
+import useArticleList from '~/hooks/useArticleList'
 import type { TPagedPosts, TResState } from '~/spec'
 
 type TRes = {
@@ -9,7 +9,7 @@ type TRes = {
 }
 
 export default (): TRes => {
-  const { todo, wip, done, resState } = useArticles()
+  const { todo, wip, done, resState } = useArticleList()
 
   return {
     resState,

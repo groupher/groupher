@@ -2,7 +2,7 @@ import { useSearchParams } from 'next/navigation'
 import { mergeRight, reject } from 'ramda'
 import { HOME_COMMUNITY } from '~/const/name'
 import URL_PARAM from '~/const/url_param'
-import useArticles from '~/hooks/useArticles'
+import useArticleList from '~/hooks/useArticleList'
 import useGeneral from '~/hooks/useGeneral'
 import type { TPagedChangelogs, TResState, TTag } from '~/spec'
 import { nilOrEmpty } from '~/validator'
@@ -46,7 +46,7 @@ const getArticlesParams = (community: string, searchParams: URLSearchParams) => 
 }
 
 export default (): TRes => {
-  const articlesStore = useArticles()
+  const articlesStore = useArticleList()
   const viewingStore = useGeneral()
   const { pagedChangelogs, resState } = articlesStore
 

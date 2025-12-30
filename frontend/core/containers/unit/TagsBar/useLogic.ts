@@ -1,7 +1,7 @@
 import { findIndex } from 'ramda'
 import { useMemo } from 'react'
 import { groupByKey } from '~/helper'
-import useArticles from '~/hooks/useArticles'
+import useArticleList from '~/hooks/useArticleList'
 import type { TGroupedTags, TTag } from '~/spec'
 import { getParameterByName } from '~/utils/route'
 
@@ -18,7 +18,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useArticles()
+  const store = useArticleList()
   const { tags, activeTag } = store
 
   // derived data

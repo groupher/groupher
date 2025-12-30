@@ -1,5 +1,5 @@
-import { GlobalLayout } from '~/providers'
-import { getCommunityInfo, getLocaleData } from '~/providers/domain'
+import GlobalProvider from '~/providers/Global'
+import { getCommunityInfo, getLocaleData } from '~/providers/ssr'
 import MainProvider from '~/stores/provider'
 
 export default async ({ children, params }) => {
@@ -12,7 +12,7 @@ export default async ({ children, params }) => {
 
   return (
     <MainProvider initData={community} locale='en' localeData={JSON.stringify(localeData)}>
-      <GlobalLayout>{children}</GlobalLayout>
+      <GlobalProvider>{children}</GlobalProvider>
     </MainProvider>
   )
 }

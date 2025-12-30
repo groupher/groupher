@@ -1,5 +1,5 @@
 import { THREAD } from '~/const/thread'
-import { getPost } from '~/providers/domain'
+import { getPost } from '~/providers/ssr'
 import ArticleStoreProvider from '~/stores/article/provider'
 
 // app/post/layout.tsx

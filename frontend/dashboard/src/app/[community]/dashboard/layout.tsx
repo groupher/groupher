@@ -1,7 +1,8 @@
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
-import { GlobalLayout, GraphQLProvider } from '~/providers'
-import { getCommunityInfo, getLocaleData } from '~/providers/domain'
+import GlobalProvider from '~/providers/Global'
+import GraphQLProvider from '~/providers/GraphQL'
+import { getCommunityInfo, getLocaleData } from '~/providers/ssr'
 import MainProvider from '~/stores/provider'
 import Client from './Client'
 
@@ -21,9 +22,9 @@ export default async ({ children, params }) => {
       localeData={JSON.stringify(localeData)}
     >
       <GraphQLProvider>
-        <GlobalLayout>
+        <GlobalProvider>
           <Client>{children}</Client>
-        </GlobalLayout>
+        </GlobalProvider>
       </GraphQLProvider>
     </MainProvider>
   )

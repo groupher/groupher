@@ -10,7 +10,7 @@ import LocaleStoreProvider from '~/stores/locale/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
 
-type TCommunityInfoProvider = {
+type TProps = {
   children: React.ReactNode
   initData: TCommunity
   locale?: TLocale
@@ -24,7 +24,7 @@ const AccountWrapper: FC<{ children: React.ReactNode; noAccount: boolean }> = ({
   noAccount,
 }) => (noAccount ? children : <AccountStoreProvider>{children}</AccountStoreProvider>)
 
-const CommunityInfoProvider: FC<TCommunityInfoProvider> = ({
+const MainProvider: FC<TProps> = ({
   children,
   initData,
   locale = LOCALE.EN,
@@ -51,4 +51,4 @@ const CommunityInfoProvider: FC<TCommunityInfoProvider> = ({
   )
 }
 
-export default CommunityInfoProvider
+export default MainProvider
