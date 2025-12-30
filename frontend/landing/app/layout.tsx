@@ -1,17 +1,16 @@
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
 import METRIC from '~/const/metric'
 import { LANDING_COMMUNITY } from '~/const/name'
 import GlobalProvider from '~/providers/Global'
 import MainProvider from '~/stores/provider'
-import { ssrThemeInitScript } from '~/utils/ssr/script'
+import RootLayoutShell from '~/widgets/RootLayoutShell'
 
-import Main from './Main'
+import Main from './widgets/Main'
 
 import '~/tailwind/global.css'
-import './domain.css'
+import './widgets/domain.css'
 
 export const metadata: Metadata = {
   title: 'Groupher | 让你的产品听见用户的声音',
@@ -20,19 +19,12 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='en' suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: ssrThemeInitScript() }} />
-      </head>
-      <Suspense fallback={null}>
-        <body>
-          <MainProvider initData={LANDING_COMMUNITY} noAccount metric={METRIC.LANDING}>
-            <GlobalProvider mainBlock={Main}>{children}</GlobalProvider>
-          </MainProvider>
-          <Analytics />
-          <SpeedInsights />
-        </body>
-      </Suspense>
-    </html>
+    <RootLayoutShell>
+      <MainProvider initData={LANDING_COMMUNITY} noAccount metric={METRIC.LANDING}>
+        <GlobalProvider mainBlock={Main}>{children}</GlobalProvider>
+      </MainProvider>
+      <Analytics />
+      <SpeedInsights />
+    </RootLayoutShell>
   )
 }
