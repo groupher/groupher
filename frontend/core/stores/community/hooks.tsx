@@ -8,7 +8,7 @@ import { StoreContext } from './provider'
 export default () => {
   const store = useContext(StoreContext)
   if (!store) {
-    throw new Error('useStore must be used within a StoreProvider 3')
+    throw new Error('useStore must be used within a Community store provider')
   }
 
   const snap = useSnapshot(store)
