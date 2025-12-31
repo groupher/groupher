@@ -15,10 +15,10 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
-  const curCommunity = useCommunity()
+  const dsb$ = useDashboard()
+  const community$ = useCommunity()
 
-  const { tags, original, activeTagThread, activeTagGroup, nameAlias, tagLayout } = store
+  const { tags, original, activeTagThread, activeTagGroup, nameAlias, tagLayout } = dsb$
 
   const selectedThread = (activeTagThread || '').toUpperCase()
 
@@ -32,7 +32,7 @@ export default (): TRet => {
   const groups = useMemo(() => uniq(pluck('group', tags)), [tags])
 
   const threads = useMemo(() => {
-    const mappedThreads = curCommunity.threads.map((pThread) => {
+    const mappedThreads = community$.threads.map((pThread) => {
       const aliasItem = find(propEq('slug', pThread.slug))(nameAlias) as TNameAlias
       return {
         ...pThread,
@@ -44,7 +44,7 @@ export default (): TRet => {
       (thread: TCommunityThread) => includes(thread.slug, [THREAD.ABOUT, THREAD.DOC]),
       mappedThreads,
     )
-  }, [curCommunity.threads, nameAlias])
+  }, [community$.threads, nameAlias])
 
   const tagLayoutTouched = useMemo(
     () => !equals(tagLayout, original.tagLayout),

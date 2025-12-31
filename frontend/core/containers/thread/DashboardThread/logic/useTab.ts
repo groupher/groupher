@@ -13,10 +13,10 @@ type TRet = {
 
 export default (): TRet => {
   const { edit } = useHelper()
-  const store = useDashboard()
+  const dsb$ = useDashboard()
 
   return {
     edit,
-    ...pick(['curTab', 'layoutTab'], store),
+    ...pick(['curTab', 'layoutTab'], dsb$),
   }
 }

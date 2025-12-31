@@ -15,10 +15,10 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { edit, isChanged } = useHelper()
 
-  const { glowType, glowFixed, glowOpacity, saving } = store
+  const { glowType, glowFixed, glowOpacity, saving } = dsb$
 
   const isTouched = isChanged('glowType')
   const isGrowFixedTouched = isChanged('glowFixed')

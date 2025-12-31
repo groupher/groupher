@@ -15,7 +15,7 @@ import useLogic from './useLogic'
 const PassportEditor: FC = () => {
   const s = useSalon()
 
-  const curCommunity = useCommunity()
+  const community$ = useCommunity()
 
   const {
     activeModerator,
@@ -35,11 +35,11 @@ const PassportEditor: FC = () => {
       {!isActiveModeratorRoot ? <h3>权限设置</h3> : <div className={s.rootSign}>ROOT</div>}
       {isActiveModeratorRoot ? (
         <div className={s.desc}>
-          {activeModerator.nickname} 拥有 {curCommunity.title} 社区的所有管理权限
+          {activeModerator.nickname} 拥有 {community$.title} 社区的所有管理权限
         </div>
       ) : (
         <div className={s.desc}>
-          在 {curCommunity.title} 社区范围内，{activeModerator.nickname} 拥有以下权限
+          在 {community$.title} 社区范围内，{activeModerator.nickname} 拥有以下权限
         </div>
       )}
       <div className={s.divider} />

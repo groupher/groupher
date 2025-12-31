@@ -84,7 +84,7 @@ const store = proxy<TStore>({
 
 export default (): TRet => {
   const snap = useSnapshot(store)
-  const curCommunity = useCommunity()
+  const community$ = useCommunity()
 
   const onPublish = (): void => {
     console.log('## onPublish')
@@ -112,7 +112,7 @@ export default (): TRet => {
 
     // @ts-expect-error
     return { ...pick(baseFields, snap), articleTags: tagsIds }
-  }, [snap.articleTags])
+  }, [snap.articleTags, snap])
 
   const catOnChange = (activeCat: TArticleCat): void => store.commit({ activeCat })
   const onTagSelect = (activeTag: TTag): void => snap.commit({ activeTag })
@@ -126,7 +126,7 @@ export default (): TRet => {
     const { mode } = snap
     if (mode !== 'publish') return
 
-    const slug = curCommunity.slug
+    const { slug } = community$
     const params = { slug }
     // console.log('## loadCommunity: ', params)
 

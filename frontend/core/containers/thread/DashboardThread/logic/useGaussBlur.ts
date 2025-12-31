@@ -14,7 +14,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 
   const isTouched = isChanged('gaussBlur')
@@ -22,7 +22,7 @@ export default (): TRet => {
 
   return {
     edit,
-    ...pick(['gaussBlur', 'gaussBlurDark', 'saving'], store),
+    ...pick(['gaussBlur', 'gaussBlurDark', 'saving'], dsb$),
     isTouched,
     isDarkTouched,
   }

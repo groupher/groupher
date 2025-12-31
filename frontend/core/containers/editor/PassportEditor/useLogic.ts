@@ -27,12 +27,12 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const dashboard = useDashboard()
-  const curCommunity = useCommunity()
-  const account = useAccount()
-  const [selectedRules, setSelectedRules] = useState([])
+  const dsb$ = useDashboard()
+  const community$ = useCommunity()
+  const account$ = useAccount()
 
-  const { activeModerator, allRootRules, allModeratorRules } = dashboard
+  const { activeModerator, allRootRules, allModeratorRules } = dsb$
+  const [selectedRules, setSelectedRules] = useState([])
 
   const toggleCheck = (rule: string, checked: boolean): void => {
     const _selectedRules = checked
@@ -49,8 +49,8 @@ export default (): TRet => {
       const { cmsPassportString } = res.user
       const passportJson = JSON.parse(cmsPassportString)
 
-      if (passportJson[curCommunity.slug]) {
-        setSelectedRules(keys(passportJson[curCommunity.slug]))
+      if (passportJson[community$.slug]) {
+        setSelectedRules(keys(passportJson[community$.slug]))
       }
     })
   }
@@ -64,12 +64,12 @@ export default (): TRet => {
     query(S.allPassportRules).then((res) => {
       const { moderator, root } = res.allPassportRules
 
-      dashboard.commit({ allRootRules: root, allModeratorRules: moderator })
+      dsb$.commit({ allRootRules: root, allModeratorRules: moderator })
     })
   }
 
   const updatePassport = (): void => {
-    const community = curCommunity.slug
+    const community = community$.slug
 
     const innerRules = {}
     forEach(
@@ -94,14 +94,14 @@ export default (): TRet => {
   }
 
   const isActiveModeratorRoot = useMemo(() => {
-    const curRoot = find((moderator) => moderator.role === 'root', curCommunity.moderators)
+    const curRoot = find((moderator) => moderator.role === 'root', community$.moderators)
     return curRoot?.user.login === activeModerator?.login
-  }, [activeModerator, curCommunity.moderators])
+  }, [activeModerator, community$.moderators])
 
   const isCurUserModeratorRoot = useMemo(() => {
-    const curRoot = find((moderator) => moderator.role === 'root', curCommunity.moderators)
-    return curRoot?.user.login === account.user.login
-  }, [account.user.login, curCommunity.moderators])
+    const curRoot = find((moderator) => moderator.role === 'root', community$.moderators)
+    return curRoot?.user.login === account$.user.login
+  }, [account$.user.login, community$.moderators])
 
   const rules = useMemo(() => {
     return isActiveModeratorRoot ? allRootRules : allModeratorRules

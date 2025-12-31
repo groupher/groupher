@@ -13,7 +13,7 @@ import useSalon, { cn } from '../salon/layout/brand_layout'
 export default () => {
   const s = useSalon()
 
-  const curCommunity = useCommunity()
+  const { title } = useCommunity()
   const { edit, layout, isTouched, saving } = useBrand()
 
   return (
@@ -25,7 +25,7 @@ export default () => {
             <div className={s.brand}>
               <BrandSVG className={s.brandIcon} />
               <div className='mr-2.5' />
-              <h3 className={s.brandTitle}>{curCommunity.title}</h3>
+              <h3 className={s.brandTitle}>{title}</h3>
             </div>
             <div className={s.divider} />
           </div>
@@ -43,7 +43,7 @@ export default () => {
         <button className={s.layout} onClick={() => edit(BRAND_LAYOUT.TEXT, 'brandLayout')}>
           <div className={cn(s.block, layout === BRAND_LAYOUT.TEXT && s.blockActive)}>
             <div className={s.brand}>
-              <h3 className={s.brandTitle}>{curCommunity.title}</h3>
+              <h3 className={s.brandTitle}>{title}</h3>
             </div>
             <div className={s.divider} />
           </div>

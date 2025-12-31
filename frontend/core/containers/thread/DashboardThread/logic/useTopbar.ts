@@ -13,14 +13,10 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 
-  if (store === null) {
-    throw new Error('Store cannot be null, please add a context provider')
-  }
-
-  const { topbarLayout, topbarBg, saving } = store
+  const { topbarLayout, topbarBg, saving } = dsb$
 
   const isLayoutTouched = isChanged('topbarLayout')
   const isBgTouched = isChanged('topbarBg')

@@ -28,10 +28,10 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const dashboard = useDashboard()
-  const { tags, settingTag, activeTagThread } = dashboard
+  const dsb$ = useDashboard()
+  const { tags, settingTag, activeTagThread } = dsb$
 
-  const curCommunity = useCommunity()
+  const community$ = useCommunity()
 
   const [editingTag, setEditingTag] = useState<TTag | null>(null)
   const [mode, setMode] = useState(CHANGE_MODE.UPDATE)
@@ -72,7 +72,7 @@ export default (): TRet => {
     const params = {
       ...editingTag,
       slug: editingTag.title,
-      community: curCommunity.slug,
+      community: community$.slug,
       thread: activeTagThread,
     }
 
@@ -88,7 +88,7 @@ export default (): TRet => {
     const params = {
       ...editingTag,
       slug: editingTag.title,
-      community: curCommunity.slug,
+      community: community$.slug,
       thread: activeTagThread,
     }
 

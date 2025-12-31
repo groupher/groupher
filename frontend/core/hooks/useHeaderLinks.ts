@@ -19,13 +19,9 @@ type THeaderLinks = {
 }
 
 export default (): THeaderLinks => {
-  const store = useDashboard()
-  const viewingCommunity = useCommunity()
+  const { headerLayout, headerLinks } = useDashboard()
+  const { slug: community } = useCommunity()
 
-  const community = viewingCommunity.slug
-
-  const { headerLinks } = store
-  // TODO:
   const isModerator = true
 
   const getCustomLinks = useCallback(() => {
@@ -68,7 +64,7 @@ export default (): THeaderLinks => {
   }, [getCustomLinks])
 
   return {
-    layout: store.headerLayout,
+    layout: headerLayout,
     links: headerLinks,
     getCustomLinks,
     getGroupedLinks,

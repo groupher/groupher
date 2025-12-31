@@ -20,9 +20,9 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
 
-  const { mediaReports, original, queryingMediaReportIndex } = store
+  const { mediaReports, original, queryingMediaReportIndex } = dsb$
 
   const mediaReportsTouched = () => {
     const curValues = reject((item: TMediaReport) => !item.editUrl, mediaReports)
@@ -35,33 +35,32 @@ export default (): TRet => {
   }
 
   const addMediaReport = (): void => {
-    const { mediaReports } = store
+    const { mediaReports } = dsb$
     const newReport = mergeRight(EMPTY_MEDIA_REPORT, { index: Date.now() })
 
-    store.mediaReports = [...mediaReports, newReport]
+    dsb$.mediaReports = [...mediaReports, newReport]
   }
 
   const mediaReportOnChange = (index: number, url: string): void => {
-    const { mediaReports } = store
-
+    const { mediaReports } = dsb$
     const restReports = reject((item: TMediaReport) => item.index === index, mediaReports)
     const report = find((item: TMediaReport) => item.index === index, mediaReports)
 
     // @ts-expect-error
     report.editUrl = url
 
-    store.mediaReports = [...restReports, report]
+    dsb$.mediaReports = [...restReports, report]
   }
 
   const removeMediaReport = (index: number): void => {
-    const { mediaReports } = store
+    const { mediaReports } = dsb$
     const newReports = reject((item: TMediaReport) => item.index === index, mediaReports)
 
-    store.commit({ mediaReports: newReports })
+    dsb$.commit({ mediaReports: newReports })
   }
 
   const handleOgQueryInfo = (data) => {
-    const { queryingMediaReportIndex, mediaReports } = store
+    const { queryingMediaReportIndex, mediaReports } = dsb$
 
     const restReports = reject(
       (item: TMediaReport) => item.index === queryingMediaReportIndex,
@@ -73,7 +72,7 @@ export default (): TRet => {
     )
     const updatedReport = mergeRight(report, data)
 
-    store.commit({
+    dsb$.commit({
       queryingMediaReportIndex: null,
       loading: false,
       mediaReports: [...restReports, updatedReport],
@@ -84,15 +83,15 @@ export default (): TRet => {
     const { url, editUrl } = item
 
     if ((startsWith('https://', editUrl) || startsWith('http://', editUrl)) && url !== editUrl) {
-      store.queryingMediaReportIndex = item.index
-      store.loading = true
+      dsb$.queryingMediaReportIndex = item.index
+      dsb$.loading = true
 
       const params = { url: editUrl.trim() }
       query(S.openGraphInfo, params)
         .then(({ openGraphInfo }) => handleOgQueryInfo(openGraphInfo))
         .catch((e) => {
-          store.loading = false
-          store.queryingMediaReportIndex = null
+          dsb$.loading = false
+          dsb$.queryingMediaReportIndex = null
           console.error('## og info: ', e)
           // biome-ignore lint/suspicious/noAlert: <explanation>
           alert('## queryOpenGraphInfo error')

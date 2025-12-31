@@ -16,30 +16,30 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
-  const curCommunity = useCommunity()
+  const dsb$ = useDashboard()
+  const community$ = useCommunity()
 
-  const { original } = store
+  const { original } = dsb$
 
   const loadTags = (activeThread = THREAD.POST): void => {
-    const community = curCommunity.slug
+    const community = community$.slug
     const thread = activeThread.toUpperCase()
 
     const params = {
       filter: { community, thread },
     }
 
-    store.commit({ loading: true })
+    dsb$.commit({ loading: true })
     query(S.pagedArticleTags, params).then((data) => {
       const tags = data.pagedArticleTags.entries
-      store.commit({ tags, original: { ...original, tags }, loading: false })
+      dsb$.commit({ tags, original: { ...original, tags }, loading: false })
     })
   }
 
   const _reindex = (tags: TTag[]): TTag[] => tags.map((item, index) => ({ ...item, index }))
 
   const moveTag = (tag: TTag, opt: 'up' | 'down'): void => {
-    const { tags } = store
+    const { tags } = dsb$
     const { group } = tag
 
     const tagsWithIndex = tags
@@ -61,11 +61,11 @@ export default (): TRet => {
     groupTags[targetIndex].index = groupTags[tagIndex].index
     groupTags[tagIndex].index = tmpIndex
 
-    store.commit({ tags: [...restTags, ..._reindex(groupTags)] })
+    dsb$.commit({ tags: [...restTags, ..._reindex(groupTags)] })
   }
 
   const moveTag2Edge = (tag: TTag, opt: 'top' | 'bottom'): void => {
-    const { tags } = store
+    const { tags } = dsb$
     const { group } = tag
 
     const groupTags = filter((item: TTag) => item.group === group, tags)
@@ -79,7 +79,7 @@ export default (): TRet => {
         ? [curTagItem, ...remove(curTagItemIndex, 1, groupTags)]
         : [...remove(curTagItemIndex, 1, groupTags), curTagItem]
 
-    store.commit({ tags: [...restTags, ..._reindex(newTags)] })
+    dsb$.commit({ tags: [...restTags, ..._reindex(newTags)] })
   }
 
   return {

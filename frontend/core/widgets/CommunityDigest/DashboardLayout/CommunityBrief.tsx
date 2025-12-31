@@ -31,7 +31,7 @@ export default () => {
 
   const threads = usePublicThreads()
   const { title, logo, slug } = useCommunity()
-  const dashboard = useDashboard()
+  const dsb$ = useDashboard()
   const { brandLayout } = useLayout()
 
   return (
@@ -47,7 +47,7 @@ export default () => {
       <Tooltip
         content={
           <div className={s.topPanel}>
-            <Link className={cn(s.panelItem, s.outside)} href={dashboard.homepage}>
+            <Link className={cn(s.panelItem, s.outside)} href={dsb$.homepage}>
               <GlobalSVG className={s.icon} />
               <div>返回官网</div>
               <div className='grow' />

@@ -19,48 +19,47 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { edit } = useHelper()
-  const { faqSections } = store
-  const curCommunity = useCommunity()
+  const { faqSections } = dsb$
+  const community$ = useCommunity()
 
   const addFAQSection = (): void => {
     const index = faqSections.length
 
-    store.commit({ editingFAQ: { ...DEFAULT_NEW_FAQ, index }, editingFAQIndex: index })
+    dsb$.commit({ editingFAQ: { ...DEFAULT_NEW_FAQ, index }, editingFAQIndex: index })
   }
 
   const triggerEditFAQ = (index: number | null): void => {
     if (index === null) {
-      store.commit({ editingFAQ: null, editingFAQIndex: null })
+      dsb$.commit({ editingFAQ: null, editingFAQIndex: null })
       return
     }
-    const { faqSections } = store
+    const { faqSections } = dsb$
     const editingFAQ = find((faq: TFAQSection) => faq.index === index, faqSections)
 
-    store.commit({ editingFAQIndex: index, editingFAQ })
+    dsb$.commit({ editingFAQIndex: index, editingFAQ })
   }
 
-  const updateEditingFAQ = (faq: TFAQSection): void => store.commit({ editingFAQ: faq })
+  const updateEditingFAQ = (faq: TFAQSection): void => dsb$.commit({ editingFAQ: faq })
 
   const deleteFAQSection = (index: number): void => {
-    const community = curCommunity.slug
+    const community = community$.slug
 
-    store.commit({
+    dsb$.commit({
       faqSections: reject((faq: TFAQSection) => faq.index === index, faqSections),
       savingField: FIELD.FAQ_SECTION_DELETE,
     })
-    const params = { faqs: store.faqSections, community }
-
+    const params = { faqs: dsb$.faqSections, community }
     console.log('## deleteFAQSection: ', params)
-    // sr71$.mutate(S.updateDashboardFaqs, { faqs: store.faqSections, community })
+    // sr71$.mutate(S.updateDashboardFaqs, { faqs: dsb$.faqSections, community })
   }
 
   const moveUpFAQ = (faqSection: TFAQSection): void => moveFAQ(faqSection, 'up')
   const moveDownFAQ = (faqSection: TFAQSection): void => moveFAQ(faqSection, 'down')
 
   const moveFAQ = (faqSection: TFAQSection, opt: 'up' | 'down'): void => {
-    const { faqSections } = store
+    const { faqSections } = dsb$
     const _faqSections = [...faqSections]
 
     const curIndex = findIndex((item: TFAQSection) => item.index === faqSection.index, _faqSections)
@@ -70,10 +69,10 @@ export default (): TRet => {
     _faqSections[targetIndex] = _faqSections[curIndex]
     _faqSections[curIndex] = tmp
 
-    store.commit({ faqSections: _faqSections })
+    dsb$.commit({ faqSections: _faqSections })
 
     setTimeout(() => {
-      store.commit({ faqSections: _reindex(_faqSections) })
+      dsb$.commit({ faqSections: _reindex(_faqSections) })
     })
   }
 
@@ -86,7 +85,7 @@ export default (): TRet => {
 
   return {
     edit,
-    ...pick(['docFaqLayout', 'saving'], store),
+    ...pick(['docFaqLayout', 'saving'], dsb$),
     addFAQSection,
     triggerEditFAQ,
     updateEditingFAQ,

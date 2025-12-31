@@ -14,7 +14,7 @@ type TRet = {
   TUserLinks
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const useLinksData = useLinks()
   const { edit } = useHelper()
 
@@ -29,7 +29,7 @@ export default (): TRet => {
         'editingGroupIndex',
         'saving',
       ],
-      store,
+      dsb$,
     ),
     edit,
     ...useLinksData,

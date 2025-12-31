@@ -15,16 +15,16 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { isChanged } = useHelper()
-  const community = useCommunity()
+  const community$ = useCommunity()
 
-  const { editingLink, enable, nameAlias } = store
+  const { editingLink, enable, nameAlias } = dsb$
 
   const threads = useMemo(() => {
     // @ts-expect-error
-    return publicThreads(community.threads, { enable, nameAlias })
-  }, [community, enable, nameAlias])
+    return publicThreads(community$.threads, { enable, nameAlias })
+  }, [community$, enable, nameAlias])
 
   const isFooterLinksTouched = useMemo((): boolean => {
     return isChanged('footerLinks') && editingLink === null

@@ -28,7 +28,7 @@ type TRet = {
 } & TDrived
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { edit } = useHelper()
   const derived = useDerived()
 
@@ -45,8 +45,8 @@ export default (): TRet => {
     'saving',
   ]
 
-  const editTag = (key: TChangeTagMode, tag: TTag): void => store.commit({ [key]: tag })
-  const changeThread = (thread: string) => store.commit({ activeTagThread: thread })
+  const editTag = (key: TChangeTagMode, tag: TTag): void => dsb$.commit({ [key]: tag })
+  const changeThread = (thread: string) => dsb$.commit({ activeTagThread: thread })
 
   const moveTagUp = (tag: TTag): void => moveTag(tag, 'up')
   const moveTagDown = (tag: TTag): void => moveTag(tag, 'down')
@@ -55,7 +55,7 @@ export default (): TRet => {
 
   return {
     // @ts-expect-error
-    ...pick(exportState, store),
+    ...pick(exportState, dsb$),
     ...derived,
     // actions
     changeThread,

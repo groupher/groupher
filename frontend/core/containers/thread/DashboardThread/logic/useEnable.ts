@@ -10,10 +10,10 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { onSave } = useHelper()
 
-  const { enable } = store
+  const { enable } = dsb$
 
   const enableThread = (key: string, toggle: boolean): void => {
     const patch = {
@@ -21,7 +21,7 @@ export default (): TRet => {
       [key]: toggle,
     }
 
-    store.commit({ enable: patch })
+    dsb$.commit({ enable: patch })
     setTimeout(() => onSave(FIELD.ENABLE))
   }
 

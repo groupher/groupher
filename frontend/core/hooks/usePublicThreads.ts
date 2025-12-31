@@ -6,16 +6,13 @@ import useDashboard from '~/hooks/useDashboard'
 import type { TCommunityThread, TLinkItem, TNameAlias } from '~/spec'
 
 export default (): TCommunityThread[] => {
-  const dashboard = useDashboard()
-  const curCommunity = useCommunity()
+  const dsb$ = useDashboard()
+  const { threads } = useCommunity()
 
-  // const { enable, nameAliasData } = store.dashboardThread
-
-  const { threads } = curCommunity
-  const enabledThreads = sortByIndex(threads.filter((thread) => dashboard.enable[thread.slug]))
+  const enabledThreads = sortByIndex(threads.filter((thread) => dsb$.enable[thread.slug]))
 
   const mappedThreads = enabledThreads.map((pThread) => {
-    const aliasItem = find(propEq(pThread.slug, 'slug'))(dashboard.nameAlias) as TNameAlias
+    const aliasItem = find(propEq(pThread.slug, 'slug'))(dsb$.nameAlias) as TNameAlias
 
     return {
       ...pThread,
@@ -23,7 +20,7 @@ export default (): TCommunityThread[] => {
     }
   })
 
-  const hasExtraAbout = find((link: TLinkItem) => link.title === '关于', dashboard.headerLinks)
+  const hasExtraAbout = find((link: TLinkItem) => link.title === '关于', dsb$.headerLinks)
 
   if (hasExtraAbout) {
     return reject(

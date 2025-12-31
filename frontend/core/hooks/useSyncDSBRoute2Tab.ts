@@ -56,7 +56,7 @@ export default function useDashboardRouteTabSync<T extends string>({
   segmentIndex = 3,
 }: TProps<T>) {
   const pathname = usePathname()
-  const dashboard = useDashboard()
+  const dsb$ = useDashboard()
 
   useEffect(() => {
     const segment = getDashboardRouteSegment(pathname, segmentIndex)
@@ -66,6 +66,6 @@ export default function useDashboardRouteTabSync<T extends string>({
       return
     }
 
-    dashboard.commit({ [tab]: value } as Record<string, T>)
-  }, [pathname, tab, defaultTab, validator, segmentIndex, dashboard])
+    dsb$.commit({ [tab]: value } as Record<string, T>)
+  }, [pathname, tab, defaultTab, validator, segmentIndex, dsb$])
 }

@@ -30,7 +30,7 @@ const AboutThreadContainer: FC<TProps> = ({ isSidebarLayout = false }) => {
   const s = useSalon({ isSidebarLayout })
 
   const { bannerLayout } = useLayout()
-  const community = useCommunity()
+  const { moderators } = useCommunity()
 
   return (
     <div className={s.wrapper}>
@@ -51,8 +51,7 @@ const AboutThreadContainer: FC<TProps> = ({ isSidebarLayout = false }) => {
         </div>
 
         <div className={cn(s.intro, s.members)}>
-          {/* @ts-ignore */}
-          <Members moderators={community.moderators} />
+          <Members moderators={moderators} />
         </div>
       </div>
       {(bannerLayout === BANNER_LAYOUT.HEADER || bannerLayout === BANNER_LAYOUT.TABBER) && (

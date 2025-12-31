@@ -25,15 +25,15 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
-  const community = useCommunity()
-  const { curTab } = store
+  const dsb$ = useDashboard()
+  const community$ = useCommunity()
+  const { curTab } = dsb$
 
-  const storeRef = useRef(store)
+  const storeRef = useRef(dsb$)
 
   useEffect(() => {
-    storeRef.current = store
-  }, [store])
+    storeRef.current = dsb$
+  }, [dsb$])
 
   const getLinks = (): TLinkItem[] => {
     const { curTab, headerLinks, footerLinks } = storeRef.current
@@ -80,7 +80,7 @@ export default (): TRet => {
     groupLinks[targetIndex].index = groupLinks[linkIndex].index
     groupLinks[linkIndex].index = tmpIndex
 
-    store.commit({
+    dsb$.commit({
       [linksKey]: [...restLinks, ...reindex(groupLinks)],
     })
   }
@@ -100,7 +100,7 @@ export default (): TRet => {
         ? [curLinkItem, ...remove(curLinkItemIndex, 1, groupLinks)]
         : [...remove(curLinkItemIndex, 1, groupLinks), curLinkItem]
 
-    store.commit({
+    dsb$.commit({
       [linksKey]: [...restLinks, ...reindex(newLinks)],
     })
   }
@@ -141,25 +141,25 @@ export default (): TRet => {
       const newLinkItem = {
         ...EMPTY_LINK_ITEM,
         title: '关于',
-        link: `/${community.slug}/${ROUTE.ABOUT}`,
+        link: `/${community$.slug}/${ROUTE.ABOUT}`,
         group: MORE_GROUP,
-        // make sure the "more" gorup is always in the end
+        // make sure the "more" group is always in the end
         groupIndex: groupKeys.length + 2,
       }
 
       const linksAfter = [...links, newLinkItem]
 
-      store.commit({
+      dsb$.commit({
         headerLinks: reindexGroup(linksAfter),
       })
     } else {
-      // make sure the "more" gorup is always in the end
+      // make sure the "more" group is always in the end
       const linksAfter = links.map((item) => ({
         ...item,
         groupIndex: item.group === MORE_GROUP ? links.length + 2 : item.groupIndex,
       }))
 
-      store.commit({
+      dsb$.commit({
         headerLinks: reindexGroup(linksAfter),
       })
     }
@@ -181,7 +181,7 @@ export default (): TRet => {
 
     const linksAfter = [...links, newLinkItem]
 
-    store.commit({
+    dsb$.commit({
       editingGroup: null,
       editingLink: newLinkItem,
       [linksKey]: linksAfter,
@@ -191,7 +191,7 @@ export default (): TRet => {
   }
 
   const confirmGroupUpdate = (): void => {
-    const { editingGroup, editingGroupIndex } = store
+    const { editingGroup, editingGroupIndex } = dsb$
     const links = getLinks()
 
     const linksAfter = clone(links)
@@ -204,7 +204,7 @@ export default (): TRet => {
       }
     }
 
-    store.commit({
+    dsb$.commit({
       editingGroup: null,
       editingGroupIndex: null,
       [linksKey]: reindexGroup(reindex(linksAfter)),
@@ -270,7 +270,7 @@ export default (): TRet => {
     const newLinks = []
     forEach((key) => newLinks.push(...groupedLinks[key]), groupKeys)
 
-    store.commit({ [linksKey]: newLinks })
+    dsb$.commit({ [linksKey]: newLinks })
   }
 
   return {

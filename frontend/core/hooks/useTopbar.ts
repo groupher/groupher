@@ -15,19 +15,19 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const metric = useMetric()
   const { isLightTheme } = useTheme()
 
   const hasTopbar =
     !includes(metric, [METRIC.APPLY_COMMUNITY, METRIC.LANDING]) &&
-    store.topbarLayout === TOPBAR_LAYOUT.YES
-  const isDarkBlack = !isLightTheme && store.topbarBg === COLOR_NAME.BLACK
+    dsb$.topbarLayout === TOPBAR_LAYOUT.YES
+  const isDarkBlack = !isLightTheme && dsb$.topbarBg === COLOR_NAME.BLACK
 
   return {
     hasTopbar,
-    topbar: store.topbarLayout,
-    topbarBg: store.topbarBg,
+    topbar: dsb$.topbarLayout,
+    topbarBg: dsb$.topbarBg,
     isDarkBlack,
   }
 }

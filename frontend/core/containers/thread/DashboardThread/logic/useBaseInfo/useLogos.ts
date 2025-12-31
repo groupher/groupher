@@ -11,13 +11,13 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { anyChanged } = useHelper()
 
   // TODO: handle image upload
 
   return {
-    ...pick(BASEINFO_LOGOS_KEYS, store),
+    ...pick(BASEINFO_LOGOS_KEYS, dsb$),
     isLogosTouched: anyChanged(BASEINFO_LOGOS_KEYS as TDsbField[]),
   }
 }

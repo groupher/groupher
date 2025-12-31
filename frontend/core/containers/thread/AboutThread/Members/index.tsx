@@ -1,18 +1,14 @@
 import type { FC } from 'react'
-
-import type { TModerator } from '~/spec'
-import { mockUsers } from '~/mock'
-
 import Img from '~/Img'
+import { mockUsers } from '~/mock'
+import type { TModerator } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import NoteTip from '~/widgets/NoteTip'
-
+import useSalon, { cn } from '../salon/members'
 import AdminMember from './AdminMember'
 
-import useSalon, { cn } from '../salon/members'
-
 type TProps = {
-  moderators: TModerator[]
+  moderators: readonly TModerator[]
 }
 
 const Members: FC<TProps> = ({ moderators }) => {
@@ -39,7 +35,7 @@ const Members: FC<TProps> = ({ moderators }) => {
         <div className={s.header}>
           <h3 className={s.title}>
             参与互动
-            <NoteTip left={1} placement="right" offset={[-6, 10]}>
+            <NoteTip left={1} placement='right' offset={[-6, 10]}>
               参与发布，投票，评论，以及 Emoji 反馈的用户
             </NoteTip>
           </h3>

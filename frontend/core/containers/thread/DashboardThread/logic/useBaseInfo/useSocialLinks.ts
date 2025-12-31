@@ -8,9 +8,7 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
-
-  const { socialLinks, original } = store
+  const { socialLinks, original } = useDashboard()
 
   const socialLinksTouched = () => {
     return !equals(socialLinks, original.socialLinks)

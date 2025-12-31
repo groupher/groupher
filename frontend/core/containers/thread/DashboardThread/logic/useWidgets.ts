@@ -17,17 +17,17 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 
-  const { widgetsThreads, original } = store
+  const { widgetsThreads, original } = dsb$
 
   const threadOnChange = (checked: boolean, thread: TThread): void => {
     const newThreads = checked
       ? [...widgetsThreads, thread]
       : reject((t: TThread) => t === thread, widgetsThreads)
 
-    store.commit({ widgetsThreads: newThreads })
+    dsb$.commit({ widgetsThreads: newThreads })
   }
 
   const isThreadTouched = !equals(widgetsThreads, original.widgetsThreads)
@@ -38,7 +38,7 @@ export default (): TRet => {
   return {
     ...pick(
       ['saving', 'widgetsPrimaryColor', 'widgetsThreads', 'widgetsSize', 'widgetsType'],
-      store,
+      dsb$,
     ),
     threadOnChange,
     isThreadTouched,

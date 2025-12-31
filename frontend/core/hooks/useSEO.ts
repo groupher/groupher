@@ -4,7 +4,7 @@ import useDashboard from '~/hooks/useDashboard'
 import type { TDsdSEOConf } from '~/spec'
 
 export default (): TDsdSEOConf => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
 
-  return pick(SEO_KEYS, store)
+  return pick(SEO_KEYS, dsb$)
 }

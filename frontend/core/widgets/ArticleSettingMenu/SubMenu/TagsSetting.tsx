@@ -24,14 +24,14 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   const [checked, setChecked] = useState([])
   const { touched, setTouched, resetTouched } = useTouched()
 
-  const community = useCommunity()
+  const { slug: community } = useCommunity()
   const { article } = useViewingArticle()
 
   const [result] = useQuery({
     query: S.pagedArticleTags,
     variables: {
       filter: {
-        community: community.slug,
+        community,
         thread: THREAD.POST.toUpperCase(),
       },
     },

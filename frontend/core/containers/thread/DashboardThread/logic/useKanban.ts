@@ -18,7 +18,7 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 
   const isKanbanLayoutTouched = isChanged('kanbanLayout')
@@ -27,7 +27,7 @@ export default (): TRet => {
 
   return {
     edit,
-    ...pick(['kanbanLayout', 'kanbanCardLayout', 'kanbanBgColors', 'saving'], store),
+    ...pick(['kanbanLayout', 'kanbanCardLayout', 'kanbanBgColors', 'saving'], dsb$),
     isKanbanLayoutTouched,
     isKanbanCardLayoutTouched,
     isKanbanColorsTouched,

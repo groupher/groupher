@@ -2,7 +2,7 @@ import useDashboard from '~/hooks/useDashboard'
 import type { TColorName } from '~/spec'
 
 export default (): readonly TColorName[] => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
 
-  return store.kanbanBgColors
+  return dsb$.kanbanBgColors
 }

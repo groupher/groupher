@@ -18,20 +18,20 @@ type TRet = TBroadcastConf & {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { edit, isChanged, onSave } = useHelper()
 
   const isTouched = isChanged('broadcastLayout') || isChanged('broadcastBg')
   const isArticleTouched = isChanged('broadcastArticleLayout') || isChanged('broadcastArticleBg')
 
   const changeEnable = (v: boolean) => {
-    store.commit({ broadcastEnable: v })
+    dsb$.commit({ broadcastEnable: v })
     setTimeout(() => onSave(FIELD.BROADCAST_ENABLE))
   }
 
   const broadcastOnSave = (isArticle = false): void => {
     console.log('## broadcastOnSave: ', isArticle)
-    store.commit({ saving: true })
+    dsb$.commit({ saving: true })
     // const layoutKey = !isArticle
     //   ? FIELD.BROADCAST_LAYOUT
     //   : FIELD.BROADCAST_ARTICLE_LAYOUT
@@ -76,7 +76,7 @@ export default (): TRet => {
         'broadcastArticleEnable',
         'saving',
       ],
-      store,
+      dsb$,
     ),
     isTouched,
     isArticleTouched,

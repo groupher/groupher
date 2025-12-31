@@ -42,13 +42,13 @@ export type TRet = {
 } & TDrived
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
 
-  const storeRef = useRef(store)
+  const storeRef = useRef(dsb$)
 
   useEffect(() => {
-    storeRef.current = store
-  }, [store])
+    storeRef.current = dsb$
+  }, [dsb$])
 
   const {
     getLinks,
@@ -64,11 +64,11 @@ export default (): TRet => {
   } = useUtils()
   const drived = useDrived()
 
-  const { curTab } = store
+  const { curTab } = dsb$
   const linksKey = curTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
 
   const updateInGroup = (link: TLinkItem): void => {
-    store.commit({ editingLink: link, editingLinkMode: CHANGE_MODE.UPDATE })
+    dsb$.commit({ editingLink: link, editingLinkMode: CHANGE_MODE.UPDATE })
   }
 
   const add2Group = (group: string, index: number): void => {
@@ -85,7 +85,7 @@ export default (): TRet => {
       groupIndex,
     }
 
-    store.commit({
+    dsb$.commit({
       [linksKey]: [...links, newItem],
       editingLink: newItem,
       editingLinkMode: CHANGE_MODE.CREATE,
@@ -102,7 +102,7 @@ export default (): TRet => {
 
     linksAfter = emptyLinksIfNeed(linksAfter)
 
-    store.commit({
+    dsb$.commit({
       [linksKey]: reindex(linksAfter),
     })
   }
@@ -113,17 +113,17 @@ export default (): TRet => {
 
     linksAfter = emptyLinksIfNeed(linksAfter)
 
-    store.commit({
+    dsb$.commit({
       [linksKey]: reindexGroup(linksAfter),
     })
   }
 
   const cancelLinkEditing = (): void => {
-    const { editingLink, editingLinkMode, original } = store
+    const { editingLink, editingLinkMode, original } = dsb$
     const links = getLinks()
 
     if (editingLinkMode === CHANGE_MODE.UPDATE) {
-      store.commit({ editingLink: null })
+      dsb$.commit({ editingLink: null })
       return
     }
 
@@ -134,7 +134,7 @@ export default (): TRet => {
 
     linksAfter = emptyLinksIfNeed(linksAfter)
 
-    store.commit({
+    dsb$.commit({
       [linksKey]: linksAfter,
       editingLink: null,
       original: { ...original, [linksKey]: linksAfter },
@@ -142,7 +142,7 @@ export default (): TRet => {
   }
 
   const confirmLinkEditing = (): void => {
-    const { editingLink, editingLinkMode } = store
+    const { editingLink, editingLinkMode } = dsb$
     const links = getLinks()
 
     if (editingLinkMode === CHANGE_MODE.UPDATE) {
@@ -154,7 +154,7 @@ export default (): TRet => {
       links[editingIndex].title = editingLink.title
       links[editingIndex].link = editingLink.link
 
-      store.commit({
+      dsb$.commit({
         [linksKey]: links,
         editingLink: null,
       })
@@ -181,7 +181,7 @@ export default (): TRet => {
       links,
     ).concat(editingLinkAfter)
 
-    store.commit({
+    dsb$.commit({
       [linksKey]: clone(linksAfter),
       editingLink: null,
     })
@@ -194,39 +194,39 @@ export default (): TRet => {
   }
 
   const updateEditingLink = (key: string, value: string): void => {
-    const { editingLink } = store
+    const { editingLink } = dsb$
 
     const editingLinkAfter = { ...editingLink, [key]: value }
 
-    store.commit({ editingLink: editingLinkAfter })
+    dsb$.commit({ editingLink: editingLinkAfter })
   }
 
   const resetEditingLink = (): void => {
-    store.commit({ editingLink: null, editingGroup: null, editingGroupIndex: null })
+    dsb$.commit({ editingLink: null, editingGroup: null, editingGroupIndex: null })
   }
 
   const updateEditingGroup = (title: string): void => {
-    store.commit({ editingGroup: title })
+    dsb$.commit({ editingGroup: title })
   }
 
   const triggerGroupUpdate = (title: string, index: number): void => {
-    store.commit({ editingGroup: title, editingGroupIndex: index })
+    dsb$.commit({ editingGroup: title, editingGroupIndex: index })
   }
 
   const triggerGroupAdd = (): void => {
-    store.commit({ editingGroup: '', editingGroupIndex: null })
+    dsb$.commit({ editingGroup: '', editingGroupIndex: null })
   }
 
   const cancelGroupChange = (): void => {
-    store.commit({ editingGroup: null, editingGroupIndex: null })
+    dsb$.commit({ editingGroup: null, editingGroupIndex: null })
   }
 
   const addHeaderLinkGroup = () => {
     const time = Date.now()
 
-    store.commit({ editingGroup: `${ONE_LINK_GROUP}_${time}` })
+    dsb$.commit({ editingGroup: `${ONE_LINK_GROUP}_${time}` })
     // TMP
-    store.commit({ editingLink: { title: 'hello', link: 'hello', index: 0 } })
+    dsb$.commit({ editingLink: { title: 'hello', link: 'hello', index: 0 } })
     // TMP end
     setTimeout(confirmGroupAdd, 100)
   }
@@ -255,7 +255,7 @@ export default (): TRet => {
 
     const aboutLink = find(
       (item: TLinkItem) => item.group === MORE_GROUP && item.title === '关于',
-      store.headerLinks,
+      dsb$.headerLinks,
     )
 
     moveLink(aboutLink, 'bottom')

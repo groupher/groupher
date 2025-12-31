@@ -12,8 +12,7 @@ import ThreadIcon from './ThreadIcon'
 export default () => {
   const s = useSalon()
 
-  const community = useCommunity()
-  const communityPath = community?.slug
+  const { slug: community } = useCommunity()
 
   const publicThreads = usePublicThreads()
   const activeThread = useViewingThread()
@@ -27,7 +26,7 @@ export default () => {
         const active = activeThread === thread.slug
 
         return (
-          <Link className={s.menuItem} key={thread.slug} href={`/${communityPath}/${thread.slug}`}>
+          <Link className={s.menuItem} key={thread.slug} href={`/${community}/${thread.slug}`}>
             <ThreadIcon thread={thread.slug} active={active} />
             <div className={cn(s.menuTitle, active && s.titleActive)}>{thread.title}</div>
           </Link>

@@ -30,7 +30,7 @@ const UniBar = lazy(() => import('~/widgets/UniBar'))
 
 export default () => {
   const { t } = useTrans()
-  const curCommunity = useCommunity()
+  const { desc, homepage } = useCommunity()
 
   const { inView: showCommunityBadge } = useCommunityDigestViewport()
   const activeTag = useActiveTag()
@@ -43,11 +43,11 @@ export default () => {
         <div className={s.stickyWrapper}>
           <div className={s.showArea}>
             <SocialBanner />
-            <div className={s.desc}>{curCommunity.desc}</div>
+            <div className={s.desc}>{desc}</div>
             <div className={s.homeLinks}>
               <LinkSVG className={s.linkIcon} />
-              <Link href={curCommunity.homepage} className={s.link}>
-                {curCommunity.homepage}
+              <Link href={homepage} className={s.link}>
+                {homepage}
               </Link>
               <div className='grow' />
 

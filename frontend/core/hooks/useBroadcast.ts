@@ -4,7 +4,7 @@ import useDashboard from '~/hooks/useDashboard'
 import type { TBroadcastConf } from '~/spec'
 
 export default (): TBroadcastConf => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
 
   return pick(
     [
@@ -15,6 +15,6 @@ export default (): TBroadcastConf => {
       'broadcastArticleBg',
       'broadcastArticleEnable',
     ],
-    store,
+    dsb$,
   )
 }

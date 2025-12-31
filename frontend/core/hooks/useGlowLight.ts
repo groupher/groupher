@@ -9,14 +9,14 @@ import useWallpaper from '~/hooks/useWallpaper'
 import type { TGlowEffect } from '~/spec'
 
 export default (): TGlowEffect => {
-  const dashboard = useDashboard()
+  const dsb$ = useDashboard()
   const { wallpaper } = useWallpaper()
 
   const metric = useMetric()
 
-  const { glowType, glowFixed, glowOpacity } = dashboard
+  const { glowType, glowFixed, glowOpacity } = dsb$
 
-  const changeGlowEffect = (glowType: string): void => dashboard.commit({ glowType })
+  const changeGlowEffect = (glowType: string): void => dsb$.commit({ glowType })
 
   if (
     includes(metric, [METRIC.APPLY_COMMUNITY]) ||
