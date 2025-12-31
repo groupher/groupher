@@ -5,25 +5,24 @@ import useLocale from '~/hooks/useLocale'
 import useNow from '~/hooks/useNow'
 import { fmtRelativeTime } from '~/utils/fmt'
 
-type TProps = {
+type Props = {
   datetime: string | Date
-  tickInterval?: number // refresh every 1 min
+  tickInterval?: number // auto refresh in every min
 }
 
-export default function TimeAgo({ datetime, tickInterval = 60_000 }: TProps) {
+export default function TimeAgo({ datetime, tickInterval = 60_000 }: Props) {
   const nowFromStore = useNow()
   const { locale } = useLocale()
 
-  const [_tick, setTick] = useState(0)
+  const [tick, setTick] = useState(0)
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setTick((t) => t + 1)
-    }, tickInterval)
+    const id = setInterval(() => setTick((t) => t + 1), tickInterval)
     return () => clearInterval(id)
   }, [tickInterval])
 
-  const text = fmtRelativeTime(datetime, nowFromStore, locale)
+  const now = tick === 0 ? nowFromStore : Date.now()
+  const text = fmtRelativeTime(datetime, now, locale)
 
   return <time dateTime={datetime instanceof Date ? datetime.toISOString() : datetime}>{text}</time>
 }
