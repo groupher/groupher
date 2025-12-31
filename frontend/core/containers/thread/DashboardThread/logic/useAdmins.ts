@@ -10,14 +10,14 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
-  const { moderators: originalModerators, activeModerator } = store
+  const dsb$ = useDashboard()
+  const { moderators: originalModerators, activeModerator } = dsb$
 
   const moderators = useMemo(() => {
     return sortByKey(originalModerators, 'passportItemCount').reverse() as TModerator[]
   }, [originalModerators])
 
-  const setActiveSettingAdmin = (user: TUser): void => store.commit({ activeModerator: user })
+  const setActiveSettingAdmin = (user: TUser): void => dsb$.commit({ activeModerator: user })
 
   return {
     moderators,

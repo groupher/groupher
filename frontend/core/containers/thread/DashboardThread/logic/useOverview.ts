@@ -7,9 +7,9 @@ import type { TCommunity, TOverview } from '~/spec'
 import S from '../schema'
 
 export default (): TOverview => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { slug } = useCommunity()
-  const { overview } = store
+  const { overview } = dsb$
 
   const { data } = useQuery(S.communityOverview, {
     slug,
@@ -19,7 +19,7 @@ export default (): TOverview => {
   const updateOverview = (community: TCommunity): void => {
     const { meta, views, subscribersCount } = community
 
-    store.commit({
+    dsb$.commit({
       // @ts-expect-error
       overview: {
         views,

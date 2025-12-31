@@ -22,7 +22,7 @@ export default ({ children }) => {
   })
 
   const router = useRouter()
-  const curCommunity = useCommunity()
+  const community$ = useCommunity()
   const { broadcastTab } = useDashboard()
 
   return (
@@ -37,8 +37,8 @@ export default ({ children }) => {
             onChange={(tab) => {
               const targetPath =
                 tab === DSB_BROADCAST_ROUTE.GLOBAL
-                  ? `/${curCommunity.slug}/dashboard/broadcast`
-                  : `/${curCommunity.slug}/dashboard/broadcast/${tab}`
+                  ? `/${community$.slug}/dashboard/broadcast`
+                  : `/${community$.slug}/dashboard/broadcast/${tab}`
 
               router.push(targetPath)
             }}

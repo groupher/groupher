@@ -10,15 +10,15 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const dashboard = useDashboard()
+  const dsb$ = useDashboard()
 
-  const { original } = dashboard
+  const { original } = dsb$
 
-  const isChanged = (field: TDsbField): boolean => !equals(dashboard[field], original[field])
+  const isChanged = (field: TDsbField): boolean => !equals(dsb$[field], original[field])
   const anyChanged = (fields: TDsbField[]): boolean => any(isChanged)(fields)
 
   const mapArrayChanged = (key: string): boolean =>
-    JSON.stringify(dashboard[key]) !== JSON.stringify(original[key])
+    JSON.stringify(dsb$[key]) !== JSON.stringify(original[key])
 
   return {
     isChanged,

@@ -20,7 +20,7 @@ type TProps = {
 const Group: FC<TProps> = ({ group }) => {
   const { curTab } = useDashboard()
 
-  const community = useCommunity()
+  const { slug: community } = useCommunity()
   const [fold, setFold] = useState(group.initFold)
 
   const s = useSalon({ fold })
@@ -48,7 +48,7 @@ const Group: FC<TProps> = ({ group }) => {
               <Link
                 key={item.slug}
                 className={cn(s.item, isActive && s.itemActive)}
-                href={`/${community.slug}/${DSB_ROUTE.DASHBOARD}/${subPath}`}
+                href={`/${community}/${DSB_ROUTE.DASHBOARD}/${subPath}`}
               >
                 {isActive && <div className={s.itemActiveBar} />}
 

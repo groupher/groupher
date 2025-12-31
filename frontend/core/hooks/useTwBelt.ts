@@ -62,9 +62,8 @@ export default (): TRet => {
   const { isLightTheme } = useTheme()
   const metric = useMetric()
   const { isSquare: isAvatarSquare } = useAvatarLayout()
-  const dashboard = useDashboard()
   const primaryColor = usePrimaryColor()
-  const { pageBg, pageBgDark } = dashboard
+  const { pageBg, pageBgDark } = useDashboard()
 
   const container = () => {
     return `container-${metric.toLowerCase()}`

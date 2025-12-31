@@ -4,12 +4,12 @@ import useDashboard from '~/hooks/useDashboard'
 import type { TNameAlias } from '~/spec'
 
 const useNameAlias = (group = 'kanban'): Record<string, TNameAlias> => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
 
   const alias = {}
   let aliasList = []
 
-  const curAlias = useMemo(() => store.nameAlias, [store.nameAlias])
+  const curAlias = useMemo(() => dsb$.nameAlias, [dsb$.nameAlias])
 
   if (!group) {
     aliasList = [...curAlias]

@@ -3,10 +3,10 @@ import useDashboard from '~/hooks/useDashboard'
 import useTheme from '~/hooks/useTheme'
 
 export default (): number => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { theme } = useTheme()
 
-  const { gaussBlur, gaussBlurDark } = store
+  const { gaussBlur, gaussBlurDark } = dsb$
 
   return theme === THEME.LIGHT ? gaussBlur : gaussBlurDark
 }

@@ -37,33 +37,35 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useWallpaperDomain()
-  const curCommunity = useCommunity()
+  const wallpaper$ = useWallpaperDomain()
+  const community$ = useCommunity()
   const { getWallpaper } = useFullWallpaper()
 
   const [tab, setTab] = useState<TTab>(TAB.BUILDIN)
   const [loading, setLoading] = useState(false)
 
   const isTouched = useMemo((): boolean => {
-    const original = pick(WALLPAPER_STATE_KEYS, store.original)
-    const current = pick(WALLPAPER_STATE_KEYS, store)
+    const original = pick(WALLPAPER_STATE_KEYS, wallpaper$.original)
+    const current = pick(WALLPAPER_STATE_KEYS, wallpaper$)
 
     return !equals(clone(original), clone(current))
-  }, [store])
+  }, [wallpaper$])
 
   const close = (): void => {
     // store.rollbackEdit()
     closeDrawer()
   }
 
-  // @ts-expect-error
-  const initRollback = (): void => store.commit({ original: pick(WALLPAPER_STATE_KEYS, store) })
-  const rollbackWallpaper = (): void => store.commit({ ...store.original })
+  const initRollback = (): void =>
+    // @ts-expect-error
+    wallpaper$.commit({ original: pick(WALLPAPER_STATE_KEYS, wallpaper$) })
+
+  const rollbackWallpaper = (): void => wallpaper$.commit({ ...wallpaper$.original })
 
   const onSave = (): void => {
     setLoading(true)
-    const community = curCommunity.slug
-    const params = { community, ...pick(WALLPAPER_STATE_KEYS, store) }
+    const community = community$.slug
+    const params = { community, ...pick(WALLPAPER_STATE_KEYS, wallpaper$) }
 
     mutate(S.updateDashboardWallpaper, params)
       .then(() => {
@@ -79,29 +81,30 @@ export default (): TRet => {
   }
 
   const changeTab = (tab: TTab): void => setTab(tab)
-  const changeDirection = (direction: TWallpaperGradientDir): void => store.commit({ direction })
+  const changeDirection = (direction: TWallpaperGradientDir): void =>
+    wallpaper$.commit({ direction })
   const removeWallpaper = (): void =>
-    store.commit({ wallpaper: '', wallpaperType: WALLPAPER_TYPE.NONE })
+    wallpaper$.commit({ wallpaper: '', wallpaperType: WALLPAPER_TYPE.NONE })
   const changeGradientWallpaper = (wallpaper: string): void =>
-    store.commit({ wallpaper, wallpaperType: WALLPAPER_TYPE.GRADIENT })
+    wallpaper$.commit({ wallpaper, wallpaperType: WALLPAPER_TYPE.GRADIENT })
   const changePatternWallpaper = (wallpaper: string): void =>
-    store.commit({ wallpaper, wallpaperType: WALLPAPER_TYPE.PATTERN })
+    wallpaper$.commit({ wallpaper, wallpaperType: WALLPAPER_TYPE.PATTERN })
 
   const changeCustomGradientWallpaper = (): void => {
-    store.commit({ wallpaper: '', wallpaperType: WALLPAPER_TYPE.CUSTOM_GRADIENT })
+    wallpaper$.commit({ wallpaper: '', wallpaperType: WALLPAPER_TYPE.CUSTOM_GRADIENT })
   }
 
   const changeWallpaperType = (wallpaperType: TWallpaperType): void => {
-    store.commit({ wallpaperType })
+    wallpaper$.commit({ wallpaperType })
   }
 
   const confirmCustomColor = (customColorValue: string): void => {
-    store.commit({ customColorValue, wallpaperType: WALLPAPER_TYPE.CUSTOM_GRADIENT })
+    wallpaper$.commit({ customColorValue, wallpaperType: WALLPAPER_TYPE.CUSTOM_GRADIENT })
   }
 
-  const togglePattern = (hasPattern: boolean): void => store.commit({ hasPattern })
-  const toggleBlur = (hasBlur: boolean): void => store.commit({ hasBlur })
-  const toggleShadow = (hasShadow: boolean): void => store.commit({ hasShadow })
+  const togglePattern = (hasPattern: boolean): void => wallpaper$.commit({ hasPattern })
+  const toggleBlur = (hasBlur: boolean): void => wallpaper$.commit({ hasBlur })
+  const toggleShadow = (hasShadow: boolean): void => wallpaper$.commit({ hasShadow })
 
   return {
     tab,

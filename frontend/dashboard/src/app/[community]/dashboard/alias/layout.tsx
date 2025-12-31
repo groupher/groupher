@@ -15,7 +15,7 @@ import Tabs from '~/widgets/Switcher/Tabs'
 export default ({ children }) => {
   const s = useSalon()
   const router = useRouter()
-  const curCommunity = useCommunity()
+  const { slug: community } = useCommunity()
   const { aliasTab } = useAlias()
 
   useSyncDSBRoute2Tab({
@@ -39,8 +39,8 @@ export default ({ children }) => {
             onChange={(tab) => {
               const targetPath =
                 tab === DSB_ALIAS_ROUTE.THREAD
-                  ? `/${curCommunity.slug}/dashboard/alias`
-                  : `/${curCommunity.slug}/dashboard/alias/${tab}`
+                  ? `/${community}/dashboard/alias`
+                  : `/${community}/dashboard/alias/${tab}`
 
               router.push(targetPath)
             }}

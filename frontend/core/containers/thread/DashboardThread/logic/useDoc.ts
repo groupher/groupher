@@ -18,25 +18,25 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 
   const addFAQSection = (): void => {
-    const { faqSections } = store
+    const { faqSections } = dsb$
     const index = faqSections.length
 
-    store.commit({ editingFAQ: { ...DEFAULT_NEW_FAQ, index }, editingFAQIndex: index })
+    dsb$.commit({ editingFAQ: { ...DEFAULT_NEW_FAQ, index }, editingFAQIndex: index })
   }
 
   const addDocCategory = (): void => {
-    const docCategories = store.docCategories.concat({
+    const docCategories = dsb$.docCategories.concat({
       name: '新分类',
-      index: store.docCategories.length,
+      index: dsb$.docCategories.length,
       color: COLOR_NAME.BLACK,
       files: [],
     })
 
-    store.commit({ docCategories })
+    dsb$.commit({ docCategories })
   }
 
   const isTouched = isChanged('docLayout')
@@ -44,7 +44,7 @@ export default (): TRet => {
 
   return {
     edit,
-    ...pick(['docLayout', 'docFaqLayout', 'saving'], store),
+    ...pick(['docLayout', 'docFaqLayout', 'saving'], dsb$),
     isTouched,
     isFaqTouched,
     addFAQSection,

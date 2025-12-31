@@ -10,9 +10,9 @@ type TABoutInfo = {
 }
 
 export default (): TABoutInfo => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
 
-  const { homepage, city, techstack, socialLinks, mediaReports } = store
+  const { homepage, city, techstack, socialLinks, mediaReports } = dsb$
 
   return {
     homepage,

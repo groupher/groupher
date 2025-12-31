@@ -16,13 +16,13 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { edit, resetEdit } = useHelper()
 
-  const { aliasTab, editingAlias, nameAlias, saving } = store
+  const { aliasTab, editingAlias, nameAlias, saving } = dsb$
 
   const updateEditingAlias = (alias: TNameAlias): void => {
-    store.commit({ editingAlias: alias })
+    dsb$.commit({ editingAlias: alias })
   }
 
   return {

@@ -38,8 +38,8 @@ const assignChecked = <T extends { id?: TID }>(
 }
 
 export default (): TRet => {
-  const dashboard = useDashboard()
-  const curCommunity = useCommunity()
+  const dsb$ = useDashboard()
+  const community$ = useCommunity()
   const { mapArrayChanged } = useHelper()
 
   const {
@@ -53,51 +53,51 @@ export default (): TRet => {
     pagedChangelogs,
     faqSections,
     editingFAQ,
-  } = dashboard
+  } = dsb$
 
   const loadPosts = () => {
-    dashboard.commit({ loading: true })
+    dsb$.commit({ loading: true })
     const params = {
-      filter: { page: 1, size: 20, community: curCommunity.slug },
+      filter: { page: 1, size: 20, community: community$.slug },
       userHasLogin: false,
     }
 
     query(S.pagedPosts, params).then((data) => {
-      dashboard.commit({ loading: false })
+      dsb$.commit({ loading: false })
       console.log('## TODO handle pagedChangelogs: ', data)
     })
-    dashboard.commit({ loading: false })
+    dsb$.commit({ loading: false })
   }
 
   const loadChangelogs = (): void => {
-    dashboard.commit({ loading: true })
+    dsb$.commit({ loading: true })
     const params = {
-      filter: { page: 1, size: 20, community: curCommunity.slug },
+      filter: { page: 1, size: 20, community: community$.slug },
       userHasLogin: false,
     }
     query(S.pagedChangelogs, params).then((data) => {
-      dashboard.commit({ loading: false })
+      dsb$.commit({ loading: false })
       console.log('## TODO handle pagedChangelogs: ', data)
     })
   }
 
   const batchSelect = (id: TID, selected = true): void => {
-    const { batchSelectedIDs } = dashboard
+    const { batchSelectedIDs } = dsb$
 
     const _batchSelectedIds = selected
       ? [...batchSelectedIDs, id]
       : reject((_id) => id === _id, batchSelectedIDs)
 
-    dashboard.commit({ batchSelectedIDs: uniq(_batchSelectedIds) })
+    dsb$.commit({ batchSelectedIDs: uniq(_batchSelectedIds) })
   }
 
   const batchSelectAll = (selected: boolean, ids = []): void => {
     if (!selected) {
-      dashboard.commit({ batchSelectedIDs: [] })
+      dsb$.commit({ batchSelectedIDs: [] })
       return
     }
 
-    dashboard.commit({ batchSelectedIDs: ids })
+    dsb$.commit({ batchSelectedIDs: ids })
   }
 
   return {

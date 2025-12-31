@@ -20,7 +20,7 @@ export default () => {
 
   const [disableTippyJump, setDisableTippyJump] = useState(false)
   const { slug } = useCommunity()
-  const dashboard = useDashboard()
+  const dsb$ = useDashboard()
 
   const [ref, isHovering] = useHover<HTMLDivElement>()
 
@@ -46,7 +46,7 @@ export default () => {
             <div className={s.menuTitle}>社区主页</div>
           </Link>
 
-          <Link className={s.menuItem} href={dashboard?.homepage}>
+          <Link className={s.menuItem} href={dsb$.homepage}>
             <div className={s.menuIconBox}>
               <GlobalSVG className={s.menuIcon} />
             </div>

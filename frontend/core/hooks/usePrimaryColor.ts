@@ -2,7 +2,7 @@ import useDashboard from '~/hooks/useDashboard'
 import type { TColorName } from '~/spec'
 
 export default (): TColorName => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
 
-  return store.primaryColor
+  return dsb$.primaryColor
 }

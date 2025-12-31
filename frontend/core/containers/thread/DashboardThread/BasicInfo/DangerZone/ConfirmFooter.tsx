@@ -17,20 +17,20 @@ const ConfirmFooter: FC<TProps> = ({ testid = '', ...spacing }) => {
   const { deleteCommunity } = useBaseInfo()
 
   const [msg, setMsg] = useState('')
-  const { slug } = useCommunity()
+  const { slug: community } = useCommunity()
 
   return (
     <div className={s.wrapper}>
       <div className={s.divider} />
       <div className={s.note}>
-        请在下方输入社区名称<span className={s.bold}>{slug}</span>确认
+        请在下方输入社区名称<span className={s.bold}>{community}</span>确认
       </div>
       <Input className={s.input} onChange={(e) => setMsg(e.target.value)} value={msg} autoFocus />
       <Button
         type='red'
         top={14}
         bottom={18}
-        disabled={msg !== slug}
+        disabled={msg !== community}
         onClick={() => deleteCommunity()}
       >
         我已了解，确认删除

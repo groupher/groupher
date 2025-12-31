@@ -23,7 +23,7 @@ export default ({ children }) => {
   })
 
   const router = useRouter()
-  const curCommunity = useCommunity()
+  const community$ = useCommunity()
   const { seoTab, saving, isTouched } = useSEO()
 
   return (
@@ -38,8 +38,8 @@ export default ({ children }) => {
             onChange={(tab) => {
               const targetPath =
                 tab === DSB_SEO_ROUTE.SEARCH_ENGINE
-                  ? `/${curCommunity.slug}/dashboard/seo`
-                  : `/${curCommunity.slug}/dashboard/seo/${tab}`
+                  ? `/${community$.slug}/dashboard/seo`
+                  : `/${community$.slug}/dashboard/seo/${tab}`
 
               router.push(targetPath)
             }}

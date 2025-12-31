@@ -15,18 +15,18 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { edit, isChanged } = useHelper()
 
   const isTouched = isChanged('rssFeedType') || isChanged('rssFeedCount')
 
   const rssOnSave = (): void => {
-    store.commit({ saving: true })
+    dsb$.commit({ saving: true })
     console.log('## rssOnSave')
     // const { RSS_FEED_TYPE, RSS_FEED_COUNT } = FIELD
 
-    // store.onSave(RSS_FEED_TYPE)
-    // store.onSave(RSS_FEED_COUNT)
+    // dsb$.onSave(RSS_FEED_TYPE)
+    // dsb$.onSave(RSS_FEED_COUNT)
 
     // setTimeout(() => {
     //   store.mark({ saving: false })
@@ -51,7 +51,7 @@ export default (): TRet => {
 
   return {
     edit,
-    ...pick(['rssFeedType', 'rssFeedCount', 'saving'], store),
+    ...pick(['rssFeedType', 'rssFeedCount', 'saving'], dsb$),
     isTouched,
     rssOnSave,
     rssOnCancel,

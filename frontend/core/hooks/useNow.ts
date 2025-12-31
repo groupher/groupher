@@ -1,7 +1,7 @@
 import useDashboard from '~/hooks/useDashboard'
 
 export default (): number => {
-  const dashboard$ = useDashboard()
+  const dsb$ = useDashboard()
 
-  return dashboard$.now
+  return dsb$.now
 }

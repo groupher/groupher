@@ -15,7 +15,7 @@ type TProps = TSpace
 const ThreadTab: FC<TProps> = ({ ...spacing }) => {
   const s = useSalon({ ...spacing })
 
-  const community = useCommunity()
+  const { slug: community } = useCommunity()
   const { getCustomLinks } = useHeaderLinks()
   const threads = usePublicThreads()
   const activeThread = useViewingThread()
@@ -30,7 +30,7 @@ const ThreadTab: FC<TProps> = ({ ...spacing }) => {
           <Link
             key={item.slug}
             className={cn(s.title, active && s.titleActive)}
-            href={`/${community.slug}/${item.slug}`}
+            href={`/${community}/${item.slug}`}
             prefetch={true}
           >
             {item.title}

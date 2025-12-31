@@ -20,12 +20,12 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { anyChanged } = useHelper()
 
   return {
-    ...pick(BASEINFO_BASIC_KEYS, store),
-    ...pick(BASEINFO_OTHER_KEYS, store),
+    ...pick(BASEINFO_BASIC_KEYS, dsb$),
+    ...pick(BASEINFO_OTHER_KEYS, dsb$),
     isTouched: anyChanged(BASEINFO_BASIC_KEYS as TDsbField[]),
     isCityTouched: anyChanged(['city']),
   }

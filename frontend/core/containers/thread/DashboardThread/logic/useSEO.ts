@@ -14,22 +14,20 @@ type TRet = TDsdSEOConf & {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { edit, anyChanged } = useHelper()
 
   const isTouched = anyChanged(SEO_KEYS)
 
   const toggleSEO = (seoEnable: boolean): void => {
-    // const { curCommunity } = store
-
     console.log('## toggleSEO: ', seoEnable)
     // sr71$.mutate(S.updateDashboardSeo, { community: curCommunity.slug, seoEnable })
   }
 
   return {
     edit,
-    ...pick(SEO_KEYS, store),
-    ...pick(['seoTab', 'loading', 'saving'], store),
+    ...pick(SEO_KEYS, dsb$),
+    ...pick(['seoTab', 'loading', 'saving'], dsb$),
     isTouched,
     toggleSEO,
   }

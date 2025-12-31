@@ -13,11 +13,11 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
   const { rawBg } = usePageBgCommon()
 
-  const { saving } = store
+  const { saving } = dsb$
 
   const isTouched = isChanged('pageBg')
   const isDarkTouched = isChanged('pageBgDark')

@@ -30,7 +30,7 @@ export default () => {
   } = useCMSInfo()
 
   const router = useRouter()
-  const curCommunity = useCommunity()
+  const { slug: community } = useCommunity()
 
   return (
     <div className={s.wrapper}>
@@ -43,8 +43,8 @@ export default () => {
 
             const targetPath =
               tab === DSB_DOC_ROUTE.TABLE
-                ? `/${curCommunity.slug}/dashboard/doc`
-                : `/${curCommunity.slug}/dashboard/doc/${tab}`
+                ? `/${community}/dashboard/doc`
+                : `/${community}/dashboard/doc/${tab}`
 
             router.push(targetPath)
           }}

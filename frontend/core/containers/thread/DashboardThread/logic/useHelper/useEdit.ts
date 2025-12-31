@@ -16,7 +16,7 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
   const { mutation } = useMutation()
 
   const edit = useCallback(
@@ -26,23 +26,23 @@ export default (): TRet => {
         value = v.target.value
       }
 
-      store.commit({ [field]: value })
+      dsb$.commit({ [field]: value })
     },
-    [store.commit],
+    [dsb$.commit],
   )
 
   const _rollbackByKeys = (keys: readonly TDsbField[]): void => {
     for (let i = 0; i < keys.length; i += 1) {
       const key = keys[i]
-      const initValue = store.original[key]
-      if (store[key] !== initValue) {
-        store.commit({ [key]: initValue })
+      const initValue = dsb$.original[key]
+      if (dsb$[key] !== initValue) {
+        dsb$.commit({ [key]: initValue })
       }
     }
   }
 
   const _findAliasIdx = (): number => {
-    const { nameAlias, editingAlias } = store
+    const { nameAlias, editingAlias } = dsb$
     const targetIdx = findIndex((item: TNameAlias) => item.slug === editingAlias.slug, nameAlias)
 
     return targetIdx
@@ -60,17 +60,17 @@ export default (): TRet => {
     }
 
     if (field === FIELD.TAG) {
-      store.commit({ editingTag: null })
+      dsb$.commit({ editingTag: null })
       return
     }
 
     if (field === FIELD.TAG_INDEX) {
-      store.commit({ tags: [...store.original.tags] })
+      dsb$.commit({ tags: [...dsb$.original.tags] })
       return
     }
 
     if (field === FIELD.FAQ_SECTIONS) {
-      store.commit({ faqSections: store.original.faqSections })
+      dsb$.commit({ faqSections: dsb$.original.faqSections })
       return
     }
 
@@ -78,16 +78,12 @@ export default (): TRet => {
       const targetIdx = _findAliasIdx()
       if (targetIdx < 0) return
 
-      const updatedNameAlias = update(
-        targetIdx,
-        store.original.nameAlias[targetIdx],
-        store.nameAlias,
-      )
-      store.commit({ editingAlias: null, nameAlias: updatedNameAlias })
+      const updatedNameAlias = update(targetIdx, dsb$.original.nameAlias[targetIdx], dsb$.nameAlias)
+      dsb$.commit({ editingAlias: null, nameAlias: updatedNameAlias })
       return
     }
 
-    store.commit({ [field]: store.original[field] })
+    dsb$.commit({ [field]: dsb$.original[field] })
   }
 
   // save to local settings should omit subTabs,
@@ -95,7 +91,7 @@ export default (): TRet => {
   const _saveToLocal = (): void => {
     const saveSlf = omit(
       ['curTab', 'baseInfoTab', 'aliasTab', 'layoutTab', 'layoutTab', 'broadcastTab'],
-      store,
+      dsb$,
     )
 
     BStore.set(DSB_DEMO_KEY, JSON.stringify(saveSlf))
@@ -110,7 +106,7 @@ export default (): TRet => {
 
       // self.nameAlias[targetIdx].name = self.nameAlias[targetIdx].original
       // self.editingAlias = null
-      store.commit({ editingAlias: null })
+      dsb$.commit({ editingAlias: null })
     }
 
     _saveToLocal()
@@ -119,9 +115,9 @@ export default (): TRet => {
 
   const onSave = (field: TDsbField): void => {
     console.log('## on save: ', field)
-    store.commit({ saving: true, savingField: field })
+    dsb$.commit({ saving: true, savingField: field })
 
-    mutation(field, store[field])
+    mutation(field, dsb$[field])
   }
 
   return {

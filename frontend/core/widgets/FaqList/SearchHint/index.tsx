@@ -13,7 +13,7 @@ type TProps = Pick<TIndex, 'sections'>
 const SearchHint: FC<TProps> = ({ sections }) => {
   const s = useSalon()
 
-  const community = useCommunity()
+  const { slug: community } = useCommunity()
   const cats = mockHelpCats()
 
   return (
@@ -29,7 +29,7 @@ const SearchHint: FC<TProps> = ({ sections }) => {
 
       <div className={s.footer}>
         更多类似问题，请移步
-        <ArrowLinker href={`/${community.slug}/${THREAD.DOC}`} left={1}>
+        <ArrowLinker href={`/${community}/${THREAD.DOC}`} left={1}>
           帮助台
         </ArrowLinker>
       </div>

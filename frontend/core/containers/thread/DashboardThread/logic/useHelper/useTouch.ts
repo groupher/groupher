@@ -10,13 +10,13 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
 
-  const { original } = store
+  const { original } = dsb$
 
-  const isChanged = (field: TDsbField): boolean => !equals(store[field], original[field])
+  const isChanged = (field: TDsbField): boolean => !equals(dsb$[field], original[field])
   const anyChanged = (fields: TDsbField[]): boolean => any(isChanged)(fields)
-  const mapArrayChanged = (key: string): boolean => !equals(store[key], original[key])
+  const mapArrayChanged = (key: string): boolean => !equals(dsb$[key], original[key])
 
   return {
     isChanged,

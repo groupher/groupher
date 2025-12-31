@@ -8,9 +8,9 @@ type TRet = {
 }
 
 export default (): TRet => {
-  const store = useDashboard()
+  const dsb$ = useDashboard()
 
-  const { avatarLayout } = store
+  const { avatarLayout } = dsb$
 
   return {
     avatarLayout,

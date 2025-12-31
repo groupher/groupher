@@ -5,12 +5,12 @@ import useLocale from '~/hooks/useLocale'
 import useNow from '~/hooks/useNow'
 import { fmtRelativeTime } from '~/utils/fmt'
 
-type Props = {
+type TProps = {
   datetime: string | Date
   tickInterval?: number // auto refresh in every min
 }
 
-export default function TimeAgo({ datetime, tickInterval = 60_000 }: Props) {
+export default function TimeAgo({ datetime, tickInterval = 60_000 }: TProps) {
   const nowFromStore = useNow()
   const { locale } = useLocale()
 
