@@ -1,10 +1,9 @@
 import type { FC } from 'react'
-import TimeAgo from '~/widgets/TimeAgo'
+import Img from '~/Img'
 
 import type { TComment } from '~/spec'
-
-import Img from '~/Img'
 import ImgFallback from '~/widgets/ImgFallback'
+import TimeAgo from '~/widgets/TimeAgo'
 
 import useSalon from '../../salon/comment/header/article'
 
@@ -39,15 +38,15 @@ const CommentHeader: FC<TProps> = ({ data, showInnerRef, isReply }) => {
               </div>
             )}
             <div className={s.createDate}>
-              <TimeAgo datetime={data.insertedAt} locale="zh_CN" />
+              <TimeAgo datetime={data.insertedAt} />
             </div>
           </div>
 
           <div className={s.floorNum}>
-            #<span className="mr-0.5" />
+            #<span className='mr-0.5' />
             {data.floor}
           </div>
-          <div className="mr-2.5" />
+          <div className='mr-2.5' />
         </div>
 
         {author.bio && <div className={s.shortBio}>{author.bio}</div>}

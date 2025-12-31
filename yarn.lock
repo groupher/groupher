@@ -1284,7 +1284,6 @@ __metadata:
     tailwind-merge: "npm:^3.3.1"
     tailwindcss: "npm:4.1.13"
     tailwindcss-animated: "npm:^2.0.0"
-    timeago-react: "npm:3.0.7"
     tinykeys: "npm:^2.1.0"
     tsc-files: "npm:^1.1.4"
     tsparticles-confetti: "npm:^2.12.0"
@@ -13751,24 +13750,6 @@ __metadata:
   version: 2.3.8
   resolution: "through@npm:2.3.8"
   checksum: 10c0/4b09f3774099de0d4df26d95c5821a62faee32c7e96fb1f4ebd54a2d7c11c57fe88b0a0d49cf375de5fee5ae6bf4eb56dbbf29d07366864e2ee805349970d3cc
-  languageName: node
-  linkType: hard
-
-"timeago-react@npm:3.0.7":
-  version: 3.0.7
-  resolution: "timeago-react@npm:3.0.7"
-  dependencies:
-    timeago.js: "npm:^4.0.0"
-  peerDependencies:
-    react: ^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c0/32069e17428ed0245a30399e7689835f00651c543986320e6e9a0864ad3749d331c1384510661ca3db5dde67921273a48c51eb1dd8d7d02915d09b7bc999cc30
-  languageName: node
-  linkType: hard
-
-"timeago.js@npm:^4.0.0":
-  version: 4.0.2
-  resolution: "timeago.js@npm:4.0.2"
-  checksum: 10c0/e4cf66df2dfa2bc17db6e7a7c591d1e877e09e91e118784347a0b2390c38d7d292d2742e29edde9cdf4eaec61e8c4ef9b9f9c8b539f03d2613403dd7ccfc6cc8
   languageName: node
   linkType: hard
 

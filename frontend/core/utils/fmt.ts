@@ -265,3 +265,31 @@ export const fmt2CompStyle = (styleString: string): { [key: string]: string } =>
 
   return result
 }
+
+// for relative time
+// utils/formatRelativeTime.ts
+type Unit = 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year'
+
+const UNITS: readonly [Unit, number][] = [
+  ['year', 1000 * 60 * 60 * 24 * 365],
+  ['month', 1000 * 60 * 60 * 24 * 30],
+  ['week', 1000 * 60 * 60 * 24 * 7],
+  ['day', 1000 * 60 * 60 * 24],
+  ['hour', 1000 * 60 * 60],
+  ['minute', 1000 * 60],
+  ['second', 1000],
+]
+
+export const fmtRelativeTime = (from: string | Date, now: number, locale: string): string => {
+  const fromTime = typeof from === 'string' ? new Date(from).getTime() : from.getTime()
+  const diff = fromTime - now
+
+  for (const [unit, ms] of UNITS) {
+    const value = Math.trunc(diff / ms)
+    if (Math.abs(value) >= 1) {
+      return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(value, unit)
+    }
+  }
+
+  return new Intl.RelativeTimeFormat(locale).format(0, 'second')
+}

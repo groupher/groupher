@@ -1,17 +1,14 @@
 import type { FC } from 'react'
-import TimeAgo from '~/widgets/TimeAgo'
-
-import type { TComment } from '~/spec'
-
 import Img from '~/Img'
-import ExpandSVG from '~/icons/Expand'
 import CheckBoldSVG from '~/icons/CheckBold'
+import ExpandSVG from '~/icons/Expand'
+import type { TComment } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
-
-import IllegalBar from './IllegalBar'
+import TimeAgo from '~/widgets/TimeAgo'
+import useSalon, { cn } from '../../salon/comment/desktop_view/fold_layout'
 
 import useLogic from '../../useLogic'
-import useSalon, { cn } from '../../salon/comment/desktop_view/fold_layout'
+import IllegalBar from './IllegalBar'
 
 type TProps = {
   data: TComment
@@ -56,7 +53,7 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
         />
       )}
       <div className={s.createDate}>
-        <TimeAgo datetime={data.insertedAt} locale="zh_CN" />
+        <TimeAgo datetime={data.insertedAt} />
       </div>
     </div>
   )

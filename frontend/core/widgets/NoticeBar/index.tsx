@@ -4,18 +4,16 @@
  *
  */
 
-import type { FC } from 'react'
 import Link from 'next/link'
-import TimeAgo from '~/widgets/TimeAgo'
+import type { FC } from 'react'
+import QuestionSVG from '~/icons/Question'
 
 import type { TSpace } from '~/spec'
-
-import QuestionSVG from '~/icons/Question'
-import Icon from './Icon'
-
-import type { TType } from './spec'
+import TimeAgo from '~/widgets/TimeAgo'
 import { TYPE } from './constant'
+import Icon from './Icon'
 import useSalon, { cn } from './salon'
+import type { TType } from './spec'
 
 type TProps = {
   testid?: string
@@ -53,7 +51,7 @@ const NoticeBar: FC<TProps> = ({
       </div>
       {timestamp && (
         <div className={s.timestamp}>
-          <TimeAgo datetime={timestamp} locale="zh_CN" />
+          <TimeAgo datetime={timestamp} />
         </div>
       )}
       {explainLink && (

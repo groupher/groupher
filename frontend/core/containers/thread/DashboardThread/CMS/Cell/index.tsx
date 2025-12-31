@@ -1,18 +1,16 @@
 // import type { FC } from 'react'
 
-import { Cell } from 'rsuite-table'
-import TimeAgo from '~/widgets/TimeAgo'
 import Link from 'next/link'
-
-import { previewArticle } from '~/signal'
+import { Cell } from 'rsuite-table'
 import { COMMUNITY_STATUS } from '~/const/mode'
-
 import Img from '~/Img'
 import PulseSVG from '~/icons/Pulse'
-import Checker from '~/widgets/Checker'
+import { previewArticle } from '~/signal'
 import ArticleCatState from '~/widgets/ArticleCatState'
 import Button from '~/widgets/Buttons/Button'
+import Checker from '~/widgets/Checker'
 import TagsList from '~/widgets/TagsList'
+import TimeAgo from '~/widgets/TimeAgo'
 
 // import { mockTags } from '~/mock'
 
@@ -28,7 +26,7 @@ export const CheckCell = ({ rowData, ...props }) => {
     <Cell {...props}>
       <Checker
         checked={_checked}
-        size="small"
+        size='small'
         top={5}
         onChange={(checked) => batchSelect(id, checked)}
       />
@@ -55,7 +53,7 @@ export const CommunityCell = ({ rowData, ...props }) => {
 
   return (
     <Cell {...props}>
-      <div className="row">
+      <div className='row'>
         <Img className={s.communityLogo} src={logo} />
         <div>
           <div className={s.communityTitle}>{title}</div>
@@ -75,12 +73,12 @@ export const PendingCell = ({ rowData, ...props }) => {
   const _pending = pending === COMMUNITY_STATUS.PENDING
 
   return (
-    <Cell {...props} align="center">
+    <Cell {...props} align='center'>
       <div className={s.actionCell}>
         <div className={cn(s.pending, _pending && s.pendingBlocked)}>
           {_pending ? '待审核' : '正常'}
         </div>
-        <Button className={s.switchButton} size="tiny" ghost>
+        <Button className={s.switchButton} size='tiny' ghost>
           开关
         </Button>
       </div>
@@ -93,12 +91,10 @@ export const ArticleCell = ({ rowData, ...props }) => {
 
   return (
     <Cell {...props}>
-      <>
-        <div className={s.articleTitle} onClick={() => previewArticle(rowData)}>
-          {rowData.title}
-        </div>
-        <TagsList items={rowData.articleTags} left={0} />
-      </>
+      <div className={s.articleTitle} onClick={() => previewArticle(rowData)}>
+        {rowData.title}
+      </div>
+      <TagsList items={rowData.articleTags} left={0} />
     </Cell>
   )
 }
@@ -124,11 +120,11 @@ export const DateCell = ({ rowData, ...props }) => {
       <div className={s.dateCell}>
         <div className={s.dateItem}>
           {/* <PublishIcon /> */}
-          <TimeAgo datetime={insertedAt} locale="zh_CN" />
+          <TimeAgo datetime={insertedAt} />
         </div>
         <div className={s.dateItem}>
           <PulseSVG className={s.pulseIcon} />
-          <TimeAgo datetime={activeAt} locale="zh_CN" />
+          <TimeAgo datetime={activeAt} />
         </div>
       </div>
     </Cell>
@@ -144,7 +140,7 @@ export const TimestampCell = ({ rowData, ...props }) => {
       <Cell {...props}>
         <div className={s.dateCell}>
           <div className={cn(s.dateItem, s.dateItemWarn)}>
-            <TimeAgo datetime={insertedAt} locale="zh_CN" />
+            <TimeAgo datetime={insertedAt} />
           </div>
         </div>
       </Cell>
@@ -156,11 +152,11 @@ export const TimestampCell = ({ rowData, ...props }) => {
       <div className={s.dateCell}>
         <div className={s.dateItem}>
           {/* <PublishIcon /> */}
-          <TimeAgo datetime={insertedAt} locale="zh_CN" />
+          <TimeAgo datetime={insertedAt} />
         </div>
         <div className={s.dateItem}>
           <PulseSVG className={s.pulseIcon} />
-          <TimeAgo datetime={updatedAt} locale="zh_CN" />
+          <TimeAgo datetime={updatedAt} />
         </div>
       </div>
     </Cell>
