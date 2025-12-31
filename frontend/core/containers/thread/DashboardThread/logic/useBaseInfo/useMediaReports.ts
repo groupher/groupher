@@ -38,7 +38,7 @@ export default (): TRet => {
     const { mediaReports } = dsb$
     const newReport = mergeRight(EMPTY_MEDIA_REPORT, { index: Date.now() })
 
-    dsb$.mediaReports = [...mediaReports, newReport]
+    dsb$.commit({ mediaReports: [...mediaReports, newReport] })
   }
 
   const mediaReportOnChange = (index: number, url: string): void => {
@@ -49,7 +49,7 @@ export default (): TRet => {
     // @ts-expect-error
     report.editUrl = url
 
-    dsb$.mediaReports = [...restReports, report]
+    dsb$.commit({ mediaReports: [...restReports, report] })
   }
 
   const removeMediaReport = (index: number): void => {
@@ -83,15 +83,13 @@ export default (): TRet => {
     const { url, editUrl } = item
 
     if ((startsWith('https://', editUrl) || startsWith('http://', editUrl)) && url !== editUrl) {
-      dsb$.queryingMediaReportIndex = item.index
-      dsb$.loading = true
+      dsb$.commit({ loading: true, queryingMediaReportIndex: item.index })
 
       const params = { url: editUrl.trim() }
       query(S.openGraphInfo, params)
         .then(({ openGraphInfo }) => handleOgQueryInfo(openGraphInfo))
         .catch((e) => {
-          dsb$.loading = false
-          dsb$.queryingMediaReportIndex = null
+          dsb$.commit({ loading: false, queryingMediaReportIndex: null })
           console.error('## og info: ', e)
           // biome-ignore lint/suspicious/noAlert: <explanation>
           alert('## queryOpenGraphInfo error')
