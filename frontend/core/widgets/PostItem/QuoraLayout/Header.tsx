@@ -49,7 +49,7 @@ const Header: FC<TProps> = ({ article }) => {
         <div className={s.dot} />
         <div className='mr-0.5' />
         <div className={s.publish}>
-          <TimeAgo datetime={insertedAt} locale='zh_CN' suppressHydrationWarning />
+          <TimeAgo datetime={insertedAt} />
         </div>
       </div>
       <div className={s.main}>

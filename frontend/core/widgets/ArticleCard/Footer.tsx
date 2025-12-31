@@ -1,14 +1,13 @@
 import type { FC } from 'react'
-import TimeAgo from '~/widgets/TimeAgo'
-
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
+import { upvoteArticle } from '~/signal'
 
 import type { TArticle } from '~/spec'
-import { upvoteArticle } from '~/signal'
-import Upvote from '~/widgets/Upvote'
-import DotDivider from '~/widgets/DotDivider'
 import CommentsCount from '~/widgets/CommentsCount'
+import DotDivider from '~/widgets/DotDivider'
+import TimeAgo from '~/widgets/TimeAgo'
+import Upvote from '~/widgets/Upvote'
 
 import useSalon from './salon/footer'
 
@@ -23,8 +22,8 @@ const Footer: FC<TProps> = ({ data }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.publish}>
-        {author.nickname} <DotDivider className="mx-1.5" />
-        <TimeAgo datetime={insertedAt} locale="zh_CN" />
+        {author.nickname} <DotDivider className='mx-1.5' />
+        <TimeAgo datetime={insertedAt} />
       </div>
       <div className={s.bottom}>
         <Upvote

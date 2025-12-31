@@ -1,8 +1,8 @@
 import type { FC } from 'react'
-import TimeAgo from '~/widgets/TimeAgo'
+import { UPVOTE_LAYOUT } from '~/const/layout'
 
 import type { TPost } from '~/spec'
-import { UPVOTE_LAYOUT } from '~/const/layout'
+import TimeAgo from '~/widgets/TimeAgo'
 
 import Upvote from '~/widgets/Upvote'
 
@@ -27,9 +27,9 @@ const Footer: FC<TProps> = ({ article }) => {
         left={-2}
         top={-1}
       />
-      <div className="grow" />
+      <div className='grow' />
       <div className={s.createTime}>
-        <TimeAgo datetime={insertedAt} locale="zh_CN" />
+        <TimeAgo datetime={insertedAt} />
       </div>
     </div>
   )

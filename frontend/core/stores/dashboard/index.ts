@@ -17,6 +17,7 @@ export default (init: TInit = {}): TStore => {
   const states = Object.assign(
     {
       metric: METRIC.COMMUNITY,
+      now: 0,
       ...FIELDS,
 
       // UI status

@@ -32,13 +32,14 @@ const MainProvider: FC<TProps> = ({
   metric = METRIC.COMMUNITY,
 }) => {
   const { dashboard, ...base } = initData
+  const now = Date.now()
 
   return (
     <ThemeStoreProvider>
       <LocaleStoreProvider initData={{ locale, localeData }}>
         <AccountWrapper noAccount={noAccount}>
           <CommunityStoreProvider initData={{ ...base }}>
-            <DashboardStoreProvider initData={{ ...dashboard, metric }}>
+            <DashboardStoreProvider initData={{ ...dashboard, metric, now }}>
               <WallpaperStoreProvider>{children}</WallpaperStoreProvider>
             </DashboardStoreProvider>
           </CommunityStoreProvider>
