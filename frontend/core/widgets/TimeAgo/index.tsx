@@ -14,7 +14,6 @@ export default function TimeAgo({ datetime, tickInterval = 60_000 }: TProps) {
   const nowFromStore = useNow()
   const { locale } = useLocale()
 
-  // 本地 state 用于触发自动刷新
   const [_tick, setTick] = useState(0)
 
   useEffect(() => {
