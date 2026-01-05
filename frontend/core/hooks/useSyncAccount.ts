@@ -1,19 +1,19 @@
-import OAUTH from '~/const/oauth'
+import { AUTH_KEY } from '~/const/oauth'
 import { debounce } from '~/helper'
 import useAccount from '~/hooks/useAccount'
 import useMount from '~/hooks/useMount'
 import type { TAccount, TSimpleUser } from '~/spec'
 import BStore from '~/utils/bstore'
 
-export default (): TAccount => {
+export default function useSyncAccount(): TAccount {
   const { isLogin, setSession, accountInfo } = useAccount()
 
   /**
    * TODO: handle token expired situation
    */
   const syncAccountInfo = debounce(() => {
-    const user = BStore.cookie.get(OAUTH.USER_KEY)
-    const token = BStore.cookie.get(OAUTH.TOKEN_KEY)
+    const user = BStore.cookie.get(AUTH_KEY.USER)
+    const token = BStore.cookie.get(AUTH_KEY.TOKEN)
 
     if (user) {
       const parsedUser = JSON.parse(user) as TSimpleUser

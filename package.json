@@ -114,7 +114,7 @@
     "mastani-codehighlight": "0.0.7",
     "motion": "^12.18.1",
     "nanoid": "^3.1.12",
-    "next": "v16.1.1-canary.9",
+    "next": "v16.1.1-canary.10",
     "next-auth": "^5.0.0-beta.16",
     "next-compose-plugins": "^2.2.0",
     "overlayscrollbars": "^2.9.1",

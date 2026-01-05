@@ -1,14 +1,12 @@
-import type { NextAuthConfig } from 'next-auth'
-import { cookies /* headers */ } from 'next/headers'
-import NextAuth from 'next-auth'
-
-import OAUTH from '~/const/oauth'
-
-import { GRAPHQL_ENDPOINT } from '~/config'
 import { cacheExchange, createClient, fetchExchange, gql } from '@urql/core'
 import { registerUrql } from '@urql/next/rsc'
-
+import { cookies /* headers */ } from 'next/headers'
+import type { NextAuthConfig } from 'next-auth'
+import NextAuth from 'next-auth'
 import Github from 'next-auth/providers/github'
+import { GRAPHQL_ENDPOINT } from '~/config'
+import { AUTH_KEY } from '~/const/oauth'
+
 // import Google from 'next-auth/providers/google'
 
 const makeClient = () => {
@@ -85,16 +83,16 @@ export const config = {
       if (error) return false
       console.log('## ## got server response: ', data)
 
-      // @ts-ignore
+      // @ts-expect-error
       cookies().set({
-        name: OAUTH.USER_KEY,
+        name: AUTH_KEY.USER,
         value: JSON.stringify(data.signinOauth.user),
         path: '/',
       })
 
-      // @ts-ignore
+      // @ts-expect-error
       cookies().set({
-        name: OAUTH.TOKEN_KEY,
+        name: AUTH_KEY.TOKEN,
         value: data.signinOauth.token,
         path: '/',
       })

@@ -5,9 +5,9 @@ import { oopsProxy } from '~/proxies/oops'
 import { queryWhitelistProxy } from '~/proxies/query-whitelist'
 import { urlPeekProxy } from '~/proxies/url-peek'
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // proxy in this array will be applied in order
   const proxyFunctions = [avoidScanProxy, oopsProxy, queryWhitelistProxy, urlPeekProxy]
 
-  return applyProxy(proxyFunctions, request)
+  return await applyProxy(proxyFunctions, request)
 }

@@ -18,7 +18,7 @@
     "paths": {
       "~/hooks": ["../core/hooks"],
       "~/hooks/*": ["../core/hooks/*"],
-      "~/config": ["config"],
+      "~/config": ["../core/config"],
       "~/stores/*": ["../core/stores/*"],
       "~/stores": ["../core/stores"],
       "~/utils": ["../core/utils"],

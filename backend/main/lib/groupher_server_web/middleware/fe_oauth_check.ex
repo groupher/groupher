@@ -20,12 +20,12 @@ defmodule GroupherServerWeb.Middleware.FEOauthCheck do
 
       false ->
         resolution
-        |> handle_absinthe_error("not tuested oauth provider", ecode(:oauth_trust_code))
+        |> handle_absinthe_error("not trusted oauth provider", ecode(:oauth_trust_code))
     end
   end
 
   def call(resolution, _info) do
     resolution
-    |> handle_absinthe_error("not tuested oauth provider", ecode(:oauth_trust_code))
+    |> handle_absinthe_error("not trusted oauth provider", ecode(:oauth_trust_code))
   end
 end

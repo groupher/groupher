@@ -1,9 +1,22 @@
+# =====================
+# Build outputs
+# =====================
 **/.next/
-node_modules/
-npm-debug.log
 build
+frontend/**/out/
+coverage/
 
+# =====================
+# Dependencies
+# =====================
+**/node_modules/
+bun.lockb
+npm-debug.log
+yarn-error.log
+
+# =====================
 # Yarn Berry
+# =====================
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -11,28 +24,39 @@ build
 !.yarn/sdks
 !.yarn/versions
 
-frontend/**/out/
+# =====================
+# Environment variables
+# =====================
+**/.env.local
+**/.env.*.local
+.env
+.env.*
+!.env.example
+!**/.env.example
 
-coverage/
+# =====================
+# Logs / OS
+# =====================
+**/.DS_Store
 .coveralls.yml
-yarn-error.log
-.env.local
-schema.graphql
 
-# Cypress (Cypress 8.x)
+# =====================
+# Cypress
+# =====================
 cypress/integration/examples/
-
-.DS_Store
 cypress/videos/*
 
-# build artifacts
+# =====================
+# TypeScript / build artifacts
+# =====================
 tsconfig.tsbuildinfo
-bun.lockb
 *.tsbuildinfo
 .VSCodeCounter/
 .deepseekrc
 
-# SW / Worker outputs for monorepo frontend
+# =====================
+# Frontend SW / Worker
+# =====================
 frontend/**/public/workbox-*.js
 frontend/**/public/sw.js
 frontend/**/public/sw.js.map
@@ -40,21 +64,26 @@ frontend/**/public/worker-*.js
 frontend/**/public/fallback-*.js
 frontend/**/public/*.js.map
 
-# App artifacts
+# =====================
+# Backend (Elixir / BEAM)
+# =====================
 backend/main/_build
 backend/main/db
 backend/main/deps
 backend/main/*.ez
-
-# Crash logs
 backend/main/erl_crash.dump
 
-# Secrets
+# =====================
+# Backend secrets / temp
+# =====================
 backend/main/config/*.secret.exs
 backend/main/config/_tmp.exs
 
+# =====================
+# Misc
+# =====================
 backend/main/_tuts/
-.agignore
 backend/main/docs/draft.ex
 backend/main/cover/excoveralls.html
-backend/main/.elixir_ls/
+.agignore
+schema.graphql

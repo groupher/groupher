@@ -6,9 +6,9 @@ export default () => {
   const { cn, fg, bg, shadow } = useTwBelt()
 
   return {
-    wrapper: cn('align-both absolute top-0 left-0 w-full h-full backdrop-blur-md z-50'),
-    iconWrapper: 'column-align-both mb-5 -mt-6 relative',
-    title: cn('text-xl bold', fg('text.digest')),
+    wrapper: cn('column-align-both absolute top-0 left-0 w-full h-full backdrop-blur-md z-50'),
+    iconWrapper: 'column-align-both mb-8 mt-10 relative',
+    title: cn('row text-xl bold', fg('text.digest')),
     desc: cn('text-sm', fg('text.digest')),
     sideLogo: cn('absolute -bottom-3 -right-4 z-20', shadow('xl')),
     icon: 'size-10',
@@ -42,6 +42,6 @@ export default () => {
     providerLogo: cn('scale-150 animate-pulse animate-duration-[800ms]'),
     providerName: cn('bold', fg('text.title')),
     //
-    footer: 'absolute bottom-8 left-[38%] opacity-65',
+    footer: 'mt-10 -ml-16 opacity-65',
   }
 }
