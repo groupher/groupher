@@ -104,6 +104,7 @@ export type { TGQLError } from './graphql'
 export type { TLocale, TTransKey } from './i18n'
 export type { TMenu } from './menu'
 export type { TMetric } from './metric'
+export type { TOauthProvider } from './oauth'
 export type {
   TDsbAliasRoute,
   TDsbBaseInfoRoute,

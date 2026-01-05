@@ -1,17 +1,23 @@
-import { signOut as authSignOut, signIn as authSignIn } from 'next-auth/react'
+import { signIn as authSignIn, signOut as authSignOut } from 'next-auth/react'
+import type { TOauthProvider } from '~/spec'
+import { removeAuth } from '~/utils/localStorage'
 
-import BStore from '~/utils/bstore'
-import OAUTH from '~/const/oauth'
+export const signOut = async () => {
+  await authSignOut({ redirect: false })
+  removeAuth()
 
-export const signOut = () => {
-  authSignOut()
-  BStore.remove(OAUTH.TOKEN_KEY)
-  BStore.remove(OAUTH.USER_KEY)
-  BStore.cookie.remove(OAUTH.TOKEN_KEY)
-  BStore.cookie.remove(OAUTH.USER_KEY)
+  window.location.reload()
 }
 
-export const signIn = (provider: string): void => {
-  // signIn('github', { callbackUrl: '/home/post' })
-  authSignIn(provider)
+export const signIn = (
+  provider: TOauthProvider,
+  options?: {
+    callbackUrl?: string
+  },
+) => {
+  const callbackUrl = options?.callbackUrl ?? `${window.location.pathname}${window.location.search}`
+
+  return authSignIn(provider, {
+    callbackUrl,
+  })
 }

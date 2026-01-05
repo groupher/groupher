@@ -1,6 +1,9 @@
-const OAUTH = {
-  USER_KEY: 'groupher.user',
-  TOKEN_KEY: 'groupher.token',
-}
+export const AUTH_KEY = {
+  USER: 'auth.user',
+  TOKEN: 'auth.token',
+} as const
 
-export default OAUTH
+export const SOCIAL = {
+  GITHUB: 'github',
+  // GOOGLE: 'google'
+} as const

@@ -61,10 +61,10 @@ const LoggedInAccount: FC<TProps> = () => {
             </div>
           </Link>
           <div className={s.divider} />
-          <div className={cn(s.menuBar, s.warningActive)} onClick={() => signOut()}>
-            <div className={s.menuTitle}>登出</div>
+          <button className={cn(s.menuBar, s.warningActive)} onClick={() => signOut()}>
+            <span className={s.menuTitle}>登出</span>
             <LogoutSVG className={s.logoutIcon} />
-          </div>
+          </button>
         </div>
       }
       placement='bottom-end'

@@ -1,5 +1,7 @@
 import type { TThemeName } from '~/spec'
 
+export { handlers as authHandlers } from './auth.config'
+
 import CONFIG from './config.json'
 
 export { default as LABEL_POOL } from './label_pool'

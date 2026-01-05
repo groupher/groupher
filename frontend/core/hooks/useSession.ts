@@ -6,7 +6,7 @@ const useSession = (): TAccount | null => {
   useEffect(() => {
     const deleteCookie = async () => {
       await fetch('/api/auth-cleanup', {
-        method: 'POST', // 或 'GET', 取决于你在API端点上定义的方法
+        method: 'POST',
         headers: {
           Accept: 'application/json',
         },

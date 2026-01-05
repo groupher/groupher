@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { type FC, useState } from 'react'
+import { SOCIAL } from '~/const/oauth'
 import { titleCase } from '~/fmt'
 import useTrans from '~/hooks/useTrans'
 import { signIn } from '~/oauth'
@@ -41,7 +42,7 @@ const Panel: FC<TProps> = ({ show, onClose }) => {
                 className={s.socialItem}
                 key={provider}
                 onClick={() => {
-                  signIn('github')
+                  signIn(SOCIAL.GITHUB)
                   setLoadingProvider(providerKey)
                 }}
               >

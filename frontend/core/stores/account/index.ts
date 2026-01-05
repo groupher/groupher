@@ -1,5 +1,5 @@
 import { proxy } from 'valtio'
-import OAUTH from '~/const/oauth'
+import { AUTH_KEY } from '~/const/oauth'
 import type { TAccount, TUser } from '~/spec'
 import BStore from '~/utils/bstore'
 
@@ -28,8 +28,8 @@ export default (): TStore => {
     },
 
     setSession(user: TUser, token: string): void {
-      BStore.set(OAUTH.USER_KEY, JSON.stringify(user))
-      BStore.set(OAUTH.TOKEN_KEY, token)
+      BStore.set(AUTH_KEY.USER, JSON.stringify(user))
+      BStore.set(AUTH_KEY.TOKEN, token)
 
       // TODO: refactor
       try {
