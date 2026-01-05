@@ -40,31 +40,38 @@ export const config = {
   // 配置回调函数
   callbacks: {
     async jwt({ token, account, profile }) {
-      const standProvider = {
-        provider: account.provider,
-        provider_id: account.providerAccountId,
-        login: profile.login,
-        nickname: profile.name,
-        avatar: profile.avatar_url,
-        bio: profile.bio,
-        country: '',
-        city: profile.location,
-        company: profile.company,
-      }
-
       if (account && profile) {
+        const standProvider = {
+          provider: account.provider,
+          provider_id: account.providerAccountId,
+          login: profile.login,
+          nickname: profile.name,
+          avatar: profile.avatar_url,
+          bio: profile.bio,
+          country: '',
+          city: profile.location,
+          company: profile.company,
+        }
+
         const params = {
           provider: standProvider,
           oauthTrustCode: process.env.OAUTH_TRUST_CODE,
         }
 
-        const { data } = await oauthSignin(params)
-
-        if (data?.signinOauth) {
-          token[AUTH_KEY.TOKEN] = data.signinOauth.token
-          token[AUTH_KEY.USER] = data.signinOauth.user
+        try {
+          const { data, error } = await oauthSignin(params)
+          if (error) {
+            // TODO: error handling on UI
+            console.error('oauthSignin GraphQL error:', error)
+          } else if (data?.signinOauth) {
+            token[AUTH_KEY.TOKEN] = data.signinOauth.token
+            token[AUTH_KEY.USER] = data.signinOauth.user
+          }
+        } catch (e) {
+          console.error('oauthSignin request failed:', e)
         }
       }
+
       return token
     },
   },
