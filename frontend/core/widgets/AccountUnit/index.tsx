@@ -28,7 +28,7 @@ const AccountUnit: FC<TProps> = ({ withName = false, ...spacing }) => {
 
   const [showPanel, setShowPanel] = useState(false)
 
-  if (!isLogin && loading) {
+  if (loading) {
     return (
       <div className={s.wrapper}>
         <div className={s.loadingBox} />
@@ -38,7 +38,7 @@ const AccountUnit: FC<TProps> = ({ withName = false, ...spacing }) => {
 
   return (
     <div className={s.wrapper}>
-      {isLogin && !loading ? (
+      {isLogin ? (
         <div className={s.hoverBox}>
           <LoggedInAccount user={user} />
         </div>
