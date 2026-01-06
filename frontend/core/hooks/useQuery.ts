@@ -4,16 +4,18 @@ const useQuery = (query, variables) => {
   const [result, reexecuteQuery] = useGQQuery({
     query,
     variables,
-    // requestPolicy: 'cache-and-network',
   })
 
-  const reload = (variables) => {
-    reexecuteQuery({ requestPolicy: 'network-only', variables })
+  const reload = (nextVariables?: any) => {
+    reexecuteQuery({
+      requestPolicy: 'network-only',
+      variables: nextVariables ?? variables,
+    })
   }
 
-  const { data, error } = result
+  const { data, error, fetching } = result
 
-  return { data, error, reload }
+  return { data, error, loading: fetching, reload }
 }
 
 export default useQuery

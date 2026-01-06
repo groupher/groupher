@@ -1,30 +1,18 @@
-import { mergeRight, toUpper, clone } from 'ramda'
-import { createClient, cacheExchange, fetchExchange } from '@urql/core'
-
-import BStore from '~/utils/bstore'
-
-import { GRAPHQL_ENDPOINT, PAGE_SIZE } from '~/config'
+import { cacheExchange, createClient, fetchExchange } from '@urql/core'
+import { clone, mergeRight, toUpper } from 'ramda'
+import { PAGE_SIZE } from '~/config'
 import { isString } from './validator'
 
-// for client(widget most) only
-export const buildGQClient = (): ReturnType<typeof makeGQClient> => {
-  return makeGQClient(BStore.get('token'))
-}
+export const FETCH_OPTIONS = (): RequestInit => ({
+  // make sure cookie is included
+  // since groupher.com and api.groupher.com is different domain
+  // same for dev env: localhost:3000 and localhost:4001
 
-// NOTE the client with jwt info is used for getInitialProps for SSR
-// to load user related data
-export const makeGQClient = (token: string): ReturnType<typeof createClient> => {
-  const client = createClient({
-    url: GRAPHQL_ENDPOINT,
-    exchanges: [cacheExchange, fetchExchange],
-    fetchOptions: () => ({
-      headers: { authorization: token ? `Bearer ${token}` : '' },
-    }),
-  })
-
-  // see https://formidable.com/open-source/urql/docs/basics/core/
-  return client
-}
+  credentials: 'include',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
 
 export const makeGithubExplore = (
   GRAPHQL_ENDPOINT: string,

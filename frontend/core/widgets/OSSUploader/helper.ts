@@ -1,18 +1,13 @@
 import { startsWith } from 'ramda'
-
-import { toast } from '~/signal'
-import { buildGQClient } from '~/utils/graphql'
-import uid from '~/utils/uid'
-import BStore from '~/utils/bstore'
-
 import { ASSETS_ENDPOINT } from '~/config'
-
-import type { TTokens } from './spec'
-import { STS, OSS_CONFIG } from './constant'
+import { toast } from '~/signal'
+import BStore from '~/utils/bstore'
+import uid from '~/utils/uid'
+import { OSS_CONFIG, STS } from './constant'
 import S from './schema'
+import type { TTokens } from './spec'
 
 // const sessionState = gqClient.request(P.sessionState)
-const gqClient = buildGQClient()
 
 export const applyUploadTokensIfNeed = async (): Promise<void> => {
   if (BStore.get(STS.TOKEN) && !isTokenExpired()) return
@@ -30,7 +25,7 @@ const isTokenExpired = () => {
 }
 
 const applyStsTokens = async (): Promise<TTokens> => {
-  // @ts-ignore
+  // @ts-expect-error
   const { applyUploadTokens } = await gqClient.request(S.applyUploadTokens)
 
   return { ...applyUploadTokens }
@@ -57,7 +52,7 @@ const getOSSDir = (): string => {
 export const initOSSClient = (): any => {
   applyUploadTokensIfNeed()
 
-  // @ts-ignore
+  // @ts-expect-error
   const ossClient = new OSS({
     /**
      *  从STS服务获取的安全令牌（SecurityToken）, 对应的 policy 在阿里控制台上设置
@@ -97,7 +92,6 @@ export const doUploadFile = (ossClient, file, filePrefix, callbacks): void => {
   const fileSize = file.size / 1024 / 1024
   // eslint-disable-next-line no-alert
   if (fileSize > 2) {
-    alert('不支持大于 2MB 的文件')
     return
   }
 

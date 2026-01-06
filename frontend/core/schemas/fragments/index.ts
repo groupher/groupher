@@ -4,7 +4,6 @@
  * used across the containers / pages, it's enough for now
  *
  * the reason is graphql-request seams not support gql`` tag , which is used
- * by fragment staff, it hurt me so bad
  *
  */
 

@@ -8,7 +8,6 @@ import { type FC, useState } from 'react'
 import { BANNER_LAYOUT } from '~/const/layout'
 import useAccount from '~/hooks/useAccount'
 import useLayout from '~/hooks/useLayout'
-import useSyncAccount from '~/hooks/useSyncAccount'
 import AccountSVG from '~/icons/Acount'
 import type { TSpace } from '~/spec'
 
@@ -23,18 +22,25 @@ type TProps = {
 
 const AccountUnit: FC<TProps> = ({ withName = false, ...spacing }) => {
   const s = useSalon({ ...spacing })
-  useSyncAccount()
 
-  const { isLogin, user } = useAccount()
+  const { isLogin, user, loading } = useAccount()
   const { bannerLayout } = useLayout()
 
   const [showPanel, setShowPanel] = useState(false)
 
+  if (!isLogin && loading) {
+    return (
+      <div className={s.wrapper}>
+        <div className={s.loadingBox} />
+      </div>
+    )
+  }
+
   return (
     <div className={s.wrapper}>
-      {isLogin ? (
+      {isLogin && !loading ? (
         <div className={s.hoverBox}>
-          <LoggedInAccount />
+          <LoggedInAccount user={user} />
         </div>
       ) : (
         <button className={s.hoverBox} onClick={() => setShowPanel(true)}>

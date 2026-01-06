@@ -7,14 +7,13 @@
 import Link from 'next/link'
 import type { FC } from 'react'
 import { ROUTE } from '~/const/route'
-import useAccount from '~/hooks/useAccount'
 import Img from '~/Img'
 import AddSVG from '~/icons/Add'
 import CmdSVG from '~/icons/Cmd'
 import LogoutSVG from '~/icons/Logout'
 import SettingSVG from '~/icons/Setting'
 import { signOut } from '~/oauth'
-import type { TSpace } from '~/spec'
+import type { TSpace, TUser } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import Tooltip from '~/widgets/Tooltip'
 
@@ -22,12 +21,12 @@ import useSalon, { cn } from './salon/logged_in_account'
 
 type TProps = {
   withName?: boolean
+  user: TUser
 } & TSpace
 
-const LoggedInAccount: FC<TProps> = () => {
+const LoggedInAccount: FC<TProps> = ({ user }) => {
   const s = useSalon()
 
-  const { user } = useAccount()
   const { avatar, nickname } = user
 
   return (
