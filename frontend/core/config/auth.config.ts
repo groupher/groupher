@@ -37,7 +37,6 @@ const oauthSignin = (params) => {
 export const config = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [Github],
-  // 配置回调函数
   callbacks: {
     async jwt({ token, account, profile }) {
       if (account && profile) {

@@ -2,7 +2,6 @@ import Link from 'next/link'
 import type { FC } from 'react'
 
 import { ROUTE } from '~/const/route'
-import useSession from '~/hooks/useSession'
 import ArrowSVG from '~/icons/ArrowSimple'
 import CommunityBrand from '~/widgets/CommunityBrand'
 import { HEAD_MENU } from './constant'
@@ -16,8 +15,6 @@ type TProps = {
 
 const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu, onLinkHover }) => {
   const s = useSalon()
-
-  useSession()
 
   const handleHover = (menu: string) => {
     if (onLinkHover) onLinkHover()

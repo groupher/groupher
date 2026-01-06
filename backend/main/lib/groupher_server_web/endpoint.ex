@@ -5,17 +5,17 @@ defmodule GroupherServerWeb.Endpoint do
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
-  @session_options [
-    store: :cookie,
-    key: "_groupher_server_key",
-    signing_salt: "skbsUB/7",
-    same_site: "Lax"
-  ]
+  # @session_options [
+  #   store: :cookie,
+  #   key: "_groupher_server_key",
+  #   signing_salt: "skbsUB/7",
+  #   same_site: "Lax"
+  # ]
 
-  socket("/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options]],
-    longpoll: [connect_info: [session: @session_options]]
-  )
+  # socket("/live", Phoenix.LiveView.Socket,
+  #   websocket: [connect_info: [session: @session_options]],
+  #   longpoll: [connect_info: [session: @session_options]]
+  # )
 
   # socket("/socket", GroupherServerWeb.UserSocket)
 
@@ -53,7 +53,8 @@ defmodule GroupherServerWeb.Endpoint do
   # plug(Sentry.PlugContext)
   plug(Plug.MethodOverride)
   plug(Plug.Head)
-  plug(Plug.Session, @session_options)
+  # no need for standalone frontend project like next.js
+  # plug(Plug.Session, @session_options)
 
   # plug(:inspect_conn)
 
@@ -79,13 +80,4 @@ defmodule GroupherServerWeb.Endpoint do
   )
 
   plug(GroupherServerWeb.Router)
-
-  # def init(_key, config) do
-  #   if config[:load_from_system_env] do
-  #     {:ok,
-  #      Keyword.put(config, :http, [:inet6, ip: {0, 0, 0, 0}, port: System.get_env("PORT") || 8080])}
-  #   else
-  #     {:ok, config}
-  #   end
-  # end
 end

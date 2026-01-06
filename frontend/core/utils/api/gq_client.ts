@@ -1,24 +1,20 @@
 import { Client, cacheExchange, fetchExchange } from '@urql/core'
 
 /* import { onError } from 'apollo-link-error' */
-
 import { GRAPHQL_ENDPOINT } from '~/config'
-import { AUTH_KEY } from '~/const/oauth'
-
-import BStore from '../bstore'
 
 // see setup https://formidable.com/open-source/urql/docs/basics/core/
 const client = new Client({
   url: GRAPHQL_ENDPOINT,
   fetchOptions: () => {
-    // console.log('## ## gq client init: ', BStore.get('token'))
-    const authorization = `Bearer ${BStore.get(AUTH_KEY.TOKEN) || ''}`
-
     return {
       headers: {
         special: 'Special header value',
-        authorization,
       },
+      // make sure cookie is included
+      // since groupher.com and api.groupher.com is different domain
+      // same for dev env: localhost:3000 and localhost:4001
+      credentials: 'include',
     }
   },
   // the default:
