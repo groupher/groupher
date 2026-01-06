@@ -89,10 +89,6 @@ defmodule GroupherServer.Test.AssertHelper do
     end
   end
 
-  def has_boolen_value?(obj, key) do
-    obj |> Map.get(key) |> is_boolean
-  end
-
   @doc """
   simulate the Graphiql mutate operation
   """
@@ -144,34 +140,6 @@ defmodule GroupherServer.Test.AssertHelper do
     end
   end
 
-  @doc """
-  check if Graphiql mutate get error
-  """
-  def mutation_error?(conn, query, variables, flag \\ false)
-
-  def mutation_error?(conn, query, variables, code) when is_integer(code) do
-    resp =
-      conn
-      |> post("/graphiql", query: query, variables: variables)
-      |> json_response(200)
-
-    case resp |> Map.has_key?("errors") do
-      true ->
-        code == resp["errors"] |> List.first() |> Map.get("code")
-
-      false ->
-        false
-    end
-  end
-
-  def mutation_error?(conn, query, variables, flag) do
-    conn
-    |> post("/graphiql", query: query, variables: variables)
-    |> json_response(200)
-    |> log_debug_info(flag)
-    |> Map.has_key?("errors")
-  end
-
   def gq_query(conn, query, variables, flag \\ false) do
     conn
     |> post("/graphiql", query: query, variables: variables)
@@ -189,28 +157,45 @@ defmodule GroupherServer.Test.AssertHelper do
     |> Map.get(get_operation_name(query))
   end
 
-  def query_get_error?(conn, query, variables) do
-    conn
-    |> post("/graphiql", query: query, variables: variables)
-    |> json_response(200)
-    |> Map.has_key?("errors")
+  def mutation_error?(conn, query, variables, opt \\ false)
+
+  def mutation_error?(conn, query, variables, code) when is_integer(code) do
+    resp = gq_resp(conn, query, variables)
+    has_error_code?(resp, code)
+  end
+
+  def mutation_error?(conn, query, variables, flag) do
+    resp = gq_resp(conn, query, variables) |> log_debug_info(flag)
+    has_errors?(resp)
   end
 
   @doc """
   check if Graphiql query get error
   """
-  def query_get_error?(conn, query, variables, code) when is_integer(code) do
-    resp =
-      conn
-      |> post("/graphiql", query: query, variables: variables)
-      |> json_response(200)
+  def query_error?(conn, query, variables, opt \\ false)
 
-    case resp |> Map.has_key?("errors") do
-      true ->
-        code == resp["errors"] |> List.first() |> Map.get("code")
+  def query_error?(conn, query, variables, code) when is_integer(code) do
+    resp = gq_resp(conn, query, variables)
+    has_error_code?(resp, code)
+  end
 
-      false ->
-        false
+  def query_error?(conn, query, variables, flag) do
+    resp = gq_resp(conn, query, variables) |> log_debug_info(flag)
+    has_errors?(resp)
+  end
+
+  defp gq_resp(conn, query, variables) do
+    conn
+    |> post("/graphiql", query: query, variables: variables)
+    |> json_response(200)
+  end
+
+  defp has_errors?(resp), do: Map.has_key?(resp, "errors")
+
+  defp has_error_code?(resp, code) when is_integer(code) do
+    case resp do
+      %{"errors" => [first | _]} -> Map.get(first, "code") == code
+      _ -> false
     end
   end
 
@@ -222,8 +207,11 @@ defmodule GroupherServer.Test.AssertHelper do
   end
 
   # log response info if need
-  # usage:
-  defp log_debug_info(res, :debug), do: IO.inspect(res, label: "debug")
+  defp log_debug_info(res, :debug) do
+    # credo:disable-for-next-line Credo.Check.Warning.IoInspect
+    IO.inspect(res, label: "debug")
+  end
+
   defp log_debug_info(res, _), do: res
 
   @doc "check id is exist in list of Map<id: xxx> structure"

@@ -1,19 +1,18 @@
 import { proxy } from 'valtio'
-import { AUTH_KEY } from '~/const/oauth'
-import type { TAccount, TUser } from '~/spec'
-import BStore from '~/utils/bstore'
+import type { TAccount } from '~/spec'
 
 import type { TStore } from './spec'
 
 export default (): TStore => {
   const store = proxy({
     user: null,
+    loading: true,
     userSubscribedCommunities: null,
     isModerator: false,
 
     // views
     get isLogin(): boolean {
-      return !!store.user?.login
+      return !!store.user
     },
 
     get accountInfo(): TAccount {
@@ -27,16 +26,8 @@ export default (): TStore => {
       }
     },
 
-    setSession(user: TUser, token: string): void {
-      BStore.set(AUTH_KEY.USER, JSON.stringify(user))
-      BStore.set(AUTH_KEY.TOKEN, token)
-
-      // TODO: refactor
-      try {
-        store.user = user
-      } catch (_e) {
-        store.user = {}
-      }
+    commit(patch: Partial<TStore>): void {
+      Object.assign(store, patch)
     },
   })
 

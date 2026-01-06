@@ -168,7 +168,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       variables = %{filter: %{page: 1, size: 200}}
 
       assert guest_conn
-             |> query_get_error?(
+             |> query_error?(
                Schema.q(:paged_articles, :changelog),
                variables,
                ecode(:pagination)
@@ -180,14 +180,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       variables_neg_1 = %{filter: %{page: 1, size: -1}}
 
       assert guest_conn
-             |> query_get_error?(
+             |> query_error?(
                Schema.q(:paged_articles, :changelog),
                variables_0,
                ecode(:pagination)
              )
 
       assert guest_conn
-             |> query_get_error?(
+             |> query_error?(
                Schema.q(:paged_articles, :changelog),
                variables_neg_1,
                ecode(:pagination)

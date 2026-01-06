@@ -1,10 +1,8 @@
 import { includes } from 'ramda'
-
-import type { TSpace } from '~/spec'
-
-import useTwBelt from '~/hooks/useTwBelt'
-import useLayout from '~/hooks/useLayout'
 import { BANNER_LAYOUT } from '~/const/layout'
+import useLayout from '~/hooks/useLayout'
+import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 type TProps = TSpace
 
@@ -33,5 +31,7 @@ export default ({ ...spacing }: TProps) => {
     ),
     nickname: cn('text-sm ml-2.5', fg('text.digest')),
     unLoginIcon: cn('size-3 pointer', fill('text.digest'), `hover:${fill('text.title')}`),
+
+    loadingBox: cn('size-4 rounded animate-pulse', bg('text.digest')),
   }
 }

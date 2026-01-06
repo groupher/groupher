@@ -37,7 +37,6 @@ const oauthSignin = (params) => {
 export const config = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [Github],
-  // 配置回调函数
   callbacks: {
     async jwt({ token, account, profile }) {
       if (account && profile) {
@@ -65,7 +64,6 @@ export const config = {
             console.error('oauthSignin GraphQL error:', error)
           } else if (data?.signinOauth) {
             token[AUTH_KEY.TOKEN] = data.signinOauth.token
-            token[AUTH_KEY.USER] = data.signinOauth.user
           }
         } catch (e) {
           console.error('oauthSignin request failed:', e)

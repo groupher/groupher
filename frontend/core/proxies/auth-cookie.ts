@@ -20,7 +20,7 @@ export async function authCookieProxy(req: Request) {
   })
 
   // 1️⃣ NextAuth session not ready
-  if (!token?.[AUTH_KEY.TOKEN] || !token?.[AUTH_KEY.USER]) {
+  if (!token?.[AUTH_KEY.TOKEN]) {
     return res
   }
 
@@ -32,7 +32,6 @@ export async function authCookieProxy(req: Request) {
   // 3️⃣ First time sync
   setCookies(res, {
     [AUTH_KEY.TOKEN]: String(token[AUTH_KEY.TOKEN]),
-    [AUTH_KEY.USER]: JSON.stringify(token[AUTH_KEY.USER]),
   })
 
   return res

@@ -364,7 +364,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     """
     test "guest user can get community info without args fails", ~m(guest_conn)a do
       variables = %{}
-      assert guest_conn |> query_get_error?(@query, variables)
+      assert guest_conn |> query_error?(@query, variables)
     end
 
     @query """

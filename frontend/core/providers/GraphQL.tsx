@@ -1,81 +1,23 @@
 'use client'
 
-/**
- * this is for Graphql fetching data on page load
- */
-
-import { makeResult } from '@urql/core'
-import { cacheExchange, createClient, fetchExchange, ssrExchange, UrqlProvider } from '@urql/next'
 import { type FC, type ReactNode, useMemo } from 'react'
-import { filter, fromPromise, merge, mergeMap, pipe, share } from 'wonka'
+import { cacheExchange, createClient, fetchExchange, Provider } from 'urql'
 import { GRAPHQL_ENDPOINT } from '~/config'
-import { loadLocaleFile } from '~/i18n'
+import { FETCH_OPTIONS } from '~/utils/graphql'
 
-type TProps = {
-  children: ReactNode
-}
-
-/*
- * this is a interceptor, which intercepts the request and load data directly from fronten.
- * but for those query, the backend GraphQL should have a fake endpoint
- * big thanks to ChatGPT debug with me ~
- */
-const localServeExchange = ({ forward }) => {
-  return (ops$) => {
-    const sharedOps$ = share(ops$)
-
-    const interceptedOps$ = pipe(
-      sharedOps$,
-      filter(({ variables }) => Object.keys(variables).length === 1 && variables?.locale),
-      mergeMap((operation) =>
-        fromPromise(
-          loadLocaleFile(operation.variables?.locale).then((result) =>
-            // @ts-expect-error
-            makeResult(operation, { data: result }),
-          ),
-        ),
-      ),
-    )
-
-    const forwardOps$ = pipe(
-      sharedOps$,
-      // @ts-expect-error
-      filter((operation) => !operation.variables?.locale),
-      forward,
-    )
-
-    return merge([interceptedOps$, forwardOps$])
-  }
-}
+type TProps = { children: ReactNode }
 
 const GraphQLProvider: FC<TProps> = ({ children }) => {
-  const [client, ssr] = useMemo(() => {
-    const ssr = ssrExchange({ isClient: true })
-    const client = createClient({
+  const client = useMemo(() => {
+    return createClient({
       url: GRAPHQL_ENDPOINT,
-      // @ts-expect-error
-      exchanges: [cacheExchange, ssr, localServeExchange, fetchExchange],
-      suspense: true,
-
-      fetchOptions: () => ({
-        headers: {
-          special: 'Special header value',
-          /*
-           * NOTE: this SSR query better to keep it serverless
-           */
-          authorization: '',
-        },
-      }),
+      exchanges: [cacheExchange, fetchExchange],
+      suspense: false,
+      fetchOptions: FETCH_OPTIONS,
     })
-
-    return [client, ssr]
   }, [])
 
-  return (
-    <UrqlProvider client={client} ssr={ssr}>
-      {children}
-    </UrqlProvider>
-  )
+  return <Provider value={client}>{children}</Provider>
 }
 
 export default GraphQLProvider

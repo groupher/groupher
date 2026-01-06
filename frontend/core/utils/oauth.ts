@@ -1,10 +1,10 @@
 import { signIn as authSignIn, signOut as authSignOut } from 'next-auth/react'
+import { LOGOUT_ENDPOINT } from '~/const/oauth'
 import type { TOauthProvider } from '~/spec'
-import { removeAuth } from '~/utils/localStorage'
 
 export const signOut = async () => {
   await authSignOut({ redirect: false })
-  removeAuth()
+  await fetch(LOGOUT_ENDPOINT, { method: 'POST' })
 
   window.location.reload()
 }

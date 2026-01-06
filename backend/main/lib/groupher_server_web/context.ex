@@ -16,6 +16,7 @@ defmodule GroupherServerWeb.Context do
   def init(opts), do: opts
 
   def call(conn, _) do
+    conn = fetch_cookies(conn)
     context = build_context(conn)
     # put_private(conn, :absinthe, %{context: context})
     # TODO: use https://github.com/absinthe-graphql/absinthe/pull/497/files
@@ -30,7 +31,9 @@ defmodule GroupherServerWeb.Context do
   authorization header is sent.
   """
   def build_context(conn) do
-    with ["Bearer " <> token] <- get_req_header(conn, "authorization"),
+    IO.inspect(conn.cookies, label: "## ---> Conn Cookies")
+
+    with token when not is_nil(token) <- get_token_from(conn),
          {:ok, cur_user} <- authorize(token) do
       # IO.inspect(
       #   RemoteIP.parse(get_req_header(conn, "x-forwarded-for")),
@@ -46,6 +49,19 @@ defmodule GroupherServerWeb.Context do
       end
     else
       _ -> %{}
+    end
+  end
+
+  # --------------------------------------------------
+  # fetch token from cookie by default，then fallback to Authorization header
+  # the key auth.token need to algn with frontend at frontend/core/constant/oauth AUTH_KEY.TOKEN
+  # --------------------------------------------------
+  defp get_token_from(%Plug.Conn{cookies: %{"auth.token" => token}}), do: token
+
+  defp get_token_from(%Plug.Conn{} = conn) do
+    case get_req_header(conn, "authorization") do
+      ["Bearer " <> token] -> token
+      _ -> nil
     end
   end
 

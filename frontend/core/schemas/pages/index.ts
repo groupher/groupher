@@ -6,7 +6,7 @@ import { doc, pagedDocs } from './doc'
 import { mentions } from './mail'
 import { pagedArticleTags, pagedCategories } from './misc'
 import { groupedKanbanPosts, pagedPosts, pagedPublishedPosts, post } from './post'
-import { sessionState, user } from './user'
+import { me, sessionState, user } from './user'
 
 const P = {
   community,
@@ -29,6 +29,7 @@ const P = {
   pagedDocs,
   doc,
   // user
+  me,
   user,
   sessionState,
   // action

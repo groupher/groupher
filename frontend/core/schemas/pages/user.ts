@@ -1,5 +1,16 @@
 import F from '../fragments'
 
+export const me = `
+  query {
+    me {
+      id
+      nickname
+      avatar
+      bio
+    }
+  }
+`
+
 export const user = `
   query user($login: String!, $userHasLogin: Boolean!) {
     user(login: $login) {

@@ -10,6 +10,8 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   alias Accounts.Model.User
   alias Helper.Certification
 
+  def me(_root, _args, %{context: %{cur_user: cur_user}}), do: {:ok, cur_user}
+
   def user(_root, %{user: user}, %{context: %{cur_user: cur_user}}) do
     Accounts.read_user(user, cur_user)
   end

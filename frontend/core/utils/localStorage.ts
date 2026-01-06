@@ -1,7 +1,6 @@
 import Cookies from 'js-cookie'
 import type { NextResponse } from 'next/server'
 import store from 'store'
-import { AUTH_KEY } from '~/const/oauth'
 
 // js-cookie details: https://github.com/js-cookie/js-cookie
 // store.js details: https://github.com/marcuswestin/store.js
@@ -23,6 +22,7 @@ export const setCookies = (
     secure: boolean
     sameSite: 'lax' | 'strict' | 'none'
     maxAge: number
+    httpOnly: boolean
   }>,
 ) => {
   const defaultOptions = {
@@ -30,19 +30,13 @@ export const setCookies = (
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
     maxAge: 60 * 60 * 24 * 14, // default 14 days
+    httpOnly: true,
     ...options,
   }
 
   for (const [key, value] of Object.entries(cookies)) {
     res.cookies.set(key, value, defaultOptions)
   }
-}
-
-export const removeAuth = () => {
-  localStorage.removeItem(AUTH_KEY.USER)
-  localStorage.removeItem(AUTH_KEY.TOKEN)
-  Cookies.remove(AUTH_KEY.TOKEN)
-  Cookies.remove(AUTH_KEY.USER)
 }
 
 export default BStore

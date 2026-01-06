@@ -2,6 +2,7 @@ import type { TAccount, TCommunity, TUser } from '~/spec'
 
 export type TStore = {
   user: TUser | null
+  loading: boolean
   isLogin: boolean
   isModerator: boolean
   userSubscribedCommunities: TCommunity[] | null
@@ -9,5 +10,5 @@ export type TStore = {
   // views
   accountInfo: TAccount
   // actions
-  setSession: (user: TUser, token: string) => void
+  commit: (patch: Partial<TStore>) => void
 }

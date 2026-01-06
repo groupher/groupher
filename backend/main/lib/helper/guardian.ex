@@ -7,7 +7,7 @@ defmodule Helper.Guardian do
   """
   use Guardian, otp_app: :groupher_server
 
-  @token_expireation 24 * 30
+  @token_expiration 24 * 30
 
   @spec subject_for_token(atom | %{id: any}, any) :: {:ok, binary}
   def subject_for_token(resource, _claims) do
@@ -21,7 +21,7 @@ defmodule Helper.Guardian do
 
   @spec jwt_encode(any, map) :: {:error, any} | {:ok, binary, map}
   def jwt_encode(source, args \\ %{}) do
-    encode_and_sign(source, args, ttl: {@token_expireation, :hour})
+    encode_and_sign(source, args, ttl: {@token_expiration, :hour})
   end
 
   # jwt_decode

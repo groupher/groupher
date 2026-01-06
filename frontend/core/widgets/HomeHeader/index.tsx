@@ -2,7 +2,6 @@ import { useMotionValueEvent, useScroll } from 'motion/react'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { ROUTE } from '~/const/route'
-import useSession from '~/hooks/useSession'
 import DemoSVG from '~/icons/DemoTV'
 import Button from '~/widgets/Buttons/Button'
 import ThemeSwitch from '~/widgets/ThemeSwitch'
@@ -56,8 +55,6 @@ export default () => {
   }
 
   const s = useSalon({ extend: !!activeMenu, isSticky })
-
-  useSession()
 
   return (
     <header ref={headerRef} className={s.header}>

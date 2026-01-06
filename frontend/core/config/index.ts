@@ -1,6 +1,7 @@
 import type { TThemeName } from '~/spec'
 
-export { handlers as authHandlers } from './auth.config'
+export { handlers as authHandlers } from './auth.handler'
+export { handlers as logoutHandlers } from './logout.handler'
 
 import CONFIG from './config.json'
 
