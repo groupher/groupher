@@ -110,7 +110,7 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
 
     variables = %{folderId: folder.id, filter: %{page: 1, size: 20}}
 
-    assert guest_conn |> query_get_error?(@query, variables, ecode(:private_collect_folder))
+    assert guest_conn |> query_error?(@query, variables, ecode(:private_collect_folder))
   end
 
   test "owner can get collect-folder articles when folder is private",

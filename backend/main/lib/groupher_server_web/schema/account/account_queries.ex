@@ -14,6 +14,13 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       resolve(&R.Accounts.paged_users/3)
     end
 
+    @desc "get cur user"
+    field :me, :user do
+      middleware(M.Authorize, :login)
+
+      resolve(&R.Accounts.me/3)
+    end
+
     @desc "get user by id"
     field :user, :user do
       arg(:login, non_null(:string))

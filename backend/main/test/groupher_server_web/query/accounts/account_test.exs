@@ -16,6 +16,31 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
   describe "[account basic]" do
     @query """
+    query {
+      me {
+        id
+        nickname
+        avatar
+        bio
+      }
+    }
+    """
+    @tag :wip
+    test "login user can get own profile", ~m(user_conn user)a do
+      results = user_conn |> gq_query(@query, %{})
+      assert results["id"] == to_string(user.id)
+
+      assert results["nickname"] == user.nickname
+      assert results["bio"] == user.bio
+      assert results["avatar"] == user.avatar
+    end
+
+    @tag :wip
+    test "guest user can not get any profile", ~m(guest_conn user)a do
+      assert guest_conn |> query_error?(@query, %{}, ecode(:account_login))
+    end
+
+    @query """
     query($login: String!) {
       user(login: $login) {
         id
