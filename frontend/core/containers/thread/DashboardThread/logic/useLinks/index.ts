@@ -10,7 +10,7 @@ import useDashboard from '~/hooks/useDashboard'
 import type { TLinkItem } from '~/spec'
 import { EMPTY_LINK_ITEM } from '../../constant'
 import type { TMoveLinkDir } from '../../spec'
-import useDrived, { type TRet as TDrived } from './useDrived'
+import useDerived, { type TRet as TDrived } from './useDerived'
 import useUtils from './useUtils'
 
 export type TRet = {
@@ -62,8 +62,9 @@ export default (): TRet => {
     confirmGroupUpdate,
     // keepMoreGroup2EndIfNeed,
   } = useUtils()
-  const drived = useDrived()
+  const derived = useDerived()
 
+  // derived
   const { curTab } = dsb$
   const linksKey = curTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
 
@@ -268,7 +269,7 @@ export default (): TRet => {
   const moveGroup2EdgeRight = (group: string): void => moveGroup(group, 'edge-right')
 
   return {
-    ...drived,
+    ...derived,
     updateInGroup,
     add2Group,
     deleteLink,

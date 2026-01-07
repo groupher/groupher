@@ -7,7 +7,7 @@ export type TSubMenu =
   | 'pin'
   | 'lock'
   | 'merge'
-  | 'archeve'
+  | 'archive'
   | 'mirror'
   | 'delete'
   | null

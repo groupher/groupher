@@ -2,7 +2,7 @@ export type TCommunityType = 'PRODUCT' | 'GAMING' | 'TEACH' | 'GROUP' | null
 
 export type TStep = 'SELECT_TYPE' | 'SETUP_DOMAIN' | 'SETUP_INFO' | 'SETUP_EXTRA' | 'FINISHED'
 
-// the locla state store types
+// the local state store types
 export type TStore = {
   // TODO: remove
   count: number
@@ -13,7 +13,7 @@ export type TStore = {
   // if community exist / has pending apply
   checking: boolean
   submitting: boolean
-  isOfficalValid: boolean
+  isOfficialValid: boolean
 
   communityExist: boolean
   hasPendingApply: boolean
@@ -29,7 +29,6 @@ export type TStore = {
 
   desc: string
 
-  // drived
   applyMsg: string
   headerStatus: THeaderStatus
   selectTypeStatus: TSelectTypeStatus
@@ -88,7 +87,7 @@ export type TFinishedStatus = {
 
 export type TValidState = {
   isCommunityTypeValid: boolean
-  isOfficalValid: boolean
+  isOfficialValid: boolean
   isRawValid: boolean
   isTitleValid: boolean
   isDescValid: boolean

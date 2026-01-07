@@ -15,7 +15,7 @@ export type TStore = {
   hasBlur: boolean
   direction: TWallpaperGradientDir
 
-  // drived
+  // derived
   gradientWallpapers: Record<string, TWallpaper>
   toolboxSetting: TToolboxSetting
 

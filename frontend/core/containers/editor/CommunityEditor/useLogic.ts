@@ -19,7 +19,7 @@ import type {
 type TRet = {
   checkPendingApply: () => void
   communityTypeOnChange: (communityType: TCommunityType) => void
-  isOfficalOnChange: (isOfficalValid: boolean) => void
+  isOfficialOnChange: (isOfficialValid: boolean) => void
   applyCommunity: () => void
   pervStep: () => void
   nextStep: () => void
@@ -33,7 +33,7 @@ const store = proxy<TStore>({
 
   checking: false,
   submitting: false,
-  isOfficalValid: false,
+  isOfficialValid: false,
 
   communityExist: false,
   hasPendingApply: false,
@@ -105,7 +105,7 @@ const store = proxy<TStore>({
   get validState(): TValidState {
     return pick(
       [
-        'isOfficalValid',
+        'isOfficialValid',
         'isCommunityTypeValid',
         'isRawValid',
         'isTitleValid',
@@ -180,7 +180,7 @@ export default (): TRet => {
     snap.commit({ communityType })
   }
 
-  const isOfficalOnChange = (isOfficalValid: boolean): void => snap.commit({ isOfficalValid })
+  const isOfficialOnChange = (isOfficialValid: boolean): void => snap.commit({ isOfficialValid })
 
   const applyCommunity = (): void => {
     const params = {
@@ -211,7 +211,7 @@ export default (): TRet => {
     pervStep,
     nextStep,
     communityTypeOnChange,
-    isOfficalOnChange,
+    isOfficialOnChange,
     applyCommunity,
     inputOnChange,
   }

@@ -19,7 +19,7 @@ export const SUB_MENU_TYPE = {
   PIN: 'pin',
   LOCK: 'lock',
   MERGE: 'merge',
-  ARCHEVE: 'archeve',
+  ARCHIVE: 'archive',
   MIRROR: 'mirror',
   DELETE: 'delete',
 } as Record<Uppercase<TSubMenu>, TSubMenu>
