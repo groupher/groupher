@@ -1,7 +1,31 @@
 import { NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { AUTH_KEY } from '~/const/oauth'
-import { setCookies } from '~/utils/localStorage'
+
+const setCookies = (
+  res: NextResponse,
+  cookies: Record<string, string>,
+  options?: Partial<{
+    path: string
+    secure: boolean
+    sameSite: 'lax' | 'strict' | 'none'
+    maxAge: number
+    httpOnly: boolean
+  }>,
+) => {
+  const defaultOptions = {
+    path: '/',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    maxAge: 60 * 60 * 24 * 14, // default 14 days
+    httpOnly: true,
+    ...options,
+  }
+
+  for (const [key, value] of Object.entries(cookies)) {
+    res.cookies.set(key, value, defaultOptions)
+  }
+}
 
 const hasBackendAuthCookie = (req: Request) => {
   const cookie = req.headers.get('cookie')
