@@ -127,3 +127,14 @@ export const ROUTE = {
 }
 
 export const STATIC_ROUTES = ['/', '/pricing', '/book-demo', '/oops']
+
+export const DSB_TAB = {
+  CUR: 'curTab',
+  BASE_INFO: 'baseInfoTab',
+  ALIAS: 'aliasTab',
+  THIRD_PART: 'thirdPartTab',
+  SEO: 'seoTab',
+  DOC: 'docTab',
+  LAYOUT: 'layoutTab',
+  BROADCAST: 'broadcastTab',
+} as const

@@ -1,6 +1,6 @@
 'use client'
 
-import { DSB_ROUTE } from '~/const/route'
+import { DSB_ROUTE, DSB_TAB } from '~/const/route'
 import SideMenu from '~/containers/thread/DashboardThread/SideMenu'
 import useSyncDSBRoute2Tab, { isRouteOf } from '~/hooks/useSyncDSBRoute2Tab'
 import CommunityDigest from '~/widgets/CommunityDigest'
@@ -10,7 +10,7 @@ const Layout = ({ children }) => {
   const s = useSalon()
 
   useSyncDSBRoute2Tab({
-    tab: 'curTab',
+    tab: DSB_TAB.CUR,
     defaultTab: DSB_ROUTE.OVERVIEW,
     segmentIndex: 2,
     validator: isRouteOf(DSB_ROUTE),

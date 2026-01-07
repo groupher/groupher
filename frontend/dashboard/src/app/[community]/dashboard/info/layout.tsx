@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { DSB_BASEINFO_ROUTE } from '~/const/route'
+import { DSB_BASEINFO_ROUTE, DSB_TAB } from '~/const/route'
 import VIEW from '~/const/view'
 import { BASEINFO_TABS } from '~/containers/thread/DashboardThread/constant'
 import Portal from '~/containers/thread/DashboardThread/Portal'
@@ -24,7 +24,7 @@ export default ({ children }) => {
   const { baseInfoTab } = useDashboard()
 
   useSyncDSBRoute2Tab({
-    tab: 'baseInfoTab',
+    tab: DSB_TAB.BASE_INFO,
     defaultTab: DSB_BASEINFO_ROUTE.BASIC,
     validator,
   })

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { DSB_THIRD_PART_ROUTE } from '~/const/route'
+import { DSB_TAB, DSB_THIRD_PART_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
 import { THIRD_PART_TABS } from '~/containers/thread/DashboardThread//constant'
 import Portal from '~/containers/thread/DashboardThread//Portal'
@@ -18,7 +18,7 @@ export default ({ children }) => {
   const { thirdPartTab } = useThirdPart()
 
   useSyncDSBRoute2Tab({
-    tab: 'thirdPartTab',
+    tab: DSB_TAB.THIRD_PART,
     defaultTab: DSB_THIRD_PART_ROUTE.ANALYTICS,
     validator: isRouteOf(DSB_THIRD_PART_ROUTE),
   })

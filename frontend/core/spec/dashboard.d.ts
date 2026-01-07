@@ -1,3 +1,4 @@
+import type { DSB_TAB } from '~/const/route'
 import type { TDsbField } from '~/stores/dashboard/spec'
 import type { TFAQSection } from './article'
 import type { TColorName } from './color'
@@ -23,6 +24,8 @@ export type TRSSType = 'digest' | 'full'
 
 export type TBroadcastLayout = 'default' | 'center'
 export type TBroadcastArticleLayout = 'default' | 'simple'
+
+export type TDsbTab = (typeof DSB_TAB)[keyof typeof DSB_TAB]
 
 export type TMediaReport = {
   index: number
