@@ -4,7 +4,7 @@ import useDashboard from '~/hooks/useDashboard'
 import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
 import { BASEINFO_KEYS, DSB_DEMO_KEY, FIELD, SEO_KEYS } from '~/stores/dashboard/constant'
 import type { TDsbField } from '~/stores/dashboard/spec'
-import BStore from '~/utils/bstore'
+import persist from '~/utils/persist'
 import { isObject } from '~/validator'
 import useMutation from '../useMutation'
 
@@ -94,7 +94,7 @@ export default (): TRet => {
       dsb$,
     )
 
-    BStore.set(DSB_DEMO_KEY, JSON.stringify(saveSlf))
+    persist.set(DSB_DEMO_KEY, JSON.stringify(saveSlf))
   }
 
   const resetEdit = (field: TDsbField): void => {

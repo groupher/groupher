@@ -1,7 +1,7 @@
 import { startsWith } from 'ramda'
 import { ASSETS_ENDPOINT } from '~/config'
 import { toast } from '~/signal'
-import BStore from '~/utils/bstore'
+import persist from '~/utils/persist'
 import uid from '~/utils/uid'
 import { OSS_CONFIG, STS } from './constant'
 import S from './schema'
@@ -10,7 +10,7 @@ import type { TTokens } from './spec'
 // const sessionState = gqClient.request(P.sessionState)
 
 export const applyUploadTokensIfNeed = async (): Promise<void> => {
-  if (BStore.get(STS.TOKEN) && !isTokenExpired()) return
+  if (persist.get(STS.TOKEN) && !isTokenExpired()) return
 
   const tokens = await applyStsTokens()
   persistTokens(tokens)
@@ -18,7 +18,7 @@ export const applyUploadTokensIfNeed = async (): Promise<void> => {
 
 // see: https://sentry.io/answers/how-to-compare-two-dates-with-javascript/
 const isTokenExpired = () => {
-  const expirationDate = new Date(BStore.get(STS.EXPIRATION))
+  const expirationDate = new Date(persist.get(STS.EXPIRATION))
   const now = new Date()
 
   return expirationDate < now
@@ -34,10 +34,10 @@ const applyStsTokens = async (): Promise<TTokens> => {
 const persistTokens = (tokns: TTokens): void => {
   const { accessKeyId, securityToken, accessKeySecret, expiration } = tokns
 
-  BStore.set(STS.TOKEN, securityToken)
-  BStore.set(STS.AK, accessKeyId)
-  BStore.set(STS.AS, accessKeySecret)
-  BStore.set(STS.EXPIRATION, expiration)
+  persist.set(STS.TOKEN, securityToken)
+  persist.set(STS.AK, accessKeyId)
+  persist.set(STS.AS, accessKeySecret)
+  persist.set(STS.EXPIRATION, expiration)
 }
 
 const getOSSDir = (): string => {
@@ -57,9 +57,9 @@ export const initOSSClient = (): any => {
     /**
      *  从STS服务获取的安全令牌（SecurityToken）, 对应的 policy 在阿里控制台上设置
      */
-    accessKeyId: BStore.get(STS.AK),
-    accessKeySecret: BStore.get(STS.AS),
-    stsToken: BStore.get(STS.TOKEN),
+    accessKeyId: persist.get(STS.AK),
+    accessKeySecret: persist.get(STS.AS),
+    stsToken: persist.get(STS.TOKEN),
     region: OSS_CONFIG.REGION,
     bucket: OSS_CONFIG.BUCKET,
     refreshSTSToken: async () => {
@@ -112,9 +112,9 @@ export const doUploadFile = (ossClient, file, filePrefix, callbacks): void => {
     .catch((_err) => {
       callbacks.onError('上传失败')
       toast('文件上传失败')
-      // BStore.remove(STS.AK)
-      // BStore.remove(STS.AS)
-      // BStore.remove(STS.TOKEN)
-      // BStore.remove(STS.EXPIRATION)
+      // persist.remove(STS.AK)
+      // persist.remove(STS.AS)
+      // persist.remove(STS.TOKEN)
+      // persist.remove(STS.EXPIRATION)
     })
 }
