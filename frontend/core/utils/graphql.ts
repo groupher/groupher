@@ -14,6 +14,15 @@ export const FETCH_OPTIONS = (): RequestInit => ({
   },
 })
 
+// None of these options have to be added, these are the default values.
+export const RETRY_OPTIONS = {
+  initialDelayMs: 1000,
+  maxDelayMs: 15000,
+  randomDelay: true,
+  maxNumberAttempts: 2,
+  retryIf: (err) => err?.networkError,
+}
+
 export const makeGithubExplore = (
   GRAPHQL_ENDPOINT: string,
   token: string,

@@ -1,6 +1,6 @@
 import { equals, filter, find, isEmpty, mergeRight, reject, startsWith } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import { query } from '~/server'
+import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TMediaReport } from '~/spec'
 
 import { EMPTY_MEDIA_REPORT } from '../../constant'
@@ -23,6 +23,8 @@ export default (): TRet => {
   const dsb$ = useDashboard()
 
   const { mediaReports, original, queryingMediaReportIndex } = dsb$
+
+  const { query } = useGraphQLClient()
 
   const mediaReportsTouched = () => {
     const curValues = reject((item: TMediaReport) => !item.editUrl, mediaReports)

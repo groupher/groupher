@@ -2,8 +2,8 @@ import { useSnapshot } from 'valtio'
 import { ANCHOR } from '~/const/dom'
 import { scrollIntoEle } from '~/dom'
 import { titleCase } from '~/fmt'
+import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useViewingArticle from '~/hooks/useViewingArticle'
-import { mutate, query } from '~/server'
 import type { TComment, TEmotionType, TID } from '~/spec'
 import uid from '~/utils/uid'
 
@@ -35,6 +35,8 @@ export default (): TRet => {
   const snap = useSnapshot(store)
   const { article } = useViewingArticle()
   const { addToReplies, upvoteEmotion, updateOneComment, published, resetPublish } = useHelper()
+
+  const { query, mutate } = useGraphQLClient()
 
   const loadCommentsState = (): void => {
     const params = {

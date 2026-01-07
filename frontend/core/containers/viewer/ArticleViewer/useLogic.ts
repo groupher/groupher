@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import useAccount from '~/hooks/useAccount'
 import useArticle from '~/hooks/useArticle'
-import { query } from '~/server'
+import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TArticle, TArticleLoad } from '~/spec'
 
 import S from './schema'
@@ -16,6 +16,8 @@ export default (): TRet => {
   const article$ = useArticle()
   const account = useAccount()
   const { article } = article$
+
+  const { query } = useGraphQLClient()
 
   const [loading, setLoading] = useState(false)
 
@@ -52,6 +54,7 @@ export default (): TRet => {
     setLoading(true)
     // query(S.getArticle(meta.thread), params).then((res) => {
     query(S.getArticle(thread), params).then((res) => {
+      // @ts-expect-error
       handleArticleLoaded(res.post)
     })
   }

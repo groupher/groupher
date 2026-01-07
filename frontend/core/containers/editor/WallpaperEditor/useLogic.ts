@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react'
 import { WALLPAPER_STATE_KEYS, WALLPAPER_TYPE } from '~/const/wallpaper'
 import useCommunity from '~/hooks/useCommunity'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
+import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useWallpaperDomain from '~/hooks/useWallpaper.domain'
-import { mutate } from '~/server'
 import { closeDrawer, toast } from '~/signal'
 import type { TWallpaperData, TWallpaperGradientDir, TWallpaperType } from '~/spec'
 import { TAB } from './constant'
@@ -41,6 +41,7 @@ export default (): TRet => {
   const community$ = useCommunity()
   const { getWallpaper } = useFullWallpaper()
 
+  const { mutate } = useGraphQLClient()
   const [tab, setTab] = useState<TTab>(TAB.BUILDIN)
   const [loading, setLoading] = useState(false)
 
