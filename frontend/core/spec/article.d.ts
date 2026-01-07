@@ -2,7 +2,7 @@ import type { TCommunity, TTag } from '.'
 import type { TAccount, TSimpleUser, TUser } from './account'
 import type { TColor } from './color'
 import type { TEmotion } from './emotion'
-import type { TID } from './utils'
+import type { TID, TPagi } from './utils'
 
 export type TArticleTitle = { $isPinned?: boolean; viewerHasViewed?: boolean } & TColor
 
@@ -98,13 +98,6 @@ export type TTechCommunities = {
 }
 
 export type TArticle = TPost
-
-type TPagi = {
-  totalCount: number
-  pageNumber: number
-  pageSize: number
-  totalPages: number
-}
 
 export type TPagedPosts = {
   entries: readonly TPost[]

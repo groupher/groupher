@@ -2,7 +2,7 @@ import type { TPagi } from './utils'
 
 // import type { TPagedCommunities } from './community'
 
-type TSocial = {
+type TUserSocial = {
   github?: string
   twitter?: string
   blog?: string
@@ -37,7 +37,7 @@ export type TUser = TSimpleUser & {
   location?: string
   geoCity?: string
   viewerHasFollowed?: boolean
-  social?: TSocial
+  social?: TUserSocial
   email?: string
   contributes?: TContributes
   followersCount?: number

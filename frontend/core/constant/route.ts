@@ -43,7 +43,7 @@ export const DSB_ROUTE = {
   BLACKHOUSE: 'blackhouse',
   RSS: 'rss',
   // integrates
-  THIRD_PART: 'third_part',
+  'THIRD-PART': 'third-part',
   ADMINS: 'admins',
   WIDGETS: 'widgets',
   INOUT: 'inout',
@@ -94,6 +94,14 @@ export const DSB_ALIAS_ROUTE = {
   KANBAN: 'kanban',
   OTHERS: 'others',
 } as Record<Uppercase<TDsbAliasRoute>, TDsbAliasRoute>
+
+export const DSB_THIRD_PART_ROUTE = {
+  ANALYTICS: 'analytics',
+  WEBHOOKS: 'webhooks',
+  BOTS: 'bots',
+  EMAIL: 'email',
+  CONTENT_SYNC: 'content-sync',
+} as const
 
 // TODO: use safe route
 export const ROUTE = {

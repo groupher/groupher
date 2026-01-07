@@ -5,194 +5,27 @@ import type { TArticle } from './article'
 import type { TCommunity } from './community'
 import type { TThemeName } from './theme'
 
-export type { TAccount, TMembership, TPagedUsers, TSimpleUser, TUser } from './account'
-export type {
-  TArticle,
-  TArticleCat,
-  TArticleCatMode,
-  TArticleCatReject,
-  TArticleEntries,
-  TArticleFilter,
-  TArticleFilterMode,
-  TArticleMeta,
-  TArticleOrder,
-  TArticleParams,
-  TArticlePubSelector,
-  TArticleState,
-  TArticleTitle,
-  TChangelog,
-  TCollectionFolder,
-  TComment,
-  TCommentsState,
-  TCopyright,
-  TDocument,
-  TFAQSection,
-  TPagedArticles,
-  TPagedArticlesParams,
-  TPagedChangelogs,
-  TPagedCollectionFolder,
-  TPagedComments,
-  TPagedDocs,
-  TPagedPosts,
-  TPost,
-  TSocialInfo,
-  TTechCommunities,
-  TTechStack,
-  TUpvoteLayout,
-  TViewingInfo,
-} from './article'
-export type { TColor, TColorName, TPrimaryColor } from './color'
-export type {
-  TCategory,
-  TCommunity,
-  TCommunityInfo,
-  TGroupedTags,
-  TModerator,
-  TPagedCommunities,
-  TPagedTags,
-  TTag,
-} from './community'
-export type { TButton, TButtonStyle, TFiltersMenuItems } from './comp'
-export type {
-  TAvatarLayout,
-  TBannerLayout,
-  TBrandLayout,
-  TBroadcastArticleLayout,
-  TBroadcastConf,
-  TBroadcastLayout,
-  TChangelogLayout,
-  TDocFAQLayout,
-  TDocLayout,
-  TDsb,
-  TDsdSEOConf,
-  TDsdThreadConf,
-  TEditFunc,
-  TEnableConf,
-  TFooterLayout,
-  THeaderLayout,
-  TKanbanCardLayout,
-  TKanbanLayout,
-  TMediaReport,
-  TNameAlias,
-  TOverview,
-  TParseDashboard,
-  TPostLayout,
-  TRSSType,
-  TTagLayout,
-  TTopbarLayout,
-} from './dashboard'
-export type { TEmotion, TEmotionType } from './emotion'
-export type {
-  TFlattenObjectKeys,
-  TNegativeInteger,
-  TNonNegativeInteger,
-  TSnakeUpperCase,
-  TValueOf,
-} from './enhance'
-export type {
-  TGallery,
-  TGallery2Column,
-  TGallery3Column,
-  TGalleryDefault,
-  TGalleryList,
-  TGalleryMainColumn,
-  TGalleryMasonryCollumn,
-  TGalleryTextOnly,
-  TGalleryTextWithImage,
-} from './gallery'
-export type { TGQLError } from './graphql'
-export type { TLocale, TTransKey } from './i18n'
-export type { TMenu } from './menu'
-export type { TMetric } from './metric'
-export type { TOauthProvider } from './oauth'
-export type {
-  TDsbAliasRoute,
-  TDsbBaseInfoRoute,
-  TDsbBroadcastRoute,
-  TDsbDocRoute,
-  TDsbLayoutRoute,
-  TDsbPath,
-  TDsbSEORoute,
-  TPath,
-} from './route'
-export type {
-  TSize,
-  TSizeH,
-  TSizeL,
-  TSizeM,
-  TSizeS,
-  TSizeSM,
-  TSizeSML,
-  TSizeT,
-  TSizeTS,
-  TSizeTSM,
-} from './size'
-export type { TAccountStore, TViewingStore } from './store'
-export type { TFlatThemeKey, TTheme, TThemeMap, TThemeMode, TThemeName } from './theme'
-export type { TArticleListThread, TArticleThread, TCommunityThread, TThread } from './thread'
-export type {
-  Nullable,
-  TActive,
-  TArticleLoad,
-  TAttInfo,
-  TButtonPrefix,
-  TChangeMode,
-  TCityOption,
-  TCommunitySetterStyle,
-  TConditionMode,
-  TDirection,
-  TDsbLayout,
-  TEditMode,
-  TEditValue,
-  TFlexRule,
-  TGAEvent,
-  TGQError,
-  TGroupedLinks,
-  TID,
-  TInput,
-  TLink,
-  TLinkItem,
-  TMenuOption,
-  TModelineType,
-  TOnlineStatus,
-  TPagi,
-  TPaymentMethod,
-  TPaymentUsage,
-  TPlatform,
-  TPublishMode,
-  TReportType,
-  TResState,
-  TScrollDirection,
-  TSelectOption,
-  TSocial,
-  TSocialItem,
-  TSocialType,
-  TSpace,
-  TSubmitState,
-  TTabItem,
-  TTechStackCategory,
-  TTestable,
-  TToastType,
-  TTooltipAnimation,
-  TTooltipPlacement,
-  TUploadPreview,
-  TUserActivity,
-  TView,
-  TWidgetType,
-  TZIndexType,
-} from './utils'
-export type {
-  TCustomWallpaper,
-  TParsedWallpaper,
-  TWallpaper,
-  TWallpaperData,
-  TWallpaperFmt,
-  TWallpaperGradient,
-  TWallpaperGradientDir,
-  TWallpaperInfo,
-  TWallpaperPic,
-  TWallpaperType,
-} from './wallpaper'
+export type * from './account'
+export type * from './article'
+export type * from './color'
+export type * from './community'
+export type * from './comp'
+export type * from './dashboard'
+export type * from './emotion'
+export type * from './enhance'
+export type * from './gallery'
+export type * from './graphql'
+export type * from './i18n'
+export type * from './menu'
+export type * from './metric'
+export type * from './oauth'
+export type * from './route'
+export type * from './size'
+export type * from './store'
+export type * from './theme'
+export type * from './thread'
+export type * from './utils'
+export type * from './wallpaper'
 
 export type TRoute = {
   communityPath?: string
