@@ -6,7 +6,9 @@ import type {
   DSB_LAYOUT_ROUTE,
   DSB_ROUTE,
   DSB_SEO_ROUTE,
+  DSB_THIRD_PART_ROUTE,
 } from '~/const/route'
+
 import type {
   TAvatarLayout,
   TBannerLayout,
@@ -179,6 +181,7 @@ export type TStore = TDsbFields & {
   curTab: TValueOf<typeof DSB_ROUTE> | null
   baseInfoTab: TValueOf<typeof DSB_BASEINFO_ROUTE>
   aliasTab: TValueOf<typeof DSB_ALIAS_ROUTE>
+  thirdPartTab: TValueOf<typeof DSB_THIRD_PART_ROUTE>
   seoTab: TValueOf<typeof DSB_SEO_ROUTE>
   docTab: TValueOf<typeof DSB_DOC_ROUTE>
   layoutTab: TValueOf<typeof DSB_LAYOUT_ROUTE>

@@ -8,6 +8,7 @@ import {
   DSB_DOC_ROUTE,
   DSB_LAYOUT_ROUTE,
   DSB_SEO_ROUTE,
+  DSB_THIRD_PART_ROUTE,
 } from '~/const/route'
 import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
 import { DEFAULT_OVERVIEW, FIELDS } from './constant'
@@ -28,11 +29,15 @@ export default (init: TInit = {}): TStore => {
       saving: false,
       loading: false,
       baseInfoTab: DSB_BASEINFO_ROUTE.BASIC,
+      // sub tabs
       aliasTab: DSB_ALIAS_ROUTE.THREAD,
+      thirdPartTab: DSB_THIRD_PART_ROUTE.ANALYTICS,
       seoTab: DSB_SEO_ROUTE.SEARCH_ENGINE,
       docTab: DSB_DOC_ROUTE.TABLE,
       layoutTab: DSB_LAYOUT_ROUTE.GENERAL,
       broadcastTab: DSB_BROADCAST_ROUTE.GLOBAL,
+      // sub tabs end
+
       overview: DEFAULT_OVERVIEW,
       editingTag: null,
       settingTag: null,
