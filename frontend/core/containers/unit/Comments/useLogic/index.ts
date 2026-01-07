@@ -9,7 +9,7 @@ import persist from '~/utils/persist'
 import type { TMode } from '../spec'
 import type { TStore } from './spec'
 import store from './store'
-import useDrived, { type TRet as TDrived } from './useDrived'
+import useDerived, { type TRet as TDrived } from './useDerived'
 import useQuery, { type TRet as TQuery } from './useQuery'
 
 type TRet = {
@@ -34,7 +34,7 @@ type TRet = {
 export default (): TRet => {
   const snap = useSnapshot(store)
   const queryActions = useQuery()
-  const drived = useDrived()
+  const derived = useDerived()
 
   const onModeChange = (mode: TMode): void => {
     snap.commit({ mode, needRefreshState: false })
@@ -105,7 +105,7 @@ export default (): TRet => {
 
   return {
     ...queryActions,
-    ...drived,
+    ...derived,
     onModeChange,
     onReplyEditorClose,
     saveDraftIfNeed,

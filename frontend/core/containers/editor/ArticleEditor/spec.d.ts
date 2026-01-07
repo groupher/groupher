@@ -1,4 +1,4 @@
-import type { TID, TTag, TEditMode, TUser, TArticleCat, TSubmitState, TGroupedTags } from '~/spec'
+import type { TArticleCat, TEditMode, TID, TSubmitState, TTag, TUser } from '~/spec'
 
 export type TStore = {
   mode: TEditMode
@@ -27,7 +27,7 @@ export type TStore = {
   activeCat: TArticleCat
   activeTag: TTag
 
-  // drived
+  // derived
   allowEdit: boolean
   isArticleAuthor: boolean
   isReady: boolean

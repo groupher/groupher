@@ -1,11 +1,9 @@
-import { useSnapshot } from 'valtio'
 import { pick } from 'ramda'
-
-import type { TCommentsState } from '~/spec'
+import { useSnapshot } from 'valtio'
 import useViewingArticle from '~/hooks/useViewingArticle'
-
-import type { TEditState, TFoldState, TRepliesState } from '../spec'
+import type { TCommentsState } from '~/spec'
 import { API_MODE } from '../constant'
+import type { TEditState, TFoldState, TRepliesState } from '../spec'
 
 import store from './store'
 
@@ -34,7 +32,7 @@ export default (): TRet => {
       isViewerJoined: snap.isViewerJoined,
       participantsCount: snap.participantsCount,
       totalCount,
-      // @ts-ignore
+      // @ts-expect-error
       participants: snap.participants,
     }
   }
@@ -46,7 +44,6 @@ export default (): TRet => {
       pagedComments.totalCount === 0 ? false : foldedCommentIds.length === pagedComments.totalCount
 
     return {
-      // @ts-ignore
       foldedIds: foldedCommentIds,
       isAllFolded,
     }
@@ -61,14 +58,14 @@ export default (): TRet => {
         'showEditor',
         'showReplyEditor',
         'showUpdateEditor',
-        // @ts-ignore
+        // @ts-expect-error
         'submitState',
         'updateId',
       ],
       snap,
     )
 
-    // @ts-ignore
+    // @ts-expect-error
     return { ...baseFields, replyToComment: snap.replyToComment }
   }
 
