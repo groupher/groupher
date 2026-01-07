@@ -5,9 +5,7 @@
  */
 
 import { type FC, useState } from 'react'
-import { Provider } from 'urql'
 import SettingSVG from '~/icons/Setting'
-import client from '~/server/gq_client'
 import type { TSpace } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
@@ -36,31 +34,29 @@ const ArticleSettingMenu: FC<TProps> = ({ testid = 'article-setting-menu', ...sp
   }
 
   return (
-    <Provider value={client}>
-      <div className={s.wrapper}>
-        <Tooltip
-          visible={visible}
-          content={<Menu onSubMenuToggle={(t) => setSubMenuOpen(t)} onClose={doClose} />}
-          placement='bottom-end'
-          hideOnClick={false}
-          offset={[0, 10]}
-          onShow={() => {
-            setMenuOpen(true)
-            setVisible(true)
-          }}
-          onHide={() => {
-            if (subMenuOpen) return
-            doClose()
-          }}
-          trigger='click'
-          noPadding
-        >
-          <div className={cn(s.settingBox, menuOpen && s.settingBoxActive)}>
-            <SettingSVG className={s.settingIcon} />
-          </div>
-        </Tooltip>
-      </div>
-    </Provider>
+    <div className={s.wrapper}>
+      <Tooltip
+        visible={visible}
+        content={<Menu onSubMenuToggle={(t) => setSubMenuOpen(t)} onClose={doClose} />}
+        placement='bottom-end'
+        hideOnClick={false}
+        offset={[0, 10]}
+        onShow={() => {
+          setMenuOpen(true)
+          setVisible(true)
+        }}
+        onHide={() => {
+          if (subMenuOpen) return
+          doClose()
+        }}
+        trigger='click'
+        noPadding
+      >
+        <div className={cn(s.settingBox, menuOpen && s.settingBoxActive)}>
+          <SettingSVG className={s.settingIcon} />
+        </div>
+      </Tooltip>
+    </div>
   )
 }
 
