@@ -1,12 +1,3 @@
-import type {
-  TDsbAliasRoute,
-  TDsbBaseInfoRoute,
-  TDsbBroadcastRoute,
-  TDsbDocRoute,
-  TDsbLayoutRoute,
-  TDsbSEORoute,
-} from '~/spec'
-
 export const NON_COMMUNITY_ROUTE = {
   APPLY_COMMUNITY: '/apply/community',
 }
@@ -53,19 +44,19 @@ export const DSB_BASEINFO_ROUTE = {
   SOCIAL: 'social',
   OTHER: 'other',
   LOGOS: 'logos',
-} as Record<Uppercase<TDsbBaseInfoRoute>, TDsbBaseInfoRoute>
+} as const
 
 export const DSB_SEO_ROUTE = {
   SEARCH_ENGINE: 'search_engine',
   TWITTER: 'twitter',
-} as Record<Uppercase<TDsbSEORoute>, TDsbSEORoute>
+} as const
 
 export const DSB_DOC_ROUTE = {
   TABLE: 'table',
   TREE: 'tree',
   COVER: 'cover',
   FAQ: 'faq',
-} as Record<Uppercase<TDsbDocRoute>, TDsbDocRoute>
+} as const
 
 export const DSB_LAYOUT_ROUTE = {
   GENERAL: 'general',
@@ -74,18 +65,18 @@ export const DSB_LAYOUT_ROUTE = {
   KANBAN: 'kanban',
   CHANGELOG: 'changelog',
   DOC: 'doc',
-} as Record<Uppercase<TDsbLayoutRoute>, TDsbLayoutRoute>
+} as const
 
 export const DSB_BROADCAST_ROUTE = {
   GLOBAL: 'global',
   ARTICLE: 'article',
-} as Record<Uppercase<TDsbBroadcastRoute>, TDsbBroadcastRoute>
+} as const
 
 export const DSB_ALIAS_ROUTE = {
   THREAD: 'thread',
   KANBAN: 'kanban',
   OTHERS: 'others',
-} as Record<Uppercase<TDsbAliasRoute>, TDsbAliasRoute>
+} as const
 
 export const DSB_THIRD_PART_ROUTE = {
   ANALYTICS: 'analytics',
