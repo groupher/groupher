@@ -4,7 +4,6 @@ import type {
   TDsbBroadcastRoute,
   TDsbDocRoute,
   TDsbLayoutRoute,
-  TDsbPath,
   TDsbSEORoute,
 } from '~/spec'
 
@@ -47,14 +46,7 @@ export const DSB_ROUTE = {
   ADMINS: 'admins',
   WIDGETS: 'widgets',
   INOUT: 'inout',
-} as Record<Uppercase<TDsbPath>, TDsbPath>
-
-export const DASHBORD_CMS_ROUTES = [
-  DSB_ROUTE.POST,
-  DSB_ROUTE.DOC,
-  DSB_ROUTE.CHANGELOG,
-  DSB_ROUTE.COMMUNITIES,
-]
+} as const
 
 export const DSB_BASEINFO_ROUTE = {
   BASIC: 'basic',
@@ -125,8 +117,6 @@ export const ROUTE = {
     ...DSB_ROUTE,
   },
 }
-
-export const STATIC_ROUTES = ['/', '/pricing', '/book-demo', '/oops']
 
 export const DSB_TAB = {
   CUR: 'curTab',
