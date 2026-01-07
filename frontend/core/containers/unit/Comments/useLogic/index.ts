@@ -4,7 +4,7 @@ import { equals, isEmpty, keys, pick, reject } from 'ramda'
 import { useSnapshot } from 'valtio'
 
 import type { TComment, TID } from '~/spec'
-import BStore from '~/utils/bstore'
+import persist from '~/utils/persist'
 
 import type { TMode } from '../spec'
 import type { TStore } from './spec'
@@ -73,12 +73,12 @@ export default (): TRet => {
 
   const saveDraftIfNeed = (content): void => {
     if (isEmpty(content)) return
-    const curDraftContent = BStore.get('recentDraft')
+    const curDraftContent = persist.get('recentDraft')
 
-    if (curDraftContent !== content) BStore.set('recentDraft', content)
+    if (curDraftContent !== content) persist.set('recentDraft', content)
   }
 
-  const clearDraft = (): void => BStore.remove('recentDraft')
+  const clearDraft = (): void => persist.remove('recentDraft')
 
   const foldComment = (id: TID): void => {
     const foldedCommentIds = [id, ...snap.foldedCommentIds]

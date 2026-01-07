@@ -1,7 +1,8 @@
-import { BStore, makeGithubExplore } from '~/utils'
+import { makeGithubExplore } from '~/utils'
+import persist from '~/utils/persist'
 import { graphqlEndpoint } from './config'
 
-const token = BStore.get('github_token')
+const token = persist.get('github_token')
 
 const rawOptions = {
   headers: {
