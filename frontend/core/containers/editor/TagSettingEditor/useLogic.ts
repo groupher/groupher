@@ -4,7 +4,7 @@ import EVENT from '~/const/event'
 import { CHANGE_MODE } from '~/const/mode'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import { mutate } from '~/server'
+import useGraphQLClient from '~/hooks/useGraphQLClient'
 
 import { closeDrawer, send } from '~/signal'
 import type { TChangeMode, TEditValue, TSelectOption, TTag } from '~/spec'
@@ -32,6 +32,8 @@ export default (): TRet => {
   const { tags, settingTag, activeTagThread } = dsb$
 
   const community$ = useCommunity()
+
+  const { mutate } = useGraphQLClient()
 
   const [editingTag, setEditingTag] = useState<TTag | null>(null)
   const [mode, setMode] = useState(CHANGE_MODE.UPDATE)

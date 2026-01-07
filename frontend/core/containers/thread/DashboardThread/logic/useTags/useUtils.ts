@@ -4,7 +4,7 @@ import { sortByIndex } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
 
 import useDashboard from '~/hooks/useDashboard'
-import { query } from '~/server'
+import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TTag, TThread } from '~/spec'
 
 import S from '../../schema'
@@ -18,6 +18,7 @@ type TRet = {
 export default (): TRet => {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
+  const { query } = useGraphQLClient()
 
   const { original } = dsb$
 
@@ -31,6 +32,7 @@ export default (): TRet => {
 
     dsb$.commit({ loading: true })
     query(S.pagedArticleTags, params).then((data) => {
+      // @ts-expect-error
       const tags = data.pagedArticleTags.entries
       dsb$.commit({ tags, original: { ...original, tags }, loading: false })
     })

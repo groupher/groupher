@@ -64,7 +64,7 @@ export default () => {
         onChange={(v) => edit(v, 'introduction')}
       />
 
-      {/* avoid show savingbar when loading community info */}
+      {/* avoid show saving bar when loading community info */}
       {title && (
         <SavingBar field={FIELD.BASE_INFO} isTouched={isTouched} loading={saving} top={30} />
       )}

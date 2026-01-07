@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 import { DSB_BASEINFO_ROUTE } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import { mutate } from '~/server'
+import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { toast } from '~/signal'
 import type { TEditValue, TTag } from '~/spec'
 import {
@@ -25,6 +25,7 @@ type TRet = {
 export default (): TRet => {
   const dashboard$ = useDashboard()
   const community$ = useCommunity()
+  const { mutate } = useGraphQLClient()
   const storeRef = useRef(dashboard$)
 
   const { slug: community } = community$

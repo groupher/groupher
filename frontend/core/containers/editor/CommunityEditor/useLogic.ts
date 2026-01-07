@@ -1,23 +1,20 @@
+import { isEmpty, keys, mergeDeepRight, pick } from 'ramda'
 import { proxy, useSnapshot } from 'valtio'
-import { pick, isEmpty, keys, mergeDeepRight } from 'ramda'
-
+import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TEditValue } from '~/spec'
-import { query, mutate } from '~/server'
-
+import { STEP } from './constant'
+import S from './schema'
 import type {
-  TStore,
+  TCommunityType,
+  TFinishedStatus,
   THeaderStatus,
   TSelectTypeStatus,
   TSetupDomainStatus,
-  TSetupInfoStatus,
   TSetupExtraStatus,
-  TFinishedStatus,
+  TSetupInfoStatus,
+  TStore,
   TValidState,
-  TCommunityType,
 } from './spec'
-import { STEP } from './constant'
-
-import S from './schema'
 
 type TRet = {
   checkPendingApply: () => void
@@ -130,6 +127,7 @@ const store = proxy<TStore>({
 
 export default (): TRet => {
   const snap = useSnapshot(store)
+  const { query, mutate } = useGraphQLClient()
 
   const checkPendingApply = () => {
     query(S.hasPendingCommunityApply, {}).then(({ hasPendingCommunityApply }) => {
@@ -203,7 +201,7 @@ export default (): TRet => {
       snap.commit({ communityExist: false })
     }
 
-    // @ts-ignore
+    // @ts-expect-error
     snap.commit({ [part]: e?.target.value || '' })
   }
 

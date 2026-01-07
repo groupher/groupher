@@ -4,7 +4,7 @@ import { proxy, useSnapshot } from 'valtio'
 import { ARTICLE_CAT } from '~/const/gtd'
 import useCommunity from '~/hooks/useCommunity'
 
-import { query } from '~/server'
+import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TArticleCat, TCommunity, TEditMode, TGroupedTags, TSubmitState, TTag } from '~/spec'
 import S from './schema'
 import type { TEditData, TStore } from './spec'
@@ -85,6 +85,7 @@ const store = proxy<TStore>({
 export default (): TRet => {
   const snap = useSnapshot(store)
   const community$ = useCommunity()
+  const { query } = useGraphQLClient()
 
   const onPublish = (): void => {
     console.log('## onPublish')

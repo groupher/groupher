@@ -1,4 +1,4 @@
-import { type FC, memo, type ReactNode } from 'react'
+import type { FC, ReactNode } from 'react'
 import InfoSVG from '~/icons/Save'
 import type { TSpace } from '~/spec'
 import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
@@ -106,4 +106,4 @@ const SavingBar: FC<TProps> = ({
   )
 }
 
-export default memo(SavingBar)
+export default SavingBar

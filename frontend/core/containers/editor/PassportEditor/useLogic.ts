@@ -4,7 +4,7 @@ import EVENT from '~/const/event'
 import useAccount from '~/hooks/useAccount'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import { mutate, query } from '~/server'
+import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { closeDrawer, send } from '~/signal'
 import type { TUser } from '~/spec'
 
@@ -30,6 +30,7 @@ export default (): TRet => {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
   const account$ = useAccount()
+  const { mutate, query } = useGraphQLClient()
 
   const { activeModerator, allRootRules, allModeratorRules } = dsb$
   const [selectedRules, setSelectedRules] = useState([])
@@ -45,7 +46,9 @@ export default (): TRet => {
   const loadUserPassport = (): void => {
     setSelectedRules([])
     query(S.userPassport, { login: activeModerator.login }).then((res) => {
+      // @ts-expect-error
       console.log('## load: userPassport: ', res.user)
+      // @ts-expect-error
       const { cmsPassportString } = res.user
       const passportJson = JSON.parse(cmsPassportString)
 
@@ -62,6 +65,7 @@ export default (): TRet => {
     }
 
     query(S.allPassportRules).then((res) => {
+      // @ts-expect-error
       const { moderator, root } = res.allPassportRules
 
       dsb$.commit({ allRootRules: root, allModeratorRules: moderator })

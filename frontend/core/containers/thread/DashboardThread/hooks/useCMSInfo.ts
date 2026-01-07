@@ -1,7 +1,7 @@
 import { includes, reject, uniq } from 'ramda'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import { query } from '~/server'
+import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TDsbDocRoute, TFAQSection, TID, TPagedArticles, TPagedCommunities } from '~/spec'
 import S from '../schema'
 import useHelper from './useHelper'
@@ -41,6 +41,7 @@ export default (): TRet => {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
   const { mapArrayChanged } = useHelper()
+  const { query } = useGraphQLClient()
 
   const {
     loading,
