@@ -9,7 +9,7 @@ import useSalon from '~/containers/thread/DashboardThread/salon/layout'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import useSyncDSBRoute2Tab, { isRouteOf } from '~/hooks/useSyncDSBRoute2Tab'
-import { LAYOUT_TABS } from '~/stores/dashboard/constant'
+import { LAYOUT_TABS } from '~/containers/thread/DashboardThread//constant'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 export default ({ children }) => {

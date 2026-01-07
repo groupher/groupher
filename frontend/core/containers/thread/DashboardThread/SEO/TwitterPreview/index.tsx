@@ -1,4 +1,4 @@
-import { TW_CARD } from '../../constant'
+import { TW_CARD } from '~/const/dashboard'
 
 import useSEO from '../../logic/useSEO'
 

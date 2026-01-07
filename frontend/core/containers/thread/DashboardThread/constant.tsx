@@ -1,5 +1,5 @@
 import { COLOR_NAME } from '~/const/colors'
-import { ONE_LINK_GROUP } from '~/const/dashboard'
+import { ONE_LINK_GROUP, TW_CARD } from '~/const/dashboard'
 import {
   DSB_ALIAS_ROUTE,
   DSB_BASEINFO_ROUTE,
@@ -12,7 +12,7 @@ import {
 import type { TSnakeUpperCase, TWidgetType } from '~/spec'
 import type { TDsbFields } from '~/stores/dashboard/spec'
 
-import type { TDsbField, TFooterEditType, THeaderEditType } from './spec'
+import type { TDsbField } from './spec'
 
 export { SEO_KEYS, SEO_OG_KEYS, SEO_TW_KEYS } from '~/const/seo'
 
@@ -183,14 +183,14 @@ export const MENU = {
   INTEGRATE: {
     title: '绑定集成',
     icon: 'bind',
-    initFold: true,
+    initFold: false,
     children: [
       {
-        title: '自定义域名',
+        title: '域名绑定',
         slug: DSB_ROUTE.DOMAIN,
       },
       {
-        title: '外部应用',
+        title: '三方集成',
         slug: DSB_ROUTE.THIRD_PART,
       },
       {
@@ -257,16 +257,32 @@ export const WIDGET_TYPES = [
   },
 ]
 
-export const HEADER_EDIT_TYPE = {
-  LOGO: 'logo',
-  TITLE: 'title',
-} as Record<Uppercase<THeaderEditType>, THeaderEditType>
-
-export const FOOTER_EDIT_TYPE = {
-  LOGO: 'logo',
-  TITLE: 'title',
-  SOCIAL: 'social',
-} as Record<Uppercase<TFooterEditType>, TFooterEditType>
+export const LAYOUT_TABS = [
+  {
+    title: '通用',
+    slug: DSB_LAYOUT_ROUTE.GENERAL,
+  },
+  {
+    title: '主题/背景',
+    slug: DSB_LAYOUT_ROUTE.THEME,
+  },
+  {
+    title: '讨论区',
+    slug: DSB_LAYOUT_ROUTE.POST,
+  },
+  {
+    title: '看板',
+    slug: DSB_LAYOUT_ROUTE.KANBAN,
+  },
+  {
+    title: '更新日志',
+    slug: DSB_LAYOUT_ROUTE.CHANGELOG,
+  },
+  {
+    title: '帮助台',
+    slug: DSB_LAYOUT_ROUTE.DOC,
+  },
+]
 
 export const BASEINFO_TABS = [
   {
@@ -295,29 +311,6 @@ export const SEO_TABS = [
   {
     title: 'Twitter',
     slug: DSB_SEO_ROUTE.TWITTER,
-  },
-]
-
-export const LAYOUT_TABS = [
-  {
-    title: '全局',
-    slug: DSB_LAYOUT_ROUTE.GENERAL,
-  },
-  {
-    title: '讨论区',
-    slug: DSB_LAYOUT_ROUTE.POST,
-  },
-  {
-    title: '看板',
-    slug: DSB_LAYOUT_ROUTE.KANBAN,
-  },
-  {
-    title: '更新日志',
-    slug: DSB_LAYOUT_ROUTE.CHANGELOG,
-  },
-  {
-    title: '帮助台',
-    slug: DSB_LAYOUT_ROUTE.DOC,
   },
 ]
 
@@ -350,11 +343,6 @@ export const DOC_TABS = [
     slug: DSB_DOC_ROUTE.FAQ,
   },
 ]
-
-export const TW_CARD = {
-  SUMMARY: 'summary',
-  SUMMARY_LARGE_IMAGE: 'summary_large_image',
-}
 
 export const TW_CARD_OPTIONS = [
   {
@@ -399,121 +387,6 @@ export const EMPTY_MEDIA_REPORT = {
   url: '',
   editUrl: '',
 }
-
-export const demoMarkdown = `
-  this is a paragraph 
-
-  - this is a list
-  - this is a list 2
-  - this is a list 3
-
-
-  \`\`\`js
-  var some = code();
-  \`\`\`
-`
-
-export const DEFAULT_FAQ_ITEMS = [
-  // {
-  //   index: 0,
-  //   title: '如何使用 Groupher？',
-  //   body: '如何使用 Groupher 的内容，我将在这片文档继续分享相关话题',
-  // },
-  // {
-  //   index: 1,
-  //   title: 'Groupher 是免费的吗',
-  //   body: demoMarkdown,
-  // },
-  // {
-  //   index: 2,
-  //   title: 'Groupher 可以独立部署吗',
-  //   body: demoMarkdown,
-  // },
-]
-
-export const DEFAULT_LINK_ITEMS = [
-  {
-    title: '讨论区',
-    link: 'https://groupher.com/home/post',
-    index: 0,
-    group: 'Group 0',
-    groupIndex: 0,
-  },
-  {
-    title: '看板',
-    link: 'https://groupher.com/home/kanban',
-    index: 1,
-    group: 'Group 0',
-    groupIndex: 0,
-  },
-  {
-    title: '更新日志',
-    link: 'https://groupher.com/home/changelog',
-    index: 2,
-    group: 'Group 0',
-    groupIndex: 0,
-  },
-  {
-    title: '帮助台',
-    link: 'https://groupher.com/home/help',
-    index: 3,
-    group: 'Group 0',
-    groupIndex: 0,
-  },
-  {
-    title: '关于',
-    link: 'https://groupher.com/home/about',
-    index: 4,
-    group: 'Group 0',
-    groupIndex: 0,
-  },
-
-  // group 1
-  {
-    title: '布局设置',
-    link: 'https://groupher.com/home/post',
-    index: 0,
-    group: 'Group 1',
-    groupIndex: 1,
-  },
-  {
-    title: '看板设置',
-    link: 'https://groupher.com/home/kanban',
-    index: 1,
-    group: 'Group 1',
-    groupIndex: 1,
-  },
-  {
-    title: '更新日志设置',
-    link: 'https://groupher.com/home/changelog',
-    index: 2,
-    group: 'Group 1',
-    groupIndex: 1,
-  },
-
-  //
-  {
-    title: '与 xxx 的对比',
-    link: 'https://groupher.com/home/post',
-    index: 0,
-    group: 'Group 2',
-    groupIndex: 2,
-  },
-  {
-    title: '帮助中心',
-    link: 'https://groupher.com/home/kanban',
-    index: 1,
-    group: 'Group 2',
-    groupIndex: 2,
-  },
-  {
-    title: '联系我们',
-    link: 'https://groupher.com/home/changelog',
-    index: 2,
-    group: 'Group 2',
-    groupIndex: 2,
-  },
-]
 
 export const BASEINFO_BASIC_KEYS: (keyof TDsbFields)[] = [
   'locale',
