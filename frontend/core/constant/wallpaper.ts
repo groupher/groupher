@@ -1,4 +1,4 @@
-import type { TSnakeUpperCase, TWallpaper, TWallpaperGradientDir, TWallpaperType } from '~/spec'
+import type { TWallpaper } from '~/spec'
 
 const DIR = '/wallpaper'
 
@@ -21,7 +21,7 @@ export const WALLPAPER_TYPE = {
   CUSTOM_GRADIENT: 'custom_gradient',
   UPLOAD: 'upload',
   NONE: 'none',
-} as Record<Uppercase<TWallpaperType>, TWallpaperType>
+} as const
 
 export const PATTERN_WALLPAPER = {
   // bubbles: {
@@ -98,7 +98,7 @@ const DEFAULT_GRADIENT_EFFECT = {
 }
 
 export const COVER_GRADIENT_WALLPAPER = {
-  // linear gradian
+  // linear gradient
   // background: #2c3e50; /* fallback for old browsers */
   // background: -webkit-linear-gradient(#C6D183, #72B58C); /* Chrome 10-25, Safari 5.1-6 */
   grey: {
@@ -168,7 +168,7 @@ export const COVER_GRADIENT_WALLPAPER = {
     colors: ['#FF987F', '#B4B8F8'],
     ...DEFAULT_GRADIENT_EFFECT,
   },
-} as Record<string, TWallpaper>
+} satisfies Record<string, TWallpaper>
 
 export const GRADIENT_WALLPAPER_NAME = {
   PINK: 'pink',
@@ -228,4 +228,4 @@ export const GRADIENT_DIRECTION = {
   BOTTOM_LEFT: 'bottom left',
   LEFT: 'left',
   TOP_LEFT: 'top left',
-} as Record<TSnakeUpperCase<TWallpaperGradientDir>, TWallpaperGradientDir>
+} as const

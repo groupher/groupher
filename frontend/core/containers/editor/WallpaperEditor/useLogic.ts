@@ -42,7 +42,7 @@ export default (): TRet => {
   const { getWallpaper } = useFullWallpaper()
 
   const { mutate } = useGraphQLClient()
-  const [tab, setTab] = useState<TTab>(TAB.BUILDIN)
+  const [tab, setTab] = useState<TTab>(TAB.BUILD_IN)
   const [loading, setLoading] = useState(false)
 
   const isTouched = useMemo((): boolean => {

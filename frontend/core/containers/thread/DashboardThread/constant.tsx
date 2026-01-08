@@ -10,17 +10,15 @@ import {
   DSB_SEO_ROUTE,
   DSB_THIRD_PART_ROUTE,
 } from '~/const/route'
-import type { TSnakeUpperCase, TWidgetType } from '~/spec'
-import type { TDsbFields } from '~/stores/dashboard/spec'
-
-import type { TDsbField } from './spec'
+import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
 export { SEO_KEYS, SEO_OG_KEYS, SEO_TW_KEYS } from '~/const/seo'
 
+export const DSB_DEMO_KEY = 'DSB_DEMO'
 export const ALIGN_HEADER_OFFSET = '100px'
 
 // do not change, it's map to GQ endpoint updateDashboardLayout
-export const SETTING_LAYOUT_FIELD = {
+export const LAYOUT_FIELD = {
   PRIMARY_COLOR: 'primaryColor',
   POST_LAYOUT: 'postLayout',
   KANBAN_LAYOUT: 'kanbanLayout',
@@ -49,7 +47,8 @@ export const SETTING_LAYOUT_FIELD = {
 }
 
 export const FIELD = {
-  ...SETTING_LAYOUT_FIELD,
+  ...LAYOUT_FIELD,
+  ENABLE: 'enable',
   BASE_INFO: 'baseInfo',
   MEDIA_REPORTS: 'mediaReports',
   SEO: 'seo',
@@ -73,7 +72,8 @@ export const FIELD = {
   GLOW_OPACITY: 'glowOpacity',
   PAGE_BG: 'pageBg',
   PAGE_BG_DARK: 'pageBgDark',
-} as Record<TSnakeUpperCase<TDsbField>, TDsbField>
+  BROADCAST_ENABLE: 'broadcastEnable',
+} as const
 
 export const MENU = {
   BASIC: {
@@ -208,7 +208,7 @@ export const ALIAS_GROUP = {
   OTHERS: DSB_ALIAS_ROUTE.OTHERS,
 }
 
-export const BUILDIN_ALIAS_SUGGESTIONS = {
+export const BUILD_IN_ALIAS_SUGGESTIONS = {
   post: ['帖子', '讨论区', '论坛'],
   kanban: ['路线图', '规划', '蓝图'],
   changelog: ['新功能', '发布日志', '里程碑', '开发计划'],
@@ -233,7 +233,7 @@ export const WIDGET_TYPE = {
   POPUP: 'popup',
   IFRAME: 'iframe',
   LINK: 'link',
-} as Record<Uppercase<TWidgetType>, TWidgetType>
+} as const
 
 export const WIDGET_TYPES = [
   {
@@ -412,7 +412,7 @@ export const EMPTY_MEDIA_REPORT = {
   editUrl: '',
 }
 
-export const BASEINFO_BASIC_KEYS: (keyof TDsbFields)[] = [
+export const BASEINFO_BASIC_KEYS: (keyof TDsbFieldMap)[] = [
   'locale',
   'title',
   'desc',
@@ -420,10 +420,10 @@ export const BASEINFO_BASIC_KEYS: (keyof TDsbFields)[] = [
   'homepage',
   'slug',
 ]
-export const BASEINFO_LOGOS_KEYS: (keyof TDsbFields)[] = ['logo', 'favicon']
-export const BASEINFO_OTHER_KEYS: (keyof TDsbFields)[] = ['city', 'techstack']
+export const BASEINFO_LOGOS_KEYS: (keyof TDsbFieldMap)[] = ['logo', 'favicon']
+export const BASEINFO_OTHER_KEYS: (keyof TDsbFieldMap)[] = ['city', 'techstack']
 
-export const BASEINFO_KEYS: (keyof TDsbFields)[] = [
+export const BASEINFO_KEYS: (keyof TDsbFieldMap)[] = [
   ...BASEINFO_BASIC_KEYS,
   ...BASEINFO_LOGOS_KEYS,
   ...BASEINFO_OTHER_KEYS,

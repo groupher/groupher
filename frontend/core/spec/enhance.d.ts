@@ -4,7 +4,6 @@
 export type {
   NegativeInteger as TNegativeInteger,
   NonNegativeInteger as TNonNegativeInteger,
-  ScreamingSnakeCase as TSnakeUpperCase,
   ValueOf as TValueOf,
 } from 'type-fest'
 

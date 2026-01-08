@@ -1,4 +1,5 @@
-import type { TWallpaper, TWallpaperGradientDir } from '~/spec'
+import type { TConstValues, TWallpaper, TWallpaperGradientDir } from '~/spec'
+import type { IMAGE_POS, IMAGE_RATIO, IMAGE_SIZE, LINEAR_BORDER, SETTING_LEVEL } from './constant'
 
 export type TStore = {
   imagePos: TImagePos
@@ -22,40 +23,17 @@ export type TStore = {
   commit: (patch: Partial<TStore>) => void
 }
 
-export type TImagePos =
-  | 'top_left'
-  | 'top_center'
-  | 'top_right'
-  | 'center_left'
-  | 'center'
-  | 'center_right'
-  | 'bottom_left'
-  | 'bottom_center'
-  | 'bottom_right'
-  | 'none'
-
-export type TLinearBorderPos =
-  | 'top_left'
-  | 'top_right'
-  | 'top'
-  | 'bottom_left'
-  | 'bottom'
-  | 'bottom_right'
-  | 'top_all'
-  | 'bottom_all'
-  | 'left_all'
-  | 'right_all'
-  | 'all'
-  | 'none'
+export type TImagePos = TConstValues<typeof IMAGE_POS>
+export type TLinearBorderPos = TConstValues<typeof LINEAR_BORDER>
 
 export type TImageSizeValue = {
   height: string
   width: string
 }
 
-export type TSettingLevel = 'L1' | 'L2' | 'L3' | 'L4' | 'L5'
-export type TImageSize = 'large' | 'medium' | 'small'
-export type TImageRadio = 'square' | 'tv' | 'screen'
+export type TSettingLevel = TConstValues<typeof SETTING_LEVEL>
+export type TImageSize = TConstValues<typeof IMAGE_SIZE>
+export type TImageRadio = TConstValues<typeof IMAGE_RATIO>
 export type TImageRotate = string
 
 export type TToolboxSetting = {

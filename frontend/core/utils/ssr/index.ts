@@ -214,7 +214,9 @@ export const parseDashboard = (community: TCommunity, pathname: string): TParseD
 // used in server/api
 
 const hasArticles = (thread: TThread) => {
-  return [THREAD.POST, THREAD.CHANGELOG].includes(thread)
+  return [THREAD.POST, THREAD.CHANGELOG].includes(
+    thread as typeof THREAD.POST | typeof THREAD.CHANGELOG,
+  )
 }
 
 const getPagedQuery = (community: string, thread: TThread) => {

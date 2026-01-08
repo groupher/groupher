@@ -18,7 +18,7 @@ import type {
 } from '~/const/layout'
 import type { DSB_TAB } from '~/const/route'
 import type { TConstValues } from '~/spec'
-import type { TDsbField } from '~/stores/dashboard/spec'
+import type { TDsbFieldKey } from '~/stores/dashboard/spec'
 import type { TFAQSection } from './article'
 import type { TColorName } from './color'
 import type { TModerator } from './community'
@@ -175,4 +175,4 @@ export type TOverview = {
   docsCount: number
 }
 
-export type TEditFunc = (value: TEditValue, field: TDsbField) => void
+export type TEditFunc = (value: TEditValue, field: TDsbFieldKey) => void

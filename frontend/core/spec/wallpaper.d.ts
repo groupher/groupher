@@ -1,17 +1,12 @@
+import type { GRADIENT_DIRECTION, WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { TConstValues } from '~/spec'
+
 export type TWallpaperFmt = {
   effect: string
   background: string
 }
 
-export type TWallpaperGradientDir =
-  | 'top'
-  | 'top right'
-  | 'right'
-  | 'bottom right'
-  | 'bottom'
-  | 'bottom left'
-  | 'left'
-  | 'top left'
+export type TWallpaperGradientDir = TConstValues<typeof GRADIENT_DIRECTION>
 
 export type TWallpaperGradient = {
   colors?: string[]
@@ -36,7 +31,7 @@ export type TWallpaper = TWallpaperGradient | TWallpaperPic
 
 export type TCustomWallpaper = TWallpaper | null
 
-export type TWallpaperType = 'pattern' | 'gradient' | 'custom_gradient' | 'upload' | 'none'
+export type TWallpaperType = TConstValues<typeof WALLPAPER_TYPE>
 
 export type TWallpaperInfo = {
   customWallpaper?: TCustomWallpaper

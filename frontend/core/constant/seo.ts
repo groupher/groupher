@@ -1,4 +1,4 @@
-import type { TDsbField } from '~/stores/dashboard/spec'
+import type { TDsbFieldKey } from '~/containers/thread/DashboardThread/spec'
 
 export const SEO_OG_KEYS = [
   'ogSiteName',
@@ -26,4 +26,4 @@ export const SEO_KEYS = [
   'seoEnable',
   ...SEO_OG_KEYS,
   ...SEO_TW_KEYS,
-] as const satisfies readonly TDsbField[]
+] as const satisfies readonly TDsbFieldKey[]

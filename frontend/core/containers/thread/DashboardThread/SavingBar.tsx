@@ -4,10 +4,10 @@ import type { TSpace } from '~/spec'
 import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
 import useHelper from './logic/useHelper'
 import useSalon, { cn } from './salon/saving_bar'
-import type { TDsbField } from './spec.d'
+import type { TDsbFieldKey } from './spec.d'
 
 type TProps = {
-  field?: TDsbField | null
+  field?: TDsbFieldKey | null
   prefix?: string
   hint?: ReactNode
   children?: ReactNode
