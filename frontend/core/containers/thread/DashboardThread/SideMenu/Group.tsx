@@ -41,14 +41,14 @@ const Group: FC<TProps> = ({ group }) => {
       {!fold && (
         <div className={s.menu}>
           {group.children.map((item) => {
-            const subPath = item.slug === DSB_ROUTE.DASHBOARD ? '' : item.slug
+            const subPath = item.slug === DSB_ROUTE.OVERVIEW ? '' : item.slug
             const isActive = item.slug === curTab
 
             return (
               <Link
                 key={item.slug}
                 className={cn(s.item, isActive && s.itemActive)}
-                href={`/${community}/${DSB_ROUTE.DASHBOARD}/${subPath}`}
+                href={`/${community}/${DSB_ROUTE.OVERVIEW}/${subPath}`}
               >
                 {isActive && <div className={s.itemActiveBar} />}
 
