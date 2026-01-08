@@ -1,26 +1,24 @@
 import { COLOR_NAME } from '~/const/colors'
 
-import type { TCommunityType, TStep } from './spec'
-
 export const STEP = {
   SELECT_TYPE: 'SELECT_TYPE',
   SETUP_DOMAIN: 'SETUP_DOMAIN',
   SETUP_INFO: 'SETUP_INFO',
   SETUP_EXTRA: 'SETUP_EXTRA',
   FINISHED: 'FINISHED',
-} as Record<Uppercase<TStep>, Uppercase<TStep>>
+} as const
 
 export const COMMUNITY_TYPE = {
   PRODUCT: 'PRODUCT',
   GAMING: 'GAMING',
   TEACH: 'TEACH',
   GROUP: 'GROUP',
-} as Record<Uppercase<TCommunityType>, Uppercase<TCommunityType>>
+} as const
 
 // TODO: remove later
 export const COMMUNITY_CATS_COLOR = {
   [COMMUNITY_TYPE.PRODUCT]: COLOR_NAME.PURPLE,
-  [COMMUNITY_TYPE.PRODUCT]: COLOR_NAME.BLUE,
+  [COMMUNITY_TYPE.GAMING]: COLOR_NAME.BLUE,
   [COMMUNITY_TYPE.TEACH]: COLOR_NAME.GREEN,
   [COMMUNITY_TYPE.GROUP]: COLOR_NAME.ORANGE,
 }

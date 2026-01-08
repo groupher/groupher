@@ -1,5 +1,3 @@
-import type { TEmotionType } from '~/spec'
-
 const EMOTION = {
   DOWNVOTE: 'downvote',
   BEER: 'beer',
@@ -7,6 +5,6 @@ const EMOTION = {
   CONFUSED: 'confused',
   POPCORN: 'popcorn',
   PILL: 'pill',
-} as Record<Uppercase<TEmotionType>, TEmotionType>
+} as const
 
 export default EMOTION

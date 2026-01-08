@@ -1,3 +1,12 @@
+import type {
+  ARTICLE_CAT,
+  ARTICLE_CAT_MODE,
+  ARTICLE_CAT_REJECT,
+  ARTICLE_ORDER,
+  ARTICLE_STATE,
+} from '~/const/gtd'
+import type { UPVOTE_LAYOUT } from '~/const/layout'
+import type { TConstValues } from '~/spec'
 import type { TCommunity, TTag } from '.'
 import type { TAccount, TSimpleUser, TUser } from './account'
 import type { TColor } from './color'
@@ -164,18 +173,8 @@ export type TArticleFilter = {
 
 export type TArticleFilterMode = 'default' | 'modeline'
 
-export type TArticleCatMode = 'filter' | 'full'
-
-export type TUpvoteLayout =
-  | 'default'
-  | 'comment'
-  | 'article'
-  | 'post_list'
-  | 'general'
-  | 'simple'
-  | 'fixed_header'
-  | 'sticker'
-  | 'post_minimal'
+export type TArticleCatMode = TConstValues<typeof ARTICLE_CAT_MODE>
+export type TUpvoteLayout = TConstValues<typeof UPVOTE_LAYOUT>
 
 export type TCollectionFolder = {
   id: TID
@@ -197,25 +196,10 @@ export type TCommentsState = {
   participants: TSimpleUser[]
 }
 
-export type TArticleCatReject =
-  | 'REJECT'
-  | 'REJECT_DUP'
-  | 'REJECT_NO_PLAN'
-  | 'REJECT_STALE'
-  | 'REJECT_REPRO'
-
-export type TArticleState =
-  | 'TODO'
-  | 'WIP'
-  | 'DONE'
-  | 'SOLVED'
-  | 'FIXED'
-  | 'DEFAULT'
-  | TArticleCatReject
-
-export type TArticleOrder = 'PUBLISH' | 'UPVOTES' | 'COMMENTS' | 'VIEWS'
-
-export type TArticleCat = 'BUG' | 'FEATURE' | 'QUESTION' | 'OTHER'
+export type TArticleCatReject = TConstValues<typeof ARTICLE_CAT_REJECT>
+export type TArticleState = TConstValues<typeof ARTICLE_STATE>
+export type TArticleOrder = TConstValues<typeof ARTICLE_ORDER>
+export type TArticleCat = TConstValues<typeof ARTICLE_CAT>
 
 export type TArticlePubSelector = {
   cat?: TArticleCat | null

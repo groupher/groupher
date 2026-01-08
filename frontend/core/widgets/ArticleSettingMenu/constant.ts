@@ -8,7 +8,6 @@ import TodoSVG from '~/icons/GtdTodo'
 import WipSVG from '~/icons/GtdWip'
 import QuestionSVG from '~/icons/Question'
 import RejectSVG from '~/icons/Reject'
-import type { TSubMenu } from './spec'
 
 export const SUB_MENU_TYPE = {
   EDIT: 'edit',
@@ -22,7 +21,7 @@ export const SUB_MENU_TYPE = {
   ARCHIVE: 'archive',
   MIRROR: 'mirror',
   DELETE: 'delete',
-} as Record<Uppercase<TSubMenu>, TSubMenu>
+} as const
 
 export const ICON = {
   // cat

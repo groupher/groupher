@@ -4,7 +4,7 @@ import ArrowSVG from '~/icons/ArrowSolid'
 import AddButton from '~/widgets/Buttons/AddButton'
 import Input from '~/widgets/Input'
 
-import { BUILDIN_ALIAS_SUGGESTIONS, FIELD } from '../constant'
+import { BUILD_IN_ALIAS_SUGGESTIONS, FIELD } from '../constant'
 import useAlias from '../logic/useAlias'
 import SavingBar from '../SavingBar'
 import useSalon, { cn } from '../salon/alias/item'
@@ -53,7 +53,7 @@ const Item: FC<TProps> = ({ alias }) => {
       <div className={s.footer}>
         {isEditMode ? (
           <Suggestion
-            items={BUILDIN_ALIAS_SUGGESTIONS[alias.slug]}
+            items={BUILD_IN_ALIAS_SUGGESTIONS[alias.slug]}
             onChange={(name) => updateEditingAlias({ ...alias, name })}
           />
         ) : (

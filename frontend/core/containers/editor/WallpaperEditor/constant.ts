@@ -1,14 +1,12 @@
-import type { TTab } from './spec'
-
 export const TAB = {
-  BUILDIN: 'buildin',
+  BUILD_IN: 'build_in',
   UPLOAD: 'upload',
-} as Record<Uppercase<TTab>, TTab>
+} as const
 
 export const TAB_OPTIONS = [
   {
     title: '内置壁纸',
-    slug: TAB.BUILDIN,
+    slug: TAB.BUILD_IN,
   },
   {
     title: '上传壁纸',

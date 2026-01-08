@@ -14,10 +14,11 @@
 import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import useDashboard from '~/hooks/useDashboard'
+import type { TDsbTab } from '~/spec'
 import { isOneOf } from '~/utils/helper'
 
 type TProps<T extends string> = {
-  tab: string
+  tab: TDsbTab
   defaultTab: T
 
   validator: (value: string) => value is T
@@ -49,7 +50,7 @@ export const isRouteOf = <const T extends Record<string, string>>(routeEnum: T) 
 const getDashboardRouteSegment = (pathname: string, index: number) =>
   pathname.split('/').filter(Boolean)[index]
 
-export default function useDashboardRouteTabSync<T extends string>({
+export default function useSyncDSBRoute2Tab<T extends string>({
   tab,
   defaultTab,
   validator,

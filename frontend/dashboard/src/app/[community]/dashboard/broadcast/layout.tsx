@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 
-import { DSB_BROADCAST_ROUTE } from '~/const/route'
+import { DSB_BROADCAST_ROUTE, DSB_TAB } from '~/const/route'
 import VIEW from '~/const/view'
 import { BROADCAST_TABS } from '~/containers//thread/DashboardThread/constant'
 import Portal from '~/containers//thread/DashboardThread/Portal'
@@ -16,7 +16,7 @@ export default ({ children }) => {
   const s = useSalon()
 
   useSyncDSBRoute2Tab({
-    tab: 'broadcastTab',
+    tab: DSB_TAB.BROADCAST,
     defaultTab: DSB_BROADCAST_ROUTE.GLOBAL,
     validator: isRouteOf(DSB_BROADCAST_ROUTE),
   })

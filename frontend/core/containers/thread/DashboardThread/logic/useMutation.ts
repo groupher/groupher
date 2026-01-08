@@ -13,9 +13,9 @@ import {
   FIELD,
   LAYOUT_FIELD,
   SEO_KEYS,
-} from '~/stores/dashboard/constant'
-import type { TDsbField } from '~/stores/dashboard/spec'
+} from '../constant'
 import S from '../schema'
+import type { TDsbFieldKey } from '../spec'
 
 type TRet = {
   mutation: (field: string, e: TEditValue) => Promise<void>
@@ -117,7 +117,7 @@ export default (): TRet => {
       })
   }
 
-  const mutation = (field: TDsbField, e: TEditValue): Promise<void> => {
+  const mutation = (field: TDsbFieldKey, e: TEditValue): Promise<void> => {
     if (field === FIELD.ENABLE) {
       const curEnable = storeRef.current.enable
       const initEnable = storeRef.current.original.enable

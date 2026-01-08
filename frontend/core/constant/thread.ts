@@ -1,11 +1,10 @@
-import type { TArticleThread, TThread } from '~/spec'
-
 export const CARD_THREAD = {}
 
 export const ARTICLE_THREAD = {
   POST: 'post',
   CHANGELOG: 'changelog',
-} as Record<Uppercase<TArticleThread>, TArticleThread>
+  ABOUT: 'about',
+} as const
 
 export const THREAD = {
   ...ARTICLE_THREAD,
@@ -14,9 +13,8 @@ export const THREAD = {
   KANBAN: 'kanban',
   CHANGELOG: 'changelog',
   DOC: 'doc',
-  ABOUT: 'about',
   DASHBOARD: 'dashboard',
-} as Record<Uppercase<TThread>, TThread>
+} as const
 
 export const USER_THREAD = {
   PROFILE: 'profile',

@@ -1,7 +1,7 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
 import type { TBroadcastConf, TBroadcastLayout, TDsbBroadcastRoute, TEditFunc } from '~/spec'
-import { FIELD } from '~/stores/dashboard/constant'
+import { FIELD } from '../constant'
 
 import useHelper from './useHelper'
 

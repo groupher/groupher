@@ -1,7 +1,9 @@
-export type TArticleListThread = 'post' | 'changelog' | 'kanban' | 'doc'
-export type TArticleThread = TArticleListThread | 'about'
+import type { ARTICLE_THREAD, THREAD } from '~/const/thread'
+import type { TConstValues } from '~/spec'
 
-export type TThread = TArticleThread | 'dashboard' | 'kanban' | 'team' | 'account'
+export type TArticleThread = TConstValues<typeof ARTICLE_THREAD>
+
+export type TThread = TConstValues<typeof THREAD>
 
 export type TCommunityThread = {
   title: string

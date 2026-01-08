@@ -8,7 +8,6 @@ import type {
   DSB_SEO_ROUTE,
   DSB_THIRD_PART_ROUTE,
 } from '~/const/route'
-
 import type {
   TAvatarLayout,
   TBannerLayout,
@@ -61,7 +60,7 @@ type TGroupCategory = {
   files: readonly TFile[]
 }
 
-export type TDsbFields = {
+export type TDsbFieldMap = {
   // baseInfo
   favicon: string
   logo: string
@@ -166,13 +165,13 @@ export type TDsbFields = {
   widgetsType: TWidgetType
 }
 
-export type TInit = { metric?: TMetric; now?: number } & Partial<TDsbFields>
+export type TInit = { metric?: TMetric; now?: number } & Partial<TDsbFieldMap>
 
-export type TStore = TDsbFields & {
+export type TStore = TDsbFieldMap & {
   metric?: TMetric
   now?: number
   initFilled: boolean
-  original: TDsbFields
+  original: TDsbFieldMap
 
   savingField: string | null
   saving: boolean
@@ -252,96 +251,3 @@ export type THeaderEditType = 'logo' | 'title'
 export type TFooterEditType = THeaderEditType | 'social'
 
 export type TChangeTagMode = 'settingTag' | 'editingTag'
-
-export type TSEOFields =
-  | 'seoEnable'
-  | 'ogSiteName'
-  | 'ogTitle'
-  | 'ogDescription'
-  | 'ogUrl'
-  | 'ogImage'
-  | 'twTitle'
-  | 'twDescription'
-  | 'twUrl'
-  | 'twCard'
-  | 'twSite'
-  | 'twImage'
-  | 'twImageWidth'
-  | 'twImageHeight'
-
-export type TDsbField =
-  | 'baseInfo'
-  | 'mediaReports'
-  | 'socialLinks'
-  | 'seo'
-  | 'favicon'
-  | 'logo'
-  | 'locale'
-  | 'title'
-  | 'slug'
-  | 'desc'
-  | 'introduction'
-  | 'homepage'
-  | 'techstack'
-  | 'city'
-  | 'primaryColor'
-  | 'postLayout'
-  | 'kanbanLayout'
-  | 'kanbanCardLayout'
-  | 'kanbanBgColors'
-  | 'brandLayout'
-  | 'tagLayout'
-  | 'avatarLayout'
-  | 'bannerLayout'
-  | 'headerLayout'
-  | 'footerLayout'
-  | 'glowType'
-  | 'glowFixed'
-  | 'glowOpacity'
-  | 'gaussBlur'
-  | 'gaussBlurDark'
-  | 'headerLinks'
-  | 'footerLinks'
-  | 'docLayout'
-  | 'docFaqLayout'
-  | 'topbarLayout'
-  | 'topbarBg'
-  | 'broadcastLayout'
-  | 'broadcastBg'
-  | 'broadcastEnable'
-  | 'broadcastArticleLayout'
-  | 'broadcastArticleBg'
-  | 'broadcastArticleEnable'
-  | 'changelogLayout'
-  | 'tag'
-  | 'tagIndex'
-  | 'faqSections'
-  | 'faqSectionItem'
-  | 'faqSectionAdd'
-  | 'faqSectionDelete'
-  | 'nameAlias'
-  | 'rssFeedType'
-  | 'rssFeedCount'
-  | 'enable'
-  | 'widgetsPrimaryColor'
-  | 'widgetsThreads'
-  | 'widgetsSize'
-  | 'widgetsType'
-  | 'activeTagGroup'
-  | 'layoutTab'
-  | 'seoTab'
-  | 'ogSiteName'
-  | 'ogTitle'
-  | 'ogDescription'
-  | 'ogUrl'
-  | 'ogImage'
-  | 'broadcastTab'
-  | 'docTab'
-  | 'twTitle'
-  | 'twDescription'
-  | 'twUrl'
-  | 'twSite'
-  | 'twCard'
-  | 'pageBg'
-  | 'pageBgDark'
-  | TSEOFields

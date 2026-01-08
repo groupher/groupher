@@ -1,6 +1,8 @@
-export type TCommunityType = 'PRODUCT' | 'GAMING' | 'TEACH' | 'GROUP' | null
+import type { TConstValues } from '~/spec'
+import type { COMMUNITY_TYPE, STEP } from './constant'
 
-export type TStep = 'SELECT_TYPE' | 'SETUP_DOMAIN' | 'SETUP_INFO' | 'SETUP_EXTRA' | 'FINISHED'
+export type TCommunityType = TConstValues<typeof COMMUNITY_TYPE>
+export type TStep = TConstValues<typeof STEP>
 
 // the local state store types
 export type TStore = {

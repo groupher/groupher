@@ -1,9 +1,14 @@
-import type { TChangeMode, TConditionMode } from '~/spec'
+export const PUBLISH_MODE = {
+  DEFAULT: 'default',
+  CHANGELOG: 'changelog',
+  SIDEBAR_LAYOUT_HEADER: 'sidebar_layout_header',
+  HELP: 'help',
+} as const
 
 export const CHANGE_MODE = {
   CREATE: 'create',
   UPDATE: 'update',
-} as Record<Uppercase<TChangeMode>, TChangeMode>
+} as const
 
 export const COMMUNITY_STATUS = {
   NORMAL: 0,
@@ -15,4 +20,4 @@ export const CONDITION_MODE = {
   CAT: 'cat',
   ORDER: 'order',
   TAG: 'tag',
-} as Record<Uppercase<TConditionMode>, TConditionMode>
+} as const

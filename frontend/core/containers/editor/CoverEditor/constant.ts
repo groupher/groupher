@@ -1,6 +1,4 @@
-import type { TSnakeUpperCase } from '~/spec'
-
-import type { TImagePos, TSettingLevel, TLinearBorderPos, TImageSize, TImageRadio } from './spec'
+import type { TSettingLevel } from './spec'
 
 // default size it's based on ratio 16:9
 export const IMAGE_CONTAINER_SIZE = {
@@ -19,7 +17,7 @@ export const IMAGE_POS = {
   BOTTOM_CENTER: 'bottom_center',
   BOTTOM_RIGHT: 'bottom_right',
   NONE: 'none',
-} as Record<TSnakeUpperCase<TImagePos>, TImagePos>
+} as const
 
 export const LINEAR_BORDER = {
   NONE: 'none',
@@ -36,7 +34,7 @@ export const LINEAR_BORDER = {
   LEFT_ALL: 'left_all',
   RIGHT_ALL: 'right_all',
   ALL: 'all',
-} as Record<TSnakeUpperCase<TLinearBorderPos>, TLinearBorderPos>
+} as const
 
 export const SETTING_LEVEL = {
   L1: 'L1',
@@ -44,7 +42,7 @@ export const SETTING_LEVEL = {
   L3: 'L3',
   L4: 'L4',
   L5: 'L5',
-} as Record<TSettingLevel, TSettingLevel>
+} as const
 
 export const IMAGE_SHADOW = {
   L1: 'none',
@@ -58,13 +56,13 @@ export const IMAGE_SIZE = {
   LARGE: 'large',
   MEDIUM: 'medium',
   SMALL: 'small',
-} as Record<Uppercase<TImageSize>, TImageSize>
+} as const
 
 export const IMAGE_RATIO = {
   SQUARE: 'square',
   TV: 'tv',
   SCREEN: 'screen',
-} as Record<Uppercase<TImageRadio>, TImageRadio>
+} as const
 
 export const IMAGE_BORDER_RADIUS = {
   L1: '0',

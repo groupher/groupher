@@ -1,27 +1,4 @@
-export type TMenu =
-  | 'ARROW_LEFT'
-  | 'ARROW_RIGHT'
-  | 'ARROW_TO_LEFT'
-  | 'ARROW_TO_RIGHT'
-  | 'ARROW_UP'
-  | 'ARROW_DOWN'
-  | 'ARROW_TO_TOP'
-  | 'ARROW_TO_BOTTOM'
-  | 'SETTING'
-  | 'DELETE'
-  // sort
-  | 'PUBLISH'
-  | 'UPVOTE'
-  | 'COMMENT'
-  | 'VIEWS'
-  // commont
-  | 'TODO'
-  | 'WIP'
-  | 'DONE'
-  | 'CLOSE'
-  | 'FEATURE'
-  | 'BUG'
-  | 'HELP'
-  | 'OTHER'
-  | 'ALL'
-  | 'TOOL'
+import type MENU from '~/const/menu'
+import type { TConstValues } from '~/spec'
+
+export type TMenu = TConstValues<typeof MENU>

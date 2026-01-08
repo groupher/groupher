@@ -2,17 +2,17 @@ import { findIndex, has, omit, update } from 'ramda'
 import { useCallback } from 'react'
 import useDashboard from '~/hooks/useDashboard'
 import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
-import { BASEINFO_KEYS, DSB_DEMO_KEY, FIELD, SEO_KEYS } from '~/stores/dashboard/constant'
-import type { TDsbField } from '~/stores/dashboard/spec'
 import persist from '~/utils/persist'
 import { isObject } from '~/validator'
+import { BASEINFO_KEYS, DSB_DEMO_KEY, FIELD, SEO_KEYS } from '../../constant'
+import type { TDsbFieldKey } from '../../spec'
 import useMutation from '../useMutation'
 
 export type TRet = {
   edit: TEditFunc
-  rollbackEdit: (field: TDsbField) => void
-  resetEdit: (field: TDsbField) => void
-  onSave: (field: TDsbField) => void
+  rollbackEdit: (field: TDsbFieldKey) => void
+  resetEdit: (field: TDsbFieldKey) => void
+  onSave: (field: TDsbFieldKey) => void
 }
 
 export default (): TRet => {
@@ -20,7 +20,7 @@ export default (): TRet => {
   const { mutation } = useMutation()
 
   const edit = useCallback(
-    (v: TEditValue, field: TDsbField): void => {
+    (v: TEditValue, field: TDsbFieldKey): void => {
       let value = v
       if (isObject(v) && has('target', v)) {
         value = v.target.value
@@ -31,7 +31,7 @@ export default (): TRet => {
     [dsb$.commit],
   )
 
-  const _rollbackByKeys = (keys: readonly TDsbField[]): void => {
+  const _rollbackByKeys = (keys: readonly TDsbFieldKey[]): void => {
     for (let i = 0; i < keys.length; i += 1) {
       const key = keys[i]
       const initValue = dsb$.original[key]
@@ -48,7 +48,7 @@ export default (): TRet => {
     return targetIdx
   }
 
-  const rollbackEdit = (field: TDsbField): void => {
+  const rollbackEdit = (field: TDsbFieldKey): void => {
     if (field === FIELD.BASE_INFO) {
       _rollbackByKeys(BASEINFO_KEYS)
       return
@@ -97,7 +97,7 @@ export default (): TRet => {
     persist.set(DSB_DEMO_KEY, JSON.stringify(saveSlf))
   }
 
-  const resetEdit = (field: TDsbField): void => {
+  const resetEdit = (field: TDsbFieldKey): void => {
     console.log('## resetEdit')
 
     if (field === FIELD.NAME_ALIAS) {
@@ -113,7 +113,7 @@ export default (): TRet => {
     // slf.mark({ demoAlertEnable: true })
   }
 
-  const onSave = (field: TDsbField): void => {
+  const onSave = (field: TDsbFieldKey): void => {
     console.log('## on save: ', field)
     dsb$.commit({ saving: true, savingField: field })
 

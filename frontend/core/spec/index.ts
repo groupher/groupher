@@ -85,3 +85,5 @@ export type TUrlInfo = {
   pathname: string
   searchParams: URLSearchParams
 }
+
+export type TConstValues<T extends Record<PropertyKey, string>> = T[keyof T]

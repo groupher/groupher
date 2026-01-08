@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 
-import { DSB_ALIAS_ROUTE } from '~/const/route'
+import { DSB_ALIAS_ROUTE, DSB_TAB } from '~/const/route'
 import VIEW from '~/const/view'
 import { ALIAS_TABS } from '~/containers/thread/DashboardThread//constant'
 import Portal from '~/containers/thread/DashboardThread//Portal'
@@ -19,7 +19,7 @@ export default ({ children }) => {
   const { aliasTab } = useAlias()
 
   useSyncDSBRoute2Tab({
-    tab: 'aliasTab',
+    tab: DSB_TAB.ALIAS,
     defaultTab: DSB_ALIAS_ROUTE.THREAD,
     validator: isRouteOf(DSB_ALIAS_ROUTE),
   })

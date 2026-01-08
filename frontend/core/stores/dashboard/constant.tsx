@@ -25,71 +25,7 @@ import SIZE from '~/const/size'
 import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
 import { EMPTY_MEDIA_REPORT } from '~/containers/thread/DashboardThread/constant'
-import type { TSnakeUpperCase } from '~/spec'
-import type { TDsbField, TDsbFields } from './spec'
-
-export { SEO_KEYS, SEO_OG_KEYS, SEO_TW_KEYS } from '~/const/seo'
-
-export const ALIGN_HEADER_OFFSET = '100px'
-
-// for local store, demo setting usage
-export const DSB_DEMO_KEY = 'dashboard_demo'
-
-// do not change, it's map to GQ endpoint updateDashboardLayout
-export const LAYOUT_FIELD = {
-  PRIMARY_COLOR: 'primaryColor',
-  POST_LAYOUT: 'postLayout',
-  KANBAN_LAYOUT: 'kanbanLayout',
-  KANBAN_CARD_LAYOUT: 'kanbanCardLayout',
-  KANBAN_BG_COLORS: 'kanbanBgColors',
-  DOC_LAYOUT: 'docLayout',
-  DOC_FAQ_LAYOUT: 'docFaqLayout',
-  BRAND_LAYOUT: 'brandLayout',
-  TAG_LAYOUT: 'tagLayout',
-  AVATAR_LAYOUT: 'avatarLayout',
-  BANNER_LAYOUT: 'bannerLayout',
-  HEADER_LAYOUT: 'headerLayout',
-  FOOTER_LAYOUT: 'footerLayout',
-  TOPBAR_LAYOUT: 'topbarLayout',
-  TOPBAR_BG: 'topbarBg',
-  BROADCAST_LAYOUT: 'broadcastLayout',
-  BROADCAST_ARTICLE_LAYOUT: 'broadcastArticleLayout',
-  BROADCAST_BG: 'broadcastBg',
-  BROADCAST_ARTICLE_BG: 'broadcastArticleBg',
-  CHANGELOG_LAYOUT: 'changelogLayout',
-  GLOW_TYPE: 'glowType',
-  GLOW_FIXED: 'glowFixed',
-  GLOW_OPACITY: 'glowOpacity',
-  GAUSS_BLUR: 'gaussBlur',
-  GAUSS_BLUR_DARK: 'gaussBlurDark',
-}
-
-export const FIELD = {
-  ...LAYOUT_FIELD,
-  BASE_INFO: 'baseInfo',
-  MEDIA_REPORTS: 'mediaReports',
-  SEO: 'seo',
-  SOCIAL_LINKS: 'socialLinks',
-  HEADER_LINKS: 'headerLinks',
-  FOOTER_LINKS: 'footerLinks',
-  TAG: 'tag',
-  TAG_INDEX: 'tagIndex',
-  FAQ_SECTIONS: 'faqSections',
-  FAQ_SECTION_ITEM: 'faqSectionItem',
-  FAQ_SECTION_ADD: 'faqSectionAdd',
-  FAQ_SECTION_DELETE: 'faqSectionDelete',
-  NAME_ALIAS: 'nameAlias',
-  RSS_FEED_TYPE: 'rssFeedType',
-  RSS_FEED_COUNT: 'rssFeedCount',
-  WIDGETS_PRIMARY_COLOR: 'widgetsPrimaryColor',
-  WIDGETS_SIZE: 'widgetsSize',
-  WIDGETS_THREADS: 'widgetsThreads',
-  GLOW_TYPE: 'glowType',
-  GLOW_FIXED: 'glowFixed',
-  GLOW_OPACITY: 'glowOpacity',
-  BROADCAST_ENABLE: 'broadcastEnable',
-  ENABLE: 'enable',
-} as Record<TSnakeUpperCase<TDsbField>, TDsbField>
+import type { TDsbFieldMap } from './spec'
 
 export const DEFAULT_OVERVIEW = {
   views: 0,
@@ -99,53 +35,9 @@ export const DEFAULT_OVERVIEW = {
   docsCount: 0,
 }
 
-export const BASEINFO_BASIC_KEYS = [
-  'favicon',
-  'locale',
-  'logo',
-  'title',
-  'desc',
-  'introduction',
-  'homepage',
-  'slug',
-] as const
-
-export const BASEINFO_OTHER_KEYS = ['city', 'techstack'] as const
-
-export const BASEINFO_KEYS = [
-  ...BASEINFO_BASIC_KEYS,
-  ...BASEINFO_OTHER_KEYS,
-] as const satisfies readonly TDsbField[]
-
-export const HEADER_SETTING_KEYS = [
-  'saving',
-  'headerLayout',
-  'headerLinks',
-  'editingLink',
-  'editingLinkMode',
-  'editingGroup',
-  'editingGroupIndex',
-]
-
-export const FOOTER_SETTING_KEYS = [
-  'saving',
-  'footerLayout',
-  'footerLinks',
-  'editingLink',
-  'editingLinkMode',
-  'editingGroup',
-  'editingGroupIndex',
-]
-
-export const DEFAULT_NEW_FAQ = {
-  title: '',
-  body: '',
-  index: 0,
-}
-
 export const INIT_KANBAN_COLORS = [COLOR_NAME.BLACK, COLOR_NAME.BLACK, COLOR_NAME.BLACK]
 
-export const FIELDS: TDsbFields = {
+export const FIELDS: TDsbFieldMap = {
   // baseInfo
   favicon: '',
   logo: '',

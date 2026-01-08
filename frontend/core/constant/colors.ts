@@ -1,5 +1,4 @@
 import THEME from '~/const/theme'
-import type { TColorName } from '~/spec'
 
 export const COLOR_NAME = {
   BLACK: 'BLACK',
@@ -14,7 +13,7 @@ export const COLOR_NAME = {
   CYAN_LIGHT: 'CYAN_LIGHT',
   BLUE: 'BLUE',
   PURPLE: 'PURPLE',
-} as Record<TColorName, TColorName>
+} as const
 
 // map to css var name in ~/tailwind/token/colors
 export const PAGE_BG_CSS_KEY = 'color-pageBg'

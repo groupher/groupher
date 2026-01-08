@@ -4,7 +4,7 @@ import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import useQuery from '~/hooks/useQuery'
 import type { TCommunity, TDsbBaseInfoRoute, TEditFunc } from '~/spec'
-import type { TDsbFields } from '~/stores/dashboard/spec'
+import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 import { BASEINFO_KEYS } from '../../constant'
 import S from '../../schema'
 import useHelper from '../useHelper'
@@ -71,7 +71,7 @@ export default (): TRet => {
     dashboard.commit({
       ...updates,
       mediaReports: initMediaReports,
-      original: original as TDsbFields,
+      original: original as TDsbFieldMap,
     })
   }
 

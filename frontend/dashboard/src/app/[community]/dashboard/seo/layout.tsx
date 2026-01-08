@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 
-import { DSB_SEO_ROUTE } from '~/const/route'
+import { DSB_SEO_ROUTE, DSB_TAB } from '~/const/route'
 import VIEW from '~/const/view'
 import { FIELD, SEO_TABS } from '~/containers/thread/DashboardThread/constant'
 import useSEO from '~/containers/thread/DashboardThread/logic/useSEO'
@@ -17,7 +17,7 @@ export default ({ children }) => {
   const s = useSalon()
 
   useSyncDSBRoute2Tab({
-    tab: 'seoTab',
+    tab: DSB_TAB.SEO,
     defaultTab: DSB_SEO_ROUTE.SEARCH_ENGINE,
     validator: isRouteOf(DSB_SEO_ROUTE),
   })

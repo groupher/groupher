@@ -3,7 +3,7 @@ import HuaSVG from '~/icons/Huaren'
 import PandaSVG from '~/icons/Panda'
 import RussiaSVG from '~/icons/Russia'
 import SpainSVG from '~/icons/Spain'
-import type { TLocale, TSelectOption } from '~/spec'
+import type { TSelectOption } from '~/spec'
 
 export const LOCALE = {
   EN: 'en',
@@ -11,7 +11,7 @@ export const LOCALE = {
   'ZH-HANT': 'zh-hant',
   RU: 'ru',
   ES: 'es',
-} as Record<Uppercase<TLocale>, TLocale>
+} as const
 
 export const LANGS_OPTIONS = [
   {

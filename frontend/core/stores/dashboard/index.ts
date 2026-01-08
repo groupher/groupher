@@ -12,7 +12,7 @@ import {
 } from '~/const/route'
 import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
 import { DEFAULT_OVERVIEW, FIELDS } from './constant'
-import type { TDsbFields, TInit, TStore } from './spec'
+import type { TDsbFieldMap, TInit, TStore } from './spec'
 
 export default (init: TInit = {}): TStore => {
   const states = Object.assign(
@@ -22,14 +22,15 @@ export default (init: TInit = {}): TStore => {
       ...FIELDS,
 
       // UI status
-      curTab: null,
       initFilled: false,
-      original: FIELDS as TDsbFields,
+      original: FIELDS as TDsbFieldMap,
       savingField: null,
       saving: false,
       loading: false,
-      baseInfoTab: DSB_BASEINFO_ROUTE.BASIC,
+
       // sub tabs
+      curTab: null,
+      baseInfoTab: DSB_BASEINFO_ROUTE.BASIC,
       aliasTab: DSB_ALIAS_ROUTE.THREAD,
       thirdPartTab: DSB_THIRD_PART_ROUTE.ANALYTICS,
       seoTab: DSB_SEO_ROUTE.SEARCH_ENGINE,
