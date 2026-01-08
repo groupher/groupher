@@ -83,7 +83,7 @@ export const MENU = {
     children: [
       {
         title: '概览',
-        slug: DSB_ROUTE.DASHBOARD,
+        slug: DSB_ROUTE.OVERVIEW,
       },
       {
         title: '基本信息',

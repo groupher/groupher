@@ -8,7 +8,6 @@ export const DOCS = '/home/doc'
 
 export const DSB_ROUTE = {
   OVERVIEW: 'dashboard',
-  DASHBOARD: 'dashboard',
   // basic-info
   INFO: 'info',
   SEO: 'seo',
