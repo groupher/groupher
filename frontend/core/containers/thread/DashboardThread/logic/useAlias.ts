@@ -1,6 +1,6 @@
-import { FIELD } from '~/containers/thread/DashboardThread/constant'
 import useDashboard from '~/hooks/useDashboard'
 import type { TDsbAliasRoute, TEditFunc, TNameAlias } from '~/spec'
+import { FIELD } from '../constant'
 
 import useHelper from './useHelper'
 

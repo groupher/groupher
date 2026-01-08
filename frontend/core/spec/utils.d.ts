@@ -1,6 +1,7 @@
 import type { ChangeEvent, ReactNode } from 'react'
 
 import type BUTTON_PREFIX from '~/const/button_prefix'
+import type { WIDGET_TYPE } from '~/const/dashboard'
 import type { DSB_DESC_LAYOUT } from '~/const/layout'
 import type { CHANGE_MODE, CONDITION_MODE, PUBLISH_MODE } from '~/const/mode'
 import type { PAYMENT_METHOD, PAYMENT_USAGE } from '~/const/payment'

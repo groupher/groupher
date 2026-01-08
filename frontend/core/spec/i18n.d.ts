@@ -1,4 +1,4 @@
-import type { LOCALE } from '~/cons/i18n'
+import type { LOCALE } from '~/const/i18n'
 import type langJson from '~/i18n/en'
 import type { TConstValues } from '~/spec'
 

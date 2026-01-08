@@ -1,4 +1,4 @@
-import type EMOTION from '~/cons/emotion'
+import type EMOTION from '~/const/emotion'
 import type { TConstValues } from '~/spec'
 import type { TSimpleUser } from './account'
 
