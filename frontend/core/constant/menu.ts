@@ -1,6 +1,4 @@
-import { ARTICLE_CAT, ARTICLE_STATE, ARTICLE_ORDER } from '~/const/gtd'
-
-import type { TMenu } from '~/spec'
+import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATE } from '~/const/gtd'
 
 const MENU = {
   ARROW_LEFT: 'ARROW_LEFT',
@@ -32,7 +30,7 @@ const MENU = {
   ALL: 'ALL',
   OTHER: 'OTHER',
   TOOL: 'TOOL',
-} as Record<Uppercase<TMenu>, Uppercase<TMenu>>
+} as const
 
 export const POST_CAT_MENU_ITEMS = [
   {

@@ -1,9 +1,8 @@
-import type { TButtonPrefix } from '~/spec'
 import BUTTON_PREFIX from '~/const/button_prefix'
-
 import CategorySVG from '~/icons/Category'
-import SortSVG from '~/icons/Sort'
 import WipSVG from '~/icons/GtdWip'
+import SortSVG from '~/icons/Sort'
+import type { TButtonPrefix } from '~/spec'
 
 import useSalon from '../salon/dropdown_button/prefix_icon'
 
@@ -15,7 +14,7 @@ export default ({ type }: TProps) => {
   const s = useSalon()
 
   switch (type) {
-    case BUTTON_PREFIX.CATETORY: {
+    case BUTTON_PREFIX.CATEGORY: {
       return <CategorySVG className={s.icon} />
     }
 

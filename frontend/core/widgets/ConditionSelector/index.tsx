@@ -1,19 +1,16 @@
 'use client'
 
-import { type FC, useState, useRef } from 'react'
-
-import type { TSpace, TTooltipPlacement, TConditionMode, TButtonPrefix } from '~/spec'
-
+import { type FC, useRef, useState } from 'react'
 import useTrans from '~/hooks/useTrans'
+import type { TButtonPrefix, TConditionMode, TSpace, TTooltipPlacement } from '~/spec'
 
 import DropdownButton from '~/widgets/Buttons/DropdownButton'
 import Menu from '~/widgets/Menu'
 
 import ActiveLabel from './ActiveLabel'
-
-import type { TActiveCondition } from './spec'
-import { getMenuItems, getTitle, getActiveMenuItem } from './helper'
+import { getActiveMenuItem, getMenuItems, getTitle } from './helper'
 import useSalon from './salon'
+import type { TActiveCondition } from './spec'
 
 type TProps = {
   mode: TConditionMode
@@ -68,7 +65,7 @@ const ConditionSelector: FC<TProps> = ({
         >
           <DropdownButton $active={menuOpen} selected={selected} prefixIcon={prefixIcon}>
             {t(title, 'titleCase')}
-            <div className="mr-1.5" />
+            <div className='mr-1.5' />
           </DropdownButton>
         </Menu>
       ) : (

@@ -1,7 +1,5 @@
-import type { TButtonPrefix } from '~/spec'
-
 export default {
   SORT: 'sort',
-  CATETORY: 'catetory',
+  CATEGORY: 'category',
   STATUS: 'status',
-} as Record<Uppercase<TButtonPrefix>, TButtonPrefix>
+} as const

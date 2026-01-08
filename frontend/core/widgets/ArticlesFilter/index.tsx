@@ -4,9 +4,9 @@
  *
  */
 
+import BUTTON_PREFIX from '~/const/button_prefix'
 import { BANNER_LAYOUT } from '~/const/layout'
-import { CONDITION_MODE } from '~/const/mode'
-import { PUBLISH_MODE } from '~/const/publish'
+import { CONDITION_MODE, PUBLISH_MODE } from '~/const/mode'
 import TYPE from '~/const/type'
 import useArticlesFilter from '~/hooks/useArticlesFilter'
 import useLayout from '~/hooks/useLayout'
@@ -45,7 +45,7 @@ export default () => {
           refreshArticles()
         }}
         selected={!!activeOrder}
-        prefixIcon='sort'
+        prefixIcon={BUTTON_PREFIX.SORT}
         right={0.5}
       />
       <ConditionSelector
@@ -56,7 +56,7 @@ export default () => {
           refreshArticles()
         }}
         selected={!!activeCat}
-        prefixIcon='catetory'
+        prefixIcon={BUTTON_PREFIX.CATEGORY}
         right={0.5}
       />
       <ConditionSelector
@@ -67,7 +67,7 @@ export default () => {
           refreshArticles()
         }}
         selected={!!activeState}
-        prefixIcon='status'
+        prefixIcon={BUTTON_PREFIX.STATUS}
       />
       <div className='mr-2.5' />
       <div className='grow' />

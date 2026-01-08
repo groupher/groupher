@@ -1,4 +1,11 @@
 import type { ChangeEvent, ReactNode } from 'react'
+
+import type BUTTON_PREFIX from '~/const/button_prefix'
+import type { DSB_DESC_LAYOUT } from '~/const/layout'
+import type { CHANGE_MODE, CONDITION_MODE, PUBLISH_MODE } from '~/const/mode'
+import type { PAYMENT_METHOD, PAYMENT_USAGE } from '~/const/payment'
+import type { SOCIAL_LIST } from '~/const/social'
+import type { TConstValues } from '~/spec'
 import type { TArticleThread } from './thread'
 // c# like
 export type Nullable<T> = T | null
@@ -102,8 +109,8 @@ export type TTabItem = {
 
 export type TResState = 'LOADING' | 'DONE' | 'EMPTY'
 
-export type TPaymentUsage = 'SENIOR' | 'GIRLS_CODE_TOO_PLAN' | 'DONATE' | 'SPONSOR'
-export type TPaymentMethod = 'ALIPAY' | 'WECHAT'
+export type TPaymentUsage = TConstValues<typeof PAYMENT_USAGE>
+export type TPaymentMethod = TConstValues<typeof PAYMENT_METHOD>
 
 export type TFlexRule =
   | 'align-both'
@@ -193,21 +200,10 @@ export type TMenuOption = {
 }
 
 export type TToastType = 'info' | 'error' | 'success'
+export type TPublishMode = TConstValues<typeof PUBLISH_MODE>
+export type TDsbLayout = TConstValues<typeof DSB_DESC_LAYOUT>
 
-export type TPublishMode = 'default' | 'changelog' | 'help' | 'sidebar_layout_header'
-
-export type TDsbLayout = 'post_list' | 'banner' | 'changelog_list'
-
-export type TSocialType =
-  | 'EMAIL'
-  | 'WECHAT'
-  | 'TWITTER'
-  | 'WEIBO'
-  | 'ZHIHU'
-  | 'GITHUB'
-  | 'BILIBILI'
-  | 'BOSS'
-  | 'TIKTOK'
+export type TSocialType = TConstValues<typeof SOCIAL_LIST>
 
 export type TSocialItem = {
   type: TSocialType
@@ -231,7 +227,7 @@ export type TGroupedLinks = {
   [key: string]: TLinkItem[]
 }
 
-export type TChangeMode = 'create' | 'update'
+export type TChangeMode = TConstValues<typeof CHANGE_MODE>
 
 export type TUploadPreview = {
   height: number
@@ -239,10 +235,10 @@ export type TUploadPreview = {
   radius: number
 }
 
-export type TConditionMode = 'state' | 'cat' | 'order' | 'tag'
-export type TWidgetType = 'sidebar' | 'modal' | 'popup' | 'iframe' | 'link'
+export type TConditionMode = TConstValues<typeof CONDITION_MODE>
+export type TWidgetType = TConstValues<typeof WIDGET_TYPE>
 
-export type TButtonPrefix = 'sort' | 'catetory' | 'status'
+export type TButtonPrefix = TConstValues<typeof BUTTON_PREFIX>
 
 export type TZIndexType =
   | 'modal'

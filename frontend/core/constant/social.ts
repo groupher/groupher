@@ -1,6 +1,3 @@
-import type { TSocialType } from '~/spec'
-
-// dribbble
 export const SOCIAL_LIST = {
   EMAIL: 'EMAIL',
   GITHUB: 'GITHUB',
@@ -11,7 +8,7 @@ export const SOCIAL_LIST = {
   WEIBO: 'WEIBO',
   BOSS: 'BOSS',
   TIKTOK: 'TIKTOK',
-} as Record<Uppercase<TSocialType>, TSocialType>
+} as const
 
 export const DEME_SOCIALS = [
   {
