@@ -103,6 +103,7 @@ export type TTabItem = {
   id?: string
   title?: string
   slug: string
+  href?: string
   alias?: string
   icon?: string | ReactNode
   localIcon?: string

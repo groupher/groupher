@@ -8,7 +8,6 @@ import {
   DSB_LAYOUT_ROUTE,
   DSB_ROUTE,
   DSB_SEO_ROUTE,
-  DSB_THIRD_PART_ROUTE,
 } from '~/const/route'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
@@ -369,29 +368,6 @@ export const ALIAS_TABS = [
   {
     title: '其他',
     slug: DSB_ALIAS_ROUTE.OTHERS,
-  },
-]
-
-export const THIRD_PART_TABS = [
-  {
-    title: '统计分析',
-    slug: DSB_THIRD_PART_ROUTE.ANALYTICS,
-  },
-  {
-    title: 'Webhooks',
-    slug: DSB_THIRD_PART_ROUTE.WEBHOOKS,
-  },
-  {
-    title: '消息机器人',
-    slug: DSB_THIRD_PART_ROUTE.BOTS,
-  },
-  {
-    title: '电子邮件',
-    slug: DSB_THIRD_PART_ROUTE.EMAIL,
-  },
-  {
-    title: '内容同步',
-    slug: DSB_THIRD_PART_ROUTE.CONTENT_SYNC,
   },
 ]
 

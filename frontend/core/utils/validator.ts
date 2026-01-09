@@ -1,21 +1,21 @@
 import {
-  mergeRight,
-  startsWith,
   compose,
-  not,
-  isNil,
-  isEmpty,
-  trim,
   either,
-  map,
-  reject,
+  equals,
+  filter,
+  head,
+  isEmpty,
+  isNil,
   keys,
+  length,
+  map,
+  mergeRight,
+  not,
   pick,
   pickBy,
-  length,
-  filter,
-  equals,
-  head,
+  reject,
+  startsWith,
+  trim,
   values,
 } from 'ramda'
 
@@ -37,11 +37,8 @@ export const isObject = (value: unknown): boolean => {
  * @return {Boolean}
  * @returns
  */
-export const isString = (value: unknown): boolean => {
-  if (typeof value === 'string' || value instanceof String) {
-    return true
-  }
-  return false
+export const isString = (value: unknown): value is string => {
+  return typeof value === 'string' || value instanceof String
 }
 
 /**
@@ -81,7 +78,7 @@ const validValues = compose(map(trimIfNeed), pickBy(notNil), reject(isObject))
 export const cast = (fields: string[], source: Record<string, unknown>): any => {
   const casted = pick(fields, source)
 
-  // @ts-ignore
+  // @ts-expect-error
   return mergeRight(validValues(casted), validObjects(casted))
 }
 
@@ -89,7 +86,6 @@ const keyOf = compose(head, keys)
 const valOf = compose(head, values)
 
 export const changeset = (source: Record<string, string>): Record<string, unknown> => ({
-  // @ts-ignore
   exist: (obj, cb, opt = { skip: false, msg: '' }) => {
     if (source.__dirty__) return changeset(source)
     if (opt.skip) return changeset(source)

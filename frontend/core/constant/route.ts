@@ -1,3 +1,5 @@
+import type { TDashboardTabsConfig } from '~/hooks/useDsbRouteTab'
+
 export const NON_COMMUNITY_ROUTE = {
   APPLY_COMMUNITY: '/apply/community',
 }
@@ -118,3 +120,16 @@ export const DSB_TAB = {
   LAYOUT: 'layoutTab',
   BROADCAST: 'broadcastTab',
 } as const
+
+export const THIRD_PART_TABS_CFG: TDashboardTabsConfig<typeof DSB_THIRD_PART_ROUTE> = {
+  tab: DSB_ROUTE['THIRD-PART'],
+  routeEnum: DSB_THIRD_PART_ROUTE,
+  baseSegment: DSB_ROUTE['THIRD-PART'],
+  items: [
+    { title: '统计分析', slug: DSB_THIRD_PART_ROUTE.ANALYTICS, segment: '' },
+    { title: 'Webhooks', slug: DSB_THIRD_PART_ROUTE.WEBHOOKS },
+    { title: '消息机器人', slug: DSB_THIRD_PART_ROUTE.BOTS },
+    { title: '电子邮件', slug: DSB_THIRD_PART_ROUTE.EMAIL },
+    { title: '内容同步', slug: DSB_THIRD_PART_ROUTE.CONTENT_SYNC },
+  ],
+}

@@ -67,6 +67,8 @@ export default function useSyncDSBRoute2Tab<T extends string>({
       return
     }
 
+    const current = (dsb$ as any)[tab] as T | undefined
+    if (current === value) return
     dsb$.commit({ [tab]: value } as Record<string, T>)
   }, [pathname, tab, defaultTab, validator, segmentIndex, dsb$])
 }
