@@ -16,7 +16,7 @@ const CMS: FC = () => {
   const s = useSalon()
 
   let contents = null
-  const { curTab: route } = useTabInfo()
+  const { mainTab: route } = useTabInfo()
 
   switch (route) {
     case DSB_ROUTE.COMMUNITIES: {

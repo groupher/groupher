@@ -119,7 +119,7 @@ export const ROUTE = {
 }
 
 export const DSB_TAB = {
-  CUR: 'curTab',
+  MAIN: 'mainTab',
   BASE_INFO: 'baseInfoTab',
   ALIAS: 'aliasTab',
   THIRD_PART: 'thirdPartTab',

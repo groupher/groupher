@@ -18,7 +18,7 @@ type TProps = {
 }
 
 const Group: FC<TProps> = ({ group }) => {
-  const { curTab } = useDashboard()
+  const { mainTab } = useDashboard()
 
   const { slug: community } = useCommunity()
   const [fold, setFold] = useState(group.initFold)
@@ -42,7 +42,7 @@ const Group: FC<TProps> = ({ group }) => {
         <div className={s.menu}>
           {group.children.map((item) => {
             const subPath = item.slug === DSB_ROUTE.OVERVIEW ? '' : item.slug
-            const isActive = item.slug === curTab
+            const isActive = item.slug === mainTab
 
             return (
               <Link

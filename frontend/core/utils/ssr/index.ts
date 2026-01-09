@@ -99,12 +99,12 @@ const parseDashboardThread = (pathname: string): TDsbTab => {
   const isOverviewThread = segments.length === 2
 
   if (segments[1] !== THREAD.DASHBOARD) {
-    return { curTab: DSB_ROUTE.OVERVIEW }
+    return { mainTab: DSB_ROUTE.OVERVIEW }
   }
 
   if (segments[1] === THREAD.DASHBOARD && isOverviewThread) {
     return {
-      curTab: DSB_ROUTE.OVERVIEW as TDsbPath,
+      mainTab: DSB_ROUTE.OVERVIEW as TDsbPath,
     }
   }
 
@@ -114,49 +114,49 @@ const parseDashboardThread = (pathname: string): TDsbTab => {
   switch (dashThread) {
     case DSB_ROUTE.INFO: {
       return {
-        curTab: DSB_ROUTE.INFO as TDsbPath,
+        mainTab: DSB_ROUTE.INFO as TDsbPath,
         baseInfoTab: (dashLeaf || DSB_INFO_ROUTE.BASIC) as TDsbBaseInfoRoute,
       }
     }
 
     case DSB_ROUTE.SEO: {
       return {
-        curTab: DSB_ROUTE.SEO as TDsbPath,
+        mainTab: DSB_ROUTE.SEO as TDsbPath,
         seoTab: (dashLeaf || DSB_SEO_ROUTE.SEARCH_ENGINE) as TDsbSEORoute,
       }
     }
 
     case DSB_ROUTE.DOC: {
       return {
-        curTab: DSB_ROUTE.DOC as TDsbPath,
+        mainTab: DSB_ROUTE.DOC as TDsbPath,
         docTab: (dashLeaf || DSB_DOC_ROUTE.TABLE) as TDsbDocRoute,
       }
     }
 
     case DSB_ROUTE.BROADCAST: {
       return {
-        curTab: DSB_ROUTE.BROADCAST as TDsbPath,
+        mainTab: DSB_ROUTE.BROADCAST as TDsbPath,
         broadcastTab: (dashLeaf || DSB_BROADCAST_ROUTE.GLOBAL) as TDsbBroadcastRoute,
       }
     }
 
     case DSB_ROUTE.ALIAS: {
       return {
-        curTab: DSB_ROUTE.ALIAS,
+        mainTab: DSB_ROUTE.ALIAS,
         aliasTab: (dashLeaf || DSB_ALIAS_ROUTE.THREAD) as TDsbAliasRoute,
       }
     }
 
     case DSB_ROUTE.LAYOUT: {
       return {
-        curTab: DSB_ROUTE.LAYOUT,
+        mainTab: DSB_ROUTE.LAYOUT,
         layoutTab: (dashLeaf || DSB_LAYOUT_ROUTE.GENERAL) as TDsbLayoutRoute,
       }
     }
 
     default: {
       return {
-        curTab: dashThread as TDsbPath,
+        mainTab: dashThread as TDsbPath,
       }
     }
   }

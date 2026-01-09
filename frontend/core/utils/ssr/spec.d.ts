@@ -60,7 +60,7 @@ export type TTagsFilter = {
 }
 
 export type TDsbTab = {
-  curTab: TDsbPath
+  mainTab: TDsbPath
   baseInfoTab?: TDsbBaseInfoRoute
   seoTab?: TDsbSEORoute
   docTab?: TDsbDocRoute

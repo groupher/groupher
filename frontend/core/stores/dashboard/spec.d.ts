@@ -176,7 +176,7 @@ export type TStore = TDsbFieldMap & {
   saving: boolean
   loading: boolean
 
-  curTab: TValueOf<typeof DSB_ROUTE> | null
+  mainTab: TValueOf<typeof DSB_ROUTE> | null
   baseInfoTab: TValueOf<typeof DSB_INFO_ROUTE>
   aliasTab: TValueOf<typeof DSB_ALIAS_ROUTE>
   thirdPartTab: TValueOf<typeof DSB_THIRD_PART_ROUTE>
