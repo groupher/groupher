@@ -1,6 +1,6 @@
 import { COLOR_NAME } from '~/const/colors'
 import { ONE_LINK_GROUP, TW_CARD } from '~/const/dashboard'
-import { DSB_ALIAS_ROUTE, DSB_BROADCAST_ROUTE, DSB_DOC_ROUTE, DSB_ROUTE } from '~/const/route'
+import { DSB_ALIAS_ROUTE, DSB_DOC_ROUTE, DSB_ROUTE } from '~/const/route'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
 export { SEO_KEYS, SEO_OG_KEYS, SEO_TW_KEYS } from '~/const/seo'
@@ -217,17 +217,6 @@ export const BUILD_IN_ALIAS_SUGGESTIONS = {
   // TODO
   state_other: ['其他讨论'],
 }
-
-export const BROADCAST_TABS = [
-  {
-    title: '站顶横幅',
-    slug: DSB_BROADCAST_ROUTE.GLOBAL,
-  },
-  {
-    title: '帖子页脚',
-    slug: DSB_BROADCAST_ROUTE.ARTICLE,
-  },
-]
 
 export const DOC_TABS = [
   {

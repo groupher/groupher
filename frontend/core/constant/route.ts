@@ -129,6 +129,16 @@ export const DSB_TAB = {
   BROADCAST: 'broadcastTab',
 } as const
 
+export const BROADCAST_TABS_CFG: TDashboardTabsConfig<typeof DSB_BROADCAST_ROUTE> = {
+  tab: DSB_ROUTE.BROADCAST,
+  routeEnum: DSB_BROADCAST_ROUTE,
+  baseSegment: DSB_ROUTE.BROADCAST,
+  items: [
+    { title: '站顶横幅', slug: DSB_BROADCAST_ROUTE.GLOBAL, segment: '' },
+    { title: '文章页脚', slug: DSB_BROADCAST_ROUTE.ARTICLE },
+  ],
+}
+
 export const INFO_TABS_CFG: TDashboardTabsConfig<typeof DSB_INFO_ROUTE> = {
   tab: DSB_ROUTE.INFO,
   routeEnum: DSB_INFO_ROUTE,
