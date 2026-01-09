@@ -31,7 +31,18 @@
       "style": {
         "noParameterAssign": "warn",
         "useImportType": "error",
-        "useComponentExportOnlyModules": "off"
+        "useComponentExportOnlyModules": "off",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "patterns": [
+              {
+                "group": ["**//**"],
+                "message": "hi Luka: Import path contains double slashes (`//`). Please normalize the path."
+              }
+            ]
+          }
+        }
       },
       "correctness": {
         "useExhaustiveDependencies": "warn",
@@ -73,3 +84,4 @@
     }
   }
 }
+

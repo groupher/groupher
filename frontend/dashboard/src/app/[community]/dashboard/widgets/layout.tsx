@@ -1,7 +1,7 @@
 'use client'
 
 import { WIDGET_TABS } from '~/const/route'
-import Portal from '~/containers/thread/DashboardThread//Portal'
+import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon from '~/containers/thread/DashboardThread/salon/widgets'
 import BaseSetting from '~/containers/thread/DashboardThread/Widgets/BaseSetting'
 import useDsbRouteTab from '~/hooks/useDsbRouteTab'
