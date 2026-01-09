@@ -1,6 +1,6 @@
 'use client'
 
-import { SEO_TABS_CFG } from '~/const/route'
+import { SEO_TABS } from '~/const/route'
 import VIEW from '~/const/view'
 import { FIELD } from '~/containers/thread/DashboardThread/constant'
 import useSEO from '~/containers/thread/DashboardThread/logic/useSEO'
@@ -14,7 +14,7 @@ export default ({ children }) => {
   const s = useSalon()
 
   const { saving, isTouched } = useSEO()
-  const { items, activeTab } = useDsbRouteTab(SEO_TABS_CFG)
+  const { items, activeTab } = useDsbRouteTab(SEO_TABS)
 
   return (
     <div className={s.wrapper}>

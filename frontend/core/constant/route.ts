@@ -130,7 +130,7 @@ export const DSB_TAB = {
   WIDGET: 'widgetTab',
 } as const
 
-export const BROADCAST_TABS_CFG: TDashboardTabsConfig<typeof DSB_BROADCAST_ROUTE> = {
+export const BROADCAST_TABS: TDashboardTabsConfig<typeof DSB_BROADCAST_ROUTE> = {
   tab: DSB_ROUTE.BROADCAST,
   routeEnum: DSB_BROADCAST_ROUTE,
   baseSegment: DSB_ROUTE.BROADCAST,
@@ -140,7 +140,7 @@ export const BROADCAST_TABS_CFG: TDashboardTabsConfig<typeof DSB_BROADCAST_ROUTE
   ],
 }
 
-export const INFO_TABS_CFG: TDashboardTabsConfig<typeof DSB_INFO_ROUTE> = {
+export const INFO_TABS: TDashboardTabsConfig<typeof DSB_INFO_ROUTE> = {
   tab: DSB_ROUTE.INFO,
   routeEnum: DSB_INFO_ROUTE,
   baseSegment: DSB_ROUTE.INFO,
@@ -152,7 +152,7 @@ export const INFO_TABS_CFG: TDashboardTabsConfig<typeof DSB_INFO_ROUTE> = {
   ],
 }
 
-export const LAYOUT_TABS_CFG: TDashboardTabsConfig<typeof DSB_LAYOUT_ROUTE> = {
+export const LAYOUT_TABS: TDashboardTabsConfig<typeof DSB_LAYOUT_ROUTE> = {
   tab: DSB_ROUTE.LAYOUT,
   routeEnum: DSB_LAYOUT_ROUTE,
   baseSegment: DSB_ROUTE.LAYOUT,
@@ -166,7 +166,7 @@ export const LAYOUT_TABS_CFG: TDashboardTabsConfig<typeof DSB_LAYOUT_ROUTE> = {
   ],
 }
 
-export const SEO_TABS_CFG: TDashboardTabsConfig<typeof DSB_SEO_ROUTE> = {
+export const SEO_TABS: TDashboardTabsConfig<typeof DSB_SEO_ROUTE> = {
   tab: DSB_ROUTE.SEO,
   routeEnum: DSB_SEO_ROUTE,
   baseSegment: DSB_ROUTE.SEO,
@@ -176,7 +176,7 @@ export const SEO_TABS_CFG: TDashboardTabsConfig<typeof DSB_SEO_ROUTE> = {
   ],
 }
 
-export const THIRD_PART_TABS_CFG: TDashboardTabsConfig<typeof DSB_THIRD_PART_ROUTE> = {
+export const THIRD_PART_TABS: TDashboardTabsConfig<typeof DSB_THIRD_PART_ROUTE> = {
   tab: DSB_ROUTE['THIRD-PART'],
   routeEnum: DSB_THIRD_PART_ROUTE,
   baseSegment: DSB_ROUTE['THIRD-PART'],
@@ -189,7 +189,7 @@ export const THIRD_PART_TABS_CFG: TDashboardTabsConfig<typeof DSB_THIRD_PART_ROU
   ],
 }
 
-export const ALIAS_TABS_CFG: TDashboardTabsConfig<typeof DSB_ALIAS_ROUTE> = {
+export const ALIAS_TABS: TDashboardTabsConfig<typeof DSB_ALIAS_ROUTE> = {
   tab: DSB_ROUTE.ALIAS,
   routeEnum: DSB_ALIAS_ROUTE,
   baseSegment: DSB_ROUTE.ALIAS,
@@ -200,7 +200,7 @@ export const ALIAS_TABS_CFG: TDashboardTabsConfig<typeof DSB_ALIAS_ROUTE> = {
   ],
 }
 
-export const WIDGET_TABS_CFG: TDashboardTabsConfig<typeof DSB_WIDGET_ROUTE> = {
+export const WIDGET_TABS: TDashboardTabsConfig<typeof DSB_WIDGET_ROUTE> = {
   tab: DSB_ROUTE.WIDGETS,
   routeEnum: DSB_WIDGET_ROUTE,
   baseSegment: DSB_ROUTE.WIDGETS,
