@@ -133,3 +133,14 @@ export const THIRD_PART_TABS_CFG: TDashboardTabsConfig<typeof DSB_THIRD_PART_ROU
     { title: '内容同步', slug: DSB_THIRD_PART_ROUTE.CONTENT_SYNC },
   ],
 }
+
+export const ALIAS_TABS_CFG: TDashboardTabsConfig<typeof DSB_ALIAS_ROUTE> = {
+  tab: DSB_ROUTE.ALIAS,
+  routeEnum: DSB_ALIAS_ROUTE,
+  baseSegment: DSB_ROUTE.ALIAS,
+  items: [
+    { title: '板块入口', slug: DSB_ALIAS_ROUTE.THREAD, segment: '' },
+    { title: '看板', slug: DSB_ALIAS_ROUTE.KANBAN },
+    { title: '其他', slug: DSB_ALIAS_ROUTE.OTHERS },
+  ],
+}

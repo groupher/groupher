@@ -1,28 +1,15 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-
-import { DSB_ALIAS_ROUTE, DSB_TAB } from '~/const/route'
+import { ALIAS_TABS_CFG } from '~/const/route'
 import VIEW from '~/const/view'
-import { ALIAS_TABS } from '~/containers/thread/DashboardThread//constant'
 import Portal from '~/containers/thread/DashboardThread//Portal'
 import useSalon from '~/containers/thread/DashboardThread//salon/alias'
-import useAlias from '~/containers/thread/DashboardThread/logic/useAlias'
-import useCommunity from '~/hooks/useCommunity'
-import useSyncDSBRoute2Tab, { isRouteOf } from '~/hooks/useSyncDSBRoute2Tab'
+import useDsbRouteTab from '~/hooks/useDsbRouteTab'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 export default ({ children }) => {
   const s = useSalon()
-  const router = useRouter()
-  const { slug: community } = useCommunity()
-  const { aliasTab } = useAlias()
-
-  useSyncDSBRoute2Tab({
-    tab: DSB_TAB.ALIAS,
-    defaultTab: DSB_ALIAS_ROUTE.THREAD,
-    validator: isRouteOf(DSB_ALIAS_ROUTE),
-  })
+  const { items, activeTab } = useDsbRouteTab(ALIAS_TABS_CFG)
 
   return (
     <div className={s.wrapper}>
@@ -33,20 +20,7 @@ export default ({ children }) => {
       />
       <div className={s.banner}>
         <div className={s.tabs}>
-          <Tabs
-            items={ALIAS_TABS}
-            activeKey={aliasTab}
-            onChange={(tab) => {
-              const targetPath =
-                tab === DSB_ALIAS_ROUTE.THREAD
-                  ? `/${community}/dashboard/alias`
-                  : `/${community}/dashboard/alias/${tab}`
-
-              router.push(targetPath)
-            }}
-            view={VIEW.DESKTOP}
-            noAnimation
-          />
+          <Tabs items={items} activeKey={activeTab} view={VIEW.DESKTOP} noAnimation />
         </div>
       </div>
       {children}

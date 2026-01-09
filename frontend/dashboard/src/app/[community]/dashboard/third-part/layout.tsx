@@ -9,7 +9,6 @@ import Tabs from '~/widgets/Switcher/Tabs'
 
 export default ({ children }) => {
   const s = useSalon()
-
   const { items, activeTab } = useDsbRouteTab(THIRD_PART_TABS_CFG)
 
   return (

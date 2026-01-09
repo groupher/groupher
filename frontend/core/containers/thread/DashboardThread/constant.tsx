@@ -356,21 +356,6 @@ export const TW_CARD_OPTIONS = [
   },
 ]
 
-export const ALIAS_TABS = [
-  {
-    title: '板块入口',
-    slug: DSB_ALIAS_ROUTE.THREAD,
-  },
-  {
-    title: '看板',
-    slug: DSB_ALIAS_ROUTE.KANBAN,
-  },
-  {
-    title: '其他',
-    slug: DSB_ALIAS_ROUTE.OTHERS,
-  },
-]
-
 export const EMPTY_LINK_ITEM = {
   title: '',
   link: '',
