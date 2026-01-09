@@ -1,5 +1,5 @@
 import { COLOR_NAME, PAGE_BG_DEFAULT } from '~/const/colors'
-import { DEFAULT_ENABLE, TW_CARD, WIDGET_TYPE } from '~/const/dashboard'
+import { DEFAULT_ENABLE, TW_CARD } from '~/const/dashboard'
 import { GLOW_OPACITY } from '~/const/glow_effect'
 import { LOCALE } from '~/const/i18n'
 import {
@@ -140,5 +140,4 @@ export const FIELDS: TDsbFieldMap = {
   widgetsPrimaryColor: COLOR_NAME.BLACK,
   widgetsThreads: [THREAD.POST],
   widgetsSize: SIZE.MEDIUM,
-  widgetsType: WIDGET_TYPE.SIDEBAR,
 }

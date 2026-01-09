@@ -1,9 +1,7 @@
 'use client'
 
-import Widgets from '~/containers//thread/DashboardThread/Widgets'
+import Drawer from '~/containers//thread/DashboardThread/Widgets/Drawer'
 
-const DashboardWidgetsPage = () => {
-  return <Widgets />
+export default function DrawerWidget() {
+  return <Drawer />
 }
-
-export default DashboardWidgetsPage

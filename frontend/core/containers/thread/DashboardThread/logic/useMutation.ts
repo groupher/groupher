@@ -1,6 +1,6 @@
 import { equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
 import { useEffect, useRef } from 'react'
-import { DSB_BASEINFO_ROUTE } from '~/const/route'
+import { DSB_INFO_ROUTE } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
@@ -175,13 +175,13 @@ export default (): TRet => {
       const { baseInfoTab } = dashboard$
 
       const params = { community }
-      if (baseInfoTab === DSB_BASEINFO_ROUTE.BASIC) {
+      if (baseInfoTab === DSB_INFO_ROUTE.BASIC) {
         for (const key of BASEINFO_BASIC_KEYS) {
           params[key] = dashboard$[key]
         }
       }
 
-      if (baseInfoTab === DSB_BASEINFO_ROUTE.OTHER) {
+      if (baseInfoTab === DSB_INFO_ROUTE.OTHER) {
         for (const key of BASEINFO_OTHER_KEYS) {
           params[key] = dashboard$[key]
         }

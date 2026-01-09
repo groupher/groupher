@@ -6,9 +6,9 @@ import { PAGE_BG_DEFAULT } from '~/const/colors'
 import { BUILTIN_ALIAS } from '~/const/name'
 import {
   DSB_ALIAS_ROUTE,
-  DSB_BASEINFO_ROUTE,
   DSB_BROADCAST_ROUTE,
   DSB_DOC_ROUTE,
+  DSB_INFO_ROUTE,
   DSB_LAYOUT_ROUTE,
   DSB_ROUTE,
   DSB_SEO_ROUTE,
@@ -115,7 +115,7 @@ const parseDashboardThread = (pathname: string): TDsbTab => {
     case DSB_ROUTE.INFO: {
       return {
         curTab: DSB_ROUTE.INFO as TDsbPath,
-        baseInfoTab: (dashLeaf || DSB_BASEINFO_ROUTE.BASIC) as TDsbBaseInfoRoute,
+        baseInfoTab: (dashLeaf || DSB_INFO_ROUTE.BASIC) as TDsbBaseInfoRoute,
       }
     }
 

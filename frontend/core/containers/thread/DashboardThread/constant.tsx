@@ -1,14 +1,6 @@
 import { COLOR_NAME } from '~/const/colors'
 import { ONE_LINK_GROUP, TW_CARD } from '~/const/dashboard'
-import {
-  DSB_ALIAS_ROUTE,
-  DSB_BASEINFO_ROUTE,
-  DSB_BROADCAST_ROUTE,
-  DSB_DOC_ROUTE,
-  DSB_LAYOUT_ROUTE,
-  DSB_ROUTE,
-  DSB_SEO_ROUTE,
-} from '~/const/route'
+import { DSB_ALIAS_ROUTE, DSB_BROADCAST_ROUTE, DSB_DOC_ROUTE, DSB_ROUTE } from '~/const/route'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
 export { SEO_KEYS, SEO_OG_KEYS, SEO_TW_KEYS } from '~/const/seo'
@@ -225,94 +217,6 @@ export const BUILD_IN_ALIAS_SUGGESTIONS = {
   // TODO
   state_other: ['其他讨论'],
 }
-
-export const WIDGET_TYPE = {
-  SIDEBAR: 'sidebar',
-  MODAL: 'modal',
-  POPUP: 'popup',
-  IFRAME: 'iframe',
-  LINK: 'link',
-} as const
-
-export const WIDGET_TYPES = [
-  {
-    title: '侧边栏',
-    slug: WIDGET_TYPE.SIDEBAR,
-  },
-  {
-    title: '居中模态框',
-    slug: WIDGET_TYPE.MODAL,
-  },
-  {
-    title: '弹出提示',
-    slug: WIDGET_TYPE.POPUP,
-  },
-  {
-    title: '页面内嵌',
-    slug: WIDGET_TYPE.IFRAME,
-  },
-  {
-    title: '链接',
-    slug: WIDGET_TYPE.LINK,
-  },
-]
-
-export const LAYOUT_TABS = [
-  {
-    title: '通用',
-    slug: DSB_LAYOUT_ROUTE.GENERAL,
-  },
-  {
-    title: '主题/背景',
-    slug: DSB_LAYOUT_ROUTE.THEME,
-  },
-  {
-    title: '讨论区',
-    slug: DSB_LAYOUT_ROUTE.POST,
-  },
-  {
-    title: '看板',
-    slug: DSB_LAYOUT_ROUTE.KANBAN,
-  },
-  {
-    title: '更新日志',
-    slug: DSB_LAYOUT_ROUTE.CHANGELOG,
-  },
-  {
-    title: '帮助台',
-    slug: DSB_LAYOUT_ROUTE.DOC,
-  },
-]
-
-export const BASEINFO_TABS = [
-  {
-    title: '基本信息',
-    slug: DSB_BASEINFO_ROUTE.BASIC,
-  },
-  {
-    title: 'Logo',
-    slug: DSB_BASEINFO_ROUTE.LOGOS,
-  },
-  {
-    title: '社交媒体',
-    slug: DSB_BASEINFO_ROUTE.SOCIAL,
-  },
-  {
-    title: '其他',
-    slug: DSB_BASEINFO_ROUTE.OTHER,
-  },
-]
-
-export const SEO_TABS = [
-  {
-    title: '搜索引擎',
-    slug: DSB_SEO_ROUTE.SEARCH_ENGINE,
-  },
-  {
-    title: 'Twitter',
-    slug: DSB_SEO_ROUTE.TWITTER,
-  },
-]
 
 export const BROADCAST_TABS = [
   {

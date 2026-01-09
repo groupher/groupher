@@ -1,6 +1,6 @@
 import { equals, pick, reject } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import type { TColorName, TEditFunc, TSizeSML, TThread, TWidgetType } from '~/spec'
+import type { TColorName, TEditFunc, TSizeSML, TThread } from '~/spec'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -8,7 +8,6 @@ type TRet = {
   widgetsPrimaryColor: TColorName
   widgetsThreads: readonly TThread[]
   widgetsSize: TSizeSML
-  widgetsType: TWidgetType
   threadOnChange: (checked: boolean, thread: TThread) => void
   isThreadTouched: boolean
   isPrimaryColorTouched: boolean
@@ -36,10 +35,7 @@ export default (): TRet => {
   const isSizeTouched = isChanged('widgetsSize')
 
   return {
-    ...pick(
-      ['saving', 'widgetsPrimaryColor', 'widgetsThreads', 'widgetsSize', 'widgetsType'],
-      dsb$,
-    ),
+    ...pick(['saving', 'widgetsPrimaryColor', 'widgetsThreads', 'widgetsSize'], dsb$),
     threadOnChange,
     isThreadTouched,
     isPrimaryColorTouched,

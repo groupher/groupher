@@ -3,7 +3,7 @@
 import { ALIAS_TABS_CFG } from '~/const/route'
 import VIEW from '~/const/view'
 import Portal from '~/containers/thread/DashboardThread//Portal'
-import useSalon from '~/containers/thread/DashboardThread//salon/alias'
+import useSalon from '~/containers/thread/DashboardThread/salon/alias'
 import useDsbRouteTab from '~/hooks/useDsbRouteTab'
 import Tabs from '~/widgets/Switcher/Tabs'
 
