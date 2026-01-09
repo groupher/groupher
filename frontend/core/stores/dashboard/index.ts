@@ -30,7 +30,7 @@ export default (init: TInit = {}): TStore => {
       loading: false,
 
       // sub tabs
-      mainTab: null,
+      menuTab: null,
       baseInfoTab: DSB_INFO_ROUTE.BASIC,
       aliasTab: DSB_ALIAS_ROUTE.THREAD,
       thirdPartTab: DSB_THIRD_PART_ROUTE.ANALYTICS,

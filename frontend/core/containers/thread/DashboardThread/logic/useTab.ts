@@ -8,7 +8,7 @@ import useHelper from './useHelper'
 type TRet = {
   edit: TEditFunc
   layoutTab: TDsbLayoutRoute
-  mainTab: TDsbPath
+  menuTab: TDsbPath
 }
 
 export default (): TRet => {
@@ -17,6 +17,6 @@ export default (): TRet => {
 
   return {
     edit,
-    ...pick(['mainTab', 'layoutTab'], dsb$),
+    ...pick(['menuTab', 'layoutTab'], dsb$),
   }
 }

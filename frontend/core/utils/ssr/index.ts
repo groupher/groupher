@@ -99,12 +99,12 @@ const parseDashboardThread = (pathname: string): TDsbTab => {
   const isOverviewThread = segments.length === 2
 
   if (segments[1] !== THREAD.DASHBOARD) {
-    return { mainTab: DSB_ROUTE.OVERVIEW }
+    return { menuTab: DSB_ROUTE.OVERVIEW }
   }
 
   if (segments[1] === THREAD.DASHBOARD && isOverviewThread) {
     return {
-      mainTab: DSB_ROUTE.OVERVIEW as TDsbPath,
+      menuTab: DSB_ROUTE.OVERVIEW as TDsbPath,
     }
   }
 
@@ -114,49 +114,49 @@ const parseDashboardThread = (pathname: string): TDsbTab => {
   switch (dashThread) {
     case DSB_ROUTE.INFO: {
       return {
-        mainTab: DSB_ROUTE.INFO as TDsbPath,
+        menuTab: DSB_ROUTE.INFO as TDsbPath,
         baseInfoTab: (dashLeaf || DSB_INFO_ROUTE.BASIC) as TDsbBaseInfoRoute,
       }
     }
 
     case DSB_ROUTE.SEO: {
       return {
-        mainTab: DSB_ROUTE.SEO as TDsbPath,
+        menuTab: DSB_ROUTE.SEO as TDsbPath,
         seoTab: (dashLeaf || DSB_SEO_ROUTE.SEARCH_ENGINE) as TDsbSEORoute,
       }
     }
 
     case DSB_ROUTE.DOC: {
       return {
-        mainTab: DSB_ROUTE.DOC as TDsbPath,
+        menuTab: DSB_ROUTE.DOC as TDsbPath,
         docTab: (dashLeaf || DSB_DOC_ROUTE.TABLE) as TDsbDocRoute,
       }
     }
 
     case DSB_ROUTE.BROADCAST: {
       return {
-        mainTab: DSB_ROUTE.BROADCAST as TDsbPath,
+        menuTab: DSB_ROUTE.BROADCAST as TDsbPath,
         broadcastTab: (dashLeaf || DSB_BROADCAST_ROUTE.GLOBAL) as TDsbBroadcastRoute,
       }
     }
 
     case DSB_ROUTE.ALIAS: {
       return {
-        mainTab: DSB_ROUTE.ALIAS,
+        menuTab: DSB_ROUTE.ALIAS,
         aliasTab: (dashLeaf || DSB_ALIAS_ROUTE.THREAD) as TDsbAliasRoute,
       }
     }
 
     case DSB_ROUTE.LAYOUT: {
       return {
-        mainTab: DSB_ROUTE.LAYOUT,
+        menuTab: DSB_ROUTE.LAYOUT,
         layoutTab: (dashLeaf || DSB_LAYOUT_ROUTE.GENERAL) as TDsbLayoutRoute,
       }
     }
 
     default: {
       return {
-        mainTab: dashThread as TDsbPath,
+        menuTab: dashThread as TDsbPath,
       }
     }
   }
