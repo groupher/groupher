@@ -1,6 +1,6 @@
 'use client'
 
-import KanbanThread from '~/containers//thread/KanbanThread'
+import KanbanThread from '~/containers/thread/KanbanThread'
 
 const CommunityKanbanPage = () => {
   return <KanbanThread />

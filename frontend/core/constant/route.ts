@@ -127,6 +127,7 @@ export const DSB_TAB = {
   DOC: 'docTab',
   LAYOUT: 'layoutTab',
   BROADCAST: 'broadcastTab',
+  WIDGET: 'widgetTab',
 } as const
 
 export const BROADCAST_TABS_CFG: TDashboardTabsConfig<typeof DSB_BROADCAST_ROUTE> = {
