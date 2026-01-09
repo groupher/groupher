@@ -46,7 +46,7 @@
       },
       "correctness": {
         "useExhaustiveDependencies": "warn",
-        "noUnusedVariables": "warn" 
+        "noUnusedVariables": "warn"
       },
       "a11y": {
         "noSvgWithoutTitle": "off",
