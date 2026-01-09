@@ -1,44 +1,50 @@
-import { type FC, useEffect, useRef, useState, useCallback } from 'react'
-import { isEmpty, findIndex, pluck, includes } from 'ramda'
-import useMobileDetect from '@groupher/use-mobile-detect-hook'
+'use client'
 
-import type { TSizeSM, TTabItem } from '~/spec'
+import useMobileDetect from '@groupher/use-mobile-detect-hook'
+import { findIndex, isEmpty } from 'ramda'
+import type { FC, MouseEvent } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
 import SIZE from '~/const/size'
+import type { TSizeSM, TTabItem } from '~/spec'
 import { isString } from '~/validator'
 
-import TabItem from './TabItem'
 import useSalon from '../salon/tabs'
+import TabItem from './TabItem'
 
-const temItems = [
+const temItems: TTabItem[] = [
   {
     title: '帖子',
     slug: 'posts',
     icon: 'settings',
-  },
+  } as any,
 ]
 
-const getDefaultActiveTabIndex = (items: TTabItem[], activeKey: string): number => {
-  if (isEmpty(activeKey)) return 0
-  const index = findIndex((item) => {
-    return activeKey === (item.slug || item.title)
-  }, items)
+const getItemKey = (item: TTabItem): string => (isString(item) ? item : item.slug || item.title)
 
+const getDefaultActiveTabIndex = (items: readonly TTabItem[], activeKey: string): number => {
+  if (isEmpty(activeKey)) return 0
+
+  const index = findIndex((item) => activeKey === getItemKey(item), items as TTabItem[])
   return index >= 0 ? index : 0
 }
 
 type TProps = {
-  items?: TTabItem[]
-  onChange: () => void
+  items?: readonly TTabItem[]
+  /**
+   * onChange 不再负责路由跳转；仅用于副作用/埋点等
+   */
+  onChange?: (key: string, item: TTabItem, index: number) => void
   activeKey?: string
-  size: TSizeSM
-  slipHeight: 'px' | 1
+  size?: TSizeSM
+  slipHeight?: 'px' | 1
   bottomSpace?: number
   noAnimation?: boolean
 }
 
 const Tabs: FC<TProps> = ({
   size = SIZE.MEDIUM,
-  onChange = console.log,
+  onChange = () => {},
   items = temItems,
   activeKey = '',
   slipHeight = 1,
@@ -46,48 +52,51 @@ const Tabs: FC<TProps> = ({
   noAnimation = false,
 }) => {
   const s = useSalon({ noAnimation, slipHeight })
-
   const { isMobile } = useMobileDetect()
 
   const defaultActiveTabIndex = getDefaultActiveTabIndex(items, activeKey)
-  // @ts-ignore
-  const hasActiveItem: boolean = includes(activeKey, pluck('slug', items))
+  const hasActiveItem = items.some((it) => getItemKey(it) === activeKey)
 
   const [active, setActive] = useState(defaultActiveTabIndex)
   const [slipWidth, setSlipWidth] = useState(0)
   const [isInitialRender, setIsInitialRender] = useState(true)
 
-  const navRef = useRef(null)
-  const tabWidthListRef = useRef([])
+  const navRef = useRef<HTMLElement | null>(null)
+  const tabWidthListRef = useRef<number[]>([])
 
   useEffect(() => {
-    if (navRef.current) {
-      const activeSlipWidth =
-        navRef.current.childNodes[defaultActiveTabIndex].firstElementChild.offsetWidth
-
-      setSlipWidth(activeSlipWidth)
+    const navEl = navRef.current
+    if (navEl?.childNodes?.[defaultActiveTabIndex]) {
+      const node = navEl.childNodes[defaultActiveTabIndex] as HTMLElement
+      // TabItem 里会保证第一个元素是可测宽 wrapper
+      const first = node.firstElementChild as HTMLElement | null
+      setSlipWidth(first?.offsetWidth ?? 0)
     }
+
     setActive(defaultActiveTabIndex)
 
-    // mare sure the real bar animation starts only when this component fullly loaded
-    const timerId = setTimeout(() => setIsInitialRender(false), 500)
+    // make sure the real bar animation starts only when this component fully loaded
+    const timerId = window.setTimeout(() => setIsInitialRender(false), 500)
+    return () => window.clearTimeout(timerId)
+  }, [defaultActiveTabIndex])
 
-    return () => clearTimeout(timerId)
-  }, [defaultActiveTabIndex, hasActiveItem])
-
-  const handleNaviItemWith = useCallback((index, width) => {
+  const handleNaviItemWidth = useCallback((index: number, width: number) => {
     tabWidthListRef.current[index] = width
   }, [])
 
   const handleItemClick = useCallback(
-    (index, e) => {
+    (index: number, e: MouseEvent<HTMLElement>) => {
       const item = items[index]
+      if (!item) return
 
-      setSlipWidth(e.target.offsetWidth)
+      const key = getItemKey(item)
+      const width = (e.currentTarget as HTMLElement).offsetWidth
+
+      setSlipWidth(width)
       setActive(index)
-      onChange(isString(item) ? item : item.slug || item.title)
+      onChange(key, item, index)
     },
-    [setSlipWidth, setActive, onChange, items],
+    [onChange, items],
   )
 
   const translateX = `${
@@ -96,27 +105,27 @@ const Tabs: FC<TProps> = ({
   }px`
 
   return (
-    <div data-testid="tabs" className={s.wrapper}>
-      <nav ref={navRef} className={s.nav}>
+    <div data-testid='tabs' className={s.wrapper}>
+      <nav ref={navRef as any} className={s.nav}>
         {items.map((item, index) => (
           <TabItem
-            key={isString(item) ? item : item.slug || item.title}
+            key={getItemKey(item)}
             activeKey={activeKey}
             index={index}
             item={item}
             size={size}
             bottomSpace={bottomSpace}
-            setItemWidth={handleNaviItemWith}
+            setItemWidth={handleNaviItemWidth}
             onClick={handleItemClick}
           />
         ))}
 
         {hasActiveItem && (
           <span
-            className={s.slipbar}
+            className={s.slipBar}
             style={{
               transform: `translate3d(${translateX}, 0, 0)`,
-              width: `${tabWidthListRef.current[active]}px`,
+              width: `${tabWidthListRef.current[active] ?? 0}px`,
               transition: isInitialRender ? 'none' : undefined,
             }}
           >

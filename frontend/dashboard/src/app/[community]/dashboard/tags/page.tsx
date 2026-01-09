@@ -1,6 +1,6 @@
 'use client'
 
-import Tags from '~/containers//thread/DashboardThread/Tags'
+import Tags from '~/containers/thread/DashboardThread/Tags'
 
 const DashboardTagsPage = () => {
   return <Tags />

@@ -4,15 +4,16 @@
  *
  */
 
-import { type FC, useEffect, useCallback, useRef } from 'react'
+'use client'
 
-import type { TSizeSM, TTabItem } from '~/spec'
-import { Trans } from '~/i18n'
-import { isString } from '~/validator'
+import Link from 'next/link'
+import { type FC, useCallback, useEffect, useRef } from 'react'
 import { isElementInViewport } from '~/dom'
-
-import TabIcon from './TabIcon'
+import { Trans } from '~/i18n'
+import type { TSizeSM, TTabItem } from '~/spec'
+import { isString } from '~/validator'
 import useSalon, { cn } from '../salon/tabs/tab_item'
+import TabIcon from './TabIcon'
 
 type TProps = {
   wrapMode?: boolean
@@ -22,8 +23,11 @@ type TProps = {
   activeKey: string
   bottomSpace?: number | string
   setItemWidth?: (index: number, width: number) => void
-  onClick?: (index: number, e) => void
+  onClick?: (index: number, e: any) => void
 }
+
+const getItemKey = (item: TTabItem): string => (isString(item) ? item : item.slug)
+const getItemHref = (item: TTabItem): string | undefined => (isString(item) ? undefined : item.href)
 
 const TabItem: FC<TProps> = ({
   wrapMode = false,
@@ -31,66 +35,84 @@ const TabItem: FC<TProps> = ({
   activeKey,
   item,
   index,
-  size,
+  size, // 保留参数，样式系统可能用到
   onClick,
   setItemWidth,
 }) => {
-  const active = item.slug === activeKey
+  const key = getItemKey(item)
+  const href = getItemHref(item)
+  const active = key === activeKey
 
   const s = useSalon({ bottomSpace })
 
-  const ref = useRef(null)
-  const clickableRef = useRef(null)
-  const activeRef = useRef(null)
+  const ref = useRef<HTMLElement | null>(null)
+  const clickableRef = useRef<HTMLSpanElement | null>(null)
+  const activeRef = useRef<HTMLDivElement | null>(null)
 
   // set each tab item width for calc
   useEffect(() => {
-    const width = ref.current ? ref.current.offsetWidth : 0
+    const width = ref.current ? (ref.current as any).offsetWidth : 0
     setItemWidth?.(index, width)
   }, [setItemWidth, index])
 
-  const handleWrapperClick = useCallback(() => clickableRef.current.click(), [clickableRef])
+  /**
+   * 非 href：维持原行为（点 wrapper 等价于点 label）
+   * href：交给 Link 自己处理导航，不要模拟 click/不要 preventDefault
+   */
+  const handleWrapperClick = useCallback(() => {
+    if (href) return
+    clickableRef.current?.click()
+  }, [href])
 
   const handleLabelClick = useCallback(
-    (e) => {
-      e.stopPropagation()
-      onClick(index, e)
+    (e: any) => {
+      // 关键：href 场景不能 stopPropagation，否则 Next Link 拦截不到 click，会变成整页刷新
+      if (!href) e.stopPropagation()
+      onClick?.(index, e)
     },
-    [onClick, index],
+    [onClick, index, href],
   )
 
   useEffect(() => {
-    if (item.slug === activeKey && !wrapMode) {
+    if (key === activeKey && !wrapMode) {
       const curEl = activeRef?.current
       const inViewport = isElementInViewport(curEl)
 
-      // 这里的 width 是一个 hack, 每一个 TabItem 会触发设置宽度的
-      // 父元素钩子，导致两次渲染，但是第一次没有调用之前每个 Item 的宽度是 auto
-      // 利用这个特性可以判断真正需要 scroll 到 view 的元素
       if (curEl && inViewport && getComputedStyle(curEl).width !== 'auto') {
         curEl.scrollIntoView({
           block: 'center',
-          // inline: 'center',
         })
       }
     }
-  }, [activeRef, item, activeKey, wrapMode])
+  }, [activeKey, wrapMode, key])
+
+  const Label = (
+    <span
+      ref={clickableRef}
+      className={cn(s.label, active && s.labelActive)}
+      onClick={handleLabelClick}
+    >
+      {!isString(item) && item.icon && (
+        <TabIcon item={item} clickableRef={clickableRef as any} active={active} />
+      )}
+      <div ref={active ? activeRef : null}>
+        {isString(item) ? item : item.alias || Trans(item.title)}
+      </div>
+    </span>
+  )
+
+  if (href) {
+    return (
+      <Link href={href} className={s.wrapper} ref={ref as any}>
+        {Label}
+      </Link>
+    )
+  }
 
   return (
-    <div className={s.wrapper} ref={ref} onClick={handleWrapperClick}>
-      <span
-        ref={clickableRef}
-        className={cn(s.label, active && s.labelActive)}
-        onClick={handleLabelClick}
-      >
-        {!isString(item) && item.icon && (
-          <TabIcon item={item} clickableRef={clickableRef} active={item.slug === activeKey} />
-        )}
-        <div ref={item.slug === activeKey ? activeRef : null}>
-          {isString(item) ? item : item.alias || Trans(item.title)}
-        </div>
-      </span>
-    </div>
+    <button className={s.wrapper} ref={ref as any} onClick={handleWrapperClick}>
+      {Label}
+    </button>
   )
 }
 

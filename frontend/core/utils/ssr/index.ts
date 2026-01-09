@@ -6,9 +6,9 @@ import { PAGE_BG_DEFAULT } from '~/const/colors'
 import { BUILTIN_ALIAS } from '~/const/name'
 import {
   DSB_ALIAS_ROUTE,
-  DSB_BASEINFO_ROUTE,
   DSB_BROADCAST_ROUTE,
   DSB_DOC_ROUTE,
+  DSB_INFO_ROUTE,
   DSB_LAYOUT_ROUTE,
   DSB_ROUTE,
   DSB_SEO_ROUTE,
@@ -99,12 +99,12 @@ const parseDashboardThread = (pathname: string): TDsbTab => {
   const isOverviewThread = segments.length === 2
 
   if (segments[1] !== THREAD.DASHBOARD) {
-    return { curTab: DSB_ROUTE.OVERVIEW }
+    return { menuTab: DSB_ROUTE.OVERVIEW }
   }
 
   if (segments[1] === THREAD.DASHBOARD && isOverviewThread) {
     return {
-      curTab: DSB_ROUTE.OVERVIEW as TDsbPath,
+      menuTab: DSB_ROUTE.OVERVIEW as TDsbPath,
     }
   }
 
@@ -114,49 +114,49 @@ const parseDashboardThread = (pathname: string): TDsbTab => {
   switch (dashThread) {
     case DSB_ROUTE.INFO: {
       return {
-        curTab: DSB_ROUTE.INFO as TDsbPath,
-        baseInfoTab: (dashLeaf || DSB_BASEINFO_ROUTE.BASIC) as TDsbBaseInfoRoute,
+        menuTab: DSB_ROUTE.INFO as TDsbPath,
+        baseInfoTab: (dashLeaf || DSB_INFO_ROUTE.BASIC) as TDsbBaseInfoRoute,
       }
     }
 
     case DSB_ROUTE.SEO: {
       return {
-        curTab: DSB_ROUTE.SEO as TDsbPath,
+        menuTab: DSB_ROUTE.SEO as TDsbPath,
         seoTab: (dashLeaf || DSB_SEO_ROUTE.SEARCH_ENGINE) as TDsbSEORoute,
       }
     }
 
     case DSB_ROUTE.DOC: {
       return {
-        curTab: DSB_ROUTE.DOC as TDsbPath,
+        menuTab: DSB_ROUTE.DOC as TDsbPath,
         docTab: (dashLeaf || DSB_DOC_ROUTE.TABLE) as TDsbDocRoute,
       }
     }
 
     case DSB_ROUTE.BROADCAST: {
       return {
-        curTab: DSB_ROUTE.BROADCAST as TDsbPath,
+        menuTab: DSB_ROUTE.BROADCAST as TDsbPath,
         broadcastTab: (dashLeaf || DSB_BROADCAST_ROUTE.GLOBAL) as TDsbBroadcastRoute,
       }
     }
 
     case DSB_ROUTE.ALIAS: {
       return {
-        curTab: DSB_ROUTE.ALIAS,
+        menuTab: DSB_ROUTE.ALIAS,
         aliasTab: (dashLeaf || DSB_ALIAS_ROUTE.THREAD) as TDsbAliasRoute,
       }
     }
 
     case DSB_ROUTE.LAYOUT: {
       return {
-        curTab: DSB_ROUTE.LAYOUT,
+        menuTab: DSB_ROUTE.LAYOUT,
         layoutTab: (dashLeaf || DSB_LAYOUT_ROUTE.GENERAL) as TDsbLayoutRoute,
       }
     }
 
     default: {
       return {
-        curTab: dashThread as TDsbPath,
+        menuTab: dashThread as TDsbPath,
       }
     }
   }

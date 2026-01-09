@@ -10,7 +10,7 @@ const Layout = ({ children }) => {
   const s = useSalon()
 
   useSyncDSBRoute2Tab({
-    tab: DSB_TAB.CUR,
+    tab: DSB_TAB.MENU,
     defaultTab: DSB_ROUTE.OVERVIEW,
     segmentIndex: 2,
     validator: isRouteOf(DSB_ROUTE),

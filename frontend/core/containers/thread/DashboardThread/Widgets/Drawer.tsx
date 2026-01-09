@@ -1,47 +1,14 @@
-import ViewSVG from '~/icons/article/Viewed'
-import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 import Radio from '~/widgets/Switcher/Radio'
-import Tabs from '~/widgets/Switcher/Tabs'
 
-import { WIDGET_TYPES } from '../constant'
-import useWidgets from '../logic/useWidgets'
-import Portal from '../Portal'
 import useSalon from '../salon/widgets'
-import BaseSetting from './BaseSetting'
 import CodeArea from './CodeArea'
 
 export default () => {
   const s = useSalon()
 
-  const { widgetsType, edit } = useWidgets()
-
   return (
-    <div className={s.wrapper}>
-      <Portal
-        title='网站插件'
-        desc='为您的主页添加社区，更新日志，看板等插件，让产品用户及时方便的了解最新动态。'
-      />
-
-      <BaseSetting />
-
-      <div className={s.typeSelect}>
-        <div className={s.tabs}>
-          <Tabs
-            items={WIDGET_TYPES}
-            activeKey={widgetsType}
-            onChange={(slug) => {
-              edit(slug, 'widgetsType')
-              // onSave('widgetsType')
-              console.log('## onSave widgetsType')
-            }}
-          />
-        </div>
-        <Button size='small' space={8} ghost className='w-20'>
-          <ViewSVG className={s.viewIcon} />
-          预览
-        </Button>
-      </div>
+    <>
       <div className='mt-4' />
       <CodeArea />
       <div className={s.hint}>
@@ -77,6 +44,6 @@ export default () => {
           activeKey='1'
         />
       </div>
-    </div>
+    </>
   )
 }

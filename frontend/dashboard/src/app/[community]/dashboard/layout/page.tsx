@@ -1,10 +1,10 @@
 'use client'
 
-import AvatarLayout from '~/containers//thread/DashboardThread/Layout/AvatarLayout'
-import BannerLayout from '~/containers//thread/DashboardThread/Layout/BannerLayout'
-import BrandLayout from '~/containers//thread/DashboardThread/Layout/BrandLayout'
-import TagLayout from '~/containers//thread/DashboardThread/Layout/TagLayout'
-import TopbarLayout from '~/containers//thread/DashboardThread/Layout/TopbarLayout'
+import AvatarLayout from '~/containers/thread/DashboardThread/Layout/AvatarLayout'
+import BannerLayout from '~/containers/thread/DashboardThread/Layout/BannerLayout'
+import BrandLayout from '~/containers/thread/DashboardThread/Layout/BrandLayout'
+import TagLayout from '~/containers/thread/DashboardThread/Layout/TagLayout'
+import TopbarLayout from '~/containers/thread/DashboardThread/Layout/TopbarLayout'
 
 import useSalon from '~/containers/thread/DashboardThread/salon/layout'
 

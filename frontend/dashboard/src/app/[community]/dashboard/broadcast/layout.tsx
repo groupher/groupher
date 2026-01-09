@@ -1,50 +1,23 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-
-import { DSB_BROADCAST_ROUTE, DSB_TAB } from '~/const/route'
+import { BROADCAST_TABS } from '~/const/route'
 import VIEW from '~/const/view'
-import { BROADCAST_TABS } from '~/containers//thread/DashboardThread/constant'
-import Portal from '~/containers//thread/DashboardThread/Portal'
-import useSalon from '~/containers//thread/DashboardThread/salon/broadcast'
-import useCommunity from '~/hooks/useCommunity'
-import useDashboard from '~/hooks/useDashboard'
-import useSyncDSBRoute2Tab, { isRouteOf } from '~/hooks/useSyncDSBRoute2Tab'
+import Portal from '~/containers/thread/DashboardThread/Portal'
+import useSalon from '~/containers/thread/DashboardThread/salon/broadcast'
+import useDsbRouteTab from '~/hooks/useDsbRouteTab'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 export default ({ children }) => {
   const s = useSalon()
-
-  useSyncDSBRoute2Tab({
-    tab: DSB_TAB.BROADCAST,
-    defaultTab: DSB_BROADCAST_ROUTE.GLOBAL,
-    validator: isRouteOf(DSB_BROADCAST_ROUTE),
-  })
-
-  const router = useRouter()
-  const community$ = useCommunity()
-  const { broadcastTab } = useDashboard()
+  const { items, activeTab } = useDsbRouteTab(BROADCAST_TABS)
 
   return (
     <div className={s.wrapper}>
       <div className={s.banner}>
-        <Portal title='布局/样式' desc='社区板块自定义布局与全局样式。' withDivider={false} />
+        <Portal title='页面广播' desc='页面广播与通知设置。' withDivider={false} />
 
         <div className={s.tabs}>
-          <Tabs
-            items={BROADCAST_TABS}
-            activeKey={broadcastTab}
-            onChange={(tab) => {
-              const targetPath =
-                tab === DSB_BROADCAST_ROUTE.GLOBAL
-                  ? `/${community$.slug}/dashboard/broadcast`
-                  : `/${community$.slug}/dashboard/broadcast/${tab}`
-
-              router.push(targetPath)
-            }}
-            view={VIEW.DESKTOP}
-            noAnimation
-          />
+          <Tabs items={items} activeKey={activeTab} view={VIEW.DESKTOP} noAnimation />
         </div>
       </div>
 

@@ -1,3 +1,5 @@
+import type { TDashboardTabsConfig } from '~/hooks/useDsbRouteTab'
+
 export const NON_COMMUNITY_ROUTE = {
   APPLY_COMMUNITY: '/apply/community',
 }
@@ -38,7 +40,7 @@ export const DSB_ROUTE = {
   INOUT: 'inout',
 } as const
 
-export const DSB_BASEINFO_ROUTE = {
+export const DSB_INFO_ROUTE = {
   BASIC: 'basic',
   SOCIAL: 'social',
   OTHER: 'other',
@@ -85,6 +87,14 @@ export const DSB_THIRD_PART_ROUTE = {
   CONTENT_SYNC: 'content-sync',
 } as const
 
+export const DSB_WIDGET_ROUTE = {
+  DRAWER: 'drawer',
+  MODAL: 'modal',
+  POPUP: 'popup',
+  IFRAME: 'iframe',
+  LINK: 'link',
+} as const
+
 // TODO: use safe route
 export const ROUTE = {
   BOOK_DEMO: 'book-demo',
@@ -109,7 +119,7 @@ export const ROUTE = {
 }
 
 export const DSB_TAB = {
-  CUR: 'curTab',
+  MENU: 'menuTab',
   BASE_INFO: 'baseInfoTab',
   ALIAS: 'aliasTab',
   THIRD_PART: 'thirdPartTab',
@@ -117,4 +127,88 @@ export const DSB_TAB = {
   DOC: 'docTab',
   LAYOUT: 'layoutTab',
   BROADCAST: 'broadcastTab',
+  WIDGET: 'widgetTab',
 } as const
+
+export const BROADCAST_TABS: TDashboardTabsConfig<typeof DSB_BROADCAST_ROUTE> = {
+  tab: DSB_ROUTE.BROADCAST,
+  routeEnum: DSB_BROADCAST_ROUTE,
+  baseSegment: DSB_ROUTE.BROADCAST,
+  items: [
+    { title: '站顶横幅', slug: DSB_BROADCAST_ROUTE.GLOBAL, segment: '' },
+    { title: '文章页脚', slug: DSB_BROADCAST_ROUTE.ARTICLE },
+  ],
+}
+
+export const INFO_TABS: TDashboardTabsConfig<typeof DSB_INFO_ROUTE> = {
+  tab: DSB_ROUTE.INFO,
+  routeEnum: DSB_INFO_ROUTE,
+  baseSegment: DSB_ROUTE.INFO,
+  items: [
+    { title: '基本信息', slug: DSB_INFO_ROUTE.BASIC, segment: '' },
+    { title: 'Logo', slug: DSB_INFO_ROUTE.LOGOS },
+    { title: '社交媒体', slug: DSB_INFO_ROUTE.SOCIAL },
+    { title: '其他', slug: DSB_INFO_ROUTE.OTHER },
+  ],
+}
+
+export const LAYOUT_TABS: TDashboardTabsConfig<typeof DSB_LAYOUT_ROUTE> = {
+  tab: DSB_ROUTE.LAYOUT,
+  routeEnum: DSB_LAYOUT_ROUTE,
+  baseSegment: DSB_ROUTE.LAYOUT,
+  items: [
+    { title: '通用', slug: DSB_LAYOUT_ROUTE.GENERAL, segment: '' },
+    { title: '主题/背景', slug: DSB_LAYOUT_ROUTE.THEME },
+    { title: '讨论区', slug: DSB_LAYOUT_ROUTE.POST },
+    { title: '看板', slug: DSB_LAYOUT_ROUTE.KANBAN },
+    { title: '更新日志', slug: DSB_LAYOUT_ROUTE.CHANGELOG },
+    { title: '帮助台', slug: DSB_LAYOUT_ROUTE.DOC },
+  ],
+}
+
+export const SEO_TABS: TDashboardTabsConfig<typeof DSB_SEO_ROUTE> = {
+  tab: DSB_ROUTE.SEO,
+  routeEnum: DSB_SEO_ROUTE,
+  baseSegment: DSB_ROUTE.SEO,
+  items: [
+    { title: '搜索引擎', slug: DSB_SEO_ROUTE.SEARCH_ENGINE, segment: '' },
+    { title: 'Twitter', slug: DSB_SEO_ROUTE.TWITTER },
+  ],
+}
+
+export const THIRD_PART_TABS: TDashboardTabsConfig<typeof DSB_THIRD_PART_ROUTE> = {
+  tab: DSB_ROUTE['THIRD-PART'],
+  routeEnum: DSB_THIRD_PART_ROUTE,
+  baseSegment: DSB_ROUTE['THIRD-PART'],
+  items: [
+    { title: '统计分析', slug: DSB_THIRD_PART_ROUTE.ANALYTICS, segment: '' },
+    { title: 'Webhooks', slug: DSB_THIRD_PART_ROUTE.WEBHOOKS },
+    { title: '消息机器人', slug: DSB_THIRD_PART_ROUTE.BOTS },
+    { title: '电子邮件', slug: DSB_THIRD_PART_ROUTE.EMAIL },
+    { title: '内容同步', slug: DSB_THIRD_PART_ROUTE.CONTENT_SYNC },
+  ],
+}
+
+export const ALIAS_TABS: TDashboardTabsConfig<typeof DSB_ALIAS_ROUTE> = {
+  tab: DSB_ROUTE.ALIAS,
+  routeEnum: DSB_ALIAS_ROUTE,
+  baseSegment: DSB_ROUTE.ALIAS,
+  items: [
+    { title: '板块入口', slug: DSB_ALIAS_ROUTE.THREAD, segment: '' },
+    { title: '看板', slug: DSB_ALIAS_ROUTE.KANBAN },
+    { title: '其他', slug: DSB_ALIAS_ROUTE.OTHERS },
+  ],
+}
+
+export const WIDGET_TABS: TDashboardTabsConfig<typeof DSB_WIDGET_ROUTE> = {
+  tab: DSB_ROUTE.WIDGETS,
+  routeEnum: DSB_WIDGET_ROUTE,
+  baseSegment: DSB_ROUTE.WIDGETS,
+  items: [
+    { title: '侧边栏', slug: DSB_WIDGET_ROUTE.DRAWER, segment: '' },
+    { title: '居中模态框', slug: DSB_WIDGET_ROUTE.MODAL },
+    { title: '弹出提示', slug: DSB_WIDGET_ROUTE.POPUP },
+    { title: '页面内嵌', slug: DSB_WIDGET_ROUTE.IFRAME },
+    { title: '链接', slug: DSB_WIDGET_ROUTE.LINK },
+  ],
+}

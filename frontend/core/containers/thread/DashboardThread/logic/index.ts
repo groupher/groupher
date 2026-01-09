@@ -132,13 +132,13 @@
 // //     const { baseInfoTab } = store
 
 // //     const params = {}
-// //     if (baseInfoTab === DSB_BASEINFO_ROUTE.BASIC) {
+// //     if (baseInfoTab === DSB_INFO_ROUTE.BASIC) {
 // //       forEach((key) => {
 // //         params[key] = store[key]
 // //       }, BASEINFO_BASIC_KEYS)
 // //     }
 
-// //     if (baseInfoTab === DSB_BASEINFO_ROUTE.OTHER) {
+// //     if (baseInfoTab === DSB_INFO_ROUTE.OTHER) {
 // //       forEach((key) => {
 // //         params[key] = store[key]
 // //       }, BASEINFO_OTHER_KEYS)

@@ -27,7 +27,7 @@ export type TRet = {
 export default (): TRet => {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
-  const { curTab } = dsb$
+  const { menuTab } = dsb$
 
   const storeRef = useRef(dsb$)
 
@@ -36,12 +36,12 @@ export default (): TRet => {
   }, [dsb$])
 
   const getLinks = (): TLinkItem[] => {
-    const { curTab, headerLinks, footerLinks } = storeRef.current
+    const { menuTab, headerLinks, footerLinks } = storeRef.current
 
-    return clone(curTab !== DSB_ROUTE.FOOTER ? headerLinks : footerLinks)
+    return clone(menuTab !== DSB_ROUTE.FOOTER ? headerLinks : footerLinks)
   }
 
-  const linksKey = curTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
+  const linksKey = menuTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
 
   const emptyLinksIfNeed = (links: TLinkItem[]): TLinkItem[] => {
     if (linksKey === 'headerLinks' && links.length === 1 && links[0].group === MORE_GROUP) {

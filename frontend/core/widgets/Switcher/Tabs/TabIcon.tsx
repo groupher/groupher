@@ -1,4 +1,4 @@
-import { type FC, useCallback, lazy, Suspense } from 'react'
+import { type FC, lazy, Suspense, useCallback } from 'react'
 
 import type { TTabItem } from '~/spec'
 import useSalon from '../salon/tabs/tab_icon'

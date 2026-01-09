@@ -4,8 +4,8 @@
  *
  */
 
-import { memo } from 'react'
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
+import { memo } from 'react'
 
 import VIEW from '~/const/view'
 

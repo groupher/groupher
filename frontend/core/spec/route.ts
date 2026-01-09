@@ -1,8 +1,8 @@
 import type {
   DSB_ALIAS_ROUTE,
-  DSB_BASEINFO_ROUTE,
   DSB_BROADCAST_ROUTE,
   DSB_DOC_ROUTE,
+  DSB_INFO_ROUTE,
   DSB_LAYOUT_ROUTE,
   DSB_ROUTE,
   DSB_SEO_ROUTE,
@@ -10,7 +10,7 @@ import type {
 } from '~/const/route'
 import type { TConstValues } from '~/spec'
 
-export type TDsbBaseInfoRoute = TConstValues<typeof DSB_BASEINFO_ROUTE>
+export type TDsbBaseInfoRoute = TConstValues<typeof DSB_INFO_ROUTE>
 export type TDsbSEORoute = TConstValues<typeof DSB_SEO_ROUTE>
 export type TDsbDocRoute = TConstValues<typeof DSB_DOC_ROUTE>
 export type TDsbLayoutRoute = TConstValues<typeof DSB_LAYOUT_ROUTE>

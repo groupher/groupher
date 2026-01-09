@@ -1,7 +1,6 @@
 import type { ChangeEvent, ReactNode } from 'react'
 
 import type BUTTON_PREFIX from '~/const/button_prefix'
-import type { WIDGET_TYPE } from '~/const/dashboard'
 import type { DSB_DESC_LAYOUT } from '~/const/layout'
 import type { CHANGE_MODE, CONDITION_MODE, PUBLISH_MODE } from '~/const/mode'
 import type { PAYMENT_METHOD, PAYMENT_USAGE } from '~/const/payment'
@@ -103,6 +102,7 @@ export type TTabItem = {
   id?: string
   title?: string
   slug: string
+  href?: string
   alias?: string
   icon?: string | ReactNode
   localIcon?: string
@@ -237,7 +237,6 @@ export type TUploadPreview = {
 }
 
 export type TConditionMode = TConstValues<typeof CONDITION_MODE>
-export type TWidgetType = TConstValues<typeof WIDGET_TYPE>
 
 export type TButtonPrefix = TConstValues<typeof BUTTON_PREFIX>
 

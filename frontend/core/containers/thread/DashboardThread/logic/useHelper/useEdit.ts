@@ -90,7 +90,7 @@ export default (): TRet => {
   // otherwise it will be choas when save one one tab then switch to other tab
   const _saveToLocal = (): void => {
     const saveSlf = omit(
-      ['curTab', 'baseInfoTab', 'aliasTab', 'layoutTab', 'layoutTab', 'broadcastTab'],
+      ['menuTab', 'baseInfoTab', 'aliasTab', 'layoutTab', 'layoutTab', 'broadcastTab'],
       dsb$,
     )
 

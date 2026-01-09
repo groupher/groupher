@@ -3,12 +3,13 @@ import METRIC from '~/const/metric'
 import { CHANGE_MODE } from '~/const/mode'
 import {
   DSB_ALIAS_ROUTE,
-  DSB_BASEINFO_ROUTE,
   DSB_BROADCAST_ROUTE,
   DSB_DOC_ROUTE,
+  DSB_INFO_ROUTE,
   DSB_LAYOUT_ROUTE,
   DSB_SEO_ROUTE,
   DSB_THIRD_PART_ROUTE,
+  DSB_WIDGET_ROUTE,
 } from '~/const/route'
 import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
 import { DEFAULT_OVERVIEW, FIELDS } from './constant'
@@ -29,14 +30,15 @@ export default (init: TInit = {}): TStore => {
       loading: false,
 
       // sub tabs
-      curTab: null,
-      baseInfoTab: DSB_BASEINFO_ROUTE.BASIC,
+      menuTab: null,
+      baseInfoTab: DSB_INFO_ROUTE.BASIC,
       aliasTab: DSB_ALIAS_ROUTE.THREAD,
       thirdPartTab: DSB_THIRD_PART_ROUTE.ANALYTICS,
       seoTab: DSB_SEO_ROUTE.SEARCH_ENGINE,
       docTab: DSB_DOC_ROUTE.TABLE,
       layoutTab: DSB_LAYOUT_ROUTE.GENERAL,
       broadcastTab: DSB_BROADCAST_ROUTE.GLOBAL,
+      widgetTab: DSB_WIDGET_ROUTE.DRAWER,
       // sub tabs end
 
       overview: DEFAULT_OVERVIEW,

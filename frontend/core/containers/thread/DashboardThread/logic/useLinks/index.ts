@@ -65,8 +65,8 @@ export default (): TRet => {
   const derived = useDerived()
 
   // derived
-  const { curTab } = dsb$
-  const linksKey = curTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
+  const { menuTab } = dsb$
+  const linksKey = menuTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
 
   const updateInGroup = (link: TLinkItem): void => {
     dsb$.commit({ editingLink: link, editingLinkMode: CHANGE_MODE.UPDATE })

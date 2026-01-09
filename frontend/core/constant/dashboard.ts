@@ -21,14 +21,6 @@ export const DEFAULT_ENABLE = {
   aboutMediaReport: true,
 }
 
-export const WIDGET_TYPE = {
-  SIDEBAR: 'sidebar',
-  MODAL: 'modal',
-  POPUP: 'popup',
-  IFRAME: 'iframe',
-  LINK: 'link',
-} as const
-
 export const TW_CARD = {
   SUMMARY: 'summary',
   SUMMARY_LARGE_IMAGE: 'summary_large_image',
