@@ -1,31 +1,15 @@
 import { cacheLife, cacheTag } from 'next/cache'
-import { includes, isEmpty, reject } from 'ramda'
+import { includes, reject } from 'ramda'
 
 import { CACHE_TAG } from '~/const/cache'
 import { PAGE_BG_DEFAULT } from '~/const/colors'
 import { BUILTIN_ALIAS } from '~/const/name'
-import {
-  DSB_ALIAS_ROUTE,
-  DSB_BROADCAST_ROUTE,
-  DSB_DOC_ROUTE,
-  DSB_INFO_ROUTE,
-  DSB_LAYOUT_ROUTE,
-  DSB_ROUTE,
-  DSB_SEO_ROUTE,
-} from '~/const/route'
 import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
 import { removeEmptyValuesFromObject } from '~/helper'
 import { P } from '~/schemas'
 import type {
   TCommunity,
-  TDsbAliasRoute,
-  TDsbBaseInfoRoute,
-  TDsbBroadcastRoute,
-  TDsbDocRoute,
-  TDsbLayoutRoute,
-  TDsbPath,
-  TDsbSEORoute,
   TNameAlias,
   TPagedArticles,
   TPagedTags,
@@ -36,7 +20,7 @@ import type {
 import { gqFetch } from '~/utils/api'
 import { extractQueryName } from '~/utils/graphql'
 
-import type { TDsbTab, TGQSSRResult } from './spec'
+import type { TGQSSRResult } from './spec'
 
 export const commonRes = (result): TGQSSRResult => {
   return {
@@ -91,78 +75,7 @@ const parseDashboardAlias = (nameAlias: TNameAlias[]): TNameAlias[] => {
   return reject((item: TNameAlias) => item.slug === '', [...nameAlias, ...unChangedAlias])
 }
 
-/**
- * parse the dashboard's cutTab & sub tab from pathname
- */
-const parseDashboardThread = (pathname: string): TDsbTab => {
-  const segments = reject(isEmpty, pathname.split('/'))
-  const isOverviewThread = segments.length === 2
-
-  if (segments[1] !== THREAD.DASHBOARD) {
-    return { menuTab: DSB_ROUTE.OVERVIEW }
-  }
-
-  if (segments[1] === THREAD.DASHBOARD && isOverviewThread) {
-    return {
-      menuTab: DSB_ROUTE.OVERVIEW as TDsbPath,
-    }
-  }
-
-  const dashThread = segments[2]
-  const dashLeaf = segments[3]
-
-  switch (dashThread) {
-    case DSB_ROUTE.INFO: {
-      return {
-        menuTab: DSB_ROUTE.INFO as TDsbPath,
-        baseInfoTab: (dashLeaf || DSB_INFO_ROUTE.BASIC) as TDsbBaseInfoRoute,
-      }
-    }
-
-    case DSB_ROUTE.SEO: {
-      return {
-        menuTab: DSB_ROUTE.SEO as TDsbPath,
-        seoTab: (dashLeaf || DSB_SEO_ROUTE.SEARCH_ENGINE) as TDsbSEORoute,
-      }
-    }
-
-    case DSB_ROUTE.DOC: {
-      return {
-        menuTab: DSB_ROUTE.DOC as TDsbPath,
-        docTab: (dashLeaf || DSB_DOC_ROUTE.TABLE) as TDsbDocRoute,
-      }
-    }
-
-    case DSB_ROUTE.BROADCAST: {
-      return {
-        menuTab: DSB_ROUTE.BROADCAST as TDsbPath,
-        broadcastTab: (dashLeaf || DSB_BROADCAST_ROUTE.GLOBAL) as TDsbBroadcastRoute,
-      }
-    }
-
-    case DSB_ROUTE.ALIAS: {
-      return {
-        menuTab: DSB_ROUTE.ALIAS,
-        aliasTab: (dashLeaf || DSB_ALIAS_ROUTE.THREAD) as TDsbAliasRoute,
-      }
-    }
-
-    case DSB_ROUTE.LAYOUT: {
-      return {
-        menuTab: DSB_ROUTE.LAYOUT,
-        layoutTab: (dashLeaf || DSB_LAYOUT_ROUTE.GENERAL) as TDsbLayoutRoute,
-      }
-    }
-
-    default: {
-      return {
-        menuTab: dashThread as TDsbPath,
-      }
-    }
-  }
-}
-
-export const parseDashboard = (community: TCommunity, pathname: string): TParseDashboard => {
+export const parseDashboard = (community: TCommunity): TParseDashboard => {
   // NOTE: if the backend is not ready, return default config
   // @ts-expect-error
   if (!community) return {}
@@ -207,7 +120,6 @@ export const parseDashboard = (community: TCommunity, pathname: string): TParseD
     original: {
       ...fieldsObj,
     },
-    ...parseDashboardThread(pathname),
   }
 }
 

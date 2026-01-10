@@ -3,7 +3,7 @@ import { type FC, useState } from 'react'
 
 import { DSB_ROUTE } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
-import useDashboard from '~/hooks/useDashboard'
+import useDsbMenuTab from '~/hooks/useDsbMenuTab'
 
 import ArrowSVG from '~/icons/ArrowSimple'
 import BindSVG from '~/icons/Bind'
@@ -18,7 +18,7 @@ type TProps = {
 }
 
 const Group: FC<TProps> = ({ group }) => {
-  const { menuTab } = useDashboard()
+  const menuTab = useDsbMenuTab()
 
   const { slug: community } = useCommunity()
   const [fold, setFold] = useState(group.initFold)

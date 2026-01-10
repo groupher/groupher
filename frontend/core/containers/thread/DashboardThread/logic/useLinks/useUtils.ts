@@ -7,6 +7,7 @@ import { DSB_ROUTE, ROUTE } from '~/const/route'
 import { groupByKey, sortByGroupIndex } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
+import useDsbMenuTab from '~/hooks/useDsbMenuTab'
 import type { TGroupedLinks, TLinkItem } from '~/spec'
 
 import { EMPTY_LINK_ITEM } from '../../constant'
@@ -27,7 +28,7 @@ export type TRet = {
 export default (): TRet => {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
-  const { menuTab } = dsb$
+  const menuTab = useDsbMenuTab()
 
   const storeRef = useRef(dsb$)
 
@@ -36,7 +37,7 @@ export default (): TRet => {
   }, [dsb$])
 
   const getLinks = (): TLinkItem[] => {
-    const { menuTab, headerLinks, footerLinks } = storeRef.current
+    const { headerLinks, footerLinks } = storeRef.current
 
     return clone(menuTab !== DSB_ROUTE.FOOTER ? headerLinks : footerLinks)
   }

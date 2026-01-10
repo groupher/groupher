@@ -4,12 +4,12 @@ import { LAYOUT_TABS } from '~/const/route'
 import VIEW from '~/const/view'
 import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon from '~/containers/thread/DashboardThread/salon/layout'
-import useDsbRouteTab from '~/hooks/useDsbRouteTab'
+import useDsbLayoutTab from '~/hooks/useDsbLayoutTab'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 export default ({ children }) => {
   const s = useSalon()
-  const { items, activeTab } = useDsbRouteTab(LAYOUT_TABS)
+  const { items, activeTab } = useDsbLayoutTab(LAYOUT_TABS)
 
   return (
     <div className={s.wrapper}>

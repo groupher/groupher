@@ -1,13 +1,12 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import type { TDsbSEORoute, TDsdSEOConf, TEditFunc } from '~/spec'
+import type { TDsdSEOConf, TEditFunc } from '~/spec'
 import { SEO_KEYS } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = TDsdSEOConf & {
   edit: TEditFunc
   saving: boolean
-  seoTab: TDsbSEORoute
   loading: boolean
   isTouched: boolean
   toggleSEO: (seoEnable: boolean) => void
@@ -27,7 +26,7 @@ export default (): TRet => {
   return {
     edit,
     ...pick(SEO_KEYS, dsb$),
-    ...pick(['seoTab', 'loading', 'saving'], dsb$),
+    ...pick(['loading', 'saving'], dsb$),
     isTouched,
     toggleSEO,
   }

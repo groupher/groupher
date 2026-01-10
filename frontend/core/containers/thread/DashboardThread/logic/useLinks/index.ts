@@ -7,6 +7,7 @@ import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import { CHANGE_MODE } from '~/const/mode'
 import { DSB_ROUTE } from '~/const/route'
 import useDashboard from '~/hooks/useDashboard'
+import useDsbMenuTab from '~/hooks/useDsbMenuTab'
 import type { TLinkItem } from '~/spec'
 import { EMPTY_LINK_ITEM } from '../../constant'
 import type { TMoveLinkDir } from '../../spec'
@@ -62,10 +63,12 @@ export default (): TRet => {
     confirmGroupUpdate,
     // keepMoreGroup2EndIfNeed,
   } = useUtils()
+
+  const menuTab = useDsbMenuTab()
+
   const derived = useDerived()
 
   // derived
-  const { menuTab } = dsb$
   const linksKey = menuTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
 
   const updateInGroup = (link: TLinkItem): void => {
