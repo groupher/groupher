@@ -1,15 +1,4 @@
 import type {
-  DSB_ALIAS_ROUTE,
-  DSB_BROADCAST_ROUTE,
-  DSB_DOC_ROUTE,
-  DSB_INFO_ROUTE,
-  DSB_LAYOUT_ROUTE,
-  DSB_ROUTE,
-  DSB_SEO_ROUTE,
-  DSB_THIRD_PART_ROUTE,
-  DSB_WIDGET_ROUTE,
-} from '~/const/route'
-import type {
   TAvatarLayout,
   TBannerLayout,
   TBrandLayout,
@@ -43,7 +32,6 @@ import type {
   TThread,
   TTopbarLayout,
   TUser,
-  TValueOf,
 } from '~/spec'
 
 type TFile = {
@@ -175,16 +163,6 @@ export type TStore = TDsbFieldMap & {
   savingField: string | null
   saving: boolean
   loading: boolean
-
-  menuTab: TValueOf<typeof DSB_ROUTE> | null
-  baseInfoTab: TValueOf<typeof DSB_INFO_ROUTE>
-  aliasTab: TValueOf<typeof DSB_ALIAS_ROUTE>
-  thirdPartTab: TValueOf<typeof DSB_THIRD_PART_ROUTE>
-  seoTab: TValueOf<typeof DSB_SEO_ROUTE>
-  docTab: TValueOf<typeof DSB_DOC_ROUTE>
-  layoutTab: TValueOf<typeof DSB_LAYOUT_ROUTE>
-  broadcastTab: TValueOf<typeof DSB_BROADCAST_ROUTE>
-  widgetTab: TValueOf<typeof DSB_WIDGET_ROUTE>
 
   overview: TOverview
 

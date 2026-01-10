@@ -1,10 +1,9 @@
-import { findIndex, has, omit, update } from 'ramda'
+import { findIndex, has, update } from 'ramda'
 import { useCallback } from 'react'
 import useDashboard from '~/hooks/useDashboard'
 import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
-import persist from '~/utils/persist'
 import { isObject } from '~/validator'
-import { BASEINFO_KEYS, DSB_DEMO_KEY, FIELD, SEO_KEYS } from '../../constant'
+import { BASEINFO_KEYS, FIELD, SEO_KEYS } from '../../constant'
 import type { TDsbFieldKey } from '../../spec'
 import useMutation from '../useMutation'
 
@@ -86,17 +85,6 @@ export default (): TRet => {
     dsb$.commit({ [field]: dsb$.original[field] })
   }
 
-  // save to local settings should omit subTabs,
-  // otherwise it will be choas when save one one tab then switch to other tab
-  const _saveToLocal = (): void => {
-    const saveSlf = omit(
-      ['menuTab', 'baseInfoTab', 'aliasTab', 'layoutTab', 'layoutTab', 'broadcastTab'],
-      dsb$,
-    )
-
-    persist.set(DSB_DEMO_KEY, JSON.stringify(saveSlf))
-  }
-
   const resetEdit = (field: TDsbFieldKey): void => {
     console.log('## resetEdit')
 
@@ -109,7 +97,8 @@ export default (): TRet => {
       dsb$.commit({ editingAlias: null })
     }
 
-    _saveToLocal()
+    console.log('## resetEdit TODO')
+    // _saveToLocal()
     // slf.mark({ demoAlertEnable: true })
   }
 

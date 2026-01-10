@@ -8,7 +8,7 @@ import type { TCommunityInfo, TPagedPosts, TPost, TTag, TThread } from '~/spec'
 import { gqFetch } from '~/utils/api'
 import { parseDashboard, parseWallpaper } from '~/utils/ssr'
 
-const getCommunity = async (community: string, pathname: string): Promise<TCommunityInfo> => {
+const getCommunity = async (community: string): Promise<TCommunityInfo> => {
   'use cache'
   cacheLife('days')
   cacheTag(CACHE_TAG.communityCache(community))
@@ -29,13 +29,13 @@ const getCommunity = async (community: string, pathname: string): Promise<TCommu
 
   return {
     community: data.community,
-    dashboard: parseDashboard(data.community, pathname),
+    dashboard: parseDashboard(data.community),
     wallpaper: parseWallpaper(data.community),
   }
 }
 
 export const getCommunityInfo = async (community$: string): Promise<TCommunityInfo> => {
-  const communityInfo = await getCommunity(community$, '/home/post')
+  const communityInfo = await getCommunity(community$)
 
   const { community, dashboard, wallpaper } = communityInfo
   // console.log('## pagedArticles got in server: ', pagedArticles)

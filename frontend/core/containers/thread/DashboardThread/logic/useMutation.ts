@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import { DSB_INFO_ROUTE } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
+import useDsbTab from '~/hooks/useDsbTab'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { toast } from '~/signal'
 import type { TEditValue, TTag } from '~/spec'
@@ -26,8 +27,9 @@ export default (): TRet => {
   const dashboard$ = useDashboard()
   const community$ = useCommunity()
   const { mutate } = useGraphQLClient()
-  const storeRef = useRef(dashboard$)
+  const { subTab } = useDsbTab()
 
+  const storeRef = useRef(dashboard$)
   const { slug: community } = community$
 
   // get latest store, for those state not in UI render cycle
@@ -172,16 +174,15 @@ export default (): TRet => {
     }
 
     if (field === FIELD.BASE_INFO) {
-      const { baseInfoTab } = dashboard$
-
       const params = { community }
-      if (baseInfoTab === DSB_INFO_ROUTE.BASIC) {
+
+      if (subTab === DSB_INFO_ROUTE.BASIC) {
         for (const key of BASEINFO_BASIC_KEYS) {
           params[key] = dashboard$[key]
         }
       }
 
-      if (baseInfoTab === DSB_INFO_ROUTE.OTHER) {
+      if (subTab === DSB_INFO_ROUTE.OTHER) {
         for (const key of BASEINFO_OTHER_KEYS) {
           params[key] = dashboard$[key]
         }

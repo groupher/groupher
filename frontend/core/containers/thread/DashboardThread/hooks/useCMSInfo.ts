@@ -2,15 +2,13 @@ import { includes, reject, uniq } from 'ramda'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
-import type { TDsbDocRoute, TFAQSection, TID, TPagedArticles, TPagedCommunities } from '~/spec'
+import type { TFAQSection, TID, TPagedArticles, TPagedCommunities } from '~/spec'
 import S from '../schema'
 import useHelper from './useHelper'
 
 type TRet = {
   loading: boolean
   batchSelectedIDs: readonly TID[]
-  docTab: TDsbDocRoute
-
   pagedPosts: TPagedArticles
   pagedCommunities: TPagedCommunities
   pagedDocs: TPagedArticles
@@ -46,7 +44,6 @@ export default (): TRet => {
   const {
     loading,
     batchSelectedIDs,
-    docTab,
     editingFAQIndex,
     pagedCommunities,
     pagedPosts,
@@ -103,7 +100,6 @@ export default (): TRet => {
 
   return {
     loading,
-    docTab,
     editingFAQIndex,
     batchSelectedIDs,
     pagedCommunities: {

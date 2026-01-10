@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import useQuery from '~/hooks/useQuery'
-import type { TCommunity, TDsbBaseInfoRoute, TEditFunc } from '~/spec'
+import type { TCommunity, TEditFunc } from '~/spec'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 import { BASEINFO_KEYS } from '../../constant'
 import S from '../../schema'
@@ -21,8 +21,6 @@ type TRet = TUseInfo &
   TUseDangerZone & {
     loading: boolean
     saving: boolean
-
-    baseInfoTab: TDsbBaseInfoRoute
     edit: TEditFunc
   }
 
@@ -86,7 +84,7 @@ export default (): TRet => {
 
   return {
     edit,
-    ...pick(['baseInfoTab', 'loading', 'saving'], dashboard),
+    ...pick(['loading', 'saving'], dashboard),
     ...useInfoData,
     ...useLogosData,
     ...useSocialLinksData,

@@ -34,10 +34,7 @@ export const getArticlesParams = (community: string, urlInfo: TUrlInfo) => {
   return mergeRight(ARTICLES_FILTER, filter)
 }
 
-export const getCommunity = async (
-  community: string,
-  pathname: string,
-): Promise<TCommunityInfo> => {
+export const getCommunity = async (community: string): Promise<TCommunityInfo> => {
   'use cache'
   cacheLife('days')
   cacheTag(CACHE_TAG.communityCache(community))
@@ -56,7 +53,7 @@ export const getCommunity = async (
 
   return {
     community: data.community,
-    dashboard: parseDashboard(data.community, pathname),
+    dashboard: parseDashboard(data.community),
     wallpaper: parseWallpaper(data.community),
   }
 }
@@ -123,7 +120,7 @@ export const useMetric = async (pathname: string): Promise<TMetric> => {
 }
 
 export const getCommunityInfo = async (community$: string): Promise<TCommunityInfo> => {
-  const communityInfo = await getCommunity(community$, '/home/post')
+  const communityInfo = await getCommunity(community$)
 
   const { community, dashboard, wallpaper } = communityInfo
   // console.log('## pagedArticles got in server: ', pagedArticles)
@@ -141,5 +138,6 @@ export const getCommunityInfo = async (community$: string): Promise<TCommunityIn
  * check if thread has articles, some thread like about has no articles/tags to fetch
  */
 const hasArticles = (thread: TThread) => {
+  // @ts-expect-error
   return [THREAD.POST, THREAD.CHANGELOG].includes(thread)
 }

@@ -4,12 +4,12 @@ import { THIRD_PART_TABS } from '~/const/route'
 import VIEW from '~/const/view'
 import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon from '~/containers/thread/DashboardThread/salon/alias'
-import useDsbRouteTab from '~/hooks/useDsbRouteTab'
+import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 export default ({ children }) => {
   const s = useSalon()
-  const { items, activeTab } = useDsbRouteTab(THIRD_PART_TABS)
+  const { items, activeTab } = useDsbLayoutTabs(THIRD_PART_TABS)
 
   return (
     <div className={s.wrapper}>

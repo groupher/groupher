@@ -1,4 +1,4 @@
-import type { TDashboardTabsConfig } from '~/hooks/useDsbRouteTab'
+import type { TDsbTabs } from '~/hooks/useDsbLayoutTabs'
 
 export const NON_COMMUNITY_ROUTE = {
   APPLY_COMMUNITY: '/apply/community',
@@ -130,20 +130,8 @@ export const DSB_TAB = {
   WIDGET: 'widgetTab',
 } as const
 
-export const BROADCAST_TABS: TDashboardTabsConfig<typeof DSB_BROADCAST_ROUTE> = {
-  tab: DSB_ROUTE.BROADCAST,
-  routeEnum: DSB_BROADCAST_ROUTE,
-  baseSegment: DSB_ROUTE.BROADCAST,
-  items: [
-    { title: '站顶横幅', slug: DSB_BROADCAST_ROUTE.GLOBAL, segment: '' },
-    { title: '文章页脚', slug: DSB_BROADCAST_ROUTE.ARTICLE },
-  ],
-}
-
-export const INFO_TABS: TDashboardTabsConfig<typeof DSB_INFO_ROUTE> = {
-  tab: DSB_ROUTE.INFO,
-  routeEnum: DSB_INFO_ROUTE,
-  baseSegment: DSB_ROUTE.INFO,
+export const INFO_TABS: TDsbTabs = {
+  segment: DSB_ROUTE.INFO,
   items: [
     { title: '基本信息', slug: DSB_INFO_ROUTE.BASIC, segment: '' },
     { title: 'Logo', slug: DSB_INFO_ROUTE.LOGOS },
@@ -152,10 +140,8 @@ export const INFO_TABS: TDashboardTabsConfig<typeof DSB_INFO_ROUTE> = {
   ],
 }
 
-export const LAYOUT_TABS: TDashboardTabsConfig<typeof DSB_LAYOUT_ROUTE> = {
-  tab: DSB_ROUTE.LAYOUT,
-  routeEnum: DSB_LAYOUT_ROUTE,
-  baseSegment: DSB_ROUTE.LAYOUT,
+export const LAYOUT_TABS: TDsbTabs = {
+  segment: DSB_ROUTE.LAYOUT,
   items: [
     { title: '通用', slug: DSB_LAYOUT_ROUTE.GENERAL, segment: '' },
     { title: '主题/背景', slug: DSB_LAYOUT_ROUTE.THEME },
@@ -166,20 +152,24 @@ export const LAYOUT_TABS: TDashboardTabsConfig<typeof DSB_LAYOUT_ROUTE> = {
   ],
 }
 
-export const SEO_TABS: TDashboardTabsConfig<typeof DSB_SEO_ROUTE> = {
-  tab: DSB_ROUTE.SEO,
-  routeEnum: DSB_SEO_ROUTE,
-  baseSegment: DSB_ROUTE.SEO,
+export const BROADCAST_TABS: TDsbTabs = {
+  segment: DSB_ROUTE.BROADCAST,
+  items: [
+    { title: '站顶横幅', slug: DSB_BROADCAST_ROUTE.GLOBAL, segment: '' },
+    { title: '文章页脚', slug: DSB_BROADCAST_ROUTE.ARTICLE },
+  ],
+}
+
+export const SEO_TABS: TDsbTabs = {
+  segment: DSB_ROUTE.SEO,
   items: [
     { title: '搜索引擎', slug: DSB_SEO_ROUTE.SEARCH_ENGINE, segment: '' },
     { title: 'Twitter', slug: DSB_SEO_ROUTE.TWITTER },
   ],
 }
 
-export const THIRD_PART_TABS: TDashboardTabsConfig<typeof DSB_THIRD_PART_ROUTE> = {
-  tab: DSB_ROUTE['THIRD-PART'],
-  routeEnum: DSB_THIRD_PART_ROUTE,
-  baseSegment: DSB_ROUTE['THIRD-PART'],
+export const THIRD_PART_TABS: TDsbTabs = {
+  segment: DSB_ROUTE['THIRD-PART'],
   items: [
     { title: '统计分析', slug: DSB_THIRD_PART_ROUTE.ANALYTICS, segment: '' },
     { title: 'Webhooks', slug: DSB_THIRD_PART_ROUTE.WEBHOOKS },
@@ -189,10 +179,8 @@ export const THIRD_PART_TABS: TDashboardTabsConfig<typeof DSB_THIRD_PART_ROUTE> 
   ],
 }
 
-export const ALIAS_TABS: TDashboardTabsConfig<typeof DSB_ALIAS_ROUTE> = {
-  tab: DSB_ROUTE.ALIAS,
-  routeEnum: DSB_ALIAS_ROUTE,
-  baseSegment: DSB_ROUTE.ALIAS,
+export const ALIAS_TABS: TDsbTabs = {
+  segment: DSB_ROUTE.ALIAS,
   items: [
     { title: '板块入口', slug: DSB_ALIAS_ROUTE.THREAD, segment: '' },
     { title: '看板', slug: DSB_ALIAS_ROUTE.KANBAN },
@@ -200,10 +188,8 @@ export const ALIAS_TABS: TDashboardTabsConfig<typeof DSB_ALIAS_ROUTE> = {
   ],
 }
 
-export const WIDGET_TABS: TDashboardTabsConfig<typeof DSB_WIDGET_ROUTE> = {
-  tab: DSB_ROUTE.WIDGETS,
-  routeEnum: DSB_WIDGET_ROUTE,
-  baseSegment: DSB_ROUTE.WIDGETS,
+export const WIDGET_TABS: TDsbTabs = {
+  segment: DSB_ROUTE.WIDGETS,
   items: [
     { title: '侧边栏', slug: DSB_WIDGET_ROUTE.DRAWER, segment: '' },
     { title: '居中模态框', slug: DSB_WIDGET_ROUTE.MODAL },

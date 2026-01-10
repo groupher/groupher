@@ -3,7 +3,8 @@ import 'rsuite-table/dist/css/rsuite-table.css'
 
 import { DSB_ROUTE } from '~/const/route'
 
-import useTabInfo from '../logic/useTab'
+import useDsbTab from '~/hooks/useDsbTab'
+
 import useSalon from '../salon/cms'
 import Changelogs from './Changelogs'
 import Communities from './Communities'
@@ -16,7 +17,7 @@ const CMS: FC = () => {
   const s = useSalon()
 
   let contents = null
-  const { menuTab: route } = useTabInfo()
+  const { mainTab: route } = useDsbTab()
 
   switch (route) {
     case DSB_ROUTE.COMMUNITIES: {

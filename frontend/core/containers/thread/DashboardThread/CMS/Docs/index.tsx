@@ -6,31 +6,21 @@ import useCommunity from '~/hooks/useCommunity'
 
 import Tabs from '~/widgets/Switcher/Tabs'
 import { DOC_TABS } from '../../constant'
-import useCMSInfo from '../../hooks/useCMSInfo'
+// import useCMSInfo from '../../hooks/useCMSInfo'
 import useDoc from '../../logic/useDoc'
 import useSalon from '../../salon/cms/docs'
-import Cover from './Cover'
-import FAQ from './FAQ'
-import TableView from './Table'
-import TreeView from './Tree'
+// import Cover from './Cover'
+// import FAQ from './FAQ'
+// import TableView from './Table'
+// import TreeView from './Tree'
 
 export default () => {
   const s = useSalon()
   const { edit } = useDoc()
 
-  const {
-    pagedDocs,
-    docTab,
-    batchSelectedIDs,
-    loading,
-    faqSections,
-    editingFAQ,
-    editingFAQIndex,
-    isFaqSectionsTouched,
-  } = useCMSInfo()
-
   const router = useRouter()
   const { slug: community } = useCommunity()
+  const docTab = DSB_DOC_ROUTE.TABLE
 
   return (
     <div className={s.wrapper}>
@@ -53,7 +43,7 @@ export default () => {
         />
       </div>
 
-      {docTab === DSB_DOC_ROUTE.TREE && <TreeView pagedDocs={pagedDocs} />}
+      {/* {docTab === DSB_DOC_ROUTE.TREE && <TreeView pagedDocs={pagedDocs} />}
       {docTab === DSB_DOC_ROUTE.TABLE && (
         <TableView
           pagedDocs={pagedDocs}
@@ -69,7 +59,7 @@ export default () => {
           editingFAQ={editingFAQ}
           isTouched={isFaqSectionsTouched}
         />
-      )}
+      )} */}
     </div>
   )
 }
