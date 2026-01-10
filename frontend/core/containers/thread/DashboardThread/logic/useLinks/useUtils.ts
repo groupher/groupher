@@ -7,7 +7,7 @@ import { DSB_ROUTE, ROUTE } from '~/const/route'
 import { groupByKey, sortByGroupIndex } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import useDsbMenuTab from '~/hooks/useDsbMenuTab'
+import useDsbTab from '~/hooks/useDsbTab'
 import type { TGroupedLinks, TLinkItem } from '~/spec'
 
 import { EMPTY_LINK_ITEM } from '../../constant'
@@ -28,7 +28,7 @@ export type TRet = {
 export default (): TRet => {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
-  const menuTab = useDsbMenuTab()
+  const { mainTab } = useDsbTab()
 
   const storeRef = useRef(dsb$)
 
@@ -39,10 +39,10 @@ export default (): TRet => {
   const getLinks = (): TLinkItem[] => {
     const { headerLinks, footerLinks } = storeRef.current
 
-    return clone(menuTab !== DSB_ROUTE.FOOTER ? headerLinks : footerLinks)
+    return clone(mainTab !== DSB_ROUTE.FOOTER ? headerLinks : footerLinks)
   }
 
-  const linksKey = menuTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
+  const linksKey = mainTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
 
   const emptyLinksIfNeed = (links: TLinkItem[]): TLinkItem[] => {
     if (linksKey === 'headerLinks' && links.length === 1 && links[0].group === MORE_GROUP) {

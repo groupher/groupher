@@ -1,4 +1,4 @@
-import type { TDsbTabs } from '~/hooks/useDsbLayoutTab'
+import type { TDsbTabs } from '~/hooks/useDsbLayoutTabs'
 
 export const NON_COMMUNITY_ROUTE = {
   APPLY_COMMUNITY: '/apply/community',

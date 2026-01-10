@@ -1,15 +1,16 @@
 import { equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
 import { useEffect, useRef } from 'react'
-// import { DSB_INFO_ROUTE } from '~/const/route'
+import { DSB_INFO_ROUTE } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
+import useDsbTab from '~/hooks/useDsbTab'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { toast } from '~/signal'
 import type { TEditValue, TTag } from '~/spec'
 import {
-  // BASEINFO_BASIC_KEYS,
+  BASEINFO_BASIC_KEYS,
   BASEINFO_KEYS,
-  // BASEINFO_OTHER_KEYS,
+  BASEINFO_OTHER_KEYS,
   FIELD,
   LAYOUT_FIELD,
   SEO_KEYS,
@@ -26,8 +27,9 @@ export default (): TRet => {
   const dashboard$ = useDashboard()
   const community$ = useCommunity()
   const { mutate } = useGraphQLClient()
-  const storeRef = useRef(dashboard$)
+  const { subTab } = useDsbTab()
 
+  const storeRef = useRef(dashboard$)
   const { slug: community } = community$
 
   // get latest store, for those state not in UI render cycle
@@ -172,25 +174,23 @@ export default (): TRet => {
     }
 
     if (field === FIELD.BASE_INFO) {
-      console.log('## 区分 baseInfoTab')
-      // const { baseInfoTab } = dashboard$
+      const params = { community }
 
-      // const params = { community }
-      // if (baseInfoTab === DSB_INFO_ROUTE.BASIC) {
-      //   for (const key of BASEINFO_BASIC_KEYS) {
-      //     params[key] = dashboard$[key]
-      //   }
-      // }
+      if (subTab === DSB_INFO_ROUTE.BASIC) {
+        for (const key of BASEINFO_BASIC_KEYS) {
+          params[key] = dashboard$[key]
+        }
+      }
 
-      // if (baseInfoTab === DSB_INFO_ROUTE.OTHER) {
-      //   for (const key of BASEINFO_OTHER_KEYS) {
-      //     params[key] = dashboard$[key]
-      //   }
-      // }
+      if (subTab === DSB_INFO_ROUTE.OTHER) {
+        for (const key of BASEINFO_OTHER_KEYS) {
+          params[key] = dashboard$[key]
+        }
+      }
 
-      // handleMutation(S.updateDashboardBaseInfo, params, (data) =>
-      //   community$.commit({ ...data.updateDashboardBaseInfo }),
-      // )
+      handleMutation(S.updateDashboardBaseInfo, params, (data) =>
+        community$.commit({ ...data.updateDashboardBaseInfo }),
+      )
       return
     }
 

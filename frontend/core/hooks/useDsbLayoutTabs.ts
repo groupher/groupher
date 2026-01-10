@@ -11,7 +11,7 @@ export type TDsbTabs = {
   items: readonly TTabDef[]
 }
 
-export default function useDsbLayoutTab(cfg: TDsbTabs): {
+export default function useDsbLayoutTabs(cfg: TDsbTabs): {
   items: TTabItem[]
   activeTab: string
 } {
@@ -25,7 +25,7 @@ export default function useDsbLayoutTab(cfg: TDsbTabs): {
   const activeTab = subpart ? subpart : defaultTab
 
   if (process.env.NODE_ENV === 'development' && !subpart) {
-    console.warn('[useDsbLayoutTab] index route hit, fallback to defaultTab:', defaultTab)
+    console.warn('[useDsbLayoutTabs] index route hit, fallback to defaultTab:', defaultTab)
   }
 
   const base = `/${community}/dashboard/${cfg.segment}`

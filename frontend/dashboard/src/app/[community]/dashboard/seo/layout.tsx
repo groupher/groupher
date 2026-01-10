@@ -7,14 +7,14 @@ import useSEO from '~/containers/thread/DashboardThread/logic/useSEO'
 import Portal from '~/containers/thread/DashboardThread/Portal'
 import SavingBar from '~/containers/thread/DashboardThread/SavingBar'
 import useSalon from '~/containers/thread/DashboardThread/salon/seo'
-import useDsbLayoutTab from '~/hooks/useDsbLayoutTab'
+import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 export default ({ children }) => {
   const s = useSalon()
 
   const { saving, isTouched } = useSEO()
-  const { items, activeTab } = useDsbLayoutTab(SEO_TABS)
+  const { items, activeTab } = useDsbLayoutTabs(SEO_TABS)
 
   return (
     <div className={s.wrapper}>
