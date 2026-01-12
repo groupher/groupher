@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, br, bg, primary, shadow, isBlackPrimary } = useTwBelt()
+  const { cn, br, hoverBr, bg, primary, shadow, isBlackPrimary } = useTwBelt()
 
   return {
     wrapper: 'column-center w-8/12 pl-32',
@@ -10,10 +10,9 @@ export default () => {
     content: 'column w-full',
 
     blockBase: cn(
-      'relative border w-72 rounded-md px-4 py-4 border pointer saturate-0 opacity-55',
+      'relative w-72 rounded-md px-4 py-4 pointer saturate-0 opacity-80',
       'hover:opacity-100 hover:saturate-100 trans-all-200',
-      `hover:${primary('borderSoft')}`,
-      br('text.hint'),
+      hoverBr(),
       bg('alphaBg'),
     ),
     blockBaseActive: cn(

@@ -25,6 +25,7 @@ type TRet = {
   bg: (key: TFlatThemeKey) => string
   fill: (key: TFlatThemeKey) => string
   br: (key: TFlatThemeKey) => string
+  hoverBr: () => string
   rainbow: (color: TColorName, prefix?: TColorPrefix) => string
   rainbowSoft: (color: TColorName | string) => string
   primary: (prefix?: TColorPrefix) => string
@@ -85,6 +86,8 @@ export default (): TRet => {
   const bg = (key: TFlatThemeKey) => _theme(key, 'bg')
   const fill = (key: TFlatThemeKey) => _theme(key, 'fill')
   const br = (key: TFlatThemeKey) => _theme(key, 'border')
+
+  const hoverBr = () => cn('border', br('divider'), `hover:${primary('borderSoft')}`)
 
   const _rainbowAlias = (prefix: TColorPrefix): string => {
     switch (prefix) {
@@ -367,6 +370,7 @@ export default (): TRet => {
     bg,
     fill,
     br,
+    hoverBr,
     rainbow,
     rainbowSoft,
     primary,
