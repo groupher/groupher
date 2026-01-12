@@ -9,8 +9,11 @@ import Client from './Client'
 export default async ({ children, params }) => {
   const params$ = await params
 
-  const { community } = await getCommunityInfo(params$.community)
-  const localeData = await getLocaleData()
+  const [{ community }, localeData] = await Promise.all([
+    getCommunityInfo(params$.community),
+    getLocaleData(),
+  ])
+
   // console.log('## localeData: ', localeData)
   // console.log('## got community$ in layout: ', community)
 
