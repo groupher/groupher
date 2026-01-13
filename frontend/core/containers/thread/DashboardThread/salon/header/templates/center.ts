@@ -9,7 +9,7 @@ export default () => {
   const base = useBase()
 
   return {
-    wrapper: cn(base.template, 'row-center-between px-5'),
+    wrapper: cn(base.template, 'row-between px-5'),
     active: base.templateActive,
     left: 'row-center gap-x-2.5',
     center: 'row-center gap-x-6 -ml-4',

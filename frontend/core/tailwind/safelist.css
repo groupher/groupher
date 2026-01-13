@@ -14,7 +14,8 @@
 /* rainbow */
 @source inline('{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');
 
-@source inline('border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,purple}/50');
+@source inline('border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,purple,black}/50');
+@source inline("{hover:}border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,purple,black}/50");
 
 /* z-index */
 @source inline('z-{modal,popover,tooltip,modalOverlay,modalCloseBtn,drawer,drawerOverlay,articleFixedHeader,header}');

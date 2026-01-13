@@ -10,7 +10,7 @@ export default () => {
   const { cn, fg, bg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row-center-between absolute left-0 top-0 w-full h-8 px-3 trans-all-200'),
+    wrapper: cn('row-between absolute left-0 top-0 w-full h-8 px-3 trans-all-200'),
     actions: 'row-center mt-1.5',
     dot: 'size-2 circle ml-2 brightness-125',
     redBg: rainbow(COLOR_NAME.RED, 'bg'),

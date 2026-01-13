@@ -9,7 +9,7 @@ export default ({ isOpened }: TProps) => {
 
   return {
     wrapper: cn('py-4 w-full'),
-    header: 'row-center-between pointer group hover:underline',
+    header: 'row-between pointer group hover:underline',
     title: cn(
       'text-lg bold-sm',
       hover('fg'),

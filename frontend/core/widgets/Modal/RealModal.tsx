@@ -55,6 +55,8 @@ const RealModal: FC<TProps> = ({
     }
   }, [show, visibleOnPage])
 
+  if (!show) return null
+
   return (
     <Portal>
       <div

@@ -29,7 +29,7 @@ export default () => {
     iconBox: 'align-both size-8',
     //
     icon: 'size-5 -mt-0.5',
-    footer: cn('row-center-between mt-4 ml-0.5 text-sm', fg('text.digest')),
+    footer: cn('row-between mt-4 ml-0.5 text-sm', fg('text.digest')),
     //
     link: cn(linkable(), fg('text.digest'), `hover:${fg('text.title')}`),
   }

@@ -9,7 +9,7 @@ export default () => {
       `hover:${br('divider')}`,
       bg('card'),
     ),
-    header: 'row-center-between mb-2.5',
+    header: 'row-between mb-2.5',
     title: cn('text-base w-full line-clamp-2', fg('text.title')),
   }
 }

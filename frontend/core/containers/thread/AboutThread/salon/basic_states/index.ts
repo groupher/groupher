@@ -8,7 +8,7 @@ export default () => {
   const { cn, fg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row-center-between w-full mt-8 mb-5'),
+    wrapper: cn('row-between w-full mt-8 mb-5'),
     block: 'column items-start w-1/5 pl-5',
     title: cn('text-sm bold', fg('text.digest')),
     desc: cn('text-xs mt-0.5', fg('text.hint')),

@@ -9,9 +9,9 @@ export default () => {
       `hover:${br('divider')}`,
       bg('card'),
     ),
-    header: 'row-center-between mb-2.5',
+    header: 'row-between mb-2.5',
     title: cn('text-base w-full line-clamp-2', fg('text.title')),
     desc: cn('text-xs line-clamp-1', fg('text.digest')),
-    footer: 'row-center-between text-xs mt-2',
+    footer: 'row-between text-xs mt-2',
   }
 }

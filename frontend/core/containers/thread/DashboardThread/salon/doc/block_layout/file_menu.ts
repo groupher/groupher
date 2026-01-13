@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: cn('column p-1.5 w-24'),
-    item: 'group row-center-between',
+    item: 'group row-between',
     title: cn('text-xs', fg('text.title')),
     transforIcon: cn('text-xs size-3', fill('text.digest')),
   }

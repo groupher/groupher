@@ -9,7 +9,7 @@ export default ({ visible }: TProps) => {
 
   return {
     wrapper: cn(
-      'fixed row-center-between w-full -ml-20 px-16 h-14 backdrop-blur-sm z-50 trans-all-200',
+      'fixed row-between w-full -ml-20 px-16 h-14 backdrop-blur-sm z-50 trans-all-200',
       visible ? 'top-0 opacity-100' : '-top-16 opacity-0',
       bg('alphaBg'),
     ),

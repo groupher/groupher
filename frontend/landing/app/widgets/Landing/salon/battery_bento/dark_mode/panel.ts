@@ -15,7 +15,7 @@ export default () => {
     ),
     //
     switchBox: cn(
-      'absolute row-center-between px-1 w-16 h-7 z-20 rounded-lg border scale-90 trans-all-200',
+      'absolute row-between px-1 w-16 h-7 z-20 rounded-lg border scale-90 trans-all-200',
       br('divider'),
       bg('alphaBg'),
       shadow('xl'),

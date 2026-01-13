@@ -45,7 +45,7 @@ export default () => {
     bar: cn('h-1.5 w-40 mt-4 opacity-30 rounded-md', bg('text.digest')),
     // cover
     coverWrapper: cn(
-      'relative row-center-between mt-5 mb-4 w-64 h-24 rounded-md',
+      'relative row-between mt-5 mb-4 w-64 h-24 rounded-md',
       isLightTheme ? 'opacity-25' : 'opacity-40',
       rainbow('CYAN', 'bg'),
     ),

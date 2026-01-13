@@ -13,7 +13,7 @@ export default ({ fold }: TProps) => {
 
   return {
     wrapper: 'mb-4',
-    folder: cn('row-center-between group pointer mb-3'),
+    folder: cn('row-between group pointer mb-3'),
     iconBox: cn('align-both size-5'),
     title: cn('text-sm grow ml-2 bold', fg('text.digest'), !isLightTheme && 'brightness-110'),
     arrowIcon: cn(

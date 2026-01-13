@@ -26,7 +26,7 @@ export default ({ isPinned }: TProps) => {
       fg('text.digest'),
       'before:content-["#"] before:mr-0.5 before:text-base before:mt-px',
     ),
-    bottomInfo: 'row-center-between pb-8 w-full',
+    bottomInfo: 'row-between pb-8 w-full',
     avatar: cn('size-4 mr-2', avatar()),
     authorName: cn(
       'row-center',

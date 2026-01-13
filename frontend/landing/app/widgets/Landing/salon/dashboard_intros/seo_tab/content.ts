@@ -8,10 +8,7 @@ export default () => {
   const { cn, fg, bg, br, shadow, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn(
-      'row-center-between absolute bottom-12 w-11/12 h-56 px-4 py-2 rounded-xl',
-      bg('hoverBg'),
-    ),
+    wrapper: cn('row-between absolute bottom-12 w-11/12 h-56 px-4 py-2 rounded-xl', bg('hoverBg')),
     ogPanel: 'w-1/2 pl-6 relative',
     twPanel: 'w-1/2 pl-12 relative',
     title: cn('text-xs mb-0.5 bold-sm', fg('text.title')),
