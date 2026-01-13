@@ -14,7 +14,7 @@ export default () => {
     inner: cn('px-5 py-4 border rounded z-10 min-h-52', bg('card'), br('divider')),
     //
     header: 'column mb-4',
-    topping: 'row-center-between',
+    topping: 'row-between',
     updateDate: cn('text-xs', fg('text.hint')),
     //
     title: cn('text-lg bold-sm mt-1.5', fg('text.title')),

@@ -10,7 +10,7 @@ export default ({ offsetRight, withLastUpdated }: TProps) => {
   return {
     wrapper: cn(
       'w-full pt-12 border-t',
-      withLastUpdated ? 'row-center-between' : 'column-align-both',
+      withLastUpdated ? 'row-between' : 'column-align-both',
       withLastUpdated ? 'pr-0' : `pr-${offsetRight}`,
       br('divider'),
     ),

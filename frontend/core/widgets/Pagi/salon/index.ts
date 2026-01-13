@@ -10,7 +10,7 @@ export default ({ ...spacing }: TProps) => {
 
   return {
     wrapper: cn('row justify-center w-full', margin(spacing)),
-    inner: 'row-center-between w-56',
+    inner: 'row-between w-56',
     empty: 'align-both',
     //
     main: 'row-center ml-10 mr-8',

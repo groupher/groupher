@@ -4,7 +4,7 @@ export default () => {
   const { cn, fg, fill, avatar } = useTwBelt()
 
   return {
-    wrapper: cn('row-center-between mt-4'),
+    wrapper: cn('row-between mt-4'),
     account: 'row-center',
     avatar: cn('size-5', avatar()),
     username: cn('text-sm ml-3', fg('text.digest')),

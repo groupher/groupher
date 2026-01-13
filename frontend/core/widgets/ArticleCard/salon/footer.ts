@@ -6,6 +6,6 @@ export default () => {
   return {
     wrapper: cn(fg('text.digest')),
     publish: 'row-center text-sm ml-0.5 mb-2',
-    bottom: 'row-center-between',
+    bottom: 'row-between',
   }
 }

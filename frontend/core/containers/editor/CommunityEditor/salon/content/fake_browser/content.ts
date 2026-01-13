@@ -8,7 +8,7 @@ export default () => {
   return {
     wrapper: cn('column relative w-full'),
     desc: cn('absolute right-8 top-16 mt-2 text-xs line-clamp-2 w-32 break-all', fg('text.digest')),
-    banner: 'row-center-between relative h-16 px-20 rounded-md',
+    banner: 'row-between relative h-16 px-20 rounded-md',
 
     logo: cn('size-6 mr-5 rounded border', br('divider')),
     title: cn('text-sm ml-2 min-w-24', fg('text.title'), cut('w-24')),

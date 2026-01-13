@@ -1,73 +1,36 @@
 import Image from 'next/image'
 import type { FC } from 'react'
-
+import { useState } from 'react'
 import useSalon, { cn } from '../salon/third_part'
+import { INTEGRATE_ANALYSIS_TOOLS } from './constant'
+import SettingModal from './SettingModal'
 
-export const INTEGRATE_ANALYSIS_TOOLS = [
-  {
-    key: 'ga',
-    title: 'Google Analytics',
-    desc: '页面访问量、来源渠道、用户路径、事件与转化数据。',
-    homepage: 'https://developers.google.com/analytics',
-  },
-  {
-    key: 'gtm',
-    title: 'Google Tag Manager',
-    desc: '基于触发条件加载和管理第三方脚本与事件标签。',
-    homepage: 'https://developers.google.com/tag-platform/tag-manager',
-  },
-  {
-    key: 'fb_pixel',
-    title: 'Facebook Pixel ID',
-    desc: '广告访问、转化事件与受众数据回传。',
-    homepage: 'https://developers.facebook.com/docs/meta-pixel',
-  },
-  {
-    key: 'hotjar',
-    title: 'Hotjar Site ID',
-    desc: '页面点击与滚动热力图，以及用户会话回放。',
-    homepage: 'https://www.hotjar.com/guides/',
-  },
-  {
-    key: 'clarity',
-    title: 'MS Clarity',
-    desc: '用户会话回放、点击与滚动热力图。',
-    homepage: 'https://learn.microsoft.com/zh-cn/clarity/',
-  },
-  {
-    key: 'plausible',
-    title: 'Plausible Analytics',
-    desc: '页面访问量、来源渠道与基础事件统计，不使用第三方 Cookie。',
-    homepage: 'https://plausible.io/docs',
-  },
-  {
-    key: 'fathom',
-    title: 'Fathom Analytics Site ID',
-    desc: '页面访问量与事件统计，支持无 Cookie 追踪。',
-    homepage: 'https://usefathom.com/docs',
-  },
-  {
-    key: 'umami',
-    title: 'Umami Analytics',
-    desc: '页面访问量、事件与来源数据，支持自托管部署。',
-    homepage: 'https://umami.is/docs',
-  },
-  {
-    key: 'matomo',
-    title: 'Matomo Analytics',
-    desc: '访问量、事件、目标、用户路径与自定义报表分析。',
-    homepage: 'https://developer.matomo.org/integration',
-  },
-]
+import type { TIntegrateAnalysisTool } from './spec'
 
 const ThirdPart: FC = () => {
+  const [showSettingModal, setShowSettingModal] = useState(false)
+  const [selectedService, setSelectedService] = useState<TIntegrateAnalysisTool | null>(null)
+
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
+      <SettingModal
+        show={showSettingModal}
+        service={selectedService}
+        onClose={() => setShowSettingModal(false)}
+      />
+
       <div className={s.inner}>
         {INTEGRATE_ANALYSIS_TOOLS.map((item) => (
-          <div key={item.key} className={s.block}>
+          <button
+            key={item.key}
+            className={s.block}
+            onClick={() => {
+              setSelectedService(item)
+              setShowSettingModal(true)
+            }}
+          >
             <div className={s.iconBox}>
               <Image
                 src={`/integrations/${item.key}.png`}
@@ -86,7 +49,7 @@ const ThirdPart: FC = () => {
 
             <div className={s.title}>{item.title}</div>
             <div className={s.desc}>{item.desc}</div>
-          </div>
+          </button>
         ))}
       </div>
     </div>

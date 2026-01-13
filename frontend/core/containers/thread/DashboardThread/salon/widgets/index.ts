@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: cn('column w-10/12 pl-7'),
-    typeSelect: 'row-center-between mb-5',
+    typeSelect: 'row-between mb-5',
     tabs: cn('border-b', br('divider')),
 
     viewIcon: cn('size-3 mr-2', primary('fill')),

@@ -1,6 +1,5 @@
-import type { TColorName } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TColorName } from '~/spec'
 
 type TProps = {
   color: TColorName
@@ -17,7 +16,7 @@ export default ({ color }: TProps) => {
     //
     title: cn('text-base', fg('text.title')),
     desc: cn('text-sm line-clamp-2 mt-1.5', fg('text.digest')),
-    footer: cn('row-center-between w-full mt-4'),
+    footer: cn('row-between w-full mt-4'),
     authorHint: cn('text-xs', fg('text.hint')),
     moreLink: 'mt-1 scale-90',
   }

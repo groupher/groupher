@@ -4,7 +4,7 @@ export default () => {
   const { cn, fg } = useTwBelt()
 
   return {
-    wrapper: 'row-center-between w-full',
+    wrapper: 'row-between w-full',
     brandLink: cn('text-sm bold no-underline hover:nderline', fg('text.title')),
     linksInfo: 'row-center gap-x-4',
     linkItem: cn(

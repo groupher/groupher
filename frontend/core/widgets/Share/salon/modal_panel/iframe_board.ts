@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: 'h-full',
-    header: 'row-center-between mb-3.5',
+    header: 'row-between mb-3.5',
     title: cn('text-sm', fg('text.title')),
     codeWrapper: cn('text-xs -ml-1.5', fg('text.digest')),
     inputer: bg('divider'),

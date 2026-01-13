@@ -4,7 +4,7 @@ export default () => {
   const { cn, fg, fill } = useTwBelt()
 
   return {
-    wrapper: cn('row-center-between px-0.5 w-full'),
+    wrapper: cn('row-between px-0.5 w-full'),
     title: cn('row-center text-base bold-sm mt-1.5', fg('text.title')),
     count: cn('text-xs ml-2.5', fg('text.digest')),
     kanbanIcon: cn('size-4 mr-2 mt-1.5 rotate-180', fill('text.digest')),

@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: cn(
-      'row-center-between px-4 pb-0 z-20 w-11/12 h-16 rounded-xl border',
+      'row-between px-4 pb-0 z-20 w-11/12 h-16 rounded-xl border',
       'absolute top-2 left-4',
       fg('text.digest'),
       bg('card'),

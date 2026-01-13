@@ -4,6 +4,6 @@ export default () => {
   const { cn } = useTwBelt()
 
   return {
-    wrapper: cn('row-center-between mb-2 px-7'),
+    wrapper: cn('row-between mb-2 px-7'),
   }
 }

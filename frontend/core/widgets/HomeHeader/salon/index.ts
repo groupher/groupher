@@ -32,7 +32,7 @@ export default ({ extend = false, isSticky = false }: TProps = {}) => {
       zIndex('header'),
       br('divider'),
     ),
-    inner: cn('row-center-between w-full px-28 h-16'),
+    inner: cn('row-between w-full px-28 h-16'),
     brand: cn(linkable()),
     links: cn('row-center gap-x-4 ml-16 mt-px'),
     linkItem: hoverLink(),

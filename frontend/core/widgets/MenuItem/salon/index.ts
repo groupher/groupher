@@ -1,12 +1,10 @@
-import MENU from '~/const/menu'
 import { COLOR_NAME } from '~/const/colors'
-
+import MENU from '~/const/menu'
+import useTwBelt from '~/hooks/useTwBelt'
 import ArrowSVG from '~/icons/Arrow'
 import Arrow2TopSVG from '~/icons/Arrow2Top'
 import SettingSVG from '~/icons/Setting'
 import DeleteSVG from '~/icons/Trash'
-
-import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
@@ -14,7 +12,7 @@ export default () => {
   const { cn, menu, fill, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn(menu('bar'), 'row-center-between px-1 py-1'),
+    wrapper: cn(menu('bar'), 'row-between px-1 py-1'),
     title: cn(menu('title'), 'text-xs'),
     deleteTitle: cn(
       menu('title'),

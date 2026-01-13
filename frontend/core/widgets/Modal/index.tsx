@@ -1,4 +1,4 @@
-import { type FC, type ReactNode, useCallback, memo } from 'react'
+import { type FC, memo, type ReactNode, useCallback } from 'react'
 
 import useShortcut from '~/hooks/useShortcut'
 

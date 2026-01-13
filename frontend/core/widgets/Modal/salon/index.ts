@@ -10,7 +10,7 @@ export default ({ visible }) => {
 
   return {
     wrapper: cn(
-      'relative mx-auto h-auto rounded-md min-h-72 border',
+      'relative column mx-auto h-auto rounded-md min-h-72 border',
       shadow('modal'),
       br('divider'),
       bg('modal.bg'),
@@ -20,12 +20,12 @@ export default ({ visible }) => {
       bg('modal.mask'),
       zIndex('modalOverlay', visible),
     ),
-    children: 'min-h-72 h-auto overflow-y-scroll',
+    children: cn('min-h-72 h-auto', 'grow', 'overflow-y-auto', 'min-h-0'),
     //
     closeBox: cn('align-both size-7 absolute top-3.5 right-4 z-10', hover('bg')),
     closeIcon: cn('size-5', hover('icon'), zIndex('modalCloseBtn')),
     //
-    glowLight: 'absolute w-full h-3/5 opacity-65 top-0 left-0 rotate-y-180',
+    glowLight: 'absolute w-full h-3/5 opacity-65 top-0 left-0 rotate-y-180 pointer-events-none',
     glowLightStyle: (glowType, theme) => {
       if (!glowType) return {}
 

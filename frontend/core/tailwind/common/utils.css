@@ -11,7 +11,7 @@
     @apply flex flex-row items-center justify-center;
   }
 
-  .row-center-between {
+  .row-between {
     @apply flex flex-row items-center justify-between;
   }
 

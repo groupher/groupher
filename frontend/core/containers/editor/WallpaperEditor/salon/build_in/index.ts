@@ -8,7 +8,7 @@ export default () => {
   return {
     wrapper: cn('relative ml-7'),
     title: cn('text-sm bold-sm mb-4 ml-0.5', fg('text.digest')),
-    switchWrapper: 'row-center-between pr-2.5 ml-px',
+    switchWrapper: 'row-between pr-2.5 ml-px',
     //
     settingWrapper: 'row ml-1',
     generalSettings: 'w-1/2',

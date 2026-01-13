@@ -11,7 +11,7 @@ export default () => {
       fg('text.title'),
       'hover:underline pointer',
     ),
-    tags: 'row-center-between mb-4',
+    tags: 'row-between mb-4',
     body: cn('text-base leading-[1.85]', fg('text.digest')),
     footer: 'row-center mt-5 -ml-1.5 mr-3',
     dateTime: cn('text-xs opacity-60 -mt-0.5 mr-1.5', fg('text.digest')),
