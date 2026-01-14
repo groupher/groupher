@@ -1,5 +1,5 @@
 import { COLOR_NAME } from '~/const/colors'
-import useSalon, {} from '../../salon/articles_intro_tabs/kanban_tab/intro_digest'
+import useSalon from '../../salon/articles_intro_tabs/kanban_tab/intro_digest'
 import FeatItem from '../FeatItem'
 
 const color = COLOR_NAME.BLUE

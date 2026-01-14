@@ -1,7 +1,7 @@
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
 
-import useSalon, {} from '../../../salon/articles_intro_tabs/help_tab/help_demo/inline_comment'
+import useSalon from '../../../salon/articles_intro_tabs/help_tab/help_demo/inline_comment'
 
 export default function InlineComment() {
   const s = useSalon()

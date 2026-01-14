@@ -1,8 +1,7 @@
 import ImageSVG from '~/icons/Image'
 
 import useSEO from '../../logic/useSEO'
-
-import useSalon, {} from '../../salon/seo/twitter_preview/summary_large_layout'
+import useSalon from '../../salon/seo/twitter_preview/summary_large_layout'
 
 // example: https://www.sketch.com/blog/design-portfolio-mindsets/?utm_source=stephaniewalter.design&utm_medium=weeklylinks
 // twitter:card = summary_large_image
