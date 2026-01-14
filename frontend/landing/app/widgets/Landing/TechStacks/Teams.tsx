@@ -4,7 +4,7 @@ import Facepile from '~/widgets/Facepile/LandingPage'
 
 import useSalon from '../salon/tech_stacks/teams'
 
-export default () => {
+export default function Teams() {
   const s = useSalon()
 
   const users = mockUsers(7)

@@ -3,7 +3,7 @@ import useSalon, { cn } from '../../../salon/articles_intro_tabs/kanban_tab/kanb
 import Banner from './Banner'
 import KanbanItem from './KanbanItem'
 
-export default () => {
+export default function KanbanDemo() {
   const s = useSalon()
 
   return (

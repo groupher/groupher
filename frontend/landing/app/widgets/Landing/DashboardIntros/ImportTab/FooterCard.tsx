@@ -2,7 +2,7 @@ import Img from '~/Img'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/import_tab/footer_card'
 
-export default () => {
+export default function FooterCard() {
   const s = useSalon()
 
   return (

@@ -9,7 +9,7 @@ import Teams from './Teams'
 
 const Trend: any = dynamic(() => import('react-trend'), { ssr: false })
 
-export default () => {
+export default function GithubCard() {
   const s = useSalon()
 
   return (

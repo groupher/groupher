@@ -2,7 +2,7 @@ import HashTagSVG from '~/icons/HashTagBold'
 
 import useSalon from '../../salon/dashboard_intros/tags_tab/tag_barnner'
 
-export default () => {
+export default function TagBanner() {
   const s = useSalon()
 
   return (

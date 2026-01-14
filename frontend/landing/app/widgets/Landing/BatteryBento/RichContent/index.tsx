@@ -2,7 +2,7 @@ import useHover from '~/hooks/useHover'
 import useSalon from '../../salon/battery_bento/rich_content'
 import Panel from './Panel'
 
-export default () => {
+export default function RichContent() {
   const s = useSalon()
 
   const [cardRef, isCardHovered] = useHover<HTMLDivElement>()

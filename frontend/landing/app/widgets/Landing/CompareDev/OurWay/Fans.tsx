@@ -4,7 +4,7 @@ import Facepile from '~/widgets/Facepile/LandingPage'
 
 import useSalon, { cn } from '../../salon/compare_dev/fans'
 
-export default () => {
+export default function Fans() {
   const s = useSalon()
   const users = mockUsers(10)
 

@@ -6,7 +6,7 @@ import BgShapes from './BgShapes'
 import Fans from './Fans'
 import NodeBlock from './NodeBlock'
 
-export default () => {
+export default function OurWay() {
   const s = useSalon()
 
   return (

@@ -21,7 +21,7 @@ const VISIBLE_SLIDES = 1
 const SLIDE_STEP = 3
 const LOOP_TIMER = 5000
 
-export default () => {
+export default function ImageSlider() {
   const { loaded } = useLoaded()
   const { changeWallpaper, changePatternWallpaper } = useFullWallpaper()
   const [loopTimer, toggleLoop] = useState(true)

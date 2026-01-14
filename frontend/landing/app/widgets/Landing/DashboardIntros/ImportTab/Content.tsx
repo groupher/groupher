@@ -2,7 +2,7 @@ import Img from '~/Img'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/import_tab/content'
 
-export default () => {
+export default function Content() {
   const s = useSalon()
 
   return (

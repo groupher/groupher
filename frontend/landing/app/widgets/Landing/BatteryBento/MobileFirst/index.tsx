@@ -5,7 +5,7 @@ import Blocks from './Blocks'
 
 import useSalon from '../../salon/battery_bento/mobile_first'
 
-export default () => {
+export default function MobileFirst() {
   const s = useSalon()
   const [ref, isHovered] = useHover<HTMLDivElement>()
 

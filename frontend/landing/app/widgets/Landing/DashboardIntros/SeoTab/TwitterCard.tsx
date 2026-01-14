@@ -7,7 +7,7 @@ import XSVG from '~/icons/X'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/seo_tab/twitter_card'
 
-export default () => {
+export default function TwitterCard() {
   const s = useSalon()
 
   return (

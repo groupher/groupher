@@ -10,7 +10,7 @@ import TechKey from './TechKey'
 const STAGING_TIME = 200
 const TECH_TOTAL = 10
 
-export default () => {
+export default function Keyboard() {
   const s = useSalon()
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: false, margin: '-20% 0px' })

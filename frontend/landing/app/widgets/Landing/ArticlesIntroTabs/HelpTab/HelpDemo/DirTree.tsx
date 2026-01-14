@@ -3,7 +3,7 @@ import GithubSVG from '~/icons/Github8'
 
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/help_tab/help_demo/dir_tree'
 
-export default () => {
+export default function DirTree() {
   const s = useSalon()
 
   return (

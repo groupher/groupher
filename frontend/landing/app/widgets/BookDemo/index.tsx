@@ -10,7 +10,7 @@ import HomeHeader from '~/widgets/HomeHeader'
 
 import useSalon, { cn } from './salon'
 
-export default () => {
+export default function BookDemo() {
   const s = useSalon()
   const [showV, setShowV] = useState(false)
 

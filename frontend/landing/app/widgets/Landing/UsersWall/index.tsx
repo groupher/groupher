@@ -25,7 +25,7 @@ const CardsList = () => {
   )
 }
 
-export default () => {
+export default function UsersWall() {
   const s = useSalon()
 
   return (

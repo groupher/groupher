@@ -8,7 +8,7 @@ import BrandLayout from './BrandLayout'
 import Header from './Header'
 import MainLayouts from './MainLayouts'
 
-export default () => {
+export default function ContentCard() {
   const s = useSalon()
   const [primaryColor, setPrimaryColor] = useState<TColorName>(COLOR_NAME.PURPLE)
 

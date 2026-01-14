@@ -3,7 +3,7 @@ import Facepile from '~/widgets/Facepile'
 import useSalon from '../salon/join_our_community'
 import Cards from './Cards'
 
-export default () => {
+export default function JoinOurCommunity() {
   const s = useSalon()
 
   return (

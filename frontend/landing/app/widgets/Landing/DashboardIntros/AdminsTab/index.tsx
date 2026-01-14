@@ -5,7 +5,7 @@ import ContentCard from './ContentCard'
 
 import useSalon from '../../salon/dashboard_intros/admins_tab'
 
-export default () => {
+export default function AdminsTab() {
   const s = useSalon()
   const [userHover, setUserHover] = useState([false, true, false])
 

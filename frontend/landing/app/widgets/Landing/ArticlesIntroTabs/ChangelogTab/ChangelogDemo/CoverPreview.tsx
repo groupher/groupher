@@ -5,7 +5,7 @@ import useSalon, {
   cn,
 } from '../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/cover_preview'
 
-export default () => {
+export default function CoverPreview() {
   const s = useSalon()
 
   return (

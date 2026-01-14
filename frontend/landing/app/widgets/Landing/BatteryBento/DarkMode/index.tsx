@@ -6,7 +6,7 @@ import StarSVG from '~/icons/Star'
 import useSalon, { cn } from '../../salon/battery_bento/dark_mode'
 import Panel from './Panel'
 
-export default () => {
+export default function DarkMode() {
   const [hoverIn, setHoverIn] = useState(false)
   const s = useSalon()
   const { toggle, theme } = useTheme()

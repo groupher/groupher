@@ -2,7 +2,7 @@ import SeedSVG from '~/icons/Seed'
 import useSalon, { cn } from '../../salon/compare_dev/high_way'
 import Block from './Block'
 
-export default () => {
+export default function HighWay() {
   const s = useSalon()
 
   return (

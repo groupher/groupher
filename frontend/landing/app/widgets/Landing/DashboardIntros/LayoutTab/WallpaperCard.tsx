@@ -6,7 +6,7 @@ import WallpaperBar from './WallpaperBar'
 
 import useSalon from '../../salon/dashboard_intros/layout_tab/wallpaper_card'
 
-export default () => {
+export default function WallpaperCard() {
   const s = useSalon()
 
   const { background, effect } = useWallpaper()

@@ -4,7 +4,7 @@ import Panel from './Panel'
 
 import useSalon from '../../salon/battery_bento/integration'
 
-export default () => {
+export default function Integration() {
   const [cardRef, isCardHovered] = useHover<HTMLDivElement>()
   const s = useSalon()
 

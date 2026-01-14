@@ -11,7 +11,7 @@ import SlugSVG from '~/icons/Slug'
 import DeleteSVG from '~/icons/Trash'
 import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/menu_card'
 
-export default () => {
+export default function MenuCard() {
   const s = useSalon()
 
   return (

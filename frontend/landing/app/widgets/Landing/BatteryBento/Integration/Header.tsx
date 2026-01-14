@@ -1,6 +1,6 @@
 import useSalon, { cn } from '../../salon/battery_bento/integration/header'
 
-export default () => {
+export default function Header() {
   const s = useSalon()
 
   return (

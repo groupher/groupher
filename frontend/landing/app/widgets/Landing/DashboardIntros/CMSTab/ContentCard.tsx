@@ -12,7 +12,7 @@ import Facepile from '~/widgets/Facepile/LandingPage'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/content_card'
 
-export default () => {
+export default function ContentCard() {
   const s = useSalon()
 
   const users = mockUsers(3)

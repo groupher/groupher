@@ -9,7 +9,7 @@ import RichContent from './RichContent'
 import Security from './Security'
 import Statistics from './Statistics'
 
-export default () => {
+export default function BatteryBento() {
   const s = useSalon()
 
   return (

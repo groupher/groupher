@@ -8,7 +8,7 @@ import ShadowSVG from '~/icons/Shadow'
 
 import useSalon from '../../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/editor_preview/toolbox'
 
-export default () => {
+export default function Toolbox() {
   const s = useSalon()
 
   return (

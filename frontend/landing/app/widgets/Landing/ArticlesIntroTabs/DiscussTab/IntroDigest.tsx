@@ -1,7 +1,7 @@
 import useSalon from '../../salon/articles_intro_tabs/discuss_tab/intro_digest'
 import IntroItems from './IntroItems'
 
-export default () => {
+export default function IntroDigest() {
   const s = useSalon()
 
   return (

@@ -5,7 +5,7 @@ import EmotionBarBad from './EmotionBarBad'
 
 import useSalon from '../../../salon/articles_intro_tabs/changelog_tab/changelog_demo'
 
-export default () => {
+export default function ChangelogDemo() {
   const s = useSalon()
 
   return (

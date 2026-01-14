@@ -1,7 +1,7 @@
+import useSalon from '../../salon/articles_intro_tabs/changelog_tab/intro_digest'
 import IntroItems from './IntroItems'
-import useSalon, {} from '../../salon/articles_intro_tabs/changelog_tab/intro_digest'
 
-export default () => {
+export default function IntroDigest() {
   const s = useSalon()
 
   return (

@@ -13,7 +13,7 @@ import TwoLineSVG from '../../salon/compare_dev/bg_shapes/TwoLine'
 
 import useSalon, { cn } from '../../salon/compare_dev/bg_shapes'
 
-export default () => {
+export default function BgShapes() {
   const s = useSalon()
 
   return (

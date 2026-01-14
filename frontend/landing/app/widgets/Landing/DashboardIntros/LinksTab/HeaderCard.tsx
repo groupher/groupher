@@ -1,6 +1,6 @@
 import useSalon from '../../salon/dashboard_intros/links_tab/header_card'
 
-export default () => {
+export default function HeaderCard() {
   const s = useSalon()
 
   return (

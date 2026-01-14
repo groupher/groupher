@@ -2,7 +2,7 @@ import TerminalSVG from '~/icons/Terminal'
 
 import useSalon from '../../salon/battery_bento/integration/embed_script'
 
-export default () => {
+export default function EmbedScript() {
   const s = useSalon()
 
   return (

@@ -5,7 +5,7 @@ import useSalon from '../salon/articles_intro_tabs'
 import Content from './Content'
 import Tabs from './Tabs'
 
-export default () => {
+export default function ArticlesIntroTabs() {
   const s = useSalon()
   const [tab, setTab] = useState<TThread>(THREAD.POST)
 

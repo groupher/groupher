@@ -65,7 +65,7 @@ const faqs = [
   },
 ]
 
-export default () => {
+export default function Landing() {
   const s = useSalon()
   const { isLightTheme } = useTheme()
   const users = mockUsers(6)

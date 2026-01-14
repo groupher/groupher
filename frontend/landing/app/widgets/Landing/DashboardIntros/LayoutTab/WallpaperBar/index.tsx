@@ -6,7 +6,7 @@ import { parseWallpaper } from '~/wallpaper'
 
 import useSalon, { cn } from '../../../salon/dashboard_intros/layout_tab/wallpaper_bar'
 
-export default () => {
+export default function WallpaperBar() {
   const s = useSalon()
 
   const { wallpaper, getGradientWallpapers } = useFullWallpaper()
