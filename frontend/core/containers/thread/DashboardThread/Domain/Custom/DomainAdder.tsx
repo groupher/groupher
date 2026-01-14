@@ -3,7 +3,11 @@ import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 import useSalon from '../../salon/domain/custom/domain_adder'
 
-const DomainAdder: FC = () => {
+type TProps = {
+  onNext: () => void
+}
+
+const DomainAdder: FC<TProps> = ({ onNext }) => {
   const s = useSalon()
 
   return (
@@ -18,7 +22,7 @@ const DomainAdder: FC = () => {
       <div className={s.desc}>TODO: 裸域提示</div>
       <div className={s.br} />
 
-      <Button disabled={false} onClick={console.log}>
+      <Button disabled={false} onClick={onNext}>
         添加
       </Button>
     </div>

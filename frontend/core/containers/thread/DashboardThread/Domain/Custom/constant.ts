@@ -31,7 +31,17 @@ export const VERIFYING_DOMAIN_ROWS: TVerifyingDomainRow[] = [
     status: 'verifying',
     addedAt: null,
   },
-  // optional: add more rows for UI testing
-  // { url: 'www.groupher.com', status: 'verified', addedAt: '2026-01-14' },
   // { url: 'docs.groupher.com', status: 'failed', addedAt: '2026-01-13' },
 ]
+
+export const STEPS = {
+  ADD_DOMAIN: 'add_domain',
+  DNS_SETUP: 'dns_setup',
+  VERIFY_DOMAIN: 'verify_domain',
+} as const
+
+export type TStep = (typeof STEPS)[keyof typeof STEPS]
+
+export const DOMAIN_STEP_ORDER = [STEPS.ADD_DOMAIN, STEPS.DNS_SETUP, STEPS.VERIFY_DOMAIN] as const
+
+export type TDomainStep = (typeof DOMAIN_STEP_ORDER)[number]

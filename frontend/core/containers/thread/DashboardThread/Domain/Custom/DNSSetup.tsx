@@ -4,7 +4,11 @@ import useSalon, { cn } from '../../salon/domain/custom/dns_setup'
 import { DNS_RECORDS } from './constant'
 import DnsRecordsTable from './DNSTable'
 
-const DNSSetup: FC = () => {
+type TProps = {
+  onNext: () => void
+}
+
+const DNSSetup: FC<TProps> = ({ onNext }) => {
   const s = useSalon()
 
   return (
@@ -39,7 +43,7 @@ const DNSSetup: FC = () => {
 
       <div className={s.br} />
 
-      <Button disabled={false} onClick={console.log}>
+      <Button disabled={false} onClick={onNext}>
         验证域名
       </Button>
     </div>
