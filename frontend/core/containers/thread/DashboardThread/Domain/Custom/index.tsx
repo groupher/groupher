@@ -1,9 +1,10 @@
 import type { FC } from 'react'
 
 import useSalon from '../../salon/domain/custom'
-import DNSSetup from './DNSSetup'
 // import DomainAdder from './DomainAdder'
 import StepBar from './StepBar'
+// import DNSSetup from './DNSSetup'
+import VerifyDomain from './VerifyDomain'
 
 const Domain: FC = () => {
   const s = useSalon()
@@ -12,7 +13,8 @@ const Domain: FC = () => {
     <div className={s.wrapper}>
       <StepBar />
       {/* <DomainAdder /> */}
-      <DNSSetup />
+      {/* <DNSSetup /> */}
+      <VerifyDomain />
     </div>
   )
 }

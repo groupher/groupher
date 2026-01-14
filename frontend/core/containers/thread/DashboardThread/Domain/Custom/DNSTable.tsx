@@ -21,7 +21,7 @@ export default function DnsRecordsTable({ records }: Props) {
 
         <tbody>
           {records.map((record) => (
-            <tr key={record.type} className={s.tr}>
+            <tr key={`${record.type}:${record.host}`} className={s.tr}>
               <td className={s.td}>{record.type}</td>
               <td className={s.td}>{record.host}</td>
               <td className={cn(s.td, 'break-all')}>{record.value}</td>
