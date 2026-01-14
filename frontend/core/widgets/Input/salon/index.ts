@@ -2,13 +2,13 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default () => {
+export default ({ width }) => {
   const { cn, fill, primary, fg, bg, br } = useTwBelt()
 
   const addon = 'absolute align-both top-0 size-8 z-10'
 
   return {
-    wrapper: 'relative w-full group',
+    wrapper: cn('relative group', width),
     addon,
     prefix: cn(addon, 'left-0'),
     suffix: cn(addon, 'right-0'),

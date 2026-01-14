@@ -68,6 +68,11 @@ export const DSB_LAYOUT_ROUTE = {
   DOC: 'doc',
 } as const
 
+export const DSB_DOMAIN_ROUTE = {
+  PLATFORM: 'platform',
+  CUSTOM: 'custom',
+} as const
+
 export const DSB_BROADCAST_ROUTE = {
   GLOBAL: 'global',
   ARTICLE: 'article',
@@ -149,6 +154,14 @@ export const LAYOUT_TABS: TDsbTabs = {
     { title: '看板', slug: DSB_LAYOUT_ROUTE.KANBAN },
     { title: '更新日志', slug: DSB_LAYOUT_ROUTE.CHANGELOG },
     { title: '帮助台', slug: DSB_LAYOUT_ROUTE.DOC },
+  ],
+}
+
+export const DOMAIN_TABS: TDsbTabs = {
+  segment: DSB_ROUTE.DOMAIN,
+  items: [
+    { title: '平台域名', slug: DSB_DOMAIN_ROUTE.PLATFORM, segment: '' },
+    { title: '自定义域名', slug: DSB_DOMAIN_ROUTE.CUSTOM },
   ],
 }
 

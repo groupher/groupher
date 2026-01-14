@@ -1,9 +1,7 @@
 'use client'
 
-import Domain from '~/containers/thread/DashboardThread/Domain'
+import Platform from '~/containers/thread/DashboardThread/Domain/Platform'
 
-const DashboardDomainPage = () => {
-  return <Domain />
+export default function PlatformPage() {
+  return <Platform />
 }
-
-export default DashboardDomainPage

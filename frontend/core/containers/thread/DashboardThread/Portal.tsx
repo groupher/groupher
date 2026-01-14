@@ -12,7 +12,7 @@ const Portal: FC<TProps> = ({ title, desc = null, withDivider = true }) => {
   const s = useSalon()
 
   return (
-    <div>
+    <div className={s.wrapper}>
       <h3 className={s.title}>{title}</h3>
 
       {desc && <p className={s.desc}>{desc}</p>}
