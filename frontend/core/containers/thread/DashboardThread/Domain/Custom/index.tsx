@@ -1,13 +1,16 @@
 import type { FC } from 'react'
 
-import useSalon from '../../salon/domain'
+import useSalon from '../../salon/domain/custom'
+import DomainAdder from './DomainAdder'
+import StepBar from './StepBar'
 
 const Domain: FC = () => {
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
-      <div>自定义域名</div>
+      <StepBar />
+      <DomainAdder />
     </div>
   )
 }

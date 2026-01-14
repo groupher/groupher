@@ -13,16 +13,14 @@ export default ({ children }) => {
 
   return (
     <div className={cn(s.wrapper, 'w-3/5')}>
-      <div>
-        <Portal title='域名设置' desc='给你的社区绑定个性化域名。' withDivider={false} />
-        <div className={s.banner}>
-          <div className={s.tabs}>
-            <Tabs items={items} activeKey={activeTab} view={VIEW.DESKTOP} noAnimation />
-          </div>
+      <Portal title='域名设置' desc='给你的社区绑定个性化域名。' withDivider={false} />
+      <div className={s.banner}>
+        <div className={s.tabs}>
+          <Tabs items={items} activeKey={activeTab} view={VIEW.DESKTOP} noAnimation />
         </div>
-
-        {children}
       </div>
+
+      {children}
     </div>
   )
 }

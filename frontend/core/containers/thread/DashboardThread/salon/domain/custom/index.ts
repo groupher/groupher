@@ -4,6 +4,6 @@ export default () => {
   const { cn } = useTwBelt()
 
   return {
-    wrapper: cn('row'),
+    wrapper: cn('column w-full'),
   }
 }

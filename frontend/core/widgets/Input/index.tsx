@@ -25,6 +25,7 @@ type TProps = {
   autoFocus?: boolean
   disableEnter?: boolean
   className?: string
+  width?: string
   id?: string | null
 
   onFocus?: (e) => void
@@ -48,9 +49,10 @@ const Input: FC<TProps> = ({
   autoFocus = false,
   disableEnter = false,
   className = '',
+  width = 'w-fit',
   ...restProps
 }) => {
-  const s = useSalon()
+  const s = useSalon({ width })
 
   const handleOnChange = useCallback((e) => onChange?.(e), [onChange])
   const handleOnKeydown = useCallback(
