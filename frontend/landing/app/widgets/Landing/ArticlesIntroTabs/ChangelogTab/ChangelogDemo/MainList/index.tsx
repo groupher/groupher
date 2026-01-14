@@ -8,7 +8,7 @@ import StarSVG from '../../../../salon/articles_intro_tabs/changelog_tab/Star'
 import CoverPreview from '../CoverPreview'
 import Footer from './Footer'
 
-export default () => {
+export default function MainList() {
   const s = useSalon()
 
   return (

@@ -5,7 +5,7 @@ import BorderButton from '~/widgets/Buttons/BorderButton'
 
 import useSalon from '../salon/footer'
 
-export default () => {
+export default function Footer() {
   const s = useSalon()
 
   return (

@@ -4,7 +4,7 @@ import useSalon from '../../../salon/articles_intro_tabs/changelog_tab/changelog
 
 const EMOTION_STATIC = 'icons/emotion'
 
-export default () => {
+export default function EmotionBar() {
   const s = useSalon()
 
   return (

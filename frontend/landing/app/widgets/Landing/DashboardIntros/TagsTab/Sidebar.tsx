@@ -2,7 +2,7 @@ import HashTagSVG from '~/icons/HashTagBold'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/tags_tab/sidebar'
 
-export default () => {
+export default function Sidebar() {
   const s = useSalon()
 
   return (

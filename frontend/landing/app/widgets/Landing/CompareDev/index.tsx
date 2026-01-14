@@ -4,7 +4,7 @@ import useSalon, { cn } from '../salon/compare_dev'
 import HighWay from './HighWay'
 import OurWay from './OurWay'
 
-export default () => {
+export default function CompareDev() {
   const s = useSalon()
 
   return (

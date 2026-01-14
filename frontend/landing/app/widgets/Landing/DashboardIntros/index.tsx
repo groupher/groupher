@@ -15,7 +15,7 @@ import type { TIntroTab } from './spec'
 import TagsTab from './TagsTab'
 import TrendTab from './TrendTab'
 
-export default () => {
+export default function DashboardIntros() {
   const [tab, setTab] = useState<TIntroTab>(DSB_ROUTE.LAYOUT)
 
   const s = useSalon({ tab })

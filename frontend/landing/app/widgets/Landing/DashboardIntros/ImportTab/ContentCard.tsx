@@ -6,7 +6,7 @@ import LineSVG from '../../salon/dashboard_intros/import_tab/Line'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/import_tab/content_card'
 
-export default () => {
+export default function ContentCard() {
   const s = useSalon()
 
   return (

@@ -4,7 +4,7 @@ import FooterCard from './FooterCard'
 
 import useSalon from '../../salon/dashboard_intros/links_tab/content_card'
 
-export default () => {
+export default function ContentCard() {
   const s = useSalon()
 
   return (

@@ -2,7 +2,7 @@ import ContentCard from './ContentCard'
 
 import useSalon from '../../salon/dashboard_intros/trend_tab'
 
-export default () => {
+export default function TrendTab() {
   const s = useSalon()
 
   return (

@@ -3,7 +3,7 @@ import PointSVG from '~/icons/PointDuo'
 
 import useSalon from '../../salon/battery_bento/grid_blocks/slogan'
 
-export default () => {
+export default function Slogan() {
   const s = useSalon()
 
   return (

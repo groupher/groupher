@@ -20,7 +20,7 @@ const Contents = () => {
   )
 }
 
-export default () => {
+export default function IntroItems() {
   const s = useSalon()
 
   return (

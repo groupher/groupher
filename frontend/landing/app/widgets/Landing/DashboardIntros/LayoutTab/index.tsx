@@ -2,7 +2,7 @@ import useSalon from '../../salon/dashboard_intros/layout_tab'
 import ContentCard from './ContentCard'
 import WallpaperCard from './WallpaperCard'
 
-export default () => {
+export default function LayoutTab() {
   const s = useSalon()
 
   return (

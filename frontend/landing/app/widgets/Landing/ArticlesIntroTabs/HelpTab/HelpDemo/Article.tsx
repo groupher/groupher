@@ -6,7 +6,7 @@ import ShareSVG from '~/icons/Share'
 
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/help_tab/help_demo/article'
 
-export default () => {
+export default function Article() {
   const s = useSalon()
 
   return (

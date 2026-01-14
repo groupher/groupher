@@ -4,7 +4,7 @@ import TwitterSVG from '~/icons/TwitterX'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/links_tab/content'
 
-export default () => {
+export default function Content() {
   const s = useSalon()
 
   return (

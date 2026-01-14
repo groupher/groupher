@@ -4,7 +4,7 @@ import InlineComment from './InlineComment'
 
 import useSalon from '../../../salon/articles_intro_tabs/help_tab/help_demo'
 
-export default () => {
+export default function HelpDemo() {
   const s = useSalon()
 
   return (

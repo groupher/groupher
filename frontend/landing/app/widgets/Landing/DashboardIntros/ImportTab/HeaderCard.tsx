@@ -5,7 +5,7 @@ import NotionSVG from '~/icons/social/Notion'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/import_tab/header_card'
 
-export default () => {
+export default function HeaderCard() {
   const s = useSalon()
 
   return (

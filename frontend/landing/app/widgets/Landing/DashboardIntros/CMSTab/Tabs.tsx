@@ -4,7 +4,7 @@ import TimeSVG from '~/icons/TimelineMode'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/tabs'
 
-export default () => {
+export default function Tabs() {
   const s = useSalon()
 
   return (

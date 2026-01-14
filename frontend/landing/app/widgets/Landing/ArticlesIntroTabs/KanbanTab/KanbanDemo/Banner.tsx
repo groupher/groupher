@@ -7,7 +7,7 @@ import Facepile from '~/widgets/Facepile/LandingPage'
 
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/kanban_tab/banner'
 
-export default () => {
+export default function Banner() {
   const s = useSalon()
 
   const users = mockUsers(5)

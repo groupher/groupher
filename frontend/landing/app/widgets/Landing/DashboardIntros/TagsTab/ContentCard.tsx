@@ -2,7 +2,7 @@ import TagBanner from './TagBanner'
 import Sidebar from './Sidebar'
 import useSalon, { cn } from '../../salon/dashboard_intros/tags_tab/content_card'
 
-export default () => {
+export default function ContentCard() {
   const s = useSalon()
 
   return (

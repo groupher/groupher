@@ -2,7 +2,7 @@ import useSalon, { cn } from '../../salon/dashboard_intros/seo_tab/content'
 
 import SpiderSVG from '~/icons/Spider'
 
-export default () => {
+export default function Content() {
   const s = useSalon()
 
   return (

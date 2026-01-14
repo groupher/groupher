@@ -5,7 +5,7 @@ import WebCard from './WebCard'
 import Content from './Content'
 import TwitterCard from './TwitterCard'
 
-export default () => {
+export default function SeoTab() {
   const s = useSalon()
 
   return (

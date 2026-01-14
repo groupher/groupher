@@ -3,7 +3,7 @@ import TwitterSVG from '~/icons/TwitterX'
 
 import useSalon from '../../salon/dashboard_intros/links_tab/footer_card'
 
-export default () => {
+export default function FooterCard() {
   const s = useSalon()
 
   return (

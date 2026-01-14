@@ -3,7 +3,7 @@ import useHover from '~/hooks/useHover'
 import Panel from './Panel'
 import useSalon from '../../salon/battery_bento/bundle_size'
 
-export default () => {
+export default function BundleSize() {
   const s = useSalon()
 
   const [ref, isHovered] = useHover<HTMLDivElement>()

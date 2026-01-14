@@ -4,7 +4,7 @@ import EmailSVG from '~/icons/social/Email'
 import WeChatSVG from '~/icons/social/WeChat'
 import useSalon from '../salon/join_our_community/cards'
 
-export default () => {
+export default function Cards() {
   const s = useSalon()
 
   return (

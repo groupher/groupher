@@ -3,7 +3,7 @@ import useHover from '~/hooks/useHover'
 import Panel from './Panel'
 import useSalon from '../../salon/battery_bento/design'
 
-export default () => {
+export default function Design() {
   const s = useSalon()
   const [cardRef, isCardHovered] = useHover<HTMLDivElement>()
 

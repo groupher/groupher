@@ -3,7 +3,7 @@ import { mockUsers } from '~/mock'
 
 import useSalon, {} from '../../../salon/articles_intro_tabs/help_tab/help_demo/inline_comment'
 
-export default () => {
+export default function InlineComment() {
   const s = useSalon()
 
   const user = mockUsers(1)

@@ -4,7 +4,7 @@ import MenuCard from './MenuCard'
 
 import useSalon from '../../salon/dashboard_intros/cms_tab'
 
-export default () => {
+export default function CMSTab() {
   const s = useSalon()
 
   return (

@@ -3,7 +3,7 @@ import useSalon from '../salon/tech_stacks'
 import GithubCard from './GithubCard'
 import Keyboard from './Keyboard'
 
-export default () => {
+export default function TechStacks() {
   const s = useSalon()
 
   return (

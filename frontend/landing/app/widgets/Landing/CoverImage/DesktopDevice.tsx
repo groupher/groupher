@@ -7,7 +7,7 @@ import LockSVG from '~/icons/Lock'
 import useSalon from '../salon/cover_image/desktop_device'
 import ImageSlider from './ImageSlider'
 
-export default () => {
+export default function DesktopDevice() {
   const s = useSalon()
   const { background, effect } = useWallpaper()
 

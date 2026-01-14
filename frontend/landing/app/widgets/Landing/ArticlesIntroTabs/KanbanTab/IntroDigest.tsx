@@ -4,7 +4,7 @@ import FeatItem from '../FeatItem'
 
 const color = COLOR_NAME.BLUE
 
-export default () => {
+export default function IntroDigest() {
   const s = useSalon()
 
   return (

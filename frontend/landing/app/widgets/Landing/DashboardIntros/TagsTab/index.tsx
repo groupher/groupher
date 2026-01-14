@@ -3,7 +3,7 @@ import Footer from './Footer'
 
 import useSalon from '../../salon/dashboard_intros/tags_tab'
 
-export default () => {
+export default function TagsTab() {
   const s = useSalon()
 
   return (

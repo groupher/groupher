@@ -2,7 +2,7 @@ import ContentCard from './ContentCard'
 
 import useSalon from '../../salon/dashboard_intros/integrate_tab'
 
-export default () => {
+export default function IntegrateTab() {
   const s = useSalon()
 
   return (

@@ -2,7 +2,7 @@ import APP from '~/const/app'
 import Img from '~/Img'
 import useSalon from '../../salon/dashboard_intros/seo_tab/web_card'
 
-export default () => {
+export default function WebCard() {
   const s = useSalon()
 
   return (

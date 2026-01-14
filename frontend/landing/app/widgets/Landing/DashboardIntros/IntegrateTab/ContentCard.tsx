@@ -1,6 +1,6 @@
 import useSalon from '../../salon/dashboard_intros/integrate_tab/content_card'
 
-export default () => {
+export default function ContentCard() {
   const s = useSalon()
 
   return (

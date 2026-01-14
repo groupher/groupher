@@ -4,7 +4,7 @@ import OptionArrowSVG from '~/icons/OptionArrow'
 
 import useSalon from '../../salon/dashboard_intros/tags_tab/footer'
 
-export default () => {
+export default function Footer() {
   const s = useSalon()
 
   return (
