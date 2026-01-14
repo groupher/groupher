@@ -1,11 +1,13 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+export { cn } from '~/css'
+
 export default () => {
   const { cn, br, hoverBr, bg, fill, shadow, primary, sexyBorder, vividDark, isBlackPrimary } =
     useTwBelt()
 
   return {
-    wrapper: 'column pl-16 w-10/12',
+    wrapper: 'column w-10/12 items-center',
     banner: cn('relative h-16 w-full border-b mb-10', br('divider')),
     tabs: 'absolute -left-2 bottom-0',
     //

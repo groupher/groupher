@@ -8,7 +8,7 @@ export default () => {
   const addon = 'absolute align-both top-0 size-8 z-10'
 
   return {
-    wrapper: 'relative w-full group',
+    wrapper: 'relative w-auto group',
     addon,
     prefix: cn(addon, 'left-0'),
     suffix: cn(addon, 'right-0'),
