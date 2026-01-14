@@ -21,6 +21,7 @@
     -webkit-text-fill-color: transparent;
   }
 
+
   .count-highlight {
     background: var(--count-highlight);
     -webkit-background-clip: text;

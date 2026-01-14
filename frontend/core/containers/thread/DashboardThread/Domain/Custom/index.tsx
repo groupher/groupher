@@ -1,13 +1,13 @@
 import type { FC } from 'react'
 
-import useSalon from '../salon/domain'
+import useSalon from '../../salon/domain'
 
 const Domain: FC = () => {
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
-      <div>Domain</div>
+      <div>自定义域名</div>
     </div>
   )
 }
