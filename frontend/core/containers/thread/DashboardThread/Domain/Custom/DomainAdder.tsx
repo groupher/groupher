@@ -3,7 +3,7 @@ import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 import useSalon from '../../salon/domain/custom/domain_adder'
 
-const Domain: FC = () => {
+const DomainAdder: FC = () => {
   const s = useSalon()
 
   return (
@@ -25,4 +25,4 @@ const Domain: FC = () => {
   )
 }
 
-export default Domain
+export default DomainAdder
