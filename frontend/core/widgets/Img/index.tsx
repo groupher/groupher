@@ -15,7 +15,6 @@ type IProps = {
   className?: string
   fallback?: ReactNode | null
   noLazy?: boolean
-  // see https://www.npmjs.com/package/react-lazy-load-image-component
   visibleByDefault?: boolean
   onClick?: () => void
 }

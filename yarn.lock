@@ -1256,7 +1256,6 @@ __metadata:
     react-flip-numbers: "npm:^3.0.8"
     react-highlight-words: "npm:^0.18.0"
     react-json-view-lite: "npm:^2.5.0"
-    react-lazy-load-image-component: "npm:1.6.0"
     react-masonry-css: "npm:^1.0.16"
     react-scroll-snap-anime-slider: "npm:^1.5.3"
     react-select: "npm:^5.5.7"
@@ -11523,19 +11522,6 @@ __metadata:
   peerDependencies:
     react: ^18.0.0 || ^19.0.0
   checksum: 10c0/8ecaa23d2fddea03f84892ca96577c5416d60a59ed2cad01dff648a60d25b799dac75dea1771e2b9b639ad026ce1efa7b44e6e636bf497b1d6ea0bac5962b96d
-  languageName: node
-  linkType: hard
-
-"react-lazy-load-image-component@npm:1.6.0":
-  version: 1.6.0
-  resolution: "react-lazy-load-image-component@npm:1.6.0"
-  dependencies:
-    lodash.debounce: "npm:^4.0.8"
-    lodash.throttle: "npm:^4.1.1"
-  peerDependencies:
-    react: ^15.x.x || ^16.x.x || ^17.x.x || ^18.x.x
-    react-dom: ^15.x.x || ^16.x.x || ^17.x.x || ^18.x.x
-  checksum: 10c0/3d348786336ea05dd4061277bb2639c6c4c54c5d2b9214c52b1367a172357af4ccad38ef079f84058a73d51e557f13784fc982c49bcccb6d15f0116af0f58700
   languageName: node
   linkType: hard
 
