@@ -31,3 +31,15 @@ export type TPath =
   | {
       DASHBOARD: TDsbPath
     }
+
+export type TDsbCrumbItem = {
+  title: string
+  seg: string
+}
+
+export type TBreadcrumbItem = {
+  key?: string
+  title: string
+  path: string
+  onClick?: () => void
+}
