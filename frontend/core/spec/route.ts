@@ -48,13 +48,28 @@ export type TBreadcrumbItem = {
 
 export type TIconComp = ComponentType<{ className?: string }>
 
-export type TDsbCoverItem = TDsbCrumbItem & {
+export type TDsbCoverItem = {
+  title: string
   desc: string
+  seg: string
   Icon?: TIconComp
+
+  pinned?: boolean
+}
+
+export type TDsbCoverGroup = {
+  groupTitle: string
+  items: TDsbCoverItem[]
 }
 
 export type TDsbCoversConfig = {
   title: string
   desc?: React.ReactNode
-  items: TDsbCoverItem[]
+  items: TDsbCoverGroup[]
+
+  /**
+   * Called when user clicks the pin button on a card.
+   * The host page owns the state; DsbCovers is purely presentational.
+   */
+  onTogglePin?: (seg: string, nextPinned: boolean) => void
 }

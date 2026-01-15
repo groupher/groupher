@@ -213,3 +213,7 @@ export const WIDGET_TABS: TDsbTabs = {
     { title: '链接', slug: DSB_WIDGET_ROUTE.LINK },
   ],
 }
+
+export const DSB_COVERS = {
+  INTEGRATIONS: 'integrations',
+}

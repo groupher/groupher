@@ -4,8 +4,9 @@ import Link from 'next/link'
 import { DSB_SEG } from '~/const/route'
 import Portal from '~/containers/thread/DashboardThread/Portal'
 import useCommunity from '~/hooks/useCommunity'
+import PinSVG from '~/icons/Pin'
 import type { TDsbCoversConfig } from '~/spec'
-import useSalon from './salon'
+import useSalon, { cn } from './salon'
 
 const joinPath = (...parts: string[]) =>
   '/' +
@@ -20,23 +21,56 @@ type Props = {
 
 export default function DsbCovers({ config }: Props) {
   const s = useSalon()
-  const { slug } = useCommunity() // e.g. 'home'
+  const { slug } = useCommunity()
 
   const buildHref = (seg: string) => joinPath(slug, DSB_SEG, seg)
 
   return (
     <div className={s.wrapper}>
-      <Portal title={config.title} desc={config.desc} withDivider={false} />
+      <Portal title={config.title} desc={config.desc} withDivider />
 
-      <div className={s.content}>
-        {config.items.map((it) => (
-          <Link key={it.seg} className={s.block} href={buildHref(it.seg)}>
-            {it.Icon ? <it.Icon className={s.icon} /> : null}
-            <div className='mt-auto'>
-              <div className={s.title}>{it.title}</div>
-              <p className={s.desc}>{it.desc}</p>
+      <div className={s.groups}>
+        {config.items.map((group) => (
+          <section key={group.groupTitle} className={s.group}>
+            <div className={s.groupHeader}>
+              <h4 className={s.groupTitle}>{group.groupTitle}</h4>
             </div>
-          </Link>
+
+            <div className={s.content}>
+              {group.items.map((it) => {
+                const pinned = Boolean(it.pinned)
+
+                return (
+                  <Link
+                    key={`${group.groupTitle}:${it.seg}`}
+                    className={s.block}
+                    href={buildHref(it.seg)}
+                  >
+                    <button
+                      type='button'
+                      className={cn(s.pinBtn, pinned && s.pinBtnActive)}
+                      aria-pressed={pinned}
+                      aria-label={pinned ? '取消置顶' : '置顶'}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        config.onTogglePin?.(it.seg, !pinned)
+                      }}
+                    >
+                      <PinSVG className={cn(s.pinIcon, pinned && s.pinIconActive)} />
+                    </button>
+
+                    {it.Icon ? <it.Icon className={s.icon} /> : null}
+
+                    <div className='mt-auto'>
+                      <div className={s.title}>{it.title}</div>
+                      <p className={s.desc}>{it.desc}</p>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
         ))}
       </div>
     </div>
