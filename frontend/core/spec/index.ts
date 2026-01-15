@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable import/no-unresolved */
-/* eslint-disable import/extensions */
 import type { TArticle } from './article'
 import type { TCommunity } from './community'
 import type { TThemeName } from './theme'
@@ -26,13 +23,6 @@ export type * from './theme'
 export type * from './thread'
 export type * from './utils'
 export type * from './wallpaper'
-
-export type TRoute = {
-  communityPath?: string
-  threadPath?: string
-  mainPath?: string
-  subPath?: string
-}
 
 export type TViewing = TCommunity | TArticle
 
@@ -65,25 +55,5 @@ interface IWindow extends Window {
 }
 
 export type TWindow = IWindow | null
-
-export type TPathQuery =
-  | 'pagedDocs'
-  | 'pagedChangelogs'
-  | 'pagedBlogs'
-  | 'pagedPosts'
-  | 'doc'
-  | 'changelog'
-  | 'blog'
-  | 'post'
-  | 'community'
-  | 'tags'
-  | 'kanbanPosts'
-
-export type TSearchParams = { [key: string]: string | string[] | undefined }
-
-export type TUrlInfo = {
-  pathname: string
-  searchParams: URLSearchParams
-}
 
 export type TConstValues<T extends Record<PropertyKey, string>> = T[keyof T]

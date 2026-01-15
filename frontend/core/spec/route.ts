@@ -1,3 +1,5 @@
+import type { ComponentType } from 'react'
+
 import type {
   DSB_ALIAS_ROUTE,
   DSB_BROADCAST_ROUTE,
@@ -31,3 +33,43 @@ export type TPath =
   | {
       DASHBOARD: TDsbPath
     }
+
+export type TDsbCrumbItem = {
+  title: string
+  seg: string
+}
+
+export type TBreadcrumbItem = {
+  key?: string
+  title: string
+  path: string
+  onClick?: () => void
+}
+
+export type TIconComp = ComponentType<{ className?: string }>
+
+export type TDsbCoverItem = {
+  title: string
+  desc: string
+  seg: string
+  Icon?: TIconComp
+
+  pinned?: boolean
+}
+
+export type TDsbCoverGroup = {
+  groupTitle: string
+  items: TDsbCoverItem[]
+}
+
+export type TDsbCoversConfig = {
+  title: string
+  desc?: React.ReactNode
+  items: TDsbCoverGroup[]
+
+  /**
+   * Called when user clicks the pin button on a card.
+   * The host page owns the state; DsbCovers is purely presentational.
+   */
+  onTogglePin?: (seg: string, nextPinned: boolean) => void
+}

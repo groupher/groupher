@@ -8,8 +8,10 @@ export const APPLY_COMMUNITY = '/apply/community'
 export const FEEDBACK = '/home/post?for=feedback'
 export const DOCS = '/home/doc'
 
+export const DSB_SEG = 'dashboard'
+
 export const DSB_ROUTE = {
-  OVERVIEW: 'dashboard',
+  OVERVIEW: DSB_SEG,
   // basic-info
   INFO: 'info',
   SEO: 'seo',
@@ -210,4 +212,8 @@ export const WIDGET_TABS: TDsbTabs = {
     { title: '页面内嵌', slug: DSB_WIDGET_ROUTE.IFRAME },
     { title: '链接', slug: DSB_WIDGET_ROUTE.LINK },
   ],
+}
+
+export const DSB_COVERS = {
+  INTEGRATIONS: 'integrations',
 }
