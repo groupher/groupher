@@ -1,9 +1,8 @@
 import { pick } from 'ramda'
 import { type FC, type ReactNode, useCallback, useState } from 'react'
 
-import { LazyLoadImage } from 'react-lazy-load-image-component'
-
 import useSalon, { cn } from './salon/lazy_load_image'
+import LazyLoad from '~/widgets/LazyLoad'
 
 type TProps = {
   className?: string
@@ -35,7 +34,6 @@ const LazyLoadImg: FC<TProps> = ({
   const s = useSalon({ ...fallbackOpt })
 
   const [imgLoaded, setImgLoaded] = useState(true)
-  const [checkError, setCheckError] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [over, setOver] = useState(false)
 
@@ -43,7 +41,6 @@ const LazyLoadImg: FC<TProps> = ({
     if (!over) {
       // console.log('## ## handleBeforeLoad')
       setImgLoaded(false)
-      setCheckError(true)
     }
   }, [over])
 
@@ -51,7 +48,6 @@ const LazyLoadImg: FC<TProps> = ({
     if (!over) {
       setImgLoaded(true)
       setLoadError(false)
-      setCheckError(false)
       setOver(true)
     }
   }, [over])
@@ -70,30 +66,25 @@ const LazyLoadImg: FC<TProps> = ({
       </div>
     )
   }
-  /**
-   * CheckPixel is a workaround for lazy loading has no onError callback,
-   * for most OSS providers the cache control is lager than 5 mins
-   * so on before load callback, we setup a real img to track is onError manually triggered
-   */
   return (
     <div onClick={onClick} className={cn(s.normal, 'z-10', !imgLoaded && s.fallbackOffset)}>
       {!imgLoaded && <div className={s.fallback}>{fallback}</div>}
 
-      {checkError && (
-        <img src={src} alt='' onLoad={handleLoad} onError={handleError} className={s.checkPixel} />
-      )}
-
       {!loadError && (
-        <LazyLoadImage
-          className={cn(className, 'flex-shrink-0')}
-          src={src}
-          alt={alt}
-          effect='blur'
+        <LazyLoad
           visibleByDefault={visibleByDefault}
-          onLoad={handleLoad}
-          beforeLoad={handleBeforeLoad}
           threshold={threshold}
-        />
+          onVisible={handleBeforeLoad}
+        >
+          <img
+            className={cn(className, 'flex-shrink-0')}
+            src={src}
+            alt={alt}
+            loading='lazy'
+            onLoad={handleLoad}
+            onError={handleError}
+          />
+        </LazyLoad>
       )}
     </div>
   )

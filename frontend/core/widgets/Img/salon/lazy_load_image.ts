@@ -14,6 +14,5 @@ export default ({ size, ...spacing }: TProps) => {
     normal: cn('align-both relative z-10'),
     fallback: 'absolute top-0 left-0 z-0',
     fallbackOffset: cn(`size-${size}`, margin(spacing)),
-    checkPixel: 'w-px h-px opacity-0 fixed bottom-0 right-0',
   }
 }

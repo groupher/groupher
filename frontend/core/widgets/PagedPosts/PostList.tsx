@@ -1,7 +1,6 @@
 /* eslint-disable react/display-name */
 
 import { lazy, Suspense } from 'react'
-// import { trackWindowScroll } from 'react-lazy-load-image-component'
 
 import usePagedPosts from '~/hooks/usePagedPosts'
 import { POST_LAYOUT } from '~/const/layout'
