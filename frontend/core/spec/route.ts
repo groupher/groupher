@@ -1,3 +1,5 @@
+import type { ComponentType } from 'react'
+
 import type {
   DSB_ALIAS_ROUTE,
   DSB_BROADCAST_ROUTE,
@@ -42,4 +44,17 @@ export type TBreadcrumbItem = {
   title: string
   path: string
   onClick?: () => void
+}
+
+export type TIconComp = ComponentType<{ className?: string }>
+
+export type TDsbCoverItem = TDsbCrumbItem & {
+  desc: string
+  Icon?: TIconComp
+}
+
+export type TDsbCoversConfig = {
+  title: string
+  desc?: React.ReactNode
+  items: TDsbCoverItem[]
 }
