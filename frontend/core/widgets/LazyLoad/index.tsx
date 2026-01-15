@@ -15,7 +15,7 @@ const LazyLoad: FC<TProps> = ({
   children,
   placeholder = null,
   className,
-  visibleByDefault = true,
+  visibleByDefault = false,
   threshold = 200,
   onVisible,
 }) => {
