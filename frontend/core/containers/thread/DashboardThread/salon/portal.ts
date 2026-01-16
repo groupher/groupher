@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: 'column w-full',
-    title: cn('text-xl w-auto', fg('text.title')),
+    title: cn('text-2xl w-auto', fg('text.title')),
     desc: cn('text-sm mt-2.5 mb-2', fg('text.digest')),
     divider: cn('w-full h-px mt-5 mb-8', bg('divider')),
   }

@@ -1,92 +1,107 @@
 import { pick } from 'ramda'
-import { type FC, type ReactNode, useCallback, useState } from 'react'
-
-import useSalon, { cn } from './salon/lazy_load_image'
+import { type FC, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import LazyLoad from '~/widgets/LazyLoad'
+import useSalon, { cn } from './salon/lazy_load_image'
 
 type TProps = {
   className?: string
   src: string
   alt?: string
   fallback?: ReactNode | null
-  visibleByDefault?: boolean
+  visibleByDefault: boolean
   onClick?: () => void
   threshold?: number
 }
 
-/**
- * lazy load images like .jpg .jpeg .png  etc
- * the fallback is for the image often block in china, like github avatars
- * fallback 常被用于图片间歇性被墙的情况，比如 github 头像等
- */
 const LazyLoadImg: FC<TProps> = ({
   className = 'img-class',
   src,
   alt = 'image',
   fallback = null,
-  visibleByDefault = true,
+  visibleByDefault,
   onClick,
   threshold = 200,
 }) => {
   // @ts-expect-error
   const fallbackOpt = pick(['size', 'left', 'right', 'top', 'bottom'], fallback?.props || {})
-
   const s = useSalon({ ...fallbackOpt })
 
-  const [imgLoaded, setImgLoaded] = useState(true)
-  const [loadError, setLoadError] = useState(false)
-  const [over, setOver] = useState(false)
+  const imgRef = useRef<HTMLImageElement | null>(null)
 
-  const handleBeforeLoad = useCallback(() => {
-    if (!over) {
-      // console.log('## ## handleBeforeLoad')
-      setImgLoaded(false)
-    }
-  }, [over])
+  const [started, setStarted] = useState(visibleByDefault)
+  const [loaded, setLoaded] = useState(false)
+  const [_error, setError] = useState(false)
+
+  useEffect(() => {
+    setStarted(visibleByDefault)
+    setLoaded(false)
+    setError(false)
+  }, [visibleByDefault])
+
+  const handleVisible = useCallback(() => {
+    setStarted(true)
+  }, [])
 
   const handleLoad = useCallback(() => {
-    if (!over) {
-      setImgLoaded(true)
-      setLoadError(false)
-      setOver(true)
-    }
-  }, [over])
+    setLoaded(true)
+    setError(false)
+  }, [])
 
   const handleError = useCallback(() => {
-    console.warn('lazy image load.: ', src)
-    setLoadError(true)
-    setImgLoaded(false)
-    setOver(true)
+    console.warn('[LazyLoadImg] load error:', src)
+    setError(true)
+    setLoaded(false)
   }, [src])
+
+  useEffect(() => {
+    if (!started) return
+    const el = imgRef.current
+    if (!el) return
+
+    if (el.complete && el.naturalWidth > 0) {
+      setLoaded(true)
+      setError(false)
+    }
+  }, [started])
+
+  const showFallback = !!fallback && !loaded
 
   if (!src) {
     return (
-      <div key={src} onClick={onClick} className={cn(s.normal, !imgLoaded && s.fallbackOffset)}>
+      <button
+        type='button'
+        onClick={onClick}
+        className={cn(s.normal, showFallback && s.fallbackOffset)}
+      >
         <div className={s.fallback}>{fallback}</div>
-      </div>
+      </button>
     )
   }
-  return (
-    <div onClick={onClick} className={cn(s.normal, 'z-10', !imgLoaded && s.fallbackOffset)}>
-      {!imgLoaded && <div className={s.fallback}>{fallback}</div>}
 
-      {!loadError && (
-        <LazyLoad
-          visibleByDefault={visibleByDefault}
-          threshold={threshold}
-          onVisible={handleBeforeLoad}
-        >
-          <img
-            className={cn(className, 'flex-shrink-0')}
-            src={src}
-            alt={alt}
-            loading='lazy'
-            onLoad={handleLoad}
-            onError={handleError}
-          />
-        </LazyLoad>
-      )}
-    </div>
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      className={cn(s.normal, 'z-10', showFallback && s.fallbackOffset)}
+    >
+      {showFallback && <div className={s.fallback}>{fallback}</div>}
+
+      <LazyLoad visibleByDefault={visibleByDefault} threshold={threshold} onVisible={handleVisible}>
+        {(visible) =>
+          visible || started ? (
+            <img
+              ref={imgRef}
+              className={cn(className, 'flex-shrink-0', !loaded && 'invisible')}
+              src={src}
+              alt={alt}
+              loading='lazy'
+              onLoad={handleLoad}
+              onError={handleError}
+            />
+          ) : null
+        }
+      </LazyLoad>
+    </button>
   )
 }
 
