@@ -1,4 +1,4 @@
-import { type FC, memo, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { type FC, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 
 import useSalon, { cn } from './salon'
 
@@ -62,4 +62,4 @@ const NativeImg: FC<TProps> = ({
   )
 }
 
-export default memo(NativeImg)
+export default NativeImg
