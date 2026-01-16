@@ -1,6 +1,6 @@
 'use client'
 
-import { DSB_INFO_ROUTE, DSB_LAYOUT_ROUTE, DSB_ROUTE } from '~/const/route'
+import { DSB_ALIAS_ROUTE, DSB_INFO_ROUTE, DSB_LAYOUT_ROUTE, DSB_ROUTE } from '~/const/route'
 import BindSVG from '~/icons/Bind'
 import BookSVG from '~/icons/Book'
 import DomainSVG from '~/icons/Domain'
@@ -83,6 +83,64 @@ export default function LayoutsPage() {
                 desc: '文档展示个性化设置。',
                 seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.DOC}`,
                 Icon: BookSVG,
+              },
+            ],
+          },
+          {
+            groupTitle: '别名映射',
+            items: [
+              {
+                title: '板块入口',
+                desc: '品牌展示，整体布局，头像，标签等全局样式。',
+                seg: DSB_ROUTE.ALIAS,
+                Icon: BindSVG,
+              },
+              {
+                title: '看板',
+                desc: '社区主题色，壁纸及各种背景效果。',
+                seg: `${DSB_ROUTE.ALIAS}/${DSB_ALIAS_ROUTE.KANBAN}`,
+                Icon: ThemeSVG,
+              },
+              {
+                title: '其他',
+                desc: '讨论区个性化设置。',
+                seg: `${DSB_ROUTE.ALIAS}/${DSB_ALIAS_ROUTE.OTHERS}`,
+                Icon: PostSVG,
+              },
+            ],
+          },
+          {
+            groupTitle: '其他',
+            items: [
+              {
+                title: '概览',
+                desc: '品牌展示，整体布局，头像，标签等全局样式。',
+                seg: DSB_ROUTE.INFO,
+                Icon: BindSVG,
+              },
+              {
+                title: 'Logo',
+                desc: '社区主题色，壁纸及各种背景效果。',
+                seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.LOGOS}`,
+                Icon: ThemeSVG,
+              },
+              {
+                title: '页眉',
+                desc: '讨论区个性化设置。',
+                seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.SOCIAL}`,
+                Icon: PostSVG,
+              },
+              {
+                title: '页脚',
+                desc: '看板展示个性化设置。',
+                seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.OTHER}`,
+                Icon: KanbanSVG,
+              },
+              {
+                title: '管理员',
+                desc: '看板展示个性化设置。',
+                seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.OTHER}`,
+                Icon: KanbanSVG,
               },
             ],
           },
