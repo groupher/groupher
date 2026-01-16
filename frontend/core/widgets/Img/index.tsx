@@ -5,7 +5,7 @@
  * Renders an image, enforcing the usage of the alt="" tag
  */
 
-import { type FC, memo, type ReactNode } from 'react'
+import type { FC, ReactNode } from 'react'
 import LazyLoadImg from './LazyLoadImg'
 import NativeImg from './NativeImg'
 
@@ -58,4 +58,4 @@ const Img: FC<IProps> = ({
   )
 }
 
-export default memo(Img)
+export default Img
