@@ -1,6 +1,6 @@
 import type { FC, ReactNode } from 'react'
 import type { TBreadcrumbItem } from '~/spec'
-import BreadCrumb from '~/widgets/BreadCrumb'
+import Breadcrumbs from '~/widgets/Breadcrumbs'
 import useSalon from './salon/portal'
 
 type TProps = {
@@ -15,7 +15,7 @@ const Portal: FC<TProps> = ({ title, desc = null, withDivider = true, crumbItems
 
   return (
     <div className={s.wrapper}>
-      {crumbItems?.length ? <BreadCrumb items={crumbItems} /> : null}
+      {crumbItems?.length ? <Breadcrumbs items={crumbItems} /> : null}
 
       <h3 className={s.title}>{title}</h3>
 
