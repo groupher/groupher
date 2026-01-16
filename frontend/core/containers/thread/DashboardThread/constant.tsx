@@ -85,7 +85,7 @@ export const MENU = {
         slug: DSB_ROUTE.SEO,
       },
       {
-        title: '社区板块',
+        title: '板块管理',
         slug: DSB_ROUTE.THREADS,
       },
       {
@@ -108,10 +108,6 @@ export const MENU = {
       {
         title: '页脚',
         slug: DSB_ROUTE.FOOTER,
-      },
-      {
-        title: '导入/导出',
-        slug: DSB_ROUTE.INOUT,
       },
     ],
   },
@@ -152,6 +148,10 @@ export const MENU = {
       {
         title: 'RSS',
         slug: DSB_ROUTE.RSS,
+      },
+      {
+        title: '导入/导出',
+        slug: DSB_ROUTE.INOUT,
       },
     ],
   },

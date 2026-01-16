@@ -1,6 +1,5 @@
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import useEnable from '../logic/useEnable'
-import Portal from '../Portal'
 import SectionLabel from '../SectionLabel'
 import useSalon from '../salon/threads'
 import AboutThread from './AboutThread'
@@ -12,8 +11,6 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <Portal title='社区板块' desc='按需开启社区对外公开板块，关闭后不会导致内容删除。' />
-
       <div className='mb-10' />
 
       <SectionLabel
