@@ -68,14 +68,22 @@ const LazyLoadImg: FC<TProps> = ({
 
   if (!src) {
     return (
-      <button onClick={onClick} className={cn(s.normal, showFallback && s.fallbackOffset)}>
+      <button
+        type='button'
+        onClick={onClick}
+        className={cn(s.normal, showFallback && s.fallbackOffset)}
+      >
         <div className={s.fallback}>{fallback}</div>
       </button>
     )
   }
 
   return (
-    <button onClick={onClick} className={cn(s.normal, 'z-10', showFallback && s.fallbackOffset)}>
+    <button
+      type='button'
+      onClick={onClick}
+      className={cn(s.normal, 'z-10', showFallback && s.fallbackOffset)}
+    >
       {showFallback && <div className={s.fallback}>{fallback}</div>}
 
       <LazyLoad visibleByDefault={visibleByDefault} threshold={threshold} onVisible={handleVisible}>
