@@ -9,11 +9,12 @@ export default ({ ...spacing }: TProps) => {
   const { cn, fg, margin, hover } = useTwBelt()
 
   return {
-    wrapper: cn('mb-2.5 -ml-0.5', margin(spacing)),
+    wrapper: cn('mb-2.5', margin(spacing)),
     li: 'row-center group',
     item: cn('text-xs py-0.5 px-1'),
     itemHover: cn(hover('bg'), hover('fg')),
-    ol: 'row-center',
+    hoverShift: 'hover:ml-1 trans-all-100',
+    ol: 'row-center -ml-1',
     curPath: cn('', fg('text.digest')),
     divider: cn('text-xs mx-1.5', fg('text.hint')),
   }

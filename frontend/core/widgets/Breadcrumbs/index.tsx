@@ -18,11 +18,12 @@ const BreadCrumb: FC<Props> = ({ items, separator = '/', ...spacing }) => {
     <nav aria-label='Breadcrumb' className={s.wrapper}>
       <ol className={s.ol}>
         {items.map((item, index) => {
+          const isFirst = index === 0
           const isLast = index === items.length - 1
           const clickable = !isLast && item.path
 
           return (
-            <li key={item?.key || item.path} className={s.li}>
+            <li key={item?.key || item.path} className={cn(s.li, isFirst && s.hoverShift)}>
               {clickable ? (
                 <Link href={item.path} className={cn(s.item, s.itemHover)}>
                   {item.title}
