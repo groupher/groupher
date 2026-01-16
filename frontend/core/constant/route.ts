@@ -140,7 +140,7 @@ export const DSB_TAB = {
 export const INFO_TABS: TDsbTabs = {
   segment: DSB_ROUTE.INFO,
   items: [
-    { title: '基本信息', slug: DSB_INFO_ROUTE.BASIC, segment: '' },
+    { title: '常规信息', slug: DSB_INFO_ROUTE.BASIC, segment: '' },
     { title: 'Logo', slug: DSB_INFO_ROUTE.LOGOS },
     { title: '社交媒体', slug: DSB_INFO_ROUTE.SOCIAL },
     { title: '其他', slug: DSB_INFO_ROUTE.OTHER },

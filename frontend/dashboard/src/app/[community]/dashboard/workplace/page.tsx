@@ -1,6 +1,6 @@
 'use client'
 
-import { DSB_LAYOUT_ROUTE, DSB_ROUTE } from '~/const/route'
+import { DSB_INFO_ROUTE, DSB_LAYOUT_ROUTE, DSB_ROUTE } from '~/const/route'
 import BindSVG from '~/icons/Bind'
 import BookSVG from '~/icons/Book'
 import DomainSVG from '~/icons/Domain'
@@ -16,6 +16,35 @@ export default function LayoutsPage() {
         title: '工作区',
         desc: '社区基本信息，各板块或组件的个性化，管理员等设置。',
         items: [
+          {
+            groupTitle: '基本信息',
+            items: [
+              {
+                title: '常规信息',
+                desc: '品牌展示，整体布局，头像，标签等全局样式。',
+                seg: DSB_ROUTE.INFO,
+                Icon: BindSVG,
+              },
+              {
+                title: 'Logo',
+                desc: '社区主题色，壁纸及各种背景效果。',
+                seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.LOGOS}`,
+                Icon: ThemeSVG,
+              },
+              {
+                title: '社交媒体',
+                desc: '讨论区个性化设置。',
+                seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.SOCIAL}`,
+                Icon: PostSVG,
+              },
+              {
+                title: '其他',
+                desc: '看板展示个性化设置。',
+                seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.OTHER}`,
+                Icon: KanbanSVG,
+              },
+            ],
+          },
           {
             groupTitle: '布局与样式',
             items: [
