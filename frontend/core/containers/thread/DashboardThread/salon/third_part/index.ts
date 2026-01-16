@@ -1,15 +1,9 @@
-import useMetric from '~/hooks/useMetric'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fg, hoverBr, isDarkBlack } = useTwBelt()
-
-  const metric = useMetric()
-
-  console.log('## metric: ', metric)
-  console.log('## isDarkBlack: ', isDarkBlack)
+  const { cn, fg, hoverBr } = useTwBelt()
 
   return {
     wrapper: cn('row -ml-1'),

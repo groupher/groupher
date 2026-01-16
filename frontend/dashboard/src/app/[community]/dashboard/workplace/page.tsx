@@ -27,19 +27,19 @@ export default function LayoutsPage() {
               },
               {
                 title: 'Logo',
-                desc: '社区主题色，壁纸及各种背景效果。',
+                desc: '社区 Logo 的上传与展示设置。',
                 seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.LOGOS}`,
                 Icon: ThemeSVG,
               },
               {
                 title: '社交媒体',
-                desc: '讨论区个性化设置。',
+                desc: '社区社交媒体账号与外部链接设置。',
                 seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.SOCIAL}`,
                 Icon: PostSVG,
               },
               {
                 title: '其他',
-                desc: '看板展示个性化设置。',
+                desc: '其他基础信息与扩展配置。',
                 seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.OTHER}`,
                 Icon: KanbanSVG,
               },
