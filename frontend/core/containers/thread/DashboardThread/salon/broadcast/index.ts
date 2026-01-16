@@ -11,7 +11,7 @@ export default () => {
 
     blockBase: cn(
       'relative w-72 rounded-md px-4 py-4 pointer saturate-0 opacity-80',
-      'hover:opacity-100 hover:saturate-100 trans-all-200',
+      'hover:opacity-100 hover:saturate-100',
       hoverBr(),
       bg('alphaBg'),
     ),

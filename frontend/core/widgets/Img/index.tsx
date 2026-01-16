@@ -25,7 +25,7 @@ const Img: FC<IProps> = ({
   alt = 'img',
   fallback = null,
   noLazy = false,
-  visibleByDefault = true,
+  visibleByDefault = false,
   onClick = console.log,
 }) => {
   if (/\.(svg)$/i.test(src)) {

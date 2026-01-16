@@ -1,6 +1,5 @@
 import { type ClassValue, clsx } from 'clsx'
 import { COLOR_NAME } from '~/const/colors'
-import METRIC from '~/const/metric'
 import { cn } from '~/css'
 import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
@@ -87,7 +86,7 @@ export default (): TRet => {
   const fill = (key: TFlatThemeKey) => _theme(key, 'fill')
   const br = (key: TFlatThemeKey) => _theme(key, 'border')
 
-  const hoverBr = () => cn('border', br('divider'), `hover:${primary('borderSoft')}`)
+  const hoverBr = () => cn('border trans-all-100', br('divider'), `hover:${primary('borderSoft')}`)
 
   const _rainbowAlias = (prefix: TColorPrefix): string => {
     switch (prefix) {
@@ -125,9 +124,9 @@ export default (): TRet => {
     }
 
     if (prefix === 'borderSoft') {
-      if (isDarkBlack && metric !== METRIC.LANDING) {
-        return 'border-text-hint'
-      }
+      // if (isDarkBlack && metric !== METRIC.LANDING) {
+      //   return 'border-text-hint'
+      // }
 
       return `${prefix$}-${color$}/50`
     }
