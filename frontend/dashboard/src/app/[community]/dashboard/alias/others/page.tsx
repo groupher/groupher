@@ -1,7 +1,7 @@
 'use client'
 
-import { ALIAS_GROUP } from '~/containers/thread/DashboardThread//constant'
 import Item from '~/containers/thread/DashboardThread/Alias/Item'
+import { ALIAS_GROUP } from '~/containers/thread/DashboardThread/constant'
 import useAlias from '~/containers/thread/DashboardThread/logic/useAlias'
 import { groupByKey } from '~/helper'
 
