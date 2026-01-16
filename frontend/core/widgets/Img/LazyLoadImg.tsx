@@ -8,7 +8,7 @@ type TProps = {
   src: string
   alt?: string
   fallback?: ReactNode | null
-  visibleByDefault?: boolean
+  visibleByDefault: boolean
   onClick?: () => void
   threshold?: number
 }
@@ -18,7 +18,7 @@ const LazyLoadImg: FC<TProps> = ({
   src,
   alt = 'image',
   fallback = null,
-  visibleByDefault = true,
+  visibleByDefault,
   onClick,
   threshold = 200,
 }) => {

@@ -40,6 +40,7 @@ export default () => {
         className={s.logo}
         src={HOME_COMMUNITY.logo}
         fallback={<ImgFallback size={7} title={title} />}
+        visibleByDefault
       />
 
       <div className={s.slash}>/</div>
