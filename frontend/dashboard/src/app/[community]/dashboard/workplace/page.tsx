@@ -91,19 +91,19 @@ export default function LayoutsPage() {
             items: [
               {
                 title: '板块入口',
-                desc: '品牌展示，整体布局，头像，标签等全局样式。',
+                desc: '板块全局命名。',
                 seg: DSB_ROUTE.ALIAS,
                 Icon: BindSVG,
               },
               {
                 title: '看板',
-                desc: '社区主题色，壁纸及各种背景效果。',
+                desc: '看板相关模块命名。',
                 seg: `${DSB_ROUTE.ALIAS}/${DSB_ALIAS_ROUTE.KANBAN}`,
                 Icon: ThemeSVG,
               },
               {
                 title: '其他',
-                desc: '讨论区个性化设置。',
+                desc: '其他组件命名。',
                 seg: `${DSB_ROUTE.ALIAS}/${DSB_ALIAS_ROUTE.OTHERS}`,
                 Icon: PostSVG,
               },
@@ -126,19 +126,19 @@ export default function LayoutsPage() {
               },
               {
                 title: '页眉',
-                desc: '讨论区个性化设置。',
+                desc: '页头自定义链接，编组等',
                 seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.SOCIAL}`,
                 Icon: PostSVG,
               },
               {
                 title: '页脚',
-                desc: '看板展示个性化设置。',
+                desc: '页脚自定义链接，编组等',
                 seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.OTHER}`,
                 Icon: KanbanSVG,
               },
               {
                 title: '管理员',
-                desc: '看板展示个性化设置。',
+                desc: '管理员管理，权限设置。',
                 seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.OTHER}`,
                 Icon: KanbanSVG,
               },
