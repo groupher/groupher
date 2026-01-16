@@ -21,37 +21,37 @@ export default function LayoutsPage() {
             items: [
               {
                 title: '通用',
-                desc: '使用 Groupher 提供的官方子域名访问社区。',
+                desc: '品牌展示，整体布局，头像，标签等全局样式。',
                 seg: DSB_ROUTE.LAYOUT,
                 Icon: BindSVG,
               },
               {
                 title: '主题/背景',
-                desc: '将社区绑定到你自己的域名。',
+                desc: '社区主题色，壁纸及各种背景效果。',
                 seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.THEME}`,
                 Icon: ThemeSVG,
               },
               {
                 title: '讨论区',
-                desc: '将社区绑定到你自己的域名。',
+                desc: '讨论区个性化设置。',
                 seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.POST}`,
                 Icon: PostSVG,
               },
               {
                 title: '看板',
-                desc: '将社区绑定到你自己的域名。',
+                desc: '看板展示个性化设置。',
                 seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.KANBAN}`,
                 Icon: KanbanSVG,
               },
               {
                 title: '更新日志',
-                desc: '将社区绑定到你自己的域名。',
+                desc: '更新日志展示个性化设置。',
                 seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.CHANGELOG}`,
                 Icon: DomainSVG,
               },
               {
                 title: '帮助台',
-                desc: '将社区绑定到你自己的域名。',
+                desc: '文档展示个性化设置。',
                 seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.DOC}`,
                 Icon: BookSVG,
               },
