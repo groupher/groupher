@@ -3,7 +3,7 @@
 import { DSB_COVERS, THIRD_PART_TABS } from '~/const/route'
 import VIEW from '~/const/view'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon from '~/containers/thread/DashboardThread/salon/alias'
+import useSalon from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import Tabs from '~/widgets/Switcher/Tabs'
@@ -28,7 +28,7 @@ export default ({ children }) => {
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
-    <div className={s.wrapper}>
+    <div className={s.content}>
       <Portal
         title='绑定集成'
         desc='将社区与外部系统连接，实现数据同步、事件通知与协作管理。支持统计分析、Webhook 事件推送、即时通讯 Bot 及内容同步等集成方式。'

@@ -5,6 +5,7 @@
     --color-text-title: oklch(27.8% 0.033 256.848); /* gray.800 */
     --color-text-digest: oklch(55.1% 0.027 264.364); /* gray.500 */
     --color-text-hint: #9d9999;
+    --color-text-link: #5073c6;
     --color-link: #5073c6;
     --color-dot: oklch(55.4% 0.046 257.417); /* slate.500 */
     --article-hover-linear: linear-gradient(315deg, oklch(1 0 0 / 0) 0%, oklch(0.97 0 0) 100%);
@@ -156,7 +157,8 @@
     /* articles */
     --color-text-title: oklch(96.7% 0.003 264.542);
     --color-text-digest: #949494; /*oklch(70.5% 0.015 286.067);*/
-    --color-text-hint: #9d9999;
+    --color-text-hint: #919191;
+    --color-text-link: #6b97d4;
     --color-link: #6b97d4;
     --color-dot: oklch(70.4% 0.04 256.788); /* slate.400 */
     --article-hover-linear: linear-gradient(315deg, oklch(0.55 0 0 / 0) 0%, oklch(0.32 0 0) 100%);
@@ -194,7 +196,7 @@
 
     /* modal */
     --color-modal-bg: #222222;
-    --color-modal-mask: oklch(13.5% 0.02 260deg / 0.1);
+    --color-modal-mask: oklch(0.19 0 0 / 0.49);
 
     /* menu */
     --color-menuHoverBg: #42424259;

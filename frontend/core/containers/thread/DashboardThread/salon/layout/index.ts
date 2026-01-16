@@ -7,14 +7,14 @@ export default () => {
     useTwBelt()
 
   return {
-    wrapper: 'column w-10/12 items-center',
+    wrapper: 'column w-3/5 ',
     banner: cn('relative h-16 w-full border-b mb-10', br('divider')),
     tabs: 'absolute -left-2 bottom-0',
     //
     baseSection: 'pb-7',
     blockBase: cn(
       'relative w-72 rounded-md px-4 py-4 pointer saturate-0 opacity-80',
-      'hover:opacity-100 hover:saturate-100 trans-all-200',
+      'hover:opacity-100 hover:saturate-100',
       hoverBr(),
       bg('alphaBg'),
     ),

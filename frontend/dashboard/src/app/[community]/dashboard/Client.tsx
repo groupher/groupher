@@ -1,7 +1,7 @@
 'use client'
 
 import SideMenu from '~/containers/thread/DashboardThread/SideMenu'
-import CommunityDigest from '~/widgets/CommunityDigest'
+import CommunityDigest from '~/widgets/CommunityDigest/DashboardLayout'
 import useSalon from './salon'
 
 const ClientLayout = ({ children }) => {
@@ -12,10 +12,8 @@ const ClientLayout = ({ children }) => {
       <CommunityDigest />
 
       <div className={s.inner}>
-        <div className={s.content}>
-          <SideMenu />
-          <div className={s.main}>{children}</div>
-        </div>
+        <SideMenu />
+        <div className={s.children}>{children}</div>
       </div>
     </div>
   )
