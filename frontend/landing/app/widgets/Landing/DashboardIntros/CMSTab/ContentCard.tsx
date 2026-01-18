@@ -1,5 +1,5 @@
 import { COLOR_NAME } from '~/const/colors'
-import AuthSVG from '~/icons/Acount'
+import AuthSVG from '~/icons/Account'
 import CurveLineSVG from '~/icons/CurveLine'
 import PostSVG from '~/icons/Post'
 import WebhookSVG from '~/icons/Webhook'

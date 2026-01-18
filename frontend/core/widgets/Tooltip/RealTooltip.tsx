@@ -4,7 +4,7 @@
  * use custom animation Globally at GlobalStyle.ts
  */
 
-import Tippy from '@tippyjs/react'
+import Tippy from '@groupher/tooltip'
 import { type FC, useEffect, useRef, useState } from 'react'
 import { hideAll } from 'tippy.js'
 
@@ -97,7 +97,6 @@ const Tooltip: FC<TProps> = ({
     placement,
     hideOnClick,
     zIndex: 3000, // zIndex.popover,
-    active: true,
     delay: [delay, 0] as [number, number],
     offset,
     // offset: [0, -8] as [number, number],

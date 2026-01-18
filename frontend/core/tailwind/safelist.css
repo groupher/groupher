@@ -8,8 +8,7 @@
 @source inline('fill-{text-title,text-digest,heightIcon,text-link}');
 
 /* background */
-@source inline('bg-{pageBg,dot,text-digest,text-link,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,sandBox,popover-bg,menuHoverBg,menuInvertBg,alphaBg,snackBar,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}');
-@source inline('bg-text-link');
+@source inline('bg-{pageBg,link,dot,text-digest,text-link,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,sandBox,popover-bg,menuHoverBg,menuInvertBg,alphaBg,snackBar,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}');
 
 /* rainbow */
 @source inline('{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');

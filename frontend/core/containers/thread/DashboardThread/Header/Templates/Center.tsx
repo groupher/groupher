@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { HEADER_LAYOUT } from '~/const/layout'
 
 import { THREAD } from '~/const/thread'
-import AccountSVG from '~/icons/Acount'
+import AccountSVG from '~/icons/Account'
 import type { TActive, TCommunityThread, TLinkItem } from '~/spec'
 import CommunityBrand from '~/widgets/CommunityBrand'
 import CustomHeaderLinks from '~/widgets/CustomHeaderLinks/HeaderTemplate'

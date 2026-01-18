@@ -15,11 +15,9 @@ export default async ({ children, previewer, params }) => {
 
   return (
     <ArticleListStoreProvider initData={initData}>
-      <div>
-        {children}
+      {children}
 
-        {previewer && <>{previewer}</>}
-      </div>
+      {previewer && <>{previewer}</>}
     </ArticleListStoreProvider>
   )
 }

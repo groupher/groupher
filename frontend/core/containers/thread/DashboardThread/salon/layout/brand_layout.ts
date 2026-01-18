@@ -14,7 +14,7 @@ export default () => {
     select: cn('row-center gap-x-10 w-full'),
     brand: 'row-center',
     brandIcon: cn('size-6', primary('fill'), isBlackPrimary && fill('text.link')),
-    brandTitle: cn('text-base bold-sm', primary('fg'), isBlackPrimary && fg('text.link')),
+    brandTitle: cn('text-base', fg('text.digest')),
     layout: 'column-align-both group',
     layoutTitleActive: cn('opacity-100'),
     divider: cn(sexyBorder(), 'mt-4'),

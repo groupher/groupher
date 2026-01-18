@@ -1,26 +1,20 @@
 import { pick } from 'ramda'
-import { type FC, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { type FC, useCallback, useEffect, useRef, useState } from 'react'
 import LazyLoad from '~/widgets/LazyLoad'
+import type { TProps as TPropsBase } from '.'
 import useSalon, { cn } from './salon/lazy_load_image'
 
-type TProps = {
-  className?: string
-  src: string
-  alt?: string
-  fallback?: ReactNode | null
-  visibleByDefault: boolean
-  onClick?: () => void
-  threshold?: number
-}
+type TProps = Omit<Required<TPropsBase>, 'noLazy'>
 
 const LazyLoadImg: FC<TProps> = ({
-  className = 'img-class',
+  className,
   src,
-  alt = 'image',
-  fallback = null,
+  alt,
+  fallback,
   visibleByDefault,
   onClick,
-  threshold = 200,
+  clickable,
+  threshold,
 }) => {
   // @ts-expect-error
   const fallbackOpt = pick(['size', 'left', 'right', 'top', 'bottom'], fallback?.props || {})
@@ -71,7 +65,7 @@ const LazyLoadImg: FC<TProps> = ({
       <button
         type='button'
         onClick={onClick}
-        className={cn(s.normal, showFallback && s.fallbackOffset)}
+        className={cn(s.normal, showFallback && s.fallbackOffset, clickable && 'pointer')}
       >
         <div className={s.fallback}>{fallback}</div>
       </button>
@@ -82,7 +76,7 @@ const LazyLoadImg: FC<TProps> = ({
     <button
       type='button'
       onClick={onClick}
-      className={cn(s.normal, 'z-10', showFallback && s.fallbackOffset)}
+      className={cn(s.normal, 'z-10', showFallback && s.fallbackOffset, clickable && 'pointer')}
     >
       {showFallback && <div className={s.fallback}>{fallback}</div>}
 
