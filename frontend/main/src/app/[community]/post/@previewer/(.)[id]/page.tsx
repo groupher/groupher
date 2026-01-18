@@ -5,13 +5,14 @@ import Drawer from '~/widgets/@Drawer'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
 export default async function Page({ params }) {
-  const p = await params
+  const params$ = await params
+  const { community, id } = params$
 
   return (
     <Drawer>
       <ErrorBoundary fallback={<div>Error loading article</div>}>
         <Suspense fallback={<LavaLampLoading />}>
-          <ArticleViewer community={p.community} innerId={p.id} thread='post' />
+          <ArticleViewer community={community} innerId={id} thread='post' />
         </Suspense>
       </ErrorBoundary>
     </Drawer>

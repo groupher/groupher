@@ -9,7 +9,7 @@ import type { FC, ReactNode } from 'react'
 import LazyLoadImg from './LazyLoadImg'
 import NativeImg from './NativeImg'
 
-type IProps = {
+export type TProps = {
   src: string
   alt?: string
   className?: string
@@ -17,9 +17,11 @@ type IProps = {
   noLazy?: boolean
   visibleByDefault?: boolean
   onClick?: () => void
+  clickable?: boolean
+  threshold?: number
 }
 
-const Img: FC<IProps> = ({
+const Img: FC<TProps> = ({
   className = 'img-class',
   src,
   alt = 'img',
@@ -27,6 +29,8 @@ const Img: FC<IProps> = ({
   noLazy = false,
   visibleByDefault = false,
   onClick = console.log,
+  clickable = false,
+  threshold = 200,
 }) => {
   if (/\.(svg)$/i.test(src)) {
     // see solution in:
@@ -41,6 +45,7 @@ const Img: FC<IProps> = ({
           src={src}
           alt={alt}
           fallback={fallback}
+          clickable={clickable}
           onClick={onClick}
         />
       ) : (
@@ -51,6 +56,8 @@ const Img: FC<IProps> = ({
           alt={alt}
           fallback={fallback}
           visibleByDefault={visibleByDefault}
+          clickable={clickable}
+          threshold={threshold}
           onClick={onClick}
         />
       )}

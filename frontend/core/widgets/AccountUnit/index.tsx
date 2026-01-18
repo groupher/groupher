@@ -8,7 +8,7 @@ import { type FC, useState } from 'react'
 import { BANNER_LAYOUT } from '~/const/layout'
 import useAccount from '~/hooks/useAccount'
 import useLayout from '~/hooks/useLayout'
-import AccountSVG from '~/icons/Acount'
+import AccountSVG from '~/icons/Account'
 import type { TSpace } from '~/spec'
 
 import LoggedInAccount from './LoggedInAccount'

@@ -1,8 +1,9 @@
-import type { FC } from 'react'
-import { range } from 'ramda'
+'use client'
 
-import type { TSpace, TSizeTSM } from '~/spec'
+import { range } from 'ramda'
+import type { FC } from 'react'
 import SIZE from '~/const/size'
+import type { TSizeTSM, TSpace } from '~/spec'
 
 import useSalon, { cn } from './salon/lava_lamp_loading'
 

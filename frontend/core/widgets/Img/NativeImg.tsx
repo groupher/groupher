@@ -8,11 +8,12 @@ type TProps = {
   alt?: string
   fallback?: ReactNode | null
   onClick: () => void
+  clickable: boolean
 }
 
 /**
  * normal image like .jpg .jpeg .png  etc
- * the fallback is for the image offen block in china, like github avatars
+ * the fallback is for the image often block in china, like github avatars
  * fallback 常被用于图片间歇性被墙的情况，比如 github 头像等
  */
 const NativeImg: FC<TProps> = ({
@@ -20,6 +21,7 @@ const NativeImg: FC<TProps> = ({
   src,
   alt = 'image',
   fallback = null,
+  clickable,
   onClick,
 }) => {
   const s = useSalon()
@@ -49,7 +51,7 @@ const NativeImg: FC<TProps> = ({
     <>
       <img
         ref={ref}
-        className={cn(className, s.wrapper, !loaded && s.notLoaded)}
+        className={cn(className, s.wrapper, !loaded && s.notLoaded, clickable && 'pointer')}
         src={src}
         alt={alt}
         onClick={onClick}

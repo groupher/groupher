@@ -26,7 +26,6 @@ export default () => {
   if (!post) {
     return <h1>Error article</h1>
   }
-  console.log('## get post: ', post)
 
   const { innerId, author, title, isPinned } = post
 

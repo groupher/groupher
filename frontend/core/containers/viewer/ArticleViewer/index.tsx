@@ -16,13 +16,9 @@ import Viewer from './Viewer'
 
 type TProps = TArticleLoad
 
-export default (props: TProps) => {
+export default (_props: TProps) => {
   const s = useSalon()
-  const { article, loadArticle } = useLogic()
-
-  useEffect(() => {
-    loadArticle(props)
-  }, [props, loadArticle])
+  const { article } = useLogic()
 
   useEffect(() => {
     if (article) {
