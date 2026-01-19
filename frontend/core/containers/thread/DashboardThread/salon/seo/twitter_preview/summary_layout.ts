@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: cn(
-      'row-center relative mb-8 rounded-lg w-96 h-28 -ml-2 border overflow-hidden',
+      'row-center relative mb-8 rounded-lg w-full h-28 border overflow-hidden',
       br('divider'),
       bg('alphaBg'),
     ),

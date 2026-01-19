@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: cn(
-      'column w-96 mb-8 -ml-2 rounded-2xl relative border overflow-hidden',
+      'column w-full mb-8 rounded-2xl relative border overflow-hidden',
       bg('alphaBg'),
       br('divider'),
     ),

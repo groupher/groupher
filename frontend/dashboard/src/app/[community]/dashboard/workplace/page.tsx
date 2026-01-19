@@ -1,6 +1,12 @@
 'use client'
 
-import { DSB_ALIAS_ROUTE, DSB_INFO_ROUTE, DSB_LAYOUT_ROUTE, DSB_ROUTE } from '~/const/route'
+import {
+  DSB_ALIAS_ROUTE,
+  DSB_INFO_ROUTE,
+  DSB_LAYOUT_ROUTE,
+  DSB_ROUTE,
+  DSB_SEO_ROUTE,
+} from '~/const/route'
 import BindSVG from '~/icons/Bind'
 import BookSVG from '~/icons/Book'
 import DomainSVG from '~/icons/Domain'
@@ -42,6 +48,23 @@ export default function LayoutsPage() {
                 desc: '其他基础信息与扩展配置。',
                 seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.OTHER}`,
                 Icon: KanbanSVG,
+              },
+            ],
+          },
+          {
+            groupTitle: 'SEO',
+            items: [
+              {
+                title: '搜索引擎',
+                desc: '搜索引擎原信息，标准 OG 信息。',
+                seg: DSB_ROUTE.SEO,
+                Icon: BindSVG,
+              },
+              {
+                title: 'Twitter',
+                desc: 'X(Twitter) SEO 信息优化。',
+                seg: `${DSB_ROUTE.SEO}/${DSB_SEO_ROUTE.TWITTER}`,
+                Icon: ThemeSVG,
               },
             ],
           },

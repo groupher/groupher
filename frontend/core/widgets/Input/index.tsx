@@ -49,7 +49,7 @@ const Input: FC<TProps> = ({
   autoFocus = false,
   disableEnter = false,
   className = '',
-  width = 'w-fit',
+  width = 'w-full',
   ...restProps
 }) => {
   const s = useSalon({ width })
