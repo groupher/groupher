@@ -6,7 +6,7 @@ export const HOME_COMMUNITY = {
   logo: '/groupher.png',
 }
 
-export const LANDING_COMMUNITY = {
+const LANDING_COMMUNITY = {
   slug: 'landing',
   homepage: '',
   desc: '',
@@ -14,6 +14,10 @@ export const LANDING_COMMUNITY = {
   dashboard: {},
 }
 
+export const LANDING_INIT_DATA = {
+  community: LANDING_COMMUNITY,
+  dashboard: { original: {} },
+}
 export const ALIAS_GROUP = {
   THREAD: DSB_ALIAS_ROUTE.THREAD,
   KANBAN: DSB_ALIAS_ROUTE.KANBAN,

@@ -21,21 +21,34 @@ const Templates: FC = () => {
     footerLinks,
     resetEditingLink,
   } = useFooter()
-  const [showAll, setShowAll] = useState<boolean>(false)
+
+  const [showAll, setShowAll] = useState(false)
 
   return (
     <div className={s.wrapper}>
-      {showAll ? (
-        <>
-          <Simple $active={footerLayout === FOOTER_LAYOUT.SIMPLE} links={footerLinks} />
-          <Group active={footerLayout === FOOTER_LAYOUT.GROUP} links={footerLinks} />
-        </>
-      ) : (
-        <>
-          {footerLayout === FOOTER_LAYOUT.SIMPLE && <Simple active links={footerLinks} />}
-          {footerLayout === FOOTER_LAYOUT.GROUP && <Group active links={footerLinks} />}
-        </>
-      )}
+      <fieldset className='w-full'>
+        <legend className='sr-only'>Footer layout</legend>
+
+        <div className={s.options}>
+          <div
+            aria-hidden={!showAll && footerLayout !== FOOTER_LAYOUT.SIMPLE}
+            className={cn(!showAll && footerLayout !== FOOTER_LAYOUT.SIMPLE && 'hidden')}
+          >
+            <Simple
+              active={footerLayout === FOOTER_LAYOUT.SIMPLE}
+              links={footerLinks}
+              previewOnly
+            />
+          </div>
+
+          <div
+            aria-hidden={!showAll && footerLayout !== FOOTER_LAYOUT.GROUP}
+            className={cn(!showAll && footerLayout !== FOOTER_LAYOUT.GROUP && 'hidden')}
+          >
+            <Group active={footerLayout === FOOTER_LAYOUT.GROUP} links={footerLinks} previewOnly />
+          </div>
+        </div>
+      </fieldset>
 
       <SavingBar
         isTouched={isLayoutTouched}
@@ -43,7 +56,6 @@ const Templates: FC = () => {
         onConfirm={() => setShowAll(false)}
         loading={saving}
         top={10}
-        width='w-11/12'
       />
 
       {!isLayoutTouched && !saving && (

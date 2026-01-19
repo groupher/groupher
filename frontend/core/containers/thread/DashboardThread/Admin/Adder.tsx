@@ -1,7 +1,6 @@
-import Input from '~/widgets/Input'
-import Button from '~/widgets/Buttons/Button'
-
 import PlusSVG from '~/icons/Plus'
+import Button from '~/widgets/Buttons/Button'
+import Input from '~/widgets/Input'
 
 import useSalon from '../salon/admin/adder'
 
@@ -10,8 +9,12 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <Input className={s.input} placeholder="账户名称 / 登入ID (TODO: use react-select)" />
-      <Button className={s.addBtn} size="small">
+      <Input
+        className={s.input}
+        placeholder='账户名称 / 登入ID (TODO: use react-select)'
+        width='w-full'
+      />
+      <Button className={s.addBtn}>
         <PlusSVG className={s.plusIcon} />
         管理员
       </Button>

@@ -4,9 +4,9 @@ export default () => {
   const { cn, fill } = useTwBelt()
 
   return {
-    wrapper: 'row-center mb-10',
-    input: 'text-sm h-9',
+    wrapper: 'row-center mb-12 w-full',
+    input: 'text-sm h-10 grow',
     plusIcon: cn('size-3 -ml-0.5 mr-1.5', fill('button.fg')),
-    addBtn: 'w-36 h-8 ml-4',
+    addBtn: 'h-8 ml-4 -mt-1.5',
   }
 }

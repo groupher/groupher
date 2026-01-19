@@ -9,7 +9,7 @@ export default () => {
 
   return {
     wrapper: cn(
-      'column relative w-96 px-4 py-4 rounded-md -ml-2.5 mb-8',
+      'column relative w-full px-4 py-4 rounded-md mb-8',
       isLightTheme ? 'bg-[#fff]' : 'bg-[#1F1F1F]',
       shadow('md'),
     ),

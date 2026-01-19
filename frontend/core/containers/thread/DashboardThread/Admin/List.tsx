@@ -28,7 +28,6 @@ export default () => {
                 <div className='grow' />
                 <Button
                   top={1}
-                  className='w-28'
                   onClick={() => {
                     setActiveSettingAdmin(user)
                     callPassportEditor()

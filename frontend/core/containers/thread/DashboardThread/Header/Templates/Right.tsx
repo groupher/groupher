@@ -1,14 +1,16 @@
 import { reject } from 'ramda'
 import type { FC } from 'react'
+
 import { HEADER_LAYOUT } from '~/const/layout'
 import { THREAD } from '~/const/thread'
+
 import AccountSVG from '~/icons/Account'
 import type { TActive, TCommunityThread, TLinkItem } from '~/spec'
+
 import CommunityBrand from '~/widgets/CommunityBrand'
 import CustomHeaderLinks from '~/widgets/CustomHeaderLinks/HeaderTemplate'
 
 import useHeader from '../../logic/useHeader'
-
 import useSalon, { cn } from '../../salon/header/templates/right'
 
 type TProps = {
@@ -16,26 +18,36 @@ type TProps = {
   links: readonly TLinkItem[]
 } & TActive
 
+const RADIO_NAME = 'header-layout'
+
 const Right: FC<TProps> = ({ active, threads, links }) => {
   const s = useSalon()
-
   const { edit } = useHeader()
+
+  const radioId = 'header-layout-right'
+
   const isAboutFold = links.length >= 2 && links[0].title !== ''
-  const _threads = isAboutFold
+  const visibleThreads = isAboutFold
     ? reject((t: TCommunityThread) => t.slug === THREAD.ABOUT, threads)
     : threads
 
   return (
-    <button
-      className={cn(s.wrapper, active && s.active)}
-      onClick={() => edit(HEADER_LAYOUT.RIGHT, 'headerLayout')}
-    >
+    <label htmlFor={radioId} className={cn(s.wrapper, active && s.active)}>
+      <input
+        id={radioId}
+        type='radio'
+        name={RADIO_NAME}
+        checked={active}
+        onChange={() => edit(HEADER_LAYOUT.RIGHT, 'headerLayout')}
+        className='sr-only'
+      />
+
       <div className={s.left}>
         <CommunityBrand />
       </div>
 
       <div className={s.right}>
-        {_threads.map((thread: TCommunityThread) => (
+        {visibleThreads.map((thread: TCommunityThread) => (
           <div key={thread.slug} className={s.linkItem}>
             {thread.title}
           </div>
@@ -45,7 +57,7 @@ const Right: FC<TProps> = ({ active, threads, links }) => {
 
         <AccountSVG className={s.accountIcon} />
       </div>
-    </button>
+    </label>
   )
 }
 

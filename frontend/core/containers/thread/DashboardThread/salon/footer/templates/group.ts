@@ -11,7 +11,7 @@ export default () => {
   return {
     wrapper: cn(base.template, 'row items-start min-h-36 justify-between px-7 pr-8 pt-4'),
     active: base.templateActive,
-    left: 'column grow items-start',
+    left: 'column grow items-start h-full pb-2',
     right: 'row gap-x-14 mt-1.5',
     desc: cn('line-clamp-2 w-40 mt-1.5 text-xs', fg('text.digest')),
     center: 'column gap-x-2',

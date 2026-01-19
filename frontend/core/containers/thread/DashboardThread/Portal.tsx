@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from 'react'
-import type { TBreadcrumbItem } from '~/spec'
+import type { TBreadcrumbItem, TSpace } from '~/spec'
 import Breadcrumbs from '~/widgets/Breadcrumbs'
 import useSalon from './salon/portal'
 
@@ -8,10 +8,16 @@ type TProps = {
   desc?: ReactNode
   withDivider?: boolean
   crumbItems?: TBreadcrumbItem[]
-}
+} & TSpace
 
-const Portal: FC<TProps> = ({ title, desc = null, withDivider = true, crumbItems = [] }) => {
-  const s = useSalon()
+const Portal: FC<TProps> = ({
+  title,
+  desc = null,
+  withDivider = true,
+  crumbItems = [],
+  ...spacing
+}) => {
+  const s = useSalon({ ...spacing })
 
   return (
     <div className={s.wrapper}>

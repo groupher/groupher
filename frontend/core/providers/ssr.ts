@@ -46,6 +46,8 @@ export const getCommunityInfo = async (community$: string): Promise<TCommunityIn
     dashboard,
   }
 
+  // console.log('## initState parseDashboard --> : ', initState.dashboard.original.headerLinks)
+
   return initState
 }
 

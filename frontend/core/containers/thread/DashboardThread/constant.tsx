@@ -102,7 +102,7 @@ export const MENU = {
         slug: DSB_ROUTE.ADMINS,
       },
       {
-        title: '页眉',
+        title: '页头',
         slug: DSB_ROUTE.HEADER,
       },
       {
