@@ -1,10 +1,10 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
-  const { cn, fg, bg } = useTwBelt()
+export default ({ ...spacing }) => {
+  const { cn, fg, bg, margin } = useTwBelt()
 
   return {
-    wrapper: 'column w-full',
+    wrapper: cn('column w-full', margin(spacing)),
     title: cn('text-2xl w-auto', fg('text.title')),
     desc: cn('text-sm mt-2.5 mb-2', fg('text.digest')),
     divider: cn('w-full h-px mt-5 mb-8', bg('divider')),
