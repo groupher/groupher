@@ -29,7 +29,7 @@ export default () => {
       />
       <p className={s.hint}>社区界面的默认语言</p>
 
-      <div className={s.label}>社区域名</div>
+      <div className={s.label}>站内子域名</div>
       <Input value={slug} className={s.input} onChange={(v) => edit(v, 'slug')} />
       <p className={s.hint}>
         社区的 URL 地址段，填写后可通过 https://groupher.com/[slug] 或 https://[slug].groupher.com

@@ -14,9 +14,6 @@ export default async ({ children, params }) => {
     getLocaleData(),
   ])
 
-  // console.log('## localeData: ', localeData)
-  // console.log('## got community$ in layout: ', community)
-
   return (
     <MainProvider
       initData={{ community, dashboard }}

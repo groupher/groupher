@@ -27,7 +27,7 @@ export default ({ children }) => {
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
-    <div className={cn(s.content, 'w-1/2')}>
+    <div className={cn(s.content, 'w-2/5')}>
       <Portal
         title='基本信息'
         desc='社区基本信息，社交媒体，关于页面主要信息等。'

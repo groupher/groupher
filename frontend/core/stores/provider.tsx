@@ -34,9 +34,6 @@ const MainProvider: FC<TProps> = ({
   const { dashboard, community } = initData
   const now = Date.now()
 
-  // console.log('## initState parseDashboard in provider--> : ', dashboard)
-  // ?.original.headerLinks
-
   return (
     <ThemeStoreProvider>
       <LocaleStoreProvider initData={{ locale, localeData }}>

@@ -41,6 +41,9 @@ export const community = `
       }
       dashboard {
         baseInfo {
+          title
+          slug
+          locale
           favicon
           homepage
           logo

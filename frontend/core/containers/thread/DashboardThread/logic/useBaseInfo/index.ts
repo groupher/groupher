@@ -25,7 +25,7 @@ type TRet = TUseInfo &
   }
 
 export default (): TRet => {
-  const dashboard = useDashboard()
+  const dsb$ = useDashboard()
   const { slug } = useCommunity()
   const { edit } = useHelper()
 
@@ -61,12 +61,12 @@ export default (): TRet => {
     }
 
     const original = {
-      ...dashboard.original,
+      ...dsb$.original,
       ...updates,
       mediaReports: initMediaReports,
     }
 
-    dashboard.commit({
+    dsb$.commit({
       ...updates,
       mediaReports: initMediaReports,
       original: original as TDsbFieldMap,
@@ -75,16 +75,16 @@ export default (): TRet => {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (data?.community && !dashboard.initFilled) {
-      dashboard.commit({ initFilled: true })
+    if (data?.community && !dsb$.initFilled) {
+      dsb$.commit({ initFilled: true })
       // to avoid hooks rerender which update baseinfo
       updateBaseInfo(data.community)
     }
-  }, [dashboard.initFilled])
+  }, [dsb$.initFilled])
 
   return {
     edit,
-    ...pick(['loading', 'saving'], dashboard),
+    ...pick(['loading', 'saving'], dsb$),
     ...useInfoData,
     ...useLogosData,
     ...useSocialLinksData,
