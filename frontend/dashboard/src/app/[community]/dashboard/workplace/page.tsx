@@ -125,7 +125,7 @@ export default function LayoutsPage() {
                 Icon: ThemeSVG,
               },
               {
-                title: '页眉',
+                title: '页头',
                 desc: '页头自定义链接，编组等',
                 seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.SOCIAL}`,
                 Icon: PostSVG,

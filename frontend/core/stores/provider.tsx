@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
-import type { TCommunity, TLocale, TMetric } from '~/spec'
+import type { TCommunity, TLocale, TMetric, TParseDashboard } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
 import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
@@ -11,7 +11,7 @@ import WallpaperStoreProvider from '~/stores/wallpaper/provider'
 
 type TProps = {
   children: React.ReactNode
-  initData: TCommunity
+  initData: { community: TCommunity; dashboard: TParseDashboard }
   locale?: TLocale
   localeData?: string
   noAccount?: boolean
@@ -31,14 +31,17 @@ const MainProvider: FC<TProps> = ({
   noAccount = false,
   metric = METRIC.COMMUNITY,
 }) => {
-  const { dashboard, ...base } = initData
+  const { dashboard, community } = initData
   const now = Date.now()
+
+  // console.log('## initState parseDashboard in provider--> : ', dashboard)
+  // ?.original.headerLinks
 
   return (
     <ThemeStoreProvider>
       <LocaleStoreProvider initData={{ locale, localeData }}>
         <AccountWrapper noAccount={noAccount}>
-          <CommunityStoreProvider initData={{ ...base }}>
+          <CommunityStoreProvider initData={community}>
             <DashboardStoreProvider initData={{ ...dashboard, metric, now }}>
               <WallpaperStoreProvider>{children}</WallpaperStoreProvider>
             </DashboardStoreProvider>

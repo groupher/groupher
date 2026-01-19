@@ -7,8 +7,9 @@ export default () => {
 
   return {
     wrapper: cn('column items-center w-full gap-4 pb-8'),
+    options: 'column gap-y-6',
     template: cn(
-      'w-11/12 h-16 border rounded-md pointer',
+      'w-full h-16 border rounded-md pointer',
       `hover:${primary('border')}`,
       br('divider'),
       bg('alphaBg'),

@@ -21,6 +21,9 @@ export default (): TRet => {
 
   const { editingLink, enable, nameAlias } = dsb$
 
+  // console.log('## headerLinks: ', dsb$.headerLinks)
+  // console.log('## headerLinks original: ', dsb$.original.headerLinks)
+
   const threads = useMemo(() => {
     // @ts-expect-error
     return publicThreads(community$.threads, { enable, nameAlias })
@@ -30,9 +33,10 @@ export default (): TRet => {
     return isChanged('footerLinks') && editingLink === null
   }, [editingLink, isChanged])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const isHeaderLinksTouched = useMemo((): boolean => {
     return isChanged('headerLinks') && editingLink === null
-  }, [editingLink, isChanged])
+  }, [editingLink])
 
   const isHeaderLayoutTouched = isChanged('headerLayout')
   const isFooterLayoutTouched = isChanged('footerLayout')

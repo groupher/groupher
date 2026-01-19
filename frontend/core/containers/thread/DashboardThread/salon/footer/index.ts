@@ -1,9 +1,6 @@
-import useTwBelt from '~/hooks/useTwBelt'
-
 export default () => {
-  const { cn } = useTwBelt()
-
   return {
-    wrapper: cn('column items-center'),
+    wrapper: 'column w-full items-end',
+    inner: 'w-11/12 pl-6',
   }
 }

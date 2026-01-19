@@ -2,7 +2,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import METRIC from '~/const/metric'
-import { LANDING_COMMUNITY } from '~/const/name'
+import { LANDING_INIT_DATA } from '~/const/name'
 import GlobalProvider from '~/providers/Global'
 import MainProvider from '~/stores/provider'
 import RootLayoutShell from '~/widgets/RootLayoutShell'
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <RootLayoutShell>
-      <MainProvider initData={LANDING_COMMUNITY} noAccount metric={METRIC.LANDING}>
+      <MainProvider initData={LANDING_INIT_DATA} noAccount metric={METRIC.LANDING}>
         <GlobalProvider mainBlock={Main}>{children}</GlobalProvider>
       </MainProvider>
       <Analytics />

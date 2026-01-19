@@ -33,7 +33,7 @@ export default function Content() {
         <EditSVG className={s.editIcon} />
       </div>
       <div className={s.twPanel}>
-        <div className={cn(s.title, 'mb-2')}>页眉链接</div>
+        <div className={cn(s.title, 'mb-2')}>页头链接</div>
         <div className={s.linkDesc}>游乐场</div>
         <div className={s.linkDesc}>价格</div>
 

@@ -13,18 +13,14 @@ const Footer: FC = () => {
 
   return (
     <div className={s.wrapper}>
-      <Templates />
-      <br />
-      <br />
-      <Editor />
+      <div className={s.inner}>
+        <Templates />
+        <br />
+        <br />
+        <Editor />
 
-      <SavingBar
-        field={FIELD.FOOTER_LINKS}
-        isTouched={isTouched}
-        loading={saving}
-        top={10}
-        width='w-11/12'
-      />
+        <SavingBar field={FIELD.FOOTER_LINKS} isTouched={isTouched} loading={saving} top={10} />
+      </div>
     </div>
   )
 }

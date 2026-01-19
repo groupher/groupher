@@ -1,7 +1,6 @@
 import { type FC, useState } from 'react'
 
 import { HEADER_LAYOUT } from '~/const/layout'
-
 import ArrowSVG from '~/icons/ArrowSimple'
 import Button from '~/widgets/Buttons/Button'
 
@@ -14,7 +13,7 @@ import Float from './Float'
 import Right from './Right'
 
 const Templates: FC = () => {
-  const [showAll, setShowAll] = useState<boolean>(false)
+  const [showAll, setShowAll] = useState(false)
   const s = useSalon()
 
   const {
@@ -24,23 +23,37 @@ const Templates: FC = () => {
     headerLinks: links,
     threads,
   } = useHeader()
+
   const linksProps = { threads, links }
 
   return (
     <div className={s.wrapper}>
-      {showAll ? (
-        <>
-          <Center {...linksProps} active={headerLayout === HEADER_LAYOUT.CENTER} />
-          <Right {...linksProps} active={headerLayout === HEADER_LAYOUT.RIGHT} />
-          <Float {...linksProps} active={headerLayout === HEADER_LAYOUT.FLOAT} />
-        </>
-      ) : (
-        <button className='w-full' onClick={() => setShowAll(true)}>
-          {headerLayout === HEADER_LAYOUT.CENTER && <Center {...linksProps} active />}
-          {headerLayout === HEADER_LAYOUT.RIGHT && <Right {...linksProps} active />}
-          {headerLayout === HEADER_LAYOUT.FLOAT && <Float {...linksProps} active />}
-        </button>
-      )}
+      <fieldset className='w-full'>
+        <legend className='sr-only'>Header layout</legend>
+
+        <div className={s.options}>
+          <div
+            aria-hidden={!showAll && headerLayout !== HEADER_LAYOUT.CENTER}
+            className={cn(!showAll && headerLayout !== HEADER_LAYOUT.CENTER && 'hidden')}
+          >
+            <Center {...linksProps} active={headerLayout === HEADER_LAYOUT.CENTER} />
+          </div>
+
+          <div
+            aria-hidden={!showAll && headerLayout !== HEADER_LAYOUT.RIGHT}
+            className={cn(!showAll && headerLayout !== HEADER_LAYOUT.RIGHT && 'hidden')}
+          >
+            <Right {...linksProps} active={headerLayout === HEADER_LAYOUT.RIGHT} />
+          </div>
+
+          <div
+            aria-hidden={!showAll && headerLayout !== HEADER_LAYOUT.FLOAT}
+            className={cn(!showAll && headerLayout !== HEADER_LAYOUT.FLOAT && 'hidden')}
+          >
+            <Float {...linksProps} active={headerLayout === HEADER_LAYOUT.FLOAT} />
+          </div>
+        </div>
+      </fieldset>
 
       <SavingBar
         isTouched={isLayoutTouched}
@@ -50,11 +63,10 @@ const Templates: FC = () => {
         top={10}
       />
 
-      <div className='w-11/12 align-both'>
+      <div className='align-both'>
         {!isLayoutTouched && !saving && (
           <Button size='small' ghost noBorder className='w-36' onClick={() => setShowAll(!showAll)}>
             {showAll ? '收起' : '更换模板'}
-
             <ArrowSVG className={cn(s.arrowIcon, showAll && 'rotate-90')} />
           </Button>
         )}

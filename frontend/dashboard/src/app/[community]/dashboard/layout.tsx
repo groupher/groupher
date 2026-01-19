@@ -9,7 +9,7 @@ import Client from './Client'
 export default async ({ children, params }) => {
   const params$ = await params
 
-  const [{ community }, localeData] = await Promise.all([
+  const [{ community, dashboard }, localeData] = await Promise.all([
     getCommunityInfo(params$.community),
     getLocaleData(),
   ])
@@ -19,7 +19,7 @@ export default async ({ children, params }) => {
 
   return (
     <MainProvider
-      initData={community}
+      initData={{ community, dashboard }}
       locale={LOCALE.EN}
       metric={METRIC.DASHBOARD}
       localeData={JSON.stringify(localeData)}

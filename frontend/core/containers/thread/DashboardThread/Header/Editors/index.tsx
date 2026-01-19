@@ -47,7 +47,7 @@ const Editor: FC = () => {
   const groupKeys = keys(groupedLinks) as string[]
 
   return (
-    <div>
+    <div className={s.wrapper}>
       <div className={s.topWrapper}>
         <div className={s.leftPart}>
           <FixedLinks isAboutLinkFold={isAboutLinkFold} />

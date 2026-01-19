@@ -8,7 +8,7 @@ import Client from './Client'
 export default async ({ children, params }) => {
   const params$ = await params
 
-  const [{ community }, localeData] = await Promise.all([
+  const [{ community, dashboard }, localeData] = await Promise.all([
     getCommunityInfo(params$.community),
     getLocaleData(),
   ])
@@ -16,7 +16,11 @@ export default async ({ children, params }) => {
   // console.log('## got community$ in layout: ', community)
 
   return (
-    <MainProvider initData={community} locale={LOCALE.EN} localeData={JSON.stringify(localeData)}>
+    <MainProvider
+      initData={{ community, dashboard }}
+      locale={LOCALE.EN}
+      localeData={JSON.stringify(localeData)}
+    >
       <GraphQLProvider>
         <GlobalProvider>
           <Client>{children}</Client>

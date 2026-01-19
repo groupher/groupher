@@ -14,17 +14,13 @@ const Header: FC = () => {
 
   return (
     <div className={s.wrapper}>
-      <Templates />
-      <div className='mt-4' />
-      <Editor />
+      <div className={s.inner}>
+        <Templates />
+        <div className='mt-4' />
+        <Editor />
 
-      <SavingBar
-        field={FIELD.HEADER_LINKS}
-        isTouched={isTouched}
-        loading={saving}
-        top={10}
-        width='w-11/12'
-      />
+        <SavingBar field={FIELD.HEADER_LINKS} isTouched={isTouched} loading={saving} top={10} />
+      </div>
     </div>
   )
 }
