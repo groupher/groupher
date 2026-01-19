@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, primary, vividDark } = useTwBelt()
 
   return {
-    wrapper: 'column pr-1',
+    wrapper: 'column pr-1 w-full',
     user: 'row relative mb-6 opacity-80',
     userActive: 'opacity-100',
     intro: 'w-full',

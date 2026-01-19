@@ -127,19 +127,19 @@ export default function LayoutsPage() {
               {
                 title: '页头',
                 desc: '页头自定义链接，编组等',
-                seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.SOCIAL}`,
+                seg: `${DSB_ROUTE.HEADER}`,
                 Icon: PostSVG,
               },
               {
                 title: '页脚',
                 desc: '页脚自定义链接，编组等',
-                seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.OTHER}`,
+                seg: `${DSB_ROUTE.FOOTER}`,
                 Icon: KanbanSVG,
               },
               {
                 title: '管理员',
                 desc: '管理员管理，权限设置。',
-                seg: `${DSB_ROUTE.INFO}/${DSB_INFO_ROUTE.OTHER}`,
+                seg: `${DSB_ROUTE.ADMINS}`,
                 Icon: KanbanSVG,
               },
             ],

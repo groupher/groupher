@@ -106,6 +106,6 @@ export default ({
       ghost ? bg('alphaBg') : bg('button.redBg'),
       fg('rainbow.red'),
     ),
-    children: cn('align-both relative w-auto', !isLightTheme && 'brightness-110'),
+    children: cn('align-both relative w-auto px-2', !isLightTheme && 'brightness-110'),
   }
 }
