@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { ANCHOR } from '~/const/dom'
 import EVENT from '~/const/event'
@@ -9,57 +9,112 @@ import TYPE from '~/const/type'
 import { lockPage, unlockPage } from '~/dom'
 import useDrawerOffset from '~/hooks/useDrawerOffset'
 import useEvent from '~/hooks/useEvent'
-
+import useSalon, { cn } from '~/widgets/Drawer/salon'
+import { CLOSE_ANIMATION_BUFFER_MS, CLOSE_ANIMATION_MS } from '~/widgets/Drawer/salon/constant'
 import Portal from '~/widgets/Portal'
 
-import useSalon, { cn } from './salon'
+type TProps = {
+  children: ReactNode
+  type?: string
+}
 
-//
-export default function Drawer({ children }) {
-  const contentRef = useRef(null)
-  const [visible, setVisible] = useState(false)
-
+export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProps) {
   const router = useRouter()
-  const type = TYPE.DRAWER.POST_VIEW
+
+  const contentRef = useRef<HTMLDivElement | null>(null)
+  const drawerRef = useRef<HTMLDivElement | null>(null)
+
+  const [visible, setVisible] = useState(false)
+  const [closing, setClosing] = useState(false)
+
+  const closeTimerRef = useRef<number | null>(null)
+  const didCloseRef = useRef(false)
+
+  const { rightOffset, fromContentEdge } = useDrawerOffset()
+  const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
 
   useEvent(EVENT.DRAWER.CONTENT_LOADED, () => {
-    if (contentRef.current) {
-      contentRef.current.scrollTo({ top: 0 })
-    }
+    contentRef.current?.scrollTo({ top: 0 })
   })
 
   useEffect(() => {
-    setVisible(true)
     lockPage()
-
     return () => {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current)
+        closeTimerRef.current = null
+      }
       unlockPage()
     }
   }, [])
 
-  const [drawerStyle, setDrawerStyle] = useState({})
-  const { rightOffset, fromContentEdge } = useDrawerOffset()
+  useLayoutEffect(() => {
+    didCloseRef.current = false
+    setClosing(false)
+    setVisible(false)
 
-  const s = useSalon({ visible, type, rightOffset, fromContentEdge })
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    drawerRef.current?.offsetHeight
 
-  useEffect(() => {
-    setDrawerStyle(s.drawerStyle)
-  }, [s.drawerStyle])
+    const raf = requestAnimationFrame(() => setVisible(true))
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  const commitRouteBack = useCallback(() => {
+    if (didCloseRef.current) return
+    didCloseRef.current = true
+    router.back()
+  }, [router])
+
+  const requestClose = useCallback(() => {
+    if (closing) return
+
+    setClosing(true)
+    setVisible(false)
+
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current)
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null
+      commitRouteBack()
+    }, CLOSE_ANIMATION_MS + CLOSE_ANIMATION_BUFFER_MS)
+  }, [closing, commitRouteBack])
+
+  const handleDrawerTransitionEnd = useCallback(
+    (e: React.TransitionEvent<HTMLDivElement>) => {
+      if (e.target !== drawerRef.current) return
+      if (!closing || visible) return
+
+      if (e.propertyName === 'opacity') {
+        if (closeTimerRef.current) {
+          window.clearTimeout(closeTimerRef.current)
+          closeTimerRef.current = null
+        }
+        commitRouteBack()
+      }
+    },
+    [closing, visible, commitRouteBack],
+  )
 
   return (
     <Portal>
-      <div className={s.drawer} style={drawerStyle}>
-        <div ref={contentRef} className={s.drawerContent}>
+      <div
+        ref={drawerRef}
+        className={s.drawer}
+        style={s.drawerStyle}
+        onTransitionEnd={handleDrawerTransitionEnd}
+      >
+        <div ref={contentRef} className={s.drawerContent} style={s.drawerContentStyle}>
           {children}
         </div>
       </div>
+
       <div
         role='presentation'
         aria-hidden='true'
         aria-label='drawer mask'
         className={cn(s.overlay, ANCHOR.GLOBAL_BLUR_CLASS)}
         style={s.overlayStyle}
-        onClick={() => router.back()}
+        onClick={requestClose}
       />
     </Portal>
   )
