@@ -3,48 +3,65 @@ export { cn } from '~/css'
 import { useMemo } from 'react'
 import { pixelAdd } from '~/dom'
 import useTwBelt from '~/hooks/useTwBelt'
-import { NARROW_HEIGHT_OFFSET } from './constant'
+import { CLOSE_ANIMATION_MS, NARROW_HEIGHT_OFFSET } from './constant'
 import { getDesktopTransform, getDrawerMinWidth, getDrawerWidth, isWideMode } from './metrics'
 
 type TProps = {
   visible: boolean
+  closing?: boolean
   type: string
   rightOffset?: string
   fromContentEdge?: boolean
 }
 
-export default ({ visible, type, rightOffset = '0px', fromContentEdge = true }: TProps) => {
+export default ({
+  visible,
+  closing = false,
+  type,
+  rightOffset = '0px',
+  fromContentEdge = true,
+}: TProps) => {
   const { cn, bg, br, shadow, zIndex } = useTwBelt()
 
-  const drawerStyle = useMemo(
-    () => ({
-      transform: getDesktopTransform(visible, fromContentEdge),
-      transition: 'transform 850ms cubic-bezier(0.23, 1, 0.32, 1) 0ms',
-      // transition: 'transform 5s cubic-bezier(0.23, 1, 0.32, 1) 0ms',
+  const drawerStyle = useMemo(() => {
+    const openTransform = getDesktopTransform(visible, fromContentEdge)
+
+    const closeTransform = 'translate3d(16px, 0, 0) scale(0.985)'
+    const isClosingFrame = closing && !visible
+
+    return {
+      transform: isClosingFrame ? closeTransform : openTransform,
+      opacity: isClosingFrame ? 0 : 1,
+      filter: isClosingFrame ? 'blur(2px)' : 'blur(0px)',
+
+      transition: closing
+        ? `opacity ${CLOSE_ANIMATION_MS}ms ease, transform ${CLOSE_ANIMATION_MS}ms ease, filter ${CLOSE_ANIMATION_MS}ms ease`
+        : 'transform 800ms cubic-bezier(0.23, 1, 0.32, 1) 0ms',
+
       right: isWideMode(type) ? rightOffset : pixelAdd(rightOffset, 30),
       width: getDrawerWidth(type),
       minWidth: getDrawerMinWidth(type),
       maxWidth: '985px',
-      // transitionDelay: '0s, 0s, 0.14s',
-      // transitionDelay: '0s, 0s, 0.14s',
-    }),
-    [visible, fromContentEdge, type, rightOffset],
-  )
+    }
+  }, [visible, closing, fromContentEdge, type, rightOffset])
 
   return {
     wrapper: cn(
       'fixed top-0 right-0 z-50 flex items-center justify-center w-96 h-screen debug',
       bg('card'),
     ),
+
     overlay: cn(
       'fixed bottom-0 left-0 overflow-auto h-full w-full',
-      visible ? cn('visible opacity-50', bg('drawer.mask')) : 'hidden',
-      zIndex('drawerOverlay', visible),
+      bg('drawer.mask'),
+      visible ? 'opacity-50 pointer-events-auto' : 'opacity-0 pointer-events-none',
+      zIndex('drawerOverlay', true),
     ),
+
     overlayStyle: {
-      // zIndex: zIndex.drawerOverlay,
-      transition: 'visibility 0.1s ease-in, opacity 0.1s ease-in, background 0.1s ease-in',
+      transition: closing ? `opacity ${CLOSE_ANIMATION_MS}ms ease` : 'opacity 250ms ease',
     },
+
     drawerContent: cn(
       'relative w-full border rounded-tl-md overflow-y-scroll h-auto',
       br('divider'),
@@ -52,15 +69,18 @@ export default ({ visible, type, rightOffset = '0px', fromContentEdge = true }: 
       !isWideMode(type) && 'rounded-md',
       shadow('drawer'),
     ),
+
     drawerContentStyle: {
       height: isWideMode(type) ? '100vh' : `calc(100vh - ${NARROW_HEIGHT_OFFSET * 2}px)`,
     },
+
     drawer: cn(
       'fixed row h-full will-change-transform box-border',
       isWideMode(type) ? 'top-0' : 'top-5',
-      visible ? 'visible' : 'hidden',
-      zIndex('drawer', visible),
+      closing && 'pointer-events-none',
+      zIndex('drawer', true),
     ),
+
     drawerStyle,
   }
 }

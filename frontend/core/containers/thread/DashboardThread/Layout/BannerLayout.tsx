@@ -1,8 +1,9 @@
-import { BANNER_LAYOUT, DSB_DESC_LAYOUT } from '~/const/layout'
+import { useState } from 'react'
+import { BANNER_LAYOUT } from '~/const/layout'
 import useCommunity from '~/hooks/useCommunity'
-import { callDashboardDesc } from '~/signal'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
+import Drawer from '~/widgets/Drawer'
 
 import { FIELD } from '../constant'
 import useBanner from '../logic/useBanner'
@@ -12,20 +13,23 @@ import useSalon, { cn } from '../salon/layout/banner_layout'
 
 export default () => {
   const s = useSalon()
+  const [showDrawer, setShowDrawer] = useState(false)
 
   const { edit, layout, isTouched, saving } = useBanner()
   const { title } = useCommunity()
 
   return (
     <div className={s.wrapper}>
+      <Drawer show={showDrawer} onClose={() => setShowDrawer(false)}>
+        <h2>整体布局，示例</h2>
+      </Drawer>
+
       <SectionLabel
         title='整体布局'
         desc={
           <div className='row-center'>
             整体页面的 Header 布局，适用于除文章页的所有页面。
-            <ArrowButton onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)}>
-              查看示例
-            </ArrowButton>
+            <ArrowButton onClick={() => setShowDrawer(true)}>查看示例</ArrowButton>
           </div>
         }
       />

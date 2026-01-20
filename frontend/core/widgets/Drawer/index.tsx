@@ -1,44 +1,32 @@
 'use client'
 
-/**
- * this version of Drawer is used in parallel router, mostly used in preview articles,
- */
-import { useRouter } from 'next/navigation'
 import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-
 import { ANCHOR } from '~/const/dom'
 import EVENT from '~/const/event'
 import TYPE from '~/const/type'
 import { lockPage, unlockPage } from '~/dom'
 import useDrawerOffset from '~/hooks/useDrawerOffset'
 import useEvent from '~/hooks/useEvent'
-import useSalon, { cn } from '~/widgets/Drawer/salon'
-import { CLOSE_ANIMATION_MS } from '~/widgets/Drawer/salon/constant'
 import Portal from '~/widgets/Portal'
+import useSalon, { cn } from './salon'
+import { CLOSE_ANIMATION_MS } from './salon/constant'
 
 type TProps = {
   children: ReactNode
+  show: boolean
+  onClose: () => void
   type?: string
 }
 
-export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProps) {
-  const router = useRouter()
-
+export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POST_VIEW }: TProps) {
   const contentRef = useRef<HTMLDivElement | null>(null)
   const drawerRef = useRef<HTMLDivElement | null>(null)
 
+  const [mounted, setMounted] = useState(false)
   const [visible, setVisible] = useState(false)
   const [closing, setClosing] = useState(false)
 
   const closeTimerRef = useRef<number | null>(null)
-  const didCloseRef = useRef(false)
-
-  const doCloseRef = useRef<() => void>(() => {})
-  doCloseRef.current = () => {
-    if (didCloseRef.current) return
-    didCloseRef.current = true
-    router.back()
-  }
 
   const { rightOffset, fromContentEdge } = useDrawerOffset()
   const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
@@ -48,7 +36,64 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
   })
 
   useEffect(() => {
-    lockPage()
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+
+    if (show) {
+      setClosing(false)
+      setMounted(true)
+      lockPage()
+      return
+    }
+
+    // close: trigger closing animation, then unmount
+    setClosing(true)
+    setVisible(false)
+
+    // fallback: transitionend 可能因为浏览器/合成层问题不触发，兜底卸载
+    closeTimerRef.current = window.setTimeout(() => {
+      setMounted(false)
+      setClosing(false)
+      unlockPage()
+    }, CLOSE_ANIMATION_MS + 60)
+  }, [show])
+
+  // enter animation
+  useLayoutEffect(() => {
+    if (!mounted) return
+
+    setClosing(false)
+    setVisible(false)
+
+    // establish initial transform for entry transition
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    drawerRef.current?.offsetHeight
+
+    const raf = requestAnimationFrame(() => setVisible(true))
+    return () => cancelAnimationFrame(raf)
+  }, [mounted])
+
+  const handleDrawerTransitionEnd = useCallback(
+    (e: React.TransitionEvent<HTMLDivElement>) => {
+      if (e.target !== drawerRef.current) return
+
+      // 关闭阶段依赖 opacity 结束卸载（我们关闭不做“滑出”）
+      if (!show && closing && e.propertyName === 'opacity') {
+        if (closeTimerRef.current) {
+          window.clearTimeout(closeTimerRef.current)
+          closeTimerRef.current = null
+        }
+        setMounted(false)
+        setClosing(false)
+        unlockPage()
+      }
+    },
+    [show, closing],
+  )
+
+  useEffect(() => {
     return () => {
       if (closeTimerRef.current) {
         window.clearTimeout(closeTimerRef.current)
@@ -58,46 +103,7 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
     }
   }, [])
 
-  useLayoutEffect(() => {
-    didCloseRef.current = false
-    setClosing(false)
-    setVisible(false)
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    drawerRef.current?.offsetHeight
-
-    const raf = requestAnimationFrame(() => setVisible(true))
-    return () => cancelAnimationFrame(raf)
-  }, [])
-
-  const requestClose = useCallback(() => {
-    if (closing) return
-
-    setClosing(true)
-    setVisible(false)
-
-    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current)
-    closeTimerRef.current = window.setTimeout(() => {
-      closeTimerRef.current = null
-      doCloseRef.current()
-    }, CLOSE_ANIMATION_MS + 60)
-  }, [closing])
-
-  const handleDrawerTransitionEnd = useCallback(
-    (e: React.TransitionEvent<HTMLDivElement>) => {
-      if (e.target !== drawerRef.current) return
-      if (!closing || visible) return
-
-      if (e.propertyName === 'opacity') {
-        if (closeTimerRef.current) {
-          window.clearTimeout(closeTimerRef.current)
-          closeTimerRef.current = null
-        }
-        doCloseRef.current()
-      }
-    },
-    [closing, visible],
-  )
+  if (!mounted) return null
 
   return (
     <Portal>
@@ -118,7 +124,7 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
         aria-label='drawer mask'
         className={cn(s.overlay, ANCHOR.GLOBAL_BLUR_CLASS)}
         style={s.overlayStyle}
-        onClick={requestClose}
+        onClick={onClose}
       />
     </Portal>
   )
