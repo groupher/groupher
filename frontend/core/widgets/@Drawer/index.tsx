@@ -1,8 +1,5 @@
 'use client'
 
-/**
- * this version of Drawer is used in parallel router, mostly used in preview articles,
- */
 import { useRouter } from 'next/navigation'
 import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
@@ -13,7 +10,7 @@ import { lockPage, unlockPage } from '~/dom'
 import useDrawerOffset from '~/hooks/useDrawerOffset'
 import useEvent from '~/hooks/useEvent'
 import useSalon, { cn } from '~/widgets/Drawer/salon'
-import { CLOSE_ANIMATION_MS } from '~/widgets/Drawer/salon/constant'
+import { CLOSE_ANIMATION_BUFFER_MS, CLOSE_ANIMATION_MS } from '~/widgets/Drawer/salon/constant'
 import Portal from '~/widgets/Portal'
 
 type TProps = {
@@ -32,13 +29,6 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
 
   const closeTimerRef = useRef<number | null>(null)
   const didCloseRef = useRef(false)
-
-  const doCloseRef = useRef<() => void>(() => {})
-  doCloseRef.current = () => {
-    if (didCloseRef.current) return
-    didCloseRef.current = true
-    router.back()
-  }
 
   const { rightOffset, fromContentEdge } = useDrawerOffset()
   const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
@@ -70,6 +60,12 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
     return () => cancelAnimationFrame(raf)
   }, [])
 
+  const commitRouteBack = useCallback(() => {
+    if (didCloseRef.current) return
+    didCloseRef.current = true
+    router.back()
+  }, [router])
+
   const requestClose = useCallback(() => {
     if (closing) return
 
@@ -79,9 +75,9 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
     if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current)
     closeTimerRef.current = window.setTimeout(() => {
       closeTimerRef.current = null
-      doCloseRef.current()
-    }, CLOSE_ANIMATION_MS + 60)
-  }, [closing])
+      commitRouteBack()
+    }, CLOSE_ANIMATION_MS + CLOSE_ANIMATION_BUFFER_MS)
+  }, [closing, commitRouteBack])
 
   const handleDrawerTransitionEnd = useCallback(
     (e: React.TransitionEvent<HTMLDivElement>) => {
@@ -93,10 +89,10 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
           window.clearTimeout(closeTimerRef.current)
           closeTimerRef.current = null
         }
-        doCloseRef.current()
+        commitRouteBack()
       }
     },
-    [closing, visible],
+    [closing, visible, commitRouteBack],
   )
 
   return (

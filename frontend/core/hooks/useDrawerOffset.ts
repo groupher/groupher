@@ -18,43 +18,35 @@ const useDrawerOffset = (): TRes => {
   const [maxWidth, setMaxWidth] = useState<number>(DEFAULT_MAX_WIDTH)
 
   useLayoutEffect(() => {
-    const raw = getCSSVar(`container-${metric}-width`)
-    if (raw) {
+    let cancelled = false
+    let raf = 0
+
+    const read = () => {
+      const raw = getCSSVar(`container-${metric}-width`)
+      if (!raw) return false
+      if (!raw.endsWith('px')) return false
+
       const n = Number(raw.slice(0, -2))
-      if (!Number.isNaN(n)) {
-        lastMaxWidthRef.current = n
-        setMaxWidth(n)
-        return
-      }
+      if (Number.isNaN(n)) return false
+
+      lastMaxWidthRef.current = n
+      setMaxWidth(n)
+      return true
     }
 
-    // CSS may not ready, get it in next frame
-    const raf = requestAnimationFrame(() => {
-      const raw2 = getCSSVar(`container-${metric}-width`)
-      if (raw2) {
-        const n2 = Number(raw2.slice(0, -2))
-        if (!Number.isNaN(n2)) {
-          lastMaxWidthRef.current = n2
-          setMaxWidth(n2)
-        } else {
+    // read on next frame to ensure CSS variables are applied
+    if (!read()) {
+      raf = requestAnimationFrame(() => {
+        if (cancelled) return
+        if (!read()) {
           setMaxWidth(lastMaxWidthRef.current)
         }
-      } else {
-        setMaxWidth(lastMaxWidthRef.current)
-      }
-    })
+      })
+    }
 
-    return () => cancelAnimationFrame(raf)
-  }, [metric])
-
-  useLayoutEffect(() => {
-    const raw = getCSSVar(`container-${metric}-width`)
-    if (raw) {
-      const n = Number(raw.slice(0, -2))
-      if (!Number.isNaN(n)) {
-        lastMaxWidthRef.current = n
-        setMaxWidth(n)
-      }
+    return () => {
+      cancelled = true
+      if (raf) cancelAnimationFrame(raf)
     }
   }, [metric])
 

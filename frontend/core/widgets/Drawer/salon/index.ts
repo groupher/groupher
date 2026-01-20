@@ -46,11 +46,6 @@ export default ({
   }, [visible, closing, fromContentEdge, type, rightOffset])
 
   return {
-    wrapper: cn(
-      'fixed top-0 right-0 z-50 flex items-center justify-center w-96 h-screen debug',
-      bg('card'),
-    ),
-
     overlay: cn(
       'fixed bottom-0 left-0 overflow-auto h-full w-full',
       bg('drawer.mask'),
