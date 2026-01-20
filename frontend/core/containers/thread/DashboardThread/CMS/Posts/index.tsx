@@ -1,5 +1,5 @@
 import { pluck } from 'ramda'
-import { type FC, useCallback, useState } from 'react'
+import { type FC, useCallback, useEffect, useState } from 'react'
 
 import { Cell, Column, HeaderCell, Table } from 'rsuite-table'
 
@@ -19,9 +19,16 @@ import FilterBar from '../FilterBar'
 const Posts: FC = () => {
   const s = useSalon()
 
+  console.log('## cms posts')
+
   const { pagedPosts, loading, batchSelectedIDs, batchSelectAll, loadPosts } = useCMSInfo()
   const [showCheckColumn, setShowCheckColumn] = useState(false)
   const [sortColumn, setSortColumn] = useState('id')
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    loadPosts()
+  }, [])
 
   const allIDs = pluck('id', pagedPosts.entries)
   const isAllSelected = allIDs.length === batchSelectedIDs?.length
@@ -70,7 +77,6 @@ const Posts: FC = () => {
         data={pagedPosts.entries}
         sortColumn={sortColumn}
         onSortColumn={handleSortColumn}
-        rowHeight={68}
         loading={loading}
         hover={false}
         autoHeight
@@ -99,12 +105,8 @@ const Posts: FC = () => {
           </Column>
         )}
 
-        <Column width={280} fixed>
-          <HeaderCell>
-            <div className={s.title} onClick={() => loadPosts()}>
-              标题
-            </div>
-          </HeaderCell>
+        <Column width={280} fixed flexGrow={1}>
+          <HeaderCell>标题</HeaderCell>
           {/* @ts-ignore */}
           <ArticleCell dataKey='title' />
         </Column>
@@ -146,7 +148,7 @@ const Posts: FC = () => {
           <DateCell />
         </Column>
 
-        <Column width={115}>
+        <Column width={115} flexGrow={0}>
           <HeaderCell align='right'>
             <div className={s.title}>作者</div>
           </HeaderCell>

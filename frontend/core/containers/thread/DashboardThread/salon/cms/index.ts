@@ -4,7 +4,7 @@ export default () => {
   const { cn, fg, fill } = useTwBelt()
 
   return {
-    wrapper: cn('w-full -ml-8'),
+    wrapper: cn('w-full pl-12'),
     title: cn('text-sm bold-sm', fg('text.title')),
     icon: {
       arrowUp: 'size-2.5 rotate-90 ml-1 mt-px',

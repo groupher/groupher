@@ -217,4 +217,5 @@ export const WIDGET_TABS: TDsbTabs = {
 export const DSB_COVERS = {
   INTEGRATIONS: 'integrations',
   WORKPLACE: 'workplace',
+  CMS: 'cms',
 }
