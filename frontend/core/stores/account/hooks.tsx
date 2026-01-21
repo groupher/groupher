@@ -32,6 +32,6 @@ export default () => {
 
   return {
     ...snap,
-    $store: store,
+    live$: store,
   }
 }

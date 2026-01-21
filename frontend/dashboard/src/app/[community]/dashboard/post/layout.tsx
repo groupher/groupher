@@ -3,7 +3,7 @@
 import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import AdminList from '~/containers/thread/DashboardThread/AdminList'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon from '~/containers/thread/DashboardThread/salon/cms'
+import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import { mockUsers } from '~/mock'
 
@@ -25,7 +25,7 @@ const DashboardPostPage = ({ children }) => {
   const adminList = mockUsers(4)
 
   return (
-    <div className={s.wrapper}>
+    <div className={cn(s.content, 'w-full pl-10')}>
       <Portal
         title='帖子管理'
         desc=''

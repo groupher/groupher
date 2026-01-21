@@ -17,6 +17,6 @@ export default () => {
     ...snap,
     change: store.change,
     changeMode: store.changeMode,
-    $store: store,
+    live$: store,
   }
 }

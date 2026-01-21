@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { reject } from 'ramda'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
@@ -18,10 +18,8 @@ type TRet = {
   faqSections: readonly TFAQSection[]
   editingFAQIndex: number | null
 
-  // 原有 action（如果别处用得到）
   batchSelect: (id: TID, selected?: boolean) => void
   batchSelectAll: (selected: boolean, ids?: TID[]) => void
-
   loadPosts: () => void
   loadChangelogs: () => void
   isFaqSectionsTouched: boolean
@@ -45,7 +43,7 @@ export default (): TRet => {
     editingFAQ,
   } = dsb$
 
-  const loadPosts = useCallback(() => {
+  const loadPosts = () => {
     dsb$.commit({ loading: true })
     const params = {
       filter: { page: 1, size: 20, community: community$.slug },
@@ -56,9 +54,9 @@ export default (): TRet => {
       // @ts-expect-error
       dsb$.commit({ loading: false, pagedPosts: data.pagedPosts })
     })
-  }, [dsb$, community$.slug, query])
+  }
 
-  const loadChangelogs = useCallback((): void => {
+  const loadChangelogs = (): void => {
     dsb$.commit({ loading: true })
     const params = {
       filter: { page: 1, size: 20, community: community$.slug },
@@ -68,33 +66,27 @@ export default (): TRet => {
       // @ts-expect-error
       dsb$.commit({ loading: false, pagedChangelogs: data.pagedChangelogs })
     })
-  }, [dsb$, community$.slug, query])
+  }
 
-  /**
-   * 仍保留 batchSelect/batchSelectAll，但内部必须读 live store，避免“丢 21”
-   */
-  const batchSelect = useCallback(
-    (id: TID, selected = true): void => {
-      const key = String(id)
-      const cur = (dsb$.live$.batchSelectedIDs ?? []).map(String) as string[]
-      const set = new Set(cur)
-      if (selected) set.add(key)
-      else set.delete(key)
-      dsb$.commit({ batchSelectedIDs: Array.from(set) as unknown as TID[] })
-    },
-    [dsb$],
-  )
+  const batchSelect = (id: TID, selected = true): void => {
+    const cur = dsb$.batchSelectedIDs
 
-  const batchSelectAll = useCallback(
-    (selected: boolean, ids: TID[] = []): void => {
-      if (!selected) {
-        dsb$.commit({ batchSelectedIDs: [] })
-        return
-      }
-      dsb$.commit({ batchSelectedIDs: ids.map(String) as unknown as TID[] })
-    },
-    [dsb$],
-  )
+    if (selected) {
+      if (cur.includes(id)) return
+      dsb$.commit({ batchSelectedIDs: [...cur, id] })
+      return
+    }
+
+    dsb$.commit({ batchSelectedIDs: reject((_id) => id === _id, cur) })
+  }
+
+  const batchSelectAll = (selected: boolean, ids: TID[] = []): void => {
+    if (!selected) {
+      dsb$.commit({ batchSelectedIDs: [] })
+      return
+    }
+    dsb$.commit({ batchSelectedIDs: ids })
+  }
 
   return {
     loading,
@@ -112,7 +104,6 @@ export default (): TRet => {
 
     loadPosts,
     loadChangelogs,
-
     batchSelect,
     batchSelectAll,
   }

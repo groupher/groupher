@@ -17,6 +17,6 @@ export default () => {
     ...snap,
     commit: store.commit,
     updateActiveFilter: store.updateActiveFilter,
-    $store: store,
+    live$: store,
   }
 }
