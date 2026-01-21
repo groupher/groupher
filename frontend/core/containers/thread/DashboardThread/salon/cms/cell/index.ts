@@ -14,7 +14,7 @@ export default () => {
     switchButton: 'mt-0.5 px-1.5 py-0.5 group-smoky-0 trans-all-100',
     //
     articleTitle: cn('text-sm pointer', cut('w-64'), fg('text.title')),
-    stateWrapper: 'scale-90 ml-2 mt-px',
+    stateWrapper: 'align-both',
     communitySlug: cn('text-sm no-underline -mt-0.5', fg('link'), 'hover:underline'),
     communityLogo: 'size-6 mr-2.5 -mt-1',
     //

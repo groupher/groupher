@@ -1,5 +1,5 @@
 .rs-table-bordered {
-  border: none;
+    border: 1px solid var(--color-table-border);
 }
 
 .rs-table-cell, .rs-table-row-header {
@@ -8,8 +8,16 @@
 /* .rs-table-cell-group-fixed-left {
   background: transparent;
 } */
+
 .rs-table-row-header .rs-table-cell {
   background: transparent;
+}
+
+.rs-table-cell-bordered .rs-table-cell {
+  border-right: 1px solid var(--color-table-border);
+}
+.rs-table-cell {
+  border-bottom: 1px solid var(--color-table-border);
 }
 
 .rs-table-row:hover {

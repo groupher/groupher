@@ -38,10 +38,18 @@ export const StateCell = ({ rowData, ...props }) => {
   const s = useSalon()
   const { cat, state } = rowData
 
+  if (!state) {
+    return (
+      <Cell {...props}>
+        <div />
+      </Cell>
+    )
+  }
+
   return (
     <Cell {...props}>
       <div className={s.stateWrapper}>
-        <ArticleCatState cat={cat} state={state} left={-8} smaller />
+        <ArticleCatState cat={cat} state={state} smaller />
       </div>
     </Cell>
   )

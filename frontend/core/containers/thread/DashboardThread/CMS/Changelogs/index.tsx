@@ -1,17 +1,15 @@
-import { useCallback, useState } from 'react'
 import { pluck } from 'ramda'
+import { useCallback, useState } from 'react'
 
-import { Table, Column, HeaderCell, Cell } from 'rsuite-table'
+import { Cell, Column, HeaderCell, Table } from 'rsuite-table'
 
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
 import Checker from '~/widgets/Checker'
-
-import { CheckCell, ArticleCell, StateCell, AuthorDateCell, DateCell } from '../Cell'
-import FilterBar from '../FilterBar'
-
 import useCMSInfo from '../../hooks/useCMSInfo'
 import useSalon from '../../salon/cms/changelogs'
+import { ArticleCell, AuthorDateCell, CheckCell, DateCell, StateCell } from '../Cell'
+import FilterBar from '../FilterBar'
 
 /**
  * example: https://table.rsuitejs.com/#fixed-column
@@ -58,7 +56,7 @@ export default () => {
           return <FilterSVG className={s.icon.filter} />
       }
     },
-    [sortState],
+    [sortState, s.icon.filter, s.icon.arrowUp, s.icon.arrowDown],
   )
 
   return (
@@ -85,7 +83,7 @@ export default () => {
             <HeaderCell>
               <Checker
                 checked={isAllSelected}
-                size="small"
+                size='small'
                 top={4}
                 onChange={(checked) => {
                   if (checked) {
@@ -109,11 +107,11 @@ export default () => {
             </div>
           </HeaderCell>
           {/* @ts-ignore */}
-          <ArticleCell dataKey="title" />
+          <ArticleCell dataKey='title' />
         </Column>
 
-        <Column width={90} fixed>
-          <HeaderCell align="center">
+        <Column width={120} fixed>
+          <HeaderCell align='center'>
             <div className={s.title}>状态</div>
           </HeaderCell>
           {/* @ts-ignore */}
@@ -121,28 +119,28 @@ export default () => {
         </Column>
 
         <Column width={65} fixed sortable>
-          <HeaderCell align="center" renderSortIcon={() => renderSortIcon('upvotesCount')}>
+          <HeaderCell align='center' renderSortIcon={() => renderSortIcon('upvotesCount')}>
             <div className={s.title}>投票</div>
           </HeaderCell>
-          <Cell dataKey="upvotesCount" align="center" />
+          <Cell dataKey='upvotesCount' align='center' />
         </Column>
 
         <Column width={65} sortable>
-          <HeaderCell align="center" renderSortIcon={() => renderSortIcon('views')}>
+          <HeaderCell align='center' renderSortIcon={() => renderSortIcon('views')}>
             <div className={s.title}>浏览</div>
           </HeaderCell>
-          <Cell dataKey="views" align="center" />
+          <Cell dataKey='views' align='center' />
         </Column>
 
         <Column width={60} sortable>
-          <HeaderCell align="center" renderSortIcon={() => renderSortIcon('commentsCount')}>
+          <HeaderCell align='center' renderSortIcon={() => renderSortIcon('commentsCount')}>
             <div className={s.title}>评论</div>
           </HeaderCell>
-          <Cell dataKey="commentsCount" align="center" />
+          <Cell dataKey='commentsCount' align='center' />
         </Column>
 
         <Column width={100}>
-          <HeaderCell align="right">
+          <HeaderCell align='right'>
             <div className={s.title}>发布/活跃</div>
           </HeaderCell>
           {/* @ts-ignore */}
@@ -150,7 +148,7 @@ export default () => {
         </Column>
 
         <Column width={110}>
-          <HeaderCell align="right">
+          <HeaderCell align='right'>
             <div className={s.title}>作者</div>
           </HeaderCell>
           {/* @ts-ignore */}

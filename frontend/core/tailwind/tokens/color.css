@@ -10,6 +10,8 @@
     --color-dot: oklch(55.4% 0.046 257.417); /* slate.500 */
     --article-hover-linear: linear-gradient(315deg, oklch(1 0 0 / 0) 0%, oklch(0.97 0 0) 100%);
 
+    --color-table-border: #9d9999;
+
     /* utils */
     --color-hoverBg: #efefef78;
     --color-card: #fff;
@@ -162,6 +164,8 @@
     --color-link: #6b97d4;
     --color-dot: oklch(70.4% 0.04 256.788); /* slate.400 */
     --article-hover-linear: linear-gradient(315deg, oklch(0.55 0 0 / 0) 0%, oklch(0.32 0 0) 100%);
+
+    --color-table-border: #4f4b4b;
 
     /* utils */
     --color-hoverBg: #42424259;

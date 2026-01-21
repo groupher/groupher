@@ -19,8 +19,6 @@ import FilterBar from '../FilterBar'
 const Posts: FC = () => {
   const s = useSalon()
 
-  console.log('## cms posts')
-
   const { pagedPosts, loading, batchSelectedIDs, batchSelectAll, loadPosts } = useCMSInfo()
   const [showCheckColumn, setShowCheckColumn] = useState(false)
   const [sortColumn, setSortColumn] = useState('id')
@@ -106,12 +104,14 @@ const Posts: FC = () => {
         )}
 
         <Column width={280} fixed flexGrow={1}>
-          <HeaderCell>标题</HeaderCell>
+          <HeaderCell>
+            <div className={s.title}>帖子标题</div>
+          </HeaderCell>
           {/* @ts-ignore */}
           <ArticleCell dataKey='title' />
         </Column>
 
-        <Column width={90} fixed>
+        <Column width={120} fixed>
           <HeaderCell align='center'>
             <div className={s.title}>状态</div>
           </HeaderCell>
@@ -123,21 +123,21 @@ const Posts: FC = () => {
           <HeaderCell align='center' renderSortIcon={() => renderSortIcon('upvotesCount')}>
             <div className={s.title}>投票</div>
           </HeaderCell>
-          <Cell dataKey='upvotesCount' align='center' />
+          <Cell dataKey='upvotesCount' align='center' className={s.cell} />
         </Column>
 
         <Column width={65} sortable>
           <HeaderCell align='center' renderSortIcon={() => renderSortIcon('views')}>
             <div className={s.title}>浏览</div>
           </HeaderCell>
-          <Cell dataKey='views' align='center' />
+          <Cell dataKey='views' align='center' className={s.cell} />
         </Column>
 
         <Column width={60} sortable>
           <HeaderCell align='center' renderSortIcon={() => renderSortIcon('commentsCount')}>
             <div className={s.title}>评论</div>
           </HeaderCell>
-          <Cell dataKey='commentsCount' align='center' />
+          <Cell dataKey='commentsCount' align='center' className={s.cell} />
         </Column>
 
         <Column width={100}>
