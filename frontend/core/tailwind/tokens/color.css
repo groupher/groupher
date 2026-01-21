@@ -10,7 +10,7 @@
     --color-dot: oklch(55.4% 0.046 257.417); /* slate.500 */
     --article-hover-linear: linear-gradient(315deg, oklch(1 0 0 / 0) 0%, oklch(0.97 0 0) 100%);
 
-    --color-table-border: #9d9999;
+    --color-table-border: #e3e3e3;
 
     /* utils */
     --color-hoverBg: #efefef78;
