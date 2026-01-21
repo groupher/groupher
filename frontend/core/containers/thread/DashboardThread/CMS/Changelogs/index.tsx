@@ -1,5 +1,5 @@
 import { pluck } from 'ramda'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { Cell, Column, HeaderCell, Table } from 'rsuite-table'
 
@@ -22,6 +22,11 @@ export default () => {
     useCMSInfo()
   const [showCheckColumn, setShowCheckColumn] = useState(false)
   const [sortColumn, setSortColumn] = useState('id')
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    loadChangelogs()
+  }, [])
 
   const allIDs = pluck('id', pagedChangelogs.entries)
   const isAllSelected = allIDs.length === batchSelectedIDs?.length
@@ -102,9 +107,7 @@ export default () => {
 
         <Column width={280} fixed>
           <HeaderCell>
-            <div className={s.title} onClick={() => loadChangelogs()}>
-              标题
-            </div>
+            <div className={s.title}>标题</div>
           </HeaderCell>
           {/* @ts-ignore */}
           <ArticleCell dataKey='title' />

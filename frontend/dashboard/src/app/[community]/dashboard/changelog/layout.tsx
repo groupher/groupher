@@ -4,6 +4,7 @@ import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon from '~/containers/thread/DashboardThread/salon/cms'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
+
 import 'rsuite-table/dist/css/rsuite-table.css'
 import '~/containers/thread/DashboardThread/salon/cms/global.css'
 
