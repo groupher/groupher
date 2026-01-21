@@ -2,7 +2,6 @@ import AddSVG from '~/icons/Plus'
 import { callTagCreateEditor } from '~/signal'
 import Button from '~/widgets/Buttons/Button'
 
-import Portal from '../Portal'
 import useSalon from '../salon/tags'
 import Footer from './Footer'
 import GroupSelector from './GroupSelector'
@@ -13,8 +12,7 @@ export default () => {
   const s = useSalon()
 
   return (
-    <div className={s.wrapper}>
-      <Portal title='标签设置' desc='编辑各板块标签，标签分组，颜色名称等均可编辑。' />
+    <>
       <ThreadSelector />
       <GroupSelector />
       <TagList />
@@ -25,6 +23,6 @@ export default () => {
       </Button>
 
       <Footer />
-    </div>
+    </>
   )
 }

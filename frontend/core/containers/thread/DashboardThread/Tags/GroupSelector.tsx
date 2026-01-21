@@ -20,7 +20,7 @@ export default memo(() => {
         <Button
           ghost
           size='small'
-          className={cn('w-20', active !== null && 'saturate-0')}
+          className={cn(active !== null && 'saturate-0')}
           noBorder={active !== null}
           onClick={() => edit(null, 'activeTagGroup')}
         >

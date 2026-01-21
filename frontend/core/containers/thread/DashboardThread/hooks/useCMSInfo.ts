@@ -73,8 +73,8 @@ export default (): TRet => {
       userHasLogin: false,
     }
     query(S.pagedChangelogs, params).then((data) => {
-      dsb$.commit({ loading: false })
-      console.log('## TODO handle pagedChangelogs: ', data)
+      // @ts-expect-error
+      dsb$.commit({ loading: false, pagedChangelogs: data.pagedChangelogs })
     })
   }
 
