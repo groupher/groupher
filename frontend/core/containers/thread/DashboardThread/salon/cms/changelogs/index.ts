@@ -8,5 +8,6 @@ export default () => {
   return {
     title: base.title,
     icon: base.icon,
+    cell: base.cell,
   }
 }

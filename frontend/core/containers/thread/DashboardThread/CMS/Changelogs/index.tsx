@@ -105,7 +105,7 @@ export default () => {
           </Column>
         )}
 
-        <Column width={280} fixed>
+        <Column width={280} fixed flexGrow={1}>
           <HeaderCell>
             <div className={s.title}>标题</div>
           </HeaderCell>
@@ -125,21 +125,21 @@ export default () => {
           <HeaderCell align='center' renderSortIcon={() => renderSortIcon('upvotesCount')}>
             <div className={s.title}>投票</div>
           </HeaderCell>
-          <Cell dataKey='upvotesCount' align='center' />
+          <Cell dataKey='upvotesCount' align='center' className={s.cell} />
         </Column>
 
         <Column width={65} sortable>
           <HeaderCell align='center' renderSortIcon={() => renderSortIcon('views')}>
             <div className={s.title}>浏览</div>
           </HeaderCell>
-          <Cell dataKey='views' align='center' />
+          <Cell dataKey='views' align='center' className={s.cell} />
         </Column>
 
         <Column width={60} sortable>
           <HeaderCell align='center' renderSortIcon={() => renderSortIcon('commentsCount')}>
             <div className={s.title}>评论</div>
           </HeaderCell>
-          <Cell dataKey='commentsCount' align='center' />
+          <Cell dataKey='commentsCount' align='center' className={s.cell} />
         </Column>
 
         <Column width={100}>
