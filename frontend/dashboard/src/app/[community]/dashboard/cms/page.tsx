@@ -1,6 +1,6 @@
 'use client'
 
-import { DSB_LAYOUT_ROUTE, DSB_ROUTE, DSB_SEO_ROUTE } from '~/const/route'
+import { DSB_ROUTE } from '~/const/route'
 import BindSVG from '~/icons/Bind'
 import KanbanSVG from '~/icons/Kanban'
 import PostSVG from '~/icons/Post'
@@ -49,13 +49,13 @@ export default function CMSCoversPage() {
               {
                 title: '社区用户',
                 desc: '搜索引擎原信息，标准 OG 信息。',
-                seg: DSB_ROUTE.SEO,
+                seg: DSB_ROUTE.BLACKHOUSE,
                 Icon: BindSVG,
               },
               {
                 title: '小黑屋',
                 desc: 'X(Twitter) SEO 信息优化。',
-                seg: `${DSB_ROUTE.SEO}/${DSB_SEO_ROUTE.TWITTER}`,
+                seg: DSB_ROUTE.BLACKHOUSE,
                 Icon: ThemeSVG,
               },
             ],
@@ -72,13 +72,13 @@ export default function CMSCoversPage() {
               {
                 title: 'RSS',
                 desc: '社区主题色，壁纸及各种背景效果。',
-                seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.THEME}`,
+                seg: DSB_ROUTE.RSS,
                 Icon: ThemeSVG,
               },
               {
                 title: '三方导入/导出',
                 desc: '讨论区个性化设置。',
-                seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.POST}`,
+                seg: DSB_ROUTE.INOUT,
                 Icon: PostSVG,
               },
             ],
