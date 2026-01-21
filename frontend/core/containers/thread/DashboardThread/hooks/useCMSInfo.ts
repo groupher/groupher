@@ -61,10 +61,9 @@ export default (): TRet => {
     }
 
     query(S.pagedPosts, params).then((data) => {
-      dsb$.commit({ loading: false })
-      console.log('## TODO handle pagedChangelogs: ', data)
+      // @ts-expect-error
+      dsb$.commit({ loading: false, pagedPosts: data.pagedPosts })
     })
-    dsb$.commit({ loading: false })
   }
 
   const loadChangelogs = (): void => {

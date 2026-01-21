@@ -1,5 +1,5 @@
 import { pluck } from 'ramda'
-import { type FC, useCallback, useState } from 'react'
+import { type FC, useCallback, useEffect, useState } from 'react'
 
 import { Cell, Column, HeaderCell, Table } from 'rsuite-table'
 
@@ -22,6 +22,11 @@ const Posts: FC = () => {
   const { pagedPosts, loading, batchSelectedIDs, batchSelectAll, loadPosts } = useCMSInfo()
   const [showCheckColumn, setShowCheckColumn] = useState(false)
   const [sortColumn, setSortColumn] = useState('id')
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    loadPosts()
+  }, [])
 
   const allIDs = pluck('id', pagedPosts.entries)
   const isAllSelected = allIDs.length === batchSelectedIDs?.length
@@ -70,7 +75,6 @@ const Posts: FC = () => {
         data={pagedPosts.entries}
         sortColumn={sortColumn}
         onSortColumn={handleSortColumn}
-        rowHeight={68}
         loading={loading}
         hover={false}
         autoHeight
@@ -99,17 +103,15 @@ const Posts: FC = () => {
           </Column>
         )}
 
-        <Column width={280} fixed>
+        <Column width={280} fixed flexGrow={1}>
           <HeaderCell>
-            <div className={s.title} onClick={() => loadPosts()}>
-              标题
-            </div>
+            <div className={s.title}>帖子标题</div>
           </HeaderCell>
           {/* @ts-ignore */}
           <ArticleCell dataKey='title' />
         </Column>
 
-        <Column width={90} fixed>
+        <Column width={120} fixed>
           <HeaderCell align='center'>
             <div className={s.title}>状态</div>
           </HeaderCell>
@@ -121,21 +123,21 @@ const Posts: FC = () => {
           <HeaderCell align='center' renderSortIcon={() => renderSortIcon('upvotesCount')}>
             <div className={s.title}>投票</div>
           </HeaderCell>
-          <Cell dataKey='upvotesCount' align='center' />
+          <Cell dataKey='upvotesCount' align='center' className={s.cell} />
         </Column>
 
         <Column width={65} sortable>
           <HeaderCell align='center' renderSortIcon={() => renderSortIcon('views')}>
             <div className={s.title}>浏览</div>
           </HeaderCell>
-          <Cell dataKey='views' align='center' />
+          <Cell dataKey='views' align='center' className={s.cell} />
         </Column>
 
         <Column width={60} sortable>
           <HeaderCell align='center' renderSortIcon={() => renderSortIcon('commentsCount')}>
             <div className={s.title}>评论</div>
           </HeaderCell>
-          <Cell dataKey='commentsCount' align='center' />
+          <Cell dataKey='commentsCount' align='center' className={s.cell} />
         </Column>
 
         <Column width={100}>
@@ -146,7 +148,7 @@ const Posts: FC = () => {
           <DateCell />
         </Column>
 
-        <Column width={115}>
+        <Column width={115} flexGrow={0}>
           <HeaderCell align='right'>
             <div className={s.title}>作者</div>
           </HeaderCell>

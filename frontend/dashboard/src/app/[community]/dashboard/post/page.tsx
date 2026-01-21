@@ -1,9 +1,9 @@
 'use client'
 
-import CMS from '~/containers/thread/DashboardThread/CMS'
+import Posts from '~/containers/thread/DashboardThread/CMS/Posts'
 
 const DashboardPostPage = () => {
-  return <CMS />
+  return <Posts />
 }
 
 export default DashboardPostPage

@@ -15,7 +15,7 @@ import PostSVG from '~/icons/Post'
 import ThemeSVG from '~/icons/Theme'
 import DsbCovers from '~/widgets/DsbCovers'
 
-export default function LayoutsPage() {
+export default function WorkplaceCoversPage() {
   return (
     <DsbCovers
       config={{
