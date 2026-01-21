@@ -5,11 +5,11 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fill, bg } = useTwBelt()
+  const { cn, hover } = useTwBelt()
 
   return {
     wrapper: cn('row-center gap-x-1'),
-    iconBox: cn('align-both size-4 pointer rounded', `hover:${bg('hoverBg')}`),
-    icon: cn('size-3.5', `hover:${fill('text.title')}`, fill('text.digest')),
+    iconBox: cn('size-4', hover('bg')),
+    icon: cn('size-3.5', hover('icon')),
   }
 }

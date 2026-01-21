@@ -8,6 +8,7 @@ type TProps = {
   desc?: ReactNode
   withDivider?: boolean
   crumbItems?: TBreadcrumbItem[]
+  addon?: ReactNode
 } & TSpace
 
 const Portal: FC<TProps> = ({
@@ -15,6 +16,7 @@ const Portal: FC<TProps> = ({
   desc = null,
   withDivider = true,
   crumbItems = [],
+  addon = null,
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })
@@ -23,7 +25,10 @@ const Portal: FC<TProps> = ({
     <div className={s.wrapper}>
       {crumbItems?.length ? <Breadcrumbs items={crumbItems} /> : null}
 
-      <h3 className={s.title}>{title}</h3>
+      <div className={s.header}>
+        <h3 className={s.title}>{title}</h3>
+        {addon && <>{addon}</>}
+      </div>
 
       {desc && <p className={s.desc}>{desc}</p>}
       {withDivider && <div className={s.divider} />}
