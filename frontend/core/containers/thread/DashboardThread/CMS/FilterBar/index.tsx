@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 import { CONDITION_MODE } from '~/const/mode'
-import DubbleCheckSVG from '~/icons/DubbleCheck'
+import DabbleCheckSVG from '~/icons/DabbleCircleCheck'
 import SearchSVG from '~/icons/HeaderSearch'
 import ResetSVG from '~/icons/Reset'
 import Button from '~/widgets/Buttons/Button'
@@ -26,7 +26,7 @@ const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount 
       <div className={s.main}>
         <Button
           size='small'
-          left={-2}
+          left={-3.5}
           onClick={() => {
             if (checkboxActive) {
               batchSelectAll(false)
@@ -36,9 +36,9 @@ const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount 
           ghost
           noBorder
         >
-          <DubbleCheckSVG className={s.icon} />
+          <DabbleCheckSVG className={s.icon} />
           {checkboxActive && '取消'}
-          选择
+          多选
         </Button>
 
         <div className={s.inputWrapper}>

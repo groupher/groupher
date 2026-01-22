@@ -1,3 +1,4 @@
+// Posts.tsx
 'use client'
 
 import {
@@ -8,119 +9,45 @@ import {
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { useMemo, useRef, useState } from 'react'
+import { startTransition, useMemo, useState } from 'react'
 import useMount from '~/hooks/useMount'
-import useTableSelection from '~/hooks/useTableSelection'
+import {
+  getArticleRowId,
+  SELECT_COL_ID,
+  type TSortDir,
+  useMultiSelection,
+  useStickyColumns,
+} from '~/hooks/useTanTable'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
 import type { TArticle } from '~/spec'
-import Checker from '~/widgets/Checker'
 import useCMSInfo from '../../hooks/useCMSInfo'
 import useSalon, { cn } from '../../salon/cms/posts'
 import { ArticleCell, AuthorCell, DateCell, StateCell } from '../Cell'
 import FilterBar from '../FilterBar'
 
-const CHECK_COL_WIDTH = 44
-type SortDir = 'asc' | 'desc' | false
-
-type TableMeta = {
-  showCheckColumn: boolean
-  selected: Set<string>
-  toggleRow: (id: string, checked: boolean) => void
-  toggleAll: (checked: boolean, ids: string[]) => void
-  isAllSelected: (ids: string[]) => boolean
-  isSomeSelected: (ids: string[]) => boolean
-}
-
 export default function Posts() {
   const s = useSalon()
-
   const { pagedPosts, loading, loadPosts } = useCMSInfo()
 
   const [sorting, setSorting] = useState<SortingState>([])
-  const [showCheckColumn, setShowCheckColumn] = useState(false)
+  const [showSelectColumn, setShowSelectColumn] = useState(false)
 
   useMount(loadPosts)
 
   const data = (pagedPosts.entries ?? []) as TArticle[]
-
-  const { selected, selectedCount, toggleRow, toggleAll, isAllSelected, isSomeSelected } =
-    useTableSelection()
-
-  const metaRef = useRef<TableMeta>({
-    showCheckColumn: false,
-    selected: new Set(),
-    toggleRow: () => {},
-    toggleAll: () => {},
-    isAllSelected: () => false,
-    isSomeSelected: () => false,
-  })
-
-  metaRef.current.showCheckColumn = showCheckColumn
-  metaRef.current.selected = selected
-  metaRef.current.toggleRow = toggleRow
-  metaRef.current.toggleAll = toggleAll
-  metaRef.current.isAllSelected = isAllSelected
-  metaRef.current.isSomeSelected = isSomeSelected
+  const { metaRef, selectColumn, selectedCount, clear } = useMultiSelection()
 
   const columns = useMemo<ColumnDef<TArticle, any>[]>(() => {
     return [
-      {
-        id: 'select',
-        size: CHECK_COL_WIDTH,
-        enableSorting: false,
-        header: ({ table }) => {
-          const meta = table.options.meta as React.RefObject<TableMeta>
-          if (!meta.current?.showCheckColumn) return null
+      selectColumn(),
 
-          const rows = table.getRowModel().rows
-          const modelIds = rows
-            .map((r) => r.original?.innerId)
-            .filter((v): v is string => typeof v === 'string' && v.length > 0)
-
-          const allChecked = meta.current.isAllSelected(modelIds)
-          const someChecked = meta.current.isSomeSelected(modelIds)
-
-          return (
-            <div className='flex items-center justify-center'>
-              <Checker
-                checked={allChecked}
-                indeterminate={someChecked}
-                top={1}
-                left={1.5}
-                onChange={(nextChecked) => meta.current?.toggleAll(nextChecked, modelIds)}
-                aria-label='Select all'
-              />
-            </div>
-          )
-        },
-        cell: ({ row, table }) => {
-          const meta = table.options.meta as React.RefObject<TableMeta>
-          if (!meta.current?.showCheckColumn) return null
-
-          const id = row.original?.innerId ?? ''
-          const checked = id ? meta.current.selected.has(id) : false
-
-          return (
-            <div className='flex items-center justify-center'>
-              <Checker
-                checked={checked}
-                top={1}
-                onChange={(nextChecked) => {
-                  if (!id) return
-                  meta.current?.toggleRow(id, nextChecked)
-                }}
-                aria-label={`Select row ${id}`}
-              />
-            </div>
-          )
-        },
-      },
       {
         id: 'title',
         header: () => <div className={s.title}>帖子标题</div>,
         cell: ({ row }) => <ArticleCell rowData={row.original} />,
         size: 520,
+        meta: { sticky: 'left' },
       },
       {
         id: 'state',
@@ -133,7 +60,7 @@ export default function Posts() {
         id: 'upvotesCount',
         header: () => <div className={cn(s.title, 'text-center')}>投票</div>,
         cell: ({ getValue }) => (
-          <div className={cn(s.cell, 'text-center tabular-nums')}>{Number(getValue() ?? 0)}</div>
+          <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
         size: 80,
         enableSorting: true,
@@ -143,7 +70,7 @@ export default function Posts() {
         id: 'views',
         header: () => <div className={cn(s.title, 'text-center')}>浏览</div>,
         cell: ({ getValue }) => (
-          <div className={cn(s.cell, 'text-center tabular-nums')}>{Number(getValue() ?? 0)}</div>
+          <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
         size: 80,
         enableSorting: true,
@@ -153,7 +80,7 @@ export default function Posts() {
         id: 'commentsCount',
         header: () => <div className={cn(s.title, 'text-center')}>评论</div>,
         cell: ({ getValue }) => (
-          <div className={cn(s.cell, 'text-center tabular-nums')}>{Number(getValue() ?? 0)}</div>
+          <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
         size: 80,
         enableSorting: true,
@@ -169,9 +96,10 @@ export default function Posts() {
         header: () => <div className={cn(s.title, 'text-right')}>作者</div>,
         cell: ({ row }) => <AuthorCell rowData={row.original} />,
         size: 140,
+        meta: { sticky: 'right' },
       },
     ]
-  }, [s.title, s.cell])
+  }, [selectColumn, s.title, s.cell])
 
   const table = useReactTable<TArticle>({
     data,
@@ -180,57 +108,32 @@ export default function Posts() {
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getRowId: (row) => row.innerId,
+    getRowId: (row, index) => getArticleRowId(row, index),
     meta: metaRef,
   })
 
+  // ✅ 关键：showSelectColumn=false 时，把 SELECT_COL_ID 当成 0 宽来算 offset，避免空白列
+  const sticky = useStickyColumns(table, { showSelectColumn })
   const rows = table.getRowModel().rows
-
-  // checkbox 列：showCheckColumn 才占宽
-  const getColWidth = (colId: string, size: number) => {
-    if (colId !== 'select') return size
-    return showCheckColumn ? CHECK_COL_WIDTH : 0
-  }
-
-  // —— 固定列：第1列(select)、第2列(title)、最后1列(author) ——
-  const getPinned = (colId: string) => {
-    if (colId === 'select') return 'left' as const
-    if (colId === 'title') return 'left' as const
-    if (colId === 'author') return 'right' as const
-    return false as const
-  }
-
-  const getStickyStyle = (colId: string, width: number) => {
-    const pin = getPinned(colId)
-    if (!pin) return undefined
-
-    // 左侧：select=0；title=selectWidth
-    if (pin === 'left') {
-      const left = colId === 'title' ? getColWidth('select', CHECK_COL_WIDTH) : 0
-      return { position: 'sticky' as const, left, width }
-    }
-
-    // 右侧：author=0
-    return { position: 'sticky' as const, right: 0, width }
-  }
-
-  const getStickyClass = (colId: string) => {
-    const pin = getPinned(colId)
-    if (!pin) return ''
-    // header 比 body 更高层级（避免被遮住）
-    // 这里返回基础，header/body 里再叠加各自 z-index
-    return 'bg-white'
-  }
 
   return (
     <>
       <FilterBar
-        checkboxActive={showCheckColumn}
-        triggerCheckbox={setShowCheckColumn}
+        checkboxActive={showSelectColumn}
+        triggerCheckbox={(next) => {
+          startTransition(() => {
+            setShowSelectColumn(next)
+            clear()
+          })
+        }}
         selectedCount={selectedCount}
       />
 
-      <div className='relative w-full overflow-x-auto overflow-y-visible bg-white border rounded-md'>
+      {/* ✅ 用 data-select 作为 CSS 开关 */}
+      <div
+        data-select={showSelectColumn ? 'on' : 'off'}
+        className='relative w-full overflow-x-auto overflow-y-visible bg-white border rounded-md'
+      >
         <div className='min-w-full w-max'>
           <div className='border-b'>
             <div className='flex'>
@@ -238,16 +141,13 @@ export default function Posts() {
                 hg.headers.map((header) => {
                   const col = header.column
                   const canSort = col.getCanSort()
-                  const sortDir = col.getIsSorted() as SortDir
-
-                  const width = getColWidth(col.id, col.getSize())
-                  const isHiddenSelect = col.id === 'select' && !showCheckColumn
+                  const sortDir = col.getIsSorted() as TSortDir
 
                   const showSortIcon =
                     col.id === 'upvotesCount' || col.id === 'views' || col.id === 'commentsCount'
 
-                  const pinned = getPinned(col.id)
-                  const stickyStyle = getStickyStyle(col.id, width)
+                  const p = sticky.header(col.id)
+                  const isSelectCol = col.id === SELECT_COL_ID
 
                   return (
                     <button
@@ -256,28 +156,30 @@ export default function Posts() {
                       className={cn(
                         'shrink-0 flex items-center gap-1 border-r px-2 py-2 text-xs font-semibold',
                         canSort ? 'cursor-pointer select-none hover:bg-black/5' : 'cursor-default',
-                        isHiddenSelect && 'border-none px-0',
-                        pinned && getStickyClass(col.id),
-                        pinned && 'z-30', // header 最高
-                        // 视觉分割：左固定列右侧加阴影，右固定列左侧加阴影
-                        pinned === 'left' && 'shadow-[2px_0_0_0_rgba(0,0,0,0.06)]',
-                        pinned === 'right' && 'shadow-[-2px_0_0_0_rgba(0,0,0,0.06)]',
+                        // ✅ select 列标记（外层做 max-width 动画）
+                        isSelectCol && 'table-col-select',
+                        p.className,
                       )}
-                      style={{
-                        width,
-                        overflow: 'hidden',
-                        ...(stickyStyle ?? {}),
-                      }}
+                      style={p.style}
                       onClick={canSort ? col.getToggleSortingHandler() : undefined}
                       aria-label={canSort ? 'Sort column' : undefined}
                     >
-                      <span className='truncate'>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </span>
+                      {/* ✅ select 列内容包一层（内层做 translate/opacity 动画） */}
+                      {isSelectCol ? (
+                        <div className='table-col-select-inner'>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </div>
+                      ) : (
+                        <span className='truncate'>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </span>
+                      )}
 
-                      {showSortIcon && (
+                      {!isSelectCol && showSortIcon && (
                         <span className='ml-auto'>
                           {sortDir === 'asc' && <ArrowSVG className={s.icon.arrowUp} />}
                           {sortDir === 'desc' && <ArrowSVG className={s.icon.arrowDown} />}
@@ -291,37 +193,34 @@ export default function Posts() {
             </div>
           </div>
 
-          {/* Body（非虚拟，分页 20 条） */}
           <div>
             {rows.map((row) => (
               <div key={row.id} className='border-b'>
                 <div className='flex'>
                   {row.getVisibleCells().map((cell) => {
                     const colId = cell.column.id
-                    const width = getColWidth(colId, cell.column.getSize())
-                    const isHiddenSelect = colId === 'select' && !showCheckColumn
-
-                    const pinned = getPinned(colId)
-                    const stickyStyle = getStickyStyle(colId, width)
+                    const p = sticky.cell(colId)
+                    const isSelectCol = colId === SELECT_COL_ID
 
                     return (
                       <div
                         key={cell.id}
                         className={cn(
                           'shrink-0 px-2 py-2 text-sm border-r',
-                          isHiddenSelect && 'border-none px-0',
-                          pinned && getStickyClass(colId),
-                          pinned && 'z-20', // body 固定列在普通列之上
-                          pinned === 'left' && 'shadow-[2px_0_0_0_rgba(0,0,0,0.06)]',
-                          pinned === 'right' && 'shadow-[-2px_0_0_0_rgba(0,0,0,0.06)]',
+                          // ✅ select 列标记（外层 max-width 动画）
+                          isSelectCol && 'table-col-select',
+                          p.className,
                         )}
-                        style={{
-                          width,
-                          overflow: 'hidden',
-                          ...(stickyStyle ?? {}),
-                        }}
+                        style={p.style}
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {/* ✅ select 列内容包一层（内层滑动/淡入淡出） */}
+                        {isSelectCol ? (
+                          <div className='table-col-select-inner'>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </div>
+                        ) : (
+                          flexRender(cell.column.columnDef.cell, cell.getContext())
+                        )}
                       </div>
                     )
                   })}
