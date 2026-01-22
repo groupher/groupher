@@ -9,5 +9,7 @@ export default () => {
     title: base.title,
     icon: base.icon,
     cell: base.cell,
+
+    table: base.table,
   }
 }

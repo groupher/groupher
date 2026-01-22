@@ -9,6 +9,7 @@ import {
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table'
+import { includes } from 'ramda'
 import { startTransition, useMemo, useState } from 'react'
 import useMount from '~/hooks/useMount'
 import {
@@ -25,6 +26,10 @@ import useCMSInfo from '../../hooks/useCMSInfo'
 import useSalon, { cn } from '../../salon/cms/posts'
 import { ArticleCell, AuthorCell, DateCell, StateCell } from '../Cell'
 import FilterBar from '../FilterBar'
+
+const SORTABLE_COLUMN = ['upvotesCount', 'views', 'commentsCount']
+const HEADER_ALIGN_LEFT = ['title']
+const HEADER_ALIGN_RIGHT = ['dates', 'author']
 
 export default function Posts() {
   const s = useSalon()
@@ -46,7 +51,7 @@ export default function Posts() {
         id: 'title',
         header: () => <div className={s.title}>帖子标题</div>,
         cell: ({ row }) => <ArticleCell rowData={row.original} />,
-        size: 520,
+        size: 420,
         meta: { sticky: 'left' },
       },
       {
@@ -112,7 +117,6 @@ export default function Posts() {
     meta: metaRef,
   })
 
-  // ✅ 关键：showSelectColumn=false 时，把 SELECT_COL_ID 当成 0 宽来算 offset，避免空白列
   const sticky = useStickyColumns(table, { showSelectColumn })
   const rows = table.getRowModel().rows
 
@@ -129,73 +133,64 @@ export default function Posts() {
         selectedCount={selectedCount}
       />
 
-      {/* ✅ 用 data-select 作为 CSS 开关 */}
-      <div
-        data-select={showSelectColumn ? 'on' : 'off'}
-        className='relative w-full overflow-x-auto overflow-y-visible bg-white border rounded-md'
-      >
-        <div className='min-w-full w-max'>
-          <div className='border-b'>
-            <div className='flex'>
-              {table.getHeaderGroups().map((hg) =>
-                hg.headers.map((header) => {
-                  const col = header.column
-                  const canSort = col.getCanSort()
-                  const sortDir = col.getIsSorted() as TSortDir
+      <div data-select={showSelectColumn ? 'on' : 'off'} className={s.table.wrapper}>
+        <div className={s.table.inner}>
+          <div className={cn('flex border-b', s.table.border)}>
+            {table.getHeaderGroups().map((hg) =>
+              hg.headers.map((header) => {
+                const col = header.column
+                const canSort = col.getCanSort()
+                const sortDir = col.getIsSorted() as TSortDir
 
-                  const showSortIcon =
-                    col.id === 'upvotesCount' || col.id === 'views' || col.id === 'commentsCount'
+                const showSortIcon = includes(col.id, SORTABLE_COLUMN)
 
-                  const p = sticky.header(col.id)
-                  const isSelectCol = col.id === SELECT_COL_ID
+                const p = sticky.header(col.id)
+                const isSelectCol = col.id === SELECT_COL_ID
 
-                  return (
-                    <button
-                      key={header.id}
-                      type='button'
-                      className={cn(
-                        'shrink-0 flex items-center gap-1 border-r px-2 py-2 text-xs font-semibold',
-                        canSort ? 'cursor-pointer select-none hover:bg-black/5' : 'cursor-default',
-                        // ✅ select 列标记（外层做 max-width 动画）
-                        isSelectCol && 'table-col-select',
-                        p.className,
-                      )}
-                      style={p.style}
-                      onClick={canSort ? col.getToggleSortingHandler() : undefined}
-                      aria-label={canSort ? 'Sort column' : undefined}
-                    >
-                      {/* ✅ select 列内容包一层（内层做 translate/opacity 动画） */}
-                      {isSelectCol ? (
-                        <div className='table-col-select-inner'>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
-                        </div>
-                      ) : (
-                        <span className='truncate'>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
-                        </span>
-                      )}
+                return (
+                  <button
+                    key={header.id}
+                    type='button'
+                    className={cn(
+                      s.table.actionBtn,
+                      HEADER_ALIGN_LEFT.includes(col.id) && '!justify-start',
+                      HEADER_ALIGN_RIGHT.includes(col.id) && '!justify-end',
+                      canSort && s.table.canSort,
+                      isSelectCol && 'table-col-select',
+                      p.className,
+                    )}
+                    style={p.style}
+                    onClick={canSort ? col.getToggleSortingHandler() : undefined}
+                    aria-label={canSort ? 'Sort column' : undefined}
+                  >
+                    {isSelectCol ? (
+                      <div className='table-col-select-inner'>
+                        {!header.isPlaceholder &&
+                          flexRender(header.column.columnDef.header, header.getContext())}
+                      </div>
+                    ) : (
+                      <span className='truncate'>
+                        {!header.isPlaceholder &&
+                          flexRender(header.column.columnDef.header, header.getContext())}
+                      </span>
+                    )}
 
-                      {!isSelectCol && showSortIcon && (
-                        <span className='ml-auto'>
-                          {sortDir === 'asc' && <ArrowSVG className={s.icon.arrowUp} />}
-                          {sortDir === 'desc' && <ArrowSVG className={s.icon.arrowDown} />}
-                          {!sortDir && <FilterSVG className={s.icon.filter} />}
-                        </span>
-                      )}
-                    </button>
-                  )
-                }),
-              )}
-            </div>
+                    {!isSelectCol && showSortIcon && (
+                      <>
+                        {sortDir === 'asc' && <ArrowSVG className={s.icon.arrowUp} />}
+                        {sortDir === 'desc' && <ArrowSVG className={s.icon.arrowDown} />}
+                        {!sortDir && <FilterSVG className={s.icon.filter} />}
+                      </>
+                    )}
+                  </button>
+                )
+              }),
+            )}
           </div>
 
           <div>
             {rows.map((row) => (
-              <div key={row.id} className='border-b'>
+              <div key={row.id} className={cn('border-b', s.table.border)}>
                 <div className='flex'>
                   {row.getVisibleCells().map((cell) => {
                     const colId = cell.column.id
@@ -207,13 +202,12 @@ export default function Posts() {
                         key={cell.id}
                         className={cn(
                           'shrink-0 px-2 py-2 text-sm border-r',
-                          // ✅ select 列标记（外层 max-width 动画）
+                          s.table.border,
                           isSelectCol && 'table-col-select',
                           p.className,
                         )}
                         style={p.style}
                       >
-                        {/* ✅ select 列内容包一层（内层滑动/淡入淡出） */}
                         {isSelectCol ? (
                           <div className='table-col-select-inner'>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}

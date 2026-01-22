@@ -102,7 +102,6 @@
     padding-right: 0.5rem !important; /* 对齐 px-2 */
     opacity: 1 !important;
     pointer-events: auto !important;
-    border-right-width: 1px !important;
   }
 
   [data-select='on'] .table-col-select-inner {
@@ -116,7 +115,6 @@
     padding-right: 0 !important;
     opacity: 0 !important;
     pointer-events: none !important;
-    border-right-width: 0 !important;
   }
 
   [data-select='off'] .table-col-select-inner {

@@ -131,7 +131,6 @@ export function useMultiSelection() {
           <div className='align-both'>
             <Checker
               top={1}
-              left={1.5}
               checked={all}
               indeterminate={some}
               onChange={(v) => meta.current.toggleAll(v, ids)}
