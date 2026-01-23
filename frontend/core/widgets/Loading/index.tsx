@@ -4,5 +4,5 @@
  *
  */
 
-export { default as LavaLampLoading } from './LavaLampLoading'
 export { default as ArticleContentLoading } from './ArticleContentLoading'
+export { default as LavaLampLoading } from './LavaLampLoading'

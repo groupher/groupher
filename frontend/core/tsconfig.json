@@ -55,6 +55,7 @@
   "include": [
     "next-env.d.ts",
     "**/*.tsx",
+    "**/*.d.ts",
     "**/*.ts",
     ".next/types/**/*.ts",
     "../landing/app/widgets/Main.tsx"

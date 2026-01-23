@@ -251,4 +251,5 @@ export type TZIndexType =
   | 'sidebar'
   | 'articleFixedHeader'
   | 'header'
+  | 'tableStickyColumn'
   | 10

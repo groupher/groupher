@@ -87,29 +87,35 @@
 @layer utilities {
   .table-col-select {
     overflow: hidden !important;
-    transition: max-width 200ms ease, padding 200ms ease, opacity 200ms ease, border-width 200ms ease;
+    transition:
+      max-width 200ms ease,
+      padding 200ms ease,
+      opacity 200ms ease,
+      border-width 200ms ease;
     will-change: max-width, padding, opacity;
   }
 
   .table-col-select-inner {
-    transition: transform 200ms ease, opacity 200ms ease;
+    transition:
+      transform 200ms ease,
+      opacity 200ms ease;
     will-change: transform, opacity;
   }
 
-  [data-select='on'] .table-col-select {
+  [data-select="on"] .table-col-select {
     max-width: 44px !important;
-    padding-left: 0.5rem !important;  /* 对齐 px-2 */
+    padding-left: 0.5rem !important; /* 对齐 px-2 */
     padding-right: 0.5rem !important; /* 对齐 px-2 */
     opacity: 1 !important;
     pointer-events: auto !important;
   }
 
-  [data-select='on'] .table-col-select-inner {
+  [data-select="on"] .table-col-select-inner {
     transform: translateX(0);
     opacity: 1;
   }
 
-  [data-select='off'] .table-col-select {
+  [data-select="off"] .table-col-select {
     max-width: 0 !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
@@ -117,10 +123,53 @@
     pointer-events: none !important;
   }
 
-  [data-select='off'] .table-col-select-inner {
+  [data-select="off"] .table-col-select-inner {
     transform: translateX(-10px);
     opacity: 0;
   }
+
+  [data-stuck-left="on"] .sticky-column-left::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -12px;
+    bottom: 0;
+
+    width: 12px;
+    pointer-events: none;
+
+    background: linear-gradient(to right, rgba(214, 214, 214, 0.25), rgba(133, 133, 133, 0));
+  }
+
+  [data-theme="dark"] { 
+    right: -15px;
+    width: 15px;
+
+    [data-stuck-left="on"] .sticky-column-left::after {
+      background: linear-gradient(to right, rgba(0, 0, 0, 0.25), rgba(133, 133, 133, 0));
+    }
+  }
+
+  [data-stuck-right="on"] .sticky-column-right::after {
+    content: "";
+    border-right: 1px solid var(--color-table-border);
+    position: absolute;
+    top: 0;
+    left: -12px;
+    bottom: 0;
+
+    width: 12px;
+    pointer-events: none;
+
+    background: linear-gradient(to left, rgba(214, 214, 214, 0.25), rgba(133, 133, 133, 0));
+  }
+
+  [data-theme="dark"] { 
+    left: -18px;
+    width: 18px;
+
+    [data-stuck-right="on"] .sticky-column-right::after {
+      background: linear-gradient(to left, rgba(0, 0, 0, 0.25), rgba(133, 133, 133, 0));
+    }
+  }
 }
-
-

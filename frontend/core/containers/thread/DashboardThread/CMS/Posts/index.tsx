@@ -17,11 +17,13 @@ import {
   SELECT_COL_ID,
   type TSortDir,
   useMultiSelection,
+  useScrollStuck,
   useStickyColumns,
 } from '~/hooks/useTanTable'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
 import type { TArticle } from '~/spec'
+import TableLoading from '~/widgets/Loading/Table'
 import useCMSInfo from '../../hooks/useCMSInfo'
 import useSalon, { cn } from '../../salon/cms/posts'
 import { ArticleCell, AuthorCell, DateCell, StateCell } from '../Cell'
@@ -32,11 +34,12 @@ const HEADER_ALIGN_LEFT = ['title']
 const HEADER_ALIGN_RIGHT = ['dates', 'author']
 
 export default function Posts() {
-  const s = useSalon()
   const { pagedPosts, loading, loadPosts } = useCMSInfo()
+  const s = useSalon({ loading })
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [showSelectColumn, setShowSelectColumn] = useState(false)
+  const { scrollRef, stuck } = useScrollStuck()
 
   useMount(loadPosts)
 
@@ -133,7 +136,13 @@ export default function Posts() {
         selectedCount={selectedCount}
       />
 
-      <div data-select={showSelectColumn ? 'on' : 'off'} className={s.table.wrapper}>
+      <div
+        ref={scrollRef}
+        data-select={showSelectColumn ? 'on' : 'off'}
+        data-stuck-left={stuck.left ? 'on' : 'off'}
+        data-stuck-right={stuck.right ? 'on' : 'off'}
+        className={s.table.wrapper}
+      >
         <div className={s.table.inner}>
           <div className={cn('flex border-b', s.table.border)}>
             {table.getHeaderGroups().map((hg) =>
@@ -200,12 +209,7 @@ export default function Posts() {
                     return (
                       <div
                         key={cell.id}
-                        className={cn(
-                          'shrink-0 px-2 py-2 text-sm border-r',
-                          s.table.border,
-                          isSelectCol && 'table-col-select',
-                          p.className,
-                        )}
+                        className={cn(s.table.cell, isSelectCol && 'table-col-select', p.className)}
                         style={p.style}
                       >
                         {isSelectCol ? (
@@ -224,7 +228,7 @@ export default function Posts() {
           </div>
         </div>
 
-        {loading && <div className='absolute inset-0 pointer-events-none bg-white/40' />}
+        {loading && <TableLoading className='absolute top-10' />}
       </div>
     </>
   )

@@ -1,6 +1,7 @@
 import type { TArticle } from '~/spec'
 
 export * from './useMultiSelection'
+export * from './useScrollStuck'
 export * from './useStickyColumns'
 
 export type TSortDir = 'asc' | 'desc' | false
