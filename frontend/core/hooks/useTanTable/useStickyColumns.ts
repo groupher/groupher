@@ -5,6 +5,7 @@ import type { Table } from '@tanstack/react-table'
 import { useMemo } from 'react'
 import useTwBelt from '~/hooks/useTwBelt'
 import { SELECT_COL_ID, SELECT_COL_WIDTH } from './useMultiSelection'
+import '~/spec/tantable'
 
 type StickySide = 'left' | 'right' | false
 

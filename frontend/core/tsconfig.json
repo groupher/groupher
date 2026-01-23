@@ -52,6 +52,7 @@
       "~/tailwind": ["./tailwind"]
     }
   },
+
   "include": [
     "next-env.d.ts",
     "**/*.tsx",

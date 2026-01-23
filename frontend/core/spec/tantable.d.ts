@@ -1,3 +1,4 @@
+// core/src/types/tanstack-table.d.ts
 import '@tanstack/table-core'
 
 declare module '@tanstack/table-core' {

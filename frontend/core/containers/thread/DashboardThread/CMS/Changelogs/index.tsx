@@ -1,163 +1,246 @@
-import { pluck } from 'ramda'
-import { useCallback, useEffect, useState } from 'react'
+// Changelogs.tsx
+'use client'
 
-import { Cell, Column, HeaderCell, Table } from 'rsuite-table'
+import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  type SortingState,
+  useReactTable,
+} from '@tanstack/react-table'
+import { includes } from 'ramda'
+import { startTransition, useMemo, useState } from 'react'
 
+import useMount from '~/hooks/useMount'
+import {
+  getArticleRowId,
+  SELECT_COL_ID,
+  type TSortDir,
+  useMultiSelection,
+  useScrollStuck,
+  useStickyColumns,
+} from '~/hooks/useTanTable'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
-import Checker from '~/widgets/Checker'
+import type { TArticle } from '~/spec'
+import TableLoading from '~/widgets/Loading/Table'
+
 import useCMSInfo from '../../hooks/useCMSInfo'
-import useSalon from '../../salon/cms/changelogs'
-import { ArticleCell, AuthorDateCell, CheckCell, DateCell, StateCell } from '../Cell'
+import useSalon, { cn } from '../../salon/cms/changelogs'
+import { ArticleCell, AuthorCell, DateCell, StateCell } from '../Cell'
 import FilterBar from '../FilterBar'
 
-/**
- * example: https://table.rsuitejs.com/#fixed-column
- * API: https://github.com/rsuite/rsuite-table#api
- */
-export default () => {
-  const s = useSalon()
+const SORTABLE_COLUMN = ['upvotesCount', 'views', 'commentsCount']
+const HEADER_ALIGN_LEFT = ['title']
+const HEADER_ALIGN_RIGHT = ['dates', 'author']
 
-  const { pagedChangelogs, loading, batchSelectedIDs, batchSelectAll, loadChangelogs } =
-    useCMSInfo()
-  const [showCheckColumn, setShowCheckColumn] = useState(false)
-  const [sortColumn, setSortColumn] = useState('id')
+export default function Changelogs() {
+  const { pagedChangelogs, loading, loadChangelogs } = useCMSInfo()
+  const s = useSalon({ loading })
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    loadChangelogs()
-  }, [])
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [showSelectColumn, setShowSelectColumn] = useState(false)
+  const { scrollRef, stuck } = useScrollStuck()
 
-  const allIDs = pluck('id', pagedChangelogs.entries)
-  const isAllSelected = allIDs.length === batchSelectedIDs?.length
+  useMount(loadChangelogs)
 
-  const [sortState, setSortState] = useState({
-    views: '', // '' / asc / desc
-    commentsCount: '',
-    upvotesCount: '',
+  const data = (pagedChangelogs.entries ?? []) as TArticle[] // 这里沿用 TArticle；若 changelog 有独立类型，请替换
+  const { metaRef, selectColumn, selectedCount, clear } = useMultiSelection()
+
+  const columns = useMemo<ColumnDef<TArticle, any>[]>(() => {
+    return [
+      selectColumn(),
+
+      {
+        id: 'title',
+        header: () => <div className={s.title}>标题</div>,
+        // changelog 也走 ArticleCell（你原 rsuite 版就是 ArticleCell dataKey='title'）
+        cell: ({ row }) => <ArticleCell rowData={row.original} />,
+        size: 420,
+        meta: { sticky: 'left' },
+      },
+
+      {
+        id: 'state',
+        header: () => <div className={cn(s.title, 'text-center')}>状态</div>,
+        cell: ({ row }) => <StateCell rowData={row.original} />,
+        size: 120,
+      },
+
+      {
+        accessorKey: 'upvotesCount',
+        id: 'upvotesCount',
+        header: () => <div className={cn(s.title, 'text-center')}>投票</div>,
+        cell: ({ getValue }) => (
+          <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
+        ),
+        size: 80,
+        enableSorting: true,
+      },
+
+      {
+        accessorKey: 'views',
+        id: 'views',
+        header: () => <div className={cn(s.title, 'text-center')}>浏览</div>,
+        cell: ({ getValue }) => (
+          <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
+        ),
+        size: 80,
+        enableSorting: true,
+      },
+
+      {
+        accessorKey: 'commentsCount',
+        id: 'commentsCount',
+        header: () => <div className={cn(s.title, 'text-center')}>评论</div>,
+        cell: ({ getValue }) => (
+          <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
+        ),
+        size: 80,
+        enableSorting: true,
+      },
+
+      {
+        id: 'dates',
+        header: () => <div className={cn(s.title, 'text-right')}>发布/活跃</div>,
+        cell: ({ row }) => <DateCell rowData={row.original} />,
+        size: 120,
+      },
+
+      {
+        id: 'author',
+        header: () => <div className={cn(s.title, 'text-right')}>作者</div>,
+        cell: ({ row }) => <AuthorCell rowData={row.original} />,
+        size: 160,
+        meta: { sticky: 'right' },
+      },
+    ]
+  }, [selectColumn, s.title, s.cell])
+
+  const table = useReactTable<TArticle>({
+    data,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getRowId: (row, index) => getArticleRowId(row, index),
+    meta: metaRef,
   })
 
-  const handleSortColumn = useCallback(
-    (sortColumn, sortType) => {
-      setSortColumn(sortColumn)
-      setSortState({ ...sortState, [sortColumn]: sortType })
-    },
-    [sortState],
-  )
-
-  const renderSortIcon = useCallback(
-    (sortColumn) => {
-      const sortType = sortState[sortColumn]
-
-      switch (sortType) {
-        case 'asc': {
-          return <ArrowSVG className={s.icon.arrowUp} />
-        }
-        case 'desc': {
-          return <ArrowSVG className={s.icon.arrowDown} />
-        }
-
-        default:
-          return <FilterSVG className={s.icon.filter} />
-      }
-    },
-    [sortState, s.icon.filter, s.icon.arrowUp, s.icon.arrowDown],
-  )
+  const sticky = useStickyColumns(table, { showSelectColumn })
+  const rows = table.getRowModel().rows
 
   return (
     <>
       <FilterBar
-        checkboxActive={showCheckColumn}
-        triggerCheckbox={(show) => setShowCheckColumn(show)}
-        selectedCount={batchSelectedIDs.length}
+        checkboxActive={showSelectColumn}
+        triggerCheckbox={(next) => {
+          startTransition(() => {
+            setShowSelectColumn(next)
+            clear()
+          })
+        }}
+        selectedCount={selectedCount}
       />
 
-      <Table
-        data={pagedChangelogs.entries}
-        sortColumn={sortColumn}
-        onSortColumn={handleSortColumn}
-        rowHeight={68}
-        loading={loading}
-        hover={false}
-        autoHeight
-        cellBordered
-        bordered
+      <div
+        ref={scrollRef}
+        data-select={showSelectColumn ? 'on' : 'off'}
+        data-stuck-left={stuck.left ? 'on' : 'off'}
+        data-stuck-right={stuck.right ? 'on' : 'off'}
+        className={s.table.wrapper}
       >
-        {showCheckColumn && (
-          <Column width={40} fixed>
-            <HeaderCell>
-              <Checker
-                checked={isAllSelected}
-                size='small'
-                top={4}
-                onChange={(checked) => {
-                  if (checked) {
-                    batchSelectAll(true, allIDs)
-                    return
-                  }
+        <div className={s.table.inner}>
+          {/* header */}
+          <div className={cn('flex border-b', s.table.border)}>
+            {table.getHeaderGroups().map((hg) =>
+              hg.headers.map((header) => {
+                const col = header.column
+                const canSort = col.getCanSort()
+                const sortDir = col.getIsSorted() as TSortDir
 
-                  batchSelectAll(false, [])
-                }}
-              />
-            </HeaderCell>
-            {/* @ts-ignore */}
-            <CheckCell />
-          </Column>
-        )}
+                const showSortIcon = includes(col.id, SORTABLE_COLUMN)
 
-        <Column width={280} fixed flexGrow={1}>
-          <HeaderCell>
-            <div className={s.title}>标题</div>
-          </HeaderCell>
-          {/* @ts-ignore */}
-          <ArticleCell dataKey='title' />
-        </Column>
+                const p = sticky.header(col.id)
+                const isSelectCol = col.id === SELECT_COL_ID
 
-        <Column width={120} fixed>
-          <HeaderCell align='center'>
-            <div className={s.title}>状态</div>
-          </HeaderCell>
-          {/* @ts-ignore */}
-          <StateCell />
-        </Column>
+                return (
+                  <button
+                    key={header.id}
+                    type='button'
+                    className={cn(
+                      s.table.actionBtn,
+                      HEADER_ALIGN_LEFT.includes(col.id) && '!justify-start',
+                      HEADER_ALIGN_RIGHT.includes(col.id) && '!justify-end',
+                      canSort && s.table.canSort,
+                      isSelectCol && 'table-col-select',
+                      p.className,
+                    )}
+                    style={p.style}
+                    onClick={canSort ? col.getToggleSortingHandler() : undefined}
+                    aria-label={canSort ? 'Sort column' : undefined}
+                  >
+                    {isSelectCol ? (
+                      <div className='table-col-select-inner'>
+                        {!header.isPlaceholder &&
+                          flexRender(header.column.columnDef.header, header.getContext())}
+                      </div>
+                    ) : (
+                      <span className='truncate'>
+                        {!header.isPlaceholder &&
+                          flexRender(header.column.columnDef.header, header.getContext())}
+                      </span>
+                    )}
 
-        <Column width={65} fixed sortable>
-          <HeaderCell align='center' renderSortIcon={() => renderSortIcon('upvotesCount')}>
-            <div className={s.title}>投票</div>
-          </HeaderCell>
-          <Cell dataKey='upvotesCount' align='center' className={s.cell} />
-        </Column>
+                    {!isSelectCol && showSortIcon && (
+                      <>
+                        {sortDir === 'asc' && <ArrowSVG className={s.icon.arrowUp} />}
+                        {sortDir === 'desc' && <ArrowSVG className={s.icon.arrowDown} />}
+                        {!sortDir && <FilterSVG className={s.icon.filter} />}
+                      </>
+                    )}
+                  </button>
+                )
+              }),
+            )}
+          </div>
 
-        <Column width={65} sortable>
-          <HeaderCell align='center' renderSortIcon={() => renderSortIcon('views')}>
-            <div className={s.title}>浏览</div>
-          </HeaderCell>
-          <Cell dataKey='views' align='center' className={s.cell} />
-        </Column>
+          {/* body */}
+          <div>
+            {rows.map((row) => (
+              <div key={row.id} className={cn('border-b', s.table.border)}>
+                <div className='flex'>
+                  {row.getVisibleCells().map((cell) => {
+                    const colId = cell.column.id
+                    const p = sticky.cell(colId)
+                    const isSelectCol = colId === SELECT_COL_ID
 
-        <Column width={60} sortable>
-          <HeaderCell align='center' renderSortIcon={() => renderSortIcon('commentsCount')}>
-            <div className={s.title}>评论</div>
-          </HeaderCell>
-          <Cell dataKey='commentsCount' align='center' className={s.cell} />
-        </Column>
+                    return (
+                      <div
+                        key={cell.id}
+                        className={cn(s.table.cell, isSelectCol && 'table-col-select', p.className)}
+                        style={p.style}
+                      >
+                        {isSelectCol ? (
+                          <div className='table-col-select-inner'>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </div>
+                        ) : (
+                          flexRender(cell.column.columnDef.cell, cell.getContext())
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
-        <Column width={100}>
-          <HeaderCell align='right'>
-            <div className={s.title}>发布/活跃</div>
-          </HeaderCell>
-          {/* @ts-ignore */}
-          <DateCell />
-        </Column>
-
-        <Column width={110}>
-          <HeaderCell align='right'>
-            <div className={s.title}>作者</div>
-          </HeaderCell>
-          {/* @ts-ignore */}
-          <AuthorDateCell />
-        </Column>
-      </Table>
+        {loading && <TableLoading className='absolute top-10' />}
+      </div>
     </>
   )
 }

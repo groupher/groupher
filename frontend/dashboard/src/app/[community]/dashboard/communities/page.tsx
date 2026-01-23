@@ -1,9 +1,9 @@
 'use client'
 
-import CMS from '~/containers/thread/DashboardThread/CMS'
+import Communities from '~/containers/thread/DashboardThread/CMS/Communities'
 
 const DashboardCommunitiesPage = () => {
-  return <CMS />
+  return <Communities />
 }
 
 export default DashboardCommunitiesPage

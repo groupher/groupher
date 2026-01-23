@@ -203,6 +203,16 @@ export const ALIAS_TABS: TDsbTabs = {
   ],
 }
 
+export const DOC_TABS: TDsbTabs = {
+  segment: DSB_ROUTE.DOC,
+  items: [
+    { title: '概览', slug: DSB_DOC_ROUTE.TABLE, segment: '' },
+    { title: '目录编排', slug: DSB_DOC_ROUTE.TREE },
+    { title: '封面图标', slug: DSB_DOC_ROUTE.COVER },
+    { title: '常见问题', slug: DSB_DOC_ROUTE.FAQ },
+  ],
+}
+
 export const WIDGET_TABS: TDsbTabs = {
   segment: DSB_ROUTE.WIDGETS,
   items: [

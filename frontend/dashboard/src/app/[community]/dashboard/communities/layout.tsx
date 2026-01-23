@@ -7,12 +7,12 @@ import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import { mockUsers } from '~/mock'
 
-const seg = DSB_ROUTE.POST
+const seg = DSB_ROUTE.COMMUNITIES
 const CRUMB_CONFIG = {
   title: '内容管理',
   seg,
   toSeg: DSB_COVERS.CMS,
-  children: [{ title: '帖子', seg }],
+  children: [{ title: '所有社区', seg }],
 }
 
 const DashboardPostPage = ({ children }) => {
@@ -24,7 +24,7 @@ const DashboardPostPage = ({ children }) => {
   return (
     <div className={cn(s.content, 'w-full pl-10')}>
       <Portal
-        title='帖子管理'
+        title='所有社区'
         desc=''
         crumbItems={crumbItems}
         addon={<AdminList userList={adminList} />}
