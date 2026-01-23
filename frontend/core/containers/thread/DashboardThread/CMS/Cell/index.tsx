@@ -1,172 +1,78 @@
-// import type { FC } from 'react'
+'use client'
 
-import Link from 'next/link'
-import { Cell } from 'rsuite-table'
-import { COMMUNITY_STATUS } from '~/const/mode'
+import * as React from 'react'
+
 import Img from '~/Img'
 import PulseSVG from '~/icons/Pulse'
 import { previewArticle } from '~/signal'
+import type { TArticle } from '~/spec'
 import ArticleCatState from '~/widgets/ArticleCatState'
-import Button from '~/widgets/Buttons/Button'
-import Checker from '~/widgets/Checker'
 import TagsList from '~/widgets/TagsList'
 import TimeAgo from '~/widgets/TimeAgo'
-
-// import { mockTags } from '~/mock'
-
-import useCMSInfo from '../../hooks/useCMSInfo'
 import useSalon, { cn } from '../../salon/cms/cell'
 
-export const CheckCell = ({ rowData, ...props }) => {
-  const { batchSelect } = useCMSInfo()
-  // const { cat, state } = rowData
-  const { id, _checked } = rowData
+const EMPTY_ARR: any[] = []
 
-  return (
-    <Cell {...props}>
-      <Checker
-        checked={_checked}
-        size='small'
-        top={5}
-        onChange={(checked) => batchSelect(id, checked)}
-      />
-    </Cell>
-  )
-}
-
-export const StateCell = ({ rowData, ...props }) => {
+export const StateCell = React.memo(function StateCell({ rowData }: { rowData: TArticle }) {
   const s = useSalon()
-  const { cat, state } = rowData
+  const { cat, state } = rowData ?? {}
 
-  if (!state) {
-    return (
-      <Cell {...props}>
-        <div />
-      </Cell>
-    )
-  }
+  if (!state) return <div />
 
   return (
-    <Cell {...props}>
-      <div className={s.stateWrapper}>
-        <ArticleCatState cat={cat} state={state} smaller />
-      </div>
-    </Cell>
+    <div className={s.stateWrapper}>
+      <ArticleCatState cat={cat} state={state} smaller />
+    </div>
   )
-}
+})
 
-export const CommunityCell = ({ rowData, ...props }) => {
-  const s = useSalon()
-  const { logo, title, slug } = rowData
-
-  return (
-    <Cell {...props}>
-      <div className='row'>
-        <Img className={s.communityLogo} src={logo} />
-        <div>
-          <div className={s.communityTitle}>{title}</div>
-          <Link className={s.communitySlug} href={`/${slug}`}>
-            /{slug}
-          </Link>
-        </div>
-      </div>
-    </Cell>
-  )
-}
-
-export const PendingCell = ({ rowData, ...props }) => {
-  const s = useSalon()
-  const { pending } = rowData
-
-  const _pending = pending === COMMUNITY_STATUS.PENDING
-
-  return (
-    <Cell {...props} align='center'>
-      <div className={s.actionCell}>
-        <div className={cn(s.pending, _pending && s.pendingBlocked)}>
-          {_pending ? '待审核' : '正常'}
-        </div>
-        <Button className={s.switchButton} size='tiny' ghost>
-          开关
-        </Button>
-      </div>
-    </Cell>
-  )
-}
-
-export const ArticleCell = ({ rowData, ...props }) => {
+export const ArticleCell = React.memo(function ArticleCell({ rowData }: { rowData: TArticle }) {
   const s = useSalon()
 
   return (
-    <Cell {...props}>
-      <div className={s.articleTitle} onClick={() => previewArticle(rowData)}>
-        {rowData.title}
-      </div>
-      <TagsList items={rowData.articleTags} left={0} />
-    </Cell>
-  )
-}
+    <div className='w-full overflow-hidden'>
+      <button
+        type='button'
+        className={cn(s.articleTitle, 'truncate w-full text-left')}
+        onClick={() => previewArticle(rowData)}
+      >
+        ({rowData.innerId}) {rowData.title}
+      </button>
 
-export const AuthorDateCell = ({ rowData, ...props }) => {
-  const s = useSalon()
-  return (
-    <Cell {...props}>
-      <div className={s.author}>
-        <Img className={s.authorAvatar} src={rowData.author.avatar} />
-        <div className={s.nickname}>{rowData.author.nickname}</div>
+      <div className='w-full overflow-hidden whitespace-nowrap'>
+        <TagsList items={rowData.articleTags ?? EMPTY_ARR} left={0} />
       </div>
-    </Cell>
+    </div>
   )
-}
+})
 
-export const DateCell = ({ rowData, ...props }) => {
+export const AuthorCell = React.memo(function AuthorCell({ rowData }: { rowData: TArticle }) {
   const s = useSalon()
-  const { insertedAt, activeAt } = rowData
+  const author = rowData?.author
+
+  if (!author) return <div />
 
   return (
-    <Cell {...props}>
-      <div className={s.dateCell}>
-        <div className={s.dateItem}>
-          {/* <PublishIcon /> */}
-          <TimeAgo datetime={insertedAt} />
-        </div>
-        <div className={s.dateItem}>
-          <PulseSVG className={s.pulseIcon} />
-          <TimeAgo datetime={activeAt} />
-        </div>
-      </div>
-    </Cell>
+    <div className={s.author}>
+      <Img className={s.authorAvatar} src={author.avatar} />
+      <div className={s.nickname}>{author.nickname}</div>
+    </div>
   )
-}
+})
 
-export const TimestampCell = ({ rowData, ...props }) => {
+export const DateCell = React.memo(function DateCell({ rowData }: { rowData: TArticle }) {
   const s = useSalon()
-  const { insertedAt, updatedAt } = rowData
-
-  if (insertedAt === updatedAt) {
-    return (
-      <Cell {...props}>
-        <div className={s.dateCell}>
-          <div className={cn(s.dateItem, s.dateItemWarn)}>
-            <TimeAgo datetime={insertedAt} />
-          </div>
-        </div>
-      </Cell>
-    )
-  }
+  const { insertedAt, activeAt } = rowData ?? {}
 
   return (
-    <Cell {...props}>
-      <div className={s.dateCell}>
-        <div className={s.dateItem}>
-          {/* <PublishIcon /> */}
-          <TimeAgo datetime={insertedAt} />
-        </div>
-        <div className={s.dateItem}>
-          <PulseSVG className={s.pulseIcon} />
-          <TimeAgo datetime={updatedAt} />
-        </div>
+    <div className={s.dateCell}>
+      <div className={s.dateItem}>
+        <TimeAgo datetime={insertedAt} />
       </div>
-    </Cell>
+      <div className={s.dateItem}>
+        <PulseSVG className={s.pulseIcon} />
+        <TimeAgo datetime={activeAt} />
+      </div>
+    </div>
   )
-}
+})

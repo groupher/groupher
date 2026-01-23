@@ -1,12 +1,11 @@
 'use client'
 
 import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
+import AdminList from '~/containers/thread/DashboardThread/AdminList'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon from '~/containers/thread/DashboardThread/salon/cms'
+import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
-
-import 'rsuite-table/dist/css/rsuite-table.css'
-import '~/containers/thread/DashboardThread/salon/cms/global.css'
+import { mockUsers } from '~/mock'
 
 const seg = DSB_ROUTE.CHANGELOG
 const CRUMB_CONFIG = {
@@ -16,15 +15,23 @@ const CRUMB_CONFIG = {
   children: [{ title: '更新日志', seg }],
 }
 
-export default function DashboardChangelogPage({ children }) {
+const DashboardPostPage = ({ children }) => {
   const s = useSalon()
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
-  return (
-    <div className={s.wrapper}>
-      <Portal title='更新日志管理(TODO: 右侧管理员头像列表)' desc='' crumbItems={crumbItems} />
+  const adminList = mockUsers(4)
 
+  return (
+    <div className={cn(s.content, 'w-full pl-10')}>
+      <Portal
+        title='更新日志'
+        desc=''
+        crumbItems={crumbItems}
+        addon={<AdminList userList={adminList} />}
+      />
       {children}
     </div>
   )
 }
+
+export default DashboardPostPage

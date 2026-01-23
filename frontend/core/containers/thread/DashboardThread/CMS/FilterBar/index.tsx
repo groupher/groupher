@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 import { CONDITION_MODE } from '~/const/mode'
-import DubbleCheckSVG from '~/icons/DubbleCheck'
+import DabbleCheckSVG from '~/icons/DabbleCircleCheck'
 import SearchSVG from '~/icons/HeaderSearch'
 import ResetSVG from '~/icons/Reset'
 import Button from '~/widgets/Buttons/Button'
@@ -26,8 +26,7 @@ const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount 
       <div className={s.main}>
         <Button
           size='small'
-          className='w-24 min-w-24'
-          left={-5}
+          left={-3.5}
           onClick={() => {
             if (checkboxActive) {
               batchSelectAll(false)
@@ -37,9 +36,9 @@ const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount 
           ghost
           noBorder
         >
-          <DubbleCheckSVG className={s.icon} />
+          <DabbleCheckSVG className={s.icon} />
           {checkboxActive && '取消'}
-          选择
+          多选
         </Button>
 
         <div className={s.inputWrapper}>
@@ -47,8 +46,8 @@ const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount 
           <Input placeholder='按标题搜索' className={s.input} />
         </div>
 
-        <ConditionSelector mode={CONDITION_MODE.CAT} selected={false} right={20} />
-        <ConditionSelector mode={CONDITION_MODE.STATE} selected={false} right={20} />
+        <ConditionSelector mode={CONDITION_MODE.CAT} selected={false} right={10} />
+        <ConditionSelector mode={CONDITION_MODE.STATE} selected={false} right={10} />
 
         <div className={s.dateRange}>日期范围(TODO)</div>
         <div className='grow' />
@@ -57,6 +56,7 @@ const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount 
           重置
         </Button>
       </div>
+
       {checkboxActive && selectedCount > 0 && (
         <ActionBar
           selectedCount={selectedCount}

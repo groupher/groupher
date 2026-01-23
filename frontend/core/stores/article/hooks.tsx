@@ -16,6 +16,6 @@ export default () => {
   return {
     ...snap,
     commit: store.commit,
-    $store: store,
+    live$: store,
   }
 }

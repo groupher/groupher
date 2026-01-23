@@ -17,6 +17,6 @@ export default () => {
     ...snap,
     setLocale: store.setLocale,
     setLocaleData: store.setLocaleData,
-    $store: store,
+    live$: store,
   }
 }
