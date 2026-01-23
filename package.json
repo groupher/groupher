@@ -147,7 +147,6 @@
     "remarkable-emoji": "^0.1.3",
     "remarkable-mentions": "^0.1.0",
     "rimraf": "^6.0.1",
-    "rsuite-table": "^5.19.2",
     "sanitize-html": "^2.5.2",
     "sentry-testkit": "^2.1.0",
     "slate": "^0.101.1",
