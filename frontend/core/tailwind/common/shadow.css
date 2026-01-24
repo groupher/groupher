@@ -1,4 +1,4 @@
-@layer utilities {
+@layer components {
   .shadow-card {
     box-shadow: var(--shadow-card);
   }

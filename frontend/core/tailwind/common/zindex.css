@@ -1,4 +1,4 @@
-@layer utilities {
+@layer components {
    .z-modal {
     z-index: var(--z-modal);
   }

@@ -4,7 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fill, bg, fg, menu, rainbow, rainbowSoft, vividDark } = useTwBelt()
+  const { cn, fill, hover, bg, fg, menu, rainbow, rainbowSoft, vividDark } = useTwBelt()
 
   const blockBase = 'relative align-both size-12 min-w-12 mr-4 rounded-lg'
   const blockBg = 'absolute top-0 left-0 w-full h-full rounded-lg trans-all-100'
@@ -14,8 +14,9 @@ export default () => {
   return {
     wrapper: cn('align-both w-full gap-x-4'),
     block: cn(
-      'row group relative min-w-72 w-72 h-28 px-3 pt-5 rounded-md pointer overflow-hidden',
-      'trans-all-200',
+      'row group relative min-w-72 w-72 h-28 px-3 pt-5 rounded-lg pointer overflow-hidden',
+      hover('bg'),
+      'items-start',
     ),
     iconBlock: blockBase,
     blockGrey: cn(blockBg, 'opacity-100 group-hover:opacity-0', bg('sandBox')),

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import THEME from '~/const/theme'
 import useHover from '~/hooks/useHover'
 import useTheme from '~/hooks/useTheme'
@@ -7,22 +7,40 @@ import useSalon, { cn } from '../../salon/battery_bento/dark_mode'
 import Panel from './Panel'
 
 export default function DarkMode() {
-  const [hoverIn, setHoverIn] = useState(false)
   const s = useSalon()
   const { toggle, theme } = useTheme()
 
   const [ref, isHovered] = useHover<HTMLDivElement>()
 
+  const prevHoveredRef = useRef(false)
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
-    if (isHovered) {
-      setHoverIn(true)
-      if (hoverIn) {
-        setTimeout(() => toggle(), 300)
-      }
-    } else {
-      setHoverIn(false)
+    const entered = isHovered && !prevHoveredRef.current
+    const left = !isHovered && prevHoveredRef.current
+
+    prevHoveredRef.current = isHovered
+
+    if (entered) {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
+
+      hoverTimeoutRef.current = setTimeout(() => {
+        hoverTimeoutRef.current = null
+        toggle()
+      }, 300)
     }
-  }, [isHovered, hoverIn, toggle])
+
+    if (left && hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current)
+      hoverTimeoutRef.current = null
+    }
+  }, [isHovered, toggle])
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
+    }
+  }, [])
 
   const showStars = isHovered || theme === THEME.DARK
 

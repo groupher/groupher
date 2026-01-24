@@ -84,7 +84,7 @@
   }
 }
 
-@layer utilities {
+@layer components {
   .table-col-select {
     overflow: hidden !important;
     transition:
