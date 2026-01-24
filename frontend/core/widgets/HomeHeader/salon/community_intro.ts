@@ -4,13 +4,14 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, fill, fg, menu, rainbow, vividDark } = useTwBelt()
+  const { cn, fill, fg, hover, menu, rainbow, vividDark } = useTwBelt()
 
   return {
     wrapper: cn('align-both w-full gap-x-4'),
     block: cn(
       'group column relative min-w-52 w-52 h-28 px-3 py-4 rounded-md pointer overflow-hidden',
-      'trans-all-200',
+      hover('bg'),
+      'items-start',
     ),
     head: 'row-center',
 

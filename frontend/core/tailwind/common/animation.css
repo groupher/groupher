@@ -1,4 +1,4 @@
-@layer utilities {
+@layer components {
   @keyframes loading-grow {
     0% {
       transform: scale(0, 0);

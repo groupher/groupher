@@ -1,4 +1,4 @@
-@layer utilities {
+@layer components {
   .row {
     @apply flex flex-row;
   }
