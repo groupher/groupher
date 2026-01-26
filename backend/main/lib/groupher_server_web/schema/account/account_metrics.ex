@@ -60,6 +60,7 @@ defmodule GroupherServerWeb.Schema.Account.Metrics do
     field(:country, :string)
     field(:city, :string)
     field(:company, :string)
+    field(:raw, :json)
   end
 
   input_object :customization_input do

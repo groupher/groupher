@@ -11,19 +11,6 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML do
   #   "text" : "<script>evil scripts</script>"
   @root_class Class.article()
 
-  @real_editor_data ~S({
-    "time" : 1567250876713,
-    "blocks" : [
-        {
-            "type" : "paragraph",
-            "data" : {
-                "text": "content"
-            }
-        }
-    ],
-    "version" : "2.15.0"
-  })
-
   describe "[basic convert]" do
     @editor_json %{
       "time" => 1_567_250_876_713,

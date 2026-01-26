@@ -31,15 +31,8 @@ defmodule GroupherServerWeb.Context do
   authorization header is sent.
   """
   def build_context(conn) do
-    IO.inspect(conn.cookies, label: "## ---> Conn Cookies")
-
     with token when not is_nil(token) <- get_token_from(conn),
          {:ok, cur_user} <- authorize(token) do
-      # IO.inspect(
-      #   RemoteIP.parse(get_req_header(conn, "x-forwarded-for")),
-      #   label: "#># x-forwarded-for"
-      # )
-
       case RemoteIP.parse(get_req_header(conn, "x-forwarded-for")) do
         {:ok, remote_ip} ->
           %{cur_user: cur_user, remote_ip: remote_ip}

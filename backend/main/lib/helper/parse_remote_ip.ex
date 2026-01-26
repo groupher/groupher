@@ -10,7 +10,7 @@ defmodule Helper.RemoteIP do
     if Mix.env() == :test, do: {:ok, @remote_ip}, else: {:error, "NOT_FOUND"}
   end
 
-  # remote ip is the fisrt ip in the proxy_ips chain
+  # remote ip is the first ip in the proxy_ips chain
   def parse([proxy_ips]) do
     client_ip = proxy_ips |> String.split(",") |> List.first()
 

@@ -6,8 +6,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
   @article_cat Constant.CMS.article_cat()
   @article_state Constant.CMS.article_state()
 
-  @page_size get_config(:general, :page_size)
-
   setup do
     {community, _, post_attrs, user} = mock_article(:post)
 
