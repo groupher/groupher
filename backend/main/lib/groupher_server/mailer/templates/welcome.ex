@@ -5,8 +5,6 @@ defmodule GroupherServer.Email.Templates.Welcome do
   """
   alias GroupherServer.Accounts.Model.User
 
-  @compile {:nowarn_unused_function, raw: 0}
-
   def html(%User{nickname: nickname}) do
     """
     <!doctype html>
@@ -530,7 +528,8 @@ defmodule GroupherServer.Email.Templates.Welcome do
     """
   end
 
-  defp raw() do
+  @doc false
+  def raw() do
     """
     <mjml>
       <mj-head>

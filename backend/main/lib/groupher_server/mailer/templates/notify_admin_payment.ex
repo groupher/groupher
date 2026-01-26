@@ -4,8 +4,6 @@ defmodule GroupherServer.Email.Templates.NotifyAdminPayment do
   just copy and paste raw string to: https://mjml.io/try-it-live
   """
 
-  @compile {:nowarn_unused_function, raw: 0}
-
   def html(record) do
     """
     <!doctype html>
@@ -511,7 +509,8 @@ defmodule GroupherServer.Email.Templates.NotifyAdminPayment do
     """
   end
 
-  defp raw() do
+  @doc false
+  def raw() do
     """
     <mjml>
       <mj-head>

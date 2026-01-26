@@ -398,7 +398,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   end
 
   @doc "count items in community"
-  def count(%Community{} = community, type)
+  def count(community, type)
 
   def count(%Community{id: id}, :threads) do
     with {:ok, community} <- ORM.find(Community, id, preload: :threads) do

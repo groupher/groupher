@@ -9,8 +9,6 @@ defmodule GroupherServer.Email.Templates.MentionAuthor do
   just copy and paste raw string to: https://mjml.io/try-it-live
   """
 
-  @compile {:nowarn_unused_function, raw: 0}
-
   def html(_record) do
     """
     TODO
@@ -23,7 +21,8 @@ defmodule GroupherServer.Email.Templates.MentionAuthor do
     """
   end
 
-  defp raw() do
+  @doc false
+  def raw() do
     """
     <mjml>
     <mj-head>

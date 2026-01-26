@@ -11,8 +11,6 @@ defmodule GroupherServer.Application do
   # for more information on OTP Applications
   @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
-    import Supervisor.Spec
-
     # Define workers and child supervisors to be supervised
     children =
       [

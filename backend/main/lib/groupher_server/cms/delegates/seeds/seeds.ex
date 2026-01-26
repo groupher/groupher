@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
 
   @comment_emotions get_config(:article, :comment_emotions)
 
-  @compile {:nowarn_unused_function, seed_comment_emotions: 1, seed_comment_replies: 1}
+
   # seed community
 
   @doc """
@@ -126,7 +126,8 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     end)
   end
 
-  defp seed_comment_replies(%Comment{} = comment) do
+  @doc false
+  def seed_comment_replies(%Comment{} = comment) do
     with {:ok, users} <- db_insert_multi(:user, Enum.random(1..5)) do
       users
       |> Enum.each(fn user ->
@@ -136,7 +137,8 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     end
   end
 
-  defp seed_comment_emotions(%Comment{} = comment) do
+  @doc false
+  def seed_comment_emotions(%Comment{} = comment) do
     with {:ok, users} <- db_insert_multi(:user, Enum.random(1..5)) do
       users
       |> Enum.each(fn user ->

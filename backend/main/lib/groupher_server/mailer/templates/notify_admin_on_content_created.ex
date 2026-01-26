@@ -7,7 +7,6 @@ defmodule GroupherServer.Email.Templates.NotifyAdminOnContentCreated do
   just copy and paste raw string to: https://mjml.io/try-it-live
   """
 
-  @compile {:nowarn_unused_function, raw: 0}
   def html(%{
         author_name: author_name,
         title: title,
@@ -504,7 +503,8 @@ defmodule GroupherServer.Email.Templates.NotifyAdminOnContentCreated do
     """
   end
 
-  defp raw() do
+  @doc false
+  def raw() do
     """
     <mjml>
     <mj-head>
