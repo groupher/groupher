@@ -105,33 +105,29 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   def paged_followers(_root, ~m(login filter)a, _info) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.paged_followers(%User{id: user_id}, filter)
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.paged_followers(%User{id: user_id}, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
 
   def paged_followings(_root, ~m(login filter)a, %{context: %{cur_user: cur_user}}) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.paged_followings(%User{id: user_id}, filter, cur_user)
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.paged_followings(%User{id: user_id}, filter, cur_user)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
 
   def paged_followings(_root, ~m(login filter)a, _info) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.paged_followings(%User{id: user_id}, filter)
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.paged_followings(%User{id: user_id}, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
 
   def paged_upvoted_articles(_root, ~m(login filter)a, _info) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.paged_upvoted_articles(user_id, filter)
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.paged_upvoted_articles(user_id, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
@@ -165,9 +161,8 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   def paged_collect_folders(_root, ~m(login filter)a, _info) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.paged_collect_folders(user_id, filter)
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.paged_collect_folders(user_id, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
@@ -182,9 +177,8 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   # published contents
   def paged_published_articles(_root, ~m(login filter thread)a, _info) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.paged_published_articles(%User{id: user_id}, thread, filter)
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.paged_published_articles(%User{id: user_id}, thread, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
@@ -194,26 +188,23 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   def paged_published_comments(_root, ~m(login filter thread)a, _info) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.paged_published_comments(%User{id: user_id}, thread, filter)
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.paged_published_comments(%User{id: user_id}, thread, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
 
   def paged_published_comments(_root, ~m(login filter)a, _info) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.paged_published_comments(%User{id: user_id}, filter)
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.paged_published_comments(%User{id: user_id}, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
 
   # paged communities which the user it's the moderator
   def moderatorable_communities(_root, ~m(login filter)a, _info) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.paged_moderatorable_communities(%User{id: user_id}, filter)
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.paged_moderatorable_communities(%User{id: user_id}, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
@@ -247,9 +238,8 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   # for check other users subscribed_communities
   def subscribed_communities(_root, %{login: login, filter: filter}, _info) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.subscribed_communities(%User{id: user_id}, filter)
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.subscribed_communities(%User{id: user_id}, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end

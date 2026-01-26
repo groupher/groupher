@@ -60,11 +60,11 @@ defmodule Helper.OSS do
       "DurationSeconds" => 3600
     }
 
-    with {:ok, %{status: 200, body: body}} <- ExAliyun.OpenAPI.call_sts(params) do
-      {:ok, body}
-    else
-      {:ok, %{status: 404, body: body}} ->
-        {:error, body["Code"]}
+    case ExAliyun.OpenAPI.call_sts(params) do
+      {:ok, %{status: 200, body: body}} ->
+        {:ok, body}
+
+      {:ok, %{status: 404, body: _body}} ->
         {:error, [message: "oss sts token error", code: ecode(:oss_sts_token)]}
 
       _ ->

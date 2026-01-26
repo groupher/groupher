@@ -87,13 +87,15 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
 
   # check if the tag to be set is in same community & thread
   defp article_tag_in_same_thread?(article_tag_ids, filter) do
-    with {:ok, paged_article_tags} <- paged_article_tags(filter) do
-      domain_tags_ids = Enum.map(paged_article_tags.entries, &to_string(&1.id))
-      article_tag_ids = Enum.map(article_tag_ids, &to_string(&1))
+    case paged_article_tags(filter) do
+      {:ok, paged_article_tags} ->
+        domain_tags_ids = Enum.map(paged_article_tags.entries, &to_string(&1.id))
+        article_tag_ids = Enum.map(article_tag_ids, &to_string(&1))
 
-      Enum.all?(article_tag_ids, &Enum.member?(domain_tags_ids, &1))
-    else
-      _ -> false
+        Enum.all?(article_tag_ids, &Enum.member?(domain_tags_ids, &1))
+
+      _ ->
+        false
     end
   end
 

@@ -23,11 +23,9 @@ defmodule GroupherServer.Statistics.Delegate.Status do
   @count_filter %{page: 1, size: 1}
 
   def online_status() do
-    with {:ok, realtime_visitors} <- Cache.get(@cache_pool, :realtime_visitors) do
-      {:ok, %{realtime_visitors: realtime_visitors}}
-    else
-      _ ->
-        {:ok, %{realtime_visitors: 1}}
+    case Cache.get(@cache_pool, :realtime_visitors) do
+      {:ok, realtime_visitors} -> {:ok, %{realtime_visitors: realtime_visitors}}
+      _ -> {:ok, %{realtime_visitors: 1}}
     end
   end
 

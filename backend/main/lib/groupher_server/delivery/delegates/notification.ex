@@ -51,31 +51,35 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
   def revoke(attrs, %User{} = from_user) do
     attrs = attrs |> Map.put(:from_user, from_user)
 
-    with {:ok, notifications} <- find_exist_notify(attrs, :all) do
-      Multi.new()
-      |> Multi.run(:revoke_notifications, fn _, _ ->
-        Enum.each(notifications, fn notify ->
-          case length(notify.from_users) == 1 do
-            # 只有一就删除记录
-            true ->
-              ORM.delete(notify)
+    case find_exist_notify(attrs, :all) do
+      {:ok, notifications} ->
+        Multi.new()
+        |> Multi.run(:revoke_notifications, fn _, _ ->
+          Enum.each(notifications, fn notify ->
+            case length(notify.from_users) == 1 do
+              # 只有一就删除记录
+              true ->
+                ORM.delete(notify)
 
-            # 如果是多人集合就在 from_users 中删除该用户
-            false ->
-              from_users = Enum.reject(notify.from_users, &(&1.login == from_user.login))
-              notify |> ORM.update_embed(:from_users, from_users)
-          end
+              # 如果是多人集合就在 from_users 中删除该用户
+              false ->
+                from_users = Enum.reject(notify.from_users, &(&1.login == from_user.login))
+                notify |> ORM.update_embed(:from_users, from_users)
+            end
+          end)
+          |> done
         end)
-        |> done
-      end)
-      |> Multi.run(:update_user_mailbox_status, fn _, _ ->
-        Enum.each(notifications, &Accounts.update_mailbox_status(&1.user_id)) |> done
-      end)
-      |> Repo.transaction()
-      |> result()
-    else
-      false -> {:ok, :pass}
-      {:error, _} -> {:ok, :pass}
+        |> Multi.run(:update_user_mailbox_status, fn _, _ ->
+          Enum.each(notifications, &Accounts.update_mailbox_status(&1.user_id)) |> done
+        end)
+        |> Repo.transaction()
+        |> result()
+
+      false ->
+        {:ok, :pass}
+
+      {:error, _} ->
+        {:ok, :pass}
     end
   end
 

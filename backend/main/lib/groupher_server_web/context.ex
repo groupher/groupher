@@ -73,9 +73,8 @@ defmodule GroupherServerWeb.Context do
 
   # TODO gather role info from CMS or other context
   defp check_passport(%User{} = user) do
-    with {:ok, cms_passport} <- CMS.get_passport(%User{id: user.id}) do
-      {:ok, Map.put(user, :cur_passport, %{"cms" => cms_passport})}
-    else
+    case CMS.get_passport(%User{id: user.id}) do
+      {:ok, cms_passport} -> {:ok, Map.put(user, :cur_passport, %{"cms" => cms_passport})}
       {:error, _} -> {:ok, user}
     end
   end

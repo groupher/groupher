@@ -412,23 +412,24 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
 
   defp do_mark_comment_solution(post, %Comment{} = comment, user, is_solution) do
     # check if user is questioner
-    with true <- user.id == post.author.user.id do
-      Multi.new()
-      |> Multi.run(:mark_solution, fn _, _ ->
-        ORM.update(comment, %{is_solution: is_solution, is_for_question: true})
-      end)
-      |> Multi.run(:update_post_state, fn _, _ ->
-        ORM.update(post, %{solution_digest: comment.body_html})
-        CMS.set_post_state(post, @article_state.resolved)
-      end)
-      |> Multi.run(:sync_embed_replies, fn _, %{mark_solution: comment} ->
-        sync_embed_replies(comment)
-      end)
-      |> Repo.transaction()
-      |> result()
-    else
-      false -> raise_error(:require_questioner, "oops, questioner only")
-      {:error, error} -> {:error, error}
+    case user.id == post.author.user.id do
+      true ->
+        Multi.new()
+        |> Multi.run(:mark_solution, fn _, _ ->
+          ORM.update(comment, %{is_solution: is_solution, is_for_question: true})
+        end)
+        |> Multi.run(:update_post_state, fn _, _ ->
+          ORM.update(post, %{solution_digest: comment.body_html})
+          CMS.set_post_state(post, @article_state.resolved)
+        end)
+        |> Multi.run(:sync_embed_replies, fn _, %{mark_solution: comment} ->
+          sync_embed_replies(comment)
+        end)
+        |> Repo.transaction()
+        |> result()
+
+      false ->
+        raise_error(:require_questioner, "oops, questioner only")
     end
   end
 
