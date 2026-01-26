@@ -495,9 +495,8 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     # @article_active_period
     # 1. 超过时限不更新
     # 2. 已经沉默的不更新, is_sunk
-    with true <- in_active_period?(thread, article) do
-      ORM.update(article, %{active_at: DateTime.utc_now()})
-    else
+    case in_active_period?(thread, article) do
+      true -> ORM.update(article, %{active_at: DateTime.utc_now()})
       _ -> {:ok, :pass}
     end
   end
@@ -548,18 +547,20 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     {:ok, thread} = thread_of(article)
 
     Transaction.locking(article, fn article ->
-      with false <- article.is_archived do
-        Multi.new()
-        |> Multi.run(:update_article, fn _, _ ->
-          ORM.update(article, %{mark_delete: true})
-        end)
-        |> Multi.run(:update_community_article_count, fn _, _ ->
-          CommunityCRUD.update_community_count_field(article.communities, thread)
-        end)
-        |> Repo.transaction()
-        |> result()
-      else
-        true -> raise_error(:archived, "article is archived, can not be edit or delete")
+      case article.is_archived do
+        false ->
+          Multi.new()
+          |> Multi.run(:update_article, fn _, _ ->
+            ORM.update(article, %{mark_delete: true})
+          end)
+          |> Multi.run(:update_community_article_count, fn _, _ ->
+            CommunityCRUD.update_community_count_field(article.communities, thread)
+          end)
+          |> Repo.transaction()
+          |> result()
+
+        true ->
+          raise_error(:archived, "article is archived, can not be edit or delete")
       end
     end)
   end

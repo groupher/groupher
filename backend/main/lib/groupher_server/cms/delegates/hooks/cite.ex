@@ -114,9 +114,8 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
   end
 
   defp parse_link(attrs) do
-    with {"href", link} <- Enum.find(attrs, fn {a, _v} -> a == "href" end) do
-      {:ok, link}
-    else
+    case Enum.find(attrs, fn {a, _v} -> a == "href" end) do
+      {"href", link} -> {:ok, link}
       _ -> {:error, "invalid fmt"}
     end
   end

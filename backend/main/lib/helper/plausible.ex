@@ -31,17 +31,17 @@ defmodule Helper.Plausible do
     # NOTICE: DO NOT use Tesla.get, otherwise the middleware will not woking
     # see https://github.com/teamon/tesla/issues/88
     # with true <- config_env() !== :test do
-    with {:ok, %{body: body}} <-
-           get(path, query: query, headers: [{"Authorization", "Bearer #{get_token()}"}]) do
-      case is_number(body) do
-        true ->
-          Cache.put(@cache_pool, :realtime_visitors, body)
-          {:ok, Enum.max([body, 1])}
+    case get(path, query: query, headers: [{"Authorization", "Bearer #{get_token()}"}]) do
+      {:ok, %{body: body}} ->
+        case is_number(body) do
+          true ->
+            Cache.put(@cache_pool, :realtime_visitors, body)
+            {:ok, Enum.max([body, 1])}
 
-        false ->
-          {:ok, 1}
-      end
-    else
+          false ->
+            {:ok, 1}
+        end
+
       _ ->
         Cache.put(@cache_pool, :realtime_visitors, 1)
         {:ok, 1}

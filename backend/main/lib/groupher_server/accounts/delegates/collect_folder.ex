@@ -91,22 +91,24 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
   create a collect folder for articles
   """
   def create_collect_folder(%{title: title} = attrs, %User{id: user_id}) do
-    with {:error, _} <- ORM.find_by(CollectFolder, ~m(user_id title)a) do
-      last_updated = Timex.today() |> Timex.to_datetime()
+    case ORM.find_by(CollectFolder, ~m(user_id title)a) do
+      {:error, _} ->
+        last_updated = Timex.today() |> Timex.to_datetime()
 
-      args =
-        Map.merge(
-          %{
-            user_id: user_id,
-            last_updated: last_updated,
-            meta: @default_meta
-          },
-          attrs
-        )
+        args =
+          Map.merge(
+            %{
+              user_id: user_id,
+              last_updated: last_updated,
+              meta: @default_meta
+            },
+            attrs
+          )
 
-      CollectFolder |> ORM.create(args)
-    else
-      {:ok, folder} -> raise_error(:already_exist, "#{folder.title} already exsits")
+        CollectFolder |> ORM.create(args)
+
+      {:ok, folder} ->
+        raise_error(:already_exist, "#{folder.title} already exists")
     end
   end
 

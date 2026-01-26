@@ -33,15 +33,16 @@ defmodule Helper.IP2City do
     # query = [ip: ip, key: @token]
     query = [ip: ip, key: get_config(:ip_locate, :ip_service)]
 
-    with true <- Mix.env() !== :test do
-      case get(@endpoint, query: query) do
-        {:ok, %Tesla.Env{status: 200, body: %{"city" => city}}} ->
-          handle_result({:ok, city})
+    case Mix.env() !== :test do
+      true ->
+        case get(@endpoint, query: query) do
+          {:ok, %Tesla.Env{status: 200, body: %{"city" => city}}} ->
+            handle_result({:ok, city})
 
-        _error ->
-          {:error, "error"}
-      end
-    else
+          _error ->
+            {:error, "error"}
+        end
+
       _ ->
         # NOTE: this only for test usage
         # error is ignored, just check next time

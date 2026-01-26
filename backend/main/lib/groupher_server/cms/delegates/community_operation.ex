@@ -106,35 +106,36 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   def add_moderator(%Community{} = community, role, %User{} = target_user, %User{} = cur_user) do
     community = Repo.preload(community, :moderators)
 
-    with {:ok, true} <- user_is_root?(community, cur_user) do
-      Transaction.locking(community, fn community ->
-        Multi.new()
-        |> Multi.insert(
-          :insert_moderator,
-          CommunityModerator.changeset(%CommunityModerator{}, %{
-            user_id: target_user.id,
-            community_id: community.id,
-            role: role
-          })
-        )
-        |> Multi.run(:update_community_count, fn _, _ ->
-          CommunityCRUD.update_community_count_field(
-            community,
-            target_user,
-            :moderators_count,
-            :inc
+    case user_is_root?(community, cur_user) do
+      {:ok, true} ->
+        Transaction.locking(community, fn community ->
+          Multi.new()
+          |> Multi.insert(
+            :insert_moderator,
+            CommunityModerator.changeset(%CommunityModerator{}, %{
+              user_id: target_user.id,
+              community_id: community.id,
+              role: role
+            })
           )
-        end)
-        |> Multi.run(:stamp_passport, fn _, %{insert_moderator: community_moderator} ->
-          rules = Certification.passport_rules(cms: role)
+          |> Multi.run(:update_community_count, fn _, _ ->
+            CommunityCRUD.update_community_count_field(
+              community,
+              target_user,
+              :moderators_count,
+              :inc
+            )
+          end)
+          |> Multi.run(:stamp_passport, fn _, %{insert_moderator: community_moderator} ->
+            rules = Certification.passport_rules(cms: role)
 
-          update_passport_item_count(community_moderator, community, target_user, rules)
-          PassportCRUD.stamp_passport(rules, target_user)
+            update_passport_item_count(community_moderator, community, target_user, rules)
+            PassportCRUD.stamp_passport(rules, target_user)
+          end)
+          |> Repo.transaction()
+          |> result()
         end)
-        |> Repo.transaction()
-        |> result()
-      end)
-    else
+
       {:error, false} ->
         {:error,
          [message: "only community root can add moderator", code: ecode(:community_root_only)]}
@@ -243,14 +244,16 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   defp match_passport_community(community_slug, rules) do
     community_keys = Map.keys(rules)
 
-    with true <- length(community_keys) == 1 do
-      passport_community = community_keys |> List.first()
+    case length(community_keys) == 1 do
+      true ->
+        passport_community = community_keys |> List.first()
 
-      if passport_community == community_slug,
-        do: {:ok, :match},
-        else: {:error, :passport_community_not_match}
-    else
-      _ -> {:error, :one_community_only}
+        if passport_community == community_slug,
+          do: {:ok, :match},
+          else: {:error, :passport_community_not_match}
+
+      _ ->
+        {:error, :one_community_only}
     end
   end
 
