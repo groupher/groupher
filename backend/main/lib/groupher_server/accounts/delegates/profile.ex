@@ -317,8 +317,15 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
   def update_profile_social(_, _), do: {:ok, :pass}
 
   defp create_profile(user, oauth_profile) do
-    # OauthProvider |> ORM.create(Map.merge(oauth_profile, %{"user_id" => user.id}))
-    OauthProvider |> ORM.create(Map.merge(oauth_profile, %{user_id: user.id}))
+    attrs = Map.merge(oauth_profile, %{user_id: user.id})
+
+    # link_oauth can be called repeatedly for the same provider.
+    # after `assert_oauth_provider_not_linked/2` passes, we can safely upsert.
+    OauthProvider
+    |> ORM.upsert_by(
+      [provider: oauth_profile.provider, provider_id: oauth_profile.provider_id],
+      attrs
+    )
   end
 
   defp update_social_ifneed(%User{} = user, %{social: attrs}) do
