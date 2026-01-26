@@ -45,7 +45,8 @@ defmodule GroupherServer.Email.Templates.AdminNewRegister do
     """
   end
 
-  defp raw() do
+  @doc false
+  def raw() do
     """
     <mjml>
       <mj-head>

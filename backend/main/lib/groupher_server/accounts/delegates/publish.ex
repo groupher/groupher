@@ -6,7 +6,7 @@ defmodule GroupherServer.Accounts.Delegate.Publish do
   import Helper.Utils, only: [plural: 1]
 
   alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.{Embeds, User}
+  alias Accounts.Model.User
 
   alias Helper.ORM
 

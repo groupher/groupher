@@ -12,7 +12,6 @@ defmodule GroupherServer.Test.Accounts.Oauth do
 
   # link oauth
   describe "[oauth login]" do
-    @tag :wip
     test "can register new valid oauth github user" do
       assert {:error, _} =
                ORM.find_by(OauthProvider, %{
@@ -47,7 +46,6 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert signin_res |> Map.has_key?(:token)
     end
 
-    @tag :wip
     test "existing user can signin" do
       {:ok, signin_res} = Accounts.signin_oauth(@valid_github_profile)
 
@@ -55,7 +53,6 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert signin_res |> Map.has_key?(:token)
     end
 
-    @tag :wip
     test "existing user can signin multiple times" do
       {:ok, _} = Accounts.signin_oauth(@valid_github_profile)
       {:ok, _} = Accounts.signin_oauth(@valid_github_profile)
@@ -65,7 +62,6 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert {:ok, 1} == ORM.count(OauthProvider)
     end
 
-    @tag :wip
     test "existing non-existing user fails" do
       {:ok, _signin_res} =
         Accounts.signin_oauth(@valid_github_profile)
@@ -74,7 +70,6 @@ defmodule GroupherServer.Test.Accounts.Oauth do
         Accounts.signin_oauth(%{@valid_github_profile | "provider_id" => "non-existing-id"})
     end
 
-    @tag :wip
     test "can link oauth provider to existing user" do
       user_login = @valid_twitter_profile["login"]
       github_provider = @valid_github_profile |> Map.put("login", user_login)
@@ -97,7 +92,6 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert last.raw["username"] == @valid_twitter_profile["login"]
     end
 
-    @tag :wip
     test "can unlink oauth provider" do
       user_login = @valid_twitter_profile["login"]
       github_provider = @valid_github_profile |> Map.put("login", user_login)
@@ -116,7 +110,6 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert after_delete.provider == "github"
     end
 
-    @tag :wip
     test "can not unlink oauth provider if there is only one" do
       user_login = @valid_twitter_profile["login"]
       github_provider = @valid_github_profile |> Map.put("login", user_login)

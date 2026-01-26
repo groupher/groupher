@@ -29,9 +29,28 @@ defmodule Helper.OgInfo do
   end
 
   defp parse_open_graph(html, url) do
-    OpenGraph.parse(html)
-    |> fmt_og_info(url)
-    |> done
+    og =
+      OpenGraph.parse(html)
+      |> fmt_og_info(url)
+
+    og =
+      case og do
+        %{title: nil} -> %{og | title: extract_html_title(html)}
+        _ -> og
+      end
+
+    og |> done
+  end
+
+  defp extract_html_title(html) do
+    with {:ok, doc} <- Floki.parse_document(html),
+         [title_el | _] <- Floki.find(doc, "title"),
+         title <- title_el |> Floki.text() |> String.trim(),
+         false <- title == "" do
+      title
+    else
+      _ -> nil
+    end
   end
 
   defp fmt_og_info(%{url: nil} = og, url) do

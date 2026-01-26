@@ -84,6 +84,7 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
 
     Notification
     |> where([n], n.user_id == ^user.id and n.read == ^read)
+    |> order_by([n], desc: n.inserted_at, desc: n.id)
     |> ORM.paginator(~m(page size)a)
     |> cut_from_users_ifneed
     |> done

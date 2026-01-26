@@ -9,9 +9,6 @@ defmodule Helper.IP2City do
 
   @endpoint "https://restapi.amap.com/v3/ip"
   @timeout_limit 5000
-  @token get_config(:ip_locate, :ip_service)
-  # @token "52ecdfe2505a4a5a6ff66b2184c10036"
-
   # plug(Tesla.Middleware.BaseUrl, "https://restapi.amap.com/v3/ip")
   plug(Tesla.Middleware.Retry, delay: 200, max_retries: 2)
   plug(Tesla.Middleware.Timeout, timeout: @timeout_limit)

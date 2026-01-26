@@ -239,10 +239,13 @@ defmodule GroupherServer.CMS do
 
   # search
   defdelegate search_articles(thread, args), to: Search
-  defdelegate search_communities(filter), to: Search
-  defdelegate search_communities(filter, user), to: Search
-  defdelegate search_communities(filter, category), to: Search
-  defdelegate search_communities(filter, category, user), to: Search
+
+  def search_communities(title), do: Search.search_communities(title)
+  def search_communities(title, %GroupherServer.Accounts.Model.User{} = user),
+    do: Search.search_communities(title, user)
+
+  def search_communities(title, category), do: Search.search_communities(title, category)
+  def search_communities(title, category, user), do: Search.search_communities(title, category, user)
 
   # seeds
   defdelegate seed_communities(opt), to: Seeds

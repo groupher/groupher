@@ -29,13 +29,10 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   @default_emotions Embeds.CommentEmotion.default_emotions()
   @delete_hint Comment.delete_hint()
 
-  @default_article_meta Embeds.ArticleMeta.default_meta()
   @default_comment_meta Embeds.CommentMeta.default_meta()
   @pinned_comment_limit Comment.pinned_comment_limit()
 
   @archive_threshold get_config(:article, :archive_threshold)
-
-  @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
 
   @audit_legal Constant.CMS.pending(:legal)
   @audit_illegal Constant.CMS.pending(:illegal)
@@ -547,13 +544,14 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
 
   defp do_paged_comment_replies(comment_id, filters, user) do
     %{page: page, size: size} = filters
+    sort = Map.get(filters, :sort, :asc_inserted)
     query = from(c in Comment, preload: [reply_to: :author])
 
     where_query = dynamic([c], not c.is_folded and c.reply_to_id == ^comment_id)
 
     query
     |> where(^where_query)
-    |> QueryBuilder.filter_pack(filters)
+    |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
     |> ORM.paginator(~m(page size)a)
     |> mark_viewer_emotion_states(user)
     |> mark_viewer_has_upvoted(user)

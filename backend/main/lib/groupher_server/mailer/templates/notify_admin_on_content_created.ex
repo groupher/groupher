@@ -6,6 +6,7 @@ defmodule GroupherServer.Email.Templates.NotifyAdminOnContentCreated do
   if you want change style or debug the template
   just copy and paste raw string to: https://mjml.io/try-it-live
   """
+
   def html(%{
         author_name: author_name,
         title: title,
@@ -502,7 +503,8 @@ defmodule GroupherServer.Email.Templates.NotifyAdminOnContentCreated do
     """
   end
 
-  defp raw() do
+  @doc false
+  def raw() do
     """
     <mjml>
     <mj-head>

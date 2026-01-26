@@ -145,6 +145,18 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   update community moderator
   """
   def update_moderator_passport(
+        community_slug,
+        rules,
+        %User{} = target_user,
+        %User{} = cur_user
+      )
+      when is_binary(community_slug) do
+    with {:ok, community} <- ORM.find_by(Community, %{slug: community_slug}, preload: :moderators) do
+      update_moderator_passport(community, rules, target_user, cur_user)
+    end
+  end
+
+  def update_moderator_passport(
         %Community{} = community,
         rules,
         %User{} = target_user,
@@ -214,6 +226,12 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
 
   # this is for first init when create community
   defp user_is_root?(%Community{moderators: []}, %User{} = _cur_user), do: {:ok, true}
+
+  defp user_is_root?(%Community{moderators: %Ecto.Association.NotLoaded{}} = community, %User{} = cur_user) do
+    community
+    |> Repo.preload(:moderators)
+    |> user_is_root?(cur_user)
+  end
 
   defp user_is_root?(%Community{moderators: moderators}, %User{} = cur_user) do
     moderators

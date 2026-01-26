@@ -509,7 +509,8 @@ defmodule GroupherServer.Email.Templates.NotifyAdminPayment do
     """
   end
 
-  defp raw() do
+  @doc false
+  def raw() do
     """
     <mjml>
       <mj-head>

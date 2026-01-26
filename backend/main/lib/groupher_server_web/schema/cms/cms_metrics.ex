@@ -7,8 +7,6 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
 
   import Helper.Utils, only: [module_to_atom: 1]
 
-  @default_inner_page_size 5
-
   @doc """
   only used for reaction result, like: upvote/collect/watch ...
   """

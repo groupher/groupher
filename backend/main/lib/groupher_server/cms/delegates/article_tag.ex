@@ -3,8 +3,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   community curd
   """
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Helper.Matcher
-  import Helper.Validator.Guards, only: [g_is_id: 1]
   import Helper.Utils, only: [done: 1, atom_values_to_upcase: 1]
 
   import GroupherServer.CMS.Delegate.ArticleCRUD,
@@ -108,9 +106,19 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   end
 
   defp find_article_related_tags(article_tag_ids) do
-    from(t in ArticleTag)
-    |> where([t], t.id in ^article_tag_ids)
-    |> Repo.all()
+    tags =
+      from(t in ArticleTag)
+      |> where([t], t.id in ^article_tag_ids)
+      |> Repo.all()
+
+    # keep the same order as input ids (Repo.all/1 does not guarantee ordering)
+    pos =
+      article_tag_ids
+      |> Enum.with_index()
+      |> Map.new(fn {id, idx} -> {to_string(id), idx} end)
+
+    tags
+    |> Enum.sort_by(&Map.get(pos, to_string(&1.id), 9_999_999))
     |> done()
   end
 

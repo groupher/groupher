@@ -32,7 +32,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       }
     }
     """
-    @tag :wip
     test "can signin oauth with github", ~m(guest_conn)a do
       variables = %{
         provider: gql_oauth_provider(@valid_github_profile),
@@ -52,7 +51,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       assert oauth_provider.raw["login"] == @valid_github_profile.login
     end
 
-    @tag :wip
     test "can signin oauth with google", ~m(guest_conn)a do
       variables = %{
         provider: gql_oauth_provider(@valid_google_profile),
@@ -72,7 +70,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       assert oauth_provider.raw["sub"] == @valid_google_profile.provider_id
     end
 
-    @tag :wip
     test "can not signin oauth with un-trust code", ~m(guest_conn)a do
       variables = %{
         provider: gql_oauth_provider(@valid_github_profile),
@@ -92,7 +89,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       }
     }
     """
-    @tag :wip
     test "can link oauth with twitter", ~m(user_conn user)a do
       variables = %{
         provider: gql_oauth_provider(@valid_twitter_profile),
@@ -113,7 +109,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       assert oauth_provider.raw["username"] == @valid_twitter_profile.login
     end
 
-    @tag :wip
     test "can not link oauth with twitter with unlogged", ~m(guest_conn)a do
       variables = %{
         provider: gql_oauth_provider(@valid_twitter_profile),
@@ -123,7 +118,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
 
-    @tag :wip
     test "can not link oauth with un-trust code", ~m(user_conn)a do
       variables = %{
         provider: gql_oauth_provider(@valid_twitter_profile),
@@ -142,7 +136,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       }
     }
     """
-    @tag :wip
     test "can unlink oauth with provider", ~m(user_conn user)a do
       github_provider = @valid_github_profile |> Map.put(:login, user.login)
       twitter_provider = @valid_twitter_profile |> Map.put(:login, user.login)
@@ -160,7 +153,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       assert ret["login"] == user.login
     end
 
-    @tag :wip
     test "can not unlink oauth with provider when unlogged in", ~m(guest_conn user)a do
       github_provider = @valid_github_profile |> Map.put(:login, user.login)
       twitter_provider = @valid_twitter_profile |> Map.put(:login, user.login)

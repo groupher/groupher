@@ -7,7 +7,7 @@ config :groupher_server, GroupherServerWeb.Endpoint,
   server: false
 
 # Print only warnings and errors during test
-config :logger, level: :warn
+config :logger, level: :warning
 
 config :groupher_server, Helper.Guardian,
   issuer: "groupher_server",
