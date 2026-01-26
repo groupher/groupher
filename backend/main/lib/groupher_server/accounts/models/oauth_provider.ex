@@ -10,7 +10,7 @@ defmodule GroupherServer.Accounts.Model.OauthProvider do
 
   @schema_prefix DBPrefix.account()
   @required_fields ~w(provider_id provider login nickname avatar user_id)a
-  @optional_fields ~w(email locale country city company bio)a
+  @optional_fields ~w(email locale country city company bio raw)a
 
   @type t :: %OauthProvider{}
   schema "oauth_providers" do
@@ -26,6 +26,7 @@ defmodule GroupherServer.Accounts.Model.OauthProvider do
     field(:country, :string)
     field(:city, :string)
     field(:company, :string)
+    field(:raw, :map)
 
     belongs_to(:user, User, foreign_key: :user_id)
   end

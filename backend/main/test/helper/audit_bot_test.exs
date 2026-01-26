@@ -2,7 +2,6 @@ defmodule GroupherServer.Test.Helper.AuditBot do
   @moduledoc false
 
   use GroupherServerWeb.ConnCase, async: true
-  alias Helper.AuditBot
 
   describe "[general test]" do
     # test "illgal words should be detected" do

@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     end
 
     @tag :wip
-    test "guest user can not get any profile", ~m(guest_conn user)a do
+    test "guest user can not get any profile", ~m(guest_conn)a do
       assert guest_conn |> query_error?(@query, %{}, ecode(:account_login))
     end
 

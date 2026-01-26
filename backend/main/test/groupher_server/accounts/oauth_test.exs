@@ -2,19 +2,17 @@ defmodule GroupherServer.Test.Accounts.Oauth do
   @moduledoc false
 
   use GroupherServer.TestTools
-  # TODO import Service.Utils move both helper and github
   import Helper.Utils
 
   alias Accounts.Model.OauthProvider
 
   # @valid_user mock_attrs(:user)
-  @valid_github_profile mock_attrs(:oauth_profile) |> map_key_stringify
-  @valid_twitter_profile mock_attrs(:oauth_profile)
-                         |> Map.merge(%{provider: "twitter"})
-                         |> map_key_stringify
+  @valid_github_profile mock_attrs(:oauth_profile, %{provider: "github"}) |> map_key_stringify
+  @valid_twitter_profile mock_attrs(:oauth_profile, %{provider: "twitter"}) |> map_key_stringify
 
   # link oauth
   describe "[oauth login]" do
+    @tag :wip
     test "can register new valid oauth github user" do
       assert {:error, _} =
                ORM.find_by(OauthProvider, %{
@@ -42,10 +40,14 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert oauth_provider.login == @valid_github_profile["login"]
       assert oauth_provider.user_id == user.id
 
+      assert oauth_provider.raw["login"] == @valid_github_profile["login"]
+      assert oauth_provider.raw["avatar_url"] == @valid_github_profile["avatar"]
+
       assert signin_res |> Map.has_key?(:user)
       assert signin_res |> Map.has_key?(:token)
     end
 
+    @tag :wip
     test "existing user can signin" do
       {:ok, signin_res} = Accounts.signin_oauth(@valid_github_profile)
 
@@ -53,6 +55,7 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert signin_res |> Map.has_key?(:token)
     end
 
+    @tag :wip
     test "existing user can signin multiple times" do
       {:ok, _} = Accounts.signin_oauth(@valid_github_profile)
       {:ok, _} = Accounts.signin_oauth(@valid_github_profile)
@@ -62,6 +65,7 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert {:ok, 1} == ORM.count(OauthProvider)
     end
 
+    @tag :wip
     test "existing non-existing user fails" do
       {:ok, _signin_res} =
         Accounts.signin_oauth(@valid_github_profile)
@@ -70,6 +74,7 @@ defmodule GroupherServer.Test.Accounts.Oauth do
         Accounts.signin_oauth(%{@valid_github_profile | "provider_id" => "non-existing-id"})
     end
 
+    @tag :wip
     test "can link oauth provider to existing user" do
       user_login = @valid_twitter_profile["login"]
       github_provider = @valid_github_profile |> Map.put("login", user_login)
@@ -88,8 +93,11 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert first.user_id == last.user_id
       assert first.provider == "github"
       assert last.provider == "twitter"
+
+      assert last.raw["username"] == @valid_twitter_profile["login"]
     end
 
+    @tag :wip
     test "can unlink oauth provider" do
       user_login = @valid_twitter_profile["login"]
       github_provider = @valid_github_profile |> Map.put("login", user_login)
@@ -108,6 +116,7 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert after_delete.provider == "github"
     end
 
+    @tag :wip
     test "can not unlink oauth provider if there is only one" do
       user_login = @valid_twitter_profile["login"]
       github_provider = @valid_github_profile |> Map.put("login", user_login)

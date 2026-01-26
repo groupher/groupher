@@ -5,10 +5,6 @@ defmodule GroupherServer.Test.CMS.Hooks.AuditPost do
 
   # alias CMS.Delegate.Hooks
 
-  @audit_legal Constant.CMS.pending(:legal)
-  @audit_illegal Constant.CMS.pending(:illegal)
-  @audit_failed Constant.CMS.pending(:audit_failed)
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, post} = db_insert(:post)

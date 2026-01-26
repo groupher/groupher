@@ -173,7 +173,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert not is_nil(user.meta)
     end
 
-    test "update meta should work with user", ~m(community user)a do
+    test "update meta should work with user", ~m(user)a do
       {:ok, ret} =
         ORM.update_meta(user, %{
           follower_user_ids: [2, 3, 5]

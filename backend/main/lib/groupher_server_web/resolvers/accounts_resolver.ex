@@ -84,25 +84,22 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   def follow(_root, ~m(login)a, %{context: %{cur_user: cur_user}}) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.follow(cur_user, %User{id: user_id})
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.follow(cur_user, %User{id: user_id})
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
 
   def undo_follow(_root, ~m(login)a, %{context: %{cur_user: cur_user}}) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.undo_follow(cur_user, %User{id: user_id})
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.undo_follow(cur_user, %User{id: user_id})
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
 
   def paged_followers(_root, ~m(login filter)a, %{context: %{cur_user: cur_user}}) do
-    with {:ok, user_id} <- Accounts.get_userid_and_cache(login) do
-      Accounts.paged_followers(%User{id: user_id}, filter, cur_user)
-    else
+    case Accounts.get_userid_and_cache(login) do
+      {:ok, user_id} -> Accounts.paged_followers(%User{id: user_id}, filter, cur_user)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end

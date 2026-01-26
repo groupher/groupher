@@ -113,9 +113,10 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
   def update_geo(_user, _remote_ip), do: {:ok, :pass}
 
   def link_oauth(login, provider) do
-    provider = provider |> keys_to_atoms
+    provider = normalize_oauth_provider(provider)
 
     with {:ok, user} <- ORM.find_by(User, login: login),
+         {:ok, :pass} <- assert_oauth_provider_not_linked(provider, user),
          create_profile(user, provider),
          update_profile_social(user, provider) do
       gen_token(user)
@@ -123,10 +124,10 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
   end
 
   def unlink_oauth(login, provider) do
-    provider = provider |> keys_to_atoms
+    provider = normalize_oauth_provider(provider)
 
     with {:ok, user} <- ORM.find_by(User, login: login),
-         {:ok, oauth_provider} <- find_oauth_provider(provider) do
+         {:ok, oauth_provider} <- find_user_oauth_provider(user, provider) do
       {:ok, provider_count} =
         from(o in OauthProvider, where: o.user_id == ^user.id)
         |> ORM.count()
@@ -145,7 +146,7 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
   user_info be like
   """
   def signin_oauth(provider) do
-    provider = provider |> keys_to_atoms
+    provider = normalize_oauth_provider(provider)
 
     case find_oauth_provider(provider) do
       {:ok, oauth_provider} ->
@@ -163,6 +164,45 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
       provider: provider.provider,
       provider_id: provider.provider_id
     )
+  end
+
+  # `keys_to_atoms/1` is convenient for top-level oauth provider fields, but it will
+  # try to convert nested map keys as atoms as well.
+  # `raw` is provider-native profile and can contain arbitrary keys (ex: "profile_image_url"),
+  # so we keep it as-is to avoid atom conversion errors / atom leaks.
+  defp normalize_oauth_provider(provider) when is_map(provider) do
+    raw = Map.get(provider, :raw, Map.get(provider, "raw"))
+
+    provider
+    |> Map.drop([:raw, "raw"])
+    |> keys_to_atoms()
+    |> maybe_put_raw(raw)
+  end
+
+  defp maybe_put_raw(provider, %{} = raw), do: Map.put(provider, :raw, raw)
+  defp maybe_put_raw(provider, raw) when is_list(raw), do: Map.put(provider, :raw, raw)
+  defp maybe_put_raw(provider, _raw), do: provider
+
+  defp find_user_oauth_provider(%User{} = user, provider) do
+    OauthProvider
+    |> ORM.find_by(
+      user_id: user.id,
+      provider: provider.provider,
+      provider_id: provider.provider_id
+    )
+  end
+
+  defp assert_oauth_provider_not_linked(provider, %User{} = user) do
+    case find_oauth_provider(provider) do
+      {:ok, oauth_provider} when oauth_provider.user_id == user.id ->
+        {:ok, :pass}
+
+      {:ok, _oauth_provider} ->
+        raise_error(:already_exist, "oauth provider already linked")
+
+      {:error, _} ->
+        {:ok, :pass}
+    end
   end
 
   @doc """

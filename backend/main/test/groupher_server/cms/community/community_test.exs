@@ -4,9 +4,6 @@ defmodule GroupherServer.Test.CMS.Community do
 
   alias CMS.Model.CommunityThread
 
-  @community_normal Constant.CMS.pending(:normal)
-  @community_applying Constant.CMS.pending(:applying)
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)

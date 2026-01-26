@@ -50,6 +50,7 @@ export const config = {
           country: '',
           city: profile.location,
           company: profile.company,
+          raw: JSON.stringify(profile),
         }
 
         const params = {

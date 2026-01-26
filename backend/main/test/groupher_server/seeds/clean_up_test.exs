@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.Seeds.CleanUp do
   end
 
   describe "[community clean up]" do
-    test "can clean up a community", ~m(user post_attrs)a do
+    test "can clean up a community", _ do
       # {:ok, community} = CMS.seed_community(:home)
       # {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
 

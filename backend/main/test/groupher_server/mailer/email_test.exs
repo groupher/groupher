@@ -5,8 +5,6 @@ defmodule GroupherServer.Test.Mailer do
   use GroupherServer.TestTools
   use Bamboo.Test
 
-  @support_email get_config(:system_emails, :support_email)
-
   describe "basic email" do
     # test "send welcome email when user has email addr" do
     #   {:ok, user} = db_insert(:user, %{email: "fake@gmail.com"})
