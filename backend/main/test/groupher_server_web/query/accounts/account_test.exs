@@ -25,7 +25,6 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       }
     }
     """
-    @tag :wip
     test "login user can get own profile", ~m(user_conn user)a do
       results = user_conn |> gq_query(@query, %{})
       assert results["id"] == to_string(user.id)
@@ -35,7 +34,6 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert results["avatar"] == user.avatar
     end
 
-    @tag :wip
     test "guest user can not get any profile", ~m(guest_conn)a do
       assert guest_conn |> query_error?(@query, %{}, ecode(:account_login))
     end

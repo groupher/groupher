@@ -113,13 +113,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
     end
   end
 
-  @doc """
-  parse link from Floki parse result
-
-  e.g:
-  [{"href", "https://coderplanets.com/post/190220", "bla", "bla"}] ->
-  {:ok, "https://coderplanets.com/post/190220"}
-  """
   defp parse_link(attrs) do
     with {"href", link} <- Enum.find(attrs, fn {a, _v} -> a == "href" end) do
       {:ok, link}

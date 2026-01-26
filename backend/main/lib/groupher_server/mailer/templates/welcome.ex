@@ -5,6 +5,8 @@ defmodule GroupherServer.Email.Templates.Welcome do
   """
   alias GroupherServer.Accounts.Model.User
 
+  @compile {:nowarn_unused_function, raw: 0}
+
   def html(%User{nickname: nickname}) do
     """
     <!doctype html>

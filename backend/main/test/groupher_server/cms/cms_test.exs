@@ -270,11 +270,11 @@ defmodule GroupherServer.Test.CMS do
 
       assert moderators.total_count == 2
 
-      moderator_user = moderators.entries |> Enum.at(0)
-      moderator_user2 = moderators.entries |> Enum.at(1)
+      moderator_user = moderators.entries |> Enum.find(&(&1.user_id == user.id))
+      moderator_user2 = moderators.entries |> Enum.find(&(&1.user_id == user2.id))
 
-      assert user.id == moderator_user.user_id
-      assert user2.id == moderator_user2.user_id
+      assert not is_nil(moderator_user)
+      assert not is_nil(moderator_user2)
     end
 
     test "can add moderator to a community, moderator has default passport",

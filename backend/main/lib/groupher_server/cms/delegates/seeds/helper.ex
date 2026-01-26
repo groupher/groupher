@@ -12,6 +12,8 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Helper do
   alias Accounts.Model.User
   alias Helper.ORM
 
+  @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"
+
   @categories Seeds.Categories.get()
 
   # set threads to given communities

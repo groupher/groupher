@@ -39,10 +39,6 @@ defmodule Helper.AuditBot do
   @wrong_endpoint "#{@url}/rest/2.0/solution/v1/text_censor/v2/user_defined?access_token=wrong"
 
   def analysis(:text, text) do
-    headers = [
-      {"Content-Type", "application/x-www-form-urlencoded"}
-    ]
-
     query = %{
       text: text |> HtmlSanitizeEx.strip_tags()
     }

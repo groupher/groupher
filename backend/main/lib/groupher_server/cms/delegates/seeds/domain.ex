@@ -29,9 +29,9 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Domain do
   """
   def seed_community(:home) do
     with {:error, _} <- ORM.find_by(Community, %{slug: "home"}),
-         {:ok, bot} <- seed_bot(),
-         {:ok, threads} <- seed_threads(:home) do
-      args = %{
+          {:ok, bot} <- seed_bot(),
+          {:ok, _threads} <- seed_threads(:home) do
+      _args = %{
         title: "Groupher",
         desc: "让你的产品聆听用户的声音",
         logo: "https://assets.groupher.com/communities/groupher-alpha.png",

@@ -38,7 +38,7 @@ defmodule Helper.Converter.EditorToHTML.Frags.Header do
       </div>)
   end
 
-  def get(id, %{"text" => text, "level" => level} = data) do
+  def get(id, %{"text" => text, "level" => level}) do
     ~s(<h#{level} id="#{id}">#{text}</h#{level}>)
   end
 end

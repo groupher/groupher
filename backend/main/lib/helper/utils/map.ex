@@ -58,12 +58,7 @@ defmodule Helper.Utils.Map do
   # 非 map 值保持不变
   defp convert_nested(val), do: val
 
-  # 字符串 key 转换为 atom
-  defp string_to_atom(key) when is_binary(key), do: String.to_existing_atom(key)
-
-  @doc """
-  be cation! make sure the string is not dynamic, otherwise the memory will blow
-  """
+  # NOTE: be careful! make sure the string is not dynamic, otherwise the memory will blow.
   defp string_to_atom(string) when is_binary(string) do
     try do
       String.to_existing_atom(string)

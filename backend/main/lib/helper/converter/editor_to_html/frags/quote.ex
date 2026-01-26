@@ -12,13 +12,13 @@ defmodule Helper.Converter.EditorToHTML.Frags.Quote do
   @class get_in(Class.article(), ["quote"])
 
   @spec get(String.t(), T.editor_quote()) :: T.html()
-  def get(id, %{"mode" => "short", "text" => text} = data) do
+  def get(id, %{"mode" => "short", "text" => text}) do
     ~s(<blockquote id="#{id}" class="#{@class["short_wrapper"]}">
         <div class="#{@class["text"]}">#{text}</div>
       </blockquote>)
   end
 
-  def get(id, %{"mode" => "long", "text" => text, "caption" => caption} = data)
+  def get(id, %{"mode" => "long", "text" => text, "caption" => caption})
       when g_none_empty_str(caption) do
     caption_content = frag(:caption, caption)
 

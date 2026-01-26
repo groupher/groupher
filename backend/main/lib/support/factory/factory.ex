@@ -29,11 +29,13 @@ defmodule GroupherServer.Support.Factory do
   use GroupherServer.Support.Factory.Articles
   use GroupherServer.Support.Factory.Oauth
 
+  def mock_xss_string(text \\ "blackmail")
+
   def mock_xss_string(:safe) do
     mock_rich_text("&lt;script&gt;blackmail&lt;/script&gt;")
   end
 
-  def mock_xss_string(text \\ "blackmail") do
+  def mock_xss_string(text) do
     mock_rich_text("<script>alert(#{text})</script>")
   end
 

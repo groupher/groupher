@@ -46,11 +46,11 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     read_community(slug, @default_read_opt) |> viewer_has_states(user)
   end
 
+  def read_community(slug, opt), do: do_read_community(slug, opt)
+
   def read_community(slug, %User{} = user, opt) do
     read_community(slug, opt) |> viewer_has_states(user)
   end
-
-  def read_community(slug, opt), do: do_read_community(slug, opt)
 
   def paged_communities(filter, %User{meta: meta}) do
     with {:ok, paged_communities} <- paged_communities(filter) do
@@ -273,7 +273,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   def update_community_inner_id(
         %Community{meta: community_meta} = community,
         thread,
-        %{inner_id: inner_id} = article
+        %{inner_id: inner_id}
       ) do
     thread_inner_id_key = :"#{plural(thread)}_inner_id_index"
     meta = community_meta |> Map.put(thread_inner_id_key, inner_id) |> strip_struct
@@ -332,6 +332,16 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     load_community_members(community, CommunityModerator, filters)
   end
 
+  def community_members(:subscribers, %Community{id: id} = community, filters)
+      when not is_nil(id) do
+    load_community_members(community, CommunitySubscriber, filters)
+  end
+
+  def community_members(:subscribers, %Community{slug: slug} = community, filters)
+      when not is_nil(slug) do
+    load_community_members(community, CommunitySubscriber, filters)
+  end
+
   def community_members(:subscribers, %Community{id: id} = community, filters, %User{} = user)
       when not is_nil(id) do
     with {:ok, members} <- community_members(:subscribers, community, filters) do
@@ -344,16 +354,6 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
 
       %{members | entries: entries} |> done
     end
-  end
-
-  def community_members(:subscribers, %Community{id: id} = community, filters)
-      when not is_nil(id) do
-    load_community_members(community, CommunitySubscriber, filters)
-  end
-
-  def community_members(:subscribers, %Community{slug: slug} = community, filters)
-      when not is_nil(slug) do
-    load_community_members(community, CommunitySubscriber, filters)
   end
 
   def create_category(attrs, %User{id: user_id}) do
@@ -397,14 +397,15 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
-  @doc "count the total threads in community"
+  @doc "count items in community"
+  def count(%Community{} = community, type)
+
   def count(%Community{id: id}, :threads) do
     with {:ok, community} <- ORM.find(Community, id, preload: :threads) do
       {:ok, length(community.threads)}
     end
   end
 
-  @doc "count the total tags in community"
   def count(%Community{id: id}, :article_tags) do
     with {:ok, community} <- ORM.find(Community, id) do
       result =
@@ -415,6 +416,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
       {:ok, result.total_count}
     end
   end
+
+  def count(_community, _type), do: {:error, "invalid count type"}
 
   defp do_read_community(slug, opt) do
     with {:ok, community} <- ORM.find_community(slug),

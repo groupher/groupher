@@ -6,6 +6,8 @@ defmodule GroupherServer.Email.Templates.NotifyAdminOnContentCreated do
   if you want change style or debug the template
   just copy and paste raw string to: https://mjml.io/try-it-live
   """
+
+  @compile {:nowarn_unused_function, raw: 0}
   def html(%{
         author_name: author_name,
         title: title,

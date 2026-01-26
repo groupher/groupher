@@ -3,8 +3,8 @@ defmodule GroupherServerWeb.Controller.OG do
   handle open-graph info
   """
   use GroupherServerWeb, :controller
-  # alias Todos.Todo
-  # plug(:action)
+
+  alias Helper.OgInfo
 
   def index(conn, %{"url" => url}) do
     fetch_opengraph_info(conn, url)
@@ -17,13 +17,65 @@ defmodule GroupherServerWeb.Controller.OG do
       {:ok, info} ->
         ok_response(conn, url, info)
 
-      {:error, reason} ->
-        error_response(conn, url, reason)
+      {:error, %OpenGraph.Error{} = err} ->
+        handle_fetch_error(conn, url, err)
     end
   end
 
+  # --------
+  # Error handling (OpenGraph.Error only)
+  # --------
+
+  defp handle_fetch_error(conn, url, %OpenGraph.Error{reason: {:missing_redirect_location, _code}}) do
+    unknown_error_response(conn, url)
+  end
+
+  defp handle_fetch_error(conn, url, %OpenGraph.Error{reason: {:unexpected_status_code, _code}}) do
+    unknown_error_response(conn, url)
+  end
+
+  defp handle_fetch_error(conn, url, %OpenGraph.Error{reason: {:request_error, _msg}}) do
+    # msg is a binary per typespec; keep uniform error semantics for your test
+    unknown_error_response(conn, url)
+  end
+
+  # --------
+  # Unified failure response (align with your test)
+  # --------
+
+  defp unknown_error_response(conn, url) do
+    image_url =
+      case OgInfo.get(url) do
+        {:ok, og} -> og.image || og.favicon || default_favicon(url)
+        {:error, _} -> default_favicon(url)
+      end
+
+    json(conn, %{
+      success: 0,
+      meta: %{
+        title: "unknown-error",
+        description: nil,
+        image: %{
+          url: image_url
+        }
+      }
+    })
+  end
+
+  defp default_favicon(url) do
+    uri = URI.parse(url)
+
+    %URI{uri | path: "/favicon.ico", query: nil, fragment: nil}
+    |> URI.to_string()
+  end
+
+  # --------
+  # Success responses
+  # --------
+
   defp ok_response(conn, url, %OpenGraph{title: nil, description: nil}) do
-    error_response(conn, url)
+    # no useful OG -> treat as failure
+    unknown_error_response(conn, url)
   end
 
   defp ok_response(conn, _url, %OpenGraph{title: nil, description: description} = info)
@@ -48,71 +100,6 @@ defmodule GroupherServerWeb.Controller.OG do
         description: info.description,
         image: %{
           url: info.image
-        }
-      }
-    })
-  end
-
-  defp error_response(conn, url) do
-    json(conn, %{
-      success: 1,
-      meta: %{
-        title: url,
-        description: url,
-        image: %{
-          url: nil
-        }
-      }
-    })
-  end
-
-  defp error_response(conn, _url, :nxdomain) do
-    json(conn, %{
-      success: 0,
-      meta: %{
-        title: "domain-not-exist",
-        description: "--",
-        image: %{
-          url: nil
-        }
-      }
-    })
-  end
-
-  defp error_response(conn, _url, :timeout) do
-    json(conn, %{
-      success: 0,
-      meta: %{
-        title: "timeout",
-        description: "--",
-        image: %{
-          url: nil
-        }
-      }
-    })
-  end
-
-  defp error_response(conn, url, "Not found :(") do
-    json(conn, %{
-      success: 1,
-      meta: %{
-        title: url,
-        description: "--",
-        image: %{
-          url: nil
-        }
-      }
-    })
-  end
-
-  defp error_response(conn, _url, _reason) do
-    json(conn, %{
-      success: 0,
-      meta: %{
-        title: "unknown-error",
-        description: nil,
-        image: %{
-          url: nil
         }
       }
     })

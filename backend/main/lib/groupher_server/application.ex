@@ -42,16 +42,11 @@ defmodule GroupherServer.Application do
   end
 
   defp cache_workers() do
-    import Supervisor.Spec
-    # worker(GroupherServer.Worker, [arg1, arg2, arg3]),
-    # worker(Cachex, [:common, Cache.config(:common)], id: :common),
-    # worker(Cachex, [:user_login, Cache.config(:user_login)], id: :user_login),
-
     @cache_pool
     |> Map.keys()
     |> Enum.reduce([], fn key, acc ->
       name = @cache_pool[key].name
-      acc ++ [worker(Cachex, [name, Cache.config(key)], id: name)]
+      acc ++ [%{id: name, start: {Cachex, :start_link, [name, Cache.config(key)]}}]
     end)
   end
 end

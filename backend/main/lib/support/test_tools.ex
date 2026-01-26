@@ -34,7 +34,10 @@ defmodule GroupherServer.TestTools do
       @last_month Timex.beginning_of_month(Timex.shift(@now, months: -1))
                   |> DateTime.truncate(:second)
 
-      @last_year Timex.end_of_year(Timex.shift(@now, years: -1))
+      # NOTE: keep it strictly "old enough" across the whole year.
+      # Using end_of_year(@now - 1y) makes it only a few weeks old in Jan,
+      # which breaks time-threshold based tests (e.g. archive_threshold months: -3).
+      @last_year Timex.shift(@now, years: -1)
                  |> DateTime.truncate(:second)
     end
   end

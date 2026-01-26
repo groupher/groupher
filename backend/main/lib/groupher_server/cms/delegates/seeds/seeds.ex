@@ -30,6 +30,8 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
   @community_types [:pl, :framework]
 
   @comment_emotions get_config(:article, :comment_emotions)
+
+  @compile {:nowarn_unused_function, seed_comment_emotions: 1, seed_comment_replies: 1}
   # seed community
 
   @doc """
@@ -82,31 +84,31 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
 
     with {:ok, community} <- ORM.find(Community, community.id),
          {:ok, tags} <- CMS.paged_article_tags(tags_filter),
-         {:ok, user} <- db_insert(:user) do
+          {:ok, user} <- db_insert(:user) do
       1..count
       |> Enum.each(fn _ ->
         attrs = mock_attrs(thread, %{community_id: community.id})
         {:ok, article} = CMS.create_article(community, thread, attrs, user)
-        seed_tags(tags, thread, article.id)
+        seed_tags(tags, thread, article)
         seed_comments(thread, article.id, user)
-        seed_upvotes(thread, article.id)
+        seed_upvotes(article)
       end)
     end
   end
 
-  defp seed_upvotes(thread, article_id) do
+  defp seed_upvotes(article) do
     with {:ok, users} <- db_insert_multi(:user, Enum.random(1..10)) do
       users
       |> Enum.each(fn user ->
-        {:ok, _article} = CMS.upvote_article(thread, article_id, user)
+        {:ok, _article} = CMS.upvote_article(article, user)
       end)
     end
   end
 
-  defp seed_tags(tags, thread, article_id) do
+  defp seed_tags(tags, thread, article) do
     get_tag_ids(tags, thread)
     |> Enum.each(fn tag_id ->
-      {:ok, _} = CMS.set_article_tag(thread, article_id, tag_id)
+      {:ok, _} = CMS.set_article_tag(article, tag_id)
     end)
   end
 
@@ -114,10 +116,10 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     tags.entries |> Enum.map(& &1.id) |> Enum.shuffle() |> Enum.take(1)
   end
 
-  defp seed_comments(thread, article_id, user) do
+  defp seed_comments(_thread, _article_id, _user) do
     0..Enum.random(1..5)
     |> Enum.each(fn _ ->
-      text = Faker.Lorem.sentence(20)
+      _text = Faker.Lorem.sentence(20)
       # {:ok, comment} = CMS.create_comment(thread, article_id, mock_comment(text), user)
       # seed_comment_emotions(comment)
       # seed_comment_replies(comment)

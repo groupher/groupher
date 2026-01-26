@@ -243,10 +243,4 @@ defmodule Helper.ORMAtom do
   defp prepare_json_value(value) when is_map(value), do: Jason.encode!(value)
   defp prepare_json_value(value), do: Jason.encode!(value)
 
-  defp fill_default_meta(queryable, default_meta) do
-    queryable
-    |> Ecto.Changeset.change(%{})
-    |> Ecto.Changeset.put_embed(:meta, default_meta)
-    |> Repo.update()
-  end
 end

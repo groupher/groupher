@@ -6,6 +6,8 @@ defmodule GroupherServer.Email.Templates.NotifyAdminRegister do
 
   alias GroupherServer.Accounts.Model.User
 
+  @compile {:nowarn_unused_function, raw: 0}
+
   def html(%User{} = user) do
     """
       <!doctype html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><title>coderplanets email</title><!--[if !mso]><!-- --><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]--><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style type="text/css">#outlook a { padding:0; }

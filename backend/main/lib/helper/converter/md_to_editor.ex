@@ -15,7 +15,7 @@ defmodule Helper.Converter.MdToEditor do
 
   @spec parse(binary | [any]) :: any
   def parse(markdown) do
-    {:ok, ast, _opt} = EarmarkParser.as_ast(markdown)
+    {:ok, ast, _opt} = Earmark.as_ast(markdown)
 
     editor_blocks =
       Enum.reduce(ast, [], fn ast_item, acc ->
@@ -298,7 +298,7 @@ defmodule Helper.Converter.MdToEditor do
 
   # 判断是否为 editorjs 的 checklist
   defp is_checklist_ul?(content) when is_list(content) do
-    Enum.all?(content, fn {"li", [], li_item, _html_ast} ->
+    Enum.all?(content, fn {"li", [], _li_item, _html_ast} ->
       # IO.inspect(li_item, label: "li_item before")
       # li_item = parse_inline(li_item)
       # IO.inspect(li_item, label: "li_item")
@@ -315,7 +315,9 @@ defmodule Helper.Converter.MdToEditor do
     do: "<code class=\"inline-code\">#{parse_inline(content)}</code>"
 
   defp wrap_with(content, "b"), do: "<b>#{parse_inline(content)}</b>"
-  defp wrap_with(content, "a", href), do: "<a href=\"#{href}\">#{parse_inline(content)}</a>"
 
   defp wrap_with(content, "h3"), do: "<h3>#{parse_inline(content)}</h3>"
+
+  defp wrap_with(content, "a", href),
+    do: "<a href=\"#{href}\">#{parse_inline(content)}</a>"
 end
