@@ -7,6 +7,13 @@ frontend/**/out/
 coverage/
 
 # =====================
+# Playwright
+# =====================
+.playwright/
+playwright-report/
+test-results/
+
+# =====================
 # Dependencies
 # =====================
 **/node_modules/
@@ -86,7 +93,6 @@ backend/main/_tuts/
 backend/main/docs/draft.ex
 backend/main/cover/excoveralls.html
 .agignore
-schema.graphql
 
 # AI agent / skills (local only)
 .agents/
@@ -95,4 +101,3 @@ schema.graphql
 .github/skills/
 .trae/
 .windsurf/
-
