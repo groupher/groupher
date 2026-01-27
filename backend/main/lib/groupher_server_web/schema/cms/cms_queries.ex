@@ -69,14 +69,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.paged_community_moderators/3)
     end
 
-    @desc "get community geo cities info"
-    field :community_geo_info, list_of(:geo_info) do
-      arg(:id, non_null(:id))
-      arg(:slug, :string)
-
-      resolve(&R.CMS.community_geo_info/3)
-    end
-
     @desc "get all categories"
     field :paged_categories, :paged_categories do
       arg(:filter, :pagi_filter)

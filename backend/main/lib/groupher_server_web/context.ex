@@ -11,7 +11,7 @@ defmodule GroupherServerWeb.Context do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias Helper.{Guardian, ORM, RemoteIP}
+  alias Helper.{Guardian, ORM}
 
   def init(opts), do: opts
 
@@ -33,13 +33,7 @@ defmodule GroupherServerWeb.Context do
   def build_context(conn) do
     with token when not is_nil(token) <- get_token_from(conn),
          {:ok, cur_user} <- authorize(token) do
-      case RemoteIP.parse(get_req_header(conn, "x-forwarded-for")) do
-        {:ok, remote_ip} ->
-          %{cur_user: cur_user, remote_ip: remote_ip}
-
-        {:error, _} ->
-          %{cur_user: cur_user}
-      end
+      %{cur_user: cur_user}
     else
       _ -> %{}
     end

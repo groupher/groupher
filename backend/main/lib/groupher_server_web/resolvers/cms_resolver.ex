@@ -279,13 +279,6 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   # #######################
-  # geo infos ..
-  # #######################
-  def community_geo_info(_root, ~m(id)a, _info) do
-    CMS.community_geo_info(%Community{id: id})
-  end
-
-  # #######################
   # tags ..
   # #######################
   def create_article_tag(_root, %{thread: thread, community: community} = args, %{
@@ -323,16 +316,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # community subscribe ..
   # #######################
-  def subscribe_community(_root, ~m(community)a, %{context: ~m(cur_user remote_ip)a}) do
-    CMS.subscribe_community(community, cur_user, remote_ip)
-  end
-
   def subscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
     CMS.subscribe_community(community, cur_user)
-  end
-
-  def unsubscribe_community(_root, ~m(community)a, %{context: ~m(cur_user remote_ip)a}) do
-    CMS.unsubscribe_community(community, cur_user, remote_ip)
   end
 
   def unsubscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do

@@ -25,14 +25,6 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   def paged_users(_root, ~m(filter)a, _info), do: Accounts.paged_users(filter)
 
-  def session_state(_root, _args, %{context: %{cur_user: cur_user, remote_ip: remote_ip}}) do
-    # 1. store remote_ip
-    # 2. subscribe home community if not
-    Accounts.update_geo(cur_user, remote_ip)
-    CMS.subscribe_default_community_ifnot(cur_user, remote_ip)
-    {:ok, %{is_valid: true, user: cur_user}}
-  end
-
   def session_state(_root, _args, %{context: %{cur_user: cur_user}}) do
     CMS.subscribe_default_community_ifnot(cur_user)
     {:ok, %{is_valid: true, user: cur_user}}

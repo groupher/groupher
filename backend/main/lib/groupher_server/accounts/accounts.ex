@@ -21,7 +21,6 @@ defmodule GroupherServer.Accounts do
   defdelegate paged_users(filter, user), to: Profile
 
   defdelegate update_profile(user, attrs), to: Profile
-  defdelegate update_geo(user, remote_ip), to: Profile
   defdelegate update_subscribe_state(user), to: Profile
   defdelegate signin_oauth(provider), to: Profile
   defdelegate link_oauth(login, provider), to: Profile

@@ -14,7 +14,7 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
 
   alias GroupherServer.Accounts.Delegate.Fans
 
-  alias Helper.{Guardian, ORM, QueryBuilder, IP2City}
+  alias Helper.{Guardian, ORM, QueryBuilder}
   alias Ecto.Multi
 
   @default_user_meta Embeds.UserMeta.default_meta()
@@ -94,23 +94,6 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
     {:ok, user} = ORM.update(user, %{subscribed_communities_count: subscribed_communities_count})
     ORM.update_meta(user, %{subscribed_communities_ids: subscribed_communities_ids})
   end
-
-  @doc """
-  update geo info for user, include geo_city & remote ip
-  """
-  def update_geo(%User{geo_city: geo_city} = user, remote_ip) when is_nil(geo_city) do
-    case IP2City.locate_city(remote_ip) do
-      {:ok, city} ->
-        update_profile(user, %{geo_city: city, remote_ip: remote_ip})
-
-      {:error, _} ->
-        update_profile(user, %{remote_ip: remote_ip})
-        {:ok, :pass}
-    end
-  end
-
-  def update_geo(%User{} = user, remote_ip), do: update_profile(user, %{remote_ip: remote_ip})
-  def update_geo(_user, _remote_ip), do: {:ok, :pass}
 
   def link_oauth(login, provider) do
     provider = normalize_oauth_provider(provider)
