@@ -8,6 +8,8 @@ import Config
 # General application configuration
 config :groupher_server, ecto_repos: [GroupherServer.Repo]
 
+config :absinthe, schema: GroupherServerWeb.Schema
+
 # Configures the endpoint
 config :groupher_server, GroupherServerWeb.Endpoint,
   url: [host: "localhost"],

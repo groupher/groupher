@@ -1,0 +1,185 @@
+name: e2e
+
+on:
+  pull_request:
+    paths:
+      - "frontend/main/**"
+      - "frontend/dashboard/**"
+      - "frontend/landing/**"
+      - "frontend/core/**"
+      - "frontend/mock-server/**"
+      - "e2e/**"
+      - "package.json"
+      - "yarn.lock"
+      - "!frontend/**/vercel.json"
+  push:
+    paths:
+      - "frontend/main/**"
+      - "frontend/dashboard/**"
+      - "frontend/landing/**"
+      - "frontend/core/**"
+      - "frontend/mock-server/**"
+      - "e2e/**"
+      - "package.json"
+      - "yarn.lock"
+      - "!frontend/**/vercel.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      main: ${{ steps.filter.outputs.main }}
+      dashboard: ${{ steps.filter.outputs.dashboard }}
+      landing: ${{ steps.filter.outputs.landing }}
+      shared: ${{ steps.filter.outputs.shared }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            main:
+              - 'frontend/main/**'
+            dashboard:
+              - 'frontend/dashboard/**'
+            landing:
+              - 'frontend/landing/**'
+            shared:
+              - 'frontend/core/**'
+              - 'frontend/mock-server/**'
+              - 'e2e/**'
+              - 'package.json'
+              - 'yarn.lock'
+
+  e2e-main:
+    name: playwright (main)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.main == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('yarn.lock') }}
+
+      - name: Install Playwright browsers
+        run: yarn playwright install --with-deps chromium
+
+      - name: Run e2e
+        env:
+          CI: true
+        run: yarn e2e:main
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-main
+          path: |
+            playwright-report
+            test-results
+
+  e2e-dashboard:
+    name: playwright (dashboard)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.dashboard == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('yarn.lock') }}
+
+      - name: Install Playwright browsers
+        run: yarn playwright install --with-deps chromium
+
+      - name: Run e2e
+        env:
+          CI: true
+        run: yarn e2e:dashboard
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-dashboard
+          path: |
+            playwright-report
+            test-results
+
+  e2e-landing:
+    name: playwright (landing)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.landing == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('yarn.lock') }}
+
+      - name: Install Playwright browsers
+        run: yarn playwright install --with-deps chromium
+
+      - name: Run e2e
+        env:
+          CI: true
+        run: yarn e2e:landing
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-landing
+          path: |
+            playwright-report
+            test-results

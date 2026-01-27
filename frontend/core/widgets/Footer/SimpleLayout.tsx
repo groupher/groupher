@@ -16,14 +16,17 @@ export default () => {
   const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
   const groupKeys = keys(groupedLinks)
 
+  const firstGroup = groupKeys[0]
+  const firstGroupLinks = firstGroup ? groupedLinks[firstGroup] : []
+
   return (
     <div className={s.wrapper}>
       <Link className={s.brandLink} href='/'>
         Groupher
       </Link>
       <div className={s.linksInfo}>
-        {groupedLinks[groupKeys[0]].map((item: TLinkItem) => (
-          <Link className={s.linkItem} key={item.index} href={item.link}>
+        {firstGroupLinks.map((item: TLinkItem) => (
+          <Link className={s.linkItem} key={`${item.groupIndex ?? 0}-${item.index}`} href={item.link}>
             {item.title}
           </Link>
         ))}

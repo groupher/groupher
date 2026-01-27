@@ -53,6 +53,11 @@ be.install:
 be.start:
 	cd ./backend/main && MIX_ENV=mock mix phx.server
 
+# generate graphql schema (SDL) and copy to front ends
+be.gen.schema:
+	cd ./backend/main && mix absinthe.schema.sdl schema.graphql && cd - \
+	&& rm -f ./frontend/mock-server/schema.graphql \
+	&& ln -s ../../backend/main/schema.graphql ./frontend/mock-server/schema.graphql
 
 # work around, see: https://elixirforum.com/t/mix-test-file-watch/12298/2
 # mix test --listen-on-stdin --stale --trace --only wip

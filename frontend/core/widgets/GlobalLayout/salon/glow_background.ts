@@ -13,16 +13,18 @@ export default () => {
   const { glowType, glowFixed, glowOpacity } = useGlowLight()
   const GLOW_EFFECTS = theme === THEME.LIGHT ? GLOW_EFFECTS_DAY : GLOW_EFFECTS_NIGHT
 
+  const glow = glowType ? GLOW_EFFECTS[glowType] : null
+
   const glowPosition = glowFixed ? 'fixed' : 'absolute'
   const isAbsolute = glowPosition === 'absolute'
 
   return {
-    bgStyle: glowType
+    bgStyle: glow
       ? `
-      radial-gradient(circle at ${GLOW_EFFECTS[glowType].LEFT.X} ${GLOW_EFFECTS[glowType].LEFT.Y}, ${GLOW_EFFECTS[glowType].LEFT.COLOR} 0, transparent ${GLOW_EFFECTS[glowType].LEFT.RADIUS}),
-      radial-gradient(circle at ${GLOW_EFFECTS[glowType].RIGHT1.X} ${GLOW_EFFECTS[glowType].RIGHT1.Y}, ${GLOW_EFFECTS[glowType].RIGHT1.COLOR} 0, transparent ${GLOW_EFFECTS[glowType].RIGHT1.RADIUS}),
-      radial-gradient(circle at ${GLOW_EFFECTS[glowType].MAIN.X} ${GLOW_EFFECTS[glowType].MAIN.Y}, ${GLOW_EFFECTS[glowType].MAIN.COLOR} 0, transparent ${GLOW_EFFECTS[glowType].MAIN.RADIUS}),
-      radial-gradient(circle at ${GLOW_EFFECTS[glowType].RIGHT2.X} ${GLOW_EFFECTS[glowType].RIGHT2.Y}, ${GLOW_EFFECTS[glowType].RIGHT2.COLOR} 0, transparent ${GLOW_EFFECTS[glowType].RIGHT1.RADIUS})
+      radial-gradient(circle at ${glow.LEFT.X} ${glow.LEFT.Y}, ${glow.LEFT.COLOR} 0, transparent ${glow.LEFT.RADIUS}),
+      radial-gradient(circle at ${glow.RIGHT1.X} ${glow.RIGHT1.Y}, ${glow.RIGHT1.COLOR} 0, transparent ${glow.RIGHT1.RADIUS}),
+      radial-gradient(circle at ${glow.MAIN.X} ${glow.MAIN.Y}, ${glow.MAIN.COLOR} 0, transparent ${glow.MAIN.RADIUS}),
+      radial-gradient(circle at ${glow.RIGHT2.X} ${glow.RIGHT2.Y}, ${glow.RIGHT2.COLOR} 0, transparent ${glow.RIGHT1.RADIUS})
     `
       : '',
     wrapper: cn(
