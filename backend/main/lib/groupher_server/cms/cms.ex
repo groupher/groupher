@@ -50,8 +50,6 @@ defmodule GroupherServer.CMS do
   defdelegate update_community_count_field(community, user_id, type, opt), to: CommunityCRUD
   defdelegate update_community_count_field(community, thread), to: CommunityCRUD
 
-  # >> geo info ..
-  defdelegate community_geo_info(community), to: CommunityCRUD
   # >> subscribers
   defdelegate community_members(type, community, filters), to: CommunityCRUD
   defdelegate community_members(type, community, filters, user), to: CommunityCRUD
@@ -84,11 +82,7 @@ defmodule GroupherServer.CMS do
   defdelegate unset_thread(community, thread), to: CommunityOperation
   # >> subscribe / unsubscribe
   defdelegate subscribe_community(community, user), to: CommunityOperation
-  defdelegate subscribe_community(community, user, remote_ip), to: CommunityOperation
   defdelegate unsubscribe_community(community, user), to: CommunityOperation
-  defdelegate unsubscribe_community(community, user, remote_ip), to: CommunityOperation
-
-  defdelegate subscribe_default_community_ifnot(user, remote_ip), to: CommunityOperation
   defdelegate subscribe_default_community_ifnot(user), to: CommunityOperation
 
   # ArticleCRUD

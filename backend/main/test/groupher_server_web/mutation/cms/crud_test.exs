@@ -618,19 +618,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert guest_conn |> mutation_error?(@subscribe_query, variables, ecode(:account_login))
     end
 
-    test "subscribed community should inc it's own geo info", ~m(user community)a do
-      login_conn = simu_conn(:user, user)
-
-      variables = %{community: community.slug}
-      _created = login_conn |> gq_mutation(@subscribe_query, variables)
-      {:ok, community} = Community |> ORM.find(community.id)
-
-      geo_info_data = community.geo_info |> Map.get("data")
-      update_geo_city = geo_info_data |> Enum.find(fn g -> g["city"] == "成都" end)
-
-      assert update_geo_city["value"] == 1
-    end
-
     @unsubscribe_query """
     mutation($community: String!){
       unsubscribeCommunity(community: $community) {
@@ -691,28 +678,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(@unsubscribe_query, variables, ecode(:account_login))
     end
 
-    test "unsubscribed community should dec it's own geo info", ~m(user community)a do
-      login_conn = simu_conn(:user, user)
-
-      variables = %{community: community.slug}
-      _created = login_conn |> gq_mutation(@subscribe_query, variables)
-      {:ok, community} = Community |> ORM.find(community.id)
-
-      geo_info_data = community.geo_info |> Map.get("data")
-      update_geo_city = geo_info_data |> Enum.find(fn g -> g["city"] == "成都" end)
-
-      assert update_geo_city["value"] == 1
-
-      variables = %{community: community.slug}
-      login_conn |> gq_mutation(@unsubscribe_query, variables)
-
-      {:ok, community} = Community |> ORM.find(community.id)
-
-      geo_info_data = community.geo_info |> Map.get("data")
-      update_geo_city = geo_info_data |> Enum.find(fn g -> g["city"] == "成都" end)
-
-      assert update_geo_city["value"] == 0
-    end
   end
 
   describe "mutation cms community apply" do
