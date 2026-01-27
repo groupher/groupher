@@ -125,36 +125,36 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:records, list_of(:contribute))
   end
 
-  object(:dasbboard_rss, do: dashboard_gq_fields(:rss))
-  object(:dasbboard_seo, do: dashboard_gq_fields(:seo))
-  object(:dasbboard_wallpaper, do: dashboard_gq_fields(:wallpaper))
+  object(:dashboard_rss, do: dashboard_gq_fields(:rss))
+  object(:dashboard_seo, do: dashboard_gq_fields(:seo))
+  object(:dashboard_wallpaper, do: dashboard_gq_fields(:wallpaper))
 
-  object :dasbboard_layout do
+  object :dashboard_layout do
     dashboard_gq_fields(:layout)
     field(:kanban_bg_colors, list_of(:string))
   end
 
-  object(:dasbboard_enable, do: dashboard_gq_fields(:enable))
-  object(:dasbboard_base_info, do: dashboard_gq_fields(:base_info))
-  object(:dasbboard_name_alias, do: dashboard_gq_fields(:name_alias))
-  object(:dasbboard_link, do: dashboard_gq_fields(:header_link))
-  object(:dasbboard_social_link, do: dashboard_gq_fields(:social_link))
-  object(:dasbboard_media_report, do: dashboard_gq_fields(:media_report))
-  object(:dasbboard_faq_section, do: dashboard_gq_fields(:faq_section))
+  object(:dashboard_enable, do: dashboard_gq_fields(:enable))
+  object(:dashboard_base_info, do: dashboard_gq_fields(:base_info))
+  object(:dashboard_name_alias, do: dashboard_gq_fields(:name_alias))
+  object(:dashboard_link, do: dashboard_gq_fields(:header_link))
+  object(:dashboard_social_link, do: dashboard_gq_fields(:social_link))
+  object(:dashboard_media_report, do: dashboard_gq_fields(:media_report))
+  object(:dashboard_faq_section, do: dashboard_gq_fields(:faq_section))
 
   object :dashboard do
-    field(:seo, :dasbboard_seo)
-    field(:wallpaper, :dasbboard_wallpaper)
-    field(:layout, :dasbboard_layout)
-    field(:enable, :dasbboard_enable)
-    field(:base_info, :dasbboard_base_info)
-    field(:rss, :dasbboard_rss)
-    field(:name_alias, list_of(:dasbboard_name_alias))
-    field(:header_links, list_of(:dasbboard_link))
-    field(:footer_links, list_of(:dasbboard_link))
-    field(:social_links, list_of(:dasbboard_social_link))
-    field(:media_reports, list_of(:dasbboard_media_report))
-    field(:faqs, list_of(:dasbboard_faq_section))
+    field(:seo, :dashboard_seo)
+    field(:wallpaper, :dashboard_wallpaper)
+    field(:layout, :dashboard_layout)
+    field(:enable, :dashboard_enable)
+    field(:base_info, :dashboard_base_info)
+    field(:rss, :dashboard_rss)
+    field(:name_alias, list_of(:dashboard_name_alias))
+    field(:header_links, list_of(:dashboard_link))
+    field(:footer_links, list_of(:dashboard_link))
+    field(:social_links, list_of(:dashboard_social_link))
+    field(:media_reports, list_of(:dashboard_media_report))
+    field(:faqs, list_of(:dashboard_faq_section))
   end
 
   object :community_moderator do
@@ -405,14 +405,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     threads_count_fields()
     field(:apply_msg, :string)
     field(:apply_category, :string)
-  end
-
-  # dashboard types
-
-  ## seo info
-  object :dashboard_seo do
-    field(:og_title, :string)
-    field(:og_description, :string)
   end
 
   object :open_graph do

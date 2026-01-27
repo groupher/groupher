@@ -860,12 +860,12 @@ type ContributeMap {
   records: [Contribute]
 }
 
-type DasbboardRss {
+type DashboardRss {
   rssFeedType: String
   rssFeedCount: Int
 }
 
-type DasbboardSeo {
+type DashboardSeo {
   seoEnable: Boolean
   ogSiteName: String
   ogTitle: String
@@ -884,7 +884,7 @@ type DasbboardSeo {
   twImageHeight: String
 }
 
-type DasbboardWallpaper {
+type DashboardWallpaper {
   wallpaperType: String
   wallpaper: String
   hasPattern: Boolean
@@ -896,7 +896,7 @@ type DasbboardWallpaper {
   hasShadow: Boolean
 }
 
-type DasbboardLayout {
+type DashboardLayout {
   primaryColor: String
   postLayout: String
   kanbanLayout: String
@@ -926,7 +926,7 @@ type DasbboardLayout {
   kanbanBgColors: [String]
 }
 
-type DasbboardEnable {
+type DashboardEnable {
   post: Boolean
   kanban: Boolean
   changelog: Boolean
@@ -940,7 +940,7 @@ type DasbboardEnable {
   aboutMediaReport: Boolean
 }
 
-type DasbboardBaseInfo {
+type DashboardBaseInfo {
   favicon: String
   title: String
   locale: String
@@ -953,14 +953,14 @@ type DasbboardBaseInfo {
   techstack: String
 }
 
-type DasbboardNameAlias {
+type DashboardNameAlias {
   slug: String
   name: String
   original: String
   group: String
 }
 
-type DasbboardLink {
+type DashboardLink {
   title: String
   link: String
   group: String
@@ -970,12 +970,12 @@ type DasbboardLink {
   isNew: Boolean
 }
 
-type DasbboardSocialLink {
+type DashboardSocialLink {
   type: String
   link: String
 }
 
-type DasbboardMediaReport {
+type DashboardMediaReport {
   index: Int
   title: String
   favicon: String
@@ -984,25 +984,25 @@ type DasbboardMediaReport {
   url: String
 }
 
-type DasbboardFaqSection {
+type DashboardFaqSection {
   title: String
   body: String
   index: Int
 }
 
 type Dashboard {
-  seo: DasbboardSeo
-  wallpaper: DasbboardWallpaper
-  layout: DasbboardLayout
-  enable: DasbboardEnable
-  baseInfo: DasbboardBaseInfo
-  rss: DasbboardRss
-  nameAlias: [DasbboardNameAlias]
-  headerLinks: [DasbboardLink]
-  footerLinks: [DasbboardLink]
-  socialLinks: [DasbboardSocialLink]
-  mediaReports: [DasbboardMediaReport]
-  faqs: [DasbboardFaqSection]
+  seo: DashboardSeo
+  wallpaper: DashboardWallpaper
+  layout: DashboardLayout
+  enable: DashboardEnable
+  baseInfo: DashboardBaseInfo
+  rss: DashboardRss
+  nameAlias: [DashboardNameAlias]
+  headerLinks: [DashboardLink]
+  footerLinks: [DashboardLink]
+  socialLinks: [DashboardSocialLink]
+  mediaReports: [DashboardMediaReport]
+  faqs: [DashboardFaqSection]
 }
 
 type CommunityModerator {
