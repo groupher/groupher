@@ -11,9 +11,9 @@ export default () => {
 
   return {
     wrapper: cn(card, '-mt-4', bg('card'), !isLightTheme && dimDark()),
-    upvoteIcon: cn('size-3 opacity-80 trans-all-200', fill('text.title')),
-    title: cn('text-xs mb-1.5 trans-all-200', fg('text.title')),
-    count: cn('text-xs ml-1 trans-all-200', fg('text.title')),
+    upvoteIcon: cn('size-3 opacity-80 trans-all-200', fill('title')),
+    title: cn('text-xs mb-1.5 trans-all-200', fg('title')),
+    count: cn('text-xs ml-1 trans-all-200', fg('title')),
     footer: cardFooter,
 
     codeBox: cn(

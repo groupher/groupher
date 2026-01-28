@@ -5,12 +5,12 @@ export default () => {
 
   return {
     wrapper: 'row-between w-full',
-    brandLink: cn('text-sm bold no-underline hover:nderline', fg('text.title')),
+    brandLink: cn('text-sm bold no-underline hover:nderline', fg('title')),
     linksInfo: 'row-center gap-x-4',
     linkItem: cn(
       'text-sm no-underline hover:underline pointer',
-      `hover:${fg('text.title')}`,
-      fg('text.digest'),
+      `hover:${fg('title')}`,
+      fg('digest'),
     ),
   }
 }

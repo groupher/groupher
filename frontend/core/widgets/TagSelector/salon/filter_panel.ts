@@ -10,7 +10,7 @@ export default () => {
     wrapper: cn('column w-52'),
     group: 'row-center wrap w-full mb-2.5',
     selectItem: cn(base.selectItem, 'mb-1 mr-1'),
-    groupTitle: cn('text-xs ml-1.5 mb-1 mt-0.5', fg('text.digest')),
+    groupTitle: cn('text-xs ml-1.5 mb-1 mt-0.5', fg('digest')),
     title: cn(menu('title'), 'text-sm'),
   }
 }

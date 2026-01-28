@@ -6,7 +6,7 @@ export default () => {
   return {
     wrapper: cn('h-full relative'),
     banner: 'px-14 py-5',
-    title: cn('text-base bold-sm mb-4 ml-0.5', fg('text.title')),
+    title: cn('text-base bold-sm mb-4 ml-0.5', fg('title')),
     content: 'px-7 h-fit pb-16',
   }
 }

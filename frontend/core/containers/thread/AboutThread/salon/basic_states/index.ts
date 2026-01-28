@@ -10,9 +10,9 @@ export default () => {
   return {
     wrapper: cn('row-between w-full mt-8 mb-5'),
     block: 'column items-start w-1/5 pl-5',
-    title: cn('text-sm bold', fg('text.digest')),
-    desc: cn('text-xs mt-0.5', fg('text.hint')),
-    num: cn('text-lg mt-1.5', fg('text.title')),
+    title: cn('text-sm bold', fg('digest')),
+    desc: cn('text-xs mt-0.5', fg('hint')),
+    num: cn('text-lg mt-1.5', fg('title')),
     trendChart: 'w-full mt-1.5 -ml-1',
     //
     iconBox: 'align-both size-7 circle mb-3.5 -ml-0.5',

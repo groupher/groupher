@@ -13,9 +13,9 @@ export default () => {
       shadow('xl'),
     ),
     item: 'column-align-both size-8 mt-0.5',
-    title: cn('text-xs scale-75 opacity-80', fg('text.digest')),
+    title: cn('text-xs scale-75 opacity-80', fg('digest')),
     colorBall: cn('size-3 circle', rainbow(COLOR_NAME.RED, 'bgSoft')),
 
-    icon: cn('size-3', fill('text.digest')),
+    icon: cn('size-3', fill('digest')),
   }
 }

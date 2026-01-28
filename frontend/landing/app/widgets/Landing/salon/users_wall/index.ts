@@ -14,12 +14,12 @@ export default () => {
     slogan: 'column align-both mb-16',
     topping: cn(
       'text-xs border mb-3 px-3.5 py-1.5 rounded-lg',
-      fg('text.title'),
+      fg('title'),
       br('divider'),
       bg('card'),
     ),
     title: landingTitle(),
-    desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
+    desc: cn('text-lg mt-3', fg('digest'), isDarkTheme && 'opacity-65'),
     paper: cn(
       'letter-paper column-align-both relative w-9/12 h-auto px-4.5 border rounded-md',
       bg('card'),
@@ -32,7 +32,7 @@ export default () => {
     ),
     demoP: 'text-base leading-loose',
     p: 'mt-2.5',
-    highlight: cn('px-1 bold-sm rounded', fg('text.digest'), vividDark()),
+    highlight: cn('px-1 bold-sm rounded', fg('digest'), vividDark()),
     // colors
     blueBg: cn('', rainbow(COLOR_NAME.BLUE, 'bgSoft')),
     greenBg: cn('', rainbow(COLOR_NAME.GREEN, 'bgSoft')),

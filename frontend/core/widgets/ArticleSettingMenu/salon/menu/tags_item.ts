@@ -11,7 +11,7 @@ export default () => {
   return {
     menuItem: base.menuItem,
     tagTitle: cn('mr-1', cut('w-12')),
-    tagCount: cn('text-xs mt-px', fg('text.hint')),
+    tagCount: cn('text-xs mt-px', fg('hint')),
     icon: base.icon,
   }
 }

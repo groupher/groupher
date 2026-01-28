@@ -10,8 +10,8 @@ export default ({ ...spacing }: TProps) => {
 
   return {
     wrapper: cn('column w-full', margin(spacing)),
-    note: cn('mb-3', fg('text.title')),
-    bold: cn('text-sm bold ml-0.5 mr-0.5', fg('text.title')),
+    note: cn('mb-3', fg('title')),
+    bold: cn('text-sm bold ml-0.5 mr-0.5', fg('title')),
     input: 'w-full text-sm',
     //
     divider: cn(sexyBorder(), 'my-5'),

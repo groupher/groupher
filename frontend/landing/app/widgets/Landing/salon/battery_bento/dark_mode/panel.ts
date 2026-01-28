@@ -22,7 +22,7 @@ export default () => {
     ),
     themeBox: cn('align-both size-6 border border-transparent rounded-md trans-all-200'),
     boxSolid: cn(br('divider'), rainbow(COLOR_NAME.CYAN, 'bg'), 'opacity-80'),
-    icon: cn('size-4', fill('text.title')),
+    icon: cn('size-4', fill('title')),
     iconSolid: fill('button.fg'),
 
     //

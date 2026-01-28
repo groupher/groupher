@@ -16,6 +16,6 @@ export default () => {
     otherCard: cn('ml-10 w-28 h-14'),
     //
     img: cn('size-7', dimDark()),
-    svgIcon: cn('size-7', fill('text.digest')),
+    svgIcon: cn('size-7', fill('digest')),
   }
 }

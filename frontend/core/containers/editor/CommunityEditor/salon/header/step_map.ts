@@ -8,6 +8,6 @@ export default () => {
     line: cn('w-8 h-0.5 mx-1 border-b', br('divider')),
     tadaIcon: 'size-5',
 
-    icon: cn('size-5', fill('text.digest')),
+    icon: cn('size-5', fill('digest')),
   }
 }

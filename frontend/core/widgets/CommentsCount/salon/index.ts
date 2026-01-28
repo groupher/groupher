@@ -11,8 +11,8 @@ export default ({ ...spacing }: TProps) => {
   return {
     wrapper: cn('row-center', margin(spacing)),
     highlightWrapper: 'count-highlight',
-    count: cn('text-sm bold', fg('text.digest')),
-    icon: cn('mr-1 mt-px size-3 opacity-65', fill('text.digest')),
-    iconHighlight: fill('heightIcon'),
+    count: cn('text-sm bold', fg('digest')),
+    icon: cn('mr-1 mt-px size-3 opacity-65', fill('digest')),
+    iconHighlight: fill('highlight'),
   }
 }

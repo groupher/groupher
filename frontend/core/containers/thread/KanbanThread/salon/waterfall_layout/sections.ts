@@ -15,7 +15,7 @@ export default () => {
 
     //
     content: 'p-2 pb-0 rounded-xl w-full',
-    label: cn('text-sm bold-sm ml-2.5', fg('text.title')),
+    label: cn('text-sm bold-sm ml-2.5', fg('title')),
     count: 'row-center text-xs mt-0.5 ml-2.5 bold-sm',
 
     todoText: cn('text-xs', rainbow(todoBg, 'fg')),
@@ -30,6 +30,6 @@ export default () => {
     wipHead: cn(head, rainbow(wipBg, 'bgSoft')),
     doneHead: cn(head, rainbow(doneBg, 'bgSoft')),
     //
-    arrowIcon: cn('size-4 pointer -rotate-90', fill('text.digest')),
+    arrowIcon: cn('size-4 pointer -rotate-90', fill('digest')),
   }
 }

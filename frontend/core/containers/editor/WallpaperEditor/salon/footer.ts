@@ -10,6 +10,6 @@ export default () => {
     ),
     divider: sexyBorder(),
     inner: 'row-between w-full h-full pt-2',
-    blankIcon: cn('size-3.5 mr-2.5', fill('text.digest')),
+    blankIcon: cn('size-3.5 mr-2.5', fill('digest')),
   }
 }

@@ -1,6 +1,5 @@
-import type { TSpace } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 export { cn } from '~/css'
 
@@ -19,9 +18,9 @@ export default ({ minimal, width, ...spacing }: TProps) => {
       minimal && 'h-8 py-2 mr-0',
       margin(spacing),
     ),
-    hint: cn('ml-0.5', fg('text.title')),
-    hintText: cn(minimal ? 'text-xs' : 'text-sm', fg('text.title')),
-    infoIcon: cn('size-4 mr-2', fill('text.digest')),
+    hint: cn('ml-0.5', fg('title')),
+    hintText: cn(minimal ? 'text-xs' : 'text-sm', fg('title')),
+    infoIcon: cn('size-4 mr-2', fill('digest')),
     actions: cn('row-center', minimal && 'scale-90 -mr-2'),
   }
 }

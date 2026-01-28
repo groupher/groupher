@@ -9,8 +9,8 @@ export default () => {
     linkBlock: 'w-60 pr-2',
     links: 'row wrap gap-6',
     right: 'w-48 list-disc mr-4',
-    noteTitle: cn('text-xs mb-4 -ml-3.5 bold-sm', fg('text.digest')),
-    noteP: cn('text-xs mb-3 leading-relaxed', fg('text.digest')),
+    noteTitle: cn('text-xs mb-4 -ml-3.5 bold-sm', fg('digest')),
+    noteP: cn('text-xs mb-3 leading-relaxed', fg('digest')),
 
     icon: cn('size-3', primary('fill')),
   }

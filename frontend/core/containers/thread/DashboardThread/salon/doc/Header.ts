@@ -5,6 +5,6 @@ export default () => {
 
   return {
     wrapper: cn('row-center w-full pb-2.5 mb-2.5'),
-    title: cn('text-sm', fg('text.title')),
+    title: cn('text-sm', fg('title')),
   }
 }

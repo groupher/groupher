@@ -5,6 +5,6 @@ export default () => {
 
   return {
     wrapper: cn('align-both size-8 pointer'),
-    icon: cn('size-4', fill('text.digest')),
+    icon: cn('size-4', fill('digest')),
   }
 }

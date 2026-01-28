@@ -1,8 +1,7 @@
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
-
-import { getLinearBorder } from '../../metric'
 import { LINEAR_BORDER } from '../../../constant'
+import { getLinearBorder } from '../../metric'
 
 export { cn } from '~/css'
 
@@ -12,14 +11,14 @@ export default ({ pos, active }) => {
 
   const getBorderColor = (linearBorderPos, active) => {
     if (linearBorderPos === LINEAR_BORDER.ALL) {
-      return active ? br('text.digest') : br('divider')
+      return active ? br('digest') : br('divider')
     }
 
     return ''
   }
 
   return {
-    radiusBoxActive: br('text.title'),
+    radiusBoxActive: br('title'),
     //
     borderBox: cn(
       'size-4 relative rounded border border-transparent trans-all-100 bg-origin-border smoky-40 hover:scale-110',

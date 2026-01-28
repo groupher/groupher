@@ -1,8 +1,7 @@
 import { BANNER_LAYOUT, CHANGELOG_LAYOUT } from '~/const/layout'
-
+import useLayout from '~/hooks/useLayout'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
-import useLayout from '~/hooks/useLayout'
 
 export default () => {
   const { isLightTheme } = useTheme()
@@ -25,8 +24,8 @@ export default () => {
     ),
     tabs: cn('absolute bottom-0 z-10', alignLeft && 'left-44'),
     //
-    title: cn('text-2xl mb-1.5 -mt-9', fg('text.title')),
-    desc: cn('text-base opacity-80', fg('text.digest')),
+    title: cn('text-2xl mb-1.5 -mt-9', fg('title')),
+    desc: cn('text-base opacity-80', fg('digest')),
     main: 'w-8/12 mt-3',
   }
 }

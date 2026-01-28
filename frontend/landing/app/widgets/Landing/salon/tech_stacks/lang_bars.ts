@@ -9,7 +9,7 @@ export default () => {
   return {
     wrapper: 'w-48 mt-2.5 saturate-80',
     barWrapper: 'row-center',
-    langWrapper: cn('row-center text-xs mt-2', fg('text.title')),
+    langWrapper: cn('row-center text-xs mt-2', fg('title')),
     bar: 'h-1.5',
     bgPurple: rainbow(COLOR_NAME.PURPLE, 'bg'),
     bgBlue: rainbow(COLOR_NAME.BLUE, 'bg'),

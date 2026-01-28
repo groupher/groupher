@@ -13,9 +13,9 @@ export default () => {
       isLightTheme ? 'bg-[#fff]' : 'bg-[#1F1F1F]',
       shadow('md'),
     ),
-    hint: cn('text-xs absolute right-2 top-2 scale-90', fg('text.hint')),
-    url: cn('text-xs', fg('text.hint')),
+    hint: cn('text-xs absolute right-2 top-2 scale-90', fg('hint')),
+    url: cn('text-xs', fg('hint')),
     title: cn('text-xl mb-1 pt-1.5', rainbow(COLOR_NAME.BLUE)),
-    desc: cn('text-sm line-clamp-2', fg('text.digest')),
+    desc: cn('text-sm line-clamp-2', fg('digest')),
   }
 }

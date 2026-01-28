@@ -14,24 +14,24 @@ export default () => {
 
   return {
     wrapper: cn('column px-5 py-2.5 text-sm min-h-64 relative'),
-    header: cn('text-base mt-2.5 ml-0.5 z-1', fg('text.title')),
+    header: cn('text-base mt-2.5 ml-0.5 z-1', fg('title')),
     body: cn('flex flex-wrap gap-x-4 gap-y-3 mt-8 min-h-32 mb-5 z-10'),
     socialItem: cn(
       'row-center h-9 px-2 rounded-lg border',
-      fg('text.digest'),
+      fg('digest'),
       br('divider'),
       'font-medium',
       `hover:${bg('hoverBg')}`,
-      `hover:${fg('text.title')}`,
+      `hover:${fg('title')}`,
       'pointer',
       // hover('bg')
     ),
     iconBox: 'align-both size-8',
     //
     icon: 'size-5 -mt-0.5',
-    footer: cn('row-between mt-4 ml-0.5 text-sm', fg('text.digest')),
+    footer: cn('row-between mt-4 ml-0.5 text-sm', fg('digest')),
     //
-    link: cn(linkable(), fg('text.digest'), `hover:${fg('text.title')}`),
+    link: cn(linkable(), fg('digest'), `hover:${fg('title')}`),
   }
 }
 

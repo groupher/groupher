@@ -37,6 +37,6 @@ export default () => {
       isBlackPrimary && bg('text.link'),
       vividDark(),
     ),
-    icon: cn('absolute size-3 opacity-65', primary('fill'), isBlackPrimary && fill('text.link')),
+    icon: cn('absolute size-3 opacity-65', primary('fill'), isBlackPrimary && fill('link')),
   }
 }

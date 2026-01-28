@@ -26,6 +26,6 @@ export default () => {
       bg('card'),
     ),
     icon: cn('size-3', rainbow(COLOR_NAME.GREEN, 'fill')),
-    title: cn('text-xs ml-1', fg('text.digest')),
+    title: cn('text-xs ml-1', fg('digest')),
   }
 }

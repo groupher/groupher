@@ -13,14 +13,14 @@ export default ({ showMore }: TProps) => {
     wrapper: cn('row wrap w-full h-full gap-3 mt-2.5 relative', showMore && 'mb-14'),
     block: cn(
       'w-44 h-28 rounded-md overflow-hidden relative border border-2 border-transparent pointer trans-all-200',
-      `hover:${br('text.digest')}`,
+      `hover:${br('digest')}`,
     ),
-    blockActive: cn(br('text.digest')),
+    blockActive: cn(br('digest')),
     image: 'object-cover w-full h-fit',
     activeSign: cn(
       'size-5 circle absolute -top-1 -right-0.5 z-20 border',
       primary('bg'),
-      br('text.title'),
+      br('title'),
     ),
     checkIcon: cn('size-3.5 absolute top-0.5 left-0.5', fill('button.fg')),
     //
@@ -29,6 +29,6 @@ export default ({ showMore }: TProps) => {
       !showMore ? 'absolute bottom-0 h-14 -ml-4' : 'h-1',
       !showMore && 'hidden-panel',
     ),
-    showMoreIcon: cn('size-3.5 mr-1.5', fill('text.digest'), showMore ? 'rotate-90' : '-rotate-90'),
+    showMoreIcon: cn('size-3.5 mr-1.5', fill('digest'), showMore ? 'rotate-90' : '-rotate-90'),
   }
 }

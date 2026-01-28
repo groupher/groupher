@@ -23,6 +23,6 @@ export default () => {
     ),
     slogan: 'column-align-both',
     title: landingTitle(),
-    desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
+    desc: cn('text-lg mt-3', fg('digest'), isDarkTheme && 'opacity-65'),
   }
 }

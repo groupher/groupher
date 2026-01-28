@@ -9,7 +9,7 @@ export default () => {
     wrapper: cn(
       'align-both border w-fit gap-x-1 rounded-lg',
       'trans-all-100',
-      fg('text.digest'),
+      fg('digest'),
       br('divider'),
     ),
     switchBlock: cn(
@@ -17,11 +17,11 @@ export default () => {
       `hover:${bg('hoverBg')}`,
     ),
     upBlock: '-top-0.5 rounded-tl-lg rounded-tr-lg',
-    upArrow: cn('size-6 rotate-90', fill('text.digest')),
+    upArrow: cn('size-6 rotate-90', fill('digest')),
     downBlock: 'top-9 rounded-bl-lg rounded-br-lg',
-    downArrow: cn('size-6 -rotate-90', fill('text.digest')),
+    downArrow: cn('size-6 -rotate-90', fill('digest')),
     //
-    indexWrapper: cn('absolute w-full text-xs pointer group-smoky-0', fg('text.digest')),
+    indexWrapper: cn('absolute w-full text-xs pointer group-smoky-0', fg('digest')),
     upIndex: 'left-8 -top-20',
     downIndex: 'left-8 top-12',
   }

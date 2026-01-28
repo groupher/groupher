@@ -7,7 +7,7 @@ export default () => {
 
   return {
     wrapper: cn('px-8 py-6'),
-    desc: cn('text-xs mt-1', fg('text.hint')),
+    desc: cn('text-xs mt-1', fg('hint')),
     footer: 'align-both w-full pr-12 gap-x-3.5',
     rootSign: cn(
       'text-xs px-1.5 py-px rounded mb-1 border bold',

@@ -1,18 +1,16 @@
-import type { TSpace } from '~/spec'
 import { SOCIAL_LIST } from '~/const/social'
-
-import TikTokSVG from '~/icons/social/TikTok'
-import EmailSVG from '~/icons/social/Email'
-import WeChatSVG from '~/icons/social/WeChat'
-import TwitterSVG from '~/icons/TwitterX'
-import WeiboSVG from '~/icons/social/Weibo'
-import ZhihuSVG from '~/icons/social/Zhihu'
-import GithubSVG from '~/icons/social/Github'
-import BiliBiliSVG from '~/icons/social/BiliBili'
-import BossSVG from '~/icons/social/Boss'
-
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
+import BiliBiliSVG from '~/icons/social/BiliBili'
+import BossSVG from '~/icons/social/Boss'
+import EmailSVG from '~/icons/social/Email'
+import GithubSVG from '~/icons/social/Github'
+import TikTokSVG from '~/icons/social/TikTok'
+import WeChatSVG from '~/icons/social/WeChat'
+import WeiboSVG from '~/icons/social/Weibo'
+import ZhihuSVG from '~/icons/social/Zhihu'
+import TwitterSVG from '~/icons/TwitterX'
+import type { TSpace } from '~/spec'
 
 export { cn } from '~/css'
 
@@ -30,8 +28,8 @@ export default ({ width, ...spacing }: TProps) => {
       'row-center wrap mt-4 mb-6 px-2 py-1.5 gap-x-3 gap-y-1.5 rounded-md w-full border',
       br('divider'),
     ),
-    label: cn('text-sm mb-3', fg('text.title')),
-    hint: cn('text-xs leading-relaxed', fg('text.digest')),
+    label: cn('text-sm mb-3', fg('title')),
+    hint: cn('text-xs leading-relaxed', fg('digest')),
     inputWrapper: cn('column gap-y-4'),
     iconBox: cn('align-both relative size-5 pointer rounded'),
     iconActiveBar: cn(
@@ -40,10 +38,7 @@ export default ({ width, ...spacing }: TProps) => {
       primary('bg'),
     ),
     iconBoxActive: cn(bg('hoverBg'), shadow('md')),
-    icon: cn(
-      'size-4 saturate-0 hover:saturate-100 hover:scale-110 trans-all-100',
-      fill('text.digest'),
-    ),
+    icon: cn('size-4 saturate-0 hover:saturate-100 hover:scale-110 trans-all-100', fill('digest')),
     iconActive: cn('saturate-100'),
   }
 }

@@ -8,6 +8,6 @@ export default () => {
 
   return {
     wrapper: cn(hoverEffect, 'column grow'),
-    digest: cn('text-sm mt-1.5 mb-3 w-11/12 truncate', fg('text.digest')),
+    digest: cn('text-sm mt-1.5 mb-3 w-11/12 truncate', fg('digest')),
   }
 }

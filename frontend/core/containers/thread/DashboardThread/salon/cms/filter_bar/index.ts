@@ -10,7 +10,7 @@ export default () => {
     main: 'row-center gap-x-4 w-full',
     inputWrapper: 'relative  h-7',
     input: 'pl-7 h-7',
-    icon: cn('size-3 z-20 mr-1', fill('text.digest')),
+    icon: cn('size-3 z-20 mr-1', fill('digest')),
     dateRange: 'text-sm',
   }
 }

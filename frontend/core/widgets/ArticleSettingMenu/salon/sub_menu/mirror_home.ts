@@ -5,6 +5,6 @@ export default () => {
 
   return {
     wrapper: cn('mr-0.5'),
-    note: cn('text-xs mt-2.5 mb-1', fg('text.digest')),
+    note: cn('text-xs mt-2.5 mb-1', fg('digest')),
   }
 }

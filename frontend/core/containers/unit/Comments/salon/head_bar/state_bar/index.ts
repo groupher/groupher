@@ -6,8 +6,8 @@ export default () => {
   return {
     wrapper: cn('row-center mb-2.5'),
     totalCount: 'grow',
-    totalTitle: cn('row items-end text-base bold-sm', fg('text.title')),
-    totalNum: cn('text-sm ml-1.5 opacity-80', fg('text.digest')),
+    totalTitle: cn('row items-end text-base bold-sm', fg('title')),
+    totalNum: cn('text-sm ml-1.5 opacity-80', fg('digest')),
     actions: 'row-center',
     editIcon: cn('size-3 mr-1', fill('button.fg')),
   }

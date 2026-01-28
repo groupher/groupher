@@ -1,6 +1,5 @@
-import type { TActive, TSpace } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TActive, TSpace } from '~/spec'
 
 type TProps = {
   size: number
@@ -14,7 +13,7 @@ export default ({ size, active, dimWhenIdle, ...spacing }: TProps) => {
   return {
     wrapper: cn('align-both relative', `hover:${bg('hoverBg')}`, zise(size), margin(spacing)),
     content: 'z-20',
-    hint: cn('min-w-20 text-center px-1 py-1.5', fg('text.digest')),
+    hint: cn('min-w-20 text-center px-1 py-1.5', fg('digest')),
     icon: cn(
       'pointer',
       dimWhenIdle ? 'opacity-80' : 'opacity-100',

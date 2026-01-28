@@ -44,14 +44,10 @@ export default () => {
     cyanFill: rainbow(COLOR_NAME.CYAN, 'fill'),
 
     //
-    title: cn(
-      'text-lg mb-1.5 mt-4 trans-all-100',
-      `group-hover:${fg('text.title')}`,
-      fg('text.digest'),
-    ),
-    titleActive: cn('bold', fg('text.title')),
+    title: cn('text-lg mb-1.5 mt-4 trans-all-100', `group-hover:${fg('title')}`, fg('digest')),
+    titleActive: cn('bold', fg('title')),
 
-    desc: cn('text-sm group-smoky-80', fg('text.digest')),
+    desc: cn('text-sm group-smoky-80', fg('digest')),
     descActive: '!opacity-100',
 
     //

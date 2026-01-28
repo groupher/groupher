@@ -8,7 +8,7 @@ export default () => {
   return {
     wrapper: cn(
       'group column relative p-1 max-w-44 pl-0 pointer w-full my-0.5',
-      fg('text.digest'),
+      fg('digest'),
       `hover:${primary('fg')}`,
     ),
     activeBg: cn('rounded-md', bg('hoverBg')),

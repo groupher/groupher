@@ -5,7 +5,7 @@ export default () => {
   const { isDarkTheme } = useTheme()
   const { cn, br, bg, fill } = useTwBelt()
 
-  const base = cn('align-both size-5 circle border', br('text.digest'))
+  const base = cn('align-both size-5 circle border', br('digest'))
 
   return {
     dot: cn('size-2 circle', bg('text.digest')),

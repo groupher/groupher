@@ -17,6 +17,6 @@ export default ({ viewerHasUpvoted }: TProps) => {
       `hover:${bg('alphaBg2')}`,
       viewerHasUpvoted && cn(rainbowSoft(color)),
     ),
-    alias: cn('text-sm ml-1.5 mt-px', viewerHasUpvoted ? primary('fg') : fg('text.digest')),
+    alias: cn('text-sm ml-1.5 mt-px', viewerHasUpvoted ? primary('fg') : fg('digest')),
   }
 }

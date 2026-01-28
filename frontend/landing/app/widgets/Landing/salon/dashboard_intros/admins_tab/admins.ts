@@ -14,8 +14,8 @@ export default () => {
     //
     avatar: 'size-10 rounded-md',
     intro: 'ml-3.5',
-    nickname: cn('text-sm mb-0.5', fg('text.digest')),
-    desc: cn('text-xs opacity-80', fg('text.digest')),
+    nickname: cn('text-sm mb-0.5', fg('digest')),
+    desc: cn('text-xs opacity-80', fg('digest')),
     //
     num: cn('text-sm bold-sm', rainbow(COLOR_NAME.PINK, 'fg')),
     rootLabel: cn(

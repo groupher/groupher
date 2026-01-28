@@ -18,7 +18,7 @@ export default () => {
       'group-hover:underline',
       'transition-colors',
       'pointer',
-      fg('text.title'),
+      fg('title'),
     ),
   }
 }

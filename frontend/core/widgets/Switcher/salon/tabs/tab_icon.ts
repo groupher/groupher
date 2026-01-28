@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: 'row-center h-4 w-5',
-    icon: cn('size-4', fill('text.digest')),
-    iconActive: cn('size-4', fill('text.title')),
+    icon: cn('size-4', fill('digest')),
+    iconActive: cn('size-4', fill('title')),
   }
 }

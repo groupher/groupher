@@ -19,11 +19,11 @@ export default ({ active }: TProps) => {
       active && rainbow(COLOR_NAME.PURPLE, 'bgSoft'),
       active && rainbow(COLOR_NAME.PURPLE, 'borderSoft'),
     ),
-    upvoteIcon: cn('size-3', fill('text.digest'), active && rainbow(COLOR_NAME.PURPLE, 'fill')),
-    count: cn('text-xs bold mt-0.5', fg('text.digest'), active && rainbow(COLOR_NAME.PURPLE, 'fg')),
+    upvoteIcon: cn('size-3', fill('digest'), active && rainbow(COLOR_NAME.PURPLE, 'fill')),
+    count: cn('text-xs bold mt-0.5', fg('digest'), active && rainbow(COLOR_NAME.PURPLE, 'fg')),
     //
     rightPart: 'column ml-3.5',
-    title: cn('text-sm bold-sm', fg('text.title')),
+    title: cn('text-sm bold-sm', fg('title')),
     footer: 'scale-90 w-32 mt-1 -ml-3.5',
   }
 }

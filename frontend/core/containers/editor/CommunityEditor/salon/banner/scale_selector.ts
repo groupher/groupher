@@ -8,10 +8,10 @@ export default () => {
   const { cn, fg, br, bg, shadow, vividDark } = useTwBelt()
 
   return {
-    wrapper: cn('column-alian-center w-full mt-4', fg('text.digest')),
+    wrapper: cn('column-alian-center w-full mt-4', fg('digest')),
     slideBox: cn('row-center justify-around w-full h-6 rounded-xl border relative', br('divider')),
-    noteBtn: cn('text-xs pointer', `hover:${fg('text.title')}`, fg('text.digest')),
-    noteBtnActive: cn('bold-sm', fg('text.title')),
+    noteBtn: cn('text-xs pointer', `hover:${fg('title')}`, fg('digest')),
+    noteBtnActive: cn('bold-sm', fg('title')),
     footer: 'row-center justify-around w-full mt-2.5',
 
     indexDot: cn(
@@ -19,7 +19,7 @@ export default () => {
       'absolute right-1 top-0.5 ',
       isDarkTheme ? shadow('sm') : shadow('xl'),
       bg('card'),
-      br('text.digest'),
+      br('digest'),
     ),
     indexInner: cn('size-3.5 circle', bg('text.digest')),
     //

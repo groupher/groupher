@@ -66,6 +66,6 @@ export default ({
       indeterminate && !checked ? fill('button.fg') : 'hidden',
     ),
 
-    children: cn('size-sm ml-2', active ? fg('text.title') : fg('text.digest')),
+    children: cn('size-sm ml-2', active ? fg('title') : fg('digest')),
   }
 }

@@ -31,20 +31,16 @@ export default ({ color, noColor, withSoftBg, ...spacing }: TProps) => {
       withSoftBg && !color && rainbow(primaryColor, 'bgSoft'),
       margin(spacing),
     ),
-    title: cn(
-      'text-sm',
-      noColor ? fg('text.digest') : fgColor,
-      noColor && `group-hover:${fg('text.title')}`,
-    ),
+    title: cn('text-sm', noColor ? fg('digest') : fgColor, noColor && `group-hover:${fg('title')}`),
     arrowIcon2: cn(
       'size-3 ml-0.5 opacity-50 group-hover:opacity-100 group-hover:ml-1 group-hover:-mr-1 trans-all-100',
-      noColor ? fill('text.digest') : fillColor,
+      noColor ? fill('digest') : fillColor,
     ),
     arrowIcon: cn(
       'size-3 ml-0.5 opacity-50 transition-all duration-150 ease-out',
       'group-hover:opacity-100',
       'group-hover:translate-x-1 group-hover:-translate-y-0.5',
-      noColor ? fill('text.digest') : fillColor,
+      noColor ? fill('digest') : fillColor,
     ),
   }
 }

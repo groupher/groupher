@@ -4,9 +4,9 @@ export default () => {
   const { cn, fg, fill, sexyBorder } = useTwBelt()
 
   return {
-    inner: cn('row-center text-sm bold-sm mt-1 mb-4', fg('text.digest')),
+    inner: cn('row-center text-sm bold-sm mt-1 mb-4', fg('digest')),
     divider: cn(sexyBorder(), '-mt-1 mb-2.5'),
-    icon: cn('size-3.5 mr-1', fill('text.digest')),
-    questionIcon: cn('size-3.5 pointer', fill('text.digest')),
+    icon: cn('size-3.5 mr-1', fill('digest')),
+    questionIcon: cn('size-3.5 pointer', fill('digest')),
   }
 }

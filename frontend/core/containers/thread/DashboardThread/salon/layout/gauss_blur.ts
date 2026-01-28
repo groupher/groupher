@@ -22,9 +22,9 @@ export default () => {
     ),
     //
     actions: 'w-1/2 h-full grow ml-12 list-disc',
-    title: cn('text-sm mb-2.5', fg('text.title')),
-    desc: cn('text-sm mb-1.5 ml-5', fg('text.digest')),
-    highlight: cn('ml-px mr-px bold-sm', fg('text.title')),
+    title: cn('text-sm mb-2.5', fg('title')),
+    desc: cn('text-sm mb-1.5 ml-5', fg('digest')),
+    highlight: cn('ml-px mr-px bold-sm', fg('title')),
     //
     bar: cn(base.bar, 'h-2 w-24 saturate-50 opacity-40'),
   }

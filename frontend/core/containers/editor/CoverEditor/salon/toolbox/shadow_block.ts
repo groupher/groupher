@@ -1,6 +1,5 @@
-import useBase from '.'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import useBase from '.'
 
 export { cn } from '~/css'
 
@@ -18,7 +17,7 @@ export default () => {
     optionItem: cn(base.optionItem, 'size-5'),
     optionItemActive: base.optionItemActive,
     //
-    forbidIcon: cn('size-3.5', fill('text.digest')),
+    forbidIcon: cn('size-3.5', fill('digest')),
     shadowBox: cn(base.optionItem, 'size-5 rounded-md'),
   }
 }

@@ -7,8 +7,8 @@ export default () => {
 
   return {
     optionRow: 'row items-end',
-    optionTitle: cn('text-sm px-1.5 rounded', fg('transparent')),
-    optionTitleActive: fg('text.title'),
-    optionDesc: cn('text-xs ml-4', fg('text.hint')),
+    optionTitle: cn('text-sm px-1.5 rounded', fg('digest')),
+    optionTitleActive: fg('title'),
+    optionDesc: cn('text-xs ml-4', fg('hint')),
   }
 }

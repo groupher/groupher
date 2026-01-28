@@ -17,8 +17,8 @@ export default () => {
     purpleBg: rainbow(COLOR_NAME.PURPLE, 'bg'),
     grayBg: cn('border', bg('hoverBg'), br('divider')),
     //
-    bookIcon: cn('size-4 z-20', fill('text.digest')),
+    bookIcon: cn('size-4 z-20', fill('digest')),
     normalIcon: cn('size-4 z-20', !isDarkBlack ? 'fill-text-title-dark' : 'fill-text-digest'),
-    title: cn('text-sm shrink-0', fg('text.digest'), `group-hover:${fg('text.title')}`),
+    title: cn('text-sm shrink-0', fg('digest'), `group-hover:${fg('title')}`),
   }
 }

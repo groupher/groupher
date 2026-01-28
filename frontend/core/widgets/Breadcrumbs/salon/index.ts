@@ -15,7 +15,7 @@ export default ({ ...spacing }: TProps) => {
     itemHover: cn(hover('bg'), hover('fg')),
     hoverShift: 'hover:ml-1 trans-all-100',
     ol: 'row-center -ml-1',
-    curPath: cn('', fg('text.digest')),
-    divider: cn('text-xs mx-1.5', fg('text.hint')),
+    curPath: cn('', fg('digest')),
+    divider: cn('text-xs mx-1.5', fg('hint')),
   }
 }

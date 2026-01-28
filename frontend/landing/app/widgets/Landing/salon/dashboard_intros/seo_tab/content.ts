@@ -11,13 +11,13 @@ export default () => {
     wrapper: cn('row-between absolute bottom-12 w-11/12 h-56 px-4 py-2 rounded-xl', bg('hoverBg')),
     ogPanel: 'w-1/2 pl-6 relative',
     twPanel: 'w-1/2 pl-12 relative',
-    title: cn('text-xs mb-0.5 bold-sm', fg('text.title')),
-    desc: cn('text-xs mb-2.5', fg('text.digest')),
+    title: cn('text-xs mb-0.5 bold-sm', fg('title')),
+    desc: cn('text-xs mb-2.5', fg('digest')),
     //
     line: cn(
       'absolute -top-5 left-1/2 -ml-4 w-2 h-28 border-r-2 border-dashed',
       'opacity-20',
-      br('text.digest'),
+      br('digest'),
     ),
     iconBox: cn(
       'size-9 circle align-both',

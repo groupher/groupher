@@ -50,7 +50,7 @@ export default () => {
     pillGadient2: cn('absolute w-full h-full rotate-180 gradient-orange'),
     pillGadient3: cn('absolute w-full h-full gradient-red'),
     pillGadient4: cn('absolute w-full h-full gradient-blue'),
-    pillIcon: cn('size-5 absolute bottom-2 left-3.5', fill('text.digest')),
+    pillIcon: cn('size-5 absolute bottom-2 left-3.5', fill('digest')),
     pillHighlighIcon: cn(rainbow(COLOR_NAME.PURPLE, 'fill')),
 
     avatar: 'absolute size-7 circle saturate-50 opacity-20',

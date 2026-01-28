@@ -8,7 +8,7 @@ export default () => {
   return {
     wrapper: cn('relative group'),
     title: cn('text-base bold-sm', cut('w-96')),
-    body: cn('mt-2.5 mb-6 break-words', fg('text.digest')),
+    body: cn('mt-2.5 mb-6 break-words', fg('digest')),
     actions: cn('row-center absolute top-1 group-smoky-65 -ml-52'),
     //
     hintBox: cn('row-center px-1 py-0.5', hover('bg')),
@@ -19,6 +19,6 @@ export default () => {
     deleteIcon: cn('size-3 mr-1 -mt-px', hover('icon-red')),
     deleteHint: cn('text-xs', hover('fg-red')),
     //
-    arrowIcon: cn('size-2.5 rotate-90 mr-1 pointer', fill('text.digest')),
+    arrowIcon: cn('size-2.5 rotate-90 mr-1 pointer', fill('digest')),
   }
 }

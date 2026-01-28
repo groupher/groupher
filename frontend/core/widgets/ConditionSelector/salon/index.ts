@@ -1,6 +1,5 @@
-import type { TSpace } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 type TProps = { menuOpen?: boolean; selected?: boolean } & TSpace
 
@@ -12,7 +11,7 @@ export default ({ menuOpen, selected, ...spacing }: TProps) => {
       'row-center rounded-lg h-8 py-0.5 transition-colors',
       `hover:${bg('hoverBg')}`,
       selected && 'mx-1',
-      fg('text.digest'),
+      fg('digest'),
       (menuOpen || selected) && bg('hoverBg'),
       margin(spacing),
     ),

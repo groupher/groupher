@@ -1,5 +1,5 @@
-import useTwBelt from '~/hooks/useTwBelt'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
+import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
   const [todoBg, wipBg, doneBg] = useKanbanBgColors()
@@ -10,8 +10,8 @@ export default () => {
   return {
     column: cn('column w-[32%] min-w-[32%] min-h-96'),
     header: 'row-center pb-4 w-full pl-0.5',
-    label: cn('text-base bold ml-2.5', fg('text.digest')),
-    subTitle: cn('text-sm ml-1.5', fg('text.hint')),
+    label: cn('text-base bold ml-2.5', fg('digest')),
+    subTitle: cn('text-sm ml-1.5', fg('hint')),
     //
     todoIcon: cn('size-3', rainbow(todoBg, 'fill')),
     wipIcon: cn('size-3.5', rainbow(wipBg, 'fill')),

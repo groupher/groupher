@@ -17,12 +17,8 @@ export default () => {
       shadow('sm'),
     ),
     block: 'relative w-1/2 h-10 px-2.5 py-0.5',
-    title: cn('text-xs scale-90 -ml-1', fg('text.hint')),
-    num: cn(
-      'row-center text-sm bold-sm overflow-hidden',
-      fg('text.title'),
-      isDarkTheme && dimDark(),
-    ),
+    title: cn('text-xs scale-90 -ml-1', fg('hint')),
+    num: cn('row-center text-sm bold-sm overflow-hidden', fg('title'), isDarkTheme && dimDark()),
 
     icon: cn('size-3 ml-2'),
     iconGreen: rainbow(COLOR_NAME.GREEN, 'fill'),

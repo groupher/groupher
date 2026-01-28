@@ -22,7 +22,7 @@ export default () => {
       shadow('card'),
     ),
     //
-    title: cn('row-center text-base', fg('text.title')),
+    title: cn('row-center text-base', fg('title')),
     inner: cn(
       'column-center w-full h-full z-10 px-4 py-8 pt-6 border rounded-md',
       br('rainbow.cyanSoft'),
@@ -30,7 +30,7 @@ export default () => {
     ),
     content: 'column relative w-64',
     //
-    shareIcon: cn('size-3 absolute top-1.5 -right-0.5 opacity-30', fill('text.digest')),
+    shareIcon: cn('size-3 absolute top-1.5 -right-0.5 opacity-30', fill('digest')),
     //
     footer: 'row-center mt-10 w-10/12',
     feedback: cn(
@@ -39,8 +39,8 @@ export default () => {
       shadow('card'),
     ),
     feedIcon: 'size-5 opacity-80',
-    arrowIcon: cn('size-4 opacity-80', fill('text.digest')),
-    arrowText: cn('text-xs opacity-80', fg('text.digest')),
+    arrowIcon: cn('size-4 opacity-80', fill('digest')),
+    arrowText: cn('text-xs opacity-80', fg('digest')),
     //
     bar: cn('h-1.5 w-40 mt-4 opacity-30 rounded-md', bg('text.digest')),
     // cover

@@ -7,15 +7,15 @@ export default () => {
 
   return {
     wrapper: cn('column relative w-full'),
-    item: cn('row-center text-xs mb-3 ml-1 relative leading-5', fg('text.hint')),
+    item: cn('row-center text-xs mb-3 ml-1 relative leading-5', fg('hint')),
     tail: cn('absolute -bottom-3 h-3 left-1 w-px ml-0.5', bg('divider')),
     avatar: cn('size-5 -ml-0.5 mr-1', avatar()),
     content: 'ml-2.5',
-    highlight: cn('my-0.5', fg('text.title')),
+    highlight: cn('my-0.5', fg('title')),
     lastUpdate: cn(
       'absolute right-2 top-0 pointer trans-all-200 text-xs',
-      fg('text.hint'),
-      `hover:${fg('text.title')}`,
+      fg('hint'),
+      `hover:${fg('title')}`,
     ),
   }
 }

@@ -15,9 +15,9 @@ export default () => {
     ),
     dot: cn('size-1.5 circle absolute -left-1 z-20 opacity-65', rainbow(COLOR_NAME.RED, 'bg')),
     buildIcon: 'text-xs opacity-65',
-    text: cn('text-sm ml-1.5', fg('text.digest')),
+    text: cn('text-sm ml-1.5', fg('digest')),
     textRed: rainbow(COLOR_NAME.RED, 'fg'),
     graveIcon: cn('size-4 opacity-65', rainbow(COLOR_NAME.PINK, 'fill')),
-    launchIcon: cn('size-3', fill('text.digest')),
+    launchIcon: cn('size-3', fill('digest')),
   }
 }

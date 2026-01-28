@@ -9,6 +9,6 @@ export default ({ viewerHasUpvoted }: TProps) => {
 
   return {
     wrapper: cn('row-center'),
-    count: cn('bold-sm text-base ml-1.5', viewerHasUpvoted ? primary('fg') : fg('text.digest')),
+    count: cn('bold-sm text-base ml-1.5', viewerHasUpvoted ? primary('fg') : fg('digest')),
   }
 }

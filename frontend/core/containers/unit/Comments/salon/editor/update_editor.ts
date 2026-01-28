@@ -9,7 +9,7 @@ export default () => {
       bg('sandBox'),
       br('divider'),
     ),
-    header: cn('row-center text-base h-8 px-7 pb-2 w-full', fg('text.digest')),
+    header: cn('row-center text-base h-8 px-7 pb-2 w-full', fg('digest')),
     editorWrapper: cn('overflow-x-hidden pt-2.5 min-h-80', bg('sandBox')),
     footer: 'pt-4 w-full',
   }

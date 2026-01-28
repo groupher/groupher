@@ -6,14 +6,14 @@ export { cn } from '~/css'
 export default () => {
   const { cn, fg, br, shadow, rainbow, rainbowSoft } = useTwBelt()
 
-  const activeBtn = cn(fg('text.title'), `hover:${fg('text.title')}`)
+  const activeBtn = cn(fg('title'), `hover:${fg('title')}`)
 
   return {
     wrapper: cn('align-both wrap gap-x-3.5 gap-y-4 w-8/12 mb-10'),
     button: cn(
       'align-both text-sm min-w-20 h-10 px-4.5 rounded-3xl border trans-all-100 pointer',
-      `hover:${fg('text.title')}`,
-      fg('text.digest'),
+      `hover:${fg('title')}`,
+      fg('digest'),
       br('divider'),
     ),
 

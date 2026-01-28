@@ -34,8 +34,8 @@ export default () => {
     },
     //
     settings: 'row-center ml-1',
-    title: cn('text-sm w-28', fg('text.digest')),
+    title: cn('text-sm w-28', fg('digest')),
 
-    icon: cn('size-12', fill('text.title')),
+    icon: cn('size-12', fill('title')),
   }
 }

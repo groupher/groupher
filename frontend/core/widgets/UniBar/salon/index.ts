@@ -15,7 +15,7 @@ export default ({ expand }: TProps) => {
     'size-6 align-both pointer rounded border border-transparent',
     `hover:${bg('hoverBg')}`,
   )
-  const icon = cn('size-4 pointer', fill('text.digest'), `hover:${fill('text.title')}`)
+  const icon = cn('size-4 pointer', fill('digest'), `hover:${fill('title')}`)
 
   return {
     wrapper: cn(
@@ -36,7 +36,7 @@ export default ({ expand }: TProps) => {
       shadow('card'),
       'rounded-tl-xl rounded-tr-xl mb-0',
     ),
-    mockPeoplePanel: cn('p-4 text-sm', fg('text.digest')),
+    mockPeoplePanel: cn('p-4 text-sm', fg('digest')),
 
     shadowMask: cn(
       'absolute -left-14 -bottom-7 w-64 h-28 circle -z-10 blur-sm',
@@ -46,7 +46,7 @@ export default ({ expand }: TProps) => {
     topBox: cn(iconBox, badgeInView ? 'max-w-0' : 'max-w-6'),
     iconBox,
     iconActive: cn(bg('hoverBg')),
-    tipText: cn('py-0.5 px-1', fg('text.digest')),
+    tipText: cn('py-0.5 px-1', fg('digest')),
 
     buttonBar: cn(
       'align-both absolute h-[38px] w-full left-px bottom-0 -ml-px rounded-2xl',

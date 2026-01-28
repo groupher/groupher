@@ -14,10 +14,10 @@ export default ({ color }: TProps) => {
     iconBox: cn('align-both size-12 -mt-8 rounded-lg', rainbow(color, 'bgSoft')),
     content: 'column grow',
     //
-    title: cn('text-base', fg('text.title')),
-    desc: cn('text-sm line-clamp-2 mt-1.5', fg('text.digest')),
+    title: cn('text-base', fg('title')),
+    desc: cn('text-sm line-clamp-2 mt-1.5', fg('digest')),
     footer: cn('row-between w-full mt-4'),
-    authorHint: cn('text-xs', fg('text.hint')),
+    authorHint: cn('text-xs', fg('hint')),
     moreLink: 'mt-1 scale-90',
   }
 }

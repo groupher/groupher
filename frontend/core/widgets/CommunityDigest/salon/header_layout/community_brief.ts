@@ -20,25 +20,21 @@ export default () => {
     optionArrow: cn(
       'size-3 opacity-0 ml-2',
       'group-hover:opacity-100 transition-opacity',
-      fill('text.digest'),
+      fill('digest'),
     ),
-    linkArrow: cn(
-      'size-3.5 opacity-0 trans-all-200',
-      'group-hover:opacity-80',
-      fill('text.digest'),
-    ),
+    linkArrow: cn('size-3.5 opacity-0 trans-all-200', 'group-hover:opacity-80', fill('digest')),
     menuItem: cn(
       'row-center group w-36 mt-0.5 mb-0.5 -ml-px mr-0.5 px-2 py-1 pr-1.5 rounded pointer no-underline',
       'border border-transparent',
       'hover:underline',
-      `hover:${fg('text.title')}`,
+      `hover:${fg('title')}`,
       `hover:${bg('menuHoverBg')}`,
       `hover:${br('divider')}`,
-      fg('text.digest'),
+      fg('digest'),
     ),
     menuIconBox: 'align-both size-4 mr-1.5',
-    menuIcon: cn('size-3.5 opacity-80', fill('text.digest')),
-    menuTitle: cn('text-sm grow', `group-hover:${fg('text.title')}`),
+    menuIcon: cn('size-3.5 opacity-80', fill('digest')),
+    menuTitle: cn('text-sm grow', `group-hover:${fg('title')}`),
     //
     divider: cn(sexyBorder(), 'my-1.5'),
   }

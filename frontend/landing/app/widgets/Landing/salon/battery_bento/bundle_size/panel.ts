@@ -16,8 +16,8 @@ export default () => {
     ),
     header: 'row-center mb-1',
     iconBox: 'align-both size-3.5 mr-1.5',
-    title: cn('text-xs bold-sm', fg('text.digest')),
-    size: cn('text-xs', fg('text.digest')),
+    title: cn('text-xs bold-sm', fg('digest')),
+    size: cn('text-xs', fg('digest')),
     textGreen: rainbow(COLOR_NAME.GREEN, 'fg'),
     textRed: cn(rainbow(COLOR_NAME.RED, 'fg'), 'bold-sm'),
     //
@@ -26,6 +26,6 @@ export default () => {
     barGreen: rainbow(COLOR_NAME.GREEN, 'bg'),
     barRed: rainbow(COLOR_NAME.RED, 'bg'),
     //
-    loading: cn('size-3.5 ml-1.5 animate-spin', fill('text.title')),
+    loading: cn('size-3.5 ml-1.5 animate-spin', fill('title')),
   }
 }

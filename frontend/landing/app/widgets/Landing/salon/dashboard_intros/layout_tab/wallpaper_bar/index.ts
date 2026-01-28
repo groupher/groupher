@@ -17,6 +17,6 @@ export default () => {
     colorBallActive: 'size-7',
     //
     curstomBall: cn('align-both size-7 circle', bg('cardAlpha'), shadow('sm')),
-    themeIcon: cn('size-5 z-20 opacity-80', fill('text.digest')),
+    themeIcon: cn('size-5 z-20 opacity-80', fill('digest')),
   }
 }

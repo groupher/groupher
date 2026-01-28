@@ -20,7 +20,7 @@ export default () => {
     threads: cn('row wrap justify-between px-4 py-3.5 rounded-md', shadow('lg')),
     section: 'w-5/12 my-2.5 px-2',
     header: 'row-center w-full',
-    threadTitle: cn('text-sm', fg('text.title')),
-    desc: cn('mt-1 text-sm opacity-80 w-9/12', fg('text.digest')),
+    threadTitle: cn('text-sm', fg('title')),
+    desc: cn('mt-1 text-sm opacity-80 w-9/12', fg('digest')),
   }
 }

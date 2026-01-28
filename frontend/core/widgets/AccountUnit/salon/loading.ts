@@ -8,8 +8,8 @@ export default () => {
   return {
     wrapper: cn('column-align-both absolute top-0 left-0 w-full h-full backdrop-blur-md z-50'),
     iconWrapper: 'column-align-both mb-8 mt-10 relative',
-    title: cn('row text-xl bold', fg('text.digest')),
-    desc: cn('text-sm', fg('text.digest')),
+    title: cn('row text-xl bold', fg('digest')),
+    desc: cn('text-sm', fg('digest')),
     sideLogo: cn('absolute -bottom-3 -right-4 z-20', shadow('xl')),
     icon: 'size-10',
 
@@ -40,7 +40,7 @@ export default () => {
 
     //
     providerLogo: cn('scale-150 animate-pulse animate-duration-[800ms]'),
-    providerName: cn('bold', fg('text.title')),
+    providerName: cn('bold', fg('title')),
     //
     footer: 'mt-10 -ml-16 opacity-65',
   }

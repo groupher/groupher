@@ -1,10 +1,9 @@
 import useTwBelt from '~/hooks/useTwBelt'
-
-import LightSVG from '~/icons/ColorLight'
-import QuestionSVG from '~/icons/Question'
 import BugSVG from '~/icons/ColorBug'
-import RejectSVG from '~/icons/Reject'
+import LightSVG from '~/icons/ColorLight'
 import OtherSVG from '~/icons/menu/Feedback'
+import QuestionSVG from '~/icons/Question'
+import RejectSVG from '~/icons/Reject'
 
 type TProps = {
   smaller: boolean
@@ -14,14 +13,10 @@ export default ({ smaller }: TProps) => {
   const { cn, fg, fill } = useTwBelt()
 
   return {
-    wrapper: cn(
-      'row-center px-1.5 py-0.5 bold',
-      smaller ? 'text-xs' : 'text-sm',
-      fg('text.digest'),
-    ),
+    wrapper: cn('row-center px-1.5 py-0.5 bold', smaller ? 'text-xs' : 'text-sm', fg('digest')),
     text: 'mt-px',
     iconBox: 'align-both size-4 mr-0.5',
-    icon: cn('size-3.5', fill('text.digest')),
+    icon: cn('size-3.5', fill('digest')),
     iconReject: cn('size-3', fill('rainbow.red')),
   }
 }

@@ -1,6 +1,6 @@
+import useTwBelt from '~/hooks/useTwBelt'
 import useBase from '.'
 
-import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
@@ -12,6 +12,6 @@ export default () => {
     active: base.templateActive,
     center: 'row-center gap-x-5',
     right: 'row-center gap-x-4',
-    linkItem: cn('text-xs no-underline hover:underline pointer', cut('w-12'), fg('text.digest')),
+    linkItem: cn('text-xs no-underline hover:underline pointer', cut('w-12'), fg('digest')),
   }
 }

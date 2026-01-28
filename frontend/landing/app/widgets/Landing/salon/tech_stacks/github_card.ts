@@ -16,20 +16,20 @@ export default () => {
       isDarkTheme ? bg('pageBg') : bg('card'),
     ),
     topping: 'column mb-1.5',
-    githubIcon: cn('size-40 absolute top-3 right-4 opacity-10', fill('text.digest')),
+    githubIcon: cn('size-40 absolute top-3 right-4 opacity-10', fill('digest')),
     githubTitle: cn('text-2xl clip-text'),
-    desc: cn('text-base mt-4', fg('text.digest')),
+    desc: cn('text-base mt-4', fg('digest')),
     gradientTextStyle: base.textGradientStyle,
     //
     numIntro: cn('row items-baseline mt-2 mb-4 pb-5 border-b', br('divider')),
     numDivider: cn('mx-4'),
-    num: cn('text-2xl', fg('text.title')),
-    unit: cn('text-base ml-2', fg('text.digest')),
+    num: cn('text-2xl', fg('title')),
+    unit: cn('text-base ml-2', fg('digest')),
     //
     row: 'row mt-3',
-    footer: cn('mt-10 text-sm', fg('text.digest')),
-    label: cn('text-base opacity-80 w-28', fg('text.digest')),
-    text: cn('text-base', fg('text.title')),
+    footer: cn('mt-10 text-sm', fg('digest')),
+    label: cn('text-base opacity-80 w-28', fg('digest')),
+    text: cn('text-base', fg('title')),
     trend: '-mt-1',
   }
 }

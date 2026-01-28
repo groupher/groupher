@@ -17,15 +17,15 @@ export default () => {
     ),
     card: cn('row-center w-full rounded-xl border overflow-hidden', br('divider')),
     cover: cn('align-both size-20 border-r', bg('hoverBg'), br('divider')),
-    xLogo: cn('size-10 opacity-65', fill('text.digest')),
+    xLogo: cn('size-10 opacity-65', fill('digest')),
     content: 'ml-4',
     //
-    url: cn('text-xs pr-2.5', fg('text.digest')),
-    title: cn('text-sm mb-1 mt-0.5', fg('text.title')),
+    url: cn('text-xs pr-2.5', fg('digest')),
+    title: cn('text-sm mb-1 mt-0.5', fg('title')),
     //
     footer: 'row-center mt-3 px-2.5',
-    count: cn('text-xs ml-2', fg('text.title')),
-    icon: cn('size-5 brightness-150', fill('text.digest')),
+    count: cn('text-xs ml-2', fg('title')),
+    icon: cn('size-5 brightness-150', fill('digest')),
     fillRed: rainbow(COLOR_NAME.RED, 'fill'),
     fillBlue: rainbow(COLOR_NAME.BLUE, 'fill'),
   }

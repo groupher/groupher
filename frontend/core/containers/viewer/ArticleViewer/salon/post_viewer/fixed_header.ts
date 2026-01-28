@@ -14,7 +14,7 @@ export default ({ visible }: TProps) => {
       bg('alphaBg'),
     ),
     left: 'row-center',
-    articleTitle: cn('row-center text-lg', cut('w-72'), fg('text.title')),
+    articleTitle: cn('row-center text-lg', cut('w-72'), fg('title')),
     divider: cn(sexyBorder(), 'absolute bottom-0 left-0 w-full'),
   }
 }

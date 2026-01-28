@@ -13,6 +13,6 @@ export default () => {
     menuItem: cn('text-sm', menu('bar')),
     menuTitle: cn('text.sm', menu('title')),
     //
-    arrowIcon: cn('size-3 rotate-90', fill('text.digest')),
+    arrowIcon: cn('size-3 rotate-90', fill('digest')),
   }
 }

@@ -7,7 +7,7 @@ export default () => {
 
   return {
     icon: 'size-4 mr-2.5 mt-1',
-    info: fill('text.digest'),
+    info: fill('digest'),
     lock: fill('notice.icon'),
   }
 }

@@ -8,7 +8,7 @@ export default () => {
   return {
     wrapper: cn('mt-8 pt-8 border-t', br('divider')),
     header: 'row items-baseline mb-4',
-    title: cn('text-base opacity-80', fg('text.digest')),
-    count: cn('text-xs ml-1', fg('text.digest')),
+    title: cn('text-base opacity-80', fg('digest')),
+    count: cn('text-xs ml-1', fg('digest')),
   }
 }

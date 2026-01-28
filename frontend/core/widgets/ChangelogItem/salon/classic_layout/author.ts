@@ -6,6 +6,6 @@ export default () => {
   return {
     wrapper: 'row-center mt-5 ml-1.5',
     avatar: cn('size-4', avatar()),
-    name: cn('text-xs ml-2', fg('text.digest')),
+    name: cn('text-xs ml-2', fg('digest')),
   }
 }

@@ -1,9 +1,7 @@
-import type { TSpace } from '~/spec'
-import useTwBelt from '~/hooks/useTwBelt'
-
-import useLayout from '~/hooks/useLayout'
-
 import { BRAND_LAYOUT } from '~/const/layout'
+import useLayout from '~/hooks/useLayout'
+import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 type TProps = {
   className?: string
@@ -18,11 +16,7 @@ export default ({ className, ...spacing }: TProps) => {
   return {
     wrapper: cn('row-center', className, margin(spacing)),
     logo: 'size-5 -ml-px mr-1',
-    title: cn(
-      'text-base bold-sm grow max-w-[80px] line-clamp-1',
-      noMargin && 'ml-2',
-      fg('text.digest'),
-    ),
+    title: cn('text-base bold-sm grow max-w-[80px] line-clamp-1', noMargin && 'ml-2', fg('digest')),
     //
   }
 }

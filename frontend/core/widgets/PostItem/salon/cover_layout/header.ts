@@ -11,7 +11,7 @@ export default () => {
       'row-center relative text-base no-underline opacity-85 bold-sm',
       'hover:opacity-100 pointer group-hover:underline',
       'transition-colors',
-      fg('text.title'),
+      fg('title'),
     ),
   }
 }

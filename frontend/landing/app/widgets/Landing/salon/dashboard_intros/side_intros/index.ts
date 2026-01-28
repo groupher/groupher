@@ -20,7 +20,7 @@ export default ({ color }: TProps) => {
     iconBox: cn('size-12 align-both rounded-lg mb-5', bg('cardAlpha')),
     icon: cn('size-6 opacity-50', rainbow(color, 'fill'), vividDark()),
     title: cn(landingTitle(), 'text-2xl'),
-    desc: cn('text-base mt-1', fg('text.digest')),
+    desc: cn('text-base mt-1', fg('digest')),
 
     barDivider: cn('rounded-md h-px w-28 mt-5 opacity-25', rainbow(color, 'bg')),
   }

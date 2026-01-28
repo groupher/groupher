@@ -1,6 +1,5 @@
-import type { TSpace } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 type TProps = {
   disabled: boolean
@@ -19,7 +18,7 @@ export default ({ dimWhenIdle, disabled, ...spacing }: TProps) => {
       !disabled ? 'pointer' : 'cursor-not-allowed',
       margin(spacing),
     ),
-    icon: cn('size-3 mr-0.5', fill('text.digest'), `group-hover:${fill('text.title')}`),
-    text: cn('text-sm', fg('text.digest'), `group-hover:${fg('text.title')}`),
+    icon: cn('size-3 mr-0.5', fill('digest'), `group-hover:${fill('title')}`),
+    text: cn('text-sm', fg('digest'), `group-hover:${fg('title')}`),
   }
 }

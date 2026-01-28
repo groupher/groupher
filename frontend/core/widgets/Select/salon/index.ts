@@ -11,15 +11,15 @@ export default ({ ...spacing }: TProps) => {
   return {
     wrapper: cn(margin(spacing)),
     optionRow: 'row items-end',
-    optionTitle: cn('text-sm px-1.5 rounded', fg('transparent')),
-    optionTitleActive: fg('text.title'),
-    optionDesc: cn('text-xs ml-4', fg('text.hint')),
+    optionTitle: cn('text-sm px-1.5 rounded', fg('digest')),
+    optionTitleActive: fg('title'),
+    optionDesc: cn('text-xs ml-4', fg('hint')),
     // custom components
     icon: 'size-6 mr-2',
     menu: cn('mt-0', bg('card')),
     menuList: 'my-0 pb-px',
-    control: cn('border', bg('alphaBg'), br('divider'), `hover:${br('text.digest')}`),
+    control: cn('border', bg('alphaBg'), br('divider'), `hover:${br('digest')}`),
     option: cn('bg-transparent', `hover:${bg('hoverBg')}`),
-    optionActive: cn(bg('hoverBg'), fg('text.title'), 'pointer'),
+    optionActive: cn(bg('hoverBg'), fg('title'), 'pointer'),
   }
 }

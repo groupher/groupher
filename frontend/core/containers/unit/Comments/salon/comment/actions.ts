@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: cn('row-center w-full'),
-    replyAction: cn('bold-sm pointer', fg('text.digest')),
-    moreIcon: cn('size-4', fill('text.digest')),
+    replyAction: cn('bold-sm pointer', fg('digest')),
+    moreIcon: cn('size-4', fill('digest')),
   }
 }

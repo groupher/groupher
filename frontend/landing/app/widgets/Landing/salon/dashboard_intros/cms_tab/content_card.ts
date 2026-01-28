@@ -18,7 +18,7 @@ export default () => {
     item: cn('row-center h-12 w-full relative border-b border-dotted px-1', br('divider')),
     itemGrey: bg('sandBox'),
     itemBlue: 'gradient-blue',
-    title: cn('text-xs line-clamp-1', fg('text.title')),
+    title: cn('text-xs line-clamp-1', fg('title')),
     //
     falseChecker: cn('size-3.5 border rounded ml-5', shadow('sm'), br('divider'), bg('card')),
     //
@@ -26,7 +26,7 @@ export default () => {
       'align-both absolute h-9 w-auto px-3 text-sm rounded-xl border z-20',
       shadow('sm'),
       br('divider'),
-      fg('text.digest'),
+      fg('digest'),
       bg('card'),
     ),
     tipLogo: cn(

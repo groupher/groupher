@@ -9,7 +9,7 @@ export default () => {
     'absolute bottom-72 align-both group size-16 circle transition-colors pointer z-30',
     `hover:${bg('hoverBg')}`,
   )
-  const naviArrow = cn('size-10 opacity-25', 'group-hover:opacity-50', fill('text.digest'))
+  const naviArrow = cn('size-10 opacity-25', 'group-hover:opacity-50', fill('digest'))
 
   return {
     wrapper: cn('column-center relative rounded-lg mt-16 ml-5', 'w-[1000px]', shadow('sm')),
@@ -32,6 +32,6 @@ export default () => {
       br('divider'),
       bg('alphaBg'),
     ),
-    themeIcon: cn('size-5', fill('text.digest')),
+    themeIcon: cn('size-5', fill('digest')),
   }
 }

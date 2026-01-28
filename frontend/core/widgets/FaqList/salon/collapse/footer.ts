@@ -6,7 +6,7 @@ export default () => {
   return {
     wrapper: cn('column-align-both text-sm mt-14 -ml-8 pt-8'),
     divider: cn(sexyBorder(), 'mb-8'),
-    note: cn('text-sm', fg('text.hint')),
+    note: cn('text-sm', fg('hint')),
 
     bottom: 'row-center mt-4 gap-x-4',
 

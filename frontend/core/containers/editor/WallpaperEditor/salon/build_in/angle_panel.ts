@@ -47,7 +47,7 @@ export default ({ direction }: TProps) => {
     point: cn(
       'align-both absolute size-4 circle z-20 pointer border border-transparent',
       bg('divider'),
-      `hover:${br('text.digest')}`,
+      `hover:${br('digest')}`,
     ),
     pointActive: cn(primary('bg')),
     top: '-top-2 left-6 pb-px',
@@ -63,7 +63,7 @@ export default ({ direction }: TProps) => {
     bottomRight: 'bottom-1.5 left-14 pt-px -ml-0.5',
 
     //
-    arrowIcon: cn('size-3.5', fill('text.digest')),
+    arrowIcon: cn('size-3.5', fill('digest')),
     arrowActive: cn(fill('button.fg')),
   }
 }

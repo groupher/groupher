@@ -11,14 +11,14 @@ export default () => {
       br('divider'),
       shadow('xl'),
     ),
-    url: cn('text-xs opacity-80 mb-0.5', fg('text.digest')),
-    title: cn('text-lg opacity-80 mb-0.5', fg('text.title')),
-    desc: cn('text-xs opacity-80 mt-1', fg('text.digest')),
+    url: cn('text-xs opacity-80 mb-0.5', fg('digest')),
+    title: cn('text-lg opacity-80 mb-0.5', fg('title')),
+    desc: cn('text-xs opacity-80 mt-1', fg('digest')),
     //
     footer: 'row-center mt-5 -ml-0.5',
     logoBox: 'align-both size-6 mr-2',
     logo: 'size-4',
     //
-    hint: cn('text-xs opacity-65', fg('text.digest')),
+    hint: cn('text-xs opacity-65', fg('digest')),
   }
 }

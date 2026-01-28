@@ -1,7 +1,6 @@
-import useBase from '.'
-
 import { COLOR_NAME } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
+import useBase from '.'
 
 export { cn } from '~/css'
 
@@ -23,8 +22,8 @@ export default () => {
       'row-center text-xs rounded py-0.5 px-2 border trans-all-100 pointer',
       bg('card'),
       br('divider'),
-      fg('text.digest'),
-      `hover:${fg('text.title')}`,
+      fg('digest'),
+      `hover:${fg('title')}`,
       shadow('md'),
     ),
     deleteItem: cn(

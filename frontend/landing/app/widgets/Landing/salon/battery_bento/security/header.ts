@@ -27,7 +27,7 @@ export default () => {
     domainText: cn(
       'text-xs',
       isLightTheme ? 'bold' : '',
-      isLightTheme ? fg('button.fg') : fg('text.digest'),
+      isLightTheme ? fg('button.fg') : fg('digest'),
     ),
   }
 }

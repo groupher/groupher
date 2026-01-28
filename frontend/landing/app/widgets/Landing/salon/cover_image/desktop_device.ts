@@ -25,9 +25,9 @@ export default () => {
       isLightTheme ? bg('divider') : cn(bg('text.digest'), 'opacity-40'),
     ),
     addrBar: cn('row-center text-xs -ml-16 px-2 py-0.5 rounded-md border', br('divider')),
-    addtext: cn(fg('text.digest'), isLightTheme && 'opacity-80'),
-    brand: cn(fg('text.title'), 'mx-0.5'),
-    lock: cn('size-3 opacity-65 mr-1', fill('text.digest')),
+    addtext: cn(fg('digest'), isLightTheme && 'opacity-80'),
+    brand: cn(fg('title'), 'mx-0.5'),
+    lock: cn('size-3 opacity-65 mr-1', fill('digest')),
 
     threadText: 'clip-text bold ml-0.5',
     threadTextStyle: base.textGradientStyle,

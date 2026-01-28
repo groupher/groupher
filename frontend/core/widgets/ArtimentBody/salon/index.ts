@@ -8,6 +8,6 @@ export default () => {
   return {
     wrapper: cn(''),
     body: 'leading-7',
-    html: fg('text.digest'),
+    html: fg('digest'),
   }
 }

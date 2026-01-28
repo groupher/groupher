@@ -1,14 +1,12 @@
-/* TODO: gen from js to include all safe-list class names */
-
 /* container  */
 @source inline('container-{landing,community,article,dashboard}');
-@source inline('text-{text-title,text-digest,text-hint,link}');
+@source inline('text-{title,digest,hint,link}');
 
 /* fill for icons */
-@source inline('fill-{text-title,text-digest,heightIcon,text-link}');
+@source inline('fill-{title,digest,link}');
 
 /* background */
-@source inline('bg-{pageBg,link,dot,text-digest,text-link,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,sandBox,popover-bg,menuHoverBg,menuInvertBg,alphaBg,snackBar,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}');
+@source inline('bg-{pageBg,link,dot,digest,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,popover-bg,menuHoverBg,menuInvertBg,alphaBg,snackBar,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}');
 
 /* rainbow */
 @source inline('{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');
@@ -26,23 +24,23 @@
 @source inline('{border,bg}-divider');
 
 /* editor */
-@source inline('border-text-digest');
+@source inline('border-digest');
 
 /* hover */
-@source inline('hover:{text,fill}-text-title');
-@source inline('hover:{border-divider,border-text-digest,border-text-hint}');
+@source inline('hover:{text,fill}-title');
+@source inline('hover:{border-divider,border-digest,border-hint}');
 @source inline('hover:text-rainbow-red');
-@source inline('hover:bg-rainbow-{redBg,redSoftBg}');
-@source inline('hover:{bg-hoverBg,bg-menuHoverBg,bg-sandBox,bg-card,bg-alphaBg2}');
+@source inline('hover:bg-rainbow-{red,redSoft}');
+@source inline('hover:{bg-hoverBg,bg-menuHoverBg,bg-sandBox,bg-card,bg-alphaBg}');
 @source inline('hover:shadow-sm');
 
 /* group hover */
-@source inline('group-hover:{text-text-title,fill-rainbow-red,fill-text-title,shadow-sm}');
+@source inline('group-hover:{text-title,fill-rainbow-red,fill-title,shadow-sm}');
 @source inline('group-hover:{fill,text}-rainbow-{red,orange,yellow,green,cyan,blue,purple,pink}');
 @source inline('group-hover:border-divider');
 
 /* menu group hover */
-@source inline('group-hover/menubar:{text-rainbow-red,fill-rainbow-red,fill-text-title}');
+@source inline('group-hover/menubar:{text-rainbow-red,fill-rainbow-red,fill-title}');
 
 /* size */
 @source inline('size-{1.5,2,2.5,3,3.5,4,5,6}');

@@ -17,7 +17,7 @@ export default () => {
     ),
     menuItem: cn(menu('bar'), 'px-1'),
     menuTitle: cn(menu('title')),
-    icon: cn('size-3.5 mr-1.5', fill('text.digest')),
+    icon: cn('size-3.5 mr-1.5', fill('digest')),
     tagIcon: cn('size-3.5 mr-1.5', rainbow(COLOR_NAME.BLUE, 'fill')),
     //
     divider: cn('mt-2.5 mb-2.5', sexyBorder()),

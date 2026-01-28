@@ -14,12 +14,12 @@ export default ({ ...spacing }: TProps) => {
     empty: 'align-both',
     //
     main: 'row-center ml-10 mr-8',
-    slash: cn('text-xs mt-px mx-2', fg('text.digest')),
-    total: cn('text-sm', fg('text.digest')),
+    slash: cn('text-xs mt-px mx-2', fg('digest')),
+    total: cn('text-sm', fg('digest')),
     //
     bottomMsg: cn(
       'text-base',
-      fg('text.digest'),
+      fg('digest'),
       'opacity-80',
       'before:content-["/\\\\*"] before:mr-2.5 before:font-mono',
       'after:content-["*/"] after:ml-2.5 after:font-mono',
@@ -33,11 +33,11 @@ export default ({ ...spacing }: TProps) => {
     numInputer: cn(
       'h-7 px-0.5 py-0 outline-none border rounded-lg text-center',
       'trans-all-200',
-      br('text.digest'),
-      fg('text.title'),
+      br('digest'),
+      fg('title'),
       bg('form.inputBg'),
-      `hover:${br('text.title')}`,
-      `focus:${br('text.title')}`,
+      `hover:${br('title')}`,
+      `focus:${br('title')}`,
       '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
     ),
   }

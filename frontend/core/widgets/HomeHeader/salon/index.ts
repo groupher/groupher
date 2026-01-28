@@ -36,9 +36,9 @@ export default ({ extend = false, isSticky = false }: TProps = {}) => {
     brand: cn(linkable()),
     links: cn('row-center gap-x-4 ml-16 mt-px'),
     linkItem: hoverLink(),
-    linkItemActive: fg('text.title'),
+    linkItemActive: fg('title'),
     stackLink: cn(hoverLink(), 'pl-3 hover:no-underline'),
-    linkActive: cn(fg('text.title'), bg('hoverBg')),
+    linkActive: cn(fg('title'), bg('hoverBg')),
     //
     requestDemoLink: cn(hoverLink('text-sm')),
     demoIcon: cn(hoverLinkIcon(), 'mt-px'),
@@ -60,9 +60,9 @@ export default ({ extend = false, isSticky = false }: TProps = {}) => {
     redIcon: rainbow(COLOR_NAME.RED, 'fill'),
     cyanIcon: rainbow(COLOR_NAME.CYAN, 'fill'),
 
-    menuIcon: cn('size-5', fill('text.digest')),
+    menuIcon: cn('size-5', fill('digest')),
     menuBarColumn: cn('column !items-start py-2'),
     menuTitle: cn(menu('title')),
-    menuDesc: cn('text-xs mt-1 pr-1 opacity-80', fg('text.digest')),
+    menuDesc: cn('text-xs mt-1 pr-1 opacity-80', fg('digest')),
   }
 }

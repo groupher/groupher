@@ -12,7 +12,7 @@ export default ({ viewerHasUpvoted }: TProps) => {
   return {
     wrapper: cn(
       'row-center gap-x-1',
-      `hover:${br('text.digest')}`,
+      `hover:${br('digest')}`,
       `hover:${bg('alphaBg2')}`,
       'trans-all-200',
       viewerHasUpvoted && cn('mr-2 ml-px pr-2', br('divider'), rainbowSoft(color)),

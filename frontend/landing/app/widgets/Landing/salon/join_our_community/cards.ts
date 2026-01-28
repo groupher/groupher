@@ -11,9 +11,9 @@ export default () => {
     iconBox: cn('w-16 h-14 align-both rounded-2xl group', bg('sandBox'), hover('bg')),
     icon: cn(
       'size-7 saturate-50 group-hover:saturate-80 group-hover:size-8 trans-all-200',
-      fill('text.digest'),
+      fill('digest'),
     ),
-    title: cn('text-base mt-3', fg('text.title')),
+    title: cn('text-base mt-3', fg('title')),
     divider: sexyVBorder(35, 'h-2/3'),
   }
 }

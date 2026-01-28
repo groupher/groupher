@@ -12,9 +12,9 @@ export default () => {
   return {
     wrapper: cn('column align-both w-full mt-36'),
     slogan: 'column align-both mb-10',
-    topping: cn('text-xs border mb-3 px-3.5 py-1.5 rounded-lg', fg('text.title'), br('divider')),
+    topping: cn('text-xs border mb-3 px-3.5 py-1.5 rounded-lg', fg('title'), br('divider')),
     title: landingTitle(),
-    desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
+    desc: cn('text-lg mt-3', fg('digest'), isDarkTheme && 'opacity-65'),
     //
     ourWall: cn('relative column-align-both w-full h-auto pl-10 overflow-hidden'),
     ourWallBg: cn(

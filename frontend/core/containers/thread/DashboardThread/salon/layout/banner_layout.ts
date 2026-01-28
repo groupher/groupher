@@ -13,12 +13,7 @@ export default () => {
     layout: cn('group button-reset column-align-both'),
     block: cn(base.blockBase, 'relative h-56'),
     blockActive: base.blockBaseActive,
-    communityTitle: cn(
-      'text-xs bold-sm',
-      cut('w-14'),
-      primary('fg'),
-      isBlackPrimary && fg('text.link'),
-    ),
+    communityTitle: cn('text-xs bold-sm', cut('w-14'), primary('fg'), isBlackPrimary && fg('link')),
     primaryBar: cn('opacity-65', primary('bg'), isBlackPrimary && bg('text.link')),
     bar: base.bar,
     circle: base.circle,

@@ -1,6 +1,5 @@
-import type { TSpace } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 type TProps = TSpace
 
@@ -12,7 +11,7 @@ export default ({ ...spacing }: TProps) => {
     popover: cn('column m-1 gap-y-1'),
     foldWrapper: cn('row-center wrap relative', margin(spacing)),
     tag: 'row-center',
-    title: cn('text-xs keep-all mr-px', fg('text.digest')),
-    more: cn('text-xs italic opacity-80', fg('text.digest')),
+    title: cn('text-xs keep-all mr-px', fg('digest')),
+    more: cn('text-xs italic opacity-80', fg('digest')),
   }
 }

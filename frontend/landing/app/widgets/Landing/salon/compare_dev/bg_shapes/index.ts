@@ -46,7 +46,7 @@ export default () => {
     curveLineTR: cn('absolute size-80 top-24 right-48', turnning),
     curveLineBR: cn('absolute size-80 bottom-20 right-44 mb-1', turnning),
     fillPurple: rainbow(COLOR_NAME.PURPLE, 'fill'),
-    fillDigest: fill('text.digest'),
+    fillDigest: fill('digest'),
     //
     shapeIcon: cn('size-5 absolute opacity-30'),
     fillGreen: rainbow(COLOR_NAME.GREEN, 'fill'),

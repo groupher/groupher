@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: cn('column justify-center mt-12'),
-    notes: cn('text-xs mt-2.5', fg('text.digest')),
+    notes: cn('text-xs mt-2.5', fg('digest')),
     addBtn: cn('w-28'),
     addIcon: cn('size-3.5 mr-1.5', fill('button.fg')),
   }

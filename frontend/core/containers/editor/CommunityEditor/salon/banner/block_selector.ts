@@ -14,11 +14,11 @@ export default ({ rounded }: TProps) => {
     block: cn(
       'text-sm px-4 py-0.5 rounded-md border trans-all-200 pointer',
       rounded ? 'rounded-xl' : 'rounded-md',
-      `hover:${fg('text.title')}`,
-      `hover:${br('text.digest')}`,
-      fg('text.digest'),
+      `hover:${fg('title')}`,
+      `hover:${br('digest')}`,
+      fg('digest'),
       br('divider'),
     ),
-    blockActive: cn('bold-sm', fg('text.title'), br('text.digest')),
+    blockActive: cn('bold-sm', fg('title'), br('digest')),
   }
 }

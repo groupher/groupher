@@ -19,7 +19,7 @@ export default ({ tab }: TProps) => {
     wrapper: cn('column-align-both w-full mt-20 mb-16'),
     slogan: 'column align-both mb-8',
     title: landingTitle(),
-    desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
+    desc: cn('text-lg mt-3', fg('digest'), isDarkTheme && 'opacity-65'),
     //
     content: 'column items-center relative w-full px-30 h-[720px] overflow-hidden',
     inner: 'row-between w-10/12 h-full pl-16 -mt-8',

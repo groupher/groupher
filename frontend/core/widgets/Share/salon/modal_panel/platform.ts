@@ -16,13 +16,13 @@ export default () => {
   return {
     wrapper: cn('px-5 pb-4 w-full min-h-44 trans-all-200'),
     header: 'row items-end mt-4 pl-6 mb-5',
-    hint: cn('text-xs', fg('text.digest')),
-    article: cn('text-sm mx-1', cut('w-44'), fg('text.title')),
+    hint: cn('text-xs', fg('digest')),
+    article: cn('text-sm mx-1', cut('w-44'), fg('title')),
     inner: 'row wrap',
     //
     media: cn('size-20 column-align-both', hover('bg')),
     logoBox: 'size-8 align-both',
-    icon: cn('size-7', fill('text.digest'), hover('icon')),
+    icon: cn('size-7', fill('digest'), hover('icon')),
     title: cn('text-xs mt-1', hover('fg')),
   }
 }

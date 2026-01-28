@@ -1,6 +1,5 @@
-import type { TSpace } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 type TProps = TSpace
 
@@ -9,6 +8,6 @@ export default ({ ...spacing }: TProps) => {
 
   return {
     wrapper: cn('column w-full', margin(spacing)),
-    item: cn('text-sm list-disc mb-1', fg('text.title')),
+    item: cn('text-sm list-disc mb-1', fg('title')),
   }
 }

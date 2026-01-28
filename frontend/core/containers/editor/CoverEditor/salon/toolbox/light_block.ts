@@ -22,6 +22,6 @@ export default () => {
       `hover:${primary('border')}`,
     ),
     piceActive: cn(primary('bg')),
-    title: cn('text-xs scale-75 -mt-3.5 group-hover/position:hidden', fg('text.digest')),
+    title: cn('text-xs scale-75 -mt-3.5 group-hover/position:hidden', fg('digest')),
   }
 }
