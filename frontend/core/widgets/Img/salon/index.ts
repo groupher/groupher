@@ -1,3 +1,5 @@
+export { cn } from '~/css'
+
 export default () => {
   return {
     wrapper: 'relative opacity-100 z-10',

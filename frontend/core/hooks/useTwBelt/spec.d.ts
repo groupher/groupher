@@ -37,6 +37,7 @@ export type TBgKey =
   | 'pageBg'
   | 'transparent'
   | 'snackBar'
+  | 'link'
 
 export type TBorderKey = 'divider' | 'table.border' | 'digest' | 'title'
 
