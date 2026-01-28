@@ -16,7 +16,7 @@ export default ({ totalSlides, currentSlide, slideTo }: TProps) => {
   )
 
   const dotClass = cn('relative size-2 circle opacity-65 trans-all-200 pointer', 'bg-text-digest')
-  const dotBoxClass = cn('align-both absolute w-5 h-5 -top-1.5 -left-1.5 circle pointer')
+  const dotBoxClass = 'align-both absolute w-5 h-5 -top-1.5 -left-1.5 circle pointer'
 
   const dotActive = 'w-12 rounded-md opacity-100'
 

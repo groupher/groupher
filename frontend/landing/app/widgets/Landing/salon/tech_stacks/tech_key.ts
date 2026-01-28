@@ -20,10 +20,10 @@ export default ({ active, name }: TProps) => {
       'size-10 align-both mb-2 opacity-80 group-hover:opacity-100',
       active ? 'saturate-100' : 'saturate-0',
     ),
-    intro: cn('ml-2 text-xs', fg('text.digest')),
+    intro: cn('ml-2 text-xs', fg('digest')),
     title: cn(
       'text-sm bold mr-1 group-hover:opacity-100',
-      fg('text.title'),
+      fg('title'),
       name === 'TypeScript' && 'group-hover:text-[#6eadf5]',
       name === 'React' && 'group-hover:text-[#7AC2DD]',
       name === 'PostgreSQL' && 'group-hover:text-[#40668E]',

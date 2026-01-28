@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export default () => {
   const { cn, fill, sexyBorder, linkable } = useTwBelt()
 
-  const icon = cn('size-3.5 pointer', fill('text.digest'))
+  const icon = cn('size-3.5 pointer', fill('digest'))
 
   return {
     wrapper: 'px-2.5 py-2',

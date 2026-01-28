@@ -11,6 +11,6 @@ export default () => {
     ),
     item: 'align-both',
     emoji: 'size-4 opacity-80',
-    count: cn('text-base ml-1.5 bold-sm', fg('text.digest')),
+    count: cn('text-base ml-1.5 bold-sm', fg('digest')),
   }
 }

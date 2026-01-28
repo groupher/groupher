@@ -42,10 +42,10 @@ export default () => {
   const { wallpaper } = useWallpaper()
 
   return {
-    wrapper: cn('relative group'),
+    wrapper: 'relative group',
     button: cn(
       isLightTheme ? shadow('xl') : shadow('lg'),
-      !isLightTheme && cn('border-2', br('text.digest')),
+      !isLightTheme && cn('border-2', br('digest')),
     ),
     background: cn(
       'relative align-center rounded-xl overflow-hidden shadow-inner',
@@ -64,7 +64,7 @@ export default () => {
       'absolute right-3 top-3 size-4.5 rotate-180 hidden group-hover:block trans-all-100',
       'z-20',
       isLightTheme && 'opacity-65',
-      isLightTheme ? fill('button.fg') : fill('text.digest'),
+      isLightTheme ? fill('button.fg') : fill('digest'),
     ),
   }
 }

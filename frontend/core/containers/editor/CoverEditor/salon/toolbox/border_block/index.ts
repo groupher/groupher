@@ -1,6 +1,5 @@
-import useBase from '..'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import useBase from '..'
 
 export { cn } from '~/css'
 
@@ -14,23 +13,23 @@ export default () => {
     blockActive: base.settingBlockActive,
     title: base.settingTitle,
     icon: base.settingIcon,
-    forbidIcon: cn('size-3', fill('text.digest')),
+    forbidIcon: cn('size-3', fill('digest')),
     divider: cn(sexyBorder(35), 'my-4'),
     //
     optionItem: cn(base.optionItem, 'size-4'),
     optionItemActive: base.optionItemActive,
     //
-    rowTitle: cn('text-xs w-12', fg('text.title')),
+    rowTitle: cn('text-xs w-12', fg('title')),
     borderRow: 'row items-start gap-x-4 w-full',
     radiusContentsRow: 'row-center w-40 gap-x-3 gap-y-2.5 ml-3.5',
     borderContentsRow: 'row-center wrap w-40 gap-x-3 gap-y-2.5 -ml-1',
     //
     radiusBox: cn(
       'size-4 border border-r-0 border-b-0 rounded-bl-none rounded-br-none rounded-tr-none pointer',
-      `hover:${br('text.digest')}`,
+      `hover:${br('digest')}`,
       br('divider'),
       bg('card'),
     ),
-    radiusBoxActive: br('text.title'),
+    radiusBoxActive: br('title'),
   }
 }

@@ -8,6 +8,6 @@ export default ({ ...spacing }: TProps) => {
 
   return {
     wrapper: cn('row-center gap-x-2', margin(spacing)),
-    label: cn('border text-sm rounded px-2 py-px', br('divider'), fg('text.title')),
+    label: cn('border text-sm rounded px-2 py-px', br('divider'), fg('title')),
   }
 }

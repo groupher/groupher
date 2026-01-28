@@ -11,7 +11,7 @@ export default () => {
       'row-center w-40 h-8 no-underline pl-1 mb-0.5 rounded-lg pointer',
       `hover:${bg('hoverBg')}`,
     ),
-    menuTitle: cn('text-sm ml-2.5', fg('text.digest')),
+    menuTitle: cn('text-sm ml-2.5', fg('digest')),
     titleActive: cn('bold', primary('fg')),
   }
 }

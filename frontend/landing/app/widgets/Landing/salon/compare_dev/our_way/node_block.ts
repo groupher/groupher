@@ -1,7 +1,6 @@
-import type { TColorName } from '~/spec'
 import { COLOR_NAME } from '~/const/colors'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TColorName } from '~/spec'
 
 export { cn } from '~/css'
 
@@ -14,8 +13,8 @@ export default ({ bgColor }: TProps) => {
 
   const softBg = bgColor ? rainbow(COLOR_NAME[bgColor], 'bgSoft') : ''
   const solidBg = bgColor ? rainbow(COLOR_NAME[bgColor], 'bg') : bg('text.digest')
-  const titleColor = bgColor ? rainbow(COLOR_NAME[bgColor], 'fg') : fg('text.digest')
-  const fillColor = bgColor ? rainbow(COLOR_NAME[bgColor], 'fill') : fill('text.digest')
+  const titleColor = bgColor ? rainbow(COLOR_NAME[bgColor], 'fg') : fg('digest')
+  const fillColor = bgColor ? rainbow(COLOR_NAME[bgColor], 'fill') : fill('digest')
 
   return {
     wrapper: cn(
@@ -48,7 +47,7 @@ export default ({ bgColor }: TProps) => {
       bg('alphaBg'),
       br('divider'),
     ),
-    avatarGroup: cn('absolute align-both rounded-xl h-9 w-auto'),
+    avatarGroup: 'absolute align-both rounded-xl h-9 w-auto',
     emoji: 'size-4',
     discussIcon: cn('size-5 opacity-65', rainbow(COLOR_NAME.GREEN, 'fill')),
     //

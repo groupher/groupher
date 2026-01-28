@@ -1,30 +1,26 @@
 import MENU from '~/const/menu'
 
 import useTwBelt from '~/hooks/useTwBelt'
-
+import ViewSVG from '~/icons/article/Viewed'
+import GtdDoneSVG from '~/icons/CheckBold'
+import BugSVG from '~/icons/ColorBug'
+import LightSVG from '~/icons/ColorLight'
+import CommentSVG from '~/icons/Comment'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
-import GtdDoneSVG from '~/icons/CheckBold'
-
-// sort
-import UpvoteSVG from '~/icons/Upvote'
-import CommentSVG from '~/icons/Comment'
+import OtherSVG from '~/icons/menu/MoreL'
 import PublishSVG from '~/icons/Publish'
-import ViewSVG from '~/icons/article/Viewed'
-
-import LightSVG from '~/icons/ColorLight'
-import BugSVG from '~/icons/ColorBug'
 import QuestionSVG from '~/icons/Question'
 import RejectSVG from '~/icons/Reject'
-
-import OtherSVG from '~/icons/menu/MoreL'
+// sort
+import UpvoteSVG from '~/icons/Upvote'
 
 export default () => {
   const { cn, fill } = useTwBelt()
 
   return {
-    wrapper: cn('align-both size-5 mr-1'),
-    icon: cn('size-3.5', fill('text.digest')),
+    wrapper: 'align-both size-5 mr-1',
+    icon: cn('size-3.5', fill('digest')),
   }
 }
 

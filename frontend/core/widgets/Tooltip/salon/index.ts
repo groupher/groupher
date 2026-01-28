@@ -9,7 +9,7 @@ export default () => {
     tooltip: cn(
       'relative p-1.5 rounded border backdrop-blur-sm cursor-default',
       shadow('xl'),
-      fg('text.digest'),
+      fg('digest'),
       bg('popover.bg'),
       br('divider'),
     ),

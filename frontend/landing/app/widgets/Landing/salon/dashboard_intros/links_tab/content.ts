@@ -8,17 +8,17 @@ export default () => {
   const { cn, fg, bg, fill, br, shadow, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row w-full h-44 px-4 py-4 mt-20'),
+    wrapper: 'row w-full h-44 px-4 py-4 mt-20',
     ogPanel: 'w-1/2 pl-2.5 relative',
     twPanel: 'w-1/2 pl-14 relative',
-    logo: cn('size-9 rounded mb-4 mt-2 gradient-orange'),
+    logo: 'size-9 rounded mb-4 mt-2 gradient-orange',
 
-    title: cn('text-xs mb-1.5 mt-2.5', fg('text.title')),
-    desc: cn('text-xs', fg('text.digest')),
+    title: cn('text-xs mb-1.5 mt-2.5', fg('title')),
+    desc: cn('text-xs', fg('digest')),
     //
-    linkDesc: cn('text-xs mt-1.5', fg('text.digest')),
+    linkDesc: cn('text-xs mt-1.5', fg('digest')),
     iconBox: 'absolute left-2.5',
-    icon: cn('size-3.5 mr-1 opacity-65', fill('text.digest')),
+    icon: cn('size-3.5 mr-1 opacity-65', fill('digest')),
     //
     bar: cn('w-10 h-1.5 opacity-15 rounded-md absolute', bg('text.digest')),
     editBox: cn(

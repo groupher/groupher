@@ -14,9 +14,9 @@ export default () => {
       shadow('card'),
     ),
     header: 'column w-48 mt-4 mb-2.5',
-    title: cn('row-center bold-sm text-base', fg('text.digest')),
-    version: cn('text-sm ml-2', fg('text.hint')),
-    tags: cn('row-center mt-0.5 gap-x-2', fg('text.digest')),
+    title: cn('row-center bold-sm text-base', fg('digest')),
+    version: cn('text-sm ml-2', fg('hint')),
+    tags: cn('row-center mt-0.5 gap-x-2', fg('digest')),
     tagItem: 'row-center text-xs',
     //
     cover: cn('relative w-44 h-24 overflow-hidden rounded mb-1.5', rainbowSoft(COLOR_NAME.RED)),

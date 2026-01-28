@@ -1,6 +1,5 @@
-import useTwBelt from '~/hooks/useTwBelt'
-
 import SIZE from '~/const/size'
+import useTwBelt from '~/hooks/useTwBelt'
 import type { TAvatarSize } from '../spec'
 
 type TProps = {
@@ -14,11 +13,11 @@ export default ({ size }: TProps) => {
     wrapper: cn(
       'align-both border border-dashed border-transparent pointer',
       size === SIZE.SMALL ? 'size-5' : 'size-6',
-      `hover:${br('text.digest')}`,
+      `hover:${br('digest')}`,
       'trans-all-200',
       bg('hoverBg'),
       avatar(),
     ),
-    textMore: cn('align-both text-lg h-full w-full pb-2', fg('text.hint')),
+    textMore: cn('align-both text-lg h-full w-full pb-2', fg('hint')),
   }
 }

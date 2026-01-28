@@ -18,7 +18,7 @@ export default () => {
     //
     item: 'align-both size-4',
     itemActive: cn('rounded-md', rainbow(COLOR_NAME.CYAN, 'bgSoft')),
-    icon: cn('size-3.5', fill('text.digest')),
+    icon: cn('size-3.5', fill('digest')),
     iconActive: rainbow(COLOR_NAME.CYAN, 'fill'),
   }
 }

@@ -13,14 +13,14 @@ export default ({ viewerHasUpvoted }: TProps) => {
     wrapper: 'row-center',
     button: cn(
       'align-both min-w-10 h-11 mr-6 px-3 rounded-xl border',
-      `hover:${br('text.digest')}`,
+      `hover:${br('digest')}`,
       `hover:${bg('alphaBg2')}`,
       'trans-all-200',
       br('divider'),
       viewerHasUpvoted && cn(rainbowSoft(color)),
     ),
     digest: 'column items-start',
-    note: cn('row-center text-xs mt-0.5', fg('text.digest')),
-    user: cn('bold max-w-12 truncate -ml-0.5', fg('text.digest')),
+    note: cn('row-center text-xs mt-0.5', fg('digest')),
+    user: cn('bold max-w-12 truncate -ml-0.5', fg('digest')),
   }
 }

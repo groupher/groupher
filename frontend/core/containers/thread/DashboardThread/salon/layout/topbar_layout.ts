@@ -1,8 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
-
-import useBase from '.'
-
 import useTopbar from '../../logic/useTopbar'
+import useBase from '.'
 
 export { cn } from '~/css'
 
@@ -16,7 +14,7 @@ export default () => {
     wrapper: base.baseSection,
     block: cn(base.blockBase, 'align-both w-72 h-44'),
     blockActive: base.blockBaseActive,
-    select: cn('row-center gap-x-8 w-full'),
+    select: 'row-center gap-x-8 w-full',
     layout: 'column-align-both',
 
     bar: cn(base.bar, 'h-1.5 w-20 opacity-40'),
@@ -26,7 +24,7 @@ export default () => {
       rainbow(topbarBg, 'bg'),
     ),
 
-    bgWrapper: cn('row-center text-xs', fg('text.digest')),
+    bgWrapper: cn('row-center text-xs', fg('digest')),
     bgLabel: cn(
       'align-both size-8 circle border pointer ml-4 hover:opacity-80',
       rainbow(topbarBg, 'border'),

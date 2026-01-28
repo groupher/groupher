@@ -8,10 +8,10 @@ export default () => {
   return {
     bodyWrapper: 'min-h-52 mt-6 mb-3.5',
     title: 'ml-0.5 relative',
-    titleText: cn('text-2xl  w-11/12', fg('text.title')),
+    titleText: cn('text-2xl  w-11/12', fg('title')),
     subTitle: cn(
       'absolute top-1 right-0',
-      fg('text.hint'),
+      fg('hint'),
       'text-xl',
       'before:content-["#"] before:mt-[1px] before:mr-1 before:text-lg before:font-sans',
     ),

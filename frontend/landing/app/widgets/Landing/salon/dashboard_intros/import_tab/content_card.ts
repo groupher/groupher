@@ -23,7 +23,7 @@ export default () => {
     //
     bot: cn(
       'absolute w-auto px-2.5 py-1 z-20 bold-sm rounded-md border',
-      fg('text.digest'),
+      fg('digest'),
       'gradient-green',
       br('divider'),
       shadow('sm'),
@@ -31,7 +31,7 @@ export default () => {
 
     ai: cn(
       'absolute w-auto px-2.5 py-1 z-20 bold-sm rounded-md border',
-      fg('text.digest'),
+      fg('digest'),
       'gradient-orange',
       br('divider'),
       shadow('sm'),

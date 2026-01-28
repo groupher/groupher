@@ -7,8 +7,8 @@ export default () => {
 
   const linkItem = cn(
     'row-center text-sm h-8 px-2 pointer rounded-lg',
-    `hover:${fg('text.title')}`,
-    fg('text.digest'),
+    `hover:${fg('title')}`,
+    fg('digest'),
   )
 
   return {
@@ -17,7 +17,7 @@ export default () => {
     linkItem: cn(linkItem, `hover:${bg('hoverBg')}`),
     groupItem: cn(linkItem, 'relative', `hover:${bg('hoverBg')}`),
     groupItemActive: cn(bg('hoverBg')),
-    icon: cn('size-3.5 mr-1 ml-px', fill('text.digest')),
-    arrowIcon: cn('size-3.5 ml-1 opacity-80 -rotate-90', fill('text.digest')),
+    icon: cn('size-3.5 mr-1 ml-px', fill('digest')),
+    arrowIcon: cn('size-3.5 ml-1 opacity-80 -rotate-90', fill('digest')),
   }
 }

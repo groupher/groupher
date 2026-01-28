@@ -8,19 +8,19 @@ export default () => {
   const { bannerLayout } = useLayout()
 
   return {
-    preview: cn('row-center w-72 mb-2.5 mt-4 -ml-1 group'),
+    preview: 'row-center w-72 mb-2.5 mt-4 -ml-1 group',
     brand: cn('row-center px-1.5 py-0.5 rounded mr-2', bg('hoverBg')),
     favicon: 'size-4 mr-1.5',
-    siteName: cn('text-xs break-keep', fg('text.digest')),
+    siteName: cn('text-xs break-keep', fg('digest')),
     //
     title: cn(
       'text-sm no-underline hover:underline',
-      `hover:${fg('text.title')}`,
+      `hover:${fg('title')}`,
       bannerLayout === BANNER_LAYOUT.SIDEBAR ? cut('w-44') : cut('w-28'),
-      fg('text.digest'),
+      fg('digest'),
     ),
     //
-    arrowBox: cn('size-3.5 group-smoky-0'),
-    arrowIcon: cn('size-3.5', fill('text.digest')),
+    arrowBox: 'size-3.5 group-smoky-0',
+    arrowIcon: cn('size-3.5', fill('digest')),
   }
 }

@@ -1,6 +1,5 @@
-import type { TSpace } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 export { cn } from '~/css'
 
@@ -28,8 +27,8 @@ export default ({ ...spacing }: TProps) => {
     },
 
     content: 'w-2/3',
-    title: cn('text-base relative z-2 bold-sm', fg('text.title')),
-    desc: cn('text-xs mt-2.5 line-clamp-2', fg('text.digest')),
+    title: cn('text-base relative z-2 bold-sm', fg('title')),
+    desc: cn('text-xs mt-2.5 line-clamp-2', fg('digest')),
     linkButton: cn(
       'rounded-md text-sm py-1.5 px-4 scale-90',
       bg('alphaBg'),

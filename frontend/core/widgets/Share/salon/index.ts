@@ -8,7 +8,7 @@ type TProps = TSpace
 export default ({ ...spacing }: TProps) => {
   const { cn, fg, margin, hover } = useTwBelt()
 
-  const tipNote = cn('text-xs', fg('text.digest'))
+  const tipNote = cn('text-xs', fg('digest'))
 
   return {
     wrapper: cn('row-center gap-x-2 smoky-65', margin(spacing)),

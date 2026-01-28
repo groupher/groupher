@@ -8,7 +8,7 @@ export default () => {
       'column p-5 rounded-md z-20 border w-[420px] h-[460px]',
       'absolute bottom-40 left-36',
       br('divider'),
-      fg('text.digest'),
+      fg('digest'),
       bg('card'),
       shadow('md'),
     ),

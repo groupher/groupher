@@ -7,12 +7,12 @@ export default () => {
   const { broadcastArticleBg } = useBroadcast()
 
   return {
-    wrapper: cn('w-full'),
+    wrapper: 'w-full',
 
     enableDesc: 'w-10/12 leading-relaxed',
     bgLabel: cn('align-both size-8 circle border pointer', rainbow(broadcastArticleBg, 'border')),
     colorBall: cn('size-6 circle', rainbow(broadcastArticleBg, 'bg')),
-    label: cn('text-sm w-28 min-w-28', fg('text.digest')),
+    label: cn('text-sm w-28 min-w-28', fg('digest')),
     item: 'row-center mb-5',
   }
 }

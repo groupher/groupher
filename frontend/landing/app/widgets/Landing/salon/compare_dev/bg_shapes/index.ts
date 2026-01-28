@@ -12,7 +12,7 @@ export default () => {
   const turnning = isLightTheme ? 'opacity-30 saturate-50' : 'opacity-15 saturate-100'
 
   return {
-    wrapper: cn('absolute w-full h-full top-0 left-0'),
+    wrapper: 'absolute w-full h-full top-0 left-0',
     wipItem: cn(
       'row-center absolute left-1/2 top-28 -ml-32 rotate-3',
       rainbow(COLOR_NAME.GREEN, 'fg'),
@@ -46,9 +46,9 @@ export default () => {
     curveLineTR: cn('absolute size-80 top-24 right-48', turnning),
     curveLineBR: cn('absolute size-80 bottom-20 right-44 mb-1', turnning),
     fillPurple: rainbow(COLOR_NAME.PURPLE, 'fill'),
-    fillDigest: fill('text.digest'),
+    fillDigest: fill('digest'),
     //
-    shapeIcon: cn('size-5 absolute opacity-30'),
+    shapeIcon: 'size-5 absolute opacity-30',
     fillGreen: rainbow(COLOR_NAME.GREEN, 'fill'),
     fillRed: rainbow(COLOR_NAME.RED, 'fill'),
     fillOrange: rainbow(COLOR_NAME.ORANGE, 'fill'),

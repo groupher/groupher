@@ -15,7 +15,7 @@ export default () => {
     title: cn('text-sm bold-sm grow', fg('text.invert')),
     resetBtn: cn(
       'min-w-15 h-5 text-xs px-1.5 rounded-md pointer smoky-90 transition-opacity',
-      fg('text.title'),
+      fg('title'),
       bg('popover.bg'),
     ),
     more: cn('row-center ml-2 h-5 text-xs border-b border-dashed smoky-90', fg('text.invert')),

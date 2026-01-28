@@ -14,7 +14,7 @@ export default ({ type }: TProps) => {
       'rounded-bl-[10px] rounded-br-[10px]',
       'trans-all-100',
       bg('modal.subPanel'),
-      fg('text.title'),
+      fg('title'),
       getInfoPanelHeight(type),
     ),
   }

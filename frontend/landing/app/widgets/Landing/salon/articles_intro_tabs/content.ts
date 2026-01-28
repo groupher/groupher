@@ -16,7 +16,7 @@ export default ({ tab }: TProps) => {
   )
 
   return {
-    wrapper: cn('column-align-both relative w-full'),
+    wrapper: 'column-align-both relative w-full',
     inner: cn(
       'column-align-both relative w-full trans-all-200',
       tab === THREAD.POST && 'h-[600px]',

@@ -9,6 +9,6 @@ export default () => {
   return {
     wrapper: 'row mt-0.5',
     title: cn(hoverTitle, 'bold-sm'),
-    brief: cn('row-center grow ml-2.5 mb-1.5', fg('text.digest')),
+    brief: cn('row-center grow ml-2.5 mb-1.5', fg('digest')),
   }
 }

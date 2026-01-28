@@ -13,26 +13,26 @@ export default ({ fold }: TProps) => {
 
   return {
     wrapper: 'mb-4',
-    folder: cn('row-between group pointer mb-3'),
-    iconBox: cn('align-both size-5'),
-    title: cn('text-sm grow ml-2 bold', fg('text.digest'), !isLightTheme && 'brightness-110'),
+    folder: 'row-between group pointer mb-3',
+    iconBox: 'align-both size-5',
+    title: cn('text-sm grow ml-2 bold', fg('digest'), !isLightTheme && 'brightness-110'),
     arrowIcon: cn(
       'size-4 group-smoky-65 trans-all-200',
       !fold ? '-rotate-90' : 'rotate-180',
-      fill('text.digest'),
+      fill('digest'),
     ),
-    menu: cn('ml-1.5 mt-2 border-l border-transparent sexy-border-50'),
+    menu: 'ml-1.5 mt-2 border-l border-transparent sexy-border-50',
     item: cn(
       'block relative no-underline w-full text-sm px-1 py-1 pl-5 mt-1 mb-0 rounded-lg',
       `hover:${bg('hoverBg')}`,
-      fg('text.digest'),
+      fg('digest'),
     ),
     itemActive: cn(
       'rounded-tl-none rounded-bl-none py-1.5',
       isLightTheme && 'bold-sm',
       primary('fg'),
       bg('hoverBg'),
-      isDarkBlack && fg('text.digest'),
+      isDarkBlack && fg('digest'),
       vividDark(),
     ),
     itemActiveBar: cn(
@@ -40,6 +40,6 @@ export default ({ fold }: TProps) => {
       primary('bg'),
       isDarkBlack && bg('text.digest'),
     ),
-    menuIcon: cn('size-3.5', fill('text.digest')),
+    menuIcon: cn('size-3.5', fill('digest')),
   }
 }

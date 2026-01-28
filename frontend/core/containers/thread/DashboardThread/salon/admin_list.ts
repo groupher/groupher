@@ -5,8 +5,8 @@ export default ({ ...spacing }) => {
 
   return {
     wrapper: cn('column items-end gap-y-5 -mt-8', margin(spacing)),
-    header: cn('row-center gap-x-1'),
-    title: cn('text-xs w-auto', fg('text.digest')),
+    header: 'row-center gap-x-1',
+    title: cn('text-xs w-auto', fg('digest')),
     iconBox: cn('size-4', hover('bg')),
     icon: cn('size-3.5', hover('icon')),
 

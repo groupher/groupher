@@ -20,8 +20,8 @@ export default () => {
     wrapper: cn('column-align-both relative h-full w-full overflow-hidden', container()),
     inner: 'column-align-both relative w-full h-full',
     banner: 'column-center relative w-full pt-16',
-    githubInfo: cn('row-center mt-12 mb-3 hover:underline pointer', fg('text.digest')),
-    githubIcon: cn('size-4 mr-1.5'),
+    githubInfo: cn('row-center mt-12 mb-3 hover:underline pointer', fg('digest')),
+    githubIcon: 'size-4 mr-1.5',
     githubText: 'clip-text bold text-base',
     githubIconStyle: { fill: getCursorGradient(wallpaper) },
     textGradientStyle: { background: `linear-gradient(to top, ${getPathGradient(wallpaper)})` },
@@ -32,10 +32,10 @@ export default () => {
       bg('text.digest'),
       isLightTheme ? 'opacity-10' : 'opacity-20',
     ),
-    icon: cn('size-9 inline-block mr-1 -mt-1 z-20'),
-    desc: cn('inline-flex items-center text-center text-lg', fg('text.digest')),
+    icon: 'size-9 inline-block mr-1 -mt-1 z-20',
+    desc: cn('inline-flex items-center text-center text-lg', fg('digest')),
     //
-    focus: cn('bold-sm mx-0.5', fg('text.title')),
+    focus: cn('bold-sm mx-0.5', fg('title')),
     //
     purpleFill: cn(rainbow(COLOR_NAME.PURPLE, 'fill'), colorFill),
     blueFill: cn(rainbow(COLOR_NAME.BLUE, 'fill'), colorFill),
@@ -54,7 +54,7 @@ export default () => {
     demoItem: cn(menu('bar'), 'py-1'),
     demoItemTitle: cn(menu('title')),
     outLink: cn(menu('link')),
-    arrow: cn('size-3.5 rotate-180 ml-0.5', fill('text.digest')),
+    arrow: cn('size-3.5 rotate-180 ml-0.5', fill('digest')),
     //
     divider: cn('mb-20 mt-14', sexyBorder()),
     faqWrapper: 'w-full mt-32 pl-52 pr-48',

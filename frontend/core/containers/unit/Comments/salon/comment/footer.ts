@@ -5,7 +5,7 @@ export default () => {
   const { cn, fg, fill, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('column mb-1 -mt-3 -ml-2'),
+    wrapper: 'column mb-1 -mt-3 -ml-2',
     main: 'row-center',
     extra: 'row-center mb-3.5 px-2',
     anwser: cn('text-xs row-center mr-4 bold-sm', rainbow(COLOR_NAME.GREEN, 'fg')),

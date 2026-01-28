@@ -1,7 +1,7 @@
-import type { TColorName } from '~/spec'
+import { COLOR_NAME } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
-import { COLOR_NAME } from '~/const/colors'
+import type { TColorName } from '~/spec'
 
 import type { TSubMenu } from '../../spec'
 import { getSubMenuWidth } from '../metric'
@@ -21,17 +21,17 @@ export default ({ subMenuType = null, color = COLOR_NAME.BLACK }: TProps = {}) =
     menuItem: cn(
       menu('bar'),
       'row-center h-8 w-full px-2 py-0.5 pr-0 rounded-md group',
-      fg('text.digest'),
+      fg('digest'),
     ),
     menuItemDanger: cn(
-      fg('text.digest'),
+      fg('digest'),
       `hover:${fg('rainbow.red')}`,
       `hover:${bg('rainbow.redSoft')}`,
     ),
     menuTitle: cn(menu('title'), cut('w-24')),
     divider: cn(sexyBorder(), 'my-2.5'),
     //
-    icon: cn('size-3.5 mr-1.5', fill('text.digest'), `group-hover:${fill('text.title')}`),
+    icon: cn('size-3.5 mr-1.5', fill('digest'), `group-hover:${fill('title')}`),
     rainbowFill: rainbow(color, 'fill'),
   }
 }

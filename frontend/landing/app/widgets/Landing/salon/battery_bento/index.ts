@@ -7,10 +7,10 @@ export default () => {
   const { cn, fg, rainbow, landingTitle } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both w-full mt-32 mb-16'),
+    wrapper: 'column-align-both w-full mt-32 mb-16',
     slogan: 'column align-both mb-16',
     title: landingTitle(),
-    desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
+    desc: cn('text-lg mt-3', fg('digest'), isDarkTheme && 'opacity-65'),
     //
     cards: 'align-both w-full h-auto gap-x-9',
     footerCards: 'align-both w-full gap-x-9 mt-9 mb-24',
@@ -27,7 +27,7 @@ export default () => {
 
       return cn(`gradient-${color$}`, `hover:${rainbow(color, 'border')}`)
     },
-    introTitle: cn('text-base mb-1', fg('text.title')),
-    introDesc: cn('text-sm break-all', fg('text.digest')),
+    introTitle: cn('text-base mb-1', fg('title')),
+    introDesc: cn('text-sm break-all', fg('digest')),
   }
 }

@@ -25,7 +25,7 @@ export default ({ linearBorderPos }) => {
     },
     glassBorder: 'relative align-both trans-all-200',
     image: cn('trans-all-200 object-cover', getBorderColor(linearBorderPos)),
-    light: cn('absolute size-96 trans-all-200 bg-blend-lighten pointer-events-none z-30'),
+    light: 'absolute size-96 trans-all-200 bg-blend-lighten pointer-events-none z-30',
 
     // helpers
     pixelAdd,

@@ -10,18 +10,18 @@ export default () => {
   const { cn, fg, bg, fill, rainbow, sexyBorder } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both w-[1400px] h-auto mb-16 px-44'),
+    wrapper: 'column-align-both w-[1400px] h-auto mb-16 px-44',
     inner: 'row wrap w-full h-auto relative',
     block: 'column w-1/3 h-48 px-10 py-5',
-    title: cn('text-base mt-5 mb-1.5', fg('text.title')),
-    desc: cn('text-sm', fg('text.digest')),
+    title: cn('text-base mt-5 mb-1.5', fg('title')),
+    desc: cn('text-sm', fg('digest')),
     //
     iconBox: 'align-both size-8',
-    blockIcon: cn('size-7 opacity-50'),
+    blockIcon: 'size-7 opacity-50',
 
     vibeIcon: cn(
       'absolute size-4 rotate-180 trans-all-200 !duration-1000',
-      fill('text.digest'),
+      fill('digest'),
       !isLightTheme && 'opacity-25',
     ),
     vibeDown: cn('-rotate-90 opacity-30', isLightTheme ? 'opacity-30' : 'opacity-10'),

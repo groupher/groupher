@@ -20,8 +20,8 @@ export default () => {
     actionBlock: cn('w-7 h-6 rounded-md align-both', bg('menuHoverBg')),
     bottomActions: cn('mt-1 w-24 p-1.5 rounded-t-md grow', bg('menuHoverBg')),
     //
-    icon: cn('size-3', fill('text.title')),
-    menuItem: cn('row-center mb-2 mt-0.5 ml-0.5 text-xs', fg('text.digest')),
+    icon: cn('size-3', fill('title')),
+    menuItem: cn('row-center mb-2 mt-0.5 ml-0.5 text-xs', fg('digest')),
     bar: cn('ml-2 w-8 h-1.5 rounded-md opacity-80', bg('text.digest')),
   }
 }

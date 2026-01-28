@@ -13,14 +13,14 @@ export default ({ active, color }: TProps) => {
       active && 'p-1.5 pl-2.5 -ml-1 my-0.5',
       active ? gradientBar(color) : 'transparent',
     ),
-    title: cn('group-smoky-80', active && 'opacity-100', fg('text.title')),
+    title: cn('group-smoky-80', active && 'opacity-100', fg('title')),
     tag: cn('row-center grow text-sm', active && '-ml-0.5'),
     closeBox: cn(
       'align-both size-5 rounded',
       !active ? `hover:${bg('hoverBg')}` : '',
       'hover:opacity-80 pointer',
     ),
-    closeIcon: cn('size-4 hidden group-smoky-65 group-hover:block', fill('text.digest')),
+    closeIcon: cn('size-4 hidden group-smoky-65 group-hover:block', fill('digest')),
     checkIcon: cn('size-3.5 opacity-80 group-hover:hidden', rainbow(color, 'fill')),
   }
 }

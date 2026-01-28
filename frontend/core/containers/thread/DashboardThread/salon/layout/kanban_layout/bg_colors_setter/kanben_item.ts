@@ -11,6 +11,6 @@ export default () => {
   return {
     wrapper: cn('column relative h-14 rounded-md py-0.5 px-1.5', bg('alphaBg'), shadow('md')),
     bar: cn(base.bar, 'h-1 w-20 opacity-40 saturate-0'),
-    icon: cn('size-3.5 absolute bottom-1 opacity-50', fill('text.digest')),
+    icon: cn('size-3.5 absolute bottom-1 opacity-50', fill('digest')),
   }
 }

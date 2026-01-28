@@ -9,11 +9,11 @@ export default () => {
       bg('sandBox'),
       br('divider'),
     ),
-    header: cn('text-base column h-16 px-7 pb-2 w-full', fg('text.digest')),
+    header: cn('text-base column h-16 px-7 pb-2 w-full', fg('digest')),
     //
     replyToHint: 'row-center mb-1.5',
-    replyToContent: cn('line-clamp-1 text-sm', fg('text.title')),
-    replyToAuthor: cn('ml-1.5', fg('text.title')),
+    replyToContent: cn('line-clamp-1 text-sm', fg('title')),
+    replyToAuthor: cn('ml-1.5', fg('title')),
     editorWrapper: cn('overflow-x-hidden pt-2.5 min-h-80', bg('sandBox')),
     footer: 'w-full pt-4',
   }

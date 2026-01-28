@@ -1,15 +1,12 @@
 import useBase from '.'
 
-import useTwBelt from '~/hooks/useTwBelt'
-
 export { cn } from '~/css'
 
 export default () => {
-  const { cn } = useTwBelt()
   const base = useBase()
 
   return {
-    wrapper: cn('column-align-both size-16 group/block'),
+    wrapper: 'column-align-both size-16 group/block',
     panel: base.panel,
     block: base.settingBlock,
     blockActive: base.settingBlockActive,

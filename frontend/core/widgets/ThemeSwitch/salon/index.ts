@@ -23,8 +23,8 @@ export default ({ ...spacing }: TProps) => {
 
     icon: cn(
       'size-5 active:scale-90 trans-all-200',
-      fill('text.digest'),
-      `group-hover:${fill('text.title')}`,
+      fill('digest'),
+      `group-hover:${fill('title')}`,
     ),
   }
 }

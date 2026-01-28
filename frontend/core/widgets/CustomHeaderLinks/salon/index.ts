@@ -5,9 +5,9 @@ export default () => {
 
   const link = cn(
     'row-center text-sm rounded px-1.5 h-8 pointer no-underline',
-    `hover:${fg('text.title')}`,
+    `hover:${fg('title')}`,
     `hover:${bg('hoverBg')}`,
-    fg('text.digest'),
+    fg('digest'),
   )
 
   return {
@@ -19,6 +19,6 @@ export default () => {
       `hover:${br('divider')}`,
     ),
     linkActive: cn(primary('fg'), bg('hoverBg')),
-    arrowIcon: cn('absolute size-3.5 right-px -rotate-90', fill('text.digest')),
+    arrowIcon: cn('absolute size-3.5 right-px -rotate-90', fill('digest')),
   }
 }

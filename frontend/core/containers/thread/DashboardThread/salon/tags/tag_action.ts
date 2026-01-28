@@ -8,7 +8,7 @@ export default () => {
   const { cn, hover } = useTwBelt()
 
   return {
-    wrapper: cn('row-center gap-x-1'),
+    wrapper: 'row-center gap-x-1',
     iconBox: cn('size-4', hover('bg')),
     icon: cn('size-3.5', hover('icon')),
   }

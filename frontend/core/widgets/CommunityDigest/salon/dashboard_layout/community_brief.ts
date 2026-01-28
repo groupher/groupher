@@ -14,17 +14,17 @@ export default () => {
       `hover:${br('divider')}`,
       `hover:${bg('card')}`,
     ),
-    title: cn('row-center text-sm bold-sm ml-1.5 max-w-32 truncate', fg('text.digest')),
-    slash: cn('text-xs ml-2 mr-1.5', fg('text.digest')),
-    optArrowIcon: cn('size-3 mr-1.5 group-smoky-80', fg('text.digest')),
+    title: cn('row-center text-sm bold-sm ml-1.5 max-w-32 truncate', fg('digest')),
+    slash: cn('text-xs ml-2 mr-1.5', fg('digest')),
+    optArrowIcon: cn('size-3 mr-1.5 group-smoky-80', fg('digest')),
     //
     topPanel: cn('border px-3 py-1 w-40 min-h-28', br('divider')),
-    arrowIcon: cn('size-3.5', fill('text.digest')),
+    arrowIcon: cn('size-3.5', fill('digest')),
 
     panelItem: cn(menu('bar'), 'h-8 mt-1'),
 
     outside: 'hover-underline',
-    icon: cn('size-3.5 mr-3 pointer', fill('text.digest'), `group-hover:${fill('text.title')}`),
+    icon: cn('size-3.5 mr-3 pointer', fill('digest'), `group-hover:${fill('title')}`),
     //
     divider: cn(sexyBorder(), 'my-1.5'),
     //

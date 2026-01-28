@@ -6,7 +6,7 @@ export default () => {
   const { cn, bg, hover, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('w-36 py-0.5'),
+    wrapper: 'w-36 py-0.5',
     colorWrapper: 'align-both mt-2 pb-3.5 gap-x-2.5 gap-y-1.5',
     item: cn('row-center pl-2.5 px-1.5 py-1 last:mb-2.5', hover('bg')),
     itemActive: cn(bg('hoverBg')),

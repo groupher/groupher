@@ -7,9 +7,9 @@ export default () => {
 
   return {
     wrapper: 'pb-8 mb-5 w-80',
-    label: cn('text-sm bold-sm mb-2.5', fg('text.digest')),
+    label: cn('text-sm bold-sm mb-2.5', fg('digest')),
     input: 'w-80',
     divider: cn('w-full h-px mt-8 mb-8', bg('divider')),
-    hint: cn('font-sm opacity-80 mt-1.5 ml-0.5', fg('text.digest')),
+    hint: cn('font-sm opacity-80 mt-1.5 ml-0.5', fg('digest')),
   }
 }

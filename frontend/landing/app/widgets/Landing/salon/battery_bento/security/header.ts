@@ -10,7 +10,7 @@ export default () => {
   const { cn, fg, bg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row-between absolute left-0 top-0 w-full h-8 px-3 trans-all-200'),
+    wrapper: 'row-between absolute left-0 top-0 w-full h-8 px-3 trans-all-200',
     actions: 'row-center mt-1.5',
     dot: 'size-2 circle ml-2 brightness-125',
     redBg: rainbow(COLOR_NAME.RED, 'bg'),
@@ -27,7 +27,7 @@ export default () => {
     domainText: cn(
       'text-xs',
       isLightTheme ? 'bold' : '',
-      isLightTheme ? fg('button.fg') : fg('text.digest'),
+      isLightTheme ? fg('button.fg') : fg('digest'),
     ),
   }
 }

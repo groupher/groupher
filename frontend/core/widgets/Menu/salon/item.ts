@@ -1,6 +1,5 @@
-import type { TActive } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TActive } from '~/spec'
 
 export { cn } from '~/css'
 
@@ -20,6 +19,6 @@ export default ({ active }: TProps) => {
     main: 'mt-0.5 mb-1',
     title: '',
     fullTitle: '',
-    desc: cn('text-xs mt-1 line-clamp-2', fg('text.digest')),
+    desc: cn('text-xs mt-1 line-clamp-2', fg('digest')),
   }
 }

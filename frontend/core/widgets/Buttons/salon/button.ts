@@ -72,7 +72,7 @@ export default ({
       ghost && color && `hover:${rainbow(color, 'bgSoft')}`,
       ghost && bg('transparent'),
       ghost && !color ? primary('fg') : fg('button.fg'),
-      ghost && !color && isDarkBlack && fg('text.digest'),
+      ghost && !color && isDarkBlack && fg('digest'),
       isRed && 'border-transparent',
       isRed && ghost && rainbow(COLOR_NAME.RED, 'borderSoft'),
       loading && bg('transparent'),
@@ -87,18 +87,14 @@ export default ({
       disabled &&
         !ghost &&
         isLightTheme &&
-        cn(
-          'brightness-90 hover:brightness-90 hover:cursor-not-allowed',
-          bg('hoverBg'),
-          fg('text.hint'),
-        ),
+        cn('brightness-90 hover:brightness-90 hover:cursor-not-allowed', bg('hoverBg'), fg('hint')),
       disabled &&
         !ghost &&
         !isLightTheme &&
         cn(
           'brightness-125 hover:brightness-125 hover:cursor-not-allowed',
           bg('hoverBg'),
-          fg('text.hint'),
+          fg('hint'),
         ),
     ),
     innerRed: cn(

@@ -8,7 +8,7 @@ export default () => {
   const { cn, fg, bg, br, fill, shadow, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('absolute top-44 mt-0.5 left-8 w-full h-5/6'),
+    wrapper: 'absolute top-44 mt-0.5 left-8 w-full h-5/6',
     postItemWrapper: cn(
       'absolute -top-2 rounded-t-xl p-1 z-30 border border-dashed',
       bg('card'),
@@ -16,13 +16,13 @@ export default () => {
     ),
     postItem: cn(
       'align-both w-24 h-8 rounded-t-md text-xs',
-      fg('text.digest'),
+      fg('digest'),
       'gradient-blue',
       shadow('xl'),
     ),
     item: cn(
       'absolute p-1 z-20 align-both w-20 h-8 rounded-t-2xl border border-dashed text-xs',
-      fg('text.digest'),
+      fg('digest'),
       bg('card'),
       rainbow(COLOR_NAME.BLUE, 'borderSoft'),
     ),
@@ -35,7 +35,7 @@ export default () => {
       'absolute top-0 left-0 w-full h-full rotate-180 -z-10 opacity-50',
       'gradient-blue',
     ),
-    icon: cn('size-3 mr-1', fill('text.digest')),
-    title: cn('text-xs', fg('text.digest')),
+    icon: cn('size-3 mr-1', fill('digest')),
+    title: cn('text-xs', fg('digest')),
   }
 }

@@ -6,7 +6,7 @@ export default () => {
   const { cn, fill, bg, br, shadow, hover } = useTwBelt()
 
   return {
-    wrapper: cn('relative'),
+    wrapper: 'relative',
     inner: 'relative',
     label: 'block pointer z-50 trans-all-100',
     inputFile: 'w-px h-px opacity-0 absolute z-10 overflow-hidden',

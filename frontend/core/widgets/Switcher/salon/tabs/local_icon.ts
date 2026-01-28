@@ -13,9 +13,9 @@ export default ({ small }: TProps) => {
     icon: cn(
       'mr-1.5 opacity-60 transition-colors',
       small ? 'size-3' : 'size-3.5',
-      `group-hover:${fill('text.title')}`,
-      fill('text.digest'),
+      `group-hover:${fill('title')}`,
+      fill('digest'),
     ),
-    active: cn('opacity-80', fill('text.title')),
+    active: cn('opacity-80', fill('title')),
   }
 }

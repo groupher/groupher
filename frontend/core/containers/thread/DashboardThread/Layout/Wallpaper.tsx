@@ -1,5 +1,4 @@
 import { PAGE_BG_CSS_KEY } from '~/const/colors'
-import { WIDTH } from '~/css'
 import { blurRGB } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'
 import useGaussBlur from '~/hooks/useGaussBlur'
@@ -27,7 +26,7 @@ export default () => {
         title='壁纸设置'
         desc={
           <>
-            「壁纸」为宽屏（屏幕尺寸大于 {WIDTH.COMMUNITY.PAGE}
+            「壁纸」为宽屏（屏幕尺寸大于 (WIDTH.COMMUNITY.PAGE)
             ）下，超出内容部分显示的背景图片，除内置壁纸外，你还可以上传和社区话题相关的自定义图片。
           </>
         }

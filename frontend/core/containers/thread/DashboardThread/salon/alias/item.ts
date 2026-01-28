@@ -7,7 +7,7 @@ export default () => {
 
   return {
     wrapper: cn('column py-4 w-full pb-7 border-b', br('divider')),
-    title: cn('text-sm w-32', fg('text.title')),
+    title: cn('text-sm w-32', fg('title')),
     alias: 'w-auto',
     header: 'row-center',
     footer: 'row-center h-10 -ml-px',
@@ -16,6 +16,6 @@ export default () => {
     //
     arrowBar: 'row-center grow pr-16',
     arrowLine: cn('grow mr-1.5 border-t-2 border-dashed h-px opacity-40', br('text.hint')),
-    arrowIcon: cn('size-3.5 opacity-80', fill('text.digest')),
+    arrowIcon: cn('size-3.5 opacity-80', fill('digest')),
   }
 }

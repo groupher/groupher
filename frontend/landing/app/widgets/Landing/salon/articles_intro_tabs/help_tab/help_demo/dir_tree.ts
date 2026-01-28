@@ -13,8 +13,8 @@ export default () => {
       shadow('card'),
     ),
     pinnedItem: 'row-center mb-0.5',
-    icon: cn('size-3 mr-1 -mt-1', fill('text.digest')),
-    file: cn('text-xs mb-2 ml-1', fg('text.digest')),
-    dir: cn('text-xs bold-sm mb-2', fg('text.title')),
+    icon: cn('size-3 mr-1 -mt-1', fill('digest')),
+    file: cn('text-xs mb-2 ml-1', fg('digest')),
+    dir: cn('text-xs bold-sm mb-2', fg('title')),
   }
 }

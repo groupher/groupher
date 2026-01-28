@@ -6,7 +6,7 @@ export default () => {
   return {
     wrapper: 'row items-start mb-4',
     info: '',
-    name: cn('truncate w-28 text-base mb-0.5 font-medium', fg('text.title')),
-    bio: cn('text-xs w-4/5 line-clamp-2', fg('text.hint')),
+    name: cn('truncate w-28 text-base mb-0.5 font-medium', fg('title')),
+    bio: cn('text-xs w-4/5 line-clamp-2', fg('hint')),
   }
 }

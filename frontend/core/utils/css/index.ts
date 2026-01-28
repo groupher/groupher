@@ -8,8 +8,8 @@ import { twMerge } from 'tailwind-merge'
  * @param inputs - Any number of class names or class name arrays.
  * @returns A string of merged class names.
  */
-export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
+export const cnMerge = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
+
+export const cn = (...inputs: ClassValue[]) => clsx(inputs)
 
 export { getCSSVar, setGlobalCSSVar } from './helper'
-// TODO: remove
-export { WIDTH } from './metric'

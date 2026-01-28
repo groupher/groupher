@@ -10,7 +10,7 @@ export default () => {
     ),
     section: 'w-full pt-1',
     header: 'row-center w-full',
-    title: cn('text-sm', fg('text.title')),
-    desc: cn('text-xs mt-1 w-4/5', fg('text.digest')),
+    title: cn('text-sm', fg('title')),
+    desc: cn('text-xs mt-1 w-4/5', fg('digest')),
   }
 }

@@ -25,9 +25,9 @@ export default () => {
       rainbow(COLOR_NAME.GREEN, 'fg'),
     ),
     //
-    title: cn('text-xs mt-0.5 opacity-90', fg('text.title')),
+    title: cn('text-xs mt-0.5 opacity-90', fg('title')),
     footer: 'row-center w-full scale-90 mt-2',
-    upvoteIcon: cn('size-3 -ml-2.5', fill('text.digest')),
-    count: cn('text-sm ml-1 mt-px grow', fg('text.digest')),
+    upvoteIcon: cn('size-3 -ml-2.5', fill('digest')),
+    count: cn('text-sm ml-1 mt-px grow', fg('digest')),
   }
 }

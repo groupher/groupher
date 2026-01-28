@@ -17,7 +17,7 @@ export default ({ viewerHasUpvoted }: TProps) => {
       'row-center h-5 border border-transparent rounded-md pl-1 pr-1.5 -ml-1.5',
       'hover:ml-px',
       'hover:mr-2',
-      `hover:${br('text.digest')}`,
+      `hover:${br('digest')}`,
       `hover:${bg('alphaBg2')}`,
       'trans-all-200',
       viewerHasUpvoted && cn('mr-2 ml-px pr-2', br('divider'), rainbowSoft(color)),

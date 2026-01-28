@@ -20,8 +20,8 @@ export default ({ isPinned }: TProps) => {
       isPinned && primary('fg'),
       isPinned ? 'bold' : 'bold-sm',
     ),
-    author: cn('text-xs', fg('text.hint')),
-    publish: cn('text-xs', fg('text.hint')),
+    author: cn('text-xs', fg('hint')),
+    publish: cn('text-xs', fg('hint')),
     dot: cn('size-0.5 circle ml-2 mr-1.5', bg('dot')),
   }
 }

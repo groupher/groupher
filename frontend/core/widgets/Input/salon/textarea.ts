@@ -11,12 +11,12 @@ export default () => {
       'px-2.5 py-2 rounded-md text-sm text-left leading-normal caret-inherit saturate-0',
       'trans-all-200',
       'min-h-14 overflow-hidden',
-      `hover:${br('text.digest')}`,
-      `focus:${br('text.digest')}`,
-      `active:${br('text.digest')}`,
+      `hover:${br('digest')}`,
+      `focus:${br('digest')}`,
+      `active:${br('digest')}`,
       br('divider'),
       bg('card'),
-      fg('text.digest'),
+      fg('digest'),
     ),
   }
 }

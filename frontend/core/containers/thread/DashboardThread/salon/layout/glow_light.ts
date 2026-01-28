@@ -17,7 +17,7 @@ export default () => {
   const GLOW_EFFECTS = theme === THEME.LIGHT ? GLOW_EFFECTS_DAY : GLOW_EFFECTS_NIGHT
 
   return {
-    wrapper: cn(''),
+    wrapper: '',
     block: cn(base.blockBase, 'h-60 saturate-100'),
     blockActive: cn(base.blockBaseActive),
     row: 'row-center wrap gap-x-5 gap-y-6 w-full',
@@ -34,8 +34,8 @@ export default () => {
     },
     //
     settings: 'row-center ml-1',
-    title: cn('text-sm w-28', fg('text.digest')),
+    title: cn('text-sm w-28', fg('digest')),
 
-    icon: cn('size-12', fill('text.title')),
+    icon: cn('size-12', fill('title')),
   }
 }

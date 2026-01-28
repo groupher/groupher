@@ -14,7 +14,7 @@ export default () => {
       br('divider'),
       shadow('sm'),
     ),
-    otherCard: cn('ml-10 w-36 h-14'),
+    otherCard: 'ml-10 w-36 h-14',
     img: cn('size-7', dimDark()),
   }
 }

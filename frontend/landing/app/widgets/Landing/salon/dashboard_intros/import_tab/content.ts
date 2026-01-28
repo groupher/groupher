@@ -9,7 +9,7 @@ export default () => {
     wrapper: cn('w-44 h-40 px-6 py-4 -mt-2.5 rounded-md relative z-30', bg('card'), shadow('md')),
     head: 'row-center',
     logo: cn('size-6', shadow('sm')),
-    title: cn('text-lg ml-2', fg('text.title')),
+    title: cn('text-lg ml-2', fg('title')),
     //
     bar: cn('w-32 h-2 opacity-15 rounded-md mb-3', bg('text.digest')),
   }

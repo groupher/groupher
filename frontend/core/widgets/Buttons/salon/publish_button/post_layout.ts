@@ -12,7 +12,7 @@ export default () => {
       'row-center justify-between',
       BANNER_LAYOUT.HEADER === bannerLayout ? 'w-40' : 'w-28',
     ),
-    title: cn('text-xs pl-0.5 bold-sm'),
+    title: 'text-xs pl-0.5 bold-sm',
     editIcon: cn('size-3 mr-1 opacity-80', fill('button.fg')),
   }
 }

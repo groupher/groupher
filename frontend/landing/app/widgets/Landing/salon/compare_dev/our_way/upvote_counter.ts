@@ -1,8 +1,6 @@
-import type { TColorName } from '~/spec'
-
 import { COLOR_NAME } from '~/const/colors'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TColorName } from '~/spec'
 
 type TProps = {
   color?: TColorName
@@ -11,8 +9,8 @@ type TProps = {
 export default ({ color }: TProps) => {
   const { cn, rainbow, fg, fill } = useTwBelt()
 
-  const fillColor = color ? rainbow(COLOR_NAME[color], 'fill') : fill('text.digest')
-  const textColor = color ? rainbow(COLOR_NAME[color], 'fg') : fg('text.digest')
+  const fillColor = color ? rainbow(COLOR_NAME[color], 'fill') : fill('digest')
+  const textColor = color ? rainbow(COLOR_NAME[color], 'fg') : fg('digest')
 
   return {
     wrapper: cn(

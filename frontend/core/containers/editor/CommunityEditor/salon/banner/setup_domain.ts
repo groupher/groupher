@@ -8,9 +8,9 @@ export default () => {
   const { cn, fg, fill, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both relative w-full h-64'),
-    introTitle: cn('row-center text-lg mb-5 -ml-2.5', fg('text.title')),
-    introLogo: cn('size-4 mr-2.5', fill('text.digest')),
+    wrapper: 'column-align-both relative w-full h-64',
+    introTitle: cn('row-center text-lg mb-5 -ml-2.5', fg('title')),
+    introLogo: cn('size-4 mr-2.5', fill('digest')),
 
     nextBtn: 'row-center justify-around w-52 absolute bottom-6',
     errorMsg: cn('absolute bottom-12 text-sm w-52', rainbow(COLOR_NAME.RED, 'fg')),

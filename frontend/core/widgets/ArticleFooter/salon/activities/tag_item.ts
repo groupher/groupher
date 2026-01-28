@@ -7,11 +7,11 @@ export default () => {
   const base = useBase()
 
   return {
-    wrapper: cn(''),
+    wrapper: '',
     item: base.item,
     tail: base.tail,
     content: base.content,
     highlight: base.highlight,
-    icon: cn('size-3.5 opacity-65 mr-2.5', fill('text.digest')),
+    icon: cn('size-3.5 opacity-65 mr-2.5', fill('digest')),
   }
 }

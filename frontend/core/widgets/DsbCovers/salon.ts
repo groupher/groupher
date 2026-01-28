@@ -10,18 +10,18 @@ export default () => {
   return {
     wrapper: 'column w-3/5',
 
-    groups: cn('column w-full mt-5 gap-y-10'),
-    group: cn('column w-full'),
-    groupHeader: cn('row-center ml-1 mb-3'),
-    groupTitle: cn('text-base', fg('text.title')),
+    groups: 'column w-full mt-5 gap-y-10',
+    group: 'column w-full',
+    groupHeader: 'row-center ml-1 mb-3',
+    groupTitle: cn('text-base', fg('title')),
 
     content: cn('grid w-full gap-4', 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 -ml-0.5'),
     block: cn('column group relative h-36 w-full rounded-md p-4', hoverBr()),
 
-    title: cn('text-base', fg('text.title')),
-    desc: cn('text-xs', fg('text.digest')),
+    title: cn('text-base', fg('title')),
+    desc: cn('text-xs', fg('digest')),
 
-    icon: cn('size-5 ml-1 mt-1', isDarkTheme ? 'opacity-80' : 'opacity-50', fill('text.digest')),
+    icon: cn('size-5 ml-1 mt-1', isDarkTheme ? 'opacity-80' : 'opacity-50', fill('digest')),
 
     // Pin button
     pinBtn: cn(
@@ -33,7 +33,7 @@ export default () => {
     ),
 
     pinBtnActive: cn(bg('alphaBg')),
-    pinIcon: cn('size-4 rotate-12 group-smoky-0', fill('text.digest')),
-    pinIconActive: cn('opacity-80', primary('fill'), isBlackPrimary && fill('text.link')),
+    pinIcon: cn('size-4 rotate-12 group-smoky-0', fill('digest')),
+    pinIconActive: cn('opacity-80', primary('fill'), isBlackPrimary && fill('link')),
   }
 }

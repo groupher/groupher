@@ -11,8 +11,8 @@ export default ({ color }: TProps) => {
   const fillColor = useCallback((color: TColorName) => rainbow(color, 'fill'), [rainbow])
 
   return {
-    wrapper: cn('row-center'),
+    wrapper: 'row-center',
     icon: cn('size-4 mr-3.5 opacity-65', fillColor(color)),
-    text: cn('text-base brightness-90 opacity-90', fg('text.digest')),
+    text: cn('text-base brightness-90 opacity-90', fg('digest')),
   }
 }

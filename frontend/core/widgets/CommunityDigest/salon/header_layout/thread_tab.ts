@@ -1,8 +1,8 @@
-import type { TSpace } from '~/spec'
 import { HEADER_LAYOUT } from '~/const/layout'
+import useHeaderLinks from '~/hooks/useHeaderLinks'
 
 import useTwBelt from '~/hooks/useTwBelt'
-import useHeaderLinks from '~/hooks/useHeaderLinks'
+import type { TSpace } from '~/spec'
 
 export { cn } from '~/css'
 
@@ -29,8 +29,8 @@ export default ({ ...spacing }: TProps) => {
       'row-center text-sm no-underline h-8 px-3.5 rounded pointer transition-colors',
       `hover:${primary('fg')}`,
       `hover:${bg('hoverBg')}`,
-      `hover:${fg('text.title')}`,
-      fg('text.digest'),
+      `hover:${fg('title')}`,
+      fg('digest'),
     ),
     titleActive: cn('bold-sm', `hover:${primary('fg')}`, primary('fg'), vividDark()),
   }

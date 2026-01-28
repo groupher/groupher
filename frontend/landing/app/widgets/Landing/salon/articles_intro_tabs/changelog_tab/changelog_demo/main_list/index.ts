@@ -16,10 +16,10 @@ export default () => {
       shadow('card'),
     ),
     header: 'column w-48 mt-6 mb-2.5',
-    title: cn('row-center text-base', fg('text.title')),
-    version: cn('opacity-80 text-sm ml-2 mt-0.5 italic', fg('text.digest')),
+    title: cn('row-center text-base', fg('title')),
+    version: cn('opacity-80 text-sm ml-2 mt-0.5 italic', fg('digest')),
 
-    tags: cn('row-center mt-0.5 gap-x-2', fg('text.digest')),
+    tags: cn('row-center mt-0.5 gap-x-2', fg('digest')),
     tagItem: 'row-center text-xs',
     content: 'column mt-4 w-52 gap-2.5',
     //

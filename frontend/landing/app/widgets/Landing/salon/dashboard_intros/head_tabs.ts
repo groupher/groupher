@@ -6,19 +6,19 @@ export { cn } from '~/css'
 export default () => {
   const { cn, fg, br, shadow, rainbow, rainbowSoft } = useTwBelt()
 
-  const activeBtn = cn(fg('text.title'), `hover:${fg('text.title')}`)
+  const activeBtn = cn(fg('title'), `hover:${fg('title')}`)
 
   return {
-    wrapper: cn('align-both wrap gap-x-3.5 gap-y-4 w-8/12 mb-10'),
+    wrapper: 'align-both wrap gap-x-3.5 gap-y-4 w-8/12 mb-10',
     button: cn(
       'align-both text-sm min-w-20 h-10 px-4.5 rounded-3xl border trans-all-100 pointer',
-      `hover:${fg('text.title')}`,
-      fg('text.digest'),
+      `hover:${fg('title')}`,
+      fg('digest'),
       br('divider'),
     ),
 
     iconBox: cn('size-6 align-both mr-3 rounded-md opacity-40', shadow('lg')),
-    icon: cn('size-4 fill-white'),
+    icon: 'size-4 fill-white',
     purpleIconBox: rainbow(COLOR_NAME.PURPLE, 'bg'),
     blueIconBox: rainbow(COLOR_NAME.BLUE, 'bg'),
     cyanIconBox: rainbow(COLOR_NAME.CYAN, 'bg'),

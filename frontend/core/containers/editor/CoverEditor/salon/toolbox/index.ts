@@ -17,31 +17,31 @@ export default () => {
       bg('cardAlpha'),
     ),
 
-    panel: cn('align-both gap-x-4 h-fit w-fit px-5 py-3', fg('text.digest')),
+    panel: cn('align-both gap-x-4 h-fit w-fit px-5 py-3', fg('digest')),
 
     settingBlock: cn(
       'align-both rounded size-8 border mt-0.5 pointer',
-      `hover:${br('text.digest')}`,
+      `hover:${br('digest')}`,
       br('divider'),
       shadow('sm'),
       bg('card'),
     ),
-    settingBlockActive: cn(br('text.digest'), shadow('md')),
-    settingTitle: cn('text-xs scale-75 mt-0.5', fg('text.digest')),
+    settingBlockActive: cn(br('digest'), shadow('md')),
+    settingTitle: cn('text-xs scale-75 mt-0.5', fg('digest')),
     settingIcon: cn(
       'size-5 opacity-65 trans-all-100',
       'group-hover/block:opacity-100',
-      fill('text.title'),
+      fill('title'),
     ),
     optionItem: cn(
       'align-both size-6 text-sm rounded border trans-all-100 pointer',
-      `hover:${br('text.digest')}`,
+      `hover:${br('digest')}`,
       br('divider'),
-      fg('text.digest'),
+      fg('digest'),
       shadow('sm'),
     ),
-    optionItemActive: cn('bold-sm', fg('text.title'), br('text.digest')),
+    optionItemActive: cn('bold-sm', fg('title'), br('digest')),
     //
-    desc: cn('text-xs', fg('text.digest')),
+    desc: cn('text-xs', fg('digest')),
   }
 }

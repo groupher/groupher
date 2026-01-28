@@ -10,26 +10,26 @@ export default () => {
   const { cn, fg, br, rainbow, rainbowSoft, landingTitle } = useTwBelt()
 
   return {
-    wrapper: cn('column align-both w-full mt-36'),
+    wrapper: 'column align-both w-full mt-36',
     slogan: 'column align-both mb-10',
-    topping: cn('text-xs border mb-3 px-3.5 py-1.5 rounded-lg', fg('text.title'), br('divider')),
+    topping: cn('text-xs border mb-3 px-3.5 py-1.5 rounded-lg', fg('title'), br('divider')),
     title: landingTitle(),
-    desc: cn('text-lg mt-3', fg('text.digest'), isDarkTheme && 'opacity-65'),
+    desc: cn('text-lg mt-3', fg('digest'), isDarkTheme && 'opacity-65'),
     //
-    ourWall: cn('relative column-align-both w-full h-auto pl-10 overflow-hidden'),
+    ourWall: 'relative column-align-both w-full h-auto pl-10 overflow-hidden',
     ourWallBg: cn(
       'absolute top-0 left-0 w-full h-full rotate-180 gradient-green',
       isDarkTheme && 'opacity-30 rotate-180',
     ),
-    greenDiffBar: cn('diff-bar-green absolute left-0 top-0 w-7 h-full z-10 rounded-tr-lg'),
-    redDiffBar: cn('diff-bar-red absolute left-0 top-0 w-7 h-full z-10 rounded-br-lg'),
+    greenDiffBar: 'diff-bar-green absolute left-0 top-0 w-7 h-full z-10 rounded-tr-lg',
+    redDiffBar: 'diff-bar-red absolute left-0 top-0 w-7 h-full z-10 rounded-br-lg',
     ourlabel: cn(
       'row-center absolute right-16 top-0 text-lg px-3 py-1 rounded-b-xl',
       rainbow(COLOR_NAME.GREEN, 'bgSoft'),
       rainbow(COLOR_NAME.GREEN, 'fg'),
     ),
 
-    theirWall: cn('relative column-align-both w-full h-auto diff-area-red-stripes'),
+    theirWall: 'relative column-align-both w-full h-auto diff-area-red-stripes',
     theirWallBg: cn(
       'absolute top-0 left-0 w-full h-full',
       rainbowSoft(COLOR_NAME.RED),

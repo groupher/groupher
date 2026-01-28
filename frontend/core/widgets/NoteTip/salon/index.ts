@@ -1,6 +1,5 @@
-import type { TSpace } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 export { cn } from '~/css'
 
@@ -11,7 +10,7 @@ export default ({ ...spacing }: TProps) => {
 
   return {
     wrapper: cn('align-both', margin(spacing)),
-    note: cn('text-sm px-2.5 py-2 max-h-52', fg('text.digest')),
+    note: cn('text-sm px-2.5 py-2 max-h-52', fg('digest')),
     infoIcon: cn('size-3.5', fill('text.hint')),
   }
 }

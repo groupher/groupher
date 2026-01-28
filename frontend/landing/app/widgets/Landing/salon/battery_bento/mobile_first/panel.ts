@@ -10,14 +10,14 @@ export default () => {
   const { cn, fg, bg, br, rainbow, shadow } = useTwBelt()
 
   return {
-    wrapper: cn('row-center w-full h-full overflow-hidden px-4 trans-all-200'),
+    wrapper: 'row-center w-full h-full overflow-hidden px-4 trans-all-200',
     phone: cn(
       'column w-28 min-w-28 h-44 pl-2.5 border-4 rounded-t-xl mt-2 gap-y-1.5',
       bg('card'),
       shadow('sm'),
-      isLightTheme ? br('text.digest') : br('divider'),
+      isLightTheme ? br('digest') : br('divider'),
     ),
-    brand: cn('row-center mt-2 mb-3.5 text-xs scale-90 -ml-1', fg('text.digest')),
+    brand: cn('row-center mt-2 mb-3.5 text-xs scale-90 -ml-1', fg('digest')),
     logo: cn('size-3.5 rounded opacity-40 mr-1.5', rainbow(COLOR_NAME.ORANGE, 'bg')),
     item: 'row-center mb-0.5',
     avatar: 'size-3.5 rounded mt-0.5',

@@ -1,7 +1,7 @@
-import type { TActive } from '~/spec'
+import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 
 import useTwBelt from '~/hooks/useTwBelt'
-import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
+import type { TActive } from '~/spec'
 
 type TProps = TActive
 
@@ -17,9 +17,9 @@ export default ({ active }: TProps) => {
       badgeInView ? 'pl-3.5' : 'pl-2.5',
       active && bg('menuHoverBg'),
       active && br('divider'),
-      active ? fg('text.title') : fg('text.digest'),
+      active ? fg('title') : fg('digest'),
 
-      `hover:${fg('text.title')}`,
+      `hover:${fg('title')}`,
       `hover:${br('divider')}`,
       `hover:${bg('menuHoverBg')}`,
     ),

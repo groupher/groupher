@@ -12,7 +12,7 @@ export default ({ viewerHasUpvoted }: TProps) => {
   return {
     button: cn(
       'column-align-both w-10 h-11 pb-0.5 rounded border',
-      `hover:${br('text.digest')}`,
+      `hover:${br('digest')}`,
       `hover:${bg('alphaBg2')}`,
       'trans-all-200',
       br('divider'),

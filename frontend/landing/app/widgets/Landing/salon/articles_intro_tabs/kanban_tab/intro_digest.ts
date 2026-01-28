@@ -6,9 +6,9 @@ export default () => {
   const { cn, fg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('column-center w-full h-44 mt-16'),
+    wrapper: 'column-center w-full h-44 mt-16',
     title: cn('text-xl bold-sm mt-1', rainbow(COLOR_NAME.BLUE, 'fg')),
-    digest: cn('text-lg leading-relaxed mb-8', fg('text.digest')),
+    digest: cn('text-lg leading-relaxed mb-8', fg('digest')),
     highlight: cn(
       'bold-sm italic ml-px mr-px px-0.5',
       rainbow(COLOR_NAME.BLUE, 'fg'),

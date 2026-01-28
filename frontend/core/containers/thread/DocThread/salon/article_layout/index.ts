@@ -1,5 +1,5 @@
-import useBase from '..'
 import useTwBelt from '~/hooks/useTwBelt'
+import useBase from '..'
 
 type TProps = {
   outlineOpen: boolean
@@ -10,15 +10,15 @@ export default ({ outlineOpen }: TProps) => {
   const base = useBase()
 
   return {
-    wrapper: cn('row justify-center w-full relative'),
+    wrapper: 'row justify-center w-full relative',
     header: 'mb-4',
     content: cn(
       base.main,
       'grow text-base pl-12 pr-0 max-w-full trans-all-200',
       outlineOpen ? 'w-[680px]' : 'px-0 mr-20',
-      fg('text.digest'),
+      fg('digest'),
     ),
-    title: cn('text-2xl bold-sm mt-4', fg('text.title')),
+    title: cn('text-2xl bold-sm mt-4', fg('title')),
     faq: 'ml-8 -mt-2.5',
 
     sidebar: cn(

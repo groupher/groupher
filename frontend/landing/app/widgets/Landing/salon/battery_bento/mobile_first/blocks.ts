@@ -16,6 +16,6 @@ export default () => {
       rainbow(COLOR_NAME.BROWN, 'borderSoft'),
     ),
     blockSolid: cn('border-none opacity-100', bg('cardAlpha'), shadow('sm')),
-    featureIcon: cn('size-4 opacity-80', fill('text.digest')),
+    featureIcon: cn('size-4 opacity-80', fill('digest')),
   }
 }

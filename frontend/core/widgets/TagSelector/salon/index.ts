@@ -7,11 +7,11 @@ export default () => {
     wrapper: cn(
       'row-center h-8 text-sm px-0.5 pl-2.5 rounded-md border',
       br('divider'),
-      fg('text.digest'),
+      fg('digest'),
       bg('hoverBg'),
-      `hover:${br('text.digest')}`,
+      `hover:${br('digest')}`,
     ),
-    label: cn('text-xs mr-1', fg('text.hint')),
+    label: cn('text-xs mr-1', fg('hint')),
     selectItem: cn(menu('bar'), 'w-auto px-2 py-0.5 rounded mb-1.5 relative'),
   }
 }

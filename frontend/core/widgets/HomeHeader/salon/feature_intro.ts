@@ -12,7 +12,7 @@ export default () => {
   const iconColor = 'group-hover:opacity-100 trans-all-100'
 
   return {
-    wrapper: cn('align-both w-full gap-x-4'),
+    wrapper: 'align-both w-full gap-x-4',
     block: cn(
       'row group relative min-w-72 w-72 h-28 px-3 pt-5 rounded-lg pointer overflow-hidden',
       hover('bg'),
@@ -26,11 +26,11 @@ export default () => {
     blockCyan: cn(blockColor, rainbowSoft(COLOR_NAME.CYAN)),
     head: 'column',
 
-    title: cn('text-sm', fg('text.title'), vividDark()),
+    title: cn('text-sm', fg('title'), vividDark()),
     desc: cn(
       'text-sm mt-2 trans-all-200 line-clamp-2',
-      fg('text.digest'),
-      `group-hover:${fg('text.title')}`,
+      fg('digest'),
+      `group-hover:${fg('title')}`,
       'group-hover:opacity-80',
     ),
 
@@ -39,9 +39,9 @@ export default () => {
     redIcon: cn(iconColor, `group-hover:${rainbow(COLOR_NAME.RED, 'fill')}`),
     cyanIcon: cn(iconColor, `group-hover:${rainbow(COLOR_NAME.CYAN, 'fill')}`),
 
-    menuIcon: cn('size-6 z-10 opacity-65', fill('text.digest')),
-    menuBarColumn: cn('column !items-start py-2'),
+    menuIcon: cn('size-6 z-10 opacity-65', fill('digest')),
+    menuBarColumn: 'column !items-start py-2',
     menuTitle: cn(menu('title')),
-    menuDesc: cn('text-xs mt-1 pr-1 opacity-80', fg('text.digest')),
+    menuDesc: cn('text-xs mt-1 pr-1 opacity-80', fg('digest')),
   }
 }

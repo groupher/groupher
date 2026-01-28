@@ -13,13 +13,9 @@ export default () => {
     active: base.templateActive,
     left: 'column grow items-start h-full pb-2',
     right: 'row gap-x-14 mt-1.5',
-    desc: cn('line-clamp-2 w-40 mt-1.5 text-xs', fg('text.digest')),
+    desc: cn('line-clamp-2 w-40 mt-1.5 text-xs', fg('digest')),
     center: 'column gap-x-2',
-    groupTitle: cn('text-xs bold-sm mb-1.5', fg('text.title')),
-    linkItem: cn(
-      'text-xs pointer no-underline hover:underline mb-1',
-      fg('text.digest'),
-      cut('w-20'),
-    ),
+    groupTitle: cn('text-xs bold-sm mb-1.5', fg('title')),
+    linkItem: cn('text-xs pointer no-underline hover:underline mb-1', fg('digest'), cut('w-20')),
   }
 }

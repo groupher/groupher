@@ -24,7 +24,7 @@ export default () => {
     ARROW_LEFT: 'size-2.5 ml-0.5',
     ARROW_TO_BOTTOM: 'rotate-180',
     DELETE: `group-hover/menubar:${rainbow(COLOR_NAME.RED, 'fill')}`,
-    icon: cn('size-3.5', fill('text.digest')),
+    icon: cn('size-3.5', fill('digest')),
   }
 }
 

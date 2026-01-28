@@ -13,15 +13,15 @@ export default ({ bottomSpace }: TProps) => {
     wrapper: cn(
       'row justify-center group relative h-full z-10 px-2 py-1.5',
       'text-center m-w-auth pointer trans-all-200',
-      fg('text.title'),
+      fg('title'),
     ),
     label: cn(
       'row-center whitespace-nowrap py-1.5 px-1.5 rounded-md',
-      fg('text.digest'),
+      fg('digest'),
       `hover:${bg('hoverBg')}`,
-      `hover:${fg('text.title')}`,
+      `hover:${fg('title')}`,
       `mb-${bottomSpace}`,
     ),
-    labelActive: cn('bold-sm', fg('text.title'), vividDark()),
+    labelActive: cn('bold-sm', fg('title'), vividDark()),
   }
 }

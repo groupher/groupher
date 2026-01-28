@@ -5,7 +5,7 @@ export default () => {
   const { cn, br, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('column-center relative w-[1080px] z-20'),
+    wrapper: 'column-center relative w-[1080px] z-20',
     other: 'w-full relative -z-10',
     //
     test: cn('w-full h-[768px] overflow-hidden', rainbow(COLOR_NAME.PINK, 'bg')),

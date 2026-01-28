@@ -33,8 +33,8 @@ export default () => {
       shadow('lg'),
     ),
     footer: 'mt-2.5',
-    colorTitle: cn('text-xs', fg('text.title')),
-    hex: cn('text-xs scale-90 italic', fg('text.hint')),
+    colorTitle: cn('text-xs', fg('title')),
+    hex: cn('text-xs scale-90 italic', fg('hint')),
     checker: cn('absolute bottom-2 right-2 size-5', primary('fill')),
     //
     getPageClass: (pageName: string): string => {

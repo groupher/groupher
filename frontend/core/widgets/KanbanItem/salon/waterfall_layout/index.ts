@@ -9,7 +9,7 @@ export default () => {
       br('divider'),
     ),
     header: '',
-    title: cn('text-base line-clamp-1', fg('text.title')),
+    title: cn('text-base line-clamp-1', fg('title')),
     upvotes: cn('rounded-md px-2 py-0.5 border', br('divider')),
   }
 }

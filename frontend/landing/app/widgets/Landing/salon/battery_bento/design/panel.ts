@@ -1,9 +1,7 @@
-import useWallpaper from '~/hooks/useWallpaper'
 import { COLOR_NAME } from '~/const/colors'
-
-import { getCursorGradient, getPathGradient } from '../../metric'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import useWallpaper from '~/hooks/useWallpaper'
+import { getCursorGradient, getPathGradient } from '../../metric'
 
 export { cn } from '~/css'
 
@@ -11,11 +9,11 @@ export default () => {
   const { cn, fg, bg, br, fill, rainbow, shadow } = useTwBelt()
   const { wallpaper } = useWallpaper()
 
-  const baseLine = cn('absolute border-dashed trans-all-200 z-10 opacity-30', br('text.digest'))
+  const baseLine = cn('absolute border-dashed trans-all-200 z-10 opacity-30', br('digest'))
   const design = 'absolute top-11 left-14 bold-lg tracking-wide z-30'
 
   return {
-    designText: cn(design, fg('text.digest'), 'italic trans-all-100'),
+    designText: cn(design, fg('digest'), 'italic trans-all-100'),
     designTextStyle: { fontSize: '42px' },
 
     designTextGradient: cn(design, 'clip-text trans-all-200'),
@@ -24,8 +22,8 @@ export default () => {
       fontSize: '42px',
     },
 
-    wrapper: cn('relative p-4 pt-7 w-full h-full overflow-hidden'),
-    gridIcon: cn('absolute top-3 size-28', fill('text.digest')),
+    wrapper: 'relative p-4 pt-7 w-full h-full overflow-hidden',
+    gridIcon: cn('absolute top-3 size-28', fill('digest')),
     mainCard: cn(
       'align-both absolute top-6 -right-5 rounded-xl border z-20',
       'w-72	h-36 rotate-3 trans-all-200',
@@ -38,7 +36,7 @@ export default () => {
     locateDot: cn(
       'absolute size-2 rounded border trans-all-200 opacity-50',
       bg('card'),
-      br('text.digest'),
+      br('digest'),
     ),
     // cursor
     cursor: 'absolute trans-all-200',

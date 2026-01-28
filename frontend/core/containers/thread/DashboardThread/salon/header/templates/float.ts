@@ -20,7 +20,7 @@ export default () => {
       bg('alphaBg'),
       !isLightTheme && cn('border', br('divider')),
     ),
-    linkItem: cn('text-xs pointer trans-all-100', `hover:${fg('text.title')}`, fg('text.digest')),
-    accountIcon: cn('size-3 -mt-0.5', fill('text.digest')),
+    linkItem: cn('text-xs pointer trans-all-100', `hover:${fg('title')}`, fg('digest')),
+    accountIcon: cn('size-3 -mt-0.5', fill('digest')),
   }
 }

@@ -15,7 +15,7 @@ export default ({ ...spacing }: TProps) => {
     wrapper: cn('row-center', margin(spacing)),
     pubBtn: cn('row relative justify-between bold w-full rounded-xl', fg('button.fg')),
 
-    arrowBtn: cn('absolute h-full w-8 right-0'),
+    arrowBtn: 'absolute h-full w-8 right-0',
     arrowIcon: cn('size-3 rotate-90 opacity-40 z-30', fill('button.fg')),
     menuOffset: bannerLayout === BANNER_LAYOUT.HEADER ? [-98, 4] : [-80, 4],
   }

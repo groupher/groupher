@@ -11,7 +11,7 @@ export default ({ size, ...spacing }: TProps) => {
   const { cn, margin } = useTwBelt()
 
   return {
-    normal: cn('align-both relative z-10'),
+    normal: 'align-both relative z-10',
     fallback: 'absolute top-0 left-0 z-0',
     fallbackOffset: cn(`size-${size}`, margin(spacing)),
   }

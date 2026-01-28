@@ -7,11 +7,11 @@ export default () => {
 
   return {
     wrapper: 'mr-1',
-    icon: cn('size-3.5 mr-2', fill('text.digest'), `group-hover:${fill('text.title')}`),
+    icon: cn('size-3.5 mr-2', fill('digest'), `group-hover:${fill('title')}`),
     item: cn('row-center w-full -ml-1', menu('bar')),
     itemActive: bg('hoverBg'),
     title: cn('text-sm', menu('title')),
-    titleActive: fg('text.title'),
+    titleActive: fg('title'),
     checkIcon: cn('size-3.5', primary('fill')),
   }
 }

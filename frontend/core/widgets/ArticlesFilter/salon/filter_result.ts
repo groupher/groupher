@@ -5,6 +5,6 @@ export default () => {
 
   return {
     wrapper: 'row-center',
-    text: cn(fg('text.digest')),
+    text: cn(fg('digest')),
   }
 }

@@ -10,11 +10,11 @@ export default () => {
       bg('alphaBg'),
     ),
     coverWrapper: cn('align-both size-28', bg('hoverBg')),
-    holdImg: cn('size-10 opacity-20', fill('text.digest')),
+    holdImg: cn('size-10 opacity-20', fill('digest')),
     content: 'grow px-3 py-2.5',
-    hint: cn('absolute right-2 top-2 text-xs', fg('text.hint')),
-    url: cn('text-sm', fg('text.hint')),
-    title: cn('text-sm bold-sm line-clamp-1', fg('text.title')),
-    desc: cn('text-sm line-clamp-2 opacity-65', fg('text.title')),
+    hint: cn('absolute right-2 top-2 text-xs', fg('hint')),
+    url: cn('text-sm', fg('hint')),
+    title: cn('text-sm bold-sm line-clamp-1', fg('title')),
+    desc: cn('text-sm line-clamp-2 opacity-65', fg('title')),
   }
 }

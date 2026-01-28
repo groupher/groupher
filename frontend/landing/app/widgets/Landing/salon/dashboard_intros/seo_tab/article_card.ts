@@ -12,8 +12,8 @@ export default () => {
     ),
     header: 'row-center mb-2',
     brand: 'size-3.5 mr-1.5 opacity-65',
-    title: cn('text-sm', fg('text.title')),
-    desc: cn('text-xs mt-1.5', fg('text.digest')),
-    url: cn('text-xs mt-1.5 opacity-80', fg('text.digest')),
+    title: cn('text-sm', fg('title')),
+    desc: cn('text-xs mt-1.5', fg('digest')),
+    url: cn('text-xs mt-1.5 opacity-80', fg('digest')),
   }
 }

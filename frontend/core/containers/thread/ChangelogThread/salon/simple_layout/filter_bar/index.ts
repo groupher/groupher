@@ -1,8 +1,7 @@
+import { CHANGELOG_LAYOUT } from '~/const/layout'
+import useLayout from '~/hooks/useLayout'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
-import useLayout from '~/hooks/useLayout'
-
-import { CHANGELOG_LAYOUT } from '~/const/layout'
 
 export default () => {
   const { isLightTheme } = useTheme()
@@ -22,6 +21,6 @@ export default () => {
       isLightTheme ? 'brightness-95' : 'brightness-125',
       sexyBorder(),
     ),
-    item: cn('text-sm', fg('text.digest')),
+    item: cn('text-sm', fg('digest')),
   }
 }

@@ -19,6 +19,6 @@ export default () => {
     //
     item: cn(menu('bar'), 'py-1 text-xs'),
     iconBox: 'align-both size-3.5 mr-2',
-    icon: cn('size-3', fill('text.digest')),
+    icon: cn('size-3', fill('digest')),
   }
 }

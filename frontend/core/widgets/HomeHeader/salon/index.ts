@@ -32,13 +32,13 @@ export default ({ extend = false, isSticky = false }: TProps = {}) => {
       zIndex('header'),
       br('divider'),
     ),
-    inner: cn('row-between w-full px-28 h-16'),
+    inner: 'row-between w-full px-28 h-16',
     brand: cn(linkable()),
-    links: cn('row-center gap-x-4 ml-16 mt-px'),
+    links: 'row-center gap-x-4 ml-16 mt-px',
     linkItem: hoverLink(),
-    linkItemActive: fg('text.title'),
+    linkItemActive: fg('title'),
     stackLink: cn(hoverLink(), 'pl-3 hover:no-underline'),
-    linkActive: cn(fg('text.title'), bg('hoverBg')),
+    linkActive: cn(fg('title'), bg('hoverBg')),
     //
     requestDemoLink: cn(hoverLink('text-sm')),
     demoIcon: cn(hoverLinkIcon(), 'mt-px'),
@@ -49,7 +49,7 @@ export default ({ extend = false, isSticky = false }: TProps = {}) => {
     //
     panel: cn('w-32 mt-1', menu('bg')),
     menuBar: cn(menu('bar'), 'group pl-3'),
-    menuIconBox: cn('align-both w-8 h-8 min-w-8 mr-4 mt-0.5 rounded-md group-smoky-80'),
+    menuIconBox: 'align-both w-8 h-8 min-w-8 mr-4 mt-0.5 rounded-md group-smoky-80',
     purpleBg: rainbow(COLOR_NAME.PURPLE, 'bgSoft'),
     blueBg: rainbow(COLOR_NAME.BLUE, 'bgSoft'),
     redBg: rainbow(COLOR_NAME.RED, 'bgSoft'),
@@ -60,9 +60,9 @@ export default ({ extend = false, isSticky = false }: TProps = {}) => {
     redIcon: rainbow(COLOR_NAME.RED, 'fill'),
     cyanIcon: rainbow(COLOR_NAME.CYAN, 'fill'),
 
-    menuIcon: cn('size-5', fill('text.digest')),
-    menuBarColumn: cn('column !items-start py-2'),
+    menuIcon: cn('size-5', fill('digest')),
+    menuBarColumn: 'column !items-start py-2',
     menuTitle: cn(menu('title')),
-    menuDesc: cn('text-xs mt-1 pr-1 opacity-80', fg('text.digest')),
+    menuDesc: cn('text-xs mt-1 pr-1 opacity-80', fg('digest')),
   }
 }
