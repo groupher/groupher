@@ -6,12 +6,12 @@ import useBase from '.'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, bg, rainbow } = useTwBelt()
+  const { cn, cnMerge, bg, rainbow } = useTwBelt()
   const base = useBase()
 
   return {
     wrapper: base.baseSection,
-    block: cn(base.blockBase, 'align-both w-64 h-20'),
+    block: cnMerge(base.blockBase, 'align-both w-64 h-20'),
     blockActive: base.blockBaseActive,
     select: cn('row-center gap-x-8 w-full'),
     layout: 'column-align-both',

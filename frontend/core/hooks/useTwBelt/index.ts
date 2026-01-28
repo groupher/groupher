@@ -4,7 +4,7 @@ import { clsx } from 'clsx'
 import { useMemo } from 'react'
 
 import { COLOR_NAME } from '~/const/colors'
-import { cn } from '~/css'
+import { cn, cnMerge } from '~/css'
 import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
 import useDashboard from '~/hooks/useDashboard'
@@ -224,6 +224,7 @@ export default function useTwBelt(): TRet {
   return useMemo<TRet>(
     () => ({
       cn,
+      cnMerge,
 
       container: () => containerClass,
 

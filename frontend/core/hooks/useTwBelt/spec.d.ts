@@ -44,6 +44,7 @@ export type TFillKey = 'title' | 'digest' | 'link' | 'highlight'
 
 export type TRet = {
   cn: (...inputs: ClassValue[]) => string
+  cnMerge: (...inputs: ClassValue[]) => string
   container: () => string
 
   fg: (key: TTextKey | `${string}.${string}`) => string
