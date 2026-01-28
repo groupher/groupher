@@ -10,7 +10,7 @@ export default ({ active }: TProps) => {
   const { cn, fg, br, fill, shadow, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row h-12 px-1.5 py-1 mb-2.5'),
+    wrapper: 'row h-12 px-1.5 py-1 mb-2.5',
     upvote: cn(
       'column-align-both size-10 rounded-md border',
       br('rainbow.purpleSoft'),

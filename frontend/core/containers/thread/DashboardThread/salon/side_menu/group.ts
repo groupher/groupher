@@ -13,15 +13,15 @@ export default ({ fold }: TProps) => {
 
   return {
     wrapper: 'mb-4',
-    folder: cn('row-between group pointer mb-3'),
-    iconBox: cn('align-both size-5'),
+    folder: 'row-between group pointer mb-3',
+    iconBox: 'align-both size-5',
     title: cn('text-sm grow ml-2 bold', fg('digest'), !isLightTheme && 'brightness-110'),
     arrowIcon: cn(
       'size-4 group-smoky-65 trans-all-200',
       !fold ? '-rotate-90' : 'rotate-180',
       fill('digest'),
     ),
-    menu: cn('ml-1.5 mt-2 border-l border-transparent sexy-border-50'),
+    menu: 'ml-1.5 mt-2 border-l border-transparent sexy-border-50',
     item: cn(
       'block relative no-underline w-full text-sm px-1 py-1 pl-5 mt-1 mb-0 rounded-lg',
       `hover:${bg('hoverBg')}`,

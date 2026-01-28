@@ -6,7 +6,7 @@ export default () => {
   const { cn, primary, br, bg, shadow } = useTwBelt()
 
   return {
-    wrapper: cn('column items-center w-full gap-4 pb-8'),
+    wrapper: 'column items-center w-full gap-4 pb-8',
     options: 'column gap-y-6',
     template: cn(
       'w-full h-16 border rounded-md pointer',

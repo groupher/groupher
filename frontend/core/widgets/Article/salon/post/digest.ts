@@ -8,7 +8,7 @@ export default ({ isPinned }: TProps) => {
   const { cn, hover, fg, primary, avatar } = useTwBelt()
 
   return {
-    wrapper: cn('row items-start justify-between w-full relative mt-12'),
+    wrapper: 'row items-start justify-between w-full relative mt-12',
     leftPart: 'grow max-w-[600px]',
     topping: 'align-both -ml-0.5 mb-4 pr-1 relative',
     backBtn: cn('align-both px-2 py-0.5 rounded-xl', hover('bg')),

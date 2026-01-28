@@ -22,6 +22,6 @@ export default ({ disabled, dimWhenIdle, leftLayout, ...spacing }: TProps) => {
       linker('fg'),
       margin(spacing),
     ),
-    text: cn('break-keep whitespace-nowrap'),
+    text: 'break-keep whitespace-nowrap',
   }
 }

@@ -8,7 +8,7 @@ export default () => {
   const { cn, fg, bg, rainbow, shadow, dimDark, linkable } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both w-full h-full mb-14 overflow-hidden'),
+    wrapper: 'column-align-both w-full h-full mb-14 overflow-hidden',
     bannerTitle: cn('text-2xl bold-sm mt-5 mb-2', fg('title')),
     bannerDesc: cn('text-base mb-14', fg('digest')),
     bannerNote: cn('text-base mb-8', fg('title')),
@@ -38,7 +38,7 @@ export default () => {
       `group-hover:${shadow('sm')}`,
     ),
     //
-    price: cn('row-center	mt-2.5 mb-1 -ml-1'),
+    price: 'row-center	mt-2.5 mb-1 -ml-1',
     priceUnit: cn('text-2xl ml-2 mb-1 mt-1', fg('digest')),
     priceNum: cn('row items-center text-3xl bold-sm', fg('title')),
     priceDesc: cn('text-base ml-2 mt-1.5', fg('title')),

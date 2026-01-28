@@ -4,7 +4,7 @@ export default () => {
   const { cn, fg, br, primary } = useTwBelt()
 
   return {
-    wrapper: cn('column w-10/12 pl-7'),
+    wrapper: 'column w-10/12 pl-7',
     typeSelect: 'row-between mb-5',
     tabs: cn('border-b', br('divider')),
 

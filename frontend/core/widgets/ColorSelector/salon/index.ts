@@ -7,7 +7,7 @@ export default () => {
 
   return {
     wrapper: 'row-center pl-1.5 pr-1.5 gap-x-1.5',
-    dotWrapper: cn('align-both size-7 circle'),
+    dotWrapper: 'align-both size-7 circle',
     dot: cn('size-5 circle pointer trans-all-100', 'hover:-mt-0.5'),
     dotActive: cn(
       'size-6 align-both border border-transparent',

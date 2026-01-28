@@ -10,7 +10,7 @@ export default () => {
   const head = 'row-center h-10 px-5 rounded-xl w-full'
 
   return {
-    wrapper: cn('column items-start w-full gap-y-10 min-h-96'),
+    wrapper: 'column items-start w-full gap-y-10 min-h-96',
     column: 'column items-start w-full min-h-40',
 
     //

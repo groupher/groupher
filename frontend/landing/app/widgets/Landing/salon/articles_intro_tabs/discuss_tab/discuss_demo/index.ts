@@ -8,7 +8,7 @@ export default () => {
   const { cn, shadow, fg, bg, br, fill, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row items-end relative'),
+    wrapper: 'row items-end relative',
     listCard: cn(
       'relative h-96 p-6 rounded-xl mb-5 border',
       shadow('card'),

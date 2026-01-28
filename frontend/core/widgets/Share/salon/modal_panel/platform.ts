@@ -14,7 +14,7 @@ export default () => {
   const { cn, fg, fill, cut, hover } = useTwBelt()
 
   return {
-    wrapper: cn('px-5 pb-4 w-full min-h-44 trans-all-200'),
+    wrapper: 'px-5 pb-4 w-full min-h-44 trans-all-200',
     header: 'row items-end mt-4 pl-6 mb-5',
     hint: cn('text-xs', fg('digest')),
     article: cn('text-sm mx-1', cut('w-44'), fg('title')),

@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, br, fill, hover } = useTwBelt()
 
   return {
-    wrapper: cn('row items-start mt-8 gap-x-14'),
+    wrapper: 'row items-start mt-8 gap-x-14',
     content: 'column',
     folderWrapper: cn('row-center rounded', hover('bg')),
     folderName: cn('row-center grow text-sm px-2.5 py-0.5 pl-4', fg('title')),

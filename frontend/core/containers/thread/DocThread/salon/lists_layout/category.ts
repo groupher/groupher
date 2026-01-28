@@ -10,13 +10,13 @@ export default ({ color }: TProps) => {
 
   return {
     wrapper: cn('row-center w-7/12 min-h-20 py-8 border-b last:border-b-0', br('divider')),
-    cover: cn('column mr-12'),
+    cover: 'column mr-12',
     iconBox: cn('align-both size-12 -mt-8 rounded-lg', rainbow(color, 'bgSoft')),
     content: 'column grow',
     //
     title: cn('text-base', fg('title')),
     desc: cn('text-sm line-clamp-2 mt-1.5', fg('digest')),
-    footer: cn('row-between w-full mt-4'),
+    footer: 'row-between w-full mt-4',
     authorHint: cn('text-xs', fg('hint')),
     moreLink: 'mt-1 scale-90',
   }

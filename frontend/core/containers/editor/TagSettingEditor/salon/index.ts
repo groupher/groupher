@@ -6,10 +6,10 @@ export default () => {
   const { cn, br, fg, bg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('mt-10 pb-24'),
+    wrapper: 'mt-10 pb-24',
     basicInfo: 'row-center ml-7 mb-6',
     dotSelector: cn('align-both size-8 circle border pointer', br('divider'), bg('hoverBg')),
-    titleDot: cn('size-7 circle'),
+    titleDot: 'size-7 circle',
     title: cn('text-sm bold-sm pl-7 mb-2', fg('title')),
     titleInput: 'w-80 ml-2.5',
     //

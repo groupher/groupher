@@ -14,7 +14,7 @@ export default () => {
     block: 'row-center row wrap relative w-full h-full',
     bar: cn(base.bar, 'h-1.5 w-20 opacity-40'),
     circle: cn(base.circle, 'size-3.5 opacity-40'),
-    iconBox: cn('absolute align-both size-4 rounded mt-2 mr-5'),
+    iconBox: 'absolute align-both size-4 rounded mt-2 mr-5',
     icon: 'size-2.5',
 
     red: rainbow(COLOR_NAME.RED, 'fill'),

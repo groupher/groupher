@@ -11,8 +11,8 @@ export default ({ noAnimation, slipHeight }: TProps) => {
   const { cn, bg, primary, vividDark, isDarkBlack } = useTwBelt()
 
   return {
-    wrapper: cn('relative text-sm w-auto overflow-hidden'),
-    nav: cn('row-center relative flex-nowrap p-o my-auto'),
+    wrapper: 'relative text-sm w-auto overflow-hidden',
+    nav: 'row-center relative flex-nowrap p-o my-auto',
     slipBar: cn(
       'row justify-center absolute bottom-0 left-0 opacity-65',
       noAnimation && 'trans-all-200',

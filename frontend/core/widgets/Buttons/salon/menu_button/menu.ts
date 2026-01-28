@@ -7,7 +7,7 @@ export default () => {
   const { cn, fg, bg, fill, sexyBorder } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-center w-full max-h-72 p-1 overflow-hidden'),
+    wrapper: 'column-align-center w-full max-h-72 p-1 overflow-hidden',
     block: cn('row items-start w-full px-2.5 py-1 pl-4 rounded pointer', `hover:${bg('hoverBg')}`),
     qrWrapper: 'ml-0.5 mt-1.5 opacity-65',
     item: 'row-center',

@@ -4,7 +4,7 @@ export default () => {
   const { cn, bg, br, fg } = useTwBelt()
 
   return {
-    wrapper: cn('column w-72 z-20 relative group'),
+    wrapper: 'column w-72 z-20 relative group',
     paperMask: cn(
       'absolute top-0 -left-1 w-72 h-1/2 z-0 rounded -rotate-2 border',
       'group-hover:-rotate-3 trans-all-200',

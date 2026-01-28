@@ -12,14 +12,14 @@ export default () => {
   const { cn, fg, rainbow, vividDark } = useTwBelt()
 
   return {
-    wrapper: cn('align-both w-full gap-x-20 relative'),
+    wrapper: 'align-both w-full gap-x-20 relative',
     tabItem: cn(
       'column-align-both relative group w-44 border-b-2 border-b-transparent pb-5',
       'smoky-80 saturate-0 hover:saturate-100',
     ),
-    tabActive: cn('saturate-100 opacity-100'),
+    tabActive: 'saturate-100 opacity-100',
 
-    arrowIcon: cn('size-12 absolute -top-0.5 -left-16 opacity-40 scale-y-75 animate-pulse'),
+    arrowIcon: 'size-12 absolute -top-0.5 -left-16 opacity-40 scale-y-75 animate-pulse',
     spinIcon: cn(
       'size-7 absolute top-2 -left-14 animate-spin animate-infinite animate-duration-[10000ms]',
     ),
@@ -51,7 +51,7 @@ export default () => {
     descActive: '!opacity-100',
 
     //
-    iconBox: cn('size-10 rounded-md relative border border-dotted trans-all-200'),
+    iconBox: 'size-10 rounded-md relative border border-dotted trans-all-200',
     icon: cn('size-7 absolute', vividDark()),
   }
 }

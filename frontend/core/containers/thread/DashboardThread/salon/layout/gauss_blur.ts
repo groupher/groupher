@@ -9,7 +9,7 @@ export default () => {
   const base = useBase()
 
   return {
-    wrapper: cn('column'),
+    wrapper: 'column',
     content: 'row align-start mt-10 mb-8',
     previewer: 'column-center relative',
     previewImage: cn('column-align-both w-72 h-60 rounded-md border', br('divider')),

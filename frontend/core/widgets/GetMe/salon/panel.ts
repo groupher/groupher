@@ -8,7 +8,7 @@ export default () => {
     menuBar: cn(menu('bar'), 'h-12 mt-1 mb-1 py-3'),
     info: 'column ml-1.5',
     title: cn('text-sm', fg('digest')),
-    appStoreBar: cn('row-center h-14 ml-3.5 smoky-90'),
+    appStoreBar: 'row-center h-14 ml-3.5 smoky-90',
     platform: cn('text-xs', fg('hint')),
     iconBox: 'align-both size-7',
     storeIcon: 'w-40 h-auto',

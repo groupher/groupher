@@ -12,7 +12,7 @@ export default () => {
   const base = useBase()
 
   return {
-    wrapper: cn('column'),
+    wrapper: 'column',
     preview: 'row-center w-full wrap gap-8',
     hoverMask: 'group column-center relative',
     settingIcon: cn(

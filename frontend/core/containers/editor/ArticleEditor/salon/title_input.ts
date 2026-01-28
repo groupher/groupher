@@ -4,7 +4,7 @@ export default () => {
   const { cn, fg } = useTwBelt()
 
   return {
-    wrapper: cn('column items-center w-full'),
+    wrapper: 'column items-center w-full',
     input: cn('w-10/12 block border-none', fg('title')),
     inputer: cn(
       'w-full block rounded-none border-none bg-transparent',

@@ -8,7 +8,7 @@ export default () => {
   const { cn, fg, fill, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both w-full grow'),
+    wrapper: 'column-align-both w-full grow',
     inner: 'column w-10/12 pt-6 px-5 h-full',
     header: 'row-center',
     title: cn('text-sm bold-sm ml-1', fg('digest')),

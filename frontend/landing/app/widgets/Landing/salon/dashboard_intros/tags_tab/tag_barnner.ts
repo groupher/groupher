@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('mt-7 ml-1.5'),
+    wrapper: 'mt-7 ml-1.5',
     header: 'row',
     hashIcon: cn('size-3.5 mr-1 mt-px opacity-65', rainbow(COLOR_NAME.GREEN, 'fill')),
     title: cn('text-xs', fg('title')),

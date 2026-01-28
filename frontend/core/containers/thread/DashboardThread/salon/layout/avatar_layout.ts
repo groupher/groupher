@@ -13,11 +13,11 @@ export default () => {
     wrapper: base.baseSection,
     block: cnMerge(base.blockBase, 'align-both w-64 h-20'),
     blockActive: base.blockBaseActive,
-    select: cn('row-center gap-x-8 w-full'),
+    select: 'row-center gap-x-8 w-full',
     layout: 'column-align-both',
     list: 'row-center gap-x-2',
     divider: cn('h-6 w-px ml-4 mr-4 opacity-65', bg('text.digest')),
-    avatar: cn('align-both size-7 text-xs border bold-sm rounded'),
+    avatar: 'align-both size-7 text-xs border bold-sm rounded',
     blue: cn(
       rainbow(COLOR_NAME.BLUE, 'fg'),
       rainbow(COLOR_NAME.BLUE, 'bgSoft'),

@@ -11,7 +11,7 @@ export default ({ color }: TProps) => {
   const { cn, fg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both mt-8'),
+    wrapper: 'column-align-both mt-8',
     title: cn('text-xs', fg('digest')),
     layouts: 'row-center gap-x-4 mb-3',
     card: cn('relative w-28 h-28 rounded-md border', rainbow(color, 'borderSoft')),

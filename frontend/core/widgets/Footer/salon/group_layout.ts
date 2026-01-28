@@ -13,7 +13,7 @@ export default () => {
     //
     column: 'column min-w-24',
     title: cn('text-sm mb-3.5', fg('title')),
-    body: cn('gap-y-3'),
+    body: 'gap-y-3',
     link: cn(
       'row-center text-sm -ml-px no-underline pointer',
       'hover:underline',

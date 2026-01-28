@@ -19,7 +19,7 @@ export default () => {
   const { cn, fill } = useTwBelt()
 
   return {
-    wrapper: cn('align-both size-5 mr-1'),
+    wrapper: 'align-both size-5 mr-1',
     icon: cn('size-3.5', fill('digest')),
   }
 }

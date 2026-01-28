@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, rainbow, sexyBorder } = useTwBelt()
 
   return {
-    wrapper: cn('px-8 py-6'),
+    wrapper: 'px-8 py-6',
     desc: cn('text-xs mt-1', fg('hint')),
     footer: 'align-both w-full pr-12 gap-x-3.5',
     rootSign: cn(

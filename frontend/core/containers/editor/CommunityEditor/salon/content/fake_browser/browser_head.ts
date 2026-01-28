@@ -64,7 +64,7 @@ export default () => {
     threadPath: 'row-center',
     threadText: cn('', fg('title')),
     //
-    domainText: cn('text-sm clip-text'),
+    domainText: 'text-sm clip-text',
     domainTextStyle: {
       background: `linear-gradient(to left, ${getPathGradient(wallpaper)})`,
     },

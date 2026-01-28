@@ -15,7 +15,7 @@ export default () => {
       bg('sandBox'),
     ),
 
-    select: cn('row-center wrap w-full -ml-2'),
+    select: 'row-center wrap w-full -ml-2',
     block: cn(base.blockBase, 'w-72 h-24 scale-90'),
     blockActive: base.blockBaseActive,
     layout: 'column-align-both w-1/2',

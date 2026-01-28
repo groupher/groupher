@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg } = useTwBelt()
 
   return {
-    header: cn('row-between'),
+    header: 'row-between',
     tabs: 'row items-end gap-x-3',
     tabName: cn(
       'text-sm pointer trans-all-200',

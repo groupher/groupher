@@ -8,7 +8,7 @@ export default () => {
   const { cn, fg, fill, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both relative w-full h-64'),
+    wrapper: 'column-align-both relative w-full h-64',
     introTitle: cn('row-center text-lg mb-5 -ml-2.5', fg('title')),
     introLogo: cn('size-4 mr-2.5', fill('digest')),
 

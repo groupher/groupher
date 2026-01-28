@@ -1,9 +1,5 @@
-import useTwBelt from '~/hooks/useTwBelt'
-
 export default () => {
-  const { cn } = useTwBelt()
-
   return {
-    wrapper: cn('row justify-between mb-8'),
+    wrapper: 'row justify-between mb-8',
   }
 }

@@ -8,8 +8,8 @@ export default () => {
   const { cn, avatar, fg, cut, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row-center relative w-full'),
-    baseInfo: cn('row-center grow'),
+    wrapper: 'row-center relative w-full',
+    baseInfo: 'row-center grow',
     headerInfo: 'column w-full',
     user: 'row-center grow text-sm',
     avatar: cn('size-6 mr-3.5', avatar()),

@@ -4,7 +4,7 @@ export default ({ loading }) => {
   const { cn, bg, fg, fill, br, hover } = useTwBelt()
 
   return {
-    wrapper: cn('w-full pl-12'),
+    wrapper: 'w-full pl-12',
     title: cn('text-sm bold-sm', fg('title')),
     cell: cn('text-sm', fg('digest')),
     icon: {

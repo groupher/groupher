@@ -8,7 +8,7 @@ export default () => {
   const { cn, fg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row wrap mt-16 pl-8 w-full h-72'),
+    wrapper: 'row wrap mt-16 pl-8 w-full h-72',
     item: 'row-center w-1/2 h-4 gap-x-2 trans-all-200',
     title: cn('text-sm', fg('digest')),
 

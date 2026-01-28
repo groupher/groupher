@@ -4,7 +4,7 @@ export default () => {
   const { cn, fg } = useTwBelt()
 
   return {
-    wrapper: cn('column w-52 min-w-52 pt-6'),
+    wrapper: 'column w-52 min-w-52 pt-6',
     desc: cn('text-base mb-6', fg('digest')),
     tabs: 'row-center mb-6 -ml-2.5',
   }

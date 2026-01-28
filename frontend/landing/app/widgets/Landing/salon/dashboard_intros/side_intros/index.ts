@@ -12,7 +12,7 @@ export default ({ color }: TProps) => {
   const { cn, fg, bg, rainbow, vividDark, landingTitle } = useTwBelt()
 
   return {
-    wrapper: cn('column w-80 h-auto mt-12'),
+    wrapper: 'column w-80 h-auto mt-12',
     head: 'mb-8',
     footer: 'row-center mt-12 gap-x-4',
 

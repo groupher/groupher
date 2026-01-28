@@ -23,14 +23,14 @@ export default () => {
     ),
     indexInner: cn('size-3.5 circle', bg('text.digest')),
     //
-    markDot: cn('align-both group w-10 h-4 pointer -ml-2 z-30'),
+    markDot: 'align-both group w-10 h-4 pointer -ml-2 z-30',
     markInner: cn(
       'size-2 circle opacity-40 trans-all-100 group-hover:scale-110',
       isDarkTheme ? 'group-hover:brightness-150' : 'group-hover:brightness-50',
       bg('text.digest'),
     ),
     //
-    gradientBar: cn('absolute left-0 -top-px h-6 rounded-xl trans-all-200 overflow-hidden'),
+    gradientBar: 'absolute left-0 -top-px h-6 rounded-xl trans-all-200 overflow-hidden',
     gradientBg: cn(
       'absolute top-0 left-0 w-full h-full',
       'gradient-purple',

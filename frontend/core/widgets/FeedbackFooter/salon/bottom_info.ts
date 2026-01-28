@@ -20,7 +20,7 @@ export default ({ offsetRight, withLastUpdated }: TProps) => {
     title: cn('text-sm mb-4', fg('title')),
     titleSmall: cn('text-xs mr-3 mt-px opacity-80', fg('digest')),
     //
-    faces: cn('row-center gap-x-6'),
+    faces: 'row-center gap-x-6',
     facesSmall: 'gap-x-1.5 mr-0.5',
     //
     iconBox: cn('size-8 align-both grayscale', hover('bg'), 'hover:grayscale-0'),

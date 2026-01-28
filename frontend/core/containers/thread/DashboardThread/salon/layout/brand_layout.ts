@@ -11,12 +11,12 @@ export default () => {
     wrapper: base.baseSection,
     block: cnMerge(base.blockBase, 'w-44 h-20'),
     blockActive: base.blockBaseActive,
-    select: cn('row-center gap-x-10 w-full'),
+    select: 'row-center gap-x-10 w-full',
     brand: 'row-center',
     brandIcon: cn('size-6', primary('fill'), isBlackPrimary && fill('link')),
     brandTitle: cn('text-base', fg('digest')),
     layout: 'column-align-both group',
-    layoutTitleActive: cn('opacity-100'),
+    layoutTitleActive: 'opacity-100',
     divider: cn(sexyBorder(), 'mt-4'),
   }
 }

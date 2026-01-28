@@ -9,7 +9,7 @@ export default () => {
   const { cn, fill, fg, bg, menu, rainbow, vividDark } = useTwBelt()
 
   return {
-    wrapper: cn('align-both w-full gap-x-4'),
+    wrapper: 'align-both w-full gap-x-4',
     block: cn(
       'group column -mt-4 relative min-w-52 w-52 h-32 px-3 py-2 rounded-md pointer overflow-hidden',
       'trans-all-200',
@@ -17,7 +17,7 @@ export default () => {
     head: 'row-center',
 
     title: cn('text-sm', fg('title'), vividDark()),
-    content: cn('column relative gap-y-1.5 pl-2.5 mt-2.5'),
+    content: 'column relative gap-y-1.5 pl-2.5 mt-2.5',
     contentBorder: cn(
       'absolute left-0 top-0 h-full w-px',
       bg('text.digest'),
@@ -42,7 +42,7 @@ export default () => {
     cyanIcon: `group-hover:${rainbow(COLOR_NAME.CYAN, 'fill')}`,
 
     menuIcon: cn('size-4.5', fill('digest')),
-    menuBarColumn: cn('column !items-start py-2'),
+    menuBarColumn: 'column !items-start py-2',
     menuTitle: cn(menu('title')),
     menuDesc: cn('text-xs mt-1 pr-1 opacity-80', fg('digest')),
   }

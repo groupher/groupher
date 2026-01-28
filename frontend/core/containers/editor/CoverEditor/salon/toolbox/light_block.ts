@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, br, bg, shadow, primary } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both size-20 group/position'),
+    wrapper: 'column-align-both size-20 group/position',
     block: cn(
       'align-both wrap size-16 rounded border-2 -mt-3.5 gap-x-1',
       'scale-50 group-hover/position:scale-75 group-hover/position:mt-0',

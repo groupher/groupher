@@ -4,7 +4,7 @@ export default () => {
   const { cn, primary } = useTwBelt()
 
   return {
-    wrapper: cn('column align-start justify-between w-11/12'),
+    wrapper: 'column align-start justify-between w-11/12',
     actionRow: 'row-center w-60 mb-8 -ml-px',
     linkGroup: 'row wrap justify-start w-full gap-8',
     column: 'w-[30%] h-full',

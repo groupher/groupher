@@ -11,7 +11,7 @@ export default ({ ...spacing }: TProps) => {
   return {
     wrapper: cn('mb-2.5', margin(spacing)),
     li: 'row-center group',
-    item: cn('text-xs py-0.5 px-1'),
+    item: 'text-xs py-0.5 px-1',
     itemHover: cn(hover('bg'), hover('fg')),
     hoverShift: 'hover:ml-1 trans-all-100',
     ol: 'row-center -ml-1',

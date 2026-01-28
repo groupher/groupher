@@ -7,7 +7,7 @@ export default () => {
   const { cn, fg, bg, br, shadow, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both w-[440px] h-auto absolute top-16 left-5'),
+    wrapper: 'column-align-both w-[440px] h-auto absolute top-16 left-5',
     inner: 'row justify-between w-full px-2.5',
     item: 'align-both px-2.5 py-2 trans-all-200 scale-90 pointer border border-transparent rounded-xl',
     itemActive: cn('scale-100', bg('alphaBg'), br('divider'), shadow('sm')),

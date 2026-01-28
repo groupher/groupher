@@ -8,7 +8,7 @@ export default () => {
   const { cn, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('relative align-both gap-x-4 py-12'),
+    wrapper: 'relative align-both gap-x-4 py-12',
     seedIcon: cn('size-4 absolute opacity-65', rainbow(COLOR_NAME.GREEN, 'fill')),
     dashline: cn('w-14 h-1 border-t border-dashed opacity-30', rainbow(COLOR_NAME.BLACK, 'border')),
     connectline: cn(

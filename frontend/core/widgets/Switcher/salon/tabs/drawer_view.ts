@@ -7,7 +7,7 @@ export default () => {
 
   return {
     wrapper: cn('relative overflow-hidden w-full h-9 rounded-xl p-1', bg('hoverBg')),
-    tabsContainer: cn('row-center w-full h-full relative z-10'),
+    tabsContainer: 'row-center w-full h-full relative z-10',
     tabItem: cn('align-both h-full grow rounded-md text-xs pointer', fg('digest')),
     activeTabItem: cn(fg('title')),
     slider: cn(

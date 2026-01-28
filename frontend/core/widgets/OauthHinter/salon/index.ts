@@ -4,7 +4,7 @@ export default () => {
   const { cn, fg, fill } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both h-screen'),
+    wrapper: 'column-align-both h-screen',
     icons: 'row justify-center',
     hint: cn('column', fg('title')),
     footer: cn('mb-2.5', fg('digest')),

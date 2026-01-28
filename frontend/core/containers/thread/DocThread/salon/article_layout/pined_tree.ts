@@ -8,9 +8,9 @@ export default () => {
   const { cn, fg, bg, br, rainbow, fill, isDarkBlack } = useTwBelt()
 
   return {
-    wrapper: cn('column justify-center gap-y-4 w-full mb-9'),
+    wrapper: 'column justify-center gap-y-4 w-full mb-9',
     item: 'row-center pointer group shrink-0',
-    iconBox: cn('align-both size-6 align-center relative mr-3.5'),
+    iconBox: 'align-both size-6 align-center relative mr-3.5',
     cover: 'size-6 absolute left-0 top-0 rounded',
     //
     blackBg: rainbow(COLOR_NAME.BLACK, 'bg'),

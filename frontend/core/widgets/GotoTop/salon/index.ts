@@ -4,7 +4,7 @@ export default () => {
   const { cn, fill } = useTwBelt()
 
   return {
-    wrapper: cn('align-both size-8 pointer'),
+    wrapper: 'align-both size-8 pointer',
     icon: cn('size-4', fill('digest')),
   }
 }

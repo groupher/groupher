@@ -21,7 +21,7 @@ export default () => {
     inner: 'column-align-both relative w-full h-full',
     banner: 'column-center relative w-full pt-16',
     githubInfo: cn('row-center mt-12 mb-3 hover:underline pointer', fg('digest')),
-    githubIcon: cn('size-4 mr-1.5'),
+    githubIcon: 'size-4 mr-1.5',
     githubText: 'clip-text bold text-base',
     githubIconStyle: { fill: getCursorGradient(wallpaper) },
     textGradientStyle: { background: `linear-gradient(to top, ${getPathGradient(wallpaper)})` },
@@ -32,7 +32,7 @@ export default () => {
       bg('text.digest'),
       isLightTheme ? 'opacity-10' : 'opacity-20',
     ),
-    icon: cn('size-9 inline-block mr-1 -mt-1 z-20'),
+    icon: 'size-9 inline-block mr-1 -mt-1 z-20',
     desc: cn('inline-flex items-center text-center text-lg', fg('digest')),
     //
     focus: cn('bold-sm mx-0.5', fg('title')),

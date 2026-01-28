@@ -4,7 +4,7 @@ export default () => {
   const { cn, fg, landingTitle } = useTwBelt()
 
   return {
-    wrapper: cn('group relative w-2/5 mt-3'),
+    wrapper: 'group relative w-2/5 mt-3',
     title: landingTitle(),
     link: cn('pointer px-0.5 hover:underline', fg('link')),
     topping: cn('text-base pb-3', fg('digest')),

@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: 'row-between w-20',
-    title: cn('text-xs pl-0.5 bold-sm'),
+    title: 'text-xs pl-0.5 bold-sm',
     editIcon: cn('size-3 mr-1.5', fill('button.fg')),
   }
 }

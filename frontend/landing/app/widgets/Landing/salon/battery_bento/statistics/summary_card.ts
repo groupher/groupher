@@ -20,7 +20,7 @@ export default () => {
     title: cn('text-xs scale-90 -ml-1', fg('hint')),
     num: cn('row-center text-sm bold-sm overflow-hidden', fg('title'), isDarkTheme && dimDark()),
 
-    icon: cn('size-3 ml-2'),
+    icon: 'size-3 ml-2',
     iconGreen: rainbow(COLOR_NAME.GREEN, 'fill'),
     iconRed: rainbow(COLOR_NAME.RED, 'fill'),
   }

@@ -7,7 +7,7 @@ export default () => {
   const { broadcastBg } = useBroadcast()
 
   return {
-    wrapper: cn('w-full'),
+    wrapper: 'w-full',
     enableDesc: 'w-10/12 leading-relaxed',
     bgLabel: cn('align-both size-8 circle border pointer', rainbow(broadcastBg, 'border')),
     colorBall: cn('size-6 circle', rainbow(broadcastBg, 'bg')),

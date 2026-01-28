@@ -7,7 +7,7 @@ export default () => {
   const base = useBase()
 
   return {
-    wrapper: cn(''),
+    wrapper: '',
     item: base.item,
     tail: base.tail,
     content: base.content,

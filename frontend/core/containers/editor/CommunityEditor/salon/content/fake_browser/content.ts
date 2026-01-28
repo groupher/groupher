@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, bg, br, cut } = useTwBelt()
 
   return {
-    wrapper: cn('column relative w-full'),
+    wrapper: 'column relative w-full',
     desc: cn('absolute right-8 top-16 mt-2 text-xs line-clamp-2 w-32 break-all', fg('digest')),
     banner: 'row-between relative h-16 px-20 rounded-md',
 

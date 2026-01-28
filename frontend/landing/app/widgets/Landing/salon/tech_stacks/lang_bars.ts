@@ -14,7 +14,7 @@ export default () => {
     bgPurple: rainbow(COLOR_NAME.PURPLE, 'bg'),
     bgBlue: rainbow(COLOR_NAME.BLUE, 'bg'),
     //
-    lang: cn('row-center mr-5'),
+    lang: 'row-center mr-5',
     dot: 'size-2 circle mr-2',
   }
 }

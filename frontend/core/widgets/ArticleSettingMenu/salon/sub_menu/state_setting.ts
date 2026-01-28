@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, menu, rainbow, fill, rainbowSoft, sexyBorder, primary } = useTwBelt()
 
   return {
-    wrapper: cn('mr-0.5'),
+    wrapper: 'mr-0.5',
     item: cn(menu('bar'), 'row-center group'),
     title: cn(menu('title'), 'grow ml-0.5 text-sm'),
     titleActive: fg('title'),

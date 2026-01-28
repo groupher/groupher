@@ -12,7 +12,7 @@ export default ({ isHighLight, ...spacing }: TProps) => {
 
   return {
     wrapper: cn('row-center', isHighLight ? fg('digest') : fg('hint'), margin(spacing)),
-    highLight: cn('bg-clip-text bold-sm count-highlight'),
+    highLight: 'bg-clip-text bold-sm count-highlight',
     viewIcon: cn('size-3 mr-1', isHighLight ? fill('highlight') : fill('digest')),
     count: 'text-sm',
   }

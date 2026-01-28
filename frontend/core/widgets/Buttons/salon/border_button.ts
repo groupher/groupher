@@ -42,7 +42,7 @@ export default () => {
   const { wallpaper } = useWallpaper()
 
   return {
-    wrapper: cn('relative group'),
+    wrapper: 'relative group',
     button: cn(
       isLightTheme ? shadow('xl') : shadow('lg'),
       !isLightTheme && cn('border-2', br('digest')),

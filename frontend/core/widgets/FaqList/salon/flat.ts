@@ -10,7 +10,7 @@ export default ({ large }: TProps) => {
   const { cn, fg, cut, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('column w-full min-w-80'),
+    wrapper: 'column w-full min-w-80',
     header: cn('align-both', large ? 'mb-16' : 'mb-14'),
     brandText: cn('bold-sm', fg('title'), large ? 'text-2xl' : 'text-xl'),
     //

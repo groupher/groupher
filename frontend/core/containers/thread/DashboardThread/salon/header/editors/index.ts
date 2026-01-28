@@ -5,7 +5,7 @@ export default () => {
 
   return {
     wrapper: 'w-full',
-    topWrapper: cn('row w-full justify-between mb-5 p-1'),
+    topWrapper: 'row w-full justify-between mb-5 p-1',
     divider: cn('mb-10', sexyBorder()),
     groupInputer: 'w-60',
     leftPart: 'column w-64 gap-y-6',

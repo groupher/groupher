@@ -8,7 +8,7 @@ export default () => {
   const { cn, fg, landingTitle, shadow } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both w-full mt-32'),
+    wrapper: 'column-align-both w-full mt-32',
     wall: cn(
       'align-both w-full mt-16 mb-12 relative border-12 overflow-hidden rounded-4xl',
       'h-[720px]',

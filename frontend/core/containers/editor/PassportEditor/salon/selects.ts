@@ -5,9 +5,9 @@ export default () => {
   const { cn, fg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row wrap w-full gap-y-2.5 relative'),
+    wrapper: 'row wrap w-full gap-y-2.5 relative',
     item: 'w-1/2',
-    readonlyItem: cn('row-center w-1/2'),
+    readonlyItem: 'row-center w-1/2',
     checkIcon: cn('size-3 mr-1.5', rainbow(COLOR_NAME.GREEN, 'fill')),
     rootCheckIcon: cn('size-3 mr-1.5', rainbow(COLOR_NAME.GREEN, 'fill')),
     itemTitle: cn('line-clamp-1', fg('title')),

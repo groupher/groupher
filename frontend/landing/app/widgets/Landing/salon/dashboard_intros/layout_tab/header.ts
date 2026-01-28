@@ -11,7 +11,7 @@ export default ({ color }: TProps) => {
   const { cn, br, fg, bg, shadow, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('align-both px-4 relative'),
+    wrapper: 'align-both px-4 relative',
     colorBox: cn(
       'align-both size-7 rounded-md border pointer',
       `hover:${br('digest')}`,

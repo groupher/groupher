@@ -6,7 +6,7 @@ export default () => {
   const { cn, fill, menu, hover } = useTwBelt()
 
   return {
-    wrapper: cn('row-center'),
+    wrapper: 'row-center',
     title: cn('row-center text-sm', hover('fg')),
     panel: cn('w-32 py-1.5 px-1', menu('bg')),
     menuIcon: cn('', menu('icon')),

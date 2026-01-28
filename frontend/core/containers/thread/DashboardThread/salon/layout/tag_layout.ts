@@ -11,7 +11,7 @@ export default () => {
     wrapper: base.baseSection,
     block: cn(base.blockBase, 'align-both w-64 h-20'),
     blockActive: base.blockBaseActive,
-    select: cn('row-center gap-x-8 w-full'),
+    select: 'row-center gap-x-8 w-full',
     layout: 'column-align-both',
 
     bar: cn(base.bar, 'h-1.5 w-20 opacity-40'),

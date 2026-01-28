@@ -8,7 +8,7 @@ export default ({ viewerHasUpvoted }: TProps) => {
   const { cn, fg, primary } = useTwBelt()
 
   return {
-    wrapper: cn('row-center'),
+    wrapper: 'row-center',
     count: cn('bold-sm text-base ml-1.5', viewerHasUpvoted ? primary('fg') : fg('digest')),
   }
 }

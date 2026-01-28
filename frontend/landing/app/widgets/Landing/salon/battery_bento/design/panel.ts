@@ -22,7 +22,7 @@ export default () => {
       fontSize: '42px',
     },
 
-    wrapper: cn('relative p-4 pt-7 w-full h-full overflow-hidden'),
+    wrapper: 'relative p-4 pt-7 w-full h-full overflow-hidden',
     gridIcon: cn('absolute top-3 size-28', fill('digest')),
     mainCard: cn(
       'align-both absolute top-6 -right-5 rounded-xl border z-20',

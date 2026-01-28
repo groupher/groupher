@@ -30,8 +30,8 @@ export default ({ width, ...spacing }: TProps) => {
     ),
     label: cn('text-sm mb-3', fg('title')),
     hint: cn('text-xs leading-relaxed', fg('digest')),
-    inputWrapper: cn('column gap-y-4'),
-    iconBox: cn('align-both relative size-5 pointer rounded'),
+    inputWrapper: 'column gap-y-4',
+    iconBox: 'align-both relative size-5 pointer rounded',
     iconActiveBar: cn(
       'absolute -bottom-2.5 size-1.5 circle',
       isLightTheme && 'opacity-65',
@@ -39,7 +39,7 @@ export default ({ width, ...spacing }: TProps) => {
     ),
     iconBoxActive: cn(bg('hoverBg'), shadow('md')),
     icon: cn('size-4 saturate-0 hover:saturate-100 hover:scale-110 trans-all-100', fill('digest')),
-    iconActive: cn('saturate-100'),
+    iconActive: 'saturate-100',
   }
 }
 

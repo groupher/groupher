@@ -17,12 +17,12 @@ export default () => {
     ),
     topping: 'column mb-1.5',
     githubIcon: cn('size-40 absolute top-3 right-4 opacity-10', fill('digest')),
-    githubTitle: cn('text-2xl clip-text'),
+    githubTitle: 'text-2xl clip-text',
     desc: cn('text-base mt-4', fg('digest')),
     gradientTextStyle: base.textGradientStyle,
     //
     numIntro: cn('row items-baseline mt-2 mb-4 pb-5 border-b', br('divider')),
-    numDivider: cn('mx-4'),
+    numDivider: 'mx-4',
     num: cn('text-2xl', fg('title')),
     unit: cn('text-base ml-2', fg('digest')),
     //

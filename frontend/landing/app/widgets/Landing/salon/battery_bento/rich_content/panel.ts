@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, bg, br, shadow, rainbow, dimDark } = useTwBelt()
 
   return {
-    wrapper: cn('p-4 w-full h-80'),
+    wrapper: 'p-4 w-full h-80',
     content: cn(
       'column items-start relative mt-2.5 rounded-md p-2.5 w-full h-5/6 border',
       bg('card'),

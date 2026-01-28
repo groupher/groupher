@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, bg, br, fill, menu, shadow, cut, sexyBorder } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both relative w-full mt-10 mb-10'),
+    wrapper: 'column-align-both relative w-full mt-10 mb-10',
     title: cn('text-xl mb-3.5 mt-5 -ml-2.5', fg('title')),
     desc: cn('text-sm mb-3', fg('digest')),
     frame: 'row w-[680px] h-[540px] rounded-xl mt-8',

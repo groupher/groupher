@@ -4,7 +4,7 @@ export default () => {
   const { cn, fg, avatar, sexyBorder } = useTwBelt()
 
   return {
-    wrapper: cn('min-h-80 w-60 min-w-60 pt-4 mt-16'),
+    wrapper: 'min-h-80 w-60 min-w-60 pt-4 mt-16',
     inner: 'w-full h-auto pl-16',
     divider: sexyBorder(),
     label: cn('text-sm mb-3', fg('title')),

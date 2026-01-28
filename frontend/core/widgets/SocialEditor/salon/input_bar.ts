@@ -6,7 +6,7 @@ export default () => {
   const { cn, fill, bg, br } = useTwBelt()
 
   return {
-    wrapper: cn('row-center relative'),
+    wrapper: 'row-center relative',
     icon: cn('size-4 saturate-100', fill('digest')),
     iconWrapper: cn(
       'align-both h-9 w-10 border border-r-none rounded-md',

@@ -8,7 +8,7 @@ export default () => {
   const { cn, fg, bg, fill, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('absolute top-14 right-9 w-20 h-56 pt-12'),
+    wrapper: 'absolute top-14 right-9 w-20 h-56 pt-12',
     tag: 'row-center mb-2 opacity-65',
     icon: cn('size-3 rotate-12 mr-2 opacity-40', fill('digest')),
     fillGreen: rainbow(COLOR_NAME.GREEN, 'fill'),

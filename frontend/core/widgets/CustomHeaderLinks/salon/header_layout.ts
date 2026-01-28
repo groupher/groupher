@@ -9,12 +9,12 @@ export default () => {
   const { link, menuLink, linkActive, arrowIcon } = useBase()
 
   return {
-    wrapper: cn('row-center gap-x-3.5 ml-1.5'),
+    wrapper: 'row-center gap-x-3.5 ml-1.5',
     menuPanel: cn('column w-36', bg('popover.bg')),
     link,
     menuLink,
     linkActive,
     arrowIcon,
-    groupItem: cn('relative pr-4'),
+    groupItem: 'relative pr-4',
   }
 }

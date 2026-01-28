@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('column p-5 pb-0 w-full min-h-52'),
+    wrapper: 'column p-5 pb-0 w-full min-h-52',
     body: 'grow mt-4',
     footer: 'column w-full mb-4 mt-5',
     desc: cn('text-sm ml-1', fg('digest')),

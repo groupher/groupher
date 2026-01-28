@@ -19,9 +19,9 @@ export default () => {
     leftArrow: cn(naviArrow),
     rightArrow: cn(naviArrow, 'rotate-180'),
 
-    slideBox: cn('relative w-11/12 h-full rounded-t-lg'),
+    slideBox: 'relative w-11/12 h-full rounded-t-lg',
     slideImage: 'w-full h-[700px] overflow-hidden',
-    coverImg: cn('object-cover w-full h-[788px] -mt-6 animation-fade-up'),
+    coverImg: 'object-cover w-full h-[788px] -mt-6 animation-fade-up',
     //
     themeSwitch: cn(
       'absolute bottom-6 right-72 mr-8 align-both size-12 circle z-50 pointer active:scale-90',

@@ -8,7 +8,7 @@ export default ({ isFolderOpen }: TProps) => {
   const { cn, fg, zise, fill } = useTwBelt()
 
   return {
-    header: cn('row-center mb-2 ml-0.5 pointer hover:opacity-80 transition-opacity'),
+    header: 'row-center mb-2 ml-0.5 pointer hover:opacity-80 transition-opacity',
     arrowBox: 'row-center size-4',
     title: 'row-center ml-1.5',
     folderTitle: cn('text-sm mr-2', fg('digest')),

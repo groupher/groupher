@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, sexyBorder } = useTwBelt()
 
   return {
-    wrapper: cn('column p-5 pb-3 h-full'),
+    wrapper: 'column p-5 pb-3 h-full',
     header: 'row-center',
     title: cn('text-lg grow', fg('title')),
     enable: cn('text-sm mr-1', fg('hint')),

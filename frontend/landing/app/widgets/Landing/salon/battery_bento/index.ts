@@ -7,7 +7,7 @@ export default () => {
   const { cn, fg, rainbow, landingTitle } = useTwBelt()
 
   return {
-    wrapper: cn('column-align-both w-full mt-32 mb-16'),
+    wrapper: 'column-align-both w-full mt-32 mb-16',
     slogan: 'column align-both mb-16',
     title: landingTitle(),
     desc: cn('text-lg mt-3', fg('digest'), isDarkTheme && 'opacity-65'),

@@ -9,7 +9,7 @@ export default ({ color }: TProps) => {
   const { cn, fg, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row items-start mb-3.5'),
+    wrapper: 'row items-start mb-3.5',
     title: cn('text-base', fg('digest')),
     iconBox: 'align-both size-5 mr-2 pt-0.5',
     checkIcon: cn('size-4', rainbow(color, 'fill')),

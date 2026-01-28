@@ -10,7 +10,7 @@ export default ({ outlineOpen }: TProps) => {
   const base = useBase()
 
   return {
-    wrapper: cn('row justify-center w-full relative'),
+    wrapper: 'row justify-center w-full relative',
     header: 'mb-4',
     content: cn(
       base.main,

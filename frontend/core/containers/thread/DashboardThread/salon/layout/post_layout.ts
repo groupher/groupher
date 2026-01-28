@@ -10,7 +10,7 @@ export default () => {
 
   return {
     wrapper: base.baseSection,
-    select: cn('row-center wrap gap-x-5 gap-y-8 w-full'),
+    select: 'row-center wrap gap-x-5 gap-y-8 w-full',
     inline: 'inline-block',
     layout: 'column-center justify-between h-32',
     block: cn(base.blockBase, 'h-24 min-h-24'),

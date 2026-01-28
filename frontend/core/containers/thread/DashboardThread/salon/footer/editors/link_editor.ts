@@ -18,7 +18,7 @@ export default () => {
     //
     editItem: 'row-center w-full mb-3',
     input: 'w-full h-7',
-    editWrapper: cn('column mt-1'),
+    editWrapper: 'column mt-1',
     footer: 'w-full align-both',
     notifyLabel: cn(
       'text-xs border rounded-md px-1 py-px bold-sm ml-1.5 scale-75',

@@ -4,7 +4,7 @@ export default () => {
   const { cn, fg, fill, avatar } = useTwBelt()
 
   return {
-    wrapper: cn('row-center h-10 pointer'),
+    wrapper: 'row-center h-10 pointer',
     expandWrapper: 'row-center h-14 ml-0 relative',
     hintText: cn('absolute -top-6 left-0.5 text-xs opacity-50', fg('digest')),
     unLogUserIcon: cn('size-3 opacity-50', fill('digest')),

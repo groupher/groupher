@@ -1,9 +1,5 @@
-import useTwBelt from '~/hooks/useTwBelt'
-
 export default () => {
-  const { cn } = useTwBelt()
-
   return {
-    wrapper: cn('w-full h-full'),
+    wrapper: 'w-full h-full',
   }
 }

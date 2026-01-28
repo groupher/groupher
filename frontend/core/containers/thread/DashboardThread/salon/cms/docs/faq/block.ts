@@ -6,10 +6,10 @@ export default () => {
   const { cn, fg, cut, fill, hover } = useTwBelt()
 
   return {
-    wrapper: cn('relative group'),
+    wrapper: 'relative group',
     title: cn('text-base bold-sm', cut('w-96')),
     body: cn('mt-2.5 mb-6 break-words', fg('digest')),
-    actions: cn('row-center absolute top-1 group-smoky-65 -ml-52'),
+    actions: 'row-center absolute top-1 group-smoky-65 -ml-52',
     //
     hintBox: cn('row-center px-1 py-0.5', hover('bg')),
     hint: cn('text-xs mr-4', hover('fg')),

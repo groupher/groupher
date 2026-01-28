@@ -12,7 +12,7 @@ export default () => {
       br('divider'),
       shadow('sm'),
     ),
-    communityLogo: cn('size-5 rounded mr-1.5 gradient-orange'),
+    communityLogo: 'size-5 rounded mr-1.5 gradient-orange',
     title: cn('row-center text-sm', fg('title')),
     links: 'align-both -ml-2 gap-x-4',
     linkName: 'text-xs',

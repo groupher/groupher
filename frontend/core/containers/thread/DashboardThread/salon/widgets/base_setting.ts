@@ -10,7 +10,7 @@ export default () => {
   const { widgetsPrimaryColor } = useWidgets()
 
   return {
-    wrapper: cn('column'),
+    wrapper: 'column',
     label: cn(
       'align-both size-7 circle pointer -ml-0.5 border',
       rainbow(widgetsPrimaryColor, 'border'),

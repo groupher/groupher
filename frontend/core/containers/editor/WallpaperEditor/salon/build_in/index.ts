@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, sexyBorder, sexyVBorder } = useTwBelt()
 
   return {
-    wrapper: cn('relative ml-7'),
+    wrapper: 'relative ml-7',
     title: cn('text-sm bold-sm mb-4 ml-0.5', fg('digest')),
     switchWrapper: 'row-between pr-2.5 ml-px',
     //

@@ -6,7 +6,7 @@ export default () => {
   const { cn, fg, bg, fill, sexyVBorder, hover } = useTwBelt()
 
   return {
-    wrapper: cn('w-2/3 h-48 row-center -mr-12'),
+    wrapper: 'w-2/3 h-48 row-center -mr-12',
     card: 'column-align-both w-1/4 h-9/12',
     iconBox: cn('w-16 h-14 align-both rounded-2xl group', bg('sandBox'), hover('bg')),
     icon: cn(

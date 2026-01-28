@@ -4,7 +4,7 @@ export default () => {
   const { cn, bg } = useTwBelt()
 
   return {
-    wrapper: cn('row-center px-1.5 pt-0.5 rounded-md -ml-1 -mt-px'),
+    wrapper: 'row-center px-1.5 pt-0.5 rounded-md -ml-1 -mt-px',
     selectEmotion: cn('align-both ml-0.5 size-6 circle', bg('hoverBg')),
   }
 }
