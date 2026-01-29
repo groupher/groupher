@@ -1,8 +1,7 @@
+import useTwBelt from '~/hooks/useTwBelt'
 import type { TSpace } from '~/spec'
 
-import useTwBelt from '~/hooks/useTwBelt'
-
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 type TProps = {
   disabled: boolean

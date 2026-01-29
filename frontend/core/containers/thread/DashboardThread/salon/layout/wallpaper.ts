@@ -3,7 +3,7 @@ import useWallpaper from '~/hooks/useWallpaper'
 
 import useBase from '.'
 
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default () => {
   const { cn, fill, br, bg, shadow } = useTwBelt()

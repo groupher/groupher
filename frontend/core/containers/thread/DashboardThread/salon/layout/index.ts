@@ -28,7 +28,7 @@ export default () => {
     divider: cn(sexyBorder(), 'mt-14 mb-14'),
 
     // basic shape
-    bar: cn('absolute h-1.5 w-20 opacity-40 rounded', primary('bg'), vividDark()),
+    bar: cn('absolute h-1.5 w-20 opacity-30 rounded', primary('bg'), vividDark()),
     circle: cn('absolute size-2 circle opacity-40', primary('bg'), vividDark()),
     icon: cn('absolute size-3 opacity-65', primary('fill')),
   }

@@ -2,10 +2,10 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import useBase from '.'
 
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default () => {
-  const { cn, fg, br, shadow } = useTwBelt()
+  const { cn, cnMerge, fg, br, shadow } = useTwBelt()
   const base = useBase()
 
   return {
@@ -26,6 +26,6 @@ export default () => {
     desc: cn('text-sm mb-1.5 ml-5', fg('digest')),
     highlight: cn('ml-px mr-px bold-sm', fg('title')),
     //
-    bar: cn(base.bar, 'h-2 w-24 saturate-50 opacity-40'),
+    bar: cnMerge(base.bar, 'h-2 w-24 saturate-50 opacity-30'),
   }
 }

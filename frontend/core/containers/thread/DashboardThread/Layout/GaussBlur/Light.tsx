@@ -10,7 +10,7 @@ import useGaussBlur from '../../logic/useGaussBlur'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 
-import useSalon, { cn } from '../../salon/layout/gauss_blur'
+import useSalon, { cnMerge } from '../../salon/layout/gauss_blur'
 
 export default () => {
   const s = useSalon()
@@ -34,20 +34,20 @@ export default () => {
         <div className={s.previewer}>
           <div className={s.previewImage} style={{ background }} />
           <div className={s.contentBlock} style={{ background: bgColor }}>
-            <div className={cn(s.bar)} />
-            <div className={cn(s.bar, 'top-10 w-40 opacity-20')} />
+            <div className={s.bar} />
+            <div className={cnMerge(s.bar, 'top-10 w-40 opacity-20')} />
 
-            <div className={cn(s.bar, 'top-16 w-28')} />
-            <div className={cn(s.bar, 'top-20 w-44 opacity-20')} />
+            <div className={cnMerge(s.bar, 'top-16 w-28')} />
+            <div className={cnMerge(s.bar, 'top-20 w-44 opacity-20')} />
 
-            <div className={cn(s.bar, 'top-24 w-16 opacity-30 mt-2')} />
-            <div className={cn(s.bar, 'top-28 w-32 opacity-15 mt-2')} />
+            <div className={cnMerge(s.bar, 'top-24 w-16 opacity-30 mt-2')} />
+            <div className={cnMerge(s.bar, 'top-28 w-32 opacity-15 mt-2')} />
 
-            <div className={cn(s.bar, 'bottom-20 w-28 opacity-30')} />
-            <div className={cn(s.bar, 'bottom-16 w-44 opacity-15')} />
+            <div className={cnMerge(s.bar, 'bottom-20 w-28 opacity-30')} />
+            <div className={cnMerge(s.bar, 'bottom-16 w-44 opacity-15')} />
 
-            <div className={cn(s.bar, 'bottom-8 w-28 opacity-20')} />
-            <div className={cn(s.bar, 'bottom-4 w-44 opacity-10')} />
+            <div className={cnMerge(s.bar, 'bottom-8 w-28 opacity-20')} />
+            <div className={cnMerge(s.bar, 'bottom-4 w-44 opacity-10')} />
           </div>
         </div>
         <ul className={s.actions}>

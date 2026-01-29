@@ -9,7 +9,7 @@ import CheckLabel from '~/widgets/CheckLabel'
 
 import SectionLabel from '../SectionLabel'
 
-import useSalon, { cn } from '../salon/layout/wallpaper'
+import useSalon, { cn, cnMerge } from '../salon/layout/wallpaper'
 
 export default () => {
   const s = useSalon()
@@ -43,17 +43,17 @@ export default () => {
           <div className={s.realPreview}>
             <div className={s.previewImage} style={{ background }} />
             <div className={s.content} style={{ background: bgColor }}>
-              <div className={cn(s.bar, 'top-3')} />
-              <div className={cn(s.bar, 'top-8 w-40 opacity-20')} />
+              <div className={cnMerge(s.bar, 'top-3 opacity-30')} />
+              <div className={cnMerge(s.bar, 'top-8 w-40 opacity-20')} />
 
-              <div className={cn(s.bar, 'top-14 w-32 opacity-30')} />
-              <div className={cn(s.bar, 'top-20 w-44 -mt-1.5 opacity-20')} />
+              <div className={cnMerge(s.bar, 'top-14 w-32 opacity-30')} />
+              <div className={cnMerge(s.bar, 'top-20 w-44 -mt-1.5 opacity-20')} />
 
-              <div className={cn(s.bar, 'top-24 w-20 opacity-20')} />
-              <div className={cn(s.bar, 'top-28 w-32 mt-0.5 opacity-10')} />
+              <div className={cnMerge(s.bar, 'top-24 w-20 opacity-20')} />
+              <div className={cnMerge(s.bar, 'top-28 w-32 mt-0.5 opacity-10')} />
 
-              <div className={cn(s.bar, 'bottom-8 w-14 opacity-15')} />
-              <div className={cn(s.bar, 'bottom-4 w-32 mt-0.5 opacity-10')} />
+              <div className={cnMerge(s.bar, 'bottom-8 w-14 opacity-15')} />
+              <div className={cnMerge(s.bar, 'bottom-4 w-32 mt-0.5 opacity-10')} />
             </div>
           </div>
           <CheckLabel title='预览效果' top={4} active={false} />

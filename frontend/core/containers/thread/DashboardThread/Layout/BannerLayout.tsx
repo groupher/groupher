@@ -27,7 +27,7 @@ export default () => {
       <SectionLabel
         title='整体布局'
         desc={
-          <div className='row-center'>
+          <div>
             整体页面的 Header 布局，适用于除文章页的所有页面。
             <ArrowButton onClick={() => setShowDrawer(true)}>查看示例</ArrowButton>
           </div>

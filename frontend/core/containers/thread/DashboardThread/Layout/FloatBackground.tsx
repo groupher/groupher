@@ -1,5 +1,4 @@
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import Checker from '~/widgets/Checker'
 import ColorSelector from '~/widgets/ColorSelector'
 import { FIELD } from '../constant'
 import usePrimaryColor from '../logic/usePrimaryColor'
@@ -14,10 +13,11 @@ export default () => {
   return (
     <section className={s.wrapper}>
       <SectionLabel
-        title='主题色'
+        title='弹出层背景色'
         desc={
           <div>
-            设置后会在常见组件，功能性文字等位置显示该个性化主题色。参考
+            浅色主题下使用深色弹出层, 仅作用于 Tooltip / Menu / Popover 等轻量弹出层，不影响 Modal /
+            Drawer 等页面级组件。参考
             <ArrowButton left={1}>影响范围</ArrowButton>
           </div>
         }
@@ -38,9 +38,6 @@ export default () => {
             <div className={s.title}>主题颜色</div>
           </div>
           <p className={s.desc}>作用于各类按钮, 标签组件，路由等高亮颜色</p>
-          <Checker checked size='small' top={6} left={2}>
-            与副主题色同步
-          </Checker>
 
           <SavingBar
             isTouched={isTouched}
