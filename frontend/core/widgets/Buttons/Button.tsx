@@ -1,4 +1,3 @@
-// Button.tsx
 import type { FC, ReactNode } from 'react'
 import SIZE from '~/const/size'
 import type { TColorName, TSizeTSM, TSpace } from '~/spec'
@@ -21,11 +20,6 @@ type TProps = {
   size?: TSizeTSM
   width?: string
 
-  // new API
-  px?: number | null
-  py?: number | null
-
-  // ✅ legacy API (backward compatible)
   space?: number | null
   spaceY?: number | null
 
@@ -36,7 +30,6 @@ type TProps = {
   disabled?: boolean
   loading?: boolean
   onClick?: () => void
-  style?: React.CSSProperties
 } & TSpace
 
 const Button: FC<TProps> = ({
@@ -52,9 +45,6 @@ const Button: FC<TProps> = ({
   size = SIZE.MEDIUM,
   width = 'w-fit',
 
-  px = null,
-  py = null,
-
   space = null,
   spaceY = null,
 
@@ -63,12 +53,8 @@ const Button: FC<TProps> = ({
   disabled = false,
   loading = false,
   onClick,
-  style,
   ...spacing
 }) => {
-  const resolvedPx = px ?? space
-  const resolvedPy = py ?? spaceY
-
   const s = useSalon({
     red,
     ghost,
@@ -78,8 +64,8 @@ const Button: FC<TProps> = ({
 
     size,
     width,
-    px: resolvedPx,
-    py: resolvedPy,
+    px: space,
+    py: spaceY,
 
     color,
 
@@ -91,7 +77,6 @@ const Button: FC<TProps> = ({
   return (
     <button
       className={cnMerge(s.wrapper, className)}
-      style={style}
       disabled={disabled}
       aria-disabled={disabled || loading}
       aria-busy={loading}
