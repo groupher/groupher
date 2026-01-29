@@ -6,7 +6,6 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
-import Button from '~/widgets/Buttons/Button'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = LAYOUT_TABS.segment
@@ -41,26 +40,6 @@ export default ({ children }) => {
         <div className={s.tabs}>
           <Tabs items={items} activeKey={activeTab} view={VIEW.DESKTOP} noAnimation />
         </div>
-      </div>
-      <div className='gap-5 mb-10 row-center wrap'>
-        <Button type='red'>黑色传说</Button>
-        <Button type='red' ghost>
-          黑色传说
-        </Button>
-
-        <Button type='red' disabled>
-          黑色传说 d
-        </Button>
-        <Button type='red' ghost disabled>
-          黑色传说 d
-        </Button>
-
-        <Button>黑色传说</Button>
-        <Button ghost>黑色传说</Button>
-        <Button ghost disabled>
-          dis & ghost
-        </Button>
-        <Button disabled>Disabled</Button>
       </div>
 
       {children}

@@ -31,7 +31,7 @@ export default () => {
 
           <Button
             className={s.actionButton}
-            type='red'
+            red
             onClick={() => onDelete(editingTag)}
             ghost
             noBorder

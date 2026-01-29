@@ -32,7 +32,7 @@ const VerifyDomain: FC = () => {
           验证中…
         </Button>
 
-        <Button type='red' onClick={() => {}}>
+        <Button red onClick={() => {}}>
           删除绑定
         </Button>
       </div>

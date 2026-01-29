@@ -9,7 +9,7 @@ import PublicModal from './PublicModal'
 
 const ActionButton = ({ children, onClick }) => {
   return (
-    <Button type='red' ghost size='small' width='w-auto' className='-mt-0.5' onClick={onClick}>
+    <Button red ghost size='small' width='w-auto' className='-mt-0.5' onClick={onClick}>
       {children}
     </Button>
   )

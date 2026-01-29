@@ -1,15 +1,11 @@
 import type { FC } from 'react'
-
-import Modal from '~/widgets/Modal'
-
-import NoticeBar from '~/widgets/NoticeBar'
 import Button from '~/widgets/Buttons/Button'
-
-// import from '~/widgets/Alert'
-import List from './List'
-
+import Modal from '~/widgets/Modal'
+import NoticeBar from '~/widgets/NoticeBar'
 import useBaseInfo from '../../logic/useBaseInfo'
 import useSalon from '../../salon/basic_info/danger_zone/modal'
+// import from '~/widgets/Alert'
+import List from './List'
 
 type TProps = {
   show: boolean
@@ -21,11 +17,11 @@ const ArchiveModal: FC<TProps> = ({ show, onClose }) => {
   const { archiveCommunity } = useBaseInfo()
 
   return (
-    <Modal show={show} width="390px" offsetLeft="40%" onClose={() => onClose()} showCloseBtn>
+    <Modal show={show} width='390px' offsetLeft='40%' onClose={() => onClose()} showCloseBtn>
       <div className={s.wrapper}>
         <h3 className={s.warningTitle}>社区归档</h3>
         <div className={s.body}>
-          <NoticeBar type="notice" content="归档后社区将变为只读，可再次切换。" />
+          <NoticeBar type='notice' content='归档后社区将变为只读，可再次切换。' />
 
           <List
             items={[
@@ -38,11 +34,11 @@ const ArchiveModal: FC<TProps> = ({ show, onClose }) => {
           />
         </div>
         <div className={s.footer}>
-          <div className="grow" />
+          <div className='grow' />
           <Button space={10} right={10} bottom={8} onClick={() => archiveCommunity()}>
             已了解，确定归档
           </Button>
-          <div className="grow" />
+          <div className='grow' />
         </div>
       </div>
     </Modal>

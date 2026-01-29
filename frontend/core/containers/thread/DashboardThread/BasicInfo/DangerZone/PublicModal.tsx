@@ -1,19 +1,15 @@
 import { type FC, useState } from 'react'
 
 import VIEW from '~/const/view'
-
+import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 import Modal from '~/widgets/Modal'
-import Tabs from '~/widgets/Switcher/Tabs'
-import Button from '~/widgets/Buttons/Button'
 import NoticeBar from '~/widgets/NoticeBar'
-
+import Tabs from '~/widgets/Switcher/Tabs'
+import useBaseInfo from '../../logic/useBaseInfo'
+import useSalon from '../../salon/basic_info/danger_zone/modal'
 // import from '~/widgets/Alert'
 import List from './List'
-
-import useBaseInfo from '../../logic/useBaseInfo'
-
-import useSalon from '../../salon/basic_info/danger_zone/modal'
 
 type TProps = {
   show: boolean
@@ -42,11 +38,11 @@ const PublicModal: FC<TProps> = ({ show, onClose }) => {
   const [privateNote, setPrivateNote] = useState(defaultPrivateNote)
 
   return (
-    <Modal show={show} width="390px" offsetLeft="40%" onClose={() => onClose()} showCloseBtn>
+    <Modal show={show} width='390px' offsetLeft='40%' onClose={() => onClose()} showCloseBtn>
       <div className={s.wrapper}>
         <h3 className={s.warningTitle}>社区可见性</h3>
         <div className={s.body}>
-          <NoticeBar type="notice" content="隐藏后所有内容只对管理员可见，当前为公开。" />
+          <NoticeBar type='notice' content='隐藏后所有内容只对管理员可见，当前为公开。' />
 
           <List
             items={[
@@ -65,20 +61,18 @@ const PublicModal: FC<TProps> = ({ show, onClose }) => {
             onChange={(value) => setVisible(value)}
             view={VIEW.DRAWER}
           />
-          <div className="mt-5" />
+          <div className='mt-5' />
           <div className={s.desc}>对外提示信息（支持 Markdown）</div>
-          <div className="mt-2" />
+          <div className='mt-2' />
           <Input
             className={s.textarea}
             value={privateNote}
             placeholder={defaultPrivateNote}
-            behavior="textarea"
+            behavior='textarea'
             onChange={(e) => setPrivateNote(e.target.value)}
           />
-          <div className="mt-4" />
-          <Button type="primary" onClick={() => toggleVisiable()}>
-            确定变更
-          </Button>
+          <div className='mt-4' />
+          <Button onClick={() => toggleVisiable()}>确定变更</Button>
         </div>
       </div>
     </Modal>
