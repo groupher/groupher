@@ -126,13 +126,17 @@ export default function useTwBelt(): TRet {
   const gradientBar = (color: TColorName): string =>
     `bg-gradient-to-r from-rainbow-${color.toLocaleLowerCase()}Bg to-transparent`
 
-  const vividDark = (): string => (!isLightTheme ? STATIC_CLS.vividDarkWhenDark : '')
+  const vividDark = (): string => STATIC_CLS.vividDarkWhenDark
 
   const dimDark = (level: TDimLevel = 'md'): string => {
-    if (isLightTheme) return ''
-    if (level === 'sm') return 'brightness-90'
-    if (level === 'lg') return 'brightness-50'
-    return 'brightness-75'
+    switch (level) {
+      case 'sm':
+        return 'dark:brightness-90'
+      case 'lg':
+        return 'dark:brightness-50'
+      default:
+        return 'dark:brightness-75'
+    }
   }
 
   const shadow = (size: TShadowType): string => `shadow-${size}`
@@ -142,8 +146,7 @@ export default function useTwBelt(): TRet {
     return cn(STATIC_CLS.cutBase, maxWidth)
   }
 
-  const landingTitle = (): string =>
-    cn(STATIC_CLS.landingTitleBase, fg('title'), isLightTheme && 'text-shadow')
+  const landingTitle = (): string => cn(STATIC_CLS.landingTitleBase, fg('title'))
 
   const hover = (part: THoverPart): string => {
     switch (part) {
@@ -279,7 +282,6 @@ export default function useTwBelt(): TRet {
       pageLightClass,
       pageDarkClass,
       isAvatarSquare,
-      isLightTheme,
       primaryColor,
       isDarkBlack,
       isBlackPrimary,
