@@ -3,8 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default () => {
-  const { cn, br, hoverBr, bg, fill, shadow, primary, sexyBorder, vividDark, isBlackPrimary } =
-    useTwBelt()
+  const { cn, br, hoverBr, bg, shadow, primary, sexyBorder, vividDark } = useTwBelt()
 
   return {
     wrapper: 'column w-3/5 ',
@@ -22,21 +21,15 @@ export default () => {
       'opacity-100 saturate-100',
       primary('borderSoft'),
       `hover:${primary('border')}`,
-      isBlackPrimary && br('text.link'),
       shadow('md'),
     ),
 
-    box: cn('relative rounded-md border', primary('borderSoft'), isBlackPrimary && br('text.link')),
+    box: cn('relative rounded-md border', primary('borderSoft')),
     divider: cn(sexyBorder(), 'mt-14 mb-14'),
 
     // basic shape
     bar: cn('absolute h-1.5 w-20 opacity-40 rounded', primary('bg'), vividDark()),
-    circle: cn(
-      'absolute size-2 circle opacity-40',
-      primary('bg'),
-      isBlackPrimary && bg('text.link'),
-      vividDark(),
-    ),
-    icon: cn('absolute size-3 opacity-65', primary('fill'), isBlackPrimary && fill('link')),
+    circle: cn('absolute size-2 circle opacity-40', primary('bg'), vividDark()),
+    icon: cn('absolute size-3 opacity-65', primary('fill')),
   }
 }

@@ -3,7 +3,7 @@ import SIZE from '~/const/size'
 import type { TColorName, TSizeTSM, TSpace } from '~/spec'
 
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-import useSalon, { cn } from './salon/button'
+import useSalon, { cn, cnMerge } from './salon/button'
 
 type TProps = {
   children?: ReactNode
@@ -63,7 +63,7 @@ const Button: FC<TProps> = ({
 
   return (
     <button
-      className={cn(s.wrapper, className)}
+      className={cnMerge(s.wrapper, className)}
       style={style}
       onClick={() => !disabled && onClick()}
     >

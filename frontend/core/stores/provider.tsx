@@ -40,7 +40,9 @@ const MainProvider: FC<TProps> = ({
         <AccountWrapper noAccount={noAccount}>
           <CommunityStoreProvider initData={community}>
             <DashboardStoreProvider initData={{ ...dashboard, metric, now }}>
-              <WallpaperStoreProvider>{children}</WallpaperStoreProvider>
+              <WallpaperStoreProvider>
+                <div data-primary-color={dashboard.primaryColor}>{children}</div>
+              </WallpaperStoreProvider>
             </DashboardStoreProvider>
           </CommunityStoreProvider>
         </AccountWrapper>

@@ -2,9 +2,8 @@ import { CHANGE_MODE } from '~/const/mode'
 
 import Button from '~/widgets/Buttons/Button'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-
-import useLogic from './useLogic'
 import useSalon, { cn } from './salon/footer'
+import useLogic from './useLogic'
 
 export default () => {
   const s = useSalon()
@@ -32,7 +31,7 @@ export default () => {
 
           <Button
             className={s.actionButton}
-            type="red"
+            type='red'
             onClick={() => onDelete(editingTag)}
             ghost
             noBorder

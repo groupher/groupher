@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, br, hoverBr, bg, primary, shadow, isBlackPrimary } = useTwBelt()
+  const { cn, br, hoverBr, bg, primary, shadow } = useTwBelt()
 
   return {
     wrapper: 'column-center w-8/12 pl-32',
@@ -19,7 +19,6 @@ export default () => {
       'opacity-100 saturate-100',
       primary('borderSoft'),
       `hover:${primary('border')}`,
-      isBlackPrimary && br('text.link'),
       shadow('md'),
     ),
   }

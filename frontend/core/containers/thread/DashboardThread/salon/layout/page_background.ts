@@ -10,7 +10,7 @@ const ROTATE_ANGLES = [
 ]
 
 export default () => {
-  const { cn, shadow, br, fg, bg, primary, isBlackPrimary } = useTwBelt()
+  const { cn, shadow, br, fg, bg, primary } = useTwBelt()
   const { theme } = useTheme()
 
   return {
@@ -29,7 +29,6 @@ export default () => {
     blockActive: cn(
       'z-10 rotate-3 rounded-lg -mt-4 hover:-mt-2',
       primary('borderSoft'),
-      isBlackPrimary && br('text.link'),
       shadow('lg'),
     ),
     footer: 'mt-2.5',

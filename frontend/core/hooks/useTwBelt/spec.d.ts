@@ -16,7 +16,7 @@ export type TCutWWidth = `w-${number}` | `w-[${number}px]`
  * - 不再出现 "text.xxx" 这种前缀重复
  * - scope 用点号表达：modal.mask / popover.bg / table.border
  */
-export type TTextKey = 'title' | 'digest' | 'hint' | 'link'
+export type TTextKey = 'title' | 'digest' | 'hint' | 'link' | 'black'
 
 export type TBgKey =
   | 'divider'
@@ -88,7 +88,4 @@ export type TRet = {
 
   zIndex: (key: TZIndexType, visible?: boolean) => string
   page: () => string
-
-  isDarkBlack: boolean
-  isBlackPrimary: boolean
 }

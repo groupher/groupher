@@ -4,7 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 import useBase from '.'
 
 export default () => {
-  const { cn, cnMerge, primary, isBlackPrimary, fg, fill, sexyBorder } = useTwBelt()
+  const { cn, cnMerge, primary, fg, sexyBorder } = useTwBelt()
   const base = useBase()
 
   return {
@@ -13,7 +13,7 @@ export default () => {
     blockActive: base.blockBaseActive,
     select: 'row-center gap-x-10 w-full',
     brand: 'row-center',
-    brandIcon: cn('size-6', primary('fill'), isBlackPrimary && fill('link')),
+    brandIcon: cn('size-6', primary('fill')),
     brandTitle: cn('text-base', fg('digest')),
     layout: 'column-align-both group',
     layoutTitleActive: 'opacity-100',

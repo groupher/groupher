@@ -10,7 +10,6 @@ import useAvatarLayout from '~/hooks/useAvatarLayout'
 import useDashboard from '~/hooks/useDashboard'
 import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
-import useTheme from '~/hooks/useTheme'
 import type { TColorName, TZIndexType } from '~/spec'
 import { cachedMargin, keyToClass, RAINBOW_ALIAS, STATIC_CLS } from './constant'
 import type {
@@ -29,14 +28,10 @@ import type {
 } from './spec'
 
 export default function useTwBelt(): TRet {
-  const { isLightTheme } = useTheme()
   const metric = useMetric()
   const { isSquare: isAvatarSquare } = useAvatarLayout()
   const primaryColor = usePrimaryColor()
   const { pageBg, pageBgDark } = useDashboard()
-
-  const isDarkBlack = !isLightTheme && primaryColor === COLOR_NAME.BLACK
-  const isBlackPrimary = primaryColor === COLOR_NAME.BLACK
 
   const metricLower = metric.toLowerCase()
   const containerClass = `container-${metricLower}`
@@ -61,7 +56,6 @@ export default function useTwBelt(): TRet {
     const color$ = camelize(color)
 
     if (prefix === 'bgSoft') {
-      if (color === COLOR_NAME.BLACK) return bg('hoverBg')
       return `${prefix$}-${color$}Soft`
     }
 
@@ -74,16 +68,12 @@ export default function useTwBelt(): TRet {
 
   const rainbowSoft = (color: TColorName | string): string => {
     const color$ = camelize(color)
-    if (color === COLOR_NAME.BLACK) return bg('hoverBg')
     return `bg-rainbow-${color$}Soft`
   }
 
   const primary = (prefix: TColorPrefix = 'fg'): string => rainbow(primaryColor, prefix)
 
   const linker = (prefix: TLinkColorPrefix = 'fg'): string => {
-    if (primaryColor === COLOR_NAME.BLACK) {
-      return prefix === 'fg' ? fg('link') : fill('link')
-    }
     return rainbow(primaryColor, prefix as unknown as TColorPrefix)
   }
 
@@ -272,19 +262,8 @@ export default function useTwBelt(): TRet {
       zIndex,
 
       page,
-
-      isDarkBlack,
-      isBlackPrimary,
     }),
     // deps: only those that can affect returned behaviors/strings
-    [
-      containerClass,
-      pageLightClass,
-      pageDarkClass,
-      isAvatarSquare,
-      primaryColor,
-      isDarkBlack,
-      isBlackPrimary,
-    ],
+    [containerClass, pageLightClass, pageDarkClass, isAvatarSquare, primaryColor],
   )
 }

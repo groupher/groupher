@@ -17,7 +17,7 @@ const temItems: TTabItem[] = [
     title: '帖子',
     slug: 'posts',
     icon: 'settings',
-  } as any,
+  },
 ]
 
 const getItemKey = (item: TTabItem): string => (isString(item) ? item : item.slug || item.title)

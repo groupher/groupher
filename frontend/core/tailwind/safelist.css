@@ -52,7 +52,7 @@
 
 /* utils */
 @source inline('debug debug-{b,g}');
-@source inline('pointer-events-none pointer');
+@source inline('pointer-events-none pointer cursor-not-allowed');
 @source inline('border-{dotted,table-border,transparent} bold bold-{none,sm,lg}');
 @source inline('outline-none bg-none bg-transparent select-none hidden');
 @source inline('bg-gradient-to-r to-transparent saturate-150 brightness-125 touch-manipulation rounded-3xl hover-underline line-clamp-[15]');

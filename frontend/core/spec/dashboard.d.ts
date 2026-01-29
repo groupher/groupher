@@ -18,7 +18,7 @@ import type {
 } from '~/const/layout'
 import type { DSB_TAB } from '~/const/route'
 import type { TConstValues } from '~/spec'
-import type { TDsbFieldKey } from '~/stores/dashboard/spec'
+import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
 import type { TFAQSection } from './article'
 import type { TColorName } from './color'
 import type { TModerator } from './community'
@@ -57,13 +57,13 @@ export type TMediaReport = {
 export type TDsb = {
   enable?: TEnableConf
   nameAlias?: readonly TNameAlias[]
-
   socialLinks?: readonly TSocialItem[]
   faqs?: readonly TFAQSection[]
   seo?: TDsdSEOConf
 
   layout?: {
     brandLayout: TBrandLayout
+    primaryColor: TColorName
     topbarLayout: TTopbarLayout
     topbarBg: TColorName
     tagLayout: TTagLayout
@@ -104,8 +104,8 @@ export type TDsb = {
   pageBgDark?: string
 }
 
-export type TParseDashboard = TDsb & {
-  original: TDsb
+export type TParseDashboard = TDsbFieldMap & {
+  original: TDsbFieldMap
 }
 
 export type TBroadcastConf = {
