@@ -200,7 +200,6 @@
     "react-test-renderer": "18.2.0",
     "start-server-and-test": "1.12.1",
     "tsc-files": "^1.1.4",
-    "type-fest": "^2.19.0",
     "typescript": "^5.3.3"
   },
   "packageManager": "yarn@4.12.0"

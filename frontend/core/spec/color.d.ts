@@ -3,5 +3,4 @@ import type { TConstValues } from '~/spec'
 
 export type TColorName = TConstValues<typeof COLOR>
 
-export type TPrimaryColor = { primaryColor: TColorName }
 export type TColor = { color?: TColorName; $color?: TColorName }
