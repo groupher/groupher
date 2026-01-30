@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { BANNER_LAYOUT } from '~/const/layout'
 import useCommunity from '~/hooks/useCommunity'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
 import Drawer from '~/widgets/Drawer'
 
@@ -26,12 +25,8 @@ export default () => {
 
       <SectionLabel
         title='整体布局'
-        desc={
-          <div>
-            整体页面的 Header 布局，适用于除文章页的所有页面。
-            <ArrowButton onClick={() => setShowDrawer(true)}>查看示例</ArrowButton>
-          </div>
-        }
+        desc="整体页面的 Header 布局，适用于除文章页的所有页面。"
+        detailText="查看示例"
       />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(BANNER_LAYOUT.HEADER, 'bannerLayout')}>

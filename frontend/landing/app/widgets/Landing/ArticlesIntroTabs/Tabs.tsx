@@ -29,7 +29,7 @@ const TAB_ITEMS = [
   },
   {
     key: THREAD.DOC,
-    title: '帮助台',
+    title: '文档',
     desc: '知识库 / 教程 / 产品手册',
     color: COLOR_NAME.CYAN,
   },

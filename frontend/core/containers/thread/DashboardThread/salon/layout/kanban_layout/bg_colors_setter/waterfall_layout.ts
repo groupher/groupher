@@ -6,10 +6,10 @@ import useTwBelt from '~/hooks/useTwBelt'
 import useKanban from '../../../../logic/useKanban'
 import useBase from '../..'
 
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default () => {
-  const { cn, shadow, rainbow, rainbowSoft } = useTwBelt()
+  const { cn, cnMerge, shadow, rainbow, rainbowSoft } = useTwBelt()
   const base = useBase()
 
   const { kanbanBgColors } = useKanban()
@@ -29,6 +29,6 @@ export default () => {
     bgDoneActive: rainbow(BG3, 'border'),
 
     content: 'relative min-h-24',
-    bar: cn(base.bar, 'h-1.5 opacity-30 saturate-0'),
+    bar: cnMerge(base.bar, 'h-1.5 opacity-30 saturate-0'),
   }
 }

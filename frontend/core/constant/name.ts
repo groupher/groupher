@@ -45,8 +45,8 @@ export const BUILTIN_ALIAS = [
   },
   {
     slug: 'doc',
-    name: '帮助台',
-    original: '帮助台',
+    name: '文档',
+    original: '文档',
     group: ALIAS_GROUP.THREAD,
   },
   {

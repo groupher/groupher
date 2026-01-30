@@ -16,7 +16,7 @@ export default function Article() {
       <div className={s.inner}>
         <div className={s.content}>
           <ShareSVG className={s.shareIcon} />
-          <div className={s.title}>自定义帮助台封面</div>
+          <div className={s.title}>自定义文档封面</div>
 
           <div className={s.coverWrapper}>
             <div className={s.slash} />

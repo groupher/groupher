@@ -1,8 +1,6 @@
 import { type FC, useEffect, useRef } from 'react'
-
-import KanbanList from './KanbanList'
-
 import useSalon, { cn } from '../../../salon/layout/kanban_layout/bg_colors_setter/classic_layout'
+import KanbanList from './KanbanList'
 
 type TProps = {
   isBoard1Hovered: boolean
@@ -23,7 +21,7 @@ const ClassicLayout: FC<TProps> = ({ isBoard1Hovered, isBoard2Hovered, isBoard3H
     if (ref?.current) {
       ref.current.scrollLeft += 80
     }
-  }, [ref])
+  }, [])
 
   return (
     <div className={s.boardsWrapper}>

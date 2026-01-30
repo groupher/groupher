@@ -134,7 +134,7 @@ export const MENU = {
         slug: DSB_ROUTE.CHANGELOG,
       },
       {
-        title: '帮助台',
+        title: '文档',
         slug: DSB_ROUTE.DOC,
       },
       {

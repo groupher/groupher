@@ -2,7 +2,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import useBase from '..'
 
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default () => {
   const { cn, br, bg, avatar } = useTwBelt()
@@ -10,7 +10,7 @@ export default () => {
 
   return {
     wrapper: cn(
-      'p-5 pl-7 rounded-md w-11/12 mt-7 border border-transparent',
+      'p-5 pl-7 rounded-md w-full mt-7 border border-transparent',
       `hover:${br('divider')}`,
       bg('sandBox'),
     ),

@@ -1,4 +1,5 @@
 import type { FC, ReactNode } from 'react'
+import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
 import type { TSpace } from '~/spec'
 import useSalon, { cn } from '../salon/section_label'
@@ -6,11 +7,14 @@ import ThemeSelect from './ThemeSelect'
 
 type TProps = {
   title: string
-  desc?: ReactNode
+  desc?: string
   addon?: ReactNode
   width?: string
   withThemeSelect?: boolean
   classNames?: string
+  detailText?: string
+  showMoreButton?: boolean
+  onDetailClick?: () => void
 } & TSpace
 
 const SectionLabel: FC<TProps> = ({
@@ -19,7 +23,10 @@ const SectionLabel: FC<TProps> = ({
   addon = null,
   width = 'w-full',
   withThemeSelect = false,
+  detailText = "影响范围",
   classNames = '',
+  showMoreButton = true,
+  onDetailClick = () => {},
   ...spacing
 }) => {
   const s = useSalon({ width, desc, ...spacing })
@@ -38,7 +45,10 @@ const SectionLabel: FC<TProps> = ({
         <div className='grow' />
         {addon}
       </div>
-      {desc && <div className={s.desc}>{desc}</div>}
+      {desc && <div className={s.desc}>
+        {desc}
+        {showMoreButton && <ArrowButton left={0.5} onClick={onDetailClick}>{detailText}</ArrowButton>}
+        </div>}
     </div>
   )
 }

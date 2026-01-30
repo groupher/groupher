@@ -1,6 +1,6 @@
-import type { TUser, TTag, TCommunity } from '~/spec'
-import { SITE_LOGO, ICON, ICON_BASE } from '~/config'
+import { ICON, ICON_BASE, SITE_LOGO } from '~/config'
 import { COLOR_NAME } from '~/const/colors'
+import type { TCommunity, TTag, TUser } from '~/spec'
 
 import { getRandomInt } from './helper'
 
@@ -442,7 +442,7 @@ export const mockHelpCats = () => {
         },
         {
           id: '3',
-          title: '帮助台内容',
+          title: '文档内容',
         },
         {
           id: '4',

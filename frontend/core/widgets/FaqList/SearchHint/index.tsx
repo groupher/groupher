@@ -30,7 +30,7 @@ const SearchHint: FC<TProps> = ({ sections }) => {
       <div className={s.footer}>
         更多类似问题，请移步
         <ArrowLinker href={`/${community}/${THREAD.DOC}`} left={1}>
-          帮助台
+          文档
         </ArrowLinker>
       </div>
     </div>

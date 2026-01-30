@@ -155,7 +155,7 @@ export const LAYOUT_TABS: TDsbTabs = {
     { title: '讨论区', slug: DSB_LAYOUT_ROUTE.POST },
     { title: '看板', slug: DSB_LAYOUT_ROUTE.KANBAN },
     { title: '更新日志', slug: DSB_LAYOUT_ROUTE.CHANGELOG },
-    { title: '帮助台', slug: DSB_LAYOUT_ROUTE.DOC },
+    { title: '文档', slug: DSB_LAYOUT_ROUTE.DOC },
   ],
 }
 

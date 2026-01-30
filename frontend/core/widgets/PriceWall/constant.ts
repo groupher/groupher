@@ -5,7 +5,7 @@ export const FREE_PAN_ITEMS = [
   },
   {
     key: 2,
-    title: '看板 & 更新日志 & 帮助台',
+    title: '看板 & 更新日志 & 文档',
   },
   {
     key: 3,

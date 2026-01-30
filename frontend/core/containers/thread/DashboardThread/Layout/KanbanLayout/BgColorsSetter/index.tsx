@@ -69,18 +69,18 @@ export default () => {
           </ColorSelector>
         </div>
         <div className='grow' />
-        <div className={s.action} onClick={() => edit(INIT_KANBAN_COLORS, 'kanbanBgColors')}>
+        <button className={s.action} onClick={() => edit(INIT_KANBAN_COLORS, 'kanbanBgColors')}>
           <ResetSVG className={s.resetIcon} />
           重置
-        </div>
-        <div
+        </button>
+        <button
           className={s.action}
           onClick={() => {
             edit(randomBgNames(3), 'kanbanBgColors')
           }}
         >
           <DiceSVG className={cn(s.resetIcon, 'size-3.5')} /> 随缘
-        </div>
+        </button>
       </div>
 
       {layout === KANBAN_LAYOUT.CLASSIC ? (

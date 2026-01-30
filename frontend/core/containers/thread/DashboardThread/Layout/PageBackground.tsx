@@ -4,7 +4,6 @@ import { camelize, titleCaseHM, upperSnakeCase } from '~/fmt'
 import useMount from '~/hooks/useMount'
 import useTheme from '~/hooks/useTheme'
 import CheckSVG from '~/icons/Check'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import { FIELD } from '../constant'
 import usePageBg from '../logic/usePageBg'
 import SavingBar from '../SavingBar'
@@ -25,12 +24,7 @@ export default () => {
     <section className={s.wrapper}>
       <SectionLabel
         title='页面背景色'
-        desc={
-          <div>
-            设置主页面背景色。参考
-            <ArrowButton left={1}>影响范围</ArrowButton>
-          </div>
-        }
+        desc="设置主页面背景色。参考"
         classNames='pr-8'
         withThemeSelect
       />

@@ -24,7 +24,7 @@ export default () => {
       shadow('md'),
     ),
 
-    box: cn('relative rounded-md border', primary('borderSoft')),
+    box: cn('relative rounded-md border', br('divider')),
     divider: cn(sexyBorder(), 'mt-14 mb-14'),
 
     // basic shape

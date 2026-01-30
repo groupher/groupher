@@ -102,7 +102,7 @@ export default function WorkplaceCoversPage() {
                 Icon: DomainSVG,
               },
               {
-                title: '帮助台',
+                title: '文档',
                 desc: '文档展示个性化设置。',
                 seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.DOC}`,
                 Icon: BookSVG,
