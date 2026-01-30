@@ -51,6 +51,7 @@
 @source inline('size-{1.5,2,2.5,3,3.5,4,5,6}');
 
 /* utils */
+@source inline('bg-black bg-white');
 @source inline('debug debug-{b,g}');
 @source inline('pointer-events-none pointer cursor-not-allowed');
 @source inline('border-{dotted,table-border,transparent} bold bold-{none,sm,lg}');

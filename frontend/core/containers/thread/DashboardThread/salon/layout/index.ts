@@ -12,7 +12,7 @@ export default () => {
     //
     baseSection: 'pb-7',
     blockBase: cn(
-      'relative w-72 rounded-md px-4 py-4 pointer saturate-0 opacity-80',
+      'relative w-72 rounded-md p-4 pointer saturate-0 opacity-80 overflow-hidden',
       'hover:opacity-100 hover:saturate-100',
       hoverBr(),
       bg('alphaBg'),
