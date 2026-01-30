@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -18,15 +18,15 @@ export default () => {
     label: cn('text-xs min-w-20 mt-0.5', fg('digest')),
     value: cn('text-xs leading-relaxed opacity-90', fg('title')),
     //
-    colorDot: cn('size-3.5 opacity-40 rounded mt-0.5', rainbow(COLOR_NAME.GREEN, 'bg')),
-    hashTagIcon: cn('size-3.5 opacity-65', rainbow(COLOR_NAME.GREEN, 'fill')),
+    colorDot: cn('size-3.5 opacity-40 rounded mt-0.5', rainbow(COLOR.GREEN, 'bg')),
+    hashTagIcon: cn('size-3.5 opacity-65', rainbow(COLOR.GREEN, 'fill')),
     clipIcon: cn(
       'size-5 absolute right-10 -top-2 z-50 -rotate-12 opacity-65',
-      rainbow(COLOR_NAME.GREEN, 'fill'),
+      rainbow(COLOR.GREEN, 'fill'),
     ),
     optArrowIcon: cn('size-3 ml-1.5 mt-0.5', fill('digest')),
     //
-    slash: cn('text-xs ml-1.5 mr-1.5 opacity-50', rainbow(COLOR_NAME.GREEN, 'fg')),
-    dotTag: cn('size-2.5 circle opacity-50', rainbow(COLOR_NAME.GREEN, 'bg')),
+    slash: cn('text-xs ml-1.5 mr-1.5 opacity-50', rainbow(COLOR.GREEN, 'fg')),
+    dotTag: cn('size-2.5 circle opacity-50', rainbow(COLOR.GREEN, 'bg')),
   }
 }

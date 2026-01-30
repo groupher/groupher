@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { ARTICLE_CAT } from '~/const/gtd'
 import CommentSVG from '~/icons/Comment'
 
@@ -59,7 +59,7 @@ const DiscussDemo: FC = () => {
         <div className={s.header}>
           <ArticleCatState cat={ARTICLE_CAT.FEATURE} right={3} />
           <div className={s.tagBox}>
-            <TagNode color={COLOR_NAME.PURPLE} boldHash />
+            <TagNode color={COLOR.PURPLE} boldHash />
             <div className={s.tag}>UI / UX</div>
           </div>
         </div>

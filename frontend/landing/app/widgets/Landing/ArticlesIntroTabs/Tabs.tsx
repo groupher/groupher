@@ -1,6 +1,6 @@
 import { includes } from 'ramda'
 import type { FC } from 'react'
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
 import IntroArrowSVG from '~/icons/IntroArrow'
 import IntroSpinSVG from '~/icons/IntroSpin'
@@ -13,25 +13,25 @@ const TAB_ITEMS = [
     key: THREAD.POST,
     title: '讨论区',
     desc: '功能请求 / Bug / 技术支持',
-    color: COLOR_NAME.PURPLE,
+    color: COLOR.PURPLE,
   },
   {
     key: THREAD.KANBAN,
     title: '看板',
     desc: '已规划 / 进行中 / 已完成',
-    color: COLOR_NAME.BLUE,
+    color: COLOR.BLUE,
   },
   {
     key: THREAD.CHANGELOG,
     title: '更新日志',
     desc: '新功能 / 修复 / 版本日志',
-    color: COLOR_NAME.RED,
+    color: COLOR.RED,
   },
   {
     key: THREAD.DOC,
     title: '文档',
     desc: '知识库 / 教程 / 产品手册',
-    color: COLOR_NAME.CYAN,
+    color: COLOR.CYAN,
   },
 ]
 

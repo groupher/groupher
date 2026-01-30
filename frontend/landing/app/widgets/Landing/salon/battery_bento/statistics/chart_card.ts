@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -34,14 +34,14 @@ export default () => {
     highlightColumn: cn(
       'absolute right-24 mr-1 top-10 w-0.5 h-28 z-10 opacity-40 trans-all-200',
       dimDark(),
-      rainbow(COLOR_NAME.ORANGE, 'bg'),
+      rainbow(COLOR.ORANGE, 'bg'),
     ),
     highlightColumnHover: 'opacity-100 right-16 mr-3',
 
     highlightDot: cn(
       'absolute size-3 circle top-24 mt-1 right-24 trans-all-200 z-30 opacity-65',
       'border-2',
-      rainbow(COLOR_NAME.ORANGE, 'bg'),
+      rainbow(COLOR.ORANGE, 'bg'),
     ),
     highlightDotHover: 'top-16 mt-0.5 right-16 mr-1.5 opacity-100',
     dotBorderStyle: { borderColor: isLightTheme ? 'white' : 'black' },

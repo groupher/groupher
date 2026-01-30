@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 import useBase from '..'
@@ -16,16 +16,16 @@ export default () => {
     iconBox: 'absolute align-both size-4 rounded mt-2 mr-5',
     icon: 'size-2.5',
 
-    red: rainbow(COLOR_NAME.RED, 'fill'),
-    redBg: rainbow(COLOR_NAME.RED, 'bgSoft'),
-    blue: rainbow(COLOR_NAME.BLUE, 'fill'),
-    blueBg: rainbow(COLOR_NAME.BLUE, 'bgSoft'),
-    green: rainbow(COLOR_NAME.GREEN, 'fill'),
-    greenBg: rainbow(COLOR_NAME.GREEN, 'bgSoft'),
-    brown: rainbow(COLOR_NAME.BROWN, 'fill'),
-    brownBg: rainbow(COLOR_NAME.BROWN, 'bgSoft'),
-    purple: rainbow(COLOR_NAME.PURPLE, 'fill'),
-    purpleBg: rainbow(COLOR_NAME.PURPLE, 'bgSoft'),
+    red: rainbow(COLOR.RED, 'fill'),
+    redBg: rainbow(COLOR.RED, 'bgSoft'),
+    blue: rainbow(COLOR.BLUE, 'fill'),
+    blueBg: rainbow(COLOR.BLUE, 'bgSoft'),
+    green: rainbow(COLOR.GREEN, 'fill'),
+    greenBg: rainbow(COLOR.GREEN, 'bgSoft'),
+    brown: rainbow(COLOR.BROWN, 'fill'),
+    brownBg: rainbow(COLOR.BROWN, 'bgSoft'),
+    purple: rainbow(COLOR.PURPLE, 'fill'),
+    purpleBg: rainbow(COLOR.PURPLE, 'bgSoft'),
 
     box: 'relative w-16 h-24',
     borderBox: cnMerge(base.box, 'w-20 h-24'),

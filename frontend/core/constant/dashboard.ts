@@ -1,9 +1,9 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 export const ONE_LINK_GROUP = '__ONE_LINK_GROUP__'
 export const MORE_GROUP = '__MORE_GROUP__'
 
-export const INIT_KANBAN_COLORS = [COLOR_NAME.BLACK, COLOR_NAME.BLACK, COLOR_NAME.BLACK]
+export const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.BLACK, COLOR.BLACK]
 
 export const DEFAULT_ENABLE = {
   post: true,
@@ -24,8 +24,4 @@ export const DEFAULT_ENABLE = {
 export const TW_CARD = {
   SUMMARY: 'summary',
   SUMMARY_LARGE_IMAGE: 'summary_large_image',
-}
-
-export const DSB = {
-  // all options
 }

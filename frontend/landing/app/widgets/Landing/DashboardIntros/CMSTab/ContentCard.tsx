@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import AuthSVG from '~/icons/Account'
 import CurveLineSVG from '~/icons/CurveLine'
 import PostSVG from '~/icons/Post'
@@ -63,7 +63,7 @@ export default function ContentCard() {
         <div className={s.bar} />
       </div>
       <div className={cn(s.item, s.itemBlue, 'opacity-70 pl-6')}>
-        <Checker checked size='small' color={COLOR_NAME.BLUE} />
+        <Checker checked size='small' color={COLOR.BLUE} />
         <div className={s.title}>支持离线同步</div>
         <ArticleCatState left={2} right={3} />
         <CommentsCount count={8} size='medium' left={3} right={4} />

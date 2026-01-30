@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -12,7 +12,7 @@ export default () => {
     inner: 'column w-10/12 pt-6 px-5 h-full',
     header: 'row-center',
     title: cn('text-sm bold-sm ml-1', fg('digest')),
-    titleActrive: rainbow(COLOR_NAME.BLUE, 'fg'),
+    titleActrive: rainbow(COLOR.BLUE, 'fg'),
     //
     labelBar: 'relative grow w-full mb-2.5',
     item: 'absolute row-center',

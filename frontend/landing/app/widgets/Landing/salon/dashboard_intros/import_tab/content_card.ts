@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -19,7 +19,7 @@ export default () => {
     rLine: 'absolute h-20 right-7 top-48 mt-1.5 rotate-180',
     //
     curveLT: 'absolute -top-20 left-5 w-52 h-80',
-    dot: cn('absolute size-2 circle opacity-20', rainbow(COLOR_NAME.BROWN, 'bg')),
+    dot: cn('absolute size-2 circle opacity-20', rainbow(COLOR.BROWN, 'bg')),
     //
     bot: cn(
       'absolute w-auto px-2.5 py-1 z-20 bold-sm rounded-md border',

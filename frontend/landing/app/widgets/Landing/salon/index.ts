@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const'
+import { COLOR } from '~/const'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
@@ -37,15 +37,15 @@ export default () => {
     //
     focus: cn('bold-sm mx-0.5', fg('title')),
     //
-    purpleFill: cn(rainbow(COLOR_NAME.PURPLE, 'fill'), colorFill),
-    blueFill: cn(rainbow(COLOR_NAME.BLUE, 'fill'), colorFill),
-    redFill: cn(rainbow(COLOR_NAME.RED, 'fill'), colorFill),
-    cyanFill: cn(rainbow(COLOR_NAME.CYAN, 'fill'), colorFill),
+    purpleFill: cn(rainbow(COLOR.PURPLE, 'fill'), colorFill),
+    blueFill: cn(rainbow(COLOR.BLUE, 'fill'), colorFill),
+    redFill: cn(rainbow(COLOR.RED, 'fill'), colorFill),
+    cyanFill: cn(rainbow(COLOR.CYAN, 'fill'), colorFill),
 
-    purpleText: cn(rainbow(COLOR_NAME.PURPLE, 'fg'), colorText),
-    blueText: cn(rainbow(COLOR_NAME.BLUE, 'fg'), colorText),
-    redText: cn(rainbow(COLOR_NAME.RED, 'fg'), colorText),
-    cyanText: cn(rainbow(COLOR_NAME.CYAN, 'fg'), colorText),
+    purpleText: cn(rainbow(COLOR.PURPLE, 'fg'), colorText),
+    blueText: cn(rainbow(COLOR.BLUE, 'fg'), colorText),
+    redText: cn(rainbow(COLOR.RED, 'fg'), colorText),
+    cyanText: cn(rainbow(COLOR.CYAN, 'fg'), colorText),
     //
     buttonGroup: 'row-center mt-6 -ml-5 gap-x-4 w-auto',
     linkable: linkable(),

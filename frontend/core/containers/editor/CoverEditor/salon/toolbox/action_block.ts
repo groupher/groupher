@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 import useBase from '.'
 
@@ -27,10 +27,10 @@ export default () => {
       shadow('md'),
     ),
     deleteItem: cn(
-      rainbow(COLOR_NAME.RED, 'fg'),
-      `hover:${rainbow(COLOR_NAME.RED, 'fg')}`,
-      `hover:${rainbow(COLOR_NAME.RED, 'bgSoft')}`,
+      rainbow(COLOR.RED, 'fg'),
+      `hover:${rainbow(COLOR.RED, 'fg')}`,
+      `hover:${rainbow(COLOR.RED, 'bgSoft')}`,
     ),
-    deleteIcon: cn('size-3 pointer mr-1 opacity-65', rainbow(COLOR_NAME.RED, 'fill')),
+    deleteIcon: cn('size-3 pointer mr-1 opacity-65', rainbow(COLOR.RED, 'fill')),
   }
 }

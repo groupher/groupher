@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -12,8 +12,8 @@ export default () => {
     block: cn(
       'align-both size-8 rounded border border-dashed transition-transform duration-500',
       'opacity-65',
-      rainbow(COLOR_NAME.BROWN, 'bgSoft'),
-      rainbow(COLOR_NAME.BROWN, 'borderSoft'),
+      rainbow(COLOR.BROWN, 'bgSoft'),
+      rainbow(COLOR.BROWN, 'borderSoft'),
     ),
     blockSolid: cn('border-none opacity-100', bg('cardAlpha'), shadow('sm')),
     featureIcon: cn('size-4 opacity-80', fill('digest')),

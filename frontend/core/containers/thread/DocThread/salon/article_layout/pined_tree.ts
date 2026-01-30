@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -13,8 +13,8 @@ export default () => {
     iconBox: 'align-both size-6 align-center relative mr-3.5',
     cover: 'size-6 absolute left-0 top-0 rounded',
     //
-    blackBg: rainbow(COLOR_NAME.BLACK, 'bg'),
-    purpleBg: rainbow(COLOR_NAME.PURPLE, 'bg'),
+    blackBg: rainbow(COLOR.BLACK, 'bg'),
+    purpleBg: rainbow(COLOR.PURPLE, 'bg'),
     grayBg: cn('border', bg('hoverBg'), br('divider')),
     //
     bookIcon: cn('size-4 z-20', fill('digest')),

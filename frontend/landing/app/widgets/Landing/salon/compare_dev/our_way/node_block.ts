@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName } from '~/spec'
 
@@ -11,10 +11,10 @@ type TProps = {
 export default ({ bgColor }: TProps) => {
   const { cn, br, fg, bg, fill, shadow, rainbow } = useTwBelt()
 
-  const softBg = bgColor ? rainbow(COLOR_NAME[bgColor], 'bgSoft') : ''
-  const solidBg = bgColor ? rainbow(COLOR_NAME[bgColor], 'bg') : bg('text.digest')
-  const titleColor = bgColor ? rainbow(COLOR_NAME[bgColor], 'fg') : fg('digest')
-  const fillColor = bgColor ? rainbow(COLOR_NAME[bgColor], 'fill') : fill('digest')
+  const softBg = bgColor ? rainbow(COLOR[bgColor], 'bgSoft') : ''
+  const solidBg = bgColor ? rainbow(COLOR[bgColor], 'bg') : bg('text.digest')
+  const titleColor = bgColor ? rainbow(COLOR[bgColor], 'fg') : fg('digest')
+  const fillColor = bgColor ? rainbow(COLOR[bgColor], 'fill') : fill('digest')
 
   return {
     wrapper: cn(
@@ -49,14 +49,14 @@ export default ({ bgColor }: TProps) => {
     ),
     avatarGroup: 'absolute align-both rounded-xl h-9 w-auto',
     emoji: 'size-4',
-    discussIcon: cn('size-5 opacity-65', rainbow(COLOR_NAME.GREEN, 'fill')),
+    discussIcon: cn('size-5 opacity-65', rainbow(COLOR.GREEN, 'fill')),
     //
     userWrapper: 'align-both absolute circle border-4',
-    borderOrange: rainbow(COLOR_NAME.ORANGE, 'borderSoft'),
-    borderRed: rainbow(COLOR_NAME.RED, 'borderSoft'),
-    borderGreen: rainbow(COLOR_NAME.GREEN, 'borderSoft'),
-    borderBlue: rainbow(COLOR_NAME.BLUE, 'borderSoft'),
-    borderPurple: rainbow(COLOR_NAME.PURPLE, 'borderSoft'),
+    borderOrange: rainbow(COLOR.ORANGE, 'borderSoft'),
+    borderRed: rainbow(COLOR.RED, 'borderSoft'),
+    borderGreen: rainbow(COLOR.GREEN, 'borderSoft'),
+    borderBlue: rainbow(COLOR.BLUE, 'borderSoft'),
+    borderPurple: rainbow(COLOR.PURPLE, 'borderSoft'),
     avatar: 'size-7 circle p-px',
   }
 }

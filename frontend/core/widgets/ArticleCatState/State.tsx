@@ -1,13 +1,10 @@
 import type { FC } from 'react'
-
-import type { TTooltipPlacement } from '~/spec'
 import { ARTICLE_STATE } from '~/const/gtd'
-import useNameAlias from '~/hooks/useNameAlias'
-
-import Tooltip from '~/widgets/Tooltip'
-
-import { Trans } from '~/i18n'
 import { aliasGTDDoneState } from '~/fmt'
+import useNameAlias from '~/hooks/useNameAlias'
+import { Trans } from '~/i18n'
+import type { TTooltipPlacement } from '~/spec'
+import Tooltip from '~/widgets/Tooltip'
 
 import type { TProps as TArticleStateBadgeProps } from '.'
 import useSalon, { Icon } from './salon/state'
@@ -99,7 +96,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
 
       return (
         <div className={s.box}>
-          {/* <DoneIcon color={doneColor === COLOR_NAME.BLACK ? COLOR_NAME.GREEN : doneColor} /> */}
+          {/* <DoneIcon color={doneColor === COLOR.BLACK ? COLOR.GREEN : doneColor} /> */}
           <Icon.Done className={s.doneIcon} />
           <div className={s.text}>{Trans(aliasGTDDoneState(cat, state))}</div>
         </div>

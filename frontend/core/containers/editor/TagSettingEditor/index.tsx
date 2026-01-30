@@ -5,7 +5,7 @@
 
 import Link from 'next/link'
 import { type FC, useEffect } from 'react'
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { DRAWER_SCROLLER } from '~/const/dom'
 import { POST_LAYOUT } from '~/const/layout'
 import { CHANGE_MODE } from '~/const/mode'
@@ -48,7 +48,7 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
             <div className={s.title}>标签名称</div>
             <div className={s.basicInfo}>
               <ColorSelector
-                activeColor={editingTag.color || COLOR_NAME.BLACK}
+                activeColor={editingTag.color || COLOR.BLACK}
                 onChange={(color) => edit(color, 'color')}
                 placement='bottom-start'
                 offset={[0, 0]}
@@ -57,7 +57,7 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
                   <div
                     className={cn(
                       s.titleDot,
-                      s.rainbow((editingTag?.color as TColorName) || COLOR_NAME.BLACK, 'bg'),
+                      s.rainbow((editingTag?.color as TColorName) || COLOR.BLACK, 'bg'),
                     )}
                   />
                 </div>

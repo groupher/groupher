@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn, cnMerge } from '~/css'
@@ -17,6 +17,6 @@ export default () => {
     ballWrapper: cn('align-both size-9 align-both circle border pointer', primary('borderSoft')),
     subBall: 'size-7',
     colorBall: cn('size-7 circle', primary('bg')),
-    subColorBall: cn('size-5', rainbow(COLOR_NAME.BLUE, 'bg')),
+    subColorBall: cn('size-5', rainbow(COLOR.PURPLE, 'bg')),
   }
 }

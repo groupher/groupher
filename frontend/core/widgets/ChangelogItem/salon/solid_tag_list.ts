@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName } from '~/spec'
 
@@ -6,7 +6,7 @@ type TProps = {
   color?: TColorName
 }
 
-export default ({ color = COLOR_NAME.BLACK }: TProps = {}) => {
+export default ({ color = COLOR.BLACK }: TProps = {}) => {
   const { cn, fg, rainbow } = useTwBelt()
 
   return {

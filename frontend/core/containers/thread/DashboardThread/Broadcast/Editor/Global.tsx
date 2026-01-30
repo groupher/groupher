@@ -24,7 +24,7 @@ export default () => {
     <div className={s.wrapper}>
       <SectionLabel
         title='开启横幅广播'
-        desc={<div className={s.enableDesc}>开启后，本社区内的所有页面顶部将展示广播信息</div>}
+        desc='开启后，本社区内的所有页面顶部将展示广播信息'
         addon={<ToggleSwitch checked={broadcastEnable} onChange={(v) => changeEnable(v)} />}
         bottom={5}
       />

@@ -2,7 +2,7 @@
 // import { uniq, reject } from 'ramda'
 
 // import type { TEditValue, TFAQSection, TID, TSocialItem, TUser } from '~/spec'
-// import { COLOR_NAME } from '~/const/colors'
+// import { COLOR } from '~/const/colors'
 // import EVENT from '~/const/event'
 // import ERR from '~/const/err'
 
@@ -36,7 +36,7 @@
 //   const docCategories = store.docSettings.categories.concat({
 //     name: '新分类',
 //     index: store.docCategories.length,
-//     color: COLOR_NAME.BLACK,
+//     color: COLOR.BLACK,
 //     files: [],
 //   })
 

@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -31,15 +31,15 @@ export default () => {
     ),
     more: cn('text-xs mt-0.5 ml-0.5 trans-all-200', fg('link'), `hover:${fg('title')}`),
 
-    purple: `group-hover:${rainbow(COLOR_NAME.PURPLE, 'fg')}`,
-    blue: `group-hover:${rainbow(COLOR_NAME.BLUE, 'fg')}`,
-    red: `group-hover:${rainbow(COLOR_NAME.RED, 'fg')}`,
-    cyan: `group-hover:${rainbow(COLOR_NAME.CYAN, 'fg')}`,
+    purple: `group-hover:${rainbow(COLOR.PURPLE, 'fg')}`,
+    blue: `group-hover:${rainbow(COLOR.BLUE, 'fg')}`,
+    red: `group-hover:${rainbow(COLOR.RED, 'fg')}`,
+    cyan: `group-hover:${rainbow(COLOR.CYAN, 'fg')}`,
 
-    purpleIcon: `group-hover:${rainbow(COLOR_NAME.PURPLE, 'fill')}`,
-    blueIcon: `group-hover:${rainbow(COLOR_NAME.BLUE, 'fill')}`,
-    redIcon: `group-hover:${rainbow(COLOR_NAME.RED, 'fill')}`,
-    cyanIcon: `group-hover:${rainbow(COLOR_NAME.CYAN, 'fill')}`,
+    purpleIcon: `group-hover:${rainbow(COLOR.PURPLE, 'fill')}`,
+    blueIcon: `group-hover:${rainbow(COLOR.BLUE, 'fill')}`,
+    redIcon: `group-hover:${rainbow(COLOR.RED, 'fill')}`,
+    cyanIcon: `group-hover:${rainbow(COLOR.CYAN, 'fill')}`,
 
     menuIcon: cn('size-4.5', fill('digest')),
     menuBarColumn: 'column !items-start py-2',

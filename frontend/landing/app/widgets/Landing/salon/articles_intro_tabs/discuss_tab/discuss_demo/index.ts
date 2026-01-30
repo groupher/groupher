@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -31,11 +31,11 @@ export default () => {
     upvote: cn(
       'row-center px-1.5 py-px mt-0.5 rounded-md border',
       fg('title'),
-      rainbow(COLOR_NAME.PURPLE, 'bgSoft'),
-      rainbow(COLOR_NAME.PURPLE, 'borderSoft'),
+      rainbow(COLOR.PURPLE, 'bgSoft'),
+      rainbow(COLOR.PURPLE, 'borderSoft'),
     ),
-    icon: cn('size-3', rainbow(COLOR_NAME.PURPLE, 'fill')),
-    count: cn('text-sm bold-sm ml-1', rainbow(COLOR_NAME.PURPLE, 'fg')),
+    icon: cn('size-3', rainbow(COLOR.PURPLE, 'fill')),
+    count: cn('text-sm bold-sm ml-1', rainbow(COLOR.PURPLE, 'fg')),
     commentIcon: cn('size-2.5 opacity-80', fill('digest')),
     commentCount: cn('text-sm ml-1', fg('digest')),
 

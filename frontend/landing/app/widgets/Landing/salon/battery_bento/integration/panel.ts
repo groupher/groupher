@@ -1,6 +1,5 @@
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
-
-import { COLOR_NAME } from '~/const/colors'
 
 export { cn } from '~/css'
 
@@ -17,6 +16,6 @@ export default () => {
     mask: bg('hoverBg'),
 
     bar: cn('absolute top-1 w-20 h-5 rounded-md opacity-20', bg('text.digest')),
-    redBg: rainbow(COLOR_NAME.RED, 'bg'),
+    redBg: rainbow(COLOR.RED, 'bg'),
   }
 }

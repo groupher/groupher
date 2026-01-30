@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { ONE_LINK_GROUP, TW_CARD } from '~/const/dashboard'
 import { DSB_ALIAS_ROUTE, DSB_DOC_ROUTE, DSB_ROUTE } from '~/const/route'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
@@ -299,4 +299,4 @@ export const DEFAULT_NEW_FAQ = {
   index: 0,
 }
 
-export const INIT_KANBAN_COLORS = [COLOR_NAME.BLACK, COLOR_NAME.BLACK, COLOR_NAME.BLACK]
+export const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.BLACK, COLOR.BLACK]

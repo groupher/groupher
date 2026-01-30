@@ -3,7 +3,7 @@
 import { clsx } from 'clsx'
 import { useMemo } from 'react'
 
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { cn, cnMerge } from '~/css'
 import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
@@ -143,22 +143,18 @@ export default function useTwBelt(): TRet {
       case 'bg':
         return cn(STATIC_CLS.hoverBgBase, `hover:${bg('hoverBg')}`)
       case 'bg-red':
-        return cn(STATIC_CLS.hoverBgBase, `hover:${rainbowSoft(COLOR_NAME.RED)}`)
+        return cn(STATIC_CLS.hoverBgBase, `hover:${rainbowSoft(COLOR.RED)}`)
       case 'icon':
         return cn(STATIC_CLS.hoverIconBase, fill('digest'), `group-hover:${fill('title')}`)
       case 'fg':
         return cn(STATIC_CLS.hoverIconBase, fg('digest'), `group-hover:${fg('title')}`)
       case 'fg-red':
-        return cn(
-          STATIC_CLS.hoverIconBase,
-          fg('digest'),
-          `group-hover:${rainbow(COLOR_NAME.RED, 'fg')}`,
-        )
+        return cn(STATIC_CLS.hoverIconBase, fg('digest'), `group-hover:${rainbow(COLOR.RED, 'fg')}`)
       case 'icon-red':
         return cn(
           STATIC_CLS.hoverIconBase,
           fill('digest'),
-          `group-hover:${rainbow(COLOR_NAME.RED, 'fill')}`,
+          `group-hover:${rainbow(COLOR.RED, 'fill')}`,
         )
       default:
         return 'debug'

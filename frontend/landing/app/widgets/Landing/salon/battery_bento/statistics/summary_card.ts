@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -21,7 +21,7 @@ export default () => {
     num: cn('row-center text-sm bold-sm overflow-hidden', fg('title'), isDarkTheme && dimDark()),
 
     icon: 'size-3 ml-2',
-    iconGreen: rainbow(COLOR_NAME.GREEN, 'fill'),
-    iconRed: rainbow(COLOR_NAME.RED, 'fill'),
+    iconGreen: rainbow(COLOR.GREEN, 'fill'),
+    iconRed: rainbow(COLOR.RED, 'fill'),
   }
 }

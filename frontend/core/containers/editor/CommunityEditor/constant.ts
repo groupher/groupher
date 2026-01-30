@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 export const STEP = {
   SELECT_TYPE: 'SELECT_TYPE',
@@ -17,10 +17,10 @@ export const COMMUNITY_TYPE = {
 
 // TODO: remove later
 export const COMMUNITY_CATS_COLOR = {
-  [COMMUNITY_TYPE.PRODUCT]: COLOR_NAME.PURPLE,
-  [COMMUNITY_TYPE.GAMING]: COLOR_NAME.BLUE,
-  [COMMUNITY_TYPE.TEACH]: COLOR_NAME.GREEN,
-  [COMMUNITY_TYPE.GROUP]: COLOR_NAME.ORANGE,
+  [COMMUNITY_TYPE.PRODUCT]: COLOR.PURPLE,
+  [COMMUNITY_TYPE.GAMING]: COLOR.BLUE,
+  [COMMUNITY_TYPE.TEACH]: COLOR.GREEN,
+  [COMMUNITY_TYPE.GROUP]: COLOR.ORANGE,
 }
 
 export const COMMUNITY_CATS = [
@@ -28,25 +28,25 @@ export const COMMUNITY_CATS = [
     //
     type: COMMUNITY_TYPE.PRODUCT,
     title: '产品支持',
-    color: COLOR_NAME.PURPLE,
+    color: COLOR.PURPLE,
   },
   {
     //
     type: COMMUNITY_TYPE.GAMING,
     title: '游戏开发',
-    color: COLOR_NAME.ORANGE,
+    color: COLOR.ORANGE,
   },
   {
     //
     type: COMMUNITY_TYPE.TEACH,
     title: '课程 / 教学',
-    color: COLOR_NAME.GREEN,
+    color: COLOR.GREEN,
   },
   {
     //
     type: COMMUNITY_TYPE.GROUP,
     title: '圈子 / 团体',
-    color: COLOR_NAME.BLUE,
+    color: COLOR.BLUE,
   },
 ]
 

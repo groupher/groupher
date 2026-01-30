@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -54,8 +54,8 @@ export default () => {
     // comment
     commentDot: cn(
       'align-both absolute right-32 bottom-52 size-3.5 z-50',
-      rainbow(COLOR_NAME.CYAN, 'bgSoft'),
+      rainbow(COLOR.CYAN, 'bgSoft'),
     ),
-    commentSolid: cn('size-2 circle opacity-80', rainbow(COLOR_NAME.CYAN, 'bg')),
+    commentSolid: cn('size-2 circle opacity-80', rainbow(COLOR.CYAN, 'bg')),
   }
 }

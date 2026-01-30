@@ -1,5 +1,5 @@
 // salon/button.ts
-import { COLOR_NAME } from '~/const'
+import { COLOR } from '~/const'
 import { cnMerge } from '~/css'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName, TSizeTSM, TSpace } from '~/spec'
@@ -71,7 +71,7 @@ export default function useButtonSalon({
   const toneBg = () => {
     if (ghost) return bg('transparent')
     if (tone === 'color') return rainbow(color!, 'bg')
-    if (tone === 'red') return rainbow(COLOR_NAME.RED, 'bgSoft')
+    if (tone === 'red') return rainbow(COLOR.RED, 'bgSoft')
     return primary('bg')
   }
 
@@ -90,7 +90,7 @@ export default function useButtonSalon({
   const ghostBorder = () => {
     if (!ghost) return ''
     if (color) return rainbow(color, 'borderSoft')
-    if (red) return rainbow(COLOR_NAME.RED, 'borderSoft')
+    if (red) return rainbow(COLOR.RED, 'borderSoft')
     return br('text.hint')
   }
 

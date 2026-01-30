@@ -5,11 +5,9 @@
  */
 
 import type { FC } from 'react'
-
-import type { TColorName, TSpace } from '~/spec'
-import { COLOR_NAME } from '~/const'
-
+import { COLOR } from '~/const'
 import BroadcastSVG from '~/icons/Broadcast'
+import type { TColorName, TSpace } from '~/spec'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
 import useSalon, { cn } from './salon'
@@ -22,7 +20,7 @@ type TProps = {
 
 const ArticleBroadcast: FC<TProps> = ({
   testid = 'article-broadcast',
-  color = COLOR_NAME.PURPLE,
+  color = COLOR.PURPLE,
   simple = false,
   ...spacing
 }) => {
@@ -45,7 +43,7 @@ const ArticleBroadcast: FC<TProps> = ({
           由社区管理员设置，在每篇帖子下面显示，后期可提供更详细的显示设置,
         </div>
       </div>
-      <div className="grow" />
+      <div className='grow' />
 
       <div className={s.linkBtn}>
         <ArrowButton>详情</ArrowButton>

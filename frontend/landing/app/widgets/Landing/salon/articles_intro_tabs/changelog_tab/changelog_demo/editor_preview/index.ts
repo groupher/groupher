@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const'
+import { COLOR } from '~/const'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
@@ -19,7 +19,7 @@ export default () => {
     tags: cn('row-center mt-0.5 gap-x-2', fg('digest')),
     tagItem: 'row-center text-xs',
     //
-    cover: cn('relative w-44 h-24 overflow-hidden rounded mb-1.5', rainbowSoft(COLOR_NAME.RED)),
+    cover: cn('relative w-44 h-24 overflow-hidden rounded mb-1.5', rainbowSoft(COLOR.RED)),
     content: 'column mt-12 w-48 gap-2.5',
     bar: cn('w-40 h-1.5 rounded-md opacity-30', bg('text.digest')),
   }

@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -15,7 +15,7 @@ export default () => {
     ),
     hint: cn('text-xs absolute right-2 top-2 scale-90', fg('hint')),
     url: cn('text-xs', fg('hint')),
-    title: cn('text-xl mb-1 pt-1.5', rainbow(COLOR_NAME.BLUE)),
+    title: cn('text-xl mb-1 pt-1.5', rainbow(COLOR.BLUE)),
     desc: cn('text-sm line-clamp-2', fg('digest')),
   }
 }

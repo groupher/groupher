@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -17,8 +17,8 @@ export default () => {
     hover: '-top-1.5',
     //
     item: 'align-both size-4',
-    itemActive: cn('rounded-md', rainbow(COLOR_NAME.CYAN, 'bgSoft')),
+    itemActive: cn('rounded-md', rainbow(COLOR.CYAN, 'bgSoft')),
     icon: cn('size-3.5', fill('digest')),
-    iconActive: rainbow(COLOR_NAME.CYAN, 'fill'),
+    iconActive: rainbow(COLOR.CYAN, 'fill'),
   }
 }

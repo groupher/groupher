@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -7,12 +7,12 @@ export default () => {
 
   return {
     wrapper: 'column-center w-full h-44 mt-16',
-    title: cn('text-xl bold-sm mt-1', rainbow(COLOR_NAME.BLUE, 'fg')),
+    title: cn('text-xl bold-sm mt-1', rainbow(COLOR.BLUE, 'fg')),
     digest: cn('text-lg leading-relaxed mb-8', fg('digest')),
     highlight: cn(
       'bold-sm italic ml-px mr-px px-0.5',
-      rainbow(COLOR_NAME.BLUE, 'fg'),
-      rainbow(COLOR_NAME.BLUE, 'bgSoft'),
+      rainbow(COLOR.BLUE, 'fg'),
+      rainbow(COLOR.BLUE, 'bgSoft'),
     ),
     //
     features: 'row wrap ml-20',

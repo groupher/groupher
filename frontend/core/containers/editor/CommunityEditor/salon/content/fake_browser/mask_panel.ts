@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -13,7 +13,7 @@ export default () => {
     inner: 'row wrap gap-y-2',
     dot: cn('size-1 circle mr-2', bg('text.digest')),
     //
-    checkIcon: cn('size-4 mr-2', rainbow(COLOR_NAME.GREEN, 'fill')),
+    checkIcon: cn('size-4 mr-2', rainbow(COLOR.GREEN, 'fill')),
     header: 'column-align-both w-full mb-8',
     divider: cn(sexyBorder(), 'w-40 h-0.5 mt-4 mb-3'),
   }

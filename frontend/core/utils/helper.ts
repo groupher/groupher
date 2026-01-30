@@ -1,6 +1,6 @@
 import { includes, isEmpty, keys, remove, sort, startsWith, uniq } from 'ramda'
 import { ASSETS_ENDPOINT } from '~/config'
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { ARTICLE_STATE } from '~/const/gtd'
 import type { TArticleState, TColorName, TCommunityThread, TDsdThreadConf, TWindow } from '~/spec'
 
@@ -131,13 +131,8 @@ export const num2Percent = (decimal: number): string => {
 /**
  * get radom backgrounds from COLOR_NAMEs
  */
-export const randomBgNames = (
-  count,
-  excepts = [COLOR_NAME.CYAN, COLOR_NAME.GREEN],
-): TColorName[] => {
-  let colorKeys = isEmpty(excepts)
-    ? keys(COLOR_NAME)
-    : keys(COLOR_NAME).filter((k) => !includes(k, excepts))
+export const randomBgNames = (count, excepts = [COLOR.CYAN, COLOR.GREEN]): TColorName[] => {
+  let colorKeys = isEmpty(excepts) ? keys(COLOR) : keys(COLOR).filter((k) => !includes(k, excepts))
 
   let randomIdx: number
   const ret = []

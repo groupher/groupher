@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -13,7 +13,7 @@ export default () => {
     introLogo: cn('size-4 mr-2.5', fill('digest')),
 
     nextBtn: 'row-center justify-around w-52 absolute bottom-6',
-    errorMsg: cn('absolute bottom-12 text-sm w-52', rainbow(COLOR_NAME.RED, 'fg')),
+    errorMsg: cn('absolute bottom-12 text-sm w-52', rainbow(COLOR.RED, 'fg')),
     prevBtn: cn('saturate-0', isLightTheme && 'opacity-80'),
   }
 }

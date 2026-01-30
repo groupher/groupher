@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -34,13 +34,13 @@ export default () => {
     p: 'mt-2.5',
     highlight: cn('px-1 bold-sm rounded', fg('digest'), vividDark()),
     // colors
-    blueBg: cn('', rainbow(COLOR_NAME.BLUE, 'bgSoft')),
-    greenBg: cn('', rainbow(COLOR_NAME.GREEN, 'bgSoft')),
-    purpleBg: cn('', rainbow(COLOR_NAME.PURPLE, 'bgSoft')),
-    orangeBg: cn('', rainbow(COLOR_NAME.ORANGE, 'bgSoft')),
-    redBg: cn('', rainbow(COLOR_NAME.RED, 'bgSoft')),
-    yellowBg: cn('', rainbow(COLOR_NAME.YELLOW, 'bgSoft')),
-    brownBg: cn('', rainbow(COLOR_NAME.BROWN, 'bgSoft')),
-    cyanBg: cn('', rainbow(COLOR_NAME.CYAN, 'bgSoft')),
+    blueBg: cn('', rainbow(COLOR.BLUE, 'bgSoft')),
+    greenBg: cn('', rainbow(COLOR.GREEN, 'bgSoft')),
+    purpleBg: cn('', rainbow(COLOR.PURPLE, 'bgSoft')),
+    orangeBg: cn('', rainbow(COLOR.ORANGE, 'bgSoft')),
+    redBg: cn('', rainbow(COLOR.RED, 'bgSoft')),
+    yellowBg: cn('', rainbow(COLOR.YELLOW, 'bgSoft')),
+    brownBg: cn('', rainbow(COLOR.BROWN, 'bgSoft')),
+    cyanBg: cn('', rainbow(COLOR.CYAN, 'bgSoft')),
   }
 }

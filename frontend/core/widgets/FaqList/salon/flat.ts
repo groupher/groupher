@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -18,7 +18,7 @@ export default ({ large }: TProps) => {
     section: cn('line-clamp-2 w-64', fg('title'), large ? 'text-lg' : 'text-base'),
     title: cn('bold-sm', cut('w-60'), fg('title'), large ? 'text-lg' : 'text-base'),
     checkBox: cn('size-5', large ? 'mr-4' : 'mr-2.5'),
-    checkIcon: cn('size-4', large && 'scale-110', rainbow(COLOR_NAME.GREEN, 'fill')),
+    checkIcon: cn('size-4', large && 'scale-110', rainbow(COLOR.GREEN, 'fill')),
     //
     body: cn('line-clamp-3 mt-4', fg('digest'), large ? 'pl-8' : 'pl-6'),
   }

@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -26,7 +26,7 @@ export default () => {
       shadow('sm'),
       'gradient-cyan',
     ),
-    spiderSVG: cn('size-5 opacity-80', rainbow(COLOR_NAME.CYAN, 'fill')),
+    spiderSVG: cn('size-5 opacity-80', rainbow(COLOR.CYAN, 'fill')),
     //
     bar: cn('absolute h-1 w-10 rounded-md opacity-20', bg('text.digest')),
   }

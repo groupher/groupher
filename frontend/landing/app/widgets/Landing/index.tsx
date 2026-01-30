@@ -138,13 +138,7 @@ export default function Landing() {
               delay={200}
               offset={[1, 5]}
             >
-              <Button
-                size='medium'
-                ghost
-                noBorder
-                withSoftBg
-                className={isLightTheme && 'brightness-95'}
-              >
+              <Button size='medium' ghost noBorder soft className={isLightTheme && 'brightness-95'}>
                 <div className='ml-2' />
                 在线体验 <ArrowSVG className={s.arrow} />
               </Button>

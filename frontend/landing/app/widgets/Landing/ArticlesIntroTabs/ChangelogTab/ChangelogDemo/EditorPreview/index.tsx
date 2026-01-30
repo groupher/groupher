@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import TagNode from '~/widgets/TagNode'
 import useSalon, {
   cn,
@@ -19,12 +19,12 @@ const EditorPreview: FC = () => {
 
         <div className={s.tags}>
           <div className={s.tagItem}>
-            <TagNode color={COLOR_NAME.GREEN} boldHash />
+            <TagNode color={COLOR.GREEN} boldHash />
             Web
           </div>
 
           <div className={s.tagItem}>
-            <TagNode color={COLOR_NAME.ORANGE} boldHash />
+            <TagNode color={COLOR.ORANGE} boldHash />
             Mobile
           </div>
         </div>

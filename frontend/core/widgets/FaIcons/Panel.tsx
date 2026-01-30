@@ -1,16 +1,13 @@
-import { type FC, useState, useEffect } from 'react'
-import { includes, keys, filter } from 'ramda'
-
+import { filter, includes, keys } from 'ramda'
+import { type FC, useEffect, useState } from 'react'
+import { COLOR } from '~/const/colors'
 import type { TColorName } from '~/spec'
-import { COLOR_NAME } from '~/const/colors'
 import CustomScroller from '~/widgets/CustomScroller'
 import Input from '~/widgets/Input'
-
-import type { TIcon } from './spec'
 import FaIcon from '.'
 import ICONS from './icons'
-
 import useSalon, { cn } from './salon/panel'
+import type { TIcon } from './spec'
 
 type TProps = {
   selectColor: TColorName
@@ -23,7 +20,7 @@ type TProps = {
 const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelect, panelOpen }) => {
   const s = useSalon()
   const iconKeys = keys(ICONS)
-  const colorNames = keys(COLOR_NAME)
+  const colorNames = keys(COLOR)
 
   const [searchKey, setSearchKey] = useState('')
   const filteredIconKeys = filter((k) => includes(searchKey, k), iconKeys)
@@ -55,14 +52,14 @@ const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelec
       <Input
         className={s.input}
         value={searchKey}
-        placeholder="// 搜索图标（英文）"
+        placeholder='// 搜索图标（英文）'
         onChange={(e) => setSearchKey(e.target.value)}
       />
 
       <CustomScroller
-        direction="vertical"
-        height="150px"
-        barSize="small"
+        direction='vertical'
+        height='150px'
+        barSize='small'
         showShadow={false}
         autoHide
       >
@@ -73,7 +70,7 @@ const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelec
             onClick={() => onIconSelect(name)}
           >
             <div className={s.iconBox}>
-              <FaIcon icon={name} size={13} color={COLOR_NAME.BLACK} />
+              <FaIcon icon={name} size={13} color={COLOR.BLACK} />
             </div>
             <div className={s.title}>{name}</div>
           </div>

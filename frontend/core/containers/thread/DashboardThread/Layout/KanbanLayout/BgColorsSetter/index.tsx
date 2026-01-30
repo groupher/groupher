@@ -1,6 +1,6 @@
 import { isEmpty } from 'ramda'
 
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { INIT_KANBAN_COLORS } from '~/const/dashboard'
 import { KANBAN_LAYOUT } from '~/const/layout'
 import { randomBgNames } from '~/helper'
@@ -40,7 +40,7 @@ export default () => {
             onChange={(color) => edit([color, BG2, BG3], 'kanbanBgColors')}
             placement='right'
             offset={[-2, 1]}
-            excepts={[COLOR_NAME.CYAN, COLOR_NAME.GREEN]}
+            excepts={[COLOR.CYAN, COLOR.GREEN]}
             bgMode
           >
             <div className={cn(s.colorBall, s.todoBall)} ref={board1Ref} />
@@ -51,7 +51,7 @@ export default () => {
             onChange={(color) => edit([BG1, color, BG3], 'kanbanBgColors')}
             placement='right'
             offset={[-2, 1]}
-            excepts={[COLOR_NAME.CYAN, COLOR_NAME.GREEN]}
+            excepts={[COLOR.CYAN, COLOR.GREEN]}
             bgMode
           >
             <div className={cn(s.colorBall, s.wipBall)} ref={board2Ref} />
@@ -62,7 +62,7 @@ export default () => {
             onChange={(color) => edit([BG1, BG2, color], 'kanbanBgColors')}
             placement='right'
             offset={[-2, 1]}
-            excepts={[COLOR_NAME.CYAN, COLOR_NAME.GREEN]}
+            excepts={[COLOR.CYAN, COLOR.GREEN]}
             bgMode
           >
             <div className={cn(s.colorBall, s.doneBall)} ref={board3Ref} />

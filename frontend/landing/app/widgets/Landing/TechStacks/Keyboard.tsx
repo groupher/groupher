@@ -1,6 +1,6 @@
 import { motion, useInView } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import ArrowLinker from '~/widgets/ArrowLinker'
 import useSalon from '../salon/tech_stacks/keyboard'
@@ -179,7 +179,7 @@ export default function Keyboard() {
       </div>
       <div className={s.bottom}>
         <span className={s.detail}>关于技术选型与架构的更多细节，请</span>
-        <ArrowLinker href='/' color={COLOR_NAME.PURPLE} className='pl-0.5'>
+        <ArrowLinker href='/' color={COLOR.PURPLE} className='pl-0.5'>
           参考这里
         </ArrowLinker>
       </div>

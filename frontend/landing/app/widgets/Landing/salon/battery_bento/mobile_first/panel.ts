@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -18,7 +18,7 @@ export default () => {
       isLightTheme ? br('digest') : br('divider'),
     ),
     brand: cn('row-center mt-2 mb-3.5 text-xs scale-90 -ml-1', fg('digest')),
-    logo: cn('size-3.5 rounded opacity-40 mr-1.5', rainbow(COLOR_NAME.ORANGE, 'bg')),
+    logo: cn('size-3.5 rounded opacity-40 mr-1.5', rainbow(COLOR.ORANGE, 'bg')),
     item: 'row-center mb-0.5',
     avatar: 'size-3.5 rounded mt-0.5',
     post: 'column ml-2.5 gap-y-1 mt-1',

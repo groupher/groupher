@@ -8,7 +8,6 @@ export default () => {
 
   return {
     wrapper: 'w-full',
-    enableDesc: 'w-10/12 leading-relaxed',
     bgLabel: cn('align-both size-8 circle border pointer', rainbow(broadcastBg, 'border')),
     colorBall: cn('size-6 circle', rainbow(broadcastBg, 'bg')),
     label: cn('text-sm w-28 min-w-28', fg('digest')),

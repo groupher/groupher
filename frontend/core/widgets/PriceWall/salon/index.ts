@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -15,9 +15,9 @@ export default () => {
     //
     inner: 'row justify-center w-full gap-x-9',
     toppingTitle: 'text-sm ml-px mb-2.5 z-20',
-    fgGreen: rainbow(COLOR_NAME.GREEN, 'fg'),
-    fgBrown: rainbow(COLOR_NAME.BROWN, 'fg'),
-    fgPurple: rainbow(COLOR_NAME.PURPLE, 'fg'),
+    fgGreen: rainbow(COLOR.GREEN, 'fg'),
+    fgBrown: rainbow(COLOR.BROWN, 'fg'),
+    fgPurple: rainbow(COLOR.PURPLE, 'fg'),
     desc: cn('text-sm ml-0.5 opacity-90', fg('title'), dimDark('sm')),
     //
     column:
@@ -44,12 +44,12 @@ export default () => {
     priceDesc: cn('text-base ml-2 mt-1.5', fg('title')),
     //
     note: cn('text-xs z-10', fg('digest')),
-    coffeeIcon: cn('size-5 mr-1.5 ml-px', rainbow(COLOR_NAME.PURPLE, 'fill')),
+    coffeeIcon: cn('size-5 mr-1.5 ml-px', rainbow(COLOR.PURPLE, 'fill')),
     tryButton: 'absolute bottom-5 left-7',
     letsTalk: cn('row-center text-xl z-20 mt-3.5 mb-2.5', fg('title')),
     //
     catPawImg: cn('absolute w-20 z-20 trans-jump shape-shadow', dimDark('lg')),
-    catNote: cn('text-xs trans-jump z-10 ml-1', rainbow(COLOR_NAME.BROWN, 'fg')),
+    catNote: cn('text-xs trans-jump z-10 ml-1', rainbow(COLOR.BROWN, 'fg')),
     //
     link: cn(linkable(), fg('link')),
   }

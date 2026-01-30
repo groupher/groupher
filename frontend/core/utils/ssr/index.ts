@@ -117,6 +117,7 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
 
   return {
     ...fieldsObj,
+    // @ts-expect-error
     original: {
       ...fieldsObj,
     },
