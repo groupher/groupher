@@ -10,7 +10,7 @@ export default () => {
   const { edit, primaryColor, isTouched, saving } = usePrimaryColor()
 
   return (
-    <section className={s.wrapper}>
+    <section>
       <SectionLabel
         title='主题色'
         desc='设置后会在常见组件，功能性文字等位置显示该个性化主题色。参考'

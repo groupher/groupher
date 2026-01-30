@@ -7,7 +7,6 @@ export default () => {
   const { cn, primary, fg, rainbow } = useTwBelt()
 
   return {
-    wrapper: 'pb-7',
     content: 'row align-start justify-between',
     head: 'row-center',
     subHead: 'mt-0.5 mb-4',
