@@ -1,18 +1,15 @@
 import type { FC } from 'react'
-
-import type { TPost } from '~/spec'
 import { UPVOTE_LAYOUT } from '~/const/layout'
-
-import { upvoteArticle, previewArticle } from '~/signal'
-import ArticlePinLabel from '~/widgets/ArticlePinLabel'
-import Upvote from '~/widgets/Upvote'
-import ImgFallback from '~/widgets/ImgFallback'
 import Img from '~/Img'
 
-import Header from './Header'
-import Body from './Body'
-
+import { previewArticle, upvoteArticle } from '~/signal'
+import type { TPost } from '~/spec'
+import ArticlePinLabel from '~/widgets/ArticlePinLabel'
+import ImgFallback from '~/widgets/ImgFallback'
+import Upvote from '~/widgets/Upvote'
 import useSalon from '../salon/ph_layout'
+import Body from './Body'
+import Header from './Header'
 
 type TProps = {
   article: TPost
@@ -24,19 +21,15 @@ const DigestView: FC<TProps> = ({ article }) => {
 
   return (
     <div className={s.wrapper}>
-      <ArticlePinLabel isPinned={article.isPinned} className="top-6" />
+      <ArticlePinLabel isPinned={article.isPinned} className='top-6' />
 
       <div className={s.avatarWrapper}>
-        <Img
-          src={author.avatar}
-          className={s.avatar}
-          fallback={<ImgFallback size={6} user={author} />}
-        />
+        <Img src={author.avatar} className={s.avatar} fallback={<ImgFallback user={author} />} />
       </div>
-      <div className={s.main} onClick={() => previewArticle(article)}>
+      <button className={s.main} onClick={() => previewArticle(article)}>
         <Header article={article} />
         <Body article={article} />
-      </div>
+      </button>
 
       <div className={s.upvoteWrapper}>
         <Upvote

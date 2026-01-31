@@ -1,11 +1,11 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
 import type { TProps } from '..'
 
 export default ({
-  color = COLOR_NAME.BLACK,
+  color = COLOR.BLACK,
   dotSize = 2,
   dotRight = 2,
   dotTop = 0,

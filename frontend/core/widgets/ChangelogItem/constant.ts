@@ -1,15 +1,15 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 export const demoTags = [
   {
     title: 'Bug 修复',
     slug: 'fix',
-    color: COLOR_NAME.GREEN,
+    color: COLOR.GREEN,
   },
   {
     title: '新功能',
     slug: 'feature',
-    color: COLOR_NAME.PURPLE,
+    color: COLOR.PURPLE,
   },
 ]
 

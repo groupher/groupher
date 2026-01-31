@@ -1,13 +1,12 @@
-import { useState } from 'react'
 import { keys } from 'ramda'
+import { useState } from 'react'
 
 import Img from '~/Img'
-import Button from '~/widgets/Buttons/Button'
-import CheckedSVG from '~/icons/CheckBold'
 import CircleArrowSVG from '~/icons/ArrowSimple'
-
-import useLogic from '../useLogic'
+import CheckedSVG from '~/icons/CheckBold'
+import Button from '~/widgets/Buttons/Button'
 import useSalon, { cn } from '../salon/build_in/pictrue_group'
+import useLogic from '../useLogic'
 
 export default () => {
   const { getWallpaper, changePatternWallpaper } = useLogic()
@@ -23,7 +22,7 @@ export default () => {
   return (
     <div className={s.wrapper}>
       {patternKeys.map((name) => {
-        // @ts-ignore
+        // @ts-expect-error
         const { bgImage } = patternWallpapers[name]
         const bgSrc = bgImage === '/wallpaper/ms.svg' ? '/wallpaper/ms.png' : bgImage
 
@@ -43,10 +42,10 @@ export default () => {
         <Button
           ghost
           noBorder
-          size="small"
+          size='small'
           space={3}
           top={10}
-          withSoftBg={showMore}
+          soft={showMore}
           onClick={() => setShowMore(!showMore)}
         >
           <CircleArrowSVG className={s.showMoreIcon} />

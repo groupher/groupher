@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
@@ -7,7 +7,7 @@ export default () => {
   return {
     wrapper: cn('align-both mt-2.5 border-t', br('divider')),
     bottomWrapper: 'text-xs align-both pt-2',
-    redBtn: cn('pointer', rainbow(COLOR_NAME.RED)),
+    redBtn: cn('pointer', rainbow(COLOR.RED)),
     cancelBtn: cn('smoky-90 pointer', `hover:${fg('title')}`, fg('digest')),
   }
 }

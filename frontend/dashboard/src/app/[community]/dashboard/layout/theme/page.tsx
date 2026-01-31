@@ -1,5 +1,6 @@
 'use client'
 
+import FloatBackground from '~/containers/thread/DashboardThread/Layout/FloatBackground'
 import GaussBlur from '~/containers/thread/DashboardThread/Layout/GaussBlur'
 import GlowLight from '~/containers/thread/DashboardThread/Layout/GlowLight'
 import PageBackground from '~/containers/thread/DashboardThread/Layout/PageBackground'
@@ -14,6 +15,8 @@ export default () => {
   return (
     <>
       <PrimaryColor />
+      <div className={s.divider} />
+      <FloatBackground />
       <div className={s.divider} />
       <PageBackground />
       <div className={s.divider} />

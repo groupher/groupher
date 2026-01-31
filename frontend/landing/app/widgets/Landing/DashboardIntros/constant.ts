@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { DSB_ROUTE } from '~/const/route'
 import AdminSVG from '~/icons/Admin'
 import CMSSVG from '~/icons/CMS'
@@ -12,7 +12,7 @@ export default {
   [DSB_ROUTE.LAYOUT]: {
     title: '布局 & 样式',
     desc: '社区与内容展示的各种个性化设置',
-    color: COLOR_NAME.PURPLE,
+    color: COLOR.PURPLE,
     icon: LayoutSVG,
 
     items: [
@@ -29,7 +29,7 @@ export default {
   [DSB_ROUTE.POST]: {
     title: '内容管理',
     desc: '社区内容管理，文章状态设置',
-    color: COLOR_NAME.BLUE,
+    color: COLOR.BLUE,
     icon: CMSSVG,
 
     items: [
@@ -46,7 +46,7 @@ export default {
   [DSB_ROUTE.SEO]: {
     title: 'SEO / RSS',
     desc: '搜索引擎/社交媒体/RSS 优化及设置',
-    color: COLOR_NAME.CYAN,
+    color: COLOR.CYAN,
     icon: SpiderSVG,
     iconClass: 'size-8 opacity-40',
 
@@ -63,7 +63,7 @@ export default {
   [DSB_ROUTE.TAGS]: {
     title: '标签设置',
     desc: '标签增改，样式等相关设置',
-    color: COLOR_NAME.GREEN,
+    color: COLOR.GREEN,
     icon: HashTagBoldSVG,
 
     items: [
@@ -79,7 +79,7 @@ export default {
   [DSB_ROUTE.ADMINS]: {
     title: '管理员 & 权限',
     desc: '社区管理员设置，操作权限相关',
-    color: COLOR_NAME.RED,
+    color: COLOR.RED,
     icon: AdminSVG,
 
     items: [
@@ -96,7 +96,7 @@ export default {
   [DSB_ROUTE.HEADER]: {
     title: '页头 & 页脚',
     desc: '链接及分组管理，展示模板设置',
-    color: COLOR_NAME.BROWN,
+    color: COLOR.BROWN,
     icon: IntroHeaderFooterSVG,
 
     items: [
@@ -112,7 +112,7 @@ export default {
   [DSB_ROUTE.INOUT]: {
     title: '导入 & 通知',
     desc: '三方平台导入内容 / 信息通知',
-    color: COLOR_NAME.YELLOW,
+    color: COLOR.YELLOW,
     icon: IntroInoutSVG,
     iconClass: 'size-8 opacity-80',
 
@@ -130,7 +130,7 @@ export default {
   [DSB_ROUTE.WIDGETS]: {
     title: '嵌入集成',
     desc: '三方平台导入内容 / 信息通知',
-    color: COLOR_NAME.YELLOW,
+    color: COLOR.YELLOW,
     icon: IntroInoutSVG,
     iconClass: 'size-8 opacity-80',
 
@@ -148,7 +148,7 @@ export default {
   [DSB_ROUTE.ANALYSIS]: {
     title: '统计分析',
     desc: '三方平台导入内容 / 信息通知',
-    color: COLOR_NAME.YELLOW,
+    color: COLOR.YELLOW,
     icon: IntroInoutSVG,
     iconClass: 'size-8 opacity-80',
 

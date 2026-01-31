@@ -48,6 +48,6 @@ export {
 /* some svg icon are sensitive to fill color */
 /* some community svg need fill color, like city etc.. */
 
-export { COLOR_NAME } from './colors'
+export { COLOR } from './colors'
 export { PUBLISH_MODE } from './mode'
 export { default as THEME } from './theme'

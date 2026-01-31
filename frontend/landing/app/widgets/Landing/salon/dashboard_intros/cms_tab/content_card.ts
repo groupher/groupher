@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -31,13 +31,13 @@ export default () => {
     ),
     tipLogo: cn(
       'size-3.5 mr-1.5 brightness-110 saturate-150 opacity-65',
-      rainbow(COLOR_NAME.BLUE, 'fill'),
+      rainbow(COLOR.BLUE, 'fill'),
     ),
     //
     bar: cn('h-1.5 w-10/12 ml-3.5 rounded-md opacity-10', bg('text.digest')),
     curveLine: cn(
       'absolute top-24 left-52 size-40 z-20 -rotate-6 opacity-40 brightness-110',
-      rainbow(COLOR_NAME.BLUE, 'fill'),
+      rainbow(COLOR.BLUE, 'fill'),
     ),
   }
 }

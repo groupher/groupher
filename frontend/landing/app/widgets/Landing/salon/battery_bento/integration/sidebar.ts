@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -15,9 +15,9 @@ export default () => {
       bg('card'),
     ),
     avatar: cn('size-5 z-40 circle border border-transparent absolute', shadow('sm')),
-    brGreen: rainbow(COLOR_NAME.GREEN, 'border'),
-    brBlue: rainbow(COLOR_NAME.BLUE, 'border'),
-    brORange: rainbow(COLOR_NAME.ORANGE, 'border'),
+    brGreen: rainbow(COLOR.GREEN, 'border'),
+    brBlue: rainbow(COLOR.BLUE, 'border'),
+    brORange: rainbow(COLOR.ORANGE, 'border'),
     bar: cn('absolute left-2 w-12 h-1.5 rounded-md opacity-30', bg('text.digest')),
   }
 }

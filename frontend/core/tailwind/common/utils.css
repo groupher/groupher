@@ -111,6 +111,10 @@
     @apply text-left leading-none cursor-pointer;
   }
 
+  .text-shadow-none {
+    text-shadow: none;
+  }
+
   .debug {
     @apply border border-dashed;
     border-color: red;

@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { ARTICLE_STATE } from '~/const/gtd'
 import type { TArticleState, TColorName } from '~/spec'
 
@@ -16,7 +16,7 @@ export const getGTDColor = (state: TArticleState, bgColors: TColorName[]): TColo
     }
 
     default:
-      return COLOR_NAME.RED
+      return COLOR.RED
   }
 }
 

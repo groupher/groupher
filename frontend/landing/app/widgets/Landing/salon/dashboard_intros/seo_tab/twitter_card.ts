@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -26,7 +26,7 @@ export default () => {
     footer: 'row-center mt-3 px-2.5',
     count: cn('text-xs ml-2', fg('title')),
     icon: cn('size-5 brightness-150', fill('digest')),
-    fillRed: rainbow(COLOR_NAME.RED, 'fill'),
-    fillBlue: rainbow(COLOR_NAME.BLUE, 'fill'),
+    fillRed: rainbow(COLOR.RED, 'fill'),
+    fillBlue: rainbow(COLOR.BLUE, 'fill'),
   }
 }

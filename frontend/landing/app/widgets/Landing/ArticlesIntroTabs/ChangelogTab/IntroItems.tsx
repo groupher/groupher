@@ -1,11 +1,11 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import ArrowLinker from '~/widgets/ArrowLinker'
 import Button from '~/widgets/Buttons/Button'
 import useSalon, { cn } from '../../salon/articles_intro_tabs'
 import FeatItem from '../FeatItem'
 
-const color = COLOR_NAME.RED
+const color = COLOR.RED
 
 const Contents = () => {
   return (

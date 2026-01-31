@@ -27,7 +27,7 @@ const ConfirmFooter: FC<TProps> = ({ testid = '', ...spacing }) => {
       </div>
       <Input className={s.input} onChange={(e) => setMsg(e.target.value)} value={msg} autoFocus />
       <Button
-        type='red'
+        red
         top={14}
         bottom={18}
         disabled={msg !== community}

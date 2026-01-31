@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -17,8 +17,8 @@ export default () => {
     inner: 'w-full h-full rounded-xl relative gradient-red',
     bar: cn(
       'w-12 h-1.5 -ml-6 rounded-xl absolute top-4 left-1/2 opacity-15',
-      rainbow(COLOR_NAME.RED, 'bg'),
+      rainbow(COLOR.RED, 'bg'),
     ),
-    printIcon: cn('size-16 opacity-10 absolute right-2 top-2', rainbow(COLOR_NAME.RED, 'fill')),
+    printIcon: cn('size-16 opacity-10 absolute right-2 top-2', rainbow(COLOR.RED, 'fill')),
   }
 }

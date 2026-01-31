@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -27,6 +27,6 @@ export default () => {
       shadow('sm'),
       'gradient-orange',
     ),
-    editIcon: cn('size-4 opacity-65', rainbow(COLOR_NAME.BROWN, 'fill')),
+    editIcon: cn('size-4 opacity-65', rainbow(COLOR.BROWN, 'fill')),
   }
 }

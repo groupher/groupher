@@ -24,14 +24,14 @@ export const STATIC_CLS = {
   hoverBgBase: 'group align-both rounded trans-all-100 pointer',
   hoverIconBase: 'trans-all-100',
 
-  landingTitleBase: 'text-3xl bold-sm opacity-70 dark:opacity-90',
+  landingTitleBase: 'text-3xl bold-sm opacity-70 dark:opacity-90 text-shadow dark:text-shadow-none',
 
   sexyBorderBase: 'h-px w-full border-b',
   sexyVBorderBase: 'h-full w-px border-l',
 
   cutBase: 'truncate w-fit w-auto',
 
-  vividDarkWhenDark: 'saturate-150 brightness-125',
+  vividDarkWhenDark: 'dark:saturate-150 dark:brightness-125',
 } as const
 
 export const DIR: Record<keyof TSpace, string> = {

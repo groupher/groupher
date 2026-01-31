@@ -1,6 +1,6 @@
-import type { TUser, TTag, TCommunity } from '~/spec'
-import { SITE_LOGO, ICON, ICON_BASE } from '~/config'
-import { COLOR_NAME } from '~/const/colors'
+import { ICON, ICON_BASE, SITE_LOGO } from '~/config'
+import { COLOR } from '~/const/colors'
+import type { TCommunity, TTag, TUser } from '~/spec'
 
 import { getRandomInt } from './helper'
 
@@ -90,84 +90,84 @@ const tags = [
     id: '104',
     slug: 'iOS',
     title: 'iOS',
-    color: COLOR_NAME.RED,
+    color: COLOR.RED,
     group: '平台',
   },
   {
     id: '103',
     slug: 'ad',
     title: '安卓',
-    color: COLOR_NAME.RED,
+    color: COLOR.RED,
     group: '平台',
   },
   {
     id: '10',
     slug: 'Web',
     title: '浏览器',
-    color: COLOR_NAME.RED,
+    color: COLOR.RED,
     group: '平台',
   },
   {
     id: '111',
     slug: 'q',
     title: '三方集成',
-    color: COLOR_NAME.ORANGE,
+    color: COLOR.ORANGE,
     group: '产品',
   },
   {
     id: '11',
     slug: 'q',
     title: '权限',
-    color: COLOR_NAME.GREEN,
+    color: COLOR.GREEN,
     group: '产品',
   },
   {
     id: '12',
     slug: 'dp',
     title: '私有部署',
-    color: COLOR_NAME.BROWN,
+    color: COLOR.BROWN,
     group: '产品',
   },
   {
     id: '0',
     slug: 'admin',
     title: '后台管理',
-    color: COLOR_NAME.RED,
+    color: COLOR.RED,
     group: '产品',
   },
   {
     id: '1',
     slug: 'editor',
     title: '编辑器',
-    color: COLOR_NAME.ORANGE,
+    color: COLOR.ORANGE,
     group: '产品',
   },
   {
     id: '2',
     slug: 'ui',
     title: 'UI/UX',
-    color: COLOR_NAME.YELLOW,
+    color: COLOR.YELLOW,
     group: '产品',
   },
   {
     id: '4',
     slug: 'am',
     title: '官方通告',
-    color: COLOR_NAME.CYAN,
+    color: COLOR.CYAN,
     group: 'Welcome',
   },
   {
     id: '5',
     slug: 'showcase',
     title: 'Showcase',
-    color: COLOR_NAME.CYAN_LIGHT,
+    color: COLOR.CYAN_LIGHT,
     group: 'Welcome',
   },
   {
     id: '6',
     slug: 'start-here',
     title: '使用指南',
-    color: COLOR_NAME.BLUE,
+    color: COLOR.BLUE,
     group: 'Welcome',
   },
 ]
@@ -378,7 +378,7 @@ export const mockHelpCats = () => {
       id: '0',
       title: 'Groupher 是什么?',
       desc: '可以。讨论区/看板/更新日志等等板块可以像使用积木一样按需使用，后台可一键开启。',
-      color: COLOR_NAME.BLACK,
+      color: COLOR.BLACK,
       articles: [
         {
           id: '0',
@@ -394,7 +394,7 @@ export const mockHelpCats = () => {
       id: '1',
       title: '个性化设置',
       desc: '可以。讨论区/看板/更新日志等等板块可以像使用积木一样按需使用，后台可一键开启。',
-      color: COLOR_NAME.RED,
+      color: COLOR.RED,
       articles: [
         {
           id: '0',
@@ -426,7 +426,7 @@ export const mockHelpCats = () => {
       id: '2',
       title: '社区内容管理',
       desc: '当然，Groupher 支持微信等国内主流社交软件的第三方登录。',
-      color: COLOR_NAME.ORANGE,
+      color: COLOR.ORANGE,
       articles: [
         {
           id: '0',
@@ -442,7 +442,7 @@ export const mockHelpCats = () => {
         },
         {
           id: '3',
-          title: '帮助台内容',
+          title: '文档内容',
         },
         {
           id: '4',
@@ -458,7 +458,7 @@ export const mockHelpCats = () => {
       id: '3',
       title: '统计分析',
       desc: '当然，Groupher 提供 30 天免费试用，对开源项目可无任何限制的使用。',
-      color: COLOR_NAME.BLUE,
+      color: COLOR.BLUE,
       articles: [
         {
           id: '0',
@@ -482,7 +482,7 @@ export const mockHelpCats = () => {
       id: '4',
       title: '联系我们',
       desc: '人手原因目前暂不支持独立部署，但未来会支持。独立部署版本不受任何限制。',
-      color: COLOR_NAME.PURPLE,
+      color: COLOR.PURPLE,
       articles: [
         {
           id: '0',
@@ -506,7 +506,7 @@ export const mockHelpCats = () => {
       id: '5',
       title: '隐私政策',
       desc: '支持，Groupher 支持高度自定义，从基础颜色到板块展现样式，各种细节均可自定义。',
-      color: COLOR_NAME.GREEN,
+      color: COLOR.GREEN,
       articles: [
         {
           id: '0',
@@ -530,7 +530,7 @@ export const mockHelpCats = () => {
       id: '6',
       title: '绑定集成',
       desc: 'Groupher 完全开源在 Github 上，欢迎任何形式的参与。',
-      color: COLOR_NAME.BLACK,
+      color: COLOR.BLACK,
       articles: [
         {
           id: '0',

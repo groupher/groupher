@@ -4,7 +4,7 @@ import useBase from '.'
 export { cn, cnMerge } from '~/css'
 
 export default () => {
-  const { cn, cnMerge, fg, bg, cut, primary, sexyBorder, sexyVBorder, isBlackPrimary } = useTwBelt()
+  const { cn, cnMerge, cut, primary, sexyBorder, sexyVBorder } = useTwBelt()
   const base = useBase()
 
   return {
@@ -13,8 +13,8 @@ export default () => {
     layout: 'group button-reset column-align-both',
     block: cnMerge(base.blockBase, 'relative h-56'),
     blockActive: base.blockBaseActive,
-    communityTitle: cn('text-xs bold-sm', cut('w-14'), primary('fg'), isBlackPrimary && fg('link')),
-    primaryBar: cn('opacity-65', primary('bg'), isBlackPrimary && bg('text.link')),
+    communityTitle: cn('text-xs bold-sm', cut('w-14'), primary('fg')),
+    primaryBar: cn('opacity-65', primary('bg')),
     bar: base.bar,
     circle: base.circle,
 

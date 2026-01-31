@@ -27,7 +27,7 @@ export default () => {
     <div className={s.wrapper}>
       <SectionLabel
         title="开启页脚广播"
-        desc={<div className={s.enableDesc}>开启后，相关帖子底部会出现广播内容</div>}
+        desc="开启后，相关帖子底部会出现广播内容"
         addon={
           <ToggleSwitch
             checked={broadcastArticleEnable}

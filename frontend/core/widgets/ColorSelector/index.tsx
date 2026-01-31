@@ -4,15 +4,12 @@
  *
  */
 
+import { endsWith, includes, isEmpty, keys } from 'ramda'
 import type { FC, ReactNode } from 'react'
-import { keys, includes, isEmpty, endsWith } from 'ramda'
-
-import type { TColorName, TTooltipPlacement } from '~/spec'
-
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
-
 import HookSVG from '~/icons/Hook'
+import type { TColorName, TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from './salon'
@@ -39,8 +36,8 @@ const ColorSelector: FC<TProps> = ({
   excepts = [],
 }) => {
   const colorKeys = isEmpty(excepts)
-    ? keys(COLOR_NAME)
-    : keys(COLOR_NAME).filter((k) => !includes(k, excepts))
+    ? keys(COLOR)
+    : keys(COLOR).filter((k) => !includes(k, excepts))
 
   const s = useSalon()
   const { rainbow } = useTwBelt()
@@ -48,7 +45,7 @@ const ColorSelector: FC<TProps> = ({
   return (
     <Tooltip
       placement={placement}
-      trigger="click"
+      trigger='click'
       hideOnClick={false}
       offset={offset}
       content={

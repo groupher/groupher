@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
@@ -15,7 +15,7 @@ export default () => {
       shadow('xl'),
       br('divider'),
     ),
-    fillOrange: rainbow(COLOR_NAME.ORANGE, 'fill'),
+    fillOrange: rainbow(COLOR.ORANGE, 'fill'),
     top: 'row-center gap-x-1',
     actionBlock: cn('w-7 h-6 rounded-md align-both', bg('menuHoverBg')),
     bottomActions: cn('mt-1 w-24 p-1.5 rounded-t-md grow', bg('menuHoverBg')),

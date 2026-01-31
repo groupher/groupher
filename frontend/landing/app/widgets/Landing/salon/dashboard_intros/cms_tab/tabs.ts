@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -12,7 +12,7 @@ export default () => {
     postItemWrapper: cn(
       'absolute -top-2 rounded-t-xl p-1 z-30 border border-dashed',
       bg('card'),
-      rainbow(COLOR_NAME.BLUE, 'borderSoft'),
+      rainbow(COLOR.BLUE, 'borderSoft'),
     ),
     postItem: cn(
       'align-both w-24 h-8 rounded-t-md text-xs',
@@ -24,7 +24,7 @@ export default () => {
       'absolute p-1 z-20 align-both w-20 h-8 rounded-t-2xl border border-dashed text-xs',
       fg('digest'),
       bg('card'),
-      rainbow(COLOR_NAME.BLUE, 'borderSoft'),
+      rainbow(COLOR.BLUE, 'borderSoft'),
     ),
     bottomItem: cn(
       'row-center w-80 absolute left-12 bottom-20 mb-2 py-2 px-3 rounded-b-xl border',

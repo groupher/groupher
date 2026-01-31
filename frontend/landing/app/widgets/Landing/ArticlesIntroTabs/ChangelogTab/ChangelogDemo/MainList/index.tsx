@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import TagNode from '~/widgets/TagNode'
 import useSalon, {
@@ -23,12 +23,12 @@ export default function MainList() {
 
         <div className={s.tags}>
           <div className={s.tagItem}>
-            <TagNode color={COLOR_NAME.GREEN} boldHash />
+            <TagNode color={COLOR.GREEN} boldHash />
             Web
           </div>
 
           <div className={s.tagItem}>
-            <TagNode color={COLOR_NAME.ORANGE} boldHash />
+            <TagNode color={COLOR.ORANGE} boldHash />
             Mobile
           </div>
         </div>
@@ -50,12 +50,12 @@ export default function MainList() {
 
           <div className={s.tags}>
             <div className={s.tagItem}>
-              <TagNode color={COLOR_NAME.GREEN} boldHash />
+              <TagNode color={COLOR.GREEN} boldHash />
               Web
             </div>
 
             <div className={s.tagItem}>
-              <TagNode color={COLOR_NAME.PINK} boldHash />
+              <TagNode color={COLOR.PINK} boldHash />
               编辑器
             </div>
           </div>

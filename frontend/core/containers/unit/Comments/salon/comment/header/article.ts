@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 export { cn } from '~/css'
 
@@ -24,8 +24,8 @@ export default () => {
     //
     authorTag: cn(
       'text-xs scale-90 mb-0.5 px-2 py-px ml-1.5 rounded bold-sm',
-      rainbow(COLOR_NAME.BLUE, 'bgSoft'),
-      rainbow(COLOR_NAME.BLUE, 'fg'),
+      rainbow(COLOR.BLUE, 'bgSoft'),
+      rainbow(COLOR.BLUE, 'fg'),
     ),
   }
 }

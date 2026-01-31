@@ -1,6 +1,6 @@
 import { isEmpty } from 'ramda'
 
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { INIT_KANBAN_COLORS } from '~/const/dashboard'
 import { KANBAN_LAYOUT } from '~/const/layout'
 import { randomBgNames } from '~/helper'
@@ -40,7 +40,7 @@ export default () => {
             onChange={(color) => edit([color, BG2, BG3], 'kanbanBgColors')}
             placement='right'
             offset={[-2, 1]}
-            excepts={[COLOR_NAME.CYAN, COLOR_NAME.GREEN]}
+            excepts={[COLOR.CYAN, COLOR.GREEN]}
             bgMode
           >
             <div className={cn(s.colorBall, s.todoBall)} ref={board1Ref} />
@@ -51,7 +51,7 @@ export default () => {
             onChange={(color) => edit([BG1, color, BG3], 'kanbanBgColors')}
             placement='right'
             offset={[-2, 1]}
-            excepts={[COLOR_NAME.CYAN, COLOR_NAME.GREEN]}
+            excepts={[COLOR.CYAN, COLOR.GREEN]}
             bgMode
           >
             <div className={cn(s.colorBall, s.wipBall)} ref={board2Ref} />
@@ -62,25 +62,25 @@ export default () => {
             onChange={(color) => edit([BG1, BG2, color], 'kanbanBgColors')}
             placement='right'
             offset={[-2, 1]}
-            excepts={[COLOR_NAME.CYAN, COLOR_NAME.GREEN]}
+            excepts={[COLOR.CYAN, COLOR.GREEN]}
             bgMode
           >
             <div className={cn(s.colorBall, s.doneBall)} ref={board3Ref} />
           </ColorSelector>
         </div>
         <div className='grow' />
-        <div className={s.action} onClick={() => edit(INIT_KANBAN_COLORS, 'kanbanBgColors')}>
+        <button className={s.action} onClick={() => edit(INIT_KANBAN_COLORS, 'kanbanBgColors')}>
           <ResetSVG className={s.resetIcon} />
           重置
-        </div>
-        <div
+        </button>
+        <button
           className={s.action}
           onClick={() => {
             edit(randomBgNames(3), 'kanbanBgColors')
           }}
         >
           <DiceSVG className={cn(s.resetIcon, 'size-3.5')} /> 随缘
-        </div>
+        </button>
       </div>
 
       {layout === KANBAN_LAYOUT.CLASSIC ? (

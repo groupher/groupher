@@ -1,13 +1,6 @@
-/*
- *
- * ImgFallback
- *
- */
-
 import type { FC } from 'react'
 
-import type { TSpace, TUser } from '~/spec'
-
+import type { TSizeSML, TSpace, TUser } from '~/spec'
 import Avatar from './Avatar'
 
 export type TAvatarProps = {
@@ -15,14 +8,12 @@ export type TAvatarProps = {
   className?: string
   user?: TUser
   title?: string
-  size?: number
+  size?: TSizeSML
   quote?: boolean
 } & TSpace
 
-type TProps = TAvatarProps
-
-const ImgFallback: FC<TProps> = ({ ...restProps }) => {
-  return <Avatar {...restProps} />
+const ImgFallback: FC<TAvatarProps> = (props) => {
+  return <Avatar {...props} />
 }
 
 export default ImgFallback

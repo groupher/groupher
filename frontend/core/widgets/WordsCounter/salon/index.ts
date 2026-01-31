@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TSpace } from '~/spec'
@@ -16,7 +16,7 @@ export default ({ ...spacing }: TProps) => {
     main: 'row items-end mx-1',
     //
     curNum: cn('text-sm', fg('title')),
-    invalid: rainbow(COLOR_NAME.RED, 'fg'),
+    invalid: rainbow(COLOR.RED, 'fg'),
     slash: cn('text-xs ml-1.5 mb-px', fg('digest')),
     total: cn('text-xs', fg('digest')),
   }

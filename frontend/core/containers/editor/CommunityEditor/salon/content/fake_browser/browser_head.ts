@@ -1,5 +1,5 @@
 import { includes, keys } from 'ramda'
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
@@ -54,7 +54,7 @@ export default () => {
     toolIcon: cn('size-3.5 opacity-80', fill('digest')),
     lockIcon: cn('size-3.5 mt-0.5 ml-1 opacity-50', fill('digest')),
     moreIcon: cn('size-3.5 mt-px opacity-80', fill('digest')),
-    starIcon: cn('size-3.5 mt-0.5 opacity-65', rainbow(COLOR_NAME.ORANGE, 'fill')),
+    starIcon: cn('size-3.5 mt-0.5 opacity-65', rainbow(COLOR.ORANGE, 'fill')),
     form: cn('row-center grow h-7 rounded-xl ml-1 mr-0.5 pl-1.5', bg('card')),
     input: cn('row-center border-none w-full px-2.5', fg('title')),
     mainDomain: cn('text-sm', fg('title')),

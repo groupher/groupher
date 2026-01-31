@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -11,7 +11,7 @@ export default () => {
   const base = useBase()
 
   return {
-    wrapper: cn(base.baseCard, base.gradient(COLOR_NAME.PURPLE), 'h-[582px]'),
+    wrapper: cn(base.baseCard, base.gradient(COLOR.PURPLE), 'h-[582px]'),
     banner: 'column w-full pl-5 mb-3.5',
     warningMask: cn(
       'w-full h-3 border-t-2 border-dotted rounded-xl',
@@ -21,8 +21,8 @@ export default () => {
       'trans-jump !duration-500',
       shadow('sm'),
 
-      rainbow(COLOR_NAME.RED, 'border'),
-      rainbow(COLOR_NAME.RED, 'bgSoft'),
+      rainbow(COLOR.RED, 'border'),
+      rainbow(COLOR.RED, 'bgSoft'),
     ),
     //
     title: base.introTitle,

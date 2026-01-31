@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -25,24 +25,24 @@ export default () => {
     redDiffBar: 'diff-bar-red absolute left-0 top-0 w-7 h-full z-10 rounded-br-lg',
     ourlabel: cn(
       'row-center absolute right-16 top-0 text-lg px-3 py-1 rounded-b-xl',
-      rainbow(COLOR_NAME.GREEN, 'bgSoft'),
-      rainbow(COLOR_NAME.GREEN, 'fg'),
+      rainbow(COLOR.GREEN, 'bgSoft'),
+      rainbow(COLOR.GREEN, 'fg'),
     ),
 
     theirWall: 'relative column-align-both w-full h-auto diff-area-red-stripes',
     theirWallBg: cn(
       'absolute top-0 left-0 w-full h-full',
-      rainbowSoft(COLOR_NAME.RED),
+      rainbowSoft(COLOR.RED),
       isDarkTheme ? 'opacity-80' : 'opacity-40',
     ),
     theirlabel: cn(
       'row-center absolute right-16 top-0 text-lg px-3 py-1 rounded-b-xl',
-      rainbow(COLOR_NAME.RED, 'bgSoft'),
-      rainbow(COLOR_NAME.RED, 'fg'),
+      rainbow(COLOR.RED, 'bgSoft'),
+      rainbow(COLOR.RED, 'fg'),
     ),
 
     checkIcon: 'size-4 mr-2',
-    fillGreen: rainbow(COLOR_NAME.GREEN, 'fill'),
-    fillRed: rainbow(COLOR_NAME.RED, 'fill'),
+    fillGreen: rainbow(COLOR.GREEN, 'fill'),
+    fillRed: rainbow(COLOR.RED, 'fill'),
   }
 }

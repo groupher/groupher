@@ -1,18 +1,10 @@
-import useTwBelt from '~/hooks/useTwBelt'
-import type { TSpace } from '~/spec'
+export { cn, cnMerge } from '~/css'
 
-export { cn } from '~/css'
-
-type TProps = {
-  size: number
-} & TSpace
-
-export default ({ size, ...spacing }: TProps) => {
-  const { cn, margin } = useTwBelt()
-
+export default () => {
   return {
-    normal: 'align-both relative z-10',
-    fallback: 'absolute top-0 left-0 z-0',
-    fallbackOffset: cn(`size-${size}`, margin(spacing)),
+    normal: 'relative inline-flex p-0 border-0 bg-transparent',
+    fallbackInFlow: 'inline-flex w-full h-full',
+    fallbackHidden: 'opacity-0 pointer-events-none',
+    imgOverlay: 'absolute inset-0 z-10 block w-full h-full object-cover',
   }
 }

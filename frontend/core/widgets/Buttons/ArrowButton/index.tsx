@@ -7,7 +7,7 @@
 import type { FC, ReactNode } from 'react'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import type { TColorName, TSpace } from '~/spec'
-import useSalon, { cn } from '../salon/arrow_button'
+import useSalon, { cnMerge } from '../salon/arrow_button'
 import Arrow from './Arrow'
 
 export type TProps = {
@@ -46,7 +46,7 @@ const ArrowButton: FC<TProps> = ({
   const isLeft = leftLayout || up || down
 
   return (
-    <div className={cn(s.wrapper, className)} onClick={() => !disabled && onClick()}>
+    <button className={cnMerge(s.wrapper, className)} onClick={() => !disabled && onClick()}>
       {isLeft && (
         <Arrow
           color={color || primaryColor}
@@ -66,7 +66,7 @@ const ArrowButton: FC<TProps> = ({
           down={down}
         />
       )}
-    </div>
+    </button>
   )
 }
 

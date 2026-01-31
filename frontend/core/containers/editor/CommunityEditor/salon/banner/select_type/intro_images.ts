@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
@@ -29,7 +29,7 @@ export default () => {
     //
     gameBox: 'size-20 absolute bg-transparent z-20',
     gameImage: cn('w-full h-full object-cover', shadow('md')),
-    gameBar: cn('w-32 h-3 rounded-md absolute -z-10', rainbow(COLOR_NAME.ORANGE, 'bg')),
+    gameBar: cn('w-32 h-3 rounded-md absolute -z-10', rainbow(COLOR.ORANGE, 'bg')),
     //
 
     // teach
@@ -44,14 +44,14 @@ export default () => {
       bg('hoverBg'),
       br('divider'),
     ),
-    pillHighlight: cn('h-36 mb-4 border-dashed', rainbow(COLOR_NAME.PURPLE, 'borderSoft')),
+    pillHighlight: cn('h-36 mb-4 border-dashed', rainbow(COLOR.PURPLE, 'borderSoft')),
     pillNormal: 'gradient-black',
     pillGadient: 'absolute w-full h-full rotate-180 gradient-purple',
     pillGadient2: 'absolute w-full h-full rotate-180 gradient-orange',
     pillGadient3: 'absolute w-full h-full gradient-red',
     pillGadient4: 'absolute w-full h-full gradient-blue',
     pillIcon: cn('size-5 absolute bottom-2 left-3.5', fill('digest')),
-    pillHighlighIcon: cn(rainbow(COLOR_NAME.PURPLE, 'fill')),
+    pillHighlighIcon: cn(rainbow(COLOR.PURPLE, 'fill')),
 
     avatar: 'absolute size-7 circle saturate-50 opacity-20',
     avatarHighlight: 'saturate-100 opacity-100',

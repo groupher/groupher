@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { mockUsers } from '~/mock'
 
 import MasonryCards from '~/widgets/MasonryCards'
@@ -12,15 +12,15 @@ const CardsList = () => {
 
   return (
     <MasonryCards column={3}>
-      <Card content={P1(COLOR_NAME.BLUE)} user={users[0]} color={COLOR_NAME.BLUE} />
-      <Card content={P2(COLOR_NAME.ORANGE)} user={users[1]} color={COLOR_NAME.ORANGE} />
-      <Card content={P1(COLOR_NAME.RED)} user={users[2]} color={COLOR_NAME.RED} />
-      <Card content={P1(COLOR_NAME.GREEN)} user={users[3]} color={COLOR_NAME.GREEN} />
-      <Card content={P3(COLOR_NAME.CYAN)} user={users[4]} color={COLOR_NAME.CYAN} />
-      <Card content={P1(COLOR_NAME.PURPLE)} user={users[5]} color={COLOR_NAME.PURPLE} />
-      <Card content={P2(COLOR_NAME.YELLOW)} user={users[6]} color={COLOR_NAME.YELLOW} />
-      <Card content={P1(COLOR_NAME.BLUE)} user={users[7]} color={COLOR_NAME.BLUE} />
-      <Card content={P1(COLOR_NAME.BROWN)} user={users[8]} color={COLOR_NAME.BROWN} />
+      <Card content={P1(COLOR.BLUE)} user={users[0]} color={COLOR.BLUE} />
+      <Card content={P2(COLOR.ORANGE)} user={users[1]} color={COLOR.ORANGE} />
+      <Card content={P1(COLOR.RED)} user={users[2]} color={COLOR.RED} />
+      <Card content={P1(COLOR.GREEN)} user={users[3]} color={COLOR.GREEN} />
+      <Card content={P3(COLOR.CYAN)} user={users[4]} color={COLOR.CYAN} />
+      <Card content={P1(COLOR.PURPLE)} user={users[5]} color={COLOR.PURPLE} />
+      <Card content={P2(COLOR.YELLOW)} user={users[6]} color={COLOR.YELLOW} />
+      <Card content={P1(COLOR.BLUE)} user={users[7]} color={COLOR.BLUE} />
+      <Card content={P1(COLOR.BROWN)} user={users[8]} color={COLOR.BROWN} />
     </MasonryCards>
   )
 }

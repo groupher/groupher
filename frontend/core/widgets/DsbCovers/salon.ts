@@ -5,7 +5,7 @@ export { cn } from '~/css'
 
 export default () => {
   const { isDarkTheme } = useTheme()
-  const { cn, fg, hoverBr, hover, bg, fill, primary, isBlackPrimary } = useTwBelt()
+  const { cn, fg, hoverBr, hover, bg, fill, primary } = useTwBelt()
 
   return {
     wrapper: 'column w-3/5',
@@ -34,6 +34,6 @@ export default () => {
 
     pinBtnActive: cn(bg('alphaBg')),
     pinIcon: cn('size-4 rotate-12 group-smoky-0', fill('digest')),
-    pinIconActive: cn('opacity-80', primary('fill'), isBlackPrimary && fill('link')),
+    pinIconActive: cn('opacity-80', primary('fill')),
   }
 }

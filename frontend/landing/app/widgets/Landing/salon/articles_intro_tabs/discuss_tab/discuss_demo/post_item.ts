@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TActive } from '~/spec'
 
@@ -16,11 +16,11 @@ export default ({ active }: TProps) => {
       br('rainbow.purpleSoft'),
       shadow('card'),
       !active && 'border-dotted',
-      active && rainbow(COLOR_NAME.PURPLE, 'bgSoft'),
-      active && rainbow(COLOR_NAME.PURPLE, 'borderSoft'),
+      active && rainbow(COLOR.PURPLE, 'bgSoft'),
+      active && rainbow(COLOR.PURPLE, 'borderSoft'),
     ),
-    upvoteIcon: cn('size-3', fill('digest'), active && rainbow(COLOR_NAME.PURPLE, 'fill')),
-    count: cn('text-xs bold mt-0.5', fg('digest'), active && rainbow(COLOR_NAME.PURPLE, 'fg')),
+    upvoteIcon: cn('size-3', fill('digest'), active && rainbow(COLOR.PURPLE, 'fill')),
+    count: cn('text-xs bold mt-0.5', fg('digest'), active && rainbow(COLOR.PURPLE, 'fg')),
     //
     rightPart: 'column ml-3.5',
     title: cn('text-sm bold-sm', fg('title')),

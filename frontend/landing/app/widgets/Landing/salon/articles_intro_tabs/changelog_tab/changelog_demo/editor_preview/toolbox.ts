@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -14,7 +14,7 @@ export default () => {
     ),
     item: 'column-align-both size-8 mt-0.5',
     title: cn('text-xs scale-75 opacity-80', fg('digest')),
-    colorBall: cn('size-3 circle', rainbow(COLOR_NAME.RED, 'bgSoft')),
+    colorBall: cn('size-3 circle', rainbow(COLOR.RED, 'bgSoft')),
 
     icon: cn('size-3', fill('digest')),
   }

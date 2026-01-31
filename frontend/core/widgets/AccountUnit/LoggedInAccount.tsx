@@ -70,12 +70,7 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
       trigger='click'
       noPadding
     >
-      <Img
-        src={avatar}
-        fallback={<ImgFallback size={5} user={user} />}
-        className={s.avatar}
-        clickable
-      />
+      <Img src={avatar} fallback={<ImgFallback user={user} />} className={s.avatar} clickable />
     </Tooltip>
   )
 }

@@ -1,26 +1,19 @@
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import Checker from '~/widgets/Checker'
 import ColorSelector from '~/widgets/ColorSelector'
 import { FIELD } from '../constant'
 import usePrimaryColor from '../logic/usePrimaryColor'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
-import useSalon, { cn } from '../salon/layout/primary_color'
+import useSalon, { cn, cnMerge } from '../salon/layout/primary_color'
 
 export default () => {
   const s = useSalon()
   const { edit, primaryColor, isTouched, saving } = usePrimaryColor()
 
   return (
-    <section className={s.wrapper}>
+    <section>
       <SectionLabel
         title='主题色'
-        desc={
-          <div className='row'>
-            设置后会在常见组件，功能性文字等位置显示该个性化主题色。参考
-            <ArrowButton left={1}>影响范围</ArrowButton>
-          </div>
-        }
+        desc='设置后会在常见组件，功能性文字等位置显示该个性化主题色。参考'
       />
       <div className={s.content}>
         <div className={s.block}>
@@ -37,10 +30,7 @@ export default () => {
             </div>
             <div className={s.title}>主题颜色</div>
           </div>
-          <p className={s.desc}>作用于各类按钮, 标签组件，路由等高亮颜色</p>
-          <Checker checked size='small' top={6} left={2}>
-            与副主题色同步
-          </Checker>
+          <p className={s.desc}>作用于各类功能按钮，Tab 高亮，菜单高亮等品牌颜色。</p>
 
           <SavingBar
             isTouched={isTouched}
@@ -53,19 +43,19 @@ export default () => {
 
         <div className={s.block}>
           <div className={cn(s.head, s.subHead)}>
-            <div className={cn(s.ballWrapper, s.subBall)}>
+            <div className={cnMerge(s.ballWrapper, s.subBall)}>
               <ColorSelector
                 activeColor={primaryColor}
                 onChange={(color) => edit(color, 'primaryColor')}
                 placement='right'
                 offset={[-1, 15]}
               >
-                <div className={cn(s.colorBall, s.subColorBall)} />
+                <div className={cnMerge(s.colorBall, s.subColorBall)} />
               </ColorSelector>
             </div>
-            <div className={s.title}>副主题颜色</div>
+            <div className={s.title}>强调色</div>
           </div>
-          <p className={s.desc}>未读提示，链接按钮，各类选择器具， 富文本链接等颜色</p>
+          <p className={s.desc}>未读提示，超链接，身份等级，状态标签等颜色</p>
         </div>
       </div>
 

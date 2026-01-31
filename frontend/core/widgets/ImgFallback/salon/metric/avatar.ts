@@ -1,12 +1,12 @@
-export const getFontSize = (size: number): string => {
-  if (size <= 4) {
-    return 'text-xs'
-  }
-  if (size > 5 && size <= 8) {
-    return 'text-sm'
-  }
+import SIZE from '~/const/size'
+import type { TSizeSML } from '~/spec'
 
-  return 'text-lg'
+const FONT_BY_SIZE: Record<TSizeSML, string> = {
+  [SIZE.SMALL]: 'text-xs',
+  [SIZE.MEDIUM]: 'text-sm',
+  [SIZE.LARGE]: 'text-base',
 }
 
-export const holder = 1
+export const getFontSize = (size: TSizeSML): string => {
+  return FONT_BY_SIZE[size]
+}

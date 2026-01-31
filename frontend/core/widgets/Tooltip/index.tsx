@@ -2,28 +2,32 @@
 
 /*
  * Tooltip
-
  * use custom animation Globally at GlobalStyle.ts
  */
 
-import { type FC, type ReactNode, memo, createContext } from 'react'
-import dynamic from 'next/dynamic'
+import Tippy from '@groupher/tooltip'
+import { type FC, memo, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import type { Instance } from 'tippy.js'
+import { hideAll } from 'tippy.js'
 
-import type { TTooltipPlacement } from '~/spec'
-// import RealTooltip from './RealTooltip'
+import useOutsideClick from '~/hooks/useOutsideClick'
+import type { TThemeName, TTooltipPlacement } from '~/spec'
 
-const RealTooltip = dynamic(() => import('./RealTooltip'), {
-  ssr: false,
-})
+import ConfirmFooter from './ConfirmFooter'
+import { FOOTER_BEHAVIOR } from './constant'
+import useSalon, { cn } from './salon'
 
-// @ts-ignore
-const TooltipContext = createContext()
+/**
+ * Current tooltip theme.
+ * For now it's hard-coded.
+ * Later: replace this with "read from dashboard settings".
+ */
+const getCurrentTooltipTheme = (): TThemeName => 'dark' // TODO: read from dashboard config
 
 export type TProps = {
   children: ReactNode
   content: string | ReactNode
   placement?: TTooltipPlacement
-  // more options see: https://atomiks.github.io/tippyjs/all-options/
   delay?: number
   offset?: [number, number]
   duration?: number
@@ -31,36 +35,176 @@ export type TProps = {
   hideOnClick?: boolean
   noPadding?: boolean
   behavior?: 'default' | 'confirm' | 'delete-confirm' | 'add'
-  // currently only for Facepile, it will collapse the height
-  // for same reason, figure out later
-
-  /**
-   * z-index is a magic number for IconSwitcher's mask situation,
-   * DO NOT USE unless you know what you are doing
-   *  在类似 IconSwitcher 的场景下（有一个基于 position: absolute 的滑动遮罩）的场景下，需要将外层
-   * 的 ChildrenWrapper z-index 置为 1, 否则滑动遮罩会在最外面。
-   *
-   * 理论上 zIndex 一直设置为 1，也没问题，但是会导致某些使用了 Tooltip 的地方有严重的粘滞感，比如 “CopyRight” 那里。
-   * 暂时没有精力看 Tippy 的具体实现，小心使用。
-   */
   forceZIndex?: boolean
   interactive?: boolean
-
   visible?: boolean | null
-
   onShow?: () => void
   onHide?: () => void
   onConfirm?: () => void
 }
 
-const Tooltip: FC<TProps> = (props) => {
-  const { children } = props
+/**
+ * Minimal props for our React Tippy wrapper.
+ * IMPORTANT: Do NOT use `tippy.js` Props here — it’s DOM content typed, not ReactNode.
+ */
+type TTippyReactProps = {
+  ref: React.RefObject<HTMLDivElement>
+  content: ReactNode
+  placement?: TTooltipPlacement
+  hideOnClick?: boolean
+  zIndex?: number
+  delay?: [number, number]
+  offset?: [number, number]
+  duration?: number
+  trigger?: string
+  interactive?: boolean
+  theme?: TThemeName
+  visible?: boolean
+
+  onHide?: () => void
+  onShow?: (instance: Instance) => void
+}
+
+const Tooltip: FC<TProps> = ({
+  children,
+  noPadding = false,
+  interactive = true,
+  onHide,
+  onShow,
+  placement = 'top',
+  delay = 0,
+  offset = [5, 5],
+  duration = 0,
+  content,
+  hideOnClick = true,
+  behavior = 'default',
+  trigger = 'mouseenter focus',
+  visible = null,
+  onConfirm,
+  forceZIndex = false,
+}) => {
+  const s = useSalon()
+
+  const tooltipTheme = getCurrentTooltipTheme()
+
+  const instanceRef = useRef<Instance | null>(null)
+  const [active, setActive] = useState(false)
+
+  // trigger wrapper ref (reference element)
+  const triggerRef = useRef<HTMLDivElement | null>(null)
+  // popover content root ref (portal content)
+  const contentRef = useRef<HTMLDivElement | null>(null)
+
+  // Close when clicking outside both trigger and popover content.
+  useOutsideClick([triggerRef, contentRef], () => {
+    instanceRef.current?.hide()
+  })
+
+  // Theme switch / route transition safety: destroy transient UI to avoid flicker/residual popper.
+  useEffect(() => {
+    if (instanceRef.current) {
+      instanceRef.current.destroy()
+      instanceRef.current = null
+      setActive(false)
+    }
+  }, [])
+
+  // Unmount cleanup
+  useEffect(() => {
+    return () => {
+      instanceRef.current?.destroy()
+      instanceRef.current = null
+    }
+  }, [])
+
+  const PopoverContent = useMemo(
+    () => (
+      <div
+        role='presentation'
+        className={s.content}
+        aria-hidden='true'
+        ref={contentRef}
+        onClick={() => {
+          if (hideOnClick) instanceRef.current?.hide()
+        }}
+      >
+        {content}
+        {active && behavior !== FOOTER_BEHAVIOR.DEFAULT && (
+          <ConfirmFooter
+            onConfirm={() => {
+              onConfirm?.()
+              instanceRef.current?.hide()
+            }}
+            onCancel={() => instanceRef.current?.hide()}
+            behavior={behavior}
+          />
+        )}
+      </div>
+    ),
+    [s.content, hideOnClick, content, active, behavior, onConfirm],
+  )
+
+  const tippyProps: TTippyReactProps = useMemo(() => {
+    const props: TTippyReactProps = {
+      ref: triggerRef as React.RefObject<HTMLDivElement>, // triggerRef is compatible (nullable current)
+      content: PopoverContent,
+      placement,
+      hideOnClick,
+      zIndex: 3000,
+      delay: [delay, 0],
+      offset,
+      duration,
+      trigger,
+      interactive,
+
+      // Let tippy manage `.tippy-box[data-theme=...]` (stable)
+      theme: tooltipTheme,
+
+      onHide: () => {
+        instanceRef.current = null
+        setActive(false)
+        onHide?.()
+      },
+
+      onShow: (ins) => {
+        // avoid fighting controlled tooltips
+        if (visible === null) hideAll({ exclude: ins })
+
+        instanceRef.current = ins
+        setActive(true)
+        onShow?.()
+      },
+    }
+
+    if (visible !== null) props.visible = visible
+    return props
+  }, [
+    PopoverContent,
+    placement,
+    hideOnClick,
+    delay,
+    offset,
+    duration,
+    trigger,
+    interactive,
+    tooltipTheme,
+    visible,
+    onHide,
+    onShow,
+  ])
+
+  const wrapperClass = !noPadding ? s.tooltip : cn(s.tooltip, 'p-0')
+
+  /**
+   * forceZIndex: only used in some special masking scenarios (IconSwitcher)
+   * Put z-1 on the trigger wrapper, not on the popper.
+   */
+  const triggerWrapperClass = forceZIndex ? 'relative z-[1]' : undefined
 
   return (
-    <TooltipContext.Provider value={{ children }}>
-      {/* @ts-ignore */}
-      <RealTooltip {...props} />
-    </TooltipContext.Provider>
+    <Tippy className={wrapperClass} {...tippyProps}>
+      <div className={triggerWrapperClass}>{children}</div>
+    </Tippy>
   )
 }
 

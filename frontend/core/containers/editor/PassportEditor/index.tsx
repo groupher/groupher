@@ -48,7 +48,7 @@ const PassportEditor: FC = () => {
 
       {!isReadonly && (
         <div className={s.footer}>
-          <Button type='red' ghost>
+          <Button red ghost>
             删除管理员
           </Button>
           <Button onClick={() => updatePassport()}>更新权限</Button>

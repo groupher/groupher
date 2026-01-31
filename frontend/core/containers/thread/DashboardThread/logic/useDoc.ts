@@ -1,5 +1,5 @@
 import { pick } from 'ramda'
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useDashboard from '~/hooks/useDashboard'
 import type { TDocFAQLayout, TDocLayout, TEditFunc } from '~/spec'
 import { DEFAULT_NEW_FAQ } from '../constant'
@@ -32,7 +32,7 @@ export default (): TRet => {
     const docCategories = dsb$.docCategories.concat({
       name: '新分类',
       index: dsb$.docCategories.length,
-      color: COLOR_NAME.BLACK,
+      color: COLOR.BLACK,
       files: [],
     })
 

@@ -1,6 +1,5 @@
-import { type FC, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
-
-import useSalon, { cn } from './salon'
+import { type FC, type ReactNode, useEffect, useRef, useState } from 'react'
+import useSalon, { cnMerge } from './salon'
 
 type TProps = {
   className?: string
@@ -11,9 +10,10 @@ type TProps = {
   clickable: boolean
 }
 
+type Status = 'checking' | 'loaded' | 'error'
+
 /**
- * normal image like .jpg .jpeg .png  etc
- * the fallback is for the image often block in china, like github avatars
+ * normal image like .jpg .jpeg .png etc
  * fallback 常被用于图片间歇性被墙的情况，比如 github 头像等
  */
 const NativeImg: FC<TProps> = ({
@@ -26,41 +26,68 @@ const NativeImg: FC<TProps> = ({
 }) => {
   const s = useSalon()
 
-  const ref = useRef(null)
-  const [loadCheck, setLoadCheck] = useState(true)
-  const [loadCheck2, setLoadCheck2] = useState(true)
+  const [status, setStatus] = useState<Status>('checking')
+  const [resolvedSrc, setResolvedSrc] = useState<string | null>(null)
+  const reqIdRef = useRef(0)
 
   useEffect(() => {
-    const image = ref.current
-    if (image?.complete) {
-      image.naturalWidth === 0 ? setLoadCheck(false) : setLoadCheck(true)
+    if (!src) {
+      setStatus('error')
+      setResolvedSrc(null)
+      return
     }
-  }, [])
 
-  const handleOnLoad = useCallback(() => setLoadCheck2(true), [])
-  const handleOnError = useCallback(() => {
-    setLoadCheck(false)
-    setLoadCheck2(false)
-  }, [])
+    setStatus('checking')
+    setResolvedSrc(null)
 
-  const loaded = loadCheck && loadCheck2
+    reqIdRef.current += 1
+    const reqId = reqIdRef.current
+
+    let alive = true
+    const probe = new Image()
+    probe.decoding = 'async'
+
+    probe.onload = () => {
+      if (!alive) return
+      if (reqIdRef.current !== reqId) return
+      setResolvedSrc(src) // ✅ 只有成功才把 src 放进 DOM <img>
+      setStatus('loaded')
+    }
+
+    probe.onerror = () => {
+      if (!alive) return
+      if (reqIdRef.current !== reqId) return
+      setResolvedSrc(null)
+      setStatus('error')
+    }
+
+    probe.src = src
+
+    return () => {
+      alive = false
+      probe.src = ''
+    }
+  }, [src])
 
   if (!src) return null
 
+  const showFallback = !!fallback && status !== 'loaded'
+  const showImg = status === 'loaded' && !!resolvedSrc
+
   return (
-    <>
-      <img
-        ref={ref}
-        className={cn(className, s.wrapper, !loaded && s.notLoaded, clickable && 'pointer')}
-        src={src}
-        alt={alt}
-        onClick={onClick}
-        loading='eager'
-        onLoad={() => handleOnLoad()}
-        onError={() => handleOnError()}
-      />
-      {fallback && !loaded && fallback}
-    </>
+    <button
+      type='button'
+      disabled={!clickable}
+      onClick={clickable ? onClick : undefined}
+      className={cnMerge(s.wrapper, className, clickable && 'pointer')}
+      aria-label={alt}
+    >
+      {showFallback && <span className={s.fallbackOverlay}>{fallback}</span>}
+
+      {showImg && (
+        <img className={s.img} src={resolvedSrc} alt={alt} draggable={false} decoding='async' />
+      )}
+    </button>
   )
 }
 

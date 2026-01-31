@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
 import { getCursorGradient, getPathGradient } from '../../metric'
@@ -46,11 +46,8 @@ export default () => {
     cursorTextStyle: { background: getCursorGradient(wallpaper) },
 
     //
-    indexBar: cn('absolute w-px opacity-50', rainbow(COLOR_NAME.RED, 'bg')),
-    indexBarBottom: cn(
-      'absolute bottom-7 left-14 w-32 h-px opacity-50',
-      rainbow(COLOR_NAME.RED, 'bg'),
-    ),
-    indexText: cn('absolute text-xs scale-90 px-2', rainbow(COLOR_NAME.RED, 'fg'), bg('card')),
+    indexBar: cn('absolute w-px opacity-50', rainbow(COLOR.RED, 'bg')),
+    indexBarBottom: cn('absolute bottom-7 left-14 w-32 h-px opacity-50', rainbow(COLOR.RED, 'bg')),
+    indexText: cn('absolute text-xs scale-90 px-2', rainbow(COLOR.RED, 'fg'), bg('card')),
   }
 }

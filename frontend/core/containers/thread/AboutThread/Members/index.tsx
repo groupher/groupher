@@ -46,7 +46,7 @@ const Members: FC<TProps> = ({ moderators }) => {
               className={s.joinerAavtar}
               key={user.login}
               src={user.avatar}
-              fallback={<ImgFallback size={7} user={user} />}
+              fallback={<ImgFallback user={user} />}
             />
           ))}
           {mockUsers(15).map((user) => (
@@ -54,7 +54,7 @@ const Members: FC<TProps> = ({ moderators }) => {
               className={s.joinerAavtar}
               key={user.login}
               src={user.avatar}
-              fallback={<ImgFallback size={7} user={user} />}
+              fallback={<ImgFallback user={user} />}
             />
           ))}
         </div>

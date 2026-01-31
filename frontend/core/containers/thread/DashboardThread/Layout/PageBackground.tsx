@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { getCSSVar } from '~/css'
 import { camelize, titleCaseHM, upperSnakeCase } from '~/fmt'
+import useMount from '~/hooks/useMount'
 import useTheme from '~/hooks/useTheme'
 import CheckSVG from '~/icons/Check'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import { FIELD } from '../constant'
 import usePageBg from '../logic/usePageBg'
 import SavingBar from '../SavingBar'
@@ -12,6 +13,10 @@ import useSalon, { cn } from '../salon/layout/page_background'
 export default () => {
   const { rawBg, edit, isTouched, isDarkTouched, saving } = usePageBg()
 
+  const [mounted, setMounted] = useState(false)
+
+  useMount(() => setMounted(true))
+
   const s = useSalon()
   const { isLightTheme } = useTheme()
 
@@ -19,12 +24,7 @@ export default () => {
     <section className={s.wrapper}>
       <SectionLabel
         title='页面背景色'
-        desc={
-          <div className='row'>
-            设置主页面背景色。参考
-            <ArrowButton left={1}>影响范围</ArrowButton>
-          </div>
-        }
+        desc="设置主页面背景色。参考"
         classNames='pr-8'
         withThemeSelect
       />
@@ -49,7 +49,7 @@ export default () => {
               </div>
               <div className={s.footer}>
                 <div className={s.colorTitle}>{bgTitle}</div>
-                <div className={s.hex}>{bgVal}</div>
+                <div className={s.hex}>{mounted && bgVal}</div>
               </div>
             </button>
           )

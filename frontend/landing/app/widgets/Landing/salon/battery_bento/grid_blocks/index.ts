@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -26,12 +26,12 @@ export default () => {
     ),
     vibeDown: cn('-rotate-90 opacity-30', isLightTheme ? 'opacity-30' : 'opacity-10'),
 
-    fillPurple: rainbow(COLOR_NAME.PURPLE, 'fill'),
-    fillRed: rainbow(COLOR_NAME.RED, 'fill'),
-    fillGreen: rainbow(COLOR_NAME.GREEN, 'fill'),
-    fillOrange: rainbow(COLOR_NAME.ORANGE, 'fill'),
-    fillBlue: rainbow(COLOR_NAME.BLUE, 'fill'),
-    fillCyan: rainbow(COLOR_NAME.CYAN, 'fill'),
+    fillPurple: rainbow(COLOR.PURPLE, 'fill'),
+    fillRed: rainbow(COLOR.RED, 'fill'),
+    fillGreen: rainbow(COLOR.GREEN, 'fill'),
+    fillOrange: rainbow(COLOR.ORANGE, 'fill'),
+    fillBlue: rainbow(COLOR.BLUE, 'fill'),
+    fillCyan: rainbow(COLOR.CYAN, 'fill'),
     //
     line: cn('absolute top-0 h-full w-px', bg('divider')),
     rowLine: cn('absolute', sexyBorder()),

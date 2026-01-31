@@ -1,4 +1,5 @@
-import { COLOR_NAME, PAGE_BG_DEFAULT } from '~/const/colors'
+import { BUILTIN_ALIAS } from '~/const/builtin-alias'
+import { COLOR, PAGE_BG_DEFAULT } from '~/const/colors'
 import { DEFAULT_ENABLE, TW_CARD } from '~/const/dashboard'
 import { GLOW_OPACITY } from '~/const/glow_effect'
 import { LOCALE } from '~/const/i18n'
@@ -20,7 +21,6 @@ import {
   TAG_LAYOUT,
   TOPBAR_LAYOUT,
 } from '~/const/layout'
-import { BUILTIN_ALIAS } from '~/const/name'
 import SIZE from '~/const/size'
 import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
@@ -35,7 +35,7 @@ export const DEFAULT_OVERVIEW = {
   docsCount: 0,
 }
 
-export const INIT_KANBAN_COLORS = [COLOR_NAME.BLACK, COLOR_NAME.BLACK, COLOR_NAME.BLACK]
+export const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.BLACK, COLOR.BLACK]
 
 export const FIELDS: TDsbFieldMap = {
   // baseInfo
@@ -78,7 +78,7 @@ export const FIELDS: TDsbFieldMap = {
   twImageHeight: '',
 
   // layout
-  primaryColor: COLOR_NAME.BLACK,
+  primaryColor: COLOR.BLACK,
   postLayout: POST_LAYOUT.QUORA,
   kanbanLayout: KANBAN_LAYOUT.CLASSIC,
   kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,
@@ -91,14 +91,14 @@ export const FIELDS: TDsbFieldMap = {
   brandLayout: BRAND_LAYOUT.BOTH,
   bannerLayout: BANNER_LAYOUT.HEADER,
   topbarLayout: TOPBAR_LAYOUT.NO,
-  topbarBg: COLOR_NAME.ORANGE,
+  topbarBg: COLOR.ORANGE,
 
   broadcastLayout: BROADCAST_LAYOUT.DEFAULT,
-  broadcastBg: COLOR_NAME.BLACK,
+  broadcastBg: COLOR.BLACK,
   broadcastEnable: false,
 
   broadcastArticleLayout: BROADCAST_ARTICLE_LAYOUT.DEFAULT,
-  broadcastArticleBg: COLOR_NAME.RED,
+  broadcastArticleBg: COLOR.RED,
   broadcastArticleEnable: true,
 
   changelogLayout: CHANGELOG_LAYOUT.CLASSIC,
@@ -137,7 +137,7 @@ export const FIELDS: TDsbFieldMap = {
   moderators: [],
 
   // widgets
-  widgetsPrimaryColor: COLOR_NAME.BLACK,
+  widgetsPrimaryColor: COLOR.BLACK,
   widgetsThreads: [THREAD.POST],
   widgetsSize: SIZE.MEDIUM,
 }

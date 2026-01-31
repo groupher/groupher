@@ -15,9 +15,7 @@ export default () => {
 
       <SectionLabel
         title='讨论区'
-        desc={
-          <p className={s.desc}>用户可在此发帖，参与社区讨论，帖子可由团队管理员同步到看板墙。</p>
-        }
+        desc='用户可在此发帖，参与社区讨论，帖子可由团队管理员同步到看板墙。'
         addon={
           <ToggleSwitch
             size='small'
@@ -29,11 +27,7 @@ export default () => {
       <div className={s.divider} />
       <SectionLabel
         title='看板墙'
-        desc={
-          <p className={s.desc}>
-            团队设置为 ToDo, Doing, Done 等状态的帖子会出现在这里，方便向用户同步进度。
-          </p>
-        }
+        desc='团队设置为 ToDo, Doing, Done 等状态的帖子会出现在这里，方便向用户同步进度。'
         addon={
           <ToggleSwitch checked={settings.kanban} onChange={(c) => enableThread('kanban', c)} />
         }
@@ -41,11 +35,7 @@ export default () => {
       <div className={s.divider} />
       <SectionLabel
         title='更新日志'
-        desc={
-          <p className={s.desc}>
-            新版本发布的新功能，Bug 修复以或性能，UI 优化等，用户同时可以查询历史版本信息。
-          </p>
-        }
+        desc='新版本发布的新功能，Bug 修复以或性能，UI 优化等，用户同时可以查询历史版本信息。'
         addon={
           <ToggleSwitch
             checked={settings.changelog}
@@ -55,8 +45,8 @@ export default () => {
       />
       <div className={s.divider} />
       <SectionLabel
-        title='帮助台'
-        desc={<p className={s.desc}>和社区内容相关的开发文档，指南，知识库等等信息。</p>}
+        title='文档'
+        desc='和社区内容相关的开发文档，指南，知识库等等信息。'
         addon={<ToggleSwitch checked={settings.doc} onChange={(c) => enableThread('help', c)} />}
       />
       {settings.doc && <DocThread settings={settings} />}
@@ -65,7 +55,7 @@ export default () => {
 
       <SectionLabel
         title='关于'
-        desc={<p className={s.desc}>社区基本信息。若更新请到基本信息设置区。</p>}
+        desc='社区基本信息。若更新请到基本信息设置区。'
         addon={<ToggleSwitch checked={settings.about} onChange={(c) => enableThread('about', c)} />}
       />
       {settings.about && <AboutThread settings={settings} />}

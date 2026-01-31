@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import type { TColorName } from '~/spec'
 import useSalon from '../../salon/dashboard_intros/layout_tab/content_card'
 import BannerTab from './BannerTab'
@@ -10,7 +10,7 @@ import MainLayouts from './MainLayouts'
 
 export default function ContentCard() {
   const s = useSalon()
-  const [primaryColor, setPrimaryColor] = useState<TColorName>(COLOR_NAME.PURPLE)
+  const [primaryColor, setPrimaryColor] = useState<TColorName>(COLOR.PURPLE)
 
   return (
     <div className={s.wrapper}>

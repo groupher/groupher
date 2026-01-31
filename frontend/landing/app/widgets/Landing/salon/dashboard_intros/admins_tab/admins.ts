@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
@@ -17,11 +17,11 @@ export default () => {
     nickname: cn('text-sm mb-0.5', fg('digest')),
     desc: cn('text-xs opacity-80', fg('digest')),
     //
-    num: cn('text-sm bold-sm', rainbow(COLOR_NAME.PINK, 'fg')),
+    num: cn('text-sm bold-sm', rainbow(COLOR.PINK, 'fg')),
     rootLabel: cn(
       'align-both text-xs bold px-1 ml-px opacity-65 rounded',
       fg('button.fg'),
-      rainbow(COLOR_NAME.RED, 'bg'),
+      rainbow(COLOR.RED, 'bg'),
     ),
   }
 }

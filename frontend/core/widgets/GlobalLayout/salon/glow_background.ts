@@ -28,7 +28,7 @@ export default () => {
     `
       : '',
     wrapper: cn(
-      'w-full -z-10',
+      'w-full -z-10 pointer-events-none',
       isAbsolute ? 'h-2/5 right-0' : 'h-fit',
       `opacity-${fmtOpacity(glowOpacity)}`,
       glowPosition,

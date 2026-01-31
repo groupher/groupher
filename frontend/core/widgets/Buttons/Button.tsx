@@ -3,73 +3,93 @@ import SIZE from '~/const/size'
 import type { TColorName, TSizeTSM, TSpace } from '~/spec'
 
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-import useSalon, { cn } from './salon/button'
+import useSalon, { cn, cnMerge } from './salon/button'
 
 type TProps = {
   children?: ReactNode
   className?: string
+
+  // style flags
+  red?: boolean
   ghost?: boolean
-  type?: 'primary' | 'red'
+  soft?: boolean
+  noBorder?: boolean
+  noLeftRound?: boolean
+
+  // sizing/layout
+  size?: TSizeTSM
   width?: string
+
   space?: number | null
   spaceY?: number | null
-  size?: TSizeTSM
-  onClick?: () => void
-  loading?: boolean
-  noBorder?: boolean
-  withSoftBg?: boolean
-  disabled?: boolean
-  noLeftRound?: boolean
+
+  // color override
   color?: TColorName | null
-  style?: any
+
+  // behavior
+  disabled?: boolean
+  loading?: boolean
+  onClick?: () => void
 } & TSpace
 
 const Button: FC<TProps> = ({
   children = 'button',
+  className = '',
+
+  red = false,
   ghost = false,
-  type = 'primary',
+  soft = false,
+  noBorder = false,
+  noLeftRound = false,
+
+  size = SIZE.MEDIUM,
   width = 'w-fit',
-  onClick = console.log,
+
   space = null,
   spaceY = null,
-  size = SIZE.MEDIUM,
-  className = '',
-  loading = false,
-  noBorder = false,
-  withSoftBg = false,
-  disabled = false,
-  noLeftRound = false,
+
   color = null,
-  style = {},
+
+  disabled = false,
+  loading = false,
+  onClick,
   ...spacing
 }) => {
   const s = useSalon({
-    type,
-    width,
+    red,
     ghost,
-    space,
-    spaceY,
-    size,
+    soft,
     noBorder,
-    withSoftBg,
+    noLeftRound,
+
+    size,
+    width,
+    px: space,
+    py: spaceY,
+
+    color,
+
     disabled,
     loading,
-    noLeftRound,
-    color,
     ...spacing,
   })
 
-  const isRed = type === 'red'
-
   return (
     <button
-      className={cn(s.wrapper, className)}
-      style={style}
-      onClick={() => !disabled && onClick()}
+      className={cnMerge(s.wrapper, className)}
+      disabled={disabled}
+      aria-disabled={disabled || loading}
+      aria-busy={loading}
+      onClick={(e) => {
+        if (disabled || loading) {
+          e.preventDefault()
+          return
+        }
+        onClick?.()
+      }}
     >
-      <div className={cn(s.inner, isRed && s.innerRed)}>
-        {loading && <LavaLampLoading size='small' />}
-        {!loading && <div className={s.children}>{children}</div>}
+      <div className={cn(s.inner)}>
+        {loading ? <LavaLampLoading size='small' /> : <div className={s.children}>{children}</div>}
       </div>
     </button>
   )

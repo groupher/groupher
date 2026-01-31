@@ -19,7 +19,7 @@ const CRUMB_CONFIG = {
     { title: '讨论区', seg: `${seg}/post` },
     { title: '看板', seg: `${seg}/kanban` },
     { title: '更新日志', seg: `${seg}/changelog` },
-    { title: '帮助台', seg: `${seg}/doc` },
+    { title: '文档', seg: `${seg}/doc` },
   ],
 }
 

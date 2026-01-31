@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic'
 
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import GithubSVG from '~/icons/social/Github'
 import ArrowLinker from '~/widgets/ArrowLinker'
 import useSalon, { cn } from '../salon/tech_stacks/github_card'
@@ -66,7 +66,7 @@ export default function GithubCard() {
       <Teams />
 
       <div className={s.footer}>
-        <ArrowLinker href='/' color={COLOR_NAME.PURPLE} className='pl-0.5'>
+        <ArrowLinker href='/' color={COLOR.PURPLE} className='pl-0.5'>
           Github 主页
         </ArrowLinker>
       </div>

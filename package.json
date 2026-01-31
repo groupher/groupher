@@ -114,6 +114,7 @@
     "@vercel/speed-insights": "^1.0.10",
     "accept-language-parser": "^1.5.0",
     "chalk": "^2.4.1",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "graphql": "^16.6.0",
     "graphql-request": "^7.1.2",
@@ -121,7 +122,7 @@
     "mastani-codehighlight": "0.0.7",
     "motion": "^12.18.1",
     "nanoid": "^3.1.12",
-    "next": "v16.1.1-canary.31",
+    "next": "v16.2.0-canary.17",
     "next-auth": "5.0.0-beta.29",
     "next-compose-plugins": "^2.2.0",
     "overlayscrollbars": "^2.9.1",
@@ -199,7 +200,6 @@
     "react-test-renderer": "18.2.0",
     "start-server-and-test": "1.12.1",
     "tsc-files": "^1.1.4",
-    "type-fest": "^2.19.0",
     "typescript": "^5.3.3"
   },
   "packageManager": "yarn@4.12.0"

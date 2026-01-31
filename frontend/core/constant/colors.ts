@@ -1,6 +1,6 @@
 import THEME from '~/const/theme'
 
-export const COLOR_NAME = {
+export const COLOR = {
   BLACK: 'BLACK',
   PINK: 'PINK',
   RED: 'RED',

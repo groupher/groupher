@@ -14,7 +14,7 @@ export default function Tabs() {
       </div>
       <div className={cn(s.item, '-top-1 left-24')}>看板</div>
       <div className={cn(s.item, '-top-0.5 left-40 ml-2 z-10')}>更新日志</div>
-      <div className={cn(s.item, '-top-0.5 left-56 ml-3 z-0')}>帮助台</div>
+      <div className={cn(s.item, '-top-0.5 left-56 ml-3 z-0')}>文档</div>
       <div className={cn(s.item, 'top-0 left-72 ml-2 -z-10')}>成员</div>
 
       <div className={s.bottomItem}>

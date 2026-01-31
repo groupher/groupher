@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -25,10 +25,10 @@ export default () => {
     nickname: cn('text-xs', cut('w-20')),
     //
     pending: cn('bold-sm text-xs mt-0.5', fg('digest')),
-    pendingBlocked: rainbow(COLOR_NAME.RED, 'fg'),
+    pendingBlocked: rainbow(COLOR.RED, 'fg'),
     //
     dateItem: cn('row-center text-xs', fg('digest')),
-    dateItemWarn: rainbow(COLOR_NAME.RED, 'fg'),
+    dateItemWarn: rainbow(COLOR.RED, 'fg'),
     //
     pulseIcon: cn('size-2.5 opacity-80 mr-1.5', fill('digest')),
   }

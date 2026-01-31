@@ -86,7 +86,7 @@ export default () => {
         </div>
         <div className={s.section}>
           <div className={s.header}>
-            <h3 className={s.threadTitle}>帮助台</h3>
+            <h3 className={s.threadTitle}>文档</h3>
             <div className='grow' />
             <ToggleSwitch
               checked={includes(THREAD.DOC, widgetsThreads)}

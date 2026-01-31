@@ -1,6 +1,4 @@
-import { DSB_DESC_LAYOUT, TOPBAR_LAYOUT } from '~/const/layout'
-import { callDashboardDesc } from '~/signal'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
+import { TOPBAR_LAYOUT } from '~/const/layout'
 import CheckLabel from '~/widgets/CheckLabel'
 import ColorSelector from '~/widgets/ColorSelector'
 
@@ -17,22 +15,7 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <SectionLabel
-        title='Topbar 样式'
-        desc={
-          <>
-            全局 Topbar 的样式。
-            <div className='inline-block'>
-              <ArrowButton
-                onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)}
-                fontSize={12}
-              >
-                查看示例
-              </ArrowButton>
-            </div>
-          </>
-        }
-      />
+      <SectionLabel title='Topbar 样式' desc='全局 Topbar 的样式。' detailText='查看示例' />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(TOPBAR_LAYOUT.YES, 'topbarLayout')}>
           <div className={cn(s.block, layout === TOPBAR_LAYOUT.YES && s.blockActive)}>

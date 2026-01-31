@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default () => {
-  const { cn, fg, bg, br, primary, vividDark, shadow, isDarkBlack, fill } = useTwBelt()
+  const { cn, fg, bg, br, primary, vividDark, shadow } = useTwBelt()
 
   return {
     wrapper: 'relative mb-3',
@@ -14,6 +14,6 @@ export default () => {
     coverHolder: cn('w-full h-36 rounded-md mt-3.5', bg('hoverBg')),
     accountWrapper: cn('absolute h-7 top-6 right-3.5 z-10', shadow('lg')),
     actions: 'row-center mt-3.5 mr-2.5',
-    more: cn('size-4', primary('fill'), isDarkBlack && fill('digest'), vividDark()),
+    more: cn('size-4', primary('fill'), vividDark()),
   }
 }

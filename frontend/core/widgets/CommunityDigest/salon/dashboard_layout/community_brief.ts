@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
@@ -30,8 +30,8 @@ export default () => {
     //
     levelLabel: cn(
       'text-xs px-2 ml-1.5 py-0.5 rounded-lg bold scale-90',
-      rainbowSoft(COLOR_NAME.BLUE),
-      rainbow(COLOR_NAME.BLUE, 'fg'),
+      rainbowSoft(COLOR.BLUE),
+      rainbow(COLOR.BLUE, 'fg'),
     ),
   }
 }

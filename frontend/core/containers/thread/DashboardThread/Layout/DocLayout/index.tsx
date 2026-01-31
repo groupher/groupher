@@ -1,7 +1,5 @@
-import { DOC_FAQ_LAYOUT, DOC_LAYOUT, DSB_DESC_LAYOUT } from '~/const/layout'
-import { callDashboardDesc } from '~/signal'
+import { DOC_FAQ_LAYOUT, DOC_LAYOUT } from '~/const/layout'
 
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
@@ -21,14 +19,8 @@ export default () => {
     <div className={s.wrapper}>
       <SectionLabel
         title='封面目录布局'
-        desc={
-          <div className='inline-flex'>
-            全部文档的目录布局。
-            <ArrowButton onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)} fontSize={12}>
-              查看示例
-            </ArrowButton>
-          </div>
-        }
+        desc="全部文档的目录布局。"
+        detailText="查看示例"
       />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(DOC_LAYOUT.BLOCKS, 'docLayout')}>
@@ -70,14 +62,8 @@ export default () => {
 
       <SectionLabel
         title='常见问题（FAQ）布局'
-        desc={
-          <div className='inline-flex'>
-            当前设置仅针对常见问题的展示样式。
-            <ArrowButton onClick={() => callDashboardDesc(DSB_DESC_LAYOUT.POST_LIST)} fontSize={12}>
-              查看示例
-            </ArrowButton>
-          </div>
-        }
+        desc="当前设置仅针对常见问题的展示样式。"
+        detailText="查看示例"
       />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(DOC_FAQ_LAYOUT.COLLAPSE, 'docFaqLayout')}>

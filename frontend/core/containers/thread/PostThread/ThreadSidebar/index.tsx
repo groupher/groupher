@@ -63,7 +63,7 @@ export default () => {
                   key={user.login}
                   className={s.joinAvatar}
                   src={user.avatar}
-                  fallback={<ImgFallback size={6} right={2} user={user} />}
+                  fallback={<ImgFallback right={2} user={user} />}
                 />
               ))}
               <button className={s.moreNum} onClick={() => listUsers('drawer')}>

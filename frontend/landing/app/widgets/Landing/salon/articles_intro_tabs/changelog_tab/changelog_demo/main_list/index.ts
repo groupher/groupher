@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
@@ -11,7 +11,7 @@ export default () => {
       'column items-start relative mt-4 w-[348px] h-[460px] rounded-md border',
       'pl-10',
       br('rainbow.redSoft'),
-      // rainbow(COLOR_NAME.RED, 'borderSoft'),
+      // rainbow(COLOR.RED, 'borderSoft'),
       bg('cardAlpha'),
       shadow('card'),
     ),
@@ -31,8 +31,8 @@ export default () => {
     ),
     bar: cn('w-40 h-1.5 opacity-30', bg('text.digest')),
     starIcon: 'absolute size-4 z-30',
-    starYellow: rainbow(COLOR_NAME.YELLOW, 'fill'),
-    starRed: rainbow(COLOR_NAME.PINK, 'fill'),
-    starOrange: rainbow(COLOR_NAME.ORANGE, 'fill'),
+    starYellow: rainbow(COLOR.YELLOW, 'fill'),
+    starRed: rainbow(COLOR.PINK, 'fill'),
+    starOrange: rainbow(COLOR.ORANGE, 'fill'),
   }
 }

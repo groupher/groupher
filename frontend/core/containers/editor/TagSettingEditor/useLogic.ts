@@ -36,7 +36,7 @@ export default (): TRet => {
   const { mutate } = useGraphQLClient()
 
   const [editingTag, setEditingTag] = useState<TTag | null>(null)
-  const [mode, setMode] = useState(CHANGE_MODE.UPDATE)
+  const [mode, setMode] = useState<TChangeMode>(CHANGE_MODE.UPDATE)
   const [processing, setProcessing] = useState(false)
 
   const initEditingTag = (mode: TChangeMode): void => {

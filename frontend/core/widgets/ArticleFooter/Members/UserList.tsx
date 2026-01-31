@@ -20,7 +20,7 @@ const UserList: FC<TProps> = ({ users }) => {
           key={user.login}
           src={user.avatar}
           className={s.avatar}
-          fallback={<ImgFallback size={5} user={user} />}
+          fallback={<ImgFallback user={user} />}
         />
       ))}
     </div>

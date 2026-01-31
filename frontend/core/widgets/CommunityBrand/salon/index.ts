@@ -15,7 +15,7 @@ export default ({ className, ...spacing }: TProps) => {
 
   return {
     wrapper: cn('row-center', className, margin(spacing)),
-    logo: 'size-5 -ml-px mr-1',
+    logo: 'size-5 mr-1 rounded-md object-cover overflow-hidden',
     title: cn('text-base bold-sm grow max-w-[80px] line-clamp-1', noMargin && 'ml-2', fg('digest')),
     //
   }

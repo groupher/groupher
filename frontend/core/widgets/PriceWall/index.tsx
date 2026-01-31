@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 import { EMAIL_SUPPORT } from '~/config'
 
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useHover from '~/hooks/useHover'
 import Img from '~/Img'
 import CoffeeSVG from '~/icons/CoffeeDuo'
@@ -48,7 +48,7 @@ export default ({ layout = 'page' }: TProps) => {
           <div className={s.note}>可随时升级或注销</div>
           <div className={s.board}>
             {FREE_PAN_ITEMS.map((item) => (
-              <Feature key={item.key} title={item.title} color={COLOR_NAME.GREEN} />
+              <Feature key={item.key} title={item.title} color={COLOR.GREEN} />
             ))}
           </div>
           <Button ghost>创建社区实例</Button>
@@ -91,7 +91,7 @@ export default ({ layout = 'page' }: TProps) => {
 
           <div className={cn(s.board, 'absolute bottom-14 mt-5')}>
             {PAID_PAN_ITEMS.map((item) => (
-              <Feature key={item.key} title={item.title} color={COLOR_NAME.ORANGE} />
+              <Feature key={item.key} title={item.title} color={COLOR.ORANGE} />
             ))}
           </div>
           <div className={s.tryButton}>
@@ -109,7 +109,7 @@ export default ({ layout = 'page' }: TProps) => {
           <div className={s.note}>对社区产品有想法？让我们知道！</div>
           <div className={s.board}>
             {CUSTOM_PAN_ITEMS.map((item) => (
-              <Feature key={item.key} title={item.title} color={COLOR_NAME.PURPLE} />
+              <Feature key={item.key} title={item.title} color={COLOR.PURPLE} />
             ))}
           </div>
           <Link href={`mailto:${EMAIL_SUPPORT}`} className={s.link}>

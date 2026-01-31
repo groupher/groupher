@@ -189,4 +189,19 @@
       transform: translateY(1px) !important;
     }
   }
+
+  .lazyload-img-broken {
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+
+  overflow: hidden !important;
+  visibility: hidden !important;
+}
+
 }

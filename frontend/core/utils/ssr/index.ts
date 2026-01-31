@@ -17,6 +17,7 @@ import type {
   TParsedWallpaper,
   TThread,
 } from '~/spec'
+import { FIELDS } from '~/stores/dashboard/constant'
 import { gqFetch } from '~/utils/api'
 import { extractQueryName } from '~/utils/graphql'
 
@@ -76,11 +77,23 @@ const parseDashboardAlias = (nameAlias: TNameAlias[]): TNameAlias[] => {
 }
 
 export const parseDashboard = (community: TCommunity): TParseDashboard => {
-  // NOTE: if the backend is not ready, return default config
-  // @ts-expect-error
-  if (!community) return {}
+  if (!community) {
+    const defaultFields = { ...FIELDS }
+    return {
+      ...defaultFields,
+      original: defaultFields,
+    }
+  }
 
   const { dashboard, moderators } = community
+
+  if (!dashboard || Object.keys(dashboard).length === 0) {
+    const defaultFields = { ...FIELDS }
+    return {
+      ...defaultFields,
+      original: defaultFields,
+    }
+  }
 
   const {
     enable,
@@ -115,11 +128,21 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     pageBgDark: pageBgDark || PAGE_BG_DEFAULT[THEME.DARK],
   })
 
+  // If fieldsObj is empty, return default config
+  if (Object.keys(fieldsObj).length === 0) {
+    const defaultFields = { ...FIELDS }
+    return {
+      ...defaultFields,
+      original: defaultFields,
+    }
+  }
+
+  // Merge with default fields to ensure all required properties exist
+  const mergedFields = { ...FIELDS, ...fieldsObj }
+
   return {
-    ...fieldsObj,
-    original: {
-      ...fieldsObj,
-    },
+    ...mergedFields,
+    original: mergedFields,
   }
 }
 

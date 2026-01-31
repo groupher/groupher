@@ -37,7 +37,6 @@ const YesOrNoButton: FC<TProps> = ({
       <div className='ml-1.5 mr-2' />
       <Button
         size='small'
-        type='primary'
         loading={loading}
         disabled={disabled}
         noBorder

@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
@@ -19,20 +19,20 @@ export default () => {
 
     iconBox: cn('size-6 align-both mr-3 rounded-md opacity-40', shadow('lg')),
     icon: 'size-4 fill-white',
-    purpleIconBox: rainbow(COLOR_NAME.PURPLE, 'bg'),
-    blueIconBox: rainbow(COLOR_NAME.BLUE, 'bg'),
-    cyanIconBox: rainbow(COLOR_NAME.CYAN, 'bg'),
-    greenIconBox: rainbow(COLOR_NAME.GREEN, 'bg'),
-    redIconBox: rainbow(COLOR_NAME.RED, 'bg'),
-    brownIconBox: rainbow(COLOR_NAME.BROWN, 'bg'),
-    yellowIconBox: rainbow(COLOR_NAME.YELLOW, 'bg'),
+    purpleIconBox: rainbow(COLOR.PURPLE, 'bg'),
+    blueIconBox: rainbow(COLOR.BLUE, 'bg'),
+    cyanIconBox: rainbow(COLOR.CYAN, 'bg'),
+    greenIconBox: rainbow(COLOR.GREEN, 'bg'),
+    redIconBox: rainbow(COLOR.RED, 'bg'),
+    brownIconBox: rainbow(COLOR.BROWN, 'bg'),
+    yellowIconBox: rainbow(COLOR.YELLOW, 'bg'),
 
-    purpleActive: cn(activeBtn, rainbowSoft(COLOR_NAME.PURPLE)),
-    blueActive: cn(activeBtn, rainbowSoft(COLOR_NAME.BLUE)),
-    cyanActive: cn(activeBtn, rainbowSoft(COLOR_NAME.CYAN)),
-    greenActive: cn(activeBtn, rainbowSoft(COLOR_NAME.GREEN)),
-    redActive: cn(activeBtn, rainbowSoft(COLOR_NAME.RED)),
-    brownActive: cn(activeBtn, rainbowSoft(COLOR_NAME.BROWN)),
-    yellowActive: cn(activeBtn, rainbowSoft(COLOR_NAME.YELLOW)),
+    purpleActive: cn(activeBtn, rainbowSoft(COLOR.PURPLE)),
+    blueActive: cn(activeBtn, rainbowSoft(COLOR.BLUE)),
+    cyanActive: cn(activeBtn, rainbowSoft(COLOR.CYAN)),
+    greenActive: cn(activeBtn, rainbowSoft(COLOR.GREEN)),
+    redActive: cn(activeBtn, rainbowSoft(COLOR.RED)),
+    brownActive: cn(activeBtn, rainbowSoft(COLOR.BROWN)),
+    yellowActive: cn(activeBtn, rainbowSoft(COLOR.YELLOW)),
   }
 }

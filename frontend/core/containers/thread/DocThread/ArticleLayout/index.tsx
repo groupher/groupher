@@ -1,23 +1,18 @@
-import { useState } from 'react'
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
+import { useState } from 'react'
 
 import { BANNER_LAYOUT } from '~/const/layout'
-
-import FileTree from '~/widgets/FileTree'
-import FeedbackFooter from '~/widgets/FeedbackFooter'
-import Sticky from '~/widgets/Sticky'
-
 import useLayout from '~/hooks/useLayout'
-
-import PinedTree from './PinedTree'
+import FeedbackFooter from '~/widgets/FeedbackFooter'
+import FileTree from '~/widgets/FileTree'
+import Sticky from '~/widgets/Sticky'
 import FaqLayout from '../FaqLayout'
-import NaviHead from './NaviHead'
-import ArticleCover from './ArticleCover'
-
-import ToggleBtn from './ToggleBtn'
-
-import useLogic from '../useLogic'
 import useSalon from '../salon/article_layout'
+import useLogic from '../useLogic'
+import ArticleCover from './ArticleCover'
+import NaviHead from './NaviHead'
+import PinedTree from './PinedTree'
+import ToggleBtn from './ToggleBtn'
 
 export default () => {
   const { gotoDetailLayout, isFAQArticleLayout } = useLogic()
@@ -31,13 +26,13 @@ export default () => {
   return (
     <div className={s.wrapper}>
       {!outlineOpen && (
-        <div className="animate-fade-left animate-duration-300">
+        <div className='animate-fade-left animate-duration-300'>
           <Sticky offsetTop={50}>
-            <div className="h-fit">
+            <div className='h-fit'>
               <ToggleBtn
                 open={false}
                 onToggle={(toggle) => setOutlineOpen(toggle)}
-                className="mt-1 top-16"
+                className='mt-1 top-16'
               />
             </div>
           </Sticky>
@@ -48,7 +43,7 @@ export default () => {
         <div className={s.sidebar}>
           <PinedTree />
           <Sticky offsetTop={30}>
-            <div className="h-fit">
+            <div className='h-fit'>
               {outlineOpen && (
                 <ToggleBtn open={outlineOpen} onToggle={(toggle) => setOutlineOpen(toggle)} />
               )}
@@ -61,7 +56,7 @@ export default () => {
       <div className={s.content}>
         <div className={s.header}>
           {!isFAQArticleLayout && <NaviHead />}
-          {!isFAQArticleLayout && <h1 className={s.title}>关于帮助台的使用</h1>}
+          {!isFAQArticleLayout && <h1 className={s.title}>关于文档的使用</h1>}
           {!isFAQArticleLayout && <ArticleCover />}
         </div>
 

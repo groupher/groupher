@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -14,15 +14,11 @@ export default () => {
       br('divider'),
     ),
 
-    draging: cn(
-      '-rotate-3 scale-95 ml-1 -mr-1 z-50',
-      shadow('xl'),
-      rainbow(COLOR_NAME.BLUE, 'border'),
-    ),
+    draging: cn('-rotate-3 scale-95 ml-1 -mr-1 z-50', shadow('xl'), rainbow(COLOR.BLUE, 'border')),
     target: cn(
       'align-both text-sm w-11/12 min-h-12 ml-1.5 mt-1 mb-1 rounded-md italic border border-dashed',
-      rainbow(COLOR_NAME.GREEN, 'border'),
-      rainbow(COLOR_NAME.GREEN, 'fg'),
+      rainbow(COLOR.GREEN, 'border'),
+      rainbow(COLOR.GREEN, 'fg'),
     ),
     //
     title: cn('text-xs mt-0.5 opacity-90', fg('title')),

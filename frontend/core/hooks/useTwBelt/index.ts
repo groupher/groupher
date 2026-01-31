@@ -3,14 +3,13 @@
 import { clsx } from 'clsx'
 import { useMemo } from 'react'
 
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { cn, cnMerge } from '~/css'
 import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
 import useDashboard from '~/hooks/useDashboard'
 import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
-import useTheme from '~/hooks/useTheme'
 import type { TColorName, TZIndexType } from '~/spec'
 import { cachedMargin, keyToClass, RAINBOW_ALIAS, STATIC_CLS } from './constant'
 import type {
@@ -29,14 +28,10 @@ import type {
 } from './spec'
 
 export default function useTwBelt(): TRet {
-  const { isLightTheme } = useTheme()
   const metric = useMetric()
   const { isSquare: isAvatarSquare } = useAvatarLayout()
   const primaryColor = usePrimaryColor()
   const { pageBg, pageBgDark } = useDashboard()
-
-  const isDarkBlack = !isLightTheme && primaryColor === COLOR_NAME.BLACK
-  const isBlackPrimary = primaryColor === COLOR_NAME.BLACK
 
   const metricLower = metric.toLowerCase()
   const containerClass = `container-${metricLower}`
@@ -61,7 +56,6 @@ export default function useTwBelt(): TRet {
     const color$ = camelize(color)
 
     if (prefix === 'bgSoft') {
-      if (color === COLOR_NAME.BLACK) return bg('hoverBg')
       return `${prefix$}-${color$}Soft`
     }
 
@@ -74,16 +68,12 @@ export default function useTwBelt(): TRet {
 
   const rainbowSoft = (color: TColorName | string): string => {
     const color$ = camelize(color)
-    if (color === COLOR_NAME.BLACK) return bg('hoverBg')
     return `bg-rainbow-${color$}Soft`
   }
 
   const primary = (prefix: TColorPrefix = 'fg'): string => rainbow(primaryColor, prefix)
 
   const linker = (prefix: TLinkColorPrefix = 'fg'): string => {
-    if (primaryColor === COLOR_NAME.BLACK) {
-      return prefix === 'fg' ? fg('link') : fill('link')
-    }
     return rainbow(primaryColor, prefix as unknown as TColorPrefix)
   }
 
@@ -126,13 +116,17 @@ export default function useTwBelt(): TRet {
   const gradientBar = (color: TColorName): string =>
     `bg-gradient-to-r from-rainbow-${color.toLocaleLowerCase()}Bg to-transparent`
 
-  const vividDark = (): string => (!isLightTheme ? STATIC_CLS.vividDarkWhenDark : '')
+  const vividDark = (): string => STATIC_CLS.vividDarkWhenDark
 
   const dimDark = (level: TDimLevel = 'md'): string => {
-    if (isLightTheme) return ''
-    if (level === 'sm') return 'brightness-90'
-    if (level === 'lg') return 'brightness-50'
-    return 'brightness-75'
+    switch (level) {
+      case 'sm':
+        return 'dark:brightness-90'
+      case 'lg':
+        return 'dark:brightness-50'
+      default:
+        return 'dark:brightness-75'
+    }
   }
 
   const shadow = (size: TShadowType): string => `shadow-${size}`
@@ -142,30 +136,25 @@ export default function useTwBelt(): TRet {
     return cn(STATIC_CLS.cutBase, maxWidth)
   }
 
-  const landingTitle = (): string =>
-    cn(STATIC_CLS.landingTitleBase, fg('title'), isLightTheme && 'text-shadow')
+  const landingTitle = (): string => cn(STATIC_CLS.landingTitleBase, fg('title'))
 
   const hover = (part: THoverPart): string => {
     switch (part) {
       case 'bg':
         return cn(STATIC_CLS.hoverBgBase, `hover:${bg('hoverBg')}`)
       case 'bg-red':
-        return cn(STATIC_CLS.hoverBgBase, `hover:${rainbowSoft(COLOR_NAME.RED)}`)
+        return cn(STATIC_CLS.hoverBgBase, `hover:${rainbowSoft(COLOR.RED)}`)
       case 'icon':
         return cn(STATIC_CLS.hoverIconBase, fill('digest'), `group-hover:${fill('title')}`)
       case 'fg':
         return cn(STATIC_CLS.hoverIconBase, fg('digest'), `group-hover:${fg('title')}`)
       case 'fg-red':
-        return cn(
-          STATIC_CLS.hoverIconBase,
-          fg('digest'),
-          `group-hover:${rainbow(COLOR_NAME.RED, 'fg')}`,
-        )
+        return cn(STATIC_CLS.hoverIconBase, fg('digest'), `group-hover:${rainbow(COLOR.RED, 'fg')}`)
       case 'icon-red':
         return cn(
           STATIC_CLS.hoverIconBase,
           fill('digest'),
-          `group-hover:${rainbow(COLOR_NAME.RED, 'fill')}`,
+          `group-hover:${rainbow(COLOR.RED, 'fill')}`,
         )
       default:
         return 'debug'
@@ -269,20 +258,8 @@ export default function useTwBelt(): TRet {
       zIndex,
 
       page,
-
-      isDarkBlack,
-      isBlackPrimary,
     }),
     // deps: only those that can affect returned behaviors/strings
-    [
-      containerClass,
-      pageLightClass,
-      pageDarkClass,
-      isAvatarSquare,
-      isLightTheme,
-      primaryColor,
-      isDarkBlack,
-      isBlackPrimary,
-    ],
+    [containerClass, pageLightClass, pageDarkClass, isAvatarSquare, primaryColor],
   )
 }

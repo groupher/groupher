@@ -37,7 +37,7 @@
     /* buttons */
     --color-button-toggle: white;
     --color-button-fg: white;
-    --color-button-blackFg: 'holder';
+    --color-black: black;
 
     /* modal */
     --color-modal-bg: #fff;
@@ -196,7 +196,7 @@
     /* buttons */
     --color-button-toggle: oklch(98.4% 0.003 247.858);
     --color-button-fg: #f1f1f1;
-    --color-button-blackFg: black;
+    --color-black: black;
 
     /* modal */
     --color-modal-bg: #222222;
@@ -278,6 +278,7 @@
     );
   }
 
+
   /* for reverse colors，for dark mode only, light is fine */
   [data-theme='dark'] [data-theme='light'] {
      --color-card: #fff;
@@ -285,5 +286,9 @@
      --color-title: oklch(27.8% 0.033 256.848); /* gray.800 */
      --color-digest: oklch(55.1% 0.027 264.364); /* gray.500 */
      --color-hoverBg: #efefef78;
+  }
+
+  [data-theme="dark"] [data-primary-color="BLACK"] { 
+    --color-rainbow-black: oklch(0.57 0 0); 
   }
 }

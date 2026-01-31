@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
 import useTwBelt from '~/hooks/useTwBelt'
 import GuideSVG from '~/icons/Book'
@@ -24,24 +24,24 @@ export default () => {
       'size-7 absolute top-2 -left-14 animate-spin animate-infinite animate-duration-[10000ms]',
     ),
 
-    fillBlue: rainbow(COLOR_NAME.BLUE, 'fill'),
-    fillOrange: rainbow(COLOR_NAME.ORANGE, 'fill'),
-    fillCyan: rainbow(COLOR_NAME.CYAN, 'fill'),
+    fillBlue: rainbow(COLOR.BLUE, 'fill'),
+    fillOrange: rainbow(COLOR.ORANGE, 'fill'),
+    fillCyan: rainbow(COLOR.CYAN, 'fill'),
 
-    purpleBorder: rainbow(COLOR_NAME.PURPLE, 'border'),
-    blueBorder: rainbow(COLOR_NAME.BLUE, 'border'),
-    redBorder: rainbow(COLOR_NAME.RED, 'border'),
-    cyanBorder: rainbow(COLOR_NAME.CYAN, 'border'),
+    purpleBorder: rainbow(COLOR.PURPLE, 'border'),
+    blueBorder: rainbow(COLOR.BLUE, 'border'),
+    redBorder: rainbow(COLOR.RED, 'border'),
+    cyanBorder: rainbow(COLOR.CYAN, 'border'),
 
-    purpleBg: rainbow(COLOR_NAME.PURPLE, 'bgSoft'),
-    blueBg: rainbow(COLOR_NAME.BLUE, 'bgSoft'),
-    redBg: rainbow(COLOR_NAME.RED, 'bgSoft'),
-    cyanBg: rainbow(COLOR_NAME.CYAN, 'bgSoft'),
+    purpleBg: rainbow(COLOR.PURPLE, 'bgSoft'),
+    blueBg: rainbow(COLOR.BLUE, 'bgSoft'),
+    redBg: rainbow(COLOR.RED, 'bgSoft'),
+    cyanBg: rainbow(COLOR.CYAN, 'bgSoft'),
 
-    purpleFill: rainbow(COLOR_NAME.PURPLE, 'fill'),
-    blueFill: rainbow(COLOR_NAME.BLUE, 'fill'),
-    redFill: rainbow(COLOR_NAME.RED, 'fill'),
-    cyanFill: rainbow(COLOR_NAME.CYAN, 'fill'),
+    purpleFill: rainbow(COLOR.PURPLE, 'fill'),
+    blueFill: rainbow(COLOR.BLUE, 'fill'),
+    redFill: rainbow(COLOR.RED, 'fill'),
+    cyanFill: rainbow(COLOR.CYAN, 'fill'),
 
     //
     title: cn('text-lg mb-1.5 mt-4 trans-all-100', `group-hover:${fg('title')}`, fg('digest')),

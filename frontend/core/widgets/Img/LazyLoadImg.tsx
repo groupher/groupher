@@ -1,8 +1,8 @@
-import { pick } from 'ramda'
+// frontend/core/widgets/Img/LazyLoadImg.tsx
 import { type FC, useCallback, useEffect, useRef, useState } from 'react'
 import LazyLoad from '~/widgets/LazyLoad'
 import type { TProps as TPropsBase } from '.'
-import useSalon, { cn } from './salon/lazy_load_image'
+import useSalon, { cnMerge } from './salon/lazy_load_image'
 
 type TProps = Omit<Required<TPropsBase>, 'noLazy'>
 
@@ -16,58 +16,65 @@ const LazyLoadImg: FC<TProps> = ({
   clickable,
   threshold,
 }) => {
-  // @ts-expect-error
-  const fallbackOpt = pick(['size', 'left', 'right', 'top', 'bottom'], fallback?.props || {})
-  const s = useSalon({ ...fallbackOpt })
-
+  const s = useSalon()
   const imgRef = useRef<HTMLImageElement | null>(null)
 
   const [started, setStarted] = useState(visibleByDefault)
   const [loaded, setLoaded] = useState(false)
-  const [_error, setError] = useState(false)
+  const [errored, setErrored] = useState(false)
 
+  // ✅ Only visibleByDefault controls initial start; do NOT reset started on src changes.
   useEffect(() => {
     setStarted(visibleByDefault)
-    setLoaded(false)
-    setError(false)
   }, [visibleByDefault])
 
-  const handleVisible = useCallback(() => {
-    setStarted(true)
-  }, [])
+  // ✅ src changes reset only per-resource states
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    setLoaded(false)
+    setErrored(false)
+  }, [src])
+
+  const handleVisible = useCallback(() => setStarted(true), [])
 
   const handleLoad = useCallback(() => {
     setLoaded(true)
-    setError(false)
+    setErrored(false)
   }, [])
 
   const handleError = useCallback(() => {
     console.warn('[LazyLoadImg] load error:', src)
-    setError(true)
+    setErrored(true)
     setLoaded(false)
   }, [src])
 
+  // ✅ cached hit / already-complete handling (must depend on src too)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!started) return
     const el = imgRef.current
-    if (!el) return
+    if (!el || !el.complete) return
 
-    if (el.complete && el.naturalWidth > 0) {
+    if (el.naturalWidth > 0) {
       setLoaded(true)
-      setError(false)
+      setErrored(false)
+    } else {
+      setLoaded(false)
+      setErrored(true)
     }
-  }, [started])
+  }, [started, src])
 
-  const showFallback = !!fallback && !loaded
+  const hideFallback = loaded && !errored
+  const showImg = started && !errored
 
   if (!src) {
     return (
       <button
         type='button'
         onClick={onClick}
-        className={cn(s.normal, showFallback && s.fallbackOffset, clickable && 'pointer')}
+        className={cnMerge(s.normal, className, clickable && 'pointer')}
       >
-        <div className={s.fallback}>{fallback}</div>
+        {fallback}
       </button>
     )
   }
@@ -76,21 +83,29 @@ const LazyLoadImg: FC<TProps> = ({
     <button
       type='button'
       onClick={onClick}
-      className={cn(s.normal, 'z-10', showFallback && s.fallbackOffset, clickable && 'pointer')}
+      className={cnMerge(s.normal, className, clickable && 'pointer')}
+      aria-label={alt}
     >
-      {showFallback && <div className={s.fallback}>{fallback}</div>}
+      {fallback && (
+        <div className={cnMerge(s.fallbackInFlow, hideFallback && s.fallbackHidden)}>
+          {fallback}
+        </div>
+      )}
 
       <LazyLoad visibleByDefault={visibleByDefault} threshold={threshold} onVisible={handleVisible}>
         {(visible) =>
-          visible || started ? (
+          // keep "visible" in the gate so behavior remains correct even if started is ever reset
+          (visible || started) && showImg ? (
             <img
               ref={imgRef}
-              className={cn(className, 'flex-shrink-0', !loaded && 'invisible')}
+              className={cnMerge(s.imgOverlay, !loaded && 'invisible', className)}
               src={src}
               alt={alt}
               loading='lazy'
+              decoding='async'
               onLoad={handleLoad}
               onError={handleError}
+              draggable={false}
             />
           ) : null
         }

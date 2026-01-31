@@ -9,13 +9,13 @@ type TProps = {
 
 export default ({ fold }: TProps) => {
   const { isLightTheme } = useTheme()
-  const { cn, fill, fg, bg, primary, vividDark, isDarkBlack } = useTwBelt()
+  const { cn, fill, fg, bg, primary, vividDark } = useTwBelt()
 
   return {
     wrapper: 'mb-4',
     folder: 'row-between group pointer mb-3',
     iconBox: 'align-both size-5',
-    title: cn('text-sm grow ml-2 bold', fg('digest'), !isLightTheme && 'brightness-110'),
+    title: cn('text-sm grow ml-2 bold', fg('digest'), 'dark:brightness-110'),
     arrowIcon: cn(
       'size-4 group-smoky-65 trans-all-200',
       !fold ? '-rotate-90' : 'rotate-180',
@@ -32,14 +32,9 @@ export default ({ fold }: TProps) => {
       isLightTheme && 'bold-sm',
       primary('fg'),
       bg('hoverBg'),
-      isDarkBlack && fg('digest'),
       vividDark(),
     ),
-    itemActiveBar: cn(
-      'absolute -left-0.5 top-2 w-1 h-4 rounded opacity-80',
-      primary('bg'),
-      isDarkBlack && bg('text.digest'),
-    ),
+    itemActiveBar: cn('absolute -left-0.5 top-2 w-1 h-4 rounded opacity-80', primary('bg')),
     menuIcon: cn('size-3.5', fill('digest')),
   }
 }

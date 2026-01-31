@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 import useBase from '.'
@@ -19,29 +19,29 @@ export default () => {
     divider: cn('h-6 w-px ml-4 mr-4 opacity-65', bg('text.digest')),
     avatar: 'align-both size-7 text-xs border bold-sm rounded',
     blue: cn(
-      rainbow(COLOR_NAME.BLUE, 'fg'),
-      rainbow(COLOR_NAME.BLUE, 'bgSoft'),
-      rainbow(COLOR_NAME.BLUE, 'borderSoft'),
+      rainbow(COLOR.BLUE, 'fg'),
+      rainbow(COLOR.BLUE, 'bgSoft'),
+      rainbow(COLOR.BLUE, 'borderSoft'),
     ),
     green: cn(
-      rainbow(COLOR_NAME.GREEN, 'fg'),
-      rainbow(COLOR_NAME.GREEN, 'bgSoft'),
-      rainbow(COLOR_NAME.GREEN, 'borderSoft'),
+      rainbow(COLOR.GREEN, 'fg'),
+      rainbow(COLOR.GREEN, 'bgSoft'),
+      rainbow(COLOR.GREEN, 'borderSoft'),
     ),
     red: cn(
-      rainbow(COLOR_NAME.RED, 'fg'),
-      rainbow(COLOR_NAME.RED, 'bgSoft'),
-      rainbow(COLOR_NAME.RED, 'borderSoft'),
+      rainbow(COLOR.RED, 'fg'),
+      rainbow(COLOR.RED, 'bgSoft'),
+      rainbow(COLOR.RED, 'borderSoft'),
     ),
     orange: cn(
-      rainbow(COLOR_NAME.ORANGE, 'fg'),
-      rainbow(COLOR_NAME.ORANGE, 'bgSoft'),
-      rainbow(COLOR_NAME.ORANGE, 'borderSoft'),
+      rainbow(COLOR.ORANGE, 'fg'),
+      rainbow(COLOR.ORANGE, 'bgSoft'),
+      rainbow(COLOR.ORANGE, 'borderSoft'),
     ),
     purple: cn(
-      rainbow(COLOR_NAME.PURPLE, 'fg'),
-      rainbow(COLOR_NAME.PURPLE, 'bgSoft'),
-      rainbow(COLOR_NAME.PURPLE, 'borderSoft'),
+      rainbow(COLOR.PURPLE, 'fg'),
+      rainbow(COLOR.PURPLE, 'bgSoft'),
+      rainbow(COLOR.PURPLE, 'borderSoft'),
     ),
   }
 }

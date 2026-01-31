@@ -1,5 +1,5 @@
+import { COLOR } from '~/const/colors'
 import type { TColorName } from '~/spec'
-import { COLOR_NAME } from '~/const/colors'
 
 /* eslint-disable radix */
 /**
@@ -11,12 +11,12 @@ const shadeColor = (color: string, percent: number): string => {
   let G = Number.parseInt(color.substring(3, 5), 16)
   let B = Number.parseInt(color.substring(5, 7), 16)
 
-  // @ts-ignore
-  R = Number.parseInt((R * (100 + percent)) / 100)
-  // @ts-ignore
-  G = Number.parseInt((G * (100 + percent)) / 100)
-  // @ts-ignore
-  B = Number.parseInt((B * (100 + percent)) / 100)
+  // @ts-expect-error
+  R = Number.parseInt((R * (100 + percent)) / 100, 10)
+  // @ts-expect-error
+  G = Number.parseInt((G * (100 + percent)) / 100, 10)
+  // @ts-expect-error
+  B = Number.parseInt((B * (100 + percent)) / 100, 10)
 
   R = R < 255 ? R : 255
   G = G < 255 ? G : 255
@@ -44,53 +44,53 @@ export const getLetterColor = (username: string): TColorName => {
     case 'a':
     case 'b':
     case 'c': {
-      return COLOR_NAME.RED
+      return COLOR.RED
     }
 
     case 'd':
     case 'e':
     case 'f': {
-      return COLOR_NAME.YELLOW
+      return COLOR.YELLOW
     }
 
     case 'g':
     case 'h':
     case 'i': {
-      return COLOR_NAME.GREEN
+      return COLOR.GREEN
     }
 
     case 'j':
     case 'k':
     case 'l': {
-      return COLOR_NAME.BLUE
+      return COLOR.BLUE
     }
 
     case 'm':
     case 'n':
     case 'o': {
-      return COLOR_NAME.PURPLE
+      return COLOR.PURPLE
     }
 
     case 'p':
     case 'q':
     case 'r': {
-      return COLOR_NAME.CYAN
+      return COLOR.CYAN
     }
     case 's':
     case 't':
     case 'w':
     case 'u': {
-      return COLOR_NAME.PURPLE
+      return COLOR.PURPLE
     }
 
     case 'x':
     case 'y':
     case 'z': {
-      return COLOR_NAME.CYAN
+      return COLOR.CYAN
     }
 
     default: {
-      return COLOR_NAME.PURPLE
+      return COLOR.PURPLE
     }
   }
 }

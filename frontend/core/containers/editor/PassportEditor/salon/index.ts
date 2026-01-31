@@ -1,4 +1,4 @@
-import { COLOR_NAME } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -11,8 +11,8 @@ export default () => {
     footer: 'align-both w-full pr-12 gap-x-3.5',
     rootSign: cn(
       'text-xs px-1.5 py-px rounded mb-1 border bold',
-      rainbow(COLOR_NAME.BLUE, 'bgSoft'),
-      rainbow(COLOR_NAME.BLUE, 'border'),
+      rainbow(COLOR.BLUE, 'bgSoft'),
+      rainbow(COLOR.BLUE, 'border'),
     ),
     divider: cn(sexyBorder(), 'mb-8'),
   }

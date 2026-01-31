@@ -3,7 +3,7 @@ import F from '../fragments'
 export const me = `
   query {
     me {
-      id
+      login
       nickname
       avatar
       bio

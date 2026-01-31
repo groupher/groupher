@@ -5,7 +5,7 @@ import useWallpaper from '~/hooks/useWallpaper'
 export default () => {
   const { cn, bg, rainbow, container, vividDark, page } = useTwBelt()
 
-  const { topbarBg, isDarkBlack } = useTopbar()
+  const { topbarBg } = useTopbar()
   const { hasShadow } = useWallpaper()
 
   return {
@@ -18,12 +18,7 @@ export default () => {
       bg('pageBg'),
       page(),
     ),
-    topBar: cn(
-      'h-0.5 w-full absolute top-0 left-0',
-      rainbow(topbarBg, 'bg'),
-      isDarkBlack && bg('text.digest'),
-      !isDarkBlack && vividDark(),
-    ),
+    topBar: cn('h-0.5 w-full absolute top-0 left-0', rainbow(topbarBg, 'bg'), vividDark()),
     scrollWrapper: 'absolute w-full',
     body: 'column-align-both w-full',
   }

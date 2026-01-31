@@ -45,6 +45,10 @@ fe.build.dashboard:
 fe.serve.dashboard: 
 	yarn run serve:prod:dashboard
 
+fe.dev.dsb: fe.dev.dashboard
+fe.build.dsb: fe.build.dashboard
+fe.serve.dsb: fe.serve.dashboard
+
 # backend
 # mix ecto.setup
 be.install:
