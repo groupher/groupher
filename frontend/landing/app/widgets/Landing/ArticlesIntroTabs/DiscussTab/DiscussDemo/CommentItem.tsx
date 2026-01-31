@@ -1,8 +1,6 @@
 import type { FC } from 'react'
-
-import type { TUser } from '~/spec'
-
 import Img from '~/Img'
+import type { TUser } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon, {
@@ -20,7 +18,7 @@ const CommentItem: FC<TProps> = ({ user, className = '' }) => {
 
   return (
     <div className={cn(s.wrapper, className)}>
-      <Img src={user.avatar} className={s.avatar} fallback={<ImgFallback size={6} user={user} />} />
+      <Img src={user.avatar} className={s.avatar} fallback={<ImgFallback user={user} />} />
       <div className={s.rightPart}>
         <div className={s.nickname}>{user.nickname}</div>
         <div className={s.bar} />
