@@ -1,3 +1,4 @@
+// frontend/core/widgets/Img/LazyLoadImg.tsx
 import { type FC, useCallback, useEffect, useRef, useState } from 'react'
 import LazyLoad from '~/widgets/LazyLoad'
 import type { TProps as TPropsBase } from '.'
@@ -22,12 +23,17 @@ const LazyLoadImg: FC<TProps> = ({
   const [loaded, setLoaded] = useState(false)
   const [errored, setErrored] = useState(false)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // ✅ Only visibleByDefault controls initial start; do NOT reset started on src changes.
   useEffect(() => {
     setStarted(visibleByDefault)
+  }, [visibleByDefault])
+
+  // ✅ src changes reset only per-resource states
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
     setLoaded(false)
     setErrored(false)
-  }, [visibleByDefault, src])
+  }, [src])
 
   const handleVisible = useCallback(() => setStarted(true), [])
 
@@ -42,6 +48,7 @@ const LazyLoadImg: FC<TProps> = ({
     setLoaded(false)
   }, [src])
 
+  // ✅ cached hit / already-complete handling (must depend on src too)
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!started) return
@@ -58,6 +65,7 @@ const LazyLoadImg: FC<TProps> = ({
   }, [started, src])
 
   const hideFallback = loaded && !errored
+  const showImg = started && !errored
 
   if (!src) {
     return (
@@ -86,7 +94,8 @@ const LazyLoadImg: FC<TProps> = ({
 
       <LazyLoad visibleByDefault={visibleByDefault} threshold={threshold} onVisible={handleVisible}>
         {(visible) =>
-          (visible || started) && started && !errored ? (
+          // keep "visible" in the gate so behavior remains correct even if started is ever reset
+          (visible || started) && showImg ? (
             <img
               ref={imgRef}
               className={cnMerge(s.imgOverlay, !loaded && 'invisible', className)}
