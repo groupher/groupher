@@ -17,6 +17,6 @@ export default () => {
     layout: 'column-align-both group',
 
     cover: cnMerge(base.bar, 'h-20 ml-0.5 opacity-15 w-40 rounded-md'),
-    thumbnil: cnMerge(base.bar, 'w-12 h-10 ml-0.5 opacity-15rounded-md opacity-10'),
+    thumbnil: cnMerge(base.bar, 'w-12 h-10 ml-0.5 opacity-15 rounded-md opacity-10'),
   }
 }
