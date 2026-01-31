@@ -10,7 +10,7 @@ export default () => {
       bg('card'),
       shadow('sm'),
     ),
-    background: cn('w-full h-full rounded-xl trans-all-200', dimDark()),
+    background: cn('s-full rounded-xl trans-all-200', dimDark()),
     edittool: 'absolute -bottom-3 left-28 z-30',
   }
 }

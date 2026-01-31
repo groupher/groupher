@@ -16,7 +16,7 @@ export default () => {
       shadow('md'),
       bg('card'),
     ),
-    inner: cn('relative border px-6 py-5 w-full h-full rounded-md', br('divider'), bg('card')),
+    inner: cn('relative border px-6 py-5 s-full rounded-md', br('divider'), bg('card')),
     bar: cn('absolute h-16 w-24 opacity-5 rounded-md', bg('text.digest')),
   }
 }

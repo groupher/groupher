@@ -10,7 +10,7 @@ export default ({ showMore }: TProps) => {
   const { cn, br, fill, primary } = useTwBelt()
 
   return {
-    wrapper: cn('row wrap w-full h-full gap-3 mt-2.5 relative', showMore && 'mb-14'),
+    wrapper: cn('row wrap s-full gap-3 mt-2.5 relative', showMore && 'mb-14'),
     block: cn(
       'w-44 h-28 rounded-md overflow-hidden relative border border-2 border-transparent pointer trans-all-200',
       `hover:${br('digest')}`,

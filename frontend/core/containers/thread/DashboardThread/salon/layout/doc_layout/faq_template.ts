@@ -9,7 +9,7 @@ export default () => {
   const base = useBase()
 
   return {
-    block: 'row-center row wrap relative w-full h-full',
+    block: 'row-center row wrap relative s-full',
     bar: cnMerge(base.bar, 'h-1.5 w-20 opacity-40'),
     icon: 'size-2.5',
     faqTitle: cn('text-xs absolute -ml-1', fg('title')),

@@ -11,9 +11,7 @@ type TProps = {
 export default ({ tab }: TProps) => {
   const { cn } = useTwBelt()
 
-  const bgGradient = cn(
-    'absolute top-0 left-0 w-full h-full opacity-0 transition-opacity duration-700',
-  )
+  const bgGradient = cn('absolute top-0 left-0 s-full opacity-0 transition-opacity duration-700')
 
   return {
     wrapper: 'column-align-both relative w-full',

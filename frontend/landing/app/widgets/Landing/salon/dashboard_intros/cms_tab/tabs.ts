@@ -31,10 +31,7 @@ export default () => {
       br('divider'),
       shadow('xl'),
     ),
-    bottomGradient: cn(
-      'absolute top-0 left-0 w-full h-full rotate-180 -z-10 opacity-50',
-      'gradient-blue',
-    ),
+    bottomGradient: cn('absolute top-0 left-0 s-full rotate-180 -z-10 opacity-50', 'gradient-blue'),
     icon: cn('size-3 mr-1', fill('digest')),
     title: cn('text-xs', fg('digest')),
   }

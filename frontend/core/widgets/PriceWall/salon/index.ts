@@ -8,7 +8,7 @@ export default () => {
   const { cn, fg, bg, rainbow, shadow, dimDark, linkable } = useTwBelt()
 
   return {
-    wrapper: 'column-align-both w-full h-full mb-14 overflow-hidden',
+    wrapper: 'column-align-both s-full mb-14 overflow-hidden',
     bannerTitle: cn('text-2xl bold-sm mt-5 mb-2', fg('title')),
     bannerDesc: cn('text-base mb-14', fg('digest')),
     bannerNote: cn('text-base mb-8', fg('title')),
@@ -22,13 +22,13 @@ export default () => {
     //
     column:
       'group w-80 h-[680px] relative px-6 pt-5 rounded-t-3xl rounded-b-xl border border-transparent overflow-hidden',
-    gradientGreen: cn('absolute top-0 left-0 w-full h-full opacity-40 -z-10', 'gradient-green'),
+    gradientGreen: cn('absolute top-0 left-0 s-full opacity-40 -z-10', 'gradient-green'),
     gradientOrange: cn(
-      'absolute top-0 left-0 w-full h-full opacity-80 rotate-180 border border-dotted border-transparent -z-10',
+      'absolute top-0 left-0 s-full opacity-80 rotate-180 border border-dotted border-transparent -z-10',
       'gradient-orange',
     ),
     gradientPurple: cn(
-      'absolute top-0 left-0 w-full h-full opacity-30 rotate-180 -z-10',
+      'absolute top-0 left-0 s-full opacity-30 rotate-180 -z-10',
       'gradient-purple',
     ),
     board: cn(

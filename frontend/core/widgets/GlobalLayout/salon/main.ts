@@ -11,7 +11,7 @@ export default () => {
   return {
     wrapper: cn(
       container(),
-      'column relative w-full h-full min-h-fit',
+      'column relative s-full min-h-fit',
       // NOTICE: this class will cause children's position fixed fail,
       'transition-transform transition-shadow backdrop-blur-2xl',
       hasShadow && 'shadow-lg',

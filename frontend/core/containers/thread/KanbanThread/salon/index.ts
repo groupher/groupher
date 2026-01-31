@@ -1,5 +1,5 @@
 export default () => {
   return {
-    wrapper: 'w-full h-full',
+    wrapper: 's-full',
   }
 }
