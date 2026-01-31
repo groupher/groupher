@@ -39,7 +39,7 @@ export default () => {
       <Img
         className={s.logo}
         src={HOME_COMMUNITY.logo}
-        fallback={<ImgFallback size={7} title={title} />}
+        fallback={<ImgFallback title={title} />}
         visibleByDefault
       />
 
@@ -79,11 +79,7 @@ export default () => {
       >
         <div className={s.menuWrapper}>
           {brandLayout !== BRAND_LAYOUT.TEXT && (
-            <Img
-              className={s.logo}
-              src={assetSrc(logo)}
-              fallback={<ImgFallback size={7} title={title} />}
-            />
+            <Img className={s.logo} src={assetSrc(logo)} fallback={<ImgFallback title={title} />} />
           )}
           {brandLayout !== BRAND_LAYOUT.LOGO && <div className={s.title}>{title}</div>}
 

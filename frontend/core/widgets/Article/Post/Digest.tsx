@@ -16,6 +16,7 @@ import type { TPost } from '~/spec'
 import ArticleBaseStats from '~/widgets/ArticleBaseStats'
 import ArticlePinLabel from '~/widgets/ArticlePinLabel'
 import ArticleSettingMenu from '~/widgets/ArticleSettingMenu'
+import ImgFallback from '~/widgets/ImgFallback'
 import Share from '~/widgets/Share'
 import useSalon from '../salon/post/digest'
 
@@ -53,7 +54,11 @@ export default () => {
         </div>
         <div className={s.bottomInfo}>
           <Link href='/' className={s.authorName}>
-            <Img src={author.avatar} className={s.avatar} />
+            <Img
+              src={author.avatar}
+              className={s.avatar}
+              fallback={<ImgFallback user={author} />}
+            />
             {author.nickname}
           </Link>
           <ArticleBaseStats article={post as TPost} right={2} />

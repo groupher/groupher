@@ -1,16 +1,12 @@
 import type { FC } from 'react'
-
-import type { TUser } from '~/spec'
-
 import Img from '~/Img'
-import Tooltip from '~/widgets/Tooltip'
+import type { TUser } from '~/spec'
 import UserCard from '~/widgets/Cards/UserCard'
 import ImgFallback from '~/widgets/ImgFallback'
-
-import { getAvatarSize } from './salon/metric'
-import type { TAvatarSize } from './spec'
+import Tooltip from '~/widgets/Tooltip'
 
 import useSalon from './salon/real_avatar'
+import type { TAvatarSize } from './spec'
 
 type TProps = {
   isFirst: boolean
@@ -46,13 +42,7 @@ const RealAvatar: FC<TProps> = ({
           className={s.avatar}
           onClick={() => onUserSelect(user)}
           noLazy={noLazyLoad}
-          fallback={
-            <ImgFallback
-              className={s.avatarFallback}
-              size={getAvatarSize(size, 'number') as number}
-              user={user}
-            />
-          }
+          fallback={<ImgFallback className={s.avatarFallback} user={user} />}
         />
       </Tooltip>
     </li>

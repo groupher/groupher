@@ -1,5 +1,4 @@
 /*
- *
  * Img.js
  *
  * Renders an image, enforcing the usage of the alt="" tag
@@ -32,13 +31,8 @@ const Img: FC<TProps> = ({
   clickable = false,
   threshold = 200,
 }) => {
-  if (/\.(svg)$/i.test(src)) {
-    // see solution in:
-    // https://github.com/tanem/react-svg/issues/676#issuecomment-589639104
-    return <>SVG TODO</>
-  }
   return (
-    <div>
+    <>
       {noLazy ? (
         <NativeImg
           className={className}
@@ -49,7 +43,6 @@ const Img: FC<TProps> = ({
           onClick={onClick}
         />
       ) : (
-        // <NextImg className={className} src={src} alt={alt} fallback={fallback} />
         <LazyLoadImg
           className={className}
           src={src}
@@ -61,7 +54,7 @@ const Img: FC<TProps> = ({
           onClick={onClick}
         />
       )}
-    </div>
+    </>
   )
 }
 

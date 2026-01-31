@@ -14,7 +14,6 @@ import ImgFallback from '~/widgets/ImgFallback'
 import MoreItem from './MoreItem'
 import useSalon, { cn } from './salon'
 
-import { getAvatarSize } from './salon/metric'
 import type { TAvatarSize } from './spec'
 
 const RealAvatar = lazy(() => import('./RealAvatar'))
@@ -80,15 +79,7 @@ const Facepile: FC<TProps> = ({
   return (
     <ul className={cn(s.wrapper, classNames)}>
       {totalCount === 1 ? (
-        <Suspense
-          fallback={
-            <ImgFallback
-              className={s.avatarFallback}
-              size={getAvatarSize(size, 'number') as number}
-              user={sortedUsers[0]}
-            />
-          }
-        >
+        <Suspense fallback={<ImgFallback className={s.avatarFallback} user={sortedUsers[0]} />}>
           <RealAvatar
             isFirst
             isLast
@@ -104,13 +95,7 @@ const Facepile: FC<TProps> = ({
           {slice(0, limit, sortedUsers).map((user, index) => (
             <Suspense
               key={user.login}
-              fallback={
-                <ImgFallback
-                  className={s.avatarFallback}
-                  size={getAvatarSize(size, 'number') as number}
-                  user={user}
-                />
-              }
+              fallback={<ImgFallback className={s.avatarFallback} user={user} />}
             >
               <RealAvatar
                 isFirst={index === 0}

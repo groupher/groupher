@@ -26,12 +26,7 @@ const CommunityBrand: FC<TProps> = ({ className = '', landingBrand = false, ...s
   if (landingBrand) {
     return (
       <div className={s.wrapper}>
-        <Img
-          src={landingLogo}
-          className={s.logo}
-          noLazy
-          fallback={<ImgFallback size={6} left={-0.5} right={1.5} title={title} />}
-        />
+        <Img src={landingLogo} className={s.logo} noLazy fallback={<ImgFallback title={title} />} />
 
         <h1 className={s.title}>{landingTitle}</h1>
       </div>
@@ -45,7 +40,7 @@ const CommunityBrand: FC<TProps> = ({ className = '', landingBrand = false, ...s
           src={assetSrc(logo)}
           className={s.logo}
           noLazy
-          fallback={<ImgFallback size={6} left={-0.5} right={1.5} title={title} />}
+          fallback={<ImgFallback title={title} />}
         />
       )}
       {brandLayout !== BRAND_LAYOUT.LOGO && <h1 className={s.title}>{title}</h1>}

@@ -5,12 +5,10 @@
  */
 
 import type { FC } from 'react'
-
-import type { TUser, TSpace } from '~/spec'
-
 import Img from '~/Img'
-import ImgFallback from '~/widgets/ImgFallback'
 import AdminStarSVG from '~/icons/AdminStar'
+import type { TSpace, TUser } from '~/spec'
+import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from './salon'
 
@@ -25,11 +23,7 @@ const AdminAvatar: FC<TProps> = ({ testid = 'admin-avatar', user, ...spacing }) 
   return (
     <div className={s.wrapper}>
       <div className={s.innerWrapper}>
-        <Img
-          className={s.avatar}
-          src={user.avatar}
-          fallback={<ImgFallback size={10} user={user} />}
-        />
+        <Img className={s.avatar} src={user.avatar} fallback={<ImgFallback user={user} />} />
         <div className={s.badge}>
           <AdminStarSVG className={s.starIcon} />
         </div>

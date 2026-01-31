@@ -1,9 +1,7 @@
-import type { TSpace } from '~/spec'
-
-import useTwBelt from '~/hooks/useTwBelt'
-import useLayout from '~/hooks/useLayout'
-
 import { AVATAR_LAYOUT } from '~/const/layout'
+import useLayout from '~/hooks/useLayout'
+import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 type TProps = TSpace
 
@@ -18,7 +16,7 @@ export default ({ ...spacing }: TProps) => {
       primary('borderSoft'),
       avatarLayout === AVATAR_LAYOUT.SQUARE ? 'rounded-md' : 'circle',
     ),
-    avatar: cn('w-full', avatar()),
+    avatar: cn('size-10', avatar()),
     badge: cn(
       'align-both absolute  size-3.5 circle border z-30',
       primary('bg'),

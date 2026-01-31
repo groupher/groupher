@@ -1,13 +1,10 @@
-import { mockUsers } from '~/mock'
-
 import Img from '~/Img'
+import { mockUsers } from '~/mock'
 import ImgFallback from '~/widgets/ImgFallback'
-
-import TagItem from './TagItem'
+import useSalon, { cn } from '../salon/activities'
 import GtdItem from './GtdItem'
 import MentionItem from './MentionItem'
-
-import useSalon, { cn } from '../salon/activities'
+import TagItem from './TagItem'
 
 export default () => {
   const s = useSalon()
@@ -21,7 +18,7 @@ export default () => {
         <Img
           src={user.avatar}
           className={s.avatar}
-          fallback={<ImgFallback size={5} user={user} left={-0.5} />}
+          fallback={<ImgFallback user={user} left={-0.5} />}
         />
 
         <div className={s.content}>

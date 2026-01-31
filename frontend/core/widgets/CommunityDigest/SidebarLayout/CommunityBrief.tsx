@@ -29,11 +29,7 @@ export default () => {
     <div className={s.wrapper}>
       {brandLayout !== BRAND_LAYOUT.TEXT && (
         <div className={s.logoBox}>
-          <Img
-            src={assetSrc(logo)}
-            className={s.logo}
-            fallback={<ImgFallback size={8} title={title} />}
-          />
+          <Img src={assetSrc(logo)} className={s.logo} fallback={<ImgFallback title={title} />} />
         </div>
       )}
 
