@@ -24,11 +24,11 @@ export default () => {
     cinemaImage: cn('size-24 -rotate-3 left-10 bottom-12 z-30', boxBase),
     codeImage: cn('size-20 -rotate-6 left-2 bottom-3', boxBase),
     adminsImage: cn('w-28 h-24 rotate-2 right-3 bottom-1 z-20', boxBase),
-    image: 'rounded-lg w-full h-full object-cover',
+    image: 'rounded-lg s-full object-cover',
 
     //
     gameBox: 'size-20 absolute bg-transparent z-20',
-    gameImage: cn('w-full h-full object-cover', shadow('md')),
+    gameImage: cn('s-full object-cover', shadow('md')),
     gameBar: cn('w-32 h-3 rounded-md absolute -z-10', rainbow(COLOR.ORANGE, 'bg')),
     //
 
@@ -46,10 +46,10 @@ export default () => {
     ),
     pillHighlight: cn('h-36 mb-4 border-dashed', rainbow(COLOR.PURPLE, 'borderSoft')),
     pillNormal: 'gradient-black',
-    pillGadient: 'absolute w-full h-full rotate-180 gradient-purple',
-    pillGadient2: 'absolute w-full h-full rotate-180 gradient-orange',
-    pillGadient3: 'absolute w-full h-full gradient-red',
-    pillGadient4: 'absolute w-full h-full gradient-blue',
+    pillGadient: 'absolute s-full rotate-180 gradient-purple',
+    pillGadient2: 'absolute s-full rotate-180 gradient-orange',
+    pillGadient3: 'absolute s-full gradient-red',
+    pillGadient4: 'absolute s-full gradient-blue',
     pillIcon: cn('size-5 absolute bottom-2 left-3.5', fill('digest')),
     pillHighlighIcon: cn(rainbow(COLOR.PURPLE, 'fill')),
 

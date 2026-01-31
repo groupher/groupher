@@ -32,7 +32,7 @@ export default () => {
     //
     gradientBar: 'absolute left-0 -top-px h-6 rounded-xl trans-all-200 overflow-hidden',
     gradientBg: cn(
-      'absolute top-0 left-0 w-full h-full',
+      'absolute top-0 left-0 s-full',
       'gradient-purple',
       isDarkTheme && 'rotate-180',
       vividDark(),

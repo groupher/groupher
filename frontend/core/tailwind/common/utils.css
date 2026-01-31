@@ -111,6 +111,10 @@
     @apply text-left leading-none cursor-pointer;
   }
 
+  .s-full {
+    @apply w-full h-full;
+  }
+
   .text-shadow-none {
     text-shadow: none;
   }

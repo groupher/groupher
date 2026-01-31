@@ -10,7 +10,7 @@ export default () => {
   const base = useBase()
 
   return {
-    block: 'row-center row wrap relative w-full h-full',
+    block: 'row-center row wrap relative s-full',
     bar: cnMerge(base.bar, 'h-1.5 w-20 opacity-40'),
     circle: cnMerge(base.circle, 'size-3.5 opacity-40'),
     iconBox: 'absolute align-both size-4 rounded mt-2 mr-5',

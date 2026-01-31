@@ -7,7 +7,7 @@ export default () => {
   const { cn, bg, shadow, rainbow } = useTwBelt()
 
   return {
-    wrapper: 'relative w-full h-full p-4 overflow-hidden',
+    wrapper: 'relative s-full p-4 overflow-hidden',
     block: cn(
       'align-both w-64 h-40 relative p-2.5 overflow-hidden rounded-md trans-all-200',
       bg('card'),

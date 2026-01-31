@@ -6,7 +6,7 @@ export default () => {
   const isSidebarLayout = useIsSidebarLayout()
 
   return {
-    wrapper: cn('w-full h-full min-h-screen py-2.5', isSidebarLayout && 'pl-12'),
+    wrapper: cn('s-full min-h-screen py-2.5', isSidebarLayout && 'pl-12'),
     columns: 'row items-start justify-between min-h-96 mt-14',
   }
 }

@@ -11,7 +11,7 @@ export default () => {
       shadow('sm'),
       bg('card'),
     ),
-    inner: 'row w-full h-full rounded-xl py-4 px-6 gradient-green',
+    inner: 'row s-full rounded-xl py-4 px-6 gradient-green',
     left: 'w-1/2',
     right: 'w-1/2',
     item: 'row items-start h-8',

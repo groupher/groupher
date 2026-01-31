@@ -7,7 +7,7 @@ export default () => {
   const { cn, fill, hover, bg, fg, menu, rainbow, rainbowSoft, vividDark } = useTwBelt()
 
   const blockBase = 'relative align-both size-12 min-w-12 mr-4 rounded-lg'
-  const blockBg = 'absolute top-0 left-0 w-full h-full rounded-lg trans-all-100'
+  const blockBg = 'absolute top-0 left-0 s-full rounded-lg trans-all-100'
   const blockColor = cn(blockBg, 'opacity-0 group-hover:opacity-100')
   const iconColor = 'group-hover:opacity-100 trans-all-100'
 

@@ -6,9 +6,9 @@ export default () => {
   return {
     wrapper: 'w-full pb-8 mb-5',
     faviconBox: cn('size-8 rounded', bg('hoverBg')),
-    favicon: 'w-full h-full',
+    favicon: 's-full',
     logoBox: cn('size-16', bg('hoverBg')),
-    logo: 'w-full h-full',
+    logo: 's-full',
 
     title: cn('text-sm mb-3', fg('title')),
     desc: cn('text-xs mt-2.5 mt-5 opacity-80', fg('digest')),

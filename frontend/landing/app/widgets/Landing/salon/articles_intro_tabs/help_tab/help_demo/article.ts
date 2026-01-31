@@ -24,7 +24,7 @@ export default () => {
     //
     title: cn('row-center text-base', fg('title')),
     inner: cn(
-      'column-center w-full h-full z-10 px-4 py-8 pt-6 border rounded-md',
+      'column-center s-full z-10 px-4 py-8 pt-6 border rounded-md',
       br('rainbow.cyanSoft'),
       bg('card'),
     ),

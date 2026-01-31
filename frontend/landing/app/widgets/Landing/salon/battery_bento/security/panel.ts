@@ -10,7 +10,7 @@ export default () => {
   const { cn, fg, bg, rainbow, shadow } = useTwBelt()
 
   return {
-    wrapper: 'w-full h-full p-4 pt-7 overflow-hidden relative',
+    wrapper: 's-full p-4 pt-7 overflow-hidden relative',
     nestIcon: cn(
       'absolute size-44 rotate-45 top-0 left-10 opacity-10 trans-all-200',
       rainbow(COLOR.GREEN, 'fill'),

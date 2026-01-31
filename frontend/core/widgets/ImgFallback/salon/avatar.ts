@@ -12,7 +12,7 @@ export default ({ size, ...spacing }: TProps) => {
   const { cn, rainbowSoft, margin, avatar, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('align-both border-none w-full h-full', margin(spacing), avatar()),
+    wrapper: cn('align-both border-none s-full', margin(spacing), avatar()),
     name: cn('bold leading-none', getFontSize(size)),
 
     rainbowSoft,

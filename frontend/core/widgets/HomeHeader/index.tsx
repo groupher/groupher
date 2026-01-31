@@ -88,7 +88,7 @@ export default () => {
             <Link className={cn(s.requestDemoLink, 'scale-90')} href={`/${ROUTE.APPLY_COMMUNITY}`}>
               <Button space={3} className='bold-sm'>
                 <span className='relative flex size-3 mr-2.5 brightness-125 scale-75'>
-                  <span className='absolute inline-flex w-full h-full rounded-full opacity-80 animate-ping bg-rainbow-purpleSoft'></span>
+                  <span className='absolute inline-flex s-full rounded-full opacity-80 animate-ping bg-rainbow-purpleSoft'></span>
                   <span className='relative inline-flex rounded-full size-3 bg-rainbow-purple'></span>
                 </span>
                 开始使用

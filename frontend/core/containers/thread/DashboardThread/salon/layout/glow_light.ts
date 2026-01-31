@@ -22,7 +22,7 @@ export default () => {
     blockActive: cn(base.blockBaseActive),
     row: 'row-center wrap gap-x-5 gap-y-6 w-full',
 
-    bgWrapper: 'absolute w-full h-full top-0 left-0',
+    bgWrapper: 'absolute s-full top-0 left-0',
 
     bgStyle2: (glowType) => {
       return `

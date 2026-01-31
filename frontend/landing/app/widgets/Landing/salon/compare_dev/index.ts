@@ -18,7 +18,7 @@ export default () => {
     //
     ourWall: 'relative column-align-both w-full h-auto pl-10 overflow-hidden',
     ourWallBg: cn(
-      'absolute top-0 left-0 w-full h-full rotate-180 gradient-green',
+      'absolute top-0 left-0 s-full rotate-180 gradient-green',
       isDarkTheme && 'opacity-30 rotate-180',
     ),
     greenDiffBar: 'diff-bar-green absolute left-0 top-0 w-7 h-full z-10 rounded-tr-lg',
@@ -31,7 +31,7 @@ export default () => {
 
     theirWall: 'relative column-align-both w-full h-auto diff-area-red-stripes',
     theirWallBg: cn(
-      'absolute top-0 left-0 w-full h-full',
+      'absolute top-0 left-0 s-full',
       rainbowSoft(COLOR.RED),
       isDarkTheme ? 'opacity-80' : 'opacity-40',
     ),
