@@ -56,9 +56,9 @@
     "test:dashboard": "vitest --config frontend/core/vitest.config.mts run frontend/core frontend/dashboard",
     "test:landing": "vitest --config frontend/core/vitest.config.mts run frontend/core frontend/landing",
     "mock:server": "yarn workspace @groupher/mock-server dev",
-    "e2e:main": "cross-env E2E_APP=main playwright test -c frontend/e2e/playwright.config.ts",
-    "e2e:dashboard": "cross-env E2E_APP=dashboard playwright test -c frontend/e2e/playwright.config.ts",
-    "e2e:landing": "cross-env E2E_APP=landing playwright test -c frontend/e2e/playwright.config.ts",
+    "test:e2e:main": "cross-env E2E_APP=main playwright test -c frontend/e2e/playwright.config.ts",
+    "test:e2e:dashboard": "cross-env E2E_APP=dashboard playwright test -c frontend/e2e/playwright.config.ts",
+    "test:e2e:landing": "cross-env E2E_APP=landing playwright test -c frontend/e2e/playwright.config.ts",
     "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "engines": {

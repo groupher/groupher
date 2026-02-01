@@ -87,7 +87,7 @@ jobs:
       - name: Run e2e
         env:
           CI: true
-        run: yarn e2e:main
+        run: yarn test:e2e:main
 
       - name: Upload Playwright report
         if: failure()
@@ -130,7 +130,7 @@ jobs:
       - name: Run e2e
         env:
           CI: true
-        run: yarn e2e:dashboard
+        run: yarn test:e2e:dashboard
 
       - name: Upload Playwright report
         if: failure()
@@ -173,7 +173,7 @@ jobs:
       - name: Run e2e
         env:
           CI: true
-        run: yarn e2e:landing
+        run: yarn test:e2e:landing
 
       - name: Upload Playwright report
         if: failure()

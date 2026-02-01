@@ -45,9 +45,29 @@ fe.build.dashboard:
 fe.serve.dashboard: 
 	yarn run serve:prod:dashboard
 
+fe.test.dashboard:
+	yarn run test:dashboard
+
+fe.test.main:
+	yarn run test:main
+
+fe.test.landing:
+	yarn run test:landing
+
+fe.e2e.dashboard:
+	yarn run test:e2e:dashboard
+
+fe.e2e.main:
+	yarn run test:e2e:main
+
+fe.e2e.landing:
+	yarn run test:e2e:landing
+
 fe.dev.dsb: fe.dev.dashboard
 fe.build.dsb: fe.build.dashboard
 fe.serve.dsb: fe.serve.dashboard
+fe.test.dsb: fe.test.dashboard
+fe.e2e.dsb: fe.e2e.dashboard
 
 # backend
 # mix ecto.setup
