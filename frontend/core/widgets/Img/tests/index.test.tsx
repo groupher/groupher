@@ -1,37 +1,39 @@
-import { shallow } from 'enzyme'
+import { render, screen, waitFor } from '@testing-library/react'
 
 import Img from '..'
 
-const src = 'test.png'
-const alt = 'test'
-
-const renderComponent = (props = {}) => shallow(<Img src={src} alt={alt} {...props} />)
-
 describe('<Img />', () => {
-  it('should have an src attribute', () => {
-    const renderedComponent = renderComponent()
-    expect(renderedComponent.prop('src')).toEqual(src)
+  it('renders NativeImg when noLazy=true', () => {
+    render(
+      <Img
+        noLazy
+        src='test.png'
+        alt='test'
+        fallback={<span>fallback</span>}
+      />,
+    )
+
+    const btn = screen.getByRole('button', { name: 'test' })
+    expect(btn).toBeDisabled()
+    expect(screen.getByText('fallback')).toBeInTheDocument()
   })
 
-  it('should have an alt attribute', () => {
-    const renderedComponent = renderComponent()
-    expect(renderedComponent.prop('alt')).toEqual(alt)
-  })
+  it('renders LazyLoadImg (wrapped in a button) by default', async () => {
+    render(
+      <Img
+        src='test.png'
+        alt='test'
+        fallback={<span>fallback</span>}
+        visibleByDefault
+      />,
+    )
 
-  it('should have a default className', () => {
-    const renderedComponent = renderComponent()
-    expect(renderedComponent.prop('className')).toBe('img-class')
-  })
+    const btn = screen.getByRole('button', { name: 'test' })
+    expect(btn).not.toBeDisabled()
+    expect(screen.getByText('fallback')).toBeInTheDocument()
 
-  it('should adopt a className attribute', () => {
-    const className = 'test'
-    const renderedComponent = renderComponent({ className })
-    expect(renderedComponent.hasClass(className)).toBe(true)
-  })
-
-  it('should not adopt a srcset attribute', () => {
-    const srcset = 'test-HD.png 2x'
-    const renderedComponent = renderComponent({ srcset })
-    expect(renderedComponent.prop('srcset')).toBeUndefined()
+    await waitFor(() => {
+      expect(screen.getByRole('img', { name: 'test' })).toBeInTheDocument()
+    })
   })
 })
