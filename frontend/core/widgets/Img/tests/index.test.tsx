@@ -18,8 +18,8 @@ describe('<Img />', () => {
     expect(screen.getByText('fallback')).toBeInTheDocument()
   })
 
-  it('renders LazyLoadImg by default', async () => {
-    const { container } = render(
+  it('renders LazyLoadImg (wrapped in a button) by default', async () => {
+    render(
       <Img
         src='test.png'
         alt='test'
@@ -33,7 +33,7 @@ describe('<Img />', () => {
     expect(screen.getByText('fallback')).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(container.querySelector('img')).toBeTruthy()
+      expect(screen.getByRole('img', { name: 'test' })).toBeInTheDocument()
     })
   })
 })
