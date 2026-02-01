@@ -31,7 +31,7 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
       <Img
         className={s.avatar}
         src={data.author.avatar}
-        fallback={<ImgFallback user={data.author} size={4} />}
+        fallback={<ImgFallback user={data.author} />}
         noLazy
       />
       {isLegal ? (
