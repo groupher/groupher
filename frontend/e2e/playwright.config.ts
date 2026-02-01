@@ -3,15 +3,19 @@ import { defineConfig, devices } from '@playwright/test'
 const app = process.env.E2E_APP ?? 'main'
 
 const appConfig = {
-  main: { cmd: 'yarn dev:main', url: 'http://localhost:3000', testDir: './tests/main' },
+  main: {
+    cmd: 'cross-env PORT=3100 yarn workspace @groupher/frontend-main dev',
+    url: 'http://localhost:3100',
+    testDir: './tests/main',
+  },
   dashboard: {
-    cmd: 'yarn dev:dashboard',
-    url: 'http://localhost:3000',
+    cmd: 'cross-env PORT=3101 yarn workspace @groupher/frontend-dashboard dev',
+    url: 'http://localhost:3101',
     testDir: './tests/dashboard',
   },
   landing: {
-    cmd: 'yarn dev:landing',
-    url: 'http://localhost:3000',
+    cmd: 'cross-env PORT=3102 yarn workspace @groupher/frontend-landing dev',
+    url: 'http://localhost:3102',
     testDir: './tests/landing',
   },
 } as const
@@ -45,7 +49,9 @@ export default defineConfig({
     {
       command: cmd,
       url,
-      reuseExistingServer: !process.env.CI,
+      // We run multiple Next apps on the same localhost URL in this monorepo.
+      // Reusing an already-running server can accidentally run tests against the wrong app.
+      reuseExistingServer: false,
       timeout: 120_000,
     },
   ],

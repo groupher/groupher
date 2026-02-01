@@ -16,7 +16,9 @@ const baseConfig = {
     turbopackFileSystemCacheForBuild: true,
     scrollRestoration: true,
     optimizePackageImports: ['ramda'],
-    browserDebugInfoInTerminal: true,
+  },
+  logging: {
+    browserToTerminal: true,
   },
 }
 

@@ -8,7 +8,7 @@ on:
       - "frontend/landing/**"
       - "frontend/core/**"
       - "frontend/mock-server/**"
-      - "e2e/**"
+      - "frontend/e2e/**"
       - "package.json"
       - "yarn.lock"
       - "!frontend/**/vercel.json"
@@ -19,7 +19,7 @@ on:
       - "frontend/landing/**"
       - "frontend/core/**"
       - "frontend/mock-server/**"
-      - "e2e/**"
+      - "frontend/e2e/**"
       - "package.json"
       - "yarn.lock"
       - "!frontend/**/vercel.json"
@@ -51,7 +51,7 @@ jobs:
             shared:
               - 'frontend/core/**'
               - 'frontend/mock-server/**'
-              - 'e2e/**'
+              - 'frontend/e2e/**'
               - 'package.json'
               - 'yarn.lock'
 
