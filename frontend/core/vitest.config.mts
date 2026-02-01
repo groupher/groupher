@@ -1,3 +1,4 @@
+// @ts-nocheck
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -27,7 +28,7 @@ export default defineConfig({
     setupFiles: [path.join(repoRoot, 'frontend/core/vitest.setup.ts')],
 
     // Colocated tests convention for this monorepo.
-    include: ['frontend/**/tests/**/*.text.{ts,tsx}'],
+    include: ['frontend/**/tests/**/*.test.{ts,tsx}'],
     exclude: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/build/**'],
 
     globals: true,
