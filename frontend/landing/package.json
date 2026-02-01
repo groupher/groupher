@@ -14,11 +14,7 @@
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "biome lint app/**/*.{ts,tsx}",
     "format": "biome format ./app",
-    "clean:up": "rm -rf *.tsbuildinfo",
-    "cy:run": "./node_modules/.bin/cypress run --key 60eb2dd7-724d-4b39-bd12-f434f3465866 --record",
-    "cy:run:free": "./node_modules/.bin/cypress run",
-    "test:ci": "start-server-and-test ci http://localhost:3000 cy:run:free",
-    "coveralls": "cat ./coverage/lcov.info | coveralls"
+    "clean:up": "rm -rf *.tsbuildinfo"
   },
   "lint-staged": {
     "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"

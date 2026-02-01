@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2015",
     "module": "esnext",
+    "moduleResolution": "bundler",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -9,12 +10,12 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": false,
     "esModuleInterop": true,
-    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
     "experimentalDecorators": true,
     "noUnusedLocals": true,
+    "types": ["vitest/globals", "@testing-library/jest-dom/vitest"],
     "paths": {
       "~/hooks": ["../core/hooks"],
       "~/hooks/*": ["../core/hooks/*"],
