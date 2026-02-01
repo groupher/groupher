@@ -23,6 +23,7 @@ describe('<LazyLoad />', () => {
   it('falls back to visible when IntersectionObserver is missing', async () => {
     const onVisible = vi.fn()
 
+    const hadObserver = 'IntersectionObserver' in window
     const original = (window as any).IntersectionObserver
     // Ensure `('IntersectionObserver' in window)` is false.
     // biome-ignore lint/performance/noDelete: test-only
@@ -41,7 +42,12 @@ describe('<LazyLoad />', () => {
       await waitFor(() => expect(screen.getByText('content')).toBeInTheDocument())
       expect(onVisible).toHaveBeenCalledTimes(1)
     } finally {
-      ;(window as any).IntersectionObserver = original
+      if (hadObserver) {
+        ;(window as any).IntersectionObserver = original
+      } else {
+        // biome-ignore lint/performance/noDelete: test-only
+        delete (window as any).IntersectionObserver
+      }
     }
   })
 })
