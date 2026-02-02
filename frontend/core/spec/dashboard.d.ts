@@ -72,6 +72,7 @@ export type TDsb = {
     glowType: string
     glowFixed: boolean
     glowOpacity: string
+    darkFloat: boolean
     docLayout: TDocLayout
     docFaqLayout: TDocFaqLayout
     postLayout: TPostLayout

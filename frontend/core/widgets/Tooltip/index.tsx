@@ -11,6 +11,7 @@ import type { Instance } from 'tippy.js'
 import { hideAll } from 'tippy.js'
 
 import useOutsideClick from '~/hooks/useOutsideClick'
+import useDarkFloat from '~/hooks/useDarkFloat'
 import type { TThemeName, TTooltipPlacement } from '~/spec'
 
 import ConfirmFooter from './ConfirmFooter'
@@ -84,6 +85,7 @@ const Tooltip: FC<TProps> = ({
   forceZIndex = false,
 }) => {
   const s = useSalon()
+  const darkFloat = useDarkFloat()
 
   const tooltipTheme = getCurrentTooltipTheme()
 
@@ -194,6 +196,7 @@ const Tooltip: FC<TProps> = ({
   ])
 
   const wrapperClass = !noPadding ? s.tooltip : cn(s.tooltip, 'p-0')
+  const themedWrapperClass = darkFloat ? cn(wrapperClass, 'dark') : wrapperClass
 
   /**
    * forceZIndex: only used in some special masking scenarios (IconSwitcher)
@@ -202,7 +205,7 @@ const Tooltip: FC<TProps> = ({
   const triggerWrapperClass = forceZIndex ? 'relative z-[1]' : undefined
 
   return (
-    <Tippy className={wrapperClass} {...tippyProps}>
+    <Tippy className={themedWrapperClass} {...tippyProps}>
       <div className={triggerWrapperClass}>{children}</div>
     </Tippy>
   )

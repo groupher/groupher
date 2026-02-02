@@ -111,6 +111,8 @@ export const FIELDS: TDsbFieldMap = {
   glowFixed: true,
   glowOpacity: GLOW_OPACITY.NORMAL,
 
+  darkFloat: true,
+
   // gauss blur
   gaussBlur: 100,
   gaussBlurDark: 100,
