@@ -1,12 +1,12 @@
 // ~/hooks/useDidMount.ts
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function useDidMount(): boolean {
-  const didMount = useRef(false)
+  const [didMount, setDidMount] = useState(false)
 
   useEffect(() => {
-    didMount.current = true
+    setDidMount(true)
   }, [])
 
-  return didMount.current
+  return didMount
 }
