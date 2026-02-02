@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 
+import { ARTICLE_CAT } from '~/const/gtd'
 import type { TArticleFilter } from '~/spec'
 
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
@@ -12,11 +13,11 @@ describe('useArticlesFilter', () => {
 
     expect(result.current.cat).toBeNull()
 
-    const filter = { cat: 'BUG' } satisfies TArticleFilter
+    const filter = { cat: ARTICLE_CAT.BUG } satisfies TArticleFilter
     act(() => result.current.updateActiveFilter(filter))
 
     await waitFor(() => {
-      expect(result.current.cat).toBe('BUG')
+      expect(result.current.cat).toBe(ARTICLE_CAT.BUG)
     })
   })
 })

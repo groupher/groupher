@@ -1,6 +1,6 @@
-import setupStore from '..'
-
+import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATE } from '~/const/gtd'
 import type { TArticleFilter, TPagedArticles, TTag } from '~/spec'
+import setupStore from '..'
 
 describe('stores/articleList', () => {
   it('updates active filters only when keys exist and supports commit with complex data', () => {
@@ -10,14 +10,18 @@ describe('stores/articleList', () => {
     expect(store.activeOrder).toBeNull()
     expect(store.activeState).toBeNull()
 
-    store.updateActiveFilter({ cat: 'BUG' } satisfies TArticleFilter)
-    expect(store.activeCat).toBe('BUG')
+    store.updateActiveFilter({ cat: ARTICLE_CAT.BUG } satisfies TArticleFilter)
+    expect(store.activeCat).toBe(ARTICLE_CAT.BUG)
     expect(store.activeOrder).toBeNull()
 
     // only order updates; cat remains
-    store.updateActiveFilter({ order: 'UPVOTES' } satisfies TArticleFilter)
-    expect(store.activeCat).toBe('BUG')
-    expect(store.activeOrder).toBe('UPVOTES')
+    store.updateActiveFilter({ order: ARTICLE_ORDER.UPVOTES } satisfies TArticleFilter)
+    expect(store.activeCat).toBe(ARTICLE_CAT.BUG)
+    expect(store.activeOrder).toBe(ARTICLE_ORDER.UPVOTES)
+
+    // edge: key exists but value is undefined -> should assign undefined
+    store.updateActiveFilter({ state: ARTICLE_STATE.TODO } satisfies TArticleFilter)
+    expect(store.activeState).toBe(ARTICLE_STATE.TODO)
 
     // edge: key exists but value is undefined -> should assign undefined
     store.updateActiveFilter({ state: undefined } satisfies TArticleFilter)
@@ -31,7 +35,10 @@ describe('stores/articleList', () => {
       entries: [{ id: 'a1' }, { id: 'a2' }],
     }
 
-    const tags: TTag[] = [{ id: 't1', title: 'tag-1' }, { id: 't2', title: 'tag-2' }]
+    const tags: TTag[] = [
+      { id: 't1', title: 'tag-1' },
+      { id: 't2', title: 'tag-2' },
+    ]
 
     store.commit({
       tags,
