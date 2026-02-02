@@ -84,7 +84,10 @@ const Tooltip: FC<TProps> = ({
   const s = useSalon()
   const darkFloat = useDarkFloat()
 
-  const tooltipTheme = darkFloat ? THEME.DARK : THEME.LIGHT
+
+  const { theme } = useTheme()
+  const tooltipTheme = darkFloat ? THEME.DARK : theme
+
 
   const instanceRef = useRef<Instance | null>(null)
   const [active, setActive] = useState(false)
