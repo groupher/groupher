@@ -1,4 +1,5 @@
 import THEME from '~/const/theme'
+import useDidMount from '~/hooks/useDidMount'
 import useTheme from '~/hooks/useTheme'
 import MoonSVG from '~/icons/Moon'
 import SunSVG from '~/icons/Sun'
@@ -8,6 +9,12 @@ import useSalon, { cn } from '../salon/section_label/theme_select'
 export default () => {
   const s = useSalon()
   const { theme, changeMode } = useTheme()
+
+  const mounted = useDidMount()
+
+  if (!mounted) {
+    return null
+  }
 
   return (
     <div className={s.wrapper}>

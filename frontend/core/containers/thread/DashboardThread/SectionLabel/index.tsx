@@ -1,8 +1,7 @@
 import type { FC, ReactNode } from 'react'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
-
 import type { TSpace } from '~/spec'
-import useSalon, { cn } from '../salon/section_label'
+import ArrowButton from '~/widgets/Buttons/ArrowButton'
+import useSalon, { cnMerge } from '../salon/section_label'
 import ThemeSelect from './ThemeSelect'
 
 type TProps = {
@@ -23,7 +22,7 @@ const SectionLabel: FC<TProps> = ({
   addon = null,
   width = 'w-full',
   withThemeSelect = false,
-  detailText = "影响范围",
+  detailText = '影响范围',
   classNames = '',
   showMoreButton = true,
   onDetailClick = () => {},
@@ -32,7 +31,7 @@ const SectionLabel: FC<TProps> = ({
   const s = useSalon({ width, desc, ...spacing })
 
   return (
-    <div className={cn(s.wrapper, classNames)}>
+    <div className={cnMerge(s.wrapper, classNames)}>
       <div className={s.header}>
         <h3 className={s.title}>
           {title}
@@ -45,10 +44,16 @@ const SectionLabel: FC<TProps> = ({
         <div className='grow' />
         {addon}
       </div>
-      {desc && <div className={s.desc}>
-        {desc}
-        {showMoreButton && <ArrowButton left={0.5} onClick={onDetailClick}>{detailText}</ArrowButton>}
-        </div>}
+      {desc && (
+        <div className={s.desc}>
+          {desc}
+          {showMoreButton && (
+            <ArrowButton left={0.5} onClick={onDetailClick}>
+              {detailText}
+            </ArrowButton>
+          )}
+        </div>
+      )}
     </div>
   )
 }

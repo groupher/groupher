@@ -1,10 +1,10 @@
 defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   @moduledoc """
-  KTV(key, type, value(default)) for dashbaord macro/schema/type etc
-  define once, we can get embed_schema fields/default_values/cast_values and GraphQL endpont arg ready
+  KTV(key, type, value(default)) for dashboard macro/schema/type etc
+  define once, we can get embed_schema fields/default_values/cast_values and GraphQL endpoint arg ready
 
   only general key/value like string/boolean are supported
-  int/array of type are not supported, cuz it's hard to leverage between GraphQL/Schama/Types ..
+  int/array of type are not supported, cuz it's hard to leverage between GraphQL/Schema/Types ..
   those cases need to manually add
   """
 
@@ -72,6 +72,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:glow_type, :string, ""],
       [:glow_fixed, :boolean, false],
       [:glow_opacity, :string, ""],
+      [:dark_float, :boolean, true],
 
       ## blur
       [:gauss_blur, :integer, 100],

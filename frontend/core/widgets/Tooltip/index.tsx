@@ -9,8 +9,10 @@ import Tippy from '@groupher/tooltip'
 import { type FC, memo, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import type { Instance } from 'tippy.js'
 import { hideAll } from 'tippy.js'
-
+import THEME from '~/const/theme'
+import useDarkFloat from '~/hooks/useDarkFloat'
 import useOutsideClick from '~/hooks/useOutsideClick'
+import useTheme from '~/hooks/useTheme'
 import type { TThemeName, TTooltipPlacement } from '~/spec'
 
 import ConfirmFooter from './ConfirmFooter'
@@ -20,10 +22,7 @@ import useSalon, { cn } from './salon'
 /**
  * Current tooltip theme.
  * For now it's hard-coded.
- * Later: replace this with "read from dashboard settings".
  */
-const getCurrentTooltipTheme = (): TThemeName => 'dark' // TODO: read from dashboard config
-
 export type TProps = {
   children: ReactNode
   content: string | ReactNode
@@ -84,8 +83,10 @@ const Tooltip: FC<TProps> = ({
   forceZIndex = false,
 }) => {
   const s = useSalon()
+  const darkFloat = useDarkFloat()
 
-  const tooltipTheme = getCurrentTooltipTheme()
+  const { theme } = useTheme()
+  const tooltipTheme = darkFloat ? THEME.DARK : theme
 
   const instanceRef = useRef<Instance | null>(null)
   const [active, setActive] = useState(false)

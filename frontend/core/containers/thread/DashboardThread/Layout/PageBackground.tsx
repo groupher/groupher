@@ -1,7 +1,6 @@
-import { useState } from 'react'
 import { getCSSVar } from '~/css'
 import { camelize, titleCaseHM, upperSnakeCase } from '~/fmt'
-import useMount from '~/hooks/useMount'
+import useDidMount from '~/hooks/useDidMount'
 import useTheme from '~/hooks/useTheme'
 import CheckSVG from '~/icons/Check'
 import { FIELD } from '../constant'
@@ -13,9 +12,7 @@ import useSalon, { cn } from '../salon/layout/page_background'
 export default () => {
   const { rawBg, edit, isTouched, isDarkTouched, saving } = usePageBg()
 
-  const [mounted, setMounted] = useState(false)
-
-  useMount(() => setMounted(true))
+  const mounted = useDidMount()
 
   const s = useSalon()
   const { isLightTheme } = useTheme()
@@ -24,36 +21,37 @@ export default () => {
     <section className={s.wrapper}>
       <SectionLabel
         title='页面背景色'
-        desc="设置主页面背景色。参考"
+        desc='设置主页面背景色。参考'
         classNames='pr-8'
         withThemeSelect
       />
 
       <div className={s.themeGroup}>
-        {s.bgColorNames.map((bg, index) => {
-          const bgTitle = titleCaseHM(bg)
-          const pageName = camelize(bg)
-          const bgVal = getCSSVar(`color-page-${pageName}`)
-          const active = rawBg === bgVal && !!rawBg
+        {mounted &&
+          s.bgColorNames.map((bg, index) => {
+            const bgTitle = titleCaseHM(bg)
+            const pageName = camelize(bg)
+            const bgVal = getCSSVar(`color-page-${pageName}`)
+            const active = rawBg === bgVal && !!rawBg
 
-          return (
-            <button
-              key={bg}
-              className={cn(s.block, `rotate-${s.rotateAngle[index]}`, active && s.blockActive)}
-              onClick={() => {
-                edit(upperSnakeCase(bg), isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK)
-              }}
-            >
-              <div className={cn(s.blockInner, s.getPageClass(pageName))}>
-                {active && <CheckSVG className={s.checker} />}
-              </div>
-              <div className={s.footer}>
-                <div className={s.colorTitle}>{bgTitle}</div>
-                <div className={s.hex}>{mounted && bgVal}</div>
-              </div>
-            </button>
-          )
-        })}
+            return (
+              <button
+                key={bg}
+                className={cn(s.block, `rotate-${s.rotateAngle[index]}`, active && s.blockActive)}
+                onClick={() => {
+                  edit(upperSnakeCase(bg), isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK)
+                }}
+              >
+                <div className={cn(s.blockInner, s.getPageClass(pageName))}>
+                  {active && <CheckSVG className={s.checker} />}
+                </div>
+                <div className={s.footer}>
+                  <div className={s.colorTitle}>{bgTitle}</div>
+                  <div className={s.hex}>{bgVal}</div>
+                </div>
+              </button>
+            )
+          })}
       </div>
 
       {isLightTheme ? (

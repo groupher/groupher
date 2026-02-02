@@ -122,6 +122,8 @@ export type TDsbFieldMap = {
   glowFixed: boolean
   glowOpacity: string
 
+  darkFloat: boolean
+
   // gauss blur
   gaussBlur: int
   gaussBlurDark: int

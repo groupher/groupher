@@ -1,13 +1,13 @@
 import CheckLabel from '~/widgets/CheckLabel'
 import { FIELD } from '../constant'
-import usePrimaryColor from '../logic/usePrimaryColor'
+import useDarkFloat from '../logic/useDarkFloat'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon, { cnMerge } from '../salon/layout/float_background'
 
 export default () => {
   const s = useSalon()
-  const { isTouched, saving } = usePrimaryColor()
+  const { darkFloat, edit, isTouched, saving } = useDarkFloat()
 
   return (
     <section className={s.wrapper}>
@@ -17,8 +17,8 @@ export default () => {
       />
 
       <div className={s.select}>
-        <button className={s.layout}>
-          <div className={cnMerge(s.block, s.blockActive)}>
+        <button className={s.layout} onClick={() => edit(true, FIELD.DARK_FLOAT)}>
+          <div className={cnMerge(s.block, darkFloat && s.blockActive)}>
             <div
               className={cnMerge(s.popover, 'left-20 top-12')}
               style={{ borderColor: 'dimgray' }}
@@ -47,10 +47,10 @@ export default () => {
             </div>
           </div>
 
-          <CheckLabel title='始终使用深色' active top={4} />
+          <CheckLabel title='始终使用深色' active={darkFloat} top={4} />
         </button>
-        <button className={s.layout}>
-          <div className={cnMerge(s.block)}>
+        <button className={s.layout} onClick={() => edit(false, FIELD.DARK_FLOAT)}>
+          <div className={cnMerge(s.block, !darkFloat && s.blockActive)}>
             <div
               className={cnMerge(s.popover, 'left-5 top-12 w-24 bg-white')}
               style={{ borderColor: 'dimgray' }}
@@ -89,17 +89,11 @@ export default () => {
             </div>
           </div>
 
-          <CheckLabel title='跟随主题' top={4} />
+          <CheckLabel title='跟随主题' active={!darkFloat} top={4} />
         </button>
       </div>
 
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.PRIMARY_COLOR}
-        loading={saving}
-        width='w-11/12'
-        top={6}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.DARK_FLOAT} loading={saving} top={6} />
     </section>
   )
 }

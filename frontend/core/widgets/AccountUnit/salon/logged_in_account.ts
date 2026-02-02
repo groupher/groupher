@@ -6,7 +6,7 @@ export default () => {
   const { cn, avatar, fg, bg, fill, menu, sexyBorder, linkable } = useTwBelt()
 
   return {
-    panel: 'w-40 px-2 py-2',
+    panel: 'w-40 py-2',
     avatar: cn('size-5', avatar('sm')),
     baseInfo: 'ml-3 mb-4',
     userName: cn('text-sm bold-sm', fg('title')),

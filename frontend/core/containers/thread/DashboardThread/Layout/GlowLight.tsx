@@ -1,4 +1,5 @@
 import { GLOW_EFFECTS_KEYS, GLOW_OPACITY } from '~/const/glow_effect'
+import useDidMount from '~/hooks/useDidMount'
 import ClossSVG from '~/icons/CloseLight'
 
 import DLightSVG from '~/icons/DLight'
@@ -11,6 +12,8 @@ import useSalon, { cn } from '../salon/layout/glow_light'
 
 export default () => {
   const s = useSalon()
+
+  const mounted = useDidMount()
 
   const {
     glowType,
@@ -42,15 +45,16 @@ export default () => {
           </div>
         </button>
 
-        {GLOW_EFFECTS_KEYS.map((effect) => (
-          <button
-            key={effect}
-            className={cn(s.block, effect === glowType && s.blockActive)}
-            onClick={() => edit(effect, 'glowType')}
-          >
-            <div className={s.bgWrapper} style={{ background: `${s.bgStyle2(effect)}` }} />
-          </button>
-        ))}
+        {mounted &&
+          GLOW_EFFECTS_KEYS.map((effect) => (
+            <button
+              key={effect}
+              className={cn(s.block, effect === glowType && s.blockActive)}
+              onClick={() => edit(effect, 'glowType')}
+            >
+              <div className={s.bgWrapper} style={{ background: `${s.bgStyle2(effect)}` }} />
+            </button>
+          ))}
       </div>
 
       <SavingBar

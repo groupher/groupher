@@ -32,13 +32,7 @@ export default () => {
           </div>
           <p className={s.desc}>作用于各类功能按钮，Tab 高亮，菜单高亮等品牌颜色。</p>
 
-          <SavingBar
-            isTouched={isTouched}
-            field={FIELD.PRIMARY_COLOR}
-            loading={saving}
-            width='w-11/12'
-            top={6}
-          />
+          <SavingBar isTouched={isTouched} field={FIELD.PRIMARY_COLOR} loading={saving} top={6} />
         </div>
 
         <div className={s.block}>
@@ -59,13 +53,7 @@ export default () => {
         </div>
       </div>
 
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.PRIMARY_COLOR}
-        loading={saving}
-        width='w-11/12'
-        top={6}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.PRIMARY_COLOR} loading={saving} top={6} />
     </section>
   )
 }
