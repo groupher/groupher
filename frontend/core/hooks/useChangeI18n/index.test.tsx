@@ -1,0 +1,28 @@
+import { act, renderHook, waitFor } from '@testing-library/react'
+import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
+import useChangeI18n from '~/hooks/useChangeI18n'
+import useTrans from '~/hooks/useTrans'
+import type { TLocale } from '~/spec'
+
+vi.mock('~/i18n', () => {
+  return {
+    loadLocaleFile: vi.fn(async () => ({ post: 'Hi' })),
+  }
+})
+
+describe('useChangeI18n', () => {
+  it('loads locale file and commits to locale store', async () => {
+    const wrapper = makeStoreWrapper({ localeData: '{}' })
+    const { result } = renderHook(() => ({ i18n: useChangeI18n(), trans: useTrans() }), { wrapper })
+
+    const zh: TLocale = 'zh'
+    act(() => result.current.i18n.changeLocale(zh))
+
+    await waitFor(() => {
+      expect(result.current.i18n.locale).toBe(zh)
+    })
+    await waitFor(() => {
+      expect(result.current.trans.t('post')).toBe('Hi')
+    })
+  })
+})

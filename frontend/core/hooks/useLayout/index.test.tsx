@@ -1,0 +1,36 @@
+import { renderHook } from '@testing-library/react'
+
+import {
+  AVATAR_LAYOUT,
+  BANNER_LAYOUT,
+  BRAND_LAYOUT,
+  CHANGELOG_LAYOUT,
+  KANBAN_CARD_LAYOUT,
+  KANBAN_LAYOUT,
+  POST_LAYOUT,
+  TAG_LAYOUT,
+} from '~/const/layout'
+
+import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
+import useLayout from '~/hooks/useLayout'
+
+describe('useLayout', () => {
+  it('returns layout fields projection', () => {
+    const wrapper = makeStoreWrapper({
+      dashboard: {
+        avatarLayout: AVATAR_LAYOUT.SQUARE,
+        bannerLayout: BANNER_LAYOUT.HEADER,
+        brandLayout: BRAND_LAYOUT.BOTH,
+        tagLayout: TAG_LAYOUT.HASH,
+        postLayout: POST_LAYOUT.QUORA,
+        kanbanLayout: KANBAN_LAYOUT.CLASSIC,
+        kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,
+        changelogLayout: CHANGELOG_LAYOUT.CLASSIC,
+      },
+    })
+
+    const { result } = renderHook(() => useLayout(), { wrapper })
+    expect(result.current.avatarLayout).toBe(AVATAR_LAYOUT.SQUARE)
+    expect(result.current.postLayout).toBe(POST_LAYOUT.QUORA)
+  })
+})

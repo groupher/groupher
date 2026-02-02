@@ -1,7 +1,7 @@
-import { useRef } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
+import { useRef } from 'react'
 
-import useOutsideClick from '../useOutsideClick'
+import useOutsideClick from '~/hooks/useOutsideClick'
 
 const SingleRefExample = ({ onOutside }: { onOutside: () => void }) => {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -32,7 +32,6 @@ const MultiRefExample = ({ onOutside }: { onOutside: () => void }) => {
 describe('useOutsideClick', () => {
   it('calls callback only when clicking outside of a single ref', () => {
     const onOutside = vi.fn()
-
     render(<SingleRefExample onOutside={onOutside} />)
 
     fireEvent.click(screen.getByText('inside'))
@@ -44,7 +43,6 @@ describe('useOutsideClick', () => {
 
   it('supports multiple refs', () => {
     const onOutside = vi.fn()
-
     render(<MultiRefExample onOutside={onOutside} />)
 
     fireEvent.click(screen.getByText('inside-a'))

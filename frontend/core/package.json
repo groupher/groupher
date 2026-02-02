@@ -17,6 +17,6 @@
     "build": "echo 'skip build'"
   },
   "lint-staged": {
-    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
+    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.app.json"
   }
 }

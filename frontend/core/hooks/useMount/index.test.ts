@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react'
 
-import useMount from '../useMount'
+import useMount from '~/hooks/useMount'
 
 it('runs mount effect once and calls cleanup on unmount', () => {
   const cleanup = vi.fn()

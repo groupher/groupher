@@ -63,5 +63,5 @@
     ".next/types/**/*.ts",
     "../landing/app/widgets/Main.tsx"
   ],
-  "exclude": ["node_modules", "**/*.test.ts"]
+  "exclude": ["node_modules"]
 }
