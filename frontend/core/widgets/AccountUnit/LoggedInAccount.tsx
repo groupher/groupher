@@ -31,6 +31,7 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
 
   return (
     <Tooltip
+      offset={[18, 5]}
       content={
         <div className={s.panel}>
           <div className={s.baseInfo}>

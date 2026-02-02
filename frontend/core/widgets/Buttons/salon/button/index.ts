@@ -83,7 +83,7 @@ export default function useButtonSalon({
   }
 
   const solidPrimaryFgOverride = () => {
-    if (!ghost && tone === 'primary') return fg('black')
+    if (!ghost && tone === 'primary') return 'dark:text-black'
     return ''
   }
 

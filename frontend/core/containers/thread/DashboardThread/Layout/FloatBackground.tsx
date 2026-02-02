@@ -93,13 +93,7 @@ export default () => {
         </button>
       </div>
 
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.DARK_FLOAT}
-        loading={saving}
-        width='w-11/12'
-        top={6}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.DARK_FLOAT} loading={saving} top={6} />
     </section>
   )
 }
