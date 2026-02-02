@@ -183,8 +183,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $primaryColor: String $postLayout: String, $kanbanLayout: String, $kanbanCardLayout: String, $footerLayout: String, $broadcastEnable: Boolean, $kanbanBgColors: [String], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: String, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: String, $darkFloat: Boolean) {
-      updateDashboardLayout(community: $community, primaryColor: $primaryColor, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, darkFloat: $darkFloat) {
+    mutation($community: String!, $primaryColor: String, $subPrimaryColor: String, $postLayout: String, $kanbanLayout: String, $kanbanCardLayout: String, $footerLayout: String, $broadcastEnable: Boolean, $kanbanBgColors: [String], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: String, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: String, $darkFloat: Boolean) {
+      updateDashboardLayout(community: $community, primaryColor: $primaryColor, subPrimaryColor: $subPrimaryColor, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, darkFloat: $darkFloat) {
         id
         title
         dashboard {
@@ -198,6 +198,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
             gaussBlurDark
             brandLayout
             darkFloat
+            subPrimaryColor
           }
         }
       }
@@ -209,6 +210,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       variables = %{
         community: community.slug,
         primaryColor: "PURPLE",
+        subPrimaryColor: "YELLOW",
         postLayout: "new layout",
         broadcastEnable: true,
         kanbanLayout: "waterfall",
@@ -232,6 +234,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
       assert found.dashboard.layout.primary_color == "PURPLE"
+      assert found.dashboard.layout.sub_primary_color == "YELLOW"
       assert found.dashboard.layout.post_layout == "new layout"
       assert found.dashboard.layout.kanban_layout == "waterfall"
       assert found.dashboard.layout.kanban_card_layout == "full"

@@ -79,6 +79,7 @@ export const FIELDS: TDsbFieldMap = {
 
   // layout
   primaryColor: COLOR.BLACK,
+  subPrimaryColor: COLOR.BLACK,
   postLayout: POST_LAYOUT.QUORA,
   kanbanLayout: KANBAN_LAYOUT.CLASSIC,
   kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,

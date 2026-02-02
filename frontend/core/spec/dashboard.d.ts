@@ -64,6 +64,7 @@ export type TDsb = {
   layout?: {
     brandLayout: TBrandLayout
     primaryColor: TColorName
+    subPrimaryColor: TColorName
     topbarLayout: TTopbarLayout
     topbarBg: TColorName
     tagLayout: TTagLayout

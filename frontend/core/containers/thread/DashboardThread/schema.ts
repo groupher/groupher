@@ -161,6 +161,7 @@ const updateDashboardLayout = gql`
   mutation (
     $community: String!
     $primaryColor: String
+    $subPrimaryColor: String
     $postLayout: String
     $kanbanLayout: String
     $kanbanCardLayout: String
@@ -187,6 +188,7 @@ const updateDashboardLayout = gql`
     updateDashboardLayout(
       community: $community
       primaryColor: $primaryColor
+      subPrimaryColor: $subPrimaryColor
       postLayout: $postLayout
       kanbanLayout: $kanbanLayout
       kanbanCardLayout: $kanbanCardLayout

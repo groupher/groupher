@@ -48,6 +48,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
 
     [
       [:primary_color, :string, ""],
+      [:sub_primary_color, :string, ""],
       [:post_layout, :string, ""],
       [:kanban_layout, :string, ""],
       [:kanban_card_layout, :string, ""],

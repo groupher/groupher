@@ -49,6 +49,7 @@ const makeDashboard = (slug = 'home') => {
     },
     layout: {
       primaryColor: '#2563eb',
+      subPrimaryColor: '#2563eb',
       postLayout: 'list',
       kanbanLayout: 'basic',
       kanbanCardLayout: 'basic',

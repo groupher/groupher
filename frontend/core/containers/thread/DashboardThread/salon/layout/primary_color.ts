@@ -1,10 +1,9 @@
-import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn, cnMerge } from '~/css'
 
 export default () => {
-  const { cn, primary, fg, rainbow } = useTwBelt()
+  const { cn, primary, fg } = useTwBelt()
 
   return {
     content: 'row align-start justify-between',
@@ -16,6 +15,6 @@ export default () => {
     ballWrapper: cn('align-both size-9 align-both circle border pointer', primary('borderSoft')),
     subBall: 'size-7',
     colorBall: cn('size-7 circle', primary('bg')),
-    subColorBall: cn('size-5', rainbow(COLOR.PURPLE, 'bg')),
+    subColorBall: 'size-5 circle',
   }
 }
