@@ -28,7 +28,9 @@ export default defineConfig({
     setupFiles: [path.join(repoRoot, 'frontend/core/vitest.setup.ts')],
 
     // Colocated tests convention for this monorepo.
-    include: ['frontend/**/tests/**/*.test.{ts,tsx}'],
+    // - legacy: `frontend/**/tests/**/*.test.{ts,tsx}`
+    // - new: colocate beside modules (e.g. `hooks/useX/index.test.tsx`)
+    include: ['frontend/**/*.test.{ts,tsx}'],
     exclude: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/build/**'],
 
     globals: true,
