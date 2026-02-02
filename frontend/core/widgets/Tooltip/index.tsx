@@ -9,9 +9,9 @@ import Tippy from '@groupher/tooltip'
 import { type FC, memo, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import type { Instance } from 'tippy.js'
 import { hideAll } from 'tippy.js'
-
-import useOutsideClick from '~/hooks/useOutsideClick'
+import THEME from '~/const/theme'
 import useDarkFloat from '~/hooks/useDarkFloat'
+import useOutsideClick from '~/hooks/useOutsideClick'
 import type { TThemeName, TTooltipPlacement } from '~/spec'
 
 import ConfirmFooter from './ConfirmFooter'
@@ -21,10 +21,7 @@ import useSalon, { cn } from './salon'
 /**
  * Current tooltip theme.
  * For now it's hard-coded.
- * Later: replace this with "read from dashboard settings".
  */
-const getCurrentTooltipTheme = (): TThemeName => 'dark' // TODO: read from dashboard config
-
 export type TProps = {
   children: ReactNode
   content: string | ReactNode
@@ -87,7 +84,7 @@ const Tooltip: FC<TProps> = ({
   const s = useSalon()
   const darkFloat = useDarkFloat()
 
-  const tooltipTheme = getCurrentTooltipTheme()
+  const tooltipTheme = darkFloat ? THEME.DARK : THEME.LIGHT
 
   const instanceRef = useRef<Instance | null>(null)
   const [active, setActive] = useState(false)
@@ -196,7 +193,6 @@ const Tooltip: FC<TProps> = ({
   ])
 
   const wrapperClass = !noPadding ? s.tooltip : cn(s.tooltip, 'p-0')
-  const themedWrapperClass = darkFloat ? cn(wrapperClass, 'dark') : wrapperClass
 
   /**
    * forceZIndex: only used in some special masking scenarios (IconSwitcher)
@@ -205,7 +201,7 @@ const Tooltip: FC<TProps> = ({
   const triggerWrapperClass = forceZIndex ? 'relative z-[1]' : undefined
 
   return (
-    <Tippy className={themedWrapperClass} {...tippyProps}>
+    <Tippy className={wrapperClass} {...tippyProps}>
       <div className={triggerWrapperClass}>{children}</div>
     </Tippy>
   )

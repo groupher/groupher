@@ -638,7 +638,7 @@ type RootMutationType {
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dashboardSection: DashboardSection, primaryColor: String, postLayout: String, kanbanLayout: String, kanbanCardLayout: String, docLayout: String, docFaqLayout: String, tagLayout: String, avatarLayout: String, brandLayout: String, bannerLayout: String, topbarLayout: String, topbarBg: String, broadcastLayout: String, broadcastBg: String, broadcastEnable: Boolean, broadcastArticleLayout: String, broadcastArticleBg: String, broadcastArticleEnable: Boolean, changelogLayout: String, footerLayout: String, headerLayout: String, glowType: String, glowFixed: Boolean, glowOpacity: String, gaussBlur: Int, gaussBlurDark: Int, kanbanBgColors: [String]
+    community: String!, dashboardSection: DashboardSection, primaryColor: String, postLayout: String, kanbanLayout: String, kanbanCardLayout: String, docLayout: String, docFaqLayout: String, tagLayout: String, avatarLayout: String, brandLayout: String, bannerLayout: String, topbarLayout: String, topbarBg: String, broadcastLayout: String, broadcastBg: String, broadcastEnable: Boolean, broadcastArticleLayout: String, broadcastArticleBg: String, broadcastArticleEnable: Boolean, changelogLayout: String, footerLayout: String, headerLayout: String, glowType: String, glowFixed: Boolean, glowOpacity: String, darkFloat: Boolean, gaussBlur: Int, gaussBlurDark: Int, kanbanBgColors: [String]
   ): Community
 
   "update rss in dashboard"
@@ -921,6 +921,7 @@ type DashboardLayout {
   glowType: String
   glowFixed: Boolean
   glowOpacity: String
+  darkFloat: Boolean
   gaussBlur: Int
   gaussBlurDark: Int
   kanbanBgColors: [String]
