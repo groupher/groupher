@@ -12,6 +12,7 @@ import { hideAll } from 'tippy.js'
 import THEME from '~/const/theme'
 import useDarkFloat from '~/hooks/useDarkFloat'
 import useOutsideClick from '~/hooks/useOutsideClick'
+import useTheme from '~/hooks/useTheme'
 import type { TThemeName, TTooltipPlacement } from '~/spec'
 
 import ConfirmFooter from './ConfirmFooter'
@@ -84,10 +85,8 @@ const Tooltip: FC<TProps> = ({
   const s = useSalon()
   const darkFloat = useDarkFloat()
 
-
   const { theme } = useTheme()
   const tooltipTheme = darkFloat ? THEME.DARK : theme
-
 
   const instanceRef = useRef<Instance | null>(null)
   const [active, setActive] = useState(false)
