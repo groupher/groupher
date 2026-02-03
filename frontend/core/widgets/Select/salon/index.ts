@@ -18,7 +18,7 @@ export default ({ ...spacing }: TProps) => {
     valueIcon: 'size-4',
     menu: cn('mt-1 rounded-md border p-1', bg('popover.bg'), br('divider'), shadow('md')),
     menuList: 'p-0',
-    control: cn('h-8 rounded-md py-1.5'),
+    control: cn('h-8 rounded-md'),
     valueContainer: cn('gap-1 px-1 pointer', fg('digest')),
     placeholder: cn('text-sm', fg('digest')),
     input: '',

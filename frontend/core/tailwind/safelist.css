@@ -29,6 +29,8 @@
 /* hover */
 @source inline('hover:{text,fill}-title');
 @source inline('hover:{border-divider,border-digest,border-hint}');
+@source inline('focus:border-digest');
+@source inline('active:border-digest');
 @source inline('hover:text-rainbow-red');
 @source inline('hover:bg-rainbow-{red,redSoft}');
 @source inline('hover:{bg-hoverBg,bg-menuHoverBg,bg-sandBox,bg-card,bg-alphaBg}');

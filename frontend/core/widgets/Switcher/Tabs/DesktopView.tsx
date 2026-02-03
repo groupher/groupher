@@ -34,22 +34,24 @@ type TProps = {
   /**
    * onChange 不再负责路由跳转；仅用于副作用/埋点等
    */
-  onChange?: (key: string, item: TTabItem, index: number) => void
   activeKey?: string
   size?: TSizeSM
-  slipHeight?: 'px' | 1
+  slipHeight?: 'px' | 0.5
   bottomSpace?: number
   noAnimation?: boolean
+
+  onChange?: (key: string, item: TTabItem, index: number) => void
 }
 
 const Tabs: FC<TProps> = ({
   size = SIZE.MEDIUM,
-  onChange = () => {},
   items = temItems,
   activeKey = '',
-  slipHeight = 1,
+  slipHeight = 0.5,
   bottomSpace = 0,
   noAnimation = false,
+
+  onChange = () => {},
 }) => {
   const s = useSalon({ noAnimation, slipHeight })
   const { isMobile } = useMobileDetect()

@@ -6,7 +6,7 @@
  *
  */
 
-import { type FC, memo } from 'react'
+import { type FC, memo, useId } from 'react'
 import ReactSelect, { components } from 'react-select'
 import CreatableReactSelect from 'react-select/creatable'
 
@@ -78,6 +78,7 @@ const Select: FC<TProps> = ({
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })
+  const instanceId = useId()
   const primaryColor = usePrimaryColor()
   const primaryColorKey = camelize(primaryColor)
   const primary = `var(--color-rainbow-${primaryColorKey})`
@@ -94,6 +95,7 @@ const Select: FC<TProps> = ({
     placeholder,
     isClearable,
     spacing,
+    instanceId,
     classNames: {
       menu: (_) => s.menu,
       menuList: (_) => s.menuList,

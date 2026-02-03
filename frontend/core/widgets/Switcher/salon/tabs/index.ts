@@ -4,7 +4,7 @@ import { getSlipMargin } from '../metric/tabs'
 
 type TProps = {
   noAnimation: boolean
-  slipHeight: 'px' | 1
+  slipHeight: 'px' | 0.5
 }
 
 export default ({ noAnimation, slipHeight }: TProps) => {
