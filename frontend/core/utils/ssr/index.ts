@@ -119,6 +119,7 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     ...baseInfo,
     ...seo,
     ...layout,
+    subPrimaryColor: layout?.subPrimaryColor || layout?.primaryColor,
     ...rss,
     headerLinks,
     footerLinks,

@@ -1,11 +1,6 @@
-import type { TColorName } from '~/spec'
-
 import useTwBelt from '~/hooks/useTwBelt'
 
-type TProps = {
-  color?: TColorName | null
-}
-export default ({ color }: TProps) => {
+export default () => {
   const { cn, linker } = useTwBelt()
 
   const base = cn('size-3 trans-all-100', linker('fill'))

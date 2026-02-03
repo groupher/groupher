@@ -11,6 +11,7 @@ export const ALIGN_HEADER_OFFSET = '100px'
 // do not change, it's map to GQ endpoint updateDashboardLayout
 export const LAYOUT_FIELD = {
   PRIMARY_COLOR: 'primaryColor',
+  SUB_PRIMARY_COLOR: 'subPrimaryColor',
   POST_LAYOUT: 'postLayout',
   KANBAN_LAYOUT: 'kanbanLayout',
   KANBAN_CARD_LAYOUT: 'kanbanCardLayout',

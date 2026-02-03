@@ -34,6 +34,7 @@ describe('stores/dashboard', () => {
 
     store.commit({
       primaryColor: COLOR.ORANGE,
+      subPrimaryColor: COLOR.RED,
       pageBg: 'radial-gradient(circle at 20% 20%, #111, #000)',
       headerLinks,
       footerLinks: [{ index: 1, title: 'GitHub', group: 'LINKS', link: 'https://x' }],
@@ -44,6 +45,7 @@ describe('stores/dashboard', () => {
     })
 
     expect(store.primaryColor).toBe(COLOR.ORANGE)
+    expect(store.subPrimaryColor).toBe(COLOR.RED)
     expect(store.headerLinks).toEqual(headerLinks)
     expect(store.enable.post).toBe(true)
     expect(store.enable.changelog).toBe(false)

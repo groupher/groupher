@@ -1,10 +1,11 @@
-import { COLOR } from '~/const/colors'
+import useSubPrimaryColor from '~/hooks/useSubPrimaryColor'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
 export default () => {
   const { cn, fg, bg, br, fill, menu, sexyBorder, rainbow, rainbowSoft } = useTwBelt()
+  const subPrimaryColor = useSubPrimaryColor()
 
   return {
     wrapper: 'row-center group',
@@ -30,8 +31,8 @@ export default () => {
     //
     levelLabel: cn(
       'text-xs px-2 ml-1.5 py-0.5 rounded-lg bold scale-90',
-      rainbowSoft(COLOR.BLUE),
-      rainbow(COLOR.BLUE, 'fg'),
+      rainbowSoft(subPrimaryColor),
+      rainbow(subPrimaryColor, 'fg'),
     ),
   }
 }

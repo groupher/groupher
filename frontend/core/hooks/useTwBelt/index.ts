@@ -10,6 +10,8 @@ import useAvatarLayout from '~/hooks/useAvatarLayout'
 import useDashboard from '~/hooks/useDashboard'
 import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
+import useSubPrimaryColor from '~/hooks/useSubPrimaryColor'
+
 import type { TColorName, TZIndexType } from '~/spec'
 import { cachedMargin, keyToClass, RAINBOW_ALIAS, STATIC_CLS } from './constant'
 import type {
@@ -31,6 +33,7 @@ export default function useTwBelt(): TRet {
   const metric = useMetric()
   const { isSquare: isAvatarSquare } = useAvatarLayout()
   const primaryColor = usePrimaryColor()
+  const subPrimaryColor = useSubPrimaryColor()
   const { pageBg, pageBgDark } = useDashboard()
 
   const metricLower = metric.toLowerCase()
@@ -72,9 +75,10 @@ export default function useTwBelt(): TRet {
   }
 
   const primary = (prefix: TColorPrefix = 'fg'): string => rainbow(primaryColor, prefix)
+  const subPrimary = (prefix: TColorPrefix = 'fg'): string => rainbow(subPrimaryColor, prefix)
 
   const linker = (prefix: TLinkColorPrefix = 'fg'): string => {
-    return rainbow(primaryColor, prefix as unknown as TColorPrefix)
+    return rainbow(subPrimaryColor, prefix as unknown as TColorPrefix)
   }
 
   const linkable = () => STATIC_CLS.linkable
@@ -227,6 +231,7 @@ export default function useTwBelt(): TRet {
       rainbow,
       rainbowSoft,
       primary,
+      subPrimary,
       linker,
 
       linkable,
@@ -260,6 +265,6 @@ export default function useTwBelt(): TRet {
       page,
     }),
     // deps: only those that can affect returned behaviors/strings
-    [containerClass, pageLightClass, pageDarkClass, isAvatarSquare, primaryColor],
+    [containerClass, pageLightClass, pageDarkClass, isAvatarSquare, primaryColor, subPrimaryColor],
   )
 }

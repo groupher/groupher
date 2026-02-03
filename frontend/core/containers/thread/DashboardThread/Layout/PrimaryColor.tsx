@@ -1,9 +1,10 @@
 import ColorSelector from '~/widgets/ColorSelector'
 import { FIELD } from '../constant'
 import usePrimaryColor from '../logic/usePrimaryColor'
+import SubPrimaryColor from './SubPrimaryColor'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
-import useSalon, { cn, cnMerge } from '../salon/layout/primary_color'
+import useSalon from '../salon/layout/primary_color'
 
 export default () => {
   const s = useSalon()
@@ -35,25 +36,8 @@ export default () => {
           <SavingBar isTouched={isTouched} field={FIELD.PRIMARY_COLOR} loading={saving} top={6} />
         </div>
 
-        <div className={s.block}>
-          <div className={cn(s.head, s.subHead)}>
-            <div className={cnMerge(s.ballWrapper, s.subBall)}>
-              <ColorSelector
-                activeColor={primaryColor}
-                onChange={(color) => edit(color, 'primaryColor')}
-                placement='right'
-                offset={[-1, 15]}
-              >
-                <div className={cnMerge(s.colorBall, s.subColorBall)} />
-              </ColorSelector>
-            </div>
-            <div className={s.title}>强调色</div>
-          </div>
-          <p className={s.desc}>未读提示，超链接，身份等级，状态标签等颜色</p>
-        </div>
+        <SubPrimaryColor />
       </div>
-
-      <SavingBar isTouched={isTouched} field={FIELD.PRIMARY_COLOR} loading={saving} top={6} />
     </section>
   )
 }

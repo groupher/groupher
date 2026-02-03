@@ -58,6 +58,7 @@ export type TRet = {
   rainbow: (color: TColorName, prefix?: TColorPrefix) => string
   rainbowSoft: (color: TColorName | string) => string
   primary: (prefix?: TColorPrefix) => string
+  subPrimary: (prefix?: TColorPrefix) => string
   linker: (prefix?: TLinkColorPrefix) => string
 
   linkable: () => string
