@@ -1,8 +1,6 @@
 import type { FC } from 'react'
-
-import type { TColorName } from '~/spec'
-
 import ArrowSVG from '~/icons/Arrow'
+import type { TColorName } from '~/spec'
 
 import useSalon from '../salon/arrow_button/arrow'
 
@@ -15,8 +13,8 @@ type TProps = {
   down: boolean
 }
 
-const Arrow: FC<TProps> = ({ color, leftLayout, up, down }) => {
-  const s = useSalon({ color })
+const Arrow: FC<TProps> = ({ leftLayout, up, down }) => {
+  const s = useSalon()
 
   if (!leftLayout) {
     if (down) return <ArrowSVG className={s.downArrow} />

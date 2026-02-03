@@ -3,9 +3,8 @@
  */
 
 import type { FC } from 'react'
-
-import type { TSpace } from '~/spec'
 import useAccount from '~/hooks/useAccount'
+import type { TSpace } from '~/spec'
 
 import useSalon from './salon'
 
