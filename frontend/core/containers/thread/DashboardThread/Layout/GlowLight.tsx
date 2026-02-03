@@ -57,22 +57,11 @@ export default () => {
           ))}
       </div>
 
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.GLOW_TYPE}
-        loading={saving}
-        top={10}
-        width='w-11/12'
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.GLOW_TYPE} loading={saving} top={10} />
 
       <div className='mb-10' />
 
-      <SavingBar
-        isTouched={isGrowFixedTouched}
-        field={FIELD.GLOW_FIXED}
-        loading={saving}
-        width='w-11/12'
-      >
+      <SavingBar isTouched={isGrowFixedTouched} field={FIELD.GLOW_FIXED} loading={saving}>
         <div className={s.settings}>
           <h3 className={s.title}>滑动跟随:</h3>
           <Radio
@@ -100,7 +89,6 @@ export default () => {
           isTouched={isGrowOpacityTouched}
           field={FIELD.GLOW_OPACITY}
           loading={saving}
-          width='88%'
           top={-8}
         >
           <div className={s.settings}>

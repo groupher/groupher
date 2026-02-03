@@ -46,7 +46,7 @@ export default ({ children }) => {
 
       {children}
 
-      <SavingBar field={FIELD.SEO} isTouched={isTouched} loading={saving} width='7/12' />
+      <SavingBar field={FIELD.SEO} isTouched={isTouched} loading={saving} />
     </div>
   )
 }

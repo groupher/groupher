@@ -25,8 +25,8 @@ export default () => {
 
       <SectionLabel
         title='整体布局'
-        desc="整体页面的 Header 布局，适用于除文章页的所有页面。"
-        detailText="查看示例"
+        desc='整体页面的 Header 布局，适用于除文章页的所有页面。'
+        detailText='查看示例'
       />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(BANNER_LAYOUT.HEADER, 'bannerLayout')}>
@@ -139,13 +139,7 @@ export default () => {
           <CheckLabel title='左右分栏' active={layout === BANNER_LAYOUT.SIDEBAR} top={4} />
         </button>
       </div>
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.BANNER_LAYOUT}
-        loading={saving}
-        top={10}
-        width='w-11/12'
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.BANNER_LAYOUT} loading={saving} top={10} />
     </div>
   )
 }

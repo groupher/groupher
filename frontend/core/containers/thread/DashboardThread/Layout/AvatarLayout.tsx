@@ -46,13 +46,7 @@ export default () => {
           <CheckLabel title='圆形' active={layout === AVATAR_LAYOUT.CIRCLE} top={3} />
         </button>
       </div>
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.AVATAR_LAYOUT}
-        loading={saving}
-        width='w-10/12'
-        top={8}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.AVATAR_LAYOUT} loading={saving} top={8} />
     </div>
   )
 }

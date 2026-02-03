@@ -42,7 +42,7 @@ const OtherInfo: FC = () => {
         field={FIELD.MEDIA_REPORTS}
         isTouched={isMediaReportsTouched}
         loading={false}
-        top={30}
+        top={14}
         left={-1}
       />
     </div>

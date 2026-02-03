@@ -23,7 +23,7 @@ export default () => {
         isTouched={isSocialLinksTouched}
         field={FIELD.SOCIAL_LINKS}
         loading={saving}
-        top={50}
+        top={10}
       />
     </div>
   )
