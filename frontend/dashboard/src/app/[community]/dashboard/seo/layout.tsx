@@ -6,7 +6,7 @@ import { FIELD } from '~/containers/thread/DashboardThread/constant'
 import useSEO from '~/containers/thread/DashboardThread/logic/useSEO'
 import Portal from '~/containers/thread/DashboardThread/Portal'
 import SavingBar from '~/containers/thread/DashboardThread/SavingBar'
-import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
+import useSalon, { cnMerge } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import Tabs from '~/widgets/Switcher/Tabs'
@@ -30,7 +30,7 @@ export default ({ children }) => {
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
-    <div className={cn(s.content, 'w-2/5')}>
+    <div className={cnMerge(s.content, 'w-2/5')}>
       <Portal
         title='SEO'
         desc='搜索引擎及社交媒体展示优化。'

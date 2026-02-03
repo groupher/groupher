@@ -3,7 +3,7 @@
 import { ALIAS_TABS, DSB_COVERS } from '~/const/route'
 import VIEW from '~/const/view'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
+import useSalon, { cnMerge } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import Tabs from '~/widgets/Switcher/Tabs'
@@ -26,7 +26,7 @@ export default ({ children }) => {
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
-    <div className={cn(s.content, 'w-1/2')}>
+    <div className={cnMerge(s.content, 'w-1/2')}>
       <Portal
         title='别名设置'
         desc='覆盖社区内默认的板块，组件，提示信息等名称，注意对应的路由不会改变。'

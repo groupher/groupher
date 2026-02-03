@@ -2,7 +2,7 @@
 
 import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
+import useSalon, { cnMerge } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
@@ -19,7 +19,7 @@ export default ({ children }) => {
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
-    <div className={cn(s.content, 'w-3/5')}>
+    <div className={cnMerge(s.content, 'w-3/5')}>
       <Portal
         title='管理员'
         desc={

@@ -3,7 +3,7 @@
 import { DSB_COVERS, INFO_TABS } from '~/const/route'
 import VIEW from '~/const/view'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
+import useSalon, { cnMerge } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import Tabs from '~/widgets/Switcher/Tabs'
@@ -27,7 +27,7 @@ export default ({ children }) => {
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
-    <div className={cn(s.content, 'w-2/5')}>
+    <div className={cnMerge(s.content, 'w-2/5')}>
       <Portal
         title='基本信息'
         desc='社区基本信息，社交媒体，关于页面主要信息等。'

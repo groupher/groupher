@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default () => {
   const { cn, br } = useTwBelt()
