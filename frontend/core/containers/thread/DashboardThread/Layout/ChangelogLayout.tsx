@@ -68,13 +68,7 @@ export default () => {
         </button>
       </div>
 
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.CHANGELOG_LAYOUT}
-        loading={saving}
-        width='w-11/12'
-        top={12}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.CHANGELOG_LAYOUT} loading={saving} top={12} />
     </div>
   )
 }

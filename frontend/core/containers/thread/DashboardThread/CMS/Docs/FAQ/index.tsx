@@ -50,7 +50,7 @@ const FAQ: FC<TProps> = ({ sections, editingFAQIndex, editingFAQ, isTouched }) =
             field={FIELD.FAQ_SECTIONS}
             prefix='是否保存排序'
             isTouched={isTouched}
-            top={30}
+            top={12}
           />
         </div>
       </Markdown>

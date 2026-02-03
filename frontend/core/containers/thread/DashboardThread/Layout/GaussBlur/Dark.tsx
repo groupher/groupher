@@ -67,19 +67,12 @@ export default () => {
             top={5}
             min={50}
             max={100}
-            width='w-10/12'
             unit='%'
           />
         </ul>
       </div>
 
-      <SavingBar
-        width='96%'
-        isTouched={isTouched}
-        field={FIELD.GAUSS_BLUR_DARK}
-        loading={saving}
-        top={20}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.GAUSS_BLUR_DARK} loading={saving} top={20} />
     </div>
   )
 }

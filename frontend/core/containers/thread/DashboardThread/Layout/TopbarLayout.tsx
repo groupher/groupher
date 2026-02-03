@@ -49,7 +49,6 @@ export default () => {
           loading={saving}
           left={-10}
           top={30}
-          width='89%'
         >
           <div className={s.bgWrapper}>
             <div>颜色:</div>

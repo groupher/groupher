@@ -17,11 +17,7 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <SectionLabel
-        title='封面目录布局'
-        desc="全部文档的目录布局。"
-        detailText="查看示例"
-      />
+      <SectionLabel title='封面目录布局' desc='全部文档的目录布局。' detailText='查看示例' />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(DOC_LAYOUT.BLOCKS, 'docLayout')}>
           <div className={cn(s.block, docLayout === DOC_LAYOUT.BLOCKS && s.blockActive)}>
@@ -50,20 +46,14 @@ export default () => {
           <CheckLabel title='卡片排列' active={docLayout === DOC_LAYOUT.CARDS} top={4} />
         </button>
       </div>
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.DOC_LAYOUT}
-        loading={saving}
-        width='w-11/12'
-        top={10}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.DOC_LAYOUT} loading={saving} top={10} />
 
       <div className={s.divider} />
 
       <SectionLabel
         title='常见问题（FAQ）布局'
-        desc="当前设置仅针对常见问题的展示样式。"
-        detailText="查看示例"
+        desc='当前设置仅针对常见问题的展示样式。'
+        detailText='查看示例'
       />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(DOC_FAQ_LAYOUT.COLLAPSE, 'docFaqLayout')}>
@@ -88,13 +78,7 @@ export default () => {
           <CheckLabel title='左右列' active={docFaqLayout === DOC_FAQ_LAYOUT.LEFT_RIGHT} top={4} />
         </button>
       </div>
-      <SavingBar
-        isTouched={isFaqTouched}
-        field={FIELD.DOC_FAQ_LAYOUT}
-        loading={saving}
-        width='w-11/12'
-        top={10}
-      />
+      <SavingBar isTouched={isFaqTouched} field={FIELD.DOC_FAQ_LAYOUT} loading={saving} top={10} />
     </div>
   )
 }

@@ -42,13 +42,7 @@ export default () => {
           <CheckLabel title='圆点' active={tagLayout === TAG_LAYOUT.DOT} top={3} />
         </button>
       </div>
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.TAG_LAYOUT}
-        loading={saving}
-        width='w-10/12'
-        top={10}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.TAG_LAYOUT} loading={saving} top={10} />
     </div>
   )
 }

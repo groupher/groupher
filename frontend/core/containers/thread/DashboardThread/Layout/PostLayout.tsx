@@ -99,13 +99,7 @@ export default () => {
         </button>
       </div>
 
-      <SavingBar
-        width='w-11/12'
-        isTouched={isTouched}
-        field={FIELD.POST_LAYOUT}
-        loading={saving}
-        top={20}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.POST_LAYOUT} loading={saving} top={20} />
     </div>
   )
 }

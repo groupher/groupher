@@ -56,7 +56,6 @@ export default () => {
         loading={saving}
         top={10}
         left={1}
-        width='w-11/12'
       />
     </div>
   )
