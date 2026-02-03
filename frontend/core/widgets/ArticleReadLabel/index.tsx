@@ -3,22 +3,30 @@
  */
 
 import type { FC } from 'react'
-import dynamic from 'next/dynamic'
 
+import useAccount from '~/hooks/useAccount'
 import type { TSpace } from '~/spec'
-// import RealLabel from './RealLabel'
 
-const RealLabel = dynamic(() => import('./RealLabel'), {
-  ssr: false,
-})
+import useSalon from './salon'
 
 export type TProps = {
   viewed?: boolean
   size?: number
 } & TSpace
 
-const ArticleReadLabel: FC<TProps> = (props) => {
-  return <RealLabel {...props} />
+const ArticleReadLabel: FC<TProps> = ({ viewed, size = 1.5, ...spacing }) => {
+  const spacing$ = { top: 0.5, right: 2, ...spacing }
+  const s = useSalon({ size, ...spacing$ })
+
+  const { isLogin } = useAccount()
+
+  if (!isLogin) return null
+
+  if (!viewed) {
+    return <div className={s.wrapper} />
+  }
+
+  return null
 }
 
 export default ArticleReadLabel
