@@ -7,10 +7,11 @@ import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
+import type { TCrumbConfig } from '~/spec'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = DOMAIN_TABS.segment
-export const CRUMB_CONFIG = {
+const CRUMB_CONFIG = {
   title: 'dsb.crumb.domain',
   seg,
   toSeg: DSB_COVERS.INTEGRATIONS,
@@ -18,7 +19,7 @@ export const CRUMB_CONFIG = {
     { title: 'dsb.crumb.domain.platform', seg },
     { title: 'dsb.crumb.domain.custom', seg: `${seg}/custom` },
   ],
-}
+} satisfies TCrumbConfig
 
 export default ({ children }) => {
   const s = useSalon()

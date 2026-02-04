@@ -5,14 +5,15 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
+import type { TCrumbConfig } from '~/spec'
 
 const seg = DSB_ROUTE.HEADER
-export const CRUMB_CONFIG = {
+const CRUMB_CONFIG = {
   title: 'dsb.crumb.workplace',
   seg,
   toSeg: DSB_COVERS.INTEGRATIONS,
   children: [{ title: 'dsb.crumb.header', seg }],
-}
+} satisfies TCrumbConfig
 
 export default ({ children }) => {
   const s = useSalon()

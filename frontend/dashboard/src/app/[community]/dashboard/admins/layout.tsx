@@ -5,6 +5,7 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
+import type { TCrumbConfig } from '~/spec'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
 const seg = DSB_ROUTE.ADMINS
@@ -13,7 +14,7 @@ const CRUMB_CONFIG = {
   seg,
   toSeg: DSB_COVERS.WORKPLACE,
   children: [{ title: 'dsb.crumb.admins', seg }],
-}
+} satisfies TCrumbConfig
 
 export default ({ children }) => {
   const s = useSalon()

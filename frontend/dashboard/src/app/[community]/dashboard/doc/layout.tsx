@@ -9,6 +9,7 @@ import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
+import type { TCrumbConfig } from '~/spec'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = DSB_ROUTE.DOC
@@ -22,7 +23,7 @@ const CRUMB_CONFIG = {
     { title: 'dsb.crumb.doc.cover', seg: `${seg}/cover` },
     { title: 'dsb.crumb.doc.faq', seg: `${seg}/faq` },
   ],
-}
+} satisfies TCrumbConfig
 
 export default function DashboardDocLayout({ children }) {
   const s = useSalon()

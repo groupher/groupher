@@ -1,5 +1,5 @@
 import useLocale from '~/hooks/useLocale'
-import { loadLocaleFile, setTransLocale } from '~/i18n'
+import { loadLocaleFile } from '~/i18n'
 import type { TLocale } from '~/spec'
 
 type TRet = {
@@ -15,7 +15,6 @@ const useChangeI18n = (): TRet => {
       .then((localeData) => {
         setLocaleData(JSON.stringify(localeData))
         setLocale(locale)
-        setTransLocale(locale)
       })
       .catch((error) => {
         console.log(`## Failed to load locale file: ${error}`)

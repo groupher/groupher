@@ -7,6 +7,7 @@ import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
+import type { TCrumbConfig } from '~/spec'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = ALIAS_TABS.segment
@@ -19,7 +20,7 @@ const CRUMB_CONFIG = {
     { title: 'dsb.crumb.alias.kanban', seg: `${seg}/kanban` },
     { title: 'common.other', seg: `${seg}/others` },
   ],
-}
+} satisfies TCrumbConfig
 
 export default ({ children }) => {
   const s = useSalon()

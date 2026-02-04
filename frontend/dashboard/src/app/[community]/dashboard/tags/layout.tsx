@@ -5,6 +5,7 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
+import type { TCrumbConfig } from '~/spec'
 
 const seg = DSB_ROUTE.TAGS
 const CRUMB_CONFIG = {
@@ -12,7 +13,7 @@ const CRUMB_CONFIG = {
   seg,
   toSeg: DSB_COVERS.CMS,
   children: [{ title: 'dsb.crumb.tags', seg }],
-}
+} satisfies TCrumbConfig
 
 export default ({ children }) => {
   const s = useSalon()

@@ -14,6 +14,7 @@ import TabItem from './TabItem'
 
 const temItems: TTabItem[] = [
   {
+    // @ts-expect-error
     title: '帖子',
     slug: 'posts',
     icon: 'settings',

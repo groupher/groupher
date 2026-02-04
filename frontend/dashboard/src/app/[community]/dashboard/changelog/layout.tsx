@@ -7,6 +7,7 @@ import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
+import type { TCrumbConfig } from '~/spec'
 
 const seg = DSB_ROUTE.CHANGELOG
 const CRUMB_CONFIG = {
@@ -14,7 +15,7 @@ const CRUMB_CONFIG = {
   seg,
   toSeg: DSB_COVERS.CMS,
   children: [{ title: 'dsb.crumb.changelog', seg }],
-}
+} satisfies TCrumbConfig
 
 const DashboardPostPage = ({ children }) => {
   const s = useSalon()

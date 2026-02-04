@@ -10,7 +10,7 @@ import type {
   DSB_SEO_ROUTE,
   DSB_THIRD_PART_ROUTE,
 } from '~/const/route'
-import type { TConstValues } from '~/spec'
+import type { TConstValues, TTransKey } from '~/spec'
 
 export type TDsbBaseInfoRoute = TConstValues<typeof DSB_INFO_ROUTE>
 export type TDsbSEORoute = TConstValues<typeof DSB_SEO_ROUTE>
@@ -41,7 +41,7 @@ export type TDsbCrumbItem = {
 
 export type TBreadcrumbItem = {
   key?: string
-  title: string
+  title: TTransKey
   path: string
   onClick?: () => void
 }

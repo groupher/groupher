@@ -10,6 +10,7 @@ import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
+import type { TCrumbConfig } from '~/spec'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = SEO_TABS.segment
@@ -21,7 +22,7 @@ const CRUMB_CONFIG = {
     { title: 'dsb.crumb.search_engine', seg },
     { title: 'dsb.crumb.twitter', seg: `${seg}/twitter` },
   ],
-}
+} satisfies TCrumbConfig
 
 export default ({ children }) => {
   const s = useSalon()

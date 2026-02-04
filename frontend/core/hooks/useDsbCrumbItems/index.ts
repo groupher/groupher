@@ -4,13 +4,10 @@ import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
 import { DSB_SEG } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
-import useTrans from '~/hooks/useTrans'
-import type { TTransKey } from '~/spec'
-
-export type TBreadcrumbItem = { title: string; path: string }
+import type { TBreadcrumbItem, TTransKey } from '~/spec'
 
 export type TDsbCrumbNode = {
-  title: string
+  title: TTransKey
 
   /**
    * Segment used for matching current pathname (route semantics).
@@ -59,7 +56,6 @@ const buildActiveChain = (relative: string, root: TDsbCrumbNode): TDsbCrumbNode[
 export default function useDsbCrumbItems(root: TDsbCrumbNode): TBreadcrumbItem[] {
   const pathname = usePathname()
   const { slug } = useCommunity()
-  const { t } = useTrans()
 
   return useMemo(() => {
     if (!pathname || !slug) return []
@@ -83,7 +79,7 @@ export default function useDsbCrumbItems(root: TDsbCrumbNode): TBreadcrumbItem[]
       const to = node.toSeg ?? node.seg
       const full = joinPath(slug, DSB_SEG, to)
       const isLast = i === chain.length - 1
-      return { title: t(node.title as TTransKey), path: isLast ? '' : full }
+      return { title: node.title, path: isLast ? '' : full }
     })
-  }, [pathname, slug, root, t])
+  }, [pathname, slug, root])
 }

@@ -3,9 +3,7 @@
 // import { useSearchParams } from 'next/navigation'
 
 import { LOCALE } from '~/const/i18n'
-import type { TLocale, TTransKey } from '~/spec'
-import en from './en'
-import zh from './zh'
+import type { TLocale } from '~/spec'
 
 /**
  * this query is used for GraphQL, which will be intercepted by frontend
@@ -49,18 +47,6 @@ export const loadLocaleFile = (locale: TLocale = LOCALE.EN) => {
   })
 }
 
-let currentLocale: TLocale = LOCALE.EN
-
-export const setTransLocale = (locale: TLocale): void => {
-  currentLocale = locale
-}
-
-export const trans = (key: TTransKey, locale: TLocale = currentLocale): string => {
-  const dict = locale === LOCALE.ZH ? zh : en
-
-  return dict?.[key] || '--'
-}
-
 const I18nDict = {
   community: '社区',
   posts: '帖子',
@@ -75,58 +61,6 @@ const I18nDict = {
   blog: '博客',
   user: '用户',
   profile: '主页',
-
-  // ArticleCat
-  ALL: '全部',
-  FEATURE: '请求功能',
-  BUG: '问题上报',
-  QUESTION: '求助/疑问',
-  OTHER: '其他',
-  // articleState;
-  TODO: '待办项',
-  WIP: '进行中',
-  DONE: '已完成',
-  SOLVED: '已解决',
-  FIXED: '已修复',
-  REJECT: '关闭',
-  REJECT_DUP: '重复问题',
-  REJECT_NO_PLAN: '无计划',
-  REJECT_REPRO: '无法重现',
-  REJECT_STALE: '过时',
-
-  //
-  PUBLISH: '发布时间',
-  UPVOTE: '投票',
-  UPVOTES: '投票数',
-  COMMENT: '评论',
-  COMMENTS: '评论数',
-  VIEWS: '浏览量',
-
-  // osocial
-  EMAIL: '邮箱地址',
-  HOMEPAGE: '官方主页',
-  TIKTOK: '抖音',
-  WECHAT: '微信',
-  GITHUB: 'Github',
-  TWITTER: '推特',
-  ZHIHU: '知乎',
-  BILIBILI: 'B站',
-  WEIBO: '微博',
-  BOSS: 'Boss 直聘',
-  LAGOU: '拉钩',
-
-  // city
-  chengdu: '成都',
-  wuhan: '武汉',
-  beijing: '北京',
-  shanghai: '上海',
-  hangzhou: '杭州',
-  shenzhen: '深圳',
-  guangzhou: '广州',
-  suzhou: '苏州',
-  xian: '西安',
 }
 
 export const Trans = (key) => I18nDict[key] || key
-
-export const holder = 1

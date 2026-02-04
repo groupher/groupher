@@ -3,7 +3,6 @@ import { useCallback, useMemo } from 'react'
 import { titleCase } from '~/fmt'
 import type { TLocale, TTransKey } from '~/spec'
 import useLocale from '~/stores/locale/hooks'
-import { setTransLocale } from '~/i18n'
 
 type TFmt = 'titleCase' | null
 
@@ -16,10 +15,6 @@ const useTrans = (): TRet => {
   const { locale, localeData } = useLocale()
 
   const localeJson = useMemo(() => JSON.parse(localeData), [localeData])
-
-  useMemo(() => {
-    setTransLocale(locale)
-  }, [locale])
 
   const t = useCallback(
     (key: TTransKey, fmt: TFmt = null): string => {

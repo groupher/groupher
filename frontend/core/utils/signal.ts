@@ -6,12 +6,10 @@ import TYPE from '~/const/type'
 import type {
   TArticle,
   TArticlePubSelector,
-  TAttInfo,
   TCommunity,
   TCommunitySetterStyle,
   TGQLError,
   TPaymentUsage,
-  TReportType,
   TTag,
   TThread,
   TToastType,
@@ -64,13 +62,6 @@ export const addCollection = (): void => {
   send(EVENT.SET_FAVORITE_CONTENT, {
     data: { thread: THREAD.POST },
   })
-}
-
-/**
- * report content
- */
-export const report = (type: TReportType, data?: TAttInfo): void => {
-  send(EVENT.REPORT, { type, data })
 }
 
 export const upvoteArticle = (article: TArticle, viewerHasUpvoted): void => {

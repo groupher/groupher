@@ -2,8 +2,7 @@
 
 import { useSelectedLayoutSegments } from 'next/navigation'
 import useCommunity from '~/hooks/useCommunity'
-import useTrans from '~/hooks/useTrans'
-import type { TTabItem, TTransKey } from '~/spec'
+import type { TTabItem } from '~/spec'
 
 type TTabDef = Omit<TTabItem, 'href'> & { segment?: string }
 
@@ -18,7 +17,6 @@ export default function useDsbLayoutTabs(cfg: TDsbTabs): {
 } {
   const { slug: community } = useCommunity()
   const segments = useSelectedLayoutSegments()
-  const { t } = useTrans()
 
   // ✅ 在 /dashboard/<part>/layout 内：segments[0] 就是 subpart
   const subpart = segments[0] ?? ''
@@ -36,7 +34,7 @@ export default function useDsbLayoutTabs(cfg: TDsbTabs): {
     const resolved = segment === undefined ? slug : segment
     const pathname = resolved ? `/${resolved}` : ''
 
-    return { ...rest, title: t(rest.title as TTransKey), slug, href: `${base}${pathname}` }
+    return { ...rest, title: rest.title, slug, href: `${base}${pathname}` }
   })
 
   return { items, activeTab }

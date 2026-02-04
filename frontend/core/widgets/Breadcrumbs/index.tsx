@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { FC } from 'react'
+import useTrans from '~/hooks/useTrans'
 import type { TBreadcrumbItem, TSpace } from '~/spec'
 
 import useSalon, { cn } from './salon'
@@ -11,6 +12,7 @@ type Props = {
 
 const BreadCrumb: FC<Props> = ({ items, separator = '/', ...spacing }) => {
   const s = useSalon(spacing)
+  const { t } = useTrans()
 
   if (!items.length) return null
 
@@ -26,11 +28,11 @@ const BreadCrumb: FC<Props> = ({ items, separator = '/', ...spacing }) => {
             <li key={item?.key || item.path} className={cn(s.li, isFirst && s.hoverShift)}>
               {clickable ? (
                 <Link href={item.path} className={cn(s.item, s.itemHover)}>
-                  {item.title}
+                  {t(item.title)}
                 </Link>
               ) : (
                 <span aria-current={isLast ? 'page' : undefined} className={cn(s.item, s.curPath)}>
-                  {item.title}
+                  {t(item.title)}
                 </span>
               )}
 

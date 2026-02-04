@@ -6,13 +6,15 @@ import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 
+import type { TCrumbConfig } from '~/spec'
+
 const seg = DSB_ROUTE.THREADS
 const CRUMB_CONFIG = {
   title: 'dsb.crumb.workplace',
   seg,
   toSeg: DSB_COVERS.WORKPLACE,
   children: [{ title: 'dsb.crumb.thread_manage', seg }],
-}
+} satisfies TCrumbConfig
 
 export default ({ children }) => {
   const s = useSalon()
