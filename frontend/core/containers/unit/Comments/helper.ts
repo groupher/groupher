@@ -1,4 +1,5 @@
-import type { TComment } from '~/spec'
+import type { TComment, TLocale } from '~/spec'
+import { trans } from '~/i18n'
 
 // see: https://stackoverflow.com/a/66446126/4050784
 const DateDiff = {
@@ -35,6 +36,7 @@ const DateDiff = {
 export const passedDate = (
   curComment: TComment | undefined,
   nextComment: TComment | undefined,
+  locale: TLocale,
 ): string | null => {
   if (!curComment || !nextComment) return null
 
@@ -44,21 +46,23 @@ export const passedDate = (
   const diffInDays = DateDiff.inDays(new Date(curInsertedAt), new Date(nextInsertedAt))
 
   if (diffInDays >= 5 && diffInDays < 14) {
-    return `${diffInDays} 天后`
+    return `${diffInDays} ${trans('comment.time.days_after', locale)}`
   }
 
   if (diffInDays >= 14 && diffInDays < 30) {
     const diffInWeeks = DateDiff.inWeeks(new Date(curInsertedAt), new Date(nextInsertedAt))
-    return `${diffInWeeks} 周后`
+    return `${diffInWeeks} ${trans('comment.time.weeks_after', locale)}`
   }
 
   if (diffInDays >= 30 && diffInDays < 365) {
     const diffInMonths = DateDiff.inMonths(new Date(curInsertedAt), new Date(nextInsertedAt))
-    return `${diffInMonths} 月后`
+    return `${diffInMonths} ${trans('comment.time.months_after', locale)}`
   }
 
   const diffInYears = DateDiff.inYears(new Date(curInsertedAt), new Date(nextInsertedAt))
-  return diffInYears !== 0 ? `${diffInYears} 年后` : null
+  return diffInYears !== 0
+    ? `${diffInYears} ${trans('comment.time.years_after', locale)}`
+    : null
 }
 
 export const holder = 1

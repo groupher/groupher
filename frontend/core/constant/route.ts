@@ -140,87 +140,87 @@ export const DSB_TAB = {
 export const INFO_TABS: TDsbTabs = {
   segment: DSB_ROUTE.INFO,
   items: [
-    { title: '常规信息', slug: DSB_INFO_ROUTE.BASIC, segment: '' },
-    { title: 'Logo', slug: DSB_INFO_ROUTE.LOGOS },
-    { title: '社交媒体', slug: DSB_INFO_ROUTE.SOCIAL },
-    { title: '其他', slug: DSB_INFO_ROUTE.OTHER },
+    { title: 'dsb.info.basic', slug: DSB_INFO_ROUTE.BASIC, segment: '' },
+    { title: 'dsb.info.logo', slug: DSB_INFO_ROUTE.LOGOS },
+    { title: 'dsb.info.social', slug: DSB_INFO_ROUTE.SOCIAL },
+    { title: 'common.other', slug: DSB_INFO_ROUTE.OTHER },
   ],
 }
 
 export const LAYOUT_TABS: TDsbTabs = {
   segment: DSB_ROUTE.LAYOUT,
   items: [
-    { title: '通用', slug: DSB_LAYOUT_ROUTE.GENERAL, segment: '' },
-    { title: '主题/背景', slug: DSB_LAYOUT_ROUTE.THEME },
-    { title: '讨论区', slug: DSB_LAYOUT_ROUTE.POST },
-    { title: '看板', slug: DSB_LAYOUT_ROUTE.KANBAN },
-    { title: '更新日志', slug: DSB_LAYOUT_ROUTE.CHANGELOG },
-    { title: '文档', slug: DSB_LAYOUT_ROUTE.DOC },
+    { title: 'dsb.layout.general', slug: DSB_LAYOUT_ROUTE.GENERAL, segment: '' },
+    { title: 'dsb.layout.theme', slug: DSB_LAYOUT_ROUTE.THEME },
+    { title: 'dsb.layout.post', slug: DSB_LAYOUT_ROUTE.POST },
+    { title: 'dsb.layout.kanban', slug: DSB_LAYOUT_ROUTE.KANBAN },
+    { title: 'dsb.layout.changelog', slug: DSB_LAYOUT_ROUTE.CHANGELOG },
+    { title: 'dsb.layout.doc', slug: DSB_LAYOUT_ROUTE.DOC },
   ],
 }
 
 export const DOMAIN_TABS: TDsbTabs = {
   segment: DSB_ROUTE.DOMAIN,
   items: [
-    { title: '平台域名', slug: DSB_DOMAIN_ROUTE.PLATFORM, segment: '' },
-    { title: '自定义域名', slug: DSB_DOMAIN_ROUTE.CUSTOM },
+    { title: 'dsb.domain.platform', slug: DSB_DOMAIN_ROUTE.PLATFORM, segment: '' },
+    { title: 'dsb.domain.custom', slug: DSB_DOMAIN_ROUTE.CUSTOM },
   ],
 }
 
 export const BROADCAST_TABS: TDsbTabs = {
   segment: DSB_ROUTE.BROADCAST,
   items: [
-    { title: '站顶横幅', slug: DSB_BROADCAST_ROUTE.GLOBAL, segment: '' },
-    { title: '文章页脚', slug: DSB_BROADCAST_ROUTE.ARTICLE },
+    { title: 'dsb.broadcast.global', slug: DSB_BROADCAST_ROUTE.GLOBAL, segment: '' },
+    { title: 'dsb.broadcast.article', slug: DSB_BROADCAST_ROUTE.ARTICLE },
   ],
 }
 
 export const SEO_TABS: TDsbTabs = {
   segment: DSB_ROUTE.SEO,
   items: [
-    { title: '搜索引擎', slug: DSB_SEO_ROUTE.SEARCH_ENGINE, segment: '' },
-    { title: 'Twitter', slug: DSB_SEO_ROUTE.TWITTER },
+    { title: 'dsb.seo.search_engine', slug: DSB_SEO_ROUTE.SEARCH_ENGINE, segment: '' },
+    { title: 'dsb.seo.twitter', slug: DSB_SEO_ROUTE.TWITTER },
   ],
 }
 
 export const THIRD_PART_TABS: TDsbTabs = {
   segment: DSB_ROUTE['THIRD-PART'],
   items: [
-    { title: '统计分析', slug: DSB_THIRD_PART_ROUTE.ANALYTICS, segment: '' },
-    { title: 'Webhooks', slug: DSB_THIRD_PART_ROUTE.WEBHOOKS },
-    { title: '消息机器人', slug: DSB_THIRD_PART_ROUTE.BOTS },
-    { title: '电子邮件', slug: DSB_THIRD_PART_ROUTE.EMAIL },
-    { title: '内容同步', slug: DSB_THIRD_PART_ROUTE.CONTENT_SYNC },
+    { title: 'dsb.third_part.analytics', slug: DSB_THIRD_PART_ROUTE.ANALYTICS, segment: '' },
+    { title: 'dsb.third_part.webhooks', slug: DSB_THIRD_PART_ROUTE.WEBHOOKS },
+    { title: 'dsb.third_part.bots', slug: DSB_THIRD_PART_ROUTE.BOTS },
+    { title: 'dsb.third_part.email', slug: DSB_THIRD_PART_ROUTE.EMAIL },
+    { title: 'dsb.third_part.content_sync', slug: DSB_THIRD_PART_ROUTE.CONTENT_SYNC },
   ],
 }
 
 export const ALIAS_TABS: TDsbTabs = {
   segment: DSB_ROUTE.ALIAS,
   items: [
-    { title: '板块入口', slug: DSB_ALIAS_ROUTE.THREAD, segment: '' },
-    { title: '看板', slug: DSB_ALIAS_ROUTE.KANBAN },
-    { title: '其他', slug: DSB_ALIAS_ROUTE.OTHERS },
+    { title: 'dsb.alias.thread', slug: DSB_ALIAS_ROUTE.THREAD, segment: '' },
+    { title: 'dsb.alias.kanban', slug: DSB_ALIAS_ROUTE.KANBAN },
+    { title: 'common.other', slug: DSB_ALIAS_ROUTE.OTHERS },
   ],
 }
 
 export const DOC_TABS: TDsbTabs = {
   segment: DSB_ROUTE.DOC,
   items: [
-    { title: '概览', slug: DSB_DOC_ROUTE.TABLE, segment: '' },
-    { title: '目录编排', slug: DSB_DOC_ROUTE.TREE },
-    { title: '封面图标', slug: DSB_DOC_ROUTE.COVER },
-    { title: '常见问题', slug: DSB_DOC_ROUTE.FAQ },
+    { title: 'dsb.doc.table', slug: DSB_DOC_ROUTE.TABLE, segment: '' },
+    { title: 'dsb.doc.tree', slug: DSB_DOC_ROUTE.TREE },
+    { title: 'dsb.doc.cover', slug: DSB_DOC_ROUTE.COVER },
+    { title: 'dsb.doc.faq', slug: DSB_DOC_ROUTE.FAQ },
   ],
 }
 
 export const WIDGET_TABS: TDsbTabs = {
   segment: DSB_ROUTE.WIDGETS,
   items: [
-    { title: '侧边栏', slug: DSB_WIDGET_ROUTE.DRAWER, segment: '' },
-    { title: '居中模态框', slug: DSB_WIDGET_ROUTE.MODAL },
-    { title: '弹出提示', slug: DSB_WIDGET_ROUTE.POPUP },
-    { title: '页面内嵌', slug: DSB_WIDGET_ROUTE.IFRAME },
-    { title: '链接', slug: DSB_WIDGET_ROUTE.LINK },
+    { title: 'dsb.widget.drawer', slug: DSB_WIDGET_ROUTE.DRAWER, segment: '' },
+    { title: 'dsb.widget.modal', slug: DSB_WIDGET_ROUTE.MODAL },
+    { title: 'dsb.widget.popup', slug: DSB_WIDGET_ROUTE.POPUP },
+    { title: 'dsb.widget.iframe', slug: DSB_WIDGET_ROUTE.IFRAME },
+    { title: 'dsb.widget.link', slug: DSB_WIDGET_ROUTE.LINK },
   ],
 }
 

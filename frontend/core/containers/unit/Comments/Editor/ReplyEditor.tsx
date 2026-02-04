@@ -4,6 +4,7 @@ import type { TSubmitState, TComment } from '~/spec'
 
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import CustomScroller from '~/widgets/CustomScroller'
+import useTrans from '~/hooks/useTrans'
 
 import BodyEditor from './BodyEditor'
 import Footer from './Footer'
@@ -20,12 +21,13 @@ type TProps = {
 const ReplyEditor: FC<TProps> = ({ body, submitState, replyTo }) => {
   const s = useSalon()
   const { commentOnChange, replyComment, closeReplyEditor } = useLogic()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <div className={s.header}>
         <div className={s.replyToHint}>
-          回复 <div className={s.replyToAuthor}>{replyTo?.author?.nickname}</div>
+          {t('comment.reply.to')} <div className={s.replyToAuthor}>{replyTo?.author?.nickname}</div>
         </div>
         <div
           className={s.replyToContent}
@@ -39,7 +41,7 @@ const ReplyEditor: FC<TProps> = ({ body, submitState, replyTo }) => {
           {replyTo.id ? (
             <BodyEditor
               body={body}
-              placeholder="// 回复内容（'Tab' 键快速插入）"
+              placeholder={t('comment.reply.placeholder')}
               onChange={(v) => commentOnChange(v)}
             />
           ) : (
@@ -50,7 +52,7 @@ const ReplyEditor: FC<TProps> = ({ body, submitState, replyTo }) => {
 
       <div className={s.footer}>
         <Footer
-          label="回 复"
+          label={t('comment.submit.reply')}
           submitState={submitState}
           body={body}
           onPublish={replyComment}

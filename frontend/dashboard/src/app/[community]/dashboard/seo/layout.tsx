@@ -9,16 +9,17 @@ import SavingBar from '~/containers/thread/DashboardThread/SavingBar'
 import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
+import useTrans from '~/hooks/useTrans'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = SEO_TABS.segment
 const CRUMB_CONFIG = {
-  title: '工作区',
+  title: 'dsb.crumb.workplace',
   seg,
   toSeg: DSB_COVERS.WORKPLACE,
   children: [
-    { title: '搜索引擎', seg },
-    { title: 'Twitter', seg: `${seg}/twitter` },
+    { title: 'dsb.crumb.search_engine', seg },
+    { title: 'dsb.crumb.twitter', seg: `${seg}/twitter` },
   ],
 }
 
@@ -27,13 +28,14 @@ export default ({ children }) => {
 
   const { saving, isTouched } = useSEO()
   const { items, activeTab } = useDsbLayoutTabs(SEO_TABS)
+  const { t } = useTrans()
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
     <div className={cn(s.content, 'w-2/5')}>
       <Portal
-        title='SEO'
-        desc='搜索引擎及社交媒体展示优化。'
+        title={t('dsb.portal.seo.title')}
+        desc={t('dsb.portal.seo.desc')}
         crumbItems={crumbItems}
         withDivider={false}
       />

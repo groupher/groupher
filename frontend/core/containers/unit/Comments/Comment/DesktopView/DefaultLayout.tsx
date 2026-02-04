@@ -5,6 +5,7 @@ import type { TComment } from '~/spec'
 // import Tooltip from '~/widgets/Tooltip'
 import PinSVG from '~/icons/Pin'
 import ArtimentBody from '~/widgets/ArtimentBody'
+import useTrans from '~/hooks/useTrans'
 
 import Header from '../Header'
 import ReplyBar from '../ReplyBar'
@@ -26,6 +27,7 @@ type TProps = {
 const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false, apiMode }) => {
   const s = useSalon()
   const { foldComment } = useLogic()
+  const { t } = useTrans()
 
   const { isPinned, meta } = data
   const { isLegal, illegalReason, illegalWords } = meta
@@ -35,7 +37,7 @@ const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false
       {isPinned && (
         <div className={s.pinState}>
           <PinSVG className={s.pinIcon} />
-          <div className={s.pinText}>置顶讨论</div>
+          <div className={s.pinText}>{t('comment.pin.label')}</div>
         </div>
       )}
       <div className={s.comment}>

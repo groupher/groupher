@@ -6,17 +6,18 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
+import useTrans from '~/hooks/useTrans'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = ALIAS_TABS.segment
 const CRUMB_CONFIG = {
-  title: '工作区',
+  title: 'dsb.crumb.workplace',
   seg,
   toSeg: DSB_COVERS.WORKPLACE,
   children: [
-    { title: '板块入口', seg },
-    { title: '看板', seg: `${seg}/kanban` },
-    { title: '其他', seg: `${seg}/others` },
+    { title: 'dsb.crumb.alias.thread', seg },
+    { title: 'dsb.crumb.alias.kanban', seg: `${seg}/kanban` },
+    { title: 'common.other', seg: `${seg}/others` },
   ],
 }
 
@@ -24,12 +25,13 @@ export default ({ children }) => {
   const s = useSalon()
   const { items, activeTab } = useDsbLayoutTabs(ALIAS_TABS)
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
+  const { t } = useTrans()
 
   return (
     <div className={cn(s.content, 'w-1/2')}>
       <Portal
-        title='别名设置'
-        desc='覆盖社区内默认的板块，组件，提示信息等名称，注意对应的路由不会改变。'
+        title={t('dsb.portal.alias.title')}
+        desc={t('dsb.portal.alias.desc')}
         crumbItems={crumbItems}
         withDivider={false}
       />

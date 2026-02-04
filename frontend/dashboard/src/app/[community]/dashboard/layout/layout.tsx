@@ -6,33 +6,35 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
+import useTrans from '~/hooks/useTrans'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = LAYOUT_TABS.segment
 const CRUMB_CONFIG = {
-  title: '工作区',
+  title: 'dsb.crumb.workplace',
   seg,
   toSeg: DSB_COVERS.WORKPLACE,
   children: [
-    { title: '通用', seg },
-    { title: '主题/背景', seg: `${seg}/theme` },
-    { title: '讨论区', seg: `${seg}/post` },
-    { title: '看板', seg: `${seg}/kanban` },
-    { title: '更新日志', seg: `${seg}/changelog` },
-    { title: '文档', seg: `${seg}/doc` },
+    { title: 'dsb.crumb.layout.general', seg },
+    { title: 'dsb.crumb.layout.theme', seg: `${seg}/theme` },
+    { title: 'dsb.crumb.layout.post', seg: `${seg}/post` },
+    { title: 'dsb.crumb.layout.kanban', seg: `${seg}/kanban` },
+    { title: 'dsb.crumb.layout.changelog', seg: `${seg}/changelog` },
+    { title: 'dsb.crumb.layout.doc', seg: `${seg}/doc` },
   ],
 }
 
 export default ({ children }) => {
   const s = useSalon()
   const { items, activeTab } = useDsbLayoutTabs(LAYOUT_TABS)
+  const { t } = useTrans()
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
     <div className={s.content}>
       <Portal
-        title='布局与样式'
-        desc='社区板块自定义布局与全局样式。'
+        title={t('dsb.portal.layout.title')}
+        desc={t('dsb.portal.layout.desc')}
         withDivider={false}
         crumbItems={crumbItems}
       />

@@ -6,32 +6,34 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
+import useTrans from '~/hooks/useTrans'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = THIRD_PART_TABS.segment
 const CRUMB_CONFIG = {
-  title: '绑定集成',
+  title: 'dsb.crumb.integrations',
   seg,
   toSeg: DSB_COVERS.INTEGRATIONS,
   children: [
-    { title: '统计分析', seg },
-    { title: 'Webhooks', seg: `${seg}/webhooks` },
-    { title: '消息机器人', seg: `${seg}/bots` },
-    { title: '电子邮件', seg: `${seg}/email` },
-    { title: '内容同步', seg: `${seg}/content-sync` },
+    { title: 'dsb.crumb.analytics', seg },
+    { title: 'dsb.crumb.webhooks', seg: `${seg}/webhooks` },
+    { title: 'dsb.crumb.bots', seg: `${seg}/bots` },
+    { title: 'dsb.crumb.email', seg: `${seg}/email` },
+    { title: 'dsb.crumb.content_sync', seg: `${seg}/content-sync` },
   ],
 }
 
 export default ({ children }) => {
   const s = useSalon()
   const { items, activeTab } = useDsbLayoutTabs(THIRD_PART_TABS)
+  const { t } = useTrans()
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
     <div className={s.content}>
       <Portal
-        title='绑定集成'
-        desc='将社区与外部系统连接，实现数据同步、事件通知与协作管理。支持统计分析、Webhook 事件推送、即时通讯 Bot 及内容同步等集成方式。'
+        title={t('dsb.portal.third_part.title')}
+        desc={t('dsb.portal.third_part.desc')}
         withDivider={false}
         crumbItems={crumbItems}
       />

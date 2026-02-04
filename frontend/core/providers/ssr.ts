@@ -4,7 +4,7 @@ import { LOCALE } from '~/const/i18n'
 import { THREAD } from '~/const/thread'
 import { loadLocaleFile } from '~/i18n'
 import { P } from '~/schemas'
-import type { TCommunityInfo, TPagedPosts, TPost, TTag, TThread } from '~/spec'
+import type { TCommunityInfo, TLocale, TPagedPosts, TPost, TTag, TThread } from '~/spec'
 import { gqFetch } from '~/utils/api'
 import { parseDashboard, parseWallpaper } from '~/utils/ssr'
 
@@ -51,11 +51,11 @@ export const getCommunityInfo = async (community$: string): Promise<TCommunityIn
   return initState
 }
 
-export const getLocaleData = async (): Promise<any> => {
+export const getLocaleData = async (locale: TLocale = LOCALE.EN): Promise<any> => {
   'use cache'
   cacheLife('days')
 
-  return loadLocaleFile(LOCALE.EN)
+  return loadLocaleFile(locale)
 }
 
 export const getPagedPosts = async (community: string): Promise<TPagedPosts | null> => {

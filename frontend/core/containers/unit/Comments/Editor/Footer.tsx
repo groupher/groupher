@@ -4,6 +4,7 @@ import type { TSubmitState } from '~/spec'
 
 import WordsCounter from '~/widgets/WordsCounter'
 import SubmitButton from '~/widgets/Buttons/SubmitButton'
+import useTrans from '~/hooks/useTrans'
 
 import useLogic from '../useLogic'
 import useSalon from '../salon/editor/footer'
@@ -16,15 +17,17 @@ type TProps = {
   onCancel: () => void
 }
 
-const EditorFooter: FC<TProps> = ({ body, label = '发 布', submitState, onPublish, onCancel }) => {
+const EditorFooter: FC<TProps> = ({ body, label, submitState, onPublish, onCancel }) => {
   const s = useSalon()
   const { setWordsCountState } = useLogic()
+  const { t } = useTrans()
+  const resolvedLabel = label ?? t('comment.submit.publish')
 
   return (
     <div className={s.wrapper}>
       <WordsCounter body={body} bottom={3} min={10} max={1000} onChange={setWordsCountState} />
       <SubmitButton
-        okText={label}
+        okText={resolvedLabel}
         submitState={submitState}
         onPublish={onPublish}
         onCancel={onCancel}

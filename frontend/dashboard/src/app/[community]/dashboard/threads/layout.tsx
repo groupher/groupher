@@ -4,24 +4,26 @@ import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
+import useTrans from '~/hooks/useTrans'
 
 const seg = DSB_ROUTE.THREADS
 const CRUMB_CONFIG = {
-  title: '工作区',
+  title: 'dsb.crumb.workplace',
   seg,
   toSeg: DSB_COVERS.WORKPLACE,
-  children: [{ title: '板块管理', seg }],
+  children: [{ title: 'dsb.crumb.thread_manage', seg }],
 }
 
 export default ({ children }) => {
   const s = useSalon()
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
+  const { t } = useTrans()
 
   return (
     <div className={cn(s.content, 'w-2/5')}>
       <Portal
-        title='板块管理'
-        desc='按需开启社区对外公开板块，关闭后不会导致内容删除。'
+        title={t('dsb.portal.threads.title')}
+        desc={t('dsb.portal.threads.desc')}
         crumbItems={crumbItems}
       />
 

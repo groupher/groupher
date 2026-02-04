@@ -4,6 +4,7 @@ import Img from '~/Img'
 import type { TComment } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import TimeAgo from '~/widgets/TimeAgo'
+import useTrans from '~/hooks/useTrans'
 
 import useSalon from '../../salon/comment/header/article'
 
@@ -15,12 +16,13 @@ type TProps = {
 
 const CommentHeader: FC<TProps> = ({ data, showInnerRef, isReply }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { author, meta } = data
 
   return (
     <div className={s.wrapper}>
-      {isReply && <span>curve</span>}
+      {isReply && <span>{t('comment.reply.curve')}</span>}
       <Img
         className={s.avatar}
         src={data.author.avatar}
@@ -30,10 +32,10 @@ const CommentHeader: FC<TProps> = ({ data, showInnerRef, isReply }) => {
         <div className={s.baseInfo}>
           <div className={s.user}>
             <div className={s.nickname}>{author.nickname}</div>
-            {data.isArticleAuthor && <div className={s.authorTag}>发帖</div>}
+            {data.isArticleAuthor && <div className={s.authorTag}>{t('comment.header.post_author')}</div>}
             {showInnerRef && meta.isReplyToOthers && (
               <div className={s.refToOther}>
-                <div className={s.refLabel}>回复:</div>
+                <div className={s.refLabel}>{t('comment.header.reply_to')}</div>
                 <div className={s.refUser}>{data.replyTo?.author?.nickname}</div>
               </div>
             )}

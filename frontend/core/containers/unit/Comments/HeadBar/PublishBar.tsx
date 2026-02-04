@@ -5,6 +5,7 @@ import Img from '~/Img'
 
 import EditPublishSVG from '~/icons/EditPublish'
 import Button from '~/widgets/Buttons/Button'
+import useTrans from '~/hooks/useTrans'
 
 import useSalon from '../salon/head_bar/publish_bar'
 
@@ -14,6 +15,7 @@ type TProps = {
 
 const PublishBar: FC<TProps> = ({ closeEditor }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
@@ -23,11 +25,11 @@ const PublishBar: FC<TProps> = ({ closeEditor }) => {
       </div>
       <div className={s.actions}>
         <Button size="small" space={3} ghost noBorder onClick={() => closeEditor()}>
-          取消
+          {t('comment.publish.cancel')}
         </Button>
         <Button size="small" space={3}>
           <EditPublishSVG className={s.pubIcon} />
-          发布
+          {t('comment.publish.publish')}
         </Button>
       </div>
     </div>

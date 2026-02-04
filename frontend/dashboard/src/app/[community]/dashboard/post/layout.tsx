@@ -5,27 +5,29 @@ import AdminList from '~/containers/thread/DashboardThread/AdminList'
 import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
+import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
 
 const seg = DSB_ROUTE.POST
 const CRUMB_CONFIG = {
-  title: '内容管理',
+  title: 'dsb.crumb.cms',
   seg,
   toSeg: DSB_COVERS.CMS,
-  children: [{ title: '帖子', seg }],
+  children: [{ title: 'dsb.crumb.post', seg }],
 }
 
 const DashboardPostPage = ({ children }) => {
   const s = useSalon()
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
+  const { t } = useTrans()
 
   const adminList = mockUsers(4)
 
   return (
     <div className={cn(s.content, 'w-full pl-10')}>
       <Portal
-        title='帖子管理'
-        desc=''
+        title={t('dsb.portal.post.title')}
+        desc={t('dsb.portal.post.desc')}
         crumbItems={crumbItems}
         addon={<AdminList userList={adminList} />}
       />

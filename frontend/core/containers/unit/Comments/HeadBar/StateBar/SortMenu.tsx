@@ -8,6 +8,7 @@ import ExpandSVG from '~/icons/Expand'
 import FoldSVG from '~/icons/Fold'
 
 import Tooltip from '~/widgets/Tooltip'
+import useTrans from '~/hooks/useTrans'
 
 import { MODE } from '../../constant'
 
@@ -22,12 +23,13 @@ const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode }) => {
   const s = useSalon()
 
   const { foldAllComments, expandAllComments, onModeChange } = useLogic()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       {isAllFolded ? (
         <div className={cn(s.title, 'mr-3')} onClick={() => expandAllComments()}>
-          展开全部
+          {t('comment.sort.expand_all')}
         </div>
       ) : (
         <Tooltip
@@ -35,19 +37,19 @@ const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode }) => {
             <div className={s.panel}>
               <div className={s.menuItem} onClick={() => onModeChange(MODE.REPLIES)}>
                 <ReplyModeSVG className={s.menuIcon} />
-                <div className={s.menuTitle}>默认排序</div>
+                <div className={s.menuTitle}>{t('comment.sort.default')}</div>
               </div>
               <div className={s.menuItem} onClick={() => onModeChange(MODE.TIMELINE)}>
                 <TimelineModeSVG className={s.menuIcon} />
-                <div className={s.menuTitle}>时间线排序</div>
+                <div className={s.menuTitle}>{t('comment.sort.timeline')}</div>
               </div>
               <div className={s.menuItem} onClick={() => expandAllComments()}>
                 <ExpandSVG className={s.menuIcon} />
-                <div className={s.menuTitle}>展开全部</div>
+                <div className={s.menuTitle}>{t('comment.sort.expand_all')}</div>
               </div>
               <div className={s.menuItem} onClick={() => foldAllComments()}>
                 <FoldSVG className={s.menuIcon} />
-                <div className={s.menuTitle}>折叠全部</div>
+                <div className={s.menuTitle}>{t('comment.sort.fold_all')}</div>
               </div>
             </div>
           }
@@ -57,7 +59,7 @@ const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode }) => {
           noPadding
         >
           <div className={cn(s.title, 'mr-3')}>
-            {mode === MODE.REPLIES ? '默认排序' : '时间线排序'}
+            {mode === MODE.REPLIES ? t('comment.sort.default') : t('comment.sort.timeline')}
             <ArrowSVG className={s.arrowIcon} />
           </div>
         </Tooltip>

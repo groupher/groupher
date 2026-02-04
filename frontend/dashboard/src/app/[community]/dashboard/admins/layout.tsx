@@ -4,29 +4,31 @@ import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
+import useTrans from '~/hooks/useTrans'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
 const seg = DSB_ROUTE.ADMINS
 const CRUMB_CONFIG = {
-  title: '工作区',
+  title: 'dsb.crumb.workplace',
   seg,
   toSeg: DSB_COVERS.WORKPLACE,
-  children: [{ title: '管理员', seg }],
+  children: [{ title: 'dsb.crumb.admins', seg }],
 }
 
 export default ({ children }) => {
   const s = useSalon()
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
+  const { t } = useTrans()
 
   return (
     <div className={cn(s.content, 'w-3/5')}>
       <Portal
-        title='管理员'
+        title={t('dsb.portal.admins.title')}
         desc={
           <>
-            添加可参与社区内容管理的账号。
+            {t('dsb.portal.admins.desc')}
             <div className='inline-block'>
-              <ArrowButton>设置参考</ArrowButton>
+              <ArrowButton>{t('dsb.portal.admins.guide')}</ArrowButton>
             </div>
           </>
         }

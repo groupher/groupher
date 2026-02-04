@@ -6,18 +6,25 @@ import { getCommunityInfo, getLocaleData } from '~/providers/ssr'
 import MainProvider from '~/stores/provider'
 import Client from './Client'
 
-export default async ({ children, params }) => {
+const parseLocale = (lang?: string | string[]) => {
+  const langValue = Array.isArray(lang) ? lang[0] : lang
+
+  return langValue === LOCALE.ZH ? LOCALE.ZH : LOCALE.EN
+}
+
+export default async ({ children, params, searchParams }) => {
   const params$ = await params
+  const locale = parseLocale(searchParams?.lang)
 
   const [{ community, dashboard }, localeData] = await Promise.all([
     getCommunityInfo(params$.community),
-    getLocaleData(),
+    getLocaleData(locale),
   ])
 
   return (
     <MainProvider
       initData={{ community, dashboard }}
-      locale={LOCALE.EN}
+      locale={locale}
       metric={METRIC.DASHBOARD}
       localeData={JSON.stringify(localeData)}
     >

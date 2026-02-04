@@ -3,7 +3,9 @@
 // import { useSearchParams } from 'next/navigation'
 
 import { LOCALE } from '~/const/i18n'
-import type { TLocale } from '~/spec'
+import type { TLocale, TTransKey } from '~/spec'
+import en from './en'
+import zh from './zh'
 
 /**
  * this query is used for GraphQL, which will be intercepted by frontend
@@ -45,6 +47,18 @@ export const loadLocaleFile = (locale: TLocale = LOCALE.EN) => {
         reject(new Error(`Unsupported locale: ${locale}`))
     }
   })
+}
+
+let currentLocale: TLocale = LOCALE.EN
+
+export const setTransLocale = (locale: TLocale): void => {
+  currentLocale = locale
+}
+
+export const trans = (key: TTransKey, locale: TLocale = currentLocale): string => {
+  const dict = locale === LOCALE.ZH ? zh : en
+
+  return dict?.[key] || '--'
 }
 
 const I18nDict = {

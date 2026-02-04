@@ -4,6 +4,7 @@ import type { TSubmitState } from '~/spec'
 
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import CustomScroller from '~/widgets/CustomScroller'
+import useTrans from '~/hooks/useTrans'
 
 import BodyEditor from './BodyEditor'
 import Footer from './Footer'
@@ -20,10 +21,11 @@ type TProps = {
 const UpdateEditor: FC<TProps> = ({ id, body, submitState }) => {
   const s = useSalon()
   const { commentOnChange, updateComment, closeUpdateEditor } = useLogic()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
-      <div className={s.header}>修改评论</div>
+      <div className={s.header}>{t('comment.update.title')}</div>
       <CustomScroller direction="vertical" height="320px" showShadow={false} autoHide={false}>
         <div className={s.editorWrapper}>
           {id ? (
@@ -36,7 +38,7 @@ const UpdateEditor: FC<TProps> = ({ id, body, submitState }) => {
 
       <div className={s.footer}>
         <Footer
-          label="更 新"
+          label={t('comment.submit.update')}
           submitState={submitState}
           body={body}
           onPublish={updateComment}

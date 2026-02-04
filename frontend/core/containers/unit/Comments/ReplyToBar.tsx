@@ -4,6 +4,7 @@ import type { TComment } from '~/spec'
 // import { ICON_CMD } from '~/config'
 // import { Wrapper } from './salon'
 import { cutRest } from '~/fmt'
+import useTrans from '~/hooks/useTrans'
 import useSalon from './salon/reply_to_bar'
 
 type TProps = {
@@ -12,11 +13,12 @@ type TProps = {
 
 const ReplyToBar: FC<TProps> = ({ comment }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   if (!comment) return null
   return (
     <div className={s.replyBar}>
-      回复&nbsp;
+      {t('comment.reply.to')}&nbsp;
       {cutRest(comment.author.nickname, 10)}:<div className={s.replyToBody}>{comment.bodyHtml}</div>
       <div className={s.replyToFloor}>#{comment.floor}</div>
     </div>

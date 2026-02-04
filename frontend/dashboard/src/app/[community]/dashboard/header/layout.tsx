@@ -4,25 +4,27 @@ import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
+import useTrans from '~/hooks/useTrans'
 
 const seg = DSB_ROUTE.HEADER
 export const CRUMB_CONFIG = {
-  title: '工作区',
+  title: 'dsb.crumb.workplace',
   seg,
   toSeg: DSB_COVERS.INTEGRATIONS,
-  children: [{ title: '页头', seg }],
+  children: [{ title: 'dsb.crumb.header', seg }],
 }
 
 export default ({ children }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
     <div className={cn(s.content, 'w-10/12 ml-20')}>
       <Portal
-        title='页头'
-        desc='页头模板样式，链接编组等设置。'
+        title={t('dsb.portal.header.title')}
+        desc={t('dsb.portal.header.desc')}
         withDivider={true}
         crumbItems={crumbItems}
       />

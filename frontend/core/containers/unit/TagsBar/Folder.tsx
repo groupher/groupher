@@ -3,6 +3,7 @@ import { type FC, useEffect, useRef, useState } from 'react'
 import { sortByColor } from '~/helper'
 import ArrowSVG from '~/icons/ArrowSimple'
 import MoreSVG from '~/icons/menu/MoreL'
+import useTrans from '~/hooks/useTrans'
 import type { TTag } from '~/spec'
 import useSalon from './salon/folder'
 import TagItem from './TagItem'
@@ -30,6 +31,7 @@ const Folder: FC<TProps> = ({
   // 决定是否显示 '展示更多' 的时候参考标签总数
   const needSubToggle = allTags?.length > totalCountThreshold && groupTags.length > maxDisplayCount
 
+  const { t } = useTrans()
   const initDisplayCount = needSubToggle ? maxDisplayCount : groupTags.length
 
   const [isFolderOpen, toggleFolder] = useState(true)
@@ -95,7 +97,7 @@ const Folder: FC<TProps> = ({
           >
             <MoreSVG className={s.toggleIcon} />
             <div className={s.subToggleTitle}>
-              {curDisplayCount === maxDisplayCount ? '展开' : '收起'}
+              {curDisplayCount === maxDisplayCount ? t('tags.fold.expand') : t('tags.fold.collapse')}
             </div>
           </button>
         )}

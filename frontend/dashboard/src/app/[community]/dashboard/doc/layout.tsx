@@ -7,19 +7,20 @@ import Portal from '~/containers/thread/DashboardThread/Portal'
 import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
+import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = DSB_ROUTE.DOC
 const CRUMB_CONFIG = {
-  title: '内容管理',
+  title: 'dsb.crumb.cms',
   seg,
   toSeg: DSB_COVERS.CMS,
   children: [
-    { title: '概览', seg },
-    { title: '目录编排', seg: `${seg}/tree` },
-    { title: '封面图标', seg: `${seg}/cover` },
-    { title: '常见问题', seg: `${seg}/faq` },
+    { title: 'dsb.crumb.doc.table', seg },
+    { title: 'dsb.crumb.doc.tree', seg: `${seg}/tree` },
+    { title: 'dsb.crumb.doc.cover', seg: `${seg}/cover` },
+    { title: 'dsb.crumb.doc.faq', seg: `${seg}/faq` },
   ],
 }
 
@@ -27,14 +28,15 @@ export default function DashboardDocLayout({ children }) {
   const s = useSalon()
   const { items, activeTab } = useDsbLayoutTabs(DOC_TABS)
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
+  const { t } = useTrans()
 
   const adminList = mockUsers(4)
 
   return (
     <div className={cn(s.content, 'w-full pl-10')}>
       <Portal
-        title='文档管理'
-        desc=''
+        title={t('dsb.portal.doc.title')}
+        desc={t('dsb.portal.doc.desc')}
         crumbItems={crumbItems}
         withDivider={false}
         addon={<AdminList userList={adminList} />}

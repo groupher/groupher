@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import type { TComment, TID } from '~/spec'
+import useTrans from '~/hooks/useTrans'
 
 import type { TRepliesState, TAPIMode } from '../spec'
 import TogglerButton from './TogglerButton'
@@ -27,6 +28,7 @@ const RepliesList: FC<TProps> = ({
   foldedIds,
 }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { loadCommentReplies } = useLogic()
   const loading = parentId === repliesState.repliesParentId && repliesState.repliesLoading
@@ -36,7 +38,7 @@ const RepliesList: FC<TProps> = ({
       {repliesCount > 0 && (
         <div className={s.countHint}>
           <div className={s.slashSign}>&#47;&#47;</div>
-          <div className={s.countNum}>{repliesCount}</div> 条回复:
+          <div className={s.countNum}>{repliesCount}</div> {t('comment.replies.count')}:
         </div>
       )}
       {entries.map((comment) => {
@@ -49,7 +51,7 @@ const RepliesList: FC<TProps> = ({
       {repliesCount > entries.length && (
         <TogglerButton
           loading={loading}
-          text={`更多回复 ( ${repliesCount - entries.length} )`}
+          text={`${t('comment.replies.more')} ( ${repliesCount - entries.length} )`}
           onClick={() => loadCommentReplies(parentId)}
         />
       )}
