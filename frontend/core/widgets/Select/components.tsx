@@ -1,39 +1,37 @@
 import type { FC } from 'react'
-import { components, type IndicatorSeparatorProps } from 'react-select'
+import {
+  components,
+  type GroupBase,
+  type IndicatorsContainerProps,
+  type OptionProps,
+} from 'react-select'
 
 import type { TSelectOption } from '~/spec'
 
-import type { TSelectProps } from './spec'
-import useSalon, { cn } from './salon/components'
+import useSalon, { cnMerge } from './salon/components'
 
-/* @ts-ignore */
-export const IndicatorsContainer: FC = (props: IndicatorSeparatorProps) => {
+export const IndicatorsContainer: FC<
+  IndicatorsContainerProps<TSelectOption, boolean, GroupBase<TSelectOption>>
+> = (props) => {
   return (
     <div style={{ background: 'transparent' }}>
-      {/* @ts-ignore */}
       <components.IndicatorsContainer {...props} />
     </div>
   )
 }
 
-type TOption = {
-  data: TSelectOption
-  selectProps: TSelectProps
-}
-
-export const Option: FC<TOption> = (props) => {
+export const Option: FC<OptionProps<TSelectOption, boolean, GroupBase<TSelectOption>>> = (
+  props,
+) => {
   const s = useSalon()
-  const { data, selectProps } = props
+  const { data } = props
+  const isActive = props.isSelected
 
   return (
-    // @ts-ignore
     <components.Option {...props}>
       <div className={s.optionRow}>
         <div
-          className={cn(
-            s.optionTitle,
-            selectProps?.value?.value === data.value && s.optionTitleActive,
-          )}
+          className={cnMerge(s.optionTitle, isActive && s.optionTitleActive)}
         >
           {data.label}
         </div>

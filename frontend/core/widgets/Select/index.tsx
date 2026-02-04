@@ -6,15 +6,17 @@
  *
  */
 
-import { type FC, memo } from 'react'
+import { type FC, memo, useId } from 'react'
 import ReactSelect, { components } from 'react-select'
 import CreatableReactSelect from 'react-select/creatable'
 
+import { camelize } from '~/fmt'
+import usePrimaryColor from '~/hooks/usePrimaryColor'
 import type { TSelectOption, TSpace } from '~/spec'
 
 import { IndicatorsContainer } from './components'
 
-import useSalon, { cn } from './salon'
+import useSalon, { cnMerge } from './salon'
 
 type TProps = {
   testid?: string
@@ -33,28 +35,30 @@ type TProps = {
 } & TSpace
 
 const CustomOption = (props) => {
-  const s = useSalon({ ...props.spacing })
+  const s = useSalon({ ...(props.selectProps?.spacing ?? {}) })
   const { label, icon } = props.data
   const Icon = icon || null
+  const isActive = props.isSelected || props.isFocused
 
   return (
     <components.Option {...props}>
-      <div className='row'>
+      <div className={s.optionRow}>
         {icon && <Icon className={s.icon} />}
-        <span>{label}</span>
+        <span className={cnMerge(s.optionTitle, isActive && s.optionTitleActive)}>{label}</span>
       </div>
     </components.Option>
   )
 }
 
 const CustomSingleValue = (props) => {
+  const s = useSalon({ ...(props.selectProps?.spacing ?? {}) })
   const { label, icon } = props.data
   const Icon = icon || null
 
   return (
     <components.SingleValue {...props}>
-      <div className='row'>
-        <div className='-ml-1'>{icon && <Icon />}</div>
+      <div className={s.optionRow}>
+        {icon && <Icon className={s.valueIcon} />}
         <span>{label}</span>
       </div>
     </components.SingleValue>
@@ -76,6 +80,14 @@ const Select: FC<TProps> = ({
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })
+  const instanceId = useId()
+  const primaryColor = usePrimaryColor()
+  const primaryColorKey = camelize(primaryColor)
+  const primary = `var(--color-rainbow-${primaryColorKey})`
+  const optionActiveBg = 'var(--color-sandBox)'
+  const optionActiveBorder = 'var(--color-digest)'
+  const optionText = 'var(--color-digest)'
+  const optionTextActive = 'var(--color-title)'
 
   const baseProps = {
     value,
@@ -84,25 +96,62 @@ const Select: FC<TProps> = ({
     closeMenuOnSelect,
     placeholder,
     isClearable,
+    spacing,
+    instanceId,
     components: { IndicatorsContainer },
     classNames: {
       menu: (_) => s.menu,
       menuList: (_) => s.menuList,
       control: (_) => s.control,
-      option: (state) => cn(s.option, state.isSelected && s.optionActive),
+      valueContainer: (_) => s.valueContainer,
+      placeholder: (_) => s.placeholder,
+      input: (_) => s.input,
+      singleValue: (_) => s.singleValue,
+      multiValue: (_) => s.multiValue,
+      multiValueLabel: (_) => s.multiValueLabel,
+      multiValueRemove: (_) => s.multiValueRemove,
+      indicatorSeparator: (_) => s.indicatorSeparator,
+      dropdownIndicator: (_) => s.dropdownIndicator,
+      clearIndicator: (_) => s.clearIndicator,
+      noOptionsMessage: (_) => s.noOptionsMessage,
+      loadingMessage: (_) => s.loadingMessage,
+      option: (state) => cnMerge(s.option, (state.isSelected || state.isFocused) && s.optionActive),
+    },
+    styles: {
+      option: (base, state) => ({
+        ...base,
+        backgroundColor: state.isSelected || state.isFocused ? optionActiveBg : 'transparent',
+        borderColor: state.isSelected || state.isFocused ? optionActiveBorder : 'transparent',
+        borderStyle: 'solid',
+        borderWidth: 1,
+        color: state.isSelected || state.isFocused ? optionTextActive : optionText,
+      }),
     },
     theme: (theme) => ({
       ...theme,
-      borderRadius: 2,
+      borderRadius: 6,
       colors: {
         ...theme.colors,
-        primary: 'black',
+        primary,
+        primary25: optionActiveBg,
+        primary50: optionActiveBg,
+        neutral0: 'var(--color-card)',
+        neutral5: 'var(--color-hoverBg)',
+        neutral10: 'var(--color-hoverBg)',
+        neutral20: 'var(--color-divider)',
+        neutral30: 'var(--color-divider)',
+        neutral40: 'var(--color-digest)',
+        neutral50: 'var(--color-digest)',
+        neutral60: 'var(--color-digest)',
+        neutral70: 'var(--color-title)',
+        neutral80: 'var(--color-title)',
+        neutral90: 'var(--color-title)',
       },
     }),
   }
 
   return (
-    <div className={cn(s.wrapper, className)}>
+    <div className={cnMerge(s.wrapper, className)}>
       {!creatable ? (
         <ReactSelect
           {...baseProps}
