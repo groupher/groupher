@@ -3,7 +3,7 @@
 import { ALIAS_TABS, DSB_COVERS } from '~/const/route'
 import VIEW from '~/const/view'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
+import useSalon, { cnMerge } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
@@ -29,7 +29,7 @@ export default ({ children }) => {
   const { t } = useTrans()
 
   return (
-    <div className={cn(s.content, 'w-1/2')}>
+    <div className={cnMerge(s.content, 'w-1/2')}>
       <Portal
         title={t('dsb.portal.alias.title')}
         desc={t('dsb.portal.alias.desc')}

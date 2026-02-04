@@ -4,7 +4,7 @@ import { DOC_TABS, DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
 import AdminList from '~/containers/thread/DashboardThread/AdminList'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
+import useSalon, { cnMerge } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
@@ -34,7 +34,7 @@ export default function DashboardDocLayout({ children }) {
   const adminList = mockUsers(4)
 
   return (
-    <div className={cn(s.content, 'w-full pl-10')}>
+    <div className={cnMerge(s.content, 'w-full pl-10')}>
       <Portal
         title={t('dsb.portal.doc.title')}
         desc={t('dsb.portal.doc.desc')}

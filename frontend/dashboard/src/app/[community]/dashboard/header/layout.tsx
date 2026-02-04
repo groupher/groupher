@@ -2,7 +2,7 @@
 
 import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
+import useSalon, { cnMerge } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
@@ -22,7 +22,7 @@ export default ({ children }) => {
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
-    <div className={cn(s.content, 'w-10/12 ml-20')}>
+    <div className={cnMerge(s.content, 'w-10/12 ml-20')}>
       <Portal
         title={t('dsb.portal.header.title')}
         desc={t('dsb.portal.header.desc')}

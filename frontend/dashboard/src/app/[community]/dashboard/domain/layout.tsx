@@ -3,7 +3,7 @@
 import { DOMAIN_TABS, DSB_COVERS } from '~/const/route'
 import VIEW from '~/const/view'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
+import useSalon, { cnMerge } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
@@ -29,7 +29,7 @@ export default ({ children }) => {
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
-    <div className={cn(s.content)}>
+    <div className={cnMerge(s.content)}>
       <Portal
         title={t('dsb.portal.domain.title')}
         desc={t('dsb.portal.domain.desc')}
