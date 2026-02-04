@@ -1,4 +1,5 @@
 import CheckSVG from '~/icons/CheckCircle'
+import useTrans from '~/hooks/useTrans'
 import useSalon, { cn } from '../../salon/domain/custom/step_bar'
 import type { TDomainStep } from './constant'
 import { DOMAIN_STEP_ORDER, STEPS } from './constant'
@@ -7,15 +8,25 @@ type Props = {
   step: TDomainStep
 }
 
-const STEP_LABELS: Record<TDomainStep, { hint: string; title: string }> = {
-  [STEPS.ADD_DOMAIN]: { hint: '第 1 步', title: '添加自定义域名' },
-  [STEPS.DNS_SETUP]: { hint: '第 2 步', title: '配置 DNS 记录' },
-  [STEPS.VERIFY_DOMAIN]: { hint: '第 3 步', title: '域名验证 / 绑定' },
-}
-
 export default function StepBar({ step }: Props) {
   const s = useSalon()
+  const { t } = useTrans()
   const activeIndex = DOMAIN_STEP_ORDER.indexOf(step)
+
+  const stepLabels: Record<TDomainStep, { hint: string; title: string }> = {
+    [STEPS.ADD_DOMAIN]: {
+      hint: t('dsb.domain.custom.step.add.hint'),
+      title: t('dsb.domain.custom.step.add.title'),
+    },
+    [STEPS.DNS_SETUP]: {
+      hint: t('dsb.domain.custom.step.dns.hint'),
+      title: t('dsb.domain.custom.step.dns.title'),
+    },
+    [STEPS.VERIFY_DOMAIN]: {
+      hint: t('dsb.domain.custom.step.verify.hint'),
+      title: t('dsb.domain.custom.step.verify.title'),
+    },
+  }
 
   return (
     <div className={s.wrapper}>
@@ -23,7 +34,7 @@ export default function StepBar({ step }: Props) {
         const isCompleted = idx < activeIndex
         const isInactive = idx > activeIndex
 
-        const { hint, title } = STEP_LABELS[itemStep]
+        const { hint, title } = stepLabels[itemStep]
 
         return (
           <div key={itemStep} className={s.block}>

@@ -38,7 +38,7 @@ type TProps = {
   onChange?: (key: string, item: TTabItem, index: number) => void
   activeKey?: string
   size?: TSizeSM
-  slipHeight?: 'px' | 1
+  slipHeight?: 'px' | 0.5
   bottomSpace?: number
   noAnimation?: boolean
 }
@@ -48,7 +48,7 @@ const Tabs: FC<TProps> = ({
   onChange = () => {},
   items = temItems,
   activeKey = '',
-  slipHeight = 1,
+  slipHeight = 0.5,
   bottomSpace = 0,
   noAnimation = false,
 }) => {
@@ -107,7 +107,7 @@ const Tabs: FC<TProps> = ({
 
   return (
     <div data-testid='tabs' className={s.wrapper}>
-      <nav ref={navRef as any} className={s.nav}>
+      <nav ref={navRef} className={s.nav}>
         {items.map((item, index) => (
           <TabItem
             key={getItemKey(item)}

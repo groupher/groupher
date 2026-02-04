@@ -6,10 +6,10 @@ export { cn, cnMerge } from '~/css'
 type TProps = TSpace
 
 export default ({ ...spacing }: TProps) => {
-  const { cn, bg, fg, br, margin, shadow } = useTwBelt()
+  const { cn, cnMerge, bg, fg, br, margin, shadow } = useTwBelt()
 
   return {
-    wrapper: cn(margin(spacing)),
+    wrapper: cnMerge('border rounded-md', br('divider'), `hover:${br('digest')}`, margin(spacing)),
     optionRow: 'row items-center gap-2',
     optionTitle: cn('text-sm px-1.5 rounded', fg('digest')),
     optionTitleActive: fg('title'),
@@ -19,14 +19,7 @@ export default ({ ...spacing }: TProps) => {
     valueIcon: 'size-4',
     menu: cn('mt-1 rounded-md border p-1', bg('popover.bg'), br('divider'), shadow('md')),
     menuList: 'p-0',
-    control: cn(
-      'min-h-9 rounded-md border px-2.5 py-1.5 text-sm transition-colors',
-      bg('alphaBg'),
-      br('divider'),
-      fg('title'),
-      `hover:${br('digest')}`,
-      `focus-within:${br('title')}`,
-    ),
+    control: cn('min-h-8 rounded-md !border-0 text-sm', fg('title')),
     valueContainer: 'gap-1 px-1',
     placeholder: cn('text-sm', fg('digest')),
     input: cn('text-sm', fg('title')),

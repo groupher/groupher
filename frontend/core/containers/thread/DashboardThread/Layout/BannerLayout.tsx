@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BANNER_LAYOUT } from '~/const/layout'
 import useCommunity from '~/hooks/useCommunity'
+import useTrans from '~/hooks/useTrans'
 import CheckLabel from '~/widgets/CheckLabel'
 import Drawer from '~/widgets/Drawer'
 
@@ -13,6 +14,7 @@ import useSalon, { cn, cnMerge } from '../salon/layout/banner_layout'
 export default () => {
   const s = useSalon()
   const [showDrawer, setShowDrawer] = useState(false)
+  const { t } = useTrans()
 
   const { edit, layout, isTouched, saving } = useBanner()
   const { title } = useCommunity()
@@ -20,13 +22,13 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <Drawer show={showDrawer} onClose={() => setShowDrawer(false)}>
-        <h2>整体布局，示例</h2>
+        <h2>{t('dsb.layout.banner.drawer_title')}</h2>
       </Drawer>
 
       <SectionLabel
-        title='整体布局'
-        desc='整体页面的 Header 布局，适用于除文章页的所有页面。'
-        detailText='查看示例'
+        title={t('dsb.layout.banner.title')}
+        desc={t('dsb.layout.banner.desc')}
+        detailText={t('dsb.layout.view_example')}
       />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(BANNER_LAYOUT.HEADER, 'bannerLayout')}>
@@ -65,7 +67,11 @@ export default () => {
             <div className={cnMerge(s.bar, 'right-7 top-32 h-1 w-8 opacity-20')} />
             <div className={cnMerge(s.bar, 'right-7 bottom-5 h-1 w-8 opacity-30')} />
           </div>
-          <CheckLabel title='经典' active={layout === BANNER_LAYOUT.HEADER} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.banner.option.classic')}
+            active={layout === BANNER_LAYOUT.HEADER}
+            top={4}
+          />
         </button>
         <button className={s.layout} onClick={() => edit(BANNER_LAYOUT.TABBER, 'bannerLayout')}>
           <div className={cnMerge(s.block, layout === BANNER_LAYOUT.TABBER && s.blockActive)}>
@@ -95,7 +101,11 @@ export default () => {
             <div className={cnMerge(s.bar, 'right-8 top-32 h-1 w-8 opacity-20')} />
             <div className={cnMerge(s.bar, 'right-8 bottom-5 h-1 w-8 opacity-30')} />
           </div>
-          <CheckLabel title='封面图' active={layout === BANNER_LAYOUT.TABBER} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.banner.option.cover')}
+            active={layout === BANNER_LAYOUT.TABBER}
+            top={4}
+          />
         </button>
         <button className={s.layout} onClick={() => edit(BANNER_LAYOUT.SIDEBAR, 'bannerLayout')}>
           <div className={cnMerge(s.block, layout === BANNER_LAYOUT.SIDEBAR && s.blockActive)}>
@@ -136,7 +146,11 @@ export default () => {
             <div className={cnMerge(s.bar, 'left-5 top-36 h-1 w-8 opacity-20')} />
             <div className={cnMerge(s.bar, 'left-5 bottom-5 h-1 w-8 opacity-30')} />
           </div>
-          <CheckLabel title='左右分栏' active={layout === BANNER_LAYOUT.SIDEBAR} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.banner.option.sidebar')}
+            active={layout === BANNER_LAYOUT.SIDEBAR}
+            top={4}
+          />
         </button>
       </div>
       <SavingBar isTouched={isTouched} field={FIELD.BANNER_LAYOUT} loading={saving} top={10} />

@@ -1,42 +1,42 @@
 import Input from '~/widgets/Input'
 import Radio from '~/widgets/Switcher/Radio'
+import useTrans from '~/hooks/useTrans'
 
 import useSalon from '../salon/widgets'
 import CodeArea from './CodeArea'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <>
       <div className='mt-4' />
       <CodeArea />
-      <div className={s.hint}>
-        启用网站插件，请复制以上代码到您的站点源码中。如果团队中缺乏相关技术人员，请联系我们。
-      </div>
+      <div className={s.hint}>{t('dsb.widgets.drawer.hint')}</div>
 
       <div className='mt-8' />
 
       <div className={s.inputWrapper}>
-        <div className={s.inputLabel}>目标元素 ID:</div>
+        <div className={s.inputLabel}>{t('dsb.widgets.drawer.target_id')}</div>
         <Input className={s.input} />
       </div>
       <div className={s.inputWrapper}>
-        <div className={s.inputLabel}>组件尺寸:</div>
+        <div className={s.inputLabel}>{t('dsb.widgets.drawer.size')}</div>
         <Radio
           size='small'
           items={[
             {
-              value: '小',
+              value: t('dsb.widgets.drawer.size.small'),
               key: '1',
             },
             {
-              value: '中',
+              value: t('dsb.widgets.drawer.size.medium'),
               key: '2',
               dimOnActive: true,
             },
             {
-              value: '大',
+              value: t('dsb.widgets.drawer.size.large'),
               key: '3',
               dimOnActive: true,
             },

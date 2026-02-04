@@ -4,7 +4,7 @@ import { getSlipMargin } from '../metric/tabs'
 
 type TProps = {
   noAnimation: boolean
-  slipHeight: 'px' | 1
+  slipHeight: 'px' | 0.5
 }
 
 export default ({ noAnimation, slipHeight }: TProps) => {
@@ -12,7 +12,7 @@ export default ({ noAnimation, slipHeight }: TProps) => {
 
   return {
     wrapper: 'relative text-sm w-auto overflow-hidden',
-    nav: 'row-center relative flex-nowrap p-o my-auto',
+    nav: 'row-center relative flex-nowrap p-0 my-auto',
     slipBar: cn(
       'row justify-center absolute bottom-0 left-0 opacity-65',
       noAnimation && 'trans-all-200',

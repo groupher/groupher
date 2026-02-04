@@ -14,8 +14,6 @@ import { camelize } from '~/fmt'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import type { TSelectOption, TSpace } from '~/spec'
 
-import { IndicatorsContainer } from './components'
-
 import useSalon, { cnMerge } from './salon'
 
 type TProps = {
@@ -98,7 +96,6 @@ const Select: FC<TProps> = ({
     isClearable,
     spacing,
     instanceId,
-    components: { IndicatorsContainer },
     classNames: {
       menu: (_) => s.menu,
       menuList: (_) => s.menuList,

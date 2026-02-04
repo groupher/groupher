@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 import MENU from '~/const/menu'
 import MenuItem from '~/widgets/MenuItem'
+import useTrans from '~/hooks/useTrans'
 
 import useSalon from '../salon/tags/action_menu'
 
@@ -23,18 +24,27 @@ const LinkMenu: FC<TProps> = ({
   onSetting = console.log,
 }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       {activeTagGroup && !isFirst && (
-        <MenuItem icon={MENU.ARROW_TO_TOP} title='移至最前' onClick={() => move2Top()} />
+        <MenuItem
+          icon={MENU.ARROW_TO_TOP}
+          title={t('dsb.tags.menu.to_top')}
+          onClick={() => move2Top()}
+        />
       )}
 
       {activeTagGroup && !isLast && (
-        <MenuItem icon={MENU.ARROW_TO_BOTTOM} title='移至最后' onClick={() => move2Bottom()} />
+        <MenuItem
+          icon={MENU.ARROW_TO_BOTTOM}
+          title={t('dsb.tags.menu.to_bottom')}
+          onClick={() => move2Bottom()}
+        />
       )}
 
-      <MenuItem icon={MENU.SETTING} title='高级设置' onClick={() => onSetting()} />
+      <MenuItem icon={MENU.SETTING} title={t('dsb.tags.menu.advanced')} onClick={() => onSetting()} />
     </div>
   )
 }

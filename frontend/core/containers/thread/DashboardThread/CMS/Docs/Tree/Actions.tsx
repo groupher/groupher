@@ -5,43 +5,45 @@ import AdderSVG from '~/icons/Plus'
 import EditSVG from '~/icons/EditPen'
 
 import Button from '~/widgets/Buttons/Button'
+import useTrans from '~/hooks/useTrans'
 
 import useSalon from '../../../salon/cms/docs/tree/actions'
 
 const Actions: FC = () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <div className={s.preview}>
         <div className={s.head}>
-          <div className={s.title}>Mac 下怎样安全使用。</div>
-          <div className={s.updateHint}>1 天前更新</div>
+          <div className={s.title}>{t('dsb.cms.docs.tree.actions.sample_title')}</div>
+          <div className={s.updateHint}>{t('dsb.cms.docs.tree.actions.sample_update')}</div>
         </div>
         <div className={s.previewButtons}>
           <Button size="small" ghost noBorder left={-2.5}>
             <EditSVG className={s.editIcon} />
-            编辑文档
+            {t('dsb.cms.docs.tree.actions.edit')}
           </Button>
 
           <Button size="small" ghost noBorder>
             <EditSVG className={s.editIcon} />
-            添加 Slug
+            {t('dsb.cms.docs.tree.actions.add_slug')}
           </Button>
         </div>
       </div>
       <div className={s.previewButtons}>
         <Button size="small" ghost>
           <AdderSVG className={s.addIcon} />
-          置顶链接&nbsp;
+          {t('dsb.cms.docs.tree.actions.pin_link')}&nbsp;
         </Button>
         <Button size="small" ghost>
           <AdderSVG className={s.addIcon} />
-          节点&nbsp;
+          {t('dsb.cms.docs.tree.actions.node')}&nbsp;
         </Button>
         <Button size="small" ghost>
           <AdderSVG className={s.addIcon} />
-          目录&nbsp;
+          {t('dsb.cms.docs.tree.actions.folder')}&nbsp;
         </Button>
       </div>
     </div>

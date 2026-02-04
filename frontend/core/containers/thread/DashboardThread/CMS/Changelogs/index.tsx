@@ -23,6 +23,7 @@ import {
 } from '~/hooks/useTanTable'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
+import useTrans from '~/hooks/useTrans'
 import type { TArticle } from '~/spec'
 import TableLoading from '~/widgets/Loading/Table'
 
@@ -38,6 +39,7 @@ const HEADER_ALIGN_RIGHT = ['dates', 'author']
 export default function Changelogs() {
   const { pagedChangelogs, loading, loadChangelogs } = useCMSInfo()
   const s = useSalon({ loading })
+  const { t } = useTrans()
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [showSelectColumn, setShowSelectColumn] = useState(false)
@@ -54,7 +56,7 @@ export default function Changelogs() {
 
       {
         id: 'title',
-        header: () => <div className={s.title}>标题</div>,
+        header: () => <div className={s.title}>{t('dsb.cms.table.title')}</div>,
         // changelog 也走 ArticleCell（你原 rsuite 版就是 ArticleCell dataKey='title'）
         cell: ({ row }) => <ArticleCell rowData={row.original} />,
         size: 420,
@@ -63,7 +65,7 @@ export default function Changelogs() {
 
       {
         id: 'state',
-        header: () => <div className={cn(s.title, 'text-center')}>状态</div>,
+        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.state')}</div>,
         cell: ({ row }) => <StateCell rowData={row.original} />,
         size: 120,
       },
@@ -71,7 +73,7 @@ export default function Changelogs() {
       {
         accessorKey: 'upvotesCount',
         id: 'upvotesCount',
-        header: () => <div className={cn(s.title, 'text-center')}>投票</div>,
+        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.upvotes')}</div>,
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
@@ -82,7 +84,7 @@ export default function Changelogs() {
       {
         accessorKey: 'views',
         id: 'views',
-        header: () => <div className={cn(s.title, 'text-center')}>浏览</div>,
+        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.views')}</div>,
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
@@ -93,7 +95,7 @@ export default function Changelogs() {
       {
         accessorKey: 'commentsCount',
         id: 'commentsCount',
-        header: () => <div className={cn(s.title, 'text-center')}>评论</div>,
+        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.comments')}</div>,
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
@@ -103,14 +105,14 @@ export default function Changelogs() {
 
       {
         id: 'dates',
-        header: () => <div className={cn(s.title, 'text-right')}>发布/活跃</div>,
+        header: () => <div className={cn(s.title, 'text-right')}>{t('dsb.cms.table.dates')}</div>,
         cell: ({ row }) => <DateCell rowData={row.original} />,
         size: 120,
       },
 
       {
         id: 'author',
-        header: () => <div className={cn(s.title, 'text-right')}>作者</div>,
+        header: () => <div className={cn(s.title, 'text-right')}>{t('dsb.cms.table.author')}</div>,
         cell: ({ row }) => <AuthorCell rowData={row.original} />,
         size: 160,
         meta: { sticky: 'right' },
@@ -180,7 +182,7 @@ export default function Changelogs() {
                     )}
                     style={p.style}
                     onClick={canSort ? col.getToggleSortingHandler() : undefined}
-                    aria-label={canSort ? 'Sort column' : undefined}
+                    aria-label={canSort ? t('dsb.cms.table.sort') : undefined}
                   >
                     {isSelectCol ? (
                       <div className='table-col-select-inner'>

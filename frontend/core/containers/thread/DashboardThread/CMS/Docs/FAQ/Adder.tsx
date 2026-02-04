@@ -1,6 +1,7 @@
 import Button from '~/widgets/Buttons/Button'
 
 import AdderSVG from '~/icons/Plus'
+import useTrans from '~/hooks/useTrans'
 
 import useDoc from '../../../logic/useDoc'
 import useSalon from '../../../salon/cms/docs/faq/adder'
@@ -8,14 +9,15 @@ import useSalon from '../../../salon/cms/docs/faq/adder'
 export default () => {
   const s = useSalon()
   const { addFAQSection } = useDoc()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
-      <Button onClick={addFAQSection} className={s.addBtn}>
-        <AdderSVG className={s.addIcon} />
-        新问题块
-      </Button>
-      <div className={s.notes}>问题块包含标题及内容，可自主折叠，自定义展示顺序等。</div>
+        <Button onClick={addFAQSection} className={s.addBtn}>
+          <AdderSVG className={s.addIcon} />
+          {t('dsb.cms.faq.add.title')}
+        </Button>
+      <div className={s.notes}>{t('dsb.cms.faq.add.desc')}</div>
     </div>
   )
 }

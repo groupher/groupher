@@ -1,5 +1,6 @@
 import { BRAND_LAYOUT } from '~/const/layout'
 import useCommunity from '~/hooks/useCommunity'
+import useTrans from '~/hooks/useTrans'
 
 import BrandSVG from '~/icons/Brand'
 import CheckLabel from '~/widgets/CheckLabel'
@@ -15,10 +16,11 @@ export default () => {
 
   const { title } = useCommunity()
   const { edit, layout, isTouched, saving } = useBrand()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
-      <SectionLabel title='品牌样式' desc='页首 Logo 的展示形式，注意文字字体为通用社区字体。' />
+      <SectionLabel title={t('dsb.layout.brand.title')} desc={t('dsb.layout.brand.desc')} />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(BRAND_LAYOUT.BOTH, 'brandLayout')}>
           <div className={cn(s.block, layout === BRAND_LAYOUT.BOTH && s.blockActive)}>
@@ -29,7 +31,11 @@ export default () => {
             </div>
             <div className={s.divider} />
           </div>
-          <CheckLabel title='Logo & 文字' active={layout === BRAND_LAYOUT.BOTH} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.brand.option.both')}
+            active={layout === BRAND_LAYOUT.BOTH}
+            top={4}
+          />
         </button>
         <button className={s.layout} onClick={() => edit(BRAND_LAYOUT.LOGO, 'brandLayout')}>
           <div className={cn(s.block, layout === BRAND_LAYOUT.LOGO && s.blockActive)}>
@@ -38,7 +44,11 @@ export default () => {
             </div>
             <div className={s.divider} />
           </div>
-          <CheckLabel title='仅 Logo' active={layout === BRAND_LAYOUT.LOGO} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.brand.option.logo')}
+            active={layout === BRAND_LAYOUT.LOGO}
+            top={4}
+          />
         </button>
         <button className={s.layout} onClick={() => edit(BRAND_LAYOUT.TEXT, 'brandLayout')}>
           <div className={cn(s.block, layout === BRAND_LAYOUT.TEXT && s.blockActive)}>
@@ -47,7 +57,11 @@ export default () => {
             </div>
             <div className={s.divider} />
           </div>
-          <CheckLabel title='仅文字' active={layout === BRAND_LAYOUT.TEXT} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.brand.option.text')}
+            active={layout === BRAND_LAYOUT.TEXT}
+            top={4}
+          />
         </button>
       </div>
       <SavingBar

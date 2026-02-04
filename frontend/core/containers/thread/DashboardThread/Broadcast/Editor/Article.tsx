@@ -2,6 +2,7 @@ import ColorSelector from '~/widgets/ColorSelector'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 
 import Input from '~/widgets/Input'
+import useTrans from '~/hooks/useTrans'
 
 import SectionLabel from '../../SectionLabel'
 import ArticleTemplate from '../Templates/Article'
@@ -22,12 +23,13 @@ export default () => {
   } = useBroadcast()
 
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title="开启页脚广播"
-        desc="开启后，相关帖子底部会出现广播内容"
+        title={t('dsb.broadcast.article.title')}
+        desc={t('dsb.broadcast.article.desc')}
         addon={
           <ToggleSwitch
             checked={broadcastArticleEnable}
@@ -41,7 +43,7 @@ export default () => {
       <div className="mb-12" />
 
       <div className={s.item}>
-        <div className={s.label}>背景色：</div>
+        <div className={s.label}>{t('dsb.broadcast.article.background')}</div>
         <div className={s.bgLabel}>
           <ColorSelector
             activeColor={broadcastArticleBg}
@@ -55,12 +57,12 @@ export default () => {
       </div>
 
       <div className={s.item}>
-        <div className={s.label}>广播内容</div>
+        <div className={s.label}>{t('dsb.broadcast.article.content')}</div>
         <Input />
       </div>
 
       <div className={s.item}>
-        <div className={s.label}>链接地址</div>
+        <div className={s.label}>{t('dsb.broadcast.article.link')}</div>
         <Input />
       </div>
 

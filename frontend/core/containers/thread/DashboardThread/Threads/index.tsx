@@ -1,4 +1,5 @@
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
+import useTrans from '~/hooks/useTrans'
 import useEnable from '../logic/useEnable'
 import SectionLabel from '../SectionLabel'
 import useSalon from '../salon/threads'
@@ -8,14 +9,15 @@ import DocThread from './DocThread'
 export default () => {
   const s = useSalon()
   const { enable: settings, enableThread } = useEnable()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <div className='mb-10' />
 
       <SectionLabel
-        title='讨论区'
-        desc='用户可在此发帖，参与社区讨论，帖子可由团队管理员同步到看板墙。'
+        title={t('dsb.threads.post.title')}
+        desc={t('dsb.threads.post.desc')}
         addon={
           <ToggleSwitch
             size='small'
@@ -26,16 +28,16 @@ export default () => {
       />
       <div className={s.divider} />
       <SectionLabel
-        title='看板墙'
-        desc='团队设置为 ToDo, Doing, Done 等状态的帖子会出现在这里，方便向用户同步进度。'
+        title={t('dsb.threads.kanban.title')}
+        desc={t('dsb.threads.kanban.desc')}
         addon={
           <ToggleSwitch checked={settings.kanban} onChange={(c) => enableThread('kanban', c)} />
         }
       />
       <div className={s.divider} />
       <SectionLabel
-        title='更新日志'
-        desc='新版本发布的新功能，Bug 修复以或性能，UI 优化等，用户同时可以查询历史版本信息。'
+        title={t('dsb.threads.changelog.title')}
+        desc={t('dsb.threads.changelog.desc')}
         addon={
           <ToggleSwitch
             checked={settings.changelog}
@@ -45,8 +47,8 @@ export default () => {
       />
       <div className={s.divider} />
       <SectionLabel
-        title='文档'
-        desc='和社区内容相关的开发文档，指南，知识库等等信息。'
+        title={t('dsb.threads.doc.title')}
+        desc={t('dsb.threads.doc.desc')}
         addon={<ToggleSwitch checked={settings.doc} onChange={(c) => enableThread('help', c)} />}
       />
       {settings.doc && <DocThread settings={settings} />}
@@ -54,8 +56,8 @@ export default () => {
       <div className={s.divider} />
 
       <SectionLabel
-        title='关于'
-        desc='社区基本信息。若更新请到基本信息设置区。'
+        title={t('dsb.threads.about.title')}
+        desc={t('dsb.threads.about.desc')}
         addon={<ToggleSwitch checked={settings.about} onChange={(c) => enableThread('about', c)} />}
       />
       {settings.about && <AboutThread settings={settings} />}

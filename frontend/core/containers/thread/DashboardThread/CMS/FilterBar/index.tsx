@@ -6,6 +6,7 @@ import ResetSVG from '~/icons/Reset'
 import Button from '~/widgets/Buttons/Button'
 import ConditionSelector from '~/widgets/ConditionSelector'
 import Input from '~/widgets/Input'
+import useTrans from '~/hooks/useTrans'
 import useCMSInfo from '../../hooks/useCMSInfo'
 import useSalon, { cn } from '../../salon/cms/filter_bar'
 import ActionBar from './ActionBar'
@@ -20,6 +21,7 @@ const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount 
   const s = useSalon()
 
   const { batchSelectAll } = useCMSInfo()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
@@ -37,23 +39,23 @@ const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount 
           noBorder
         >
           <DabbleCheckSVG className={s.icon} />
-          {checkboxActive && '取消'}
-          多选
+          {checkboxActive && t('dsb.cms.filter.cancel')}
+          {t('dsb.cms.filter.multi_select')}
         </Button>
 
         <div className={s.inputWrapper}>
           <SearchSVG className={cn(s.icon, 'absolute left-2 top-2')} />
-          <Input placeholder='按标题搜索' className={s.input} />
+          <Input placeholder={t('dsb.cms.filter.search_placeholder')} className={s.input} />
         </div>
 
         <ConditionSelector mode={CONDITION_MODE.CAT} selected={false} right={10} />
         <ConditionSelector mode={CONDITION_MODE.STATE} selected={false} right={10} />
 
-        <div className={s.dateRange}>日期范围(TODO)</div>
+        <div className={s.dateRange}>{t('dsb.cms.filter.date_range')}</div>
         <div className='grow' />
         <Button size='small' ghost noBorder>
           <ResetSVG className={s.icon} />
-          重置
+          {t('dsb.cms.filter.reset')}
         </Button>
       </div>
 

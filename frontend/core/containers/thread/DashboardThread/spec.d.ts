@@ -1,22 +1,22 @@
 import type { ReactNode } from 'react'
-import type { TChangeMode, TColorName, TConstValues, TDsbPath, TLinkItem } from '~/spec'
+import type { TChangeMode, TColorName, TConstValues, TDsbPath, TLinkItem, TTransKey } from '~/spec'
 import type { FIELD } from './constant'
 
 export { TNameAlias } from '~/spec'
 
 type TMenuGroupName = 'BASIC' | 'ANALYSIS' | 'CMS' | 'INTEGRATE'
 
-export type TMenuGroup = {
-  title: string
+export type TDsbMenuGroup = {
+  title: TTransKey
   icon: ReactNode
   initFold: boolean
-  children: TMenuItem[]
+  children: TDsbMenuItem[]
 }
 
-type TMenuItem = { title: string; slug: TDsbPath; alias?: string }
+type TDsbMenuItem = { title: TTransKey; slug: TDsbPath; alias?: string }
 
-export type TMenu = {
-  [k: TMenuGroupName]: TMenuGroup
+export type TDsbMenu = {
+  [k: TMenuGroupName]: TDsbMenuGroup
 }
 
 export type TLinkState = {

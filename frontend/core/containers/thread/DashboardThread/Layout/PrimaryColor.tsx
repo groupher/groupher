@@ -1,4 +1,5 @@
 import ColorSelector from '~/widgets/ColorSelector'
+import useTrans from '~/hooks/useTrans'
 import { FIELD } from '../constant'
 import usePrimaryColor from '../logic/usePrimaryColor'
 import SubPrimaryColor from './SubPrimaryColor'
@@ -9,12 +10,13 @@ import useSalon from '../salon/layout/primary_color'
 export default () => {
   const s = useSalon()
   const { edit, primaryColor, isTouched, saving } = usePrimaryColor()
+  const { t } = useTrans()
 
   return (
     <section>
       <SectionLabel
-        title='主题色'
-        desc='设置后会在常见组件，功能性文字等位置显示该个性化主题色。参考'
+        title={t('dsb.layout.primary_color.title')}
+        desc={t('dsb.layout.primary_color.desc')}
       />
       <div className={s.content}>
         <div className={s.block}>
@@ -29,9 +31,9 @@ export default () => {
                 <div className={s.colorBall} />
               </ColorSelector>
             </div>
-            <div className={s.title}>主题颜色</div>
+            <div className={s.title}>{t('dsb.layout.primary_color.label')}</div>
           </div>
-          <p className={s.desc}>作用于各类功能按钮，Tab 高亮，菜单高亮等品牌颜色。</p>
+          <p className={s.desc}>{t('dsb.layout.primary_color.hint')}</p>
 
           <SavingBar isTouched={isTouched} field={FIELD.PRIMARY_COLOR} loading={saving} top={6} />
         </div>

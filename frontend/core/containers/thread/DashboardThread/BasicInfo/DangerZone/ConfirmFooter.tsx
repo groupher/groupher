@@ -1,5 +1,6 @@
 import { type FC, useState } from 'react'
 import useCommunity from '~/hooks/useCommunity'
+import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
@@ -13,6 +14,7 @@ type TProps = {
 
 const ConfirmFooter: FC<TProps> = ({ testid = '', ...spacing }) => {
   const s = useSalon({ ...spacing })
+  const { t } = useTrans()
 
   const { deleteCommunity } = useBaseInfo()
 
@@ -23,7 +25,9 @@ const ConfirmFooter: FC<TProps> = ({ testid = '', ...spacing }) => {
     <div className={s.wrapper}>
       <div className={s.divider} />
       <div className={s.note}>
-        请在下方输入社区名称<span className={s.bold}>{community}</span>确认
+        {t('dsb.base_info.danger.delete.confirm_prefix')}
+        <span className={s.bold}>{community}</span>
+        {t('dsb.base_info.danger.delete.confirm_suffix')}
       </div>
       <Input className={s.input} onChange={(e) => setMsg(e.target.value)} value={msg} autoFocus />
       <Button
@@ -33,7 +37,7 @@ const ConfirmFooter: FC<TProps> = ({ testid = '', ...spacing }) => {
         disabled={msg !== community}
         onClick={() => deleteCommunity()}
       >
-        我已了解，确认删除
+        {t('dsb.base_info.danger.delete.confirm_button')}
       </Button>
     </div>
   )

@@ -1,6 +1,7 @@
 import { DOC_FAQ_LAYOUT, DOC_LAYOUT } from '~/const/layout'
 
 import CheckLabel from '~/widgets/CheckLabel'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../../constant'
 import useDoc from '../../logic/useDoc'
@@ -12,25 +13,38 @@ import MainTemplate from './MainTemplate'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { docLayout, docFaqLayout, isTouched, isFaqTouched, saving, edit } = useDoc()
 
   return (
     <div className={s.wrapper}>
-      <SectionLabel title='封面目录布局' desc='全部文档的目录布局。' detailText='查看示例' />
+      <SectionLabel
+        title={t('dsb.layout.doc.title')}
+        desc={t('dsb.layout.doc.desc')}
+        detailText={t('dsb.layout.view_example')}
+      />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(DOC_LAYOUT.BLOCKS, 'docLayout')}>
           <div className={cn(s.block, docLayout === DOC_LAYOUT.BLOCKS && s.blockActive)}>
             <MainTemplate layout={DOC_LAYOUT.BLOCKS} />
           </div>
-          <CheckLabel title='块状排列' active={docLayout === DOC_LAYOUT.BLOCKS} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.doc.option.blocks')}
+            active={docLayout === DOC_LAYOUT.BLOCKS}
+            top={4}
+          />
         </button>
 
         <button className={s.layout} onClick={() => edit(DOC_LAYOUT.LISTS, 'docLayout')}>
           <div className={cn(s.block, docLayout === DOC_LAYOUT.LISTS && s.blockActive)}>
             <MainTemplate layout={DOC_LAYOUT.LISTS} />
           </div>
-          <CheckLabel title='列表排列' active={docLayout === DOC_LAYOUT.LISTS} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.doc.option.lists')}
+            active={docLayout === DOC_LAYOUT.LISTS}
+            top={4}
+          />
         </button>
 
         <button className={s.layout} onClick={() => edit(DOC_LAYOUT.CARDS, 'docLayout')}>
@@ -43,7 +57,11 @@ export default () => {
           >
             <MainTemplate layout={DOC_LAYOUT.CARDS} />
           </div>
-          <CheckLabel title='卡片排列' active={docLayout === DOC_LAYOUT.CARDS} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.doc.option.cards')}
+            active={docLayout === DOC_LAYOUT.CARDS}
+            top={4}
+          />
         </button>
       </div>
       <SavingBar isTouched={isTouched} field={FIELD.DOC_LAYOUT} loading={saving} top={10} />
@@ -51,22 +69,30 @@ export default () => {
       <div className={s.divider} />
 
       <SectionLabel
-        title='常见问题（FAQ）布局'
-        desc='当前设置仅针对常见问题的展示样式。'
-        detailText='查看示例'
+        title={t('dsb.layout.doc.faq.title')}
+        desc={t('dsb.layout.doc.faq.desc')}
+        detailText={t('dsb.layout.view_example')}
       />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(DOC_FAQ_LAYOUT.COLLAPSE, 'docFaqLayout')}>
           <div className={cn(s.block, docFaqLayout === DOC_FAQ_LAYOUT.COLLAPSE && s.blockActive)}>
             <FaqTemplate layout={DOC_FAQ_LAYOUT.COLLAPSE} />
           </div>
-          <CheckLabel title='可折叠' active={docFaqLayout === DOC_FAQ_LAYOUT.COLLAPSE} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.doc.faq.option.collapse')}
+            active={docFaqLayout === DOC_FAQ_LAYOUT.COLLAPSE}
+            top={4}
+          />
         </button>
         <button className={s.layout} onClick={() => edit(DOC_FAQ_LAYOUT.FLAT, 'docFaqLayout')}>
           <div className={cn(s.block, docFaqLayout === DOC_FAQ_LAYOUT.FLAT && s.blockActive)}>
             <FaqTemplate layout={DOC_FAQ_LAYOUT.FLAT} />
           </div>
-          <CheckLabel title='铺开式' active={docFaqLayout === DOC_FAQ_LAYOUT.FLAT} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.doc.faq.option.flat')}
+            active={docFaqLayout === DOC_FAQ_LAYOUT.FLAT}
+            top={4}
+          />
         </button>
         <button
           className={s.layout}
@@ -75,7 +101,11 @@ export default () => {
           <div className={cn(s.block, docFaqLayout === DOC_FAQ_LAYOUT.LEFT_RIGHT && s.blockActive)}>
             <FaqTemplate layout={DOC_FAQ_LAYOUT.LEFT_RIGHT} />
           </div>
-          <CheckLabel title='左右列' active={docFaqLayout === DOC_FAQ_LAYOUT.LEFT_RIGHT} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.doc.faq.option.left_right')}
+            active={docFaqLayout === DOC_FAQ_LAYOUT.LEFT_RIGHT}
+            top={4}
+          />
         </button>
       </div>
       <SavingBar isTouched={isFaqTouched} field={FIELD.DOC_FAQ_LAYOUT} loading={saving} top={10} />

@@ -1,5 +1,6 @@
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import Input from '~/widgets/Input'
+import useTrans from '~/hooks/useTrans'
 import useSEO from '../logic/useSEO'
 import SectionLabel from '../SectionLabel'
 import useSalon from '../salon/seo/open_graph'
@@ -11,15 +12,16 @@ import SearchEnginePreview from './SearchEnginePreview'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
   const { seoEnable, ogSiteName, ogTitle, ogDescription, ogImage, ogUrl, edit, toggleSEO } =
     useSEO()
 
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title='允许搜索引擎收录'
-        detailText='实现原理'
-        desc="请确保你知道该操作的含义，"
+        title={t('dsb.seo.open_graph.title')}
+        detailText={t('dsb.seo.open_graph.detail')}
+        desc={t('dsb.seo.open_graph.desc')}
         onDetailClick={() => {
           window.open('https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=zh-cn', '_blank', 'noopener,noreferrer')
         }}

@@ -1,7 +1,7 @@
 import useSubPrimaryColor from '~/hooks/useSubPrimaryColor'
 import useTwBelt from '~/hooks/useTwBelt'
 
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default () => {
   const { cn, fg, bg, br, fill, menu, sexyBorder, rainbow, rainbowSoft } = useTwBelt()
@@ -19,7 +19,7 @@ export default () => {
     slash: cn('text-xs ml-2 mr-1.5', fg('digest')),
     optArrowIcon: cn('size-3 mr-1.5 group-smoky-80', fg('digest')),
     //
-    topPanel: cn('border px-3 py-1 w-40 min-h-28', br('divider')),
+    topPanel: cn('border w-40 min-h-28', br('divider')),
     arrowIcon: cn('size-3.5', fill('digest')),
 
     panelItem: cn(menu('bar'), 'h-8 mt-1'),

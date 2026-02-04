@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
+import useTrans from '~/hooks/useTrans'
 import type { TDocFAQLayout } from '~/spec'
 
 import useSalon, { cnMerge } from '../../salon/layout/doc_layout/faq_template'
@@ -10,11 +11,12 @@ type TProps = {
 
 const FaqTemplate: FC<TProps> = ({ layout }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   if (layout === DOC_FAQ_LAYOUT.COLLAPSE) {
     return (
       <div className={s.block}>
-        <div className={cnMerge(s.faqTitle, 'top-5 left-28')}>常见问题</div>
+        <div className={cnMerge(s.faqTitle, 'top-5 left-28')}>{t('dsb.layout.doc.faq.label')}</div>
         <div className={cnMerge(s.bar, 'h-1.5 top-14 left-24 w-16')} />
         <div className={cnMerge(s.bar, 'h-1 top-16 mt-2 left-24 w-24 opacity-20')} />
         <div className={cnMerge(s.bar, 'h-1 top-20 mt-1.5 left-24 w-20 opacity-20')} />
@@ -33,7 +35,9 @@ const FaqTemplate: FC<TProps> = ({ layout }) => {
   if (layout === DOC_FAQ_LAYOUT.LEFT_RIGHT) {
     return (
       <div className={s.block}>
-        <div className={cnMerge(s.faqTitle, 'top-8 left-7 -ml-1')}>常见问题</div>
+        <div className={cnMerge(s.faqTitle, 'top-8 left-7 -ml-1')}>
+          {t('dsb.layout.doc.faq.label')}
+        </div>
         <div className={cnMerge(s.bar, 'h-1.5 top-14 left-6 w-16 opacity-20')} />
         <div className={cnMerge(s.bar, 'h-1.5 top-16 left-6 w-12 mt-1 opacity-10')} />
 
@@ -54,7 +58,9 @@ const FaqTemplate: FC<TProps> = ({ layout }) => {
 
   return (
     <div className={s.block}>
-      <div className={cnMerge(s.faqTitle, 'top-5 left-28 -ml-1')}>常见问题</div>
+      <div className={cnMerge(s.faqTitle, 'top-5 left-28 -ml-1')}>
+        {t('dsb.layout.doc.faq.label')}
+      </div>
 
       <div className={s.list}>
         <div className={s.box}>

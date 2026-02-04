@@ -22,6 +22,7 @@ import {
 
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
+import useTrans from '~/hooks/useTrans'
 import TableLoading from '~/widgets/Loading/Table'
 
 import useCMSInfo from '../../hooks/useCMSInfo'
@@ -35,6 +36,7 @@ const HEADER_ALIGN_RIGHT = ['timestamps']
 export default function Communities() {
   const { loading, pagedCommunities } = useCMSInfo()
   const s = useSalon({ loading: false })
+  const { t } = useTrans()
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [showSelectColumn, setShowSelectColumn] = useState(false)
@@ -51,7 +53,7 @@ export default function Communities() {
 
       {
         id: 'name',
-        header: () => <div className={s.title}>名称</div>,
+        header: () => <div className={s.title}>{t('dsb.cms.communities.name')}</div>,
         cell: () => <div>TODO: CommunityCell</div>,
         size: 180,
         meta: { sticky: 'left' },
@@ -60,7 +62,7 @@ export default function Communities() {
       {
         accessorKey: 'desc',
         id: 'desc',
-        header: () => <div className={s.title}>简介</div>,
+        header: () => <div className={s.title}>{t('dsb.cms.communities.desc')}</div>,
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'truncate')}>{String(getValue() ?? '')}</div>
         ),
@@ -69,7 +71,9 @@ export default function Communities() {
 
       {
         id: 'state',
-        header: () => <div className={cn(s.title, 'text-center')}>状态</div>,
+        header: () => (
+          <div className={cn(s.title, 'text-center')}>{t('dsb.cms.communities.state')}</div>
+        ),
         cell: () => <div className='text-center'>TODO: PendingCell</div>,
         size: 90,
       },
@@ -77,7 +81,9 @@ export default function Communities() {
       {
         accessorKey: 'subscribersCount',
         id: 'subscribersCount',
-        header: () => <div className={cn(s.title, 'text-center')}>关注</div>,
+        header: () => (
+          <div className={cn(s.title, 'text-center')}>{t('dsb.cms.communities.followers')}</div>
+        ),
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
@@ -88,7 +94,9 @@ export default function Communities() {
       {
         accessorKey: 'views',
         id: 'views',
-        header: () => <div className={cn(s.title, 'text-center')}>浏览</div>,
+        header: () => (
+          <div className={cn(s.title, 'text-center')}>{t('dsb.cms.communities.views')}</div>
+        ),
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
@@ -99,7 +107,9 @@ export default function Communities() {
       {
         accessorKey: 'articlesCount',
         id: 'articlesCount',
-        header: () => <div className={cn(s.title, 'text-center')}>内容</div>,
+        header: () => (
+          <div className={cn(s.title, 'text-center')}>{t('dsb.cms.communities.content')}</div>
+        ),
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
@@ -109,7 +119,9 @@ export default function Communities() {
 
       {
         id: 'timestamps',
-        header: () => <div className={cn(s.title, 'text-right')}>创建/更新</div>,
+        header: () => (
+          <div className={cn(s.title, 'text-right')}>{t('dsb.cms.communities.timestamps')}</div>
+        ),
         cell: () => <div className='text-right'>TODO: TimestampCell</div>,
         size: 120,
       },

@@ -5,6 +5,7 @@ import type { TFAQSection } from '~/spec'
 import ArrowSVG from '~/icons/Arrow'
 import EditSVG from '~/icons/EditPen'
 import DeleteSVG from '~/icons/Delete'
+import useTrans from '~/hooks/useTrans'
 
 import Markdown from '~/widgets/Markdown'
 import Editor from './Editor'
@@ -23,6 +24,7 @@ type TProps = {
 
 const Block: FC<TProps> = ({ section, editingFAQIndex, editingFAQ, isFirst, isLast, sortOnly }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { deleteFAQSection, triggerEditFAQ, moveUpFAQ, moveDownFAQ } = useFAQ()
 
@@ -43,13 +45,13 @@ const Block: FC<TProps> = ({ section, editingFAQIndex, editingFAQ, isFirst, isLa
           <>
             <div className={s.hintBox} onClick={() => triggerEditFAQ(section.index)}>
               <EditSVG className={s.editIcon} />
-              <div className={s.hint}>编辑</div>
+              <div className={s.hint}>{t('dsb.cms.faq.block.edit')}</div>
             </div>
 
             <div className={s.deleteBox}>
               <DeleteSVG className={s.deleteIcon} />
               <div className={s.deleteHint} onClick={() => deleteFAQSection(section.index)}>
-                删除
+                {t('dsb.cms.faq.block.delete')}
               </div>
             </div>
           </>

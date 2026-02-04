@@ -20,6 +20,7 @@ import {
 } from '~/hooks/useTanTable'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
+import useTrans from '~/hooks/useTrans'
 import type { TPagedArticles } from '~/spec'
 import TableLoading from '~/widgets/Loading/Table'
 import useSalon, { cn } from '../../salon/cms/posts'
@@ -38,6 +39,7 @@ type TProps = {
 
 export default function DocsTables({ pagedDocs, loading }: TProps) {
   const s = useSalon({ loading })
+  const { t } = useTrans()
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [showSelectColumn, setShowSelectColumn] = useState(false)
@@ -56,7 +58,7 @@ export default function DocsTables({ pagedDocs, loading }: TProps) {
 
       {
         id: 'title',
-        header: () => <div className={s.title}>标题</div>,
+        header: () => <div className={s.title}>{t('dsb.cms.table.title')}</div>,
         cell: ({ row }) => <ArticleCell rowData={row.original} />,
         size: 420,
         meta: { sticky: 'left' },
@@ -64,7 +66,7 @@ export default function DocsTables({ pagedDocs, loading }: TProps) {
 
       {
         id: 'state',
-        header: () => <div className={cn(s.title, 'text-center')}>状态</div>,
+        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.state')}</div>,
         cell: ({ row }) => <StateCell rowData={row.original} />,
         size: 90,
       },
@@ -72,7 +74,7 @@ export default function DocsTables({ pagedDocs, loading }: TProps) {
       {
         accessorKey: 'upvotesCount',
         id: 'upvotesCount',
-        header: () => <div className={cn(s.title, 'text-center')}>投票</div>,
+        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.upvotes')}</div>,
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
@@ -83,7 +85,7 @@ export default function DocsTables({ pagedDocs, loading }: TProps) {
       {
         accessorKey: 'views',
         id: 'views',
-        header: () => <div className={cn(s.title, 'text-center')}>浏览</div>,
+        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.views')}</div>,
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
@@ -94,7 +96,7 @@ export default function DocsTables({ pagedDocs, loading }: TProps) {
       {
         accessorKey: 'commentsCount',
         id: 'commentsCount',
-        header: () => <div className={cn(s.title, 'text-center')}>评论</div>,
+        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.comments')}</div>,
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
@@ -104,14 +106,14 @@ export default function DocsTables({ pagedDocs, loading }: TProps) {
 
       {
         id: 'dates',
-        header: () => <div className={cn(s.title, 'text-right')}>发布/活跃</div>,
+        header: () => <div className={cn(s.title, 'text-right')}>{t('dsb.cms.table.dates')}</div>,
         cell: ({ row }) => <DateCell rowData={row.original} />,
         size: 120,
       },
 
       {
         id: 'author',
-        header: () => <div className={cn(s.title, 'text-right')}>作者</div>,
+        header: () => <div className={cn(s.title, 'text-right')}>{t('dsb.cms.table.author')}</div>,
         // AuthorDateCell 不存在：占位
         cell: () => <div className='text-right'>TODO: AuthorDateCell</div>,
         size: 140,
@@ -181,7 +183,7 @@ export default function DocsTables({ pagedDocs, loading }: TProps) {
                     )}
                     style={p.style}
                     onClick={canSort ? col.getToggleSortingHandler() : undefined}
-                    aria-label={canSort ? 'Sort column' : undefined}
+                    aria-label={canSort ? t('dsb.cms.table.sort') : undefined}
                   >
                     {isSelectCol ? (
                       <div className='table-col-select-inner'>

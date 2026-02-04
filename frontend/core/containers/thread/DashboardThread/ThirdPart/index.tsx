@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import type { FC } from 'react'
 import { useState } from 'react'
+import useTrans from '~/hooks/useTrans'
 import useSalon, { cn } from '../salon/third_part'
 import { INTEGRATE_ANALYSIS_TOOLS } from './constant'
 import SettingModal from './SettingModal'
@@ -12,6 +13,7 @@ const ThirdPart: FC = () => {
   const [selectedService, setSelectedService] = useState<TIntegrateAnalysisTool | null>(null)
 
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
@@ -34,7 +36,7 @@ const ThirdPart: FC = () => {
             <div className={s.iconBox}>
               <Image
                 src={`/integrations/${item.key}.png`}
-                alt={`${item.title} icon`}
+                alt={`${t(item.title)} icon`}
                 width={28}
                 height={28}
                 className={cn(
@@ -47,8 +49,8 @@ const ThirdPart: FC = () => {
               />
             </div>
 
-            <div className={s.title}>{item.title}</div>
-            <div className={s.desc}>{item.desc}</div>
+            <div className={s.title}>{t(item.title)}</div>
+            <div className={s.desc}>{t(item.desc)}</div>
           </button>
         ))}
       </div>

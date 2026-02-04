@@ -2,6 +2,7 @@ import type { FC } from 'react'
 
 import type { TFAQSection } from '~/spec'
 import Input from '~/widgets/Input'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../../../constant'
 import useFAQ from '../../../logic/useFAQ'
@@ -16,18 +17,19 @@ type TProps = {
 const Editor: FC<TProps> = ({ editingFAQ, addNew = false }) => {
   const s = useSalon()
   const { triggerEditFAQ, updateEditingFAQ } = useFAQ()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <Input
         className={s.titleInput}
-        placeholder='标题'
+        placeholder={t('dsb.cms.faq.editor.title_placeholder')}
         value={editingFAQ?.title}
         onChange={(e) => updateEditingFAQ({ ...editingFAQ, title: e.target.value })}
       />
       <Input
         className={s.bodyInput}
-        placeholder='内容 (支持 Markdown 语法)'
+        placeholder={t('dsb.cms.faq.editor.body_placeholder')}
         behavior='textarea'
         value={editingFAQ?.body}
         onChange={(e) => updateEditingFAQ({ ...editingFAQ, body: e.target.value })}

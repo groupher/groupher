@@ -3,6 +3,7 @@ import type { FC } from 'react'
 import Modal from '~/widgets/Modal'
 
 import NoticeBar from '~/widgets/NoticeBar'
+import useTrans from '~/hooks/useTrans'
 
 // import from '~/widgets/Alert'
 import List from './List'
@@ -17,19 +18,23 @@ type TProps = {
 
 const DeleteModal: FC<TProps> = ({ show, onClose }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <Modal show={show} width="390px" offsetLeft="40%" onClose={() => onClose()} showCloseBtn>
       <div className={s.wrapper}>
-        <h3 className={s.warningTitle}>删除社区</h3>
+        <h3 className={s.warningTitle}>{t('dsb.base_info.danger.delete.modal.title')}</h3>
         <div className={s.body}>
-          <NoticeBar type="notice" content="以下内容将被永久删除, 无法恢复, 请谨慎操作。" />
+          <NoticeBar
+            type='notice'
+            content={t('dsb.base_info.danger.delete.modal.notice')}
+          />
 
           <List
             items={[
-              '社区信息，个性化设置等',
-              '帖子，看板以及更新日志等内容',
-              '所有评论以及点赞，表情等信息',
+              t('dsb.base_info.danger.delete.modal.item.settings'),
+              t('dsb.base_info.danger.delete.modal.item.content'),
+              t('dsb.base_info.danger.delete.modal.item.interactions'),
             ]}
             left={6}
             top={5}

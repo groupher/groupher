@@ -1,11 +1,9 @@
 import type { FC } from 'react'
-
-import type { TActive, TMenu } from '~/spec'
 import { Trans } from '~/i18n'
-
-import type { TMenuItem } from './spec'
+import type { TActive, TMenu } from '~/spec'
 import Icon from './Icon'
 import useSalon, { cn } from './salon/item'
+import type { TMenuItem } from './spec'
 
 type TProps = {
   item: TMenuItem

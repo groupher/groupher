@@ -2,6 +2,7 @@ import { PAGE_BG_CSS_KEY } from '~/const/colors'
 import { blurRGB } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'
 import useWallpaper from '~/hooks/useWallpaper'
+import useTrans from '~/hooks/useTrans'
 
 import RangeSlider from '~/widgets/RangeSlider'
 
@@ -14,6 +15,7 @@ import useSalon, { cnMerge } from '../../salon/layout/gauss_blur'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { wallpaper, background } = useWallpaper()
   const { gaussBlur, saving, isTouched, edit } = useGaussBlur()
@@ -24,8 +26,8 @@ export default () => {
   return (
     <div className={s.wrapper} key={wallpaper}>
       <SectionLabel
-        title='毛玻璃效果'
-        desc='主要页面的高斯模糊值，类似主流音乐播放器效果'
+        title={t('dsb.layout.gauss_blur.title')}
+        desc={t('dsb.layout.gauss_blur.desc')}
         classNames='pr-8'
         withThemeSelect
       />
@@ -51,14 +53,15 @@ export default () => {
           </div>
         </div>
         <ul className={s.actions}>
-          <h3 className={s.title}>透明度</h3>
-          <li className={s.desc}>默认为无模糊白（黑）色背景。</li>
-          <li className={s.desc}>透明度过低会导致内容无法辨认。</li>
-          <li className={s.desc}>个别浏览器不支持相应特性，会导致效果失效。</li>
+          <h3 className={s.title}>{t('dsb.layout.gauss_blur.opacity.title')}</h3>
+          <li className={s.desc}>{t('dsb.layout.gauss_blur.opacity.note.default')}</li>
+          <li className={s.desc}>{t('dsb.layout.gauss_blur.opacity.note.low')}</li>
+          <li className={s.desc}>{t('dsb.layout.gauss_blur.opacity.note.unsupported')}</li>
           <li className={s.desc}>
-            可根据<span className={s.highlight}>浅色</span>/
-            <span className={s.highlight}>暗色</span>主题
-            <span className={s.highlight}>分别设置</span>。
+            {t('dsb.layout.gauss_blur.opacity.note.prefix')}
+            <span className={s.highlight}>{t('dsb.layout.gauss_blur.opacity.note.light')}</span>/
+            <span className={s.highlight}>{t('dsb.layout.gauss_blur.opacity.note.dark')}</span>
+            {t('dsb.layout.gauss_blur.opacity.note.suffix')}
           </li>
 
           <br />
