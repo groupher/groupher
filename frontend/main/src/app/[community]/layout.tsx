@@ -1,23 +1,16 @@
-import { LOCALE } from '~/const/i18n'
 import GlobalProvider from '~/providers/Global'
 import GraphQLProvider from '~/providers/GraphQL'
 import { getCommunityInfo, getLocaleData } from '~/providers/ssr'
 import MainProvider from '~/stores/provider'
 import Client from './Client'
 
-const parseLocale = (lang?: string | string[]) => {
-  const langValue = Array.isArray(lang) ? lang[0] : lang
-
-  return langValue === LOCALE.ZH ? LOCALE.ZH : LOCALE.EN
-}
-
-export default async ({ children, params, searchParams }) => {
+export default async ({ children, params }) => {
   const params$ = await params
-  const locale = parseLocale(searchParams?.lang)
+  const locale = 'en'
 
   const [{ community, dashboard }, localeData] = await Promise.all([
     getCommunityInfo(params$.community),
-    getLocaleData(locale),
+    getLocaleData(),
   ])
   // console.log('## localeData: ', localeData)
   // console.log('## got community$ in layout: ', community)
