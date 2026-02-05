@@ -642,5 +642,40 @@ export default {
   'account.menu.shortcuts': 'Shortcuts',
   'account.menu.create_community': 'Create community',
   'account.menu.logout': 'Log out',
+  'community.add_moderator': 'Add community moderator',
+  'post.article_tag.create': 'Create post tag',
+  'post.article_tag.edit': 'Edit post tag',
+  'post.mark_delete': 'Delete post',
+
+  'community.editor.your.community': 'your community',
+
+  FEATURE: 'FEATURE',
+  BUG: 'BUG',
+  QUESTION: 'QUESTION',
+  OTHER: 'OTHER',
+
+  TODO: 'TODO',
+  WIP: 'WIP',
+  DONE: 'DONE',
+  SOLVED: 'SOLVED',
+  FIXED: 'FIXED',
+  DEFAULT: 'DEFAULT',
+
+  REJECT: 'REJECT',
+  REJECT_DUP: 'REJECT_DUP',
+  REJECT_NO_PLAN: 'REJECT_NO_PLAN',
+  REJECT_REPRO: 'REJECT_REPRO',
+  REJECT_STALE: 'REJECT_STALE',
+
+  EMAIL: 'email',
+  GITHUB: 'Github',
+  WECHAT: 'WeChat',
+  TWITTER: 'X(Twitter)',
+  ZHIHU: 'Zhihu',
+  BILIBILI: 'Bilibili',
+  WEIBO: 'Weibo',
+  BOSS: 'Boss',
+  TIKTOK: 'TikTok',
+
   '??': '??',
 }

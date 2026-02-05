@@ -163,7 +163,8 @@ export default {
   'dsb.portal.broadcast.title': '页面广播',
   'dsb.portal.broadcast.desc': '页面广播与通知设置。',
   'dsb.portal.widgets.title': '网站插件',
-  'dsb.portal.widgets.desc': '为您的主页添加社区，更新日志，看板等插件，让产品用户及时方便的了解最新动态。',
+  'dsb.portal.widgets.desc':
+    '为您的主页添加社区，更新日志，看板等插件，让产品用户及时方便的了解最新动态。',
   'dsb.portal.widgets.preview': '预览',
   'dashboard.info.workspace': '工作区',
   'dashboard.info.basic': '基本信息',
@@ -438,7 +439,8 @@ export default {
   'dsb.footer.templates.switch': '更换模板',
   'dsb.header.editors.note.title': '注意事项:',
   'dsb.header.editors.note.item.fixed': '固定链接无法调整顺序，分组链接会自动折叠。',
-  'dsb.header.editors.note.item.about': '新增链接或链接组后，“关于”会自动折叠到“更多”中，且位于最后一项。',
+  'dsb.header.editors.note.item.about':
+    '新增链接或链接组后，“关于”会自动折叠到“更多”中，且位于最后一项。',
   'dsb.header.editors.note.item.preview': '改变顺序后可通过上方模板预览效果。',
   'dsb.header.editors.link': '链接',
   'dsb.header.editors.group': '链接组',
@@ -460,7 +462,8 @@ export default {
   'dsb.domain.custom.step.verify.hint': '第 3 步',
   'dsb.domain.custom.step.verify.title': '域名验证 / 绑定',
   'dsb.domain.custom.adder.title': '自定义域名',
-  'dsb.domain.custom.adder.desc': '添加你想绑定的域名，支持绑定子域名, 如 community.your-domain.com',
+  'dsb.domain.custom.adder.desc':
+    '添加你想绑定的域名，支持绑定子域名, 如 community.your-domain.com',
   'dsb.domain.custom.adder.tip': 'TODO: 裸域提示',
   'dsb.domain.custom.adder.add': '添加',
   'dsb.domain.custom.dns.title': '目标 DNS 设置',
@@ -480,7 +483,8 @@ export default {
   'dsb.third_part.placeholder': 'G-123456',
   'dsb.third_part.learn_more': '了解更多',
   'dsb.third_part.confirm': '确定',
-  'dsb.widgets.drawer.hint': '启用网站插件，请复制以上代码到您的站点源码中。如果团队中缺乏相关技术人员，请联系我们。',
+  'dsb.widgets.drawer.hint':
+    '启用网站插件，请复制以上代码到您的站点源码中。如果团队中缺乏相关技术人员，请联系我们。',
   'dsb.widgets.drawer.target_id': '目标元素 ID:',
   'dsb.widgets.drawer.size': '组件尺寸:',
   'dsb.widgets.drawer.size.small': '小',
@@ -573,7 +577,8 @@ export default {
   'dsb.third_part.plausible.detail':
     'Plausible Analytics 提供轻量级的页面访问与来源统计能力，不依赖第三方 Cookie，适合对隐私合规有要求的文档站点。',
   'dsb.third_part.plausible.track_label': '站点域名',
-  'dsb.third_part.plausible.track_desc': '填写你在 Plausible 中配置并用于统计的站点域名，无需包含协议或路径。',
+  'dsb.third_part.plausible.track_desc':
+    '填写你在 Plausible 中配置并用于统计的站点域名，无需包含协议或路径。',
   'dsb.third_part.plausible.placeholder': 'docs.example.com',
   'dsb.third_part.fathom.title': 'Fathom Analytics Site ID',
   'dsb.third_part.fathom.desc': '页面访问量与事件统计，支持无 Cookie 追踪。',
@@ -621,5 +626,40 @@ export default {
   'account.menu.shortcuts': '快捷键',
   'account.menu.create_community': '创建社区',
   'account.menu.logout': '登出',
+  'community.add_moderator': '添加社区管理员',
+  'post.article_tag.create': '创建帖子标签',
+  'post.article_tag.edit': '编辑帖子标签',
+  'post.mark_delete': '删除帖子',
+
+  'community.editor.your.community': '你的社区',
+
+  FEATURE: '功能建议',
+  BUG: '问题上报',
+  QUESTION: '问题',
+  OTHER: '其他',
+
+  TODO: '已排期',
+  WIP: '进行中',
+  DONE: '已完成',
+  SOLVED: '已解决',
+  FIXED: '已修复',
+  DEFAULT: '默认',
+
+  REJECT: '关闭',
+  REJECT_DUP: '重复问题',
+  REJECT_NO_PLAN: '无计划',
+  REJECT_REPRO: '无法重现',
+  REJECT_STALE: '已过时',
+
+  EMAIL: '电子邮箱',
+  GITHUB: 'Github',
+  WECHAT: '微信',
+  TWITTER: 'X(推特)',
+  ZHIHU: '知乎',
+  BILIBILI: '哔哩哔哩',
+  WEIBO: '微博',
+  BOSS: 'Boss 直聘',
+  TIKTOK: '抖音',
+
   '??': '??',
 }

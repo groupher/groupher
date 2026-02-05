@@ -1,5 +1,4 @@
 import { sortByColor } from '~/helper'
-import { Trans } from '~/i18n'
 import type { TColorName } from '~/spec'
 
 import TagNode from '~/widgets/TagNode'
@@ -30,7 +29,7 @@ export default ({ items, max, size, withTitle = true, ...spacing }: TProps) => {
               dotRight={dotRight}
               hashRight={hashRight}
             />
-            {withTitle && <div className={s.title}>{Trans(tag.title)}</div>}
+            {withTitle && <div className={s.title}>{tag.title}</div>}
           </div>
         ))}
     </>

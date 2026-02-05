@@ -6,7 +6,7 @@ import { aliasGTDDoneState } from '~/fmt'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useNameAlias from '~/hooks/useNameAlias'
 import useViewingArticle from '~/hooks/useViewingArticle'
-import { Trans } from '~/i18n'
+import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/CheckBold'
 import { toast, updateViewingArticle } from '~/signal'
 import { ICON } from '../constant'
@@ -22,6 +22,7 @@ type TProps = {
 
 const StateSetting: FC<TProps> = ({ onBack }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { article } = useViewingArticle()
   const bgColors = useKanbanBgColors()
@@ -83,8 +84,8 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
             />
             <div className={cn(s.title, active && s.titleActive)}>
               {article.state === ARTICLE_STATE.DONE
-                ? Trans(aliasGTDDoneState(article.cat, item.key))
-                : kanbanAlias[ARTICLE_STATE[item.key].toLowerCase()]?.name || Trans(item.key)}
+                ? t(aliasGTDDoneState(article.cat, item.key))
+                : kanbanAlias[ARTICLE_STATE[item.key].toLowerCase()]?.name || t(item.key)}
             </div>
             {active && <CheckSVG className={s.checkIcon} />}
           </button>

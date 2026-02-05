@@ -1,38 +1,40 @@
 import type { FC } from 'react'
-import { Trans } from '~/i18n'
+import useTrans from '~/hooks/useTrans'
 import type { TActive, TMenu } from '~/spec'
 import Icon from './Icon'
-import useSalon, { cn } from './salon/item'
+import useSalon, { cnMerge } from './salon/item'
 import type { TMenuItem } from './spec'
 
 type TProps = {
   item: TMenuItem
   withDesc?: boolean
+
   onClick: () => void
 } & TActive
 
 const Item: FC<TProps> = ({ item, withDesc = false, active, onClick }) => {
   const s = useSalon({ active })
+  const { t } = useTrans()
 
   if (withDesc) {
     return (
-      <div className={cn(s.wrapper, s.full)} onClick={onClick}>
+      <button className={cnMerge(s.wrapper, s.full)} onClick={onClick}>
         <div className={s.fullIconBox}>
           <Icon type={item.icon as TMenu} />
         </div>
         <div className={s.main}>
-          <div className={cn(s.title, s.fullTitle)}>{Trans(item.key)}</div>
+          <div className={cnMerge(s.title, s.fullTitle)}>{t(item.key)}</div>
           <div className={s.desc}>{item.desc || '--'}</div>
         </div>
-      </div>
+      </button>
     )
   }
 
   return (
-    <div className={s.wrapper} onClick={onClick}>
+    <button className={s.wrapper} onClick={onClick}>
       <Icon type={item.icon as TMenu} />
-      <div className={s.title}>{Trans(item.key)}</div>
-    </div>
+      <div className={s.title}>{t(item.key)}</div>
+    </button>
   )
 }
 

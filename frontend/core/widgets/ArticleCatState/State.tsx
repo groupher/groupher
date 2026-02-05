@@ -2,7 +2,7 @@ import type { FC } from 'react'
 import { ARTICLE_STATE } from '~/const/gtd'
 import { aliasGTDDoneState } from '~/fmt'
 import useNameAlias from '~/hooks/useNameAlias'
-import { Trans } from '~/i18n'
+import useTrans from '~/hooks/useTrans'
 import type { TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
@@ -19,6 +19,7 @@ const tipConfig = {
 
 const State: FC<TProps> = ({ cat, state, smaller }) => {
   const s = useSalon({ cat, state })
+  const { t } = useTrans()
 
   const kanbanAlias = useNameAlias('kanban')
 
@@ -77,12 +78,13 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
     }
 
     case ARTICLE_STATE.DONE: {
+      const doneStateKey = aliasGTDDoneState(cat, state)
       if (smaller) {
         return (
           <Tooltip
             content={
               <div className={s.tipNote}>
-                <div className={s.text}>{Trans(aliasGTDDoneState(cat, state))}</div>
+                <div className={s.text}>{t(doneStateKey)}</div>
               </div>
             }
             {...tipConfig}
@@ -98,7 +100,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
         <div className={s.box}>
           {/* <DoneIcon color={doneColor === COLOR.BLACK ? COLOR.GREEN : doneColor} /> */}
           <Icon.Done className={s.doneIcon} />
-          <div className={s.text}>{Trans(aliasGTDDoneState(cat, state))}</div>
+          <div className={s.text}>{t(doneStateKey)}</div>
         </div>
       )
     }
@@ -108,12 +110,14 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
     case ARTICLE_STATE.REJECT_NO_PLAN:
     case ARTICLE_STATE.REJECT_REPRO:
     case ARTICLE_STATE.REJECT_DUP: {
+      const rejectStateKey = state
+
       if (smaller) {
         return (
           <Tooltip
             content={
               <div className={s.tipNote}>
-                <div className={s.text}>{Trans(state)}</div>
+                <div className={s.text}>{t(rejectStateKey)}</div>
               </div>
             }
             {...tipConfig}
@@ -128,7 +132,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
       return (
         <div className={s.box}>
           <Icon.Reject className={s.rejectIcon} />
-          <div className={s.text}>{Trans(state)}</div>
+          <div className={s.text}>{t(rejectStateKey)}</div>
         </div>
       )
     }

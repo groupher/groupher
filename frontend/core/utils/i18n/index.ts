@@ -46,21 +46,3 @@ export const loadLocaleFile = (locale: TLocale = LOCALE.EN) => {
     }
   })
 }
-
-const I18nDict = {
-  community: '社区',
-  posts: '帖子',
-  kanban: '看板',
-  changelog: '更新日志',
-  doc: '文档',
-  help: '文档',
-  about: '关于',
-  post: '帖子',
-  share: '分享',
-  users: '用户',
-  blog: '博客',
-  user: '用户',
-  profile: '主页',
-}
-
-export const Trans = (key) => I18nDict[key] || key

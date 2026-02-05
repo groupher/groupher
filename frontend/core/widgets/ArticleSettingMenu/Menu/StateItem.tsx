@@ -4,7 +4,7 @@ import { aliasGTDDoneState } from '~/fmt'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useNameAlias from '~/hooks/useNameAlias'
 import useViewingArticle from '~/hooks/useViewingArticle'
-import { Trans } from '~/i18n'
+import useTrans from '~/hooks/useTrans'
 
 import ArrowSVG from '~/icons/ArrowSimple'
 
@@ -24,6 +24,7 @@ const StateItem: FC<TProps> = ({ onClick }) => {
   const color = getGTDColor(article.state, [...bgColors])
 
   const s = useSalon({ color })
+  const { t } = useTrans()
 
   const kanbanAlias = useNameAlias('kanban')
 
@@ -36,8 +37,8 @@ const StateItem: FC<TProps> = ({ onClick }) => {
       <button className={s.menuItem} onClick={onClick}>
         <TheIcon className={cn(s.icon, s.rainbowFill)} />
         {article.state === ARTICLE_STATE.DONE
-          ? Trans(aliasGTDDoneState(article.cat, article.state))
-          : kanbanAlias[ARTICLE_STATE[article.state].toLowerCase()]?.name || Trans(article.state)}
+          ? t(aliasGTDDoneState(article.cat, article.state))
+          : kanbanAlias[ARTICLE_STATE[article.state].toLowerCase()]?.name || t(article.state)}
         <div className='grow' />
         <ArrowSVG className={cn(s.icon, 'rotate-180')} />
       </button>
@@ -47,7 +48,7 @@ const StateItem: FC<TProps> = ({ onClick }) => {
   return (
     <button className={s.menuItem} onClick={onClick}>
       <WipIcon className={cn(s.icon, 'ml-px')} />
-      状态
+      {t('article.state')}
       <div className='grow' />
       <ArrowSVG className={cn(s.icon, 'rotate-180')} />
     </button>

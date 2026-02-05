@@ -1,5 +1,4 @@
 import type { FC } from 'react'
-import { Trans } from '~/i18n'
 import type { TSpace } from '~/spec'
 
 import useSalon from './salon/label_list'
@@ -15,7 +14,7 @@ const LabelList: FC<TProps> = ({ items, ...spacing }) => {
     <div className={s.wrapper}>
       {items.map((item: string) => (
         <div key={item} className={s.label}>
-          {Trans(item)}
+          {item}
         </div>
       ))}
     </div>

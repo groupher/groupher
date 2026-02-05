@@ -1,6 +1,5 @@
 import { includes, keys } from 'ramda'
 
-import { Trans } from '~/i18n/dashboard'
 import CheckSVG from '~/icons/Check'
 import RootCheckSVG from '~/icons/CheckCircle'
 import Checker from '~/widgets/Checker'
@@ -31,7 +30,7 @@ export default () => {
                 <CheckSVG className={s.checkIcon} />
               )}
 
-              <div className={s.itemTitle}>{Trans(ruleKey)}</div>
+              <div className={s.itemTitle}>{ruleKey}</div>
             </div>
           )
         })}
@@ -49,7 +48,7 @@ export default () => {
               size='small'
               onChange={(checked) => toggleCheck(ruleKey, checked)}
             >
-              <div className={s.itemTitle}>{Trans(ruleKey)}</div>
+              <div className={s.itemTitle}>{ruleKey}</div>
             </Checker>
           </div>
         )
