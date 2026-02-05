@@ -9,7 +9,11 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <Portal title={t('dsb.overview.portal.title')} desc={t('dsb.overview.portal.desc')} />
+      <Portal
+        title={t('dsb.overview.portal.title')}
+        desc={t('dsb.overview.portal.desc')}
+        testid="dashboard-overview-title"
+      />
       <section className={s.section}>
         <BasicNumbers />
         {/* <SectionLabel title="基本信息" /> */}

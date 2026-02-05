@@ -7,5 +7,5 @@ test('dashboard overview renders', async ({ page }) => {
   await expect(page).toHaveURL(/\/home\/dashboard/)
 
   // Assert a stable UI element from the dashboard overview portal.
-  await expect(page.getByRole('heading', { level: 3, name: '设置概览' })).toBeVisible()
+  await expect(page.getByTestId('dashboard-overview-title')).toBeVisible()
 })
