@@ -2,6 +2,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import { callPassportEditor } from '~/signal'
 import AdminAvatar from '~/widgets/AdminAvatar'
 import Button from '~/widgets/Buttons/Button'
+import useTrans from '~/hooks/useTrans'
 
 import useAdmins from '../logic/useAdmins'
 
@@ -10,6 +11,7 @@ import useSalon, { cn } from '../salon/admin/list'
 export default () => {
   const s = useSalon()
   const { moderators, activeModerator, setActiveSettingAdmin } = useAdmins()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
@@ -36,7 +38,13 @@ export default () => {
                   noBorder
                   size='small'
                 >
-                  {role === 'root' ? <>全部权限</> : <>{passportItemCount} 项权限</>}
+                  {role === 'root' ? (
+                    <>{t('dsb.admin.list.all_permissions')}</>
+                  ) : (
+                    <>
+                      {passportItemCount} {t('dsb.admin.list.permissions_unit')}
+                    </>
+                  )}
                   <ArrowSVG className={s.arrowIcon} />
                 </Button>
               </div>

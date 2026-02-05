@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 import useCommunity from '~/hooks/useCommunity'
+import useTrans from '~/hooks/useTrans'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 import useSalon from '../salon/domain/platform'
@@ -7,13 +8,17 @@ import useSalon from '../salon/domain/platform'
 const Domain: FC = () => {
   const s = useSalon()
   const community = useCommunity()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
-      <div className={s.title}>平台子域名</div>
+      <div className={s.title}>{t('dsb.domain.platform.title')}</div>
       <div className={s.desc}>
-        添加绑定后，groupher 将重定向所有 groupher/{community.slug}/* 到 {community.slug}
-        .groupher.com/*, 但不会将旧有的子域名内容重定向到新的子域名。90 天周期内不可再次更改。
+        {t('dsb.domain.platform.desc_prefix')}
+        {community.slug}
+        {t('dsb.domain.platform.desc_middle')}
+        {community.slug}
+        {t('dsb.domain.platform.desc_suffix')}
       </div>
 
       <div className={s.inputWrapper}>
@@ -24,7 +29,7 @@ const Domain: FC = () => {
       </div>
 
       <Button disabled={false} onClick={console.log}>
-        更新
+        {t('dsb.domain.platform.update')}
       </Button>
     </div>
   )

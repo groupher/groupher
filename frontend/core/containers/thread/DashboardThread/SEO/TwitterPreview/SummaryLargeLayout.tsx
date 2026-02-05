@@ -1,4 +1,5 @@
 import ImageSVG from '~/icons/Image'
+import useTrans from '~/hooks/useTrans'
 
 import useSEO from '../../logic/useSEO'
 import useSalon from '../../salon/seo/twitter_preview/summary_large_layout'
@@ -8,10 +9,11 @@ import useSalon from '../../salon/seo/twitter_preview/summary_large_layout'
 export default () => {
   const s = useSalon()
   const { twUrl, twTitle, twDescription } = useSEO()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
-      <div className={s.hint}>预览</div>
+      <div className={s.hint}>{t('dsb.seo.twitter.preview')}</div>
       <div className={s.coverWrapper}>
         <ImageSVG className={s.holdImg} />
       </div>

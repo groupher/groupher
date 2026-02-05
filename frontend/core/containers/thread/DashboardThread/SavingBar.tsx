@@ -1,5 +1,6 @@
 import type { FC, ReactNode } from 'react'
 import InfoSVG from '~/icons/Save'
+import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
 import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
 import useHelper from './logic/useHelper'
@@ -22,7 +23,7 @@ type TProps = {
 
 const SavingBar: FC<TProps> = ({
   field = null,
-  prefix = '是否保存',
+  prefix = null,
   hint = null,
   children = null,
   isTouched = false,
@@ -36,6 +37,10 @@ const SavingBar: FC<TProps> = ({
 }) => {
   const s = useSalon({ minimal, width, ...spacing })
   const { rollbackEdit, onSave } = useHelper()
+  const { t } = useTrans()
+  const resolvedPrefix = prefix ?? t('dsb.saving_bar.prefix')
+  const cancelText = t('dsb.saving_bar.cancel')
+  const confirmText = t('dsb.saving_bar.confirm')
 
   if (children !== null) {
     if (isTouched) {
@@ -45,8 +50,8 @@ const SavingBar: FC<TProps> = ({
           <div className='grow' />
           <div className={s.actions}>
             <YesOrNoButtons
-              cancelText='取消'
-              confirmText='确定'
+              cancelText={cancelText}
+              confirmText={confirmText}
               disabled={disabled}
               loading={loading}
               space={!loading ? 0.5 : 0}
@@ -77,16 +82,16 @@ const SavingBar: FC<TProps> = ({
       <div className='row-center'>
         <InfoSVG className={s.infoIcon} />
         <div className={s.hintText}>
-          {prefix}
+          {resolvedPrefix}
           {hint && <div className={s.hint}>{hint}</div>} ?
         </div>
       </div>
       <div className='grow' />
       <div className={s.actions}>
         <YesOrNoButtons
-          cancelText='取消'
+          cancelText={cancelText}
           disabled={disabled}
-          confirmText='确定'
+          confirmText={confirmText}
           space={!loading ? 0.5 : 0}
           onConfirm={() => {
             if (field) {

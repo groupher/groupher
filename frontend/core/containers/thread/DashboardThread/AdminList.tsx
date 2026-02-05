@@ -1,5 +1,6 @@
 import { type FC, useState } from 'react'
 import SettingSVG from '~/icons/Setting'
+import useTrans from '~/hooks/useTrans'
 import type { TSpace, TUser } from '~/spec'
 import Drawer from '~/widgets/Drawer'
 import Facepile from '~/widgets/Facepile'
@@ -10,9 +11,11 @@ type TProps = {
   userList?: TUser[]
 } & TSpace
 
-const AdminList: FC<TProps> = ({ title = '参与管理', userList, ...spacing }) => {
+const AdminList: FC<TProps> = ({ title = null, userList, ...spacing }) => {
   const s = useSalon({ ...spacing })
   const [showDrawer, setShowDrawer] = useState(false)
+  const { t } = useTrans()
+  const resolvedTitle = title ?? t('dsb.admin_list.title')
 
   if (!userList || userList.length === 0) {
     return null
@@ -21,11 +24,11 @@ const AdminList: FC<TProps> = ({ title = '参与管理', userList, ...spacing })
   return (
     <div className={s.wrapper}>
       <Drawer show={showDrawer} onClose={() => setShowDrawer(false)}>
-        <h2>管理员列表，设置</h2>
+        <h2>{t('dsb.admin_list.drawer_title')}</h2>
       </Drawer>
 
       <div className={s.header}>
-        <div className={s.title}>{title}</div>
+        <div className={s.title}>{resolvedTitle}</div>
         <button className={s.iconBox} onClick={() => setShowDrawer(true)}>
           <SettingSVG
             className={s.icon}

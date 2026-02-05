@@ -8,27 +8,10 @@ import { authWarn } from '~/signal'
 
 import MoreSVG from '~/icons/menu/More'
 import MenuButton from '~/widgets/Buttons/MenuButton'
+import useTrans from '~/hooks/useTrans'
 
 import useLogic from '../useLogic'
 import useSalon from '../salon/comment/actions'
-
-const menuOptions = [
-  // {
-  //   key: 'quote',
-  //   icon: `${ICON}/shape/quote.svg`,
-  //   title: '引用',
-  // },
-  {
-    key: 'share',
-    icon: `${ICON}/article/share.svg`,
-    title: '分享',
-  },
-  {
-    key: 'report',
-    icon: `${ICON}/article/report.svg`,
-    title: '举报',
-  },
-]
 
 type TProps = {
   data: TComment
@@ -36,9 +19,28 @@ type TProps = {
 
 const Actions: FC<TProps> = ({ data }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const accountInfo = useAccount()
   const { openUpdateEditor, openReplyEditor } = useLogic()
+
+  const menuOptions = [
+    // {
+    //   key: 'quote',
+    //   icon: `${ICON}/shape/quote.svg`,
+    //   title: t('comment.action.quote'),
+    // },
+    {
+      key: 'share',
+      icon: `${ICON}/article/share.svg`,
+      title: t('comment.action.share'),
+    },
+    {
+      key: 'report',
+      icon: `${ICON}/article/report.svg`,
+      title: t('comment.action.report'),
+    },
+  ]
 
   let extraOptions = []
 
@@ -47,12 +49,12 @@ const Actions: FC<TProps> = ({ data }) => {
       {
         key: 'edit',
         icon: `${ICON}/edit/publish-pen.svg`,
-        title: '编辑',
+        title: t('comment.action.edit'),
       },
       {
         key: 'delete',
         icon: `${ICON}/shape/delete.svg`,
-        title: '删除',
+        title: t('comment.action.delete'),
       },
     ]
   }
@@ -97,7 +99,7 @@ const Actions: FC<TProps> = ({ data }) => {
             openReplyEditor(data)
           }}
         >
-          回复
+          {t('comment.action.reply')}
         </div>
       )}
 

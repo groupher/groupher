@@ -1,4 +1,5 @@
 import OSSUploader from '~/widgets/OSSUploader'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../constant'
 import useBaseInfo from '../logic/useBaseInfo'
@@ -7,19 +8,20 @@ import useSalon from '../salon/basic_info/logos'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
   const { edit, saving, logo, isLogosTouched } = useBaseInfo()
 
   return (
     <div className={s.wrapper}>
-      <h3 className={s.title}>favicon</h3>
+      <h3 className={s.title}>{t('dsb.base_info.logo.favicon.title')}</h3>
       <div className={s.faviconBox}>
         <OSSUploader>
           <div className={s.favicon} />
         </OSSUploader>
       </div>
-      <div className={s.desc}>上传 favicon, 仅支持 ico 格式，最大 10 KB。可选。</div>
+      <div className={s.desc}>{t('dsb.base_info.logo.favicon.desc')}</div>
       <div className='mb-8' />
-      <h3 className={s.title}>LOGO</h3>
+      <h3 className={s.title}>{t('dsb.base_info.logo.title')}</h3>
       <div className={s.logoBox}>
         <OSSUploader
           previewUrl={logo}
@@ -29,7 +31,7 @@ export default () => {
           <div className={s.logo} />
         </OSSUploader>
       </div>
-      <div className={s.desc}>上传社区 Logo, 支持常见图片格式，200 KB以内。可选。</div>
+      <div className={s.desc}>{t('dsb.base_info.logo.desc')}</div>
 
       <SavingBar field={FIELD.BASE_INFO} isTouched={isLogosTouched} loading={saving} top={10} />
     </div>

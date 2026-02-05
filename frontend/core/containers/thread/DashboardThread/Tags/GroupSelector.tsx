@@ -3,19 +3,21 @@ import { memo } from 'react'
 
 import { nilOrEmpty } from '~/validator'
 import Button from '~/widgets/Buttons/Button'
+import useTrans from '~/hooks/useTrans'
 
 import useTags from '../logic/useTags'
 import useSalon, { cn } from '../salon/tags/group_selector'
 
 export default memo(() => {
   const s = useSalon()
+  const { t } = useTrans()
   const { activeTagGroup, edit, groups } = useTags()
 
   const active = activeTagGroup
 
   return (
     <div className={s.wrapper}>
-      <div className={s.hint}>标签分组:</div>
+      <div className={s.hint}>{t('dsb.tags.group.label')}</div>
       <div className={s.cardsWrapper}>
         <Button
           ghost
@@ -24,7 +26,7 @@ export default memo(() => {
           noBorder={active !== null}
           onClick={() => edit(null, 'activeTagGroup')}
         >
-          全部
+          {t('dsb.tags.group.all')}
         </Button>
 
         {reject((cat) => nilOrEmpty(cat), groups.sort()).map((cat) => (

@@ -5,7 +5,7 @@ import type { DSB_DESC_LAYOUT } from '~/const/layout'
 import type { CHANGE_MODE, CONDITION_MODE, PUBLISH_MODE } from '~/const/mode'
 import type { PAYMENT_METHOD, PAYMENT_USAGE } from '~/const/payment'
 import type { SOCIAL_LIST } from '~/const/social'
-import type { TConstValues } from '~/spec'
+import type { TConstValues, TTransKey } from '~/spec'
 import type { TArticleThread } from './thread'
 // c# like
 export type Nullable<T> = T | null
@@ -92,15 +92,9 @@ export type TTooltipPlacement =
 
 export type TReportType = 'ARTICLE' | 'USER' | 'COMMENT' | 'COMMUNITY'
 
-export type TAttInfo = {
-  id: string
-  title: string
-  // ...
-}
-
 export type TTabItem = {
   id?: string
-  title?: string
+  title?: TTransKey
   slug: string
   href?: string
   alias?: string

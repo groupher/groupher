@@ -1,12 +1,10 @@
 import type { FC } from 'react'
-
-import type { TColorName, TTag } from '~/spec'
-import { cutRest } from '~/fmt'
-import { Trans } from '~/i18n'
 import { EMPTY_TAG } from '~/const/utils'
-import TagNode from '~/widgets/TagNode'
-import CloseSVG from '~/icons/CloseLight'
+import { cutRest } from '~/fmt'
 import CheckVG from '~/icons/CheckBold'
+import CloseSVG from '~/icons/CloseLight'
+import type { TColorName, TTag } from '~/spec'
+import TagNode from '~/widgets/TagNode'
 
 import useSalon from './salon/tag_item'
 
@@ -21,15 +19,15 @@ const TagItem: FC<TProps> = ({ tag, active, onSelect }) => {
 
   return (
     <div className={s.wrapper}>
-      <div className={s.tag} onClick={() => onSelect(tag)}>
+      <button className={s.tag} onClick={() => onSelect(tag)}>
         <TagNode color={tag.color as TColorName} boldHash />
-        <div className={s.title}>{cutRest(Trans(tag.title), 10)}</div>
-      </div>
+        <div className={s.title}>{cutRest(tag.title, 10)}</div>
+      </button>
       {active && (
-        <div className={s.closeBox} onClick={(e) => onSelect(EMPTY_TAG)}>
+        <button className={s.closeBox} onClick={(_e) => onSelect(EMPTY_TAG)}>
           <CloseSVG className={s.closeIcon} />
           <CheckVG className={s.checkIcon} />
-        </div>
+        </button>
       )}
     </div>
   )

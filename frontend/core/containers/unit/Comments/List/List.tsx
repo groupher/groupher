@@ -1,19 +1,15 @@
-import type { FC } from 'react'
 import { includes } from 'ramda'
+import type { FC } from 'react'
 
 import type { TComment, TID } from '~/spec'
-
-import type { TMode, TRepliesState, TAPIMode } from '../spec'
-
 import Comment from '../Comment'
-import RepliesList from './RepliesList'
-import DateDivider from './DateDivider'
-
 import { MODE } from '../constant'
 import { passedDate } from '../helper'
-
-import useLogic from '../useLogic'
 import useSalon from '../salon/list/list'
+import type { TAPIMode, TMode, TRepliesState } from '../spec'
+import useLogic from '../useLogic'
+import DateDivider from './DateDivider'
+import RepliesList from './RepliesList'
 
 type TProps = {
   mode: TMode
@@ -37,9 +33,11 @@ const List: FC<TProps> = ({ mode, repliesState, apiMode, entries, foldedIds }) =
             hasReplies={comment.repliesCount > 0}
             foldedIds={foldedIds}
           />
+
           {mode === MODE.TIMELINE && (
             <DateDivider text={passedDate(entries[index], entries[index + 1])} />
           )}
+
           {mode === MODE.REPLIES &&
             comment.replies?.length > 0 &&
             !includes(comment.id, foldedIds) && (
@@ -52,7 +50,8 @@ const List: FC<TProps> = ({ mode, repliesState, apiMode, entries, foldedIds }) =
                 foldedIds={foldedIds}
               />
             )}
-          <div className={s.indentLine} onClick={() => foldComment(comment.id)} />
+
+          <button className={s.indentLine} onClick={() => foldComment(comment.id)} />
         </div>
       ))}
     </>

@@ -3,6 +3,7 @@ import { keys } from 'ramda'
 import type { FC } from 'react'
 import { groupByKey, sortByGroupIndex } from '~/helper'
 import PlusSVG from '~/icons/Plus'
+import useTrans from '~/hooks/useTrans'
 import type { TLinkItem } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
 import useFooter from '../../../logic/useFooter'
@@ -12,6 +13,7 @@ import LinkEditor from '../LinkEditor'
 const Simple: FC = () => {
   const s = useSalon()
   const [animateRef] = useAutoAnimate()
+  const { t } = useTrans()
 
   const { footerLinks: links, editingLink, editingLinkMode, add2Group } = useFooter()
 
@@ -38,15 +40,15 @@ const Simple: FC = () => {
             className='mt-6 w-28'
           >
             <PlusSVG className={s.icon} />
-            链接
+            {t('dsb.footer.editors.link')}
           </Button>
         )}
       </div>
 
       <ul className={s.right}>
-        <h3 className={s.noteTitle}>注意事项</h3>
-        <li className={s.noteP}>改变顺序后可通过上方模板预览效果。</li>
-        <li className={s.noteP}>不同模板间切换时，本组（第一组）链接组会被保留。</li>
+        <h3 className={s.noteTitle}>{t('dsb.footer.editors.note.title')}</h3>
+        <li className={s.noteP}>{t('dsb.footer.editors.note.item.preview')}</li>
+        <li className={s.noteP}>{t('dsb.footer.editors.note.item.keep')}</li>
       </ul>
     </div>
   )

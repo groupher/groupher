@@ -3,6 +3,7 @@ import { type FC, memo } from 'react'
 import EditPenSVG from '~/icons/EditPen'
 import Button from '~/widgets/Buttons/Button'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import useTrans from '~/hooks/useTrans'
 
 import SortMenu from './SortMenu'
 import type { TProps as TBase } from '..'
@@ -22,12 +23,13 @@ const StateBar: FC<TProps> = ({
   callEditor = console.log,
 }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <div className={s.totalCount}>
         <div className={s.totalTitle}>
-          评论
+          {t('comment.state.title')}
           <div className={s.totalNum}>{basicState.totalCount}</div>
         </div>
       </div>
@@ -37,7 +39,7 @@ const StateBar: FC<TProps> = ({
         <SortMenu mode={mode} isAllFolded={isAllFolded} apiMode={apiMode} />
         <Button size="small" space={2.5} onClick={() => callEditor()}>
           <EditPenSVG className={s.editIcon} />
-          写评论
+          {t('comment.state.write')}
         </Button>
       </div>
     </div>

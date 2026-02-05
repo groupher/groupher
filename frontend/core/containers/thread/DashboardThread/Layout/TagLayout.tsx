@@ -2,6 +2,7 @@ import { TAG_LAYOUT } from '~/const/layout'
 
 import HashTagSVG from '~/icons/HashTag'
 import CheckLabel from '~/widgets/CheckLabel'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../constant'
 import useTags from '../logic/useTags'
@@ -12,12 +13,13 @@ import useSalon, { cn } from '../salon/layout/tag_layout'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { edit, tagLayout, tagLayoutTouched: isTouched, saving } = useTags()
 
   return (
     <div className={s.wrapper}>
-      <SectionLabel title='标签样式' desc='列表内容及文章详情的标签的展现形式。' />
+      <SectionLabel title={t('dsb.layout.tag.title')} desc={t('dsb.layout.tag.desc')} />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(TAG_LAYOUT.HASH, 'tagLayout')}>
           <div className={cn(s.block, tagLayout === TAG_LAYOUT.HASH && s.blockActive)}>
@@ -28,7 +30,11 @@ export default () => {
             <div className={cn(s.bar, 'right-10 w-10 h-1.5')} />
           </div>
 
-          <CheckLabel title='井字' active={tagLayout === TAG_LAYOUT.HASH} top={3} />
+          <CheckLabel
+            title={t('dsb.layout.tag.option.hash')}
+            active={tagLayout === TAG_LAYOUT.HASH}
+            top={3}
+          />
         </button>
         <button className={s.layout} onClick={() => edit(TAG_LAYOUT.DOT, 'tagLayout')}>
           <div className={cn(s.block, tagLayout === TAG_LAYOUT.DOT && s.blockActive)}>
@@ -39,7 +45,11 @@ export default () => {
             <div className={cn(s.bar, 'right-11 w-10 h-1.5')} />
           </div>
 
-          <CheckLabel title='圆点' active={tagLayout === TAG_LAYOUT.DOT} top={3} />
+          <CheckLabel
+            title={t('dsb.layout.tag.option.dot')}
+            active={tagLayout === TAG_LAYOUT.DOT}
+            top={3}
+          />
         </button>
       </div>
       <SavingBar isTouched={isTouched} field={FIELD.TAG_LAYOUT} loading={saving} top={10} />

@@ -1,7 +1,5 @@
 import type { FC } from 'react'
-
 import type { TTag } from '~/spec'
-import { Trans } from '~/i18n'
 
 import useSalon, { cn } from './salon/file_item'
 
@@ -16,9 +14,9 @@ const FileItem: FC<TProps> = ({ tag, active, onSelect }) => {
 
   return (
     <div className={cn(s.wrapper)}>
-      <div className={cn(s.file, active && 'py-0.5')} onClick={() => onSelect(tag)}>
-        <div className={cn(s.title, active && s.primary)}>{Trans(tag.title)}</div>
-      </div>
+      <button className={cn(s.file, active && 'py-0.5')} onClick={() => onSelect(tag)}>
+        <div className={cn(s.title, active && s.primary)}>{tag.title}</div>
+      </button>
       {/* {active && <Outline />} */}
       {active && <div className={s.indexDot} />}
     </div>

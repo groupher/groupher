@@ -3,34 +3,37 @@
 import { DSB_COVERS, INFO_TABS } from '~/const/route'
 import VIEW from '~/const/view'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
+import useSalon, { cnMerge } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
+import useTrans from '~/hooks/useTrans'
+import type { TCrumbConfig } from '~/spec'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = INFO_TABS.segment
 const CRUMB_CONFIG = {
-  title: '工作区',
+  title: 'dsb.crumb.workplace',
   seg,
   toSeg: DSB_COVERS.WORKPLACE,
   children: [
-    { title: '基本信息', seg },
-    { title: 'Logo', seg: `${seg}/logos` },
-    { title: '社交媒体', seg: `${seg}/social` },
-    { title: '其他', seg: `${seg}/others` },
+    { title: 'dsb.info.basic', seg },
+    { title: 'dsb.info.logo', seg: `${seg}/logos` },
+    { title: 'dsb.info.social', seg: `${seg}/social` },
+    { title: 'common.other', seg: `${seg}/others` },
   ],
-}
+} satisfies TCrumbConfig
 
 export default ({ children }) => {
   const s = useSalon()
   const { items, activeTab } = useDsbLayoutTabs(INFO_TABS)
+  const { t } = useTrans()
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
-    <div className={cn(s.content, 'w-2/5')}>
+    <div className={cnMerge(s.content, 'w-2/5')}>
       <Portal
-        title='基本信息'
-        desc='社区基本信息，社交媒体，关于页面主要信息等。'
+        title={t('dashboard.info.portal.title')}
+        desc={t('dashboard.info.portal.desc')}
         crumbItems={crumbItems}
         withDivider={false}
       />

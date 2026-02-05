@@ -3,6 +3,7 @@ import { blurRGB } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'
 import useGaussBlur from '~/hooks/useGaussBlur'
 import useWallpaper from '~/hooks/useWallpaper'
+import useTrans from '~/hooks/useTrans'
 import SettingSVG from '~/icons/Setting'
 import { callWallpaperEditor } from '~/signal'
 import CheckLabel from '~/widgets/CheckLabel'
@@ -13,6 +14,7 @@ import useSalon, { cn, cnMerge } from '../salon/layout/wallpaper'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const gaussBlur = useGaussBlur()
   const { background } = useWallpaper()
@@ -23,9 +25,8 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title='壁纸设置'
-        desc="「壁纸」为宽屏（屏幕尺寸大于 (WIDTH.COMMUNITY.PAGE)
-            ）下，超出内容部分显示的背景图片，除内置壁纸外，你还可以上传和社区话题相关的自定义图片。"
+        title={t('dsb.layout.wallpaper.title')}
+        desc={t('dsb.layout.wallpaper.desc')}
         
         width='96%'
       />
@@ -34,7 +35,7 @@ export default () => {
         <button className={s.hoverMask} onClick={() => callWallpaperEditor()}>
           <SettingSVG className={s.settingIcon} />
           <div className={cn(s.previewImage, 'group-hover:brightness-90')} style={{ background }} />
-          <CheckLabel title='原图' top={4} active={false} />
+          <CheckLabel title={t('dsb.layout.wallpaper.original')} top={4} active={false} />
         </button>
         <div className={s.previewer}>
           <div className={s.realPreview}>
@@ -53,7 +54,7 @@ export default () => {
               <div className={cnMerge(s.bar, 'bottom-4 w-32 mt-0.5 opacity-10')} />
             </div>
           </div>
-          <CheckLabel title='预览效果' top={4} active={false} />
+          <CheckLabel title={t('dsb.layout.wallpaper.preview')} top={4} active={false} />
         </div>
       </div>
     </div>

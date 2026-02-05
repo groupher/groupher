@@ -12,6 +12,7 @@ import UserBadge from '~/icons/UserBadge'
 
 import EmotionSelector from '~/widgets/EmotionSelector'
 import Upvote from '~/widgets/Upvote'
+import useTrans from '~/hooks/useTrans'
 
 import Actions from './Actions'
 
@@ -31,6 +32,7 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
 
   const accountInfo = useAccount()
   const { handleUpvote, handleEmotion } = useLogic()
+  const { t } = useTrans()
 
   // const { isLegal } = data.meta
   const { meta, upvotesCount, viewerHasUpvoted } = data
@@ -46,14 +48,14 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
           {isSolution && (
             <span className={s.anwser}>
               <CheckSVG className={s.checkIcon} />
-              解决方案
+              {t('comment.footer.solution')}
             </span>
           )}
 
           {isArticleAuthorUpvoted && (
             <div className={s.authorUpvote}>
               <UserBadge className={s.upvoteIcon} />
-              作者点了赞
+              {t('comment.footer.author_upvoted')}
             </div>
           )}
           <div className="grow" />

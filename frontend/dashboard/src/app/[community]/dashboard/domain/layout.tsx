@@ -3,33 +3,36 @@
 import { DOMAIN_TABS, DSB_COVERS } from '~/const/route'
 import VIEW from '~/const/view'
 import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon, { cn } from '~/containers/thread/DashboardThread/salon'
+import useSalon, { cnMerge } from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
+import useTrans from '~/hooks/useTrans'
+import type { TCrumbConfig } from '~/spec'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = DOMAIN_TABS.segment
-export const CRUMB_CONFIG = {
-  title: '域名绑定',
+const CRUMB_CONFIG = {
+  title: 'dsb.crumb.domain',
   seg,
   toSeg: DSB_COVERS.INTEGRATIONS,
   children: [
-    { title: '平台子域名', seg },
-    { title: '自定义域名', seg: `${seg}/custom` },
+    { title: 'dsb.crumb.domain.platform', seg },
+    { title: 'dsb.crumb.domain.custom', seg: `${seg}/custom` },
   ],
-}
+} satisfies TCrumbConfig
 
 export default ({ children }) => {
   const s = useSalon()
   const { items, activeTab } = useDsbLayoutTabs(DOMAIN_TABS)
+  const { t } = useTrans()
 
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
-    <div className={cn(s.content)}>
+    <div className={cnMerge(s.content)}>
       <Portal
-        title='域名设置'
-        desc='给你的社区绑定个性化域名。'
+        title={t('dsb.portal.domain.title')}
+        desc={t('dsb.portal.domain.desc')}
         withDivider={false}
         crumbItems={crumbItems}
       />

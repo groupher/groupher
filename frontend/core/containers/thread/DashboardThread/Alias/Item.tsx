@@ -2,6 +2,7 @@ import type { FC } from 'react'
 
 import ArrowSVG from '~/icons/ArrowSolid'
 import AddButton from '~/widgets/Buttons/AddButton'
+import useTrans from '~/hooks/useTrans'
 import Input from '~/widgets/Input'
 
 import { BUILD_IN_ALIAS_SUGGESTIONS, FIELD } from '../constant'
@@ -17,6 +18,7 @@ type TProps = {
 
 const Item: FC<TProps> = ({ alias }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const { updateEditingAlias, editingAlias, resetEdit } = useAlias()
 
   const isEditMode: boolean = alias.slug === editingAlias?.slug
@@ -65,7 +67,7 @@ const Item: FC<TProps> = ({ alias }) => {
               right={4}
               onClick={() => updateEditingAlias(alias)}
             >
-              修改
+              {t('dsb.alias.edit')}
             </AddButton>
             {isChanged && (
               <AddButton
@@ -77,7 +79,7 @@ const Item: FC<TProps> = ({ alias }) => {
                   resetEdit()
                 }}
               >
-                恢复默认
+                {t('dsb.alias.reset')}
               </AddButton>
             )}
           </>

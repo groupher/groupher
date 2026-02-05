@@ -1,6 +1,7 @@
 import { TOPBAR_LAYOUT } from '~/const/layout'
 import CheckLabel from '~/widgets/CheckLabel'
 import ColorSelector from '~/widgets/ColorSelector'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../constant'
 import useTopbar from '../logic/useTopbar'
@@ -10,12 +11,17 @@ import useSalon, { cn } from '../salon/layout/topbar_layout'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { edit, layout, isBgTouched, isLayoutTouched, saving, bg } = useTopbar()
 
   return (
     <div className={s.wrapper}>
-      <SectionLabel title='Topbar 样式' desc='全局 Topbar 的样式。' detailText='查看示例' />
+      <SectionLabel
+        title={t('dsb.layout.topbar.title')}
+        desc={t('dsb.layout.topbar.desc')}
+        detailText={t('dsb.layout.view_example')}
+      />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(TOPBAR_LAYOUT.YES, 'topbarLayout')}>
           <div className={cn(s.block, layout === TOPBAR_LAYOUT.YES && s.blockActive)}>
@@ -23,14 +29,22 @@ export default () => {
             <div className={cn(s.bar, 'top-8 left-5 h-28 w-6/12 opacity-5')} />
             <div className={cn(s.bar, 'top-8 right-5 h-24 w-20 opacity-5')} />
           </div>
-          <CheckLabel title='有 Topbar' active={layout === TOPBAR_LAYOUT.YES} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.topbar.option.with')}
+            active={layout === TOPBAR_LAYOUT.YES}
+            top={4}
+          />
         </button>
         <button className={s.layout} onClick={() => edit(TOPBAR_LAYOUT.NO, 'topbarLayout')}>
           <div className={cn(s.block, layout === TOPBAR_LAYOUT.NO && s.blockActive)}>
             <div className={cn(s.bar, 'top-8 left-5 h-28 w-6/12 opacity-5')} />
             <div className={cn(s.bar, 'top-8 right-5 h-24 w-20 opacity-5')} />
           </div>
-          <CheckLabel title='无 Topbar' active={layout === TOPBAR_LAYOUT.NO} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.topbar.option.none')}
+            active={layout === TOPBAR_LAYOUT.NO}
+            top={4}
+          />
         </button>
       </div>
 
@@ -51,7 +65,7 @@ export default () => {
           top={30}
         >
           <div className={s.bgWrapper}>
-            <div>颜色:</div>
+            <div>{t('dsb.layout.topbar.color_label')}</div>
             <div className={s.bgLabel}>
               <ColorSelector
                 activeColor={bg}

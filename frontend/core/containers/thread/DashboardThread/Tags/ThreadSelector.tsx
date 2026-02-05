@@ -1,17 +1,19 @@
 import Button from '~/widgets/Buttons/Button'
+import useTrans from '~/hooks/useTrans'
 
 import useTags from '../logic/useTags'
 import useSalon, { cn } from '../salon/tags/thread_selector'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { activeTagThread, changeThread, threads } = useTags()
   const active = activeTagThread
 
   return (
     <div className={s.wrapper}>
-      <div className={s.hint}>社区板块:</div>
+      <div className={s.hint}>{t('dsb.tags.thread.label')}</div>
       <div className={s.cardsWrapper}>
         {threads.map((thread) => (
           <Button

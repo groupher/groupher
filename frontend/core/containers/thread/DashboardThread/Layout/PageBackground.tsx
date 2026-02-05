@@ -2,6 +2,7 @@ import { getCSSVar } from '~/css'
 import { camelize, titleCaseHM, upperSnakeCase } from '~/fmt'
 import useDidMount from '~/hooks/useDidMount'
 import useTheme from '~/hooks/useTheme'
+import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/Check'
 import { FIELD } from '../constant'
 import usePageBg from '../logic/usePageBg'
@@ -16,12 +17,13 @@ export default () => {
 
   const s = useSalon()
   const { isLightTheme } = useTheme()
+  const { t } = useTrans()
 
   return (
     <section className={s.wrapper}>
       <SectionLabel
-        title='页面背景色'
-        desc='设置主页面背景色。参考'
+        title={t('dsb.layout.page_background.title')}
+        desc={t('dsb.layout.page_background.desc')}
         classNames='pr-8'
         withThemeSelect
       />

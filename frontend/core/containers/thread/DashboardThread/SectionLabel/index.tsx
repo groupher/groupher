@@ -1,6 +1,7 @@
 import type { FC, ReactNode } from 'react'
 import type { TSpace } from '~/spec'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
+import useTrans from '~/hooks/useTrans'
 import useSalon, { cnMerge } from '../salon/section_label'
 import ThemeSelect from './ThemeSelect'
 
@@ -22,13 +23,15 @@ const SectionLabel: FC<TProps> = ({
   addon = null,
   width = 'w-full',
   withThemeSelect = false,
-  detailText = '影响范围',
+  detailText = null,
   classNames = '',
   showMoreButton = true,
   onDetailClick = () => {},
   ...spacing
 }) => {
   const s = useSalon({ width, desc, ...spacing })
+  const { t } = useTrans()
+  const resolvedDetailText = detailText ?? t('dsb.section_label.detail')
 
   return (
     <div className={cnMerge(s.wrapper, classNames)}>
@@ -49,7 +52,7 @@ const SectionLabel: FC<TProps> = ({
           {desc}
           {showMoreButton && (
             <ArrowButton left={0.5} onClick={onDetailClick}>
-              {detailText}
+              {resolvedDetailText}
             </ArrowButton>
           )}
         </div>

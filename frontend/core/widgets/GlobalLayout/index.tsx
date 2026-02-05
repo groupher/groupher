@@ -16,6 +16,7 @@ import ThemeMonitor from './ThemeMonitor'
 // import CustomScroller from '~/widgets/CustomScroller'
 
 import Main from './Main'
+import LocaleSync from './LocaleSync'
 import SEO from './SEO'
 import useSalon from './salon'
 import Wallpaper from './Wallpaper'
@@ -48,6 +49,7 @@ const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
 
   return (
     <>
+      <LocaleSync />
       <Mushroom />
       <Suspense fallback={null}>
         <Addon />

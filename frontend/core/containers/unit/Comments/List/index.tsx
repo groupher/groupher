@@ -1,12 +1,14 @@
 import { Fragment } from 'react'
 
 import Pagi from '~/widgets/Pagi'
+import useTrans from '~/hooks/useTrans'
 
 import List from './List'
 
 import useLogic from '../useLogic'
 
 export default () => {
+  const { t } = useTrans()
   const { mode, apiMode, loading, getFoldState, getRepliesState, pagedComments, onPageChange } =
     useLogic()
 
@@ -33,8 +35,8 @@ export default () => {
           totalCount={totalCount}
           onChange={onPageChange}
           showBottomMsg
-          noMoreMsg="没有更多的讨论了"
-          emptyMsg="目前还没有讨论"
+          noMoreMsg={t('comment.list.no_more')}
+          emptyMsg={t('comment.list.empty')}
         />
       )}
     </Fragment>

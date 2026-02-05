@@ -34,7 +34,7 @@ export default function useDsbLayoutTabs(cfg: TDsbTabs): {
     const resolved = segment === undefined ? slug : segment
     const pathname = resolved ? `/${resolved}` : ''
 
-    return { ...rest, slug, href: `${base}${pathname}` }
+    return { ...rest, title: rest.title, slug, href: `${base}${pathname}` }
   })
 
   return { items, activeTab }

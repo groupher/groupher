@@ -575,18 +575,4 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert not is_nil(results["siteName"])
     end
   end
-
-  @query """
-  query($locale: String!) {
-    clientI18n(locale: $locale) {
-      locale
-    }
-  }
-  """
-  test "fake client i18n test", ~m(guest_conn)a do
-    variables = %{locale: "en"}
-    results = guest_conn |> gq_query(@query, variables)
-
-    assert results["locale"] == "__ignore_this__"
-  end
 end

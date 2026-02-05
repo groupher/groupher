@@ -4,11 +4,10 @@ import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
 import { DSB_SEG } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
-
-export type TBreadcrumbItem = { title: string; path: string }
+import type { TBreadcrumbItem, TTransKey } from '~/spec'
 
 export type TDsbCrumbNode = {
-  title: string
+  title: TTransKey
 
   /**
    * Segment used for matching current pathname (route semantics).

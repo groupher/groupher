@@ -3,6 +3,7 @@ import type { FC } from 'react'
 import type { TFAQSection } from '~/spec'
 
 import Markdown from '~/widgets/Markdown'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../../../constant'
 
@@ -21,6 +22,7 @@ export type TProps = {
 
 const FAQ: FC<TProps> = ({ sections, editingFAQIndex, editingFAQ, isTouched }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const showAdder = editingFAQIndex === sections.length
   const [animateRef] = useAutoAnimate()
@@ -48,7 +50,7 @@ const FAQ: FC<TProps> = ({ sections, editingFAQIndex, editingFAQ, isTouched }) =
 
           <SavingBar
             field={FIELD.FAQ_SECTIONS}
-            prefix='是否保存排序'
+            prefix={t('dsb.cms.faq.save_sort')}
             isTouched={isTouched}
             top={12}
           />

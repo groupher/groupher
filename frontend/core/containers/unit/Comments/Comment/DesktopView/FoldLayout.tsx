@@ -5,6 +5,7 @@ import ExpandSVG from '~/icons/Expand'
 import type { TComment } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import TimeAgo from '~/widgets/TimeAgo'
+import useTrans from '~/hooks/useTrans'
 import useSalon, { cn } from '../../salon/comment/desktop_view/fold_layout'
 
 import useLogic from '../../useLogic'
@@ -19,6 +20,7 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
   const s = useSalon()
 
   const { expandComment } = useLogic()
+  const { t } = useTrans()
 
   const isSolution = false //
   const { meta } = data
@@ -26,7 +28,7 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
 
   return (
     <div className={s.wrapper} onClick={() => expandComment(data.id)}>
-      {isReply && <span>curve</span>}
+      {isReply && <span>{t('comment.reply.curve')}</span>}
       <ExpandSVG className={s.expandIcon} />
       <Img
         className={s.avatar}
@@ -45,7 +47,11 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
         <IllegalBar illegalReason={illegalReason} illegalWords={illegalWords} isFold />
       )}
 
-      {data.repliesCount > 0 && <div className={s.repliesHint}>[ {data.repliesCount} 条回复 ]</div>}
+      {data.repliesCount > 0 && (
+        <div className={s.repliesHint}>
+          [ {data.repliesCount} {t('comment.replies.count')} ]
+        </div>
+      )}
 
       {isSolution && (
         <CheckBoldSVG

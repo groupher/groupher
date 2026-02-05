@@ -1,3 +1,4 @@
+import { LOCALE } from '~/const/i18n'
 import useLocale from '~/hooks/useLocale'
 import { loadLocaleFile } from '~/i18n'
 import type { TLocale } from '~/spec'
@@ -18,6 +19,16 @@ const useChangeI18n = (): TRet => {
       })
       .catch((error) => {
         console.log(`## Failed to load locale file: ${error}`)
+        if (locale === LOCALE.EN) return
+
+        loadLocaleFile(LOCALE.EN)
+          .then((localeData) => {
+            setLocaleData(JSON.stringify(localeData))
+            setLocale(LOCALE.EN)
+          })
+          .catch((fallbackError) => {
+            console.log(`## Failed to load fallback locale: ${fallbackError}`)
+          })
       })
   }
 

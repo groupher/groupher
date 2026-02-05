@@ -6,6 +6,7 @@ import Input from '~/widgets/Input'
 import Modal from '~/widgets/Modal'
 import NoticeBar from '~/widgets/NoticeBar'
 import Tabs from '~/widgets/Switcher/Tabs'
+import useTrans from '~/hooks/useTrans'
 import useBaseInfo from '../../logic/useBaseInfo'
 import useSalon from '../../salon/basic_info/danger_zone/modal'
 // import from '~/widgets/Alert'
@@ -16,39 +17,42 @@ type TProps = {
   onClose: () => void
 }
 
-export const VISIBLE_OPTIONS = [
-  {
-    title: '公开（默认）',
-    slug: 'public',
-  },
-  {
-    title: '隐藏',
-    slug: 'private',
-  },
-]
-
-const defaultPrivateNote = '当前社区为私有状态，只对管理员开放。'
-
 const PublicModal: FC<TProps> = ({ show, onClose }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { toggleVisiable } = useBaseInfo()
 
   const [visible, setVisible] = useState('public')
+  const defaultPrivateNote = t('dsb.base_info.danger.visibility.modal.private_note')
   const [privateNote, setPrivateNote] = useState(defaultPrivateNote)
+
+  const visibleOptions = [
+    {
+      title: t('dsb.base_info.danger.visibility.modal.option.public'),
+      slug: 'public',
+    },
+    {
+      title: t('dsb.base_info.danger.visibility.modal.option.private'),
+      slug: 'private',
+    },
+  ]
 
   return (
     <Modal show={show} width='390px' offsetLeft='40%' onClose={() => onClose()} showCloseBtn>
       <div className={s.wrapper}>
-        <h3 className={s.warningTitle}>社区可见性</h3>
+        <h3 className={s.warningTitle}>{t('dsb.base_info.danger.visibility.modal.title')}</h3>
         <div className={s.body}>
-          <NoticeBar type='notice' content='隐藏后所有内容只对管理员可见，当前为公开。' />
+          <NoticeBar
+            type='notice'
+            content={t('dsb.base_info.danger.visibility.modal.notice')}
+          />
 
           <List
             items={[
-              '所有帖子，看板，更新日志等等将不可见',
-              '社区创建者以及管理员不受影响',
-              '后台操作不受影响',
+              t('dsb.base_info.danger.visibility.modal.item.invisible'),
+              t('dsb.base_info.danger.visibility.modal.item.admins'),
+              t('dsb.base_info.danger.visibility.modal.item.console'),
             ]}
             left={6}
             top={5}
@@ -56,13 +60,13 @@ const PublicModal: FC<TProps> = ({ show, onClose }) => {
         </div>
         <div className={s.footer}>
           <Tabs
-            items={VISIBLE_OPTIONS}
+            items={visibleOptions}
             activeKey={visible}
             onChange={(value) => setVisible(value)}
             view={VIEW.DRAWER}
           />
           <div className='mt-5' />
-          <div className={s.desc}>对外提示信息（支持 Markdown）</div>
+          <div className={s.desc}>{t('dsb.base_info.danger.visibility.modal.external_note')}</div>
           <div className='mt-2' />
           <Input
             className={s.textarea}
@@ -72,7 +76,9 @@ const PublicModal: FC<TProps> = ({ show, onClose }) => {
             onChange={(e) => setPrivateNote(e.target.value)}
           />
           <div className='mt-4' />
-          <Button onClick={() => toggleVisiable()}>确定变更</Button>
+          <Button onClick={() => toggleVisiable()}>
+            {t('dsb.base_info.danger.visibility.modal.confirm')}
+          </Button>
         </div>
       </div>
     </Modal>

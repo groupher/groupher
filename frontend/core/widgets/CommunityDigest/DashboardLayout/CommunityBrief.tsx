@@ -8,6 +8,7 @@ import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import useLayout from '~/hooks/useLayout'
 import usePublicThreads from '~/hooks/usePublicThreads'
+import useTrans from '~/hooks/useTrans'
 
 import Img from '~/Img'
 import ArrowSVG from '~/icons/ArrowUpRight'
@@ -24,7 +25,7 @@ import ChangelogSVG from '~/icons/TadaRaw'
 import ImgFallback from '~/widgets/ImgFallback'
 import Tooltip from '~/widgets/Tooltip'
 
-import useSalon, { cn } from '../salon/dashboard_layout/community_brief'
+import useSalon, { cn, cnMerge } from '../salon/dashboard_layout/community_brief'
 
 export default () => {
   const s = useSalon()
@@ -33,6 +34,7 @@ export default () => {
   const { title, logo, slug } = useCommunity()
   const dsb$ = useDashboard()
   const { brandLayout } = useLayout()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
@@ -50,14 +52,14 @@ export default () => {
           <div className={s.topPanel}>
             <Link className={cn(s.panelItem, s.outside)} href={dsb$.homepage}>
               <GlobalSVG className={s.icon} />
-              <div>返回官网</div>
+              <div>{t('dsb.community_brief.back_home')}</div>
               <div className='grow' />
               <ArrowSVG className={s.arrowIcon} />
             </Link>
 
             <Link className={cn(s.panelItem, s.outside)} href={`/${slug}`}>
               <GithubSVG className={s.icon} />
-              <div>Github</div>
+              <div>{t('dsb.community_brief.github')}</div>
               <div className='grow' />
               <ArrowSVG className={s.arrowIcon} />
             </Link>
@@ -65,7 +67,7 @@ export default () => {
             <div className={s.divider} />
             <Link className={cn(s.panelItem, s.outside)} href={APPLY_COMMUNITY}>
               <PlusSVG className={s.icon} />
-              <div>新社区</div>
+              <div>{t('dsb.community_brief.new_community')}</div>
               <div className='grow' />
               <ArrowSVG className={s.arrowIcon} />
             </Link>
@@ -83,7 +85,7 @@ export default () => {
           )}
           {brandLayout !== BRAND_LAYOUT.LOGO && <div className={s.title}>{title}</div>}
 
-          <div className={s.levelLabel}>Free</div>
+          <div className={s.levelLabel}>{t('dsb.community_brief.plan_free')}</div>
 
           <div className='mr-3' />
           <OptionArrowSVG className={s.optArrowIcon} />
@@ -109,7 +111,7 @@ export default () => {
 
             <Link className={s.panelItem} href={`/${slug}/${THREAD.ABOUT}`}>
               <AboutSVG className={s.icon} />
-              <div>关于</div>
+              <div>{t('dsb.community_brief.about')}</div>
             </Link>
           </div>
         }
@@ -120,8 +122,8 @@ export default () => {
         noPadding
       >
         <div className={s.menuWrapper}>
-          <SettingSVG className={cn(s.icon, 'mr-0')} />
-          <div className={s.title}>管理后台</div>
+          <SettingSVG className={cnMerge(s.icon, 'mr-0')} />
+          <div className={s.title}>{t('dsb.community_brief.dashboard')}</div>
           <div className='mr-3' />
           <OptionArrowSVG className={s.optArrowIcon} />
         </div>

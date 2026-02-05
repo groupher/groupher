@@ -3,6 +3,7 @@ import { type FC, useState } from 'react'
 import { HEADER_LAYOUT } from '~/const/layout'
 import ArrowSVG from '~/icons/ArrowSimple'
 import Button from '~/widgets/Buttons/Button'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../../constant'
 import useHeader from '../../logic/useHeader'
@@ -15,6 +16,7 @@ import Right from './Right'
 const Templates: FC = () => {
   const [showAll, setShowAll] = useState(false)
   const s = useSalon()
+  const { t } = useTrans()
 
   const {
     isHeaderLayoutTouched: isLayoutTouched,
@@ -66,7 +68,7 @@ const Templates: FC = () => {
       <div className='align-both'>
         {!isLayoutTouched && !saving && (
           <Button size='small' ghost noBorder className='w-36' onClick={() => setShowAll(!showAll)}>
-            {showAll ? '收起' : '更换模板'}
+            {showAll ? t('dsb.header.templates.collapse') : t('dsb.header.templates.switch')}
             <ArrowSVG className={cn(s.arrowIcon, showAll && 'rotate-90')} />
           </Button>
         )}

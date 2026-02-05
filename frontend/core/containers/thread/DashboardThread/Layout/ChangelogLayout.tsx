@@ -1,5 +1,6 @@
 import { CHANGELOG_LAYOUT } from '~/const/layout'
 import CheckLabel from '~/widgets/CheckLabel'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../constant'
 import useChangelog from '../logic/useChangelog'
@@ -10,13 +11,14 @@ import useSalon, { cnMerge } from '../salon/layout/changelog_layout'
 export default () => {
   const s = useSalon()
   const { edit, layout, isTouched, saving } = useChangelog()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title='更新日志布局'
-        desc='「更新日志」列表的默认展现形式，切换布局不影响已发布内容。'
-        detailText='查看示例'
+        title={t('dsb.layout.changelog.title')}
+        desc={t('dsb.layout.changelog.desc')}
+        detailText={t('dsb.layout.view_example')}
       />
       <div className={s.select}>
         <button
@@ -34,7 +36,11 @@ export default () => {
             <div className={cnMerge(s.bar, 'h-1.5 bottom-6 left-16 ml-0.5 mt-2 w-28 opacity-15')} />
           </div>
 
-          <CheckLabel title='经典模式' active={layout === CHANGELOG_LAYOUT.CLASSIC} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.changelog.option.classic')}
+            active={layout === CHANGELOG_LAYOUT.CLASSIC}
+            top={4}
+          />
         </button>
         <button
           className={s.layout}
@@ -64,7 +70,11 @@ export default () => {
             <div className={cnMerge(s.bar, 'h-2.5 w-16 bottom-6 left-24 ml-0.5 opacity-30')} />
           </div>
 
-          <CheckLabel title='极简模式' active={layout === CHANGELOG_LAYOUT.SIMPLE} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.changelog.option.simple')}
+            active={layout === CHANGELOG_LAYOUT.SIMPLE}
+            top={4}
+          />
         </button>
       </div>
 

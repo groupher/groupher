@@ -1,6 +1,7 @@
 import { KANBAN_LAYOUT } from '~/const/layout'
 
 import CheckLabel from '~/widgets/CheckLabel'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../../constant'
 import useKanban from '../../logic/useKanban'
@@ -10,12 +11,13 @@ import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/global_layou
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { kanbanLayout: layout, isKanbanLayoutTouched: isTouched, saving, edit } = useKanban()
 
   return (
     <>
-      <SectionLabel title='看板布局' desc='「看板」的整体布局，切换不影响内容。' />
+      <SectionLabel title={t('dsb.layout.kanban.global.title')} desc={t('dsb.layout.kanban.global.desc')} />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(KANBAN_LAYOUT.CLASSIC, 'kanbanLayout')}>
           <div className={cnMerge(s.block, layout === KANBAN_LAYOUT.CLASSIC && s.blockActive)}>
@@ -35,7 +37,11 @@ export default () => {
             <div className={cnMerge(s.bar, s.item, 'right-6 top-24 opacity-25 -mt-1')} />
             <div className={cnMerge(s.bar, s.item, 'right-6 bottom-9 opacity-15')} />
           </div>
-          <CheckLabel title='经典' active={layout === KANBAN_LAYOUT.CLASSIC} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.kanban.global.option.classic')}
+            active={layout === KANBAN_LAYOUT.CLASSIC}
+            top={4}
+          />
         </button>
         <button className={s.layout} onClick={() => edit(KANBAN_LAYOUT.WATERFALL, 'kanbanLayout')}>
           <div className={cnMerge(s.block, layout === KANBAN_LAYOUT.WATERFALL && s.blockActive)}>
@@ -64,7 +70,11 @@ export default () => {
             <div className={cnMerge(s.bar, 'w-12 h-1.5 left-6 bottom-2 mt-3.5 opacity-10')} />
             <div className={cnMerge(s.bar, 'w-8 h-1.5 right-4 bottom-2 mt-3 opacity-10')} />
           </div>
-          <CheckLabel title='瀑布' active={layout === KANBAN_LAYOUT.WATERFALL} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.kanban.global.option.waterfall')}
+            active={layout === KANBAN_LAYOUT.WATERFALL}
+            top={4}
+          />
         </button>
       </div>
 

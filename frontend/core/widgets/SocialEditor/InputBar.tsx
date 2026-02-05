@@ -5,12 +5,9 @@
  */
 
 import type { FC } from 'react'
-
-import type { TSocialItem } from '~/spec'
-
-import { Trans } from '~/i18n'
-
+import useTrans from '~/hooks/useTrans'
 import DeleteSVG from '~/icons/DeleteSolid'
+import type { TSocialItem } from '~/spec'
 import Input from '~/widgets/Input'
 
 import useSalon, { Icon } from './salon/input_bar'
@@ -23,16 +20,17 @@ type TProps = {
 
 const InputBar: FC<TProps> = ({ social, onDelete, onChange }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
-  const SocalIcon = Icon[social.type]
+  const SocialIcon = Icon[social.type]
 
   return (
     <div className={s.wrapper}>
       <div className={s.iconWrapper}>
-        <SocalIcon className={s.icon} />
+        <SocialIcon className={s.icon} />
       </div>
       <Input
-        placeholder={Trans(social.type)}
+        placeholder={t(social.type)}
         value={social.link}
         onChange={(e) => onChange(social.type, e.target.value)}
       />

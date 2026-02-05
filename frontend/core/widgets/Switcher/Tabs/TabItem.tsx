@@ -9,7 +9,7 @@
 import Link from 'next/link'
 import { type FC, useCallback, useEffect, useRef } from 'react'
 import { isElementInViewport } from '~/dom'
-import { Trans } from '~/i18n'
+import useTrans from '~/hooks/useTrans'
 import type { TSizeSM, TTabItem } from '~/spec'
 import { isString } from '~/validator'
 import useSalon, { cn } from '../salon/tabs/tab_item'
@@ -45,6 +45,7 @@ const TabItem: FC<TProps> = ({
 
   const s = useSalon({ bottomSpace })
 
+  const { t } = useTrans()
   const ref = useRef<HTMLElement | null>(null)
   const clickableRef = useRef<HTMLSpanElement | null>(null)
   const activeRef = useRef<HTMLDivElement | null>(null)
@@ -95,9 +96,7 @@ const TabItem: FC<TProps> = ({
       {!isString(item) && item.icon && (
         <TabIcon item={item} clickableRef={clickableRef as any} active={active} />
       )}
-      <div ref={active ? activeRef : null}>
-        {isString(item) ? item : item.alias || Trans(item.title)}
-      </div>
+      <div ref={active ? activeRef : null}>{isString(item) ? item : t(item.title)}</div>
     </span>
   )
 

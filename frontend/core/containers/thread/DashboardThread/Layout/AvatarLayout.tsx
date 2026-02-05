@@ -1,6 +1,7 @@
 import { AVATAR_LAYOUT } from '~/const/layout'
 
 import CheckLabel from '~/widgets/CheckLabel'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../constant'
 import useAvatar from '../logic/useAvatar'
@@ -12,10 +13,11 @@ export default () => {
   const s = useSalon()
 
   const { edit, layout, isTouched, saving } = useAvatar()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
-      <SectionLabel title='头像样式' desc='用户/用户列表头像展示样式，作用于投票列表，评论区等。' />
+      <SectionLabel title={t('dsb.layout.avatar.title')} desc={t('dsb.layout.avatar.desc')} />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(AVATAR_LAYOUT.SQUARE, 'avatarLayout')}>
           <div className={cn(s.block, layout === AVATAR_LAYOUT.SQUARE && s.blockActive)}>
@@ -29,7 +31,11 @@ export default () => {
             </div>
           </div>
 
-          <CheckLabel title='圆角方形' active={layout === AVATAR_LAYOUT.SQUARE} top={3} />
+          <CheckLabel
+            title={t('dsb.layout.avatar.option.square')}
+            active={layout === AVATAR_LAYOUT.SQUARE}
+            top={3}
+          />
         </button>
         <button className={s.layout} onClick={() => edit(AVATAR_LAYOUT.CIRCLE, 'avatarLayout')}>
           <div className={cn(s.block, layout === AVATAR_LAYOUT.CIRCLE && s.blockActive)}>
@@ -43,7 +49,11 @@ export default () => {
             </div>
           </div>
 
-          <CheckLabel title='圆形' active={layout === AVATAR_LAYOUT.CIRCLE} top={3} />
+          <CheckLabel
+            title={t('dsb.layout.avatar.option.circle')}
+            active={layout === AVATAR_LAYOUT.CIRCLE}
+            top={3}
+          />
         </button>
       </div>
       <SavingBar isTouched={isTouched} field={FIELD.AVATAR_LAYOUT} loading={saving} top={8} />

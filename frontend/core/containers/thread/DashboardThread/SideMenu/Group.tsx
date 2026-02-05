@@ -4,6 +4,7 @@ import { type FC, useState } from 'react'
 import { DSB_ROUTE } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
 import useDsbTab from '~/hooks/useDsbTab'
+import useTrans from '~/hooks/useTrans'
 
 import ArrowSVG from '~/icons/ArrowSimple'
 import BindSVG from '~/icons/Bind'
@@ -11,10 +12,10 @@ import InfoSVG from '~/icons/Info'
 import ManagementSVG from '~/icons/Management'
 import PulseSVG from '~/icons/Pulse'
 import useSalon, { cn } from '../salon/side_menu/group'
-import type { TMenuGroup } from '../spec'
+import type { TDsbMenuGroup } from '../spec'
 
 type TProps = {
-  group: TMenuGroup
+  group: TDsbMenuGroup
 }
 
 const Group: FC<TProps> = ({ group }) => {
@@ -22,6 +23,7 @@ const Group: FC<TProps> = ({ group }) => {
 
   const { slug: community } = useCommunity()
   const [fold, setFold] = useState(group.initFold)
+  const { t } = useTrans()
 
   const s = useSalon({ fold })
 
@@ -34,7 +36,7 @@ const Group: FC<TProps> = ({ group }) => {
           {group.icon === 'analysis' && <PulseSVG className={s.menuIcon} />}
           {group.icon === 'bind' && <BindSVG className={s.menuIcon} />}
         </div>
-        <h3 className={s.title}>{group.title}</h3>
+        <h3 className={s.title}>{t(group.title)}</h3>
         <ArrowSVG className={s.arrowIcon} />
       </button>
 
@@ -52,7 +54,7 @@ const Group: FC<TProps> = ({ group }) => {
               >
                 {isActive && <div className={s.itemActiveBar} />}
 
-                {item.title}
+                {t(item.title)}
               </Link>
             )
           })}

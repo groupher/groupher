@@ -1,5 +1,6 @@
 import { find } from 'ramda'
 import { LANGS_OPTIONS } from '~/const/i18n'
+import useTrans from '~/hooks/useTrans'
 import type { TSelectOption } from '~/spec'
 import Input from '~/widgets/Input'
 import Select from '~/widgets/Select'
@@ -14,51 +15,49 @@ export default () => {
     useBaseInfo()
 
   const s = useSalon()
+  const { t } = useTrans()
   const curLangOption = find((o) => o.value === locale, LANGS_OPTIONS)
 
   return (
     <div className={s.wrapper}>
-      <div className={s.label}>默认语言</div>
+      <div className={s.label}>{t('dsb.base_info.default_locale.label')}</div>
       <Select
         value={curLangOption}
         options={LANGS_OPTIONS}
-        placeholder='社区默认语言'
+        placeholder={t('dsb.base_info.default_locale.placeholder')}
         onChange={(option: TSelectOption) => edit(option.value, 'locale')}
         top={2.5}
         bottom={5}
       />
-      <p className={s.hint}>社区界面的默认语言</p>
+      <p className={s.hint}>{t('dsb.base_info.default_locale.hint')}</p>
 
-      <div className={s.label}>站内子域名</div>
+      <div className={s.label}>{t('dsb.base_info.subdomain.label')}</div>
       <Input value={slug} className={s.input} onChange={(v) => edit(v, 'slug')} />
-      <p className={s.hint}>
-        社区的 URL 地址段，填写后可通过 https://groupher.com/[slug] 或 https://[slug].groupher.com
-        访问。
-      </p>
+      <p className={s.hint}>{t('dsb.base_info.subdomain.hint')}</p>
       <div className='mb-2.5' />
 
-      <div className={s.label}>社区名称</div>
+      <div className={s.label}>{t('dsb.base_info.title.label')}</div>
       <Input value={title} className={s.input} onChange={(v) => edit(v, 'title')} />
 
       <div className='mb-2.5' />
 
-      <div className={s.label}>官方主页</div>
+      <div className={s.label}>{t('dsb.base_info.homepage.label')}</div>
       <Input value={homepage} className={s.input} onChange={(v) => edit(v, 'homepage')} />
-      <p className={s.hint}>您产品或服务的官方地址。</p>
+      <p className={s.hint}>{t('dsb.base_info.homepage.hint')}</p>
 
-      <div className={s.label}>社区简介</div>
+      <div className={s.label}>{t('dsb.base_info.desc.label')}</div>
       <Input
-        placeholder='一句话简介'
+        placeholder={t('dsb.base_info.desc.placeholder')}
         value={desc}
         className={s.input}
         onChange={(v) => edit(v, 'desc')}
       />
       <div className='mb-4' />
 
-      <div className={s.label}>关于社区</div>
+      <div className={s.label}>{t('dsb.base_info.about.label')}</div>
       <Input
         behavior='textarea'
-        placeholder='支持 Markdown 语法'
+        placeholder={t('dsb.base_info.about.placeholder')}
         className={s.input}
         value={introduction}
         onChange={(v) => edit(v, 'introduction')}

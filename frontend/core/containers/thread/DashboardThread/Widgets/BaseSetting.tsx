@@ -3,6 +3,7 @@ import { includes } from 'ramda'
 import { THREAD } from '~/const/thread'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import ColorSelector from '~/widgets/ColorSelector'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../constant'
 import useWidgets from '../logic/useWidgets'
@@ -12,6 +13,7 @@ import useSalon, { cn } from '../salon/widgets/base_setting'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const {
     widgetsPrimaryColor,
@@ -25,7 +27,7 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <SectionLabel title='组件主题色' desc='默认与当前社区设置的主题色相一致。' />
+      <SectionLabel title={t('dsb.widgets.primary_color.title')} desc={t('dsb.widgets.primary_color.desc')} />
       <SavingBar
         isTouched={isPrimaryColorTouched}
         field={FIELD.WIDGETS_PRIMARY_COLOR}
@@ -46,54 +48,54 @@ export default () => {
 
       <div className='mt-8' />
       <SectionLabel
-        title='展示板块'
-        desc='被勾选的板块会在组件中以 Tab 形式展示相关内容，展示样式与‘社区板块’中的设置保持一致'
+        title={t('dsb.widgets.threads.title')}
+        desc={t('dsb.widgets.threads.desc')}
       />
 
       <div className={s.threads}>
         <div className={s.section}>
           <div className={s.header}>
-            <h3 className={s.threadTitle}>讨论</h3>
+            <h3 className={s.threadTitle}>{t('dsb.widgets.threads.post.title')}</h3>
             <div className='grow' />
             <ToggleSwitch
               checked={includes(THREAD.POST, widgetsThreads)}
               onChange={(checked) => threadOnChange(checked, THREAD.POST)}
             />
           </div>
-          <div className={s.desc}>社区内全部帖子列表</div>
+          <div className={s.desc}>{t('dsb.widgets.threads.post.desc')}</div>
         </div>
         <div className={s.section}>
           <div className={s.header}>
-            <h3 className={s.threadTitle}>看板</h3>
+            <h3 className={s.threadTitle}>{t('dsb.widgets.threads.kanban.title')}</h3>
             <div className='grow' />
             <ToggleSwitch
               checked={includes(THREAD.KANBAN, widgetsThreads)}
               onChange={(checked) => threadOnChange(checked, THREAD.KANBAN)}
             />
           </div>
-          <div className={s.desc}>社区内看板内容，包含GTD标签</div>
+          <div className={s.desc}>{t('dsb.widgets.threads.kanban.desc')}</div>
         </div>
         <div className={s.section}>
           <div className={s.header}>
-            <h3 className={s.threadTitle}>更新日志</h3>
+            <h3 className={s.threadTitle}>{t('dsb.widgets.threads.changelog.title')}</h3>
             <div className='grow' />
             <ToggleSwitch
               checked={includes(THREAD.CHANGELOG, widgetsThreads)}
               onChange={(checked) => threadOnChange(checked, THREAD.CHANGELOG)}
             />
           </div>
-          <div className={s.desc}>最新版本以及历史发布版本</div>
+          <div className={s.desc}>{t('dsb.widgets.threads.changelog.desc')}</div>
         </div>
         <div className={s.section}>
           <div className={s.header}>
-            <h3 className={s.threadTitle}>文档</h3>
+            <h3 className={s.threadTitle}>{t('dsb.widgets.threads.doc.title')}</h3>
             <div className='grow' />
             <ToggleSwitch
               checked={includes(THREAD.DOC, widgetsThreads)}
               onChange={(checked) => threadOnChange(checked, THREAD.DOC)}
             />
           </div>
-          <div className={s.desc}>常见问题与帮助中心文档</div>
+          <div className={s.desc}>{t('dsb.widgets.threads.doc.desc')}</div>
         </div>
       </div>
 

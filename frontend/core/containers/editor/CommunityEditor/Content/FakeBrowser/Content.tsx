@@ -1,6 +1,6 @@
 import { type FC, memo } from 'react'
+import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
-import { Trans } from '~/i18n'
 import useSalon, { cn } from '../../salon/content/fake_browser/content'
 import type { TCommunityType } from '../../spec'
 import communityIntros from '../communityIntros'
@@ -15,6 +15,7 @@ type TProps = {
 
 const Content: FC<TProps> = ({ title = '', desc = '', logo, communityType, onHoverThread }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
@@ -24,7 +25,7 @@ const Content: FC<TProps> = ({ title = '', desc = '', logo, communityType, onHov
           {title ? (
             <div className={s.title}>{title}</div>
           ) : (
-            <div className={cn(s.title, 'opacity-50')}>你的社区</div>
+            <div className={cn(s.title, 'opacity-50')}>{t('community.editor.your.community')}</div>
           )}
         </div>
         {communityType && (
@@ -36,7 +37,7 @@ const Content: FC<TProps> = ({ title = '', desc = '', logo, communityType, onHov
                 onMouseOver={() => onHoverThread(thread)}
                 onFocus={() => onHoverThread(thread)}
               >
-                {Trans(thread)}
+                {thread}
               </button>
             ))}
           </div>

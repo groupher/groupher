@@ -2,6 +2,7 @@ import { type FC, useState } from 'react'
 
 import InfoSVG from '~/icons/Info'
 import Button from '~/widgets/Buttons/Button'
+import useTrans from '~/hooks/useTrans'
 import useSalon, { cn } from '../../salon/basic_info/danger_zone'
 import ArchiveModal from './ArchiveModal'
 import DeleteModal from './DeleteModal'
@@ -17,6 +18,7 @@ const ActionButton = ({ children, onClick }) => {
 
 const DangerZone: FC = () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const [showPublicModal, setPublicModal] = useState(false)
   const [showArchiveModal, setArchiveModal] = useState(false)
@@ -24,36 +26,42 @@ const DangerZone: FC = () => {
 
   return (
     <div className={s.wrapper}>
-      <h3 className={s.dangerTitle}>危险操作</h3>
+      <h3 className={s.dangerTitle}>{t('dsb.base_info.danger.title')}</h3>
 
       <div className={cn(s.item, 'border-b-0 border-t-2 rounded-t-2xl')}>
         <h3 className={s.title}>
-          社区可见性
+          {t('dsb.base_info.danger.visibility.title')}
           <InfoSVG className={s.icon} />
           <div className='grow' />
-          <ActionButton onClick={() => setPublicModal(true)}>隐藏</ActionButton>
+          <ActionButton onClick={() => setPublicModal(true)}>
+            {t('dsb.base_info.danger.visibility.action')}
+          </ActionButton>
         </h3>
-        <p className={s.desc}>当前社区为公开，任何人可以访问</p>
+        <p className={s.desc}>{t('dsb.base_info.danger.visibility.desc')}</p>
       </div>
 
       <div className={cn(s.item, 'border-b-0')}>
         <h3 className={s.title}>
-          社区归档
+          {t('dsb.base_info.danger.archive.title')}
           <InfoSVG className={s.icon} />
           <div className='grow' />
-          <ActionButton onClick={() => setArchiveModal(true)}>归档</ActionButton>
+          <ActionButton onClick={() => setArchiveModal(true)}>
+            {t('dsb.base_info.danger.archive.action')}
+          </ActionButton>
         </h3>
-        <p className={s.desc}>归档后社区将变为只读</p>
+        <p className={s.desc}>{t('dsb.base_info.danger.archive.desc')}</p>
       </div>
 
       <div className={cn(s.item, 'border-b-0 rounded-b-2xl')}>
         <h3 className={s.title}>
-          删除社区
+          {t('dsb.base_info.danger.delete.title')}
           <InfoSVG className={s.icon} />
           <div className='grow' />
-          <ActionButton onClick={() => setShowDeleteModal(true)}>删除</ActionButton>
+          <ActionButton onClick={() => setShowDeleteModal(true)}>
+            {t('dsb.base_info.danger.delete.action')}
+          </ActionButton>
         </h3>
-        <p className={s.desc}>关联删除所有帖子评论等，删除后无法恢复。</p>
+        <p className={s.desc}>{t('dsb.base_info.danger.delete.desc')}</p>
       </div>
       <PublicModal show={showPublicModal} onClose={() => setPublicModal(false)} />
       <ArchiveModal show={showArchiveModal} onClose={() => setArchiveModal(false)} />

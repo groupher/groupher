@@ -14,6 +14,7 @@ import LogoutSVG from '~/icons/Logout'
 import SettingSVG from '~/icons/Setting'
 import { signOut } from '~/oauth'
 import type { TSpace, TUser } from '~/spec'
+import useTrans from '~/hooks/useTrans'
 import ImgFallback from '~/widgets/ImgFallback'
 import Tooltip from '~/widgets/Tooltip'
 
@@ -26,6 +27,7 @@ type TProps = {
 
 const LoggedInAccount: FC<TProps> = ({ user }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { avatar, nickname } = user
 
@@ -36,33 +38,33 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
         <div className={s.panel}>
           <div className={s.baseInfo}>
             <div className={s.userName}>{nickname}</div>
-            <div className={s.loginBy}>via Github</div>
+            <div className={s.loginBy}>{t('account.menu.via_github')}</div>
           </div>
           <div className={s.menuBar}>
-            <div className={s.menuTitle}>账户设置</div>
+            <div className={s.menuTitle}>{t('account.menu.settings')}</div>
             <SettingSVG className={s.icon} />
           </div>
           <div className={s.menuBar}>
-            <div className={s.menuTitle}>个人主页</div>
+            <div className={s.menuTitle}>{t('account.menu.profile')}</div>
           </div>
           <div className={s.divider} />
           <div className={s.menuBar}>
-            <div className={s.menuTitle}>使用指南</div>
+            <div className={s.menuTitle}>{t('account.menu.guide')}</div>
           </div>
           <div className={s.menuBar}>
-            <div className={s.menuTitle}>快捷键</div>
+            <div className={s.menuTitle}>{t('account.menu.shortcuts')}</div>
             <CmdSVG className={s.icon} />
           </div>
           {/* <MenuBar>主题?</MenuBar> */}
           <Link href={ROUTE.APPLY_COMMUNITY} prefetch={false} className={s.linkable}>
             <div className={s.menuBar}>
-              <div className={s.menuTitle}>创建社区</div>
+              <div className={s.menuTitle}>{t('account.menu.create_community')}</div>
               <AddSVG className={s.icon} />
             </div>
           </Link>
           <div className={s.divider} />
           <button className={cn(s.menuBar, s.warningActive)} onClick={() => signOut()}>
-            <span className={s.menuTitle}>登出</span>
+            <span className={s.menuTitle}>{t('account.menu.logout')}</span>
             <LogoutSVG className={s.logoutIcon} />
           </button>
         </div>

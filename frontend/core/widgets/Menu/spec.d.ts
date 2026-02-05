@@ -1,5 +1,7 @@
+import type { TTransKey } from '~/spec'
+
 export type TMenuItem = {
-  title?: string
+  title?: TTransKey
   icon?: string
   desc?: string
   key: string

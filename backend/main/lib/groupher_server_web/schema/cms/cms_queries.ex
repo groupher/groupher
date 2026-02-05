@@ -188,13 +188,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.paged_kanban_posts/3)
     end
 
-    # this query is only use to pass the graphql type spec, real logic is in fronted
-    field :client_i18n, :client_locale do
-      arg(:locale, :string)
-
-      resolve(&R.CMS.client_i18n/3)
-    end
-
     article_search_queries()
 
     article_reacted_users_query(:upvote, &R.CMS.upvoted_users/3)

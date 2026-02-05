@@ -4,6 +4,7 @@ import ClossSVG from '~/icons/CloseLight'
 
 import DLightSVG from '~/icons/DLight'
 import Radio from '~/widgets/Switcher/Radio'
+import useTrans from '~/hooks/useTrans'
 import { FIELD } from '../constant'
 import useGlowLight from '../logic/useGlowLight'
 import SavingBar from '../SavingBar'
@@ -12,6 +13,7 @@ import useSalon, { cn } from '../salon/layout/glow_light'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const mounted = useDidMount()
 
@@ -29,8 +31,8 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title='页面辉光'
-        desc='设置后每个页面的展示光晕（阅览页面除外），可配合壁纸风格搭配。'
+        title={t('dsb.layout.glow.title')}
+        desc={t('dsb.layout.glow.desc')}
         width='96%'
       />
 
@@ -63,16 +65,16 @@ export default () => {
 
       <SavingBar isTouched={isGrowFixedTouched} field={FIELD.GLOW_FIXED} loading={saving}>
         <div className={s.settings}>
-          <h3 className={s.title}>滑动跟随:</h3>
+          <h3 className={s.title}>{t('dsb.layout.glow.follow.title')}</h3>
           <Radio
             size='small'
             items={[
               {
-                value: '固定位置',
+                value: t('dsb.layout.glow.follow.fixed'),
                 key: true,
               },
               {
-                value: '随页面滚动',
+                value: t('dsb.layout.glow.follow.scroll'),
                 key: false,
               },
             ]}
@@ -92,16 +94,16 @@ export default () => {
           top={-8}
         >
           <div className={s.settings}>
-            <h3 className={s.title}>辉光强度:</h3>
+            <h3 className={s.title}>{t('dsb.layout.glow.intensity.title')}</h3>
             <Radio
               size='small'
               items={[
                 {
-                  value: '正常',
+                  value: t('dsb.layout.glow.intensity.normal'),
                   key: GLOW_OPACITY.NORMAL,
                 },
                 {
-                  value: '弱',
+                  value: t('dsb.layout.glow.intensity.weak'),
                   key: GLOW_OPACITY.WEEK,
                 },
               ]}

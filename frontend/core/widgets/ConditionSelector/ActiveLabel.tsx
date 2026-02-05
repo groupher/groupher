@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import type { TActive } from '~/spec'
 
-import { Trans } from '~/i18n'
+import useTrans from '~/hooks/useTrans'
 import Icon from '~/widgets/Menu/Icon'
 
 import type { TActiveCondition, TMenuItem } from './spec'
@@ -17,11 +17,12 @@ type TProps = {
 const ActiveLabel: FC<TProps> = ({ condition, activeItem }) => {
   const $active = !!condition
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.label}>
       {activeItem && <Icon type={activeItem.icon} $active={$active} />}
-      <div className={s.stateTitle}>{Trans(condition)}</div>
+      <div className={s.stateTitle}>{t(condition)}</div>
     </div>
   )
 }

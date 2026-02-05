@@ -1,64 +1,73 @@
 import type { TComment } from '~/spec'
 
-// see: https://stackoverflow.com/a/66446126/4050784
-const DateDiff = {
-  inDays: (d1, d2): number => {
-    const t2 = d2.getTime()
-    const t1 = d1.getTime()
+type TRTFUnit = Intl.RelativeTimeFormatUnit
 
-    // @ts-ignore
-    return Number.parseInt((t2 - t1) / (24 * 3600 * 1000), 10)
-  },
+const DAY = 24 * 60 * 60 * 1000
 
-  inWeeks: (d1, d2): number => {
-    const t2 = d2.getTime()
-    const t1 = d1.getTime()
-
-    // @ts-ignore
-    return Number.parseInt((t2 - t1) / (24 * 3600 * 1000 * 7), 10)
-  },
-
-  inMonths: (d1, d2): number => {
-    const d1Y = d1.getFullYear()
-    const d2Y = d2.getFullYear()
-    const d1M = d1.getMonth()
-    const d2M = d2.getMonth()
-
-    return d2M + 12 * d2Y - (d1M + 12 * d1Y)
-  },
-
-  inYears: (d1, d2): number => {
-    return d2.getFullYear() - d1.getFullYear()
-  },
+const getBrowserLocales = (): string[] => {
+  if (typeof navigator !== 'undefined') {
+    if (Array.isArray(navigator.languages) && navigator.languages.length > 0) {
+      return navigator.languages
+    }
+    if (navigator.language) return [navigator.language]
+  }
+  // SSR / 非浏览器环境：让 Intl 自己走默认 locale
+  return []
 }
 
+/**
+ * 将两个日期的差值，映射到你原先的展示规则：
+ * - diffDays < 5 => 不显示
+ * - 5~13 => days
+ * - 14~29 => weeks
+ * - 30~364 => months
+ * - >=365 => years
+ */
+const diffToUnitValue = (from: Date, to: Date): { unit: TRTFUnit; value: number } | null => {
+  const diffMs = to.getTime() - from.getTime()
+  const diffDays = Math.floor(diffMs / DAY)
+
+  if (diffDays < 5) return null
+
+  if (diffDays < 14) {
+    return { unit: 'day', value: diffDays }
+  }
+
+  if (diffDays < 30) {
+    return { unit: 'week', value: Math.floor(diffDays / 7) }
+  }
+
+  if (diffDays < 365) {
+    const months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth())
+    return { unit: 'month', value: months }
+  }
+
+  const years = to.getFullYear() - from.getFullYear()
+  return { unit: 'year', value: years }
+}
+
+/**
+ * Timeline 用：显示“相隔多久”的 divider 文案
+ * - 只使用浏览器 Intl（不依赖外部 i18n）
+ * - locales 可选：不传则自动用 navigator.languages
+ */
 export const passedDate = (
   curComment: TComment | undefined,
   nextComment: TComment | undefined,
+  locales?: string | string[],
 ): string | null => {
   if (!curComment || !nextComment) return null
 
-  const { insertedAt: curInsertedAt } = curComment
-  const { insertedAt: nextInsertedAt } = nextComment
+  const from = new Date(curComment.insertedAt)
+  const to = new Date(nextComment.insertedAt)
 
-  const diffInDays = DateDiff.inDays(new Date(curInsertedAt), new Date(nextInsertedAt))
+  const unitValue = diffToUnitValue(from, to)
+  if (!unitValue) return null
 
-  if (diffInDays >= 5 && diffInDays < 14) {
-    return `${diffInDays} 天后`
-  }
+  const rtf = new Intl.RelativeTimeFormat(locales ?? getBrowserLocales(), {
+    numeric: 'always',
+    style: 'long',
+  })
 
-  if (diffInDays >= 14 && diffInDays < 30) {
-    const diffInWeeks = DateDiff.inWeeks(new Date(curInsertedAt), new Date(nextInsertedAt))
-    return `${diffInWeeks} 周后`
-  }
-
-  if (diffInDays >= 30 && diffInDays < 365) {
-    const diffInMonths = DateDiff.inMonths(new Date(curInsertedAt), new Date(nextInsertedAt))
-    return `${diffInMonths} 月后`
-  }
-
-  const diffInYears = DateDiff.inYears(new Date(curInsertedAt), new Date(nextInsertedAt))
-  return diffInYears !== 0 ? `${diffInYears} 年后` : null
+  return rtf.format(unitValue.value, unitValue.unit)
 }
-
-export const holder = 1

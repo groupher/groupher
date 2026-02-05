@@ -6,6 +6,7 @@ import type { FC } from 'react'
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import { groupByKey, sortByGroupIndex } from '~/helper'
 import PlusSVG from '~/icons/Plus'
+import useTrans from '~/hooks/useTrans'
 import type { TLinkItem } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
 import GroupInputer from '../../Footer/Editors/GroupInputer'
@@ -17,6 +18,7 @@ import GroupHead from './GroupHead'
 
 const Editor: FC = () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const [animateRef] = useAutoAnimate()
   const [groupAnimateRef] = useAutoAnimate()
@@ -53,12 +55,10 @@ const Editor: FC = () => {
           <FixedLinks isAboutLinkFold={isAboutLinkFold} />
         </div>
         <ul className={s.rightPart}>
-          <h3 className={s.noteTitle}>注意事项:</h3>
-          <li className={s.noteP}>固定链接无法调整顺序，分组链接会自动折叠。</li>
-          <li className={s.noteP}>
-            新增链接或链接组后，"关于"会自动折叠到"更多"中，且位于最后一项。
-          </li>
-          <li className={s.noteP}>改变顺序后可通过上方模板预览效果。</li>
+          <h3 className={s.noteTitle}>{t('dsb.header.editors.note.title')}</h3>
+          <li className={s.noteP}>{t('dsb.header.editors.note.item.fixed')}</li>
+          <li className={s.noteP}>{t('dsb.header.editors.note.item.about')}</li>
+          <li className={s.noteP}>{t('dsb.header.editors.note.item.preview')}</li>
         </ul>
       </div>
 
@@ -79,12 +79,12 @@ const Editor: FC = () => {
         <div className={s.adder}>
           <Button size='small' onClick={addHeaderLinkGroup} space={8} ghost>
             <PlusSVG className={s.plusIcon} />
-            链接
+            {t('dsb.header.editors.link')}
           </Button>
           <div className={s.slash}>/</div>
           <Button size='small' onClick={triggerGroupAdd} space={10} ghost>
             <PlusSVG className={s.plusIcon} />
-            链接组
+            {t('dsb.header.editors.group')}
           </Button>
         </div>
       )}
@@ -145,7 +145,7 @@ const Editor: FC = () => {
                     onClick={() => add2Group(groupKey, curGroupLinks.length)}
                   >
                     <PlusSVG className={s.plusIcon} />
-                    链接
+                    {t('dsb.header.editors.link')}
                   </Button>
                 </div>
               )}

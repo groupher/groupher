@@ -2,6 +2,7 @@ import { COLOR } from '~/const/colors'
 import { ONE_LINK_GROUP, TW_CARD } from '~/const/dashboard'
 import { DSB_ALIAS_ROUTE, DSB_DOC_ROUTE, DSB_ROUTE } from '~/const/route'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
+import type { TDsbMenu } from './spec'
 
 export { SEO_KEYS, SEO_OG_KEYS, SEO_TW_KEYS } from '~/const/seo'
 
@@ -68,127 +69,127 @@ export const FIELD = {
   BROADCAST_ENABLE: 'broadcastEnable',
 } as const
 
-export const MENU = {
+export const MENU: TDsbMenu = {
   BASIC: {
-    title: '工作区',
+    title: 'dsb.menu.basic',
     icon: 'basic',
     initFold: false,
     children: [
       {
-        title: '概览',
+        title: 'dsb.menu.overview',
         slug: DSB_ROUTE.OVERVIEW,
       },
       {
-        title: '基本信息',
+        title: 'dsb.menu.basic_info',
         slug: DSB_ROUTE.INFO,
       },
       {
-        title: 'SEO',
+        title: 'dsb.menu.seo',
         slug: DSB_ROUTE.SEO,
       },
       {
-        title: '板块管理',
+        title: 'dsb.menu.threads',
         slug: DSB_ROUTE.THREADS,
       },
       {
-        title: '布局与样式',
+        title: 'dsb.menu.layout',
         slug: DSB_ROUTE.LAYOUT,
       },
       {
-        title: '别名',
+        title: 'dsb.menu.alias',
         slug: DSB_ROUTE.ALIAS,
         alias: FIELD.NAME_ALIAS,
       },
       {
-        title: '管理员',
+        title: 'dsb.menu.admins',
         slug: DSB_ROUTE.ADMINS,
       },
       {
-        title: '页头',
+        title: 'dsb.menu.header',
         slug: DSB_ROUTE.HEADER,
       },
       {
-        title: '页脚',
+        title: 'dsb.menu.footer',
         slug: DSB_ROUTE.FOOTER,
       },
     ],
   },
 
   CMS: {
-    title: '内容管理',
+    title: 'dsb.menu.cms',
     icon: 'cms',
     initFold: false,
     children: [
       {
-        title: '社区',
+        title: 'dsb.menu.communities',
         slug: DSB_ROUTE.COMMUNITIES,
       },
       {
-        title: '标签',
+        title: 'dsb.menu.tags',
         slug: DSB_ROUTE.TAGS,
       },
       {
-        title: '帖子',
+        title: 'dsb.menu.post',
         slug: DSB_ROUTE.POST,
       },
       {
-        title: '更新日志',
+        title: 'dsb.menu.changelog',
         slug: DSB_ROUTE.CHANGELOG,
       },
       {
-        title: '文档',
+        title: 'dsb.menu.doc',
         slug: DSB_ROUTE.DOC,
       },
       {
-        title: '广播',
+        title: 'dsb.menu.broadcast',
         slug: DSB_ROUTE.BROADCAST,
       },
       {
-        title: '小黑屋',
+        title: 'dsb.menu.blackhouse',
         slug: DSB_ROUTE.BLACKHOUSE,
       },
       {
-        title: 'RSS',
+        title: 'dsb.menu.rss',
         slug: DSB_ROUTE.RSS,
       },
       {
-        title: '导入/导出',
+        title: 'dsb.menu.inout',
         slug: DSB_ROUTE.INOUT,
       },
     ],
   },
 
   ANALYSIS: {
-    title: '统计分析',
+    title: 'dsb.menu.analysis',
     icon: 'analysis',
     initFold: true,
     children: [
       {
-        title: '趋势',
+        title: 'dsb.menu.trend',
         slug: DSB_ROUTE.TREND,
       },
       {
-        title: '日志',
+        title: 'dsb.menu.log',
         slug: DSB_ROUTE.LOG,
       },
     ],
   },
 
   INTEGRATE: {
-    title: '绑定集成',
+    title: 'dsb.menu.integrations',
     icon: 'bind',
     initFold: false,
     children: [
       {
-        title: '域名绑定',
+        title: 'dsb.menu.domain',
         slug: DSB_ROUTE.DOMAIN,
       },
       {
-        title: '三方集成',
+        title: 'dsb.menu.third_part',
         slug: DSB_ROUTE['THIRD-PART'],
       },
       {
-        title: '网站插件',
+        title: 'dsb.menu.widgets',
         slug: DSB_ROUTE.WIDGETS,
       },
     ],
@@ -222,19 +223,19 @@ export const BUILD_IN_ALIAS_SUGGESTIONS = {
 
 export const DOC_TABS = [
   {
-    title: '概览',
+    title: 'dsb.menu.doc.table',
     slug: DSB_DOC_ROUTE.TABLE,
   },
   {
-    title: '目录编排',
+    title: 'dsb.menu.doc.tree',
     slug: DSB_DOC_ROUTE.TREE,
   },
   {
-    title: '封面图标',
+    title: 'dsb.menu.doc.cover',
     slug: DSB_DOC_ROUTE.COVER,
   },
   {
-    title: '常见问题',
+    title: 'dsb.menu.doc.faq',
     slug: DSB_DOC_ROUTE.FAQ,
   },
 ]

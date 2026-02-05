@@ -3,6 +3,7 @@ import { type FC, useState } from 'react'
 import { FOOTER_LAYOUT } from '~/const/layout'
 import ArrowSVG from '~/icons/ArrowSimple'
 import Button from '~/widgets/Buttons/Button'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../../constant'
 import useFooter from '../../logic/useFooter'
@@ -13,6 +14,7 @@ import Simple from './Simple'
 
 const Templates: FC = () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const {
     isFooterLayoutTouched: isLayoutTouched,
@@ -69,7 +71,7 @@ const Templates: FC = () => {
             resetEditingLink()
           }}
         >
-          {showAll ? '收起' : '更换模板'}
+          {showAll ? t('dsb.footer.templates.collapse') : t('dsb.footer.templates.switch')}
           <ArrowSVG className={cn(s.arrowIcon, showAll && 'rotate-90')} />
         </Button>
       )}

@@ -1,4 +1,5 @@
 import CheckLabel from '~/widgets/CheckLabel'
+import useTrans from '~/hooks/useTrans'
 import { FIELD } from '../constant'
 import useDarkFloat from '../logic/useDarkFloat'
 import SavingBar from '../SavingBar'
@@ -8,12 +9,13 @@ import useSalon, { cnMerge } from '../salon/layout/float_background'
 export default () => {
   const s = useSalon()
   const { darkFloat, edit, isTouched, saving } = useDarkFloat()
+  const { t } = useTrans()
 
   return (
     <section className={s.wrapper}>
       <SectionLabel
-        title='弹出层外观'
-        desc='浅色主题下使用深色弹出层, 仅作用于 Tooltip/Menu/Popover 等轻量弹出层，不影响 Modal/Drawer 等容器组件。参考'
+        title={t('dsb.layout.float_background.title')}
+        desc={t('dsb.layout.float_background.desc')}
       />
 
       <div className={s.select}>
@@ -47,7 +49,11 @@ export default () => {
             </div>
           </div>
 
-          <CheckLabel title='始终使用深色' active={darkFloat} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.float_background.option.dark')}
+            active={darkFloat}
+            top={4}
+          />
         </button>
         <button className={s.layout} onClick={() => edit(false, FIELD.DARK_FLOAT)}>
           <div className={cnMerge(s.block, !darkFloat && s.blockActive)}>
@@ -89,7 +95,11 @@ export default () => {
             </div>
           </div>
 
-          <CheckLabel title='跟随主题' active={!darkFloat} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.float_background.option.follow')}
+            active={!darkFloat}
+            top={4}
+          />
         </button>
       </div>
 

@@ -1,5 +1,6 @@
 import type { TArticle } from './article'
 import type { TCommunity } from './community'
+import type { TTransKey } from './i18n'
 import type { TThemeName } from './theme'
 
 export type * from './account'
@@ -56,3 +57,10 @@ interface IWindow extends Window {
 export type TWindow = IWindow | null
 
 export type TConstValues<T extends Record<PropertyKey, string>> = T[keyof T]
+
+export type TCrumbConfig = {
+  title: TTransKey
+  seg: string
+  toSeg: string
+  children: { title: TTransKey; seg: string }[]
+}

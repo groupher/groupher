@@ -7,6 +7,7 @@ import { randomBgNames } from '~/helper'
 import useHover from '~/hooks/useHover'
 import DiceSVG from '~/icons/Dice'
 import ResetSVG from '~/icons/Reset'
+import useTrans from '~/hooks/useTrans'
 
 import ColorSelector from '~/widgets/ColorSelector'
 
@@ -20,6 +21,7 @@ import WaterfallLayout from './WaterfallLayout'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { kanbanLayout: layout, kanbanBgColors, isKanbanColorsTouched, saving, edit } = useKanban()
 
@@ -31,7 +33,10 @@ export default () => {
 
   return (
     <>
-      <SectionLabel title='看板背景色' desc='看板页面每列的背景版颜色，默认为浅灰色。' />
+      <SectionLabel
+        title={t('dsb.layout.kanban.bg.title')}
+        desc={t('dsb.layout.kanban.bg.desc')}
+      />
 
       <div className={s.colorsWrapper}>
         <div className={s.preset}>
@@ -71,7 +76,7 @@ export default () => {
         <div className='grow' />
         <button className={s.action} onClick={() => edit(INIT_KANBAN_COLORS, 'kanbanBgColors')}>
           <ResetSVG className={s.resetIcon} />
-          重置
+          {t('dsb.layout.kanban.bg.reset')}
         </button>
         <button
           className={s.action}
@@ -79,7 +84,7 @@ export default () => {
             edit(randomBgNames(3), 'kanbanBgColors')
           }}
         >
-          <DiceSVG className={cn(s.resetIcon, 'size-3.5')} /> 随缘
+          <DiceSVG className={cn(s.resetIcon, 'size-3.5')} /> {t('dsb.layout.kanban.bg.random')}
         </button>
       </div>
 

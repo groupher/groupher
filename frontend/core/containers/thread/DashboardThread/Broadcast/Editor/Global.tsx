@@ -1,6 +1,7 @@
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import ColorSelector from '~/widgets/ColorSelector'
 import Input from '~/widgets/Input'
+import useTrans from '~/hooks/useTrans'
 import useBroadcast from '../../logic/useBroadcast'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
@@ -19,12 +20,13 @@ export default () => {
     changeEnable,
   } = useBroadcast()
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title='开启横幅广播'
-        desc='开启后，本社区内的所有页面顶部将展示广播信息'
+        title={t('dsb.broadcast.global.title')}
+        desc={t('dsb.broadcast.global.desc')}
         addon={<ToggleSwitch checked={broadcastEnable} onChange={(v) => changeEnable(v)} />}
         bottom={5}
       />
@@ -33,7 +35,7 @@ export default () => {
       <br />
 
       <div className={s.item}>
-        <div className={s.label}>背景色</div>
+        <div className={s.label}>{t('dsb.broadcast.global.background')}</div>
         <div className={s.bgLabel}>
           <ColorSelector
             activeColor={broadcastBg}
@@ -47,12 +49,12 @@ export default () => {
       </div>
 
       <div className={s.item}>
-        <div className={s.label}>广播内容</div>
+        <div className={s.label}>{t('dsb.broadcast.global.content')}</div>
         <Input />
       </div>
 
       <div className={s.item}>
-        <div className={s.label}>链接地址</div>
+        <div className={s.label}>{t('dsb.broadcast.global.link')}</div>
         <Input />
       </div>
 

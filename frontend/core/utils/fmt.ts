@@ -2,7 +2,7 @@ import { endsWith, includes } from 'ramda'
 import { length, limit } from 'stringz'
 import { ARTICLE_CAT, ARTICLE_STATE } from '~/const/gtd'
 import { THREAD } from '~/const/thread'
-import type { TArticleCat, TArticleState } from '~/spec'
+import type { TArticleCat, TArticleState, TTransKey } from '~/spec'
 
 import { isString } from './validator'
 
@@ -188,8 +188,8 @@ export const prettyURL = (url: string): string => {
  * alias GTD DONE key
  * 如果是问题，显示已解决，如果是其他，显示已完成
  */
-export const aliasGTDDoneState = (cat: TArticleCat, state: TArticleState): string => {
-  if (state !== ARTICLE_STATE.DONE) return state
+export const aliasGTDDoneState = (cat: TArticleCat, state: TArticleState): TTransKey => {
+  if (state !== ARTICLE_STATE.DONE) return state as TTransKey
 
   switch (cat) {
     case ARTICLE_CAT.BUG: {

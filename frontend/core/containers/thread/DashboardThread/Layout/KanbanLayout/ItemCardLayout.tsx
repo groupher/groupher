@@ -3,6 +3,7 @@ import CommentSVG from '~/icons/Comment'
 import UpvoteSVG from '~/icons/Upvote'
 
 import CheckLabel from '~/widgets/CheckLabel'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../../constant'
 import useKanban from '../../logic/useKanban'
@@ -12,6 +13,7 @@ import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/item_card_la
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const {
     kanbanCardLayout: cardLayout,
@@ -23,8 +25,8 @@ export default () => {
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title='看板卡片布局'
-        desc='「看板」卡片的显示样式，只在整体布局为「经典」时有效。'
+        title={t('dsb.layout.kanban.card.title')}
+        desc={t('dsb.layout.kanban.card.desc')}
       />
       <div className={s.select}>
         <button
@@ -42,7 +44,11 @@ export default () => {
             <CommentSVG className={cnMerge(s.icon, 'size-3.5 bottom-3.5 left-12')} />
           </div>
 
-          <CheckLabel title='简洁' active={cardLayout === KANBAN_CARD_LAYOUT.SIMPLE} top={2} />
+          <CheckLabel
+            title={t('dsb.layout.kanban.card.option.simple')}
+            active={cardLayout === KANBAN_CARD_LAYOUT.SIMPLE}
+            top={2}
+          />
         </button>
         <button
           className={s.layout}
@@ -65,7 +71,11 @@ export default () => {
 
             <div className={cnMerge(s.bar, 'w-4 bottom-5 right-4 mt-1 opacity-20')} />
           </div>
-          <CheckLabel title='摘要' active={cardLayout === KANBAN_CARD_LAYOUT.FULL} top={2} />
+          <CheckLabel
+            title={t('dsb.layout.kanban.card.option.full')}
+            active={cardLayout === KANBAN_CARD_LAYOUT.FULL}
+            top={2}
+          />
         </button>
       </div>
 

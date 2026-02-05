@@ -4,6 +4,7 @@ import CommentSVG from '~/icons/Comment'
 import UpvoteSVG from '~/icons/Upvote'
 
 import CheckLabel from '~/widgets/CheckLabel'
+import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../constant'
 import usePost from '../logic/usePost'
@@ -14,13 +15,14 @@ import useSalon, { cnMerge } from '../salon/layout/post_layout'
 export default () => {
   const s = useSalon()
   const { layout, isTouched, saving, edit } = usePost()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <SectionLabel
-        title='讨论区布局'
-        desc='「讨论区」列表的默认布局，切换布局不影响已发布内容。'
-        detailText='查看示例'
+        title={t('dsb.layout.post.title')}
+        desc={t('dsb.layout.post.desc')}
+        detailText={t('dsb.layout.view_example')}
       />
       <div className={s.select}>
         <button className={s.layout} onClick={() => edit(POST_LAYOUT.QUORA, 'postLayout')}>
@@ -36,7 +38,11 @@ export default () => {
             <div className={cnMerge(s.bar, 'left-10 bottom-4 w-10 h-2 opacity-40')} />
             <div className={cnMerge(s.bar, 'left-24 bottom-4 w-10 h-1 mb-0.5 opacity-20')} />
           </div>
-          <CheckLabel title='经典（默认）' active={layout === POST_LAYOUT.QUORA} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.post.option.classic')}
+            active={layout === POST_LAYOUT.QUORA}
+            top={4}
+          />
         </button>
         <button className={s.layout} onClick={() => edit(POST_LAYOUT.PH, 'postLayout')}>
           <div className={cnMerge(s.block, layout === POST_LAYOUT.PH && s.blockActive)}>
@@ -51,7 +57,11 @@ export default () => {
               <div>N</div>
             </div>
           </div>
-          <CheckLabel title='三段式' active={layout === POST_LAYOUT.PH} top={15} />
+          <CheckLabel
+            title={t('dsb.layout.post.option.ph')}
+            active={layout === POST_LAYOUT.PH}
+            top={15}
+          />
         </button>
 
         <button className={s.layout} onClick={() => edit(POST_LAYOUT.MASONRY, 'postLayout')}>
@@ -64,7 +74,11 @@ export default () => {
             <div className={cnMerge(s.bar, 'right-6 top-6 w-28 h-14 opacity-40')} />
             <div className={cnMerge(s.bar, 'right-6 bottom-0 w-28 h-2 opacity-15')} />
           </div>
-          <CheckLabel title='瀑布流卡片' active={layout === POST_LAYOUT.MASONRY} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.post.option.masonry')}
+            active={layout === POST_LAYOUT.MASONRY}
+            top={4}
+          />
         </button>
 
         <button className={s.layout} onClick={() => edit(POST_LAYOUT.MINIMAL, 'postLayout')}>
@@ -80,7 +94,11 @@ export default () => {
 
             <CommentSVG className={cnMerge(s.upvoteIcon, 'right-6 top-6 ml-5 size-3')} />
           </div>
-          <CheckLabel title='极简' active={layout === POST_LAYOUT.MINIMAL} top={15} />
+          <CheckLabel
+            title={t('dsb.layout.post.option.minimal')}
+            active={layout === POST_LAYOUT.MINIMAL}
+            top={15}
+          />
         </button>
 
         <button className={s.layout} onClick={() => edit(POST_LAYOUT.COVER, 'postLayout')}>
@@ -95,7 +113,11 @@ export default () => {
             <CommentSVG className={cnMerge(s.upvoteIcon, 'right-24 bottom-4 ml-5 size-3.5')} />
             <div className={cnMerge(s.bar, 'right-16 bottom-5 ml-2 w-6 h-1.5 opacity-20')} />
           </div>
-          <CheckLabel title='封面图' active={layout === POST_LAYOUT.COVER} top={4} />
+          <CheckLabel
+            title={t('dsb.layout.post.option.cover')}
+            active={layout === POST_LAYOUT.COVER}
+            top={4}
+          />
         </button>
       </div>
 

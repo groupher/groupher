@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 import { EMPTY_TAG } from '~/const/utils'
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import type { TTag } from '~/spec'
 
@@ -11,11 +12,12 @@ type TProps = {
 
 const GoBackTag: FC<TProps> = ({ onSelect }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <button className={s.wrapper} onClick={() => onSelect(EMPTY_TAG)}>
       <ArrowSVG className={s.arrow} />
-      <div className={s.title}>全部标签</div>
+      <div className={s.title}>{t('tags.all')}</div>
     </button>
   )
 }

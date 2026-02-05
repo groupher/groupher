@@ -1,13 +1,19 @@
 import Portal from '../Portal'
+import useTrans from '~/hooks/useTrans'
 import useSalon from '../salon/overview'
 import BasicNumbers from './BasicNumbers'
 
 export default () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
-      <Portal title='设置概览' desc='基础设置向导，帮助文档等等' />
+      <Portal
+        title={t('dsb.overview.portal.title')}
+        desc={t('dsb.overview.portal.desc')}
+        testid="dashboard-overview-title"
+      />
       <section className={s.section}>
         <BasicNumbers />
         {/* <SectionLabel title="基本信息" /> */}

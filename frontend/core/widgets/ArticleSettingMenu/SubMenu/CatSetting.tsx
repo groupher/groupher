@@ -1,19 +1,15 @@
-import { type FC, useState, useEffect } from 'react'
+import { type FC, useEffect, useState } from 'react'
 import { useMutation } from 'urql'
-
-import useViewingArticle from '~/hooks/useViewingArticle'
 import { POST_CAT_MENU_ITEMS } from '~/const/menu'
-import { Trans } from '~/i18n'
-import { toast, updateViewingArticle } from '~/signal'
-
-import { ICON } from '../constant'
-
+import useTrans from '~/hooks/useTrans'
+import useViewingArticle from '~/hooks/useViewingArticle'
 import CheckSVG from '~/icons/CheckBold'
-
+import { toast, updateViewingArticle } from '~/signal'
+import { ICON } from '../constant'
+import useSalon, { cn } from '../salon/sub_menu/cat_setting'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'
-import useSalon, { cn } from '../salon/sub_menu/cat_setting'
 
 type TProps = {
   onBack: () => void
@@ -21,6 +17,7 @@ type TProps = {
 
 const CatSetting: FC<TProps> = ({ onBack }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { article } = useViewingArticle()
   const [cat, setCat] = useState(article.cat)
@@ -28,6 +25,7 @@ const CatSetting: FC<TProps> = ({ onBack }) => {
   const { touched, setTouched, resetTouched } = useTouched()
   const [result, setPostCat] = useMutation(S.setPostCat)
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     setCat(article.cat)
   }, [])
@@ -54,7 +52,7 @@ const CatSetting: FC<TProps> = ({ onBack }) => {
         const $active = item.key === cat
 
         return (
-          <div
+          <button
             key={item.key}
             className={cn(s.item, $active && s.itemActive)}
             onClick={() => {
@@ -63,9 +61,9 @@ const CatSetting: FC<TProps> = ({ onBack }) => {
             }}
           >
             <TheIcon className={s.icon} />
-            <div className={cn(s.title, $active && s.titleActive)}>{Trans(item.key)}</div>
+            <div className={cn(s.title, $active && s.titleActive)}>{t(item.key)}</div>
             {$active && <CheckSVG className={s.checkIcon} />}
-          </div>
+          </button>
         )
       })}
 

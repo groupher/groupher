@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
-import { Trans } from '~/i18n'
+import useTrans from '~/hooks/useTrans'
 
 import CategorySVG from '~/icons/Category'
 import ArrowSVG from '~/icons/ArrowSimple'
@@ -16,6 +16,7 @@ type TProps = {
 
 const CatItem: FC<TProps> = ({ onClick }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { article } = useViewingArticle()
 
@@ -27,7 +28,7 @@ const CatItem: FC<TProps> = ({ onClick }) => {
     return (
       <div className={s.menuItem} onClick={onClick}>
         <TheIcon />
-        {Trans(article.cat)}
+        {t(article.cat)}
         <div className="grow" />
         <ArrowSVG className={cn(s.icon, 'rotate-180')} />
       </div>
@@ -37,7 +38,7 @@ const CatItem: FC<TProps> = ({ onClick }) => {
   return (
     <div className={s.menuItem} onClick={onClick}>
       <CategorySVG className={cn(s.icon, 'ml-px ')} />
-      分类
+      {t('article.cat')}
       <div className="grow" />
       <ArrowSVG className={cn(s.icon, 'rotate-180')} />
     </div>
