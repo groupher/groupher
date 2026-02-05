@@ -1,3 +1,4 @@
+import { LOCALE } from '~/const/i18n'
 import GlobalProvider from '~/providers/Global'
 import GraphQLProvider from '~/providers/GraphQL'
 import { getCommunityInfo, getLocaleData } from '~/providers/ssr'
@@ -6,7 +7,7 @@ import Client from './Client'
 
 export default async ({ children, params }) => {
   const params$ = await params
-  const locale = 'en'
+  const locale = LOCALE.EN
 
   const [{ community, dashboard }, localeData] = await Promise.all([
     getCommunityInfo(params$.community),
