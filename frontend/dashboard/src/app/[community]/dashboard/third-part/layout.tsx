@@ -7,6 +7,7 @@ import useSalon from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
+import type { TCrumbConfig } from '~/spec'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = THIRD_PART_TABS.segment
@@ -21,7 +22,7 @@ const CRUMB_CONFIG = {
     { title: 'dsb.crumb.email', seg: `${seg}/email` },
     { title: 'dsb.crumb.content_sync', seg: `${seg}/content-sync` },
   ],
-}
+} satisfies TCrumbConfig
 
 export default ({ children }) => {
   const s = useSalon()

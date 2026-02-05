@@ -7,6 +7,7 @@ import useSalon from '~/containers/thread/DashboardThread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
+import type { TCrumbConfig } from '~/spec'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = LAYOUT_TABS.segment
@@ -22,7 +23,7 @@ const CRUMB_CONFIG = {
     { title: 'dsb.crumb.layout.changelog', seg: `${seg}/changelog` },
     { title: 'dsb.crumb.layout.doc', seg: `${seg}/doc` },
   ],
-}
+} satisfies TCrumbConfig
 
 export default ({ children }) => {
   const s = useSalon()

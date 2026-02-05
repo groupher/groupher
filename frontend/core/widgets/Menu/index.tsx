@@ -4,15 +4,13 @@
  *
  */
 
-import { type ReactNode, type FC, memo } from 'react'
+import { type FC, memo, type ReactNode } from 'react'
 
 import type { TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
-
-import type { TMenuItem } from './spec'
 import List from './List'
-
 import useSalon from './salon'
+import type { TMenuItem } from './spec'
 
 type TProps = {
   activeKey?: string
@@ -42,7 +40,7 @@ const Menu: FC<TProps> = ({
   return (
     <Tooltip
       placement={placement}
-      trigger="click"
+      trigger='click'
       onShow={() => onShow?.()}
       onHide={() => onHide?.()}
       offset={offset as [number, number]}

@@ -1,8 +1,7 @@
 import type { FC } from 'react'
-
-import type { TMenuItem } from './spec'
 import Item from './Item'
 import useSalon from './salon/list'
+import type { TMenuItem } from './spec'
 
 type TProps = {
   items: TMenuItem[]

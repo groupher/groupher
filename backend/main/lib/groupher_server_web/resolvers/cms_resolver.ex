@@ -487,8 +487,4 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def upload_tokens(_root, _, _) do
     CMS.upload_tokens()
   end
-
-  def client_i18n(_root, _, _) do
-    {:ok, %{locale: "__ignore_this__"}}
-  end
 end

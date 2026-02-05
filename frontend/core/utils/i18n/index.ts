@@ -1,48 +1,16 @@
-// this is tmp, use react-i18n .. later
-
-// import { useSearchParams } from 'next/navigation'
-
 import { LOCALE } from '~/const/i18n'
 import type { TLocale } from '~/spec'
 
-/**
- * this query is used for GraphQL, which will be intercepted by frontend
- * in short: fake
- */
-export const i18nQuery = `
-  query($locale: String!) {
-    clientI18n(locale: $locale) {
-      locale
-    }
-  }
-`
+const loaders: Record<TLocale, () => Promise<any>> = {
+  [LOCALE.EN]: () => import('~/utils/i18n/en').then((m) => m.default),
+  [LOCALE.ZH]: () => import('~/utils/i18n/zh').then((m) => m.default),
+  [LOCALE['ZH-HANT']]: () => import('~/utils/i18n/zh').then((m) => m.default),
+  [LOCALE.RU]: () => import('~/utils/i18n/en').then((m) => m.default),
+  [LOCALE.ES]: () => import('~/utils/i18n/en').then((m) => m.default),
+} as const
 
-export const useParseLang = (): TLocale => {
-  // const searchParams = useSearchParams()
-
-  // return (searchParams.get('lang') || LOCALE.EN) as TLocale
-  return LOCALE.EN
-}
-
-export const useParseLang2 = (searchParams: URLSearchParams): TLocale => {
-  return (searchParams.get('lang') || LOCALE.EN) as TLocale
-}
-
-export const loadLocaleFile = (locale: TLocale = LOCALE.EN) => {
-  return new Promise((resolve, reject) => {
-    switch (locale) {
-      case LOCALE.ZH:
-        import('~/utils/i18n/zh')
-          .then((module) => resolve(module.default))
-          .catch((error) => reject(error))
-        break
-      case LOCALE.EN:
-        import('~/utils/i18n/en')
-          .then((module) => resolve(module.default))
-          .catch((error) => reject(error))
-        break
-      default:
-        reject(new Error(`Unsupported locale: ${locale}`))
-    }
-  })
+export function loadLocaleFile(locale: TLocale = LOCALE.EN) {
+  const loader = loaders[locale]
+  if (!loader) throw new Error(`Unsupported locale: ${locale}`)
+  return loader()
 }

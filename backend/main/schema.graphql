@@ -141,8 +141,6 @@ type RootQueryType {
   "kanban posts grouped by todo\/wip\/done"
   pagedKanbanPosts(community: String!, filter: PagedKanbanPostsFilter!): PagedPosts
 
-  clientI18n(locale: String): ClientLocale
-
   "get post by id"
   searchPosts(title: String!, thread: PostThread): PagedPosts
 
@@ -1373,10 +1371,6 @@ type OpenGraph {
   url: String
   favicon: String
   siteName: String
-}
-
-type ClientLocale {
-  locale: String
 }
 
 interface Article {

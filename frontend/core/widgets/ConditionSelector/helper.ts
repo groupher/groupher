@@ -1,10 +1,9 @@
 import { find } from 'ramda'
-
-import type { TConditionMode, TTransKey } from '~/spec'
+import { POST_CAT_MENU_ITEMS, POST_ORDER_MENU_ITEMS, POST_STATE_MENU_ITEMS } from '~/const/menu'
 import { CONDITION_MODE } from '~/const/mode'
-import { POST_STATE_MENU_ITEMS, POST_CAT_MENU_ITEMS, POST_ORDER_MENU_ITEMS } from '~/const/menu'
+import type { TConditionMode, TTransKey } from '~/spec'
 
-import type { TMenuItem, TActiveCondition } from './spec'
+import type { TActiveCondition, TMenuItem } from './spec'
 
 export const getMenuItems = (mode: TConditionMode): TMenuItem[] => {
   switch (mode) {
