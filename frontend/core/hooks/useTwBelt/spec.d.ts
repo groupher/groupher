@@ -8,7 +8,7 @@ export type TLinkColorPrefix = 'fg' | 'fill'
 export type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon' | 'activeBox' | 'activeIcon'
 export type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'card' | 'drawer' | 'modal'
 export type TDimLevel = 'lg' | 'md' | 'sm'
-export type THoverPart = 'bg' | 'icon' | 'bg-red' | 'icon-red' | 'fg' | 'fg-red'
+export type THoverPart = 'bg' | 'box' | 'icon' | 'bg-red' | 'icon-red' | 'fg' | 'fg-red'
 export type TCutWWidth = `w-${number}` | `w-[${number}px]`
 
 /**

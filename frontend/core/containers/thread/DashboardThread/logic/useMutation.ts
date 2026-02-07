@@ -3,10 +3,12 @@ import { useEffect, useRef } from 'react'
 import { DSB_INFO_ROUTE } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
+import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useDsbTab from '~/hooks/useDsbTab'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { toast } from '~/signal'
 import type { TEditValue, TTag } from '~/spec'
+import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
 import {
   BASEINFO_BASIC_KEYS,
   BASEINFO_KEYS,
@@ -28,6 +30,7 @@ export default (): TRet => {
   const community$ = useCommunity()
   const { mutate } = useGraphQLClient()
   const { subTab } = useDsbTab()
+  const isDemoMode = useDsbDemoMode()
 
   const storeRef = useRef(dashboard$)
   const { slug: community } = community$
@@ -60,8 +63,9 @@ export default (): TRet => {
     return updatedTags
   }
 
-  const _handleDone = () => {
-    const field = storeRef.current.savingField
+  const applyOriginal = (field: TDsbFieldKey | null): void => {
+    if (!field) return
+
     console.log('## done field: ', field)
     let original = { ...dashboard$.original, [field]: dashboard$[field] }
 
@@ -97,6 +101,11 @@ export default (): TRet => {
     }
 
     dashboard$.commit({ original })
+  }
+
+  const _handleDone = (fieldOverride?: TDsbFieldKey): void => {
+    const field = fieldOverride ?? storeRef.current.savingField
+    applyOriginal(field)
     // avoid page component jump caused by saving state
     setTimeout(() => dashboard$.commit({ saving: false, savingField: null }), 800)
   }
@@ -119,7 +128,27 @@ export default (): TRet => {
       })
   }
 
+  const handleDemoMutation = (field: TDsbFieldKey): void => {
+    if (field === FIELD.BASE_INFO) {
+      const patch = BASEINFO_KEYS.reduce((acc, key) => {
+        acc[key] = dashboard$[key]
+        return acc
+      }, {} as Record<string, unknown>)
+
+      community$.commit(patch)
+    }
+
+    setDsbDemoConfig(buildDsbDemoConfig(storeRef.current))
+    toast('设置已保存')
+    _handleDone(field)
+  }
+
   const mutation = (field: TDsbFieldKey, e: TEditValue): Promise<void> => {
+    if (isDemoMode) {
+      handleDemoMutation(field)
+      return Promise.resolve()
+    }
+
     if (field === FIELD.ENABLE) {
       const curEnable = storeRef.current.enable
       const initEnable = storeRef.current.original.enable

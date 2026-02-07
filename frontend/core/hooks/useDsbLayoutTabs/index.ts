@@ -3,6 +3,7 @@
 import { useSelectedLayoutSegments } from 'next/navigation'
 import useCommunity from '~/hooks/useCommunity'
 import type { TTabItem } from '~/spec'
+import useURLSearchParams from '~/hooks/useURLSearchParams'
 
 type TTabDef = Omit<TTabItem, 'href'> & { segment?: string }
 
@@ -17,6 +18,7 @@ export default function useDsbLayoutTabs(cfg: TDsbTabs): {
 } {
   const { slug: community } = useCommunity()
   const segments = useSelectedLayoutSegments()
+  const querySuffix = useURLSearchParams()
 
   // ✅ 在 /dashboard/<part>/layout 内：segments[0] 就是 subpart
   const subpart = segments[0] ?? ''
@@ -34,7 +36,7 @@ export default function useDsbLayoutTabs(cfg: TDsbTabs): {
     const resolved = segment === undefined ? slug : segment
     const pathname = resolved ? `/${resolved}` : ''
 
-    return { ...rest, title: rest.title, slug, href: `${base}${pathname}` }
+    return { ...rest, title: rest.title, slug, href: `${base}${pathname}${querySuffix}` }
   })
 
   return { items, activeTab }

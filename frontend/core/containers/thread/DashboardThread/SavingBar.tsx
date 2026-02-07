@@ -1,6 +1,6 @@
 import type { FC, ReactNode } from 'react'
-import InfoSVG from '~/icons/Save'
 import useTrans from '~/hooks/useTrans'
+import InfoSVG from '~/icons/Save'
 import type { TSpace } from '~/spec'
 import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
 import useHelper from './logic/useHelper'
@@ -40,7 +40,7 @@ const SavingBar: FC<TProps> = ({
   const { t } = useTrans()
   const resolvedPrefix = prefix ?? t('dsb.saving_bar.prefix')
   const cancelText = t('dsb.saving_bar.cancel')
-  const confirmText = t('dsb.saving_bar.confirm')
+  const saveText = t('dsb.saving_bar.save')
 
   if (children !== null) {
     if (isTouched) {
@@ -51,7 +51,7 @@ const SavingBar: FC<TProps> = ({
           <div className={s.actions}>
             <YesOrNoButtons
               cancelText={cancelText}
-              confirmText={confirmText}
+              saveText={saveText}
               disabled={disabled}
               loading={loading}
               space={!loading ? 0.5 : 0}
@@ -91,7 +91,7 @@ const SavingBar: FC<TProps> = ({
         <YesOrNoButtons
           cancelText={cancelText}
           disabled={disabled}
-          confirmText={confirmText}
+          saveText={saveText}
           space={!loading ? 0.5 : 0}
           onConfirm={() => {
             if (field) {
