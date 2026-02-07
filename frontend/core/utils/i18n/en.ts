@@ -445,7 +445,7 @@ export default {
   'dsb.cms.docs.tree.actions.folder': 'Folder',
   'dsb.saving_bar.prefix': 'Save changes',
   'dsb.saving_bar.cancel': 'Cancel',
-  'dsb.saving_bar.confirm': 'Confirm',
+  'dsb.saving_bar.save': 'Save',
   'dsb.header.templates.collapse': 'Collapse',
   'dsb.header.templates.switch': 'Switch template',
   'dsb.footer.templates.collapse': 'Collapse',

@@ -145,6 +145,7 @@ export default function useTwBelt(): TRet {
   const hover = (part: THoverPart): string => {
     switch (part) {
       case 'bg':
+      case 'box':
         return cn(STATIC_CLS.hoverBgBase, `hover:${bg('hoverBg')}`)
       case 'bg-red':
         return cn(STATIC_CLS.hoverBgBase, `hover:${rainbowSoft(COLOR.RED)}`)
@@ -201,7 +202,7 @@ export default function useTwBelt(): TRet {
         )
 
       case 'activeIcon':
-        return cn(fill('title'))
+        return fill('title')
 
       case 'link':
         return cn(STATIC_CLS.menuLinkBase, fill('digest'))

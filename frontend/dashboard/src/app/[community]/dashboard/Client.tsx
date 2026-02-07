@@ -4,11 +4,11 @@ import SideMenu from '~/containers/thread/DashboardThread/SideMenu'
 import CommunityDigest from '~/widgets/CommunityDigest/DashboardLayout'
 import useSalon from './salon'
 
-const ClientLayout = ({ children }) => {
+const ClientLayout = ({ children, demoMode = false }) => {
   const s = useSalon()
 
   return (
-    <div className={s.wrapper}>
+    <div className={s.wrapper} data-demo-mode={demoMode ? 'true' : 'false'}>
       <CommunityDigest />
 
       <div className={s.inner}>

@@ -22,7 +22,7 @@ export const STATIC_CLS = {
   menuLinkBase: 'size-3.5 opacity-0 group-hover/menubar:opacity-60',
 
   hoverBgBase: 'group align-both rounded trans-all-100 pointer',
-  hoverIconBase: 'trans-all-100',
+  hoverIconBase: 'trans-all-100 pointer',
 
   landingTitleBase: 'text-3xl bold-sm opacity-70 dark:opacity-90 text-shadow dark:text-shadow-none',
 

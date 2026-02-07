@@ -7,7 +7,7 @@ import useSalon from './salon/yes_or_no_buttons'
 type TProps = {
   align?: 'center' | 'right'
   cancelText?: string
-  confirmText?: string
+  saveText?: string
   loading?: boolean
   disabled?: boolean
   onCancel?: () => void
@@ -18,7 +18,7 @@ type TProps = {
 const YesOrNoButton: FC<TProps> = ({
   align = 'center',
   cancelText = '取消',
-  confirmText = '确定',
+  saveText = '确定',
   onCancel = console.log,
   onConfirm = console.log,
   disabled = false,
@@ -43,7 +43,7 @@ const YesOrNoButton: FC<TProps> = ({
         space={space}
         onClick={() => onConfirm?.()}
       >
-        {confirmText}
+        {saveText}
       </Button>
     </div>
   )

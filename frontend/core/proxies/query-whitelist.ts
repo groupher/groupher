@@ -2,21 +2,21 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
 // 白名单参数数组
-const ALLOWED_PARAMS = ['theme']
+const ALLOWED_PARAMS = ['theme', 'mode']
 
 export function queryWhitelistProxy(req: NextRequest) {
   const url = new URL(req.url)
-  let hasUnallowedParams = false
+  let hasNotAllowedParams = false
 
   // 检查URL中的查询参数是否都在白名单中
   url.searchParams.forEach((_, key) => {
     if (!ALLOWED_PARAMS.includes(key)) {
-      hasUnallowedParams = true
+      hasNotAllowedParams = true
     }
   })
 
   // 如果发现不在白名单中的查询参数，重设URL查询参数，只包括白名单内的
-  if (hasUnallowedParams) {
+  if (hasNotAllowedParams) {
     const searchParams = new URLSearchParams()
 
     for (const param in ALLOWED_PARAMS) {
@@ -29,7 +29,6 @@ export function queryWhitelistProxy(req: NextRequest) {
     // 重构URL的查询部分
     const newUrl = `${url.origin + url.pathname}?${searchParams.toString()}`
 
-    // 重写URL
     return NextResponse.rewrite(newUrl)
   }
 

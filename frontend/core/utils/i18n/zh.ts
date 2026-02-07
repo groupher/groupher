@@ -432,7 +432,7 @@ export default {
   'dsb.cms.docs.tree.actions.folder': '目录',
   'dsb.saving_bar.prefix': '是否保存',
   'dsb.saving_bar.cancel': '取消',
-  'dsb.saving_bar.confirm': '确定',
+  'dsb.saving_bar.save': '确定',
   'dsb.header.templates.collapse': '收起',
   'dsb.header.templates.switch': '更换模板',
   'dsb.footer.templates.collapse': '收起',

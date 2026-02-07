@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { type FC, useState } from 'react'
-
 import { DSB_ROUTE } from '~/const/route'
 import useCommunity from '~/hooks/useCommunity'
 import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
+import useURLSearchParams from '~/hooks/useURLSearchParams'
 
 import ArrowSVG from '~/icons/ArrowSimple'
 import BindSVG from '~/icons/Bind'
@@ -22,6 +22,7 @@ const Group: FC<TProps> = ({ group }) => {
   const { mainTab } = useDsbTab()
 
   const { slug: community } = useCommunity()
+  const searchString = useURLSearchParams()
   const [fold, setFold] = useState(group.initFold)
   const { t } = useTrans()
 
@@ -50,7 +51,7 @@ const Group: FC<TProps> = ({ group }) => {
               <Link
                 key={item.slug}
                 className={cn(s.item, isActive && s.itemActive)}
-                href={`/${community}/${DSB_ROUTE.OVERVIEW}/${subPath}`}
+                href={`/${community}/${DSB_ROUTE.OVERVIEW}/${subPath}${searchString}`}
               >
                 {isActive && <div className={s.itemActiveBar} />}
 

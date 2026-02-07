@@ -6,7 +6,7 @@
 @source inline('fill-{title,digest,link}');
 
 /* background */
-@source inline('bg-{pageBg,link,dot,digest,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,popover-bg,menuHoverBg,menuInvertBg,alphaBg,snackBar,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}');
+@source inline('bg-{pageBg,link,dot,digest,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,popover-bg,menuHoverBg,menuInvertBg,alphaBg,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}');
 
 /* rainbow */
 @source inline('{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');

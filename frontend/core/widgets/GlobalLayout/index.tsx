@@ -12,11 +12,12 @@ import ThemeMonitor from './ThemeMonitor'
 // import Broadcast from '~/widgets/Broadcast'
 // import ModeLine from '~/containers/unit/ModeLine'
 
-// import DashboardAlert from './DashboardAlert'
+import DemoModeSnackbarGate from './DemoModeSnackbarGate'
+
 // import CustomScroller from '~/widgets/CustomScroller'
 
-import Main from './Main'
 import LocaleSync from './LocaleSync'
+import Main from './Main'
 import SEO from './SEO'
 import useSalon from './salon'
 import Wallpaper from './Wallpaper'
@@ -35,7 +36,6 @@ const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
   const MainWrapper = mainBlock || Main
 
   // useSyncAccount()
-  // const [showDashboardAlertUI, setShowDashboardAlertUI] = useState(false)
   // const isMobile = false
 
   // useEffect(() => {
@@ -65,8 +65,7 @@ const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
 
       <ThemeMonitor />
 
-      {/* <DashboardAlert /> */}
-      {/* {showDashboardAlertUI && <DashboardAlert />} */}
+      <DemoModeSnackbarGate />
     </>
   )
 }

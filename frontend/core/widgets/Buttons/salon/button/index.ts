@@ -76,8 +76,13 @@ export default function useButtonSalon({
   }
 
   const toneFg = () => {
-    if (ghost && tone === 'primary') return primary('fg')
-    if (tone === 'color') return rainbow(color!, 'fg')
+    if (ghost || soft) {
+      if (tone === 'color') return rainbow(color!, 'fg')
+      if (tone === 'red') return rainbow(COLOR.RED, 'fg')
+      return primary('fg')
+    }
+
+    if (tone === 'color') return fg('title')
     if (tone === 'red') return fg('rainbow.red')
     return fg('button.fg')
   }
@@ -103,6 +108,7 @@ export default function useButtonSalon({
   const softBg = () => {
     if (!soft) return ''
     if (color) return rainbow(color, 'bgSoft')
+
     return bg('hoverBg')
   }
 

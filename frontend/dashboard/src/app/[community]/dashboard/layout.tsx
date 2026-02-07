@@ -4,6 +4,7 @@ import GlobalProvider from '~/providers/Global'
 import GraphQLProvider from '~/providers/GraphQL'
 import { getCommunityInfo, getLocaleData } from '~/providers/ssr'
 import MainProvider from '~/stores/provider'
+import { isDsbDemoMode } from '~/utils/dsb-demo'
 import Client from './Client'
 
 const parseLocale = (lang?: string | string[]) => {
@@ -15,6 +16,7 @@ const parseLocale = (lang?: string | string[]) => {
 export default async ({ children, params, searchParams }) => {
   const params$ = await params
   const locale = parseLocale(searchParams?.lang)
+  const isDemoMode = isDsbDemoMode(params$.community, searchParams?.mode)
 
   const [{ community, dashboard }, localeData] = await Promise.all([
     getCommunityInfo(params$.community),
@@ -30,7 +32,7 @@ export default async ({ children, params, searchParams }) => {
     >
       <GraphQLProvider>
         <GlobalProvider>
-          <Client>{children}</Client>
+          <Client demoMode={isDemoMode}>{children}</Client>
         </GlobalProvider>
       </GraphQLProvider>
     </MainProvider>
