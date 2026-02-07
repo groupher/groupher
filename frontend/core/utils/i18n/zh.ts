@@ -533,6 +533,7 @@ export default {
   'dsb.menu.doc.tree': '目录编排',
   'dsb.menu.doc.cover': '封面图标',
   'dsb.menu.doc.faq': '常见问题',
+  'dsb.demo.exit': '退出演示',
   'dsb.header.fixed_links.title': '固定链接:',
   'dsb.header.fixed_links.more': '更多',
   'dsb.header.fixed_links.about': '关于',

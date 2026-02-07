@@ -538,6 +538,7 @@ export default {
   'dsb.menu.inout': 'Import/Export',
   'dsb.menu.analysis': 'Analytics',
   'dsb.menu.trend': 'Trends',
+  'dsb.demo.exit': 'Exit demo',
   'dsb.menu.log': 'Logs',
   'dsb.menu.integrations': 'Integrations',
   'dsb.menu.domain': 'Domain',
