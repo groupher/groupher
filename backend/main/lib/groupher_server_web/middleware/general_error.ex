@@ -11,7 +11,7 @@ defmodule GroupherServerWeb.Middleware.GeneralError do
 
   # legacy string errors
   def call(%{errors: [error]} = resolution, _) when is_binary(error) do
-    %{resolution | value: [], errors: [%{message: error}]}
+    %{resolution | value: [], errors: Enum.map(error, &%{message: to_string(&1)})}
   end
 
   # legacy list errors (exclude graphql keyword shape)
