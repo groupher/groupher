@@ -51,7 +51,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   def report_threshold_for_fold, do: @report_threshold_for_fold
   def pinned_comment_limit, do: @pinned_comment_limit
 
-  @type t :: %Comment{}
+  schema_artiment_type(is_archived: boolean())
   schema "comments" do
     belongs_to(:author, User, foreign_key: :author_id)
 
@@ -97,6 +97,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   end
 
   @doc false
+  @spec changeset(t(), map()) :: Ecto.Changeset.t(t())
   def changeset(%Comment{} = comment, attrs) do
     comment
     |> cast(attrs, @required_fields ++ @optional_fields ++ @article_fields)

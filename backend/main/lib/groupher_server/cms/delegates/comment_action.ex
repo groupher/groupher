@@ -6,7 +6,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
 
   import Helper.Utils,
     only: [
-      done: 1,
       strip_struct: 1,
       get_config: 2,
       article_of: 1,
@@ -44,11 +43,9 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   @pinned_comment_limit Comment.pinned_comment_limit()
 
   @doc "pin a comment"
-  @spec pin_comment(Integer.t()) :: {:ok, Comment.t()}
+  @spec pin_comment(Integer.t()) :: T.domain_result(Comment.t())
   def pin_comment(comment_id) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id),
-         {:ok, full_comment} <- get_full_comment(comment.id),
-         {:ok, info} <- match(full_comment.thread) do
+    with {:ok, {comment, full_comment, info}} <- pin_context(comment_id) do
       Multi.new()
       |> Multi.run(:checked_pined_comments_count, fn _, _ ->
         pined_comments_query =
@@ -57,9 +54,10 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
           )
 
         with {:ok, pined_comments_count} <- ORM.count(pined_comments_query) do
-          case pined_comments_count >= @pinned_comment_limit do
-            true -> {:error, "max #{@pinned_comment_limit} pinned comment for each article"}
-            false -> {:ok, :pass}
+          if pined_comments_count >= @pinned_comment_limit do
+            {:error, {:comment_pin_limit, @pinned_comment_limit}}
+          else
+            {:ok, :pass}
           end
         end
       end)
@@ -76,8 +74,9 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
+  @spec undo_pin_comment(Integer.t()) :: T.domain_result(Comment.t())
   def undo_pin_comment(comment_id) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id) do
+    with {:ok, comment} <- CMS.fetch_comment(comment_id) do
       Multi.new()
       |> Multi.run(:update_comment_flag, fn _, _ ->
         ORM.update(comment, %{is_pinned: false})
@@ -277,7 +276,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   end
 
   defp update_article_author_upvoted_info(%Comment{} = comment, user_id) do
-    with {:ok, article} = get_full_comment(comment.id) do
+    with {:ok, article} = CMS.fetch_full_comment(comment.id) do
       is_article_author_upvoted = article.author.id == user_id
       meta = comment.meta |> Map.put(:is_article_author_upvoted, is_article_author_upvoted)
       comment |> ORM.update_meta(meta)
@@ -321,33 +320,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
-  @spec get_full_comment(String.t()) :: {:ok, T.article_info()} | {:error, nil}
-  defp get_full_comment(comment_id) do
-    query = from(c in Comment, where: c.id == ^comment_id, preload: ^@article_threads)
-
-    with {:ok, comment} <- Repo.one(query) |> done(),
-         article_thread <- find_comment_article_thread(comment) do
-      do_extract_article_info(article_thread, Map.get(comment, article_thread))
-    end
-  end
-
-  @spec do_extract_article_info(T.article_thread(), T.article_common()) :: {:ok, T.article_info()}
-  defp do_extract_article_info(thread, article) do
-    with {:ok, article_with_author} <- Repo.preload(article, author: :user) |> done(),
-         article_author <- get_in(article_with_author, [:author, :user]) do
-      #
-      article_info = %{title: article.title, id: article.id}
-
-      author_info = %{
-        id: article_author.id,
-        login: article_author.login,
-        nickname: article_author.nickname
-      }
-
-      {:ok, %{thread: thread, article: article_info, author: author_info}}
-    end
-  end
-
   defp find_comment_article_thread(%Comment{} = comment) do
     @article_threads
     |> Enum.filter(&Map.get(comment, :"#{&1}_id"))
@@ -372,6 +344,14 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
 
       false ->
         {:ok, :pass}
+    end
+  end
+
+  defp pin_context(comment_id) do
+    with {:ok, comment} <- CMS.fetch_comment(comment_id),
+         {:ok, full_comment} <- CMS.fetch_full_comment(comment.id),
+         {:ok, info} <- match(full_comment.thread) do
+      {:ok, {comment, full_comment, info}}
     end
   end
 
@@ -402,6 +382,10 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   defp result({:error, :create_comment_upvote, _result, _steps}) do
     raise_error(:comment_already_upvote, "already upvoted")
   end
+
+  defp result({:error, :update_comment_flag, _result, _steps}), do: {:error, :update_fails}
+  defp result({:error, :add_pined_comment, _result, _steps}), do: {:error, :create_fails}
+  defp result({:error, :remove_pined_comment, _result, _steps}), do: {:error, :delete_fails}
 
   defp result({:error, :add_participator, result, _steps}) do
     {:error, result}

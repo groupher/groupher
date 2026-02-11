@@ -22,6 +22,52 @@ defmodule GroupherServer.CMS.Helper.Macros do
   @article_threads get_config(:article, :threads)
 
   @doc """
+  generate base schema type with shared fields for artiments
+  """
+  defmacro schema_artiment_type(extra_fields \\ []) do
+    fields =
+      [
+        author_id: quote(do: integer() | nil),
+        thread: quote(do: String.t() | nil),
+        body: quote(do: String.t() | nil),
+        body_html: quote(do: String.t() | nil),
+        is_pinned: quote(do: boolean()),
+        is_deleted: quote(do: boolean()),
+        pending: quote(do: integer())
+      ] ++ extra_fields
+
+    quote do
+      @type t_artiment :: %__MODULE__{
+              id: integer() | nil,
+              inserted_at: DateTime.t() | nil,
+              updated_at: DateTime.t() | nil,
+              unquote_splicing(fields)
+            }
+
+      @type t :: t_artiment()
+    end
+  end
+
+  @doc """
+  generate base schema type with shared fields
+  """
+  defmacro schema_base_type(extra_fields \\ []) do
+    fields =
+      for {key, type_ast} <- extra_fields do
+        {key, type_ast}
+      end
+
+    quote do
+      @type t :: %__MODULE__{
+              id: integer() | nil,
+              inserted_at: DateTime.t() | nil,
+              updated_at: DateTime.t() | nil,
+              unquote_splicing(fields)
+            }
+    end
+  end
+
+  @doc """
   generate belongs to fields for given thread
 
   e.g:

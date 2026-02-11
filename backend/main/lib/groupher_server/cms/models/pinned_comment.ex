@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
 
   @article_fields @article_threads |> Enum.map(&:"#{&1}_id")
 
-  @type t :: %PinnedComment{}
+  schema_base_type(comment_id: integer() | nil)
   schema "pinned_comments" do
     belongs_to(:comment, Comment, foreign_key: :comment_id)
 
@@ -32,6 +32,7 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   end
 
   @doc false
+  @spec changeset(t(), map()) :: Ecto.Changeset.t(t())
   def changeset(%PinnedComment{} = article_pined_comment, attrs) do
     article_pined_comment
     |> cast(attrs, @required_fields ++ @article_fields)

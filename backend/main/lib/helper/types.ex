@@ -13,10 +13,21 @@ defmodule Helper.Types do
   @type done ::
           {:ok, :pass} | {:ok, Map} | {:error, List.t()} | {:error, String} | {:error, Map.t()}
 
+  @type error_reason :: atom()
+  @type error_meta :: term()
+  @type error :: error_reason() | {error_reason(), error_meta()}
+
+  @type ok(t) :: {:ok, t}
+  @type err(e) :: {:error, e}
+
+  @type result(t, e) :: ok(t) | err(e)
+  @type domain_result(t) :: result(t, error())
+
   @typedoc """
   Type GraphQL flavor the error format
   """
   @type gq_error :: {:error, [message: String.t(), code: non_neg_integer()]}
+  @type gq_result(t) :: {:ok, t} | gq_error()
 
   @type id :: non_neg_integer() | String.t()
 

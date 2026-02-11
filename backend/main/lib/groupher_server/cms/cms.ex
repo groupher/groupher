@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS do
     ArticleUpvote,
     CommentAction,
     CommentEmotion,
+    Fetcher,
     ArticleTag,
     CommunityCRUD,
     CommunityOperation,
@@ -203,6 +204,9 @@ defmodule GroupherServer.CMS do
 
   defdelegate pin_comment(comment_id), to: CommentAction
   defdelegate undo_pin_comment(comment_id), to: CommentAction
+
+  defdelegate fetch_comment(comment_id), to: Fetcher
+  defdelegate fetch_full_comment(comment_id), to: Fetcher
 
   defdelegate fold_comment(comment_id, user), to: CommentAction
   defdelegate unfold_comment(comment_id, user), to: CommentAction
