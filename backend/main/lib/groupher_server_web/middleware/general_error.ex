@@ -15,9 +15,12 @@ defmodule GroupherServerWeb.Middleware.GeneralError do
   end
 
   # legacy list errors (exclude graphql keyword shape)
-  def call(%{errors: [error]} = resolution, _)
-      when is_list(error) and not Keyword.keyword?(error) do
-    %{resolution | value: [], errors: [%{message: error}]}
+  def call(%{errors: [error]} = resolution, _) when is_list(error) do
+    if Keyword.keyword?(error) do
+      resolution
+    else
+      %{resolution | value: [], errors: [%{message: error}]}
+    end
   end
 
   def call(resolution, _), do: resolution

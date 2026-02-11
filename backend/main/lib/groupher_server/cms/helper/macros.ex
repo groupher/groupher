@@ -38,10 +38,10 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
     quote do
       @type t_artiment :: %__MODULE__{
+              unquote_splicing(fields),
               id: integer() | nil,
               inserted_at: DateTime.t() | nil,
-              updated_at: DateTime.t() | nil,
-              unquote_splicing(fields)
+              updated_at: DateTime.t() | nil
             }
 
       @type t :: t_artiment()
@@ -59,10 +59,10 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
     quote do
       @type t :: %__MODULE__{
+              unquote_splicing(fields),
               id: integer() | nil,
               inserted_at: DateTime.t() | nil,
-              updated_at: DateTime.t() | nil,
-              unquote_splicing(fields)
+              updated_at: DateTime.t() | nil
             }
     end
   end

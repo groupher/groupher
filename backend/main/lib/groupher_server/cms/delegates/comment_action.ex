@@ -6,6 +6,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
 
   import Helper.Utils,
     only: [
+      done: 1,
       strip_struct: 1,
       get_config: 2,
       article_of: 1,

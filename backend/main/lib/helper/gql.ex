@@ -5,7 +5,8 @@ defmodule Helper.GQL do
 
   alias Helper.Types
 
-  @spec result(Types.result(t, Types.error()) | Types.gq_result(t)) :: Types.gq_result(t)
+  @spec result(Types.result(term(), Types.error()) | Types.gq_result(term())) ::
+          Types.gq_result(term())
   def result({:ok, _} = ok), do: ok
   def result({:error, [message: _, code: _]} = gq_error), do: gq_error
   def result({:error, error}), do: Helper.GQLError.encode(error)
