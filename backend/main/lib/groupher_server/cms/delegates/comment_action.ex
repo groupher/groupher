@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   @pinned_comment_limit Comment.pinned_comment_limit()
 
   @doc "pin a comment"
-  @spec pin_comment(Integer.t()) :: T.domain_result(Comment.t())
+  @spec pin_comment(integer()) :: T.domain_result(Comment.t())
   def pin_comment(comment_id) do
     with {:ok, {comment, full_comment, info}} <- pin_context(comment_id) do
       Multi.new()
