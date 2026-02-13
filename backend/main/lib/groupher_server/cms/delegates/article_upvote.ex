@@ -12,8 +12,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
       update_article_reaction_user_list: 4
     ]
 
-  # import Helper.ErrorCode
-
   alias Helper.{ORM, Later, Transaction}
   alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
