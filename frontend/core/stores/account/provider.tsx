@@ -9,6 +9,7 @@ type TProps = {
 }
 
 export const StoreContext = createContext<TStore | null>(null)
+StoreContext.displayName = 'Account'
 
 export default ({ children }: TProps) => {
   const storeRef = useRef<TStore | null>(null)

@@ -48,7 +48,6 @@ export default (): TRet => {
     const restReports = reject((item: TMediaReport) => item.index === index, mediaReports)
     const report = find((item: TMediaReport) => item.index === index, mediaReports)
 
-    // @ts-expect-error
     report.editUrl = url
 
     dsb$.commit({ mediaReports: [...restReports, report] })

@@ -1,19 +1,16 @@
 'use client'
 
-import { useContext, useEffect } from 'react'
-import { useSnapshot } from 'valtio'
-
+import { useEffect } from 'react'
 import useQuery from '~/hooks/useQuery'
 import { P } from '~/schemas'
+import createStoreHook from '../createStoreHook'
 import { StoreContext } from './provider'
 
-export default () => {
-  const store = useContext(StoreContext)
-  if (!store) {
-    throw new Error('useStore must be used within a Account store provider')
-  }
+const useBaseStore = createStoreHook(StoreContext)
 
-  const snap = useSnapshot(store)
+export default () => {
+  const storeHook = useBaseStore()
+  const store = storeHook.live$
 
   const { data, loading, error } = useQuery(P.me, {})
 
@@ -30,8 +27,5 @@ export default () => {
     }
   }, [loading, error, data, store])
 
-  return {
-    ...snap,
-    live$: store,
-  }
+  return storeHook
 }
