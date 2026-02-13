@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Articles.BlogPin do
       {:ok, new_blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
 
       {:error, reason} = CMS.pin_article(community, new_blog)
-      assert reason |> Keyword.get(:code) == ecode(:too_much_pinned_article)
+      assert error_code(reason) == ecode(:too_much_pinned_article)
     end
 
     test "can undo pin to a blog", ~m(community blog)a do

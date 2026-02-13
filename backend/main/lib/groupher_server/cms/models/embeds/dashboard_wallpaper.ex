@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Model.Embeds.DashboardWallpaper do
+  @type t :: %__MODULE__{}
+
   @moduledoc """
   general article comment meta info
   """

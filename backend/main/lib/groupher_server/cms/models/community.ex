@@ -21,6 +21,8 @@ defmodule GroupherServer.CMS.Model.Community do
     CommunityModerator
   }
 
+  @type t :: %__MODULE__{}
+
   @schema_prefix DBPrefix.cms()
 
   @max_pinned_article_count_per_thread 2

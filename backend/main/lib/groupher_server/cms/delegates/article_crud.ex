@@ -19,11 +19,12 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       thread_of: 1
     ]
 
-  import Helper.ErrorCode
   import ShortMaps
+  import Helper.ErrorCode
 
   alias GroupherServer.FrontDesk
   alias Helper.{Later, ORM, QueryBuilder, Converter, Constant, Transaction}
+  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Email, Repo, Statistics}
 
   alias Accounts.Model.User
@@ -58,6 +59,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   read articles for un-logged user
   """
+  @spec read_article(String.t(), atom(), T.id()) :: T.domain_res(term())
   def read_article(community_slug, thread, inner_id) when thread in @article_threads do
     with {:ok, article} <- if_article_legal(community_slug, thread, inner_id) do
       do_read_article(article, community_slug, thread)
@@ -126,6 +128,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   get paged articles
   """
+  @spec paged_articles(atom(), map()) :: T.domain_res(term())
   def paged_articles(thread, filter) do
     %{page: page, size: size} = filter
     flags = %{mark_delete: false, pending: :legal}
@@ -142,6 +145,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end
   end
 
+  @spec paged_articles(atom(), map(), User.t()) :: T.domain_res(term())
   def paged_articles(thread, filter, %User{} = user) do
     with {:ok, stateless_paged_articles} <- paged_articles(thread, filter) do
       stateless_paged_articles
@@ -154,6 +158,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   get grouped kanban posts for a community, only for first load of kanban page
   """
+  @spec grouped_kanban_posts(Community.t()) :: T.domain_res(term())
   def grouped_kanban_posts(%Community{} = community) do
     filter = %{page: 1, size: 20}
 
@@ -172,6 +177,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end
   end
 
+  @spec paged_kanban_posts(Community.t(), map()) :: T.domain_res(term())
   def paged_kanban_posts(%Community{} = community, %{state: state} = filter)
       when is_binary(state) do
     state_key = state |> String.downcase() |> String.to_atom()
@@ -199,6 +205,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   end
 
   @doc "paged published articles for accounts"
+  @spec paged_published_articles(atom(), map(), T.id()) :: T.domain_res(term())
   def paged_published_articles(thread, filter, user_id) do
     %{page: page, size: size} = filter
 
@@ -217,6 +224,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   end
 
   # get audit failed articles
+  @spec paged_audit_failed_articles(atom(), map()) :: T.domain_res(term())
   def paged_audit_failed_articles(thread, filter) do
     %{page: page, size: size} = filter
     flags = %{mark_delete: false, pending: :audit_failed}
@@ -229,6 +237,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end
   end
 
+  @spec set_post_cat(Post.t(), term()) :: T.domain_res(term())
   def set_post_cat(%Post{} = post, cat) do
     with {:ok, updated} <- ORM.update(post, %{cat: cat}) do
       CommentCRUD.batch_update_question_flag(post, cat == @article_cat.question)
@@ -237,6 +246,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end
   end
 
+  @spec set_post_state(Post.t(), term()) :: T.domain_res(term())
   def set_post_state(%Post{} = post, state) do
     with {:ok, updated} <- ORM.update(post, %{state: state}) do
       updated |> covert_cat_state_ifneed |> done
@@ -245,8 +255,9 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   @doc """
   archive articles based on thread
-  called every day by scheuler job
+  called every day by scheduler job
   """
+  @spec archive_articles(atom()) :: T.domain_res(term())
   def archive_articles(thread) do
     with {:ok, info} <- match(thread) do
       now = Timex.now()
@@ -261,6 +272,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   end
 
   # 调用审核接口失败，等待队列定时处理
+  @spec set_article_audit_failed(term(), term()) :: T.domain_res(term())
   def set_article_audit_failed(article, _audit_state) do
     ORM.update(article, %{pending: @audit_failed})
   end
@@ -268,6 +280,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   pending an article due to forbid words or spam talk
   """
+  @spec set_article_illegal(atom(), T.id(), map()) :: T.domain_res(term())
   def set_article_illegal(thread, id, audit_state) do
     with {:ok, info} <- match(thread),
          {:ok, article} <- ORM.find(info.model, id) do
@@ -275,6 +288,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end
   end
 
+  @spec set_article_illegal(term(), map()) :: T.domain_res(term())
   def set_article_illegal(article, audit_state) do
     # 1. set pending state
     # 2. set article meta
@@ -301,6 +315,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     |> result()
   end
 
+  @spec unset_article_illegal(atom(), T.id(), map()) :: T.domain_res(term())
   def unset_article_illegal(thread, id, audit_state) do
     with {:ok, info} <- match(thread),
          {:ok, article} <- ORM.find(info.model, id) do
@@ -308,6 +323,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end
   end
 
+  @spec unset_article_illegal(term(), map()) :: T.domain_res(term())
   def unset_article_illegal(article, audit_state) do
     Multi.new()
     |> Multi.run(:update_pending_state, fn _, _ ->
@@ -378,6 +394,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   #   end
   # end
 
+  @spec create_article(Community.t(), atom(), map(), User.t()) :: T.domain_res(term())
   def create_article(%Community{} = community, thread, attrs, %User{} = user) do
     attrs = atom_values_to_upcase(attrs)
 
@@ -455,6 +472,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   update a article(post/job ...)
   """
+  @spec update_article(map(), map()) :: T.domain_res(term())
   def update_article(%{is_archived: true}, _attrs),
     do: raise_error(:archived, "article is archived, can not be edit or delete")
 
@@ -491,6 +509,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   update active at timestamp of an article
   """
+  @spec update_active_timestamp(atom(), term()) :: T.domain_res(term())
   def update_active_timestamp(thread, article) do
     # @article_active_period
     # 1. 超过时限不更新
@@ -504,6 +523,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   sink article
   """
+  @spec sink_article(term()) :: T.domain_res(term())
   def sink_article(article) do
     %{inserted_at: inserted_at} = article
 
@@ -519,6 +539,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   undo sink article
   """
+  @spec undo_sink_article(term()) :: T.domain_res(term())
   def undo_sink_article(article) do
     thread = thread_of(article)
 
@@ -543,6 +564,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   mark delete false for an article
   """
+  @spec mark_delete_article(term()) :: T.domain_res(term())
   def mark_delete_article(article) do
     {:ok, thread} = thread_of(article)
 
@@ -568,6 +590,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   undo mark delete false for an article
   """
+  @spec undo_mark_delete_article(term()) :: T.domain_res(term())
   def undo_mark_delete_article(article) do
     {:ok, thread} = thread_of(article)
 
@@ -587,6 +610,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   make sure the given ids are deleted
   """
+  @spec batch_mark_delete_articles(String.t(), atom(), [T.id()]) :: T.domain_res(term())
   def batch_mark_delete_articles(community, thread, inner_id_list) do
     do_batch_mark_delete_articles(community, thread, inner_id_list, true)
   end
@@ -594,6 +618,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   make sure the given ids are deleted
   """
+  @spec batch_undo_mark_delete_articles(String.t(), atom(), [T.id()]) :: T.domain_res(term())
   def batch_undo_mark_delete_articles(community, thread, inner_id_list) do
     do_batch_mark_delete_articles(community, thread, inner_id_list, false)
   end
@@ -628,6 +653,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @doc """
   remove article forever
   """
+  @spec delete_article(term(), String.t()) :: T.domain_res(term())
   def delete_article(article, _reason \\ @remove_article_hint) do
     article = Repo.preload(article, [:communities, [author: :user]])
     {:ok, thread} = thread_of(article)
@@ -876,23 +902,23 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   defp result({:ok, %{update_article_meta: result}}), do: {:ok, result}
 
   defp result({:error, :create_article, _result, _steps}) do
-    {:error, [message: "create article", code: ecode(:create_fails)]}
+    {:error, {:create_fails, "create article"}}
   end
 
   defp result({:error, :update_article, _result, _steps}) do
-    {:error, [message: "update article", code: ecode(:update_fails)]}
+    {:error, {:update_fails, "update article"}}
   end
 
   defp result({:error, :mirror_article, _result, _steps}) do
-    {:error, [message: "set community", code: ecode(:create_fails)]}
+    {:error, {:create_fails, "set community"}}
   end
 
   defp result({:error, :set_community_flag, _result, _steps}) do
-    {:error, [message: "set community flag", code: ecode(:create_fails)]}
+    {:error, {:create_fails, "set community flag"}}
   end
 
   defp result({:error, :log_action, _result, _steps}) do
-    {:error, [message: "log action", code: ecode(:create_fails)]}
+    {:error, {:create_fails, "log action"}}
   end
 
   defp result({:error, _, result, _steps}), do: {:error, result}

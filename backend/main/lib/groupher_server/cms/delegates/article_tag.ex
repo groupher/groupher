@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
 
   alias Helper.ORM
   alias Helper.QueryBuilder
+  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, Repo}
 
   alias Accounts.Model.User
@@ -26,6 +27,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   @doc """
   create a article tag
   """
+  @spec create_article_tag(Community.t(), atom(), map(), User.t()) :: T.domain_res(term())
   def create_article_tag(%Community{} = community, thread, attrs, %User{
         id: user_id
       }) do
@@ -57,6 +59,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   @doc """
   update an article tag
   """
+  @spec update_article_tag(T.id(), map()) :: T.domain_res(term())
   def update_article_tag(id, attrs) do
     with {:ok, article_tag} <- ORM.find(ArticleTag, id) do
       attrs = attrs |> atom_values_to_upcase
@@ -67,6 +70,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   @doc """
   delete an article tag
   """
+  @spec delete_article_tag(T.id()) :: T.domain_res(term())
   def delete_article_tag(id) do
     with {:ok, article_tag} <- ORM.find(ArticleTag, id),
          {:ok, community} <- ORM.find(Community, article_tag.community_id) do
@@ -167,6 +171,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   @doc """
   set article a tag
   """
+  @spec set_article_tag(term(), T.id()) :: T.domain_res(term())
   def set_article_tag(article, tag_id) do
     with {:ok, article_tag} <- ORM.find(ArticleTag, tag_id) do
       do_update_article_tags_assoc(article, article_tag, :add)
@@ -176,6 +181,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   @doc """
   unset article a tag
   """
+  @spec unset_article_tag(term(), T.id()) :: T.domain_res(term())
   def unset_article_tag(article, tag_id) do
     with {:ok, article_tag} <- ORM.find(ArticleTag, tag_id) do
       do_update_article_tags_assoc(article, article_tag, :remove)
@@ -200,6 +206,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   @doc """
   get all paged tags
   """
+  @spec paged_article_tags(map()) :: T.domain_res(term())
   def paged_article_tags(%{page: page, size: size} = filter) do
     ArticleTag
     |> QueryBuilder.filter_pack(replace_community_ifneed(filter))
@@ -218,6 +225,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   @doc """
   reindex tags in spec group
   """
+  @spec reindex_tags_in_group(Community.t(), atom(), atom(), list()) :: T.domain_res(term())
   def reindex_tags_in_group(community, thread, group, indexed_tags) do
     with {:ok, group_tags} <- _find_group_tags(community, thread, group) do
       group_tags

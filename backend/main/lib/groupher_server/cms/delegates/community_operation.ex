@@ -4,10 +4,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   """
   import ShortMaps
 
-  import Helper.Utils, only: [done: 1]
-  import Helper.ErrorCode
-
   alias Helper.{Certification, ORM, Transaction}
+  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -29,6 +27,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   set a category to community
   """
+  @spec set_category(Community.t(), Category.t()) :: T.domain_res(term())
   def set_category(%Community{id: community_id}, %Category{id: category_id}) do
     with {:ok, community_category} <-
            CommunityCategory |> ORM.create(~m(community_id category_id)a) do
@@ -39,6 +38,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   unset a category to community
   """
+  @spec unset_category(Community.t(), Category.t()) :: T.domain_res(term())
   def unset_category(%Community{id: community_id}, %Category{id: category_id}) do
     with {:ok, community_category} <-
            CommunityCategory |> ORM.findby_delete!(~m(community_id category_id)a) do
@@ -49,6 +49,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   set to thread to a community
   """
+  @spec set_thread(Community.t(), Thread.t()) :: T.domain_res(term())
   def set_thread(%Community{} = community, %Thread{} = thread) do
     attrs = %{community_id: community.id, thread_id: thread.id}
 
@@ -60,6 +61,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   unset to thread to a community
   """
+  @spec unset_thread(Community.t(), Thread.t()) :: T.domain_res(term())
   def unset_thread(%Community{} = community, %Thread{} = thread) do
     with {:ok, community_thread} <-
            ORM.findby_delete!(CommunityThread, %{community_id: community.id, thread_id: thread.id}) do
@@ -103,6 +105,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   set a community moderator
   """
+  @spec add_moderator(Community.t(), term(), User.t(), User.t()) :: T.domain_res(term())
   def add_moderator(%Community{} = community, role, %User{} = target_user, %User{} = cur_user) do
     community = Repo.preload(community, :moderators)
 
@@ -136,15 +139,16 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
           |> result()
         end)
 
-      {:error, false} ->
-        {:error,
-         [message: "only community root can add moderator", code: ecode(:community_root_only)]}
+      {:error, :community_root_only} ->
+        {:error, {:community_root_only, "only community root can add moderator"}}
     end
   end
 
   @doc """
   update community moderator
   """
+  @spec update_moderator_passport(String.t() | Community.t(), term(), User.t(), User.t()) ::
+          T.domain_res(term())
   def update_moderator_passport(
         community_slug,
         rules,
@@ -170,29 +174,24 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
 
       CMS.read_community(community.slug, inc_views: false)
     else
-      {:error, false} ->
-        {:error,
-         [message: "only community root can update moderator", code: ecode(:community_root_only)]}
+      {:error, :community_root_only} ->
+        {:error, {:community_root_only, "only community root can update moderator"}}
 
       {:error, :passport_community_not_match} ->
-        {:error,
-         [
-           message: "can only update passport in #{community.slug}",
-           code: ecode(:passport_community_not_match)
-         ]}
+        {:error, {:passport_community_not_match, "can only update passport in #{community.slug}"}}
 
       {:error, :one_community_only} ->
-        {:error,
-         [message: "can only passport once community a time", code: ecode(:one_community_only)]}
+        {:error, {:one_community_only, "can only passport once community a time"}}
 
       _ ->
-        {:error, "update passport error"}
+        {:error, {:custom, "update passport error"}}
     end
   end
 
   @doc """
   unset a community moderator
   """
+  @spec remove_moderator(String.t() | Community.t(), User.t(), User.t()) :: T.domain_res(term())
   def remove_moderator(community_slug, %User{} = target_user, %User{} = cur_user) do
     with {:ok, community} <- ORM.find_community(community_slug),
          {:ok, true} <- user_is_root?(community, cur_user) do
@@ -219,26 +218,30 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
       |> Repo.transaction()
       |> result()
     else
-      {:error, false} ->
-        {:error,
-         [message: "only community root can remove moderator", code: ecode(:community_root_only)]}
+      {:error, :community_root_only} ->
+        {:error, {:community_root_only, "only community root can remove moderator"}}
     end
   end
 
   # this is for first init when create community
   defp user_is_root?(%Community{moderators: []}, %User{} = _cur_user), do: {:ok, true}
 
-  defp user_is_root?(%Community{moderators: %Ecto.Association.NotLoaded{}} = community, %User{} = cur_user) do
+  defp user_is_root?(
+         %Community{moderators: %Ecto.Association.NotLoaded{}} = community,
+         %User{} = cur_user
+       ) do
     community
     |> Repo.preload(:moderators)
     |> user_is_root?(cur_user)
   end
 
   defp user_is_root?(%Community{moderators: moderators}, %User{} = cur_user) do
-    moderators
-    |> Enum.filter(&(&1.role == "root"))
-    |> Enum.any?(&(to_string(&1.user_id) == to_string(cur_user.id)))
-    |> done
+    is_root =
+      moderators
+      |> Enum.filter(&(&1.role == "root"))
+      |> Enum.any?(&(to_string(&1.user_id) == to_string(cur_user.id)))
+
+    if is_root, do: {:ok, true}, else: {:error, :community_root_only}
   end
 
   defp match_passport_community(community_slug, rules) do
@@ -260,6 +263,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   subscribe a community. (ONLY community, post etc use watch )
   """
+  @spec subscribe_community(Community.t(), User.t()) :: T.domain_res(term())
   def subscribe_community(%Community{} = community, %User{} = user) do
     with {:ok, record} <-
            ORM.create(CommunitySubscriber, %{community_id: community.id, user_id: user.id}) do
@@ -281,6 +285,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   @doc """
   unsubscribe a community
   """
+  @spec unsubscribe_community(Community.t(), User.t()) :: T.domain_res(term())
   def unsubscribe_community(%Community{id: community_id}, %User{} = user) do
     with {:ok, community} <- ORM.find(Community, community_id),
          true <- community.slug !== "home" do
@@ -298,13 +303,14 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
       |> result()
     else
       false ->
-        {:error, "can not unsubscribe home community"}
+        {:error, {:custom, "can not unsubscribe home community"}}
 
       error ->
         error
     end
   end
 
+  @spec subscribe_community_ifnot(Community.t(), User.t()) :: T.domain_res(term())
   def subscribe_community_ifnot(%Community{} = community, %User{} = user) do
     with {:error, _} <-
            ORM.find_by(CommunitySubscriber, %{community_id: community.id, user_id: user.id}) do
@@ -316,6 +322,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   if user is new subscribe home community by default
   """
   # 这里只处理第一次订阅 home 社区
+  @spec subscribe_default_community_ifnot(User.t()) :: T.domain_res(term())
   def subscribe_default_community_ifnot(%User{} = user) do
     with {:ok, community} <- ORM.find_by(Community, slug: "home") do
       case ORM.find_by(CommunitySubscriber, %{community_id: community.id, user_id: user.id}) do
@@ -334,10 +341,10 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   end
 
   defp result({:error, :stamp_passport, %Ecto.Changeset{} = result, _steps}),
-    do: {:error, result}
+    do: {:error, {:changeset, result}}
 
   defp result({:error, :stamp_passport, _result, _steps}),
-    do: {:error, "stamp passport error"}
+    do: {:error, {:custom, "stamp passport error"}}
 
   defp result({:error, _, result, _steps}) do
     {:error, result}

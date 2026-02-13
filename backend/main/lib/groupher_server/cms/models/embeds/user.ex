@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Model.Embeds.User do
+  @type t :: %__MODULE__{}
+
   @moduledoc """
   only used for embeds_many situation
   """

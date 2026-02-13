@@ -6,27 +6,27 @@ defmodule Helper.Types do
   alias GroupherServer.{Accounts}
   alias Accounts.Model.User
 
+  @type error_reason :: atom()
+  @type error_meta :: term()
+  @type error :: error_reason() | {error_reason(), error_meta()}
+
   @typedoc """
   general response conventions
   """
 
-  @type done ::
-          {:ok, :pass} | {:ok, Map} | {:error, List.t()} | {:error, String} | {:error, Map.t()}
-
-  @type error_reason :: atom()
-  @type error_meta :: term()
-  @type error :: error_reason() | {error_reason(), error_meta()}
+  @type done :: {:ok, term()} | {:error, error()}
 
   @type ok(t) :: {:ok, t}
   @type err(e) :: {:error, e}
 
   @type result(t, e) :: ok(t) | err(e)
-  @type domain_result(t) :: result(t, error())
+  @type domain_res(t) :: result(t, error())
 
   @typedoc """
   Type GraphQL flavor the error format
   """
-  @type gq_error :: {:error, [message: String.t(), code: non_neg_integer()]}
+  @type gq_error ::
+          {:error, [message: String.t(), code: non_neg_integer()]} | {:error, Ecto.Changeset.t()}
   @type gq_result(t) :: {:ok, t} | gq_error()
 
   @type id :: non_neg_integer() | String.t()
@@ -34,46 +34,46 @@ defmodule Helper.Types do
   @type article_thread :: :post | :blog | :changelog | :doc
 
   @type paged_filter :: %{
-          page: Integer.t(),
-          size: Integer.t(),
+          page: integer(),
+          size: integer(),
           sort: :desc_inserted | :asc_inserted
         }
 
   @type paged_users :: %{
           entries: [User.t()],
-          page_number: Integer.t(),
-          page_size: Integer.t(),
-          total_count: Integer.t(),
-          total_pages: Integer.t()
+          page_number: integer(),
+          page_size: integer(),
+          total_count: integer(),
+          total_pages: integer()
         }
 
   @type paged_data :: %{
-          entries: [Map.t()],
-          page_number: Integer.t(),
-          page_size: Integer.t(),
-          total_count: Integer.t(),
-          total_pages: Integer.t()
+          entries: [map()],
+          page_number: integer(),
+          page_size: integer(),
+          total_count: integer(),
+          total_pages: integer()
         }
 
   @type article_common :: %{
-          id: Integer.t(),
-          thread: Atom.t(),
+          id: integer(),
+          thread: atom(),
           title: String.t(),
-          upvotes_count: Integer.t(),
+          upvotes_count: integer(),
           meta: %{
-            upvoted_user_ids: [Integer.t()],
-            collected_user_ids: [Integer.t()],
-            viewed_user_ids: [Integer.t()],
-            reported_user_ids: [Integer.t()]
+            upvoted_user_ids: [integer()],
+            collected_user_ids: [integer()],
+            viewed_user_ids: [integer()],
+            reported_user_ids: [integer()]
           }
         }
 
   @type paged_article_common :: %{
           entries: [article_common],
-          page_number: Integer.t(),
-          page_size: Integer.t(),
-          total_count: Integer.t(),
-          total_pages: Integer.t()
+          page_number: integer(),
+          page_size: integer(),
+          total_count: integer(),
+          total_pages: integer()
         }
 
   @type article_info :: %{
@@ -82,7 +82,7 @@ defmodule Helper.Types do
             title: String.t()
           },
           author: %{
-            id: Integer.t(),
+            id: integer(),
             login: String.t(),
             nickname: String.t()
           }
@@ -141,8 +141,8 @@ defmodule Helper.Types do
   @type editor_table_cell :: %{
           required(:text) => String.t(),
           required(:align) => editor_table_align,
-          isStripe: Boolean.t(),
-          isHeader: Boolean.t()
+          isStripe: boolean(),
+          isHeader: boolean()
         }
 
   # @typep editor_image_mode :: :single | :jiugongge | :gallery
@@ -153,7 +153,7 @@ defmodule Helper.Types do
   @type editor_image_item :: %{
           required(:src) => String.t(),
           caption: String.t(),
-          index: Integer.t(),
+          index: integer(),
           width: String.t(),
           height: String.t()
         }
@@ -182,12 +182,12 @@ defmodule Helper.Types do
   @type html :: String.t()
 
   @type cite_info :: %{
-          id: Integer.t(),
+          id: integer(),
           thread: article_thread,
           title: String.t(),
           inserted_at: String.t(),
           block_linker: [String.t()],
-          comment_id: Integer.t() | nil,
+          comment_id: integer() | nil,
           user: %{
             login: String.t(),
             avatar: String.t(),

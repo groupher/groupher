@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   import ShortMaps
 
   alias Helper.{ORM, Transaction, QueryBuilder}
+  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -36,6 +37,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   @doc """
   list paged reports for article comments
   """
+  @spec paged_reports(map()) :: T.domain_res(term())
   def paged_reports(%{content_type: :account, content_id: content_id} = filter) do
     with {:ok, info} <- match(:account) do
       query =
@@ -97,6 +99,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   @doc """
   report an account
   """
+  @spec report_account(User.t(), term(), map(), User.t()) :: T.domain_res(term())
   def report_account(%User{} = account, reason, attr, %User{} = user) do
     {:ok, info} = match(:account)
 
@@ -116,6 +119,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   @doc """
   undo report article content
   """
+  @spec undo_report_account(User.t(), User.t()) :: T.domain_res(term())
   def undo_report_account(%User{} = account, %User{} = user) do
     {:ok, info} = match(:account)
 
@@ -135,6 +139,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   @doc """
   report article content
   """
+  @spec report_article(term(), term(), map(), User.t()) :: T.domain_res(term())
   def report_article(article, reason, attr, %User{} = user) do
     {:ok, info} = match(article)
 
@@ -155,6 +160,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   @doc """
   undo report article content
   """
+  @spec undo_report_article(term(), User.t()) :: T.domain_res(term())
   def undo_report_article(article, %User{} = user) do
     {:ok, thread} = thread_of(article)
     {:ok, info} = match(thread)
@@ -173,6 +179,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
   end
 
   @doc "report a comment"
+  @spec report_comment(Comment.t(), term(), map(), User.t()) :: T.domain_res(term())
   def report_comment(%Comment{} = comment, reason, attr, %User{} = user) do
     Transaction.locking(comment, fn comment ->
       Multi.new()
@@ -196,6 +203,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
     end)
   end
 
+  @spec undo_report_comment(Comment.t(), User.t()) :: T.domain_res(term())
   def undo_report_comment(%Comment{} = comment, %User{} = user) do
     Transaction.locking(comment, fn comment ->
       Multi.new()
@@ -320,7 +328,9 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
           |> length
           |> Kernel.>(0)
 
-        if not reported_before, do: {:ok, report}, else: {:error, "#{login} already reported"}
+        if not reported_before,
+          do: {:ok, report},
+          else: {:error, {:already_exist, "#{login} already reported"}}
     end
   end
 

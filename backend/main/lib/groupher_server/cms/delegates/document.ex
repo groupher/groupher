@@ -5,7 +5,6 @@ defmodule GroupherServer.CMS.Delegate.Document do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [thread_of: 2]
 
-  import Helper.ErrorCode
 
   alias Helper.{ORM, Converter}
   alias GroupherServer.{CMS, Repo}
@@ -54,7 +53,7 @@ defmodule GroupherServer.CMS.Delegate.Document do
       |> result()
     else
       true ->
-        {:error, "document already exist"}
+        {:error, {:already_exist, "document already exist"}}
     end
   end
 
@@ -133,6 +132,6 @@ defmodule GroupherServer.CMS.Delegate.Document do
   defp result({:ok, %{update_article_document: result}}), do: {:ok, result}
 
   defp result({:error, _, _result, _steps}) do
-    {:error, [message: "create document", code: ecode(:create_fails)]}
+    {:error, {:create_fails, "create document"}}
   end
 end

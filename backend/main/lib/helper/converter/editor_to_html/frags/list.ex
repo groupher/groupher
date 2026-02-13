@@ -101,7 +101,7 @@ defmodule Helper.Converter.EditorToHTML.Frags.List do
     ~s(<div class="#{@class["order_list_prefix"]}">#{prefix_index}</div>)
   end
 
-  @spec frag(:checkbox, Boolean.t()) :: T.html()
+  @spec frag(:checkbox, boolean()) :: T.html()
   def frag(:checkbox, checked) when is_boolean(checked) do
     checked_svg = svg(:checked)
     checkbox_checked_class = if checked, do: @class["checklist_checkbox_checked"], else: ""

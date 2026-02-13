@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   import GroupherServer.CMS.Helper.Matcher
 
   alias Helper.ORM
+  alias Helper.Types, as: T
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.{Embeds, Community, PinnedArticle}
@@ -19,6 +20,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
+  @spec pin_article(Community.t(), term()) :: T.domain_res(term())
   def pin_article(%Community{} = community, article) do
     with {:ok, thread} <- thread_of(article),
          args <- pack_pin_args(community, thread, article.id),
@@ -28,6 +30,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
     end
   end
 
+  @spec undo_pin_article(Community.t(), term()) :: T.domain_res(term())
   def undo_pin_article(%Community{} = community, article) do
     with {:ok, thread} <- thread_of(article),
          args <- pack_pin_args(community, thread, article.id),
@@ -55,6 +58,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   @doc """
   mirror article to other community
   """
+  @spec mirror_article(Community.t(), term(), [T.id()]) :: T.domain_res(term())
   def mirror_article(%Community{} = target_community, article, article_tag_ids \\ []) do
     article = Repo.preload(article, :communities)
 
@@ -79,6 +83,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   @doc """
   unmirror article to a community
   """
+  @spec unmirror_article(Community.t(), term()) :: T.domain_res(term())
   def unmirror_article(%Community{} = target_community, article) do
     article = Repo.preload(article, [:communities, :community, :article_tags])
 
@@ -103,6 +108,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   @doc """
   move article original community to other community
   """
+  @spec move_article(Community.t(), term(), [T.id()]) :: T.domain_res(term())
   def move_article(%Community{} = target_community, article, article_tag_ids \\ []) do
     article = Repo.preload(article, [:communities, :community, :article_tags])
 
@@ -134,6 +140,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   @doc """
   shortcut for mirror article to home page
   """
+  @spec mirror_to_home(Community.t(), term(), [T.id()]) :: T.domain_res(term())
   def mirror_to_home(%Community{} = home_community, article, article_tag_ids \\ []) do
     article = Repo.preload(article, [:communities, :article_tags])
 
@@ -155,6 +162,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
     end
   end
 
+  @spec mirror_to_home2(atom(), T.id(), [T.id()]) :: T.domain_res(term())
   def mirror_to_home2(thread, article_id, article_tag_ids \\ []) do
     preload = [:communities, :article_tags]
 
@@ -179,6 +187,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCommunity do
   @doc """
   shortcut for move article to blackhole
   """
+  @spec move_to_blackhole(Community.t(), term(), [T.id()]) :: T.domain_res(term())
   def move_to_blackhole(%Community{} = blackhole, article, article_tag_ids \\ []) do
     article = Repo.preload(article, [:communities, :community, :article_tags])
 

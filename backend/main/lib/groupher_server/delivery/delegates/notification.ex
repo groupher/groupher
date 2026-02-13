@@ -172,8 +172,8 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
 
   # find exist notification, in latest peroid
   # 在最近的时期内，找到一个存在的通知
-  @spec do_find_exist_notify(Ecto.Queryable.t(), Map.t(), Atom.t()) ::
-          {Atom.t(), Notification.t()}
+  @spec do_find_exist_notify(Ecto.Queryable.t(), map(), atom()) ::
+          {atom(), Notification.t()}
   defp do_find_exist_notify(queryable, attrs, :latest_peroid) do
     ~m(user_id action)a = atom_values_to_upcase(attrs)
 
@@ -186,8 +186,8 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
 
   # find exist notifications, in all history
   # 在所有通知中，找到多个存在的通知
-  @spec do_find_exist_notify(Ecto.Queryable.t(), Map.t(), Atom.t()) ::
-          {Atom.t(), [Notification.t()]}
+  @spec do_find_exist_notify(Ecto.Queryable.t(), map(), atom()) ::
+          {atom(), [Notification.t()]}
   defp do_find_exist_notify(queryable, attrs, _opt) do
     ~m(user_id action from_user)a = atom_values_to_upcase(attrs)
 

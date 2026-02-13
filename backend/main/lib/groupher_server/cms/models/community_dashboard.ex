@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Model.CommunityDashboard do
+  @type t :: %__MODULE__{}
+
   @moduledoc false
   alias __MODULE__
 

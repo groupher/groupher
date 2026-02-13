@@ -34,7 +34,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
   import Helper.Utils, only: [preload_author: 1, thread_of: 1, get_config: 2]
   import GroupherServer.CMS.Delegate.Hooks.Helper, only: [merge_same_block_linker: 2]
 
-  import Helper.ErrorCode
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Delegate.CitedArtiment
@@ -96,7 +95,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
     with {:ok, cited} <- parse_cited_in_link(link) do
       case not is_citing_itself?(content_id, cited) do
         true -> {:ok, cited}
-        false -> {:error, "citing itself, ignored"}
+        false -> {:error, {:custom, "citing itself, ignored"}}
       end
     end
   end
@@ -116,7 +115,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
   defp parse_link(attrs) do
     case Enum.find(attrs, fn {a, _v} -> a == "href" end) do
       {"href", link} -> {:ok, link}
-      _ -> {:error, "invalid fmt"}
+      _ -> {:error, {:custom, "invalid fmt"}}
     end
   end
 
@@ -130,7 +129,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
         {:ok, %{type: :comment, artiment: comment}}
       end
     rescue
-      _ -> {:error, "load comment error"}
+      _ -> {:error, {:custom, "load comment error"}}
     end
   end
 
@@ -239,6 +238,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
   defp result({:ok, %{update_cited_info: result}}), do: {:ok, result}
 
   defp result({:error, :update_cited_info, _result, _steps}) do
-    {:error, [message: "cited article", code: ecode(:cite_article)]}
+    {:error, {:cite_article, "cited article"}}
   end
 end

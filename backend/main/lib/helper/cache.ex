@@ -47,7 +47,7 @@ defmodule Helper.Cache do
   iex> Helper.Cache.get(:common, :a)
   {:ok, "b"}
   """
-  @spec get(Atom.t(), String.t()) :: {:error, nil} | {:ok, any}
+  @spec get(atom(), String.t()) :: {:error, nil} | {:ok, any}
   def get(pool, key) do
     case Cachex.get(pool, key) do
       {:ok, nil} -> {:error, nil}

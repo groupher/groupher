@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   import ShortMaps
 
   alias Helper.{ORM, QueryBuilder, OSS, Constant, Transaction}
+  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -40,6 +41,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
 
   @default_read_opt [inc_views: true]
 
+  @spec read_community(String.t(), keyword()) :: T.domain_res(term())
   def read_community(slug, opt \\ @default_read_opt)
 
   def read_community(slug, %User{} = user) do
@@ -52,6 +54,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     read_community(slug, opt) |> viewer_has_states(user)
   end
 
+  @spec paged_communities(map(), User.t()) :: T.domain_res(term())
   def paged_communities(filter, %User{meta: meta}) do
     with {:ok, paged_communities} <- paged_communities(filter) do
       %{entries: entries} = paged_communities
@@ -66,6 +69,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
+  @spec paged_communities(map()) :: T.domain_res(term())
   def paged_communities(filter) do
     filter = filter |> Enum.reject(fn {_k, v} -> is_nil(v) end) |> Enum.into(%{})
     Community |> ORM.find_all(filter)
@@ -74,6 +78,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   create a community
   """
+  @spec create_community(map(), User.t()) :: T.domain_res(term())
   def create_community(args, %User{} = user) do
     with {:ok, community} <- do_create_community(args, user),
          {:ok, _} <- init_community_root(community, user),
@@ -86,6 +91,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
+  @spec delete_community(String.t() | Community.t()) :: T.domain_res(term())
   def delete_community(community) do
     with {:ok, community} <- ORM.find_by(Community, slug: community) do
       community |> ORM.delete()
@@ -126,6 +132,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   update community
   """
+  @spec update_community(Community.t(), map()) :: T.domain_res(term())
   def update_community(%Community{} = community, args) do
     with {:ok, community} <- ORM.fill_meta(community) do
       ORM.update(community, args)
@@ -135,6 +142,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   update dashboard settings of a community
   """
+  @spec update_dashboard(Community.t(), atom(), map()) :: T.domain_res(term())
   def update_dashboard(%Community{} = community, :base_info, args) do
     main_fields =
       Map.take(args, [:title, :locale, :desc, :logo, :favicon, :slug, :homepage])
@@ -182,6 +190,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   check if community exist
   """
+  @spec community_exist?(String.t()) :: T.domain_res(term())
   def community_exist?(slug) do
     case ORM.find_by(Community, slug: slug) do
       {:ok, _} -> {:ok, %{exist: true}}
@@ -189,6 +198,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
+  @spec has_pending_community_apply?(User.t()) :: T.domain_res(term())
   def has_pending_community_apply?(%User{} = user) do
     with {:ok, paged_applies} <- paged_community_applies(user, %{page: 1, size: 1}) do
       case paged_applies.total_count > 0 do
@@ -206,6 +216,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     |> done
   end
 
+  @spec apply_community(map(), User.t()) :: T.domain_res(term())
   def apply_community(args, %User{} = user) do
     with {:ok, community} <-
            create_community(Map.merge(args, %{pending: @community_applying}), user) do
@@ -217,6 +228,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
+  @spec approve_community_apply(String.t()) :: T.domain_res(term())
   def approve_community_apply(slug) do
     # TODO: create community with thread, category and tags
     with {:ok, community} <- ORM.find_by(Community, slug: slug) do
@@ -224,6 +236,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
+  @spec deny_community_apply(T.id()) :: T.domain_res(term())
   def deny_community_apply(id) do
     with {:ok, community} <- ORM.find(Community, id) do
       case community.pending == @community_applying do
@@ -236,6 +249,8 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   update article_tags_count / thread / article_count / subscribers_count of a community
   """
+  @spec update_community_count_field(Community.t(), User.t(), atom(), atom()) ::
+          T.domain_res(term())
   def update_community_count_field(
         %Community{} = community,
         %User{} = user,
@@ -281,6 +296,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     ORM.update_meta(community, meta)
   end
 
+  @spec update_community_count_field(Community.t(), atom()) :: T.domain_res(term())
   def update_community_count_field(%Community{} = community, :article_tags_count) do
     {:ok, article_tags_count} =
       from(t in ArticleTag, where: t.community_id == ^community.id) |> ORM.count()
@@ -290,10 +306,11 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     |> Repo.update()
   end
 
+  @spec update_community_count_field([Community.t()], atom()) :: T.domain_res(term())
   def update_community_count_field(communities, thread) when is_list(communities) do
     case Enum.all?(Enum.uniq(communities), &({:ok, _} = update_community_count_field(&1, thread))) do
       true -> {:ok, :pass}
-      false -> {:error, "update_community_count_field"}
+      false -> {:error, {:custom, "update_community_count_field"}}
     end
   end
 
@@ -322,6 +339,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   return paged community subscribers
   """
+  @spec community_members(atom(), Community.t(), map()) :: T.domain_res(term())
   def community_members(:moderators, %Community{id: id} = community, filters)
       when not is_nil(id) do
     load_community_members(community, CommunityModerator, filters)
@@ -342,6 +360,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     load_community_members(community, CommunitySubscriber, filters)
   end
 
+  @spec community_members(atom(), Community.t(), map(), User.t()) :: T.domain_res(term())
   def community_members(:subscribers, %Community{id: id} = community, filters, %User{} = user)
       when not is_nil(id) do
     with {:ok, members} <- community_members(:subscribers, community, filters) do
@@ -356,6 +375,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
+  @spec create_category(map(), User.t()) :: T.domain_res(term())
   def create_category(attrs, %User{id: user_id}) do
     with {:ok, author} <- ensure_author_exists(%User{id: user_id}) do
       attrs = attrs |> Map.merge(%{author_id: author.id})
@@ -363,6 +383,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
+  @spec update_category(map()) :: T.domain_res(term())
   def update_category(~m(%Category id title)a) do
     with {:ok, category} <- ORM.find(Category, id) do
       category |> ORM.update(~m(title)a)
@@ -372,6 +393,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   @doc """
   TODO: create_thread
   """
+  @spec create_thread(map()) :: T.domain_res(term())
   def create_thread(attrs) do
     slug = to_string(attrs.slug)
     title = attrs.title
@@ -381,6 +403,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   end
 
   @doc "count items in community"
+  @spec count(Community.t(), atom()) :: T.domain_res(term())
   def count(community, type)
 
   def count(%Community{id: id}, :threads) do
@@ -400,7 +423,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
     end
   end
 
-  def count(_community, _type), do: {:error, "invalid count type"}
+  def count(_community, _type), do: {:error, {:custom, "invalid count type"}}
 
   defp do_read_community(slug, opt) do
     with {:ok, community} <- ORM.find_community(slug),

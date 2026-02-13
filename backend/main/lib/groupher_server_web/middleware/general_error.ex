@@ -23,5 +23,16 @@ defmodule GroupherServerWeb.Middleware.GeneralError do
     end
   end
 
+  # domain tuple errors
+  def call(%{errors: [error]} = resolution, _) when is_tuple(error) do
+    case Helper.GQLError.encode(error) do
+      {:error, [message: message, code: code]} ->
+        %{resolution | value: [], errors: [%{message: message, code: code}]}
+
+      _ ->
+        resolution
+    end
+  end
+
   def call(resolution, _), do: resolution
 end

@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   alias GroupherServer.FrontDesk
   alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.Delegate.Fetcher
 
   alias Accounts.Model.User
   alias CMS.Model.{Post, Comment, PinnedComment, Embeds, Community}
@@ -41,12 +42,13 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   @article_cat Constant.CMS.article_cat()
   @article_state Constant.CMS.article_state()
 
+  @spec comments_state(T.article_thread(), T.id()) :: T.domain_res(term())
   def comments_state(thread, article_id) do
     filter = %{page: 1, size: 20}
 
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, article_id),
+         {:ok, article} <- Fetcher.fetch(info.model, article_id),
          {:ok, paged_participants} <- do_paged_comments_participants(thread_query, filter) do
       %{
         total_count: article.comments_count,
@@ -58,6 +60,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     end
   end
 
+  @spec comments_state(T.article_thread(), T.id(), User.t()) :: T.domain_res(term())
   def comments_state(thread, article_id, user) do
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, state} <- comments_state(thread, article_id) do
@@ -82,10 +85,12 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   @doc """
   get spec comment by id
   """
-  def one_comment(id), do: ORM.find(Comment, id)
+  @spec one_comment(T.id()) :: T.domain_res(Comment.t())
+  def one_comment(id), do: Fetcher.fetch(Comment, id)
 
+  @spec one_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def one_comment(id, %User{} = user) do
-    with {:ok, comment} <- ORM.find(Comment, id) do
+    with {:ok, comment} <- Fetcher.fetch(Comment, id) do
       %{entries: [comment]}
       |> mark_viewer_emotion_states(user)
       |> mark_viewer_has_upvoted(user)
@@ -98,6 +103,8 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   @doc """
   [timeline-mode] list paged article comments
   """
+  @spec paged_comments(T.article_thread(), T.id(), map(), atom(), User.t() | nil) ::
+          T.domain_res(term())
   def paged_comments(thread, article_id, filters, mode, user \\ nil)
 
   def paged_comments(thread, article_id, filters, :timeline, user) do
@@ -115,6 +122,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     do_paged_comment(thread, article_id, filters, where_query, user)
   end
 
+  @spec paged_published_comments(User.t(), map()) :: T.domain_res(term())
   def paged_published_comments(%User{id: user_id}, filter) do
     %{page: page, size: size} = filter
 
@@ -127,6 +135,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     |> done()
   end
 
+  @spec paged_published_comments(User.t(), T.article_thread(), map()) :: T.domain_res(term())
   def paged_published_comments(%User{id: user_id}, thread, filter) do
     %{page: page, size: size} = filter
 
@@ -146,17 +155,21 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     |> done()
   end
 
+  @spec paged_folded_comments(T.article_thread(), T.id(), map()) :: T.domain_res(term())
   def paged_folded_comments(thread, article_id, filters) do
     where_query = dynamic([c], c.is_folded and not c.is_pinned)
     do_paged_comment(thread, article_id, filters, where_query, nil)
   end
 
+  @spec paged_folded_comments(T.article_thread(), T.id(), map(), User.t()) ::
+          T.domain_res(term())
   def paged_folded_comments(thread, article_id, filters, user) do
     where_query = dynamic([c], c.is_folded and not c.is_pinned)
     do_paged_comment(thread, article_id, filters, where_query, user)
   end
 
   # get audit failed articles
+  @spec paged_audit_failed_comments(map()) :: T.domain_res(term())
   def paged_audit_failed_comments(filter) do
     %{page: page, size: size} = filter
     flags = %{pending: :audit_failed}
@@ -170,18 +183,19 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   @doc """
   list paged comment replies
   """
+  @spec paged_comment_replies(T.id(), map(), User.t() | nil) :: T.domain_res(term())
   def paged_comment_replies(comment_id, filters, user \\ nil)
 
   def paged_comment_replies(comment_id, filters, user) do
     do_paged_comment_replies(comment_id, filters, user)
   end
 
-  @spec paged_comments_participants(T.article_thread(), Integer.t(), T.paged_filter()) ::
-          {:ok, T.paged_users()}
+  @spec paged_comments_participants(T.article_thread(), integer(), T.paged_filter()) ::
+          T.domain_res(T.paged_users())
   def paged_comments_participants(thread, article_id, filters) do
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, article_id),
+         {:ok, article} <- Fetcher.fetch(info.model, article_id),
          {:ok, paged_data} <- do_paged_comments_participants(thread_query, filters) do
       # check participants_count if history data do not match
       case article.comments_participants_count !== paged_data.total_count do
@@ -197,10 +211,12 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   end
 
   # 调用审核接口失败，等待队列定时处理
+  @spec set_comment_audit_failed(Comment.t(), term()) :: T.domain_res(term())
   def set_comment_audit_failed(%Comment{} = comment, _audit_state) do
     ORM.update(comment, %{pending: @audit_failed})
   end
 
+  @spec set_comment_illegal(Comment.t(), map()) :: T.domain_res(term())
   def set_comment_illegal(%Comment{} = comment, audit_state) do
     # 1. set pending
     # 2. update comment-meta
@@ -227,12 +243,14 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     |> result()
   end
 
+  @spec set_comment_illegal(T.id(), map()) :: T.domain_res(term())
   def set_comment_illegal(comment_id, audit_state) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id) do
+    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id) do
       set_comment_illegal(comment, audit_state)
     end
   end
 
+  @spec unset_comment_illegal(Comment.t(), map()) :: T.domain_res(term())
   def unset_comment_illegal(%Comment{} = comment, audit_state) do
     Multi.new()
     |> Multi.run(:update_pending_state, fn _, _ ->
@@ -259,8 +277,9 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     |> result()
   end
 
+  @spec unset_comment_illegal(T.id(), map()) :: T.domain_res(term())
   def unset_comment_illegal(comment_id, audit_state) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id) do
+    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id) do
       unset_comment_illegal(comment, audit_state)
     end
   end
@@ -282,14 +301,18 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     |> done()
   end
 
+  @spec update_user_in_comments_participants(User.t()) :: T.domain_res(term())
   def update_user_in_comments_participants(%User{login: login}) do
     from(a in CMS.Model.Post,
       cross_join: cp in fragment("jsonb_array_elements(?)", a.comments_participants),
       where: fragment("?->>'login' = ?", cp, ^login)
     )
     |> Repo.all()
+    |> done()
   end
 
+  @spec create_comment(Community.t(), T.article_thread(), T.id(), String.t(), User.t()) ::
+          T.domain_res(term())
   def create_comment(%Community{slug: community_slug}, thread, article_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
@@ -338,6 +361,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     not article.meta.is_comment_locked
   end
 
+  @spec update_comment(map(), String.t()) :: T.domain_res(term())
   def update_comment(%{is_archived: true}, _body),
     do: raise_error(:archived, "comment is archived, can not be edit or delete")
 
@@ -346,7 +370,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   """
   # 如果是 solution, 那么要更新对应的 post 的 solution_digest
   def update_comment(%Comment{is_solution: true} = comment, body) do
-    with {:ok, post} <- ORM.find(Post, comment.post_id),
+    with {:ok, post} <- Fetcher.fetch(Post, comment.post_id),
          {:ok, parsed} <- Converter.Article.parse_body(body),
          {:ok, digest} <- Converter.Article.parse_digest(parsed.body_map) do
       Multi.new()
@@ -388,9 +412,10 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   @doc """
   mark a comment as question post's best solution
   """
+  @spec mark_comment_solution(T.id(), User.t()) :: T.domain_res(term())
   def mark_comment_solution(comment_id, user) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id),
-         {:ok, post} <- ORM.find(Post, comment.post_id, preload: [author: :user]) do
+    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
+         {:ok, post} <- Fetcher.fetch(Post, comment.post_id, preload: [author: :user]) do
       # 确保只有一个最佳答案
       batch_update_solution_flag(post, false)
       CMS.pin_comment(comment.id)
@@ -401,9 +426,10 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   @doc """
   undo mark a comment as question post's best solution
   """
+  @spec undo_mark_comment_solution(T.id(), User.t()) :: T.domain_res(term())
   def undo_mark_comment_solution(comment_id, user) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id),
-         {:ok, post} <- ORM.find(Post, comment.post_id, preload: [author: :user]) do
+    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
+         {:ok, post} <- Fetcher.fetch(Post, comment.post_id, preload: [author: :user]) do
       CMS.set_post_state(post, @article_state.default)
 
       do_mark_comment_solution(post, comment, user, false)
@@ -446,6 +472,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
     {:ok, :pass}
   end
 
+  @spec delete_comment(map()) :: T.domain_res(term())
   def delete_comment(%{is_archived: true}),
     do: raise_error(:archived, "article is archived, can not be edit or delete")
 
@@ -513,6 +540,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   archive comments
   called every day by scheuler job
   """
+  @spec archive_comments() :: T.domain_res(term())
   def archive_comments() do
     now = Timex.now() |> DateTime.truncate(:second)
     threshold = @archive_threshold[:default]

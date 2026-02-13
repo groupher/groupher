@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Model.Embeds.SocialInfo do
+  @type t :: %__MODULE__{}
+
   @moduledoc """
   general community meta
   """

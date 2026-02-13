@@ -10,9 +10,9 @@ defmodule Helper.ErrorCode do
   @article_base 4500
   @community_base 5500
 
-  @spec raise_error(Atom.t(), String.t()) :: {:error, [message: String.t(), code: Integer.t()]}
+  @spec raise_error(atom(), String.t()) :: {:error, {atom(), String.t()}}
   def raise_error(code_atom, msg) do
-    {:error, [message: msg, code: ecode(code_atom)]}
+    {:error, {code_atom, msg}}
   end
 
   # account error code

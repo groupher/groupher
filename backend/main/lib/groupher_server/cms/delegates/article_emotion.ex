@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
   import GroupherServer.CMS.Delegate.Helper, only: [update_emotions_field: 4]
 
   alias Helper.{Transaction, ORM}
+  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -17,9 +18,10 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
   alias Ecto.Multi
 
   @type t_user_list :: [%{login: String.t()}]
-  @type t_mention_status :: %{user_list: t_user_list, user_count: Integer.t()}
+  @type t_mention_status :: %{user_list: t_user_list, user_count: integer()}
 
   @doc "make emotion to a comment"
+  @spec emotion_to_article(term(), atom(), User.t()) :: T.domain_res(term())
   def emotion_to_article(article, emotion, %User{} = user) do
     {:ok, info} = match(article)
 
@@ -48,6 +50,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
     end)
   end
 
+  @spec undo_emotion_to_article(term(), atom(), User.t()) :: T.domain_res(term())
   def undo_emotion_to_article(article, emotion, %User{} = user) do
     {:ok, info} = match(article)
 
@@ -80,7 +83,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleEmotion do
     end)
   end
 
-  # @spec query_emotion_status(Comment.t(), Atom.t()) :: {:ok, t_mention_status}
+  # @spec query_emotion_status(Comment.t(), atom()) :: {:ok, t_mention_status}
   defp query_emotion_status(article, emotion) do
     with {:ok, thread} <- thread_of(article),
          {:ok, info} <- match(thread) do

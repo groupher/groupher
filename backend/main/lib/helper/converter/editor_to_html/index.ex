@@ -14,7 +14,7 @@ defmodule Helper.Converter.EditorToHTML do
   # alias EditorToHTML.Assets.{DelimiterIcons}
   @root_class Class.article()
 
-  @spec to_html(Map.t()) :: {:ok, T.html()}
+  @spec to_html(map()) :: {:ok, T.html()}
   def to_html(editor_map) when is_map(editor_map) do
     content =
       Enum.reduce(editor_map["blocks"], "", fn block, acc ->

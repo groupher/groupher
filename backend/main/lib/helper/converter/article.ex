@@ -24,7 +24,7 @@ defmodule Helper.Converter.Article do
   parse article body field
   """
   @spec parse_body(String.t()) ::
-          {:ok, %{body: String.t(), body_map: Map.t(), body_html: String.t()}}
+          {:ok, %{body: String.t(), body_map: map(), body_html: String.t()}}
   def parse_body(body) when is_binary(body) do
     with {:ok, body_map} <- to_editor_map(body),
          {:ok, body_html} <- EditorToHTML.to_html(body_map),

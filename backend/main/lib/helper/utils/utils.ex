@@ -75,23 +75,29 @@ defmodule Helper.Utils do
   @doc """
   handle General {:ok, ..} or {:error, ..} return
   """
-  def done(false), do: {:error, false}
+  def done(false), do: {:error, :not_exist}
   def done(true), do: {:ok, true}
-  def done(nil), do: {:error, "record not found."}
+  def done(nil), do: {:error, :not_exist}
   def done({n, nil}) when is_integer(n), do: {:ok, %{done: true}}
   def done(:ok), do: {:ok, :pass}
   def done([]), do: {:ok, []}
   def done(result), do: {:ok, result}
   def done(nil, :boolean), do: {:ok, false}
   def done(_, :boolean), do: {:ok, true}
-  def done(nil, err_msg), do: {:error, err_msg}
+  def done(nil, err_msg) when is_binary(err_msg), do: {:error, {:custom, err_msg}}
+  def done(nil, err_msg), do: {:error, {:custom, err_msg}}
   def done({:ok, _}, with: result), do: {:ok, result}
-  def done({:error, reason}, with: _result), do: {:error, reason}
+  def done({:error, reason}, with: _result), do: {:error, normalize_error(reason)}
 
   def done({:ok, result}, :trans), do: result
-  def done({:error, reason}, :trans), do: throw({:error, reason})
-  def done(nil, queryable, id), do: {:error, not_found_formatter(queryable, id)}
+  def done({:error, reason}, :trans), do: throw({:error, normalize_error(reason)})
+  def done(nil, queryable, id), do: {:error, {:not_exist, not_found_formatter(queryable, id)}}
   def done(result, _, _), do: {:ok, result}
+
+  defp normalize_error({reason, _meta} = error) when is_atom(reason), do: error
+  defp normalize_error(reason) when is_atom(reason), do: reason
+  defp normalize_error(reason) when is_binary(reason), do: {:custom, reason}
+  defp normalize_error(reason), do: {:custom, reason}
 
   # for delete_all, update_all
   # see: https://groups.google.com/forum/#!topic/elixir-ecto/1g5Pp6ceqFE
@@ -122,6 +128,13 @@ defmodule Helper.Utils do
   @doc """
   see: https://hexdocs.pm/absinthe/errors.html#content for error format
   """
+  def handle_absinthe_error(resolution, {reason, meta}, code) when is_integer(code) do
+    message = if is_binary(meta), do: meta, else: Atom.to_string(reason)
+
+    resolution
+    |> Absinthe.Resolution.put_result({:error, message: message, code: code})
+  end
+
   def handle_absinthe_error(resolution, err_msg, code) when is_integer(code) do
     resolution
     |> Absinthe.Resolution.put_result({:error, message: err_msg, code: code})

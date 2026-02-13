@@ -8,8 +8,6 @@ defmodule GroupherServer.CMS.Delegate.Fetcher do
   import Helper.Utils,
     only: [done: 1, get_config: 2]
 
-  import GroupherServer.CMS.Helper.Matcher
-
   alias Helper.Types, as: T
   alias Helper.ORM
   alias GroupherServer.Repo
@@ -18,29 +16,30 @@ defmodule GroupherServer.CMS.Delegate.Fetcher do
 
   @article_threads get_config(:article, :threads)
 
-  @spec fetch_comment(integer()) :: T.domain_result(Comment.t())
+  @spec fetch_comment(integer()) :: T.domain_res(Comment.t())
   def fetch_comment(comment_id) do
-    case ORM.find(Comment, comment_id) do
-      {:ok, comment} ->
-        {:ok, comment}
-
-      {:error, reason} ->
-        {:error, {:not_exist, reason}}
-    end
+    ORM.find(Comment, comment_id)
   end
 
-  @spec fetch_full_comment(integer()) :: T.domain_result(T.article_info())
+  @spec fetch_full_comment(integer()) :: T.domain_res(T.article_info())
   def fetch_full_comment(comment_id) do
-    case get_full_comment(comment_id) do
-      {:ok, full_comment} ->
-        {:ok, full_comment}
-
-      {:error, reason} ->
-        {:error, {:not_exist, reason}}
-    end
+    get_full_comment(comment_id)
   end
 
-  @spec get_full_comment(integer()) :: {:ok, T.article_info()} | {:error, any()}
+  @spec fetch(Ecto.Queryable.t(), T.id()) :: T.domain_res(term())
+  def fetch(queryable, id), do: ORM.find(queryable, id)
+
+  @spec fetch(Ecto.Queryable.t(), T.id(), keyword()) :: T.domain_res(term())
+  def fetch(queryable, id, preload: preload), do: ORM.find(queryable, id, preload: preload)
+
+  @spec fetch_by(Ecto.Queryable.t(), map()) :: T.domain_res(term())
+  def fetch_by(queryable, clauses), do: ORM.find_by(queryable, clauses)
+
+  @spec fetch_by(Ecto.Queryable.t(), map(), keyword()) :: T.domain_res(term())
+  def fetch_by(queryable, clauses, preload: preload),
+    do: ORM.find_by(queryable, clauses, preload: preload)
+
+  @spec get_full_comment(integer()) :: T.domain_res(T.article_info())
   defp get_full_comment(comment_id) do
     query = from(c in Comment, where: c.id == ^comment_id, preload: ^@article_threads)
 

@@ -31,6 +31,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   alias Helper.Types, as: T
   alias Helper.{ORM, Later, Transaction}
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.Delegate.Fetcher
 
   alias Accounts.Model.User
   alias CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply}
@@ -44,7 +45,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   @pinned_comment_limit Comment.pinned_comment_limit()
 
   @doc "pin a comment"
-  @spec pin_comment(integer()) :: T.domain_result(Comment.t())
+  @spec pin_comment(integer()) :: T.domain_res(Comment.t())
   def pin_comment(comment_id) do
     with {:ok, {comment, full_comment, info}} <- pin_context(comment_id) do
       Multi.new()
@@ -75,7 +76,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
-  @spec undo_pin_comment(Integer.t()) :: T.domain_result(Comment.t())
+  @spec undo_pin_comment(integer()) :: T.domain_res(Comment.t())
   def undo_pin_comment(comment_id) do
     with {:ok, comment} <- CMS.fetch_comment(comment_id) do
       Multi.new()
@@ -91,24 +92,27 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   end
 
   @doc "fold a comment"
+  @spec fold_comment(T.id() | Comment.t(), User.t()) :: T.domain_res(Comment.t())
   def fold_comment(%Comment{} = comment, %User{} = _user), do: do_fold_comment(comment, true)
 
   def fold_comment(comment_id, %User{} = _user) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id) do
+    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id) do
       do_fold_comment(comment, true)
     end
   end
 
   @doc "unfold a comment"
+  @spec unfold_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def unfold_comment(comment_id, %User{} = _user) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id) do
+    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id) do
       do_fold_comment(comment, false)
     end
   end
 
   @doc "reply to existing comment"
+  @spec reply_comment(T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
   def reply_comment(comment_id, body, %User{} = user) do
-    with {:ok, target_comment} <- ORM.find_by(Comment, %{id: comment_id, is_deleted: false}),
+    with {:ok, target_comment} <- Fetcher.fetch_by(Comment, %{id: comment_id, is_deleted: false}),
          replying_comment <- Repo.preload(target_comment, reply_to: :author),
          {thread, article} <- get_article(replying_comment),
          true <- can_comment?(article, user),
@@ -163,8 +167,9 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   end
 
   @doc "upvote a comment"
+  @spec upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def upvote_comment(comment_id, %User{id: user_id} = from_user) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id),
+    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
          false <- comment.is_deleted do
       Multi.new()
       |> Multi.run(:create_comment_upvote, fn _, _ ->
@@ -202,8 +207,9 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   end
 
   @doc "upvote a comment"
+  @spec undo_upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def undo_upvote_comment(comment_id, %User{id: user_id} = from_user) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id),
+    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
          false <- comment.is_deleted do
       Multi.new()
       |> Multi.run(:delete_comment_upvote, fn _, _ ->
@@ -243,6 +249,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   end
 
   @doc "lock comment of a article"
+  @spec lock_article_comments(term()) :: T.domain_res(term())
   def lock_article_comments(article) do
     Transaction.locking(article, fn article ->
       ORM.update_meta(article, %{is_comment_locked: true})
@@ -250,6 +257,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
   end
 
   @doc "undo lock comment of a article"
+  @spec undo_lock_article_comments(term()) :: T.domain_res(term())
   def undo_lock_article_comments(article) do
     Transaction.locking(article, fn article ->
       ORM.update_meta(article, %{is_comment_locked: false})
@@ -316,7 +324,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     with article_thread <- find_comment_article_thread(comment),
          {:ok, info} <- match(article_thread),
          article_id <- Map.get(comment, info.foreign_key),
-         {:ok, article} <- ORM.find(info.model, article_id, preload: [author: :user]) do
+         {:ok, article} <- Fetcher.fetch(info.model, article_id, preload: [author: :user]) do
       {article_thread, article}
     end
   end

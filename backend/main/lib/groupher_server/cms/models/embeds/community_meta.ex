@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
+  
   @moduledoc false
 
   import Helper.Utils, only: [get_config: 2, plural: 1]
@@ -25,6 +26,8 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
 end
 
 defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
+  @type t :: %__MODULE__{}
+
   @moduledoc """
   general community meta
   """

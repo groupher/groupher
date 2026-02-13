@@ -5,7 +5,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
   import GroupherServer.CMS.Helper.Matcher
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1, thread_of: 2]
-  import Helper.ErrorCode
 
   import GroupherServer.CMS.Delegate.Helper,
     only: [
@@ -16,6 +15,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
   # import Helper.ErrorCode
 
   alias Helper.{ORM, Later, Transaction}
+  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -24,9 +24,11 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
 
   alias Ecto.Multi
 
+  @spec upvoted_users(term(), map()) :: T.domain_res(term())
   def upvoted_users(article, filter), do: load_reaction_users(ArticleUpvote, article, filter)
 
   @doc "upvote to a article-like content"
+  @spec upvote_article(term(), User.t()) :: T.domain_res(term())
   def upvote_article(article, %User{} = user) do
     {:ok, info} = match(article)
 
@@ -57,6 +59,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
   end
 
   @doc "upvote to a article-like content"
+  @spec undo_upvote_article(term(), User.t()) :: T.domain_res(term())
   def undo_upvote_article(article, %User{id: user_id} = from_user) do
     {:ok, info} = match(article)
 
@@ -88,7 +91,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleUpvote do
 
     case ORM.create(ArticleUpvote, args) do
       {:ok, _} -> article |> done
-      _ -> {:error, [message: "viewer already upvoted", code: ecode(:already_upvoted)]}
+      _ -> {:error, {:already_upvoted, "viewer already upvoted"}}
     end
   end
 

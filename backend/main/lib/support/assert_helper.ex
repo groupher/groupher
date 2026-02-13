@@ -22,9 +22,14 @@ defmodule GroupherServer.Test.AssertHelper do
   def non_exist_login, do: "15_982_398_614"
   # def page_size, do: @page_size
 
-  def is_error?(reason, code) when is_list(reason) and is_atom(code) do
-    reason |> Keyword.get(:code) == ecode(code)
+  def is_error?(reason, code) when is_atom(code) do
+    error_code(reason) == ecode(code)
   end
+
+  def error_code(reason) when is_list(reason), do: Keyword.get(reason, :code)
+  def error_code({reason, _meta}) when is_atom(reason), do: ecode(reason)
+  def error_code(reason) when is_atom(reason), do: ecode(reason)
+  def error_code(_), do: nil
 
   def assert_v(:inner_page_size), do: @inner_page_size
 
@@ -215,7 +220,7 @@ defmodule GroupherServer.Test.AssertHelper do
   defp log_debug_info(res, _), do: res
 
   @doc "check id is exist in list of Map<id: xxx> structure"
-  @spec exist_in?(Map.t(), [Map.t()]) :: boolean
+  @spec exist_in?(map(), [map()]) :: boolean
   def exist_in?(%{id: id}, list) when is_list(list) do
     list
     |> Enum.any?(fn item ->

@@ -126,7 +126,7 @@ defmodule GroupherServer.Test.Helper.ORM do
     test "should have error code if not found", ~m(community)a do
       {:error, reason} = ORM.find_article(community.slug, :post, 3845)
 
-      assert reason |> Keyword.get(:code) == ecode(:article_not_found)
+      assert error_code(reason) == ecode(:article_not_found)
     end
   end
 

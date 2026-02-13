@@ -76,7 +76,7 @@ defmodule Helper.ORM do
   @doc """
   similar to Repo.get/3, with standard result/error handle
   """
-  @spec find(Ecto.Queryable.t(), SpecType.id()) :: {:ok, any()} | {:error, String.t()}
+  @spec find(Ecto.Queryable.t(), SpecType.id()) :: {:ok, any()} | {:error, T.error()}
   def find(queryable, id) do
     queryable
     |> Repo.get(id)
@@ -91,7 +91,7 @@ defmodule Helper.ORM do
     |> Repo.get_by(clauses)
     |> case do
       nil ->
-        {:error, not_found_formatter(queryable, clauses)}
+        {:error, {:not_exist, not_found_formatter(queryable, clauses)}}
 
       result ->
         {:ok, result}
@@ -104,7 +104,7 @@ defmodule Helper.ORM do
     |> Repo.get_by(clauses)
     |> case do
       nil ->
-        {:error, not_found_formatter(queryable, clauses)}
+        {:error, {:not_exist, not_found_formatter(queryable, clauses)}}
 
       result ->
         {:ok, result}
@@ -317,7 +317,7 @@ defmodule Helper.ORM do
   end
 
   @doc "extract common articles info"
-  @spec extract_articles(T.paged_data(), [Atom.t()]) :: T.paged_article_common()
+  @spec extract_articles(T.paged_data(), [atom()]) :: T.paged_article_common()
   def extract_articles(%{entries: entries} = paged_articles, threads \\ @article_threads) do
     paged_articles
     |> Map.put(:entries, Enum.map(entries, &extract_article_info(&1, threads)))

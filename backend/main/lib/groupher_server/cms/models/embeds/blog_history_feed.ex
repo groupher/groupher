@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Model.Embeds.BlogHistoryFeed do
+  @type t :: %__MODULE__{}
+
   @moduledoc """
   general community meta
   """
