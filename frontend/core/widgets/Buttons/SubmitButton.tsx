@@ -1,12 +1,9 @@
 import { type FC, memo } from 'react'
-
-import type { TSubmitState } from '~/spec'
-
 import CheckedSVG from '~/icons/Checked'
-
-import YesOrNoButtons from './YesOrNoButtons'
+import type { TSubmitState } from '~/spec'
 import Button from './Button'
 import useSalon from './salon/submit_button'
+import YesOrNoButtons from './YesOrNoButtons'
 
 const space = 22
 
@@ -33,7 +30,7 @@ const TheButton: FC<TProps> = ({
   return withCancel ? (
     <YesOrNoButtons
       cancelText={cancelText}
-      confirmText={okText}
+      saveText={okText}
       onConfirm={onPublish}
       loading={publishing}
       disabled={!isReady}
@@ -43,7 +40,7 @@ const TheButton: FC<TProps> = ({
     <Button
       loading={publishing}
       onClick={() => onPublish()}
-      size="small"
+      size='small'
       space={space}
       disabled={!isReady}
     >
@@ -72,7 +69,7 @@ const SubmitButton: FC<TProps> = ({
 
   if (mode === 'update' && !isArticleAuthor) {
     return (
-      <Button size="small" disabled space={space}>
+      <Button size='small' disabled space={space}>
         无权限
       </Button>
     )
@@ -80,7 +77,7 @@ const SubmitButton: FC<TProps> = ({
 
   if (isArchived) {
     return (
-      <Button size="small" disabled space={space}>
+      <Button size='small' disabled space={space}>
         已存档
       </Button>
     )

@@ -1,21 +1,6 @@
 'use client'
 
-import { useContext } from 'react'
-import { useSnapshot } from 'valtio'
-
+import createStoreHook from '../createStoreHook'
 import { StoreContext } from './provider'
 
-export default () => {
-  const store = useContext(StoreContext)
-  if (!store) {
-    throw new Error('useStore must be used within a Article store provider')
-  }
-
-  const snap = useSnapshot(store)
-
-  return {
-    ...snap,
-    commit: store.commit,
-    live$: store,
-  }
-}
+export default createStoreHook(StoreContext)
