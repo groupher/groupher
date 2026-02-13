@@ -236,7 +236,7 @@ defmodule GroupherServer.Test.CMS do
       {:error, reason} =
         CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
-      assert reason[:code] == ecode(:passport_community_not_match)
+      assert error_code(reason) == ecode(:passport_community_not_match)
     end
 
     test "can not update multi community passport", ~m(user user2 community)a do
@@ -258,7 +258,7 @@ defmodule GroupherServer.Test.CMS do
       {:error, reason} =
         CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
-      assert reason[:code] == ecode(:one_community_only)
+      assert error_code(reason) == ecode(:one_community_only)
     end
 
     test "can add multi moderators to a community", ~m(user user2 community)a do

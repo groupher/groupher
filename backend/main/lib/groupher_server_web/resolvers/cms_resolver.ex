@@ -440,6 +440,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def pin_comment(_root, ~m(id)a, _info), do: CMS.pin_comment(id)
+
   def undo_pin_comment(_root, ~m(id)a, _info), do: CMS.undo_pin_comment(id)
 
   ############

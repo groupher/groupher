@@ -9,7 +9,7 @@ defmodule Helper.Utils.String do
   def stringify(v), do: v
 
   # see https://stackoverflow.com/a/49558074/4050784
-  @spec str_occurrence(String.t(), String.t()) :: Integer.t()
+  @spec str_occurrence(String.t(), String.t()) :: integer()
   def str_occurrence(string, substr) when is_binary(string) and is_binary(substr) do
     len = string |> String.split(substr) |> length()
     len - 1

@@ -7,7 +7,9 @@ defmodule GroupherServer.CMS.Delegate.ThirdPart do
   import Helper.Utils, only: [done: 1]
 
   alias Helper.OSS
+  alias Helper.Types, as: T
 
+  @spec upload_tokens() :: T.domain_res(term())
   def upload_tokens() do
     with {:ok, %{"Credentials" => credentials}} <- OSS.get_sts_token() do
       %{

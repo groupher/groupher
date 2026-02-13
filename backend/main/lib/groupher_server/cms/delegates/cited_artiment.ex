@@ -32,6 +32,7 @@ defmodule GroupherServer.CMS.Delegate.CitedArtiment do
   @cited_preloads @article_preloads ++ [[comment: :author] ++ @comment_article_preloads]
 
   @doc "get paged citing contents"
+  @spec paged_citing_contents(atom(), T.id(), map()) :: T.domain_res(term())
   def paged_citing_contents(cited_by_type, cited_by_id, %{page: page, size: size} = filter) do
     cited_by_type = to_upcase(cited_by_type)
 
@@ -79,7 +80,7 @@ defmodule GroupherServer.CMS.Delegate.CitedArtiment do
 
     case {0, nil} !== Repo.insert_all(CitedArtiment, clean_cited_artiments) do
       true -> update_artiment_citing_count(cited_artiments)
-      false -> {:error, "insert cited artiment error"}
+      false -> {:error, {:create_fails, "insert cited artiment error"}}
     end
   end
 

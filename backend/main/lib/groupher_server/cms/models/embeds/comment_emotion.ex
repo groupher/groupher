@@ -29,6 +29,8 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion.Macros do
 end
 
 defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion do
+  @type t :: %__MODULE__{}
+
   @moduledoc """
   general article meta info for article-like content, like post ...
   """

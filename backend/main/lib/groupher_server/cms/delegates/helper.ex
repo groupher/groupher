@@ -68,7 +68,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
     end
   end
 
-  def article_of(_), do: {:error, "only support comment"}
+  def article_of(_), do: {:error, {:custom, "only support comment"}}
 
   # get thread of comment
   def thread_of(%Comment{thread: thread}) do
@@ -80,7 +80,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
     thread |> String.downcase() |> String.to_atom() |> done
   end
 
-  def thread_of(_), do: {:error, "invalid article"}
+  def thread_of(_), do: {:error, {:custom, "invalid article"}}
 
   def thread_of(%{meta: %{thread: thread}}, :upcase) do
     thread |> to_string |> String.upcase() |> done

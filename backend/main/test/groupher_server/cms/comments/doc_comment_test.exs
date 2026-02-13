@@ -448,7 +448,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         {:ok, _} = CMS.pin_comment(comment.id)
       end)
 
-      assert {:error, _} = CMS.pin_comment(comment.id)
+      assert {:error, {:comment_pin_limit, @pinned_comment_limit}} = CMS.pin_comment(comment.id)
     end
   end
 

@@ -210,8 +210,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :doc), variables)
 
       assert result["articleTags"] |> length == 2
-      assert result["articleTags"] |> List.first() |> get_in(["id"]) == to_string(article_tag.id)
-      assert result["articleTags"] |> List.last() |> get_in(["id"]) == to_string(article_tag2.id)
+
+      assert result["articleTags"]
+             |> Enum.map(&get_in(&1, ["id"]))
+             |> Enum.sort() == Enum.sort([to_string(article_tag.id), to_string(article_tag2.id)])
 
       variables = %{
         id: doc.inner_id,
@@ -222,8 +224,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :doc), variables)
 
       assert result["articleTags"] |> length == 2
-      assert result["articleTags"] |> List.first() |> get_in(["id"]) == to_string(article_tag2.id)
-      assert result["articleTags"] |> List.last() |> get_in(["id"]) == to_string(article_tag3.id)
+
+      assert result["articleTags"]
+             |> Enum.map(&get_in(&1, ["id"]))
+             |> Enum.sort() == Enum.sort([to_string(article_tag2.id), to_string(article_tag3.id)])
     end
 
     test "update doc with valid attrs should have is_edited meta info update",

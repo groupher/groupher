@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
+  @type t :: %__MODULE__{}
+
   @moduledoc """
   general article meta info for article-like content, like post ...
   """

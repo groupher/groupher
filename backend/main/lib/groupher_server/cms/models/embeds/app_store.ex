@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Model.Embeds.AppStore do
+  @type t :: %__MODULE__{}
+
   @moduledoc """
   general community meta
   """

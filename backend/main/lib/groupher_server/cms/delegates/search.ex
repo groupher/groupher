@@ -7,6 +7,7 @@ defmodule GroupherServer.CMS.Delegate.Search do
   import GroupherServer.CMS.Helper.Matcher
 
   alias Helper.ORM
+  alias Helper.Types, as: T
 
   alias GroupherServer.{Accounts, CMS}
   alias CMS.Model.{Community}
@@ -17,10 +18,12 @@ defmodule GroupherServer.CMS.Delegate.Search do
   @doc """
   search community by title
   """
+  @spec search_communities(String.t()) :: T.domain_res(term())
   def search_communities(title) do
     do_search_communities(Community, title)
   end
 
+  @spec search_communities(String.t(), User.t()) :: T.domain_res(term())
   def search_communities(title, %User{} = user) do
     with {:ok, communities} <- do_search_communities(Community, title) do
       %{entries: entries} = communities
@@ -35,6 +38,7 @@ defmodule GroupherServer.CMS.Delegate.Search do
     end
   end
 
+  @spec search_communities(String.t(), term()) :: T.domain_res(term())
   def search_communities(title, category) do
     from(
       c in Community,
@@ -44,6 +48,7 @@ defmodule GroupherServer.CMS.Delegate.Search do
     |> do_search_communities(title)
   end
 
+  @spec search_communities(String.t(), term(), User.t()) :: T.domain_res(term())
   def search_communities(title, category, %User{meta: _}) do
     search_communities(title, category)
   end
@@ -61,6 +66,7 @@ defmodule GroupherServer.CMS.Delegate.Search do
   @doc """
   search article by title
   """
+  @spec search_articles(atom(), map()) :: T.domain_res(term())
   def search_articles(thread, %{title: title}) do
     with {:ok, info} <- match(thread) do
       info.model

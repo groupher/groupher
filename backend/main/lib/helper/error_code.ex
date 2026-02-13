@@ -10,9 +10,9 @@ defmodule Helper.ErrorCode do
   @article_base 4500
   @community_base 5500
 
-  @spec raise_error(Atom.t(), String.t()) :: {:error, [message: String.t(), code: Integer.t()]}
+  @spec raise_error(atom(), String.t()) :: {:error, {atom(), String.t()}}
   def raise_error(code_atom, msg) do
-    {:error, [message: msg, code: ecode(code_atom)]}
+    {:error, {code_atom, msg}}
   end
 
   # account error code
@@ -47,6 +47,7 @@ defmodule Helper.ErrorCode do
   # comment
   def ecode(:create_comment), do: @comment_base + 1
   def ecode(:comment_already_upvote), do: @comment_base + 2
+  def ecode(:comment_pin_limit), do: @comment_base + 3
   # article
   def ecode(:too_much_pinned_article), do: @article_base + 1
   def ecode(:already_collected_in_folder), do: @article_base + 2
@@ -69,6 +70,15 @@ defmodule Helper.ErrorCode do
   def ecode(:passport_community_not_match), do: @community_base + 2
   def ecode(:one_community_only), do: @community_base + 3
 
+  def ecode(reason) when is_atom(reason) do
+    case Mix.env() do
+      env when env in [:dev, :test] ->
+        raise ArgumentError, "unknown error reason: #{inspect(reason)}"
+
+      _ ->
+        ecode(:custom)
+    end
+  end
+
   def ecode, do: @default_base
-  # def ecode(_), do: @default_base
 end

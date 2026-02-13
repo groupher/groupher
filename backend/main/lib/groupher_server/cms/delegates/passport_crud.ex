@@ -7,6 +7,7 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
   import ShortMaps
 
   alias Helper.{Certification, NestedFilter, ORM}
+  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -16,6 +17,7 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
   # http://www.ubazu.com/using-postgres-jsonb-columns-in-ecto
   # http://www.ubazu.com/using-postgres-jsonb-columns-in-ecto
 
+  @spec paged_passports(term(), term()) :: T.domain_res(term())
   def paged_passports(community, key) do
     UserPasport
     |> where([p], fragment("(?->?->>?)::boolean = ?", p.rules, ^community, ^key, true))
@@ -23,6 +25,7 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
     |> done
   end
 
+  @spec all_passport_rules() :: T.domain_res(term())
   def all_passport_rules() do
     %{
       root: Certification.passport_rules(cms: "root"),
@@ -34,6 +37,7 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
   @doc """
   return a user's passport in CMS context
   """
+  @spec get_passport(User.t()) :: T.domain_res(term())
   def get_passport(%User{} = user) do
     with {:ok, _} <- ORM.find(User, user.id) do
       case ORM.find_by(UserPasport, user_id: user.id) do
@@ -50,6 +54,7 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
   @doc """
   insert or update a user's passport in CMS context
   """
+  @spec stamp_passport(term(), User.t()) :: T.domain_res(term())
   def stamp_passport(rules, %User{id: user_id}) do
     case ORM.find_by(UserPasport, user_id: user_id) do
       {:ok, passport} ->
@@ -62,6 +67,7 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
     end
   end
 
+  @spec erase_passport(term(), User.t()) :: T.domain_res(term())
   def erase_passport(rules, %User{id: user_id}) when is_list(rules) do
     with {:ok, passport} <- ORM.find_by(UserPasport, user_id: user_id) do
       case pop_in(passport.rules, rules) do
@@ -74,6 +80,7 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
     end
   end
 
+  @spec delete_passport(User.t()) :: T.domain_res(term())
   def delete_passport(%User{id: user_id}) do
     ORM.findby_delete!(UserPasport, ~m(user_id)a)
   end

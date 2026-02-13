@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Delegate.CommentEmotion do
     ]
 
   alias Helper.{ORM, Later}
+  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias CMS.Delegate.Hooks
@@ -23,9 +24,10 @@ defmodule GroupherServer.CMS.Delegate.CommentEmotion do
   alias Ecto.Multi
 
   @type t_user_list :: [%{login: String.t()}]
-  @type t_mention_status :: %{user_list: t_user_list, user_count: Integer.t()}
+  @type t_mention_status :: %{user_list: t_user_list, user_count: integer()}
 
   @doc "make emotion to a comment"
+  @spec emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(term())
   def emotion_to_comment(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
       Multi.new()
@@ -62,6 +64,7 @@ defmodule GroupherServer.CMS.Delegate.CommentEmotion do
     end
   end
 
+  @spec undo_emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(term())
   def undo_emotion_to_comment(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
       Multi.new()
@@ -94,7 +97,7 @@ defmodule GroupherServer.CMS.Delegate.CommentEmotion do
     end
   end
 
-  @spec query_emotion_states(Comment.t(), Atom.t()) :: {:ok, t_mention_status}
+  @spec query_emotion_states(Comment.t(), atom()) :: {:ok, t_mention_status}
   defp query_emotion_states(comment, emotion) do
     # 每次被 emotion 动作触发后重新查询，主要原因
     # 1.并发下保证数据准确，类似 views 阅读数的统计

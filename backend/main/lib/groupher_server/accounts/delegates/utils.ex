@@ -11,7 +11,7 @@ defmodule GroupherServer.Accounts.Delegate.Utils do
   @doc """
   get and cache user'id by user's login
   """
-  @spec get_userid_and_cache(String.t()) :: {:ok, Integer.t()} | {:error, any}
+  @spec get_userid_and_cache(String.t()) :: {:ok, integer()} | {:error, any}
   def get_userid_and_cache(login) do
     case Cache.get(@cache_pool, login) do
       {:ok, user_id} -> {:ok, user_id}

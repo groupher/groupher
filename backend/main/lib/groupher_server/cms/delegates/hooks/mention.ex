@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Mention do
          {:ok, user_id} <- Accounts.get_userid_and_cache(user_login) do
       case author.id !== user_id do
         true -> {:ok, user_id}
-        false -> {:error, "mention yourself, ignored"}
+        false -> {:error, {:custom, "mention yourself, ignored"}}
       end
     end
   end

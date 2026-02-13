@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     ]
 
   alias Helper.ORM
+  alias Helper.Types, as: T
   alias GroupherServer.CMS
 
   alias CMS.Model.{Community, Category, Post, Comment}
@@ -37,6 +38,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
   @doc """
   seed communities pragraming languages
   """
+  @spec seed_communities(atom()) :: T.domain_res(term())
   def seed_communities(type) when type in @community_types do
     Seeds.Communities.get(type) |> Enum.each(&seed_community(&1, type)) |> done
   end
@@ -44,10 +46,12 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
   @doc """
   seed community for home
   """
+  @spec seed_community(atom()) :: T.domain_res(term())
   def seed_community(:home), do: Domain.seed_community(:home)
   def seed_community(:feedback), do: Domain.seed_community(:feedback)
 
   # type: city, pl, framework, ...
+  @spec seed_community(atom(), atom()) :: T.domain_res(term())
   def seed_community(slug, type) when type in @community_types do
     with {:ok, threads} <- seed_threads(type),
          {:ok, bot} <- seed_bot(),
@@ -61,11 +65,12 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     end
   end
 
-  def seed_community(_slug, _type), do: "undown community type"
+  def seed_community(_slug, _type), do: {:error, {:custom, "unknown community type"}}
 
   @doc """
   set list of communities to a spec category
   """
+  @spec seed_set_category(list(), atom()) :: T.domain_res(term())
   def seed_set_category(communities_names, cat_name) when is_list(communities_names) do
     {:ok, category} = ORM.find_by(Category, %{slug: cat_name})
 
@@ -76,6 +81,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     end)
   end
 
+  @spec seed_articles(Community.t(), atom(), integer()) :: T.domain_res(term())
   def seed_articles(%Community{} = community, thread, count \\ 3)
       when thread in @article_threads do
     #
@@ -154,12 +160,14 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     #
   end
 
+  @spec clean_up_community(atom()) :: T.domain_res(term())
   def clean_up_community(slug) do
     with {:ok, community} <- ORM.findby_delete(Community, %{slug: to_string(slug)}) do
       clean_up_articles(community, :post)
     end
   end
 
+  @spec clean_up_articles(Community.t(), atom()) :: T.domain_res(term())
   def clean_up_articles(%Community{} = community, :post) do
     Post
     |> join(:inner, [p], c in assoc(p, :community))

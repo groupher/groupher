@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
 
   # import Helper.ErrorCode
   alias Helper.{ORM, Later, Transaction}
+  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
@@ -25,11 +26,13 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   @doc """
   get paged collected users
   """
+  @spec collected_users(term(), map()) :: T.domain_res(term())
   def collected_users(article, filter), do: load_reaction_users(ArticleCollect, article, filter)
 
   @doc """
   collect an article
   """
+  @spec collect_article(term(), User.t()) :: T.domain_res(term())
   def collect_article(article, %User{} = user) do
     {:ok, info} = match(article)
 
@@ -62,6 +65,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
   # 如果是同一篇文章，只创建一次，collect_article 不创建记录，只是后续设置不同的收藏夹即可
   # 如果是第一次收藏，那么才创建文章收藏记录
   # 避免因为同一篇文章在不同收藏夹内造成的统计和用户成就系统的混乱
+  @spec collect_article_ifneed(term(), User.t()) :: T.domain_res(term())
   def collect_article_ifneed(article, %User{} = user) do
     findby_args = collection_findby_args(article, user.id)
     already_collected = ORM.find_by(ArticleCollect, findby_args)
@@ -72,6 +76,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
     end
   end
 
+  @spec undo_collect_article(term(), User.t()) :: T.domain_res(term())
   def undo_collect_article(article, %User{} = user) do
     {:ok, info} = match(article)
 
@@ -99,6 +104,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
     end)
   end
 
+  @spec undo_collect_article_ifneed(term(), User.t()) :: T.domain_res(term())
   def undo_collect_article_ifneed(
         %{author: %Ecto.Association.NotLoaded{}} = article,
         %User{} = user
@@ -119,12 +125,14 @@ defmodule GroupherServer.CMS.Delegate.ArticleCollect do
     end
   end
 
+  @spec set_collect_folder(ArticleCollect.t(), term()) :: T.domain_res(term())
   def set_collect_folder(%ArticleCollect{} = collect, folder) do
     collect_folders = (collect.collect_folders ++ [folder]) |> Enum.uniq()
 
     ORM.update_embed(collect, :collect_folders, collect_folders)
   end
 
+  @spec undo_set_collect_folder(ArticleCollect.t(), term()) :: T.domain_res(term())
   def undo_set_collect_folder(%ArticleCollect{} = collect, folder) do
     collect_folders = Enum.reject(collect.collect_folders, &(&1.id == folder.id))
 
