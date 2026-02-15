@@ -42,11 +42,15 @@ defmodule GroupherServer.CMS.Articles.Placement do
     article = Repo.preload(article, :communities)
 
     with {:ok, thread} <- thread_of(article) do
+      communities =
+        (article.communities ++ [target_community])
+        |> Enum.uniq_by(& &1.id)
+
       Multi.new()
       |> Multi.run(:mirror_target_community, fn _, _ ->
         article
         |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_assoc(:communities, article.communities ++ [target_community])
+        |> Ecto.Changeset.put_assoc(:communities, communities)
         |> Repo.update()
       end)
       |> Multi.run(:set_target_tags, fn _, %{mirror_target_community: article} ->
@@ -91,7 +95,10 @@ defmodule GroupherServer.CMS.Articles.Placement do
 
       Multi.new()
       |> Multi.run(:move_article, fn _, _ ->
-        communities = (article.communities -- [original_community]) ++ [target_community]
+        communities =
+          (article.communities -- [original_community])
+          |> Kernel.++([target_community])
+          |> Enum.uniq_by(& &1.id)
         article_tags = tags_without_community(article, original_community)
 
         article
@@ -117,11 +124,15 @@ defmodule GroupherServer.CMS.Articles.Placement do
     article = Repo.preload(article, [:communities, :article_tags])
 
     with {:ok, thread} <- thread_of(article) do
+      communities =
+        (article.communities ++ [home_community])
+        |> Enum.uniq_by(& &1.id)
+
       Multi.new()
       |> Multi.run(:set_community, fn _, _ ->
         article
         |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_assoc(:communities, article.communities ++ [home_community])
+        |> Ecto.Changeset.put_assoc(:communities, communities)
         |> Repo.update()
       end)
       |> Multi.run(:set_target_tags, fn _, %{set_community: article} ->

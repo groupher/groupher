@@ -70,7 +70,6 @@ defmodule GroupherServer.CMS.Model.Post do
 
   # Accept:
   # - atom: :feature
-  # - string: "feature" / "FEATURE" / "reject_dup" / "REJECT_DUP"
   #
   # Reject any other value with a changeset error.
   defp normalize_enum(changeset, field, allowed_atoms) do
@@ -89,7 +88,6 @@ defmodule GroupherServer.CMS.Model.Post do
         end
 
       {:ok, _other} ->
-        # 这里直接拒绝字符串/数字等，逼所有调用方走 enum atom
         add_error(changeset, field, "invalid value")
     end
   end

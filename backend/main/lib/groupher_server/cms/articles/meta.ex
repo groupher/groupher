@@ -16,9 +16,8 @@ defmodule GroupherServer.CMS.Articles.Meta do
 
   @spec set_cat(Post.t(), term()) :: T.domain_res(term())
   def set_cat(%Post{} = post, cat) do
-    with {:ok, updated} <- ORM.update(post, %{cat: cat}) do
-      CommentCRUD.batch_update_question_flag(post, cat == @article_cat.question)
-
+    with {:ok, updated} <- ORM.update(post, %{cat: cat}),
+         {:ok, _} <- CommentCRUD.batch_update_question_flag(post, cat == @article_cat.question) do
       updated |> done
     end
   end

@@ -204,9 +204,8 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   @spec set_post_cat(Post.t(), term()) :: T.domain_res(term())
   def set_post_cat(%Post{} = post, cat) do
-    with {:ok, updated} <- ORM.update(post, %{cat: cat}) do
-      CommentCRUD.batch_update_question_flag(post, cat == @article_cat.question)
-
+    with {:ok, updated} <- ORM.update(post, %{cat: cat}),
+         {:ok, _} <- CommentCRUD.batch_update_question_flag(post, cat == @article_cat.question) do
       updated |> done
     end
   end
@@ -515,7 +514,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   """
   @spec undo_sink_article(term()) :: T.domain_res(term())
   def undo_sink_article(article) do
-    thread = thread_of(article)
+    {:ok, thread} = thread_of(article)
 
     with true <- in_active_period?(thread, article),
          {:ok, article} <- ORM.update_meta(article, %{is_sunk: false}) do
@@ -617,7 +616,10 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
           |> Enum.map(& &1.communities)
           |> Enum.at(0)
 
-        CommunityCRUD.update_community_count_field(communities, thread)
+        case communities do
+          nil -> {:ok, :pass}
+          _ -> CommunityCRUD.update_community_count_field(communities, thread)
+        end
       end)
       |> Repo.transaction()
       |> result()
@@ -846,7 +848,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     end
   end
 
-  defp add_digest_attrs(attrs), do: attrs
+  defp add_digest_attrs(attrs), do: done(attrs)
 
   defp normalize_article_enum_attrs(attrs) when is_map(attrs) do
     attrs

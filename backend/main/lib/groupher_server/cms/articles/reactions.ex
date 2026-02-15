@@ -62,8 +62,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
             article_user_emotion |> ORM.update(args)
 
           {:error, _} ->
-            args = target
-            ORM.create(ArticleUserEmotion, args)
+            {:ok, :pass}
         end
       end)
       |> Multi.run(:query_emotion_status, fn _, _ ->

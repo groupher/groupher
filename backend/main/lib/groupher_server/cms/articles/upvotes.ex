@@ -57,17 +57,33 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
 
     Transaction.locking(article, fn article ->
       Multi.new()
-      |> Multi.run(:update_upvotes_count, fn _, _ ->
-        ORM.dec(article, :upvotes_count)
-      end)
-      |> Multi.run(:update_reaction_user_list, fn _, %{update_upvotes_count: article} ->
-        update_article_reaction_user_list(:upvote, article, from_user, :remove)
-      end)
-      |> Multi.run(:undo_upvote, fn _, %{update_reaction_user_list: article} ->
+      |> Multi.run(:find_upvote, fn _, _ ->
         args = Map.put(%{user_id: user_id}, info.foreign_key, article.id)
 
-        ORM.findby_delete(ArticleUpvote, args)
-        article |> done
+        case ORM.find_by(ArticleUpvote, args) do
+          {:ok, record} -> {:ok, record}
+          {:error, _} -> {:ok, nil}
+        end
+      end)
+      |> Multi.run(:update_upvotes_count, fn _, %{find_upvote: record} ->
+        case record do
+          nil -> {:ok, article}
+          _ -> ORM.dec(article, :upvotes_count)
+        end
+      end)
+      |> Multi.run(:update_reaction_user_list, fn _, %{find_upvote: record} ->
+        case record do
+          nil -> {:ok, article}
+          _ -> update_article_reaction_user_list(:upvote, article, from_user, :remove)
+        end
+      end)
+      |> Multi.run(:undo_upvote, fn _, %{find_upvote: record} ->
+        case record do
+          nil -> {:ok, article}
+          _ ->
+            args = Map.put(%{user_id: user_id}, info.foreign_key, article.id)
+            ORM.findby_delete(ArticleUpvote, args)
+        end
       end)
       |> Multi.run(:after_hooks, fn _, _ ->
         Later.run({Hooks.Notify, :handle, [:undo, :upvote, article, from_user]})

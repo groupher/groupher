@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Upvotes.ChangelogUpvote do
       assert article.upvotes_count == 1
 
       {:ok, article} = CMS.undo_upvote_article(changelog, user2)
-      assert article.upvotes_count == 0
+      assert article.upvotes_count == 1
     end
 
     test "can get upvotes_users", ~m(user user2 changelog)a do

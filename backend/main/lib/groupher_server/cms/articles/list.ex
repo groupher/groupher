@@ -50,10 +50,12 @@ defmodule GroupherServer.CMS.Articles.List do
   @spec paged(atom(), map(), User.t()) :: T.domain_res(term())
   def paged(thread, filter, %User{} = user) do
     with {:ok, stateless_paged_articles} <- paged(thread, filter) do
-      stateless_paged_articles
-      |> mark_viewer_emotion_states(user)
-      |> mark_viewer_has_states(user)
-      |> done()
+      case stateless_paged_articles
+           |> mark_viewer_emotion_states(user)
+           |> mark_viewer_has_states(user) do
+        {:error, reason} -> {:error, reason}
+        articles -> done(articles)
+      end
     end
   end
 
@@ -114,7 +116,12 @@ defmodule GroupherServer.CMS.Articles.List do
       |> ORM.paginator(~m(page size)a)
       |> mark_viewer_emotion_states(user)
       |> mark_viewer_has_states(user)
-      |> done()
+      |> then(fn result ->
+        case result do
+          {:error, reason} -> {:error, reason}
+          articles -> done(articles)
+        end
+      end)
     end
   end
 
@@ -176,10 +183,6 @@ defmodule GroupherServer.CMS.Articles.List do
 
   defp citing_thread(cited) do
     @article_threads |> Enum.find(fn thread -> not is_nil(Map.get(cited, :"#{thread}_id")) end)
-  end
-
-  defp normalize_article_state(state) when is_atom(state) do
-    if Map.has_key?(@article_state, state), do: state
   end
 
   defp normalize_article_state(state) when is_binary(state) do

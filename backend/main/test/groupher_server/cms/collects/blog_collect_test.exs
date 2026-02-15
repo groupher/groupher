@@ -80,5 +80,15 @@ defmodule GroupherServer.Test.Collect.Blog do
       assert user.id not in blog.meta.collected_user_ids
       assert user2.id not in blog.meta.collected_user_ids
     end
+
+    test "undo collect without record is no-op", ~m(user blog)a do
+      {:ok, blog} = ORM.find(Blog, blog.id)
+      assert blog.collects_count == 0
+
+      {:ok, _} = CMS.undo_collect_article(blog, user)
+      {:ok, blog} = ORM.find(Blog, blog.id)
+
+      assert blog.collects_count == 0
+    end
   end
 end

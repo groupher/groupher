@@ -189,7 +189,7 @@ defmodule GroupherServer.CMS.Articles.Write do
     end
   end
 
-  defp add_digest_attrs(attrs), do: attrs
+  defp add_digest_attrs(attrs), do: done(attrs)
 
   defp normalize_article_enum_attrs(attrs) when is_map(attrs) do
     attrs

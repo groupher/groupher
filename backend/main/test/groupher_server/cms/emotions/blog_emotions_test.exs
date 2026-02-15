@@ -90,6 +90,16 @@ defmodule GroupherServer.Test.CMS.Emotions.BlogEmotions do
       assert not user_exist_in?(user2, emotions.latest_downvote_users)
     end
 
+    test "undo emotion without record is no-op", ~m(community blog_attrs user)a do
+      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
+
+      {:ok, _} = CMS.undo_emotion_to_article(blog, :downvote, user)
+      {:ok, %{emotions: emotions}} = ORM.find(Blog, blog.id)
+
+      assert emotions.downvote_count == 0
+      assert not user_exist_in?(user, emotions.latest_downvote_users)
+    end
+
     test "same user make same emotion to same blog.", ~m(community blog_attrs user)a do
       {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
 

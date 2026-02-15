@@ -69,19 +69,20 @@ defmodule GroupherServer.CMS.Articles.Collects do
 
     Transaction.locking(article, fn article ->
       Multi.new()
-      |> Multi.run(:dec_author_achieve, fn _, _ ->
-        Accounts.achieve(article.author.user, :dec, :collect)
+      |> Multi.run(:find_collect, fn _, _ ->
+        find_collect_record(info, article, user.id)
       end)
-      |> Multi.run(:inc_article_collects_count, fn _, _ ->
-        ORM.dec(article, :collects_count)
+      |> Multi.run(:dec_author_achieve, fn _, %{find_collect: record} ->
+        maybe_dec_author_achieve(record, article)
       end)
-      |> Multi.run(:update_article_reaction_user_list, fn _, _ ->
-        update_article_reaction_user_list(:collect, article, user, :remove)
+      |> Multi.run(:inc_article_collects_count, fn _, %{find_collect: record} ->
+        maybe_dec_collects_count(record, article)
       end)
-      |> Multi.run(:undo_collect, fn _, _ ->
-        args = Map.put(%{user_id: user.id}, info.foreign_key, article.id)
-
-        ORM.findby_delete(ArticleCollect, args)
+      |> Multi.run(:update_article_reaction_user_list, fn _, %{find_collect: record} ->
+        maybe_update_collect_user_list(record, article, user)
+      end)
+      |> Multi.run(:undo_collect, fn _, %{find_collect: record} ->
+        maybe_undo_collect(record, article, info, user.id)
       end)
       |> Multi.run(:after_hooks, fn _, _ ->
         Later.run({Hooks.Notify, :handle, [:undo, :collect, article, user]})
@@ -89,6 +90,37 @@ defmodule GroupherServer.CMS.Articles.Collects do
       |> Repo.transaction()
       |> result()
     end)
+  end
+
+  defp find_collect_record(info, article, user_id) do
+    args = Map.put(%{user_id: user_id}, info.foreign_key, article.id)
+
+    case ORM.find_by(ArticleCollect, args) do
+      {:ok, record} -> {:ok, record}
+      {:error, _} -> {:ok, nil}
+    end
+  end
+
+  defp maybe_dec_author_achieve(nil, _article), do: {:ok, :pass}
+
+  defp maybe_dec_author_achieve(_record, article) do
+    Accounts.achieve(article.author.user, :dec, :collect)
+  end
+
+  defp maybe_dec_collects_count(nil, article), do: {:ok, article}
+  defp maybe_dec_collects_count(_record, article), do: ORM.dec(article, :collects_count)
+
+  defp maybe_update_collect_user_list(nil, article, _user), do: {:ok, article}
+
+  defp maybe_update_collect_user_list(_record, article, user) do
+    update_article_reaction_user_list(:collect, article, user, :remove)
+  end
+
+  defp maybe_undo_collect(nil, article, _info, _user_id), do: {:ok, article}
+
+  defp maybe_undo_collect(_record, article, info, user_id) do
+    args = Map.put(%{user_id: user_id}, info.foreign_key, article.id)
+    ORM.findby_delete(ArticleCollect, args)
   end
 
   @spec undo_collect_ifneed(term(), User.t()) :: T.domain_res(term())
@@ -104,8 +136,8 @@ defmodule GroupherServer.CMS.Articles.Collects do
   def undo_collect_ifneed(article, %User{} = user) do
     findby_args = collection_findby_args(article, user.id)
 
-    with {:ok, article_collect} = ORM.find_by(ArticleCollect, findby_args) do
-      case article_collect.collect_folders |> length <= 1 do
+    with {:ok, article_collect} <- ORM.find_by(ArticleCollect, findby_args) do
+      case length(article_collect.collect_folders) <= 1 do
         true -> undo_collect(article, user)
         false -> {:ok, article_collect}
       end

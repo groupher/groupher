@@ -82,5 +82,15 @@ defmodule GroupherServer.Test.Collect.Changelog do
       assert user.id not in changelog.meta.collected_user_ids
       assert user2.id not in changelog.meta.collected_user_ids
     end
+
+    test "undo collect without record is no-op", ~m(user changelog)a do
+      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      assert changelog.collects_count == 0
+
+      {:ok, _} = CMS.undo_collect_article(changelog, user)
+      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+
+      assert changelog.collects_count == 0
+    end
   end
 end

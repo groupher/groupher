@@ -131,7 +131,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
   @spec undo_sink(term()) :: T.domain_res(term())
   def undo_sink(article) do
-    thread = thread_of(article)
+    {:ok, thread} = thread_of(article)
 
     with true <- in_active_period?(thread, article),
          {:ok, article} <- ORM.update_meta(article, %{is_sunk: false}) do
@@ -161,7 +161,10 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
           |> Enum.map(& &1.communities)
           |> Enum.at(0)
 
-        CommunityCRUD.update_community_count_field(communities, thread)
+        case communities do
+          nil -> {:ok, :pass}
+          _ -> CommunityCRUD.update_community_count_field(communities, thread)
+        end
       end)
       |> Repo.transaction()
       |> result()
