@@ -5,6 +5,7 @@ defmodule Helper.Types do
 
   alias GroupherServer.{Accounts}
   alias Accounts.Model.User
+  alias GroupherServer.CMS.Model.{Post, Changelog, Doc, Blog}
 
   @type error_reason :: atom()
   @type error_meta :: term()
@@ -54,6 +55,12 @@ defmodule Helper.Types do
           total_count: integer(),
           total_pages: integer()
         }
+
+  @type article ::
+          Post.t()
+          | Blog.t()
+          | Doc.t()
+          | Changelog.t()
 
   @type article_common :: %{
           id: integer(),

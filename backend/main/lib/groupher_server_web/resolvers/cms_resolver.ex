@@ -6,12 +6,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   alias GroupherServer.{Accounts, CMS}
 
-  alias Helper.{ORM, OgInfo, Constant}
+  alias Helper.{ORM, OgInfo}
   alias Accounts.Model.User
   alias CMS.Model.{Community, Category, Thread}
 
-  @article_cat Constant.CMS.article_cat()
-  @article_state Constant.CMS.article_state()
   # #######################
   # community ..
   # #######################
@@ -88,35 +86,35 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def read_article(_root, %{community: community, thread: thread, id: id}, %{
         context: %{cur_user: user}
       }) do
-    CMS.read_article(community, thread, id, user)
+    CMS.Articles.read(community, thread, id, user)
   end
 
   def read_article(_root, %{community: community, thread: thread, id: id}, _info) do
-    CMS.read_article(community, thread, id)
+    CMS.Articles.read(community, thread, id)
   end
 
   def set_post_cat(_root, %{article: article, cat: cat}, _info) do
-    CMS.set_post_cat(article, Map.get(@article_cat, cat))
+    CMS.Articles.set_cat(article, cat)
   end
 
   def set_post_state(_root, %{article: article, state: state}, _info) do
-    CMS.set_post_state(article, Map.get(@article_state, state))
+    CMS.Articles.set_state(article, state)
   end
 
   def paged_articles(_root, ~m(thread filter)a, %{context: %{cur_user: user}}) do
-    CMS.paged_articles(thread, filter, user)
+    CMS.Articles.paged(thread, filter, user)
   end
 
   def paged_articles(_root, ~m(thread filter)a, _info) do
-    CMS.paged_articles(thread, filter)
+    CMS.Articles.paged(thread, filter)
   end
 
   def grouped_kanban_posts(_root, %{community: community}, _info) do
-    CMS.grouped_kanban_posts(community)
+    CMS.Articles.grouped_kanban(community)
   end
 
   def paged_kanban_posts(_root, %{community: community, filter: filter}, _info) do
-    CMS.paged_kanban_posts(community, filter)
+    CMS.Articles.paged_kanban(community, filter)
   end
 
   def paged_reports(_root, ~m(filter)a, _) do
@@ -124,40 +122,41 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def create_article(_root, ~m(community thread)a = args, %{context: %{cur_user: user}}) do
-    CMS.create_article(community, thread, args, user)
+    CMS.Articles.create(community, thread, args, user)
   end
 
   def update_article(_root, %{article: article} = args, _info) do
-    CMS.update_article(article, args)
+    CMS.Articles.update(article, args)
   end
 
   def delete_article(_root, %{article: article}, _info) do
-    CMS.delete_article(article)
+    CMS.Articles.delete(article)
   end
 
   # #######################
   # article actions
   # #######################
-  def pin_article(_root, ~m(community article)a, _info), do: CMS.pin_article(community, article)
+  def pin_article(_root, ~m(community article)a, _info),
+    do: CMS.Articles.pin(community, article)
 
   def undo_pin_article(_root, ~m(community article)a, _info) do
-    CMS.undo_pin_article(community, article)
+    CMS.Articles.undo_pin(community, article)
   end
 
   def mark_delete_article(_root, ~m(article)a, _info) do
-    CMS.mark_delete_article(article)
+    CMS.Articles.mark_delete(article)
   end
 
   def batch_mark_delete_articles(_root, ~m(community thread ids)a, _info) do
-    CMS.batch_mark_delete_articles(community, thread, ids)
+    CMS.Articles.batch_mark_delete(community, thread, ids)
   end
 
   def batch_undo_mark_delete_articles(_root, ~m(community thread ids)a, _info) do
-    CMS.batch_undo_mark_delete_articles(community, thread, ids)
+    CMS.Articles.batch_undo_mark_delete(community, thread, ids)
   end
 
   def undo_mark_delete_article(_root, ~m(article)a, _info) do
-    CMS.undo_mark_delete_article(article)
+    CMS.Articles.undo_mark_delete(article)
   end
 
   def report_article(_root, ~m(article reason attr)a, %{context: %{cur_user: user}}) do
@@ -169,7 +168,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def paged_citing_contents(_root, ~m(content id filter)a, _info) do
-    CMS.paged_citing_contents(content, id, filter)
+    CMS.Articles.paged_citing_contents(content, id, filter)
   end
 
   # #######################
@@ -181,31 +180,31 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.undo_lock_article_comments(article)
   end
 
-  def sink_article(_root, ~m(article)a, _info), do: CMS.sink_article(article)
-  def undo_sink_article(_root, ~m(article)a, _info), do: CMS.undo_sink_article(article)
+  def sink_article(_root, ~m(article)a, _info), do: CMS.Articles.sink(article)
+  def undo_sink_article(_root, ~m(article)a, _info), do: CMS.Articles.undo_sink(article)
 
   def upvote_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.upvote_article(article, user)
+    CMS.Articles.upvote(article, user)
   end
 
   def undo_upvote_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.undo_upvote_article(article, user)
+    CMS.Articles.undo_upvote(article, user)
   end
 
   def upvoted_users(_root, ~m(article filter)a, _info) do
-    CMS.upvoted_users(article, filter)
+    CMS.Articles.upvoted_users(article, filter)
   end
 
   def collected_users(_root, ~m(article filter)a, _info) do
-    CMS.collected_users(article, filter)
+    CMS.Articles.collected_users(article, filter)
   end
 
   def emotion_to_article(_root, ~m(article emotion)a, %{context: %{cur_user: user}}) do
-    CMS.emotion_to_article(article, emotion, user)
+    CMS.Articles.emotion(article, emotion, user)
   end
 
   def undo_emotion_to_article(_root, ~m(article emotion)a, %{context: %{cur_user: user}}) do
-    CMS.undo_emotion_to_article(article, emotion, user)
+    CMS.Articles.undo_emotion(article, emotion, user)
   end
 
   # #######################
@@ -343,23 +342,23 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def paged_community_subscribers(_root, _args, _info), do: {:error, "invalid args"}
 
   def mirror_article(_root, ~m(target_community article article_tags)a, _info) do
-    CMS.mirror_article(target_community, article, article_tags)
+    CMS.Articles.mirror(target_community, article, article_tags)
   end
 
   def unmirror_article(_root, ~m(target_community article)a, _info) do
-    CMS.unmirror_article(target_community, article)
+    CMS.Articles.unmirror(target_community, article)
   end
 
   def move_article(_root, ~m(target_community article article_tags)a, _info) do
-    CMS.move_article(target_community, article, article_tags)
+    CMS.Articles.move(target_community, article, article_tags)
   end
 
   def mirror_to_home(_root, ~m(target_community article article_tags)a, _info) do
-    CMS.mirror_to_home(target_community, article, article_tags)
+    CMS.Articles.mirror_to_home(target_community, article, article_tags)
   end
 
   def move_to_blackhole(_root, ~m(target_community article article_tags)a, _info) do
-    CMS.move_to_blackhole(target_community, article, article_tags)
+    CMS.Articles.move_to_blackhole(target_community, article, article_tags)
   end
 
   # #######################

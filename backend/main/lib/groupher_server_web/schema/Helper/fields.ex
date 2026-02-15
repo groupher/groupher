@@ -204,8 +204,8 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     quote do
       field(:when, :when_enum)
       field(:article_tag, :string)
-      field(:cat, :string)
-      field(:state, :string)
+      field(:cat, :article_cat_enum)
+      field(:state, :article_state_enum)
       field(:order, :string)
       field(:article_tags, list_of(:string))
       field(:community, :string)
@@ -308,6 +308,21 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       Enum.reduce(unquote(Dashboard.macro_schema(section)), %{}, fn [k, _t, v], acc ->
         Map.put(acc, k, v)
       end)
+    end
+  end
+
+  defmacro enum_values(values_ast) do
+    expanded = Macro.expand(values_ast, __CALLER__)
+
+    if is_list(expanded) do
+      for v <- expanded do
+        quote do
+          value(unquote(v))
+        end
+      end
+    else
+      raise ArgumentError,
+            "enum_values/1 expects a compile-time list, got: #{Macro.to_string(expanded)}"
     end
   end
 end

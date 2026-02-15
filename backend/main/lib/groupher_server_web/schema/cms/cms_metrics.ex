@@ -3,9 +3,13 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   common metrics in queries
   """
   use Absinthe.Schema.Notation
+
   import GroupherServerWeb.Schema.Helper.Fields
 
   import Helper.Utils, only: [module_to_atom: 1]
+
+  alias GroupherServer.CMS.Helper.ArticleEnums
+  require ArticleEnums
 
   @doc """
   only used for reaction result, like: upvote/collect/watch ...
@@ -115,22 +119,11 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   end
 
   enum :article_cat_enum do
-    value(:feature)
-    value(:bug)
-    value(:question)
-    value(:other)
+    enum_values(ArticleEnums.cat())
   end
 
   enum :article_state_enum do
-    value(:todo)
-    value(:wip)
-    value(:done)
-    value(:resolved)
-    value(:reject)
-    value(:reject_dup)
-    value(:reject_no_plan)
-    value(:reject_repro)
-    value(:reject_stale)
+    enum_values(ArticleEnums.state())
   end
 
   @desc "the filter mode for list comments"
@@ -208,7 +201,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   @desc "kanban posts_filter doc"
   input_object :paged_kanban_posts_filter do
     pagination_args()
-    field(:state, :string)
+    field(:state, :article_state_enum)
   end
 
   @desc "changelogs_filter doc"

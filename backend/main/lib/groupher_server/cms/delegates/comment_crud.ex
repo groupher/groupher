@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   alias CMS.Delegate.Fetcher
 
   alias Accounts.Model.User
+  alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Post, Comment, PinnedComment, Embeds, Community}
 
   alias CMS.Delegate.Hooks
@@ -39,8 +40,8 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   @audit_illegal Constant.CMS.pending(:illegal)
   @audit_failed Constant.CMS.pending(:audit_failed)
 
-  @article_cat Constant.CMS.article_cat()
-  @article_state Constant.CMS.article_state()
+  @article_cat ArticleEnums.cat_values() |> Enum.into(%{}, &{&1, &1})
+  @article_state ArticleEnums.state_values() |> Enum.into(%{}, &{&1, &1})
 
   @spec comments_state(T.article_thread(), T.id()) :: T.domain_res(term())
   def comments_state(thread, article_id) do

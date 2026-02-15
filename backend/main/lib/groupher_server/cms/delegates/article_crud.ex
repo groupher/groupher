@@ -28,6 +28,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   alias GroupherServer.{Accounts, CMS, Email, Repo, Statistics}
 
   alias Accounts.Model.User
+  alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Author, Community, PinnedArticle, Embeds, Post}
 
   alias CMS.Delegate.{
@@ -53,8 +54,8 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @audit_illegal Constant.CMS.pending(:illegal)
   @audit_failed Constant.CMS.pending(:audit_failed)
 
-  @article_cat Constant.CMS.article_cat()
-  @article_state Constant.CMS.article_state()
+  @article_cat ArticleEnums.cat_values() |> Enum.into(%{}, &{&1, &1})
+  @article_state ArticleEnums.state_values() |> Enum.into(%{}, &{&1, &1})
 
   @doc """
   read articles for un-logged user
@@ -85,45 +86,12 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
         article
         |> Map.merge(viewer_has_states)
-        |> covert_cat_state_ifneed()
         |> done
       end)
       |> Repo.transaction()
       |> result()
     end
   end
-
-  def convert_paged_cat_state_if_need(%{entries: []} = paged_posts), do: paged_posts
-
-  def convert_paged_cat_state_if_need(%{entries: entries} = paged_posts) do
-    cooked_entries = Enum.map(entries, &covert_cat_state_ifneed/1)
-
-    paged_posts |> Map.merge(%{entries: cooked_entries})
-  end
-
-  defp covert_cat_state_ifneed(%Post{cat: cat, state: state} = article)
-       when is_nil(cat) and is_nil(state) do
-    article
-  end
-
-  defp covert_cat_state_ifneed(%Post{cat: cat, state: state} = article) when is_nil(state) do
-    cat_value = Constant.CMS.article_cat_value(cat)
-    article |> Map.merge(%{cat: cat_value})
-  end
-
-  defp covert_cat_state_ifneed(%Post{cat: cat, state: state} = article) when is_nil(cat) do
-    state_value = Constant.CMS.article_state_value(state)
-    article |> Map.merge(%{state: state_value})
-  end
-
-  defp covert_cat_state_ifneed(%Post{cat: cat, state: state} = article) do
-    cat_value = Constant.CMS.article_cat_value(cat)
-    state_value = Constant.CMS.article_state_value(state)
-
-    article |> Map.merge(%{cat: cat_value, state: state_value})
-  end
-
-  defp covert_cat_state_ifneed(article), do: article
 
   @doc """
   get paged articles
@@ -140,7 +108,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
       |> ORM.paginator(~m(page size)a)
       # |> ORM.cursor_paginator()
       |> add_pin_articles_ifneed(info.model, filter)
-      |> convert_paged_cat_state_if_need()
       |> done()
     end
   end
@@ -180,8 +147,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   @spec paged_kanban_posts(Community.t(), map()) :: T.domain_res(term())
   def paged_kanban_posts(%Community{} = community, %{state: state} = filter)
       when is_binary(state) do
-    state_key = state |> String.downcase() |> String.to_atom()
-    state = @article_state |> Map.get(state_key)
+    state = normalize_article_state(state) || :__invalid__
     filter = filter |> Map.merge(%{state: state})
 
     paged_kanban_posts(community, filter)
@@ -200,7 +166,6 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     Post
     |> QueryBuilder.filter_pack(Map.merge(filter, flags))
     |> ORM.paginator(~m(page size)a)
-    |> convert_paged_cat_state_if_need()
     |> done()
   end
 
@@ -242,15 +207,24 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     with {:ok, updated} <- ORM.update(post, %{cat: cat}) do
       CommentCRUD.batch_update_question_flag(post, cat == @article_cat.question)
 
-      updated |> covert_cat_state_ifneed |> done
+      updated |> done
     end
   end
 
   @spec set_post_state(Post.t(), term()) :: T.domain_res(term())
   def set_post_state(%Post{} = post, state) do
     with {:ok, updated} <- ORM.update(post, %{state: state}) do
-      updated |> covert_cat_state_ifneed |> done
+      updated |> done
     end
+  end
+
+  defp normalize_article_state(state) when is_atom(state) do
+    if Map.has_key?(@article_state, state), do: state
+  end
+
+  defp normalize_article_state(state) when is_binary(state) do
+    state = state |> String.downcase()
+    Map.keys(@article_state) |> Enum.find(fn value -> Atom.to_string(value) == state end)
   end
 
   @doc """
@@ -396,7 +370,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
 
   @spec create_article(Community.t(), atom(), map(), User.t()) :: T.domain_res(term())
   def create_article(%Community{} = community, thread, attrs, %User{} = user) do
-    attrs = atom_values_to_upcase(attrs)
+    attrs = attrs |> atom_values_to_upcase() |> normalize_article_enum_attrs()
 
     with {:ok, author} <- ensure_author_exists(user),
          {:ok, info} <- match(thread) do
@@ -477,7 +451,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
     do: raise_error(:archived, "article is archived, can not be edit or delete")
 
   def update_article(article, attrs) do
-    attrs = atom_values_to_upcase(attrs)
+    attrs = attrs |> atom_values_to_upcase() |> normalize_article_enum_attrs()
 
     Multi.new()
     |> Multi.run(:update_article, fn _, _ ->
@@ -873,6 +847,37 @@ defmodule GroupherServer.CMS.Delegate.ArticleCRUD do
   end
 
   defp add_digest_attrs(attrs), do: attrs
+
+  defp normalize_article_enum_attrs(attrs) when is_map(attrs) do
+    attrs
+    |> normalize_enum_attr(:cat, ArticleEnums.cat_values())
+    |> normalize_enum_attr(:state, ArticleEnums.state_values())
+  end
+
+  defp normalize_article_enum_attrs(attrs), do: attrs
+
+  defp normalize_enum_attr(attrs, key, allowed) do
+    case Map.get(attrs, key) do
+      nil ->
+        attrs
+
+      value when is_atom(value) ->
+        if value in allowed, do: Map.put(attrs, key, value), else: attrs
+
+      value when is_binary(value) ->
+        normalized = value |> String.downcase()
+        atom = Enum.find(allowed, fn v -> Atom.to_string(v) == normalized end)
+
+        if atom do
+          Map.put(attrs, key, atom)
+        else
+          attrs
+        end
+
+      _ ->
+        attrs
+    end
+  end
 
   defp update_viewed_user_list(%{meta: meta} = article, user_id) do
     user_not_viewed = not Enum.member?(meta.viewed_user_ids, user_id)
