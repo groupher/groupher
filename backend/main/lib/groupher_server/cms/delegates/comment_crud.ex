@@ -336,7 +336,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
       |> Multi.run(:update_article_active_timestamp, fn _, %{create_comment: comment} ->
         case comment.author_id == article.author.user.id do
           true -> {:ok, :pass}
-          false -> CMS.update_active_timestamp(thread, article)
+          false -> CMS.Articles.update_active_timestamp(thread, article)
         end
       end)
       |> Multi.run(:after_hooks, fn _, %{create_comment: comment} ->

@@ -77,16 +77,17 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
           _ -> update_article_reaction_user_list(:upvote, article, from_user, :remove)
         end
       end)
-      |> Multi.run(:undo_upvote, fn _, %{find_upvote: record} ->
+      |> Multi.run(:undo_upvote, fn _, %{find_upvote: record, update_reaction_user_list: updated} ->
         case record do
-          nil -> {:ok, article}
+          nil -> {:ok, updated}
           _ ->
             args = Map.put(%{user_id: user_id}, info.foreign_key, article.id)
             ORM.findby_delete(ArticleUpvote, args)
+            {:ok, updated}
         end
       end)
-      |> Multi.run(:after_hooks, fn _, _ ->
-        Later.run({Hooks.Notify, :handle, [:undo, :upvote, article, from_user]})
+      |> Multi.run(:after_hooks, fn _, %{undo_upvote: updated} ->
+        Later.run({Hooks.Notify, :handle, [:undo, :upvote, updated, from_user]})
       end)
       |> Repo.transaction()
       |> result()

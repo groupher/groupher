@@ -157,7 +157,7 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
                                                      add_article_collect: article_collect,
                                                      add_to_collect_folder: folder
                                                    } ->
-        CMS.set_collect_folder(article_collect, folder)
+        CMS.Articles.set_collect_folder(article_collect, folder)
       end)
       |> Repo.transaction()
       |> result()
@@ -187,7 +187,7 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
                                                        del_article_collect: article_collect,
                                                        rm_from_collect_folder: folder
                                                      } ->
-        CMS.undo_set_collect_folder(article_collect, folder)
+        CMS.Articles.undo_set_collect_folder(article_collect, folder)
       end)
       |> Repo.transaction()
       |> result()

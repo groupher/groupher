@@ -14,7 +14,9 @@ defmodule GroupherServer.Accounts.Delegate.Publish do
   get paged published contents of a user
   """
   def paged_published_articles(%User{id: user_id}, thread, filter) do
-    CMS.Articles.paged_published(thread, filter, user_id)
+    with {:ok, user} <- ORM.find(User, user_id) do
+      CMS.Articles.paged_published(thread, filter, user)
+    end
   end
 
   @doc """
@@ -23,7 +25,7 @@ defmodule GroupherServer.Accounts.Delegate.Publish do
   def update_published_states(%User{} = user, thread) do
     filter = %{page: 1, size: 1}
 
-    with {:ok, paged_articles} <- CMS.Articles.paged_published(thread, filter, user.id) do
+    with {:ok, paged_articles} <- CMS.Articles.paged_published(thread, filter, user) do
       ORM.update_meta(user, %{:"published_#{plural(thread)}_count" => paged_articles.total_count})
     end
   end

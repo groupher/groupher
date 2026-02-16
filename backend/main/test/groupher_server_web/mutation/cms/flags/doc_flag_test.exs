@@ -192,7 +192,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       passport_rules = %{community.slug => %{"doc.undo_pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      CMS.pin_article(community, doc)
+      CMS.Articles.pin(community, doc)
       updated = rule_conn |> gq_mutation(Schema.m(:undo_pin_article, :doc), variables)
 
       assert updated["innerId"] == to_string(doc.inner_id)
