@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
     {:ok, user2} = db_insert(:user)
 
     post_attrs = mock_attrs(:post, %{community_id: community.id, author: %{user: user}})
-    {:ok, post2} = CMS.create_article(community, :post, post_attrs, user)
+    {:ok, post2} = CMS.Articles.create(community, :post, post_attrs, user)
 
     {:ok, post3} = db_insert(:post)
     {:ok, post4} = db_insert(:post)
@@ -32,11 +32,11 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
         )
 
       post_attrs = post_attrs |> Map.merge(%{body: body})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       body = mock_rich_text(~s(the <a href=#{@site_host}/post/#{post3.id} />))
       post_attrs = post_attrs |> Map.merge(%{body: body})
-      {:ok, post_n} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post_n} = CMS.Articles.create(community, :post, post_attrs, user)
 
       Hooks.Cite.handle(post)
       Hooks.Cite.handle(post_n)
@@ -53,10 +53,10 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
     end
 
     test "cited post itself should not work", ~m(user community post_attrs)a do
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       body = mock_rich_text(~s(the <a href=#{@site_host}/post/#{post.id} />))
-      {:ok, post} = CMS.update_article(post, %{body: body})
+      {:ok, post} = CMS.Articles.update(post, %{body: body})
 
       Hooks.Cite.handle(post)
 
@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
 
       post_attrs = post_attrs |> Map.merge(%{body: body})
 
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       Hooks.Cite.handle(post)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -179,18 +179,18 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
         )
 
       post_attrs = post_attrs |> Map.merge(%{body: body})
-      {:ok, post_x} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post_x} = CMS.Articles.create(community, :post, post_attrs, user)
 
       Process.sleep(1000)
       body = mock_rich_text(~s(the <a href=#{@site_host}/post/#{post2.id} />))
       post_attrs = post_attrs |> Map.merge(%{body: body})
-      {:ok, post_y} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post_y} = CMS.Articles.create(community, :post, post_attrs, user)
 
       Hooks.Cite.handle(post_x)
       Hooks.Cite.handle(comment)
       Hooks.Cite.handle(post_y)
 
-      {:ok, result} = CMS.paged_citing_contents("POST", post2.id, %{page: 1, size: 10})
+      {:ok, result} = CMS.Articles.paged_citing_contents("POST", post2.id, %{page: 1, size: 10})
 
       entries = result.entries
 
@@ -225,18 +225,18 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
       body = mock_rich_text(~s(the <a href=#{@site_host}/post/#{post2.id} />))
 
       {:ok, post} =
-        CMS.create_article(community, :post, Map.merge(post_attrs, %{body: body}), user)
+        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
 
       Hooks.Cite.handle(post)
 
       Process.sleep(1000)
 
       {:ok, blog} =
-        CMS.create_article(community, :blog, Map.merge(blog_attrs, %{body: body}), user)
+        CMS.Articles.create(community, :blog, Map.merge(blog_attrs, %{body: body}), user)
 
       Hooks.Cite.handle(blog)
 
-      {:ok, result} = CMS.paged_citing_contents("POST", post2.id, %{page: 1, size: 10})
+      {:ok, result} = CMS.Articles.paged_citing_contents("POST", post2.id, %{page: 1, size: 10})
 
       assert result.total_count == 2
 

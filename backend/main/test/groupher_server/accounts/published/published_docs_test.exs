@@ -17,8 +17,8 @@ defmodule GroupherServer.Test.Accounts.Published.Doc do
   describe "[published docs]" do
     test "create doc should update user published meta", ~m(community user2)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
-      {:ok, _} = CMS.create_article(community, :doc, doc_attrs, user2)
-      {:ok, _} = CMS.create_article(community, :doc, doc_attrs, user2)
+      {:ok, _} = CMS.Articles.create(community, :doc, doc_attrs, user2)
+      {:ok, _} = CMS.Articles.create(community, :doc, doc_attrs, user2)
 
       {:ok, user} = ORM.find(User, user2.id)
       assert user.meta.published_docs_count == 2
@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.Accounts.Published.Doc do
       pub_docs =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
           doc_attrs = mock_attrs(:doc, %{community_id: community.id})
-          {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+          {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
           acc ++ [doc]
         end)
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.Accounts.Published.Doc do
       pub_docs2 =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
           doc_attrs = mock_attrs(:doc, %{community_id: community2.id})
-          {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+          {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
           acc ++ [doc]
         end)
@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.Accounts.Published.Doc do
       # unrelated other user
       Enum.reduce(1..5, [], fn _, acc ->
         doc_attrs = mock_attrs(:doc, %{community_id: community.id})
-        {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user2)
+        {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user2)
 
         acc ++ [doc]
       end)

@@ -31,17 +31,17 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
          ~m(guest_conn community_attrs user)a do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
-      {:ok, _} = CMS.create_article(community, :post, mock_attrs(:post), user)
-      {:ok, _} = CMS.create_article(community, :post, mock_attrs(:post), user)
+      {:ok, _} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
+      {:ok, _} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
 
-      {:ok, _} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
-      {:ok, _} = CMS.create_article(community, :changelog, mock_attrs(:changelog), user)
+      {:ok, _} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+      {:ok, _} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
 
-      {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
-      {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
-      {:ok, _} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
+      {:ok, _} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
+      {:ok, _} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
+      {:ok, _} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
 
-      {:ok, _} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
+      {:ok, _} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
 
       variables = %{slug: community.slug}
       results = guest_conn |> gq_query(@query, variables)

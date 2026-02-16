@@ -39,11 +39,11 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
       post_attrs = mock_attrs(:post)
       post_attrs2 = mock_attrs(:post)
 
-      {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, _} = CMS.create_article(community, :post, post_attrs2, user)
+      {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, _} = CMS.Articles.create(community, :post, post_attrs2, user)
 
-      {:ok, _} = CMS.create_article(community2, :post, post_attrs, user)
-      {:ok, _} = CMS.create_article(community3, :post, post_attrs, user)
+      {:ok, _} = CMS.Articles.create(community2, :post, post_attrs, user)
+      {:ok, _} = CMS.Articles.create(community3, :post, post_attrs, user)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.articles_count == 2
@@ -59,11 +59,11 @@ defmodule GroupherServer.Test.Community.CommunityMeta do
       changelog_attrs = mock_attrs(:changelog)
       changelog_attrs2 = mock_attrs(:changelog)
 
-      {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs2, user)
+      {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+      {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs2, user)
 
-      {:ok, _} = CMS.create_article(community2, :changelog, changelog_attrs, user)
-      {:ok, _} = CMS.create_article(community3, :changelog, changelog_attrs, user)
+      {:ok, _} = CMS.Articles.create(community2, :changelog, changelog_attrs, user)
+      {:ok, _} = CMS.Articles.create(community3, :changelog, changelog_attrs, user)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.articles_count == 2

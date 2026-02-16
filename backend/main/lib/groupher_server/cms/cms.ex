@@ -8,13 +8,7 @@ defmodule GroupherServer.CMS do
 
   alias Delegate.{
     AbuseReport,
-    ArticleCRUD,
-    ArticleCommunity,
-    ArticleEmotion,
-    CitedArtiment,
     CommentCRUD,
-    ArticleCollect,
-    ArticleUpvote,
     CommentAction,
     CommentEmotion,
     Fetcher,
@@ -85,81 +79,6 @@ defmodule GroupherServer.CMS do
   defdelegate subscribe_community(community, user), to: CommunityOperation
   defdelegate unsubscribe_community(community, user), to: CommunityOperation
   defdelegate subscribe_default_community_ifnot(user), to: CommunityOperation
-
-  # ArticleCRUD
-  defdelegate read_article(community_slug, thread, id), to: ArticleCRUD
-  defdelegate read_article(community_slug, thread, id, user), to: ArticleCRUD
-
-  defdelegate set_article_illegal(thread, id, attrs), to: ArticleCRUD
-  defdelegate set_article_illegal(article, attrs), to: ArticleCRUD
-  defdelegate unset_article_illegal(thread, id, attrs), to: ArticleCRUD
-  defdelegate unset_article_illegal(article, attrs), to: ArticleCRUD
-  defdelegate set_article_audit_failed(article, state), to: ArticleCRUD
-
-  defdelegate paged_articles(thread, filter), to: ArticleCRUD
-  defdelegate paged_articles(thread, filter, user), to: ArticleCRUD
-  defdelegate grouped_kanban_posts(community), to: ArticleCRUD
-  defdelegate paged_kanban_posts(community_slug, filter), to: ArticleCRUD
-
-  defdelegate paged_published_articles(thread, filter, user), to: ArticleCRUD
-  defdelegate paged_audit_failed_articles(thread, filter), to: ArticleCRUD
-
-  defdelegate create_article(community, thread, attrs, user), to: ArticleCRUD
-  defdelegate update_article(article, attrs), to: ArticleCRUD
-
-  defdelegate mark_delete_article(article), to: ArticleCRUD
-  defdelegate undo_mark_delete_article(article), to: ArticleCRUD
-  defdelegate delete_article(article), to: ArticleCRUD
-  defdelegate delete_article(article, reason), to: ArticleCRUD
-
-  defdelegate set_post_cat(post, cat), to: ArticleCRUD
-  defdelegate set_post_state(post, state), to: ArticleCRUD
-
-  defdelegate update_active_timestamp(thread, article), to: ArticleCRUD
-  defdelegate sink_article(article), to: ArticleCRUD
-  defdelegate undo_sink_article(article), to: ArticleCRUD
-
-  defdelegate archive_articles(thread), to: ArticleCRUD
-  defdelegate batch_mark_delete_articles(community, thread, id_list), to: ArticleCRUD
-  defdelegate batch_undo_mark_delete_articles(community, thread, id_list), to: ArticleCRUD
-
-  defdelegate paged_citing_contents(type, id, filter), to: CitedArtiment
-
-  defdelegate upvote_article(article, user), to: ArticleUpvote
-  defdelegate undo_upvote_article(article, user), to: ArticleUpvote
-
-  defdelegate upvoted_users(article, filter), to: ArticleUpvote
-
-  defdelegate collect_article(article, user), to: ArticleCollect
-  defdelegate collect_article_ifneed(article, user), to: ArticleCollect
-
-  defdelegate undo_collect_article(article, user), to: ArticleCollect
-  defdelegate undo_collect_article_ifneed(article, user), to: ArticleCollect
-  defdelegate collected_users(article, filter), to: ArticleCollect
-
-  defdelegate set_collect_folder(collect, folder), to: ArticleCollect
-  defdelegate undo_set_collect_folder(collect, folder), to: ArticleCollect
-
-  # ArticleCommunity
-  # >> set flag on article, like: pin / unpin article
-  defdelegate pin_article(community, article), to: ArticleCommunity
-  defdelegate undo_pin_article(community, article), to: ArticleCommunity
-
-  # >> community: set / unset
-  defdelegate mirror_article(target_community, article), to: ArticleCommunity
-  defdelegate mirror_article(target_community, article, article_ids), to: ArticleCommunity
-  defdelegate unmirror_article(target_community, article), to: ArticleCommunity
-  defdelegate move_article(target_community, article), to: ArticleCommunity
-  defdelegate move_article(target_community, article, article_ids), to: ArticleCommunity
-
-  defdelegate move_to_blackhole(target_community, article, article_ids), to: ArticleCommunity
-  defdelegate move_to_blackhole(target_community, article), to: ArticleCommunity
-
-  defdelegate mirror_to_home(target_community, article), to: ArticleCommunity
-  defdelegate mirror_to_home(target_community, article, article_ids), to: ArticleCommunity
-
-  defdelegate emotion_to_article(article, args, user), to: ArticleEmotion
-  defdelegate undo_emotion_to_article(article, args, user), to: ArticleEmotion
 
   # Comment CRUD
 

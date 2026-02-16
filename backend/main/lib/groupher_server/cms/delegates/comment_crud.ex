@@ -431,7 +431,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   def undo_mark_comment_solution(comment_id, user) do
     with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
          {:ok, post} <- Fetcher.fetch(Post, comment.post_id, preload: [author: :user]) do
-      CMS.set_post_state(post, @article_state.default)
+      CMS.Articles.set_state(post, @article_state.default)
 
       do_mark_comment_solution(post, comment, user, false)
     end
@@ -447,7 +447,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
         end)
         |> Multi.run(:update_post_state, fn _, _ ->
           ORM.update(post, %{solution_digest: comment.body_html})
-          CMS.set_post_state(post, @article_state.resolved)
+          CMS.Articles.set_state(post, @article_state.resolved)
         end)
         |> Multi.run(:sync_embed_replies, fn _, %{mark_solution: comment} ->
           sync_embed_replies(comment)

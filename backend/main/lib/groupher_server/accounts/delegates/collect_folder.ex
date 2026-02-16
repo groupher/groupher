@@ -145,7 +145,7 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
          true <- user.id == folder.user_id do
       Multi.new()
       |> Multi.run(:add_article_collect, fn _, _ ->
-        CMS.collect_article_ifneed(article, user)
+        CMS.Articles.collect_ifneed(article, user)
       end)
       |> Multi.run(:add_to_collect_folder, fn _, %{add_article_collect: article_collect} ->
         collects = [article_collect] ++ folder.collects
@@ -174,7 +174,7 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
          true <- user.id == folder.user_id do
       Multi.new()
       |> Multi.run(:del_article_collect, fn _, _ ->
-        CMS.undo_collect_article_ifneed(article, user)
+        CMS.Articles.undo_collect_ifneed(article, user)
       end)
       |> Multi.run(:rm_from_collect_folder, fn _, %{del_article_collect: article_collect} ->
         # 不能用 -- 语法，因为两个结构体的 meta 信息不同，摔。

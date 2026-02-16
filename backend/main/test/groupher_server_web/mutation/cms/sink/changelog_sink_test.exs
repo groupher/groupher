@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
       passport_rules = %{community.slug => %{"changelog.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      {:ok, _} = CMS.sink_article(changelog)
+      {:ok, _} = CMS.Articles.sink(changelog)
 
       updated = rule_conn |> gq_mutation(Schema.m(:undo_sink_article, :changelog), variables)
 

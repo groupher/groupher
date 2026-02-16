@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.CMS.ArticleTag.DocTag do
       doc_with_tags =
         Map.merge(doc_attrs, %{article_tags: [article_tag.id, article_tag2.id]})
 
-      {:ok, created} = CMS.create_article(community, :doc, doc_with_tags, user)
+      {:ok, created} = CMS.Articles.create(community, :doc, doc_with_tags, user)
       {:ok, doc} = ORM.find(Doc, created.id, preload: :article_tags)
 
       assert exist_in?(article_tag, doc.article_tags)
@@ -114,7 +114,7 @@ defmodule GroupherServer.Test.CMS.ArticleTag.DocTag do
       doc_with_tags =
         Map.merge(doc_attrs, %{article_tags: [article_tag.id, article_tag2.id]})
 
-      {:error, reason} = CMS.create_article(community, :doc, doc_with_tags, user)
+      {:error, reason} = CMS.Articles.create(community, :doc, doc_with_tags, user)
       is_error?(reason, :invalid_domain_tag)
     end
   end

@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.Helper.ORM do
   describe "inc/dec" do
     test "inc/dec should work", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, _} = ORM.inc(post, :upvotes_count)
       {:ok, ret} = ORM.inc(post, :upvotes_count)
@@ -145,7 +145,7 @@ defmodule GroupherServer.Test.Helper.ORM do
 
     test "dec should below 0", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, ret} = ORM.inc(post, :upvotes_count)
       assert ret.upvotes_count == 1
@@ -184,7 +184,7 @@ defmodule GroupherServer.Test.Helper.ORM do
 
     test "update meta should work with post", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, ret} =
         ORM.update_meta(post, %{
@@ -206,7 +206,7 @@ defmodule GroupherServer.Test.Helper.ORM do
 
     test "update meta should effect inserted_at", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, ret} =
         ORM.update_meta(post, %{
@@ -225,7 +225,7 @@ defmodule GroupherServer.Test.Helper.ORM do
 
     test "update meta should work with edge cases", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, ret} =
         ORM.update_meta(post, %{

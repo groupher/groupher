@@ -240,4 +240,6 @@ defmodule GroupherServer.Test.AssertHelper do
       login == Map.get(u, :login, Map.get(u, "login"))
     end)
   end
+
+  def user_exist_in?(_user, _list), do: false
 end

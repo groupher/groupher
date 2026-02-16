@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Delegate.ArticleTag do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1, atom_values_to_upcase: 1]
 
-  import GroupherServer.CMS.Delegate.ArticleCRUD,
+  import GroupherServer.CMS.Articles.Write,
     only: [ensure_author_exists: 1]
 
   import ShortMaps

@@ -18,8 +18,8 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Posts do
     test "can get published posts", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
 
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, post2} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, post2} = CMS.Articles.create(community, :post, post_attrs, user)
 
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(Schema.q(:paged_published_articles, :post), variables)

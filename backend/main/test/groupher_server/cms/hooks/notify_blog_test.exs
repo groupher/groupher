@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
     test "upvote hook should work on blog", ~m(user2 blog)a do
       {:ok, blog} = preload_author(blog)
 
-      {:ok, article} = CMS.upvote_article(blog, user2)
+      {:ok, article} = CMS.Articles.upvote(blog, user2)
       Hooks.Notify.handle(:upvote, article, user2)
 
       {:ok, notifications} =
@@ -62,10 +62,10 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
     test "undo upvote hook should work on blog", ~m(user2 blog)a do
       {:ok, blog} = preload_author(blog)
 
-      {:ok, article} = CMS.upvote_article(blog, user2)
+      {:ok, article} = CMS.Articles.upvote(blog, user2)
       Hooks.Notify.handle(:upvote, article, user2)
 
-      {:ok, article} = CMS.undo_upvote_article(blog, user2)
+      {:ok, article} = CMS.Articles.undo_upvote(blog, user2)
       Hooks.Notify.handle(:undo, :upvote, article, user2)
 
       {:ok, notifications} =
@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
     test "collect hook should work on blog", ~m(user2 blog)a do
       {:ok, blog} = preload_author(blog)
 
-      {:ok, _} = CMS.collect_article(blog, user2)
+      {:ok, _} = CMS.Articles.collect(blog, user2)
       Hooks.Notify.handle(:collect, blog, user2)
 
       {:ok, notifications} =
@@ -113,10 +113,10 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyBlog do
     test "undo collect hook should work on blog", ~m(user2 blog)a do
       {:ok, blog} = preload_author(blog)
 
-      {:ok, _} = CMS.upvote_article(blog, user2)
+      {:ok, _} = CMS.Articles.upvote(blog, user2)
       Hooks.Notify.handle(:collect, blog, user2)
 
-      {:ok, _} = CMS.undo_upvote_article(blog, user2)
+      {:ok, _} = CMS.Articles.undo_upvote(blog, user2)
       Hooks.Notify.handle(:undo, :collect, blog, user2)
 
       {:ok, notifications} =

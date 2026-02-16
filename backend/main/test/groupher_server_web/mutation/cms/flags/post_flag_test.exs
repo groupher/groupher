@@ -6,8 +6,8 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
   setup do
     {community, post, _, user} = mock_article(:post)
 
-    {:ok, post2} = CMS.create_article(community, :post, mock_attrs(:post), user)
-    {:ok, post3} = CMS.create_article(community, :post, mock_attrs(:post), user)
+    {:ok, post2} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
+    {:ok, post3} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     test "mark delete post should update post's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
-      {:ok, post} = CMS.create_article(community, :post, mock_attrs(:post), user)
+      {:ok, post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.posts_count == 1
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     test "auth user can undo markDelete post", ~m(community post)a do
       variables = %{id: post.inner_id, community: community.slug}
 
-      {:ok, _} = CMS.mark_delete_article(post)
+      {:ok, _} = CMS.Articles.mark_delete(post)
 
       passport_rules = %{"post.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -78,9 +78,9 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     test "undo mark delete post should update post's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
-      {:ok, post} = CMS.create_article(community, :post, mock_attrs(:post), user)
+      {:ok, post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
 
-      {:ok, _} = CMS.mark_delete_article(post)
+      {:ok, _} = CMS.Articles.mark_delete(post)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.posts_count == 0
@@ -130,7 +130,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
 
     test "auth user can batch undo mark delete posts",
          ~m(community post post2 post3)a do
-      CMS.batch_mark_delete_articles(community.slug, :post, [
+      CMS.Articles.batch_mark_delete(community.slug, :post, [
         post.inner_id,
         post2.inner_id
       ])

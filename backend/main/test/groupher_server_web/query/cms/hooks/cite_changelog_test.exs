@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Query.Hooks.ChangelogCiting do
     """
     test "should get paged cittings", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog2} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       body = mock_comment(~s(the <a href=#{@site_host}/changelog/#{changelog2.id} />))
       {:ok, comment} = CMS.create_comment(community, :changelog, changelog2.inner_id, body, user)
@@ -50,11 +50,11 @@ defmodule GroupherServer.Test.Query.Hooks.ChangelogCiting do
         )
 
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
-      {:ok, changelog_x} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog_x} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       body = mock_rich_text(~s(the <a href=#{@site_host}/changelog/#{changelog2.id} />))
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
-      {:ok, changelog_y} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog_y} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       Hooks.Cite.handle(changelog_x)
       Hooks.Cite.handle(comment)

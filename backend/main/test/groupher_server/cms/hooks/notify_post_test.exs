@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
     test "upvote hook should work on post", ~m(user2 post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, article} = CMS.upvote_article(post, user2)
+      {:ok, article} = CMS.Articles.upvote(post, user2)
       Hooks.Notify.handle(:upvote, article, user2)
 
       {:ok, notifications} = Delivery.fetch(:notification, post.author.user, %{page: 1, size: 20})
@@ -59,10 +59,10 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
     test "undo upvote hook should work on post", ~m(user2 post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, article} = CMS.upvote_article(post, user2)
+      {:ok, article} = CMS.Articles.upvote(post, user2)
       Hooks.Notify.handle(:upvote, article, user2)
 
-      {:ok, article} = CMS.undo_upvote_article(post, user2)
+      {:ok, article} = CMS.Articles.undo_upvote(post, user2)
       Hooks.Notify.handle(:undo, :upvote, article, user2)
 
       {:ok, notifications} = Delivery.fetch(:notification, post.author.user, %{page: 1, size: 20})
@@ -90,7 +90,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
     test "collect hook should work on post", ~m(user2 post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, _} = CMS.collect_article(post, user2)
+      {:ok, _} = CMS.Articles.collect(post, user2)
       Hooks.Notify.handle(:collect, post, user2)
 
       {:ok, notifications} = Delivery.fetch(:notification, post.author.user, %{page: 1, size: 20})
@@ -108,10 +108,10 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
     test "undo collect hook should work on post", ~m(user2 post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, _} = CMS.upvote_article(post, user2)
+      {:ok, _} = CMS.Articles.upvote(post, user2)
       Hooks.Notify.handle(:collect, post, user2)
 
-      {:ok, _} = CMS.undo_upvote_article(post, user2)
+      {:ok, _} = CMS.Articles.undo_upvote(post, user2)
       Hooks.Notify.handle(:undo, :collect, post, user2)
 
       {:ok, notifications} = Delivery.fetch(:notification, post.author.user, %{page: 1, size: 20})

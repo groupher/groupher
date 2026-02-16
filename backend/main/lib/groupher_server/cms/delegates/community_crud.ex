@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
 
   import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2, plural: 1]
 
-  import GroupherServer.CMS.Delegate.ArticleCRUD, only: [ensure_author_exists: 1]
+import GroupherServer.CMS.Articles.Write, only: [ensure_author_exists: 1]
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
 

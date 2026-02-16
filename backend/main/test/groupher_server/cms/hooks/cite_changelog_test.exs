@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
     {:ok, user2} = db_insert(:user)
 
     changelog_attrs = mock_attrs(:changelog, %{community_id: community.id, author: %{user: user}})
-    {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
+    {:ok, changelog2} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
     {:ok, changelog3} = db_insert(:changelog)
     {:ok, changelog4} = db_insert(:changelog)
@@ -34,11 +34,11 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
         )
 
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       body = mock_rich_text(~s(the <a href=#{@site_host}/changelog/#{changelog3.id} />))
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
-      {:ok, changelog_n} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog_n} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       Hooks.Cite.handle(changelog)
       Hooks.Cite.handle(changelog_n)
@@ -55,10 +55,10 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
     end
 
     test "cited changelog itself should not work", ~m(user community changelog_attrs)a do
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       body = mock_rich_text(~s(the <a href=#{@site_host}/changelog/#{changelog.id} />))
-      {:ok, changelog} = CMS.update_article(changelog, %{body: body})
+      {:ok, changelog} = CMS.Articles.update(changelog, %{body: body})
 
       Hooks.Cite.handle(changelog)
 
@@ -108,7 +108,7 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
 
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
 
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
       Hooks.Cite.handle(changelog)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -203,18 +203,18 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
         )
 
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
-      {:ok, changelog_x} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog_x} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       Process.sleep(1000)
       body = mock_rich_text(~s(the <a href=#{@site_host}/changelog/#{changelog2.id} />))
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
-      {:ok, changelog_y} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog_y} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       Hooks.Cite.handle(changelog_x)
       Hooks.Cite.handle(comment)
       Hooks.Cite.handle(changelog_y)
 
-      {:ok, result} = CMS.paged_citing_contents("CHANGELOG", changelog2.id, %{page: 1, size: 10})
+      {:ok, result} = CMS.Articles.paged_citing_contents("CHANGELOG", changelog2.id, %{page: 1, size: 10})
 
       entries = result.entries
 
@@ -249,18 +249,18 @@ defmodule GroupherServer.Test.CMS.Hooks.CiteChangelog do
       body = mock_rich_text(~s(the <a href=#{@site_host}/changelog/#{changelog2.id} />))
 
       {:ok, changelog} =
-        CMS.create_article(community, :changelog, Map.merge(changelog_attrs, %{body: body}), user)
+        CMS.Articles.create(community, :changelog, Map.merge(changelog_attrs, %{body: body}), user)
 
       Hooks.Cite.handle(changelog)
 
       Process.sleep(1000)
 
       {:ok, blog} =
-        CMS.create_article(community, :blog, Map.merge(blog_attrs, %{body: body}), user)
+        CMS.Articles.create(community, :blog, Map.merge(blog_attrs, %{body: body}), user)
 
       Hooks.Cite.handle(blog)
 
-      {:ok, result} = CMS.paged_citing_contents("CHANGELOG", changelog2.id, %{page: 1, size: 10})
+      {:ok, result} = CMS.Articles.paged_citing_contents("CHANGELOG", changelog2.id, %{page: 1, size: 10})
 
       assert result.total_count == 2
 

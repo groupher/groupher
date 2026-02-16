@@ -18,8 +18,8 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Blogs do
     test "can get published blogs", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
 
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
-      {:ok, blog2} = CMS.create_article(community, :blog, blog_attrs, user)
+      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+      {:ok, blog2} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(Schema.q(:paged_published_articles, :blog), variables)

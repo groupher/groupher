@@ -18,8 +18,8 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Docs do
     test "can get published docs", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
-      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      {:ok, doc2} = CMS.create_article(community, :doc, doc_attrs, user)
+      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+      {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(Schema.q(:paged_published_articles, :doc), variables)

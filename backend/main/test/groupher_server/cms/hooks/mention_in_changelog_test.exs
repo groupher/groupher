@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInChangelog do
         )
 
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
       {:ok, changelog} = preload_author(changelog)
 
       {:ok, _} = Hooks.Mention.handle(changelog)
@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInChangelog do
          ~m(community user changelog_attrs)a do
       body = mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
       assert result.total_count == 0

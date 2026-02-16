@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedBlogs do
       {:ok, user} = db_insert(:user)
 
       Enum.each(blogs, fn blog ->
-        {:ok, _} = CMS.upvote_article(blog, user)
+        {:ok, _} = CMS.Articles.upvote(blog, user)
       end)
 
       variables = %{
@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotedBlogs do
       {:ok, user} = db_insert(:user)
 
       Enum.each(blogs, fn blog ->
-        {:ok, _} = CMS.upvote_article(blog, user)
+        {:ok, _} = CMS.Articles.upvote(blog, user)
       end)
 
       variables = %{

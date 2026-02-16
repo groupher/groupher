@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInBlog do
         )
 
       blog_attrs = blog_attrs |> Map.merge(%{body: body})
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
+      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
       {:ok, blog} = preload_author(blog)
 
       {:ok, _} = Hooks.Mention.handle(blog)
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInBlog do
          ~m(community user blog_attrs)a do
       body = mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))
       blog_attrs = blog_attrs |> Map.merge(%{body: body})
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
+      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
       assert result.total_count == 0

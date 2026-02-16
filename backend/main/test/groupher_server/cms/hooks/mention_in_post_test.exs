@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInPost do
         )
 
       post_attrs = post_attrs |> Map.merge(%{body: body})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, post} = preload_author(post)
 
       {:ok, _} = Hooks.Mention.handle(post)
@@ -74,7 +74,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInPost do
     test "can not mention author self in post or comment", ~m(community user post_attrs)a do
       body = mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))
       post_attrs = post_attrs |> Map.merge(%{body: body})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
       assert result.total_count == 0

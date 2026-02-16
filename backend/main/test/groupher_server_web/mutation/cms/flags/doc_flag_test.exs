@@ -6,8 +6,8 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
   setup do
     {community, doc, _, user} = mock_article(:doc)
 
-    {:ok, doc2} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
-    {:ok, doc3} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
+    {:ok, doc2} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
+    {:ok, doc3} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
     test "mark delete doc should update doc's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
-      {:ok, doc} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
+      {:ok, doc} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.docs_count == 1
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
     test "auth user can undo markDelete doc", ~m(community doc)a do
       variables = %{id: doc.inner_id, community: community.slug}
 
-      {:ok, _} = CMS.mark_delete_article(doc)
+      {:ok, _} = CMS.Articles.mark_delete(doc)
 
       passport_rules = %{"doc.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -78,9 +78,9 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
     test "undo mark delete doc should update doc's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
-      {:ok, doc} = CMS.create_article(community, :doc, mock_attrs(:doc), user)
+      {:ok, doc} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
 
-      {:ok, _} = CMS.mark_delete_article(doc)
+      {:ok, _} = CMS.Articles.mark_delete(doc)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.docs_count == 0
@@ -130,7 +130,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
 
     test "auth user can batch undo mark delete docs",
          ~m(community doc doc2 doc3)a do
-      CMS.batch_mark_delete_articles(community.slug, :doc, [
+      CMS.Articles.batch_mark_delete(community.slug, :doc, [
         doc.inner_id,
         doc2.inner_id
       ])

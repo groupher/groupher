@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Query.Hooks.BlogCiting do
     """
     test "should get paged cittings", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-      {:ok, blog2} = CMS.create_article(community, :blog, blog_attrs, user)
+      {:ok, blog2} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       body = mock_comment(~s(the <a href=#{@site_host}/blog/#{blog2.id} />))
       {:ok, comment} = CMS.create_comment(community, :blog, blog2.inner_id, body, user)
@@ -50,11 +50,11 @@ defmodule GroupherServer.Test.Query.Hooks.BlogCiting do
         )
 
       blog_attrs = blog_attrs |> Map.merge(%{body: body})
-      {:ok, blog_x} = CMS.create_article(community, :blog, blog_attrs, user)
+      {:ok, blog_x} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       body = mock_rich_text(~s(the <a href=#{@site_host}/blog/#{blog2.id} />))
       blog_attrs = blog_attrs |> Map.merge(%{body: body})
-      {:ok, blog_y} = CMS.create_article(community, :blog, blog_attrs, user)
+      {:ok, blog_y} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       Hooks.Cite.handle(blog_x)
       Hooks.Cite.handle(comment)
