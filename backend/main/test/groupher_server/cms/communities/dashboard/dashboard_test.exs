@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Community.CommunityDashboard do
+defmodule GroupherServer.Test.CMS.Communities.Dashboard do
   @moduledoc false
 
   use GroupherServer.TestTools
