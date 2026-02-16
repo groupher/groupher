@@ -154,13 +154,15 @@ defmodule GroupherServer.CMS.Articles.Write do
          %Author{id: author_id},
          %Community{} = community
        ) do
-    %{id: community_id, meta: community_meta, slug: community_slug} = community
     threads_name = model |> module_to_atom |> plural
-    inner_id = community_meta |> Map.get(:"#{threads_name}_inner_id_index")
 
-    meta = @default_article_meta |> Map.merge(%{thread: module_to_upcase(model)})
+    with {:ok, community} <- ORM.fill_meta(community),
+         {:ok, attrs} <- add_digest_attrs(attrs) do
+      %{id: community_id, meta: community_meta, slug: community_slug} = community
+      inner_id = community_meta |> Map.get(:"#{threads_name}_inner_id_index")
 
-    with {:ok, attrs} <- add_digest_attrs(attrs) do
+      meta = @default_article_meta |> Map.merge(%{thread: module_to_upcase(model)})
+
       model.__struct__
       |> model.changeset(attrs |> Map.merge(%{inner_id: inner_id + 1}))
       |> Ecto.Changeset.put_change(:emotions, @default_emotions)
