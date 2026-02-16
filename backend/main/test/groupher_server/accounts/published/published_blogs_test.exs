@@ -9,7 +9,8 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
     {community, blog, _, user} = mock_article(:blog)
 
     {:ok, user2} = db_insert(:user)
-    {:ok, community2} = db_insert(:community)
+    community2_attrs = mock_attrs(:community, %{slug: "community_2"})
+    {:ok, community2} = CMS.create_community(community2_attrs, user)
 
     {:ok, ~m(user user2 blog community community2)a}
   end
