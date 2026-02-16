@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
     end
 
     test "login user can undo upvote to a post", ~m(user_conn community post user)a do
-      {:ok, _} = CMS.upvote_article(post, user)
+      {:ok, _} = CMS.Articles.upvote(post, user)
 
       variables = %{id: post.inner_id, community: community.slug}
 

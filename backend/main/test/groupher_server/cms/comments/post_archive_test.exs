@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
 
   describe "[cms comment archive]" do
     test "can archive comments", ~m(comment_long_ago)a do
-      {:ok, _} = CMS.archive_articles(:comment)
+      {:ok, _} = CMS.archive_comments()
 
       archived_comments =
         Comment
@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
     end
 
     test "can not edit archived comment" do
-      {:ok, _} = CMS.archive_articles(:comment)
+      {:ok, _} = CMS.archive_comments()
 
       archived_comments =
         Comment
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
     end
 
     test "can not delete archived comment" do
-      {:ok, _} = CMS.archive_articles(:comment)
+      {:ok, _} = CMS.archive_comments()
 
       archived_comments =
         Comment

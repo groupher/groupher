@@ -6,9 +6,10 @@ defmodule Helper.QueryBuilder do
   import Ecto.Query, warn: false
 
   alias Helper.Constant
+  alias GroupherServer.CMS.Helper.ArticleEnums
 
-  @article_cat Constant.CMS.article_cat()
-  @article_state Constant.CMS.article_state()
+  @article_cat ArticleEnums.cat_values()
+  @article_state ArticleEnums.state_values()
 
   @audit_illegal Constant.CMS.pending(:illegal)
   @audit_failed Constant.CMS.pending(:audit_failed)
@@ -251,34 +252,33 @@ defmodule Helper.QueryBuilder do
     |> order_by([_, s], {^direction, fragment("count(?)", s.id)})
   end
 
-  defp trans_article_cat(queryable, cat) when is_integer(cat) do
-    queryable |> where([p], p.cat == ^cat)
+  defp trans_article_cat(queryable, cat) when is_atom(cat) do
+    case cat in @article_cat do
+      true -> queryable |> where([p], p.cat == ^cat)
+      false -> queryable |> where([p], p.id == -1)
+    end
   end
 
   defp trans_article_cat(queryable, cat) when is_binary(cat) do
-    cat_key = cat |> String.downcase() |> String.to_atom()
-    cat_value = @article_cat |> Map.get(cat_key)
-
-    case cat_value do
-      ## -1 means not exist
-      nil -> queryable |> where([p], p.cat == -1)
-      _ -> queryable |> where([p], p.cat == ^cat_value)
-    end
+    cat_value = find_article_enum(@article_cat, cat)
+    trans_article_cat(queryable, cat_value || :__invalid__)
   end
 
-  defp trans_article_state(queryable, state) when is_integer(state) do
-    queryable |> where([p], p.state == ^state)
+  defp trans_article_state(queryable, state) when is_atom(state) do
+    case state in @article_state do
+      true -> queryable |> where([p], p.state == ^state)
+      false -> queryable |> where([p], p.id == -1)
+    end
   end
 
   defp trans_article_state(queryable, state) when is_binary(state) do
-    state_key = state |> String.downcase() |> String.to_atom()
-    state_value = @article_state |> Map.get(state_key)
+    state_value = find_article_enum(@article_state, state)
+    trans_article_state(queryable, state_value || :__invalid__)
+  end
 
-    case state_value do
-      ## -1 means not exist
-      nil -> queryable |> where([p], p.state == -1)
-      _ -> queryable |> where([p], p.state == ^state_value)
-    end
+  defp find_article_enum(values, input) do
+    input = input |> String.downcase()
+    Enum.find(values, fn value -> Atom.to_string(value) == input end)
   end
 
   defp trans_articles_order(queryable, "upvotes") do

@@ -17,8 +17,8 @@ defmodule GroupherServer.Test.Accounts.Published.Changelog do
   describe "[published changelogs]" do
     test "create changelog should update user published meta", ~m(community user2)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user2)
-      {:ok, _} = CMS.create_article(community, :changelog, changelog_attrs, user2)
+      {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs, user2)
+      {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs, user2)
 
       {:ok, user} = ORM.find(User, user2.id)
       assert user.meta.published_changelogs_count == 2
@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.Accounts.Published.Changelog do
       pub_changelogs =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
           changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-          {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+          {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
           acc ++ [changelog]
         end)
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Accounts.Published.Changelog do
       pub_changelogs2 =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
           changelog_attrs = mock_attrs(:changelog, %{community_id: community2.id})
-          {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+          {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
           acc ++ [changelog]
         end)
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.Accounts.Published.Changelog do
       # unrelated other user
       Enum.reduce(1..5, [], fn _, acc ->
         changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-        {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user2)
+        {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user2)
 
         acc ++ [changelog]
       end)

@@ -139,7 +139,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
   @doc """
   for GroupherServer.CMS.[Article]
-  aritlce's upvote and collect feature
+  article's upvote and collect feature
 
   MIGRATION:
   should do migration to DB manually:

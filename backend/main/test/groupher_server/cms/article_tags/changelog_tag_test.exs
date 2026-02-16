@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
       changelog_with_tags =
         Map.merge(changelog_attrs, %{article_tags: [article_tag.id, article_tag2.id]})
 
-      {:ok, created} = CMS.create_article(community, :changelog, changelog_with_tags, user)
+      {:ok, created} = CMS.Articles.create(community, :changelog, changelog_with_tags, user)
       {:ok, changelog} = ORM.find(Changelog, created.id, preload: :article_tags)
 
       assert exist_in?(article_tag, changelog.article_tags)
@@ -114,7 +114,7 @@ defmodule GroupherServer.Test.CMS.ArticleTag.ChangelogTag do
       changelog_with_tags =
         Map.merge(changelog_attrs, %{article_tags: [article_tag.id, article_tag2.id]})
 
-      {:error, reason} = CMS.create_article(community, :changelog, changelog_with_tags, user)
+      {:error, reason} = CMS.Articles.create(community, :changelog, changelog_with_tags, user)
       is_error?(reason, :invalid_domain_tag)
     end
   end

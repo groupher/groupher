@@ -9,7 +9,8 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
     {community, blog, _, user} = mock_article(:blog)
 
     {:ok, user2} = db_insert(:user)
-    {:ok, community2} = db_insert(:community)
+    community2_attrs = mock_attrs(:community, %{slug: "community_2"})
+    {:ok, community2} = CMS.create_community(community2_attrs, user)
 
     {:ok, ~m(user user2 blog community community2)a}
   end
@@ -17,8 +18,8 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
   describe "[published blogs]" do
     test "create blog should update user published meta", ~m(community user2)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-      {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user2)
-      {:ok, _} = CMS.create_article(community, :blog, blog_attrs, user2)
+      {:ok, _} = CMS.Articles.create(community, :blog, blog_attrs, user2)
+      {:ok, _} = CMS.Articles.create(community, :blog, blog_attrs, user2)
 
       {:ok, user} = ORM.find(User, user2.id)
       assert user.meta.published_blogs_count == 2
@@ -35,7 +36,7 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
       pub_blogs =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
           blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-          {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
+          {:ok, blog} = CMS.Articles.create(community2, :blog, blog_attrs, user)
 
           acc ++ [blog]
         end)
@@ -43,7 +44,7 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
       pub_blogs2 =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
           blog_attrs = mock_attrs(:blog, %{community_id: community2.id})
-          {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
+          {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
           acc ++ [blog]
         end)
@@ -51,7 +52,7 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
       # unrelated other user
       Enum.reduce(1..5, [], fn _, acc ->
         blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-        {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user2)
+        {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user2)
 
         acc ++ [blog]
       end)

@@ -108,7 +108,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "doc author create comment will not update active timestamp",
          ~m(community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
-      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       {:ok, doc} = ORM.find(Doc, doc.id, preload: [author: :user])
 
       Process.sleep(1000)
@@ -136,7 +136,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       #   Timex.shift(Timex.now(), days: -(active_period_days - 1)) |> Timex.to_datetime()
 
       doc_attrs = mock_attrs(:doc)
-      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       Process.sleep(1000)
 
@@ -154,7 +154,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         |> Timex.to_datetime()
 
       doc_attrs = mock_attrs(:doc)
-      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       {:ok, doc} =
         ORM.update(doc, %{inserted_at: inserted_at, active_at: inserted_at}, strict: false)
@@ -903,7 +903,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   describe "[update user info in comments_participants]" do
     test "basic find", ~m(user community)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id, is_question: true})
-      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       {:ok, _} =
         CMS.create_comment(

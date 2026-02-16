@@ -94,7 +94,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
       1..count
       |> Enum.each(fn _ ->
         attrs = mock_attrs(thread, %{community_id: community.id})
-        {:ok, article} = CMS.create_article(community, thread, attrs, user)
+        {:ok, article} = CMS.Articles.create(community, thread, attrs, user)
         seed_tags(tags, thread, article)
         seed_comments(thread, article.id, user)
         seed_upvotes(article)
@@ -106,7 +106,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     with {:ok, users} <- db_insert_multi(:user, Enum.random(1..10)) do
       users
       |> Enum.each(fn user ->
-        {:ok, _article} = CMS.upvote_article(article, user)
+        {:ok, _article} = CMS.Articles.upvote(article, user)
       end)
     end
   end

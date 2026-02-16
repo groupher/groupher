@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInDoc do
         )
 
       doc_attrs = doc_attrs |> Map.merge(%{body: body})
-      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       {:ok, doc} = preload_author(doc)
 
       {:ok, _} = Hooks.Mention.handle(doc)
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInDoc do
          ~m(community user doc_attrs)a do
       body = mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))
       doc_attrs = doc_attrs |> Map.merge(%{body: body})
-      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
+      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
       assert result.total_count == 0

@@ -394,7 +394,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     test "if solution in pinned comments, solution should always on top",
          ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       total_count = 20
       thread = :post

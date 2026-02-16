@@ -107,7 +107,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
     test "changelog author create comment will not update active timestamp",
          ~m(community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: [author: :user])
 
       Process.sleep(1000)
@@ -135,7 +135,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       #   Timex.shift(Timex.now(), days: -(active_period_days - 1)) |> Timex.to_datetime()
 
       changelog_attrs = mock_attrs(:changelog)
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       Process.sleep(1000)
 
@@ -153,7 +153,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         |> Timex.to_datetime()
 
       changelog_attrs = mock_attrs(:changelog)
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, changelog} =
         ORM.update(changelog, %{inserted_at: inserted_at, active_at: inserted_at}, strict: false)
@@ -921,7 +921,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
   describe "[update user info in comments_participants]" do
     test "basic find", ~m(user community)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id, is_question: true})
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, _} =
         CMS.create_comment(

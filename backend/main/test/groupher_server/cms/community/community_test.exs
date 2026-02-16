@@ -54,14 +54,14 @@ defmodule GroupherServer.Test.CMS.Community do
       {:ok, community} = CMS.create_community(community_attrs, user)
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-      {:ok, post2} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, post2} = CMS.Articles.create(community, :post, post_attrs, user)
 
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-      {:ok, blog} = CMS.create_article(community, :blog, blog_attrs, user)
+      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       {:ok, _} = ORM.find(Post, post.id)
       {:ok, _} = ORM.find(Post, post2.id)
@@ -85,10 +85,10 @@ defmodule GroupherServer.Test.CMS.Community do
       {:ok, community} = CMS.create_community(community_attrs, user)
       {:ok, community2} = CMS.create_community(community2_attrs, user)
 
-      post_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.mirror_article(community2, post)
+      {:ok, _} = CMS.Articles.mirror(community2, post)
 
       {:ok, _} = CMS.delete_community(community.slug)
       {:error, _} = ORM.find(Community, community.id)
@@ -104,10 +104,10 @@ defmodule GroupherServer.Test.CMS.Community do
       {:ok, community} = CMS.create_community(community_attrs, user)
       {:ok, community2} = CMS.create_community(community2_attrs, user)
 
-      post_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.mirror_article(community2, post)
+      {:ok, _} = CMS.Articles.mirror(community2, post)
 
       {:ok, _} = CMS.delete_community(community2.slug)
       {:error, _} = ORM.find(Community, community2.id)

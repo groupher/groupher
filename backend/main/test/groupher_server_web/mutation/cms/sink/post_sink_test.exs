@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       passport_rules = %{community.slug => %{"post.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      {:ok, _} = CMS.sink_article(post)
+      {:ok, _} = CMS.Articles.sink(post)
 
       updated = rule_conn |> gq_mutation(Schema.m(:undo_sink_article, :post), variables)
       assert updated["innerId"] == to_string(post.inner_id)

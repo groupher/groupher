@@ -119,7 +119,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "post author create comment will not update active timestamp", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
 
       Process.sleep(1000)
@@ -137,7 +137,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       #   Timex.shift(Timex.now(), days: -(active_period_days - 1)) |> Timex.to_datetime()
 
       post_attrs = mock_attrs(:post)
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       Process.sleep(1000)
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -152,7 +152,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         |> Timex.to_datetime()
 
       post_attrs = mock_attrs(:post)
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, post} =
         ORM.update(post, %{inserted_at: inserted_at, active_at: inserted_at}, strict: false)
@@ -869,7 +869,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[article comment qa type]" do
     test "create comment for normal post should have default qa flags", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, post_comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -881,10 +881,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     test "create comment for question post should have flags", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, cat: @article_cat.question})
 
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, post_comment} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -895,7 +895,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     test "update comment with is_question should batch update exist comments is_for_question field",
          ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, comment1} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -906,7 +906,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, comment3} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.set_post_cat(post, @article_cat.question)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.question)
 
       {:ok, comment1} = ORM.find(Comment, comment1.id)
       {:ok, comment2} = ORM.find(Comment, comment2.id)
@@ -916,7 +916,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert comment2.is_for_question
       assert comment3.is_for_question
 
-      {:ok, _} = CMS.set_post_cat(post, @article_cat.feature)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
 
       {:ok, comment1} = ORM.find(Comment, comment1.id)
       {:ok, comment2} = ORM.find(Comment, comment2.id)
@@ -929,7 +929,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "can mark a comment as solution", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
@@ -949,7 +949,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "non-post-author can not mark a comment as solution", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
@@ -965,7 +965,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "can undo mark a comment as solution", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
 
@@ -984,7 +984,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "non-post-author can not undo mark a comment as solution", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
@@ -1000,7 +1000,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "can only mark one best comment as solution", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
@@ -1024,7 +1024,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "update a solution should also update post's solution digest", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
@@ -1053,7 +1053,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[update user info in comments_participants]" do
     test "basic find", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, _} =
         CMS.create_comment(community, :post, post.inner_id, mock_comment("solution"), user)

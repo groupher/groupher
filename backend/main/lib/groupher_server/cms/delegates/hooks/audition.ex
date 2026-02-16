@@ -41,7 +41,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Audition do
 
   def handle_audition_result({:ok, audit_res}, article) do
     audit_res = Map.merge(audit_res, %{illegal_articles: []})
-    CMS.unset_article_illegal(article, audit_res)
+    CMS.Articles.unset_illegal(article, audit_res)
   end
 
   def handle_audition_result(
@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Audition do
   end
 
   def handle_audition_result({:error, %{audit_failed: true} = audit_res}, article) do
-    CMS.set_article_audit_failed(article, audit_res)
+    CMS.Articles.set_audit_failed(article, audit_res)
   end
 
   def handle_audition_result({:error, audit_res}, %{body_html: _} = comment) do
@@ -68,6 +68,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Audition do
     illegal_articles = [article_addr]
 
     audit_res = Map.merge(audit_res, %{illegal_articles: illegal_articles})
-    CMS.set_article_illegal(article, audit_res)
+    CMS.Articles.set_illegal(article, audit_res)
   end
 end

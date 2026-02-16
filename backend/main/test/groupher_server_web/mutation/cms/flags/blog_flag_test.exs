@@ -6,8 +6,8 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
   setup do
     {community, blog, _, user} = mock_article(:blog)
 
-    {:ok, blog2} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
-    {:ok, blog3} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
+    {:ok, blog2} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
+    {:ok, blog3} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     test "mark delete blog should update blog's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
-      {:ok, blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
+      {:ok, blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.blogs_count == 1
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     test "auth user can undo markDelete blog", ~m(community blog)a do
       variables = %{id: blog.inner_id, community: community.slug}
 
-      {:ok, _} = CMS.mark_delete_article(blog)
+      {:ok, _} = CMS.Articles.mark_delete(blog)
 
       passport_rules = %{"blog.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -78,9 +78,9 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     test "undo mark delete blog should update blog's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.create_community(community_attrs, user)
-      {:ok, blog} = CMS.create_article(community, :blog, mock_attrs(:blog), user)
+      {:ok, blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
 
-      {:ok, _} = CMS.mark_delete_article(blog)
+      {:ok, _} = CMS.Articles.mark_delete(blog)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.blogs_count == 0
@@ -130,7 +130,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
 
     test "auth user can batch undo mark delete blogs",
          ~m(community blog blog2 blog3)a do
-      CMS.batch_mark_delete_articles(community.slug, :blog, [
+      CMS.Articles.batch_mark_delete(community.slug, :blog, [
         blog.inner_id,
         blog2.inner_id
       ])
@@ -192,7 +192,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       passport_rules = %{community.slug => %{"blog.undo_pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      CMS.pin_article(community, blog)
+      CMS.Articles.pin(community, blog)
       updated = rule_conn |> gq_mutation(Schema.m(:undo_pin_article, :blog), variables)
 
       assert updated["innerId"] == to_string(blog.inner_id)

@@ -236,7 +236,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
     updated_users =
       case opt do
         :add -> [extract_embed_user(user)] ++ cur_users
-        :remove -> Enum.reject(cur_users, &(&1.user_id == user.id))
+        :remove -> Enum.reject(cur_users, &user_id_match?(&1, user.id))
       end
 
     meta =
@@ -262,7 +262,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
     updated_users =
       case opt do
         :add -> [extract_embed_user(user)] ++ cur_users
-        :remove -> Enum.reject(cur_users, &(&1.user_id == user.id))
+        :remove -> Enum.reject(cur_users, &user_id_match?(&1, user.id))
       end
       |> Enum.uniq()
       |> Enum.slice(0, @max_latest_upvoted_users_count)
@@ -282,5 +282,9 @@ defmodule GroupherServer.CMS.Delegate.Helper do
       login: user.login,
       nickname: user.nickname
     }
+  end
+
+  defp user_id_match?(user, user_id) do
+    Map.get(user, :user_id) == user_id || Map.get(user, "user_id") == user_id
   end
 end

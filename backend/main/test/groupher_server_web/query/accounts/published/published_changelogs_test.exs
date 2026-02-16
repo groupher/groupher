@@ -18,8 +18,8 @@ defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
     test "can get published changelogs", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
 
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+      {:ok, changelog2} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(Schema.q(:paged_published_articles, :changelog), variables)

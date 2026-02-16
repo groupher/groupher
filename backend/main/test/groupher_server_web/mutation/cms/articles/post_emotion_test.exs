@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     end
 
     test "login user can undo emotion to a post", ~m(community post user owner_conn)a do
-      {:ok, _} = CMS.emotion_to_article(post, :beer, user)
+      {:ok, _} = CMS.Articles.emotion(post, :beer, user)
 
       variables = %{id: post.inner_id, community: community.slug, emotion: "BEER"}
 

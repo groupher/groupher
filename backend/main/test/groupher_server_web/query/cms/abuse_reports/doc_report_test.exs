@@ -52,8 +52,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
     }
     """
     test "should get pagination info", ~m(guest_conn community doc_attrs user user2)a do
-      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      {:ok, doc2} = CMS.create_article(community, :doc, doc_attrs, user)
+      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+      {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(doc2, "reason", "attr_info", user2)
@@ -66,8 +66,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
     end
 
     test "support search with id", ~m(guest_conn community doc_attrs user user2)a do
-      {:ok, doc} = CMS.create_article(community, :doc, doc_attrs, user)
-      {:ok, doc2} = CMS.create_article(community, :doc, doc_attrs, user)
+      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+      {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(doc2, "reason", "attr_info", user2)

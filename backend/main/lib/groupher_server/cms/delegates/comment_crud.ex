@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   alias CMS.Delegate.Fetcher
 
   alias Accounts.Model.User
+  alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Post, Comment, PinnedComment, Embeds, Community}
 
   alias CMS.Delegate.Hooks
@@ -39,8 +40,8 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   @audit_illegal Constant.CMS.pending(:illegal)
   @audit_failed Constant.CMS.pending(:audit_failed)
 
-  @article_cat Constant.CMS.article_cat()
-  @article_state Constant.CMS.article_state()
+  @article_cat ArticleEnums.cat_values() |> Enum.into(%{}, &{&1, &1})
+  @article_state ArticleEnums.state_values() |> Enum.into(%{}, &{&1, &1})
 
   @spec comments_state(T.article_thread(), T.id()) :: T.domain_res(term())
   def comments_state(thread, article_id) do
@@ -335,7 +336,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
       |> Multi.run(:update_article_active_timestamp, fn _, %{create_comment: comment} ->
         case comment.author_id == article.author.user.id do
           true -> {:ok, :pass}
-          false -> CMS.update_active_timestamp(thread, article)
+          false -> CMS.Articles.update_active_timestamp(thread, article)
         end
       end)
       |> Multi.run(:after_hooks, fn _, %{create_comment: comment} ->
@@ -430,7 +431,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
   def undo_mark_comment_solution(comment_id, user) do
     with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
          {:ok, post} <- Fetcher.fetch(Post, comment.post_id, preload: [author: :user]) do
-      CMS.set_post_state(post, @article_state.default)
+      CMS.Articles.set_state(post, @article_state.default)
 
       do_mark_comment_solution(post, comment, user, false)
     end
@@ -446,7 +447,7 @@ defmodule GroupherServer.CMS.Delegate.CommentCRUD do
         end)
         |> Multi.run(:update_post_state, fn _, _ ->
           ORM.update(post, %{solution_digest: comment.body_html})
-          CMS.set_post_state(post, @article_state.resolved)
+          CMS.Articles.set_state(post, @article_state.resolved)
         end)
         |> Multi.run(:sync_embed_replies, fn _, %{mark_solution: comment} ->
           sync_embed_replies(comment)

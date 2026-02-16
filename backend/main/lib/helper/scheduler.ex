@@ -25,7 +25,7 @@ defmodule Helper.Scheduler do
   archive articles and comments based on config
   """
   def archive_artiments() do
-    Enum.map(@article_threads, &CMS.archive_articles(&1))
+    Enum.map(@article_threads, &CMS.Articles.archive(&1))
     |> done
   end
 
@@ -49,7 +49,8 @@ defmodule Helper.Scheduler do
   end
 
   defp audit_articles(thread) do
-    with {:ok, paged_articles} <- CMS.paged_audit_failed_articles(thread, %{page: 1, size: 30}) do
+    with {:ok, paged_articles} <-
+           CMS.Articles.paged_audit_failed(thread, %{page: 1, size: 30}) do
       Enum.map(paged_articles.entries, fn article ->
         Hooks.Audition.handle(article)
         # the free audition service's QPS is limit to 2

@@ -288,7 +288,7 @@ defmodule GroupherServer.Support.Factory do
     {:ok, community} = CMS.create_community(community_attrs, user)
 
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
-    {:ok, article} = CMS.create_article(community, thread, attrs, user)
+    {:ok, article} = CMS.Articles.create(community, thread, attrs, user)
 
     {community, article, attrs, user}
   end
@@ -307,7 +307,7 @@ defmodule GroupherServer.Support.Factory do
 
   def mock_article(thread, %Community{} = community, %User{} = user) do
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
-    {:ok, article} = CMS.create_article(community, thread, attrs, user)
+    {:ok, article} = CMS.Articles.create(community, thread, attrs, user)
 
     {community, article, attrs, user}
   end

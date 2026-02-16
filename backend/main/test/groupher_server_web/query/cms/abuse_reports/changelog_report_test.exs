@@ -52,8 +52,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
     }
     """
     test "should get pagination info", ~m(guest_conn community changelog_attrs user user2)a do
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+      {:ok, changelog2} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(changelog2, "reason", "attr_info", user2)
@@ -66,8 +66,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
     end
 
     test "support search with id", ~m(guest_conn community changelog_attrs user user2)a do
-      {:ok, changelog} = CMS.create_article(community, :changelog, changelog_attrs, user)
-      {:ok, changelog2} = CMS.create_article(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+      {:ok, changelog2} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
       {:ok, _} = CMS.report_article(changelog2, "reason", "attr_info", user2)

@@ -68,8 +68,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     general_article_fields()
     comments_fields()
 
-    field(:cat, :string)
-    field(:state, :string)
+    field(:cat, :article_cat_enum)
+    field(:state, :article_state_enum)
 
     timestamp_fields(:article)
   end
