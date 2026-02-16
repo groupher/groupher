@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
       pub_blogs =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
           blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-          {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+          {:ok, blog} = CMS.Articles.create(community2, :blog, blog_attrs, user)
 
           acc ++ [blog]
         end)

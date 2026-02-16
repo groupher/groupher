@@ -113,10 +113,10 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyDoc do
     test "undo collect hook should work on doc", ~m(user2 doc)a do
       {:ok, doc} = preload_author(doc)
 
-      {:ok, _} = CMS.Articles.upvote(doc, user2)
+      {:ok, _} = CMS.Articles.collect(doc, user2)
       Hooks.Notify.handle(:collect, doc, user2)
 
-      {:ok, _} = CMS.Articles.undo_upvote(doc, user2)
+      {:ok, _} = CMS.Articles.undo_collect(doc, user2)
       Hooks.Notify.handle(:undo, :collect, doc, user2)
 
       {:ok, notifications} =

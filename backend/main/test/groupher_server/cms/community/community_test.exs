@@ -85,7 +85,7 @@ defmodule GroupherServer.Test.CMS.Community do
       {:ok, community} = CMS.create_community(community_attrs, user)
       {:ok, community2} = CMS.create_community(community2_attrs, user)
 
-      post_attrs = mock_attrs(:changelog, %{community_id: community.id})
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, _} = CMS.Articles.mirror(community2, post)
@@ -104,7 +104,7 @@ defmodule GroupherServer.Test.CMS.Community do
       {:ok, community} = CMS.create_community(community_attrs, user)
       {:ok, community2} = CMS.create_community(community2_attrs, user)
 
-      post_attrs = mock_attrs(:changelog, %{community_id: community.id})
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, _} = CMS.Articles.mirror(community2, post)
