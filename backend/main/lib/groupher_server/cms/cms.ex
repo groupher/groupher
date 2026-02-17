@@ -13,7 +13,6 @@ defmodule GroupherServer.CMS do
     CommentEmotion,
     Fetcher,
     ArticleTag,
-    PassportCRUD,
     Search,
     Seeds,
     ThirdPart
@@ -100,14 +99,6 @@ defmodule GroupherServer.CMS do
   defdelegate undo_report_article(article, user), to: AbuseReport
   defdelegate paged_reports(filter), to: AbuseReport
   defdelegate undo_report_comment(comment, user), to: AbuseReport
-
-  # Passport CRUD
-  defdelegate stamp_passport(rules, user), to: PassportCRUD
-  defdelegate erase_passport(rules, user), to: PassportCRUD
-  defdelegate get_passport(user), to: PassportCRUD
-  defdelegate paged_passports(community, key), to: PassportCRUD
-  defdelegate all_passport_rules(), to: PassportCRUD
-  defdelegate delete_passport(user), to: PassportCRUD
 
   # search
   defdelegate search_articles(thread, args), to: Search

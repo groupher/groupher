@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Communities.Read do
   @default_dashboard CommunityDashboard.default()
   @default_read_opt [inc_views: true]
 
-  @spec read(String.t(), keyword()) :: T.domain_res(term())
+  @spec read(String.t(), keyword() | User.t()) :: T.domain_res(term())
   def read(slug, opt \\ @default_read_opt)
 
   def read(slug, %User{} = user) do
@@ -23,6 +23,7 @@ defmodule GroupherServer.CMS.Communities.Read do
 
   def read(slug, opt), do: do_read(slug, opt)
 
+  @spec read(String.t(), User.t(), keyword()) :: T.domain_res(term())
   def read(slug, %User{} = user, opt) do
     read(slug, opt) |> viewer_has_states(user)
   end

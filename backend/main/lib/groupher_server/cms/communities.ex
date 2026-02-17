@@ -18,10 +18,9 @@ defmodule GroupherServer.CMS.Communities do
     Subscribe,
     Count,
     Categories,
-    Threads
+    Threads,
+    Passport
   }
-
-  alias GroupherServer.CMS.Delegate.PassportCRUD
 
   # Read
   @spec read(String.t()) :: T.domain_res(Community.t())
@@ -58,7 +57,8 @@ defmodule GroupherServer.CMS.Communities do
 
   # Dashboard
   @spec update_dashboard(Community.t(), atom(), map()) :: T.domain_res(Community.t())
-  def update_dashboard(%Community{} = community, key, args), do: Dashboard.update(community, key, args)
+  def update_dashboard(%Community{} = community, key, args),
+    do: Dashboard.update(community, key, args)
 
   # Apply
   @spec apply(map(), User.t()) :: T.domain_res(Community.t())
@@ -75,7 +75,8 @@ defmodule GroupherServer.CMS.Communities do
 
   # Members
   @spec members(atom(), Community.t(), map()) :: T.domain_res(T.paged_data())
-  def members(type, %Community{} = community, filters), do: Members.members(type, community, filters)
+  def members(type, %Community{} = community, filters),
+    do: Members.members(type, community, filters)
 
   @spec members(atom(), Community.t(), map(), User.t()) :: T.domain_res(T.paged_data())
   def members(type, %Community{} = community, filters, %User{} = user) do
@@ -115,7 +116,22 @@ defmodule GroupherServer.CMS.Communities do
 
   # Passport
   @spec get_passport(User.t()) :: T.domain_res(map())
-  def get_passport(%User{} = user), do: PassportCRUD.get_passport(user)
+  def get_passport(%User{} = user), do: Passport.get_passport(user)
+
+  @spec stamp_passport(map(), User.t()) :: T.domain_res(map())
+  def stamp_passport(rules, %User{} = user), do: Passport.stamp_passport(rules, user)
+
+  @spec erase_passport(list(), User.t()) :: T.domain_res(map())
+  def erase_passport(rules, %User{} = user), do: Passport.erase_passport(rules, user)
+
+  @spec delete_passport(User.t()) :: T.domain_res(map())
+  def delete_passport(%User{} = user), do: Passport.delete_passport(user)
+
+  @spec paged_passports(String.t(), String.t()) :: T.domain_res(list())
+  def paged_passports(community, key), do: Passport.paged_passports(community, key)
+
+  @spec all_passport_rules() :: T.domain_res(map())
+  def all_passport_rules(), do: Passport.all_passport_rules()
 
   # Moderator
   @spec add_moderator(Community.t(), String.t(), User.t(), User.t()) ::
@@ -138,10 +154,12 @@ defmodule GroupherServer.CMS.Communities do
 
   # Subscribe
   @spec subscribe(Community.t(), User.t()) :: T.domain_res(Community.t())
-  def subscribe(%Community{} = community, %User{} = user), do: Subscribe.subscribe(community, user)
+  def subscribe(%Community{} = community, %User{} = user),
+    do: Subscribe.subscribe(community, user)
 
   @spec unsubscribe(Community.t(), User.t()) :: T.domain_res(Community.t())
-  def unsubscribe(%Community{} = community, %User{} = user), do: Subscribe.unsubscribe(community, user)
+  def unsubscribe(%Community{} = community, %User{} = user),
+    do: Subscribe.unsubscribe(community, user)
 
   @spec subscribe_ifnot(Community.t(), User.t()) :: T.domain_res(Community.t())
   def subscribe_ifnot(%Community{} = community, %User{} = user) do
@@ -161,7 +179,8 @@ defmodule GroupherServer.CMS.Communities do
   def update_count(%Community{} = community, type), do: Count.update(community, type)
 
   @spec update_count([Community.t()], atom()) :: T.domain_res(atom())
-  def update_count(communities, type) when is_list(communities), do: Count.update(communities, type)
+  def update_count(communities, type) when is_list(communities),
+    do: Count.update(communities, type)
 
   @spec count(Community.t(), atom()) :: T.domain_res(integer())
   def count(%Community{} = community, type), do: Count.count(community, type)

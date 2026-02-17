@@ -3,6 +3,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
   use GroupherServer.TestTools
 
   alias CMS.Model.CommunityModerator
+  alias GroupherServer.CMS.Communities.Passport
   alias Helper.Certification
 
   setup do
@@ -115,7 +116,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, _} =
         CMS.Communities.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
-      {:ok, passport} = CMS.get_passport(user2)
+      {:ok, passport} = Passport.get_passport(user2)
 
       assert not Map.has_key?(passport, "post.article.delete")
       assert get_in(passport, ["#{community.slug}", "post.tag.edit"])
@@ -188,7 +189,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       related_rules = Certification.passport_rules(cms: role)
 
       {:ok, moderator} = CommunityModerator |> ORM.find_by(user_id: user2.id)
-      {:ok, user_passport} = CMS.get_passport(user2)
+      {:ok, user_passport} = Passport.get_passport(user2)
 
       assert moderator.user_id == user2.id
       assert moderator.community_id == community.id

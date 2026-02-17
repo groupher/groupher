@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   use GroupherServer.TestTools
 
   alias CMS.Model.{Category, CommunityModerator, Passport}
+  alias GroupherServer.CMS.Communities.Passport, as: CMSPassport
 
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)
@@ -556,7 +557,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       result = root_rule_conn |> gq_mutation(@update_moderator_query, variables)
 
-      {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
+      {:ok, user2_passport} = CMSPassport.get_passport(%User{id: user2.id})
       assert get_in(user2_passport, ["#{community.slug}", "post.tag.edit"])
 
       moderator = Enum.find(result["moderators"], &(&1["user"]["login"] == user2.login))

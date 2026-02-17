@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.ConnSimulator do
 
     token = gen_jwt_token(id: user.id)
 
-    {:ok, _passport} = CMS.stamp_passport(passport_rules, %User{id: user.id})
+    {:ok, _passport} = CMS.Communities.stamp_passport(passport_rules, %User{id: user.id})
 
     build_conn() |> put_req_header("authorization", token)
   end
@@ -59,7 +59,7 @@ defmodule GroupherServer.Test.ConnSimulator do
   def simu_conn(:user, %User{} = user, cms: passport_rules) do
     token = gen_jwt_token(id: user.id)
 
-    {:ok, _passport} = CMS.stamp_passport(passport_rules, %User{id: user.id})
+    {:ok, _passport} = CMS.Communities.stamp_passport(passport_rules, %User{id: user.id})
 
     build_conn() |> put_req_header("authorization", token)
   end

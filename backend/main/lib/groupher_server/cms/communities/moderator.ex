@@ -5,11 +5,11 @@ defmodule GroupherServer.CMS.Communities.Moderator do
 
   alias Helper.{Certification, ORM, Transaction}
   alias Helper.Types, as: T
-  alias GroupherServer.{Repo, CMS}
+  alias GroupherServer.Repo
   alias GroupherServer.CMS.Communities
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.{Community, CommunityModerator}
-  alias CMS.Delegate.PassportCRUD
+  alias GroupherServer.CMS.Communities.Passport
   alias Ecto.Multi
 
 
@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
             rules = Certification.passport_rules(cms: role)
 
             update_passport_item_count(community_moderator, community, target_user, rules)
-            PassportCRUD.stamp_passport(rules, target_user)
+            Passport.stamp_passport(rules, target_user)
           end)
           |> Repo.transaction()
           |> result()
@@ -83,7 +83,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
       ) do
     with {:ok, true} <- user_is_root?(community, cur_user),
          {:ok, :match} <- match_passport_community(community.slug, rules),
-         {:ok, _} <- PassportCRUD.stamp_passport(rules, target_user) do
+         {:ok, _} <- Passport.stamp_passport(rules, target_user) do
       update_passport_item_count(community, target_user, rules)
 
       Communities.Read.read(community.slug, inc_views: false)
@@ -111,7 +111,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
          {:ok, true} <- user_is_root?(community, cur_user) do
       Multi.new()
       |> Multi.run(:stamp_passport, fn _, _ ->
-        PassportCRUD.erase_passport([community_slug], target_user)
+        Passport.erase_passport([community_slug], target_user)
       end)
       |> Multi.run(:delete_moderator, fn _, _ ->
         ORM.findby_delete!(CommunityModerator, %{
@@ -163,7 +163,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
        ) do
     case Map.has_key?(rules, community.slug) do
       true ->
-        {:ok, passport_rules} = PassportCRUD.get_passport(user)
+        {:ok, passport_rules} = Passport.get_passport(user)
         passport_item_count = get_in(passport_rules, [community.slug]) |> Map.keys() |> length
         moderator |> ORM.update(%{passport_item_count: passport_item_count})
 
