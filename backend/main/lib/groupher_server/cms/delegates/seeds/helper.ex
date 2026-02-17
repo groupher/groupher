@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Helper do
   def threadify_communities(communities, threads) when is_list(communities) do
     Enum.each(communities, fn community ->
       Enum.each(threads, fn thread ->
-        {:ok, _} = CMS.set_thread(%Community{id: community.id}, %Thread{id: thread.id})
+        {:ok, _} = CMS.Communities.set_thread(%Community{id: community.id}, %Thread{id: thread.id})
       end)
     end)
   end
@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Helper do
     the_category = categories.entries |> Enum.find(fn cat -> cat.slug == Atom.to_string(part) end)
 
     Enum.each(communities, fn community ->
-      {:ok, _} = CMS.set_category(%Community{id: community.id}, %Category{id: the_category.id})
+      {:ok, _} = CMS.Communities.set_category(%Community{id: community.id}, %Category{id: the_category.id})
     end)
   end
 
@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Helper do
     threads
     |> Enum.each(fn thread ->
       with {:error, _} <- ORM.find_by(Thread, %{slug: thread.slug}) do
-        CMS.create_thread(thread)
+        CMS.Communities.create_thread(thread)
       end
     end)
 
@@ -84,7 +84,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Helper do
 
   def seed_categories_ifneed(bot) do
     with true <- is_empty_in_db?(Category) do
-      Enum.each(@categories, &CMS.create_category(&1, bot))
+      Enum.each(@categories, &CMS.Communities.create_category(&1, bot))
     end
 
     ORM.find_all(Category, %{page: 1, size: 20})

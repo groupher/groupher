@@ -269,13 +269,13 @@ defmodule GroupherServer.Support.Factory do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
 
-    CMS.create_community(community_attrs, user)
+    CMS.Communities.create(community_attrs, user)
   end
 
   def mock_community(%User{} = user, attrs \\ %{}) do
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user}) |> Map.merge(attrs)
 
-    CMS.create_community(community_attrs, user)
+    CMS.Communities.create(community_attrs, user)
   end
 
   @doc """
@@ -285,7 +285,7 @@ defmodule GroupherServer.Support.Factory do
     {:ok, user} = db_insert(:user)
 
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
-    {:ok, community} = CMS.create_community(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
 
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
     {:ok, article} = CMS.Articles.create(community, thread, attrs, user)

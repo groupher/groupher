@@ -69,14 +69,14 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     test "can get user's  communities list when user is editor",
          ~m(guest_conn user user2 user3)a do
       community_attrs = mock_attrs(:community)
-      {:ok, community} = CMS.create_community(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       community_attrs2 = mock_attrs(:community)
-      {:ok, community2} = CMS.create_community(community_attrs2, user2)
+      {:ok, community2} = CMS.Communities.create(community_attrs2, user2)
 
       role = "moderator"
-      {:ok, _} = CMS.add_moderator(community, role, user3, user)
-      {:ok, _} = CMS.add_moderator(community2, role, user3, user2)
+      {:ok, _} = CMS.Communities.add_moderator(community, role, user3, user)
+      {:ok, _} = CMS.Communities.add_moderator(community2, role, user3, user2)
 
       variables = %{login: user3.login, filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(@query, variables)

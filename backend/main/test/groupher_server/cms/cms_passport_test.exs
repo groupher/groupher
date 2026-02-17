@@ -58,17 +58,17 @@ defmodule GroupherServer.Test.CMS.Passport do
 
     test "get a user's passport", ~m(user)a do
       {:ok, _} = CMS.stamp_passport(@valid_passport_rules, user)
-      {:ok, passport} = CMS.get_passport(user)
+      {:ok, passport} = CMS.Communities.get_passport(user)
 
       assert passport |> Map.equal?(@valid_passport_rules)
     end
 
     test "get a normal user's passport fails", ~m(user)a do
-      assert {:ok, %{}} = CMS.get_passport(user)
+      assert {:ok, %{}} = CMS.Communities.get_passport(user)
     end
 
     test "get a non-exist user's passport fails" do
-      assert {:error, _} = CMS.get_passport(%User{id: non_exist_id()})
+      assert {:error, _} = CMS.Communities.get_passport(%User{id: non_exist_id()})
     end
 
     test "list passport by key", ~m(user user2)a do

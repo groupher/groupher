@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
 
     test "mark delete changelog should update changelog's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
-      {:ok, community} = CMS.create_community(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
       {:ok, changelog} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
 
       {:ok, community} = ORM.find(Community, community.id)
@@ -78,7 +78,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
     test "undo mark delete changelog should update changelog's communities meta count",
          ~m(user)a do
       community_attrs = mock_attrs(:community)
-      {:ok, community} = CMS.create_community(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
       {:ok, changelog} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
 
       {:ok, _} = CMS.Articles.mark_delete(changelog)

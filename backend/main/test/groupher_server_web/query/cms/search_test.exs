@@ -65,7 +65,7 @@ defmodule GroupherServer.Test.Query.CMS.Search do
       {:ok, community} = db_insert(:community, %{title: "cool-pl"})
       {:ok, category} = db_insert(:category, %{slug: "pl"})
 
-      {:ok, _} = CMS.set_category(community, category)
+      {:ok, _} = CMS.Communities.set_category(community, category)
 
       variables = %{title: "cool-pl", category: "pl"}
       results = guest_conn |> gq_query(Schema.q(:search_communities), variables)

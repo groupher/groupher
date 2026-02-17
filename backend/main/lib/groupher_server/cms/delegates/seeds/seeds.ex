@@ -77,7 +77,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     Enum.each(communities_names, fn name ->
       {:ok, community} = ORM.find_by(Community, %{slug: name})
 
-      {:ok, _} = CMS.set_category(%Community{id: community.id}, %Category{id: category.id})
+      {:ok, _} = CMS.Communities.set_category(%Community{id: community.id}, %Category{id: category.id})
     end)
   end
 
