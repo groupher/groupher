@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.Communities.Threads do
 
     test "create thread with exist title fails" do
       title = "POST"
-      slug = title
+      slug = "post"
       {:ok, _} = CMS.Communities.create_thread(~m(title slug)a)
       assert {:error, _error} = CMS.Communities.create_thread(~m(title slug)a)
     end

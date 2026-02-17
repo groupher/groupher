@@ -21,6 +21,8 @@ defmodule GroupherServer.CMS.Communities do
     Threads
   }
 
+  alias GroupherServer.CMS.Delegate.PassportCRUD
+
   # Read
   @spec read(String.t()) :: T.domain_res(Community.t())
   def read(slug), do: Read.read(slug)
@@ -110,6 +112,10 @@ defmodule GroupherServer.CMS.Communities do
   def unset_thread(%Community{} = community, %Thread{} = thread) do
     Threads.unset(community, thread)
   end
+
+  # Passport
+  @spec get_passport(User.t()) :: T.domain_res(map())
+  def get_passport(%User{} = user), do: PassportCRUD.get_passport(user)
 
   # Moderator
   @spec add_moderator(Community.t(), String.t(), User.t(), User.t()) ::

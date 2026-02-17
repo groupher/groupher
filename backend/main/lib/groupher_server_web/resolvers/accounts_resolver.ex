@@ -241,11 +241,11 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   def get_passport(root, _args, %{context: %{cur_user: _}}) do
-    CMS.get_passport(%User{id: root.id})
+    CMS.Communities.get_passport(%User{id: root.id})
   end
 
   def get_passport_string(root, _args, %{context: %{cur_user: _}}) do
-    with {:ok, passport} <- CMS.get_passport(%User{id: root.id}) do
+    with {:ok, passport} <- CMS.Communities.get_passport(%User{id: root.id}) do
       {:ok, Jason.encode!(passport)}
     end
   end
