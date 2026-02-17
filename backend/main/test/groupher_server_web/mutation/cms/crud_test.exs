@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   use GroupherServer.TestTools
 
   alias CMS.Model.{Category, CommunityModerator, Passport}
+  alias GroupherServer.CMS.Communities.Passport, as: CMSPassport
 
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)
@@ -149,7 +150,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, community} = mock_community()
       {:ok, category} = db_insert(:category)
 
-      {:ok, _} = CMS.set_category(community, %Category{id: category.id})
+      {:ok, _} = CMS.Communities.set_category(community, %Category{id: category.id})
 
       rule_conn = simu_conn(:user, cms: %{"category.unset" => true})
       variables = %{community: community.slug, categoryId: category.id}
@@ -403,7 +404,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "auth user can add thread to community", ~m(user community)a do
       title = "other"
       slug = "OTHER"
-      {:ok, thread} = CMS.create_thread(~m(title slug)a)
+      {:ok, thread} = CMS.Communities.create_thread(~m(title slug)a)
       variables = %{threadId: thread.id, community: community.slug}
 
       passport_rules = %{community.title => %{"thread.set" => true}}
@@ -426,7 +427,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     }
     """
     test "auth user can remove thread from community", ~m(user community thread)a do
-      CMS.set_thread(community, thread)
+      CMS.Communities.set_thread(community, thread)
       {:ok, found_community} = Community |> ORM.find(community.id, preload: :threads)
 
       assert found_community.threads |> Enum.any?(&(&1.thread_id == thread.id))
@@ -491,7 +492,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       role = "moderator"
 
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
       assert {:ok, _} =
                CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
@@ -529,7 +530,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       role = "moderator"
       cur_user = user
 
-      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
       passport_rules = %{"moderator.update" => true}
       rule_conn = simu_conn(:user, user2, cms: passport_rules)
@@ -556,10 +557,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       result = root_rule_conn |> gq_mutation(@update_moderator_query, variables)
 
-      {:ok, user2_passport} = CMS.get_passport(%User{id: user2.id})
+      {:ok, user2_passport} = CMSPassport.get_passport(%User{id: user2.id})
       assert get_in(user2_passport, ["#{community.slug}", "post.tag.edit"])
 
-      assert result["moderators"] |> List.first() |> get_in(["passportItemCount"]) == 3
+      moderator = Enum.find(result["moderators"], &(&1["user"]["login"] == user2.login))
+      assert moderator["passportItemCount"] == 3
     end
 
     test "unauth user add moderator fails", ~m(user_conn guest_conn user community)a do
@@ -627,14 +629,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     """
     test "login user can unsubscribe community", ~m(user community)a do
       {:ok, cur_subscribers} =
-        CMS.community_members(:subscribers, community, %{page: 1, size: 10})
+        CMS.Communities.members(:subscribers, community, %{page: 1, size: 10})
 
       assert false == cur_subscribers.entries |> Enum.any?(&(&1.id == user.id))
 
-      {:ok, record} = CMS.subscribe_community(community, user)
+      {:ok, record} = CMS.Communities.subscribe(community, user)
 
       {:ok, cur_subscribers} =
-        CMS.community_members(:subscribers, community, %{page: 1, size: 10})
+        CMS.Communities.members(:subscribers, community, %{page: 1, size: 10})
 
       assert true == cur_subscribers.entries |> Enum.any?(&(&1.id == user.id))
       login_conn = simu_conn(:user, user)
@@ -644,7 +646,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       result = login_conn |> gq_mutation(@unsubscribe_query, variables)
 
       {:ok, cur_subscribers} =
-        CMS.community_members(:subscribers, %Community{id: community.id}, %{page: 1, size: 10})
+        CMS.Communities.members(:subscribers, %Community{id: community.id}, %{page: 1, size: 10})
 
       assert result["id"] == to_string(record.id)
       assert false == cur_subscribers.entries |> Enum.any?(&(&1.id == user.id))

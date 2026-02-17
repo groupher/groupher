@@ -14,27 +14,27 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # community ..
   # #######################
   def community(_root, %{slug: slug, inc_views: inc_views}, %{context: %{cur_user: user}}) do
-    CMS.read_community(slug, user, inc_views: inc_views)
+    CMS.Communities.read(slug, user, inc_views: inc_views)
   end
 
   def community(_root, %{slug: slug, inc_views: inc_views}, _info) do
-    CMS.read_community(slug, inc_views: inc_views)
+    CMS.Communities.read(slug, inc_views: inc_views)
   end
 
   def paged_communities(_root, ~m(filter)a, %{context: %{cur_user: user}}) do
-    CMS.paged_communities(filter, user)
+    CMS.Communities.paged(filter, user)
   end
 
   def paged_communities(_root, ~m(filter)a, _info) do
-    CMS.paged_communities(filter)
+    CMS.Communities.paged(filter)
   end
 
   def create_community(_root, args, %{context: %{cur_user: user}}) do
-    CMS.create_community(args, user)
+    CMS.Communities.create(args, user)
   end
 
   def update_community(_root, %{community: community} = args, _info) do
-    CMS.update_community(community, args)
+    CMS.Communities.update(community, args)
   end
 
   def update_dashboard(_root, %{community: community, dashboard_section: key} = args, _info) do
@@ -53,7 +53,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         false -> Map.drop(args, [:community, :dashboard_section])
       end
 
-    CMS.update_dashboard(community, key, dashboard_args)
+    CMS.Communities.update_dashboard(community, key, dashboard_args)
   end
 
   def open_graph_info(_root, %{url: url}, _info), do: OgInfo.get(url)
@@ -61,23 +61,23 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def delete_community(_root, %{id: id}, _info), do: Community |> ORM.find_delete!(id)
 
   def apply_community(_root, args, %{context: %{cur_user: user}}) do
-    CMS.apply_community(args, user)
+    CMS.Communities.apply(args, user)
   end
 
   def approve_community_apply(_root, %{community: community}, _) do
-    CMS.approve_community_apply(community)
+    CMS.Communities.approve_apply(community)
   end
 
   def deny_community_apply(_root, %{id: id}, _) do
-    CMS.deny_community_apply(id)
+    CMS.Communities.deny_apply(id)
   end
 
   def community_exist?(_root, %{slug: slug}, _) do
-    CMS.community_exist?(slug)
+    CMS.Communities.exist?(slug)
   end
 
   def has_pending_community_apply?(_root, _, %{context: %{cur_user: user}}) do
-    CMS.has_pending_community_apply?(user)
+    CMS.Communities.has_pending_apply?(user)
   end
 
   # #######################
@@ -213,21 +213,21 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def paged_categories(_root, ~m(filter)a, _info), do: Category |> ORM.find_all(filter)
 
   def create_category(_root, ~m(title slug)a, %{context: %{cur_user: user}}) do
-    CMS.create_category(%{title: title, slug: slug}, user)
+    CMS.Communities.create_category(%{title: title, slug: slug}, user)
   end
 
   def delete_category(_root, %{id: id}, _info), do: Category |> ORM.find_delete!(id)
 
   def update_category(_root, ~m(id title)a, %{context: %{cur_user: _}}) do
-    CMS.update_category(~m(%Category id title)a)
+    CMS.Communities.update_category(~m(%Category id title)a)
   end
 
   def set_category(_root, ~m(community category_id)a, %{context: %{cur_user: _}}) do
-    CMS.set_category(community, %Category{id: category_id})
+    CMS.Communities.set_category(community, %Category{id: category_id})
   end
 
   def unset_category(_root, ~m(community category_id)a, %{context: %{cur_user: _}}) do
-    CMS.unset_category(community, %Category{id: category_id})
+    CMS.Communities.unset_category(community, %Category{id: category_id})
   end
 
   # #######################
@@ -236,17 +236,17 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def paged_threads(_root, ~m(filter)a, _info), do: Thread |> ORM.find_all(filter)
 
   def create_thread(_root, ~m(title slug index)a, _info),
-    do: CMS.create_thread(~m(title slug index)a)
+    do: CMS.Communities.create_thread(~m(title slug index)a)
 
-  def set_thread(_root, ~m(community thread)a, _info), do: CMS.set_thread(community, thread)
+  def set_thread(_root, ~m(community thread)a, _info), do: CMS.Communities.set_thread(community, thread)
 
-  def unset_thread(_root, ~m(community thread)a, _info), do: CMS.unset_thread(community, thread)
+  def unset_thread(_root, ~m(community thread)a, _info), do: CMS.Communities.unset_thread(community, thread)
 
   # #######################
   # moderators ..
   # #######################
   def all_passport_rules(_root, _, _) do
-    with {:ok, rules} <- CMS.all_passport_rules() do
+    with {:ok, rules} <- CMS.Communities.all_passport_rules() do
       {:ok,
        %{
          root: Jason.encode!(rules.root),
@@ -256,12 +256,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def add_moderator(_root, ~m(community user role)a, %{context: %{cur_user: cur_user}}) do
-    CMS.add_moderator(community, role, user, cur_user)
+    CMS.Communities.add_moderator(community, role, user, cur_user)
   end
 
   def remove_moderator(_root, ~m(community user)a, %{context: %{cur_user: cur_user}}) do
     with {:ok, target_user} <- ORM.find_user(user) do
-      CMS.remove_moderator(community, %User{id: target_user.id}, cur_user)
+      CMS.Communities.remove_moderator(community, %User{id: target_user.id}, cur_user)
     end
   end
 
@@ -269,12 +269,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         context: %{cur_user: cur_user}
       }) do
     with {:ok, target_user} <- ORM.find_user(user) do
-      CMS.update_moderator_passport(community, rules, %User{id: target_user.id}, cur_user)
+      CMS.Communities.update_moderator_passport(community, rules, %User{id: target_user.id}, cur_user)
     end
   end
 
   def paged_community_moderators(_root, ~m(id filter)a, _info) do
-    CMS.community_members(:moderators, %Community{id: id}, filter)
+    CMS.Communities.members(:moderators, %Community{id: id}, filter)
   end
 
   # #######################
@@ -316,27 +316,27 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # community subscribe ..
   # #######################
   def subscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
-    CMS.subscribe_community(community, cur_user)
+    CMS.Communities.subscribe(community, cur_user)
   end
 
   def unsubscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
-    CMS.unsubscribe_community(community, cur_user)
+    CMS.Communities.unsubscribe(community, cur_user)
   end
 
   def paged_community_subscribers(_root, ~m(id filter)a, %{context: %{cur_user: cur_user}}) do
-    CMS.community_members(:subscribers, %Community{id: id}, filter, cur_user)
+    CMS.Communities.members(:subscribers, %Community{id: id}, filter, cur_user)
   end
 
   def paged_community_subscribers(_root, ~m(id filter)a, _info) do
-    CMS.community_members(:subscribers, %Community{id: id}, filter)
+    CMS.Communities.members(:subscribers, %Community{id: id}, filter)
   end
 
   def paged_community_subscribers(_root, ~m(community filter)a, %{context: %{cur_user: cur_user}}) do
-    CMS.community_members(:subscribers, %Community{slug: community}, filter, cur_user)
+    CMS.Communities.members(:subscribers, %Community{slug: community}, filter, cur_user)
   end
 
   def paged_community_subscribers(_root, ~m(community filter)a, _info) do
-    CMS.community_members(:subscribers, %Community{slug: community}, filter)
+    CMS.Communities.members(:subscribers, %Community{slug: community}, filter)
   end
 
   def paged_community_subscribers(_root, _args, _info), do: {:error, "invalid args"}
@@ -479,9 +479,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # ##############################################
   # counts just for manngers to use in admin site ..
   # ##############################################
-  def threads_count(root, _, _), do: CMS.count(%Community{id: root.id}, :threads)
+  def threads_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :threads)
 
-  def article_tags_count(root, _, _), do: CMS.count(%Community{id: root.id}, :article_tags)
+  def article_tags_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :article_tags)
 
   # OSS token
   def upload_tokens(_root, _, _) do

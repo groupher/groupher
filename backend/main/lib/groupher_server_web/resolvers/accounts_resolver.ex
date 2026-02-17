@@ -26,7 +26,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   def paged_users(_root, ~m(filter)a, _info), do: Accounts.paged_users(filter)
 
   def session_state(_root, _args, %{context: %{cur_user: cur_user}}) do
-    CMS.subscribe_default_community_ifnot(cur_user)
+    CMS.Communities.subscribe_default_ifnot(cur_user)
     {:ok, %{is_valid: true, user: cur_user}}
   end
 
@@ -241,11 +241,11 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   def get_passport(root, _args, %{context: %{cur_user: _}}) do
-    CMS.get_passport(%User{id: root.id})
+    CMS.Communities.get_passport(%User{id: root.id})
   end
 
   def get_passport_string(root, _args, %{context: %{cur_user: _}}) do
-    with {:ok, passport} <- CMS.get_passport(%User{id: root.id}) do
+    with {:ok, passport} <- CMS.Communities.get_passport(%User{id: root.id}) do
       {:ok, Jason.encode!(passport)}
     end
   end

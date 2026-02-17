@@ -13,9 +13,6 @@ defmodule GroupherServer.CMS do
     CommentEmotion,
     Fetcher,
     ArticleTag,
-    CommunityCRUD,
-    CommunityOperation,
-    PassportCRUD,
     Search,
     Seeds,
     ThirdPart
@@ -25,35 +22,6 @@ defmodule GroupherServer.CMS do
   # see https://github.com/elixir-lang/elixir/issues/5306
 
   # Community CRUD: moderators, thread, tag
-  defdelegate read_community(args), to: CommunityCRUD
-  defdelegate read_community(args, opt), to: CommunityCRUD
-  defdelegate read_community(args, user, opt), to: CommunityCRUD
-
-  defdelegate paged_communities(filter, user), to: CommunityCRUD
-  defdelegate paged_communities(filter), to: CommunityCRUD
-  defdelegate create_community(args, user), to: CommunityCRUD
-  defdelegate delete_community(community), to: CommunityCRUD
-  defdelegate apply_community(args, user), to: CommunityCRUD
-  defdelegate update_community(community, args), to: CommunityCRUD
-  defdelegate update_dashboard(community, key, args), to: CommunityCRUD
-  defdelegate approve_community_apply(community), to: CommunityCRUD
-  defdelegate deny_community_apply(id), to: CommunityCRUD
-  defdelegate community_exist?(slug), to: CommunityCRUD
-  defdelegate has_pending_community_apply?(user), to: CommunityCRUD
-
-  # TODO: delete after prod seed
-  defdelegate update_community_count_field(community, user_id, type, opt), to: CommunityCRUD
-  defdelegate update_community_count_field(community, thread), to: CommunityCRUD
-
-  # >> subscribers
-  defdelegate community_members(type, community, filters), to: CommunityCRUD
-  defdelegate community_members(type, community, filters, user), to: CommunityCRUD
-  # >> category
-  defdelegate create_category(category_attrs, user), to: CommunityCRUD
-  defdelegate update_category(category_attrs), to: CommunityCRUD
-  # >> thread
-  defdelegate create_thread(attrs), to: CommunityCRUD
-  defdelegate count(community, part), to: CommunityCRUD
   # >> tag
   defdelegate create_article_tag(community, thread, attrs, user), to: ArticleTag
   defdelegate update_article_tag(tag_id, attrs), to: ArticleTag
@@ -64,21 +32,7 @@ defmodule GroupherServer.CMS do
   defdelegate reindex_tags_in_group(community, thread, group, tags), to: ArticleTag
 
   # CommunityOperation
-  # >> category
-  defdelegate set_category(community, category), to: CommunityOperation
-  defdelegate unset_category(community, category), to: CommunityOperation
-  # >> moderator
-  defdelegate add_moderator(community, role, target_user, cur_user), to: CommunityOperation
-  defdelegate remove_moderator(community, user, cur_user), to: CommunityOperation
-  defdelegate update_moderator_passport(community, role, user, cur_user), to: CommunityOperation
 
-  # >> thread
-  defdelegate set_thread(community, thread), to: CommunityOperation
-  defdelegate unset_thread(community, thread), to: CommunityOperation
-  # >> subscribe / unsubscribe
-  defdelegate subscribe_community(community, user), to: CommunityOperation
-  defdelegate unsubscribe_community(community, user), to: CommunityOperation
-  defdelegate subscribe_default_community_ifnot(user), to: CommunityOperation
 
   # Comment CRUD
 
@@ -145,14 +99,6 @@ defmodule GroupherServer.CMS do
   defdelegate undo_report_article(article, user), to: AbuseReport
   defdelegate paged_reports(filter), to: AbuseReport
   defdelegate undo_report_comment(comment, user), to: AbuseReport
-
-  # Passport CRUD
-  defdelegate stamp_passport(rules, user), to: PassportCRUD
-  defdelegate erase_passport(rules, user), to: PassportCRUD
-  defdelegate get_passport(user), to: PassportCRUD
-  defdelegate paged_passports(community, key), to: PassportCRUD
-  defdelegate all_passport_rules(), to: PassportCRUD
-  defdelegate delete_passport(user), to: PassportCRUD
 
   # search
   defdelegate search_articles(thread, args), to: Search

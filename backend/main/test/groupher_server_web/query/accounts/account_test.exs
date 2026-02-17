@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
   use GroupherServer.TestTools
 
   alias CMS.Model.CommunitySubscriber
+  alias GroupherServer.CMS.Communities.Passport, as: CMSPassport
 
   @default_subscribed_communities get_config(:general, :default_subscribed_communities)
 
@@ -137,7 +138,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     test "login user can get own cms_passport and cms_passport_string", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
-      {:ok, _} = CMS.stamp_passport(@valid_rules, user)
+      {:ok, _} = CMSPassport.stamp_passport(@valid_rules, user)
 
       results = user_conn |> gq_query(@query, %{login: user.login})
 

@@ -62,7 +62,7 @@ defmodule GroupherServer.Test.CMS.Search do
       {:ok, community} = db_insert(:community, %{title: "cool-pl"})
       {:ok, category} = db_insert(:category, %{slug: "pl"})
 
-      {:ok, _} = CMS.set_category(community, category)
+      {:ok, _} = CMS.Communities.set_category(community, category)
 
       {:ok, searched} = CMS.search_communities("cool-pl", "pl")
       assert searched.entries |> List.first() |> Map.get(:title) == "cool-pl"

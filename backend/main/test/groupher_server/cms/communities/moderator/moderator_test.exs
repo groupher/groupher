@@ -1,122 +1,24 @@
-defmodule GroupherServer.Test.CMS do
+defmodule GroupherServer.Test.CMS.Communities.Moderator do
   @moduledoc false
-
   use GroupherServer.TestTools
 
-  alias CMS.Model.{Category, CommunityModerator}
+  alias CMS.Model.CommunityModerator
+  alias GroupherServer.CMS.Communities.Passport
   alias Helper.Certification
 
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
-
     {:ok, community} = mock_community(user)
-    {:ok, category} = db_insert(:category)
 
-    {:ok, ~m(user user2 community category)a}
-  end
-
-  describe "[cms category]" do
-    test "create category with valid attrs", ~m(user)a do
-      valid_attrs = mock_attrs(:category, %{user_id: user.id})
-      ~m(title slug)a = valid_attrs
-
-      {:ok, category} = CMS.create_category(~m(title slug)a, user)
-
-      assert category.title == valid_attrs.title
-    end
-
-    test "create category with same title fails", ~m(user)a do
-      valid_attrs = mock_attrs(:category, %{user_id: user.id})
-      ~m(title slug)a = valid_attrs
-
-      assert {:ok, _} = CMS.create_category(~m(title slug)a, user)
-      assert {:error, _} = CMS.create_category(~m(title)a, user)
-    end
-
-    test "update category with valid attrs", ~m(user)a do
-      valid_attrs = mock_attrs(:category, %{user_id: user.id})
-      ~m(title slug)a = valid_attrs
-
-      {:ok, category} = CMS.create_category(~m(title slug)a, user)
-
-      assert category.title == valid_attrs.title
-      {:ok, updated} = CMS.update_category(%Category{id: category.id, title: "new title"})
-
-      assert updated.title == "new title"
-    end
-
-    test "update title to existing title fails", ~m(user)a do
-      valid_attrs = mock_attrs(:category, %{user_id: user.id})
-      ~m(title slug)a = valid_attrs
-
-      {:ok, category} = CMS.create_category(~m(title slug)a, user)
-
-      new_category_attrs = %{title: "category2 title", slug: "category2 title"}
-      {:ok, category2} = CMS.create_category(new_category_attrs, user)
-
-      {:error, _} = CMS.update_category(%Category{id: category.id, title: category2.title})
-    end
-
-    test "can set a category to a community", ~m(community category)a do
-      {:ok, _} = CMS.set_category(community, category)
-
-      {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
-      {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)
-
-      assoc_categories = found_community.categories |> Enum.map(& &1.id)
-      assoc_communities = found_category.communities |> Enum.map(& &1.id)
-
-      assert category.id in assoc_categories
-      assert community.id in assoc_communities
-    end
-
-    test "can unset a category to a community", ~m(community category)a do
-      {:ok, _} = CMS.set_category(community, category)
-      CMS.unset_category(community, category)
-
-      {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
-      {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)
-
-      assoc_categories = found_community.categories |> Enum.map(& &1.id)
-      assoc_communities = found_category.communities |> Enum.map(& &1.id)
-
-      assert category.id not in assoc_categories
-      assert community.id not in assoc_communities
-    end
-  end
-
-  describe "[cms community thread]" do
-    test "can create thread to a community" do
-      title = "OTHER"
-      slug = "other"
-      {:ok, thread} = CMS.create_thread(~m(title slug)a)
-      assert thread.title == title
-    end
-
-    test "create thread with exist title fails" do
-      title = "POST"
-      slug = title
-      {:ok, _} = CMS.create_thread(~m(title slug)a)
-      assert {:error, _error} = CMS.create_thread(~m(title slug)a)
-    end
-
-    test "can set a thread to community", ~m(community)a do
-      title = "POST"
-      slug = title
-
-      {:ok, thread} = CMS.create_thread(~m(title slug)a)
-      {:ok, ret_community} = CMS.set_thread(community, thread)
-
-      assert ret_community.id == community.id
-    end
+    {:ok, ~m(user user2 community)a}
   end
 
   describe "[cms community moderators]" do
     test "should have infinite passport count of root", ~m(user user2 community)a do
       role = "root"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
@@ -136,7 +38,7 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:ok, _} =
-        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
+        CMS.Communities.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
@@ -148,7 +50,7 @@ defmodule GroupherServer.Test.CMS do
          ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
@@ -171,7 +73,7 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:ok, _} =
-        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
+        CMS.Communities.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
@@ -191,7 +93,7 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:ok, _} =
-        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
+        CMS.Communities.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
@@ -202,7 +104,7 @@ defmodule GroupherServer.Test.CMS do
     test "can update passport of community moderator", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
       new_passport_rules = %{
         "#{community.slug}" => %{
@@ -212,9 +114,9 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:ok, _} =
-        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
+        CMS.Communities.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
-      {:ok, passport} = CMS.get_passport(user2)
+      {:ok, passport} = Passport.get_passport(user2)
 
       assert not Map.has_key?(passport, "post.article.delete")
       assert get_in(passport, ["#{community.slug}", "post.tag.edit"])
@@ -223,7 +125,7 @@ defmodule GroupherServer.Test.CMS do
     test "can not update passport of other community moderator", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
       {:ok, other_community} = db_insert(:community)
 
@@ -234,7 +136,7 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:error, reason} =
-        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
+        CMS.Communities.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       assert error_code(reason) == ecode(:passport_community_not_match)
     end
@@ -242,7 +144,7 @@ defmodule GroupherServer.Test.CMS do
     test "can not update multi community passport", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
       {:ok, other_community} = db_insert(:community)
 
@@ -256,7 +158,7 @@ defmodule GroupherServer.Test.CMS do
       }
 
       {:error, reason} =
-        CMS.update_moderator_passport(community, new_passport_rules, user2, cur_user)
+        CMS.Communities.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       assert error_code(reason) == ecode(:one_community_only)
     end
@@ -264,7 +166,7 @@ defmodule GroupherServer.Test.CMS do
     test "can add multi moderators to a community", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
       {:ok, moderators} = CommunityModerator |> ORM.find_all(%{page: 1, size: 10})
 
@@ -282,12 +184,12 @@ defmodule GroupherServer.Test.CMS do
       role = "moderator"
       cur_user = user
 
-      {:ok, _} = CMS.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
       related_rules = Certification.passport_rules(cms: role)
 
       {:ok, moderator} = CommunityModerator |> ORM.find_by(user_id: user2.id)
-      {:ok, user_passport} = CMS.get_passport(user2)
+      {:ok, user_passport} = Passport.get_passport(user2)
 
       assert moderator.user_id == user2.id
       assert moderator.community_id == community.id
@@ -299,10 +201,10 @@ defmodule GroupherServer.Test.CMS do
       role = "moderator"
       cur_user = user
 
-      Enum.each(users, &CMS.add_moderator(community, role, %User{id: &1.id}, cur_user))
+      Enum.each(users, &CMS.Communities.add_moderator(community, role, %User{id: &1.id}, cur_user))
 
       filter = %{page: 1, size: 10}
-      {:ok, results} = CMS.community_members(:moderators, %Community{id: community.id}, filter)
+      {:ok, results} = CMS.Communities.members(:moderators, %Community{id: community.id}, filter)
 
       assert results |> is_valid_pagination?(:raw)
       assert results.total_count == 26

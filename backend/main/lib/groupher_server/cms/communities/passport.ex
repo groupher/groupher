@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.PassportCRUD do
+defmodule GroupherServer.CMS.Communities.Passport do
   @moduledoc """
   passport curd
   """
@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Model.Passport, as: UserPasport
+  alias CMS.Model.Passport, as: UserPassport
 
   # https://medium.com/front-end-hacking/use-github-oauth-as-your-sso-seamlessly-with-react-3e2e3b358fa1
   # http://www.ubazu.com/using-postgres-jsonb-columns-in-ecto
@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
 
   @spec paged_passports(term(), term()) :: T.domain_res(term())
   def paged_passports(community, key) do
-    UserPasport
+    UserPassport
     |> where([p], fragment("(?->?->>?)::boolean = ?", p.rules, ^community, ^key, true))
     |> Repo.all()
     |> done
@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
   @spec get_passport(User.t()) :: T.domain_res(term())
   def get_passport(%User{} = user) do
     with {:ok, _} <- ORM.find(User, user.id) do
-      case ORM.find_by(UserPasport, user_id: user.id) do
+      case ORM.find_by(UserPassport, user_id: user.id) do
         {:ok, passport} ->
           {:ok, passport.rules}
 
@@ -56,20 +56,20 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
   """
   @spec stamp_passport(term(), User.t()) :: T.domain_res(term())
   def stamp_passport(rules, %User{id: user_id}) do
-    case ORM.find_by(UserPasport, user_id: user_id) do
+    case ORM.find_by(UserPassport, user_id: user_id) do
       {:ok, passport} ->
         rules = passport.rules |> deep_merge(rules) |> reject_invalid_rules
         passport |> ORM.update(~m(rules)a)
 
       {:error, _} ->
         rules = rules |> reject_invalid_rules
-        UserPasport |> ORM.create(~m(user_id rules)a)
+        UserPassport |> ORM.create(~m(user_id rules)a)
     end
   end
 
   @spec erase_passport(term(), User.t()) :: T.domain_res(term())
   def erase_passport(rules, %User{id: user_id}) when is_list(rules) do
-    with {:ok, passport} <- ORM.find_by(UserPasport, user_id: user_id) do
+    with {:ok, passport} <- ORM.find_by(UserPassport, user_id: user_id) do
       case pop_in(passport.rules, rules) do
         {nil, _} ->
           {:ok, passport}
@@ -82,7 +82,7 @@ defmodule GroupherServer.CMS.Delegate.PassportCRUD do
 
   @spec delete_passport(User.t()) :: T.domain_res(term())
   def delete_passport(%User{id: user_id}) do
-    ORM.findby_delete!(UserPasport, ~m(user_id)a)
+    ORM.findby_delete!(UserPassport, ~m(user_id)a)
   end
 
   defp reject_invalid_rules(rules) when is_map(rules) do

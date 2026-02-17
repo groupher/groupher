@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
 
     test "mark delete blog should update blog's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
-      {:ok, community} = CMS.create_community(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
       {:ok, blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
 
       {:ok, community} = ORM.find(Community, community.id)
@@ -77,7 +77,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
 
     test "undo mark delete blog should update blog's communities meta count", ~m(user)a do
       community_attrs = mock_attrs(:community)
-      {:ok, community} = CMS.create_community(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
       {:ok, blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
 
       {:ok, _} = CMS.Articles.mark_delete(blog)
