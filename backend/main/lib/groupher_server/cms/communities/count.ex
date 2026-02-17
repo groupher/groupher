@@ -30,8 +30,9 @@ defmodule GroupherServer.CMS.Communities.Count do
         :dec -> (community.meta.moderators_ids -- [user.id]) |> Enum.uniq()
       end
 
-    {:ok, community} = ORM.update_meta(community, %{moderators_ids: moderators_ids})
-    ORM.update(community, %{moderators_count: length(moderators_ids)})
+    with {:ok, community} <- ORM.update_meta(community, %{moderators_ids: moderators_ids}) do
+      ORM.update(community, %{moderators_count: length(moderators_ids)})
+    end
   end
 
   def update(
@@ -47,8 +48,10 @@ defmodule GroupherServer.CMS.Communities.Count do
           :dec -> (community.meta.subscribed_user_ids -- [user.id]) |> Enum.uniq()
         end
 
-      {:ok, community} = ORM.update_meta(community, %{subscribed_user_ids: subscribed_user_ids})
-      ORM.update(community, %{subscribers_count: length(subscribed_user_ids)})
+      with {:ok, community} <-
+             ORM.update_meta(community, %{subscribed_user_ids: subscribed_user_ids}) do
+        ORM.update(community, %{subscribers_count: length(subscribed_user_ids)})
+      end
     end
   end
 

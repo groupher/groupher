@@ -25,9 +25,7 @@ defmodule GroupherServer.CMS.Articles do
 
   # Read
   @spec read(String.t(), T.article_thread(), T.id()) :: T.domain_res(T.article())
-  def read(community_slug, thread, inner_id) do
-    Read.read(community_slug, thread, inner_id)
-  end
+  def read(community_slug, thread, inner_id), do: Read.read(community_slug, thread, inner_id)
 
   @spec read(String.t(), T.article_thread(), T.id(), User.t()) :: T.domain_res(T.article())
   def read(community_slug, thread, inner_id, %User{} = user) do
@@ -37,24 +35,16 @@ defmodule GroupherServer.CMS.Articles do
   # List
 
   @spec paged(T.article_thread(), map()) :: T.domain_res(T.paged_data())
-  def paged(thread, filter) do
-    List.paged(thread, filter)
-  end
+  def paged(thread, filter), do: List.paged(thread, filter)
 
   @spec paged(T.article_thread(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def paged(thread, filter, %User{} = user) do
-    List.paged(thread, filter, user)
-  end
+  def paged(thread, filter, %User{} = user), do: List.paged(thread, filter, user)
 
   @spec grouped_kanban(Community.t()) :: T.domain_res(term())
-  def grouped_kanban(%Community{} = community) do
-    List.grouped_kanban(community)
-  end
+  def grouped_kanban(%Community{} = community), do: List.grouped_kanban(community)
 
   @spec paged_kanban(Community.t(), map()) :: T.domain_res(term())
-  def paged_kanban(%Community{} = community, filter) do
-    List.paged_kanban(community, filter)
-  end
+  def paged_kanban(%Community{} = community, filter), do: List.paged_kanban(community, filter)
 
   @spec paged_published(T.article_thread(), map(), User.t()) :: T.domain_res(T.paged_data())
   def paged_published(thread, filter, %User{} = user) do
@@ -62,9 +52,7 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   @spec paged_citing_contents(atom(), T.id(), map()) :: T.domain_res(T.paged_data())
-  def paged_citing_contents(type, id, filter) do
-    List.paged_citing_contents(type, id, filter)
-  end
+  def paged_citing_contents(type, id, filter), do: List.paged_citing_contents(type, id, filter)
 
   # Write
 
@@ -74,36 +62,24 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   @spec update(T.article(), map()) :: T.domain_res(T.article())
-  def update(article, attrs) do
-    Write.update(article, attrs)
-  end
+  def update(article, attrs), do: Write.update(article, attrs)
 
   # Lifecycle
 
   @spec mark_delete(T.article()) :: T.domain_res(T.article())
-  def mark_delete(article) do
-    Lifecycle.mark_delete(article)
-  end
+  def mark_delete(article), do: Lifecycle.mark_delete(article)
 
   @spec undo_mark_delete(T.article()) :: T.domain_res(T.article())
-  def undo_mark_delete(article) do
-    Lifecycle.undo_mark_delete(article)
-  end
+  def undo_mark_delete(article), do: Lifecycle.undo_mark_delete(article)
 
   @spec delete(T.article()) :: T.domain_res(term())
-  def delete(article) do
-    Lifecycle.delete(article)
-  end
+  def delete(article), do: Lifecycle.delete(article)
 
   @spec delete(T.article(), String.t()) :: T.domain_res(term())
-  def delete(article, reason) do
-    Lifecycle.delete(article, reason)
-  end
+  def delete(article, reason), do: Lifecycle.delete(article, reason)
 
   @spec archive(T.article_thread()) :: T.domain_res(term())
-  def archive(thread) do
-    Lifecycle.archive(thread)
-  end
+  def archive(thread), do: Lifecycle.archive(thread)
 
   @spec batch_mark_delete(String.t(), T.article_thread(), [T.id()]) :: T.domain_res(term())
   def batch_mark_delete(community, thread, id_list) do
@@ -116,26 +92,18 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   @spec sink(T.article()) :: T.domain_res(T.article())
-  def sink(article) do
-    Lifecycle.sink(article)
-  end
+  def sink(article), do: Lifecycle.sink(article)
 
   @spec undo_sink(T.article()) :: T.domain_res(T.article())
-  def undo_sink(article) do
-    Lifecycle.undo_sink(article)
-  end
+  def undo_sink(article), do: Lifecycle.undo_sink(article)
 
   # Meta
 
   @spec set_cat(T.article(), ArticleEnums.cat_enum() | nil) :: T.domain_res(T.article())
-  def set_cat(article, cat) do
-    Meta.set_cat(article, cat)
-  end
+  def set_cat(article, cat), do: Meta.set_cat(article, cat)
 
   @spec set_state(T.article(), ArticleEnums.state_enum() | nil) :: T.domain_res(T.article())
-  def set_state(article, state) do
-    Meta.set_state(article, state)
-  end
+  def set_state(article, state), do: Meta.set_state(article, state)
 
   @spec update_active_timestamp(T.article_thread(), T.article()) :: T.domain_res(T.article())
   def update_active_timestamp(thread, article) do
@@ -145,34 +113,22 @@ defmodule GroupherServer.CMS.Articles do
   # Moderation
 
   @spec set_illegal(T.article_thread(), T.id(), map()) :: T.domain_res(T.article())
-  def set_illegal(thread, id, attrs) do
-    Moderation.set_illegal(thread, id, attrs)
-  end
+  def set_illegal(thread, id, attrs), do: Moderation.set_illegal(thread, id, attrs)
 
   @spec set_illegal(T.article(), map()) :: T.domain_res(T.article())
-  def set_illegal(article, attrs) do
-    Moderation.set_illegal(article, attrs)
-  end
+  def set_illegal(article, attrs), do: Moderation.set_illegal(article, attrs)
 
   @spec unset_illegal(T.article_thread(), T.id(), map()) :: T.domain_res(T.article())
-  def unset_illegal(thread, id, attrs) do
-    Moderation.unset_illegal(thread, id, attrs)
-  end
+  def unset_illegal(thread, id, attrs), do: Moderation.unset_illegal(thread, id, attrs)
 
   @spec unset_illegal(T.article(), map()) :: T.domain_res(T.article())
-  def unset_illegal(article, attrs) do
-    Moderation.unset_illegal(article, attrs)
-  end
+  def unset_illegal(article, attrs), do: Moderation.unset_illegal(article, attrs)
 
   @spec set_audit_failed(T.article(), integer()) :: T.domain_res(T.article())
-  def set_audit_failed(article, state) do
-    Moderation.set_audit_failed(article, state)
-  end
+  def set_audit_failed(article, state), do: Moderation.set_audit_failed(article, state)
 
   @spec paged_audit_failed(T.article_thread(), map()) :: T.domain_res(T.paged_data())
-  def paged_audit_failed(thread, filter) do
-    Moderation.paged_audit_failed(thread, filter)
-  end
+  def paged_audit_failed(thread, filter), do: Moderation.paged_audit_failed(thread, filter)
 
   # Placement
 
@@ -222,9 +178,7 @@ defmodule GroupherServer.CMS.Articles do
   # Reactions
 
   @spec emotion(T.article(), atom(), User.t()) :: T.domain_res(T.article())
-  def emotion(article, emotion, %User{} = user) do
-    Reactions.emotion(article, emotion, user)
-  end
+  def emotion(article, emotion, %User{} = user), do: Reactions.emotion(article, emotion, user)
 
   @spec undo_emotion(T.article(), atom(), User.t()) :: T.domain_res(T.article())
   def undo_emotion(article, emotion, %User{} = user) do
@@ -234,46 +188,30 @@ defmodule GroupherServer.CMS.Articles do
   # Upvotes
 
   @spec upvote(T.article(), User.t()) :: T.domain_res(T.article())
-  def upvote(article, %User{} = user) do
-    Upvotes.upvote(article, user)
-  end
+  def upvote(article, %User{} = user), do: Upvotes.upvote(article, user)
 
   @spec undo_upvote(T.article(), User.t()) :: T.domain_res(T.article())
-  def undo_upvote(article, %User{} = user) do
-    Upvotes.undo_upvote(article, user)
-  end
+  def undo_upvote(article, %User{} = user), do: Upvotes.undo_upvote(article, user)
 
   @spec upvoted_users(T.article(), map()) :: T.domain_res(T.paged_users() | T.paged_data())
-  def upvoted_users(article, filter) do
-    Upvotes.upvoted_users(article, filter)
-  end
+  def upvoted_users(article, filter), do: Upvotes.upvoted_users(article, filter)
 
   # Collects
 
   @spec collect(T.article(), User.t()) :: T.domain_res(T.article())
-  def collect(article, %User{} = user) do
-    Collects.collect(article, user)
-  end
+  def collect(article, %User{} = user), do: Collects.collect(article, user)
 
   @spec collect_ifneed(T.article(), User.t()) :: T.domain_res(T.article())
-  def collect_ifneed(article, %User{} = user) do
-    Collects.collect_ifneed(article, user)
-  end
+  def collect_ifneed(article, %User{} = user), do: Collects.collect_ifneed(article, user)
 
   @spec undo_collect(T.article(), User.t()) :: T.domain_res(T.article())
-  def undo_collect(article, %User{} = user) do
-    Collects.undo_collect(article, user)
-  end
+  def undo_collect(article, %User{} = user), do: Collects.undo_collect(article, user)
 
   @spec undo_collect_ifneed(T.article(), User.t()) :: T.domain_res(T.article())
-  def undo_collect_ifneed(article, %User{} = user) do
-    Collects.undo_collect_ifneed(article, user)
-  end
+  def undo_collect_ifneed(article, %User{} = user), do: Collects.undo_collect_ifneed(article, user)
 
   @spec collected_users(T.article(), map()) :: T.domain_res(T.paged_users() | T.paged_data())
-  def collected_users(article, filter) do
-    Collects.collected_users(article, filter)
-  end
+  def collected_users(article, filter), do: Collects.collected_users(article, filter)
 
   @spec set_collect_folder(ArticleCollect.t(), term()) :: T.domain_res(ArticleCollect.t())
   def set_collect_folder(%ArticleCollect{} = collect, folder) do

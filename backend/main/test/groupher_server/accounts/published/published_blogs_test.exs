@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.Accounts.Published.Blog do
         acc ++ [blog]
       end)
 
-      {:ok, results} = Accounts.paged_published_articles(user, :blog, %{page: 1, size: 20})
+      {:ok, results} = Accounts.paged_published_articles(user, :blog, %{page: 1, size: 30})
 
       assert results |> is_valid_pagination?(:raw)
       assert results.total_count == @publish_count * 2 + 1
