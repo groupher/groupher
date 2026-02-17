@@ -3,8 +3,6 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   Moderator helpers for communities.
   """
 
-  import Helper.Utils, only: [done: 1]
-
   alias Helper.{Certification, ORM, Transaction}
   alias Helper.Types, as: T
   alias GroupherServer.{Repo, CMS}
@@ -13,6 +11,10 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   alias GroupherServer.CMS.Model.{Community, CommunityModerator}
   alias CMS.Delegate.PassportCRUD
   alias Ecto.Multi
+
+
+
+
 
   @doc """
   set a community moderator

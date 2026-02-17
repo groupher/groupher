@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   Count helpers for communities.
   """
   import Ecto.Query, only: [from: 2, where: 3]
-  import Helper.Utils, only: [done: 1, get_config: 2, plural: 1]
+  import Helper.Utils, only: [done: 1, get_config: 2, plural: 1, strip_struct: 1]
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
 

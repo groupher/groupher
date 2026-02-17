@@ -559,7 +559,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, user2_passport} = CMS.get_passport(%User{id: user2.id})
       assert get_in(user2_passport, ["#{community.slug}", "post.tag.edit"])
 
-      assert result["moderators"] |> List.first() |> get_in(["passportItemCount"]) == 3
+      moderator = Enum.find(result["moderators"], &(&1["user"]["login"] == user2.login))
+      assert moderator["passportItemCount"] == 3
     end
 
     test "unauth user add moderator fails", ~m(user_conn guest_conn user community)a do

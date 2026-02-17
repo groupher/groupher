@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
   Subscribe helpers for communities.
   """
 
-  import Helper.Utils, only: [done: 1]
+
 
   alias Helper.ORM
   alias Helper.Types, as: T

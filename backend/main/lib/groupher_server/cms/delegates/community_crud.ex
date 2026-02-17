@@ -5,8 +5,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   alias GroupherServer.CMS.Communities
 
   defdelegate read_community(slug), to: Communities.Read, as: :read
-  defdelegate read_community(slug, opt), to: Communities.Read, as: :read
-  defdelegate read_community(slug, user), to: Communities.Read, as: :read
+  defdelegate read_community(slug, opt_or_user), to: Communities.Read, as: :read
   defdelegate read_community(slug, user, opt), to: Communities.Read, as: :read
 
   defdelegate paged_communities(filter), to: Communities.List, as: :paged
@@ -26,8 +25,7 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   defdelegate deny_community_apply(id), to: Communities.Apply, as: :deny
 
   defdelegate update_community_count_field(community, user, type, opt), to: Communities.Count, as: :update
-  defdelegate update_community_count_field(community, type), to: Communities.Count, as: :update
-  defdelegate update_community_count_field(communities, thread), to: Communities.Count, as: :update
+  defdelegate update_community_count_field(community_or_list, type), to: Communities.Count, as: :update
   defdelegate update_community_inner_id(community, thread, inner_id), to: Communities.Count, as: :update_inner_id
 
   defdelegate community_members(type, community, filters), to: Communities.Members, as: :members
