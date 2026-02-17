@@ -16,11 +16,10 @@ defmodule GroupherServer.CMS.Communities do
     Members,
     Moderator,
     Subscribe,
-    Count
+    Count,
+    Categories,
+    Threads
   }
-
-  alias __MODULE__.Category, as: CategoryOp
-  alias __MODULE__.Thread, as: ThreadOp
 
   # Read
   @spec read(String.t()) :: T.domain_res(Community.t())
@@ -43,7 +42,7 @@ defmodule GroupherServer.CMS.Communities do
     Read.read(slug, user, opt)
   end
 
-  @spec exist?(String.t()) :: T.domain_res(term())
+  @spec exist?(String.t()) :: T.domain_res(%{exist: boolean()})
   def exist?(slug) do
     Read.exist?(slug)
   end
@@ -70,7 +69,7 @@ defmodule GroupherServer.CMS.Communities do
     Write.update(community, args)
   end
 
-  @spec delete(String.t() | Community.t()) :: T.domain_res(term())
+  @spec delete(String.t() | Community.t()) :: T.domain_res(Community.t())
   def delete(community) do
     Write.delete(community)
   end
@@ -97,7 +96,7 @@ defmodule GroupherServer.CMS.Communities do
     Apply.deny(id)
   end
 
-  @spec has_pending_apply?(User.t()) :: T.domain_res(term())
+  @spec has_pending_apply?(User.t()) :: T.domain_res(%{exist: boolean()})
   def has_pending_apply?(%User{} = user) do
     Apply.has_pending?(user)
   end
@@ -116,42 +115,42 @@ defmodule GroupherServer.CMS.Communities do
   # Category
   @spec create_category(map(), User.t()) :: T.domain_res(Category.t())
   def create_category(attrs, %User{} = user) do
-    CategoryOp.create(attrs, user)
+    Categories.create(attrs, user)
   end
 
   @spec update_category(map()) :: T.domain_res(Category.t())
   def update_category(attrs) do
-    CategoryOp.update(attrs)
+    Categories.update(attrs)
   end
 
   @spec set_category(Community.t(), Category.t()) :: T.domain_res(Community.t())
   def set_category(%Community{} = community, %Category{} = category) do
-    CategoryOp.set(community, category)
+    Categories.set(community, category)
   end
 
   @spec unset_category(Community.t(), Category.t()) :: T.domain_res(Community.t())
   def unset_category(%Community{} = community, %Category{} = category) do
-    CategoryOp.unset(community, category)
+    Categories.unset(community, category)
   end
 
   # Thread
   @spec create_thread(map()) :: T.domain_res(Thread.t())
   def create_thread(attrs) do
-    ThreadOp.create(attrs)
+    Threads.create(attrs)
   end
 
   @spec set_thread(Community.t(), Thread.t()) :: T.domain_res(Community.t())
   def set_thread(%Community{} = community, %Thread{} = thread) do
-    ThreadOp.set(community, thread)
+    Threads.set(community, thread)
   end
 
   @spec unset_thread(Community.t(), Thread.t()) :: T.domain_res(Community.t())
   def unset_thread(%Community{} = community, %Thread{} = thread) do
-    ThreadOp.unset(community, thread)
+    Threads.unset(community, thread)
   end
 
   # Moderator
-  @spec add_moderator(Community.t(), term(), User.t(), User.t()) :: T.domain_res(Community.t())
+  @spec add_moderator(Community.t(), String.t(), User.t(), User.t()) :: T.domain_res(Community.t())
   def add_moderator(%Community{} = community, role, %User{} = target_user, %User{} = cur_user) do
     Moderator.add(community, role, target_user, cur_user)
   end
@@ -162,7 +161,7 @@ defmodule GroupherServer.CMS.Communities do
     Moderator.remove(community, target_user, cur_user)
   end
 
-  @spec update_moderator_passport(String.t() | Community.t(), term(), User.t(), User.t()) ::
+  @spec update_moderator_passport(String.t() | Community.t(), map(), User.t(), User.t()) ::
           T.domain_res(Community.t())
   def update_moderator_passport(community, rules, %User{} = target_user, %User{} = cur_user) do
     Moderator.update_passport(community, rules, target_user, cur_user)

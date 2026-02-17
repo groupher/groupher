@@ -2,7 +2,6 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   @moduledoc """
   Dashboard helpers for communities.
   """
-  import ShortMaps
 
   alias Helper.{ORM, OSS}
   alias Helper.Types, as: T
@@ -13,7 +12,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   @doc """
   update dashboard settings of a community
   """
-  @spec update(Community.t(), atom(), map()) :: T.domain_res(term())
+  @spec update(Community.t(), atom(), map()) :: T.domain_res(Community.t())
   def update(%Community{} = community, :base_info, args) do
     main_fields =
       Map.take(args, [:title, :locale, :desc, :logo, :favicon, :slug, :homepage])

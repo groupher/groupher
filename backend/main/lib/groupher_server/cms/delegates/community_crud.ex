@@ -31,10 +31,10 @@ defmodule GroupherServer.CMS.Delegate.CommunityCRUD do
   defdelegate community_members(type, community, filters), to: Communities.Members, as: :members
   defdelegate community_members(type, community, filters, user), to: Communities.Members, as: :members
 
-  defdelegate create_category(attrs, user), to: Communities.Category, as: :create
-  defdelegate update_category(attrs), to: Communities.Category, as: :update
+  defdelegate create_category(attrs, user), to: Communities.Categories, as: :create
+  defdelegate update_category(attrs), to: Communities.Categories, as: :update
 
-  defdelegate create_thread(attrs), to: Communities.Thread, as: :create
+  defdelegate create_thread(attrs), to: Communities.Threads, as: :create
 
   defdelegate count(community, type), to: Communities.Count
 end

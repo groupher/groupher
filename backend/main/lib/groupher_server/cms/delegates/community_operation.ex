@@ -4,11 +4,11 @@ defmodule GroupherServer.CMS.Delegate.CommunityOperation do
   """
   alias GroupherServer.CMS.Communities
 
-  defdelegate set_category(community, category), to: Communities.Category, as: :set
-  defdelegate unset_category(community, category), to: Communities.Category, as: :unset
+  defdelegate set_category(community, category), to: Communities.Categories, as: :set
+  defdelegate unset_category(community, category), to: Communities.Categories, as: :unset
 
-  defdelegate set_thread(community, thread), to: Communities.Thread, as: :set
-  defdelegate unset_thread(community, thread), to: Communities.Thread, as: :unset
+  defdelegate set_thread(community, thread), to: Communities.Threads, as: :set
+  defdelegate unset_thread(community, thread), to: Communities.Threads, as: :unset
 
   defdelegate add_moderator(community, role, target_user, cur_user), to: Communities.Moderator, as: :add
   defdelegate remove_moderator(community, target_user, cur_user), to: Communities.Moderator, as: :remove

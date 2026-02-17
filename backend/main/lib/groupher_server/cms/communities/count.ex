@@ -3,9 +3,8 @@ defmodule GroupherServer.CMS.Communities.Count do
   Count helpers for communities.
   """
   import Ecto.Query, only: [from: 2, where: 3]
-  import Helper.Utils, only: [done: 1, get_config: 2, plural: 1, strip_struct: 1]
+  import Helper.Utils, only: [get_config: 2, plural: 1, strip_struct: 1]
   import GroupherServer.CMS.Helper.Matcher
-  import ShortMaps
 
   alias Helper.{ORM, Transaction, Constant}
   alias Helper.Types, as: T
@@ -18,7 +17,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   @doc """
   update article_tags_count / thread / article_count / subscribers_count of a community
   """
-  @spec update(Community.t(), User.t(), atom(), atom()) :: T.domain_res(term())
+  @spec update(Community.t(), User.t(), atom(), atom()) :: T.domain_res(Community.t())
   def update(
         %Community{} = community,
         %User{} = user,
@@ -53,7 +52,7 @@ defmodule GroupherServer.CMS.Communities.Count do
     end
   end
 
-  @spec update(Community.t(), atom()) :: T.domain_res(term())
+  @spec update(Community.t(), atom()) :: T.domain_res(Community.t())
   def update(%Community{} = community, :article_tags_count) do
     {:ok, article_tags_count} =
       from(t in ArticleTag, where: t.community_id == ^community.id) |> ORM.count()
@@ -63,7 +62,7 @@ defmodule GroupherServer.CMS.Communities.Count do
     |> Repo.update()
   end
 
-  @spec update([Community.t()], atom()) :: T.domain_res(term())
+  @spec update([Community.t()], atom()) :: T.domain_res(atom())
   def update(communities, thread) when is_list(communities) do
     case Enum.all?(Enum.uniq(communities), &({:ok, _} = update(&1, thread))) do
       true -> {:ok, :pass}
@@ -71,7 +70,7 @@ defmodule GroupherServer.CMS.Communities.Count do
     end
   end
 
-  @spec update(Community.t(), atom()) :: T.domain_res(term())
+  @spec update(Community.t(), atom()) :: T.domain_res(Community.t())
   def update(%Community{} = community, thread) do
     with {:ok, info} <- match(thread) do
       {:ok, thread_article_count} =
@@ -90,7 +89,7 @@ defmodule GroupherServer.CMS.Communities.Count do
     end
   end
 
-  @spec update_inner_id(Community.t(), atom(), map()) :: T.domain_res(term())
+  @spec update_inner_id(Community.t(), atom(), map()) :: T.domain_res(Community.t())
   def update_inner_id(
         %Community{meta: community_meta} = community,
         thread,
@@ -103,7 +102,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   end
 
   @doc "count items in community"
-  @spec count(Community.t(), atom()) :: T.domain_res(term())
+  @spec count(Community.t(), atom()) :: T.domain_res(integer())
   def count(community, type)
 
   def count(%Community{id: id}, :threads) do

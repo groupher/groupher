@@ -22,20 +22,21 @@ defmodule GroupherServer.CMS.Communities.Write do
   @doc """
   create a community
   """
-  @spec create(map(), User.t()) :: T.domain_res(term())
+  @spec create(map(), User.t()) :: T.domain_res(Community.t())
   def create(args, %User{} = user) do
     with {:ok, community} <- do_create(args, user),
-         {:ok, _} <- init_community_root(community, user),
-         {:ok, threads} = create_default_threads_ifneed() do
+         {:ok, _} <- init_community_root(community, user) do
+      {:ok, threads} = create_default_threads_ifneed()
+
       Enum.each(threads, fn thread ->
-        Communities.Thread.set(community, thread)
+        Communities.Threads.set(community, thread)
       end)
 
       Communities.Read.read(community.slug, inc_views: false)
     end
   end
 
-  @spec delete(String.t() | Community.t()) :: T.domain_res(term())
+  @spec delete(String.t() | Community.t()) :: T.domain_res(Community.t())
   def delete(community) do
     with {:ok, community} <- ORM.find_by(Community, slug: community) do
       community |> ORM.delete()
@@ -45,7 +46,7 @@ defmodule GroupherServer.CMS.Communities.Write do
   @doc """
   update community
   """
-  @spec update(Community.t(), map()) :: T.domain_res(term())
+  @spec update(Community.t(), map()) :: T.domain_res(Community.t())
   def update(%Community{} = community, args) do
     with {:ok, community} <- ORM.fill_meta(community) do
       ORM.update(community, args)
@@ -74,7 +75,7 @@ defmodule GroupherServer.CMS.Communities.Write do
 
       case ORM.find_by(Thread, slug: slug) do
         {:ok, _} -> {:ok, :pass}
-        {:error, _} -> Communities.Thread.create(~m(title slug index)a)
+        {:error, _} -> Communities.Threads.create(~m(title slug index)a)
       end
     end)
 

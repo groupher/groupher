@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.Thread do
+defmodule GroupherServer.CMS.Communities.Threads do
   @moduledoc """
   Thread helpers for communities.
   """

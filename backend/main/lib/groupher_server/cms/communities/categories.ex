@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.Category do
+defmodule GroupherServer.CMS.Communities.Categories do
   @moduledoc """
   Category helpers for communities.
   """
