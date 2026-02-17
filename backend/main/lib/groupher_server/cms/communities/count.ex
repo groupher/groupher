@@ -24,14 +24,16 @@ defmodule GroupherServer.CMS.Communities.Count do
         :moderators_count,
         opt
       ) do
-    moderators_ids =
-      case opt do
-        :inc -> (community.meta.moderators_ids ++ [user.id]) |> Enum.uniq()
-        :dec -> (community.meta.moderators_ids -- [user.id]) |> Enum.uniq()
-      end
+    with {:ok, community} <- ORM.fill_meta(community) do
+      moderators_ids =
+        case opt do
+          :inc -> (community.meta.moderators_ids ++ [user.id]) |> Enum.uniq()
+          :dec -> (community.meta.moderators_ids -- [user.id]) |> Enum.uniq()
+        end
 
-    with {:ok, community} <- ORM.update_meta(community, %{moderators_ids: moderators_ids}) do
-      ORM.update(community, %{moderators_count: length(moderators_ids)})
+      with {:ok, community} <- ORM.update_meta(community, %{moderators_ids: moderators_ids}) do
+        ORM.update(community, %{moderators_count: length(moderators_ids)})
+      end
     end
   end
 
@@ -86,8 +88,9 @@ defmodule GroupherServer.CMS.Communities.Count do
       meta = Map.put(community.meta, :"#{plural(thread)}_count", thread_article_count)
 
       Transaction.locking(community, fn community ->
-        {:ok, community} = ORM.update_meta(community, meta)
-        ORM.update(community, %{articles_count: recount_articles_count(community.meta)})
+        with {:ok, community} <- ORM.update_meta(community, meta) do
+          ORM.update(community, %{articles_count: recount_articles_count(community.meta)})
+        end
       end)
     end
   end
