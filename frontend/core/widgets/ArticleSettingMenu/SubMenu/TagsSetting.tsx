@@ -28,7 +28,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   const { article } = useViewingArticle()
 
   const [result] = useQuery({
-    query: S.pagedArticleTags,
+    query: S.pagedCommunityTags,
     variables: {
       filter: {
         community,
@@ -39,7 +39,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   })
   const [updatePostRes, updatePost] = useMutation(S.updatePost)
 
-  const tags = result.data?.pagedArticleTags?.entries || []
+  const tags = result.data?.pagedCommunityTags?.entries || []
 
   useEffect(() => {
     setChecked(article.articleTags.map((item) => item.id))
@@ -53,7 +53,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   }
 
   const handleUpdate = () => {
-    const params = { id: article.id, articleTags: checked }
+    const params = { id: article.id, communityTags: checked }
     updatePost(params).then((result) => {
       if (result.error) {
         toast('修改失败', 'error')

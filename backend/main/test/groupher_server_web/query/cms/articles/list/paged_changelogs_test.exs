@@ -135,8 +135,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, article_tag} = CMS.create_community_tag(community, :changelog, article_tag_attrs, user)
-      {:ok, _} = CMS.set_community_tag(changelog, article_tag.id)
+      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, _} = GroupherServer.CMS.Communities.set_tag(changelog, article_tag.id)
 
       variables = %{filter: %{page: 1, size: 10, community_tag: article_tag.slug}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)

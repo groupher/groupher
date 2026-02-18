@@ -25,12 +25,12 @@ const getArticleFreshSchema = () => {
   `
 }
 
-const pagedArticleTags = gql`
-  ${P.pagedArticleTags}
+const pagedCommunityTags = gql`
+  ${P.pagedCommunityTags}
 `
 
 const schema = {
-  pagedArticleTags,
+  pagedCommunityTags,
   getPagedArticlesSchema,
   getArticleFreshSchema,
   getUpvote: F.getUpvote,

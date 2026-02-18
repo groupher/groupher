@@ -85,7 +85,7 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
   cacheLife('days')
   cacheTag(CACHE_TAG.tagsCache(community, thread))
 
-  const response = await gqFetch(P.pagedArticleTags, { community, thread })
+  const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread } })
 
   const { data, errors } = await response.json()
   if (errors) {
@@ -94,7 +94,7 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
     return []
   }
 
-  return data.pagedArticleTags.entries
+  return data.pagedCommunityTags.entries
 }
 
 export const getPost = async (community: string, id: string): Promise<TPost | null> => {

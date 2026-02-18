@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
     test "create changelog with valid tags id list", ~m(user_conn user community)a do
       article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, article_tag} = CMS.create_community_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
 
       changelog_attr = mock_attrs(:changelog)
 
@@ -166,7 +166,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, article_tag} = CMS.create_community_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
 
       variables = %{
         id: changelog.inner_id,
@@ -193,13 +193,13 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       article_tag_attrs2 = mock_attrs(:community_tag)
       article_tag_attrs3 = mock_attrs(:community_tag)
 
-      {:ok, article_tag} = CMS.create_community_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
 
       {:ok, article_tag2} =
-        CMS.create_community_tag(community, :changelog, article_tag_attrs2, user)
+        GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs2, user)
 
       {:ok, article_tag3} =
-        CMS.create_community_tag(community, :changelog, article_tag_attrs3, user)
+        GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs3, user)
 
       variables = %{
         id: changelog.inner_id,

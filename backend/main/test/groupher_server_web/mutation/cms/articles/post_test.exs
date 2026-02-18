@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
     test "create post with valid tags id list", ~m(user_conn user community)a do
       article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, article_tag} = CMS.create_community_tag(community, :post, article_tag_attrs, user)
+      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
 
       post_attr = mock_attrs(:post)
 
@@ -159,7 +159,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, article_tag} = CMS.create_community_tag(community, :post, article_tag_attrs, user)
+      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
 
       variables = %{
         id: post.inner_id,
@@ -188,9 +188,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       article_tag_attrs2 = mock_attrs(:community_tag)
       article_tag_attrs3 = mock_attrs(:community_tag)
 
-      {:ok, article_tag} = CMS.create_community_tag(community, :post, article_tag_attrs, user)
-      {:ok, article_tag2} = CMS.create_community_tag(community, :post, article_tag_attrs2, user)
-      {:ok, article_tag3} = CMS.create_community_tag(community, :post, article_tag_attrs3, user)
+      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, article_tag2} = GroupherServer.CMS.Communities.create_tag(community, :post, article_tag_attrs2, user)
+      {:ok, article_tag3} = GroupherServer.CMS.Communities.create_tag(community, :post, article_tag_attrs3, user)
 
       variables = %{
         id: post.inner_id,

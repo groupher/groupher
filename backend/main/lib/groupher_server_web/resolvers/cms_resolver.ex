@@ -283,31 +283,31 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def create_community_tag(_root, %{thread: thread, community: community} = args, %{
         context: %{cur_user: user}
       }) do
-    CMS.create_community_tag(%Community{slug: community}, thread, args, user)
+    GroupherServer.CMS.Communities.create_tag(%Community{slug: community}, thread, args, user)
   end
 
   def update_community_tag(_root, %{id: id} = args, _info) do
-    CMS.update_community_tag(id, args)
+    GroupherServer.CMS.Communities.update_tag(id, args)
   end
 
   def delete_community_tag(_root, %{id: id}, _info) do
-    CMS.delete_community_tag(id)
+    GroupherServer.CMS.Communities.delete_tag(id)
   end
 
   def set_community_tag(_root, ~m(article community_tag_id)a, _info) do
-    CMS.set_community_tag(article, community_tag_id)
+    GroupherServer.CMS.Communities.set_tag(article, community_tag_id)
   end
 
   def unset_community_tag(_root, ~m(article community_tag_id)a, _info) do
-    CMS.unset_community_tag(article, community_tag_id)
+    GroupherServer.CMS.Communities.unset_tag(article, community_tag_id)
   end
 
   def paged_community_tags(_root, %{filter: filter}, _info) do
-    CMS.paged_community_tags(filter)
+    GroupherServer.CMS.Communities.paged_tags(filter)
   end
 
   def reindex_community_tags(_root, ~m(community thread group tags)a, _info) do
-    CMS.reindex_community_tags(community, thread, group, tags)
+    GroupherServer.CMS.Communities.reindex_tags(community, thread, group, tags)
 
     {:ok, %{done: true}}
   end

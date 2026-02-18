@@ -112,7 +112,7 @@ export default (): TRet => {
     const baseFields = ['title', 'body', 'copyRight', 'isQuestion', 'linkAddr']
 
     // @ts-expect-error
-    return { ...pick(baseFields, snap), articleTags: tagsIds }
+    return { ...pick(baseFields, snap), communityTags: tagsIds }
   }, [snap.articleTags, snap])
 
   const catOnChange = (activeCat: TArticleCat): void => store.commit({ activeCat })

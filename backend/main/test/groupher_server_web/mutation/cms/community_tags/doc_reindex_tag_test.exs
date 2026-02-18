@@ -30,10 +30,10 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocReindexTag do
     test "auth user can reindex tags in given group", ~m(community community_tag_attrs user)a do
       attrs = Map.merge(community_tag_attrs, %{group: "group1"})
 
-      {:ok, community_tag1} = CMS.create_community_tag(community, :doc, attrs, user)
-      {:ok, community_tag2} = CMS.create_community_tag(community, :doc, attrs, user)
-      {:ok, community_tag3} = CMS.create_community_tag(community, :doc, attrs, user)
-      {:ok, community_tag4} = CMS.create_community_tag(community, :doc, attrs, user)
+      {:ok, community_tag1} = GroupherServer.CMS.Communities.create_tag(community, :doc, attrs, user)
+      {:ok, community_tag2} = GroupherServer.CMS.Communities.create_tag(community, :doc, attrs, user)
+      {:ok, community_tag3} = GroupherServer.CMS.Communities.create_tag(community, :doc, attrs, user)
+      {:ok, community_tag4} = GroupherServer.CMS.Communities.create_tag(community, :doc, attrs, user)
 
       passport_rules = %{community.title => %{"doc.community_tag.update" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)

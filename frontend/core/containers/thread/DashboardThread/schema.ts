@@ -233,9 +233,9 @@ const updateDashboardNameAlias = gql`
   }
 `
 
-const pagedArticleTags = gql`
-  query ($filter: ArticleTagsFilter) {
-    pagedArticleTags(filter: $filter) {
+const pagedCommunityTags = gql`
+  query ($filter: CommunityTagsFilter) {
+    pagedCommunityTags(filter: $filter) {
       entries {
         ${F.tag}
       }
@@ -243,7 +243,6 @@ const pagedArticleTags = gql`
     }
   }
 `
-
 const updateArticleTag = gql`
   mutation (
     $id: ID!
@@ -372,7 +371,7 @@ const schema = {
   updateDashboardBaseInfo,
   updateDashboardMediaReports,
   updateDashboardSeo,
-  pagedArticleTags,
+  pagedCommunityTags,
   updateDashboardEnable,
   updateDashboardLayout,
   updateDashboardSocialLinks,

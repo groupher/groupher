@@ -3,8 +3,8 @@ import { gql } from 'urql'
 import { F } from '~/schemas'
 
 const updatePost = gql`
-  mutation ($id: ID!, $title: String, $body: String, $articleTags: [ID]) {
-    updatePost(id: $id, title: $title, body: $body, articleTags: $articleTags) {
+  mutation ($id: ID!, $title: String, $body: String, $communityTags: [ID]) {
+    updatePost(id: $id, title: $title, body: $body, communityTags: $communityTags) {
       id
       title
       articleTags {
@@ -47,9 +47,9 @@ const undoPinPost = gql`
   }
 `
 
-const pagedArticleTags = gql`
-  query ($filter: ArticleTagsFilter) {
-    pagedArticleTags(filter: $filter) {
+const pagedCommunityTags = gql`
+  query ($filter: CommunityTagsFilter) {
+    pagedCommunityTags(filter: $filter) {
       entries {
         ${F.tag}
       }
@@ -63,7 +63,7 @@ const schema = {
   setPostState,
   pinPost,
   undoPinPost,
-  pagedArticleTags,
+  pagedCommunityTags,
 }
 
 export default schema

@@ -204,7 +204,7 @@ export const getPagedTags = async (
 
   //  if (!hasArticles(thread)) return null
 
-  const response = await gqFetch(P.pagedArticleTags, { community, thread })
+  const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread } })
 
   const { data, errors } = await response.json()
 
@@ -213,5 +213,5 @@ export const getPagedTags = async (
     return null
   }
 
-  return data[extractQueryName(P.pagedArticleTags)]
+  return data[extractQueryName(P.pagedCommunityTags)]
 }

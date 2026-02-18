@@ -17,20 +17,11 @@ defmodule GroupherServer.CMS do
     ThirdPart
   }
 
-  alias GroupherServer.CMS.Communities
-
   # do not pattern match in delegating func, do it on one delegating inside
   # see https://github.com/elixir-lang/elixir/issues/5306
 
   # Community CRUD: moderators, thread, tag
   # >> tag
-  defdelegate create_community_tag(community, thread, attrs, user), to: Communities, as: :create_tag
-  defdelegate update_community_tag(tag_id, attrs), to: Communities, as: :update_tag
-  defdelegate delete_community_tag(tag_id), to: Communities, as: :delete_tag
-  defdelegate set_community_tag(article, tag_id), to: Communities, as: :set_tag
-  defdelegate unset_community_tag(article, tag_id), to: Communities, as: :unset_tag
-  defdelegate paged_community_tags(filter), to: Communities, as: :paged_tags
-  defdelegate reindex_community_tags(community, thread, group, tags), to: Communities, as: :reindex_tags
 
   # CommunityOperation
 

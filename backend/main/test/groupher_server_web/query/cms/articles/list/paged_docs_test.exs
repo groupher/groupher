@@ -134,8 +134,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, article_tag} = CMS.create_community_tag(community, :doc, article_tag_attrs, user)
-      {:ok, _} = CMS.set_community_tag(doc, article_tag.id)
+      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :doc, article_tag_attrs, user)
+      {:ok, _} = GroupherServer.CMS.Communities.set_tag(doc, article_tag.id)
 
       variables = %{filter: %{page: 1, size: 10, community_tag: article_tag.slug}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)

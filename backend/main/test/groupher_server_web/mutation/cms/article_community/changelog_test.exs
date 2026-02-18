@@ -185,7 +185,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       article_tag_attrs = mock_attrs(:community_tag)
       {:ok, user} = db_insert(:user)
-      {:ok, article_tag} = CMS.create_community_tag(community2, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community2, :changelog, article_tag_attrs, user)
 
       variables = %{
         id: changelog.inner_id,
