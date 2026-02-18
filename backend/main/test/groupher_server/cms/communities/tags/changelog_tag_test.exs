@@ -18,7 +18,9 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
 
   describe "[changelog tag CRUD]" do
     test "create article tag with valid data", ~m(community article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+
       assert article_tag.title == article_tag_attrs.title
       assert article_tag.group == article_tag_attrs.group
     end
@@ -32,7 +34,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
     end
 
     test "can update an article tag", ~m(community article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
 
       new_attrs = article_tag_attrs |> Map.merge(%{title: "new title"})
 
@@ -51,7 +54,9 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
     end
 
     test "tag can be deleted", ~m(community article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+
       {:ok, article_tag} = ORM.find(CommunityTag, article_tag.id)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag.id)
@@ -61,7 +66,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
 
     test "assoc tag should be delete after tag deleted",
          ~m(community changelog article_tag_attrs article_tag_attrs2 user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
 
       {:ok, article_tag2} =
         CMS.Communities.create_tag(community, :changelog, article_tag_attrs2, user)
@@ -88,9 +94,10 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
   end
 
   describe "[create/update changelog with tags]" do
-    test "can create changelog with existed article tags",
+    test "can create changelog with existed community tags",
          ~m(community user changelog_attrs article_tag_attrs article_tag_attrs2)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
 
       {:ok, article_tag2} =
         CMS.Communities.create_tag(community, :changelog, article_tag_attrs2, user)
@@ -105,10 +112,12 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       assert exist_in?(article_tag2, changelog.community_tags)
     end
 
-    test "can not create changelog with other community's article tags",
+    test "can not create changelog with other community's community tags",
          ~m(community user changelog_attrs article_tag_attrs article_tag_attrs2)a do
       {:ok, community2} = db_insert(:community)
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
 
       {:ok, article_tag2} =
         CMS.Communities.create_tag(community2, :changelog, article_tag_attrs2, user)
@@ -123,7 +132,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
 
   describe "[changelog tag set /unset]" do
     test "can set a tag ", ~m(community changelog article_tag_attrs article_tag_attrs2 user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
 
       {:ok, article_tag2} =
         CMS.Communities.create_tag(community, :changelog, article_tag_attrs2, user)
@@ -149,7 +159,9 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
     end
 
     test "can not set dup tag ", ~m(community changelog article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+
       {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
       {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
 

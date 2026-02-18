@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
   @moduledoc false
 
   use GroupherServer.TestTools
+  alias GroupherServer.CMS
 
   setup do
     {community, doc, _, user} = mock_article(:doc)
@@ -36,7 +37,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
 
     test "create doc with valid tags id list", ~m(user_conn user community)a do
       community_tag_attrs = mock_attrs(:community_tag)
-      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
+
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
 
       doc_attr = mock_attrs(:doc)
 
@@ -166,7 +169,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       community_tag_attrs = mock_attrs(:community_tag)
-      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
+
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
 
       variables = %{
         id: doc.inner_id,
@@ -180,26 +185,28 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :doc), variables)
       assert result["title"] == variables.title
 
-      assert result["communityTags"] |> List.first() |> get_in(["id"]) == to_string(community_tag.id)
+      assert result["communityTags"] |> List.first() |> get_in(["id"]) ==
+               to_string(community_tag.id)
 
       assert result
              |> get_in(["document", "bodyHtml"])
              |> String.contains?(~s(updated body #{unique_num}))
     end
 
-    test "update doc article tags should be overwrite old ones",
+    test "update doc community tags should be overwrite old ones",
          ~m(owner_conn community doc user)a do
       community_tag_attrs = mock_attrs(:community_tag)
       community_tag_attrs2 = mock_attrs(:community_tag)
       community_tag_attrs3 = mock_attrs(:community_tag)
 
-      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
 
       {:ok, community_tag2} =
-        GroupherServer.CMS.Communities.create_tag(community, :doc, community_tag_attrs2, user)
+        CMS.Communities.create_tag(community, :doc, community_tag_attrs2, user)
 
       {:ok, community_tag3} =
-        GroupherServer.CMS.Communities.create_tag(community, :doc, community_tag_attrs3, user)
+        CMS.Communities.create_tag(community, :doc, community_tag_attrs3, user)
 
       variables = %{
         id: doc.inner_id,
@@ -213,7 +220,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
 
       assert result["communityTags"]
              |> Enum.map(&get_in(&1, ["id"]))
-             |> Enum.sort() == Enum.sort([to_string(community_tag.id), to_string(community_tag2.id)])
+             |> Enum.sort() ==
+               Enum.sort([to_string(community_tag.id), to_string(community_tag2.id)])
 
       variables = %{
         id: doc.inner_id,
@@ -227,7 +235,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
 
       assert result["communityTags"]
              |> Enum.map(&get_in(&1, ["id"]))
-             |> Enum.sort() == Enum.sort([to_string(community_tag2.id), to_string(community_tag3.id)])
+             |> Enum.sort() ==
+               Enum.sort([to_string(community_tag2.id), to_string(community_tag3.id)])
     end
 
     test "update doc with valid attrs should have is_edited meta info update",

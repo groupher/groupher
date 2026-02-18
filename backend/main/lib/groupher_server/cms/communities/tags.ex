@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
       |> Multi.run(:update_community_count, fn _, _ ->
         CommunityCRUD.update_community_count_field(
           community,
-          :article_tags_count
+          :community_tags_count
         )
       end)
       |> Repo.transaction()
@@ -82,7 +82,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
       |> Multi.run(:update_community_count, fn _, _ ->
         CommunityCRUD.update_community_count_field(
           community,
-          :article_tags_count
+          :community_tags_count
         )
       end)
       |> Repo.transaction()

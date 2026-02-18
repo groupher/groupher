@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
   @moduledoc false
 
   use GroupherServer.TestTools
+  alias GroupherServer.CMS
 
   setup do
     {community, blog, _, user} = mock_article(:blog)
@@ -36,7 +37,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
     test "create blog with valid tags id list", ~m(user_conn user community)a do
       community_tag_attrs = mock_attrs(:community_tag)
-      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
+
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
 
       blog_attr = mock_attrs(:blog)
 
@@ -166,7 +169,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       community_tag_attrs = mock_attrs(:community_tag)
-      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
+
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
 
       variables = %{
         id: blog.inner_id,
@@ -180,26 +185,28 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
       assert result["title"] == variables.title
 
-      assert result["communityTags"] |> List.first() |> get_in(["id"]) == to_string(community_tag.id)
+      assert result["communityTags"] |> List.first() |> get_in(["id"]) ==
+               to_string(community_tag.id)
 
       assert result
              |> get_in(["document", "bodyHtml"])
              |> String.contains?(~s(updated body #{unique_num}))
     end
 
-    test "update blog article tags should be overwrite old ones",
+    test "update blog community tags should be overwrite old ones",
          ~m(owner_conn community blog user)a do
       community_tag_attrs = mock_attrs(:community_tag)
       community_tag_attrs2 = mock_attrs(:community_tag)
       community_tag_attrs3 = mock_attrs(:community_tag)
 
-      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
 
       {:ok, community_tag2} =
-        GroupherServer.CMS.Communities.create_tag(community, :blog, community_tag_attrs2, user)
+        CMS.Communities.create_tag(community, :blog, community_tag_attrs2, user)
 
       {:ok, community_tag3} =
-        GroupherServer.CMS.Communities.create_tag(community, :blog, community_tag_attrs3, user)
+        CMS.Communities.create_tag(community, :blog, community_tag_attrs3, user)
 
       variables = %{
         id: blog.inner_id,
@@ -210,8 +217,12 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
 
       assert result["communityTags"] |> length == 2
-      assert result["communityTags"] |> List.first() |> get_in(["id"]) == to_string(community_tag.id)
-      assert result["communityTags"] |> List.last() |> get_in(["id"]) == to_string(community_tag2.id)
+
+      assert result["communityTags"] |> List.first() |> get_in(["id"]) ==
+               to_string(community_tag.id)
+
+      assert result["communityTags"] |> List.last() |> get_in(["id"]) ==
+               to_string(community_tag2.id)
 
       variables = %{
         id: blog.inner_id,
@@ -222,8 +233,12 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
 
       assert result["communityTags"] |> length == 2
-      assert result["communityTags"] |> List.first() |> get_in(["id"]) == to_string(community_tag2.id)
-      assert result["communityTags"] |> List.last() |> get_in(["id"]) == to_string(community_tag3.id)
+
+      assert result["communityTags"] |> List.first() |> get_in(["id"]) ==
+               to_string(community_tag2.id)
+
+      assert result["communityTags"] |> List.last() |> get_in(["id"]) ==
+               to_string(community_tag3.id)
     end
 
     test "update blog with valid attrs should have is_edited meta info update",

@@ -85,7 +85,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
   end
 
   describe "[create/update blog with tags]" do
-    test "can create blog with existed article tags",
+    test "can create blog with existed community tags",
          ~m(community user blog_attrs article_tag_attrs article_tag_attrs2)a do
       {:ok, article_tag} = CMS.Communities.create_tag(community, :blog, article_tag_attrs, user)
 
@@ -100,12 +100,13 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
       assert exist_in?(article_tag2, blog.community_tags)
     end
 
-    test "can not create blog with other community's article tags",
+    test "can not create blog with other community's community tags",
          ~m(community user blog_attrs article_tag_attrs article_tag_attrs2)a do
       {:ok, community2} = db_insert(:community)
       {:ok, article_tag} = CMS.Communities.create_tag(community, :blog, article_tag_attrs, user)
 
-      {:ok, article_tag2} = CMS.Communities.create_tag(community2, :blog, article_tag_attrs2, user)
+      {:ok, article_tag2} =
+        CMS.Communities.create_tag(community2, :blog, article_tag_attrs2, user)
 
       blog_with_tags = Map.merge(blog_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 

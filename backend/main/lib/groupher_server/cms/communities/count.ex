@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   @article_threads get_config(:article, :threads)
 
   @doc """
-  update article_tags_count / thread / article_count / subscribers_count of a community
+  update community_tags_count / thread / article_count / subscribers_count of a community
   """
   @spec update(Community.t(), User.t(), atom(), atom()) :: T.domain_res(Community.t())
   def update(
@@ -58,12 +58,12 @@ defmodule GroupherServer.CMS.Communities.Count do
   end
 
   @spec update(Community.t(), atom()) :: T.domain_res(Community.t())
-  def update(%Community{} = community, :article_tags_count) do
-    {:ok, article_tags_count} =
+  def update(%Community{} = community, :community_tags_count) do
+    {:ok, community_tags_count} =
       from(t in CommunityTag, where: t.community_id == ^community.id) |> ORM.count()
 
     community
-    |> Ecto.Changeset.change(%{article_tags_count: article_tags_count})
+    |> Ecto.Changeset.change(%{community_tags_count: community_tags_count})
     |> Repo.update()
   end
 
@@ -117,7 +117,7 @@ defmodule GroupherServer.CMS.Communities.Count do
     end
   end
 
-  def count(%Community{id: id}, :article_tags) do
+  def count(%Community{id: id}, :community_tags) do
     with {:ok, community} <- ORM.find(Community, id) do
       result =
         CommunityTag

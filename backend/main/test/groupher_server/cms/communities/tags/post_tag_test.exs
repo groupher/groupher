@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
   end
 
   describe "[create/update post with tags]" do
-    test "can create post with existed article tags",
+    test "can create post with existed community tags",
          ~m(community user post_attrs article_tag_attrs article_tag_attrs2)a do
       {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
       {:ok, article_tag2} = CMS.Communities.create_tag(community, :post, article_tag_attrs2, user)
@@ -147,11 +147,13 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert exist_in?(article_tag2, post.community_tags)
     end
 
-    test "can not create post with other community's article tags",
+    test "can not create post with other community's community tags",
          ~m(community user post_attrs article_tag_attrs article_tag_attrs2)a do
       {:ok, community2} = mock_community()
       {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, article_tag2} = CMS.Communities.create_tag(community2, :post, article_tag_attrs2, user)
+
+      {:ok, article_tag2} =
+        CMS.Communities.create_tag(community2, :post, article_tag_attrs2, user)
 
       post_with_tags = Map.merge(post_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 

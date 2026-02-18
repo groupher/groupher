@@ -43,11 +43,10 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocSetTag do
 
     test "can unset tag to a doc",
          ~m(community doc community_tag_attrs community_tag_attrs2 user)a do
-      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
-      {:ok, community_tag2} = GroupherServer.CMS.Communities.create_tag(community, :doc, community_tag_attrs2, user)
-
-      {:ok, _} = GroupherServer.CMS.Communities.set_tag(doc, community_tag.id)
-      {:ok, _} = GroupherServer.CMS.Communities.set_tag(doc, community_tag2.id)
+      {:ok, community_tag} = CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
+      {:ok, community_tag2} = CMS.Communities.create_tag(community, :doc, community_tag_attrs2, user)
+      {:ok, _} = CMS.Communities.set_tag(doc, community_tag.id)
+      {:ok, _} = CMS.Communities.set_tag(doc, community_tag2.id)
 
       passport_rules = %{community.title => %{"doc.community_tag.unset" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)

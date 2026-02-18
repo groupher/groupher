@@ -481,7 +481,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # ##############################################
   def threads_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :threads)
 
-  def article_tags_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :article_tags)
+  def community_tags_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :community_tags)
 
   # OSS token
   def upload_tokens(_root, _, _) do

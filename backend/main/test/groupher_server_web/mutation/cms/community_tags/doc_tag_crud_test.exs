@@ -3,6 +3,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.DocTagCRUD do
 
   use GroupherServer.TestTools
 
+  alias GroupherServer.CMS
   alias CMS.Model.CommunityTag
 
   setup do
@@ -112,7 +113,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.DocTagCRUD do
     }
     """
     test "auth user can update a tag", ~m(community_tag_attrs community user)a do
-      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
+      {:ok, community_tag} = CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
 
       variables = %{
         id: community_tag.id,

@@ -88,7 +88,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
   end
 
   describe "[create/update doc with tags]" do
-    test "can create doc with existed article tags",
+    test "can create doc with existed community tags",
          ~m(community user doc_attrs article_tag_attrs article_tag_attrs2)a do
       {:ok, article_tag} = CMS.Communities.create_tag(community, :doc, article_tag_attrs, user)
 
@@ -105,7 +105,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
       assert exist_in?(article_tag2, doc.community_tags)
     end
 
-    test "can not create doc with other community's article tags",
+    test "can not create doc with other community's community tags",
          ~m(community user doc_attrs article_tag_attrs article_tag_attrs2)a do
       {:ok, community2} = db_insert(:community)
       {:ok, article_tag} = CMS.Communities.create_tag(community, :doc, article_tag_attrs, user)

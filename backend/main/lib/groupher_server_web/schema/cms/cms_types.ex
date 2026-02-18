@@ -202,7 +202,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:subscribers_count, :integer)
     field(:moderators_count, :integer)
     field :community_tags_count, :integer do
-      resolve(fn parent, _, _ -> {:ok, parent.article_tags_count} end)
+      resolve(&R.CMS.community_tags_count/3)
     end
 
     field(:viewer_has_subscribed, :boolean)
