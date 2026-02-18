@@ -55,7 +55,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
       end)
       |> Multi.run(:set_target_tags, fn _, %{mirror_target_community: article} ->
         Communities.set_tags(target_community, thread, article, %{
-          article_tags: community_tag_ids
+          community_tags: community_tag_ids
         })
       end)
       |> Repo.transaction()
@@ -65,14 +65,14 @@ defmodule GroupherServer.CMS.Articles.Placement do
 
   @spec unmirror(Community.t(), T.article()) :: T.domain_res(T.article())
   def unmirror(%Community{} = target_community, article) do
-    article = Repo.preload(article, [:communities, :community, :article_tags])
+    article = Repo.preload(article, [:communities, :community, :community_tags])
 
     case article.community.id == target_community.id do
       true ->
         raise_error(:mirror_article, "can not unmirror original community")
 
       false ->
-        article_tags = tags_without_community(article, target_community)
+        community_tags = tags_without_community(article, target_community)
 
         article
         |> Ecto.Changeset.change()
@@ -80,7 +80,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
           :communities,
           Enum.reject(article.communities, &(&1.slug == target_community.slug))
         )
-        |> Ecto.Changeset.put_assoc(:article_tags, article_tags)
+        |> Ecto.Changeset.put_assoc(:community_tags, community_tags)
         |> Repo.update()
     end
   end
@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
   @spec move(Community.t(), T.article()) :: T.domain_res(T.article())
   @spec move(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
   def move(%Community{} = target_community, article, community_tag_ids \\ []) do
-    article = Repo.preload(article, [:communities, :community, :article_tags])
+    article = Repo.preload(article, [:communities, :community, :community_tags])
 
     with {:ok, thread} <- thread_of(article) do
       original_community = article.community
@@ -99,18 +99,19 @@ defmodule GroupherServer.CMS.Articles.Placement do
           (article.communities -- [original_community])
           |> Kernel.++([target_community])
           |> Enum.uniq_by(& &1.id)
-        article_tags = tags_without_community(article, original_community)
+
+        community_tags = tags_without_community(article, original_community)
 
         article
         |> Ecto.Changeset.change()
         |> Ecto.Changeset.put_change(:community_id, target_community.id)
         |> Ecto.Changeset.put_assoc(:communities, communities)
-        |> Ecto.Changeset.put_assoc(:article_tags, article_tags)
+        |> Ecto.Changeset.put_assoc(:community_tags, community_tags)
         |> Repo.update()
       end)
       |> Multi.run(:set_target_tags, fn _, %{move_article: article} ->
         Communities.set_tags(target_community, thread, article, %{
-          article_tags: community_tag_ids
+          community_tags: community_tag_ids
         })
       end)
       |> Repo.transaction()
@@ -121,7 +122,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
   @spec mirror_to_home(Community.t(), T.article()) :: T.domain_res(T.article())
   @spec mirror_to_home(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
   def mirror_to_home(%Community{} = home_community, article, community_tag_ids \\ []) do
-    article = Repo.preload(article, [:communities, :article_tags])
+    article = Repo.preload(article, [:communities, :community_tags])
 
     with {:ok, thread} <- thread_of(article) do
       communities =
@@ -137,7 +138,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
       end)
       |> Multi.run(:set_target_tags, fn _, %{set_community: article} ->
         Communities.set_tags(home_community, thread, article, %{
-          article_tags: community_tag_ids
+          community_tags: community_tag_ids
         })
       end)
       |> Repo.transaction()
@@ -148,7 +149,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
   @spec move_to_blackhole(Community.t(), T.article()) :: T.domain_res(T.article())
   @spec move_to_blackhole(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
   def move_to_blackhole(%Community{} = blackhole, article, community_tag_ids \\ []) do
-    article = Repo.preload(article, [:communities, :community, :article_tags])
+    article = Repo.preload(article, [:communities, :community, :community_tags])
 
     with {:ok, thread} <- thread_of(article) do
       Multi.new()
@@ -157,12 +158,12 @@ defmodule GroupherServer.CMS.Articles.Placement do
         |> Ecto.Changeset.change()
         |> Ecto.Changeset.put_change(:community_id, blackhole.id)
         |> Ecto.Changeset.put_assoc(:communities, [blackhole])
-        |> Ecto.Changeset.put_assoc(:article_tags, [])
+        |> Ecto.Changeset.put_assoc(:community_tags, [])
         |> Repo.update()
       end)
       |> Multi.run(:set_target_tags, fn _, %{set_community: article} ->
         Communities.set_tags(blackhole, thread, article, %{
-          article_tags: community_tag_ids
+          community_tags: community_tag_ids
         })
       end)
       |> Repo.transaction()
@@ -197,8 +198,8 @@ defmodule GroupherServer.CMS.Articles.Placement do
   end
 
   defp tags_without_community(article, %Community{id: community_id}) do
-    %{article_tags: article_tags} = article
-    article_tags -- Enum.filter(article_tags, &(&1.community_id === community_id))
+    %{community_tags: community_tags} = article
+    community_tags -- Enum.filter(community_tags, &(&1.community_id === community_id))
   end
 
   defp result({:ok, %{set_target_tags: result}}), do: result |> done()

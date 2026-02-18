@@ -40,7 +40,7 @@ export const ArticleCell = React.memo(function ArticleCell({ rowData }: { rowDat
       </button>
 
       <div className='w-full overflow-hidden whitespace-nowrap'>
-        <TagsList items={rowData.articleTags ?? EMPTY_ARR} left={0} />
+        <TagsList items={rowData.communityTags ?? EMPTY_ARR} left={0} />
       </div>
     </div>
   )

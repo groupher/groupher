@@ -306,7 +306,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
   defmacro article_tags_field(thread) do
     quote do
       many_to_many(
-        :article_tags,
+        :community_tags,
         CommunityTag,
         # NOTE: can not use "community_join_tags" here because it need to set schema_prefix
         join_through: CommunityJoinTag,

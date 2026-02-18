@@ -36,7 +36,7 @@ const getArticlesParams = (community: string, searchParams: URLSearchParams) => 
   const filter = reject(nilOrEmpty)({
     community,
     page: Number(searchParams.get(URL_PARAM.PAGE)) || 1,
-    articleTag: searchParams.get(URL_PARAM.TAG),
+    communityTag: searchParams.get(URL_PARAM.TAG),
     cat: searchParams.get(URL_PARAM.CAT),
     state: searchParams.get(URL_PARAM.STATE),
     order: searchParams.get(URL_PARAM.ORDER),

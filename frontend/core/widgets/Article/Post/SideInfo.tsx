@@ -17,7 +17,7 @@ export default () => {
     return <h1>Error article</h1>
   }
 
-  const { insertedAt, articleTags, upvotesCount, meta, viewerHasUpvoted, cat, state } = article
+  const { insertedAt, communityTags, upvotesCount, meta, viewerHasUpvoted, cat, state } = article
   const { latestUpvotedUsers } = meta
 
   return (
@@ -44,7 +44,7 @@ export default () => {
         </div>
         <div className='mb-6' />
         <div className={s.label}>标签</div>
-        <TagsList items={articleTags} size='medium' left={1} max={20} bottom={2} />
+        <TagsList items={communityTags} size='medium' left={1} max={20} bottom={2} />
         <div className='mb-6' />
         <div className={s.label}>分类</div>
         <ArticleCatState cat={cat} state={state} smaller={false} />

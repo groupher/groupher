@@ -3,6 +3,8 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
   use GroupherServer.TestTools
 
+  alias GroupherServer.CMS
+
   setup do
     {community, changelog, _, user} = mock_article(:changelog)
 
@@ -139,7 +141,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       rule_conn |> gq_mutation(Schema.m(:mirror_to_home), variables)
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: [:communities, :article_tags])
+      {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: [:communities, :community_tags])
 
       assert exist_in?(home_community, changelog.communities)
     end
@@ -152,8 +154,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       rule_conn |> gq_mutation(Schema.m(:move_to_blackhole), variables)
 
-      {:ok, changelog} =
-        ORM.find(Changelog, changelog.id, preload: [:community, :communities, :article_tags])
+      {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: [:community, :communities, :community_tags])
 
       assert changelog.community.id == blackhole.id
     end
@@ -185,7 +186,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       article_tag_attrs = mock_attrs(:community_tag)
       {:ok, user} = db_insert(:user)
-      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community2, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} = CMS.Communities.create_tag(community2, :changelog, article_tag_attrs, user)
 
       variables = %{
         id: changelog.inner_id,
@@ -197,11 +198,10 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       rule_conn |> gq_mutation(Schema.m(:move_article), variables)
 
-      {:ok, found} =
-        ORM.find(Changelog, changelog.id, preload: [:community, :communities, :article_tags])
+      {:ok, found} = ORM.find(Changelog, changelog.id, preload: [:community, :communities, :community_tags])
 
       assoc_communities = found.communities |> Enum.map(& &1.id)
-      assoc_article_tags = found.article_tags |> Enum.map(& &1.id)
+      assoc_article_tags = found.community_tags |> Enum.map(& &1.id)
 
       assert pre_community_id not in assoc_communities
       assert community2.id in assoc_communities

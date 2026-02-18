@@ -644,8 +644,8 @@ export default {
   'account.menu.create_community': 'Create community',
   'account.menu.logout': 'Log out',
   'community.add_moderator': 'Add community moderator',
-  'post.article_tag.create': 'Create post tag',
-  'post.article_tag.edit': 'Edit post tag',
+  'post.community_tag.create': 'Create post tag',
+  'post.community_tag.edit': 'Edit post tag',
   'post.mark_delete': 'Delete post',
 
   'community.editor.your.community': 'your community',

@@ -25,6 +25,7 @@ defmodule GroupherServer.CMS.Model.Changelog do
 
   @type t :: %Changelog{}
   schema "changelogs" do
+    # association: community_tags
     article_tags_field(:changelog)
     article_communities_field(:changelog)
     general_article_fields(:changelog)

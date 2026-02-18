@@ -46,9 +46,9 @@ defmodule GroupherServer.CMS.Articles.Write do
         |> Multi.run(:mirror_article, fn _, %{create_article: article} ->
           Placement.mirror(community, article)
         end)
-        |> Multi.run(:set_article_tags, fn _, %{create_article: article} ->
+        |> Multi.run(:set_community_tags, fn _, %{create_article: article} ->
           Communities.set_tags(community, thread, article, %{
-            article_tags: Map.get(attrs, :community_tags, [])
+            community_tags: Map.get(attrs, :community_tags, [])
           })
         end)
         |> Multi.run(:set_active_at_timestamp, fn _, %{create_article: article} ->
@@ -116,15 +116,15 @@ defmodule GroupherServer.CMS.Articles.Write do
     |> Multi.run(:update_document, fn _, %{update_article: update_article} ->
       Document.update(update_article, attrs)
     end)
-    |> Multi.run(:set_article_tags, fn _, %{update_article: article} ->
+    |> Multi.run(:set_community_tags, fn _, %{update_article: article} ->
       Communities.overwrite_tags(
         %Community{id: article.community_id},
         article.meta.thread,
         article,
-        %{article_tags: Map.get(attrs, :community_tags, [])}
+        %{community_tags: Map.get(attrs, :community_tags, [])}
       )
     end)
-    |> Multi.run(:update_edit_status, fn _, %{set_article_tags: update_article} ->
+    |> Multi.run(:update_edit_status, fn _, %{set_community_tags: update_article} ->
       Meta.update_edit_status(update_article)
     end)
     |> Multi.run(:after_hooks, fn _, %{update_article: update_article} ->

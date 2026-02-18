@@ -54,7 +54,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert results |> is_valid_pagination?
       assert results["pageSize"] == 10
       assert results["totalCount"] == @total_count
-      assert results["entries"] |> List.first() |> Map.get("articleTags") |> is_list
+      assert results["entries"] |> List.first() |> Map.get("communityTags") |> is_list
     end
 
     test "publish order should work", ~m(guest_conn community user)a do
@@ -130,24 +130,24 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert not is_nil(get_in(changelog, ["document", "bodyHtml"]))
     end
 
-    test "support article_tag filter", ~m(guest_conn community user)a do
+    test "support community_tag filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
-      {:ok, _} = GroupherServer.CMS.Communities.set_tag(changelog, article_tag.id)
+      community_tag_attrs = mock_attrs(:community_tag)
+      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, community_tag_attrs, user)
+      {:ok, _} = GroupherServer.CMS.Communities.set_tag(changelog, community_tag.id)
 
-      variables = %{filter: %{page: 1, size: 10, community_tag: article_tag.slug}}
+      variables = %{filter: %{page: 1, size: 10, community_tag: community_tag.slug}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
 
-      variables = %{filter: %{page: 1, size: 10, community_tags: [article_tag.slug]}}
+      variables = %{filter: %{page: 1, size: 10, community_tags: [community_tag.slug]}}
       results2 = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
       assert results == results2
 
       changelog = results["entries"] |> List.first()
       assert results["totalCount"] == 1
-      assert exist_in?(article_tag, changelog["articleTags"])
+      assert exist_in?(%{id: to_string(community_tag.id)}, changelog["communityTags"])
     end
 
     test "support community filter", ~m(guest_conn community user)a do

@@ -12,7 +12,7 @@ export type TStore = {
   copyRight: string
   isQuestion: boolean
 
-  articleTags: TTag[]
+  communityTags: TTag[]
   // job spec
   company: string
   companyLink: string
@@ -53,5 +53,5 @@ export type TEditData = {
   company?: string
   companyLink?: string
 
-  articleTags: [TID]
+  communityTags: TID[]
 }

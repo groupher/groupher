@@ -67,7 +67,7 @@
 
 //   // const filter = { page, size: 20, community: curCommunity.slug } as TPagedArticlesParams
 
-//   // if (activeTag?.slug) filter.articleTag = activeTag?.slug
+//   // if (activeTag?.slug) filter.communityTag = activeTag?.slug
 
 //   // if (activeCat) filter.cat = activeCat
 //   // if (activeState) filter.state = activeState

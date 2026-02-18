@@ -5,16 +5,16 @@ defmodule GroupherServer.Test.CMS.Communities.Count.CommunityTag do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
-    article_tag_attrs = mock_attrs(:community_tag)
+    community_tag_attrs = mock_attrs(:community_tag)
 
-    {:ok, ~m(user community article_tag_attrs)a}
+    {:ok, ~m(user community community_tag_attrs)a}
   end
 
   describe "[cms community community_tag]" do
-    test "articleTagsCount should work", ~m(community article_tag_attrs user)a do
-      {:ok, tag} = GroupherServer.CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, tag2} = GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
-      {:ok, tag3} = GroupherServer.CMS.Communities.create_tag(community, :blog, article_tag_attrs, user)
+    test "communityTagsCount should work", ~m(community community_tag_attrs user)a do
+      {:ok, tag} = GroupherServer.CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+      {:ok, tag2} = GroupherServer.CMS.Communities.create_tag(community, :changelog, community_tag_attrs, user)
+      {:ok, tag3} = GroupherServer.CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.article_tags_count == 3

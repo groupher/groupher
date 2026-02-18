@@ -263,7 +263,7 @@ export default (): TRet => {
       const { editingTag } = storeRef.current
       const params = { ...editingTag, community }
 
-      handleMutation(S.updateArticleTag, params)
+      handleMutation(S.updateCommunityTag, params)
       return
     }
 

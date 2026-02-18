@@ -1,9 +1,8 @@
 import { type FC, Fragment } from 'react'
 
 import type { TPost } from '~/spec'
-
-import DotDivider from '~/widgets/DotDivider'
 import ArticleCatState from '~/widgets/ArticleCatState'
+import DotDivider from '~/widgets/DotDivider'
 import TagsList from '~/widgets/TagsList'
 
 import useSalon from '../salon/post_viewer/header'
@@ -14,16 +13,16 @@ type TProps = {
 
 const Header: FC<TProps> = ({ article }) => {
   const s = useSalon()
-  const { meta, cat, state, articleTags } = article
+  const { meta, cat, state, communityTags } = article
 
   return (
     <div className={s.wrapper}>
       <ArticleCatState cat={cat} state={state} smaller={false} right={4} />
-      <TagsList items={articleTags} size="medium" />
+      <TagsList items={communityTags} size='medium' />
       <div className={s.publishWrapper}>
         {meta.isEdited && (
           <Fragment>
-            <DotDivider className="mx-2" />
+            <DotDivider className='mx-2' />
             <div className={s.editedHint}>修改过</div>
           </Fragment>
         )}

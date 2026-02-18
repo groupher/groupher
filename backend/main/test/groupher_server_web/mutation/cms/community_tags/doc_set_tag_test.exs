@@ -35,9 +35,9 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocSetTag do
       }
 
       rule_conn |> gq_mutation(Schema.m(:set_community_tag), variables)
-      {:ok, found} = ORM.find(Doc, doc.id, preload: :article_tags)
+      {:ok, found} = ORM.find(Doc, doc.id, preload: :community_tags)
 
-      assoc_tags = found.article_tags |> Enum.map(& &1.id)
+      assoc_tags = found.community_tags |> Enum.map(& &1.id)
       assert community_tag.id in assoc_tags
     end
 
@@ -61,8 +61,8 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocSetTag do
 
       rule_conn |> gq_mutation(Schema.m(:unset_community_tag), variables)
 
-      {:ok, doc} = ORM.find(Doc, doc.id, preload: :article_tags)
-      assoc_tags = doc.article_tags |> Enum.map(& &1.id)
+      {:ok, doc} = ORM.find(Doc, doc.id, preload: :community_tags)
+      assoc_tags = doc.community_tags |> Enum.map(& &1.id)
 
       assert community_tag.id not in assoc_tags
       assert community_tag2.id in assoc_tags

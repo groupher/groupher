@@ -37,14 +37,14 @@ export const commonRes = (result): TGQSSRResult => {
 // export const usePagedArticlesParams = (searchParams: URLSearchParams): TPagedArticlesParams => {
 //   const community = 'home'
 
-//   const filter = reject(nilOrEmpty)({
+//   const filter = removeEmptyValuesFromObject({
 //     community,
 //     page: Number(searchParams.get(URL_PARAM.PAGE)) || 1,
 //     size: 20,
-//     articleTag: searchParams.get(URL_PARAM.TAG),
+
+//     communityTag: searchParams.get(URL_PARAM.TAG),
 //     cat: searchParams.get(URL_PARAM.CAT),
 //     state: searchParams.get(URL_PARAM.STATE),
-//     order: searchParams.get(URL_PARAM.ORDER),
 //   }) as TPagedArticlesParams
 
 //   return mergeRight(ARTICLES_FILTER, filter)

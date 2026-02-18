@@ -25,7 +25,6 @@ defmodule GroupherServer.CMS do
 
   # CommunityOperation
 
-
   # Comment CRUD
 
   defdelegate set_comment_illegal(comment_id, attrs), to: CommentCRUD

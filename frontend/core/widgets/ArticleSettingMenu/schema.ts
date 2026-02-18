@@ -7,7 +7,7 @@ const updatePost = gql`
     updatePost(id: $id, title: $title, body: $body, communityTags: $communityTags) {
       id
       title
-      articleTags {
+      communityTags {
         ${F.tag}
       }
     }

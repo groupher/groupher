@@ -62,7 +62,7 @@ defmodule GroupherServer.Test.Helper.Schema do
             id
             slug
           }
-          articleTags {
+          communityTags {
             id
           }
           insertedAt
@@ -383,7 +383,7 @@ defmodule GroupherServer.Test.Helper.Schema do
           id
           nickname
         }
-        articleTags {
+        communityTags {
           id
         }
       }

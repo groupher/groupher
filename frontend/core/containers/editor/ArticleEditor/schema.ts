@@ -7,17 +7,17 @@ const createPost = gql`
     $title: String!
     $body: String!
     $communityId: ID!
-    $linkAddr: String
-    $isQuestion: Boolean
     $communityTags: [Id]
+    $linkAddr: String
+    $copyRight: String
   ) {
     createPost(
       title: $title
       body: $body
       communityId: $communityId
-      linkAddr: $linkAddr
-      isQuestion: $isQuestion
       communityTags: $communityTags
+      linkAddr: $linkAddr
+      copyRight: $copyRight
     ) {
       id
       title
@@ -202,7 +202,7 @@ const post = gql`
         ${F.community}
       }
 
-      articleTags {
+      communityTags {
         ${F.tag}
       }
 
@@ -238,7 +238,7 @@ const job = gql`
         ${F.community}
       }
 
-      articleTags {
+      communityTags {
         ${F.tag}
       }
 
@@ -269,7 +269,7 @@ const radar = gql`
         ${F.community}
       }
 
-      articleTags {
+      communityTags {
         ${F.tag}
       }
 

@@ -35,20 +35,20 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     end
 
     test "create changelog with valid tags id list", ~m(user_conn user community)a do
-      article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+      community_tag_attrs = mock_attrs(:community_tag)
+      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, community_tag_attrs, user)
 
       changelog_attr = mock_attrs(:changelog)
 
       variables =
-        changelog_attr |> Map.merge(%{community: community.slug, communityTags: [article_tag.id]})
+        changelog_attr |> Map.merge(%{community: community.slug, communityTags: [community_tag.id]})
 
       created = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
 
       {:ok, changelog} =
-        ORM.find_article(community, :changelog, created["innerId"], preload: :article_tags)
+        ORM.find_article(community, :changelog, created["innerId"], preload: :community_tags)
 
-      assert exist_in?(%{id: article_tag.id}, changelog.article_tags)
+      assert exist_in?(%{id: community_tag.id}, changelog.community_tags)
     end
 
     test "create changelog should escape xss attracts", ~m(user_conn community)a do
@@ -165,8 +165,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     test "changelog can be update by owner", ~m(owner_conn community changelog user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
-      article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+      community_tag_attrs = mock_attrs(:community_tag)
+      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, community_tag_attrs, user)
 
       variables = %{
         id: changelog.inner_id,
@@ -174,13 +174,13 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         title: "updated title #{unique_num}",
         # body: mock_rich_text("updated body #{unique_num}"),,
         body: mock_rich_text("updated body #{unique_num}"),
-        communityTags: [article_tag.id]
+        communityTags: [community_tag.id]
       }
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
       assert result["title"] == variables.title
 
-      assert result["articleTags"] |> List.first() |> get_in(["id"]) == to_string(article_tag.id)
+      assert result["communityTags"] |> List.first() |> get_in(["id"]) == to_string(community_tag.id)
 
       assert result
              |> get_in(["document", "bodyHtml"])
@@ -189,41 +189,41 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
     test "update changelog article tags should be overwrite old ones",
          ~m(owner_conn community changelog user)a do
-      article_tag_attrs = mock_attrs(:community_tag)
-      article_tag_attrs2 = mock_attrs(:community_tag)
-      article_tag_attrs3 = mock_attrs(:community_tag)
+      community_tag_attrs = mock_attrs(:community_tag)
+      community_tag_attrs2 = mock_attrs(:community_tag)
+      community_tag_attrs3 = mock_attrs(:community_tag)
 
-      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :changelog, community_tag_attrs, user)
 
-      {:ok, article_tag2} =
-        GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs2, user)
+      {:ok, community_tag2} =
+        GroupherServer.CMS.Communities.create_tag(community, :changelog, community_tag_attrs2, user)
 
-      {:ok, article_tag3} =
-        GroupherServer.CMS.Communities.create_tag(community, :changelog, article_tag_attrs3, user)
-
-      variables = %{
-        id: changelog.inner_id,
-        community: community.slug,
-        communityTags: [article_tag.id, article_tag2.id]
-      }
-
-      result = owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
-
-      assert result["articleTags"] |> length == 2
-      assert result["articleTags"] |> List.first() |> get_in(["id"]) == to_string(article_tag.id)
-      assert result["articleTags"] |> List.last() |> get_in(["id"]) == to_string(article_tag2.id)
+      {:ok, community_tag3} =
+        GroupherServer.CMS.Communities.create_tag(community, :changelog, community_tag_attrs3, user)
 
       variables = %{
         id: changelog.inner_id,
         community: community.slug,
-        communityTags: [article_tag2.id, article_tag3.id]
+        communityTags: [community_tag.id, community_tag2.id]
       }
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
 
-      assert result["articleTags"] |> length == 2
-      assert result["articleTags"] |> List.first() |> get_in(["id"]) == to_string(article_tag2.id)
-      assert result["articleTags"] |> List.last() |> get_in(["id"]) == to_string(article_tag3.id)
+      assert result["communityTags"] |> length == 2
+      assert result["communityTags"] |> List.first() |> get_in(["id"]) == to_string(community_tag.id)
+      assert result["communityTags"] |> List.last() |> get_in(["id"]) == to_string(community_tag2.id)
+
+      variables = %{
+        id: changelog.inner_id,
+        community: community.slug,
+        communityTags: [community_tag2.id, community_tag3.id]
+      }
+
+      result = owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
+
+      assert result["communityTags"] |> length == 2
+      assert result["communityTags"] |> List.first() |> get_in(["id"]) == to_string(community_tag2.id)
+      assert result["communityTags"] |> List.last() |> get_in(["id"]) == to_string(community_tag3.id)
     end
 
     test "update changelog with valid attrs should have is_edited meta info update",

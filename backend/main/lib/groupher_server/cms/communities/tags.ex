@@ -106,9 +106,9 @@ defmodule GroupherServer.CMS.Communities.Tags do
 
   defp do_overwrite_tags(article, tags) do
     article
-    |> Repo.preload(:article_tags)
+    |> Repo.preload(:community_tags)
     |> Ecto.Changeset.change()
-    |> Ecto.Changeset.put_assoc(:article_tags, tags)
+    |> Ecto.Changeset.put_assoc(:community_tags, tags)
     |> Repo.update()
   end
 
@@ -134,7 +134,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   @spec overwrite(Community.t(), atom(), Ecto.Schema.t(), map()) ::
           {:ok, Ecto.Schema.t()} | {:error, any()}
   def overwrite(%Community{id: cid}, thread, article, %{
-        article_tags: tag_ids
+        community_tags: tag_ids
       }) do
     check_filter = %{page: 1, size: 100, community_id: cid, thread: thread}
 
@@ -148,10 +148,10 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
-  def set(_, _, article, %{article_tags: []}), do: {:ok, article}
+  def set(_, _, article, %{community_tags: []}), do: {:ok, article}
 
   def set(%Community{id: cid}, thread, article, %{
-        article_tags: tag_ids
+        community_tags: tag_ids
       }) do
     check_filter = %{page: 1, size: 100, community_id: cid, thread: thread}
 
@@ -188,17 +188,17 @@ defmodule GroupherServer.CMS.Communities.Tags do
   end
 
   defp do_update_tags_assoc(article, %CommunityTag{} = tag, opt) do
-    article = Repo.preload(article, :article_tags)
+    article = Repo.preload(article, :community_tags)
 
-    article_tags =
+    community_tags =
       case opt do
-        :add -> (article.article_tags ++ [tag]) |> Enum.uniq_by(& &1.id)
-        :remove -> article.article_tags -- [tag]
+        :add -> (article.community_tags ++ [tag]) |> Enum.uniq_by(& &1.id)
+        :remove -> article.community_tags -- [tag]
       end
 
     article
     |> Ecto.Changeset.change()
-    |> Ecto.Changeset.put_assoc(:article_tags, article_tags)
+    |> Ecto.Changeset.put_assoc(:community_tags, community_tags)
     |> Repo.update()
   end
 

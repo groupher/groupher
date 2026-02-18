@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results |> is_valid_pagination?
       assert results["pageSize"] == 10
       assert results["totalCount"] == @total_count
-      assert results["entries"] |> List.first() |> Map.get("articleTags") |> is_list
+      assert results["entries"] |> List.first() |> Map.get("communityTags") |> is_list
     end
 
     test "publish order should work", ~m(guest_conn community user)a do
@@ -182,7 +182,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       post = results["entries"] |> List.first()
       assert results["totalCount"] == 1
-      assert exist_in?(article_tag, post["articleTags"])
+      assert exist_in?(%{id: to_string(article_tag.id)}, post["communityTags"])
     end
 
     test "support community filter", ~m(guest_conn community user)a do

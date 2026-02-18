@@ -42,26 +42,30 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   const tags = result.data?.pagedCommunityTags?.entries || []
 
   useEffect(() => {
-    setChecked(article.articleTags.map((item) => item.id))
-  }, [article.articleTags])
+    const originTags = article.communityTags || []
+    setChecked(originTags.map((item) => item.id))
+  }, [article.communityTags])
 
   const handleCheck = (id: TID, toggle: boolean): void => {
-    const updated = toggle ? [...checked, id] : reject((_id) => _id === id, checked)
+    const checkedIds = checked || []
+    const updated = toggle ? [...checkedIds, id] : reject((_id) => _id === id, checkedIds)
+
+    const originTags = article.communityTags || []
 
     setChecked(uniq(updated))
-    setTouched(!equals(updated.sort(), article.articleTags.map((item) => item.id).sort()))
+    setTouched(!equals(updated.sort(), originTags.map((item) => item.id).sort()))
   }
 
   const handleUpdate = () => {
     const params = { id: article.id, communityTags: checked }
-    updatePost(params).then((result) => {
-      if (result.error) {
+    updatePost(params).then((res) => {
+      if (res.error) {
         toast('修改失败', 'error')
       } else {
         toast('修改完成')
-        const newTags = result.data.updatePost.articleTags
+        const newTags = res.data.updatePost.communityTags
         setChecked(newTags.map((item) => item.id))
-        updateViewingArticle({ id: article.id, articleTags: newTags })
+        updateViewingArticle({ id: article.id, communityTags: newTags })
         resetTouched()
       }
     })

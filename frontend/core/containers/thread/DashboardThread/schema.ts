@@ -243,7 +243,7 @@ const pagedCommunityTags = gql`
     }
   }
 `
-const updateArticleTag = gql`
+const updateCommunityTag = gql`
   mutation (
     $id: ID!
     $color: RainbowColor
@@ -254,7 +254,7 @@ const updateArticleTag = gql`
     $icon: String
     $group: String
   ) {
-    updateArticleTag(
+    updateCommunityTag(
       id: $id
       color: $color
       title: $title
@@ -275,7 +275,7 @@ const updateArticleTag = gql`
 `
 
 const reindexTagsInGroup = gql`
-  mutation ($community: String!, $thread: Thread, $group: String!, $tags: [ArticleTagIndex]) {
+  mutation ($community: String!, $thread: Thread, $group: String!, $tags: [CommunityTagIndex]) {
     reindexTagsInGroup(community: $community, thread: $thread, group: $group, tags: $tags) {
       done
     }
@@ -376,7 +376,7 @@ const schema = {
   updateDashboardLayout,
   updateDashboardSocialLinks,
   updateDashboardNameAlias,
-  updateArticleTag,
+  updateCommunityTag,
   reindexTagsInGroup,
   pagedPosts,
   pagedChangelogs,

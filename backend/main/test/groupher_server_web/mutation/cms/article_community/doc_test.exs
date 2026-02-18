@@ -3,6 +3,8 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
 
   use GroupherServer.TestTools
 
+  alias GroupherServer.CMS
+
   setup do
     {community, doc, _, user} = mock_article(:doc)
 
@@ -138,7 +140,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
 
       rule_conn |> gq_mutation(Schema.m(:mirror_to_home), variables)
 
-      {:ok, doc} = ORM.find(Doc, doc.id, preload: [:communities, :article_tags])
+      {:ok, doc} = ORM.find(Doc, doc.id, preload: [:communities, :community_tags])
 
       assert exist_in?(home_community, doc.communities)
     end
@@ -151,8 +153,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
 
       rule_conn |> gq_mutation(Schema.m(:move_to_blackhole), variables)
 
-      {:ok, doc} =
-        ORM.find(Doc, doc.id, preload: [:community, :communities, :article_tags])
+      {:ok, doc} = ORM.find(Doc, doc.id, preload: [:community, :communities, :community_tags])
 
       assert doc.community.id == blackhole.id
     end
@@ -183,7 +184,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
 
       article_tag_attrs = mock_attrs(:community_tag)
       {:ok, user} = db_insert(:user)
-      {:ok, article_tag} = GroupherServer.CMS.Communities.create_tag(community2, :doc, article_tag_attrs, user)
+      {:ok, article_tag} = CMS.Communities.create_tag(community2, :doc, article_tag_attrs, user)
 
       variables = %{
         id: doc.inner_id,
@@ -195,11 +196,10 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
 
       rule_conn |> gq_mutation(Schema.m(:move_article), variables)
 
-      {:ok, found} =
-        ORM.find(Doc, doc.id, preload: [:community, :communities, :article_tags])
+      {:ok, found} = ORM.find(Doc, doc.id, preload: [:community, :communities, :community_tags])
 
       assoc_communities = found.communities |> Enum.map(& &1.id)
-      assoc_article_tags = found.article_tags |> Enum.map(& &1.id)
+      assoc_article_tags = found.community_tags |> Enum.map(& &1.id)
 
       assert pre_community_id not in assoc_communities
       assert community2.id in assoc_communities
