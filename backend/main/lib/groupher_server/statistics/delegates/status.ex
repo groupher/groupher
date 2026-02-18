@@ -14,7 +14,7 @@ defmodule GroupherServer.Statistics.Delegate.Status do
     Community,
     Thread,
     Category,
-    ArticleTag
+    CommunityTag
   }
 
   alias Helper.{ORM, Cache}
@@ -35,11 +35,11 @@ defmodule GroupherServer.Statistics.Delegate.Status do
     {:ok, %{total_count: blogs_count}} = find_total_count(Blog)
 
     {:ok, %{total_count: threads_count}} = find_total_count(Thread)
-    {:ok, %{total_count: article_tags_count}} = find_total_count(ArticleTag)
+    {:ok, %{total_count: community_tags_count}} = find_total_count(CommunityTag)
     {:ok, %{total_count: categories_count}} = find_total_count(Category)
 
     {:ok,
-     ~m(communities_count posts_count blogs_count threads_count article_tags_count categories_count)a}
+     ~m(communities_count posts_count blogs_count threads_count community_tags_count categories_count)a}
   end
 
   defp find_total_count(queryable), do: ORM.find_all(queryable, @count_filter)

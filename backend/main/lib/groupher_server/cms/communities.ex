@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Communities do
 
   alias Helper.Types, as: T
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, Category, Thread}
+  alias GroupherServer.CMS.Model.{Community, Category, Thread, CommunityTag}
 
   alias __MODULE__.{
     Read,
@@ -19,7 +19,8 @@ defmodule GroupherServer.CMS.Communities do
     Count,
     Categories,
     Threads,
-    Passport
+    Passport,
+    Tags
   }
 
   # Read
@@ -184,4 +185,43 @@ defmodule GroupherServer.CMS.Communities do
 
   @spec count(Community.t(), atom()) :: T.domain_res(integer())
   def count(%Community{} = community, type), do: Count.count(community, type)
+
+  # Tags
+  @spec create_tag(Community.t(), atom(), map(), User.t()) ::
+          T.domain_res(CommunityTag.t())
+  def create_tag(%Community{} = community, thread, attrs, %User{} = user) do
+    Tags.create(community, thread, attrs, user)
+  end
+
+  @spec update_tag(T.id(), map()) :: T.domain_res(CommunityTag.t())
+  def update_tag(id, attrs), do: Tags.update(id, attrs)
+
+  @spec delete_tag(T.id()) :: T.domain_res(CommunityTag.t())
+  def delete_tag(id), do: Tags.delete(id)
+
+  @spec set_tag(Ecto.Schema.t(), T.id()) :: T.domain_res(Ecto.Schema.t())
+  def set_tag(article, id), do: Tags.add(article, id)
+
+  @spec unset_tag(Ecto.Schema.t(), T.id()) :: T.domain_res(Ecto.Schema.t())
+  def unset_tag(article, id), do: Tags.remove(article, id)
+
+  @spec set_tags(Community.t(), atom(), Ecto.Schema.t(), map()) ::
+          T.domain_res(Ecto.Schema.t())
+  def set_tags(%Community{} = community, thread, article, attrs) do
+    Tags.set(community, thread, article, attrs)
+  end
+
+  @spec overwrite_tags(Community.t(), atom(), Ecto.Schema.t(), map()) ::
+          T.domain_res(Ecto.Schema.t())
+  def overwrite_tags(%Community{} = community, thread, article, attrs) do
+    Tags.overwrite(community, thread, article, attrs)
+  end
+
+  @spec paged_tags(map()) :: T.domain_res(T.paged_data())
+  def paged_tags(filter), do: Tags.paged(filter)
+
+  @spec reindex_tags(Community.t() | String.t(), atom(), atom(), list()) :: T.domain_res(atom())
+  def reindex_tags(community, thread, group, tags) do
+    Tags.reindex_in_group(community, thread, group, tags)
+  end
 end

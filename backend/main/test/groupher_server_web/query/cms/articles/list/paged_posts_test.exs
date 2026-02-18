@@ -169,14 +169,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      article_tag_attrs = mock_attrs(:article_tag)
-      {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
-      {:ok, _} = CMS.set_article_tag(post, article_tag.id)
+      article_tag_attrs = mock_attrs(:community_tag)
+      {:ok, article_tag} = CMS.create_community_tag(community, :post, article_tag_attrs, user)
+      {:ok, _} = CMS.set_community_tag(post, article_tag.id)
 
-      variables = %{filter: %{page: 1, size: 10, article_tag: article_tag.slug}}
+      variables = %{filter: %{page: 1, size: 10, community_tag: article_tag.slug}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
 
-      variables = %{filter: %{page: 1, size: 10, article_tags: [article_tag.slug]}}
+      variables = %{filter: %{page: 1, size: 10, community_tags: [article_tag.slug]}}
       results2 = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
       assert results == results2
 

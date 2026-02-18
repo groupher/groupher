@@ -180,16 +180,16 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
 
       pre_community_id = found.community.id
 
-      article_tag_attrs = mock_attrs(:article_tag)
+      article_tag_attrs = mock_attrs(:community_tag)
       {:ok, user} = db_insert(:user)
-      {:ok, article_tag} = CMS.create_article_tag(community2, :post, article_tag_attrs, user)
+      {:ok, article_tag} = CMS.create_community_tag(community2, :post, article_tag_attrs, user)
 
       variables = %{
         id: post.inner_id,
         thread: "POST",
         community: community.slug,
         targetCommunity: community2.slug,
-        articleTags: [article_tag.id]
+        communityTags: [article_tag.id]
       }
 
       rule_conn |> gq_mutation(Schema.m(:move_article), variables)

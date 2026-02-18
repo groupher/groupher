@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   alias Helper.Types, as: T
   alias GroupherServer.Repo
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, ArticleTag}
+  alias GroupherServer.CMS.Model.{Community, CommunityTag}
 
   @article_threads get_config(:article, :threads)
 
@@ -60,7 +60,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   @spec update(Community.t(), atom()) :: T.domain_res(Community.t())
   def update(%Community{} = community, :article_tags_count) do
     {:ok, article_tags_count} =
-      from(t in ArticleTag, where: t.community_id == ^community.id) |> ORM.count()
+      from(t in CommunityTag, where: t.community_id == ^community.id) |> ORM.count()
 
     community
     |> Ecto.Changeset.change(%{article_tags_count: article_tags_count})
@@ -120,7 +120,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   def count(%Community{id: id}, :article_tags) do
     with {:ok, community} <- ORM.find(Community, id) do
       result =
-        ArticleTag
+        CommunityTag
         |> where([t], t.community_id == ^community.id)
         |> ORM.paginator(page: 1, size: 1)
 

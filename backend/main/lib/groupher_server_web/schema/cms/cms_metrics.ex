@@ -149,14 +149,14 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:sort, :thread_sort_enum)
   end
 
-  input_object :article_tags_filter do
+  input_object :community_tags_filter do
     field(:community, :string)
     field(:thread, :thread)
     pagination_args()
   end
 
   # for reindex usage
-  input_object :article_tag_index do
+  input_object :reindex_tag_input do
     field(:id, :id)
     field(:index, :integer)
   end

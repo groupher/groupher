@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
   alias Helper.Types, as: T
   alias GroupherServer.Repo
   alias GroupherServer.CMS.Model.{Community, PinnedArticle}
-  alias GroupherServer.CMS.Delegate.ArticleTag
+  alias GroupherServer.CMS.Communities
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
 
   @spec mirror(Community.t(), T.article()) :: T.domain_res(T.article())
   @spec mirror(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def mirror(%Community{} = target_community, article, article_tag_ids \\ []) do
+  def mirror(%Community{} = target_community, article, community_tag_ids \\ []) do
     article = Repo.preload(article, :communities)
 
     with {:ok, thread} <- thread_of(article) do
@@ -54,8 +54,8 @@ defmodule GroupherServer.CMS.Articles.Placement do
         |> Repo.update()
       end)
       |> Multi.run(:set_target_tags, fn _, %{mirror_target_community: article} ->
-        ArticleTag.set_article_tags(target_community, thread, article, %{
-          article_tags: article_tag_ids
+        Communities.set_tags(target_community, thread, article, %{
+          article_tags: community_tag_ids
         })
       end)
       |> Repo.transaction()
@@ -87,7 +87,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
 
   @spec move(Community.t(), T.article()) :: T.domain_res(T.article())
   @spec move(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def move(%Community{} = target_community, article, article_tag_ids \\ []) do
+  def move(%Community{} = target_community, article, community_tag_ids \\ []) do
     article = Repo.preload(article, [:communities, :community, :article_tags])
 
     with {:ok, thread} <- thread_of(article) do
@@ -109,8 +109,8 @@ defmodule GroupherServer.CMS.Articles.Placement do
         |> Repo.update()
       end)
       |> Multi.run(:set_target_tags, fn _, %{move_article: article} ->
-        ArticleTag.set_article_tags(target_community, thread, article, %{
-          article_tags: article_tag_ids
+        Communities.set_tags(target_community, thread, article, %{
+          article_tags: community_tag_ids
         })
       end)
       |> Repo.transaction()
@@ -120,7 +120,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
 
   @spec mirror_to_home(Community.t(), T.article()) :: T.domain_res(T.article())
   @spec mirror_to_home(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def mirror_to_home(%Community{} = home_community, article, article_tag_ids \\ []) do
+  def mirror_to_home(%Community{} = home_community, article, community_tag_ids \\ []) do
     article = Repo.preload(article, [:communities, :article_tags])
 
     with {:ok, thread} <- thread_of(article) do
@@ -136,8 +136,8 @@ defmodule GroupherServer.CMS.Articles.Placement do
         |> Repo.update()
       end)
       |> Multi.run(:set_target_tags, fn _, %{set_community: article} ->
-        ArticleTag.set_article_tags(home_community, thread, article, %{
-          article_tags: article_tag_ids
+        Communities.set_tags(home_community, thread, article, %{
+          article_tags: community_tag_ids
         })
       end)
       |> Repo.transaction()
@@ -147,7 +147,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
 
   @spec move_to_blackhole(Community.t(), T.article()) :: T.domain_res(T.article())
   @spec move_to_blackhole(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def move_to_blackhole(%Community{} = blackhole, article, article_tag_ids \\ []) do
+  def move_to_blackhole(%Community{} = blackhole, article, community_tag_ids \\ []) do
     article = Repo.preload(article, [:communities, :community, :article_tags])
 
     with {:ok, thread} <- thread_of(article) do
@@ -161,8 +161,8 @@ defmodule GroupherServer.CMS.Articles.Placement do
         |> Repo.update()
       end)
       |> Multi.run(:set_target_tags, fn _, %{set_community: article} ->
-        ArticleTag.set_article_tags(blackhole, thread, article, %{
-          article_tags: article_tag_ids
+        Communities.set_tags(blackhole, thread, article, %{
+          article_tags: community_tag_ids
         })
       end)
       |> Repo.transaction()

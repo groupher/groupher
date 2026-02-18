@@ -15,7 +15,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
       arg(:copy_right, :string)
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :changelog)
-      arg(:article_tags, list_of(:id))
+      arg(:community_tags, list_of(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
@@ -33,7 +33,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
       arg(:digest, :string)
       arg(:copy_right, :string)
       arg(:link_addr, :string)
-      arg(:article_tags, list_of(:id))
+      arg(:community_tags, list_of(:id))
       arg(:thread, :thread, default_value: :changelog)
 
       middleware(M.Authorize, :login)

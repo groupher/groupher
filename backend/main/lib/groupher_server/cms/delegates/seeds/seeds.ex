@@ -89,7 +89,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     tags_filter = %{community_id: community.id, thread: thread_upcase}
 
     with {:ok, community} <- ORM.find(Community, community.id),
-         {:ok, tags} <- CMS.paged_article_tags(tags_filter),
+         {:ok, tags} <- CMS.paged_community_tags(tags_filter),
           {:ok, user} <- db_insert(:user) do
       1..count
       |> Enum.each(fn _ ->
@@ -114,7 +114,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
   defp seed_tags(tags, thread, article) do
     get_tag_ids(tags, thread)
     |> Enum.each(fn tag_id ->
-      {:ok, _} = CMS.set_article_tag(article, tag_id)
+      {:ok, _} = CMS.set_community_tag(article, tag_id)
     end)
   end
 

@@ -22,7 +22,7 @@ defmodule GroupherServerWeb.Schema.Statistics.Types do
     field(:blogs_count, :integer)
 
     field(:categories_count, :integer)
-    field(:article_tags_count, :integer)
+    field(:community_tags_count, :integer)
     field(:threads_count, :integer)
   end
 end

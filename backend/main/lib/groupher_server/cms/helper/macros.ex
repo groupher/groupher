@@ -13,10 +13,10 @@ defmodule GroupherServer.CMS.Helper.Macros do
     Author,
     Community,
     Comment,
-    ArticleTag,
     ArticleUpvote,
     ArticleCollect,
-    ArticleJoinTag
+    CommunityTag,
+    CommunityJoinTag
   }
 
   @article_threads get_config(:article, :threads)
@@ -299,7 +299,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
   @doc """
   for GroupherServer.CMS.[Article]
 
-  # TABLE: "articles_join_tags"
+  # TABLE: "community_join_tags"
 
   add(:[article]_id, references(:cms_[article]s, on_delete: :delete_all))
   """
@@ -307,10 +307,10 @@ defmodule GroupherServer.CMS.Helper.Macros do
     quote do
       many_to_many(
         :article_tags,
-        ArticleTag,
-        # NOTE: can not use "articles_join_tags" here because it need to set schema_prefix
-        join_through: ArticleJoinTag,
-        join_keys: Keyword.new([{unquote(:"#{thread}_id"), :id}]) ++ [article_tag_id: :id],
+        CommunityTag,
+        # NOTE: can not use "community_join_tags" here because it need to set schema_prefix
+        join_through: CommunityJoinTag,
+        join_keys: Keyword.new([{unquote(:"#{thread}_id"), :id}]) ++ [community_tag_id: :id],
         # :delete_all will only remove data from the join source
         on_delete: :delete_all,
         on_replace: :delete

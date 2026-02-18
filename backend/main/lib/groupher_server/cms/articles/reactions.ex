@@ -16,6 +16,8 @@ defmodule GroupherServer.CMS.Articles.Reactions do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.ArticleUserEmotion
 
+  import Ecto.Query
+
   @spec emotion(term(), atom(), User.t()) :: T.domain_res(term())
   def emotion(article, emotion, %User{} = user) do
     {:ok, info} = match(article)
@@ -85,7 +87,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
           on: a.user_id == user.id,
           where: field(a, ^info.foreign_key) == ^article.id,
           where: field(a, ^emotion) == true,
-          select: %{login: user.login, nickname: user.nickname}
+          select: %{login: user.login, nickname: user.nickname, avatar: user.avatar}
         )
 
       emotioned_user_info_list = Repo.all(query) |> Enum.uniq()

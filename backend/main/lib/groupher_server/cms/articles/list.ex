@@ -211,7 +211,7 @@ defmodule GroupherServer.CMS.Articles.List do
   defp add_pin_articles_ifneed(articles, _queryable, _filter), do: articles
 
   defp should_add_pin?(%{page: 1, sort: :desc_active} = filter) do
-    skip_pinned_fields = [:article_tag, :article_tags]
+    skip_pinned_fields = [:article_tag, :article_tags, :community_tag, :community_tags]
 
     not Enum.any?(Map.keys(filter), &(&1 in skip_pinned_fields))
   end

@@ -86,11 +86,11 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     end
 
     @desc "get paged article tags"
-    field :paged_article_tags, :paged_article_tags do
-      arg(:filter, :article_tags_filter)
+    field :paged_community_tags, :paged_community_tags do
+      arg(:filter, :community_tags_filter)
 
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.paged_article_tags/3)
+      resolve(&R.CMS.paged_community_tags/3)
     end
 
     @desc "got basic comments state"

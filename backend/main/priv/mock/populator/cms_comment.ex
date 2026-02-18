@@ -1,6 +1,4 @@
 defmodule GroupherServer.Mock.CMS.Comment do
-  import GroupherServer.Support.Factory
-
   # alias GroupherServer.Repo
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User

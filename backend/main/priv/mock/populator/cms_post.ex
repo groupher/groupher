@@ -6,7 +6,7 @@ defmodule GroupherServer.Mock.CMS.Post do
 
   def random_attrs do
     %{
-      title: Faker.Name.first_name() <> " " <> Faker.Name.last_name(),
+      title: Faker.Person.first_name() <> " " <> Faker.Person.last_name(),
       body: Faker.Lorem.sentence(20)
     }
   end

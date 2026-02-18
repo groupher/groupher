@@ -10,9 +10,9 @@ defmodule GroupherServer.Mock.User do
 
   def random_attrs do
     %{
-      username: Faker.Name.first_name() <> " " <> Faker.Name.last_name(),
-      nickname: Faker.Name.first_name() <> " " <> Faker.Name.last_name(),
-      bio: Faker.Name.first_name(),
+      username: Faker.Person.first_name() <> " " <> Faker.Person.last_name(),
+      nickname: Faker.Person.first_name() <> " " <> Faker.Person.last_name(),
+      bio: Faker.Person.first_name(),
       company: Faker.Company.name()
     }
   end

@@ -35,13 +35,13 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     end
 
     test "create blog with valid tags id list", ~m(user_conn user community)a do
-      article_tag_attrs = mock_attrs(:article_tag)
-      {:ok, article_tag} = CMS.create_article_tag(community, :blog, article_tag_attrs, user)
+      article_tag_attrs = mock_attrs(:community_tag)
+      {:ok, article_tag} = CMS.create_community_tag(community, :blog, article_tag_attrs, user)
 
       blog_attr = mock_attrs(:blog)
 
       variables =
-        blog_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
+        blog_attr |> Map.merge(%{community: community.slug, communityTags: [article_tag.id]})
 
       created = user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
 
@@ -165,8 +165,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     test "blog can be update by owner", ~m(owner_conn community blog user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
-      article_tag_attrs = mock_attrs(:article_tag)
-      {:ok, article_tag} = CMS.create_article_tag(community, :blog, article_tag_attrs, user)
+      article_tag_attrs = mock_attrs(:community_tag)
+      {:ok, article_tag} = CMS.create_community_tag(community, :blog, article_tag_attrs, user)
 
       variables = %{
         id: blog.inner_id,
@@ -174,7 +174,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
         title: "updated title #{unique_num}",
         # body: mock_rich_text("updated body #{unique_num}"),,
         body: mock_rich_text("updated body #{unique_num}"),
-        articleTags: [article_tag.id]
+        communityTags: [article_tag.id]
       }
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
@@ -189,22 +189,22 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
     test "update blog article tags should be overwrite old ones",
          ~m(owner_conn community blog user)a do
-      article_tag_attrs = mock_attrs(:article_tag)
-      article_tag_attrs2 = mock_attrs(:article_tag)
-      article_tag_attrs3 = mock_attrs(:article_tag)
+      article_tag_attrs = mock_attrs(:community_tag)
+      article_tag_attrs2 = mock_attrs(:community_tag)
+      article_tag_attrs3 = mock_attrs(:community_tag)
 
-      {:ok, article_tag} = CMS.create_article_tag(community, :blog, article_tag_attrs, user)
+      {:ok, article_tag} = CMS.create_community_tag(community, :blog, article_tag_attrs, user)
 
       {:ok, article_tag2} =
-        CMS.create_article_tag(community, :blog, article_tag_attrs2, user)
+        CMS.create_community_tag(community, :blog, article_tag_attrs2, user)
 
       {:ok, article_tag3} =
-        CMS.create_article_tag(community, :blog, article_tag_attrs3, user)
+        CMS.create_community_tag(community, :blog, article_tag_attrs3, user)
 
       variables = %{
         id: blog.inner_id,
         community: community.slug,
-        articleTags: [article_tag.id, article_tag2.id]
+        communityTags: [article_tag.id, article_tag2.id]
       }
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
@@ -216,7 +216,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       variables = %{
         id: blog.inner_id,
         community: community.slug,
-        articleTags: [article_tag2.id, article_tag3.id]
+        communityTags: [article_tag2.id, article_tag3.id]
       }
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)

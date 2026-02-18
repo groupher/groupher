@@ -227,7 +227,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     timestamp_fields()
   end
 
-  object :article_tag do
+  object :community_tag do
     field(:id, :id)
     field(:title, :string)
     field(:desc, :string)
@@ -372,8 +372,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     pagination_fields()
   end
 
-  object :paged_article_tags do
-    field(:entries, list_of(:article_tag))
+  object :paged_community_tags do
+    field(:entries, list_of(:community_tag))
     pagination_fields()
   end
 
