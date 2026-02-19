@@ -2,7 +2,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
   @moduledoc false
 
   use GroupherServer.TestTools
-  alias GroupherServer.CMS
 
   setup do
     {community, changelog, _, user} = mock_article(:changelog)

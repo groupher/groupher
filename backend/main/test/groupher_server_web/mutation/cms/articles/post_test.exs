@@ -2,7 +2,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
   @moduledoc false
 
   use GroupherServer.TestTools
-  alias GroupherServer.CMS
 
   setup do
     {community, post, _, user} = mock_article(:post)

@@ -114,7 +114,8 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
     }
     """
     test "auth user can update a tag", ~m(community_tag_attrs community user)a do
-      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
 
       variables = %{
         id: community_tag.id,
@@ -149,7 +150,8 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
     }
     """
     test "auth user can delete tag", ~m(community_tag_attrs community user)a do
-      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
 
       variables = %{id: community_tag.id, community: community.slug}
 
@@ -165,7 +167,8 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
 
     test "unauth user delete tag fails",
          ~m(community_tag_attrs community user_conn guest_conn user)a do
-      {:ok, community_tag} = GroupherServer.CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
 
       variables = %{id: community_tag.id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})

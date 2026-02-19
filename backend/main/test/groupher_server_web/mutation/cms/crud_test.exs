@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   use GroupherServer.TestTools
 
   alias CMS.Model.{Category, CommunityModerator, Passport}
-  alias GroupherServer.CMS.Communities.Passport, as: CMSPassport
+  alias CMS.Communities.Passport, as: CMSPassport
 
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)

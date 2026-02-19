@@ -2,7 +2,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   @moduledoc false
 
   use GroupherServer.TestTools
-  alias GroupherServer.CMS
 
   @article_cat Constant.CMS.article_cat()
   @article_state Constant.CMS.article_state()
@@ -137,6 +136,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["totalCount"] == 1
 
       variables = %{filter: %{page: 1, size: 20, cat: "NOT_EXIST"}}
+
       assert guest_conn
              |> query_error?(Schema.q(:paged_articles, :post, "cat state"), variables)
 
@@ -145,6 +145,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["totalCount"] == 1
 
       variables = %{filter: %{page: 1, size: 20, state: "NOT_EXIST"}}
+
       assert guest_conn
              |> query_error?(Schema.q(:paged_articles, :post, "cat state"), variables)
 

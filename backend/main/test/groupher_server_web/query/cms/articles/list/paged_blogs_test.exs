@@ -2,7 +2,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
   @moduledoc false
 
   use GroupherServer.TestTools
-  alias GroupherServer.CMS
 
   @page_size get_config(:general, :page_size)
 
@@ -136,7 +135,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       community_tag_attrs = mock_attrs(:community_tag)
-      {:ok, community_tag} = CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
+
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
+
       {:ok, _} = CMS.Communities.set_tag(blog, community_tag.id)
 
       variables = %{filter: %{page: 1, size: 10, community_tag: community_tag.slug}}

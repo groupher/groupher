@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.CMS.Communities.Passport do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS.Communities.Passport
+  alias CMS.Communities.Passport
 
   setup do
     {:ok, [user, user2]} = db_insert_multi(:user, 2)

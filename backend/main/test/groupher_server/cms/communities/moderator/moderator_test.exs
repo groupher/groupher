@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
   use GroupherServer.TestTools
 
   alias CMS.Model.CommunityModerator
-  alias GroupherServer.CMS.Communities.Passport
+  alias CMS.Communities.Passport
   alias Helper.Certification
 
   setup do

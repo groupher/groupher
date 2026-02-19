@@ -134,9 +134,9 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
     test "can get tags count ", ~m(community guest_conn user)a do
       community_tag_attrs = mock_attrs(:community_tag)
-      {:ok, _community_tag} = GroupherServer.CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+      {:ok, _community_tag} = CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
       community_tag_attrs = mock_attrs(:community_tag)
-      {:ok, _community_tag} = GroupherServer.CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+      {:ok, _community_tag} = CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
 
       variables = %{slug: community.slug}
       results = guest_conn |> gq_query(@query, variables)

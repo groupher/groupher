@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.CMS.Communities.Count.CommunityTag do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
