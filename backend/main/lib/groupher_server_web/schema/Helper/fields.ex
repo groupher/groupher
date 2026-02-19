@@ -25,7 +25,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:is_pinned, :boolean)
       field(:mark_delete, :boolean)
 
-      field(:article_tags, list_of(:article_tag), resolve: dataloader(CMS, :article_tags))
+      field(:community_tags, list_of(:community_tag), resolve: dataloader(CMS, :community_tags))
       field(:author, :user, resolve: dataloader(CMS, :author))
       field(:community, :community, resolve: dataloader(CMS, :community))
       field(:community_slug, :string)
@@ -203,12 +203,13 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   defmacro article_filter_fields do
     quote do
       field(:when, :when_enum)
-      field(:article_tag, :string)
+      field(:community_tag, :string)
       field(:cat, :article_cat_enum)
       field(:state, :article_state_enum)
       field(:order, :string)
-      field(:article_tags, list_of(:string))
+      field(:community_tags, list_of(:string))
       field(:community, :string)
+      field(:author, :string)
     end
   end
 

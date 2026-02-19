@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
     {community, post, _, user} = mock_article(:post)
     # {:ok, category} = db_insert(:category)
     # {:ok, thread} = db_insert(:thread)
-    {:ok, tag} = db_insert(:article_tag, %{community: community})
+    {:ok, tag} = db_insert(:community_tag, %{community: community})
 
     user_conn = simu_conn(:user)
     guest_conn = simu_conn(:guest)

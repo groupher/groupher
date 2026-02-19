@@ -35,7 +35,7 @@ const store = proxy<TStore>({
   copyRight: 'cc',
   isQuestion: false,
 
-  articleTags: [],
+  communityTags: [],
   company: '',
   companyLink: '',
 
@@ -108,12 +108,19 @@ export default (): TRet => {
   }, [])
 
   const getEditData = useCallback((): TEditData => {
-    const tagsIds = snap.articleTags.map((t) => t.id)
-    const baseFields = ['title', 'body', 'copyRight', 'isQuestion', 'linkAddr']
+    const tagsIds = store.communityTags.map((t) => t.id)
+    const baseFields: (keyof TStore)[] = [
+      'title',
+      'body',
+      'copyRight',
+      'isQuestion',
+      'linkAddr',
+      'company',
+      'companyLink',
+    ]
 
-    // @ts-expect-error
-    return { ...pick(baseFields, snap), articleTags: tagsIds }
-  }, [snap.articleTags, snap])
+    return { ...pick(baseFields, store), communityTags: tagsIds }
+  }, [])
 
   const catOnChange = (activeCat: TArticleCat): void => store.commit({ activeCat })
   const onTagSelect = (activeTag: TTag): void => snap.commit({ activeTag })

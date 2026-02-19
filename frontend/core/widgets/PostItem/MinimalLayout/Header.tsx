@@ -17,7 +17,7 @@ type TProps = {
 const Header: FC<TProps> = ({ article }) => {
   const s = useSalon()
   const { slug } = useCommunity()
-  const { innerId, title, commentsCount, articleTags } = article
+  const { innerId, title, commentsCount, communityTags } = article
 
   return (
     <article className={s.wrapper}>
@@ -34,7 +34,7 @@ const Header: FC<TProps> = ({ article }) => {
           {title}
         </a>
         {/*  @ts-ignore */}
-        <TagsList items={articleTags} left={1} />
+        <TagsList items={communityTags} left={1} />
         <div className='grow' />
         {commentsCount !== 0 && <CommentsCount count={commentsCount} size={SIZE.MEDIUM} />}
       </div>

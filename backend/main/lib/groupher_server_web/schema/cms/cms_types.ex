@@ -201,7 +201,9 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:articles_count, :integer)
     field(:subscribers_count, :integer)
     field(:moderators_count, :integer)
-    field(:article_tags_count, :integer)
+    field :community_tags_count, :integer do
+      resolve(&R.CMS.community_tags_count/3)
+    end
 
     field(:viewer_has_subscribed, :boolean)
     field(:viewer_is_moderator, :boolean)
@@ -227,7 +229,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     timestamp_fields()
   end
 
-  object :article_tag do
+  object :community_tag do
     field(:id, :id)
     field(:title, :string)
     field(:desc, :string)
@@ -372,8 +374,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     pagination_fields()
   end
 
-  object :paged_article_tags do
-    field(:entries, list_of(:article_tag))
+  object :paged_community_tags do
+    field(:entries, list_of(:community_tag))
     pagination_fields()
   end
 

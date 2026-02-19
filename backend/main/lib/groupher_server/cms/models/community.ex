@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.Model.Community do
     field(:articles_count, :integer, default: 0)
     field(:moderators_count, :integer, default: 0)
     field(:subscribers_count, :integer, default: 0)
-    field(:article_tags_count, :integer, default: 0)
+    field(:community_tags_count, :integer, default: 0)
     field(:threads_count, :integer, default: 0)
 
     field(:pending, :integer, default: 0)

@@ -205,7 +205,7 @@ export const openSearch = (): void => {
   send(EVENT.DRAWER.OPEN, { type })
 }
 
-export const setArticleTag = (community: TCommunity, thread: TThread, tags: TTag[]): void => {
+export const setCommunityTag = (community: TCommunity, thread: TThread, tags: TTag[]): void => {
   if (!community.id) {
     console.error('should set community for tag setter')
     return

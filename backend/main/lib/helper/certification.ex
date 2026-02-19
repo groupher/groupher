@@ -19,11 +19,11 @@ defmodule Helper.Certification do
     "undo_sink",
     "lock_comment",
     "undo_lock_comment",
-    "article_tag.create",
-    "article_tag.update",
-    "article_tag.delete",
-    "article_tag.set",
-    "article_tag.unset"
+    "community_tag.create",
+    "community_tag.update",
+    "community_tag.delete",
+    "community_tag.set",
+    "community_tag.unset"
   ]
 
   def root_passport_item_count(), do: 10000
@@ -31,8 +31,8 @@ defmodule Helper.Certification do
   def passport_rules(cms: "root") do
     %{
       "root.spec" => true,
-      "post.article_tag.create" => true,
-      "post.article_tag.edit" => true,
+      "post.community_tag.create" => true,
+      "post.community_tag.edit" => true,
       "post.mark_delete" => true,
       "community.add_moderator" => true
       # todo ...
@@ -42,8 +42,8 @@ defmodule Helper.Certification do
   def passport_rules(cms: "moderator") do
     %{
       ## TODO: remove those
-      "post.article_tag.create" => true,
-      "post.article_tag.edit" => true,
+      "post.community_tag.create" => true,
+      "post.community_tag.edit" => true,
       "post.mark_delete" => true
     }
   end
@@ -126,14 +126,14 @@ end
 # middleware(M.Passport, claim: "cms->c?->posts.article.edit")
 # middleware(M.Passport, claim: "owner;cms->c?->posts.article.edit")
 
-# 可以添加某个社区 posts 版块的 article_tag 标签, 同时可支持 owner
-# middleware(M.Passport, claim: "cms->c?->posts.article_tag.add")
-# middleware(M.Passport, claim: "cms->c?->posts.article_tag.edit")
-# middleware(M.Passport, claim: "cms->c?->posts.article_tag.delete")
-# middleware(M.Passport, claim: "owner;cms->c?->posts.article_tag.delete")
+# 可以添加某个社区 posts 版块的 community_tag 标签, 同时可支持 owner
+# middleware(M.Passport, claim: "cms->c?->posts.community_tag.add")
+# middleware(M.Passport, claim: "cms->c?->posts.community_tag.edit")
+# middleware(M.Passport, claim: "cms->c?->posts.community_tag.delete")
+# middleware(M.Passport, claim: "owner;cms->c?->posts.community_tag.delete")
 
 # 可以给某个社区 posts 版块的 posts 设置标签(setTag), 同时可支持 owner?
-# middleware(M.Passport, claim: "c?->posts.article_tag.set")
+# middleware(M.Passport, claim: "c?->posts.community_tag.set")
 
 # 可以某个社区的 posts 版块置顶
 # middleware(M.Passport, claim: "cms->c?->posts.setTop")

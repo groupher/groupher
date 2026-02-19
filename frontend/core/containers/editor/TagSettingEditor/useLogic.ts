@@ -62,8 +62,8 @@ export default (): TRet => {
     setProcessing(true)
     const { id, thread, community } = tag
 
-    mutate(S.deleteArticleTag, { id, community: community.slug, thread }).then((res) => {
-      console.log('## deleteArticleTag: ', res)
+    mutate(S.deleteCommunityTag, { id, community: community.slug, thread }).then((res) => {
+      console.log('## deleteCommunityTag: ', res)
       _handleDone()
     })
   }
@@ -78,8 +78,8 @@ export default (): TRet => {
       thread: activeTagThread,
     }
 
-    mutate(S.updateArticleTag, params).then((res) => {
-      console.log('## updateArticleTag: ', res)
+    mutate(S.updateCommunityTag, params).then((res) => {
+      console.log('## updateCommunityTag: ', res)
       _handleDone()
     })
   }
@@ -94,8 +94,8 @@ export default (): TRet => {
       thread: activeTagThread,
     }
 
-    mutate(S.createArticleTag, params).then((res) => {
-      console.log('## createArticleTag: ', res)
+    mutate(S.createCommunityTag, params).then((res) => {
+      console.log('## createCommunityTag: ', res)
       _handleDone()
     })
   }

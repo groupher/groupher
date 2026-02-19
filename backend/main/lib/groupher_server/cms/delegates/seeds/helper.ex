@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Helper do
 
     Enum.each(
       Seeds.Tags.get(community, thread, type),
-      &CMS.create_article_tag(community, thread, &1, bot)
+      &GroupherServer.CMS.Communities.create_tag(community, thread, &1, bot)
     )
   end
 

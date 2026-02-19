@@ -26,7 +26,7 @@ type TProps = {
 const KanbanItem: FC<TProps> = ({ article }) => {
   const s = useSalon()
 
-  const { title, articleTags, cat, upvotesCount } = article
+  const { title, communityTags, cat, upvotesCount } = article
 
   return (
     <div className={s.wrapper}>
@@ -34,7 +34,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
         {title}
       </h4>
       <div className="grow" />
-      <TagsList items={articleTags} right={1} />
+      <TagsList items={communityTags} right={1} />
       <ArticleCatState cat={cat} right={10} top={-1} />
       <div className={s.upvotes}>
         <Upvote count={upvotesCount} avatarList={mockUsers(3)} type={UPVOTE_LAYOUT.GENERAL} />

@@ -1,13 +1,13 @@
 import { gql } from 'urql'
 
-const deleteArticleTag = gql`
+const deleteCommunityTag = gql`
   mutation ($id: ID!, $community: String!, $thread: Thread) {
-    deleteArticleTag(id: $id, community: $community, thread: $thread) {
+    deleteCommunityTag(id: $id, community: $community, thread: $thread) {
       id
     }
   }
 `
-const createArticleTag = gql`
+const createCommunityTag = gql`
   mutation (
     $thread: Thread!
     $title: String!
@@ -18,7 +18,7 @@ const createArticleTag = gql`
     $group: String
     $community: String!
   ) {
-    createArticleTag(
+    createCommunityTag(
       thread: $thread
       title: $title
       desc: $desc
@@ -31,7 +31,7 @@ const createArticleTag = gql`
     }
   }
 `
-const updateArticleTag = gql`
+const updateCommunityTag = gql`
   mutation (
     $id: ID!
     $color: RainbowColor
@@ -42,7 +42,7 @@ const updateArticleTag = gql`
     $community: String!
     $group: String
   ) {
-    updateArticleTag(
+    updateCommunityTag(
       id: $id
       color: $color
       title: $title
@@ -58,9 +58,9 @@ const updateArticleTag = gql`
 `
 
 const schema = {
-  deleteArticleTag,
-  createArticleTag,
-  updateArticleTag,
+  deleteCommunityTag,
+  createCommunityTag,
+  updateCommunityTag,
 }
 
 export default schema

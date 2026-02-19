@@ -1,15 +1,14 @@
 import F from '../fragments'
 
-export const pagedArticleTags = `
-  query ($filter: ArticleTagsFilter) {
-    pagedArticleTags(filter: $filter) {
+export const pagedCommunityTags = `
+  query ($filter: CommunityTagsFilter) {
+    pagedCommunityTags(filter: $filter) {
       entries {
         ${F.tag}
       }
     }
   }
 `
-
 export const pagedCategories = `
   query($filter: PagiFilter!) {
     pagedCategories(filter: $filter) {

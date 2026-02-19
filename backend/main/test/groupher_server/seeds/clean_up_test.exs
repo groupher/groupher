@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.Seeds.CleanUp do
   @moduledoc false
   use GroupherServer.TestTools
 
-  # alias CMS.Model.ArticleTag
+  # alias CMS.Model.CommunityTag
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.Seeds.CleanUp do
       # {:ok, community} = CMS.seed_community(:home)
       # {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
 
-      # {:ok, found} = ORM.find_all(ArticleTag, %{page: 1, size: 20})
+      # {:ok, found} = ORM.find_all(CommunityTag, %{page: 1, size: 20})
       # assert found.total_count === 0
 
       # CMS.clean_up_community(:home)
@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.Seeds.CleanUp do
       # {:ok, found} = ORM.find_all(Thread, %{page: 1, size: 20})
       # assert found.total_count !== 0
 
-      # {:ok, found} = ORM.find_all(ArticleTag, %{page: 1, size: 20})
+      # {:ok, found} = ORM.find_all(CommunityTag, %{page: 1, size: 20})
       # assert found.total_count == 0
     end
   end

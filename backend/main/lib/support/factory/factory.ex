@@ -19,7 +19,7 @@ defmodule GroupherServer.Support.Factory do
     Community,
     Thread,
     CommunityThread,
-    ArticleTag,
+    CommunityTag,
     Comment
   }
 
@@ -99,7 +99,7 @@ defmodule GroupherServer.Support.Factory do
     }
   end
 
-  defp mock_meta(:article_tag) do
+  defp mock_meta(:community_tag) do
     unique_num = System.unique_integer([:positive, :monotonic])
 
     %{
@@ -150,7 +150,7 @@ defmodule GroupherServer.Support.Factory do
   def mock_attrs(:communities_threads, attrs),
     do: mock_meta(:communities_threads) |> Map.merge(attrs)
 
-  def mock_attrs(:article_tag, attrs), do: mock_meta(:article_tag) |> Map.merge(attrs)
+  def mock_attrs(:community_tag, attrs), do: mock_meta(:community_tag) |> Map.merge(attrs)
   def mock_attrs(:category, attrs), do: mock_meta(:category) |> Map.merge(attrs)
   def mock_attrs(:github_profile, attrs), do: mock_meta(:github_profile) |> Map.merge(attrs)
   def mock_attrs(:oauth_profile, attrs) do
@@ -166,7 +166,7 @@ defmodule GroupherServer.Support.Factory do
   defp mock(:comment), do: Comment |> struct(mock_meta(:comment))
   defp mock(:author), do: Author |> struct(mock_meta(:author))
   defp mock(:category), do: Category |> struct(mock_meta(:category))
-  defp mock(:article_tag), do: ArticleTag |> struct(mock_meta(:article_tag))
+  defp mock(:community_tag), do: CommunityTag |> struct(mock_meta(:community_tag))
 
   defp mock(:user), do: User |> struct(mock_meta(:user))
   defp mock(:community), do: Community |> struct(mock_meta(:community))

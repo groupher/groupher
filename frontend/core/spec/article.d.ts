@@ -62,7 +62,7 @@ type TBaseArticle = {
   viewerHasCollected?: boolean
   viewerHasUpvoted?: boolean
   commentsCount?: number
-  articleTags?: readonly TTag[]
+  communityTags?: readonly TTag[]
   meta?: TArticleMeta
   document?: TDocument
   linkAddr?: string
@@ -216,7 +216,7 @@ export type TPagedArticlesParams = {
   page?: number
   size?: number
   community?: string
-  articleTag?: string
+  communityTag?: string
   cat?: string
   state?: string
   order?: string

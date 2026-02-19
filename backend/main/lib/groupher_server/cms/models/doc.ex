@@ -25,6 +25,7 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   @type t :: %Doc{}
   schema "docs" do
+    # association: community_tags
     article_tags_field(:doc)
     article_communities_field(:doc)
     general_article_fields(:doc)

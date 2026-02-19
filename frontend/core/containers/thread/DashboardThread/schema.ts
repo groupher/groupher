@@ -233,9 +233,9 @@ const updateDashboardNameAlias = gql`
   }
 `
 
-const pagedArticleTags = gql`
-  query ($filter: ArticleTagsFilter) {
-    pagedArticleTags(filter: $filter) {
+const pagedCommunityTags = gql`
+  query ($filter: CommunityTagsFilter) {
+    pagedCommunityTags(filter: $filter) {
       entries {
         ${F.tag}
       }
@@ -243,8 +243,7 @@ const pagedArticleTags = gql`
     }
   }
 `
-
-const updateArticleTag = gql`
+const updateCommunityTag = gql`
   mutation (
     $id: ID!
     $color: RainbowColor
@@ -255,7 +254,7 @@ const updateArticleTag = gql`
     $icon: String
     $group: String
   ) {
-    updateArticleTag(
+    updateCommunityTag(
       id: $id
       color: $color
       title: $title
@@ -276,7 +275,7 @@ const updateArticleTag = gql`
 `
 
 const reindexTagsInGroup = gql`
-  mutation ($community: String!, $thread: Thread, $group: String!, $tags: [ArticleTagIndex]) {
+  mutation ($community: String!, $thread: Thread, $group: String!, $tags: [ReindexTagInput]) {
     reindexTagsInGroup(community: $community, thread: $thread, group: $group, tags: $tags) {
       done
     }
@@ -372,12 +371,12 @@ const schema = {
   updateDashboardBaseInfo,
   updateDashboardMediaReports,
   updateDashboardSeo,
-  pagedArticleTags,
+  pagedCommunityTags,
   updateDashboardEnable,
   updateDashboardLayout,
   updateDashboardSocialLinks,
   updateDashboardNameAlias,
-  updateArticleTag,
+  updateCommunityTag,
   reindexTagsInGroup,
   pagedPosts,
   pagedChangelogs,

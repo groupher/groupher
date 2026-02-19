@@ -188,7 +188,7 @@
 // //   if (field === FIELD.TAG) {
 // //     console.log("## if it's here: ", field)
 // //     store.updateEditingTag()
-// //     sr71$.mutate(S.updateArticleTag, { ...toJS(store.editingTag), community })
+// //     sr71$.mutate(S.updateCommunityTag, { ...toJS(store.editingTag), community })
 // //     return
 // //   }
 
@@ -399,7 +399,7 @@
 //     action: () => _handleDone(),
 //   },
 //   {
-//     match: asyncRes('updateArticleTag'),
+//     match: asyncRes('updateCommunityTag'),
 //     action: () => _handleDone(),
 //   },
 //   {
@@ -421,10 +421,10 @@
 //     },
 //   },
 //   {
-//     match: asyncRes('pagedArticleTags'),
-//     action: ({ pagedArticleTags }) => {
+//     match: asyncRes('pagedCommunityTags'),
+//     action: ({ pagedCommunityTags }) => {
 //       // const { original } = store
-//       // const tags = pagedArticleTags.entries
+//       // const tags = pagedCommunityTags.entries
 //       // store.mark({ tags, original: { ...original, tags } })
 //     },
 //   },
@@ -435,7 +435,7 @@
 //   {
 //     match: asyncRes(EVENT.REFRESH_TAGS),
 //     action: () => {
-//       // reloadArticleTags()
+//       // reloadCommunityTags()
 //       store.mark({ settingTag: null })
 //     },
 //   },

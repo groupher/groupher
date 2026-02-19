@@ -75,33 +75,33 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       resolve(&R.CMS.unsubscribe_community/3)
     end
 
-    @desc "set a article_tag to content"
-    field :set_article_tag, :article_tag do
+    @desc "set a community_tag to content"
+    field :set_community_tag, :article do
       arg(:id, non_null(:id))
-      arg(:article_tag_id, non_null(:id))
+      arg(:community_tag_id, non_null(:id))
       # community_id only use for passport check
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, claim: "cms->c?->t?.article_tag.set")
+      middleware(M.Passport, claim: "cms->c?->t?.community_tag.set")
       middleware(M.FrontDesk, :article)
 
-      resolve(&R.CMS.set_article_tag/3)
+      resolve(&R.CMS.set_community_tag/3)
     end
 
     @desc "unset a tag to content"
-    field :unset_article_tag, :article_tag do
+    field :unset_community_tag, :article do
       arg(:id, non_null(:id))
-      arg(:article_tag_id, non_null(:id))
+      arg(:community_tag_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, claim: "cms->c?->t?.article_tag.unset")
+      middleware(M.Passport, claim: "cms->c?->t?.community_tag.unset")
       middleware(M.FrontDesk, :article)
 
-      resolve(&R.CMS.unset_article_tag/3)
+      resolve(&R.CMS.unset_community_tag/3)
     end
 
     @desc "reindex tags in given group"
@@ -109,12 +109,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
       arg(:group, non_null(:string))
-      arg(:tags, list_of(:article_tag_index))
+      arg(:tags, list_of(:reindex_tag_input))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, claim: "cms->c?->t?.article_tag.update")
+      middleware(M.Passport, claim: "cms->c?->t?.community_tag.update")
 
-      resolve(&R.CMS.reindex_tags_in_group/3)
+      resolve(&R.CMS.reindex_community_tags/3)
     end
 
     @desc "mirror article to other community"
@@ -123,7 +123,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:community, non_null(:string))
       arg(:target_community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
-      arg(:article_tags, list_of(:id), default_value: [])
+      arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, claim: "cms->t?.community.mirror")
@@ -154,7 +154,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:community, non_null(:string))
       arg(:target_community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
-      arg(:article_tags, list_of(:id), default_value: [])
+      arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, claim: "cms->t?.community.move")
@@ -169,7 +169,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
-      arg(:article_tags, list_of(:id), default_value: [])
+      arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, claim: "cms->homemirror")
@@ -184,7 +184,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
-      arg(:article_tags, list_of(:id), default_value: [])
+      arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, claim: "cms->blackeye")

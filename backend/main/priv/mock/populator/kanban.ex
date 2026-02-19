@@ -1,9 +1,9 @@
 defmodule GroupherServer.Mock.CMS.Kanban do
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Model.{Community, Post}
+  # alias GroupherServer.CMS.Model.{Community, Post}
 
-  alias Helper.ORM
+  # alias Helper.ORM
 
   # {:ok, community} = ORM.find_by(Community, %{slug: "home"})
   # IO.inspect community

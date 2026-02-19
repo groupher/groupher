@@ -102,7 +102,7 @@ export const article = `
   communities {
     ${community}
   }
-  articleTags {
+  communityTags {
     ${tag}
   }
 `

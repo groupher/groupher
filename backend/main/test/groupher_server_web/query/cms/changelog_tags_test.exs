@@ -9,16 +9,16 @@ defmodule GroupherServer.Test.Query.CMS.ChangelogTags do
     {:ok, community2} = db_insert(:community)
     {:ok, user} = db_insert(:user)
 
-    article_tag_attrs = mock_attrs(:article_tag)
-    article_tag_attrs2 = mock_attrs(:article_tag)
+    article_tag_attrs = mock_attrs(:community_tag)
+    article_tag_attrs2 = mock_attrs(:community_tag)
 
     {:ok, ~m(guest_conn community community2 article_tag_attrs article_tag_attrs2 user)a}
   end
 
   describe "[cms query tags]" do
     @query """
-    query($filter: ArticleTagsFilter) {
-      pagedArticleTags(filter: $filter) {
+    query($filter: CommunityTagsFilter) {
+      pagedCommunityTags(filter: $filter) {
         entries {
           id
           title
@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.Query.CMS.ChangelogTags do
     test "guest user can get paged tags without filter",
          ~m(guest_conn community article_tag_attrs user)a do
       variables = %{}
-      {:ok, _article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, _article_tag} = CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
       results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.Query.CMS.ChangelogTags do
 
     test "guest user can get all paged tags belongs to a community",
          ~m(guest_conn community article_tag_attrs user)a do
-      {:ok, _article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, _article_tag} = CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(@query, variables)
@@ -62,7 +62,7 @@ defmodule GroupherServer.Test.Query.CMS.ChangelogTags do
 
     test "guest user can get tags by community and thread",
          ~m(guest_conn community  article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.create_article_tag(community, :changelog, article_tag_attrs, user)
+      {:ok, article_tag} = CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
 
       variables = %{filter: %{community: community.slug, thread: "CHANGELOG"}}
       results = guest_conn |> gq_query(@query, variables)

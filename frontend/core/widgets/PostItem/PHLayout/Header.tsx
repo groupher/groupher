@@ -13,7 +13,7 @@ type TProps = {
 }
 
 const Header: FC<TProps> = ({ article }) => {
-  const { innerId, title, articleTags } = article
+  const { innerId, title, communityTags } = article
   const { slug } = useCommunity()
   const s = useSalon()
 
@@ -32,7 +32,7 @@ const Header: FC<TProps> = ({ article }) => {
           {title}
         </a>
         {/*  @ts-ignore */}
-        <TagsList items={articleTags} left={12} />
+        <TagsList items={communityTags} left={12} />
       </div>
     </div>
   )

@@ -106,7 +106,7 @@ type RootQueryType {
   pagedThreads(filter: ThreadsFilter): PagedThreads
 
   "get paged article tags"
-  pagedArticleTags(filter: ArticleTagsFilter): PagedArticleTags
+  pagedCommunityTags(filter: CommunityTagsFilter): PagedCommunityTags
 
   "got basic comments state"
   commentsState(id: ID!, thread: Thread, freshkey: String): CommentsListState
@@ -274,17 +274,17 @@ type RootMutationType {
   updateModeratorPassport(community: String!, user: String!, rules: Json!): Community
 
   "create a tag"
-  createArticleTag(
+  createCommunityTag(
     title: String!, slug: String!, color: RainbowColor!, layout: String, community: String!, group: String, thread: Thread, extra: [String], icon: String
-  ): ArticleTag
+  ): CommunityTag
 
   "update a tag"
-  updateArticleTag(
+  updateCommunityTag(
     id: ID!, community: String!, title: String, layout: String, desc: String, slug: String, color: RainbowColor, group: String, thread: Thread, extra: [String], icon: String
-  ): ArticleTag
+  ): CommunityTag
 
   "delete a tag by thread"
-  deleteArticleTag(id: ID!, community: String!, thread: Thread): ArticleTag
+  deleteCommunityTag(id: ID!, community: String!, thread: Thread): CommunityTag
 
   "set category to a community"
   setCategory(community: String!, categoryId: ID!): Community
@@ -304,38 +304,38 @@ type RootMutationType {
   "unsubscribe a community"
   unsubscribeCommunity(community: String!): Community
 
-  "set a article_tag to content"
-  setArticleTag(id: ID!, articleTagId: ID!, community: String!, thread: Thread): ArticleTag
+  "set a community_tag to content"
+  setCommunityTag(id: ID!, communityTagId: ID!, community: String!, thread: Thread): Article
 
   "unset a tag to content"
-  unsetArticleTag(id: ID!, articleTagId: ID!, community: String!, thread: Thread): ArticleTag
+  unsetCommunityTag(id: ID!, communityTagId: ID!, community: String!, thread: Thread): Article
 
   "reindex tags in given group"
-  reindexTagsInGroup(community: String!, thread: Thread, group: String!, tags: [ArticleTagIndex]): Done
+  reindexTagsInGroup(community: String!, thread: Thread, group: String!, tags: [ReindexTagInput]): Done
 
   "mirror article to other community"
-  mirrorArticle(id: ID!, community: String!, targetCommunity: String!, thread: Thread, articleTags: [ID]): Article
+  mirrorArticle(id: ID!, community: String!, targetCommunity: String!, thread: Thread, communityTags: [ID]): Article
 
   "unmirror article for community"
   unmirrorArticle(id: ID!, community: String!, targetCommunity: String!, thread: Thread): Article
 
   "move article to other community"
-  moveArticle(id: ID!, community: String!, targetCommunity: String!, thread: Thread, articleTags: [ID]): Article
+  moveArticle(id: ID!, community: String!, targetCommunity: String!, thread: Thread, communityTags: [ID]): Article
 
   "mirror article to home community"
-  mirrorToHome(id: ID!, community: String!, thread: Thread, articleTags: [ID]): Article
+  mirrorToHome(id: ID!, community: String!, thread: Thread, communityTags: [ID]): Article
 
   "move article to other community"
-  moveToBlackhole(id: ID!, community: String!, thread: Thread, articleTags: [ID]): Article
+  moveToBlackhole(id: ID!, community: String!, thread: Thread, communityTags: [ID]): Article
 
   "create a post"
   createPost(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, articleTags: [ID]
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
   ): Post
 
   "update a cms\/post"
   updatePost(
-    id: ID!, community: String!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, articleTags: [ID], thread: Thread
+    id: ID!, community: String!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], thread: Thread
   ): Post
 
   "set cat for a post"
@@ -397,12 +397,12 @@ type RootMutationType {
 
   "create a blog"
   createBlog(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, articleTags: [ID]
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
   ): Blog
 
   "update a cms\/blog"
   updateBlog(
-    id: ID!, community: String!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, articleTags: [ID], thread: Thread
+    id: ID!, community: String!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], thread: Thread
   ): Blog
 
   "upvote to blog"
@@ -458,12 +458,12 @@ type RootMutationType {
 
   "create a changelog"
   createChangelog(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, articleTags: [ID]
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
   ): Changelog
 
   "update a cms\/changelog"
   updateChangelog(
-    id: ID!, community: String!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, articleTags: [ID], thread: Thread
+    id: ID!, community: String!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], thread: Thread
   ): Changelog
 
   "upvote to changelog"
@@ -519,12 +519,12 @@ type RootMutationType {
 
   "create a doc"
   createDoc(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, articleTags: [ID]
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
   ): Doc
 
   "update a cms\/doc"
   updateDoc(
-    id: ID!, community: String!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, articleTags: [ID], thread: Thread
+    id: ID!, community: String!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], thread: Thread
   ): Doc
 
   "upvote to doc"
@@ -709,7 +709,7 @@ type Post implements Article {
   views: Int
   isPinned: Boolean
   markDelete: Boolean
-  articleTags: [ArticleTag]
+  communityTags: [CommunityTag]
   author: User
   community: Community
   communitySlug: String
@@ -730,8 +730,8 @@ type Post implements Article {
   commentsParticipants: [User]
   commentsParticipantsCount: Int
   commentsCount: Int
-  cat: String
-  state: String
+  cat: ArticleCatEnum
+  state: ArticleStateEnum
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -745,7 +745,7 @@ type Changelog implements Article {
   views: Int
   isPinned: Boolean
   markDelete: Boolean
-  articleTags: [ArticleTag]
+  communityTags: [CommunityTag]
   author: User
   community: Community
   communitySlug: String
@@ -779,7 +779,7 @@ type Doc implements Article {
   views: Int
   isPinned: Boolean
   markDelete: Boolean
-  articleTags: [ArticleTag]
+  communityTags: [CommunityTag]
   author: User
   community: Community
   communitySlug: String
@@ -813,7 +813,7 @@ type Blog implements Article {
   views: Int
   isPinned: Boolean
   markDelete: Boolean
-  articleTags: [ArticleTag]
+  communityTags: [CommunityTag]
   author: User
   community: Community
   communitySlug: String
@@ -1044,7 +1044,7 @@ type Community {
   articlesCount: Int
   subscribersCount: Int
   moderatorsCount: Int
-  articleTagsCount: Int
+  communityTagsCount: Int
   viewerHasSubscribed: Boolean
   viewerIsModerator: Boolean
   pending: Int
@@ -1064,7 +1064,7 @@ type Category {
   updatedAt: DateTime
 }
 
-type ArticleTag {
+type CommunityTag {
   id: ID
   title: String
   desc: String
@@ -1320,8 +1320,8 @@ type PagedCommunities {
   pageNumber: Int
 }
 
-type PagedArticleTags {
-  entries: [ArticleTag]
+type PagedCommunityTags {
+  entries: [CommunityTag]
   totalCount: Int
   pageSize: Int
   totalPages: Int
@@ -1513,6 +1513,8 @@ enum ArticleCatEnum {
 }
 
 enum ArticleStateEnum {
+  DEFAULT
+  BACKLOG
   TODO
   WIP
   DONE
@@ -1553,14 +1555,14 @@ input ThreadsFilter {
   sort: ThreadSortEnum
 }
 
-input ArticleTagsFilter {
+input CommunityTagsFilter {
   community: String
   thread: Thread
   page: Int
   size: Int
 }
 
-input ArticleTagIndex {
+input ReindexTagInput {
   id: ID
   index: Int
 }
@@ -1583,17 +1585,19 @@ input PagedPostsFilter {
 
   when: WhenEnum
 
-  articleTag: String
+  communityTag: String
 
-  cat: String
+  cat: ArticleCatEnum
 
-  state: String
+  state: ArticleStateEnum
 
   order: String
 
-  articleTags: [String]
+  communityTags: [String]
 
   community: String
+
+  author: String
 
   sort: SortEnum
 }
@@ -1602,7 +1606,7 @@ input PagedPostsFilter {
 input PagedKanbanPostsFilter {
   page: Int
   size: Int
-  state: String
+  state: ArticleStateEnum
 }
 
 "changelogs_filter doc"
@@ -1614,17 +1618,19 @@ input PagedChangelogsFilter {
 
   when: WhenEnum
 
-  articleTag: String
+  communityTag: String
 
-  cat: String
+  cat: ArticleCatEnum
 
-  state: String
+  state: ArticleStateEnum
 
   order: String
 
-  articleTags: [String]
+  communityTags: [String]
 
   community: String
+
+  author: String
 
   sort: SortEnum
 }
@@ -1638,17 +1644,19 @@ input PagedDocsFilter {
 
   when: WhenEnum
 
-  articleTag: String
+  communityTag: String
 
-  cat: String
+  cat: ArticleCatEnum
 
-  state: String
+  state: ArticleStateEnum
 
   order: String
 
-  articleTags: [String]
+  communityTags: [String]
 
   community: String
+
+  author: String
 
   sort: SortEnum
 }
@@ -1658,12 +1666,13 @@ input PagedBlogsFilter {
   page: Int
   size: Int
   when: WhenEnum
-  articleTag: String
-  cat: String
-  state: String
+  communityTag: String
+  cat: ArticleCatEnum
+  state: ArticleStateEnum
   order: String
-  articleTags: [String]
+  communityTags: [String]
   community: String
+  author: String
   sort: SortEnum
 }
 
@@ -1757,7 +1766,7 @@ type CountStatusInfo {
   changelogsCount: Int
   blogsCount: Int
   categoriesCount: Int
-  articleTagsCount: Int
+  communityTagsCount: Int
   threadsCount: Int
 }
 

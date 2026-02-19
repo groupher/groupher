@@ -280,34 +280,34 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # tags ..
   # #######################
-  def create_article_tag(_root, %{thread: thread, community: community} = args, %{
+  def create_community_tag(_root, %{thread: thread, community: community} = args, %{
         context: %{cur_user: user}
       }) do
-    CMS.create_article_tag(%Community{slug: community}, thread, args, user)
+    GroupherServer.CMS.Communities.create_tag(%Community{slug: community}, thread, args, user)
   end
 
-  def update_article_tag(_root, %{id: id} = args, _info) do
-    CMS.update_article_tag(id, args)
+  def update_community_tag(_root, %{id: id} = args, _info) do
+    GroupherServer.CMS.Communities.update_tag(id, args)
   end
 
-  def delete_article_tag(_root, %{id: id}, _info) do
-    CMS.delete_article_tag(id)
+  def delete_community_tag(_root, %{id: id}, _info) do
+    GroupherServer.CMS.Communities.delete_tag(id)
   end
 
-  def set_article_tag(_root, ~m(article article_tag_id)a, _info) do
-    CMS.set_article_tag(article, article_tag_id)
+  def set_community_tag(_root, ~m(article community_tag_id)a, _info) do
+    GroupherServer.CMS.Communities.set_tag(article, community_tag_id)
   end
 
-  def unset_article_tag(_root, ~m(article article_tag_id)a, _info) do
-    CMS.unset_article_tag(article, article_tag_id)
+  def unset_community_tag(_root, ~m(article community_tag_id)a, _info) do
+    GroupherServer.CMS.Communities.unset_tag(article, community_tag_id)
   end
 
-  def paged_article_tags(_root, %{filter: filter}, _info) do
-    CMS.paged_article_tags(filter)
+  def paged_community_tags(_root, %{filter: filter}, _info) do
+    GroupherServer.CMS.Communities.paged_tags(filter)
   end
 
-  def reindex_tags_in_group(_root, ~m(community thread group tags)a, _info) do
-    CMS.reindex_tags_in_group(community, thread, group, tags)
+  def reindex_community_tags(_root, ~m(community thread group tags)a, _info) do
+    GroupherServer.CMS.Communities.reindex_tags(community, thread, group, tags)
 
     {:ok, %{done: true}}
   end
@@ -341,24 +341,24 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def paged_community_subscribers(_root, _args, _info), do: {:error, "invalid args"}
 
-  def mirror_article(_root, ~m(target_community article article_tags)a, _info) do
-    CMS.Articles.mirror(target_community, article, article_tags)
+  def mirror_article(_root, ~m(target_community article community_tags)a, _info) do
+    CMS.Articles.mirror(target_community, article, community_tags)
   end
 
   def unmirror_article(_root, ~m(target_community article)a, _info) do
     CMS.Articles.unmirror(target_community, article)
   end
 
-  def move_article(_root, ~m(target_community article article_tags)a, _info) do
-    CMS.Articles.move(target_community, article, article_tags)
+  def move_article(_root, ~m(target_community article community_tags)a, _info) do
+    CMS.Articles.move(target_community, article, community_tags)
   end
 
-  def mirror_to_home(_root, ~m(target_community article article_tags)a, _info) do
-    CMS.Articles.mirror_to_home(target_community, article, article_tags)
+  def mirror_to_home(_root, ~m(target_community article community_tags)a, _info) do
+    CMS.Articles.mirror_to_home(target_community, article, community_tags)
   end
 
-  def move_to_blackhole(_root, ~m(target_community article article_tags)a, _info) do
-    CMS.Articles.move_to_blackhole(target_community, article, article_tags)
+  def move_to_blackhole(_root, ~m(target_community article community_tags)a, _info) do
+    CMS.Articles.move_to_blackhole(target_community, article, community_tags)
   end
 
   # #######################
@@ -481,7 +481,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # ##############################################
   def threads_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :threads)
 
-  def article_tags_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :article_tags)
+  def community_tags_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :community_tags)
 
   # OSS token
   def upload_tokens(_root, _, _) do

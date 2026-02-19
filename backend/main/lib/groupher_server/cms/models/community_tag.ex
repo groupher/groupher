@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.ArticleTag do
+defmodule GroupherServer.CMS.Model.CommunityTag do
   @moduledoc false
   alias __MODULE__
 
@@ -16,8 +16,8 @@ defmodule GroupherServer.CMS.Model.ArticleTag do
 
   @schema_prefix DBPrefix.cms()
 
-  @type t :: %ArticleTag{}
-  schema "article_tags" do
+  @type t :: %CommunityTag{}
+  schema "community_tags" do
     field(:title, :string)
     field(:desc, :string)
     field(:slug, :string)
@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Model.ArticleTag do
     timestamps(type: :utc_datetime)
   end
 
-  def changeset(%ArticleTag{} = tag, attrs) do
+  def changeset(%CommunityTag{} = tag, attrs) do
     tag
     |> cast(attrs, @required_fields ++ @updatable_fields)
     |> validate_required(@required_fields)
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Model.ArticleTag do
     |> foreign_key_constraint(:community_id)
   end
 
-  def update_changeset(%ArticleTag{} = tag, attrs) do
+  def update_changeset(%CommunityTag{} = tag, attrs) do
     tag
     |> cast(attrs, @updatable_fields)
     |> foreign_key_constraint(:user_id)

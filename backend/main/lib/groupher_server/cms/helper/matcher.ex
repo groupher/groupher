@@ -39,6 +39,15 @@ defmodule GroupherServer.CMS.Helper.Matcher do
      }}
   end
 
+  def match(:community_tag) do
+    {:ok,
+     %{
+       model: CMS.Model.CommunityTag,
+       foreign_key: :community_tag_id,
+       preload: :community_tag
+     }}
+  end
+
   thread_matches()
   thread_query_matches()
 end

@@ -35,20 +35,22 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     end
 
     test "create doc with valid tags id list", ~m(user_conn user community)a do
-      article_tag_attrs = mock_attrs(:article_tag)
-      {:ok, article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
+      community_tag_attrs = mock_attrs(:community_tag)
+
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
 
       doc_attr = mock_attrs(:doc)
 
       variables =
-        doc_attr |> Map.merge(%{community: community.slug, articleTags: [article_tag.id]})
+        doc_attr |> Map.merge(%{community: community.slug, communityTags: [community_tag.id]})
 
       created = user_conn |> gq_mutation(Schema.m(:create_article, :doc), variables)
 
       {:ok, doc} =
-        ORM.find_article(community, :doc, created["innerId"], preload: :article_tags)
+        ORM.find_article(community, :doc, created["innerId"], preload: :community_tags)
 
-      assert exist_in?(%{id: article_tag.id}, doc.article_tags)
+      assert exist_in?(%{id: community_tag.id}, doc.community_tags)
     end
 
     test "create doc should escape xss attracts", ~m(user_conn community)a do
@@ -165,8 +167,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
     test "doc can be update by owner", ~m(owner_conn community doc user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
-      article_tag_attrs = mock_attrs(:article_tag)
-      {:ok, article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
+      community_tag_attrs = mock_attrs(:community_tag)
+
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
 
       variables = %{
         id: doc.inner_id,
@@ -174,60 +178,64 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
         title: "updated title #{unique_num}",
         # body: mock_rich_text("updated body #{unique_num}"),,
         body: mock_rich_text("updated body #{unique_num}"),
-        articleTags: [article_tag.id]
+        communityTags: [community_tag.id]
       }
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :doc), variables)
       assert result["title"] == variables.title
 
-      assert result["articleTags"] |> List.first() |> get_in(["id"]) == to_string(article_tag.id)
+      assert result["communityTags"] |> List.first() |> get_in(["id"]) ==
+               to_string(community_tag.id)
 
       assert result
              |> get_in(["document", "bodyHtml"])
              |> String.contains?(~s(updated body #{unique_num}))
     end
 
-    test "update doc article tags should be overwrite old ones",
+    test "update doc community tags should be overwrite old ones",
          ~m(owner_conn community doc user)a do
-      article_tag_attrs = mock_attrs(:article_tag)
-      article_tag_attrs2 = mock_attrs(:article_tag)
-      article_tag_attrs3 = mock_attrs(:article_tag)
+      community_tag_attrs = mock_attrs(:community_tag)
+      community_tag_attrs2 = mock_attrs(:community_tag)
+      community_tag_attrs3 = mock_attrs(:community_tag)
 
-      {:ok, article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
 
-      {:ok, article_tag2} =
-        CMS.create_article_tag(community, :doc, article_tag_attrs2, user)
+      {:ok, community_tag2} =
+        CMS.Communities.create_tag(community, :doc, community_tag_attrs2, user)
 
-      {:ok, article_tag3} =
-        CMS.create_article_tag(community, :doc, article_tag_attrs3, user)
-
-      variables = %{
-        id: doc.inner_id,
-        community: community.slug,
-        articleTags: [article_tag.id, article_tag2.id]
-      }
-
-      result = owner_conn |> gq_mutation(Schema.m(:update_article, :doc), variables)
-
-      assert result["articleTags"] |> length == 2
-
-      assert result["articleTags"]
-             |> Enum.map(&get_in(&1, ["id"]))
-             |> Enum.sort() == Enum.sort([to_string(article_tag.id), to_string(article_tag2.id)])
+      {:ok, community_tag3} =
+        CMS.Communities.create_tag(community, :doc, community_tag_attrs3, user)
 
       variables = %{
         id: doc.inner_id,
         community: community.slug,
-        articleTags: [article_tag2.id, article_tag3.id]
+        communityTags: [community_tag.id, community_tag2.id]
       }
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :doc), variables)
 
-      assert result["articleTags"] |> length == 2
+      assert result["communityTags"] |> length == 2
 
-      assert result["articleTags"]
+      assert result["communityTags"]
              |> Enum.map(&get_in(&1, ["id"]))
-             |> Enum.sort() == Enum.sort([to_string(article_tag2.id), to_string(article_tag3.id)])
+             |> Enum.sort() ==
+               Enum.sort([to_string(community_tag.id), to_string(community_tag2.id)])
+
+      variables = %{
+        id: doc.inner_id,
+        community: community.slug,
+        communityTags: [community_tag2.id, community_tag3.id]
+      }
+
+      result = owner_conn |> gq_mutation(Schema.m(:update_article, :doc), variables)
+
+      assert result["communityTags"] |> length == 2
+
+      assert result["communityTags"]
+             |> Enum.map(&get_in(&1, ["id"]))
+             |> Enum.sort() ==
+               Enum.sort([to_string(community_tag2.id), to_string(community_tag3.id)])
     end
 
     test "update doc with valid attrs should have is_edited meta info update",

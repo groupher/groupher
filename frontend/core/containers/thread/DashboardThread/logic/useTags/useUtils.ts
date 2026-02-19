@@ -31,9 +31,9 @@ export default (): TRet => {
     }
 
     dsb$.commit({ loading: true })
-    query(S.pagedArticleTags, params).then((data) => {
+    query(S.pagedCommunityTags, params).then((data) => {
       // @ts-expect-error
-      const tags = data.pagedArticleTags.entries
+      const tags = data.pagedCommunityTags.entries
       dsb$.commit({ tags, original: { ...original, tags }, loading: false })
     })
   }

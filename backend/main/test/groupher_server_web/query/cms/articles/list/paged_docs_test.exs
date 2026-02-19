@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert results |> is_valid_pagination?
       assert results["pageSize"] == 10
       assert results["totalCount"] == @total_count
-      assert results["entries"] |> List.first() |> Map.get("articleTags") |> is_list
+      assert results["entries"] |> List.first() |> Map.get("communityTags") |> is_list
     end
 
     test "publish order should work", ~m(guest_conn community user)a do
@@ -129,24 +129,27 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert not is_nil(get_in(doc, ["document", "bodyHtml"]))
     end
 
-    test "support article_tag filter", ~m(guest_conn community user)a do
+    test "support community_tag filter", ~m(guest_conn community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      article_tag_attrs = mock_attrs(:article_tag)
-      {:ok, article_tag} = CMS.create_article_tag(community, :doc, article_tag_attrs, user)
-      {:ok, _} = CMS.set_article_tag(doc, article_tag.id)
+      community_tag_attrs = mock_attrs(:community_tag)
 
-      variables = %{filter: %{page: 1, size: 10, article_tag: article_tag.slug}}
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
+
+      {:ok, _} = CMS.Communities.set_tag(doc, community_tag.id)
+
+      variables = %{filter: %{page: 1, size: 10, community_tag: community_tag.slug}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
 
-      variables = %{filter: %{page: 1, size: 10, article_tags: [article_tag.slug]}}
+      variables = %{filter: %{page: 1, size: 10, community_tags: [community_tag.slug]}}
       results2 = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
       assert results == results2
 
       doc = results["entries"] |> List.first()
       assert results["totalCount"] == 1
-      assert exist_in?(article_tag, doc["articleTags"])
+      assert exist_in?(community_tag, doc["communityTags"])
     end
 
     test "support community filter", ~m(guest_conn community user)a do

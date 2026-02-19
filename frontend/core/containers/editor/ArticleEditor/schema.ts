@@ -7,17 +7,17 @@ const createPost = gql`
     $title: String!
     $body: String!
     $communityId: ID!
+    $communityTags: [Id]
     $linkAddr: String
-    $isQuestion: Boolean
-    $articleTags: [Id]
+    $copyRight: String
   ) {
     createPost(
       title: $title
       body: $body
       communityId: $communityId
+      communityTags: $communityTags
       linkAddr: $linkAddr
-      isQuestion: $isQuestion
-      articleTags: $articleTags
+      copyRight: $copyRight
     ) {
       id
       title
@@ -34,7 +34,7 @@ const updatePost = gql`
     $body: String
     $linkAddr: String
     $copyRight: String
-    $articleTags: [Id]
+    $communityTags: [Id]
   ) {
     updatePost(
       id: $id
@@ -42,7 +42,7 @@ const updatePost = gql`
       body: $body
       linkAddr: $linkAddr
       copyRight: $copyRight
-      articleTags: $articleTags
+      communityTags: $communityTags
     ) {
       id
       title
@@ -66,7 +66,7 @@ const createJob = gql`
     $communityId: ID!
     $company: String!
     $companyLink: String
-    $articleTags: [Id]
+    $communityTags: [Id]
   ) {
     createJob(
       title: $title
@@ -74,7 +74,7 @@ const createJob = gql`
       communityId: $communityId
       company: $company
       companyLink: $companyLink
-      articleTags: $articleTags
+      communityTags: $communityTags
     ) {
       id
       title
@@ -92,7 +92,7 @@ const updateJob = gql`
     $company: String!
     $companyLink: String
     $body: String
-    $articleTags: [Ids]
+    $communityTags: [Ids]
   ) {
     updateJob(
       id: $id
@@ -100,7 +100,7 @@ const updateJob = gql`
       company: $company
       companyLink: $companyLink
       body: $body
-      articleTags: $articleTags
+      communityTags: $communityTags
     ) {
       id
       title
@@ -124,14 +124,14 @@ const createRadar = gql`
     $body: String
     $linkAddr: String!
     $communityId: ID!
-    $articleTags: [Id]
+    $communityTags: [Id]
   ) {
     createRadar(
       title: $title
       body: $body
       linkAddr: $linkAddr
       communityId: $communityId
-      articleTags: $articleTags
+      communityTags: $communityTags
     ) {
       id
       title
@@ -147,14 +147,14 @@ const updateRadar = gql`
     $title: String
     $body: String
     $linkAddr: String
-    $articleTags: [Id]
+    $communityTags: [Id]
   ) {
     updateRadar(
       id: $id
       title: $title
       body: $body
       linkAddr: $linkAddr
-      articleTags: $articleTags
+      communityTags: $communityTags
     ) {
       id
       title
@@ -202,7 +202,7 @@ const post = gql`
         ${F.community}
       }
 
-      articleTags {
+      communityTags {
         ${F.tag}
       }
 
@@ -238,7 +238,7 @@ const job = gql`
         ${F.community}
       }
 
-      articleTags {
+      communityTags {
         ${F.tag}
       }
 
@@ -269,7 +269,7 @@ const radar = gql`
         ${F.community}
       }
 
-      articleTags {
+      communityTags {
         ${F.tag}
       }
 

@@ -628,8 +628,8 @@ export default {
   'account.menu.create_community': '创建社区',
   'account.menu.logout': '登出',
   'community.add_moderator': '添加社区管理员',
-  'post.article_tag.create': '创建帖子标签',
-  'post.article_tag.edit': '编辑帖子标签',
+  'post.community_tag.create': '创建帖子标签',
+  'post.community_tag.edit': '编辑帖子标签',
   'post.mark_delete': '删除帖子',
 
   'community.editor.your.community': '你的社区',

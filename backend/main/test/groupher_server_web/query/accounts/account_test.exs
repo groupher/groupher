@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
   use GroupherServer.TestTools
 
   alias CMS.Model.CommunitySubscriber
-  alias GroupherServer.CMS.Communities.Passport, as: CMSPassport
+  alias CMS.Communities.Passport, as: CMSPassport
 
   @default_subscribed_communities get_config(:general, :default_subscribed_communities)
 

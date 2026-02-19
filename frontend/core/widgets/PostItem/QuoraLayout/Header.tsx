@@ -28,7 +28,7 @@ const Header: FC<TProps> = ({ article }) => {
 
   const s = useSalon({ isPinned })
 
-  const { author, title, commentsCount, innerId, articleTags, insertedAt } = article
+  const { author, title, commentsCount, innerId, communityTags, insertedAt } = article
 
   return (
     <section className={s.wrapper}>
@@ -58,8 +58,7 @@ const Header: FC<TProps> = ({ article }) => {
           {title}
         </Link>
 
-        {/*  @ts-ignore */}
-        <TagsList items={articleTags} left={2} top='px' />
+        <TagsList items={communityTags} left={2} top='px' />
         <div className='grow' />
         {commentsCount !== 0 && (
           <CommentsCount

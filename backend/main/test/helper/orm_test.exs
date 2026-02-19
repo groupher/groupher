@@ -43,9 +43,9 @@ defmodule GroupherServer.Test.Helper.ORM do
     end
 
     test "find/3 with preload can preload multi fields", %{post: post} do
-      {:ok, found} = ORM.find(Post, post.id, preload: [:author, :article_tags, :communities])
+      {:ok, found} = ORM.find(Post, post.id, preload: [:author, :community_tags, :communities])
       assert %Author{} = found.author
-      assert %Ecto.Association.NotLoaded{} != found.article_tags
+      assert %Ecto.Association.NotLoaded{} != found.community_tags
       assert %Ecto.Association.NotLoaded{} != found.communities
     end
 

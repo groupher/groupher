@@ -23,6 +23,7 @@ defmodule GroupherServer.CMS.Model.Blog do
 
   @type t :: %Blog{}
   schema "blogs" do
+    # association: community_tags
     article_tags_field(:blog)
     article_communities_field(:blog)
     general_article_fields(:blog)

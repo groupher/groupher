@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results |> is_valid_pagination?
       assert results["pageSize"] == 10
       assert results["totalCount"] == @total_count
-      assert results["entries"] |> List.first() |> Map.get("articleTags") |> is_list
+      assert results["entries"] |> List.first() |> Map.get("communityTags") |> is_list
     end
 
     test "publish order should work", ~m(guest_conn community user)a do
@@ -136,6 +136,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["totalCount"] == 1
 
       variables = %{filter: %{page: 1, size: 20, cat: "NOT_EXIST"}}
+
       assert guest_conn
              |> query_error?(Schema.q(:paged_articles, :post, "cat state"), variables)
 
@@ -144,6 +145,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["totalCount"] == 1
 
       variables = %{filter: %{page: 1, size: 20, state: "NOT_EXIST"}}
+
       assert guest_conn
              |> query_error?(Schema.q(:paged_articles, :post, "cat state"), variables)
 
@@ -169,20 +171,20 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      article_tag_attrs = mock_attrs(:article_tag)
-      {:ok, article_tag} = CMS.create_article_tag(community, :post, article_tag_attrs, user)
-      {:ok, _} = CMS.set_article_tag(post, article_tag.id)
+      article_tag_attrs = mock_attrs(:community_tag)
+      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, _} = CMS.Communities.set_tag(post, article_tag.id)
 
-      variables = %{filter: %{page: 1, size: 10, article_tag: article_tag.slug}}
+      variables = %{filter: %{page: 1, size: 10, community_tag: article_tag.slug}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
 
-      variables = %{filter: %{page: 1, size: 10, article_tags: [article_tag.slug]}}
+      variables = %{filter: %{page: 1, size: 10, community_tags: [article_tag.slug]}}
       results2 = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
       assert results == results2
 
       post = results["entries"] |> List.first()
       assert results["totalCount"] == 1
-      assert exist_in?(article_tag, post["articleTags"])
+      assert exist_in?(%{id: to_string(article_tag.id)}, post["communityTags"])
     end
 
     test "support community filter", ~m(guest_conn community user)a do

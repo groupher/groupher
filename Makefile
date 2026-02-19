@@ -83,6 +83,8 @@ be.gen.schema:
 	&& rm -f ./frontend/mock-server/schema.graphql \
 	&& ln -s ../../backend/main/schema.graphql ./frontend/mock-server/schema.graphql
 
+sync.schema: be.gen.schema
+
 # work around, see: https://elixirforum.com/t/mix-test-file-watch/12298/2
 # mix test --listen-on-stdin --stale --trace --only wip
 

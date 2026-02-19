@@ -1,9 +1,9 @@
 import { gql } from 'urql'
 import { F } from '~/schemas'
 
-const pagedArticleTags = gql`
-  query($filter: ArticleTagsFilter) {
-    pagedArticleTags(filter: $filter) {
+const pagedCommunityTags = gql`
+  query($filter: CommunityTagsFilter) {
+    pagedCommunityTags(filter: $filter) {
       entries {
         ${F.tag}
       }
@@ -12,7 +12,7 @@ const pagedArticleTags = gql`
 `
 
 const schema = {
-  pagedArticleTags,
+  pagedCommunityTags,
 }
 
 export default schema
