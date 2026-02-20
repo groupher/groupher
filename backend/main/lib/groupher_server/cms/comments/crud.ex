@@ -210,6 +210,13 @@ defmodule GroupherServer.CMS.Comments.CRUD do
     |> done()
   end
 
+  @spec batch_update_question_flag(Post.t(), boolean()) :: T.domain_res(term())
+  def batch_update_question_flag(%Post{} = post, is_question) do
+    from(c in Comment, where: c.post_id == ^post.id)
+    |> Repo.update_all(set: [is_for_question: is_question])
+    |> done()
+  end
+
   defp do_create_comment(body, foreign_key, article, %User{id: user_id}) do
     with {:ok, %{body: body, body_html: body_html}} <- Helper.Converter.Article.parse_body(body) do
       thread = foreign_key |> to_string |> String.slice(0..-4) |> String.upcase()
