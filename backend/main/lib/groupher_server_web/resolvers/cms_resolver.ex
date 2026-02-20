@@ -174,10 +174,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # thread reaction ..
   # #######################
-  def lock_article_comments(_root, ~m(article)a, _info), do: CMS.lock_article_comments(article)
+  def lock_article_comments(_root, ~m(article)a, _info), do: CMS.Comments.lock_article_comments(article)
 
   def undo_lock_article_comments(_root, ~m(article)a, _info) do
-    CMS.undo_lock_article_comments(article)
+    CMS.Comments.undo_lock_article_comments(article)
   end
 
   def sink_article(_root, ~m(article)a, _info), do: CMS.Articles.sink(article)
@@ -365,92 +365,92 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # comments ..
   # #######################
   def comments_state(_root, ~m(thread id)a, %{context: %{cur_user: user}}) do
-    CMS.comments_state(thread, id, user)
+    CMS.Comments.comments_state(thread, id, user)
   end
 
   def comments_state(_root, ~m(thread id)a, _) do
-    CMS.comments_state(thread, id)
+    CMS.Comments.comments_state(thread, id)
   end
 
   def one_comment(_root, ~m(id)a, %{context: %{cur_user: user}}) do
-    CMS.one_comment(id, user)
+    CMS.Comments.one_comment(id, user)
   end
 
   def one_comment(_root, ~m(id)a, _) do
-    CMS.one_comment(id)
+    CMS.Comments.one_comment(id)
   end
 
   def paged_comments(_root, ~m(id thread filter mode)a, %{context: %{cur_user: user}}) do
     case mode do
-      :replies -> CMS.paged_comments(thread, id, filter, :replies, user)
-      :timeline -> CMS.paged_comments(thread, id, filter, :timeline, user)
+      :replies -> CMS.Comments.paged_comments(thread, id, filter, :replies, user)
+      :timeline -> CMS.Comments.paged_comments(thread, id, filter, :timeline, user)
     end
   end
 
   def paged_comments(_root, ~m(id thread filter mode)a, _info) do
     case mode do
-      :replies -> CMS.paged_comments(thread, id, filter, :replies)
-      :timeline -> CMS.paged_comments(thread, id, filter, :timeline)
+      :replies -> CMS.Comments.paged_comments(thread, id, filter, :replies)
+      :timeline -> CMS.Comments.paged_comments(thread, id, filter, :timeline)
     end
   end
 
   def paged_comments_participants(_root, ~m(id thread filter)a, _info) do
-    CMS.paged_comments_participants(thread, id, filter)
+    CMS.Comments.paged_comments_participants(thread, id, filter)
   end
 
   def create_comment(_root, ~m(community thread id body)a, %{context: %{cur_user: user}}) do
-    CMS.create_comment(community, thread, id, body, user)
+    CMS.Comments.create_comment(community, thread, id, body, user)
   end
 
   def update_comment(_root, ~m(body comment)a, _info) do
-    CMS.update_comment(comment, body)
+    CMS.Comments.update_comment(comment, body)
   end
 
   def delete_comment(_root, ~m(comment)a, _info) do
-    CMS.delete_comment(comment)
+    CMS.Comments.delete_comment(comment)
   end
 
   def reply_comment(_root, ~m(id body)a, %{context: %{cur_user: user}}) do
-    CMS.reply_comment(id, body, user)
+    CMS.Comments.reply_comment(id, body, user)
   end
 
   def upvote_comment(_root, ~m(id)a, %{context: %{cur_user: user}}) do
-    CMS.upvote_comment(id, user)
+    CMS.Comments.upvote_comment(id, user)
   end
 
   def undo_upvote_comment(_root, ~m(id)a, %{context: %{cur_user: user}}) do
-    CMS.undo_upvote_comment(id, user)
+    CMS.Comments.undo_upvote_comment(id, user)
   end
 
   def emotion_to_comment(_root, ~m(id emotion)a, %{context: %{cur_user: user}}) do
-    CMS.emotion_to_comment(id, emotion, user)
+    CMS.Comments.emotion_to_comment(id, emotion, user)
   end
 
   def undo_emotion_to_comment(_root, ~m(id emotion)a, %{context: %{cur_user: user}}) do
-    CMS.undo_emotion_to_comment(id, emotion, user)
+    CMS.Comments.undo_emotion_to_comment(id, emotion, user)
   end
 
   def mark_comment_solution(_root, ~m(id)a, %{context: %{cur_user: user}}) do
-    CMS.mark_comment_solution(id, user)
+    CMS.Comments.mark_comment_solution(id, user)
   end
 
   def undo_mark_comment_solution(_root, ~m(id)a, %{context: %{cur_user: user}}) do
-    CMS.undo_mark_comment_solution(id, user)
+    CMS.Comments.undo_mark_comment_solution(id, user)
   end
 
-  def pin_comment(_root, ~m(id)a, _info), do: CMS.pin_comment(id)
+  def pin_comment(_root, ~m(id)a, _info), do: CMS.Comments.pin_comment(id)
 
-  def undo_pin_comment(_root, ~m(id)a, _info), do: CMS.undo_pin_comment(id)
+  def undo_pin_comment(_root, ~m(id)a, _info), do: CMS.Comments.undo_pin_comment(id)
 
   ############
   ############
   ############
   def paged_comment_replies(_root, ~m(id filter)a, %{context: %{cur_user: user}}) do
-    CMS.paged_comment_replies(id, filter, user)
+    CMS.Comments.paged_comment_replies(id, filter, user)
   end
 
   def paged_comment_replies(_root, ~m(id filter)a, _info) do
-    CMS.paged_comment_replies(id, filter)
+    CMS.Comments.paged_comment_replies(id, filter)
   end
 
   # #######################

@@ -17,10 +17,10 @@ defmodule GroupherServer.Test.CMS.Comments.BlogPendingFlag do
   describe "[pending blog comment flags]" do
     test "pending blog comment can set/unset pending", ~m(community blog user)a do
       {:ok, comment} =
-        CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} =
-        CMS.set_comment_illegal(comment.id, %{
+        CMS.Comments.set_comment_illegal(comment.id, %{
           is_legal: false,
           illegal_reason: ["some-reason"],
           illegal_words: ["some-word"]
@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogPendingFlag do
       assert comment.pending == @audit_illegal
 
       {:ok, _} =
-        CMS.unset_comment_illegal(comment.id, %{
+        CMS.Comments.unset_comment_illegal(comment.id, %{
           is_legal: true,
           illegal_reason: [],
           illegal_words: []
@@ -42,10 +42,10 @@ defmodule GroupherServer.Test.CMS.Comments.BlogPendingFlag do
 
     test "pending blog-comment's meta should have info", ~m(community blog user)a do
       {:ok, comment} =
-        CMS.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} =
-        CMS.set_comment_illegal(comment.id, %{
+        CMS.Comments.set_comment_illegal(comment.id, %{
           is_legal: false,
           illegal_reason: ["some-reason"],
           illegal_words: ["some-word"],
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogPendingFlag do
       assert user.meta.illegal_comments == ["/blog/#{blog.id}/comment/#{comment.id}"]
 
       {:ok, _} =
-        CMS.unset_comment_illegal(comment.id, %{
+        CMS.Comments.unset_comment_illegal(comment.id, %{
           is_legal: true,
           illegal_reason: [],
           illegal_words: [],

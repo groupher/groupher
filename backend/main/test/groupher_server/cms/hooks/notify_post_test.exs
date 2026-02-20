@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 
-    {:ok, comment} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+    {:ok, comment} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
     {:ok, ~m(user2 user3 community post comment)a}
   end
@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
     end
 
     test "upvote hook should work on post comment", ~m(user2 post comment)a do
-      {:ok, comment} = CMS.upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
       {:ok, comment} = preload_author(comment)
 
       Hooks.Notify.handle(:upvote, comment, user2)
@@ -71,11 +71,11 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
     end
 
     test "undo upvote hook should work on post comment", ~m(user2 comment)a do
-      {:ok, comment} = CMS.upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
 
       Hooks.Notify.handle(:upvote, comment, user2)
 
-      {:ok, comment} = CMS.undo_upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user2)
       Hooks.Notify.handle(:undo, :upvote, comment, user2)
 
       {:ok, comment} = preload_author(comment)
@@ -125,7 +125,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
          ~m(user2 community post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, comment} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+      {:ok, comment} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
       Hooks.Notify.handle(:comment, comment, user2)
 
       {:ok, notifications} = Delivery.fetch(:notification, post.author.user, %{page: 1, size: 20})
@@ -144,8 +144,8 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
          ~m(user2 user3 community post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, comment} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user2)
-      {:ok, replied_comment} = CMS.reply_comment(comment.id, mock_comment(), user3)
+      {:ok, comment} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+      {:ok, replied_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user3)
 
       Hooks.Notify.handle(:reply, replied_comment, user3)
 

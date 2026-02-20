@@ -27,10 +27,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
   describe "[comments state]" do
     test "can get basic state", ~m(community user post)a do
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, state} = CMS.comments_state(:post, post.id)
+      {:ok, state} = CMS.Comments.comments_state(:post, post.id)
 
       assert state.participants_count == 1
       assert state.total_count == 2
@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     #       user_id: user.id
     #     })
 
-    #   {:ok, _} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    #   {:ok, _} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
 
     #   {:ok, subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
@@ -60,10 +60,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     # end
 
     test "can get viewer joined state", ~m(community user post)a do
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, state} = CMS.comments_state(:post, post.id, user)
+      {:ok, state} = CMS.Comments.comments_state(:post, post.id, user)
 
       assert state.participants_count == 1
       assert state.total_count == 2
@@ -72,10 +72,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     end
 
     test "can get viewer joined state 2", ~m(community user user2 user3 post)a do
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user2)
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user3)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user3)
 
-      {:ok, state} = CMS.comments_state(:post, post.id, user)
+      {:ok, state} = CMS.Comments.comments_state(:post, post.id, user)
 
       assert state.participants_count == 2
       assert state.total_count == 2
@@ -87,10 +87,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[basic article comment]" do
     test "post are supported by article comment.", ~m(user community post)a do
       {:ok, post_comment_1} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, post_comment_2} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, post} = ORM.find_article(community.slug, :post, post.inner_id, preload: :comments)
 
@@ -100,7 +100,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "comment should have default meta after create", ~m(user post community)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       assert comment.meta |> Map.from_struct() |> Map.delete(:id) == @default_comment_meta
     end
@@ -109,7 +109,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       Process.sleep(1000)
 
       {:ok, _} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
 
       {:ok, post_after} = ORM.find(Post, post.id)
 
@@ -124,7 +124,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       Process.sleep(1000)
       author = post.author.user
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), author)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), author)
       {:ok, post} = ORM.find(Post, post.id, preload: :comments)
 
       assert not is_nil(post.active_at)
@@ -140,7 +140,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       Process.sleep(1000)
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
       {:ok, post} = ORM.find(Post, post.id)
 
       assert post.active_at |> DateTime.to_date() == cur_date
@@ -158,7 +158,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         ORM.update(post, %{inserted_at: inserted_at, active_at: inserted_at}, strict: false)
 
       Process.sleep(1000)
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, post} = ORM.find(Post, post.id)
       assert post.active_at |> DateTime.to_unix() !== cur_date
@@ -166,10 +166,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "comment can be updated", ~m(community post user)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      # {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
-      {:ok, updated_comment} = CMS.update_comment(comment, mock_comment("updated content"))
+      # {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
+      {:ok, updated_comment} = CMS.Comments.update_comment(comment, mock_comment("updated content"))
 
       assert updated_comment.body_html |> String.contains?(~s(updated content</p>))
     end
@@ -178,10 +178,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[article comment floor]" do
     test "comment will have a floor number after created", ~m(community post user)a do
       {:ok, post_comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, post_comment2} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, post_comment} = ORM.find(Comment, post_comment.id)
       {:ok, post_comment2} = ORM.find(Comment, post_comment2.id)
@@ -193,7 +193,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
   describe "[article comment participator for post]" do
     test "post will have participator after comment created", ~m(community post user)a do
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, post} = ORM.find(Post, post.id)
 
@@ -202,8 +202,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     end
 
     test "post participator will not contains same user", ~m(community post user)a do
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, post} = ORM.find(Post, post.id)
 
@@ -212,8 +212,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "recent comment user should appear at first of the post participants",
          ~m(community user user2 post)a do
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
 
       {:ok, post} = ORM.find(Post, post.id)
 
@@ -226,9 +226,9 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[article comment upvotes]" do
     test "user can upvote a post comment", ~m(community post user)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      CMS.upvote_comment(comment.id, user)
+      CMS.Comments.upvote_comment(comment.id, user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
 
@@ -244,8 +244,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     #       user_id: user.id
     #     })
 
-    #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
-    #   CMS.upvote_comment(comment.id, user)
+    #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
+    #   CMS.Comments.upvote_comment(comment.id, user)
 
     #   {:ok, subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
@@ -264,10 +264,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "user can upvote a post comment twice is fine", ~m(community user post)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.upvote_comment(comment.id, user)
-      {:error, _} = CMS.upvote_comment(comment.id, user)
+      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
+      {:error, _} = CMS.Comments.upvote_comment(comment.id, user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       assert 1 == length(comment.upvotes)
@@ -275,11 +275,11 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "article author upvote post comment will have flag", ~m(community post user)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, author_user} = ORM.find(User, post.author.user.id)
 
-      CMS.upvote_comment(comment.id, author_user)
+      CMS.Comments.upvote_comment(comment.id, author_user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       assert comment.meta.is_article_author_upvoted
@@ -287,9 +287,9 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "user upvote post comment will add id to upvoted_user_ids", ~m(community post user)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, comment} = CMS.upvote_comment(comment.id, user)
+      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user)
 
       assert user.id in comment.meta.upvoted_user_ids
     end
@@ -297,15 +297,15 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     test "user undo upvote post comment will remove id from upvoted_user_ids",
          ~m(community post user user2)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.upvote_comment(comment.id, user)
-      {:ok, comment} = CMS.upvote_comment(comment.id, user2)
+      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
+      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
 
       assert user2.id in comment.meta.upvoted_user_ids
       assert user.id in comment.meta.upvoted_user_ids
 
-      {:ok, comment} = CMS.undo_upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user2)
 
       assert user.id in comment.meta.upvoted_user_ids
       assert user2.id not in comment.meta.upvoted_user_ids
@@ -313,22 +313,22 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "user upvote a already-upvoted comment fails", ~m(community user post)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      CMS.upvote_comment(comment.id, user)
-      {:error, _} = CMS.upvote_comment(comment.id, user)
+      CMS.Comments.upvote_comment(comment.id, user)
+      {:error, _} = CMS.Comments.upvote_comment(comment.id, user)
     end
 
     test "upvote comment should inc the comment's upvotes_count",
          ~m(community post user user2)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert comment.upvotes_count == 0
 
-      {:ok, _} = CMS.upvote_comment(comment.id, user)
-      {:ok, _} = CMS.upvote_comment(comment.id, user2)
+      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
+      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user2)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert comment.upvotes_count == 2
@@ -336,50 +336,50 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "user can undo upvote a post comment", ~m(community user post)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      CMS.upvote_comment(comment.id, user)
+      CMS.Comments.upvote_comment(comment.id, user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       assert 1 == length(comment.upvotes)
 
-      {:ok, comment} = CMS.undo_upvote_comment(comment.id, user)
+      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user)
       assert 0 == comment.upvotes_count
     end
 
     test "user can undo upvote a post comment with no upvote", ~m(community user post)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, comment} = CMS.undo_upvote_comment(comment.id, user)
+      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user)
       assert 0 == comment.upvotes_count
 
-      {:ok, comment} = CMS.undo_upvote_comment(comment.id, user)
+      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user)
       assert 0 == comment.upvotes_count
     end
 
     test "upvote comment should update embedded replies too",
          ~m(community post user user2 user3)a do
       {:ok, parent_comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, replied_comment} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
+      {:ok, replied_comment} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
 
-      {:ok, _} = CMS.upvote_comment(parent_comment.id, user)
-      {:ok, _} = CMS.upvote_comment(replied_comment.id, user)
-      {:ok, _} = CMS.upvote_comment(replied_comment.id, user2)
-      {:ok, _} = CMS.upvote_comment(replied_comment.id, user3)
+      {:ok, _} = CMS.Comments.upvote_comment(parent_comment.id, user)
+      {:ok, _} = CMS.Comments.upvote_comment(replied_comment.id, user)
+      {:ok, _} = CMS.Comments.upvote_comment(replied_comment.id, user2)
+      {:ok, _} = CMS.Comments.upvote_comment(replied_comment.id, user3)
 
       filter = %{page: 1, size: 20}
-      {:ok, paged_comments} = CMS.paged_comments(:post, post.id, filter, :replies)
+      {:ok, paged_comments} = CMS.Comments.paged_comments(:post, post.id, filter, :replies)
 
       parent = paged_comments.entries |> List.first()
       reply = parent |> Map.get(:replies) |> List.first()
       assert parent.upvotes_count == 1
       assert reply.upvotes_count == 3
 
-      {:ok, _} = CMS.undo_upvote_comment(replied_comment.id, user2)
-      {:ok, paged_comments} = CMS.paged_comments(:post, post.id, filter, :replies)
+      {:ok, _} = CMS.Comments.undo_upvote_comment(replied_comment.id, user2)
+      {:ok, paged_comments} = CMS.Comments.paged_comments(:post, post.id, filter, :replies)
 
       parent = paged_comments.entries |> List.first()
       reply = parent |> Map.get(:replies) |> List.first()
@@ -391,13 +391,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[article comment fold/unfold]" do
     test "user can fold a comment", ~m(community post user)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
 
       assert not comment.is_folded
 
-      {:ok, comment} = CMS.fold_comment(comment.id, user)
+      {:ok, comment} = CMS.Comments.fold_comment(comment.id, user)
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert comment.is_folded
 
@@ -407,14 +407,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "user can unfold a comment", ~m(community post user)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.fold_comment(comment.id, user)
+      {:ok, _} = CMS.Comments.fold_comment(comment.id, user)
       {:ok, comment} = ORM.find(Comment, comment.id)
 
       assert comment.is_folded
 
-      {:ok, _} = CMS.unfold_comment(comment.id, user)
+      {:ok, _} = CMS.Comments.unfold_comment(comment.id, user)
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert not comment.is_folded
 
@@ -426,13 +426,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[article comment pin/unpin]" do
     test "user can pin a comment", ~m(community user post)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
 
       assert not comment.is_pinned
 
-      {:ok, comment} = CMS.pin_comment(comment.id)
+      {:ok, comment} = CMS.Comments.pin_comment(comment.id)
       {:ok, comment} = ORM.find(Comment, comment.id)
 
       assert comment.is_pinned
@@ -443,10 +443,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "user can unpin a comment", ~m(community user post)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.pin_comment(comment.id)
-      {:ok, comment} = CMS.undo_pin_comment(comment.id)
+      {:ok, _} = CMS.Comments.pin_comment(comment.id)
+      {:ok, comment} = CMS.Comments.undo_pin_comment(comment.id)
 
       assert not comment.is_pinned
       assert {:error, _} = PinnedComment |> ORM.find_by(%{comment_id: comment.id})
@@ -454,20 +454,20 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "pinned comments has a limit for each article", ~m(community user post)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       Enum.reduce(0..(@pinned_comment_limit - 1), [], fn _, _acc ->
-        {:ok, _} = CMS.pin_comment(comment.id)
+        {:ok, _} = CMS.Comments.pin_comment(comment.id)
       end)
 
-      assert {:error, {:comment_pin_limit, @pinned_comment_limit}} = CMS.pin_comment(comment.id)
+      assert {:error, {:comment_pin_limit, @pinned_comment_limit}} = CMS.Comments.pin_comment(comment.id)
     end
   end
 
   describe "[article comment report/unreport]" do
     #
     # test "user can report a comment", ~m(user post)a do
-    #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
     #   {:ok, comment} = ORM.find(Comment, comment.id)
 
     #   {:ok, comment} = CMS.report_comment(comment, mock_comment(), "attr", user)
@@ -476,7 +476,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     #
     # test "user can unreport a comment", ~m(user post)a do
-    #   {:ok, comment} = CMS.create_comment(:post, post.id, mock_comment(), user)
+    #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
     #   {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
     #   {:ok, comment} = ORM.find(Comment, comment.id)
 
@@ -486,7 +486,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "can undo a report with other user report it too", ~m(community user user2 post)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
       {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user2)
@@ -515,7 +515,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     test "report user < @report_threshold_for_fold will not fold comment",
          ~m(community user post)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       assert not comment.is_folded
 
@@ -531,7 +531,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     test "report user > @report_threshold_for_fold will cause comment fold",
          ~m(community user post)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       assert not comment.is_folded
 
@@ -555,19 +555,19 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         {:ok, new_user} = db_insert(:user)
 
         {:ok, comment} =
-          CMS.create_comment(community, :post, post.inner_id, mock_comment(), new_user)
+          CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), new_user)
 
         acc ++ [comment]
       end)
 
       {:ok, _} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, results} =
-        CMS.paged_comments_participants(thread, post.id, %{page: 1, size: page_size})
+        CMS.Comments.paged_comments_participants(thread, post.id, %{page: 1, size: page_size})
 
       assert results |> is_valid_pagination?(:raw)
       assert results.total_count == total_count + 1
@@ -581,13 +581,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       all_comments =
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+            CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
           acc ++ [comment]
         end)
 
       {:ok, paged_comments} =
-        CMS.paged_comments(
+        CMS.Comments.paged_comments(
           :post,
           post.id,
           %{page: page_number, size: page_size},
@@ -611,22 +611,22 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+          CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
         acc ++ [comment]
       end)
 
       {:ok, random_comment_1} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, random_comment_2} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, pined_comment_1} = CMS.pin_comment(random_comment_1.id)
-      {:ok, pined_comment_2} = CMS.pin_comment(random_comment_2.id)
+      {:ok, pined_comment_1} = CMS.Comments.pin_comment(random_comment_1.id)
+      {:ok, pined_comment_2} = CMS.Comments.pin_comment(random_comment_2.id)
 
       {:ok, paged_comments} =
-        CMS.paged_comments(
+        CMS.Comments.paged_comments(
           :post,
           post.id,
           %{page: page_number, size: page_size},
@@ -647,22 +647,22 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+          CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
         acc ++ [comment]
       end)
 
       {:ok, random_comment_1} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, random_comment_2} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, pined_comment_1} = CMS.pin_comment(random_comment_1.id)
-      {:ok, pined_comment_2} = CMS.pin_comment(random_comment_2.id)
+      {:ok, pined_comment_1} = CMS.Comments.pin_comment(random_comment_1.id)
+      {:ok, pined_comment_2} = CMS.Comments.pin_comment(random_comment_2.id)
 
       {:ok, paged_comments} =
-        CMS.paged_comments(
+        CMS.Comments.paged_comments(
           :post,
           post.id,
           %{page: page_number, size: page_size},
@@ -684,7 +684,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       all_comments =
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+            CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
           acc ++ [comment]
         end)
@@ -693,12 +693,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       random_comment_2 = all_comments |> Enum.at(1)
       random_comment_3 = all_comments |> Enum.at(3)
 
-      {:ok, _} = CMS.fold_comment(random_comment_1.id, user)
-      {:ok, _} = CMS.fold_comment(random_comment_2.id, user)
-      {:ok, _} = CMS.fold_comment(random_comment_3.id, user)
+      {:ok, _} = CMS.Comments.fold_comment(random_comment_1.id, user)
+      {:ok, _} = CMS.Comments.fold_comment(random_comment_2.id, user)
+      {:ok, _} = CMS.Comments.fold_comment(random_comment_3.id, user)
 
       {:ok, paged_comments} =
-        CMS.paged_comments(
+        CMS.Comments.paged_comments(
           :post,
           post.id,
           %{page: page_number, size: page_size},
@@ -722,9 +722,9 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       all_folded_comments =
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+            CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-          CMS.fold_comment(comment.id, user)
+          CMS.Comments.fold_comment(comment.id, user)
 
           acc ++ [comment]
         end)
@@ -734,7 +734,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       random_comment_3 = all_folded_comments |> Enum.at(5)
 
       {:ok, paged_comments} =
-        CMS.paged_folded_comments(:post, post.id, %{page: page_number, size: page_size})
+        CMS.Comments.paged_folded_comments(:post, post.id, %{page: page_number, size: page_size})
 
       assert exist_in?(random_comment_1, paged_comments.entries)
       assert exist_in?(random_comment_2, paged_comments.entries)
@@ -756,17 +756,17 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       all_comments =
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+            CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
           acc ++ [comment]
         end)
 
       random_comment = all_comments |> Enum.at(1)
 
-      {:ok, deleted_comment} = CMS.delete_comment(random_comment)
+      {:ok, deleted_comment} = CMS.Comments.delete_comment(random_comment)
 
       {:ok, paged_comments} =
-        CMS.paged_comments(
+        CMS.Comments.paged_comments(
           :post,
           post.id,
           %{page: page_number, size: page_size},
@@ -780,20 +780,20 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "delete comment still update article's comments_count field",
          ~m(community user post)a do
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, post} = ORM.find(Post, post.id)
 
       assert post.comments_count == 5
 
-      {:ok, _} = CMS.delete_comment(comment)
+      {:ok, _} = CMS.Comments.delete_comment(comment)
 
       {:ok, post} = ORM.find(Post, post.id)
       assert post.comments_count == 4
@@ -805,17 +805,17 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       all_comments =
         Enum.reduce(1..total_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+            CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
           acc ++ [comment]
         end)
 
       random_comment = all_comments |> Enum.at(1)
 
-      {:ok, _} = CMS.pin_comment(random_comment.id)
+      {:ok, _} = CMS.Comments.pin_comment(random_comment.id)
       {:ok, _} = ORM.find(Comment, random_comment.id)
 
-      {:ok, _} = CMS.delete_comment(random_comment)
+      {:ok, _} = CMS.Comments.delete_comment(random_comment)
       assert {:error, _} = ORM.find(PinnedComment, random_comment.id)
     end
   end
@@ -823,14 +823,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[article comment info]" do
     test "author of the article comment a comment should have flag", ~m(community post user2)a do
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
 
       assert not comment.is_article_author
 
       author_user = post.author.user
 
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), author_user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), author_user)
 
       assert comment.is_article_author
     end
@@ -838,31 +838,31 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
   describe "[lock/unlock post comment]" do
     test "locked post can not be comment", ~m(community user post)a do
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-      {:ok, _} = CMS.lock_article_comments(post)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.lock_article_comments(post)
 
       {:error, reason} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       assert reason |> is_error?(:article_comments_locked)
 
-      {:ok, _} = CMS.undo_lock_article_comments(post)
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.undo_lock_article_comments(post)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
     end
 
     test "locked post can not by reply", ~m(community user post)a do
       {:ok, parent_comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
 
-      {:ok, _} = CMS.lock_article_comments(post)
+      {:ok, _} = CMS.Comments.lock_article_comments(post)
 
-      {:error, reason} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
+      {:error, reason} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
       assert reason |> is_error?(:article_comments_locked)
 
-      {:ok, _} = CMS.undo_lock_article_comments(post)
-      {:ok, _} = CMS.reply_comment(parent_comment.id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.undo_lock_article_comments(post)
+      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
     end
   end
 
@@ -872,7 +872,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, post_comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       assert not post_comment.is_for_question
       assert not post_comment.is_solution
@@ -883,11 +883,11 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, post_comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       assert post_comment.is_for_question
     end
@@ -898,13 +898,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, comment1} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, comment2} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, comment3} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.Articles.set_cat(post, @article_cat.question)
 
@@ -935,9 +935,9 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       post_author = post.author.user
 
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
-      {:ok, comment} = CMS.mark_comment_solution(comment.id, post_author)
+      {:ok, comment} = CMS.Comments.mark_comment_solution(comment.id, post_author)
 
       assert comment.is_solution
 
@@ -956,9 +956,9 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, random_user} = db_insert(:user)
 
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
-      {:error, reason} = CMS.mark_comment_solution(comment.id, random_user)
+      {:error, reason} = CMS.Comments.mark_comment_solution(comment.id, random_user)
 
       reason |> is_error?(:require_questioner)
     end
@@ -970,11 +970,11 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       post_author = post.author.user
 
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
-      {:ok, comment} = CMS.mark_comment_solution(comment.id, post_author)
+      {:ok, comment} = CMS.Comments.mark_comment_solution(comment.id, post_author)
 
-      {:ok, comment} = CMS.undo_mark_comment_solution(comment.id, post_author)
+      {:ok, comment} = CMS.Comments.undo_mark_comment_solution(comment.id, post_author)
 
       assert not comment.is_solution
 
@@ -991,9 +991,9 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, random_user} = db_insert(:user)
 
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
-      {:error, reason} = CMS.undo_mark_comment_solution(comment.id, random_user)
+      {:error, reason} = CMS.Comments.undo_mark_comment_solution(comment.id, random_user)
 
       reason |> is_error?(:require_questioner)
     end
@@ -1006,13 +1006,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       post_author = post.author.user
 
       {:ok, comment1} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
       {:ok, comment2} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
-      {:ok, _} = CMS.mark_comment_solution(comment1.id, post_author)
-      {:ok, comment2} = CMS.mark_comment_solution(comment2.id, post_author)
+      {:ok, _} = CMS.Comments.mark_comment_solution(comment1.id, post_author)
+      {:ok, comment2} = CMS.Comments.mark_comment_solution(comment2.id, post_author)
 
       answers =
         from(c in Comment, where: c.post_id == ^post.id and c.is_solution == true)
@@ -1030,7 +1030,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       post_author = post.author.user
 
       {:ok, comment} =
-        CMS.create_comment(
+        CMS.Comments.create_comment(
           community,
           :post,
           post.inner_id,
@@ -1038,13 +1038,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           post_author
         )
 
-      {:ok, comment} = CMS.mark_comment_solution(comment.id, post_author)
+      {:ok, comment} = CMS.Comments.mark_comment_solution(comment.id, post_author)
 
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       assert post.solution_digest |> String.contains?(~s(<p id=))
       assert post.solution_digest |> String.contains?(~s(solution</p>))
 
-      {:ok, _} = CMS.update_comment(comment, mock_comment("new solution"))
+      {:ok, _} = CMS.Comments.update_comment(comment, mock_comment("new solution"))
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       assert post.solution_digest == "new solution"
     end
@@ -1056,9 +1056,9 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, _} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment("solution"), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment("solution"), user)
 
-      CMS.update_user_in_comments_participants(user)
+      CMS.Comments.update_user_in_comments_participants(user)
     end
   end
 end

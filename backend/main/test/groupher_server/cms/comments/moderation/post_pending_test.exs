@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Comments.DocPendingFlag do
+defmodule GroupherServer.Test.CMS.Comments.PostPending do
   @moduledoc false
 
   use GroupherServer.TestTools
@@ -7,20 +7,20 @@ defmodule GroupherServer.Test.CMS.Comments.DocPendingFlag do
   @audit_illegal Constant.CMS.pending(:illegal)
 
   setup do
-    {community, doc, _, user} = mock_article(:doc)
+    {community, post, _, user} = mock_article(:post)
 
     guest_conn = simu_conn(:guest)
 
-    {:ok, ~m(guest_conn community user doc)a}
+    {:ok, ~m(guest_conn community user post)a}
   end
 
-  describe "[pending doc comment flags]" do
-    test "pending doc comment can set/unset pending", ~m(community doc user)a do
+  describe "[pending post comment flags]" do
+    test "pending post comment can set/unset pending", ~m(community post user)a do
       {:ok, comment} =
-        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} =
-        CMS.set_comment_illegal(comment.id, %{
+        CMS.Comments.set_comment_illegal(comment.id, %{
           is_legal: false,
           illegal_reason: ["some-reason"],
           illegal_words: ["some-word"]
@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocPendingFlag do
       assert comment.pending == @audit_illegal
 
       {:ok, _} =
-        CMS.unset_comment_illegal(comment.id, %{
+        CMS.Comments.unset_comment_illegal(comment.id, %{
           is_legal: true,
           illegal_reason: [],
           illegal_words: []
@@ -40,16 +40,16 @@ defmodule GroupherServer.Test.CMS.Comments.DocPendingFlag do
       assert comment.pending == @audit_legal
     end
 
-    test "pending doc-comment's meta should have info", ~m(community doc user)a do
+    test "pending post-comment's meta should have info", ~m(community post user)a do
       {:ok, comment} =
-        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} =
-        CMS.set_comment_illegal(comment.id, %{
+        CMS.Comments.set_comment_illegal(comment.id, %{
           is_legal: false,
           illegal_reason: ["some-reason"],
           illegal_words: ["some-word"],
-          illegal_comments: ["/doc/#{doc.id}/comment/#{comment.id}"]
+          illegal_comments: ["/post/#{post.id}/comment/#{comment.id}"]
         })
 
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -60,14 +60,14 @@ defmodule GroupherServer.Test.CMS.Comments.DocPendingFlag do
 
       {:ok, user} = ORM.find(User, comment.author_id)
       assert user.meta.has_illegal_comments
-      assert user.meta.illegal_comments == ["/doc/#{doc.id}/comment/#{comment.id}"]
+      assert user.meta.illegal_comments == ["/post/#{post.id}/comment/#{comment.id}"]
 
       {:ok, _} =
-        CMS.unset_comment_illegal(comment.id, %{
+        CMS.Comments.unset_comment_illegal(comment.id, %{
           is_legal: true,
           illegal_reason: [],
           illegal_words: [],
-          illegal_comments: ["/doc/#{doc.id}/comment/#{comment.id}"]
+          illegal_comments: ["/post/#{post.id}/comment/#{comment.id}"]
         })
 
       {:ok, comment} = ORM.find(Comment, comment.id)

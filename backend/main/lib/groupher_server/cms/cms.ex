@@ -8,10 +8,6 @@ defmodule GroupherServer.CMS do
 
   alias Delegate.{
     AbuseReport,
-    CommentCRUD,
-    CommentAction,
-    CommentEmotion,
-    Fetcher,
     Search,
     Seeds,
     ThirdPart
@@ -25,62 +21,8 @@ defmodule GroupherServer.CMS do
 
   # CommunityOperation
 
-  # Comment CRUD
-
-  defdelegate set_comment_illegal(comment_id, attrs), to: CommentCRUD
-  defdelegate unset_comment_illegal(comment_id, attrs), to: CommentCRUD
-  defdelegate paged_audit_failed_comments(filter), to: CommentCRUD
-
-  defdelegate set_comment_audit_failed(comment, state), to: CommentCRUD
-
-  defdelegate comments_state(thread, article_id), to: CommentCRUD
-  defdelegate comments_state(thread, article_id, user), to: CommentCRUD
-  defdelegate one_comment(id), to: CommentCRUD
-  defdelegate one_comment(id, user), to: CommentCRUD
-
-  defdelegate update_user_in_comments_participants(user), to: CommentCRUD
-  defdelegate paged_comments(thread, article_id, filters, mode), to: CommentCRUD
-  defdelegate paged_comments(thread, article_id, filters, mode, user), to: CommentCRUD
-
-  defdelegate paged_published_comments(user, thread, filters), to: CommentCRUD
-  defdelegate paged_published_comments(user, filters), to: CommentCRUD
-
-  defdelegate paged_folded_comments(thread, article_id, filters), to: CommentCRUD
-  defdelegate paged_folded_comments(thread, article_id, filters, user), to: CommentCRUD
-
-  defdelegate paged_comment_replies(comment_id, filters), to: CommentCRUD
-  defdelegate paged_comment_replies(comment_id, filters, user), to: CommentCRUD
-  defdelegate paged_comments_participants(thread, content_id, filters), to: CommentCRUD
-  defdelegate create_comment(community, thread, inner_id, args, user), to: CommentCRUD
-
-  defdelegate update_comment(comment, content), to: CommentCRUD
-  defdelegate delete_comment(comment), to: CommentCRUD
-  defdelegate mark_comment_solution(comment, user), to: CommentCRUD
-  defdelegate undo_mark_comment_solution(comment, user), to: CommentCRUD
-
-  defdelegate archive_comments(), to: CommentCRUD
-
-  defdelegate upvote_comment(comment_id, user), to: CommentAction
-  defdelegate undo_upvote_comment(comment_id, user), to: CommentAction
-  defdelegate reply_comment(comment_id, args, user), to: CommentAction
-  defdelegate lock_article_comments(article), to: CommentAction
-  defdelegate undo_lock_article_comments(article), to: CommentAction
-
-  defdelegate pin_comment(comment_id), to: CommentAction
-  defdelegate undo_pin_comment(comment_id), to: CommentAction
-
-  defdelegate fetch_comment(comment_id), to: Fetcher
-  defdelegate fetch_full_comment(comment_id), to: Fetcher
-
-  defdelegate fold_comment(comment_id, user), to: CommentAction
-  defdelegate unfold_comment(comment_id, user), to: CommentAction
-
-  defdelegate emotion_to_comment(comment_id, args, user), to: CommentEmotion
-  defdelegate undo_emotion_to_comment(comment_id, args, user), to: CommentEmotion
-  ###################
-  ###################
-  ###################
-  ###################
+  # Comment functions moved to CMS.Comments module
+  # Use CMS.Comments.xxx directly
 
   # TODO: move report to abuse report module
   defdelegate report_article(article, reason, attr, user), to: AbuseReport

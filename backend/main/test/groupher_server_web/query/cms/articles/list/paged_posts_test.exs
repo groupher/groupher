@@ -90,9 +90,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
       post_id = post_last_week.inner_id
 
-      {:ok, _} = CMS.create_comment(community, :post, post_id, mock_comment(), user)
-      {:ok, _} = CMS.create_comment(community, :post, post_id, mock_comment(), user2)
-      {:ok, _} = CMS.create_comment(community, :post, post_id, mock_comment(), user3)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post_id, mock_comment(), user2)
+      {:ok, _} = CMS.Comments.create_comment(community, :post, post_id, mock_comment(), user3)
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post, "cat state"), variables)
       first_post = results["entries"] |> List.first()
@@ -366,7 +366,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       Process.sleep(1500)
 
       {:ok, _} =
-        CMS.create_comment(community, :post, post_last_week.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(community, :post, post_last_week.inner_id, mock_comment(), user2)
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
       entries = results["entries"]
@@ -380,7 +380,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       variables = %{filter: %{page: 1, size: 20}}
 
       {:ok, _} =
-        CMS.create_comment(community, :post, post_last_year.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(community, :post, post_last_year.inner_id, mock_comment(), user2)
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
       entries = results["entries"]
@@ -395,7 +395,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       {:ok, post} = ORM.find(Post, post_last_week.id, preload: [author: :user])
 
       {:ok, _} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post.author.user)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post.author.user)
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
       entries = results["entries"]

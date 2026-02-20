@@ -15,7 +15,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyChangelog do
     {:ok, user3} = db_insert(:user)
 
     {:ok, comment} =
-      CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
     {:ok, ~m(user2 user3 community changelog comment)a}
   end
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyChangelog do
     end
 
     test "upvote hook should work on changelog comment", ~m(user2 changelog comment)a do
-      {:ok, comment} = CMS.upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
       {:ok, comment} = preload_author(comment)
 
       Hooks.Notify.handle(:upvote, comment, user2)
@@ -75,11 +75,11 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyChangelog do
     end
 
     test "undo upvote hook should work on changelog comment", ~m(user2 comment)a do
-      {:ok, comment} = CMS.upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
 
       Hooks.Notify.handle(:upvote, comment, user2)
 
-      {:ok, comment} = CMS.undo_upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user2)
       Hooks.Notify.handle(:undo, :upvote, comment, user2)
 
       {:ok, comment} = preload_author(comment)
@@ -132,7 +132,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyChangelog do
       {:ok, changelog} = preload_author(changelog)
 
       {:ok, comment} =
-        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user2)
 
       Hooks.Notify.handle(:comment, comment, user2)
 
@@ -154,9 +154,9 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyChangelog do
       {:ok, changelog} = preload_author(changelog)
 
       {:ok, comment} =
-        CMS.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user2)
 
-      {:ok, replied_comment} = CMS.reply_comment(comment.id, mock_comment(), user3)
+      {:ok, replied_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user3)
 
       Hooks.Notify.handle(:reply, replied_comment, user3)
 

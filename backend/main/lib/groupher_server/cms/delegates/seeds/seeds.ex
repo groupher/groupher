@@ -138,7 +138,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
       users
       |> Enum.each(fn user ->
         text = Faker.Lorem.sentence(20)
-        {:ok, _} = CMS.reply_comment(comment.id, mock_comment(text), user)
+        {:ok, _} = CMS.Comments.reply_comment(comment.id, mock_comment(text), user)
       end)
     end
   end
@@ -149,7 +149,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
       users
       |> Enum.each(fn user ->
         emotion = @comment_emotions |> Enum.random()
-        {:ok, _} = CMS.emotion_to_comment(comment.id, emotion, user)
+        {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, emotion, user)
       end)
     end
   end

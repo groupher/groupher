@@ -1,7 +1,8 @@
-defmodule GroupherServer.CMS.Delegate.CommentEmotion do
+defmodule GroupherServer.CMS.Comments.Emotion do
   @moduledoc """
-  CRUD and operations for article comments
+  Emotion operations for comments.
   """
+
   import Ecto.Query, warn: false
 
   import Helper.Utils, only: [done: 1]
@@ -15,19 +16,18 @@ defmodule GroupherServer.CMS.Delegate.CommentEmotion do
 
   alias Helper.{ORM, Later}
   alias Helper.Types, as: T
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, Repo}
 
-  alias CMS.Delegate.Hooks
+  alias GroupherServer.CMS.Delegate.Hooks
   alias Accounts.Model.User
-  alias CMS.Model.{Comment, CommentUserEmotion}
+  alias GroupherServer.CMS.Model.{Comment, CommentUserEmotion}
 
   alias Ecto.Multi
 
   @type t_user_list :: [%{login: String.t()}]
   @type t_mention_status :: %{user_list: t_user_list, user_count: integer()}
 
-  @doc "make emotion to a comment"
-  @spec emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(term())
+  @spec emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
   def emotion_to_comment(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
       Multi.new()
@@ -55,8 +55,6 @@ defmodule GroupherServer.CMS.Delegate.CommentEmotion do
         end
       end)
       |> Multi.run(:after_hooks, fn _, _ ->
-        # comment this for test
-        # Hooks.SubscribeCommunity.handle(comment, user)
         Later.run({Hooks.SubscribeCommunity, :handle, [comment, user]})
       end)
       |> Repo.transaction()
@@ -64,7 +62,7 @@ defmodule GroupherServer.CMS.Delegate.CommentEmotion do
     end
   end
 
-  @spec undo_emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(term())
+  @spec undo_emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
   def undo_emotion_to_comment(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
       Multi.new()
@@ -99,9 +97,6 @@ defmodule GroupherServer.CMS.Delegate.CommentEmotion do
 
   @spec query_emotion_states(Comment.t(), atom()) :: {:ok, t_mention_status}
   defp query_emotion_states(comment, emotion) do
-    # 每次被 emotion 动作触发后重新查询，主要原因
-    # 1.并发下保证数据准确，类似 views 阅读数的统计
-    # 2. 前端使用 nickname 而非 login 展示，如果用户改了 nickname, 可以"自动纠正"
     query =
       from(a in CommentUserEmotion,
         join: user in User,

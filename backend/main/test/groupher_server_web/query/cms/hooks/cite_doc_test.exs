@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.Query.Hooks.DocCiting do
       {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       body = mock_comment(~s(the <a href=#{@site_host}/doc/#{doc2.id} />))
-      {:ok, comment} = CMS.create_comment(community, :doc, doc2.inner_id, body, user)
+      {:ok, comment} = CMS.Comments.create_comment(community, :doc, doc2.inner_id, body, user)
 
       body =
         mock_rich_text(
