@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.Seeds.CleanUpTest do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS.Seeds
+  # alias GroupherServer.CMS.Seeds
 
   describe "[clean up]" do
     test "can clean up a community" do

@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.Seeds.ThreadsTest do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS.Seeds.Threads
+  # alias GroupherServer.CMS.Seeds.Threads
 
   describe "[threads seeds]" do
     test "get returns threads for home type" do

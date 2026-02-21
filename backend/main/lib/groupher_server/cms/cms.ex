@@ -18,7 +18,8 @@ defmodule GroupherServer.CMS do
   # Community CRUD: moderators, thread, tag
   # >> tag
 
-  # CommunityOperation
+  # Community functions are now in CMS.Communities module
+  # Use CMS.Communities.xxx directly
 
   # Comment functions moved to CMS.Comments module
   # Use CMS.Comments.xxx directly

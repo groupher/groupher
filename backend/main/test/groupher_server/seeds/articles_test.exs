@@ -2,8 +2,8 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS.Seeds
-  alias GroupherServer.CMS.Model.Community
+  # alias GroupherServer.CMS.Seeds
+  # alias GroupherServer.CMS.Model.Community
 
   describe "[articles seeds]" do
     test "can seed articles for a community" do

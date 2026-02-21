@@ -2,8 +2,8 @@ defmodule GroupherServer.Test.Seeds.HelperTest do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS.Seeds.Helper
-  alias GroupherServer.CMS.Model.{Community, Thread}
+  # alias GroupherServer.CMS.Seeds.Helper
+  # alias GroupherServer.CMS.Model.{Community, Thread}
 
   describe "[helper functions]" do
     test "seed_bot creates or returns existing bot user" do

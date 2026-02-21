@@ -18,7 +18,8 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   alias Helper.{ORM, Transaction}
   alias Helper.Types, as: T
   alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.CMS.Delegate.{CommunityCRUD, Document}
+  alias GroupherServer.CMS.Communities
+  alias GroupherServer.CMS.Delegate.Document
 
   @active_period get_config(:article, :active_period_days)
   @archive_threshold get_config(:article, :archive_threshold)
@@ -36,7 +37,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
             ORM.update(article, %{mark_delete: true})
           end)
           |> Multi.run(:update_community_article_count, fn _, _ ->
-            CommunityCRUD.update_community_count_field(article.communities, thread)
+            Communities.update_count_field(article.communities, thread)
           end)
           |> Repo.transaction()
           |> result()
@@ -57,7 +58,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
         ORM.update(article, %{mark_delete: false})
       end)
       |> Multi.run(:update_community_article_count, fn _, _ ->
-        CommunityCRUD.update_community_count_field(article.communities, thread)
+        Communities.update_count_field(article.communities, thread)
       end)
       |> Repo.transaction()
       |> result()
@@ -89,7 +90,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
       article |> ORM.delete()
     end)
     |> Multi.run(:update_community_article_count, fn _, _ ->
-      CommunityCRUD.update_community_count_field(article.communities, thread)
+      Communities.update_count_field(article.communities, thread)
     end)
     |> Multi.run(:update_user_published_meta, fn _, _ ->
       Accounts.update_published_states(article.author.user, thread)
@@ -163,7 +164,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
         case communities do
           nil -> {:ok, :pass}
-          _ -> CommunityCRUD.update_community_count_field(communities, thread)
+          _ -> Communities.update_count_field(communities, thread)
         end
       end)
       |> Repo.transaction()

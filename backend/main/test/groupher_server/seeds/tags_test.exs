@@ -2,8 +2,8 @@ defmodule GroupherServer.Test.Seeds.TagsTest do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS.Seeds.Tags
-  alias GroupherServer.CMS.Model.Community
+  # alias GroupherServer.CMS.Seeds.Tags
+  # alias GroupherServer.CMS.Model.Community
 
   describe "[tags seeds]" do
     test "get returns tags for home post thread" do

@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.Seeds.DomainTest do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS.Seeds.Domain
+  # alias GroupherServer.CMS.Seeds.Domain
 
   describe "[domain seeds]" do
     test "can seed home community" do
