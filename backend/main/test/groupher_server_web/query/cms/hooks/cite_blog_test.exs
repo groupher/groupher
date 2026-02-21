@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.Query.Hooks.BlogCiting do
       {:ok, blog2} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       body = mock_comment(~s(the <a href=#{@site_host}/blog/#{blog2.id} />))
-      {:ok, comment} = CMS.create_comment(community, :blog, blog2.inner_id, body, user)
+      {:ok, comment} = CMS.Comments.create_comment(community, :blog, blog2.inner_id, body, user)
 
       body =
         mock_rich_text(

@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Comments.PostArchive do
+defmodule GroupherServer.Test.CMS.Comments.BlogArchive do
   @moduledoc false
   use GroupherServer.TestTools
 
@@ -6,25 +6,32 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
   @comment_archive_threshold Timex.shift(@now, @archive_threshold[:default])
 
   setup do
-    {community, post, _, user} = mock_article(:post)
+    {community, blog, _, user} = mock_article(:blog)
 
     {:ok, comment_long_ago} =
       db_insert(:comment, %{
-        title: "last year",
-        inserted_at: DateTime.truncate(@last_year, :second)
+        title: "last week",
+        inserted_at: @last_year
       })
 
-    {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-    {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-    {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
-    {:ok, _} = CMS.create_comment(community, :post, post.inner_id, mock_comment(), user)
+    {:ok, _} =
+      CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+
+    {:ok, _} =
+      CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+
+    {:ok, _} =
+      CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+
+    {:ok, _} =
+      CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
     {:ok, ~m(comment_long_ago)a}
   end
 
   describe "[cms comment archive]" do
     test "can archive comments", ~m(comment_long_ago)a do
-      {:ok, _} = CMS.archive_comments()
+      {:ok, _} = CMS.Comments.archive_comments()
 
       archived_comments =
         Comment
@@ -37,7 +44,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
     end
 
     test "can not edit archived comment" do
-      {:ok, _} = CMS.archive_comments()
+      {:ok, _} = CMS.Comments.archive_comments()
 
       archived_comments =
         Comment
@@ -45,12 +52,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
         |> Repo.all()
 
       archived_comment = archived_comments |> List.first()
-      {:error, reason} = CMS.update_comment(archived_comment, mock_comment("updated content"))
+      {:error, reason} = CMS.Comments.update_comment(archived_comment, mock_comment("updated content"))
       assert reason |> is_error?(:archived)
     end
 
     test "can not delete archived comment" do
-      {:ok, _} = CMS.archive_comments()
+      {:ok, _} = CMS.Comments.archive_comments()
 
       archived_comments =
         Comment
@@ -59,7 +66,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostArchive do
 
       archived_comment = archived_comments |> List.first()
 
-      {:error, reason} = CMS.delete_comment(archived_comment)
+      {:error, reason} = CMS.Comments.delete_comment(archived_comment)
       assert reason |> is_error?(:archived)
     end
   end

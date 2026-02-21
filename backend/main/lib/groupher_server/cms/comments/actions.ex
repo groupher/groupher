@@ -1,7 +1,8 @@
-defmodule GroupherServer.CMS.Delegate.CommentAction do
+defmodule GroupherServer.CMS.Comments.Actions do
   @moduledoc """
-  CRUD and operations for article comments
+  Action operations for comments (pin, fold, lock, upvote, reply).
   """
+
   import Ecto.Query, warn: false
 
   import Helper.Utils,
@@ -18,34 +19,28 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
 
   import Helper.ErrorCode
 
-  import GroupherServer.CMS.Delegate.CommentCRUD,
-    only: [
-      add_participant_to_article: 2,
-      do_create_comment: 4,
-      can_comment?: 2,
-      paged_comment_replies: 2
-    ]
-
   import GroupherServer.CMS.Helper.Matcher
 
   alias Helper.Types, as: T
   alias Helper.{ORM, Later, Transaction}
-  alias GroupherServer.{Accounts, CMS, Repo}
-  alias CMS.Delegate.Fetcher
+  alias GroupherServer.{Accounts, Repo}
+  alias GroupherServer.CMS.Delegate.Fetcher
 
   alias Accounts.Model.User
-  alias CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply}
-  alias CMS.Delegate.Hooks
+  alias GroupherServer.CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply}
+  alias GroupherServer.CMS.Delegate.Hooks
+  alias GroupherServer.CMS.Comments.List, as: CommentList
+  alias GroupherServer.CMS.Comments.Read, as: CommentRead
 
   alias Ecto.Multi
 
   @article_threads get_config(:article, :threads)
 
+  @max_participator_count Comment.max_participator_count()
   @max_parent_replies_count Comment.max_parent_replies_count()
   @pinned_comment_limit Comment.pinned_comment_limit()
 
-  @doc "pin a comment"
-  @spec pin_comment(integer()) :: T.domain_res(Comment.t())
+  @spec pin_comment(T.id()) :: T.domain_res(Comment.t())
   def pin_comment(comment_id) do
     with {:ok, {comment, full_comment, info}} <- pin_context(comment_id) do
       Multi.new()
@@ -76,9 +71,9 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
-  @spec undo_pin_comment(integer()) :: T.domain_res(Comment.t())
+  @spec undo_pin_comment(T.id()) :: T.domain_res(Comment.t())
   def undo_pin_comment(comment_id) do
-    with {:ok, comment} <- CMS.fetch_comment(comment_id) do
+    with {:ok, comment} <- CommentRead.fetch_comment(comment_id) do
       Multi.new()
       |> Multi.run(:update_comment_flag, fn _, _ ->
         ORM.update(comment, %{is_pinned: false})
@@ -91,7 +86,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
-  @doc "fold a comment"
   @spec fold_comment(T.id() | Comment.t(), User.t()) :: T.domain_res(Comment.t())
   def fold_comment(%Comment{} = comment, %User{} = _user), do: do_fold_comment(comment, true)
 
@@ -101,7 +95,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
-  @doc "unfold a comment"
   @spec unfold_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def unfold_comment(comment_id, %User{} = _user) do
     with {:ok, comment} <- Fetcher.fetch(Comment, comment_id) do
@@ -109,7 +102,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
-  @doc "reply to existing comment"
   @spec reply_comment(T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
   def reply_comment(comment_id, body, %User{} = user) do
     with {:ok, target_comment} <- Fetcher.fetch_by(Comment, %{id: comment_id, is_deleted: false}),
@@ -149,7 +141,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
       |> Multi.run(:inc_replies_count, fn _, %{add_reply_to: replied_comment} ->
         filter = %{page: 1, size: 1}
 
-        with {:ok, paged_replies} <- paged_comment_replies(parent_comment.id, filter),
+        with {:ok, paged_replies} <- CommentList.paged_comment_replies(parent_comment.id, filter),
              {:ok, _} <- ORM.update(parent_comment, %{replies_count: paged_replies.total_count}) do
           {:ok, replied_comment}
         end
@@ -166,7 +158,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
-  @doc "upvote a comment"
   @spec upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def upvote_comment(comment_id, %User{id: user_id} = from_user) do
     with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
@@ -197,7 +188,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
         sync_embed_replies(comment)
       end)
       |> Multi.run(:after_hooks, fn _, _ ->
-        # Hooks.SubscribeCommunity.handle(comment, from_user)
         Later.run({Hooks.SubscribeCommunity, :handle, [comment, from_user]})
         Later.run({Hooks.Notify, :handle, [:upvote, comment, from_user]})
       end)
@@ -206,7 +196,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
-  @doc "upvote a comment"
   @spec undo_upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def undo_upvote_comment(comment_id, %User{id: user_id} = from_user) do
     with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
@@ -248,7 +237,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
-  @doc "lock comment of a article"
   @spec lock_article_comments(term()) :: T.domain_res(term())
   def lock_article_comments(article) do
     Transaction.locking(article, fn article ->
@@ -256,7 +244,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end)
   end
 
-  @doc "undo lock comment of a article"
   @spec undo_lock_article_comments(term()) :: T.domain_res(term())
   def undo_lock_article_comments(article) do
     Transaction.locking(article, fn article ->
@@ -264,7 +251,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end)
   end
 
-  # do (un)fold and update folded count in article meta
   defp do_fold_comment(%Comment{} = comment, is_folded) when is_boolean(is_folded) do
     Multi.new()
     |> Multi.run(:fold_comment, fn _, _ ->
@@ -275,7 +261,7 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
       {:ok, article_thread} = thread_of(article)
 
       {:ok, %{total_count: total_count}} =
-        CMS.paged_folded_comments(article_thread, article.id, %{page: 1, size: 1})
+        CommentList.paged_folded_comments(article_thread, article.id, %{page: 1, size: 1})
 
       meta = article.meta |> Map.put(:folded_comment_count, total_count)
       article |> ORM.update_meta(meta)
@@ -284,15 +270,18 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     |> result()
   end
 
+  defp can_comment?(article, _user) do
+    not article.meta.is_comment_locked
+  end
+
   defp update_article_author_upvoted_info(%Comment{} = comment, user_id) do
-    with {:ok, article} = CMS.fetch_full_comment(comment.id) do
+    with {:ok, article} = CommentRead.fetch_full_comment(comment.id) do
       is_article_author_upvoted = article.author.id == user_id
       meta = comment.meta |> Map.put(:is_article_author_upvoted, is_article_author_upvoted)
       comment |> ORM.update_meta(meta)
     end
   end
 
-  # 设计盖楼只保留一个层级，回复楼中的评论都会被放到顶楼的 replies 中
   defp get_parent_comment(%Comment{reply_to_id: nil} = comment), do: comment
 
   defp get_parent_comment(%Comment{reply_to_id: reply_to_id} = comment)
@@ -300,8 +289,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     get_parent_comment(Repo.preload(comment.reply_to, reply_to: :author))
   end
 
-  # 如果 replies 没有达到 @max_parent_replies_count, 则添加
-  # "加载更多" 的逻辑使用另外的 paged 接口从 CommentReply 表中查询
   defp add_replies_ifneed(
          %Comment{replies: replies} = parent_comment,
          %Comment{} = replied_comment
@@ -315,7 +302,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     ORM.update_embed(parent_comment, :replies, new_replies)
   end
 
-  # 如果已经有 @max_parent_replies_count 以上的回复了，直接忽略即可
   defp add_replies_ifneed(%Comment{} = parent_comment, _) do
     {:ok, parent_comment}
   end
@@ -335,8 +321,6 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     |> List.first()
   end
 
-  # used in replies mode, for those reply to other user in replies box (for frontend)
-  # 用于回复模式，指代这条回复是回复“回复列表其他人的” （方便前端展示）
   defp update_reply_to_others_state(parent_comment, replying_comment, replied_comment) do
     replying_comment = replying_comment |> Repo.preload(:author)
     parent_comment = parent_comment |> Repo.preload(:author)
@@ -356,9 +340,10 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
     end
   end
 
+  @spec pin_context(T.id()) :: {:ok, {Comment.t(), map(), map()}} | {:error, atom() | {atom(), String.t()}}
   defp pin_context(comment_id) do
-    with {:ok, comment} <- CMS.fetch_comment(comment_id),
-         {:ok, full_comment} <- CMS.fetch_full_comment(comment.id),
+    with {:ok, comment} <- CommentRead.fetch_comment(comment_id),
+         {:ok, full_comment} <- CommentRead.fetch_full_comment(comment.id),
          {:ok, info} <- match(full_comment.thread) do
       {:ok, {comment, full_comment, info}}
     end
@@ -375,6 +360,56 @@ defmodule GroupherServer.CMS.Delegate.CommentAction do
 
     meta = comment.meta |> Map.merge(%{upvoted_user_ids: user_ids}) |> strip_struct
     ORM.update_meta(comment, meta)
+  end
+
+  defp do_create_comment(body, foreign_key, article, %User{id: user_id}) do
+    import GroupherServer.CMS.Model.Embeds.CommentMeta, only: [default_meta: 0]
+    import GroupherServer.CMS.Model.Embeds.CommentEmotion, only: [default_emotions: 0]
+
+    with {:ok, %{body: body, body_html: body_html}} <-
+           Helper.Converter.Article.parse_body(body) do
+      thread = foreign_key |> to_string |> String.slice(0..-4) |> String.upcase()
+
+      attrs = %{
+        author_id: user_id,
+        body: body,
+        body_html: body_html,
+        emotions: default_emotions(),
+        floor: next_floor(article, foreign_key),
+        is_article_author: user_id == article.author.user.id,
+        thread: thread,
+        meta: default_meta()
+      }
+
+      Comment |> ORM.create(Map.put(attrs, foreign_key, article.id))
+    end
+  end
+
+  defp add_participant_to_article(%{comments_participants: participants} = article, %User{} = user) do
+    cur_participants = participants |> List.insert_at(0, user) |> Enum.uniq_by(& &1.id)
+
+    meta = article.meta |> Map.from_struct()
+    cur_participants_ids = (meta[:comments_participant_user_ids] ++ [user.id]) |> Enum.uniq()
+    meta = Map.merge(meta, %{comments_participant_user_ids: cur_participants_ids})
+
+    latest_participants = cur_participants |> Enum.slice(0, @max_participator_count)
+
+    article
+    |> Ecto.Changeset.change()
+    |> Ecto.Changeset.put_change(:comments_participants_count, cur_participants_ids |> length)
+    |> Ecto.Changeset.put_embed(:comments_participants, latest_participants)
+    |> Ecto.Changeset.put_embed(:meta, meta)
+    |> Repo.update()
+  end
+
+  defp add_participant_to_article(_, _), do: {:ok, :pass}
+
+  defp next_floor(article, foreign_key) do
+    {:ok, cur_count} =
+      from(c in Comment, where: field(c, ^foreign_key) == ^article.id)
+      |> ORM.count()
+
+    cur_count + 1
   end
 
   defp result({:ok, %{create_comment: result}}), do: {:ok, result}

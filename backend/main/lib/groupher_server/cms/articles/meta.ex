@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Articles.Meta do
 
   alias Helper.Types, as: T
   alias Helper.ORM
-  alias GroupherServer.CMS.Delegate.CommentCRUD
+  alias GroupherServer.CMS.Comments.CRUD
   alias GroupherServer.CMS.Model.{Embeds, Post}
   alias GroupherServer.CMS.Helper.ArticleEnums
 
@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Articles.Meta do
   @spec set_cat(Post.t(), term()) :: T.domain_res(term())
   def set_cat(%Post{} = post, cat) do
     with {:ok, updated} <- ORM.update(post, %{cat: cat}),
-         {:ok, _} <- CommentCRUD.batch_update_question_flag(post, cat == @article_cat.question) do
+         {:ok, _} <- CRUD.batch_update_question_flag(post, cat == @article_cat.question) do
       updated |> done
     end
   end

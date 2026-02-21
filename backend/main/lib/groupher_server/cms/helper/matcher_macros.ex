@@ -26,6 +26,7 @@ defmodule GroupherServer.CMS.Helper.MatcherMacros do
     @article_threads
     |> Enum.map(fn thread ->
       quote do
+        @spec match(unquote(thread)) :: {:ok, GroupherServer.CMS.Helper.Matcher.match_info()}
         def match(unquote(thread)) do
           thread_module = unquote(thread) |> to_string |> Recase.to_pascal()
 

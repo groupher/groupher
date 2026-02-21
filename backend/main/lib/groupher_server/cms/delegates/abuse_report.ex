@@ -192,7 +192,7 @@ defmodule GroupherServer.CMS.Delegate.AbuseReport do
       end)
       |> Multi.run(:fold_comment_report_too_many, fn _, %{create_abuse_report: abuse_report} ->
         if abuse_report.report_cases_count >= @report_threshold_for_fold,
-          do: CMS.fold_comment(comment, user),
+          do: CMS.Comments.fold_comment(comment.id, user),
           else: {:ok, comment}
       end)
       |> Multi.run(:sync_embed_replies, fn _, %{update_report_meta: comment} ->

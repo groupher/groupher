@@ -29,9 +29,8 @@ defmodule Helper.Scheduler do
     |> done
   end
 
-  def arthive_comments() do
-    CMS.archive_comments()
-    |> done
+  def archive_comments() do
+    CMS.Comments.archive_comments()
   end
 
   def articles_audition() do
@@ -40,7 +39,7 @@ defmodule Helper.Scheduler do
   end
 
   def comments_audition() do
-    with {:ok, paged_comments} <- CMS.paged_audit_failed_comments(%{page: 1, size: 30}) do
+    with {:ok, paged_comments} <- CMS.Comments.paged_audit_failed_comments(%{page: 1, size: 30}) do
       Enum.map(paged_comments.entries, fn comment ->
         Hooks.Audition.handle(comment)
       end)

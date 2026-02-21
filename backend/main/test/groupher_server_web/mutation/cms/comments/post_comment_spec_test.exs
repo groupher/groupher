@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       post_author = post.author.user
 
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
       questioner_conn = simu_conn(:user, post_author)
 
@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       post_author = post.author.user
 
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
       variables = %{id: comment.id}
       assert user_conn |> mutation_error?(@query, variables, ecode(:require_questioner))
@@ -67,9 +67,9 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       post_author = post.author.user
 
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
-      {:ok, comment} = CMS.mark_comment_solution(comment.id, post_author)
+      {:ok, comment} = CMS.Comments.mark_comment_solution(comment.id, post_author)
 
       questioner_conn = simu_conn(:user, post_author)
 
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       post_author = post.author.user
 
       {:ok, comment} =
-        CMS.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
       variables = %{id: comment.id}
       assert user_conn |> mutation_error?(@query, variables, ecode(:require_questioner))

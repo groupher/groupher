@@ -31,10 +31,10 @@ defmodule GroupherServer.Accounts.Delegate.Publish do
   end
 
   def paged_published_comments(user, filter) do
-    CMS.paged_published_comments(user, filter)
+    CMS.Comments.paged_published_comments(user, filter)
   end
 
   def paged_published_comments(user, thread, filter) do
-    CMS.paged_published_comments(user, thread, filter)
+    CMS.Comments.paged_published_comments(user, thread, filter)
   end
 end

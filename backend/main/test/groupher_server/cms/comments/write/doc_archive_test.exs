@@ -15,23 +15,23 @@ defmodule GroupherServer.Test.CMS.Comments.DocArchive do
       })
 
     {:ok, _} =
-      CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
     {:ok, _} =
-      CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
     {:ok, _} =
-      CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
     {:ok, _} =
-      CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
     {:ok, ~m(comment_long_ago)a}
   end
 
   describe "[cms comment archive]" do
     test "can archive comments", ~m(comment_long_ago)a do
-      {:ok, _} = CMS.archive_comments()
+      {:ok, _} = CMS.Comments.archive_comments()
 
       archived_comments =
         Comment
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocArchive do
     end
 
     test "can not edit archived comment" do
-      {:ok, _} = CMS.archive_comments()
+      {:ok, _} = CMS.Comments.archive_comments()
 
       archived_comments =
         Comment
@@ -52,12 +52,12 @@ defmodule GroupherServer.Test.CMS.Comments.DocArchive do
         |> Repo.all()
 
       archived_comment = archived_comments |> List.first()
-      {:error, reason} = CMS.update_comment(archived_comment, mock_comment("updated content"))
+      {:error, reason} = CMS.Comments.update_comment(archived_comment, mock_comment("updated content"))
       assert reason |> is_error?(:archived)
     end
 
     test "can not delete archived comment" do
-      {:ok, _} = CMS.archive_comments()
+      {:ok, _} = CMS.Comments.archive_comments()
 
       archived_comments =
         Comment
@@ -66,7 +66,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocArchive do
 
       archived_comment = archived_comments |> List.first()
 
-      {:error, reason} = CMS.delete_comment(archived_comment)
+      {:error, reason} = CMS.Comments.delete_comment(archived_comment)
       assert reason |> is_error?(:archived)
     end
   end

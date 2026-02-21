@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
       all_comment =
         Enum.reduce(0..total_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.create_comment(
+            CMS.Comments.create_comment(
               community,
               :doc,
               doc.inner_id,
@@ -37,12 +37,12 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
 
       first_comment = List.first(all_comment)
 
-      {:ok, _} = CMS.emotion_to_comment(first_comment.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_comment(first_comment.id, :beer, user)
-      {:ok, _} = CMS.emotion_to_comment(first_comment.id, :popcorn, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(first_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(first_comment.id, :beer, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(first_comment.id, :popcorn, user)
 
       {:ok, paged_comments} =
-        CMS.paged_comments(
+        CMS.Comments.paged_comments(
           :doc,
           doc.id,
           %{page: page_number, size: page_size},
@@ -72,7 +72,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
       all_comment =
         Enum.reduce(0..total_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.create_comment(
+            CMS.Comments.create_comment(
               community,
               :doc,
               doc.inner_id,
@@ -85,9 +85,9 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
 
       first_comment = List.first(all_comment)
 
-      {:ok, _} = CMS.emotion_to_comment(first_comment.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_comment(first_comment.id, :beer, user2)
-      {:ok, comment} = CMS.emotion_to_comment(first_comment.id, :beer, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(first_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(first_comment.id, :beer, user2)
+      {:ok, comment} = CMS.Comments.emotion_to_comment(first_comment.id, :beer, user)
 
       assert comment.emotions.viewer_has_downvoteed == true
       assert comment.emotions.viewer_has_beered == true
@@ -96,18 +96,18 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
     test "nested reply should have viewer emotion status in replies mode",
          ~m(community doc user)a do
       {:ok, parent_comment} =
-        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
       {:ok, reply_comment} =
-        CMS.reply_comment(parent_comment.id, mock_comment("reply_content"), user)
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment("reply_content"), user)
 
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_comment(reply_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(reply_comment.id, :downvote, user)
 
       filter = %{page: 1, size: 10}
 
       {:ok, %{entries: entries}} =
-        CMS.paged_comments(:doc, doc.id, filter, :replies, user)
+        CMS.Comments.paged_comments(:doc, doc.id, filter, :replies, user)
 
       parent = entries |> List.first()
       parent_emotion = parent |> Map.get(:emotions)
@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
   describe "[basic article comment emotion]" do
     test "comment has default emotions after created", ~m(community doc user)a do
       {:ok, parent_comment} =
-        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -131,10 +131,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
 
     test "can make emotion to comment", ~m(community doc user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :downvote, user2)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user2)
 
       {:ok, %{emotions: emotions}} = ORM.find(Comment, parent_comment.id)
 
@@ -145,10 +145,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
 
     test "can undo emotion to comment", ~m(community doc user user2)a do
       {:ok, parent_comment} =
-        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :downvote, user2)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user2)
 
       {:ok, %{emotions: emotions}} = ORM.find(Comment, parent_comment.id)
 
@@ -156,8 +156,8 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
       assert user_exist_in?(user, emotions.latest_downvote_users)
       assert user_exist_in?(user2, emotions.latest_downvote_users)
 
-      {:ok, _} = CMS.undo_emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.undo_emotion_to_comment(parent_comment.id, :downvote, user2)
+      {:ok, _} = CMS.Comments.undo_emotion_to_comment(parent_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.undo_emotion_to_comment(parent_comment.id, :downvote, user2)
 
       {:ok, %{emotions: emotions}} = ORM.find(Comment, parent_comment.id)
       assert emotions.downvote_count == 0
@@ -167,10 +167,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
 
     test "same user make same emotion to same comment.", ~m(community doc user)a do
       {:ok, parent_comment} =
-        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -181,10 +181,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
     test "same user same emotion to same comment only have one user_emotion record",
          ~m(community doc user)a do
       {:ok, parent_comment} =
-        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :heart, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :heart, user)
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -201,11 +201,11 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
     test "different user can make same emotions on same comment",
          ~m(community doc user user2 user3)a do
       {:ok, parent_comment} =
-        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :beer, user)
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :beer, user2)
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :beer, user3)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :beer, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :beer, user2)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :beer, user3)
 
       {:ok, %{emotions: emotions}} = ORM.find(Comment, parent_comment.id)
 
@@ -218,13 +218,13 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
     test "same user can make differcent emotions on same comment",
          ~m(community doc user)a do
       {:ok, parent_comment} =
-        CMS.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :beer, user)
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :heart, user)
-      {:ok, _} = CMS.emotion_to_comment(parent_comment.id, :orz, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :beer, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :heart, user)
+      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :orz, user)
 
       {:ok, %{emotions: emotions}} = ORM.find(Comment, parent_comment.id)
 

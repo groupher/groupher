@@ -87,9 +87,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
       changelog_id = changelog_last_week.inner_id
 
-      {:ok, _} = CMS.create_comment(community, :changelog, changelog_id, mock_comment(), user)
-      {:ok, _} = CMS.create_comment(community, :changelog, changelog_id, mock_comment(), user2)
-      {:ok, _} = CMS.create_comment(community, :changelog, changelog_id, mock_comment(), user3)
+      {:ok, _} = CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user2)
+      {:ok, _} = CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user3)
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
@@ -337,7 +337,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       Process.sleep(2000)
 
       {:ok, _} =
-        CMS.create_comment(
+        CMS.Comments.create_comment(
           community,
           :changelog,
           changelog_last_week.inner_id,
@@ -358,7 +358,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       variables = %{filter: %{page: 1, size: 20}}
 
       {:ok, _} =
-        CMS.create_comment(
+        CMS.Comments.create_comment(
           community,
           :changelog,
           changelog_last_year.inner_id,
@@ -379,7 +379,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, changelog} = ORM.find(Changelog, changelog_last_week.id, preload: [author: :user])
 
       {:ok, _} =
-        CMS.create_comment(
+        CMS.Comments.create_comment(
           community,
           :changelog,
           changelog.inner_id,
