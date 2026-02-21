@@ -168,15 +168,16 @@ defmodule GroupherServer.CMS.Comments.CRUD do
       true ->
         batch_update_solution_flag(post, false)
 
-        if is_solution do
-          Actions.pin_comment(comment.id)
-        else
-          Actions.undo_pin_comment(comment.id)
-        end
-
         Multi.new()
-        |> Multi.run(:mark_solution, fn _, _ ->
-          ORM.update(comment, %{is_solution: is_solution, is_for_question: true})
+        |> Multi.run(:pin_comment, fn _, _ ->
+          if is_solution do
+            Actions.pin_comment(comment.id)
+          else
+            Actions.undo_pin_comment(comment.id)
+          end
+        end)
+        |> Multi.run(:mark_solution, fn _, %{pin_comment: updated_comment} ->
+          ORM.update(updated_comment, %{is_solution: is_solution, is_for_question: true})
         end)
         |> Multi.run(:update_post_state, fn _, _ ->
           with {:ok, updated_post} <- ORM.update(post, %{solution_digest: comment.body_html}) do
@@ -184,8 +185,8 @@ defmodule GroupherServer.CMS.Comments.CRUD do
             CMS.Articles.set_state(updated_post, state)
           end
         end)
-        |> Multi.run(:sync_embed_replies, fn _, %{mark_solution: comment} ->
-          sync_embed_replies(comment)
+        |> Multi.run(:sync_embed_replies, fn _, %{mark_solution: updated_comment} ->
+          sync_embed_replies(updated_comment)
         end)
         |> Repo.transaction()
         |> result()
