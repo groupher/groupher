@@ -167,7 +167,12 @@ defmodule GroupherServer.CMS.Comments.CRUD do
     case user.id == post.author.user.id do
       true ->
         batch_update_solution_flag(post, false)
-        Actions.pin_comment(comment.id)
+
+        if is_solution do
+          Actions.pin_comment(comment.id)
+        else
+          Actions.undo_pin_comment(comment.id)
+        end
 
         Multi.new()
         |> Multi.run(:mark_solution, fn _, _ ->

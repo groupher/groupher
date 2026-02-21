@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Comments.Read do
 
   @spec one_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def one_comment(id, %User{} = user) do
-    with {:ok, comment} <- Fetcher.fetch(Comment, id, preload: [:replies]) do
+    with {:ok, comment} <- Fetcher.fetch(Comment, id) do
       %{entries: [comment]}
       |> mark_viewer_emotion_states(user)
       |> mark_viewer_has_upvoted(user)

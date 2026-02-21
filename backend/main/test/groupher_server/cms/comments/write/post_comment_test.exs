@@ -973,10 +973,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
       {:ok, comment} = CMS.Comments.mark_comment_solution(comment.id, post_author)
+      assert comment.is_pinned
 
       {:ok, comment} = CMS.Comments.undo_mark_comment_solution(comment.id, post_author)
 
       assert not comment.is_solution
+      assert not comment.is_pinned
 
       {:ok, post} = ORM.find(Post, post.id)
       assert post.state == @article_state.default
