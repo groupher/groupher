@@ -151,8 +151,6 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   def mark_comment_solution(comment_id, %User{} = user) do
     with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
          {:ok, post} <- Fetcher.fetch(Post, comment.post_id, preload: [author: :user]) do
-      batch_update_solution_flag(post, false)
-      Actions.pin_comment(comment.id)
       do_mark_comment_solution(post, comment, user, true)
     end
   end
@@ -161,7 +159,6 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   def undo_mark_comment_solution(comment_id, %User{} = user) do
     with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
          {:ok, post} <- Fetcher.fetch(Post, comment.post_id, preload: [author: :user]) do
-      CMS.Articles.set_state(post, @article_state.default)
       do_mark_comment_solution(post, comment, user, false)
     end
   end
@@ -169,13 +166,18 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   defp do_mark_comment_solution(post, %Comment{} = comment, %User{} = user, is_solution) do
     case user.id == post.author.user.id do
       true ->
+        batch_update_solution_flag(post, false)
+        Actions.pin_comment(comment.id)
+
         Multi.new()
         |> Multi.run(:mark_solution, fn _, _ ->
           ORM.update(comment, %{is_solution: is_solution, is_for_question: true})
         end)
         |> Multi.run(:update_post_state, fn _, _ ->
-          ORM.update(post, %{solution_digest: comment.body_html})
-          CMS.Articles.set_state(post, @article_state.resolved)
+          with {:ok, updated_post} <- ORM.update(post, %{solution_digest: comment.body_html}) do
+            state = if is_solution, do: @article_state.resolved, else: @article_state.default
+            CMS.Articles.set_state(updated_post, state)
+          end
         end)
         |> Multi.run(:sync_embed_replies, fn _, %{mark_solution: comment} ->
           sync_embed_replies(comment)
@@ -294,7 +296,6 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   defp result({:ok, %{delete_comment: result}}), do: {:ok, result}
   defp result({:ok, %{mark_solution: result}}), do: {:ok, result}
   defp result({:ok, %{sync_embed_replies: result}}), do: {:ok, result}
-  defp result({:ok, %{update_comment_meta: result}}), do: {:ok, result}
 
   defp result({:error, :create_comment, result, _steps}) do
     raise_error(:create_comment, result)

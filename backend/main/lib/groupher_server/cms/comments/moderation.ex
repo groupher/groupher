@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   @spec paged_audit_failed_comments(map()) :: T.domain_res(T.paged_data())
   def paged_audit_failed_comments(filter) do
     %{page: page, size: size} = filter
-    flags = %{pending: :audit_failed}
+    flags = %{pending: @audit_failed}
 
     Comment
     |> QueryBuilder.filter_pack(Map.merge(filter, flags))

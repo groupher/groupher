@@ -29,9 +29,8 @@ defmodule Helper.Scheduler do
     |> done
   end
 
-  def arthive_comments() do
+  def archive_comments() do
     CMS.Comments.archive_comments()
-    |> done
   end
 
   def articles_audition() do

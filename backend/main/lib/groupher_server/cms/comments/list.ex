@@ -81,6 +81,10 @@ defmodule GroupherServer.CMS.Comments.List do
     do_paged_comment(thread, article_id, filters, where_query, user)
   end
 
+  def paged_comments(_thread, _article_id, _filters, mode, _user) do
+    {:error, "unknown mode: #{mode}"}
+  end
+
   @spec paged_published_comments(User.t(), map()) :: T.domain_res(T.paged_data())
   def paged_published_comments(%User{id: user_id}, filter) do
     %{page: page, size: size} = filter
@@ -139,12 +143,8 @@ defmodule GroupherServer.CMS.Comments.List do
          {:ok, info} <- match(thread),
          {:ok, article} <- Fetcher.fetch(info.model, article_id),
          {:ok, paged_data} <- do_paged_comments_participants(thread_query, filters) do
-      case article.comments_participants_count !== paged_data.total_count do
-        true ->
-          article |> ORM.update(%{comments_participants_count: paged_data.total_count})
-
-        false ->
-          {:ok, :pass}
+      if article.comments_participants_count !== paged_data.total_count do
+        Later.run({ORM, :update, [article, %{comments_participants_count: paged_data.total_count}]})
       end
 
       paged_data |> done

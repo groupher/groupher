@@ -13,12 +13,22 @@ defmodule GroupherServer.CMS.Helper.Matcher do
   alias Accounts.Model.User
   alias CMS.Model.Comment
 
+  @type match_info :: %{
+          model: module(),
+          thread: atom(),
+          foreign_key: atom(),
+          preload: atom(),
+          default_meta: map() | nil
+        }
+
+  @spec match(map()) :: {:ok, match_info()}
   def match(%{} = article) do
     {:ok, thread} = thread_of(article)
 
     match(thread)
   end
 
+  @spec match(:account) :: {:ok, match_info()}
   def match(:account) do
     {:ok,
      %{
@@ -29,6 +39,7 @@ defmodule GroupherServer.CMS.Helper.Matcher do
      }}
   end
 
+  @spec match(:comment) :: {:ok, match_info()}
   def match(:comment) do
     {:ok,
      %{
@@ -39,6 +50,7 @@ defmodule GroupherServer.CMS.Helper.Matcher do
      }}
   end
 
+  @spec match(:community_tag) :: {:ok, match_info()}
   def match(:community_tag) do
     {:ok,
      %{

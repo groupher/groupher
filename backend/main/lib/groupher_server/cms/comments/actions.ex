@@ -36,6 +36,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
 
   @article_threads get_config(:article, :threads)
 
+  @max_participator_count Comment.max_participator_count()
   @max_parent_replies_count Comment.max_parent_replies_count()
   @pinned_comment_limit Comment.pinned_comment_limit()
 
@@ -85,7 +86,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
     end
   end
 
-  @spec fold_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
+  @spec fold_comment(T.id() | Comment.t(), User.t()) :: T.domain_res(Comment.t())
   def fold_comment(%Comment{} = comment, %User{} = _user), do: do_fold_comment(comment, true)
 
   def fold_comment(comment_id, %User{} = _user) do
@@ -339,6 +340,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
     end
   end
 
+  @spec pin_context(T.id()) :: {:ok, {Comment.t(), map(), map()}} | {:error, atom() | {atom(), String.t()}}
   defp pin_context(comment_id) do
     with {:ok, comment} <- CommentRead.fetch_comment(comment_id),
          {:ok, full_comment} <- CommentRead.fetch_full_comment(comment.id),
@@ -390,7 +392,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
     cur_participants_ids = (meta[:comments_participant_user_ids] ++ [user.id]) |> Enum.uniq()
     meta = Map.merge(meta, %{comments_participant_user_ids: cur_participants_ids})
 
-    latest_participants = cur_participants |> Enum.slice(0, 20)
+    latest_participants = cur_participants |> Enum.slice(0, @max_participator_count)
 
     article
     |> Ecto.Changeset.change()
