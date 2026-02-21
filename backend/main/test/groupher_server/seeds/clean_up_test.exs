@@ -1,27 +1,18 @@
-defmodule GroupherServer.Test.Seeds.CleanUp do
+defmodule GroupherServer.Test.Seeds.CleanUpTest do
   @moduledoc false
   use GroupherServer.TestTools
 
-  # alias CMS.Model.CommunityTag
+  alias GroupherServer.CMS.Seeds
 
-  setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, community} = mock_community(user)
-
-    post_attrs = mock_attrs(:post, %{community_id: community.id})
-
-    {:ok, ~m(user community post_attrs)a}
-  end
-
-  describe "[community clean up]" do
-    test "can clean up a community", _ do
-      # {:ok, community} = CMS.Seeds.community(:home)
+  describe "[clean up]" do
+    test "can clean up a community" do
+      # {:ok, community} = Seeds.community(:home)
       # {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
 
       # {:ok, found} = ORM.find_all(CommunityTag, %{page: 1, size: 20})
       # assert found.total_count === 0
 
-      # CMS.Seeds.clean_up_community(:home)
+      # Seeds.clean_up_community(:home)
 
       # {:ok, found} = ORM.find_all(Post, %{page: 1, size: 20})
       # assert found.total_count == 0
@@ -34,6 +25,16 @@ defmodule GroupherServer.Test.Seeds.CleanUp do
 
       # {:ok, found} = ORM.find_all(CommunityTag, %{page: 1, size: 20})
       # assert found.total_count == 0
+    end
+  end
+
+  describe "[clean_up_articles]" do
+    test "can clean up articles for a community" do
+      # Test cleaning up articles of a specific type
+      # {:ok, community} = Seeds.community(:home)
+      # Seeds.articles(community, :post, 5)
+      # Seeds.clean_up_articles(community, :post)
+      # Verify articles are deleted
     end
   end
 end
