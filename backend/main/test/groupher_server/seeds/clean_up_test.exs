@@ -15,13 +15,13 @@ defmodule GroupherServer.Test.Seeds.CleanUp do
 
   describe "[community clean up]" do
     test "can clean up a community", _ do
-      # {:ok, community} = CMS.seed_community(:home)
+      # {:ok, community} = CMS.Seeds.community(:home)
       # {:ok, _} = CMS.create_article(community, :post, post_attrs, user)
 
       # {:ok, found} = ORM.find_all(CommunityTag, %{page: 1, size: 20})
       # assert found.total_count === 0
 
-      # CMS.clean_up_community(:home)
+      # CMS.Seeds.clean_up_community(:home)
 
       # {:ok, found} = ORM.find_all(Post, %{page: 1, size: 20})
       # assert found.total_count == 0

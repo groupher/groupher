@@ -1,6 +1,6 @@
 alias GroupherServer.CMS
 
-CMS.seed_set_category(
+CMS.Seeds.set_category(
   # ["elixir", "ruby", "javascript", "typescript", "java", "php"],
   [
     "mithril",
@@ -43,22 +43,22 @@ CMS.seed_set_category(
   "pl"
 )
 
-# CMS.seed_set_category(
+# CMS.Seeds.set_category(
 #   ["css", "bootstrap", "semantic-ui", "material-design", "fabric"],
 #   "design"
 # )
 
-# CMS.seed_set_category(
+# CMS.Seeds.set_category(
 #   # TODO: shopify, tv ...
 #   ["ios", "android", "flutter"],
 #   "platform"
 # )
 
-# CMS.seed_set_category(["ethereum", "bitcoin"], "blockchain")
+# CMS.Seeds.set_category(["ethereum", "bitcoin"], "blockchain")
 
-# CMS.seed_set_category(["tensorflow"], "ai")
+# CMS.Seeds.set_category(["tensorflow"], "ai")
 
-# CMS.seed_set_category(
+# CMS.Seeds.set_category(
 #   [
 #     "taro",
 #     "webrtc",
@@ -79,7 +79,7 @@ CMS.seed_set_category(
 #   "framework"
 # )
 
-# CMS.seed_set_category(
+# CMS.Seeds.set_category(
 #   [
 #     "django",
 #     "drupal",
@@ -108,7 +108,7 @@ CMS.seed_set_category(
 #   "framework"
 # )
 
-# CMS.seed_set_category(
+# CMS.Seeds.set_category(
 #   [
 #     "beijing",
 #     "shanghai",
@@ -123,7 +123,7 @@ CMS.seed_set_category(
 #   "city"
 # )
 
-# CMS.seed_set_category(
+# CMS.Seeds.set_category(
 #   [
 #     "mysql",
 #     "sql-server",
@@ -139,7 +139,7 @@ CMS.seed_set_category(
 #   "db"
 # )
 
-# CMS.seed_set_category(
+# CMS.Seeds.set_category(
 #   [
 #     "kubernetes",
 #     "docker",
@@ -148,7 +148,7 @@ CMS.seed_set_category(
 #   "devops"
 # )
 
-# CMS.seed_set_category(
+# CMS.Seeds.set_category(
 #   [
 #     "vim",
 #     "emacs",

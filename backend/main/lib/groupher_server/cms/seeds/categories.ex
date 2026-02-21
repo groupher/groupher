@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.Seeds.Categories do
+defmodule GroupherServer.CMS.Seeds.Categories do
   @doc """
   default categories seeds for general community
   """

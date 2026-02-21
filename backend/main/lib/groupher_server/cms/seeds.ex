@@ -1,13 +1,14 @@
-defmodule GroupherServer.CMS.Delegate.Seeds do
+defmodule GroupherServer.CMS.Seeds do
   @moduledoc """
-  seeds data for init, should be called ONLY in new database, like migration
+  CMS seeds for database initialization.
+  Should be called ONLY in new database, like migration.
   """
 
   import GroupherServer.Support.Factory
   import Helper.Utils, only: [done: 1, get_config: 2]
   import Ecto.Query, warn: false
 
-  import GroupherServer.CMS.Delegate.Seeds.Helper,
+  import GroupherServer.CMS.Seeds.Helper,
     only: [
       threadify_communities: 2,
       tagfy_threads: 4,
@@ -23,36 +24,26 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
   alias GroupherServer.CMS
 
   alias CMS.Model.{Community, Category, Post, Comment}
-  alias CMS.Delegate.Seeds
-  alias Seeds.Domain
+
+  alias __MODULE__.{Domain, Communities}
 
   @article_threads get_config(:article, :threads)
-  # categories
   @community_types [:pl, :framework]
-
   @comment_emotions get_config(:article, :comment_emotions)
 
+  # Community seeds
 
-  # seed community
-
-  @doc """
-  seed communities pragraming languages
-  """
-  @spec seed_communities(atom()) :: T.domain_res(term())
-  def seed_communities(type) when type in @community_types do
-    Seeds.Communities.get(type) |> Enum.each(&seed_community(&1, type)) |> done
+  @spec communities(atom()) :: T.domain_res(:ok)
+  def communities(type) when type in @community_types do
+    Communities.get(type) |> Enum.each(&community(&1, type)) |> done
   end
 
-  @doc """
-  seed community for home
-  """
-  @spec seed_community(atom()) :: T.domain_res(term())
-  def seed_community(:home), do: Domain.seed_community(:home)
-  def seed_community(:feedback), do: Domain.seed_community(:feedback)
+  @spec community(atom()) :: T.domain_res(Community.t())
+  def community(:home), do: Domain.seed_community(:home)
+  def community(:feedback), do: Domain.seed_community(:feedback)
 
-  # type: city, pl, framework, ...
-  @spec seed_community(atom(), atom()) :: T.domain_res(term())
-  def seed_community(slug, type) when type in @community_types do
+  @spec community(atom(), atom()) :: T.domain_res(Community.t())
+  def community(slug, type) when type in @community_types do
     with {:ok, threads} <- seed_threads(type),
          {:ok, bot} <- seed_bot(),
          {:ok, categories} <- seed_categories_ifneed(bot),
@@ -65,13 +56,10 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     end
   end
 
-  def seed_community(_slug, _type), do: {:error, {:custom, "unknown community type"}}
+  def community(_slug, _type), do: {:error, {:custom, "unknown community type"}}
 
-  @doc """
-  set list of communities to a spec category
-  """
-  @spec seed_set_category(list(), atom()) :: T.domain_res(term())
-  def seed_set_category(communities_names, cat_name) when is_list(communities_names) do
+  @spec set_category([atom() | String.t()], atom() | String.t()) :: T.domain_res(:ok)
+  def set_category(communities_names, cat_name) when is_list(communities_names) do
     {:ok, category} = ORM.find_by(Category, %{slug: cat_name})
 
     Enum.each(communities_names, fn name ->
@@ -81,16 +69,28 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     end)
   end
 
-  @spec seed_articles(Community.t(), atom(), integer()) :: T.domain_res(term())
-  def seed_articles(%Community{} = community, thread, count \\ 3)
-      when thread in @article_threads do
-    #
+  # Article seeds
+
+  @spec articles(Community.t(), atom()) :: T.domain_res(:ok)
+  def articles(%Community{} = community, thread) when is_atom(thread) do
+    seed_articles(community, thread, 3)
+  end
+
+  @spec articles(Community.t(), atom(), integer()) :: T.domain_res(:ok)
+  def articles(%Community{} = community, thread, count)
+      when is_atom(thread) and is_integer(count) do
+    seed_articles(community, thread, count)
+  end
+
+  @spec seed_articles(Community.t(), atom(), integer()) :: T.domain_res(:ok)
+  defp seed_articles(%Community{} = community, thread, count)
+       when thread in @article_threads do
     thread_upcase = thread |> to_string |> String.upcase()
     tags_filter = %{community_id: community.id, thread: thread_upcase}
 
     with {:ok, community} <- ORM.find(Community, community.id),
-         {:ok, tags} <- GroupherServer.CMS.Communities.paged_tags(tags_filter),
-          {:ok, user} <- db_insert(:user) do
+         {:ok, tags} <- CMS.Communities.paged_tags(tags_filter),
+         {:ok, user} <- db_insert(:user) do
       1..count
       |> Enum.each(fn _ ->
         attrs = mock_attrs(thread, %{community_id: community.id})
@@ -114,7 +114,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
   defp seed_tags(tags, thread, article) do
     get_tag_ids(tags, thread)
     |> Enum.each(fn tag_id ->
-      {:ok, _} = GroupherServer.CMS.Communities.set_tag(article, tag_id)
+      {:ok, _} = CMS.Communities.set_tag(article, tag_id)
     end)
   end
 
@@ -126,14 +126,13 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     0..Enum.random(1..5)
     |> Enum.each(fn _ ->
       _text = Faker.Lorem.sentence(20)
-      # {:ok, comment} = CMS.create_comment(thread, article_id, mock_comment(text), user)
-      # seed_comment_emotions(comment)
-      # seed_comment_replies(comment)
     end)
   end
 
-  @doc false
-  def seed_comment_replies(%Comment{} = comment) do
+  # Comment seeds
+
+  @spec comment_replies(Comment.t()) :: T.domain_res(:ok)
+  def comment_replies(%Comment{} = comment) do
     with {:ok, users} <- db_insert_multi(:user, Enum.random(1..5)) do
       users
       |> Enum.each(fn user ->
@@ -143,8 +142,8 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     end
   end
 
-  @doc false
-  def seed_comment_emotions(%Comment{} = comment) do
+  @spec comment_emotions(Comment.t()) :: T.domain_res(:ok)
+  def comment_emotions(%Comment{} = comment) do
     with {:ok, users} <- db_insert_multi(:user, Enum.random(1..5)) do
       users
       |> Enum.each(fn user ->
@@ -154,20 +153,16 @@ defmodule GroupherServer.CMS.Delegate.Seeds do
     end
   end
 
-  # clean up
+  # Clean up
 
-  def clean_up(:all) do
-    #
-  end
-
-  @spec clean_up_community(atom()) :: T.domain_res(term())
+  @spec clean_up_community(atom()) :: T.domain_res(Community.t())
   def clean_up_community(slug) do
     with {:ok, community} <- ORM.findby_delete(Community, %{slug: to_string(slug)}) do
       clean_up_articles(community, :post)
     end
   end
 
-  @spec clean_up_articles(Community.t(), atom()) :: T.domain_res(term())
+  @spec clean_up_articles(Community.t(), atom()) :: T.domain_res(:ok)
   def clean_up_articles(%Community{} = community, :post) do
     Post
     |> join(:inner, [p], c in assoc(p, :community))
