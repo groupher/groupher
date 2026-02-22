@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.Seeds.Communities do
+defmodule GroupherServer.CMS.Seeds.Communities do
   @moduledoc """
   communities seeds
   """

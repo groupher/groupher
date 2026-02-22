@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.Seeds.Helper do
+defmodule GroupherServer.CMS.Seeds.Helper do
   @moduledoc false
 
   import Ecto.Query, warn: false
@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Helper do
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS}
-  alias CMS.Delegate.{Seeds, SeedsConfig}
+  alias CMS.Seeds.SeedsConfig
   alias CMS.Model.{Community, Thread, Category}
 
   alias Accounts.Model.User
@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Helper do
 
   @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"
 
-  @categories Seeds.Categories.get()
+  @categories CMS.Seeds.Categories.get()
 
   # set threads to given communities
   def threadify_communities(communities, threads) when is_list(communities) do
@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Helper do
     thread = slug |> String.to_atom()
 
     Enum.each(
-      Seeds.Tags.get(community, thread, type),
+      CMS.Seeds.Tags.get(community, thread, type),
       &GroupherServer.CMS.Communities.create_tag(community, thread, &1, bot)
     )
   end
@@ -64,7 +64,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Helper do
 
   # seed thread
   def seed_threads(type) do
-    threads = Seeds.Threads.get(type)
+    threads = CMS.Seeds.Threads.get(type)
     threads_list = threads |> Enum.map(& &1.slug)
 
     threads

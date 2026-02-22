@@ -9,7 +9,6 @@ defmodule GroupherServer.CMS do
   alias Delegate.{
     AbuseReport,
     Search,
-    Seeds,
     ThirdPart
   }
 
@@ -19,7 +18,8 @@ defmodule GroupherServer.CMS do
   # Community CRUD: moderators, thread, tag
   # >> tag
 
-  # CommunityOperation
+  # Community functions are now in CMS.Communities module
+  # Use CMS.Communities.xxx directly
 
   # Comment functions moved to CMS.Comments module
   # Use CMS.Comments.xxx directly
@@ -45,17 +45,6 @@ defmodule GroupherServer.CMS do
 
   def search_communities(title, category, user),
     do: Search.search_communities(title, category, user)
-
-  # seeds
-  defdelegate seed_communities(opt), to: Seeds
-  defdelegate seed_community(slug, type), to: Seeds
-  defdelegate seed_community(slug), to: Seeds
-  defdelegate seed_set_category(communities, category), to: Seeds
-  defdelegate seed_articles(community, type), to: Seeds
-  defdelegate seed_articles(community, type, count), to: Seeds
-
-  defdelegate clean_up_community(slug), to: Seeds
-  defdelegate clean_up_articles(community, type), to: Seeds
 
   # defdelegate seed_bot, to: Seeds
   defdelegate upload_tokens(), to: ThirdPart

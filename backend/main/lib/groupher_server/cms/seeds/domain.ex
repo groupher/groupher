@@ -1,11 +1,11 @@
-defmodule GroupherServer.CMS.Delegate.Seeds.Domain do
+defmodule GroupherServer.CMS.Seeds.Domain do
   @moduledoc """
   seeds data for init, should be called ONLY in new database, like migration
   """
 
   import Ecto.Query, warn: false
 
-  import GroupherServer.CMS.Delegate.Seeds.Helper,
+  import GroupherServer.CMS.Seeds.Helper,
     only: [
       threadify_communities: 2,
       tagfy_threads: 4,

@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Articles.Write do
   alias GroupherServer.CMS.Helper.ArticleEnums
   alias GroupherServer.CMS.Model.{Author, Community, Embeds}
   alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Delegate.{CommunityCRUD, Document, Hooks}
+  alias GroupherServer.CMS.Delegate.{Document, Hooks}
   alias GroupherServer.CMS.Articles.{Meta, Placement}
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
@@ -55,14 +55,14 @@ defmodule GroupherServer.CMS.Articles.Write do
           ORM.update(article, %{active_at: article.inserted_at})
         end)
         |> Multi.run(:update_community_article_count, fn _, _ ->
-          CommunityCRUD.update_community_count_field(community, thread)
+          Communities.update_count_field(community, thread)
         end)
         |> Multi.run(:update_community_inner_id, fn _,
                                                     %{
                                                       create_article: article,
                                                       update_community_article_count: community
                                                     } ->
-          CommunityCRUD.update_community_inner_id(community, thread, article)
+          Communities.update_inner_id(community, thread, article)
         end)
         |> Multi.run(:update_user_published_meta, fn _, _ ->
           Accounts.update_published_states(user, thread)

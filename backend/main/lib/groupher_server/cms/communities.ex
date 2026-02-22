@@ -224,4 +224,19 @@ defmodule GroupherServer.CMS.Communities do
   def reindex_tags(community, thread, group, tags) do
     Tags.reindex_in_group(community, thread, group, tags)
   end
+
+  # Count helpers (migrated from CommunityCRUD)
+  @spec update_count_field(Community.t() | [Community.t()], atom()) :: T.domain_res(Community.t() | :pass)
+  def update_count_field(%Community{} = community, field) do
+    Count.update(community, field)
+  end
+
+  def update_count_field(communities, thread) when is_list(communities) do
+    Count.update(communities, thread)
+  end
+
+  @spec update_inner_id(Community.t(), atom(), map()) :: T.domain_res(Community.t())
+  def update_inner_id(%Community{} = community, thread, attrs) do
+    Count.update_inner_id(community, thread, attrs)
+  end
 end

@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.Seeds.Articles do
+defmodule GroupherServer.CMS.Seeds.Articles do
   @moduledoc """
   seeds data for init, should be called ONLY in new database, like migration
   """
@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Delegate.Seeds.Articles do
 
   alias CMS.Model.{Community}
 
-  # alias CMS.Delegate.Seeds
+  # alias CMS.Seeds
 
   @doc """
   seed communities pragraming languages

@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.Seeds.Tags do
+defmodule GroupherServer.CMS.Seeds.Tags do
   @moduledoc """
   tags seeds
   """

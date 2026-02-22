@@ -20,7 +20,6 @@ defmodule GroupherServer.CMS.Communities.Tags do
   alias GroupherServer.CMS
 
   alias CMS.Model.{CommunityTag, Community}
-  alias CMS.Delegate.CommunityCRUD
 
   alias Ecto.Multi
 
@@ -47,7 +46,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
         ORM.create(CommunityTag, attrs)
       end)
       |> Multi.run(:update_community_count, fn _, _ ->
-        CommunityCRUD.update_community_count_field(
+        CMS.Communities.update_count_field(
           community,
           :community_tags_count
         )
@@ -80,7 +79,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
         ORM.delete(tag)
       end)
       |> Multi.run(:update_community_count, fn _, _ ->
-        CommunityCRUD.update_community_count_field(
+        CMS.Communities.update_count_field(
           community,
           :community_tags_count
         )

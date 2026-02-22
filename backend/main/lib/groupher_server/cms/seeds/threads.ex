@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.Seeds.Threads do
+defmodule GroupherServer.CMS.Seeds.Threads do
   def get(:home) do
     [
       # %{

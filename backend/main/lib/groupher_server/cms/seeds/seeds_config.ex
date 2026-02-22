@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.SeedsConfig do
+defmodule GroupherServer.CMS.Seeds.SeedsConfig do
   @moduledoc """
   init config for seeds
   """
