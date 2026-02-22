@@ -23,7 +23,8 @@ defmodule GroupherServer.CMS.Articles.Write do
   alias GroupherServer.CMS.Helper.ArticleEnums
   alias GroupherServer.CMS.Model.{Author, Community, Embeds}
   alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Delegate.{Document, Hooks}
+  alias GroupherServer.CMS.Delegate.{Document}
+  alias GroupherServer.CMS.Hooks
   alias GroupherServer.CMS.Articles.{Meta, Placement}
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()

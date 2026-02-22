@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   alias GroupherServer.CMS.Helper.ArticleEnums
   alias GroupherServer.CMS.Model.{Post, Comment, PinnedComment, Embeds, Community}
 
-  alias GroupherServer.CMS.Delegate.Hooks
+  alias GroupherServer.CMS.Hooks
   alias GroupherServer.CMS.Comments.Actions
   alias Helper.{Later, ORM}
 

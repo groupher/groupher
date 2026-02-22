@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Hooks.MentionInPost do
+defmodule GroupherServer.Test.CMS.Hooks.Mention.PostTest do
   @moduledoc false
 
   use GroupherServer.TestTools
@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.CMS.Hooks.MentionInPost do
   import Helper.Utils, only: [preload_author: 1]
 
   alias GroupherServer.Delivery
-  alias CMS.Delegate.Hooks
+  alias CMS.Hooks
 
   @article_mention_class "cdx-mention"
 

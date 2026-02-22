@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.Hooks.Audition do
+defmodule GroupherServer.CMS.Hooks.Audition do
   @moduledoc """
   hooks for mention task
 
@@ -8,11 +8,16 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Audition do
 
   alias GroupherServer.{CMS, Repo}
   alias Helper.AuditBot
+  alias GroupherServer.CMS.Model.Comment
 
+  @type audition_result :: {:ok, map()} | {:error, map()}
+
+  @spec handle(Comment.t() | map()) :: audition_result()
   def handle(%{body_html: body_html} = comment) do
     AuditBot.analysis(:text, body_html) |> handle_audition_result(comment)
   end
 
+  @spec handle(map()) :: audition_result()
   def handle(%{title: title, document: _document} = article) do
     body_html = Repo.preload(article, :document) |> get_in([:document, :body_html])
     audit_text = title <> body_html
@@ -20,12 +25,13 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Audition do
     AuditBot.analysis(:text, audit_text) |> handle_audition_result(article)
   end
 
-  # NOTE: this method is only for test
+  @spec handle_edge(Comment.t() | map()) :: audition_result()
   def handle_edge(%{body_html: body_html} = comment) do
     AuditBot.analysis_wrong(:text, body_html)
     |> handle_audition_result(comment)
   end
 
+  @spec handle_edge(map()) :: audition_result()
   def handle_edge(%{title: title, document: _document} = article) do
     body_html = Repo.preload(article, :document) |> get_in([:document, :body_html])
     audit_text = title <> body_html
@@ -34,6 +40,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Audition do
     |> handle_audition_result(article)
   end
 
+  @spec handle_audition_result(audition_result(), Comment.t() | map()) :: audition_result()
   def handle_audition_result({:ok, audit_res}, %{body_html: _} = comment) do
     audit_res = Map.merge(audit_res, %{illegal_comments: []})
     CMS.Comments.unset_comment_illegal(comment, audit_res)

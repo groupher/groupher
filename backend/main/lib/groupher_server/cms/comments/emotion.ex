@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   alias Helper.Types, as: T
   alias GroupherServer.{Accounts, Repo}
 
-  alias GroupherServer.CMS.Delegate.Hooks
+  alias GroupherServer.CMS.Hooks
   alias Accounts.Model.User
   alias GroupherServer.CMS.Model.{Comment, CommentUserEmotion}
 

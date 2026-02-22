@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Hooks.NotifyChangelog do
+defmodule GroupherServer.Test.CMS.Hooks.Notify.ChangelogTest do
   @moduledoc false
 
   use GroupherServer.TestTools
@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.CMS.Hooks.NotifyChangelog do
   import Helper.Utils, only: [preload_author: 1]
 
   alias GroupherServer.{CMS, Delivery, Repo}
-  alias CMS.Delegate.Hooks
+  alias CMS.Hooks
 
   setup do
     {community, changelog, _, user} = mock_article(:changelog)

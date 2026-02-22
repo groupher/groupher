@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   alias GroupherServer.{Accounts, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.ArticleUpvote
-  alias GroupherServer.CMS.Delegate.Hooks
+  alias GroupherServer.CMS.Hooks
 
   @spec upvoted_users(term(), map()) :: T.domain_res(term())
   def upvoted_users(article, filter), do: load_reaction_users(ArticleUpvote, article, filter)

@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
 
   alias Accounts.Model.User
   alias GroupherServer.CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply}
-  alias GroupherServer.CMS.Delegate.Hooks
+  alias GroupherServer.CMS.Hooks
   alias GroupherServer.CMS.Comments.List, as: CommentList
   alias GroupherServer.CMS.Comments.Read, as: CommentRead
 

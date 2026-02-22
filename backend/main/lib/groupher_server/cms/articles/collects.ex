@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
   alias GroupherServer.{Accounts, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.ArticleCollect
-  alias GroupherServer.CMS.Delegate.Hooks
+  alias GroupherServer.CMS.Hooks
 
   @spec collected_users(term(), map()) :: T.domain_res(term())
   def collected_users(article, filter), do: load_reaction_users(ArticleCollect, article, filter)

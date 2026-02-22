@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.Hooks.Helper do
+defmodule GroupherServer.CMS.Hooks.Helper do
   @moduledoc """
   helper functions for hooks
   """
@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Helper do
     },
   ]
   """
+  @spec merge_same_block_linker([map()], atom()) :: [map()]
   def merge_same_block_linker(contents, group_key) do
     contents
     |> Enum.reduce([], fn content, acc ->
