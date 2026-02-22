@@ -118,7 +118,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def paged_reports(_root, ~m(filter)a, _) do
-    CMS.paged_reports(filter)
+    CMS.AbuseReports.paged_reports(filter)
   end
 
   def create_article(_root, ~m(community thread)a = args, %{context: %{cur_user: user}}) do
@@ -160,11 +160,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def report_article(_root, ~m(article reason attr)a, %{context: %{cur_user: user}}) do
-    CMS.report_article(article, reason, attr, user)
+    CMS.AbuseReports.article(article, reason, attr, user)
   end
 
   def undo_report_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.undo_report_article(article, user)
+    CMS.AbuseReports.undo_article(article, user)
   end
 
   def paged_citing_contents(_root, ~m(content id filter)a, _info) do

@@ -457,17 +457,17 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
     #   {:ok, comment} = CMS.Comments.create_comment(:changelog, changelog.id, mock_comment(), user)
     #   {:ok, comment} = ORM.find(Comment, comment.id)
 
-    #   {:ok, comment} = CMS.report_comment(comment, mock_comment(), "attr", user)
+    #   {:ok, comment} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
     #   {:ok, comment} = ORM.find(Comment, comment.id)
     # end
 
     #
     # test "user can unreport a comment", ~m(user changelog)a do
     #   {:ok, comment} = CMS.Comments.create_comment(:changelog, changelog.id, mock_comment(), user)
-    #   {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
+    #   {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
     #   {:ok, comment} = ORM.find(Comment, comment.id)
 
-    #   {:ok, _} = CMS.undo_report_comment(comment, user)
+    #   {:ok, _} = CMS.AbuseReports.undo_comment(comment, user)
     #   {:ok, comment} = ORM.find(Comment, comment.id)
     # end
 
@@ -475,11 +475,11 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.report_comment(comment, "reason", "attr", user)
-      {:ok, _} = CMS.report_comment(comment, "reason", "attr", user2)
+      {:ok, _} = CMS.AbuseReports.comment(comment, "reason", "attr", user)
+      {:ok, _} = CMS.AbuseReports.comment(comment, "reason", "attr", user2)
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
-      {:ok, all_reports} = CMS.paged_reports(filter)
+      {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
       assert all_reports.total_count == 1
 
       report = all_reports.entries |> List.first()
@@ -487,10 +487,10 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       assert Enum.any?(report.report_cases, &(&1.user.login == user.login))
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
 
-      {:ok, _} = CMS.undo_report_comment(comment, user)
+      {:ok, _} = CMS.AbuseReports.undo_comment(comment, user)
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
-      {:ok, all_reports} = CMS.paged_reports(filter)
+      {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
 
       assert all_reports.total_count == 1
 
@@ -508,7 +508,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       Enum.reduce(1..(@report_threshold_for_fold - 1), [], fn _, _acc ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
+        {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
       end)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -524,7 +524,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       Enum.reduce(1..(@report_threshold_for_fold + 1), [], fn _, _acc ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
+        {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
       end)
 
       {:ok, comment} = ORM.find(Comment, comment.id)

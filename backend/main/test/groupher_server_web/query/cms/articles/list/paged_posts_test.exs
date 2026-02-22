@@ -303,7 +303,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       {:ok, _} = CMS.Articles.upvote(post, user)
       {:ok, _} = CMS.Articles.collect(post, user)
       {:ok, post} = ORM.find(Post, post.id)
-      {:ok, _} = CMS.report_article(post, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user)
 
       results = user_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
 

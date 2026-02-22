@@ -271,7 +271,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
       {:ok, _} = CMS.Articles.upvote(blog, user)
       {:ok, _} = CMS.Articles.collect(blog, user)
-      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user)
 
       results = user_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
 
