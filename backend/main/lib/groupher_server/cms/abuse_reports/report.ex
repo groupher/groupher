@@ -168,7 +168,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
   defp delete_report(thread, content_id, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:error, _} <- not_reported_before(info, content_id, user),
-         {:ok, report} = ORM.find_by(AbuseReport, Map.put(%{}, info.foreign_key, content_id)) do
+         {:ok, report} <- ORM.find_by(AbuseReport, Map.put(%{}, info.foreign_key, content_id)) do
       case length(report.report_cases) do
         1 ->
           ORM.delete(report)

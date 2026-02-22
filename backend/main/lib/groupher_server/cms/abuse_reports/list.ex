@@ -160,14 +160,19 @@ defmodule GroupherServer.CMS.AbuseReports.List do
 
   defp extract_article_in_comment(%Comment{} = comment) do
     article_thread =
-      Enum.filter(@article_threads, fn thread ->
+      Enum.find(@article_threads, fn thread ->
         not is_nil(Map.get(comment, :"#{thread}_id"))
       end)
-      |> List.first()
 
-    comment
-    |> Map.get(article_thread)
-    |> Map.take(@export_article_keys)
-    |> Map.merge(%{thread: article_thread})
+    case article_thread do
+      nil ->
+        %{thread: nil}
+
+      _ ->
+        comment
+        |> Map.get(article_thread)
+        |> Map.take(@export_article_keys)
+        |> Map.merge(%{thread: article_thread})
+    end
   end
 end
