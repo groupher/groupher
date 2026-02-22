@@ -153,9 +153,6 @@ defmodule Helper.Utils do
     |> Absinthe.Resolution.put_result({:error, message: err_msg, code: ecode()})
   end
 
-  def integerfy(id) when is_binary(id), do: String.to_integer(id)
-  def integerfy(id), do: id
-
   # TODO: enhance, doc
   def repeat(times, [x]) when is_integer(x), do: to_string(for _ <- 1..times, do: x)
   def repeat(times, x), do: for(_ <- 1..times, do: x)

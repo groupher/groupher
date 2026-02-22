@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.AccountReport do
     }
     """
     test "should get pagination info", ~m(guest_conn user user2)a do
-      {:ok, _} = CMS.report_account(user, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.account(user, "reason", "attr_info", user2)
 
       variables = %{filter: %{content_type: "ACCOUNT", page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)

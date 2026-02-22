@@ -273,7 +273,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       {:ok, _} = CMS.Articles.upvote(changelog, user)
       {:ok, _} = CMS.Articles.collect(changelog, user)
-      {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(changelog, "reason", "attr_info", user)
 
       results = user_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
 

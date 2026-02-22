@@ -153,7 +153,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       {:ok, _} = CMS.Articles.upvote(blog, user)
       {:ok, blog} = ORM.find(Blog, blog.id)
       {:ok, _} = CMS.Articles.collect(blog, user)
-      {:ok, _} = CMS.report_article(blog, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user)
 
       {:ok, blog} = CMS.Articles.read(blog.community_slug, :blog, blog.inner_id, user)
 

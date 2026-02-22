@@ -165,7 +165,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, _} = CMS.Articles.upvote(changelog, user)
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
       {:ok, _} = CMS.Articles.collect(changelog, user)
-      {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(changelog, "reason", "attr_info", user)
 
       {:ok, changelog} =
         CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id, user)

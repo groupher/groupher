@@ -12,11 +12,11 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
 
   describe "[article doc report/unreport]" do
     test "list article reports should work", ~m(user user2 doc)a do
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user2)
 
       filter = %{content_type: :doc, content_id: doc.id, page: 1, size: 20}
-      {:ok, all_reports} = CMS.paged_reports(filter)
+      {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
 
       report = all_reports.entries |> List.first()
       assert report.article.id == doc.id
@@ -24,10 +24,10 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
     end
 
     test "report a doc should have a abuse report record", ~m(user doc)a do
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
 
       filter = %{content_type: :doc, content_id: doc.id, page: 1, size: 20}
-      {:ok, all_reports} = CMS.paged_reports(filter)
+      {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
 
       report = List.first(all_reports.entries)
       report_cases = report.report_cases
@@ -43,11 +43,11 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
     end
 
     test "can undo a report", ~m(user doc)a do
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
-      {:ok, _} = CMS.undo_report_article(doc, user)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.undo_article(doc, user)
 
       filter = %{content_type: :doc, content_id: doc.id, page: 1, size: 20}
-      {:ok, all_reports} = CMS.paged_reports(filter)
+      {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
       assert all_reports.total_count == 0
 
       {:ok, doc} = ORM.find(Doc, doc.id)
@@ -55,12 +55,12 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
     end
 
     test "can undo a existed report", ~m(user user2 doc)a do
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user2)
-      {:ok, _} = CMS.undo_report_article(doc, user)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.undo_article(doc, user)
 
       filter = %{content_type: :doc, content_id: doc.id, page: 1, size: 20}
-      {:ok, all_reports} = CMS.paged_reports(filter)
+      {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
       assert all_reports.total_count == 1
 
       {:ok, doc} = ORM.find(Doc, doc.id)
@@ -70,11 +70,11 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
     end
 
     test "can undo a report with other user report it too", ~m(user user2 doc)a do
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user2)
 
       filter = %{content_type: :doc, content_id: doc.id, page: 1, size: 20}
-      {:ok, all_reports} = CMS.paged_reports(filter)
+      {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
       assert all_reports.total_count == 1
 
       report = all_reports.entries |> List.first()
@@ -82,10 +82,10 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
       assert Enum.any?(report.report_cases, &(&1.user.login == user.login))
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
 
-      {:ok, _} = CMS.undo_report_article(doc, user)
+      {:ok, _} = CMS.AbuseReports.undo_article(doc, user)
 
       filter = %{content_type: :doc, content_id: doc.id, page: 1, size: 20}
-      {:ok, all_reports} = CMS.paged_reports(filter)
+      {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
       assert all_reports.total_count == 1
 
       report = all_reports.entries |> List.first()
@@ -95,11 +95,11 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
 
     test "different user report a comment should have same report with different report cases",
          ~m(user user2 doc)a do
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(doc, "reason2", "attr_info 2", user2)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason2", "attr_info 2", user2)
 
       filter = %{content_type: :doc, content_id: doc.id, page: 1, size: 20}
-      {:ok, all_reports} = CMS.paged_reports(filter)
+      {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
 
       report = List.first(all_reports.entries)
       report_cases = report.report_cases
@@ -113,9 +113,9 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
     end
 
     test "same user can not report a comment twice", ~m(doc user)a do
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
 
-      assert {:error, _report} = CMS.report_article(doc, "reason", "attr_info", user)
+      assert {:error, _report} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
     end
   end
 end

@@ -7,16 +7,9 @@ defmodule GroupherServer.CMS do
   alias GroupherServer.CMS.Delegate
 
   alias Delegate.{
-    AbuseReport,
     Search,
     ThirdPart
   }
-
-  # do not pattern match in delegating func, do it on one delegating inside
-  # see https://github.com/elixir-lang/elixir/issues/5306
-
-  # Community CRUD: moderators, thread, tag
-  # >> tag
 
   # Community functions are now in CMS.Communities module
   # Use CMS.Communities.xxx directly
@@ -24,14 +17,8 @@ defmodule GroupherServer.CMS do
   # Comment functions moved to CMS.Comments module
   # Use CMS.Comments.xxx directly
 
-  # TODO: move report to abuse report module
-  defdelegate report_article(article, reason, attr, user), to: AbuseReport
-  defdelegate report_comment(comment, reason, attr, user), to: AbuseReport
-  defdelegate report_account(account, reason, attr, user), to: AbuseReport
-  defdelegate undo_report_account(account, user), to: AbuseReport
-  defdelegate undo_report_article(article, user), to: AbuseReport
-  defdelegate paged_reports(filter), to: AbuseReport
-  defdelegate undo_report_comment(comment, user), to: AbuseReport
+  # AbuseReport functions moved to CMS.AbuseReports module
+  # Use CMS.AbuseReports.xxx directly
 
   # search
   defdelegate search_articles(thread, args), to: Search

@@ -69,10 +69,8 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
   Returns the list of user_contribute/community_contribute by latest 6 days.
   """
   def list_contributes_digest(%User{id: id}) do
-    user_id = integerfy(id)
-
     UserContribute
-    |> where([c], c.user_id == ^user_id)
+    |> where([c], c.user_id == ^id)
     |> QueryBuilder.recent_inserted(months: @user_contribute_months)
     |> select([c], %{date: c.date, count: c.count})
     |> Repo.all()
@@ -131,10 +129,8 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
   end
 
   defp do_get_contributes(%Community{id: id}) do
-    community_id = integerfy(id)
-
     CommunityContribute
-    |> where([c], c.community_id == ^community_id)
+    |> where([c], c.community_id == ^id)
     |> QueryBuilder.recent_inserted(days: @community_contribute_days)
     |> select([c], %{date: c.date, count: c.count})
     |> Repo.all()

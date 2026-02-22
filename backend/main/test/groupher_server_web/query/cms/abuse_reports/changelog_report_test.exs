@@ -55,8 +55,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
       {:ok, changelog2} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(changelog2, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(changelog, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(changelog2, "reason", "attr_info", user2)
 
       variables = %{filter: %{content_type: "CHANGELOG", page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
@@ -69,8 +69,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
       {:ok, changelog2} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      {:ok, _} = CMS.report_article(changelog, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(changelog2, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(changelog, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(changelog2, "reason", "attr_info", user2)
 
       variables = %{
         filter: %{content_type: "CHANGELOG", content_id: changelog.id, page: 1, size: 10}
@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
+      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
 
       variables = %{filter: %{content_type: "COMMENT", page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)

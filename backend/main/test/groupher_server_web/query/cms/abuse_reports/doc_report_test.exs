@@ -55,8 +55,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(doc2, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(doc2, "reason", "attr_info", user2)
 
       variables = %{filter: %{content_type: "DOC", page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
@@ -69,8 +69,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.report_article(doc, "reason", "attr_info", user)
-      {:ok, _} = CMS.report_article(doc2, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(doc2, "reason", "attr_info", user2)
 
       variables = %{
         filter: %{content_type: "DOC", content_id: doc.id, page: 1, size: 10}
@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.report_comment(comment, mock_comment(), "attr", user)
+      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
 
       variables = %{filter: %{content_type: "COMMENT", page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
