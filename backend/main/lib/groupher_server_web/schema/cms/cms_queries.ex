@@ -17,12 +17,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.community/3)
     end
 
-    @desc "get temp token for upload assets"
-    field :apply_upload_tokens, :upload_tokens do
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.upload_tokens/3)
-    end
-
     field :all_passport_rules, :all_rules do
       middleware(M.Authorize, :login)
       resolve(&R.CMS.all_passport_rules/3)

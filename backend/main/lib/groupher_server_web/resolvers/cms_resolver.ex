@@ -457,23 +457,23 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # sync github content ..
   # #######################
   def search_communities(_root, %{title: title, category: category}, %{context: %{cur_user: user}}) do
-    CMS.search_communities(title, category, user)
+    CMS.Search.communities(title, category, user)
   end
 
   def search_communities(_root, %{title: title, category: category}, _info) do
-    CMS.search_communities(title, category)
+    CMS.Search.communities(title, category)
   end
 
   def search_communities(_root, %{title: title}, %{context: %{cur_user: user}}) do
-    CMS.search_communities(title, user)
+    CMS.Search.communities(title, user)
   end
 
   def search_communities(_root, %{title: title}, _info) do
-    CMS.search_communities(title)
+    CMS.Search.communities(title)
   end
 
   def search_articles(_root, %{thread: thread, title: title}, _info) do
-    CMS.search_articles(thread, %{title: title})
+    CMS.Search.articles(thread, %{title: title})
   end
 
   # ##############################################
@@ -482,9 +482,4 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def threads_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :threads)
 
   def community_tags_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :community_tags)
-
-  # OSS token
-  def upload_tokens(_root, _, _) do
-    CMS.upload_tokens()
-  end
 end

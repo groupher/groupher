@@ -10,7 +10,7 @@ import CrossSVG from '~/icons/CloseCross'
 import TurboSVG from '~/icons/Turbo'
 import UploadSVG from '~/icons/Upload'
 import uid from '~/utils/uid'
-import { applyUploadTokensIfNeed, handleUploadFile, initOSSClient } from './helper'
+import { handleUploadFile, initOSSClient } from './helper'
 import PreviewBlock from './PreviewBlock'
 import useSalon, { cn } from './salon'
 
@@ -44,8 +44,7 @@ const OSSUploader: FC<TProps> = ({
     if (loaded) {
       // see https://stackoverflow.com/a/53572588
       // eslint-disable-next-line no-inner-declarations
-      async function initOSS() {
-        await applyUploadTokensIfNeed()
+      function initOSS() {
         const ossClient = initOSSClient()
 
         setOSSClient(ossClient)
