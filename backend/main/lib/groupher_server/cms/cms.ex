@@ -7,7 +7,6 @@ defmodule GroupherServer.CMS do
   alias GroupherServer.CMS.Delegate
 
   alias Delegate.{
-    Search,
     ThirdPart
   }
 
@@ -20,18 +19,8 @@ defmodule GroupherServer.CMS do
   # AbuseReport functions moved to CMS.AbuseReports module
   # Use CMS.AbuseReports.xxx directly
 
-  # search
-  defdelegate search_articles(thread, args), to: Search
-
-  def search_communities(title), do: Search.search_communities(title)
-
-  def search_communities(title, %GroupherServer.Accounts.Model.User{} = user),
-    do: Search.search_communities(title, user)
-
-  def search_communities(title, category), do: Search.search_communities(title, category)
-
-  def search_communities(title, category, user),
-    do: Search.search_communities(title, category, user)
+  # Search functions moved to CMS.Search module
+  # Use CMS.Search.xxx directly
 
   # defdelegate seed_bot, to: Seeds
   defdelegate upload_tokens(), to: ThirdPart
