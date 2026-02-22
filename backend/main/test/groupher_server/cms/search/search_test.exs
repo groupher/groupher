@@ -53,8 +53,8 @@ defmodule GroupherServer.Test.CMS.Search do
       assert searched.entries |> Enum.any?(&(&1.title == "javascript"))
     end
 
-    test "search non exist community should get empty pagi data" do
-      {:ok, searched} = Search.communities("non-exist")
+    test "search non exist post should get empty pagi data" do
+      {:ok, searched} = Search.articles(:post, %{title: "non-exist"})
       assert searched |> is_valid_pagination?(:raw, :empty)
     end
   end
