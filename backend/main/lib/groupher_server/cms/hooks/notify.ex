@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Hooks.Notify do
   @moduledoc """
   notify hooks, for upvote, collect, comment, reply
   """
-  import GroupherServer.CMS.Delegate.Helper,
+  import GroupherServer.CMS.FrontDesk,
     only: [preload_author: 1, article_of: 1, thread_of: 1]
 
   alias GroupherServer.{Accounts, CMS, Delivery, Repo}

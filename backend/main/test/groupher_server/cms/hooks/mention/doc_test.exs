@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.CMS.Hooks.Mention.DocTest do
   @moduledoc false
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [preload_author: 1]
-
   alias GroupherServer.Delivery
   alias CMS.Hooks
 

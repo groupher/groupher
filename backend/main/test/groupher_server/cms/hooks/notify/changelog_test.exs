@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.CMS.Hooks.Notify.ChangelogTest do
 
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [preload_author: 1]
-
   alias GroupherServer.{CMS, Delivery, Repo}
   alias CMS.Hooks
 

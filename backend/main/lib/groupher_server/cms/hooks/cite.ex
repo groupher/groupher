@@ -31,12 +31,13 @@ defmodule GroupherServer.CMS.Hooks.Cite do
   import Ecto.Query, warn: false
 
   import GroupherServer.CMS.Helper.Matcher
-  import Helper.Utils, only: [preload_author: 1, thread_of: 1, get_config: 2]
+  import Helper.Utils, only: [get_config: 2]
+  import GroupherServer.CMS.FrontDesk, only: [preload_author: 1, thread_of: 1]
   import GroupherServer.CMS.Hooks.Helper, only: [merge_same_block_linker: 2]
 
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Delegate.CitedArtiment
+  alias CMS.Hooks.CitedArtiment
   alias CMS.Model.Comment
 
   alias Helper.ORM

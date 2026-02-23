@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
   import GroupherServer.CMS.Model.ArticleUserEmotion.Macros
   import Helper.Utils, only: [get_config: 2]
   import GroupherServer.CMS.Helper.Macros
-  import GroupherServer.CMS.Helper.Utils, only: [articles_foreign_key_constraint: 1]
+  import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
 
   alias Helper.Constant.DBPrefix
   alias GroupherServer.Accounts

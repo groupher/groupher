@@ -41,7 +41,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
     |> Multi.run(:update_author_meta, fn _, _ ->
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- FrontDesk.info(:user, comment.author_id) do
+      with {:ok, user} <- FrontDesk.user(comment.author_id) do
         illegal_comments = user.meta.illegal_comments ++ illegal_comments
 
         ORM.update_meta(user, %{has_illegal_comments: true, illegal_comments: illegal_comments})
@@ -71,7 +71,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
     |> Multi.run(:update_author_meta, fn _, _ ->
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- FrontDesk.info(:user, comment.author_id) do
+      with {:ok, user} <- FrontDesk.user(comment.author_id) do
         illegal_comments = user.meta.illegal_comments -- illegal_comments
         has_illegal_comments = not Enum.empty?(illegal_comments)
 

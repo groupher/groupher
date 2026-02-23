@@ -1,6 +1,6 @@
-defmodule GroupherServer.CMS.Delegate.CitedArtiment do
+defmodule GroupherServer.CMS.Hooks.CitedArtiment do
   @moduledoc """
-  CRUD operation on post/job ...
+  CRUD operations for cited artiments (article/comment citations).
   """
   import Ecto.Query, warn: false
 
@@ -9,10 +9,10 @@ defmodule GroupherServer.CMS.Delegate.CitedArtiment do
       done: 1,
       get_config: 2,
       atom_values_to_upcase: 1,
-      to_upcase: 1,
-      thread_of: 1,
-      article_of: 1
+      to_upcase: 1
     ]
+
+  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1, article_of: 1]
 
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
@@ -44,14 +44,14 @@ defmodule GroupherServer.CMS.Delegate.CitedArtiment do
     |> done
   end
 
-  @doc "delete all records before insert_all, this will dynamically update"
-  # those cited info when update article
-  # 插入引用记录之前先全部清除，这样可以在更新文章的时候自动计算引用信息
+  @doc "delete all records before insert_all, this will dynamically update those cited info when update article"
+  @spec batch_delete_by(Comment.t()) :: {:ok, :pass}
   def batch_delete_by(%Comment{} = comment) do
     from(c in CitedArtiment, where: c.comment_id == ^comment.id)
     |> ORM.delete_all(:if_exist)
   end
 
+  @spec batch_delete_by(map()) :: {:ok, :pass}
   def batch_delete_by(article) do
     with {:ok, thread} <- thread_of(article),
          {:ok, info} <- match(thread) do
@@ -65,13 +65,10 @@ defmodule GroupherServer.CMS.Delegate.CitedArtiment do
   end
 
   @doc "batch insert CitedArtiment record and update citing count"
+  @spec batch_insert([map()]) :: {:ok, true} | {:error, map()}
   def batch_insert([]), do: {:ok, :pass}
 
   def batch_insert(cited_artiments) do
-    # 注意这里多了 artiment 和 citting_time
-    # artiment 是为了下一步更新 citting_count 预先加载的，避免单独 preload 消耗性能
-    # citing_time 是因为 insert_all 必须要自己更新时间
-    # see: https://github.com/elixir-ecto/ecto/issues/1932#issuecomment-314083252
     clean_cited_artiments =
       cited_artiments
       |> Enum.map(&Map.merge(&1, %{inserted_at: &1.citing_time, updated_at: &1.citing_time}))
@@ -84,7 +81,6 @@ defmodule GroupherServer.CMS.Delegate.CitedArtiment do
     end
   end
 
-  # update article/comment 's citting_count in meta
   defp update_artiment_citing_count(cited_artiments) do
     Enum.all?(cited_artiments, fn cited ->
       {:ok, count} =
@@ -107,7 +103,6 @@ defmodule GroupherServer.CMS.Delegate.CitedArtiment do
     Map.put(paged_contents, :entries, entries)
   end
 
-  # shape comment cite
   @spec shape(CitedArtiment.t()) :: T.cite_info()
   defp shape(%CitedArtiment{comment_id: comment_id} = cited) when not is_nil(comment_id) do
     %{block_linker: block_linker, comment: comment, inserted_at: inserted_at} = cited
@@ -128,7 +123,6 @@ defmodule GroupherServer.CMS.Delegate.CitedArtiment do
     })
   end
 
-  # shape general article cite
   defp shape(%CitedArtiment{} = cited) do
     %{block_linker: block_linker, inserted_at: inserted_at} = cited
 
@@ -147,8 +141,6 @@ defmodule GroupherServer.CMS.Delegate.CitedArtiment do
     })
   end
 
-  # find thread_id that not empty
-  # only used for shape
   defp citing_thread(cited) do
     @article_threads |> Enum.find(fn thread -> not is_nil(Map.get(cited, :"#{thread}_id")) end)
   end

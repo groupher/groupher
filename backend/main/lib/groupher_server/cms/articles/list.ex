@@ -13,8 +13,12 @@ defmodule GroupherServer.CMS.Articles.List do
       pick_by: 2,
       module_to_atom: 1,
       get_config: 2,
+      to_upcase: 1
+    ]
+
+  import GroupherServer.CMS.FrontDesk,
+    only: [
       mark_viewer_emotion_states: 2,
-      to_upcase: 1,
       thread_of: 1,
       article_of: 1
     ]

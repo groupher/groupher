@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       variables = post_attr |> Map.merge(%{community: community.slug, body: body})
       result = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-      {:ok, post} = ORM.find_article(community, :post, result["innerId"])
+      {:ok, post} = CMS.FrontDesk.article(community, :post, result["innerId"])
 
       assert result["innerId"] == to_string(post.inner_id)
       assert result["community"]["id"] == to_string(community.id)
@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       created = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
       {:ok, post} =
-        ORM.find_article(community, :post, created["innerId"], preload: :community_tags)
+        CMS.FrontDesk.article(community, :post, created["innerId"], preload: :community_tags)
 
       assert exist_in?(%{id: community_tag.id}, post.community_tags)
     end
@@ -59,7 +59,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       result = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-      {:ok, post} = ORM.find_article(community, :post, result["innerId"], preload: :document)
+      {:ok, post} = CMS.FrontDesk.article(community, :post, result["innerId"], preload: :document)
       body_html = post |> get_in([:document, :body_html])
 
       assert not String.contains?(body_html, "script")
@@ -71,7 +71,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       result = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-      {:ok, post} = ORM.find_article(community, :post, result["innerId"], preload: :document)
+      {:ok, post} = CMS.FrontDesk.article(community, :post, result["innerId"], preload: :document)
       body_html = post |> get_in([:document, :body_html])
 
       assert String.contains?(body_html, "&lt;script&gt;blackmail&lt;/script&gt;")
@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       result = owner_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
 
       assert result["innerId"] == to_string(post.inner_id)
-      assert {:error, _} = ORM.find_article(community, :post, result["innerId"])
+      assert {:error, _} = CMS.FrontDesk.article(community, :post, result["innerId"])
     end
 
     test "can delete a post by auth user", ~m(community post)a do
@@ -104,7 +104,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       result = rule_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
 
       assert result["innerId"] == to_string(post.inner_id)
-      assert {:error, _} = ORM.find_article(community, :post, result["innerId"])
+      assert {:error, _} = CMS.FrontDesk.article(community, :post, result["innerId"])
     end
 
     test "delete a post without login user fails", ~m(guest_conn community post)a do

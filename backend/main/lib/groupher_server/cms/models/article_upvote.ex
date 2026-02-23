@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
   import Helper.Utils, only: [get_config: 2]
   import GroupherServer.CMS.Helper.Macros
 
-  import GroupherServer.CMS.Helper.Utils,
+  import GroupherServer.CMS.Helper.Constraints,
     only: [articles_foreign_key_constraint: 1, articles_upvote_unique_key_constraint: 1]
 
   alias Helper.Constant.DBPrefix

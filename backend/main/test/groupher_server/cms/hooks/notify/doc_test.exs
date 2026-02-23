@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.CMS.Hooks.Notify.DocTest do
 
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [preload_author: 1]
-
   alias GroupherServer.Delivery
   alias CMS.Hooks
 

@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
           illegal_words: ["some-word"]
         })
 
-      {:ok, doc_m} = ORM.find_article(community, :doc, doc_m.inner_id)
+      {:ok, doc_m} = CMS.FrontDesk.article(community, :doc, doc_m.inner_id)
       assert doc_m.pending == @audit_illegal
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
@@ -77,7 +77,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       assert results |> is_valid_pagination?
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
-      {:ok, doc} = ORM.find_article(community, :doc, random_id)
+      {:ok, doc} = CMS.FrontDesk.article(community, :doc, random_id)
       {:ok, _} = CMS.Articles.pin(community, doc)
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
 
@@ -90,7 +90,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
-      {:ok, random_doc} = ORM.find_article(community, :doc, random_id)
+      {:ok, random_doc} = CMS.FrontDesk.article(community, :doc, random_id)
       {:ok, _} = CMS.Articles.mark_delete(random_doc)
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :doc), variables)

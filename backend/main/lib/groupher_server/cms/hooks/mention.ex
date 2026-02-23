@@ -5,7 +5,8 @@ defmodule GroupherServer.CMS.Hooks.Mention do
   parse and fmt(see shape function) mentions to Delivery module
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [get_config: 2, preload_author: 1, author_of: 1, thread_of: 1]
+  import Helper.Utils, only: [get_config: 2]
+  import GroupherServer.CMS.FrontDesk, only: [preload_author: 1, author_of: 1, thread_of: 1]
 
   import GroupherServer.CMS.Hooks.Helper, only: [merge_same_block_linker: 2]
 

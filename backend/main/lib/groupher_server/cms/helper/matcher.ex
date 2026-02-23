@@ -6,12 +6,9 @@ defmodule GroupherServer.CMS.Helper.Matcher do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.MatcherMacros
 
-  import Helper.Utils, only: [thread_of: 1]
-
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Model.Comment
 
   @type match_info :: %{
           model: module(),
@@ -43,7 +40,7 @@ defmodule GroupherServer.CMS.Helper.Matcher do
   def match(:comment) do
     {:ok,
      %{
-       model: Comment,
+       model: CMS.Model.Comment,
        foreign_key: :comment_id,
        preload: :comment,
        default_meta: CMS.Model.Embeds.CommentMeta.default_meta()
@@ -59,6 +56,16 @@ defmodule GroupherServer.CMS.Helper.Matcher do
        preload: :community_tag
      }}
   end
+
+  defp thread_of(%{thread: thread}) when is_binary(thread) do
+    thread |> String.downcase() |> String.to_atom() |> then(&{:ok, &1})
+  end
+
+  defp thread_of(%{meta: %{thread: thread}}) do
+    thread |> String.downcase() |> String.to_atom() |> then(&{:ok, &1})
+  end
+
+  defp thread_of(_), do: {:error, {:custom, "invalid article"}}
 
   thread_matches()
   thread_query_matches()

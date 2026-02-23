@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
       article = Repo.preload(article, :author)
       illegal_articles = Map.get(audit_state, :illegal_articles, [])
 
-      with {:ok, user} <- FrontDesk.info(:user, article.author.user_id) do
+      with {:ok, user} <- FrontDesk.user(article.author.user_id) do
         illegal_articles = user.meta.illegal_articles ++ illegal_articles
 
         ORM.update_meta(user, %{has_illegal_articles: true, illegal_articles: illegal_articles})
@@ -91,7 +91,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
       article = Repo.preload(article, :author)
       illegal_articles = Map.get(audit_state, :illegal_articles, [])
 
-      with {:ok, user} <- FrontDesk.info(:user, article.author.user_id) do
+      with {:ok, user} <- FrontDesk.user(article.author.user_id) do
         illegal_articles = user.meta.illegal_articles -- illegal_articles
         has_illegal_articles = not Enum.empty?(illegal_articles)
 

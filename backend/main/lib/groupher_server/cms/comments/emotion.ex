@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
 
   import Helper.Utils, only: [done: 1]
 
-  import GroupherServer.CMS.Delegate.Helper,
+  import GroupherServer.CMS.FrontDesk,
     only: [
       update_emotions_field: 4,
       mark_viewer_emotion_states: 2,

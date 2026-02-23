@@ -3,7 +3,8 @@ defmodule GroupherServer.Delivery.Delegate.Mention do
   The Delivery context.
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, thread_of: 2, atom_values_to_upcase: 1]
+  import Helper.Utils, only: [done: 1, atom_values_to_upcase: 1]
+  import GroupherServer.CMS.FrontDesk, only: [thread_of: 2]
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS, Delivery, Repo}

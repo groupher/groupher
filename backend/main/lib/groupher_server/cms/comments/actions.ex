@@ -9,13 +9,11 @@ defmodule GroupherServer.CMS.Comments.Actions do
     only: [
       done: 1,
       strip_struct: 1,
-      get_config: 2,
-      article_of: 1,
-      thread_of: 1
+      get_config: 2
     ]
 
-  import GroupherServer.CMS.Delegate.Helper,
-    only: [sync_embed_replies: 1]
+  import GroupherServer.CMS.FrontDesk,
+    only: [sync_embed_replies: 1, article_of: 1, thread_of: 1]
 
   import Helper.ErrorCode
 
@@ -24,7 +22,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
   alias Helper.Types, as: T
   alias Helper.{ORM, Later, Transaction}
   alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.CMS.Delegate.Fetcher
+  alias GroupherServer.CMS.FrontDesk
 
   alias Accounts.Model.User
   alias GroupherServer.CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply}
@@ -90,21 +88,21 @@ defmodule GroupherServer.CMS.Comments.Actions do
   def fold_comment(%Comment{} = comment, %User{} = _user), do: do_fold_comment(comment, true)
 
   def fold_comment(comment_id, %User{} = _user) do
-    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id) do
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
       do_fold_comment(comment, true)
     end
   end
 
   @spec unfold_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def unfold_comment(comment_id, %User{} = _user) do
-    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id) do
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
       do_fold_comment(comment, false)
     end
   end
 
   @spec reply_comment(T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
   def reply_comment(comment_id, body, %User{} = user) do
-    with {:ok, target_comment} <- Fetcher.fetch_by(Comment, %{id: comment_id, is_deleted: false}),
+    with {:ok, target_comment} <- FrontDesk.get_by(Comment, %{id: comment_id, is_deleted: false}),
          replying_comment <- Repo.preload(target_comment, reply_to: :author),
          {thread, article} <- get_article(replying_comment),
          true <- can_comment?(article, user),
@@ -160,7 +158,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
 
   @spec upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def upvote_comment(comment_id, %User{id: user_id} = from_user) do
-    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
          false <- comment.is_deleted do
       Multi.new()
       |> Multi.run(:create_comment_upvote, fn _, _ ->
@@ -198,7 +196,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
 
   @spec undo_upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def undo_upvote_comment(comment_id, %User{id: user_id} = from_user) do
-    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
          false <- comment.is_deleted do
       Multi.new()
       |> Multi.run(:delete_comment_upvote, fn _, _ ->
@@ -310,7 +308,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
     with article_thread <- find_comment_article_thread(comment),
          {:ok, info} <- match(article_thread),
          article_id <- Map.get(comment, info.foreign_key),
-         {:ok, article} <- Fetcher.fetch(info.model, article_id, preload: [author: :user]) do
+         {:ok, article} <- FrontDesk.get(info.model, article_id, preload: [author: :user]) do
       {article_thread, article}
     end
   end

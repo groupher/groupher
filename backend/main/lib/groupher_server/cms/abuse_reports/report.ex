@@ -3,8 +3,8 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
   Abuse report operations.
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, strip_struct: 1, thread_of: 1]
-  import GroupherServer.CMS.Delegate.Helper, only: [sync_embed_replies: 1]
+  import Helper.Utils, only: [done: 1, strip_struct: 1]
+  import GroupherServer.CMS.FrontDesk, only: [sync_embed_replies: 1, thread_of: 1]
   import GroupherServer.CMS.Helper.Matcher
 
   alias Helper.{ORM, Transaction}

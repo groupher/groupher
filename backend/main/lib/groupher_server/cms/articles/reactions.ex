@@ -5,9 +5,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.Matcher
-
-  import Helper.Utils, only: [thread_of: 1]
-  import GroupherServer.CMS.Delegate.Helper, only: [update_emotions_field: 4]
+  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1, update_emotions_field: 4]
 
   alias Ecto.Multi
   alias Helper.{Transaction, ORM}

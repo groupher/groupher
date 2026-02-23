@@ -6,8 +6,7 @@ defmodule Helper.ORM do
   import Helper.Utils, only: [done: 1, done: 3, strip_struct: 1, get_config: 2]
   import ShortMaps
 
-  import GroupherServer.CMS.Helper.Matcher
-  import Helper.{ErrorHandler, ErrorCode}
+import Helper.ErrorHandler
 
   alias Helper.Types, as: T
   alias GroupherServer.Repo
@@ -352,24 +351,6 @@ defmodule Helper.ORM do
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> done
-  end
-
-  def find_article(community_or_slug, thread, inner_id, opts \\ [])
-
-  def find_article(%Community{} = community, thread, inner_id, opts) do
-    find_article(community.slug, thread, inner_id, opts)
-  end
-
-  def find_article(community_slug, thread, inner_id, opts) do
-    preload = Keyword.get(opts, :preload, [])
-    query = ~m(community_slug inner_id)a
-
-    with {:ok, info} <- match(thread) do
-      case find_by(info.model, query, preload: preload) do
-        {:ok, result} -> {:ok, result}
-        {:error, _} -> raise_error(:article_not_found, "article not found")
-      end
-    end
   end
 
   defp extract_article_info(reaction, threads) do

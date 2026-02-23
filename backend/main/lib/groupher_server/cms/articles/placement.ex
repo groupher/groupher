@@ -6,7 +6,8 @@ defmodule GroupherServer.CMS.Articles.Placement do
   import GroupherServer.CMS.Helper.Matcher
   import Ecto.Query, warn: false
   import Helper.ErrorCode
-  import Helper.Utils, only: [done: 1, thread_of: 1]
+  import Helper.Utils, only: [done: 1]
+  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
 
   alias Ecto.Multi
   alias Helper.ORM

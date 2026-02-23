@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, post_comment_2} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, post} = ORM.find_article(community.slug, :post, post.inner_id, preload: :comments)
+      {:ok, post} = CMS.FrontDesk.article(community.slug, :post, post.inner_id, preload: :comments)
 
       assert exist_in?(post_comment_1, post.comments)
       assert exist_in?(post_comment_2, post.comments)
