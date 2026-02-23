@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Articles.Write do
   alias GroupherServer.CMS.Model.{Author, Community, Embeds}
   alias GroupherServer.CMS.Communities
   alias GroupherServer.CMS.Articles.Document
-  alias GroupherServer.CMS.Hooks
+  alias GroupherServer.CMS.Events
   alias GroupherServer.CMS.Articles.{Meta, Placement}
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
@@ -68,10 +68,10 @@ defmodule GroupherServer.CMS.Articles.Write do
         |> Multi.run(:update_user_published_meta, fn _, _ ->
           Accounts.update_published_states(user, thread)
         end)
-        |> Multi.run(:after_hooks, fn _, %{create_article: article} ->
-          Later.run({Hooks.Cite, :handle, [article]})
-          Later.run({Hooks.Mention, :handle, [article]})
-          Later.run({Hooks.Audition, :handle, [article]})
+        |> Multi.run(:after_events, fn _, %{create_article: article} ->
+          Later.run({Events.Cite, :handle, [article]})
+          Later.run({Events.Mention, :handle, [article]})
+          Later.run({Events.Audition, :handle, [article]})
           Later.run({__MODULE__, :notify_admin_new_article, [article]})
         end)
         |> Multi.run(:log_action, fn _, _ ->
@@ -128,10 +128,10 @@ defmodule GroupherServer.CMS.Articles.Write do
     |> Multi.run(:update_edit_status, fn _, %{set_community_tags: update_article} ->
       Meta.update_edit_status(update_article)
     end)
-    |> Multi.run(:after_hooks, fn _, %{update_article: update_article} ->
-      Later.run({Hooks.Cite, :handle, [update_article]})
-      Later.run({Hooks.Mention, :handle, [update_article]})
-      Later.run({Hooks.Audition, :handle, [update_article]})
+    |> Multi.run(:after_events, fn _, %{update_article: update_article} ->
+      Later.run({Events.Cite, :handle, [update_article]})
+      Later.run({Events.Mention, :handle, [update_article]})
+      Later.run({Events.Audition, :handle, [update_article]})
     end)
     |> Repo.transaction()
     |> result()

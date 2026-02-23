@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   alias GroupherServer.{Accounts, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.ArticleUpvote
-  alias GroupherServer.CMS.Hooks
+  alias GroupherServer.CMS.Events
 
   @spec upvoted_users(term(), map()) :: T.domain_res(term())
   def upvoted_users(article, filter), do: load_reaction_users(ArticleUpvote, article, filter)
@@ -43,9 +43,9 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
       |> Multi.run(:create_upvote, fn _, %{update_reaction_user_list: article} ->
         create_upvote(article, info, user)
       end)
-      |> Multi.run(:after_hooks, fn _, _ ->
-        Later.run({Hooks.Notify, :handle, [:upvote, article, user]})
-        Later.run({Hooks.SubscribeCommunity, :handle, [article.community, user]})
+      |> Multi.run(:after_events, fn _, _ ->
+        Later.run({Events.Notify, :handle, [:upvote, article, user]})
+        Later.run({Events.SubscribeCommunity, :handle, [article.community, user]})
       end)
       |> Repo.transaction()
       |> result()
@@ -87,8 +87,8 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
             {:ok, updated}
         end
       end)
-      |> Multi.run(:after_hooks, fn _, %{undo_upvote: updated} ->
-        Later.run({Hooks.Notify, :handle, [:undo, :upvote, updated, from_user]})
+      |> Multi.run(:after_events, fn _, %{undo_upvote: updated} ->
+        Later.run({Events.Notify, :handle, [:undo, :upvote, updated, from_user]})
       end)
       |> Repo.transaction()
       |> result()

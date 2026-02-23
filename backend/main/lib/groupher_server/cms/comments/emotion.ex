@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   alias Helper.Types, as: T
   alias GroupherServer.{Accounts, Repo}
 
-  alias GroupherServer.CMS.Hooks
+  alias GroupherServer.CMS.Events
   alias Accounts.Model.User
   alias GroupherServer.CMS.Model.{Comment, CommentUserEmotion}
 
@@ -54,8 +54,8 @@ defmodule GroupherServer.CMS.Comments.Emotion do
           mark_viewer_emotion_states(comment, user) |> done
         end
       end)
-      |> Multi.run(:after_hooks, fn _, _ ->
-        Later.run({Hooks.SubscribeCommunity, :handle, [comment, user]})
+      |> Multi.run(:after_events, fn _, _ ->
+        Later.run({Events.SubscribeCommunity, :handle, [comment, user]})
       end)
       |> Repo.transaction()
       |> result

@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
 
   alias Accounts.Model.User
   alias GroupherServer.CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply}
-  alias GroupherServer.CMS.Hooks
+  alias GroupherServer.CMS.Events
   alias GroupherServer.CMS.Comments.List, as: CommentList
   alias GroupherServer.CMS.Comments.Read, as: CommentRead
 
@@ -144,9 +144,9 @@ defmodule GroupherServer.CMS.Comments.Actions do
           {:ok, replied_comment}
         end
       end)
-      |> Multi.run(:after_hooks, fn _, %{add_reply_to: replied_comment} ->
-        Later.run({Hooks.Notify, :handle, [:reply, replied_comment, user]})
-        Later.run({Hooks.Mention, :handle, [replied_comment]})
+      |> Multi.run(:after_events, fn _, %{add_reply_to: replied_comment} ->
+        Later.run({Events.Notify, :handle, [:reply, replied_comment, user]})
+        Later.run({Events.Mention, :handle, [replied_comment]})
       end)
       |> Repo.transaction()
       |> result()
@@ -185,9 +185,9 @@ defmodule GroupherServer.CMS.Comments.Actions do
       |> Multi.run(:sync_embed_replies, fn _, %{viewer_states: comment} ->
         sync_embed_replies(comment)
       end)
-      |> Multi.run(:after_hooks, fn _, _ ->
-        Later.run({Hooks.SubscribeCommunity, :handle, [comment, from_user]})
-        Later.run({Hooks.Notify, :handle, [:upvote, comment, from_user]})
+      |> Multi.run(:after_events, fn _, _ ->
+        Later.run({Events.SubscribeCommunity, :handle, [comment, from_user]})
+        Later.run({Events.Notify, :handle, [:upvote, comment, from_user]})
       end)
       |> Repo.transaction()
       |> result()
@@ -227,8 +227,8 @@ defmodule GroupherServer.CMS.Comments.Actions do
       |> Multi.run(:sync_embed_replies, fn _, %{viewer_states: comment} ->
         sync_embed_replies(comment)
       end)
-      |> Multi.run(:after_hooks, fn _, _ ->
-        Later.run({Hooks.Notify, :handle, [:undo, :upvote, comment, from_user]})
+      |> Multi.run(:after_events, fn _, _ ->
+        Later.run({Events.Notify, :handle, [:undo, :upvote, comment, from_user]})
       end)
       |> Repo.transaction()
       |> result()

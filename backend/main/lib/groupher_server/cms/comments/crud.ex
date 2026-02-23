@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   alias GroupherServer.CMS.Helper.ArticleEnums
   alias GroupherServer.CMS.Model.{Post, Comment, PinnedComment, Embeds, Community}
 
-  alias GroupherServer.CMS.Hooks
+  alias GroupherServer.CMS.Events
   alias GroupherServer.CMS.Comments.Actions
   alias Helper.{Later, ORM}
 
@@ -64,12 +64,12 @@ defmodule GroupherServer.CMS.Comments.CRUD do
           false -> CMS.Articles.update_active_timestamp(thread, article)
         end
       end)
-      |> Multi.run(:after_hooks, fn _, %{create_comment: comment} ->
-        Later.run({Hooks.Cite, :handle, [comment]})
-        Later.run({Hooks.Notify, :handle, [:comment, comment, user]})
-        Later.run({Hooks.Mention, :handle, [comment]})
-        Later.run({Hooks.Audition, :handle, [comment]})
-        Later.run({Hooks.SubscribeCommunity, :handle, [article.community, user]})
+      |> Multi.run(:after_events, fn _, %{create_comment: comment} ->
+        Later.run({Events.Cite, :handle, [comment]})
+        Later.run({Events.Notify, :handle, [:comment, comment, user]})
+        Later.run({Events.Mention, :handle, [comment]})
+        Later.run({Events.Audition, :handle, [comment]})
+        Later.run({Events.SubscribeCommunity, :handle, [article.community, user]})
       end)
       |> Repo.transaction()
       |> result()
@@ -102,8 +102,8 @@ defmodule GroupherServer.CMS.Comments.CRUD do
       |> Multi.run(:sync_embed_replies, fn _, %{update_comment: comment} ->
         sync_embed_replies(comment)
       end)
-      |> Multi.run(:after_hooks, fn _, %{update_comment: comment} ->
-        Later.run({Hooks.Audition, :handle, [comment]})
+      |> Multi.run(:after_events, fn _, %{update_comment: comment} ->
+        Later.run({Events.Audition, :handle, [comment]})
       end)
       |> Repo.transaction()
       |> result()
@@ -119,8 +119,8 @@ defmodule GroupherServer.CMS.Comments.CRUD do
       |> Multi.run(:sync_embed_replies, fn _, %{update_comment: comment} ->
         sync_embed_replies(comment)
       end)
-      |> Multi.run(:after_hooks, fn _, %{update_comment: comment} ->
-        Later.run({Hooks.Audition, :handle, [comment]})
+      |> Multi.run(:after_events, fn _, %{update_comment: comment} ->
+        Later.run({Events.Audition, :handle, [comment]})
       end)
       |> Repo.transaction()
       |> result()
