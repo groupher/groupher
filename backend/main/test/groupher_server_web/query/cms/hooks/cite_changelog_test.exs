@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Query.Hooks.ChangelogCiting do
 
   use GroupherServer.TestTools
 
-  alias CMS.Delegate.Hooks
+  alias CMS.Hooks
 
   @site_host get_config(:general, :site_host)
 

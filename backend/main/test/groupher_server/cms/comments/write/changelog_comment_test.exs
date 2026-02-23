@@ -78,7 +78,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
 
       {:ok, changelog} =
-        ORM.find_article(community.slug, :changelog, changelog.inner_id, preload: :comments)
+        CMS.FrontDesk.article(community.slug, :changelog, changelog.inner_id, preload: :comments)
 
       assert exist_in?(changelog_comment_1, changelog.comments)
       assert exist_in?(changelog_comment_2, changelog.comments)

@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
+defmodule GroupherServer.CMS.Hooks.Cite do
   @moduledoc """
   run tasks in every article blocks if need
 
@@ -31,12 +31,13 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
   import Ecto.Query, warn: false
 
   import GroupherServer.CMS.Helper.Matcher
-  import Helper.Utils, only: [preload_author: 1, thread_of: 1, get_config: 2]
-  import GroupherServer.CMS.Delegate.Hooks.Helper, only: [merge_same_block_linker: 2]
+  import Helper.Utils, only: [get_config: 2]
+  import GroupherServer.CMS.FrontDesk, only: [preload_author: 1, thread_of: 1]
+  import GroupherServer.CMS.Hooks.Helper, only: [merge_same_block_linker: 2]
 
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Delegate.CitedArtiment
+  alias CMS.Hooks.CitedArtiment
   alias CMS.Model.Comment
 
   alias Helper.ORM
@@ -46,6 +47,9 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
   @article_threads get_config(:article, :threads)
   @valid_article_prefix Enum.map(@article_threads, &"#{@site_host}/#{&1}/")
 
+  @type cite_result :: {:ok, list()} | {:error, map()}
+
+  @spec handle(Comment.t() | map()) :: cite_result()
   def handle(%{body: body} = artiment) when not is_nil(body) do
     with {:ok, %{"blocks" => blocks}} <- Jason.decode(body),
          {:ok, artiment} <- preload_author(artiment) do
@@ -64,6 +68,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
     end
   end
 
+  @spec handle(map()) :: cite_result()
   def handle(%{document: _document} = article) do
     body = Repo.preload(article, :document) |> get_in([:document, :body])
     article = article |> Map.put(:body, body)
@@ -76,10 +81,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
     parse_links_in_block(artiment, block_id, links)
   end
 
-  # links Floki parsed fmt
-  # artiment means both article and comment
-  # e.g:
-  # [{"a", [{"href", "https://coderplanets.com/post/195675"}], []},]
   defp parse_links_in_block(artiment, block_id, links) do
     Enum.reduce(links, [], fn link, acc ->
       case parse_valid_cited(artiment.id, link) do
@@ -90,7 +91,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
     |> Enum.uniq()
   end
 
-  # parse cited with check if citing link is point to itself
   defp parse_valid_cited(content_id, link) do
     with {:ok, cited} <- parse_cited_in_link(link) do
       case not is_citing_itself?(content_id, cited) do
@@ -100,8 +100,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
     end
   end
 
-  # return fmt: %{type: :comment | :article, artiment: %Comment{} | Article}
-  # 要考虑是否有 comment_id 的情况，如果有，那么 就应该 load comment 而不是 article
   defp parse_cited_in_link({"a", attrs, _}) do
     with {:ok, link} <- parse_link(attrs),
          true <- is_site_article_link?(link) do
@@ -133,8 +131,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
     end
   end
 
-  # get cited article from url
-  # e.g: https://coderplanets.com/post/189993 -> ORM.find(Post, 189993)
   defp load_cited_article_from_url(url) do
     %{path: path} = URI.parse(url)
     path_list = path |> String.split("/")
@@ -147,10 +143,8 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
     end
   end
 
-  # check if article/comment id is point to itself
   defp is_citing_itself?(content_id, %{artiment: %{id: id}}), do: content_id == id
 
-  # 检测是否是站内文章的链接
   defp is_site_article_link?(url) do
     Enum.any?(@valid_article_prefix, &String.starts_with?(url, &1))
   end
@@ -161,8 +155,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
     end
   end
 
-  # cite article in comment
-  # 在评论中引用文章
   defp shape(%Comment{} = comment, %{type: :article, artiment: cited}, block_id) do
     %{
       cited_by_id: cited.id,
@@ -170,16 +162,11 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
       comment_id: comment.id,
       block_linker: [block_id],
       user_id: comment.author_id,
-      # extra fields for next-step usage
-      # used for updating citing_count, avoid load again
       artiment: cited,
-      # for later insert all
       citing_time: comment.updated_at |> DateTime.truncate(:second)
     }
   end
 
-  # cite comment in comment
-  # 评论中引用评论
   defp shape(%Comment{} = comment, %{type: :comment, artiment: cited}, block_id) do
     %{
       cited_by_id: cited.id,
@@ -187,16 +174,11 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
       comment_id: comment.id,
       block_linker: [block_id],
       user_id: comment.author_id,
-      # extra fields for next-step usage
-      # used for updating citing_count, avoid load again
       artiment: cited,
-      # for later insert all
       citing_time: comment.updated_at |> DateTime.truncate(:second)
     }
   end
 
-  # cite article in article
-  # 文章之间相互引用
   defp shape(article, %{type: :article, artiment: cited}, block_id) do
     {:ok, thread} = thread_of(article)
     {:ok, info} = match(thread)
@@ -206,17 +188,12 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
       cited_by_type: cited.meta.thread,
       block_linker: [block_id],
       user_id: article.author.user.id,
-      # extra fields for next-step usage
-      # used for updating citing_count, avoid load again
       artiment: cited,
-      # for later insert all
       citing_time: article.updated_at |> DateTime.truncate(:second)
     }
     |> Map.put(info.foreign_key, article.id)
   end
 
-  # cite comment in article
-  # 文章中引用评论
   defp shape(article, %{type: :comment, artiment: cited}, block_id) do
     {:ok, thread} = thread_of(article)
     {:ok, info} = match(thread)
@@ -226,10 +203,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Cite do
       cited_by_type: :comment,
       block_linker: [block_id],
       user_id: article.author.user.id,
-      # extra fields for next-step usage
-      # used for updating citing_count, avoid load again
       artiment: cited,
-      # for later insert all
       citing_time: article.updated_at |> DateTime.truncate(:second)
     }
     |> Map.put(info.foreign_key, article.id)

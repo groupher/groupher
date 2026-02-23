@@ -10,16 +10,17 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   import Helper.Utils,
     only: [
       done: 1,
-      get_config: 2,
-      thread_of: 1
+      get_config: 2
     ]
+
+  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
 
   alias Ecto.Multi
   alias Helper.{ORM, Transaction}
   alias Helper.Types, as: T
   alias GroupherServer.{Accounts, Repo}
   alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Delegate.Document
+  alias GroupherServer.CMS.Articles.Document
 
   @active_period get_config(:article, :active_period_days)
   @archive_threshold get_config(:article, :archive_threshold)

@@ -1,27 +1,69 @@
-defmodule GroupherServer.CMS.Delegate.Helper do
+defmodule GroupherServer.CMS.FrontDesk do
   @moduledoc """
-  helpers for GroupherServer.CMS.Delegate
+  CMS domain front desk for reading/fetching and helper operations.
   """
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
-  import Helper.Utils, only: [get_config: 2, done: 1, past_verb: 1]
 
+  alias Helper.Types, as: T
   alias Helper.{ORM, QueryBuilder}
   alias GroupherServer.{Accounts, Repo, CMS}
 
-  alias CMS.Model.{Comment}
   alias Accounts.Model.User
+  alias CMS.Model.{Comment, Community, Thread}
 
+  @article_threads Application.compile_env(:groupher_server, :article, []) |> Keyword.get(:threads, [])
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
-  @max_latest_upvoted_users_count get_config(:article, :max_upvoted_users_count)
+  @max_latest_upvoted_users_count Application.compile_env(:groupher_server, :article, []) |> Keyword.get(:max_upvoted_users_count, 10)
 
-  # TODO:
-  # @max_latest_emotion_users_count Comment.max_latest_emotion_users_count()
   @max_latest_emotion_users_count 4
-  @supported_emotions get_config(:article, :emotions)
-  @supported_comment_emotions get_config(:article, :comment_emotions)
+  @supported_emotions Application.compile_env(:groupher_server, :article, []) |> Keyword.get(:emotions, [])
+  @supported_comment_emotions Application.compile_env(:groupher_server, :article, []) |> Keyword.get(:comment_emotions, [])
 
+  @spec community(String.t()) :: {:ok, Community.t()} | {:error, map()}
+  def community(slug) when is_binary(slug) do
+    Community
+    |> where([c], c.slug == ^slug or c.aka == ^slug)
+    |> preload(:dashboard)
+    |> preload(moderators: :user)
+    |> Repo.one()
+    |> done()
+    |> case do
+      {:ok, community} -> ORM.fill_meta(community)
+      {:error, _} = error -> error
+    end
+  end
+
+  @spec thread(integer()) :: {:ok, Thread.t()} | {:error, map()}
+  def thread(thread_id), do: ORM.find(Thread, thread_id)
+
+  @spec comment(integer()) :: T.domain_res(Comment.t())
+  def comment(comment_id) do
+    with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
+      ORM.fill_meta(comment)
+    end
+  end
+
+  @spec full_comment(integer()) :: T.domain_res(T.article_info())
+  def full_comment(comment_id) do
+    get_full_comment(comment_id)
+  end
+
+  @spec get(Ecto.Queryable.t(), T.id()) :: T.domain_res(term())
+  def get(queryable, id), do: ORM.find(queryable, id)
+
+  @spec get(Ecto.Queryable.t(), T.id(), keyword()) :: T.domain_res(term())
+  def get(queryable, id, preload: preload), do: ORM.find(queryable, id, preload: preload)
+
+  @spec get_by(Ecto.Queryable.t(), map()) :: T.domain_res(term())
+  def get_by(queryable, clauses), do: ORM.find_by(queryable, clauses)
+
+  @spec get_by(Ecto.Queryable.t(), map(), keyword()) :: T.domain_res(term())
+  def get_by(queryable, clauses, preload: preload),
+    do: ORM.find_by(queryable, clauses, preload: preload)
+
+  @spec preload_author(Comment.t() | map()) :: {:ok, Comment.t() | map()} | {:error, map()}
   def preload_author(%Comment{} = comment), do: Repo.preload(comment, :author) |> done
 
   def preload_author(article) do
@@ -45,6 +87,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   end
 
   @doc "get author of article or comment"
+  @spec author_of(Comment.t()) :: {:ok, map()} | {:error, map()}
   def author_of(%Comment{} = comment) do
     case Ecto.assoc_loaded?(comment.author) do
       true -> comment.author
@@ -53,6 +96,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
     |> done
   end
 
+  @spec author_of(map()) :: {:ok, User.t()} | {:error, map()}
   def author_of(article) do
     case Ecto.assoc_loaded?(article.author) do
       true -> article.author.user
@@ -62,40 +106,42 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   end
 
   @doc "get parent article of a comment"
+  @spec article_of(Comment.t()) :: {:ok, map()} | {:error, map()}
   def article_of(%Comment{} = comment) do
     with {:ok, article_thread} <- thread_of(comment) do
       comment |> Repo.preload(article_thread) |> Map.get(article_thread) |> done
     end
   end
 
+  @spec article_of(any()) :: {:error, {:custom, String.t()}}
   def article_of(_), do: {:error, {:custom, "only support comment"}}
 
-  # get thread of comment
+  @doc "get thread of comment or article"
+  @spec thread_of(Comment.t()) :: {:ok, atom()} | {:error, map()}
   def thread_of(%Comment{thread: thread}) do
     thread |> String.downcase() |> String.to_atom() |> done
   end
 
-  # get thread of article
+  @spec thread_of(map()) :: {:ok, atom()} | {:error, map()}
   def thread_of(%{meta: %{thread: thread}}) do
     thread |> String.downcase() |> String.to_atom() |> done
   end
 
+  @spec thread_of(any()) :: {:error, {:custom, String.t()}}
   def thread_of(_), do: {:error, {:custom, "invalid article"}}
 
+  @spec thread_of(map(), :upcase) :: {:ok, String.t()}
   def thread_of(%{meta: %{thread: thread}}, :upcase) do
-    thread |> to_string |> String.upcase() |> done
+    thread |> to_string() |> String.upcase() |> done
   end
-
-  #######
-  # emotion related
-  #######
-
-  def mark_viewer_emotion_states(paged_artiments, nil), do: paged_artiments
-  def mark_viewer_emotion_states(%{entries: []} = paged_artiments, _), do: paged_artiments
 
   @doc """
   mark viewer emotions status for article or comment
   """
+  @spec mark_viewer_emotion_states(map() | [map()], User.t() | nil) :: map() | [map()]
+  def mark_viewer_emotion_states(paged_artiments, nil), do: paged_artiments
+  def mark_viewer_emotion_states(%{entries: []} = paged_artiments, _), do: paged_artiments
+
   def mark_viewer_emotion_states(%{entries: entries} = artiments, %User{} = user) do
     entries =
       Enum.map(entries, fn artiment ->
@@ -112,10 +158,12 @@ defmodule GroupherServer.CMS.Delegate.Helper do
     %{artiments | entries: entries}
   end
 
+  @spec mark_viewer_emotion_states(Comment.t(), User.t()) :: Comment.t()
   def mark_viewer_emotion_states(%Comment{} = comment, %User{} = user) do
     do_mark_viewer_emotion_states(comment, user, @supported_comment_emotions)
   end
 
+  @spec mark_viewer_emotion_states(map(), User.t()) :: map()
   def mark_viewer_emotion_states(article, %User{} = user) do
     do_mark_viewer_emotion_states(article, user, @supported_emotions)
   end
@@ -149,6 +197,7 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   @doc """
   update emotions field for body article and comment
   """
+  @spec update_emotions_field(map(), atom(), map(), User.t()) :: {:ok, map()} | {:error, map()}
   def update_emotions_field(artiment, emotion, status, user) do
     %{user_count: user_count, user_list: user_list} = status
 
@@ -167,11 +216,11 @@ defmodule GroupherServer.CMS.Delegate.Helper do
     artiment |> ORM.update_embed(:emotions, emotions)
   end
 
+  @spec sync_embed_replies(Comment.t()) :: {:ok, Comment.t()}
   def sync_embed_replies(%Comment{reply_to_id: nil} = comment) do
     {:ok, comment}
   end
 
-  # replies(embed_many) 不会自定更新，需要手动更新，否则在 replies 模式下数据会不同步。
   def sync_embed_replies(%Comment{reply_to_id: reply_to_id} = comment) do
     with {:ok, parent_comment} <- ORM.find(Comment, reply_to_id),
          embed_index <- Enum.find_index(parent_comment.replies, &(&1.id == comment.id)) do
@@ -182,7 +231,6 @@ defmodule GroupherServer.CMS.Delegate.Helper do
         false ->
           replies = List.replace_at(parent_comment.replies, embed_index, comment)
 
-          # 理论上更新一次即可，但 Changeset 无法识别数量一致的 replies ，不确定是业务代码的问题还是 Ecto 的问题，好坑啊
           {:ok, parent_comment} = ORM.update_embed(parent_comment, :replies, [])
           {:ok, _} = ORM.update_embed(parent_comment, :replies, replies)
       end
@@ -191,19 +239,10 @@ defmodule GroupherServer.CMS.Delegate.Helper do
     end
   end
 
-  defp user_in_logins?([], _), do: false
-  defp user_in_logins?(ids_list, %User{login: login}), do: Enum.member?(ids_list, login)
-
-  #######
-  # emotion related end
-  #######
-
-  ######
-  # reaction related end, include upvote && collect
-  #######
   @doc """
   paged [reaction] users list
   """
+  @spec load_reaction_users(Ecto.Queryable.t(), map(), map()) :: {:ok, map()} | {:error, map()}
   def load_reaction_users(queryable, article, filter) do
     {:ok, thread} = thread_of(article)
     %{page: page, size: size} = filter
@@ -218,10 +257,12 @@ defmodule GroupherServer.CMS.Delegate.Helper do
   end
 
   @doc """
-  add or remove article's reaction users is list history
+  add or remove article's reaction users in list history
   e.g:
   add/remove user_id to upvoted_user_ids in article meta
   """
+  @spec update_article_reaction_user_list(atom(), map(), User.t(), :add | :remove) ::
+          {:ok, map()} | {:error, map()}
   def update_article_reaction_user_list(action, %{meta: nil} = article, %User{} = user, opt) do
     action = past_verb(action)
     cur_user_ids = []
@@ -275,6 +316,59 @@ defmodule GroupherServer.CMS.Delegate.Helper do
     ORM.update_meta(article, meta)
   end
 
+  @spec article(Community.t() | String.t(), atom(), integer() | String.t(), keyword()) ::
+          {:ok, struct()} | {:error, map()}
+  def article(community_or_slug, thread, inner_id, opts \\ [])
+
+  def article(%Community{} = community, thread, inner_id, opts) do
+    article(community.slug, thread, inner_id, opts)
+  end
+
+  def article(community_slug, thread, inner_id, opts) do
+    preload = Keyword.get(opts, :preload, [])
+    query = %{community_slug: community_slug, inner_id: inner_id}
+
+    with {:ok, info} <- match(thread),
+         {:ok, article} <- ORM.find_by(info.model, query, preload: preload),
+         {:ok, article} <- ORM.fill_meta(article) do
+      {:ok, article}
+    else
+      {:error, _} -> {:error, {:article_not_found, "article not found"}}
+    end
+  end
+
+  @spec get_full_comment(integer()) :: T.domain_res(T.article_info())
+  defp get_full_comment(comment_id) do
+    query = from(c in Comment, where: c.id == ^comment_id, preload: ^@article_threads)
+
+    with {:ok, comment} <- Repo.one(query) |> done(),
+         article_thread <- find_comment_article_thread(comment) do
+      do_extract_article_info(article_thread, Map.get(comment, article_thread))
+    end
+  end
+
+  @spec do_extract_article_info(T.article_thread(), T.article_common()) :: {:ok, T.article_info()}
+  defp do_extract_article_info(thread, article) do
+    with {:ok, article_with_author} <- Repo.preload(article, author: :user) |> done(),
+         article_author <- get_in(article_with_author, [:author, :user]) do
+      article_info = %{title: article.title, id: article.id}
+
+      author_info = %{
+        id: article_author.id,
+        login: article_author.login,
+        nickname: article_author.nickname
+      }
+
+      {:ok, %{thread: thread, article: article_info, author: author_info}}
+    end
+  end
+
+  defp find_comment_article_thread(%Comment{} = comment) do
+    @article_threads
+    |> Enum.filter(&Map.get(comment, :"#{&1}_id"))
+    |> List.first()
+  end
+
   defp extract_embed_user(%User{} = user) do
     %{
       user_id: user.id,
@@ -286,5 +380,22 @@ defmodule GroupherServer.CMS.Delegate.Helper do
 
   defp user_id_match?(user, user_id) do
     Map.get(user, :user_id) == user_id || Map.get(user, "user_id") == user_id
+  end
+
+  defp user_in_logins?([], _), do: false
+  defp user_in_logins?(ids_list, %User{login: login}), do: Enum.member?(ids_list, login)
+
+  defp done({:ok, _} = result), do: result
+  defp done({:error, _} = result), do: result
+  defp done(nil), do: {:error, :not_exist}
+  defp done(result), do: {:ok, result}
+
+  defp past_verb(word) do
+    word_str = if is_atom(word), do: Atom.to_string(word), else: word
+
+    case word_str do
+      "upvote" -> "upvoted"
+      _ -> "#{word_str}ed"
+    end
   end
 end

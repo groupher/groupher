@@ -1,12 +1,10 @@
-defmodule GroupherServer.Test.CMS.Hooks.NotifyPost do
+defmodule GroupherServer.Test.CMS.Hooks.Notify.PostTest do
   @moduledoc false
 
   use GroupherServer.TestTools
 
-  import Helper.Utils, only: [preload_author: 1]
-
   alias GroupherServer.Delivery
-  alias CMS.Delegate.Hooks
+  alias CMS.Hooks
 
   setup do
     {community, post, _, user} = mock_article(:post)

@@ -15,7 +15,9 @@ defmodule GroupherServer.TestTools do
       import Helper.ErrorCode
 
       import Helper.Utils,
-        only: [camelize_map_key: 1, camelize_map_key: 2, get_config: 2, preload_author: 1]
+        only: [camelize_map_key: 1, camelize_map_key: 2, get_config: 2]
+
+      import GroupherServer.CMS.FrontDesk, only: [preload_author: 1]
 
       import ShortMaps
 

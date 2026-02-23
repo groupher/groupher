@@ -5,22 +5,22 @@ defmodule GroupherServer.CMS.Comments.CRUD do
 
   import Ecto.Query, warn: false
 
-  import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2, article_of: 1]
+  import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2]
   import Helper.ErrorCode
 
-  import GroupherServer.CMS.Delegate.Helper, only: [sync_embed_replies: 1]
+  import GroupherServer.CMS.FrontDesk, only: [sync_embed_replies: 1, article_of: 1, article: 4]
 
   import GroupherServer.CMS.Helper.Matcher
 
   alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias GroupherServer.CMS.Delegate.Fetcher
+  alias GroupherServer.CMS.FrontDesk
 
   alias Accounts.Model.User
   alias GroupherServer.CMS.Helper.ArticleEnums
   alias GroupherServer.CMS.Model.{Post, Comment, PinnedComment, Embeds, Community}
 
-  alias GroupherServer.CMS.Delegate.Hooks
+  alias GroupherServer.CMS.Hooks
   alias GroupherServer.CMS.Comments.Actions
   alias Helper.{Later, ORM}
 
@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   def create_comment(%Community{slug: community_slug}, thread, article_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
-           ORM.find_article(community_slug, thread, article_id,
+           article(community_slug, thread, article_id,
              preload: [[author: :user], :community]
            ),
          true <- can_comment?(article, user) do
@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Comments.CRUD do
     do: raise_error(:archived, "comment is archived, can not be edit or delete")
 
   def update_comment(%Comment{is_solution: true} = comment, body) do
-    with {:ok, post} <- Fetcher.fetch(Post, comment.post_id),
+    with {:ok, post} <- FrontDesk.get(Post, comment.post_id),
           {:ok, parsed} <- Helper.Converter.Article.parse_body(body),
           {:ok, digest} <- Helper.Converter.Article.parse_digest(parsed.body_map) do
       Multi.new()
@@ -149,16 +149,16 @@ defmodule GroupherServer.CMS.Comments.CRUD do
 
   @spec mark_comment_solution(T.id(), User.t()) :: T.domain_res(Comment.t())
   def mark_comment_solution(comment_id, %User{} = user) do
-    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
-         {:ok, post} <- Fetcher.fetch(Post, comment.post_id, preload: [author: :user]) do
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
+         {:ok, post} <- FrontDesk.get(Post, comment.post_id, preload: [author: :user]) do
       do_mark_comment_solution(post, comment, user, true)
     end
   end
 
   @spec undo_mark_comment_solution(T.id(), User.t()) :: T.domain_res(Comment.t())
   def undo_mark_comment_solution(comment_id, %User{} = user) do
-    with {:ok, comment} <- Fetcher.fetch(Comment, comment_id),
-         {:ok, post} <- Fetcher.fetch(Post, comment.post_id, preload: [author: :user]) do
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
+         {:ok, post} <- FrontDesk.get(Post, comment.post_id, preload: [author: :user]) do
       do_mark_comment_solution(post, comment, user, false)
     end
   end

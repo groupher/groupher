@@ -1,10 +1,10 @@
-defmodule GroupherServer.Test.CMS.Hooks.CitePost do
+defmodule GroupherServer.Test.CMS.Hooks.Cite.PostTest do
   @moduledoc false
 
   use GroupherServer.TestTools
 
   alias CMS.Model.CitedArtiment
-  alias CMS.Delegate.Hooks
+  alias CMS.Hooks
 
   @site_host get_config(:general, :site_host)
 
@@ -27,7 +27,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
       body =
         mock_rich_text(
           ~s(the <a href=#{@site_host}/post/#{post2.id} /> and <a href=#{@site_host}/post/#{post2.id}>same la</a> is awesome, the <a href=#{@site_host}/post/#{post3.id}></a> is awesome too.),
-          # second paragraph
           ~s(the paragraph 2 <a href=#{@site_host}/post/#{post2.id} class=#{post2.title}> again</a>, the paragraph 2 <a href=#{@site_host}/post/#{post4.id}> again</a>, the paragraph 2 <a href=#{@site_host}/post/#{post5.id}> again</a>)
         )
 
@@ -99,7 +98,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
 
       {:ok, cited_content} = ORM.find_by(CitedArtiment, %{cited_by_id: comment.id})
 
-      # 被 post 以 comment link 的方式引用了
       assert cited_content.post_id == post.id
       assert cited_content.cited_by_type == "COMMENT"
     end
@@ -131,7 +129,6 @@ defmodule GroupherServer.Test.CMS.Hooks.CitePost do
       comment_body =
         mock_rich_text(
           ~s(the <a href=#{@site_host}/post/#{post2.id} /> and <a href=#{@site_host}/post/#{post2.id}>same la</a> is awesome, the <a href=#{@site_host}/post/#{post3.id}></a> is awesome too.),
-          # second paragraph
           ~s(the paragraph 2 <a href=#{@site_host}/post/#{post2.id} class=#{post2.title}> again</a>, the paragraph 2 <a href=#{@site_host}/post/#{post4.id}> again</a>, the paragraph 2 <a href=#{@site_host}/post/#{post5.id}> again</a>)
         )
 

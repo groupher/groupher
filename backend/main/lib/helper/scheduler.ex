@@ -8,7 +8,7 @@ defmodule Helper.Scheduler do
   import Helper.Utils, only: [get_config: 2, done: 1]
 
   alias GroupherServer.CMS
-  alias CMS.Delegate.Hooks
+  alias CMS.Hooks
   alias Helper.Plausible
 
   @article_threads get_config(:article, :threads)

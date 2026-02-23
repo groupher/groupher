@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
 
   import Helper.Utils, only: [done: 1]
 
-  import GroupherServer.CMS.Delegate.Helper,
+  import GroupherServer.CMS.FrontDesk,
     only: [
       update_emotions_field: 4,
       mark_viewer_emotion_states: 2,
@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   alias Helper.Types, as: T
   alias GroupherServer.{Accounts, Repo}
 
-  alias GroupherServer.CMS.Delegate.Hooks
+  alias GroupherServer.CMS.Hooks
   alias Accounts.Model.User
   alias GroupherServer.CMS.Model.{Comment, CommentUserEmotion}
 

@@ -1,13 +1,14 @@
-defmodule GroupherServer.CMS.Delegate.Hooks.Mention do
+defmodule GroupherServer.CMS.Hooks.Mention do
   @moduledoc """
   hooks for mention task
 
   parse and fmt(see shape function) mentions to Delivery module
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [get_config: 2, preload_author: 1, author_of: 1, thread_of: 1]
+  import Helper.Utils, only: [get_config: 2]
+  import GroupherServer.CMS.FrontDesk, only: [preload_author: 1, author_of: 1, thread_of: 1]
 
-  import GroupherServer.CMS.Delegate.Hooks.Helper, only: [merge_same_block_linker: 2]
+  import GroupherServer.CMS.Hooks.Helper, only: [merge_same_block_linker: 2]
 
   alias GroupherServer.{Accounts, CMS, Delivery, Repo}
   alias CMS.Model.Comment
@@ -16,6 +17,9 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Mention do
 
   @article_mention_class "cdx-mention"
 
+  @type mention_result :: {:ok, list()} | {:error, map()}
+
+  @spec handle(Comment.t() | map()) :: mention_result()
   def handle(%{body: body} = artiment) when not is_nil(body) do
     with {:ok, %{"blocks" => blocks}} <- Jason.decode(body),
          {:ok, artiment} <- preload_author(artiment) do
@@ -26,12 +30,14 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Mention do
     end
   end
 
+  @spec handle(map()) :: mention_result()
   def handle(%{document: _document} = article) do
     body = Repo.preload(article, :document) |> get_in([:document, :body])
     article = article |> Map.put(:body, body)
     handle(article)
   end
 
+  @spec handle_mentions(list(), Comment.t() | map()) :: mention_result()
   defp handle_mentions(mentions, artiment) do
     with {:ok, author} <- author_of(artiment) do
       Delivery.send(:mention, artiment, mentions, author)
@@ -44,10 +50,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Mention do
     parse_mention_in_block(artiment, block_id, mentions)
   end
 
-  # mentions Floki parsed fmt
-  # artiment means both article and comment
-  # e.g:
-  # [{"div", [{"class", "cdx-mention"}], ["penelope438"]}]
   defp parse_mention_in_block(artiment, block_id, mentions) do
     Enum.reduce(mentions, [], fn mention, acc ->
       case parse_mention_user_id(artiment, mention) do
@@ -58,8 +60,6 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Mention do
     |> Enum.uniq()
   end
 
-  # make sure mention user is exist and not author self
-  # 确保 mention 的用户是存在的, 并且不是在提及自己
   defp parse_mention_user_id(artiment, {_, _, [user_login]}) do
     with {:ok, author} <- author_of(artiment),
          {:ok, user_id} <- Accounts.get_userid_and_cache(user_login) do

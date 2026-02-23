@@ -9,7 +9,8 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
   alias Helper.QueryBuilder
 
   import Helper.ErrorCode
-  import Helper.Utils, only: [done: 1, get_config: 2, thread_of: 1]
+  import Helper.Utils, only: [done: 1, get_config: 2]
+  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
 
   import ShortMaps
 

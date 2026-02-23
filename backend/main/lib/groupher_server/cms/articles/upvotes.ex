@@ -4,10 +4,11 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   """
 
   import GroupherServer.CMS.Helper.Matcher
-  import Helper.Utils, only: [done: 1, thread_of: 2]
+  import Helper.Utils, only: [done: 1]
 
-  import GroupherServer.CMS.Delegate.Helper,
+  import GroupherServer.CMS.FrontDesk,
     only: [
+      thread_of: 2,
       load_reaction_users: 3,
       update_article_reaction_user_list: 4
     ]
@@ -18,7 +19,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   alias GroupherServer.{Accounts, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.ArticleUpvote
-  alias GroupherServer.CMS.Delegate.Hooks
+  alias GroupherServer.CMS.Hooks
 
   @spec upvoted_users(term(), map()) :: T.domain_res(term())
   def upvoted_users(article, filter), do: load_reaction_users(ArticleUpvote, article, filter)

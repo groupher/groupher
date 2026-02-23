@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Delegate.Hooks.SubscribeCommunity do
+defmodule GroupherServer.CMS.Hooks.SubscribeCommunity do
   @moduledoc """
   this is for auto subscribe community if user upvote article or upvote/emoji comment
   """
@@ -9,10 +9,14 @@ defmodule GroupherServer.CMS.Delegate.Hooks.SubscribeCommunity do
   alias CMS.Model.{Community, Comment, Post, Blog, Changelog}
   alias Helper.ORM
 
+  @type subscribe_result :: {:ok, struct()} | {:error, map()}
+
+  @spec handle(Community.t(), map()) :: subscribe_result()
   def handle(%Community{} = community, user) do
     Communities.subscribe_ifnot(community, user)
   end
 
+  @spec handle(Comment.t(), map()) :: subscribe_result()
   def handle(%Comment{post_id: post_id}, user) when not is_nil(post_id) do
     with {:ok, article} <- comment_parent_article(Post, post_id) do
       Communities.subscribe_ifnot(article.community, user)
@@ -32,6 +36,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.SubscribeCommunity do
     end
   end
 
+  @spec comment_parent_article(module(), integer() | String.t()) :: {:ok, struct()} | {:error, map()}
   defp comment_parent_article(article, id) do
     ORM.find(article, id, preload: [[author: :user], :community])
   end

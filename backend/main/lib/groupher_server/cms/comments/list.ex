@@ -8,15 +8,15 @@ defmodule GroupherServer.CMS.Comments.List do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  import GroupherServer.CMS.Delegate.Helper,
+  import GroupherServer.CMS.FrontDesk,
     only: [mark_viewer_emotion_states: 2]
 
   import GroupherServer.CMS.Helper.Matcher
 
   alias Helper.Types, as: T
-  alias Helper.{ORM, QueryBuilder}
+  alias Helper.{Later, ORM, QueryBuilder}
   alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.CMS.Delegate.Fetcher
+  alias GroupherServer.CMS.FrontDesk
 
   alias Accounts.Model.User
   alias GroupherServer.CMS.Model.{Comment, PinnedComment}
@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, info} <- match(thread),
-         {:ok, article} <- Fetcher.fetch(info.model, article_id),
+         {:ok, article} <- FrontDesk.get(info.model, article_id),
          {:ok, paged_participants} <- do_paged_comments_participants(thread_query, filter) do
       %{
         total_count: article.comments_count,
@@ -141,7 +141,7 @@ defmodule GroupherServer.CMS.Comments.List do
   def paged_comments_participants(thread, article_id, filters) do
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, info} <- match(thread),
-         {:ok, article} <- Fetcher.fetch(info.model, article_id),
+         {:ok, article} <- FrontDesk.get(info.model, article_id),
          {:ok, paged_data} <- do_paged_comments_participants(thread_query, filters) do
       if article.comments_participants_count !== paged_data.total_count do
         Later.run({ORM, :update, [article, %{comments_participants_count: paged_data.total_count}]})

@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       deleted = rule_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
 
       assert deleted["innerId"] == to_string(post.inner_id)
-      assert {:error, _} = ORM.find_article(community, :post, deleted["innerId"])
+      assert {:error, _} = CMS.FrontDesk.article(community, :post, deleted["innerId"])
     end
   end
 end

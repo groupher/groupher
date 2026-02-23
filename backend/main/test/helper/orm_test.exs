@@ -98,7 +98,7 @@ defmodule GroupherServer.Test.Helper.ORM do
 
   describe "[find article]" do
     test "should find by default args", ~m(community post)a do
-      {:ok, article} = ORM.find_article(community.slug, :post, post.inner_id)
+      {:ok, article} = CMS.FrontDesk.article(community.slug, :post, post.inner_id)
 
       assert article.title == post.title
       assert article.id == post.id
@@ -111,7 +111,7 @@ defmodule GroupherServer.Test.Helper.ORM do
 
     test "should find by preload", ~m(community post)a do
       {:ok, article} =
-        ORM.find_article(community.slug, :post, post.inner_id,
+        CMS.FrontDesk.article(community.slug, :post, post.inner_id,
           preload: [[author: :user], :community]
         )
 
@@ -124,7 +124,7 @@ defmodule GroupherServer.Test.Helper.ORM do
     end
 
     test "should have error code if not found", ~m(community)a do
-      {:error, reason} = ORM.find_article(community.slug, :post, 3845)
+      {:error, reason} = CMS.FrontDesk.article(community.slug, :post, 3845)
 
       assert error_code(reason) == ecode(:article_not_found)
     end

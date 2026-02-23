@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
       assert changelog.inner_id == 1
 
-      {:ok, community} = FrontDesk.info(:community, community.slug)
+      {:ok, community} = FrontDesk.community(community.slug)
 
       assert community.meta.docs_inner_id_index == 4
       assert community.meta.blogs_inner_id_index == 2

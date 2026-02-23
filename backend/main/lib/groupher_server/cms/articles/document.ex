@@ -1,10 +1,9 @@
-defmodule GroupherServer.CMS.Delegate.Document do
+defmodule GroupherServer.CMS.Articles.Document do
   @moduledoc """
-  CRUD operation on post/job ...
+  CRUD operations for article documents.
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [thread_of: 2]
-
+  import GroupherServer.CMS.FrontDesk, only: [thread_of: 2]
 
   alias Helper.{ORM, Converter}
   alias GroupherServer.{CMS, Repo}
@@ -12,19 +11,18 @@ defmodule GroupherServer.CMS.Delegate.Document do
   alias CMS.Model.ArticleDocument
   alias Ecto.Multi
 
-  # alias Helper.Converter.MdToEditor
   alias GroupherServer.Support.Factory
 
-  # TODO: spec repo logic
+  @type document_result :: {:ok, map()} | {:error, map()}
+
+  @spec create(map(), map()) :: document_result()
   def create(article, %{readme: readme} = attrs) do
-    # .parse(markdown)
-    # body = MdToEditor.mock_rich_text(readme)
     body = Factory.mock_rich_text(readme)
     attrs = attrs |> Map.drop([:readme]) |> Map.put(:body, body)
     create(article, attrs)
   end
 
-  #  for create article step in Multi.new
+  @spec create(map(), map()) :: document_result()
   def create(article, %{body: body}) do
     with {:ok, article_thread} <- thread_of(article, :upcase),
          false <- article_document_exist(article),
@@ -71,6 +69,7 @@ defmodule GroupherServer.CMS.Delegate.Document do
   @doc """
   update both article and thread document
   """
+  @spec update(map(), map()) :: document_result()
   def update(article, %{body: body}) when not is_nil(body) do
     with {:ok, article_thread} <- thread_of(article, :upcase),
          {:ok, article_doc} <- find_article_document(article_thread, article),
@@ -93,7 +92,6 @@ defmodule GroupherServer.CMS.Delegate.Document do
     end
   end
 
-  # 只更新 title 的情况
   def update(article, %{title: _title} = attrs) do
     with {:ok, article_thread} <- thread_of(article, :upcase),
          {:ok, article_doc} <- find_article_document(article_thread, article) do
@@ -116,6 +114,7 @@ defmodule GroupherServer.CMS.Delegate.Document do
   @doc """
   remove article document forever
   """
+  @spec remove(atom(), T.id()) :: {:ok, ArticleDocument.t()} | {:error, map()}
   def remove(thread, id) do
     thread = thread |> to_string |> String.upcase()
 

@@ -1,8 +1,8 @@
-defmodule GroupherServer.CMS.Delegate.Hooks.Notify do
+defmodule GroupherServer.CMS.Hooks.Notify do
   @moduledoc """
   notify hooks, for upvote, collect, comment, reply
   """
-  import GroupherServer.CMS.Delegate.Helper,
+  import GroupherServer.CMS.FrontDesk,
     only: [preload_author: 1, article_of: 1, thread_of: 1]
 
   alias GroupherServer.{Accounts, CMS, Delivery, Repo}
@@ -10,7 +10,10 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Notify do
   alias Accounts.Model.User
   alias CMS.Model.Comment
 
-  # 发布评论是特殊情况，单独处理
+  @type notify_result :: {:ok, map()} | {:error, map()}
+  @type notify_action :: :comment | :reply | :upvote | :collect
+
+  @spec handle(:comment, Comment.t(), User.t()) :: notify_result()
   def handle(:comment, %Comment{} = comment, %User{} = from_user) do
     {:ok, article} = article_of(comment)
     {:ok, article} = preload_author(article)
@@ -22,14 +25,13 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Notify do
       article_id: article.id,
       title: article.title,
       comment_id: comment.id,
-      # NOTE: 这里是提醒该评论文章的作者，不是评论本身的作者
       user_id: article.author.user.id
     }
 
     Delivery.send(:notify, notify_attrs, from_user)
   end
 
-  # 回复评论是特殊情况，单独处理
+  @spec handle(:reply, Comment.t(), User.t()) :: notify_result()
   def handle(:reply, %Comment{} = reply_comment, %User{} = from_user) do
     reply_comment = Repo.preload(reply_comment, reply_to: :author)
 
@@ -43,13 +45,13 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Notify do
       article_id: article.id,
       title: article.title,
       comment_id: reply_comment.id,
-      # NOTE: 这里是提醒该评论的作者，不提醒文章作者了
       user_id: reply_comment.reply_to.author_id
     }
 
     Delivery.send(:notify, notify_attrs, from_user)
   end
 
+  @spec handle(notify_action(), Comment.t(), User.t()) :: notify_result()
   def handle(action, %Comment{} = comment, %User{} = from_user) do
     {:ok, article} = article_of(comment)
     {:ok, thread} = thread_of(article)
@@ -66,6 +68,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Notify do
     Delivery.send(:notify, notify_attrs, from_user)
   end
 
+  @spec handle(notify_action(), map(), User.t()) :: notify_result()
   def handle(action, article, %User{} = from_user) do
     {:ok, article} = preload_author(article)
     {:ok, thread} = thread_of(article)
@@ -81,6 +84,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Notify do
     Delivery.send(:notify, notify_attrs, from_user)
   end
 
+  @spec handle(:undo, notify_action(), Comment.t(), User.t()) :: notify_result()
   def handle(:undo, action, %Comment{} = comment, %User{} = from_user) do
     {:ok, article} = article_of(comment)
     {:ok, thread} = thread_of(article)
@@ -97,6 +101,7 @@ defmodule GroupherServer.CMS.Delegate.Hooks.Notify do
     Delivery.revoke(:notify, notify_attrs, from_user)
   end
 
+  @spec handle(:undo, notify_action(), map(), User.t()) :: notify_result()
   def handle(:undo, action, article, %User{} = from_user) do
     {:ok, article} = preload_author(article)
     {:ok, thread} = thread_of(article)
