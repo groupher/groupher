@@ -7,10 +7,10 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
 
   alias Helper.ORM
   alias Helper.Types, as: T
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunitySubscriber}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.Communities
+  alias CMS.Model.{Community, CommunitySubscriber}
   alias Ecto.Multi
 
   @doc """

@@ -8,8 +8,8 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   import Ecto.Query, warn: false
 
   alias Helper.ORM
-  alias GroupherServer.CMS
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
 
   alias CMS.Model.{Community}
 

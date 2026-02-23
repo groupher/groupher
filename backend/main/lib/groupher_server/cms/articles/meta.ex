@@ -7,9 +7,10 @@ defmodule GroupherServer.CMS.Articles.Meta do
 
   alias Helper.Types, as: T
   alias Helper.ORM
-  alias GroupherServer.CMS.Comments.CRUD
-  alias GroupherServer.CMS.Model.{Embeds, Post}
-  alias GroupherServer.CMS.Helper.ArticleEnums
+  alias GroupherServer.CMS
+  alias CMS.Comments.CRUD
+  alias CMS.Model.{Embeds, Post}
+  alias CMS.Helper.ArticleEnums
 
   @active_period get_config(:article, :active_period_days)
   @article_cat ArticleEnums.cat_values() |> Enum.into(%{}, &{&1, &1})

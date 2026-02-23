@@ -5,11 +5,11 @@ defmodule GroupherServer.CMS.Communities.Moderator do
 
   alias Helper.{Certification, ORM, Transaction}
   alias Helper.Types, as: T
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunityModerator}
-  alias GroupherServer.CMS.Communities.Passport
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.Communities
+  alias CMS.Model.{Community, CommunityModerator}
+  alias CMS.Communities.Passport
   alias Ecto.Multi
 
 

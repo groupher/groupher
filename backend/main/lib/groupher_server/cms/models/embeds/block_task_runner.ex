@@ -8,7 +8,8 @@ defmodule GroupherServer.CMS.Model.Embeds.BlockTaskRunner do
   use Accessible
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.Embeds
+  alias GroupherServer.CMS
+  alias CMS.Model.Embeds
 
   @optional_fields ~w(bi_link_tasks)a
   # @optional_fields ~w(bi_link_tasks mention_user_tasks)a

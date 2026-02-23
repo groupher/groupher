@@ -4,12 +4,12 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
   """
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1, strip_struct: 1]
-  import GroupherServer.CMS.FrontDesk, only: [sync_embed_replies: 1, thread_of: 1]
   import GroupherServer.CMS.Helper.Matcher
 
   alias Helper.{ORM, Transaction}
   alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.FrontDesk
 
   alias Accounts.Model.User
   alias CMS.Model.{AbuseReport, Comment, Embeds}
@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
     Transaction.locking(target_article, fn article ->
       Multi.new()
       |> Multi.run(:create_abuse_report, fn _, _ ->
-        {:ok, thread} = thread_of(article)
+        {:ok, thread} = FrontDesk.thread_of(article)
         create_report(thread, article.id, reason, attr, user)
       end)
       |> Multi.run(:update_report_meta, fn _, _ ->
@@ -72,7 +72,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
 
   @spec undo_article(T.article(), User.t()) :: T.domain_res(T.article())
   def undo_article(target_article, %User{} = user) do
-    {:ok, thread} = thread_of(target_article)
+    {:ok, thread} = FrontDesk.thread_of(target_article)
     {:ok, info} = match(thread)
 
     Transaction.locking(target_article, fn article ->
@@ -105,7 +105,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
           else: {:ok, comment}
       end)
       |> Multi.run(:sync_embed_replies, fn _, %{update_report_meta: comment} ->
-        sync_embed_replies(comment)
+        FrontDesk.sync_embed_replies(comment)
       end)
       |> Repo.transaction()
       |> result()

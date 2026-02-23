@@ -3,10 +3,10 @@ defmodule GroupherServer.CMS.Articles.Document do
   CRUD operations for article documents.
   """
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.FrontDesk, only: [thread_of: 2]
 
   alias Helper.{ORM, Converter}
   alias GroupherServer.{CMS, Repo}
+  alias CMS.FrontDesk
 
   alias CMS.Model.ArticleDocument
   alias Ecto.Multi
@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   @spec create(map(), map()) :: document_result()
   def create(article, %{body: body}) do
-    with {:ok, article_thread} <- thread_of(article, :upcase),
+    with {:ok, article_thread} <- FrontDesk.thread_of(article, :upcase),
          false <- article_document_exist(article),
          {:ok, parsed} <- Converter.Article.parse_body(body) do
       attrs = Map.take(parsed, [:body, :body_html])
@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.Articles.Document do
   end
 
   defp article_document_exist(article) do
-    with {:ok, article_thread} <- thread_of(article, :upcase) do
+    with {:ok, article_thread} <- FrontDesk.thread_of(article, :upcase) do
       {:ok, count} =
         ArticleDocument
         |> where([ad], ad.thread == ^article_thread and ad.article_id == ^article.id)
@@ -71,7 +71,7 @@ defmodule GroupherServer.CMS.Articles.Document do
   """
   @spec update(map(), map()) :: document_result()
   def update(article, %{body: body}) when not is_nil(body) do
-    with {:ok, article_thread} <- thread_of(article, :upcase),
+    with {:ok, article_thread} <- FrontDesk.thread_of(article, :upcase),
          {:ok, article_doc} <- find_article_document(article_thread, article),
          {:ok, thread_doc} <- find_thread_document(article_thread, article),
          {:ok, parsed} <- Converter.Article.parse_body(body) do
@@ -93,7 +93,7 @@ defmodule GroupherServer.CMS.Articles.Document do
   end
 
   def update(article, %{title: _title} = attrs) do
-    with {:ok, article_thread} <- thread_of(article, :upcase),
+    with {:ok, article_thread} <- FrontDesk.thread_of(article, :upcase),
          {:ok, article_doc} <- find_article_document(article_thread, article) do
       article_doc |> ORM.update(%{title: attrs.title})
     end

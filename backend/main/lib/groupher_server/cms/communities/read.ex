@@ -7,9 +7,9 @@ defmodule GroupherServer.CMS.Communities.Read do
 
   alias Helper.ORM
   alias Helper.Types, as: T
-  alias GroupherServer.{Accounts, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
+  alias CMS.Model.{Community, CommunityDashboard}
 
   @default_dashboard CommunityDashboard.default()
   @default_read_opt [inc_views: true]

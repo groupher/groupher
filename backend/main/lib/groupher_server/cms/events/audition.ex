@@ -7,9 +7,9 @@ defmodule GroupherServer.CMS.Events.Audition do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Events.Event
+  alias CMS.Events.Event
   alias Helper.AuditBot
-  alias GroupherServer.CMS.Model.Comment
+  alias CMS.Model.Comment
 
   @behaviour GroupherServer.CMS.Events.Handler
 

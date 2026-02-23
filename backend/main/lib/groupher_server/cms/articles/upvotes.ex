@@ -6,23 +6,16 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   import GroupherServer.CMS.Helper.Matcher
   import Helper.Utils, only: [done: 1]
 
-  import GroupherServer.CMS.FrontDesk,
-    only: [
-      thread_of: 2,
-      load_reaction_users: 3,
-      update_article_reaction_user_list: 4
-    ]
-
   alias Ecto.Multi
   alias Helper.{ORM, Later, Transaction}
   alias Helper.Types, as: T
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.ArticleUpvote
-  alias GroupherServer.CMS.Events
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.Model.ArticleUpvote
+  alias CMS.{FrontDesk, Events}
 
   @spec upvoted_users(term(), map()) :: T.domain_res(term())
-  def upvoted_users(article, filter), do: load_reaction_users(ArticleUpvote, article, filter)
+  def upvoted_users(article, filter), do: FrontDesk.load_reaction_users(ArticleUpvote, article, filter)
 
   @spec upvote(term(), User.t()) :: T.domain_res(term())
   def upvote(article, %User{} = user) do
@@ -34,7 +27,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
         ORM.inc(article, :upvotes_count)
       end)
       |> Multi.run(:update_reaction_user_list, fn _, %{update_upvotes_count: article} ->
-        update_article_reaction_user_list(:upvote, article, user, :add)
+        FrontDesk.update_article_reaction_user_list(:upvote, article, user, :add)
       end)
       |> Multi.run(:add_achievement, fn _, _ ->
         achiever_id = article.author.user_id
@@ -75,7 +68,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
       |> Multi.run(:update_reaction_user_list, fn _, %{find_upvote: record} ->
         case record do
           nil -> {:ok, article}
-          _ -> update_article_reaction_user_list(:upvote, article, from_user, :remove)
+          _ -> FrontDesk.update_article_reaction_user_list(:upvote, article, from_user, :remove)
         end
       end)
       |> Multi.run(:undo_upvote, fn _, %{find_upvote: record, update_reaction_user_list: updated} ->
@@ -96,7 +89,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   end
 
   defp create_upvote(article, info, user) do
-    {:ok, thread} = thread_of(article, :upcase)
+    {:ok, thread} = FrontDesk.thread_of(article, :upcase)
     args = Map.put(%{user_id: user.id, thread: thread}, info.foreign_key, article.id)
 
     case ORM.create(ArticleUpvote, args) do

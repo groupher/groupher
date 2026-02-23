@@ -9,7 +9,6 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.CommunityDashboard
   alias GroupherServer.CMS
   alias Helper.Constant.DBPrefix
 

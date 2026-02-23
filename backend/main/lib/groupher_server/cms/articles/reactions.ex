@@ -5,14 +5,14 @@ defmodule GroupherServer.CMS.Articles.Reactions do
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.Matcher
-  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1, update_emotions_field: 4]
 
   alias Ecto.Multi
   alias Helper.{Transaction, ORM}
   alias Helper.Types, as: T
-  alias GroupherServer.Repo
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.ArticleUserEmotion
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.FrontDesk
+  alias CMS.Model.ArticleUserEmotion
 
   import Ecto.Query
 
@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
         query_emotion_status(article, emotion)
       end)
       |> Multi.run(:update_emotions_field, fn _, %{query_emotion_status: status} ->
-        update_emotions_field(article, emotion, status, user)
+        FrontDesk.update_emotions_field(article, emotion, status, user)
       end)
       |> Repo.transaction()
       |> update_emotions_field_result()
@@ -69,7 +69,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
         query_emotion_status(article, emotion)
       end)
       |> Multi.run(:update_emotions_field, fn _, %{query_emotion_status: status} ->
-        update_emotions_field(article, emotion, status, user)
+        FrontDesk.update_emotions_field(article, emotion, status, user)
       end)
       |> Repo.transaction()
       |> update_emotions_field_result()
@@ -77,7 +77,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
   end
 
   defp query_emotion_status(article, emotion) do
-    with {:ok, thread} <- thread_of(article),
+    with {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, info} <- match(thread) do
       query =
         from(a in ArticleUserEmotion,
@@ -88,10 +88,10 @@ defmodule GroupherServer.CMS.Articles.Reactions do
           select: %{login: user.login, nickname: user.nickname, avatar: user.avatar}
         )
 
-      emotioned_user_info_list = Repo.all(query) |> Enum.uniq()
-      emotioned_user_count = length(emotioned_user_info_list)
+      mentioned_user_info_list = Repo.all(query) |> Enum.uniq()
+      mentioned_user_count = length(mentioned_user_info_list)
 
-      {:ok, %{user_list: emotioned_user_info_list, user_count: emotioned_user_count}}
+      {:ok, %{user_list: mentioned_user_info_list, user_count: mentioned_user_count}}
     end
   end
 

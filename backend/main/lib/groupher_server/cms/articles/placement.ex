@@ -7,20 +7,20 @@ defmodule GroupherServer.CMS.Articles.Placement do
   import Ecto.Query, warn: false
   import Helper.ErrorCode
   import Helper.Utils, only: [done: 1]
-  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
 
   alias Ecto.Multi
   alias Helper.ORM
   alias Helper.Types, as: T
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.{Community, PinnedArticle}
-  alias GroupherServer.CMS.Communities
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.FrontDesk
+  alias CMS.Model.{Community, PinnedArticle}
+  alias CMS.Communities
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
   @spec pin(Community.t(), T.article()) :: T.domain_res(T.article())
   def pin(%Community{} = community, article) do
-    with {:ok, thread} <- thread_of(article),
+    with {:ok, thread} <- FrontDesk.thread_of(article),
          args <- pack_pin_args(community, thread, article.id),
          {:ok, _} <- check_pinned_article_count(community, thread),
          {:ok, _} <- ORM.create(PinnedArticle, args) do
@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
 
   @spec undo_pin(Community.t(), T.article()) :: T.domain_res(T.article())
   def undo_pin(%Community{} = community, article) do
-    with {:ok, thread} <- thread_of(article),
+    with {:ok, thread} <- FrontDesk.thread_of(article),
          args <- pack_pin_args(community, thread, article.id),
          {:ok, _} <- ORM.findby_delete(PinnedArticle, args) do
       {:ok, article}
@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
   def mirror(%Community{} = target_community, article, community_tag_ids \\ []) do
     article = Repo.preload(article, :communities)
 
-    with {:ok, thread} <- thread_of(article) do
+    with {:ok, thread} <- FrontDesk.thread_of(article) do
       communities =
         (article.communities ++ [target_community])
         |> Enum.uniq_by(& &1.id)
@@ -91,7 +91,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
   def move(%Community{} = target_community, article, community_tag_ids \\ []) do
     article = Repo.preload(article, [:communities, :community, :community_tags])
 
-    with {:ok, thread} <- thread_of(article) do
+    with {:ok, thread} <- FrontDesk.thread_of(article) do
       original_community = article.community
 
       Multi.new()
@@ -125,7 +125,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
   def mirror_to_home(%Community{} = home_community, article, community_tag_ids \\ []) do
     article = Repo.preload(article, [:communities, :community_tags])
 
-    with {:ok, thread} <- thread_of(article) do
+    with {:ok, thread} <- FrontDesk.thread_of(article) do
       communities =
         (article.communities ++ [home_community])
         |> Enum.uniq_by(& &1.id)
@@ -152,7 +152,7 @@ defmodule GroupherServer.CMS.Articles.Placement do
   def move_to_blackhole(%Community{} = blackhole, article, community_tag_ids \\ []) do
     article = Repo.preload(article, [:communities, :community, :community_tags])
 
-    with {:ok, thread} <- thread_of(article) do
+    with {:ok, thread} <- FrontDesk.thread_of(article) do
       Multi.new()
       |> Multi.run(:set_community, fn _, _ ->
         article

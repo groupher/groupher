@@ -7,22 +7,17 @@ defmodule GroupherServer.CMS.Comments.Read do
 
   import Helper.Utils, only: [done: 1, get_config: 2]
 
-  import GroupherServer.CMS.FrontDesk,
-    only: [mark_viewer_emotion_states: 2]
-
   alias Helper.Types, as: T
-  alias Helper.ORM
-  alias GroupherServer.Repo
-
-  alias GroupherServer.CMS.Model.Comment
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.FrontDesk
+  alias CMS.Model.Comment
 
   @article_threads get_config(:article, :threads)
 
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
   def fetch_comment(comment_id) do
-    ORM.find(Comment, comment_id)
+    FrontDesk.get(Comment, comment_id)
   end
 
   @spec fetch_full_comment(T.id()) :: T.domain_res(T.article_info())
@@ -37,7 +32,7 @@ defmodule GroupherServer.CMS.Comments.Read do
   def one_comment(id, %User{} = user) do
     with {:ok, comment} <- FrontDesk.get(Comment, id) do
       %{entries: [comment]}
-      |> mark_viewer_emotion_states(user)
+      |> FrontDesk.mark_viewer_emotion_states(user)
       |> mark_viewer_has_upvoted(user)
       |> Map.get(:entries)
       |> List.first()

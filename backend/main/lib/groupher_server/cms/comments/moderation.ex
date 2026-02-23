@@ -10,9 +10,11 @@ defmodule GroupherServer.CMS.Comments.Moderation do
 
   alias Helper.Types, as: T
   alias Helper.{ORM, QueryBuilder}
-  alias GroupherServer.{FrontDesk, Repo}
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.FrontDesk
+  alias GroupherServer.FrontDesk, as: UserFrontDesk
 
-  alias GroupherServer.CMS.Model.Comment
+  alias CMS.Model.Comment
 
   alias Ecto.Multi
 
@@ -22,7 +24,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
 
   @spec set_comment_illegal(T.id(), map()) :: T.domain_res(Comment.t())
   def set_comment_illegal(comment_id, audit_state) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id) do
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
       do_set_comment_illegal(comment, audit_state)
     end
   end
@@ -41,7 +43,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
     |> Multi.run(:update_author_meta, fn _, _ ->
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- FrontDesk.user(comment.author_id) do
+      with {:ok, user} <- UserFrontDesk.user(comment.author_id) do
         illegal_comments = user.meta.illegal_comments ++ illegal_comments
 
         ORM.update_meta(user, %{has_illegal_comments: true, illegal_comments: illegal_comments})
@@ -53,7 +55,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
 
   @spec unset_comment_illegal(T.id(), map()) :: T.domain_res(Comment.t())
   def unset_comment_illegal(comment_id, audit_state) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id) do
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
       do_unset_comment_illegal(comment, audit_state)
     end
   end
@@ -71,7 +73,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
     |> Multi.run(:update_author_meta, fn _, _ ->
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- FrontDesk.user(comment.author_id) do
+      with {:ok, user} <- UserFrontDesk.user(comment.author_id) do
         illegal_comments = user.meta.illegal_comments -- illegal_comments
         has_illegal_comments = not Enum.empty?(illegal_comments)
 

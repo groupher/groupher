@@ -3,7 +3,8 @@ defmodule GroupherServer.CMS.Events.Handler do
   Callback contract for CMS event handlers.
   """
 
-  alias GroupherServer.CMS.Events.Event
+  alias GroupherServer.CMS
+  alias CMS.Events.Event
 
   @callback handle(Event.t()) :: {:ok, term()} | {:error, term()}
 end

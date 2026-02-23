@@ -12,7 +12,9 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   alias Ecto.Multi
   alias Helper.{ORM, Constant, QueryBuilder}
   alias Helper.Types, as: T
-  alias GroupherServer.{FrontDesk, Repo}
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.FrontDesk
+  alias GroupherServer.FrontDesk, as: UserFrontDesk
 
   @audit_legal Constant.CMS.pending(:legal)
   @audit_illegal Constant.CMS.pending(:illegal)
@@ -39,7 +41,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   @spec set_illegal(atom(), T.id(), map()) :: T.domain_res(term())
   def set_illegal(thread, id, audit_state) do
     with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id) do
+         {:ok, article} <- FrontDesk.get(info.model, id) do
       set_illegal(article, audit_state)
     end
   end
@@ -58,7 +60,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
       article = Repo.preload(article, :author)
       illegal_articles = Map.get(audit_state, :illegal_articles, [])
 
-      with {:ok, user} <- FrontDesk.user(article.author.user_id) do
+      with {:ok, user} <- UserFrontDesk.user(article.author.user_id) do
         illegal_articles = user.meta.illegal_articles ++ illegal_articles
 
         ORM.update_meta(user, %{has_illegal_articles: true, illegal_articles: illegal_articles})
@@ -71,7 +73,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   @spec unset_illegal(atom(), T.id(), map()) :: T.domain_res(term())
   def unset_illegal(thread, id, audit_state) do
     with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id) do
+         {:ok, article} <- FrontDesk.get(info.model, id) do
       unset_illegal(article, audit_state)
     end
   end
@@ -91,7 +93,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
       article = Repo.preload(article, :author)
       illegal_articles = Map.get(audit_state, :illegal_articles, [])
 
-      with {:ok, user} <- FrontDesk.user(article.author.user_id) do
+      with {:ok, user} <- UserFrontDesk.user(article.author.user_id) do
         illegal_articles = user.meta.illegal_articles -- illegal_articles
         has_illegal_articles = not Enum.empty?(illegal_articles)
 

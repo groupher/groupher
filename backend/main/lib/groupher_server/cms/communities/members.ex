@@ -8,8 +8,9 @@ defmodule GroupherServer.CMS.Communities.Members do
 
   alias Helper.{ORM, QueryBuilder}
   alias Helper.Types, as: T
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunityModerator, CommunitySubscriber}
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, CommunityModerator, CommunitySubscriber}
 
   @doc """
   return paged community subscribers

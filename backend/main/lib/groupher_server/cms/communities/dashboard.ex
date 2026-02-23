@@ -5,7 +5,8 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   alias Helper.{ORM, OSS}
   alias Helper.Types, as: T
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
+  alias GroupherServer.CMS
+  alias CMS.Model.{Community, CommunityDashboard}
 
   @default_dashboard CommunityDashboard.default()
 

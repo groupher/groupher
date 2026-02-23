@@ -18,14 +18,13 @@ defmodule GroupherServer.CMS.Articles.Write do
   alias Ecto.Multi
   alias Helper.{Converter, Later, ORM, Transaction}
   alias Helper.Types, as: T
-  alias GroupherServer.{Accounts, Email, Repo, Statistics}
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Helper.ArticleEnums
-  alias GroupherServer.CMS.Model.{Author, Community, Embeds}
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Articles.Document
-  alias GroupherServer.CMS.Events
-  alias GroupherServer.CMS.Articles.{Meta, Placement}
+  alias GroupherServer.{Accounts, CMS, Email, Repo, Statistics}
+  alias Accounts.Model.User
+  alias CMS.Helper.ArticleEnums
+  alias CMS.Model.{Author, Community, Embeds}
+  alias CMS.{FrontDesk, Communities, Events}
+  alias CMS.Articles.Document
+  alias CMS.Articles.{Meta, Placement}
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
   @default_article_meta Embeds.ArticleMeta.default_meta()
@@ -88,7 +87,7 @@ defmodule GroupherServer.CMS.Articles.Write do
     target = result.__struct__
     preload = [:community, author: :user]
 
-    with {:ok, article} <- ORM.find(target, id, preload: preload) do
+    with {:ok, article} <- FrontDesk.get(target, id, preload: preload) do
       info = %{
         id: article.id,
         title: article.title,

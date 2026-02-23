@@ -11,8 +11,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   import ShortMaps
   import Helper.ErrorCode
 
-  alias Helper.ORM
-  alias Helper.QueryBuilder
+  alias Helper.{ORM, QueryBuilder}
   alias Helper.Types, as: T
   alias GroupherServer.{Accounts, Repo}
 

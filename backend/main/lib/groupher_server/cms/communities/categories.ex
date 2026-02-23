@@ -7,8 +7,9 @@ defmodule GroupherServer.CMS.Communities.Categories do
 
   alias Helper.ORM
   alias Helper.Types, as: T
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, Category, CommunityCategory}
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, Category, CommunityCategory}
 
   @spec create(map(), User.t()) :: T.domain_res(term())
   def create(attrs, %User{id: user_id}) do

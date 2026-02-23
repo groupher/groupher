@@ -12,23 +12,20 @@ defmodule GroupherServer.CMS.Comments.Actions do
       get_config: 2
     ]
 
-  import GroupherServer.CMS.FrontDesk,
-    only: [sync_embed_replies: 1, article_of: 1, thread_of: 1]
-
   import Helper.ErrorCode
 
   import GroupherServer.CMS.Helper.Matcher
 
   alias Helper.Types, as: T
   alias Helper.{ORM, Later, Transaction}
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.FrontDesk
 
   alias Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply}
-  alias GroupherServer.CMS.Events
-  alias GroupherServer.CMS.Comments.List, as: CommentList
-  alias GroupherServer.CMS.Comments.Read, as: CommentRead
+  alias CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply}
+  alias CMS.Events
+  alias CMS.Comments.List, as: CommentList
+  alias CMS.Comments.Read, as: CommentRead
 
   alias Ecto.Multi
 
@@ -113,7 +110,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
         do_create_comment(body, info.foreign_key, article, user)
       end)
       |> Multi.run(:update_comments_count, fn _, %{create_reply_comment: replied_comment} ->
-        {:ok, article} = article_of(replied_comment)
+        {:ok, article} = FrontDesk.article_of(replied_comment)
         ORM.inc(article, :comments_count)
       end)
       |> Multi.run(:create_comment_reply, fn _, %{create_reply_comment: replied_comment} ->
@@ -183,7 +180,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
         |> done
       end)
       |> Multi.run(:sync_embed_replies, fn _, %{viewer_states: comment} ->
-        sync_embed_replies(comment)
+        FrontDesk.sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, _ ->
         Later.run({Events, :emit, [:subscribe_community, %{target: comment, user: from_user}]})
@@ -225,7 +222,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
         |> done
       end)
       |> Multi.run(:sync_embed_replies, fn _, %{viewer_states: comment} ->
-        sync_embed_replies(comment)
+        FrontDesk.sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, _ ->
         Later.run({Events, :emit, [:notify_undo_upvote, %{target: comment, from_user: from_user}]})
@@ -255,8 +252,8 @@ defmodule GroupherServer.CMS.Comments.Actions do
       comment |> ORM.update(%{is_folded: is_folded})
     end)
     |> Multi.run(:update_article_fold_count, fn _, _ ->
-      {:ok, article} = article_of(comment)
-      {:ok, article_thread} = thread_of(article)
+      {:ok, article} = FrontDesk.article_of(comment)
+      {:ok, article_thread} = FrontDesk.thread_of(article)
 
       {:ok, %{total_count: total_count}} =
         CommentList.paged_folded_comments(article_thread, article.id, %{page: 1, size: 1})

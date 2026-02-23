@@ -13,12 +13,12 @@ defmodule GroupherServer.CMS.Articles.Read do
     ]
 
   alias Ecto.Multi
+  alias Helper.{Constant, ORM}
   alias Helper.Types, as: T
-  alias Helper.ORM
-  alias Helper.Constant
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.{Community, PinnedArticle}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.FrontDesk
+  alias CMS.Model.{Community, PinnedArticle}
 
   @active_period get_config(:article, :active_period_days)
   @article_threads get_config(:article, :threads)
@@ -112,7 +112,7 @@ defmodule GroupherServer.CMS.Articles.Read do
 
   defp if_article_legal(thread, id, %User{} = user) when thread in @article_threads do
     with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id, preload: :author) do
+         {:ok, article} <- FrontDesk.get(info.model, id, preload: :author) do
       if_article_legal(article, user)
     end
   end
@@ -129,7 +129,7 @@ defmodule GroupherServer.CMS.Articles.Read do
 
   defp if_article_legal(thread, id) when thread in @article_threads do
     with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id) do
+         {:ok, article} <- FrontDesk.get(info.model, id) do
       if_article_legal(article)
     end
   end

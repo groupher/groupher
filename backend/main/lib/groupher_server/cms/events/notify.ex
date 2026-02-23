@@ -2,11 +2,9 @@ defmodule GroupherServer.CMS.Events.Notify do
   @moduledoc """
   notify events, for upvote, collect, comment, reply
   """
-  import GroupherServer.CMS.FrontDesk,
-    only: [preload_author: 1, article_of: 1, thread_of: 1]
-
   alias GroupherServer.{Accounts, CMS, Delivery, Repo}
-  alias GroupherServer.CMS.Events.Event
+  alias CMS.FrontDesk
+  alias CMS.Events.Event
 
   alias Accounts.Model.User
   alias CMS.Model.Comment
@@ -45,9 +43,9 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   @spec handle(:comment, Comment.t(), User.t()) :: notify_result()
   def handle(:comment, %Comment{} = comment, %User{} = from_user) do
-    {:ok, article} = article_of(comment)
-    {:ok, article} = preload_author(article)
-    {:ok, thread} = thread_of(article)
+    {:ok, article} = FrontDesk.article_of(comment)
+    {:ok, article} = FrontDesk.preload_author(article)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     notify_attrs = %{
       action: :comment,
@@ -65,9 +63,9 @@ defmodule GroupherServer.CMS.Events.Notify do
   def handle(:reply, %Comment{} = reply_comment, %User{} = from_user) do
     reply_comment = Repo.preload(reply_comment, reply_to: :author)
 
-    {:ok, article} = article_of(reply_comment)
-    {:ok, article} = preload_author(article)
-    {:ok, thread} = thread_of(article)
+    {:ok, article} = FrontDesk.article_of(reply_comment)
+    {:ok, article} = FrontDesk.preload_author(article)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     notify_attrs = %{
       action: :reply,
@@ -83,8 +81,8 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   @spec handle(notify_action(), Comment.t(), User.t()) :: notify_result()
   def handle(action, %Comment{} = comment, %User{} = from_user) do
-    {:ok, article} = article_of(comment)
-    {:ok, thread} = thread_of(article)
+    {:ok, article} = FrontDesk.article_of(comment)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     notify_attrs = %{
       action: action,
@@ -100,8 +98,8 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   @spec handle(notify_action(), map(), User.t()) :: notify_result()
   def handle(action, article, %User{} = from_user) do
-    {:ok, article} = preload_author(article)
-    {:ok, thread} = thread_of(article)
+    {:ok, article} = FrontDesk.preload_author(article)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     notify_attrs = %{
       action: action,
@@ -116,8 +114,8 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   @spec handle(:undo, notify_action(), Comment.t(), User.t()) :: notify_result()
   def handle(:undo, action, %Comment{} = comment, %User{} = from_user) do
-    {:ok, article} = article_of(comment)
-    {:ok, thread} = thread_of(article)
+    {:ok, article} = FrontDesk.article_of(comment)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     notify_attrs = %{
       action: action,
@@ -133,8 +131,8 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   @spec handle(:undo, notify_action(), map(), User.t()) :: notify_result()
   def handle(:undo, action, article, %User{} = from_user) do
-    {:ok, article} = preload_author(article)
-    {:ok, thread} = thread_of(article)
+    {:ok, article} = FrontDesk.preload_author(article)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     notify_attrs = %{
       action: action,
