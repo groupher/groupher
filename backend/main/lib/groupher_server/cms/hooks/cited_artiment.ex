@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Hooks.CitedArtiment do
   end
 
   @doc "batch insert CitedArtiment record and update citing count"
-  @spec batch_insert([map()]) :: {:ok, true} | {:error, map()}
+  @spec batch_insert([map()]) :: {:ok, true | :pass} | {:error, term()}
   def batch_insert([]), do: {:ok, :pass}
 
   def batch_insert(cited_artiments) do
