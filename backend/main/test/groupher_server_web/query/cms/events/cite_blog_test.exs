@@ -56,9 +56,9 @@ defmodule GroupherServer.Test.Query.Events.BlogCiting do
       blog_attrs = blog_attrs |> Map.merge(%{body: body})
       {:ok, blog_y} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
-      Events.Cite.handle(blog_x)
-      Events.Cite.handle(comment)
-      Events.Cite.handle(blog_y)
+      Events.emit(:cite, %{artiment: blog_x})
+      Events.emit(:cite, %{artiment: comment})
+      Events.emit(:cite, %{artiment: blog_y})
 
       variables = %{content: "BLOG", id: blog2.id, filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)

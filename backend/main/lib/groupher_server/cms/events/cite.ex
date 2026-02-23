@@ -37,6 +37,7 @@ defmodule GroupherServer.CMS.Events.Cite do
 
 
   alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Events.Event
   alias CMS.Events.CitedArtiment
   alias CMS.Model.Comment
 
@@ -48,10 +49,17 @@ defmodule GroupherServer.CMS.Events.Cite do
   @valid_article_prefix Enum.map(@article_threads, &"#{@site_host}/#{&1}/")
 
   @type cite_result :: {:ok, list()} | {:error, map()}
+  @type handle_result :: {:ok, term()} | {:error, term()}
+
+  @behaviour GroupherServer.CMS.Events.Handler
+
+  @spec handle(Event.t()) :: handle_result()
+  @impl true
+  def handle(%Event{type: :cite, payload: %{artiment: artiment}}) do
+    handle(artiment)
+  end
 
   @spec handle(Comment.t() | map()) :: cite_result()
-  @behaviour GroupherServer.CMS.Events.UnaryHandler
-  @impl true
   def handle(%{body: body} = artiment) when not is_nil(body) do
     with {:ok, %{"blocks" => blocks}} <- Jason.decode(body),
          {:ok, artiment} <- preload_author(artiment) do

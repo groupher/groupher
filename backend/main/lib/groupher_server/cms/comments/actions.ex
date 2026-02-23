@@ -145,8 +145,8 @@ defmodule GroupherServer.CMS.Comments.Actions do
         end
       end)
       |> Multi.run(:after_events, fn _, %{add_reply_to: replied_comment} ->
-        Later.run({Events.Notify, :handle, [:reply, replied_comment, user]})
-        Later.run({Events.Mention, :handle, [replied_comment]})
+        Later.run({Events, :emit, [:notify_reply, %{reply_comment: replied_comment, from_user: user}]})
+        Later.run({Events, :emit, [:mention, %{artiment: replied_comment}]})
       end)
       |> Repo.transaction()
       |> result()
@@ -186,8 +186,8 @@ defmodule GroupherServer.CMS.Comments.Actions do
         sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, _ ->
-        Later.run({Events.SubscribeCommunity, :handle, [comment, from_user]})
-        Later.run({Events.Notify, :handle, [:upvote, comment, from_user]})
+        Later.run({Events, :emit, [:subscribe_community, %{target: comment, user: from_user}]})
+        Later.run({Events, :emit, [:notify_upvote, %{target: comment, from_user: from_user}]})
       end)
       |> Repo.transaction()
       |> result()
@@ -228,7 +228,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
         sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, _ ->
-        Later.run({Events.Notify, :handle, [:undo, :upvote, comment, from_user]})
+        Later.run({Events, :emit, [:notify_undo_upvote, %{target: comment, from_user: from_user}]})
       end)
       |> Repo.transaction()
       |> result()

@@ -4,17 +4,24 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
   """
   import Ecto.Query, warn: false
 
+  alias GroupherServer.CMS.Events.Event
   alias GroupherServer.CMS
   alias CMS.Communities
   alias CMS.Model.{Community, Comment, Post, Blog, Changelog}
   alias Helper.ORM
 
-  @behaviour GroupherServer.CMS.Events.BinaryHandler
+  @behaviour GroupherServer.CMS.Events.Handler
 
   @type subscribe_result :: {:ok, struct()} | {:error, map()}
+  @type handle_result :: {:ok, term()} | {:error, term()}
+
+  @spec handle(Event.t()) :: handle_result()
+  @impl true
+  def handle(%Event{type: :subscribe_community, payload: %{target: target, user: user}}) do
+    handle(target, user)
+  end
 
   @spec handle(Community.t(), map()) :: subscribe_result()
-  @impl true
   def handle(%Community{} = community, user) do
     Communities.subscribe_ifnot(community, user)
   end

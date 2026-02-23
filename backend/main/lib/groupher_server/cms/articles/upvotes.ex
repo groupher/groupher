@@ -44,8 +44,8 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
         create_upvote(article, info, user)
       end)
       |> Multi.run(:after_events, fn _, _ ->
-        Later.run({Events.Notify, :handle, [:upvote, article, user]})
-        Later.run({Events.SubscribeCommunity, :handle, [article.community, user]})
+        Later.run({Events, :emit, [:notify_upvote, %{target: article, from_user: user}]})
+        Later.run({Events, :emit, [:subscribe_community, %{target: article.community, user: user}]})
       end)
       |> Repo.transaction()
       |> result()
@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
         end
       end)
       |> Multi.run(:after_events, fn _, %{undo_upvote: updated} ->
-        Later.run({Events.Notify, :handle, [:undo, :upvote, updated, from_user]})
+        Later.run({Events, :emit, [:notify_undo_upvote, %{target: updated, from_user: from_user}]})
       end)
       |> Repo.transaction()
       |> result()

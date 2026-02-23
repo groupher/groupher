@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       {:ok, blog} = preload_author(blog)
 
       {:ok, article} = CMS.Articles.upvote(blog, user2)
-      Events.Notify.handle(:upvote, article, user2)
+      Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
         Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
       {:ok, comment} = preload_author(comment)
 
-      Events.Notify.handle(:upvote, comment, user2)
+      Events.emit(:notify_upvote, %{target: comment, from_user: user2})
 
       {:ok, notifications} = Delivery.fetch(:notification, comment.author, %{page: 1, size: 20})
 
@@ -61,10 +61,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       {:ok, blog} = preload_author(blog)
 
       {:ok, article} = CMS.Articles.upvote(blog, user2)
-      Events.Notify.handle(:upvote, article, user2)
+      Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, article} = CMS.Articles.undo_upvote(blog, user2)
-      Events.Notify.handle(:undo, :upvote, article, user2)
+      Events.emit(:notify_undo_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
         Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
@@ -75,10 +75,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
     test "undo upvote hook should work on blog comment", ~m(user2 comment)a do
       {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
 
-      Events.Notify.handle(:upvote, comment, user2)
+      Events.emit(:notify_upvote, %{target: comment, from_user: user2})
 
       {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user2)
-      Events.Notify.handle(:undo, :upvote, comment, user2)
+      Events.emit(:notify_undo_upvote, %{target: comment, from_user: user2})
 
       {:ok, comment} = preload_author(comment)
 
@@ -93,7 +93,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       {:ok, blog} = preload_author(blog)
 
       {:ok, _} = CMS.Articles.collect(blog, user2)
-      Events.Notify.handle(:collect, blog, user2)
+      Events.emit(:notify_collect, %{article: blog, from_user: user2})
 
       {:ok, notifications} =
         Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
@@ -112,10 +112,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       {:ok, blog} = preload_author(blog)
 
       {:ok, _} = CMS.Articles.upvote(blog, user2)
-      Events.Notify.handle(:collect, blog, user2)
+      Events.emit(:notify_collect, %{article: blog, from_user: user2})
 
       {:ok, _} = CMS.Articles.undo_upvote(blog, user2)
-      Events.Notify.handle(:undo, :collect, blog, user2)
+      Events.emit(:notify_undo_collect, %{article: blog, from_user: user2})
 
       {:ok, notifications} =
         Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
@@ -132,7 +132,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user2)
 
-      Events.Notify.handle(:comment, comment, user2)
+      Events.emit(:notify_comment, %{comment: comment, from_user: user2})
 
       {:ok, notifications} =
         Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
@@ -156,7 +156,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
       {:ok, replied_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user3)
 
-      Events.Notify.handle(:reply, replied_comment, user3)
+      Events.emit(:notify_reply, %{reply_comment: replied_comment, from_user: user3})
 
       comment = Repo.preload(comment, :author)
       {:ok, notifications} = Delivery.fetch(:notification, comment.author, %{page: 1, size: 20})

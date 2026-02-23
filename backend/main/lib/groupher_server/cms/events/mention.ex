@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Events.Mention do
   import GroupherServer.CMS.Events.Helper, only: [merge_same_block_linker: 2]
 
   alias GroupherServer.{Accounts, CMS, Delivery, Repo}
+  alias GroupherServer.CMS.Events.Event
   alias CMS.Model.Comment
 
   @article_threads get_config(:article, :threads)
@@ -18,10 +19,17 @@ defmodule GroupherServer.CMS.Events.Mention do
   @article_mention_class "cdx-mention"
 
   @type mention_result :: {:ok, list()} | {:error, map()}
+  @type handle_result :: {:ok, term()} | {:error, term()}
+
+  @behaviour GroupherServer.CMS.Events.Handler
+
+  @spec handle(Event.t()) :: handle_result()
+  @impl true
+  def handle(%Event{type: :mention, payload: %{artiment: artiment}}) do
+    handle(artiment)
+  end
 
   @spec handle(Comment.t() | map()) :: mention_result()
-  @behaviour GroupherServer.CMS.Events.UnaryHandler
-  @impl true
   def handle(%{body: body} = artiment) when not is_nil(body) do
     with {:ok, %{"blocks" => blocks}} <- Jason.decode(body),
          {:ok, artiment} <- preload_author(artiment) do

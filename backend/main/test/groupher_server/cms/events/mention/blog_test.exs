@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.BlogTest do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
       {:ok, blog} = preload_author(blog)
 
-      {:ok, _} = Events.Mention.handle(blog)
+      {:ok, _} = Events.emit(:mention, %{artiment: blog})
 
       {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
 
@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.BlogTest do
 
       {:ok, comment} = preload_author(comment)
 
-      {:ok, _} = Events.Mention.handle(comment)
+      {:ok, _} = Events.emit(:mention, %{artiment: comment})
       {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
@@ -85,7 +85,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.BlogTest do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, comment_body, user)
 
-      {:ok, _} = Events.Mention.handle(comment)
+      {:ok, _} = Events.emit(:mention, %{artiment: comment})
       {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
 
       assert result.total_count == 0

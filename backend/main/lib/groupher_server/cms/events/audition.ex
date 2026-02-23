@@ -7,15 +7,22 @@ defmodule GroupherServer.CMS.Events.Audition do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Events.Event
   alias Helper.AuditBot
   alias GroupherServer.CMS.Model.Comment
 
-  @behaviour GroupherServer.CMS.Events.UnaryHandler
+  @behaviour GroupherServer.CMS.Events.Handler
 
   @type audition_result :: {:ok, map()} | {:error, map()}
+  @type handle_result :: {:ok, term()} | {:error, term()}
+
+  @spec handle(Event.t()) :: handle_result()
+  @impl true
+  def handle(%Event{type: :audition, payload: %{artiment: artiment}}) do
+    handle(artiment)
+  end
 
   @spec handle(Comment.t() | map()) :: audition_result()
-  @impl true
   def handle(%{body_html: body_html} = comment) do
     AuditBot.analysis(:text, body_html) |> handle_audition_result(comment)
   end

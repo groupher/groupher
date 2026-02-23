@@ -6,18 +6,44 @@ defmodule GroupherServer.CMS.Events.Notify do
     only: [preload_author: 1, article_of: 1, thread_of: 1]
 
   alias GroupherServer.{Accounts, CMS, Delivery, Repo}
+  alias GroupherServer.CMS.Events.Event
 
   alias Accounts.Model.User
   alias CMS.Model.Comment
 
-  @behaviour GroupherServer.CMS.Events.TernaryHandler
-  @behaviour GroupherServer.CMS.Events.QuaternaryHandler
+  @behaviour GroupherServer.CMS.Events.Handler
 
   @type notify_result :: {:ok, map()} | {:error, map()}
+  @type handle_result :: {:ok, term()} | {:error, term()}
   @type notify_action :: :comment | :reply | :upvote | :collect
 
-  @spec handle(:comment, Comment.t(), User.t()) :: notify_result()
+  @spec handle(Event.t()) :: handle_result()
   @impl true
+  def handle(%Event{type: :notify_comment, payload: %{comment: comment, from_user: from_user}}) do
+    handle(:comment, comment, from_user)
+  end
+
+  def handle(%Event{type: :notify_reply, payload: %{reply_comment: reply_comment, from_user: from_user}}) do
+    handle(:reply, reply_comment, from_user)
+  end
+
+  def handle(%Event{type: :notify_upvote, payload: %{target: target, from_user: from_user}}) do
+    handle(:upvote, target, from_user)
+  end
+
+  def handle(%Event{type: :notify_collect, payload: %{article: article, from_user: from_user}}) do
+    handle(:collect, article, from_user)
+  end
+
+  def handle(%Event{type: :notify_undo_upvote, payload: %{target: target, from_user: from_user}}) do
+    handle(:undo, :upvote, target, from_user)
+  end
+
+  def handle(%Event{type: :notify_undo_collect, payload: %{article: article, from_user: from_user}}) do
+    handle(:undo, :collect, article, from_user)
+  end
+
+  @spec handle(:comment, Comment.t(), User.t()) :: notify_result()
   def handle(:comment, %Comment{} = comment, %User{} = from_user) do
     {:ok, article} = article_of(comment)
     {:ok, article} = preload_author(article)
@@ -89,7 +115,6 @@ defmodule GroupherServer.CMS.Events.Notify do
   end
 
   @spec handle(:undo, notify_action(), Comment.t(), User.t()) :: notify_result()
-  @impl true
   def handle(:undo, action, %Comment{} = comment, %User{} = from_user) do
     {:ok, article} = article_of(comment)
     {:ok, thread} = thread_of(article)

@@ -39,8 +39,8 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
       {:ok, changelog_n} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      Events.Cite.handle(changelog)
-      Events.Cite.handle(changelog_n)
+      Events.emit(:cite, %{artiment: changelog})
+      Events.emit(:cite, %{artiment: changelog_n})
 
       {:ok, changelog2} = ORM.find(Changelog, changelog2.id)
       {:ok, changelog3} = ORM.find(Changelog, changelog3.id)
@@ -59,7 +59,7 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
       body = mock_rich_text(~s(the <a href=#{@site_host}/changelog/#{changelog.id} />))
       {:ok, changelog} = CMS.Articles.update(changelog, %{body: body})
 
-      Events.Cite.handle(changelog)
+      Events.emit(:cite, %{artiment: changelog})
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
       assert changelog.meta.citing_count == 0
@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
           )
         )
 
-      Events.Cite.handle(comment)
+      Events.emit(:cite, %{artiment: comment})
 
       {:ok, cited_comment} = ORM.find(Comment, cited_comment.id)
       assert cited_comment.meta.citing_count == 0
@@ -108,7 +108,7 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
 
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-      Events.Cite.handle(changelog)
+      Events.emit(:cite, %{artiment: changelog})
 
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert comment.meta.citing_count == 1
@@ -137,7 +137,7 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :changelog, changelog.inner_id, comment_body, user)
 
-      Events.Cite.handle(comment)
+      Events.emit(:cite, %{artiment: comment})
 
       {:ok, cited_comment} = ORM.find(Comment, cited_comment.id)
       assert cited_comment.meta.citing_count == 1
@@ -159,14 +159,14 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :changelog, changelog.inner_id, comment_body, user)
 
-      Events.Cite.handle(comment)
+      Events.emit(:cite, %{artiment: comment})
 
       comment_body = mock_rich_text(~s(the <a href=#{@site_host}/changelog/#{changelog3.id} />))
 
       {:ok, comment} =
         CMS.Comments.create_comment(community, :changelog, changelog.inner_id, comment_body, user)
 
-      Events.Cite.handle(comment)
+      Events.emit(:cite, %{artiment: comment})
 
       {:ok, changelog2} = ORM.find(Changelog, changelog2.id)
       {:ok, changelog3} = ORM.find(Changelog, changelog3.id)
@@ -207,9 +207,9 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
       {:ok, changelog_y} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      Events.Cite.handle(changelog_x)
-      Events.Cite.handle(comment)
-      Events.Cite.handle(changelog_y)
+      Events.emit(:cite, %{artiment: changelog_x})
+      Events.emit(:cite, %{artiment: comment})
+      Events.emit(:cite, %{artiment: changelog_y})
 
       {:ok, result} = CMS.Articles.paged_citing_contents("CHANGELOG", changelog2.id, %{page: 1, size: 10})
 
@@ -248,14 +248,14 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
       {:ok, changelog} =
         CMS.Articles.create(community, :changelog, Map.merge(changelog_attrs, %{body: body}), user)
 
-      Events.Cite.handle(changelog)
+      Events.emit(:cite, %{artiment: changelog})
 
       Process.sleep(1000)
 
       {:ok, blog} =
         CMS.Articles.create(community, :blog, Map.merge(blog_attrs, %{body: body}), user)
 
-      Events.Cite.handle(blog)
+      Events.emit(:cite, %{artiment: blog})
 
       {:ok, result} = CMS.Articles.paged_citing_contents("CHANGELOG", changelog2.id, %{page: 1, size: 10})
 

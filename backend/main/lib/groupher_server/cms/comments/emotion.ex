@@ -55,7 +55,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
         end
       end)
       |> Multi.run(:after_events, fn _, _ ->
-        Later.run({Events.SubscribeCommunity, :handle, [comment, user]})
+        Later.run({Events, :emit, [:subscribe_community, %{target: comment, user: user}]})
       end)
       |> Repo.transaction()
       |> result

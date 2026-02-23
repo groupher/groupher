@@ -38,8 +38,8 @@ defmodule GroupherServer.Test.CMS.Events.Cite.DocTest do
       doc_attrs = doc_attrs |> Map.merge(%{body: body})
       {:ok, doc_n} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      Events.Cite.handle(doc)
-      Events.Cite.handle(doc_n)
+      Events.emit(:cite, %{artiment: doc})
+      Events.emit(:cite, %{artiment: doc_n})
 
       {:ok, doc2} = ORM.find(Doc, doc2.id)
       {:ok, doc3} = ORM.find(Doc, doc3.id)
@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.CMS.Events.Cite.DocTest do
       body = mock_rich_text(~s(the <a href=#{@site_host}/doc/#{doc.id} />))
       {:ok, doc} = CMS.Articles.update(doc, %{body: body})
 
-      Events.Cite.handle(doc)
+      Events.emit(:cite, %{artiment: doc})
 
       {:ok, doc} = ORM.find(Doc, doc.id)
       assert doc.meta.citing_count == 0
@@ -82,7 +82,7 @@ defmodule GroupherServer.Test.CMS.Events.Cite.DocTest do
           )
         )
 
-      Events.Cite.handle(comment)
+      Events.emit(:cite, %{artiment: comment})
 
       {:ok, cited_comment} = ORM.find(Comment, cited_comment.id)
       assert cited_comment.meta.citing_count == 0
@@ -105,7 +105,7 @@ defmodule GroupherServer.Test.CMS.Events.Cite.DocTest do
       doc_attrs = doc_attrs |> Map.merge(%{body: body})
 
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
-      Events.Cite.handle(doc)
+      Events.emit(:cite, %{artiment: doc})
 
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert comment.meta.citing_count == 1
@@ -134,7 +134,7 @@ defmodule GroupherServer.Test.CMS.Events.Cite.DocTest do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :doc, doc.inner_id, comment_body, user)
 
-      Events.Cite.handle(comment)
+      Events.emit(:cite, %{artiment: comment})
 
       {:ok, cited_comment} = ORM.find(Comment, cited_comment.id)
       assert cited_comment.meta.citing_count == 1
@@ -156,14 +156,14 @@ defmodule GroupherServer.Test.CMS.Events.Cite.DocTest do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :doc, doc.inner_id, comment_body, user)
 
-      Events.Cite.handle(comment)
+      Events.emit(:cite, %{artiment: comment})
 
       comment_body = mock_rich_text(~s(the <a href=#{@site_host}/doc/#{doc3.id} />))
 
       {:ok, comment} =
         CMS.Comments.create_comment(community, :doc, doc.inner_id, comment_body, user)
 
-      Events.Cite.handle(comment)
+      Events.emit(:cite, %{artiment: comment})
 
       {:ok, doc2} = ORM.find(Doc, doc2.id)
       {:ok, doc3} = ORM.find(Doc, doc3.id)
@@ -204,9 +204,9 @@ defmodule GroupherServer.Test.CMS.Events.Cite.DocTest do
       doc_attrs = doc_attrs |> Map.merge(%{body: body})
       {:ok, doc_y} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      Events.Cite.handle(doc_x)
-      Events.Cite.handle(comment)
-      Events.Cite.handle(doc_y)
+      Events.emit(:cite, %{artiment: doc_x})
+      Events.emit(:cite, %{artiment: comment})
+      Events.emit(:cite, %{artiment: doc_y})
 
       {:ok, result} = CMS.Articles.paged_citing_contents("DOC", doc2.id, %{page: 1, size: 10})
 
@@ -245,14 +245,14 @@ defmodule GroupherServer.Test.CMS.Events.Cite.DocTest do
       {:ok, doc} =
         CMS.Articles.create(community, :doc, Map.merge(doc_attrs, %{body: body}), user)
 
-      Events.Cite.handle(doc)
+      Events.emit(:cite, %{artiment: doc})
 
       Process.sleep(1000)
 
       {:ok, blog} =
         CMS.Articles.create(community, :blog, Map.merge(blog_attrs, %{body: body}), user)
 
-      Events.Cite.handle(blog)
+      Events.emit(:cite, %{artiment: blog})
 
       {:ok, result} = CMS.Articles.paged_citing_contents("DOC", doc2.id, %{page: 1, size: 10})
 

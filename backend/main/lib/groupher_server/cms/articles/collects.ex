@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
         ORM.create(ArticleCollect, args)
       end)
       |> Multi.run(:after_events, fn _, _ ->
-        Later.run({Events.Notify, :handle, [:collect, article, user]})
+        Later.run({Events, :emit, [:notify_collect, %{article: article, from_user: user}]})
       end)
       |> Repo.transaction()
       |> result()
@@ -85,7 +85,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
         maybe_undo_collect(record, article, info, user.id)
       end)
       |> Multi.run(:after_events, fn _, _ ->
-        Later.run({Events.Notify, :handle, [:undo, :collect, article, user]})
+        Later.run({Events, :emit, [:notify_undo_collect, %{article: article, from_user: user}]})
       end)
       |> Repo.transaction()
       |> result()

@@ -41,7 +41,7 @@ defmodule Helper.Scheduler do
   def comments_audition() do
     with {:ok, paged_comments} <- CMS.Comments.paged_audit_failed_comments(%{page: 1, size: 30}) do
       Enum.map(paged_comments.entries, fn comment ->
-        Events.Audition.handle(comment)
+        Events.emit(:audition, %{artiment: comment})
       end)
       |> done
     end
@@ -51,7 +51,7 @@ defmodule Helper.Scheduler do
     with {:ok, paged_articles} <-
            CMS.Articles.paged_audit_failed(thread, %{page: 1, size: 30}) do
       Enum.map(paged_articles.entries, fn article ->
-        Events.Audition.handle(article)
+        Events.emit(:audition, %{artiment: article})
         # the free audition service's QPS is limit to 2
         Process.sleep(500)
       end)

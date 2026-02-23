@@ -69,9 +69,9 @@ defmodule GroupherServer.CMS.Articles.Write do
           Accounts.update_published_states(user, thread)
         end)
         |> Multi.run(:after_events, fn _, %{create_article: article} ->
-          Later.run({Events.Cite, :handle, [article]})
-          Later.run({Events.Mention, :handle, [article]})
-          Later.run({Events.Audition, :handle, [article]})
+          Later.run({Events, :emit, [:cite, %{artiment: article}]})
+          Later.run({Events, :emit, [:mention, %{artiment: article}]})
+          Later.run({Events, :emit, [:audition, %{artiment: article}]})
           Later.run({__MODULE__, :notify_admin_new_article, [article]})
         end)
         |> Multi.run(:log_action, fn _, _ ->
@@ -129,9 +129,9 @@ defmodule GroupherServer.CMS.Articles.Write do
       Meta.update_edit_status(update_article)
     end)
     |> Multi.run(:after_events, fn _, %{update_article: update_article} ->
-      Later.run({Events.Cite, :handle, [update_article]})
-      Later.run({Events.Mention, :handle, [update_article]})
-      Later.run({Events.Audition, :handle, [update_article]})
+      Later.run({Events, :emit, [:cite, %{artiment: update_article}]})
+      Later.run({Events, :emit, [:mention, %{artiment: update_article}]})
+      Later.run({Events, :emit, [:audition, %{artiment: update_article}]})
     end)
     |> Repo.transaction()
     |> result()

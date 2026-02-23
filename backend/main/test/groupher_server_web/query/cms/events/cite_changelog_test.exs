@@ -56,9 +56,9 @@ defmodule GroupherServer.Test.Query.Events.ChangelogCiting do
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
       {:ok, changelog_y} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      Events.Cite.handle(changelog_x)
-      Events.Cite.handle(comment)
-      Events.Cite.handle(changelog_y)
+      Events.emit(:cite, %{artiment: changelog_x})
+      Events.emit(:cite, %{artiment: comment})
+      Events.emit(:cite, %{artiment: changelog_y})
 
       variables = %{content: "CHANGELOG", id: changelog2.id, filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)

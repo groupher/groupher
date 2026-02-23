@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
       {:ok, changelog} = preload_author(changelog)
 
-      {:ok, _} = Events.Mention.handle(changelog)
+      {:ok, _} = Events.emit(:mention, %{artiment: changelog})
 
       {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
 
@@ -59,7 +59,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
 
       {:ok, comment} = preload_author(comment)
 
-      {:ok, _} = Events.Mention.handle(comment)
+      {:ok, _} = Events.emit(:mention, %{artiment: comment})
       {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :changelog, changelog.inner_id, comment_body, user)
 
-      {:ok, _} = Events.Mention.handle(comment)
+      {:ok, _} = Events.emit(:mention, %{artiment: comment})
       {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
 
       assert result.total_count == 0

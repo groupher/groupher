@@ -56,9 +56,9 @@ defmodule GroupherServer.Test.Query.Events.DocCiting do
       doc_attrs = doc_attrs |> Map.merge(%{body: body})
       {:ok, doc_y} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      Events.Cite.handle(doc_x)
-      Events.Cite.handle(comment)
-      Events.Cite.handle(doc_y)
+      Events.emit(:cite, %{artiment: doc_x})
+      Events.emit(:cite, %{artiment: comment})
+      Events.emit(:cite, %{artiment: doc_y})
 
       variables = %{content: "DOC", id: doc2.id, filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)

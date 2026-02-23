@@ -56,9 +56,9 @@ defmodule GroupherServer.Test.Query.Events.PostCiting do
       post_attrs = post_attrs |> Map.merge(%{body: body})
       {:ok, post_y} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      Events.Cite.handle(post_x)
-      Events.Cite.handle(comment)
-      Events.Cite.handle(post_y)
+      Events.emit(:cite, %{artiment: post_x})
+      Events.emit(:cite, %{artiment: comment})
+      Events.emit(:cite, %{artiment: post_y})
 
       variables = %{content: "POST", id: post2.id, filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
