@@ -7,9 +7,11 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS, Repo}
+
   alias Accounts.Model.User
   alias CMS.Model.ArticleUpvote
   alias CMS.{Events, FrontDesk}
+
   alias Ecto.Multi
   alias Helper.Types, as: T
   alias Helper.{Later, ORM, Transaction}

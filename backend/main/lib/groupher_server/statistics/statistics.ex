@@ -4,6 +4,7 @@ defmodule GroupherServer.Statistics do
   """
 
   alias GroupherServer.Statistics.Delegate
+
   alias Delegate.{Contribute, Geo, Status, Throttle}
 
   # contributes

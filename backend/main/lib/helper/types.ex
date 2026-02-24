@@ -3,9 +3,10 @@ defmodule Helper.Types do
   custom @types
   """
 
+  alias GroupherServer.{Accounts, CMS}
+
   alias Accounts.Model.User
-  alias GroupherServer.Accounts
-  alias GroupherServer.CMS.Model.{Blog, Changelog, Doc, Post}
+  alias CMS.Model.{Blog, Changelog, Doc, Post}
 
   @type error_reason :: atom()
   @type error_meta :: term()

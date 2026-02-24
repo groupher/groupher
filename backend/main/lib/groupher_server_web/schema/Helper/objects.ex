@@ -15,7 +15,7 @@ defmodule GroupherServerWeb.Schema.Helper.Objects do
     pagination_fields()
   end
   """
-  defmacro paged_article_objects() do
+  defmacro paged_article_objects do
     @article_threads
     |> Enum.map(
       &quote do

@@ -9,13 +9,14 @@ defmodule GroupherServer.CMS.Model.Embeds.BlockTaskRunner do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
+
   alias CMS.Model.Embeds
 
   @optional_fields ~w(bi_link_tasks)a
   # @optional_fields ~w(bi_link_tasks mention_user_tasks)a
 
   @doc "for test usage"
-  def default_meta() do
+  def default_meta do
     %{
       bi_link_tasks: []
       # mention_user_tasks: []

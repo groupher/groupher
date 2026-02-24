@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Events.Mention.PostTest do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.Delivery
   alias CMS.Events
+  alias GroupherServer.Delivery
 
   @article_mention_class "cdx-mention"
 
@@ -54,7 +54,9 @@ defmodule GroupherServer.Test.CMS.Events.Mention.PostTest do
       comment_body =
         mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user2.login}</div>))
 
-      {:ok, comment} = CMS.Comments.create_comment(community, :post, post.inner_id, comment_body, user)
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, comment_body, user)
+
       {:ok, comment} = preload_author(comment)
 
       {:ok, _} = Events.emit(:mention, %{artiment: comment})
@@ -80,7 +82,8 @@ defmodule GroupherServer.Test.CMS.Events.Mention.PostTest do
       comment_body =
         mock_rich_text(~s(hi <div class=#{@article_mention_class}>#{user.login}</div>))
 
-      {:ok, comment} = CMS.Comments.create_comment(community, :post, post.inner_id, comment_body, user)
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, comment_body, user)
 
       {:ok, _} = Events.emit(:mention, %{artiment: comment})
       {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})

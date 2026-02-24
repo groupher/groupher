@@ -6,9 +6,11 @@ defmodule GroupherServer.CMS.Articles.Meta do
   import Helper.Utils, only: [get_config: 2, done: 1]
 
   alias GroupherServer.CMS
+
   alias CMS.Comments.CRUD
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Embeds, Post}
+
   alias Helper.ORM
   alias Helper.Types, as: T
 
@@ -59,5 +61,4 @@ defmodule GroupherServer.CMS.Articles.Meta do
 
     :gt == DateTime.compare(inserted_at, active_threshold)
   end
-
 end

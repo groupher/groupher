@@ -504,7 +504,7 @@ defmodule GroupherServer.Email.Templates.NotifyAdminOnContentCreated do
   end
 
   @doc false
-  def raw() do
+  def raw do
     """
     <mjml>
     <mj-head>
@@ -571,7 +571,6 @@ defmodule GroupherServer.Email.Templates.NotifyAdminOnContentCreated do
             <mj-social-element name="github" href="https://github.com/coderplanets" background-color="#296C7D">
             </mj-social-element>
           </mj-social>
-
 
           <mj-text color="#445566" font-size="11px" align="center" line-height="16px">
             &copy; Coderplanets Inc., All Rights Reserved.

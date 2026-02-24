@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
 
   use GroupherServer.TestTools
   import Helper.Utils
-  alias GroupherServer.Repo
   alias GroupherServer.Accounts.Model.OauthProvider
+  alias GroupherServer.Repo
 
   @oauth_trust_code get_config(:oauth, :oauth_trust_code)
 

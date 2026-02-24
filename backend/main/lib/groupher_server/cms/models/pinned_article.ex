@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
   import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
 
   alias GroupherServer.CMS
+
   alias CMS.Model.Community
   alias Helper.Constant.DBPrefix
 

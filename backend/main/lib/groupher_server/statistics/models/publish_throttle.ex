@@ -5,9 +5,8 @@ defmodule GroupherServer.Statistics.Model.PublishThrottle do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias GroupherServer.Accounts.Model.User
   alias Helper.Constant.DBPrefix
-  alias GroupherServer.Accounts
-  alias Accounts.Model.User
 
   @schema_prefix DBPrefix.statistics()
 

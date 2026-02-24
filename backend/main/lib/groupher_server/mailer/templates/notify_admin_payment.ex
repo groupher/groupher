@@ -503,14 +503,14 @@ defmodule GroupherServer.Email.Templates.NotifyAdminPayment do
     """
   end
 
-  def text() do
+  def text do
     """
     有人打赏了
     """
   end
 
   @doc false
-  def raw() do
+  def raw do
     """
     <mjml>
       <mj-head>

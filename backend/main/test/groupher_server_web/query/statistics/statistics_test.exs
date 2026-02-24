@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Query.Statistics do
 
   use GroupherServer.TestTools
 
-  alias Helper.GeoPool
   alias GroupherServer.Statistics
+  alias Helper.GeoPool
 
   setup do
     GeoPool.insert_geo_data()

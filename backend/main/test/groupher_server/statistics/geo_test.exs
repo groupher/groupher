@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Statistics.Geo do
 
   use GroupherServer.TestTools
 
-  alias Helper.GeoPool
   alias GroupherServer.Statistics
+  alias Helper.GeoPool
   alias Statistics.Model.UserGeoInfo
 
   setup do

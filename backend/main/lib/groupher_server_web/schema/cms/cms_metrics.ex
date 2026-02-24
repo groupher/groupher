@@ -5,10 +5,12 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   use Absinthe.Schema.Notation
 
   import GroupherServerWeb.Schema.Helper.Fields
-
   import Helper.Utils, only: [module_to_atom: 1]
 
-  alias GroupherServer.CMS.Helper.ArticleEnums
+  alias GroupherServer.CMS
+
+  alias CMS.Helper.ArticleEnums
+
   require ArticleEnums
 
   @doc """

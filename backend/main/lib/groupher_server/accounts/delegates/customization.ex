@@ -7,10 +7,10 @@ defmodule GroupherServer.Accounts.Delegate.Customization do
   import ShortMaps
 
   alias GroupherServer.Accounts
-  alias Helper.ORM
 
-  alias Accounts.Model.{Customization, User}
   alias Accounts.Delegate.Achievements
+  alias Accounts.Model.{Customization, User}
+  alias Helper.ORM
 
   def upgrade_by_plan(%User{} = user, :donate) do
     Achievements.set_member(user, :donate)

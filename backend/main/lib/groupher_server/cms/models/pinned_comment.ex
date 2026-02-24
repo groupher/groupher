@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
 
   alias GroupherServer.CMS
+
   alias CMS.Model.Comment
   alias Helper.Constant.DBPrefix
 
@@ -24,6 +25,7 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   @article_fields @article_threads |> Enum.map(&:"#{&1}_id")
 
   schema_base_type(comment_id: integer() | nil)
+
   schema "pinned_comments" do
     belongs_to(:comment, Comment, foreign_key: :comment_id)
 

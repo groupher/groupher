@@ -8,11 +8,11 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   import ShortMaps
 
   alias GroupherServer.FrontDesk
-  alias Helper.{Later, ORM, QueryBuilder, Types}
   alias GroupherServer.{Accounts, Repo}
+  alias Helper.{Later, ORM, QueryBuilder, Types}
 
-  alias Accounts.Model.{User, UserFollower, UserFollowing}
-  alias Accounts.Delegate.Hooks
+  alias GroupherServer.Accounts.Delegate.Hooks
+  alias GroupherServer.Accounts.Model.{User, UserFollower, UserFollowing}
 
   alias Ecto.Multi
 

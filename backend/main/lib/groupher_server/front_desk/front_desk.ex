@@ -6,9 +6,9 @@ defmodule GroupherServer.FrontDesk do
   those can be use both in function and middleware
   # TODO: bring cache in
   """
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS
   alias Helper.ORM
-  alias GroupherServer.{CMS, Accounts}
-  alias Accounts.Model.User
 
   def community(slug) when is_binary(slug), do: CMS.FrontDesk.community(slug)
 

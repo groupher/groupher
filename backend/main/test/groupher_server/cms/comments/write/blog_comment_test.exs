@@ -172,7 +172,8 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, updated_comment} = CMS.Comments.update_comment(comment, mock_comment("updated content"))
+      {:ok, updated_comment} =
+        CMS.Comments.update_comment(comment, mock_comment("updated content"))
 
       assert updated_comment.body_html |> String.contains?(~s(updated content</p>))
     end
@@ -448,7 +449,8 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         {:ok, _} = CMS.Comments.pin_comment(comment.id)
       end)
 
-      assert {:error, {:comment_pin_limit, @pinned_comment_limit}} = CMS.Comments.pin_comment(comment.id)
+      assert {:error, {:comment_pin_limit, @pinned_comment_limit}} =
+               CMS.Comments.pin_comment(comment.id)
     end
   end
 
@@ -483,7 +485,8 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
     test "report user < @report_threshold_for_fold will not fold comment",
          ~m(community user blog)a do
-      {:ok, comment} = CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       assert not comment.is_folded
 

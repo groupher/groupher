@@ -8,8 +8,7 @@ defmodule GroupherServer.CMS.Model.Changelog do
   import Ecto.Changeset
   import GroupherServer.CMS.Helper.Macros
 
-  alias GroupherServer.CMS
-  alias CMS.Model.Embeds
+  alias GroupherServer.CMS.Model.Embeds
 
   alias Helper.Constant.DBPrefix
   alias Helper.HTML

@@ -8,21 +8,22 @@ defmodule GroupherServer.Accounts.Model.User do
   # import GroupherServerWeb.Schema.Helper.Fields
   import Ecto.Changeset
 
-  alias Helper.Constant.DBPrefix
+  alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.Accounts.Model.{
+  alias Accounts.Model.{
     Achievement,
-    Embeds,
-    Customization,
     CollectFolder,
+    Customization,
+    Embeds,
     OauthProvider,
     Purchase,
+    Social,
     UserFollower,
-    UserFollowing,
-    Social
+    UserFollowing
   }
 
-  alias GroupherServer.CMS.Model.{Passport, CommunitySubscriber}
+  alias CMS.Model.{CommunitySubscriber, Passport}
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.account()
 

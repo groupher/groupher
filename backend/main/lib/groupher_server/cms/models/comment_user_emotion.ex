@@ -1,9 +1,11 @@
 defmodule GroupherServer.CMS.Model.CommentUserEmotion.Macros do
+  @moduledoc false
+
   import Helper.Utils, only: [get_config: 2]
 
   @supported_emotions get_config(:article, :comment_emotions)
 
-  defmacro emotion_fields() do
+  defmacro emotion_fields do
     @supported_emotions
     |> Enum.map(fn emotion ->
       quote do

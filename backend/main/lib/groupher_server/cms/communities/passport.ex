@@ -7,11 +7,12 @@ defmodule GroupherServer.CMS.Communities.Passport do
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias Helper.Types, as: T
-  alias Helper.{Certification, NestedFilter, ORM}
 
   alias Accounts.Model.User
   alias CMS.Model.Passport, as: UserPassport
+
+  alias Helper.Types, as: T
+  alias Helper.{Certification, NestedFilter, ORM}
 
   # https://medium.com/front-end-hacking/use-github-oauth-as-your-sso-seamlessly-with-react-3e2e3b358fa1
   # http://www.ubazu.com/using-postgres-jsonb-columns-in-ecto
@@ -26,7 +27,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
   end
 
   @spec all_passport_rules() :: T.domain_res(term())
-  def all_passport_rules() do
+  def all_passport_rules do
     %{
       root: Certification.passport_rules(cms: "root"),
       moderator: Certification.passport_rules(cms: "moderator")

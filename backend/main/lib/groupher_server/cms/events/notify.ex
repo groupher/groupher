@@ -3,13 +3,13 @@ defmodule GroupherServer.CMS.Events.Notify do
   notify events, for upvote, collect, comment, reply
   """
   alias GroupherServer.{Accounts, CMS, Delivery, Repo}
-  alias CMS.Events.Event
-  alias CMS.FrontDesk
 
   alias Accounts.Model.User
+  alias CMS.Events.Event
+  alias CMS.FrontDesk
   alias CMS.Model.Comment
 
-  @behaviour GroupherServer.CMS.Events.Handler
+  @behaviour CMS.Events.Handler
 
   @type notify_result :: {:ok, map()} | {:error, map()}
   @type handle_result :: {:ok, term()} | {:error, term()}
@@ -21,7 +21,10 @@ defmodule GroupherServer.CMS.Events.Notify do
     handle(:comment, comment, from_user)
   end
 
-  def handle(%Event{type: :notify_reply, payload: %{reply_comment: reply_comment, from_user: from_user}}) do
+  def handle(%Event{
+        type: :notify_reply,
+        payload: %{reply_comment: reply_comment, from_user: from_user}
+      }) do
     handle(:reply, reply_comment, from_user)
   end
 
@@ -37,7 +40,10 @@ defmodule GroupherServer.CMS.Events.Notify do
     handle(:undo, :upvote, target, from_user)
   end
 
-  def handle(%Event{type: :notify_undo_collect, payload: %{article: article, from_user: from_user}}) do
+  def handle(%Event{
+        type: :notify_undo_collect,
+        payload: %{article: article, from_user: from_user}
+      }) do
     handle(:undo, :collect, article, from_user)
   end
 

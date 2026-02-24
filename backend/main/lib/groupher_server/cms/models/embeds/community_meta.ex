@@ -1,12 +1,12 @@
 defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
-  
+
   @moduledoc false
 
   import Helper.Utils, only: [get_config: 2, plural: 1]
 
   @article_threads get_config(:article, :threads)
 
-  defmacro thread_count_fields() do
+  defmacro thread_count_fields do
     @article_threads
     |> Enum.map(fn thread ->
       quote do
@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
     end)
   end
 
-  defmacro thread_inner_id_index_fields() do
+  defmacro thread_inner_id_index_fields do
     @article_threads
     |> Enum.map(fn thread ->
       quote do
@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
                      Enum.map(@article_threads, &:"#{plural(&1)}_count") ++
                      Enum.map(@article_threads, &:"#{plural(&1)}_inner_id_index")
 
-  def default_meta() do
+  def default_meta do
     threads_counts =
       @article_threads
       |> Enum.reduce([], &(&2 ++ ["#{plural(&1)}_count": 0]))

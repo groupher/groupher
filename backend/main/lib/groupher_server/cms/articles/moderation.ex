@@ -9,12 +9,14 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.FrontDesk, as: UserFrontDesk
   alias GroupherServer.{CMS, Repo}
+
   alias CMS.FrontDesk
+  alias GroupherServer.FrontDesk, as: UserFrontDesk
+
   alias Ecto.Multi
-  alias Helper.Types, as: T
   alias Helper.{Constant, ORM, QueryBuilder}
+  alias Helper.Types, as: T
 
   @audit_legal Constant.CMS.pending(:legal)
   @audit_illegal Constant.CMS.pending(:illegal)

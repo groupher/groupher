@@ -8,6 +8,7 @@ defmodule GroupherServer.CMS.Communities.Write do
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS, Repo}
+
   alias Accounts.Model.User
   alias CMS.Communities
   alias CMS.Model.{Community, CommunityDashboard, Embeds, Thread}
@@ -66,7 +67,7 @@ defmodule GroupherServer.CMS.Communities.Write do
     Communities.Moderator.add(community, role, user, user)
   end
 
-  def create_default_threads_ifneed() do
+  def create_default_threads_ifneed do
     @community_default_threads
     |> Enum.with_index()
     |> Enum.map(fn {thread, index} ->

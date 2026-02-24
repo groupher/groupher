@@ -250,11 +250,9 @@ defmodule Helper.Utils do
   end
 
   def module_to_atom(module_struct) do
-    try do
-      module_struct |> struct |> module_to_atom
-    rescue
-      _ -> nil
-    end
+    module_struct |> struct |> module_to_atom
+  rescue
+    _ -> nil
   end
 
   def to_upcase(v) when is_atom(v), do: v |> to_string |> String.upcase()
@@ -286,16 +284,14 @@ defmodule Helper.Utils do
   # Repo.transaction will rewrite error to {:error, :rollback}, so if we want to return error with
   # details context, need use try catch
   def use_transaction(fun) do
-    try do
-      Repo.transaction(fn ->
-        case fun.() do
-          {:ok, result} -> result
-          {:error, reason} -> throw({:error, reason})
-          value -> value
-        end
-      end)
-    catch
-      {:error, reason} -> {:error, reason}
-    end
+    Repo.transaction(fn ->
+      case fun.() do
+        {:ok, result} -> result
+        {:error, reason} -> throw({:error, reason})
+        value -> value
+      end
+    end)
+  catch
+    {:error, reason} -> {:error, reason}
   end
 end

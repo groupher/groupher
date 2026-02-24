@@ -8,6 +8,8 @@ defmodule GroupherServer.Support.Factory do
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Helper.Matcher
 
+  alias GroupherServer.{Accounts, CMS, Delivery}
+
   alias Accounts.Model.User
 
   alias CMS.Model.{
@@ -20,11 +22,10 @@ defmodule GroupherServer.Support.Factory do
     Thread
   }
 
-  alias GroupherServer.{Accounts, CMS, Delivery}
   alias Helper.ORM
 
-  @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
-  @default_emotions CMS.Model.Embeds.CommentEmotion.default_emotions()
+  @default_article_meta GroupherServer.CMS.Model.Embeds.ArticleMeta.default_meta()
+  @default_emotions GroupherServer.CMS.Model.Embeds.CommentEmotion.default_emotions()
 
   use GroupherServer.Support.Factory.Articles
   use GroupherServer.Support.Factory.Oauth
@@ -267,7 +268,7 @@ defmodule GroupherServer.Support.Factory do
     Delivery.send(:notify, notify_attrs, from_user)
   end
 
-  def mock_community() do
+  def mock_community do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
 

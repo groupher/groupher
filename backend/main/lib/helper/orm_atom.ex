@@ -8,8 +8,9 @@ defmodule Helper.ORMAtom do
   import Helper.Utils, only: [strip_struct: 1]
 
   alias GroupherServer.{Accounts, CMS, Repo}
+
   alias Accounts.Model.User
-  alias CMS.Model.{Community, Comment}
+  alias CMS.Model.{Comment, Community}
 
   @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
@@ -191,12 +192,6 @@ defmodule Helper.ORMAtom do
     {:ok, schema, Map.get(queryable, :id)}
   end
 
-  defp extract_schema_and_id(schema) when is_atom(schema) do
-    {:ok, schema, nil}
-  end
-
-  defp extract_schema_and_id(_), do: {:error, :invalid_queryable}
-
   defp get_primary_key(schema_module) do
     case schema_module.__schema__(:primary_key) do
       [key] -> {:ok, key}
@@ -242,5 +237,4 @@ defmodule Helper.ORMAtom do
   defp prepare_json_value(value) when is_struct(value, DateTime), do: value
   defp prepare_json_value(value) when is_map(value), do: Jason.encode!(value)
   defp prepare_json_value(value), do: Jason.encode!(value)
-
 end

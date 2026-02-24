@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Accounts.Hooks.Notify do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.Delivery
   alias Accounts.Delegate.Hooks
+  alias GroupherServer.Delivery
 
   setup do
     {:ok, user} = db_insert(:user)

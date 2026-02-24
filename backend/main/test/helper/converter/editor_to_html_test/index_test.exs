@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML do
 
   use GroupherServerWeb.ConnCase, async: true
 
-  alias Helper.Converter.EditorToHTML.Class
   alias Helper.Converter.EditorToHTML, as: Parser
+  alias Helper.Converter.EditorToHTML.Class
 
   #   "<addr class="cdx-lock">hello</addr> Editor.js <mark class="cdx-marker">workspace</mark>. is an element &lt;script&gt;alert("hello")&lt;/script&gt;"
 

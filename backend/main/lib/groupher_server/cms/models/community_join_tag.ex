@@ -7,8 +7,7 @@ defmodule GroupherServer.CMS.Model.CommunityJoinTag do
 
   import GroupherServer.CMS.Helper.Macros
 
-  alias GroupherServer.CMS
-  alias CMS.Model.CommunityTag
+  alias GroupherServer.CMS.Model.CommunityTag
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

@@ -16,15 +16,16 @@ defmodule GroupherServer.CMS.Articles.Write do
     ]
 
   alias GroupherServer.{Accounts, CMS, Email, Repo, Statistics}
+
   alias Accounts.Model.User
-  alias CMS.Articles.Document
-  alias CMS.Articles.{Meta, Placement}
+  alias CMS.Articles.{Document, Meta, Placement}
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Author, Community, Embeds}
   alias CMS.{Communities, Events, FrontDesk}
+
   alias Ecto.Multi
-  alias Helper.Types, as: T
   alias Helper.{Converter, Later, ORM, Transaction}
+  alias Helper.Types, as: T
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
   @default_article_meta Embeds.ArticleMeta.default_meta()

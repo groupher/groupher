@@ -4,7 +4,7 @@ defmodule GroupherServer.Delivery do
   """
 
   alias GroupherServer.Delivery
-  alias Delivery.Delegate.Postman
+  alias GroupherServer.Delivery.Delegate.Postman
 
   defdelegate send(service, artiment, mentions, from_user), to: Postman
   defdelegate send(service, attrs, from_user), to: Postman

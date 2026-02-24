@@ -4,9 +4,9 @@ defmodule GroupherServer.Accounts.Delegate.Mailbox do
 
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Accounts, Delivery}
+  alias GroupherServer.Delivery
 
-  alias Accounts.Model.{Embeds, User}
+  alias GroupherServer.Accounts.Model.{Embeds, User}
   alias Helper.ORM
 
   @default_mailbox_status Embeds.UserMailbox.default_status()

@@ -6,6 +6,7 @@ defmodule GroupherServer.CMS.Model.CommunityJoinBlog do
   use Accessible
 
   alias GroupherServer.CMS
+
   alias CMS.Model.{Blog, Community}
   alias Helper.Constant.DBPrefix
 

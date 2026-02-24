@@ -11,11 +11,12 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros do
   import Helper.Utils, only: [get_config: 2]
 
   alias GroupherServer.CMS
+
   alias CMS.Model.Embeds
 
   @supported_emotions get_config(:article, :emotions)
 
-  defmacro emotion_fields() do
+  defmacro emotion_fields do
     @supported_emotions
     |> Enum.map(fn emotion ->
       quote do
@@ -48,7 +49,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion do
 
   @doc "default emotion status for article comment"
   # for create comment and test usage
-  def default_emotions() do
+  def default_emotions do
     @supported_emotions
     |> Enum.reduce([], fn emotion, acc ->
       acc ++

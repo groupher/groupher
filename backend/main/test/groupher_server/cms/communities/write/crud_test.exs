@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.CMS.Communities.Write do
 
   setup do
     {:ok, user} = db_insert(:user)
-    
+
     {:ok, ~m(user)a}
   end
 

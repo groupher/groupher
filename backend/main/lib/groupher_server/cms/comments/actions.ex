@@ -17,16 +17,18 @@ defmodule GroupherServer.CMS.Comments.Actions do
   import GroupherServer.CMS.Helper.Matcher
 
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias CMS.FrontDesk
+
   alias Helper.Types, as: T
   alias Helper.{Later, ORM, Transaction}
 
   alias Accounts.Model.User
-  alias CMS.Comments.List, as: CommentList
-  alias CMS.Comments.Read, as: CommentRead
-  alias CMS.Events
+  alias CMS.FrontDesk
   alias CMS.Model.{Comment, CommentReply, CommentUpvote, PinnedComment}
 
+  alias CMS.Comments.List, as: CommentList
+  alias CMS.Comments.Read, as: CommentRead
+
+  alias CMS.Events
   alias Ecto.Multi
 
   @article_threads get_config(:article, :threads)
@@ -37,12 +39,14 @@ defmodule GroupherServer.CMS.Comments.Actions do
 
   @spec pin_comment(T.id()) :: T.domain_res(Comment.t())
   def pin_comment(comment_id) do
-    with {:ok, {comment, full_comment, info}} <- pin_context(comment_id) do
+    with {:ok, comment} <- CommentRead.fetch_comment(comment_id),
+         {article_thread, article} <- get_article(comment),
+         {:ok, info} <- match(article_thread) do
       Multi.new()
       |> Multi.run(:checked_pined_comments_count, fn _, _ ->
         pined_comments_query =
           from(p in PinnedComment,
-            where: field(p, ^info.foreign_key) == ^full_comment.article.id
+            where: field(p, ^info.foreign_key) == ^article.id
           )
 
         check_pined_comments_count(pined_comments_query)
@@ -51,7 +55,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
         ORM.update(comment, %{is_pinned: true})
       end)
       |> Multi.run(:add_pined_comment, fn _, _ ->
-        attrs = %{comment_id: comment.id} |> Map.put(info.foreign_key, full_comment.article.id)
+        attrs = %{comment_id: comment.id} |> Map.put(info.foreign_key, article.id)
 
         PinnedComment |> ORM.create(attrs)
       end)
@@ -136,7 +140,10 @@ defmodule GroupherServer.CMS.Comments.Actions do
         end
       end)
       |> Multi.run(:after_events, fn _, %{add_reply_to: replied_comment} ->
-        Later.run({Events, :emit, [:notify_reply, %{reply_comment: replied_comment, from_user: user}]})
+        Later.run(
+          {Events, :emit, [:notify_reply, %{reply_comment: replied_comment, from_user: user}]}
+        )
+
         Later.run({Events, :emit, [:mention, %{artiment: replied_comment}]})
       end)
       |> Repo.transaction()
@@ -219,7 +226,9 @@ defmodule GroupherServer.CMS.Comments.Actions do
         FrontDesk.sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, _ ->
-        Later.run({Events, :emit, [:notify_undo_upvote, %{target: comment, from_user: from_user}]})
+        Later.run(
+          {Events, :emit, [:notify_undo_upvote, %{target: comment, from_user: from_user}]}
+        )
       end)
       |> Repo.transaction()
       |> result()
@@ -264,14 +273,10 @@ defmodule GroupherServer.CMS.Comments.Actions do
   end
 
   defp update_article_author_upvoted_info(%Comment{} = comment, user_id) do
-    case CommentRead.fetch_full_comment(comment.id) do
-      {:ok, article} ->
-        is_article_author_upvoted = article.author.id == user_id
-        meta = comment.meta |> Map.put(:is_article_author_upvoted, is_article_author_upvoted)
-        comment |> ORM.update_meta(meta)
-
-      {:error, reason} ->
-        {:error, reason}
+    with {_, article} <- get_article(comment) do
+      is_article_author_upvoted = get_in(article, [:author, :user, :id]) == user_id
+      meta = comment.meta |> Map.put(:is_article_author_upvoted, is_article_author_upvoted)
+      comment |> ORM.update_meta(meta)
     end
   end
 
@@ -346,15 +351,6 @@ defmodule GroupherServer.CMS.Comments.Actions do
     end
   end
 
-  @spec pin_context(T.id()) :: {:ok, {Comment.t(), map(), map()}} | {:error, atom() | {atom(), String.t()}}
-  defp pin_context(comment_id) do
-    with {:ok, comment} <- CommentRead.fetch_comment(comment_id),
-         {:ok, full_comment} <- CommentRead.fetch_full_comment(comment.id),
-         {:ok, info} <- match(full_comment.thread) do
-      {:ok, {comment, full_comment, info}}
-    end
-  end
-
   defp update_upvoted_user_list(comment, user_id, opt) do
     cur_user_ids = get_in(comment, [:meta, :upvoted_user_ids])
 
@@ -391,7 +387,10 @@ defmodule GroupherServer.CMS.Comments.Actions do
     end
   end
 
-  defp add_participant_to_article(%{comments_participants: participants} = article, %User{} = user) do
+  defp add_participant_to_article(
+         %{comments_participants: participants} = article,
+         %User{} = user
+       ) do
     cur_participants = participants |> List.insert_at(0, user) |> Enum.uniq_by(& &1.id)
 
     meta = article.meta |> Map.from_struct()

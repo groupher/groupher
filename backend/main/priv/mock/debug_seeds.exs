@@ -6,6 +6,5 @@ alias GroupherServer.CMS
 CMS.Seeds.clean_up_community(:home)
 {:ok, community} = CMS.Seeds.community(:home)
 
-
 CMS.Seeds.articles(community, :post, 5)
 CMS.Seeds.articles(community, :blog, 5)

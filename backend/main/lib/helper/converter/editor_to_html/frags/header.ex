@@ -4,8 +4,8 @@ defmodule Helper.Converter.EditorToHTML.Frags.Header do
 
   see https://editorjs.io/
   """
-  alias Helper.Types, as: T
   alias Helper.Converter.EditorToHTML.Class
+  alias Helper.Types, as: T
 
   @class get_in(Class.article(), ["header"])
 

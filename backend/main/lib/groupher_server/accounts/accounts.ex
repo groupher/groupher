@@ -3,14 +3,14 @@ defmodule GroupherServer.Accounts do
 
   alias GroupherServer.Accounts.Delegate.{
     Achievements,
+    CollectFolder,
     Customization,
     Fans,
-    CollectFolder,
-    Publish,
     Mailbox,
     Profile,
-    UpvotedArticles,
+    Publish,
     Search,
+    UpvotedArticles,
     Utils
   }
 

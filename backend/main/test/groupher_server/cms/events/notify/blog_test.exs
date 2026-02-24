@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.Delivery
   alias CMS.Events
+  alias GroupherServer.Delivery
 
   setup do
     {community, blog, _, user} = mock_article(:blog)

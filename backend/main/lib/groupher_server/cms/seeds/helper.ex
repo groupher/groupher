@@ -6,10 +6,11 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
   alias CMS.Model.{Category, Community, Thread}
   alias CMS.Seeds.SeedsConfig
 
-  alias Accounts.Model.User
   alias Helper.ORM
 
   @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"
@@ -41,7 +42,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
     Enum.each(
       CMS.Seeds.Tags.get(community, thread, type),
-      &GroupherServer.CMS.Communities.create_tag(community, thread, &1, bot)
+      &CMS.Communities.create_tag(community, thread, &1, bot)
     )
   end
 

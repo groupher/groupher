@@ -6,7 +6,7 @@ defmodule Helper.GeoPool do
   alias GroupherServer.Statistics
   alias Helper.ORM
 
-  alias Statistics.Model.UserGeoInfo
+  alias GroupherServer.Statistics.Model.UserGeoInfo
 
   def all do
     [

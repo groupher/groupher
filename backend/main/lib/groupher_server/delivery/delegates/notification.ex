@@ -9,12 +9,12 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
 
   import ShortMaps
 
-  alias GroupherServer.{Accounts, Delivery, Repo}
-  alias Delivery.Model.Notification
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Delivery.Model.Notification
+  alias GroupherServer.{Accounts, Repo}
 
-  alias Helper.ORM
   alias Ecto.Multi
+  alias Helper.ORM
 
   @notify_actions get_config(:general, :nofity_actions)
   @notify_group_interval_hour get_config(:general, :notify_group_interval_hour)
@@ -75,10 +75,7 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
         |> Repo.transaction()
         |> result()
 
-      false ->
-        {:ok, :pass}
-
-      {:error, _} ->
+      {:error, _reason} ->
         {:ok, :pass}
     end
   end

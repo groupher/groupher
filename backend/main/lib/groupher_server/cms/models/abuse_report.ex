@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
 
   @article_threads get_config(:article, :threads)
 
-  # @required_fields ~w(comment_id user_id recived_user_id)a
+  # @required_fields ~w(comment_id user_id received_user_id)a
   @optional_fields ~w(comment_id account_id operate_user_id deal_with report_cases_count)a
   @update_fields ~w(operate_user_id deal_with report_cases_count)a
 

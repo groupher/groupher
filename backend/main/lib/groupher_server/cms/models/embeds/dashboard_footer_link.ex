@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardFooterLink do
   @optional_fields dashboard_cast_fields(:footer_link)
 
   @doc "for test usage"
-  def default() do
+  def default do
     [
       dashboard_default(:footer_link)
     ]

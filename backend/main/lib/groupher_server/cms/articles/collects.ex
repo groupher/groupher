@@ -7,6 +7,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS, Repo}
+
   alias Accounts.Model.User
   alias CMS.Model.ArticleCollect
   alias CMS.{Events, FrontDesk}

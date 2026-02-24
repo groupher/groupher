@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Model.BlogDocument do
   import Helper.Utils, only: [get_config: 2]
 
   alias GroupherServer.CMS
+
   alias CMS.Model.Blog
   alias Helper.Constant.DBPrefix
 

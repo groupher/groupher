@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Communities.Subscribe do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
-    
+
     {:ok, ~m(user community)a}
   end
 

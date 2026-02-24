@@ -8,12 +8,13 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias CMS.{Events, FrontDesk}
-  alias Helper.Types, as: T
-  alias Helper.{Later, ORM}
 
   alias Accounts.Model.User
   alias CMS.Model.{Comment, CommentUserEmotion}
+  alias CMS.{Events, FrontDesk}
+
+  alias Helper.Types, as: T
+  alias Helper.{Later, ORM}
 
   alias Ecto.Multi
 

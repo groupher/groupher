@@ -7,8 +7,7 @@ defmodule GroupherServer.CMS.Model.Author do
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -29,6 +28,7 @@ defmodule GroupherServer.CMS.Model.Author do
   def changeset(%Author{} = author, _attrs) do
     # |> foreign_key_constraint(:user_id)
     author
+    |> change()
     # |> cast(attrs, [:role])
     # |> validate_required([:role])
     |> unique_constraint(:user_id)

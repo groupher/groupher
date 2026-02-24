@@ -5,8 +5,8 @@ defmodule GroupherServer.Accounts.Model.Social do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.Accounts.Model.User
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.account()
 

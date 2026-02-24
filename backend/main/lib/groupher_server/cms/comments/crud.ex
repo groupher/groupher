@@ -11,15 +11,17 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   import GroupherServer.CMS.Helper.Matcher
 
   alias GroupherServer.{Accounts, CMS, Repo}
+
   alias CMS.FrontDesk
-  alias Helper.Types, as: T
 
   alias Accounts.Model.User
   alias CMS.Comments.Actions
   alias CMS.Events
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Comment, Community, Embeds, PinnedComment, Post}
+
   alias Helper.{Later, ORM}
+  alias Helper.Types, as: T
 
   alias Ecto.Multi
 
@@ -39,9 +41,9 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   def create_comment(%Community{slug: community_slug}, thread, article_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
-            FrontDesk.article(community_slug, thread, article_id,
-              preload: [[author: :user], :community]
-            ),
+           FrontDesk.article(community_slug, thread, article_id,
+             preload: [[author: :user], :community]
+           ),
          true <- can_comment?(article, user) do
       Multi.new()
       |> Multi.run(:create_comment, fn _, _ ->
@@ -66,7 +68,10 @@ defmodule GroupherServer.CMS.Comments.CRUD do
         Later.run({Events, :emit, [:notify_comment, %{comment: comment, from_user: user}]})
         Later.run({Events, :emit, [:mention, %{artiment: comment}]})
         Later.run({Events, :emit, [:audition, %{artiment: comment}]})
-        Later.run({Events, :emit, [:subscribe_community, %{target: article.community, user: user}]})
+
+        Later.run(
+          {Events, :emit, [:subscribe_community, %{target: article.community, user: user}]}
+        )
       end)
       |> Repo.transaction()
       |> result()
@@ -86,8 +91,8 @@ defmodule GroupherServer.CMS.Comments.CRUD do
 
   def update_comment(%Comment{is_solution: true} = comment, body) do
     with {:ok, post} <- FrontDesk.get(Post, comment.post_id),
-          {:ok, parsed} <- Helper.Converter.Article.parse_body(body),
-          {:ok, digest} <- Helper.Converter.Article.parse_digest(parsed.body_map) do
+         {:ok, parsed} <- Helper.Converter.Article.parse_body(body),
+         {:ok, digest} <- Helper.Converter.Article.parse_digest(parsed.body_map) do
       Multi.new()
       |> Multi.run(:update_parent_post, fn _, _ ->
         ORM.update(post, %{solution_digest: digest})
@@ -201,7 +206,7 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   end
 
   @spec archive_comments() :: T.domain_res(term())
-  def archive_comments() do
+  def archive_comments do
     now = Timex.now() |> DateTime.truncate(:second)
     threshold = @archive_threshold[:default]
     archive_threshold = Timex.shift(now, threshold)

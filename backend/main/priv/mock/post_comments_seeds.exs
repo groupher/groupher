@@ -1,7 +1,7 @@
 import GroupherServer.Support.Factory
 
-alias GroupherServer.{CMS, Accounts}
 alias Accounts.Model.User
+alias GroupherServer.{Accounts, CMS}
 
 {:ok, user} = db_insert(:user)
 {:ok, post} = db_insert(:post)

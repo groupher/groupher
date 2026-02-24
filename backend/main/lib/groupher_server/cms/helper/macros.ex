@@ -9,24 +9,16 @@ defmodule GroupherServer.CMS.Helper.Macros do
   alias Accounts.Model.User
 
   alias CMS.Model.{
-
     ArticleCollect,
-
     ArticleUpvote,
-
     Author,
-
     Comment,
-
     Community,
-
     CommunityJoinTag,
-
     CommunityTag,
-
     Embeds
-
   }
+
   @article_threads get_config(:article, :threads)
 
   @doc """
@@ -89,7 +81,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
   add(:xxx_id, references(:cms_xxxs, on_delete: :delete_all))
   ...
   """
-  defmacro article_belongs_to_fields() do
+  defmacro article_belongs_to_fields do
     @article_threads
     |> Enum.map(fn thread ->
       quote do
@@ -120,7 +112,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
   add(:comments_count, :integer, default: 0)
   add(:comments_participants, :map)
   """
-  defmacro comment_fields() do
+  defmacro comment_fields do
     quote do
       field(:comments_participants_count, :integer, default: 0)
       field(:comments_count, :integer, default: 0)
@@ -136,7 +128,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
   those fields is virtual, do not need DB migration
   """
-  defmacro viewer_has_fields() do
+  defmacro viewer_has_fields do
     quote do
       field(:viewer_has_viewed, :boolean, default: false, virtual: true)
       field(:viewer_has_upvoted, :boolean, default: false, virtual: true)
@@ -162,7 +154,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
   -----
   add(:[article]_id, references(:cms_[article]s, on_delete: :delete_all))
   """
-  defmacro upvote_and_collect_fields() do
+  defmacro upvote_and_collect_fields do
     quote do
       has_many(:upvotes, {"article_upvotes", ArticleUpvote})
       field(:upvotes_count, :integer, default: 0)
@@ -177,7 +169,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
   common casting fields for general_article_fields
   """
-  def general_article_cast_fields() do
+  def general_article_cast_fields do
     [
       :title,
       :digest,

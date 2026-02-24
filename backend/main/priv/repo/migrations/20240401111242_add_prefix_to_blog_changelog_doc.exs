@@ -16,7 +16,6 @@ defmodule GroupherServer.Repo.Migrations.AddPrefixToBlogChangelogDoc do
     execute "ALTER TABLE cms.blogs SET SCHEMA public"
     execute "ALTER TABLE public.blogs RENAME TO cms_blogs"
 
-
     execute "ALTER TABLE cms.changelogs SET SCHEMA public"
     execute "ALTER TABLE public.changelogs RENAME TO cms_changelos"
 

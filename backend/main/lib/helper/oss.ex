@@ -57,7 +57,7 @@ defmodule Helper.OSS do
   @doc """
   get sts tmp token for upload file follow a spec policy defined on aliyun
   """
-  def get_sts_token() do
+  def get_sts_token do
     params = %{
       "Action" => "AssumeRole",
       "RoleArn" => @sts_role_arn,
@@ -117,7 +117,7 @@ defmodule Helper.OSS do
     Object.delete_object(config(), "#{@bucket}", file)
   end
 
-  defp config() do
+  defp config do
     :groupher_server
     |> Application.fetch_env!(Helper.OSS)
     |> Map.new()

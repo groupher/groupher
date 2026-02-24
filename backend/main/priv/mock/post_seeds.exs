@@ -1,7 +1,8 @@
 alias GroupherServer.CMS.Delegate.Seeds
 
 alias GroupherServer.CMS
-alias CMS.Model.{Post, CommunityTag}
+
+alias CMS.Model.{CommunityTag, Post}
 alias Helper.{Constant, ORM}
 
 {:ok, post} = Seeds.Articles.seed_articles("home", :post)

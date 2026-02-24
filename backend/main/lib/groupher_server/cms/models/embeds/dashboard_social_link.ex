@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardSocialLink do
   @optional_fields dashboard_cast_fields(:social_link)
 
   @doc "for test usage"
-  def default() do
+  def default do
     [
       dashboard_default(:social_link)
     ]

@@ -1,8 +1,6 @@
 defmodule GroupherServer.Mock.CMS.Kanban do
   import Ecto.Query, warn: false
 
-  # alias GroupherServer.CMS.Model.{Community, Post}
-
   # alias Helper.ORM
 
   # {:ok, community} = ORM.find_by(Community, %{slug: "home"})
@@ -30,7 +28,5 @@ defmodule GroupherServer.Mock.CMS.Kanban do
   #   end
   # end
 end
-
-
 
 GroupherServer.Mock.CMS.Kanban.find_community()

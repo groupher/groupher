@@ -6,9 +6,10 @@ defmodule GroupherServer.Delivery.Model.Notification do
   import Ecto.Changeset
 
   alias GroupherServer.{Accounts, CMS}
-  alias Helper.Constant.DBPrefix
+
   alias Accounts.Model.User
   alias CMS.Model.Embeds
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.delivery()
 

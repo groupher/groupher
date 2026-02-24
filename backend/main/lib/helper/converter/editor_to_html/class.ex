@@ -9,7 +9,7 @@ defmodule Helper.Converter.EditorToHTML.Class do
   @doc """
   get all the class names of the parsed editor.js's html parts
   """
-  def article() do
+  def article do
     %{
       # root wrapper
       "viewer" => "article-viewer-wrapper",

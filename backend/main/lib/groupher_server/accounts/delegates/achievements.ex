@@ -11,10 +11,11 @@ defmodule GroupherServer.Accounts.Delegate.Achievements do
   import Helper.Utils, only: [get_config: 2, done: 1]
   import ShortMaps
 
-  alias Helper.{ORM, Types}
-  alias GroupherServer.Accounts.Model.{Achievement, User}
+  alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.CMS.Model.CommunityModerator
+  alias Accounts.Model.{Achievement, User}
+  alias CMS.Model.CommunityModerator
+  alias Helper.{ORM, Types}
 
   @collect_weight get_config(:general, :user_achieve_collect_weight)
   @upvote_weight get_config(:general, :user_achieve_upvote_weight)

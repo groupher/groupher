@@ -8,9 +8,10 @@ defmodule Helper.ORM do
 
   import Helper.ErrorHandler
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.ORMAtom
   alias Helper.QueryBuilder
   alias Helper.Types, as: T

@@ -4,7 +4,8 @@ defmodule Helper.Converter.MentionParser do
   see https://gitgud.io/lambadalambda/pleroma/commit/2ab1d915e3a7db329f09332e8b688e4bd405b748
   """
 
-  # @mention_regex ~r/@[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@?[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*/u
+  # @mention_regex
+  # legacy mention regex variant (kept for reference)
   # see: https://github.com/regexhq/mentions-regex/blob/master/index.js#L21
   # in elixir regex should replace \ with \\
   # see http://developerworks.github.io/2015/01/02/elixir-regex/

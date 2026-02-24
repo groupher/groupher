@@ -5,8 +5,8 @@ defmodule GroupherServer.Accounts.Delegate.Publish do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [plural: 1]
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS
 
   alias Helper.ORM
 

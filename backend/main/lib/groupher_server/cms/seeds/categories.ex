@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Seeds.Categories do
   @doc """
   default categories seeds for general community
   """
-  def get() do
+  def get do
     [
       %{
         title: "编程语言",

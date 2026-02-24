@@ -3,36 +3,27 @@ defmodule GroupherServer.CMS.Articles do
   CMS articles facade.
   """
 
-  alias GroupherServer.{Accounts, CMS}
   alias Helper.Types, as: T
+
+  alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.{ArticleCollect, Community}
 
   alias __MODULE__.{
-
     Collects,
-
     Lifecycle,
-
     List,
-
     Meta,
-
     Moderation,
-
     Placement,
-
     Reactions,
-
     Read,
-
     Upvotes,
-
     Write
-
   }
+
   # Read
   @spec read(String.t(), T.article_thread(), T.id()) :: T.domain_res(T.article())
   def read(community_slug, thread, inner_id), do: Read.read(community_slug, thread, inner_id)
@@ -134,7 +125,7 @@ defmodule GroupherServer.CMS.Articles do
   @spec unset_illegal(T.article(), map()) :: T.domain_res(T.article())
   def unset_illegal(article, attrs), do: Moderation.unset_illegal(article, attrs)
 
-  @spec set_audit_failed(T.article(), integer()) :: T.domain_res(T.article())
+  @spec set_audit_failed(T.article(), map()) :: T.domain_res(T.article())
   def set_audit_failed(article, state), do: Moderation.set_audit_failed(article, state)
 
   @spec paged_audit_failed(T.article_thread(), map()) :: T.domain_res(T.paged_data())
@@ -218,7 +209,8 @@ defmodule GroupherServer.CMS.Articles do
   def undo_collect(article, %User{} = user), do: Collects.undo_collect(article, user)
 
   @spec undo_collect_ifneed(T.article(), User.t()) :: T.domain_res(T.article())
-  def undo_collect_ifneed(article, %User{} = user), do: Collects.undo_collect_ifneed(article, user)
+  def undo_collect_ifneed(article, %User{} = user),
+    do: Collects.undo_collect_ifneed(article, user)
 
   @spec collected_users(T.article(), map()) :: T.domain_res(T.paged_users() | T.paged_data())
   def collected_users(article, filter), do: Collects.collected_users(article, filter)

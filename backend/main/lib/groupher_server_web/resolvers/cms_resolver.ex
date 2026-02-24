@@ -6,9 +6,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   alias GroupherServer.{Accounts, CMS}
 
-  alias Helper.{ORM, OgInfo}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, Category, Thread}
+  alias CMS.Model.{Category, Community, Thread}
+  alias Helper.{OgInfo, ORM}
 
   # #######################
   # community ..
@@ -174,7 +174,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # thread reaction ..
   # #######################
-  def lock_article_comments(_root, ~m(article)a, _info), do: CMS.Comments.lock_article_comments(article)
+  def lock_article_comments(_root, ~m(article)a, _info),
+    do: CMS.Comments.lock_article_comments(article)
 
   def undo_lock_article_comments(_root, ~m(article)a, _info) do
     CMS.Comments.undo_lock_article_comments(article)
@@ -238,9 +239,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def create_thread(_root, ~m(title slug index)a, _info),
     do: CMS.Communities.create_thread(~m(title slug index)a)
 
-  def set_thread(_root, ~m(community thread)a, _info), do: CMS.Communities.set_thread(community, thread)
+  def set_thread(_root, ~m(community thread)a, _info),
+    do: CMS.Communities.set_thread(community, thread)
 
-  def unset_thread(_root, ~m(community thread)a, _info), do: CMS.Communities.unset_thread(community, thread)
+  def unset_thread(_root, ~m(community thread)a, _info),
+    do: CMS.Communities.unset_thread(community, thread)
 
   # #######################
   # moderators ..
@@ -269,7 +272,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         context: %{cur_user: cur_user}
       }) do
     with {:ok, target_user} <- ORM.find_user(user) do
-      CMS.Communities.update_moderator_passport(community, rules, %User{id: target_user.id}, cur_user)
+      CMS.Communities.update_moderator_passport(
+        community,
+        rules,
+        %User{id: target_user.id},
+        cur_user
+      )
     end
   end
 
@@ -481,5 +489,6 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # ##############################################
   def threads_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :threads)
 
-  def community_tags_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :community_tags)
+  def community_tags_count(root, _, _),
+    do: CMS.Communities.count(%Community{id: root.id}, :community_tags)
 end

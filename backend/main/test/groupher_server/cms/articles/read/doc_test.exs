@@ -5,8 +5,9 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
-  alias EditorToHTML.{Class, Validator}
+  alias CMS.FrontDesk
   alias CMS.Model.{ArticleDocument, DocDocument}
+  alias EditorToHTML.{Class, Validator}
 
   @root_class Class.article()
   @article_digest_length get_config(:article, :digest_length)

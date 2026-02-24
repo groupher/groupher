@@ -35,6 +35,7 @@ defmodule GroupherServer.CMS.Events.Cite do
   import GroupherServer.CMS.Events.Helper, only: [merge_same_block_linker: 2]
 
   alias GroupherServer.{CMS, Repo}
+
   alias CMS.Events.{CitedArtiment, Event}
   alias CMS.FrontDesk
   alias CMS.Model.Comment

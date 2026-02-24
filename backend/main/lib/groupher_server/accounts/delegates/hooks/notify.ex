@@ -2,8 +2,8 @@ defmodule GroupherServer.Accounts.Delegate.Hooks.Notify do
   @moduledoc """
   notify hooks, for upvote, collect, comment, reply
   """
-  alias GroupherServer.{Accounts, Delivery}
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Delivery
 
   # 发布评论是特殊情况，单独处理
   def handle(:follow, %User{} = user, %User{} = from_user) do

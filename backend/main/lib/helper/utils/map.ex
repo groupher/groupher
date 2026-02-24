@@ -60,11 +60,9 @@ defmodule Helper.Utils.Map do
 
   # NOTE: be careful! make sure the string is not dynamic, otherwise the memory will blow.
   defp string_to_atom(string) when is_binary(string) do
-    try do
-      String.to_existing_atom(string)
-    rescue
-      ArgumentError -> String.to_atom(string)
-    end
+    String.to_existing_atom(string)
+  rescue
+    ArgumentError -> String.to_atom(string)
   end
 
   defp string_to_atom(atom) when is_atom(atom) do

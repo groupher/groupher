@@ -7,6 +7,7 @@ defmodule GroupherServer.CMS.Communities.Apply do
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS}
+
   alias Accounts.Model.User
   alias CMS.Communities
   alias CMS.Model.Community

@@ -9,13 +9,13 @@ defmodule GroupherServer.Accounts.Delegate.Profile do
 
   alias GroupherServer.{Accounts, CMS, Email, Repo, Statistics}
 
-  alias Accounts.Model.{Achievement, OauthProvider, User, Social, Embeds}
+  alias Accounts.Model.{Achievement, Embeds, OauthProvider, Social, User}
   alias CMS.Model.{Community, CommunitySubscriber}
 
-  alias GroupherServer.Accounts.Delegate.Fans
+  alias Accounts.Delegate.Fans
 
-  alias Helper.{Guardian, ORM, QueryBuilder}
   alias Ecto.Multi
+  alias Helper.{Guardian, ORM, QueryBuilder}
 
   @default_user_meta Embeds.UserMeta.default_meta()
   @default_subscribed_communities get_config(:general, :default_subscribed_communities)

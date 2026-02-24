@@ -9,9 +9,10 @@ defmodule GroupherServer.CMS.Articles.Placement do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Communities
-  alias CMS.FrontDesk
+
+  alias CMS.{Communities, FrontDesk}
   alias CMS.Model.{Community, PinnedArticle}
+
   alias Ecto.Multi
   alias Helper.ORM
   alias Helper.Types, as: T

@@ -42,7 +42,6 @@ defmodule GroupherServer.Repo.Migrations.DropDrinkModule do
       remove(:drink_id)
     end
 
-
     alter table(:abuse_reports) do
       remove(:drink_id)
     end

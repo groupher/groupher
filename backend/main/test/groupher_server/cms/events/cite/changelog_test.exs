@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
 
   use GroupherServer.TestTools
 
-  alias CMS.Model.{CitedArtiment}
   alias CMS.Events
+  alias CMS.Model.CitedArtiment
 
   @site_host get_config(:general, :site_host)
 
@@ -211,7 +211,8 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
       Events.emit(:cite, %{artiment: comment})
       Events.emit(:cite, %{artiment: changelog_y})
 
-      {:ok, result} = CMS.Articles.paged_citing_contents("CHANGELOG", changelog2.id, %{page: 1, size: 10})
+      {:ok, result} =
+        CMS.Articles.paged_citing_contents("CHANGELOG", changelog2.id, %{page: 1, size: 10})
 
       entries = result.entries
 
@@ -246,7 +247,12 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
       body = mock_rich_text(~s(the <a href=#{@site_host}/changelog/#{changelog2.id} />))
 
       {:ok, changelog} =
-        CMS.Articles.create(community, :changelog, Map.merge(changelog_attrs, %{body: body}), user)
+        CMS.Articles.create(
+          community,
+          :changelog,
+          Map.merge(changelog_attrs, %{body: body}),
+          user
+        )
 
       Events.emit(:cite, %{artiment: changelog})
 
@@ -257,7 +263,8 @@ defmodule GroupherServer.Test.CMS.Events.Cite.ChangelogTest do
 
       Events.emit(:cite, %{artiment: blog})
 
-      {:ok, result} = CMS.Articles.paged_citing_contents("CHANGELOG", changelog2.id, %{page: 1, size: 10})
+      {:ok, result} =
+        CMS.Articles.paged_citing_contents("CHANGELOG", changelog2.id, %{page: 1, size: 10})
 
       assert result.total_count == 2
 

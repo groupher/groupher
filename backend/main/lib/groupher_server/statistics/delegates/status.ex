@@ -1,6 +1,6 @@
 defmodule GroupherServer.Statistics.Delegate.Status do
   @moduledoc """
-  badic count info of the whole site, used in admin panel sidebar
+  basic count info of the whole site, used in admin panel sidebar
   """
 
   import Ecto.Query, warn: false
@@ -22,7 +22,7 @@ defmodule GroupherServer.Statistics.Delegate.Status do
   @cache_pool :online_status
   @count_filter %{page: 1, size: 1}
 
-  def online_status() do
+  def online_status do
     case Cache.get(@cache_pool, :realtime_visitors) do
       {:ok, realtime_visitors} -> {:ok, %{realtime_visitors: realtime_visitors}}
       _ -> {:ok, %{realtime_visitors: 1}}

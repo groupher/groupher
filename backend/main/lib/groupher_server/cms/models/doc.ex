@@ -9,8 +9,8 @@ defmodule GroupherServer.CMS.Model.Doc do
   import GroupherServer.CMS.Helper.Macros
 
   alias GroupherServer.CMS
-  alias CMS.Model.Embeds
 
+  alias CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
   alias Helper.HTML
 

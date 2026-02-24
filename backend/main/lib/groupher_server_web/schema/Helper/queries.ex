@@ -10,7 +10,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
   @article_threads get_config(:article, :threads)
 
   # user published articles
-  defmacro published_article_queries() do
+  defmacro published_article_queries do
     @article_threads
     |> Enum.map(fn thread ->
       quote do
@@ -28,7 +28,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
     end)
   end
 
-  defmacro article_search_queries() do
+  defmacro article_search_queries do
     @article_threads
     |> Enum.map(fn thread ->
       quote do
@@ -48,7 +48,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
 
   post, page_posts ...
   """
-  defmacro article_queries() do
+  defmacro article_queries do
     @article_threads
     |> Enum.map(fn thread ->
       quote do

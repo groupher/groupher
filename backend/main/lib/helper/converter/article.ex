@@ -10,7 +10,7 @@ defmodule Helper.Converter.Article do
 
   @article_digest_length get_config(:article, :digest_length)
 
-  def default_rich_text() do
+  def default_rich_text do
     """
     {
       "time": 2018,

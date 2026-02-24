@@ -35,14 +35,14 @@ defmodule GroupherServer.Email.Templates.ThanksDonation do
     """
   end
 
-  def text() do
+  def text do
     """
     您的善举将全部被用于社区服务器的维护和运营，如有任何疑问，请将上述账单截图发送至 support@group.coderplanets.com, 我会第一时间为您处理。再次感谢, 祝生活愉快!
     """
   end
 
   @doc false
-  def raw() do
+  def raw do
     """
     <mjml>
       <mj-head>

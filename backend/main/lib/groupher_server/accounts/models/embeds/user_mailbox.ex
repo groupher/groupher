@@ -9,7 +9,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMailbox do
 
   @optional_fields ~w(is_empty unread_total_count unread_mentions_count unread_notifications_count)a
 
-  def default_status() do
+  def default_status do
     %{
       is_empty: true,
       unread_total_count: 0,

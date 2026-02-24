@@ -11,12 +11,12 @@ defmodule GroupherServer.CMS.Comments.List do
   import GroupherServer.CMS.Helper.Matcher
 
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias CMS.FrontDesk
-  alias Helper.Types, as: T
-  alias Helper.{Later, ORM, QueryBuilder}
 
   alias Accounts.Model.User
+  alias CMS.FrontDesk
   alias CMS.Model.{Comment, PinnedComment}
+  alias Helper.Types, as: T
+  alias Helper.{Later, ORM, QueryBuilder}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
 
@@ -60,7 +60,8 @@ defmodule GroupherServer.CMS.Comments.List do
     end
   end
 
-  @spec paged_comments(T.article_thread(), T.id(), map(), atom(), User.t() | nil) :: T.domain_res(T.paged_data())
+  @spec paged_comments(T.article_thread(), T.id(), map(), atom(), User.t() | nil) ::
+          T.domain_res(T.paged_data())
   def paged_comments(thread, article_id, filters, mode, user \\ nil)
 
   def paged_comments(thread, article_id, filters, :timeline, user) do
@@ -95,7 +96,8 @@ defmodule GroupherServer.CMS.Comments.List do
     |> done()
   end
 
-  @spec paged_published_comments(User.t(), T.article_thread(), map()) :: T.domain_res(T.paged_data())
+  @spec paged_published_comments(User.t(), T.article_thread(), map()) ::
+          T.domain_res(T.paged_data())
   def paged_published_comments(%User{id: user_id}, thread, filter) do
     %{page: page, size: size} = filter
 
@@ -121,7 +123,8 @@ defmodule GroupherServer.CMS.Comments.List do
     do_paged_comment(thread, article_id, filters, where_query, nil)
   end
 
-  @spec paged_folded_comments(T.article_thread(), T.id(), map(), User.t()) :: T.domain_res(T.paged_data())
+  @spec paged_folded_comments(T.article_thread(), T.id(), map(), User.t()) ::
+          T.domain_res(T.paged_data())
   def paged_folded_comments(thread, article_id, filters, %User{} = user) do
     where_query = dynamic([c], c.is_folded and not c.is_pinned)
     do_paged_comment(thread, article_id, filters, where_query, user)
@@ -134,14 +137,17 @@ defmodule GroupherServer.CMS.Comments.List do
     do_paged_comment_replies(comment_id, filters, user)
   end
 
-  @spec paged_comments_participants(T.article_thread(), T.id(), map()) :: T.domain_res(T.paged_users())
+  @spec paged_comments_participants(T.article_thread(), T.id(), map()) ::
+          T.domain_res(T.paged_users())
   def paged_comments_participants(thread, article_id, filters) do
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, info} <- match(thread),
          {:ok, article} <- FrontDesk.get(info.model, article_id),
          {:ok, paged_data} <- do_paged_comments_participants(thread_query, filters) do
       if article.comments_participants_count !== paged_data.total_count do
-        Later.run({ORM, :update, [article, %{comments_participants_count: paged_data.total_count}]})
+        Later.run(
+          {ORM, :update, [article, %{comments_participants_count: paged_data.total_count}]}
+        )
       end
 
       paged_data |> done

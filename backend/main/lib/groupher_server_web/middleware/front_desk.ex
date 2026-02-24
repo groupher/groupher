@@ -63,34 +63,24 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
          } = resolution,
          community
        ) do
-    case FrontDesk.article(community, thread, inner_id) do
-      {:ok, article} ->
-        passport_is_owner = article.author.user.id == cur_user.id
+    {:ok, article} = FrontDesk.article(community, thread, inner_id)
+    passport_is_owner = article.author.user.id == cur_user.id
 
-        updated_arguments =
-          arguments
-          |> Map.put(:article, article)
-          |> Map.put(:passport_is_owner, passport_is_owner)
+    updated_arguments =
+      arguments
+      |> Map.put(:article, article)
+      |> Map.put(:passport_is_owner, passport_is_owner)
 
-        %{resolution | arguments: updated_arguments}
-
-      {:error, err_msg} ->
-        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
-    end
+    %{resolution | arguments: updated_arguments}
   end
 
   defp fetch_article(
          %{arguments: %{thread: thread, id: inner_id} = arguments} = resolution,
          community
        ) do
-    case FrontDesk.article(community, thread, inner_id) do
-      {:ok, article} ->
-        updated_arguments = arguments |> Map.put(:article, article)
-        %{resolution | arguments: updated_arguments}
-
-      {:error, err_msg} ->
-        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
-    end
+    {:ok, article} = FrontDesk.article(community, thread, inner_id)
+    updated_arguments = arguments |> Map.put(:article, article)
+    %{resolution | arguments: updated_arguments}
   end
 
   defp fetch_comment(
@@ -124,13 +114,8 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   end
 
   defp fetch_thread(%{arguments: %{thread_id: thread_id} = arguments} = resolution) do
-    case FrontDesk.thread(thread_id) do
-      {:ok, community} ->
-        %{resolution | arguments: Map.put(arguments, :thread, community)}
-
-      {:error, err_msg} ->
-        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
-    end
+    {:ok, community} = FrontDesk.thread(thread_id)
+    %{resolution | arguments: Map.put(arguments, :thread, community)}
   end
 
   defp fetch_user(%{arguments: %{login: login} = arguments} = resolution) do

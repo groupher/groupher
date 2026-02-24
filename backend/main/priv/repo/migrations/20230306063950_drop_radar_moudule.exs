@@ -42,7 +42,6 @@ defmodule GroupherServer.Repo.Migrations.DropRadarMoudule do
       remove(:radar_id)
     end
 
-
     alter table(:abuse_reports) do
       remove(:radar_id)
     end

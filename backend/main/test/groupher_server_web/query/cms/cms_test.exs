@@ -134,9 +134,14 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
     test "can get tags count ", ~m(community guest_conn user)a do
       community_tag_attrs = mock_attrs(:community_tag)
-      {:ok, _community_tag} = CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+
+      {:ok, _community_tag} =
+        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+
       community_tag_attrs = mock_attrs(:community_tag)
-      {:ok, _community_tag} = CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+
+      {:ok, _community_tag} =
+        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
 
       variables = %{slug: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -343,7 +348,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       {:ok, category} = CMS.Communities.create_category(~m(title slug)a, %User{id: user.id})
 
-      {:ok, _} = CMS.Communities.set_category(%Community{id: community.id}, %Category{id: category.id})
+      {:ok, _} =
+        CMS.Communities.set_category(%Community{id: community.id}, %Category{id: category.id})
 
       results = guest_conn |> gq_query(@query, variables)
       contain_communities = results["entries"] |> List.first() |> Map.get("communities")
@@ -404,18 +410,26 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       {:ok, community} = CMS.Communities.create(community_attrs, user)
       {:ok, _} = CMS.Communities.update_dashboard(community, :seo, %{og_title: "groupher"})
-      {:ok, _} = CMS.Communities.update_dashboard(community, :layout, %{post_layout: "new layout"})
+
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :layout, %{post_layout: "new layout"})
 
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :layout, %{kanban_bg_colors: ["GREEN", "RED"]})
 
-      {:ok, _} = CMS.Communities.update_dashboard(community, :base_info, %{favicon: "new favicon"})
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :base_info, %{favicon: "new favicon"})
 
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :rss, %{rss_feed_type: "digest", rss_feed_count: 50})
+        CMS.Communities.update_dashboard(community, :rss, %{
+          rss_feed_type: "digest",
+          rss_feed_count: 50
+        })
 
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :name_alias, [%{slug: "slug 0", name: "name 0"}])
+        CMS.Communities.update_dashboard(community, :name_alias, [
+          %{slug: "slug 0", name: "name 0"}
+        ])
 
       variables = %{slug: community.slug}
 
@@ -476,7 +490,11 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, users} = db_insert_multi(:user, 25)
 
       cur_user = user
-      Enum.each(users, &CMS.Communities.add_moderator(community, role, %User{id: &1.id}, cur_user))
+
+      Enum.each(
+        users,
+        &CMS.Communities.add_moderator(community, role, %User{id: &1.id}, cur_user)
+      )
 
       variables = %{id: community.id, filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)

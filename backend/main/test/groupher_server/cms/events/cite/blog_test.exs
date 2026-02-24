@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Events.Cite.BlogTest do
 
   use GroupherServer.TestTools
 
-  alias CMS.Model.{CitedArtiment}
   alias CMS.Events
+  alias CMS.Model.CitedArtiment
 
   @site_host get_config(:general, :site_host)
 

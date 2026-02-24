@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   @optional_fields dashboard_cast_fields(:layout) ++ [:kanban_bg_colors]
 
   @doc "for test usage"
-  def default() do
+  def default do
     dashboard_default(:layout) |> Map.merge(%{kanban_bg_colors: []})
   end
 

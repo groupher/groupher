@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.{CMS, Delivery, Repo}
   alias CMS.Events
+  alias GroupherServer.{Delivery, Repo}
 
   setup do
     {community, changelog, _, user} = mock_article(:changelog)
@@ -130,7 +130,13 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       {:ok, changelog} = preload_author(changelog)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :changelog,
+          changelog.inner_id,
+          mock_comment(),
+          user2
+        )
 
       Events.emit(:notify_comment, %{comment: comment, from_user: user2})
 
@@ -152,7 +158,13 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       {:ok, changelog} = preload_author(changelog)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :changelog,
+          changelog.inner_id,
+          mock_comment(),
+          user2
+        )
 
       {:ok, replied_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user3)
 

@@ -18,7 +18,6 @@ defmodule GroupherServer.Repo.Migrations.AddOriginalCommunityRawToArticles do
       add(:original_community_raw, :string)
     end
 
-
     # drop(unique_index(:cms_posts, [:original_community_id, :inner_id]))
     # drop(unique_index(:cms_blogs, [:original_community_id, :inner_id]))
     # drop(unique_index(:cms_changelogs, [:original_community_id, :inner_id]))

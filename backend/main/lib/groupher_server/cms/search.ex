@@ -8,6 +8,7 @@ defmodule GroupherServer.CMS.Search do
   import GroupherServer.CMS.Helper.Matcher
 
   alias GroupherServer.{Accounts, CMS}
+
   alias Accounts.Model.User
   alias CMS.Model.Community
   alias Helper.ORM
