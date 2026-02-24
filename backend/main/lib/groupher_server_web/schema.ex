@@ -6,7 +6,7 @@ defmodule GroupherServerWeb.Schema do
   import GroupherServerWeb.Schema.Helper.Imports
 
   alias GroupherServerWeb.Middleware, as: M
-  alias GroupherServerWeb.Schema.{Account, Payment, CMS, Statistics, Helper}
+  alias GroupherServerWeb.Schema.{Account, CMS, Helper, Payment, Statistics}
 
   import_types(Absinthe.Type.Custom)
 

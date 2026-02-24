@@ -8,14 +8,12 @@ defmodule Helper.ORM do
 
   import Helper.ErrorHandler
 
-  alias Helper.Types, as: T
-  alias GroupherServer.Repo
-  alias Helper.QueryBuilder
-
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias GroupherServer.Accounts.Model.User
-
+  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
+  alias GroupherServer.Repo
   alias Helper.ORMAtom
+  alias Helper.QueryBuilder
+  alias Helper.Types, as: T
 
   @article_threads get_config(:article, :threads)
 

@@ -7,8 +7,8 @@ defmodule Helper.GqlSchemaSuite do
     quote do
       use Absinthe.Schema.Notation
 
-      alias GroupherServerWeb.Resolvers, as: R
       alias GroupherServerWeb.Middleware, as: M
+      alias GroupherServerWeb.Resolvers, as: R
     end
   end
 end

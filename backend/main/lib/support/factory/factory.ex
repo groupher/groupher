@@ -8,20 +8,20 @@ defmodule GroupherServer.Support.Factory do
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Helper.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Delivery}
   alias Accounts.Model.User
-
-  alias Helper.ORM
 
   alias CMS.Model.{
     Author,
     Category,
+    Comment,
     Community,
-    Thread,
-    CommunityThread,
     CommunityTag,
-    Comment
+    CommunityThread,
+    Thread
   }
+
+  alias GroupherServer.{Accounts, CMS, Delivery}
+  alias Helper.ORM
 
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
   @default_emotions CMS.Model.Embeds.CommentEmotion.default_emotions()

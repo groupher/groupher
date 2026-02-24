@@ -2,9 +2,9 @@ defmodule GroupherServerWeb.Resolvers.Statistics do
   @moduledoc """
   resolvers for Statistics
   """
-  alias GroupherServer.{Accounts, CMS, Statistics}
-  alias CMS.Model.Community
   alias Accounts.Model.User
+  alias CMS.Model.Community
+  alias GroupherServer.{Accounts, CMS, Statistics}
 
   # tmp for test
 

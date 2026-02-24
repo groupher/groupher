@@ -9,15 +9,15 @@ defmodule GroupherServer.Statistics.Delegate.Status do
   alias GroupherServer.CMS
 
   alias CMS.Model.{
-    Post,
     Blog,
-    Community,
-    Thread,
     Category,
-    CommunityTag
+    Community,
+    CommunityTag,
+    Post,
+    Thread
   }
 
-  alias Helper.{ORM, Cache}
+  alias Helper.{Cache, ORM}
 
   @cache_pool :online_status
   @count_filter %{page: 1, size: 1}

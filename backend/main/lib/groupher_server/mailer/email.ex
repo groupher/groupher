@@ -7,12 +7,11 @@ defmodule GroupherServer.Email do
   import Bamboo.Email
   import Helper.Utils, only: [get_config: 2]
 
-  alias GroupherServer.{Accounts, Payment, Email, Mailer}
-
   alias Accounts.Model.User
-  alias Payment.Model.BillRecord
   alias Email.Templates
-  alias Mailer
+  alias Payment.Model.BillRecord
+
+  alias GroupherServer.{Accounts, Email, Mailer, Payment}
 
   @support_email get_config(:system_emails, :support_email)
   @admin_email get_config(:system_emails, :admin_email)
