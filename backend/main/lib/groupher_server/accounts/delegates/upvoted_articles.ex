@@ -6,10 +6,10 @@ defmodule GroupherServer.Accounts.Delegate.UpvotedArticles do
   import Helper.Utils, only: [done: 1, get_config: 2]
   import ShortMaps
 
-  alias Helper.{ORM, QueryBuilder}
-
   alias GroupherServer.CMS
-  alias CMS.Model.{ArticleUpvote}
+
+  alias CMS.Model.ArticleUpvote
+  alias Helper.{ORM, QueryBuilder}
 
   @article_threads get_config(:article, :threads)
 

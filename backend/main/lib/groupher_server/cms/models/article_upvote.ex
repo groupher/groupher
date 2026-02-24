@@ -11,8 +11,7 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
   import GroupherServer.CMS.Helper.Constraints,
     only: [articles_foreign_key_constraint: 1, articles_upvote_unique_key_constraint: 1]
 
-  alias GroupherServer.Accounts
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

@@ -4,6 +4,7 @@ defmodule GroupherServer.CMS.AbuseReports do
   """
 
   alias GroupherServer.{Accounts, CMS}
+
   alias Accounts.Model.User
   alias CMS.Model.Comment
   alias Helper.Types, as: T

@@ -11,14 +11,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
   import ShortMaps
   import Helper.ErrorCode
 
-  alias GroupherServer.{Accounts, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, CommunityTag}
   alias Helper.Types, as: T
   alias Helper.{ORM, QueryBuilder}
-
-  alias GroupherServer.CMS
-  alias Accounts.Model.User
-
-  alias CMS.Model.{Community, CommunityTag}
 
   alias Ecto.Multi
 
@@ -136,13 +134,13 @@ defmodule GroupherServer.CMS.Communities.Tags do
       }) do
     check_filter = %{page: 1, size: 100, community_id: cid, thread: thread}
 
-    with true <- tag_in_same_thread?(tag_ids, check_filter),
-         {:ok, article} <- do_overwrite_tags(article, []),
-         {:ok, related_tags} <- find_related_tags(tag_ids) do
-      do_overwrite_tags(article, related_tags)
+    if tag_in_same_thread?(tag_ids, check_filter) do
+      with {:ok, article} <- do_overwrite_tags(article, []),
+           {:ok, related_tags} <- find_related_tags(tag_ids) do
+        do_overwrite_tags(article, related_tags)
+      end
     else
-      false ->
-        raise_error(:invalid_domain_tag, "tag not in same community & thread")
+      raise_error(:invalid_domain_tag, "tag not in same community & thread")
     end
   end
 

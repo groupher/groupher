@@ -6,9 +6,9 @@ defmodule GroupherServer.CMS.Model.CommunityCategory do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
-  alias Helper.Constant.DBPrefix
 
   alias CMS.Model.{Category, Community}
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @type t :: %CommunityCategory{}

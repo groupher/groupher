@@ -13,8 +13,8 @@ defmodule GroupherServer.Delivery.Delegate.Mention do
   alias CMS.Model.Comment
   alias Delivery.Model.Mention
 
-  alias Helper.ORM
   alias Ecto.Multi
+  alias Helper.ORM
 
   # 发送
   # Delivery.send(:mention, content, mentions, user)

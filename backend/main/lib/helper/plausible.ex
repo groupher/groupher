@@ -23,9 +23,9 @@ defmodule Helper.Plausible do
   plug(Tesla.Middleware.Timeout, timeout: @timeout_limit)
   plug(Tesla.Middleware.JSON)
 
-  defp get_token(), do: get_config(:plausible, :token)
+  defp get_token, do: get_config(:plausible, :token)
 
-  def realtime_visitors() do
+  def realtime_visitors do
     query = [site_id: @site_id]
     path = "#{@realtime_visitors_query}"
     # NOTICE: DO NOT use Tesla.get, otherwise the middleware will not woking

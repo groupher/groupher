@@ -6,7 +6,8 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Model.Metrics.Dashboard
+
+  alias CMS.Model.Metrics.Dashboard
 
   @page_size get_config(:general, :page_size)
 
@@ -15,7 +16,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   @article_threads get_config(:article, :threads)
 
   @doc "general article fields for GraphQL resolve fields"
-  defmacro general_article_fields() do
+  defmacro general_article_fields do
     quote do
       field(:inner_id, :id)
       field(:title, :string)
@@ -114,7 +115,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   viewer_has_beered
   latest_bear_users
   """
-  defmacro emotion_fields() do
+  defmacro emotion_fields do
     @emotions
     |> Enum.map(
       &quote do
@@ -230,7 +231,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     end
   end
 
-  defmacro threads_count_fields() do
+  defmacro threads_count_fields do
     @article_threads
     |> Enum.map(
       &quote do
@@ -250,7 +251,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   @doc """
   general collect folder meta info
   """
-  defmacro collect_folder_meta_fields() do
+  defmacro collect_folder_meta_fields do
     @article_threads
     |> Enum.map(fn thread ->
       quote do

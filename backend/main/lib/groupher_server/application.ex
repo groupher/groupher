@@ -39,7 +39,7 @@ defmodule GroupherServer.Application do
     :ok
   end
 
-  defp cache_workers() do
+  defp cache_workers do
     @cache_pool
     |> Map.keys()
     |> Enum.reduce([], fn key, acc ->

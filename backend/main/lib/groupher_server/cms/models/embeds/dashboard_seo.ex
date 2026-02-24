@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardSEO do
   @optional_fields dashboard_cast_fields(:seo)
 
   @doc "for test usage"
-  def default(), do: dashboard_default(:seo)
+  def default, do: dashboard_default(:seo)
 
   embedded_schema do
     dashboard_fields(:seo)

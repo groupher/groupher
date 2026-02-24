@@ -18,7 +18,6 @@ defmodule GroupherServer.Repo.Migrations.MoreArticlesToCmsPrefix do
     execute "ALTER TABLE public.article_documents SET SCHEMA cms"
   end
 
-
   def down do
     execute "ALTER TABLE cms.authors SET SCHEMA public"
     execute "ALTER TABLE public.authors RENAME TO cms_authors"

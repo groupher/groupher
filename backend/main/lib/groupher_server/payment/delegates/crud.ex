@@ -9,12 +9,11 @@ defmodule GroupherServer.Payment.Delegate.CRUD do
 
   alias Helper.ORM
 
-  alias GroupherServer.{Accounts, Payment}
-  alias Accounts.Model.User
-  alias Payment.Model.BillRecord
-  alias Payment.Delegate.Actions
-  alias GroupherServer.Repo
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.Email
+  alias GroupherServer.Payment.Delegate.Actions
+  alias GroupherServer.Payment.Model.BillRecord
+  alias GroupherServer.Repo
 
   alias Ecto.Multi
 

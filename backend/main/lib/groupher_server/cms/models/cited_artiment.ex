@@ -9,8 +9,8 @@ defmodule GroupherServer.CMS.Model.CitedArtiment do
   import GroupherServer.CMS.Helper.Macros
 
   alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
 
+  alias Accounts.Model.User
   alias CMS.Model.Comment
   alias Helper.Constant.DBPrefix
 

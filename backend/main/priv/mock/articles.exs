@@ -1,12 +1,11 @@
 # TODO: remove later
 # import GroupherServer.Support.Factory
 
+alias GroupherServer.{Accounts, CMS}
 alias Helper.ORM
-alias GroupherServer.CMS
-alias GroupherServer.Accounts
 
-alias CMS.Model.{Community, Post, Embeds}
 alias Accounts.Model.User
+alias CMS.Model.{Community, Embeds, Post}
 
 default_meta = Embeds.ArticleMeta.default_meta()
 

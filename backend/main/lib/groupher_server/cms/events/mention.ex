@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.Events.Mention do
   import GroupherServer.CMS.Events.Helper, only: [merge_same_block_linker: 2]
 
   alias GroupherServer.{Accounts, CMS, Delivery, Repo}
+
   alias CMS.Events.Event
   alias CMS.FrontDesk
   alias CMS.Model.Comment

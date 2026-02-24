@@ -10,7 +10,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.CollectFolderMeta.Macros do
 
   @article_threads get_config(:article, :threads)
 
-  defmacro threads_fields() do
+  defmacro threads_fields do
     @article_threads
     |> Enum.map(fn thread ->
       quote do
@@ -35,7 +35,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.CollectFolderMeta do
   @optional_fields Enum.map(@article_threads, &:"#{&1}_count") ++
                      Enum.map(@article_threads, &:"has_#{&1}")
 
-  def default_meta() do
+  def default_meta do
     @article_threads
     |> Enum.reduce([], fn thread, acc -> acc ++ ["#{thread}_count": 0, "has_#{thread}": false] end)
     |> Enum.into(%{})

@@ -1,7 +1,7 @@
 import GroupherServer.Support.Factory
 
-alias Helper.ORM
 alias GroupherServer.CMS
+alias Helper.ORM
 
 # communities = ["js", "java", "nodejs", "elixir", "c", "python", "ruby", "lisp"]
 # communities = ["php", "julia", "rust", "cpp", "csharp", "clojure", "dart", "go", "kotlin"]

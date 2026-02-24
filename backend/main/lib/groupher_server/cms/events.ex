@@ -17,8 +17,7 @@ defmodule GroupherServer.CMS.Events do
   or reconfigure events without touching the rest of the codebase.
   """
 
-  alias GroupherServer.CMS
-  alias CMS.Events.Event
+  alias GroupherServer.CMS.Events.Event
 
   @type event_result :: {:ok, term()} | {:error, term()}
 

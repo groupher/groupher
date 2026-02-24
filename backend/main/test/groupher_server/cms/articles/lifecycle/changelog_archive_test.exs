@@ -1,5 +1,6 @@
 defmodule GroupherServer.Test.CMS.ChangelogArchive do
   @moduledoc false
+
   use GroupherServer.TestTools
 
   @archive_threshold get_config(:article, :archive_threshold)

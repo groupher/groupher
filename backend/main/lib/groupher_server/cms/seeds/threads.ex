@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Seeds.Threads do
+  @moduledoc false
   def get(:home) do
     [
       # %{

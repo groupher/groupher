@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.CMS.Search do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.CMS.Search
+  alias CMS.Search
 
   setup do
     {:ok, user} = db_insert(:user)

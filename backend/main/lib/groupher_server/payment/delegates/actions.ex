@@ -7,10 +7,10 @@ defmodule GroupherServer.Payment.Delegate.Actions do
   alias Helper.ORM
 
   alias GroupherServer.Accounts
-  alias GroupherServer.Payment.Model.BillRecord
   alias GroupherServer.Email
+  alias GroupherServer.Payment.Model.BillRecord
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
 
   @senior_amount_threshold get_config(:general, :senior_amount_threshold)
 

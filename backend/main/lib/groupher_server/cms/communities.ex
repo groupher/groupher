@@ -4,39 +4,27 @@ defmodule GroupherServer.CMS.Communities do
   """
 
   alias GroupherServer.{Accounts, CMS}
+
   alias Accounts.Model.User
   alias CMS.Model.{Category, Community, CommunityTag, Thread}
   alias Helper.Types, as: T
 
   alias __MODULE__.{
-
     Apply,
-
     Categories,
-
     Count,
-
     Dashboard,
-
     List,
-
     Members,
-
     Moderator,
-
     Passport,
-
     Read,
-
     Subscribe,
-
     Tags,
-
     Threads,
-
     Write
-
   }
+
   # Read
   @spec read(String.t()) :: T.domain_res(Community.t())
   def read(slug), do: Read.read(slug)
@@ -146,7 +134,7 @@ defmodule GroupherServer.CMS.Communities do
   def paged_passports(community, key), do: Passport.paged_passports(community, key)
 
   @spec all_passport_rules() :: T.domain_res(map())
-  def all_passport_rules(), do: Passport.all_passport_rules()
+  def all_passport_rules, do: Passport.all_passport_rules()
 
   # Moderator
   @spec add_moderator(Community.t(), String.t(), User.t(), User.t()) ::
@@ -240,7 +228,8 @@ defmodule GroupherServer.CMS.Communities do
   end
 
   # Count helpers (migrated from CommunityCRUD)
-  @spec update_count_field(Community.t() | [Community.t()], atom()) :: T.domain_res(Community.t() | :pass)
+  @spec update_count_field(Community.t() | [Community.t()], atom()) ::
+          T.domain_res(Community.t() | :pass)
   def update_count_field(%Community{} = community, field) do
     Count.update(community, field)
   end

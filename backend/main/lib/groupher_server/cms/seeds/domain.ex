@@ -16,9 +16,9 @@ defmodule GroupherServer.CMS.Seeds.Domain do
     ]
 
   alias GroupherServer.CMS
-  alias Helper.ORM
 
   alias CMS.Model.Community
+  alias Helper.ORM
 
   @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"
 
@@ -29,8 +29,8 @@ defmodule GroupherServer.CMS.Seeds.Domain do
   """
   def seed_community(:home) do
     with {:error, _} <- ORM.find_by(Community, %{slug: "home"}),
-          {:ok, bot} <- seed_bot(),
-          {:ok, _threads} <- seed_threads(:home) do
+         {:ok, bot} <- seed_bot(),
+         {:ok, _threads} <- seed_threads(:home) do
       _args = %{
         title: "Groupher",
         desc: "让你的产品聆听用户的声音",

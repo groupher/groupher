@@ -5,6 +5,7 @@ defmodule GroupherServer.CMS.Communities.Threads do
   import ShortMaps
 
   alias GroupherServer.CMS
+
   alias CMS.Model.{Community, CommunityThread, Thread}
   alias Helper.ORM
   alias Helper.Types, as: T

@@ -6,7 +6,7 @@ defmodule GroupherServer.Repo.Migrations.RenameIsSinkInMeta do
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Model.{Post, Changelog, Blog, Doc}
+  alias CMS.Model.{Blog, Changelog, Doc, Post}
 
   @models_using_meta [Post, Changelog, Blog, Doc]
 

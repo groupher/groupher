@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardFAQ do
   @optional_fields dashboard_cast_fields(:faq_section)
 
   @doc "for test usage"
-  def default() do
+  def default do
     [
       dashboard_default(:faq_section)
     ]

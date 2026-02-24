@@ -3,9 +3,11 @@ defmodule GroupherServer.CMS.Helper.MatcherMacros do
   generate match functions
   """
   alias GroupherServer.CMS
-  alias CMS.Model.{Embeds}
 
-  @article_threads Application.compile_env(:groupher_server, :article, []) |> Keyword.get(:threads, [])
+  alias CMS.Model.Embeds
+
+  @article_threads Application.compile_env(:groupher_server, :article, [])
+                   |> Keyword.get(:threads, [])
 
   @doc """
   match basic threads
@@ -20,7 +22,7 @@ defmodule GroupherServer.CMS.Helper.MatcherMacros do
     default_meta: ...
   }
   """
-  defmacro thread_matches() do
+  defmacro thread_matches do
     @article_threads
     |> Enum.map(fn thread ->
       quote do
@@ -48,7 +50,7 @@ defmodule GroupherServer.CMS.Helper.MatcherMacros do
   info:
   %{dynamic([c], field(c, :post_id) == ^id)}
   """
-  defmacro thread_query_matches() do
+  defmacro thread_query_matches do
     @article_threads
     |> Enum.map(fn thread ->
       quote do

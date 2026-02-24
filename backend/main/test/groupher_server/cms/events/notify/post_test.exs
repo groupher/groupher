@@ -3,15 +3,16 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.Delivery
   alias CMS.Events
+  alias GroupherServer.Delivery
 
   setup do
     {community, post, _, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 
-    {:ok, comment} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+    {:ok, comment} =
+      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
     {:ok, ~m(user2 user3 community post comment)a}
   end
@@ -123,7 +124,9 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
          ~m(user2 community post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, comment} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+
       Events.emit(:notify_comment, %{comment: comment, from_user: user2})
 
       {:ok, notifications} = Delivery.fetch(:notification, post.author.user, %{page: 1, size: 20})
@@ -142,7 +145,9 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
          ~m(user2 user3 community post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, comment} = CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+
       {:ok, replied_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user3)
 
       Events.emit(:notify_reply, %{reply_comment: replied_comment, from_user: user3})

@@ -8,6 +8,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
+
   alias CMS.Model.{Author, Community}
   alias Helper.Constant.DBPrefix
 

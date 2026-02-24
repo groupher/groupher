@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.Seeds.CommunitiesTest do
   @moduledoc false
   use GroupherServer.TestTools
 
-  # alias GroupherServer.CMS.Seeds
-
   describe "[communities seeds]" do
     test "can seed a single community" do
       # Test seeding a specific community like :home or :feedback

@@ -7,7 +7,7 @@ defmodule GroupherServer.Accounts.Helper.Loader do
   alias Helper.QueryBuilder
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Model.{CommunitySubscriber}
+  alias CMS.Model.CommunitySubscriber
 
   def data, do: Dataloader.Ecto.new(Repo, query: &query/2)
 

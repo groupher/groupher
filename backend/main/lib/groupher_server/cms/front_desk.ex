@@ -7,19 +7,23 @@ defmodule GroupherServer.CMS.FrontDesk do
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias Helper.Types, as: T
-  alias Helper.{ORM, QueryBuilder}
 
   alias Accounts.Model.User
   alias CMS.Model.{Comment, Community, Thread}
+  alias Helper.Types, as: T
+  alias Helper.{ORM, QueryBuilder}
 
-  @article_threads Application.compile_env(:groupher_server, :article, []) |> Keyword.get(:threads, [])
+  @article_threads Application.compile_env(:groupher_server, :article, [])
+                   |> Keyword.get(:threads, [])
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
-  @max_latest_upvoted_users_count Application.compile_env(:groupher_server, :article, []) |> Keyword.get(:max_upvoted_users_count, 10)
+  @max_latest_upvoted_users_count Application.compile_env(:groupher_server, :article, [])
+                                  |> Keyword.get(:max_upvoted_users_count, 10)
 
   @max_latest_emotion_users_count 4
-  @supported_emotions Application.compile_env(:groupher_server, :article, []) |> Keyword.get(:emotions, [])
-  @supported_comment_emotions Application.compile_env(:groupher_server, :article, []) |> Keyword.get(:comment_emotions, [])
+  @supported_emotions Application.compile_env(:groupher_server, :article, [])
+                      |> Keyword.get(:emotions, [])
+  @supported_comment_emotions Application.compile_env(:groupher_server, :article, [])
+                              |> Keyword.get(:comment_emotions, [])
 
   @spec community(String.t()) :: {:ok, Community.t()} | {:error, map()}
   def community(slug) when is_binary(slug) do
@@ -347,7 +351,8 @@ defmodule GroupherServer.CMS.FrontDesk do
     end
   end
 
-  @spec do_extract_article_info(T.article_thread(), T.article_common()) :: {:ok, T.article_info()}
+  @spec do_extract_article_info(T.article_thread(), T.article_common()) ::
+          T.domain_res(T.article_info())
   defp do_extract_article_info(thread, article) do
     with {:ok, article_with_author} <- Repo.preload(article, author: :user) |> done(),
          article_author <- get_in(article_with_author, [:author, :user]) do

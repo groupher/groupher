@@ -3,6 +3,7 @@
 # see https://hexdocs.pm/absinthe/Absinthe.Middleware.html#content
 # ---
 defmodule GroupherServerWeb.Middleware.PutCurrentUser do
+  @moduledoc false
   @behaviour Absinthe.Middleware
 
   def call(%{context: %{cur_user: cur_user}} = resolution, _) do

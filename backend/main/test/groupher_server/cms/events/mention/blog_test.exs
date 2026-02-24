@@ -2,8 +2,8 @@ defmodule GroupherServer.Test.CMS.Events.Mention.BlogTest do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias GroupherServer.Delivery
   alias CMS.Events
+  alias GroupherServer.Delivery
 
   @article_mention_class "cdx-mention"
 

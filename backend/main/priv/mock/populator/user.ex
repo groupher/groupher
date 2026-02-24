@@ -5,8 +5,8 @@
 #
 
 defmodule GroupherServer.Mock.User do
-  alias GroupherServer.Repo
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Repo
 
   def random_attrs do
     %{

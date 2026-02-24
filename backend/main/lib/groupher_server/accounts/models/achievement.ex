@@ -5,8 +5,8 @@ defmodule GroupherServer.Accounts.Model.Achievement do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias GroupherServer.Accounts.Model.{SourceContribute, User}
   alias Helper.Constant.DBPrefix
-  alias GroupherServer.Accounts.Model.{User, SourceContribute}
 
   @schema_prefix DBPrefix.account()
 

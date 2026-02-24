@@ -42,7 +42,6 @@ defmodule GroupherServer.Repo.Migrations.DropGuideModule do
       remove(:guide_id)
     end
 
-
     alter table(:abuse_reports) do
       remove(:guide_id)
     end

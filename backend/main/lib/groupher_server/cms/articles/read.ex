@@ -13,8 +13,10 @@ defmodule GroupherServer.CMS.Articles.Read do
     ]
 
   alias GroupherServer.{Accounts, CMS, Repo}
+
   alias Accounts.Model.User
   alias CMS.Model.{Community, PinnedArticle}
+
   alias Ecto.Multi
   alias Helper.Types, as: T
   alias Helper.{Constant, ORM}
@@ -54,6 +56,7 @@ defmodule GroupherServer.CMS.Articles.Read do
               viewer_has_upvoted: user_id in article.meta.upvoted_user_ids,
               viewer_has_reported: user_id in article.meta.reported_user_ids
           }
+
         {:ok, article}
       end)
       |> Repo.transaction()

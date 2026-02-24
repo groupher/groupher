@@ -8,13 +8,13 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.FrontDesk, as: GlobalFrontDesk
   alias GroupherServer.{CMS, Repo}
+
   alias CMS.FrontDesk
+  alias CMS.Model.Comment
+  alias GroupherServer.FrontDesk, as: GlobalFrontDesk
   alias Helper.Types, as: T
   alias Helper.{ORM, QueryBuilder}
-
-  alias CMS.Model.Comment
 
   alias Ecto.Multi
 

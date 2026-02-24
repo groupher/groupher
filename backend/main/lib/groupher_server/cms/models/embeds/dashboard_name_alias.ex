@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardNameAlias do
   @optional_fields dashboard_cast_fields(:name_alias)
 
   @doc "for test usage"
-  def default() do
+  def default do
     [
       dashboard_default(:name_alias)
     ]

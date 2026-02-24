@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Paragraph do
 
   use GroupherServerWeb.ConnCase, async: true
 
-  alias Helper.Converter.EditorToHTML.Class
   alias Helper.Converter.EditorToHTML, as: Parser
+  alias Helper.Converter.EditorToHTML.Class
 
   @root_class Class.article()
 

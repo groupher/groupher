@@ -37,7 +37,9 @@ defmodule GroupherServer.Test.CMS.Communities.Categories do
       {:ok, category} = CMS.Communities.create_category(~m(title slug)a, user)
 
       assert category.title == valid_attrs.title
-      {:ok, updated} = CMS.Communities.update_category(%Category{id: category.id, title: "new title"})
+
+      {:ok, updated} =
+        CMS.Communities.update_category(%Category{id: category.id, title: "new title"})
 
       assert updated.title == "new title"
     end
@@ -51,7 +53,8 @@ defmodule GroupherServer.Test.CMS.Communities.Categories do
       new_category_attrs = %{title: "category2 title", slug: "category2 title"}
       {:ok, category2} = CMS.Communities.create_category(new_category_attrs, user)
 
-      {:error, _} = CMS.Communities.update_category(%Category{id: category.id, title: category2.title})
+      {:error, _} =
+        CMS.Communities.update_category(%Category{id: category.id, title: category2.title})
     end
 
     test "can set a category to a community", ~m(community category)a do

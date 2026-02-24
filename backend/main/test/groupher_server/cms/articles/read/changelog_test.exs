@@ -5,8 +5,8 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
   alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
 
-  alias EditorToHTML.{Class, Validator}
   alias CMS.Model.{ArticleDocument, ChangelogDocument}
+  alias EditorToHTML.{Class, Validator}
 
   @root_class Class.article()
   @article_digest_length get_config(:article, :digest_length)

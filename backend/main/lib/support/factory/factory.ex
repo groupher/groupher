@@ -9,22 +9,23 @@ defmodule GroupherServer.Support.Factory do
   import GroupherServer.CMS.Helper.Matcher
 
   alias GroupherServer.{Accounts, CMS, Delivery}
-  alias Accounts.Model.User
 
-  alias Helper.ORM
+  alias Accounts.Model.User
 
   alias CMS.Model.{
     Author,
     Category,
+    Comment,
     Community,
-    Thread,
-    CommunityThread,
     CommunityTag,
-    Comment
+    CommunityThread,
+    Thread
   }
 
-  @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
-  @default_emotions CMS.Model.Embeds.CommentEmotion.default_emotions()
+  alias Helper.ORM
+
+  @default_article_meta GroupherServer.CMS.Model.Embeds.ArticleMeta.default_meta()
+  @default_emotions GroupherServer.CMS.Model.Embeds.CommentEmotion.default_emotions()
 
   use GroupherServer.Support.Factory.Articles
   use GroupherServer.Support.Factory.Oauth
@@ -153,10 +154,12 @@ defmodule GroupherServer.Support.Factory do
   def mock_attrs(:community_tag, attrs), do: mock_meta(:community_tag) |> Map.merge(attrs)
   def mock_attrs(:category, attrs), do: mock_meta(:category) |> Map.merge(attrs)
   def mock_attrs(:github_profile, attrs), do: mock_meta(:github_profile) |> Map.merge(attrs)
+
   def mock_attrs(:oauth_profile, attrs) do
     provider = Map.get(attrs, :provider) || Map.get(attrs, "provider") || "github"
     mock_meta({:oauth_profile, provider}) |> Map.merge(attrs)
   end
+
   def mock_attrs(:bill, attrs), do: mock_meta(:bill) |> Map.merge(attrs)
 
   def mock_attrs(thread, attrs), do: mock_meta(thread) |> Map.merge(attrs)
@@ -219,13 +222,13 @@ defmodule GroupherServer.Support.Factory do
   ]
 
   @doc "mock image"
-  @spec mock_image(Number.t()) :: String.t()
+  @spec mock_image(non_neg_integer()) :: String.t()
   def mock_image(index \\ 0) do
     Enum.at(@images, index)
   end
 
   @doc "mock images"
-  @spec mock_images(Number.t()) :: [String.t()]
+  @spec mock_images(non_neg_integer()) :: [String.t()]
   def mock_images(count \\ 1) do
     @images |> Enum.slice(0, count)
   end
@@ -265,7 +268,7 @@ defmodule GroupherServer.Support.Factory do
     Delivery.send(:notify, notify_attrs, from_user)
   end
 
-  def mock_community() do
+  def mock_community do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
 

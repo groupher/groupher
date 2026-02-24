@@ -1,9 +1,9 @@
 import Ecto.Query, warn: false
 
-alias Helper.ORM
+alias GroupherServer.{CMS, Repo}
 
-alias GroupherServer.Repo
-alias GroupherServer.CMS.Model.Post
+alias CMS.Model.Post
+alias Helper.ORM
 
 {:ok, all_posts} =
   Post

@@ -1,9 +1,11 @@
 defmodule GroupherServer.CMS.Model.ArticleUserEmotion.Macros do
+  @moduledoc false
+
   import Helper.Utils, only: [get_config: 2]
 
   @supported_emotions get_config(:article, :emotions)
 
-  defmacro emotion_fields() do
+  defmacro emotion_fields do
     @supported_emotions
     |> Enum.map(fn emotion ->
       quote do
@@ -24,8 +26,7 @@ defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
   import GroupherServer.CMS.Helper.Macros
   import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
 
-  alias GroupherServer.Accounts
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

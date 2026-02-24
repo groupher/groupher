@@ -1,8 +1,8 @@
 defmodule GroupherServer.Mock.CMS.Comment do
   # alias GroupherServer.Repo
-  alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Model.Post
+  alias GroupherServer.{Accounts, CMS}
   alias Helper.ORM
 
   # CMS.comment_post(post_id, body)
@@ -14,7 +14,7 @@ defmodule GroupherServer.Mock.CMS.Comment do
   # }
   # end
 
-  def gen() do
+  def gen do
     {:ok, user} = ORM.find(User, 1)
     IO.inspect(user, label: "got user")
     {:ok, post} = ORM.find(Post, 21)

@@ -5,8 +5,8 @@ defmodule GroupherServer.Log.UserActivity do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.Accounts.Model.User
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.log()
   @required_fields ~w(user_id source_title source_id source_type)a

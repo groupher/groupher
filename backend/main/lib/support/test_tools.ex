@@ -21,12 +21,12 @@ defmodule GroupherServer.TestTools do
 
       import ShortMaps
 
+      alias GroupherServer.{Accounts, CMS, Repo}
+      alias CMS.Model.{Author, Blog, Changelog, Comment, Community, Doc, Embeds, Post}
       alias GroupherServer.Test.Helper.Schema
       alias Helper.{Constant, ORM}
-      alias GroupherServer.{Accounts, CMS, Repo, FrontDesk}
-      alias CMS.Model.{Community, Author, Post, Changelog, Blog, Doc, Embeds, Comment}
 
-      alias GroupherServer.Accounts.Model.User
+      alias Accounts.Model.User
 
       @now Timex.now() |> DateTime.truncate(:second)
 

@@ -6,10 +6,8 @@ defmodule GroupherServer.Statistics.Delegate.Throttle do
   import Ecto.Query, warn: false
   import ShortMaps
 
-  alias GroupherServer.{Accounts, Statistics}
-
-  alias Accounts.Model.User
-  alias Statistics.Model.PublishThrottle
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Statistics.Model.PublishThrottle
 
   alias Helper.ORM
 

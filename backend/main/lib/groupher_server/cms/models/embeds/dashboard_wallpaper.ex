@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardWallpaper do
   @optional_fields dashboard_cast_fields(:wallpaper)
 
   @doc "for test usage"
-  def default(), do: dashboard_default(:wallpaper)
+  def default, do: dashboard_default(:wallpaper)
 
   embedded_schema do
     dashboard_fields(:wallpaper)

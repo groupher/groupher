@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardMediaReport do
   @optional_fields dashboard_cast_fields(:media_report)
 
   @doc "for test usage"
-  def default() do
+  def default do
     [
       dashboard_default(:media_report)
     ]

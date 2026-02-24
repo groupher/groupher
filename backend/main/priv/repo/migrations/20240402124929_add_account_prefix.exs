@@ -5,7 +5,6 @@ defmodule GroupherServer.Repo.Migrations.AddAccountPrefix do
     execute "CREATE SCHEMA IF NOT EXISTS account"
     execute "ALTER TABLE public.users SET SCHEMA account"
 
-
     # user_socials
     execute "ALTER TABLE user_socials RENAME TO socials"
     execute "ALTER TABLE public.socials SET SCHEMA account"
@@ -53,7 +52,6 @@ defmodule GroupherServer.Repo.Migrations.AddAccountPrefix do
 
     execute "ALTER TABLE account.github_users SET SCHEMA public"
 
-
     execute "ALTER TABLE account.contributes SET SCHEMA public"
     execute "ALTER TABLE public.contributes RENAME TO user_contributes"
 
@@ -62,7 +60,6 @@ defmodule GroupherServer.Repo.Migrations.AddAccountPrefix do
     execute "ALTER TABLE account.customizations SET SCHEMA public"
 
     execute "ALTER TABLE account.collect_folders SET SCHEMA public"
-
 
     execute "ALTER TABLE account.achievements SET SCHEMA public"
     execute "ALTER TABLE public.achievements RENAME TO user_achievements"

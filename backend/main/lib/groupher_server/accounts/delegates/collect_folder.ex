@@ -5,8 +5,8 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.Matcher
 
-  alias Helper.Types, as: T
   alias Helper.QueryBuilder
+  alias Helper.Types, as: T
 
   import Helper.ErrorCode
   import Helper.Utils, only: [done: 1, get_config: 2]
@@ -14,13 +14,12 @@ defmodule GroupherServer.Accounts.Delegate.CollectFolder do
 
   import ShortMaps
 
-  alias Helper.ORM
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.{CollectFolder, Embeds, User}
   alias CMS.Model.ArticleCollect
-
   alias Ecto.Multi
+  alias Helper.ORM
 
   # @max_article_count_per_collect_folder 300
 

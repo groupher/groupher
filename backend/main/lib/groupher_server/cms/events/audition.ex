@@ -7,6 +7,7 @@ defmodule GroupherServer.CMS.Events.Audition do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+
   alias CMS.Events.Event
   alias CMS.Model.Comment
   alias Helper.AuditBot
@@ -53,7 +54,7 @@ defmodule GroupherServer.CMS.Events.Audition do
   @spec handle_audition_result(audition_result(), Comment.t() | map()) :: audition_result()
   def handle_audition_result({:ok, audit_res}, %{body_html: _} = comment) do
     audit_res = Map.merge(audit_res, %{illegal_comments: []})
-    CMS.Comments.unset_comment_illegal(comment, audit_res)
+    CMS.Comments.unset_comment_illegal(comment.id, audit_res)
   end
 
   def handle_audition_result({:ok, audit_res}, article) do
@@ -77,7 +78,7 @@ defmodule GroupherServer.CMS.Events.Audition do
     illegal_comments = [comment_addr]
 
     audit_res = Map.merge(audit_res, %{illegal_comments: illegal_comments})
-    CMS.Comments.set_comment_illegal(comment, audit_res)
+    CMS.Comments.set_comment_illegal(comment.id, audit_res)
   end
 
   def handle_audition_result({:error, audit_res}, article) do

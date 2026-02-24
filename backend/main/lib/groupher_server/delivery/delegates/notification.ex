@@ -9,12 +9,12 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
 
   import ShortMaps
 
-  alias GroupherServer.{Accounts, Delivery, Repo}
-  alias Delivery.Model.Notification
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Delivery.Model.Notification
+  alias GroupherServer.{Accounts, Repo}
 
-  alias Helper.ORM
   alias Ecto.Multi
+  alias Helper.ORM
 
   @notify_actions get_config(:general, :nofity_actions)
   @notify_group_interval_hour get_config(:general, :notify_group_interval_hour)
@@ -22,7 +22,7 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
 
   def handle(%{action: action, user_id: user_id} = attrs, %User{} = from_user) do
     with true <- action in @notify_actions,
-         true <- is_valid?(attrs),
+         true <- valid?(attrs),
          true <- user_id !== from_user.id do
       Multi.new()
       |> Multi.run(:upsert_notifications, fn _, _ ->
@@ -75,10 +75,7 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
         |> Repo.transaction()
         |> result()
 
-      false ->
-        {:ok, :pass}
-
-      {:error, _} ->
+      {:error, _reason} ->
         {:ok, :pass}
     end
   end
@@ -204,25 +201,25 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
     |> done
   end
 
-  defp is_valid?(%{action: :follow} = attrs), do: attrs |> all_exist?([:user_id])
+  defp valid?(%{action: :follow} = attrs), do: attrs |> all_exist?([:user_id])
 
-  defp is_valid?(%{action: :upvote} = attrs) do
+  defp valid?(%{action: :upvote} = attrs) do
     attrs |> all_exist?([:article_id, :thread, :title, :user_id])
   end
 
-  defp is_valid?(%{action: :collect} = attrs) do
+  defp valid?(%{action: :collect} = attrs) do
     attrs |> all_exist?([:article_id, :thread, :title, :user_id])
   end
 
-  defp is_valid?(%{action: :comment} = attrs) do
+  defp valid?(%{action: :comment} = attrs) do
     attrs |> all_exist?([:article_id, :thread, :title, :comment_id, :user_id])
   end
 
-  defp is_valid?(%{action: :reply} = attrs) do
+  defp valid?(%{action: :reply} = attrs) do
     attrs |> all_exist?([:article_id, :thread, :title, :comment_id, :user_id])
   end
 
-  defp is_valid?(_), do: false
+  defp valid?(_), do: false
 
   # 确保 key 存在，并且不为 nil
   defp all_exist?(attrs, keys) when is_map(attrs) and is_list(keys) do
@@ -230,7 +227,7 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
   end
 
   # 此时间段内的相似通知会被 merge
-  defp interval_threshold_time() do
+  defp interval_threshold_time do
     Timex.shift(Timex.now(), hours: -@notify_group_interval_hour)
   end
 

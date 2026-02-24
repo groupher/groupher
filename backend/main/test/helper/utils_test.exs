@@ -3,7 +3,9 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
 
   use GroupherServerWeb.ConnCase, async: true
 
-  alias GroupherServer.CMS.Model.Post
+  alias GroupherServer.CMS
+
+  alias CMS.Model.Post
   alias Helper.Utils
 
   describe "map atom value up upcase str" do

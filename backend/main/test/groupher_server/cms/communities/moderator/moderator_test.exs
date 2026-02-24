@@ -2,8 +2,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
   @moduledoc false
   use GroupherServer.TestTools
 
-  alias CMS.Model.CommunityModerator
   alias CMS.Communities.Passport
+  alias CMS.Model.CommunityModerator
   alias Helper.Certification
 
   setup do
@@ -201,7 +201,10 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       role = "moderator"
       cur_user = user
 
-      Enum.each(users, &CMS.Communities.add_moderator(community, role, %User{id: &1.id}, cur_user))
+      Enum.each(
+        users,
+        &CMS.Communities.add_moderator(community, role, %User{id: &1.id}, cur_user)
+      )
 
       filter = %{page: 1, size: 10}
       {:ok, results} = CMS.Communities.members(:moderators, %Community{id: community.id}, filter)

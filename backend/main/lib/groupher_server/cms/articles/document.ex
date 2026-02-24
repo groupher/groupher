@@ -5,10 +5,12 @@ defmodule GroupherServer.CMS.Articles.Document do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+
   alias CMS.FrontDesk
+  alias CMS.Model.ArticleDocument
+  alias Helper.Types, as: T
   alias Helper.{Converter, ORM}
 
-  alias CMS.Model.ArticleDocument
   alias Ecto.Multi
 
   alias GroupherServer.Support.Factory

@@ -15,14 +15,14 @@ defmodule GroupherServer.Email.Templates.MentionAuthor do
     """
   end
 
-  def text() do
+  def text do
     """
     有人发帖了
     """
   end
 
   @doc false
-  def raw() do
+  def raw do
     """
     <mjml>
     <mj-head>
@@ -70,7 +70,6 @@ defmodule GroupherServer.Email.Templates.MentionAuthor do
 
           <mj-divider border-width="1px" border-style="dashed" border-color="#113A41" />
 
-
           <mj-text color="#637381" font-size="16px" padding-top="10px" align="center">
             <a class="text-link" href="https://github.com/coderplanets.com">去看看 -></a>
           </mj-text>
@@ -87,7 +86,6 @@ defmodule GroupherServer.Email.Templates.MentionAuthor do
             <mj-social-element name="github" href="https://github.com/coderplanets" background-color="#296C7D">
             </mj-social-element>
           </mj-social>
-
 
           <mj-text color="#445566" font-size="11px" align="center" line-height="16px">
             &copy; Coderplanets Inc., All Rights Reserved.

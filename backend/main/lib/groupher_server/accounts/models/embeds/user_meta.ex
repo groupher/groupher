@@ -5,7 +5,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta.Macro do
 
   @article_threads get_config(:article, :threads)
 
-  defmacro published_article_count_fields() do
+  defmacro published_article_count_fields do
     @article_threads
     |> Enum.map(fn thread ->
       quote do
@@ -45,7 +45,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta do
   @optional_fields Map.keys(@general_options) ++
                      Enum.map(@article_threads, &:"published_#{plural(&1)}_count")
 
-  def default_meta() do
+  def default_meta do
     published_article_counts =
       @article_threads
       |> Enum.reduce([], &(&2 ++ ["published_#{plural(&1)}_count": 0]))

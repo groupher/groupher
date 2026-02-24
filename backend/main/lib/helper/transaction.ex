@@ -23,40 +23,36 @@ defmodule Helper.Transaction do
 
   @spec locking(any() | [any()], (any() -> any())) :: {:ok, any()} | {:error, any()}
   def locking(queryable, fun) when not is_list(queryable) do
-    try do
-      Repo.transaction(fn ->
-        locked = lock_queryable(queryable)
+    Repo.transaction(fn ->
+      locked = lock_queryable(queryable)
 
-        case fun.(locked) do
-          {:ok, result} -> result
-          {:error, reason} -> throw({:error, reason})
-          value -> value
-        end
-      end)
-    catch
-      {:error, reason} -> {:error, reason}
-      other -> {:error, {:unexpected_error, other}}
-    end
+      case fun.(locked) do
+        {:ok, result} -> result
+        {:error, reason} -> throw({:error, reason})
+        value -> value
+      end
+    end)
+  catch
+    {:error, reason} -> {:error, reason}
+    other -> {:error, {:unexpected_error, other}}
   end
 
   def locking(queryable, fun) when is_list(queryable) do
-    try do
-      Repo.transaction(fn ->
-        locked_resources =
-          queryable
-          |> Enum.sort_by(&resource_sort_key/1)
-          |> Enum.map(&lock_queryable/1)
+    Repo.transaction(fn ->
+      locked_resources =
+        queryable
+        |> Enum.sort_by(&resource_sort_key/1)
+        |> Enum.map(&lock_queryable/1)
 
-        case fun.(locked_resources) do
-          {:ok, result} -> result
-          {:error, reason} -> throw({:error, reason})
-          value -> value
-        end
-      end)
-    catch
-      {:error, reason} -> {:error, reason}
-      other -> {:error, {:unexpected_error, other}}
-    end
+      case fun.(locked_resources) do
+        {:ok, result} -> result
+        {:error, reason} -> throw({:error, reason})
+        value -> value
+      end
+    end)
+  catch
+    {:error, reason} -> {:error, reason}
+    other -> {:error, {:unexpected_error, other}}
   end
 
   # Generates consistent sort key for queryable to prevent deadlocks

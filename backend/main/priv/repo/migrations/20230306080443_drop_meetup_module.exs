@@ -42,7 +42,6 @@ defmodule GroupherServer.Repo.Migrations.DropMeetupModule do
       remove(:meetup_id)
     end
 
-
     alter table(:abuse_reports) do
       remove(:meetup_id)
     end

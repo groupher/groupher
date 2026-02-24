@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardRSS do
   @optional_fields dashboard_cast_fields(:rss)
 
   @doc "for test usage"
-  def default(), do: dashboard_default(:rss)
+  def default, do: dashboard_default(:rss)
 
   embedded_schema do
     dashboard_fields(:rss)

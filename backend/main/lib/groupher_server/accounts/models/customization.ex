@@ -7,8 +7,8 @@ defmodule GroupherServer.Accounts.Model.Customization do
   import Helper.Utils, only: [get_config: 2]
   import Ecto.Changeset
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.Accounts.Model.User
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.account()
 

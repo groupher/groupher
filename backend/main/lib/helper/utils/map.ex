@@ -60,11 +60,9 @@ defmodule Helper.Utils.Map do
 
   # NOTE: be careful! make sure the string is not dynamic, otherwise the memory will blow.
   defp string_to_atom(string) when is_binary(string) do
-    try do
-      String.to_existing_atom(string)
-    rescue
-      ArgumentError -> String.to_atom(string)
-    end
+    String.to_existing_atom(string)
+  rescue
+    ArgumentError -> String.to_atom(string)
   end
 
   defp string_to_atom(atom) when is_atom(atom) do
@@ -102,7 +100,7 @@ defmodule Helper.Utils.Map do
       Enum.map(map, fn {k, v} ->
         v =
           cond do
-            is_datetime?(v) ->
+            datetime?(v) ->
               DateTime.to_iso8601(v)
 
             is_map(v) ->
@@ -136,7 +134,7 @@ defmodule Helper.Utils.Map do
       Enum.map(map, fn {k, v} ->
         v =
           cond do
-            is_datetime?(v) ->
+            datetime?(v) ->
               DateTime.to_iso8601(v)
 
             is_map(v) ->
@@ -152,8 +150,8 @@ defmodule Helper.Utils.Map do
     Enum.into(map_list, %{})
   end
 
-  defp is_datetime?(%DateTime{}), do: true
-  defp is_datetime?(_), do: false
+  defp datetime?(%DateTime{}), do: true
+  defp datetime?(_), do: false
 
   def map_atom_value(attrs, :string) do
     results =

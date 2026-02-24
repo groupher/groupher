@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Helper.Matcher do
 
   alias GroupherServer.{Accounts, CMS}
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
 
   @type match_info :: %{
           model: module(),

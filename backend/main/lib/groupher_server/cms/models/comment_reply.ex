@@ -6,8 +6,8 @@ defmodule GroupherServer.CMS.Model.CommentReply do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
-  alias CMS.Model.Comment
 
+  alias CMS.Model.Comment
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

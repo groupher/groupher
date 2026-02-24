@@ -5,8 +5,8 @@ defmodule Helper.QueryBuilder do
 
   import Ecto.Query, warn: false
 
-  alias Helper.Constant
   alias GroupherServer.CMS.Helper.ArticleEnums
+  alias Helper.Constant
 
   @article_cat ArticleEnums.cat_values()
   @article_state ArticleEnums.state_values()

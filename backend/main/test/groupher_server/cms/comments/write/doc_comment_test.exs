@@ -172,7 +172,8 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, updated_comment} = CMS.Comments.update_comment(comment, mock_comment("updated content"))
+      {:ok, updated_comment} =
+        CMS.Comments.update_comment(comment, mock_comment("updated content"))
 
       assert updated_comment.body_html |> String.contains?(~s(updated content</p>))
     end
@@ -448,7 +449,8 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         {:ok, _} = CMS.Comments.pin_comment(comment.id)
       end)
 
-      assert {:error, {:comment_pin_limit, @pinned_comment_limit}} = CMS.Comments.pin_comment(comment.id)
+      assert {:error, {:comment_pin_limit, @pinned_comment_limit}} =
+               CMS.Comments.pin_comment(comment.id)
     end
   end
 

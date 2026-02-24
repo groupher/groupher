@@ -10,21 +10,16 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
+
+  alias CMS.Model.{Community, Embeds}
   alias Helper.Constant.DBPrefix
 
-  alias CMS.Model.{
-
-    Community,
-
-    Embeds
-
-  }
   @schema_prefix DBPrefix.cms()
 
   @required_fields ~w(community_id)a
   @optional_fields ~w(base_info wallpaper seo layout enable rss header_links footer_links social_links faqs)a
 
-  def default() do
+  def default do
     %{
       base_info: Embeds.DashboardBaseInfo.default(),
       wallpaper: Embeds.DashboardWallpaper.default(),

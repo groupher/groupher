@@ -8,15 +8,15 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
-  alias Helper.ORM
 
-  alias CMS.Model.{Community}
+  alias Accounts.Model.User
+  alias CMS.Model.Community
+  alias Helper.ORM
 
   # alias CMS.Seeds
 
   @doc """
-  seed communities pragraming languages
+  seed communities programming languages
   """
   # type: city, pl, framework, ...
   def seed_articles(community_slug, thread) do

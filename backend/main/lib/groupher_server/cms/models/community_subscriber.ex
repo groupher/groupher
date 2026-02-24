@@ -5,8 +5,9 @@ defmodule GroupherServer.CMS.Model.CommunitySubscriber do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias GroupherServer.{Accounts, CMS}
   alias Helper.Constant.DBPrefix
+
+  alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
   alias CMS.Model.Community

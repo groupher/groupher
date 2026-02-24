@@ -40,7 +40,12 @@ defmodule Helper.OSS do
   end
 
   def skip_persist_file(file) do
-    Mix.env() == :test or not String.starts_with?(file, "ugc/_tmp")
+    test_env?() or is_nil(Application.get_env(:groupher_server, Helper.OSS)) or
+      not String.starts_with?(file, "ugc/_tmp")
+  end
+
+  defp test_env? do
+    System.get_env("MIX_ENV") == "test" or Application.get_env(:groupher_server, :env) == :test
   end
 
   defp do_persit_file(file) do
@@ -52,7 +57,7 @@ defmodule Helper.OSS do
   @doc """
   get sts tmp token for upload file follow a spec policy defined on aliyun
   """
-  def get_sts_token() do
+  def get_sts_token do
     params = %{
       "Action" => "AssumeRole",
       "RoleArn" => @sts_role_arn,
@@ -112,7 +117,7 @@ defmodule Helper.OSS do
     Object.delete_object(config(), "#{@bucket}", file)
   end
 
-  defp config() do
+  defp config do
     :groupher_server
     |> Application.fetch_env!(Helper.OSS)
     |> Map.new()

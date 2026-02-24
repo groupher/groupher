@@ -14,8 +14,8 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
     ]
 
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias CMS.Articles.Document
-  alias CMS.{Communities, FrontDesk}
+
+  alias CMS.{Articles, Communities, FrontDesk}
   alias Ecto.Multi
   alias Helper.Types, as: T
   alias Helper.{ORM, Transaction}
@@ -95,7 +95,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
       Accounts.update_published_states(article.author.user, thread)
     end)
     |> Multi.run(:delete_document, fn _, _ ->
-      Document.remove(thread, article.id)
+      Articles.Document.remove(thread, article.id)
       {:ok, :pass}
     end)
     |> Repo.transaction()

@@ -6,10 +6,11 @@ defmodule GroupherServer.Accounts.Model.CollectFolder do
   use Accessible
   import Ecto.Changeset
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.{User, Embeds}
+
+  alias Accounts.Model.{Embeds, User}
   alias CMS.Model.ArticleCollect
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.account()
 

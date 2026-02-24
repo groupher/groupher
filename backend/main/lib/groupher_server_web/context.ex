@@ -9,8 +9,8 @@ defmodule GroupherServerWeb.Context do
   import Plug.Conn
   # import Ecto.Query, only: [first: 1]
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS
   alias Helper.{Guardian, ORM}
 
   def init(opts), do: opts

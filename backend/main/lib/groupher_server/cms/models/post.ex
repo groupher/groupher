@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.Model.Post do
   import GroupherServer.CMS.Helper.Macros
 
   alias GroupherServer.CMS
+
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.Embeds
   alias Helper.Constant.DBPrefix

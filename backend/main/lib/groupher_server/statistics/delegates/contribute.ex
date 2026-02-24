@@ -13,8 +13,8 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
   alias CMS.Model.Community
   alias Statistics.Model.{CommunityContribute, UserContribute}
 
-  alias Helper.{Cache, Later, ORM, QueryBuilder}
   alias Ecto.Multi
+  alias Helper.{Cache, Later, ORM, QueryBuilder}
 
   @community_contribute_days get_config(:general, :community_contribute_days)
   @user_contribute_months get_config(:general, :user_contribute_months)

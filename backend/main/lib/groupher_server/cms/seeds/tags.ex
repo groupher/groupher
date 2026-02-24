@@ -3,12 +3,11 @@ defmodule GroupherServer.CMS.Seeds.Tags do
   tags seeds
   """
 
-  alias GroupherServer.CMS
-  alias CMS.Model.Community
+  alias GroupherServer.CMS.Model.Community
 
   @tag_colors ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink", "grey"]
 
-  def random_color(), do: @tag_colors |> Enum.random() |> String.to_atom()
+  def random_color, do: @tag_colors |> Enum.random() |> String.to_atom()
 
   def get(_, :map, _), do: []
   def get(_, :cper, _), do: []

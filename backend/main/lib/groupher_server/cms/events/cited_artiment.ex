@@ -16,12 +16,12 @@ defmodule GroupherServer.CMS.Events.CitedArtiment do
   import ShortMaps
 
   alias GroupherServer.{CMS, Repo}
+
   alias CMS.FrontDesk
-  alias Helper.Types, as: T
+  alias CMS.Model.{CitedArtiment, Comment}
 
   alias Helper.{ORM, QueryBuilder}
-
-  alias CMS.Model.{CitedArtiment, Comment}
+  alias Helper.Types, as: T
 
   @article_threads get_config(:article, :threads)
 

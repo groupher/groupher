@@ -5,8 +5,8 @@ defmodule GroupherServer.Accounts.Model.OauthProvider do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.Accounts.Model.User
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.account()
   @required_fields ~w(provider_id provider login nickname avatar user_id)a

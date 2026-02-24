@@ -4,9 +4,9 @@ defmodule GroupherServer.Test.Statistics do
   use GroupherServer.TestTools
 
   # alias Helper.{Cache, Later, ORM}
-  alias Helper.Cache
   alias GroupherServer.Statistics
-  alias Statistics.Model.{UserContribute, CommunityContribute}
+  alias Helper.Cache
+  alias Statistics.Model.{CommunityContribute, UserContribute}
 
   @community_contribute_days get_config(:general, :community_contribute_days)
 

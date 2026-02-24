@@ -6,6 +6,7 @@ defmodule GroupherServer.CMS.Communities.List do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS}
+
   alias Accounts.Model.User
   alias CMS.Model.Community
   alias Helper.ORM

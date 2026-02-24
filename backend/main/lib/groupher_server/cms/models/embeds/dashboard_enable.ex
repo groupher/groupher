@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardEnable do
   @optional_fields dashboard_cast_fields(:enable)
 
   @doc "for test usage"
-  def default() do
+  def default do
     dashboard_default(:enable)
   end
 

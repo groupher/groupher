@@ -35,6 +35,7 @@ defmodule GroupherServer.CMS.Events.Cite do
   import GroupherServer.CMS.Events.Helper, only: [merge_same_block_linker: 2]
 
   alias GroupherServer.{CMS, Repo}
+
   alias CMS.Events.{CitedArtiment, Event}
   alias CMS.FrontDesk
   alias CMS.Model.Comment
@@ -100,7 +101,7 @@ defmodule GroupherServer.CMS.Events.Cite do
 
   defp parse_valid_cited(content_id, link) do
     with {:ok, cited} <- parse_cited_in_link(link) do
-      case not is_citing_itself?(content_id, cited) do
+      case not citing_itself?(content_id, cited) do
         true -> {:ok, cited}
         false -> {:error, {:custom, "citing itself, ignored"}}
       end
@@ -109,8 +110,8 @@ defmodule GroupherServer.CMS.Events.Cite do
 
   defp parse_cited_in_link({"a", attrs, _}) do
     with {:ok, link} <- parse_link(attrs),
-         true <- is_site_article_link?(link) do
-      case is_link_for_comment?(link) do
+         true <- site_article_link?(link) do
+      case link_for_comment?(link) do
         true -> load_cited_comment_from_url(link)
         false -> load_cited_article_from_url(link)
       end
@@ -150,13 +151,13 @@ defmodule GroupherServer.CMS.Events.Cite do
     end
   end
 
-  defp is_citing_itself?(content_id, %{artiment: %{id: id}}), do: content_id == id
+  defp citing_itself?(content_id, %{artiment: %{id: id}}), do: content_id == id
 
-  defp is_site_article_link?(url) do
+  defp site_article_link?(url) do
     Enum.any?(@valid_article_prefix, &String.starts_with?(url, &1))
   end
 
-  defp is_link_for_comment?(url) do
+  defp link_for_comment?(url) do
     with %{query: query} <- URI.parse(url) do
       not is_nil(query) and String.starts_with?(query, "comment_id=")
     end

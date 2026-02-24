@@ -42,7 +42,6 @@ defmodule GroupherServer.Repo.Migrations.DropWorksModule do
       remove(:works_id)
     end
 
-
     alter table(:abuse_reports) do
       remove(:works_id)
     end

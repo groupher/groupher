@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardBaseInfo do
   @optional_fields dashboard_cast_fields(:base_info)
 
   @doc "for test usage"
-  def default(), do: dashboard_default(:base_info)
+  def default, do: dashboard_default(:base_info)
 
   embedded_schema do
     dashboard_fields(:base_info)

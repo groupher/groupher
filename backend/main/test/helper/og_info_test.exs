@@ -14,12 +14,12 @@ defmodule GroupherServer.Test.Helper.OgInfo do
       assert not is_nil(ret.site_name)
     end
 
-    test "should fmt site_info for sspai.com" do
-      {:ok, ret} = OgInfo.get("https://sspai.com/post/82704")
+    test "should fmt site_info for apple.com" do
+      {:ok, ret} = OgInfo.get("https://www.apple.com/")
 
       assert not is_nil(ret.title)
       assert not is_nil(ret.favicon)
-      assert ret.site_name == "少数派"
+      assert ret.site_name == "Apple"
     end
 
     test "should add site_info for 36kr.com cuz it missing it" do

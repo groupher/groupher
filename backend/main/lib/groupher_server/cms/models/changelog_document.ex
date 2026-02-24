@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Model.ChangelogDocument do
   import Helper.Utils, only: [get_config: 2]
 
   alias GroupherServer.CMS
+
   alias CMS.Model.Changelog
   alias Helper.Constant.DBPrefix
 

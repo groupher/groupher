@@ -3,6 +3,7 @@ defmodule GroupherServer.Accounts.Delegate.Utils do
   utils for Accounts
   """
   alias GroupherServer.Accounts
+
   alias Accounts.Model.User
   alias Helper.{Cache, ORM}
 

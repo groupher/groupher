@@ -4,9 +4,9 @@ defmodule GroupherServer.Test.Helper.Converter.MdToEditor do
   """
   use GroupherServerWeb.ConnCase, async: true
 
-  alias Helper.Converter.MdToEditor, as: Converter
   alias Helper.Converter.EditorToHTML
   alias Helper.Converter.EditorToHTML.Class
+  alias Helper.Converter.MdToEditor, as: Converter
 
   @root_class Class.article()
   # alias Helper.Converter.HtmlSanitizer, as: Sanitizer

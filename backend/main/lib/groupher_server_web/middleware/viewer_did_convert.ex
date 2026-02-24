@@ -4,6 +4,7 @@
 # ---
 
 defmodule GroupherServerWeb.Middleware.ViewerDidConvert do
+  @moduledoc false
   @behaviour Absinthe.Middleware
 
   def call(%{value: nil} = resolution, _) do

@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentMeta do
   @optional_fields ~w(is_article_author_upvoted report_count is_reply_to_others reported_count reported_user_ids citing_count is_legal illegal_reason illegal_words)a
 
   @doc "for test usage"
-  def default_meta() do
+  def default_meta do
     %{
       is_article_author_upvoted: false,
       is_reply_to_others: false,

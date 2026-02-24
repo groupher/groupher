@@ -7,7 +7,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   alias GroupherServer.{Accounts, CMS}
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias Helper.Certification
 
   def me(_root, _args, %{context: %{cur_user: cur_user}}), do: {:ok, cur_user}

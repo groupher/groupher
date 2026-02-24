@@ -6,9 +6,8 @@ defmodule GroupherServer.Test.Helper.ORM do
   # TODO import Service.Utils move both helper and github
   import GroupherServer.Support.Factory
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias CMS.Model.{Post, Author}
+  alias Accounts.Model.User
+  alias CMS.Model.{Author, Post}
   alias Helper.ORM
 
   @posts_count 20

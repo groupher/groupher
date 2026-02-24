@@ -6,6 +6,7 @@ defmodule GroupherServer.CMS.Model.CommunityThread do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
+
   alias CMS.Model.{Community, Thread}
   alias Helper.Constant.DBPrefix
 

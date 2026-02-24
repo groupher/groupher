@@ -3,8 +3,8 @@ defmodule Helper.Converter.EditorToHTML.Validator do
 
   alias Helper.{Converter, Validator}
 
-  alias Validator.Schema
   alias Converter.EditorToHTML.Validator.EditorSchema
+  alias Validator.Schema
 
   @normal_blocks ["header", "paragraph", "quote"]
 
@@ -34,15 +34,13 @@ defmodule Helper.Converter.EditorToHTML.Validator do
   end
 
   defp validate_editor_fmt(data) do
-    try do
-      validate_with("editor", EditorSchema.get("editor"), data)
-    rescue
-      e in MatchError ->
-        format_parse_error(e)
+    validate_with("editor", EditorSchema.get("editor"), data)
+  rescue
+    e in MatchError ->
+      format_parse_error(e)
 
-      _ ->
-        format_parse_error()
-    end
+    _ ->
+      format_parse_error()
   end
 
   defp validate_blocks([]), do: {:ok, :pass}
@@ -102,6 +100,10 @@ defmodule Helper.Converter.EditorToHTML.Validator do
     end
   end
 
+  defp format_parse_error(type, error_list) when is_map(error_list) do
+    format_parse_error(type, Map.values(error_list))
+  end
+
   defp format_parse_error(type, error_list) when is_list(error_list) do
     {:error,
      Enum.map(error_list, fn error ->
@@ -117,5 +119,5 @@ defmodule Helper.Converter.EditorToHTML.Validator do
     {:error, message}
   end
 
-  defp format_parse_error(), do: {:error, "undown validate error"}
+  defp format_parse_error, do: {:error, "undown validate error"}
 end

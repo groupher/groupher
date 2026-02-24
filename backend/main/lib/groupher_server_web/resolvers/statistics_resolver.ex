@@ -3,8 +3,10 @@ defmodule GroupherServerWeb.Resolvers.Statistics do
   resolvers for Statistics
   """
   alias GroupherServer.{Accounts, CMS, Statistics}
-  alias CMS.Model.Community
+
   alias Accounts.Model.User
+  alias CMS.Model.Community
+  alias Statistics
 
   # tmp for test
 

@@ -93,7 +93,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       {:ok, _} = CMS.Comments.emotion_to_comment(reply_comment.id, :downvote, user)
 
       filter = %{page: 1, size: 10}
-      {:ok, %{entries: entries}} = CMS.Comments.paged_comments(:post, post.id, filter, :replies, user)
+
+      {:ok, %{entries: entries}} =
+        CMS.Comments.paged_comments(:post, post.id, filter, :replies, user)
+
       parent = entries |> List.first()
       parent_emotion = parent |> Map.get(:emotions)
       reply_emotion = parent |> Map.get(:replies) |> List.first() |> Map.get(:emotions)

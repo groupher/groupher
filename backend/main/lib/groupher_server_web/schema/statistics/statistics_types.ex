@@ -1,4 +1,5 @@
 defmodule GroupherServerWeb.Schema.Statistics.Types do
+  @moduledoc false
   use Absinthe.Schema.Notation
 
   # import GroupherServerWeb.Schema.Helper.Fields

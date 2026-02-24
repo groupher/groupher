@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Converter.EditorToHTML.Quote do
 
   use GroupherServerWeb.ConnCase, async: true
 
-  alias Helper.Converter.EditorToHTML.Class
   alias Helper.Converter.EditorToHTML, as: Parser
+  alias Helper.Converter.EditorToHTML.Class
 
   alias Helper.Utils
 

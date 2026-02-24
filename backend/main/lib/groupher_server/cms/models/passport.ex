@@ -5,8 +5,7 @@ defmodule GroupherServer.CMS.Model.Passport do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias Helper.Constant.DBPrefix
 
   @required_fields ~w(rules user_id)a

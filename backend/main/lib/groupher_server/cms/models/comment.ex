@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
 
   alias GroupherServer.{Accounts, CMS}
+
   alias Accounts.Model.User
   alias CMS.Model.{CommentUpvote, Embeds}
   alias Helper.Constant.DBPrefix
@@ -23,7 +24,23 @@ defmodule GroupherServer.CMS.Model.Comment do
   @required_fields ~w(body author_id)a
   @optional_fields ~w(body_html reply_to_id replies_count is_folded is_deleted floor is_article_author thread is_for_question is_solution pending)a
   # @updatable_fields ~w(body_html is_folded is_deleted floor upvotes_count is_pinned is_for_question is_solution replies_count pending)a
-  @updatable_fields ~w(body_html is_folded is_deleted floor upvotes_count is_pinned is_for_question is_solution replies_count pending inserted_at updated_at is_archived archived_at is_article_author)a
+  @updatable_fields ~w(
+    body_html
+    is_folded
+    is_deleted
+    floor
+    upvotes_count
+    is_pinned
+    is_for_question
+    is_solution
+    replies_count
+    pending
+    inserted_at
+    updated_at
+    is_archived
+    archived_at
+    is_article_author
+  )a
 
   @article_fields @article_threads |> Enum.map(&:"#{&1}_id")
 
@@ -40,18 +57,19 @@ defmodule GroupherServer.CMS.Model.Comment do
   @pinned_comment_limit 10
 
   @doc "latest participants stores in article comment_participants field"
-  def max_participator_count(), do: @max_participator_count
+  def max_participator_count, do: @max_participator_count
   @doc "latest replies stores in comment replies field, used for frontend display"
-  def max_parent_replies_count(), do: @max_parent_replies_count
+  def max_parent_replies_count, do: @max_parent_replies_count
 
   @doc "操作某 emotion 的最近用户"
-  def max_latest_emotion_users_count(), do: @max_latest_emotion_users_count
-  def delete_hint(), do: @delete_hint
+  def max_latest_emotion_users_count, do: @max_latest_emotion_users_count
+  def delete_hint, do: @delete_hint
 
   def report_threshold_for_fold, do: @report_threshold_for_fold
   def pinned_comment_limit, do: @pinned_comment_limit
 
   schema_artiment_type(is_archived: boolean())
+
   schema "comments" do
     belongs_to(:author, User, foreign_key: :author_id)
 

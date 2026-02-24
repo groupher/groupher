@@ -8,8 +8,9 @@ defmodule Helper.Scheduler do
   import Helper.Utils, only: [get_config: 2, done: 1]
 
   alias GroupherServer.CMS
-  alias CMS.Events
   alias Helper.Plausible
+
+  alias GroupherServer.CMS.Events
 
   @article_threads get_config(:article, :threads)
 
@@ -24,21 +25,21 @@ defmodule Helper.Scheduler do
   @doc """
   archive articles and comments based on config
   """
-  def archive_artiments() do
+  def archive_artiments do
     Enum.map(@article_threads, &CMS.Articles.archive(&1))
     |> done
   end
 
-  def archive_comments() do
+  def archive_comments do
     CMS.Comments.archive_comments()
   end
 
-  def articles_audition() do
+  def articles_audition do
     audit_articles(:post)
     audit_articles(:blog)
   end
 
-  def comments_audition() do
+  def comments_audition do
     with {:ok, paged_comments} <- CMS.Comments.paged_audit_failed_comments(%{page: 1, size: 30}) do
       Enum.map(paged_comments.entries, fn comment ->
         Events.emit(:audition, %{artiment: comment})
@@ -59,8 +60,8 @@ defmodule Helper.Scheduler do
     end
   end
 
-  def gather_online_status() do
-    with true <- Mix.env() !== :test do
+  def gather_online_status do
+    with true <- System.get_env("MIX_ENV") != "test" do
       Plausible.realtime_visitors()
     end
   end
