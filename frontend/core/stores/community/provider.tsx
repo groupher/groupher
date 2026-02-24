@@ -15,9 +15,7 @@ StoreContext.displayName = 'Community'
 export default ({ children, initData }: TProps) => {
   const storeRef = useRef<TStore | null>(null)
 
-  if (!storeRef.current) {
-    storeRef.current = setupStore(initData)
-  }
+  storeRef.current ??= setupStore(initData)
 
   return <StoreContext.Provider value={storeRef.current}>{children}</StoreContext.Provider>
 }
