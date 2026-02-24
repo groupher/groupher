@@ -14,10 +14,10 @@ defmodule GroupherServer.Accounts.CollectFolders do
 
   import ShortMaps
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.Accounts.Model.{CollectFolder, Embeds, User}
-  alias GroupherServer.CMS.Model.ArticleCollect
+  alias Accounts.Model.{CollectFolder, Embeds, User}
+  alias CMS.Model.ArticleCollect
   alias Ecto.Multi
   alias Helper.ORM
 
