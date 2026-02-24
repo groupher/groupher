@@ -1,4 +1,5 @@
 defmodule Helper.OgInfo do
+  @moduledoc false
   import Helper.Utils, only: [done: 1]
 
   alias Helper.SiteFavicon
@@ -6,7 +7,7 @@ defmodule Helper.OgInfo do
   def get(url) do
     with {:ok, location, resp} <- SiteFavicon.find_page(url),
          {:ok, og} <- parse_open_graph(resp.body, url),
-         true <- is_valid_og?(og),
+         true <- valid_og?(og),
          %URI{host: host} <- URI.parse(url),
          favicon <- SiteFavicon.parse_favicon(resp.body, location) do
       og |> Map.merge(%{favicon: favicon}) |> fmt_field(host) |> done
@@ -64,7 +65,7 @@ defmodule Helper.OgInfo do
 
   defp fmt_field(og, _host), do: og
 
-  defp is_valid_og?(og) do
+  defp valid_og?(og) do
     not is_nil(og.title)
   end
 end

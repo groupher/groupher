@@ -1,4 +1,5 @@
 defmodule GroupherServer.Accounts.Delegate.Mailbox do
+  @moduledoc false
   import Ecto.Query, warn: false
 
   import Helper.Utils, only: [done: 1]

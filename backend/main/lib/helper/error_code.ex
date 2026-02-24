@@ -71,8 +71,8 @@ defmodule Helper.ErrorCode do
   def ecode(:one_community_only), do: @community_base + 3
 
   def ecode(reason) when is_atom(reason) do
-    case Mix.env() do
-      env when env in [:dev, :test] ->
+    case System.get_env("MIX_ENV", "dev") do
+      env when env in ["dev", "test"] ->
         raise ArgumentError, "unknown error reason: #{inspect(reason)}"
 
       _ ->

@@ -25,17 +25,15 @@ defmodule GroupherServer.Email do
                                         )
 
   def welcome(%User{email: email} = user) when not is_nil(email) do
-    case @conf_welcome_new_register do
-      true ->
-        base_mail()
-        |> to(email)
-        |> subject("欢迎来到 coderplanets")
-        |> html_body(Templates.Welcome.html(user))
-        |> text_body(Templates.Welcome.text())
-        |> Mailer.deliver_later()
-
-      false ->
-        {:ok, :pass}
+    if @conf_welcome_new_register do
+      base_mail()
+      |> to(email)
+      |> subject("欢迎来到 coderplanets")
+      |> html_body(Templates.Welcome.html(user))
+      |> text_body(Templates.Welcome.text())
+      |> Mailer.deliver_later()
+    else
+      {:ok, :pass}
     end
   end
 
@@ -55,17 +53,15 @@ defmodule GroupherServer.Email do
 
   #  notify admin when new user register
   def notify_admin(%User{} = user, :new_register) do
-    case @conf_notify_admin_on_new_user do
-      true ->
-        base_mail()
-        |> to(@admin_email)
-        |> subject("新用户(#{user.nickname})注册")
-        |> html_body(Templates.NotifyAdminRegister.html(user))
-        |> text_body(Templates.NotifyAdminRegister.text())
-        |> Mailer.deliver_later()
-
-      false ->
-        {:ok, :pass}
+    if @conf_notify_admin_on_new_user do
+      base_mail()
+      |> to(@admin_email)
+      |> subject("新用户(#{user.nickname})注册")
+      |> html_body(Templates.NotifyAdminRegister.html(user))
+      |> text_body(Templates.NotifyAdminRegister.text())
+      |> Mailer.deliver_later()
+    else
+      {:ok, :pass}
     end
   end
 
@@ -85,17 +81,15 @@ defmodule GroupherServer.Email do
 
   #  notify admin when new post has created
   def notify_admin(%{type: type, title: title} = info, :new_article) do
-    case @conf_notify_admin_on_content_created do
-      true ->
-        base_mail()
-        |> to(@admin_email)
-        |> subject("new #{type}: #{title}")
-        |> html_body(Templates.NotifyAdminOnContentCreated.html(info))
-        |> text_body(Templates.NotifyAdminOnContentCreated.text(info))
-        |> Mailer.deliver_later()
-
-      false ->
-        {:ok, :pass}
+    if @conf_notify_admin_on_content_created do
+      base_mail()
+      |> to(@admin_email)
+      |> subject("new #{type}: #{title}")
+      |> html_body(Templates.NotifyAdminOnContentCreated.html(info))
+      |> text_body(Templates.NotifyAdminOnContentCreated.text(info))
+      |> Mailer.deliver_later()
+    else
+      {:ok, :pass}
     end
   end
 

@@ -69,7 +69,7 @@ defmodule Helper.Converter.EditorToHTML.Frags.People do
       </div>)
   end
 
-  @spec frag(:previewer_item, T.editor_people_item(), T.string()) :: T.html()
+  @spec frag(:previewer_item, T.editor_people_item(), String.t()) :: T.html()
   defp frag(:previewer_item, item, acc) do
     avatar = item["avatar"]
     active_class = if byte_size(acc) == 0, do: @class["gallery_previewer_active_item"], else: ""

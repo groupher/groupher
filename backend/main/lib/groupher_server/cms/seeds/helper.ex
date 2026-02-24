@@ -20,7 +20,8 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   def threadify_communities(communities, threads) when is_list(communities) do
     Enum.each(communities, fn community ->
       Enum.each(threads, fn thread ->
-        {:ok, _} = CMS.Communities.set_thread(%Community{id: community.id}, %Thread{id: thread.id})
+        {:ok, _} =
+          CMS.Communities.set_thread(%Community{id: community.id}, %Thread{id: thread.id})
       end)
     end)
   end
@@ -56,7 +57,8 @@ defmodule GroupherServer.CMS.Seeds.Helper do
     the_category = categories.entries |> Enum.find(fn cat -> cat.slug == Atom.to_string(part) end)
 
     Enum.each(communities, fn community ->
-      {:ok, _} = CMS.Communities.set_category(%Community{id: community.id}, %Category{id: the_category.id})
+      {:ok, _} =
+        CMS.Communities.set_category(%Community{id: community.id}, %Category{id: the_category.id})
     end)
   end
 
@@ -83,7 +85,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   # seed thread end
 
   def seed_categories_ifneed(bot) do
-    with true <- is_empty_in_db?(Category) do
+    with true <- empty_in_db?(Category) do
       Enum.each(@categories, &CMS.Communities.create_category(&1, bot))
     end
 
@@ -98,7 +100,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
     User |> ORM.findby_or_insert(~m(nickname avatar)a, ~m(nickname avatar login)a)
   end
 
-  def seed_bot() do
+  def seed_bot do
     case ORM.find(User, 1) do
       {:ok, user} ->
         {:ok, user}
@@ -113,7 +115,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   end
 
   # check is the seeds alreay runed
-  def is_empty_in_db?(queryable) do
+  def empty_in_db?(queryable) do
     {:ok, results} = ORM.find_all(queryable, %{page: 1, size: 20})
     results.total_count == 0
   end

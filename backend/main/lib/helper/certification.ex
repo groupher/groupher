@@ -26,7 +26,7 @@ defmodule Helper.Certification do
     "community_tag.unset"
   ]
 
-  def root_passport_item_count(), do: 10000
+  def root_passport_item_count, do: 10_000
 
   def passport_rules(cms: "root") do
     %{

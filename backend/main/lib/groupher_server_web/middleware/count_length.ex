@@ -2,6 +2,7 @@
 # see https://hexdocs.pm/absinthe/Absinthe.Middleware.html#content
 # ---
 defmodule GroupherServerWeb.Middleware.CountLength do
+  @moduledoc false
   @behaviour Absinthe.Middleware
   # google: must appear in the GROUP BY clause or be used in an aggregate function
 

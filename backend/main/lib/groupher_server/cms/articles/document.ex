@@ -6,6 +6,7 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.FrontDesk
+  alias Helper.Types, as: T
   alias Helper.{Converter, ORM}
 
   alias CMS.Model.ArticleDocument

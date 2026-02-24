@@ -8,7 +8,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   import ShortMaps
 
   alias GroupherServer.FrontDesk
-  alias Helper.{ORM, QueryBuilder, Later, SpecType}
+  alias Helper.{Later, ORM, QueryBuilder, Types}
   alias GroupherServer.{Accounts, Repo}
 
   alias Accounts.Model.{User, UserFollower, UserFollowing}
@@ -19,7 +19,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   @doc """
   follow a user
   """
-  @spec follow(User.t(), User.t()) :: {:ok, User.t()} | SpecType.gq_error()
+  @spec follow(User.t(), User.t()) :: {:ok, User.t()} | Types.gq_error()
   def follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
          {:ok, user} <- FrontDesk.user(user.id),
@@ -56,7 +56,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   @doc """
   undo a follow action to a user
   """
-  @spec undo_follow(User.t(), User.t()) :: {:ok, User.t()} | SpecType.gq_error()
+  @spec undo_follow(User.t(), User.t()) :: {:ok, User.t()} | Types.gq_error()
   def undo_follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
          {:ok, user} <- FrontDesk.user(user.id),
@@ -180,7 +180,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
     }
   end
 
-  @spec result({:ok, map()}) :: SpecType.done()
+  @spec result({:ok, map()}) :: Types.done()
   defp result({:ok, %{create_follower: user_follower}}) do
     User |> ORM.find(user_follower.user_id)
   end

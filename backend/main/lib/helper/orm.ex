@@ -6,11 +6,11 @@ defmodule Helper.ORM do
   import Helper.Utils, only: [done: 1, done: 3, strip_struct: 1, get_config: 2]
   import ShortMaps
 
-import Helper.ErrorHandler
+  import Helper.ErrorHandler
 
   alias Helper.Types, as: T
   alias GroupherServer.Repo
-  alias Helper.{QueryBuilder, SpecType}
+  alias Helper.QueryBuilder
 
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias GroupherServer.Accounts.Model.User
@@ -75,7 +75,7 @@ import Helper.ErrorHandler
   @doc """
   similar to Repo.get/3, with standard result/error handle
   """
-  @spec find(Ecto.Queryable.t(), SpecType.id()) :: {:ok, any()} | {:error, T.error()}
+  @spec find(Ecto.Queryable.t(), T.id()) :: {:ok, any()} | {:error, T.error()}
   def find(queryable, id) do
     queryable
     |> Repo.get(id)

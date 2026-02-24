@@ -11,7 +11,7 @@ defmodule GroupherServer.Accounts.Delegate.Achievements do
   import Helper.Utils, only: [get_config: 2, done: 1]
   import ShortMaps
 
-  alias Helper.{ORM, SpecType}
+  alias Helper.{ORM, Types}
   alias GroupherServer.Accounts.Model.{Achievement, User}
 
   alias GroupherServer.CMS.Model.CommunityModerator
@@ -25,7 +25,7 @@ defmodule GroupherServer.Accounts.Delegate.Achievements do
   inc/dec user's achievement by inc followers_count of collect_weight
   inc/dec user's achievement by articles_upvotes_count of upvote_weight
   """
-  @spec achieve(User.t(), atom, atom) :: SpecType.done()
+  @spec achieve(User.t(), atom, atom) :: Types.done()
   def achieve(%User{id: user_id}, :inc, :follow) do
     with {:ok, achievement} <- ORM.findby_or_insert(Achievement, ~m(user_id)a, ~m(user_id)a) do
       followers_count = achievement.followers_count + 1

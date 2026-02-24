@@ -60,7 +60,7 @@ defmodule Helper.Scheduler do
   end
 
   def gather_online_status() do
-    with true <- Mix.env() !== :test do
+    with true <- System.get_env("MIX_ENV") != "test" do
       Plausible.realtime_visitors()
     end
   end

@@ -3,6 +3,7 @@
 # see https://hexdocs.pm/absinthe/Absinthe.Middleware.html#content
 # ---
 defmodule GroupherServerWeb.Middleware.SeeMe do
+  @moduledoc false
   @behaviour Absinthe.Middleware
 
   def call(resolution, _) do

@@ -153,10 +153,12 @@ defmodule GroupherServer.Support.Factory do
   def mock_attrs(:community_tag, attrs), do: mock_meta(:community_tag) |> Map.merge(attrs)
   def mock_attrs(:category, attrs), do: mock_meta(:category) |> Map.merge(attrs)
   def mock_attrs(:github_profile, attrs), do: mock_meta(:github_profile) |> Map.merge(attrs)
+
   def mock_attrs(:oauth_profile, attrs) do
     provider = Map.get(attrs, :provider) || Map.get(attrs, "provider") || "github"
     mock_meta({:oauth_profile, provider}) |> Map.merge(attrs)
   end
+
   def mock_attrs(:bill, attrs), do: mock_meta(:bill) |> Map.merge(attrs)
 
   def mock_attrs(thread, attrs), do: mock_meta(thread) |> Map.merge(attrs)
@@ -219,13 +221,13 @@ defmodule GroupherServer.Support.Factory do
   ]
 
   @doc "mock image"
-  @spec mock_image(Number.t()) :: String.t()
+  @spec mock_image(non_neg_integer()) :: String.t()
   def mock_image(index \\ 0) do
     Enum.at(@images, index)
   end
 
   @doc "mock images"
-  @spec mock_images(Number.t()) :: [String.t()]
+  @spec mock_images(non_neg_integer()) :: [String.t()]
   def mock_images(count \\ 1) do
     @images |> Enum.slice(0, count)
   end

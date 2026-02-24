@@ -40,7 +40,7 @@ defmodule Helper.OSS do
   end
 
   def skip_persist_file(file) do
-    Mix.env() == :test or not String.starts_with?(file, "ugc/_tmp")
+    System.get_env("MIX_ENV") == "test" or not String.starts_with?(file, "ugc/_tmp")
   end
 
   defp do_persit_file(file) do

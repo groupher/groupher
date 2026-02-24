@@ -3,6 +3,7 @@
 # see https://hexdocs.pm/absinthe/Absinthe.Middleware.html#content
 # ---
 defmodule GroupherServerWeb.Middleware.PutRootSource do
+  @moduledoc false
   @behaviour Absinthe.Middleware
 
   # def call(%{source: %{id: id}} = resolution, _) do
