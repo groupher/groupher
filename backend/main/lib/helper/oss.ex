@@ -40,7 +40,12 @@ defmodule Helper.OSS do
   end
 
   def skip_persist_file(file) do
-    System.get_env("MIX_ENV") == "test" or not String.starts_with?(file, "ugc/_tmp")
+    test_env?() or is_nil(Application.get_env(:groupher_server, Helper.OSS)) or
+      not String.starts_with?(file, "ugc/_tmp")
+  end
+
+  defp test_env? do
+    System.get_env("MIX_ENV") == "test" or Application.get_env(:groupher_server, :env) == :test
   end
 
   defp do_persit_file(file) do
