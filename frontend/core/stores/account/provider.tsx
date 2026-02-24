@@ -14,9 +14,7 @@ StoreContext.displayName = 'Account'
 export default ({ children }: TProps) => {
   const storeRef = useRef<TStore | null>(null)
 
-  if (!storeRef.current) {
-    storeRef.current = setupStore()
-  }
+  storeRef.current ??= setupStore()
 
   return <StoreContext.Provider value={storeRef.current}>{children}</StoreContext.Provider>
 }

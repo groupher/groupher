@@ -43,9 +43,7 @@ export default ({ children, initData }: TProps) => {
     }
   }, [demoConfig, initData])
 
-  if (!storeRef.current) {
-    storeRef.current = setupStore(resolvedInit)
-  }
+  storeRef.current ??= setupStore(resolvedInit)
 
   useEffect(() => {
     if (!isDemoMode) return
