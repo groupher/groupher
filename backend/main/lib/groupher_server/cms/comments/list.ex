@@ -8,18 +8,15 @@ defmodule GroupherServer.CMS.Comments.List do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  import GroupherServer.CMS.FrontDesk,
-    only: [mark_viewer_emotion_states: 2]
-
   import GroupherServer.CMS.Helper.Matcher
 
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.FrontDesk
   alias Helper.Types, as: T
   alias Helper.{Later, ORM, QueryBuilder}
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.CMS.FrontDesk
 
   alias Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Comment, PinnedComment}
+  alias CMS.Model.{Comment, PinnedComment}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
 
@@ -180,7 +177,7 @@ defmodule GroupherServer.CMS.Comments.List do
       |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
       |> ORM.paginator(~m(page size)a)
       |> add_pinned_comments_ifneed(thread, article_id, filters)
-      |> mark_viewer_emotion_states(user)
+      |> FrontDesk.mark_viewer_emotion_states(user)
       |> mark_viewer_has_upvoted(user)
       |> done()
     end
@@ -197,7 +194,7 @@ defmodule GroupherServer.CMS.Comments.List do
     |> where(^where_query)
     |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
     |> ORM.paginator(~m(page size)a)
-    |> mark_viewer_emotion_states(user)
+    |> FrontDesk.mark_viewer_emotion_states(user)
     |> mark_viewer_has_upvoted(user)
     |> done()
   end

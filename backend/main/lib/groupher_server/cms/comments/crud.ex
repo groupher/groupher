@@ -8,20 +8,17 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2]
   import Helper.ErrorCode
 
-  import GroupherServer.CMS.FrontDesk, only: [sync_embed_replies: 1, article_of: 1, article: 4]
-
   import GroupherServer.CMS.Helper.Matcher
 
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias GroupherServer.CMS.FrontDesk
+  alias CMS.FrontDesk
+  alias Helper.Types, as: T
 
   alias Accounts.Model.User
-  alias GroupherServer.CMS.Helper.ArticleEnums
-  alias GroupherServer.CMS.Model.{Post, Comment, PinnedComment, Embeds, Community}
-
-  alias GroupherServer.CMS.Events
-  alias GroupherServer.CMS.Comments.Actions
+  alias CMS.Comments.Actions
+  alias CMS.Events
+  alias CMS.Helper.ArticleEnums
+  alias CMS.Model.{Comment, Community, Embeds, PinnedComment, Post}
   alias Helper.{Later, ORM}
 
   alias Ecto.Multi
@@ -42,16 +39,16 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   def create_comment(%Community{slug: community_slug}, thread, article_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
-           article(community_slug, thread, article_id,
-             preload: [[author: :user], :community]
-           ),
+            FrontDesk.article(community_slug, thread, article_id,
+              preload: [[author: :user], :community]
+            ),
          true <- can_comment?(article, user) do
       Multi.new()
       |> Multi.run(:create_comment, fn _, _ ->
         do_create_comment(body, info.foreign_key, article, user)
       end)
       |> Multi.run(:update_comments_count, fn _, %{create_comment: comment} ->
-        {:ok, article} = article_of(comment)
+        {:ok, article} = FrontDesk.article_of(comment)
         ORM.inc(article, :comments_count)
       end)
       |> Multi.run(:set_question_flag_ifneed, fn _, %{create_comment: comment} ->
@@ -100,7 +97,7 @@ defmodule GroupherServer.CMS.Comments.CRUD do
         comment |> ORM.update(%{body: body, body_html: body_html})
       end)
       |> Multi.run(:sync_embed_replies, fn _, %{update_comment: comment} ->
-        sync_embed_replies(comment)
+        FrontDesk.sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, %{update_comment: comment} ->
         Later.run({Events, :emit, [:audition, %{artiment: comment}]})
@@ -117,7 +114,7 @@ defmodule GroupherServer.CMS.Comments.CRUD do
         ORM.update(comment, %{body: body, body_html: body_html})
       end)
       |> Multi.run(:sync_embed_replies, fn _, %{update_comment: comment} ->
-        sync_embed_replies(comment)
+        FrontDesk.sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, %{update_comment: comment} ->
         Later.run({Events, :emit, [:audition, %{artiment: comment}]})
@@ -134,7 +131,7 @@ defmodule GroupherServer.CMS.Comments.CRUD do
   def delete_comment(%Comment{} = comment) do
     Multi.new()
     |> Multi.run(:update_comments_count, fn _, _ ->
-      {:ok, article} = article_of(comment)
+      {:ok, article} = FrontDesk.article_of(comment)
       ORM.dec(article, :comments_count)
     end)
     |> Multi.run(:remove_pined_comment, fn _, _ ->
@@ -180,13 +177,10 @@ defmodule GroupherServer.CMS.Comments.CRUD do
           ORM.update(updated_comment, %{is_solution: is_solution, is_for_question: true})
         end)
         |> Multi.run(:update_post_state, fn _, _ ->
-          with {:ok, updated_post} <- ORM.update(post, %{solution_digest: comment.body_html}) do
-            state = if is_solution, do: @article_state.resolved, else: @article_state.default
-            CMS.Articles.set_state(updated_post, state)
-          end
+          update_post_state_for_solution(post, comment, is_solution)
         end)
         |> Multi.run(:sync_embed_replies, fn _, %{mark_solution: updated_comment} ->
-          sync_embed_replies(updated_comment)
+          FrontDesk.sync_embed_replies(updated_comment)
         end)
         |> Repo.transaction()
         |> result()
@@ -296,6 +290,17 @@ defmodule GroupherServer.CMS.Comments.CRUD do
       |> ORM.count()
 
     cur_count + 1
+  end
+
+  defp update_post_state_for_solution(post, comment, is_solution) do
+    case ORM.update(post, %{solution_digest: comment.body_html}) do
+      {:ok, updated_post} ->
+        state = if is_solution, do: @article_state.resolved, else: @article_state.default
+        CMS.Articles.set_state(updated_post, state)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   defp result({:ok, %{set_question_flag_ifneed: result}}), do: {:ok, result}

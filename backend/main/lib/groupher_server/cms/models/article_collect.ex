@@ -9,9 +9,9 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
   import GroupherServer.CMS.Helper.Macros
   import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.Accounts
-  alias Accounts.Model.{User, CollectFolder}
+  alias Accounts.Model.{CollectFolder, User}
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
 

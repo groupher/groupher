@@ -32,16 +32,13 @@ defmodule GroupherServer.CMS.Events.Cite do
 
   import GroupherServer.CMS.Helper.Matcher
   import Helper.Utils, only: [get_config: 2]
-  import GroupherServer.CMS.FrontDesk, only: [preload_author: 1, thread_of: 1]
   import GroupherServer.CMS.Events.Helper, only: [merge_same_block_linker: 2]
 
-
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Events.Event
-  alias CMS.Events.CitedArtiment
+  alias CMS.Events.{CitedArtiment, Event}
+  alias CMS.FrontDesk
   alias CMS.Model.Comment
 
-  alias Helper.ORM
   alias Ecto.Multi
 
   @site_host get_config(:general, :site_host)
@@ -62,7 +59,7 @@ defmodule GroupherServer.CMS.Events.Cite do
   @spec handle(Comment.t() | map()) :: cite_result()
   def handle(%{body: body} = artiment) when not is_nil(body) do
     with {:ok, %{"blocks" => blocks}} <- Jason.decode(body),
-         {:ok, artiment} <- preload_author(artiment) do
+         {:ok, artiment} <- FrontDesk.preload_author(artiment) do
       Multi.new()
       |> Multi.run(:delete_all_cited_artiments, fn _, _ ->
         CitedArtiment.batch_delete_by(artiment)
@@ -133,7 +130,7 @@ defmodule GroupherServer.CMS.Events.Cite do
     try do
       comment_id = URI.decode_query(query) |> Map.get("comment_id")
 
-      with {:ok, comment} <- ORM.find(Comment, comment_id) do
+      with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
         {:ok, %{type: :comment, artiment: comment}}
       end
     rescue
@@ -148,7 +145,7 @@ defmodule GroupherServer.CMS.Events.Cite do
     article_id = path_list |> Enum.at(2)
 
     with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, article_id) do
+         {:ok, article} <- FrontDesk.get(info.model, article_id) do
       {:ok, %{type: :article, artiment: article}}
     end
   end
@@ -190,7 +187,7 @@ defmodule GroupherServer.CMS.Events.Cite do
   end
 
   defp shape(article, %{type: :article, artiment: cited}, block_id) do
-    {:ok, thread} = thread_of(article)
+    {:ok, thread} = FrontDesk.thread_of(article)
     {:ok, info} = match(thread)
 
     %{
@@ -205,7 +202,7 @@ defmodule GroupherServer.CMS.Events.Cite do
   end
 
   defp shape(article, %{type: :comment, artiment: cited}, block_id) do
-    {:ok, thread} = thread_of(article)
+    {:ok, thread} = FrontDesk.thread_of(article)
     {:ok, info} = match(thread)
 
     %{

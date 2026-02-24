@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Model.Comment do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Embeds, CommentUpvote}
+  alias CMS.Model.{CommentUpvote, Embeds}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

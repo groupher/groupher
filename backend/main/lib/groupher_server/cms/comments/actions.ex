@@ -12,23 +12,20 @@ defmodule GroupherServer.CMS.Comments.Actions do
       get_config: 2
     ]
 
-  import GroupherServer.CMS.FrontDesk,
-    only: [sync_embed_replies: 1, article_of: 1, thread_of: 1]
-
   import Helper.ErrorCode
 
   import GroupherServer.CMS.Helper.Matcher
 
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.FrontDesk
   alias Helper.Types, as: T
-  alias Helper.{ORM, Later, Transaction}
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.CMS.FrontDesk
+  alias Helper.{Later, ORM, Transaction}
 
   alias Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Comment, PinnedComment, CommentUpvote, CommentReply}
-  alias GroupherServer.CMS.Events
-  alias GroupherServer.CMS.Comments.List, as: CommentList
-  alias GroupherServer.CMS.Comments.Read, as: CommentRead
+  alias CMS.Comments.List, as: CommentList
+  alias CMS.Comments.Read, as: CommentRead
+  alias CMS.Events
+  alias CMS.Model.{Comment, CommentReply, CommentUpvote, PinnedComment}
 
   alias Ecto.Multi
 
@@ -48,13 +45,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
             where: field(p, ^info.foreign_key) == ^full_comment.article.id
           )
 
-        with {:ok, pined_comments_count} <- ORM.count(pined_comments_query) do
-          if pined_comments_count >= @pinned_comment_limit do
-            {:error, {:comment_pin_limit, @pinned_comment_limit}}
-          else
-            {:ok, :pass}
-          end
-        end
+        check_pined_comments_count(pined_comments_query)
       end)
       |> Multi.run(:update_comment_flag, fn _, _ ->
         ORM.update(comment, %{is_pinned: true})
@@ -113,7 +104,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
         do_create_comment(body, info.foreign_key, article, user)
       end)
       |> Multi.run(:update_comments_count, fn _, %{create_reply_comment: replied_comment} ->
-        {:ok, article} = article_of(replied_comment)
+        {:ok, article} = FrontDesk.article_of(replied_comment)
         ORM.inc(article, :comments_count)
       end)
       |> Multi.run(:create_comment_reply, fn _, %{create_reply_comment: replied_comment} ->
@@ -183,7 +174,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
         |> done
       end)
       |> Multi.run(:sync_embed_replies, fn _, %{viewer_states: comment} ->
-        sync_embed_replies(comment)
+        FrontDesk.sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, _ ->
         Later.run({Events, :emit, [:subscribe_community, %{target: comment, user: from_user}]})
@@ -225,7 +216,7 @@ defmodule GroupherServer.CMS.Comments.Actions do
         |> done
       end)
       |> Multi.run(:sync_embed_replies, fn _, %{viewer_states: comment} ->
-        sync_embed_replies(comment)
+        FrontDesk.sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, _ ->
         Later.run({Events, :emit, [:notify_undo_upvote, %{target: comment, from_user: from_user}]})
@@ -255,8 +246,8 @@ defmodule GroupherServer.CMS.Comments.Actions do
       comment |> ORM.update(%{is_folded: is_folded})
     end)
     |> Multi.run(:update_article_fold_count, fn _, _ ->
-      {:ok, article} = article_of(comment)
-      {:ok, article_thread} = thread_of(article)
+      {:ok, article} = FrontDesk.article_of(comment)
+      {:ok, article_thread} = FrontDesk.thread_of(article)
 
       {:ok, %{total_count: total_count}} =
         CommentList.paged_folded_comments(article_thread, article.id, %{page: 1, size: 1})
@@ -273,10 +264,14 @@ defmodule GroupherServer.CMS.Comments.Actions do
   end
 
   defp update_article_author_upvoted_info(%Comment{} = comment, user_id) do
-    with {:ok, article} = CommentRead.fetch_full_comment(comment.id) do
-      is_article_author_upvoted = article.author.id == user_id
-      meta = comment.meta |> Map.put(:is_article_author_upvoted, is_article_author_upvoted)
-      comment |> ORM.update_meta(meta)
+    case CommentRead.fetch_full_comment(comment.id) do
+      {:ok, article} ->
+        is_article_author_upvoted = article.author.id == user_id
+        meta = comment.meta |> Map.put(:is_article_author_upvoted, is_article_author_upvoted)
+        comment |> ORM.update_meta(meta)
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -285,6 +280,19 @@ defmodule GroupherServer.CMS.Comments.Actions do
   defp get_parent_comment(%Comment{reply_to_id: reply_to_id} = comment)
        when not is_nil(reply_to_id) do
     get_parent_comment(Repo.preload(comment.reply_to, reply_to: :author))
+  end
+
+  defp check_pined_comments_count(pined_comments_query) do
+    case ORM.count(pined_comments_query) do
+      {:ok, pined_comments_count} when pined_comments_count >= @pinned_comment_limit ->
+        {:error, {:comment_pin_limit, @pinned_comment_limit}}
+
+      {:ok, _} ->
+        {:ok, :pass}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   defp add_replies_ifneed(

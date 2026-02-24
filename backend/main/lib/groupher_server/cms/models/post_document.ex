@@ -10,9 +10,9 @@ defmodule GroupherServer.CMS.Model.PostDocument do
   import Ecto.Changeset
   import Helper.Utils, only: [get_config: 2]
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.CMS
   alias CMS.Model.Post
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
 

@@ -5,23 +5,18 @@ defmodule GroupherServer.CMS.Articles.Collects do
 
   import GroupherServer.CMS.Helper.Matcher
   import Helper.Utils, only: [done: 1]
-  import GroupherServer.CMS.FrontDesk,
-    only: [
-      thread_of: 2,
-      load_reaction_users: 3,
-      update_article_reaction_user_list: 4
-    ]
 
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.Model.ArticleCollect
+  alias CMS.{Events, FrontDesk}
   alias Ecto.Multi
-  alias Helper.{ORM, Later, Transaction}
   alias Helper.Types, as: T
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.ArticleCollect
-  alias GroupherServer.CMS.Events
+  alias Helper.{Later, ORM, Transaction}
 
   @spec collected_users(term(), map()) :: T.domain_res(term())
-  def collected_users(article, filter), do: load_reaction_users(ArticleCollect, article, filter)
+  def collected_users(article, filter),
+    do: FrontDesk.load_reaction_users(ArticleCollect, article, filter)
 
   @spec collect(term(), User.t()) :: T.domain_res(term())
   def collect(article, %User{} = user) do
@@ -36,10 +31,10 @@ defmodule GroupherServer.CMS.Articles.Collects do
         ORM.inc(article, :collects_count)
       end)
       |> Multi.run(:update_article_reaction_user_list, fn _, _ ->
-        update_article_reaction_user_list(:collect, article, user, :add)
+        FrontDesk.update_article_reaction_user_list(:collect, article, user, :add)
       end)
       |> Multi.run(:create_collect, fn _, _ ->
-        {:ok, thread} = thread_of(article, :upcase)
+        {:ok, thread} = FrontDesk.thread_of(article, :upcase)
         args = Map.put(%{user_id: user.id, thread: thread}, info.foreign_key, article.id)
 
         ORM.create(ArticleCollect, args)
@@ -113,7 +108,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
   defp maybe_update_collect_user_list(nil, article, _user), do: {:ok, article}
 
   defp maybe_update_collect_user_list(_record, article, user) do
-    update_article_reaction_user_list(:collect, article, user, :remove)
+    FrontDesk.update_article_reaction_user_list(:collect, article, user, :remove)
   end
 
   defp maybe_undo_collect(nil, article, _info, _user_id), do: {:ok, article}
@@ -166,7 +161,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
 
   defp collection_findby_args(article, user_id) do
     {:ok, info} = match(article)
-    {:ok, thread} = thread_of(article, :upcase)
+    {:ok, thread} = FrontDesk.thread_of(article, :upcase)
 
     %{thread: thread, user_id: user_id} |> Map.put(info.foreign_key, article.id)
   end

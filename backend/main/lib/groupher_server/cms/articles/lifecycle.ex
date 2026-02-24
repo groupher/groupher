@@ -13,14 +13,12 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
       get_config: 2
     ]
 
-  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
-
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.Articles.Document
+  alias CMS.{Communities, FrontDesk}
   alias Ecto.Multi
-  alias Helper.{ORM, Transaction}
   alias Helper.Types, as: T
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Articles.Document
+  alias Helper.{ORM, Transaction}
 
   @active_period get_config(:article, :active_period_days)
   @archive_threshold get_config(:article, :archive_threshold)
@@ -28,7 +26,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
   @spec mark_delete(term()) :: T.domain_res(term())
   def mark_delete(article) do
-    {:ok, thread} = thread_of(article)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     Transaction.locking(article, fn article ->
       case article.is_archived do
@@ -51,7 +49,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
   @spec undo_mark_delete(term()) :: T.domain_res(term())
   def undo_mark_delete(article) do
-    {:ok, thread} = thread_of(article)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     Transaction.locking(article, fn article ->
       Multi.new()
@@ -84,7 +82,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   @spec delete(term(), String.t()) :: T.domain_res(term())
   def delete(article, _reason) do
     article = Repo.preload(article, [:communities, [author: :user]])
-    {:ok, thread} = thread_of(article)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     Multi.new()
     |> Multi.run(:delete_article, fn _, _ ->
@@ -122,18 +120,21 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   def sink(article) do
     %{inserted_at: inserted_at} = article
 
-    with {:ok, article} <-
-           ORM.update_meta(article, %{
-             is_sunk: true,
-             last_active_at: inserted_at
-           }) do
-      ORM.update(article, %{active_at: inserted_at})
+    case ORM.update_meta(article, %{
+           is_sunk: true,
+           last_active_at: inserted_at
+         }) do
+      {:ok, article} ->
+        ORM.update(article, %{active_at: inserted_at})
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
   @spec undo_sink(term()) :: T.domain_res(term())
   def undo_sink(article) do
-    {:ok, thread} = thread_of(article)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     with true <- in_active_period?(thread, article),
          {:ok, article} <- ORM.update_meta(article, %{is_sunk: false}) do

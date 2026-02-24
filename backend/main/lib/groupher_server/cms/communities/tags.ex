@@ -11,15 +11,14 @@ defmodule GroupherServer.CMS.Communities.Tags do
   import ShortMaps
   import Helper.ErrorCode
 
-  alias Helper.ORM
-  alias Helper.QueryBuilder
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, Repo}
+  alias Helper.Types, as: T
+  alias Helper.{ORM, QueryBuilder}
 
-  alias Accounts.Model.User
   alias GroupherServer.CMS
+  alias Accounts.Model.User
 
-  alias CMS.Model.{CommunityTag, Community}
+  alias CMS.Model.{Community, CommunityTag}
 
   alias Ecto.Multi
 
@@ -139,7 +138,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
 
     with true <- tag_in_same_thread?(tag_ids, check_filter),
          {:ok, article} <- do_overwrite_tags(article, []),
-         {:ok, related_tags} = find_related_tags(tag_ids) do
+         {:ok, related_tags} <- find_related_tags(tag_ids) do
       do_overwrite_tags(article, related_tags)
     else
       false ->
@@ -154,11 +153,11 @@ defmodule GroupherServer.CMS.Communities.Tags do
       }) do
     check_filter = %{page: 1, size: 100, community_id: cid, thread: thread}
 
-    with true <- tag_in_same_thread?(tag_ids, check_filter),
-         Enum.each(tag_ids, &add(article, &1))
-         |> done do
-      {:ok, article}
-    else
+    case tag_in_same_thread?(tag_ids, check_filter) do
+      true ->
+        Enum.each(tag_ids, &add(article, &1))
+        {:ok, article}
+
       false ->
         raise_error(:invalid_domain_tag, "tag not in same community & thread")
     end
@@ -224,7 +223,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec reindex_in_group(Community.t(), atom(), atom(), list()) :: {:ok, atom()} | {:error, any()}
   def reindex_in_group(%Community{} = community, thread, group, indexed_tags) do
-    with {:ok, group_tags} <- _find_group_tags(community, thread, group) do
+    with {:ok, group_tags} <- find_group_tags(community, thread, group) do
       group_tags
       |> Enum.each(fn tag ->
         target =
@@ -247,18 +246,8 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
-  defp _find_group_tags(%Community{} = community, thread, group) do
+  defp find_group_tags(%Community{} = community, thread, group) do
     filter = %{community: community.slug, thread: thread} |> atom_values_to_upcase
-
-    CommunityTag
-    |> where([t], t.group == ^group)
-    |> QueryBuilder.filter_pack(replace_community_ifneed(filter))
-    |> Repo.all()
-    |> done
-  end
-
-  defp _find_group_tags(community, thread, group) do
-    filter = %{community: community, thread: thread} |> atom_values_to_upcase
 
     CommunityTag
     |> where([t], t.group == ^group)

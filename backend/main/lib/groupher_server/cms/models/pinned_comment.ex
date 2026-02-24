@@ -10,9 +10,9 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   import GroupherServer.CMS.Helper.Macros
   import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.CMS
   alias CMS.Model.Comment
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   # alias Helper.HTML

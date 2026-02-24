@@ -8,7 +8,8 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
   use Accessible
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.Embeds
+  alias GroupherServer.CMS
+  alias CMS.Model.Embeds
 
   @optional_fields ~w(thread is_edited is_comment_locked upvoted_user_ids collected_user_ids viewed_user_ids comments_participant_user_ids reported_user_ids reported_count is_sunk can_undo_sink last_active_at is_legal illegal_reason illegal_words)a
 

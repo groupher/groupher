@@ -11,8 +11,8 @@ defmodule GroupherServer.CMS.Model.Doc do
   alias GroupherServer.CMS
   alias CMS.Model.Embeds
 
-  alias Helper.HTML
   alias Helper.Constant.DBPrefix
+  alias Helper.HTML
 
   @schema_prefix DBPrefix.cms()
 

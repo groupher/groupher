@@ -3,26 +3,40 @@ defmodule GroupherServer.CMS.Communities do
   CMS communities facade.
   """
 
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.{Category, Community, CommunityTag, Thread}
   alias Helper.Types, as: T
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, Category, Thread, CommunityTag}
 
   alias __MODULE__.{
-    Read,
-    List,
-    Write,
-    Dashboard,
-    Apply,
-    Members,
-    Moderator,
-    Subscribe,
-    Count,
-    Categories,
-    Threads,
-    Passport,
-    Tags
-  }
 
+    Apply,
+
+    Categories,
+
+    Count,
+
+    Dashboard,
+
+    List,
+
+    Members,
+
+    Moderator,
+
+    Passport,
+
+    Read,
+
+    Subscribe,
+
+    Tags,
+
+    Threads,
+
+    Write
+
+  }
   # Read
   @spec read(String.t()) :: T.domain_res(Community.t())
   def read(slug), do: Read.read(slug)

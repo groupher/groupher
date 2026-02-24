@@ -6,9 +6,9 @@ defmodule GroupherServer.CMS.FrontDesk do
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
 
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Helper.Types, as: T
   alias Helper.{ORM, QueryBuilder}
-  alias GroupherServer.{Accounts, Repo, CMS}
 
   alias Accounts.Model.User
   alias CMS.Model.{Comment, Community, Thread}

@@ -7,20 +7,13 @@ defmodule GroupherServer.CMS.Comments.Emotion do
 
   import Helper.Utils, only: [done: 1]
 
-  import GroupherServer.CMS.FrontDesk,
-    only: [
-      update_emotions_field: 4,
-      mark_viewer_emotion_states: 2,
-      sync_embed_replies: 1
-    ]
-
-  alias Helper.{ORM, Later}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.{Events, FrontDesk}
   alias Helper.Types, as: T
-  alias GroupherServer.{Accounts, Repo}
+  alias Helper.{Later, ORM}
 
-  alias GroupherServer.CMS.Events
   alias Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Comment, CommentUserEmotion}
+  alias CMS.Model.{Comment, CommentUserEmotion}
 
   alias Ecto.Multi
 
@@ -29,7 +22,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
 
   @spec emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
   def emotion_to_comment(comment_id, emotion, %User{} = user) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id) do
       Multi.new()
       |> Multi.run(:create_user_emotion, fn _, _ ->
         target = %{
@@ -49,9 +42,9 @@ defmodule GroupherServer.CMS.Comments.Emotion do
         query_emotion_states(comment, emotion)
       end)
       |> Multi.run(:update_emotions_field, fn _, %{query_emotion_states: status} ->
-        with {:ok, comment} <- update_emotions_field(comment, emotion, status, user),
-             {:ok, comment} <- sync_embed_replies(comment) do
-          mark_viewer_emotion_states(comment, user) |> done
+        with {:ok, comment} <- FrontDesk.update_emotions_field(comment, emotion, status, user),
+             {:ok, comment} <- FrontDesk.sync_embed_replies(comment) do
+          FrontDesk.mark_viewer_emotion_states(comment, user) |> done
         end
       end)
       |> Multi.run(:after_events, fn _, _ ->
@@ -64,7 +57,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
 
   @spec undo_emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
   def undo_emotion_to_comment(comment_id, emotion, %User{} = user) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id) do
       Multi.new()
       |> Multi.run(:update_user_emotion, fn _, _ ->
         target = %{
@@ -86,8 +79,8 @@ defmodule GroupherServer.CMS.Comments.Emotion do
         query_emotion_states(comment, emotion)
       end)
       |> Multi.run(:update_emotions_field, fn _, %{query_emotion_states: status} ->
-        with {:ok, comment} <- update_emotions_field(comment, emotion, status, user) do
-          mark_viewer_emotion_states(comment, user) |> done
+        with {:ok, comment} <- FrontDesk.update_emotions_field(comment, emotion, status, user) do
+          FrontDesk.mark_viewer_emotion_states(comment, user) |> done
         end
       end)
       |> Repo.transaction()
@@ -106,10 +99,10 @@ defmodule GroupherServer.CMS.Comments.Emotion do
         select: %{login: user.login, nickname: user.nickname}
       )
 
-    emotioned_user_info_list = Repo.all(query) |> Enum.uniq()
-    emotioned_user_count = length(emotioned_user_info_list)
+    mentioned_user_info_list = Repo.all(query) |> Enum.uniq()
+    mentioned_user_count = length(mentioned_user_info_list)
 
-    {:ok, %{user_list: emotioned_user_info_list, user_count: emotioned_user_count}}
+    {:ok, %{user_list: mentioned_user_info_list, user_count: mentioned_user_count}}
   end
 
   defp result({:ok, %{update_emotions_field: result}}), do: {:ok, result}

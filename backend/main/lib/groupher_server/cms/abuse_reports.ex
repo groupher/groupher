@@ -3,9 +3,10 @@ defmodule GroupherServer.CMS.AbuseReports do
   CMS abuse reports facade.
   """
 
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.Comment
   alias Helper.Types, as: T
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Comment
 
   alias __MODULE__.{List, Report}
 

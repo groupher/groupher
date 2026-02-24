@@ -15,8 +15,8 @@ defmodule GroupherServer.CMS.Seeds.Domain do
       seed_categories_ifneed: 1
     ]
 
-  alias Helper.ORM
   alias GroupherServer.CMS
+  alias Helper.ORM
 
   alias CMS.Model.Community
 

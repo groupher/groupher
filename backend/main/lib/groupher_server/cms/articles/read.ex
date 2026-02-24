@@ -12,13 +12,12 @@ defmodule GroupherServer.CMS.Articles.Read do
       get_config: 2
     ]
 
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, PinnedArticle}
   alias Ecto.Multi
   alias Helper.Types, as: T
-  alias Helper.ORM
-  alias Helper.Constant
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.{Community, PinnedArticle}
+  alias Helper.{Constant, ORM}
 
   @active_period get_config(:article, :active_period_days)
   @article_threads get_config(:article, :threads)
@@ -110,13 +109,6 @@ defmodule GroupherServer.CMS.Articles.Read do
     end
   end
 
-  defp if_article_legal(thread, id, %User{} = user) when thread in @article_threads do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id, preload: :author) do
-      if_article_legal(article, user)
-    end
-  end
-
   defp if_article_legal(%{pending: @audit_legal} = article, _), do: {:ok, article}
   defp if_article_legal(%{pending: @audit_failed} = article, _), do: {:ok, article}
 
@@ -124,13 +116,6 @@ defmodule GroupherServer.CMS.Articles.Read do
     case article.author.user_id == user_id do
       true -> {:ok, article}
       false -> raise_error(:pending, "this article is under audition")
-    end
-  end
-
-  defp if_article_legal(thread, id) when thread in @article_threads do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find(info.model, id) do
-      if_article_legal(article)
     end
   end
 

@@ -7,12 +7,12 @@ defmodule GroupherServer.CMS.Communities.Write do
   import GroupherServer.CMS.Articles.Write, only: [ensure_author_exists: 1]
   import ShortMaps
 
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.Communities
+  alias CMS.Model.{Community, CommunityDashboard, Embeds, Thread}
   alias Helper.ORM
   alias Helper.Types, as: T
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.CMS.Communities
-  alias Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, Embeds, CommunityDashboard, Thread}
 
   @default_meta Embeds.CommunityMeta.default_meta()
   @default_dashboard CommunityDashboard.default()

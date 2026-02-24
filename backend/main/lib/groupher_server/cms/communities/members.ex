@@ -6,10 +6,11 @@ defmodule GroupherServer.CMS.Communities.Members do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias Helper.{ORM, QueryBuilder}
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, CommunityModerator, CommunitySubscriber}
   alias Helper.Types, as: T
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunityModerator, CommunitySubscriber}
+  alias Helper.{ORM, QueryBuilder}
 
   @doc """
   return paged community subscribers

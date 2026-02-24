@@ -23,8 +23,6 @@ config :groupher_server, GroupherServer.Repo,
   pool_size: 20,
   # 设置查询超时时间为 60 秒
   timeout: 60_000,
-  # 设置从连接池获取连接的超时时间为 10 秒
-  pool_timeout: 10_000,
   # 设置连接所有权超时时间为 60 秒
   ownership_timeout: 60_000,
   # 设置队列目标为 5000

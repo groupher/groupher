@@ -12,13 +12,12 @@ defmodule GroupherServer.CMS.Events.CitedArtiment do
       to_upcase: 1
     ]
 
-  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1, article_of: 1]
-
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
 
-  alias Helper.Types, as: T
   alias GroupherServer.{CMS, Repo}
+  alias CMS.FrontDesk
+  alias Helper.Types, as: T
 
   alias Helper.{ORM, QueryBuilder}
 
@@ -53,7 +52,7 @@ defmodule GroupherServer.CMS.Events.CitedArtiment do
 
   @spec batch_delete_by(map()) :: {:ok, :pass}
   def batch_delete_by(article) do
-    with {:ok, thread} <- thread_of(article),
+    with {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, info} <- match(thread) do
       thread = to_upcase(thread)
 
@@ -107,8 +106,8 @@ defmodule GroupherServer.CMS.Events.CitedArtiment do
   defp shape(%CitedArtiment{comment_id: comment_id} = cited) when not is_nil(comment_id) do
     %{block_linker: block_linker, comment: comment, inserted_at: inserted_at} = cited
 
-    {:ok, article} = article_of(comment)
-    {:ok, article_thread} = thread_of(article)
+    {:ok, article} = FrontDesk.article_of(comment)
+    {:ok, article_thread} = FrontDesk.thread_of(article)
 
     user = comment.author |> Map.take([:login, :nickname, :avatar])
 

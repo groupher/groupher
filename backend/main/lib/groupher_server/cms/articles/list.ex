@@ -16,19 +16,13 @@ defmodule GroupherServer.CMS.Articles.List do
       to_upcase: 1
     ]
 
-  import GroupherServer.CMS.FrontDesk,
-    only: [
-      mark_viewer_emotion_states: 2,
-      thread_of: 1,
-      article_of: 1
-    ]
-
-  alias Helper.{ORM, QueryBuilder}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.FrontDesk
+  alias CMS.Helper.ArticleEnums
+  alias CMS.Model.{CitedArtiment, Community, PinnedArticle, Post}
   alias Helper.Types, as: T
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.{CitedArtiment, Community, PinnedArticle, Post}
-  alias GroupherServer.CMS.Helper.ArticleEnums
+  alias Helper.{ORM, QueryBuilder}
 
   @article_threads get_config(:article, :threads)
   @article_preloads @article_threads |> Enum.map(&Keyword.new([{&1, [author: :user]}]))
@@ -55,7 +49,7 @@ defmodule GroupherServer.CMS.Articles.List do
   def paged(thread, filter, %User{} = user) do
     with {:ok, stateless_paged_articles} <- paged(thread, filter) do
       case stateless_paged_articles
-           |> mark_viewer_emotion_states(user)
+           |> FrontDesk.mark_viewer_emotion_states(user)
            |> mark_viewer_has_states(user) do
         {:error, reason} -> {:error, reason}
         articles -> done(articles)
@@ -118,7 +112,7 @@ defmodule GroupherServer.CMS.Articles.List do
       |> select([article, author], article)
       |> QueryBuilder.filter_pack(filter)
       |> ORM.paginator(~m(page size)a)
-      |> mark_viewer_emotion_states(user)
+      |> FrontDesk.mark_viewer_emotion_states(user)
       |> mark_viewer_has_states(user)
       |> then(fn result ->
         case result do
@@ -151,8 +145,8 @@ defmodule GroupherServer.CMS.Articles.List do
   defp shape(%CitedArtiment{comment_id: comment_id} = cited) when not is_nil(comment_id) do
     %{block_linker: block_linker, comment: comment, inserted_at: inserted_at} = cited
 
-    {:ok, article} = article_of(comment)
-    {:ok, article_thread} = thread_of(article)
+    {:ok, article} = FrontDesk.article_of(comment)
+    {:ok, article_thread} = FrontDesk.thread_of(article)
 
     user = comment.author |> Map.take([:login, :nickname, :avatar])
 

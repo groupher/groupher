@@ -7,9 +7,9 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   # import Helper.Utils, only: [done: 1, get_config: 2]
   import Ecto.Query, warn: false
 
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
   alias Helper.ORM
-  alias GroupherServer.CMS
-  alias GroupherServer.Accounts.Model.User
 
   alias CMS.Model.{Community}
 

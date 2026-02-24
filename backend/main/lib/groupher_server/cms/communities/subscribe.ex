@@ -3,15 +3,13 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
   Subscribe helpers for communities.
   """
 
-
-
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.Communities
+  alias CMS.Model.{Community, CommunitySubscriber}
+  alias Ecto.Multi
   alias Helper.ORM
   alias Helper.Types, as: T
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunitySubscriber}
-  alias Ecto.Multi
 
   @doc """
   subscribe a community. (ONLY community, post etc use watch )

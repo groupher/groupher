@@ -3,9 +3,10 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   Dashboard helpers for communities.
   """
 
-  alias Helper.{ORM, OSS}
+  alias GroupherServer.CMS
+  alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.Types, as: T
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
+  alias Helper.{ORM, OSS}
 
   @default_dashboard CommunityDashboard.default()
 

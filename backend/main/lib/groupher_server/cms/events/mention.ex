@@ -6,12 +6,12 @@ defmodule GroupherServer.CMS.Events.Mention do
   """
   import Ecto.Query, warn: false
   import Helper.Utils, only: [get_config: 2]
-  import GroupherServer.CMS.FrontDesk, only: [preload_author: 1, author_of: 1, thread_of: 1]
 
   import GroupherServer.CMS.Events.Helper, only: [merge_same_block_linker: 2]
 
   alias GroupherServer.{Accounts, CMS, Delivery, Repo}
-  alias GroupherServer.CMS.Events.Event
+  alias CMS.Events.Event
+  alias CMS.FrontDesk
   alias CMS.Model.Comment
 
   @article_threads get_config(:article, :threads)
@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.Events.Mention do
   @spec handle(Comment.t() | map()) :: mention_result()
   def handle(%{body: body} = artiment) when not is_nil(body) do
     with {:ok, %{"blocks" => blocks}} <- Jason.decode(body),
-         {:ok, artiment} <- preload_author(artiment) do
+         {:ok, artiment} <- FrontDesk.preload_author(artiment) do
       blocks
       |> Enum.reduce([], &(&2 ++ parse_mention_info_per_block(artiment, &1)))
       |> merge_same_block_linker(:to_user_id)
@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.Events.Mention do
 
   @spec handle_mentions(list(), Comment.t() | map()) :: mention_result()
   defp handle_mentions(mentions, artiment) do
-    with {:ok, author} <- author_of(artiment) do
+    with {:ok, author} <- FrontDesk.author_of(artiment) do
       Delivery.send(:mention, artiment, mentions, author)
     end
   end
@@ -71,7 +71,7 @@ defmodule GroupherServer.CMS.Events.Mention do
   end
 
   defp parse_mention_user_id(artiment, {_, _, [user_login]}) do
-    with {:ok, author} <- author_of(artiment),
+    with {:ok, author} <- FrontDesk.author_of(artiment),
          {:ok, user_id} <- Accounts.get_userid_and_cache(user_login) do
       case author.id !== user_id do
         true -> {:ok, user_id}
@@ -100,7 +100,7 @@ defmodule GroupherServer.CMS.Events.Mention do
   end
 
   defp shape(article, to_user_id, block_id) do
-    {:ok, thread} = thread_of(article)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     %{
       thread: thread,

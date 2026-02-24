@@ -6,11 +6,11 @@ defmodule GroupherServer.CMS.Communities.Count do
   import Helper.Utils, only: [get_config: 2, plural: 1, strip_struct: 1]
   import GroupherServer.CMS.Helper.Matcher
 
-  alias Helper.{ORM, Transaction, Constant}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, CommunityTag}
   alias Helper.Types, as: T
-  alias GroupherServer.Repo
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunityTag}
+  alias Helper.{Constant, ORM, Transaction}
 
   @article_threads get_config(:article, :threads)
 

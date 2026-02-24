@@ -7,20 +7,27 @@ defmodule GroupherServer.CMS.Model.Community do
 
   import Ecto.Changeset
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
+  alias Helper.Constant.DBPrefix
 
   alias CMS.Model.{
-    Embeds,
-    CommunityDashboard,
-    Category,
-    CommunityCategory,
-    CommunityThread,
-    CommunitySubscriber,
-    CommunityModerator
-  }
 
+    Category,
+
+    CommunityCategory,
+
+    CommunityDashboard,
+
+    CommunityModerator,
+
+    CommunitySubscriber,
+
+    CommunityThread,
+
+    Embeds
+
+  }
   @type t :: %__MODULE__{}
 
   @schema_prefix DBPrefix.cms()

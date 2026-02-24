@@ -4,11 +4,10 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
   """
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Events.Event
   alias GroupherServer.CMS
   alias CMS.Communities
-  alias CMS.Model.{Community, Comment, Post, Blog, Changelog}
-  alias Helper.ORM
+  alias CMS.Events.Event
+  alias CMS.Model.{Blog, Changelog, Comment, Community, Post}
 
   @behaviour GroupherServer.CMS.Events.Handler
 
@@ -48,6 +47,6 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
 
   @spec comment_parent_article(module(), integer() | String.t()) :: {:ok, struct()} | {:error, map()}
   defp comment_parent_article(article, id) do
-    ORM.find(article, id, preload: [[author: :user], :community])
+    CMS.FrontDesk.get(article, id, preload: [[author: :user], :community])
   end
 end

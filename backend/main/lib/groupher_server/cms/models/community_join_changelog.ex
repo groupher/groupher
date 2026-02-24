@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Model.CommunityJoinChangelog do
   use Accessible
 
   alias GroupherServer.CMS
-  alias CMS.Model.{Community, Changelog}
+  alias CMS.Model.{Changelog, Community}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
