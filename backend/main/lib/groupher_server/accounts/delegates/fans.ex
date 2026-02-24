@@ -11,7 +11,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
   alias GroupherServer.{Accounts, Repo}
   alias Helper.{Later, ORM, QueryBuilder, Types}
 
-  alias GroupherServer.Accounts.Delegate.Hooks
+  alias GroupherServer.Accounts.Events
   alias GroupherServer.Accounts.Model.{User, UserFollower, UserFollowing}
 
   alias Ecto.Multi
@@ -43,7 +43,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
         Accounts.achieve(%User{id: target_user.id}, :inc, :follow)
       end)
       |> Multi.run(:after_hooks, fn _, _ ->
-        Later.run({Hooks.Notify, :handle, [:follow, user, follower]})
+        Later.run({Events, :emit, [:follow, %{user: user, from_user: follower}]})
       end)
       |> Repo.transaction()
       |> result()
@@ -75,7 +75,7 @@ defmodule GroupherServer.Accounts.Delegate.Fans do
         Accounts.achieve(%User{id: target_user.id}, :dec, :follow)
       end)
       |> Multi.run(:after_hooks, fn _, _ ->
-        Later.run({Hooks.Notify, :handle, [:undo, :follow, user, follower]})
+        Later.run({Events, :emit, [:undo_follow, %{user: user, from_user: follower}]})
       end)
       |> Repo.transaction()
       |> result()

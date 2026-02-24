@@ -1,9 +1,9 @@
-defmodule GroupherServer.Test.Accounts.Hooks.Notify do
+defmodule GroupherServer.Test.Accounts.Events.Notify do
   @moduledoc false
 
   use GroupherServer.TestTools
 
-  alias Accounts.Delegate.Hooks
+  alias Accounts.Events
   alias GroupherServer.Delivery
 
   setup do
@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.Accounts.Hooks.Notify do
   describe "[follow notify]" do
     test "follow notify hook should work", ~m(user user2)a do
       {:ok, _} = Accounts.follow(user, user2)
-      Hooks.Notify.handle(:follow, user, user2)
+      Events.emit(:follow, %{user: user, from_user: user2})
 
       {:ok, notifications} = Delivery.fetch(:notification, user, %{page: 1, size: 20})
       assert notifications.total_count == 1
@@ -29,8 +29,8 @@ defmodule GroupherServer.Test.Accounts.Hooks.Notify do
 
     test "undo follow notify hook should work", ~m(user user2)a do
       {:ok, _} = Accounts.follow(user, user2)
-      Hooks.Notify.handle(:follow, user, user2)
-      Hooks.Notify.handle(:undo, :follow, user, user2)
+      Events.emit(:follow, %{user: user, from_user: user2})
+      Events.emit(:undo_follow, %{user: user, from_user: user2})
 
       {:ok, notifications} = Delivery.fetch(:notification, user, %{page: 1, size: 20})
       assert notifications.total_count == 0
