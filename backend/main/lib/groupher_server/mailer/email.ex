@@ -7,10 +7,10 @@ defmodule GroupherServer.Email do
   import Bamboo.Email
   import Helper.Utils, only: [get_config: 2]
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Payment.Model.BillRecord
+  alias GroupherServer.{Accounts, Email, Mailer, Payment}
 
-  alias GroupherServer.Mailer
+  alias Accounts.Model.User
+  alias Payment.Model.BillRecord
 
   @support_email get_config(:system_emails, :support_email)
   @admin_email get_config(:system_emails, :admin_email)
@@ -20,8 +20,8 @@ defmodule GroupherServer.Email do
       base_mail()
       |> to(email)
       |> subject("欢迎来到 Groupher")
-      |> html_body(GroupherServer.Email.Templates.Welcome.html(user))
-      |> text_body(GroupherServer.Email.Templates.Welcome.text())
+      |> html_body(Email.Templates.Welcome.html(user))
+      |> text_body(Email.Templates.Welcome.text())
       |> Mailer.deliver_later()
     else
       {:ok, :pass}
@@ -37,8 +37,8 @@ defmodule GroupherServer.Email do
     base_mail()
     |> to(email)
     |> subject("感谢你的打赏")
-    |> html_body(GroupherServer.Email.Templates.ThanksDonation.html(user, record))
-    |> text_body(GroupherServer.Email.Templates.ThanksDonation.text())
+    |> html_body(Email.Templates.ThanksDonation.html(user, record))
+    |> text_body(Email.Templates.ThanksDonation.text())
     |> Mailer.deliver_later()
   end
 
@@ -48,8 +48,8 @@ defmodule GroupherServer.Email do
       base_mail()
       |> to(@admin_email)
       |> subject("新用户(#{user.nickname})注册")
-      |> html_body(GroupherServer.Email.Templates.NotifyAdminRegister.html(user))
-      |> text_body(GroupherServer.Email.Templates.NotifyAdminRegister.text())
+      |> html_body(Email.Templates.NotifyAdminRegister.html(user))
+      |> text_body(Email.Templates.NotifyAdminRegister.text())
       |> Mailer.deliver_later()
     else
       {:ok, :pass}
@@ -65,8 +65,8 @@ defmodule GroupherServer.Email do
     base_mail()
     |> to(@admin_email)
     |> subject("打赏 #{record.amount} 元")
-    |> html_body(GroupherServer.Email.Templates.NotifyAdminPayment.html(record))
-    |> text_body(GroupherServer.Email.Templates.NotifyAdminPayment.text())
+    |> html_body(Email.Templates.NotifyAdminPayment.html(record))
+    |> text_body(Email.Templates.NotifyAdminPayment.text())
     |> Mailer.deliver_later()
   end
 
@@ -76,8 +76,8 @@ defmodule GroupherServer.Email do
       base_mail()
       |> to(@admin_email)
       |> subject("new #{type}: #{title}")
-      |> html_body(GroupherServer.Email.Templates.NotifyAdminOnContentCreated.html(info))
-      |> text_body(GroupherServer.Email.Templates.NotifyAdminOnContentCreated.text(info))
+      |> html_body(Email.Templates.NotifyAdminOnContentCreated.html(info))
+      |> text_body(Email.Templates.NotifyAdminOnContentCreated.text(info))
       |> Mailer.deliver_later()
     else
       {:ok, :pass}
@@ -94,7 +94,9 @@ defmodule GroupherServer.Email do
   end
 
   defp welcome_new_register_enabled?, do: get_config(:system_emails, :welcome_new_register)
-  defp notify_admin_on_new_user_enabled?, do: get_config(:system_emails, :notify_admin_on_new_user)
+
+  defp notify_admin_on_new_user_enabled?,
+    do: get_config(:system_emails, :notify_admin_on_new_user)
 
   defp notify_admin_on_content_created_enabled? do
     get_config(:system_emails, :notify_admin_on_content_created)
