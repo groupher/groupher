@@ -9,7 +9,7 @@ defmodule Helper.Converter.EditorToHTML do
   alias Helper.Utils
 
   alias Helper.Converter.EditorToHTML.{Class, Frags}
-  alias Helper.Converter.{Article, EditorToHTML, HtmlSanitizer}
+  alias Helper.Converter.{Article, HtmlSanitizer}
 
   # alias EditorToHTML.Assets.{DelimiterIcons}
   @root_class Class.article()
