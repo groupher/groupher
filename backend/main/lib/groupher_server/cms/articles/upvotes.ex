@@ -6,16 +6,17 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   import GroupherServer.CMS.Helper.Matcher
   import Helper.Utils, only: [done: 1]
 
-  alias Ecto.Multi
-  alias Helper.{ORM, Later, Transaction}
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Model.ArticleUpvote
-  alias CMS.{FrontDesk, Events}
+  alias CMS.{Events, FrontDesk}
+  alias Ecto.Multi
+  alias Helper.Types, as: T
+  alias Helper.{Later, ORM, Transaction}
 
   @spec upvoted_users(term(), map()) :: T.domain_res(term())
-  def upvoted_users(article, filter), do: FrontDesk.load_reaction_users(ArticleUpvote, article, filter)
+  def upvoted_users(article, filter),
+    do: FrontDesk.load_reaction_users(ArticleUpvote, article, filter)
 
   @spec upvote(term(), User.t()) :: T.domain_res(term())
   def upvote(article, %User{} = user) do
@@ -38,7 +39,10 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
       end)
       |> Multi.run(:after_events, fn _, _ ->
         Later.run({Events, :emit, [:notify_upvote, %{target: article, from_user: user}]})
-        Later.run({Events, :emit, [:subscribe_community, %{target: article.community, user: user}]})
+
+        Later.run(
+          {Events, :emit, [:subscribe_community, %{target: article.community, user: user}]}
+        )
       end)
       |> Repo.transaction()
       |> result()
@@ -71,9 +75,12 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
           _ -> FrontDesk.update_article_reaction_user_list(:upvote, article, from_user, :remove)
         end
       end)
-      |> Multi.run(:undo_upvote, fn _, %{find_upvote: record, update_reaction_user_list: updated} ->
+      |> Multi.run(:undo_upvote, fn _,
+                                    %{find_upvote: record, update_reaction_user_list: updated} ->
         case record do
-          nil -> {:ok, updated}
+          nil ->
+            {:ok, updated}
+
           _ ->
             args = Map.put(%{user_id: user_id}, info.foreign_key, article.id)
             ORM.findby_delete(ArticleUpvote, args)
@@ -81,7 +88,9 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
         end
       end)
       |> Multi.run(:after_events, fn _, %{undo_upvote: updated} ->
-        Later.run({Events, :emit, [:notify_undo_upvote, %{target: updated, from_user: from_user}]})
+        Later.run(
+          {Events, :emit, [:notify_undo_upvote, %{target: updated, from_user: from_user}]}
+        )
       end)
       |> Repo.transaction()
       |> result()

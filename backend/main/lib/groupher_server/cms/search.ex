@@ -7,11 +7,11 @@ defmodule GroupherServer.CMS.Search do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.Matcher
 
-  alias Helper.ORM
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Model.Community
+  alias Helper.ORM
+  alias Helper.Types, as: T
 
   @search_items_count 15
 

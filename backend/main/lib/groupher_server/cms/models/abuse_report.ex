@@ -12,9 +12,9 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
 
   alias GroupherServer.{Accounts, CMS}
 
-  alias Helper.Constant.DBPrefix
   alias Accounts.Model.User
   alias CMS.Model.{Comment, Embeds}
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
 

@@ -8,11 +8,11 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias Helper.Types, as: T
-  alias Helper.{ORM, QueryBuilder}
+  alias GroupherServer.FrontDesk, as: GlobalFrontDesk
   alias GroupherServer.{CMS, Repo}
   alias CMS.FrontDesk
-  alias GroupherServer.FrontDesk, as: UserFrontDesk
+  alias Helper.Types, as: T
+  alias Helper.{ORM, QueryBuilder}
 
   alias CMS.Model.Comment
 
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
     |> Multi.run(:update_author_meta, fn _, _ ->
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- UserFrontDesk.user(comment.author_id) do
+      with {:ok, user} <- GlobalFrontDesk.user(comment.author_id) do
         illegal_comments = user.meta.illegal_comments ++ illegal_comments
 
         ORM.update_meta(user, %{has_illegal_comments: true, illegal_comments: illegal_comments})
@@ -73,7 +73,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
     |> Multi.run(:update_author_meta, fn _, _ ->
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- UserFrontDesk.user(comment.author_id) do
+      with {:ok, user} <- GlobalFrontDesk.user(comment.author_id) do
         illegal_comments = user.meta.illegal_comments -- illegal_comments
         has_illegal_comments = not Enum.empty?(illegal_comments)
 

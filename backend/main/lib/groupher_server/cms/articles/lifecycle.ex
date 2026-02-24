@@ -13,12 +13,12 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
       get_config: 2
     ]
 
-  alias Ecto.Multi
-  alias Helper.{ORM, Transaction}
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias CMS.{FrontDesk, Communities}
   alias CMS.Articles.Document
+  alias CMS.{Communities, FrontDesk}
+  alias Ecto.Multi
+  alias Helper.Types, as: T
+  alias Helper.{ORM, Transaction}
 
   @active_period get_config(:article, :active_period_days)
   @archive_threshold get_config(:article, :archive_threshold)
@@ -120,12 +120,15 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   def sink(article) do
     %{inserted_at: inserted_at} = article
 
-    with {:ok, article} <-
-           ORM.update_meta(article, %{
-             is_sunk: true,
-             last_active_at: inserted_at
-           }) do
-      ORM.update(article, %{active_at: inserted_at})
+    case ORM.update_meta(article, %{
+           is_sunk: true,
+           last_active_at: inserted_at
+         }) do
+      {:ok, article} ->
+        ORM.update(article, %{active_at: inserted_at})
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 

@@ -5,9 +5,9 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS
-  alias CMS.Events.Event
   alias CMS.Communities
-  alias CMS.Model.{Community, Comment, Post, Blog, Changelog}
+  alias CMS.Events.Event
+  alias CMS.Model.{Blog, Changelog, Comment, Community, Post}
 
   @behaviour GroupherServer.CMS.Events.Handler
 

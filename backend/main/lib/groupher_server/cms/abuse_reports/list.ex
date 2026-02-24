@@ -6,10 +6,10 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
 
-  alias Helper.{ORM, QueryBuilder}
-  alias Helper.Types, as: T
   alias GroupherServer.CMS
   alias CMS.Model.{AbuseReport, Comment}
+  alias Helper.Types, as: T
+  alias Helper.{ORM, QueryBuilder}
 
   import Helper.Utils, only: [done: 1, get_config: 2]
 

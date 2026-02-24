@@ -3,8 +3,8 @@ defmodule GroupherServer.CMS.Events.Notify do
   notify events, for upvote, collect, comment, reply
   """
   alias GroupherServer.{Accounts, CMS, Delivery, Repo}
-  alias CMS.FrontDesk
   alias CMS.Events.Event
+  alias CMS.FrontDesk
 
   alias Accounts.Model.User
   alias CMS.Model.Comment

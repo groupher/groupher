@@ -15,16 +15,16 @@ defmodule GroupherServer.CMS.Articles.Write do
       atom_values_to_upcase: 1
     ]
 
-  alias Ecto.Multi
-  alias Helper.{Converter, Later, ORM, Transaction}
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Email, Repo, Statistics}
   alias Accounts.Model.User
-  alias CMS.Helper.ArticleEnums
-  alias CMS.Model.{Author, Community, Embeds}
-  alias CMS.{FrontDesk, Communities, Events}
   alias CMS.Articles.Document
   alias CMS.Articles.{Meta, Placement}
+  alias CMS.Helper.ArticleEnums
+  alias CMS.Model.{Author, Community, Embeds}
+  alias CMS.{Communities, Events, FrontDesk}
+  alias Ecto.Multi
+  alias Helper.Types, as: T
+  alias Helper.{Converter, Later, ORM, Transaction}
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
   @default_article_meta Embeds.ArticleMeta.default_meta()

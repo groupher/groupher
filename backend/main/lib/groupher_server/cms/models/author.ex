@@ -7,9 +7,9 @@ defmodule GroupherServer.CMS.Model.Author do
 
   import Ecto.Changeset
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.Accounts
   alias Accounts.Model.User
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
 

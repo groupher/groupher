@@ -7,11 +7,11 @@ defmodule GroupherServer.CMS.Comments.Read do
 
   import Helper.Utils, only: [done: 1, get_config: 2]
 
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Model.Comment
+  alias Helper.Types, as: T
 
   @article_threads get_config(:article, :threads)
 
@@ -70,8 +70,6 @@ defmodule GroupherServer.CMS.Comments.Read do
     |> Enum.filter(&Map.get(comment, :"#{&1}_id"))
     |> List.first()
   end
-
-  defp mark_viewer_has_upvoted(paged_comments, nil), do: paged_comments
 
   defp mark_viewer_has_upvoted(%{entries: entries} = paged_comments, %User{} = user) do
     entries =

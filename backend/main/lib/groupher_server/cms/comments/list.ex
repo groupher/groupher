@@ -10,10 +10,10 @@ defmodule GroupherServer.CMS.Comments.List do
 
   import GroupherServer.CMS.Helper.Matcher
 
-  alias Helper.Types, as: T
-  alias Helper.{Later, ORM, QueryBuilder}
   alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.FrontDesk
+  alias Helper.Types, as: T
+  alias Helper.{Later, ORM, QueryBuilder}
 
   alias Accounts.Model.User
   alias CMS.Model.{Comment, PinnedComment}

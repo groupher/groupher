@@ -7,10 +7,10 @@ defmodule GroupherServer.CMS.Comments.Emotion do
 
   import Helper.Utils, only: [done: 1]
 
-  alias Helper.{ORM, Later}
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias CMS.{FrontDesk, Events}
+  alias CMS.{Events, FrontDesk}
+  alias Helper.Types, as: T
+  alias Helper.{Later, ORM}
 
   alias Accounts.Model.User
   alias CMS.Model.{Comment, CommentUserEmotion}
@@ -99,10 +99,10 @@ defmodule GroupherServer.CMS.Comments.Emotion do
         select: %{login: user.login, nickname: user.nickname}
       )
 
-    emotioned_user_info_list = Repo.all(query) |> Enum.uniq()
-    emotioned_user_count = length(emotioned_user_info_list)
+    mentioned_user_info_list = Repo.all(query) |> Enum.uniq()
+    mentioned_user_count = length(mentioned_user_info_list)
 
-    {:ok, %{user_list: emotioned_user_info_list, user_count: emotioned_user_count}}
+    {:ok, %{user_list: mentioned_user_info_list, user_count: mentioned_user_count}}
   end
 
   defp result({:ok, %{update_emotions_field: result}}), do: {:ok, result}

@@ -8,9 +8,9 @@ defmodule GroupherServer.CMS.Model.Blog do
   import Ecto.Changeset
   import GroupherServer.CMS.Helper.Macros
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.CMS
   alias CMS.Model.Embeds
+  alias Helper.Constant.DBPrefix
 
   @timestamps_opts [type: :utc_datetime]
 

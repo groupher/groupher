@@ -13,10 +13,12 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
   alias Helper.Constant.DBPrefix
 
   alias CMS.Model.{
-    Embeds,
-    Community
-  }
 
+    Community,
+
+    Embeds
+
+  }
   @schema_prefix DBPrefix.cms()
 
   @required_fields ~w(community_id)a

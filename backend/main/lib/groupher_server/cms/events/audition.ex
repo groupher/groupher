@@ -8,8 +8,8 @@ defmodule GroupherServer.CMS.Events.Audition do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Events.Event
-  alias Helper.AuditBot
   alias CMS.Model.Comment
+  alias Helper.AuditBot
 
   @behaviour GroupherServer.CMS.Events.Handler
 

@@ -10,15 +10,15 @@ defmodule GroupherServer.CMS.Comments.CRUD do
 
   import GroupherServer.CMS.Helper.Matcher
 
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.FrontDesk
+  alias Helper.Types, as: T
 
   alias Accounts.Model.User
-  alias CMS.Helper.ArticleEnums
-  alias CMS.Model.{Post, Comment, PinnedComment, Embeds, Community}
-  alias CMS.Events
   alias CMS.Comments.Actions
+  alias CMS.Events
+  alias CMS.Helper.ArticleEnums
+  alias CMS.Model.{Comment, Community, Embeds, PinnedComment, Post}
   alias Helper.{Later, ORM}
 
   alias Ecto.Multi
@@ -177,10 +177,7 @@ defmodule GroupherServer.CMS.Comments.CRUD do
           ORM.update(updated_comment, %{is_solution: is_solution, is_for_question: true})
         end)
         |> Multi.run(:update_post_state, fn _, _ ->
-          with {:ok, updated_post} <- ORM.update(post, %{solution_digest: comment.body_html}) do
-            state = if is_solution, do: @article_state.resolved, else: @article_state.default
-            CMS.Articles.set_state(updated_post, state)
-          end
+          update_post_state_for_solution(post, comment, is_solution)
         end)
         |> Multi.run(:sync_embed_replies, fn _, %{mark_solution: updated_comment} ->
           FrontDesk.sync_embed_replies(updated_comment)
@@ -293,6 +290,17 @@ defmodule GroupherServer.CMS.Comments.CRUD do
       |> ORM.count()
 
     cur_count + 1
+  end
+
+  defp update_post_state_for_solution(post, comment, is_solution) do
+    case ORM.update(post, %{solution_digest: comment.body_html}) do
+      {:ok, updated_post} ->
+        state = if is_solution, do: @article_state.resolved, else: @article_state.default
+        CMS.Articles.set_state(updated_post, state)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   defp result({:ok, %{set_question_flag_ifneed: result}}), do: {:ok, result}

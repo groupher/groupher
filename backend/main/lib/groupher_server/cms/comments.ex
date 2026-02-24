@@ -3,20 +3,26 @@ defmodule GroupherServer.CMS.Comments do
   CMS comments facade.
   """
 
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, Comment}
+  alias CMS.Model.{Comment, Community}
+  alias Helper.Types, as: T
 
   alias __MODULE__.{
-    Read,
-    List,
-    CRUD,
-    Actions,
-    Emotion,
-    Moderation
-  }
 
+    Actions,
+
+    CRUD,
+
+    Emotion,
+
+    List,
+
+    Moderation,
+
+    Read
+
+  }
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
   def fetch_comment(comment_id), do: Read.fetch_comment(comment_id)
 

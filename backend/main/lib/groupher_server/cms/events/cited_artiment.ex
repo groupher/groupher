@@ -15,9 +15,9 @@ defmodule GroupherServer.CMS.Events.CitedArtiment do
   import GroupherServer.CMS.Helper.Matcher
   import ShortMaps
 
-  alias Helper.Types, as: T
   alias GroupherServer.{CMS, Repo}
   alias CMS.FrontDesk
+  alias Helper.Types, as: T
 
   alias Helper.{ORM, QueryBuilder}
 

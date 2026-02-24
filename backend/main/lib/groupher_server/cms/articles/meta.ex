@@ -5,12 +5,12 @@ defmodule GroupherServer.CMS.Articles.Meta do
 
   import Helper.Utils, only: [get_config: 2, done: 1]
 
-  alias Helper.Types, as: T
-  alias Helper.ORM
   alias GroupherServer.CMS
   alias CMS.Comments.CRUD
-  alias CMS.Model.{Embeds, Post}
   alias CMS.Helper.ArticleEnums
+  alias CMS.Model.{Embeds, Post}
+  alias Helper.ORM
+  alias Helper.Types, as: T
 
   @active_period get_config(:article, :active_period_days)
   @article_cat ArticleEnums.cat_values() |> Enum.into(%{}, &{&1, &1})

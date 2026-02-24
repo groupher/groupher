@@ -5,11 +5,12 @@ defmodule GroupherServer.CMS.Communities.Read do
 
   import Helper.Utils, only: [done: 1]
 
-  alias Helper.ORM
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
+  alias CMS.FrontDesk
   alias CMS.Model.{Community, CommunityDashboard}
+  alias Helper.ORM
+  alias Helper.Types, as: T
 
   @default_dashboard CommunityDashboard.default()
   @default_read_opt [inc_views: true]
@@ -40,9 +41,8 @@ defmodule GroupherServer.CMS.Communities.Read do
   end
 
   defp do_read(slug, opt) do
-    with {:ok, community} <- ORM.find_community(slug),
+    with {:ok, community} <- FrontDesk.community(slug),
          {:ok, community} <- ensure_community_with_dashboard(community),
-         {:ok, community} <- ORM.fill_meta(community),
          {:ok, community} <- read_moderators(community) do
       case get_in(opt, [:inc_views]) do
         true -> ORM.inc(community, :views)

@@ -3,26 +3,36 @@ defmodule GroupherServer.CMS.Articles do
   CMS articles facade.
   """
 
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS}
+  alias Helper.Types, as: T
 
   alias Accounts.Model.User
-  alias CMS.Model.{ArticleCollect, Community}
   alias CMS.Helper.ArticleEnums
+  alias CMS.Model.{ArticleCollect, Community}
 
   alias __MODULE__.{
-    Read,
-    List,
-    Write,
-    Lifecycle,
-    Meta,
-    Moderation,
-    Placement,
-    Reactions,
-    Upvotes,
-    Collects
-  }
 
+    Collects,
+
+    Lifecycle,
+
+    List,
+
+    Meta,
+
+    Moderation,
+
+    Placement,
+
+    Reactions,
+
+    Read,
+
+    Upvotes,
+
+    Write
+
+  }
   # Read
   @spec read(String.t(), T.article_thread(), T.id()) :: T.domain_res(T.article())
   def read(community_slug, thread, inner_id), do: Read.read(community_slug, thread, inner_id)

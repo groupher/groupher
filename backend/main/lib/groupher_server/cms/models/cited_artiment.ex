@@ -11,8 +11,8 @@ defmodule GroupherServer.CMS.Model.CitedArtiment do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
 
-  alias Helper.Constant.DBPrefix
   alias CMS.Model.Comment
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
 

@@ -6,9 +6,9 @@ defmodule GroupherServer.CMS.Communities.Passport do
   import Ecto.Query, warn: false
   import ShortMaps
 
-  alias Helper.{Certification, NestedFilter, ORM}
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias Helper.Types, as: T
+  alias Helper.{Certification, NestedFilter, ORM}
 
   alias Accounts.Model.User
   alias CMS.Model.Passport, as: UserPassport

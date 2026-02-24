@@ -19,13 +19,13 @@ defmodule GroupherServer.CMS.Seeds do
       insert_community: 3
     ]
 
+  alias GroupherServer.CMS
   alias Helper.ORM
   alias Helper.Types, as: T
-  alias GroupherServer.CMS
 
-  alias CMS.Model.{Community, Category, Post, Comment}
+  alias CMS.Model.{Category, Comment, Community, Post}
 
-  alias __MODULE__.{Domain, Communities}
+  alias __MODULE__.{Communities, Domain}
 
   @article_threads get_config(:article, :threads)
   @community_types [:pl, :framework]

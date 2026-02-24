@@ -3,18 +3,14 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   Moderator helpers for communities.
   """
 
-  alias Helper.{Certification, ORM, Transaction}
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.Communities
-  alias CMS.Model.{Community, CommunityModerator}
   alias CMS.Communities.Passport
+  alias CMS.Model.{Community, CommunityModerator}
+  alias CMS.{Communities, FrontDesk}
   alias Ecto.Multi
-
-
-
-
+  alias Helper.Types, as: T
+  alias Helper.{Certification, ORM, Transaction}
 
   @doc """
   set a community moderator
@@ -70,8 +66,12 @@ defmodule GroupherServer.CMS.Communities.Moderator do
         %User{} = cur_user
       )
       when is_binary(community_slug) do
-    with {:ok, community} <- ORM.find_by(Community, %{slug: community_slug}, preload: :moderators) do
-      update_passport(community, rules, target_user, cur_user)
+    case FrontDesk.community(community_slug) do
+      {:ok, community} ->
+        update_passport(community, rules, target_user, cur_user)
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -106,8 +106,13 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   unset a community moderator
   """
   @spec remove(String.t() | Community.t(), User.t(), User.t()) :: T.domain_res(term())
-  def remove(community_slug, %User{} = target_user, %User{} = cur_user) do
-    with {:ok, community} <- ORM.find_community(community_slug),
+  def remove(%Community{slug: community_slug}, %User{} = target_user, %User{} = cur_user) do
+    remove(community_slug, target_user, cur_user)
+  end
+
+  def remove(community_slug, %User{} = target_user, %User{} = cur_user)
+      when is_binary(community_slug) do
+    with {:ok, community} <- FrontDesk.community(community_slug),
          {:ok, true} <- user_is_root?(community, cur_user) do
       Multi.new()
       |> Multi.run(:stamp_passport, fn _, _ ->
@@ -134,6 +139,9 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     else
       {:error, :community_root_only} ->
         {:error, {:community_root_only, "only community root can remove moderator"}}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 

@@ -4,9 +4,9 @@ defmodule GroupherServer.CMS.Articles.Document do
   """
   import Ecto.Query, warn: false
 
-  alias Helper.{ORM, Converter}
   alias GroupherServer.{CMS, Repo}
   alias CMS.FrontDesk
+  alias Helper.{Converter, ORM}
 
   alias CMS.Model.ArticleDocument
   alias Ecto.Multi

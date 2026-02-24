@@ -6,12 +6,12 @@ defmodule GroupherServer.CMS.Communities.Apply do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias Helper.{ORM, Constant}
-  alias Helper.Types, as: T
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Communities
   alias CMS.Model.Community
+  alias Helper.Types, as: T
+  alias Helper.{Constant, ORM}
 
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)
