@@ -1,10 +1,29 @@
 defmodule GroupherServer.Accounts.Utils do
-  @moduledoc false
+  @moduledoc """
+  utils for Accounts
+  """
+  alias GroupherServer.Accounts
 
-  alias Helper.Types, as: T
+  alias Accounts.Model.User
+  alias Helper.{Cache, ORM}
 
-  alias GroupherServer.Accounts.Delegate.Utils
+  @cache_pool :user_login
 
-  @spec get_userid_and_cache(String.t()) :: T.domain_res(T.id())
-  def get_userid_and_cache(login), do: Utils.get_userid_and_cache(login)
+  @doc """
+  get and cache user'id by user's login
+  """
+  @spec get_userid_and_cache(String.t()) :: {:ok, integer()} | {:error, any}
+  def get_userid_and_cache(login) do
+    case Cache.get(@cache_pool, login) do
+      {:ok, user_id} -> {:ok, user_id}
+      {:error, _} -> get_and_cache(login)
+    end
+  end
+
+  defp get_and_cache(login) do
+    with {:ok, user} <- ORM.find_by(User, %{login: login}) do
+      Cache.put(@cache_pool, login, user.id)
+      {:ok, user.id}
+    end
+  end
 end
