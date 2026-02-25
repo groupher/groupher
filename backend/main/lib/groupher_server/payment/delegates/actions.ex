@@ -17,21 +17,21 @@ defmodule GroupherServer.Payment.Delegate.Actions do
   def after_bill(%BillRecord{payment_usage: "donate", amount: amount} = record, :done) do
     plan = if amount >= @senior_amount_threshold, do: :senior, else: :donate
 
-    with {:ok, _} <- Accounts.upgrade_by_plan(%User{id: record.user_id}, plan) do
+    with {:ok, _} <- Accounts.Customizations.upgrade_by_plan(%User{id: record.user_id}, plan) do
       send_thanks_email(record)
       {:ok, record}
     end
   end
 
   def after_bill(%BillRecord{payment_usage: "senior"} = record, :done) do
-    with {:ok, _} <- Accounts.upgrade_by_plan(%User{id: record.user_id}, :senior) do
+    with {:ok, _} <- Accounts.Customizations.upgrade_by_plan(%User{id: record.user_id}, :senior) do
       send_thanks_email(record)
       {:ok, record}
     end
   end
 
   def after_bill(%BillRecord{payment_usage: "sponsor"} = record, :done) do
-    with {:ok, _} <- Accounts.upgrade_by_plan(%User{id: record.user_id}, :sponsor) do
+    with {:ok, _} <- Accounts.Customizations.upgrade_by_plan(%User{id: record.user_id}, :sponsor) do
       send_thanks_email(record)
       {:ok, record}
     end

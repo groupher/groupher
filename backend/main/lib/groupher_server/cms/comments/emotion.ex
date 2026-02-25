@@ -21,8 +21,8 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   @type t_user_list :: [%{login: String.t()}]
   @type t_mention_status :: %{user_list: t_user_list, user_count: integer()}
 
-  @spec emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
-  def emotion_to_comment(comment_id, emotion, %User{} = user) do
+  @spec set(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
+  def set(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
       Multi.new()
       |> Multi.run(:create_user_emotion, fn _, _ ->
@@ -56,8 +56,8 @@ defmodule GroupherServer.CMS.Comments.Emotion do
     end
   end
 
-  @spec undo_emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
-  def undo_emotion_to_comment(comment_id, emotion, %User{} = user) do
+  @spec undo(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
+  def undo(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
       Multi.new()
       |> Multi.run(:update_user_emotion, fn _, _ ->

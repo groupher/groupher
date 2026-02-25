@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
         Communities.Count.update(community, user, :subscribers_count, :inc)
       end)
       |> Multi.run(:update_user_subscribe_state, fn _, _ ->
-        Accounts.update_subscribe_state(user)
+        Accounts.Profiles.update_subscribe_state(user)
       end)
       |> Repo.transaction()
       |> result()
@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
         Communities.Count.update(community, user, :subscribers_count, :dec)
       end)
       |> Multi.run(:update_user_subscribe_state, fn _, _ ->
-        Accounts.update_subscribe_state(user)
+        Accounts.Profiles.update_subscribe_state(user)
       end)
       |> Repo.transaction()
       |> result()

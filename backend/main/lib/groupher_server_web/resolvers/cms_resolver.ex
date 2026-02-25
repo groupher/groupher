@@ -102,11 +102,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def paged_articles(_root, ~m(thread filter)a, %{context: %{cur_user: user}}) do
-    CMS.Articles.paged(thread, filter, user)
+    CMS.Articles.page(thread, filter, user)
   end
 
   def paged_articles(_root, ~m(thread filter)a, _info) do
-    CMS.Articles.paged(thread, filter)
+    CMS.Articles.page(thread, filter)
   end
 
   def grouped_kanban_posts(_root, %{community: community}, _info) do
@@ -175,10 +175,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # thread reaction ..
   # #######################
   def lock_article_comments(_root, ~m(article)a, _info),
-    do: CMS.Comments.lock_article_comments(article)
+    do: CMS.Articles.lock_comments(article)
 
   def undo_lock_article_comments(_root, ~m(article)a, _info) do
-    CMS.Comments.undo_lock_article_comments(article)
+    CMS.Articles.undo_lock_comments(article)
   end
 
   def sink_article(_root, ~m(article)a, _info), do: CMS.Articles.sink(article)
@@ -465,23 +465,23 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # sync github content ..
   # #######################
   def search_communities(_root, %{title: title, category: category}, %{context: %{cur_user: user}}) do
-    CMS.Search.communities(title, category, user)
+    CMS.Search.community(title, category, user)
   end
 
   def search_communities(_root, %{title: title, category: category}, _info) do
-    CMS.Search.communities(title, category)
+    CMS.Search.community(title, category)
   end
 
   def search_communities(_root, %{title: title}, %{context: %{cur_user: user}}) do
-    CMS.Search.communities(title, user)
+    CMS.Search.community(title, user)
   end
 
   def search_communities(_root, %{title: title}, _info) do
-    CMS.Search.communities(title)
+    CMS.Search.community(title)
   end
 
   def search_articles(_root, %{thread: thread, title: title}, _info) do
-    CMS.Search.articles(thread, %{title: title})
+    CMS.Search.article(thread, title)
   end
 
   # ##############################################

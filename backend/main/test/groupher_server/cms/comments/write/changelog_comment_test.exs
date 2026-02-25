@@ -1205,7 +1205,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, _} = CMS.Comments.lock_article_comments(changelog)
+      {:ok, _} = CMS.Articles.lock_comments(changelog)
 
       {:error, reason} =
         CMS.Comments.create_comment(
@@ -1218,7 +1218,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       assert reason |> is_error?(:article_comments_locked)
 
-      {:ok, _} = CMS.Comments.undo_lock_article_comments(changelog)
+      {:ok, _} = CMS.Articles.undo_lock_comments(changelog)
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -1242,12 +1242,12 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.lock_article_comments(changelog)
+      {:ok, _} = CMS.Articles.lock_comments(changelog)
 
       {:error, reason} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
       assert reason |> is_error?(:article_comments_locked)
 
-      {:ok, _} = CMS.Comments.undo_lock_article_comments(changelog)
+      {:ok, _} = CMS.Articles.undo_lock_comments(changelog)
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
     end
   end

@@ -3,10 +3,11 @@ defmodule GroupherServer.CMS.Articles.Write do
   Article write helpers.
   """
 
+  import Ecto.Query, warn: false
   import GroupherServer.CMS.Helper.Matcher
   import Helper.ErrorCode
 
-  import Helper.Utils,
+import Helper.Utils,
     only: [
       done: 1,
       plural: 1,
@@ -18,7 +19,7 @@ defmodule GroupherServer.CMS.Articles.Write do
   alias GroupherServer.{Accounts, CMS, Email, Repo, Statistics}
 
   alias Accounts.Model.User
-  alias CMS.Articles.{Document, Meta, Placement}
+  alias CMS.Articles.{Document, States}
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Author, Community, Embeds}
   alias CMS.{Communities, Events, FrontDesk}
@@ -29,6 +30,7 @@ defmodule GroupherServer.CMS.Articles.Write do
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
   @default_article_meta Embeds.ArticleMeta.default_meta()
+  @remove_article_hint "The content does not comply with the community norms"
 
   @spec create(Community.t(), atom(), map(), User.t()) :: T.domain_res(term())
   def create(%Community{} = community, thread, attrs, %User{} = user) do
@@ -45,7 +47,7 @@ defmodule GroupherServer.CMS.Articles.Write do
           Document.create(article, attrs)
         end)
         |> Multi.run(:mirror_article, fn _, %{create_article: article} ->
-          Placement.mirror(community, article)
+          States.mirror(community, article)
         end)
         |> Multi.run(:set_community_tags, fn _, %{create_article: article} ->
           Communities.set_tags(community, thread, article, %{
@@ -66,7 +68,7 @@ defmodule GroupherServer.CMS.Articles.Write do
           Communities.update_inner_id(community, thread, article)
         end)
         |> Multi.run(:update_user_published_meta, fn _, _ ->
-          Accounts.update_published_states(user, thread)
+          Accounts.Publish.update_states(user, thread)
         end)
         |> Multi.run(:after_events, fn _, %{create_article: article} ->
           Later.run({Events, :emit, [:cite, %{artiment: article}]})
@@ -126,7 +128,7 @@ defmodule GroupherServer.CMS.Articles.Write do
       )
     end)
     |> Multi.run(:update_edit_status, fn _, %{set_community_tags: update_article} ->
-      Meta.update_edit_status(update_article)
+      States.update_edit_status(update_article)
     end)
     |> Multi.run(:after_events, fn _, %{update_article: update_article} ->
       Later.run({Events, :emit, [:cite, %{artiment: update_article}]})
@@ -149,7 +151,85 @@ defmodule GroupherServer.CMS.Articles.Write do
         |> Ecto.Changeset.unique_constraint(:user_id)
         |> Ecto.Changeset.foreign_key_constraint(:user_id)
         |> Repo.insert()
-    end
+      end
+  end
+
+  @spec mark_delete(term()) :: T.domain_res(term())
+  def mark_delete(article) do
+    {:ok, thread} = FrontDesk.thread_of(article)
+
+    Transaction.locking(article, fn article ->
+      case article.is_archived do
+        false ->
+          Multi.new()
+          |> Multi.run(:update_article, fn _, _ ->
+            ORM.update(article, %{mark_delete: true})
+          end)
+          |> Multi.run(:update_community_article_count, fn _, _ ->
+            Communities.update_count_field(article.communities, thread)
+          end)
+          |> Repo.transaction()
+          |> result()
+
+        true ->
+          raise_error(:archived, "article is archived, can not be edit or delete")
+      end
+    end)
+  end
+
+  @spec undo_mark_delete(term()) :: T.domain_res(term())
+  def undo_mark_delete(article) do
+    {:ok, thread} = FrontDesk.thread_of(article)
+
+    Transaction.locking(article, fn article ->
+      Multi.new()
+      |> Multi.run(:update_article, fn _, _ ->
+        ORM.update(article, %{mark_delete: false})
+      end)
+      |> Multi.run(:update_community_article_count, fn _, _ ->
+        Communities.update_count_field(article.communities, thread)
+      end)
+      |> Repo.transaction()
+      |> result()
+    end)
+  end
+
+  @spec batch_mark_delete(String.t(), atom(), [T.id()]) :: T.domain_res(term())
+  def batch_mark_delete(community, thread, inner_id_list) do
+    do_batch_mark_delete(community, thread, inner_id_list, true)
+  end
+
+  @spec batch_undo_mark_delete(String.t(), atom(), [T.id()]) :: T.domain_res(term())
+  def batch_undo_mark_delete(community, thread, inner_id_list) do
+    do_batch_mark_delete(community, thread, inner_id_list, false)
+  end
+
+  @spec delete(term()) :: T.domain_res(term())
+  def delete(article) do
+    delete(article, @remove_article_hint)
+  end
+
+  @spec delete(term(), String.t()) :: T.domain_res(term())
+  def delete(article, _reason) do
+    article = Repo.preload(article, [:communities, [author: :user]])
+    {:ok, thread} = FrontDesk.thread_of(article)
+
+    Multi.new()
+    |> Multi.run(:delete_article, fn _, _ ->
+      article |> ORM.delete()
+    end)
+    |> Multi.run(:update_community_article_count, fn _, _ ->
+      Communities.update_count_field(article.communities, thread)
+    end)
+    |> Multi.run(:update_user_published_meta, fn _, _ ->
+      Accounts.Publish.update_states(article.author.user, thread)
+    end)
+    |> Multi.run(:delete_document, fn _, _ ->
+      Document.remove(thread, article.id)
+      {:ok, :pass}
+    end)
+    |> Repo.transaction()
+    |> result()
   end
 
   defp do_create_article(
@@ -228,9 +308,41 @@ defmodule GroupherServer.CMS.Articles.Write do
     end
   end
 
+  defp do_batch_mark_delete(community, thread, inner_id_list, delete_flag) do
+    with {:ok, info} <- match(thread) do
+      batch_query =
+        info.model
+        |> where([article], article.community_slug == ^community)
+        |> where([article], article.inner_id in ^inner_id_list)
+
+      Multi.new()
+      |> Multi.run(:update_articles, fn _, _ ->
+        batch_query
+        |> Repo.update_all(set: [mark_delete: delete_flag])
+        |> done
+      end)
+      |> Multi.run(:update_community_article_count, fn _, _ ->
+        communities =
+          from(a in batch_query, preload: :communities)
+          |> Repo.all()
+          |> Enum.map(& &1.communities)
+          |> Enum.at(0)
+
+        case communities do
+          nil -> {:ok, :pass}
+          _ -> Communities.update_count_field(communities, thread)
+        end
+      end)
+      |> Repo.transaction()
+      |> result()
+    end
+  end
+
   defp result({:ok, %{set_active_at_timestamp: result}}), do: {:ok, result}
   defp result({:ok, %{update_edit_status: result}}), do: {:ok, result}
   defp result({:ok, %{update_article: result}}), do: {:ok, result}
+  defp result({:ok, %{delete_article: result}}), do: {:ok, result}
+  defp result({:ok, %{update_articles: _result}}), do: {:ok, %{done: true}}
 
   defp result({:error, :create_article, _result, _steps}) do
     {:error, {:create_fails, "create article"}}

@@ -105,10 +105,10 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       {:ok, user3} = db_insert(:user)
       {:ok, user4} = db_insert(:user)
 
-      user2 |> Accounts.follow(user)
-      user |> Accounts.follow(user2)
-      user3 |> Accounts.follow(user2)
-      user3 |> Accounts.follow(user4)
+      user2 |> Accounts.Fans.follow(user)
+      user |> Accounts.Fans.follow(user2)
+      user3 |> Accounts.Fans.follow(user2)
+      user3 |> Accounts.Fans.follow(user4)
 
       variables = %{login: user2.login}
       results = guest_conn |> gq_query(@query, variables)
@@ -122,11 +122,11 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       {:ok, users} = db_insert_multi(:user, total_count)
 
       Enum.each(users, fn fan ->
-        {:ok, _} = fan |> Accounts.follow(user)
+        {:ok, _} = fan |> Accounts.Fans.follow(user)
       end)
 
       random_fan = users |> Enum.shuffle() |> List.first()
-      random_fan |> Accounts.undo_follow(user)
+      random_fan |> Accounts.Fans.undo_follow(user)
 
       variables = %{login: user.login}
       results = guest_conn |> gq_query(@query, variables)
