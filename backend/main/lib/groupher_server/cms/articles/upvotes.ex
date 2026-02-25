@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
       end)
       |> Multi.run(:add_achievement, fn _, _ ->
         achiever_id = article.author.user_id
-        Accounts.achieve(%User{id: achiever_id}, :inc, :upvote)
+        Accounts.Achievements.achieve(%User{id: achiever_id}, :inc, :upvote)
       end)
       |> Multi.run(:create_upvote, fn _, %{update_reaction_user_list: article} ->
         create_upvote(article, info, user)

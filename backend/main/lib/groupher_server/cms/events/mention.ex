@@ -73,7 +73,7 @@ defmodule GroupherServer.CMS.Events.Mention do
 
   defp parse_mention_user_id(artiment, {_, _, [user_login]}) do
     with {:ok, author} <- FrontDesk.author_of(artiment),
-         {:ok, user_id} <- Accounts.get_userid_and_cache(user_login) do
+         {:ok, user_id} <- Accounts.FrontDesk.userid(user_login) do
       case author.id !== user_id do
         true -> {:ok, user_id}
         false -> {:error, {:custom, "mention yourself, ignored"}}

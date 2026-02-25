@@ -9,7 +9,7 @@ root_rules = %{
 
 github_profile = mock_attrs(:github_profile, %{login: "cms_root"}) |> map_key_stringify
 
-{:ok, %{token: token, user: user}} = Accounts.signin_oauth(github_profile)
+{:ok, %{token: token, user: user}} = Accounts.Profiles.signin_oauth(github_profile)
 {:ok, _passport} = CMS.Communities.stamp_passport(root_rules, user)
 
 IO.puts("========== create cms root done ! ===========================")

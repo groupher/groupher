@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Accounts.Customization do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.Accounts
+  alias GroupherServer.Accounts.Customizations, as: Accounts
 
   setup do
     {:ok, user} = db_insert(:user)

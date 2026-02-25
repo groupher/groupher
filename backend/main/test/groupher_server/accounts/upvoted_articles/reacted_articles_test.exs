@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
 
   use GroupherServer.TestTools
 
-  alias GroupherServer.Accounts
+  alias GroupherServer.Accounts.UpvotedArticles, as: Accounts
 
   setup do
     {:ok, user} = db_insert(:user)

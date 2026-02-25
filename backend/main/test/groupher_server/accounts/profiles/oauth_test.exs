@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert {:error, _} = ORM.find_by(User, nickname: @valid_github_profile["login"])
       assert {:error, _} = ORM.find_by(OauthProvider, login: @valid_github_profile["login"])
 
-      {:ok, signin_res} = Accounts.signin_oauth(@valid_github_profile)
+      {:ok, signin_res} = Accounts.Profiles.signin_oauth(@valid_github_profile)
 
       assert {:ok, user} =
                ORM.find_by(User, %{login: @valid_github_profile["login"]}, preload: :social)
@@ -47,34 +47,34 @@ defmodule GroupherServer.Test.Accounts.Oauth do
     end
 
     test "existing user can signin" do
-      {:ok, signin_res} = Accounts.signin_oauth(@valid_github_profile)
+      {:ok, signin_res} = Accounts.Profiles.signin_oauth(@valid_github_profile)
 
       assert signin_res |> Map.has_key?(:user)
       assert signin_res |> Map.has_key?(:token)
     end
 
     test "existing user can signin multiple times" do
-      {:ok, _} = Accounts.signin_oauth(@valid_github_profile)
-      {:ok, _} = Accounts.signin_oauth(@valid_github_profile)
-      {:ok, _} = Accounts.signin_oauth(@valid_github_profile)
-      {:ok, _} = Accounts.signin_oauth(@valid_github_profile)
+      {:ok, _} = Accounts.Profiles.signin_oauth(@valid_github_profile)
+      {:ok, _} = Accounts.Profiles.signin_oauth(@valid_github_profile)
+      {:ok, _} = Accounts.Profiles.signin_oauth(@valid_github_profile)
+      {:ok, _} = Accounts.Profiles.signin_oauth(@valid_github_profile)
 
       assert {:ok, 1} == ORM.count(OauthProvider)
     end
 
     test "existing non-existing user fails" do
       {:ok, _signin_res} =
-        Accounts.signin_oauth(@valid_github_profile)
+        Accounts.Profiles.signin_oauth(@valid_github_profile)
 
       {:error, _res} =
-        Accounts.signin_oauth(%{@valid_github_profile | "provider_id" => "non-existing-id"})
+        Accounts.Profiles.signin_oauth(%{@valid_github_profile | "provider_id" => "non-existing-id"})
     end
 
     test "can link oauth provider to existing user" do
       user_login = @valid_twitter_profile["login"]
       github_provider = @valid_github_profile |> Map.put("login", user_login)
-      {:ok, _} = Accounts.signin_oauth(github_provider)
-      {:ok, res} = Accounts.link_oauth(user_login, @valid_twitter_profile)
+      {:ok, _} = Accounts.Profiles.signin_oauth(github_provider)
+      {:ok, res} = Accounts.Profiles.link_oauth(user_login, @valid_twitter_profile)
 
       assert res |> Map.has_key?(:user)
       assert res |> Map.has_key?(:token)
@@ -95,13 +95,13 @@ defmodule GroupherServer.Test.Accounts.Oauth do
     test "can unlink oauth provider" do
       user_login = @valid_twitter_profile["login"]
       github_provider = @valid_github_profile |> Map.put("login", user_login)
-      {:ok, _} = Accounts.signin_oauth(github_provider)
-      {:ok, _} = Accounts.link_oauth(user_login, @valid_twitter_profile)
+      {:ok, _} = Accounts.Profiles.signin_oauth(github_provider)
+      {:ok, _} = Accounts.Profiles.link_oauth(user_login, @valid_twitter_profile)
 
       {:ok, providers} = ORM.find_all(OauthProvider, %{page: 1, size: 10})
       assert providers.total_count == 2
 
-      {:ok, _} = Accounts.unlink_oauth(user_login, @valid_twitter_profile)
+      {:ok, _} = Accounts.Profiles.unlink_oauth(user_login, @valid_twitter_profile)
 
       {:ok, providers} = ORM.find_all(OauthProvider, %{page: 1, size: 10})
       assert providers.total_count == 1
@@ -113,12 +113,12 @@ defmodule GroupherServer.Test.Accounts.Oauth do
     test "can not unlink oauth provider if there is only one" do
       user_login = @valid_twitter_profile["login"]
       github_provider = @valid_github_profile |> Map.put("login", user_login)
-      {:ok, _} = Accounts.signin_oauth(github_provider)
+      {:ok, _} = Accounts.Profiles.signin_oauth(github_provider)
 
       {:ok, providers} = ORM.find_all(OauthProvider, %{page: 1, size: 10})
       assert providers.total_count == 1
 
-      {:error, reason} = Accounts.unlink_oauth(user_login, github_provider)
+      {:error, reason} = Accounts.Profiles.unlink_oauth(user_login, github_provider)
 
       assert reason |> Enum.into(%{}) |> Map.get(:code) == ecode(:oauth_unlink)
     end

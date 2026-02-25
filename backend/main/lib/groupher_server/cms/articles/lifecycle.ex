@@ -92,7 +92,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
       Communities.update_count_field(article.communities, thread)
     end)
     |> Multi.run(:update_user_published_meta, fn _, _ ->
-      Accounts.update_published_states(article.author.user, thread)
+      Accounts.Publishes.update_published_states(article.author.user, thread)
     end)
     |> Multi.run(:delete_document, fn _, _ ->
       Articles.Document.remove(thread, article.id)

@@ -1,40 +1,28 @@
 defmodule GroupherServer.Accounts.Publishes do
   @moduledoc """
-  user followers / following related
+  Accounts publishes facade.
   """
-  import Ecto.Query, warn: false
-  import Helper.Utils, only: [plural: 1]
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  alias Helper.Types, as: T
 
-  alias Helper.ORM
+  alias __MODULE__.{Articles, Comments}
 
-  @doc """
-  get paged published contents of a user
-  """
-  def paged_published_articles(%User{id: user_id}, thread, filter) do
-    with {:ok, user} <- ORM.find(User, user_id) do
-      CMS.Articles.paged_published(thread, filter, user)
-    end
+  @spec paged_published_articles(User.t(), T.article_thread(), map()) :: T.domain_res(T.paged_data())
+  def paged_published_articles(%User{} = user, thread, filter) do
+    Articles.paged_published_articles(user, thread, filter)
   end
 
-  @doc """
-  update published articles count in user meta
-  """
+  @spec update_published_states(User.t(), T.article_thread()) :: T.domain_res(User.t())
   def update_published_states(%User{} = user, thread) do
-    filter = %{page: 1, size: 1}
-
-    with {:ok, paged_articles} <- CMS.Articles.paged_published(thread, filter, user) do
-      ORM.update_meta(user, %{:"published_#{plural(thread)}_count" => paged_articles.total_count})
-    end
+    Articles.update_published_states(user, thread)
   end
 
-  def paged_published_comments(user, filter) do
-    CMS.Comments.paged_published_comments(user, filter)
-  end
+  @spec paged_published_comments(User.t(), map()) :: T.domain_res(T.paged_data())
+  def paged_published_comments(%User{} = user, filter), do: Comments.paged_published_comments(user, filter)
 
-  def paged_published_comments(user, thread, filter) do
-    CMS.Comments.paged_published_comments(user, thread, filter)
+  @spec paged_published_comments(User.t(), T.article_thread(), map()) :: T.domain_res(T.paged_data())
+  def paged_published_comments(%User{} = user, thread, filter) do
+    Comments.paged_published_comments(user, thread, filter)
   end
 end

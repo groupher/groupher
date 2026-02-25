@@ -3,7 +3,6 @@ defmodule GroupherServer.Delivery do
   The Delivery context.
   """
 
-  alias GroupherServer.Delivery
   alias GroupherServer.Delivery.Delegate.Postman
 
   defdelegate send(service, artiment, mentions, from_user), to: Postman

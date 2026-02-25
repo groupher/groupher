@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Query.Accounts.Published.Blogs do
+defmodule GroupherServer.Test.Query.Accounts.Publishes.Blogs do
   @moduledoc false
 
   use GroupherServer.TestTools

@@ -465,23 +465,23 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # sync github content ..
   # #######################
   def search_communities(_root, %{title: title, category: category}, %{context: %{cur_user: user}}) do
-    CMS.Search.communities(title, category, user)
+    CMS.Search.community(title, category, user)
   end
 
   def search_communities(_root, %{title: title, category: category}, _info) do
-    CMS.Search.communities(title, category)
+    CMS.Search.community(title, category)
   end
 
   def search_communities(_root, %{title: title}, %{context: %{cur_user: user}}) do
-    CMS.Search.communities(title, user)
+    CMS.Search.community(title, user)
   end
 
   def search_communities(_root, %{title: title}, _info) do
-    CMS.Search.communities(title)
+    CMS.Search.community(title)
   end
 
   def search_articles(_root, %{thread: thread, title: title}, _info) do
-    CMS.Search.articles(thread, %{title: title})
+    CMS.Search.article(thread, title)
   end
 
   # ##############################################

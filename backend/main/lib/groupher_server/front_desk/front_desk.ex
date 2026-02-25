@@ -6,24 +6,18 @@ defmodule GroupherServer.FrontDesk do
   those can be use both in function and middleware
   # TODO: bring cache in
   """
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias Helper.ORM
+  alias GroupherServer.{Accounts, CMS}
 
   def community(slug) when is_binary(slug), do: CMS.FrontDesk.community(slug)
 
   def thread(thread_id), do: CMS.FrontDesk.thread(thread_id)
 
   def user(id) when is_integer(id) do
-    with {:ok, user} <- ORM.find(User, id) do
-      ORM.fill_meta(user)
-    end
+    Accounts.FrontDesk.user(id)
   end
 
   def user(login) do
-    with {:ok, user} <- ORM.find_by(User, %{login: login}) do
-      ORM.fill_meta(user)
-    end
+    Accounts.FrontDesk.user(login)
   end
 
   def comment(id), do: CMS.FrontDesk.comment(id)

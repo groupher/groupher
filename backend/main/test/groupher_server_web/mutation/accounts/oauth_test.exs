@@ -140,8 +140,8 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       github_provider = @valid_github_profile |> Map.put(:login, user.login)
       twitter_provider = @valid_twitter_profile |> Map.put(:login, user.login)
 
-      {:ok, _} = Accounts.link_oauth(user.login, github_provider)
-      {:ok, _} = Accounts.link_oauth(user.login, twitter_provider)
+      {:ok, _} = Accounts.Profiles.link_oauth(user.login, github_provider)
+      {:ok, _} = Accounts.Profiles.link_oauth(user.login, twitter_provider)
 
       variables = %{
         provider: gql_oauth_provider(@valid_twitter_profile),
@@ -157,8 +157,8 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       github_provider = @valid_github_profile |> Map.put(:login, user.login)
       twitter_provider = @valid_twitter_profile |> Map.put(:login, user.login)
 
-      {:ok, _} = Accounts.link_oauth(user.login, github_provider)
-      {:ok, _} = Accounts.link_oauth(user.login, twitter_provider)
+      {:ok, _} = Accounts.Profiles.link_oauth(user.login, github_provider)
+      {:ok, _} = Accounts.Profiles.link_oauth(user.login, twitter_provider)
 
       variables = %{
         provider: gql_oauth_provider(@valid_twitter_profile),

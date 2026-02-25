@@ -6,10 +6,8 @@ defmodule GroupherServer.Accounts.Customizations do
   import Helper.Utils, only: [map_atom_value: 2]
   import ShortMaps
 
-  alias GroupherServer.Accounts
-
-  alias Accounts.Achievements
-  alias Accounts.Model.{Customization, User}
+  alias GroupherServer.Accounts.{Achievements, FrontDesk}
+  alias GroupherServer.Accounts.Model.{Customization, User}
   alias Helper.ORM
 
   def upgrade_by_plan(%User{} = user, :donate) do
@@ -55,7 +53,7 @@ defmodule GroupherServer.Accounts.Customizations do
 
   def set_customization(%User{id: user_id} = user, map) when is_map(map) do
     with {:ok, ~m(achievement customization)a} <-
-           ORM.find(User, user_id, preload: [:achievement, :customization]) do
+           FrontDesk.user(user_id, preload: [:achievement, :customization], fill_meta: false) do
       cur_c11n = extract_cur_c11n(customization)
       map = map |> map_atom_value(:string)
 
@@ -83,7 +81,8 @@ defmodule GroupherServer.Accounts.Customizations do
   end
 
   def set_customization(%User{} = user, key, value \\ true) do
-    with {:ok, %{achievement: achievement}} <- ORM.find(User, user.id, preload: :achievement) do
+    with {:ok, %{achievement: achievement}} <-
+           FrontDesk.user(user.id, preload: :achievement, fill_meta: false) do
       case c11n_item_setable?(key, achievement) do
         true ->
           attrs = Map.put(%{user_id: user.id}, key, value)

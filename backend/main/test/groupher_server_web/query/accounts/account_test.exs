@@ -184,8 +184,8 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       {:ok, user2} = db_insert(:user)
       {:ok, user3} = db_insert(:user)
 
-      {:ok, _} = Accounts.follow(user, user2)
-      {:ok, _} = Accounts.follow(user3, user)
+      {:ok, _} = Accounts.Fans.follow(user, user2)
+      {:ok, _} = Accounts.Fans.follow(user3, user)
 
       results = user_conn |> gq_query(@query, variables)
       assert results |> is_valid_pagination?()

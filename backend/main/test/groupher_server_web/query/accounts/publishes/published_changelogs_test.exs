@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Query.Accounts.Published.Changelogs do
+defmodule GroupherServer.Test.Query.Accounts.Publishes.Changelogs do
   @moduledoc false
 
   use GroupherServer.TestTools

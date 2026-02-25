@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
 
   describe "mailbox status" do
     test "can get default mailbox status", ~m(user)a do
-      {:ok, status} = Accounts.mailbox_status(user)
+      {:ok, status} = Accounts.Mailboxes.mailbox_status(user)
       assert status == @default_mailbox_status
     end
 
@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
       }
 
       {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
-      {:ok, user} = Accounts.update_mailbox_status(user.id)
+      {:ok, user} = Accounts.Mailboxes.update_mailbox_status(user.id)
 
       assert user.mailbox.is_empty == false
       assert user.mailbox.unread_notifications_count == 1
@@ -56,7 +56,7 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
       ]
 
       {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user2)
-      {:ok, user} = Accounts.update_mailbox_status(user.id)
+      {:ok, user} = Accounts.Mailboxes.update_mailbox_status(user.id)
 
       assert user.mailbox.is_empty == false
       assert user.mailbox.unread_notifications_count == 1

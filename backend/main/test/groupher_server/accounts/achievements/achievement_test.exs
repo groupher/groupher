@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.Accounts.Achievement do
 
   describe "[Accounts Achievement communities]" do
     test "normal user should have a empty editable communities list", ~m(user)a do
-      {:ok, results} = Accounts.paged_moderatorable_communities(user, %{page: 1, size: 20})
+      {:ok, results} = Accounts.Achievements.paged_moderatorable_communities(user, %{page: 1, size: 20})
 
       assert results |> is_valid_pagination?(:raw)
       assert results.total_count == 0
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.Accounts.Achievement do
       {:ok, _} = CMS.Communities.add_moderator(community, role, user2, user)
 
       {:ok, moderatorable_communities} =
-        Accounts.paged_moderatorable_communities(user3, %{page: 1, size: 20})
+        Accounts.Achievements.paged_moderatorable_communities(user3, %{page: 1, size: 20})
 
       assert moderatorable_communities.total_count == 2
       assert moderatorable_communities.entries |> Enum.any?(&(&1.id == community.id))
@@ -50,9 +50,9 @@ defmodule GroupherServer.Test.Accounts.Achievement do
 
   describe "[Accounts Achievement function]" do
     test "Accounts.achieve should inc / dec achievement by parts", ~m(user)a do
-      user |> Accounts.achieve(:inc, :follow)
-      user |> Accounts.achieve(:inc, :upvote)
-      user |> Accounts.achieve(:inc, :collect)
+      user |> Accounts.Achievements.achieve(:inc, :follow)
+      user |> Accounts.Achievements.achieve(:inc, :upvote)
+      user |> Accounts.Achievements.achieve(:inc, :collect)
       {:ok, achievement} = Achievement |> ORM.find_by(user_id: user.id)
 
       assert achievement.followers_count == 1
@@ -62,9 +62,9 @@ defmodule GroupherServer.Test.Accounts.Achievement do
       reputation = @follow_weight + @upvote_weight + @collect_weight
       assert achievement.reputation == reputation
 
-      user |> Accounts.achieve(:dec, :follow)
-      user |> Accounts.achieve(:dec, :upvote)
-      user |> Accounts.achieve(:dec, :collect)
+      user |> Accounts.Achievements.achieve(:dec, :follow)
+      user |> Accounts.Achievements.achieve(:dec, :upvote)
+      user |> Accounts.Achievements.achieve(:dec, :collect)
 
       {:ok, achievement} = Achievement |> ORM.find_by(user_id: user.id)
       assert achievement.followers_count == 0
@@ -74,9 +74,9 @@ defmodule GroupherServer.Test.Accounts.Achievement do
     end
 
     test "Accounts.achieve can not minus count < 0", ~m(user)a do
-      user |> Accounts.achieve(:dec, :follow)
-      user |> Accounts.achieve(:dec, :upvote)
-      user |> Accounts.achieve(:dec, :collect)
+      user |> Accounts.Achievements.achieve(:dec, :follow)
+      user |> Accounts.Achievements.achieve(:dec, :upvote)
+      user |> Accounts.Achievements.achieve(:dec, :collect)
 
       {:ok, achievement} = Achievement |> ORM.find_by(user_id: user.id)
       assert achievement.followers_count == 0
@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.Accounts.Achievement do
       {:ok, users} = db_insert_multi(:user, 20)
 
       Enum.each(users, fn cool_user ->
-        {:ok, _} = cool_user |> Accounts.follow(user)
+        {:ok, _} = cool_user |> Accounts.Fans.follow(user)
       end)
 
       {:ok, user} = User |> ORM.find(user.id, preload: :achievement)
@@ -106,11 +106,11 @@ defmodule GroupherServer.Test.Accounts.Achievement do
       {:ok, users} = db_insert_multi(:user, 20)
 
       Enum.each(users, fn cool_user ->
-        {:ok, _} = cool_user |> Accounts.follow(user)
+        {:ok, _} = cool_user |> Accounts.Fans.follow(user)
       end)
 
       one_folloer = users |> List.first()
-      one_folloer |> Accounts.undo_follow(user)
+      one_folloer |> Accounts.Fans.undo_follow(user)
 
       {:ok, user} = User |> ORM.find(user.id, preload: :achievement)
 

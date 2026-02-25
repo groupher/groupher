@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Accounts.Events.Notify do
 
   use GroupherServer.TestTools
 
-  alias Accounts.Events
+  alias GroupherServer.Accounts.Events
+  alias GroupherServer.Accounts.Fans
   alias GroupherServer.Delivery
 
   setup do
@@ -15,7 +16,7 @@ defmodule GroupherServer.Test.Accounts.Events.Notify do
 
   describe "[follow notify]" do
     test "follow notify hook should work", ~m(user user2)a do
-      {:ok, _} = Accounts.follow(user, user2)
+      {:ok, _} = Fans.follow(user, user2)
       Events.emit(:follow, %{user: user, from_user: user2})
 
       {:ok, notifications} = Delivery.fetch(:notification, user, %{page: 1, size: 20})
@@ -28,7 +29,7 @@ defmodule GroupherServer.Test.Accounts.Events.Notify do
     end
 
     test "undo follow notify hook should work", ~m(user user2)a do
-      {:ok, _} = Accounts.follow(user, user2)
+      {:ok, _} = Fans.follow(user, user2)
       Events.emit(:follow, %{user: user, from_user: user2})
       Events.emit(:undo_follow, %{user: user, from_user: user2})
 

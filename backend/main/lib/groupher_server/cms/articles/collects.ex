@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
     Transaction.locking(article, fn article ->
       Multi.new()
       |> Multi.run(:inc_author_achieve, fn _, _ ->
-        Accounts.achieve(article.author.user, :inc, :collect)
+        Accounts.Achievements.achieve(article.author.user, :inc, :collect)
       end)
       |> Multi.run(:inc_article_collects_count, fn _, _ ->
         ORM.inc(article, :collects_count)
@@ -100,7 +100,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
   defp maybe_dec_author_achieve(nil, _article), do: {:ok, :pass}
 
   defp maybe_dec_author_achieve(_record, article) do
-    Accounts.achieve(article.author.user, :dec, :collect)
+    Accounts.Achievements.achieve(article.author.user, :dec, :collect)
   end
 
   defp maybe_dec_collects_count(nil, article), do: {:ok, article}

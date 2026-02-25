@@ -66,7 +66,7 @@ defmodule GroupherServer.CMS.Articles.Write do
           Communities.update_inner_id(community, thread, article)
         end)
         |> Multi.run(:update_user_published_meta, fn _, _ ->
-          Accounts.update_published_states(user, thread)
+          Accounts.Publishes.update_published_states(user, thread)
         end)
         |> Multi.run(:after_events, fn _, %{create_article: article} ->
           Later.run({Events, :emit, [:cite, %{artiment: article}]})

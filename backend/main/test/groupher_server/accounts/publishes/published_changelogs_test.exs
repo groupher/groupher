@@ -1,7 +1,9 @@
-defmodule GroupherServer.Test.Accounts.Published.Changelog do
+defmodule GroupherServer.Test.Accounts.Publishes.Changelog do
   @moduledoc false
 
   use GroupherServer.TestTools
+
+  alias GroupherServer.Accounts.Publishes, as: Accounts
 
   @publish_count 10
 

@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Accounts do
+defmodule GroupherServer.Test.Accounts.Profiles.User do
   @moduledoc false
 
   use GroupherServer.TestTools
@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Accounts do
         email: "new@qq.com"
       }
 
-      {:ok, updated} = Accounts.update_profile(%User{id: user.id}, attrs)
+      {:ok, updated} = Accounts.Profiles.update_profile(%User{id: user.id}, attrs)
 
       assert updated.bio == attrs.bio
       assert updated.nickname == attrs.nickname
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.Accounts do
         }
       }
 
-      {:ok, updated} = Accounts.update_profile(%User{id: user.id}, attrs)
+      {:ok, updated} = Accounts.Profiles.update_profile(%User{id: user.id}, attrs)
 
       assert updated.location == "new name"
 

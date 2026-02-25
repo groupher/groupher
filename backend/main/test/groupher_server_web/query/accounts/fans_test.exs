@@ -30,8 +30,8 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       {:ok, user2} = db_insert(:user)
       {:ok, user3} = db_insert(:user)
 
-      {:ok, _} = Accounts.follow(user2, user)
-      {:ok, _} = Accounts.follow(user3, user)
+      {:ok, _} = Accounts.Fans.follow(user2, user)
+      {:ok, _} = Accounts.Fans.follow(user3, user)
 
       user_conn = simu_conn(:user, user)
       results = user_conn |> gq_query(@query, variables)
@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
 
     test "login user can get other user's paged followers", ~m(guest_conn user)a do
       {:ok, user2} = db_insert(:user)
-      {:ok, _} = user |> Accounts.follow(user2)
+      {:ok, _} = user |> Accounts.Fans.follow(user2)
 
       variables = %{login: user2.login, filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(@query, variables)
@@ -77,9 +77,9 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       {:ok, user3} = db_insert(:user)
       {:ok, user4} = db_insert(:user)
 
-      {:ok, _} = user |> Accounts.follow(user2)
-      {:ok, _} = user |> Accounts.follow(user3)
-      {:ok, _} = user |> Accounts.follow(user4)
+      {:ok, _} = user |> Accounts.Fans.follow(user2)
+      {:ok, _} = user |> Accounts.Fans.follow(user3)
+      {:ok, _} = user |> Accounts.Fans.follow(user4)
 
       results = user_conn |> gq_query(@query, variables)
 
@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
 
     test "login user can get other user's paged followings", ~m(guest_conn user)a do
       {:ok, user2} = db_insert(:user)
-      {:ok, _followeer} = user |> Accounts.follow(user2)
+      {:ok, _followeer} = user |> Accounts.Fans.follow(user2)
 
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(@query, variables)
@@ -118,7 +118,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       {:ok, users} = db_insert_multi(:user, total_count)
 
       Enum.each(users, fn other_user ->
-        {:ok, _} = other_user |> Accounts.follow(user)
+        {:ok, _} = other_user |> Accounts.Fans.follow(user)
       end)
 
       variables = %{login: user.login}
@@ -140,12 +140,12 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       {:ok, users} = db_insert_multi(:user, total_count)
 
       Enum.each(users, fn cool_user ->
-        {:ok, _} = user |> Accounts.follow(cool_user)
+        {:ok, _} = user |> Accounts.Fans.follow(cool_user)
       end)
 
       # make some noise
       {:ok, [user2, user3]} = db_insert_multi(:user, 2)
-      {:ok, _} = user2 |> Accounts.follow(user3)
+      {:ok, _} = user2 |> Accounts.Fans.follow(user3)
 
       variables = %{login: user.login}
       results = user_conn |> gq_query(@query, variables)
@@ -167,7 +167,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       results = user_conn |> gq_query(@query, variables)
       assert results |> Map.get("viewerHasFollowed") == false
 
-      {:ok, _} = user |> Accounts.follow(user2)
+      {:ok, _} = user |> Accounts.Fans.follow(user2)
       variables = %{login: user2.login}
       results = user_conn |> gq_query(@query, variables)
 
@@ -190,7 +190,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       results = user_conn |> gq_query(@query, variables)
       assert results |> Map.get("viewerBeenFollowed") == false
 
-      {:ok, _} = Accounts.follow(user, user2)
+      {:ok, _} = Accounts.Fans.follow(user, user2)
       variables = %{login: user.login}
 
       results = user_conn |> gq_query(@query, variables)

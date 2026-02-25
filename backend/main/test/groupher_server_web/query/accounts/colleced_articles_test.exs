@@ -35,8 +35,8 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
   test "other user can get other user's paged collect folders", ~m(user_conn guest_conn)a do
     {:ok, user} = db_insert(:user)
 
-    {:ok, _folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
-    {:ok, _folder} = Accounts.create_collect_folder(%{title: "test folder2"}, user)
+    {:ok, _folder} = Accounts.CollectFolders.create_collect_folder(%{title: "test folder"}, user)
+    {:ok, _folder} = Accounts.CollectFolders.create_collect_folder(%{title: "test folder2"}, user)
 
     variables = %{login: user.login, filter: %{page: 1, size: 20}}
     results = user_conn |> gq_query(@query, variables)
@@ -51,8 +51,8 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
 
   test "owner can get it's paged collect folders with private folders",
        ~m(user user_conn guest_conn)a do
-    {:ok, _folder} = Accounts.create_collect_folder(%{title: "test folder", private: true}, user)
-    {:ok, _folder} = Accounts.create_collect_folder(%{title: "test folder2"}, user)
+    {:ok, _folder} = Accounts.CollectFolders.create_collect_folder(%{title: "test folder", private: true}, user)
+    {:ok, _folder} = Accounts.CollectFolders.create_collect_folder(%{title: "test folder2"}, user)
 
     variables = %{login: user.login, filter: %{page: 1, size: 20}}
     results = user_conn |> gq_query(@query, variables)
@@ -77,10 +77,10 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
   }
   """
   test "can get paged articles inside a collect-folder", ~m(user_conn guest_conn user posts)a do
-    {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder"}, user)
+    {:ok, folder} = Accounts.CollectFolders.create_collect_folder(%{title: "test folder"}, user)
 
     Enum.each(posts, fn post ->
-      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
+      {:ok, _folder} = Accounts.CollectFolders.add_to_collect(post, folder.id, user)
     end)
 
     post1 = Enum.at(posts, 0)
@@ -102,10 +102,10 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
 
   test "can not get collect-folder articles when folder is private", ~m(guest_conn posts)a do
     {:ok, user2} = db_insert(:user)
-    {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder", private: true}, user2)
+    {:ok, folder} = Accounts.CollectFolders.create_collect_folder(%{title: "test folder", private: true}, user2)
 
     Enum.each(posts, fn post ->
-      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user2)
+      {:ok, _folder} = Accounts.CollectFolders.add_to_collect(post, folder.id, user2)
     end)
 
     variables = %{folderId: folder.id, filter: %{page: 1, size: 20}}
@@ -115,10 +115,10 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
 
   test "owner can get collect-folder articles when folder is private",
        ~m(user_conn user posts)a do
-    {:ok, folder} = Accounts.create_collect_folder(%{title: "test folder", private: true}, user)
+    {:ok, folder} = Accounts.CollectFolders.create_collect_folder(%{title: "test folder", private: true}, user)
 
     Enum.each(posts, fn post ->
-      {:ok, _folder} = Accounts.add_to_collect(post, folder.id, user)
+      {:ok, _folder} = Accounts.CollectFolders.add_to_collect(post, folder.id, user)
     end)
 
     variables = %{folderId: folder.id, filter: %{page: 1, size: 20}}

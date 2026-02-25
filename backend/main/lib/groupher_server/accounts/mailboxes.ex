@@ -4,6 +4,7 @@ defmodule GroupherServer.Accounts.Mailboxes do
 
   import Helper.Utils, only: [done: 1]
 
+  alias GroupherServer.Accounts.FrontDesk
   alias GroupherServer.Delivery
 
   alias GroupherServer.Accounts.Model.{Embeds, User}
@@ -26,7 +27,7 @@ defmodule GroupherServer.Accounts.Mailboxes do
 
   @doc "update messages count in mailbox"
   def update_mailbox_status(user_id) do
-    with {:ok, user} <- ORM.find(User, user_id),
+    with {:ok, user} <- FrontDesk.user(user_id),
          {:ok, unread_mentions_count} <- Delivery.unread_count(:mention, user_id),
          {:ok, unread_notifications_count} <- Delivery.unread_count(:notification, user_id) do
       unread_total_count = unread_mentions_count + unread_notifications_count

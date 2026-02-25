@@ -1,7 +1,9 @@
-defmodule GroupherServer.Test.Accounts.Published.Blog do
+defmodule GroupherServer.Test.Accounts.Publishes.Blog do
   @moduledoc false
 
   use GroupherServer.TestTools
+
+  alias GroupherServer.Accounts.Publishes, as: Accounts
 
   @publish_count 10
 

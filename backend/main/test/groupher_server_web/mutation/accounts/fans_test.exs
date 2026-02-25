@@ -67,7 +67,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
     """
     test "login user can undo follow other user", ~m(user_conn user)a do
       {:ok, user2} = db_insert(:user)
-      {:ok, _} = user |> Accounts.follow(user2)
+      {:ok, _} = user |> Accounts.Fans.follow(user2)
 
       {:ok, found} = User |> ORM.find(user2.id, preload: :followers)
       assert found |> Map.get(:followers) |> length == 1
