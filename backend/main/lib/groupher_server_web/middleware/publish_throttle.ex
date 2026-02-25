@@ -7,9 +7,10 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   import Helper.Utils, only: [handle_absinthe_error: 3, get_config: 2]
   import Helper.ErrorCode
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Statistics
-  alias GroupherServer.Statistics.Model.PublishThrottle
+  alias GroupherServer.{Accounts, Statistics}
+
+  alias Accounts.Model.User
+  alias Statistics.Model.PublishThrottle
 
   @interval_minutes get_config(:general, :publish_throttle_interval_minutes)
   @hour_limit get_config(:general, :publish_throttle_hour_limit)

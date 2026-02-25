@@ -8,8 +8,9 @@ defmodule GroupherServer.Test.ConnSimulator do
 
   import GroupherServer.CMS.FrontDesk, only: [author_of: 1]
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
   alias Helper.{Guardian, ORM}
 
   @spec simu_conn(:guest | :invalid_token | :user) :: Plug.Conn.t()

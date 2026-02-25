@@ -10,8 +10,7 @@ defmodule GroupherServer.CMS.Communities.Count do
 
   alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityTag}
-  alias Helper.Types, as: T
-  alias Helper.{Constant, ORM, Transaction}
+  alias Helper.{Constant, ORM, T, Transaction}
 
   @article_threads get_config(:article, :threads)
 

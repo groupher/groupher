@@ -10,8 +10,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
 
   alias CMS.FrontDesk
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias Helper.Types, as: T
-  alias Helper.{ORM, Transaction}
+  alias Helper.{ORM, T, Transaction}
 
   alias Accounts.Model.User
   alias CMS.Model.{AbuseReport, Comment, Embeds}

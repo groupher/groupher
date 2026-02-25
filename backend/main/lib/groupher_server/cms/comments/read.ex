@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Comments.Read do
   alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Model.Comment
-  alias Helper.Types, as: T
+  alias Helper.T
 
   @article_threads get_config(:article, :threads)
 

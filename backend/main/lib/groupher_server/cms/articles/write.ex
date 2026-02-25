@@ -25,8 +25,7 @@ import Helper.Utils,
   alias CMS.{Communities, Events, FrontDesk}
 
   alias Ecto.Multi
-  alias Helper.{Converter, Later, ORM, Transaction}
-  alias Helper.Types, as: T
+  alias Helper.{Converter, Later, ORM, T, Transaction}
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
   @default_article_meta Embeds.ArticleMeta.default_meta()

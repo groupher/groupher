@@ -12,9 +12,7 @@ defmodule Helper.ORM do
 
   alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityDashboard}
-  alias Helper.ORMAtom
-  alias Helper.QueryBuilder
-  alias Helper.Types, as: T
+  alias Helper.{ORMAtom, QueryBuilder, T}
 
   @article_threads get_config(:article, :threads)
 

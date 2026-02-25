@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Search do
   """
 
   alias GroupherServer.Accounts.Model.User
-  alias Helper.Types, as: T
+  alias Helper.T
 
   alias __MODULE__.{Article, Community}
 

@@ -7,7 +7,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
   alias Helper.Certification
 
   def me(_root, _args, %{context: %{cur_user: cur_user}}), do: {:ok, cur_user}
@@ -199,7 +199,8 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
       {:ok, user_id} ->
         Accounts.Achievements.paged_moderatorable_communities(%User{id: user_id}, filter)
 
-      _ -> raise_error(:not_exist, "#{login} not found")
+      _ ->
+        raise_error(:not_exist, "#{login} not found")
     end
   end
 

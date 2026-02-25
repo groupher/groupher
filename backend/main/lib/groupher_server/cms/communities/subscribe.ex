@@ -9,8 +9,7 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
   alias Accounts.Model.User
   alias CMS.Communities
   alias CMS.Model.{Community, CommunitySubscriber}
-  alias Helper.ORM
-  alias Helper.Types, as: T
+  alias Helper.{ORM, T}
 
   @doc """
   subscribe a community. (ONLY community, post etc use watch )

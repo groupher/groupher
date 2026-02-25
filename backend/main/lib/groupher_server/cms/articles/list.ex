@@ -22,8 +22,7 @@ defmodule GroupherServer.CMS.Articles.List do
   alias CMS.FrontDesk
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.{CitedArtiment, Community, PinnedArticle, Post}
-  alias Helper.Types, as: T
-  alias Helper.{ORM, QueryBuilder}
+  alias Helper.{ORM, QueryBuilder, T}
 
   @article_threads get_config(:article, :threads)
   @article_preloads @article_threads |> Enum.map(&Keyword.new([{&1, [author: :user]}]))

@@ -9,8 +9,7 @@ defmodule GroupherServer.CMS.Communities.List do
 
   alias Accounts.Model.User
   alias CMS.Model.Community
-  alias Helper.ORM
-  alias Helper.Types, as: T
+  alias Helper.{ORM, T}
 
   @spec page(map(), User.t()) :: T.domain_res(term())
   def page(filter, %User{meta: meta}) do

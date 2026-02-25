@@ -15,8 +15,7 @@ defmodule GroupherServer.CMS.Comments.List do
   alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Model.{Comment, PinnedComment}
-  alias Helper.Types, as: T
-  alias Helper.{Later, ORM, QueryBuilder}
+  alias Helper.{Later, ORM, QueryBuilder, T}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
 

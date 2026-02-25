@@ -10,8 +10,7 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   alias Accounts.Model.User
   alias CMS.Model.{Comment, Community, Thread}
-  alias Helper.Types, as: T
-  alias Helper.{ORM, QueryBuilder}
+  alias Helper.{ORM, QueryBuilder, T}
 
   @article_threads Application.compile_env(:groupher_server, :article, [])
                    |> Keyword.get(:threads, [])

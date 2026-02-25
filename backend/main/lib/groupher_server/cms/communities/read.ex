@@ -10,8 +10,7 @@ defmodule GroupherServer.CMS.Communities.Read do
   alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Model.{Community, CommunityDashboard}
-  alias Helper.ORM
-  alias Helper.Types, as: T
+  alias Helper.{ORM, T}
 
   @default_dashboard CommunityDashboard.default()
   @default_read_opt [inc_views: true]

@@ -11,8 +11,7 @@ defmodule GroupherServer.CMS.Communities.Apply do
   alias Accounts.Model.User
   alias CMS.Communities
   alias CMS.Model.Community
-  alias Helper.Types, as: T
-  alias Helper.{Constant, ORM}
+  alias Helper.{Constant, ORM, T}
 
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)

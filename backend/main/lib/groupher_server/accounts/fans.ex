@@ -4,7 +4,7 @@ defmodule GroupherServer.Accounts.Fans do
   """
 
   alias GroupherServer.Accounts.Model.User
-  alias Helper.Types, as: T
+  alias Helper.T
 
   alias __MODULE__.{Actions, List, ViewerState}
 

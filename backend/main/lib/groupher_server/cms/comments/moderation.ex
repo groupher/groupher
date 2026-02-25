@@ -13,8 +13,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   alias CMS.FrontDesk
   alias CMS.Model.Comment
   alias GroupherServer.FrontDesk, as: GlobalFrontDesk
-  alias Helper.Types, as: T
-  alias Helper.{ORM, QueryBuilder}
+  alias Helper.{ORM, QueryBuilder, T}
 
   alias Ecto.Multi
 

@@ -11,8 +11,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
   alias Accounts.Model.User
   alias CMS.Model.Passport, as: UserPassport
 
-  alias Helper.Types, as: T
-  alias Helper.{Certification, NestedFilter, ORM}
+  alias Helper.{Certification, NestedFilter, ORM, T}
 
   # https://medium.com/front-end-hacking/use-github-oauth-as-your-sso-seamlessly-with-react-3e2e3b358fa1
   # http://www.ubazu.com/using-postgres-jsonb-columns-in-ecto

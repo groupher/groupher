@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Communities do
 
   alias Accounts.Model.User
   alias CMS.Model.{Category, Community, CommunityTag, Thread}
-  alias Helper.Types, as: T
+  alias Helper.T
 
   alias __MODULE__.{
     Apply,

@@ -4,9 +4,11 @@ defmodule GroupherServer.Accounts.Achievements.Moderatorable do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.Accounts.FrontDesk
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.CommunityModerator
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.FrontDesk
+  alias Accounts.Model.User
+  alias CMS.Model.CommunityModerator
   alias Helper.ORM
 
   def paged_moderatorable_communities(%User{id: user_id}, %{page: page, size: size}) do

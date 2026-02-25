@@ -18,8 +18,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias Helper.Types, as: T
-  alias Helper.{Later, ORM}
+  alias Helper.{Later, ORM, T}
 
   alias Accounts.Model.User
   alias CMS.FrontDesk

@@ -5,8 +5,7 @@ defmodule Helper.Converter.EditorToHTML do
   see https://editorjs.io/
   """
 
-  alias Helper.Types, as: T
-  alias Helper.Utils
+  alias Helper.{T, Utils}
 
   alias Helper.Converter.EditorToHTML.{Class, Frags}
   alias Helper.Converter.{Article, HtmlSanitizer}

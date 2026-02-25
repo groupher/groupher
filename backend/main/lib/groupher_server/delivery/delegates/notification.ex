@@ -9,9 +9,10 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
 
   import ShortMaps
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Delivery.Model.Notification
-  alias GroupherServer.{Accounts, Repo}
+  alias GroupherServer.{Accounts, Delivery, Repo}
+
+  alias Accounts.Model.User
+  alias Delivery.Model.Notification
 
   alias Ecto.Multi
   alias Helper.ORM

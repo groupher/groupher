@@ -3,9 +3,9 @@ defmodule Helper.GQLError do
   Encode domain errors into GraphQL error shape.
   """
 
-  alias Helper.{ErrorCode, Types}
+  alias Helper.{ErrorCode, T}
 
-  @spec encode(Types.error() | Types.gq_error() | {:error, Types.error()}) :: Types.gq_error()
+  @spec encode(T.error() | T.gq_error() | {:error, T.error()}) :: T.gq_error()
   def encode({:error, [message: _message, code: _code]} = error), do: error
   def encode({:error, error}), do: encode(error)
 

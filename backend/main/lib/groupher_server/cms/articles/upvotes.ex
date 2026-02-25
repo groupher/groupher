@@ -13,8 +13,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   alias CMS.{Events, FrontDesk}
 
   alias Ecto.Multi
-  alias Helper.Types, as: T
-  alias Helper.{Later, ORM, Transaction}
+  alias Helper.{Later, ORM, T, Transaction}
 
   @spec upvoted_users(term(), map()) :: T.domain_res(term())
   def upvoted_users(article, filter),

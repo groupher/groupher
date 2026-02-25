@@ -3,10 +3,10 @@ defmodule Helper.GQL do
   GraphQL boundary helpers for transforming domain results.
   """
 
-  alias Helper.Types
+  alias Helper.T
 
-  @spec result(Types.result(term(), Types.error()) | Types.gq_result(term())) ::
-          Types.gq_result(term())
+  @spec result(T.result(term(), T.error()) | T.gq_result(term())) ::
+          T.gq_result(term())
   def result({:ok, _} = ok), do: ok
   def result({:error, {:changeset, %Ecto.Changeset{} = changeset}}), do: {:error, changeset}
   def result({:error, [message: _, code: _]} = gq_error), do: gq_error

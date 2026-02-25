@@ -3,9 +3,10 @@ defmodule GroupherServer.Accounts.Publish.Articles do
 
   import Helper.Utils, only: [plural: 1]
 
-  alias GroupherServer.Accounts.FrontDesk
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.FrontDesk
+  alias Accounts.Model.User
   alias Helper.ORM
 
   def paged(%User{id: user_id}, thread, filter) do

@@ -20,8 +20,7 @@ defmodule GroupherServer.CMS.Events.CitedArtiment do
   alias CMS.FrontDesk
   alias CMS.Model.{CitedArtiment, Comment}
 
-  alias Helper.{ORM, QueryBuilder}
-  alias Helper.Types, as: T
+  alias Helper.{ORM, QueryBuilder, T}
 
   @article_threads get_config(:article, :threads)
 

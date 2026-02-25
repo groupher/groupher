@@ -4,7 +4,7 @@ defmodule GroupherServer.Accounts.Search do
   """
 
   alias __MODULE__.User
-  alias Helper.Types, as: T
+  alias Helper.T
 
   @spec user(String.t()) :: T.domain_res(T.paged_users())
   def user(name) when is_binary(name), do: User.search(name)

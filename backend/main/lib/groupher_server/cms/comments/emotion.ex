@@ -13,8 +13,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   alias CMS.Model.{Comment, CommentUserEmotion}
   alias CMS.{Events, FrontDesk}
 
-  alias Helper.Types, as: T
-  alias Helper.{Later, ORM}
+  alias Helper.{Later, ORM, T}
 
   alias Ecto.Multi
 

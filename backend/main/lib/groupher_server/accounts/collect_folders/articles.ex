@@ -6,11 +6,11 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
 
   alias GroupherServer.Accounts.Model.{CollectFolder, User}
   alias GroupherServer.Repo
-  alias Helper.{ORM, Types}
+  alias Helper.{ORM, T}
 
   @article_threads get_config(:article, :threads)
 
-  @spec paged(Types.id(), map()) :: Types.domain_res(Types.paged_data())
+  @spec paged(T.id(), map()) :: T.domain_res(T.paged_data())
   def paged(folder_id, filter) do
     with {:ok, folder} <- ORM.find(CollectFolder, folder_id) do
       case folder.private do
@@ -20,7 +20,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
     end
   end
 
-  @spec paged(Types.id(), map(), User.t()) :: Types.domain_res(Types.paged_data())
+  @spec paged(T.id(), map(), User.t()) :: T.domain_res(T.paged_data())
   def paged(folder_id, filter, %User{id: cur_user_id}) do
     with {:ok, folder} <- ORM.find(CollectFolder, folder_id) do
       is_valid_request = if folder.private, do: folder.user_id == cur_user_id, else: true

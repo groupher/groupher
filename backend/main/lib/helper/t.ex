@@ -1,4 +1,4 @@
-defmodule Helper.Types do
+defmodule Helper.T do
   @moduledoc """
   custom @types
   """

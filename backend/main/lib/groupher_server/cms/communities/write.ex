@@ -12,8 +12,7 @@ defmodule GroupherServer.CMS.Communities.Write do
   alias Accounts.Model.User
   alias CMS.Communities
   alias CMS.Model.{Community, CommunityDashboard, Embeds, Thread}
-  alias Helper.ORM
-  alias Helper.Types, as: T
+  alias Helper.{ORM, T}
 
   @default_meta Embeds.CommunityMeta.default_meta()
   @default_dashboard CommunityDashboard.default()

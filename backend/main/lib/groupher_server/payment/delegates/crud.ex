@@ -9,11 +9,11 @@ defmodule GroupherServer.Payment.Delegate.CRUD do
 
   alias Helper.ORM
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Email
-  alias GroupherServer.Payment.Delegate.Actions
-  alias GroupherServer.Payment.Model.BillRecord
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, Email, Payment, Repo}
+
+  alias Accounts.Model.User
+  alias Payment.Delegate.Actions
+  alias Payment.Model.BillRecord
 
   alias Ecto.Multi
 
@@ -30,7 +30,7 @@ defmodule GroupherServer.Payment.Delegate.CRUD do
   end
 
   @doc """
-  create bill recoard with pending state
+  create bill record with pending state
   """
   def create_record(%User{id: user_id}, attrs) do
     with {:ok, user} <- ORM.find(User, user_id) do
