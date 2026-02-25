@@ -102,11 +102,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def paged_articles(_root, ~m(thread filter)a, %{context: %{cur_user: user}}) do
-    CMS.Articles.paged(thread, filter, user)
+    CMS.Articles.page(thread, filter, user)
   end
 
   def paged_articles(_root, ~m(thread filter)a, _info) do
-    CMS.Articles.paged(thread, filter)
+    CMS.Articles.page(thread, filter)
   end
 
   def grouped_kanban_posts(_root, %{community: community}, _info) do
@@ -175,10 +175,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # thread reaction ..
   # #######################
   def lock_article_comments(_root, ~m(article)a, _info),
-    do: CMS.Comments.lock_article_comments(article)
+    do: CMS.Articles.lock_comments(article)
 
   def undo_lock_article_comments(_root, ~m(article)a, _info) do
-    CMS.Comments.undo_lock_article_comments(article)
+    CMS.Articles.undo_lock_comments(article)
   end
 
   def sink_article(_root, ~m(article)a, _info), do: CMS.Articles.sink(article)

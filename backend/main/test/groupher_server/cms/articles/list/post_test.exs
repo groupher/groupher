@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.CMS.Articles.PostList do
       {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, paged_posts} = CMS.Articles.paged(:post, %{page: 1, size: 20})
+      {:ok, paged_posts} = CMS.Articles.page(:post, %{page: 1, size: 20})
 
       assert paged_posts |> is_valid_pagination?(:raw)
       assert length(paged_posts.entries) >= 2

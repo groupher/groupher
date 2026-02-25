@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocList do
       {:ok, _} = CMS.Articles.create(community, :doc, doc_attrs, user)
       {:ok, _} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      {:ok, paged_docs} = CMS.Articles.paged(:doc, %{page: 1, size: 20})
+      {:ok, paged_docs} = CMS.Articles.page(:doc, %{page: 1, size: 20})
 
       assert paged_docs |> is_valid_pagination?(:raw)
       assert length(paged_docs.entries) >= 2

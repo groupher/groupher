@@ -39,7 +39,7 @@ defmodule GroupherServer.Delivery.Delegate.Mention do
       end
     end)
     |> Multi.run(:update_user_mailbox_status, fn _, _ ->
-      Enum.each(mentions, &Accounts.Mailboxes.update_mailbox_status(&1.to_user_id)) |> done
+      Enum.each(mentions, &Accounts.Mailbox.update_status(&1.to_user_id)) |> done
     end)
     |> Repo.transaction()
     |> result()
@@ -63,7 +63,7 @@ defmodule GroupherServer.Delivery.Delegate.Mention do
       end
     end)
     |> Multi.run(:update_user_mailbox_status, fn _, _ ->
-      Enum.each(mentions, &Accounts.Mailboxes.update_mailbox_status(&1.to_user_id)) |> done
+      Enum.each(mentions, &Accounts.Mailbox.update_status(&1.to_user_id)) |> done
     end)
     |> Repo.transaction()
     |> result()

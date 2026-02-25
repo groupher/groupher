@@ -873,14 +873,14 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, _} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.lock_article_comments(blog)
+      {:ok, _} = CMS.Articles.lock_comments(blog)
 
       {:error, reason} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       assert reason |> is_error?(:article_comments_locked)
 
-      {:ok, _} = CMS.Comments.undo_lock_article_comments(blog)
+      {:ok, _} = CMS.Articles.undo_lock_comments(blog)
 
       {:ok, _} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
@@ -891,12 +891,12 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
-      {:ok, _} = CMS.Comments.lock_article_comments(blog)
+      {:ok, _} = CMS.Articles.lock_comments(blog)
 
       {:error, reason} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
       assert reason |> is_error?(:article_comments_locked)
 
-      {:ok, _} = CMS.Comments.undo_lock_article_comments(blog)
+      {:ok, _} = CMS.Articles.undo_lock_comments(blog)
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
     end
   end

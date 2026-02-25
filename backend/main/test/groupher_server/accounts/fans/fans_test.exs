@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Accounts.Fans do
 
     test "user can get paged followers", ~m(user)a do
       {:ok, user2} = db_insert(:user)
-      {:ok, _followeer} = user |> Accounts.Fans.follow(user2)
+      {:ok, _follower} = user |> Accounts.Fans.follow(user2)
 
       {:ok, followers} = Accounts.Fans.paged_followers(user2, %{page: 1, size: 20})
       assert followers.entries |> Enum.any?(&(&1.id == user.id))
@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Accounts.Fans do
 
     test "user can get paged followings", ~m(user)a do
       {:ok, user2} = db_insert(:user)
-      {:ok, _followeer} = user |> Accounts.Fans.follow(user2)
+      {:ok, _follower} = user |> Accounts.Fans.follow(user2)
 
       {:ok, followings} = Accounts.Fans.paged_followings(user, %{page: 1, size: 20})
 
@@ -56,18 +56,18 @@ defmodule GroupherServer.Test.Accounts.Fans do
 
     test "user follow other user twice fails", ~m(user)a do
       {:ok, user2} = db_insert(:user)
-      {:ok, _followeer} = user |> Accounts.Fans.follow(user2)
+      {:ok, _follower} = user |> Accounts.Fans.follow(user2)
       assert {:error, _} = user |> Accounts.Fans.follow(user2)
     end
 
     test "user can undo follow", ~m(user)a do
       {:ok, user2} = db_insert(:user)
-      {:ok, _followeer} = user |> Accounts.Fans.follow(user2)
+      {:ok, _follower} = user |> Accounts.Fans.follow(user2)
 
       {:ok, found} = User |> ORM.find(user2.id, preload: :followers)
       assert found |> Map.get(:followers) |> length == 1
 
-      {:ok, _followeer} = user |> Accounts.Fans.undo_follow(user2)
+      {:ok, _follower} = user |> Accounts.Fans.undo_follow(user2)
 
       {:ok, found} = User |> ORM.find(user2.id, preload: :followers)
       assert found |> Map.get(:followers) |> length == 0

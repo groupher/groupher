@@ -43,10 +43,10 @@ defmodule GroupherServer.CMS.Communities do
 
   # List
   @spec paged(map()) :: T.domain_res(T.paged_data())
-  def paged(filter), do: List.paged(filter)
+  def paged(filter), do: List.page(filter)
 
   @spec paged(map(), User.t()) :: T.domain_res(T.paged_data())
-  def paged(filter, %User{} = user), do: List.paged(filter, user)
+  def paged(filter, %User{} = user), do: List.page(filter, user)
 
   # Write
   @spec create(map(), User.t()) :: T.domain_res(Community.t())

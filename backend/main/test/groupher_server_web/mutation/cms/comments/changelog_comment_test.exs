@@ -165,7 +165,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
     end
 
     test "can undo lock a changelog's comment", ~m(community changelog)a do
-      {:ok, _} = CMS.Comments.lock_article_comments(changelog)
+      {:ok, _} = CMS.Articles.lock_comments(changelog)
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
       assert changelog.meta.is_comment_locked
 

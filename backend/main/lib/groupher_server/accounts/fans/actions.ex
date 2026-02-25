@@ -2,12 +2,13 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   @moduledoc false
 
   import Helper.ErrorCode
-  alias GroupherServer.Accounts.{Events, FrontDesk}
-  alias GroupherServer.Accounts.Model.{User, UserFollower, UserFollowing}
-  alias GroupherServer.Repo
-  alias Helper.{Later, ORM, Types}
+
+  alias GroupherServer.{Accounts, Repo}
+  alias Accounts.{Events, FrontDesk}
+  alias Accounts.Model.{User, UserFollower, UserFollowing}
 
   alias Ecto.Multi
+  alias Helper.{Later, ORM, Types}
 
   @spec follow(User.t(), User.t()) :: {:ok, User.t()} | Types.gq_error()
   def follow(%User{} = user, %User{} = follower) do

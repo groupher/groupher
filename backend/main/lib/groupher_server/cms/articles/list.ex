@@ -31,8 +31,8 @@ defmodule GroupherServer.CMS.Articles.List do
   @cited_preloads @article_preloads ++ [[comment: :author] ++ @comment_article_preloads]
   @article_state ArticleEnums.state_values() |> Enum.into(%{}, &{&1, &1})
 
-  @spec paged(atom(), map()) :: T.domain_res(term())
-  def paged(thread, filter) do
+  @spec page(atom(), map()) :: T.domain_res(term())
+  def page(thread, filter) do
     %{page: page, size: size} = filter
     flags = %{mark_delete: false, pending: :legal}
 
@@ -46,9 +46,9 @@ defmodule GroupherServer.CMS.Articles.List do
     end
   end
 
-  @spec paged(atom(), map(), User.t()) :: T.domain_res(term())
-  def paged(thread, filter, %User{} = user) do
-    with {:ok, stateless_paged_articles} <- paged(thread, filter) do
+  @spec page(atom(), map(), User.t()) :: T.domain_res(term())
+  def page(thread, filter, %User{} = user) do
+    with {:ok, stateless_paged_articles} <- page(thread, filter) do
       case stateless_paged_articles
            |> FrontDesk.mark_viewer_emotion_states(user)
            |> mark_viewer_has_states(user) do

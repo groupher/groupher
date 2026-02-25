@@ -67,7 +67,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
     """
     test "login user can update own collect folder", ~m(user_conn user)a do
       args = %{title: "folder_title", private: false}
-      {:ok, folder} = Accounts.CollectFolders.create_collect_folder(args, user)
+      {:ok, folder} = Accounts.CollectFolders.create(args, user)
 
       variables = %{id: folder.id, title: "new title", desc: "new desc", private: true}
       updated = user_conn |> gq_mutation(@query, variables)
@@ -87,7 +87,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
     """
     test "login user can delete own collect folder", ~m(user_conn user)a do
       args = %{title: "folder_title", private: false}
-      {:ok, folder} = Accounts.CollectFolders.create_collect_folder(args, user)
+      {:ok, folder} = Accounts.CollectFolders.create(args, user)
 
       variables = %{id: folder.id}
       user_conn |> gq_mutation(@query, variables)
@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
     }
     test "user can add a post to collect folder", ~m(user user_conn community post)a do
       args = %{title: "folder_title", private: false}
-      {:ok, folder} = Accounts.CollectFolders.create_collect_folder(args, user)
+      {:ok, folder} = Accounts.CollectFolders.create(args, user)
 
       variables = %{
         id: post.inner_id,
@@ -148,7 +148,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
 
     test "user can add a blog to collect folder", ~m(user user_conn community blog)a do
       args = %{title: "folder_title", private: false}
-      {:ok, folder} = Accounts.CollectFolders.create_collect_folder(args, user)
+      {:ok, folder} = Accounts.CollectFolders.create(args, user)
 
       variables = %{
         id: blog.inner_id,
@@ -192,8 +192,8 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
     """
     test "user can remove a post from collect folder", ~m(user user_conn community post)a do
       args = %{title: "folder_title", private: false}
-      {:ok, folder} = Accounts.CollectFolders.create_collect_folder(args, user)
-      {:ok, _folder} = Accounts.CollectFolders.add_to_collect(post, folder.id, user)
+      {:ok, folder} = Accounts.CollectFolders.create(args, user)
+      {:ok, _folder} = Accounts.CollectFolders.add(post, folder.id, user)
 
       variables = %{
         id: post.inner_id,
@@ -210,8 +210,8 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
 
     test "user can remove a blog from collect folder", ~m(user user_conn community blog)a do
       args = %{title: "folder_title", private: false}
-      {:ok, folder} = Accounts.CollectFolders.create_collect_folder(args, user)
-      {:ok, _folder} = Accounts.CollectFolders.add_to_collect(blog, folder.id, user)
+      {:ok, folder} = Accounts.CollectFolders.create(args, user)
+      {:ok, _folder} = Accounts.CollectFolders.add(blog, folder.id, user)
 
       variables = %{
         id: blog.inner_id,

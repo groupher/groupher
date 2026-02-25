@@ -119,76 +119,76 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   def paged_upvoted_articles(_root, ~m(login filter)a, _info) do
     case Accounts.FrontDesk.userid(login) do
-      {:ok, user_id} -> Accounts.UpvotedArticles.paged_upvoted_articles(user_id, filter)
+      {:ok, user_id} -> Accounts.Upvotes.paged_articles(user_id, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
 
   def create_collect_folder(_root, attrs, %{context: %{cur_user: cur_user}}) do
-    Accounts.CollectFolders.create_collect_folder(attrs, cur_user)
+    Accounts.CollectFolders.create(attrs, cur_user)
   end
 
   def update_collect_folder(_root, %{id: id} = attrs, _) do
-    Accounts.CollectFolders.update_collect_folder(id, attrs)
+    Accounts.CollectFolders.update(id, attrs)
   end
 
   def delete_collect_folder(_root, %{id: id}, _) do
-    Accounts.CollectFolders.delete_collect_folder(id)
+    Accounts.CollectFolders.delete(id)
   end
 
   def add_to_collect(_root, ~m(article folder_id)a, %{context: %{cur_user: cur_user}}) do
-    Accounts.CollectFolders.add_to_collect(article, folder_id, cur_user)
+    Accounts.CollectFolders.add(article, folder_id, cur_user)
   end
 
   def remove_from_collect(_root, ~m(article folder_id)a, %{
         context: %{cur_user: cur_user}
       }) do
-    Accounts.CollectFolders.remove_from_collect(article, folder_id, cur_user)
+    Accounts.CollectFolders.remove(article, folder_id, cur_user)
   end
 
   def paged_collect_folders(_root, ~m(login filter)a, %{context: %{cur_user: cur_user}}) do
     with {:ok, user_id} <- Accounts.FrontDesk.userid(login) do
-      Accounts.CollectFolders.paged_collect_folders(user_id, filter, cur_user)
+      Accounts.CollectFolders.paged(user_id, filter, cur_user)
     end
   end
 
   def paged_collect_folders(_root, ~m(login filter)a, _info) do
     case Accounts.FrontDesk.userid(login) do
-      {:ok, user_id} -> Accounts.CollectFolders.paged_collect_folders(user_id, filter)
+      {:ok, user_id} -> Accounts.CollectFolders.paged(user_id, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
 
   def paged_collected_articles(_root, ~m(folder_id filter)a, %{context: %{cur_user: cur_user}}) do
-    Accounts.CollectFolders.paged_collect_folder_articles(folder_id, filter, cur_user)
+    Accounts.CollectFolders.paged_articles(folder_id, filter, cur_user)
   end
 
   def paged_collected_articles(_root, ~m(folder_id filter)a, _info) do
-    Accounts.CollectFolders.paged_collect_folder_articles(folder_id, filter)
+    Accounts.CollectFolders.paged_articles(folder_id, filter)
   end
 
   # published contents
   def paged_published_articles(_root, ~m(login filter thread)a, _info) do
     case Accounts.FrontDesk.userid(login) do
-      {:ok, user_id} -> Accounts.Publishes.paged_published_articles(%User{id: user_id}, thread, filter)
+      {:ok, user_id} -> Accounts.Publish.paged_articles(%User{id: user_id}, thread, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
 
   def paged_published_articles(_root, ~m(filter thread)a, %{context: %{cur_user: cur_user}}) do
-    Accounts.Publishes.paged_published_articles(cur_user, thread, filter)
+    Accounts.Publish.paged_articles(cur_user, thread, filter)
   end
 
   def paged_published_comments(_root, ~m(login filter thread)a, _info) do
     case Accounts.FrontDesk.userid(login) do
-      {:ok, user_id} -> Accounts.Publishes.paged_published_comments(%User{id: user_id}, thread, filter)
+      {:ok, user_id} -> Accounts.Publish.paged_comments(%User{id: user_id}, thread, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
 
   def paged_published_comments(_root, ~m(login filter)a, _info) do
     case Accounts.FrontDesk.userid(login) do
-      {:ok, user_id} -> Accounts.Publishes.paged_published_comments(%User{id: user_id}, filter)
+      {:ok, user_id} -> Accounts.Publish.paged_comments(%User{id: user_id}, filter)
       _ -> raise_error(:not_exist, "#{login} not found")
     end
   end
@@ -209,23 +209,23 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   # mailbox
   def mailbox_status(_root, _args, %{context: %{cur_user: cur_user}}) do
-    Accounts.Mailboxes.mailbox_status(cur_user)
+    Accounts.Mailbox.status(cur_user)
   end
 
   def mark_read(_root, ~m(type ids)a, %{context: %{cur_user: cur_user}}) do
-    Accounts.Mailboxes.mark_read(type, ids, cur_user)
+    Accounts.Mailbox.mark_read(type, ids, cur_user)
   end
 
   def mark_read_all(_root, ~m(type)a, %{context: %{cur_user: cur_user}}) do
-    Accounts.Mailboxes.mark_read_all(type, cur_user)
+    Accounts.Mailbox.mark_read_all(type, cur_user)
   end
 
   def paged_mailbox_mentions(_root, ~m(filter)a, %{context: %{cur_user: cur_user}}) do
-    Accounts.Mailboxes.paged_mailbox_messages(:mention, cur_user, filter)
+    Accounts.Mailbox.paged_messages(:mention, cur_user, filter)
   end
 
   def paged_mailbox_notifications(_root, ~m(filter)a, %{context: %{cur_user: cur_user}}) do
-    Accounts.Mailboxes.paged_mailbox_messages(:notification, cur_user, filter)
+    Accounts.Mailbox.paged_messages(:notification, cur_user, filter)
   end
 
   # mailbox end

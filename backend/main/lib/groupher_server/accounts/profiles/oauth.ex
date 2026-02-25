@@ -4,9 +4,10 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
   import Ecto.Query, warn: false
   import Helper.ErrorCode
   import Helper.Utils, only: [keys_to_atoms: 1]
-  alias GroupherServer.{Accounts, Email, Repo}
-  alias GroupherServer.Accounts.FrontDesk
 
+  alias GroupherServer.{Accounts, Email, Repo}
+
+  alias Accounts.FrontDesk
   alias Accounts.Model.{Achievement, OauthProvider, Social, User}
 
   alias Ecto.Multi

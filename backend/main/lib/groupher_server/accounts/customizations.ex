@@ -6,8 +6,10 @@ defmodule GroupherServer.Accounts.Customizations do
   import Helper.Utils, only: [map_atom_value: 2]
   import ShortMaps
 
-  alias GroupherServer.Accounts.{Achievements, FrontDesk}
-  alias GroupherServer.Accounts.Model.{Customization, User}
+  alias GroupherServer.Accounts
+
+  alias Accounts.{Achievements, FrontDesk}
+  alias Accounts.Model.{Customization, User}
   alias Helper.ORM
 
   def upgrade_by_plan(%User{} = user, :donate) do

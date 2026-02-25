@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.CMS.Articles.ChangelogList do
       {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
       {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      {:ok, paged_changelogs} = CMS.Articles.paged(:changelog, %{page: 1, size: 20})
+      {:ok, paged_changelogs} = CMS.Articles.page(:changelog, %{page: 1, size: 20})
 
       assert paged_changelogs |> is_valid_pagination?(:raw)
       assert length(paged_changelogs.entries) >= 2

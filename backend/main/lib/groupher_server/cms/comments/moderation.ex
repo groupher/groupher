@@ -22,15 +22,15 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   @audit_illegal Helper.Constant.CMS.pending(:illegal)
   @audit_failed Helper.Constant.CMS.pending(:audit_failed)
 
-  @spec set_comment_illegal(T.id(), map()) :: T.domain_res(Comment.t())
-  def set_comment_illegal(comment_id, audit_state) do
+  @spec set_illegal(T.id(), map()) :: T.domain_res(Comment.t())
+  def set_illegal(comment_id, audit_state) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
-      do_set_comment_illegal(comment, audit_state)
+      do_set_illegal(comment, audit_state)
     end
   end
 
-  @spec do_set_comment_illegal(Comment.t(), map()) :: T.domain_res(Comment.t())
-  defp do_set_comment_illegal(%Comment{} = comment, audit_state) do
+  @spec do_set_illegal(Comment.t(), map()) :: T.domain_res(Comment.t())
+  defp do_set_illegal(%Comment{} = comment, audit_state) do
     Multi.new()
     |> Multi.run(:update_pending_state, fn _, _ ->
       ORM.update(comment, %{pending: @audit_illegal})
@@ -53,15 +53,15 @@ defmodule GroupherServer.CMS.Comments.Moderation do
     |> result()
   end
 
-  @spec unset_comment_illegal(T.id(), map()) :: T.domain_res(Comment.t())
-  def unset_comment_illegal(comment_id, audit_state) do
+  @spec unset_illegal(T.id(), map()) :: T.domain_res(Comment.t())
+  def unset_illegal(comment_id, audit_state) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
-      do_unset_comment_illegal(comment, audit_state)
+      do_unset_illegal(comment, audit_state)
     end
   end
 
-  @spec do_unset_comment_illegal(Comment.t(), map()) :: T.domain_res(Comment.t())
-  defp do_unset_comment_illegal(%Comment{} = comment, audit_state) do
+  @spec do_unset_illegal(Comment.t(), map()) :: T.domain_res(Comment.t())
+  defp do_unset_illegal(%Comment{} = comment, audit_state) do
     Multi.new()
     |> Multi.run(:update_pending_state, fn _, _ ->
       ORM.update(comment, %{pending: @audit_legal})
@@ -87,8 +87,8 @@ defmodule GroupherServer.CMS.Comments.Moderation do
     |> result()
   end
 
-  @spec paged_audit_failed_comments(map()) :: T.domain_res(T.paged_data())
-  def paged_audit_failed_comments(filter) do
+  @spec page_audit_failed(map()) :: T.domain_res(T.paged_data())
+  def page_audit_failed(filter) do
     %{page: page, size: size} = filter
     flags = %{pending: @audit_failed}
 
@@ -98,8 +98,8 @@ defmodule GroupherServer.CMS.Comments.Moderation do
     |> done()
   end
 
-  @spec set_comment_audit_failed(Comment.t(), term()) :: T.domain_res(Comment.t())
-  def set_comment_audit_failed(%Comment{} = comment, _audit_state) do
+  @spec set_audit_failed(Comment.t(), term()) :: T.domain_res(Comment.t())
+  def set_audit_failed(%Comment{} = comment, _audit_state) do
     ORM.update(comment, %{pending: @audit_failed})
   end
 

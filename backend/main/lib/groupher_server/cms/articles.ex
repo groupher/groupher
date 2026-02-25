@@ -13,13 +13,11 @@ defmodule GroupherServer.CMS.Articles do
 
   alias __MODULE__.{
     Collects,
-    Lifecycle,
     List,
-    Meta,
     Moderation,
-    Placement,
     Reactions,
     Read,
+    States,
     Upvotes,
     Write
   }
@@ -35,11 +33,11 @@ defmodule GroupherServer.CMS.Articles do
 
   # List
 
-  @spec paged(T.article_thread(), map()) :: T.domain_res(T.paged_data())
-  def paged(thread, filter), do: List.paged(thread, filter)
+  @spec page(T.article_thread(), map()) :: T.domain_res(T.paged_data())
+  def page(thread, filter), do: List.page(thread, filter)
 
-  @spec paged(T.article_thread(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def paged(thread, filter, %User{} = user), do: List.paged(thread, filter, user)
+  @spec page(T.article_thread(), map(), User.t()) :: T.domain_res(T.paged_data())
+  def page(thread, filter, %User{} = user), do: List.page(thread, filter, user)
 
   @spec grouped_kanban(Community.t()) :: T.domain_res(term())
   def grouped_kanban(%Community{} = community), do: List.grouped_kanban(community)
@@ -68,47 +66,47 @@ defmodule GroupherServer.CMS.Articles do
   # Lifecycle
 
   @spec mark_delete(T.article()) :: T.domain_res(T.article())
-  def mark_delete(article), do: Lifecycle.mark_delete(article)
+  def mark_delete(article), do: Write.mark_delete(article)
 
   @spec undo_mark_delete(T.article()) :: T.domain_res(T.article())
-  def undo_mark_delete(article), do: Lifecycle.undo_mark_delete(article)
+  def undo_mark_delete(article), do: Write.undo_mark_delete(article)
 
   @spec delete(T.article()) :: T.domain_res(term())
-  def delete(article), do: Lifecycle.delete(article)
+  def delete(article), do: Write.delete(article)
 
   @spec delete(T.article(), String.t()) :: T.domain_res(term())
-  def delete(article, reason), do: Lifecycle.delete(article, reason)
+  def delete(article, reason), do: Write.delete(article, reason)
 
   @spec archive(T.article_thread()) :: T.domain_res(term())
-  def archive(thread), do: Lifecycle.archive(thread)
+  def archive(thread), do: States.archive(thread)
 
   @spec batch_mark_delete(String.t(), T.article_thread(), [T.id()]) :: T.domain_res(term())
   def batch_mark_delete(community, thread, id_list) do
-    Lifecycle.batch_mark_delete(community, thread, id_list)
+    Write.batch_mark_delete(community, thread, id_list)
   end
 
   @spec batch_undo_mark_delete(String.t(), T.article_thread(), [T.id()]) :: T.domain_res(term())
   def batch_undo_mark_delete(community, thread, id_list) do
-    Lifecycle.batch_undo_mark_delete(community, thread, id_list)
+    Write.batch_undo_mark_delete(community, thread, id_list)
   end
 
   @spec sink(T.article()) :: T.domain_res(T.article())
-  def sink(article), do: Lifecycle.sink(article)
+  def sink(article), do: States.sink(article)
 
   @spec undo_sink(T.article()) :: T.domain_res(T.article())
-  def undo_sink(article), do: Lifecycle.undo_sink(article)
+  def undo_sink(article), do: States.undo_sink(article)
 
   # Meta
 
   @spec set_cat(T.article(), ArticleEnums.cat_enum() | nil) :: T.domain_res(T.article())
-  def set_cat(article, cat), do: Meta.set_cat(article, cat)
+  def set_cat(article, cat), do: States.set_cat(article, cat)
 
   @spec set_state(T.article(), ArticleEnums.state_enum() | nil) :: T.domain_res(T.article())
-  def set_state(article, state), do: Meta.set_state(article, state)
+  def set_state(article, state), do: States.set_state(article, state)
 
   @spec update_active_timestamp(T.article_thread(), T.article()) :: T.domain_res(T.article())
   def update_active_timestamp(thread, article) do
-    Meta.update_active_timestamp(thread, article)
+    States.update_active_timestamp(thread, article)
   end
 
   # Moderation
@@ -134,47 +132,53 @@ defmodule GroupherServer.CMS.Articles do
   # Placement
 
   @spec pin(Community.t(), T.article()) :: T.domain_res(T.article())
-  def pin(%Community{} = community, article), do: Placement.pin(community, article)
+  def pin(%Community{} = community, article), do: States.pin(community, article)
 
   @spec undo_pin(Community.t(), T.article()) :: T.domain_res(T.article())
-  def undo_pin(%Community{} = community, article), do: Placement.undo_pin(community, article)
+  def undo_pin(%Community{} = community, article), do: States.undo_pin(community, article)
 
   @spec mirror(Community.t(), T.article()) :: T.domain_res(T.article())
-  def mirror(%Community{} = community, article), do: Placement.mirror(community, article)
+  def mirror(%Community{} = community, article), do: States.mirror(community, article)
 
   @spec mirror(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
   def mirror(%Community{} = community, article, article_ids) do
-    Placement.mirror(community, article, article_ids)
+    States.mirror(community, article, article_ids)
   end
 
   @spec unmirror(Community.t(), T.article()) :: T.domain_res(T.article())
-  def unmirror(%Community{} = community, article), do: Placement.unmirror(community, article)
+  def unmirror(%Community{} = community, article), do: States.unmirror(community, article)
 
   @spec move(Community.t(), T.article()) :: T.domain_res(T.article())
-  def move(%Community{} = community, article), do: Placement.move(community, article)
+  def move(%Community{} = community, article), do: States.move(community, article)
 
   @spec move(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
   def move(%Community{} = community, article, article_ids) do
-    Placement.move(community, article, article_ids)
+    States.move(community, article, article_ids)
   end
 
   @spec move_to_blackhole(Community.t(), T.article()) :: T.domain_res(T.article())
   def move_to_blackhole(%Community{} = community, article),
-    do: Placement.move_to_blackhole(community, article)
+    do: States.move_to_blackhole(community, article)
 
   @spec move_to_blackhole(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
   def move_to_blackhole(%Community{} = community, article, article_ids) do
-    Placement.move_to_blackhole(community, article, article_ids)
+    States.move_to_blackhole(community, article, article_ids)
   end
 
   @spec mirror_to_home(Community.t(), T.article()) :: T.domain_res(T.article())
   def mirror_to_home(%Community{} = community, article),
-    do: Placement.mirror_to_home(community, article)
+    do: States.mirror_to_home(community, article)
 
   @spec mirror_to_home(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
   def mirror_to_home(%Community{} = community, article, article_ids) do
-    Placement.mirror_to_home(community, article, article_ids)
+    States.mirror_to_home(community, article, article_ids)
   end
+
+  @spec lock_comments(T.article()) :: T.domain_res(T.article())
+  def lock_comments(article), do: States.lock_comments(article)
+
+  @spec undo_lock_comments(T.article()) :: T.domain_res(T.article())
+  def undo_lock_comments(article), do: States.undo_lock_comments(article)
 
   # Reactions
 

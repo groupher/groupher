@@ -37,7 +37,7 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
         end
       end)
       |> Multi.run(:update_user_mailbox_status, fn _, %{upsert_notifications: nofity} ->
-        Accounts.Mailboxes.update_mailbox_status(nofity.user_id)
+        Accounts.Mailbox.update_status(nofity.user_id)
       end)
       |> Repo.transaction()
       |> result()
@@ -70,7 +70,7 @@ defmodule GroupherServer.Delivery.Delegate.Notification do
           |> done
         end)
         |> Multi.run(:update_user_mailbox_status, fn _, _ ->
-          Enum.each(notifications, &Accounts.Mailboxes.update_mailbox_status(&1.user_id)) |> done
+          Enum.each(notifications, &Accounts.Mailbox.update_status(&1.user_id)) |> done
         end)
         |> Repo.transaction()
         |> result()
