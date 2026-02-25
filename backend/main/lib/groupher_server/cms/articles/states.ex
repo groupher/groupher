@@ -16,8 +16,7 @@ defmodule GroupherServer.CMS.Articles.States do
   alias CMS.{Communities, FrontDesk}
 
   alias Ecto.Multi
-  alias Helper.{ORM, Transaction}
-  alias Helper.Types, as: T
+  alias Helper.{ORM, T, Transaction}
 
   @active_period get_config(:article, :active_period_days)
   @archive_threshold get_config(:article, :archive_threshold)

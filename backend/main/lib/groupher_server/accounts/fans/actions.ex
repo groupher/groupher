@@ -8,9 +8,9 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   alias Accounts.Model.{User, UserFollower, UserFollowing}
 
   alias Ecto.Multi
-  alias Helper.{Later, ORM, Types}
+  alias Helper.{Later, ORM, T}
 
-  @spec follow(User.t(), User.t()) :: {:ok, User.t()} | Types.gq_error()
+  @spec follow(User.t(), User.t()) :: {:ok, User.t()} | T.gq_error()
   def follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
          {:ok, user} <- FrontDesk.user(user.id),
@@ -44,7 +44,7 @@ defmodule GroupherServer.Accounts.Fans.Actions do
     end
   end
 
-  @spec undo_follow(User.t(), User.t()) :: {:ok, User.t()} | Types.gq_error()
+  @spec undo_follow(User.t(), User.t()) :: {:ok, User.t()} | T.gq_error()
   def undo_follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
          {:ok, user} <- FrontDesk.user(user.id),
@@ -103,7 +103,7 @@ defmodule GroupherServer.Accounts.Fans.Actions do
     end
   end
 
-  @spec result({:ok, map()}) :: Types.done()
+  @spec result({:ok, map()}) :: T.done()
   defp result({:ok, %{create_follower: user_follower}}) do
     User |> ORM.find(user_follower.user_id)
   end

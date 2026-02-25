@@ -20,8 +20,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Comment, Community, Embeds, PinnedComment, Post}
 
-  alias Helper.{Later, ORM}
-  alias Helper.Types, as: T
+  alias Helper.{Later, ORM, T}
 
   alias Ecto.Multi
 

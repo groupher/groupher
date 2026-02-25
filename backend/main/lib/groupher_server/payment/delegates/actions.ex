@@ -1,16 +1,15 @@
 defmodule GroupherServer.Payment.Delegate.Actions do
   @moduledoc """
-  actions after biling state success
+  actions after billing state success
   """
   import Helper.Utils, only: [get_config: 2]
 
   alias Helper.ORM
 
-  alias GroupherServer.Accounts
-  alias GroupherServer.Email
-  alias GroupherServer.Payment.Model.BillRecord
+  alias GroupherServer.{Accounts, Email, Payment}
 
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
+  alias Payment.Model.BillRecord
 
   @senior_amount_threshold get_config(:general, :senior_amount_threshold)
 

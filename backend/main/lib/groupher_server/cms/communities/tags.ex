@@ -15,8 +15,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
 
   alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityTag}
-  alias Helper.Types, as: T
-  alias Helper.{ORM, QueryBuilder}
+  alias Helper.{ORM, QueryBuilder, T}
 
   alias Ecto.Multi
 

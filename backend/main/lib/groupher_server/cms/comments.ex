@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Comments do
 
   alias Accounts.Model.User
   alias CMS.Model.{Comment, Community}
-  alias Helper.Types, as: T
+  alias Helper.T
 
   alias __MODULE__.{
     States,

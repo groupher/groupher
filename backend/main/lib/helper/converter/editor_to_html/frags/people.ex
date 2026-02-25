@@ -7,7 +7,7 @@ defmodule Helper.Converter.EditorToHTML.Frags.People do
   import Helper.Utils, only: [get_config: 2]
 
   alias Helper.Converter.EditorToHTML.Class
-  alias Helper.Types, as: T
+  alias Helper.T
 
   @static_icon get_config(:cloud_assets, :static_icon)
 

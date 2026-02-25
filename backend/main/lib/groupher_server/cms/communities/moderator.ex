@@ -11,8 +11,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   alias CMS.Communities.Passport
   alias CMS.Model.{Community, CommunityModerator}
   alias CMS.{Communities, FrontDesk}
-  alias Helper.{Certification, ORM, Transaction}
-  alias Helper.Types, as: T
+  alias Helper.{Certification, ORM, T, Transaction}
 
   @doc """
   set a community moderator

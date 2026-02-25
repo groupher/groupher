@@ -20,8 +20,7 @@ defmodule GroupherServer.CMS.Seeds do
     ]
 
   alias GroupherServer.CMS
-  alias Helper.ORM
-  alias Helper.Types, as: T
+  alias Helper.{ORM, T}
 
   alias CMS.Model.{Category, Comment, Community, Post}
 

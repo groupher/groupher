@@ -12,8 +12,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
   alias CMS.Model.ArticleCollect
   alias CMS.{Events, FrontDesk}
   alias Ecto.Multi
-  alias Helper.Types, as: T
-  alias Helper.{Later, ORM, Transaction}
+  alias Helper.{Later, ORM, T, Transaction}
 
   @spec collected_users(term(), map()) :: T.domain_res(term())
   def collected_users(article, filter),

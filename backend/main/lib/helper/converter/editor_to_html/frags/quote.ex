@@ -7,7 +7,7 @@ defmodule Helper.Converter.EditorToHTML.Frags.Quote do
   import Helper.Validator.Guards, only: [g_none_empty_str: 1]
 
   alias Helper.Converter.EditorToHTML.Class
-  alias Helper.Types, as: T
+  alias Helper.T
 
   @class get_in(Class.article(), ["quote"])
 

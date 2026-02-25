@@ -2,19 +2,18 @@ defmodule GroupherServer.Accounts.CollectFolders.List do
   @moduledoc false
 
   import Ecto.Query, warn: false
-
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.Accounts.Model.{CollectFolder, User}
-  alias Helper.{ORM, QueryBuilder, Types}
+  alias Helper.{ORM, QueryBuilder, T}
 
-  @spec page(Types.id(), map()) :: Types.domain_res(Types.paged_data())
+  @spec page(T.id(), map()) :: T.domain_res(T.paged_data())
   def page(user_id, filter) do
     query = CollectFolder |> where([c], c.user_id == ^user_id and not c.private)
     do_paged(filter, query)
   end
 
-  @spec page(Types.id(), map(), User.t()) :: Types.domain_res(Types.paged_data())
+  @spec page(T.id(), map(), User.t()) :: T.domain_res(T.paged_data())
   def page(user_id, filter, %User{id: cur_user_id}) do
     query =
       if cur_user_id == user_id,

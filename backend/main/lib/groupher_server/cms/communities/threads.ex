@@ -7,8 +7,7 @@ defmodule GroupherServer.CMS.Communities.Threads do
   alias GroupherServer.CMS
 
   alias CMS.Model.{Community, CommunityThread, Thread}
-  alias Helper.ORM
-  alias Helper.Types, as: T
+  alias Helper.{ORM, T}
 
   @spec create(map()) :: T.domain_res(term())
   def create(attrs) do

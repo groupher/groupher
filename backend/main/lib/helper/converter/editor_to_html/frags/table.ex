@@ -5,7 +5,7 @@ defmodule Helper.Converter.EditorToHTML.Frags.Table do
   see https://editorjs.io/
   """
   alias Helper.Converter.EditorToHTML.Class
-  alias Helper.Types, as: T
+  alias Helper.T
 
   @class get_in(Class.article(), ["table"])
 

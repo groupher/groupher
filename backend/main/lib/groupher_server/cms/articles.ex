@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Articles do
   CMS articles facade.
   """
 
-  alias Helper.Types, as: T
+  alias Helper.T
 
   alias GroupherServer.{Accounts, CMS}
 

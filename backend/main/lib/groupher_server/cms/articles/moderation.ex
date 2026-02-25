@@ -15,8 +15,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   alias GroupherServer.FrontDesk, as: UserFrontDesk
 
   alias Ecto.Multi
-  alias Helper.{Constant, ORM, QueryBuilder}
-  alias Helper.Types, as: T
+  alias Helper.{Constant, ORM, QueryBuilder, T}
 
   @audit_legal Constant.CMS.pending(:legal)
   @audit_illegal Constant.CMS.pending(:illegal)

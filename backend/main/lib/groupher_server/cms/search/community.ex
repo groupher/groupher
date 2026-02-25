@@ -4,8 +4,10 @@ defmodule GroupherServer.CMS.Search.Community do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.Community
   alias Helper.ORM
 
   @search_items_count 15

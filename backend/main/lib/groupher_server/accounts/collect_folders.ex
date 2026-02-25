@@ -3,7 +3,7 @@ defmodule GroupherServer.Accounts.CollectFolders do
   Accounts collect folders facade.
   """
   alias GroupherServer.Accounts.Model.User
-  alias Helper.Types, as: T
+  alias Helper.T
 
   alias __MODULE__.{Articles, List, Write}
 

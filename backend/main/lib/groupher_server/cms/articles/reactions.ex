@@ -13,8 +13,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
   alias CMS.Model.ArticleUserEmotion
 
   alias Ecto.Multi
-  alias Helper.Types, as: T
-  alias Helper.{ORM, Transaction}
+  alias Helper.{ORM, T, Transaction}
 
   import Ecto.Query
 

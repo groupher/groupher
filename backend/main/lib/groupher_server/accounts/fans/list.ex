@@ -5,8 +5,10 @@ defmodule GroupherServer.Accounts.Fans.List do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.Accounts.Fans.ViewerState
-  alias GroupherServer.Accounts.Model.{User, UserFollower, UserFollowing}
+  alias GroupherServer.Accounts
+
+  alias Accounts.Fans.ViewerState
+  alias Accounts.Model.{User, UserFollower, UserFollowing}
   alias Helper.{ORM, QueryBuilder}
 
   def paged_followers(%User{id: user_id}, filter, %User{} = cur_user) do

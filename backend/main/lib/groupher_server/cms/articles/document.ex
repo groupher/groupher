@@ -8,8 +8,7 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   alias CMS.FrontDesk
   alias CMS.Model.ArticleDocument
-  alias Helper.Types, as: T
-  alias Helper.{Converter, ORM}
+  alias Helper.{Converter, ORM, T}
 
   alias Ecto.Multi
 

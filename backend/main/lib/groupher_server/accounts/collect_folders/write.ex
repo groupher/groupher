@@ -7,14 +7,14 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   import Helper.ErrorCode
   import ShortMaps
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.Accounts.Model.{CollectFolder, Embeds, User}
+  alias Accounts.Model.{CollectFolder, Embeds, User}
   alias Ecto.Multi
-  alias Helper.{ORM, Types}
+  alias Helper.{ORM, T}
 
   @default_meta Embeds.CollectFolderMeta.default_meta()
-  @spec create(map(), User.t()) :: Types.domain_res(CollectFolder.t())
+  @spec create(map(), User.t()) :: T.domain_res(CollectFolder.t())
   def create(%{title: title} = attrs, %User{id: user_id}) do
     case ORM.find_by(CollectFolder, ~m(user_id title)a) do
       {:error, _} ->
@@ -33,7 +33,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     end
   end
 
-  @spec update(Types.id(), map()) :: Types.domain_res(CollectFolder.t())
+  @spec update(T.id(), map()) :: T.domain_res(CollectFolder.t())
   def update(folder_id, attrs) do
     with {:ok, folder} <- ORM.find(CollectFolder, folder_id) do
       last_updated = Timex.today() |> Timex.to_datetime()
@@ -41,7 +41,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     end
   end
 
-  @spec delete(Types.id()) :: Types.domain_res(CollectFolder.t())
+  @spec delete(T.id()) :: T.domain_res(CollectFolder.t())
   def delete(id) do
     with {:ok, folder} <- ORM.find(CollectFolder, id) do
       case Enum.empty?(folder.collects) do
@@ -51,7 +51,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     end
   end
 
-  @spec add(Types.article(), Types.id(), User.t()) :: Types.domain_res(Types.article())
+  @spec add(T.article(), T.id(), User.t()) :: T.domain_res(T.article())
   def add(article, folder_id, %User{} = user) do
     with {:ok, thread} <- thread_of(article),
          {:ok, folder} <- ORM.find(CollectFolder, folder_id),
@@ -77,7 +77,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     end
   end
 
-  @spec remove(Types.article(), Types.id(), User.t()) :: Types.domain_res(Types.article())
+  @spec remove(T.article(), T.id(), User.t()) :: T.domain_res(T.article())
   def remove(article, folder_id, %User{} = user) do
     with {:ok, thread} <- thread_of(article),
          {:ok, folder} <- ORM.find(CollectFolder, folder_id),
@@ -105,7 +105,8 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   defp article_not_in_folder(article, collects) do
     with {:ok, thread} <- thread_of(article),
          {:ok, info} <- match(thread) do
-      already_collected = Enum.any?(collects, fn c -> article.id == Map.get(c, info.foreign_key) end)
+      already_collected =
+        Enum.any?(collects, fn c -> article.id == Map.get(c, info.foreign_key) end)
 
       case already_collected do
         true -> raise_error(:already_collected_in_folder, "already collected in this folder")
