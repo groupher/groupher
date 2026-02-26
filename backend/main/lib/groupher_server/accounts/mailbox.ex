@@ -5,7 +5,7 @@ defmodule GroupherServer.Accounts.Mailbox do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.Accounts.FrontDesk
-  alias GroupherServer.Delivery
+  alias GroupherServer.Messaging
   alias GroupherServer.Accounts.Model.{Embeds, User}
   alias Helper.ORM
 
@@ -14,15 +14,15 @@ defmodule GroupherServer.Accounts.Mailbox do
   def status(%User{mailbox: nil}), do: done(@default_status)
   def status(%User{mailbox: mailbox}), do: done(mailbox)
 
-  def mark_read(type, ids, %User{} = user), do: Delivery.mark_read(type, ids, user)
-  def mark_read_all(type, %User{} = user), do: Delivery.mark_read_all(type, user)
-  def paged_messages(type, user, filter), do: Delivery.fetch(type, user, filter)
+  def mark_read(type, ids, %User{} = user), do: Messaging.mark_read(type, ids, user)
+  def mark_read_all(type, %User{} = user), do: Messaging.mark_read_all(type, user)
+  def paged_messages(type, user, filter), do: Messaging.paged_messages(type, user, filter)
 
   @doc "update messages count in mailbox"
   def update_status(user_id) do
     with {:ok, user} <- FrontDesk.user(user_id),
-         {:ok, unread_mentions_count} <- Delivery.unread_count(:mention, user_id),
-         {:ok, unread_notifications_count} <- Delivery.unread_count(:notification, user_id) do
+         {:ok, unread_mentions_count} <- Messaging.unread_count(:mention, user_id),
+         {:ok, unread_notifications_count} <- Messaging.unread_count(:notification, user_id) do
       unread_total_count = unread_mentions_count + unread_notifications_count
 
       mailbox = %{

@@ -1,11 +1,11 @@
-defmodule GroupherServer.Test.Delivery.Notification do
+defmodule GroupherServer.Test.Messaging.Notification do
   @moduledoc false
 
   use GroupherServer.TestTools
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Delivery
+  alias GroupherServer.Messaging
 
   @notify_group_interval_hour get_config(:general, :notify_group_interval_hour)
 
@@ -47,9 +47,9 @@ defmodule GroupherServer.Test.Delivery.Notification do
         user_id: user.id
       }
 
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
 
       assert paged_notifies.total_count == 1
       notify = paged_notifies.entries |> List.first()
@@ -65,10 +65,10 @@ defmodule GroupherServer.Test.Delivery.Notification do
         user_id: user.id
       }
 
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user3)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user3)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
 
       notify = paged_notifies.entries |> List.first()
 
@@ -82,19 +82,19 @@ defmodule GroupherServer.Test.Delivery.Notification do
 
   describe "notification" do
     test "can get unread notification count of a user", ~m(user user2 user3 notify_attrs)a do
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user3)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user3)
 
-      {:ok, count} = Delivery.unread_count(:notification, user.id)
+      {:ok, count} = Messaging.unread_count(:notification, user.id)
 
       assert count == 1
     end
 
     test "similar notify should be merged", ~m(user user2 user3 notify_attrs)a do
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user3)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user3)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
 
       notify = paged_notifies.entries |> List.first()
 
@@ -107,11 +107,11 @@ defmodule GroupherServer.Test.Delivery.Notification do
 
     @tag :skip_ci
     test "different notify should not be merged", ~m(user user2 user3 notify_attrs)a do
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
       notify_attrs = notify_attrs |> Map.put(:action, :collect)
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user3)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user3)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
 
       assert paged_notifies.total_count == 2
 
@@ -125,11 +125,11 @@ defmodule GroupherServer.Test.Delivery.Notification do
     @tag :skip_ci
     test "notify not in @notify_group_interval_hour should not be merged",
          ~m(user user2 user3 notify_attrs)a do
-      {:ok, notify} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, notify} = Messaging.send_notification(notify_attrs, user2)
       move_insert_at_long_ago(notify)
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user3)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user3)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
 
       assert paged_notifies.total_count == 2
 
@@ -143,12 +143,12 @@ defmodule GroupherServer.Test.Delivery.Notification do
     test "notify's from_users_count should work", ~m(user user2 user3 user4 notify_attrs)a do
       {:ok, user5} = db_insert(:user)
 
-      {:ok, _notify} = Delivery.send(:notify, notify_attrs, user2)
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user3)
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user4)
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user5)
+      {:ok, _notify} = Messaging.send_notification(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user4)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user5)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
 
       assert paged_notifies.total_count == 1
       notify = paged_notifies.entries |> List.first()
@@ -163,36 +163,36 @@ defmodule GroupherServer.Test.Delivery.Notification do
     end
 
     test "notify myself got ignored", ~m(user notify_attrs)a do
-      {:error, _} = Delivery.send(:notify, notify_attrs, user)
+      {:error, _} = Messaging.send_notification(notify_attrs, user)
     end
   end
 
   describe "revoke case" do
     test "can revoke a notification", ~m(user user2  notify_attrs)a do
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert paged_notifies.total_count == 1
 
-      Delivery.revoke(:notify, notify_attrs, user2)
+      Messaging.revoke_notification(notify_attrs, user2)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert paged_notifies.total_count == 0
     end
 
     test "can revoke a multi-user joined notification", ~m(user user2 user3 notify_attrs)a do
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user3)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user3)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert paged_notifies.total_count == 1
       notify = paged_notifies.entries |> List.first()
       assert user_exist_in?(user2, notify.from_users)
       assert user_exist_in?(user3, notify.from_users)
 
-      Delivery.revoke(:notify, notify_attrs, user2)
+      Messaging.revoke_notification(notify_attrs, user2)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert paged_notifies.total_count == 1
 
       notify = paged_notifies.entries |> List.first()
@@ -201,18 +201,18 @@ defmodule GroupherServer.Test.Delivery.Notification do
 
     test "can revoke a multi-user joined notification, long peroid",
          ~m(user user2 user3 notify_attrs)a do
-      {:ok, notify} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, notify} = Messaging.send_notification(notify_attrs, user2)
 
       move_insert_at_long_ago(notify)
 
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user3)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user3)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert paged_notifies.total_count == 2
 
-      Delivery.revoke(:notify, notify_attrs, user2)
+      Messaging.revoke_notification(notify_attrs, user2)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert paged_notifies.total_count == 1
       notify = paged_notifies.entries |> List.first()
       assert not user_exist_in?(user2, notify.from_users)
@@ -220,19 +220,19 @@ defmodule GroupherServer.Test.Delivery.Notification do
 
     test "can revoke a multi-user joined notification, long peroid, edge case",
          ~m(user user2 user3 user4 notify_attrs)a do
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
-      {:ok, notify} = Delivery.send(:notify, notify_attrs, user3)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
+      {:ok, notify} = Messaging.send_notification(notify_attrs, user3)
 
       move_insert_at_long_ago(notify)
 
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user4)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user4)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert paged_notifies.total_count == 2
 
-      Delivery.revoke(:notify, notify_attrs, user2)
+      Messaging.revoke_notification(notify_attrs, user2)
 
-      {:ok, paged_notifies} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, paged_notifies} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert paged_notifies.total_count == 2
       notify1 = paged_notifies.entries |> List.first()
       notify2 = paged_notifies.entries |> List.last()
@@ -253,7 +253,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
         user_id: user.id
       })
 
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
 
       notify_attrs
       |> Map.merge(%{
@@ -265,7 +265,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
         user_id: user.id
       })
 
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
 
       invalid_notify_attrs =
         notify_attrs
@@ -277,7 +277,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
           user_id: user.id
         })
 
-      {:error, _} = Delivery.send(:notify, invalid_notify_attrs, user2)
+      {:error, _} = Messaging.send_notification(invalid_notify_attrs, user2)
     end
 
     test "support collect", ~m(post user user2 notify_attrs)a do
@@ -290,7 +290,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
         user_id: user.id
       })
 
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
 
       invalid_notify_attrs =
         notify_attrs
@@ -301,7 +301,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
           user_id: user.id
         })
 
-      {:error, _} = Delivery.send(:notify, invalid_notify_attrs, user2)
+      {:error, _} = Messaging.send_notification(invalid_notify_attrs, user2)
     end
 
     test "support comment and reply", ~m(post user user2 notify_attrs)a do
@@ -315,7 +315,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
         user_id: user.id
       })
 
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
 
       notify_attrs
       |> Map.merge(%{
@@ -327,7 +327,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
         user_id: user.id
       })
 
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
 
       invalid_notify_attrs =
         notify_attrs
@@ -339,7 +339,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
           user_id: user.id
         })
 
-      {:error, _} = Delivery.send(:notify, invalid_notify_attrs, user2)
+      {:error, _} = Messaging.send_notification(invalid_notify_attrs, user2)
 
       invalid_notify_attrs =
         notify_attrs
@@ -351,7 +351,7 @@ defmodule GroupherServer.Test.Delivery.Notification do
           user_id: user.id
         })
 
-      {:error, _} = Delivery.send(:notify, invalid_notify_attrs, user2)
+      {:error, _} = Messaging.send_notification(invalid_notify_attrs, user2)
     end
 
     test "support follow", ~m(user user2)a do
@@ -360,46 +360,46 @@ defmodule GroupherServer.Test.Delivery.Notification do
         user_id: user.id
       }
 
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
     end
   end
 
   describe "mark read" do
     test "can mark multi notification as read", ~m(user user2 user3 notify_attrs)a do
-      {:ok, notify} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, notify} = Messaging.send_notification(notify_attrs, user2)
       move_insert_at_long_ago(notify)
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user3)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user3)
 
-      {:ok, result} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       notify1 = result.entries |> List.first()
       notify2 = result.entries |> List.last()
 
       assert result.total_count == 2
 
-      {:ok, _} = Delivery.mark_read(:notification, [notify1.id, notify2.id], user)
+      {:ok, _} = Messaging.mark_read(:notification, [notify1.id, notify2.id], user)
 
-      {:ok, result} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert result.total_count == 0
 
-      {:ok, result} = Delivery.fetch(:notification, user, %{page: 1, size: 10, read: true})
+      {:ok, result} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10, read: true})
       assert result.total_count == 2
     end
 
     test "can mark all notification as read", ~m(user user2 user3 notify_attrs)a do
-      {:ok, notify} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, notify} = Messaging.send_notification(notify_attrs, user2)
       move_insert_at_long_ago(notify)
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user3)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user3)
 
-      {:ok, result} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
 
       assert result.total_count == 2
 
-      {:ok, _} = Delivery.mark_read_all(:notification, user)
+      {:ok, _} = Messaging.mark_read_all(:notification, user)
 
-      {:ok, result} = Delivery.fetch(:notification, user, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert result.total_count == 0
 
-      {:ok, result} = Delivery.fetch(:notification, user, %{page: 1, size: 10, read: true})
+      {:ok, result} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10, read: true})
       assert result.total_count == 2
     end
   end

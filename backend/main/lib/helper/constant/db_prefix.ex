@@ -8,11 +8,13 @@ defmodule Helper.Constant.DBPrefix do
   @account "account"
   @statistics "statistics"
   @delivery "delivery"
+  @messaging "messaging"
   @payment "payment"
   @log "log"
 
   def default, do: @default
   def cms, do: @cms
+  def messaging, do: @messaging
   def delivery, do: @delivery
   def statistics, do: @statistics
   def account, do: @account

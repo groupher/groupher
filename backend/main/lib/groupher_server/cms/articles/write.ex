@@ -16,7 +16,7 @@ import Helper.Utils,
       atom_values_to_upcase: 1
     ]
 
-  alias GroupherServer.{Accounts, CMS, Email, Repo, Statistics}
+  alias GroupherServer.{Accounts, CMS, Messaging, Repo, Statistics}
 
   alias Accounts.Model.User
   alias CMS.Articles.{Document, States}
@@ -100,7 +100,7 @@ import Helper.Utils,
           result.__struct__ |> to_string |> String.split(".") |> List.last() |> String.downcase()
       }
 
-      Email.notify_admin(info, :new_article)
+      Messaging.notify(:notify_admin_new_article, info)
     end
   end
 

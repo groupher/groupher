@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
   # TODO import Service.Utils move both helper and github
   # import Helper.Utils
 
-  alias GroupherServer.{Accounts, Delivery}
+  alias GroupherServer.{Accounts, Messaging}
 
   @default_mailbox_status Accounts.Model.Embeds.UserMailbox.default_status()
 
@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
         user_id: user.id
       }
 
-      {:ok, _} = Delivery.send(:notify, notify_attrs, user2)
+      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
       {:ok, user} = Accounts.Mailbox.update_status(user.id)
 
       assert user.mailbox.is_empty == false
@@ -55,7 +55,7 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
         }
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user2)
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user2)
       {:ok, user} = Accounts.Mailbox.update_status(user.id)
 
       assert user.mailbox.is_empty == false

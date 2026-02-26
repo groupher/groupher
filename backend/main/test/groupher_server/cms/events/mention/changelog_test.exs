@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
   use GroupherServer.TestTools
 
   alias CMS.Events
-  alias GroupherServer.Delivery
+  alias GroupherServer.Messaging
 
   @article_mention_class "cdx-mention"
 
@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
 
       {:ok, _} = Events.emit(:mention, %{artiment: changelog})
 
-      {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
       assert mention.thread == "CHANGELOG"
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
       assert mention.title == changelog.title
       assert mention.user.login == changelog.author.user.login
 
-      {:ok, result} = Delivery.fetch(:mention, user3, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user3, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
       assert mention.thread == "CHANGELOG"
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
       {:ok, comment} = preload_author(comment)
 
       {:ok, _} = Events.emit(:mention, %{artiment: comment})
-      {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
       assert mention.thread == "CHANGELOG"
@@ -77,7 +77,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
       changelog_attrs = changelog_attrs |> Map.merge(%{body: body})
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user, %{page: 1, size: 10})
       assert result.total_count == 0
 
       comment_body =
@@ -87,7 +87,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
         CMS.Comments.create_comment(community, :changelog, changelog.inner_id, comment_body, user)
 
       {:ok, _} = Events.emit(:mention, %{artiment: comment})
-      {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user, %{page: 1, size: 10})
 
       assert result.total_count == 0
     end

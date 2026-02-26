@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Events.Audition do
   @moduledoc """
   events for mention task
 
-  parse and fmt(see shape function) mentions to Delivery module
+  parse and fmt(see shape function) mentions to Messaging module
   """
   import Ecto.Query, warn: false
 

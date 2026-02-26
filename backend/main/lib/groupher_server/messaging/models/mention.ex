@@ -1,4 +1,4 @@
-defmodule GroupherServer.Delivery.Model.Mention do
+defmodule GroupherServer.Messaging.Model.Mention do
   @moduledoc false
   alias __MODULE__
 
@@ -8,7 +8,7 @@ defmodule GroupherServer.Delivery.Model.Mention do
   alias GroupherServer.Accounts.Model.User
   alias Helper.Constant.DBPrefix
 
-  @schema_prefix DBPrefix.delivery()
+  @schema_prefix DBPrefix.messaging()
 
   @required_fields ~w(from_user_id to_user_id title article_id thread)a
   @optional_fields ~w(comment_id read)a
@@ -29,7 +29,6 @@ defmodule GroupherServer.Delivery.Model.Mention do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
   def changeset(%Mention{} = mention, attrs) do
     mention
     |> cast(attrs, @optional_fields ++ @required_fields)

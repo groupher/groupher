@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
   use GroupherServer.TestTools
 
   alias CMS.Events
-  alias GroupherServer.Delivery
+  alias GroupherServer.Messaging
 
   setup do
     {community, blog, _, user} = mock_article(:blog)
@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
-        Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
 
-      {:ok, notifications} = Delivery.fetch(:notification, comment.author, %{page: 1, size: 20})
+      {:ok, notifications} = Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -67,7 +67,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_undo_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
-        Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -82,7 +82,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
       {:ok, comment} = preload_author(comment)
 
-      {:ok, notifications} = Delivery.fetch(:notification, comment.author, %{page: 1, size: 20})
+      {:ok, notifications} = Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_collect, %{article: blog, from_user: user2})
 
       {:ok, notifications} =
-        Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -118,7 +118,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_undo_collect, %{article: blog, from_user: user2})
 
       {:ok, notifications} =
-        Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -135,7 +135,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_comment, %{comment: comment, from_user: user2})
 
       {:ok, notifications} =
-        Delivery.fetch(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -159,7 +159,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_reply, %{reply_comment: replied_comment, from_user: user3})
 
       comment = Repo.preload(comment, :author)
-      {:ok, notifications} = Delivery.fetch(:notification, comment.author, %{page: 1, size: 20})
+      {:ok, notifications} = Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 

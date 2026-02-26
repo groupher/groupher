@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Events.Notify do
   @moduledoc """
   notify events, for upvote, collect, comment, reply
   """
-  alias GroupherServer.{Accounts, CMS, Delivery, Repo}
+  alias GroupherServer.{Accounts, CMS, Messaging, Repo}
 
   alias Accounts.Model.User
   alias CMS.Events.Event
@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.Events.Notify do
       user_id: article.author.user.id
     }
 
-    Delivery.send(:notify, notify_attrs, from_user)
+    Messaging.send_notification(notify_attrs, from_user)
   end
 
   @spec handle(:reply, Comment.t(), User.t()) :: notify_result()
@@ -82,7 +82,7 @@ defmodule GroupherServer.CMS.Events.Notify do
       user_id: reply_comment.reply_to.author_id
     }
 
-    Delivery.send(:notify, notify_attrs, from_user)
+    Messaging.send_notification(notify_attrs, from_user)
   end
 
   @spec handle(notify_action(), Comment.t(), User.t()) :: notify_result()
@@ -99,7 +99,7 @@ defmodule GroupherServer.CMS.Events.Notify do
       comment_id: comment.id
     }
 
-    Delivery.send(:notify, notify_attrs, from_user)
+    Messaging.send_notification(notify_attrs, from_user)
   end
 
   @spec handle(notify_action(), map(), User.t()) :: notify_result()
@@ -115,7 +115,7 @@ defmodule GroupherServer.CMS.Events.Notify do
       user_id: article.author.user.id
     }
 
-    Delivery.send(:notify, notify_attrs, from_user)
+    Messaging.send_notification(notify_attrs, from_user)
   end
 
   @spec handle(:undo, notify_action(), Comment.t(), User.t()) :: notify_result()
@@ -132,7 +132,7 @@ defmodule GroupherServer.CMS.Events.Notify do
       user_id: comment.author_id
     }
 
-    Delivery.revoke(:notify, notify_attrs, from_user)
+    Messaging.revoke_notification(notify_attrs, from_user)
   end
 
   @spec handle(:undo, notify_action(), map(), User.t()) :: notify_result()
@@ -147,6 +147,6 @@ defmodule GroupherServer.CMS.Events.Notify do
       user_id: article.author.user.id
     }
 
-    Delivery.revoke(:notify, notify_attrs, from_user)
+    Messaging.revoke_notification(notify_attrs, from_user)
   end
 end

@@ -153,9 +153,6 @@ if config_env() == :prod do
   #   },
   #   included_environments: [:prod]
 
-  #  config email services
-  config :groupher_server, GroupherServer.Mailer, api_key: System.get_env("MAILER_API_KEY")
-
   config :groupher_server, :oauth, oauth_trust_code: System.get_env("OAUTH_TRUST_CODE")
 
   config :ex_aliyun_openapi, :sts,

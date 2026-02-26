@@ -2,14 +2,14 @@ defmodule GroupherServer.CMS.Events.Mention do
   @moduledoc """
   events for mention task
 
-  parse and fmt(see shape function) mentions to Delivery module
+  parse and fmt(see shape function) mentions to Messaging module
   """
   import Ecto.Query, warn: false
   import Helper.Utils, only: [get_config: 2]
 
   import GroupherServer.CMS.Events.Helper, only: [merge_same_block_linker: 2]
 
-  alias GroupherServer.{Accounts, CMS, Delivery, Repo}
+  alias GroupherServer.{Accounts, CMS, Messaging, Repo}
 
   alias CMS.Events.Event
   alias CMS.FrontDesk
@@ -51,7 +51,7 @@ defmodule GroupherServer.CMS.Events.Mention do
   @spec handle_mentions(list(), Comment.t() | map()) :: mention_result()
   defp handle_mentions(mentions, artiment) do
     with {:ok, author} <- FrontDesk.author_of(artiment) do
-      Delivery.send(:mention, artiment, mentions, author)
+      Messaging.send_mention(artiment, mentions, author)
     end
   end
 

@@ -90,9 +90,6 @@ config :sentry,
   },
   included_environments: [:prod]
 
-#  config email services
-config :groupher_server, GroupherServer.Mailer, api_key: System.get_env("MAILER_API_KEY")
-
 config :ex_aliyun_openapi, :sts,
   access_key_id: System.get_env("ALI_OSS_STS_AK"),
   access_key_secret: System.get_env("_ALIOSS_STS_AS")

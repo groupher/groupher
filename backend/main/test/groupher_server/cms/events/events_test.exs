@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Events.EventsTest do
   use GroupherServer.TestTools
 
   alias CMS.Events
-  alias GroupherServer.Delivery
+  alias GroupherServer.Messaging
 
   setup do
     {community, post, _post_attrs, user} = mock_article(:post)
@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.Events.EventsTest do
 
       {:ok, _} = Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
-      {:ok, notifications} = Delivery.fetch(:notification, post.author.user, %{page: 1, size: 20})
+      {:ok, notifications} = Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
       assert notifications.total_count == 1
     end
 
