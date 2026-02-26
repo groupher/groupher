@@ -1,11 +1,11 @@
-defmodule GroupherServer.Test.Delivery.Mention do
+defmodule GroupherServer.Test.Messaging.Mention do
   @moduledoc false
 
   use GroupherServer.TestTools
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Delivery
+  alias GroupherServer.Messaging
 
   setup do
     {:ok, post} = db_insert(:post)
@@ -33,14 +33,14 @@ defmodule GroupherServer.Test.Delivery.Mention do
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user3.id})
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user)
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
 
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user2.id, to_user_id: user3.id})
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user2)
-      {:ok, count} = Delivery.unread_count(:mention, user3.id)
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user2)
+      {:ok, count} = Messaging.unread_count(:mention, user3.id)
 
       assert count == 2
     end
@@ -50,8 +50,8 @@ defmodule GroupherServer.Test.Delivery.Mention do
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user2.id})
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user)
-      {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
 
@@ -66,13 +66,13 @@ defmodule GroupherServer.Test.Delivery.Mention do
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user2.id})
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user)
-      {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       assert result.total_count == 1
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user)
-      {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       assert result.total_count == 1
     end
@@ -83,23 +83,23 @@ defmodule GroupherServer.Test.Delivery.Mention do
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user2.id})
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user)
-      {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       assert result.total_count == 1
 
-      {:ok, result} = Delivery.fetch(:mention, user3, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user3, %{page: 1, size: 10})
       assert result.total_count == 0
 
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user3.id})
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user)
-      {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
       assert result.total_count == 0
 
-      {:ok, result} = Delivery.fetch(:mention, user3, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user3, %{page: 1, size: 10})
       assert result.total_count == 1
     end
   end
@@ -110,13 +110,13 @@ defmodule GroupherServer.Test.Delivery.Mention do
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user2.id})
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user)
-      {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
-      {:ok, _} = Delivery.mark_read(:mention, [mention.id], user2)
+      {:ok, _} = Messaging.mark_read(:mention, [mention.id], user2)
 
-      {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10, read: true})
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10, read: true})
       mention = result.entries |> List.first()
 
       assert mention.read
@@ -127,21 +127,21 @@ defmodule GroupherServer.Test.Delivery.Mention do
         Map.merge(mention_attr, %{from_user_id: user2.id, to_user_id: user.id})
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user2)
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user2)
 
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user3.id, to_user_id: user.id})
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user3)
-      {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user3)
+      {:ok, result} = Messaging.paged_messages(:mention, user, %{page: 1, size: 10})
 
       mention1 = result.entries |> List.first()
       mention2 = result.entries |> List.last()
 
-      {:ok, _} = Delivery.mark_read(:mention, [mention1.id, mention2.id], user)
+      {:ok, _} = Messaging.mark_read(:mention, [mention1.id, mention2.id], user)
 
-      {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10, read: true})
+      {:ok, result} = Messaging.paged_messages(:mention, user, %{page: 1, size: 10, read: true})
 
       mention1 = result.entries |> List.first()
       mention2 = result.entries |> List.last()
@@ -155,23 +155,23 @@ defmodule GroupherServer.Test.Delivery.Mention do
         Map.merge(mention_attr, %{from_user_id: user2.id, to_user_id: user.id})
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user2)
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user2)
 
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user3.id, to_user_id: user.id})
       ]
 
-      {:ok, :pass} = Delivery.send(:mention, post, mention_contents, user3)
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user3)
 
-      {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user, %{page: 1, size: 10})
       assert result.total_count == 2
 
-      {:ok, _} = Delivery.mark_read_all(:mention, user)
+      {:ok, _} = Messaging.mark_read_all(:mention, user)
 
-      {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user, %{page: 1, size: 10})
       assert result.total_count == 0
 
-      {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10, read: true})
+      {:ok, result} = Messaging.paged_messages(:mention, user, %{page: 1, size: 10, read: true})
       assert result.total_count == 2
     end
   end

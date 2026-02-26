@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Accounts.Events.Notify do
 
   alias GroupherServer.Accounts.Events
   alias GroupherServer.Accounts.Fans
-  alias GroupherServer.Delivery
+  alias GroupherServer.Messaging
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.Accounts.Events.Notify do
       {:ok, _} = Fans.follow(user, user2)
       Events.emit(:follow, %{user: user, from_user: user2})
 
-      {:ok, notifications} = Delivery.fetch(:notification, user, %{page: 1, size: 20})
+      {:ok, notifications} = Messaging.paged_messages(:notification, user, %{page: 1, size: 20})
       assert notifications.total_count == 1
 
       notify = notifications.entries |> List.first()
@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Accounts.Events.Notify do
       Events.emit(:follow, %{user: user, from_user: user2})
       Events.emit(:undo_follow, %{user: user, from_user: user2})
 
-      {:ok, notifications} = Delivery.fetch(:notification, user, %{page: 1, size: 20})
+      {:ok, notifications} = Messaging.paged_messages(:notification, user, %{page: 1, size: 20})
       assert notifications.total_count == 0
     end
   end

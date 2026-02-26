@@ -9,7 +9,7 @@ defmodule GroupherServer.Payment.Delegate.CRUD do
 
   alias Helper.ORM
 
-  alias GroupherServer.{Accounts, Email, Payment, Repo}
+  alias GroupherServer.{Accounts, Messaging, Payment, Repo}
 
   alias Accounts.Model.User
   alias Payment.Delegate.Actions
@@ -90,7 +90,13 @@ defmodule GroupherServer.Payment.Delegate.CRUD do
       |> map_atom_value(:string)
 
     with {:ok, record} <- ORM.create(BillRecord, attrs) do
-      Email.notify_admin(record, :payment)
+      Messaging.notify(:notify_admin_payment, %{
+        bill_record_id: record.id,
+        user_id: record.user_id,
+        amount: record.amount,
+        payment_usage: record.payment_usage,
+        state: record.state
+      })
 
       {:ok, record}
     end

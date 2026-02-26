@@ -5,7 +5,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
   import Helper.ErrorCode
   import Helper.Utils, only: [keys_to_atoms: 1]
 
-  alias GroupherServer.{Accounts, Email, Repo}
+  alias GroupherServer.{Accounts, Messaging, Repo}
 
   alias Accounts.FrontDesk
   alias Accounts.Model.{Achievement, OauthProvider, Social, User}
@@ -165,8 +165,19 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
     {:ok, user} = FrontDesk.user(create_user.id, preload: :oauth_providers, fill_meta: false)
 
     with {:ok, result} <- gen_token(user) do
-      Email.welcome(user)
-      Email.notify_admin(user, :new_register)
+      Messaging.notify(:welcome_new_register, %{
+        user_id: user.id,
+        login: user.login,
+        nickname: user.nickname,
+        email: user.email
+      })
+
+      Messaging.notify(:notify_admin_new_register, %{
+        user_id: user.id,
+        login: user.login,
+        nickname: user.nickname,
+        email: user.email
+      })
 
       {:ok, result}
     end

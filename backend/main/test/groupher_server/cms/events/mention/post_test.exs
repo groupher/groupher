@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.PostTest do
   use GroupherServer.TestTools
 
   alias CMS.Events
-  alias GroupherServer.Delivery
+  alias GroupherServer.Messaging
 
   @article_mention_class "cdx-mention"
 
@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.PostTest do
 
       {:ok, _} = Events.emit(:mention, %{artiment: post})
 
-      {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
       assert mention.thread == "POST"
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.PostTest do
       assert mention.title == post.title
       assert mention.user.login == post.author.user.login
 
-      {:ok, result} = Delivery.fetch(:mention, user3, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user3, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
       assert mention.thread == "POST"
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.PostTest do
       {:ok, comment} = preload_author(comment)
 
       {:ok, _} = Events.emit(:mention, %{artiment: comment})
-      {:ok, result} = Delivery.fetch(:mention, user2, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
       assert mention.thread == "POST"
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.PostTest do
       post_attrs = post_attrs |> Map.merge(%{body: body})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user, %{page: 1, size: 10})
       assert result.total_count == 0
 
       comment_body =
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.PostTest do
         CMS.Comments.create_comment(community, :post, post.inner_id, comment_body, user)
 
       {:ok, _} = Events.emit(:mention, %{artiment: comment})
-      {:ok, result} = Delivery.fetch(:mention, user, %{page: 1, size: 10})
+      {:ok, result} = Messaging.paged_messages(:mention, user, %{page: 1, size: 10})
 
       assert result.total_count == 0
     end

@@ -8,7 +8,7 @@ defmodule GroupherServer.Support.Factory do
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Helper.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Delivery}
+  alias GroupherServer.{Accounts, CMS, Messaging}
 
   alias Accounts.Model.User
 
@@ -250,7 +250,7 @@ defmodule GroupherServer.Support.Factory do
       Map.merge(mention_attr, %{from_user_id: from_user.id, to_user_id: user.id})
     ]
 
-    Delivery.send(:mention, post, mention_contents, from_user)
+    Messaging.send_mention(post, mention_contents, from_user)
   end
 
   def mock_notification_for(user, from_user) do
@@ -265,7 +265,7 @@ defmodule GroupherServer.Support.Factory do
       read: false
     }
 
-    Delivery.send(:notify, notify_attrs, from_user)
+    Messaging.send_notification(notify_attrs, from_user)
   end
 
   def mock_community do

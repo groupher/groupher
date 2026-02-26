@@ -1,31 +1,23 @@
-defmodule GroupherServer.Delivery.Delegate.Mention do
-  @moduledoc """
-  The Delivery context.
-  """
+defmodule GroupherServer.Messaging.Mentions do
+  @moduledoc false
+
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1, atom_values_to_upcase: 1]
   import GroupherServer.CMS.FrontDesk, only: [thread_of: 2]
   import ShortMaps
 
-  alias GroupherServer.{Accounts, CMS, Delivery, Repo}
+  alias GroupherServer.{Accounts, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Model.Comment
-  alias Delivery.Model.Mention
+  alias GroupherServer.CMS.Model.Comment
+  alias GroupherServer.Messaging.Model.Mention
 
   alias Ecto.Multi
   alias Helper.ORM
 
-  # 发送
-  # Delivery.send(:mention, content, mentions, user)
-  # Delivery.send(:notify, content, mentions, user)
+  def send(_, [], _), do: {:ok, :pass}
 
-  # 用户侧取
-  # Delivery.fetch(:mention)
-
-  def handle(_, [], _), do: {:ok, :pass}
-
-  def handle(%Comment{} = comment, mentions, %User{} = from_user) do
+  def send(%Comment{} = comment, mentions, %User{} = from_user) do
     Multi.new()
     |> Multi.run(:batch_delete_mentions, fn _, _ ->
       batch_delete_mentions(comment, from_user)
@@ -45,7 +37,7 @@ defmodule GroupherServer.Delivery.Delegate.Mention do
     |> result()
   end
 
-  def handle(article, mentions, %User{} = from_user) do
+  def send(article, mentions, %User{} = from_user) do
     Multi.new()
     |> Multi.run(:batch_delete_mentions, fn _, _ ->
       batch_delete_mentions(article, from_user)
@@ -54,7 +46,6 @@ defmodule GroupherServer.Delivery.Delegate.Mention do
       mentions =
         mentions
         |> Enum.map(&atom_values_to_upcase(&1))
-        # ignore mention myself
         |> Enum.reject(&(&1.to_user_id == from_user.id))
 
       case Enum.empty?(mentions) or {0, nil} !== Repo.insert_all(Mention, mentions) do
@@ -69,8 +60,7 @@ defmodule GroupherServer.Delivery.Delegate.Mention do
     |> result()
   end
 
-  @doc "paged mentions"
-  def paged_mentions(%User{} = user, %{page: page, size: size} = filter) do
+  def paged(%User{} = user, %{page: page, size: size} = filter) do
     read = Map.get(filter, :read, false)
 
     Mention
@@ -80,21 +70,18 @@ defmodule GroupherServer.Delivery.Delegate.Mention do
     |> done()
   end
 
-  @doc "get unread mentions count"
   def unread_count(user_id) do
     Mention
     |> where([m], m.to_user_id == ^user_id and m.read == false)
     |> ORM.count()
   end
 
-  @doc "mark mention in ids as readed"
   def mark_read(ids, %User{} = user) when is_list(ids) do
     Mention
     |> where([m], m.id in ^ids and m.to_user_id == ^user.id and m.read == false)
     |> ORM.mark_read_all()
   end
 
-  @doc "mark all related mentions as readed"
   def mark_read_all(%User{} = user) do
     Mention
     |> where([m], m.to_user_id == ^user.id and m.read == false)
@@ -126,7 +113,6 @@ defmodule GroupherServer.Delivery.Delegate.Mention do
     Map.put(paged_mentions, :entries, entries)
   end
 
-  # who in what part, mentioned me?
   defp shape(%Mention{} = mention) do
     user = Map.take(mention.from_user, [:login, :nickname, :avatar])
 

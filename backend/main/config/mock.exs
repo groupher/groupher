@@ -31,9 +31,6 @@ config :groupher_server, GroupherServer.Repo,
   pool_size: 50,
   queue_target: 5000
 
-#  config email services
-config :groupher_server, GroupherServer.Mailer, adapter: Bamboo.LocalAdapter
-
 config :groupher_server, :oauth,
   oauth_trust_code: "fWrFuWs1j+TGcrok7XHkwDLiOVTGOnUR3JWF3cbcu2Tcnbj7TvSS1mMVeekvjgNQ"
 

@@ -126,18 +126,6 @@ config :groupher_server, GroupherServerWeb.Gettext, default_locale: "zh_CN", loc
 config :groupher_server, :cloud_assets,
   static_icon: "https://cps-oss.oss-cn-shanghai.aliyuncs.com/icons/static"
 
-#  config email services
-config :groupher_server, :system_emails,
-  support_email: "coderplanets <support@group.coderplanets.com>",
-  admin_email: "mydearxym@qq.com",
-  welcome_new_register: true,
-  notify_admin_on_new_user: true,
-  notify_admin_on_content_created: true
-
-config :groupher_server, GroupherServer.Mailer,
-  adapter: Bamboo.MailgunAdapter,
-  domain: "mailer.coderplanets.com"
-
 config :groupher_server, :cache,
   pool: %{
     common: %{

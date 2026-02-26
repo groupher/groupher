@@ -6,7 +6,7 @@ defmodule GroupherServer.Payment.Delegate.Actions do
 
   alias Helper.ORM
 
-  alias GroupherServer.{Accounts, Email, Payment}
+  alias GroupherServer.{Accounts, Messaging, Payment}
 
   alias Accounts.Model.User
   alias Payment.Model.BillRecord
@@ -43,7 +43,15 @@ defmodule GroupherServer.Payment.Delegate.Actions do
 
   defp send_thanks_email(%BillRecord{} = record) do
     with {:ok, user} <- ORM.find(User, record.user_id, preload: :achievement) do
-      Email.thanks_donation(user, record)
+      Messaging.notify(:thanks_donation, %{
+        user_id: user.id,
+        login: user.login,
+        nickname: user.nickname,
+        email: user.email,
+        bill_record_id: record.id,
+        amount: record.amount,
+        payment_usage: record.payment_usage
+      })
     end
   end
 end
