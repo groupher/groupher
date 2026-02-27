@@ -6,10 +6,9 @@ import useSalon from './salon/glow_background'
 export default () => {
   const s = useSalon()
   const metric = useMetric()
+  const { glowType } = useGlowLight()
 
   if (metric === METRIC.LANDING) return null
-
-  const { glowType } = useGlowLight()
 
   if (!glowType) return null
 

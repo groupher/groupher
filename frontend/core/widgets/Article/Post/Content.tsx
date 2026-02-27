@@ -18,12 +18,11 @@ import useSalon from '../salon/post/content'
 export default () => {
   const ref = useRef(null)
   const { article } = useArticle()
+  const s = useSalon()
 
   if (!article) {
     return <h1>Error article</h1>
   }
-
-  const s = useSalon()
 
   return (
     <div className={s.wrapper}>
