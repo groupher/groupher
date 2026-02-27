@@ -9,9 +9,14 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   alias CMS.Model.Community
   alias Helper.{ORM, T}
 
-  alias GroupherServer.CMS.Seeds.{Comments, Tags}
+  alias GroupherServer.CMS.Seeds.{Comments, Config, Tags}
 
   @article_emotions get_config(:article, :emotions)
+  @article_count_range {Config.article_count_per_thread(), Config.article_count_per_thread()}
+  @article_upvotes_range Config.article_upvotes_range()
+  @comment_count_range {Config.comment_count_per_article(), Config.comment_count_per_article()}
+  @comment_upvotes_range Config.comment_upvotes_range()
+  @comment_replies_range Config.comment_replies_range()
 
   @spec mock(String.t(), atom()) :: T.domain_res(map())
   def mock(community_slug, thread) when is_binary(community_slug) and is_atom(thread) do
@@ -24,7 +29,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
 
   @spec mock(Community.t(), atom()) :: T.domain_res([map()])
   def mock(%Community{} = community, thread) when is_atom(thread) do
-    mock(community, thread, count_range: {3, 3})
+    mock(community, thread, count_range: @article_count_range)
   end
 
   def mock(community, thread, opts_or_count \\ [])
@@ -37,8 +42,11 @@ defmodule GroupherServer.CMS.Seeds.Articles do
 
   @spec mock(Community.t(), atom(), keyword()) :: T.domain_res([map()])
   def mock(%Community{} = community, thread, opts) when is_list(opts) and thread in [:post, :changelog, :doc] do
-    article_range = Keyword.get(opts, :count_range, {20, 30})
-    comment_range = Keyword.get(opts, :comment_range, {20, 30})
+    article_range = Keyword.get(opts, :count_range, @article_count_range)
+    comment_range = Keyword.get(opts, :comment_range, @comment_count_range)
+    article_upvotes_range = Keyword.get(opts, :upvotes_range, @article_upvotes_range)
+    comment_upvotes_range = Keyword.get(opts, :comment_upvotes_range, @comment_upvotes_range)
+    replies_range = Keyword.get(opts, :replies_range, @comment_replies_range)
     count = random_range(article_range)
 
     tag_ids =
@@ -56,9 +64,18 @@ defmodule GroupherServer.CMS.Seeds.Articles do
         {:ok, article} = CMS.Articles.create(community, thread, attrs, author)
 
         attach_tags(article, tag_ids)
-        {:ok, article} = seed_upvotes(article)
+        {:ok, article} = seed_upvotes(article, article_upvotes_range)
         {:ok, article} = seed_emotions(article)
-        Comments.mock(community, thread, article, count_range: comment_range)
+
+        Comments.mock(
+          community,
+          thread,
+          article,
+          count_range: comment_range,
+          upvotes_range: comment_upvotes_range,
+          replies_range: replies_range,
+          seed_replies: true
+        )
 
         [article | acc]
       end)
@@ -79,13 +96,17 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     end)
   end
 
-  defp seed_upvotes(article) do
+  defp seed_upvotes(article, {min, max}) do
     with {:ok, user} <- db_insert(:user),
          {:ok, _} <- CMS.Articles.upvote(article, user),
          {:ok, article} <- ORM.find(article.__struct__, article.id),
-         {:ok, article} <- ORM.update(article, %{upvotes_count: Enum.random(3..20)}) do
+         {:ok, article} <- ORM.update(article, %{upvotes_count: Enum.random(min..max)}) do
       {:ok, article}
     end
+  end
+
+  defp seed_upvotes(article, _) do
+    seed_upvotes(article, @article_upvotes_range)
   end
 
   defp seed_emotions(article) do

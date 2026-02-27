@@ -4,25 +4,30 @@ defmodule GroupherServer.CMS.Seeds.Tags do
   """
 
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Seeds.Config
   alias GroupherServer.CMS.Model.Community
   alias Helper.T
 
   @tag_colors ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink", "grey"]
-  @seed_groups ["General", "Engineering", "Resources"]
+  @seed_groups ["General", "Engineering", "Resources", "Ecosystem"]
+  @tag_count_range Config.tag_count_range()
+  @group_count_range Config.group_count_range()
 
   def random_color, do: @tag_colors |> Enum.random() |> String.to_atom()
 
   @spec mock(Community.t(), atom(), keyword()) :: T.domain_res([integer()])
   def mock(%Community{} = community, thread, opts \\ [])
-      when thread in [:post, :changelog, :doc] do
-    count = Keyword.get(opts, :count, 12)
+      when thread in [:post, :changelog, :doc, :kanban, :about] do
+    count = Keyword.get(opts, :count, random_range(@tag_count_range))
+    group_count = Keyword.get(opts, :group_count, random_range(@group_count_range))
+    groups = @seed_groups |> Enum.take(group_count)
 
     with {:ok, bot} <- GroupherServer.CMS.Seeds.Helper.seed_bot(),
          {:ok, existing} <- CMS.Communities.paged_tags(tag_filter(community.id, thread)) do
       needed = max(count - length(existing.entries), 0)
 
       Enum.each(1..needed, fn index ->
-        group = Enum.at(@seed_groups, rem(index - 1, length(@seed_groups)))
+        group = Enum.at(groups, rem(index - 1, length(groups)))
 
         attrs = %{
           title: "#{thread} tag #{index}",
@@ -39,6 +44,11 @@ defmodule GroupherServer.CMS.Seeds.Tags do
       end
     end
   end
+
+  defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max,
+    do: Enum.random(min..max)
+
+  defp random_range(_), do: 10
 
   defp tag_filter(community_id, thread) do
     %{

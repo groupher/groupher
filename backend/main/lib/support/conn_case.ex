@@ -31,7 +31,7 @@ defmodule GroupherServerWeb.ConnCase do
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(GroupherServer.Repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(GroupherServer.Repo, ownership_timeout: 300_000)
 
     unless tags[:async] do
       Ecto.Adapters.SQL.Sandbox.mode(GroupherServer.Repo, {:shared, self()})

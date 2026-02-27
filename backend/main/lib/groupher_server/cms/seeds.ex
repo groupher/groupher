@@ -28,6 +28,9 @@ defmodule GroupherServer.CMS.Seeds do
   @spec full_community(String.t() | atom()) :: T.domain_res(Community.t())
   def full_community(slug), do: FullCommunity.mock(slug)
 
+  @spec delete_full_community(String.t() | atom()) :: T.domain_res(:ok)
+  def delete_full_community(slug), do: FullCommunity.delete(slug)
+
   # Article seeds
 
   @spec articles(Community.t(), atom()) :: T.domain_res([map()])

@@ -1,38 +1,93 @@
 defmodule GroupherServer.CMS.Seeds.FullCommunity do
   @moduledoc false
 
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Seeds.{Articles, Communities, Tags}
-  alias Helper.T
+  import Ecto.Query, warn: false
 
-  @content_threads [:post, :changelog, :doc]
-  @kanban_states [:todo, :wip, :done]
-  @article_count_per_thread 23
-  @comment_count_per_article 23
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Seeds.{Articles, Communities, Config, Tags}
+
+  alias CMS.Model.{
+    ArticleUpvote,
+    ArticleUserEmotion,
+    Changelog,
+    Comment,
+    CommentReply,
+    CommentUpvote,
+    CommentUserEmotion,
+    Community,
+    CommunityCategory,
+    CommunityDashboard,
+    CommunityJoinChangelog,
+    CommunityJoinDoc,
+    CommunityJoinPost,
+    CommunityJoinTag,
+    CommunityModerator,
+    CommunitySubscriber,
+    CommunityTag,
+    CommunityThread,
+    Doc,
+    PinnedArticle,
+    PinnedComment,
+    Post
+  }
+
+  alias Helper.{ORM, T}
+
+  @tag_threads Config.tag_threads()
+  @content_threads Config.content_threads()
+  @kanban_states Config.kanban_states()
+
+  @tag_count_range Config.tag_count_range()
+  @article_count_per_thread Config.article_count_per_thread()
+  @comment_count_per_article Config.comment_count_per_article()
+  @article_upvotes_range Config.article_upvotes_range()
+  @comment_upvotes_range Config.comment_upvotes_range()
+  @comment_replies_range Config.comment_replies_range()
 
   @spec mock(String.t() | atom()) :: T.domain_res(map())
   def mock(slug) do
     with {:ok, community} <- Communities.mock(slug),
          {:ok, _} <- seed_about_dashboard(community, slug),
-         {:ok, posts} <- seed_content_threads(community),
+         {:ok, posts} <- seed_threads(community),
          {:ok, _} <- seed_kanban_states(posts),
          {:ok, updated_community} <- CMS.Communities.read(community.slug, inc_views: false) do
       {:ok, updated_community}
     end
   end
 
-  defp seed_content_threads(community) do
+  @spec delete(String.t() | atom()) :: T.domain_res(:ok)
+  def delete(slug) do
+    with {:ok, community} <- ORM.find_by(Community, %{slug: to_string(slug)}),
+         {post_ids, changelog_ids, doc_ids} <- article_ids(community.id),
+         comment_ids <- comments_ids(post_ids, changelog_ids, doc_ids),
+         {:ok, _} <- delete_comment_relations(comment_ids),
+         {:ok, _} <- delete_article_relations(post_ids, changelog_ids, doc_ids),
+         {:ok, _} <- delete_tag_relations(community.id),
+         {:ok, _} <- delete_community_relations(community.id),
+         {_count, _} <- delete_all(from(c in Community, where: c.id == ^community.id)) do
+      {:ok, :ok}
+    end
+  end
+
+  defp seed_threads(community) do
+    tags_by_thread =
+      Enum.reduce(@tag_threads, %{}, fn thread, acc ->
+        {:ok, tag_ids} = Tags.mock(community, thread, count: random_range(@tag_count_range))
+        Map.put(acc, thread, tag_ids)
+      end)
+
     posts =
       Enum.reduce(@content_threads, [], fn thread, acc ->
-        {:ok, tag_ids} = Tags.mock(community, thread)
-
         {:ok, articles} =
           Articles.mock(
             community,
             thread,
             count_range: {@article_count_per_thread, @article_count_per_thread},
+            upvotes_range: @article_upvotes_range,
             comment_range: {@comment_count_per_article, @comment_count_per_article},
-            tag_ids: tag_ids
+            comment_upvotes_range: @comment_upvotes_range,
+            replies_range: @comment_replies_range,
+            tag_ids: Map.get(tags_by_thread, thread, [])
           )
 
         case thread do
@@ -106,4 +161,95 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
       {:ok, :ok}
     end
   end
+
+  defp article_ids(community_id) do
+    post_ids = Repo.all(from(p in Post, where: p.community_id == ^community_id, select: p.id))
+
+    changelog_ids =
+      Repo.all(from(c in Changelog, where: c.community_id == ^community_id, select: c.id))
+
+    doc_ids = Repo.all(from(d in Doc, where: d.community_id == ^community_id, select: d.id))
+
+    {post_ids, changelog_ids, doc_ids}
+  end
+
+  defp comments_ids(post_ids, changelog_ids, doc_ids) do
+    Repo.all(
+      from(c in Comment,
+        where: c.post_id in ^post_ids or c.changelog_id in ^changelog_ids or c.doc_id in ^doc_ids,
+        select: c.id
+      )
+    )
+  end
+
+  defp delete_comment_relations(comment_ids) do
+    delete_all(from(c in CommentReply, where: c.comment_id in ^comment_ids or c.reply_to_id in ^comment_ids))
+    delete_all(from(c in CommentUpvote, where: c.comment_id in ^comment_ids))
+    delete_all(from(c in CommentUserEmotion, where: c.comment_id in ^comment_ids))
+    delete_all(from(c in PinnedComment, where: c.comment_id in ^comment_ids))
+    delete_all(from(c in Comment, where: c.id in ^comment_ids))
+
+    {:ok, :ok}
+  end
+
+  defp delete_article_relations(post_ids, changelog_ids, doc_ids) do
+    delete_all(
+      from(a in ArticleUpvote,
+        where: a.post_id in ^post_ids or a.changelog_id in ^changelog_ids or a.doc_id in ^doc_ids
+      )
+    )
+
+    delete_all(
+      from(a in ArticleUserEmotion,
+        where: a.post_id in ^post_ids or a.changelog_id in ^changelog_ids or a.doc_id in ^doc_ids
+      )
+    )
+
+    delete_all(
+      from(c in CommunityJoinTag,
+        where: c.post_id in ^post_ids or c.changelog_id in ^changelog_ids or c.doc_id in ^doc_ids
+      )
+    )
+
+    delete_all(from(p in PinnedArticle, where: p.post_id in ^post_ids or p.changelog_id in ^changelog_ids or p.doc_id in ^doc_ids))
+
+    delete_all(from(c in CommunityJoinPost, where: c.post_id in ^post_ids))
+    delete_all(from(c in CommunityJoinChangelog, where: c.changelog_id in ^changelog_ids))
+    delete_all(from(c in CommunityJoinDoc, where: c.doc_id in ^doc_ids))
+
+    delete_all(from(p in Post, where: p.id in ^post_ids))
+    delete_all(from(c in Changelog, where: c.id in ^changelog_ids))
+    delete_all(from(d in Doc, where: d.id in ^doc_ids))
+
+    {:ok, :ok}
+  end
+
+  defp delete_tag_relations(community_id) do
+    tag_ids = Repo.all(from(t in CommunityTag, where: t.community_id == ^community_id, select: t.id))
+
+    delete_all(from(c in CommunityJoinTag, where: c.community_tag_id in ^tag_ids))
+    delete_all(from(t in CommunityTag, where: t.id in ^tag_ids))
+
+    {:ok, :ok}
+  end
+
+  defp delete_community_relations(community_id) do
+    delete_all(from(c in CommunityDashboard, where: c.community_id == ^community_id))
+    delete_all(from(c in CommunityThread, where: c.community_id == ^community_id))
+    delete_all(from(c in CommunityCategory, where: c.community_id == ^community_id))
+    delete_all(from(c in CommunitySubscriber, where: c.community_id == ^community_id))
+    delete_all(from(c in CommunityModerator, where: c.community_id == ^community_id))
+    delete_all(from(c in CommunityJoinPost, where: c.community_id == ^community_id))
+    delete_all(from(c in CommunityJoinChangelog, where: c.community_id == ^community_id))
+    delete_all(from(c in CommunityJoinDoc, where: c.community_id == ^community_id))
+
+    {:ok, :ok}
+  end
+
+  defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max,
+    do: Enum.random(min..max)
+
+  defp random_range(_), do: 10
+
+  defp delete_all(query), do: Repo.delete_all(query, timeout: 300_000)
 end

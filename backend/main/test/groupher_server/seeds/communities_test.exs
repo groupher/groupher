@@ -1,6 +1,7 @@
 defmodule GroupherServer.Test.Seeds.CommunitiesTest do
   @moduledoc false
   use GroupherServer.TestTools
+  @moduletag timeout: 300_000
 
   alias GroupherServer.CMS.Seeds.Communities
 

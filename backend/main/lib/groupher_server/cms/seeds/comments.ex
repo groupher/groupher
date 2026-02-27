@@ -3,28 +3,40 @@ defmodule GroupherServer.CMS.Seeds.Comments do
 
   import GroupherServer.Support.Factory
   import Helper.Utils, only: [get_config: 2]
+  import GroupherServer.CMS.Model.Embeds.CommentEmotion, only: [default_emotions: 0]
+  import GroupherServer.CMS.Model.Embeds.CommentMeta, only: [default_meta: 0]
 
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Seeds.Config
 
   alias CMS.Model.{Comment, Community}
   alias Helper.{ORM, T}
 
   @comment_emotions get_config(:article, :comment_emotions)
+  @comment_count_range {Config.comment_count_per_article(), Config.comment_count_per_article()}
+  @comment_upvotes_range Config.comment_upvotes_range()
+  @comment_replies_range Config.comment_replies_range()
 
   @spec mock(Community.t(), atom(), map(), keyword()) :: T.domain_res([Comment.t()])
   def mock(%Community{} = community, thread, article, opts \\ [])
       when thread in [:post, :changelog, :doc] do
-    range = Keyword.get(opts, :count_range, {20, 30})
+    range = Keyword.get(opts, :count_range, @comment_count_range)
+    upvotes_range = Keyword.get(opts, :upvotes_range, @comment_upvotes_range)
+    replies_range = Keyword.get(opts, :replies_range, @comment_replies_range)
+    seed_replies = Keyword.get(opts, :seed_replies, true)
     count = random_range(range)
     {:ok, commenter} = db_insert(:user)
 
     comments =
       Enum.reduce(1..count, [], fn index, acc ->
-        body = mock_comment("#{Faker.Lorem.sentence(12)} #{index}")
-        {:ok, comment} = CMS.Comments.create_comment(community, thread, article.inner_id, body, commenter)
+        {:ok, comment} = create_top_comment(community, thread, article, commenter, index)
 
-        {:ok, comment} = seed_upvotes(comment)
+        {:ok, comment} = seed_upvotes(comment, upvotes_range)
         {:ok, comment} = seed_emotions(comment)
+
+        if seed_replies do
+          mock_replies(comment, count_range: replies_range)
+        end
 
         [comment | acc]
       end)
@@ -33,12 +45,18 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   end
 
   @spec mock_replies(Comment.t()) :: T.domain_res(:ok)
-  def mock_replies(%Comment{} = comment) do
-    with {:ok, users} <- db_insert_multi(:user, Enum.random(1..5)) do
+  def mock_replies(%Comment{} = comment), do: mock_replies(comment, [])
+
+  @spec mock_replies(Comment.t(), keyword()) :: T.domain_res(:ok)
+  def mock_replies(%Comment{} = comment, opts) do
+    range = Keyword.get(opts, :count_range, @comment_replies_range)
+    count = random_range(range)
+
+    with {:ok, users} <- db_insert_multi(:user, count) do
       users
       |> Enum.each(fn user ->
         text = Faker.Lorem.sentence(20)
-        {:ok, _} = CMS.Comments.reply_comment(comment.id, mock_comment(text), user)
+        {:ok, _} = create_reply(comment, text, user)
       end)
     end
   end
@@ -54,11 +72,19 @@ defmodule GroupherServer.CMS.Seeds.Comments do
     end
   end
 
-  defp seed_upvotes(%Comment{} = comment) do
+  defp seed_upvotes(%Comment{} = comment, {min, max}) do
     with {:ok, user} <- db_insert(:user),
          {:ok, _} <- CMS.Comments.upvote_comment(comment.id, user),
          {:ok, comment} <- ORM.find(Comment, comment.id),
-         {:ok, comment} <- ORM.update(comment, %{upvotes_count: Enum.random(2..12)}) do
+         {:ok, comment} <- ORM.update(comment, %{upvotes_count: Enum.random(min..max)}) do
+      {:ok, comment}
+    end
+  end
+
+  defp seed_upvotes(%Comment{} = comment, _) do
+    with {:ok, user} <- db_insert(:user),
+         {:ok, _} <- CMS.Comments.upvote_comment(comment.id, user),
+         {:ok, comment} <- ORM.find(Comment, comment.id) do
       {:ok, comment}
     end
   end
@@ -99,5 +125,52 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max,
     do: Enum.random(min..max)
 
-  defp random_range(_), do: Enum.random(20..30)
+  defp random_range(_), do: 23
+
+  defp create_reply(comment, text, user) do
+    body = mock_comment(text)
+
+    attrs = %{
+      body: body,
+      body_html: body,
+      author_id: user.id,
+      reply_to_id: comment.id,
+      thread: comment.thread,
+      floor: 0,
+      is_article_author: false,
+      upvotes_count: 0,
+      emotions: default_emotions(),
+      meta: default_meta(),
+      post_id: comment.post_id,
+      changelog_id: comment.changelog_id,
+      doc_id: comment.doc_id
+    }
+
+    ORM.create(Comment, attrs)
+  end
+
+  defp create_top_comment(_community, thread, article, user, floor) do
+    body = mock_comment("#{Faker.Lorem.sentence(12)} #{floor}")
+    thread_name = thread |> to_string() |> String.upcase()
+
+    attrs =
+      %{
+        body: body,
+        body_html: body,
+        author_id: user.id,
+        thread: thread_name,
+        floor: floor,
+        is_article_author: false,
+        upvotes_count: 0,
+        emotions: default_emotions(),
+        meta: default_meta()
+      }
+      |> put_article_fk(thread, article.id)
+
+    ORM.create(Comment, attrs)
+  end
+
+  defp put_article_fk(attrs, :post, id), do: Map.put(attrs, :post_id, id)
+  defp put_article_fk(attrs, :changelog, id), do: Map.put(attrs, :changelog_id, id)
+  defp put_article_fk(attrs, :doc, id), do: Map.put(attrs, :doc_id, id)
 end
