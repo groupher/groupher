@@ -18,7 +18,6 @@ import DemoModeSnackbarGate from './DemoModeSnackbarGate'
 
 import LocaleSync from './LocaleSync'
 import Main from './Main'
-import SEO from './SEO'
 import useSalon from './salon'
 import Wallpaper from './Wallpaper'
 
@@ -60,7 +59,6 @@ const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
           <MainWrapper>{children}</MainWrapper>
           {/* {isMobile && <ModeLine />} */}
         </div>
-        <SEO />
       </div>
 
       <ThemeMonitor />

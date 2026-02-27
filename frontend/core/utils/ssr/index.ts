@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { cacheLife, cacheTag } from 'next/cache'
 import { includes, reject } from 'ramda'
 
@@ -214,4 +215,42 @@ export const getPagedTags = async (
   }
 
   return data[extractQueryName(P.pagedCommunityTags)]
+}
+
+export const getMetadata = (dashboard: TParseDashboard): Metadata => {
+  const {
+    seoEnable,
+    ogTitle,
+    ogSiteName,
+    ogUrl,
+    ogDescription,
+    ogImage,
+    // twitter
+    twCard,
+    twSite,
+    twTitle,
+    twDescription,
+    twImage,
+  } = dashboard
+
+  return {
+    title: ogTitle,
+    description: ogDescription,
+    robots: seoEnable ? undefined : 'noindex',
+    openGraph: {
+      title: ogTitle,
+      description: ogDescription,
+      siteName: ogSiteName,
+      url: ogUrl,
+      type: 'website',
+      images: ogImage ? [ogImage] : [],
+    },
+    twitter: {
+      card: (twCard as any) || 'summary',
+      site: twSite,
+      title: twTitle || ogTitle,
+      description: twDescription || ogDescription,
+      images: twImage ? [twImage] : ogImage ? [ogImage] : [],
+    },
+  }
 }

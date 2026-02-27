@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
 import GlobalProvider from '~/providers/Global'
@@ -5,12 +6,19 @@ import GraphQLProvider from '~/providers/GraphQL'
 import { getCommunityInfo, getLocaleData } from '~/providers/ssr'
 import MainProvider from '~/stores/provider'
 import { isDsbDemoMode } from '~/utils/dsb-demo'
+import { getMetadata } from '~/utils/ssr'
 import Client from './Client'
 
 const parseLocale = (lang?: string | string[]) => {
   const langValue = Array.isArray(lang) ? lang[0] : lang
 
   return langValue === LOCALE.ZH ? LOCALE.ZH : LOCALE.EN
+}
+
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const params$ = await params
+  const { dashboard } = await getCommunityInfo(params$.community)
+  return getMetadata(dashboard)
 }
 
 export default async ({ children, params, searchParams }) => {
