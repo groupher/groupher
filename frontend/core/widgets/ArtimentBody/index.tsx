@@ -2,7 +2,7 @@
 /*
  * ArtimentBody
  */
-import { type FC, useRef, useState, useEffect } from 'react'
+import { type FC, useState } from 'react'
 
 import type { TDocument } from '~/spec'
 
@@ -26,29 +26,13 @@ const ArtimentBody: FC<TProps> = ({
 }) => {
   const s = useSalon()
 
-  const bodyRef = useRef(null)
-  const [fold, setFold] = useState(false)
-  const [needFold, setNeedFold] = useState(false)
-  const [lineClamp, setLineClamp] = useState(initLineClamp)
-
-  useEffect(() => {
-    if (bodyRef) {
-      const { scrollHeight, clientHeight } = bodyRef.current
-      // 确保只有超过两行才是折叠的情况
-      if (scrollHeight - clientHeight > 22) {
-        setNeedFold(true)
-        setFold(true)
-      } else {
-        setNeedFold(false)
-        setFold(false)
-      }
-    }
-  }, [bodyRef])
+  const [fold, setFold] = useState(true)
+  const needFold = document.bodyHtml.length > 220
+  const lineClamp = fold ? initLineClamp : 0
 
   return (
     <div className={s.wrapper}>
       <div
-        ref={bodyRef}
         className={cn(
           s.body,
           `line-clamp-[${lineClamp}]`,
@@ -68,11 +52,9 @@ const ArtimentBody: FC<TProps> = ({
           fold={fold}
           mode={mode}
           onFold={() => {
-            setLineClamp(initLineClamp)
             setFold(true)
           }}
           onExpand={() => {
-            setLineClamp(0)
             setFold(false)
           }}
         />

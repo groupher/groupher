@@ -1,15 +1,8 @@
-import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 const Portal = ({ children }) => {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    return () => setMounted(false)
-  }, [])
-
-  return mounted ? createPortal(children, document.body) : null
+  if (typeof window === 'undefined') return null
+  return createPortal(children, document.body)
 }
 
 export default Portal

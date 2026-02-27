@@ -46,7 +46,7 @@ export default function Posts() {
   useMount(loadPosts)
 
   const data = (pagedPosts.entries ?? []) as TArticle[]
-  const { metaRef, selectColumn, selectedCount, clear } = useMultiSelection()
+  const { meta, selectColumn, selectedCount, clear } = useMultiSelection()
 
   const columns = useMemo<ColumnDef<TArticle, any>[]>(() => {
     return [
@@ -119,7 +119,7 @@ export default function Posts() {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowId: (row, index) => getArticleRowId(row, index),
-    meta: metaRef,
+    meta,
   })
 
   const sticky = useStickyColumns(table, { showSelectColumn })

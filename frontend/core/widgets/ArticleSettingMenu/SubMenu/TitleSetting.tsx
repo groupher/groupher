@@ -1,4 +1,4 @@
-import { type FC, useState, useEffect } from 'react'
+import { type FC, useState } from 'react'
 import { useMutation } from 'urql'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
@@ -23,10 +23,6 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
   const [title, setTitle] = useState(article.title)
   const { touched, setTouched, resetTouched } = useTouched()
   const [result, updatePost] = useMutation(S.updatePost)
-
-  useEffect(() => {
-    setTitle(article.title)
-  }, [])
 
   const handleUpdate = () => {
     const params = { id: article.id, title }

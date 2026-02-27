@@ -23,44 +23,48 @@ export default () => {
           </div>
         </div>
 
-        <div className={s.markDot} onClick={() => setStep(STEP.S)}>
+        <button type='button' className={s.markDot} onClick={() => setStep(STEP.S)}>
           <div className={s.markInner} />
-        </div>
-        <div className={s.markDot} onClick={() => setStep(STEP.X)}>
+        </button>
+        <button type='button' className={s.markDot} onClick={() => setStep(STEP.X)}>
           <div className={s.markInner} />
-        </div>
-        <div className={s.markDot} onClick={() => setStep(STEP.M)}>
+        </button>
+        <button type='button' className={s.markDot} onClick={() => setStep(STEP.M)}>
           <div className={s.markInner} />
-        </div>
-        <div className={s.markDot} onClick={() => setStep(STEP.L)}>
+        </button>
+        <button type='button' className={s.markDot} onClick={() => setStep(STEP.L)}>
           <div className={s.markInner} />
-        </div>
+        </button>
       </div>
       <div className={s.footer}>
-        <div
+        <button
+          type='button'
           className={cn(s.noteBtn, '-ml-5', step === STEP.S && s.noteBtnActive)}
           onClick={() => setStep(STEP.S)}
         >
           独立开发者
-        </div>
-        <div
+        </button>
+        <button
+          type='button'
           className={cn(s.noteBtn, '-ml-4', step === STEP.X && s.noteBtnActive)}
           onClick={() => setStep(STEP.X)}
         >
           2-20
-        </div>
-        <div
+        </button>
+        <button
+          type='button'
           className={cn(s.noteBtn, '-ml-1', step === STEP.M && s.noteBtnActive)}
           onClick={() => setStep(STEP.M)}
         >
           20-100
-        </div>
-        <div
+        </button>
+        <button
+          type='button'
           className={cn(s.noteBtn, '-ml-1 mr-0.5', step === STEP.L && s.noteBtnActive)}
           onClick={() => setStep(STEP.L)}
         >
           100+
-        </div>
+        </button>
       </div>
     </div>
   )

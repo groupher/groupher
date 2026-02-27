@@ -48,7 +48,7 @@ export default function Changelogs() {
   useMount(loadChangelogs)
 
   const data = (pagedChangelogs.entries ?? []) as TArticle[] // 这里沿用 TArticle；若 changelog 有独立类型，请替换
-  const { metaRef, selectColumn, selectedCount, clear } = useMultiSelection()
+  const { meta, selectColumn, selectedCount, clear } = useMultiSelection()
 
   const columns = useMemo<ColumnDef<TArticle, any>[]>(() => {
     return [
@@ -128,7 +128,7 @@ export default function Changelogs() {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowId: (row, index) => getArticleRowId(row, index),
-    meta: metaRef,
+    meta,
   })
 
   const sticky = useStickyColumns(table, { showSelectColumn })

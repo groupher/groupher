@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from 'react'
+import type { FC } from 'react'
 
 import type { TChangeMode, TLinkItem } from '~/spec'
 
@@ -53,25 +53,12 @@ const LinkEditor: FC<TProps> = ({
     moveLink,
   } = useFooter()
 
-  const [snapshot, setSnapshot] = useState<TLinkItem | null>(null)
   const editing = linkItem.group === editingLink?.group && linkItem.index === editingLink?.index
-
-  useEffect(() => {
-    return () => {
-      setSnapshot(null)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!snapshot && editing && editingLink) {
-      setSnapshot(editingLink)
-    }
-  }, [editing, snapshot, editingLink])
 
   const isTouched =
     editing &&
-    snapshot &&
-    (snapshot?.title !== editingLink?.title || snapshot?.link !== editingLink?.link)
+    editingLink !== null &&
+    (linkItem.title !== editingLink.title || linkItem.link !== editingLink.link)
 
   return (
     <div className={cn(s.wrapper, editing && 'w-11/12')}>

@@ -21,7 +21,7 @@ export default function TimeAgo({ datetime, tickInterval = 60_000 }: TProps) {
     return () => clearInterval(id)
   }, [tickInterval])
 
-  const now = tick === 0 ? nowFromStore : Date.now()
+  const now = nowFromStore + tick * tickInterval
   const text = fmtRelativeTime(datetime, now, locale)
 
   return <time dateTime={datetime instanceof Date ? datetime.toISOString() : datetime}>{text}</time>

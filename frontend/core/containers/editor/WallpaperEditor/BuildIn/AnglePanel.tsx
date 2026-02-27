@@ -16,7 +16,8 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <div
+      <button
+        type='button'
         className={cn(s.point, s.top, direction === TOP && s.pointActive)}
         onClick={() => changeDirection(TOP)}
       >
@@ -24,8 +25,9 @@ export default () => {
           className={cn(s.arrowIcon, direction === TOP && s.arrowActive)}
           style={{ transform: 'rotate(-90deg)' }}
         />
-      </div>
-      <div
+      </button>
+      <button
+        type='button'
         className={cn(s.point, s.sidePoint, s.topLeft, direction === TOP_LEFT && s.pointActive)}
         onClick={() => changeDirection(TOP_LEFT)}
       >
@@ -33,8 +35,9 @@ export default () => {
           className={cn(s.arrowIcon, direction === TOP_LEFT && s.arrowActive)}
           style={{ transform: 'rotate(-135deg)' }}
         />
-      </div>
-      <div
+      </button>
+      <button
+        type='button'
         className={cn(s.point, s.sidePoint, s.topRight, direction === TOP_RIGHT && s.pointActive)}
         onClick={() => changeDirection(TOP_RIGHT)}
       >
@@ -42,8 +45,9 @@ export default () => {
           className={cn(s.arrowIcon, direction === TOP_RIGHT && s.arrowActive)}
           style={{ transform: 'rotate(-45deg)' }}
         />
-      </div>
-      <div
+      </button>
+      <button
+        type='button'
         className={cn(s.point, s.bottom, direction === BOTTOM && s.pointActive)}
         onClick={() => changeDirection(BOTTOM)}
       >
@@ -51,9 +55,10 @@ export default () => {
           className={cn(s.arrowIcon, direction === BOTTOM && s.arrowActive)}
           style={{ transform: 'rotate(90deg)' }}
         />
-      </div>
+      </button>
 
-      <div
+      <button
+        type='button'
         className={cn(
           s.point,
           s.sidePoint,
@@ -66,9 +71,10 @@ export default () => {
           className={cn(s.arrowIcon, direction === BOTTOM_LEFT && s.arrowActive)}
           style={{ transform: 'rotate(135deg)' }}
         />
-      </div>
+      </button>
 
-      <div
+      <button
+        type='button'
         className={cn(
           s.point,
           s.sidePoint,
@@ -81,9 +87,10 @@ export default () => {
           className={cn(s.arrowIcon, direction === BOTTOM_RIGHT && s.arrowActive)}
           style={{ transform: 'rotate(42deg)' }}
         />
-      </div>
+      </button>
 
-      <div
+      <button
+        type='button'
         className={cn(s.point, s.left, direction === LEFT && s.pointActive)}
         onClick={() => changeDirection(LEFT)}
       >
@@ -91,13 +98,14 @@ export default () => {
           className={cn(s.arrowIcon, direction === LEFT && s.arrowActive)}
           style={{ transform: 'rotate(-180deg)' }}
         />
-      </div>
-      <div
+      </button>
+      <button
+        type='button'
         className={cn(s.point, s.right, direction === RIGHT && s.pointActive)}
         onClick={() => changeDirection(RIGHT)}
       >
         <ArrowSVG className={cn(s.arrowIcon, direction === RIGHT && s.arrowActive)} />
-      </div>
+      </button>
       <div className={s.needleDot} />
       <div className={s.needle} style={s.needleStyle} />
     </div>

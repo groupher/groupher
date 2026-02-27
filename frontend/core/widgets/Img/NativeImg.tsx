@@ -1,4 +1,4 @@
-import { type FC, type ReactNode, useEffect, useRef, useState } from 'react'
+import { type FC, type ReactNode, useState } from 'react'
 import useSalon, { cnMerge } from './salon'
 
 type TProps = {
@@ -9,8 +9,6 @@ type TProps = {
   onClick: () => void
   clickable: boolean
 }
-
-type Status = 'checking' | 'loaded' | 'error'
 
 /**
  * normal image like .jpg .jpeg .png etc
@@ -25,54 +23,13 @@ const NativeImg: FC<TProps> = ({
   onClick,
 }) => {
   const s = useSalon()
-
-  const [status, setStatus] = useState<Status>('checking')
-  const [resolvedSrc, setResolvedSrc] = useState<string | null>(null)
-  const reqIdRef = useRef(0)
-
-  useEffect(() => {
-    if (!src) {
-      setStatus('error')
-      setResolvedSrc(null)
-      return
-    }
-
-    setStatus('checking')
-    setResolvedSrc(null)
-
-    reqIdRef.current += 1
-    const reqId = reqIdRef.current
-
-    let alive = true
-    const probe = new Image()
-    probe.decoding = 'async'
-
-    probe.onload = () => {
-      if (!alive) return
-      if (reqIdRef.current !== reqId) return
-      setResolvedSrc(src) // ✅ 只有成功才把 src 放进 DOM <img>
-      setStatus('loaded')
-    }
-
-    probe.onerror = () => {
-      if (!alive) return
-      if (reqIdRef.current !== reqId) return
-      setResolvedSrc(null)
-      setStatus('error')
-    }
-
-    probe.src = src
-
-    return () => {
-      alive = false
-      probe.src = ''
-    }
-  }, [src])
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null)
+  const [erroredSrc, setErroredSrc] = useState<string | null>(null)
 
   if (!src) return null
 
-  const showFallback = !!fallback && status !== 'loaded'
-  const showImg = status === 'loaded' && !!resolvedSrc
+  const showImg = loadedSrc === src
+  const showFallback = !!fallback && !showImg
 
   return (
     <button
@@ -84,9 +41,23 @@ const NativeImg: FC<TProps> = ({
     >
       {showFallback && <span className={s.fallbackOverlay}>{fallback}</span>}
 
-      {showImg && (
-        <img className={s.img} src={resolvedSrc} alt={alt} draggable={false} decoding='async' />
-      )}
+      <img
+        key={src}
+        className={s.img}
+        src={src}
+        alt={alt}
+        draggable={false}
+        decoding='async'
+        onLoad={() => {
+          setLoadedSrc(src)
+          setErroredSrc(null)
+        }}
+        onError={() => {
+          setErroredSrc(src)
+          setLoadedSrc(null)
+        }}
+        style={{ display: showImg && erroredSrc !== src ? undefined : 'none' }}
+      />
     </button>
   )
 }

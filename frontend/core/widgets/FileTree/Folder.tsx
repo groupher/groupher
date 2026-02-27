@@ -1,5 +1,5 @@
 import { findIndex, reverse } from 'ramda'
-import { type FC, useEffect, useRef, useState } from 'react'
+import { type FC, useState } from 'react'
 import { sortByColor } from '~/helper'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TTag } from '~/spec'
@@ -41,13 +41,7 @@ const Folder: FC<TProps> = ({
 
   const isActiveTagInFolder = findIndex((item) => item.id === activeTag.id, groupTags) >= 0
 
-  const subToggleRef = useRef(null)
-  // 当选中的 Tag 被折叠在展示更多里面时，将其展开
-  useEffect(() => {
-    if (subToggleRef && isActiveTagInFolder) {
-      setCurDisplayCount(groupTags.length)
-    }
-  }, [isActiveTagInFolder, groupTags])
+  const effectiveDisplayCount = isActiveTagInFolder ? groupTags.length : curDisplayCount
 
   return (
     <div className={s.wrapper}>
@@ -71,7 +65,7 @@ const Folder: FC<TProps> = ({
       </button>
 
       <div className={s.content}>
-        {sortedTags.slice(0, curDisplayCount).map((tag) => (
+        {sortedTags.slice(0, effectiveDisplayCount).map((tag) => (
           <FileItem
             key={tag.slug}
             tag={tag}
@@ -82,14 +76,13 @@ const Folder: FC<TProps> = ({
         {needSubToggle && (
           <button
             className={s.subToggle}
-            ref={subToggleRef}
             onClick={() => {
               setCurDisplayCount(
                 curDisplayCount === maxDisplayCount ? groupTags.length : maxDisplayCount,
               )
             }}
           >
-            {curDisplayCount === maxDisplayCount ? '展开...' : '收起'}
+            {effectiveDisplayCount === maxDisplayCount ? '展开...' : '收起'}
           </button>
         )}
       </div>

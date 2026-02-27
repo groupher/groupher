@@ -19,8 +19,11 @@ const LazyLoad: FC<TProps> = ({
   threshold = 200,
   onVisible,
 }) => {
+  const hasIntersectionObserver =
+    typeof window !== 'undefined' && 'IntersectionObserver' in window
+
   const ref = useRef<HTMLDivElement | null>(null)
-  const [visible, setVisible] = useState(visibleByDefault)
+  const [visible, setVisible] = useState(visibleByDefault || !hasIntersectionObserver)
   const didNotify = useRef(false)
 
   useEffect(() => {
@@ -33,12 +36,7 @@ const LazyLoad: FC<TProps> = ({
   useEffect(() => {
     if (visibleByDefault) return
     if (!ref.current) return
-    if (!('IntersectionObserver' in window)) {
-      setVisible(true)
-      if (!didNotify.current) {
-        didNotify.current = true
-        onVisible?.()
-      }
+    if (!hasIntersectionObserver) {
       return
     }
 
@@ -63,7 +61,7 @@ const LazyLoad: FC<TProps> = ({
     return () => {
       observer.disconnect()
     }
-  }, [onVisible, threshold, visibleByDefault])
+  }, [onVisible, threshold, visibleByDefault, hasIntersectionObserver])
 
   return (
     <div ref={ref} className={className}>

@@ -25,7 +25,6 @@ const Main: FC<TProps> = ({ children }) => {
   const [fromWidth, setFromWidth] = useState(DEFAULT_CONTAINER_WIDTH)
   const [toWidth, setToWidth] = useState(DEFAULT_CONTAINER_WIDTH)
   const [scrollRange, setScrollRange] = useState(0)
-  const [_enabled, setEnabled] = useState(false)
 
   useEffect(() => {
     const getConfiguredContainerWidth = (): number => {
@@ -59,8 +58,6 @@ const Main: FC<TProps> = ({ children }) => {
     }
 
     updateVars()
-    setEnabled(true)
-
     let raf: number | null = null
     const onResize = () => {
       if (raf !== null) cancelAnimationFrame(raf)

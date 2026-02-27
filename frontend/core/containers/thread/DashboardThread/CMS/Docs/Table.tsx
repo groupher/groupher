@@ -49,7 +49,7 @@ export default function DocsTables({ pagedDocs, loading }: TProps) {
   // useMount(...) 这里故意不调用
 
   const data = (pagedDocs.entries ?? []) as any[]
-  const { metaRef, selectColumn, selectedCount, clear } = useMultiSelection()
+  const { meta, selectColumn, selectedCount, clear } = useMultiSelection()
 
   const columns = useMemo<ColumnDef<any, any>[]>(() => {
     return [
@@ -130,7 +130,7 @@ export default function DocsTables({ pagedDocs, loading }: TProps) {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowId: (row, index) => getArticleRowId(row, index),
-    meta: metaRef,
+    meta,
   })
 
   const sticky = useStickyColumns(table, { showSelectColumn })

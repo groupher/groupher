@@ -6,7 +6,7 @@
 
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { findIndex, includes, keys, reject, update } from 'ramda'
-import { type FC, Fragment, memo, useCallback, useEffect, useState } from 'react'
+import { type FC, Fragment, memo, useCallback, useState } from 'react'
 import { SOCIAL_LIST } from '~/const/social'
 import type { TSocialItem, TSocialType, TSpace } from '~/spec'
 
@@ -34,10 +34,6 @@ const SocialEditor: FC<TProps> = ({
   const [parent] = useAutoAnimate()
 
   const [selected, setSelected] = useState<TSocialItem[]>([{ type: SOCIAL_LIST.EMAIL, link: '' }])
-
-  useEffect(() => {
-    setSelected([...value])
-  }, [value])
 
   const removeSocial = useCallback(
     (social: TSocialItem) => {

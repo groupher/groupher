@@ -1,5 +1,5 @@
 import { findIndex, reverse } from 'ramda'
-import { type FC, useEffect, useRef, useState } from 'react'
+import { type FC, useState } from 'react'
 import { sortByColor } from '~/helper'
 import ArrowSVG from '~/icons/ArrowSimple'
 import MoreSVG from '~/icons/menu/MoreL'
@@ -40,16 +40,8 @@ const Folder: FC<TProps> = ({
   const sortedTags = reverse(sortByColor([...groupTags]))
   const isActiveTagInFolder = findIndex((item: TTag) => item.id === activeTag?.id, groupTags) >= 0
 
-  const subToggleRef = useRef(null)
-
   const s = useSalon({ isFolderOpen })
-
-  // 当选中的 Tag 被折叠在展示更多里面时，将其展开
-  useEffect(() => {
-    if (subToggleRef && isActiveTagInFolder) {
-      setCurDisplayCount(groupTags.length)
-    }
-  }, [isActiveTagInFolder, groupTags])
+  const effectiveDisplayCount = isActiveTagInFolder ? groupTags.length : curDisplayCount
 
   return (
     <>
@@ -77,7 +69,7 @@ const Folder: FC<TProps> = ({
       </button>
 
       <div className={s.content}>
-        {sortedTags.slice(0, curDisplayCount).map((tag) => (
+        {sortedTags.slice(0, effectiveDisplayCount).map((tag) => (
           <TagItem
             key={tag.slug}
             tag={tag}
@@ -88,7 +80,6 @@ const Folder: FC<TProps> = ({
         {needSubToggle && (
           <button
             className={s.subToggle}
-            ref={subToggleRef}
             onClick={() => {
               setCurDisplayCount(
                 curDisplayCount === maxDisplayCount ? groupTags.length : maxDisplayCount,
@@ -97,7 +88,9 @@ const Folder: FC<TProps> = ({
           >
             <MoreSVG className={s.toggleIcon} />
             <div className={s.subToggleTitle}>
-              {curDisplayCount === maxDisplayCount ? t('tags.fold.expand') : t('tags.fold.collapse')}
+              {effectiveDisplayCount === maxDisplayCount
+                ? t('tags.fold.expand')
+                : t('tags.fold.collapse')}
             </div>
           </button>
         )}

@@ -15,10 +15,26 @@ type TProps = {
   current: TCommunityType
 }
 
+type TAvatarProps = {
+  index: number
+  className: string
+  highlight?: boolean
+}
+
 export default ({ type, current }: TProps) => {
   const s = useSalon()
 
   const users = mockUsers(6)
+  const Avatar = ({ index, className, highlight = false }: TAvatarProps) => (
+    <Image
+      src={users[index].avatar}
+      width={40}
+      height={40}
+      className={cn(s.avatar, highlight && s.avatarHighlight, className)}
+      alt='avatar'
+      unoptimized
+    />
+  )
 
   if (type === COMMUNITY_TYPE.PRODUCT) {
     return (
@@ -120,70 +136,46 @@ export default ({ type, current }: TProps) => {
         <div className={cn(s.pill, s.pillNormal)}>
           {current === type && <div className={s.pillGadient3} />}
 
-          <img src={users[0].avatar} className={cn(s.avatar, 'top-2 left-0')} alt='avatar' />
-          <img src={users[1].avatar} className={cn(s.avatar, 'top-4 -right-2')} alt='avatar' />
-          <img src={users[2].avatar} className={cn(s.avatar, 'top-9 left-2')} alt='avatar' />
-          <img src={users[3].avatar} className={cn(s.avatar, 'top-12 -left-3')} alt='avatar' />
-          <img src={users[3].avatar} className={cn(s.avatar, 'top-14 -right-3')} alt='avatar' />
-          <img src={users[4].avatar} className={cn(s.avatar, '-top-3 -right-2')} alt='avatar' />
+          <Avatar index={0} className='top-2 left-0' />
+          <Avatar index={1} className='top-4 -right-2' />
+          <Avatar index={2} className='top-9 left-2' />
+          <Avatar index={3} className='top-12 -left-3' />
+          <Avatar index={3} className='top-14 -right-3' />
+          <Avatar index={4} className='-top-3 -right-2' />
 
           <ArtSVG className={s.pillIcon} />
         </div>
         <div className={cn(s.pill, s.pillNormal)}>
           {current === type && <div className={s.pillGadient2} />}
 
-          <img src={users[0].avatar} className={cn(s.avatar, 'top-2 left-0')} alt='avatar' />
-          <img src={users[1].avatar} className={cn(s.avatar, 'top-4 -right-2')} alt='avatar' />
-          <img src={users[2].avatar} className={cn(s.avatar, 'top-9 left-2')} alt='avatar' />
-          <img src={users[3].avatar} className={cn(s.avatar, 'top-12 -left-3')} alt='avatar' />
-          <img src={users[3].avatar} className={cn(s.avatar, 'top-14 -right-3')} alt='avatar' />
-          <img src={users[4].avatar} className={cn(s.avatar, '-top-3 -right-2')} alt='avatar' />
+          <Avatar index={0} className='top-2 left-0' />
+          <Avatar index={1} className='top-4 -right-2' />
+          <Avatar index={2} className='top-9 left-2' />
+          <Avatar index={3} className='top-12 -left-3' />
+          <Avatar index={3} className='top-14 -right-3' />
+          <Avatar index={4} className='-top-3 -right-2' />
 
           <RocketSVG className={s.pillIcon} />
         </div>
         <div className={cn(s.pill, s.pillHighlight)}>
           <div className={s.pillGadient} />
-          <img
-            src={users[0].avatar}
-            className={cn(s.avatar, s.avatarHighlight, 'top-2 left-0')}
-            alt='avatar'
-          />
-          <img
-            src={users[1].avatar}
-            className={cn(s.avatar, s.avatarHighlight, 'top-4 -right-2')}
-            alt='avatar'
-          />
-          <img
-            src={users[2].avatar}
-            className={cn(s.avatar, s.avatarHighlight, 'top-9 left-2')}
-            alt='avatar'
-          />
-          <img
-            src={users[3].avatar}
-            className={cn(s.avatar, s.avatarHighlight, 'top-12 -left-3')}
-            alt='avatar'
-          />
-          <img
-            src={users[3].avatar}
-            className={cn(s.avatar, s.avatarHighlight, 'top-14 -right-3')}
-            alt='avatar'
-          />
-          <img
-            src={users[4].avatar}
-            className={cn(s.avatar, s.avatarHighlight, '-top-3 -right-2')}
-            alt='avatar'
-          />
+          <Avatar index={0} className='top-2 left-0' highlight />
+          <Avatar index={1} className='top-4 -right-2' highlight />
+          <Avatar index={2} className='top-9 left-2' highlight />
+          <Avatar index={3} className='top-12 -left-3' highlight />
+          <Avatar index={3} className='top-14 -right-3' highlight />
+          <Avatar index={4} className='-top-3 -right-2' highlight />
 
           <UniverseSVG className={cn(s.pillIcon, s.pillHighlighIcon)} />
         </div>
         <div className={cn(s.pill, s.pillNormal)}>
           {current === type && <div className={s.pillGadient4} />}
-          <img src={users[0].avatar} className={cn(s.avatar, 'top-2 left-0')} alt='avatar' />
-          <img src={users[1].avatar} className={cn(s.avatar, 'top-4 -right-2')} alt='avatar' />
-          <img src={users[2].avatar} className={cn(s.avatar, 'top-9 left-2')} alt='avatar' />
-          <img src={users[3].avatar} className={cn(s.avatar, 'top-12 -left-3')} alt='avatar' />
-          <img src={users[3].avatar} className={cn(s.avatar, 'top-14 -right-3')} alt='avatar' />
-          <img src={users[4].avatar} className={cn(s.avatar, '-top-3 -right-2')} alt='avatar' />
+          <Avatar index={0} className='top-2 left-0' />
+          <Avatar index={1} className='top-4 -right-2' />
+          <Avatar index={2} className='top-9 left-2' />
+          <Avatar index={3} className='top-12 -left-3' />
+          <Avatar index={3} className='top-14 -right-3' />
+          <Avatar index={4} className='-top-3 -right-2' />
 
           <MusicSVG className={s.pillIcon} />
         </div>

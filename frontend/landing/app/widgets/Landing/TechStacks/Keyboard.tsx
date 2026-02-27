@@ -1,5 +1,5 @@
 import { motion, useInView } from 'motion/react'
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import { COLOR } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import ArrowLinker from '~/widgets/ArrowLinker'
@@ -7,44 +7,15 @@ import useSalon from '../salon/tech_stacks/keyboard'
 import HolderKey from './HolderKey'
 import TechKey from './TechKey'
 
-const STAGING_TIME = 200
 const TECH_TOTAL = 10
 
 export default function Keyboard() {
   const s = useSalon()
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: false, margin: '-20% 0px' })
-  const [activeCount, setActiveCount] = useState(0)
   const { isDarkTheme } = useTheme()
-
-  const [lightOn, setLightOn] = useState(false)
-
-  useEffect(() => {
-    if (!(isDarkTheme && inView)) {
-      setLightOn(false)
-      return
-    }
-
-    const timer = setTimeout(() => {
-      setLightOn(true)
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [inView, isDarkTheme])
-
-  useEffect(() => {
-    if (!inView) return
-    const timers: NodeJS.Timeout[] = []
-
-    for (let i = 0; i < TECH_TOTAL; i++) {
-      timers.push(setTimeout(() => setActiveCount(i + 1), i * STAGING_TIME))
-    }
-    return () => {
-      for (const timer of timers) {
-        clearTimeout(timer)
-      }
-    }
-  }, [inView])
+  const lightOn = isDarkTheme && inView
+  const activeCount = inView ? TECH_TOTAL : 0
 
   return (
     <div ref={ref} className={s.wrapper}>

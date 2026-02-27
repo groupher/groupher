@@ -4,7 +4,7 @@
  *
  */
 
-import { type FC, memo, useState, useEffect } from 'react'
+import { type FC, memo, useState } from 'react'
 
 import type { TArticle } from '~/spec'
 
@@ -29,11 +29,7 @@ type TProps = {
 const KanbanItem: FC<TProps> = ({ article }) => {
   const s = useSalon()
 
-  const [titleIdx, setTitleIdx] = useState(0)
-
-  useEffect(() => {
-    setTitleIdx(getRandomInt(0, 7))
-  }, [])
+  const [titleIdx] = useState(() => getRandomInt(0, 7))
 
   const tags = mockTags(8)
 

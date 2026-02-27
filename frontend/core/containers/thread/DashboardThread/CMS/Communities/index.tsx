@@ -45,7 +45,7 @@ export default function Communities() {
   // useMount(loadCommunities)
 
   const data = (pagedCommunities.entries ?? []) as any[]
-  const { metaRef, selectColumn, selectedCount, clear } = useMultiSelection()
+  const { meta, selectColumn, selectedCount, clear } = useMultiSelection()
 
   const columns = useMemo<ColumnDef<any, any>[]>(() => {
     return [
@@ -136,7 +136,7 @@ export default function Communities() {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowId: (row, index) => getArticleRowId(row, index),
-    meta: metaRef,
+    meta,
   })
 
   const sticky = useStickyColumns(table, { showSelectColumn })
