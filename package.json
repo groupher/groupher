@@ -65,7 +65,8 @@
     "doctor:dashboard": "react-doctor frontend/dashboard",
     "doctor:landing": "react-doctor frontend/landing",
     "doctor:gateway": "react-doctor frontend/gateway",
-    "doctor:core": "react-doctor frontend/core"
+    "doctor:core": "react-doctor frontend/core",
+    "doctor:all": "run-s doctor:core doctor:main doctor:dashboard doctor:landing doctor:gateway"
   },
   "engines": {
     "node": "24.x"
