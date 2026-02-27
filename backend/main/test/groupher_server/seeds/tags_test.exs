@@ -1,43 +1,33 @@
 defmodule GroupherServer.Test.Seeds.TagsTest do
   @moduledoc false
   use GroupherServer.TestTools
+  @moduletag timeout: 300_000
 
-  # alias GroupherServer.CMS.Seeds.Tags
-  # alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.CMS.Seeds.{Communities, Tags}
 
   describe "[tags seeds]" do
-    test "get returns tags for home post thread" do
-      # Test getting tags for home community
-      # tags = Tags.get(nil, :post, :home)
-      # assert length(tags) > 0
-    end
+    test "mock seeds tags for article threads" do
+      slug = "seed-tags-#{System.unique_integer([:positive, :monotonic])}"
+      {:ok, community} = Communities.mock(slug)
 
-    test "get returns tags for home blog thread" do
-      # tags = Tags.get(nil, :blog, :home)
-      # assert length(tags) > 0
-    end
+      {:ok, tag_ids} = Tags.mock(community, :post, count: 4)
 
-    test "get returns tags for framework communities" do
-      # Test getting tags for framework type
-      # tags = Tags.get(nil, :post, :framework)
-      # assert length(tags) > 0
-    end
+      assert length(tag_ids) >= 4
 
-    test "get returns tags for city communities" do
-      # tags = Tags.get(nil, :post, :city)
-      # assert length(tags) > 0
-    end
+      {:ok, paged_tags} =
+        CMS.Communities.paged_tags(%{
+          page: 1,
+          size: 100,
+          community_id: community.id,
+          thread: "POST"
+        })
 
-    test "get returns tags for specific community" do
-      # Test getting tags for a specific community
-      # community = %Community{slug: "blackhole"}
-      # tags = Tags.get(community, :post)
-      # assert length(tags) > 0
+      assert paged_tags.total_count >= 4
     end
 
     test "random_color returns valid color atom" do
-      # color = Tags.random_color()
-      # assert color in [:red, :orange, :yellow, :green, :cyan, :blue, :purple, :pink, :grey]
+      color = Tags.random_color()
+      assert color in [:red, :orange, :yellow, :green, :cyan, :blue, :purple, :pink, :grey]
     end
   end
 end

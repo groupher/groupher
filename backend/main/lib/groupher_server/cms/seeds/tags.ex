@@ -3,11 +3,61 @@ defmodule GroupherServer.CMS.Seeds.Tags do
   tags seeds
   """
 
+  alias GroupherServer.CMS
+  alias GroupherServer.CMS.Seeds.Config
   alias GroupherServer.CMS.Model.Community
+  alias Helper.T
 
   @tag_colors ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink", "grey"]
+  @seed_groups ["General", "Engineering", "Resources", "Ecosystem"]
+  @tag_count_range Config.tag_count_range()
+  @group_count_range Config.group_count_range()
 
   def random_color, do: @tag_colors |> Enum.random() |> String.to_atom()
+
+  @spec mock(Community.t(), atom(), keyword()) :: T.domain_res([integer()])
+  def mock(%Community{} = community, thread, opts \\ [])
+      when thread in [:post, :changelog, :doc, :kanban, :about] do
+    count = Keyword.get(opts, :count, random_range(@tag_count_range))
+    group_count = Keyword.get(opts, :group_count, random_range(@group_count_range))
+    groups = @seed_groups |> Enum.take(group_count)
+
+    with {:ok, bot} <- GroupherServer.CMS.Seeds.Helper.seed_bot(),
+         {:ok, existing} <- CMS.Communities.paged_tags(tag_filter(community.id, thread)) do
+      needed = max(count - length(existing.entries), 0)
+
+      Enum.each(1..needed, fn index ->
+        group = Enum.at(groups, rem(index - 1, length(groups)))
+
+        attrs = %{
+          title: "#{thread} tag #{index}",
+          slug: "#{thread}-#{index}-#{System.unique_integer([:positive, :monotonic])}",
+          group: group,
+          color: random_color()
+        }
+
+        CMS.Communities.create_tag(community, thread, attrs, bot)
+      end)
+
+      with {:ok, tags} <- CMS.Communities.paged_tags(tag_filter(community.id, thread)) do
+        {:ok, Enum.map(tags.entries, & &1.id)}
+      end
+    end
+  end
+
+  defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max,
+    do: Enum.random(min..max)
+
+  defp random_range(_), do: 10
+
+  defp tag_filter(community_id, thread) do
+    %{
+      community_id: community_id,
+      thread: thread |> to_string() |> String.upcase(),
+      page: 1,
+      size: 100
+    }
+  end
 
   def get(_, :map, _), do: []
   def get(_, :cper, _), do: []

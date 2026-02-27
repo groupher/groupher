@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Seeds.Domain do
   seeds data for init, should be called ONLY in new database, like migration
   """
 
-  import Ecto.Query, warn: false
+  import Helper.Utils, only: [done: 1]
 
   import GroupherServer.CMS.Seeds.Helper,
     only: [
@@ -12,15 +12,57 @@ defmodule GroupherServer.CMS.Seeds.Domain do
       categorify_communities: 3,
       seed_bot: 0,
       seed_threads: 1,
-      seed_categories_ifneed: 1
+      seed_categories_ifneed: 1,
+      insert_community: 3
     ]
 
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Seeds.Communities, as: CommunitySeeds
 
-  alias CMS.Model.Community
-  alias Helper.ORM
+  alias CMS.Model.{Category, Community}
+  alias Helper.{ORM, T}
 
   @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"
+  @community_types [:pl, :framework]
+
+  @spec communities(atom()) :: T.domain_res(:ok)
+  def communities(type) when type in @community_types do
+    CommunitySeeds.get(type) |> Enum.each(&community(&1, type)) |> done
+  end
+
+  @spec community(atom()) :: T.domain_res(Community.t())
+  def community(:home), do: seed_community(:home)
+  def community(:feedback), do: seed_community(:feedback)
+
+  @spec community(atom(), atom()) :: T.domain_res(Community.t())
+  def community(slug, type) when type in @community_types do
+    with {:ok, threads} <- seed_threads(type),
+         {:ok, bot} <- seed_bot(),
+         {:ok, categories} <- seed_categories_ifneed(bot),
+         {:ok, community} <- insert_community(bot, slug, type) do
+      threadify_communities([community], threads.entries)
+      tagfy_threads([community], threads.entries, bot, type)
+      categorify_communities([community], categories, type)
+
+      {:ok, community}
+    end
+  end
+
+  def community(_slug, _type), do: {:error, {:custom, "unknown community type"}}
+
+  @spec set_category([atom() | String.t()], atom() | String.t()) :: T.domain_res(:ok)
+  def set_category(communities_names, cat_name) when is_list(communities_names) do
+    {:ok, category} = ORM.find_by(Category, %{slug: cat_name})
+
+    Enum.each(communities_names, fn name ->
+      {:ok, community} = ORM.find_by(Community, %{slug: name})
+
+      {:ok, _} =
+        CMS.Communities.set_category(%Community{id: community.id}, %Category{id: category.id})
+    end)
+
+    {:ok, :ok}
+  end
 
   # seed community
   @spec seed_community(:blackhole | :feedback | :home) :: any
