@@ -1,7 +1,5 @@
 // a.k.a for HOME COMMUNITY NAME
 
-export { default as ACTION } from './action'
-export { COMMUNITY_MAP_ALIAS } from './alias'
 export { default as C11N } from './c11n'
 export { default as EMOTION } from './emotion'
 export { default as ERR } from './err'
@@ -31,7 +29,7 @@ export { REPORT, REPORT_TYPE } from './report'
 export { DSB_ROUTE, NON_COMMUNITY_ROUTE, ROUTE } from './route'
 export { default as SIZE } from './size'
 export { default as SVG } from './svg'
-export { ARTICLE_THREAD, CARD_THREAD, THREAD } from './thread'
+export { ARTICLE_THREAD, THREAD } from './thread'
 export { default as TYPE } from './type'
 export { default as URL_QUERY } from './url_query'
 export { default as VIEW } from './view'

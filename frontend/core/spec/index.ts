@@ -24,8 +24,6 @@ export type * from './thread'
 export type * from './utils'
 export type * from './wallpaper'
 
-export type TViewing = TCommunity | TArticle
-
 export type TContainer = 'body' | 'drawer'
 
 export type TGlowPosition = 'fixed' | 'absolute'
