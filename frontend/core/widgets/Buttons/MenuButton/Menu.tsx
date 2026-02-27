@@ -1,44 +1,10 @@
 import { QRCodeSVG } from 'qrcode.react'
 import { isEmpty } from 'ramda'
 import { type FC, Fragment, memo } from 'react'
-import { ICON } from '~/config'
-import SVG from '~/const/svg'
-import { cutRest } from '~/fmt'
-import Img from '~/Img'
 import type { TMenuOption } from '~/spec'
 
 import useSalon, { cn } from '../salon/menu_button/menu'
-
-// there is two types of block, normal block and link
-const OptionBlock = ({ item, onClick, s }) => {
-  const iconName = item.icon || SVG.UPVOTE
-
-  if (item.link) {
-    return (
-      <a className={cn(s.block, 'no-underline')} href={item.link}>
-        <div className={s.item}>
-          <div className={s.icon}>
-            {/* @ts-ignore */}
-            {s.getIcon(iconName)({})}
-          </div>
-          <div className={s.title}>{cutRest(item.title, 50)}</div>
-          <Img src={`${ICON}/shape/link-hint.svg`} className={s.linkIcon} />
-        </div>
-      </a>
-    )
-  }
-  return (
-    <button className={s.block} onClick={onClick}>
-      <div className={s.item}>
-        <div className={s.icon}>
-          {/* @ts-ignore */}
-          {s.getIcon(iconName)({})}
-        </div>
-        <div className={s.title}>{cutRest(item.title, 50)}</div>
-      </div>
-    </button>
-  )
-}
+import OptionBlock from './OptionBlock'
 
 type TProps = {
   options: TMenuOption[]
