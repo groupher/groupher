@@ -61,21 +61,18 @@
     "test:e2e:landing": "cross-env E2E_APP=landing playwright test -c frontend/e2e/playwright.config.ts",
     "coveralls": "cat ./coverage/lcov.info | coveralls",
     "doctor": "react-doctor .",
-    "doctor:main": "yarn exec react-doctor . --project @groupher/frontend-main",
-    "doctor:dashboard": "yarn exec react-doctor . --project @groupher/frontend-dashboard",
-    "doctor:landing": "yarn exec react-doctor . --project @groupher/frontend-landing",
-    "doctor:gateway": "yarn exec react-doctor . --project @groupher/frontend-gateway",
-    "doctor:core": "yarn exec react-doctor . --project @groupher/frontend-core",
+    "doctor:main": "react-doctor frontend/main",
+    "doctor:dashboard": "react-doctor frontend/dashboard",
+    "doctor:landing": "react-doctor frontend/landing",
+    "doctor:gateway": "react-doctor frontend/gateway",
+    "doctor:core": "react-doctor frontend/core",
     "doctor:all": "yarn doctor:core && yarn doctor:main && yarn doctor:dashboard && yarn doctor:landing && yarn doctor:gateway",
-    "doctor:all:verbose": "yarn exec react-doctor . --project @groupher/frontend-core --verbose && yarn exec react-doctor . --project @groupher/frontend-main --verbose && yarn exec react-doctor . --project @groupher/frontend-dashboard --verbose && yarn exec react-doctor . --project @groupher/frontend-landing --verbose && yarn exec react-doctor . --project @groupher/frontend-gateway --verbose"
+    "doctor:all:verbose": "yarn exec react-doctor frontend/core --verbose && yarn exec react-doctor frontend/main --verbose && yarn exec react-doctor frontend/dashboard --verbose && yarn exec react-doctor frontend/landing --verbose && yarn exec react-doctor frontend/gateway --verbose"
   },
   "engines": {
     "node": "24.x"
   },
   "private": true,
-  "reactDoctor": {
-    "diff": false
-  },
   "workspaces": {
     "packages": [
       "frontend/*"
