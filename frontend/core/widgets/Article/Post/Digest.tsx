@@ -24,13 +24,14 @@ export default () => {
   const router = useRouter()
   const { post } = useArticle()
 
+  const isPinned = post?.isPinned ?? false
+  const s = useSalon({ isPinned })
+
   if (!post) {
     return <h1>Error article</h1>
   }
 
-  const { innerId, author, title, isPinned } = post
-
-  const s = useSalon({ isPinned })
+  const { innerId, author, title } = post
 
   const backUrl = `/${post.communitySlug}/${ARTICLE_THREAD.POST}`
 

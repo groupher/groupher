@@ -37,18 +37,14 @@ export default function ImageSlider() {
 
   const { isLightTheme } = useTheme()
 
-  const localCurrentSlide = useMemo(() => {
-    return {
-      index: 0,
-    }
-  }, [])
+  const localCurrentSlide = useRef({ index: 0 })
 
   useInterval(
     () => {
       const slider = sliderRef.current
       if (slider) {
         const maxSlideIndex = MAX_INTRO_IMAGES_COUNT - VISIBLE_SLIDES
-        let nextSlideIndex = localCurrentSlide.index + 1
+        let nextSlideIndex = localCurrentSlide.current.index + 1
         nextSlideIndex = nextSlideIndex > maxSlideIndex ? 0 : nextSlideIndex
         slider.slideTo(nextSlideIndex)
       }
@@ -56,11 +52,9 @@ export default function ImageSlider() {
     loopTimer ? LOOP_TIMER : null,
   )
 
-  useEffect(() => {
-    setImgSrc(
-      isLightTheme ? `/${APP.LANDING}/intro/home.webp` : `/${APP.LANDING}/intro/home-dark.webp`,
-    )
-  }, [isLightTheme])
+  const currentImgSrc = isLightTheme
+    ? `/${APP.LANDING}/intro/home.webp`
+    : `/${APP.LANDING}/intro/home-dark.webp`
 
   useEffect(() => {
     switch (themeIndex) {
@@ -111,16 +105,15 @@ export default function ImageSlider() {
           step={SLIDE_STEP}
           slideMargin='20px'
           onSlide={({ currentSlide }) => {
-            localCurrentSlide.index = currentSlide
+            localCurrentSlide.current.index = currentSlide
           }}
         >
           <Slider ref={sliderRef}>
             {range(0, MAX_INTRO_IMAGES_COUNT).map((_, i) => (
               <Slide key={i}>
                 <div className={s.slideImage}>
-                  {i !== 1 && <Img src={imgSrc} alt='cover page' className={s.coverImg} />}
+                  {i !== 1 && <Img src={currentImgSrc} alt='cover page' className={s.coverImg} />}
                   {i === 1 && <Img src={imgSrc2} alt='cover page' className={s.coverImg} />}
-                  {/* <Img src={imgSrc} alt="cover page" className={s.coverImg} /> */}
                 </div>
               </Slide>
             ))}

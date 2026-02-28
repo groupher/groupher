@@ -28,7 +28,18 @@ const DigestView: FC<TProps> = ({ article }) => {
   }, [])
 
   return (
-    <section className={s.wrapper} onClick={() => previewArticle(article)}>
+    <section
+      className={s.wrapper}
+      onClick={() => previewArticle(article)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          previewArticle(article)
+        }
+      }}
+      role='button'
+      tabIndex={0}
+    >
       <ArticlePinLabel isPinned={article.isPinned} className="top-8" />
       <div className={s.coverWrapper}>
         <Img src={coverImg} className={s.cover} />

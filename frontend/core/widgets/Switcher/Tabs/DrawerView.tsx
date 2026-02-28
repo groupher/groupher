@@ -56,13 +56,14 @@ const Tabs: FC<TProps> = ({ onChange = console.log, items = temItems, activeKey 
     <div className={s.wrapper} data-testid="tabs">
       <div className={s.tabsContainer} ref={tabsRef}>
         {items.map((item, index) => (
-          <div
+          <button
+            type='button'
             key={isString(item) ? item : item.slug || item.title}
             className={cn(s.tabItem, index === activeIndex && s.activeTabItem)}
             onClick={() => handleItemClick(item, index)}
           >
             {item.title}
-          </div>
+          </button>
         ))}
       </div>
       <div className={s.slider} style={sliderStyle} />

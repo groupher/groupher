@@ -1,7 +1,3 @@
-import type { TArticle } from './article'
-import type { TCommunity } from './community'
-import type { TTransKey } from './i18n'
-import type { TThemeName } from './theme'
 
 export type * from './account'
 export type * from './article'
@@ -24,7 +20,8 @@ export type * from './thread'
 export type * from './utils'
 export type * from './wallpaper'
 
-export type TViewing = TCommunity | TArticle
+import type { TThemeName } from './theme'
+import type { TTransKey } from './i18n'
 
 export type TContainer = 'body' | 'drawer'
 

@@ -14,22 +14,28 @@ export default function Keyboard() {
   const s = useSalon()
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: false, margin: '-20% 0px' })
-  const [activeCount, setActiveCount] = useState(0)
+  const [state, setState] = useState({
+    activeCount: 0,
+    showLight: false,
+  })
+  const { activeCount, showLight } = state
+
   const { isDarkTheme } = useTheme()
 
-  const [lightOn, setLightOn] = useState(false)
-
   useEffect(() => {
-    if (!(isDarkTheme && inView)) {
-      setLightOn(false)
-      return
+    let timer: NodeJS.Timeout | null = null
+
+    if (isDarkTheme && inView) {
+      timer = setTimeout(() => {
+        setState((prev) => (prev.showLight ? prev : { ...prev, showLight: true }))
+      }, 500)
+    } else {
+      setState((prev) => (prev.showLight ? { ...prev, showLight: false } : prev))
     }
 
-    const timer = setTimeout(() => {
-      setLightOn(true)
-    }, 500)
-
-    return () => clearTimeout(timer)
+    return () => {
+      if (timer) clearTimeout(timer)
+    }
   }, [inView, isDarkTheme])
 
   useEffect(() => {
@@ -37,7 +43,10 @@ export default function Keyboard() {
     const timers: NodeJS.Timeout[] = []
 
     for (let i = 0; i < TECH_TOTAL; i++) {
-      timers.push(setTimeout(() => setActiveCount(i + 1), i * STAGING_TIME))
+      const count = i + 1
+      timers.push(
+        setTimeout(() => setState((prev) => ({ ...prev, activeCount: count })), i * STAGING_TIME),
+      )
     }
     return () => {
       for (const timer of timers) {
@@ -56,8 +65,8 @@ export default function Keyboard() {
               opacity: 0,
             }}
             animate={{
-              clipPath: lightOn ? 'inset(0 0% 0 0)' : 'inset(0 100% 0 0)',
-              opacity: lightOn ? 0.4 : 0,
+              clipPath: showLight ? 'inset(0 0% 0 0)' : 'inset(0 100% 0 0)',
+              opacity: showLight ? 0.4 : 0,
             }}
             transition={{
               clipPath: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
@@ -68,8 +77,8 @@ export default function Keyboard() {
           <motion.div
             initial={{ clipPath: 'inset(0 0 100% 0)' }}
             animate={{
-              clipPath: lightOn ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
-              opacity: lightOn ? 1 : 0,
+              clipPath: showLight ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
+              opacity: showLight ? 1 : 0,
             }}
             transition={{
               clipPath: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },

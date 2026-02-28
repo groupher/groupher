@@ -18,15 +18,14 @@ type TProps = {
 
 const StateItem: FC<TProps> = ({ onClick }) => {
   const { article } = useViewingArticle()
-  if (!article?.state) return <div>no state in this article</div>
-
   const bgColors = useKanbanBgColors()
-  const color = getGTDColor(article.state, [...bgColors])
-
-  const s = useSalon({ color })
+  const kanbanAlias = useNameAlias('kanban')
   const { t } = useTrans()
 
-  const kanbanAlias = useNameAlias('kanban')
+  const color = article?.state ? getGTDColor(article.state, [...bgColors]) : ''
+  const s = useSalon({ color })
+
+  if (!article?.state) return <div>no state in this article</div>
 
   const WipIcon = ICON[ARTICLE_STATE.WIP]
 

@@ -13,7 +13,7 @@ export default () => {
 
   return (
     <div className={s.wrapper}>
-      <label className={s.hint}>预览</label>
+      <div className={s.hint}>预览</div>
       <div className={s.coverWrapper}>
         <ImageSVG className={s.holdImg} />
       </div>

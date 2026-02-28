@@ -1,4 +1,4 @@
-import { type FC, memo, useEffect } from 'react'
+import { type FC, memo } from 'react'
 
 import VIEW from '~/const/view'
 
@@ -17,12 +17,6 @@ type TProps = {
 
 const Sidebar: FC<TProps> = ({ tagsMode }) => {
   const s = useSalon()
-
-  useEffect(() => {
-    setTimeout(() => {
-      tagsModeChange(TABS_MODE_OPTIONS[1].slug)
-    }, 100)
-  }, [])
 
   return (
     <div className={s.wrapper}>

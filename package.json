@@ -59,7 +59,13 @@
     "test:e2e:main": "cross-env E2E_APP=main playwright test -c frontend/e2e/playwright.config.ts",
     "test:e2e:dashboard": "cross-env E2E_APP=dashboard playwright test -c frontend/e2e/playwright.config.ts",
     "test:e2e:landing": "cross-env E2E_APP=landing playwright test -c frontend/e2e/playwright.config.ts",
-    "coveralls": "cat ./coverage/lcov.info | coveralls"
+    "coveralls": "cat ./coverage/lcov.info | coveralls",
+    "doctor": "react-doctor .",
+    "doctor:main": "react-doctor frontend/main",
+    "doctor:dashboard": "react-doctor frontend/dashboard",
+    "doctor:landing": "react-doctor frontend/landing",
+    "doctor:gateway": "react-doctor frontend/gateway",
+    "doctor:core": "react-doctor frontend/core"
   },
   "engines": {
     "node": "24.x"
@@ -198,6 +204,7 @@
     "lint-staged": "^15.2.0",
     "npm-run-all": "^4.1.1",
     "postcss": "^8.4.39",
+    "react-doctor": "^0.0.29",
     "react-json-view-lite": "^2.5.0",
     "react-test-renderer": "18.2.0",
     "start-server-and-test": "1.12.1",

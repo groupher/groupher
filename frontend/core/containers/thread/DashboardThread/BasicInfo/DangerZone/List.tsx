@@ -13,9 +13,8 @@ const List: FC<TProps> = ({ items, ...spacing }) => {
 
   return (
     <ul className={s.wrapper}>
-      {items.map((item, index) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-        <li className={s.item} key={index}>
+      {items.map((item) => (
+        <li className={s.item} key={item}>
           {item}
         </li>
       ))}
