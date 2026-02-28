@@ -57,6 +57,10 @@ export const POST_CAT_MENU_ITEMS = [
 
 export const POST_STATE_MENU_ITEMS = [
   {
+    key: ARTICLE_STATE.BACKLOG,
+    icon: MENU.TODO,
+  },
+  {
     key: ARTICLE_STATE.TODO,
     icon: MENU.TODO,
   },

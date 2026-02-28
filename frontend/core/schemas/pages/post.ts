@@ -57,6 +57,23 @@ export const pagedPublishedPosts = `
 export const groupedKanbanPosts = `
   query groupedKanbanPosts($community: String!) {
     groupedKanbanPosts(community: $community) {
+      backlog {
+        entries {
+          innerId
+          cat
+          state
+          title
+          communitySlug
+          meta {
+            thread
+          }
+          author {
+            ${F.author}
+          }
+        }
+        ${F.pagi}
+      }
+
       todo {
         entries {
           innerId
@@ -92,6 +109,23 @@ export const groupedKanbanPosts = `
       }
 
       done {
+        entries {
+          innerId
+          cat
+          state
+          title
+          communitySlug
+          meta {
+            thread
+          }
+          author {
+            ${F.author}
+          }
+        }
+        ${F.pagi}
+      }
+
+      rejected {
         entries {
           innerId
           cat

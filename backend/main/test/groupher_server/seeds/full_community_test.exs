@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert doc_count == 23
 
       post = Repo.one!(from(p in Post, where: p.community_id == ^community.id, limit: 1))
-      assert post.state in [:todo, :wip, :done]
+      assert post.state in [:backlog, :todo, :wip, :done, :reject]
 
       comments_count = from(c in Comment, where: c.post_id == ^post.id) |> Repo.aggregate(:count, :id)
       assert comments_count >= 23

@@ -21,6 +21,7 @@ export const ARTICLE_CAT = {
 } as const
 
 export const ARTICLE_STATE = {
+  BACKLOG: 'BACKLOG',
   TODO: 'TODO',
   WIP: 'WIP',
   DONE: 'DONE',

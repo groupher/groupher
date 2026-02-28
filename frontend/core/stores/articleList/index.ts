@@ -14,9 +14,11 @@ export default (init: TInit = {}): TStore => {
     pagedChangelogs: EMPTY_PAGED_ARTICLES,
 
     // kanban's
+    backlog: EMPTY_PAGED_ARTICLES,
     todo: EMPTY_PAGED_ARTICLES,
     wip: EMPTY_PAGED_ARTICLES,
     done: EMPTY_PAGED_ARTICLES,
+    rejected: EMPTY_PAGED_ARTICLES,
 
     activeOrder: null,
     activeCat: null,

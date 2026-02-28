@@ -209,9 +209,11 @@ export const BUILD_IN_ALIAS_SUGGESTIONS = {
   upvote: ['支持', '顶', '赞', '有帮助'],
   doc: ['文档', '帮助中心'],
   upvote_bug: ['同样问题', '复现', '求解决'],
+  backlog: ['Backlog', '积压', '待排期'],
   todo: ['Todo', '已排期', '评估中', '计划中'],
   wip: ['Wip', '完善中'],
   done: ['Done', '已解决'],
+  rejected: ['Rejected', '已拒绝', '已关闭'],
   // state
   feature: ['功能建议', '功能需求', '新功能'],
   question: ['求助 / 疑问', '使用帮助'],

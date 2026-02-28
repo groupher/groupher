@@ -31,6 +31,7 @@ export const ICON = {
   [ARTICLE_CAT.OTHER]: DiscussSVG,
 
   // state
+  [ARTICLE_STATE.BACKLOG]: TodoSVG,
   [ARTICLE_STATE.TODO]: TodoSVG,
   [ARTICLE_STATE.WIP]: WipSVG,
   [ARTICLE_STATE.DONE]: DoneSVG,

@@ -24,13 +24,16 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
   const kanbanAlias = useNameAlias('kanban')
 
   switch (state) {
+    case ARTICLE_STATE.BACKLOG:
     case ARTICLE_STATE.TODO: {
+      const stateKey = state.toLowerCase()
+
       if (smaller) {
         return (
           <Tooltip
             content={
               <div className={s.tipNote}>
-                <div className={s.text}>{kanbanAlias[ARTICLE_STATE.TODO.toLowerCase()].name}</div>
+                <div className={s.text}>{kanbanAlias[stateKey]?.name || t(state)}</div>
               </div>
             }
             {...tipConfig}
@@ -45,7 +48,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
       return (
         <div className={s.box}>
           <Icon.Todo className={s.todoIcon} />
-          <div className={s.text}>{kanbanAlias[ARTICLE_STATE.TODO.toLowerCase()].name}</div>
+          <div className={s.text}>{kanbanAlias[stateKey]?.name || t(state)}</div>
         </div>
       )
     }
@@ -56,7 +59,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
           <Tooltip
             content={
               <div className={s.tipNote}>
-                <div className={s.text}>{kanbanAlias[ARTICLE_STATE.WIP.toLowerCase()].name}</div>
+                <div className={s.text}>{kanbanAlias[ARTICLE_STATE.WIP.toLowerCase()]?.name || t(state)}</div>
               </div>
             }
             {...tipConfig}
@@ -72,7 +75,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
         <div className={s.box}>
           <Icon.Wip className={s.wipIcon} />
 
-          <div className={s.text}>{kanbanAlias[ARTICLE_STATE.WIP.toLowerCase()].name}</div>
+          <div className={s.text}>{kanbanAlias[ARTICLE_STATE.WIP.toLowerCase()]?.name || t(state)}</div>
         </div>
       )
     }

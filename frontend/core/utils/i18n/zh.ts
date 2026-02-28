@@ -639,9 +639,11 @@ export default {
   QUESTION: '问题',
   OTHER: '其他',
 
+  BACKLOG: '积压',
   TODO: '已排期',
   WIP: '进行中',
   DONE: '已完成',
+  REJECTED: '已拒绝',
   SOLVED: '已解决',
   FIXED: '已修复',
   DEFAULT: '默认',
