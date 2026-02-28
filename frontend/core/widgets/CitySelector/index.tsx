@@ -4,8 +4,8 @@
  *
  */
 
-import { type FC, memo, useCallback, useMemo, useState } from 'react'
-import { find, includes, without, reject, isEmpty } from 'ramda'
+import { type FC, memo, useCallback, useEffect, useState } from 'react'
+import { find, includes, without, reject, isEmpty, forEach } from 'ramda'
 
 import type { TCityOption, TSpace } from '~/spec'
 import { CITY_OPTIONS, HOME_CITY_OPTIONS, CITY_OPTION_VALUES } from '~/const/city'
@@ -22,31 +22,32 @@ type TProps = {
 const CitySelector: FC<TProps> = ({ value = '', onChange = console.log, ...spacing }) => {
   const s = useSalon({ ...spacing })
 
-  const parsed = useMemo(() => {
-    const splitted = reject(isEmpty, value.split(','))
-    const selectedCities: string[] = []
-    const extraCityItems: string[] = []
+  const [selected, setSelected] = useState(value.split(','))
+  const [showMore, setShowMore] = useState(false)
+  const [extraCities, setExtraCities] = useState('')
 
-    for (const item of splitted) {
-      if (includes(item, CITY_OPTION_VALUES)) {
-        selectedCities.push(item)
+  useEffect(() => {
+    const splitedValue = value.split(',')
+    const extraCities = []
+    const selectedCities = []
+
+    forEach((item) => {
+      if (!includes(item, CITY_OPTION_VALUES)) {
+        extraCities.push(item)
       } else {
-        extraCityItems.push(item)
+        selectedCities.push(item)
       }
-    }
+    }, splitedValue)
 
-    return {
-      selectedCities,
-      extraCities: extraCityItems.join(','),
+    setSelected(selectedCities)
+
+    if (!(isEmpty(extraCities) || reject(isEmpty, extraCities).length === 0)) {
+      setExtraCities(extraCities.join(','))
+      setShowMore(true)
     }
   }, [value])
 
-  const [showMore, setShowMore] = useState(false)
-  const [extraCitiesDraft, setExtraCitiesDraft] = useState('')
-  const selected = parsed.selectedCities
-  const extraCities = extraCitiesDraft || parsed.extraCities
-  const showMorePanel = showMore || !isEmpty(parsed.extraCities)
-  const options = showMorePanel ? CITY_OPTIONS : HOME_CITY_OPTIONS
+  const options = !showMore ? HOME_CITY_OPTIONS : CITY_OPTIONS
 
   const calcCityValue = useCallback((extraCityValue: string, selectedCityValue: string) => {
     return extraCityValue.trim()
@@ -61,6 +62,8 @@ const CitySelector: FC<TProps> = ({ value = '', onChange = console.log, ...spaci
     } else {
       selectedAfter = without([option.value], selected)
     }
+
+    setSelected(selectedAfter)
 
     const selectedCityValue = reject(isEmpty, selectedAfter).join(',')
     const cityVal = calcCityValue(extraCities, selectedCityValue)
@@ -83,29 +86,28 @@ const CitySelector: FC<TProps> = ({ value = '', onChange = console.log, ...spaci
         const active = includes(option.value, selected)
 
         return (
-          <button
-            type='button'
+          <div
             className={cn(s.box, active && s.boxActive, option.flag && 'px-2.5')}
             key={option.value}
             onClick={() => cityOnChange(option)}
           >
             {option.label}
             {NationFlag && <NationFlag className={cn(s.flag, !active && 'opacity-65')} />}
-          </button>
+          </div>
         )
       })}
-      {!showMorePanel && (
-        <button type='button' className={s.moreBtn} onClick={() => setShowMore(true)}>
+      {!showMore && (
+        <div className={s.moreBtn} onClick={() => setShowMore(true)}>
           更多..
-        </button>
+        </div>
       )}
-      {showMorePanel && (
+      {showMore && (
         <>
           <div className={s.inputLabel}>其他城市（地区）：</div>
           <Input
             placeholder="多个城市请用 , 分隔开"
             value={extraCities}
-            onChange={(e) => setExtraCitiesDraft(e.target.value)}
+            onChange={(e) => setExtraCities(e.target.value)}
             onBlur={() => extraCityOnBlur()}
           />
         </>

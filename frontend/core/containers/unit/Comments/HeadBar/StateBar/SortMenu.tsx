@@ -28,29 +28,29 @@ const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode }) => {
   return (
     <div className={s.wrapper}>
       {isAllFolded ? (
-        <button type='button' className={cn(s.title, 'mr-3')} onClick={() => expandAllComments()}>
+        <div className={cn(s.title, 'mr-3')} onClick={() => expandAllComments()}>
           {t('comment.sort.expand_all')}
-        </button>
+        </div>
       ) : (
         <Tooltip
           content={
             <div className={s.panel}>
-              <button type='button' className={s.menuItem} onClick={() => onModeChange(MODE.REPLIES)}>
+              <div className={s.menuItem} onClick={() => onModeChange(MODE.REPLIES)}>
                 <ReplyModeSVG className={s.menuIcon} />
                 <div className={s.menuTitle}>{t('comment.sort.default')}</div>
-              </button>
-              <button type='button' className={s.menuItem} onClick={() => onModeChange(MODE.TIMELINE)}>
+              </div>
+              <div className={s.menuItem} onClick={() => onModeChange(MODE.TIMELINE)}>
                 <TimelineModeSVG className={s.menuIcon} />
                 <div className={s.menuTitle}>{t('comment.sort.timeline')}</div>
-              </button>
-              <button type='button' className={s.menuItem} onClick={() => expandAllComments()}>
+              </div>
+              <div className={s.menuItem} onClick={() => expandAllComments()}>
                 <ExpandSVG className={s.menuIcon} />
                 <div className={s.menuTitle}>{t('comment.sort.expand_all')}</div>
-              </button>
-              <button type='button' className={s.menuItem} onClick={() => foldAllComments()}>
+              </div>
+              <div className={s.menuItem} onClick={() => foldAllComments()}>
                 <FoldSVG className={s.menuIcon} />
                 <div className={s.menuTitle}>{t('comment.sort.fold_all')}</div>
-              </button>
+              </div>
             </div>
           }
           placement="bottom-end"
@@ -58,10 +58,10 @@ const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode }) => {
           offset={[-5, 5]}
           noPadding
         >
-          <button type='button' className={cn(s.title, 'mr-3')}>
+          <div className={cn(s.title, 'mr-3')}>
             {mode === MODE.REPLIES ? t('comment.sort.default') : t('comment.sort.timeline')}
             <ArrowSVG className={s.arrowIcon} />
-          </button>
+          </div>
         </Tooltip>
       )}
 

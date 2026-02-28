@@ -8,27 +8,32 @@ export default function ThemeMonitor() {
   const { changeMode } = useTheme()
 
   useMount(() => {
-    const stored = localStorage.getItem(LOCAL_THEME_KEY)
-    const isValid = stored === THEME.DARK || stored === THEME.LIGHT || stored === THEME_MODE.SYSTEM
+    try {
+      const stored = localStorage.getItem(LOCAL_THEME_KEY)
+      const isValid =
+        stored === THEME.DARK || stored === THEME.LIGHT || stored === THEME_MODE.SYSTEM
 
-    const mode = isValid ? stored : THEME_MODE.SYSTEM
+      const mode = isValid ? stored : THEME_MODE.SYSTEM
 
-    changeMode(mode)
+      changeMode(mode)
 
-    if (mode === THEME_MODE.SYSTEM) {
-      const media = window.matchMedia('(prefers-color-scheme: dark)')
+      if (mode === THEME_MODE.SYSTEM) {
+        const media = window.matchMedia('(prefers-color-scheme: dark)')
 
-      const listener = () => {
-        if (localStorage.getItem(LOCAL_THEME_KEY) === THEME_MODE.SYSTEM) {
-          changeMode(THEME_MODE.SYSTEM)
+        const listener = () => {
+          if (localStorage.getItem(LOCAL_THEME_KEY) === THEME_MODE.SYSTEM) {
+            changeMode(THEME_MODE.SYSTEM)
+          }
+        }
+
+        media.addEventListener('change', listener)
+
+        return () => {
+          media.removeEventListener('change', listener)
         }
       }
-
-      media.addEventListener('change', listener)
-
-      return () => {
-        media.removeEventListener('change', listener)
-      }
+    } catch {
+      changeMode(THEME_MODE.SYSTEM)
     }
   })
 

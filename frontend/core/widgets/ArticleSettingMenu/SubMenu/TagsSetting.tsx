@@ -1,5 +1,5 @@
 import { equals, includes, reject, uniq } from 'ramda'
-import { type FC, useState } from 'react'
+import { type FC, useEffect, useState } from 'react'
 import { useMutation, useQuery } from 'urql'
 // import { mockTags } from '~/mock'
 import { THREAD } from '~/const/thread'
@@ -20,14 +20,12 @@ type TProps = {
 
 const TagSetting: FC<TProps> = ({ onBack }) => {
   const s = useSalon()
+
+  const [checked, setChecked] = useState([])
+  const { touched, setTouched, resetTouched } = useTouched()
+
   const { slug: community } = useCommunity()
   const { article } = useViewingArticle()
-
-  const [checked, setChecked] = useState<TID[]>(() => {
-    const originTags = article.communityTags || []
-    return originTags.map((item) => item.id)
-  })
-  const { touched, setTouched, resetTouched } = useTouched()
 
   const [result] = useQuery({
     query: S.pagedCommunityTags,
@@ -42,6 +40,11 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   const [updatePostRes, updatePost] = useMutation(S.updatePost)
 
   const tags = result.data?.pagedCommunityTags?.entries || []
+
+  useEffect(() => {
+    const originTags = article.communityTags || []
+    setChecked(originTags.map((item) => item.id))
+  }, [article.communityTags])
 
   const handleCheck = (id: TID, toggle: boolean): void => {
     const checkedIds = checked || []

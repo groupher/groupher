@@ -1,5 +1,5 @@
 import { filter, includes, keys } from 'ramda'
-import { type FC, useState } from 'react'
+import { type FC, useEffect, useState } from 'react'
 import { COLOR } from '~/const/colors'
 import type { TColorName } from '~/spec'
 import CustomScroller from '~/widgets/CustomScroller'
@@ -23,15 +23,19 @@ const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelec
   const colorNames = keys(COLOR)
 
   const [searchKey, setSearchKey] = useState('')
-  const effectiveSearchKey = panelOpen ? searchKey : ''
-  const filteredIconKeys = filter((k) => includes(effectiveSearchKey, k), iconKeys)
+  const filteredIconKeys = filter((k) => includes(searchKey, k), iconKeys)
+
+  useEffect(() => {
+    if (!panelOpen) {
+      setSearchKey('')
+    }
+  }, [panelOpen])
 
   return (
     <div className={s.wrapper}>
       <div className={s.colorWrapper}>
         {colorNames.map((color) => (
-          <button
-            type='button'
+          <div
             key={color}
             className={cn(
               s.colorBlock,
@@ -41,7 +45,7 @@ const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelec
             onClick={() => onColorSelect(color)}
           >
             <div className={cn(s.colorCenter, s.rainbow(color, 'bg'))} />
-          </button>
+          </div>
         ))}
       </div>
 
@@ -60,8 +64,7 @@ const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelec
         autoHide
       >
         {filteredIconKeys.map((name) => (
-          <button
-            type='button'
+          <div
             className={cn(s.item, selectIcon === name && s.itemActive)}
             key={name}
             onClick={() => onIconSelect(name)}
@@ -70,7 +73,7 @@ const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelec
               <FaIcon icon={name} size={13} color={COLOR.BLACK} />
             </div>
             <div className={s.title}>{name}</div>
-          </button>
+          </div>
         ))}
       </CustomScroller>
     </div>

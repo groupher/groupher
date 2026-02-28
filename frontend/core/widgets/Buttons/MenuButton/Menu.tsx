@@ -20,7 +20,7 @@ const Menu: FC<TProps> = ({ options, extraOptions, onClick, panelMinWidth }) => 
     <div className={cn(s.wrapper, panelMinWidth)}>
       {options.map((item) => (
         <Fragment key={item.key}>
-          <OptionBlock item={item} onClick={() => onClick?.(item.key)} />
+          <OptionBlock item={item} onClick={() => onClick(item.key)} s={s} />
           {item.qrLink && (
             <div className={s.qrWrapper}>
               <QRCodeSVG value={item.qrLink} size={72} />
@@ -30,7 +30,7 @@ const Menu: FC<TProps> = ({ options, extraOptions, onClick, panelMinWidth }) => 
       ))}
       {!isEmpty(extraOptions) && <div className={s.divider} />}
       {extraOptions.map((item) => (
-        <OptionBlock key={item.key} item={item} onClick={() => onClick?.(item.key)} />
+        <OptionBlock key={item.key} item={item} onClick={() => onClick(item.key)} s={s} />
       ))}
     </div>
   )

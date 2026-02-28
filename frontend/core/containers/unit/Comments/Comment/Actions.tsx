@@ -85,7 +85,7 @@ const Actions: FC<TProps> = ({ data }) => {
         }
       }
     },
-    [data, accountInfo, openUpdateEditor],
+    [data, accountInfo],
   )
 
   return (
@@ -94,7 +94,7 @@ const Actions: FC<TProps> = ({ data }) => {
         <div
           className={s.replyAction}
           onClick={() => {
-            if (!accountInfo) return authWarn()
+            if (accountInfo) return authWarn()
 
             openReplyEditor(data)
           }}

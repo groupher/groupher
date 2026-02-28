@@ -1,5 +1,5 @@
 import { motion, useInView } from 'motion/react'
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { COLOR } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import ArrowLinker from '~/widgets/ArrowLinker'
@@ -7,15 +7,53 @@ import useSalon from '../salon/tech_stacks/keyboard'
 import HolderKey from './HolderKey'
 import TechKey from './TechKey'
 
+const STAGING_TIME = 200
 const TECH_TOTAL = 10
 
 export default function Keyboard() {
   const s = useSalon()
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: false, margin: '-20% 0px' })
+  const [state, setState] = useState({
+    activeCount: 0,
+    showLight: false,
+  })
+  const { activeCount, showLight } = state
+
   const { isDarkTheme } = useTheme()
-  const lightOn = isDarkTheme && inView
-  const activeCount = inView ? TECH_TOTAL : 0
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null
+
+    if (isDarkTheme && inView) {
+      timer = setTimeout(() => {
+        setState((prev) => (prev.showLight ? prev : { ...prev, showLight: true }))
+      }, 500)
+    } else {
+      setState((prev) => (prev.showLight ? { ...prev, showLight: false } : prev))
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer)
+    }
+  }, [inView, isDarkTheme])
+
+  useEffect(() => {
+    if (!inView) return
+    const timers: NodeJS.Timeout[] = []
+
+    for (let i = 0; i < TECH_TOTAL; i++) {
+      const count = i + 1
+      timers.push(
+        setTimeout(() => setState((prev) => ({ ...prev, activeCount: count })), i * STAGING_TIME),
+      )
+    }
+    return () => {
+      for (const timer of timers) {
+        clearTimeout(timer)
+      }
+    }
+  }, [inView])
 
   return (
     <div ref={ref} className={s.wrapper}>
@@ -27,8 +65,8 @@ export default function Keyboard() {
               opacity: 0,
             }}
             animate={{
-              clipPath: lightOn ? 'inset(0 0% 0 0)' : 'inset(0 100% 0 0)',
-              opacity: lightOn ? 0.4 : 0,
+              clipPath: showLight ? 'inset(0 0% 0 0)' : 'inset(0 100% 0 0)',
+              opacity: showLight ? 0.4 : 0,
             }}
             transition={{
               clipPath: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
@@ -39,8 +77,8 @@ export default function Keyboard() {
           <motion.div
             initial={{ clipPath: 'inset(0 0 100% 0)' }}
             animate={{
-              clipPath: lightOn ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
-              opacity: lightOn ? 1 : 0,
+              clipPath: showLight ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
+              opacity: showLight ? 1 : 0,
             }}
             transition={{
               clipPath: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },

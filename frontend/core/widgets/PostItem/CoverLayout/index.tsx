@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react'
+import { type FC, useState, useEffect } from 'react'
 
 import type { TPost } from '~/spec'
 
@@ -21,7 +21,11 @@ type TProps = {
 const DigestView: FC<TProps> = ({ article }) => {
   const s = useSalon()
 
-  const [coverImg] = useState(() => mockImage())
+  const [coverImg, setCoverImg] = useState('')
+
+  useEffect(() => {
+    setCoverImg(mockImage())
+  }, [])
 
   return (
     <section className={s.wrapper} onClick={() => previewArticle(article)}>

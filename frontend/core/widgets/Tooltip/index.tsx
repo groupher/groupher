@@ -106,6 +106,7 @@ const Tooltip: FC<TProps> = ({
     if (instanceRef.current) {
       instanceRef.current.destroy()
       instanceRef.current = null
+      setActive(false)
     }
   }, [])
 
@@ -145,7 +146,7 @@ const Tooltip: FC<TProps> = ({
   )
 
   const tippyProps: TTippyReactProps = useMemo(() => {
-    return {
+    const props: TTippyReactProps = {
       ref: triggerRef as React.RefObject<HTMLDivElement>, // triggerRef is compatible (nullable current)
       content: PopoverContent,
       placement,
@@ -174,8 +175,10 @@ const Tooltip: FC<TProps> = ({
         setActive(true)
         onShow?.()
       },
-      ...(visible !== null ? { visible } : {}),
     }
+
+    if (visible !== null) props.visible = visible
+    return props
   }, [
     PopoverContent,
     placement,

@@ -1,5 +1,5 @@
 // frontend/core/widgets/Img/LazyLoadImg.tsx
-import { type FC, useCallback, useRef, useState } from 'react'
+import { type FC, useCallback, useEffect, useRef, useState } from 'react'
 import LazyLoad from '~/widgets/LazyLoad'
 import type { TProps as TPropsBase } from '.'
 import useSalon, { cnMerge } from './salon/lazy_load_image'
@@ -18,26 +18,51 @@ const LazyLoadImg: FC<TProps> = ({
 }) => {
   const s = useSalon()
   const imgRef = useRef<HTMLImageElement | null>(null)
-  const [becameVisible, setBecameVisible] = useState(false)
-  const [loadedSrc, setLoadedSrc] = useState<string | null>(null)
-  const [erroredSrc, setErroredSrc] = useState<string | null>(null)
 
-  const started = visibleByDefault || becameVisible
-  const loaded = loadedSrc === src
-  const errored = erroredSrc === src
+  const [started, setStarted] = useState(visibleByDefault)
+  const [loaded, setLoaded] = useState(false)
+  const [errored, setErrored] = useState(false)
 
-  const handleVisible = useCallback(() => setBecameVisible(true), [])
+  // ✅ Only visibleByDefault controls initial start; do NOT reset started on src changes.
+  useEffect(() => {
+    setStarted(visibleByDefault)
+  }, [visibleByDefault])
+
+  // ✅ src changes reset only per-resource states
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    setLoaded(false)
+    setErrored(false)
+  }, [src])
+
+  const handleVisible = useCallback(() => setStarted(true), [])
 
   const handleLoad = useCallback(() => {
-    setLoadedSrc(src)
-    setErroredSrc(null)
-  }, [src])
+    setLoaded(true)
+    setErrored(false)
+  }, [])
 
   const handleError = useCallback(() => {
     console.warn('[LazyLoadImg] load error:', src)
-    setErroredSrc(src)
-    setLoadedSrc(null)
+    setErrored(true)
+    setLoaded(false)
   }, [src])
+
+  // ✅ cached hit / already-complete handling (must depend on src too)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    if (!started) return
+    const el = imgRef.current
+    if (!el || !el.complete) return
+
+    if (el.naturalWidth > 0) {
+      setLoaded(true)
+      setErrored(false)
+    } else {
+      setLoaded(false)
+      setErrored(true)
+    }
+  }, [started, src])
 
   const hideFallback = loaded && !errored
   const showImg = started && !errored

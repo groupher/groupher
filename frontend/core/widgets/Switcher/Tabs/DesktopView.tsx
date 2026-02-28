@@ -2,7 +2,7 @@
 
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
 import { findIndex, isEmpty } from 'ramda'
-import type { FC } from 'react'
+import type { FC, MouseEvent } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import SIZE from '~/const/size'
@@ -57,37 +57,43 @@ const Tabs: FC<TProps> = ({
 
   const defaultActiveTabIndex = getDefaultActiveTabIndex(items, activeKey)
   const hasActiveItem = items.some((it) => getItemKey(it) === activeKey)
-  const isControlled = !isEmpty(activeKey)
 
   const [active, setActive] = useState(defaultActiveTabIndex)
+  const [slipWidth, setSlipWidth] = useState(0)
   const [isInitialRender, setIsInitialRender] = useState(true)
-  const [tabWidths, setTabWidths] = useState<number[]>([])
-  const currentActive = isControlled ? defaultActiveTabIndex : active
 
   const navRef = useRef<HTMLElement | null>(null)
+  const tabWidthListRef = useRef<number[]>([])
 
   useEffect(() => {
+    const navEl = navRef.current
+    if (navEl?.childNodes?.[defaultActiveTabIndex]) {
+      const node = navEl.childNodes[defaultActiveTabIndex] as HTMLElement
+      // TabItem 里会保证第一个元素是可测宽 wrapper
+      const first = node.firstElementChild as HTMLElement | null
+      setSlipWidth(first?.offsetWidth ?? 0)
+    }
+
+    setActive(defaultActiveTabIndex)
+
     // make sure the real bar animation starts only when this component fully loaded
     const timerId = window.setTimeout(() => setIsInitialRender(false), 500)
     return () => window.clearTimeout(timerId)
   }, [defaultActiveTabIndex])
 
   const handleNaviItemWidth = useCallback((index: number, width: number) => {
-    setTabWidths((prev) => {
-      if (prev[index] === width) return prev
-      const next = [...prev]
-      next[index] = width
-      return next
-    })
+    tabWidthListRef.current[index] = width
   }, [])
 
   const handleItemClick = useCallback(
-    (index: number) => {
+    (index: number, e: MouseEvent<HTMLElement>) => {
       const item = items[index]
       if (!item) return
 
       const key = getItemKey(item)
+      const width = (e.currentTarget as HTMLElement).offsetWidth
 
+      setSlipWidth(width)
       setActive(index)
       onChange(key, item, index)
     },
@@ -95,8 +101,8 @@ const Tabs: FC<TProps> = ({
   )
 
   const translateX = `${
-    tabWidths.slice(0, currentActive).reduce((a, b) => a + b, 0) +
-    s.getSlipMargin(size, isMobile) * currentActive
+    tabWidthListRef.current.slice(0, active).reduce((a, b) => a + b, 0) +
+    s.getSlipMargin(size, isMobile) * active
   }px`
 
   return (
@@ -120,17 +126,17 @@ const Tabs: FC<TProps> = ({
             className={s.slipBar}
             style={{
               transform: `translate3d(${translateX}, 0, 0)`,
-              width: `${tabWidths[currentActive] ?? 0}px`,
+              width: `${tabWidthListRef.current[active] ?? 0}px`,
               transition: isInitialRender ? 'none' : undefined,
             }}
           >
             <span
-                className={s.realBar}
-                style={{
-                  width: `${tabWidths[currentActive] ?? 0}px`,
-                  transition: isInitialRender ? 'none' : undefined,
-                }}
-              />
+              className={s.realBar}
+              style={{
+                width: `${slipWidth}px`,
+                transition: isInitialRender ? 'none' : undefined,
+              }}
+            />
           </span>
         )}
       </nav>

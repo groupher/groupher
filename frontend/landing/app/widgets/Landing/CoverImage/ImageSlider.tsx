@@ -1,5 +1,5 @@
 import { range } from 'ramda'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Carousel, Slide, Slider, SliderBarDotGroup } from 'react-scroll-snap-anime-slider'
 import APP from '~/const/app'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
@@ -31,28 +31,30 @@ export default function ImageSlider() {
   const [curImageIndex, setCurImageIndex] = useState(0)
   const [themeIndex, setThemeIndex] = useState(0)
 
+  const [imgSrc, setImgSrc] = useState(`/${APP.LANDING}/intro/home.webp`)
+  const [imgSrc2, _] = useState(`/${APP.LANDING}/intro/home-dark.webp`)
   const s = useSalon()
 
   const { isLightTheme } = useTheme()
-  const imgSrc = isLightTheme
-    ? `/${APP.LANDING}/intro/home.webp`
-    : `/${APP.LANDING}/intro/home-dark.webp`
-  const imgSrc2 = `/${APP.LANDING}/intro/home-dark.webp`
 
-  const currentSlideRef = useRef(0)
+  const localCurrentSlide = useRef({ index: 0 })
 
   useInterval(
     () => {
       const slider = sliderRef.current
       if (slider) {
         const maxSlideIndex = MAX_INTRO_IMAGES_COUNT - VISIBLE_SLIDES
-        let nextSlideIndex = currentSlideRef.current + 1
+        let nextSlideIndex = localCurrentSlide.current.index + 1
         nextSlideIndex = nextSlideIndex > maxSlideIndex ? 0 : nextSlideIndex
         slider.slideTo(nextSlideIndex)
       }
     },
     loopTimer ? LOOP_TIMER : null,
   )
+
+  const currentImgSrc = isLightTheme
+    ? `/${APP.LANDING}/intro/home.webp`
+    : `/${APP.LANDING}/intro/home-dark.webp`
 
   useEffect(() => {
     switch (themeIndex) {
@@ -103,16 +105,15 @@ export default function ImageSlider() {
           step={SLIDE_STEP}
           slideMargin='20px'
           onSlide={({ currentSlide }) => {
-            currentSlideRef.current = currentSlide
+            localCurrentSlide.current.index = currentSlide
           }}
         >
           <Slider ref={sliderRef}>
             {range(0, MAX_INTRO_IMAGES_COUNT).map((_, i) => (
               <Slide key={i}>
                 <div className={s.slideImage}>
-                  {i !== 1 && <Img src={imgSrc} alt='cover page' className={s.coverImg} />}
+                  {i !== 1 && <Img src={currentImgSrc} alt='cover page' className={s.coverImg} />}
                   {i === 1 && <Img src={imgSrc2} alt='cover page' className={s.coverImg} />}
-                  {/* <Img src={imgSrc} alt="cover page" className={s.coverImg} /> */}
                 </div>
               </Slide>
             ))}
@@ -172,7 +173,7 @@ export default function ImageSlider() {
               setThemeIndex(0)
               return
             }
-            setThemeIndex((prev) => prev + 1)
+            setThemeIndex(themeIndex + 1)
           }}
         >
           <ThemeRulerSVG className={s.themeIcon} />

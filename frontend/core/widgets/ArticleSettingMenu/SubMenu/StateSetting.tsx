@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react'
+import { type FC, useEffect, useState } from 'react'
 import { useMutation } from 'urql'
 import { ARTICLE_STATE } from '~/const/gtd'
 import { POST_STATE_MENU_ITEMS } from '~/const/menu'
@@ -32,6 +32,10 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
   const { touched, setTouched, resetTouched } = useTouched()
 
   const [result, setPostState] = useMutation(S.setPostState)
+
+  useEffect(() => {
+    setState(article.state)
+  }, [article.state])
 
   const handleState = () => {
     const params = { id: article.id, state }

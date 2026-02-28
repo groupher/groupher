@@ -2,7 +2,7 @@
 'use client'
 
 import type { ColumnDef, Row, Table } from '@tanstack/react-table'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import Checker from '~/widgets/Checker'
 
 export const SELECT_COL_ID = 'select'
@@ -80,16 +80,20 @@ export function useMultiSelection() {
     [selected, isAllSelected],
   )
 
-  const meta = useMemo<MultiSelectionTableMeta>(
-    () => ({
-      selected,
-      toggleRow,
-      toggleAll,
-      isAllSelected,
-      isSomeSelected,
-    }),
-    [selected, toggleRow, toggleAll, isAllSelected, isSomeSelected],
-  )
+  // ✅ stable meta ref
+  const metaRef = useRef<MultiSelectionTableMeta>({
+    selected: new Set(),
+    toggleRow: () => {},
+    toggleAll: () => {},
+    isAllSelected: () => false,
+    isSomeSelected: () => false,
+  })
+
+  metaRef.current.selected = selected
+  metaRef.current.toggleRow = toggleRow
+  metaRef.current.toggleAll = toggleAll
+  metaRef.current.isAllSelected = isAllSelected
+  metaRef.current.isSomeSelected = isSomeSelected
 
   /**
    * ✅ IMPORTANT: this callback is stable (no deps),
@@ -105,7 +109,7 @@ export function useMultiSelection() {
       meta: { sticky: 'left' },
 
       header: ({ table }: { table: Table<TData> }) => {
-        const meta = table.options.meta as MultiSelectionTableMeta
+        const meta = table.options.meta as React.MutableRefObject<MultiSelectionTableMeta>
 
         // rows are already current view (sorted/filtered); keep it local to avoid extra state
         const rows = table.getRowModel().rows as unknown as Row<TData>[]
@@ -117,7 +121,7 @@ export function useMultiSelection() {
         for (let i = 0; i < rows.length; i++) {
           const id = getId(rows[i]!)
           ids[i] = id
-          if (meta.selected.has(id)) selectedCount++
+          if (meta.current.selected.has(id)) selectedCount++
         }
 
         const all = rows.length > 0 && selectedCount === rows.length
@@ -129,7 +133,7 @@ export function useMultiSelection() {
               top={1}
               checked={all}
               indeterminate={some}
-               onChange={(v) => meta.toggleAll(v, ids)}
+              onChange={(v) => meta.current.toggleAll(v, ids)}
               aria-label='Select all'
             />
           </div>
@@ -137,16 +141,16 @@ export function useMultiSelection() {
       },
 
       cell: ({ row, table }) => {
-        const meta = table.options.meta as MultiSelectionTableMeta
+        const meta = table.options.meta as React.MutableRefObject<MultiSelectionTableMeta>
         const id = getId(row as unknown as Row<TData>)
-        const checked = meta.selected.has(id)
+        const checked = meta.current.selected.has(id)
 
         return (
           <div className='align-both'>
             <Checker
               top={1}
               checked={checked}
-               onChange={(v) => meta.toggleRow(id, v)}
+              onChange={(v) => meta.current.toggleRow(id, v)}
               aria-label={`Select row ${id}`}
             />
           </div>
@@ -156,7 +160,7 @@ export function useMultiSelection() {
   }, [])
 
   return {
-    meta,
+    metaRef,
     selectColumn,
     selectedCount: selected.size,
     clear,

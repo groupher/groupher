@@ -1,4 +1,4 @@
-import { type FC, useCallback, useEffect, useRef, useState } from 'react'
+import { type FC, useCallback, useState, useRef, useEffect } from 'react'
 
 import type { TTabItem } from '~/spec'
 import { isString } from '~/validator'
@@ -23,15 +23,17 @@ const Tabs: FC<TProps> = ({ onChange = console.log, items = temItems, activeKey 
   const [activeIndex, setActiveIndex] = useState(0)
   const tabsRef = useRef<HTMLDivElement>(null)
   const [sliderStyle, setSliderStyle] = useState({})
-  const controlledActiveIndex = items.findIndex(
-    (item) => (isString(item) ? item : item.slug || item.title) === activeKey,
-  )
-  const currentActiveIndex =
-    activeKey ? (controlledActiveIndex !== -1 ? controlledActiveIndex : 0) : activeIndex
+
+  useEffect(() => {
+    const index = items.findIndex(
+      (item) => (isString(item) ? item : item.slug || item.title) === activeKey,
+    )
+    setActiveIndex(index !== -1 ? index : 0)
+  }, [activeKey, items])
 
   useEffect(() => {
     if (tabsRef.current) {
-      const activeTab = tabsRef.current.children[currentActiveIndex] as HTMLElement
+      const activeTab = tabsRef.current.children[activeIndex] as HTMLElement
       if (activeTab) {
         const { offsetLeft, offsetWidth } = activeTab
         setSliderStyle({
@@ -40,7 +42,7 @@ const Tabs: FC<TProps> = ({ onChange = console.log, items = temItems, activeKey 
         })
       }
     }
-  }, [currentActiveIndex])
+  }, [activeIndex])
 
   const handleItemClick = useCallback(
     (item, index) => {
@@ -56,7 +58,7 @@ const Tabs: FC<TProps> = ({ onChange = console.log, items = temItems, activeKey 
         {items.map((item, index) => (
           <div
             key={isString(item) ? item : item.slug || item.title}
-            className={cn(s.tabItem, index === currentActiveIndex && s.activeTabItem)}
+            className={cn(s.tabItem, index === activeIndex && s.activeTabItem)}
             onClick={() => handleItemClick(item, index)}
           >
             {item.title}

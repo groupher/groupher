@@ -1,6 +1,6 @@
 'use client'
 
-import { type ReactNode, useEffect, useRef } from 'react'
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ANCHOR } from '~/const/dom'
 import EVENT from '~/const/event'
 import TYPE from '~/const/type'
@@ -9,6 +9,7 @@ import useDrawerOffset from '~/hooks/useDrawerOffset'
 import useEvent from '~/hooks/useEvent'
 import Portal from '~/widgets/Portal'
 import useSalon, { cn } from './salon'
+import { CLOSE_ANIMATION_BUFFER_MS, CLOSE_ANIMATION_MS } from './salon/constant'
 
 type TProps = {
   children: ReactNode
@@ -19,28 +20,128 @@ type TProps = {
 
 export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POST_VIEW }: TProps) {
   const contentRef = useRef<HTMLDivElement | null>(null)
+  const drawerRef = useRef<HTMLDivElement | null>(null)
+
+  const [mounted, setMounted] = useState(false)
+  const [visible, setVisible] = useState(false)
+  const [closing, setClosing] = useState(false)
+
+  const closeTimerRef = useRef<number | null>(null)
+  const didCloseRef = useRef(false)
+
+  // close action needs to be stable for timers / transitionend
+  const onCloseRef = useRef<() => void>(() => {})
+  onCloseRef.current = onClose
+
   const { rightOffset, fromContentEdge } = useDrawerOffset()
-  const s = useSalon({ visible: show, closing: false, type, rightOffset, fromContentEdge })
+  const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
 
   useEvent(EVENT.DRAWER.CONTENT_LOADED, () => {
     contentRef.current?.scrollTo({ top: 0 })
   })
 
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }, [])
+
+  const commitClose = useCallback(() => {
+    if (didCloseRef.current) return
+    didCloseRef.current = true
+    setMounted(false)
+    setClosing(false)
+    unlockPage()
+    onCloseRef.current?.()
+  }, [])
+
+  const scheduleFallbackClose = useCallback(() => {
+    clearCloseTimer()
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null
+      commitClose()
+    }, CLOSE_ANIMATION_MS + CLOSE_ANIMATION_BUFFER_MS)
+  }, [clearCloseTimer, commitClose])
+
+  const triggerEnter = useCallback(() => {
+    didCloseRef.current = false
+    setClosing(false)
+    setVisible(false)
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    drawerRef.current?.offsetHeight
+
+    const raf = requestAnimationFrame(() => setVisible(true))
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  // show -> mounted / close orchestration (handles reopen while closing)
   useEffect(() => {
-    if (!show) {
-      unlockPage()
+    clearCloseTimer()
+
+    if (show) {
+      lockPage()
+
+      if (!mounted) {
+        setMounted(true)
+        return
+      }
+
+      if (closing || !visible) {
+        triggerEnter()
+      } else {
+        setClosing(false)
+      }
+
       return
     }
 
-    lockPage()
-    return () => unlockPage()
-  }, [show])
+    // show=false -> start closing animation (but keep mounted until animation ends)
+    if (mounted) {
+      setClosing(true)
+      setVisible(false)
+      scheduleFallbackClose()
+    } else {
+      unlockPage()
+    }
+  }, [show, mounted, visible, closing, clearCloseTimer, scheduleFallbackClose, triggerEnter])
 
-  if (!show) return null
+  // initial mount enter: when mounted becomes true, run enter sequence once
+  useLayoutEffect(() => {
+    if (!mounted) return
+    return triggerEnter()
+  }, [mounted, triggerEnter])
+
+  const handleDrawerTransitionEnd = useCallback(
+    (e: React.TransitionEvent<HTMLDivElement>) => {
+      if (e.target !== drawerRef.current) return
+      if (closing && !visible && e.propertyName === 'opacity') {
+        clearCloseTimer()
+        commitClose()
+      }
+    },
+    [closing, visible, clearCloseTimer, commitClose],
+  )
+
+  // unmount cleanup
+  useEffect(() => {
+    return () => {
+      clearCloseTimer()
+      unlockPage()
+    }
+  }, [clearCloseTimer])
+
+  if (!mounted) return null
 
   return (
     <Portal>
-      <div className={s.drawer} style={s.drawerStyle}>
+      <div
+        ref={drawerRef}
+        className={s.drawer}
+        style={s.drawerStyle}
+        onTransitionEnd={handleDrawerTransitionEnd}
+      >
         <div ref={contentRef} className={s.drawerContent} style={s.drawerContentStyle}>
           {children}
         </div>
@@ -52,7 +153,10 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
         aria-label='drawer mask'
         className={cn(s.overlay, ANCHOR.GLOBAL_BLUR_CLASS)}
         style={s.overlayStyle}
-        onClick={onClose}
+        onClick={() => {
+          // State drawer close is caller controlled
+          onCloseRef.current?.()
+        }}
       />
     </Portal>
   )

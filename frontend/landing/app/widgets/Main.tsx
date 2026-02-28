@@ -22,9 +22,13 @@ const Main: FC<TProps> = ({ children }) => {
   const { hasTopbar } = useTopbar()
   const { scrollY } = useScroll()
 
-  const [fromWidth, setFromWidth] = useState(DEFAULT_CONTAINER_WIDTH)
-  const [toWidth, setToWidth] = useState(DEFAULT_CONTAINER_WIDTH)
-  const [scrollRange, setScrollRange] = useState(0)
+  const [layout, setLayout] = useState({
+    fromWidth: DEFAULT_CONTAINER_WIDTH,
+    toWidth: DEFAULT_CONTAINER_WIDTH,
+    scrollRange: 0,
+  })
+
+  const { fromWidth, toWidth, scrollRange } = layout
 
   useEffect(() => {
     const getConfiguredContainerWidth = (): number => {
@@ -52,12 +56,15 @@ const Main: FC<TProps> = ({ children }) => {
 
       const vw = window.innerWidth
       const vh = window.innerHeight || 1
-      setFromWidth(vw)
-      setToWidth(Math.min(tokenWidth, vw))
-      setScrollRange(vh)
+      setLayout({
+        fromWidth: vw,
+        toWidth: Math.min(tokenWidth, vw),
+        scrollRange: vh,
+      })
     }
 
     updateVars()
+
     let raf: number | null = null
     const onResize = () => {
       if (raf !== null) cancelAnimationFrame(raf)
@@ -84,22 +91,17 @@ const Main: FC<TProps> = ({ children }) => {
     mass: 0.25, // 越大惯性越明显
   })
 
-  useTransform(smoothProgress, (p) => {
-    if (typeof window !== 'undefined') {
+  useEffect(() => {
+    return smoothProgress.on('change', (p) => {
       if (scrollY.get() === 0) {
         document.documentElement.style.setProperty(`${LANDING_WIDTH_VAR}`, '100vw')
-        return fromWidth
+        return
       }
-    }
 
-    const width = fromWidth + p * (toWidth - fromWidth)
-
-    if (typeof window !== 'undefined') {
+      const width = fromWidth + p * (toWidth - fromWidth)
       document.documentElement.style.setProperty(`${LANDING_WIDTH_VAR}`, `${width}px`)
-    }
-
-    return width
-  })
+    })
+  }, [smoothProgress, scrollY, fromWidth, toWidth])
 
   return (
     <motion.main key={locale} className={s.wrapper}>
