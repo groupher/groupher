@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Seeds.Config do
 
   @tag_threads [:post, :changelog, :kanban, :doc, :about]
   @content_threads [:post, :changelog, :doc]
-  @kanban_states [:todo, :wip, :done]
+  @kanban_states [:backlog, :todo, :wip, :done, :reject]
 
   @tag_count_range {10, 20}
   @group_count_range {2, 3}

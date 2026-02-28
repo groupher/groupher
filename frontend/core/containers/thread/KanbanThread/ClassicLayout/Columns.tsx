@@ -8,6 +8,7 @@ import useKanbanPosts from '~/hooks/useKanbanPosts'
 import GtdWipSVG from '~/icons/GtdWip'
 import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
+import RejectSVG from '~/icons/Reject'
 
 import KanbanItem from '~/widgets/KanbanItem'
 import EmptyItem from '~/widgets/KanbanItem/EmptyItem'
@@ -17,10 +18,29 @@ import useSalon from '../salon/classic_layout/columns'
 export default () => {
   const s = useSalon()
 
-  const { todo: todoPosts, wip: wipPosts, done: donePosts } = useKanbanPosts()
+  const {
+    backlog: backlogPosts,
+    todo: todoPosts,
+    wip: wipPosts,
+    done: donePosts,
+    rejected: rejectedPosts,
+  } = useKanbanPosts()
 
   return (
     <>
+      <div className={s.column}>
+        <div className={s.header}>
+          <GtdTodoSVG className={s.backlogIcon} />
+          <h4 className={s.label}>积压</h4>
+          <div className={s.subTitle}>{backlogPosts.totalCount}</div>
+          <div className="grow" />
+        </div>
+        <div className={s.backlogBody}>
+          {backlogPosts.totalCount === 0 && <EmptyItem />}
+          {backlogPosts.totalCount !== 0 &&
+            backlogPosts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
+        </div>
+      </div>
       <div className={s.column}>
         <div className={s.header}>
           <GtdTodoSVG className={s.todoIcon} />
@@ -60,6 +80,20 @@ export default () => {
 
           {donePosts.totalCount !== 0 &&
             donePosts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
+        </div>
+      </div>
+      <div className={s.column}>
+        <div className={s.header}>
+          <RejectSVG className={s.rejectedIcon} />
+          <h4 className={s.label}>已拒绝</h4>
+          <div className={s.subTitle}>{rejectedPosts.totalCount}</div>
+          <div className="grow" />
+        </div>
+        <div className={s.rejectedBody}>
+          {rejectedPosts.totalCount === 0 && <EmptyItem />}
+
+          {rejectedPosts.totalCount !== 0 &&
+            rejectedPosts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
         </div>
       </div>
     </>

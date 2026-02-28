@@ -157,7 +157,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.search_communities/3)
     end
 
-    @desc "kanban posts grouped by todo/wip/done"
+    @desc "kanban posts grouped by backlog/todo/wip/done/rejected"
     field :grouped_kanban_posts, :grouped_posts do
       arg(:community, non_null(:string))
 
@@ -173,7 +173,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.open_graph_info/3)
     end
 
-    @desc "kanban posts grouped by todo/wip/done"
+    @desc "paged kanban posts by state"
     field :paged_kanban_posts, :paged_posts do
       arg(:community, non_null(:string))
       arg(:filter, non_null(:paged_kanban_posts_filter))

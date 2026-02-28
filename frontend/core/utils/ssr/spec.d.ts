@@ -33,9 +33,11 @@ export type TPagedChangelogsRes = TGQSSRResult & { pagedChangelogs: TPagedArticl
 
 export type TGroupedKanbanPostsRes = TGQSSRResult & {
   groupedKanbanPosts: {
+    backlog: TPagedArticles
     todo: TPagedArticles
     wip: TPagedArticles
     done: TPagedArticles
+    rejected: TPagedArticles
   }
 }
 

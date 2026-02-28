@@ -332,9 +332,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   paged_article_objects()
 
   object :grouped_posts do
+    field(:backlog, :paged_posts)
     field(:todo, :paged_posts)
     field(:wip, :paged_posts)
     field(:done, :paged_posts)
+    field(:rejected, :paged_posts)
   end
 
   object :paged_reports do

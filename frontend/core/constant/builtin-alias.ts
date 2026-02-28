@@ -32,6 +32,12 @@ export const BUILTIN_ALIAS = [
     group: ALIAS_GROUP.THREAD,
   },
   {
+    slug: 'backlog',
+    name: '积压',
+    original: '积压',
+    group: ALIAS_GROUP.KANBAN,
+  },
+  {
     slug: 'todo',
     name: '待办',
     original: '待办',
@@ -47,6 +53,12 @@ export const BUILTIN_ALIAS = [
     slug: 'done',
     name: '已完成',
     original: '已完成',
+    group: ALIAS_GROUP.KANBAN,
+  },
+  {
+    slug: 'rejected',
+    name: '已拒绝',
+    original: '已拒绝',
     group: ALIAS_GROUP.KANBAN,
   },
   {

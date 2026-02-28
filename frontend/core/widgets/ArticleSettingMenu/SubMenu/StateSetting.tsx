@@ -67,7 +67,7 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
               s.item,
               `hover:${s.rainbowSoft(color)}`,
               active && s.rainbowSoft(color),
-              index === 3 && 'mt-3.5',
+              index === 4 && 'mt-3.5',
             )}
             onClick={() => {
               setState(item.key)

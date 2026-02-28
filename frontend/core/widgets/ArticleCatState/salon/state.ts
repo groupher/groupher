@@ -28,6 +28,7 @@ export default ({ cat, state }: TProps) => {
   const [todoColor, wipColor, doneColor] = useKanbanBgColors()
 
   const stateColor = {
+    [ARTICLE_STATE.BACKLOG]: todoColor,
     [ARTICLE_STATE.TODO]: todoColor,
     [ARTICLE_STATE.WIP]: wipColor,
     [ARTICLE_STATE.DONE]: doneColor,

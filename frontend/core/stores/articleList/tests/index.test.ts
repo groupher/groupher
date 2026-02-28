@@ -43,14 +43,18 @@ describe('stores/articleList', () => {
     store.commit({
       tags,
       pagedPosts: paged,
+      backlog: { ...paged, entries: [{ id: 'a0' }] },
       todo: paged,
       wip: { ...paged, entries: [] },
       done: { ...paged, entries: [{ id: 'a2' }] },
+      rejected: { ...paged, entries: [{ id: 'a3' }] },
     })
 
     expect(store.pagedPosts.entries).toHaveLength(2)
+    expect(store.backlog.entries).toHaveLength(1)
     expect(store.todo.entries).toHaveLength(2)
     expect(store.wip.entries).toHaveLength(0)
     expect(store.done.entries).toHaveLength(1)
+    expect(store.rejected.entries).toHaveLength(1)
   })
 })

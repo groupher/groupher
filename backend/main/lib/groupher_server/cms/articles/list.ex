@@ -29,6 +29,13 @@ defmodule GroupherServer.CMS.Articles.List do
   @comment_article_preloads @article_threads |> Enum.map(&Keyword.new([{:comment, &1}]))
   @cited_preloads @article_preloads ++ [[comment: :author] ++ @comment_article_preloads]
   @article_state ArticleEnums.state_values() |> Enum.into(%{}, &{&1, &1})
+  @kanban_rejected_states [
+    @article_state.reject,
+    @article_state.reject_dup,
+    @article_state.reject_no_plan,
+    @article_state.reject_repro,
+    @article_state.reject_stale
+  ]
 
   @spec page(atom(), map()) :: T.domain_res(term())
   def page(thread, filter) do
@@ -61,16 +68,23 @@ defmodule GroupherServer.CMS.Articles.List do
   def grouped_kanban(%Community{} = community) do
     filter = %{page: 1, size: 20}
 
+    # rejected is a virtual kanban column that aggregates all reject states.
     with {:ok, paged_todo} <-
            paged_kanban(community, Map.merge(filter, %{state: @article_state.todo})),
+         {:ok, paged_backlog} <-
+           paged_kanban(community, Map.merge(filter, %{state: @article_state.backlog})),
          {:ok, paged_wip} <-
            paged_kanban(community, Map.merge(filter, %{state: @article_state.wip})),
          {:ok, paged_done} <-
-           paged_kanban(community, Map.merge(filter, %{state: @article_state.done})) do
+           paged_kanban(community, Map.merge(filter, %{state: @article_state.done})),
+         {:ok, paged_rejected} <-
+           paged_kanban(community, Map.merge(filter, %{state: @kanban_rejected_states})) do
       %{
         todo: paged_todo,
+        backlog: paged_backlog,
         wip: paged_wip,
-        done: paged_done
+        done: paged_done,
+        rejected: paged_rejected
       }
       |> done
     end
@@ -83,6 +97,34 @@ defmodule GroupherServer.CMS.Articles.List do
     filter = filter |> Map.merge(%{state: state})
 
     paged_kanban(community, filter)
+  end
+
+  def paged_kanban(%Community{} = community, %{state: states} = filter) when is_list(states) do
+    %{page: page, size: size} = filter
+
+    valid_states =
+      states
+      |> Enum.filter(&is_atom/1)
+      |> Enum.filter(&(&1 in Map.keys(@article_state)))
+
+    case valid_states do
+      [] ->
+        %{entries: [], total_count: 0, page_number: page, page_size: size, total_pages: 0} |> done()
+
+      _ ->
+        flags = %{
+          mark_delete: false,
+          pending: :legal,
+          community_id: community.id,
+          state: nil
+        }
+
+        Post
+        |> QueryBuilder.filter_pack(Map.merge(filter, flags))
+        |> where([p], p.state in ^valid_states)
+        |> ORM.paginator(~m(page size)a)
+        |> done()
+    end
   end
 
   def paged_kanban(%Community{} = community, filter) do

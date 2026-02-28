@@ -14,9 +14,11 @@ export type TInit = {
   pagedChangelogs?: TPagedArticles
 
   // kanban's
+  backlog?: TPagedArticles
   todo?: TPagedArticles
   wip?: TPagedArticles
   done?: TPagedArticles
+  rejected?: TPagedArticles
 
   tags?: TTag[]
   activeTag?: TTag | null

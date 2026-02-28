@@ -4,6 +4,10 @@ import type { TArticleState, TColorName } from '~/spec'
 
 export const getGTDColor = (state: TArticleState, bgColors: TColorName[]): TColorName => {
   switch (state) {
+    case ARTICLE_STATE.BACKLOG: {
+      return bgColors[0]
+    }
+
     case ARTICLE_STATE.TODO: {
       return bgColors[0]
     }
