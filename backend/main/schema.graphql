@@ -79,9 +79,6 @@ type RootQueryType {
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
 
-  "get temp token for upload assets"
-  applyUploadTokens: UploadTokens
-
   allPassportRules: AllRules
 
   "if use has pending apply"
@@ -105,7 +102,7 @@ type RootQueryType {
   "get all the threads across all communities"
   pagedThreads(filter: ThreadsFilter): PagedThreads
 
-  "get paged article tags"
+  "get paged community tags"
   pagedCommunityTags(filter: CommunityTagsFilter): PagedCommunityTags
 
   "got basic comments state"
@@ -132,13 +129,13 @@ type RootQueryType {
   "search communities by title"
   searchCommunities(title: String!, category: String): PagedCommunities
 
-  "kanban posts grouped by todo\/wip\/done"
+  "kanban posts grouped by backlog\/todo\/wip\/done\/rejected"
   groupedKanbanPosts(community: String!): GroupedPosts
 
   "get open graph info by url"
   openGraphInfo(url: String!): OpenGraph
 
-  "kanban posts grouped by todo\/wip\/done"
+  "paged kanban posts by state"
   pagedKanbanPosts(community: String!, filter: PagedKanbanPostsFilter!): PagedPosts
 
   "get post by id"
@@ -1011,13 +1008,6 @@ type CommunityModerator {
   user: CommonUser
 }
 
-type UploadTokens {
-  accessKeyId: String
-  accessKeySecret: String
-  expiration: String
-  securityToken: String
-}
-
 type AllRules {
   root: String
   moderator: String
@@ -1267,9 +1257,11 @@ type PagedDocs {
 }
 
 type GroupedPosts {
+  backlog: PagedPosts
   todo: PagedPosts
   wip: PagedPosts
   done: PagedPosts
+  rejected: PagedPosts
 }
 
 type PagedReports {
