@@ -17,11 +17,11 @@ const MediaReports: FC<TProps> = ({ items }) => {
   return (
     <>
       {sortByIndex(items).map((item: TMediaReport) => {
-        const { index, favicon, title, url, siteName } = item
+        const { favicon, title, url, siteName } = item
         if (!title) return null
 
         return (
-          <div className={s.preview} key={index}>
+          <div className={s.preview} key={url}>
             <div className={s.brand}>
               <Img src={favicon} className={s.favicon} />
               <div className={s.siteName}>{siteName}</div>

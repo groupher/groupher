@@ -1,5 +1,5 @@
-import { type FC, memo } from 'react'
 import { isEmpty } from 'ramda'
+import { type FC, memo } from 'react'
 
 import Button from '~/widgets/Buttons/Button'
 
@@ -17,14 +17,14 @@ const Suggestion: FC<TProps> = ({ items, onChange }) => {
 
   return (
     <div className={s.wrapper}>
-      <label className={s.hint}>常用别名:</label>
+      <div className={s.hint}>常用别名:</div>
       <div className={s.list}>
         {items.map((item) => (
           <Button
             key={item}
             className={s.item}
             space={2}
-            size="tiny"
+            size='tiny'
             ghost
             onClick={() => onChange(item)}
           >

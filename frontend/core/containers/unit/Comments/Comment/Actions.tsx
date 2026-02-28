@@ -91,7 +91,8 @@ const Actions: FC<TProps> = ({ data }) => {
   return (
     <div className={s.wrapper}>
       {data.meta.isLegal && (
-        <div
+        <button
+          type='button'
           className={s.replyAction}
           onClick={() => {
             if (accountInfo) return authWarn()
@@ -100,7 +101,7 @@ const Actions: FC<TProps> = ({ data }) => {
           }}
         >
           {t('comment.action.reply')}
-        </div>
+        </button>
       )}
 
       <div className="grow" />

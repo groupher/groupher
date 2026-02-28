@@ -74,7 +74,8 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   return (
     <div className={s.wrapper}>
       {tags.map((item: TTag) => (
-        <div
+        <button
+          type='button'
           className={s.item}
           key={item.id}
           onClick={() => handleCheck(item.id, !includes(String(item.id), checked))}
@@ -83,7 +84,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
           <div className={s.title}>{item.title}</div>
           <div className='grow' />
           <Checker size='small' checked={includes(item.id, checked)} />
-        </div>
+        </button>
       ))}
 
       <Footer

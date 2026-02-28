@@ -1,8 +1,6 @@
-/* eslint-disable react/no-array-index-key */
-import { type FC, memo, Fragment } from 'react'
-
-import BotSVG from '~/icons/Bot'
+import { type FC, Fragment, memo } from 'react'
 import useTrans from '~/hooks/useTrans'
+import BotSVG from '~/icons/Bot'
 
 import useSalon, { cn } from '../../salon/comment/desktop_view/illegal_bar'
 
@@ -22,8 +20,7 @@ const IllegalBar: FC<TProps> = ({ illegalReason, illegalWords, isFold }) => {
       <div className={s.content}>
         {t('comment.illegal.prefix')} [
         {illegalReason.map((reason, index) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-          <Fragment key={index}>
+          <Fragment key={reason}>
             <div className={s.reason}>{reason}</div>
             {index !== illegalReason.length - 1 && <>{t('comment.illegal.separator')}</>}
           </Fragment>

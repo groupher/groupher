@@ -1,6 +1,4 @@
 import type { FC } from 'react'
-import { THREAD } from '~/const/thread'
-import useCommunity from '~/hooks/useCommunity'
 import { previewArticle } from '~/signal'
 import type { TPost } from '~/spec'
 import ArticleReadLabel from '~/widgets/ArticleReadLabel'
@@ -13,24 +11,22 @@ type TProps = {
 }
 
 const Header: FC<TProps> = ({ article }) => {
-  const { innerId, title, communityTags } = article
-  const { slug } = useCommunity()
+  const { title, communityTags } = article
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
       <div className={s.brief}>
         <ArticleReadLabel viewed={article.viewerHasViewed} />
-        <a
+        <button
+          type='button'
           className={s.title}
-          onClick={(e) => {
-            e.preventDefault()
+          onClick={() => {
             previewArticle(article)
           }}
-          href={`/${slug}/${THREAD.POST}/${innerId}`}
         >
           {title}
-        </a>
+        </button>
         {/*  @ts-ignore */}
         <TagsList items={communityTags} left={12} />
       </div>

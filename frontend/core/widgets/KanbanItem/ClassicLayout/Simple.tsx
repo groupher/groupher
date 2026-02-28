@@ -42,9 +42,9 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <div className={s.header}>
         <TagsList items={[tags[titleIdx]]} />
       </div>
-      <div className={s.title} onClick={() => previewArticle(article)}>
+      <button type='button' className={s.title} onClick={() => previewArticle(article)}>
         {article.title}
-      </div>
+      </button>
       <div className={s.footer}>
         <div className="row-center">
           <Upvote
