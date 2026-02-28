@@ -194,6 +194,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:articles_count, :integer)
     field(:subscribers_count, :integer)
     field(:moderators_count, :integer)
+
     field :community_tags_count, :integer do
       resolve(&R.CMS.community_tags_count/3)
     end
@@ -331,7 +332,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   paged_article_objects()
 
-  object :grouped_posts do
+  object :kanban_posts do
     field(:backlog, :paged_posts)
     field(:todo, :paged_posts)
     field(:wip, :paged_posts)

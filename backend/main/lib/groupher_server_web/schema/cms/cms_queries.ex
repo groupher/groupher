@@ -158,7 +158,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     end
 
     @desc "kanban posts grouped by backlog/todo/wip/done/rejected"
-    field :grouped_kanban_posts, :grouped_posts do
+    field :grouped_kanban_posts, :kanban_posts do
       arg(:community, non_null(:string))
 
       middleware(M.FrontDesk, :community)
