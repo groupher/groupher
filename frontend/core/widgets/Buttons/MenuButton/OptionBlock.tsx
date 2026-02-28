@@ -1,4 +1,4 @@
-import { type FC } from 'react'
+import type { FC } from 'react'
 import { ICON } from '~/config'
 import SVG from '~/const/svg'
 import { cutRest } from '~/fmt'
@@ -20,10 +20,7 @@ const OptionBlock: FC<TProps> = ({ item, onClick, s }) => {
     return (
       <a className={cn(s.block, 'no-underline')} href={item.link}>
         <div className={s.item}>
-          <div className={s.icon}>
-            {/* @ts-ignore */}
-            {s.getIcon(iconName)({})}
-          </div>
+          <div className={s.icon}>{s.getIcon(iconName)({})}</div>
           <div className={s.title}>{cutRest(item.title, 50)}</div>
           <Img src={`${ICON}/shape/link-hint.svg`} className={s.linkIcon} />
         </div>
