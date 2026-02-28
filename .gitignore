@@ -5,6 +5,7 @@
 build
 frontend/**/out/
 coverage/
+tools/reports
 
 # =====================
 # Playwright
