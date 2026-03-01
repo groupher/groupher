@@ -163,6 +163,12 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:index, :integer)
   end
 
+  input_object :article_ref_input do
+    field(:inner_id, non_null(:id))
+    field(:community, non_null(:string))
+    field(:thread, :thread)
+  end
+
   input_object :pagi_filter do
     @desc "limit of records (default 20), if first > 30, only return 30 at most"
     pagination_args()

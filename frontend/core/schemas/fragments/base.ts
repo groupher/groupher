@@ -286,8 +286,8 @@ export const pagi = `
 export const getUpvote = (thread, withLatestUser = false) => {
   if (withLatestUser) {
     return gql`
-    mutation ($id: ID!, $community: String!) {
-      upvote${titleCase(thread)}(id: $id, $community: $community) {
+    mutation ($article: ArticleRefInput!) {
+      upvote${titleCase(thread)}(article: $article) {
         innerId
         upvotesCount
         meta {
@@ -300,8 +300,8 @@ export const getUpvote = (thread, withLatestUser = false) => {
   `
   }
   return gql`
-    mutation ($id: ID!, $community: String!) {
-      upvote${titleCase(thread)}(id: $id, $community: $community) {
+    mutation ($article: ArticleRefInput!) {
+      upvote${titleCase(thread)}(article: $article) {
         innerId
         upvotesCount
       }
@@ -312,8 +312,8 @@ export const getUpvote = (thread, withLatestUser = false) => {
 export const getUndoUpvote = (thread, withLatestUser = false) => {
   if (withLatestUser) {
     return gql`
-    mutation ($id: ID!, $community: String!) {
-      undoUpvote${titleCase(thread)}(id: $id, $community: $community) {
+    mutation ($article: ArticleRefInput!) {
+      undoUpvote${titleCase(thread)}(article: $article) {
         innerId
         upvotesCount
         meta {
@@ -326,8 +326,8 @@ export const getUndoUpvote = (thread, withLatestUser = false) => {
   `
   }
   return gql`
-    mutation ($id: ID!, $community: String!) {
-      undoUpvote${titleCase(thread)}(id: $id, $community: $community) {
+    mutation ($article: ArticleRefInput!) {
+      undoUpvote${titleCase(thread)}(article: $article) {
         innerId
         upvotesCount
       }

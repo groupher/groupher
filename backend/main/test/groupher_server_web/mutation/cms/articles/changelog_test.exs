@@ -98,7 +98,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     end
 
     test "delete a changelog by changelog's owner", ~m(owner_conn community changelog)a do
-      variables = %{community: community.slug, id: changelog.inner_id}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
       result = owner_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
@@ -112,7 +112,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       rule_conn =
         simu_conn(:user, cms: %{belongs_community_title => %{"changelog.delete" => true}})
 
-      variables = %{community: community.slug, id: changelog.inner_id}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
       result = rule_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
@@ -120,7 +120,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     end
 
     test "delete a changelog without login user fails", ~m(guest_conn community changelog)a do
-      variables = %{community: community.slug, id: changelog.inner_id}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
 
       assert guest_conn
              |> mutation_error?(
@@ -136,14 +136,14 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       passport_rules = %{changelog_communities_0 => %{"changelog.delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{community: community.slug, id: changelog.inner_id}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
       result = rule_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
     end
 
     test "unauth user delete changelog fails", ~m(user_conn guest_conn community changelog)a do
-      variables = %{community: community.slug, id: changelog.inner_id}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
       schema = Schema.m(:delete_article, :changelog)
 
@@ -155,12 +155,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     test "update a changelog without login user fails", ~m(guest_conn community changelog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
-      variables = %{
-        id: changelog.inner_id,
-        community: community.slug,
-        title: "updated title #{unique_num}",
-        body: mock_rich_text("updated body #{unique_num}")
-      }
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}, title: "updated title #{unique_num}", body: mock_rich_text("updated body #{unique_num}")}
 
       assert guest_conn
              |> mutation_error?(
@@ -183,14 +178,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
           user
         )
 
-      variables = %{
-        id: changelog.inner_id,
-        community: community.slug,
-        title: "updated title #{unique_num}",
-        # body: mock_rich_text("updated body #{unique_num}"),,
-        body: mock_rich_text("updated body #{unique_num}"),
-        communityTags: [community_tag.id]
-      }
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}, title: "updated title #{unique_num}", body: mock_rich_text("updated body #{unique_num}"), communityTags: [community_tag.id]}
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
       assert result["title"] == variables.title
@@ -233,11 +221,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
           user
         )
 
-      variables = %{
-        id: changelog.inner_id,
-        community: community.slug,
-        communityTags: [community_tag.id, community_tag2.id]
-      }
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}, communityTags: [community_tag.id, community_tag2.id]}
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
 
@@ -249,11 +233,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       assert result["communityTags"] |> List.last() |> get_in(["id"]) ==
                to_string(community_tag2.id)
 
-      variables = %{
-        id: changelog.inner_id,
-        community: community.slug,
-        communityTags: [community_tag2.id, community_tag3.id]
-      }
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}, communityTags: [community_tag2.id, community_tag3.id]}
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
 
@@ -270,12 +250,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
          ~m(owner_conn community changelog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
-      variables = %{
-        id: changelog.inner_id,
-        community: community.slug,
-        title: "updated title #{unique_num}",
-        body: mock_rich_text("updated body #{unique_num}")
-      }
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}, title: "updated title #{unique_num}", body: mock_rich_text("updated body #{unique_num}")}
 
       updated_changelog =
         owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
@@ -292,12 +267,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       unique_num = System.unique_integer([:positive, :monotonic])
 
-      variables = %{
-        id: changelog.inner_id,
-        community: community.slug,
-        title: "updated title #{unique_num}",
-        body: mock_rich_text("updated body #{unique_num}")
-      }
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}, title: "updated title #{unique_num}", body: mock_rich_text("updated body #{unique_num}")}
 
       updated_changelog =
         rule_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
@@ -308,12 +278,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     test "unauth user update changelog fails", ~m(user_conn guest_conn community changelog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
-      variables = %{
-        id: changelog.inner_id,
-        community: community.slug,
-        title: "updated title #{unique_num}",
-        body: mock_rich_text("updated body #{unique_num}")
-      }
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}, title: "updated title #{unique_num}", body: mock_rich_text("updated body #{unique_num}")}
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 

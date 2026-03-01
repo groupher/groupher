@@ -22,7 +22,14 @@ const Mirrow2Home: FC<TProps> = ({ onBack }) => {
   const [result, updatePost] = useMutation(S.updatePost)
 
   const handleUpdate = () => {
-    const params = { id: article.id }
+    const params = {
+      article: {
+        innerId: article.innerId,
+        community: article.communitySlug,
+        thread: article.meta.thread,
+      },
+    }
+
     console.log('## ## handle action')
     updatePost(params).then((result) => {
       if (result.error) {

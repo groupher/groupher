@@ -3,8 +3,8 @@ import { gql } from 'urql'
 import { F } from '~/schemas'
 
 const updatePost = gql`
-  mutation ($id: ID!, $title: String, $body: String, $communityTags: [ID]) {
-    updatePost(id: $id, title: $title, body: $body, communityTags: $communityTags) {
+  mutation ($article: ArticleRefInput!, $title: String, $body: String, $communityTags: [ID]) {
+    updatePost(article: $article, title: $title, body: $body, communityTags: $communityTags) {
       id
       title
       communityTags {
@@ -14,16 +14,16 @@ const updatePost = gql`
   }
 `
 const setPostCat = gql`
-  mutation ($id: ID!, $cat: ArticleCatEnum!) {
-    setPostCat(id: $id, cat: $cat) {
+  mutation ($article: ArticleRefInput!, $cat: ArticleCatEnum!) {
+    setPostCat(article: $article, cat: $cat) {
       id
       cat
     }
   }
 `
 const setPostState = gql`
-  mutation ($id: ID!, $state: ArticleStateEnum!) {
-    setPostState(id: $id, state: $state) {
+  mutation ($article: ArticleRefInput!, $state: ArticleStateEnum!) {
+    setPostState(article: $article, state: $state) {
       id
       state
     }
@@ -31,16 +31,16 @@ const setPostState = gql`
 `
 
 const pinPost = gql`
-  mutation ($id: ID!, $communityId: ID!) {
-    pinPost(id: $id, communityId: $communityId) {
+  mutation ($article: ArticleRefInput!) {
+    pinPost(article: $article) {
       id
     }
   }
 `
 
 const undoPinPost = gql`
-  mutation ($id: ID!, $communityId: ID!) {
-    undoPinPost(id: $id, communityId: $communityId) {
+  mutation ($article: ArticleRefInput!) {
+    undoPinPost(article: $article) {
       id
       isPinned
     }

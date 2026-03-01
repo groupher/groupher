@@ -1,8 +1,8 @@
 import F from '../fragments'
 
 export const doc = `
-  query doc($community: String!, $id: ID!, $userHasLogin: Boolean!) {
-    doc(community: $community, id: $id) {
+  query doc($article: ArticleRefInput!, $userHasLogin: Boolean!) {
+    doc(article: $article) {
       ${F.article}
       ${F.articleDetail}
     }

@@ -26,19 +26,18 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Doc do
 
     @desc "update a cms/doc"
     field :update_doc, :doc do
-      arg(:id, non_null(:id))
-      arg(:community, non_null(:string))
+      arg(:article, non_null(:article_ref_input))
       arg(:title, :string)
       arg(:body, :string)
       arg(:digest, :string)
       arg(:copy_right, :string)
       arg(:link_addr, :string)
       arg(:community_tags, list_of(:id))
-      arg(:thread, :thread, default_value: :doc)
 
       middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :article)
+      middleware(M.ArticleArgs, thread: :doc)
       middleware(M.Passport, claim: "owner;cms->c?->doc.edit")
+      middleware(M.ArticleLoader)
 
       resolve(&R.CMS.update_article/3)
     end

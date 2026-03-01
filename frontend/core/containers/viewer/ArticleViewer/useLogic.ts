@@ -49,7 +49,14 @@ export default (): TRet => {
     // console.log("## load article: ", article)
     // const { communitySlug, innerId, meta } = article
     // const { communitySlug, meta } = article
-    const params = { community, id: innerId, userHasLogin }
+    const params = {
+      article: {
+        innerId,
+        community,
+        thread: thread.toUpperCase(),
+      },
+      userHasLogin,
+    }
 
     setLoading(true)
     // query(S.getArticle(meta.thread), params).then((res) => {

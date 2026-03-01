@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
 
   describe "root mutation" do
     test "root can markDelete a post", ~m(community post)a do
-      variables = %{community: community.slug, id: post.inner_id}
+      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
 
       passport_rules = %{"root" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       passport_rules = %{"root" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{community: community.slug, id: post.inner_id}
+      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
       deleted = rule_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
 
       assert deleted["innerId"] == to_string(post.inner_id)

@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
 
   describe "[mutation blog flag curd]" do
     test "auth user can markDelete blog", ~m(community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
 
       passport_rules = %{"blog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.blogs_count == 1
 
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
       passport_rules = %{"blog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
 
     test "unauth user markDelete blog fails",
          ~m(user_conn guest_conn community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       schema = Schema.m(:mark_delete_article, :blog)
@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     end
 
     test "auth user can undo markDelete blog", ~m(community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
 
       {:ok, _} = CMS.Articles.mark_delete(blog)
 
@@ -85,7 +85,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.blogs_count == 0
 
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
       passport_rules = %{"blog.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
       rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :blog), variables)
@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
 
     test "unauth user undo markDelete blog fails",
          ~m(user_conn guest_conn community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       schema = Schema.m(:undo_mark_delete_article, :blog)
@@ -158,7 +158,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     end
 
     test "auth user can pin blog", ~m(community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
 
       passport_rules = %{community.slug => %{"blog.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -169,7 +169,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     end
 
     test "unauth user pin blog fails", ~m(user_conn guest_conn community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
@@ -187,7 +187,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     end
 
     test "auth user can undo pin blog", ~m(community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
 
       passport_rules = %{community.slug => %{"blog.undo_pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -199,7 +199,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
     end
 
     test "unauth user undo pin blog fails", ~m(user_conn guest_conn community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn

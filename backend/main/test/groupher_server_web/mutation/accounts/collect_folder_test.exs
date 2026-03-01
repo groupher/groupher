@@ -97,8 +97,8 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
 
   describe "[Accounts CollectFolder add/remove]" do
     @query """
-    mutation($id: ID!, $folderId: ID!, $community: String!, $thread: Thread) {
-      addToCollect(id: $id, folderId: $folderId, community: $community, thread: $thread) {
+    mutation($article: ArticleRefInput!, $folderId: ID!) {
+      addToCollect(article: $article, folderId: $folderId) {
         id
         title
         totalCount
@@ -124,10 +124,8 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       {:ok, folder} = Accounts.CollectFolders.create(args, user)
 
       variables = %{
-        id: post.inner_id,
-        folderId: folder.id,
-        community: community.slug,
-        thread: "POST"
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        folderId: folder.id
       }
 
       folder = user_conn |> gq_mutation(@query, variables)
@@ -151,10 +149,8 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       {:ok, folder} = Accounts.CollectFolders.create(args, user)
 
       variables = %{
-        id: blog.inner_id,
-        community: community.slug,
-        folderId: folder.id,
-        thread: "BLOG"
+        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        folderId: folder.id
       }
 
       folder = user_conn |> gq_mutation(@query, variables)
@@ -174,8 +170,8 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
     end
 
     @query """
-    mutation($id: ID!, $community: String!, $folderId: ID!, $thread: Thread) {
-      removeFromCollect(id: $id, community: $community, folderId: $folderId, thread: $thread) {
+    mutation($article: ArticleRefInput!, $folderId: ID!) {
+      removeFromCollect(article: $article, folderId: $folderId) {
         id
         title
         totalCount
@@ -196,10 +192,8 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       {:ok, _folder} = Accounts.CollectFolders.add(post, folder.id, user)
 
       variables = %{
-        id: post.inner_id,
-        folderId: folder.id,
-        community: community.slug,
-        thread: "POST"
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        folderId: folder.id
       }
 
       result = user_conn |> gq_mutation(@query, variables)
@@ -214,10 +208,8 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       {:ok, _folder} = Accounts.CollectFolders.add(blog, folder.id, user)
 
       variables = %{
-        id: blog.inner_id,
-        folderId: folder.id,
-        community: community.slug,
-        thread: "BLOG"
+        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        folderId: folder.id
       }
 
       result = user_conn |> gq_mutation(@query, variables)

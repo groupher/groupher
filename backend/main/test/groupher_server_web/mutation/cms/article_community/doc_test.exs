@@ -24,12 +24,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       passport_rules = %{"doc.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: doc.inner_id,
-        thread: "DOC",
-        community: community.slug,
-        targetCommunity: community2.slug
-      }
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}, targetCommunity: community2.slug}
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
       {:ok, found} = ORM.find(Doc, doc.id, preload: :communities)
@@ -40,12 +35,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
 
     test "unauth user cannot mirror a doc to a community",
          ~m(user_conn guest_conn community community2 doc)a do
-      variables = %{
-        id: doc.inner_id,
-        thread: "DOC",
-        community: community.slug,
-        targetCommunity: community2.slug
-      }
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}, targetCommunity: community2.slug}
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
@@ -64,21 +54,11 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       passport_rules = %{"doc.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: doc.inner_id,
-        thread: "DOC",
-        community: community.slug,
-        targetCommunity: community2.slug
-      }
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}, targetCommunity: community2.slug}
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
-      variables = %{
-        id: doc.inner_id,
-        thread: "DOC",
-        community: community.slug,
-        targetCommunity: community3.slug
-      }
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}, targetCommunity: community3.slug}
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
@@ -94,19 +74,12 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       passport_rules = %{"doc.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: doc.inner_id,
-        thread: "DOC",
-        community: community.slug,
-        targetCommunity: community2.slug
-      }
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}, targetCommunity: community2.slug}
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
       variables2 = %{
-        id: doc.inner_id,
-        thread: "DOC",
-        community: community.slug,
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         targetCommunity: community3.slug
       }
 
@@ -131,7 +104,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
     test "auth user can mirror doc home", ~m(user community doc)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 
-      variables = %{id: doc.inner_id, community: community.slug, thread: "DOC"}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
 
       passport_rules = %{"homemirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -144,7 +117,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
     end
 
     test "auth user can move doc to blackhole", ~m(community blackhole doc)a do
-      variables = %{id: doc.inner_id, thread: "DOC", community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
 
       passport_rules = %{"blackeye" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -160,12 +133,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       passport_rules = %{"doc.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: doc.inner_id,
-        thread: "DOC",
-        community: community.slug,
-        targetCommunity: community2.slug
-      }
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}, targetCommunity: community2.slug}
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
@@ -184,13 +152,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
       {:ok, user} = db_insert(:user)
       {:ok, article_tag} = CMS.Communities.create_tag(community2, :doc, article_tag_attrs, user)
 
-      variables = %{
-        id: doc.inner_id,
-        thread: "DOC",
-        community: community.slug,
-        targetCommunity: community2.slug,
-        communityTags: [article_tag.id]
-      }
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}, targetCommunity: community2.slug, communityTags: [article_tag.id]}
 
       rule_conn |> gq_mutation(Schema.m(:move_article), variables)
 

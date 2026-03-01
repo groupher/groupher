@@ -63,24 +63,34 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
          } = resolution,
          community
        ) do
-    {:ok, article} = FrontDesk.article(community, thread, inner_id)
-    passport_is_owner = article.author.user.id == cur_user.id
+    case FrontDesk.article(community, thread, inner_id) do
+      {:ok, article} ->
+        passport_is_owner = article.author.user.id == cur_user.id
 
-    updated_arguments =
-      arguments
-      |> Map.put(:article, article)
-      |> Map.put(:passport_is_owner, passport_is_owner)
+        updated_arguments =
+          arguments
+          |> Map.put(:article, article)
+          |> Map.put(:passport_is_owner, passport_is_owner)
 
-    %{resolution | arguments: updated_arguments}
+        %{resolution | arguments: updated_arguments}
+
+      {:error, err_msg} ->
+        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+    end
   end
 
   defp fetch_article(
          %{arguments: %{thread: thread, id: inner_id} = arguments} = resolution,
          community
        ) do
-    {:ok, article} = FrontDesk.article(community, thread, inner_id)
-    updated_arguments = arguments |> Map.put(:article, article)
-    %{resolution | arguments: updated_arguments}
+    case FrontDesk.article(community, thread, inner_id) do
+      {:ok, article} ->
+        updated_arguments = arguments |> Map.put(:article, article)
+        %{resolution | arguments: updated_arguments}
+
+      {:error, err_msg} ->
+        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+    end
   end
 
   defp fetch_comment(

@@ -15,19 +15,19 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
 
   describe "[changelog report/undo_report]" do
     test "login user can report a changelog", ~m(community changelog user_conn)a do
-      variables = %{id: changelog.inner_id, community: community.slug, reason: "reason"}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}, reason: "reason"}
 
       article = user_conn |> gq_mutation(Schema.m(:report_article, :changelog), variables)
       assert article["innerId"] == to_string(changelog.inner_id)
     end
 
     test "login user can undo report a changelog", ~m(community changelog user_conn)a do
-      variables = %{id: changelog.inner_id, reason: "reason", community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}, reason: "reason"}
 
       article = user_conn |> gq_mutation(Schema.m(:report_article, :changelog), variables)
       assert article["innerId"] == to_string(changelog.inner_id)
 
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
 
       article =
         user_conn |> gq_mutation(Schema.m(:undo_report_article, :changelog), variables)

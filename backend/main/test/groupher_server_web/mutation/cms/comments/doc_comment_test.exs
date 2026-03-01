@@ -141,7 +141,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
   describe "[article comment lock/unlock]" do
     test "can lock a doc's comment", ~m(community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
       passport_rules = %{community.slug => %{"doc.lock_comment" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -154,7 +154,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
     end
 
     test "unauth user fails", ~m(guest_conn community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
 
       assert guest_conn
              |> mutation_error?(
@@ -169,7 +169,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
       {:ok, doc} = ORM.find(Doc, doc.id)
       assert doc.meta.is_comment_locked
 
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
       passport_rules = %{community.slug => %{"doc.undo_lock_comment" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -182,7 +182,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
     end
 
     test "unauth user undo fails", ~m(guest_conn community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
 
       assert guest_conn
              |> mutation_error?(

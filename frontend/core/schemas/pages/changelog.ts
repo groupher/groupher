@@ -1,8 +1,8 @@
 import F from '../fragments'
 
 export const changelog = `
-  query changelog($community: String!, $id: ID!, $userHasLogin: Boolean!) {
-    changelog(community: $community, id: $id) {
+  query changelog($article: ArticleRefInput!, $userHasLogin: Boolean!) {
+    changelog(article: $article) {
       ${F.article}
       ${F.articleDetail}
     }
