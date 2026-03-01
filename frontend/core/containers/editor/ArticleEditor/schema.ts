@@ -7,7 +7,7 @@ const createPost = gql`
     $title: String!
     $body: String!
     $communityId: ID!
-    $communityTags: [Id]
+    $communityTags: [ID]
     $linkAddr: String
     $copyRight: String
   ) {
@@ -34,7 +34,7 @@ const updatePost = gql`
     $body: String
     $linkAddr: String
     $copyRight: String
-    $communityTags: [Id]
+    $communityTags: [ID]
   ) {
     updatePost(
       article: $article
@@ -66,7 +66,7 @@ const createJob = gql`
     $communityId: ID!
     $company: String!
     $companyLink: String
-    $communityTags: [Id]
+    $communityTags: [ID]
   ) {
     createJob(
       title: $title
@@ -92,7 +92,7 @@ const updateJob = gql`
     $company: String!
     $companyLink: String
     $body: String
-    $communityTags: [Ids]
+    $communityTags: [ID]
   ) {
     updateJob(
       id: $id
@@ -124,7 +124,7 @@ const createRadar = gql`
     $body: String
     $linkAddr: String!
     $communityId: ID!
-    $communityTags: [Id]
+    $communityTags: [ID]
   ) {
     createRadar(
       title: $title
@@ -147,7 +147,7 @@ const updateRadar = gql`
     $title: String
     $body: String
     $linkAddr: String
-    $communityTags: [Id]
+    $communityTags: [ID]
   ) {
     updateRadar(
       id: $id

@@ -78,7 +78,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       {:ok, community2} = db_insert(:community)
       {:ok, community3} = db_insert(:community)
 
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}, targetCommunity: community2.slug}
+      variables = %{article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}, targetCommunity: community2.slug}
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
