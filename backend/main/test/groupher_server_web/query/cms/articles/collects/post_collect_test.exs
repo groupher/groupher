@@ -20,12 +20,7 @@ defmodule GroupherServer.Test.Query.Collects.PostCollect do
       {:ok, _} = CMS.Articles.collect(post, user)
       {:ok, _} = CMS.Articles.collect(post, user2)
 
-      variables = %{
-        id: post.inner_id,
-        community: community.slug,
-        thread: "POST",
-        filter: %{page: 1, size: 20}
-      }
+      variables = %{article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}, filter: %{page: 1, size: 20}}
 
       results =
         guest_conn |> gq_query(Schema.q(:collected_users), variables)

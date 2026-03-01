@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
 
   describe "[mutation doc flag curd]" do
     test "auth user can markDelete doc", ~m(community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
 
       passport_rules = %{"doc.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.docs_count == 1
 
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
       passport_rules = %{"doc.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
 
     test "unauth user markDelete doc fails",
          ~m(user_conn guest_conn community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       schema = Schema.m(:mark_delete_article, :doc)
@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
     end
 
     test "auth user can undo markDelete doc", ~m(community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
 
       {:ok, _} = CMS.Articles.mark_delete(doc)
 
@@ -85,7 +85,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.docs_count == 0
 
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
       passport_rules = %{"doc.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
       rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :doc), variables)
@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
 
     test "unauth user undo markDelete doc fails",
          ~m(user_conn guest_conn community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       schema = Schema.m(:undo_mark_delete_article, :doc)
@@ -158,7 +158,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
     end
 
     test "auth user can pin doc", ~m(community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
 
       passport_rules = %{community.slug => %{"doc.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -169,7 +169,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
     end
 
     test "unauth user pin doc fails", ~m(user_conn guest_conn community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
@@ -187,7 +187,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
     end
 
     test "auth user can undo pin doc", ~m(community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
 
       passport_rules = %{community.slug => %{"doc.undo_pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -199,7 +199,7 @@ defmodule GroupherServer.Test.Mutation.Flags.DocFlag do
     end
 
     test "unauth user undo pin doc fails", ~m(user_conn guest_conn community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn

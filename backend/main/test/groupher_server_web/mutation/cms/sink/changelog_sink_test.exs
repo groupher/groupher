@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
 
   describe "[changelog sink]" do
     test "login user can sink a changelog", ~m(community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
       passport_rules = %{community.slug => %{"changelog.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
     end
 
     test "unauth user sink a changelog fails", ~m(guest_conn community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
 
       assert guest_conn
              |> mutation_error?(
@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
     end
 
     test "login user can undo sink to a changelog", ~m(community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
 
       passport_rules = %{community.slug => %{"changelog.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -54,7 +54,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
     end
 
     test "unauth user undo sink a changelog fails", ~m(guest_conn community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
 
       assert guest_conn
              |> mutation_error?(

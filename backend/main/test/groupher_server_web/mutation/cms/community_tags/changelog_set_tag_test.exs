@@ -26,12 +26,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
       passport_rules = %{community.title => %{"changelog.community_tag.set" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: changelog.inner_id,
-        thread: "CHANGELOG",
-        communityTagId: community_tag.id,
-        community: community.slug
-      }
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}, communityTagId: community_tag.id}
 
       rule_conn |> gq_mutation(Schema.m(:set_community_tag), variables)
       {:ok, found} = ORM.find(Changelog, changelog.id, preload: :community_tags)
@@ -54,12 +49,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
       passport_rules = %{community.title => %{"changelog.community_tag.unset" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: changelog.inner_id,
-        thread: "CHANGELOG",
-        communityTagId: community_tag.id,
-        community: community.slug
-      }
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}, communityTagId: community_tag.id}
 
       rule_conn |> gq_mutation(Schema.m(:unset_community_tag), variables)
 

@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
 
   describe "[mutation changelog flag curd]" do
     test "auth user can markDelete changelog", ~m(community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
 
       passport_rules = %{"changelog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.changelogs_count == 1
 
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
       passport_rules = %{"changelog.mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
 
     test "unauth user markDelete changelog fails",
          ~m(user_conn guest_conn community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       schema = Schema.m(:mark_delete_article, :changelog)
@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
     end
 
     test "auth user can undo markDelete changelog", ~m(community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
 
       {:ok, _} = CMS.Articles.mark_delete(changelog)
 
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.changelogs_count == 0
 
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
       passport_rules = %{"changelog.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
       rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :changelog), variables)
@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
 
     test "unauth user undo markDelete changelog fails",
          ~m(user_conn guest_conn community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       schema = Schema.m(:undo_mark_delete_article, :changelog)
@@ -161,7 +161,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
     end
 
     test "auth user can pin changelog", ~m(community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
 
       passport_rules = %{community.slug => %{"changelog.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -172,7 +172,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
     end
 
     test "unauth user pin changelog fails", ~m(user_conn guest_conn community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
@@ -190,7 +190,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
     end
 
     test "auth user can undo pin changelog", ~m(community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
 
       passport_rules = %{community.slug => %{"changelog.undo_pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -202,7 +202,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
     end
 
     test "unauth user undo pin changelog fails", ~m(user_conn guest_conn community changelog)a do
-      variables = %{id: changelog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn

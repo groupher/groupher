@@ -16,13 +16,11 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
   describe "[post cat & state]" do
     @set_cat_query """
     mutation(
-      $id: ID!
-      $community: String!
+      $article: ArticleRefInput!
       $cat: ArticleCatEnum!
     ) {
       setPostCat(
-        id: $id
-        community: $community
+        article: $article
         cat: $cat
       ) {
         innerId
@@ -31,7 +29,11 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
     }
     """
     test "can set cat for a existing post", ~m(user_conn community post)a do
-      variables = %{id: post.inner_id, cat: "FEATURE", community: community.slug}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        cat: "FEATURE"
+      }
+
       created = user_conn |> gq_mutation(@set_cat_query, variables)
 
       assert "FEATURE" == created["cat"]
@@ -39,13 +41,11 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
 
     @set_state_query """
     mutation(
-      $id: ID!
-      $community: String!
+      $article: ArticleRefInput!
       $state: ArticleStateEnum!
     ) {
       setPostState(
-        id: $id
-                community: $community
+        article: $article
         state: $state
       ) {
         innerId
@@ -54,7 +54,11 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
     }
     """
     test "can set state for a existing post", ~m(user_conn community post)a do
-      variables = %{id: post.inner_id, state: "DONE", community: community.slug}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        state: "DONE"
+      }
+
       created = user_conn |> gq_mutation(@set_state_query, variables)
 
       assert "DONE" == created["state"]

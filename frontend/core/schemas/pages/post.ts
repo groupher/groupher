@@ -1,8 +1,8 @@
 import F from '../fragments'
 
 export const post = `
-  query post($community: String!, $id: ID!, $userHasLogin: Boolean!) {
-    post(community: $community, id: $id) {
+  query post($article: ArticleRefInput!, $userHasLogin: Boolean!) {
+    post(article: $article) {
       ${F.article}
       ${F.articleDetail}
     }

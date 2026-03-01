@@ -16,6 +16,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
   import Helper.Utils
   import Helper.ErrorCode
 
+  alias GroupherServerWeb.Middleware.ArticleLoader
+
   def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
     resolution
   end
@@ -72,7 +74,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
         } = resolution,
         claim: "owner;" <> claim
       ) do
-    resolution |> check_passport_stamp(claim)
+    resolution
+    |> check_or_owner(claim)
   end
 
   def call(
@@ -105,6 +108,29 @@ defmodule GroupherServerWeb.Middleware.Passport do
       true ->
         resolution
         |> handle_absinthe_error("PassportError: Passport not qualified.", ecode(:passport))
+    end
+  end
+
+  defp check_or_owner(resolution, claim) do
+    case check_passport_stamp(resolution, claim) do
+      %{errors: []} = ok_resolution ->
+        ok_resolution
+
+      _failed_resolution ->
+        case ArticleLoader.call(resolution, []) do
+          %{arguments: %{passport_is_owner: true}} = loaded_resolution ->
+            loaded_resolution
+
+          %{errors: errors} = failed_resolution when errors != [] ->
+            failed_resolution
+
+          _ ->
+            resolution
+            |> handle_absinthe_error(
+              "PassportError: your passport not qualified.",
+              ecode(:passport)
+            )
+        end
     end
   end
 

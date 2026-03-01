@@ -77,29 +77,26 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "set a community_tag to content"
     field :set_community_tag, :article do
-      arg(:id, non_null(:id))
+      arg(:article, non_null(:article_ref_input))
       arg(:community_tag_id, non_null(:id))
-      # community_id only use for passport check
-      arg(:community, non_null(:string))
-      arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
+      middleware(M.ArticleArgs)
       middleware(M.Passport, claim: "cms->c?->t?.community_tag.set")
-      middleware(M.FrontDesk, :article)
+      middleware(M.ArticleLoader)
 
       resolve(&R.CMS.set_community_tag/3)
     end
 
     @desc "unset a tag to content"
     field :unset_community_tag, :article do
-      arg(:id, non_null(:id))
+      arg(:article, non_null(:article_ref_input))
       arg(:community_tag_id, non_null(:id))
-      arg(:community, non_null(:string))
-      arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
+      middleware(M.ArticleArgs)
       middleware(M.Passport, claim: "cms->c?->t?.community_tag.unset")
-      middleware(M.FrontDesk, :article)
+      middleware(M.ArticleLoader)
 
       resolve(&R.CMS.unset_community_tag/3)
     end
@@ -119,77 +116,72 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "mirror article to other community"
     field :mirror_article, :article do
-      arg(:id, non_null(:id))
-      arg(:community, non_null(:string))
+      arg(:article, non_null(:article_ref_input))
       arg(:target_community, non_null(:string))
-      arg(:thread, :thread, default_value: :post)
       arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
+      middleware(M.ArticleArgs)
       middleware(M.Passport, claim: "cms->t?.community.mirror")
       middleware(M.FrontDesk, :target_community)
-      middleware(M.FrontDesk, :article)
+      middleware(M.ArticleLoader)
 
       resolve(&R.CMS.mirror_article/3)
     end
 
     @desc "unmirror article for community"
     field :unmirror_article, :article do
-      arg(:id, non_null(:id))
-      arg(:community, non_null(:string))
+      arg(:article, non_null(:article_ref_input))
       arg(:target_community, non_null(:string))
-      arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
+      middleware(M.ArticleArgs)
       middleware(M.Passport, claim: "cms->t?.community.unmirror")
       middleware(M.FrontDesk, :target_community)
-      middleware(M.FrontDesk, :article)
+      middleware(M.ArticleLoader)
 
       resolve(&R.CMS.unmirror_article/3)
     end
 
     @desc "move article to other community"
     field :move_article, :article do
-      arg(:id, non_null(:id))
-      arg(:community, non_null(:string))
+      arg(:article, non_null(:article_ref_input))
       arg(:target_community, non_null(:string))
-      arg(:thread, :thread, default_value: :post)
       arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
+      middleware(M.ArticleArgs)
       middleware(M.Passport, claim: "cms->t?.community.move")
       middleware(M.FrontDesk, :target_community)
-      middleware(M.FrontDesk, :article)
+      middleware(M.ArticleLoader)
 
       resolve(&R.CMS.move_article/3)
     end
 
     @desc "mirror article to home community"
     field :mirror_to_home, :article do
-      arg(:id, non_null(:id))
-      arg(:community, non_null(:string))
-      arg(:thread, :thread, default_value: :post)
+      arg(:article, non_null(:article_ref_input))
       arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
+      middleware(M.ArticleArgs)
       middleware(M.Passport, claim: "cms->homemirror")
-      middleware(M.FrontDesk, :article)
       middleware(M.FrontDesk, target_community: :home)
+      middleware(M.ArticleLoader)
 
       resolve(&R.CMS.mirror_to_home/3)
     end
 
     @desc "move article to other community"
     field :move_to_blackhole, :article do
-      arg(:id, non_null(:id))
-      arg(:community, non_null(:string))
-      arg(:thread, :thread, default_value: :post)
+      arg(:article, non_null(:article_ref_input))
       arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
+      middleware(M.ArticleArgs)
       middleware(M.Passport, claim: "cms->blackeye")
-      middleware(M.FrontDesk, :article)
       middleware(M.FrontDesk, target_community: :blackhole)
+      middleware(M.ArticleLoader)
 
       resolve(&R.CMS.move_to_blackhole/3)
     end

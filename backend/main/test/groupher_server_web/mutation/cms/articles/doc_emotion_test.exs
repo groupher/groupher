@@ -15,7 +15,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocEmotion do
 
   describe "[doc emotion]" do
     test "login user can emotion to a doc", ~m(community doc user_conn)a do
-      variables = %{id: doc.inner_id, community: community.slug, emotion: "BEER"}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}, emotion: "BEER"}
 
       article = user_conn |> gq_mutation(Schema.m(:emotion_article, :doc), variables)
 
@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocEmotion do
     test "login user can undo emotion to a doc", ~m(community doc user owner_conn)a do
       {:ok, _} = CMS.Articles.emotion(doc, :beer, user)
 
-      variables = %{id: doc.inner_id, community: community.slug, emotion: "BEER"}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}, emotion: "BEER"}
 
       article = owner_conn |> gq_mutation(Schema.m(:undo_emotion_article, :doc), variables)
 

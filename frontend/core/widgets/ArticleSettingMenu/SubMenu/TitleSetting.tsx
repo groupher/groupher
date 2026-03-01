@@ -29,7 +29,15 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
   }, [])
 
   const handleUpdate = () => {
-    const params = { id: article.id, title }
+    const params = {
+      article: {
+        innerId: article.innerId,
+        community: article.communitySlug,
+        thread: article.meta.thread,
+      },
+      title,
+    }
+
     updatePost(params).then((result) => {
       if (result.error) {
         toast('修改失败', 'error')

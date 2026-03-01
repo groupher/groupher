@@ -25,12 +25,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostSetTag do
       passport_rules = %{community.title => %{"post.community_tag.set" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: post.inner_id,
-        thread: "POST",
-        communityTagId: community_tag.id,
-        community: community.slug
-      }
+      variables = %{article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}, communityTagId: community_tag.id}
 
       rule_conn |> gq_mutation(Schema.m(:set_community_tag), variables)
       {:ok, found} = ORM.find(Post, post.id, preload: :community_tags)
@@ -53,12 +48,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostSetTag do
       passport_rules = %{community.title => %{"post.community_tag.unset" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: post.inner_id,
-        thread: "POST",
-        communityTagId: community_tag.id,
-        community: community.slug
-      }
+      variables = %{article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}, communityTagId: community_tag.id}
 
       rule_conn |> gq_mutation(Schema.m(:unset_community_tag), variables)
 

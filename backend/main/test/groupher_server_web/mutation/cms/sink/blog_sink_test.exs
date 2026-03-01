@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
 
   describe "[blog sink]" do
     test "login user can sink a blog", ~m(community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
       passport_rules = %{community.slug => %{"blog.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
     end
 
     test "unauth user sink a blog fails", ~m(guest_conn community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
 
       assert guest_conn
              |> mutation_error?(
@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
     end
 
     test "login user can undo sink to a blog", ~m(community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
 
       passport_rules = %{community.slug => %{"blog.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
     end
 
     test "unauth user undo sink a blog fails", ~m(guest_conn community blog)a do
-      variables = %{id: blog.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
 
       assert guest_conn
              |> mutation_error?(

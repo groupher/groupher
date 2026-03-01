@@ -22,9 +22,15 @@ export default () => {
   }, [article.isPinned])
 
   const handlePin = useCallback(() => {
+    const articleRef = {
+      innerId: article.innerId,
+      community: article.communitySlug,
+      thread: article.meta.thread,
+    }
+
     const action = !pin
-      ? pinPost({ id: article.id, communityId: article.community.id })
-      : undoPinPost({ id: article.id, communityId: article.community.id })
+      ? pinPost({ article: articleRef })
+      : undoPinPost({ article: articleRef })
 
     action.then((result) => {
       if (result.error) {

@@ -25,12 +25,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
       passport_rules = %{"blog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: blog.inner_id,
-        thread: "BLOG",
-        community: community.slug,
-        targetCommunity: community2.slug
-      }
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}, targetCommunity: community2.slug}
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
       {:ok, found} = ORM.find(Blog, blog.id, preload: :communities)
@@ -41,12 +36,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
 
     test "unauth user cannot mirror a blog to a community",
          ~m(user_conn guest_conn community community2 blog)a do
-      variables = %{
-        id: blog.inner_id,
-        thread: "BLOG",
-        community: community.slug,
-        targetCommunity: community2.slug
-      }
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}, targetCommunity: community2.slug}
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
@@ -65,21 +55,11 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
       passport_rules = %{"blog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: blog.inner_id,
-        thread: "BLOG",
-        community: community.slug,
-        targetCommunity: community2.slug
-      }
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}, targetCommunity: community2.slug}
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
-      variables = %{
-        id: blog.inner_id,
-        thread: "BLOG",
-        community: community.slug,
-        targetCommunity: community3.slug
-      }
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}, targetCommunity: community3.slug}
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
@@ -95,19 +75,12 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
       passport_rules = %{"blog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: blog.inner_id,
-        thread: "BLOG",
-        community: community.slug,
-        targetCommunity: community2.slug
-      }
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}, targetCommunity: community2.slug}
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
       variables2 = %{
-        id: blog.inner_id,
-        thread: "BLOG",
-        community: community.slug,
+        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
         targetCommunity: community3.slug
       }
 
@@ -132,7 +105,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
     test "auth user can mirror blog home", ~m(user community blog)a do
       {:ok, home_community} = mock_community(user, %{slug: "home"})
 
-      variables = %{id: blog.inner_id, community: community.slug, thread: "BLOG"}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}}
 
       passport_rules = %{"homemirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -145,7 +118,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
     end
 
     test "auth user can move blog to blackhole", ~m(community blackhole blog)a do
-      variables = %{id: blog.inner_id, thread: "BLOG", community: community.slug}
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}}
 
       passport_rules = %{"blackeye" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -161,12 +134,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
       passport_rules = %{"blog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{
-        id: blog.inner_id,
-        thread: "BLOG",
-        community: community.slug,
-        targetCommunity: community2.slug
-      }
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}, targetCommunity: community2.slug}
 
       rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
 
@@ -185,13 +153,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
       {:ok, user} = db_insert(:user)
       {:ok, article_tag} = CMS.Communities.create_tag(community2, :blog, article_tag_attrs, user)
 
-      variables = %{
-        id: blog.inner_id,
-        thread: "BLOG",
-        community: community.slug,
-        targetCommunity: community2.slug,
-        communityTags: [article_tag.id]
-      }
+      variables = %{article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}, targetCommunity: community2.slug, communityTags: [article_tag.id]}
 
       rule_conn |> gq_mutation(Schema.m(:move_article), variables)
 

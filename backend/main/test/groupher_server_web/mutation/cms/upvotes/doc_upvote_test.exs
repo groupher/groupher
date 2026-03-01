@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
 
   describe "[doc upvote]" do
     test "login user can upvote a doc", ~m(user_conn community doc user)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
 
       created = user_conn |> gq_mutation(Schema.m(:upvote_article, :doc), variables)
 
@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
     end
 
     test "unauth user upvote a doc fails", ~m(guest_conn community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
 
       assert guest_conn
              |> mutation_error?(
@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
     test "login user can undo upvote to a doc", ~m(user_conn community doc user)a do
       {:ok, _} = CMS.Articles.upvote(doc, user)
 
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
 
       updated = user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :doc), variables)
 
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
     end
 
     test "unauth user undo upvote a doc fails", ~m(guest_conn community doc)a do
-      variables = %{id: doc.inner_id, community: community.slug}
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug}}
 
       assert guest_conn
              |> mutation_error?(

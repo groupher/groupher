@@ -38,7 +38,15 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
   }, [article.state])
 
   const handleState = () => {
-    const params = { id: article.id, state }
+    const params = {
+      article: {
+        innerId: article.innerId,
+        community: article.communitySlug,
+        thread: article.meta.thread,
+      },
+      state,
+    }
+
     setPostState(params).then((result) => {
       if (result.error) {
         toast('修改失败', 'error')

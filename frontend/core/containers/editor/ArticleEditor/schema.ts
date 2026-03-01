@@ -29,7 +29,7 @@ const createPost = gql`
 `
 const updatePost = gql`
   mutation (
-    $id: ID!
+    $article: ArticleRefInput!
     $title: String
     $body: String
     $linkAddr: String
@@ -37,7 +37,7 @@ const updatePost = gql`
     $communityTags: [Id]
   ) {
     updatePost(
-      id: $id
+      article: $article
       title: $title
       body: $body
       linkAddr: $linkAddr
@@ -186,8 +186,8 @@ const community = gql`
 `
 
 const post = gql`
-  query post($id: ID!) {
-    post(id: $id) {
+  query post($article: ArticleRefInput!) {
+    post(article: $article) {
       id
       title
       linkAddr

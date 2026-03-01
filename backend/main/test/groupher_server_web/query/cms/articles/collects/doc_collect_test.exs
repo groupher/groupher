@@ -19,12 +19,7 @@ defmodule GroupherServer.Test.Query.Collects.DocCollect do
       {:ok, _} = CMS.Articles.collect(doc, user)
       {:ok, _} = CMS.Articles.collect(doc, user2)
 
-      variables = %{
-        id: doc.inner_id,
-        community: community.slug,
-        thread: "DOC",
-        filter: %{page: 1, size: 20}
-      }
+      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}, filter: %{page: 1, size: 20}}
 
       results =
         guest_conn |> gq_query(Schema.q(:collected_users), variables)

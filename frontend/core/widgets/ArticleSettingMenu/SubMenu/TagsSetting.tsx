@@ -57,7 +57,15 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   }
 
   const handleUpdate = () => {
-    const params = { id: article.id, communityTags: checked }
+    const params = {
+      article: {
+        innerId: article.innerId,
+        community: article.communitySlug,
+        thread: article.meta.thread,
+      },
+      communityTags: checked,
+    }
+
     updatePost(params).then((res) => {
       if (res.error) {
         toast('修改失败', 'error')

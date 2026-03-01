@@ -18,12 +18,7 @@ defmodule GroupherServer.Test.Query.Upvotes.PostUpvote do
       {:ok, _} = CMS.Articles.upvote(post, user)
       {:ok, _} = CMS.Articles.upvote(post, user2)
 
-      variables = %{
-        id: post.inner_id,
-        community: community.slug,
-        thread: "POST",
-        filter: %{page: 1, size: 20}
-      }
+      variables = %{article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}, filter: %{page: 1, size: 20}}
 
       results = guest_conn |> gq_query(Schema.q(:upvoted_users), variables)
 

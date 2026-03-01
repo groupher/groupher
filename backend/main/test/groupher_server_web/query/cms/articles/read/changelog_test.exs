@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
        ~m(user_conn community user changelog_attrs)a do
     {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-    variables = %{community: changelog.community_slug, id: changelog.inner_id}
+    variables = %{article: %{inner_id: changelog.inner_id, community: changelog.community_slug}}
     results = user_conn |> gq_query(Schema.q(:article, :changelog), variables)
 
     assert results["innerId"] == to_string(changelog.inner_id)
@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
        ~m(guest_conn community changelog_attrs user)a do
     {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-    variables = %{community: changelog.community_slug, id: changelog.inner_id}
+    variables = %{article: %{inner_id: changelog.inner_id, community: changelog.community_slug}}
     results = guest_conn |> gq_query(Schema.q(:article, :changelog), variables)
 
     assert results["innerId"] == to_string(changelog.inner_id)
@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
   test "pending state should in meta", ~m(guest_conn user_conn community user changelog_attrs)a do
     {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-    variables = %{community: changelog.community_slug, id: changelog.inner_id}
+    variables = %{article: %{inner_id: changelog.inner_id, community: changelog.community_slug}}
     results = user_conn |> gq_query(Schema.q(:article, :changelog), variables)
 
     assert results |> get_in(["meta", "isLegal"])
