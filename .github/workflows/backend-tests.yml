@@ -25,7 +25,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: backend/main/deps
-          key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock') }}
+          key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
             ${{ runner.OS }}-mix-
 
@@ -33,7 +33,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: backend/main/_build
-          key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock') }}
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
             ${{ runner.OS }}-build-
 
@@ -71,7 +71,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: backend/main/deps
-          key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock') }}
+          key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
             ${{ runner.OS }}-mix-
 
@@ -79,9 +79,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: backend/main/_build
-          key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock') }}
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
             ${{ runner.OS }}-build-
+
+      - name: Ensure dependencies are synced
+        run: mix deps.get
 
       - name: Run tests
         run: mix test --exclude skip_ci
