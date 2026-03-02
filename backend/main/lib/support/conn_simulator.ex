@@ -52,7 +52,10 @@ defmodule GroupherServer.Test.ConnSimulator do
 
     token = gen_jwt_token(id: user.id)
 
-    {:ok, _passport} = CMS.Communities.stamp_passport(passport_rules, %User{id: user.id})
+    _ =
+      passport_rules
+      |> normalize_passport_rules()
+      |> CMS.Communities.stamp_passport(%User{id: user.id})
 
     build_conn() |> put_req_header("authorization", token)
   end
@@ -60,7 +63,10 @@ defmodule GroupherServer.Test.ConnSimulator do
   def simu_conn(:user, %User{} = user, cms: passport_rules) do
     token = gen_jwt_token(id: user.id)
 
-    {:ok, _passport} = CMS.Communities.stamp_passport(passport_rules, %User{id: user.id})
+    _ =
+      passport_rules
+      |> normalize_passport_rules()
+      |> CMS.Communities.stamp_passport(%User{id: user.id})
 
     build_conn() |> put_req_header("authorization", token)
   end
@@ -72,4 +78,17 @@ defmodule GroupherServer.Test.ConnSimulator do
       "Bearer #{token}"
     end
   end
+
+  defp normalize_passport_rules(%{"global" => _global, "communities" => _communities} = rules),
+    do: rules
+
+  defp normalize_passport_rules(rules) when is_map(rules) do
+    if Enum.all?(rules, fn {_k, v} -> is_map(v) end) do
+      %{"global" => %{}, "communities" => rules}
+    else
+      %{"global" => rules, "communities" => %{}}
+    end
+  end
+
+  defp normalize_passport_rules(_), do: %{"global" => %{}, "communities" => %{}}
 end

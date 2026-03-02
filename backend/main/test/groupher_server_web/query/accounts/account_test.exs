@@ -123,15 +123,13 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       variables = %{login: user.login}
       results = user_conn |> gq_query(@query, variables)
 
-      assert results["cmsPassport"] == %{}
-      assert results["cmsPassportString"] == "{}"
+      assert results["cmsPassport"] == %{"global" => %{}, "communities" => %{}}
+      assert Jason.decode!(results["cmsPassportString"]) == %{"global" => %{}, "communities" => %{}}
     end
 
     @valid_rules %{
-      "javascript" => %{
-        "post.article.delete" => true,
-        "post.tag.edit" => true
-      }
+      "global" => %{},
+      "communities" => %{"javascript" => %{"post.delete" => true, "post.edit" => true}}
     }
 
     test "login user can get own cms_passport and cms_passport_string", ~m(user)a do
@@ -150,8 +148,8 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
       results = user_conn |> gq_query(@query, %{login: user.login})
 
-      assert %{} == results["cmsPassport"]
-      assert "{}" == results["cmsPassportString"]
+      assert %{"global" => %{}, "communities" => %{}} == results["cmsPassport"]
+      assert Jason.decode!(results["cmsPassportString"]) == %{"global" => %{}, "communities" => %{}}
     end
 
     @query """

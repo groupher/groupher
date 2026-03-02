@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
   alias CMS.Communities.Passport
   alias CMS.Model.CommunityModerator
-  alias Helper.Certification
+  alias Helper.PermissionRegistry
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -23,18 +23,17 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
 
-      assert moderator.passport_item_count == Certification.root_passport_item_count()
-
-      new_community_rules =
-        Certification.passport_rules(cms: "moderator")
-        |> Map.merge(%{
-          "post.tag.edit2" => true,
-          "post.tag.edit3" => true,
-          "post.tag.edit4" => true
-        })
+      assert moderator.passport_item_count == PermissionRegistry.root_passport_item_count()
 
       new_passport_rules = %{
-        "#{community.slug}" => new_community_rules
+        "global" => %{},
+        "communities" => %{
+          "#{community.slug}" => %{
+            "post.edit" => true,
+            "post.pin" => true,
+            "post.delete" => true
+          }
+        }
       }
 
       {:ok, _} =
@@ -43,7 +42,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
 
-      assert moderator.passport_item_count == Certification.root_passport_item_count()
+      assert moderator.passport_item_count == PermissionRegistry.root_passport_item_count()
     end
 
     test "should have passport count of community after add moderator",
@@ -57,19 +56,15 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       assert moderator.passport_item_count == 0
 
-      default_passport_item_count =
-        Certification.passport_rules(cms: "moderator") |> Map.keys() |> length
-
-      new_community_rules =
-        Certification.passport_rules(cms: "moderator")
-        |> Map.merge(%{
-          "post.tag.edit2" => true,
-          "post.tag.edit3" => true,
-          "post.tag.edit4" => true
-        })
-
       new_passport_rules = %{
-        "#{community.slug}" => new_community_rules
+        "global" => %{},
+        "communities" => %{
+          "#{community.slug}" => %{
+            "post.edit" => true,
+            "post.pin" => true,
+            "post.delete" => true
+          }
+        }
       }
 
       {:ok, _} =
@@ -78,18 +73,17 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
 
-      assert moderator.passport_item_count == default_passport_item_count + 3
-
-      new_community_rules =
-        Certification.passport_rules(cms: "moderator")
-        |> Map.merge(%{
-          "post.tag.edit2" => true,
-          "post.tag.edit3" => false,
-          "post.tag.edit4" => true
-        })
+      assert moderator.passport_item_count == 3
 
       new_passport_rules = %{
-        "#{community.slug}" => new_community_rules
+        "global" => %{},
+        "communities" => %{
+          "#{community.slug}" => %{
+            "post.edit" => true,
+            "post.pin" => false,
+            "post.delete" => true
+          }
+        }
       }
 
       {:ok, _} =
@@ -98,7 +92,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
 
-      assert moderator.passport_item_count == default_passport_item_count + 2
+      assert moderator.passport_item_count == 2
     end
 
     test "can update passport of community moderator", ~m(user user2 community)a do
@@ -107,9 +101,12 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
       new_passport_rules = %{
-        "#{community.slug}" => %{
-          "post.article.delete" => false,
-          "post.tag.edit" => true
+        "global" => %{},
+        "communities" => %{
+          "#{community.slug}" => %{
+            "post.delete" => false,
+            "post.edit" => true
+          }
         }
       }
 
@@ -118,8 +115,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       {:ok, passport} = Passport.get_passport(user2)
 
-      assert not Map.has_key?(passport, "post.article.delete")
-      assert get_in(passport, ["#{community.slug}", "post.tag.edit"])
+      assert get_in(passport, ["communities", "#{community.slug}", "post.edit"]) == true
     end
 
     test "can not update passport of other community moderator", ~m(user user2 community)a do
@@ -130,8 +126,11 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, other_community} = db_insert(:community)
 
       new_passport_rules = %{
-        "#{other_community.slug}" => %{
-          "post.article.delete" => false
+        "global" => %{},
+        "communities" => %{
+          "#{other_community.slug}" => %{
+            "post.delete" => false
+          }
         }
       }
 
@@ -149,11 +148,14 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, other_community} = db_insert(:community)
 
       new_passport_rules = %{
-        "#{community.slug}" => %{
-          "post.article.delete" => false
-        },
-        "#{other_community.slug}" => %{
-          "post.article.delete" => false
+        "global" => %{},
+        "communities" => %{
+          "#{community.slug}" => %{
+            "post.delete" => false
+          },
+          "#{other_community.slug}" => %{
+            "post.delete" => false
+          }
         }
       }
 
@@ -186,7 +188,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
-      related_rules = Certification.passport_rules(cms: role)
+      {:ok, related_rules} = PermissionRegistry.role_template(role)
 
       {:ok, moderator} = CommunityModerator |> ORM.find_by(user_id: user2.id)
       {:ok, user_passport} = Passport.get_passport(user2)

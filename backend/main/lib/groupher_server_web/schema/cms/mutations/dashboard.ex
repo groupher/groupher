@@ -100,7 +100,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       dashboard_args(:rss)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, claim: "cms->community.update")
+      middleware(M.Passport, action: "mutate.update_dashboard_rss")
 
       # middleware(M.PublishThrottle)
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)

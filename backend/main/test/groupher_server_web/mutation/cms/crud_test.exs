@@ -531,17 +531,20 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
-      passport_rules = %{"moderator.update" => true}
+      passport_rules = %{"global" => %{"moderator.update" => true}, "communities" => %{}}
       rule_conn = simu_conn(:user, user2, cms: passport_rules)
       root_rule_conn = simu_conn(:user, user, cms: passport_rules)
 
       new_passport_rules =
         Jason.encode!(%{
-          "#{community.slug}" => %{
-            "post.article.delete" => false,
-            "post.tag.edit" => true,
-            "post.tag.edit2" => true,
-            "post.tag.edit3" => true
+          "global" => %{},
+          "communities" => %{
+            "#{community.slug}" => %{
+              "post.delete" => false,
+              "post.edit" => true,
+              "post.pin" => true,
+              "post.undo_pin" => true
+            }
           }
         })
 
@@ -557,7 +560,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       result = root_rule_conn |> gq_mutation(@update_moderator_query, variables)
 
       {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
-      assert get_in(user2_passport, ["#{community.slug}", "post.tag.edit"])
+      assert get_in(user2_passport, ["communities", "#{community.slug}", "post.edit"])
 
       moderator = Enum.find(result["moderators"], &(&1["user"]["login"] == user2.login))
       assert moderator["passportItemCount"] == 3

@@ -8,9 +8,25 @@ defmodule Helper.Cache do
   @cache_pool get_config(:cache, :pool)
 
   def config(pool_name) do
+    size = @cache_pool[pool_name].size
+    seconds = @cache_pool[pool_name].seconds
+
     [
-      limit: limit(size: @cache_pool[pool_name].size, policy: Cachex.Policy.LRW, reclaim: 0.1),
-      expiration: expiration(default: :timer.seconds(@cache_pool[pool_name].seconds))
+      # Cachex v4: use Limit hook instead of `limit: limit(...)`
+      hooks: [
+        hook(
+          module: Cachex.Limit.Scheduled,
+          args: {
+            # max size
+            size,
+            # options for Cachex.prune/3
+            [reclaim: 0.1],
+            # options for the Scheduled hook (e.g. frequency)
+            []
+          }
+        )
+      ],
+      expiration: expiration(default: :timer.seconds(seconds))
     ]
   end
 

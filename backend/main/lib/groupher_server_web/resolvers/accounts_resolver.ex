@@ -8,7 +8,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias Helper.Certification
+  alias Helper.PermissionRegistry
 
   def me(_root, _args, %{context: %{cur_user: cur_user}}), do: {:ok, cur_user}
 
@@ -254,7 +254,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   def get_all_rules(_root, _args, %{context: %{cur_user: _}}) do
-    cms_rules = Certification.all_rules(:cms, :stringify)
+    cms_rules = PermissionRegistry.all_rules(:cms, :stringify)
 
     {:ok, %{cms: cms_rules}}
   end

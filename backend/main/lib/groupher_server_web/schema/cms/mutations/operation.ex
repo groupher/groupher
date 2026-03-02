@@ -11,7 +11,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:category_id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, claim: "cms->category.set")
+      middleware(M.Passport, action: "mutate.set_category")
       middleware(M.FrontDesk, :community)
 
       resolve(&R.CMS.set_category/3)
@@ -23,7 +23,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:category_id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, claim: "cms->category.unset")
+      middleware(M.Passport, action: "mutate.unset_category")
       middleware(M.FrontDesk, :community)
 
       resolve(&R.CMS.unset_category/3)
@@ -35,7 +35,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:thread_id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, claim: "cms->c?->thread.set")
+      middleware(M.Passport, action: "mutate.set_thread")
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :thread)
 
@@ -48,7 +48,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:thread_id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, claim: "cms->c?->thread.unset")
+      middleware(M.Passport, action: "mutate.unset_thread")
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :thread)
 
@@ -82,7 +82,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
       middleware(M.Authorize, :login)
       middleware(M.ArticleArgs)
-      middleware(M.Passport, claim: "cms->c?->t?.community_tag.set")
+      middleware(M.Passport, action: "mutate.set_community_tag")
       middleware(M.ArticleLoader)
 
       resolve(&R.CMS.set_community_tag/3)
@@ -95,7 +95,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
       middleware(M.Authorize, :login)
       middleware(M.ArticleArgs)
-      middleware(M.Passport, claim: "cms->c?->t?.community_tag.unset")
+      middleware(M.Passport, action: "mutate.unset_community_tag")
       middleware(M.ArticleLoader)
 
       resolve(&R.CMS.unset_community_tag/3)
@@ -109,7 +109,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:tags, list_of(:reindex_tag_input))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, claim: "cms->c?->t?.community_tag.update")
+      middleware(M.Passport, action: "mutate.reindex_tags_in_group")
 
       resolve(&R.CMS.reindex_community_tags/3)
     end
@@ -122,7 +122,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
       middleware(M.Authorize, :login)
       middleware(M.ArticleArgs)
-      middleware(M.Passport, claim: "cms->t?.community.mirror")
+      middleware(M.Passport, action: "mutate.mirror_article")
       middleware(M.FrontDesk, :target_community)
       middleware(M.ArticleLoader)
 
@@ -136,7 +136,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
       middleware(M.Authorize, :login)
       middleware(M.ArticleArgs)
-      middleware(M.Passport, claim: "cms->t?.community.unmirror")
+      middleware(M.Passport, action: "mutate.unmirror_article")
       middleware(M.FrontDesk, :target_community)
       middleware(M.ArticleLoader)
 
@@ -151,7 +151,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
       middleware(M.Authorize, :login)
       middleware(M.ArticleArgs)
-      middleware(M.Passport, claim: "cms->t?.community.move")
+      middleware(M.Passport, action: "mutate.move_article")
       middleware(M.FrontDesk, :target_community)
       middleware(M.ArticleLoader)
 
@@ -165,7 +165,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
       middleware(M.Authorize, :login)
       middleware(M.ArticleArgs)
-      middleware(M.Passport, claim: "cms->homemirror")
+      middleware(M.Passport, action: "mutate.mirror_to_home")
       middleware(M.FrontDesk, target_community: :home)
       middleware(M.ArticleLoader)
 
@@ -179,7 +179,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
       middleware(M.Authorize, :login)
       middleware(M.ArticleArgs)
-      middleware(M.Passport, claim: "cms->blackeye")
+      middleware(M.Passport, action: "mutate.move_to_blackhole")
       middleware(M.FrontDesk, target_community: :blackhole)
       middleware(M.ArticleLoader)
 

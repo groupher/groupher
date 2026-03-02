@@ -2,216 +2,131 @@
 # Absinthe.Middleware behaviour
 # see https://hexdocs.pm/absinthe/Absinthe.Middleware.html#content
 # ---
-# RBAC vs CBAC
-# https://stackoverflow.com/questions/22814023/role-based-access-control-rbac-vs-claims-based-access-control-cbac-in-asp-n
-
-# 本中间件会隐式的加载 community 的 rules 信息，并应用该 rules 信息
 defmodule GroupherServerWeb.Middleware.Passport do
   @moduledoc """
-  c? -> community / communities
-  t? -> article thread, could be post / job / tut ...
+  Action-based passport check middleware.
   """
+
   @behaviour Absinthe.Middleware
 
   import Helper.Utils
   import Helper.ErrorCode
 
-  alias GroupherServerWeb.Middleware.ArticleLoader
+  alias Helper.PermissionRegistry
 
   def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
     resolution
   end
 
-  def call(%{arguments: %{passport_is_owner: true}} = resolution, claim: "owner") do
-    resolution
-  end
+  def call(resolution, action: action) when is_binary(action) do
+    with {:ok, requirement} <- PermissionRegistry.requirement(action),
+         {:ok, cur_passport} <- fetch_cur_passport(resolution),
+         false <- owner_pass?(resolution, requirement),
+         true <- has_permission?(cur_passport, resolution, requirement) do
+      resolution
+    else
+      true ->
+        resolution
 
-  def call(%{arguments: %{passport_is_owner: true}} = resolution, claim: "owner;" <> _rest) do
-    resolution
-  end
+      {:error, :unknown_action} ->
+        resolution
+        |> handle_absinthe_error("PassportError: unknown action #{action}.", ecode(:passport))
 
-  def call(
-        %{context: %{cur_user: %{cur_passport: %{"cms" => %{"root" => true}}}}} = resolution,
-        _claim
-      ) do
-    resolution
-  end
+      {:error, :missing_passport} ->
+        resolution
+        |> handle_absinthe_error("PassportError: your passport not qualified.", ecode(:passport))
 
-  def call(
-        %{
-          context: %{cur_user: %{cur_passport: _}},
-          arguments: %{community: _, thread: _}
-        } = resolution,
-        claim: "cms->c?->t?." <> _rest = claim
-      ) do
-    resolution |> check_passport_stamp(claim)
-  end
-
-  def call(
-        %{
-          context: %{cur_user: %{cur_passport: _}},
-          arguments: %{thread: _}
-        } = resolution,
-        claim: "cms->t?." <> _rest = claim
-      ) do
-    resolution |> check_passport_stamp(claim)
-  end
-
-  def call(
-        %{
-          context: %{cur_user: %{cur_passport: _}},
-          arguments: %{community: _}
-        } = resolution,
-        claim: "cms->c?->" <> _rest = claim
-      ) do
-    resolution |> check_passport_stamp(claim)
-  end
-
-  def call(
-        %{
-          context: %{cur_user: %{cur_passport: _}},
-          arguments: %{community: _}
-        } = resolution,
-        claim: "owner;" <> claim
-      ) do
-    resolution
-    |> check_or_owner(claim)
-  end
-
-  def call(
-        %{context: %{cur_user: %{cur_passport: _}}} = resolution,
-        claim: "cms->" <> _rest = claim
-      ) do
-    resolution |> check_passport_stamp(claim)
+      false ->
+        resolution
+        |> handle_absinthe_error("PassportError: your passport not qualified.", ecode(:passport))
+    end
   end
 
   def call(resolution, _) do
     resolution
-    |> handle_absinthe_error("PassportError: your passport not qualified.", ecode(:passport))
+    |> handle_absinthe_error("PassportError: action is required.", ecode(:passport))
   end
 
-  defp check_passport_stamp(resolution, claim) do
-    # TODO: refactor
-    cond do
-      claim |> String.starts_with?("cms->c?->t?.") ->
-        resolution |> cp_check(claim)
+  defp owner_pass?(%{arguments: %{passport_is_owner: true}}, %{owner_fallback: true}), do: true
+  defp owner_pass?(_, _), do: false
 
-      claim |> String.starts_with?("cms->t?.") ->
-        resolution |> thread_check(claim)
+  defp fetch_cur_passport(%{context: %{cur_user: %{cur_passport: cur_passport}}}) when is_map(cur_passport),
+    do: {:ok, cur_passport}
 
-      claim |> String.starts_with?("cms->c?->") ->
-        resolution |> community_check(claim)
+  defp fetch_cur_passport(_), do: {:error, :missing_passport}
 
-      claim |> String.starts_with?("cms->") ->
-        resolution |> do_check(claim)
+  defp has_permission?(cur_passport, resolution, requirement) do
+    cms_passport =
+      cur_passport
+      |> Map.get("cms", %{})
+      |> PermissionRegistry.normalize_rules()
 
-      true ->
-        resolution
-        |> handle_absinthe_error("PassportError: Passport not qualified.", ecode(:passport))
+    has_root_permission?(cms_passport) or
+      check_scope_permission(cms_passport, resolution, requirement)
+  end
+
+  defp check_scope_permission(cms_passport, _resolution, %{scope: :global, permission: permission}),
+    do: has_global_permission?(cms_passport, permission)
+
+  defp check_scope_permission(cms_passport, resolution, %{scope: :thread} = requirement) do
+    with {:ok, permission} <- resolve_permission(requirement, resolution) do
+      has_global_permission?(cms_passport, permission)
+    else
+      _ -> false
     end
   end
 
-  defp check_or_owner(resolution, claim) do
-    case check_passport_stamp(resolution, claim) do
-      %{errors: []} = ok_resolution ->
-        ok_resolution
-
-      _failed_resolution ->
-        case ArticleLoader.call(resolution, []) do
-          %{arguments: %{passport_is_owner: true}} = loaded_resolution ->
-            loaded_resolution
-
-          %{errors: errors} = failed_resolution when errors != [] ->
-            failed_resolution
-
-          _ ->
-            resolution
-            |> handle_absinthe_error(
-              "PassportError: your passport not qualified.",
-              ecode(:passport)
-            )
-        end
+  defp check_scope_permission(cms_passport, resolution, %{scope: :community} = requirement) do
+    with {:ok, community} <- fetch_community_slug(resolution),
+         {:ok, permission} <- resolve_permission(requirement, resolution) do
+      get_in(cms_passport, ["communities", community, permission]) == true
+    else
+      _ -> false
     end
   end
 
-  defp do_check(resolution, claim) do
-    cur_passport = resolution.context.cur_user.cur_passport
-    path = claim |> String.split("->")
-
-    case get_in(cur_passport, path) do
-      true ->
-        resolution
-
-      nil ->
-        resolution
-        |> handle_absinthe_error("PassportError 1: Passport not qualified.", ecode(:passport))
+  defp check_scope_permission(cms_passport, resolution, %{scope: :community_thread} = requirement) do
+    with {:ok, community} <- fetch_community_slug(resolution),
+         {:ok, permission} <- resolve_permission(requirement, resolution) do
+      get_in(cms_passport, ["communities", community, permission]) == true
+    else
+      _ -> false
     end
   end
 
-  defp thread_check(resolution, claim) do
-    cur_passport = resolution.context.cur_user.cur_passport
-    thread = resolution.arguments.thread |> to_string
+  defp check_scope_permission(_cms_passport, _resolution, %{owner_fallback: true, permission: nil}), do: false
+  defp check_scope_permission(_cms_passport, _resolution, %{owner_fallback: true}), do: false
+  defp check_scope_permission(_cms_passport, _resolution, _), do: false
 
-    path =
-      claim
-      |> String.replace("t?", thread)
-      |> String.split("->")
+  defp resolve_permission(%{permission: permission}, _resolution) when is_binary(permission),
+    do: {:ok, permission}
 
-    case get_in(cur_passport, path) do
-      true ->
-        resolution
-
-      nil ->
-        resolution
-        |> handle_absinthe_error("PassportError 2: Passport not qualified.", ecode(:passport))
+  defp resolve_permission(%{permission_template: template}, resolution) do
+    with {:ok, thread} <- fetch_thread(resolution) do
+      {:ok, String.replace(template, "{thread}", thread)}
     end
   end
 
-  defp cp_check(resolution, claim) do
-    cur_passport = resolution.context.cur_user.cur_passport
+  defp resolve_permission(_, _), do: {:error, :invalid_requirement}
 
-    # community_slug = resolution.arguments.passport_communities |> List.first() |> Map.get(:slug)
-    community_slug = resolution.arguments.community
-    thread = resolution.arguments.thread |> to_string
+  defp fetch_thread(%{arguments: %{thread: thread}}) when is_atom(thread), do: {:ok, Atom.to_string(thread)}
+  defp fetch_thread(%{arguments: %{thread: thread}}) when is_binary(thread), do: {:ok, thread}
+  defp fetch_thread(_), do: {:error, :missing_thread}
 
-    path =
-      claim
-      |> String.replace("c?", community_slug)
-      |> String.replace("t?", thread)
-      |> String.split("->")
+  defp fetch_community_slug(%{arguments: %{community: %{slug: slug}}}) when is_binary(slug),
+    do: {:ok, slug}
 
-    case get_in(cur_passport, path) do
-      true ->
-        resolution
+  defp fetch_community_slug(%{arguments: %{community: community}}) when is_binary(community),
+    do: {:ok, community}
 
-      nil ->
-        resolution
-        |> handle_absinthe_error("PassportError 3: Passport not qualified.", ecode(:passport))
-    end
+  defp fetch_community_slug(_), do: {:error, :missing_community}
+
+  defp has_global_permission?(cms_passport, permission) do
+    get_in(cms_passport, ["global", permission]) == true
   end
 
-  defp community_check(%{arguments: %{community: community}} = resolution, claim) do
-    do_community_check(resolution, [community], claim)
+  defp has_root_permission?(cms_passport) do
+    has_global_permission?(cms_passport, "root") or has_global_permission?(cms_passport, "root.spec")
   end
 
-  defp do_community_check(resolution, communities, claim) do
-    cur_passport = resolution.context.cur_user.cur_passport
-
-    result =
-      communities
-      |> Enum.filter(fn community ->
-        path = claim |> String.replace("c?", community) |> String.split("->")
-        get_in(cur_passport, path) == true
-      end)
-      |> length
-
-    case result > 0 do
-      true ->
-        resolution
-
-      false ->
-        resolution
-        |> handle_absinthe_error("PassportError: Passport not qualified.", ecode(:passport))
-    end
-  end
 end

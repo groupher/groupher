@@ -99,7 +99,7 @@ defmodule GroupherServer.Mixfile do
       {:recase, "~> 0.7.0"},
       {:nanoid, "~> 2.0.5"},
       # mem cache
-      {:cachex, "3.3.0"},
+      {:cachex, "~> 4.1"},
       # postgres-backed job queue
       {:rihanna, "1.3.5"},
       # cron-like scheduler job

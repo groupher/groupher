@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   alias CMS.Communities.Passport
   alias CMS.Model.{Community, CommunityModerator}
   alias CMS.{Communities, FrontDesk}
-  alias Helper.{Certification, ORM, T, Transaction}
+  alias Helper.{ORM, PermissionRegistry, T, Transaction}
 
   @doc """
   set a community moderator
@@ -41,10 +41,10 @@ defmodule GroupherServer.CMS.Communities.Moderator do
             )
           end)
           |> Multi.run(:stamp_passport, fn _, %{insert_moderator: community_moderator} ->
-            rules = Certification.passport_rules(cms: role)
-
-            update_passport_item_count(community_moderator, community, target_user, rules)
-            Passport.stamp_passport(rules, target_user)
+            with {:ok, rules} <- PermissionRegistry.role_template(role),
+                 {:ok, _} <- update_passport_item_count(community_moderator, community, target_user, rules) do
+              Passport.stamp_passport(rules, target_user)
+            end
           end)
           |> Repo.transaction()
           |> result()
@@ -117,7 +117,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
          {:ok, true} <- user_is_root?(community, cur_user) do
       Multi.new()
       |> Multi.run(:stamp_passport, fn _, _ ->
-        Passport.erase_passport([community_slug], target_user)
+        Passport.erase_passport(["communities", community_slug], target_user)
       end)
       |> Multi.run(:delete_moderator, fn _, _ ->
         ORM.findby_delete!(CommunityModerator, %{
@@ -161,7 +161,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
          _user,
          _rules
        ) do
-    moderator |> ORM.update(%{passport_item_count: Certification.root_passport_item_count()})
+    moderator |> ORM.update(%{passport_item_count: PermissionRegistry.root_passport_item_count()})
   end
 
   defp update_passport_item_count(
@@ -170,13 +170,14 @@ defmodule GroupherServer.CMS.Communities.Moderator do
          %User{} = user,
          rules
        ) do
-    case Map.has_key?(rules, community.slug) do
-      true ->
+    case get_in(rules, ["communities", community.slug]) do
+      %{} ->
         {:ok, passport_rules} = Passport.get_passport(user)
-        passport_item_count = get_in(passport_rules, [community.slug]) |> Map.keys() |> length
+        community_rules = get_in(passport_rules, ["communities", community.slug]) || %{}
+        passport_item_count = community_rules |> Map.keys() |> length
         moderator |> ORM.update(%{passport_item_count: passport_item_count})
 
-      false ->
+      _ ->
         moderator |> ORM.update(%{passport_item_count: 0})
     end
   end
@@ -203,7 +204,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   end
 
   defp match_passport_community(community_slug, rules) do
-    community_keys = Map.keys(rules)
+    community_keys = (get_in(rules, ["communities"]) || %{}) |> Map.keys()
 
     case length(community_keys) == 1 do
       true ->

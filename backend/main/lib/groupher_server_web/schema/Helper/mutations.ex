@@ -90,7 +90,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
 
         middleware(M.Authorize, :login)
         middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.pin"))
+        middleware(M.Passport, action: unquote("mutate.pin_#{to_string(thread)}"))
         middleware(M.ArticleLoader)
 
         resolve(&R.CMS.pin_article/3)
@@ -102,7 +102,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
 
         middleware(M.Authorize, :login)
         middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.undo_pin"))
+        middleware(M.Passport, action: unquote("mutate.undo_pin_#{to_string(thread)}"))
         middleware(M.ArticleLoader)
 
         resolve(&R.CMS.undo_pin_article/3)
@@ -126,7 +126,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
 
         middleware(M.Authorize, :login)
         middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, claim: unquote("cms->#{to_string(thread)}.mark_delete"))
+        middleware(M.Passport, action: unquote("mutate.mark_delete_#{to_string(thread)}"))
         middleware(M.ArticleLoader)
 
         resolve(&R.CMS.mark_delete_article/3)
@@ -138,7 +138,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
 
         middleware(M.Authorize, :login)
         middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, claim: unquote("cms->#{to_string(thread)}.undo_mark_delete"))
+        middleware(M.Passport, action: unquote("mutate.undo_mark_delete_#{to_string(thread)}"))
         middleware(M.ArticleLoader)
 
         resolve(&R.CMS.undo_mark_delete_article/3)
@@ -151,7 +151,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
-        middleware(M.Passport, claim: unquote("cms->#{to_string(thread)}.mark_delete"))
+        middleware(M.Passport, action: unquote("mutate.batch_mark_delete_#{plural(thread)}"))
 
         resolve(&R.CMS.batch_mark_delete_articles/3)
       end
@@ -163,7 +163,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
-        middleware(M.Passport, claim: unquote("cms->#{to_string(thread)}.mark_delete"))
+        middleware(M.Passport, action: unquote("mutate.batch_undo_mark_delete_#{plural(thread)}"))
 
         resolve(&R.CMS.batch_undo_mark_delete_articles/3)
       end
@@ -187,7 +187,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
 
         middleware(M.Authorize, :login)
         middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, claim: unquote("owner;cms->c?->#{to_string(thread)}.delete"))
+        middleware(M.Passport, action: unquote("mutate.delete_#{to_string(thread)}"))
         middleware(M.ArticleLoader)
 
         resolve(&R.CMS.delete_article/3)
@@ -283,7 +283,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
 
         middleware(M.Authorize, :login)
         middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.sink"))
+        middleware(M.Passport, action: unquote("mutate.sink_#{to_string(thread)}"))
         middleware(M.ArticleLoader)
 
         resolve(&R.CMS.sink_article/3)
@@ -295,7 +295,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
 
         middleware(M.Authorize, :login)
         middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.undo_sink"))
+        middleware(M.Passport, action: unquote("mutate.undo_sink_#{to_string(thread)}"))
         middleware(M.ArticleLoader)
 
         resolve(&R.CMS.undo_sink_article/3)
@@ -319,7 +319,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
 
         middleware(M.Authorize, :login)
         middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.lock_comment"))
+        middleware(M.Passport, action: unquote("mutate.lock_#{to_string(thread)}_comment"))
         middleware(M.ArticleLoader)
 
         resolve(&R.CMS.lock_article_comments/3)
@@ -331,7 +331,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
 
         middleware(M.Authorize, :login)
         middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, claim: unquote("cms->c?->#{to_string(thread)}.undo_lock_comment"))
+        middleware(M.Passport, action: unquote("mutate.undo_lock_#{to_string(thread)}_comment"))
         middleware(M.ArticleLoader)
 
         resolve(&R.CMS.undo_lock_article_comments/3)
