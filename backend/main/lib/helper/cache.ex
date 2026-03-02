@@ -8,8 +8,12 @@ defmodule Helper.Cache do
   @cache_pool get_config(:cache, :pool)
 
   def config(pool_name) do
-    size = @cache_pool[pool_name].size
-    seconds = @cache_pool[pool_name].seconds
+    pool_config =
+      Map.get(@cache_pool, pool_name) ||
+        raise ArgumentError, "unknown cache pool: #{inspect(pool_name)}"
+
+    size = pool_config.size
+    seconds = pool_config.seconds
 
     [
       # Cachex v4: use Limit hook instead of `limit: limit(...)`

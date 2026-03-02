@@ -138,7 +138,8 @@ defmodule Helper.PermissionRegistry do
 
     %{
       general: rules.general |> Enum.map(fn x -> {x, false} end) |> Map.new() |> Jason.encode!(),
-      community: rules.community |> Enum.map(fn x -> {x, false} end) |> Map.new() |> Jason.encode!()
+      community:
+        rules.community |> Enum.map(fn x -> {x, false} end) |> Map.new() |> Jason.encode!()
     }
   end
 
@@ -170,7 +171,10 @@ defmodule Helper.PermissionRegistry do
     normalize_rules(%{"global" => global, "communities" => communities})
   end
 
-  def normalize_rules(_), do: empty_rules()
+  def normalize_rules(nil), do: empty_rules()
+
+  def normalize_rules(_),
+    do: raise(ArgumentError, "invalid passport rules shape, expected global/communities maps")
 
   @spec valid_permission?(String.t()) :: boolean()
   def valid_permission?(permission) when is_binary(permission) do
@@ -231,10 +235,13 @@ defmodule Helper.PermissionRegistry do
     do: {:ok, %{scope: :community_thread, permission: "#{thread}.undo_pin"}}
 
   defp article_requirement("mutate.lock_" <> rest),
-    do: {:ok, %{scope: :community_thread, permission: "#{strip_comment_suffix(rest)}.lock_comment"}}
+    do:
+      {:ok, %{scope: :community_thread, permission: "#{strip_comment_suffix(rest)}.lock_comment"}}
 
   defp article_requirement("mutate.undo_lock_" <> rest),
-    do: {:ok, %{scope: :community_thread, permission: "#{strip_comment_suffix(rest)}.undo_lock_comment"}}
+    do:
+      {:ok,
+       %{scope: :community_thread, permission: "#{strip_comment_suffix(rest)}.undo_lock_comment"}}
 
   defp article_requirement("mutate.mark_delete_" <> thread),
     do: {:ok, %{scope: :thread, permission: "#{thread}.mark_delete"}}
@@ -246,7 +253,7 @@ defmodule Helper.PermissionRegistry do
     do: {:ok, %{scope: :thread, permission: "#{to_singular(plural_thread)}.mark_delete"}}
 
   defp article_requirement("mutate.batch_undo_mark_delete_" <> plural_thread),
-    do: {:ok, %{scope: :thread, permission: "#{to_singular(plural_thread)}.mark_delete"}}
+    do: {:ok, %{scope: :thread, permission: "#{to_singular(plural_thread)}.undo_mark_delete"}}
 
   defp article_requirement("mutate.delete_" <> thread),
     do: {:ok, %{scope: :community_thread, permission: "#{thread}.delete", owner_fallback: true}}
@@ -299,6 +306,6 @@ defmodule Helper.PermissionRegistry do
     end)
   end
 
-  defp to_singular(plural_thread), do: String.trim_trailing(plural_thread, "s")
+  defp to_singular(plural_thread), do: String.replace_suffix(plural_thread, "s", "")
   defp strip_comment_suffix(rest), do: String.replace_suffix(rest, "_comment", "")
 end

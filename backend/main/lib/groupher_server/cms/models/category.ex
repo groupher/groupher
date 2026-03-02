@@ -40,7 +40,6 @@ defmodule GroupherServer.CMS.Model.Category do
     category
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
-    # |> validate_inclusion(:title, Certification.moderator_titles(:cms))
     # |> foreign_key_constraint(:community_id)
     # |> foreign_key_constraint(:author_id)
     |> unique_constraint(:title, name: :categories_title_index)
@@ -50,7 +49,6 @@ defmodule GroupherServer.CMS.Model.Category do
   def update_changeset(%Category{} = category, attrs) do
     category
     |> cast(attrs, @optional_fields ++ @required_fields)
-    # |> validate_inclusion(:title, Certification.moderator_titles(:cms))
     # |> foreign_key_constraint(:community_id)
     # |> foreign_key_constraint(:author_id)
     |> unique_constraint(:title, name: :categories_title_index)

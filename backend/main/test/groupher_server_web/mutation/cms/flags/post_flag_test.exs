@@ -140,7 +140,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
         ids: [post.inner_id, post2.inner_id]
       }
 
-      passport_rules = %{"post.mark_delete" => true}
+      passport_rules = %{"post.undo_mark_delete" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =

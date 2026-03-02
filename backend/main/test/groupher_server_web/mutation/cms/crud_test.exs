@@ -8,8 +8,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)
 
-  # @default_root_rules Certification.passport_rules(cms: "root")
-
   setup do
     {:ok, category} = db_insert(:category)
     {:ok, thread} = db_insert(:thread)

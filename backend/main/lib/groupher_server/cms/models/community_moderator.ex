@@ -33,7 +33,6 @@ defmodule GroupherServer.CMS.Model.CommunityModerator do
     community_moderator
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
-    # |> validate_inclusion(:title, Certification.moderator_titles(:cms))
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:user_id)
 
