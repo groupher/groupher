@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
     test "auth user can markDelete changelog", ~m(community changelog)a do
       variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
 
-      passport_rules = %{"changelog.mark_delete" => true}
+      passport_rules = %{community.slug => %{"changelog.mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert community.meta.changelogs_count == 1
 
       variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
-      passport_rules = %{"changelog.mark_delete" => true}
+      passport_rules = %{community.slug => %{"changelog.mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       rule_conn |> gq_mutation(Schema.m(:mark_delete_article, :changelog), variables)
@@ -65,7 +65,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
 
       {:ok, _} = CMS.Articles.mark_delete(changelog)
 
-      passport_rules = %{"changelog.undo_mark_delete" => true}
+      passport_rules = %{community.slug => %{"changelog.undo_mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
@@ -87,7 +87,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       assert community.meta.changelogs_count == 0
 
       variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
-      passport_rules = %{"changelog.undo_mark_delete" => true}
+      passport_rules = %{community.slug => %{"changelog.undo_mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
       rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :changelog), variables)
 
@@ -114,7 +114,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
         ids: [changelog.inner_id, changelog2.inner_id]
       }
 
-      passport_rules = %{"changelog.mark_delete" => true}
+      passport_rules = %{community.slug => %{"changelog.mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
@@ -143,7 +143,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
         ids: [changelog.inner_id, changelog2.inner_id]
       }
 
-      passport_rules = %{"changelog.mark_delete" => true}
+      passport_rules = %{community.slug => %{"changelog.undo_mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
