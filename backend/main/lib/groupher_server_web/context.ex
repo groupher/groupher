@@ -69,7 +69,7 @@ defmodule GroupherServerWeb.Context do
   # TODO gather role info from CMS or other context
   defp check_passport(%User{} = user) do
     case CMS.Communities.get_passport(%User{id: user.id}) do
-      {:ok, cms_passport} -> {:ok, Map.put(user, :cur_passport, %{"cms" => cms_passport})}
+      {:ok, passport} -> {:ok, Map.put(user, :cur_passport, passport)}
       {:error, _} -> {:ok, user}
     end
   end

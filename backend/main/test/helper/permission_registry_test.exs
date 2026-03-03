@@ -18,17 +18,15 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
     threads = article_reaction_threads()
 
     templates = [
-      "mutate.pin_%s",
-      "mutate.undo_pin_%s",
-      "mutate.mark_delete_%s",
-      "mutate.undo_mark_delete_%s",
-      "mutate.batch_mark_delete_%ss",
-      "mutate.batch_undo_mark_delete_%ss",
-      "mutate.delete_%s",
-      "mutate.sink_%s",
-      "mutate.undo_sink_%s",
-      "mutate.lock_%s_comment",
-      "mutate.undo_lock_%s_comment"
+      "%s.pin",
+      "%s.undo_pin",
+      "%s.mark_delete",
+      "%s.undo_mark_delete",
+      "%s.delete",
+      "%s.sink",
+      "%s.undo_sink",
+      "%s.lock_comment",
+      "%s.undo_lock_comment"
     ]
 
     for thread <- threads, template <- templates do
@@ -39,18 +37,32 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
   end
 
   test "unknown action returns unknown_action error" do
-    assert {:error, :unknown_action} = PermissionRegistry.requirement("mutate.this_action_does_not_exist")
+    assert {:error, :unknown_action} =
+             PermissionRegistry.requirement("this_action_does_not_exist")
   end
 
   test "valid_rules? accepts normalized shape only" do
     normalized = %{
       "global" => %{"community.update" => true},
-      "communities" => %{"javascript" => %{"post.edit" => true}}
+      "cms" => %{"javascript" => %{"post.edit" => true}}
     }
 
     assert PermissionRegistry.valid_rules?(normalized)
-    refute PermissionRegistry.valid_rules?(%{"community.update" => true, "javascript" => %{"post.edit" => true}})
-    refute PermissionRegistry.valid_rules?(%{"global" => %{"bad.perm" => true}, "communities" => %{}})
+
+    refute PermissionRegistry.valid_rules?(%{
+             "community.update" => true,
+             "javascript" => %{"post.edit" => true}
+           })
+
+    refute PermissionRegistry.valid_rules?(%{
+             "global" => %{"bad.perm" => true},
+             "cms" => %{}
+           })
+
+    refute PermissionRegistry.valid_rules?(%{
+             "global" => %{},
+             "communities" => %{"javascript" => %{"post.edit" => true}}
+           })
   end
 
   defp action_literals_from_schema do
@@ -82,9 +94,8 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
   defp valid_requirement?(%{owner_fallback: true} = requirement) when map_size(requirement) == 1,
     do: true
 
-  defp valid_requirement?(%{scope: scope} = requirement)
-       when scope in [:global, :thread, :community, :community_thread] do
-    is_binary(requirement[:permission]) or is_binary(requirement[:permission_template])
+  defp valid_requirement?(%{scope: scope} = requirement) when scope in [:global, :context] do
+    is_binary(requirement[:grant]) or is_binary(requirement[:grant_by_thread])
   end
 
   defp valid_requirement?(_), do: false

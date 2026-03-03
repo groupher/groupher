@@ -1,138 +1,90 @@
 defmodule Helper.PermissionRegistry do
   @moduledoc """
-  Central registry for action-based permission requirements and known passport rules.
+  Central permission registry for action-based authorization.
+
+  Main responsibilities:
+
+  - map GraphQL `action` strings to normalized permission requirements
+  - normalize and validate passport rule payloads
+  - provide known grant catalogs used by write-time validation and UI payloads
+
+  Rule data structure (canonical):
+
+      %{
+        "global" => %{
+          "community.create" => true,
+          "root" => true
+        },
+        "cms" => %{
+          "<community_slug>" => %{
+            "post.edit" => true,
+            "thread.set" => true
+          }
+        }
+      }
+
+  Requirement structure:
+
+      %{scope: :global, grant: "community.create"}
+      %{scope: :context, context: :cms, grant: "post.edit"}
+      %{scope: :global, grant_by_thread: "community.unmirror"}
+
+  Canonical passport shape:
+
+      %{
+        "global" => %{...},
+        "cms" => %{"community-slug" => %{...}}
+      }
   """
 
-  import Helper.Utils, only: [get_config: 2]
+  alias Helper.PermissionConfig
 
-  @article_threads get_config(:article, :threads)
+  @root_passport_item_count 10_000
+  @contexts PermissionConfig.contexts()
+  @action_requirements PermissionConfig.action_requirements()
 
-  @article_rule_suffixes [
-    "edit",
-    "mark_delete",
-    "undo_mark_delete",
-    "delete",
-    "community.mirror",
-    "community.unmirror",
-    "community.move",
-    "pin",
-    "undo_pin",
-    "sink",
-    "undo_sink",
-    "lock_comment",
-    "undo_lock_comment",
-    "community_tag.create",
-    "community_tag.update",
-    "community_tag.delete",
-    "community_tag.set",
-    "community_tag.unset"
-  ]
-
-  @general_permissions Enum.reduce(@article_rule_suffixes, [], fn suffix, acc ->
-                         acc ++ Enum.map(@article_threads, &"#{&1}.#{suffix}")
-                       end) ++
-                         [
-                           "root",
-                           "root.spec",
-                           "blackeye",
-                           "homemirror",
-                           "system_accountant",
-                           "system_notification.publish",
-                           "stamp_passport",
-                           "moderator.set",
-                           "moderator.unset",
-                           "moderator.update",
-                           "community.create",
-                           "community.update",
-                           "community.delete",
-                           "category.create",
-                           "category.delete",
-                           "category.update",
-                           "category.set",
-                           "category.unset",
-                           "thread.create",
-                           "community.apply.approve",
-                           "community.apply.deny"
-                         ]
-
-  @community_permissions ["thread.set", "thread.unset"]
-
-  @role_templates %{
-    "root" => %{
-      "global" => %{"root" => true},
-      "communities" => %{}
-    },
-    "moderator" => %{
-      "global" => %{
-        "post.community_tag.create" => true,
-        "post.community_tag.update" => true,
-        "post.mark_delete" => true
-      },
-      "communities" => %{}
-    }
-  }
-
-  @community_actions %{
-    "mutate.create_community" => %{scope: :global, permission: "community.create"},
-    "mutate.update_community" => %{scope: :global, permission: "community.update"},
-    "mutate.delete_community" => %{scope: :global, permission: "community.delete"},
-    "mutate.approve_community_apply" => %{scope: :global, permission: "community.apply.approve"},
-    "mutate.deny_community_apply" => %{scope: :global, permission: "community.apply.deny"},
-    "mutate.create_category" => %{scope: :global, permission: "category.create"},
-    "mutate.delete_category" => %{scope: :global, permission: "category.delete"},
-    "mutate.update_category" => %{scope: :global, permission: "category.update"},
-    "mutate.create_thread" => %{scope: :global, permission: "thread.create"},
-    "mutate.add_moderator" => %{scope: :global, permission: "moderator.set"},
-    "mutate.remove_moderator" => %{scope: :global, permission: "moderator.unset"},
-    "mutate.update_moderator_passport" => %{scope: :global, permission: "moderator.update"},
-    "mutate.set_category" => %{scope: :global, permission: "category.set"},
-    "mutate.unset_category" => %{scope: :global, permission: "category.unset"},
-    "mutate.set_thread" => %{scope: :community, permission: "thread.set"},
-    "mutate.unset_thread" => %{scope: :community, permission: "thread.unset"},
-    "mutate.mirror_to_home" => %{scope: :global, permission: "homemirror"},
-    "mutate.move_to_blackhole" => %{scope: :global, permission: "blackeye"},
-    "mutate.update_bill_state" => %{scope: :global, permission: "system_accountant"},
-    "mutate.update_comment" => %{owner_fallback: true},
-    "mutate.delete_comment" => %{owner_fallback: true},
-    "mutate.pin_comment" => %{owner_fallback: true},
-    "mutate.undo_pin_comment" => %{owner_fallback: true},
-    "query.count_status" => %{scope: :global, permission: "root"},
-    "mutate.update_dashboard_rss" => %{scope: :global, permission: "community.update"}
-  }
-
+  @doc """
+  Returns permission requirement metadata for an action.
+  """
   @spec requirement(String.t()) :: {:ok, map()} | {:error, :unknown_action}
   def requirement(action) when is_binary(action) do
-    case Map.get(@community_actions, action) do
-      nil -> article_requirement(action)
+    case Map.get(@action_requirements, action) do
+      nil -> {:error, :unknown_action}
       requirement -> {:ok, requirement}
     end
   end
 
   def requirement(_), do: {:error, :unknown_action}
 
-  @spec role_template(String.t()) :: {:ok, map()} | {:error, :unknown_role}
-  def role_template(role) when is_binary(role) do
-    case Map.get(@role_templates, role) do
-      nil -> {:error, :unknown_role}
-      rules -> {:ok, rules}
-    end
-  end
-
-  def role_template(_), do: {:error, :unknown_role}
-
+  @doc """
+  Returns supported moderator titles.
+  """
   def moderator_titles(:cms), do: ["root", "moderator"]
 
-  def root_passport_item_count, do: 10_000
+  @doc """
+  Returns sentinel passport item count for root moderators.
+  """
+  def root_passport_item_count, do: @root_passport_item_count
 
+  @doc """
+  Returns default passport rule examples for compatibility APIs.
+  """
   def all_passport_rules do
-    %{
-      root: @role_templates["root"],
-      moderator: @role_templates["moderator"]
-    }
+    PermissionConfig.passport_rule_examples()
   end
 
-  def all_rules(:cms), do: %{general: @general_permissions, community: @community_permissions}
+  @doc """
+  Returns all known grants for CMS split by global and context scopes.
+  """
+  def all_rules(:cms),
+    do: %{
+      general: PermissionConfig.grants_for("global"),
+      community: PermissionConfig.grants_for("cms")
+    }
 
+  @doc """
+  Returns all known grants encoded as JSON maps with false defaults.
+  """
   def all_rules(:cms, :stringify) do
     rules = all_rules(:cms)
 
@@ -143,148 +95,110 @@ defmodule Helper.PermissionRegistry do
     }
   end
 
+  @doc """
+  Returns canonical empty passport rules.
+  """
   @spec empty_rules() :: map()
-  def empty_rules, do: %{"global" => %{}, "communities" => %{}}
+  def empty_rules, do: %{"global" => %{}, "cms" => %{}}
 
+  @doc """
+  Validates whether rules contain only known keys per scope.
+  """
   @spec valid_rules?(map()) :: boolean()
-  def valid_rules?(%{"global" => global, "communities" => communities} = rules)
-      when is_map(global) and is_map(communities) do
-    rules
-    |> normalize_rules()
-    |> permission_keys_from_rules()
-    |> Enum.all?(&valid_permission?/1)
+  def valid_rules?(rules) when is_map(rules) do
+    normalized = normalize_rules(rules)
+
+    @contexts
+    |> Enum.all?(fn context ->
+      valid_context_rules?(context, Map.get(normalized, context, %{}))
+    end)
+  rescue
+    ArgumentError -> false
   end
 
   def valid_rules?(_), do: false
 
-  @spec normalize_rules(map()) :: map()
-  def normalize_rules(%{"global" => global, "communities" => communities})
-      when is_map(global) and is_map(communities) do
-    %{
-      "global" => normalize_permission_map(global),
-      "communities" => normalize_communities_map(communities)
-    }
+  @doc """
+  Normalizes rules into `%{"global" => map, "cms" => map}` with string keys.
+  """
+  @spec normalize_rules(map() | nil) :: map()
+  def normalize_rules(%{"global" => global} = rules) when is_map(global) do
+    validate_top_level_keys!(Map.keys(rules))
+
+    base = %{"global" => normalize_context("global", global)}
+
+    Enum.reduce(Enum.reject(@contexts, &(&1 == "global")), base, fn context, acc ->
+      context_value = Map.get(rules, context, %{})
+      Map.put(acc, context, normalize_context(context, context_value))
+    end)
   end
 
-  def normalize_rules(%{global: global, communities: communities})
-      when is_map(global) and is_map(communities) do
-    normalize_rules(%{"global" => global, "communities" => communities})
+  def normalize_rules(rules) when is_map(rules) do
+    if map_has_atom_keys?(rules) do
+      rules
+      |> normalize_top_level_atom_keys()
+      |> normalize_rules()
+    else
+      raise(ArgumentError, "invalid passport rules shape, expected context maps")
+    end
   end
 
   def normalize_rules(nil), do: empty_rules()
 
   def normalize_rules(_),
-    do: raise(ArgumentError, "invalid passport rules shape, expected global/communities maps")
+    do: raise(ArgumentError, "invalid passport rules shape, expected configured context maps")
 
+  @doc """
+  Returns whether a permission key is known in either scope.
+  """
   @spec valid_permission?(String.t()) :: boolean()
   def valid_permission?(permission) when is_binary(permission) do
-    permission in @general_permissions or permission in @community_permissions
+    @contexts
+    |> Enum.any?(&valid_context_permission?(&1, permission))
   end
 
   def valid_permission?(_), do: false
 
-  defp article_requirement("mutate.create_community_tag"),
-    do: {:ok, %{scope: :community_thread, permission_template: "{thread}.community_tag.create"}}
+  @doc """
+  Returns whether a key is valid for global scope.
+  """
+  @spec valid_global_permission?(String.t()) :: boolean()
+  def valid_global_permission?(permission) when is_binary(permission),
+    do: valid_context_permission?("global", permission)
 
-  defp article_requirement("mutate.update_community_tag"),
-    do: {:ok, %{scope: :community_thread, permission_template: "{thread}.community_tag.update"}}
+  def valid_global_permission?(_), do: false
 
-  defp article_requirement("mutate.delete_community_tag"),
-    do: {:ok, %{scope: :community_thread, permission_template: "{thread}.community_tag.delete"}}
+  @doc """
+  Returns whether a key is valid for the given scope context.
+  """
+  @spec valid_context_permission?(String.t() | atom(), String.t()) :: boolean()
+  def valid_context_permission?(context, permission) when is_atom(context),
+    do: valid_context_permission?(to_string(context), permission)
 
-  defp article_requirement("mutate.set_community_tag"),
-    do: {:ok, %{scope: :community_thread, permission_template: "{thread}.community_tag.set"}}
-
-  defp article_requirement("mutate.unset_community_tag"),
-    do: {:ok, %{scope: :community_thread, permission_template: "{thread}.community_tag.unset"}}
-
-  defp article_requirement("mutate.reindex_tags_in_group"),
-    do: {:ok, %{scope: :community_thread, permission_template: "{thread}.community_tag.update"}}
-
-  defp article_requirement("mutate.mirror_article"),
-    do: {:ok, %{scope: :thread, permission_template: "{thread}.community.mirror"}}
-
-  defp article_requirement("mutate.unmirror_article"),
-    do: {:ok, %{scope: :thread, permission_template: "{thread}.community.unmirror"}}
-
-  defp article_requirement("mutate.move_article"),
-    do: {:ok, %{scope: :thread, permission_template: "{thread}.community.move"}}
-
-  defp article_requirement("mutate.update_post"),
-    do: {:ok, %{scope: :community_thread, permission: "post.edit", owner_fallback: true}}
-
-  defp article_requirement("mutate.set_post_cat"),
-    do: {:ok, %{scope: :community_thread, permission: "post.edit", owner_fallback: true}}
-
-  defp article_requirement("mutate.set_post_state"),
-    do: {:ok, %{scope: :community_thread, permission: "post.edit", owner_fallback: true}}
-
-  defp article_requirement("mutate.update_doc"),
-    do: {:ok, %{scope: :community_thread, permission: "doc.edit", owner_fallback: true}}
-
-  defp article_requirement("mutate.update_blog"),
-    do: {:ok, %{scope: :community_thread, permission: "blog.edit", owner_fallback: true}}
-
-  defp article_requirement("mutate.update_changelog"),
-    do: {:ok, %{scope: :community_thread, permission: "changelog.edit", owner_fallback: true}}
-
-  defp article_requirement("mutate.pin_" <> thread),
-    do: {:ok, %{scope: :community_thread, permission: "#{thread}.pin"}}
-
-  defp article_requirement("mutate.undo_pin_" <> thread),
-    do: {:ok, %{scope: :community_thread, permission: "#{thread}.undo_pin"}}
-
-  defp article_requirement("mutate.lock_" <> rest),
-    do:
-      {:ok, %{scope: :community_thread, permission: "#{strip_comment_suffix(rest)}.lock_comment"}}
-
-  defp article_requirement("mutate.undo_lock_" <> rest),
-    do:
-      {:ok,
-       %{scope: :community_thread, permission: "#{strip_comment_suffix(rest)}.undo_lock_comment"}}
-
-  defp article_requirement("mutate.mark_delete_" <> thread),
-    do: {:ok, %{scope: :thread, permission: "#{thread}.mark_delete"}}
-
-  defp article_requirement("mutate.undo_mark_delete_" <> thread),
-    do: {:ok, %{scope: :thread, permission: "#{thread}.undo_mark_delete"}}
-
-  defp article_requirement("mutate.batch_mark_delete_" <> plural_thread),
-    do: {:ok, %{scope: :thread, permission: "#{to_singular(plural_thread)}.mark_delete"}}
-
-  defp article_requirement("mutate.batch_undo_mark_delete_" <> plural_thread),
-    do: {:ok, %{scope: :thread, permission: "#{to_singular(plural_thread)}.undo_mark_delete"}}
-
-  defp article_requirement("mutate.delete_" <> thread),
-    do: {:ok, %{scope: :community_thread, permission: "#{thread}.delete", owner_fallback: true}}
-
-  defp article_requirement("mutate.sink_" <> thread),
-    do: {:ok, %{scope: :community_thread, permission: "#{thread}.sink"}}
-
-  defp article_requirement("mutate.undo_sink_" <> thread),
-    do: {:ok, %{scope: :community_thread, permission: "#{thread}.undo_sink"}}
-
-  defp article_requirement(_), do: {:error, :unknown_action}
-
-  defp permission_keys_from_rules(%{"global" => global, "communities" => communities})
-       when is_map(global) and is_map(communities) do
-    global_keys =
-      global
-      |> Enum.filter(fn {_key, value} -> value == true end)
-      |> Enum.map(fn {key, _value} -> key end)
-
-    community_keys =
-      communities
-      |> Enum.flat_map(fn {_slug, perms} ->
-        perms
-        |> Enum.filter(fn {_key, value} -> value == true end)
-        |> Enum.map(fn {key, _value} -> key end)
-      end)
-
-    global_keys ++ community_keys
+  def valid_context_permission?(context, permission)
+      when is_binary(context) and is_binary(permission) do
+    permission in PermissionConfig.grants_for(context)
   end
 
-  defp permission_keys_from_rules(_), do: []
+  def valid_context_permission?(_, _), do: false
+
+  defp valid_context_rules?("global", rules) when is_map(rules) do
+    rules
+    |> Enum.filter(fn {_key, value} -> value == true end)
+    |> Enum.all?(fn {key, _} -> valid_context_permission?("global", key) end)
+  end
+
+  defp valid_context_rules?(context, rules) when is_binary(context) and is_map(rules) do
+    rules
+    |> Enum.all?(fn {_scope_key, permission_map} ->
+      is_map(permission_map) and
+        permission_map
+        |> Enum.filter(fn {_key, value} -> value == true end)
+        |> Enum.all?(fn {key, _} -> valid_context_permission?(context, key) end)
+    end)
+  end
+
+  defp valid_context_rules?(_, _), do: false
 
   defp normalize_permission_map(map) do
     Enum.reduce(map, %{}, fn {key, value}, acc ->
@@ -296,16 +210,40 @@ defmodule Helper.PermissionRegistry do
     end)
   end
 
-  defp normalize_communities_map(map) do
-    Enum.reduce(map, %{}, fn {key, value}, acc ->
+  defp normalize_context("global", map) when is_map(map), do: normalize_permission_map(map)
+
+  defp normalize_context(context, map) when is_binary(context) and is_map(map) do
+    Enum.reduce(map, %{}, fn {scope_key, value}, acc ->
       if is_map(value) do
-        Map.put(acc, to_string(key), normalize_permission_map(value))
+        Map.put(acc, to_string(scope_key), normalize_permission_map(value))
       else
-        acc
+        raise(ArgumentError, "invalid passport rules shape, expected configured context maps")
       end
     end)
   end
 
-  defp to_singular(plural_thread), do: String.replace_suffix(plural_thread, "s", "")
-  defp strip_comment_suffix(rest), do: String.replace_suffix(rest, "_comment", "")
+  defp normalize_context(_, _),
+    do: raise(ArgumentError, "invalid passport rules shape, expected configured context maps")
+
+  defp validate_top_level_keys!(keys) do
+    allowed = @contexts
+
+    case Enum.all?(keys, &(&1 in allowed)) do
+      true ->
+        :ok
+
+      false ->
+        raise(ArgumentError, "invalid passport rules shape, expected configured context maps")
+    end
+  end
+
+  defp normalize_top_level_atom_keys(map) do
+    Enum.reduce(map, %{}, fn {key, value}, acc ->
+      Map.put(acc, to_string(key), value)
+    end)
+  end
+
+  defp map_has_atom_keys?(map) do
+    Enum.any?(map, fn {key, _} -> is_atom(key) end)
+  end
 end

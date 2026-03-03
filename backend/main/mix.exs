@@ -7,19 +7,24 @@ defmodule GroupherServer.Mixfile do
     [
       app: :groupher_server,
       version: "2.1.10",
-      elixir: "~> 1.9",
+      elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: [plt_add_deps: :transitive, ignore_warnings: ".dialyzer_ignore.exs"],
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [
+      start_permanent: Mix.env() == :prod,
+      aliases: aliases(),
+      deps: deps()
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [
         coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.post": :test,
         "coveralls.html": :test
-      ],
-      start_permanent: Mix.env() == :prod,
-      aliases: aliases(),
-      deps: deps()
+      ]
     ]
   end
 
@@ -58,9 +63,9 @@ defmodule GroupherServer.Mixfile do
       {:phoenix_live_view, "~> 0.20.2"},
       {:phoenix_live_reload, "~> 1.2", only: :mock},
       {:phoenix_live_dashboard, "~> 0.8.3"},
-      {:ecto_sql, "~> 3.10.1"},
+      {:ecto_sql, "~> 3.13.4"},
       {:phoenix_ecto, "~> 4.5.1"},
-      {:postgrex, "~> 0.17.3"},
+      {:postgrex, "~> 0.22.0"},
       # for i18n usage
       {:gettext, "~> 0.23.1"},
       {:plug_cowboy, "~> 2.7.0"},
@@ -80,13 +85,13 @@ defmodule GroupherServer.Mixfile do
       {:poison, "~> 4.0.1"},
       # for fake data in test env
       {:faker, "~> 0.17.0"},
-      {:scrivener_ecto, "~> 2.7.0"},
+      {:scrivener_ecto, "~> 3.0.1"},
       # enhanced cursor based pagination
       {:quarto, "~> 1.1.5"},
       {:guardian, "~> 2.3.2"},
       {:timex, "~> 3.7.11"},
-      {:dataloader, "~> 2.0.0"},
-      {:mix_test_watch, "~> 1.0.2", only: :dev, runtime: false},
+      {:dataloader, "~> 2.0.2"},
+      {:mix_test_watch, "~> 1.4.0", only: :dev, runtime: false},
       {:ex_unit_notifier, "~> 1.0", only: :test},
       {:pre_commit, "~> 0.3.4"},
       {:inch_ex, "~> 2.0", only: [:dev, :test]},

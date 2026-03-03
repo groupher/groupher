@@ -5,6 +5,35 @@
 defmodule GroupherServerWeb.Middleware.Passport do
   @moduledoc """
   Action-based passport check middleware.
+
+  Permission check flow (wireframe):
+
+      GraphQL field
+          -> middleware(M.Passport, action: "...")
+          -> PermissionRegistry.requirement(action)
+          -> resolve_grant(requirement, resolution)
+          -> read cur_user.cur_passport
+          -> match grant in proper context scope
+
+  Global action example (`community.create`):
+
+      action: "community.create"
+          -> requirement: %{scope: :global, grant: "community.create"}
+          -> passport["global"]["community.create"] == true ? allow : deny
+
+  Community-scoped action example (`post.edit` style):
+
+      action (for post operations) -> requirement: %{scope: :context, context: :cms, grant: "post.*"}
+          -> fetch community_slug from resolution.arguments.community
+          -> read cur_user.cur_passport["cms"][community_slug]
+          -> check if that community whitelist contains required grant
+          -> true: allow, false/missing: deny
+
+  Notes:
+
+  - `community_slug` comes from request arguments, then selects one community whitelist bucket.
+  - `grant_by_thread` requirements are expanded at runtime into concrete grants via `thread` argument.
+  - `global.root == true` bypasses normal checks.
   """
 
   @behaviour Absinthe.Middleware
@@ -20,30 +49,31 @@ defmodule GroupherServerWeb.Middleware.Passport do
   end
 
   def call(resolution, action: action) when is_binary(action) do
-    with {:ok, requirement} <- PermissionRegistry.requirement(action) do
-      if owner_pass?(resolution, requirement) do
-        resolution
-      else
-        with {:ok, cur_passport} <- fetch_cur_passport(resolution),
-             true <- has_permission?(cur_passport, resolution, requirement) do
+    case PermissionRegistry.requirement(action) do
+      {:ok, requirement} ->
+        if owner_pass?(resolution, requirement) do
           resolution
         else
-          {:error, :missing_passport} ->
+          with {:ok, cur_passport} <- fetch_cur_passport(resolution),
+               true <- has_permission?(cur_passport, resolution, requirement) do
             resolution
-            |> handle_absinthe_error(
-              "PassportError: your passport not qualified.",
-              ecode(:passport)
-            )
+          else
+            {:error, :missing_passport} ->
+              resolution
+              |> handle_absinthe_error(
+                "PassportError: your passport not qualified.",
+                ecode(:passport)
+              )
 
-          false ->
-            resolution
-            |> handle_absinthe_error(
-              "PassportError: your passport not qualified.",
-              ecode(:passport)
-            )
+            false ->
+              resolution
+              |> handle_absinthe_error(
+                "PassportError: your passport not qualified.",
+                ecode(:passport)
+              )
+          end
         end
-      end
-    else
+
       {:error, :unknown_action} ->
         resolution
         |> handle_absinthe_error("PassportError: unknown action #{action}.", ecode(:passport))
@@ -66,52 +96,48 @@ defmodule GroupherServerWeb.Middleware.Passport do
   defp fetch_cur_passport(_), do: {:error, :missing_passport}
 
   defp has_permission?(cur_passport, resolution, requirement) do
-    cms_passport =
-      cur_passport
-      |> Map.get("cms", PermissionRegistry.empty_rules())
-      |> PermissionRegistry.normalize_rules()
+    normalized_passport = PermissionRegistry.normalize_rules(cur_passport)
 
-    has_root_permission?(cms_passport) or
-      check_scope_permission(cms_passport, resolution, requirement)
+    has_root_permission?(normalized_passport) or
+      check_scope_permission(normalized_passport, resolution, requirement)
   end
 
-  defp check_scope_permission(cms_passport, _resolution, %{scope: :global, permission: permission}),
-       do: has_global_permission?(cms_passport, permission)
-
-  defp check_scope_permission(cms_passport, resolution, %{scope: :thread} = requirement) do
-    with {:ok, permission} <- resolve_permission(requirement, resolution) do
-      has_global_permission?(cms_passport, permission)
-    else
-      _ -> false
-    end
-  end
-
-  defp check_scope_permission(cms_passport, resolution, %{scope: scope} = requirement)
-       when scope in [:community, :community_thread] do
+  defp check_scope_permission(
+         passport,
+         resolution,
+         %{scope: :context, context: context} = requirement
+       ) do
     with {:ok, community} <- fetch_community_slug(resolution),
-         {:ok, permission} <- resolve_permission(requirement, resolution) do
-      get_in(cms_passport, ["communities", community, permission]) == true
+         {:ok, grant} <- resolve_grant(requirement, resolution) do
+      get_in(passport, [to_string(context), community, grant]) == true
     else
       _ -> false
     end
   end
 
-  defp check_scope_permission(_cms_passport, _resolution, %{owner_fallback: true, permission: nil}),
-       do: false
+  defp check_scope_permission(passport, resolution, %{scope: :global} = requirement) do
+    with {:ok, grant} <- resolve_grant(requirement, resolution) do
+      has_global_permission?(passport, grant)
+    else
+      _ -> false
+    end
+  end
+
+  defp check_scope_permission(_cms_passport, _resolution, %{owner_fallback: true, grant: nil}),
+    do: false
 
   defp check_scope_permission(_cms_passport, _resolution, %{owner_fallback: true}), do: false
   defp check_scope_permission(_cms_passport, _resolution, _), do: false
 
-  defp resolve_permission(%{permission: permission}, _resolution) when is_binary(permission),
-    do: {:ok, permission}
+  defp resolve_grant(%{grant: grant}, _resolution) when is_binary(grant), do: {:ok, grant}
 
-  defp resolve_permission(%{permission_template: template}, resolution) do
+  defp resolve_grant(%{grant_by_thread: suffix}, resolution) do
     with {:ok, thread} <- fetch_thread(resolution) do
-      {:ok, String.replace(template, "{thread}", thread)}
+      {:ok, "#{thread}.#{suffix}"}
     end
   end
 
-  defp resolve_permission(_, _), do: {:error, :invalid_requirement}
+  defp resolve_grant(_, _), do: {:error, :invalid_requirement}
 
   defp fetch_thread(%{arguments: %{thread: thread}}) when is_atom(thread),
     do: {:ok, Atom.to_string(thread)}
@@ -127,13 +153,12 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   defp fetch_community_slug(_), do: {:error, :missing_community}
 
-  defp has_global_permission?(cms_passport, permission) do
-    get_in(cms_passport, ["global", permission]) == true
+  defp has_global_permission?(passport, permission) do
+    get_in(passport, ["global", permission]) == true
   end
 
-  defp has_root_permission?(cms_passport) do
-    has_global_permission?(cms_passport, "root") or
-      has_global_permission?(cms_passport, "root.spec")
+  defp has_root_permission?(passport) do
+    has_global_permission?(passport, "root")
   end
 
   defp infer_owner?(%{

@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
     UserPassport
     |> where(
       [p],
-      fragment("(?->'communities'->?->>?)::boolean = ?", p.rules, ^community, ^key, true)
+      fragment("(?->'cms'->?->>?)::boolean = ?", p.rules, ^community, ^key, true)
     )
     |> Repo.all()
     |> done
@@ -69,7 +69,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
       end
     else
       {:error, :invalid_passport_shape} ->
-        {:error, {:invalid_passport_shape, "passport rules must contain global/communities"}}
+        {:error, {:invalid_passport_shape, "passport rules must contain global/cms"}}
 
       false ->
         {:error, {:invalid_passport_permission, "contains invalid permission key"}}
@@ -98,10 +98,10 @@ defmodule GroupherServer.CMS.Communities.Passport do
 
   defp validate_shape(rules) do
     case rules do
-      %{"global" => global, "communities" => communities} when is_map(global) and is_map(communities) ->
+      %{"global" => global, "cms" => cms} when is_map(global) and is_map(cms) ->
         {:ok, PermissionRegistry.normalize_rules(rules)}
 
-      %{global: global, communities: communities} when is_map(global) and is_map(communities) ->
+      %{global: global, cms: cms} when is_map(global) and is_map(cms) ->
         {:ok, PermissionRegistry.normalize_rules(rules)}
 
       _ ->
@@ -112,12 +112,12 @@ defmodule GroupherServer.CMS.Communities.Passport do
   defp validate_erase_path(["global", permission]) when is_binary(permission),
     do: {:ok, ["global", permission]}
 
-  defp validate_erase_path(["communities", community, permission])
+  defp validate_erase_path(["cms", community, permission])
        when is_binary(community) and is_binary(permission),
-       do: {:ok, ["communities", community, permission]}
+       do: {:ok, ["cms", community, permission]}
 
-  defp validate_erase_path(["communities", community]) when is_binary(community),
-    do: {:ok, ["communities", community]}
+  defp validate_erase_path(["cms", community]) when is_binary(community),
+    do: {:ok, ["cms", community]}
 
   defp validate_erase_path(_), do: {:error, :invalid_passport_shape}
 
@@ -129,7 +129,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
 
     %{
       "global" => Map.get(cleaned, "global", %{}),
-      "communities" => Map.get(cleaned, "communities", %{})
+      "cms" => Map.get(cleaned, "cms", %{})
     }
   end
 

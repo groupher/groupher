@@ -25,7 +25,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      middleware(M.Passport, action: "mutate.update_comment")
+      middleware(M.Passport, action: "comment.update")
 
       resolve(&R.CMS.update_comment/3)
     end
@@ -36,7 +36,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      middleware(M.Passport, action: "mutate.delete_comment")
+      middleware(M.Passport, action: "comment.delete")
 
       resolve(&R.CMS.delete_comment/3)
     end
@@ -107,7 +107,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      middleware(M.Passport, action: "mutate.pin_comment")
+      middleware(M.Passport, action: "comment.pin")
 
       resolve(&R.CMS.pin_comment/3)
     end
@@ -118,7 +118,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      middleware(M.Passport, action: "mutate.undo_pin_comment")
+      middleware(M.Passport, action: "comment.undo_pin")
 
       resolve(&R.CMS.undo_pin_comment/3)
     end

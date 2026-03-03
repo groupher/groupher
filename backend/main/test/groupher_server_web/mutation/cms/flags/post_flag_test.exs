@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     test "auth user can markDelete post", ~m(community post)a do
       variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
 
-      passport_rules = %{"post.mark_delete" => true}
+      passport_rules = %{community.slug => %{"post.mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       assert community.meta.posts_count == 1
 
       variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
-      passport_rules = %{"post.mark_delete" => true}
+      passport_rules = %{community.slug => %{"post.mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       rule_conn |> gq_mutation(Schema.m(:mark_delete_article, :post), variables)
@@ -65,7 +65,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
 
       {:ok, _} = CMS.Articles.mark_delete(post)
 
-      passport_rules = %{"post.undo_mark_delete" => true}
+      passport_rules = %{community.slug => %{"post.undo_mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       assert community.meta.posts_count == 0
 
       variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
-      passport_rules = %{"post.undo_mark_delete" => true}
+      passport_rules = %{community.slug => %{"post.undo_mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
       rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :post), variables)
 
@@ -113,7 +113,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
         ids: [post.inner_id, post2.inner_id]
       }
 
-      passport_rules = %{"post.mark_delete" => true}
+      passport_rules = %{community.slug => %{"post.mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated = rule_conn |> gq_mutation(Schema.m(:batch_mark_delete_article, :post), variables)
@@ -140,7 +140,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
         ids: [post.inner_id, post2.inner_id]
       }
 
-      passport_rules = %{"post.undo_mark_delete" => true}
+      passport_rules = %{community.slug => %{"post.undo_mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =

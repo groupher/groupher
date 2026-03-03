@@ -1,7 +1,7 @@
 {
   "makefile.configureOnOpen": false,
-  "elixir.projectPath": "./backend/main",
-  "elixirLS.projectDir": "./backend/main",
+  "elixir.projectPath": "backend/main",
+  "elixirLS.projectDir": "backend/main",
   "search.exclude": {
     "**/*.dump": true,
     "**/cover": true,

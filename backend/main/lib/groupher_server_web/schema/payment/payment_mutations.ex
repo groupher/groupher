@@ -22,7 +22,7 @@ defmodule GroupherServerWeb.Schema.Payment.Mutations do
       arg(:state, non_null(:bill_state_enum))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.update_bill_state")
+      middleware(M.Passport, action: "billing.state.update")
 
       resolve(&R.Payment.update_bill_state/3)
     end

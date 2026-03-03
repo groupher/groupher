@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       new_passport_rules = %{
         "global" => %{},
-        "communities" => %{
+        "cms" => %{
           "#{community.slug}" => %{
             "post.edit" => true,
             "post.pin" => true,
@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       new_passport_rules = %{
         "global" => %{},
-        "communities" => %{
+        "cms" => %{
           "#{community.slug}" => %{
             "post.edit" => true,
             "post.pin" => true,
@@ -77,7 +77,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       new_passport_rules = %{
         "global" => %{},
-        "communities" => %{
+        "cms" => %{
           "#{community.slug}" => %{
             "post.edit" => true,
             "post.pin" => false,
@@ -102,7 +102,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       new_passport_rules = %{
         "global" => %{},
-        "communities" => %{
+        "cms" => %{
           "#{community.slug}" => %{
             "post.delete" => false,
             "post.edit" => true
@@ -115,7 +115,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       {:ok, passport} = Passport.get_passport(user2)
 
-      assert get_in(passport, ["communities", "#{community.slug}", "post.edit"]) == true
+      assert get_in(passport, ["cms", "#{community.slug}", "post.edit"]) == true
     end
 
     test "can not update passport of other community moderator", ~m(user user2 community)a do
@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       new_passport_rules = %{
         "global" => %{},
-        "communities" => %{
+        "cms" => %{
           "#{other_community.slug}" => %{
             "post.delete" => false
           }
@@ -149,7 +149,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       new_passport_rules = %{
         "global" => %{},
-        "communities" => %{
+        "cms" => %{
           "#{community.slug}" => %{
             "post.delete" => false
           },
@@ -188,14 +188,12 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
-      {:ok, related_rules} = PermissionRegistry.role_template(role)
-
       {:ok, moderator} = CommunityModerator |> ORM.find_by(user_id: user2.id)
       {:ok, user_passport} = Passport.get_passport(user2)
 
       assert moderator.user_id == user2.id
       assert moderator.community_id == community.id
-      assert Map.equal?(related_rules, user_passport)
+      assert Map.equal?(%{"global" => %{}, "cms" => %{}}, user_passport)
     end
 
     test "user can get paged-moderators of a community", ~m(user community)a do

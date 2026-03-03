@@ -14,7 +14,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:locale, :string)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.create_community")
+      middleware(M.Passport, action: "community.create")
 
       resolve(&R.CMS.create_community/3)
       middleware(M.Statistics.MakeContribute, for: [:user])
@@ -30,7 +30,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:locale, :string)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.update_community")
+      middleware(M.Passport, action: "community.update")
       middleware(M.FrontDesk, :community)
 
       resolve(&R.CMS.update_community/3)
@@ -40,7 +40,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :delete_community, :community do
       arg(:id, non_null(:id))
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.delete_community")
+      middleware(M.Passport, action: "community.delete")
 
       resolve(&R.CMS.delete_community/3)
     end
@@ -64,7 +64,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.approve_community_apply")
+      middleware(M.Passport, action: "community.apply.approve")
       resolve(&R.CMS.approve_community_apply/3)
     end
 
@@ -73,50 +73,54 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.deny_community_apply")
+      middleware(M.Passport, action: "community.apply.deny")
       resolve(&R.CMS.deny_community_apply/3)
     end
 
     @desc "create category"
     field :create_category, :category do
+      arg(:community, non_null(:string))
       arg(:title, non_null(:string))
       arg(:slug, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.create_category")
+      middleware(M.Passport, action: "category.create")
 
       resolve(&R.CMS.create_category/3)
     end
 
     @desc "delete category"
     field :delete_category, :category do
+      arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.delete_category")
+      middleware(M.Passport, action: "category.delete")
 
       resolve(&R.CMS.delete_category/3)
     end
 
     @desc "update category"
     field :update_category, :category do
+      arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:title, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.update_category")
+      middleware(M.Passport, action: "category.update")
 
       resolve(&R.CMS.update_category/3)
     end
 
     @desc "create independent thread"
     field :create_thread, :thread_item do
+      arg(:community, non_null(:string))
       arg(:title, non_null(:string))
       arg(:slug, non_null(:string))
       arg(:index, :integer, default_value: 0)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.create_thread")
+      middleware(M.Passport, action: "thread.create")
 
       resolve(&R.CMS.create_thread/3)
     end
@@ -128,7 +132,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:role, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.add_moderator")
+      middleware(M.Passport, action: "moderator.set")
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :user)
 
@@ -142,7 +146,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:user, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.remove_moderator")
+      middleware(M.Passport, action: "moderator.unset")
 
       resolve(&R.CMS.remove_moderator/3)
     end
@@ -154,7 +158,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:rules, non_null(:json))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.update_moderator_passport")
+      middleware(M.Passport, action: "moderator.update")
 
       resolve(&R.CMS.update_moderator_passport/3)
     end
@@ -172,7 +176,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:icon, :string)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.create_community_tag")
+      middleware(M.Passport, action: "community_tag.create")
 
       resolve(&R.CMS.create_community_tag/3)
     end
@@ -192,7 +196,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:icon, :string)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.update_community_tag")
+      middleware(M.Passport, action: "community_tag.update")
 
       resolve(&R.CMS.update_community_tag/3)
     end
@@ -204,7 +208,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "mutate.delete_community_tag")
+      middleware(M.Passport, action: "community_tag.delete")
 
       resolve(&R.CMS.delete_community_tag/3)
     end

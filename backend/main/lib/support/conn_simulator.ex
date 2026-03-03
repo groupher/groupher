@@ -79,36 +79,36 @@ defmodule GroupherServer.Test.ConnSimulator do
     end
   end
 
-  defp normalize_passport_rules(%{"global" => _global, "communities" => _communities} = rules),
+  defp normalize_passport_rules(%{"global" => _global, "cms" => _cms} = rules),
     do: sanitize_passport_rules(rules)
 
   defp normalize_passport_rules(rules) when is_map(rules) do
     if Enum.all?(rules, fn {_k, v} -> is_map(v) end) do
-      %{"global" => %{}, "communities" => rules}
+      %{"global" => %{}, "cms" => rules}
       |> sanitize_passport_rules()
     else
-      %{"global" => rules, "communities" => %{}}
+      %{"global" => rules, "cms" => %{}}
       |> sanitize_passport_rules()
     end
   end
 
-  defp normalize_passport_rules(_), do: %{"global" => %{}, "communities" => %{}}
+  defp normalize_passport_rules(_), do: %{"global" => %{}, "cms" => %{}}
 
-  defp sanitize_passport_rules(%{"global" => global, "communities" => communities}) do
+  defp sanitize_passport_rules(%{"global" => global, "cms" => cms}) do
     %{
-      "global" => filter_rule_map(global),
-      "communities" =>
-        communities
+      "global" => filter_global_rule_map(global),
+      "cms" =>
+        cms
         |> Enum.reduce(%{}, fn {community, rules}, acc ->
-          Map.put(acc, community, filter_rule_map(rules))
+          Map.put(acc, community, filter_cms_rule_map(rules))
         end)
     }
   end
 
-  defp filter_rule_map(map) when is_map(map) do
+  defp filter_global_rule_map(map) when is_map(map) do
     map
     |> Enum.reduce(%{}, fn {rule, value}, acc ->
-      if PermissionRegistry.valid_permission?(to_string(rule)) and value == true do
+      if PermissionRegistry.valid_global_permission?(to_string(rule)) and value == true do
         Map.put(acc, to_string(rule), true)
       else
         acc
@@ -116,5 +116,18 @@ defmodule GroupherServer.Test.ConnSimulator do
     end)
   end
 
-  defp filter_rule_map(_), do: %{}
+  defp filter_global_rule_map(_), do: %{}
+
+  defp filter_cms_rule_map(map) when is_map(map) do
+    map
+    |> Enum.reduce(%{}, fn {rule, value}, acc ->
+      if PermissionRegistry.valid_context_permission?("cms", to_string(rule)) and value == true do
+        Map.put(acc, to_string(rule), true)
+      else
+        acc
+      end
+    end)
+  end
+
+  defp filter_cms_rule_map(_), do: %{}
 end
