@@ -250,16 +250,16 @@ type RootMutationType {
   denyCommunityApply(id: ID!): Community
 
   "create category"
-  createCategory(title: String!, slug: String!): Category
+  createCategory(community: String!, title: String!, slug: String!): Category
 
   "delete category"
-  deleteCategory(id: ID!): Category
+  deleteCategory(community: String!, id: ID!): Category
 
   "update category"
-  updateCategory(id: ID!, title: String!): Category
+  updateCategory(community: String!, id: ID!, title: String!): Category
 
   "create independent thread"
-  createThread(title: String!, slug: String!, index: Int): ThreadItem
+  createThread(community: String!, title: String!, slug: String!, index: Int): ThreadItem
 
   "add a moderator for a community"
   addModerator(community: String!, user: String!, role: String!): Community

@@ -3,7 +3,7 @@ defmodule GroupherServer.Repo.Migrations.CreateCollectFolder do
 
   def change do
     create table(:collect_folders) do
-      add(:user_id, references(:users, on_delete: :delete_all, null: false))
+      add(:user_id, references(:users, on_delete: :delete_all), null: false)
 
       add(:title, :string)
       add(:desc, :string)

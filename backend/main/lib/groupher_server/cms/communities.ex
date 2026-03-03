@@ -90,8 +90,14 @@ defmodule GroupherServer.CMS.Communities do
   @spec create_category(map(), User.t()) :: T.domain_res(Category.t())
   def create_category(attrs, %User{} = user), do: Categories.create(attrs, user)
 
+  @spec update_category(String.t(), map()) :: T.domain_res(Category.t())
+  def update_category(community, attrs), do: Categories.update(community, attrs)
+
   @spec update_category(map()) :: T.domain_res(Category.t())
   def update_category(attrs), do: Categories.update(attrs)
+
+  @spec delete_category(String.t(), T.id()) :: T.domain_res(Category.t())
+  def delete_category(community, id), do: Categories.delete(community, id)
 
   @spec set_category(Community.t(), Category.t()) :: T.domain_res(Community.t())
   def set_category(%Community{} = community, %Category{} = category) do
@@ -104,6 +110,9 @@ defmodule GroupherServer.CMS.Communities do
   end
 
   # Thread
+  @spec create_thread(String.t(), map()) :: T.domain_res(Thread.t())
+  def create_thread(community, attrs), do: Threads.create(community, attrs)
+
   @spec create_thread(map()) :: T.domain_res(Thread.t())
   def create_thread(attrs), do: Threads.create(attrs)
 

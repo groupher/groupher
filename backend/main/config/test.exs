@@ -23,6 +23,8 @@ config :groupher_server, GroupherServer.Repo,
   pool_size: 20,
   # 设置查询超时时间为 60 秒
   timeout: 60_000,
+  # 设置从连接池获取连接的超时时间为 10 秒
+  pool_timeout: 10_000,
   # 设置连接所有权超时时间为 60 秒
   ownership_timeout: 60_000,
   # 设置队列目标为 5000
@@ -33,6 +35,9 @@ config :groupher_server, GroupherServer.Repo,
 config :groupher_server, :github_oauth,
   client_id: "3b4281c5e54ffd801f85",
   client_secret: "51f04dd8239b27f00a39a647ef3704de4c5ddc26"
+
+#  config email services
+config :groupher_server, GroupherServer.Mailer, adapter: Bamboo.TestAdapter
 
 config :groupher_server, :audit,
   token: "24.aa6fb4e4018c371e9ed228db5bea3ec0.2592000.1641816180.282335-25148796"

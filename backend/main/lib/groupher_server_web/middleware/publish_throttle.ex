@@ -17,7 +17,7 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   @day_total get_config(:general, :publish_throttle_day_limit)
 
   def call(
-        %{context: %{cur_user: %{cur_passport: %{"cms" => %{"root" => true}}}}} = resolution,
+        %{context: %{cur_user: %{cur_passport: %{"global" => %{"root" => true}}}}} = resolution,
         _
       ) do
     resolution

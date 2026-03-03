@@ -101,10 +101,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
     test "can delete a blog by auth user", ~m(community blog)a do
       blog = blog |> Repo.preload(:communities)
-      belongs_community_title = blog.communities |> List.first() |> Map.get(:title)
+      belongs_community_slug = blog.communities |> List.first() |> Map.get(:slug)
 
       rule_conn =
-        simu_conn(:user, cms: %{belongs_community_title => %{"blog.delete" => true}})
+        simu_conn(:user, cms: %{belongs_community_slug => %{"blog.delete" => true}})
 
       variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
       result = rule_conn |> gq_mutation(Schema.m(:delete_article, :blog), variables)
@@ -126,8 +126,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
     test "login user with auth passport delete a blog", ~m(community blog)a do
       blog = blog |> Repo.preload(:communities)
-      blog_communities_0 = blog.communities |> List.first() |> Map.get(:title)
-      passport_rules = %{blog_communities_0 => %{"blog.delete" => true}}
+      blog_community_slug = blog.communities |> List.first() |> Map.get(:slug)
+      passport_rules = %{blog_community_slug => %{"blog.delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
@@ -149,7 +149,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     test "update a blog without login user fails", ~m(guest_conn community blog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
-      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}, title: "updated title #{unique_num}", body: mock_rich_text("updated body #{unique_num}")}
+      variables = %{
+        article: %{inner_id: blog.inner_id, community: community.slug},
+        title: "updated title #{unique_num}",
+        body: mock_rich_text("updated body #{unique_num}")
+      }
 
       assert guest_conn
              |> mutation_error?(
@@ -167,7 +171,12 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       {:ok, community_tag} =
         CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
 
-      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}, title: "updated title #{unique_num}", body: mock_rich_text("updated body #{unique_num}"), communityTags: [community_tag.id]}
+      variables = %{
+        article: %{inner_id: blog.inner_id, community: community.slug},
+        title: "updated title #{unique_num}",
+        body: mock_rich_text("updated body #{unique_num}"),
+        communityTags: [community_tag.id]
+      }
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
       assert result["title"] == variables.title
@@ -195,7 +204,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       {:ok, community_tag3} =
         CMS.Communities.create_tag(community, :blog, community_tag_attrs3, user)
 
-      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}, communityTags: [community_tag.id, community_tag2.id]}
+      variables = %{
+        article: %{inner_id: blog.inner_id, community: community.slug},
+        communityTags: [community_tag.id, community_tag2.id]
+      }
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
 
@@ -207,7 +219,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert result["communityTags"] |> List.last() |> get_in(["id"]) ==
                to_string(community_tag2.id)
 
-      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}, communityTags: [community_tag2.id, community_tag3.id]}
+      variables = %{
+        article: %{inner_id: blog.inner_id, community: community.slug},
+        communityTags: [community_tag2.id, community_tag3.id]
+      }
 
       result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
 
@@ -224,7 +239,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
          ~m(owner_conn community blog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
-      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}, title: "updated title #{unique_num}", body: mock_rich_text("updated body #{unique_num}")}
+      variables = %{
+        article: %{inner_id: blog.inner_id, community: community.slug},
+        title: "updated title #{unique_num}",
+        body: mock_rich_text("updated body #{unique_num}")
+      }
 
       updated_blog =
         owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
@@ -234,14 +253,18 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
     test "login user with auth passport update a blog", ~m(community blog)a do
       blog = blog |> Repo.preload(:communities)
-      belongs_community_title = blog.communities |> List.first() |> Map.get(:title)
+      belongs_community_slug = blog.communities |> List.first() |> Map.get(:slug)
 
-      passport_rules = %{belongs_community_title => %{"blog.edit" => true}}
+      passport_rules = %{belongs_community_slug => %{"blog.edit" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       unique_num = System.unique_integer([:positive, :monotonic])
 
-      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}, title: "updated title #{unique_num}", body: mock_rich_text("updated body #{unique_num}")}
+      variables = %{
+        article: %{inner_id: blog.inner_id, community: community.slug},
+        title: "updated title #{unique_num}",
+        body: mock_rich_text("updated body #{unique_num}")
+      }
 
       updated_blog =
         rule_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
@@ -252,7 +275,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     test "unauth user update blog fails", ~m(user_conn guest_conn community blog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
-      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}, title: "updated title #{unique_num}", body: mock_rich_text("updated body #{unique_num}")}
+      variables = %{
+        article: %{inner_id: blog.inner_id, community: community.slug},
+        title: "updated title #{unique_num}",
+        body: mock_rich_text("updated body #{unique_num}")
+      }
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 

@@ -9,6 +9,17 @@ defmodule GroupherServer.CMS.Communities.Threads do
   alias CMS.Model.{Community, CommunityThread, Thread}
   alias Helper.{ORM, T}
 
+  @spec create(String.t(), map()) :: T.domain_res(term())
+  def create(community_slug, attrs) do
+    slug = to_string(attrs.slug)
+    title = attrs.title
+    index = attrs |> Map.get(:index, 0)
+
+    with {:ok, _community} <- ORM.find_by(Community, slug: community_slug) do
+      Thread |> ORM.create(~m(title slug index)a)
+    end
+  end
+
   @spec create(map()) :: T.domain_res(term())
   def create(attrs) do
     slug = to_string(attrs.slug)

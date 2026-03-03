@@ -1,37 +1,33 @@
 defmodule GroupherServer.CMS.Communities.Passport do
   @moduledoc """
-  passport curd
+  Passport CRUD.
   """
+
   import Helper.Utils, only: [done: 1, deep_merge: 2]
   import Ecto.Query, warn: false
   import ShortMaps
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Model.Passport, as: UserPassport
+  alias GroupherServer.CMS.Model.Passport, as: UserPassport
 
-  alias Helper.{Certification, NestedFilter, ORM, T}
-
-  # https://medium.com/front-end-hacking/use-github-oauth-as-your-sso-seamlessly-with-react-3e2e3b358fa1
-  # http://www.ubazu.com/using-postgres-jsonb-columns-in-ecto
-  # http://www.ubazu.com/using-postgres-jsonb-columns-in-ecto
+  alias Helper.{NestedFilter, ORM, PermissionRegistry, T}
 
   @spec paged_passports(term(), term()) :: T.domain_res(term())
   def paged_passports(community, key) do
     UserPassport
-    |> where([p], fragment("(?->?->>?)::boolean = ?", p.rules, ^community, ^key, true))
+    |> where(
+      [p],
+      fragment("(?->'cms'->?->>?)::boolean = ?", p.rules, ^community, ^key, true)
+    )
     |> Repo.all()
     |> done
   end
 
   @spec all_passport_rules() :: T.domain_res(term())
   def all_passport_rules do
-    %{
-      root: Certification.passport_rules(cms: "root"),
-      moderator: Certification.passport_rules(cms: "moderator")
-    }
-    |> done
+    PermissionRegistry.all_passport_rules() |> done
   end
 
   @doc """
@@ -42,39 +38,54 @@ defmodule GroupherServer.CMS.Communities.Passport do
     with {:ok, _} <- ORM.find(User, user.id) do
       case ORM.find_by(UserPassport, user_id: user.id) do
         {:ok, passport} ->
-          {:ok, passport.rules}
+          {:ok, PermissionRegistry.normalize_rules(passport.rules)}
 
         {:error, _error} ->
-          {:ok, %{}}
+          {:ok, PermissionRegistry.empty_rules()}
       end
     end
   end
 
-  # TODO passport should be public utils
   @doc """
   insert or update a user's passport in CMS context
   """
   @spec stamp_passport(term(), User.t()) :: T.domain_res(term())
   def stamp_passport(rules, %User{id: user_id}) do
-    case ORM.find_by(UserPassport, user_id: user_id) do
-      {:ok, passport} ->
-        rules = passport.rules |> deep_merge(rules) |> reject_invalid_rules
-        passport |> ORM.update(~m(rules)a)
+    with {:ok, rules} <- validate_shape(rules),
+         true <- PermissionRegistry.valid_rules?(rules) do
+      case ORM.find_by(UserPassport, user_id: user_id) do
+        {:ok, passport} ->
+          merged_rules =
+            passport.rules
+            |> PermissionRegistry.normalize_rules()
+            |> deep_merge(rules)
+            |> reject_invalid_rules()
 
-      {:error, _} ->
-        rules = rules |> reject_invalid_rules
-        UserPassport |> ORM.create(~m(user_id rules)a)
+          passport |> ORM.update(%{rules: merged_rules})
+
+        {:error, _} ->
+          rules = rules |> reject_invalid_rules()
+          UserPassport |> ORM.create(~m(user_id rules)a)
+      end
+    else
+      {:error, :invalid_passport_shape} ->
+        {:error, {:invalid_passport_shape, "passport rules must contain global/cms"}}
+
+      false ->
+        {:error, {:invalid_passport_permission, "contains invalid permission key"}}
     end
   end
 
   @spec erase_passport(term(), User.t()) :: T.domain_res(term())
-  def erase_passport(rules, %User{id: user_id}) when is_list(rules) do
-    with {:ok, passport} <- ORM.find_by(UserPassport, user_id: user_id) do
-      case pop_in(passport.rules, rules) do
+  def erase_passport(rules_path, %User{id: user_id}) when is_list(rules_path) do
+    with {:ok, passport} <- ORM.find_by(UserPassport, user_id: user_id),
+         {:ok, rules_path} <- validate_erase_path(rules_path) do
+      case pop_in(passport.rules, rules_path) do
         {nil, _} ->
           {:ok, passport}
 
         {_, lefts} ->
+          lefts = lefts |> PermissionRegistry.normalize_rules() |> reject_invalid_rules()
           passport |> ORM.update(%{rules: lefts})
       end
     end
@@ -85,11 +96,53 @@ defmodule GroupherServer.CMS.Communities.Passport do
     ORM.findby_delete!(UserPassport, ~m(user_id)a)
   end
 
+  defp validate_shape(rules) do
+    case rules do
+      %{"global" => global, "cms" => cms} when is_map(global) and is_map(cms) ->
+        {:ok, PermissionRegistry.normalize_rules(rules)}
+
+      %{global: global, cms: cms} when is_map(global) and is_map(cms) ->
+        {:ok, PermissionRegistry.normalize_rules(rules)}
+
+      _ ->
+        {:error, :invalid_passport_shape}
+    end
+  end
+
+  defp validate_erase_path(["global", permission]) when is_binary(permission),
+    do: {:ok, ["global", permission]}
+
+  defp validate_erase_path(["cms", community, permission])
+       when is_binary(community) and is_binary(permission),
+       do: {:ok, ["cms", community, permission]}
+
+  defp validate_erase_path(["cms", community]) when is_binary(community),
+    do: {:ok, ["cms", community]}
+
+  defp validate_erase_path(_), do: {:error, :invalid_passport_shape}
+
   defp reject_invalid_rules(rules) when is_map(rules) do
-    rules |> NestedFilter.drop_by_value([false]) |> reject_empty_values
+    cleaned =
+      rules
+      |> NestedFilter.drop_by_value([false])
+      |> reject_empty_values()
+
+    %{
+      "global" => Map.get(cleaned, "global", %{}),
+      "cms" => Map.get(cleaned, "cms", %{})
+    }
   end
 
   defp reject_empty_values(map) when is_map(map) do
-    for {k, v} <- map, v != %{}, into: %{}, do: {k, v}
+    map
+    |> Enum.reduce(%{}, fn {k, v}, acc ->
+      value =
+        cond do
+          is_map(v) -> reject_empty_values(v)
+          true -> v
+        end
+
+      if value == %{}, do: acc, else: Map.put(acc, k, value)
+    end)
   end
 end

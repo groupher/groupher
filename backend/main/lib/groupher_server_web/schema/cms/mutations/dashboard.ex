@@ -15,7 +15,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       dashboard_args(:base_info)
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, claim: "cms->community.update")
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
@@ -31,8 +30,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       dashboard_args(:seo)
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, claim: "cms->community.update")
-
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
@@ -48,8 +45,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       dashboard_args(:wallpaper)
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, claim: "cms->community.update")
-
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
@@ -65,8 +60,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       dashboard_args(:enable)
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, claim: "cms->community.update")
-
       # middleware(M.PublishThrottle)
       middleware(M.PublishThrottle, interval: 3, hour_limit: 100, day_limit: 100)
       middleware(M.FrontDesk, :community)
@@ -83,8 +76,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:kanban_bg_colors, list_of(:string))
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, claim: "cms->community.update")
-
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
@@ -100,7 +91,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       dashboard_args(:rss)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, claim: "cms->community.update")
+      middleware(M.Passport, action: "dashboard.rss.update")
 
       # middleware(M.PublishThrottle)
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
@@ -117,8 +108,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:name_alias, list_of(:dashboard_alias_map))
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, claim: "cms->community.update")
-
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
@@ -134,8 +123,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:header_links, list_of(:dashboard_link_map))
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, claim: "cms->community.update")
-
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
@@ -150,8 +137,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:footer_links, list_of(:dashboard_link_map))
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, claim: "cms->community.update")
-
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
@@ -167,8 +152,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:social_links, list_of(:dashboard_social_link_map))
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, claim: "cms->community.update")
-
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
@@ -183,8 +166,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:media_reports, list_of(:dashboard_media_report_map))
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, claim: "cms->community.update")
-
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
@@ -200,8 +181,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:faqs, list_of(:dashboard_faq_map))
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, claim: "cms->community.update")
-
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)

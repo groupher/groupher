@@ -8,8 +8,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   @community_normal Constant.CMS.pending(:normal)
   @community_applying Constant.CMS.pending(:applying)
 
-  # @default_root_rules Certification.passport_rules(cms: "root")
-
   setup do
     {:ok, category} = db_insert(:category)
     {:ok, thread} = db_insert(:thread)
@@ -27,8 +25,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
   describe "mutation cms category" do
     @create_category_query """
-    mutation($title: String!, $slug: String!) {
-      createCategory(title: $title, slug: $slug) {
+    mutation($community: String!, $title: String!, $slug: String!) {
+      createCategory(community: $community, title: $title, slug: $slug) {
         id
         title
         author {
@@ -39,9 +37,9 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       }
     }
     """
-    test "auth user can create category", ~m(user)a do
-      variables = mock_attrs(:category, %{user_id: user.id})
-      rule_conn = simu_conn(:user, cms: %{"category.create" => true})
+    test "auth user can create category", ~m(user community)a do
+      variables = mock_attrs(:category, %{user_id: user.id, community: community.slug})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"category.create" => true}})
 
       created = rule_conn |> gq_mutation(@create_category_query, variables)
       # author = created["author"]
@@ -49,40 +47,42 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     @delete_category_query """
-    mutation($id: ID!) {
-      deleteCategory(id: $id) {
+    mutation($community: String!, $id: ID!) {
+      deleteCategory(community: $community, id: $id) {
         id
       }
     }
     """
-    test "auth user can delete category" do
+    test "auth user can delete category", ~m(community)a do
       {:ok, category} = db_insert(:category)
-      rule_conn = simu_conn(:user, cms: %{"category.delete" => true})
+      {:ok, _} = CMS.Communities.set_category(community, category)
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"category.delete" => true}})
 
-      variables = %{id: category.id}
+      variables = %{community: community.slug, id: category.id}
       deleted = rule_conn |> gq_mutation(@delete_category_query, variables)
 
       assert deleted["id"] == to_string(category.id)
     end
 
     @update_category_query """
-    mutation($id: ID!, $title: String!) {
-      updateCategory(id: $id, title: $title) {
+    mutation($community: String!, $id: ID!, $title: String!) {
+      updateCategory(community: $community, id: $id, title: $title) {
         id
         title
       }
     }
     """
-    test "auth user can update  category", ~m(category)a do
-      rule_conn = simu_conn(:user, cms: %{"category.update" => true})
-      variables = %{id: category.id, title: "new title"}
+    test "auth user can update  category", ~m(category community)a do
+      {:ok, _} = CMS.Communities.set_category(community, category)
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"category.update" => true}})
+      variables = %{community: community.slug, id: category.id, title: "new title"}
 
       updated = rule_conn |> gq_mutation(@update_category_query, variables)
       assert updated["title"] == "new title"
     end
 
-    test "unauth user create category fails", ~m(user user_conn guest_conn)a do
-      variables = mock_attrs(:category, %{user_id: user.id})
+    test "unauth user create category fails", ~m(user user_conn guest_conn community)a do
+      variables = mock_attrs(:category, %{user_id: user.id, community: community.slug})
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn |> mutation_error?(@create_category_query, variables, ecode(:passport))
@@ -93,8 +93,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert rule_conn |> mutation_error?(@create_category_query, variables, ecode(:passport))
     end
 
-    test "unauth user update category fails", ~m(category user_conn guest_conn)a do
-      variables = %{id: category.id, title: "new title"}
+    test "unauth user update category fails", ~m(category user_conn guest_conn community)a do
+      variables = %{community: community.slug, id: category.id, title: "new title"}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn |> mutation_error?(@update_category_query, variables, ecode(:passport))
@@ -122,7 +122,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, community} = mock_community()
       {:ok, category} = db_insert(:category)
 
-      rule_conn = simu_conn(:user, cms: %{"category.set" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"category.set" => true}})
       variables = %{community: community.slug, categoryId: category.id}
 
       rule_conn |> gq_mutation(@set_category_query, variables)
@@ -151,7 +151,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       {:ok, _} = CMS.Communities.set_category(community, %Category{id: category.id})
 
-      rule_conn = simu_conn(:user, cms: %{"category.unset" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"category.unset" => true}})
       variables = %{community: community.slug, categoryId: category.id}
 
       rule_conn |> gq_mutation(@unset_category_query, variables)
@@ -360,18 +360,18 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
   describe "[mutation cms thread]" do
     @query """
-    mutation($title: String!, $slug: String!){
-      createThread(title: $title, slug: $slug) {
+    mutation($community: String!, $title: String!, $slug: String!){
+      createThread(community: $community, title: $title, slug: $slug) {
         title
       }
     }
     """
-    test "auth user can create thread", ~m(user)a do
+    test "auth user can create thread", ~m(user community)a do
       title = "other"
       slug = "OTHER"
-      variables = ~m(title slug)a
+      variables = ~m(title slug)a |> Map.put(:community, community.slug)
 
-      passport_rules = %{"thread.create" => true}
+      passport_rules = %{community.slug => %{"thread.create" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(@query, variables)
@@ -379,10 +379,10 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert result["title"] == title
     end
 
-    test "unauth user create thread fails", ~m(user_conn guest_conn)a do
+    test "unauth user create thread fails", ~m(user_conn guest_conn community)a do
       title = "other"
       slug = "OTHER"
-      variables = ~m(title slug)a
+      variables = ~m(title slug)a |> Map.put(:community, community.slug)
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn |> mutation_error?(@query, variables, ecode(:passport))
@@ -403,10 +403,10 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "auth user can add thread to community", ~m(user community)a do
       title = "other"
       slug = "OTHER"
-      {:ok, thread} = CMS.Communities.create_thread(~m(title slug)a)
+      {:ok, thread} = CMS.Communities.create_thread(community.slug, ~m(title slug)a)
       variables = %{threadId: thread.id, community: community.slug}
 
-      passport_rules = %{community.title => %{"thread.set" => true}}
+      passport_rules = %{community.slug => %{"thread.set" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(@query, variables)
@@ -432,7 +432,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert found_community.threads |> Enum.any?(&(&1.thread_id == thread.id))
       variables = %{threadId: thread.id, community: community.slug}
 
-      passport_rules = %{community.title => %{"thread.unset" => true}}
+      passport_rules = %{community.slug => %{"thread.unset" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(@query, variables)
@@ -470,7 +470,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "auth user can add moderator to community", ~m(user user2 community)a do
       role = "moderator"
 
-      passport_rules = %{"moderator.set" => true}
+      passport_rules = %{community.slug => %{"moderator.set" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
       variables = %{user: user2.login, community: community.slug, role: role}
@@ -498,7 +498,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       assert {:ok, _} = Passport |> ORM.find_by(user_id: user2.id)
 
-      passport_rules = %{"moderator.unset" => true}
+      passport_rules = %{community.slug => %{"moderator.unset" => true}}
       rule_conn = simu_conn(:user, cur_user, cms: passport_rules)
 
       variables = %{user: user2.login, community: community.slug}
@@ -531,17 +531,24 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
-      passport_rules = %{"moderator.update" => true}
+      passport_rules = %{
+        "global" => %{},
+        "cms" => %{community.slug => %{"moderator.update" => true}}
+      }
+
       rule_conn = simu_conn(:user, user2, cms: passport_rules)
       root_rule_conn = simu_conn(:user, user, cms: passport_rules)
 
       new_passport_rules =
         Jason.encode!(%{
-          "#{community.slug}" => %{
-            "post.article.delete" => false,
-            "post.tag.edit" => true,
-            "post.tag.edit2" => true,
-            "post.tag.edit3" => true
+          "global" => %{},
+          "cms" => %{
+            "#{community.slug}" => %{
+              "post.delete" => false,
+              "post.edit" => true,
+              "post.pin" => true,
+              "post.undo_pin" => true
+            }
           }
         })
 
@@ -557,10 +564,10 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       result = root_rule_conn |> gq_mutation(@update_moderator_query, variables)
 
       {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
-      assert get_in(user2_passport, ["#{community.slug}", "post.tag.edit"])
+      assert get_in(user2_passport, ["cms", "#{community.slug}", "post.edit"])
 
       moderator = Enum.find(result["moderators"], &(&1["user"]["login"] == user2.login))
-      assert moderator["passportItemCount"] == 3
+      assert moderator["passportItemCount"] == 4
     end
 
     test "unauth user add moderator fails", ~m(user_conn guest_conn user community)a do

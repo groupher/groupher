@@ -19,7 +19,7 @@ defmodule GroupherServerWeb.Schema.Statistics.Queries do
 
     @desc "basic site info in total counts format"
     field :count_status, :count_status_info do
-      middleware(M.Passport, claim: "cms->root")
+      middleware(M.Passport, action: "status.count")
 
       resolve(&R.Statistics.count_status/3)
     end

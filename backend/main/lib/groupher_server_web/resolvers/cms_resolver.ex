@@ -213,14 +213,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   def paged_categories(_root, ~m(filter)a, _info), do: Category |> ORM.find_all(filter)
 
-  def create_category(_root, ~m(title slug)a, %{context: %{cur_user: user}}) do
-    CMS.Communities.create_category(%{title: title, slug: slug}, user)
+  def create_category(_root, ~m(community title slug)a, %{context: %{cur_user: user}}) do
+    CMS.Communities.create_category(%{community: community, title: title, slug: slug}, user)
   end
 
-  def delete_category(_root, %{id: id}, _info), do: Category |> ORM.find_delete!(id)
+  def delete_category(_root, %{community: community, id: id}, _info) do
+    CMS.Communities.delete_category(community, id)
+  end
 
-  def update_category(_root, ~m(id title)a, %{context: %{cur_user: _}}) do
-    CMS.Communities.update_category(~m(%Category id title)a)
+  def update_category(_root, ~m(community id title)a, %{context: %{cur_user: _}}) do
+    CMS.Communities.update_category(community, ~m(%Category id title)a)
   end
 
   def set_category(_root, ~m(community category_id)a, %{context: %{cur_user: _}}) do
@@ -236,8 +238,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   def paged_threads(_root, ~m(filter)a, _info), do: Thread |> ORM.find_all(filter)
 
-  def create_thread(_root, ~m(title slug index)a, _info),
-    do: CMS.Communities.create_thread(~m(title slug index)a)
+  def create_thread(_root, ~m(community title slug index)a, _info),
+    do: CMS.Communities.create_thread(community, ~m(title slug index)a)
 
   def set_thread(_root, ~m(community thread)a, _info),
     do: CMS.Communities.set_thread(community, thread)

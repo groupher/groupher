@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard base info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
       variables = %{
         community: community.slug,
@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard seo info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
       variables = %{community: community.slug, ogTitle: "new title", seoEnable: false}
 
       updated = rule_conn |> gq_mutation(@update_seo_query, variables)
@@ -147,7 +147,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard wallpaper", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
       variables = %{community: community.slug, wallpaper: "orange", wallpaperType: "custom"}
 
       updated =
@@ -170,7 +170,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard enable info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
       variables = %{community: community.slug, post: false, changelog: true}
 
       updated =
@@ -205,7 +205,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard layout info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
       variables = %{
         community: community.slug,
@@ -254,7 +254,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     test "update community dashboard layout should not overwrite existing settings",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
       variables = %{
         community: community.slug,
@@ -294,7 +294,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard rss info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
       variables = %{
         community: community.slug,
@@ -321,7 +321,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard name alias info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
       variables = %{
         community: community.slug,
@@ -362,7 +362,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard header links info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
       variables = %{
         community: community.slug,
@@ -408,7 +408,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard footer links info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
       variables = %{
         community: community.slug,
@@ -456,7 +456,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard social links info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
       variables = %{
         community: community.slug,
@@ -495,7 +495,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard media reports info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
       variables = %{
         community: community.slug,
@@ -536,7 +536,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     }
     """
     test "update community dashboard faqs info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
       variables = %{
         community: community.slug,
