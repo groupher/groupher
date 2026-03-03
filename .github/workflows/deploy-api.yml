@@ -28,13 +28,13 @@ jobs:
         uses: actions/cache@v3
         with:
           path: backend/main/deps
-          key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock') }}
+          key: ${{ runner.OS }}-otp26-elixir19-mix-${{ hashFiles('**/mix.lock') }}
 
       - name: Cache build
         uses: actions/cache@v3
         with:
           path: backend/main/_build
-          key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock') }}
+          key: ${{ runner.OS }}-otp26-elixir19-build-${{ hashFiles('**/mix.lock') }}
 
       - name: Install dependencies
         run: mix deps.get

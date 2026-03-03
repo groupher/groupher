@@ -25,17 +25,17 @@ jobs:
         uses: actions/cache@v3
         with:
           path: backend/main/deps
-          key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          key: ${{ runner.OS }}-otp26-elixir19-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
-            ${{ runner.OS }}-mix-
+            ${{ runner.OS }}-otp26-elixir19-mix-
 
       - name: Cache build
         uses: actions/cache@v3
         with:
           path: backend/main/_build
-          key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          key: ${{ runner.OS }}-otp26-elixir19-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
-            ${{ runner.OS }}-build-
+            ${{ runner.OS }}-otp26-elixir19-build-
 
       - name: Install dependencies
         run: mix deps.get
@@ -71,17 +71,17 @@ jobs:
         uses: actions/cache@v3
         with:
           path: backend/main/deps
-          key: ${{ runner.OS }}-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          key: ${{ runner.OS }}-otp26-elixir19-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
-            ${{ runner.OS }}-mix-
+            ${{ runner.OS }}-otp26-elixir19-mix-
 
       - name: Restore cached build
         uses: actions/cache@v3
         with:
           path: backend/main/_build
-          key: ${{ runner.OS }}-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          key: ${{ runner.OS }}-otp26-elixir19-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
-            ${{ runner.OS }}-build-
+            ${{ runner.OS }}-otp26-elixir19-build-
 
       - name: Ensure dependencies are synced
         run: mix deps.get
