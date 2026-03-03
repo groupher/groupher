@@ -75,7 +75,7 @@ defmodule Helper.PermissionRegistry do
 
   @doc """
   Returns all known grants for CMS split by global and context scopes.
-  TODO: refactor later.
+  TODO: refactor later
   """
   def all_rules(:cms),
     do: %{
