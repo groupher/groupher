@@ -4,9 +4,11 @@ defmodule GroupherServer.TestTools do
   """
   use ExUnit.CaseTemplate
 
+  @conn_case_opts [async: true]
+
   using do
-    quote do
-      use GroupherServerWeb.ConnCase, async: true
+    quote bind_quoted: [conn_case_opts: @conn_case_opts] do
+      use GroupherServerWeb.ConnCase, conn_case_opts
 
       import GroupherServer.Support.Factory
       import GroupherServer.Test.ConnSimulator
