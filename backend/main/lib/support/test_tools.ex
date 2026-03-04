@@ -4,10 +4,10 @@ defmodule GroupherServer.TestTools do
   """
   use ExUnit.CaseTemplate
 
-  @conn_case_opts [async: true]
+  using opts do
+    conn_case_opts = [async: Keyword.get(opts, :async, true)]
 
-  using do
-    quote bind_quoted: [conn_case_opts: @conn_case_opts] do
+    quote bind_quoted: [conn_case_opts: conn_case_opts] do
       use GroupherServerWeb.ConnCase, conn_case_opts
 
       import GroupherServer.Support.Factory

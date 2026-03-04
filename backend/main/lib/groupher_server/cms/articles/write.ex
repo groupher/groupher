@@ -246,7 +246,7 @@ import Helper.Utils,
 
       meta = @default_article_meta |> Map.merge(%{thread: module_to_upcase(model)})
 
-      model.__struct__
+      struct(model)
       |> model.changeset(attrs |> Map.merge(%{inner_id: inner_id + 1}))
       |> Ecto.Changeset.put_change(:emotions, @default_emotions)
       |> Ecto.Changeset.put_change(:author_id, author_id)
