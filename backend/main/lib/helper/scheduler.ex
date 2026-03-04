@@ -2,7 +2,7 @@ defmodule Helper.Scheduler do
   @moduledoc """
   cron-like job scheduler
   """
-  use Quantum.Scheduler, otp_app: :groupher_server
+  use Quantum, otp_app: :groupher_server
 
   # import Config
   import Helper.Utils, only: [get_config: 2, done: 1]

@@ -9,8 +9,15 @@ defmodule Helper.Later do
   {:ok, _}
   """
   def run({mod, func, args}) do
-    Rihanna.enqueue({mod, func, args})
+    if test_env?() do
+      apply(mod, func, args)
+    else
+      Rihanna.enqueue({mod, func, args})
+    end
+
     # weather enqueue success or not, just return {:ok, :pass}, or Multi.Job will be rollback
     {:ok, :pass}
   end
+
+  defp test_env?, do: System.get_env("MIX_ENV") == "test"
 end

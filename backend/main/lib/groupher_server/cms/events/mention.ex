@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Events.Mention do
   @article_threads get_config(:article, :threads)
 
   @article_mention_class "cdx-mention"
+  @mention_regex ~r/<(?:a|div)\b[^>]*class\s*=\s*(?:"[^"]*cdx-mention[^"]*"|'[^']*cdx-mention[^']*'|[^\s>]*cdx-mention[^\s>]*)[^>]*>([^<]*)<\/(?:a|div)>/i
 
   @type mention_result :: {:ok, list()} | {:error, map()}
   @type handle_result :: {:ok, term()} | {:error, term()}
@@ -56,9 +57,25 @@ defmodule GroupherServer.CMS.Events.Mention do
   end
 
   defp parse_mention_info_per_block(artiment, %{"id" => block_id, "data" => %{"text" => text}}) do
-    mentions = Floki.find(text, ".#{@article_mention_class}")
+    mentions = extract_mentions(text)
 
     parse_mention_in_block(artiment, block_id, mentions)
+  end
+
+  defp extract_mentions(text) do
+    floki_mentions = Floki.find(text, ".#{@article_mention_class}")
+
+    if floki_mentions == [] do
+      extract_mentions_by_regex(text)
+    else
+      floki_mentions
+    end
+  end
+
+  defp extract_mentions_by_regex(text) do
+    Regex.scan(@mention_regex, text, capture: :all_but_first)
+    |> Enum.map(fn [user_login] -> String.trim(user_login) end)
+    |> Enum.reject(&(&1 == ""))
   end
 
   defp parse_mention_in_block(artiment, block_id, mentions) do
@@ -72,6 +89,16 @@ defmodule GroupherServer.CMS.Events.Mention do
   end
 
   defp parse_mention_user_id(artiment, {_, _, [user_login]}) do
+    with {:ok, author} <- FrontDesk.author_of(artiment),
+         {:ok, user_id} <- Accounts.FrontDesk.userid(user_login) do
+      case author.id !== user_id do
+        true -> {:ok, user_id}
+        false -> {:error, {:custom, "mention yourself, ignored"}}
+      end
+    end
+  end
+
+  defp parse_mention_user_id(artiment, user_login) when is_binary(user_login) do
     with {:ok, author} <- FrontDesk.author_of(artiment),
          {:ok, user_id} <- Accounts.FrontDesk.userid(user_login) do
       case author.id !== user_id do

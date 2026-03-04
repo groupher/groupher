@@ -13,13 +13,17 @@ defmodule GroupherServerWeb.Controller.OG do
   # return editor-js flavor fmt
   # see https://github.com/editor-js/link
   defp fetch_opengraph_info(conn, url) do
-    case OpenGraph.fetch(url) do
+    case open_graph_adapter().fetch(url) do
       {:ok, info} ->
         ok_response(conn, url, info)
 
       {:error, %OpenGraph.Error{} = err} ->
         handle_fetch_error(conn, url, err)
     end
+  end
+
+  defp open_graph_adapter do
+    Application.get_env(:groupher_server, :open_graph_adapter, OpenGraph)
   end
 
   # --------

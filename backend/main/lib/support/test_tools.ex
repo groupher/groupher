@@ -6,7 +6,7 @@ defmodule GroupherServer.TestTools do
 
   using do
     quote do
-      use GroupherServerWeb.ConnCase, async: true
+      use GroupherServerWeb.ConnCase, async: false
 
       import GroupherServer.Support.Factory
       import GroupherServer.Test.ConnSimulator

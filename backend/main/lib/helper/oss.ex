@@ -19,7 +19,7 @@ defmodule Helper.OSS do
   @bucket "groupher"
   @tmp_dir "_tmp"
 
-  plug(Tesla.Middleware.JSON)
+  plug(Tesla.Middleware.JSON, engine: Jason)
   plug(Tesla.Middleware.Retry, delay: 200, max_retries: 2)
   plug(Tesla.Middleware.Timeout, timeout: @timeout_limit)
   plug(Tesla.Middleware.PathParams)

@@ -7,6 +7,7 @@ import Config
 
 # General application configuration
 config :groupher_server, ecto_repos: [GroupherServer.Repo]
+config :groupher_server, env: config_env()
 
 config :absinthe, schema: GroupherServerWeb.Schema
 
@@ -126,6 +127,9 @@ config :groupher_server, GroupherServerWeb.Gettext, default_locale: "zh_CN", loc
 config :groupher_server, :cloud_assets,
   static_icon: "https://cps-oss.oss-cn-shanghai.aliyuncs.com/icons/static"
 
+config :groupher_server, :site_favicon_adapter, Helper.SiteFavicon
+config :groupher_server, :open_graph_adapter, OpenGraph
+
 config :groupher_server, :cache,
   pool: %{
     common: %{
@@ -162,7 +166,9 @@ config :groupher_server, Helper.Scheduler,
     ]
   ]
 
-config :tesla, adapter: Tesla.Adapter.Hackney
+config :tesla,
+  adapter: Tesla.Adapter.Hackney,
+  disable_deprecated_builder_warning: true
 
 # handle background jobs
 config :rihanna,
