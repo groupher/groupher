@@ -28,7 +28,7 @@ defmodule GroupherServerWeb do
       # use Phoenix.Controller, namespace: GroupherServerWeb
       import Plug.Conn
       # import GroupherServerWeb.Router.Helpers
-      import GroupherServerWeb.Gettext
+      use Gettext, backend: GroupherServerWeb.Gettext
 
       unquote(verified_routes())
     end
@@ -85,7 +85,7 @@ defmodule GroupherServerWeb do
       import Phoenix.HTML
       # Core UI components and translation
       import GroupherServerWeb.CoreComponents
-      import GroupherServerWeb.Gettext
+      use Gettext, backend: GroupherServerWeb.Gettext
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())

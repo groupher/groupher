@@ -4,22 +4,33 @@ defmodule GroupherServerWeb.Controller.OG do
   """
   use GroupherServerWeb, :controller
 
-  alias Helper.OgInfo
+  alias Helper.{OgInfo, UrlSafety}
 
-  def index(conn, %{"url" => url}) do
-    fetch_opengraph_info(conn, url)
+  def index(conn, %{"url" => url}) when is_binary(url) do
+    case UrlSafety.validate_http_url(url) do
+      {:ok, safe_url} -> fetch_opengraph_info(conn, safe_url)
+      {:error, _} -> unknown_error_response(conn, url)
+    end
+  end
+
+  def index(conn, _params) do
+    unknown_error_response(conn, "https://example.com/fallback")
   end
 
   # return editor-js flavor fmt
   # see https://github.com/editor-js/link
   defp fetch_opengraph_info(conn, url) do
-    case OpenGraph.fetch(url) do
+    case open_graph_adapter().fetch(url) do
       {:ok, info} ->
         ok_response(conn, url, info)
 
       {:error, %OpenGraph.Error{} = err} ->
         handle_fetch_error(conn, url, err)
     end
+  end
+
+  defp open_graph_adapter do
+    Application.get_env(:groupher_server, :open_graph_adapter, OpenGraph)
   end
 
   # --------

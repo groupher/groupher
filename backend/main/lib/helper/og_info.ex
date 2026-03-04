@@ -2,16 +2,28 @@ defmodule Helper.OgInfo do
   @moduledoc false
   import Helper.Utils, only: [done: 1]
 
-  alias Helper.SiteFavicon
+  alias Helper.UrlSafety
+
+  @default_site_favicon_adapter Helper.SiteFavicon
 
   def get(url) do
-    with {:ok, location, resp} <- SiteFavicon.find_page(url),
-         {:ok, og} <- parse_open_graph(resp.body, url),
+    adapter = site_favicon_adapter()
+
+    with {:ok, safe_url} <- UrlSafety.validate_http_url(url),
+         {:ok, location, resp} <- adapter.find_page(safe_url),
+         {:ok, og} <- parse_open_graph(resp.body, safe_url),
          true <- valid_og?(og),
-         %URI{host: host} <- URI.parse(url),
-         favicon <- SiteFavicon.parse_favicon(resp.body, location) do
+         %URI{host: host} <- URI.parse(safe_url),
+         favicon <- adapter.parse_favicon(resp.body, location) do
       og |> Map.merge(%{favicon: favicon}) |> fmt_field(host) |> done
     else
+      {:error, reason}
+      when reason in [:invalid_url, :invalid_scheme, :missing_host, :blocked_host, :blocked_ip] ->
+        {:error, "unsafe url blocked"}
+
+      {:error, :unsafe_url} ->
+        {:error, "unsafe url blocked"}
+
       {:error, %HTTPoison.Error{reason: :nxdomain, id: nil}} ->
         {:error, "get url page error"}
 
@@ -67,5 +79,13 @@ defmodule Helper.OgInfo do
 
   defp valid_og?(og) do
     not is_nil(og.title)
+  end
+
+  defp site_favicon_adapter do
+    Application.get_env(
+      :groupher_server,
+      :site_favicon_adapter,
+      @default_site_favicon_adapter
+    )
   end
 end

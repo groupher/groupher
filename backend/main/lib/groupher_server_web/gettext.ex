@@ -20,5 +20,5 @@ defmodule GroupherServerWeb.Gettext do
 
   See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
   """
-  use Gettext, otp_app: :groupher_server
+  use Gettext.Backend, otp_app: :groupher_server
 end

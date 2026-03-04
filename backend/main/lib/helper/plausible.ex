@@ -21,7 +21,7 @@ defmodule Helper.Plausible do
   # plug(Tesla.Middleware.Headers, [{"Authorization", "Bearer #{@token}"}])
   plug(Tesla.Middleware.Retry, delay: 200, max_retries: 2)
   plug(Tesla.Middleware.Timeout, timeout: @timeout_limit)
-  plug(Tesla.Middleware.JSON)
+  plug(Tesla.Middleware.JSON, engine: Jason)
 
   defp get_token, do: get_config(:plausible, :token)
 

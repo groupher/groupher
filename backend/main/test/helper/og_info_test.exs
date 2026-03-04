@@ -35,5 +35,9 @@ defmodule GroupherServer.Test.Helper.OgInfo do
     # {:error, error} = OgInfo.get("https://thisnotexisteekde.com")
     # IO.inspect(error, label: "get")
     # end
+
+    test "should block unsafe urls" do
+      assert {:error, "unsafe url blocked"} = OgInfo.get("http://127.0.0.1/admin")
+    end
   end
 end

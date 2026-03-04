@@ -50,6 +50,16 @@ defmodule GroupherServerWeb.Test.Controller.OG do
     assert Map.has_key?(image, "url")
   end
 
+  test "should block unsafe url input" do
+    conn = build_conn()
+
+    res = get(conn, "/api/og-info", %{url: "http://127.0.0.1/admin"})
+    res = json_response(res, 200)
+
+    assert res["success"] == 0
+    assert get_in(res, ["meta", "title"]) == "unknown-error"
+  end
+
   test "return empty valid structure when url not follow open-graph" do
     conn = build_conn()
 

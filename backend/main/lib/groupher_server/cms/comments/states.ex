@@ -355,7 +355,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
     with {:ok, %{body: body, body_html: body_html}} <-
            Helper.Converter.Article.parse_body(body) do
-      thread = foreign_key |> to_string |> String.slice(0..-4) |> String.upcase()
+      thread = foreign_key |> to_string |> String.slice(0..-4//1) |> String.upcase()
 
       attrs = %{
         author_id: user_id,

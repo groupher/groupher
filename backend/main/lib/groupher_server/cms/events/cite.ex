@@ -45,6 +45,7 @@ defmodule GroupherServer.CMS.Events.Cite do
   @site_host get_config(:general, :site_host)
   @article_threads get_config(:article, :threads)
   @valid_article_prefix Enum.map(@article_threads, &"#{@site_host}/#{&1}/")
+  @href_regex ~r/<a\b[^>]*\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i
 
   @type cite_result :: {:ok, list()} | {:error, map()}
   @type handle_result :: {:ok, term()} | {:error, term()}
@@ -84,7 +85,7 @@ defmodule GroupherServer.CMS.Events.Cite do
   end
 
   defp parse_cited_per_block(artiment, %{"id" => block_id, "data" => %{"text" => text}}) do
-    links = Floki.find(text, "a[href]")
+    links = extract_links(text)
 
     parse_links_in_block(artiment, block_id, links)
   end
@@ -108,9 +109,45 @@ defmodule GroupherServer.CMS.Events.Cite do
     end
   end
 
+  defp extract_links(text) do
+    floki_links =
+      text
+      |> Floki.find("a[href]")
+      |> Enum.map(&extract_href/1)
+      |> Enum.reject(&is_nil/1)
+
+    if floki_links == [], do: extract_links_by_regex(text), else: floki_links
+  end
+
+  defp extract_href({"a", attrs, _}) do
+    case parse_link(attrs) do
+      {:ok, link} -> link
+      _ -> nil
+    end
+  end
+
+  defp extract_href(_), do: nil
+
+  defp extract_links_by_regex(text) do
+    Regex.scan(@href_regex, text, capture: :all_but_first)
+    |> Enum.map(fn captures ->
+      Enum.find(captures, fn part -> is_binary(part) and part != "" end)
+    end)
+    |> Enum.reject(&is_nil/1)
+  end
+
   defp parse_cited_in_link({"a", attrs, _}) do
     with {:ok, link} <- parse_link(attrs),
          true <- site_article_link?(link) do
+      case link_for_comment?(link) do
+        true -> load_cited_comment_from_url(link)
+        false -> load_cited_article_from_url(link)
+      end
+    end
+  end
+
+  defp parse_cited_in_link(link) when is_binary(link) do
+    with true <- site_article_link?(link) do
       case link_for_comment?(link) do
         true -> load_cited_comment_from_url(link)
         false -> load_cited_article_from_url(link)

@@ -5,8 +5,12 @@ defmodule Helper.SiteFavicon do
   """
   use HTTPoison.Base
 
+  alias Helper.UrlSafety
+
   def find_page(url) do
-    req(url)
+    with {:ok, safe_url} <- UrlSafety.validate_http_url(url) do
+      req(safe_url)
+    end
   end
 
   def parse_favicon(html, location) do
@@ -32,16 +36,15 @@ defmodule Helper.SiteFavicon do
   end
 
   def valid_favicon_url?(url) do
-    case head(url) do
-      {:ok, resp} ->
-        ctype =
-          resp.headers
-          |> get_header("content-type")
+    with {:ok, safe_url} <- UrlSafety.validate_http_url(url),
+         {:ok, resp} <- head(safe_url) do
+      ctype =
+        resp.headers
+        |> get_header("content-type")
 
-        if Regex.match?(~r/image/, ctype), do: true, else: false
-
-      _ ->
-        false
+      Regex.match?(~r/image/, ctype)
+    else
+      _ -> false
     end
   end
 
@@ -53,12 +56,33 @@ defmodule Helper.SiteFavicon do
 
       case List.keyfind(headers, "location", 0) do
         {"location", location} ->
-          req(location)
+          merged_location = merge_location(url, location)
+
+          with {:ok, safe_location} <- UrlSafety.validate_http_url(merged_location) do
+            req(safe_location)
+          else
+            _ -> {:error, :unsafe_url}
+          end
 
         _ ->
           {:ok, url, resp}
       end
     end
+  end
+
+  defp merge_location(base_url, location) do
+    base_uri = URI.parse(base_url)
+
+    location_uri = URI.parse(location)
+
+    if is_nil(location_uri.scheme) and is_nil(location_uri.host) do
+      merged = URI.merge(base_uri, location_uri)
+      URI.to_string(merged)
+    else
+      location
+    end
+  rescue
+    _ -> location
   end
 
   defp detect(html, url) do

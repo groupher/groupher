@@ -90,5 +90,19 @@ defmodule GroupherServer.Test.CMS.Events.Mention.BlogTest do
 
       assert result.total_count == 0
     end
+
+    test "regex fallback should not match class substring",
+         ~m(user user2 community blog_attrs)a do
+      body = mock_rich_text(~s(hi <div class=notcdx-mention>#{user2.login}</div>))
+
+      blog_attrs = blog_attrs |> Map.merge(%{body: body})
+      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+      {:ok, blog} = preload_author(blog)
+
+      {:ok, _} = Events.emit(:mention, %{artiment: blog})
+      {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
+
+      assert result.total_count == 0
+    end
   end
 end
