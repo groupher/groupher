@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Events.BlogCiting do
   @moduledoc false
 
-  use GroupherServer.TestTools, async: false
+  use GroupherServer.TestTools
 
   alias CMS.Events
 
