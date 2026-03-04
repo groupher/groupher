@@ -4,10 +4,13 @@ defmodule GroupherServerWeb.Controller.OG do
   """
   use GroupherServerWeb, :controller
 
-  alias Helper.OgInfo
+  alias Helper.{OgInfo, UrlSafety}
 
   def index(conn, %{"url" => url}) do
-    fetch_opengraph_info(conn, url)
+    case UrlSafety.validate_http_url(url) do
+      {:ok, safe_url} -> fetch_opengraph_info(conn, safe_url)
+      {:error, _} -> unknown_error_response(conn, url)
+    end
   end
 
   # return editor-js flavor fmt

@@ -76,6 +76,7 @@ frontend/**/public/*.js.map
 # Backend (Elixir / BEAM)
 # =====================
 backend/main/_build
+backend/main/.elixir_ls
 backend/main/db
 backend/main/deps
 backend/main/*.ez

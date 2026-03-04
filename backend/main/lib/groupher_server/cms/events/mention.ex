@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Events.Mention do
   @article_threads get_config(:article, :threads)
 
   @article_mention_class "cdx-mention"
-  @mention_regex ~r/<(?:a|div)\b[^>]*class\s*=\s*(?:"[^"]*cdx-mention[^"]*"|'[^']*cdx-mention[^']*'|[^\s>]*cdx-mention[^\s>]*)[^>]*>([^<]*)<\/(?:a|div)>/i
+  @mention_regex ~r/<(?:a|div)\b[^>]*class\s*=\s*(?:"[^"]*\bcdx-mention\b[^"]*"|'[^']*\bcdx-mention\b[^']*'|[^\s>]*\bcdx-mention\b[^\s>]*)[^>]*>([^<]*)<\/(?:a|div)>/i
 
   @type mention_result :: {:ok, list()} | {:error, map()}
   @type handle_result :: {:ok, term()} | {:error, term()}
