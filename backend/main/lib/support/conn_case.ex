@@ -7,10 +7,9 @@ defmodule GroupherServerWeb.ConnCase do
   import other functionality to make it easier
   to build common datastructures and query the data layer.
 
-  Finally, if the test case interacts with the database,
-  it cannot be async. For this reason, every test runs
-  inside a transaction which is reset at the beginning
-  of the test unless the test case is marked as async.
+  DB tests can run async by passing `async: true` when using this case.
+  Each test runs in a SQL sandbox owner process; async tests get isolated
+  owners while sync tests run in shared mode.
   """
 
   use ExUnit.CaseTemplate
@@ -31,11 +30,15 @@ defmodule GroupherServerWeb.ConnCase do
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(GroupherServer.Repo, ownership_timeout: 300_000)
+    async? = tags[:async] == true
 
-    unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(GroupherServer.Repo, {:shared, self()})
-    end
+    owner =
+      Ecto.Adapters.SQL.Sandbox.start_owner!(GroupherServer.Repo,
+        shared: not async?,
+        ownership_timeout: 300_000
+      )
+
+    on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(owner) end)
 
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
