@@ -284,7 +284,6 @@ defmodule GroupherServer.CMS.Articles.List do
     Map.merge(articles, %{entries: entries})
   end
 
-  defp mark_viewer_has_states({:error, reason}, _), do: {:error, reason}
 
   defp do_mark_viewer_has_states(nil, _) do
     %{
