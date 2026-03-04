@@ -45,5 +45,8 @@ config :groupher_server, :audit,
 config :groupher_server, :oauth,
   oauth_trust_code: "fWrFuWs1j+TGcrok7XHkwDLiOVTGOnUR3JWF3cbcu2Tcnbj7TvSS1mMVeekvjgNQ"
 
+config :groupher_server, :site_favicon_adapter, Helper.TestFakes.SiteFavicon
+config :groupher_server, :open_graph_adapter, Helper.TestFakes.OpenGraph
+
 config :groupher_server, :plausible,
   token: "tDsEjaIBqmfVpkKByebYgrCs1Kl1V3N3prFACyFJq33eeEumg8hAFgm-3ZQamwAq"

@@ -16,15 +16,14 @@ defmodule GroupherServer.Application do
       [
         {DNSCluster, query: Application.get_env(:groupher_server, :dns_cluster_query) || :ignore},
         # Start the PubSub system
-        {Phoenix.PubSub, name: MyApp.PubSub},
+        {Phoenix.PubSub, name: GroupherServer.PubSub},
         # Start the Ecto repository
         GroupherServer.Repo,
         # Start the endpoint when the application starts
-        GroupherServerWeb.Endpoint,
+        GroupherServerWeb.Endpoint
         # Start your own worker by calling: GroupherServer.Worker.start_link(arg1, arg2, arg3)
         # worker(Helper.Scheduler, []),
-        {Rihanna.Supervisor, [postgrex: GroupherServer.Repo.config()]}
-      ] ++ cache_workers()
+      ] ++ maybe_rihanna_worker() ++ cache_workers()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -47,4 +46,14 @@ defmodule GroupherServer.Application do
       acc ++ [%{id: name, start: {Cachex, :start_link, [name, Cache.config(key)]}}]
     end)
   end
+
+  defp maybe_rihanna_worker do
+    if test_env?() do
+      []
+    else
+      [{Rihanna.Supervisor, [postgrex: GroupherServer.Repo.config()]}]
+    end
+  end
+
+  defp test_env?, do: Application.get_env(:groupher_server, :env) == :test
 end
