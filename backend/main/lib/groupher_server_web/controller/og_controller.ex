@@ -6,11 +6,15 @@ defmodule GroupherServerWeb.Controller.OG do
 
   alias Helper.{OgInfo, UrlSafety}
 
-  def index(conn, %{"url" => url}) do
+  def index(conn, %{"url" => url}) when is_binary(url) do
     case UrlSafety.validate_http_url(url) do
       {:ok, safe_url} -> fetch_opengraph_info(conn, safe_url)
       {:error, _} -> unknown_error_response(conn, url)
     end
+  end
+
+  def index(conn, _params) do
+    unknown_error_response(conn, "https://example.com/fallback")
   end
 
   # return editor-js flavor fmt

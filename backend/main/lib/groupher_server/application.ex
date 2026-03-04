@@ -12,17 +12,18 @@ defmodule GroupherServer.Application do
   @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
     # Define workers and child supervisors to be supervised
-    children = [
-      {DNSCluster, query: Application.get_env(:groupher_server, :dns_cluster_query) || :ignore},
-      # Start the PubSub system
-      {Phoenix.PubSub, name: MyApp.PubSub},
-      # Start the Ecto repository
-      GroupherServer.Repo,
-      # Start the endpoint when the application starts
-      GroupherServerWeb.Endpoint
-      # Start your own worker by calling: GroupherServer.Worker.start_link(arg1, arg2, arg3)
-      # worker(Helper.Scheduler, []),
-    ] ++ maybe_rihanna_worker() ++ cache_workers()
+    children =
+      [
+        {DNSCluster, query: Application.get_env(:groupher_server, :dns_cluster_query) || :ignore},
+        # Start the PubSub system
+        {Phoenix.PubSub, name: GroupherServer.PubSub},
+        # Start the Ecto repository
+        GroupherServer.Repo,
+        # Start the endpoint when the application starts
+        GroupherServerWeb.Endpoint
+        # Start your own worker by calling: GroupherServer.Worker.start_link(arg1, arg2, arg3)
+        # worker(Helper.Scheduler, []),
+      ] ++ maybe_rihanna_worker() ++ cache_workers()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

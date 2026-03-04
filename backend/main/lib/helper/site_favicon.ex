@@ -56,7 +56,9 @@ defmodule Helper.SiteFavicon do
 
       case List.keyfind(headers, "location", 0) do
         {"location", location} ->
-          with {:ok, safe_location} <- UrlSafety.validate_http_url(location) do
+          merged_location = merge_location(url, location)
+
+          with {:ok, safe_location} <- UrlSafety.validate_http_url(merged_location) do
             req(safe_location)
           else
             _ -> {:error, :unsafe_url}
@@ -66,6 +68,21 @@ defmodule Helper.SiteFavicon do
           {:ok, url, resp}
       end
     end
+  end
+
+  defp merge_location(base_url, location) do
+    base_uri = URI.parse(base_url)
+
+    location_uri = URI.parse(location)
+
+    if is_nil(location_uri.scheme) and is_nil(location_uri.host) do
+      merged = URI.merge(base_uri, location_uri)
+      URI.to_string(merged)
+    else
+      location
+    end
+  rescue
+    _ -> location
   end
 
   defp detect(html, url) do
