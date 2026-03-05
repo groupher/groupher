@@ -69,6 +69,7 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
     |> cast_embed(:header_links, with: &Embeds.DashboardHeaderLink.changeset/2)
     |> cast_embed(:footer_links, with: &Embeds.DashboardFooterLink.changeset/2)
     |> cast_embed(:social_links, with: &Embeds.DashboardSocialLink.changeset/2)
+    |> cast_embed(:media_reports, with: &Embeds.DashboardMediaReport.changeset/2)
     |> cast_embed(:faqs, with: &Embeds.DashboardFAQ.changeset/2)
   end
 

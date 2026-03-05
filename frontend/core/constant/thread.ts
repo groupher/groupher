@@ -1,16 +1,16 @@
 export const ARTICLE_THREAD = {
   POST: 'post',
+  BLOG: 'blog',
   CHANGELOG: 'changelog',
-  ABOUT: 'about',
+  DOC: 'doc',
+  KANBAN: 'kanban',
 } as const
 
 export const THREAD = {
   ...ARTICLE_THREAD,
   ACCOUNT: 'account',
   // for groupher
-  KANBAN: 'kanban',
-  CHANGELOG: 'changelog',
-  DOC: 'doc',
+
+  ABOUT: 'about',
   DASHBOARD: 'dashboard',
 } as const
-

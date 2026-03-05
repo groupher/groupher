@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
 
   alias CMS.Communities
   alias CMS.Events.Event
-  alias CMS.Model.{Blog, Changelog, Comment, Community, Post}
+  alias CMS.Model.{Blog, Changelog, Comment, Community, Doc, Post}
 
   @behaviour CMS.Events.Handler
 
@@ -42,6 +42,12 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
 
   def handle(%Comment{blog_id: blog_id}, user) when not is_nil(blog_id) do
     with {:ok, article} <- comment_parent_article(Blog, blog_id) do
+      Communities.subscribe_ifnot(article.community, user)
+    end
+  end
+
+  def handle(%Comment{doc_id: doc_id}, user) when not is_nil(doc_id) do
+    with {:ok, article} <- comment_parent_article(Doc, doc_id) do
       Communities.subscribe_ifnot(article.community, user)
     end
   end

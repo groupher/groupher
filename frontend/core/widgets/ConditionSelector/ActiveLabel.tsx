@@ -22,7 +22,7 @@ const ActiveLabel: FC<TProps> = ({ condition, activeItem }) => {
   return (
     <div className={s.label}>
       {activeItem && <Icon type={activeItem.icon} $active={$active} />}
-      <div className={s.stateTitle}>{t(condition)}</div>
+      <div className={s.stateTitle}>{t(activeItem?.title || condition)}</div>
     </div>
   )
 }

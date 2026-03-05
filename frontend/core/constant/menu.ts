@@ -35,21 +35,25 @@ const MENU = {
 export const POST_CAT_MENU_ITEMS = [
   {
     key: ARTICLE_CAT.FEATURE,
+    title: 'article.cat.feature',
     desc: '功能请求，提建议等',
     icon: MENU.FEATURE,
   },
   {
     key: ARTICLE_CAT.BUG,
+    title: 'article.cat.bug',
     desc: '使用中遇到的错误，逻辑 Bug 等等',
     icon: MENU.BUG,
   },
   {
     key: ARTICLE_CAT.QUESTION,
+    title: 'article.cat.question',
     desc: '请求帮助，使用疑惑等',
     icon: MENU.HELP,
   },
   {
     key: ARTICLE_CAT.OTHER,
+    title: 'article.cat.other',
     desc: '一般讨论，其他话题',
     icon: MENU.OTHER,
   },
@@ -58,38 +62,47 @@ export const POST_CAT_MENU_ITEMS = [
 export const POST_STATE_MENU_ITEMS = [
   {
     key: ARTICLE_STATE.BACKLOG,
+    title: 'article.state.backlog',
     icon: MENU.TODO,
   },
   {
     key: ARTICLE_STATE.TODO,
+    title: 'article.state.todo',
     icon: MENU.TODO,
   },
   {
     key: ARTICLE_STATE.WIP,
+    title: 'article.state.wip',
     icon: MENU.WIP,
   },
   {
     key: ARTICLE_STATE.DONE,
+    title: 'article.state.done',
     icon: MENU.DONE,
   },
   {
     key: ARTICLE_STATE.REJECT,
+    title: 'article.state.reject',
     icon: MENU.CLOSE,
   },
   {
     key: ARTICLE_STATE.REJECT_DUP,
+    title: 'article.state.reject_dup',
     icon: MENU.CLOSE,
   },
   {
     key: ARTICLE_STATE.REJECT_NO_PLAN,
+    title: 'article.state.reject_no_plan',
     icon: MENU.CLOSE,
   },
   {
     key: ARTICLE_STATE.REJECT_REPRO,
+    title: 'article.state.reject_repro',
     icon: MENU.CLOSE,
   },
   {
     key: ARTICLE_STATE.REJECT_STALE,
+    title: 'article.state.reject_stale',
     icon: MENU.CLOSE,
   },
 ]
@@ -97,22 +110,22 @@ export const POST_STATE_MENU_ITEMS = [
 export const POST_ORDER_MENU_ITEMS = [
   {
     key: ARTICLE_ORDER.PUBLISH,
-    title: '发布时间',
+    title: 'article.order.publish',
     icon: MENU.PUBLISH,
   },
   {
     key: ARTICLE_ORDER.UPVOTES,
-    title: '投票数',
+    title: 'article.order.upvotes',
     icon: MENU.UPVOTE,
   },
   {
     key: ARTICLE_ORDER.COMMENTS,
-    title: '评论数',
+    title: 'article.order.comments',
     icon: MENU.COMMENT,
   },
   {
     key: ARTICLE_ORDER.VIEWS,
-    title: '浏览量',
+    title: 'article.order.views',
     icon: MENU.VIEWS,
   },
 ]

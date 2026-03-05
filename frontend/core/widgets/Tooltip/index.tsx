@@ -200,7 +200,7 @@ const Tooltip: FC<TProps> = ({
    * forceZIndex: only used in some special masking scenarios (IconSwitcher)
    * Put z-1 on the trigger wrapper, not on the popper.
    */
-  const triggerWrapperClass = forceZIndex ? 'relative z-[1]' : undefined
+  const triggerWrapperClass = forceZIndex ? 'relative z-10' : undefined
 
   return (
     <Tippy className={wrapperClass} {...tippyProps}>

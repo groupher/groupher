@@ -24,7 +24,7 @@ export default ({ size, isFirst, isLast }: TProps) => {
       br('divider'),
       avatar(),
     ),
-    avatar: 'text-xs s-full text-center',
+    avatar: 'absolute inset-0 text-xs text-center',
     avatarFallback: cn('border', br('divider')),
   }
 }

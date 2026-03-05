@@ -102,17 +102,11 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   end
 
   def seed_bot do
-    case ORM.find(User, 1) do
-      {:ok, user} ->
-        {:ok, user}
+    nickname = "seed_bot_v2"
+    login = "seed_bot_v2"
+    avatar = "https://avatars1.githubusercontent.com/u/6184465?s=460&v=4"
 
-      {:error, _} ->
-        nickname = "bot_2398614_2018"
-        login = "bot"
-        avatar = "https://avatars1.githubusercontent.com/u/6184465?s=460&v=4"
-
-        User |> ORM.findby_or_insert(~m(nickname avatar)a, ~m(nickname avatar login)a)
-    end
+    User |> ORM.findby_or_insert(~m(nickname avatar)a, ~m(nickname avatar login)a)
   end
 
   # check is the seeds alreay runed

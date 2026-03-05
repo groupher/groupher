@@ -41,7 +41,8 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   end
 
   @spec mock(Community.t(), atom(), keyword()) :: T.domain_res([map()])
-  def mock(%Community{} = community, thread, opts) when is_list(opts) and thread in [:post, :changelog, :doc] do
+  def mock(%Community{} = community, thread, opts)
+      when is_list(opts) and thread in [:post, :changelog, :doc] do
     article_range = Keyword.get(opts, :count_range, @article_count_range)
     comment_range = Keyword.get(opts, :comment_range, @comment_count_range)
     article_upvotes_range = Keyword.get(opts, :upvotes_range, @article_upvotes_range)
@@ -51,7 +52,9 @@ defmodule GroupherServer.CMS.Seeds.Articles do
 
     tag_ids =
       case Keyword.get(opts, :tag_ids) do
-        ids when is_list(ids) and ids != [] -> ids
+        ids when is_list(ids) and ids != [] ->
+          ids
+
         _ ->
           {:ok, ids} = Tags.mock(community, thread)
           ids
@@ -97,12 +100,14 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   end
 
   defp seed_upvotes(article, {min, max}) do
-    with {:ok, user} <- db_insert(:user),
-         {:ok, _} <- CMS.Articles.upvote(article, user),
-         {:ok, article} <- ORM.find(article.__struct__, article.id),
-         {:ok, article} <- ORM.update(article, %{upvotes_count: Enum.random(min..max)}) do
-      {:ok, article}
-    end
+    target_count = Enum.random(min..max)
+
+    Enum.each(1..target_count, fn _ ->
+      {:ok, user} = db_insert(:user)
+      {:ok, _} = CMS.Articles.upvote(article, user)
+    end)
+
+    ORM.find(article.__struct__, article.id)
   end
 
   defp seed_upvotes(article, _) do
