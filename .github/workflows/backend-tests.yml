@@ -87,4 +87,4 @@ jobs:
         run: mix deps.get
 
       - name: Run tests
-        run: mix test --exclude skip_ci
+        run: mix test --exclude skip_ci --max-cases 8 --max-failures 1

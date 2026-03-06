@@ -4,12 +4,11 @@
  */
 
 import useKanbanPosts from '~/hooks/useKanbanPosts'
-
+import ArrowSVG from '~/icons/ArrowSimple'
+import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
-import GtdDoneSVG from '~/icons/GtdDone'
 import RejectSVG from '~/icons/Reject'
-import ArrowSVG from '~/icons/ArrowSimple'
 
 import KanbanItem from '~/widgets/KanbanItem'
 import EmptyItem from '~/widgets/KanbanItem/EmptyItem'
@@ -32,9 +31,9 @@ export default () => {
       <div className={s.column}>
         <div className={s.backlogHead}>
           <GtdTodoSVG className={s.backlogIcon} />
-          <div className={s.label}>积压</div>
+          <div className={s.label}>需求池</div>
           <div className={cn(s.count, s.backlogText)}>{backlogPosts.totalCount} 项</div>
-          <div className="grow" />
+          <div className='grow' />
           <ArrowSVG className={s.arrowIcon} />
         </div>
         <div className={s.content}>
@@ -48,7 +47,7 @@ export default () => {
           <GtdTodoSVG className={s.todoIcon} />
           <div className={s.label}>待办</div>
           <div className={cn(s.count, s.todoText)}>{todoPosts.totalCount} 项</div>
-          <div className="grow" />
+          <div className='grow' />
           <ArrowSVG className={s.arrowIcon} />
         </div>
         <div className={s.content}>
@@ -62,7 +61,7 @@ export default () => {
           <GtdWipSVG className={s.wipIcon} />
           <div className={s.label}>进行中</div>
           <div className={cn(s.count, s.wipText)}>{wipPosts.totalCount} 项</div>
-          <div className="grow" />
+          <div className='grow' />
           <ArrowSVG className={s.arrowIcon} />
         </div>
         <div className={s.content}>
@@ -77,7 +76,7 @@ export default () => {
           <GtdDoneSVG className={s.doneIcon} />
           <div className={s.label}>已完成</div>
           <div className={cn(s.count, s.doneText)}>{donePosts.totalCount} 项</div>
-          <div className="grow" />
+          <div className='grow' />
           <ArrowSVG className={s.arrowIcon} />
         </div>
         <div className={s.content}>
@@ -91,7 +90,7 @@ export default () => {
           <RejectSVG className={s.rejectedIcon} />
           <div className={s.label}>已拒绝</div>
           <div className={cn(s.count, s.rejectedText)}>{rejectedPosts.totalCount} 项</div>
-          <div className="grow" />
+          <div className='grow' />
           <ArrowSVG className={s.arrowIcon} />
         </div>
         <div className={s.content}>

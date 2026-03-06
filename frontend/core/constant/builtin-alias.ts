@@ -33,8 +33,8 @@ export const BUILTIN_ALIAS = [
   },
   {
     slug: 'backlog',
-    name: '积压',
-    original: '积压',
+    name: '需求池',
+    original: '需求池',
     group: ALIAS_GROUP.KANBAN,
   },
   {

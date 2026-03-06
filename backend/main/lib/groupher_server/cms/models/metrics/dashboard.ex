@@ -8,6 +8,18 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   those cases need to manually add
   """
 
+  @kanban_bg_colors_default ["BLACK", "YELLOW", "PURPLE", "GREEN", "RED"]
+
+  def kanban_bg_colors_default, do: @kanban_bg_colors_default
+
+  def layout_default do
+    macro_schema(:layout)
+    |> Enum.reduce(%{}, fn [key, _type, default], acc ->
+      Map.put(acc, key, default)
+    end)
+    |> Map.put(:kanban_bg_colors, kanban_bg_colors_default())
+  end
+
   def macro_schema(:enable) do
     [
       [:post, :boolean, true],
@@ -41,14 +53,12 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     ]
   end
 
-  # note: write kanban_bg_colors rules by itself
+  # note: write kanban_bg_colors schema/graphql rules by itself
   def macro_schema(:layout) do
-    # manually add this:
-    # [:kanban_bg_colors, {:array, :string}, []],
-
     [
       [:primary_color, :string, "BLACK"],
       [:sub_primary_color, :string, "BLACK"],
+      [:kanban_bg_colors, {:array, :string}, @kanban_bg_colors_default],
       [:post_layout, :string, "quora"],
       [:kanban_layout, :string, "classic"],
       [:kanban_card_layout, :string, "simple"],

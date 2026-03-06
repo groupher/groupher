@@ -278,7 +278,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       [key, type, _default_v] = item
 
       quote do
-        arg(unquote(key), unquote(type))
+        arg(unquote(key), unquote(to_absinthe_type(type)))
       end
     end)
   end
@@ -289,7 +289,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       [key, type, default_v] = item
 
       quote do
-        field(unquote(key), unquote(type), default: unquote(default_v))
+        field(unquote(key), unquote(to_ecto_type(type)), default: unquote(default_v))
       end
     end)
   end
@@ -300,7 +300,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       [key, type, _default_v] = item
 
       quote do
-        field(unquote(key), unquote(type))
+        field(unquote(key), unquote(to_absinthe_type(type)))
       end
     end)
   end
@@ -312,6 +312,19 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       end)
     end
   end
+
+  # Convert dashboard metric DSL types to Ecto field types.
+  # Supports list-like types in shared dashboard schema definitions.
+  defp to_ecto_type({:array, inner}), do: {:array, to_ecto_type(inner)}
+  defp to_ecto_type(type), do: type
+
+  # Convert dashboard metric DSL types to Absinthe field/arg type AST.
+  # Supports list-like types in shared dashboard schema definitions.
+  defp to_absinthe_type({:array, inner}) do
+    quote(do: list_of(unquote(to_absinthe_type(inner))))
+  end
+
+  defp to_absinthe_type(type), do: type
 
   defmacro enum_values(values_ast) do
     expanded = Macro.expand(values_ast, __CALLER__)

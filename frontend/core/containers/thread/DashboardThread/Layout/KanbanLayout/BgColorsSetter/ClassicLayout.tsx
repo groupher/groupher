@@ -6,9 +6,17 @@ type TProps = {
   isBoard1Hovered: boolean
   isBoard2Hovered: boolean
   isBoard3Hovered: boolean
+  isBoard4Hovered: boolean
+  isBoard5Hovered: boolean
 }
 
-const ClassicLayout: FC<TProps> = ({ isBoard1Hovered, isBoard2Hovered, isBoard3Hovered }) => {
+const ClassicLayout: FC<TProps> = ({
+  isBoard1Hovered,
+  isBoard2Hovered,
+  isBoard3Hovered,
+  isBoard4Hovered,
+  isBoard5Hovered,
+}) => {
   const s = useSalon()
 
   const ref = useRef(null)
@@ -25,14 +33,20 @@ const ClassicLayout: FC<TProps> = ({ isBoard1Hovered, isBoard2Hovered, isBoard3H
 
   return (
     <div className={s.boardsWrapper}>
-      <div className={cn(s.board, s.boardTodo, isBoard1Hovered && s.todoActive)}>
+      <div className={cn(s.board, s.boardBacklog, isBoard1Hovered && s.backlogActive)}>
         <KanbanList num={1} />
       </div>
-      <div className={cn(s.board, s.boardWip, isBoard2Hovered && s.wipActive)}>
+      <div className={cn(s.board, s.boardTodo, isBoard2Hovered && s.todoActive)}>
         <KanbanList num={2} />
       </div>
-      <div className={cn(s.board, s.boardDone, isBoard3Hovered && s.doneActive)}>
+      <div className={cn(s.board, s.boardWip, isBoard3Hovered && s.wipActive)}>
         <KanbanList num={3} />
+      </div>
+      <div className={cn(s.board, s.boardDone, isBoard4Hovered && s.doneActive)}>
+        <KanbanList num={4} />
+      </div>
+      <div className={cn(s.board, s.boardRejected, isBoard5Hovered && s.rejectedActive)}>
+        <KanbanList num={5} />
       </div>
     </div>
   )

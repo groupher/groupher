@@ -12,7 +12,7 @@ export default () => {
   const s = useSalon()
   const { cities, techstacks, socialLinks, mediaReports } = useAboutInfo()
 
-  const noMediaReports = mediaReports.length <= 1 && !mediaReports[0].title
+  const noMediaReports = !mediaReports.some((report) => report?.title)
 
   return (
     <div className={s.wrapper}>

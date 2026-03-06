@@ -35,7 +35,7 @@ defmodule GroupherServerWeb.ConnCase do
     owner =
       Ecto.Adapters.SQL.Sandbox.start_owner!(GroupherServer.Repo,
         shared: not async?,
-        ownership_timeout: 300_000
+        ownership_timeout: 900_000
       )
 
     on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(owner) end)

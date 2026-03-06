@@ -8,9 +8,17 @@ type TProps = {
   isBoard1Hovered: boolean
   isBoard2Hovered: boolean
   isBoard3Hovered: boolean
+  isBoard4Hovered: boolean
+  isBoard5Hovered: boolean
 }
 
-const WaterfallLayout: FC<TProps> = ({ isBoard1Hovered, isBoard2Hovered, isBoard3Hovered }) => {
+const WaterfallLayout: FC<TProps> = ({
+  isBoard1Hovered,
+  isBoard2Hovered,
+  isBoard3Hovered,
+  isBoard4Hovered,
+  isBoard5Hovered,
+}) => {
   const s = useSalon()
 
   return (
@@ -46,6 +54,28 @@ const WaterfallLayout: FC<TProps> = ({ isBoard1Hovered, isBoard2Hovered, isBoard
         <div className={cnMerge(s.bar, 'top-10 right-2 w-14 opacity-15')} />
 
         <div className={cnMerge(s.bar, 'top-16 left-2 w-4/12 opacity-10')} />
+        <div className={cnMerge(s.bar, 'top-16 right-2 w-10 opacity-10')} />
+      </div>
+      <div className={cnMerge(s.header, s.bgReview, isBoard4Hovered && s.bgReviewActive)} />
+      <div className={s.content}>
+        <div className={cnMerge(s.bar, 'top-5 left-2 w-6/12')} />
+        <div className={cnMerge(s.bar, 'top-5 right-2 w-14 opacity-20')} />
+
+        <div className={cnMerge(s.bar, 'top-10 left-2 w-5/12 mt-0.5 opacity-20')} />
+        <div className={cnMerge(s.bar, 'top-10 right-2 w-14 opacity-15')} />
+
+        <div className={cnMerge(s.bar, 'top-16 left-2 w-4/12 opacity-10')} />
+        <div className={cnMerge(s.bar, 'top-16 right-2 w-10 opacity-10')} />
+      </div>
+      <div className={cnMerge(s.header, s.bgRejected, isBoard5Hovered && s.bgRejectedActive)} />
+      <div className={s.content}>
+        <div className={cnMerge(s.bar, 'top-5 left-2 w-4/12')} />
+        <div className={cnMerge(s.bar, 'top-5 right-2 w-14 opacity-20')} />
+
+        <div className={cnMerge(s.bar, 'top-10 left-2 w-7/12 mt-0.5 opacity-20')} />
+        <div className={cnMerge(s.bar, 'top-10 right-2 w-14 opacity-15')} />
+
+        <div className={cnMerge(s.bar, 'top-16 left-2 w-3/12 opacity-10')} />
         <div className={cnMerge(s.bar, 'top-16 right-2 w-10 opacity-10')} />
       </div>
     </div>

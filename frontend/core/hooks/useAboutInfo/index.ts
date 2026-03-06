@@ -12,12 +12,18 @@ type TABoutInfo = {
 export default (): TABoutInfo => {
   const dsb$ = useDashboard()
 
-  const { homepage, city, techstack, socialLinks, mediaReports } = dsb$
+  const {
+    homepage = '',
+    city = '',
+    techstack = '',
+    socialLinks = [],
+    mediaReports = [],
+  } = dsb$
 
   return {
-    homepage,
-    cities: city.split(','),
-    techstacks: techstack.split(','),
+    homepage: homepage || null,
+    cities: city ? city.split(',') : [],
+    techstacks: techstack ? techstack.split(',') : [],
     socialLinks,
     mediaReports,
   }

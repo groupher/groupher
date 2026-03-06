@@ -7,6 +7,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
   alias GroupherServer.CMS
   alias GroupherServer.Repo
+  alias GroupherServer.CMS.Model.Metrics.Dashboard
   alias Helper.ORM
 
   alias CMS.Model.{Changelog, Comment, Community, Doc, Post}
@@ -17,17 +18,21 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
       {:ok, community} = CMS.Seeds.full_community(slug)
 
-      {:ok, community} = ORM.find(Community, community.id, preload: [:dashboard, threads: :thread])
+      {:ok, community} =
+        ORM.find(Community, community.id, preload: [:dashboard, threads: :thread])
 
       thread_slugs = Enum.map(community.threads, & &1.thread.slug)
       assert Enum.all?(["post", "changelog", "kanban", "doc", "about"], &(&1 in thread_slugs))
 
-      post_count = from(p in Post, where: p.community_id == ^community.id) |> Repo.aggregate(:count, :id)
+      post_count =
+        from(p in Post, where: p.community_id == ^community.id) |> Repo.aggregate(:count, :id)
 
       changelog_count =
-        from(p in Changelog, where: p.community_id == ^community.id) |> Repo.aggregate(:count, :id)
+        from(p in Changelog, where: p.community_id == ^community.id)
+        |> Repo.aggregate(:count, :id)
 
-      doc_count = from(p in Doc, where: p.community_id == ^community.id) |> Repo.aggregate(:count, :id)
+      doc_count =
+        from(p in Doc, where: p.community_id == ^community.id) |> Repo.aggregate(:count, :id)
 
       assert post_count == 23
       assert changelog_count == 23
@@ -36,13 +41,20 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       post = Repo.one!(from(p in Post, where: p.community_id == ^community.id, limit: 1))
       assert post.state in [:backlog, :todo, :wip, :done, :reject]
 
-      comments_count = from(c in Comment, where: c.post_id == ^post.id) |> Repo.aggregate(:count, :id)
+      comments_count =
+        from(c in Comment, where: c.post_id == ^post.id) |> Repo.aggregate(:count, :id)
+
       assert comments_count >= 23
 
       assert post.upvotes_count in 10..20
 
       {:ok, paged_post_tags} =
-        CMS.Communities.paged_tags(%{page: 1, size: 100, community_id: community.id, thread: "POST"})
+        CMS.Communities.paged_tags(%{
+          page: 1,
+          size: 100,
+          community_id: community.id,
+          thread: "POST"
+        })
 
       assert paged_post_tags.total_count in 10..20
 
@@ -85,6 +97,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert dashboard.base_info.homepage != ""
       assert dashboard.base_info.techstack != ""
       assert dashboard.base_info.city != ""
+      assert dashboard.layout.kanban_bg_colors == Dashboard.kanban_bg_colors_default()
       assert length(dashboard.social_links) > 0
       assert length(dashboard.media_reports) > 0
       assert dashboard.enable.about == true

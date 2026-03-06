@@ -11,7 +11,7 @@ export default {
   'article.cat.bug': '问题上报',
   'article.cat.question': '求助 / 疑问',
   'article.cat.other': '其他讨论',
-  'article.state.backlog': '积压',
+  'article.state.backlog': '需求池',
   'article.state.todo': '待办',
   'article.state.wip': '进行中',
   'article.state.done': '已完成',
@@ -656,7 +656,7 @@ export default {
   QUESTION: '问题',
   OTHER: '其他',
 
-  BACKLOG: '积压',
+  BACKLOG: '需求池',
   TODO: '已排期',
   WIP: '进行中',
   DONE: '已完成',

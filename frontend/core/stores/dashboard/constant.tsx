@@ -35,7 +35,13 @@ export const DEFAULT_OVERVIEW = {
   docsCount: 0,
 }
 
-export const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.BLACK, COLOR.BLACK]
+export const INIT_KANBAN_COLORS = [
+  COLOR.BLACK,
+  COLOR.YELLOW,
+  COLOR.PURPLE,
+  COLOR.GREEN,
+  COLOR.RED,
+]
 
 export const FIELDS: TDsbFieldMap = {
   // baseInfo

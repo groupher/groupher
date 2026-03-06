@@ -268,7 +268,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
       assert found.dashboard.layout.post_layout == "new layout"
-      assert found.dashboard.layout.kanban_layout == ""
+      assert found.dashboard.layout.kanban_layout == "classic"
 
       variables = %{
         community: community.slug,

@@ -45,10 +45,13 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
   @comment_replies_range Config.comment_replies_range()
 
   @spec mock(String.t() | atom()) :: T.domain_res(map())
-  def mock(slug) do
+  def mock(slug), do: mock(slug, [])
+
+  @spec mock(String.t() | atom(), keyword()) :: T.domain_res(map())
+  def mock(slug, opts) when is_list(opts) do
     with {:ok, community} <- Communities.mock(slug),
          {:ok, _} <- seed_about_dashboard(community, slug),
-         {:ok, posts} <- seed_threads(community),
+         {:ok, posts} <- seed_threads(community, opts),
          {:ok, _} <- seed_kanban_states(posts),
          {:ok, updated_community} <- CMS.Communities.read(community.slug, inc_views: false) do
       {:ok, updated_community}
@@ -69,10 +72,22 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     end
   end
 
-  defp seed_threads(community) do
+  defp seed_threads(community, opts) do
+    tag_count_range = Keyword.get(opts, :tag_count_range, @tag_count_range)
+
+    article_count_per_thread =
+      Keyword.get(opts, :article_count_per_thread, @article_count_per_thread)
+
+    comment_count_per_article =
+      Keyword.get(opts, :comment_count_per_article, @comment_count_per_article)
+
+    article_upvotes_range = Keyword.get(opts, :article_upvotes_range, @article_upvotes_range)
+    comment_upvotes_range = Keyword.get(opts, :comment_upvotes_range, @comment_upvotes_range)
+    comment_replies_range = Keyword.get(opts, :comment_replies_range, @comment_replies_range)
+
     tags_by_thread =
       Enum.reduce(@tag_threads, %{}, fn thread, acc ->
-        {:ok, tag_ids} = Tags.mock(community, thread, count: random_range(@tag_count_range))
+        {:ok, tag_ids} = Tags.mock(community, thread, count: random_range(tag_count_range))
         Map.put(acc, thread, tag_ids)
       end)
 
@@ -82,11 +97,11 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
           Articles.mock(
             community,
             thread,
-            count_range: {@article_count_per_thread, @article_count_per_thread},
-            upvotes_range: @article_upvotes_range,
-            comment_range: {@comment_count_per_article, @comment_count_per_article},
-            comment_upvotes_range: @comment_upvotes_range,
-            replies_range: @comment_replies_range,
+            count_range: {article_count_per_thread, article_count_per_thread},
+            upvotes_range: article_upvotes_range,
+            comment_range: {comment_count_per_article, comment_count_per_article},
+            comment_upvotes_range: comment_upvotes_range,
+            replies_range: comment_replies_range,
             tag_ids: Map.get(tags_by_thread, thread, [])
           )
 
@@ -183,7 +198,12 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
   end
 
   defp delete_comment_relations(comment_ids) do
-    delete_all(from(c in CommentReply, where: c.comment_id in ^comment_ids or c.reply_to_id in ^comment_ids))
+    delete_all(
+      from(c in CommentReply,
+        where: c.comment_id in ^comment_ids or c.reply_to_id in ^comment_ids
+      )
+    )
+
     delete_all(from(c in CommentUpvote, where: c.comment_id in ^comment_ids))
     delete_all(from(c in CommentUserEmotion, where: c.comment_id in ^comment_ids))
     delete_all(from(c in PinnedComment, where: c.comment_id in ^comment_ids))
@@ -211,7 +231,11 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
       )
     )
 
-    delete_all(from(p in PinnedArticle, where: p.post_id in ^post_ids or p.changelog_id in ^changelog_ids or p.doc_id in ^doc_ids))
+    delete_all(
+      from(p in PinnedArticle,
+        where: p.post_id in ^post_ids or p.changelog_id in ^changelog_ids or p.doc_id in ^doc_ids
+      )
+    )
 
     delete_all(from(c in CommunityJoinPost, where: c.post_id in ^post_ids))
     delete_all(from(c in CommunityJoinChangelog, where: c.changelog_id in ^changelog_ids))
@@ -225,7 +249,8 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
   end
 
   defp delete_tag_relations(community_id) do
-    tag_ids = Repo.all(from(t in CommunityTag, where: t.community_id == ^community_id, select: t.id))
+    tag_ids =
+      Repo.all(from(t in CommunityTag, where: t.community_id == ^community_id, select: t.id))
 
     delete_all(from(c in CommunityJoinTag, where: c.community_tag_id in ^tag_ids))
     delete_all(from(t in CommunityTag, where: t.id in ^tag_ids))
