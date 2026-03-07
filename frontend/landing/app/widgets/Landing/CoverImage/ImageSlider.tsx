@@ -1,5 +1,5 @@
 import { range } from 'ramda'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Carousel, Slide, Slider, SliderBarDotGroup } from 'react-scroll-snap-anime-slider'
 import APP from '~/const/app'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
@@ -31,7 +31,6 @@ export default function ImageSlider() {
   const [curImageIndex, setCurImageIndex] = useState(0)
   const [themeIndex, setThemeIndex] = useState(0)
 
-  const [imgSrc, setImgSrc] = useState(`/${APP.LANDING}/intro/home.webp`)
   const [imgSrc2, _] = useState(`/${APP.LANDING}/intro/home-dark.webp`)
   const s = useSalon()
 

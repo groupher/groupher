@@ -12,8 +12,6 @@ type TProps = TSpace & { size?: TSizeTSM; className?: string }
 const LavaLampLoading: FC<TProps> = ({ size, className = '', ...spacing }) => {
   const s = useSalon({ ...spacing })
 
-  // <Circle key={num} index={num} $color={primaryColor} />
-
   return (
     <div
       className={cn(s.wrapper, size === SIZE.TINY && 'scale-75', size === SIZE.SMALL && 'scale-90')}
