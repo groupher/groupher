@@ -16,9 +16,7 @@ defmodule GroupherServer.CMS.Articles.Read do
 
   alias Accounts.Model.User
   alias CMS.Model.{Community, PinnedArticle}
-
-  alias Ecto.Multi
-  alias Helper.{Constant, ORM, T}
+  alias Helper.{Multi, Constant, ORM, T}
 
   @active_period get_config(:article, :active_period_days)
   @article_threads get_config(:article, :threads)

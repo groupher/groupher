@@ -3,15 +3,13 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   Moderator helpers for communities.
   """
 
-  alias Ecto.Multi
-
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
   alias CMS.Communities.Passport
   alias CMS.Model.{Community, CommunityModerator}
   alias CMS.{Communities, FrontDesk}
-  alias Helper.{ORM, PermissionConfig, PermissionRegistry, T, Transaction}
+  alias Helper.{Multi, ORM, PermissionConfig, PermissionRegistry, T, Transaction}
 
   @doc """
   set a community moderator

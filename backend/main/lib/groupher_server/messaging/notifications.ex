@@ -12,9 +12,7 @@ defmodule GroupherServer.Messaging.Notifications do
 
   alias Accounts.Model.User
   alias GroupherServer.Messaging.Model.Notification
-
-  alias Ecto.Multi
-  alias Helper.ORM
+  alias Helper.{Multi, ORM}
 
   @notify_actions get_config(:general, :nofity_actions)
   @notify_group_interval_hour get_config(:general, :notify_group_interval_hour)

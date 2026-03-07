@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias Helper.{Later, ORM, T}
+  alias Helper.{Multi, Later, ORM, T}
 
   alias Accounts.Model.User
   alias CMS.FrontDesk
@@ -28,7 +28,6 @@ defmodule GroupherServer.CMS.Comments.States do
   alias CMS.Comments.Read, as: CommentRead
 
   alias CMS.Events
-  alias Ecto.Multi
 
   @article_threads get_config(:article, :threads)
 

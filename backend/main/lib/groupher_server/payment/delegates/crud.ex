@@ -7,15 +7,13 @@ defmodule GroupherServer.Payment.Delegate.CRUD do
   import Helper.ErrorCode
   import ShortMaps
 
-  alias Helper.ORM
+  alias Helper.{Multi, ORM}
 
   alias GroupherServer.{Accounts, Messaging, Payment, Repo}
 
   alias Accounts.Model.User
   alias Payment.Delegate.Actions
   alias Payment.Model.BillRecord
-
-  alias Ecto.Multi
 
   @doc """
   list all the bill records

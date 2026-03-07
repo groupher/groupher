@@ -9,9 +9,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
 
   alias Accounts.FrontDesk
   alias Accounts.Model.{Achievement, OauthProvider, Social, User}
-
-  alias Ecto.Multi
-  alias Helper.{Guardian, ORM}
+  alias Helper.{Multi, Guardian, ORM}
 
   def link_oauth(login, provider) do
     provider = normalize_oauth_provider(provider)

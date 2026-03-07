@@ -39,8 +39,7 @@ defmodule GroupherServer.CMS.Events.Cite do
   alias CMS.Events.{CitedArtiment, Event}
   alias CMS.FrontDesk
   alias CMS.Model.Comment
-
-  alias Ecto.Multi
+  alias Helper.Multi
 
   @site_host get_config(:general, :site_host)
   @article_threads get_config(:article, :threads)
