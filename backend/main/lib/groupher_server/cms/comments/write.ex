@@ -74,7 +74,6 @@ defmodule GroupherServer.CMS.Comments.Write do
       |> result()
     else
       false -> raise_error(:article_comments_locked, "this article is forbid comment")
-      {:error, error} -> {:error, error}
     end
   end
 

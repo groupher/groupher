@@ -55,12 +55,10 @@ defmodule GroupherServer.CMS.Articles.List do
   @spec page(atom(), map(), User.t()) :: T.domain_res(term())
   def page(thread, filter, %User{} = user) do
     with {:ok, stateless_paged_articles} <- page(thread, filter) do
-      case stateless_paged_articles
-           |> FrontDesk.mark_viewer_emotion_states(user)
-           |> mark_viewer_has_states(user) do
-        {:error, reason} -> {:error, reason}
-        articles -> done(articles)
-      end
+      stateless_paged_articles
+      |> FrontDesk.mark_viewer_emotion_states(user)
+      |> mark_viewer_has_states(user)
+      |> done()
     end
   end
 
@@ -109,7 +107,8 @@ defmodule GroupherServer.CMS.Articles.List do
 
     case valid_states do
       [] ->
-        %{entries: [], total_count: 0, page_number: page, page_size: size, total_pages: 0} |> done()
+        %{entries: [], total_count: 0, page_number: page, page_size: size, total_pages: 0}
+        |> done()
 
       _ ->
         flags = %{
@@ -156,12 +155,7 @@ defmodule GroupherServer.CMS.Articles.List do
       |> ORM.paginator(~m(page size)a)
       |> FrontDesk.mark_viewer_emotion_states(user)
       |> mark_viewer_has_states(user)
-      |> then(fn result ->
-        case result do
-          {:error, reason} -> {:error, reason}
-          articles -> done(articles)
-        end
-      end)
+      |> done()
     end
   end
 

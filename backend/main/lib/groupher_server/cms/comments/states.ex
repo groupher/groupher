@@ -278,9 +278,6 @@ defmodule GroupherServer.CMS.Comments.States do
 
       {:ok, _} ->
         {:ok, :pass}
-
-      {:error, reason} ->
-        {:error, reason}
     end
   end
 
@@ -354,7 +351,6 @@ defmodule GroupherServer.CMS.Comments.States do
 
     with {:ok, %{body: body, body_html: body_html}} <-
            Helper.Converter.Article.parse_body(body) do
-
       thread = foreign_key |> to_string |> String.trim_trailing("_id") |> String.upcase()
 
       attrs = %{

@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Seeds.Communities do
     get(type) |> Enum.each(&mock(&1, type)) |> done
   end
 
-  @spec mock(atom()) :: T.domain_res(Community.t())
+  @spec mock(String.t() | atom()) :: T.domain_res(Community.t())
   def mock(:home), do: Domain.seed_community(:home)
   def mock(:feedback), do: Domain.seed_community(:feedback)
 
@@ -52,7 +52,9 @@ defmodule GroupherServer.CMS.Seeds.Communities do
 
   defp find_or_create(slug, title, user) do
     case ORM.find_by(Community, %{slug: slug}) do
-      {:ok, community} -> {:ok, community}
+      {:ok, community} ->
+        {:ok, community}
+
       {:error, _} ->
         CMS.Communities.create(
           %{
@@ -72,10 +74,16 @@ defmodule GroupherServer.CMS.Seeds.Communities do
 
       thread_record =
         case ORM.find_by(Thread, %{slug: slug}) do
-          {:ok, record} -> record
+          {:ok, record} ->
+            record
+
           {:error, _} ->
             {:ok, record} =
-              CMS.Communities.create_thread(%{title: String.capitalize(slug), slug: slug, index: 0})
+              CMS.Communities.create_thread(%{
+                title: String.capitalize(slug),
+                slug: slug,
+                index: 0
+              })
 
             record
         end
