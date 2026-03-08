@@ -45,6 +45,9 @@ fe.build.dashboard:
 fe.serve.dashboard: 
 	yarn run serve:prod:dashboard
 
+fe.build.gateway:
+	yarn run build:prod:gateway
+
 fe.test.dashboard:
 	yarn run test:dashboard
 
@@ -53,6 +56,9 @@ fe.test.main:
 
 fe.test.landing:
 	yarn run test:landing
+
+fe.test.gateway:
+	yarn vitest --config frontend/core/vitest.config.mts run frontend/gateway
 
 fe.e2e.dashboard:
 	yarn run test:e2e:dashboard

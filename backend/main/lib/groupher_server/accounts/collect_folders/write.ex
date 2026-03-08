@@ -10,8 +10,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.{CollectFolder, Embeds, User}
-  alias Ecto.Multi
-  alias Helper.{ORM, T}
+  alias Helper.{Multi, ORM, T}
 
   @default_meta Embeds.CollectFolderMeta.default_meta()
   @spec create(map(), User.t()) :: T.domain_res(CollectFolder.t())

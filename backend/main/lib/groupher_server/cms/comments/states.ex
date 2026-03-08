@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias Helper.{Later, ORM, T}
+  alias Helper.{Multi, Later, ORM, T}
 
   alias Accounts.Model.User
   alias CMS.FrontDesk
@@ -28,7 +28,6 @@ defmodule GroupherServer.CMS.Comments.States do
   alias CMS.Comments.Read, as: CommentRead
 
   alias CMS.Events
-  alias Ecto.Multi
 
   @article_threads get_config(:article, :threads)
 
@@ -279,9 +278,6 @@ defmodule GroupherServer.CMS.Comments.States do
 
       {:ok, _} ->
         {:ok, :pass}
-
-      {:error, reason} ->
-        {:error, reason}
     end
   end
 
@@ -355,7 +351,6 @@ defmodule GroupherServer.CMS.Comments.States do
 
     with {:ok, %{body: body, body_html: body_html}} <-
            Helper.Converter.Article.parse_body(body) do
-
       thread = foreign_key |> to_string |> String.trim_trailing("_id") |> String.upcase()
 
       attrs = %{

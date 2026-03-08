@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.Communities do
   def delete(community), do: Write.delete(community)
 
   # Dashboard
-  @spec update_dashboard(Community.t(), atom(), map()) :: T.domain_res(Community.t())
+  @spec update_dashboard(Community.t(), atom(), map() | list()) :: T.domain_res(Community.t())
   def update_dashboard(%Community{} = community, key, args),
     do: Dashboard.update(community, key, args)
 

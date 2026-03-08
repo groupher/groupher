@@ -7,9 +7,10 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   import GroupherServer.CMS.Model.Embeds.CommentMeta, only: [default_meta: 0]
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Seeds.Config
 
   alias CMS.Model.{Comment, Community}
+  alias CMS.Seeds.Config
+
   alias Helper.{ORM, T}
 
   @comment_emotions get_config(:article, :comment_emotions)

@@ -20,6 +20,7 @@ defmodule Helper.ORMAtom do
   @doc """
   increase by 1 for given field
   """
+  @spec inc(struct(), atom()) :: {:ok, struct()} | {:error, term()}
   def inc(queryable, field) when is_atom(field) do
     update_counter(queryable, field, "+ 1")
   end
@@ -27,6 +28,7 @@ defmodule Helper.ORMAtom do
   @doc """
   decrease by 1 for given field
   """
+  @spec dec(struct(), atom()) :: {:ok, struct()} | {:error, term()}
   def dec(queryable, field) when is_atom(field) do
     update_counter(queryable, field, "- 1", safeguard: true)
   end
@@ -66,6 +68,7 @@ defmodule Helper.ORMAtom do
         "stats.visits" => 42
       })
   """
+  @spec update_meta(struct(), map() | struct()) :: {:ok, struct()} | {:error, term()}
   def update_meta(queryable, changes) when is_struct(changes) do
     update_meta(queryable, changes |> strip_struct)
   end
@@ -92,6 +95,7 @@ defmodule Helper.ORMAtom do
     end
   end
 
+  @spec fill_meta(struct()) :: {:ok, struct()} | {:error, Ecto.Changeset.t()}
   def fill_meta(%User{meta: nil} = user) do
     fill_default_meta(user, @default_user_meta)
   end

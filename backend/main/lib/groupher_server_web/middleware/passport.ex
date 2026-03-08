@@ -166,7 +166,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
          arguments: %{id: id, thread: thread, community: community}
        })
        when not is_nil(cur_user) do
-    case FrontDesk.article(community_slug(community), thread, id) do
+    case apply(FrontDesk, :article, [community_slug(community), thread, id]) do
       {:ok, article} -> article.author.user.id == cur_user.id
       _ -> false
     end
@@ -174,7 +174,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   defp infer_owner?(%{context: %{cur_user: cur_user}, arguments: %{id: id}})
        when not is_nil(cur_user) do
-    case FrontDesk.comment(id) do
+    case apply(FrontDesk, :comment, [id]) do
       {:ok, comment} -> comment.author.id == cur_user.id
       _ -> false
     end

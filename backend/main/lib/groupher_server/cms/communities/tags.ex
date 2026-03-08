@@ -15,9 +15,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
 
   alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityTag}
-  alias Helper.{ORM, QueryBuilder, T}
-
-  alias Ecto.Multi
+  alias Helper.{Multi, ORM, QueryBuilder, T}
 
   @doc """
   create a community tag

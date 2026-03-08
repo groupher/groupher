@@ -13,9 +13,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   alias CMS.FrontDesk
   alias CMS.Model.Comment
   alias GroupherServer.FrontDesk, as: GlobalFrontDesk
-  alias Helper.{ORM, QueryBuilder, T}
-
-  alias Ecto.Multi
+  alias Helper.{Multi, ORM, QueryBuilder, T}
 
   @audit_legal Helper.Constant.CMS.pending(:legal)
   @audit_illegal Helper.Constant.CMS.pending(:illegal)

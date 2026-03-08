@@ -20,9 +20,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Comment, Community, Embeds, PinnedComment, Post}
 
-  alias Helper.{Later, ORM, T}
-
-  alias Ecto.Multi
+  alias Helper.{Multi, Later, ORM, T}
 
   @max_participator_count Comment.max_participator_count()
   @default_emotions Embeds.CommentEmotion.default_emotions()
@@ -76,7 +74,6 @@ defmodule GroupherServer.CMS.Comments.Write do
       |> result()
     else
       false -> raise_error(:article_comments_locked, "this article is forbid comment")
-      {:error, error} -> {:error, error}
     end
   end
 

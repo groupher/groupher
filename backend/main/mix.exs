@@ -9,7 +9,7 @@ defmodule GroupherServer.Mixfile do
       version: "2.1.10",
       elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
-      dialyzer: [plt_add_deps: :transitive, ignore_warnings: ".dialyzer_ignore.exs"],
+      dialyzer: [plt_add_deps: :app_tree, ignore_warnings: ".dialyzer_ignore.exs"],
       test_coverage: [tool: ExCoveralls],
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),

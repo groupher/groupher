@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "ci": "cross-env NODE_ENV=ci next dev",
-    "build": "cross-env NODE_ENV=production next build --webpack",
+    "build": "cross-env NODE_ENV=production next build --turbopack",
     "start": "cross-env NODe_ENV=production next start",
     "info": "next info",
     "lint": "echo 'skip link'",

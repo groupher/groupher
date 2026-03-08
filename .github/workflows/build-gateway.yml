@@ -5,6 +5,10 @@ on:
     paths:
       - "frontend/gateway/**" # only trigger when this dir changes
       - "!frontend/gateway/vercel.json"
+  pull_request:
+    paths:
+      - "frontend/gateway/**"
+      - "!frontend/gateway/vercel.json"
 
 jobs:
   build:
@@ -36,6 +40,9 @@ jobs:
 
       # - name: Run Biome for gateway
       #   run: biome lint "$GITHUB_WORKSPACE/frontend-gateway/src/**/*.{ts,tsx}"
+
+      - name: Run Gateway Tests
+        run: make fe.test.gateway
 
       - name: Build Project
         run: yarn run build:prod:gateway

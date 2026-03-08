@@ -12,9 +12,7 @@ defmodule GroupherServer.Messaging.Notifications do
 
   alias Accounts.Model.User
   alias GroupherServer.Messaging.Model.Notification
-
-  alias Ecto.Multi
-  alias Helper.ORM
+  alias Helper.{Multi, ORM}
 
   @notify_actions get_config(:general, :nofity_actions)
   @notify_group_interval_hour get_config(:general, :notify_group_interval_hour)
@@ -33,7 +31,7 @@ defmodule GroupherServer.Messaging.Notifications do
 
         case find_exist_notify(attrs, :latest_peroid) do
           {:ok, notify} -> merge_notification(notify, from_user)
-          {:error, _} -> create_notification(attrs, from_user)
+          {:error, _} -> create_or_merge_notification(attrs, from_user)
         end
       end)
       |> Multi.run(:update_user_mailbox_status, fn _, %{upsert_notifications: nofity} ->
@@ -130,7 +128,31 @@ defmodule GroupherServer.Messaging.Notifications do
     %Notification{}
     |> Ecto.Changeset.change(attrs)
     |> Ecto.Changeset.put_embed(:from_users, [from_user])
+    |> Ecto.Changeset.unique_constraint(:user_id, name: :notifications_unread_group_uniq_idx)
     |> Repo.insert()
+  end
+
+  defp create_or_merge_notification(attrs, from_user) do
+    case create_notification(attrs, from_user) do
+      {:ok, notify} ->
+        {:ok, notify}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        if unique_group_constraint_violated?(changeset) do
+          with {:ok, notify} <- find_exist_notify(attrs, :latest_peroid) do
+            merge_notification(notify, from_user)
+          end
+        else
+          {:error, changeset}
+        end
+    end
+  end
+
+  defp unique_group_constraint_violated?(%Ecto.Changeset{errors: errors}) do
+    Enum.any?(errors, fn
+      {:user_id, {_message, opts}} -> opts[:constraint] == :unique
+      _ -> false
+    end)
   end
 
   defp find_exist_notify(%{action: :follow} = attrs, opt) do
@@ -165,6 +187,8 @@ defmodule GroupherServer.Messaging.Notifications do
     queryable
     |> where([n], n.inserted_at >= ^interval_threshold_time() and n.user_id == ^user_id)
     |> where([n], n.action == ^action and n.read == false)
+    |> order_by([n], desc: n.inserted_at, desc: n.id)
+    |> limit(1)
     |> Repo.one()
     |> done
   end

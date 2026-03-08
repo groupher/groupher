@@ -158,8 +158,7 @@
           {Credo.Check.Warning.UnusedPathOperation, []},
           {Credo.Check.Warning.UnusedRegexOperation, []},
           {Credo.Check.Warning.UnusedStringOperation, []},
-          {Credo.Check.Warning.UnusedTupleOperation, []},
-          {Credo.Check.Warning.WrongTestFileExtension, []}
+          {Credo.Check.Warning.UnusedTupleOperation, []}
         ],
         disabled: [
           #
@@ -203,8 +202,8 @@
           {Credo.Check.Warning.LeakyEnvironment, []},
           {Credo.Check.Warning.MapGetUnsafePass, []},
           {Credo.Check.Warning.MixEnv, []},
-          {Credo.Check.Warning.UnsafeToAtom, []}
-
+          {Credo.Check.Warning.UnsafeToAtom, []},
+          {Credo.Check.Warning.WrongTestFileExtension, []}
           # {Credo.Check.Refactor.MapInto, []},
 
           #

@@ -4,8 +4,9 @@ defmodule GroupherServer.CMS.Seeds.Tags do
   """
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Seeds.Config
-  alias GroupherServer.CMS.Model.Community
+
+  alias CMS.Seeds.Config
+  alias CMS.Model.Community
   alias Helper.T
 
   @tag_colors ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink", "grey"]

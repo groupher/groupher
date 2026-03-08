@@ -10,11 +10,10 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
 
   alias CMS.FrontDesk
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias Helper.{ORM, T, Transaction}
+  alias Helper.{Multi, ORM, T, Transaction}
 
   alias Accounts.Model.User
   alias CMS.Model.{AbuseReport, Comment, Embeds}
-  alias Ecto.Multi
 
   @report_threshold_for_fold Comment.report_threshold_for_fold()
 

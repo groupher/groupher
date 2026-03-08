@@ -11,9 +11,7 @@ defmodule GroupherServer.Messaging.Mentions do
   alias Accounts.Model.User
   alias GroupherServer.CMS.Model.Comment
   alias GroupherServer.Messaging.Model.Mention
-
-  alias Ecto.Multi
-  alias Helper.ORM
+  alias Helper.{Multi, ORM}
 
   def send(_, [], _), do: {:ok, :pass}
 

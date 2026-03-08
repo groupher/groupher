@@ -17,9 +17,10 @@ defmodule GroupherServer.CMS.Seeds.Domain do
     ]
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Seeds.Communities, as: CommunitySeeds
 
   alias CMS.Model.{Category, Community}
+  alias CMS.Seeds.Communities, as: CommunitySeeds
+
   alias Helper.{ORM, T}
 
   @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"

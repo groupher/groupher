@@ -6,9 +6,7 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   alias GroupherServer.{Accounts, Repo}
   alias Accounts.{Events, FrontDesk}
   alias Accounts.Model.{User, UserFollower, UserFollowing}
-
-  alias Ecto.Multi
-  alias Helper.{Later, ORM, T}
+  alias Helper.{Multi, Later, ORM, T}
 
   @spec follow(User.t(), User.t()) :: {:ok, User.t()} | T.gq_error()
   def follow(%User{} = user, %User{} = follower) do

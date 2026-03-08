@@ -11,9 +11,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   alias Accounts.Model.User
   alias CMS.Model.ArticleUpvote
   alias CMS.{Events, FrontDesk}
-
-  alias Ecto.Multi
-  alias Helper.{Later, ORM, T, Transaction}
+  alias Helper.{Multi, Later, ORM, T, Transaction}
 
   @spec upvoted_users(term(), map()) :: T.domain_res(term())
   def upvoted_users(article, filter),

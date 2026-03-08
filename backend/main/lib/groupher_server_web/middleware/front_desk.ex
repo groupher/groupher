@@ -63,7 +63,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
          } = resolution,
          community
        ) do
-    case FrontDesk.article(community, thread, inner_id) do
+    case apply(FrontDesk, :article, [community, thread, inner_id]) do
       {:ok, article} ->
         passport_is_owner = article.author.user.id == cur_user.id
 
@@ -83,7 +83,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
          %{arguments: %{thread: thread, id: inner_id} = arguments} = resolution,
          community
        ) do
-    case FrontDesk.article(community, thread, inner_id) do
+    case apply(FrontDesk, :article, [community, thread, inner_id]) do
       {:ok, article} ->
         updated_arguments = arguments |> Map.put(:article, article)
         %{resolution | arguments: updated_arguments}
