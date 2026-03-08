@@ -415,14 +415,17 @@ defmodule Helper.ORM do
     conflict_target = clause_keys(clauses)
     attrs = attrs |> normalize_attrs()
 
+    changeset =
+      queryable
+      |> struct
+      |> queryable.changeset(attrs)
+
     set_fields =
-      attrs
+      changeset.changes
       |> Map.drop(conflict_target)
       |> Enum.to_list()
 
-    queryable
-    |> struct
-    |> queryable.changeset(attrs)
+    changeset
     |> Repo.insert(
       on_conflict: upsert_set_clause(set_fields),
       conflict_target: conflict_target

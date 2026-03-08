@@ -1,15 +1,11 @@
 slug =
   case System.argv() do
-    [s | _] ->
-      if s == "--" or String.starts_with?(s, "-") do
-        raise "Invalid slug: '#{s}'. Slug cannot start with '-' or be '--'."
+    [s] ->
+      if Helper.Validator.Slug.valid?(s) do
+        s
+      else
+        raise "Invalid slug: '#{s}'. Use lowercase letters, numbers, hyphen and underscore."
       end
-
-      if String.contains?(s, " ") do
-        raise "Invalid slug: '#{s}'. Slug cannot contain spaces."
-      end
-
-      s
 
     _ ->
       raise "Usage: mix run scripts/delete_full_community.exs -- <slug>"

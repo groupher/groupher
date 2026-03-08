@@ -60,11 +60,17 @@ defmodule GroupherServer.Accounts.Achievements.Reputation do
   end
 
   def downgrade_achievement(%User{id: user_id}, :collect, count) do
-    with {:ok, achievement} <- ORM.find_by(Achievement, user_id: user_id) do
-      articles_collects_count = max(achievement.articles_collects_count - count, 0)
-      reputation = max(achievement.reputation - count * @collect_weight, 0)
+    Transaction.lock_global("achievement:user:#{user_id}", fn ->
+      with {:ok, achievement} <- ORM.find_by(Achievement, user_id: user_id) do
+        articles_collects_count = max(achievement.articles_collects_count - count, 0)
+        reputation = max(achievement.reputation - count * @collect_weight, 0)
 
-      achievement |> ORM.update(~m(articles_collects_count reputation)a)
+        achievement |> ORM.update(~m(articles_collects_count reputation)a)
+      end
+    end)
+    |> case do
+      {:ok, result} -> {:ok, result}
+      {:error, reason} -> {:error, reason}
     end
   end
 

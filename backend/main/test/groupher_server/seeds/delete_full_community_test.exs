@@ -57,71 +57,61 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
       assert length(post_ids) > 0
       assert length(comment_ids) > 0
 
-      assert Repo.aggregate(
-               from(c in CommunityDashboard, where: c.community_id == ^community.id),
-               :count
+      assert count(from(c in CommunityDashboard, where: c.community_id == ^community.id)) > 0
+      assert count(from(c in CommunityTag, where: c.community_id == ^community.id)) > 0
+      assert count(from(c in CommentUpvote, where: c.comment_id in ^comment_ids)) > 0
+      assert count(from(c in CommentUserEmotion, where: c.comment_id in ^comment_ids)) > 0
+
+      assert count(
+               from(a in ArticleUpvote,
+                 where:
+                   a.post_id in ^post_ids or a.changelog_id in ^changelog_ids or
+                     a.doc_id in ^doc_ids
+               )
              ) > 0
 
-      assert Repo.aggregate(
-               from(c in CommunityTag, where: c.community_id == ^community.id),
-               :count
-             ) > 0
-
-      assert Repo.aggregate(from(c in CommentUpvote, where: c.comment_id in ^comment_ids), :count) >
-               0
-
-      assert Repo.aggregate(
-               from(c in CommentUserEmotion, where: c.comment_id in ^comment_ids),
-               :count
+      assert count(
+               from(a in ArticleUserEmotion,
+                 where:
+                   a.post_id in ^post_ids or a.changelog_id in ^changelog_ids or
+                     a.doc_id in ^doc_ids
+               )
              ) > 0
 
       {:ok, :ok} = CMS.Seeds.delete_full_community(slug)
 
       assert {:error, _} = ORM.find_by(Community, %{slug: slug})
 
-      assert Repo.aggregate(
-               from(c in CommunityDashboard, where: c.community_id == ^community.id),
-               :count
-             ) == 0
+      assert count(from(c in CommunityDashboard, where: c.community_id == ^community.id)) == 0
+      assert count(from(c in CommunityTag, where: c.community_id == ^community.id)) == 0
+      assert count(from(c in Post, where: c.id in ^post_ids)) == 0
+      assert count(from(c in Changelog, where: c.id in ^changelog_ids)) == 0
+      assert count(from(c in Doc, where: c.id in ^doc_ids)) == 0
+      assert count(from(c in Comment, where: c.id in ^comment_ids)) == 0
+      assert count(from(c in CommentReply, where: c.comment_id in ^comment_ids)) == 0
+      assert count(from(c in CommentUpvote, where: c.comment_id in ^comment_ids)) == 0
+      assert count(from(c in CommentUserEmotion, where: c.comment_id in ^comment_ids)) == 0
 
-      assert Repo.aggregate(
-               from(c in CommunityTag, where: c.community_id == ^community.id),
-               :count
-             ) == 0
-
-      assert Repo.aggregate(from(c in Post, where: c.id in ^post_ids), :count) == 0
-      assert Repo.aggregate(from(c in Changelog, where: c.id in ^changelog_ids), :count) == 0
-      assert Repo.aggregate(from(c in Doc, where: c.id in ^doc_ids), :count) == 0
-      assert Repo.aggregate(from(c in Comment, where: c.id in ^comment_ids), :count) == 0
-
-      assert Repo.aggregate(from(c in CommentReply, where: c.comment_id in ^comment_ids), :count) ==
-               0
-
-      assert Repo.aggregate(from(c in CommentUpvote, where: c.comment_id in ^comment_ids), :count) ==
-               0
-
-      assert Repo.aggregate(
-               from(c in CommentUserEmotion, where: c.comment_id in ^comment_ids),
-               :count
-             ) == 0
-
-      assert Repo.aggregate(
+      assert count(
                from(a in ArticleUpvote,
                  where:
                    a.post_id in ^post_ids or a.changelog_id in ^changelog_ids or
                      a.doc_id in ^doc_ids
-               ),
-               :count
+               )
              ) == 0
 
-      assert Repo.aggregate(
+      assert count(
                from(a in ArticleUserEmotion,
                  where:
                    a.post_id in ^post_ids or a.changelog_id in ^changelog_ids or
                      a.doc_id in ^doc_ids
-               ),
-               :count
+               )
              ) == 0
     end
+  end
+
+  defp count(queryable) do
+    {:ok, total_count} = ORM.count(queryable)
+    total_count
   end
 end

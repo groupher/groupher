@@ -25,14 +25,13 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert Enum.all?(["post", "changelog", "kanban", "doc", "about"], &(&1 in thread_slugs))
 
       post_count =
-        from(p in Post, where: p.community_id == ^community.id) |> Repo.aggregate(:count, :id)
+        from(p in Post, where: p.community_id == ^community.id) |> count()
 
       changelog_count =
-        from(p in Changelog, where: p.community_id == ^community.id)
-        |> Repo.aggregate(:count, :id)
+        from(p in Changelog, where: p.community_id == ^community.id) |> count()
 
       doc_count =
-        from(p in Doc, where: p.community_id == ^community.id) |> Repo.aggregate(:count, :id)
+        from(p in Doc, where: p.community_id == ^community.id) |> count()
 
       assert post_count == 23
       assert changelog_count == 23
@@ -42,7 +41,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert post.state in [:backlog, :todo, :wip, :done, :reject]
 
       comments_count =
-        from(c in Comment, where: c.post_id == ^post.id) |> Repo.aggregate(:count, :id)
+        from(c in Comment, where: c.post_id == ^post.id) |> count()
 
       assert comments_count >= 23
 
@@ -89,7 +88,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
       reply_count =
         from(c in Comment, where: c.post_id == ^post.id and not is_nil(c.reply_to_id))
-        |> Repo.aggregate(:count, :id)
+        |> count()
 
       assert reply_count > 0
 
@@ -106,5 +105,10 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert dashboard.enable.about_links == true
       assert dashboard.enable.about_media_report == true
     end
+  end
+
+  defp count(queryable) do
+    {:ok, total_count} = ORM.count(queryable)
+    total_count
   end
 end

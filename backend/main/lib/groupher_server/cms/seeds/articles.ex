@@ -102,10 +102,12 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   defp seed_upvotes(article, {min, max}) do
     target_count = Enum.random(min..max)
 
-    Enum.each(1..target_count, fn _ ->
-      {:ok, user} = db_insert(:user)
-      {:ok, _} = CMS.Articles.upvote(article, user)
-    end)
+    if target_count > 0 do
+      Enum.each(1..target_count, fn _ ->
+        {:ok, user} = db_insert(:user)
+        {:ok, _} = CMS.Articles.upvote(article, user)
+      end)
+    end
 
     ORM.find(article.__struct__, article.id)
   end

@@ -72,6 +72,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
                variables,
                ecode(:already_upvoted)
              )
+
+      {:ok, current_post} = CMS.FrontDesk.article(community.slug, :post, post.inner_id)
+      assert current_post.upvotes_count == 1
     end
 
     test "undo upvote is idempotent (can undo even if not upvoted)",

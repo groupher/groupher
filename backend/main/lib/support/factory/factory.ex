@@ -26,6 +26,7 @@ defmodule GroupherServer.Support.Factory do
 
   @default_article_meta GroupherServer.CMS.Model.Embeds.ArticleMeta.default_meta()
   @default_emotions GroupherServer.CMS.Model.Embeds.CommentEmotion.default_emotions()
+  @retryable_constraints ["users_login_index"]
 
   use GroupherServer.Support.Factory.Articles
   use GroupherServer.Support.Factory.Oauth
@@ -197,24 +198,24 @@ defmodule GroupherServer.Support.Factory do
     db_insert_with_retry(factory_name, attributes, 3)
   end
 
-  defp db_insert_with_retry(_factory_name, _attributes, 0) do
-    raise "db_insert failed after 3 retries: unique constraint collision"
-  end
-
   defp db_insert_with_retry(factory_name, attributes, attempts_left) do
     try do
       GroupherServer.Repo.insert(mock(factory_name, attributes))
     rescue
       e in Ecto.ConstraintError ->
-        msg = Exception.message(e)
-
-        if String.contains?(msg, "users_login_index") do
+        if retryable_constraint?(e) and attempts_left > 1 do
           db_insert_with_retry(factory_name, attributes, attempts_left - 1)
         else
           reraise e, __STACKTRACE__
         end
     end
   end
+
+  defp retryable_constraint?(%Ecto.ConstraintError{type: :unique, constraint: constraint}) do
+    to_string(constraint) in @retryable_constraints
+  end
+
+  defp retryable_constraint?(_), do: false
 
   def db_insert_multi(factory_name, count, delay \\ 0) do
     results =

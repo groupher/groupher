@@ -49,14 +49,23 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
   @spec mock(String.t() | atom(), keyword()) :: T.domain_res(map())
   def mock(slug, opts) when is_list(opts) do
-    with {:ok, community} <- Communities.mock(slug),
-         {:ok, _} <- seed_about_dashboard(community, slug),
-         {:ok, posts} <- seed_threads(community, opts),
-         {:ok, _} <- seed_kanban_states(posts),
-         {:ok, updated_community} <- CMS.Communities.read(community.slug, inc_views: false) do
-      {:ok, updated_community}
+    case Keyword.keyword?(opts) do
+      true ->
+        with {:ok, community} <- Communities.mock(slug),
+             {:ok, _} <- seed_about_dashboard(community, slug),
+             {:ok, posts} <- seed_threads(community, opts),
+             {:ok, _} <- seed_kanban_states(posts),
+             {:ok, updated_community} <- CMS.Communities.read(community.slug, inc_views: false) do
+          {:ok, updated_community}
+        end
+
+      false ->
+        {:error, {:invalid_opts, "full_community mock opts must be a keyword list"}}
     end
   end
+
+  def mock(_slug, _opts),
+    do: {:error, {:invalid_opts, "full_community mock opts must be a keyword list"}}
 
   @spec delete(String.t() | atom()) :: T.domain_res(:ok)
   def delete(slug) do

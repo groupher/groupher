@@ -26,6 +26,12 @@ defmodule GroupherServer.Test.CMS.Communities.Write do
       assert community.threads |> length == 5
     end
 
+    test "create community should reject invalid slug format", ~m(user)a do
+      community_attrs = mock_attrs(:community, %{slug: "Invalid Slug"})
+
+      assert {:error, %Ecto.Changeset{}} = CMS.Communities.create(community_attrs, user)
+    end
+
     test "deleted community should delete all related threads", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir"})
       {:ok, community} = CMS.Communities.create(community_attrs, user)
