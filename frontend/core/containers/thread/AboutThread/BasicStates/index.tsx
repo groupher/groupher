@@ -1,6 +1,6 @@
+import dynamic from 'next/dynamic'
 import { type FC, memo } from 'react'
 
-import Trend from 'react-trend'
 import CommentSVG from '~/icons/Comment'
 import EmojiSVG from '~/icons/Heart'
 import PostSVG from '~/icons/Post'
@@ -8,6 +8,8 @@ import PulseSVG from '~/icons/Pulse'
 import UserSVG from '~/icons/Users'
 
 import useSalon, { cn } from '../salon/basic_states'
+
+const Trend: any = dynamic(() => import('react-trend'), { ssr: false })
 
 const BasicStates: FC = () => {
   const s = useSalon()

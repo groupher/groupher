@@ -1,11 +1,10 @@
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useTwBelt from '~/hooks/useTwBelt'
-import { COLOR } from '~/const/colors'
 
 export { cn } from '~/css'
 
 export default () => {
-  const [todoBg, wipBg, doneBg] = useKanbanBgColors()
+  const [backlogBg, todoBg, wipBg, doneBg, rejectedBg] = useKanbanBgColors()
   const { cn, rainbow, fill, fg } = useTwBelt()
 
   const head = 'row-center h-10 px-5 rounded-xl w-full'
@@ -19,23 +18,23 @@ export default () => {
     label: cn('text-sm bold-sm ml-2.5', fg('title')),
     count: 'row-center text-xs mt-0.5 ml-2.5 bold-sm',
 
-    backlogText: cn('text-xs', rainbow(todoBg, 'fg')),
+    backlogText: cn('text-xs', rainbow(backlogBg, 'fg')),
     todoText: cn('text-xs', rainbow(todoBg, 'fg')),
     wipText: cn('text-xs', rainbow(wipBg, 'fg')),
     doneText: cn('text-xs', rainbow(doneBg, 'fg')),
-    rejectedText: cn('text-xs', rainbow(COLOR.RED, 'fg')),
+    rejectedText: cn('text-xs', rainbow(rejectedBg, 'fg')),
 
-    backlogIcon: cn('size-3', rainbow(todoBg, 'fill')),
+    backlogIcon: cn('size-3', rainbow(backlogBg, 'fill')),
     todoIcon: cn('size-3', rainbow(todoBg, 'fill')),
     wipIcon: cn('size-3.5', rainbow(wipBg, 'fill')),
     doneIcon: cn('size-3', rainbow(doneBg, 'fill')),
-    rejectedIcon: cn('size-3', rainbow(COLOR.RED, 'fill')),
+    rejectedIcon: cn('size-3', rainbow(rejectedBg, 'fill')),
     //
-    backlogHead: cn(head, rainbow(todoBg, 'bgSoft')),
+    backlogHead: cn(head, rainbow(backlogBg, 'bgSoft')),
     todoHead: cn(head, rainbow(todoBg, 'bgSoft')),
     wipHead: cn(head, rainbow(wipBg, 'bgSoft')),
     doneHead: cn(head, rainbow(doneBg, 'bgSoft')),
-    rejectedHead: cn(head, rainbow(COLOR.RED, 'bgSoft')),
+    rejectedHead: cn(head, rainbow(rejectedBg, 'bgSoft')),
     //
     arrowIcon: cn('size-4 pointer -rotate-90', fill('digest')),
   }

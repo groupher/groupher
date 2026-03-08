@@ -4,19 +4,29 @@ import { LOCALE } from '~/const/i18n'
 import { THREAD } from '~/const/thread'
 import { loadLocaleFile } from '~/i18n'
 import { P } from '~/schemas'
-import type { TCommunityInfo, TLocale, TPagedPosts, TPost, TTag, TThread } from '~/spec'
+import type {
+  TCommunityInfo,
+  TLocale,
+  TPagedChangelogs,
+  TPagedPosts,
+  TPost,
+  TTag,
+  TThread,
+} from '~/spec'
 import { gqFetch } from '~/utils/api'
 import { parseDashboard, parseWallpaper } from '~/utils/ssr'
+import { toGqlThread } from '~/utils/thread'
 
 const getCommunity = async (community: string): Promise<TCommunityInfo> => {
   'use cache'
   cacheLife('days')
   cacheTag(CACHE_TAG.communityCache(community))
 
-  console.log('## getCommunity community: ', community)
   const response = await gqFetch(P.community, { slug: community, userHasLogin: false })
 
   const { data, errors } = await response.json()
+
+  // console.log('## data: ', data.community.dashboard.enable)
 
   if (errors) {
     // console.log('## error in fetching', P.community)
@@ -79,13 +89,63 @@ export const getPagedPosts = async (community: string): Promise<TPagedPosts | nu
   return data.pagedPosts
 }
 
+export const getPagedChangelogs = async (community: string): Promise<TPagedChangelogs | null> => {
+  'use cache'
+  cacheLife('minutes')
+  cacheTag(CACHE_TAG.articlesCache(community, THREAD.CHANGELOG))
+
+  const response = await gqFetch(P.pagedChangelogs, {
+    filter: { community, page: 1 },
+    userHasLogin: false,
+  })
+
+  const { data, errors } = await response.json()
+
+  if (errors) {
+    console.log('## error details', errors)
+    return null
+  }
+
+  return data.pagedChangelogs
+}
+
+type TGroupedKanbanPosts = {
+  backlog: TPagedPosts
+  todo: TPagedPosts
+  wip: TPagedPosts
+  done: TPagedPosts
+  rejected: TPagedPosts
+}
+
+export const getGroupedKanbanPosts = async (
+  community: string,
+): Promise<TGroupedKanbanPosts | null> => {
+  'use cache'
+  cacheLife('minutes')
+  cacheTag(CACHE_TAG.articlesCache(community, THREAD.KANBAN))
+
+  const response = await gqFetch(P.groupedKanbanPosts, { community })
+
+  const { data, errors } = await response.json()
+
+  if (errors) {
+    console.log('## error details', errors)
+    return null
+  }
+
+  return data.groupedKanbanPosts
+}
+
 export const getTags = async (community: string, thread: TThread): Promise<TTag[] | []> => {
   'use cache'
   //
   cacheLife('days')
   cacheTag(CACHE_TAG.tagsCache(community, thread))
 
-  const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread } })
+  const gqlThread = toGqlThread(thread, 'TAGS')
+  if (!gqlThread) return []
+
+  const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread: gqlThread } })
 
   const { data, errors } = await response.json()
   if (errors) {

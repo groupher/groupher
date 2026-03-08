@@ -1,5 +1,3 @@
-import { isEmpty } from 'ramda'
-
 import { INIT_KANBAN_COLORS } from '~/const/dashboard'
 import useTwBelt from '~/hooks/useTwBelt'
 
@@ -13,7 +11,8 @@ export default () => {
   const base = useBase()
 
   const { kanbanBgColors } = useKanban()
-  const [BG1, BG2, BG3] = isEmpty(kanbanBgColors) ? INIT_KANBAN_COLORS : kanbanBgColors
+  const [BG1, BG2, BG3, BG4, BG5] =
+    kanbanBgColors.length === INIT_KANBAN_COLORS.length ? kanbanBgColors : INIT_KANBAN_COLORS
 
   return {
     wrapper: 'column w-full mt-7',
@@ -27,6 +26,10 @@ export default () => {
     bgWipActive: rainbow(BG2, 'border'),
     bgDone: rainbowSoft(BG3),
     bgDoneActive: rainbow(BG3, 'border'),
+    bgReview: rainbowSoft(BG4),
+    bgReviewActive: rainbow(BG4, 'border'),
+    bgRejected: rainbowSoft(BG5),
+    bgRejectedActive: rainbow(BG5, 'border'),
 
     content: 'relative min-h-24',
     bar: cnMerge(base.bar, 'h-1.5 opacity-30 saturate-0'),

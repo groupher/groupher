@@ -30,6 +30,39 @@ const KanbanList: FC<TProps> = ({ num }) => {
         </>
       )
     }
+    case 3: {
+      return (
+        <>
+          <KanbanItem />
+          <KanbanItem width={'w-32'} />
+          <KanbanItem width={'w-16'} />
+          <KanbanItem opacity="opacity-80" />
+          <KanbanItem opacity="opacity-60" />
+        </>
+      )
+    }
+    case 4: {
+      return (
+        <>
+          <KanbanItem />
+          <KanbanItem width={'w-24'} />
+          <KanbanItem width={'w-20'} />
+          <KanbanItem opacity="opacity-80" />
+          <KanbanItem opacity="opacity-60" />
+        </>
+      )
+    }
+    case 5: {
+      return (
+        <>
+          <KanbanItem />
+          <KanbanItem width={'w-28'} />
+          <KanbanItem width={'w-16'} />
+          <KanbanItem opacity="opacity-80" />
+          <KanbanItem opacity="opacity-60" />
+        </>
+      )
+    }
 
     default: {
       return (

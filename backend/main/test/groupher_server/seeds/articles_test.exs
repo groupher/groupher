@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
 
       comments_count =
         from(c in Comment, where: c.post_id == ^first.id)
-        |> Repo.aggregate(:count, :id)
+        |> count()
 
       assert comments_count >= 2
       assert reloaded_post.upvotes_count > 0
@@ -34,5 +34,10 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
 
       assert emotion_total > 0
     end
+  end
+
+  defp count(queryable) do
+    {:ok, total_count} = ORM.count(queryable)
+    total_count
   end
 end

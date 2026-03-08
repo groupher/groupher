@@ -8,6 +8,18 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   those cases need to manually add
   """
 
+  @kanban_bg_colors_default ["BLACK", "YELLOW", "PURPLE", "GREEN", "RED"]
+
+  def kanban_bg_colors_default, do: @kanban_bg_colors_default
+
+  def layout_default do
+    macro_schema(:layout)
+    |> Enum.reduce(%{}, fn [key, _type, default], acc ->
+      Map.put(acc, key, default)
+    end)
+    |> Map.put(:kanban_bg_colors, kanban_bg_colors_default())
+  end
+
   def macro_schema(:enable) do
     [
       [:post, :boolean, true],
@@ -41,38 +53,36 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     ]
   end
 
-  # note: write kanban_bg_colors rules by itself
+  # note: write kanban_bg_colors schema/graphql rules by itself
   def macro_schema(:layout) do
-    # manually add this:
-    # [:kanban_bg_colors, {:array, :string}, []],
-
     [
-      [:primary_color, :string, ""],
-      [:sub_primary_color, :string, ""],
-      [:post_layout, :string, ""],
-      [:kanban_layout, :string, ""],
-      [:kanban_card_layout, :string, ""],
-      [:doc_layout, :string, ""],
-      [:doc_faq_layout, :string, ""],
-      [:tag_layout, :string, ""],
-      [:avatar_layout, :string, ""],
-      [:brand_layout, :string, ""],
-      [:banner_layout, :string, ""],
-      [:topbar_layout, :string, ""],
-      [:topbar_bg, :string, ""],
-      [:broadcast_layout, :string, ""],
-      [:broadcast_bg, :string, ""],
+      [:primary_color, :string, "BLACK"],
+      [:sub_primary_color, :string, "BLACK"],
+      [:kanban_bg_colors, {:array, :string}, @kanban_bg_colors_default],
+      [:post_layout, :string, "quora"],
+      [:kanban_layout, :string, "classic"],
+      [:kanban_card_layout, :string, "simple"],
+      [:doc_layout, :string, "cards"],
+      [:doc_faq_layout, :string, "collapse"],
+      [:tag_layout, :string, "hash"],
+      [:avatar_layout, :string, "square"],
+      [:brand_layout, :string, "both"],
+      [:banner_layout, :string, "header"],
+      [:topbar_layout, :string, "no"],
+      [:topbar_bg, :string, "BLACK"],
+      [:broadcast_layout, :string, "default"],
+      [:broadcast_bg, :string, "BLACK"],
       [:broadcast_enable, :boolean, false],
-      [:broadcast_article_layout, :string, ""],
-      [:broadcast_article_bg, :string, ""],
-      [:broadcast_article_enable, :boolean, false],
-      [:changelog_layout, :string, ""],
-      [:footer_layout, :string, ""],
-      [:header_layout, :string, ""],
+      [:broadcast_article_layout, :string, "default"],
+      [:broadcast_article_bg, :string, "RED"],
+      [:broadcast_article_enable, :boolean, true],
+      [:changelog_layout, :string, "classic"],
+      [:footer_layout, :string, "group"],
+      [:header_layout, :string, "center"],
       ## glow
       [:glow_type, :string, ""],
-      [:glow_fixed, :boolean, false],
-      [:glow_opacity, :string, ""],
+      [:glow_fixed, :boolean, true],
+      [:glow_opacity, :string, "100"],
       [:dark_float, :boolean, true],
 
       ## blur

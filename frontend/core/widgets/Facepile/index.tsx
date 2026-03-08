@@ -5,18 +5,16 @@
  */
 
 import { compose, filter, isNil, not, reverse as reverseFn, slice } from 'ramda'
-import { type FC, lazy, Suspense } from 'react'
+import { type FC, Suspense } from 'react'
 import { AVATARS_LIST_LENGTH } from '~/config'
 import SIZE from '~/const/size'
 import type { TSpace, TUser } from '~/spec'
 
 import ImgFallback from '~/widgets/ImgFallback'
 import MoreItem from './MoreItem'
+import RealAvatar from './RealAvatar'
 import useSalon, { cn } from './salon'
-
 import type { TAvatarSize } from './spec'
-
-const RealAvatar = lazy(() => import('./RealAvatar'))
 
 const validUser = compose(not, isNil)
 

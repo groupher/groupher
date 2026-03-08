@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
 
     case user_is_root?(community, cur_user) do
       {:ok, true} ->
-        Transaction.locking(community, fn community ->
+        Transaction.lock_row(community, fn community ->
           Multi.new()
           |> Multi.insert(
             :insert_moderator,

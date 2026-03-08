@@ -39,6 +39,7 @@ defmodule GroupherServer.Accounts.Model.Achievement do
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:user_id)
+    |> unique_constraint(:user_id, name: :achievements_user_id_index)
   end
 
   @doc false
@@ -46,5 +47,6 @@ defmodule GroupherServer.Accounts.Model.Achievement do
     achievement
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> foreign_key_constraint(:user_id)
+    |> unique_constraint(:user_id, name: :achievements_user_id_index)
   end
 end

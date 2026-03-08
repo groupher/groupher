@@ -73,20 +73,18 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   end
 
   defp seed_upvotes(%Comment{} = comment, {min, max}) do
-    with {:ok, user} <- db_insert(:user),
-         {:ok, _} <- CMS.Comments.upvote_comment(comment.id, user),
-         {:ok, comment} <- ORM.find(Comment, comment.id),
-         {:ok, comment} <- ORM.update(comment, %{upvotes_count: Enum.random(min..max)}) do
-      {:ok, comment}
-    end
+    target_count = Enum.random(min..max)
+
+    Enum.each(1..target_count, fn _ ->
+      {:ok, user} = db_insert(:user)
+      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
+    end)
+
+    ORM.find(Comment, comment.id)
   end
 
   defp seed_upvotes(%Comment{} = comment, _) do
-    with {:ok, user} <- db_insert(:user),
-         {:ok, _} <- CMS.Comments.upvote_comment(comment.id, user),
-         {:ok, comment} <- ORM.find(Comment, comment.id) do
-      {:ok, comment}
-    end
+    seed_upvotes(comment, @comment_upvotes_range)
   end
 
   defp seed_emotions(%Comment{} = comment) do

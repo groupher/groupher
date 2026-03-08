@@ -73,7 +73,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:dashboard_section, :dashboard_section, default_value: :layout)
 
       dashboard_args(:layout)
-      arg(:kanban_bg_colors, list_of(:string))
 
       middleware(M.Authorize, :login)
       # middleware(M.PublishThrottle)

@@ -21,6 +21,7 @@ import type {
 import { FIELDS } from '~/stores/dashboard/constant'
 import { gqFetch } from '~/utils/api'
 import { extractQueryName } from '~/utils/graphql'
+import { toGqlThread } from '~/utils/thread'
 
 import type { TGQSSRResult } from './spec'
 
@@ -203,9 +204,10 @@ export const getPagedTags = async (
   cacheLife('hours')
   cacheTag(CACHE_TAG.tagsCache(community, thread))
 
-  //  if (!hasArticles(thread)) return null
+  const gqlThread = toGqlThread(thread, 'TAGS')
+  if (!gqlThread) return null
 
-  const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread } })
+  const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread: gqlThread } })
 
   const { data, errors } = await response.json()
 

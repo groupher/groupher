@@ -28,6 +28,9 @@ defmodule GroupherServer.CMS.Seeds do
   @spec full_community(String.t() | atom()) :: T.domain_res(Community.t())
   def full_community(slug), do: FullCommunity.mock(slug)
 
+  @spec full_community(String.t() | atom(), keyword()) :: T.domain_res(Community.t())
+  def full_community(slug, opts) when is_list(opts), do: FullCommunity.mock(slug, opts)
+
   @spec delete_full_community(String.t() | atom()) :: T.domain_res(:ok)
   def delete_full_community(slug), do: FullCommunity.delete(slug)
 
@@ -37,7 +40,8 @@ defmodule GroupherServer.CMS.Seeds do
   def articles(%Community{} = community, thread), do: Articles.mock(community, thread)
 
   @spec articles(Community.t(), atom(), integer()) :: T.domain_res([map()])
-  def articles(%Community{} = community, thread, count), do: Articles.mock(community, thread, count)
+  def articles(%Community{} = community, thread, count),
+    do: Articles.mock(community, thread, count)
 
   # Comment seeds
 

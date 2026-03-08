@@ -5,14 +5,13 @@ defmodule GroupherServer.CMS.Communities.Write do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1, get_config: 2]
   import GroupherServer.CMS.Articles.Write, only: [ensure_author_exists: 1]
-  import ShortMaps
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
   alias CMS.Communities
   alias CMS.Model.{Community, CommunityDashboard, Embeds, Thread}
-  alias Helper.{ORM, T}
+  alias Helper.{ORM, T, Transaction}
 
   @default_meta Embeds.CommunityMeta.default_meta()
   @default_dashboard CommunityDashboard.default()
@@ -67,20 +66,45 @@ defmodule GroupherServer.CMS.Communities.Write do
   end
 
   def create_default_threads_ifneed do
-    @community_default_threads
-    |> Enum.with_index()
-    |> Enum.map(fn {thread, index} ->
-      title = thread |> Atom.to_string()
-      slug = title
+    Transaction.lock_global("init:default_threads", fn ->
+      default_threads = @community_default_threads |> Enum.map(&to_string(&1))
 
-      case ORM.find_by(Thread, slug: slug) do
-        {:ok, _} -> {:ok, :pass}
-        {:error, _} -> Communities.Threads.create(~m(title slug index)a)
+      existing_threads =
+        from(t in Thread, where: t.slug in ^default_threads)
+        |> Repo.all()
+
+      existing_slugs = MapSet.new(existing_threads, & &1.slug)
+
+      missing_rows =
+        @community_default_threads
+        |> Enum.with_index()
+        |> Enum.map(fn {thread, index} ->
+          build_default_thread_row(thread, index)
+        end)
+        |> Enum.reject(fn row -> MapSet.member?(existing_slugs, row.slug) end)
+
+      if missing_rows != [] do
+        Repo.insert_all(Thread, missing_rows, on_conflict: :nothing, conflict_target: [:title])
       end
+
+      from(t in Thread, where: t.slug in ^default_threads) |> Repo.all()
     end)
+    |> case do
+      {:ok, threads} -> done(threads)
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
-    exist_threads = @community_default_threads |> Enum.map(&to_string(&1))
+  defp build_default_thread_row(thread, index) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    title = thread |> Atom.to_string()
 
-    from(t in Thread, where: t.slug in ^exist_threads) |> Repo.all() |> done
+    %{
+      title: title,
+      slug: title,
+      index: index,
+      inserted_at: now,
+      updated_at: now
+    }
   end
 end

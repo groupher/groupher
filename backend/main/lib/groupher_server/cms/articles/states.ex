@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Articles.States do
   alias CMS.{Communities, FrontDesk}
 
   alias Ecto.Multi
-  alias Helper.{ORM, T, Transaction}
+  alias Helper.{ORM, T}
 
   @active_period get_config(:article, :active_period_days)
   @archive_threshold get_config(:article, :archive_threshold)
@@ -104,16 +104,12 @@ defmodule GroupherServer.CMS.Articles.States do
 
   @spec lock_comments(term()) :: T.domain_res(term())
   def lock_comments(article) do
-    Transaction.locking(article, fn article ->
-      ORM.update_meta(article, %{is_comment_locked: true})
-    end)
+    ORM.update_meta(article, %{is_comment_locked: true})
   end
 
   @spec undo_lock_comments(term()) :: T.domain_res(term())
   def undo_lock_comments(article) do
-    Transaction.locking(article, fn article ->
-      ORM.update_meta(article, %{is_comment_locked: false})
-    end)
+    ORM.update_meta(article, %{is_comment_locked: false})
   end
 
   @spec pin(Community.t(), T.article()) :: T.domain_res(T.article())

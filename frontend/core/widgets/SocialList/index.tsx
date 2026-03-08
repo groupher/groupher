@@ -24,9 +24,12 @@ const SocialList: FC<TProps> = ({
       className={cn(s.wrapper, size === SIZE.TINY && 'scale-75', size === SIZE.TINY && 'scale-90')}
     >
       {selected.map((social) => {
-        const SocialIcon = Icon[social.type]
+        const socialType = String(social?.type || '').toUpperCase()
+        const SocialIcon = Icon[socialType]
+        if (!SocialIcon || !social?.link) return null
+
         return (
-          <Link className={s.socialBox} key={social.type} href={social.link} target='_blank'>
+          <Link className={s.socialBox} key={`${socialType}-${social.link}`} href={social.link} target='_blank'>
             <SocialIcon className={s.icon} />
           </Link>
         )

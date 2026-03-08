@@ -26,6 +26,7 @@ defmodule GroupherServer.Support.Factory do
 
   @default_article_meta GroupherServer.CMS.Model.Embeds.ArticleMeta.default_meta()
   @default_emotions GroupherServer.CMS.Model.Embeds.CommentEmotion.default_emotions()
+  @retryable_constraints ["users_login_index"]
 
   use GroupherServer.Support.Factory.Articles
   use GroupherServer.Support.Factory.Oauth
@@ -120,13 +121,14 @@ defmodule GroupherServer.Support.Factory do
 
   defp mock_meta(:user) do
     unique_num = System.unique_integer([:positive, :monotonic])
+    unique_id = :rand.uniform(999_999_999)
 
     %{
-      login: "#{Faker.Person.first_name()}#{unique_num}" |> String.downcase(),
-      nickname: "#{Faker.Person.first_name()}#{unique_num}",
+      login: "user_#{unique_num}_#{unique_id}" |> String.downcase(),
+      nickname: "User#{unique_num}_#{unique_id}",
       bio: Faker.Lorem.Shakespeare.romeo_and_juliet(),
       avatar: Faker.Avatar.image_url(),
-      email: "faker@gmail.com",
+      email: "faker_#{unique_num}_#{unique_id}@gmail.com",
       __schema__: nil
     }
   end
@@ -193,8 +195,27 @@ defmodule GroupherServer.Support.Factory do
   # like: views, insert/update ... to test filter-sort,when ...
   # """
   def db_insert(factory_name, attributes \\ []) do
-    GroupherServer.Repo.insert(mock(factory_name, attributes))
+    db_insert_with_retry(factory_name, attributes, 3)
   end
+
+  defp db_insert_with_retry(factory_name, attributes, attempts_left) do
+    try do
+      GroupherServer.Repo.insert(mock(factory_name, attributes))
+    rescue
+      e in Ecto.ConstraintError ->
+        if retryable_constraint?(e) and attempts_left > 1 do
+          db_insert_with_retry(factory_name, attributes, attempts_left - 1)
+        else
+          reraise e, __STACKTRACE__
+        end
+    end
+  end
+
+  defp retryable_constraint?(%Ecto.ConstraintError{type: :unique, constraint: constraint}) do
+    to_string(constraint) in @retryable_constraints
+  end
+
+  defp retryable_constraint?(_), do: false
 
   def db_insert_multi(factory_name, count, delay \\ 0) do
     results =

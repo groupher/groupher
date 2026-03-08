@@ -10,7 +10,7 @@ export default () => {
       bg('card'),
     ),
     header: 'row-between mb-2.5',
-    title: cn('text-base w-full line-clamp-2', fg('title')),
+    title: cn('text-base w-full line-clamp-2 text-left', fg('title')),
     desc: cn('text-xs line-clamp-1', fg('digest')),
     footer: 'row-between text-xs mt-2',
   }

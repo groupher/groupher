@@ -22,6 +22,7 @@ defmodule GroupherServer.CMS.Model.Community do
   }
 
   alias Helper.Constant.DBPrefix
+  alias Helper.Validator.Slug
 
   @type t :: %__MODULE__{}
 
@@ -97,6 +98,7 @@ defmodule GroupherServer.CMS.Model.Community do
     |> cast_assoc(:dashboard)
     |> validate_length(:title, min: 1, max: 30)
     |> validate_length(:slug, min: 1, max: 30)
+    |> Slug.validate_changeset(:slug)
     |> foreign_key_constraint(:user_id)
     |> unique_constraint(:slug, name: :communities_raw_index)
     |> unique_constraint(:aka, name: :communities_aka_index)
@@ -112,7 +114,10 @@ defmodule GroupherServer.CMS.Model.Community do
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> cast_embed(:meta, with: &Embeds.CommunityMeta.changeset/2)
     |> validate_length(:title, min: 1, max: 30)
+    |> validate_length(:slug, min: 1, max: 30)
+    |> Slug.validate_changeset(:slug)
     |> foreign_key_constraint(:user_id)
+    |> unique_constraint(:slug, name: :communities_raw_index)
     |> unique_constraint(:title, name: :communities_title_index)
     |> unique_constraint(:aka, name: :communities_aka_index)
 

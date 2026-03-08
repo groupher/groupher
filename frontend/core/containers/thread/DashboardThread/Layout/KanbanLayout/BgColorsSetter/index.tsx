@@ -1,5 +1,3 @@
-import { isEmpty } from 'ramda'
-
 import { COLOR } from '~/const/colors'
 import { INIT_KANBAN_COLORS } from '~/const/dashboard'
 import { KANBAN_LAYOUT } from '~/const/layout'
@@ -28,8 +26,11 @@ export default () => {
   const [board1Ref, isBoard1Hovered] = useHover<HTMLDivElement>()
   const [board2Ref, isBoard2Hovered] = useHover<HTMLDivElement>()
   const [board3Ref, isBoard3Hovered] = useHover<HTMLDivElement>()
+  const [board4Ref, isBoard4Hovered] = useHover<HTMLDivElement>()
+  const [board5Ref, isBoard5Hovered] = useHover<HTMLDivElement>()
 
-  const [BG1, BG2, BG3] = isEmpty(kanbanBgColors) ? INIT_KANBAN_COLORS : kanbanBgColors
+  const [BG1, BG2, BG3, BG4, BG5] =
+    kanbanBgColors.length === INIT_KANBAN_COLORS.length ? kanbanBgColors : INIT_KANBAN_COLORS
 
   return (
     <>
@@ -42,35 +43,57 @@ export default () => {
         <div className={s.preset}>
           <ColorSelector
             activeColor={BG1}
-            onChange={(color) => edit([color, BG2, BG3], 'kanbanBgColors')}
+            onChange={(color) => edit([color, BG2, BG3, BG4, BG5], 'kanbanBgColors')}
             placement='right'
             offset={[-2, 1]}
-            excepts={[COLOR.CYAN, COLOR.GREEN]}
+            excepts={[COLOR.CYAN]}
             bgMode
           >
-            <div className={cn(s.colorBall, s.todoBall)} ref={board1Ref} />
+            <div className={cn(s.colorBall, s.backlogBall)} ref={board1Ref} />
           </ColorSelector>
 
           <ColorSelector
             activeColor={BG2}
-            onChange={(color) => edit([BG1, color, BG3], 'kanbanBgColors')}
+            onChange={(color) => edit([BG1, color, BG3, BG4, BG5], 'kanbanBgColors')}
             placement='right'
             offset={[-2, 1]}
-            excepts={[COLOR.CYAN, COLOR.GREEN]}
+            excepts={[COLOR.CYAN]}
             bgMode
           >
-            <div className={cn(s.colorBall, s.wipBall)} ref={board2Ref} />
+            <div className={cn(s.colorBall, s.todoBall)} ref={board2Ref} />
           </ColorSelector>
 
           <ColorSelector
             activeColor={BG3}
-            onChange={(color) => edit([BG1, BG2, color], 'kanbanBgColors')}
+            onChange={(color) => edit([BG1, BG2, color, BG4, BG5], 'kanbanBgColors')}
             placement='right'
             offset={[-2, 1]}
-            excepts={[COLOR.CYAN, COLOR.GREEN]}
+            excepts={[COLOR.CYAN]}
             bgMode
           >
-            <div className={cn(s.colorBall, s.doneBall)} ref={board3Ref} />
+            <div className={cn(s.colorBall, s.wipBall)} ref={board3Ref} />
+          </ColorSelector>
+
+          <ColorSelector
+            activeColor={BG4}
+            onChange={(color) => edit([BG1, BG2, BG3, color, BG5], 'kanbanBgColors')}
+            placement='right'
+            offset={[-2, 1]}
+            excepts={[COLOR.CYAN]}
+            bgMode
+          >
+            <div className={cn(s.colorBall, s.doneBall)} ref={board4Ref} />
+          </ColorSelector>
+
+          <ColorSelector
+            activeColor={BG5}
+            onChange={(color) => edit([BG1, BG2, BG3, BG4, color], 'kanbanBgColors')}
+            placement='right'
+            offset={[-2, 1]}
+            excepts={[COLOR.CYAN]}
+            bgMode
+          >
+            <div className={cn(s.colorBall, s.rejectedBall)} ref={board5Ref} />
           </ColorSelector>
         </div>
         <div className='grow' />
@@ -81,7 +104,7 @@ export default () => {
         <button
           className={s.action}
           onClick={() => {
-            edit(randomBgNames(3), 'kanbanBgColors')
+            edit(randomBgNames(5, [COLOR.CYAN]), 'kanbanBgColors')
           }}
         >
           <DiceSVG className={cn(s.resetIcon, 'size-3.5')} /> {t('dsb.layout.kanban.bg.random')}
@@ -93,12 +116,16 @@ export default () => {
           isBoard1Hovered={isBoard1Hovered}
           isBoard2Hovered={isBoard2Hovered}
           isBoard3Hovered={isBoard3Hovered}
+          isBoard4Hovered={isBoard4Hovered}
+          isBoard5Hovered={isBoard5Hovered}
         />
       ) : (
         <WaterfallLayout
           isBoard1Hovered={isBoard1Hovered}
           isBoard2Hovered={isBoard2Hovered}
           isBoard3Hovered={isBoard3Hovered}
+          isBoard4Hovered={isBoard4Hovered}
+          isBoard5Hovered={isBoard5Hovered}
         />
       )}
 

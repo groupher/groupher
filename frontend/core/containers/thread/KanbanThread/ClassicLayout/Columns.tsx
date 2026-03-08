@@ -4,10 +4,9 @@
  */
 
 import useKanbanPosts from '~/hooks/useKanbanPosts'
-
-import GtdWipSVG from '~/icons/GtdWip'
 import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
+import GtdWipSVG from '~/icons/GtdWip'
 import RejectSVG from '~/icons/Reject'
 
 import KanbanItem from '~/widgets/KanbanItem'
@@ -31,9 +30,9 @@ export default () => {
       <div className={s.column}>
         <div className={s.header}>
           <GtdTodoSVG className={s.backlogIcon} />
-          <h4 className={s.label}>积压</h4>
+          <h4 className={s.label}>需求池</h4>
           <div className={s.subTitle}>{backlogPosts.totalCount}</div>
-          <div className="grow" />
+          <div className='grow' />
         </div>
         <div className={s.backlogBody}>
           {backlogPosts.totalCount === 0 && <EmptyItem />}
@@ -46,7 +45,7 @@ export default () => {
           <GtdTodoSVG className={s.todoIcon} />
           <h4 className={s.label}>待办</h4>
           <div className={s.subTitle}>{todoPosts.totalCount}</div>
-          <div className="grow" />
+          <div className='grow' />
         </div>
         <div className={s.todoBody}>
           {todoPosts.totalCount === 0 && <EmptyItem />}
@@ -59,7 +58,7 @@ export default () => {
           <GtdWipSVG className={s.wipIcon} />
           <h4 className={s.label}>进行中</h4>
           <div className={s.subTitle}>{wipPosts.totalCount}</div>
-          <div className="grow" />
+          <div className='grow' />
         </div>
         <div className={s.wipBody}>
           {wipPosts.totalCount === 0 && <EmptyItem />}
@@ -73,7 +72,7 @@ export default () => {
           <GtdDoneSVG className={s.doneIcon} />
           <h4 className={s.label}>已完成</h4>
           <div className={s.subTitle}>{donePosts.totalCount}</div>
-          <div className="grow" />
+          <div className='grow' />
         </div>
         <div className={s.doneBody}>
           {donePosts.totalCount === 0 && <EmptyItem />}
@@ -87,7 +86,7 @@ export default () => {
           <RejectSVG className={s.rejectedIcon} />
           <h4 className={s.label}>已拒绝</h4>
           <div className={s.subTitle}>{rejectedPosts.totalCount}</div>
-          <div className="grow" />
+          <div className='grow' />
         </div>
         <div className={s.rejectedBody}>
           {rejectedPosts.totalCount === 0 && <EmptyItem />}

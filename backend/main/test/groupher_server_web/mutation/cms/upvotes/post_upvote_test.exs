@@ -58,6 +58,34 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       assert updated["innerId"] == to_string(post.inner_id)
     end
 
+    test "duplicate upvote returns error and count does not increase",
+         ~m(user_conn community post user)a do
+      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+
+      created = user_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
+      assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
+      assert created["upvotesCount"] == 1
+
+      assert user_conn
+             |> mutation_error?(
+               Schema.m(:upvote_article, :post),
+               variables,
+               ecode(:already_upvoted)
+             )
+
+      {:ok, current_post} = CMS.FrontDesk.article(community.slug, :post, post.inner_id)
+      assert current_post.upvotes_count == 1
+    end
+
+    test "undo upvote is idempotent (can undo even if not upvoted)",
+         ~m(user_conn community post)a do
+      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+
+      result = user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :post), variables)
+
+      assert result["innerId"] == to_string(post.inner_id)
+    end
+
     test "unauth user undo upvote a post fails", ~m(guest_conn community post)a do
       variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
 

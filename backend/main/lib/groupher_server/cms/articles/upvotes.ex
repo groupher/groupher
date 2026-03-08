@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   def upvote(article, %User{} = user) do
     {:ok, info} = match(article)
 
-    Transaction.locking(article, fn article ->
+    Transaction.lock_row(article, fn article ->
       Multi.new()
       |> Multi.run(:update_upvotes_count, fn _, _ ->
         ORM.inc(article, :upvotes_count)
@@ -54,7 +54,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   def undo_upvote(article, %User{id: user_id} = from_user) do
     {:ok, info} = match(article)
 
-    Transaction.locking(article, fn article ->
+    Transaction.lock_row(article, fn article ->
       Multi.new()
       |> Multi.run(:find_upvote, fn _, _ ->
         args = Map.put(%{user_id: user_id}, info.foreign_key, article.id)

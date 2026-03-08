@@ -22,6 +22,9 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
       assert find_community.dashboard.base_info.homepage == @default_dashboard.base_info.homepage
+
+      assert find_community.dashboard.layout.kanban_bg_colors ==
+               @default_dashboard.layout.kanban_bg_colors
     end
 
     test "read a exist community should have default dashboard field", ~m(community)a do
@@ -53,13 +56,20 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :base_info, %{
           title: "new title",
-          slug: "new slug"
+          slug: "new-slug"
         })
 
       {:ok, community} = ORM.find(Community, community.id)
 
       assert community.title == "new title"
-      assert community.slug == "new slug"
+      assert community.slug == "new-slug"
+    end
+
+    test "update base info should reject invalid slug format", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:error, %Ecto.Changeset{}} =
+               CMS.Communities.update_dashboard(community, :base_info, %{slug: "new slug"})
     end
 
     test "update base info logo should remove _tmp prefix", ~m(community_attrs user)a do

@@ -131,7 +131,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :dashboard_layout do
     dashboard_gq_fields(:layout)
-    field(:kanban_bg_colors, list_of(:string))
   end
 
   object(:dashboard_enable, do: dashboard_gq_fields(:enable))

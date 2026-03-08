@@ -10,18 +10,17 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   import Ecto.Changeset
 
   import GroupherServerWeb.Schema.Helper.Fields,
-    only: [dashboard_cast_fields: 1, dashboard_default: 1, dashboard_fields: 1]
+    only: [dashboard_cast_fields: 1, dashboard_fields: 1]
 
-  @optional_fields dashboard_cast_fields(:layout) ++ [:kanban_bg_colors]
+  alias GroupherServer.CMS.Model.Metrics.Dashboard
+
+  @optional_fields dashboard_cast_fields(:layout)
 
   @doc "for test usage"
-  def default do
-    dashboard_default(:layout) |> Map.merge(%{kanban_bg_colors: []})
-  end
+  def default, do: Dashboard.layout_default()
 
   embedded_schema do
     dashboard_fields(:layout)
-    field(:kanban_bg_colors, {:array, :string}, default: [])
   end
 
   @doc "for test usage"

@@ -33,7 +33,7 @@ const Menu: FC<TProps> = ({
   onHide = console.log,
   placement = 'bottom',
   offset = [-5, 5],
-  popWidth = 36,
+  popWidth = 40,
 }) => {
   const s = useSalon()
 
@@ -44,8 +44,8 @@ const Menu: FC<TProps> = ({
       onShow={() => onShow?.()}
       onHide={() => onHide?.()}
       offset={offset as [number, number]}
-      noPadding
       content={<List items={items} activeKey={activeKey} onSelect={onSelect} popWidth={popWidth} />}
+      noPadding
     >
       <div className={s.wrapper}>{children}</div>
     </Tooltip>

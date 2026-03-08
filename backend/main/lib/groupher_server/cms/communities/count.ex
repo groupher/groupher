@@ -85,10 +85,10 @@ defmodule GroupherServer.CMS.Communities.Count do
         )
         |> ORM.count(prefix: Constant.DBPrefix.cms())
 
-      meta = Map.put(community.meta, :"#{plural(thread)}_count", thread_article_count)
-
-      Transaction.locking(community, fn community ->
-        with {:ok, community} <- ORM.update_meta(community, meta) do
+      Transaction.lock_row(community, fn community ->
+        with {:ok, community} <- ORM.fill_meta(community),
+             meta <- Map.put(community.meta, :"#{plural(thread)}_count", thread_article_count),
+             {:ok, community} <- ORM.update_meta(community, meta) do
           ORM.update(community, %{articles_count: recount_articles_count(community.meta)})
         end
       end)

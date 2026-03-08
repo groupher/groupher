@@ -35,8 +35,7 @@ defmodule GroupherServer.CMS.Model.CommunityModerator do
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:user_id)
-
-    # |> unique_constraint(:user_id, name: :communities_editors_user_id_community_id_index)
+    |> unique_constraint(:user_id, name: :communities_editors_user_id_community_id_index)
   end
 
   def update_changeset(%CommunityModerator{} = community_moderator, attrs) do

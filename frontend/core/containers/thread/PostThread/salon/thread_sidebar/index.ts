@@ -19,7 +19,7 @@ export default () => {
     wrapper: 'min-w-52 max-w-52 mt-5 relative',
     innerWrapper: 'sticky top-0',
     stickyWrapper: cn('min-h-screen sticky', badgeInView ? 'top-10' : 'top-0'),
-    showArea: cn('transition-opacity duration-100', {
+    showArea: cn('transition-opacity', {
       'opacity-100 ease-in max-h-auto': badgeInView,
       'opacity-0 max-h-16 duration-0': !badgeInView,
     }),
