@@ -1,16 +1,19 @@
 defmodule Helper.Transaction do
   @moduledoc """
   Enhanced transaction utility providing:
-  - Multi-queryable sequential locking
+  - Row-level locking for existing records
+  - Global mutex for critical sections
   - Complete error stack capture
   - Automatic transaction management
   """
 
   @doc """
-  Lock queryable and execute transaction (preserves detailed errors)
+  Lock one or more existing rows with `FOR UPDATE` and execute transaction.
+
+  Use this when updating records that already exist.
 
   ## Examples
-      Transaction.locking([article, user], fn [locked_article, locked_user] ->
+      Transaction.lock_row([article, user], fn [locked_article, locked_user] ->
         # Business logic can return:
         # - {:ok, result}
         # - {:error, reason}
@@ -21,8 +24,8 @@ defmodule Helper.Transaction do
   import Ecto.Query, warn: false
   alias GroupherServer.Repo
 
-  @spec locking(any() | [any()], (any() -> any())) :: {:ok, any()} | {:error, any()}
-  def locking(queryable, fun) when not is_list(queryable) do
+  @spec lock_row(any() | [any()], (any() -> any())) :: {:ok, any()} | {:error, any()}
+  def lock_row(queryable, fun) when not is_list(queryable) do
     Repo.transaction(fn ->
       locked = lock_queryable(queryable)
 
@@ -37,7 +40,7 @@ defmodule Helper.Transaction do
     other -> {:error, {:unexpected_error, other}}
   end
 
-  def locking(queryable, fun) when is_list(queryable) do
+  def lock_row(queryable, fun) when is_list(queryable) do
     Repo.transaction(fn ->
       locked_resources =
         queryable
@@ -45,6 +48,31 @@ defmodule Helper.Transaction do
         |> Enum.map(&lock_queryable/1)
 
       case fun.(locked_resources) do
+        {:ok, result} -> result
+        {:error, reason} -> throw({:error, reason})
+        value -> value
+      end
+    end)
+  catch
+    {:error, reason} -> {:error, reason}
+    other -> {:error, {:unexpected_error, other}}
+  end
+
+  @doc """
+  Execute a critical section under a transaction-scoped global mutex.
+
+  This uses PostgreSQL advisory transaction locks and is suitable for
+  serializing business logic that is not tied to a single existing row.
+  The lock is released automatically when the transaction ends.
+  """
+  @spec lock_global(binary() | integer(), (-> any())) :: {:ok, any()} | {:error, any()}
+  def lock_global(lock_key, fun) when is_function(fun, 0) do
+    key = normalize_lock_key(lock_key)
+
+    Repo.transaction(fn ->
+      Repo.query!("SELECT pg_advisory_xact_lock($1)", [key])
+
+      case fun.() do
         {:ok, result} -> result
         {:error, reason} -> throw({:error, reason})
         value -> value
@@ -79,5 +107,12 @@ defmodule Helper.Transaction do
   rescue
     Ecto.NoResultsError ->
       throw({:error, {:resource_not_found, queryable.__struct__}})
+  end
+
+  defp normalize_lock_key(lock_key) when is_integer(lock_key), do: lock_key
+
+  defp normalize_lock_key(lock_key) when is_binary(lock_key) do
+    <<key::signed-64, _::binary>> = :crypto.hash(:sha256, lock_key)
+    key
   end
 end

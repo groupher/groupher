@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Communities.Write do
   alias Accounts.Model.User
   alias CMS.Communities
   alias CMS.Model.{Community, CommunityDashboard, Embeds, Thread}
-  alias Helper.{ORM, T}
+  alias Helper.{ORM, T, Transaction}
 
   @default_meta Embeds.CommunityMeta.default_meta()
   @default_dashboard CommunityDashboard.default()
@@ -66,9 +66,7 @@ defmodule GroupherServer.CMS.Communities.Write do
   end
 
   def create_default_threads_ifneed do
-    Repo.transaction(fn ->
-      Repo.query!("SELECT pg_advisory_xact_lock($1)", [2_024_040_1])
-
+    Transaction.lock_global("init:default_threads", fn ->
       default_threads = @community_default_threads |> Enum.map(&to_string(&1))
 
       existing_threads =

@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
   def emotion(article, emotion, %User{} = user) do
     {:ok, info} = match(article)
 
-    Transaction.locking(article, fn article ->
+    Transaction.lock_row(article, fn article ->
       Multi.new()
       |> Multi.run(:create_user_emotion, fn _, _ ->
         target =
@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
   def undo_emotion(article, emotion, %User{} = user) do
     {:ok, info} = match(article)
 
-    Transaction.locking(article, fn article ->
+    Transaction.lock_row(article, fn article ->
       Multi.new()
       |> Multi.run(:update_user_emotion, fn _, _ ->
         target =

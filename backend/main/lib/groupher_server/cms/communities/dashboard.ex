@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   alias GroupherServer.CMS
 
   alias CMS.Model.{Community, CommunityDashboard}
-  alias Helper.{ORM, OSS, T}
+  alias Helper.{ORM, OSS, T, Transaction}
 
   @default_dashboard CommunityDashboard.default()
 
@@ -37,16 +37,18 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   end
 
   defp ensure_exist(%Community{} = community) do
-    case ORM.find_by(CommunityDashboard, community_id: community.id) do
-      {:error, _} ->
-        ORM.create(
-          CommunityDashboard,
-          %{community_id: community.id} |> Map.merge(@default_dashboard)
-        )
+    Transaction.lock_global("community_dashboard:init:#{community.id}", fn ->
+      case ORM.find_by(CommunityDashboard, community_id: community.id) do
+        {:error, _} ->
+          ORM.create(
+            CommunityDashboard,
+            %{community_id: community.id} |> Map.merge(@default_dashboard)
+          )
 
-      {:ok, community_dashboard} ->
-        {:ok, community_dashboard}
-    end
+        {:ok, community_dashboard} ->
+          {:ok, community_dashboard}
+      end
+    end)
   end
 
   # see https://elixirforum.com/t/pattern-match-on-empty-maps/33259/5

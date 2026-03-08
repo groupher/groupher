@@ -98,7 +98,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
     login = name
     avatar = "https://avatars1.githubusercontent.com/u/6184465?s=460&v=4"
 
-    User |> ORM.findby_or_insert(~m(nickname avatar)a, ~m(nickname avatar login)a)
+    User |> ORM.upsert_by([login: login], ~m(nickname avatar login)a)
   end
 
   def seed_bot do
@@ -106,7 +106,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
     login = "seed_bot_v2"
     avatar = "https://avatars1.githubusercontent.com/u/6184465?s=460&v=4"
 
-    User |> ORM.findby_or_insert(~m(nickname avatar)a, ~m(nickname avatar login)a)
+    User |> ORM.upsert_by([login: login], ~m(nickname avatar login)a)
   end
 
   # check is the seeds alreay runed

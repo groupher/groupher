@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Articles.Write do
   import GroupherServer.CMS.Helper.Matcher
   import Helper.ErrorCode
 
-import Helper.Utils,
+  import Helper.Utils,
     only: [
       done: 1,
       plural: 1,
@@ -37,7 +37,7 @@ import Helper.Utils,
 
     with {:ok, author} <- ensure_author_exists(user),
          {:ok, info} <- match(thread) do
-      Transaction.locking(community, fn community ->
+      Transaction.lock_row(community, fn community ->
         Multi.new()
         |> Multi.run(:create_article, fn _, _ ->
           do_create_article(info.model, attrs, author, community)
@@ -150,14 +150,14 @@ import Helper.Utils,
         |> Ecto.Changeset.unique_constraint(:user_id)
         |> Ecto.Changeset.foreign_key_constraint(:user_id)
         |> Repo.insert()
-      end
+    end
   end
 
   @spec mark_delete(term()) :: T.domain_res(term())
   def mark_delete(article) do
     {:ok, thread} = FrontDesk.thread_of(article)
 
-    Transaction.locking(article, fn article ->
+    Transaction.lock_row(article, fn article ->
       case article.is_archived do
         false ->
           Multi.new()
@@ -180,7 +180,7 @@ import Helper.Utils,
   def undo_mark_delete(article) do
     {:ok, thread} = FrontDesk.thread_of(article)
 
-    Transaction.locking(article, fn article ->
+    Transaction.lock_row(article, fn article ->
       Multi.new()
       |> Multi.run(:update_article, fn _, _ ->
         ORM.update(article, %{mark_delete: false})

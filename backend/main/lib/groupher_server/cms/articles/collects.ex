@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
   def collect(article, %User{} = user) do
     {:ok, info} = match(article)
 
-    Transaction.locking(article, fn article ->
+    Transaction.lock_row(article, fn article ->
       Multi.new()
       |> Multi.run(:inc_author_achieve, fn _, _ ->
         Accounts.Achievements.achieve(article.author.user, :inc, :collect)
@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
   def undo_collect(article, %User{} = user) do
     {:ok, info} = match(article)
 
-    Transaction.locking(article, fn article ->
+    Transaction.lock_row(article, fn article ->
       Multi.new()
       |> Multi.run(:find_collect, fn _, _ ->
         find_collect_record(info, article, user.id)

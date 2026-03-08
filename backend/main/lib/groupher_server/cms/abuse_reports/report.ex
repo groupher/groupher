@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
   def account(%User{} = target_account, reason, attr, %User{} = user) do
     {:ok, info} = match(:account)
 
-    Transaction.locking(target_account, fn account ->
+    Transaction.lock_row(target_account, fn account ->
       Multi.new()
       |> Multi.run(:create_abuse_report, fn _, _ ->
         create_report(:account, account.id, reason, attr, user)
@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
   def undo_account(%User{} = target_account, %User{} = user) do
     {:ok, info} = match(:account)
 
-    Transaction.locking(target_account, fn account ->
+    Transaction.lock_row(target_account, fn account ->
       Multi.new()
       |> Multi.run(:delete_abuse_report, fn _, _ ->
         delete_report(:account, account.id, user)
@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
   def article(target_article, reason, attr, %User{} = user) do
     {:ok, info} = match(target_article)
 
-    Transaction.locking(target_article, fn article ->
+    Transaction.lock_row(target_article, fn article ->
       Multi.new()
       |> Multi.run(:create_abuse_report, fn _, _ ->
         {:ok, thread} = FrontDesk.thread_of(article)
@@ -75,7 +75,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
     {:ok, thread} = FrontDesk.thread_of(target_article)
     {:ok, info} = match(thread)
 
-    Transaction.locking(target_article, fn article ->
+    Transaction.lock_row(target_article, fn article ->
       Multi.new()
       |> Multi.run(:delete_abuse_report, fn _, _ ->
         delete_report(thread, article.id, user)
@@ -90,7 +90,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
 
   @spec comment(Comment.t(), String.t(), map(), User.t()) :: T.domain_res(Comment.t())
   def comment(%Comment{} = target_comment, reason, attr, %User{} = user) do
-    Transaction.locking(target_comment, fn comment ->
+    Transaction.lock_row(target_comment, fn comment ->
       Multi.new()
       |> Multi.run(:create_abuse_report, fn _, _ ->
         create_report(:comment, comment.id, reason, attr, user)
@@ -114,7 +114,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
 
   @spec undo_comment(Comment.t(), User.t()) :: T.domain_res(Comment.t())
   def undo_comment(%Comment{} = target_comment, %User{} = user) do
-    Transaction.locking(target_comment, fn comment ->
+    Transaction.lock_row(target_comment, fn comment ->
       Multi.new()
       |> Multi.run(:delete_abuse_report, fn _, _ ->
         delete_report(:comment, comment.id, user)
