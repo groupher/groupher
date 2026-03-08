@@ -1,4 +1,5 @@
 import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATE } from '~/const/gtd'
+import type { TTransKey } from '~/spec'
 
 const MENU = {
   ARROW_LEFT: 'ARROW_LEFT',
@@ -32,6 +33,13 @@ const MENU = {
   TOOL: 'TOOL',
 } as const
 
+type TPostMenuItem = {
+  key: string
+  title: TTransKey
+  desc?: string
+  icon: (typeof MENU)[keyof typeof MENU]
+}
+
 export const POST_CAT_MENU_ITEMS = [
   {
     key: ARTICLE_CAT.FEATURE,
@@ -57,7 +65,7 @@ export const POST_CAT_MENU_ITEMS = [
     desc: '一般讨论，其他话题',
     icon: MENU.OTHER,
   },
-]
+] satisfies TPostMenuItem[]
 
 export const POST_STATE_MENU_ITEMS = [
   {
@@ -105,7 +113,7 @@ export const POST_STATE_MENU_ITEMS = [
     title: 'article.state.reject_stale',
     icon: MENU.CLOSE,
   },
-]
+] satisfies TPostMenuItem[]
 
 export const POST_ORDER_MENU_ITEMS = [
   {
@@ -128,6 +136,6 @@ export const POST_ORDER_MENU_ITEMS = [
     title: 'article.order.views',
     icon: MENU.VIEWS,
   },
-]
+] satisfies TPostMenuItem[]
 
 export default MENU
