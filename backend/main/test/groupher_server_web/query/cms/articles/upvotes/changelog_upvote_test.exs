@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.Query.Upvotes.ChangelogUpvote do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {community, changelog, _, user} = mock_article(:changelog, preload: [author: :user])

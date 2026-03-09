@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @total_count 35
   @page_size get_config(:general, :page_size)

@@ -1,4 +1,4 @@
-defmodule GroupherServer.TestTools do
+defmodule GroupherServer.TestMate do
   @moduledoc """
   helper for reduce import modules in test files
   """

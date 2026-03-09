@@ -2,7 +2,7 @@ defmodule GroupherServerWeb.Test.Controller.OG do
   @moduledoc """
   test open-graph feather
   """
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   test "should return valid structure when query url is valid" do
     conn = build_conn()

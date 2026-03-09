@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Articles.PostList do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {community, _, post_attrs, user} = mock_article(:post)

@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {community, changelog, _, user} = mock_article(:changelog, preload: [author: :user])

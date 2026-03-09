@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Account.Fans do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {:ok, user} = db_insert(:user)

@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.CMS.Basic do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Model.Category
 

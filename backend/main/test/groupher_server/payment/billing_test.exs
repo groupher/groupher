@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Payment do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias GroupherServer.Payment
 

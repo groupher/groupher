@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Mutation.Payment.Basic do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   import Helper.Utils
 

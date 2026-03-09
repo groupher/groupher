@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Articles.Doc do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.FrontDesk
   alias CMS.Model.{ArticleDocument, DocDocument}

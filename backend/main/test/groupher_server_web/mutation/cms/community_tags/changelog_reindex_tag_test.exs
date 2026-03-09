@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogReindexTag do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Model.CommunityTag
 

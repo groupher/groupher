@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.Seeds.DomainTest do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   # alias GroupherServer.CMS.Seeds.Domain
 

@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {community, doc, doc_attrs, user} = mock_article(:doc)

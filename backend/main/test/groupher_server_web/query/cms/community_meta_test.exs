@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     guest_conn = simu_conn(:guest)

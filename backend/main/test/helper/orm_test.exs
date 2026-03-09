@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Helper.ORM do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   # TODO import Service.Utils move both helper and github
   import GroupherServer.Support.Factory

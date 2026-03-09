@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Events.Audition.PostTest do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {:ok, user} = db_insert(:user)

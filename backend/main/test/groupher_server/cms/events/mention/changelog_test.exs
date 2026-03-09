@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Events
   alias GroupherServer.Messaging

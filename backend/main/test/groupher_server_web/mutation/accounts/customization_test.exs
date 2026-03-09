@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Mutation.Account.Customization do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @max_page_size get_config(:general, :page_size)
 

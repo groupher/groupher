@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @audit_legal Constant.CMS.pending(:legal)
   @audit_illegal Constant.CMS.pending(:illegal)

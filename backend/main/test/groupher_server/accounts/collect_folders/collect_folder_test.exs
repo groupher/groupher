@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Accounts.CollectFolder do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.CollectFolders

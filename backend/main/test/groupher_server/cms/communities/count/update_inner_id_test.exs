@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.CMS.Communities.Count.UpdateInnerId do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {:ok, user} = db_insert(:user)

@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.Query.Accounts.UpvotesBlogs do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @total_count 20
 

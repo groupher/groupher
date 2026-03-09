@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Accounts.Search do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     guest_conn = simu_conn(:guest)

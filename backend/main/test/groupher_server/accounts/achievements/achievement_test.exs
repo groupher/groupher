@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.Accounts.Achievement do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias Accounts.Model.Achievement
 

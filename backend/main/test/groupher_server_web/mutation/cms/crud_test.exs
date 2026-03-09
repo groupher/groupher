@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Model.{Category, CommunityModerator, Passport}
 

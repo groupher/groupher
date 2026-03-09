@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Communities.Meta do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   import Helper.Utils, only: [strip_struct: 1]
 

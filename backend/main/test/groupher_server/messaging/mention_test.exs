@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Messaging.Mention do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   import Ecto.Query, warn: false
 

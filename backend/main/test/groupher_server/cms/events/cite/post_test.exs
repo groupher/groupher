@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Events.Cite.PostTest do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Events
   alias CMS.Model.CitedArtiment

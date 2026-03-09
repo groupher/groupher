@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.Accounts.FrontDesk do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias Helper.Cache
 

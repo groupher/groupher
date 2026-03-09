@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Accounts.Events.Notify do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias GroupherServer.Accounts.Events
   alias GroupherServer.Accounts.Fans

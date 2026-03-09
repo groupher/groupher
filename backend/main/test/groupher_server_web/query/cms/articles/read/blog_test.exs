@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Articles.Blog do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {community, blog, blog_attrs, user} = mock_article(:blog)

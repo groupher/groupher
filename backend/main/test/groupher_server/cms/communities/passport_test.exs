@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.CMS.Communities.Passport do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Communities.Passport
 

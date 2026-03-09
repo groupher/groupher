@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.DocPendingFlag do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @total_count 35
 

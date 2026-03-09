@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Accounts.Profiles.User do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   # TODO import Service.Utils move both helper and github
 

@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Statistics.PublishThrottle do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias GroupherServer.{CMS, Statistics}
   alias Statistics.Model.PublishThrottle

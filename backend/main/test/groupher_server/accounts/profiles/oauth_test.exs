@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Accounts.Oauth do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
   import Helper.Utils
 
   alias Accounts.Model.OauthProvider

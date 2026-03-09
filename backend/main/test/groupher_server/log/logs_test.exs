@@ -1,5 +1,5 @@
 defmodule GroupherServer.Test.Logs do
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   # alias GroupherServer.Logs
 

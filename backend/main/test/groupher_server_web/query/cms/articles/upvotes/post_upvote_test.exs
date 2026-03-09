@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.Query.Upvotes.PostUpvote do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {community, post, _, user} = mock_article(:post, preload: [author: :user])

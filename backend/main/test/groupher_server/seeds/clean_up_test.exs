@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.Seeds.CleanUpTest do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   # alias GroupherServer.CMS.Seeds
 

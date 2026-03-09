@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.CMS.Comments.DocArchive do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @archive_threshold get_config(:article, :archive_threshold)
   @comment_archive_threshold Timex.shift(@now, @archive_threshold[:default])

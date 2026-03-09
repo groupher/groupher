@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {:ok, category} = db_insert(:category)

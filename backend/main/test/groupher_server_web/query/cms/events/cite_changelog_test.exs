@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Events.ChangelogCiting do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Events
 

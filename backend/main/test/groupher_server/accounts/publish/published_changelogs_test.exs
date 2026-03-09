@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Accounts.Publish.Changelog do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias GroupherServer.Accounts.Publish, as: Accounts
 

@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Articles.DocPin do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Model.PinnedArticle
 

@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @plate_body Jason.encode!([
                 %{"type" => "h1", "children" => [%{"text" => "Plate Title"}]},
