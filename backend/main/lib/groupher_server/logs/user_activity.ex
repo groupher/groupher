@@ -1,4 +1,4 @@
-defmodule GroupherServer.Log.UserActivity do
+defmodule GroupherServer.Logs.UserActivity do
   @moduledoc false
   # alias __MODULE__
 

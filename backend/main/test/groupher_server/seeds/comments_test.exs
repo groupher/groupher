@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.Seeds.CommentsTest do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
   @moduletag timeout: 300_000
 
   alias GroupherServer.CMS.Seeds.{Comments, Communities}

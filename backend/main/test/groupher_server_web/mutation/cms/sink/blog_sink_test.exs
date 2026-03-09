@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {community, blog, _, user} = mock_article(:blog)

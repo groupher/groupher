@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {community, changelog, changelog_attrs, user} = mock_article(:changelog)

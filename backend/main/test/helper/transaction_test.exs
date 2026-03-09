@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Helper.Transaction do
   @moduledoc false
 
-  use GroupherServer.TestTools, async: false
+  use GroupherServer.TestMate, async: false
 
   alias CMS.Model.Community
   alias Helper.Transaction

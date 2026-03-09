@@ -1,4 +1,4 @@
-defmodule GroupherServer.Payment.Model.BillRecord do
+defmodule GroupherServer.Payments.Model.BillRecord do
   @moduledoc """
   bill records for investors
   """

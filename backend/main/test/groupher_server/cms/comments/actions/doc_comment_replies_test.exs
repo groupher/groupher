@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Comments.DocCommentReplies do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @max_parent_replies_count Comment.max_parent_replies_count()
 

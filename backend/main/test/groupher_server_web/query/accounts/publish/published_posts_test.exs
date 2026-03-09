@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Accounts.Publish.Posts do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @publish_count 10
 

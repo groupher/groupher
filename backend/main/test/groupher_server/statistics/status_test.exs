@@ -1,5 +1,5 @@
 defmodule GroupherServer.Test.Statistics.Status do
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   # alias Helper.ORM
   alias GroupherServer.Statistics

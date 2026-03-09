@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @article_cat Constant.CMS.article_cat()
   @article_state Constant.CMS.article_state()

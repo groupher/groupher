@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.CMS.Search do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Search
 

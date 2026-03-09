@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Mutation.Account.Oauth do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
   import Helper.Utils
 
   alias GroupherServer.{Accounts, Repo}

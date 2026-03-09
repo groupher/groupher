@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.ChangelogArchive do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @archive_threshold get_config(:article, :archive_threshold)
   @changelog_archive_threshold Timex.shift(

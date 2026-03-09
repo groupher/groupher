@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Comments.BlogComment do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {community, blog, _, user} = mock_article(:blog, preload: [author: :user])

@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Statistics do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   # alias Helper.{Cache, Later, ORM}
   alias GroupherServer.Statistics

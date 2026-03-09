@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Mutation.Statistics do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias GroupherServer.Statistics
   alias Statistics.Model.{CommunityContribute, UserContribute}

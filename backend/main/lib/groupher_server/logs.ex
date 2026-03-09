@@ -1,4 +1,4 @@
-defmodule GroupherServer.Log do
+defmodule GroupherServer.Logs do
   @moduledoc """
   The Logs context.
   """
@@ -6,5 +6,5 @@ defmodule GroupherServer.Log do
   # import Ecto.Query, warn: false
   # alias GroupherServer.Repo
 
-  # alias GroupherServer.Log.UserActivity
+  # alias GroupherServer.Logs.UserActivity
 end

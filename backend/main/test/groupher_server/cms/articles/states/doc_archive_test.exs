@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.CMS.DocArchive do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @archive_threshold get_config(:article, :archive_threshold)
   @doc_archive_threshold Timex.shift(

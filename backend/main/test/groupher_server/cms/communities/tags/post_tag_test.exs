@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Model.CommunityTag
 

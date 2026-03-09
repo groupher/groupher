@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Articles.DocList do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   setup do
     {community, _, doc_attrs, user} = mock_article(:doc)

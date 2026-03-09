@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Model.PinnedComment
 

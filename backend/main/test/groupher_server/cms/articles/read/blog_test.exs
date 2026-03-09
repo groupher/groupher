@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Articles.Blog do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Model.{ArticleDocument, BlogDocument}
   @article_digest_length get_config(:article, :digest_length)

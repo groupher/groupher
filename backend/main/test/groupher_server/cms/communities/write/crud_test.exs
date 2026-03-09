@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.CMS.Communities.Write do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Model.CommunityThread
 

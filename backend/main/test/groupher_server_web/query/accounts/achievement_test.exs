@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.Account.Achievement do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @follow_weight get_config(:general, :user_achieve_follow_weight)
   @collect_weight get_config(:general, :user_achieve_collect_weight)

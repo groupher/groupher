@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.CMS.ChangelogMeta do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @default_article_meta Embeds.ArticleMeta.default_meta()
 

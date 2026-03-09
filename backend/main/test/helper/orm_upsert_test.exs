@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Helper.ORMUpsert do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias Accounts.Model.Customization
   alias Helper.ORM

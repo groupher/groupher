@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Communities.Dashboard do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias CMS.Model.CommunityDashboard
 

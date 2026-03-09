@@ -1,7 +1,7 @@
-defmodule GroupherServer.Payment do
+defmodule GroupherServer.Payments do
   @moduledoc false
 
-  alias GroupherServer.Payment.Delegate.CRUD
+  alias GroupherServer.Payments.Delegate.CRUD
 
   defdelegate create_record(user, attrs), to: CRUD
   defdelegate paged_records(user, filter), to: CRUD

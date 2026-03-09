@@ -1,9 +1,9 @@
 defmodule GroupherServer.Test.Query.Payment.Basic do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
-  alias GroupherServer.Payment
+  alias GroupherServer.Payments, as: Payment
 
   setup do
     {:ok, user} = db_insert(:user)

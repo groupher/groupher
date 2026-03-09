@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Accounts.ReactedContents do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias GroupherServer.Accounts.Upvotes, as: Accounts
 

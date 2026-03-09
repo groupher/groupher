@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
   @moduledoc false
 
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   @page_size get_config(:general, :page_size)
 

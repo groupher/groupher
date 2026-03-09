@@ -1,6 +1,6 @@
 defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
   @moduledoc false
-  use GroupherServer.TestTools
+  use GroupherServer.TestMate
 
   alias Accounts.Model.CollectFolder
   alias CMS.Model.ArticleCollect
