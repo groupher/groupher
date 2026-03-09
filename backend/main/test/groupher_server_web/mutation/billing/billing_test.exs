@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Mutation.Payment.Basic do
 
   import Helper.Utils
 
-  alias GroupherServer.Payment
+  alias GroupherServer.Payments, as: Payment
 
   @senior_amount_threshold get_config(:general, :senior_amount_threshold)
 

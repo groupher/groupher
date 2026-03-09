@@ -1,4 +1,4 @@
-defmodule GroupherServer.Payment.Delegate.Actions do
+defmodule GroupherServer.Payments.Delegate.Actions do
   @moduledoc """
   actions after billing state success
   """
@@ -6,10 +6,10 @@ defmodule GroupherServer.Payment.Delegate.Actions do
 
   alias Helper.ORM
 
-  alias GroupherServer.{Accounts, Messaging, Payment}
+  alias GroupherServer.{Accounts, Messaging, Payments}
 
   alias Accounts.Model.User
-  alias Payment.Model.BillRecord
+  alias Payments.Model.BillRecord
 
   @senior_amount_threshold get_config(:general, :senior_amount_threshold)
 

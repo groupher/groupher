@@ -1,4 +1,4 @@
-defmodule GroupherServer.Payment.Delegate.CRUD do
+defmodule GroupherServer.Payments.Delegate.CRUD do
   @moduledoc """
   create update & list for billings
   """
@@ -9,11 +9,11 @@ defmodule GroupherServer.Payment.Delegate.CRUD do
 
   alias Helper.{Multi, ORM}
 
-  alias GroupherServer.{Accounts, Messaging, Payment, Repo}
+  alias GroupherServer.{Accounts, Messaging, Payments, Repo}
 
   alias Accounts.Model.User
-  alias Payment.Delegate.Actions
-  alias Payment.Model.BillRecord
+  alias Payments.Delegate.Actions
+  alias Payments.Model.BillRecord
 
   @doc """
   list all the bill records

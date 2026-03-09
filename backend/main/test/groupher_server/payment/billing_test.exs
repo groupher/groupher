@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Payment do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Payment
+  alias GroupherServer.Payments, as: Payment
 
   @senior_amount_threshold get_config(:general, :senior_amount_threshold)
 

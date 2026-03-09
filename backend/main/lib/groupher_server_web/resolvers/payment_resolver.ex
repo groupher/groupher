@@ -6,7 +6,7 @@ defmodule GroupherServerWeb.Resolvers.Payment do
   # import ShortMaps
   # import Helper.ErrorCode
 
-  alias GroupherServer.Payment
+  alias GroupherServer.Payments, as: Payment
 
   def paged_bill_records(_root, %{filter: filter}, %{context: %{cur_user: cur_user}}) do
     Payment.paged_records(cur_user, filter)
