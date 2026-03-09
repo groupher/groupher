@@ -21,7 +21,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       body = mock_rich_text("create changelog by plate")
 
       variables = changelog_attr |> Map.merge(%{community: community.slug, body: body})
-      _result = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
+      result = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
+
+      assert result["community"]["id"] == to_string(community.id)
+      assert result["linkAddr"] == "https://helloworld"
 
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
     end

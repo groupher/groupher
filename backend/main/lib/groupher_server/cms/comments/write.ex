@@ -293,9 +293,13 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   defp update_post_state_for_solution(post, comment, is_solution) do
     solution_digest =
-      case ContentPipeline.parse(%{body: comment.body}) do
-        {:ok, payload} -> payload.digest
-        _ -> comment.body_html
+      if is_solution do
+        case ContentPipeline.parse(%{body: comment.body}) do
+          {:ok, payload} -> payload.digest
+          _ -> comment.body_html
+        end
+      else
+        nil
       end
 
     case ORM.update(post, %{solution_digest: solution_digest}) do

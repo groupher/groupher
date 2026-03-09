@@ -45,13 +45,13 @@ defmodule GroupherServer.CMS.Model.BlogDocument do
     blog
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
-    |> validate_length(:json, min: @min_body_length, max: @max_body_length)
+    |> validate_length(:plain_text, min: @min_body_length, max: @max_body_length)
   end
 
   @doc false
   def update_changeset(%BlogDocument{} = blog, attrs) do
     blog
     |> cast(attrs, @optional_fields ++ @required_fields)
-    |> validate_length(:json, min: @min_body_length, max: @max_body_length)
+    |> validate_length(:plain_text, min: @min_body_length, max: @max_body_length)
   end
 end

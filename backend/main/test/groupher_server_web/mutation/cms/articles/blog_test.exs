@@ -21,7 +21,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       body = mock_rich_text("create blog by plate")
 
       variables = blog_attr |> Map.merge(%{community: community.slug, body: body})
-      _result = user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
+      result = user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
+
+      assert result["community"]["id"] == to_string(community.id)
+      assert result["linkAddr"] == "https://helloworld"
 
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
     end

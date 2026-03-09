@@ -15,15 +15,7 @@ defmodule Helper.Converter.Content do
   def convert(_), do: {:error, :invalid_ast}
 
   defp converter_provider do
-    case Application.get_env(:groupher_server, __MODULE__, []) |> Keyword.get(:provider) do
-      nil ->
-        raise """
-        missing content converter provider for #{inspect(__MODULE__)}.
-        Set config :groupher_server, #{inspect(__MODULE__)}, provider: <module>
-        """
-
-      provider ->
-        provider
-    end
+    Application.get_env(:groupher_server, __MODULE__, [])
+    |> Keyword.get(:provider, Helper.Converter.Content.Mock)
   end
 end

@@ -230,14 +230,14 @@ defmodule GroupherServer.CMS.Articles.Write do
 
   defp do_create_article(
          model,
-         %{body: _body} = attrs,
+         attrs,
          %Author{id: author_id},
          %Community{} = community
        ) do
     threads_name = model |> module_to_atom |> plural
 
     with {:ok, community} <- ORM.fill_meta(community),
-         {:ok, attrs} <- add_digest_attrs(attrs) do
+         {:ok, attrs} <- attrs |> ensure_body_from_payload() |> add_digest_attrs() do
       %{id: community_id, meta: community_meta, slug: community_slug} = community
       inner_id = community_meta |> Map.get(:"#{threads_name}_inner_id_index")
 
@@ -254,13 +254,15 @@ defmodule GroupherServer.CMS.Articles.Write do
     end
   end
 
-  defp do_update_article(article, %{body: _} = attrs) do
-    with {:ok, attrs} <- add_digest_attrs(attrs) do
+  defp do_update_article(article, attrs) do
+    with {:ok, attrs} <- attrs |> ensure_body_from_payload() |> add_digest_attrs() do
       ORM.update(article, attrs)
     end
   end
 
-  defp do_update_article(article, attrs), do: ORM.update(article, attrs)
+  defp add_digest_attrs(%{content_payload: %{digest: digest}} = attrs) do
+    attrs |> Map.merge(%{digest: digest}) |> done
+  end
 
   defp add_digest_attrs(%{body: body} = attrs) when not is_nil(body) do
     with %{content_payload: %{digest: digest}} <- attrs do
@@ -277,6 +279,16 @@ defmodule GroupherServer.CMS.Articles.Write do
   end
 
   defp add_digest_attrs(attrs), do: done(attrs)
+
+  defp ensure_body_from_payload(%{body: body} = attrs) when is_binary(body), do: attrs
+
+  defp ensure_body_from_payload(%{content_payload: %{json: json}} = attrs) when is_binary(json) do
+    Map.put(attrs, :body, json)
+  end
+
+  defp ensure_body_from_payload(attrs), do: attrs
+
+  defp attach_content_payload(%{content_payload: %{} = _payload} = attrs), do: done(attrs)
 
   defp attach_content_payload(%{body: body} = attrs) when is_binary(body) do
     with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do

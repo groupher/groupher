@@ -30,8 +30,8 @@ defmodule GroupherServer.CMS.Events.Audition do
 
   @spec handle(map()) :: audition_result()
   def handle(%{title: title, document: _document} = article) do
-    html = Repo.preload(article, :document) |> get_in([:document, :html])
-    audit_text = title <> (html || "")
+    plain_text = Repo.preload(article, :document) |> get_in([:document, :plain_text])
+    audit_text = title <> (plain_text || "")
 
     AuditBot.analysis(:text, audit_text) |> handle_audition_result(article)
   end
@@ -44,8 +44,8 @@ defmodule GroupherServer.CMS.Events.Audition do
 
   @spec handle_edge(map()) :: audition_result()
   def handle_edge(%{title: title, document: _document} = article) do
-    html = Repo.preload(article, :document) |> get_in([:document, :html])
-    audit_text = title <> (html || "")
+    plain_text = Repo.preload(article, :document) |> get_in([:document, :plain_text])
+    audit_text = title <> (plain_text || "")
 
     AuditBot.analysis_wrong(:text, audit_text)
     |> handle_audition_result(article)

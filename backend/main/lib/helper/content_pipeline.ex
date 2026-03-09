@@ -162,10 +162,15 @@ defmodule Helper.ContentPipeline do
   defp do_extract_mentions([_ | rest], acc), do: do_extract_mentions(rest, acc)
 
   # Public cite extraction entry from AST list.
-  defp extract_cites(nodes) when is_list(nodes), do: do_extract_cites(nodes, []) |> Enum.reverse()
+  defp extract_cites(nodes) when is_list(nodes) do
+    nodes
+    |> do_extract_cites([])
+    |> Enum.reverse()
+    |> Enum.uniq()
+  end
 
   # Deduplicate extracted URLs while preserving order.
-  defp do_extract_cites([], acc), do: Enum.uniq(acc)
+  defp do_extract_cites([], acc), do: acc
 
   # Collect URLs from current node text then recurse into children.
   defp do_extract_cites([node | rest], acc) when is_map(node) do
