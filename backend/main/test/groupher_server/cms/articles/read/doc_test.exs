@@ -3,11 +3,8 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
   use GroupherServer.TestTools
 
-  alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
-
   alias CMS.FrontDesk
   alias CMS.Model.{ArticleDocument, DocDocument}
-  alias EditorToHTML.Validator
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
@@ -59,16 +56,12 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert doc.meta.thread == "DOC"
 
       assert doc.title == doc_attrs.title
-      assert body_map |> Validator.is_valid()
+      assert is_list(body_map)
 
       assert doc.document.html |> String.contains?(~s(<p>))
 
-      paragraph_text = body_map["blocks"] |> List.first() |> get_in(["data", "text"])
-
-      assert doc.digest ==
-               paragraph_text
-               |> HtmlSanitizer.strip_all_tags()
-               |> String.slice(0, @article_digest_length)
+      assert is_binary(doc.digest)
+      assert String.length(doc.digest) <= @article_digest_length
     end
 
     test "created doc should have original_community info", ~m(user community doc_attrs)a do

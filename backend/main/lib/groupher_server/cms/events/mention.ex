@@ -34,10 +34,10 @@ defmodule GroupherServer.CMS.Events.Mention do
 
   @spec handle(Comment.t() | map()) :: mention_result()
   def handle(%{body: body} = artiment) when not is_nil(body) do
-    with {:ok, %{"blocks" => blocks}} <- Jason.decode(body),
+    with {:ok, ast} <- ContentPipeline.decode(body),
          {:ok, artiment} <- FrontDesk.preload_author(artiment) do
-      blocks
-      |> Enum.reduce([], &(&2 ++ parse_mention_info_per_block(artiment, &1)))
+      ast
+      |> parse_mentions_from_ast(artiment)
       |> merge_same_block_linker(:to_user_id)
       |> handle_mentions(artiment)
     end
@@ -59,12 +59,6 @@ defmodule GroupherServer.CMS.Events.Mention do
     with {:ok, author} <- FrontDesk.author_of(artiment) do
       Messaging.send_mention(artiment, mentions, author)
     end
-  end
-
-  defp parse_mention_info_per_block(artiment, %{"id" => block_id, "data" => %{"text" => text}}) do
-    mentions = extract_mentions(text)
-
-    parse_mention_in_block(artiment, block_id, mentions)
   end
 
   defp extract_mentions(text) do

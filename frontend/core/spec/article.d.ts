@@ -30,6 +30,11 @@ export type TArticleMeta = {
 }
 
 export type TDocument = {
+  json?: string
+  html?: string
+  markdown?: string
+  markdownToc?: Record<string, unknown>
+  rss?: string
   bodyHtml?: string
   body?: string
 }

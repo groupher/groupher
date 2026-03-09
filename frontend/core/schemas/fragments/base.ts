@@ -118,8 +118,11 @@ export const articleDetail = `
   }
 
   document {
-    bodyHtml
-    body
+    json
+    html
+    markdown
+    markdownToc
+    rss
   }
 
   commentsParticipants {

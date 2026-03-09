@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Comment, Community, Embeds, PinnedComment, Post}
 
-  alias Helper.{Multi, Later, ORM, T}
+  alias Helper.{ContentPipeline, Multi, Later, ORM, T}
 
   @max_participator_count Comment.max_participator_count()
   @default_emotions Embeds.CommentEmotion.default_emotions()
@@ -87,15 +87,13 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   def update(%Comment{is_solution: true} = comment, body) do
     with {:ok, post} <- FrontDesk.get(Post, comment.post_id),
-         {:ok, parsed} <- Helper.Converter.Article.parse_body(body),
-         {:ok, digest} <- Helper.Converter.Article.parse_digest(parsed.body_map) do
+         {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
       Multi.new()
       |> Multi.run(:update_parent_post, fn _, _ ->
-        ORM.update(post, %{solution_digest: digest})
+        ORM.update(post, %{solution_digest: payload.digest})
       end)
       |> Multi.run(:update_comment, fn _, _ ->
-        %{body: body, body_html: body_html} = parsed
-        comment |> ORM.update(%{body: body, body_html: body_html})
+        comment |> ORM.update(%{body: payload.json, body_html: payload.html})
       end)
       |> Multi.run(:sync_embed_replies, fn _, %{update_comment: comment} ->
         FrontDesk.sync_embed_replies(comment)
@@ -109,10 +107,10 @@ defmodule GroupherServer.CMS.Comments.Write do
   end
 
   def update(%Comment{} = comment, body) do
-    with {:ok, %{body: body, body_html: body_html}} <- Helper.Converter.Article.parse_body(body) do
+    with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
       Multi.new()
       |> Multi.run(:update_comment, fn _, _ ->
-        ORM.update(comment, %{body: body, body_html: body_html})
+        ORM.update(comment, %{body: payload.json, body_html: payload.html})
       end)
       |> Multi.run(:sync_embed_replies, fn _, %{update_comment: comment} ->
         FrontDesk.sync_embed_replies(comment)
@@ -221,13 +219,13 @@ defmodule GroupherServer.CMS.Comments.Write do
   end
 
   defp do_create_comment(body, foreign_key, article, %User{id: user_id}) do
-    with {:ok, %{body: body, body_html: body_html}} <- Helper.Converter.Article.parse_body(body) do
+    with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
       thread = foreign_key |> to_string |> String.trim_trailing("_id") |> String.upcase()
 
       attrs = %{
         author_id: user_id,
-        body: body,
-        body_html: body_html,
+        body: payload.json,
+        body_html: payload.html,
         emotions: @default_emotions,
         floor: next_floor(article, foreign_key),
         is_article_author: user_id == article.author.user.id,
@@ -294,7 +292,13 @@ defmodule GroupherServer.CMS.Comments.Write do
   end
 
   defp update_post_state_for_solution(post, comment, is_solution) do
-    case ORM.update(post, %{solution_digest: comment.body_html}) do
+    solution_digest =
+      case ContentPipeline.parse(%{body: comment.body}) do
+        {:ok, payload} -> payload.digest
+        _ -> comment.body_html
+      end
+
+    case ORM.update(post, %{solution_digest: solution_digest}) do
       {:ok, updated_post} ->
         state = if is_solution, do: @article_state.resolved, else: @article_state.default
         CMS.Articles.set_state(updated_post, state)

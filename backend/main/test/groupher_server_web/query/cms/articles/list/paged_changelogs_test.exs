@@ -87,9 +87,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       variables = %{filter: %{page: 1, size: 20, order: "comments"}}
       changelog_id = changelog_last_week.inner_id
 
-      {:ok, _} = CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user)
-      {:ok, _} = CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user2)
-      {:ok, _} = CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user3)
+      {:ok, _} =
+        CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user)
+
+      {:ok, _} =
+        CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user2)
+
+      {:ok, _} =
+        CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user3)
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
@@ -127,7 +132,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       changelog = results["entries"] |> List.first()
 
-      assert not is_nil(get_in(changelog, ["document", "bodyHtml"]))
+      assert not is_nil(get_in(changelog, ["document", "html"]))
     end
 
     test "support community_tag filter", ~m(guest_conn community user)a do
@@ -135,7 +140,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       community_tag_attrs = mock_attrs(:community_tag)
-      {:ok, community_tag} = CMS.Communities.create_tag(community, :changelog, community_tag_attrs, user)
+
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :changelog, community_tag_attrs, user)
+
       {:ok, _} = CMS.Communities.set_tag(changelog, community_tag.id)
 
       variables = %{filter: %{page: 1, size: 10, community_tag: community_tag.slug}}

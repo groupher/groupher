@@ -24,8 +24,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       result = user_conn |> gq_mutation(Schema.m(:create_comment), variables)
 
-      assert result["bodyHtml"] |> String.contains?(~s(<p id=))
-      assert result["bodyHtml"] |> String.contains?(~s(comment</p>))
+      assert result["bodyHtml"] |> String.contains?(~s(<p))
+      assert result["bodyHtml"] |> String.contains?(~s(comment))
     end
 
     test "login user can reply to a comment", ~m(community post user user_conn)a do
@@ -36,8 +36,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       result = user_conn |> gq_mutation(Schema.m(:reply_comment), variables)
 
-      assert result["bodyHtml"] |> String.contains?(~s(<p id=))
-      assert result["bodyHtml"] |> String.contains?(~s(reply comment</p>))
+      assert result["bodyHtml"] |> String.contains?(~s(<p))
+      assert result["bodyHtml"] |> String.contains?(~s(reply comment))
     end
 
     test "only owner can update a exist comment",
@@ -54,8 +54,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       result = owner_conn |> gq_mutation(Schema.m(:update_comment), variables)
 
-      assert result["bodyHtml"] |> String.contains?(~s(<p id=))
-      assert result["bodyHtml"] |> String.contains?(~s(updated comment</p>))
+      assert result["bodyHtml"] |> String.contains?(~s(<p))
+      assert result["bodyHtml"] |> String.contains?(~s(updated comment))
     end
 
     test "only owner can delete a exist comment",

@@ -42,7 +42,7 @@ defmodule GroupherServer.Support.Factory do
   end
 
   def mock_comment(text \\ "comment") do
-    mock_rich_text(text)
+    GroupherServer.Support.Factory.Articles.comment_rich_text(text)
   end
 
   defp mock_meta(:comment) do

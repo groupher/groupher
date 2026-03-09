@@ -2,7 +2,6 @@
  * ArticleViewer
  */
 
-import RichEditor from '@groupher/rich-editor'
 import { useEffect, useState } from 'react'
 import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
 import { scrollDrawerToTop } from '~/dom'
@@ -43,7 +42,6 @@ export default () => {
     <>
       <FixedHeader article={article} visible={fixedHeaderVisible} footerVisible={footerVisible} />
       <Header article={article} />
-      <RichEditor />
       <div className={s.title}>
         <div className={s.titleText}>{article.title}</div>
         <div className={s.subTitle}>{article.innerId}</div>

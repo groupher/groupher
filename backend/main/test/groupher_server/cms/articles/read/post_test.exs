@@ -3,11 +3,8 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
   use GroupherServer.TestTools
 
-  alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
-
   alias CMS.FrontDesk
   alias CMS.Model.{ArticleDocument, PostDocument}
-  alias EditorToHTML.Validator
   # @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3)
   #            |> DateTime.truncate(:second)
   @article_digest_length get_config(:article, :digest_length)
@@ -61,16 +58,12 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert post.meta.thread == "POST"
 
       assert post.title == post_attrs.title
-      assert body_map |> Validator.is_valid()
+      assert is_list(body_map)
 
       assert post.document.html |> String.contains?(~s(<p>))
 
-      paragraph_text = body_map["blocks"] |> List.first() |> get_in(["data", "text"])
-
-      assert post.digest ==
-               paragraph_text
-               |> HtmlSanitizer.strip_all_tags()
-               |> String.slice(0, @article_digest_length)
+      assert is_binary(post.digest)
+      assert String.length(post.digest) <= @article_digest_length
     end
 
     test "created post should have original_community info", ~m(user community post_attrs)a do

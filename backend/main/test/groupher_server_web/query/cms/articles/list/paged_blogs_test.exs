@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
       blog = results["entries"] |> List.first()
 
-      assert not is_nil(get_in(blog, ["document", "bodyHtml"]))
+      assert not is_nil(get_in(blog, ["document", "html"]))
     end
 
     test "support community_tag filter", ~m(guest_conn community user)a do
@@ -333,7 +333,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       Process.sleep(2000)
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :blog, blog_last_week.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          blog_last_week.inner_id,
+          mock_comment(),
+          user2
+        )
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
 
@@ -348,7 +354,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       variables = %{filter: %{page: 1, size: 20}}
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :blog, blog_last_year.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          blog_last_year.inner_id,
+          mock_comment(),
+          user2
+        )
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
       entries = results["entries"]
@@ -363,7 +375,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       {:ok, blog} = ORM.find(Blog, blog_last_week.id, preload: [author: :user])
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), blog.author.user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          blog.inner_id,
+          mock_comment(),
+          blog.author.user
+        )
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
       entries = results["entries"]

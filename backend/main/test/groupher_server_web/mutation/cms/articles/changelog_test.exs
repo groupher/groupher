@@ -18,9 +18,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
          ~m(user_conn user community)a do
       changelog_attr = mock_attrs(:changelog) |> Map.merge(%{linkAddr: "https://helloworld"})
 
-      body = """
-      {"time":1639375020110,"blocks":[{"type":"list","data":{"mode":"unordered_list","items":[{"text":"CP 的图标是字母 C (Coder / China) 和 Planet 的意象结合，斜向的条饰灵感来自于 NASA Logo 上的 red chevron。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0},{"text":"所有的 Upvote 的图标都是小火箭，点击它会有一个起飞的动画 — 虽然它目前看起来像爆炸。。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0}]}}],"version":"2.19.38"}
-      """
+      body = mock_rich_text("create changelog by plate")
 
       variables = changelog_attr |> Map.merge(%{community: community.slug, body: body})
       _result = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)

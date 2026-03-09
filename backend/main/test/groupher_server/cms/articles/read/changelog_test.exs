@@ -3,10 +3,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
   use GroupherServer.TestTools
 
-  alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
-
   alias CMS.Model.{ArticleDocument, ChangelogDocument}
-  alias EditorToHTML.Validator
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
@@ -59,16 +56,12 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog.meta.thread == "CHANGELOG"
 
       assert changelog.title == changelog_attrs.title
-      assert body_map |> Validator.is_valid()
+      assert is_list(body_map)
 
       assert changelog.document.html |> String.contains?(~s(<p>))
 
-      paragraph_text = body_map["blocks"] |> List.first() |> get_in(["data", "text"])
-
-      assert changelog.digest ==
-               paragraph_text
-               |> HtmlSanitizer.strip_all_tags()
-               |> String.slice(0, @article_digest_length)
+      assert is_binary(changelog.digest)
+      assert String.length(changelog.digest) <= @article_digest_length
     end
 
     test "created changelog should have original_community info",

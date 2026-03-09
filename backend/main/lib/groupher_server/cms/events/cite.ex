@@ -60,15 +60,15 @@ defmodule GroupherServer.CMS.Events.Cite do
 
   @spec handle(Comment.t() | map()) :: cite_result()
   def handle(%{body: body} = artiment) when not is_nil(body) do
-    with {:ok, %{"blocks" => blocks}} <- Jason.decode(body),
+    with {:ok, ast} <- ContentPipeline.decode(body),
          {:ok, artiment} <- FrontDesk.preload_author(artiment) do
       Multi.new()
       |> Multi.run(:delete_all_cited_artiments, fn _, _ ->
         CitedArtiment.batch_delete_by(artiment)
       end)
       |> Multi.run(:update_cited_info, fn _, _ ->
-        blocks
-        |> Enum.reduce([], &(&2 ++ parse_cited_per_block(artiment, &1)))
+        ast
+        |> parse_cited_from_ast(artiment)
         |> merge_same_block_linker(:cited_by_id)
         |> CitedArtiment.batch_insert()
       end)
@@ -94,12 +94,6 @@ defmodule GroupherServer.CMS.Events.Cite do
       |> Repo.transaction()
       |> result()
     end
-  end
-
-  defp parse_cited_per_block(artiment, %{"id" => block_id, "data" => %{"text" => text}}) do
-    links = extract_links(text)
-
-    parse_links_in_block(artiment, block_id, links)
   end
 
   defp parse_links_in_block(artiment, block_id, links) do
@@ -151,25 +145,6 @@ defmodule GroupherServer.CMS.Events.Cite do
       end
     end
   end
-
-  defp extract_links(text) do
-    floki_links =
-      text
-      |> Floki.find("a[href]")
-      |> Enum.map(&extract_href/1)
-      |> Enum.reject(&is_nil/1)
-
-    if floki_links == [], do: extract_links_by_regex(text), else: floki_links
-  end
-
-  defp extract_href({"a", attrs, _}) do
-    case parse_link(attrs) do
-      {:ok, link} -> link
-      _ -> nil
-    end
-  end
-
-  defp extract_href(_), do: nil
 
   defp extract_links_by_regex(text) do
     Regex.scan(@href_regex, text, capture: :all_but_first)

@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Articles.Write do
   alias CMS.Articles.{Document, States}
   alias CMS.Model.{Author, Community, Embeds}
   alias CMS.{Communities, Events, FrontDesk}
-  alias Helper.{ContentPipeline, Converter, Multi, Later, ORM, T, Transaction}
+  alias Helper.{ContentPipeline, Multi, Later, ORM, T, Transaction}
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
   @default_article_meta Embeds.ArticleMeta.default_meta()
@@ -267,10 +267,10 @@ defmodule GroupherServer.CMS.Articles.Write do
       attrs |> Map.merge(%{digest: digest}) |> done
     else
       _ ->
-        with {:ok, parsed} <- Converter.Article.parse_body(body),
-             {:ok, digest} <- Converter.Article.parse_digest(parsed.body_map) do
+        with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
           attrs
-          |> Map.merge(%{digest: digest})
+          |> Map.put(:content_payload, payload)
+          |> Map.put(:digest, payload.digest)
           |> done
         end
     end
