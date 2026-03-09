@@ -7,7 +7,6 @@ import METRIC from '~/const/metric'
 import { CONDITION_MODE } from '~/const/mode'
 import type { TEditMode, TMetric } from '~/spec'
 import ArchiveAlert from '~/widgets/ArchiveAlert'
-// import RichEditor from '~/containers/editor/RichEditor'
 import ConditionSelector from '~/widgets/ConditionSelector'
 import NoticeBar from '~/widgets/NoticeBar'
 import TagSelector from '~/widgets/TagSelector'
@@ -58,11 +57,8 @@ const ArticleEditor: FC<TProps> = ({ metric = METRIC.ARTICLE_EDITOR }) => {
   const texts = {
     holder: {
       title: '// 帖子标题',
-      body: "// 帖子内容（'Tab' 键插入富文本）",
     },
   }
-  // const initEditor = mode === 'publish' || body !== '{}'
-
   return (
     <div className={s.wrapper}>
       <div className={s.inner}>
@@ -82,14 +78,6 @@ const ArticleEditor: FC<TProps> = ({ metric = METRIC.ARTICLE_EDITOR }) => {
           />
           <TagSelector groupedTags={groupedTags} activeTag={activeTag} onSelect={onTagSelect} />
         </div>
-
-        {/* {initEditor && (
-            <RichEditor
-              data={body}
-              onChange={(v) => editOnChange(JSON.stringify(v), 'body')}
-              placeholder={texts.holder.body}
-            />
-          )} */}
         <Footer mode={mode as TEditMode} editData={editData} submitState={submitState} />
       </div>
     </div>

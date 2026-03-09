@@ -104,7 +104,7 @@ export default (): TRet => {
 
   const getGroupedTags = useCallback((): TGroupedTags => {
     // return root.tagsBar.groupedTags
-    return []
+    return {}
   }, [])
 
   const getEditData = useCallback((): TEditData => {

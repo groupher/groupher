@@ -73,7 +73,7 @@ export type TPagedTags = {
 
 export type TGroupedTags = {
   [group: string]: TTag[]
-}[]
+}
 
 export type TCategory = {
   id: TID

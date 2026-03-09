@@ -22,16 +22,22 @@ defmodule GroupherServer.CMS.Model.PostDocument do
   @max_body_length get_config(:article, :max_length)
   @min_body_length get_config(:article, :min_length)
 
-  @required_fields ~w(body body_html post_id)a
-  @optional_fields []
+  @required_fields ~w(json post_id)a
+  @optional_fields ~w(markdown markdown_toc html rss plain_text digest content_hash schema_version)a
 
   @type t :: %PostDocument{}
   schema "post_documents" do
     belongs_to(:post, Post, foreign_key: :post_id)
 
-    field(:body, :string)
-    field(:body_html, :string)
-    field(:toc, :map)
+    field(:json, :string)
+    field(:markdown, :string)
+    field(:markdown_toc, :map)
+    field(:html, :string)
+    field(:rss, :string)
+    field(:plain_text, :string)
+    field(:digest, :string)
+    field(:content_hash, :string)
+    field(:schema_version, :integer, default: 1)
   end
 
   @doc false
@@ -39,13 +45,13 @@ defmodule GroupherServer.CMS.Model.PostDocument do
     post
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
-    |> validate_length(:body, min: @min_body_length, max: @max_body_length)
+    |> validate_length(:plain_text, min: @min_body_length, max: @max_body_length)
   end
 
   @doc false
   def update_changeset(%PostDocument{} = post, attrs) do
     post
     |> cast(attrs, @optional_fields ++ @required_fields)
-    |> validate_length(:body, min: @min_body_length, max: @max_body_length)
+    |> validate_length(:plain_text, min: @min_body_length, max: @max_body_length)
   end
 end

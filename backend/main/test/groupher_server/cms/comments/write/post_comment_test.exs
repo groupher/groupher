@@ -190,7 +190,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, updated_comment} =
         CMS.Comments.update_comment(comment, mock_comment("updated content"))
 
-      assert updated_comment.body_html |> String.contains?(~s(updated content</p>))
+      assert updated_comment.body_html |> String.contains?(~s(updated content))
     end
   end
 
@@ -983,7 +983,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, post} = ORM.find(Post, post.id)
 
       assert post.state == @article_state.resolved
-      assert post.solution_digest == comment.body_html
+      assert post.solution_digest == "comment"
     end
 
     test "non-post-author can not mark a comment as solution", ~m(user community)a do
@@ -1082,8 +1082,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, comment} = CMS.Comments.mark_comment_solution(comment.id, post_author)
 
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
-      assert post.solution_digest |> String.contains?(~s(<p id=))
-      assert post.solution_digest |> String.contains?(~s(solution</p>))
+      assert post.solution_digest == "solution"
 
       {:ok, _} = CMS.Comments.update_comment(comment, mock_comment("new solution"))
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])

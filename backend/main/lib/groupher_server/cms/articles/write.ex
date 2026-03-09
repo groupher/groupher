@@ -12,18 +12,16 @@ defmodule GroupherServer.CMS.Articles.Write do
       done: 1,
       plural: 1,
       module_to_atom: 1,
-      module_to_upcase: 1,
-      atom_values_to_upcase: 1
+      module_to_upcase: 1
     ]
 
   alias GroupherServer.{Accounts, CMS, Messaging, Repo, Statistics}
 
   alias Accounts.Model.User
   alias CMS.Articles.{Document, States}
-  alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Author, Community, Embeds}
   alias CMS.{Communities, Events, FrontDesk}
-  alias Helper.{Converter, Multi, Later, ORM, T, Transaction}
+  alias Helper.{ContentPipeline, Multi, Later, ORM, T, Transaction}
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
   @default_article_meta Embeds.ArticleMeta.default_meta()
@@ -31,9 +29,8 @@ defmodule GroupherServer.CMS.Articles.Write do
 
   @spec create(Community.t(), atom(), map(), User.t()) :: T.domain_res(term())
   def create(%Community{} = community, thread, attrs, %User{} = user) do
-    attrs = attrs |> atom_values_to_upcase() |> normalize_article_enum_attrs()
-
-    with {:ok, author} <- ensure_author_exists(user),
+    with {:ok, attrs} <- attrs |> attach_content_payload(),
+         {:ok, author} <- ensure_author_exists(user),
          {:ok, info} <- match(thread) do
       Transaction.lock_row(community, fn community ->
         Multi.new()
@@ -107,33 +104,35 @@ defmodule GroupherServer.CMS.Articles.Write do
     do: raise_error(:archived, "article is archived, can not be edit or delete")
 
   def update(article, attrs) do
-    attrs = attrs |> atom_values_to_upcase() |> normalize_article_enum_attrs()
-
-    Multi.new()
-    |> Multi.run(:update_article, fn _, _ ->
-      do_update_article(article, attrs)
-    end)
-    |> Multi.run(:update_document, fn _, %{update_article: update_article} ->
-      Document.update(update_article, attrs)
-    end)
-    |> Multi.run(:set_community_tags, fn _, %{update_article: article} ->
-      Communities.overwrite_tags(
-        %Community{id: article.community_id},
-        article.meta.thread,
-        article,
-        %{community_tags: Map.get(attrs, :community_tags, [])}
-      )
-    end)
-    |> Multi.run(:update_edit_status, fn _, %{set_community_tags: update_article} ->
-      States.update_edit_status(update_article)
-    end)
-    |> Multi.run(:after_events, fn _, %{update_article: update_article} ->
-      Later.run({Events, :emit, [:cite, %{artiment: update_article}]})
-      Later.run({Events, :emit, [:mention, %{artiment: update_article}]})
-      Later.run({Events, :emit, [:audition, %{artiment: update_article}]})
-    end)
-    |> Repo.transaction()
-    |> result()
+    with {:ok, attrs} <-
+           attrs
+           |> attach_content_payload() do
+      Multi.new()
+      |> Multi.run(:update_article, fn _, _ ->
+        do_update_article(article, attrs)
+      end)
+      |> Multi.run(:update_document, fn _, %{update_article: update_article} ->
+        Document.update(update_article, attrs)
+      end)
+      |> Multi.run(:set_community_tags, fn _, %{update_article: article} ->
+        Communities.overwrite_tags(
+          %Community{id: article.community_id},
+          article.meta.thread,
+          article,
+          %{community_tags: Map.get(attrs, :community_tags, [])}
+        )
+      end)
+      |> Multi.run(:update_edit_status, fn _, %{set_community_tags: update_article} ->
+        States.update_edit_status(update_article)
+      end)
+      |> Multi.run(:after_events, fn _, %{update_article: update_article} ->
+        Later.run({Events, :emit, [:cite, %{artiment: update_article}]})
+        Later.run({Events, :emit, [:mention, %{artiment: update_article}]})
+        Later.run({Events, :emit, [:audition, %{artiment: update_article}]})
+      end)
+      |> Repo.transaction()
+      |> result()
+    end
   end
 
   @spec ensure_author_exists(User.t()) :: {:ok, Author.t()}
@@ -231,14 +230,14 @@ defmodule GroupherServer.CMS.Articles.Write do
 
   defp do_create_article(
          model,
-         %{body: _body} = attrs,
+         attrs,
          %Author{id: author_id},
          %Community{} = community
        ) do
     threads_name = model |> module_to_atom |> plural
 
     with {:ok, community} <- ORM.fill_meta(community),
-         {:ok, attrs} <- add_digest_attrs(attrs) do
+         {:ok, attrs} <- attrs |> ensure_body_from_payload() |> add_digest_attrs() do
       %{id: community_id, meta: community_meta, slug: community_slug} = community
       inner_id = community_meta |> Map.get(:"#{threads_name}_inner_id_index")
 
@@ -255,55 +254,51 @@ defmodule GroupherServer.CMS.Articles.Write do
     end
   end
 
-  defp do_update_article(article, %{body: _} = attrs) do
-    with {:ok, attrs} <- add_digest_attrs(attrs) do
+  defp do_update_article(article, attrs) do
+    with {:ok, attrs} <- attrs |> ensure_body_from_payload() |> add_digest_attrs() do
       ORM.update(article, attrs)
     end
   end
 
-  defp do_update_article(article, attrs), do: ORM.update(article, attrs)
+  defp add_digest_attrs(%{content_payload: %{digest: digest}} = attrs) do
+    attrs |> Map.merge(%{digest: digest}) |> done
+  end
 
   defp add_digest_attrs(%{body: body} = attrs) when not is_nil(body) do
-    with {:ok, parsed} <- Converter.Article.parse_body(body),
-         {:ok, digest} <- Converter.Article.parse_digest(parsed.body_map) do
-      attrs
-      |> Map.merge(%{digest: digest})
-      |> done
+    with %{content_payload: %{digest: digest}} <- attrs do
+      attrs |> Map.merge(%{digest: digest}) |> done
+    else
+      _ ->
+        with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
+          attrs
+          |> Map.put(:content_payload, payload)
+          |> Map.put(:digest, payload.digest)
+          |> done
+        end
     end
   end
 
   defp add_digest_attrs(attrs), do: done(attrs)
 
-  defp normalize_article_enum_attrs(attrs) when is_map(attrs) do
-    attrs
-    |> normalize_enum_attr(:cat, ArticleEnums.cat_values())
-    |> normalize_enum_attr(:state, ArticleEnums.state_values())
+  defp ensure_body_from_payload(%{body: body} = attrs) when is_binary(body), do: attrs
+
+  defp ensure_body_from_payload(%{content_payload: %{json: json}} = attrs) when is_binary(json) do
+    Map.put(attrs, :body, json)
   end
 
-  defp normalize_article_enum_attrs(attrs), do: attrs
+  defp ensure_body_from_payload(attrs), do: attrs
 
-  defp normalize_enum_attr(attrs, key, allowed) do
-    case Map.get(attrs, key) do
-      nil ->
-        attrs
+  defp attach_content_payload(%{content_payload: %{} = _payload} = attrs), do: done(attrs)
 
-      value when is_atom(value) ->
-        if value in allowed, do: Map.put(attrs, key, value), else: attrs
-
-      value when is_binary(value) ->
-        normalized = value |> String.downcase()
-        atom = Enum.find(allowed, fn v -> Atom.to_string(v) == normalized end)
-
-        if atom do
-          Map.put(attrs, key, atom)
-        else
-          attrs
-        end
-
-      _ ->
-        attrs
+  defp attach_content_payload(%{body: body} = attrs) when is_binary(body) do
+    with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
+      attrs
+      |> Map.put(:content_payload, payload)
+      |> done
     end
   end
+
+  defp attach_content_payload(attrs), do: done(attrs)
 
   defp do_batch_mark_delete(community, thread, inner_id_list, delete_flag) do
     with {:ok, info} <- match(thread) do

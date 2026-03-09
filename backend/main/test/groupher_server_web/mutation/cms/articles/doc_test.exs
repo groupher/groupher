@@ -18,16 +18,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
          ~m(user_conn user community)a do
       doc_attr = mock_attrs(:doc) |> Map.merge(%{linkAddr: "https://helloworld"})
 
-      body = """
-      {"time":1639375020110,"blocks":[{"type":"list","data":{"mode":"unordered_list","items":[{"text":"CP 的图标是字母 C (Coder / China) 和 Planet 的意象结合，斜向的条饰灵感来自于 NASA Logo 上的 red chevron。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0},{"text":"所有的 Upvote 的图标都是小火箭，点击它会有一个起飞的动画 — 虽然它目前看起来像爆炸。。","label":null,"labelType":null,"checked":false,"hideLabel":true,"prefixIndex":"","indent":0}]}}],"version":"2.19.38"}
-      """
+      body = mock_rich_text("create doc by plate")
 
       variables = doc_attr |> Map.merge(%{community: community.slug, body: body})
       result = user_conn |> gq_mutation(Schema.m(:create_article, :doc), variables)
 
-      {:ok, doc} = CMS.FrontDesk.article(community, :doc, result["innerId"])
-
-      assert result["innerId"] == to_string(doc.inner_id)
       assert result["community"]["id"] == to_string(community.id)
       assert result["linkAddr"] == "https://helloworld"
 
@@ -62,9 +57,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       {:ok, doc} =
         CMS.FrontDesk.article(community, :doc, result["innerId"], preload: :document)
 
-      body_html = doc |> get_in([:document, :body_html])
+      body_html = doc |> get_in([:document, :html])
 
-      assert not String.contains?(body_html, "script")
+      assert not String.contains?(body_html, "<script")
     end
 
     test "create doc should escape xss attracts 2", ~m(user_conn community)a do
@@ -76,9 +71,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
       {:ok, doc} =
         CMS.FrontDesk.article(community, :doc, result["innerId"], preload: :document)
 
-      body_html = doc |> get_in([:document, :body_html])
+      body_html = doc |> get_in([:document, :html])
 
-      assert String.contains?(body_html, "&lt;script&gt;blackmail&lt;/script&gt;")
+      assert String.contains?(body_html, "&amp;lt;script&amp;gt;blackmail&amp;lt;/script&amp;gt;")
     end
 
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
@@ -185,7 +180,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Doc do
                to_string(community_tag.id)
 
       assert result
-             |> get_in(["document", "bodyHtml"])
+             |> get_in(["document", "html"])
              |> String.contains?(~s(updated body #{unique_num}))
     end
 

@@ -38,18 +38,15 @@ const GroupTags: FC<TGroupTags> = ({ tags, activeTag, onSelect }) => {
 
 const FilterPanel: FC<TProps> = ({ groupedTags, activeTag, onSelect }) => {
   const s = useSalon()
+  const groupTitles = keys(groupedTags) as string[]
 
   return (
     <div className={s.wrapper}>
-      {keys(groupedTags).map((title) => {
+      {groupTitles.map((title) => {
         return (
-          <div key={title as string}>
+          <div key={title}>
             <div className={s.groupTitle}>{title}</div>
-            <GroupTags
-              tags={groupedTags[title as string]}
-              onSelect={onSelect}
-              activeTag={activeTag}
-            />
+            <GroupTags tags={groupedTags[title]} onSelect={onSelect} activeTag={activeTag} />
           </div>
         )
       })}

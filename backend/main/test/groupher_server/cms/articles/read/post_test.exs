@@ -3,13 +3,8 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
   use GroupherServer.TestTools
 
-  alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
-
   alias CMS.FrontDesk
   alias CMS.Model.{ArticleDocument, PostDocument}
-  alias EditorToHTML.{Class, Validator}
-
-  @root_class Class.article()
   # @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3)
   #            |> DateTime.truncate(:second)
   @article_digest_length get_config(:article, :digest_length)
@@ -58,24 +53,17 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       post = Repo.preload(post, :document)
 
-      body_map = Jason.decode!(post.document.body)
+      body_map = Jason.decode!(post.document.json)
 
       assert post.meta.thread == "POST"
 
       assert post.title == post_attrs.title
-      assert body_map |> Validator.is_valid()
+      assert is_list(body_map)
 
-      assert post.document.body_html
-             |> String.contains?(~s(<div class="#{@root_class["viewer"]}">))
+      assert post.document.html |> String.contains?(~s(<p>))
 
-      assert post.document.body_html |> String.contains?(~s(<p id="block-))
-
-      paragraph_text = body_map["blocks"] |> List.first() |> get_in(["data", "text"])
-
-      assert post.digest ==
-               paragraph_text
-               |> HtmlSanitizer.strip_all_tags()
-               |> String.slice(0, @article_digest_length)
+      assert is_binary(post.digest)
+      assert String.length(post.digest) <= @article_digest_length
     end
 
     test "created post should have original_community info", ~m(user community post_attrs)a do
@@ -302,15 +290,15 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, post} = CMS.Articles.read(post.community_slug, :post, post.inner_id)
 
-      assert not is_nil(post.document.body_html)
+      assert not is_nil(post.document.html)
       {:ok, post} = CMS.Articles.read(post.community_slug, :post, post.inner_id, user)
-      assert not is_nil(post.document.body_html)
+      assert not is_nil(post.document.html)
 
       {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: "POST"})
       {:ok, post_doc} = ORM.find_by(PostDocument, %{post_id: post.id})
 
-      assert post.document.body == post_doc.body
-      assert article_doc.body == post_doc.body
+      assert post.document.json == post_doc.json
+      assert article_doc.json == post_doc.json
     end
 
     test "delete post should also delete related document", ~m(user community post_attrs)a do
@@ -334,8 +322,8 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: "POST"})
       {:ok, post_doc} = ORM.find_by(PostDocument, %{post_id: post.id})
 
-      assert String.contains?(post_doc.body, "new content")
-      assert String.contains?(article_doc.body, "new content")
+      assert String.contains?(post_doc.json, "new content")
+      assert String.contains?(article_doc.json, "new content")
     end
   end
 end

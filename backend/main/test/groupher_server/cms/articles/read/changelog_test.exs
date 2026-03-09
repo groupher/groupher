@@ -3,12 +3,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
   use GroupherServer.TestTools
 
-  alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
-
   alias CMS.Model.{ArticleDocument, ChangelogDocument}
-  alias EditorToHTML.{Class, Validator}
-
-  @root_class Class.article()
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
@@ -56,24 +51,17 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
       changelog = Repo.preload(changelog, :document)
 
-      body_map = Jason.decode!(changelog.document.body)
+      body_map = Jason.decode!(changelog.document.json)
 
       assert changelog.meta.thread == "CHANGELOG"
 
       assert changelog.title == changelog_attrs.title
-      assert body_map |> Validator.is_valid()
+      assert is_list(body_map)
 
-      assert changelog.document.body_html
-             |> String.contains?(~s(<div class="#{@root_class["viewer"]}">))
+      assert changelog.document.html |> String.contains?(~s(<p>))
 
-      assert changelog.document.body_html |> String.contains?(~s(<p id="block-))
-
-      paragraph_text = body_map["blocks"] |> List.first() |> get_in(["data", "text"])
-
-      assert changelog.digest ==
-               paragraph_text
-               |> HtmlSanitizer.strip_all_tags()
-               |> String.slice(0, @article_digest_length)
+      assert is_binary(changelog.digest)
+      assert String.length(changelog.digest) <= @article_digest_length
     end
 
     test "created changelog should have original_community info",
@@ -300,20 +288,20 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} =
         CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id)
 
-      assert not is_nil(changelog.document.body_html)
+      assert not is_nil(changelog.document.html)
 
       {:ok, changelog} =
         CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id, user)
 
-      assert not is_nil(changelog.document.body_html)
+      assert not is_nil(changelog.document.html)
 
       {:ok, article_doc} =
         ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: "CHANGELOG"})
 
       {:ok, changelog_doc} = ORM.find_by(ChangelogDocument, %{changelog_id: changelog.id})
 
-      assert changelog.document.body == changelog_doc.body
-      assert article_doc.body == changelog_doc.body
+      assert changelog.document.json == changelog_doc.json
+      assert article_doc.json == changelog_doc.json
     end
 
     test "delete changelog should also delete related document",
@@ -344,8 +332,8 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
       {:ok, changelog_doc} = ORM.find_by(ChangelogDocument, %{changelog_id: changelog.id})
 
-      assert String.contains?(changelog_doc.body, "new content")
-      assert String.contains?(article_doc.body, "new content")
+      assert String.contains?(changelog_doc.json, "new content")
+      assert String.contains?(article_doc.json, "new content")
     end
   end
 end

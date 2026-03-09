@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias Helper.{Multi, Later, ORM, T}
+  alias Helper.{ContentPipeline, Multi, Later, ORM, T}
 
   alias Accounts.Model.User
   alias CMS.FrontDesk
@@ -349,14 +349,13 @@ defmodule GroupherServer.CMS.Comments.States do
     import GroupherServer.CMS.Model.Embeds.CommentMeta, only: [default_meta: 0]
     import GroupherServer.CMS.Model.Embeds.CommentEmotion, only: [default_emotions: 0]
 
-    with {:ok, %{body: body, body_html: body_html}} <-
-           Helper.Converter.Article.parse_body(body) do
+    with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
       thread = foreign_key |> to_string |> String.trim_trailing("_id") |> String.upcase()
 
       attrs = %{
         author_id: user_id,
-        body: body,
-        body_html: body_html,
+        body: payload.json,
+        body_html: payload.html,
         emotions: default_emotions(),
         floor: next_floor(article, foreign_key),
         is_article_author: user_id == article.author.user.id,

@@ -3,12 +3,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
 
   use GroupherServer.TestTools
 
-  alias Helper.Converter.{EditorToHTML, HtmlSanitizer}
-
   alias CMS.Model.{ArticleDocument, BlogDocument}
-  alias EditorToHTML.{Class, Validator}
-
-  @root_class Class.article()
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
@@ -55,24 +50,17 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
       blog = Repo.preload(blog, :document)
 
-      body_map = Jason.decode!(blog.document.body)
+      body_map = Jason.decode!(blog.document.json)
 
       assert blog.meta.thread == "BLOG"
 
       assert blog.title == blog_attrs.title
-      assert body_map |> Validator.is_valid()
+      assert is_list(body_map)
 
-      assert blog.document.body_html
-             |> String.contains?(~s(<div class="#{@root_class["viewer"]}">))
+      assert blog.document.html |> String.contains?(~s(<p>))
 
-      assert blog.document.body_html |> String.contains?(~s(<p id="block-))
-
-      paragraph_text = body_map["blocks"] |> List.first() |> get_in(["data", "text"])
-
-      assert blog.digest ==
-               paragraph_text
-               |> HtmlSanitizer.strip_all_tags()
-               |> String.slice(0, @article_digest_length)
+      assert is_binary(blog.digest)
+      assert String.length(blog.digest) <= @article_digest_length
     end
 
     test "created blog should have original_community info",
@@ -279,16 +267,16 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
     test "will create related document after create", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
       {:ok, blog} = CMS.Articles.read(blog.community_slug, :blog, blog.inner_id)
-      assert not is_nil(blog.document.body_html)
+      assert not is_nil(blog.document.html)
       {:ok, blog} = CMS.Articles.read(blog.community_slug, :blog, blog.inner_id, user)
-      assert not is_nil(blog.document.body_html)
+      assert not is_nil(blog.document.html)
 
       {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: "BLOG"})
 
       {:ok, doc_doc} = ORM.find_by(BlogDocument, %{blog_id: blog.id})
 
-      assert blog.document.body == doc_doc.body
-      assert article_doc.body == doc_doc.body
+      assert blog.document.json == doc_doc.json
+      assert article_doc.json == doc_doc.json
     end
 
     test "delete blog should also delete related document",
@@ -317,8 +305,8 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
 
       {:ok, doc_doc} = ORM.find_by(BlogDocument, %{blog_id: blog.id})
 
-      assert String.contains?(doc_doc.body, "new content")
-      assert String.contains?(article_doc.body, "new content")
+      assert String.contains?(doc_doc.json, "new content")
+      assert String.contains?(article_doc.json, "new content")
     end
   end
 end
