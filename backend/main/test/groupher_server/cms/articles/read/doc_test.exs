@@ -7,9 +7,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
   alias CMS.FrontDesk
   alias CMS.Model.{ArticleDocument, DocDocument}
-  alias EditorToHTML.{Class, Validator}
-
-  @root_class Class.article()
+  alias EditorToHTML.Validator
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
@@ -56,17 +54,14 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       doc = Repo.preload(doc, :document)
 
-      body_map = Jason.decode!(doc.document.body)
+      body_map = Jason.decode!(doc.document.json)
 
       assert doc.meta.thread == "DOC"
 
       assert doc.title == doc_attrs.title
       assert body_map |> Validator.is_valid()
 
-      assert doc.document.body_html
-             |> String.contains?(~s(<div class="#{@root_class["viewer"]}">))
-
-      assert doc.document.body_html |> String.contains?(~s(<p id="block-))
+      assert doc.document.html |> String.contains?(~s(<p>))
 
       paragraph_text = body_map["blocks"] |> List.first() |> get_in(["data", "text"])
 
@@ -280,16 +275,16 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
     test "will create related document after create", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       {:ok, doc} = CMS.Articles.read(doc.community_slug, :doc, doc.inner_id)
-      assert not is_nil(doc.document.body_html)
+      assert not is_nil(doc.document.html)
       {:ok, doc} = CMS.Articles.read(doc.community_slug, :doc, doc.inner_id, user)
-      assert not is_nil(doc.document.body_html)
+      assert not is_nil(doc.document.html)
 
       {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: "DOC"})
 
       {:ok, doc_doc} = ORM.find_by(DocDocument, %{doc_id: doc.id})
 
-      assert doc.document.body == doc_doc.body
-      assert article_doc.body == doc_doc.body
+      assert doc.document.json == doc_doc.json
+      assert article_doc.json == doc_doc.json
     end
 
     test "delete doc should also delete related document",
@@ -317,8 +312,8 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
       {:ok, doc_doc} = ORM.find_by(DocDocument, %{doc_id: doc.id})
 
-      assert String.contains?(doc_doc.body, "new content")
-      assert String.contains?(article_doc.body, "new content")
+      assert String.contains?(doc_doc.json, "new content")
+      assert String.contains?(article_doc.json, "new content")
     end
   end
 end

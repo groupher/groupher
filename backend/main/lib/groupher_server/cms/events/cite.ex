@@ -39,6 +39,7 @@ defmodule GroupherServer.CMS.Events.Cite do
   alias CMS.Events.{CitedArtiment, Event}
   alias CMS.FrontDesk
   alias CMS.Model.Comment
+  alias Helper.ContentPipeline
   alias Helper.Multi
 
   @site_host get_config(:general, :site_host)
@@ -78,9 +79,21 @@ defmodule GroupherServer.CMS.Events.Cite do
 
   @spec handle(map()) :: cite_result()
   def handle(%{document: _document} = article) do
-    body = Repo.preload(article, :document) |> get_in([:document, :body])
-    article = article |> Map.put(:body, body)
-    handle(article)
+    with {:ok, ast} <- load_document_ast(article),
+         {:ok, artiment} <- FrontDesk.preload_author(article) do
+      Multi.new()
+      |> Multi.run(:delete_all_cited_artiments, fn _, _ ->
+        CitedArtiment.batch_delete_by(artiment)
+      end)
+      |> Multi.run(:update_cited_info, fn _, _ ->
+        ast
+        |> parse_cited_from_ast(artiment)
+        |> merge_same_block_linker(:cited_by_id)
+        |> CitedArtiment.batch_insert()
+      end)
+      |> Repo.transaction()
+      |> result()
+    end
   end
 
   defp parse_cited_per_block(artiment, %{"id" => block_id, "data" => %{"text" => text}}) do
@@ -98,6 +111,37 @@ defmodule GroupherServer.CMS.Events.Cite do
     end)
     |> Enum.uniq()
   end
+
+  defp load_document_ast(article) do
+    case Repo.preload(article, :document) |> get_in([:document, :json]) do
+      nil -> {:ok, []}
+      json when is_binary(json) -> ContentPipeline.decode(json)
+      _ -> {:error, {:custom, "invalid json body"}}
+    end
+  end
+
+  defp parse_cited_from_ast(ast, artiment) when is_list(ast) do
+    Enum.reduce(ast, [], fn node, acc ->
+      block_id = node_block_id(node)
+      links = collect_links_from_node(node)
+      acc ++ parse_links_in_block(artiment, block_id, links)
+    end)
+  end
+
+  defp parse_cited_from_ast(_, _), do: []
+
+  defp collect_links_from_node(%{"text" => text}) when is_binary(text),
+    do: extract_links_by_regex(text)
+
+  defp collect_links_from_node(%{"children" => children}) when is_list(children) do
+    Enum.reduce(children, [], fn node, acc -> acc ++ collect_links_from_node(node) end)
+  end
+
+  defp collect_links_from_node(_), do: []
+
+  defp node_block_id(%{"id" => block_id}) when is_binary(block_id), do: block_id
+  defp node_block_id(%{"_id" => block_id}) when is_binary(block_id), do: block_id
+  defp node_block_id(_), do: "block-unknown"
 
   defp parse_valid_cited(content_id, link) do
     with {:ok, cited} <- parse_cited_in_link(link) do

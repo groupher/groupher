@@ -56,7 +56,7 @@ defmodule GroupherServer.Test.Helper.Schema do
             avatar
           }
           document {
-            bodyHtml
+            html
           }
           communities {
             id
@@ -294,7 +294,7 @@ defmodule GroupherServer.Test.Helper.Schema do
         title
         linkAddr
         document {
-          bodyHtml
+          html
         }
         community {
           id
@@ -363,7 +363,7 @@ defmodule GroupherServer.Test.Helper.Schema do
         innerId
         title
         document {
-          bodyHtml
+          html
         }
         copyRight
         meta {

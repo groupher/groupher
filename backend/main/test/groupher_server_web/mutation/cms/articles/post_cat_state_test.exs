@@ -39,6 +39,15 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
       assert "FEATURE" == created["cat"]
     end
 
+    test "set cat rejects non-enum value", ~m(user_conn community post)a do
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        cat: "feature"
+      }
+
+      assert user_conn |> mutation_error?(@set_cat_query, variables)
+    end
+
     @set_state_query """
     mutation(
       $article: ArticleRefInput!
@@ -62,6 +71,15 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
       created = user_conn |> gq_mutation(@set_state_query, variables)
 
       assert "DONE" == created["state"]
+    end
+
+    test "set state rejects non-enum value", ~m(user_conn community post)a do
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        state: "done"
+      }
+
+      assert user_conn |> mutation_error?(@set_state_query, variables)
     end
   end
 end

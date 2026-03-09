@@ -57,8 +57,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :thread_document do
-    field(:body, :string)
-    field(:body_html, :string)
+    field(:json, :string)
+    field(:markdown, :string)
+    field(:markdown_toc, :json)
+    field(:html, :string)
+    field(:rss, :string)
   end
 
   object :post do

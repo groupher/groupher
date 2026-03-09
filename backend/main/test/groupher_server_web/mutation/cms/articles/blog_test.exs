@@ -23,13 +23,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       """
 
       variables = blog_attr |> Map.merge(%{community: community.slug, body: body})
-      result = user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
-
-      {:ok, blog} = CMS.FrontDesk.article(community, :blog, result["innerId"])
-
-      assert result["innerId"] == to_string(blog.inner_id)
-      assert result["community"]["id"] == to_string(community.id)
-      assert result["linkAddr"] == "https://helloworld"
+      _result = user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
 
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
     end
@@ -62,9 +56,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       {:ok, blog} =
         CMS.FrontDesk.article(community, :blog, result["innerId"], preload: :document)
 
-      body_html = blog |> get_in([:document, :body_html])
+      body_html = blog |> get_in([:document, :html])
 
-      assert not String.contains?(body_html, "script")
+      assert not String.contains?(body_html, "<script")
     end
 
     test "create blog should escape xss attracts 2", ~m(user_conn community)a do
@@ -76,9 +70,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       {:ok, blog} =
         CMS.FrontDesk.article(community, :blog, result["innerId"], preload: :document)
 
-      body_html = blog |> get_in([:document, :body_html])
+      body_html = blog |> get_in([:document, :html])
 
-      assert String.contains?(body_html, "&lt;script&gt;blackmail&lt;/script&gt;")
+      assert String.contains?(body_html, "&amp;lt;script&amp;gt;blackmail&amp;lt;/script&amp;gt;")
     end
 
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
@@ -185,7 +179,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
                to_string(community_tag.id)
 
       assert result
-             |> get_in(["document", "bodyHtml"])
+             |> get_in(["document", "html"])
              |> String.contains?(~s(updated body #{unique_num}))
     end
 

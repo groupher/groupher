@@ -58,3 +58,5 @@ config :groupher_server, GroupherServer.Repo,
 config :groupher_server, :github_oauth,
   client_id: System.get_env("OAUTH_GITHUB_CLIENT_ID"),
   client_secret: System.get_env("OAUTH_GITHUB_CLIENT_SECRET")
+
+config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Mock

@@ -21,16 +21,22 @@ defmodule GroupherServer.CMS.Model.ChangelogDocument do
   @max_body_length get_config(:article, :max_length)
   @min_body_length get_config(:article, :min_length)
 
-  @required_fields ~w(body body_html changelog_id)a
-  @optional_fields []
+  @required_fields ~w(json changelog_id)a
+  @optional_fields ~w(markdown markdown_toc html rss plain_text digest content_hash schema_version)a
 
   @type t :: %ChangelogDocument{}
   schema "changelog_documents" do
     belongs_to(:changelog, Changelog, foreign_key: :changelog_id)
 
-    field(:body, :string)
-    field(:body_html, :string)
-    field(:toc, :map)
+    field(:json, :string)
+    field(:markdown, :string)
+    field(:markdown_toc, :map)
+    field(:html, :string)
+    field(:rss, :string)
+    field(:plain_text, :string)
+    field(:digest, :string)
+    field(:content_hash, :string)
+    field(:schema_version, :integer, default: 1)
   end
 
   @doc false
@@ -38,13 +44,13 @@ defmodule GroupherServer.CMS.Model.ChangelogDocument do
     changelog
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
-    |> validate_length(:body, min: @min_body_length, max: @max_body_length)
+    |> validate_length(:json, min: @min_body_length, max: @max_body_length)
   end
 
   @doc false
   def update_changeset(%ChangelogDocument{} = changelog, attrs) do
     changelog
     |> cast(attrs, @optional_fields ++ @required_fields)
-    |> validate_length(:body, min: @min_body_length, max: @max_body_length)
+    |> validate_length(:json, min: @min_body_length, max: @max_body_length)
   end
 end
