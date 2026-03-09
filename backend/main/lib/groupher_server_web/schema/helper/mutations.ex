@@ -46,7 +46,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
   include:
   -----
   upvote_[thread]
-  unto_emotion_[thread]
+  undo_upvote_[thread]
   """
   defmacro article_upvote_mutation(thread) do
     quote do
@@ -181,7 +181,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
   # TODO: if post belongs to multi communities, unset instead delete
   defmacro article_delete_mutation(thread) do
     quote do
-      @desc unquote("delete a #{thread}, not delete")
+      @desc unquote("permanently delete a #{thread}")
       field unquote(:"delete_#{thread}"), unquote(thread) do
         arg(:article, non_null(:article_ref_input))
 
