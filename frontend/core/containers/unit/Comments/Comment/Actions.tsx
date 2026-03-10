@@ -44,7 +44,7 @@ const Actions: FC<TProps> = ({ data }) => {
 
   let extraOptions = []
 
-  if (data.author.login === accountInfo?.user.login) {
+  if (data.author?.login === accountInfo?.user?.login) {
     extraOptions = [
       {
         key: 'edit',
@@ -95,7 +95,7 @@ const Actions: FC<TProps> = ({ data }) => {
           type='button'
           className={s.replyAction}
           onClick={() => {
-            if (accountInfo) return authWarn()
+            if (!accountInfo) return authWarn()
 
             openReplyEditor(data)
           }}

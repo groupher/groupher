@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Model.{Comment, Community, Thread}
+  alias CMS.Model.{Comment, Community, Embeds, Thread}
   alias Helper.{ORM, QueryBuilder, T}
 
   @article_threads Application.compile_env(:groupher_server, :article, [])
@@ -374,12 +374,9 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   defp extract_embed_user(%User{} = user) do
-    %{
-      user_id: user.id,
-      avatar: user.avatar,
-      login: user.login,
-      nickname: user.nickname
-    }
+    user
+    |> Embeds.User.from_account_user()
+    |> Map.from_struct()
   end
 
   defp user_id_match?(user, user_id) do

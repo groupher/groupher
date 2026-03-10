@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
   @tag_count_range Config.tag_count_range()
   @article_count_per_thread Config.article_count_per_thread()
-  @comment_count_per_article Config.comment_count_per_article()
+  @comment_count_range Config.comment_count_range()
   @article_upvotes_range Config.article_upvotes_range()
   @comment_upvotes_range Config.comment_upvotes_range()
   @comment_replies_range Config.comment_replies_range()
@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
   @spec delete(String.t() | atom()) :: T.domain_res(:ok)
   def delete(slug) do
     with {:ok, community} <- ORM.find_by(Community, %{slug: to_string(slug)}),
-         {post_ids, changelog_ids, doc_ids} <- article_ids(community.id),
+         {post_ids, changelog_ids, doc_ids} <- article_ids(community),
          comment_ids <- comments_ids(post_ids, changelog_ids, doc_ids),
          {:ok, _} <- delete_comment_relations(comment_ids),
          {:ok, _} <- delete_article_relations(post_ids, changelog_ids, doc_ids),
@@ -87,8 +87,19 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     article_count_per_thread =
       Keyword.get(opts, :article_count_per_thread, @article_count_per_thread)
 
-    comment_count_per_article =
-      Keyword.get(opts, :comment_count_per_article, @comment_count_per_article)
+    comment_count_range =
+      case Keyword.get(opts, :comment_count_range) do
+        {min, max} when is_integer(min) and is_integer(max) and min <= max ->
+          {min, max}
+
+        _ ->
+          comment_count_per_article = Keyword.get(opts, :comment_count_per_article)
+
+          case comment_count_per_article do
+            count when is_integer(count) and count >= 0 -> {count, count}
+            _ -> @comment_count_range
+          end
+      end
 
     article_upvotes_range = Keyword.get(opts, :article_upvotes_range, @article_upvotes_range)
     comment_upvotes_range = Keyword.get(opts, :comment_upvotes_range, @comment_upvotes_range)
@@ -108,7 +119,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
             thread,
             count_range: {article_count_per_thread, article_count_per_thread},
             upvotes_range: article_upvotes_range,
-            comment_range: {comment_count_per_article, comment_count_per_article},
+            comment_range: comment_count_range,
             comment_upvotes_range: comment_upvotes_range,
             replies_range: comment_replies_range,
             tag_ids: Map.get(tags_by_thread, thread, [])
@@ -186,13 +197,30 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     end
   end
 
-  defp article_ids(community_id) do
-    post_ids = Repo.all(from(p in Post, where: p.community_id == ^community_id, select: p.id))
+  defp article_ids(%Community{id: community_id, slug: community_slug}) do
+    post_ids =
+      Repo.all(
+        from(p in Post,
+          where: p.community_id == ^community_id or p.community_slug == ^community_slug,
+          select: p.id
+        )
+      )
 
     changelog_ids =
-      Repo.all(from(c in Changelog, where: c.community_id == ^community_id, select: c.id))
+      Repo.all(
+        from(c in Changelog,
+          where: c.community_id == ^community_id or c.community_slug == ^community_slug,
+          select: c.id
+        )
+      )
 
-    doc_ids = Repo.all(from(d in Doc, where: d.community_id == ^community_id, select: d.id))
+    doc_ids =
+      Repo.all(
+        from(d in Doc,
+          where: d.community_id == ^community_id or d.community_slug == ^community_slug,
+          select: d.id
+        )
+      )
 
     {post_ids, changelog_ids, doc_ids}
   end

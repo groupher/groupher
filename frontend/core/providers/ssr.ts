@@ -165,7 +165,7 @@ export const getPost = async (community: string, id: string): Promise<TPost | nu
     article: {
       innerId: id,
       community,
-      thread: THREAD.POST,
+      thread: toGqlThread(THREAD.POST) || THREAD.POST.toUpperCase(),
     },
     userHasLogin: false,
   })

@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
   alias Accounts.Model.User
   alias CMS.FrontDesk
-  alias CMS.Model.{Comment, CommentReply, CommentUpvote, PinnedComment}
+  alias CMS.Model.{Comment, CommentReply, CommentUpvote, Embeds, PinnedComment}
 
   alias CMS.Comments.List, as: CommentList
   alias CMS.Comments.Read, as: CommentRead
@@ -371,20 +371,41 @@ defmodule GroupherServer.CMS.Comments.States do
          %{comments_participants: participants} = article,
          %User{} = user
        ) do
-    cur_participants = participants |> List.insert_at(0, user) |> Enum.uniq_by(& &1.id)
+    normalized_participants =
+      participants
+      |> Enum.map(&Embeds.User.normalize/1)
+      |> Enum.filter(&Embeds.User.valid?/1)
+
+    cur_participants =
+      normalized_participants
+      |> List.insert_at(0, Embeds.User.from_account_user(user))
+      |> Enum.filter(&Embeds.User.valid?/1)
+      |> Enum.uniq_by(&Embeds.User.uniq_key/1)
 
     meta = article.meta |> Map.from_struct()
-    cur_participants_ids = (meta[:comments_participant_user_ids] ++ [user.id]) |> Enum.uniq()
+
+    cur_participants_ids =
+      (meta[:comments_participant_user_ids] ++ [user.id])
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
     meta = Map.merge(meta, %{comments_participant_user_ids: cur_participants_ids})
 
     latest_participants = cur_participants |> Enum.slice(0, @max_participator_count)
 
-    article
-    |> Ecto.Changeset.change()
-    |> Ecto.Changeset.put_change(:comments_participants_count, cur_participants_ids |> length)
-    |> Ecto.Changeset.put_embed(:comments_participants, latest_participants)
-    |> Ecto.Changeset.put_embed(:meta, meta)
-    |> Repo.update()
+    article = %{article | comments_participants: normalized_participants}
+
+    with {:ok, article} <-
+           article
+           |> Ecto.Changeset.change()
+           |> Ecto.Changeset.put_change(
+             :comments_participants_count,
+             cur_participants_ids |> length
+           )
+           |> Ecto.Changeset.put_embed(:comments_participants, latest_participants)
+           |> Repo.update() do
+      ORM.update_meta(article, meta)
+    end
   end
 
   defp add_participant_to_article(_, _), do: {:ok, :pass}

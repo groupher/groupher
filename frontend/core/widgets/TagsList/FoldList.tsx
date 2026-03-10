@@ -13,7 +13,7 @@ const FoldList: FC<TProps> = ({ items, max, size, ...spacing }) => {
 
   return (
     <div className={s.foldWrapper}>
-      <List items={items} size={size} max={max} withTitle={false} {...spacing} />
+      <List items={items} size={size} max={max} withTitle {...spacing} />
       <div className={s.more}>&nbsp;+{items.length}</div>
     </div>
   )

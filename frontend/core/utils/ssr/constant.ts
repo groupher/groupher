@@ -1,5 +1,6 @@
 import { HOME_COMMUNITY } from '~/const/name'
 import { THREAD } from '~/const/thread'
+import { toGqlThread } from '~/utils/thread'
 
 import type { TRequestPolicy } from './spec'
 
@@ -11,7 +12,7 @@ export const GQ_OPTION = {
 
 export const TAGS_FILTER = {
   community: HOME_COMMUNITY.slug,
-  thread: THREAD.POST.toUpperCase(),
+  thread: toGqlThread(THREAD.POST, 'TAGS') || THREAD.POST.toUpperCase(),
 }
 
 export const ARTICLES_FILTER = {

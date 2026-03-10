@@ -3,6 +3,7 @@ import useAccount from '~/hooks/useAccount'
 import useArticle from '~/hooks/useArticle'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TArticle, TArticleLoad } from '~/spec'
+import { toGqlThread } from '~/utils/thread'
 
 import S from './schema'
 
@@ -53,7 +54,7 @@ export default (): TRet => {
       article: {
         innerId,
         community,
-        thread: thread.toUpperCase(),
+        thread: toGqlThread(thread) || thread.toUpperCase(),
       },
       userHasLogin,
     }

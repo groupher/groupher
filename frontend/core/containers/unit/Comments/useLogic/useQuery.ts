@@ -40,7 +40,7 @@ export default (): TRet => {
 
   const loadCommentsState = (): void => {
     const params = {
-      id: article.id,
+      id: article.innerId,
       thread: article.meta.thread,
       freshkey: uid.gen(),
     }

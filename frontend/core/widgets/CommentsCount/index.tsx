@@ -1,9 +1,7 @@
-import { type FC, memo, Fragment } from 'react'
-
-import type { TSizeSM, TSpace } from '~/spec'
+import { type FC, Fragment, memo } from 'react'
 import SIZE from '~/const/size'
-
 import CommentSVG from '~/icons/Comment'
+import type { TSizeSM, TSpace } from '~/spec'
 
 import useSalon, { cn } from './salon'
 
@@ -20,13 +18,13 @@ const CommentsCount: FC<TProps> = ({ count, size = SIZE.SMALL, ...spacing }) => 
       {count >= 100 ? (
         <div className={cn(s.wrapper, s.highlightWrapper)}>
           <CommentSVG className={cn(s.icon, s.iconHighlight)} />
-          {size === SIZE.MEDIUM && <div className="mr-0.5" />}
+          {size === SIZE.MEDIUM && <div className='mr-0.5' />}
           <div className={s.count}>{count}</div>
         </div>
       ) : (
         <div className={s.wrapper}>
           <CommentSVG className={s.icon} />
-          {size === SIZE.MEDIUM && <div className="mr-0.5" />}
+          {size === SIZE.MEDIUM && <div className='mr-0.5' />}
           <div className={s.count}>{count}</div>
         </div>
       )}

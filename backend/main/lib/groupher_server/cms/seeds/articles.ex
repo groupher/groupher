@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   @article_emotions get_config(:article, :emotions)
   @article_count_range {Config.article_count_per_thread(), Config.article_count_per_thread()}
   @article_upvotes_range Config.article_upvotes_range()
-  @comment_count_range {Config.comment_count_per_article(), Config.comment_count_per_article()}
+  @comment_count_range Config.comment_count_range()
   @comment_upvotes_range Config.comment_upvotes_range()
   @comment_replies_range Config.comment_replies_range()
   @post_title_zh [
@@ -47,7 +47,10 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     with {:ok, community} <- ORM.find_by(Community, slug: community_slug),
          {:ok, user} <- db_insert(:user) do
       attrs = mock_attrs(thread, %{community_id: community.id, community: community})
-      CMS.Articles.create(community, thread, attrs, user)
+
+      with {:ok, article} <- CMS.Articles.create(community, thread, attrs, user) do
+        seed_views(article)
+      end
     end
   end
 
@@ -93,6 +96,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
           |> maybe_put_post_title(index, count, thread)
 
         {:ok, article} = CMS.Articles.create(community, thread, attrs, author)
+        {:ok, article} = seed_views(article)
 
         attach_tags(article, tag_ids)
         {:ok, article} = seed_upvotes(article, article_upvotes_range)
@@ -196,4 +200,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
 
     Map.put(attrs, :title, title)
   end
+
+  defp seed_views(article),
+    do: ORM.update(article, %{views: Enum.random(100..1000)}, strict: false)
 end
