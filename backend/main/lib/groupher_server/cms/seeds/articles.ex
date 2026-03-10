@@ -17,6 +17,30 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   @comment_count_range {Config.comment_count_per_article(), Config.comment_count_per_article()}
   @comment_upvotes_range Config.comment_upvotes_range()
   @comment_replies_range Config.comment_replies_range()
+  @post_title_zh [
+    "一次线上故障复盘记录",
+    "这个方案在生产可行吗",
+    "从零搭建服务监控实践",
+    "缓存雪崩排查与修复",
+    "如何优化接口响应时间",
+    "数据库索引使用经验",
+    "团队协作中的工程规范",
+    "发布流程自动化改造",
+    "日志体系设计心得",
+    "复杂需求拆解方法"
+  ]
+  @post_title_en [
+    "Production incident retrospective",
+    "Is this architecture production ready",
+    "Service observability from scratch",
+    "Cache stampede debugging notes",
+    "How we improved API latency",
+    "Database indexing lessons learned",
+    "Engineering standards in teams",
+    "Automating the release workflow",
+    "Designing a practical logging system",
+    "How to break down complex requirements"
+  ]
 
   @spec mock(String.t(), atom()) :: T.domain_res(map())
   def mock(community_slug, thread) when is_binary(community_slug) and is_atom(thread) do
@@ -61,9 +85,13 @@ defmodule GroupherServer.CMS.Seeds.Articles do
       end
 
     articles =
-      Enum.reduce(1..count, [], fn _index, acc ->
+      Enum.reduce(1..count, [], fn index, acc ->
         {:ok, author} = db_insert(:user)
-        attrs = mock_attrs(thread, %{community_id: community.id})
+
+        attrs =
+          mock_attrs(thread, %{community_id: community.id})
+          |> maybe_put_post_title(index, count, thread)
+
         {:ok, article} = CMS.Articles.create(community, thread, attrs, author)
 
         attach_tags(article, tag_ids)
@@ -153,4 +181,19 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     do: Enum.random(min..max)
 
   defp random_range(_), do: Enum.random(20..30)
+
+  defp maybe_put_post_title(attrs, _index, _count, thread) when thread != :post, do: attrs
+
+  defp maybe_put_post_title(attrs, index, count, :post) do
+    half = div(count, 2)
+    lang = if index <= half, do: :zh, else: :en
+
+    title =
+      case lang do
+        :zh -> Enum.at(@post_title_zh, rem(index - 1, length(@post_title_zh)))
+        :en -> Enum.at(@post_title_en, rem(index - 1, length(@post_title_en)))
+      end
+
+    Map.put(attrs, :title, title)
+  end
 end

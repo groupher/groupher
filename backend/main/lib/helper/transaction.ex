@@ -90,7 +90,8 @@ defmodule Helper.Transaction do
   defp lock_queryable(%{inner_id: _} = article) do
     article.__struct__
     |> where(id: ^article.id)
-    |> preload([:communities, author: :user])
+    # Preload :community so subscribe_community event handlers get a loaded struct.
+    |> preload([:community, :communities, author: :user])
     |> lock("FOR UPDATE")
     |> Repo.one!()
   rescue

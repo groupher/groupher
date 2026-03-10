@@ -10,4 +10,4 @@ SLUG="$1"
 
 cd "$(dirname "$0")/.."
 
-MIX_ENV=mock mix run scripts/delete_full_community.exs -- "$SLUG"
+MIX_ENV=mock mix run scripts/delete_full_community.exs "$SLUG"

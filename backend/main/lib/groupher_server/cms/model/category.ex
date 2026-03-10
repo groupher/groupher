@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Model.Category do
 
   alias CMS.Model.{Author, Community, CommunityCategory}
   alias Helper.Constant.DBPrefix
+  alias Helper.Validator.Slug
 
   @schema_prefix DBPrefix.cms()
 
@@ -40,6 +41,7 @@ defmodule GroupherServer.CMS.Model.Category do
     category
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
+    |> Slug.validate_changeset(:slug)
     # |> foreign_key_constraint(:community_id)
     # |> foreign_key_constraint(:author_id)
     |> unique_constraint(:title, name: :categories_title_index)
@@ -49,6 +51,7 @@ defmodule GroupherServer.CMS.Model.Category do
   def update_changeset(%Category{} = category, attrs) do
     category
     |> cast(attrs, @optional_fields ++ @required_fields)
+    |> Slug.validate_changeset(:slug)
     # |> foreign_key_constraint(:community_id)
     # |> foreign_key_constraint(:author_id)
     |> unique_constraint(:title, name: :categories_title_index)

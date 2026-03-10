@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
 
   alias CMS.Model.{Author, Community}
   alias Helper.Constant.DBPrefix
+  alias Helper.Validator.Slug
 
   @required_fields ~w(thread title color author_id community_id slug)a
   @updatable_fields ~w(thread title desc color community_id group extra icon slug index layout)a
@@ -40,6 +41,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
     tag
     |> cast(attrs, @required_fields ++ @updatable_fields)
     |> validate_required(@required_fields)
+    |> Slug.validate_changeset(:slug)
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:community_id)
   end
@@ -47,6 +49,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
   def update_changeset(%CommunityTag{} = tag, attrs) do
     tag
     |> cast(attrs, @updatable_fields)
+    |> Slug.validate_changeset(:slug)
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:community_id)
   end

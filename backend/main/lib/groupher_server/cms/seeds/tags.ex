@@ -11,6 +11,19 @@ defmodule GroupherServer.CMS.Seeds.Tags do
 
   @tag_colors ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink", "grey"]
   @seed_groups ["General", "Engineering", "Resources", "Ecosystem"]
+  @tag_title_zh ["排查", "经验", "讨论", "实战", "建议", "复盘", "教程", "技巧", "案例", "工具"]
+  @tag_title_en [
+    "debug",
+    "guide",
+    "discussion",
+    "practice",
+    "notes",
+    "retrospective",
+    "tips",
+    "case",
+    "tools",
+    "design"
+  ]
   @tag_count_range Config.tag_count_range()
   @group_count_range Config.group_count_range()
 
@@ -29,10 +42,17 @@ defmodule GroupherServer.CMS.Seeds.Tags do
 
       Enum.each(1..needed, fn index ->
         group = Enum.at(groups, rem(index - 1, length(groups)))
+        lang = if index <= div(count, 2), do: :zh, else: :en
+
+        title_seed =
+          case lang do
+            :zh -> Enum.at(@tag_title_zh, rem(index - 1, length(@tag_title_zh)))
+            :en -> Enum.at(@tag_title_en, rem(index - 1, length(@tag_title_en)))
+          end
 
         attrs = %{
-          title: "#{thread} tag #{index}",
-          slug: "#{thread}-#{index}-#{System.unique_integer([:positive, :monotonic])}",
+          title: "#{title_seed}#{index}",
+          slug: "#{thread}-#{lang}-#{index}-#{System.unique_integer([:positive, :monotonic])}",
           group: group,
           color: random_color()
         }
@@ -93,12 +113,12 @@ defmodule GroupherServer.CMS.Seeds.Tags do
         group: "技术与人文"
       },
       %{
-        slug: "IxD",
+        slug: "ixd",
         title: "交互设计",
         group: "技术与人文"
       },
       %{
-        slug: "DF",
+        slug: "df",
         title: "黑暗森林",
         group: "技术与人文"
       },
@@ -123,12 +143,12 @@ defmodule GroupherServer.CMS.Seeds.Tags do
         group: "生活与职场"
       },
       %{
-        slug: "WTF",
+        slug: "wtf",
         title: "吐槽",
         group: "其他"
       },
       %{
-        slug: "REC",
+        slug: "rec",
         title: "推荐",
         group: "其他"
       },
@@ -278,7 +298,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
       },
       %{
         title: "界面交互",
-        slug: "UI/UX",
+        slug: "ui-ux",
         group: "产品"
       },
       %{
@@ -326,7 +346,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
       },
       %{
         title: "推荐",
-        slug: "REC"
+        slug: "rec"
       },
       %{
         title: "二手",
@@ -334,7 +354,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
       },
       %{
         title: "吐槽",
-        slug: "WTF"
+        slug: "wtf"
       },
       %{
         title: "求/转/合租",
@@ -362,7 +382,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
       },
       %{
         title: "分享推荐",
-        slug: "REC",
+        slug: "rec",
         group: "技术与工程"
       },
       %{
@@ -507,7 +527,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
       },
       %{
         title: "推荐",
-        slug: "REC",
+        slug: "rec",
         group: "讨论"
       },
       %{
@@ -552,7 +572,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
       },
       %{
         title: "吐槽",
-        slug: "WTF",
+        slug: "wtf",
         group: "其他"
       }
     ]

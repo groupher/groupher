@@ -129,7 +129,9 @@ defmodule GroupherServer.Messaging.Notifications do
     |> Ecto.Changeset.change(attrs)
     |> Ecto.Changeset.put_embed(:from_users, [from_user])
     |> Ecto.Changeset.unique_constraint(:user_id, name: :notifications_unread_group_uniq_idx)
-    |> Repo.insert()
+    # Keep unique-conflict failures isolated, so the outer transaction can continue
+    # and fallback to find+merge without hitting 25P02 (aborted transaction).
+    |> Repo.insert(mode: :savepoint)
   end
 
   defp create_or_merge_notification(attrs, from_user) do

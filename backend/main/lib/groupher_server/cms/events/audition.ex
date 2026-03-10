@@ -54,23 +54,33 @@ defmodule GroupherServer.CMS.Events.Audition do
   @spec handle_audition_result(audition_result(), Comment.t() | map()) :: audition_result()
   def handle_audition_result({:ok, audit_res}, %{body_html: _} = comment) do
     audit_res = Map.merge(audit_res, %{illegal_comments: []})
-    CMS.Comments.unset_comment_illegal(comment.id, audit_res)
+
+    apply_moderation(fn ->
+      CMS.Comments.unset_comment_illegal(comment.id, audit_res)
+    end)
   end
 
   def handle_audition_result({:ok, audit_res}, article) do
     audit_res = Map.merge(audit_res, %{illegal_articles: []})
-    CMS.Articles.unset_illegal(article, audit_res)
+
+    apply_moderation(fn ->
+      CMS.Articles.unset_illegal(article, audit_res)
+    end)
   end
 
   def handle_audition_result(
         {:error, %{audit_failed: true} = audit_res},
         %{body_html: _} = comment
       ) do
-    CMS.Comments.set_comment_audit_failed(comment, audit_res)
+    apply_moderation(fn ->
+      CMS.Comments.set_comment_audit_failed(comment, audit_res)
+    end)
   end
 
   def handle_audition_result({:error, %{audit_failed: true} = audit_res}, article) do
-    CMS.Articles.set_audit_failed(article, audit_res)
+    apply_moderation(fn ->
+      CMS.Articles.set_audit_failed(article, audit_res)
+    end)
   end
 
   def handle_audition_result({:error, audit_res}, %{body_html: _} = comment) do
@@ -78,7 +88,10 @@ defmodule GroupherServer.CMS.Events.Audition do
     illegal_comments = [comment_addr]
 
     audit_res = Map.merge(audit_res, %{illegal_comments: illegal_comments})
-    CMS.Comments.set_comment_illegal(comment.id, audit_res)
+
+    apply_moderation(fn ->
+      CMS.Comments.set_comment_illegal(comment.id, audit_res)
+    end)
   end
 
   def handle_audition_result({:error, audit_res}, article) do
@@ -86,6 +99,21 @@ defmodule GroupherServer.CMS.Events.Audition do
     illegal_articles = [article_addr]
 
     audit_res = Map.merge(audit_res, %{illegal_articles: illegal_articles})
-    CMS.Articles.set_illegal(article, audit_res)
+
+    apply_moderation(fn ->
+      CMS.Articles.set_illegal(article, audit_res)
+    end)
+  end
+
+  defp apply_moderation(fun) when is_function(fun, 0) do
+    case fun.() do
+      # Background jobs may run after community/content cleanup.
+      {:error, :not_exist} -> {:ok, :pass}
+      {:error, {:not_exist, _}} -> {:ok, :pass}
+      result -> result
+    end
+  rescue
+    # Stale structs are expected in async jobs when target rows were deleted.
+    Ecto.StaleEntryError -> {:ok, :pass}
   end
 end

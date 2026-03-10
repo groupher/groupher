@@ -5,6 +5,7 @@ defmodule GroupherServer.CMS.Model.Thread do
   use Ecto.Schema
   import Ecto.Changeset
   alias Helper.Constant.DBPrefix
+  alias Helper.Validator.Slug
 
   @schema_prefix DBPrefix.cms()
 
@@ -28,6 +29,7 @@ defmodule GroupherServer.CMS.Model.Thread do
     |> validate_required(@required_fields)
     |> validate_length(:title, min: 2, max: 20)
     |> validate_length(:slug, min: 2, max: 20)
+    |> Slug.validate_changeset(:slug)
     |> unique_constraint(:title)
 
     # |> unique_constraint(:slug)

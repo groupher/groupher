@@ -2,6 +2,7 @@
 import { type FC, useCallback, useEffect, useRef, useState } from 'react'
 import LazyLoad from '~/widgets/LazyLoad'
 import type { TProps as TPropsBase } from '.'
+import { hasLoadedSrc, markLoadedSrc } from './cache'
 import useSalon, { cnMerge } from './salon/lazy_load_image'
 
 type TProps = Omit<Required<TPropsBase>, 'noLazy'>
@@ -18,29 +19,30 @@ const LazyLoadImg: FC<TProps> = ({
 }) => {
   const s = useSalon()
   const imgRef = useRef<HTMLImageElement | null>(null)
+  const isCachedSrc = hasLoadedSrc(src)
 
-  const [started, setStarted] = useState(visibleByDefault)
-  const [loaded, setLoaded] = useState(false)
+  const [started, setStarted] = useState(visibleByDefault || isCachedSrc)
+  const [loaded, setLoaded] = useState(isCachedSrc)
   const [errored, setErrored] = useState(false)
 
-  // ✅ Only visibleByDefault controls initial start; do NOT reset started on src changes.
+  // Keep started true for cached images and visibleByDefault.
   useEffect(() => {
-    setStarted(visibleByDefault)
-  }, [visibleByDefault])
+    setStarted(visibleByDefault || hasLoadedSrc(src))
+  }, [visibleByDefault, src])
 
-  // ✅ src changes reset only per-resource states
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // src changes reset per-resource states; cached src skips fallback.
   useEffect(() => {
-    setLoaded(false)
+    setLoaded(hasLoadedSrc(src))
     setErrored(false)
   }, [src])
 
   const handleVisible = useCallback(() => setStarted(true), [])
 
   const handleLoad = useCallback(() => {
+    markLoadedSrc(src)
     setLoaded(true)
     setErrored(false)
-  }, [])
+  }, [src])
 
   const handleError = useCallback(() => {
     console.warn('[LazyLoadImg] load error:', src)
@@ -56,6 +58,7 @@ const LazyLoadImg: FC<TProps> = ({
     if (!el || !el.complete) return
 
     if (el.naturalWidth > 0) {
+      markLoadedSrc(src)
       setLoaded(true)
       setErrored(false)
     } else {
