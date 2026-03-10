@@ -3,7 +3,6 @@ import { filter, keys, startsWith } from 'ramda'
 import { type FC, Fragment, useState } from 'react'
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import { groupByKey, sortByGroupIndex } from '~/helper'
-import useAccount from '~/hooks/useAccount'
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/Link'
 import type { TLinkItem } from '~/spec'
@@ -44,8 +43,6 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
 const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
   const s = useSalon()
 
-  const { isModerator } = useAccount()
-
   const _links = filter((item) => item.title !== '', links)
 
   const groupedLinks = groupByKey(sortByGroupIndex(_links), 'group')
@@ -70,7 +67,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
                 groupTitle={groupTitle}
                 links={curGroupLinks}
                 activePath={activePath}
-                showMoreFold={(links.length >= 2 && links[0].title !== '') || isModerator}
+                showMoreFold={curGroupLinks.length > 0}
               />
             )}
           </Fragment>
