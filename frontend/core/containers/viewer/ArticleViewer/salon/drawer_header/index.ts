@@ -6,7 +6,7 @@ export default () => {
   const { cn, hover, sexyVBorder } = useTwBelt()
 
   return {
-    wrapper: 'row-center h-9 mb-5 pl-0.5',
+    wrapper: 'row-center h-9 my-5 pl-0.5',
     backBtn: cn('size-7 -ml-1 mr-1.5', hover('bg')),
     iconBox: cn('size-7', hover('bg')),
     iconBoxRed: cn('size-7', hover('bg-red')),

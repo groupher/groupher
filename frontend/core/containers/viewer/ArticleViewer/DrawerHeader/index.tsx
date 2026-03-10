@@ -2,27 +2,24 @@ import { useRouter } from 'next/navigation'
 
 import ArrowSVG from '~/icons/Arrow'
 import WarningSVG from '~/icons/Warning'
-
-import Share from '~/widgets/Share'
 import ArticleSettingMenu from '~/widgets/ArticleSettingMenu'
-
-import ArticleNavi from './ArticleNavi'
-
+import Share from '~/widgets/Share'
 import useSalon, { cn } from '../salon/drawer_header'
+import ArticleNavi from './ArticleNavi'
 
 export default () => {
   const s = useSalon()
   const router = useRouter()
 
   return (
-    <div className={s.wrapper}>
-      <div className={s.backBtn} onClick={() => router.back()}>
+    <div className={s.wrapper} data-drawer-scroll-anchor>
+      <button className={s.backBtn} onClick={() => router.back()}>
         <ArrowSVG className={s.icon} />
-      </div>
-      <div className="ml-1" />
+      </button>
+      <div className='ml-1' />
       <ArticleNavi />
-      <div className="grow" />
-      <Share modalOffset="53%" />
+      <div className='grow' />
+      <Share modalOffset='53%' />
       <div className={s.divider} />
       <div className={s.iconBoxRed}>
         <WarningSVG className={cn(s.iconRed, 'size-4')} />

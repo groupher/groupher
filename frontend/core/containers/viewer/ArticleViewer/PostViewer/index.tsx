@@ -2,9 +2,8 @@
  * ArticleViewer
  */
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
-import { scrollDrawerToTop } from '~/dom'
 
 import useBroadcast from '~/hooks/useBroadcast'
 import ArticleBroadcast from '~/widgets/ArticleBroadcast'
@@ -27,10 +26,6 @@ export default () => {
 
   const [fixedHeaderVisible, setFixedHeaderVisible] = useState(false)
   const [footerVisible, setFooterVisible] = useState(false)
-
-  useEffect(() => {
-    scrollDrawerToTop()
-  }, [])
 
   const hideFixedHeader = () => setFixedHeaderVisible(false)
   const showFixedHeader = () => setFixedHeaderVisible(true)

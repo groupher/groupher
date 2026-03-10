@@ -158,8 +158,9 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
 }
 
 export const getPost = async (community: string, id: string): Promise<TPost | null> => {
-  // 'use cache'
-  // cacheLife('minutes')
+  'use cache'
+  cacheLife('minutes')
+
   // cacheTag(CACHE_TAG.articlesCache(community, THREAD.POST))
   const response = await gqFetch(P.post, {
     article: {

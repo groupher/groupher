@@ -4,11 +4,9 @@ import { useRouter } from 'next/navigation'
 import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { ANCHOR } from '~/const/dom'
-import EVENT from '~/const/event'
 import TYPE from '~/const/type'
 import { lockPage, unlockPage } from '~/dom'
 import useDrawerOffset from '~/hooks/useDrawerOffset'
-import useEvent from '~/hooks/useEvent'
 import useSalon, { cn } from '~/widgets/Drawer/salon'
 import { CLOSE_ANIMATION_BUFFER_MS, CLOSE_ANIMATION_MS } from '~/widgets/Drawer/salon/constant'
 import Portal from '~/widgets/Portal'
@@ -16,13 +14,59 @@ import Portal from '~/widgets/Portal'
 type TProps = {
   children: ReactNode
   type?: string
+  resetKey?: string | number
 }
 
-export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProps) {
+export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW, resetKey }: TProps) {
   const router = useRouter()
 
   const contentRef = useRef<HTMLDivElement | null>(null)
   const drawerRef = useRef<HTMLDivElement | null>(null)
+  const resetRafRef = useRef<number | null>(null)
+
+  const clearPendingReset = useCallback(() => {
+    if (resetRafRef.current) {
+      window.cancelAnimationFrame(resetRafRef.current)
+      resetRafRef.current = null
+    }
+  }, [])
+
+  const resetContentScroll = useCallback(() => {
+    const container = contentRef.current
+    if (!container) return false
+
+    const anchor = container.querySelector<HTMLElement>('[data-drawer-scroll-anchor]')
+    if (anchor) {
+      const containerRect = container.getBoundingClientRect()
+      const anchorRect = anchor.getBoundingClientRect()
+      const nextTop = container.scrollTop + (anchorRect.top - containerRect.top)
+      container.scrollTop = Math.max(0, nextTop)
+      return true
+    }
+
+    return false
+  }, [])
+
+  const scheduleResetContentScroll = useCallback(
+    (attempt = 0) => {
+      const container = contentRef.current
+      if (!container) return
+
+      if (resetContentScroll()) return
+
+      // if (attempt >= 12) {
+      //   container.scrollTop = 0
+      //   return
+      // }
+
+      clearPendingReset()
+      resetRafRef.current = window.requestAnimationFrame(() => {
+        resetRafRef.current = null
+        scheduleResetContentScroll(attempt + 1)
+      })
+    },
+    [clearPendingReset, resetContentScroll],
+  )
 
   const [visible, setVisible] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -33,20 +77,17 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
   const { rightOffset, fromContentEdge } = useDrawerOffset()
   const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
 
-  useEvent(EVENT.DRAWER.CONTENT_LOADED, () => {
-    contentRef.current?.scrollTo({ top: 0 })
-  })
-
   useEffect(() => {
     lockPage()
     return () => {
+      clearPendingReset()
       if (closeTimerRef.current) {
         window.clearTimeout(closeTimerRef.current)
         closeTimerRef.current = null
       }
       unlockPage()
     }
-  }, [])
+  }, [clearPendingReset])
 
   useLayoutEffect(() => {
     didCloseRef.current = false
@@ -59,6 +100,11 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
     const raf = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(raf)
   }, [])
+
+  useEffect(() => {
+    if (!visible) return
+    scheduleResetContentScroll()
+  }, [visible, scheduleResetContentScroll])
 
   const commitRouteBack = useCallback(() => {
     if (didCloseRef.current) return
@@ -82,14 +128,14 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
   const handleDrawerTransitionEnd = useCallback(
     (e: React.TransitionEvent<HTMLDivElement>) => {
       if (e.target !== drawerRef.current) return
-      if (!closing || visible) return
 
-      if (e.propertyName === 'opacity') {
+      if (closing && !visible && e.propertyName === 'opacity') {
         if (closeTimerRef.current) {
           window.clearTimeout(closeTimerRef.current)
           closeTimerRef.current = null
         }
         commitRouteBack()
+        return
       }
     },
     [closing, visible, commitRouteBack],
@@ -103,7 +149,10 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
         style={s.drawerStyle}
         onTransitionEnd={handleDrawerTransitionEnd}
       >
-        <div ref={contentRef} className={s.drawerContent} style={s.drawerContentStyle}>
+        <div
+          className={s.drawerContent}
+          style={{ ...s.drawerContentStyle, overflowAnchor: 'none' }}
+        >
           {children}
         </div>
       </div>

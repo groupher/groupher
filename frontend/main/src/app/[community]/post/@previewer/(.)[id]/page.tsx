@@ -9,7 +9,7 @@ export default async function Page({ params }) {
   const { community, id } = params$
 
   return (
-    <Drawer>
+    <Drawer resetKey={id}>
       <ErrorBoundary fallback={<div>Error loading article</div>}>
         <Suspense fallback={<LavaLampLoading />}>
           <ArticleViewer community={community} innerId={id} thread='post' />
