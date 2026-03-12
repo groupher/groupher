@@ -1,5 +1,5 @@
+import Link from 'next/link'
 import type { FC } from 'react'
-import { useRouter } from 'next/navigation'
 import { THREAD } from '~/const/thread'
 import useCommunity from '~/hooks/useCommunity'
 import type { TPost } from '~/spec'
@@ -16,21 +16,18 @@ const Header: FC<TProps> = ({ article }) => {
   const s = useSalon()
   const { title } = article
   const { slug } = useCommunity()
-  const router = useRouter()
 
   return (
     <div className={s.wrapper}>
       <div className={s.main}>
         <ArticleReadLabel viewed={article.viewerHasViewed} />
-        <button
-          type='button'
+        <Link
           className={s.title}
-          onClick={() => {
-            router.push(`/${slug}/${THREAD.POST}/${article.innerId}`, { scroll: false })
-          }}
+          href={`/${slug}/${THREAD.POST}/${article.innerId}`}
+          scroll={false}
         >
           {title}
-        </button>
+        </Link>
       </div>
     </div>
   )

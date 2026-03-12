@@ -15,9 +15,15 @@ type TProps = {
   children: ReactNode
   type?: string
   resetKey?: string | number
+  dismissible?: boolean
 }
 
-export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW, resetKey }: TProps) {
+export default function Drawer({
+  children,
+  type = TYPE.DRAWER.POST_VIEW,
+  resetKey,
+  dismissible = true,
+}: TProps) {
   const router = useRouter()
 
   const contentRef = useRef<HTMLDivElement | null>(null)
@@ -205,7 +211,7 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW, resetKe
         aria-label='drawer mask'
         className={cn(s.overlay, ANCHOR.GLOBAL_BLUR_CLASS)}
         style={s.overlayStyle}
-        onClick={requestClose}
+        onClick={dismissible ? requestClose : undefined}
       />
     </Portal>
   )

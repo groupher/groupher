@@ -1,5 +1,5 @@
+import Link from 'next/link'
 import type { FC } from 'react'
-import { useRouter } from 'next/navigation'
 import SIZE from '~/const/size'
 import { THREAD } from '~/const/thread'
 import useCommunity from '~/hooks/useCommunity'
@@ -18,21 +18,18 @@ const Header: FC<TProps> = ({ article }) => {
   const s = useSalon()
   const { title, commentsCount, communityTags } = article
   const { slug } = useCommunity()
-  const router = useRouter()
 
   return (
     <article className={s.wrapper}>
       <div className={s.main}>
         <ArticleReadLabel viewed={article.viewerHasViewed} />
-        <button
-          type='button'
+        <Link
           className={s.title}
-          onClick={() => {
-            router.push(`/${slug}/${THREAD.POST}/${article.innerId}`, { scroll: false })
-          }}
+          href={`/${slug}/${THREAD.POST}/${article.innerId}`}
+          scroll={false}
         >
           {title}
-        </button>
+        </Link>
         {/*  @ts-ignore */}
         <TagsList items={communityTags} left={1} />
         <div className='grow' />

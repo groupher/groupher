@@ -1,8 +1,5 @@
 import type { FC } from 'react'
-import { useRouter } from 'next/navigation'
 import { UPVOTE_LAYOUT } from '~/const/layout'
-import { THREAD } from '~/const/thread'
-import useCommunity from '~/hooks/useCommunity'
 import Img from '~/Img'
 
 import { upvoteArticle } from '~/signal'
@@ -21,8 +18,6 @@ type TProps = {
 const DigestView: FC<TProps> = ({ article }) => {
   const s = useSalon()
   const { author } = article
-  const { slug } = useCommunity()
-  const router = useRouter()
 
   return (
     <div className={s.wrapper}>
@@ -31,13 +26,10 @@ const DigestView: FC<TProps> = ({ article }) => {
       <div className={s.avatarWrapper}>
         <Img src={author.avatar} className={s.avatar} fallback={<ImgFallback user={author} />} />
       </div>
-      <button
-        className={s.main}
-        onClick={() => router.push(`/${slug}/${THREAD.POST}/${article.innerId}`, { scroll: false })}
-      >
+      <div className={s.main}>
         <Header article={article} />
         <Body article={article} />
-      </button>
+      </div>
 
       <div className={s.upvoteWrapper}>
         <Upvote

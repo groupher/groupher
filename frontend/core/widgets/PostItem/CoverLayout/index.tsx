@@ -1,7 +1,4 @@
 import { type FC, useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { THREAD } from '~/const/thread'
-import useCommunity from '~/hooks/useCommunity'
 
 import type { TPost } from '~/spec'
 
@@ -22,8 +19,6 @@ type TProps = {
 
 const DigestView: FC<TProps> = ({ article }) => {
   const s = useSalon()
-  const { slug } = useCommunity()
-  const router = useRouter()
 
   const [coverImg, setCoverImg] = useState('')
 
@@ -32,18 +27,7 @@ const DigestView: FC<TProps> = ({ article }) => {
   }, [])
 
   return (
-    <section
-      className={s.wrapper}
-      onClick={() => router.push(`/${slug}/${THREAD.POST}/${article.innerId}`, { scroll: false })}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          router.push(`/${slug}/${THREAD.POST}/${article.innerId}`, { scroll: false })
-        }
-      }}
-      role='button'
-      tabIndex={0}
-    >
+    <section className={s.wrapper}>
       <ArticlePinLabel isPinned={article.isPinned} className="top-8" />
       <div className={s.coverWrapper}>
         <Img src={coverImg} className={s.cover} />

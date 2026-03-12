@@ -84,7 +84,13 @@ defmodule GroupherServer.CMS.Articles.Reactions do
           on: a.user_id == user.id,
           where: field(a, ^info.foreign_key) == ^article.id,
           where: field(a, ^emotion) == true,
-          select: %{login: user.login, nickname: user.nickname, avatar: user.avatar}
+          select: %{
+            id: user.id,
+            user_id: user.id,
+            login: user.login,
+            nickname: user.nickname,
+            avatar: user.avatar
+          }
         )
 
       mentioned_user_info_list = Repo.all(query) |> Enum.uniq()

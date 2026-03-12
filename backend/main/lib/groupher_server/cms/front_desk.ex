@@ -204,14 +204,14 @@ defmodule GroupherServer.CMS.FrontDesk do
   def update_emotions_field(artiment, emotion, status, user) do
     %{user_count: user_count, user_list: user_list} = status
 
+    latest_users =
+      user_list |> normalize_embed_users() |> Enum.slice(0, @max_latest_emotion_users_count)
+
     emotions =
       %{}
       |> Map.put(:"#{emotion}_count", user_count)
       |> Map.put(:"#{emotion}_user_logins", user_list |> Enum.map(& &1.login))
-      |> Map.put(
-        :"latest_#{emotion}_users",
-        Enum.slice(user_list, 0, @max_latest_emotion_users_count)
-      )
+      |> Map.put(:"latest_#{emotion}_users", latest_users)
 
     viewer_has_emotioned = user.login in Map.get(emotions, :"#{emotion}_user_logins")
     emotions = emotions |> Map.put(:"viewer_has_#{emotion}ed", viewer_has_emotioned)
@@ -377,6 +377,13 @@ defmodule GroupherServer.CMS.FrontDesk do
     user
     |> Embeds.User.from_account_user()
     |> Map.from_struct()
+  end
+
+  defp normalize_embed_users(users) do
+    users
+    |> Enum.map(&Embeds.User.normalize/1)
+    |> Enum.filter(&Embeds.User.valid?/1)
+    |> Enum.uniq_by(&Embeds.User.uniq_key/1)
   end
 
   defp user_id_match?(user, user_id) do
