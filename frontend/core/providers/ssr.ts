@@ -7,6 +7,7 @@ import { P } from '~/schemas'
 import type {
   TCommunityInfo,
   TLocale,
+  TPagedComments,
   TPagedChangelogs,
   TPagedPosts,
   TPost,
@@ -180,4 +181,32 @@ export const getPost = async (community: string, id: string): Promise<TPost | nu
   }
 
   return data.post
+}
+
+export const getPagedComments = async (
+  community: string,
+  id: string,
+  page = 1,
+): Promise<TPagedComments | null> => {
+  'use cache'
+  cacheLife('minutes')
+
+  const response = await gqFetch(P.pagedComments, {
+    article: {
+      innerId: id,
+      community,
+      thread: toGqlThread(THREAD.POST) || THREAD.POST.toUpperCase(),
+    },
+    mode: 'REPLIES',
+    filter: { page, size: 30 },
+  })
+
+  const { data, errors } = await response.json()
+
+  if (errors) {
+    console.log('## error details', errors)
+    return null
+  }
+
+  return data.pagedComments
 }

@@ -1,13 +1,13 @@
-import type { FC } from 'react'
+import { memo, type FC } from 'react'
 
 import type { TComment, TID } from '~/spec'
 import useTrans from '~/hooks/useTrans'
 
-import type { TRepliesState, TAPIMode } from '../spec'
+import type { TAPIMode } from '../spec'
 import TogglerButton from './TogglerButton'
 import Comment from '../Comment'
 
-import useLogic from '../useLogic'
+import useActions from '../useLogic/useActions'
 import useSalon from '../salon/list/replies_list'
 
 type TProps = {
@@ -15,8 +15,8 @@ type TProps = {
   apiMode: TAPIMode
   entries: TComment[]
   repliesCount: number
-  repliesState: TRepliesState
-  foldedIds: TID[]
+  loading: boolean
+  foldedIdSet: Set<TID>
 }
 
 const RepliesList: FC<TProps> = ({
@@ -24,14 +24,13 @@ const RepliesList: FC<TProps> = ({
   apiMode,
   entries,
   repliesCount,
-  repliesState,
-  foldedIds,
+  loading,
+  foldedIdSet,
 }) => {
   const s = useSalon()
   const { t } = useTrans()
 
-  const { loadCommentReplies } = useLogic()
-  const loading = parentId === repliesState.repliesParentId && repliesState.repliesLoading
+  const { loadCommentReplies } = useActions()
 
   return (
     <div className={s.wrapper}>
@@ -44,7 +43,13 @@ const RepliesList: FC<TProps> = ({
       {entries.map((comment) => {
         return (
           <div key={comment.id} className={s.list}>
-            <Comment apiMode={apiMode} data={comment} foldedIds={foldedIds} showInnerRef isReply />
+            <Comment
+              apiMode={apiMode}
+              data={comment}
+              isFolded={foldedIdSet.has(comment.id)}
+              showInnerRef
+              isReply
+            />
           </div>
         )
       })}
@@ -59,4 +64,4 @@ const RepliesList: FC<TProps> = ({
   )
 }
 
-export default RepliesList
+export default memo(RepliesList)

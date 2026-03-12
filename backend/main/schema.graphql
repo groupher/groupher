@@ -106,16 +106,16 @@ type RootQueryType {
   pagedCommunityTags(filter: CommunityTagsFilter): PagedCommunityTags
 
   "got basic comments state"
-  commentsState(id: ID!, thread: Thread, freshkey: String): CommentsListState
+  commentsState(article: ArticleRefInput!, freshkey: String): CommentsListState
 
   "got spec comment by id"
   oneComment(id: ID!): Comment
 
   "get paged article comments"
-  pagedComments(id: ID!, mode: CommentsMode, thread: Thread, filter: CommentsFilter): PagedComments
+  pagedComments(article: ArticleRefInput!, mode: CommentsMode, filter: CommentsFilter): PagedComments
 
   "get paged article comments participants"
-  pagedCommentsParticipants(id: ID!, thread: Thread, filter: PagiFilter): PagedUsers
+  pagedCommentsParticipants(article: ArticleRefInput!, filter: PagiFilter): PagedUsers
 
   "get paged replies of a comment"
   pagedCommentReplies(id: ID!, filter: CommentsFilter): PagedCommentReplies
@@ -365,7 +365,7 @@ type RootMutationType {
   "batch undo mark delete posts type article, aka soft-delete"
   batchUndoMarkDeletePosts(community: String!, ids: [ID], thread: PostThread): DoneState
 
-  "delete a post, not delete"
+  "permanently delete a post"
   deletePost(article: ArticleRefInput!): Post
 
   "emotion to post"
@@ -426,7 +426,7 @@ type RootMutationType {
   "batch undo mark delete blogs type article, aka soft-delete"
   batchUndoMarkDeleteBlogs(community: String!, ids: [ID], thread: BlogThread): DoneState
 
-  "delete a blog, not delete"
+  "permanently delete a blog"
   deleteBlog(article: ArticleRefInput!): Blog
 
   "emotion to blog"
@@ -487,7 +487,7 @@ type RootMutationType {
   "batch undo mark delete changelogs type article, aka soft-delete"
   batchUndoMarkDeleteChangelogs(community: String!, ids: [ID], thread: ChangelogThread): DoneState
 
-  "delete a changelog, not delete"
+  "permanently delete a changelog"
   deleteChangelog(article: ArticleRefInput!): Changelog
 
   "emotion to changelog"
@@ -548,7 +548,7 @@ type RootMutationType {
   "batch undo mark delete docs type article, aka soft-delete"
   batchUndoMarkDeleteDocs(community: String!, ids: [ID], thread: DocThread): DoneState
 
-  "delete a doc, not delete"
+  "permanently delete a doc"
   deleteDoc(article: ArticleRefInput!): Doc
 
   "emotion to doc"
@@ -694,8 +694,11 @@ type CommonComment {
 }
 
 type ThreadDocument {
-  body: String
-  bodyHtml: String
+  json: String
+  markdown: String
+  markdownToc: Json
+  html: String
+  rss: String
 }
 
 type Post implements Article {

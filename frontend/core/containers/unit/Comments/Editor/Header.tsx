@@ -7,7 +7,7 @@ import CommentSVG from '~/icons/Comment'
 import UserSVG from '~/icons/User'
 import useTrans from '~/hooks/useTrans'
 
-import useLogic from '../useLogic'
+import useActions from '../useLogic/useActions'
 import useSalon from '../salon/editor/header'
 
 type TProps = {
@@ -18,7 +18,7 @@ type TProps = {
 const EditorHeader: FC<TProps> = ({ accountInfo, showEditor }) => {
   const s = useSalon()
 
-  const { openEditor } = useLogic()
+  const { openEditor } = useActions()
   const { t } = useTrans()
 
   if (showEditor) {

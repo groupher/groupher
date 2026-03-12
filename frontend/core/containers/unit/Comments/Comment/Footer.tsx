@@ -19,7 +19,7 @@ import Actions from './Actions'
 import type { TAPIMode } from '../spec'
 import { API_MODE } from '../constant'
 
-import useLogic from '../useLogic'
+import useActions from '../useLogic/useActions'
 import useSalon from '../salon/comment/footer'
 
 type TProps = {
@@ -31,7 +31,7 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
   const s = useSalon()
 
   const accountInfo = useAccount()
-  const { handleUpvote, handleEmotion } = useLogic()
+  const { handleUpvote, handleEmotion } = useActions()
   const { t } = useTrans()
 
   // const { isLegal } = data.meta

@@ -5,7 +5,7 @@ import type { TSubmitState } from '~/spec'
 // import Header from './Header'
 import BodyEditor from './BodyEditor'
 
-import useLogic from '../useLogic'
+import useActions from '../useLogic/useActions'
 import useSalon from '../salon/editor/publish_editor'
 
 type TProps = {
@@ -15,7 +15,7 @@ type TProps = {
 
 const PublishEditor: FC<TProps> = ({ submitState, body }) => {
   const s = useSalon()
-  const { commentOnChange } = useLogic()
+  const { commentOnChange } = useActions()
 
   return (
     <div className={s.wrapper}>

@@ -3,7 +3,6 @@ import type { FC } from 'react'
 import { THREAD } from '~/const/thread'
 import { cutRest } from '~/fmt'
 import useCommunity from '~/hooks/useCommunity'
-import { previewArticle } from '~/signal'
 import type { TArticle } from '~/spec'
 import ArticleImgWindow from '~/widgets/ArticleImgWindow'
 import ArticlePinLabel from '~/widgets/ArticlePinLabel'
@@ -36,16 +35,15 @@ const ArticleCard: FC<TProps> = ({ data }) => {
       <div className='mt-1' />
       <Link
         className={s.titleLink}
-        onClick={(e) => {
-          e.preventDefault()
-          previewArticle(data)
-        }}
+        scroll={false}
         href={`/${slug}/${THREAD.POST}/${innerId}`}
       >
         {title}
       </Link>
 
-      <div onClick={() => previewArticle(data)}>{cutRest(digest, 150)}</div>
+      <Link scroll={false} href={`/${slug}/${THREAD.POST}/${innerId}`}>
+        {cutRest(digest, 150)}
+      </Link>
 
       <div className='mt-1' />
       <ArticleImgWindow />

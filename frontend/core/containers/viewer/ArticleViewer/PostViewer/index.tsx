@@ -2,7 +2,7 @@
  * ArticleViewer
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
 
 import useBroadcast from '~/hooks/useBroadcast'
@@ -26,6 +26,16 @@ export default () => {
 
   const [fixedHeaderVisible, setFixedHeaderVisible] = useState(false)
   const [footerVisible, setFooterVisible] = useState(false)
+  const [trackerReady, setTrackerReady] = useState(false)
+
+  useEffect(() => {
+    setTrackerReady(false)
+    setFixedHeaderVisible(false)
+    setFooterVisible(false)
+
+    const raf = window.requestAnimationFrame(() => setTrackerReady(true))
+    return () => window.cancelAnimationFrame(raf)
+  }, [article.innerId, article.id])
 
   const hideFixedHeader = () => setFixedHeaderVisible(false)
   const showFixedHeader = () => setFixedHeaderVisible(true)
@@ -42,7 +52,16 @@ export default () => {
         <div className={s.subTitle}>{article.innerId}</div>
       </div>
       <ArticleInfo article={article} />
-      <ViewportTracker onEnter={hideFixedHeader} onLeave={showFixedHeader} />
+      <ViewportTracker
+        onEnter={() => {
+          if (!trackerReady) return
+          hideFixedHeader()
+        }}
+        onLeave={() => {
+          if (!trackerReady) return
+          showFixedHeader()
+        }}
+      />
       {loading && <ArticleContentLoading num={1} top={15} bottom={30} left={-25} />}
       {!loading && (
         <div className={s.bodyWrapper}>
@@ -59,7 +78,16 @@ export default () => {
         />
       )}
       <ArticleFooter />
-      <ViewportTracker onEnter={showFooter} onLeave={hideFooter} />
+      <ViewportTracker
+        onEnter={() => {
+          if (!trackerReady) return
+          showFooter()
+        }}
+        onLeave={() => {
+          if (!trackerReady) return
+          hideFooter()
+        }}
+      />
       <div className={cn(s.gotoTop, fixedHeaderVisible ? 'visible' : 'invisible')}>
         <GotoTop type='drawer' />
       </div>

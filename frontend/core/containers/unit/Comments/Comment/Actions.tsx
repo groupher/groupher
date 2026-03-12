@@ -10,7 +10,7 @@ import MoreSVG from '~/icons/menu/More'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 import useTrans from '~/hooks/useTrans'
 
-import useLogic from '../useLogic'
+import useActions from '../useLogic/useActions'
 import useSalon from '../salon/comment/actions'
 
 type TProps = {
@@ -22,7 +22,7 @@ const Actions: FC<TProps> = ({ data }) => {
   const { t } = useTrans()
 
   const accountInfo = useAccount()
-  const { openUpdateEditor, openReplyEditor } = useLogic()
+  const { openUpdateEditor, openReplyEditor } = useActions()
 
   const menuOptions = [
     // {

@@ -185,18 +185,6 @@ export const multiClick = (
 }
 
 /**
- * send preview article signal to Drawer
- */
-export const previewArticle = (article: TArticle): void => {
-  const type = TYPE.DRAWER[`${article.meta.thread}_VIEW`]
-  const data = article
-
-  console.log('## previewArticle: ', article)
-
-  send(EVENT.DRAWER.OPEN, { type, data })
-}
-
-/**
  * open search panel
  */
 export const openSearch = (): void => {

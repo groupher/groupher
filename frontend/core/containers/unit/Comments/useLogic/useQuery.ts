@@ -1,15 +1,15 @@
-import { useSnapshot } from 'valtio'
+import { type MutableRefObject, useContext, useEffect, useRef } from 'react'
 import { ANCHOR } from '~/const/dom'
 import { scrollIntoEle } from '~/dom'
 import { titleCase } from '~/fmt'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import type { TComment, TEmotionType, TID } from '~/spec'
+import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
 import uid from '~/utils/uid'
 
 import { API_MODE, EDIT_MODE } from '../constant'
 import S from '../schema'
-import store from './store'
 import useHelper from './useHelper'
 
 //
@@ -32,22 +32,70 @@ let repliesPagiNo = {}
 const PAGI_SIZE = 30
 
 export default (): TRet => {
-  const snap = useSnapshot(store)
+  const commentsStore = useContext(CommentsStoreContext) as any
+  if (!commentsStore) {
+    throw new Error('useQuery must be used within a Comments store provider')
+  }
   const { article } = useViewingArticle()
   const { addToReplies, upvoteEmotion, updateOneComment, published, resetPublish } = useHelper()
 
   const { query, mutate } = useGraphQLClient()
 
+  const isMountedRef = useRef(true)
+  const commentsRequestRef = useRef(0)
+  const stateRequestRef = useRef(0)
+  const repliesRequestRef = useRef(0)
+
+  const articleKey = `${article.community?.slug || article.communitySlug || ''}:${article.meta.thread}:${article.innerId}`
+  const latestArticleKeyRef = useRef(articleKey)
+
+  useEffect(() => {
+    latestArticleKeyRef.current = articleKey
+  }, [articleKey])
+
+  useEffect(() => {
+    isMountedRef.current = true
+
+    return () => {
+      isMountedRef.current = false
+      commentsRequestRef.current += 1
+      stateRequestRef.current += 1
+      repliesRequestRef.current += 1
+    }
+  }, [])
+
+  const shouldIgnoreResult = (
+    requestId: number,
+    requestRef: MutableRefObject<number>,
+    requestArticleKey: string,
+  ): boolean => {
+    return (
+      !isMountedRef.current ||
+      requestId !== requestRef.current ||
+      requestArticleKey !== latestArticleKeyRef.current
+    )
+  }
+
+  const buildArticleRef = () => ({
+    innerId: article.innerId,
+    community: article.community?.slug || article.communitySlug,
+    thread: article.meta.thread,
+  })
+
   const loadCommentsState = (): void => {
+    const requestArticleKey = latestArticleKeyRef.current
+    const requestId = stateRequestRef.current + 1
+    stateRequestRef.current = requestId
+
     const params = {
-      id: article.innerId,
-      thread: article.meta.thread,
+      article: buildArticleRef(),
       freshkey: uid.gen(),
     }
 
     // console.log('## loadCommentsState args: ', params)
     query(S.commentsState, params).then(({ commentsState }) => {
-      snap.commit({ ...commentsState })
+      if (shouldIgnoreResult(requestId, stateRequestRef, requestArticleKey)) return
+      commentsStore.commit({ ...commentsState })
     })
   }
 
@@ -56,30 +104,40 @@ export default (): TRet => {
   }
 
   const loadComments = (page = 1): void => {
-    snap.commit({ loading: true })
+    const requestArticleKey = latestArticleKeyRef.current
+    const requestId = commentsRequestRef.current + 1
+    commentsRequestRef.current = requestId
+
+    commentsStore.commit({ loading: true })
 
     const params = {
-      id: article.innerId,
-      thread: article.meta.thread,
-      mode: snap.mode,
+      article: buildArticleRef(),
+      mode: commentsStore.mode,
       filter: { page, size: PAGI_SIZE },
     }
     // console.log('## loadComments args: ', params)
 
-    query(S.pagedComments, params).then(({ pagedComments }) => {
-      repliesPagiNo = {}
-      snap.commit({ pagedComments, loading: false })
+    query(S.pagedComments, params)
+      .then(({ pagedComments }) => {
+        if (shouldIgnoreResult(requestId, commentsRequestRef, requestArticleKey)) return
 
-      if (snap.needRefreshState) {
-        loadCommentsState()
-      }
-    })
+        repliesPagiNo = {}
+        commentsStore.commit({ pagedComments, loading: false, initialized: true })
+
+        if (commentsStore.needRefreshState) {
+          loadCommentsState()
+        }
+      })
+      .catch(() => {
+        if (shouldIgnoreResult(requestId, commentsRequestRef, requestArticleKey)) return
+        commentsStore.commit({ loading: false })
+      })
   }
 
   const openUpdateEditor = (comment: TComment): void => {
-    snap.commit({ showUpdateEditor: true })
+    commentsStore.commit({ showUpdateEditor: true })
     query(S.oneComment, { id: comment.id }).then(({ oneComment }) => {
-      snap.commit({ updateId: oneComment.id, updateBody: oneComment.body })
+      commentsStore.commit({ updateId: oneComment.id, updateBody: oneComment.body })
     })
   }
 
@@ -90,16 +148,36 @@ export default (): TRet => {
   }
 
   const loadCommentReplies = (id: TID): void => {
+    const requestArticleKey = latestArticleKeyRef.current
+    const requestId = repliesRequestRef.current + 1
+    repliesRequestRef.current = requestId
+
     const filter = { page: _getRepliesPagiNo(id), size: 30 }
     const params = { id, filter }
 
-    snap.commit({ repliesParentId: id, repliesLoading: true })
+    commentsStore.commit({
+      repliesParentId: id,
+      repliesLoading: true,
+      repliesLoadingByParentId: {
+        ...commentsStore.repliesLoadingByParentId,
+        [id]: true,
+      },
+    })
     console.log('## loadCommentReplies args: ', params)
     query(S.pagedCommentReplies, params).then(({ pagedCommentReplies }) => {
-      addToReplies(pagedCommentReplies.entries)
+      if (shouldIgnoreResult(requestId, repliesRequestRef, requestArticleKey)) return
 
-      repliesPagiNo[snap.repliesParentId] = pagedCommentReplies.pageNumber
-      snap.commit({ repliesParentId: null, repliesLoading: false })
+      addToReplies(id, pagedCommentReplies.entries)
+
+      repliesPagiNo[id] = pagedCommentReplies.pageNumber
+      commentsStore.commit({
+        repliesParentId: null,
+        repliesLoading: false,
+        repliesLoadingByParentId: {
+          ...commentsStore.repliesLoadingByParentId,
+          [id]: false,
+        },
+      })
     })
   }
 
@@ -107,9 +185,9 @@ export default (): TRet => {
    * load the same mode when page change
    */
   const onPageChange = (page = 1): void => {
-    const { apiMode } = snap
+    const { apiMode } = commentsStore
     if (apiMode === API_MODE.ARTICLE) {
-      snap.commit({ needRefreshState: false })
+      commentsStore.commit({ needRefreshState: false })
       loadComments(page)
     } else {
       loadPublishedComments(page)
@@ -200,11 +278,11 @@ export default (): TRet => {
   }
 
   const replyComment = (): void => {
-    const { replyToComment, replyBody } = snap
+    const { replyToComment, replyBody } = commentsStore
     const params = { id: replyToComment.id, body: replyBody }
-    snap.commit({ publishing: true })
+    commentsStore.commit({ publishing: true })
     mutate(S.replyComment, params).then(() => {
-      snap.commit({ needRefreshState: true })
+      commentsStore.commit({ needRefreshState: true })
       loadComments()
       published()
       setTimeout(() => resetPublish(EDIT_MODE.REPLY), 500)
@@ -214,15 +292,15 @@ export default (): TRet => {
   }
 
   const updateComment = (): void => {
-    if (!snap.wordsCountReady) return
+    if (!commentsStore.wordsCountReady) return
 
     const params = {
-      id: store.updateId,
-      body: store.updateBody,
+      id: commentsStore.updateId,
+      body: commentsStore.updateBody,
     }
 
     console.log('## updateComment params: ', params)
-    snap.commit({ publishing: true })
+    commentsStore.commit({ publishing: true })
     mutate(S.updateComment, params).then(({ updateComment }) => {
       published()
       const { bodyHtml } = updateComment

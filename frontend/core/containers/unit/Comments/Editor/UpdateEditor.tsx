@@ -9,7 +9,7 @@ import useTrans from '~/hooks/useTrans'
 import BodyEditor from './BodyEditor'
 import Footer from './Footer'
 
-import useLogic from '../useLogic'
+import useActions from '../useLogic/useActions'
 import useSalon from '../salon/editor/update_editor'
 
 type TProps = {
@@ -20,7 +20,7 @@ type TProps = {
 
 const UpdateEditor: FC<TProps> = ({ id, body, submitState }) => {
   const s = useSalon()
-  const { commentOnChange, updateComment, closeUpdateEditor } = useLogic()
+  const { commentOnChange, updateComment, closeUpdateEditor } = useActions()
   const { t } = useTrans()
 
   return (

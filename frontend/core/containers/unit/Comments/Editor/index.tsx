@@ -5,7 +5,7 @@ import Modal from '~/widgets/Modal'
 import ReplyEditor from './ReplyEditor'
 import UpdateEditor from './UpdateEditor'
 
-import useLogic from '../useLogic'
+import useActions from '../useLogic/useActions'
 import type { TEditState } from '../spec'
 
 type TProps = {
@@ -13,7 +13,7 @@ type TProps = {
 }
 
 const CommentEditor: FC<TProps> = ({ editState }) => {
-  const { closeUpdateEditor, onReplyEditorClose } = useLogic()
+  const { closeUpdateEditor, onReplyEditorClose } = useActions()
 
   const {
     // update

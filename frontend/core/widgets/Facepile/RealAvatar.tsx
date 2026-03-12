@@ -33,6 +33,7 @@ const RealAvatar: FC<TProps> = ({
     <li className={s.wrapper}>
       <Tooltip
         content={<UserCard user={user} />}
+        offset={[5, 25]}
         delay={0}
         placement={popCardPlacement}
         interactive={false}

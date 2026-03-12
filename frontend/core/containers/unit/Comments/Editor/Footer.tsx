@@ -6,7 +6,7 @@ import WordsCounter from '~/widgets/WordsCounter'
 import SubmitButton from '~/widgets/Buttons/SubmitButton'
 import useTrans from '~/hooks/useTrans'
 
-import useLogic from '../useLogic'
+import useActions from '../useLogic/useActions'
 import useSalon from '../salon/editor/footer'
 
 type TProps = {
@@ -19,7 +19,7 @@ type TProps = {
 
 const EditorFooter: FC<TProps> = ({ body, label, submitState, onPublish, onCancel }) => {
   const s = useSalon()
-  const { setWordsCountState } = useLogic()
+  const { setWordsCountState } = useActions()
   const { t } = useTrans()
   const resolvedLabel = label ?? t('comment.submit.publish')
 

@@ -9,7 +9,6 @@ import { type FC, memo } from 'react'
 import { THREAD } from '~/const/thread'
 import useCommunity from '~/hooks/useCommunity'
 import ShareSVG from '~/icons/Share'
-import { previewArticle } from '~/signal'
 import type { TChangelog } from '~/spec'
 import CommentsCount from '~/widgets/CommentsCount'
 import EmotionSelector from '~/widgets/EmotionSelector'
@@ -38,10 +37,7 @@ const SimpleLayout: FC<TProps> = ({ article }) => {
         <Link
           href={`/${slug}/${THREAD.CHANGELOG}/${article.innerId}`}
           className={s.title}
-          onClick={(e) => {
-            e.preventDefault()
-            previewArticle(article)
-          }}
+          scroll={false}
         >
           {article.title}
           <div className={s.version}>v3.21</div>

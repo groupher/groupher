@@ -6,12 +6,11 @@ import { F } from '~/schemas'
 
 const pagedComments = gql`
   query pagedComments(
-    $id: ID!
-    $thread: Thread,
+    $article: ArticleRefInput!
     $mode: CommentsMode,
     $filter: CommentsFilter!
   ) {
-    pagedComments(id: $id, thread: $thread, mode: $mode, filter: $filter) {
+    pagedComments(article: $article, mode: $mode, filter: $filter) {
       entries {
         ${F.comment}
       }
@@ -53,8 +52,8 @@ const updateComment = gql`
   }
 `
 const commentsState = gql`
-  query ($id: ID!, $thread: Thread, $freshkey: String) {
-    commentsState(id: $id, thread: $thread, freshkey: $freshkey) {
+  query ($article: ArticleRefInput!, $freshkey: String) {
+    commentsState(article: $article, freshkey: $freshkey) {
       totalCount
       isViewerJoined
       participantsCount

@@ -15,8 +15,8 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
   end
 
   @query """
-  query($id: ID!, $thread: Thread) {
-    commentsState(id: $id, thread: $thread) {
+  query($article: ArticleRefInput!) {
+    commentsState(article: $article) {
       totalCount
       isViewerJoined
       participantsCount
@@ -34,7 +34,10 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
     {:ok, _} =
       CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-    variables = %{id: doc.id, thread: "DOC"}
+    variables = %{
+      article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"}
+    }
+
     results = guest_conn |> gq_query(@query, variables)
 
     assert results["participantsCount"] == 1
@@ -131,8 +134,8 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
     end
 
     @query """
-      query($id: ID!, $thread: Thread, $mode: CommentsMode, $filter: CommentsFilter!) {
-        pagedComments(id: $id, thread: $thread, mode: $mode, filter: $filter) {
+      query($article: ArticleRefInput!, $mode: CommentsMode, $filter: CommentsFilter!) {
+        pagedComments(article: $article, mode: $mode, filter: $filter) {
           entries {
             id
             bodyHtml
@@ -228,10 +231,17 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
       assert random_comment.meta.is_legal
 
-      {:ok, replied_comment_1} = CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
-      {:ok, replied_comment_2} = CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_1} =
+        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
 
-      variables = %{id: doc.id, thread: "DOC", filter: %{page: 1, size: page_size}}
+      {:ok, replied_comment_2} =
+        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
+
+      variables = %{
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        filter: %{page: 1, size: page_size}
+      }
+
       results = guest_conn |> gq_query(@query, variables)
       assert results["entries"] |> length == total_count
 
@@ -273,13 +283,14 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
 
-      {:ok, replied_comment_1} = CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_1} =
+        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
 
-      {:ok, replied_comment_2} = CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_2} =
+        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
 
       variables = %{
-        id: doc.id,
-        thread: "DOC",
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
         mode: "TIMELINE",
         filter: %{page: 1, size: page_size}
       }
@@ -322,12 +333,14 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
           user
         )
 
-      {:ok, replied_comment_1} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
-      {:ok, replied_comment_2} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_1} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+
+      {:ok, replied_comment_2} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
 
       variables = %{
-        id: doc.id,
-        thread: "DOC",
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
         filter: %{page: 1, size: 10},
         mode: "TIMELINE"
       }
@@ -363,7 +376,11 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         acc ++ [value]
       end)
 
-      variables = %{id: doc.id, thread: "DOC", filter: %{page: 1, size: 10}}
+      variables = %{
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        filter: %{page: 1, size: 10}
+      }
+
       results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
@@ -394,7 +411,11 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
       {:ok, pinned_comment2} = CMS.Comments.pin_comment(comment.id)
 
-      variables = %{id: doc.id, thread: "DOC", filter: %{page: 1, size: 10}}
+      variables = %{
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        filter: %{page: 1, size: 10}
+      }
+
       results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> List.first() |> Map.get("id") == to_string(pinned_comment2.id)
@@ -417,7 +438,11 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         acc ++ [comment]
       end)
 
-      variables = %{id: doc.id, thread: "DOC", filter: %{page: 1, size: page_size}}
+      variables = %{
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        filter: %{page: 1, size: page_size}
+      }
+
       results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> List.first() |> Map.get("floor") == 1
@@ -443,8 +468,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.Comments.create_comment(community, thread, doc.inner_id, mock_comment(), user)
 
       variables = %{
-        id: doc.id,
-        thread: "DOC",
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
         filter: %{page: 1, size: page_size},
         mode: "TIMELINE"
       }
@@ -474,8 +498,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.Comments.create_comment(community, thread, doc.inner_id, mock_comment(), user)
 
       variables = %{
-        id: doc.id,
-        thread: "DOC",
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
         filter: %{page: 1, size: page_size, sort: "DESC_INSERTED"},
         mode: "TIMELINE"
       }
@@ -512,8 +535,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, _reply_comment} = CMS.Comments.reply_comment(comment3.id, mock_comment(), user2)
 
       variables = %{
-        id: doc.id,
-        thread: "DOC",
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
         filter: %{page: 1, size: page_size, sort: "DESC_INSERTED"}
       }
 
@@ -550,7 +572,11 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, _} = CMS.Comments.upvote_comment(upvote_comment2.id, user)
       {:ok, _} = CMS.Comments.upvote_comment(upvote_comment2.id, user2)
 
-      variables = %{id: doc.id, thread: "DOC", filter: %{page: 1, size: page_size}}
+      variables = %{
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        filter: %{page: 1, size: page_size}
+      }
+
       results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> Enum.at(3) |> Map.get("upvotesCount") == 1
@@ -595,7 +621,11 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
       {:ok, _} = CMS.Comments.upvote_comment(author_comment.id, author_user)
 
-      variables = %{id: doc.id, thread: "DOC", filter: %{page: 1, size: page_size}}
+      variables = %{
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        filter: %{page: 1, size: page_size}
+      }
+
       results = guest_conn |> gq_query(@query, variables)
 
       the_author_comment =
@@ -639,7 +669,11 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :downvote, user2)
       {:ok, _} = CMS.Comments.emotion_to_comment(comment2.id, :beer, user2)
 
-      variables = %{id: doc.id, thread: "DOC", filter: %{page: 1, size: page_size}}
+      variables = %{
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        filter: %{page: 1, size: page_size}
+      }
+
       results = guest_conn |> gq_query(@query, variables)
 
       comment_emotion =
@@ -696,7 +730,11 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :downvote, user)
       {:ok, _} = CMS.Comments.emotion_to_comment(comment2.id, :downvote, user2)
 
-      variables = %{id: doc.id, thread: "DOC", filter: %{page: 1, size: page_size}}
+      variables = %{
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        filter: %{page: 1, size: page_size}
+      }
+
       results = user_conn |> gq_query(@query, variables)
 
       assert Enum.find(results["entries"], &(&1["id"] == to_string(comment.id)))
@@ -726,7 +764,11 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
       {:ok, _} = CMS.Comments.upvote_comment(random_comment.id, user)
 
-      variables = %{id: doc.id, thread: "DOC", filter: %{page: 1, size: page_size}}
+      variables = %{
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        filter: %{page: 1, size: page_size}
+      }
+
       results = user_conn |> gq_query(@query, variables)
 
       upvoted_comment = Enum.find(results["entries"], &(&1["id"] == to_string(random_comment.id)))
@@ -737,8 +779,8 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
   describe "paged participants" do
     @query """
-      query($id: ID!, $thread: Thread, $filter: PagiFilter!) {
-        pagedCommentsParticipants(id: $id, thread: $thread, filter: $filter) {
+      query($article: ArticleRefInput!, $filter: PagiFilter!) {
+        pagedCommentsParticipants(article: $article, filter: $filter) {
           entries {
             id
             nickname
@@ -776,7 +818,10 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, _} =
         CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      variables = %{id: doc.id, thread: thread, filter: %{page: 1, size: page_size}}
+      variables = %{
+        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: thread},
+        filter: %{page: 1, size: page_size}
+      }
 
       results = guest_conn |> gq_query(@query, variables)
 

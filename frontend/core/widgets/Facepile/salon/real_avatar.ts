@@ -15,7 +15,7 @@ export default ({ size, isFirst, isLast }: TProps) => {
 
   return {
     wrapper: cn(
-      'relative -ml-1 border-2 overflow-hidden',
+      'relative -ml-1 border-2 z-10 overflow-hidden',
       size === SIZE.SMALL ? 'size-5' : 'size-6',
       'hover:scale-125 hover:z-30 hover:border-none hover:shadow-md',
       !isFirst && 'hover:ml-0.5',

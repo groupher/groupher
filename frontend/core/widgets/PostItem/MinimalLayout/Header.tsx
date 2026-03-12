@@ -1,6 +1,8 @@
 import type { FC } from 'react'
+import { useRouter } from 'next/navigation'
 import SIZE from '~/const/size'
-import { previewArticle } from '~/signal'
+import { THREAD } from '~/const/thread'
+import useCommunity from '~/hooks/useCommunity'
 import type { TPost } from '~/spec'
 import ArticleReadLabel from '~/widgets/ArticleReadLabel'
 import CommentsCount from '~/widgets/CommentsCount'
@@ -15,6 +17,8 @@ type TProps = {
 const Header: FC<TProps> = ({ article }) => {
   const s = useSalon()
   const { title, commentsCount, communityTags } = article
+  const { slug } = useCommunity()
+  const router = useRouter()
 
   return (
     <article className={s.wrapper}>
@@ -24,7 +28,7 @@ const Header: FC<TProps> = ({ article }) => {
           type='button'
           className={s.title}
           onClick={() => {
-            previewArticle(article)
+            router.push(`/${slug}/${THREAD.POST}/${article.innerId}`, { scroll: false })
           }}
         >
           {title}

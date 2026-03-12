@@ -22,51 +22,39 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW, resetKe
 
   const contentRef = useRef<HTMLDivElement | null>(null)
   const drawerRef = useRef<HTMLDivElement | null>(null)
-  const resetRafRef = useRef<number | null>(null)
+  const resetPostPaintRafRef = useRef<number | null>(null)
+  const resetPostPaintTimerRef = useRef<number | null>(null)
 
-  const clearPendingReset = useCallback(() => {
-    if (resetRafRef.current) {
-      window.cancelAnimationFrame(resetRafRef.current)
-      resetRafRef.current = null
+  const clearPostPaintReset = useCallback(() => {
+    if (resetPostPaintRafRef.current) {
+      window.cancelAnimationFrame(resetPostPaintRafRef.current)
+      resetPostPaintRafRef.current = null
+    }
+    if (resetPostPaintTimerRef.current) {
+      window.clearTimeout(resetPostPaintTimerRef.current)
+      resetPostPaintTimerRef.current = null
     }
   }, [])
 
-  const resetContentScroll = useCallback(() => {
+  const resetContentToTop = useCallback(() => {
     const container = contentRef.current
-    if (!container) return false
-
-    const anchor = container.querySelector<HTMLElement>('[data-drawer-scroll-anchor]')
-    if (anchor) {
-      const containerRect = container.getBoundingClientRect()
-      const anchorRect = anchor.getBoundingClientRect()
-      const nextTop = container.scrollTop + (anchorRect.top - containerRect.top)
-      container.scrollTop = Math.max(0, nextTop)
-      return true
-    }
-
-    return false
+    if (!container) return
+    container.scrollTop = 0
   }, [])
 
-  const scheduleResetContentScroll = useCallback(
-    (attempt = 0) => {
-      const container = contentRef.current
-      if (!container) return
+  const schedulePostPaintReset = useCallback(() => {
+    clearPostPaintReset()
 
-      if (resetContentScroll()) return
+    resetPostPaintRafRef.current = window.requestAnimationFrame(() => {
+      resetPostPaintRafRef.current = null
+      resetContentToTop()
+    })
 
-      // if (attempt >= 12) {
-      //   container.scrollTop = 0
-      //   return
-      // }
-
-      clearPendingReset()
-      resetRafRef.current = window.requestAnimationFrame(() => {
-        resetRafRef.current = null
-        scheduleResetContentScroll(attempt + 1)
-      })
-    },
-    [clearPendingReset, resetContentScroll],
-  )
+    resetPostPaintTimerRef.current = window.setTimeout(() => {
+      resetPostPaintTimerRef.current = null
+      resetContentToTop()
+    }, 80)
+  }, [clearPostPaintReset, resetContentToTop])
 
   const [visible, setVisible] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -80,31 +68,83 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW, resetKe
   useEffect(() => {
     lockPage()
     return () => {
-      clearPendingReset()
+      clearPostPaintReset()
       if (closeTimerRef.current) {
         window.clearTimeout(closeTimerRef.current)
         closeTimerRef.current = null
       }
       unlockPage()
     }
-  }, [clearPendingReset])
+  }, [clearPostPaintReset])
 
   useLayoutEffect(() => {
     didCloseRef.current = false
     setClosing(false)
     setVisible(false)
+    resetContentToTop()
 
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     drawerRef.current?.offsetHeight
 
     const raf = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(raf)
-  }, [])
+  }, [resetContentToTop])
+
+  useLayoutEffect(() => {
+    resetContentToTop()
+  }, [resetKey, resetContentToTop])
 
   useEffect(() => {
     if (!visible) return
-    scheduleResetContentScroll()
-  }, [visible, scheduleResetContentScroll])
+
+    schedulePostPaintReset()
+
+    return clearPostPaintReset
+  }, [visible, resetKey, clearPostPaintReset, schedulePostPaintReset])
+
+  useEffect(() => {
+    if (!visible) return
+
+    const container = contentRef.current
+    if (!container || typeof ResizeObserver === 'undefined') return
+
+    let settleTimer: number | null = null
+    let lastHeight = container.scrollHeight
+    let stopped = false
+
+    const stopObserver = () => {
+      if (stopped) return
+      stopped = true
+      observer.disconnect()
+      if (settleTimer) {
+        window.clearTimeout(settleTimer)
+        settleTimer = null
+      }
+    }
+
+    const scheduleSettle = () => {
+      if (settleTimer) window.clearTimeout(settleTimer)
+      settleTimer = window.setTimeout(() => {
+        settleTimer = null
+        resetContentToTop()
+        stopObserver()
+      }, 140)
+    }
+
+    const observer = new ResizeObserver(() => {
+      const nextHeight = container.scrollHeight
+      if (nextHeight === lastHeight) return
+
+      lastHeight = nextHeight
+      resetContentToTop()
+      scheduleSettle()
+    })
+
+    observer.observe(container)
+    scheduleSettle()
+
+    return stopObserver
+  }, [visible, resetKey, resetContentToTop])
 
   const commitRouteBack = useCallback(() => {
     if (didCloseRef.current) return
@@ -150,6 +190,8 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW, resetKe
         onTransitionEnd={handleDrawerTransitionEnd}
       >
         <div
+          ref={contentRef}
+          data-drawer-scroll-container='true'
           className={s.drawerContent}
           style={{ ...s.drawerContentStyle, overflowAnchor: 'none' }}
         >

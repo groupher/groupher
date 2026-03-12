@@ -136,7 +136,12 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
         style={s.drawerStyle}
         onTransitionEnd={handleDrawerTransitionEnd}
       >
-        <div ref={contentRef} className={s.drawerContent} style={s.drawerContentStyle}>
+        <div
+          ref={contentRef}
+          data-drawer-scroll-container='true'
+          className={s.drawerContent}
+          style={s.drawerContentStyle}
+        >
           {children}
         </div>
       </div>

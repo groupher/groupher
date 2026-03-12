@@ -1,9 +1,12 @@
 import type { FC } from 'react'
+import { useRouter } from 'next/navigation'
 
 import type { TPost } from '~/spec'
 import { UPVOTE_LAYOUT } from '~/const/layout'
+import { THREAD } from '~/const/thread'
+import useCommunity from '~/hooks/useCommunity'
 
-import { previewArticle, upvoteArticle } from '~/signal'
+import { upvoteArticle } from '~/signal'
 
 import ArticlePinLabel from '~/widgets/ArticlePinLabel'
 import Upvote from '~/widgets/Upvote'
@@ -20,6 +23,8 @@ type TProps = {
 const DigestView: FC<TProps> = ({ article }) => {
   const s = useSalon()
   const { upvotesCount, meta, viewerHasUpvoted } = article
+  const { slug } = useCommunity()
+  const router = useRouter()
 
   return (
     <article className={s.wrapper}>
@@ -35,7 +40,10 @@ const DigestView: FC<TProps> = ({ article }) => {
           top={-1}
         />
       </div>
-      <div className={s.main} onClick={() => previewArticle(article)}>
+      <div
+        className={s.main}
+        onClick={() => router.push(`/${slug}/${THREAD.POST}/${article.innerId}`, { scroll: false })}
+      >
         <Header article={article} />
         <div className={s.digest}>{article.digest}</div>
         <Footer article={article} />
