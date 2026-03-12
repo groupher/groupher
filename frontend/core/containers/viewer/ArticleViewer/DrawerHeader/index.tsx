@@ -12,7 +12,7 @@ export default () => {
   const router = useRouter()
 
   return (
-    <div className={s.wrapper} data-drawer-scroll-anchor>
+    <div className={s.wrapper}>
       <button className={s.backBtn} onClick={() => router.back()}>
         <ArrowSVG className={s.icon} />
       </button>

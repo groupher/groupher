@@ -28,39 +28,12 @@ export default function Drawer({
 
   const contentRef = useRef<HTMLDivElement | null>(null)
   const drawerRef = useRef<HTMLDivElement | null>(null)
-  const resetPostPaintRafRef = useRef<number | null>(null)
-  const resetPostPaintTimerRef = useRef<number | null>(null)
-
-  const clearPostPaintReset = useCallback(() => {
-    if (resetPostPaintRafRef.current) {
-      window.cancelAnimationFrame(resetPostPaintRafRef.current)
-      resetPostPaintRafRef.current = null
-    }
-    if (resetPostPaintTimerRef.current) {
-      window.clearTimeout(resetPostPaintTimerRef.current)
-      resetPostPaintTimerRef.current = null
-    }
-  }, [])
 
   const resetContentToTop = useCallback(() => {
     const container = contentRef.current
     if (!container) return
     container.scrollTop = 0
   }, [])
-
-  const schedulePostPaintReset = useCallback(() => {
-    clearPostPaintReset()
-
-    resetPostPaintRafRef.current = window.requestAnimationFrame(() => {
-      resetPostPaintRafRef.current = null
-      resetContentToTop()
-    })
-
-    resetPostPaintTimerRef.current = window.setTimeout(() => {
-      resetPostPaintTimerRef.current = null
-      resetContentToTop()
-    }, 80)
-  }, [clearPostPaintReset, resetContentToTop])
 
   const [visible, setVisible] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -73,15 +46,15 @@ export default function Drawer({
 
   useEffect(() => {
     lockPage()
+
     return () => {
-      clearPostPaintReset()
       if (closeTimerRef.current) {
         window.clearTimeout(closeTimerRef.current)
         closeTimerRef.current = null
       }
       unlockPage()
     }
-  }, [clearPostPaintReset])
+  }, [])
 
   useLayoutEffect(() => {
     didCloseRef.current = false
@@ -99,58 +72,6 @@ export default function Drawer({
   useLayoutEffect(() => {
     resetContentToTop()
   }, [resetKey, resetContentToTop])
-
-  useEffect(() => {
-    if (!visible) return
-
-    schedulePostPaintReset()
-
-    return clearPostPaintReset
-  }, [visible, resetKey, clearPostPaintReset, schedulePostPaintReset])
-
-  useEffect(() => {
-    if (!visible) return
-
-    const container = contentRef.current
-    if (!container || typeof ResizeObserver === 'undefined') return
-
-    let settleTimer: number | null = null
-    let lastHeight = container.scrollHeight
-    let stopped = false
-
-    const stopObserver = () => {
-      if (stopped) return
-      stopped = true
-      observer.disconnect()
-      if (settleTimer) {
-        window.clearTimeout(settleTimer)
-        settleTimer = null
-      }
-    }
-
-    const scheduleSettle = () => {
-      if (settleTimer) window.clearTimeout(settleTimer)
-      settleTimer = window.setTimeout(() => {
-        settleTimer = null
-        resetContentToTop()
-        stopObserver()
-      }, 140)
-    }
-
-    const observer = new ResizeObserver(() => {
-      const nextHeight = container.scrollHeight
-      if (nextHeight === lastHeight) return
-
-      lastHeight = nextHeight
-      resetContentToTop()
-      scheduleSettle()
-    })
-
-    observer.observe(container)
-    scheduleSettle()
-
-    return stopObserver
-  }, [visible, resetKey, resetContentToTop])
 
   const commitRouteBack = useCallback(() => {
     if (didCloseRef.current) return

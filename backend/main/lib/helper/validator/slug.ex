@@ -19,6 +19,20 @@ defmodule Helper.Validator.Slug do
   def valid?(slug) when is_binary(slug), do: Regex.match?(@slug_regex, slug)
   def valid?(_), do: false
 
+  @spec normalize(String.t() | term()) :: String.t() | term()
+  def normalize(slug) when is_binary(slug) do
+    slug
+    |> String.trim()
+    |> String.downcase()
+    |> String.replace(~r/\s+/, "-")
+    |> String.replace(~r/[^a-z0-9_-]+/u, "-")
+    |> String.replace(~r/-{2,}/, "-")
+    |> String.replace(~r/_{2,}/, "_")
+    |> String.replace(~r/^[^a-z0-9]+|[^a-z0-9]+$/, "")
+  end
+
+  def normalize(slug), do: slug
+
   @spec validate_changeset(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
   def validate_changeset(changeset, field \\ :slug) do
     validate_format(

@@ -58,7 +58,7 @@ export default ({
     },
 
     drawerContent: cn(
-      'relative w-full border rounded-tl-md overflow-y-scroll h-auto',
+      'relative w-full border rounded-tl-md overflow-y-auto h-auto',
       br('divider'),
       bg('card'),
       !isWideMode(type) && 'rounded-md',

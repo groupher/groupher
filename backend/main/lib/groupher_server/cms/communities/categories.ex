@@ -10,12 +10,14 @@ defmodule GroupherServer.CMS.Communities.Categories do
   alias Accounts.Model.User
   alias CMS.Model.{Category, Community, CommunityCategory}
   alias Helper.{ORM, T}
+  alias Helper.Validator.Slug
 
   @spec create(map(), User.t()) :: T.domain_res(term())
   def create(%{community: community} = attrs, %User{id: user_id}) do
     with {:ok, _} <- ORM.find_by(Community, slug: community),
          {:ok, author} <- ensure_author_exists(%User{id: user_id}) do
       attrs = attrs |> Map.merge(%{author_id: author.id})
+      attrs = Map.update(attrs, :slug, nil, &Slug.normalize/1)
       attrs = Map.drop(attrs, [:community])
       Category |> ORM.create(attrs)
     end
@@ -24,6 +26,7 @@ defmodule GroupherServer.CMS.Communities.Categories do
   def create(attrs, %User{id: user_id}) do
     with {:ok, author} <- ensure_author_exists(%User{id: user_id}) do
       attrs = attrs |> Map.merge(%{author_id: author.id})
+      attrs = Map.update(attrs, :slug, nil, &Slug.normalize/1)
       Category |> ORM.create(attrs)
     end
   end

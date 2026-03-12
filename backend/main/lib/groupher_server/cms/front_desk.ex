@@ -282,6 +282,7 @@ defmodule GroupherServer.CMS.FrontDesk do
         :add -> [extract_embed_user(user)] ++ cur_users
         :remove -> Enum.reject(cur_users, &user_id_match?(&1, user.id))
       end
+      |> normalize_embed_users()
 
     meta =
       @default_article_meta
@@ -295,7 +296,7 @@ defmodule GroupherServer.CMS.FrontDesk do
     action = past_verb(action)
     cur_user_ids = get_in(article, [:meta, :"#{action}_user_ids"])
 
-    cur_users = get_in(article, [:meta, :"latest_#{action}_users"])
+    cur_users = get_in(article, [:meta, :"latest_#{action}_users"]) |> normalize_embed_users()
 
     updated_user_ids =
       case opt do
@@ -308,7 +309,7 @@ defmodule GroupherServer.CMS.FrontDesk do
         :add -> [extract_embed_user(user)] ++ cur_users
         :remove -> Enum.reject(cur_users, &user_id_match?(&1, user.id))
       end
-      |> Enum.uniq()
+      |> normalize_embed_users()
       |> Enum.slice(0, @max_latest_upvoted_users_count)
 
     meta =

@@ -1,34 +1,67 @@
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-
-import PreviewDrawerShell from './PreviewDrawerShell'
-
 export default function PreviewDrawerLoading() {
   return (
-    <PreviewDrawerShell dismissible={false}>
-      <div className='flex min-h-full flex-col gap-6 px-6 py-7 md:px-8 md:py-8'>
-        <div className='flex items-start justify-between gap-4 border-b border-divider pb-5'>
-          <div className='flex-1'>
-            <div className='mb-3 h-4 w-24 rounded bg-divider' />
-            <div className='mb-3 h-8 w-4/5 max-w-2xl rounded bg-divider' />
-            <div className='h-4 w-2/5 rounded bg-divider' />
+    <div className='min-h-full px-20'>
+      <div className='my-5 flex h-9 items-center pl-0.5'>
+        <div className='mr-1.5 h-7 w-7 rounded bg-divider' />
+        <div className='h-2 w-2 rounded-full bg-divider' />
+        <div className='grow' />
+        <div className='h-7 w-7 rounded bg-divider' />
+        <div className='ml-2 h-7 w-7 rounded bg-divider' />
+        <div className='ml-2 h-7 w-7 rounded bg-divider' />
+        <div className='mx-2.5 h-6 w-px bg-divider' />
+        <div className='h-7 w-7 rounded bg-divider' />
+        <div className='ml-2 h-7 w-7 rounded bg-divider' />
+      </div>
+
+      <div className='mb-1.5 flex h-12 items-center gap-3'>
+        <div className='h-8 w-36 rounded-xl bg-divider' />
+        <div className='h-7 w-24 rounded-xl bg-divider' />
+        <div className='h-7 w-20 rounded-xl bg-divider' />
+      </div>
+
+      <div className='relative ml-0.5'>
+        <div className='mb-3 h-14 w-9/12 rounded bg-divider' />
+        <div className='absolute top-1 right-0 h-10 w-20 rounded bg-divider' />
+      </div>
+
+      <div className='mt-2 flex h-20 items-center border-b border-divider pb-3'>
+        <div className='flex h-16 w-32 items-center justify-center rounded-2xl border border-divider'>
+          <div className='h-8 w-16 rounded bg-divider' />
+        </div>
+        <div className='grow' />
+        <div className='flex items-center gap-4'>
+          <div className='h-6 w-20 rounded bg-divider' />
+          <div className='h-6 w-20 rounded bg-divider' />
+        </div>
+      </div>
+
+      <div className='mt-6 mb-3.5 space-y-4'>
+        <div className='h-5 w-full rounded bg-divider' />
+        <div className='h-5 w-11/12 rounded bg-divider' />
+        <div className='h-5 w-full rounded bg-divider' />
+        <div className='h-5 w-10/12 rounded bg-divider' />
+        <div className='h-5 w-full rounded bg-divider' />
+        <div className='h-5 w-9/12 rounded bg-divider' />
+      </div>
+
+      <div className='mt-8'>
+        <div className='mb-4 h-8 w-48 rounded bg-divider' />
+
+        <div className='rounded-2xl border border-divider p-5'>
+          <div className='mb-4 flex items-center gap-3'>
+            <div className='h-9 w-9 rounded-full bg-divider' />
+            <div className='space-y-2'>
+              <div className='h-4 w-24 rounded bg-divider' />
+              <div className='h-3 w-16 rounded bg-divider' />
+            </div>
           </div>
-          <div className='h-10 w-10 rounded-full bg-divider' />
-        </div>
 
-        <div className='space-y-3'>
-          <div className='h-4 w-full rounded bg-divider' />
-          <div className='h-4 w-full rounded bg-divider' />
-          <div className='h-4 w-11/12 rounded bg-divider' />
-          <div className='h-4 w-4/5 rounded bg-divider' />
-        </div>
-
-        <div className='mt-3 rounded border border-divider p-4'>
-          <div className='mb-4 h-4 w-28 rounded bg-divider' />
-          <div className='flex justify-center py-10'>
-            <LavaLampLoading top={0} left={0} />
+          <div className='space-y-3'>
+            <div className='h-4 w-full rounded bg-divider' />
+            <div className='h-4 w-10/12 rounded bg-divider' />
           </div>
         </div>
       </div>
-    </PreviewDrawerShell>
+    </div>
   )
 }

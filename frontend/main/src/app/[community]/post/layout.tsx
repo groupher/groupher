@@ -1,6 +1,7 @@
 import { THREAD } from '~/const/thread'
 import { getPagedPosts, getTags } from '~/providers/ssr'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
+import PostPreviewDrawerHost from './PostPreviewDrawerHost'
 
 // app/post/layout.tsx
 export default async ({ children, previewer, params }) => {
@@ -17,7 +18,7 @@ export default async ({ children, previewer, params }) => {
     <ArticleListStoreProvider initData={initData}>
       {children}
 
-      {previewer && <>{previewer}</>}
+      <PostPreviewDrawerHost>{previewer}</PostPreviewDrawerHost>
     </ArticleListStoreProvider>
   )
 }
