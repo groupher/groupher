@@ -3,8 +3,6 @@ defmodule GroupherServer.CMS.Seeds.Comments do
 
   import GroupherServer.Support.Factory
   import Helper.Utils, only: [get_config: 2]
-  import GroupherServer.CMS.Model.Embeds.CommentEmotion, only: [default_emotions: 0]
-  import GroupherServer.CMS.Model.Embeds.CommentMeta, only: [default_meta: 0]
 
   alias GroupherServer.CMS
 
@@ -14,7 +12,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   alias Helper.{ORM, T}
 
   @comment_emotions get_config(:article, :comment_emotions)
-  @comment_count_range {Config.comment_count_per_article(), Config.comment_count_per_article()}
+  @comment_count_range Config.comment_count_range()
   @comment_upvotes_range Config.comment_upvotes_range()
   @comment_replies_range Config.comment_replies_range()
 
@@ -53,12 +51,16 @@ defmodule GroupherServer.CMS.Seeds.Comments do
     range = Keyword.get(opts, :count_range, @comment_replies_range)
     count = random_range(range)
 
-    with {:ok, users} <- db_insert_multi(:user, count) do
-      users
-      |> Enum.each(fn user ->
-        text = Faker.Lorem.sentence(20)
-        {:ok, _} = create_reply(comment, text, user)
-      end)
+    if count <= 0 do
+      {:ok, :pass}
+    else
+      with {:ok, users} <- db_insert_multi(:user, count) do
+        users
+        |> Enum.each(fn user ->
+          text = Faker.Lorem.sentence(20)
+          {:ok, _} = create_reply(comment, text, user)
+        end)
+      end
     end
   end
 
@@ -128,48 +130,12 @@ defmodule GroupherServer.CMS.Seeds.Comments do
 
   defp create_reply(comment, text, user) do
     body = mock_comment(text)
-
-    attrs = %{
-      body: body,
-      body_html: body,
-      author_id: user.id,
-      reply_to_id: comment.id,
-      thread: comment.thread,
-      floor: 0,
-      is_article_author: false,
-      upvotes_count: 0,
-      emotions: default_emotions(),
-      meta: default_meta(),
-      post_id: comment.post_id,
-      changelog_id: comment.changelog_id,
-      doc_id: comment.doc_id
-    }
-
-    ORM.create(Comment, attrs)
+    CMS.Comments.reply_comment(comment.id, body, user)
   end
 
-  defp create_top_comment(_community, thread, article, user, floor) do
+  defp create_top_comment(community, thread, article, user, floor) do
     body = mock_comment("#{Faker.Lorem.sentence(12)} #{floor}")
-    thread_name = thread |> to_string() |> String.upcase()
 
-    attrs =
-      %{
-        body: body,
-        body_html: body,
-        author_id: user.id,
-        thread: thread_name,
-        floor: floor,
-        is_article_author: false,
-        upvotes_count: 0,
-        emotions: default_emotions(),
-        meta: default_meta()
-      }
-      |> put_article_fk(thread, article.id)
-
-    ORM.create(Comment, attrs)
+    CMS.Comments.create_comment(community, thread, article.inner_id, body, user)
   end
-
-  defp put_article_fk(attrs, :post, id), do: Map.put(attrs, :post_id, id)
-  defp put_article_fk(attrs, :changelog, id), do: Map.put(attrs, :changelog_id, id)
-  defp put_article_fk(attrs, :doc, id), do: Map.put(attrs, :doc_id, id)
 end

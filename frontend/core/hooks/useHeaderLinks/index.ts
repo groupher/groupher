@@ -1,10 +1,11 @@
-import { filter, find } from 'ramda'
+import { filter } from 'ramda'
 import { useCallback } from 'react'
 import { MORE_GROUP } from '~/const/dashboard'
 import { groupByKey, sortByGroupIndex } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import type { THeaderLayout, TLinkItem } from '~/spec'
+import { getAboutPath, hasAboutLinkInMore, shouldFoldAboutToMore } from './helper'
 
 type TGroupInfo = {
   groupedLinks: Record<string, TLinkItem[]>
@@ -25,14 +26,15 @@ export default (): THeaderLinks => {
   const isModerator = true
 
   const getCustomLinks = useCallback(() => {
-    const hasExtraAbout = find((link: TLinkItem) => link.title === '关于', headerLinks)
+    const shouldFoldAbout = shouldFoldAboutToMore(headerLinks, community)
+    const hasMoreAbout = hasAboutLinkInMore(headerLinks, community)
 
-    const aboutLink = !hasExtraAbout
+    const aboutLink = shouldFoldAbout && !hasMoreAbout
       ? {
           index: 999,
           title: '关于',
           group: MORE_GROUP,
-          link: `/${community}/about`,
+          link: getAboutPath(community),
         }
       : { title: '', index: 0 }
 

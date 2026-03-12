@@ -1,4 +1,3 @@
-import { includes } from 'ramda'
 import type { FC } from 'react'
 
 import type { TComment, TID } from '~/spec'
@@ -6,54 +5,63 @@ import Comment from '../Comment'
 import { MODE } from '../constant'
 import { passedDate } from '../helper'
 import useSalon from '../salon/list/list'
-import type { TAPIMode, TMode, TRepliesState } from '../spec'
-import useLogic from '../useLogic'
+import type { TAPIMode, TMode } from '../spec'
+import useActions from '../useLogic/useActions'
 import DateDivider from './DateDivider'
 import RepliesList from './RepliesList'
 
 type TProps = {
   mode: TMode
-  repliesState: TRepliesState
+  repliesLoadingByParentId: Record<string, boolean>
   apiMode: TAPIMode
   entries: TComment[]
-  foldedIds: TID[]
+  foldedIdSet: Set<TID>
 }
 
-const List: FC<TProps> = ({ mode, repliesState, apiMode, entries, foldedIds }) => {
+const List: FC<TProps> = ({
+  mode,
+  repliesLoadingByParentId,
+  apiMode,
+  entries,
+  foldedIdSet,
+}) => {
   const s = useSalon()
-  const { foldComment } = useLogic()
+  const { foldComment } = useActions()
 
   return (
     <>
-      {entries.map((comment, index) => (
-        <div key={comment.id} className={s.wrapper}>
-          <Comment
-            data={comment}
-            apiMode={apiMode}
-            hasReplies={comment.repliesCount > 0}
-            foldedIds={foldedIds}
-          />
+      {entries.map((comment, index) => {
+        const isFolded = foldedIdSet.has(comment.id)
+        const isRepliesLoading = Boolean(repliesLoadingByParentId[comment.id])
 
-          {mode === MODE.TIMELINE && (
-            <DateDivider text={passedDate(entries[index], entries[index + 1])} />
-          )}
+        return (
+          <div key={comment.id} className={s.wrapper}>
+            <Comment
+              data={comment}
+              apiMode={apiMode}
+              hasReplies={comment.repliesCount > 0}
+              isFolded={isFolded}
+            />
 
-          {mode === MODE.REPLIES &&
-            comment.replies?.length > 0 &&
-            !includes(comment.id, foldedIds) && (
+            {mode === MODE.TIMELINE && (
+              <DateDivider text={passedDate(entries[index], entries[index + 1])} />
+            )}
+
+            {mode === MODE.REPLIES && comment.replies?.length > 0 && !isFolded && (
               <RepliesList
                 parentId={comment.id}
                 apiMode={apiMode}
                 entries={comment.replies}
                 repliesCount={comment.repliesCount}
-                repliesState={repliesState}
-                foldedIds={foldedIds}
+                loading={isRepliesLoading}
+                foldedIdSet={foldedIdSet}
               />
             )}
 
-          <button className={s.indentLine} onClick={() => foldComment(comment.id)} />
-        </div>
-      ))}
+            <button className={s.indentLine} onClick={() => foldComment(comment.id)} />
+          </div>
+        )
+      })}
     </>
   )
 }

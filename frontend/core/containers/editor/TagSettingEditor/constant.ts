@@ -1,5 +1,6 @@
 import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
+import { toGqlThread } from '~/utils/thread'
 
 export const DEFAULT_CREATE_TAG = {
   id: '',
@@ -8,7 +9,7 @@ export const DEFAULT_CREATE_TAG = {
   slug: '',
   title: '',
   desc: '',
-  thread: THREAD.POST.toUpperCase(),
+  thread: toGqlThread(THREAD.POST, 'TAGS') || THREAD.POST.toUpperCase(),
   group: '',
 }
 

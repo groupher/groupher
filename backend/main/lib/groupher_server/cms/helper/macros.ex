@@ -4,9 +4,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
   """
   import Helper.Utils, only: [get_config: 2]
 
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
+  alias GroupherServer.CMS
 
   alias CMS.Model.{
     ArticleCollect,
@@ -118,7 +116,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
       field(:comments_count, :integer, default: 0)
       has_many(:comments, {"comments", Comment})
       # 评论参与者，只保留最近 5 个
-      embeds_many(:comments_participants, User, on_replace: :delete)
+      embeds_many(:comments_participants, Embeds.User, on_replace: :delete)
     end
   end
 

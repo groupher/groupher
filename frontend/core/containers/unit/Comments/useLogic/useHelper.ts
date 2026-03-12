@@ -1,29 +1,32 @@
-import { useSnapshot } from 'valtio'
-import { propEq, findIndex, update, uniqBy, prop } from 'ramda'
+import { useContext } from 'react'
+import { propEq, findIndex, uniqBy, prop } from 'ramda'
 
-import type { TComment, TEmotion } from '~/spec'
+import type { TComment, TEmotion, TID } from '~/spec'
+import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
 
 import type { TEditMode } from '../spec'
 import { MODE, EDIT_MODE } from '../constant'
 
-import store from './store'
-
 type TRet = {
   updateOneComment: (comment: TComment, fields?: Partial<TComment>) => void
   upvoteEmotion: (comment: TComment, emotion: TEmotion) => void
-  addToReplies: (replies: TComment[]) => void
+  addToReplies: (parentId: TID, replies: TComment[]) => void
   published: () => void
   resetPublish: (mode: TEditMode) => void
 }
 
 export default (): TRet => {
-  const snap = useSnapshot(store)
+  const commentsStore = useContext(CommentsStoreContext) as any
+  if (!commentsStore) {
+    throw new Error('useHelper must be used within a Comments store provider')
+  }
+  const comments = commentsStore
 
   const updateOneComment = (comment: TComment, fields = {}): void => {
     const { id, replyToId } = comment
-    const { entries } = snap.pagedComments
+    const { entries } = comments.pagedComments
 
-    if (snap.mode === MODE.REPLIES && replyToId) {
+    if (comments.mode === MODE.REPLIES && replyToId) {
       const parentIndex = findIndex(propEq(replyToId, 'id'), entries)
       if (parentIndex < 0) return
       const parentComment = entries[parentIndex]
@@ -55,9 +58,9 @@ export default (): TRet => {
 
   const upvoteEmotion = (comment: TComment, emotion: TEmotion): void => {
     const { id, replyToId } = comment
-    const { entries } = snap.pagedComments
+    const { entries } = comments.pagedComments
 
-    if (snap.mode === MODE.REPLIES && replyToId) {
+    if (comments.mode === MODE.REPLIES && replyToId) {
       const parentIndex = findIndex(propEq(replyToId, 'id'), entries)
       if (parentIndex < 0) return
       const parentComment = entries[parentIndex]
@@ -87,34 +90,38 @@ export default (): TRet => {
     }
   }
 
-  const addToReplies = (replies: TComment[]): void => {
-    const { repliesParentId } = snap
-    const { entries } = snap.pagedComments
+  const addToReplies = (parentId: TID, replies: TComment[]): void => {
+    const { entries } = comments.pagedComments
 
-    if (snap.mode === MODE.REPLIES && repliesParentId) {
-      const parentIndex = findIndex(propEq(repliesParentId, 'id'), entries)
+    if (comments.mode === MODE.REPLIES && parentId) {
+      const parentIndex = findIndex(propEq(parentId, 'id'), entries)
 
       if (parentIndex < 0) return
-      const curReplies = entries[parentIndex].replies
-      const uniqReplies = uniqBy(prop('id'), curReplies.concat(replies))
+      const curReplies = entries[parentIndex].replies || []
+      const uniqReplies = uniqBy(prop('id'), [...curReplies, ...replies]) as TComment[]
 
-      // @ts-ignore
-      const pagedComments = update(parentIndex, uniqReplies, snap.pagedComments.entries)
-      // @ts-ignore
-      snap.commit({ pagedComments })
+      const entriesPatch = entries.map((item, index) =>
+        index === parentIndex ? { ...item, replies: uniqReplies } : item,
+      ) as unknown as TComment[]
+      commentsStore.commit({
+        pagedComments: {
+          ...comments.pagedComments,
+          entries: entriesPatch,
+        },
+      })
 
       // self.pagedComments.entries[parentIndex].replies = uniqReplies
     }
   }
 
   const published = (): void => {
-    snap.commit({ publishing: false, publishDone: true })
+    commentsStore.commit({ publishing: false, publishDone: true })
   }
 
   const resetPublish = (mode: TEditMode): void => {
     switch (mode) {
       case EDIT_MODE.REPLY: {
-        snap.commit({
+        commentsStore.commit({
           showReplyEditor: false,
           replyBody: '{}',
           replyToComment: null,
@@ -123,7 +130,7 @@ export default (): TRet => {
         return
       }
       case EDIT_MODE.UPDATE: {
-        snap.commit({
+        commentsStore.commit({
           showUpdateEditor: false,
           updateId: null,
           updateBody: '{}',
@@ -132,7 +139,7 @@ export default (): TRet => {
         return
       }
       default: {
-        snap.commit({ showEditor: false, commentBody: '{}', publishDone: false })
+        commentsStore.commit({ showEditor: false, commentBody: '{}', publishDone: false })
       }
     }
   }

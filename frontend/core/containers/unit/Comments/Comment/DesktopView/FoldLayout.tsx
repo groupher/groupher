@@ -8,7 +8,7 @@ import TimeAgo from '~/widgets/TimeAgo'
 import useTrans from '~/hooks/useTrans'
 import useSalon, { cn } from '../../salon/comment/desktop_view/fold_layout'
 
-import useLogic from '../../useLogic'
+import useActions from '../../useLogic/useActions'
 import IllegalBar from './IllegalBar'
 
 type TProps = {
@@ -19,7 +19,7 @@ type TProps = {
 const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
   const s = useSalon()
 
-  const { expandComment } = useLogic()
+  const { expandComment } = useActions()
   const { t } = useTrans()
 
   const isSolution = false //

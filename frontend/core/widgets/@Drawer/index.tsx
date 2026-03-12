@@ -4,11 +4,9 @@ import { useRouter } from 'next/navigation'
 import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { ANCHOR } from '~/const/dom'
-import EVENT from '~/const/event'
 import TYPE from '~/const/type'
 import { lockPage, unlockPage } from '~/dom'
 import useDrawerOffset from '~/hooks/useDrawerOffset'
-import useEvent from '~/hooks/useEvent'
 import useSalon, { cn } from '~/widgets/Drawer/salon'
 import { CLOSE_ANIMATION_BUFFER_MS, CLOSE_ANIMATION_MS } from '~/widgets/Drawer/salon/constant'
 import Portal from '~/widgets/Portal'
@@ -16,13 +14,26 @@ import Portal from '~/widgets/Portal'
 type TProps = {
   children: ReactNode
   type?: string
+  resetKey?: string | number
+  dismissible?: boolean
 }
 
-export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProps) {
+export default function Drawer({
+  children,
+  type = TYPE.DRAWER.POST_VIEW,
+  resetKey,
+  dismissible = true,
+}: TProps) {
   const router = useRouter()
 
   const contentRef = useRef<HTMLDivElement | null>(null)
   const drawerRef = useRef<HTMLDivElement | null>(null)
+
+  const resetContentToTop = useCallback(() => {
+    const container = contentRef.current
+    if (!container) return
+    container.scrollTop = 0
+  }, [])
 
   const [visible, setVisible] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -33,12 +44,9 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
   const { rightOffset, fromContentEdge } = useDrawerOffset()
   const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
 
-  useEvent(EVENT.DRAWER.CONTENT_LOADED, () => {
-    contentRef.current?.scrollTo({ top: 0 })
-  })
-
   useEffect(() => {
     lockPage()
+
     return () => {
       if (closeTimerRef.current) {
         window.clearTimeout(closeTimerRef.current)
@@ -52,13 +60,18 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
     didCloseRef.current = false
     setClosing(false)
     setVisible(false)
+    resetContentToTop()
 
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     drawerRef.current?.offsetHeight
 
     const raf = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(raf)
-  }, [])
+  }, [resetContentToTop])
+
+  useLayoutEffect(() => {
+    resetContentToTop()
+  }, [resetKey, resetContentToTop])
 
   const commitRouteBack = useCallback(() => {
     if (didCloseRef.current) return
@@ -82,14 +95,14 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
   const handleDrawerTransitionEnd = useCallback(
     (e: React.TransitionEvent<HTMLDivElement>) => {
       if (e.target !== drawerRef.current) return
-      if (!closing || visible) return
 
-      if (e.propertyName === 'opacity') {
+      if (closing && !visible && e.propertyName === 'opacity') {
         if (closeTimerRef.current) {
           window.clearTimeout(closeTimerRef.current)
           closeTimerRef.current = null
         }
         commitRouteBack()
+        return
       }
     },
     [closing, visible, commitRouteBack],
@@ -103,7 +116,12 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
         style={s.drawerStyle}
         onTransitionEnd={handleDrawerTransitionEnd}
       >
-        <div ref={contentRef} className={s.drawerContent} style={s.drawerContentStyle}>
+        <div
+          ref={contentRef}
+          data-drawer-scroll-container='true'
+          className={s.drawerContent}
+          style={{ ...s.drawerContentStyle, overflowAnchor: 'none' }}
+        >
           {children}
         </div>
       </div>
@@ -114,7 +132,7 @@ export default function Drawer({ children, type = TYPE.DRAWER.POST_VIEW }: TProp
         aria-label='drawer mask'
         className={cn(s.overlay, ANCHOR.GLOBAL_BLUR_CLASS)}
         style={s.overlayStyle}
-        onClick={requestClose}
+        onClick={dismissible ? requestClose : undefined}
       />
     </Portal>
   )

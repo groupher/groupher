@@ -36,7 +36,7 @@ export default ({
 
       transition: closing
         ? `opacity ${CLOSE_ANIMATION_MS}ms ease, transform ${CLOSE_ANIMATION_MS}ms ease, filter ${CLOSE_ANIMATION_MS}ms ease`
-        : 'transform 800ms cubic-bezier(0.23, 1, 0.32, 1) 0ms',
+        : 'transform 280ms cubic-bezier(0.23, 1, 0.32, 1) 0ms',
 
       right: isWideMode(type) ? rightOffset : pixelAdd(rightOffset, 30),
       width: getDrawerWidth(type),
@@ -58,7 +58,7 @@ export default ({
     },
 
     drawerContent: cn(
-      'relative w-full border rounded-tl-md overflow-y-scroll h-auto',
+      'relative w-full border rounded-tl-md overflow-y-auto h-auto',
       br('divider'),
       bg('card'),
       !isWideMode(type) && 'rounded-md',

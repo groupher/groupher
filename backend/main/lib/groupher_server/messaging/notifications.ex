@@ -4,13 +4,14 @@ defmodule GroupherServer.Messaging.Notifications do
   import Ecto.Query, warn: false
 
   import Helper.Utils,
-    only: [get_config: 2, done: 1, strip_struct: 1, atom_values_to_upcase: 1]
+    only: [get_config: 2, done: 1, atom_values_to_upcase: 1]
 
   import ShortMaps
 
   alias GroupherServer.{Accounts, Repo}
 
   alias Accounts.Model.User
+  alias GroupherServer.CMS.Model.Embeds
   alias GroupherServer.Messaging.Model.Notification
   alias Helper.{Multi, ORM}
 
@@ -24,10 +25,7 @@ defmodule GroupherServer.Messaging.Notifications do
          true <- user_id !== from_user.id do
       Multi.new()
       |> Multi.run(:upsert_notifications, fn _, _ ->
-        from_user =
-          from_user
-          |> Map.take([:login, :nickname])
-          |> Map.put(:user_id, from_user.id)
+        from_user = Embeds.User.from_account_user(from_user)
 
         case find_exist_notify(attrs, :latest_peroid) do
           {:ok, notify} -> merge_notification(notify, from_user)
@@ -58,7 +56,11 @@ defmodule GroupherServer.Messaging.Notifications do
                 ORM.delete(notify)
 
               false ->
-                from_users = Enum.reject(notify.from_users, &(&1.login == from_user.login))
+                from_users =
+                  notify.from_users
+                  |> normalize_embed_users()
+                  |> Enum.reject(&(&1.login == from_user.login))
+
                 notify |> ORM.update_embed(:from_users, from_users)
             end
           end)
@@ -115,8 +117,9 @@ defmodule GroupherServer.Messaging.Notifications do
   end
 
   defp merge_notification(notify, from_user) do
-    cur_from_users = notify.from_users |> Enum.map(&strip_struct(&1))
-    from_users = ([from_user] ++ cur_from_users) |> Enum.uniq()
+    from_users =
+      ([from_user] ++ normalize_embed_users(notify.from_users))
+      |> Enum.uniq_by(&Embeds.User.uniq_key/1)
 
     notify
     |> ORM.update_embed(:from_users, from_users, %{from_users_count: length(from_users)})
@@ -127,9 +130,11 @@ defmodule GroupherServer.Messaging.Notifications do
 
     %Notification{}
     |> Ecto.Changeset.change(attrs)
-    |> Ecto.Changeset.put_embed(:from_users, [from_user])
+    |> Ecto.Changeset.put_embed(:from_users, normalize_embed_users([from_user]))
     |> Ecto.Changeset.unique_constraint(:user_id, name: :notifications_unread_group_uniq_idx)
-    |> Repo.insert()
+    # Keep unique-conflict failures isolated, so the outer transaction can continue
+    # and fallback to find+merge without hitting 25P02 (aborted transaction).
+    |> Repo.insert(mode: :savepoint)
   end
 
   defp create_or_merge_notification(attrs, from_user) do
@@ -234,6 +239,12 @@ defmodule GroupherServer.Messaging.Notifications do
 
   defp interval_threshold_time do
     Timex.shift(Timex.now(), hours: -@notify_group_interval_hour)
+  end
+
+  defp normalize_embed_users(users) do
+    users
+    |> Enum.map(&Embeds.User.normalize/1)
+    |> Enum.filter(&Embeds.User.valid?/1)
   end
 
   defp result({:ok, %{upsert_notifications: result}}), do: {:ok, result}

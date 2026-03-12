@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import type { TPost } from '~/spec'
 import { UPVOTE_LAYOUT } from '~/const/layout'
 
-import { previewArticle, upvoteArticle } from '~/signal'
+import { upvoteArticle } from '~/signal'
 
 import ArticlePinLabel from '~/widgets/ArticlePinLabel'
 import Upvote from '~/widgets/Upvote'
@@ -35,7 +35,7 @@ const DigestView: FC<TProps> = ({ article }) => {
           top={-1}
         />
       </div>
-      <div className={s.main} onClick={() => previewArticle(article)}>
+      <div className={s.main}>
         <Header article={article} />
         <div className={s.digest}>{article.digest}</div>
         <Footer article={article} />

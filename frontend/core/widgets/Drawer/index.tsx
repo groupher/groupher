@@ -2,11 +2,9 @@
 
 import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ANCHOR } from '~/const/dom'
-import EVENT from '~/const/event'
 import TYPE from '~/const/type'
 import { lockPage, unlockPage } from '~/dom'
 import useDrawerOffset from '~/hooks/useDrawerOffset'
-import useEvent from '~/hooks/useEvent'
 import Portal from '~/widgets/Portal'
 import useSalon, { cn } from './salon'
 import { CLOSE_ANIMATION_BUFFER_MS, CLOSE_ANIMATION_MS } from './salon/constant'
@@ -35,10 +33,6 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
 
   const { rightOffset, fromContentEdge } = useDrawerOffset()
   const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
-
-  useEvent(EVENT.DRAWER.CONTENT_LOADED, () => {
-    contentRef.current?.scrollTo({ top: 0 })
-  })
 
   const clearCloseTimer = useCallback(() => {
     if (closeTimerRef.current) {
@@ -142,7 +136,12 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
         style={s.drawerStyle}
         onTransitionEnd={handleDrawerTransitionEnd}
       >
-        <div ref={contentRef} className={s.drawerContent} style={s.drawerContentStyle}>
+        <div
+          ref={contentRef}
+          data-drawer-scroll-container='true'
+          className={s.drawerContent}
+          style={s.drawerContentStyle}
+        >
           {children}
         </div>
       </div>

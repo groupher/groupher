@@ -14,7 +14,7 @@ import IllegalBar from './IllegalBar'
 
 import type { TAPIMode } from '../../spec'
 
-import useLogic from '../../useLogic'
+import useActions from '../../useLogic/useActions'
 import useSalon, { cn } from '../../salon/comment/desktop_view'
 
 type TProps = {
@@ -26,7 +26,7 @@ type TProps = {
 
 const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false, apiMode }) => {
   const s = useSalon()
-  const { foldComment } = useLogic()
+  const { foldComment } = useActions()
   const { t } = useTrans()
 
   const { isPinned, meta } = data

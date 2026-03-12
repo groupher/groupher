@@ -89,8 +89,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "got basic comments state"
     field :comments_state, :comments_list_state do
-      arg(:id, non_null(:id))
-      arg(:thread, :thread, default_value: :post)
+      arg(:article, non_null(:article_ref_input))
       arg(:freshkey, :string)
 
       resolve(&R.CMS.comments_state/3)
@@ -105,9 +104,8 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "get paged article comments"
     field :paged_comments, :paged_comments do
-      arg(:id, non_null(:id))
+      arg(:article, non_null(:article_ref_input))
       arg(:mode, :comments_mode, default_value: :replies)
-      arg(:thread, :thread, default_value: :post)
       arg(:filter, :comments_filter)
 
       middleware(M.PageSizeProof)
@@ -116,8 +114,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "get paged article comments participants"
     field :paged_comments_participants, :paged_users do
-      arg(:id, non_null(:id))
-      arg(:thread, :thread, default_value: :post)
+      arg(:article, non_null(:article_ref_input))
       arg(:filter, :pagi_filter)
 
       middleware(M.PageSizeProof)

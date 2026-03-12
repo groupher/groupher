@@ -14,7 +14,7 @@ import { MODE } from '../../constant'
 
 import type { TProps as TBase } from '..'
 
-import useLogic from '../../useLogic'
+import useActions from '../../useLogic/useActions'
 import useSalon, { cn } from '../../salon/head_bar/state_bar/sort_menu'
 
 type TProps = Pick<TBase, 'mode' | 'apiMode' | 'isAllFolded'>
@@ -22,7 +22,7 @@ type TProps = Pick<TBase, 'mode' | 'apiMode' | 'isAllFolded'>
 const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode }) => {
   const s = useSalon()
 
-  const { foldAllComments, expandAllComments, onModeChange } = useLogic()
+  const { foldAllComments, expandAllComments, onModeChange } = useActions()
   const { t } = useTrans()
 
   return (

@@ -5,15 +5,16 @@
  */
 
 import type { FC } from 'react'
+import Link from 'next/link'
 
 import type { TArticle } from '~/spec'
+import useCommunity from '~/hooks/useCommunity'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import ArticleCatState from '~/widgets/ArticleCatState'
 import TagsList from '~/widgets/TagsList'
 
 import { mockUsers } from '~/mock'
-import { previewArticle } from '~/signal'
 
 import Upvote from '~/widgets/Upvote'
 
@@ -25,13 +26,18 @@ type TProps = {
 
 const KanbanItem: FC<TProps> = ({ article }) => {
   const s = useSalon()
+  const { slug } = useCommunity()
 
   const { title, communityTags, cat, upvotesCount } = article
 
   return (
     <div className={s.wrapper}>
-      <h4 className={s.title} onClick={() => previewArticle(article)}>
-        {title}
+      <h4
+        className={s.title}
+      >
+        <Link href={`/${slug}/${article.meta.thread.toLowerCase()}/${article.innerId}`} scroll={false}>
+          {title}
+        </Link>
       </h4>
       <div className="grow" />
       <TagsList items={communityTags} right={1} />

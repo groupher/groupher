@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Model.{Comment, Community, Thread}
+  alias CMS.Model.{Comment, Community, Embeds, Thread}
   alias Helper.{ORM, QueryBuilder, T}
 
   @article_threads Application.compile_env(:groupher_server, :article, [])
@@ -204,14 +204,14 @@ defmodule GroupherServer.CMS.FrontDesk do
   def update_emotions_field(artiment, emotion, status, user) do
     %{user_count: user_count, user_list: user_list} = status
 
+    latest_users =
+      user_list |> normalize_embed_users() |> Enum.slice(0, @max_latest_emotion_users_count)
+
     emotions =
       %{}
       |> Map.put(:"#{emotion}_count", user_count)
       |> Map.put(:"#{emotion}_user_logins", user_list |> Enum.map(& &1.login))
-      |> Map.put(
-        :"latest_#{emotion}_users",
-        Enum.slice(user_list, 0, @max_latest_emotion_users_count)
-      )
+      |> Map.put(:"latest_#{emotion}_users", latest_users)
 
     viewer_has_emotioned = user.login in Map.get(emotions, :"#{emotion}_user_logins")
     emotions = emotions |> Map.put(:"viewer_has_#{emotion}ed", viewer_has_emotioned)
@@ -282,6 +282,7 @@ defmodule GroupherServer.CMS.FrontDesk do
         :add -> [extract_embed_user(user)] ++ cur_users
         :remove -> Enum.reject(cur_users, &user_id_match?(&1, user.id))
       end
+      |> normalize_embed_users()
 
     meta =
       @default_article_meta
@@ -295,7 +296,7 @@ defmodule GroupherServer.CMS.FrontDesk do
     action = past_verb(action)
     cur_user_ids = get_in(article, [:meta, :"#{action}_user_ids"])
 
-    cur_users = get_in(article, [:meta, :"latest_#{action}_users"])
+    cur_users = get_in(article, [:meta, :"latest_#{action}_users"]) |> normalize_embed_users()
 
     updated_user_ids =
       case opt do
@@ -308,7 +309,7 @@ defmodule GroupherServer.CMS.FrontDesk do
         :add -> [extract_embed_user(user)] ++ cur_users
         :remove -> Enum.reject(cur_users, &user_id_match?(&1, user.id))
       end
-      |> Enum.uniq()
+      |> normalize_embed_users()
       |> Enum.slice(0, @max_latest_upvoted_users_count)
 
     meta =
@@ -374,12 +375,16 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   defp extract_embed_user(%User{} = user) do
-    %{
-      user_id: user.id,
-      avatar: user.avatar,
-      login: user.login,
-      nickname: user.nickname
-    }
+    user
+    |> Embeds.User.from_account_user()
+    |> Map.from_struct()
+  end
+
+  defp normalize_embed_users(users) do
+    users
+    |> Enum.map(&Embeds.User.normalize/1)
+    |> Enum.filter(&Embeds.User.valid?/1)
+    |> Enum.uniq_by(&Embeds.User.uniq_key/1)
   end
 
   defp user_id_match?(user, user_id) do

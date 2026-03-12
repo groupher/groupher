@@ -136,7 +136,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
             %{
               reason: reason,
               attr: attr,
-              user: %{user_id: user.id, login: user.login, nickname: user.nickname}
+              user: Embeds.User.from_account_user(user) |> Map.from_struct()
             }
           ]
 
@@ -147,7 +147,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
           AbuseReport |> ORM.create(args)
 
         _ ->
-          report_user = %{user_id: user.id, login: user.login, nickname: user.nickname}
+          report_user = Embeds.User.from_account_user(user) |> Map.from_struct()
 
           report_cases =
             report.report_cases

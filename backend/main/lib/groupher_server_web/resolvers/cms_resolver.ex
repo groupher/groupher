@@ -374,12 +374,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # comments ..
   # #######################
-  def comments_state(_root, ~m(thread id)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.comments_state(thread, id, user)
+  def comments_state(_root, %{article: article_ref}, %{context: %{cur_user: user}}) do
+    with {:ok, {thread, article_id}} <- resolve_comment_article_ref(article_ref) do
+      CMS.Comments.comments_state(thread, article_id, user)
+    end
   end
 
-  def comments_state(_root, ~m(thread id)a, _) do
-    CMS.Comments.comments_state(thread, id)
+  def comments_state(_root, %{article: article_ref}, _) do
+    with {:ok, {thread, article_id}} <- resolve_comment_article_ref(article_ref) do
+      CMS.Comments.comments_state(thread, article_id)
+    end
   end
 
   def one_comment(_root, ~m(id)a, %{context: %{cur_user: user}}) do
@@ -390,22 +394,24 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Comments.one_comment(id)
   end
 
-  def paged_comments(_root, ~m(id thread filter mode)a, %{context: %{cur_user: user}}) do
-    case mode do
-      :replies -> CMS.Comments.paged_comments(thread, id, filter, :replies, user)
-      :timeline -> CMS.Comments.paged_comments(thread, id, filter, :timeline, user)
+  def paged_comments(_root, %{article: article_ref, filter: filter, mode: mode}, %{
+        context: %{cur_user: user}
+      }) do
+    with {:ok, {thread, article_id}} <- resolve_comment_article_ref(article_ref) do
+      CMS.Comments.paged_comments(thread, article_id, filter, mode, user)
     end
   end
 
-  def paged_comments(_root, ~m(id thread filter mode)a, _info) do
-    case mode do
-      :replies -> CMS.Comments.paged_comments(thread, id, filter, :replies)
-      :timeline -> CMS.Comments.paged_comments(thread, id, filter, :timeline)
+  def paged_comments(_root, %{article: article_ref, filter: filter, mode: mode}, _info) do
+    with {:ok, {thread, article_id}} <- resolve_comment_article_ref(article_ref) do
+      CMS.Comments.paged_comments(thread, article_id, filter, mode)
     end
   end
 
-  def paged_comments_participants(_root, ~m(id thread filter)a, _info) do
-    CMS.Comments.paged_comments_participants(thread, id, filter)
+  def paged_comments_participants(_root, %{article: article_ref, filter: filter}, _info) do
+    with {:ok, {thread, article_id}} <- resolve_comment_article_ref(article_ref) do
+      CMS.Comments.paged_comments_participants(thread, article_id, filter)
+    end
   end
 
   def create_comment(_root, ~m(community thread id body)a, %{context: %{cur_user: user}}) do
@@ -451,6 +457,23 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def pin_comment(_root, ~m(id)a, _info), do: CMS.Comments.pin_comment(id)
 
   def undo_pin_comment(_root, ~m(id)a, _info), do: CMS.Comments.undo_pin_comment(id)
+
+  defp resolve_comment_article_ref(article_ref) do
+    inner_id = Map.get(article_ref, :inner_id) || Map.get(article_ref, :innerId)
+    community = Map.get(article_ref, :community)
+
+    with {:ok, thread} <- normalize_thread(Map.get(article_ref, :thread, :post)),
+         {:ok, article} <- CMS.FrontDesk.article(community, thread, inner_id) do
+      {:ok, {thread, article.id}}
+    end
+  end
+
+  defp normalize_thread(nil), do: {:ok, :post}
+  defp normalize_thread(thread) when is_atom(thread), do: {:ok, thread}
+
+  defp normalize_thread(thread) when is_binary(thread) do
+    {:ok, thread |> String.downcase() |> String.to_atom()}
+  end
 
   ############
   ############

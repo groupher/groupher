@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useMemo } from 'react'
 
 import Pagi from '~/widgets/Pagi'
 import useTrans from '~/hooks/useTrans'
@@ -9,14 +9,19 @@ import useLogic from '../useLogic'
 
 export default () => {
   const { t } = useTrans()
-  const { mode, apiMode, loading, getFoldState, getRepliesState, pagedComments, onPageChange } =
-    useLogic()
+  const {
+    mode,
+    apiMode,
+    loading,
+    pagedComments,
+    onPageChange,
+    foldedCommentIds,
+    repliesLoadingByParentId,
+  } = useLogic()
 
-  const foldState = getFoldState()
-  const repliesState = getRepliesState()
+  const foldedIdSet = useMemo(() => new Set(foldedCommentIds), [foldedCommentIds])
 
   const { entries, totalCount, pageSize, pageNumber } = pagedComments
-  const { foldedIds } = foldState
 
   return (
     <Fragment>
@@ -24,8 +29,8 @@ export default () => {
         mode={mode}
         apiMode={apiMode}
         entries={entries}
-        repliesState={repliesState}
-        foldedIds={foldedIds}
+        foldedIdSet={foldedIdSet}
+        repliesLoadingByParentId={repliesLoadingByParentId}
       />
       <div className="mb-14" />
       {!loading && (

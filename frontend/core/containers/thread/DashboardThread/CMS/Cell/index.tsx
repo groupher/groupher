@@ -1,10 +1,10 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import * as React from 'react'
-
+import useCommunity from '~/hooks/useCommunity'
 import Img from '~/Img'
 import PulseSVG from '~/icons/Pulse'
-import { previewArticle } from '~/signal'
 import type { TArticle } from '~/spec'
 import ArticleCatState from '~/widgets/ArticleCatState'
 import TagsList from '~/widgets/TagsList'
@@ -28,13 +28,19 @@ export const StateCell = React.memo(function StateCell({ rowData }: { rowData: T
 
 export const ArticleCell = React.memo(function ArticleCell({ rowData }: { rowData: TArticle }) {
   const s = useSalon()
+  const router = useRouter()
+  const { slug } = useCommunity()
 
   return (
     <div className='w-full overflow-hidden'>
       <button
         type='button'
         className={cn(s.articleTitle, 'truncate w-full text-left')}
-        onClick={() => previewArticle(rowData)}
+        onClick={() =>
+          router.push(`/${slug}/${rowData.meta.thread.toLowerCase()}/${rowData.innerId}`, {
+            scroll: false,
+          })
+        }
       >
         ({rowData.innerId}) {rowData.title}
       </button>

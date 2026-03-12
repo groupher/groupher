@@ -9,7 +9,11 @@ slug =
         raise "Invalid slug: '#{s}'. Slug cannot contain spaces."
       end
 
-      s
+      if Helper.Validator.Slug.valid?(s) do
+        s
+      else
+        raise "Invalid slug: '#{s}'. Use lowercase letters, numbers, hyphen and underscore."
+      end
 
     _ ->
       raise "Usage: mix run scripts/seed_full_community.exs -- <slug>"

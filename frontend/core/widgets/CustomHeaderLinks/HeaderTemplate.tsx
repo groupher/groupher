@@ -61,7 +61,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links }) => {
               <LinkGroup
                 groupTitle={groupTitle}
                 links={curGroupLinks}
-                showMoreFold={links.length >= 2 && links[0].title !== ''}
+                showMoreFold={curGroupLinks.length > 0}
               />
             )}
           </Fragment>

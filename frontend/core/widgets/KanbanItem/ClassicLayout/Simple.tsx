@@ -5,13 +5,14 @@
  */
 
 import { type FC, memo, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 import type { TArticle } from '~/spec'
+import useCommunity from '~/hooks/useCommunity'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
 
 import { mockTags, mockUsers } from '~/mock'
-import { previewArticle } from '~/signal'
 import { getRandomInt } from '~/helper'
 
 import CommentsCount from '~/widgets/CommentsCount'
@@ -28,6 +29,8 @@ type TProps = {
 
 const KanbanItem: FC<TProps> = ({ article }) => {
   const s = useSalon()
+  const router = useRouter()
+  const { slug } = useCommunity()
 
   const [titleIdx, setTitleIdx] = useState(0)
 
@@ -42,7 +45,13 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <div className={s.header}>
         <TagsList items={[tags[titleIdx]]} />
       </div>
-      <button type='button' className={s.title} onClick={() => previewArticle(article)}>
+      <button
+        type='button'
+        className={s.title}
+        onClick={() =>
+          router.push(`/${slug}/${article.meta.thread.toLowerCase()}/${article.innerId}`, { scroll: false })
+        }
+      >
         {article.title}
       </button>
       <div className={s.footer}>

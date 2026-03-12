@@ -10,6 +10,7 @@ import type { TChangelog } from '~/spec'
 
 import ArtimentBody from '~/widgets/ArtimentBody'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import CommentsStoreProvider from '~/stores/comments/provider'
 // import ViewportTracker from '~/widgets/ViewportTracker'
 
 import useSalon from '../salon/changelog/content'
@@ -35,7 +36,9 @@ const Content: FC<TProps> = ({ article }) => {
 
         <div className={s.comments}>
           <Suspense fallback={<LavaLampLoading />}>
-            <Comments />
+            <CommentsStoreProvider>
+              <Comments />
+            </CommentsStoreProvider>
           </Suspense>
         </div>
       </div>

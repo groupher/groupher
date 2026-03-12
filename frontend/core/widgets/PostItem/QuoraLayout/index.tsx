@@ -1,5 +1,7 @@
+import Link from 'next/link'
 import type { FC } from 'react'
-import { previewArticle } from '~/signal'
+import { THREAD } from '~/const/thread'
+import useCommunity from '~/hooks/useCommunity'
 import type { TPost } from '~/spec'
 import useSalon from '../salon/quora_layout'
 import Footer from './Footer'
@@ -11,13 +13,14 @@ type TProps = {
 
 const PostItem: FC<TProps> = ({ article }) => {
   const s = useSalon()
+  const { slug } = useCommunity()
 
   return (
     <article className={s.wrapper}>
       <Header article={article} />
-      <div className={s.digest} onClick={() => previewArticle(article)}>
+      <Link className={s.digest} href={`/${slug}/${THREAD.POST}/${article.innerId}`} scroll={false}>
         {article.digest}
-      </div>
+      </Link>
       <Footer article={article} />
     </article>
   )

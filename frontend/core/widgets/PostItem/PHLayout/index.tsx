@@ -2,7 +2,7 @@ import type { FC } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import Img from '~/Img'
 
-import { previewArticle, upvoteArticle } from '~/signal'
+import { upvoteArticle } from '~/signal'
 import type { TPost } from '~/spec'
 import ArticlePinLabel from '~/widgets/ArticlePinLabel'
 import ImgFallback from '~/widgets/ImgFallback'
@@ -26,10 +26,10 @@ const DigestView: FC<TProps> = ({ article }) => {
       <div className={s.avatarWrapper}>
         <Img src={author.avatar} className={s.avatar} fallback={<ImgFallback user={author} />} />
       </div>
-      <button className={s.main} onClick={() => previewArticle(article)}>
+      <div className={s.main}>
         <Header article={article} />
         <Body article={article} />
-      </button>
+      </div>
 
       <div className={s.upvoteWrapper}>
         <Upvote

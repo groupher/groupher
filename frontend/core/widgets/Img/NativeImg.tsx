@@ -1,4 +1,5 @@
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react'
+import { hasLoadedSrc, markLoadedSrc } from './cache'
 import useSalon, { cnMerge } from './salon'
 
 type TProps = {
@@ -25,15 +26,22 @@ const NativeImg: FC<TProps> = ({
   onClick,
 }) => {
   const s = useSalon()
+  const isCachedSrc = hasLoadedSrc(src)
 
-  const [status, setStatus] = useState<Status>('checking')
-  const [resolvedSrc, setResolvedSrc] = useState<string | null>(null)
+  const [status, setStatus] = useState<Status>(isCachedSrc ? 'loaded' : 'checking')
+  const [resolvedSrc, setResolvedSrc] = useState<string | null>(isCachedSrc ? src : null)
   const reqIdRef = useRef(0)
 
   useEffect(() => {
     if (!src) {
       setStatus('error')
       setResolvedSrc(null)
+      return
+    }
+
+    if (hasLoadedSrc(src)) {
+      setStatus('loaded')
+      setResolvedSrc(src)
       return
     }
 
@@ -50,6 +58,7 @@ const NativeImg: FC<TProps> = ({
     probe.onload = () => {
       if (!alive) return
       if (reqIdRef.current !== reqId) return
+      markLoadedSrc(src)
       setResolvedSrc(src) // ✅ 只有成功才把 src 放进 DOM <img>
       setStatus('loaded')
     }

@@ -12,14 +12,13 @@ import { ANCHOR } from '~/const/dom'
 
 import Editor from './Editor'
 import List from './List'
-// import LockedMessage from './LockedMessage'
 
-import type { TAPIMode } from './spec'
+// import LockedMessage from './LockedMessage'
 
 import { API_MODE } from './constant'
 import HeadBar from './HeadBar'
-
 import useSalon from './salon'
+import type { TAPIMode } from './spec'
 import useLogic from './useLogic'
 
 type TProps = {
@@ -29,10 +28,13 @@ type TProps = {
 
 const Comments: FC<TProps> = ({ locked = false, apiMode = API_MODE.ARTICLE }) => {
   const s = useSalon()
-  const { pagedComments, getEditState, loadComments } = useLogic()
+  const { initialized, pagedComments, getEditState, loadComments } = useLogic()
 
   useEffect(() => {
-    loadComments()
+    if (!initialized) {
+      loadComments()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const editState = getEditState()

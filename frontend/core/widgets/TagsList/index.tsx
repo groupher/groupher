@@ -19,12 +19,12 @@ export type TProps = {
   size?: TSizeTSM
 } & TSpace
 
-const TagsList: FC<TProps> = ({ items, max = 3, size = SIZE.TINY, ...spacing }) => {
+const TagsList: FC<TProps> = ({ items, max = 2, size = SIZE.TINY, ...spacing }) => {
   const s = useSalon(spacing)
 
   if (!items) return null
 
-  if (items.length < max) {
+  if (items.length <= max) {
     return (
       <div className={s.wrapper}>
         <List items={items} size={size} max={max} {...spacing} />
@@ -38,11 +38,11 @@ const TagsList: FC<TProps> = ({ items, max = 3, size = SIZE.TINY, ...spacing }) 
         placement='bottom'
         content={
           <div className={s.popover}>
-            <List items={items} size={size} max={max} {...spacing} />
+            <List items={items} size={size} max={items.length} {...spacing} />
           </div>
         }
       >
-        {items.length > 0 && <FoldList items={items} size={size} {...spacing} />}
+        {items.length > 0 && <FoldList items={items} size={size} max={max} {...spacing} />}
       </Tooltip>
     </div>
   )

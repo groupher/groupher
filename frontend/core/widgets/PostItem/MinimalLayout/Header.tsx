@@ -1,6 +1,8 @@
+import Link from 'next/link'
 import type { FC } from 'react'
 import SIZE from '~/const/size'
-import { previewArticle } from '~/signal'
+import { THREAD } from '~/const/thread'
+import useCommunity from '~/hooks/useCommunity'
 import type { TPost } from '~/spec'
 import ArticleReadLabel from '~/widgets/ArticleReadLabel'
 import CommentsCount from '~/widgets/CommentsCount'
@@ -15,20 +17,19 @@ type TProps = {
 const Header: FC<TProps> = ({ article }) => {
   const s = useSalon()
   const { title, commentsCount, communityTags } = article
+  const { slug } = useCommunity()
 
   return (
     <article className={s.wrapper}>
       <div className={s.main}>
         <ArticleReadLabel viewed={article.viewerHasViewed} />
-        <button
-          type='button'
+        <Link
           className={s.title}
-          onClick={() => {
-            previewArticle(article)
-          }}
+          href={`/${slug}/${THREAD.POST}/${article.innerId}`}
+          scroll={false}
         >
           {title}
-        </button>
+        </Link>
         {/*  @ts-ignore */}
         <TagsList items={communityTags} left={1} />
         <div className='grow' />

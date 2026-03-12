@@ -71,7 +71,7 @@ defmodule GroupherServer.Support.Factory do
 
   defp mock_meta(:thread) do
     unique_num = System.unique_integer([:positive, :monotonic])
-    %{title: "thread #{unique_num}", slug: "thread #{unique_num}", index: :rand.uniform(20)}
+    %{title: "thread #{unique_num}", slug: "thread-#{unique_num}", index: :rand.uniform(20)}
   end
 
   defp mock_meta(:community) do
@@ -103,10 +103,12 @@ defmodule GroupherServer.Support.Factory do
 
   defp mock_meta(:community_tag) do
     unique_num = System.unique_integer([:positive, :monotonic])
+    cheese = Faker.Pizza.cheese()
+    tag_slug = build_slug(cheese, unique_num)
 
     %{
-      title: "#{Faker.Pizza.cheese()}#{unique_num}",
-      slug: "#{Faker.Pizza.cheese()}#{unique_num}",
+      title: "#{cheese}#{unique_num}",
+      slug: tag_slug,
       thread: "POST",
       color: "YELLOW",
       group: "cool",
@@ -122,10 +124,12 @@ defmodule GroupherServer.Support.Factory do
   defp mock_meta(:user) do
     unique_num = System.unique_integer([:positive, :monotonic])
     unique_id = :rand.uniform(999_999_999)
+    lower = random_lower_letter()
+    upper = String.upcase(lower)
 
     %{
-      login: "user_#{unique_num}_#{unique_id}" |> String.downcase(),
-      nickname: "User#{unique_num}_#{unique_id}",
+      login: "#{lower}user_#{unique_num}_#{unique_id}",
+      nickname: "#{upper}user#{unique_num}_#{unique_id}",
       bio: Faker.Lorem.Shakespeare.romeo_and_juliet(),
       avatar: Faker.Avatar.image_url(),
       email: "faker_#{unique_num}_#{unique_id}@gmail.com",
@@ -216,6 +220,22 @@ defmodule GroupherServer.Support.Factory do
   end
 
   defp retryable_constraint?(_), do: false
+
+  defp random_lower_letter do
+    <<Enum.random(?a..?z)::utf8>>
+  end
+
+  defp build_slug(prefix, unique_num) do
+    prefix
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9]+/u, "-")
+    |> String.trim("-")
+    |> case do
+      "" -> "tag"
+      value -> value
+    end
+    |> then(&"#{&1}-#{unique_num}")
+  end
 
   def db_insert_multi(factory_name, count, delay \\ 0) do
     results =

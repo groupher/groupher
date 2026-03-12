@@ -5,6 +5,17 @@ import { ANCHOR, BODY_SCROLLER, DRAWER_SCROLLER } from '~/const/dom'
 const hasDocument = typeof document === 'object' && document !== null
 const hasWindow = typeof window === 'object' && window !== null && window.self === window
 
+let pageLockCount = 0
+let pageLockScrollY = 0
+let pageLockBodyStyleSnapshot: {
+  overflowY: string
+  position: string
+  top: string
+  width: string
+  left: string
+  right: string
+} | null = null
+
 /**
  * check is client side or not
  */
@@ -16,22 +27,6 @@ const getDocument = () => (isBrowser() ? document : null)
  */
 export const scrollToTop = (): void => {
   scrollIntoEle(ANCHOR.GLOBAL_HEADER_ID)
-}
-
-/**
- * scroll to page top
- * https://developer.mozilla.org/zh-CN/docs/Web/API/Element/scrollIntoView
- */
-export const oldScrollIntoEle = (eleID: string): void => {
-  const safeDocument = getDocument()
-  if (!safeDocument) return
-
-  const e = safeDocument.getElementById(eleID)
-
-  if (e?.scrollIntoView) {
-    // e.scrollIntoView({ behavior: 'smooth' })
-    e.scrollIntoView()
-  }
 }
 
 /**
@@ -50,11 +45,16 @@ export const scrollToHeader = (): void => scrollIntoEle(ANCHOR.GLOBAL_HEADER_ID)
 export const scrollToTabber = (): void => scrollIntoEle(ANCHOR.GLOBAL_TABBER_ID)
 
 export const scrollDrawerToTop = (): void => {
-  scrollIntoEle(ANCHOR.DRAWER_HEAD)
+  if (typeof window !== 'object') return
 
-  // if (typeof window === 'object') {
-  //   window[DRAWER_SCROLLER]?.scroll({ top: 0, behavior: 'auto' })
-  // }
+  const container = document.querySelector<HTMLElement>('[data-drawer-scroll-container]')
+
+  if (container) {
+    container.scrollTop = 0
+    return
+  }
+
+  scrollIntoEle(ANCHOR.DRAWER_HEAD)
 }
 
 export const scrollToComments = (view: TContainer = 'body'): void => {
@@ -71,15 +71,29 @@ export const scrollToComments = (view: TContainer = 'body'): void => {
  */
 export const lockPage = (): void => {
   const safeDocument = getDocument()
+  if (!safeDocument || typeof window !== 'object') return
 
-  console.log('## lockPage')
+  pageLockCount += 1
+  if (pageLockCount > 1) return
 
-  if (safeDocument) {
-    const el = safeDocument.getElementsByTagName('body')[0]
+  pageLockScrollY = window.scrollY || window.pageYOffset || 0
 
-    el.style.overflowY = 'hidden'
-    el.style.position = 'fixed !important'
+  const el = safeDocument.getElementsByTagName('body')[0]
+  pageLockBodyStyleSnapshot = {
+    overflowY: el.style.overflowY,
+    position: el.style.position,
+    top: el.style.top,
+    width: el.style.width,
+    left: el.style.left,
+    right: el.style.right,
   }
+
+  el.style.overflowY = 'hidden'
+  el.style.setProperty('position', 'fixed', 'important')
+  el.style.top = `-${pageLockScrollY}px`
+  el.style.width = '100%'
+  el.style.left = '0'
+  el.style.right = '0'
 }
 
 /**
@@ -88,12 +102,34 @@ export const lockPage = (): void => {
  */
 export const unlockPage = (): void => {
   const safeDocument = getDocument()
+  if (!safeDocument || typeof window !== 'object') return
 
-  if (safeDocument) {
-    const el = safeDocument.getElementsByTagName('body')[0]
+  if (pageLockCount <= 0) return
+  pageLockCount -= 1
+  if (pageLockCount > 0) return
+
+  const restoreScrollY = pageLockScrollY
+  pageLockScrollY = 0
+
+  const el = safeDocument.getElementsByTagName('body')[0]
+  if (pageLockBodyStyleSnapshot) {
+    el.style.overflowY = pageLockBodyStyleSnapshot.overflowY
+    el.style.position = pageLockBodyStyleSnapshot.position
+    el.style.top = pageLockBodyStyleSnapshot.top
+    el.style.width = pageLockBodyStyleSnapshot.width
+    el.style.left = pageLockBodyStyleSnapshot.left
+    el.style.right = pageLockBodyStyleSnapshot.right
+  } else {
     el.style.overflowY = 'auto'
     el.style.position = ''
+    el.style.top = ''
+    el.style.width = ''
+    el.style.left = ''
+    el.style.right = ''
   }
+
+  pageLockBodyStyleSnapshot = null
+  window.scrollTo(0, restoreScrollY)
 }
 
 /**

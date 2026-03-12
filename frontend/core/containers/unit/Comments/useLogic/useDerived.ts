@@ -1,11 +1,11 @@
 import { pick } from 'ramda'
+import { useContext } from 'react'
 import { useSnapshot } from 'valtio'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import type { TCommentsState } from '~/spec'
+import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
 import { API_MODE } from '../constant'
 import type { TEditState, TFoldState, TRepliesState } from '../spec'
-
-import store from './store'
 
 export type TRet = {
   getBasicState: () => TCommentsState
@@ -15,36 +15,40 @@ export type TRet = {
 }
 
 export default (): TRet => {
-  const snap = useSnapshot(store)
+  const commentsStore = useContext(CommentsStoreContext) as any
+  if (!commentsStore) {
+    throw new Error('useDerived must be used within a Comments store provider')
+  }
+  const commentsSnap = useSnapshot(commentsStore) as any
   const { article } = useViewingArticle()
 
   const getBasicState = (): TCommentsState => {
     let totalCount = 0
 
-    if (snap.apiMode === API_MODE.ARTICLE) {
-      totalCount = snap.totalCount === -1 ? article.commentsCount : snap.totalCount
+    if (commentsSnap.apiMode === API_MODE.ARTICLE) {
+      totalCount = commentsSnap.totalCount === -1 ? article.commentsCount : commentsSnap.totalCount
     } else {
       // eslint-disable-next-line prefer-destructuring
-      totalCount = snap.pagedPublishedComments.totalCount
+      totalCount = commentsSnap.pagedPublishedComments.totalCount
     }
 
     return {
-      isViewerJoined: snap.isViewerJoined,
-      participantsCount: snap.participantsCount,
+      isViewerJoined: commentsSnap.isViewerJoined,
+      participantsCount: commentsSnap.participantsCount,
       totalCount,
-      // @ts-expect-error
-      participants: snap.participants,
+      participants: [...commentsSnap.participants] as TCommentsState['participants'],
     }
   }
 
   const getFoldState = (): TFoldState => {
-    const { foldedCommentIds, pagedComments } = snap
+    const { foldedCommentIds } = commentsSnap
+    const { pagedComments } = commentsSnap
 
     const isAllFolded =
       pagedComments.totalCount === 0 ? false : foldedCommentIds.length === pagedComments.totalCount
 
     return {
-      foldedIds: foldedCommentIds,
+      foldedIds: [...foldedCommentIds] as string[],
       isAllFolded,
     }
   }
@@ -58,19 +62,25 @@ export default (): TRet => {
         'showEditor',
         'showReplyEditor',
         'showUpdateEditor',
-        // @ts-expect-error
         'submitState',
         'updateId',
       ],
-      snap,
+      commentsSnap,
     )
 
-    // @ts-expect-error
-    return { ...baseFields, replyToComment: snap.replyToComment }
+    return {
+      ...baseFields,
+      submitState: {
+        publishing: commentsSnap.publishing,
+        publishDone: commentsSnap.publishDone,
+        isReady: commentsSnap.wordsCountReady,
+      },
+      replyToComment: commentsSnap.replyToComment,
+    }
   }
 
   const getRepliesState = (): TRepliesState => {
-    return pick(['repliesParentId', 'repliesLoading'], snap)
+    return pick(['repliesParentId', 'repliesLoading'], commentsSnap)
   }
 
   return {

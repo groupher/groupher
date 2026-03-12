@@ -6,8 +6,10 @@ import { useEffect, useRef } from 'react'
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import { CHANGE_MODE } from '~/const/mode'
 import { DSB_ROUTE } from '~/const/route'
+import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
 import useDsbTab from '~/hooks/useDsbTab'
+import { getAboutPath } from '~/hooks/useHeaderLinks/helper'
 import type { TLinkItem } from '~/spec'
 import { EMPTY_LINK_ITEM } from '../../constant'
 import type { TMoveLinkDir } from '../../spec'
@@ -44,6 +46,7 @@ export type TRet = {
 
 export default (): TRet => {
   const dsb$ = useDashboard()
+  const { slug: community } = useCommunity()
 
   const storeRef = useRef(dsb$)
 
@@ -258,9 +261,11 @@ export default (): TRet => {
     if (linksKey !== 'headerLinks') return
 
     const aboutLink = find(
-      (item: TLinkItem) => item.group === MORE_GROUP && item.title === '关于',
+      (item: TLinkItem) => item.group === MORE_GROUP && item.link === getAboutPath(community),
       dsb$.headerLinks,
     )
+
+    if (!aboutLink) return
 
     moveLink(aboutLink, 'bottom')
   }

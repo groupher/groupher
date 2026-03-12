@@ -3,11 +3,12 @@ import { THREAD } from '~/const/thread'
 import { sortByIndex } from '~/helper'
 import useCommunity from '~/hooks/useCommunity'
 import useDashboard from '~/hooks/useDashboard'
-import type { TCommunityThread, TLinkItem, TNameAlias } from '~/spec'
+import { shouldFoldAboutToMore } from '~/hooks/useHeaderLinks/helper'
+import type { TCommunityThread, TNameAlias } from '~/spec'
 
 export default (): TCommunityThread[] => {
   const dsb$ = useDashboard()
-  const { threads } = useCommunity()
+  const { slug: community, threads } = useCommunity()
 
   const enabledThreads = sortByIndex(threads.filter((thread) => dsb$.enable[thread.slug]))
 
@@ -20,9 +21,9 @@ export default (): TCommunityThread[] => {
     }
   })
 
-  const hasExtraAbout = find((link: TLinkItem) => link.title === '关于', dsb$.headerLinks)
+  const shouldFoldAbout = shouldFoldAboutToMore(dsb$.headerLinks, community)
 
-  if (hasExtraAbout) {
+  if (shouldFoldAbout) {
     return reject(
       (item: TCommunityThread) => item.slug === THREAD.ABOUT,
       mappedThreads as TCommunityThread[],
