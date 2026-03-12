@@ -5,7 +5,7 @@
  */
 
 import type { FC } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 import type { TArticle } from '~/spec'
 import useCommunity from '~/hooks/useCommunity'
@@ -26,7 +26,6 @@ type TProps = {
 
 const KanbanItem: FC<TProps> = ({ article }) => {
   const s = useSalon()
-  const router = useRouter()
   const { slug } = useCommunity()
 
   const { title, communityTags, cat, upvotesCount } = article
@@ -35,11 +34,10 @@ const KanbanItem: FC<TProps> = ({ article }) => {
     <div className={s.wrapper}>
       <h4
         className={s.title}
-        onClick={() =>
-          router.push(`/${slug}/${article.meta.thread.toLowerCase()}/${article.innerId}`, { scroll: false })
-        }
       >
-        {title}
+        <Link href={`/${slug}/${article.meta.thread.toLowerCase()}/${article.innerId}`} scroll={false}>
+          {title}
+        </Link>
       </h4>
       <div className="grow" />
       <TagsList items={communityTags} right={1} />

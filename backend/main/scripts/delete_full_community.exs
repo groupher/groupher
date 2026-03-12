@@ -23,17 +23,10 @@ IO.puts("Deleting full community with slug: #{slug}")
 
 case GroupherServer.CMS.Seeds.delete_full_community(slug) do
   {:ok, :ok} ->
-    # Cleanup async jobs referencing removed rows to avoid stale/not_found retries.
-    case GroupherServer.Repo.query("TRUNCATE TABLE background_jobs") do
-      {:ok, _} ->
-        IO.puts("✓ Cleared background_jobs queue")
-
-      {:error, reason} ->
-        IO.puts("! Failed to clear background_jobs queue: #{inspect(reason)}")
-    end
-
     IO.puts("✓ Full community deleted successfully!")
     IO.puts("  slug: #{slug}")
+    IO.puts("! background_jobs were not truncated automatically.")
+    IO.puts("  If needed, clean up only community-specific jobs manually.")
 
   {:error, reason} ->
     IO.puts("✗ Failed to delete full community: #{inspect(reason)}")

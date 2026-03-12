@@ -15,7 +15,15 @@ defmodule GroupherServer.CMS.Comments.Emotion do
 
   alias Helper.{Multi, Later, ORM, T}
 
-  @type t_user_list :: [%{id: integer(), user_id: integer(), login: String.t()}]
+  @type t_user_list :: [
+          %{
+            id: integer(),
+            user_id: integer(),
+            login: String.t(),
+            nickname: String.t() | nil,
+            avatar: String.t() | nil
+          }
+        ]
   @type t_mention_status :: %{user_list: t_user_list, user_count: integer()}
 
   @spec set(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
