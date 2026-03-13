@@ -29,6 +29,8 @@ export default function Drawer({
   const contentRef = useRef<HTMLDivElement | null>(null)
   const drawerRef = useRef<HTMLDivElement | null>(null)
 
+  // Drawer owns only the container-level reset. Preview content is responsible
+  // for aligning to its readable top anchor after cached/full/real phase changes.
   const resetContentToTop = useCallback(() => {
     const container = contentRef.current
     if (!container) return

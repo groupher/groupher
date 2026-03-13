@@ -6,7 +6,7 @@ import StateBar from './StateBar'
 import PublishBar from './PublishBar'
 import PublishEditor from '../Editor/PublishEditor'
 
-import useLogic from '../useLogic'
+import { useCommentsHeadState } from '../useLogic'
 import useSalon from '../salon/head_bar'
 
 import type { TMode, TAPIMode, TEditState } from '../spec'
@@ -22,15 +22,8 @@ export type TProps = {
 
 export default () => {
   const s = useSalon()
-  const { mode, apiMode, loading, getFoldState, getEditState, getBasicState } = useLogic()
-
-  const foldState = getFoldState()
-  const basicState = getBasicState()
-  const editState = getEditState()
-
-  const { isAllFolded } = foldState
-
-  const { commentBody, submitState } = editState
+  const { mode, apiMode, loading, isAllFolded, basicState, commentBody, submitState } =
+    useCommentsHeadState()
   const [barMode, setBarMode] = useState('normal')
 
   return (

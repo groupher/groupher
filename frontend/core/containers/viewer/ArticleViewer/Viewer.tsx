@@ -12,15 +12,16 @@ import PostViewer from './PostViewer'
 
 type TProps = {
   article: TArticle
+  mode?: 'lite' | 'full'
 }
 
-const Viewer: FC<TProps> = ({ article }) => {
+const Viewer: FC<TProps> = ({ article, mode = 'full' }) => {
   const { meta } = article
 
   switch (meta.thread.toLowerCase()) {
     default: {
       // post, job, etc..
-      return <PostViewer />
+      return <PostViewer mode={mode} />
     }
   }
 }
