@@ -1,23 +1,28 @@
+import { THREAD } from '~/const/thread'
 import { getPagedComments, getPost } from '~/providers/ssr'
 
-import PreviewCacheSync from '../../../_preview/PreviewCacheSync'
+import { PreviewCacheSync } from '../../../_preview'
 import buildPreviewCacheEntry from '../../buildPreviewCacheEntry'
 import PreviewRuntime from '../../PreviewRuntime'
 
 type TProps = {
   community: string
-  innerId: number
+  innerId: string
 }
 
 export default async function ArticleContent({ community, innerId }: TProps) {
-  const id = String(innerId)
-
   const [post, pagedComments] = await Promise.all([
-    getPost(community, id),
-    getPagedComments(community, id),
+    getPost(community, innerId),
+    getPagedComments(community, innerId),
   ])
 
-  const entry = buildPreviewCacheEntry({ communitySlug: community, innerId, post, pagedComments })
+  const entry = buildPreviewCacheEntry({
+    communitySlug: community,
+    thread: THREAD.POST,
+    innerId,
+    post,
+    pagedComments,
+  })
 
   return (
     <>

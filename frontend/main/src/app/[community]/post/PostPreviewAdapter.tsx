@@ -4,8 +4,8 @@ import type { ReactNode } from 'react'
 
 import { THREAD } from '~/const/thread'
 
-import ThreadPreviewDrawerHost from '../_preview/ThreadPreviewDrawerHost'
-import { getPreviewCacheKey } from './buildPreviewCacheEntry'
+import { getPreviewCacheKey, PreviewHost } from '../_preview'
+import type { TPostPreviewCacheEntry } from './buildPreviewCacheEntry'
 import PreviewRuntime from './PreviewRuntime'
 
 type TProps = {
@@ -16,9 +16,9 @@ type TProps = {
  * Thin adapter bridge: post owns how preview keys are derived and how cached
  * preview content is rendered, while the shared host owns drawer/cache phases.
  */
-export default function PostPreviewDrawerHost({ children }: TProps) {
+export default function PostPreviewAdapter({ children }: TProps) {
   return (
-    <ThreadPreviewDrawerHost
+    <PreviewHost<TPostPreviewCacheEntry>
       resolvePreviewKey={(communitySlug, id) =>
         communitySlug && id ? getPreviewCacheKey(communitySlug, THREAD.POST, id) : null
       }
@@ -27,6 +27,6 @@ export default function PostPreviewDrawerHost({ children }: TProps) {
       )}
     >
       {children}
-    </ThreadPreviewDrawerHost>
+    </PreviewHost>
   )
 }

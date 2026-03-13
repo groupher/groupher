@@ -1,12 +1,12 @@
 'use client'
 
-import { useMemo, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useSyncExternalStore } from 'react'
 
-import type { TPreviewCacheEntry } from './spec'
+import type { TPreviewCacheEntryBase } from './spec'
 
 const PREVIEW_CACHE_TTL_MS = 5 * 60 * 1000
 
-const previewCache = new Map<string, TPreviewCacheEntry>()
+const previewCache = new Map<string, TPreviewCacheEntryBase>()
 const previewStatus = new Map<string, 'pending' | 'ready'>()
 const listeners = new Set<() => void>()
 let previewCacheVersion = 0
@@ -18,7 +18,7 @@ const emit = () => {
   }
 }
 
-const evictExpiredEntryIfNeeded = (key: string) => {
+const getFreshEntry = (key: string) => {
   const entry = previewCache.get(key)
   if (!entry) return null
 
@@ -26,25 +26,40 @@ const evictExpiredEntryIfNeeded = (key: string) => {
     return entry
   }
 
+  return null
+}
+
+const cleanupExpiredEntry = (key: string) => {
+  const entry = previewCache.get(key)
+  if (!entry) return
+  if (Date.now() - entry.cachedAt <= PREVIEW_CACHE_TTL_MS) return
+
   previewCache.delete(key)
   previewStatus.delete(key)
   emit()
-  return null
 }
 
 /**
  * Returns the cached preview snapshot for a post while it is still inside the
  * active in-memory window.
  */
-export const getPreviewCacheEntry = (key: string): TPreviewCacheEntry | null => {
-  return evictExpiredEntryIfNeeded(key)
+export const getPreviewCacheEntry = <
+  TEntry extends TPreviewCacheEntryBase = TPreviewCacheEntryBase,
+>(
+  key: string,
+): TEntry | null => {
+  return getFreshEntry(key) as TEntry | null
 }
 
 /**
  * Stores the provider init snapshot produced by the real preview route so the
  * next reopen can render before the next RSC payload arrives.
  */
-export const setPreviewCacheEntry = (entry: TPreviewCacheEntry): void => {
+export const setPreviewCacheEntry = <
+  TEntry extends TPreviewCacheEntryBase = TPreviewCacheEntryBase,
+>(
+  entry: TEntry,
+): void => {
   previewCache.set(entry.key, entry)
   emit()
 }
@@ -80,12 +95,27 @@ const subscribe = (listener: () => void) => {
  * kept as a primitive version because returning a fresh object directly from
  * the snapshot reader would make React treat every read as a state change.
  */
-export const usePreviewCacheState = (key: string | null) => {
-  const version = useSyncExternalStore(subscribe, () => previewCacheVersion)
+export const usePreviewCacheState = <
+  TEntry extends TPreviewCacheEntryBase = TPreviewCacheEntryBase,
+>(
+  key: string | null,
+) => {
+  const version = useSyncExternalStore(
+    subscribe,
+    () => previewCacheVersion,
+    () => previewCacheVersion,
+  )
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    if (!key) return
+    cleanupExpiredEntry(key)
+  }, [key, version])
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   return useMemo(
     () => ({
-      entry: key ? getPreviewCacheEntry(key) : null,
+      entry: key ? getPreviewCacheEntry<TEntry>(key) : null,
       ready: key ? getPreviewReadyState(key) : false,
     }),
     [key, version],

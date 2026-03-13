@@ -1,20 +1,19 @@
 import { THREAD } from '~/const/thread'
 import type { TPagedComments, TPost } from '~/spec'
 
-import type { TPreviewCacheEntry } from '../_preview/spec'
+import { getPreviewCacheKey, type TPreviewCacheEntryBase, type TPreviewIdentity } from '../_preview'
 
-type TArgs = {
-  communitySlug: string
-  innerId: number
+export type TPostPreviewCacheEntry = TPreviewCacheEntryBase & {
+  articleInitData: { post: TPost | null; thread: typeof THREAD.POST }
+  commentsInitData:
+    | { pagedComments: TPagedComments; totalCount: number; initialized: true }
+    | { initialized: false }
+}
+
+type TArgs = TPreviewIdentity & {
   post: TPost | null
   pagedComments: TPagedComments | null
 }
-
-export const getPreviewCacheKey = (
-  communitySlug: string,
-  thread: string,
-  innerId: number | string,
-) => `${communitySlug}:${thread}:${innerId}`
 
 /**
  * Preview cache stores the init snapshots used to recreate the same provider
@@ -22,14 +21,15 @@ export const getPreviewCacheKey = (
  */
 export default function buildPreviewCacheEntry({
   communitySlug,
+  thread,
   innerId,
-  post,
   pagedComments,
-}: TArgs): TPreviewCacheEntry {
+  post,
+}: TArgs): TPostPreviewCacheEntry {
   return {
-    key: getPreviewCacheKey(communitySlug, THREAD.POST, innerId),
+    key: getPreviewCacheKey(communitySlug, thread, innerId),
     communitySlug,
-    thread: THREAD.POST,
+    thread,
     innerId,
     articleInitData: { post, thread: THREAD.POST },
     commentsInitData: pagedComments

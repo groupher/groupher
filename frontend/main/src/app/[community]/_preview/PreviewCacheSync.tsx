@@ -3,10 +3,10 @@
 import { useEffect } from 'react'
 
 import { markPreviewReady, setPreviewCacheEntry } from './preview-cache'
-import type { TPreviewCacheEntry } from './spec'
+import type { TPreviewCacheEntryBase } from './spec'
 
 type TProps = {
-  entry: TPreviewCacheEntry
+  entry: TPreviewCacheEntryBase
 }
 
 /**

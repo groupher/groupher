@@ -4,10 +4,10 @@ import ArticleViewer from '~/containers/viewer/ArticleViewer'
 import ArticleStoreProvider from '~/stores/article/provider'
 import CommentsStoreProvider from '~/stores/comments/provider'
 
-import type { TPreviewCacheEntry } from '../_preview/spec'
+import type { TPostPreviewCacheEntry } from './buildPreviewCacheEntry'
 
 type TProps = {
-  entry: TPreviewCacheEntry
+  entry: TPostPreviewCacheEntry
   mode?: 'lite' | 'full'
 }
 
@@ -21,7 +21,7 @@ export default function PreviewRuntime({ entry, mode = 'full' }: TProps) {
       <CommentsStoreProvider initData={entry.commentsInitData}>
         <ArticleViewer
           community={entry.communitySlug}
-          innerId={entry.innerId}
+          innerId={Number(entry.innerId)}
           thread='post'
           mode={mode}
         />

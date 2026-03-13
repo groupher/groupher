@@ -5,12 +5,12 @@ import { Fragment, type ReactNode, startTransition, useEffect, useRef, useState 
 import Drawer from '~/widgets/@Drawer'
 
 import { markPreviewPending, usePreviewCacheState } from './preview-cache'
-import type { TPreviewCacheEntry } from './spec'
+import type { TPreviewCacheEntryBase } from './spec'
 
-type TProps = {
+type TProps<TEntry extends TPreviewCacheEntryBase> = {
   children: ReactNode
   resolvePreviewKey: (community?: string, id?: string) => string | null
-  renderCachedPreview: (entry: TPreviewCacheEntry, mode: 'lite' | 'full') => ReactNode
+  renderCachedPreview: (entry: TEntry, mode: 'lite' | 'full') => ReactNode
 }
 
 type TCachedPhase = 'cached-lite' | 'cached-full' | 'real'
@@ -58,17 +58,17 @@ const useDeferredCachedFull = (enabled: boolean) => {
   return showCachedFull
 }
 
-export default function ThreadPreviewDrawerHost({
+export default function PreviewHost<TEntry extends TPreviewCacheEntryBase>({
   children,
   resolvePreviewKey,
   renderCachedPreview,
-}: TProps) {
+}: TProps<TEntry>) {
   const activeSegment = useSelectedLayoutSegment('previewer')
   const params = useParams<{ community?: string | string[]; id?: string | string[] }>()
   const community = Array.isArray(params.community) ? params.community[0] : params.community
   const resetKey = Array.isArray(params.id) ? params.id[0] : params.id
   const previewKey = resolvePreviewKey(community, resetKey)
-  const { entry: cachedEntry, ready } = usePreviewCacheState(previewKey)
+  const { entry: cachedEntry, ready } = usePreviewCacheState<TEntry>(previewKey)
   const lastPendingKeyRef = useRef<string | null>(null)
   const showCachedFull = useDeferredCachedFull(Boolean(cachedEntry) && !ready)
   const phase = resolveCachedPhase(Boolean(cachedEntry), ready, showCachedFull)

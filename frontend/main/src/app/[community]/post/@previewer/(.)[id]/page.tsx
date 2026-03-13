@@ -4,9 +4,9 @@ import ArticleContent from './ArticleContent'
 export default async function Page({ params }) {
   const params$ = await params
   const { community, id } = params$
-  const innerId = Number(id)
+  const innerId = id
 
-  if (Number.isNaN(innerId)) {
+  if (Number.isNaN(Number(innerId))) {
     notFound()
   }
 
