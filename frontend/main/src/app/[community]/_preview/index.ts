@@ -1,6 +1,4 @@
-export { getPreviewCacheKey } from './cache-key'
-export { default as PreviewCacheSync } from './PreviewCacheSync'
-export { default as PreviewHost } from './PreviewHost'
+export { getPreviewCacheKey } from './helper'
 export {
   getPreviewCacheEntry,
   getPreviewReadyState,
@@ -8,5 +6,7 @@ export {
   markPreviewReady,
   setPreviewCacheEntry,
   usePreviewCacheState,
-} from './preview-cache'
+} from './hooks'
+export { default as PreviewCacheSync } from './PreviewCacheSync'
+export { default as PreviewHost } from './PreviewHost'
 export type { TPreviewCacheEntryBase, TPreviewIdentity } from './spec'

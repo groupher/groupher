@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 
-import { markPreviewReady, setPreviewCacheEntry } from './preview-cache'
+import { markPreviewReady, setPreviewCacheEntry } from './hooks'
 import type { TPreviewCacheEntryBase } from './spec'
 
 type TProps = {

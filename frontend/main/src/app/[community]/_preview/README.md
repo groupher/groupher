@@ -6,7 +6,7 @@ navigation semantics.
 
 ## Responsibilities
 
-- `preview-cache.ts`
+- `helper.ts`
   - Stores browser-memory preview snapshots keyed by `community:id`
   - Tracks whether the current key is still waiting for the real route payload
   - Exposes a small external-store bridge for client hosts

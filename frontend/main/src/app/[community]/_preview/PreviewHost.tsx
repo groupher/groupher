@@ -4,7 +4,7 @@ import { useParams, useSelectedLayoutSegment } from 'next/navigation'
 import { Fragment, type ReactNode, startTransition, useEffect, useRef, useState } from 'react'
 import Drawer from '~/widgets/@Drawer'
 
-import { markPreviewPending, usePreviewCacheState } from './preview-cache'
+import { markPreviewPending, usePreviewCacheState } from './hooks'
 import type { TPreviewCacheEntryBase } from './spec'
 
 type TProps<TEntry extends TPreviewCacheEntryBase> = {

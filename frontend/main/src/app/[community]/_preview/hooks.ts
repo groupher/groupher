@@ -5,6 +5,7 @@ import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import type { TPreviewCacheEntryBase } from './spec'
 
 const PREVIEW_CACHE_TTL_MS = 5 * 60 * 1000
+const PREVIEW_CACHE_MAX_ENTRIES = 100
 
 const previewCache = new Map<string, TPreviewCacheEntryBase>()
 const previewStatus = new Map<string, 'pending' | 'ready'>()
@@ -40,6 +41,37 @@ const cleanupExpiredEntry = (key: string) => {
 }
 
 /**
+ * Preview cache is only a tab-local UX optimization, so an opportunistic prune
+ * is enough here: whenever a new entry is written, first drop expired keys,
+ * then cap the cache size by evicting the oldest remaining snapshots.
+ */
+const prunePreviewCacheIfNeeded = () => {
+  const now = Date.now()
+
+  for (const [key, entry] of previewCache) {
+    if (now - entry.cachedAt > PREVIEW_CACHE_TTL_MS) {
+      previewCache.delete(key)
+      previewStatus.delete(key)
+    }
+  }
+
+  if (previewCache.size <= PREVIEW_CACHE_MAX_ENTRIES) return
+
+  const entriesByAge = Array.from(previewCache.entries()).sort(
+    (a, b) => a[1].cachedAt - b[1].cachedAt,
+  )
+
+  while (previewCache.size > PREVIEW_CACHE_MAX_ENTRIES && entriesByAge.length > 0) {
+    const oldest = entriesByAge.shift()
+    if (!oldest) break
+
+    const [oldestKey] = oldest
+    previewCache.delete(oldestKey)
+    previewStatus.delete(oldestKey)
+  }
+}
+
+/**
  * Returns the cached preview snapshot for a post while it is still inside the
  * active in-memory window.
  */
@@ -60,6 +92,7 @@ export const setPreviewCacheEntry = <
 >(
   entry: TEntry,
 ): void => {
+  prunePreviewCacheIfNeeded()
   previewCache.set(entry.key, entry)
   emit()
 }
