@@ -13,11 +13,11 @@ navigation semantics.
 - `PreviewCacheSync.tsx`
   - Writes the resolved route payload back into browser memory
   - Marks the key as `ready` so the host can stop showing cached content
-- `ThreadPreviewDrawerHost.tsx`
+- `PreviewHost.tsx`
   - Owns the single Drawer instance for a thread layout
   - Chooses between `cached-lite`, `cached-full`, and `real` content
   - Keeps cache-first behavior out of `loading.tsx`
-- `types.ts`
+- `spec.d.ts`
   - Defines the shared preview cache entry contract
 
 ## Design Rules
@@ -31,9 +31,9 @@ navigation semantics.
 
 ## Thread Adapter Pattern
 
-Each thread should provide a thin client wrapper around the shared host.
+Each thread should provide a thin client adapter around the shared host.
 
-For `post`, that wrapper is `post/PostPreviewDrawerHost.tsx` and it supplies:
+For `post`, that adapter is `post/PostPreviewAdapter.tsx` and it supplies:
 
 - `resolvePreviewKey(community, id)`
 - `renderCachedPreview(entry, mode)`
@@ -47,9 +47,9 @@ That keeps the shared host generic while allowing each thread to decide:
 ## Adding a New Thread
 
 1. Keep the thread's route/layout structure unchanged
-2. Create a thin `<ThreadName>PreviewDrawerHost.tsx>` client wrapper next to the
+2. Create a thin `<ThreadName>PreviewAdapter.tsx>` client wrapper next to the
    thread route
-3. Reuse `ThreadPreviewDrawerHost` from this directory
+3. Reuse `PreviewHost` from this directory
 4. Provide thread-specific `resolvePreviewKey` and `renderCachedPreview`
 5. Build the thread's cache entry from its own route data builder
 6. Reuse `PreviewCacheSync` to mark the route payload as ready
