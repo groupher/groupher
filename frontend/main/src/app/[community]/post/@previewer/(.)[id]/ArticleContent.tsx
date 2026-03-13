@@ -1,33 +1,28 @@
-import { THREAD } from '~/const/thread'
-import ArticleViewer from '~/containers/viewer/ArticleViewer'
 import { getPagedComments, getPost } from '~/providers/ssr'
-import ArticleStoreProvider from '~/stores/article/provider'
-import CommentsStoreProvider from '~/stores/comments/provider'
+
+import PreviewCacheSync from '../../../_preview/PreviewCacheSync'
+import buildPreviewCacheEntry from '../../buildPreviewCacheEntry'
+import PreviewRuntime from '../../PreviewRuntime'
 
 type TProps = {
   community: string
-  id: string
   innerId: number
 }
 
-export default async function ArticleContent({ community, id, innerId }: TProps) {
+export default async function ArticleContent({ community, innerId }: TProps) {
+  const id = String(innerId)
+
   const [post, pagedComments] = await Promise.all([
     getPost(community, id),
     getPagedComments(community, id),
   ])
 
-  console.log('## pagedComments: ', pagedComments.totalCount)
-
-  const initData = { post, thread: THREAD.POST }
-  const commentsInitData = pagedComments
-    ? { pagedComments, totalCount: pagedComments.totalCount || 0, initialized: true }
-    : { initialized: false }
+  const entry = buildPreviewCacheEntry({ communitySlug: community, innerId, post, pagedComments })
 
   return (
-    <ArticleStoreProvider initData={initData}>
-      <CommentsStoreProvider initData={commentsInitData}>
-        <ArticleViewer community={community} innerId={innerId} thread='post' />
-      </CommentsStoreProvider>
-    </ArticleStoreProvider>
+    <>
+      <PreviewCacheSync entry={entry} />
+      <PreviewRuntime entry={entry} />
+    </>
   )
 }

@@ -10,5 +10,5 @@ export default async function Page({ params }) {
     notFound()
   }
 
-  return <ArticleContent community={community} id={id} innerId={innerId} />
+  return <ArticleContent community={community} innerId={innerId} />
 }

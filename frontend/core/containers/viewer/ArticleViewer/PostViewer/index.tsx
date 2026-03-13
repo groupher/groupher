@@ -18,7 +18,11 @@ import ArticleInfo from './ArticleInfo'
 import FixedHeader from './FixedHeader'
 import Header from './Header'
 
-export default () => {
+type TProps = {
+  mode?: 'lite' | 'full'
+}
+
+export default ({ mode = 'full' }: TProps) => {
   const s = useSalon()
 
   const { loading, article } = useLogic()
@@ -45,23 +49,27 @@ export default () => {
 
   return (
     <>
-      <FixedHeader article={article} visible={fixedHeaderVisible} footerVisible={footerVisible} />
+      {mode === 'full' && (
+        <FixedHeader article={article} visible={fixedHeaderVisible} footerVisible={footerVisible} />
+      )}
       <Header article={article} />
       <div className={s.title}>
         <div className={s.titleText}>{article.title}</div>
         <div className={s.subTitle}>{article.innerId}</div>
       </div>
       <ArticleInfo article={article} />
-      <ViewportTracker
-        onEnter={() => {
-          if (!trackerReady) return
-          hideFixedHeader()
-        }}
-        onLeave={() => {
-          if (!trackerReady) return
-          showFixedHeader()
-        }}
-      />
+      {mode === 'full' && (
+        <ViewportTracker
+          onEnter={() => {
+            if (!trackerReady) return
+            hideFixedHeader()
+          }}
+          onLeave={() => {
+            if (!trackerReady) return
+            showFixedHeader()
+          }}
+        />
+      )}
       {loading && <ArticleContentLoading num={1} top={15} bottom={30} left={-25} />}
       {!loading && (
         <div className={s.bodyWrapper}>
@@ -69,7 +77,7 @@ export default () => {
         </div>
       )}
 
-      {broadcastConfig.broadcastArticleEnable && (
+      {mode === 'full' && broadcastConfig.broadcastArticleEnable && (
         <ArticleBroadcast
           top={20}
           bottom={30}
@@ -77,20 +85,24 @@ export default () => {
           simple={broadcastConfig.broadcastArticleLayout === BROADCAST_ARTICLE_LAYOUT.SIMPLE}
         />
       )}
-      <ArticleFooter />
-      <ViewportTracker
-        onEnter={() => {
-          if (!trackerReady) return
-          showFooter()
-        }}
-        onLeave={() => {
-          if (!trackerReady) return
-          hideFooter()
-        }}
-      />
-      <div className={cn(s.gotoTop, fixedHeaderVisible ? 'visible' : 'invisible')}>
-        <GotoTop type='drawer' />
-      </div>
+      {mode === 'full' && <ArticleFooter />}
+      {mode === 'full' && (
+        <ViewportTracker
+          onEnter={() => {
+            if (!trackerReady) return
+            showFooter()
+          }}
+          onLeave={() => {
+            if (!trackerReady) return
+            hideFooter()
+          }}
+        />
+      )}
+      {mode === 'full' && (
+        <div className={cn(s.gotoTop, fixedHeaderVisible ? 'visible' : 'invisible')}>
+          <GotoTop type='drawer' />
+        </div>
+      )}
     </>
   )
 }

@@ -5,19 +5,20 @@ import useTrans from '~/hooks/useTrans'
 
 import List from './List'
 
-import useLogic from '../useLogic'
+import { useCommentsListState } from '../useLogic'
+import useActions from '../useLogic/useActions'
 
 export default () => {
   const { t } = useTrans()
+  const { onPageChange } = useActions()
   const {
     mode,
     apiMode,
     loading,
     pagedComments,
-    onPageChange,
     foldedCommentIds,
     repliesLoadingByParentId,
-  } = useLogic()
+  } = useCommentsListState()
 
   const foldedIdSet = useMemo(() => new Set(foldedCommentIds), [foldedCommentIds])
 

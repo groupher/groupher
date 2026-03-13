@@ -8,12 +8,10 @@ import { type FC, Fragment } from 'react'
 import type { TUser } from '~/spec'
 
 import Facepile from '~/widgets/Facepile'
-
-import useUpvote from './useUpvote'
 import AnimatedCount from '../AnimatedCount'
-import UpvoteBtn from './UpvoteBtn'
-
 import useSalon from './salon/default_layout'
+import UpvoteBtn from './UpvoteBtn'
+import useUpvote from './useUpvote'
 
 type TProps = {
   testid?: string
@@ -21,6 +19,7 @@ type TProps = {
   alias?: string
   viewerHasUpvoted?: boolean
   avatarList?: TUser[]
+  noLazyLoad?: boolean
   onAction?: (viewerHasUpvoted: boolean) => void
 }
 
@@ -31,6 +30,7 @@ const Upvote: FC<TProps> = ({
   viewerHasUpvoted = false,
   onAction = console.log,
   avatarList,
+  noLazyLoad = false,
 }) => {
   const s = useSalon({ viewerHasUpvoted })
 
@@ -43,11 +43,18 @@ const Upvote: FC<TProps> = ({
     <div className={s.wrapper} data-testid={testid}>
       <button className={s.button} onClick={handleClick}>
         <UpvoteBtn viewerHasUpvoted={viewerHasUpvoted} count={count} />
-        <AnimatedCount count={count} active={viewerHasUpvoted} size="large" left={2} />
+        <AnimatedCount count={count} active={viewerHasUpvoted} size='large' left={2} />
       </button>
       {!noOne && (
         <div className={s.digest}>
-          <Facepile users={avatarList} showMore={false} left={-4} bottom={3} top={3} />
+          <Facepile
+            users={avatarList}
+            showMore={false}
+            noLazyLoad={noLazyLoad}
+            left={-4}
+            bottom={3}
+            top={3}
+          />
           <div className={s.note}>
             {names.map((name, index) => (
               <Fragment key={name}>

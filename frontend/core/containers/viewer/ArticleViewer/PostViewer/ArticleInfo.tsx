@@ -1,12 +1,10 @@
-import { memo, type FC } from 'react'
-
-import type { TArticle } from '~/spec'
-
-import { upvoteArticle } from '~/signal'
+import { type FC, memo } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
 
-import Upvote from '~/widgets/Upvote'
+import { upvoteArticle } from '~/signal'
+import type { TArticle } from '~/spec'
 import ArticleBaseStats from '~/widgets/ArticleBaseStats'
+import Upvote from '~/widgets/Upvote'
 
 import useSalon from '../salon/post_viewer/article_info'
 
@@ -25,11 +23,12 @@ const ArticleInfo: FC<TProps> = ({ article }) => {
           type={UPVOTE_LAYOUT.DEFAULT}
           count={upvotesCount}
           avatarList={meta.latestUpvotedUsers}
+          noLazyLoad
           viewerHasUpvoted={viewerHasUpvoted}
           onAction={(viewerHasUpvoted) => upvoteArticle(article, viewerHasUpvoted)}
         />
-        <div className="grow" />
-        <ArticleBaseStats article={article} container="drawer" />
+        <div className='grow' />
+        <ArticleBaseStats article={article} container='drawer' />
       </div>
     </div>
   )

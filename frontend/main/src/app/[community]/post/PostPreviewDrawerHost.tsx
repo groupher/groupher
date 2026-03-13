@@ -1,19 +1,32 @@
 'use client'
 
-import { useParams, useSelectedLayoutSegment } from 'next/navigation'
 import type { ReactNode } from 'react'
-import Drawer from '~/widgets/@Drawer'
+
+import { THREAD } from '~/const/thread'
+
+import ThreadPreviewDrawerHost from '../_preview/ThreadPreviewDrawerHost'
+import { getPreviewCacheKey } from './buildPreviewCacheEntry'
+import PreviewRuntime from './PreviewRuntime'
 
 type TProps = {
   children: ReactNode
 }
 
+/**
+ * Thin adapter bridge: post owns how preview keys are derived and how cached
+ * preview content is rendered, while the shared host owns drawer/cache phases.
+ */
 export default function PostPreviewDrawerHost({ children }: TProps) {
-  const activeSegment = useSelectedLayoutSegment('previewer')
-  const params = useParams<{ id?: string | string[] }>()
-  const resetKey = Array.isArray(params.id) ? params.id[0] : params.id
-
-  if (!activeSegment) return null
-
-  return <Drawer resetKey={resetKey ?? activeSegment}>{children}</Drawer>
+  return (
+    <ThreadPreviewDrawerHost
+      resolvePreviewKey={(communitySlug, id) =>
+        communitySlug && id ? getPreviewCacheKey(communitySlug, THREAD.POST, id) : null
+      }
+      renderCachedPreview={(entry, mode) => (
+        <PreviewRuntime key={`${entry.key}:${mode}`} entry={entry} mode={mode} />
+      )}
+    >
+      {children}
+    </ThreadPreviewDrawerHost>
+  )
 }

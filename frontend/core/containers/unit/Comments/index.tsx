@@ -19,7 +19,8 @@ import { API_MODE } from './constant'
 import HeadBar from './HeadBar'
 import useSalon from './salon'
 import type { TAPIMode } from './spec'
-import useLogic from './useLogic'
+import { useCommentsEditState, useCommentsRootState } from './useLogic'
+import useActions from './useLogic/useActions'
 
 type TProps = {
   apiMode?: TAPIMode
@@ -28,7 +29,9 @@ type TProps = {
 
 const Comments: FC<TProps> = ({ locked = false, apiMode = API_MODE.ARTICLE }) => {
   const s = useSalon()
-  const { initialized, pagedComments, getEditState, loadComments } = useLogic()
+  const { initialized, totalCount } = useCommentsRootState()
+  const editState = useCommentsEditState()
+  const { loadComments } = useActions()
 
   useEffect(() => {
     if (!initialized) {
@@ -36,9 +39,6 @@ const Comments: FC<TProps> = ({ locked = false, apiMode = API_MODE.ARTICLE }) =>
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  const editState = getEditState()
-  const { totalCount } = pagedComments
 
   return (
     <div id={ANCHOR.COMMENTS_ID} className={s.wrapper}>

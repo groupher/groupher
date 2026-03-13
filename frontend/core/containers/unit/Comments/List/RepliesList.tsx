@@ -1,4 +1,4 @@
-import { memo, type FC } from 'react'
+import { memo, type CSSProperties, type FC } from 'react'
 
 import type { TComment, TID } from '~/spec'
 import useTrans from '~/hooks/useTrans'
@@ -13,10 +13,15 @@ import useSalon from '../salon/list/replies_list'
 type TProps = {
   parentId: TID
   apiMode: TAPIMode
-  entries: TComment[]
+  entries: readonly TComment[]
   repliesCount: number
   loading: boolean
   foldedIdSet: Set<TID>
+}
+
+const REPLY_VISIBILITY_STYLE: CSSProperties = {
+  contentVisibility: 'auto',
+  containIntrinsicSize: '220px',
 }
 
 const RepliesList: FC<TProps> = ({
@@ -42,7 +47,7 @@ const RepliesList: FC<TProps> = ({
       )}
       {entries.map((comment) => {
         return (
-          <div key={comment.id} className={s.list}>
+          <div key={comment.id} className={s.list} style={REPLY_VISIBILITY_STYLE}>
             <Comment
               apiMode={apiMode}
               data={comment}

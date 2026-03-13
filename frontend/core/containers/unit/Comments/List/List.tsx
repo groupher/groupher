@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import type { CSSProperties } from 'react'
 
 import type { TComment, TID } from '~/spec'
 import Comment from '../Comment'
@@ -14,8 +15,13 @@ type TProps = {
   mode: TMode
   repliesLoadingByParentId: Record<string, boolean>
   apiMode: TAPIMode
-  entries: TComment[]
+  entries: readonly TComment[]
   foldedIdSet: Set<TID>
+}
+
+const COMMENT_VISIBILITY_STYLE: CSSProperties = {
+  contentVisibility: 'auto',
+  containIntrinsicSize: '360px',
 }
 
 const List: FC<TProps> = ({
@@ -35,7 +41,7 @@ const List: FC<TProps> = ({
         const isRepliesLoading = Boolean(repliesLoadingByParentId[comment.id])
 
         return (
-          <div key={comment.id} className={s.wrapper}>
+          <div key={comment.id} className={s.wrapper} style={COMMENT_VISIBILITY_STYLE}>
             <Comment
               data={comment}
               apiMode={apiMode}
