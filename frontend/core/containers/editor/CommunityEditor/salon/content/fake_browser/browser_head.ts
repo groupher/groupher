@@ -31,7 +31,7 @@ export const getPathGradient = (wallpaper: string): string => {
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { wallpaper } = useWallpaper()
   const { cn, fg, br, bg, fill, rainbow } = useTwBelt()
 

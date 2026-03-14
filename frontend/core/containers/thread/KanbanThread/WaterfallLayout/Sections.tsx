@@ -15,7 +15,7 @@ import EmptyItem from '~/widgets/KanbanItem/EmptyItem'
 
 import useSalon, { cn } from '../salon/waterfall_layout/sections'
 
-export default () => {
+export default function Sections() {
   const {
     backlog: backlogPosts,
     todo: todoPosts,

@@ -1,8 +1,6 @@
 import type { FC } from 'react'
-
-import List from './List'
-
 import type { TProps as TTagProps } from '.'
+import List from './List'
 
 import useSalon from './salon'
 

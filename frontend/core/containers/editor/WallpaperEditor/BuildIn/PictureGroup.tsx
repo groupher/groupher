@@ -8,7 +8,7 @@ import Button from '~/widgets/Buttons/Button'
 import useSalon, { cn } from '../salon/build_in/pictrue_group'
 import useLogic from '../useLogic'
 
-export default () => {
+export default function PictureGroup() {
   const { getWallpaper, changePatternWallpaper } = useLogic()
   const { wallpaper, patternWallpapers } = getWallpaper()
 

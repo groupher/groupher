@@ -8,7 +8,7 @@ import SectionLabel from '../../SectionLabel'
 import useSalon from '../../salon/broadcast/editor/global'
 import GlobalTemplate from '../Templates/Global'
 
-export default () => {
+export default function Global() {
   const {
     saving,
     broadcastBg,

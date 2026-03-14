@@ -4,7 +4,7 @@ export { cn } from '~/css'
 
 import useBase from '.'
 
-export default () => {
+export default function useSalon() {
   const { cn, bg } = useTwBelt()
   const { link, menuLink, linkActive, arrowIcon } = useBase()
 

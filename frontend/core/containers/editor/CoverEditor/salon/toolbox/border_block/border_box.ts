@@ -5,7 +5,7 @@ import { getLinearBorder } from '../../metric'
 
 export { cn } from '~/css'
 
-export default ({ pos, active }) => {
+export default function useSalon({ pos, active }) {
   const { isLightTheme } = useTheme()
   const { cn, br, bg, shadow } = useTwBelt()
 

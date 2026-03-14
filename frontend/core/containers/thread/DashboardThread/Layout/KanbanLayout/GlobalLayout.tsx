@@ -9,7 +9,7 @@ import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/global_layout'
 
-export default () => {
+export default function GlobalLayout() {
   const s = useSalon()
   const { t } = useTrans()
 

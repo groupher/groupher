@@ -4,7 +4,7 @@ import useLayout from '~/hooks/useLayout'
 import useScroll from '~/hooks/useScroll'
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, fill, avatar, sexyBorder, linkable, cut } = useTwBelt()
   const { bannerLayout } = useLayout()
 

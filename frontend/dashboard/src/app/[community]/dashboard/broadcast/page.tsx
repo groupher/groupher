@@ -2,6 +2,6 @@
 
 import GlobalEditor from '~/containers/thread/DashboardThread/Broadcast/Editor/Global'
 
-export default () => {
+export default function Page() {
   return <GlobalEditor />
 }

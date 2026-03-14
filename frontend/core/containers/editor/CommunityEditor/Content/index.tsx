@@ -10,7 +10,7 @@ import useLogic from '../useLogic'
 import SetupDomain from './SetupDomain'
 import SetupInfo from './SetupInfo'
 
-export default () => {
+export default function Content() {
   const { isLogin } = useAccount()
   const { step, validState } = useLogic()
 

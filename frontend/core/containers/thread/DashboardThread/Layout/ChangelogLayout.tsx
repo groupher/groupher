@@ -8,7 +8,7 @@ import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon, { cnMerge } from '../salon/layout/changelog_layout'
 
-export default () => {
+export default function ChangelogLayout() {
   const s = useSalon()
   const { edit, layout, isTouched, saving } = useChangelog()
   const { t } = useTrans()

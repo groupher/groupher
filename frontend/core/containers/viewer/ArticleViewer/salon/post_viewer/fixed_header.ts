@@ -4,7 +4,7 @@ type TProps = {
   visible: boolean
 }
 
-export default ({ visible }: TProps) => {
+export default function useSalon({ visible }: TProps) {
   const { cn, fg, bg, cut, sexyBorder } = useTwBelt()
 
   return {

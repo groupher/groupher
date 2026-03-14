@@ -9,7 +9,7 @@ type TRet = {
   enableThread: (key: string, toggle: boolean) => void
 }
 
-export default (): TRet => {
+export default function useEnable(): TRet {
   const dsb$ = useDashboard()
   const { onSave } = useHelper()
 

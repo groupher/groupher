@@ -6,7 +6,7 @@ type TProps = { circle: boolean } & TSpace
 
 export { cn } from '~/css'
 
-export default ({ circle, ...spacing }: TProps) => {
+export default function useSalon({ circle, ...spacing }: TProps) {
   const { cn, br, margin } = useTwBelt()
 
   return {

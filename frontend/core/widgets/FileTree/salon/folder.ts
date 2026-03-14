@@ -5,7 +5,7 @@ type TProps = {
   isFolderOpen: boolean
 }
 
-export default ({ show, isFolderOpen }: TProps) => {
+export default function useSalon({ show, isFolderOpen }: TProps) {
   const { cn, fg, bg, fill, cut } = useTwBelt()
 
   return {

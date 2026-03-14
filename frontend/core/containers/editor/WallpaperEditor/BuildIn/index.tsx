@@ -15,7 +15,7 @@ import AnglePanel from './AnglePanel'
 import useLogic from '../useLogic'
 import useSalon, { cn } from '../salon/build_in'
 
-export default () => {
+export default function BuildIn() {
   const { getWallpaper, togglePattern, toggleBlur, toggleShadow } = useLogic()
   const { wallpaperType, hasPattern, hasBlur, hasShadow } = getWallpaper()
 

@@ -10,7 +10,7 @@ export type TRet = {
   isLogosTouched: boolean
 }
 
-export default (): TRet => {
+export default function useLogos(): TRet {
   const dsb$ = useDashboard()
   const { anyChanged } = useHelper()
 

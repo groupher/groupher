@@ -9,7 +9,7 @@ export type TRet = {
   mapArrayChanged: (key: string) => boolean
 }
 
-export default (): TRet => {
+export default function useTouch(): TRet {
   const dsb$ = useDashboard()
 
   const { original } = dsb$

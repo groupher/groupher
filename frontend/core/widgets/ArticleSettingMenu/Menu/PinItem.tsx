@@ -8,7 +8,7 @@ import { toast, updateViewingArticle } from '~/signal'
 import useSalon from '../salon/menu'
 import S from '../schema'
 
-export default () => {
+export default function PinItem() {
   const s = useSalon()
 
   const { article } = useArticle()

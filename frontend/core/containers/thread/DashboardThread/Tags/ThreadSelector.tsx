@@ -4,7 +4,7 @@ import useTrans from '~/hooks/useTrans'
 import useTags from '../logic/useTags'
 import useSalon, { cn } from '../salon/tags/thread_selector'
 
-export default () => {
+export default function ThreadSelector() {
   const s = useSalon()
   const { t } = useTrans()
 

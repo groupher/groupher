@@ -11,7 +11,7 @@ import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/item_card_layout'
 
-export default () => {
+export default function ItemCardLayout() {
   const s = useSalon()
   const { t } = useTrans()
 

@@ -25,7 +25,7 @@ const CRUMB_CONFIG = {
   ],
 } satisfies TCrumbConfig
 
-export default ({ children }) => {
+export default function Layout({ children }) {
   const s = useSalon()
   const { items, activeTab } = useDsbLayoutTabs(LAYOUT_TABS)
   const { t } = useTrans()

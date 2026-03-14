@@ -19,7 +19,7 @@ type TProps = {
   layout?: 'page' | 'modal'
 }
 
-export default ({ layout = 'page' }: TProps) => {
+export default function PriceWall({ layout = 'page' }: TProps) {
   const s = useSalon()
 
   const [paidHoveredRef, paidHovered] = useHover<HTMLDivElement>()

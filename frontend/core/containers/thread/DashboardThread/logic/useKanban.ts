@@ -17,7 +17,7 @@ type TRet = {
   edit: TEditFunc
 }
 
-export default (): TRet => {
+export default function useKanban(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 

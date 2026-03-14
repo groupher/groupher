@@ -9,7 +9,7 @@ import { COMMUNITY_TYPE } from '../../../constant'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { isLightTheme } = useTheme()
   const { cn, fg, bg, br, shadow, fill, primary } = useTwBelt()
 

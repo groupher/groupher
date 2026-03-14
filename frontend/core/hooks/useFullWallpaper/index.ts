@@ -18,7 +18,7 @@ type TRet = {
   getPatternWallpapers: () => Record<string, TWallpaper>
 }
 
-export default (): TRet => {
+export default function useFullWallpaper(): TRet {
   const store = useWallpaperDomain()
 
   const getGradientWallpapers = (): Record<string, TWallpaper> => {

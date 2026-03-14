@@ -10,7 +10,7 @@ const OauthHinter = dynamic(() => import('~/widgets/OauthHinter'), {
   ssr: false,
 })
 
-export default () => {
+export default function Page() {
   return (
     <Suspense fallback={null}>
       <OauthHinter />

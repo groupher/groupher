@@ -10,7 +10,7 @@ import SearchEnginePreview from './SearchEnginePreview'
  see: https://mintlify.com/docs/settings/seo for details
 */
 
-export default () => {
+export default function OpenGraph() {
   const s = useSalon()
   const { t } = useTrans()
   const { seoEnable, ogSiteName, ogTitle, ogDescription, ogImage, ogUrl, edit, toggleSEO } =

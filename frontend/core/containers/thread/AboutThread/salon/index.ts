@@ -9,7 +9,7 @@ type TProps = {
   isSidebarLayout: boolean
 }
 
-export default ({ isSidebarLayout }: TProps) => {
+export default function useSalon({ isSidebarLayout }: TProps) {
   const { cn, fg, sexyBorder } = useTwBelt()
   const { bannerLayout } = useLayout()
 

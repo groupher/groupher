@@ -9,7 +9,7 @@ type TProps = {
   smaller: boolean
 }
 
-export default ({ smaller }: TProps) => {
+export default function useSalon({ smaller }: TProps) {
   const { cn, fg, fill } = useTwBelt()
 
   return {

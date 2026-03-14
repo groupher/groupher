@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
 import MarkdownRender from 'markdown-to-jsx'
+import type { ReactNode } from 'react'
 
 import type { TSpace } from '~/spec'
 
@@ -10,7 +10,7 @@ type TProps = {
   className?: string
 } & TSpace
 
-export default ({ children, className = '', ...spacing }: TProps) => {
+export default function Markdown({ children, className = '', ...spacing }: TProps) {
   const s = useSalon({ className, ...spacing })
 
   return (

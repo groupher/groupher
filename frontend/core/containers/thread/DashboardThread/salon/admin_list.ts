@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default ({ ...spacing }) => {
+export default function useSalon({ ...spacing }) {
   const { cn, fg, margin, hover } = useTwBelt()
 
   return {

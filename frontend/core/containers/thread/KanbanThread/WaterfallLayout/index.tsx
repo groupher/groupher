@@ -7,7 +7,7 @@ import Sections from './Sections'
 
 import useSalon from '../salon/waterfall_layout'
 
-export default () => {
+export default function WaterfallLayout() {
   const s = useSalon()
 
   return (

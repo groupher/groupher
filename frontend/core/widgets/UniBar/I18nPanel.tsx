@@ -7,7 +7,7 @@ import MenuBar from './MenuBar'
 
 import useSalon from './salon/i18n_panel'
 
-export default () => {
+export default function I18nPanel() {
   const { locale, changeLocale } = useChangeI18n()
 
   const s = useSalon()

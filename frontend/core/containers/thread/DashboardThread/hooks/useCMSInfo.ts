@@ -27,7 +27,7 @@ type TRet = {
   isFaqSectionsTouched: boolean
 }
 
-export default (): TRet => {
+export default function useCMSInfo(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
   const { mapArrayChanged } = useHelper()

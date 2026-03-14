@@ -36,7 +36,7 @@ export const getGithubGradient = (wallpaper: string): string => {
   }
 }
 
-export default () => {
+export default function useSalon() {
   const { isLightTheme } = useTheme()
   const { cn, shadow, fill, br } = useTwBelt()
   const { wallpaper } = useWallpaper()

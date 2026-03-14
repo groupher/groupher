@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default ({ loading }) => {
+export default function useSalon({ loading }: { loading: boolean }) {
   const { cn, bg, fg, fill, br, hover } = useTwBelt()
 
   return {

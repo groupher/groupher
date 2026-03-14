@@ -17,7 +17,7 @@ type TRet = {
   syncURL: (page: number) => void
 }
 
-export default (): TRet => {
+export default function useLogic(): TRet {
   const snap = useSnapshot(store)
   // const curCommunity = useCommunity()
   // const curThread = useViewingThread()

@@ -7,7 +7,7 @@ import useSalon from './salon/article_cover'
 
 export const CoverEditor = lazy(() => import('~/containers/editor/CoverEditor'))
 
-export default () => {
+export default function ArticleCover() {
   const s = useSalon()
   const [hasCover, setHasCover] = useState(false)
 

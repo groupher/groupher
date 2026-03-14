@@ -1,7 +1,7 @@
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg } = useTwBelt()
   const { inView: badgeInView } = useCommunityDigestViewport()
 

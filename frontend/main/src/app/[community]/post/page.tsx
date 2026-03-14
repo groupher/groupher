@@ -2,6 +2,6 @@
 
 import PostThread from '~/containers/thread/PostThread'
 
-export default () => {
+export default function Page() {
   return <PostThread />
 }

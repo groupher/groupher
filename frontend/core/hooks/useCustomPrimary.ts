@@ -3,7 +3,7 @@ type TRet = {
   getCSSVar: (name: string) => void
 }
 
-export default (): TRet => {
+export default function useCustomPrimary(): TRet {
   const setCSSVar = (name: string, value: string) => {
     if (typeof document !== 'undefined') {
       document.documentElement.style.setProperty(name, value)

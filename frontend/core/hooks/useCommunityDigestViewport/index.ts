@@ -6,7 +6,7 @@ type TRet = {
   inView: boolean
 }
 
-export default (): TRet => {
+export default function useCommunityDigestViewport(): TRet {
   const community$ = useCommunity()
 
   return {

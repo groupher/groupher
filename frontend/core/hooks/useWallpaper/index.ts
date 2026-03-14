@@ -15,7 +15,7 @@ import { parseWallpaper } from '~/wallpaper'
 
 type TRet = { wallpaper: string; hasShadow: boolean } & TWallpaperFmt
 
-export default (): TRet => {
+export default function useWallpaper(): TRet {
   const store = useWallpaperDomain()
 
   const { wallpaper, hasPattern, hasBlur, hasShadow, direction, customColorValue, wallpaperType } =

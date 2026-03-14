@@ -9,7 +9,7 @@ import ArrowSVG from '~/icons/ArrowUpRight'
 import useLogic from '../useLogic'
 import useSalon, { cn } from '../salon/banner/finished'
 
-export default () => {
+export default function Finished() {
   const s = useSalon()
   const { logo, title, slug, desc } = useLogic()
 

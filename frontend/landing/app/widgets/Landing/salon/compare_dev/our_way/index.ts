@@ -2,7 +2,7 @@ import { COLOR } from '~/const/colors'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn, rainbow } = useTwBelt()
 
   return {

@@ -20,7 +20,7 @@ export type TProps = {
   editState: TEditState
 }
 
-export default () => {
+export default function HeadBar() {
   const s = useSalon()
   const { mode, apiMode, loading, isAllFolded, basicState, commentBody, submitState } =
     useCommentsHeadState()

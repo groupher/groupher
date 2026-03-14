@@ -4,7 +4,10 @@ import type { TThemeMode, TThemeName } from '~/spec'
 
 import type { TInit, TStore } from './spec'
 
-export default (themeMode: TThemeMode = THEME_MODE.SYSTEM, theme: TInit = THEME.LIGHT): TStore => {
+export default function ThemeStore(
+  themeMode: TThemeMode = THEME_MODE.SYSTEM,
+  theme: TInit = THEME.LIGHT,
+): TStore {
   const store = proxy({
     theme,
     themeMode,

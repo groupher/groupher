@@ -13,7 +13,7 @@ type TProps = {
   color?: TColorName
 }
 
-export default ({ subMenuType = null, color = COLOR.BLACK }: TProps = {}) => {
+export default function useSalon({ subMenuType = null, color = COLOR.BLACK }: TProps = {}) {
   const { cn, fg, bg, menu, fill, cut, sexyBorder, rainbow } = useTwBelt()
 
   return {

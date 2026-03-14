@@ -8,7 +8,7 @@ import useBaseInfo from '../../logic/useBaseInfo'
 import useSalon from '../../salon/basic_info/other_info/media_editor'
 import InputBox from './InputBox'
 
-export default () => {
+export default function MediaEditor() {
   const s = useSalon()
   const { addMediaReport, mediaReports, queryingMediaReportIndex } = useBaseInfo()
   const { t } = useTrans()

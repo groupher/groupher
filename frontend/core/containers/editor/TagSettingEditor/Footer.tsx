@@ -5,7 +5,7 @@ import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import useSalon, { cn } from './salon/footer'
 import useLogic from './useLogic'
 
-export default () => {
+export default function Footer() {
   const s = useSalon()
   const { mode, editingTag, onCreate, onUpdate, onDelete, processing } = useLogic()
 

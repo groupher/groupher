@@ -28,7 +28,7 @@ import CommunityBrief from './CommunityBrief'
 
 const UniBar = lazy(() => import('~/widgets/UniBar'))
 
-export default () => {
+export default function ThreadSidebar() {
   const { t } = useTrans()
   const { desc, homepage } = useCommunity()
 

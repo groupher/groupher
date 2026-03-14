@@ -3,7 +3,7 @@ import type { TSpace } from '~/spec'
 
 type TProps = { menuOpen?: boolean; selected?: boolean } & TSpace
 
-export default ({ menuOpen, selected, ...spacing }: TProps) => {
+export default function useSalon({ menuOpen, selected, ...spacing }: TProps) {
   const { cn, fg, bg, margin } = useTwBelt()
 
   return {

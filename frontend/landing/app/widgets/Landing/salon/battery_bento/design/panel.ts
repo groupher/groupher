@@ -5,7 +5,7 @@ import { getCursorGradient, getPathGradient } from '../../metric'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, bg, br, fill, rainbow, shadow } = useTwBelt()
   const { wallpaper } = useWallpaper()
 

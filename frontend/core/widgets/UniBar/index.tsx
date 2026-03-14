@@ -20,7 +20,7 @@ import MorePanel from './MorePanel'
 import NotifyPanel from './NotifyPanel'
 import useSalon, { cn } from './salon'
 
-export default () => {
+export default function UniBar() {
   const ref = useRef<HTMLDivElement>(null)
   const { t } = useTrans()
 

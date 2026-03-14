@@ -12,7 +12,7 @@ type TProps = {
   withSoftBg: boolean
 } & TSpace
 
-export default ({ color, noColor, withSoftBg, ...spacing }: TProps) => {
+export default function useSalon({ color, noColor, withSoftBg, ...spacing }: TProps) {
   const { isLightTheme } = useTheme()
   const { cn, fg, fill, margin, primary, rainbow } = useTwBelt()
 

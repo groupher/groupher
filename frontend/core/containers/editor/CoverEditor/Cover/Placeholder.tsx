@@ -2,7 +2,7 @@ import useSalon from '../salon/cover/placeholder'
 
 import UploadSVG from '~/icons/Upload'
 
-export default () => {
+export default function Placeholder() {
   const s = useSalon()
 
   return (

@@ -35,7 +35,7 @@ type TProps = {
   direction: string
 }
 
-export default ({ direction }: TProps) => {
+export default function useSalon({ direction }: TProps) {
   const { cn, br, bg, fill, primary } = useTwBelt()
 
   return {

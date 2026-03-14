@@ -8,7 +8,7 @@ import TopbarLayout from '~/containers/thread/DashboardThread/Layout/TopbarLayou
 
 import useSalon from '~/containers/thread/DashboardThread/salon/layout'
 
-export default () => {
+export default function Page() {
   const s = useSalon()
 
   return (

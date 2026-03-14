@@ -7,7 +7,7 @@ type TProps = {
   name: string
 }
 
-export default ({ active, name }: TProps) => {
+export default function useSalon({ active, name }: TProps) {
   const { cn, fg } = useTwBelt()
 
   return {

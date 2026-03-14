@@ -9,7 +9,7 @@ const STEP = {
   L: '91%',
 }
 
-export default () => {
+export default function ScaleSelector() {
   const s = useSalon()
   const [step, setStep] = useState(STEP.X)
 

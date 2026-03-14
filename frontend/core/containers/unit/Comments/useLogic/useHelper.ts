@@ -1,11 +1,10 @@
+import { findIndex, prop, propEq, uniqBy } from 'ramda'
 import { useContext } from 'react'
-import { propEq, findIndex, uniqBy, prop } from 'ramda'
 
 import type { TComment, TEmotion, TID } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
-
+import { EDIT_MODE, MODE } from '../constant'
 import type { TEditMode } from '../spec'
-import { MODE, EDIT_MODE } from '../constant'
 
 type TRet = {
   updateOneComment: (comment: TComment, fields?: Partial<TComment>) => void
@@ -15,7 +14,7 @@ type TRet = {
   resetPublish: (mode: TEditMode) => void
 }
 
-export default (): TRet => {
+export default function useHelper(): TRet {
   const commentsStore = useContext(CommentsStoreContext) as any
   if (!commentsStore) {
     throw new Error('useHelper must be used within a Comments store provider')
@@ -33,10 +32,9 @@ export default (): TRet => {
       const replyIndex = findIndex(propEq(id, 'id'), parentComment.replies)
       if (replyIndex < 0) return
       const replyComment = parentComment.replies[replyIndex]
-      // @ts-ignore
+      // @ts-expect-error
       if (fields.meta) fields.meta = { ...replyComment.meta, ...fields.meta }
       console.log('## TODO: update one comment')
-      // @ts-ignore
       // snap.pagedComments.entries[parentIndex].replies[replyIndex] = {
       //   ...replyComment,
       //   ...fields,
@@ -47,11 +45,10 @@ export default (): TRet => {
 
       if (index < 0) return
       const comment = entries[index]
-      // @ts-ignore
+      // @ts-expect-error
       if (fields.meta) fields.meta = { ...comment.meta, ...fields.meta }
 
       console.log('## TODO: update one comment')
-      // @ts-ignore
       // snap.pagedComments.entries[index] = { ...comment, ...fields }
     }
   }
@@ -82,7 +79,6 @@ export default (): TRet => {
       const index = findIndex(propEq(id, 'id'), entries)
       if (index < 0) return
       console.log('## TODO updateEmotion: ', emotion)
-      // @ts-ignore
       // snap.pagedComments.entries[index].emotions = {
       //   ...entries[index].emotions,
       //   ...emotion,

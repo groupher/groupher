@@ -9,7 +9,7 @@ type TProps = {
   onChange: (tab: TIntroTab) => void
 }
 
-export default ({ tab, onChange }: TProps) => {
+export default function HeadTabs({ tab, onChange }: TProps) {
   const tabKeys = keys(INTROS)
 
   const s = useSalon()

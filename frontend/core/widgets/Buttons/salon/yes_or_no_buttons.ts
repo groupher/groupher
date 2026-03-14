@@ -2,7 +2,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 type TProps = { align: 'center' | 'right' }
 
-export default ({ align }: TProps) => {
+export default function useSalon({ align }: TProps) {
   const { cn, fg } = useTwBelt()
 
   return {

@@ -22,7 +22,7 @@ const getThreadFromPathname = (pathname: string): TThread | null => {
   return null
 }
 
-export default (): TThread => {
+export default function useViewingThread(): TThread {
   const pathname = usePathname()
 
   const metric = useMetric()

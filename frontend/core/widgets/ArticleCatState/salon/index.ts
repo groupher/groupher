@@ -6,7 +6,7 @@ type TProps = {
   noBorder?: boolean
 } & TSpace
 
-export default ({ noBorder, ...spacing }: TProps) => {
+export default function useSalon({ noBorder, ...spacing }: TProps) {
   const { cn, margin, br } = useTwBelt()
 
   return {

@@ -6,7 +6,7 @@ type TProps = {
   viewerHasUpvoted: boolean
 }
 
-export default ({ viewerHasUpvoted }: TProps) => {
+export default function useSalon({ viewerHasUpvoted }: TProps) {
   const { cn, br, bg, rainbowSoft } = useTwBelt()
   const color = usePrimaryColor()
 

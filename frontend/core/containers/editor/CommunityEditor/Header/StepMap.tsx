@@ -11,7 +11,7 @@ import useLogic from '../useLogic'
 import { Icon } from '../salon/banner/select_type/type_boxes'
 import useSalon from '../salon/header/step_map'
 
-export default () => {
+export default function StepMap() {
   const s = useSalon()
 
   const { headerStatus } = useLogic()

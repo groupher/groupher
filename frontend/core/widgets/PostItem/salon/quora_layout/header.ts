@@ -6,7 +6,7 @@ type TProps = {
   isPinned?: boolean
 }
 
-export default ({ isPinned }: TProps) => {
+export default function useSalon({ isPinned }: TProps) {
   const { cn, fg, bg, primary } = useTwBelt()
   const { hoverTitle } = useBase()
 

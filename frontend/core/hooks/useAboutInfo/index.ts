@@ -9,16 +9,10 @@ type TABoutInfo = {
   mediaReports: readonly TMediaReport[]
 }
 
-export default (): TABoutInfo => {
+export default function useAboutInfo(): TABoutInfo {
   const dsb$ = useDashboard()
 
-  const {
-    homepage = '',
-    city = '',
-    techstack = '',
-    socialLinks = [],
-    mediaReports = [],
-  } = dsb$
+  const { homepage = '', city = '', techstack = '', socialLinks = [], mediaReports = [] } = dsb$
 
   return {
     homepage: homepage || null,

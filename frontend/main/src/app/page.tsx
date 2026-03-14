@@ -1,5 +1,5 @@
 // https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config
-export default () => {
+export default function Page() {
   return (
     <>
       <h2>this is main app.</h2>

@@ -1,6 +1,6 @@
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   return {
     wrapper: 'align-both w-full mt-4 px-4',
     updateWrapper: 'column',

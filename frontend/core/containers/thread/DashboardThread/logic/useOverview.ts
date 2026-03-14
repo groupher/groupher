@@ -6,7 +6,7 @@ import type { TCommunity, TOverview } from '~/spec'
 
 import S from '../schema'
 
-export default (): TOverview => {
+export default function useOverview(): TOverview {
   const dsb$ = useDashboard()
   const { slug } = useCommunity()
   const { overview } = dsb$

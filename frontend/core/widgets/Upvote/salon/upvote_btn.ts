@@ -4,7 +4,7 @@ type TProps = {
   viewerHasUpvoted: boolean
 }
 
-export default ({ viewerHasUpvoted }: TProps) => {
+export default function useSalon({ viewerHasUpvoted }: TProps) {
   const { cn, fg, fill, primary } = useTwBelt()
 
   return {

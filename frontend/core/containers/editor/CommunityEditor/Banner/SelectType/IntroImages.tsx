@@ -15,7 +15,7 @@ type TProps = {
   current: TCommunityType
 }
 
-export default ({ type, current }: TProps) => {
+export default function IntroImages({ type, current }: TProps) {
   const s = useSalon()
 
   const users = mockUsers(6)

@@ -14,7 +14,7 @@ export type TRet = {
   getRepliesState: () => TRepliesState
 }
 
-export default (): TRet => {
+export default function useDerived(): TRet {
   const commentsStore = useContext(CommentsStoreContext) as any
   if (!commentsStore) {
     throw new Error('useDerived must be used within a Comments store provider')

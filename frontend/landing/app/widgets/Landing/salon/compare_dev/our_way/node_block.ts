@@ -8,7 +8,7 @@ type TProps = {
   bgColor?: TColorName
 }
 
-export default ({ bgColor }: TProps) => {
+export default function useSalon({ bgColor }: TProps) {
   const { cn, br, fg, bg, fill, shadow, rainbow } = useTwBelt()
 
   const softBg = bgColor ? rainbow(COLOR[bgColor], 'bgSoft') : ''

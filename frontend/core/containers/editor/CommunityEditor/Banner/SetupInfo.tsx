@@ -14,7 +14,7 @@ import NextStepButton from './NextStepButton'
 import useLogic from '../useLogic'
 import useSalon from '../salon/banner/setup_info'
 
-export default () => {
+export default function SetupInfo() {
   const s = useSalon()
 
   const { title, desc, logo, validState, pervStep, nextStep, inputOnChange } = useLogic()

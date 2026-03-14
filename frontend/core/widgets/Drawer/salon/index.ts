@@ -14,13 +14,13 @@ type TProps = {
   fromContentEdge?: boolean
 }
 
-export default ({
+export default function useSalon({
   visible,
   closing = false,
   type,
   rightOffset = '0px',
   fromContentEdge = true,
-}: TProps) => {
+}: TProps) {
   const { cn, bg, br, shadow, zIndex } = useTwBelt()
 
   const drawerStyle = useMemo(() => {

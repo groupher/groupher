@@ -1,4 +1,4 @@
-export default () => {
+export default function useSalon() {
   return {
     wrapper: 'column-center w-full relative bg-transparent min-h-60 h-auto mb-6 w-full',
     banner: 'row justify-start w-full pl-2',

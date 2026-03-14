@@ -10,7 +10,7 @@ import ViewSVG from '~/icons/article/Viewed'
 import Button from '~/widgets/Buttons/Button'
 import Tabs from '~/widgets/Switcher/Tabs'
 
-export default ({ children }) => {
+export default function Layout({ children }) {
   const s = useSalon()
   const { items, activeTab } = useDsbLayoutTabs(WIDGET_TABS)
   const { t } = useTrans()

@@ -12,7 +12,7 @@ import SectionLabel from '../../SectionLabel'
 
 import useSalon, { cn } from '../../salon/layout/gauss_blur'
 
-export default () => {
+export default function Dark() {
   const s = useSalon()
   const { t } = useTrans()
 

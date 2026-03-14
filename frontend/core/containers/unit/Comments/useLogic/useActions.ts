@@ -25,7 +25,7 @@ export type TActions = {
   closeReplyEditor: () => void
 } & ReturnType<typeof useQuery>
 
-export default (): TActions => {
+export default function useActions(): TActions {
   const commentsStore = useContext(CommentsStoreContext) as any
   if (!commentsStore) {
     throw new Error('useActions must be used within a Comments store provider')

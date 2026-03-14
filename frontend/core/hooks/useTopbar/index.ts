@@ -11,7 +11,7 @@ type TRet = {
   topbarBg: TColorName
 }
 
-export default (): TRet => {
+export default function useTopbar(): TRet {
   const dsb$ = useDashboard()
   const metric = useMetric()
 

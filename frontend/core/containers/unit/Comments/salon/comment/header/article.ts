@@ -4,7 +4,7 @@ export { cn } from '~/css'
 
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn, avatar, fg, cut, rainbow } = useTwBelt()
 
   return {

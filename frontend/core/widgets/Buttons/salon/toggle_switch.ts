@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 type TProps = { size: TSizeSM; checked: boolean }
 
-export default ({ size, checked }: TProps) => {
+export default function useSalon({ size, checked }: TProps) {
   const { cn, primary, br, bg, shadow } = useTwBelt()
 
   return {

@@ -15,7 +15,7 @@ type TRet = {
   edit: TEditFunc
 }
 
-export default (): TRet => {
+export default function useWidgets(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 

@@ -5,7 +5,7 @@ import useBase from '..'
 import useLayout from '~/hooks/useLayout'
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn } = useTwBelt()
   const { bannerLayout } = useLayout()
   const base = useBase()

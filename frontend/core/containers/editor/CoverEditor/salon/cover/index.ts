@@ -6,7 +6,7 @@ import { getImageTranslate, getLinearBorder, getImageSize, getLightPos } from '.
 
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default ({ linearBorderPos }) => {
+export default function useSalon({ linearBorderPos }) {
   const { cn, br } = useTwBelt()
 
   const getBorderColor = (linearBorderPos) => {

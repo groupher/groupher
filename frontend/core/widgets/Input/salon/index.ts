@@ -2,7 +2,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default ({ width }) => {
+export default function useSalon({ width }) {
   const { cn, fill, primary, fg, bg, br } = useTwBelt()
 
   const addon = 'absolute align-both top-0 size-8 z-10'

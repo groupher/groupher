@@ -14,7 +14,7 @@ import useSalon from './salon'
 import UploadPic from './UploadPic'
 import useLogic from './useLogic'
 
-export default () => {
+export default function WallpaperEditor() {
   const s = useSalon()
   const { tab, changeTab, initRollback } = useLogic()
 

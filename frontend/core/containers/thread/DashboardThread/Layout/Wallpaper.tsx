@@ -12,7 +12,7 @@ import SectionLabel from '../SectionLabel'
 
 import useSalon, { cn, cnMerge } from '../salon/layout/wallpaper'
 
-export default () => {
+export default function Wallpaper() {
   const s = useSalon()
   const { t } = useTrans()
 

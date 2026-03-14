@@ -36,7 +36,7 @@ type TRet = {
   toggleShadow: (hasShadow: boolean) => void
 }
 
-export default (): TRet => {
+export default function useLogic(): TRet {
   const wallpaper$ = useWallpaperDomain()
   const community$ = useCommunity()
   const { getWallpaper } = useFullWallpaper()

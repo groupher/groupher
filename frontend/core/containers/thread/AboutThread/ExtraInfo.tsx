@@ -8,7 +8,7 @@ import MediaReports from './MediaReports'
 
 import useSalon, { cn } from './salon/extra_info'
 
-export default () => {
+export default function ExtraInfo() {
   const s = useSalon()
   const { cities, techstacks, socialLinks, mediaReports } = useAboutInfo()
 

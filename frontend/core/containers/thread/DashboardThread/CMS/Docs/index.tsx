@@ -6,7 +6,7 @@
 // import TableView from './Table'
 // import TreeView from './Tree'
 
-// export default () => {
+// export default function Docs() {
 //   return (
 //     <div className={s.wrapper}>
 {

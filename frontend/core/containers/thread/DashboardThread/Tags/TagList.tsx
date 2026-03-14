@@ -7,7 +7,7 @@ import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import useTags from '../logic/useTags'
 import TagBar from './TagBar'
 
-export default () => {
+export default function TagList() {
   const { loading, loadTags, tags } = useTags()
   const [animateRef] = useAutoAnimate()
 

@@ -5,7 +5,7 @@ import ArrowSVG from '~/icons/ArrowSolid'
 import useSalon, { cn } from '../salon/build_in/angle_panel'
 import useLogic from '../useLogic'
 
-export default () => {
+export default function AnglePanel() {
   const { getWallpaper, changeDirection } = useLogic()
   const { direction } = getWallpaper()
 

@@ -5,7 +5,7 @@ import UserList from '~/widgets/UserList'
 
 import useSalon from './salon'
 
-export default () => {
+export default function UserListModal() {
   const s = useSalon()
   const { show, onClose } = useUserListModal()
 

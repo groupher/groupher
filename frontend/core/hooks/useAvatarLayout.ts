@@ -7,7 +7,7 @@ type TRet = {
   isSquare: boolean
 }
 
-export default (): TRet => {
+export default function useAvatarLayout(): TRet {
   const dsb$ = useDashboard()
 
   const { avatarLayout } = dsb$

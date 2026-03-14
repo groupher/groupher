@@ -1,4 +1,4 @@
-export default () => {
+export default function useSalon() {
   /**
  * see layout details:
  " @link https://css-tricks.com/the-fixed-background-attachment-hack/

@@ -3,7 +3,7 @@ import type { TActive, TColor } from '~/spec'
 
 type TProps = TActive & TColor
 
-export default ({ active, color }: TProps) => {
+export default function useSalon({ active, color }: TProps) {
   const { cn, fg, bg, fill, rainbow, gradientBar } = useTwBelt()
 
   return {

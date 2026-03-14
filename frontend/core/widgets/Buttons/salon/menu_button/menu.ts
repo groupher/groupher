@@ -3,7 +3,7 @@ import { getLocalSVG } from '~/icons'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, bg, fill, sexyBorder } = useTwBelt()
 
   return {

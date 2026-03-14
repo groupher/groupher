@@ -2,6 +2,6 @@
 
 import Layout from '~/containers/thread/DashboardThread/Layout/PostLayout'
 
-export default () => {
+export default function Page() {
   return <Layout />
 }

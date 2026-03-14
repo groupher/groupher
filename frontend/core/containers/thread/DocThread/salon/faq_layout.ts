@@ -6,7 +6,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 type TProps = TSpace
 
-export default ({ ...spacing }: TProps) => {
+export default function useSalon({ ...spacing }: TProps) {
   const { cn, margin } = useTwBelt()
   const base = useBase()
 

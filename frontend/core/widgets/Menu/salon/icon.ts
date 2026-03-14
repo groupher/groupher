@@ -15,7 +15,7 @@ import RejectSVG from '~/icons/Reject'
 // sort
 import UpvoteSVG from '~/icons/Upvote'
 
-export default () => {
+export default function useSalon() {
   const { cn, fill } = useTwBelt()
 
   return {

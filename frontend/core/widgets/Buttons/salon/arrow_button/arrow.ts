@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn, linker } = useTwBelt()
 
   const base = cn('size-3 trans-all-100', linker('fill'))

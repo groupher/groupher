@@ -5,7 +5,7 @@ import useTrans from '~/hooks/useTrans'
 import useSalon from '../salon/widgets'
 import CodeArea from './CodeArea'
 
-export default () => {
+export default function Drawer() {
   const s = useSalon()
   const { t } = useTrans()
 

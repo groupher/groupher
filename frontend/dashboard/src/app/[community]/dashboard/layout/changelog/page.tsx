@@ -2,6 +2,6 @@
 
 import Layout from '~/containers/thread/DashboardThread/Layout/ChangelogLayout'
 
-export default () => {
+export default function Page() {
   return <Layout />
 }

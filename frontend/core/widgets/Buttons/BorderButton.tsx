@@ -10,7 +10,7 @@ type TProps = {
   className?: string
 }
 
-export default ({ children, space = 2, className }: TProps) => {
+export default function BorderButton({ children, space = 2, className }: TProps) {
   const s = useSalon()
   const { background } = useWallpaper()
 

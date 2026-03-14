@@ -18,7 +18,7 @@ type TProps = {
   width: string
 } & TSpace
 
-export default ({ width, ...spacing }: TProps) => {
+export default function useSalon({ width, ...spacing }: TProps) {
   const { isLightTheme } = useTheme()
   const { cn, margin, fg, br, bg, shadow, fill, primary } = useTwBelt()
 

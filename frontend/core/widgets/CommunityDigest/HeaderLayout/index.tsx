@@ -8,7 +8,7 @@ import useSalon, { cn } from '../salon/header_layout'
 import CommunityBrief from './CommunityBrief'
 import ThreadTab from './ThreadTab'
 
-export default () => {
+export default function HeaderLayout() {
   const s = useSalon()
 
   const { layout } = useHeaderLinks()

@@ -22,7 +22,7 @@ const CRUMB_CONFIG = {
   ],
 } satisfies TCrumbConfig
 
-export default ({ children }) => {
+export default function Layout({ children }) {
   const s = useSalon()
   const { items, activeTab } = useDsbLayoutTabs(ALIAS_TABS)
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)

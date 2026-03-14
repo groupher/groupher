@@ -13,7 +13,7 @@ import ArtimentBody from '~/widgets/ArtimentBody'
 import Comments from '~/containers/unit/Comments'
 import useSalon from '../salon/post/content'
 
-export default () => {
+export default function Content() {
   const ref = useRef(null)
   const { article } = useArticle()
   const s = useSalon()

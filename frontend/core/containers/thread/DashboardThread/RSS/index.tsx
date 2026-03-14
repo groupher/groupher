@@ -5,7 +5,7 @@ import Portal from '../Portal'
 import SavingBar from '../SavingBar'
 import useSalon from '../salon/rss'
 
-export default () => {
+export default function RSS() {
   const s = useSalon()
 
   const { rssFeedType, rssFeedCount, saving, isTouched, edit, rssOnSave, rssOnCancel } = useRSS()

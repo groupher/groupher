@@ -10,7 +10,7 @@ type TProps = {
   type: TButtonPrefix | null
 }
 
-export default ({ type }: TProps) => {
+export default function PrefixIcon({ type }: TProps) {
   const s = useSalon()
 
   switch (type) {

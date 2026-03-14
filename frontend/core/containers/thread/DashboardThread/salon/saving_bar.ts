@@ -8,7 +8,7 @@ type TProps = {
   width: string
 } & TSpace
 
-export default ({ minimal, width, ...spacing }: TProps) => {
+export default function useSalon({ minimal, width, ...spacing }: TProps) {
   const { cn, margin, fg, fill } = useTwBelt()
 
   return {

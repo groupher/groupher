@@ -1,4 +1,4 @@
-export default () => {
+export default function useSalon() {
   return {
     wrapper: 'row-center relative',
   }

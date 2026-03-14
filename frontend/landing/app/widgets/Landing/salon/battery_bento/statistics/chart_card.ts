@@ -4,7 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { isLightTheme } = useTheme()
   const { cn, fg, br, bg, rainbow, shadow, dimDark } = useTwBelt()
 

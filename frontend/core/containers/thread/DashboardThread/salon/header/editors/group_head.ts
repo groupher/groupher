@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, fill } = useTwBelt()
 
   const common = 'size-3.5 pointer pointer trans-all-100'

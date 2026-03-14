@@ -25,7 +25,7 @@ type TRet = {
   mergeBackEditingTag: () => TTag[]
 }
 
-export default (): TRet => {
+export default function useMutation(): TRet {
   const dashboard$ = useDashboard()
   const community$ = useCommunity()
   const { mutate } = useGraphQLClient()
@@ -130,10 +130,13 @@ export default (): TRet => {
 
   const handleDemoMutation = (field: TDsbFieldKey): void => {
     if (field === FIELD.BASE_INFO) {
-      const patch = BASEINFO_KEYS.reduce((acc, key) => {
-        acc[key] = dashboard$[key]
-        return acc
-      }, {} as Record<string, unknown>)
+      const patch = BASEINFO_KEYS.reduce(
+        (acc, key) => {
+          acc[key] = dashboard$[key]
+          return acc
+        },
+        {} as Record<string, unknown>,
+      )
 
       community$.commit(patch)
     }

@@ -9,7 +9,7 @@ import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon, { cn } from '../salon/layout/avatar_layout'
 
-export default () => {
+export default function AvatarLayout() {
   const s = useSalon()
 
   const { edit, layout, isTouched, saving } = useAvatar()

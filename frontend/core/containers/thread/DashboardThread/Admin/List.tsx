@@ -8,7 +8,7 @@ import useAdmins from '../logic/useAdmins'
 
 import useSalon, { cn } from '../salon/admin/list'
 
-export default () => {
+export default function List() {
   const s = useSalon()
   const { moderators, activeModerator, setActiveSettingAdmin } = useAdmins()
   const { t } = useTrans()

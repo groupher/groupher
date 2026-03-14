@@ -22,7 +22,7 @@ type TRet = {
   changelogLayout: TChangelogLayout
 }
 
-export default (): TRet => {
+export default function UseLayout(): TRet {
   const dashboard = useDashboard()
 
   return pick(

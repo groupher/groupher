@@ -6,7 +6,7 @@ import useMetric from '~/hooks/useMetric'
 
 import useSalon from './salon/powerby_info'
 
-export default () => {
+export default function PowerbyInfo() {
   const s = useSalon()
   const metric = useMetric()
 

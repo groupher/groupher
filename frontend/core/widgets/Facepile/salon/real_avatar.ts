@@ -10,7 +10,7 @@ type TProps = {
   isLast: boolean
 }
 
-export default ({ size, isFirst, isLast }: TProps) => {
+export default function useSalon({ size, isFirst, isLast }: TProps) {
   const { cn, br, avatar } = useTwBelt()
 
   return {

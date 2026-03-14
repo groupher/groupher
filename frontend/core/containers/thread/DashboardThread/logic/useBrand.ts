@@ -10,7 +10,7 @@ type TRet = {
   saving: boolean
 }
 
-export default (): TRet => {
+export default function useBrand(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 

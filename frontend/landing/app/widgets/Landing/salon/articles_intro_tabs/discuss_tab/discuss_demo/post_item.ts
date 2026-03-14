@@ -6,7 +6,7 @@ export { cn } from '~/css'
 
 type TProps = TActive
 
-export default ({ active }: TProps) => {
+export default function useSalon({ active }: TProps) {
   const { cn, fg, br, fill, shadow, rainbow } = useTwBelt()
 
   return {

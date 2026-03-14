@@ -3,7 +3,7 @@ import type { TAccount } from '~/spec'
 
 import type { TStore } from './spec'
 
-export default (): TStore => {
+export default function AccountStore(): TStore {
   const store = proxy({
     user: null,
     loading: true,

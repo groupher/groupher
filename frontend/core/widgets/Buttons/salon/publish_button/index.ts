@@ -7,7 +7,7 @@ import { BANNER_LAYOUT } from '~/const/layout'
 
 type TProps = TSpace
 
-export default ({ ...spacing }: TProps) => {
+export default function useSalon({ ...spacing }: TProps) {
   const { cn, fg, margin, fill } = useTwBelt()
   const { bannerLayout } = useLayout()
 

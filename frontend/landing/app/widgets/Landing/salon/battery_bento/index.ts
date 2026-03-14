@@ -2,7 +2,7 @@ import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName } from '~/spec'
 
-export default () => {
+export default function useSalon() {
   const { isDarkTheme } = useTheme()
   const { cn, fg, rainbow, landingTitle } = useTwBelt()
 

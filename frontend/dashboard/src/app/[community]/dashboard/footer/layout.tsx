@@ -15,7 +15,7 @@ const CRUMB_CONFIG = {
   children: [{ title: 'dsb.crumb.footer', seg }],
 } satisfies TCrumbConfig
 
-export default ({ children }) => {
+export default function Layout({ children }) {
   const s = useSalon()
   const { t } = useTrans()
 

@@ -12,7 +12,7 @@ type TProps = {
 export const StoreContext = createContext<TStore | null>(null)
 StoreContext.displayName = 'Wallpaper'
 
-export default ({ children, initData }: TProps) => {
+export default function Provider({ children, initData }: TProps) {
   const storeRef = useRef<TStore | null>(null)
 
   storeRef.current ??= setupStore(initData)

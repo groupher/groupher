@@ -12,7 +12,7 @@ type TRet = {
   isDarkTouched: boolean
 }
 
-export default (): TRet => {
+export default function usePageBg(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
   const { rawBg } = usePageBgCommon()

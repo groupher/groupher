@@ -5,7 +5,7 @@ import MenuItem from '~/widgets/MenuItem'
 
 import useSalon from '../../salon/doc/block_layout/file_menu'
 
-export default () => {
+export default function FileMenu() {
   const s = useSalon()
 
   return (

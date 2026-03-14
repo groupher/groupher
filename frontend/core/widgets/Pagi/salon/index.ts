@@ -5,7 +5,7 @@ type TProps = TSpace
 
 export { cn } from '~/css'
 
-export default ({ ...spacing }: TProps) => {
+export default function useSalon({ ...spacing }: TProps) {
   const { cn, fg, margin, br, bg, hover } = useTwBelt()
 
   return {

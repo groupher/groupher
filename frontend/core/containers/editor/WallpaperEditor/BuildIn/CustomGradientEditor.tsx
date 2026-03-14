@@ -6,7 +6,7 @@ import Input from '~/widgets/Input'
 import useLogic from '../useLogic'
 import useSalon from '../salon/build_in/custom_gradient_editor'
 
-export default () => {
+export default function CustomGradientEditor() {
   const s = useSalon()
 
   const { getWallpaper, confirmCustomColor } = useLogic()

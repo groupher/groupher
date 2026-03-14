@@ -1,20 +1,18 @@
-import { pick, keys, clone, forEach, mergeDeepRight } from 'ramda'
+import { clone, forEach, keys, mergeDeepRight, pick } from 'ramda'
 
 import { proxy, useSnapshot } from 'valtio'
-
-import type { TWallpaperGradientDir, TWallpaper, TWallpaperGradient } from '~/spec'
 import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
-
+import type { TWallpaper, TWallpaperGradient, TWallpaperGradientDir } from '~/spec'
+import { IMAGE_POS, IMAGE_RATIO, IMAGE_SIZE, LINEAR_BORDER, SETTING_LEVEL } from './constant'
 import type {
-  TStore,
   TImagePos,
   TImageRadio,
   TImageSize,
   TLinearBorderPos,
   TSettingLevel,
+  TStore,
   TToolboxSetting,
 } from './spec'
-import { IMAGE_POS, SETTING_LEVEL, IMAGE_SIZE, LINEAR_BORDER, IMAGE_RATIO } from './constant'
 
 type TRet = {
   posOnChange: (imagePos: TImagePos) => void
@@ -99,7 +97,7 @@ const store = proxy<TStore>({
   },
 })
 
-export default (): TRet => {
+export default function useLogic(): TRet {
   const snap = useSnapshot(store)
 
   const posOnChange = (imagePos: TImagePos): void => snap.commit({ imagePos })

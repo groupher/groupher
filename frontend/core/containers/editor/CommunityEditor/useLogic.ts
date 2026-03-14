@@ -125,7 +125,7 @@ const store = proxy<TStore>({
   },
 })
 
-export default (): TRet => {
+export default function useLogic(): TRet {
   const snap = useSnapshot(store)
   const { query, mutate } = useGraphQLClient()
 

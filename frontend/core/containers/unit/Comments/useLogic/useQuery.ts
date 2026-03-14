@@ -31,7 +31,7 @@ export type TRet = {
 let repliesPagiNo = {}
 const PAGI_SIZE = 30
 
-export default (): TRet => {
+export default function useQuery(): TRet {
   const commentsStore = useContext(CommentsStoreContext) as any
   if (!commentsStore) {
     throw new Error('useQuery must be used within a Comments store provider')

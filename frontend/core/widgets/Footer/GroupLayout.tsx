@@ -12,7 +12,7 @@ import SocialList from '~/widgets/SocialList'
 
 import useSalon from './salon/group_layout'
 
-export default () => {
+export default function GroupLayout() {
   const s = useSalon()
 
   const { logo, desc, title } = useCommunity()

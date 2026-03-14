@@ -11,7 +11,7 @@ import HomeLogo from '~/widgets/HomeLogo'
 import MenuBar from './MenuBar'
 import useSalon from './salon/more_panel'
 
-export default () => {
+export default function MorePanel() {
   const s = useSalon()
   const { slug } = useCommunity()
   const { t } = useTrans()

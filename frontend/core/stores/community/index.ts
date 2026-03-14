@@ -1,7 +1,7 @@
 import { proxy } from 'valtio'
 import type { TInit, TStore } from './spec'
 
-export default (init: TInit = { slug: 'home' }): TStore => {
+export default function CommunityStore(init: TInit = { slug: 'home' }): TStore {
   const store = proxy({
     title: init.title || '',
     id: init.id || '',

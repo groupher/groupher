@@ -7,7 +7,7 @@ export type TRet = {
   isSocialLinksTouched: boolean
 }
 
-export default (): TRet => {
+export default function useSocialLinks(): TRet {
   const { socialLinks, original } = useDashboard()
 
   const socialLinksTouched = () => {

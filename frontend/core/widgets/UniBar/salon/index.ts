@@ -7,7 +7,7 @@ type TProps = {
   expand: boolean
 }
 
-export default ({ expand }: TProps) => {
+export default function useSalon({ expand }: TProps) {
   const { cn, br, fg, bg, fill, shadow } = useTwBelt()
   const { inView: badgeInView } = useCommunityDigestViewport()
 

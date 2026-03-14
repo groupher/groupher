@@ -7,7 +7,7 @@ import type { TArticleFilter, TResState } from '~/spec'
 
 import type { TInit, TStore } from './spec'
 
-export default (init: TInit = {}): TStore => {
+export default function ArticleListStore(init: TInit = {}): TStore {
   const initialStore: TStore = {
     thread: null,
     pagedPosts: EMPTY_PAGED_ARTICLES,

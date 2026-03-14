@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { cn, fill, hover, bg, fg, menu, rainbow, rainbowSoft, vividDark } = useTwBelt()
 
   const blockBase = 'relative align-both size-12 min-w-12 mr-4 rounded-lg'

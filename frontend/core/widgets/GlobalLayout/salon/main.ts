@@ -2,7 +2,7 @@ import useTopbar from '~/hooks/useTopbar'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
 
-export default () => {
+export default function useSalon() {
   const { cn, bg, rainbow, container, vividDark, page } = useTwBelt()
 
   const { topbarBg } = useTopbar()

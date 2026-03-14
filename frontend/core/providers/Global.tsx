@@ -8,6 +8,6 @@ type TProps = {
   children?: ReactNode
 }
 
-export default ({ children, mainBlock = undefined }: TProps) => {
+export default function Global({ children, mainBlock = undefined }: TProps) {
   return <GlobalLayout mainBlock={mainBlock}>{children}</GlobalLayout>
 }

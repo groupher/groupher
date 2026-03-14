@@ -13,7 +13,7 @@ type TProps = {
   color: TColorName | null
 } & TSpace
 
-export default ({
+export default function useSalon({
   disabled,
   checked,
   indeterminate,
@@ -22,7 +22,7 @@ export default ({
   color,
   size,
   ...spacing
-}: TProps) => {
+}: TProps) {
   const { cn, margin, fg, fill, rainbow } = useTwBelt()
   const primaryColor = usePrimaryColor()
 

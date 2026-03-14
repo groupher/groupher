@@ -1,6 +1,6 @@
 export { cn, cnMerge } from '~/css'
 
-export default () => {
+export default function useSalon() {
   return {
     wrapper: 'relative z-10 inline-block p-0 border-0 bg-transparent align-middle shrink-0',
     notLoaded: '-z-10 opacity-0 absolute',

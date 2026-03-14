@@ -4,7 +4,7 @@ import useBase from './panel'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { isLightTheme } = useTheme()
   const { cn, fg, bg, fill, dimDark } = useTwBelt()
   const { card, cardFooter } = useBase()

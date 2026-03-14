@@ -9,7 +9,7 @@ type TProps = {
   desc: ReactNode
 } & TSpace
 
-export default ({ width, desc, ...spacing }: TProps) => {
+export default function useSalon({ width, desc, ...spacing }: TProps) {
   const { cn, fg, margin } = useTwBelt()
 
   return {

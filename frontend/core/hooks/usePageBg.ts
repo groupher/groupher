@@ -9,7 +9,7 @@ type TRes = {
   rawBg: string
 }
 
-export default (): TRes => {
+export default function usePageBg(): TRes {
   const { page } = useTwBelt()
   const { isLightTheme } = useTheme()
 

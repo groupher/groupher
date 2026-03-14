@@ -9,7 +9,7 @@ type TProps = {
   leftLayout: boolean
 } & TSpace
 
-export default ({ disabled, dimWhenIdle, leftLayout, ...spacing }: TProps) => {
+export default function useSalon({ disabled, dimWhenIdle, leftLayout, ...spacing }: TProps) {
   const { cn, margin, linker } = useTwBelt()
 
   return {

@@ -15,7 +15,7 @@ import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from '../salon/sidebar_layout/community_brief'
 
-export default () => {
+export default function CommunityBrief() {
   const s = useSalon()
 
   const router = useRouter()

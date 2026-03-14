@@ -8,7 +8,7 @@ import PenSVG from '~/icons/EditPen'
 import useLogic from '../useLogic'
 import useSalon, { cn } from '../salon/build_in/gradient_group'
 
-export default () => {
+export default function GradientGroup() {
   const s = useSalon()
   const { getWallpaper, changeGradientWallpaper, changeCustomGradientWallpaper } = useLogic()
 

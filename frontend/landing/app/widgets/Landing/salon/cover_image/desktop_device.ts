@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import useBase from '..'
 
-export default () => {
+export default function useSalon() {
   const { theme, isLightTheme } = useTheme()
   const { cn, fg, bg, fill, shadow, br } = useTwBelt()
   const base = useBase()

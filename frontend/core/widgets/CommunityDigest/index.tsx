@@ -14,7 +14,7 @@ import HeaderLayout from './HeaderLayout'
 import SidebarLayout from './SidebarLayout'
 import TabberLayout from './TabberLayout'
 
-export default () => {
+export default function CommunityDigest() {
   // const router = useRouter()
   const { bannerLayout } = useLayout()
 

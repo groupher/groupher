@@ -11,7 +11,7 @@ type TProps = {
 export const StoreContext = createContext<TStore | null>(null)
 StoreContext.displayName = 'Account'
 
-export default ({ children }: TProps) => {
+export default function Provider({ children }: TProps) {
   const storeRef = useRef<TStore | null>(null)
 
   storeRef.current ??= setupStore()

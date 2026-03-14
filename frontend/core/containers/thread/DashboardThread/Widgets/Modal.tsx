@@ -1,7 +1,7 @@
 import useSalon from '../salon/widgets'
 import CodeArea from './CodeArea'
 
-export default () => {
+export default function Modal() {
   const s = useSalon()
 
   return (

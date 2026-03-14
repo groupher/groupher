@@ -44,7 +44,7 @@ export type TRet = {
   moveGroup2EdgeRight: (group: string) => void
 } & TDrived
 
-export default (): TRet => {
+export default function useLinks(): TRet {
   const dsb$ = useDashboard()
   const { slug: community } = useCommunity()
 

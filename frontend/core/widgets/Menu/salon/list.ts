@@ -4,7 +4,7 @@ type TProps = {
   popWidth: number
 }
 
-export default ({ popWidth }: TProps) => {
+export default function useSalon({ popWidth }: TProps) {
   const { cn } = useTwBelt()
 
   return {

@@ -6,7 +6,7 @@ type TFooterLinks = {
   links: readonly TLinkItem[]
 }
 
-export default (): TFooterLinks => {
+export default function useFooterLinks(): TFooterLinks {
   const { footerLayout, footerLinks } = useDashboard()
 
   return {

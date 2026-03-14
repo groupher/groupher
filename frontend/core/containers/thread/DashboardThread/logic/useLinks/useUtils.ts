@@ -25,7 +25,7 @@ export type TRet = {
   confirmGroupUpdate: () => void
 }
 
-export default (): TRet => {
+export default function useUtils(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
   const { mainTab } = useDsbTab()

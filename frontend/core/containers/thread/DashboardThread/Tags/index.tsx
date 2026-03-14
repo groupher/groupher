@@ -9,7 +9,7 @@ import GroupSelector from './GroupSelector'
 import TagList from './TagList'
 import ThreadSelector from './ThreadSelector'
 
-export default () => {
+export default function Tags() {
   const s = useSalon()
   const { t } = useTrans()
 

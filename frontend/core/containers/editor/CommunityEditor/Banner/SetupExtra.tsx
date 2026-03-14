@@ -13,7 +13,7 @@ import NextStepButton from './NextStepButton'
 import useLogic from '../useLogic'
 import useSalon from '../salon/banner/setup_extra'
 
-export default () => {
+export default function SetupExtra() {
   const s = useSalon()
 
   const { homepage, city, source, validState, pervStep, nextStep, inputOnChange } = useLogic()

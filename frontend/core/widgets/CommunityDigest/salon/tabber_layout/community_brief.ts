@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, bg, br, primary, vividDark, shadow } = useTwBelt()
 
   return {

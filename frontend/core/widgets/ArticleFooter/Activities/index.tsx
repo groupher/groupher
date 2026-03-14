@@ -6,7 +6,7 @@ import GtdItem from './GtdItem'
 import MentionItem from './MentionItem'
 import TagItem from './TagItem'
 
-export default () => {
+export default function Activities() {
   const s = useSalon()
 
   const user = mockUsers(1)[0]

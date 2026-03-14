@@ -18,7 +18,7 @@ type TRet = {
   moveDownFAQ: (faqSection: TFAQSection) => void
 }
 
-export default (): TRet => {
+export default function useFAQ(): TRet {
   const dsb$ = useDashboard()
   const { edit } = useHelper()
   const { faqSections } = dsb$

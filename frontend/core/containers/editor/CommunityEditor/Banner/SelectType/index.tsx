@@ -13,7 +13,7 @@ import NextStepButton from '../NextStepButton'
 import TypeBoxes from './TypeBoxes'
 import WarnBox from './WarnBox'
 
-export default () => {
+export default function SelectType() {
   const { isLogin } = useAccount()
   const { communityType, validState, nextStep, isOfficialOnChange } = useLogic()
 

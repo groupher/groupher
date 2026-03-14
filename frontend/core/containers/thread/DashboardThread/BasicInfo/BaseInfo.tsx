@@ -10,7 +10,7 @@ import SavingBar from '../SavingBar'
 import useSalon from '../salon/basic_info/base_info'
 import DangerZone from './DangerZone'
 
-export default () => {
+export default function BaseInfo() {
   const { saving, locale, desc, title, slug, homepage, introduction, isTouched, edit } =
     useBaseInfo()
 

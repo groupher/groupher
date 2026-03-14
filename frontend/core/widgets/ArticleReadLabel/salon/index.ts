@@ -5,7 +5,7 @@ type TProps = {
   size: number
 } & TSpace
 
-export default ({ size, ...spacing }: TProps) => {
+export default function useSalon({ size, ...spacing }: TProps) {
   const { cn, zise, margin, subPrimary, vividDark } = useTwBelt()
 
   return {

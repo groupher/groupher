@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn, fill, sexyBorder, linkable } = useTwBelt()
 
   const icon = cn('size-3.5 pointer', fill('digest'))

@@ -5,7 +5,7 @@ import useTrans from '~/hooks/useTrans'
 
 import useSalon from '../salon/admin/adder'
 
-export default () => {
+export default function Adder() {
   const s = useSalon()
   const { t } = useTrans()
 

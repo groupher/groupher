@@ -7,7 +7,7 @@ import ViewportTracker from '~/widgets/ViewportTracker'
 import useSalon from '../salon/dashboard_layout'
 import CommunityBrief from './CommunityBrief'
 
-export default () => {
+export default function DashboardLayout() {
   const s = useSalon()
 
   const { enterView, leaveView } = useCommunityDigestViewport()

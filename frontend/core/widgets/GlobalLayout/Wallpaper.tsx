@@ -5,7 +5,7 @@ import useWallpaper from '~/hooks/useWallpaper'
 
 import useSalon from './salon/wallpaper'
 
-export default () => {
+export default function Wallpaper() {
   const s = useSalon()
 
   const { background, effect } = useWallpaper()

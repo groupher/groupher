@@ -7,7 +7,7 @@ import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon from '../salon/layout/primary_color'
 
-export default () => {
+export default function PrimaryColor() {
   const s = useSalon()
   const { edit, primaryColor, isTouched, saving } = usePrimaryColor()
   const { t } = useTrans()

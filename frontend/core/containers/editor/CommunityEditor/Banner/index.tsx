@@ -15,7 +15,7 @@ import { STEP } from '../constant'
 import useLogic from '../useLogic'
 import useSalon from '../salon/banner'
 
-export default () => {
+export default function Banner() {
   const s = useSalon()
 
   const { step } = useLogic()

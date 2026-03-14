@@ -2,7 +2,7 @@ import useSalon from '../salon/activities/tag_item'
 
 import TagSVG from '~/icons/Tag'
 
-export default () => {
+export default function TagItem() {
   const s = useSalon()
 
   return (

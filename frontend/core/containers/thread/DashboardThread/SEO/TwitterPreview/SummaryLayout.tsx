@@ -7,7 +7,7 @@ import useSalon from '../../salon/seo/twitter_preview/summary_layout'
 // example: https://elixirweekly.net/issues/339
 // twitter:card = summary
 
-export default () => {
+export default function SummaryLayout() {
   const { twUrl, twTitle, twDescription } = useSEO()
   const s = useSalon()
 

@@ -6,7 +6,7 @@ type TProps = {
   fold: boolean
 }
 
-export default ({ fold }: TProps) => {
+export default function useSalon({ fold }: TProps) {
   const { cn, fg, hover } = useTwBelt()
 
   return {

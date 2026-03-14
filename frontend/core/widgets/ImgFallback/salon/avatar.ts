@@ -8,7 +8,7 @@ type TProps = {
   size: TSizeSML
 } & TSpace
 
-export default ({ size, ...spacing }: TProps) => {
+export default function useSalon({ size, ...spacing }: TProps) {
   const { cn, rainbowSoft, margin, avatar, rainbow } = useTwBelt()
 
   return {

@@ -5,7 +5,7 @@ import type { TColor, TColorName } from '~/spec'
 
 type TProps = TColor
 
-export default ({ color }: TProps) => {
+export default function useSalon({ color }: TProps) {
   const { cn, fg, rainbow } = useTwBelt()
 
   const fillColor = useCallback((color: TColorName) => rainbow(color, 'fill'), [rainbow])

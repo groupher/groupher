@@ -14,7 +14,7 @@ import EmptyItem from '~/widgets/KanbanItem/EmptyItem'
 
 import useSalon from '../salon/classic_layout/columns'
 
-export default () => {
+export default function Columns() {
   const s = useSalon()
 
   const {

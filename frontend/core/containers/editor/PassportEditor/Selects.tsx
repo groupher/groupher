@@ -6,7 +6,7 @@ import Checker from '~/widgets/Checker'
 import useSalon from './salon/selects'
 import useLogic from './useLogic'
 
-export default () => {
+export default function Selects() {
   const s = useSalon()
 
   const { rules, allModeratorRules, selectedRules, isReadonly, toggleCheck } = useLogic()

@@ -7,7 +7,7 @@ import Content from './Content'
 import Digest from './Digest'
 import SideInfo from './SideInfo'
 
-export default () => {
+export default function Post() {
   const s = useSalon()
   const [_inViewport, setInViewport] = useState(false)
 

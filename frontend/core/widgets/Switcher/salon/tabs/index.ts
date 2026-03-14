@@ -7,7 +7,7 @@ type TProps = {
   slipHeight: 'px' | 0.5
 }
 
-export default ({ noAnimation, slipHeight }: TProps) => {
+export default function useSalon({ noAnimation, slipHeight }: TProps) {
   const { cn, primary, vividDark } = useTwBelt()
 
   return {

@@ -3,7 +3,7 @@ import useTrans from '~/hooks/useTrans'
 
 import useSalon from './salon/locked_message'
 
-export default () => {
+export default function LockedMessage() {
   const s = useSalon()
   const { t } = useTrans()
 

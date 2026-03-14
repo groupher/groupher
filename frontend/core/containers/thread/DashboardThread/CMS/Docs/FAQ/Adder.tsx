@@ -6,7 +6,7 @@ import useTrans from '~/hooks/useTrans'
 import useDoc from '../../../logic/useDoc'
 import useSalon from '../../../salon/cms/docs/faq/adder'
 
-export default () => {
+export default function Adder() {
   const s = useSalon()
   const { addFAQSection } = useDoc()
   const { t } = useTrans()

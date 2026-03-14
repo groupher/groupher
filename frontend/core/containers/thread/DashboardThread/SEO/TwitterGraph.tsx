@@ -7,7 +7,7 @@ import useSEO from '../logic/useSEO'
 import useSalon from '../salon/seo/twitter_graph'
 import TwitterPreview from './TwitterPreview'
 
-export default () => {
+export default function TwitterGraph() {
   const s = useSalon()
   const { twTitle, twDescription, twUrl, twSite, twCard, edit } = useSEO()
 

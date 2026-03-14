@@ -2,7 +2,7 @@ import useBase from '..'
 
 export { cn } from '~/css'
 
-export default ({ loading }) => {
+export default function useSalon({ loading }) {
   const base = useBase({ loading })
 
   return {

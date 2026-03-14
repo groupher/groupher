@@ -8,7 +8,7 @@ import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
 import Tabs from '~/widgets/Switcher/Tabs'
 
-export default ({ children }) => {
+export default function Layout({ children }) {
   const s = useSalon()
   const { items, activeTab } = useDsbLayoutTabs(BROADCAST_TABS)
   const { t } = useTrans()

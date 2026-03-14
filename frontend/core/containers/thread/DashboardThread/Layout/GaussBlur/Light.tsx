@@ -13,7 +13,7 @@ import SectionLabel from '../../SectionLabel'
 
 import useSalon, { cnMerge } from '../../salon/layout/gauss_blur'
 
-export default () => {
+export default function Light() {
   const s = useSalon()
   const { t } = useTrans()
 

@@ -15,7 +15,7 @@ type TRet = {
   moveTag2Edge: (tag: TTag, opt: 'top' | 'bottom') => void
 }
 
-export default (): TRet => {
+export default function useUtils(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
   const { query } = useGraphQLClient()

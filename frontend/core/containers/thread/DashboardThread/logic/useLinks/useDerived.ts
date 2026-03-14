@@ -14,7 +14,7 @@ export type TRet = {
   isFooterLayoutTouched: boolean
 }
 
-export default (): TRet => {
+export default function useDerived(): TRet {
   const dsb$ = useDashboard()
   const { isChanged } = useHelper()
   const community$ = useCommunity()

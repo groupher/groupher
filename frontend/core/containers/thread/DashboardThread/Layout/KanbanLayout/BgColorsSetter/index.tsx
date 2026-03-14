@@ -17,7 +17,7 @@ import useSalon, { cn } from '../../../salon/layout/kanban_layout/bg_colors_sett
 import ClassicLayout from './ClassicLayout'
 import WaterfallLayout from './WaterfallLayout'
 
-export default () => {
+export default function BgColorsSetter() {
   const s = useSalon()
   const { t } = useTrans()
 

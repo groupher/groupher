@@ -14,7 +14,7 @@ type TRet = {
   rssOnCancel: () => void
 }
 
-export default (): TRet => {
+export default function useRSS(): TRet {
   const dsb$ = useDashboard()
   const { edit, isChanged } = useHelper()
 
