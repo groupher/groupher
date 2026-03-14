@@ -1,21 +1,17 @@
 import { type FC, Fragment } from 'react'
-
-import type { TComment } from '~/spec'
+import useTrans from '~/hooks/useTrans'
 
 // import Tooltip from '~/widgets/Tooltip'
 import PinSVG from '~/icons/Pin'
+import type { TComment } from '~/spec'
 import ArtimentBody from '~/widgets/ArtimentBody'
-import useTrans from '~/hooks/useTrans'
-
+import useSalon, { cn } from '../../salon/comment/desktop_view'
+import type { TAPIMode } from '../../spec'
+import useActions from '../../useLogic/useActions'
+import Footer from '../Footer'
 import Header from '../Header'
 import ReplyBar from '../ReplyBar'
-import Footer from '../Footer'
 import IllegalBar from './IllegalBar'
-
-import type { TAPIMode } from '../../spec'
-
-import useActions from '../../useLogic/useActions'
-import useSalon, { cn } from '../../salon/comment/desktop_view'
 
 type TProps = {
   data: TComment
@@ -40,9 +36,10 @@ const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false
           <div className={s.pinText}>{t('comment.pin.label')}</div>
         </div>
       )}
+
       <div className={s.comment}>
         <div className={s.sidebar}>
-          {isReply && <div className={s.indentLine} onClick={() => foldComment(data.id)} />}
+          {isReply && <button className={s.indentLine} onClick={() => foldComment(data.id)} />}
         </div>
 
         <div className={s.commentBody}>
@@ -54,7 +51,7 @@ const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false
                 <ArtimentBody
                   document={{ bodyHtml: data.bodyHtml }}
                   initLineClamp={6}
-                  mode="comment"
+                  mode='comment'
                 />
               </Fragment>
             ) : (

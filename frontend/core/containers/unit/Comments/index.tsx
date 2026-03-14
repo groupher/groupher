@@ -33,11 +33,11 @@ const Comments: FC<TProps> = ({ locked = false, apiMode = API_MODE.ARTICLE }) =>
   const editState = useCommentsEditState()
   const { loadComments } = useActions()
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!initialized) {
       loadComments()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (

@@ -1,10 +1,9 @@
 import type { FC } from 'react'
+import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
-
 import type { TComment } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import TimeAgo from '~/widgets/TimeAgo'
-import useTrans from '~/hooks/useTrans'
 
 import useSalon from '../../salon/comment/header/article'
 
@@ -32,7 +31,9 @@ const CommentHeader: FC<TProps> = ({ data, showInnerRef, isReply }) => {
         <div className={s.baseInfo}>
           <div className={s.user}>
             <div className={s.nickname}>{author.nickname}</div>
-            {data.isArticleAuthor && <div className={s.authorTag}>{t('comment.header.post_author')}</div>}
+            {data.isArticleAuthor && (
+              <div className={s.authorTag}>{t('comment.header.post_author')}</div>
+            )}
             {showInnerRef && meta.isReplyToOthers && (
               <div className={s.refToOther}>
                 <div className={s.refLabel}>{t('comment.header.reply_to')}</div>

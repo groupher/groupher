@@ -20,7 +20,7 @@ import ImgFallback from '~/widgets/ImgFallback'
 import Share from '~/widgets/Share'
 import useSalon from '../salon/post/digest'
 
-export default () => {
+export default function Digest() {
   const router = useRouter()
   const { post } = useArticle()
 

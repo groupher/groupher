@@ -9,7 +9,7 @@ import Upvote from '~/widgets/Upvote'
 
 import useSalon from '../salon/post/side_info'
 
-export default () => {
+export default function SideInfo() {
   const s = useSalon()
   const { article } = useArticle()
 
@@ -38,7 +38,6 @@ export default () => {
           {latestUpvotedUsers.map((user) => (
             <div key={user.login} className={s.user}>
               <Img src={user.avatar} className={s.avatar} />
-              <div className={s.nickname}>{user.nickname}</div>
             </div>
           ))}
         </div>

@@ -4,16 +4,14 @@
  *
  */
 
-import { Suspense, useRef } from 'react'
+import { useRef } from 'react'
 
 import useArticle from '~/hooks/useArticle'
 import ArtimentBody from '~/widgets/ArtimentBody'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 // import ViewportTracker from '~/widgets/ViewportTracker'
 
+import Comments from '~/containers/unit/Comments'
 import useSalon from '../salon/post/content'
-
-// export const Comments = lazy(() => import('~/containers/unit/Comments'))
 
 export default () => {
   const ref = useRef(null)
@@ -32,10 +30,7 @@ export default () => {
           <ArtimentBody document={article.document} />
         </div>
         <div className={s.comments}>
-          <Suspense fallback={<LavaLampLoading />}>
-            TODO: comments
-            {/* <Comments /> */}
-          </Suspense>
+          <Comments />
         </div>
       </div>
     </div>
