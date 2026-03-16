@@ -42,50 +42,38 @@ defmodule Helper.ORMAtom do
     id = queryable.id
     field_name = to_string(field)
 
-    # 检查字段是否存在于 meta 结构体中
-    meta_fields = queryable.meta.__struct__.__schema__(:fields)
-
-    if not Enum.member?(meta_fields, field) do
-      {:error, {:update_fails, "Field #{field} does not exist in meta"}}
+    # 检查 meta 是否为 nil
+    if is_nil(queryable.meta) do
+      {:error, {:update_fails, "Meta field is not initialized"}}
     else
-      # 构建更新查询
-      update_query =
-        from(q in schema_module,
-          where: q.id == ^id,
-          update: [
-            set: [
-              meta:
-                fragment(
-                  "jsonb_set(meta, ARRAY[?], (COALESCE(meta->>?, '0')::int + 1)::text::jsonb)",
-                  ^field_name,
-                  ^field_name
-                )
-            ]
-          ]
-        )
+      # 检查字段是否存在于 meta 结构体中
+      meta_fields = queryable.meta.__struct__.__schema__(:fields)
+      if not Enum.member?(meta_fields, field) do
+        {:error, {:update_fails, "Field #{field} does not exist in meta"}}
+      else
+        # 构建更新查询，使用 RETURNING 子句直接返回新值
+        update_query = 
+          from(q in schema_module, 
+            where: q.id == ^id,
+            update: [
+              set: [
+                meta: fragment("jsonb_set(meta, ARRAY[?], (COALESCE(meta->>?, '0')::int + 1)::text::jsonb)", ^field_name, ^field_name)
+              ]
+            ],
+            select: fragment("(meta->>?)::int", ^field_name)
+          )
 
-      # 执行更新
-      Repo.update_all(update_query, [])
-
-      # 查询更新后的值
-      select_query =
-        from(q in schema_module,
-          where: q.id == ^id,
-          select: fragment("(meta->>?)::int", ^field_name)
-        )
-
-      case Repo.one(select_query) do
-        nil ->
-          {:error, :not_found}
-
-        new_val ->
-          # 更新内存中的结构
-          updated_struct =
-            update_in(queryable.meta, fn meta ->
+        # 执行更新并获取返回的新值
+        case Repo.update_all(update_query, []) do
+          {1, [new_val]} ->
+            # 更新内存中的结构
+            updated_struct = update_in(queryable.meta, fn meta ->
               meta |> Map.put(field, new_val)
             end)
-
-          {:ok, updated_struct, new_val}
+            {:ok, updated_struct, new_val}
+          {0, []} ->
+            {:error, :not_found}
+        end
       end
     end
   end
@@ -132,6 +120,11 @@ defmodule Helper.ORMAtom do
     end
   end
 
+  def update_meta(%{} = changes, %{} = _queryable) when not is_struct(changes) do
+    # 处理 map 形式的 queryable（实际上是 changes），保持向后兼容
+    {:error, :invalid_queryable}
+  end
+
   def update_meta(queryable, changes) when is_map(changes) do
     changes = ensure_datetime(queryable, strip_struct(changes))
 
@@ -146,11 +139,6 @@ defmodule Helper.ORMAtom do
     else
       {:error, reason} -> {:error, reason}
     end
-  end
-
-  def update_meta(%{} = changes, %{} = _queryable) when not is_struct(changes) do
-    # 处理 map 形式的 queryable（实际上是 changes），保持向后兼容
-    {:error, :invalid_queryable}
   end
 
   @spec fill_meta(struct()) :: {:ok, struct()} | {:error, Ecto.Changeset.t()}
