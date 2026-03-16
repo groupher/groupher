@@ -1,4 +1,4 @@
-import { type FC, Fragment } from 'react'
+import { Fragment, type FC } from 'react'
 import useTrans from '~/hooks/useTrans'
 
 // import Tooltip from '~/widgets/Tooltip'
@@ -44,7 +44,7 @@ const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false
 
         <div className={s.commentBody}>
           <Header data={data} showInnerRef={showInnerRef} apiMode={apiMode} isReply={isReply} />
-          <div>
+          <div className={cn(isReply && 'ml-10')}>
             {isLegal ? (
               <Fragment>
                 {!isReply && data.replyTo && <ReplyBar data={data.replyTo} />}
@@ -57,8 +57,8 @@ const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false
             ) : (
               <IllegalBar illegalReason={illegalReason} illegalWords={illegalWords} />
             )}
-          </div>
           <Footer data={data} apiMode={apiMode} />
+          </div>
         </div>
       </div>
     </div>

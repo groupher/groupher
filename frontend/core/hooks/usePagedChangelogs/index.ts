@@ -45,7 +45,7 @@ const getArticlesParams = (community: string, searchParams: URLSearchParams) => 
   return mergeRight(ARTICLES_FILTER, filter)
 }
 
-export default (): TRes => {
+export default function usePagedChangelogs(): TRes {
   const articleList = useArticleList()
   const { slug } = useCommunity()
   const { pagedChangelogs, resState } = articleList

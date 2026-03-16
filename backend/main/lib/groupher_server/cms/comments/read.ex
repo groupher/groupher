@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Comments.Read do
   alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Model.Comment
+  alias CMS.Comments.Helper, as: CommentHelper
   alias Helper.T
 
   @article_threads get_config(:article, :threads)
@@ -34,7 +35,7 @@ defmodule GroupherServer.CMS.Comments.Read do
     with {:ok, comment} <- FrontDesk.get(Comment, id) do
       %{entries: [comment]}
       |> FrontDesk.mark_viewer_emotion_states(user)
-      |> mark_viewer_has_upvoted(user)
+      |> CommentHelper.mark_viewer_has_upvoted(user)
       |> Map.get(:entries)
       |> List.first()
       |> done
@@ -72,25 +73,5 @@ defmodule GroupherServer.CMS.Comments.Read do
     |> List.first()
   end
 
-  defp mark_viewer_has_upvoted(%{entries: entries} = paged_comments, %User{} = user) do
-    entries =
-      Enum.map(
-        entries,
-        fn comment ->
-          replies =
-            Enum.map(comment.replies, fn reply_comment ->
-              Map.merge(reply_comment, %{
-                viewer_has_upvoted: Enum.member?(reply_comment.meta.upvoted_user_ids, user.id)
-              })
-            end)
 
-          Map.merge(comment, %{
-            viewer_has_upvoted: Enum.member?(comment.meta.upvoted_user_ids, user.id),
-            replies: replies
-          })
-        end
-      )
-
-    Map.merge(paged_comments, %{entries: entries})
-  end
 end

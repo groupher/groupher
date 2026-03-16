@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Comments.List do
   alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Model.{Comment, PinnedComment}
+  alias CMS.Comments.Helper, as: CommentHelper
   alias Helper.{Later, ORM, QueryBuilder, T}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
@@ -183,7 +184,7 @@ defmodule GroupherServer.CMS.Comments.List do
       |> ORM.paginator(~m(page size)a)
       |> add_pinned_comments_ifneed(thread, article_id, filters)
       |> FrontDesk.mark_viewer_emotion_states(user)
-      |> mark_viewer_has_upvoted(user)
+      |> CommentHelper.mark_viewer_has_upvoted(user)
       |> done()
     end
   end
@@ -200,7 +201,7 @@ defmodule GroupherServer.CMS.Comments.List do
     |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
     |> ORM.paginator(~m(page size)a)
     |> FrontDesk.mark_viewer_emotion_states(user)
-    |> mark_viewer_has_upvoted(user)
+    |> CommentHelper.mark_viewer_has_upvoted(user)
     |> done()
   end
 
@@ -255,27 +256,5 @@ defmodule GroupherServer.CMS.Comments.List do
 
   defp sort_solution_to_front(_, pinned_comments), do: pinned_comments
 
-  defp mark_viewer_has_upvoted(paged_comments, nil), do: paged_comments
 
-  defp mark_viewer_has_upvoted(%{entries: entries} = paged_comments, %User{} = user) do
-    entries =
-      Enum.map(
-        entries,
-        fn comment ->
-          replies =
-            Enum.map(comment.replies, fn reply_comment ->
-              Map.merge(reply_comment, %{
-                viewer_has_upvoted: Enum.member?(reply_comment.meta.upvoted_user_ids, user.id)
-              })
-            end)
-
-          Map.merge(comment, %{
-            viewer_has_upvoted: Enum.member?(comment.meta.upvoted_user_ids, user.id),
-            replies: replies
-          })
-        end
-      )
-
-    Map.merge(paged_comments, %{entries: entries})
-  end
 end

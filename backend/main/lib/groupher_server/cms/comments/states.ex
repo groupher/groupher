@@ -17,21 +17,20 @@ defmodule GroupherServer.CMS.Comments.States do
   import GroupherServer.CMS.Helper.Matcher
 
   alias GroupherServer.{Accounts, CMS, Repo}
-
-  alias Helper.{ContentPipeline, Multi, Later, ORM, T}
+  alias Helper.{Multi, Later, ORM, T}
 
   alias Accounts.Model.User
   alias CMS.FrontDesk
-  alias CMS.Model.{Comment, CommentReply, CommentUpvote, Embeds, PinnedComment}
+  alias CMS.Model.{Comment, CommentReply, CommentUpvote, PinnedComment}
 
   alias CMS.Comments.List, as: CommentList
   alias CMS.Comments.Read, as: CommentRead
+  alias CMS.Comments.Helper, as: CommentHelper
 
   alias CMS.Events
 
   @article_threads get_config(:article, :threads)
 
-  @max_participator_count Comment.max_participator_count()
   @max_parent_replies_count Comment.max_parent_replies_count()
   @pinned_comment_limit Comment.pinned_comment_limit()
 
@@ -98,12 +97,12 @@ defmodule GroupherServer.CMS.Comments.States do
     with {:ok, target_comment} <- FrontDesk.get_by(Comment, %{id: comment_id, is_deleted: false}),
          replying_comment <- Repo.preload(target_comment, reply_to: :author),
          {thread, article} <- get_article(replying_comment),
-         true <- can_comment?(article, user),
+         true <- CommentHelper.can_comment?(article, user),
          {:ok, info} <- match(thread),
-         parent_comment <- get_parent_comment(replying_comment) do
+         parent_comment <- CommentHelper.get_parent_comment(replying_comment) do
       Multi.new()
       |> Multi.run(:create_reply_comment, fn _, _ ->
-        do_create_comment(body, info.foreign_key, article, user)
+        CommentHelper.do_create_comment(body, info.foreign_key, article, user, replying_comment)
       end)
       |> Multi.run(:update_comments_count, fn _, %{create_reply_comment: replied_comment} ->
         {:ok, article} = FrontDesk.article_of(replied_comment)
@@ -114,7 +113,7 @@ defmodule GroupherServer.CMS.Comments.States do
         |> ORM.create(%{comment_id: replied_comment.id, reply_to_id: replying_comment.id})
       end)
       |> Multi.run(:add_participator, fn _, _ ->
-        add_participant_to_article(article, user)
+        CommentHelper.add_participant_to_article(article, user)
       end)
       |> Multi.run(:set_meta_flag, fn _, %{create_reply_comment: replied_comment} ->
         update_reply_to_others_state(parent_comment, replying_comment, replied_comment)
@@ -252,23 +251,12 @@ defmodule GroupherServer.CMS.Comments.States do
     |> result()
   end
 
-  defp can_comment?(article, _user) do
-    not article.meta.is_comment_locked
-  end
-
   defp update_article_author_upvoted_info(%Comment{} = comment, user_id) do
     with {_, article} <- get_article(comment) do
       is_article_author_upvoted = get_in(article, [:author, :user, :id]) == user_id
       meta = comment.meta |> Map.put(:is_article_author_upvoted, is_article_author_upvoted)
       comment |> ORM.update_meta(meta)
     end
-  end
-
-  defp get_parent_comment(%Comment{reply_to_id: nil} = comment), do: comment
-
-  defp get_parent_comment(%Comment{reply_to_id: reply_to_id} = comment)
-       when not is_nil(reply_to_id) do
-    get_parent_comment(Repo.preload(comment.reply_to, reply_to: :author))
   end
 
   defp check_pined_comments_count(pined_comments_query) do
@@ -343,81 +331,6 @@ defmodule GroupherServer.CMS.Comments.States do
 
     meta = comment.meta |> Map.merge(%{upvoted_user_ids: user_ids}) |> strip_struct
     ORM.update_meta(comment, meta)
-  end
-
-  defp do_create_comment(body, foreign_key, article, %User{id: user_id}) do
-    import GroupherServer.CMS.Model.Embeds.CommentMeta, only: [default_meta: 0]
-    import GroupherServer.CMS.Model.Embeds.CommentEmotion, only: [default_emotions: 0]
-
-    with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
-      thread = foreign_key |> to_string |> String.trim_trailing("_id") |> String.upcase()
-
-      attrs = %{
-        author_id: user_id,
-        body: payload.json,
-        body_html: payload.html,
-        emotions: default_emotions(),
-        floor: next_floor(article, foreign_key),
-        is_article_author: user_id == article.author.user.id,
-        thread: thread,
-        meta: default_meta()
-      }
-
-      Comment |> ORM.create(Map.put(attrs, foreign_key, article.id))
-    end
-  end
-
-  defp add_participant_to_article(
-         %{comments_participants: _participants} = article,
-         %User{} = user
-       ) do
-    with {:ok, locked_article} <- ORM.lock_article(article) do
-      normalized_participants =
-        locked_article.comments_participants
-        |> Enum.map(&Embeds.User.normalize/1)
-        |> Enum.filter(&Embeds.User.valid?/1)
-
-      cur_participants =
-        normalized_participants
-        |> List.insert_at(0, Embeds.User.from_account_user(user))
-        |> Enum.filter(&Embeds.User.valid?/1)
-        |> Enum.uniq_by(&Embeds.User.uniq_key/1)
-
-      meta = locked_article.meta |> Map.from_struct()
-
-      cur_participants_ids =
-        (meta[:comments_participant_user_ids] ++ [user.id])
-        |> Enum.reject(&is_nil/1)
-        |> Enum.uniq()
-
-      meta = Map.merge(meta, %{comments_participant_user_ids: cur_participants_ids})
-
-      latest_participants = cur_participants |> Enum.slice(0, @max_participator_count)
-
-      locked_article = %{locked_article | comments_participants: normalized_participants}
-
-      with {:ok, article} <-
-             locked_article
-             |> Ecto.Changeset.change()
-             |> Ecto.Changeset.put_change(
-               :comments_participants_count,
-               length(cur_participants_ids)
-             )
-             |> Ecto.Changeset.put_embed(:comments_participants, latest_participants)
-             |> Repo.update() do
-        ORM.update_meta(article, meta)
-      end
-    end
-  end
-
-  defp add_participant_to_article(_, _), do: {:ok, :pass}
-
-  defp next_floor(article, foreign_key) do
-    {:ok, cur_count} =
-      from(c in Comment, where: field(c, ^foreign_key) == ^article.id)
-      |> ORM.count()
-
-    cur_count + 1
   end
 
   defp result({:ok, %{create_comment: result}}), do: {:ok, result}

@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   @article_threads get_config(:article, :threads)
 
   @required_fields ~w(body author_id)a
-  @optional_fields ~w(body_html reply_to_id replies_count is_folded is_deleted floor is_article_author thread is_for_question is_solution pending)a
+  @optional_fields ~w(body_html reply_to_id root_comment_id replies_count is_folded is_deleted floor is_article_author thread is_for_question is_solution pending)a
   # @updatable_fields ~w(body_html is_folded is_deleted floor upvotes_count is_pinned is_for_question is_solution replies_count pending)a
   @updatable_fields ~w(
     body_html
@@ -40,6 +40,7 @@ defmodule GroupherServer.CMS.Model.Comment do
     is_archived
     archived_at
     is_article_author
+    root_comment_id
   )a
 
   @article_fields @article_threads |> Enum.map(&:"#{&1}_id")
@@ -96,6 +97,7 @@ defmodule GroupherServer.CMS.Model.Comment do
     field(:viewer_has_reported, :boolean, default: false, virtual: true)
 
     belongs_to(:reply_to, Comment, foreign_key: :reply_to_id)
+    field(:root_comment_id, :integer, default: nil)
 
     embeds_many(:replies, Comment, on_replace: :delete)
     field(:replies_count, :integer, default: 0)

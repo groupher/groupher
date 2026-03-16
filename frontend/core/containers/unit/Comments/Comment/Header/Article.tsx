@@ -19,9 +19,14 @@ const CommentHeader: FC<TProps> = ({ data, showInnerRef, isReply }) => {
 
   const { author, meta } = data
 
+  // <ReplyCurveSVG className={s.replyCurve} />
   return (
     <div className={s.wrapper}>
-      {isReply && <span>{t('comment.reply.curve')}</span>}
+      {isReply && (
+        <div className={s.replyCurveBox}>
+          <div className={s.replyCurve2}></div>
+        </div>
+      )}
       <Img
         className={s.avatar}
         src={data.author.avatar}

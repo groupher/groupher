@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
   const { cn, fg, br, fill } = useTwBelt()
@@ -15,7 +15,7 @@ export default function useSalon() {
     commentBody: 'column w-full',
     //
     indentLine: cn(
-      'absolute top-20 left-0 h-[calc(100%-85px)] w-5 ml-1 border-l-2',
+      'absolute top-20 left-0 h-[calc(100%-85px)] w-5 ml-12 border-l',
       br('divider'),
       `hover:${br('digest')}`,
     ),
