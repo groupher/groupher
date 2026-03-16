@@ -7,7 +7,7 @@ import Share from '~/widgets/Share'
 import useSalon, { cn } from '../salon/drawer_header'
 import ArticleNavi from './ArticleNavi'
 
-export default () => {
+export default function DrawerHeader() {
   const s = useSalon()
   const router = useRouter()
 

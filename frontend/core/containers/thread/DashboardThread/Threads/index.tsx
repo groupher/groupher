@@ -6,7 +6,7 @@ import useSalon from '../salon/threads'
 import AboutThread from './AboutThread'
 import DocThread from './DocThread'
 
-export default () => {
+export default function Threads() {
   const s = useSalon()
   const { enable: settings, enableThread } = useEnable()
   const { t } = useTrans()

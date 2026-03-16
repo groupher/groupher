@@ -4,7 +4,7 @@ type TProps = {
   selected: boolean
 }
 
-export default ({ selected }: TProps) => {
+export default function useSalon({ selected }: TProps) {
   const { cn, fg, sexyBorder } = useTwBelt()
 
   return {

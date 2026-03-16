@@ -70,6 +70,16 @@ defmodule Helper.ORM do
   defdelegate dec(queryable, field), to: ORMAtom
 
   @doc """
+  Atomically increments a value inside a JSONB meta field and returns the updated struct and new value.
+
+  ## Examples
+
+      iex> ORM.inc_meta(article, :next_floor)
+      {:ok, updated_article, 1}
+  """
+  defdelegate inc_meta(queryable, field), to: ORMAtom
+
+  @doc """
   Fills default `meta` payload for structs that do not have it yet.
 
   ## Examples

@@ -14,7 +14,7 @@ type TRet = {
   faqSections: TFAQSection[]
 }
 
-export default (): TRet => {
+export default function useLogic(): TRet {
   const dashboard = useDashboard()
   const article$ = useArticle()
 

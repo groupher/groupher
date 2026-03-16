@@ -1,24 +1,15 @@
 import { Fragment, useMemo } from 'react'
-
-import Pagi from '~/widgets/Pagi'
 import useTrans from '~/hooks/useTrans'
-
-import List from './List'
-
+import Pagi from '~/widgets/Pagi'
 import { useCommentsListState } from '../useLogic'
 import useActions from '../useLogic/useActions'
+import CommentsList from './List'
 
-export default () => {
+export default function List() {
   const { t } = useTrans()
   const { onPageChange } = useActions()
-  const {
-    mode,
-    apiMode,
-    loading,
-    pagedComments,
-    foldedCommentIds,
-    repliesLoadingByParentId,
-  } = useCommentsListState()
+  const { mode, apiMode, loading, pagedComments, foldedCommentIds, repliesLoadingByParentId } =
+    useCommentsListState()
 
   const foldedIdSet = useMemo(() => new Set(foldedCommentIds), [foldedCommentIds])
 
@@ -26,14 +17,14 @@ export default () => {
 
   return (
     <Fragment>
-      <List
+      <CommentsList
         mode={mode}
         apiMode={apiMode}
         entries={entries}
         foldedIdSet={foldedIdSet}
         repliesLoadingByParentId={repliesLoadingByParentId}
       />
-      <div className="mb-14" />
+      <div className='mb-14' />
       {!loading && (
         <Pagi
           pageNumber={pageNumber}

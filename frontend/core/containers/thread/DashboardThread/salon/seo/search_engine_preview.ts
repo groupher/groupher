@@ -3,7 +3,7 @@ import { COLOR } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, shadow, rainbow } = useTwBelt()
   const { isLightTheme } = useTheme()
 

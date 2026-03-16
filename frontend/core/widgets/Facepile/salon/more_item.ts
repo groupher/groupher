@@ -6,7 +6,7 @@ type TProps = {
   size?: TAvatarSize
 }
 
-export default ({ size }: TProps) => {
+export default function useSalon({ size }: TProps) {
   const { cn, avatar, fg, bg, br } = useTwBelt()
 
   return {

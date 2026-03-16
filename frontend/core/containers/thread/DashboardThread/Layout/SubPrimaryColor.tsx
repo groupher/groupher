@@ -6,7 +6,7 @@ import useSubPrimaryColor from '../logic/useSubPrimaryColor'
 import SavingBar from '../SavingBar'
 import useSalon, { cn, cnMerge } from '../salon/layout/primary_color'
 
-export default () => {
+export default function SubPrimaryColor() {
   const s = useSalon()
   const { rainbow } = useTwBelt()
   const { edit, subPrimaryColor, isTouched, saving } = useSubPrimaryColor()

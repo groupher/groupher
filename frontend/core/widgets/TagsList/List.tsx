@@ -8,7 +8,7 @@ import { getDotMargin, getDotSize, getHashMargin, getIconSize } from './salon/me
 
 type TProps = TBase & { withTitle?: boolean }
 
-export default ({ items, max, size, withTitle = true, ...spacing }: TProps) => {
+export default function List({ items, max, size, withTitle = true, ...spacing }: TProps) {
   const s = useSalon(spacing)
 
   const dotSize = getDotSize(size)

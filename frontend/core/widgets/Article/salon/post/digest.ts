@@ -4,19 +4,19 @@ type TProps = {
   isPinned: boolean
 }
 
-export default ({ isPinned }: TProps) => {
+export default function useSalon({ isPinned }: TProps) {
   const { cn, hover, fg, primary, avatar } = useTwBelt()
 
   return {
     wrapper: 'row items-start justify-between w-full relative mt-12',
-    leftPart: 'grow max-w-[600px]',
+    leftPart: 'grow',
     topping: 'align-both -ml-0.5 mb-4 pr-1 relative',
     backBtn: cn('align-both px-2 py-0.5 rounded-xl', hover('bg')),
-    backText: hover('fg'),
-    backIcon: cn('size-3 mr-1.5', hover('icon')),
+    backText: cn('text-sm', hover('fg')),
+    backIcon: cn('size-2.5 mr-2', hover('icon')),
     //
     title: cn(
-      'text-2xl mb-4 bold-sm max-w-[600px]',
+      'text-2xl mb-4 bold-sm',
       fg('title'),
       isPinned && primary('fg'),
       isPinned && 'brightness-110',

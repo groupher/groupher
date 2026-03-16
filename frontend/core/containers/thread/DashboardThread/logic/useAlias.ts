@@ -14,7 +14,7 @@ type TRet = {
   resetEdit: () => void
 }
 
-export default (): TRet => {
+export default function useAlias(): TRet {
   const dsb$ = useDashboard()
   const { edit, resetEdit } = useHelper()
 

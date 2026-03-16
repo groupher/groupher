@@ -3,7 +3,7 @@ import useBase from '.'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { cn, cut, fg } = useTwBelt()
   const base = useBase()
 

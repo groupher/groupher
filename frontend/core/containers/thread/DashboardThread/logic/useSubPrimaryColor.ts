@@ -10,7 +10,7 @@ type TRet = {
   isTouched: boolean
 }
 
-export default (): TRet => {
+export default function useSubPrimaryColor(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 

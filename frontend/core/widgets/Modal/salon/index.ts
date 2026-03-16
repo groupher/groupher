@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default ({ visible }) => {
+export default function useSalon({ visible }) {
   const { cn, bg, br, zIndex, hover, shadow } = useTwBelt()
 
   return {

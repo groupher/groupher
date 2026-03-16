@@ -6,7 +6,7 @@ import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon, { cnMerge } from '../salon/layout/float_background'
 
-export default () => {
+export default function FloatBackground() {
   const s = useSalon()
   const { darkFloat, edit, isTouched, saving } = useDarkFloat()
   const { t } = useTrans()

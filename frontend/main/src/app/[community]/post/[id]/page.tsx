@@ -2,6 +2,6 @@
 
 import Post from '~/widgets/Article/Post'
 
-export default () => {
+export default function Page() {
   return <Post />
 }

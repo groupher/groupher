@@ -7,7 +7,7 @@ type TProps = {
 } & TSpace &
   TActive
 
-export default ({ size, active, dimWhenIdle, ...spacing }: TProps) => {
+export default function useSalon({ size, active, dimWhenIdle, ...spacing }: TProps) {
   const { cn, zise, margin, fg, bg, fill } = useTwBelt()
 
   return {

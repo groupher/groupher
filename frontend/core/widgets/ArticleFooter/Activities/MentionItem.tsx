@@ -2,7 +2,7 @@ import useSalon from '../salon/activities/mention_item'
 
 import MentionSVG from '~/icons/Mention'
 
-export default () => {
+export default function MentionItem() {
   const s = useSalon()
 
   return (

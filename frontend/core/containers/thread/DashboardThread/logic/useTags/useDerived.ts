@@ -14,7 +14,7 @@ export type TRet = {
   tagsIndexTouched: boolean
 }
 
-export default (): TRet => {
+export default function useDerived(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
 

@@ -8,7 +8,7 @@ import TadaSVG from '~/icons/Tada'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, rainbow, vividDark } = useTwBelt()
 
   return {

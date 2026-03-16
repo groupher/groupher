@@ -11,7 +11,7 @@ import InputBox from './InputBox'
 import useSalon from '../salon/banner/setup_domain'
 import useLogic from '../useLogic'
 
-export default () => {
+export default function SetupDomain() {
   const s = useSalon()
 
   const { slug, validState, pervStep, nextStep, inputOnChange } = useLogic()

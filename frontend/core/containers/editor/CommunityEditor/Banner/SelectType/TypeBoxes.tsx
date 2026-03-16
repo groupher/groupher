@@ -7,7 +7,7 @@ import { COMMUNITY_CATS } from '../../constant'
 import useLogic from '../../useLogic'
 import useSalon, { cn, Icon } from '../../salon/banner/select_type/type_boxes'
 
-export default () => {
+export default function TypeBoxes() {
   const s = useSalon()
   const { communityType, communityTypeOnChange } = useLogic()
 

@@ -16,7 +16,7 @@ const CRUMB_CONFIG = {
   children: [{ title: 'dsb.crumb.admins', seg }],
 } satisfies TCrumbConfig
 
-export default ({ children }) => {
+export default function Layout({ children }) {
   const s = useSalon()
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
   const { t } = useTrans()

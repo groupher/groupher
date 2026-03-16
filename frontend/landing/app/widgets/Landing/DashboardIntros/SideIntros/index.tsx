@@ -10,7 +10,7 @@ type TProps = {
   tab: TIntroTab
 }
 
-export default ({ tab }: TProps) => {
+export default function SideIntros({ tab }: TProps) {
   const intro = INTROS[tab]
   const { color, icon } = intro
 

@@ -9,7 +9,7 @@ const ROTATE_ANGLES = [
   3, 2, -2,
 ]
 
-export default () => {
+export default function useSalon() {
   const { cn, shadow, br, fg, bg, primary } = useTwBelt()
   const { theme } = useTheme()
 

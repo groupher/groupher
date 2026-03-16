@@ -6,7 +6,7 @@ type TProps = {
   showMore: boolean
 }
 
-export default ({ showMore }: TProps) => {
+export default function useSalon({ showMore }: TProps) {
   const { cn, br, fill, primary } = useTwBelt()
 
   return {

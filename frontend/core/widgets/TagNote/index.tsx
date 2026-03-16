@@ -12,7 +12,7 @@ import TagNode from '~/widgets/TagNode'
 
 import useSalon from './salon'
 
-export default () => {
+export default function TagNote() {
   const tag = useActiveTag()
   const s = useSalon()
 

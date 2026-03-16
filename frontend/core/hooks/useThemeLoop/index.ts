@@ -5,7 +5,7 @@ import THEME, { THEME_MODE } from '~/const/theme'
 import type { TThemeMode } from '~/spec'
 import useThemeDomain from '~/stores/theme/hooks'
 
-export default () => {
+export default function UseThemeLoop() {
   const { theme, themeMode } = useThemeDomain()
 
   const loopRef = useRef<TThemeMode[]>([])

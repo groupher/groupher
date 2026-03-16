@@ -5,7 +5,7 @@ type TProps = {
   outlineOpen: boolean
 }
 
-export default ({ outlineOpen }: TProps) => {
+export default function useSalon({ outlineOpen }: TProps) {
   const { cn, fg, br } = useTwBelt()
   const base = useBase()
 

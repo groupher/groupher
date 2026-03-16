@@ -29,7 +29,7 @@ const syncDrawerToHeader = (wrapper: HTMLDivElement) => {
   container.scrollTop = Math.max(0, nextScrollTop)
 }
 
-export default ({ mode = 'full' }: TProps & { mode?: 'lite' | 'full' }) => {
+export default function ArticleViewer({ mode = 'full' }: TProps & { mode?: 'lite' | 'full' }) {
   const s = useSalon()
   const { article } = useLogic()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
@@ -90,13 +90,13 @@ export default ({ mode = 'full' }: TProps & { mode?: 'lite' | 'full' }) => {
         window.cancelAnimationFrame(innerRaf)
       }
     }
-  }, [article?.id, article?.innerId, mode])
+  }, [article?.id, article?.innerId, mode, article])
 
   if (!article) return null
 
   return (
     <div ref={wrapperRef} className={s.wrapper}>
-      <div id={ANCHOR.DRAWER_HEAD} data-drawer-scroll-anchor className='h-px w-full' />
+      <div id={ANCHOR.DRAWER_HEAD} data-drawer-scroll-anchor className='w-full h-px' />
       <DrawerHeader />
       <div className='relative'>
         <Viewer article={article} mode={mode} />

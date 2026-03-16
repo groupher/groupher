@@ -8,12 +8,12 @@ type TProps = {
   active?: boolean
 }
 
-export default ({ children, active = false, onClick = console.log }: TProps) => {
+export default function MenuBar({ children, active = false, onClick = console.log }: TProps) {
   const s = useSalon({ active })
 
   return (
-    <div className={s.wrapper} onClick={() => onClick()}>
+    <button className={s.wrapper} onClick={() => onClick()}>
       {children}
-    </div>
+    </button>
   )
 }

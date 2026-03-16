@@ -3,7 +3,7 @@ import useTrans from '~/hooks/useTrans'
 import useSalon from '../salon/overview'
 import BasicNumbers from './BasicNumbers'
 
-export default () => {
+export default function Overview() {
   const s = useSalon()
   const { t } = useTrans()
 

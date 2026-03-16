@@ -9,7 +9,7 @@ import SocialList from '~/widgets/SocialList'
 
 import useSalon from './salon/simple_layout'
 
-export default () => {
+export default function SimpleLayout() {
   const s = useSalon()
   const { links } = useFooterLinks()
 

@@ -10,7 +10,7 @@ import MediaReports from './MediaReports'
 
 import useSalon, { cn } from './salon/sidebar'
 
-export default () => {
+export default function Sidebar() {
   const s = useSalon()
   const { homepage, cities, techstacks, socialLinks, mediaReports } = useAboutInfo()
 

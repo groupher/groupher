@@ -10,7 +10,7 @@ import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon, { cn } from '../salon/layout/page_background'
 
-export default () => {
+export default function PageBackground() {
   const { rawBg, edit, isTouched, isDarkTouched, saving } = usePageBg()
 
   const mounted = useDidMount()

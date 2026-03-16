@@ -14,7 +14,7 @@ import NaviHead from './NaviHead'
 import PinedTree from './PinedTree'
 import ToggleBtn from './ToggleBtn'
 
-export default () => {
+export default function ArticleLayout() {
   const { gotoDetailLayout, isFAQArticleLayout } = useLogic()
   const [outlineOpen, setOutlineOpen] = useState(true)
 

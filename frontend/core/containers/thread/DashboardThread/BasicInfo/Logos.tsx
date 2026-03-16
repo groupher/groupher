@@ -6,7 +6,7 @@ import useBaseInfo from '../logic/useBaseInfo'
 import SavingBar from '../SavingBar'
 import useSalon from '../salon/basic_info/logos'
 
-export default () => {
+export default function Logos() {
   const s = useSalon()
   const { t } = useTrans()
   const { edit, saving, logo, isLogosTouched } = useBaseInfo()

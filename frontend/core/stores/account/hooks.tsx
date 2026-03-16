@@ -8,7 +8,7 @@ import { StoreContext } from './provider'
 
 const useBaseStore = createStoreHook(StoreContext)
 
-export default () => {
+export default function Hooks() {
   const storeHook = useBaseStore()
   const store = storeHook.live$
 

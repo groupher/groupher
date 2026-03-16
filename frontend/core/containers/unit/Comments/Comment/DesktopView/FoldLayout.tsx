@@ -2,6 +2,7 @@ import type { FC } from 'react'
 import Img from '~/Img'
 import CheckBoldSVG from '~/icons/CheckBold'
 import ExpandSVG from '~/icons/Expand'
+import ReplyCurveSVG from '~/icons/ReplyCurve'
 import type { TComment } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import TimeAgo from '~/widgets/TimeAgo'
@@ -28,7 +29,7 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
 
   return (
     <div className={s.wrapper} onClick={() => expandComment(data.id)}>
-      {isReply && <span>{t('comment.reply.curve')}</span>}
+      {isReply && <ReplyCurveSVG className={s.replyCurve} />}
       <ExpandSVG className={s.expandIcon} />
       <Img
         className={s.avatar}

@@ -9,7 +9,7 @@ type TRet = {
   setActiveSettingAdmin: (user: TUser) => void
 }
 
-export default (): TRet => {
+export default function useAdmins(): TRet {
   const dsb$ = useDashboard()
   const { moderators: originalModerators, activeModerator } = dsb$
 

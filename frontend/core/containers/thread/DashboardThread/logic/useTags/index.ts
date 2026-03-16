@@ -27,7 +27,7 @@ type TRet = {
   moveTag2Bottom: (tag: TTag) => void
 } & TDrived
 
-export default (): TRet => {
+export default function useTags(): TRet {
   const dsb$ = useDashboard()
   const { edit } = useHelper()
   const derived = useDerived()

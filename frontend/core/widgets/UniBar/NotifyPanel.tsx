@@ -1,6 +1,6 @@
 import useSalon from './salon/notify_panel'
 
-export default () => {
+export default function NotifyPanel() {
   const s = useSalon()
 
   return (

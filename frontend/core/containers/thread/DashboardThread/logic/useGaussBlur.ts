@@ -13,7 +13,7 @@ type TRet = {
   isDarkTouched: boolean
 }
 
-export default (): TRet => {
+export default function useGaussBlur(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 

@@ -1,5 +1,5 @@
 import Landing from './widgets/Landing'
 
-export default () => {
+export default function Page() {
   return <Landing />
 }

@@ -5,7 +5,7 @@ import { MENU } from '../constant'
 import useSalon from '../salon/side_menu'
 import Group from './Group'
 
-export default () => {
+export default function SideMenu() {
   const s = useSalon()
   const groupKeys = keys(MENU)
 

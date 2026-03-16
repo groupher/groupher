@@ -1,14 +1,12 @@
-import { memo, type CSSProperties, type FC } from 'react'
-
-import type { TComment, TID } from '~/spec'
+import { type CSSProperties, type FC, memo } from 'react'
 import useTrans from '~/hooks/useTrans'
-
-import type { TAPIMode } from '../spec'
-import TogglerButton from './TogglerButton'
+import type { TComment, TID } from '~/spec'
 import Comment from '../Comment'
+import useSalon from '../salon/list/replies_list'
+import type { TAPIMode } from '../spec'
 
 import useActions from '../useLogic/useActions'
-import useSalon from '../salon/list/replies_list'
+import TogglerButton from './TogglerButton'
 
 type TProps = {
   parentId: TID
@@ -47,7 +45,7 @@ const RepliesList: FC<TProps> = ({
       )}
       {entries.map((comment) => {
         return (
-          <div key={comment.id} className={s.list} style={REPLY_VISIBILITY_STYLE}>
+          <div key={comment.id} style={REPLY_VISIBILITY_STYLE}>
             <Comment
               apiMode={apiMode}
               data={comment}

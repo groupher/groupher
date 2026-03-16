@@ -2,7 +2,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import useBroadcast from '../../../logic/useBroadcast'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, rainbow } = useTwBelt()
   const { broadcastArticleBg } = useBroadcast()
 

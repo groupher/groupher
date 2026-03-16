@@ -5,7 +5,7 @@ import Facepile from '~/widgets/Facepile'
 
 import useSalon from '../salon/waterfall_layout/actions'
 
-export default () => {
+export default function Actions() {
   const s = useSalon()
 
   return (

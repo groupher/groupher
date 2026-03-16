@@ -9,7 +9,7 @@ import useSalon, { cn } from '../../../salon/broadcast/templates/global'
 import Center from './Center'
 import Default from './Default'
 
-export default () => {
+export default function Global() {
   const s = useSalon()
 
   const [showAll, setShowAll] = useState<boolean>(false)

@@ -9,7 +9,7 @@ import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon, { cn } from '../salon/layout/topbar_layout'
 
-export default () => {
+export default function TopbarLayout() {
   const s = useSalon()
   const { t } = useTrans()
 

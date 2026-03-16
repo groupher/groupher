@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 type TProps = {
   onEnter: () => void
@@ -7,7 +7,12 @@ type TProps = {
   rootMargin?: string
 }
 
-export default ({ onEnter, onLeave, threshold = 0.1, rootMargin = '0px' }: TProps) => {
+export default function ViewportTracker({
+  onEnter,
+  onLeave,
+  threshold = 0.1,
+  rootMargin = '0px',
+}: TProps) {
   const ref = useRef(null)
 
   useEffect(() => {

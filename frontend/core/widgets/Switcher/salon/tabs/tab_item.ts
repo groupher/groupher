@@ -6,7 +6,7 @@ type TProps = {
   bottomSpace: number | string
 }
 
-export default ({ bottomSpace }: TProps) => {
+export default function useSalon({ bottomSpace }: TProps) {
   const { cn, bg, fg, vividDark } = useTwBelt()
 
   return {

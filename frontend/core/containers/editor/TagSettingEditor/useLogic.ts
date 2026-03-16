@@ -27,7 +27,7 @@ type TRet = {
   categoryOptions: TSelectOption[]
 }
 
-export default (): TRet => {
+export default function useLogic(): TRet {
   const dsb$ = useDashboard()
   const { tags, settingTag, activeTagThread } = dsb$
 

@@ -8,7 +8,7 @@ import useMetric from '~/hooks/useMetric'
 import useWallpaper from '~/hooks/useWallpaper'
 import type { TGlowEffect } from '~/spec'
 
-export default (): TGlowEffect => {
+export default function useGlowLight(): TGlowEffect {
   const dsb$ = useDashboard()
   const { wallpaper } = useWallpaper()
 

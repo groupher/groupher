@@ -4,7 +4,7 @@ import { THREAD } from '~/const/thread'
 
 import type { TInit, TStore } from './spec'
 
-export default (init: TInit = {}): TStore => {
+export default function ArticleStore(init: TInit = {}): TStore {
   const initialStore: TStore = {
     metric: METRIC.ARTICLE,
     thread: null,

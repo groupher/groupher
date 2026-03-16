@@ -13,7 +13,7 @@ type TRet = {
   loadArticle: (p: TArticleLoad) => void
 }
 
-export default (): TRet => {
+export default function useLogic(): TRet {
   const article$ = useArticle()
   const account = useAccount()
   const { article } = article$

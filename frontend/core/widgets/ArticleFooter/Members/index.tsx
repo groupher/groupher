@@ -2,7 +2,7 @@ import useViewingArticle from '~/hooks/useViewingArticle'
 import useSalon from '../salon/members'
 import UserList from './UserList'
 
-export default () => {
+export default function Members() {
   const s = useSalon()
 
   const { article } = useViewingArticle()

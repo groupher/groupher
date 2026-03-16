@@ -1,6 +1,6 @@
 import useSalon from './salon/empty_item'
 
-export default () => {
+export default function EmptyItem() {
   const s = useSalon()
 
   return (

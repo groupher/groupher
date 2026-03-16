@@ -11,7 +11,7 @@ import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon, { cn } from '../salon/layout/brand_layout'
 
-export default () => {
+export default function BrandLayout() {
   const s = useSalon()
 
   const { title } = useCommunity()

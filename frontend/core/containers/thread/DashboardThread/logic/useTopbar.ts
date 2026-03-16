@@ -12,7 +12,7 @@ type TRet = {
   bg: TColorName
 }
 
-export default (): TRet => {
+export default function useTopbar(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 

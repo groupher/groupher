@@ -7,7 +7,7 @@ import Columns from './Columns'
 
 import useSalon from '../salon/classic_layout'
 
-export default () => {
+export default function ClassicLayout() {
   const s = useSalon()
 
   return (

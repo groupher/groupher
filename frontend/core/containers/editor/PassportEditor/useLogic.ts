@@ -26,7 +26,7 @@ type TRet = {
   isReadonly: boolean
 }
 
-export default (): TRet => {
+export default function useLogic(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
   const account$ = useAccount()

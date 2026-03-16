@@ -5,7 +5,7 @@ import NoteTip from '~/widgets/NoteTip'
 import useOverview from '../logic/useOverview'
 import useSalon from '../salon/overview/basic_numbers'
 
-export default () => {
+export default function BasicNumbers() {
   const s = useSalon()
   const { views, subscribersCount, postsCount, changelogsCount, docsCount } = useOverview()
 

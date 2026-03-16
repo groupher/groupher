@@ -14,7 +14,7 @@ import ArticleLayout from './ArticleLayout'
 import useLogic from './useLogic'
 import useSalon from './salon'
 
-export default () => {
+export default function DocThread() {
   const s = useSalon()
   const { isArticleLayout, layout, faqLayout, faqSections } = useLogic()
   // return <ArticleLayout />

@@ -1,7 +1,7 @@
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const [backlogBg, todoBg, wipBg, doneBg, rejectedBg] = useKanbanBgColors()
   const { cn, fg, rainbow } = useTwBelt()
 

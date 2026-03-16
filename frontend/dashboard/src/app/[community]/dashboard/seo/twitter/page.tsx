@@ -2,6 +2,6 @@
 
 import TwitterGraph from '~/containers/thread/DashboardThread/SEO/TwitterGraph'
 
-export default () => {
+export default function Page() {
   return <TwitterGraph />
 }

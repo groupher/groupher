@@ -6,7 +6,7 @@ type TProps = {
   rounded?: boolean
 }
 
-export default ({ rounded }: TProps) => {
+export default function useSalon({ rounded }: TProps) {
   const { cn, fg, br } = useTwBelt()
 
   return {

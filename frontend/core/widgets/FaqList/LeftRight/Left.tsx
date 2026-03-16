@@ -1,6 +1,6 @@
 import useSalon from '../salon/left_right/left'
 
-export default () => {
+export default function Left() {
   const s = useSalon()
 
   return (

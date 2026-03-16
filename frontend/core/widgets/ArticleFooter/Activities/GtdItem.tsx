@@ -2,7 +2,7 @@ import GtdWipSVG from '~/icons/GtdWip'
 
 import useSalon from '../salon/activities/gtd_item'
 
-export default () => {
+export default function GtdItem() {
   const s = useSalon()
 
   return (

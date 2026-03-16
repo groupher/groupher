@@ -5,7 +5,7 @@ import type { TActive } from '~/spec'
 
 type TProps = TActive
 
-export default ({ active }: TProps) => {
+export default function useSalon({ active }: TProps) {
   const { cn, fg, bg, br } = useTwBelt()
   const { inView: badgeInView } = useCommunityDigestViewport()
 

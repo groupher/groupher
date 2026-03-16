@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import useBase from '..'
 
-export default () => {
+export default function useSalon() {
   const { cn } = useTwBelt()
   const { main } = useBase()
 

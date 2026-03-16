@@ -19,7 +19,7 @@ export type TRet = {
   queryOpenGraphInfo: (item: TMediaReport) => void
 }
 
-export default (): TRet => {
+export default function useMediaReports(): TRet {
   const dsb$ = useDashboard()
 
   const { mediaReports, original, queryingMediaReportIndex } = dsb$

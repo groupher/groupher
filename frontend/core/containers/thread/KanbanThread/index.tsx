@@ -11,7 +11,7 @@ import ClassicLayout from './ClassicLayout'
 
 import useSalon from './salon'
 
-export default () => {
+export default function KanbanThread() {
   const s = useSalon()
   const { kanbanLayout } = useLayout()
 

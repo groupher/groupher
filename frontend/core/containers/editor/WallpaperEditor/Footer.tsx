@@ -5,7 +5,7 @@ import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
 import useSalon from './salon/footer'
 import useLogic from './useLogic'
 
-export default () => {
+export default function Footer() {
   const s = useSalon()
 
   const { getWallpaper, loading, isTouched, removeWallpaper, onSave, rollbackWallpaper } =
@@ -28,7 +28,7 @@ export default () => {
         {isTouched ? (
           <YesOrNoButtons
             cancelText='恢复默认'
-            confirmText='确定'
+            saveText='确定'
             space={4}
             onCancel={() => {
               rollbackWallpaper()

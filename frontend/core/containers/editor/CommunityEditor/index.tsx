@@ -11,7 +11,7 @@ import Header from './Header'
 import useSalon from './salon'
 // import useLogic from './useLogic'
 
-export default () => {
+export default function CommunityEditor() {
   const s = useSalon()
   // const { checkPendingApply } = useLogic()
 

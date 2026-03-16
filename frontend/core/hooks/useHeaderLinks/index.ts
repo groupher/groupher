@@ -19,7 +19,7 @@ type THeaderLinks = {
   getGroupedLinks: () => TGroupInfo
 }
 
-export default (): THeaderLinks => {
+export default function useHeaderLinks(): THeaderLinks {
   const { headerLayout, headerLinks } = useDashboard()
   const { slug: community } = useCommunity()
 
@@ -29,14 +29,15 @@ export default (): THeaderLinks => {
     const shouldFoldAbout = shouldFoldAboutToMore(headerLinks, community)
     const hasMoreAbout = hasAboutLinkInMore(headerLinks, community)
 
-    const aboutLink = shouldFoldAbout && !hasMoreAbout
-      ? {
-          index: 999,
-          title: '关于',
-          group: MORE_GROUP,
-          link: getAboutPath(community),
-        }
-      : { title: '', index: 0 }
+    const aboutLink =
+      shouldFoldAbout && !hasMoreAbout
+        ? {
+            index: 999,
+            title: '关于',
+            group: MORE_GROUP,
+            link: getAboutPath(community),
+          }
+        : { title: '', index: 0 }
 
     const dashboardLink = {
       index: 1000,

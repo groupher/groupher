@@ -7,7 +7,7 @@ import SunSVG from '~/icons/Sun'
 
 import useSalon, { cn } from '../salon/section_label/theme_select'
 
-export default () => {
+export default function ThemeSelect() {
   const s = useSalon()
   const { theme, changeMode } = useTheme()
   const { t } = useTrans()

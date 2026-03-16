@@ -5,7 +5,7 @@ import BookSVG from '~/icons/Book'
 import useLogic from '../useLogic'
 import useSalon, { cn } from '../salon/article_layout/pined_tree'
 
-export default () => {
+export default function PinedTree() {
   const s = useSalon()
   const { back2Layout, gotoFAQDetailLayout } = useLogic()
 

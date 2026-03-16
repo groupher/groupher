@@ -8,7 +8,7 @@ type TProps = {
   isSticky?: boolean
 }
 
-export default ({ extend = false, isSticky = false }: TProps = {}) => {
+export default function useSalon({ extend = false, isSticky = false }: TProps = {}) {
   const {
     cn,
     br,

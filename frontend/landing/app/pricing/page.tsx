@@ -5,7 +5,7 @@ import HomeHeader from '~/widgets/HomeHeader'
 import PriceWall from '~/widgets/PriceWall'
 import useSalon from './salon'
 
-export default () => {
+export default function Page() {
   const s = useSalon()
 
   return (

@@ -27,7 +27,7 @@ import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn, cnMerge } from '../salon/dashboard_layout/community_brief'
 
-export default () => {
+export default function CommunityBrief() {
   const s = useSalon()
 
   const threads = usePublicThreads()

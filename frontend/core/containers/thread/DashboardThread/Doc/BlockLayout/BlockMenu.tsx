@@ -3,7 +3,7 @@ import MenuItem from '~/widgets/MenuItem'
 
 import useSalon from '../../salon/doc/block_layout/block_menu'
 
-export default () => {
+export default function BlockMenu() {
   const s = useSalon()
 
   return (

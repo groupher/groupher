@@ -10,7 +10,7 @@ type TRes = {
   resState: TResState
 }
 
-export default (): TRes => {
+export default function useKanbanPosts(): TRes {
   const { backlog, todo, wip, done, rejected, resState } = useArticleList()
 
   return {

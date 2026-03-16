@@ -10,7 +10,7 @@ import Sidebar from './Sidebar'
 
 import useSalon from '../salon/classic_layout'
 
-export default () => {
+export default function ClassicLayout() {
   const s = useSalon()
   const { pagedChangelogs } = usePagedChangelogs()
 

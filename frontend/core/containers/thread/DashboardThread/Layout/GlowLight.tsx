@@ -11,7 +11,7 @@ import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon, { cn } from '../salon/layout/glow_light'
 
-export default () => {
+export default function GlowLight() {
   const s = useSalon()
   const { t } = useTrans()
 

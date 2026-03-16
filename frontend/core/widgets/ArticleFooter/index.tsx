@@ -16,7 +16,7 @@ import useSalon from './salon'
 
 // import { onFollow, undoFollow } from '../logic'
 
-export default () => {
+export default function ArticleFooter() {
   const s = useSalon()
 
   const [tab, setTab] = useState(TAB_ACTIVITIES)

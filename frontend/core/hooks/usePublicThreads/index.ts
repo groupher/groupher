@@ -6,7 +6,7 @@ import useDashboard from '~/hooks/useDashboard'
 import { shouldFoldAboutToMore } from '~/hooks/useHeaderLinks/helper'
 import type { TCommunityThread, TNameAlias } from '~/spec'
 
-export default (): TCommunityThread[] => {
+export default function usePublicThreads(): TCommunityThread[] {
   const dsb$ = useDashboard()
   const { slug: community, threads } = useCommunity()
 

@@ -12,7 +12,7 @@ type TRes = {
   next: TArticle | null
 }
 
-export default (): TRes => {
+export default function useNaviArticle(): TRes {
   const articles = useArticleList()
   const curThread = useViewingThread()
   const { article: viewingArticle } = useViewingArticle()

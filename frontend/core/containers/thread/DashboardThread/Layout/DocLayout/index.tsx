@@ -11,7 +11,7 @@ import useSalon, { cn } from '../../salon/layout/doc_layout'
 import FaqTemplate from './FaqTemplate'
 import MainTemplate from './MainTemplate'
 
-export default () => {
+export default function DocLayout() {
   const s = useSalon()
   const { t } = useTrans()
 

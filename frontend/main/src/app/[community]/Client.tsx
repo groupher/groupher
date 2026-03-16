@@ -4,7 +4,7 @@ import CommunityDigest from '~/widgets/CommunityDigest'
 
 import useSalon from './salon'
 
-export default ({ children }) => {
+export default function Client({ children }) {
   const s = useSalon()
 
   return (

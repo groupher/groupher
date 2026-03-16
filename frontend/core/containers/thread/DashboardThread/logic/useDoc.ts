@@ -17,7 +17,7 @@ type TRet = {
   addDocCategory: () => void
 }
 
-export default (): TRet => {
+export default function useDoc(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 

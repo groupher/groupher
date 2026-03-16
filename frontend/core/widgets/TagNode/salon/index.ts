@@ -4,7 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import type { TProps } from '..'
 
-export default ({
+export default function useSalon({
   color = COLOR.BLACK,
   dotSize = 2,
   dotRight = 2,
@@ -14,7 +14,7 @@ export default ({
   hashRight = 2,
   hashLeft,
   hashTop,
-}: TProps) => {
+}: TProps) {
   const { cn, rainbow, zise, margin } = useTwBelt()
 
   const dotSpacing = { top: dotTop, right: dotRight, left: dotLeft }

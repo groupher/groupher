@@ -24,7 +24,7 @@ const CRUMB_CONFIG = {
   ],
 } satisfies TCrumbConfig
 
-export default ({ children }) => {
+export default function Layout({ children }) {
   const s = useSalon()
 
   const { saving, isTouched } = useSEO()

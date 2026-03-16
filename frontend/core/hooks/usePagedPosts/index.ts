@@ -12,7 +12,7 @@ type TRes = {
   update: (params: TUpdate) => void
 }
 
-export default (): TRes => {
+export default function usePagedPosts(): TRes {
   const articleList$ = useArticleList()
   const { pagedPosts, resState } = articleList$
 

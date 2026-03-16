@@ -10,7 +10,7 @@ import ViewportTracker from '~/widgets/ViewportTracker'
 import useSalon from '../salon/tabber_layout'
 import CommunityBrief from './CommunityBrief'
 
-export default () => {
+export default function TabberLayout() {
   const s = useSalon()
 
   const router = useRouter()

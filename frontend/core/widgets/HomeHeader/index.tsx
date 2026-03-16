@@ -12,7 +12,7 @@ import useSalon, { cn } from './salon'
 
 const HOVER_DELAY = 150
 
-export default () => {
+export default function HomeHeader() {
   const [activeMenu, setActiveMenu] = useState('')
   const timerRef = useRef<number | null>(null)
   const isInsideRef = useRef(false)

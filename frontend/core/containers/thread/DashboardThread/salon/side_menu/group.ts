@@ -7,7 +7,7 @@ type TProps = {
   fold: boolean
 }
 
-export default ({ fold }: TProps) => {
+export default function useSalon({ fold }: TProps) {
   const { isLightTheme } = useTheme()
   const { cn, fill, fg, bg, primary, vividDark } = useTwBelt()
 

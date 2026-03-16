@@ -3,7 +3,7 @@ import { mockHelpCats } from '~/mock'
 import Category from './Category'
 import useSalon from '../salon/blocks_layout'
 
-export default () => {
+export default function BlocksLayout() {
   const s = useSalon()
   const cats = mockHelpCats()
 

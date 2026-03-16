@@ -5,7 +5,7 @@ import useBase from '.'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { isLightTheme } = useTheme()
   const { cn, fg, br, bg, fill, shadow } = useTwBelt()
   const base = useBase()

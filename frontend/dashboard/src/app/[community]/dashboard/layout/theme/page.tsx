@@ -9,7 +9,7 @@ import Wallpaper from '~/containers/thread/DashboardThread/Layout/Wallpaper'
 
 import useSalon from '~/containers/thread/DashboardThread/salon/layout'
 
-export default () => {
+export default function Page() {
   const s = useSalon()
 
   return (

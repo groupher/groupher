@@ -7,7 +7,7 @@ type TProps = {
   isHighLight: boolean
 } & TSpace
 
-export default ({ isHighLight, ...spacing }: TProps) => {
+export default function useSalon({ isHighLight, ...spacing }: TProps) {
   const { cn, fg, fill, margin } = useTwBelt()
 
   return {

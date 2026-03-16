@@ -16,7 +16,7 @@ import useSalon from './salon/article_list'
 
 export const EmptyThread = lazy(() => import('~/widgets/EmptyThread'))
 
-export default () => {
+export default function PostList() {
   const s = useSalon()
 
   const { postLayout } = useLayout()

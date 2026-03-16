@@ -34,6 +34,51 @@ defmodule Helper.ORMAtom do
   end
 
   @doc """
+  atomically increment a value inside a JSONB meta field
+  """
+  @spec inc_meta(struct(), atom()) :: {:ok, struct(), integer()} | {:error, term()}
+  def inc_meta(queryable, field) when is_struct(queryable) and is_atom(field) do
+    schema_module = queryable.__struct__
+    id = queryable.id
+    field_name = to_string(field)
+
+    # 检查 meta 是否为 nil
+    if is_nil(queryable.meta) do
+      {:error, {:update_fails, "Meta field is not initialized"}}
+    else
+      # 检查字段是否存在于 meta 结构体中
+      meta_fields = queryable.meta.__struct__.__schema__(:fields)
+      if not Enum.member?(meta_fields, field) do
+        {:error, {:update_fails, "Field #{field} does not exist in meta"}}
+      else
+        # 构建更新查询，使用 RETURNING 子句直接返回新值
+        update_query = 
+          from(q in schema_module, 
+            where: q.id == ^id,
+            update: [
+              set: [
+                meta: fragment("jsonb_set(meta, ARRAY[?], (COALESCE(meta->>?, '0')::int + 1)::text::jsonb)", ^field_name, ^field_name)
+              ]
+            ],
+            select: fragment("(meta->>?)::int", ^field_name)
+          )
+
+        # 执行更新并获取返回的新值
+        case Repo.update_all(update_query, []) do
+          {1, [new_val]} ->
+            # 更新内存中的结构
+            updated_struct = update_in(queryable.meta, fn meta ->
+              meta |> Map.put(field, new_val)
+            end)
+            {:ok, updated_struct, new_val}
+          {0, []} ->
+            {:error, :not_found}
+        end
+      end
+    end
+  end
+
+  @doc """
   更新模型的 meta JSONB 字段（部分更新）。
 
   ## 参数
@@ -69,14 +114,15 @@ defmodule Helper.ORMAtom do
       })
   """
   @spec update_meta(struct(), map() | struct()) :: {:ok, struct()} | {:error, term()}
-  def update_meta(queryable, changes) when is_struct(changes) do
-    update_meta(queryable, changes |> strip_struct)
-  end
-
   def update_meta(%{meta: nil} = queryable, changes) when is_map(changes) do
     with {:ok, queryable} <- fill_meta(queryable) do
       update_meta(queryable, changes)
     end
+  end
+
+  def update_meta(%{} = changes, %{} = _queryable) when not is_struct(changes) do
+    # 处理 map 形式的 queryable（实际上是 changes），保持向后兼容
+    {:error, :invalid_queryable}
   end
 
   def update_meta(queryable, changes) when is_map(changes) do

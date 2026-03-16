@@ -13,7 +13,7 @@ type TRet = {
 } & TLinkState &
   TUserLinks
 
-export default (): TRet => {
+export default function useHeader(): TRet {
   const dsb$ = useDashboard()
   const useLinksData = useLinks()
   const { edit } = useHelper()

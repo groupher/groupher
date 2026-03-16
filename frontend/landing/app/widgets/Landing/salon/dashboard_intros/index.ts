@@ -7,7 +7,7 @@ type TProps = {
   tab: TIntroTab
 }
 
-export default ({ tab }: TProps) => {
+export default function useSalon({ tab }: TProps) {
   const { isDarkTheme } = useTheme()
   const { cn, fg, landingTitle } = useTwBelt()
 

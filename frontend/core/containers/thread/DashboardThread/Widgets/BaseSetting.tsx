@@ -11,7 +11,7 @@ import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon, { cn } from '../salon/widgets/base_setting'
 
-export default () => {
+export default function BaseSetting() {
   const s = useSalon()
   const { t } = useTrans()
 

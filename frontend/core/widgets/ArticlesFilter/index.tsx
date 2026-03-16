@@ -22,7 +22,7 @@ import SearchBox from '~/widgets/SearchBox'
 
 import useSalon from './salon'
 
-export default () => {
+export default function ArticlesFilter() {
   const s = useSalon()
 
   const { resState } = usePagedPosts()

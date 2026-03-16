@@ -1,7 +1,7 @@
 import useIsSidebarLayout from '~/hooks/useIsSidebarLayout'
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn } = useTwBelt()
   const isSidebarLayout = useIsSidebarLayout()
 

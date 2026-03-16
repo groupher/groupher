@@ -17,7 +17,7 @@ type TRet = {
   totalCountThreshold: number
 }
 
-export default (): TRet => {
+export default function useLogic(): TRet {
   const store = useArticleList()
   const { tags, activeTag } = store
 

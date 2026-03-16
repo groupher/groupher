@@ -6,7 +6,7 @@ import useKanban from '../../../../logic/useKanban'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { cn, rainbow, rainbowSoft, shadow } = useTwBelt()
 
   const { kanbanBgColors } = useKanban()

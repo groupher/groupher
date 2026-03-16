@@ -6,7 +6,7 @@ type TProps = {
   open: boolean
 }
 
-export default ({ open }: TProps) => {
+export default function useSalon({ open }: TProps) {
   const { cn, bg, br, shadow, hover } = useTwBelt()
 
   return {

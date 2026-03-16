@@ -2,7 +2,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, bg, primary, fill } = useTwBelt()
 
   const linkItem = cn('row-center text-sm h-8 w-40 pl-1.5', `hover:${fg('title')}`, fg('digest'))

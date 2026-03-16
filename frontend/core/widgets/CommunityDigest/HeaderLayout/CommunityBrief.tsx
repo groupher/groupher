@@ -15,7 +15,7 @@ import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from '../salon/header_layout/community_brief'
 
-export default () => {
+export default function CommunityBrief() {
   const s = useSalon()
 
   const [disableTippyJump, setDisableTippyJump] = useState(false)

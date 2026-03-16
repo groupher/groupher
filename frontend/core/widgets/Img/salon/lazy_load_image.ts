@@ -1,6 +1,6 @@
 export { cn, cnMerge } from '~/css'
 
-export default () => {
+export default function useSalon() {
   return {
     normal: 'relative inline-flex p-0 border-0 bg-transparent',
     fallbackInFlow: 'inline-flex s-full',

@@ -7,7 +7,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 
 import useSalon, { cn } from '../salon/drawer_header/article_navi'
 
-export default () => {
+export default function ArticleNavi() {
   const s = useSalon()
   const router = useRouter()
   const { slug } = useCommunity()

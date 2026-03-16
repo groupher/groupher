@@ -16,7 +16,7 @@ type TRet = TBroadcastConf & {
   broadcastOnCancel: (isArticle?: boolean) => void
 }
 
-export default (): TRet => {
+export default function useBroadcast(): TRet {
   const dsb$ = useDashboard()
   const { edit, isChanged, onSave } = useHelper()
 

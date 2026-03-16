@@ -3,7 +3,7 @@ import { BANNER_LAYOUT } from '~/const'
 import useLayout from '~/hooks/useLayout'
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn, divider } = useTwBelt()
   const { bannerLayout } = useLayout()
 

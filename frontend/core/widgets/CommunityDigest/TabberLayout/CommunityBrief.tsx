@@ -16,7 +16,7 @@ import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from '../salon/tabber_layout/community_brief'
 
-export default () => {
+export default function CommunityBrief() {
   const s = useSalon()
   const activeTag = useActiveTag()
 

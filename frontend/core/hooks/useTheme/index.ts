@@ -12,7 +12,7 @@ type TRet = {
   toggle: () => void
 }
 
-export default (): TRet => {
+export default function useTheme(): TRet {
   const { theme, themeMode, change: changeTheme, changeMode: doChangeMode } = useThemeDomain()
 
   const resolveSystemTheme = () => {

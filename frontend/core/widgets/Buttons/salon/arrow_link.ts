@@ -1,8 +1,7 @@
+import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName, TSize } from '~/spec'
 
-import useTwBelt from '~/hooks/useTwBelt'
-
-import { getTextSize, getIconSize } from './metircs/arrow_link'
+import { getIconSize, getTextSize } from './metrics/arrow_link'
 
 export { cn } from '~/css'
 
@@ -11,7 +10,7 @@ type TProps = {
   color?: string
 }
 
-export default ({ size, color }: TProps) => {
+export default function useSalon({ size, color }: TProps) {
   const { cn, fg, rainbow, fill } = useTwBelt()
 
   return {

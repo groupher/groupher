@@ -1,13 +1,10 @@
 import { type FC, memo } from 'react'
 
 import type { TComment } from '~/spec'
-
-import ArticleHeader from './Article'
-
-import type { TAPIMode } from '../../spec'
 import { API_MODE } from '../../constant'
-
 import useSalon from '../../salon/comment/header'
+import type { TAPIMode } from '../../spec'
+import ArticleHeader from './Article'
 
 type TProps = {
   data: TComment

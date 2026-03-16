@@ -8,7 +8,7 @@ type TRes = {
   updateActiveFilter: (filter: TArticleFilter) => void
 }
 
-export default (): TRes => {
+export default function useArticlesFilter(): TRes {
   const store = useArticleList()
   const { activeOrder: order, activeState: state, activeCat: cat, updateActiveFilter } = store
 

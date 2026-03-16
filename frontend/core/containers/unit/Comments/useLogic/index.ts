@@ -2,13 +2,13 @@ import { useContext } from 'react'
 import { useSnapshot } from 'valtio'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
+import type { TCommentsState } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
 import type { TStore as TCommentsStore } from '~/stores/comments/spec'
-import type { TCommentsState } from '~/spec'
 import { API_MODE } from '../constant'
 import type { TEditState } from '../spec'
-import useDerived, { type TRet as TDrived } from './useDerived'
 import useActions, { type TActions } from './useActions'
+import useDerived, { type TRet as TDrived } from './useDerived'
 
 type TRet = TCommentsStore & TActions & TDrived
 
@@ -41,7 +41,8 @@ export const useCommentsListState = () => {
     loading: comments.loading,
     pagedComments: comments.pagedComments as TCommentsStore['pagedComments'],
     foldedCommentIds: comments.foldedCommentIds as TCommentsStore['foldedCommentIds'],
-    repliesLoadingByParentId: comments.repliesLoadingByParentId as TCommentsStore['repliesLoadingByParentId'],
+    repliesLoadingByParentId:
+      comments.repliesLoadingByParentId as TCommentsStore['repliesLoadingByParentId'],
   }
 }
 
@@ -103,7 +104,7 @@ export const useCommentsHeadState = () => {
   }
 }
 
-export default (): TRet => {
+export default function useLogic(): TRet {
   const commentsStore = useCommentsStore() as any
   const comments = useSnapshot(commentsStore) as any
   const actions = useActions()

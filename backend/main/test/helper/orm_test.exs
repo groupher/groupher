@@ -3,7 +3,6 @@ defmodule GroupherServer.Test.Helper.ORM do
 
   use GroupherServer.TestMate
 
-  # TODO import Service.Utils move both helper and github
   import GroupherServer.Support.Factory
 
   alias Accounts.Model.User
@@ -226,12 +225,34 @@ defmodule GroupherServer.Test.Helper.ORM do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, ret} =
-        ORM.update_meta(post, %{
-          last_active_at: nil
-        })
+      {:ok, ret} = ORM.update_meta(post, %{last_active_at: nil})
 
       assert ret.meta.last_active_at == post.updated_at
+    end
+  end
+
+  describe "inc_meta" do
+    test "inc_meta should work with post", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      # 测试第一次递增
+      {:ok, updated_post, new_floor} = ORM.inc_meta(post, :next_floor)
+      assert new_floor == 1
+      assert updated_post.meta.next_floor == 1
+
+      # 测试再次递增
+      {:ok, updated_post, new_floor} = ORM.inc_meta(updated_post, :next_floor)
+      assert new_floor == 2
+      assert updated_post.meta.next_floor == 2
+    end
+
+    test "inc_meta should return error for non-existent field", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:error, reason} = ORM.inc_meta(post, :non_existent_field)
+      assert error_code(reason) == ecode(:update_fails)
     end
   end
 end

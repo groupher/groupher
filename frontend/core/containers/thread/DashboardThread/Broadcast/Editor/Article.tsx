@@ -11,7 +11,7 @@ import SavingBar from '../../SavingBar'
 import useBroadcast from '../../logic/useBroadcast'
 import useSalon from '../../salon/broadcast/editor/article'
 
-export default () => {
+export default function Article() {
   const {
     saving,
     broadcastArticleBg,

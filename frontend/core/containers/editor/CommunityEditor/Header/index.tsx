@@ -7,7 +7,7 @@ import StepMap from './StepMap'
 import useLogic from '../useLogic'
 import useSalon from '../salon/header'
 
-export default () => {
+export default function Header() {
   const s = useSalon()
 
   const { headerStatus } = useLogic()

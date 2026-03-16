@@ -5,7 +5,7 @@ import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import useLogic from '../useLogic'
 import useSalon from '../salon/article_layout/navi_head'
 
-export default () => {
+export default function NaviHead() {
   const s = useSalon()
   const { back2Layout } = useLogic()
 

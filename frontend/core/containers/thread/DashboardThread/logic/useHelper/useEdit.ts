@@ -14,7 +14,7 @@ export type TRet = {
   onSave: (field: TDsbFieldKey) => void
 }
 
-export default (): TRet => {
+export default function useEdit(): TRet {
   const dsb$ = useDashboard()
   const { mutation } = useMutation()
 

@@ -11,7 +11,7 @@ import SectionLabel from '../SectionLabel'
 
 import useSalon, { cn } from '../salon/layout/tag_layout'
 
-export default () => {
+export default function TagLayout() {
   const s = useSalon()
   const { t } = useTrans()
 

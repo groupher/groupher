@@ -19,7 +19,7 @@ export type TRet = {
   isCityTouched: boolean
 }
 
-export default (): TRet => {
+export default function useInfo(): TRet {
   const dsb$ = useDashboard()
   const { anyChanged } = useHelper()
 

@@ -1,6 +1,6 @@
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   return {
     wrapper: 'row-center text-xs',
   }

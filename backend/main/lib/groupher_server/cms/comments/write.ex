@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   import Ecto.Query, warn: false
 
-  import Helper.Utils, only: [done: 1, strip_struct: 1, get_config: 2]
+  import Helper.Utils, only: [done: 1, get_config: 2]
   import Helper.ErrorCode
 
   import GroupherServer.CMS.Helper.Matcher
@@ -16,17 +16,14 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   alias Accounts.Model.User
   alias CMS.Comments.States
+  alias CMS.Comments.Helper, as: CommentHelper
   alias CMS.Events
   alias CMS.Helper.ArticleEnums
-  alias CMS.Model.{Comment, Community, Embeds, PinnedComment, Post}
+  alias CMS.Model.{Comment, Community, PinnedComment, Post}
 
   alias Helper.{ContentPipeline, Multi, Later, ORM, T}
 
-  @max_participator_count Comment.max_participator_count()
-  @default_emotions Embeds.CommentEmotion.default_emotions()
   @delete_hint Comment.delete_hint()
-
-  @default_comment_meta Embeds.CommentMeta.default_meta()
 
   @archive_threshold get_config(:article, :archive_threshold)
 
@@ -41,10 +38,10 @@ defmodule GroupherServer.CMS.Comments.Write do
            FrontDesk.article(community_slug, thread, article_id,
              preload: [[author: :user], :community]
            ),
-         true <- can_comment?(article, user) do
+         true <- CommentHelper.can_comment?(article, user) do
       Multi.new()
       |> Multi.run(:create_comment, fn _, _ ->
-        do_create_comment(body, info.foreign_key, article, user)
+        CommentHelper.do_create_comment(body, info.foreign_key, article, user)
       end)
       |> Multi.run(:update_comments_count, fn _, %{create_comment: comment} ->
         {:ok, article} = FrontDesk.article_of(comment)
@@ -53,7 +50,7 @@ defmodule GroupherServer.CMS.Comments.Write do
       |> Multi.run(:set_question_flag_ifneed, fn _, %{create_comment: comment} ->
         set_question_flag_ifneed(article, comment)
       end)
-      |> Multi.run(:add_participator, fn _, _ -> add_participant_to_article(article, user) end)
+      |> Multi.run(:add_participator, fn _, _ -> CommentHelper.add_participant_to_article(article, user) end)
       |> Multi.run(:update_article_active_timestamp, fn _, %{create_comment: comment} ->
         case comment.author_id == article.author.user.id do
           true -> {:ok, :pass}
@@ -77,9 +74,7 @@ defmodule GroupherServer.CMS.Comments.Write do
     end
   end
 
-  defp can_comment?(article, _user) do
-    not article.meta.is_comment_locked
-  end
+
 
   @spec update(Comment.t(), String.t()) :: T.domain_res(Comment.t())
   def update(%{is_archived: true}, _body),
@@ -218,70 +213,6 @@ defmodule GroupherServer.CMS.Comments.Write do
     |> done()
   end
 
-  defp do_create_comment(body, foreign_key, article, %User{id: user_id}) do
-    with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
-      thread = foreign_key |> to_string |> String.trim_trailing("_id") |> String.upcase()
-
-      attrs = %{
-        author_id: user_id,
-        body: payload.json,
-        body_html: payload.html,
-        emotions: @default_emotions,
-        floor: next_floor(article, foreign_key),
-        is_article_author: user_id == article.author.user.id,
-        thread: thread,
-        meta: @default_comment_meta
-      }
-
-      Comment |> ORM.create(Map.put(attrs, foreign_key, article.id))
-    end
-  end
-
-  defp add_participant_to_article(
-         %{comments_participants: _participants} = article,
-         %User{} = user
-       ) do
-    with {:ok, locked_article} <- ORM.lock_article(article) do
-      normalized_participants =
-        locked_article.comments_participants
-        |> Enum.map(&Embeds.User.normalize/1)
-        |> Enum.filter(&Embeds.User.valid?/1)
-
-      cur_participants =
-        normalized_participants
-        |> List.insert_at(0, Embeds.User.from_account_user(user))
-        |> Enum.filter(&Embeds.User.valid?/1)
-        |> Enum.uniq_by(&Embeds.User.uniq_key/1)
-
-      meta = locked_article.meta |> strip_struct
-
-      cur_participants_ids =
-        (meta.comments_participant_user_ids ++ [user.id])
-        |> Enum.reject(&is_nil/1)
-        |> Enum.uniq()
-
-      meta = Map.merge(meta, %{comments_participant_user_ids: cur_participants_ids})
-
-      latest_participants = cur_participants |> Enum.slice(0, @max_participator_count)
-
-      locked_article = %{locked_article | comments_participants: normalized_participants}
-
-      with {:ok, article} <-
-             locked_article
-             |> Ecto.Changeset.change()
-             |> Ecto.Changeset.put_change(
-               :comments_participants_count,
-               length(cur_participants_ids)
-             )
-             |> Ecto.Changeset.put_embed(:comments_participants, latest_participants)
-             |> Repo.update() do
-        ORM.update_meta(article, meta)
-      end
-    end
-  end
-
-  defp add_participant_to_article(_, _), do: {:ok, :pass}
-
   defp set_question_flag_ifneed(%Post{cat: cat}, %Comment{} = comment) do
     question_type = @article_cat.question
 
@@ -304,14 +235,6 @@ defmodule GroupherServer.CMS.Comments.Write do
     |> Repo.update_all([])
 
     {:ok, :pass}
-  end
-
-  defp next_floor(article, foreign_key) do
-    {:ok, cur_count} =
-      from(c in Comment, where: field(c, ^foreign_key) == ^article.id)
-      |> ORM.count()
-
-    cur_count + 1
   end
 
   defp update_post_state_for_solution(post, comment, is_solution) do

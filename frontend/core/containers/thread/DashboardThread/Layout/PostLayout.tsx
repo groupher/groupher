@@ -12,7 +12,7 @@ import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon, { cnMerge } from '../salon/layout/post_layout'
 
-export default () => {
+export default function PostLayout() {
   const s = useSalon()
   const { layout, isTouched, saving, edit } = usePost()
   const { t } = useTrans()

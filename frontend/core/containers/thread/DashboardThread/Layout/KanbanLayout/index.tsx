@@ -5,7 +5,7 @@ import BgColorsSetter from './BgColorsSetter'
 import GlobalLayout from './GlobalLayout'
 import ItemCardLayout from './ItemCardLayout'
 
-export default () => {
+export default function KanbanLayout() {
   const { kanbanLayout } = useKanban()
   const s = useSalon()
 

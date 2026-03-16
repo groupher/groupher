@@ -9,7 +9,7 @@ import useSalon, { cn } from '../../../salon/broadcast/templates/article'
 import Default from './Default'
 import Simple from './Simple'
 
-export default () => {
+export default function Article() {
   const s = useSalon()
 
   const [showAll, setShowAll] = useState<boolean>(false)

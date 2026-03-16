@@ -3,7 +3,7 @@ import THEME from '~/const/theme'
 import useTwBelt from '~/hooks/useTwBelt'
 import useTheme from '~/hooks/useTheme'
 
-export default () => {
+export default function useSalon() {
   const { cn } = useTwBelt()
   const { theme } = useTheme()
 

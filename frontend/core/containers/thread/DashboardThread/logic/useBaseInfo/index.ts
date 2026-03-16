@@ -24,7 +24,7 @@ type TRet = TUseInfo &
     edit: TEditFunc
   }
 
-export default (): TRet => {
+export default function useBaseInfo(): TRet {
   const dsb$ = useDashboard()
   const { slug } = useCommunity()
   const { edit } = useHelper()

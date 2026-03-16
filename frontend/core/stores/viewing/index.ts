@@ -6,7 +6,7 @@ import type { TCommunity } from '~/spec'
 
 import type { TInit, TStore } from './spec'
 
-export default (init: TInit = {}): TStore => {
+export default function ViewingStore(init: TInit = {}): TStore {
   const initialStore: TStore = {
     metric: METRIC.COMMUNITY,
 

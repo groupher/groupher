@@ -12,7 +12,7 @@ type TRet = TDsdSEOConf & {
   toggleSEO: (seoEnable: boolean) => void
 }
 
-export default (): TRet => {
+export default function useSEO(): TRet {
   const dsb$ = useDashboard()
   const { edit, anyChanged } = useHelper()
 

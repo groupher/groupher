@@ -2,6 +2,6 @@
 
 import OpenGraph from '~/containers/thread/DashboardThread/SEO/OpenGraph'
 
-export default () => {
+export default function Page() {
   return <OpenGraph />
 }

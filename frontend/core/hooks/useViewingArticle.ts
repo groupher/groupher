@@ -16,7 +16,7 @@ export const parseArticleLink = (article: TArticle): string => {
   return `${SITE_URL}/${community.slug}/${thread}/${innerId}`
 }
 
-export default (): TRet => {
+export default function useViewingArticle(): TRet {
   const article$ = useArticle()
   const { article } = article$
 

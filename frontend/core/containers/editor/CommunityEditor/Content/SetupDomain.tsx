@@ -5,7 +5,7 @@ import { STEP } from '../constant'
 import useLogic from '../useLogic'
 import useSalon from '../salon/content/setup_domain'
 
-export default () => {
+export default function SetupDomain() {
   const s = useSalon()
 
   const { slug, communityType } = useLogic()

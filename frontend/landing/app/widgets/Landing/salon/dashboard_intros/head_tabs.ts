@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, br, shadow, rainbow, rainbowSoft } = useTwBelt()
 
   const activeBtn = cn(fg('title'), `hover:${fg('title')}`)

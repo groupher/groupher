@@ -19,7 +19,7 @@ import MainMenu from './MainMenu'
 
 import useSalon, { cn } from '../salon/sidebar_layout'
 
-export default () => {
+export default function SidebarLayout() {
   const s = useSalon()
 
   const activeThread = useViewingThread()

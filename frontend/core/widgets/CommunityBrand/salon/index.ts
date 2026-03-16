@@ -7,7 +7,7 @@ type TProps = {
   className?: string
 } & TSpace
 
-export default ({ className, ...spacing }: TProps) => {
+export default function useSalon({ className, ...spacing }: TProps) {
   const { cn, fg, margin } = useTwBelt()
 
   const { brandLayout } = useLayout()

@@ -10,7 +10,7 @@ import Content from './Content'
 
 import useSalon from '../salon/changelog'
 
-export default () => {
+export default function Changelog() {
   const s = useSalon()
   const { article } = useViewingArticle()
 

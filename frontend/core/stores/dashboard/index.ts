@@ -5,7 +5,7 @@ import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
 import { DEFAULT_OVERVIEW, FIELDS } from './constant'
 import type { TDsbFieldMap, TInit, TStore } from './spec'
 
-export default (init: TInit = {}): TStore => {
+export default function DashboardStore(init: TInit = {}): TStore {
   const states = Object.assign(
     {
       metric: METRIC.COMMUNITY,

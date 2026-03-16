@@ -6,7 +6,7 @@ type TProps = {
   dimWhenIdle: boolean
 } & TSpace
 
-export default ({ dimWhenIdle, disabled, ...spacing }: TProps) => {
+export default function useSalon({ dimWhenIdle, disabled, ...spacing }: TProps) {
   const { cn, margin, fg, fill } = useTwBelt()
 
   return {

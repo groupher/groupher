@@ -22,7 +22,7 @@ type TProps = {
   mode?: 'lite' | 'full'
 }
 
-export default ({ mode = 'full' }: TProps) => {
+export default function PostViewer({ mode = 'full' }: TProps) {
   const s = useSalon()
 
   const { loading, article } = useLogic()
@@ -32,6 +32,7 @@ export default ({ mode = 'full' }: TProps) => {
   const [footerVisible, setFooterVisible] = useState(false)
   const [trackerReady, setTrackerReady] = useState(false)
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     setTrackerReady(false)
     setFixedHeaderVisible(false)
@@ -39,7 +40,7 @@ export default ({ mode = 'full' }: TProps) => {
 
     const raf = window.requestAnimationFrame(() => setTrackerReady(true))
     return () => window.cancelAnimationFrame(raf)
-  }, [article.innerId, article.id])
+  }, [article.innerId])
 
   const hideFixedHeader = () => setFixedHeaderVisible(false)
   const showFixedHeader = () => setFixedHeaderVisible(true)

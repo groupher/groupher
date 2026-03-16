@@ -23,7 +23,7 @@ type TProps = {
   state: TArticleState
 }
 
-export default ({ cat, state }: TProps) => {
+export default function useSalon({ cat, state }: TProps) {
   const { cn, rainbow, rainbowSoft } = useTwBelt()
   const [todoColor, wipColor, doneColor] = useKanbanBgColors()
 

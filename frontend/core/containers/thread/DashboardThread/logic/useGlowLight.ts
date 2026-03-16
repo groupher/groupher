@@ -14,7 +14,7 @@ type TRet = {
   edit: TEditFunc
 }
 
-export default (): TRet => {
+export default function useGlowLight(): TRet {
   const dsb$ = useDashboard()
   const { edit, isChanged } = useHelper()
 

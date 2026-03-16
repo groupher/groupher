@@ -15,7 +15,7 @@ import SimpleLayout from './SimpleLayout'
 
 import useSalon from './salon'
 
-export default () => {
+export default function Footer() {
   const s = useSalon()
 
   const { slug } = useCommunity()

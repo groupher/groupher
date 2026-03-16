@@ -9,7 +9,7 @@ import NotionSVG from '~/icons/social/Notion'
 import TwitchSVG from '~/icons/social/Twitch'
 import TwitterSVG from '~/icons/social/Twitter'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, bg, br, linkable } = useTwBelt()
 
   return {

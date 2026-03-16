@@ -15,7 +15,7 @@ import FilterBar from './FilterBar'
 
 import useSalon from '../salon/simple_layout'
 
-export default () => {
+export default function SimpleLayout() {
   const s = useSalon()
   const { pagedChangelogs } = usePagedChangelogs()
 

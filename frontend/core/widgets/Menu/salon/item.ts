@@ -5,7 +5,7 @@ export { cn, cnMerge } from '~/css'
 
 type TProps = TActive
 
-export default ({ active }: TProps) => {
+export default function useSalon({ active }: TProps) {
   const { cn, bg, fg, br, menu, cut } = useTwBelt()
 
   return {

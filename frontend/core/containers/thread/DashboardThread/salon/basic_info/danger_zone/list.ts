@@ -3,7 +3,7 @@ import type { TSpace } from '~/spec'
 
 type TProps = TSpace
 
-export default ({ ...spacing }: TProps) => {
+export default function useSalon({ ...spacing }: TProps) {
   const { cn, fg, margin } = useTwBelt()
 
   return {

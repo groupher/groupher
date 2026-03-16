@@ -7,7 +7,7 @@ import { getCursorGradient, getPathGradient } from './metric'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { isLightTheme } = useTheme()
   const { cn, fg, bg, fill, container, rainbow, linkable, menu, landingTitle, sexyBorder } =
     useTwBelt()

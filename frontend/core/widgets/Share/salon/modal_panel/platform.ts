@@ -10,7 +10,7 @@ import WeChatSVG from '~/icons/social/WeChat'
 import WeiboSVG from '~/icons/social/Weibo'
 import { SHARE_TYPE } from '../../constant'
 
-export default () => {
+export default function useSalon() {
   const { cn, fg, fill, cut, hover } = useTwBelt()
 
   return {

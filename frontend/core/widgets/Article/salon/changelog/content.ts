@@ -1,4 +1,4 @@
-export default () => {
+export default function useSalon() {
   return {
     wrapper: 'row justify-center relative min-h-60 w-full',
     inner: 'w-full',

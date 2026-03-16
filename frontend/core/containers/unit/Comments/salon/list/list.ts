@@ -1,12 +1,12 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default () => {
+export default function useSalon() {
   const { cn, br } = useTwBelt()
 
   return {
-    wrapper: 'relative ml-1.5',
+    wrapper: 'relative',
     indentLine: cn(
-      'absolute top-20 left-0 h-[calc(100%-85px)] w-5 ml-1 border-l-2',
+      'absolute top-20 left-0 h-[calc(100%-85px)] w-5 ml-2.5 border-l',
       br('divider'),
       `hover:${br('digest')}`,
     ),

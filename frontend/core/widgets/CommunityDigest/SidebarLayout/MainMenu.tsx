@@ -9,7 +9,7 @@ import CustomHeaderLinks from '~/widgets/CustomHeaderLinks'
 import useSalon, { cn } from '../salon/sidebar_layout/main_menu'
 import ThreadIcon from './ThreadIcon'
 
-export default () => {
+export default function MainMenu() {
   const s = useSalon()
 
   const { slug: community } = useCommunity()

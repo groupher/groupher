@@ -16,7 +16,7 @@ import TagNote from '~/widgets/TagNote'
 import useSalon from './salon'
 import ThreadSidebar from './ThreadSidebar'
 
-export default () => {
+export default function PostThread() {
   const { bannerLayout } = useLayout()
   const s = useSalon()
 

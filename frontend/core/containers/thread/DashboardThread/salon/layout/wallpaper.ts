@@ -5,7 +5,7 @@ import useBase from '.'
 
 export { cn, cnMerge } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { cn, fill, br, bg, shadow } = useTwBelt()
 
   const { hasShadow } = useWallpaper()

@@ -11,7 +11,7 @@ import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
 import useSalon, { cn, cnMerge } from '../salon/layout/banner_layout'
 
-export default () => {
+export default function BannerLayout() {
   const s = useSalon()
   const [showDrawer, setShowDrawer] = useState(false)
   const { t } = useTrans()

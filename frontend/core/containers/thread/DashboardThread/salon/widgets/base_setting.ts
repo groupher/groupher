@@ -4,7 +4,7 @@ import useWidgets from '../../logic/useWidgets'
 
 export { cn } from '~/css'
 
-export default () => {
+export default function useSalon() {
   const { cn, rainbow, fg, shadow } = useTwBelt()
 
   const { widgetsPrimaryColor } = useWidgets()

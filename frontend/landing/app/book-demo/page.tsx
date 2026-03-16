@@ -2,6 +2,6 @@
 
 import BookDemo from '../widgets/BookDemo'
 
-export default () => {
+export default function Page() {
   return <BookDemo />
 }

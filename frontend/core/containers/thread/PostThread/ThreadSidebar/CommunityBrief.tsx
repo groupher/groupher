@@ -13,7 +13,7 @@ import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from '../salon/thread_sidebar/community_brief'
 
-export default () => {
+export default function CommunityBrief() {
   const { logo, title, meta, subscribersCount } = useCommunity()
 
   const s = useSalon()

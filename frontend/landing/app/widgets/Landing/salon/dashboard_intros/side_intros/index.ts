@@ -8,7 +8,7 @@ type TProps = {
   color: TColorName
 }
 
-export default ({ color }: TProps) => {
+export default function useSalon({ color }: TProps) {
   const { cn, fg, bg, rainbow, vividDark, landingTitle } = useTwBelt()
 
   return {

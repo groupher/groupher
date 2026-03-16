@@ -4,7 +4,7 @@ export { cn } from '~/css'
 
 type TProps = { offsetRight: number; withLastUpdated: boolean }
 
-export default ({ offsetRight, withLastUpdated }: TProps) => {
+export default function useSalon({ offsetRight, withLastUpdated }: TProps) {
   const { cn, br, fg, hover } = useTwBelt()
 
   return {

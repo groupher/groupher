@@ -4,7 +4,7 @@ type TRes = {
   loaded: boolean
 }
 
-export default (): TRes => {
+export default function useLoaded(): TRes {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {

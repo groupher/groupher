@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.Model.CommentUserEmotion do
     struct
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> foreign_key_constraint(:omment_id)
+    |> foreign_key_constraint(:comment_id)
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:recived_user_id)
   end

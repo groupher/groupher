@@ -10,7 +10,7 @@ import Linker from '~/widgets/Linker'
 
 import useSalon from './salon'
 
-export default () => {
+export default function OauthHinter() {
   const s = useSalon()
 
   return (
