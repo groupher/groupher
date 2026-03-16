@@ -104,14 +104,8 @@ defmodule GroupherServer.CMS.Comments.Helper do
 
   @spec next_floor(map(), atom()) :: integer()
   def next_floor(article, _foreign_key) do
-    # 使用 article 的 next_floor 字段并原子递增，避免竞态条件
-    current_floor = article.meta.next_floor || 0
-    new_floor = current_floor + 1
-
-    # 原子更新 article 的 next_floor 字段
-    updated_meta = Map.merge(article.meta, %{next_floor: new_floor})
-    {:ok, _updated_article} = ORM.update_meta(article, updated_meta)
-
+    # 使用 ORM.inc_meta 函数原子递增 next_floor 字段，避免竞态条件
+    {:ok, _updated_article, new_floor} = ORM.inc_meta(article, :next_floor)
     new_floor
   end
 
