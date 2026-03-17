@@ -12,19 +12,19 @@ import PostViewer from './PostViewer'
 
 type TProps = {
   article: TArticle
-  mode?: 'lite' | 'full'
+  isFullView?: boolean
 }
 
-const Viewer: FC<TProps> = ({ article, mode = 'full' }) => {
+const Viewer: FC<TProps> = ({ article, isFullView = true }) => {
   const { meta } = article
 
   switch (meta.thread.toLowerCase()) {
     case 'changelog': {
-      return <ChangelogViewer mode={mode} />
+      return <ChangelogViewer isFullView={isFullView} />
     }
     default: {
       // post, job, etc..
-      return <PostViewer mode={mode} />
+      return <PostViewer isFullView={isFullView} />
     }
   }
 }

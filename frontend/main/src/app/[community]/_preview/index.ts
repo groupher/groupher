@@ -9,4 +9,4 @@ export {
 } from './hooks'
 export { default as PreviewCacheSync } from './PreviewCacheSync'
 export { default as PreviewHost } from './PreviewHost'
-export type { TPreviewCacheEntryBase, TPreviewIdentity } from './spec'
+export type { TPreviewCacheEntryBase, TPreviewIdentity, TPreviewPhase } from './spec'

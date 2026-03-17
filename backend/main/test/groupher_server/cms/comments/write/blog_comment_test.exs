@@ -193,6 +193,15 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       assert blog_comment.floor == 1
       assert blog_comment2.floor == 2
     end
+
+    test "create comment returns domain error when floor allocation fails", ~m(blog user)a do
+      blog = put_in(blog.meta.__struct__, nil)
+
+      {:error, reason} =
+        CMS.Comments.Helper.do_create_comment(mock_comment(), :blog_id, blog, user)
+
+      assert error_code(reason) == ecode(:update_fails)
+    end
   end
 
   describe "[article comment participator for blog]" do

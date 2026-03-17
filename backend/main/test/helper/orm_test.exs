@@ -141,6 +141,22 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert ret.upvotes_count == 1
     end
 
+    test "inc should return error for non-integer field", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:error, reason} = ORM.inc(post, :title)
+      assert error_code(reason) == ecode(:update_fails)
+    end
+
+    test "dec should return error for non-existent field", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:error, reason} = ORM.dec(post, :not_a_field)
+      assert error_code(reason) == ecode(:update_fails)
+    end
+
     test "dec should below 0", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
@@ -239,12 +255,21 @@ defmodule GroupherServer.Test.Helper.ORM do
       # 测试第一次递增
       {:ok, updated_post, new_floor} = ORM.inc_meta(post, :next_floor)
       assert new_floor == 1
+      assert updated_post.id == post.id
       assert updated_post.meta.next_floor == 1
 
       # 测试再次递增
       {:ok, updated_post, new_floor} = ORM.inc_meta(updated_post, :next_floor)
       assert new_floor == 2
       assert updated_post.meta.next_floor == 2
+    end
+
+    test "inc_meta should return error for non-integer meta field", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:error, reason} = ORM.inc_meta(post, :thread)
+      assert error_code(reason) == ecode(:update_fails)
     end
 
     test "inc_meta should return error for non-existent field", ~m(community user)a do

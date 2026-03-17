@@ -283,6 +283,16 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       assert changelog_comment.floor == 1
       assert changelog_comment2.floor == 2
     end
+
+    test "create comment returns domain error when floor allocation fails",
+         ~m(changelog user)a do
+      changelog = put_in(changelog.meta.__struct__, nil)
+
+      {:error, reason} =
+        CMS.Comments.Helper.do_create_comment(mock_comment(), :changelog_id, changelog, user)
+
+      assert error_code(reason) == ecode(:update_fails)
+    end
   end
 
   describe "[article comment participator for changelog]" do

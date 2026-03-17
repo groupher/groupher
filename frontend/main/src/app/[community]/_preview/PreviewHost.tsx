@@ -5,22 +5,20 @@ import { Fragment, type ReactNode, startTransition, useEffect, useRef, useState 
 import Drawer from '~/widgets/@Drawer'
 
 import { markPreviewPending, usePreviewCacheState } from './hooks'
-import type { TPreviewCacheEntryBase } from './spec'
+import type { TPreviewCacheEntryBase, TPreviewPhase } from './spec'
 
 type TProps<TEntry extends TPreviewCacheEntryBase> = {
   children: ReactNode
   resolvePreviewKey: (community?: string, id?: string) => string | null
-  renderCachedPreview: (entry: TEntry, mode: 'lite' | 'full') => ReactNode
+  renderCachedPreview: (entry: TEntry, phase: TPreviewPhase) => ReactNode
 }
 
-type TCachedPhase = 'cached-lite' | 'cached-full' | 'real'
-
-const resolveCachedPhase = (
+const resolvePreviewPhase = (
   hasCachedEntry: boolean,
   ready: boolean,
   showCachedFull: boolean,
-): TCachedPhase => {
-  if (!hasCachedEntry || ready) return 'real'
+): TPreviewPhase => {
+  if (!hasCachedEntry || ready) return 'live'
 
   return showCachedFull ? 'cached-full' : 'cached-lite'
 }
@@ -71,7 +69,7 @@ export default function PreviewHost<TEntry extends TPreviewCacheEntryBase>({
   const { entry: cachedEntry, ready } = usePreviewCacheState<TEntry>(previewKey)
   const lastPendingKeyRef = useRef<string | null>(null)
   const showCachedFull = useDeferredCachedFull(Boolean(cachedEntry) && !ready)
-  const phase = resolveCachedPhase(Boolean(cachedEntry), ready, showCachedFull)
+  const phase = resolvePreviewPhase(Boolean(cachedEntry), ready, showCachedFull)
 
   useEffect(() => {
     // Each open cycle should flip the matching key back to pending exactly once.
@@ -94,9 +92,9 @@ export default function PreviewHost<TEntry extends TPreviewCacheEntryBase>({
   // loading.tsx and preserves a single drawer owner.
   const displayNode =
     cachedEntry && !ready ? (
-      renderCachedPreview(cachedEntry, showCachedFull ? 'full' : 'lite')
+      renderCachedPreview(cachedEntry, phase)
     ) : (
-      <Fragment key={`${previewKey ?? activeSegment}:real`}>{children}</Fragment>
+      <Fragment key={`${previewKey ?? activeSegment}:live`}>{children}</Fragment>
     )
 
   return <Drawer resetKey={`${resetKey ?? activeSegment}:${phase}`}>{displayNode}</Drawer>

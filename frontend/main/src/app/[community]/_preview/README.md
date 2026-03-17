@@ -15,7 +15,7 @@ navigation semantics.
   - Marks the key as `ready` so the host can stop showing cached content
 - `PreviewHost.tsx`
   - Owns the single Drawer instance for a thread layout
-  - Chooses between `cached-lite`, `cached-full`, and `real` content
+  - Chooses between `cached-lite`, `cached-full`, and `live` content
   - Keeps cache-first behavior out of `loading.tsx`
 - `spec.d.ts`
   - Defines the shared preview cache entry contract
@@ -41,7 +41,7 @@ For `post`, that adapter is `post/PostPreviewAdapter.tsx` and it supplies:
 That keeps the shared host generic while allowing each thread to decide:
 
 - how preview keys are derived
-- how cache entries are rendered in `lite` and `full` mode
+  - how cache entries are rendered in each preview phase
 - which runtime tree is the thread's single UI source of truth
 
 ## Adding a New Thread

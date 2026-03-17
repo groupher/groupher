@@ -14,6 +14,9 @@ import useLogic from './useLogic'
 import Viewer from './Viewer'
 
 type TProps = TArticleLoad
+type TViewProps = {
+  isFullView?: boolean
+}
 
 const syncDrawerToHeader = (wrapper: HTMLDivElement) => {
   const container = wrapper.closest<HTMLElement>('[data-drawer-scroll-container]')
@@ -29,7 +32,9 @@ const syncDrawerToHeader = (wrapper: HTMLDivElement) => {
   container.scrollTop = Math.max(0, nextScrollTop)
 }
 
-export default function ArticleViewer({ mode = 'full' }: TProps & { mode?: 'lite' | 'full' }) {
+export default function ArticleViewer({
+  isFullView = true,
+}: TProps & TViewProps) {
   const s = useSalon()
   const { article } = useLogic()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
@@ -42,7 +47,7 @@ export default function ArticleViewer({ mode = 'full' }: TProps & { mode?: 'lite
     if (!wrapper) return
 
     // scrollTop=0 only resets the drawer container. The preview's readable start
-    // lives at DRAWER_HEAD, and cached-lite/full/real phases can shift where that
+    // lives at DRAWER_HEAD, and cached-lite/cached-full/live phases can shift where that
     // anchor ends up. Re-sync against the content anchor after each content mount.
     const scrollToHeader = () => syncDrawerToHeader(wrapper)
 
@@ -66,7 +71,7 @@ export default function ArticleViewer({ mode = 'full' }: TProps & { mode?: 'lite
   }, [article])
 
   useEffect(() => {
-    if (!article || mode !== 'full') {
+    if (!article || !isFullView) {
       setCommentsVisible(false)
       return
     }
@@ -90,7 +95,7 @@ export default function ArticleViewer({ mode = 'full' }: TProps & { mode?: 'lite
         window.cancelAnimationFrame(innerRaf)
       }
     }
-  }, [article?.id, article?.innerId, mode, article])
+  }, [article?.id, article?.innerId, isFullView, article])
 
   if (!article) return null
 
@@ -99,9 +104,9 @@ export default function ArticleViewer({ mode = 'full' }: TProps & { mode?: 'lite
       <div id={ANCHOR.DRAWER_HEAD} data-drawer-scroll-anchor className='w-full h-px' />
       <DrawerHeader />
       <div className='relative'>
-        <Viewer article={article} mode={mode} />
+        <Viewer article={article} isFullView={isFullView} />
 
-        {mode === 'full' && commentsVisible && (
+        {isFullView && commentsVisible && (
           <div className={s.comments}>
             <Comments />
           </div>

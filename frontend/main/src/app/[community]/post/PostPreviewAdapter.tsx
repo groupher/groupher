@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 
 import { THREAD } from '~/const/thread'
 
-import { getPreviewCacheKey, PreviewHost } from '../_preview'
+import { getPreviewCacheKey, PreviewHost, type TPreviewPhase } from '../_preview'
 import type { TPostPreviewCacheEntry } from './buildPreviewCacheEntry'
 import PreviewRuntime from './PreviewRuntime'
 
@@ -22,8 +22,8 @@ export default function PostPreviewAdapter({ children }: TProps) {
       resolvePreviewKey={(communitySlug, id) =>
         communitySlug && id ? getPreviewCacheKey(communitySlug, THREAD.POST, id) : null
       }
-      renderCachedPreview={(entry, mode) => (
-        <PreviewRuntime key={`${entry.key}:${mode}`} entry={entry} mode={mode} />
+      renderCachedPreview={(entry, phase: TPreviewPhase) => (
+        <PreviewRuntime key={`${entry.key}:${phase}`} entry={entry} phase={phase} />
       )}
     >
       {children}

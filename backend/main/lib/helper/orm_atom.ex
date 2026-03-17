@@ -17,8 +17,15 @@ defmodule Helper.ORMAtom do
   @default_community_meta CMS.Model.Embeds.CommunityMeta.default_meta()
   @default_comment_meta CMS.Model.Embeds.CommentMeta.default_meta()
 
+  defp update_error(message), do: {:error, {:update_fails, message}}
+
   @doc """
-  increase by 1 for given field
+  Increments a top-level integer field by `1`.
+
+  ## Examples
+
+      iex> ORMAtom.inc(article, :views)
+      {:ok, updated_article}
   """
   @spec inc(struct(), atom()) :: {:ok, struct()} | {:error, term()}
   def inc(queryable, field) when is_atom(field) do
@@ -26,7 +33,12 @@ defmodule Helper.ORMAtom do
   end
 
   @doc """
-  decrease by 1 for given field
+  Decrements a top-level integer field by `1` and never goes below `0`.
+
+  ## Examples
+
+      iex> ORMAtom.dec(article, :upvotes_count)
+      {:ok, updated_article}
   """
   @spec dec(struct(), atom()) :: {:ok, struct()} | {:error, term()}
   def dec(queryable, field) when is_atom(field) do
@@ -34,7 +46,12 @@ defmodule Helper.ORMAtom do
   end
 
   @doc """
-  atomically increment a value inside a JSONB meta field
+  Atomically increments an integer value inside a JSONB meta field.
+
+  ## Examples
+
+      iex> ORMAtom.inc_meta(article, :next_floor)
+      {:ok, updated_article, 1}
   """
   @spec inc_meta(struct(), atom()) :: {:ok, struct(), integer()} | {:error, term()}
   def inc_meta(queryable, field) when is_struct(queryable) and is_atom(field) do
@@ -44,35 +61,49 @@ defmodule Helper.ORMAtom do
 
     # 检查 meta 是否为 nil
     if is_nil(queryable.meta) do
-      {:error, {:update_fails, "Meta field is not initialized"}}
+      update_error("meta field is not initialized")
     else
-      # 检查字段是否存在于 meta 结构体中
-      meta_fields = queryable.meta.__struct__.__schema__(:fields)
-      if not Enum.member?(meta_fields, field) do
-        {:error, {:update_fails, "Field #{field} does not exist in meta"}}
+      if not function_exported?(queryable.meta.__struct__, :__schema__, 1) do
+        update_error("meta field must be an embedded schema")
       else
-        # 构建更新查询，使用 RETURNING 子句直接返回新值
-        update_query = 
-          from(q in schema_module, 
-            where: q.id == ^id,
-            update: [
-              set: [
-                meta: fragment("jsonb_set(meta, ARRAY[?], (COALESCE(meta->>?, '0')::int + 1)::text::jsonb)", ^field_name, ^field_name)
-              ]
-            ],
-            select: fragment("(meta->>?)::int", ^field_name)
-          )
+        meta_schema = queryable.meta.__struct__
+        meta_fields = meta_schema.__schema__(:fields)
 
-        # 执行更新并获取返回的新值
-        case Repo.update_all(update_query, []) do
-          {1, [new_val]} ->
-            # 更新内存中的结构
-            updated_struct = update_in(queryable.meta, fn meta ->
-              meta |> Map.put(field, new_val)
-            end)
-            {:ok, updated_struct, new_val}
-          {0, []} ->
-            {:error, :not_found}
+        if not Enum.member?(meta_fields, field) do
+          update_error("meta field #{field} does not exist")
+        else
+          if meta_schema.__schema__(:type, field) != :integer do
+            update_error("meta field #{field} must be integer")
+          else
+            # 构建更新查询，使用 RETURNING 子句直接返回新值
+            update_query =
+              from(q in schema_module,
+                where: q.id == ^id,
+                update: [
+                  set: [
+                    meta:
+                      fragment(
+                        "jsonb_set(meta, ARRAY[?], (COALESCE(meta->>?, '0')::int + 1)::text::jsonb)",
+                        ^field_name,
+                        ^field_name
+                      )
+                  ]
+                ],
+                select: fragment("(meta->>?)::int", ^field_name)
+              )
+
+            # 执行更新并获取返回的新值
+            case Repo.update_all(update_query, []) do
+              {1, [new_val]} ->
+                updated_queryable =
+                  put_in(queryable.meta, Map.put(queryable.meta, field, new_val))
+
+                {:ok, updated_queryable, new_val}
+
+              {0, []} ->
+                {:error, :not_found}
+            end
+          end
         end
       end
     end
@@ -112,6 +143,12 @@ defmodule Helper.ORMAtom do
         "tags" => ["elixir", "ecto"],
         "stats.visits" => 42
       })
+
+      # 通过 atom key 更新顶层 meta 字段
+      {:ok, updated} = update_meta(post, %{
+        is_comment_locked: true,
+        next_floor: 3
+      })
   """
   @spec update_meta(struct(), map() | struct()) :: {:ok, struct()} | {:error, term()}
   def update_meta(%{meta: nil} = queryable, changes) when is_map(changes) do
@@ -142,6 +179,17 @@ defmodule Helper.ORMAtom do
   end
 
   @spec fill_meta(struct()) :: {:ok, struct()} | {:error, Ecto.Changeset.t()}
+  @doc """
+  Fills the default embedded `meta` payload when it is currently `nil`.
+
+  ## Examples
+
+      iex> ORMAtom.fill_meta(user)
+      {:ok, user_with_meta}
+
+      iex> ORMAtom.fill_meta(article)
+      {:ok, article_with_meta}
+  """
   def fill_meta(%User{meta: nil} = user) do
     fill_default_meta(user, @default_user_meta)
   end
@@ -162,44 +210,61 @@ defmodule Helper.ORMAtom do
 
   defp update_counter(queryable, field, operation, opts \\ []) do
     schema_module = queryable.__struct__
-    table = schema_module.__schema__(:source)
 
-    prefix =
-      case schema_module.__schema__(:prefix) do
-        nil -> ""
-        prefix -> "#{prefix}."
-      end
+    case schema_field_type(schema_module, field) do
+      {:ok, :integer} ->
+        table = schema_module.__schema__(:source)
 
-    full_table = "#{prefix}#{table}"
-    id = queryable.id
-    safeguard = Keyword.get(opts, :safeguard, false)
+        prefix =
+          case schema_module.__schema__(:prefix) do
+            nil -> ""
+            prefix -> "#{prefix}."
+          end
 
-    operation_expr =
-      if safeguard do
-        "GREATEST(#{field} #{operation}, 0)"
-      else
-        "#{field} #{operation}"
-      end
+        full_table = "#{prefix}#{table}"
+        id = queryable.id
+        safeguard = Keyword.get(opts, :safeguard, false)
 
-    # SET #{field} = #{field} + 1
-    # SET #{field} = GREATEST(#{field} - 1, 0)
-    Repo.query(
-      """
-      UPDATE #{full_table}
-      SET #{field} = #{operation_expr}
-      WHERE id = $1
-      RETURNING #{field}
-      """,
-      [id]
-    )
-    |> case do
-      {:ok, %Postgrex.Result{rows: [[new_val]]}} ->
-        changeset = Ecto.Changeset.change(queryable, %{field => new_val})
-        updated = Ecto.Changeset.apply_changes(changeset)
-        {:ok, updated}
+        operation_expr =
+          if safeguard do
+            "GREATEST(#{field} #{operation}, 0)"
+          else
+            "#{field} #{operation}"
+          end
 
-      error ->
-        error
+        # SET #{field} = #{field} + 1
+        # SET #{field} = GREATEST(#{field} - 1, 0)
+        Repo.query(
+          """
+          UPDATE #{full_table}
+          SET #{field} = #{operation_expr}
+          WHERE id = $1
+          RETURNING #{field}
+          """,
+          [id]
+        )
+        |> case do
+          {:ok, %Postgrex.Result{rows: [[new_val]]}} ->
+            changeset = Ecto.Changeset.change(queryable, %{field => new_val})
+            updated = Ecto.Changeset.apply_changes(changeset)
+            {:ok, updated}
+
+          error ->
+            error
+        end
+
+      {:ok, _type} ->
+        update_error("schema field #{field} must be integer")
+
+      {:error, :field_not_found} ->
+        update_error("schema field #{field} does not exist")
+    end
+  end
+
+  defp schema_field_type(schema_module, field) do
+    case schema_module.__schema__(:type, field) do
+      nil -> {:error, :field_not_found}
+      type -> {:ok, type}
     end
   end
 

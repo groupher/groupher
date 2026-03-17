@@ -16,10 +16,10 @@ import FixedHeader from './FixedHeader'
 import Header from './Header'
 
 type TProps = {
-  mode?: 'lite' | 'full'
+  isFullView?: boolean
 }
 
-export default function ChangelogViewer({ mode = 'full' }: TProps) {
+export default function ChangelogViewer({ isFullView = true }: TProps) {
   const s = useSalon()
 
   const { loading, article } = useLogic()
@@ -46,7 +46,7 @@ export default function ChangelogViewer({ mode = 'full' }: TProps) {
 
   return (
     <>
-      {mode === 'full' && (
+      {isFullView && (
         <FixedHeader article={article} visible={fixedHeaderVisible} footerVisible={footerVisible} />
       )}
       <Header article={article} />
@@ -55,7 +55,7 @@ export default function ChangelogViewer({ mode = 'full' }: TProps) {
         <div className={s.subTitle}>{article.innerId}</div>
       </div>
       <ArticleInfo article={article} />
-      {mode === 'full' && (
+      {isFullView && (
         <ViewportTracker
           onEnter={() => {
             if (!trackerReady) return
@@ -74,8 +74,8 @@ export default function ChangelogViewer({ mode = 'full' }: TProps) {
         </div>
       )}
 
-      {mode === 'full' && <ArticleFooter />}
-      {mode === 'full' && (
+      {isFullView && <ArticleFooter />}
+      {isFullView && (
         <ViewportTracker
           onEnter={() => {
             if (!trackerReady) return
@@ -87,7 +87,7 @@ export default function ChangelogViewer({ mode = 'full' }: TProps) {
           }}
         />
       )}
-      {mode === 'full' && (
+      {isFullView && (
         <div className={cn(s.gotoTop, fixedHeaderVisible ? 'visible' : 'invisible')}>
           <GotoTop type='drawer' />
         </div>
