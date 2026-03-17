@@ -110,7 +110,7 @@ defmodule Helper.ORMAtom do
   end
 
   @doc """
-  更新模型的 meta JSONB 字段（部分更新）。
+  更新模型的 meta JSONB 字段（部分更新，仅允许更新 meta schema 中已定义的字段路径）。
 
   ## 参数
 
@@ -118,7 +118,7 @@ defmodule Helper.ORMAtom do
     - Ecto 结构体（如 `%Post{}`）
     - Schema 模块（如 `Post`，此时需要传入包含 `:id` 的 updates）
 
-  - `updates`: 要更新的字段映射，支持嵌套路径（用点号分隔）
+  - `updates`: 要更新的字段映射，仅支持 meta schema 中已定义的字段路径
 
   ## 返回值
 
@@ -133,15 +133,15 @@ defmodule Helper.ORMAtom do
       # 通过结构体更新
       post = Repo.get!(Post, 1)
       {:ok, updated} = update_meta(post, %{
-        "views" => 100,
-        "author.name" => "张伟"  # 嵌套字段更新
+        reported_count: 100,
+        is_comment_locked: true
       })
 
       # 通过模块更新（需在updates中包含id）
       {:ok, updated} = update_meta(Post, %{
         "id" => 1,
-        "tags" => ["elixir", "ecto"],
-        "stats.visits" => 42
+        "reported_user_ids" => [1, 2],
+        "reported_count" => 42
       })
 
       # 通过 atom key 更新顶层 meta 字段
@@ -169,7 +169,7 @@ defmodule Helper.ORMAtom do
     preloaded = get_preloaded(queryable)
 
     with {:ok, schema_module, id} <- extract_schema_and_id(queryable),
-         {:ok, dynamic_updates} <- build_dynamic_updates(changes),
+         {:ok, dynamic_updates} <- build_dynamic_updates(queryable, changes),
          {:ok, primary_key} <- get_primary_key(schema_module),
          {:ok, updated} <- execute_update(schema_module, primary_key, id, dynamic_updates) do
       {:ok, merge_preloaded(updated, preloaded)}
@@ -314,17 +314,49 @@ defmodule Helper.ORMAtom do
     end
   end
 
-  defp build_dynamic_updates(changes) do
+  defp build_dynamic_updates(queryable, changes) do
     base_dynamic = dynamic([r], r.meta)
 
-    dynamic_updates =
-      Enum.reduce(changes, base_dynamic, fn {key, value}, acc ->
-        path = String.split(to_string(key), ".")
-        json_value = prepare_json_value(value)
-        dynamic([r], fragment("jsonb_set(?, ?, ?)", ^acc, ^path, ^json_value))
-      end)
+    with {:ok, validated_changes} <- validate_meta_changes(queryable, changes) do
+      dynamic_updates =
+        Enum.reduce(validated_changes, base_dynamic, fn {path, value}, acc ->
+          json_value = prepare_json_value(value)
+          dynamic([r], fragment("jsonb_set(?, ?, ?)", ^acc, ^path, ^json_value))
+        end)
 
-    {:ok, dynamic_updates}
+      {:ok, dynamic_updates}
+    end
+  end
+
+  defp validate_meta_changes(queryable, changes) do
+    Enum.reduce_while(changes, {:ok, []}, fn {key, value}, {:ok, acc} ->
+      path = String.split(to_string(key), ".")
+
+      case validate_meta_path(queryable, path) do
+        :ok -> {:cont, {:ok, [{path, value} | acc]}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, validated_changes} -> {:ok, Enum.reverse(validated_changes)}
+      error -> error
+    end
+  end
+
+  defp validate_meta_path(%{meta: meta}, [field_name]) when is_struct(meta) do
+    field = String.to_existing_atom(field_name)
+
+    if field in meta.__struct__.__schema__(:fields) do
+      :ok
+    else
+      update_error("meta field path #{field_name} does not exist")
+    end
+  rescue
+    ArgumentError -> update_error("meta field path #{field_name} does not exist")
+  end
+
+  defp validate_meta_path(_queryable, path) when is_list(path) do
+    update_error("meta field path #{Enum.join(path, ".")} is not defined in schema")
   end
 
   defp execute_update(schema_module, primary_key, id, dynamic_updates) do
@@ -350,6 +382,6 @@ defmodule Helper.ORMAtom do
   defp prepare_json_value(value) when is_boolean(value), do: value
   defp prepare_json_value(value) when is_list(value), do: value
   defp prepare_json_value(value) when is_struct(value, DateTime), do: value
-  defp prepare_json_value(value) when is_map(value), do: Jason.encode!(value)
+  defp prepare_json_value(value) when is_map(value), do: value
   defp prepare_json_value(value), do: Jason.encode!(value)
 end

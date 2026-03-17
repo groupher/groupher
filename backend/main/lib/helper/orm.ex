@@ -47,7 +47,7 @@ defmodule Helper.ORM do
       iex> ORM.update_meta(user, %{follower_user_ids: [1, 2]})
       {:ok, updated_user}
 
-      iex> ORM.update_meta(article, %{"stats.visits" => 42})
+      iex> ORM.update_meta(article, %{reported_count: 42})
       {:ok, updated_article}
   """
   defdelegate update_meta(queryable, changes), to: ORMAtom

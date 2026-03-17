@@ -245,6 +245,96 @@ defmodule GroupherServer.Test.Helper.ORM do
 
       assert ret.meta.last_active_at == post.updated_at
     end
+
+    test "update meta should preserve concurrent updates on different paths",
+         ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      parent = self()
+
+      task1 =
+        Task.async(fn ->
+          send(parent, {:task_ready, self()})
+
+          receive do
+            :go -> ORM.update_meta(post, %{"last_active_at" => post.inserted_at})
+          end
+        end)
+
+      task2 =
+        Task.async(fn ->
+          send(parent, {:task_ready, self()})
+
+          receive do
+            :go -> ORM.update_meta(post, %{is_comment_locked: true})
+          end
+        end)
+
+      for _ <- 1..2 do
+        assert_receive {:task_ready, pid}
+        send(pid, :go)
+      end
+
+      assert {:ok, _} = Task.await(task1, 5_000)
+      assert {:ok, _} = Task.await(task2, 5_000)
+
+      {:ok, fresh_post} = ORM.find(Post, post.id)
+
+      assert fresh_post.meta.is_comment_locked == true
+      assert fresh_post.meta.last_active_at == post.inserted_at
+    end
+
+    test "update meta follows last write wins on same path", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      parent = self()
+      first_time = post.inserted_at
+      second_time = DateTime.add(post.inserted_at, 60, :second)
+
+      task1 =
+        Task.async(fn ->
+          send(parent, {:task_ready, self()})
+
+          receive do
+            :go -> ORM.update_meta(post, %{"last_active_at" => first_time})
+          end
+        end)
+
+      task2 =
+        Task.async(fn ->
+          send(parent, {:task_ready, self()})
+
+          receive do
+            :go -> ORM.update_meta(post, %{"last_active_at" => second_time})
+          end
+        end)
+
+      ready_pids =
+        for _ <- 1..2 do
+          assert_receive {:task_ready, pid}
+          pid
+        end
+
+      Enum.each(ready_pids, &send(&1, :go))
+
+      assert {:ok, _} = Task.await(task1, 5_000)
+      assert {:ok, _} = Task.await(task2, 5_000)
+
+      {:ok, fresh_post} = ORM.find(Post, post.id)
+
+      assert fresh_post.meta.last_active_at in [first_time, second_time]
+    end
+
+    test "update meta should reject nested paths not defined in schema", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:error, reason} = ORM.update_meta(post, %{"stats.views" => 42})
+
+      assert error_code(reason) == ecode(:update_fails)
+    end
   end
 
   describe "inc_meta" do
