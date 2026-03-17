@@ -288,7 +288,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert fresh_post.meta.last_active_at == post.inserted_at
     end
 
-    test "update meta follows last write wins on same path", ~m(community user)a do
+    test "update meta preserves one complete winner on same path", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
@@ -328,6 +328,24 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, fresh_post} = ORM.find(Post, post.id)
 
       assert fresh_post.meta.last_active_at in [first_time, second_time]
+    end
+
+    test "update meta follows last write wins for sequential writes", ~m(community user)a do
+      post_attrs = mock_attrs(:post, %{community_id: community.id})
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      first_time = post.inserted_at
+      second_time = DateTime.add(post.inserted_at, 60, :second)
+
+      assert {:ok, _} = ORM.update_meta(post, %{"last_active_at" => first_time})
+
+      {:ok, post_after_first} = ORM.find(Post, post.id)
+
+      assert {:ok, _} = ORM.update_meta(post_after_first, %{"last_active_at" => second_time})
+
+      {:ok, fresh_post} = ORM.find(Post, post.id)
+
+      assert fresh_post.meta.last_active_at == second_time
     end
 
     test "update meta should reject nested paths not defined in schema", ~m(community user)a do
