@@ -271,10 +271,13 @@ defmodule GroupherServer.Test.Helper.ORM do
           end
         end)
 
-      for _ <- 1..2 do
-        assert_receive {:task_ready, pid}
-        send(pid, :go)
-      end
+      ready_pids =
+        for _ <- 1..2 do
+          assert_receive {:task_ready, pid}
+          pid
+        end
+
+      Enum.each(ready_pids, &send(&1, :go))
 
       assert {:ok, _} = Task.await(task1, 5_000)
       assert {:ok, _} = Task.await(task2, 5_000)

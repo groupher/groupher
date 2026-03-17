@@ -194,7 +194,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert doc_comment2.floor == 2
     end
 
-    test "create comment returns domain error when floor allocation fails", ~m(doc user)a do
+    test "comment helper returns domain error when floor allocation fails", ~m(doc user)a do
       doc = put_in(doc.meta.__struct__, nil)
 
       {:error, reason} =
