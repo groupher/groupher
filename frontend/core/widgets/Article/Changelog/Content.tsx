@@ -1,49 +1,38 @@
 /*
  *
- * general ArticleContent for Changelog, Job, Blog, Radar ..
+ * general ArticleContent for Post, Job, Blog, Radar ..
  *
  */
 
-import { type FC, lazy, Suspense, useRef } from 'react'
+import { useRef } from 'react'
 
-import type { TChangelog } from '~/spec'
-
+import useArticle from '~/hooks/useArticle'
 import ArtimentBody from '~/widgets/ArtimentBody'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-import CommentsStoreProvider from '~/stores/comments/provider'
 // import ViewportTracker from '~/widgets/ViewportTracker'
 
-import useSalon from '../salon/changelog/content'
+import Comments from '~/containers/unit/Comments'
+import useSalon from '../salon/post/content'
 
-const Comments = lazy(() => import('~/containers/unit/Comments'))
-
-type TProps = {
-  article: TChangelog
-}
-
-const Content: FC<TProps> = ({ article }) => {
+export default function Content() {
+  const ref = useRef(null)
+  const { article } = useArticle()
   const s = useSalon()
 
-  const ref = useRef(null)
+  if (!article) {
+    return <h1>Error article</h1>
+  }
 
   return (
     <div className={s.wrapper}>
       <div className={s.inner}>
-        <div className={s.article} ref={ref}>
+        <div ref={ref} className={s.article}>
           {/* {!!article.linkAddr && <Linker src={article.linkAddr} bottom={22} />} */}
           <ArtimentBody document={article.document} />
         </div>
-
         <div className={s.comments}>
-          <Suspense fallback={<LavaLampLoading />}>
-            <CommentsStoreProvider>
-              <Comments />
-            </CommentsStoreProvider>
-          </Suspense>
+          <Comments />
         </div>
       </div>
     </div>
   )
 }
-
-export default Content

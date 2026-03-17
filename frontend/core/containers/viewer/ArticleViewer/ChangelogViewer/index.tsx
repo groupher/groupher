@@ -1,0 +1,97 @@
+/*
+ * ArticleViewer
+ */
+
+import { useEffect, useState } from 'react'
+
+import ArticleFooter from '~/widgets/ArticleFooter'
+import ArticleBody from '~/widgets/ArtimentBody'
+import GotoTop from '~/widgets/GotoTop'
+import { ArticleContentLoading } from '~/widgets/Loading'
+import ViewportTracker from '~/widgets/ViewportTracker'
+import useSalon, { cn } from '../salon/changelog_viewer'
+import useLogic from '../useLogic'
+import ArticleInfo from './ArticleInfo'
+import FixedHeader from './FixedHeader'
+import Header from './Header'
+
+type TProps = {
+  mode?: 'lite' | 'full'
+}
+
+export default function ChangelogViewer({ mode = 'full' }: TProps) {
+  const s = useSalon()
+
+  const { loading, article } = useLogic()
+
+  const [fixedHeaderVisible, setFixedHeaderVisible] = useState(false)
+  const [footerVisible, setFooterVisible] = useState(false)
+  const [trackerReady, setTrackerReady] = useState(false)
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    setTrackerReady(false)
+    setFixedHeaderVisible(false)
+    setFooterVisible(false)
+
+    const raf = window.requestAnimationFrame(() => setTrackerReady(true))
+    return () => window.cancelAnimationFrame(raf)
+  }, [article.innerId])
+
+  const hideFixedHeader = () => setFixedHeaderVisible(false)
+  const showFixedHeader = () => setFixedHeaderVisible(true)
+
+  const hideFooter = () => setFooterVisible(false)
+  const showFooter = () => setFooterVisible(true)
+
+  return (
+    <>
+      {mode === 'full' && (
+        <FixedHeader article={article} visible={fixedHeaderVisible} footerVisible={footerVisible} />
+      )}
+      <Header article={article} />
+      <div className={s.title}>
+        <div className={s.titleText}>{article.title}</div>
+        <div className={s.subTitle}>{article.innerId}</div>
+      </div>
+      <ArticleInfo article={article} />
+      {mode === 'full' && (
+        <ViewportTracker
+          onEnter={() => {
+            if (!trackerReady) return
+            hideFixedHeader()
+          }}
+          onLeave={() => {
+            if (!trackerReady) return
+            showFixedHeader()
+          }}
+        />
+      )}
+      {loading && <ArticleContentLoading num={1} top={15} bottom={30} left={-25} />}
+      {!loading && (
+        <div className={s.bodyWrapper}>
+          <ArticleBody document={article.document} />
+        </div>
+      )}
+
+      {mode === 'full' && <ArticleFooter />}
+      {mode === 'full' && (
+        <ViewportTracker
+          onEnter={() => {
+            if (!trackerReady) return
+            showFooter()
+          }}
+          onLeave={() => {
+            if (!trackerReady) return
+            hideFooter()
+          }}
+        />
+      )}
+      {mode === 'full' && (
+        <div className={cn(s.gotoTop, fixedHeaderVisible ? 'visible' : 'invisible')}>
+          <GotoTop type='drawer' />
+        </div>
+      )}
+    </>
+  )
+}
