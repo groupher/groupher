@@ -5,6 +5,7 @@ import ViewportTracker from '~/widgets/ViewportTracker'
 import useSalon from '../salon/post'
 import Content from './Content'
 import Digest from './Digest'
+import SideInfo from './SideInfo'
 
 export default function Changelog() {
   const s = useSalon()
@@ -17,7 +18,7 @@ export default function Changelog() {
           <Digest />
           <Content />
         </div>
-        <h2>Side Info for Changelog</h2>
+        <SideInfo />
       </div>
       <ViewportTracker onEnter={() => setInViewport(true)} onLeave={() => setInViewport(false)} />
     </>

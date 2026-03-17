@@ -13,7 +13,7 @@ type TProps = {
 export default async function ArticleContent({ community, innerId }: TProps) {
   const [changelog, pagedComments] = await Promise.all([
     getChangelog(community, innerId),
-    getPagedComments(community, innerId),
+    getPagedComments(community, innerId, 1, THREAD.CHANGELOG),
   ])
 
   const entry = buildPreviewCacheEntry({
