@@ -22,7 +22,7 @@ export default function ChangelogPreviewAdapter({ children }: TProps) {
       resolvePreviewKey={(communitySlug, id) =>
         communitySlug && id ? getPreviewCacheKey(communitySlug, THREAD.CHANGELOG, id) : null
       }
-      renderCachedPreview={(entry, phase: TPreviewPhase) => (
+      renderPreview={(entry, phase: TPreviewPhase) => (
         <PreviewRuntime key={`${entry.key}:${phase}`} entry={entry} phase={phase} />
       )}
     >

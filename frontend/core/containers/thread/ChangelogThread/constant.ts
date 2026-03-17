@@ -9,19 +9,19 @@ export const TAGS_MODE = {
 
 export const TABS_MODE_OPTIONS = [
   {
-    title: '全部',
+    title: 'changelog.tab.all',
     slug: TAGS_MODE.ALL,
   },
   {
-    title: '标签',
+    title: 'changelog.tab.tag',
     slug: TAGS_MODE.TAG,
   },
   {
-    title: '时间',
+    title: 'changelog.tab.time',
     slug: TAGS_MODE.TIME,
   },
   {
-    title: '版本',
+    title: 'changelog.tab.version',
     slug: TAGS_MODE.VERSION,
   },
 ]

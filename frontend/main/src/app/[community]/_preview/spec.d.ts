@@ -4,8 +4,6 @@ export type TPreviewIdentity = {
   innerId: string
 }
 
-export type TPreviewPhase = 'cached-lite' | 'cached-full' | 'live'
-
 export type TPreviewCacheEntryBase = TPreviewIdentity & {
   key: string
   cachedAt: number
