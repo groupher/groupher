@@ -11,6 +11,7 @@ import type { TArticle } from '~/spec'
 import useCommunity from '~/hooks/useCommunity'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
+import { THREAD } from '~/const/thread'
 import ArticleCatState from '~/widgets/ArticleCatState'
 import TagsList from '~/widgets/TagsList'
 
@@ -35,7 +36,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <h4
         className={s.title}
       >
-        <Link href={`/${slug}/${article.meta.thread.toLowerCase()}/${article.innerId}`} scroll={false}>
+        <Link href={`/${slug}/${THREAD.POST}/${article.innerId}`} scroll={false}>
           {title}
         </Link>
       </h4>

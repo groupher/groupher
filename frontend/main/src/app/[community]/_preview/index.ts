@@ -1,3 +1,5 @@
+export type { TPreviewPhase } from './constant'
+export { isLitePreviewPhase, PREVIEW_PHASE } from './constant'
 export { getPreviewCacheKey } from './helper'
 export {
   getPreviewCacheEntry,

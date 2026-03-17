@@ -32,7 +32,6 @@ const SimpleLayout: FC<TProps> = ({ article }) => {
       <div className={s.dateTime}>
         <ReadableDate date={article.insertedAt} withTime={false} />
       </div>
-
       <div className={s.main}>
         <Link
           href={`/${slug}/${THREAD.CHANGELOG}/${article.innerId}`}

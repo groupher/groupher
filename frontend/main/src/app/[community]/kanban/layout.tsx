@@ -1,8 +1,9 @@
 import { THREAD } from '~/const/thread'
 import { getGroupedKanbanPosts } from '~/providers/ssr'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
+import PostPreviewAdapter from '../post/PostPreviewAdapter'
 
-export default async ({ children, params }) => {
+export default async ({ children, previewer, params }) => {
   const params$ = await params
 
   const groupedKanbanPosts = await getGroupedKanbanPosts(params$.community)
@@ -16,5 +17,10 @@ export default async ({ children, params }) => {
     thread: THREAD.KANBAN,
   }
 
-  return <ArticleListStoreProvider initData={initData}>{children}</ArticleListStoreProvider>
+  return (
+    <ArticleListStoreProvider initData={initData}>
+      {children}
+      <PostPreviewAdapter>{previewer}</PostPreviewAdapter>
+    </ArticleListStoreProvider>
+  )
 }

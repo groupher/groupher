@@ -7,16 +7,18 @@ navigation semantics.
 ## Responsibilities
 
 - `helper.ts`
-  - Stores browser-memory preview snapshots keyed by `community:id`
-  - Tracks whether the current key is still waiting for the real route payload
-  - Exposes a small external-store bridge for client hosts
+  - Builds browser-memory preview keys as `community:thread:id`
 - `PreviewCacheSync.tsx`
-  - Writes the resolved route payload back into browser memory
+  - Writes the intercepted route's resolved payload back into browser memory
   - Marks the key as `ready` so the host can stop showing cached content
 - `PreviewHost.tsx`
   - Owns the single Drawer instance for a thread layout
-  - Chooses between `cached-lite`, `cached-full`, and `real` content
+  - Chooses between `cached-lite`, `cached-full`, and `live` phases
   - Keeps cache-first behavior out of `loading.tsx`
+- `hooks.ts`
+  - Stores browser-memory preview snapshots keyed by `community:thread:id`
+  - Tracks whether the current key is still waiting for the real route payload
+  - Exposes a small external-store bridge for client hosts
 - `spec.d.ts`
   - Defines the shared preview cache entry contract
 
@@ -36,12 +38,12 @@ Each thread should provide a thin client adapter around the shared host.
 For `post`, that adapter is `post/PostPreviewAdapter.tsx` and it supplies:
 
 - `resolvePreviewKey(community, id)`
-- `renderCachedPreview(entry, mode)`
+- `renderPreview(entry, phase)`
 
 That keeps the shared host generic while allowing each thread to decide:
 
 - how preview keys are derived
-- how cache entries are rendered in `lite` and `full` mode
+- how cache entries are rendered in each preview phase
 - which runtime tree is the thread's single UI source of truth
 
 ## Adding a New Thread
@@ -50,7 +52,7 @@ That keeps the shared host generic while allowing each thread to decide:
 2. Create a thin `<ThreadName>PreviewAdapter.tsx>` client wrapper next to the
    thread route
 3. Reuse `PreviewHost` from this directory
-4. Provide thread-specific `resolvePreviewKey` and `renderCachedPreview`
+4. Provide thread-specific `resolvePreviewKey` and `renderPreview`
 5. Build the thread's cache entry from its own route data builder
 6. Reuse `PreviewCacheSync` to mark the route payload as ready
 7. Verify:
@@ -62,6 +64,6 @@ That keeps the shared host generic while allowing each thread to decide:
 
 ## Current Scope
 
-The shared framework is currently validated only by `post`. Other threads such
-as `changelog`, `kanban`, and `doc` should be migrated one at a time after
-their preview/detail semantics are confirmed.
+The shared framework is currently used by `post` and `changelog`. Other threads
+such as `kanban` and `doc` should be migrated one at a time after their
+preview/detail semantics are confirmed.

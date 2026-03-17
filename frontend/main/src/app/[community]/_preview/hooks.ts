@@ -92,8 +92,8 @@ export const setPreviewCacheEntry = <
 >(
   entry: TEntry,
 ): void => {
-  prunePreviewCacheIfNeeded()
   previewCache.set(entry.key, entry)
+  prunePreviewCacheIfNeeded()
   emit()
 }
 

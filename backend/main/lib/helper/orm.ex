@@ -46,6 +46,9 @@ defmodule Helper.ORM do
 
       iex> ORM.update_meta(user, %{follower_user_ids: [1, 2]})
       {:ok, updated_user}
+
+      iex> ORM.update_meta(article, %{reported_count: 42})
+      {:ok, updated_article}
   """
   defdelegate update_meta(queryable, changes), to: ORMAtom
 
@@ -70,7 +73,7 @@ defmodule Helper.ORM do
   defdelegate dec(queryable, field), to: ORMAtom
 
   @doc """
-  Atomically increments a value inside a JSONB meta field and returns the updated struct and new value.
+  Atomically increments an integer value inside a JSONB meta field and returns the updated struct and new value.
 
   ## Examples
 
@@ -86,6 +89,9 @@ defmodule Helper.ORM do
 
       iex> ORM.fill_meta(community)
       {:ok, community_with_default_meta}
+
+      iex> ORM.fill_meta(user)
+      {:ok, user_with_meta}
   """
   defdelegate fill_meta(queryable), to: ORMAtom
 

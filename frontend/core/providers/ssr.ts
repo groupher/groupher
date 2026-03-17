@@ -158,16 +158,16 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
   return data.pagedCommunityTags.entries
 }
 
-export const getPost = async (community: string, id: string): Promise<TPost | null> => {
+export const getPost = async (community: string, id: string, thread: TThread = THREAD.POST): Promise<TPost | null> => {
   'use cache'
   cacheLife('minutes')
 
-  // cacheTag(CACHE_TAG.articlesCache(community, THREAD.POST))
+  // cacheTag(CACHE_TAG.articlesCache(community, thread))
   const response = await gqFetch(P.post, {
     article: {
       innerId: id,
       community,
-      thread: toGqlThread(THREAD.POST) || THREAD.POST.toUpperCase(),
+      thread: toGqlThread(thread) || thread.toUpperCase(),
     },
     userHasLogin: false,
   })
@@ -183,10 +183,36 @@ export const getPost = async (community: string, id: string): Promise<TPost | nu
   return data.post
 }
 
+export const getChangelog = async (community: string, id: string): Promise<TPost | null> => {
+  'use cache'
+  cacheLife('minutes')
+
+  // cacheTag(CACHE_TAG.articlesCache(community, THREAD.CHANGELOG))
+  const response = await gqFetch(P.changelog, {
+    article: {
+      innerId: id,
+      community,
+      thread: toGqlThread(THREAD.CHANGELOG) || THREAD.CHANGELOG.toUpperCase(),
+    },
+    userHasLogin: false,
+  })
+
+  const { data, errors } = await response.json()
+
+  if (errors) {
+    // console.log('## error in fetching', P.community)
+    console.log('## error details', errors)
+    return null
+  }
+
+  return data.changelog
+}
+
 export const getPagedComments = async (
   community: string,
   id: string,
   page = 1,
+  thread: TThread = THREAD.POST,
 ): Promise<TPagedComments | null> => {
   'use cache'
   cacheLife('minutes')
@@ -195,7 +221,7 @@ export const getPagedComments = async (
     article: {
       innerId: id,
       community,
-      thread: toGqlThread(THREAD.POST) || THREAD.POST.toUpperCase(),
+      thread: toGqlThread(thread) || thread.toUpperCase(),
     },
     mode: 'REPLIES',
     filter: { page, size: 30 },

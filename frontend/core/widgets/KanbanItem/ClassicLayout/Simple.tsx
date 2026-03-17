@@ -11,6 +11,7 @@ import type { TArticle } from '~/spec'
 import useCommunity from '~/hooks/useCommunity'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
+import { THREAD } from '~/const/thread'
 
 import { mockTags, mockUsers } from '~/mock'
 import { getRandomInt } from '~/helper'
@@ -48,9 +49,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <button
         type='button'
         className={s.title}
-        onClick={() =>
-          router.push(`/${slug}/${article.meta.thread.toLowerCase()}/${article.innerId}`, { scroll: false })
-        }
+        onClick={() => router.push(`/${slug}/${THREAD.POST}/${article.innerId}`, { scroll: false })}
       >
         {article.title}
       </button>

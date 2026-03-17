@@ -5,12 +5,15 @@
  */
 
 import { type FC, memo, useState, useEffect } from 'react'
+import Link from 'next/link'
 
 import type { TArticle } from '~/spec'
+import useCommunity from '~/hooks/useCommunity'
 
 import { mockTags, mockUsers } from '~/mock'
 import { getRandomInt } from '~/helper'
 import { UPVOTE_LAYOUT } from '~/const/layout'
+import { THREAD } from '~/const/thread'
 
 import ArticleCatState from '~/widgets/ArticleCatState'
 import Upvote from '~/widgets/Upvote'
@@ -24,6 +27,7 @@ type TProps = {
 
 const KanbanItem: FC<TProps> = ({ article }) => {
   const s = useSalon()
+  const { slug } = useCommunity()
 
   const [titleIdx, setTitleIdx] = useState(0)
 
@@ -38,7 +42,9 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <div className={s.header}>
         <TagsList items={[tags[titleIdx]]} />
       </div>
-      <div className={s.title}>{article.title}</div>
+      <Link href={`/${slug}/${THREAD.POST}/${article.innerId}`} scroll={false} className={s.title}>
+        {article.title}
+      </Link>
       <div className={s.desc}>{article.digest}</div>
       <div className={s.footer}>
         <Upvote

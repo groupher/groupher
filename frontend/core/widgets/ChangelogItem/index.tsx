@@ -1,8 +1,7 @@
 import type { FC } from 'react'
-
-import type { TChangelog } from '~/spec'
 import { CHANGELOG_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
+import type { TChangelog } from '~/spec'
 
 import ClassicLayout from './ClassicLayout'
 import SimpleLayout from './SimpleLayout'

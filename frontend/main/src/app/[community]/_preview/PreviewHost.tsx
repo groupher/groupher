@@ -1,28 +1,37 @@
 'use client'
 
 import { useParams, useSelectedLayoutSegment } from 'next/navigation'
-import { Fragment, type ReactNode, startTransition, useEffect, useRef, useState } from 'react'
+import {
+  Fragment,
+  type ReactNode,
+  startTransition,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import Drawer from '~/widgets/@Drawer'
-
+import type { TPreviewPhase } from './constant'
+import { PREVIEW_PHASE } from './constant'
 import { markPreviewPending, usePreviewCacheState } from './hooks'
 import type { TPreviewCacheEntryBase } from './spec'
 
 type TProps<TEntry extends TPreviewCacheEntryBase> = {
   children: ReactNode
   resolvePreviewKey: (community?: string, id?: string) => string | null
-  renderCachedPreview: (entry: TEntry, mode: 'lite' | 'full') => ReactNode
+  renderPreview: (entry: TEntry, phase: TPreviewPhase) => ReactNode
 }
 
-type TCachedPhase = 'cached-lite' | 'cached-full' | 'real'
+const resolveParamValue = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value)
 
-const resolveCachedPhase = (
+const resolvePreviewPhase = (
   hasCachedEntry: boolean,
   ready: boolean,
   showCachedFull: boolean,
-): TCachedPhase => {
-  if (!hasCachedEntry || ready) return 'real'
+): TPreviewPhase => {
+  if (!hasCachedEntry || ready) return PREVIEW_PHASE.LIVE
 
-  return showCachedFull ? 'cached-full' : 'cached-lite'
+  return showCachedFull ? PREVIEW_PHASE.CACHED_FULL : PREVIEW_PHASE.CACHED_LITE
 }
 
 // Cached reopen favors a light first paint, then promotes to the full cached
@@ -58,22 +67,28 @@ const useDeferredCachedFull = (enabled: boolean) => {
   return showCachedFull
 }
 
-export default function PreviewHost<TEntry extends TPreviewCacheEntryBase>({
-  children,
-  resolvePreviewKey,
-  renderCachedPreview,
-}: TProps<TEntry>) {
+const usePreviewRouteState = <TEntry extends TPreviewCacheEntryBase>(
+  resolvePreviewKey: (community?: string, id?: string) => string | null,
+) => {
   const activeSegment = useSelectedLayoutSegment('previewer')
   const params = useParams<{ community?: string | string[]; id?: string | string[] }>()
-  const community = Array.isArray(params.community) ? params.community[0] : params.community
-  const resetKey = Array.isArray(params.id) ? params.id[0] : params.id
-  const previewKey = resolvePreviewKey(community, resetKey)
-  const { entry: cachedEntry, ready } = usePreviewCacheState<TEntry>(previewKey)
-  const lastPendingKeyRef = useRef<string | null>(null)
-  const showCachedFull = useDeferredCachedFull(Boolean(cachedEntry) && !ready)
-  const phase = resolveCachedPhase(Boolean(cachedEntry), ready, showCachedFull)
+  const community = resolveParamValue(params.community)
+  const id = resolveParamValue(params.id)
+  const previewKey = resolvePreviewKey(community, id)
+  const cacheState = usePreviewCacheState<TEntry>(previewKey)
 
-  useEffect(() => {
+  return {
+    activeSegment,
+    id,
+    previewKey,
+    ...cacheState,
+  }
+}
+
+const useMarkPreviewPending = (previewKey: string | null) => {
+  const lastPendingKeyRef = useRef<string | null>(null)
+
+  useLayoutEffect(() => {
     // Each open cycle should flip the matching key back to pending exactly once.
     // The real route will later promote it to ready via PreviewCacheSync.
     if (!previewKey) {
@@ -86,18 +101,54 @@ export default function PreviewHost<TEntry extends TPreviewCacheEntryBase>({
     markPreviewPending(previewKey)
     lastPendingKeyRef.current = previewKey
   }, [previewKey])
+}
+
+const renderDisplayNode = <TEntry extends TPreviewCacheEntryBase>(
+  cachedEntry: TEntry | null,
+  ready: boolean,
+  previewKey: string | null,
+  activeSegment: string | null,
+  children: ReactNode,
+  renderPreview: (entry: TEntry, phase: TPreviewPhase) => ReactNode,
+  phase: TPreviewPhase,
+) => {
+  if (cachedEntry && !ready) {
+    return renderPreview(cachedEntry, phase)
+  }
+
+  return (
+    <Fragment key={`${previewKey ?? activeSegment}:${PREVIEW_PHASE.LIVE}`}>{children}</Fragment>
+  )
+}
+
+export default function PreviewHost<TEntry extends TPreviewCacheEntryBase>({
+  children,
+  resolvePreviewKey,
+  renderPreview,
+}: TProps<TEntry>) {
+  const {
+    activeSegment,
+    id,
+    previewKey,
+    entry: cachedEntry,
+    ready,
+  } = usePreviewRouteState<TEntry>(resolvePreviewKey)
+  const showCachedFull = useDeferredCachedFull(Boolean(cachedEntry) && !ready)
+  const phase = resolvePreviewPhase(Boolean(cachedEntry), ready, showCachedFull)
+
+  useMarkPreviewPending(previewKey)
 
   if (!activeSegment) return null
 
-  // The host is the only place where cached preview content is allowed to sit
-  // in front of intercepted-route output. That keeps cache behavior out of
-  // loading.tsx and preserves a single drawer owner.
-  const displayNode =
-    cachedEntry && !ready ? (
-      renderCachedPreview(cachedEntry, showCachedFull ? 'full' : 'lite')
-    ) : (
-      <Fragment key={`${previewKey ?? activeSegment}:real`}>{children}</Fragment>
-    )
+  const displayNode = renderDisplayNode(
+    cachedEntry,
+    ready,
+    previewKey,
+    activeSegment,
+    children,
+    renderPreview,
+    phase,
+  )
 
-  return <Drawer resetKey={`${resetKey ?? activeSegment}:${phase}`}>{displayNode}</Drawer>
+  return <Drawer resetKey={`${id ?? activeSegment}:${phase}`}>{displayNode}</Drawer>
 }

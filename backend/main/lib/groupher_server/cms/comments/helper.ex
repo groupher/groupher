@@ -40,19 +40,21 @@ defmodule GroupherServer.CMS.Comments.Helper do
           %{id: reply_to_id} -> reply_to_id
         end
 
-      attrs = %{
-        author_id: user_id,
-        body: payload.json,
-        body_html: payload.html,
-        emotions: @default_emotions,
-        floor: next_floor(article, foreign_key),
-        is_article_author: user_id == article.author.user.id,
-        thread: thread,
-        meta: @default_comment_meta,
-        root_comment_id: root_comment_id
-      }
+      with {:ok, floor} <- next_floor(article, foreign_key) do
+        attrs = %{
+          author_id: user_id,
+          body: payload.json,
+          body_html: payload.html,
+          emotions: @default_emotions,
+          floor: floor,
+          is_article_author: user_id == article.author.user.id,
+          thread: thread,
+          meta: @default_comment_meta,
+          root_comment_id: root_comment_id
+        }
 
-      Comment |> ORM.create(Map.put(attrs, foreign_key, article.id))
+        Comment |> ORM.create(Map.put(attrs, foreign_key, article.id))
+      end
     end
   end
 
@@ -102,11 +104,12 @@ defmodule GroupherServer.CMS.Comments.Helper do
 
   def add_participant_to_article(_, _), do: {:ok, :pass}
 
-  @spec next_floor(map(), atom()) :: integer()
+  @spec next_floor(map(), atom()) :: T.domain_res(integer())
   def next_floor(article, _foreign_key) do
-    # 使用 ORM.inc_meta 函数原子递增 next_floor 字段，避免竞态条件
-    {:ok, _updated_article, new_floor} = ORM.inc_meta(article, :next_floor)
-    new_floor
+    case ORM.inc_meta(article, :next_floor) do
+      {:ok, _updated_article, new_floor} -> {:ok, new_floor}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @spec mark_viewer_has_upvoted(map(), User.t() | nil) :: map()
