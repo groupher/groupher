@@ -32,5 +32,7 @@ export default function useInlineTagSalon({ color, layout }: TProps) {
     },
   }
 
-  return TAG_LAYOUTS[layout ?? inlineTagLayout]
+  const resolvedLayout = layout ?? inlineTagLayout
+
+  return TAG_LAYOUTS[resolvedLayout] ?? TAG_LAYOUTS[INLINE_TAG_LAYOUT.BORDER]
 }
