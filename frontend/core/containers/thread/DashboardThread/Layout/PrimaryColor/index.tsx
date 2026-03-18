@@ -1,11 +1,11 @@
-import ColorSelector from '~/widgets/ColorSelector'
 import useTrans from '~/hooks/useTrans'
-import { FIELD } from '../constant'
-import usePrimaryColor from '../logic/usePrimaryColor'
-import SubPrimaryColor from './SubPrimaryColor'
-import SavingBar from '../SavingBar'
-import SectionLabel from '../SectionLabel'
-import useSalon from '../salon/layout/primary_color'
+import ColorSelector from '~/widgets/ColorSelector'
+import { FIELD } from '../../constant'
+import usePrimaryColor from '../../logic/usePrimaryColor'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
+import useSalon from '../../salon/layout/primary_color'
+import SubPrimaryColor from '../SubPrimaryColor'
 
 export default function PrimaryColor() {
   const s = useSalon()

@@ -15,6 +15,14 @@ export const TAG_LAYOUT = {
   DOT: 'dot',
 } as const
 
+export const INLINE_TAG_LAYOUT = {
+  MORANDI: 'morandi',
+  SOFT: 'soft',
+  SOLID: 'solid',
+  BORDER: 'border',
+  SIMPLE: 'simple',
+} as const
+
 export const AVATAR_LAYOUT = {
   CIRCLE: 'circle',
   SQUARE: 'square',

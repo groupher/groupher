@@ -1,10 +1,10 @@
-import CheckLabel from '~/widgets/CheckLabel'
 import useTrans from '~/hooks/useTrans'
-import { FIELD } from '../constant'
-import useDarkFloat from '../logic/useDarkFloat'
-import SavingBar from '../SavingBar'
-import SectionLabel from '../SectionLabel'
-import useSalon, { cnMerge } from '../salon/layout/float_background'
+import CheckLabel from '~/widgets/CheckLabel'
+import { FIELD } from '../../constant'
+import useDarkFloat from '../../logic/useDarkFloat'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
+import useSalon, { cnMerge } from '../../salon/layout/float_background'
 
 export default function FloatBackground() {
   const s = useSalon()
@@ -19,7 +19,12 @@ export default function FloatBackground() {
       />
 
       <div className={s.select}>
-        <button className={s.layout} onClick={() => edit(true, FIELD.DARK_FLOAT)}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={darkFloat}
+          onClick={() => edit(true, FIELD.DARK_FLOAT)}
+        >
           <div className={cnMerge(s.block, darkFloat && s.blockActive)}>
             <div
               className={cnMerge(s.popover, 'left-20 top-12')}
@@ -55,7 +60,12 @@ export default function FloatBackground() {
             top={4}
           />
         </button>
-        <button className={s.layout} onClick={() => edit(false, FIELD.DARK_FLOAT)}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={!darkFloat}
+          onClick={() => edit(false, FIELD.DARK_FLOAT)}
+        >
           <div className={cnMerge(s.block, !darkFloat && s.blockActive)}>
             <div
               className={cnMerge(s.popover, 'left-5 top-12 w-24 bg-white')}

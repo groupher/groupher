@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
 import useDashboard from '~/hooks/useDashboard'
-import type { TEditFunc, TTag, TTagLayout, TThread } from '~/spec'
+import type { TEditFunc, TInlineTagLayout, TTag, TTagLayout, TThread } from '~/spec'
 import type { TChangeTagMode } from '~/stores/dashboard/spec'
 
 import useHelper from '../useHelper'
@@ -15,6 +15,7 @@ type TRet = {
   activeTagGroup: string
   activeTagThread: string
   tagLayout: TTagLayout
+  inlineTagLayout: TInlineTagLayout
 
   edit: TEditFunc
   changeThread: (thread: string) => void
@@ -37,6 +38,7 @@ export default function useTags(): TRet {
   const exportState = [
     'loading',
     'tagLayout',
+    'inlineTagLayout',
     'editingTag',
     'activeTagGroup',
     'activeTagThread',

@@ -1,10 +1,10 @@
-import ColorSelector from '~/widgets/ColorSelector'
-import useTwBelt from '~/hooks/useTwBelt'
 import useTrans from '~/hooks/useTrans'
-import { FIELD } from '../constant'
-import useSubPrimaryColor from '../logic/useSubPrimaryColor'
-import SavingBar from '../SavingBar'
-import useSalon, { cn, cnMerge } from '../salon/layout/primary_color'
+import useTwBelt from '~/hooks/useTwBelt'
+import ColorSelector from '~/widgets/ColorSelector'
+import { FIELD } from '../../constant'
+import useSubPrimaryColor from '../../logic/useSubPrimaryColor'
+import SavingBar from '../../SavingBar'
+import useSalon, { cn, cnMerge } from '../../salon/layout/primary_color'
 
 export default function SubPrimaryColor() {
   const s = useSalon()

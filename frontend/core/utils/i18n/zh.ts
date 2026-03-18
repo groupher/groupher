@@ -256,10 +256,20 @@ export default {
   'dsb.layout.topbar.option.with': '有 Topbar',
   'dsb.layout.topbar.option.none': '无 Topbar',
   'dsb.layout.topbar.color_label': '颜色:',
+
   'dsb.layout.tag.title': '标签样式',
   'dsb.layout.tag.desc': '列表内容及文章详情的标签的展现形式。',
   'dsb.layout.tag.option.hash': '井字',
   'dsb.layout.tag.option.dot': '圆点',
+
+  'dsb.layout.inline_tag.title': '行内标签样式',
+  'dsb.layout.inline_tag.desc': '列表内容及文章详情的行内标签样式。',
+  'dsb.layout.inline_tag.option.morandi': '莫兰迪',
+  'dsb.layout.inline_tag.option.soft': '柔和',
+  'dsb.layout.inline_tag.option.solid': '实心',
+  'dsb.layout.inline_tag.option.simple': '极简',
+  'dsb.layout.inline_tag.option.border': '边框',
+
   'dsb.layout.post.title': '讨论区布局',
   'dsb.layout.post.desc': '「讨论区」列表的默认布局，切换布局不影响已发布内容。',
   'dsb.layout.post.option.classic': '经典（默认）',

@@ -183,14 +183,15 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $primaryColor: String, $subPrimaryColor: String, $postLayout: String, $kanbanLayout: String, $kanbanCardLayout: String, $footerLayout: String, $broadcastEnable: Boolean, $kanbanBgColors: [String], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: String, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: String, $darkFloat: Boolean) {
-      updateDashboardLayout(community: $community, primaryColor: $primaryColor, subPrimaryColor: $subPrimaryColor, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, darkFloat: $darkFloat) {
+    mutation($community: String!, $primaryColor: String, $subPrimaryColor: String, $postLayout: String, $kanbanLayout: String, $kanbanCardLayout: String, $footerLayout: String, $broadcastEnable: Boolean, $kanbanBgColors: [String], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: String, $inlineTagLayout: String, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: String, $darkFloat: Boolean) {
+      updateDashboardLayout(community: $community, primaryColor: $primaryColor, subPrimaryColor: $subPrimaryColor, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, darkFloat: $darkFloat) {
         id
         title
         dashboard {
           layout {
             footerLayout
             tagLayout
+            inlineTagLayout
             glowType
             glowFixed
             glowOpacity
@@ -221,6 +222,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         glowFixed: true,
         glowOpacity: "30",
         tagLayout: "dot",
+        inlineTagLayout: "soft",
         gaussBlur: 80,
         gaussBlurDark: 60,
         brandLayout: "LOGO",
@@ -246,6 +248,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.layout.glow_fixed == true
       assert found.dashboard.layout.glow_opacity == "30"
       assert found.dashboard.layout.tag_layout == "dot"
+      assert found.dashboard.layout.inline_tag_layout == "soft"
       assert found.dashboard.layout.gauss_blur == 80
       assert found.dashboard.layout.gauss_blur_dark == 60
       assert found.dashboard.layout.brand_layout == "LOGO"

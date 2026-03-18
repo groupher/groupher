@@ -13,6 +13,7 @@ import type {
   TFAQSection,
   TFooterLayout,
   THeaderLayout,
+  TInlineTagLayout,
   TKanbanCardLayout,
   TKanbanLayout,
   TLinkItem,
@@ -99,6 +100,7 @@ export type TDsbFieldMap = {
   docLayout: TDocLayout
   docFaqLayout: TDocFAQLayout
   tagLayout: TTagLayout
+  inlineTagLayout: TInlineTagLayout
   avatarLayout: TAvatarLayout
   brandLayout: TBrandLayout
   bannerLayout: TBannerLayout

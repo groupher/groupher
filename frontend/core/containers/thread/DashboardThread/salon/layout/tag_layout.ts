@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 import useBase from '.'
 
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
   const { cn } = useTwBelt()

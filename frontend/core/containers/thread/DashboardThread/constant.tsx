@@ -21,6 +21,7 @@ export const LAYOUT_FIELD = {
   DOC_FAQ_LAYOUT: 'docFaqLayout',
   BRAND_LAYOUT: 'brandLayout',
   TAG_LAYOUT: 'tagLayout',
+  INLINE_TAG_LAYOUT: 'inlineTagLayout',
   AVATAR_LAYOUT: 'avatarLayout',
   BANNER_LAYOUT: 'bannerLayout',
   HEADER_LAYOUT: 'headerLayout',
@@ -304,10 +305,4 @@ export const DEFAULT_NEW_FAQ = {
   index: 0,
 }
 
-export const INIT_KANBAN_COLORS = [
-  COLOR.BLACK,
-  COLOR.YELLOW,
-  COLOR.PURPLE,
-  COLOR.GREEN,
-  COLOR.RED,
-]
+export const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED]

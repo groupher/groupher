@@ -25,7 +25,12 @@ export default function DocLayout() {
         detailText={t('dsb.layout.view_example')}
       />
       <div className={s.select}>
-        <button className={s.layout} onClick={() => edit(DOC_LAYOUT.BLOCKS, 'docLayout')}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={docLayout === DOC_LAYOUT.BLOCKS}
+          onClick={() => edit(DOC_LAYOUT.BLOCKS, FIELD.DOC_LAYOUT)}
+        >
           <div className={cn(s.block, docLayout === DOC_LAYOUT.BLOCKS && s.blockActive)}>
             <MainTemplate layout={DOC_LAYOUT.BLOCKS} />
           </div>
@@ -36,7 +41,12 @@ export default function DocLayout() {
           />
         </button>
 
-        <button className={s.layout} onClick={() => edit(DOC_LAYOUT.LISTS, 'docLayout')}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={docLayout === DOC_LAYOUT.LISTS}
+          onClick={() => edit(DOC_LAYOUT.LISTS, FIELD.DOC_LAYOUT)}
+        >
           <div className={cn(s.block, docLayout === DOC_LAYOUT.LISTS && s.blockActive)}>
             <MainTemplate layout={DOC_LAYOUT.LISTS} />
           </div>
@@ -47,7 +57,12 @@ export default function DocLayout() {
           />
         </button>
 
-        <button className={s.layout} onClick={() => edit(DOC_LAYOUT.CARDS, 'docLayout')}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={docLayout === DOC_LAYOUT.CARDS}
+          onClick={() => edit(DOC_LAYOUT.CARDS, FIELD.DOC_LAYOUT)}
+        >
           <div
             className={cn(
               s.block,
@@ -74,7 +89,12 @@ export default function DocLayout() {
         detailText={t('dsb.layout.view_example')}
       />
       <div className={s.select}>
-        <button className={s.layout} onClick={() => edit(DOC_FAQ_LAYOUT.COLLAPSE, 'docFaqLayout')}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={docFaqLayout === DOC_FAQ_LAYOUT.COLLAPSE}
+          onClick={() => edit(DOC_FAQ_LAYOUT.COLLAPSE, FIELD.DOC_FAQ_LAYOUT)}
+        >
           <div className={cn(s.block, docFaqLayout === DOC_FAQ_LAYOUT.COLLAPSE && s.blockActive)}>
             <FaqTemplate layout={DOC_FAQ_LAYOUT.COLLAPSE} />
           </div>
@@ -84,7 +104,12 @@ export default function DocLayout() {
             top={4}
           />
         </button>
-        <button className={s.layout} onClick={() => edit(DOC_FAQ_LAYOUT.FLAT, 'docFaqLayout')}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={docFaqLayout === DOC_FAQ_LAYOUT.FLAT}
+          onClick={() => edit(DOC_FAQ_LAYOUT.FLAT, FIELD.DOC_FAQ_LAYOUT)}
+        >
           <div className={cn(s.block, docFaqLayout === DOC_FAQ_LAYOUT.FLAT && s.blockActive)}>
             <FaqTemplate layout={DOC_FAQ_LAYOUT.FLAT} />
           </div>
@@ -95,8 +120,10 @@ export default function DocLayout() {
           />
         </button>
         <button
+          type='button'
           className={s.layout}
-          onClick={() => edit(DOC_FAQ_LAYOUT.LEFT_RIGHT, 'docFaqLayout')}
+          aria-pressed={docFaqLayout === DOC_FAQ_LAYOUT.LEFT_RIGHT}
+          onClick={() => edit(DOC_FAQ_LAYOUT.LEFT_RIGHT, FIELD.DOC_FAQ_LAYOUT)}
         >
           <div className={cn(s.block, docFaqLayout === DOC_FAQ_LAYOUT.LEFT_RIGHT && s.blockActive)}>
             <FaqTemplate layout={DOC_FAQ_LAYOUT.LEFT_RIGHT} />

@@ -10,6 +10,7 @@
 
 /* rainbow */
 @source inline('{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');
+@source inline('bg-rainbow-greySoft');
 
 @source inline('border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,purple,black}/50');
 @source inline("{hover:}border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,purple,black}/50");
@@ -24,7 +25,7 @@
 @source inline('{border,bg}-divider');
 
 /* editor */
-@source inline('border-digest');
+@source inline('border-{digest,outline}');
 
 /* hover */
 @source inline('hover:{text,fill}-title');

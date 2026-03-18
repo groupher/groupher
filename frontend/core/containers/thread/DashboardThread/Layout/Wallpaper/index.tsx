@@ -8,9 +8,9 @@ import SettingSVG from '~/icons/Setting'
 import { callWallpaperEditor } from '~/signal'
 import CheckLabel from '~/widgets/CheckLabel'
 
-import SectionLabel from '../SectionLabel'
+import SectionLabel from '../../SectionLabel'
 
-import useSalon, { cn, cnMerge } from '../salon/layout/wallpaper'
+import useSalon, { cn, cnMerge } from '../../salon/layout/wallpaper'
 
 export default function Wallpaper() {
   const s = useSalon()
@@ -32,7 +32,7 @@ export default function Wallpaper() {
       />
 
       <div className={s.preview}>
-        <button className={s.hoverMask} onClick={() => callWallpaperEditor()}>
+        <button type='button' className={s.hoverMask} onClick={() => callWallpaperEditor()}>
           <SettingSVG className={s.settingIcon} />
           <div className={cn(s.previewImage, 'group-hover:brightness-90')} style={{ background }} />
           <CheckLabel title={t('dsb.layout.wallpaper.original')} top={4} active={false} />

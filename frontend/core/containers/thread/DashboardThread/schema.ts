@@ -170,6 +170,7 @@ const updateDashboardLayout = gql`
     $topbarLayout: String
     $topbarBg: String
     $tagLayout: String
+    $inlineTagLayout: String
     $avatarLayout: String
     $broadcastEnable: Boolean
     $kanbanBgColors: [String]
@@ -197,6 +198,7 @@ const updateDashboardLayout = gql`
       topbarLayout: $topbarLayout
       topbarBg: $topbarBg
       tagLayout: $tagLayout
+      inlineTagLayout: $inlineTagLayout
       avatarLayout: $avatarLayout
       broadcastEnable: $broadcastEnable
       kanbanBgColors: $kanbanBgColors

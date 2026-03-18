@@ -4,11 +4,11 @@ import useDidMount from '~/hooks/useDidMount'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/Check'
-import { FIELD } from '../constant'
-import usePageBg from '../logic/usePageBg'
-import SavingBar from '../SavingBar'
-import SectionLabel from '../SectionLabel'
-import useSalon, { cn } from '../salon/layout/page_background'
+import { FIELD } from '../../constant'
+import usePageBg from '../../logic/usePageBg'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
+import useSalon, { cn } from '../../salon/layout/page_background'
 
 export default function PageBackground() {
   const { rawBg, edit, isTouched, isDarkTouched, saving } = usePageBg()
@@ -39,7 +39,9 @@ export default function PageBackground() {
             return (
               <button
                 key={bg}
+                type='button'
                 className={cn(s.block, `rotate-${s.rotateAngle[index]}`, active && s.blockActive)}
+                aria-pressed={active}
                 onClick={() => {
                   edit(upperSnakeCase(bg), isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK)
                 }}

@@ -19,7 +19,12 @@ export default function GlobalLayout() {
     <>
       <SectionLabel title={t('dsb.layout.kanban.global.title')} desc={t('dsb.layout.kanban.global.desc')} />
       <div className={s.select}>
-        <button className={s.layout} onClick={() => edit(KANBAN_LAYOUT.CLASSIC, 'kanbanLayout')}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={layout === KANBAN_LAYOUT.CLASSIC}
+          onClick={() => edit(KANBAN_LAYOUT.CLASSIC, FIELD.KANBAN_LAYOUT)}
+        >
           <div className={cnMerge(s.block, layout === KANBAN_LAYOUT.CLASSIC && s.blockActive)}>
             <div className={cnMerge(s.bar, 'w-10')} />
             <div className={cnMerge(s.bar, 'w-6 right-5 opacity-30')} />
@@ -43,7 +48,12 @@ export default function GlobalLayout() {
             top={4}
           />
         </button>
-        <button className={s.layout} onClick={() => edit(KANBAN_LAYOUT.WATERFALL, 'kanbanLayout')}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={layout === KANBAN_LAYOUT.WATERFALL}
+          onClick={() => edit(KANBAN_LAYOUT.WATERFALL, FIELD.KANBAN_LAYOUT)}
+        >
           <div className={cnMerge(s.block, layout === KANBAN_LAYOUT.WATERFALL && s.blockActive)}>
             <div className={cnMerge(s.bar, 'w-10')} />
             <div className={cnMerge(s.bar, 'w-6 right-5 opacity-30')} />

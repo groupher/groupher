@@ -5,9 +5,8 @@
  */
 
 import type { FC } from 'react'
-
-import type { TColorName } from '~/spec'
 import useLayout from '~/hooks/useLayout'
+import type { TColorName } from '~/spec'
 // import useTheme from '~/hooks/useTheme'
 
 import { TAG_LAYOUT } from '~/const/layout'

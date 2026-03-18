@@ -3,6 +3,7 @@
 import AvatarLayout from '~/containers/thread/DashboardThread/Layout/AvatarLayout'
 import BannerLayout from '~/containers/thread/DashboardThread/Layout/BannerLayout'
 import BrandLayout from '~/containers/thread/DashboardThread/Layout/BrandLayout'
+import InlineTagLayout from '~/containers/thread/DashboardThread/Layout/InlineTagLayout'
 import TagLayout from '~/containers/thread/DashboardThread/Layout/TagLayout'
 import TopbarLayout from '~/containers/thread/DashboardThread/Layout/TopbarLayout'
 
@@ -20,6 +21,8 @@ export default function Page() {
       <AvatarLayout />
       <div className={s.divider} />
       <TagLayout />
+      <div className={s.divider} />
+      <InlineTagLayout />
       <div className={s.divider} />
       <TopbarLayout />
     </>

@@ -40,7 +40,7 @@ export default {
   dashboard: 'Dashboard',
   //
   more: 'more',
-  'tags.fold.expand': 'Expand',
+  'tags.fold.expand': 'More..',
   'tags.fold.collapse': 'Collapse',
   'tags.all': 'All tags',
   'comment.editor.placeholder': "// Comment (press 'Tab' to insert quickly)",
@@ -267,10 +267,20 @@ export default {
   'dsb.layout.topbar.option.with': 'With topbar',
   'dsb.layout.topbar.option.none': 'No topbar',
   'dsb.layout.topbar.color_label': 'Color:',
+
   'dsb.layout.tag.title': 'Tag style',
   'dsb.layout.tag.desc': 'Tag styles in lists and article details.',
   'dsb.layout.tag.option.hash': 'Hash',
   'dsb.layout.tag.option.dot': 'Dot',
+
+  'dsb.layout.inline_tag.title': 'Inline tag style',
+  'dsb.layout.inline_tag.desc': 'Inline tag styles in lists and article details.',
+  'dsb.layout.inline_tag.option.morandi': 'Morandi',
+  'dsb.layout.inline_tag.option.soft': 'Soft',
+  'dsb.layout.inline_tag.option.solid': 'Solid',
+  'dsb.layout.inline_tag.option.simple': 'Simple',
+  'dsb.layout.inline_tag.option.border': 'Border',
+
   'dsb.layout.post.title': 'Post layout',
   'dsb.layout.post.desc':
     "Default layout for the post list. Changing it won't affect published content.",

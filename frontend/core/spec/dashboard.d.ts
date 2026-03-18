@@ -9,6 +9,7 @@ import type {
   DOC_LAYOUT,
   FOOTER_LAYOUT,
   HEADER_LAYOUT,
+  INLINE_TAG_LAYOUT,
   KANBAN_CARD_LAYOUT,
   KANBAN_LAYOUT,
   POST_LAYOUT,
@@ -26,6 +27,7 @@ import type { TEditValue, TLinkItem, TSocialItem } from './utils'
 import type { TWallpaperData } from './wallpaper'
 
 export type TTagLayout = TConstValues<typeof TAG_LAYOUT>
+export type TInlineTagLayout = TConstValues<typeof INLINE_TAG_LAYOUT>
 export type TAvatarLayout = TConstValues<typeof AVATAR_LAYOUT>
 export type TBrandLayout = TConstValues<typeof BRAND_LAYOUT>
 export type TBannerLayout = TConstValues<typeof BANNER_LAYOUT>
@@ -68,6 +70,7 @@ export type TDsb = {
     topbarLayout: TTopbarLayout
     topbarBg: TColorName
     tagLayout: TTagLayout
+    inlineTagLayout: TInlineTagLayout
     avatarLayout: TAvatarLayout
     bannerLayout: TBannerLayout
     glowType: string

@@ -39,7 +39,7 @@ export type TBgKey =
   | 'snackBar'
   | 'link'
 
-export type TBorderKey = 'divider' | 'table.border' | 'digest' | 'title'
+export type TBorderKey = 'outline' | 'divider' | 'table.border' | 'digest' | 'title'
 
 export type TFillKey = 'title' | 'digest' | 'link' | 'highlight'
 

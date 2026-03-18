@@ -1,4 +1,3 @@
-
 export type * from './account'
 export type * from './article'
 export type * from './color'
@@ -20,8 +19,8 @@ export type * from './thread'
 export type * from './utils'
 export type * from './wallpaper'
 
-import type { TThemeName } from './theme'
 import type { TTransKey } from './i18n'
+import type { TThemeName } from './theme'
 
 export type TContainer = 'body' | 'drawer'
 

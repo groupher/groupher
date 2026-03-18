@@ -1,15 +1,14 @@
 import { GLOW_EFFECTS_KEYS, GLOW_OPACITY } from '~/const/glow_effect'
 import useDidMount from '~/hooks/useDidMount'
+import useTrans from '~/hooks/useTrans'
 import ClossSVG from '~/icons/CloseLight'
-
 import DLightSVG from '~/icons/DLight'
 import Radio from '~/widgets/Switcher/Radio'
-import useTrans from '~/hooks/useTrans'
-import { FIELD } from '../constant'
-import useGlowLight from '../logic/useGlowLight'
-import SavingBar from '../SavingBar'
-import SectionLabel from '../SectionLabel'
-import useSalon, { cn } from '../salon/layout/glow_light'
+import { FIELD } from '../../constant'
+import useGlowLight from '../../logic/useGlowLight'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
+import useSalon, { cn } from '../../salon/layout/glow_light'
 
 export default function GlowLight() {
   const s = useSalon()
@@ -38,8 +37,10 @@ export default function GlowLight() {
 
       <div className={s.row}>
         <button
-          className={cn(s.block, 'align-both', glowType === '' && s.block)}
-          onClick={() => edit('', 'glowType')}
+          type='button'
+          className={cn(s.block, 'align-both', glowType === '' && s.blockActive)}
+          aria-pressed={glowType === ''}
+          onClick={() => edit('', FIELD.GLOW_TYPE)}
         >
           <div className='column-align-both'>
             <DLightSVG className={s.icon} />
@@ -51,8 +52,10 @@ export default function GlowLight() {
           GLOW_EFFECTS_KEYS.map((effect) => (
             <button
               key={effect}
+              type='button'
               className={cn(s.block, effect === glowType && s.blockActive)}
-              onClick={() => edit(effect, 'glowType')}
+              aria-pressed={effect === glowType}
+              onClick={() => edit(effect, FIELD.GLOW_TYPE)}
             >
               <div className={s.bgWrapper} style={{ background: `${s.bgStyle2(effect)}` }} />
             </button>

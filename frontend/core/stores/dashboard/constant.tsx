@@ -14,6 +14,7 @@ import {
   DOC_LAYOUT,
   FOOTER_LAYOUT,
   HEADER_LAYOUT,
+  INLINE_TAG_LAYOUT,
   KANBAN_CARD_LAYOUT,
   KANBAN_LAYOUT,
   POST_LAYOUT,
@@ -35,13 +36,7 @@ export const DEFAULT_OVERVIEW = {
   docsCount: 0,
 }
 
-export const INIT_KANBAN_COLORS = [
-  COLOR.BLACK,
-  COLOR.YELLOW,
-  COLOR.PURPLE,
-  COLOR.GREEN,
-  COLOR.RED,
-]
+export const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED]
 
 export const FIELDS: TDsbFieldMap = {
   // baseInfo
@@ -94,6 +89,7 @@ export const FIELDS: TDsbFieldMap = {
   docLayout: DOC_LAYOUT.CARDS,
   docFaqLayout: DOC_FAQ_LAYOUT.COLLAPSE,
   tagLayout: TAG_LAYOUT.HASH,
+  inlineTagLayout: INLINE_TAG_LAYOUT.BORDER,
   avatarLayout: AVATAR_LAYOUT.SQUARE,
   brandLayout: BRAND_LAYOUT.BOTH,
   bannerLayout: BANNER_LAYOUT.HEADER,

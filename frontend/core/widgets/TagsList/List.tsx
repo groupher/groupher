@@ -1,36 +1,17 @@
 import { sortByColor } from '~/helper'
-import type { TColorName } from '~/spec'
 
-import TagNode from '~/widgets/TagNode'
 import type { TProps as TBase } from '.'
-import useSalon from './salon'
-import { getDotMargin, getDotSize, getHashMargin, getIconSize } from './salon/metric'
+import TagItem from './TagItem'
 
 type TProps = TBase & { withTitle?: boolean }
 
-export default function List({ items, max, size, withTitle = true, ...spacing }: TProps) {
-  const s = useSalon(spacing)
-
-  const dotSize = getDotSize(size)
-  const hashSize = getIconSize(size)
-  const dotRight = getDotMargin(size)
-  const hashRight = getHashMargin(size)
-
+export default function List({ items, max, size, withTitle = true }: TProps) {
   return (
     <>
       {sortByColor([...items])
         .slice(0, max)
         .map((tag) => (
-          <div className={s.tag} key={tag.slug}>
-            <TagNode
-              color={tag.color as TColorName}
-              dotSize={dotSize}
-              hashSize={hashSize}
-              dotRight={dotRight}
-              hashRight={hashRight}
-            />
-            {withTitle && <div className={s.title}>{tag.title}</div>}
-          </div>
+          <TagItem key={tag.slug} tag={tag} withTitle={withTitle} size={size} />
         ))}
     </>
   )
