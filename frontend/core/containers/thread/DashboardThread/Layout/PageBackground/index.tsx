@@ -39,7 +39,9 @@ export default function PageBackground() {
             return (
               <button
                 key={bg}
+                type='button'
                 className={cn(s.block, `rotate-${s.rotateAngle[index]}`, active && s.blockActive)}
+                aria-pressed={active}
                 onClick={() => {
                   edit(upperSnakeCase(bg), isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK)
                 }}

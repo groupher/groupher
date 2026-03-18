@@ -97,11 +97,12 @@ export default function BgColorsSetter() {
           </ColorSelector>
         </div>
         <div className='grow' />
-        <button className={s.action} onClick={() => edit(INIT_KANBAN_COLORS, 'kanbanBgColors')}>
+        <button type='button' className={s.action} onClick={() => edit(INIT_KANBAN_COLORS, 'kanbanBgColors')}>
           <ResetSVG className={s.resetIcon} />
           {t('dsb.layout.kanban.bg.reset')}
         </button>
         <button
+          type='button'
           className={s.action}
           onClick={() => {
             edit(randomBgNames(5, [COLOR.CYAN]), 'kanbanBgColors')

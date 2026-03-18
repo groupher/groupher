@@ -32,7 +32,7 @@ export default function Wallpaper() {
       />
 
       <div className={s.preview}>
-        <button className={s.hoverMask} onClick={() => callWallpaperEditor()}>
+        <button type='button' className={s.hoverMask} onClick={() => callWallpaperEditor()}>
           <SettingSVG className={s.settingIcon} />
           <div className={cn(s.previewImage, 'group-hover:brightness-90')} style={{ background }} />
           <CheckLabel title={t('dsb.layout.wallpaper.original')} top={4} active={false} />

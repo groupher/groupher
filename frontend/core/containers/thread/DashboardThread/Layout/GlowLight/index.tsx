@@ -37,7 +37,9 @@ export default function GlowLight() {
 
       <div className={s.row}>
         <button
+          type='button'
           className={cn(s.block, 'align-both', glowType === '' && s.block)}
+          aria-pressed={glowType === ''}
           onClick={() => edit('', 'glowType')}
         >
           <div className='column-align-both'>
@@ -50,7 +52,9 @@ export default function GlowLight() {
           GLOW_EFFECTS_KEYS.map((effect) => (
             <button
               key={effect}
+              type='button'
               className={cn(s.block, effect === glowType && s.blockActive)}
+              aria-pressed={effect === glowType}
               onClick={() => edit(effect, 'glowType')}
             >
               <div className={s.bgWrapper} style={{ background: `${s.bgStyle2(effect)}` }} />

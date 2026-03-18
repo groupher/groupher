@@ -31,7 +31,12 @@ export default function BannerLayout() {
         detailText={t('dsb.layout.view_example')}
       />
       <div className={s.select}>
-        <button className={s.layout} onClick={() => edit(BANNER_LAYOUT.HEADER, 'bannerLayout')}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={layout === BANNER_LAYOUT.HEADER}
+          onClick={() => edit(BANNER_LAYOUT.HEADER, 'bannerLayout')}
+        >
           <div className={cn(s.block, layout === BANNER_LAYOUT.HEADER && s.blockActive)}>
             <h4 className={cn(s.communityTitle)}>{title}</h4>
             <div className={cnMerge(s.bar, 'left-28 top-5')} />
@@ -73,7 +78,12 @@ export default function BannerLayout() {
             top={4}
           />
         </button>
-        <button className={s.layout} onClick={() => edit(BANNER_LAYOUT.TABBER, 'bannerLayout')}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={layout === BANNER_LAYOUT.TABBER}
+          onClick={() => edit(BANNER_LAYOUT.TABBER, 'bannerLayout')}
+        >
           <div className={cnMerge(s.block, layout === BANNER_LAYOUT.TABBER && s.blockActive)}>
             <div className={cnMerge(s.bar, 'left-2.5 top-2 w-11/12 h-10 opacity-10')} />
             <div className={cnMerge(s.bar, 'left-4 top-8 w-10 h-10 opacity-30')} />
@@ -107,7 +117,12 @@ export default function BannerLayout() {
             top={4}
           />
         </button>
-        <button className={s.layout} onClick={() => edit(BANNER_LAYOUT.SIDEBAR, 'bannerLayout')}>
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={layout === BANNER_LAYOUT.SIDEBAR}
+          onClick={() => edit(BANNER_LAYOUT.SIDEBAR, 'bannerLayout')}
+        >
           <div className={cnMerge(s.block, layout === BANNER_LAYOUT.SIDEBAR && s.blockActive)}>
             <h4 className={s.communityTitle}>{title}</h4>
             <div className={cnMerge(s.bar, 'left-28 w-10 top-5')} />
