@@ -11,8 +11,9 @@ type TProps = {
 export default function TagItem({ tag, layout }: TProps) {
   const s = useSalon({ color: tag.color as TColorName, layout })
 
-  // @ts-expect-error
-  const noTagNode = [INLINE_TAG_LAYOUT.SOLID, INLINE_TAG_LAYOUT.SOFT].includes(layout)
+  const noTagNode = (
+    [INLINE_TAG_LAYOUT.SOLID, INLINE_TAG_LAYOUT.SOFT] as readonly TInlineTagLayout[]
+  ).includes(layout)
 
   return (
     <div className={s.wrapper}>
