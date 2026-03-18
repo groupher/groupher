@@ -89,7 +89,7 @@ export const FIELDS: TDsbFieldMap = {
   docLayout: DOC_LAYOUT.CARDS,
   docFaqLayout: DOC_FAQ_LAYOUT.COLLAPSE,
   tagLayout: TAG_LAYOUT.HASH,
-  inlineTagLayout: INLINE_TAG_LAYOUT.MORANDI,
+  inlineTagLayout: INLINE_TAG_LAYOUT.BORDER,
   avatarLayout: AVATAR_LAYOUT.SQUARE,
   brandLayout: BRAND_LAYOUT.BOTH,
   bannerLayout: BANNER_LAYOUT.HEADER,
