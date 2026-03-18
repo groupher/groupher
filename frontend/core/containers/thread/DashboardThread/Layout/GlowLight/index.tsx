@@ -1,15 +1,14 @@
 import { GLOW_EFFECTS_KEYS, GLOW_OPACITY } from '~/const/glow_effect'
 import useDidMount from '~/hooks/useDidMount'
+import useTrans from '~/hooks/useTrans'
 import ClossSVG from '~/icons/CloseLight'
-
 import DLightSVG from '~/icons/DLight'
 import Radio from '~/widgets/Switcher/Radio'
-import useTrans from '~/hooks/useTrans'
-import { FIELD } from '../constant'
-import useGlowLight from '../logic/useGlowLight'
-import SavingBar from '../SavingBar'
-import SectionLabel from '../SectionLabel'
-import useSalon, { cn } from '../salon/layout/glow_light'
+import { FIELD } from '../../constant'
+import useGlowLight from '../../logic/useGlowLight'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
+import useSalon, { cn } from '../../salon/layout/glow_light'
 
 export default function GlowLight() {
   const s = useSalon()

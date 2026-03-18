@@ -1,10 +1,10 @@
-import CheckLabel from '~/widgets/CheckLabel'
 import useTrans from '~/hooks/useTrans'
-import { FIELD } from '../constant'
-import useDarkFloat from '../logic/useDarkFloat'
-import SavingBar from '../SavingBar'
-import SectionLabel from '../SectionLabel'
-import useSalon, { cnMerge } from '../salon/layout/float_background'
+import CheckLabel from '~/widgets/CheckLabel'
+import { FIELD } from '../../constant'
+import useDarkFloat from '../../logic/useDarkFloat'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
+import useSalon, { cnMerge } from '../../salon/layout/float_background'
 
 export default function FloatBackground() {
   const s = useSalon()

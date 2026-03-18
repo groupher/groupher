@@ -1,16 +1,14 @@
 import { POST_LAYOUT } from '~/const/layout'
-import CommentSVG from '~/icons/Comment'
-
-import UpvoteSVG from '~/icons/Upvote'
-
-import CheckLabel from '~/widgets/CheckLabel'
 import useTrans from '~/hooks/useTrans'
+import CommentSVG from '~/icons/Comment'
+import UpvoteSVG from '~/icons/Upvote'
+import CheckLabel from '~/widgets/CheckLabel'
 
-import { FIELD } from '../constant'
-import usePost from '../logic/usePost'
-import SavingBar from '../SavingBar'
-import SectionLabel from '../SectionLabel'
-import useSalon, { cnMerge } from '../salon/layout/post_layout'
+import { FIELD } from '../../constant'
+import usePost from '../../logic/usePost'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
+import useSalon, { cnMerge } from '../../salon/layout/post_layout'
 
 export default function PostLayout() {
   const s = useSalon()

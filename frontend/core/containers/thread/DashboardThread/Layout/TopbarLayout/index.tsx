@@ -1,13 +1,24 @@
 import { TOPBAR_LAYOUT } from '~/const/layout'
+import useTrans from '~/hooks/useTrans'
 import CheckLabel from '~/widgets/CheckLabel'
 import ColorSelector from '~/widgets/ColorSelector'
-import useTrans from '~/hooks/useTrans'
 
-import { FIELD } from '../constant'
-import useTopbar from '../logic/useTopbar'
-import SavingBar from '../SavingBar'
-import SectionLabel from '../SectionLabel'
-import useSalon, { cn } from '../salon/layout/topbar_layout'
+import { FIELD } from '../../constant'
+import useTopbar from '../../logic/useTopbar'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
+import useSalon, { cn } from '../../salon/layout/topbar_layout'
+
+const TOPBAR_LAYOUT_OPTIONS = [
+  {
+    value: TOPBAR_LAYOUT.YES,
+    titleKey: 'dsb.layout.topbar.option.with',
+  },
+  {
+    value: TOPBAR_LAYOUT.NO,
+    titleKey: 'dsb.layout.topbar.option.none',
+  },
+] as const
 
 export default function TopbarLayout() {
   const s = useSalon()
@@ -23,29 +34,26 @@ export default function TopbarLayout() {
         detailText={t('dsb.layout.view_example')}
       />
       <div className={s.select}>
-        <button className={s.layout} onClick={() => edit(TOPBAR_LAYOUT.YES, 'topbarLayout')}>
-          <div className={cn(s.block, layout === TOPBAR_LAYOUT.YES && s.blockActive)}>
-            <div className={s.topBar} />
-            <div className={cn(s.bar, 'top-8 left-5 h-28 w-6/12 opacity-5')} />
-            <div className={cn(s.bar, 'top-8 right-5 h-24 w-20 opacity-5')} />
-          </div>
-          <CheckLabel
-            title={t('dsb.layout.topbar.option.with')}
-            active={layout === TOPBAR_LAYOUT.YES}
-            top={4}
-          />
-        </button>
-        <button className={s.layout} onClick={() => edit(TOPBAR_LAYOUT.NO, 'topbarLayout')}>
-          <div className={cn(s.block, layout === TOPBAR_LAYOUT.NO && s.blockActive)}>
-            <div className={cn(s.bar, 'top-8 left-5 h-28 w-6/12 opacity-5')} />
-            <div className={cn(s.bar, 'top-8 right-5 h-24 w-20 opacity-5')} />
-          </div>
-          <CheckLabel
-            title={t('dsb.layout.topbar.option.none')}
-            active={layout === TOPBAR_LAYOUT.NO}
-            top={4}
-          />
-        </button>
+        {TOPBAR_LAYOUT_OPTIONS.map(({ value, titleKey }) => {
+          const isActive = layout === value
+
+          return (
+            <button
+              key={value}
+              type='button'
+              className={s.layout}
+              aria-pressed={isActive}
+              onClick={() => edit(value, 'topbarLayout')}
+            >
+              <div className={cn(s.block, isActive && s.blockActive)}>
+                {value === TOPBAR_LAYOUT.YES && <div className={s.topBar} />}
+                <div className={cn(s.bar, 'top-8 left-5 h-28 w-6/12 opacity-5')} />
+                <div className={cn(s.bar, 'top-8 right-5 h-24 w-20 opacity-5')} />
+              </div>
+              <CheckLabel title={t(titleKey)} active={isActive} top={4} />
+            </button>
+          )
+        })}
       </div>
 
       <SavingBar

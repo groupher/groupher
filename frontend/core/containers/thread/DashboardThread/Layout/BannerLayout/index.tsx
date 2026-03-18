@@ -5,11 +5,11 @@ import useTrans from '~/hooks/useTrans'
 import CheckLabel from '~/widgets/CheckLabel'
 import Drawer from '~/widgets/Drawer'
 
-import { FIELD } from '../constant'
-import useBanner from '../logic/useBanner'
-import SavingBar from '../SavingBar'
-import SectionLabel from '../SectionLabel'
-import useSalon, { cn, cnMerge } from '../salon/layout/banner_layout'
+import { FIELD } from '../../constant'
+import useBanner from '../../logic/useBanner'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
+import useSalon, { cn, cnMerge } from '../../salon/layout/banner_layout'
 
 export default function BannerLayout() {
   const s = useSalon()
