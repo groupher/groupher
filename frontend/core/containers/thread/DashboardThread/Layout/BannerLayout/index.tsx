@@ -35,7 +35,7 @@ export default function BannerLayout() {
           type='button'
           className={s.layout}
           aria-pressed={layout === BANNER_LAYOUT.HEADER}
-          onClick={() => edit(BANNER_LAYOUT.HEADER, 'bannerLayout')}
+          onClick={() => edit(BANNER_LAYOUT.HEADER, FIELD.BANNER_LAYOUT)}
         >
           <div className={cn(s.block, layout === BANNER_LAYOUT.HEADER && s.blockActive)}>
             <h4 className={cn(s.communityTitle)}>{title}</h4>
@@ -82,7 +82,7 @@ export default function BannerLayout() {
           type='button'
           className={s.layout}
           aria-pressed={layout === BANNER_LAYOUT.TABBER}
-          onClick={() => edit(BANNER_LAYOUT.TABBER, 'bannerLayout')}
+          onClick={() => edit(BANNER_LAYOUT.TABBER, FIELD.BANNER_LAYOUT)}
         >
           <div className={cnMerge(s.block, layout === BANNER_LAYOUT.TABBER && s.blockActive)}>
             <div className={cnMerge(s.bar, 'left-2.5 top-2 w-11/12 h-10 opacity-10')} />
@@ -121,7 +121,7 @@ export default function BannerLayout() {
           type='button'
           className={s.layout}
           aria-pressed={layout === BANNER_LAYOUT.SIDEBAR}
-          onClick={() => edit(BANNER_LAYOUT.SIDEBAR, 'bannerLayout')}
+          onClick={() => edit(BANNER_LAYOUT.SIDEBAR, FIELD.BANNER_LAYOUT)}
         >
           <div className={cnMerge(s.block, layout === BANNER_LAYOUT.SIDEBAR && s.blockActive)}>
             <h4 className={s.communityTitle}>{title}</h4>

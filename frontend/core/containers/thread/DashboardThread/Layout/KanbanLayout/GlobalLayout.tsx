@@ -23,7 +23,7 @@ export default function GlobalLayout() {
           type='button'
           className={s.layout}
           aria-pressed={layout === KANBAN_LAYOUT.CLASSIC}
-          onClick={() => edit(KANBAN_LAYOUT.CLASSIC, 'kanbanLayout')}
+          onClick={() => edit(KANBAN_LAYOUT.CLASSIC, FIELD.KANBAN_LAYOUT)}
         >
           <div className={cnMerge(s.block, layout === KANBAN_LAYOUT.CLASSIC && s.blockActive)}>
             <div className={cnMerge(s.bar, 'w-10')} />
@@ -52,7 +52,7 @@ export default function GlobalLayout() {
           type='button'
           className={s.layout}
           aria-pressed={layout === KANBAN_LAYOUT.WATERFALL}
-          onClick={() => edit(KANBAN_LAYOUT.WATERFALL, 'kanbanLayout')}
+          onClick={() => edit(KANBAN_LAYOUT.WATERFALL, FIELD.KANBAN_LAYOUT)}
         >
           <div className={cnMerge(s.block, layout === KANBAN_LAYOUT.WATERFALL && s.blockActive)}>
             <div className={cnMerge(s.bar, 'w-10')} />

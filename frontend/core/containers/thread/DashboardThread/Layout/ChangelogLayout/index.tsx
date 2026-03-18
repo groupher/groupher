@@ -41,7 +41,7 @@ export default function ChangelogLayout() {
               type='button'
               className={s.layout}
               aria-pressed={isActive}
-              onClick={() => edit(value, 'changelogLayout')}
+              onClick={() => edit(value, FIELD.CHANGELOG_LAYOUT)}
             >
               <div className={cnMerge(s.block, isActive && s.blockActive)}>
                 {value === CHANGELOG_LAYOUT.CLASSIC ? (

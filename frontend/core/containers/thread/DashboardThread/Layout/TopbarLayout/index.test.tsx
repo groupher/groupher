@@ -87,13 +87,19 @@ describe('<TopbarLayout />', () => {
     expect(screen.getByTestId('color-selector')).toHaveAttribute('data-color', 'black')
   })
 
-  it('updates layout and topbar color through interactions', () => {
+  it('updates layout when none option is clicked', () => {
     render(<TopbarLayout />)
 
     fireEvent.click(screen.getByRole('button', { name: 'dsb.layout.topbar.option.none' }))
+
+    expect(edit).toHaveBeenCalledWith(TOPBAR_LAYOUT.NO, FIELD.TOPBAR_LAYOUT)
+  })
+
+  it('updates topbar color while yes layout is active', () => {
+    render(<TopbarLayout />)
+
     fireEvent.click(screen.getByTestId('color-selector'))
 
-    expect(edit).toHaveBeenNthCalledWith(1, TOPBAR_LAYOUT.NO, FIELD.TOPBAR_LAYOUT)
-    expect(edit).toHaveBeenNthCalledWith(2, 'red', FIELD.TOPBAR_BG)
+    expect(edit).toHaveBeenCalledWith('red', FIELD.TOPBAR_BG)
   })
 })

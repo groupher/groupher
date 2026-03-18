@@ -43,7 +43,7 @@ export default function TopbarLayout() {
               type='button'
               className={s.layout}
               aria-pressed={isActive}
-              onClick={() => edit(value, 'topbarLayout')}
+              onClick={() => edit(value, FIELD.TOPBAR_LAYOUT)}
             >
               <div className={cn(s.block, isActive && s.blockActive)}>
                 {value === TOPBAR_LAYOUT.YES && <div className={s.topBar} />}
@@ -75,12 +75,12 @@ export default function TopbarLayout() {
           <div className={s.bgWrapper}>
             <div>{t('dsb.layout.topbar.color_label')}</div>
             <div className={s.bgLabel}>
-              <ColorSelector
-                activeColor={bg}
-                onChange={(color) => edit(color, 'topbarBg')}
-                placement='right'
-                offset={[-1, 15]}
-              >
+                <ColorSelector
+                  activeColor={bg}
+                  onChange={(color) => edit(color, FIELD.TOPBAR_BG)}
+                  placement='right'
+                  offset={[-1, 15]}
+                >
                 <div className={s.theColor} />
               </ColorSelector>
             </div>

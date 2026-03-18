@@ -38,9 +38,9 @@ export default function GlowLight() {
       <div className={s.row}>
         <button
           type='button'
-          className={cn(s.block, 'align-both', glowType === '' && s.block)}
+          className={cn(s.block, 'align-both', glowType === '' && s.blockActive)}
           aria-pressed={glowType === ''}
-          onClick={() => edit('', 'glowType')}
+          onClick={() => edit('', FIELD.GLOW_TYPE)}
         >
           <div className='column-align-both'>
             <DLightSVG className={s.icon} />
@@ -55,7 +55,7 @@ export default function GlowLight() {
               type='button'
               className={cn(s.block, effect === glowType && s.blockActive)}
               aria-pressed={effect === glowType}
-              onClick={() => edit(effect, 'glowType')}
+              onClick={() => edit(effect, FIELD.GLOW_TYPE)}
             >
               <div className={s.bgWrapper} style={{ background: `${s.bgStyle2(effect)}` }} />
             </button>

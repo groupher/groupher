@@ -27,7 +27,7 @@ export default function PostLayout() {
           type='button'
           className={s.layout}
           aria-pressed={layout === POST_LAYOUT.QUORA}
-          onClick={() => edit(POST_LAYOUT.QUORA, 'postLayout')}
+          onClick={() => edit(POST_LAYOUT.QUORA, FIELD.POST_LAYOUT)}
         >
           <div className={cnMerge(s.block, layout === POST_LAYOUT.QUORA && s.blockActive)}>
             <div className={cnMerge(s.bar, 'left-4 top-5 h-1 opacity-30')} />
@@ -51,7 +51,7 @@ export default function PostLayout() {
           type='button'
           className={s.layout}
           aria-pressed={layout === POST_LAYOUT.PH}
-          onClick={() => edit(POST_LAYOUT.PH, 'postLayout')}
+          onClick={() => edit(POST_LAYOUT.PH, FIELD.POST_LAYOUT)}
         >
           <div className={cnMerge(s.block, layout === POST_LAYOUT.PH && s.blockActive)}>
             <div className={s.userAvatar} />
@@ -76,7 +76,7 @@ export default function PostLayout() {
           type='button'
           className={s.layout}
           aria-pressed={layout === POST_LAYOUT.MASONRY}
-          onClick={() => edit(POST_LAYOUT.MASONRY, 'postLayout')}
+          onClick={() => edit(POST_LAYOUT.MASONRY, FIELD.POST_LAYOUT)}
         >
           <div className={cnMerge(s.block, layout === POST_LAYOUT.MASONRY && s.blockActive)}>
             <div className={cnMerge(s.bar, 'left-6 top-0 w-28 h-2 opacity-15')} />
@@ -98,7 +98,7 @@ export default function PostLayout() {
           type='button'
           className={s.layout}
           aria-pressed={layout === POST_LAYOUT.MINIMAL}
-          onClick={() => edit(POST_LAYOUT.MINIMAL, 'postLayout')}
+          onClick={() => edit(POST_LAYOUT.MINIMAL, FIELD.POST_LAYOUT)}
         >
           <div className={cnMerge(s.block, layout === POST_LAYOUT.MINIMAL && s.blockActive)}>
             <div className={cnMerge(s.upvoteBtn, 'top-5 left-5')}>
@@ -123,7 +123,7 @@ export default function PostLayout() {
           type='button'
           className={s.layout}
           aria-pressed={layout === POST_LAYOUT.COVER}
-          onClick={() => edit(POST_LAYOUT.COVER, 'postLayout')}
+          onClick={() => edit(POST_LAYOUT.COVER, FIELD.POST_LAYOUT)}
         >
           <div className={cnMerge(s.block, layout === POST_LAYOUT.COVER && s.blockActive)}>
             <div className={cnMerge(s.bar, 'left-5 top-4 w-24 h-16 opacity-30')} />

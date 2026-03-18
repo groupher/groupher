@@ -43,7 +43,7 @@ export default function BgColorsSetter() {
         <div className={s.preset}>
           <ColorSelector
             activeColor={BG1}
-            onChange={(color) => edit([color, BG2, BG3, BG4, BG5], 'kanbanBgColors')}
+            onChange={(color) => edit([color, BG2, BG3, BG4, BG5], FIELD.KANBAN_BG_COLORS)}
             placement='right'
             offset={[-2, 1]}
             excepts={[COLOR.CYAN]}
@@ -54,7 +54,7 @@ export default function BgColorsSetter() {
 
           <ColorSelector
             activeColor={BG2}
-            onChange={(color) => edit([BG1, color, BG3, BG4, BG5], 'kanbanBgColors')}
+            onChange={(color) => edit([BG1, color, BG3, BG4, BG5], FIELD.KANBAN_BG_COLORS)}
             placement='right'
             offset={[-2, 1]}
             excepts={[COLOR.CYAN]}
@@ -65,7 +65,7 @@ export default function BgColorsSetter() {
 
           <ColorSelector
             activeColor={BG3}
-            onChange={(color) => edit([BG1, BG2, color, BG4, BG5], 'kanbanBgColors')}
+            onChange={(color) => edit([BG1, BG2, color, BG4, BG5], FIELD.KANBAN_BG_COLORS)}
             placement='right'
             offset={[-2, 1]}
             excepts={[COLOR.CYAN]}
@@ -76,7 +76,7 @@ export default function BgColorsSetter() {
 
           <ColorSelector
             activeColor={BG4}
-            onChange={(color) => edit([BG1, BG2, BG3, color, BG5], 'kanbanBgColors')}
+            onChange={(color) => edit([BG1, BG2, BG3, color, BG5], FIELD.KANBAN_BG_COLORS)}
             placement='right'
             offset={[-2, 1]}
             excepts={[COLOR.CYAN]}
@@ -87,7 +87,7 @@ export default function BgColorsSetter() {
 
           <ColorSelector
             activeColor={BG5}
-            onChange={(color) => edit([BG1, BG2, BG3, BG4, color], 'kanbanBgColors')}
+            onChange={(color) => edit([BG1, BG2, BG3, BG4, color], FIELD.KANBAN_BG_COLORS)}
             placement='right'
             offset={[-2, 1]}
             excepts={[COLOR.CYAN]}
@@ -97,7 +97,7 @@ export default function BgColorsSetter() {
           </ColorSelector>
         </div>
         <div className='grow' />
-        <button type='button' className={s.action} onClick={() => edit(INIT_KANBAN_COLORS, 'kanbanBgColors')}>
+        <button type='button' className={s.action} onClick={() => edit(INIT_KANBAN_COLORS, FIELD.KANBAN_BG_COLORS)}>
           <ResetSVG className={s.resetIcon} />
           {t('dsb.layout.kanban.bg.reset')}
         </button>
@@ -105,7 +105,7 @@ export default function BgColorsSetter() {
           type='button'
           className={s.action}
           onClick={() => {
-            edit(randomBgNames(5, [COLOR.CYAN]), 'kanbanBgColors')
+            edit(randomBgNames(5, [COLOR.CYAN]), FIELD.KANBAN_BG_COLORS)
           }}
         >
           <DiceSVG className={cn(s.resetIcon, 'size-3.5')} /> {t('dsb.layout.kanban.bg.random')}

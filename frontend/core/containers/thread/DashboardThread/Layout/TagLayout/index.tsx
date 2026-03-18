@@ -40,7 +40,7 @@ export default function TagLayout() {
               type='button'
               className={s.layout}
               aria-pressed={isActive}
-              onClick={() => edit(value, 'tagLayout')}
+              onClick={() => edit(value, FIELD.TAG_LAYOUT)}
             >
               <div className={cnMerge(s.block, isActive && s.blockActive)}>
                 {value === TAG_LAYOUT.HASH ? (

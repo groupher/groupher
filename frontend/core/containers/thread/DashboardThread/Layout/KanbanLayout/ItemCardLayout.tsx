@@ -49,7 +49,7 @@ export default function ItemCardLayout() {
               type='button'
               className={s.layout}
               aria-pressed={isActive}
-              onClick={() => edit(value, 'kanbanCardLayout')}
+              onClick={() => edit(value, FIELD.KANBAN_CARD_LAYOUT)}
             >
               <div className={cnMerge(s.block, isActive && s.blockActive)}>
                 <div className={cnMerge(s.bar, 'w-16')} />

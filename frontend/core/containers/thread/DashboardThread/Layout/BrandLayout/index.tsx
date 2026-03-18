@@ -46,7 +46,7 @@ export default function BrandLayout() {
               type='button'
               className={s.layout}
               aria-pressed={isActive}
-              onClick={() => edit(value, 'brandLayout')}
+              onClick={() => edit(value, FIELD.BRAND_LAYOUT)}
             >
               <div className={cn(s.block, isActive && s.blockActive)}>
                 <div className={s.brand}>

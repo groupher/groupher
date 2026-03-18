@@ -39,7 +39,7 @@ export default function AvatarLayout() {
               type='button'
               className={s.layout}
               aria-pressed={isActive}
-              onClick={() => edit(value, 'avatarLayout')}
+              onClick={() => edit(value, FIELD.AVATAR_LAYOUT)}
             >
               <div className={cn(s.block, isActive && s.blockActive)}>
                 <div className={cn(s.avatar, s.blue, shapeClass)}>YM</div>

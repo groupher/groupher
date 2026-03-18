@@ -54,7 +54,7 @@ export default function InlineTagLayout() {
               type='button'
               className={s.layout}
               aria-pressed={isActive}
-              onClick={() => edit(value, 'inlineTagLayout')}
+              onClick={() => edit(value, FIELD.INLINE_TAG_LAYOUT)}
             >
               <div className={cnMerge(s.block, isActive && s.blockActive)}>
                 {TAGS_DEMO_LIST.map((item) => (
