@@ -22,6 +22,6 @@ export default function useSalon({
 
   return {
     dot: cn('circle opacity-80', rainbow(color, 'bg'), zise(dotSize), margin(dotSpacing)),
-    hash: cn('opacity-80', zise(hashSize), rainbow(color, 'fill'), margin(hashSpacing)),
+    hash: cn(zise(hashSize), rainbow(color, 'fill'), margin(hashSpacing)),
   }
 }

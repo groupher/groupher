@@ -5,6 +5,7 @@ import type {
   TBannerLayout,
   TBrandLayout,
   TChangelogLayout,
+  TInlineTagLayout,
   TKanbanCardLayout,
   TKanbanLayout,
   TPostLayout,
@@ -16,6 +17,7 @@ type TRet = {
   bannerLayout: TBannerLayout
   brandLayout: TBrandLayout
   tagLayout: TTagLayout
+  inlineTagLayout: TInlineTagLayout
   postLayout: TPostLayout
   kanbanLayout: TKanbanLayout
   kanbanCardLayout: TKanbanCardLayout
@@ -31,6 +33,7 @@ export default function UseLayout(): TRet {
       'bannerLayout',
       'brandLayout',
       'tagLayout',
+      'inlineTagLayout',
       'postLayout',
       'kanbanLayout',
       'kanbanCardLayout',

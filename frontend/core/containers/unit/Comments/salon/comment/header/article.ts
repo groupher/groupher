@@ -5,15 +5,13 @@ export { cn } from '~/css'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { cn, avatar, fg, fill, cut, br, rainbow } = useTwBelt()
+  const { cn, avatar, fg, cut, br, rainbow } = useTwBelt()
 
   return {
     wrapper: 'row-center relative w-full ml-1',
     //
     replyCurveBox: 'align-both size-12 -ml-2.5 overflow-hidden relative mr-1.5 rotate-6',
-    replyCurve2: cn('size-16 border rounded-full absolute -top-10 -left-0', br('divider')),
-    //
-    replyCurve: cn('size-14 -ml-6 mr-1.5', fill('digest')),
+    replyCurve: cn('size-16 border rounded-full absolute -top-10 -left-0', br('outline')),
     baseInfo: 'row-center grow',
     headerInfo: 'column w-full',
     user: 'row-center grow text-sm',

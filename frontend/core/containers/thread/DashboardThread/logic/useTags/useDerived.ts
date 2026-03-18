@@ -11,6 +11,7 @@ export type TRet = {
   groups: string[]
   threads: TCommunityThread[]
   tagLayoutTouched: boolean
+  inlineTagLayoutTouched: boolean
   tagsIndexTouched: boolean
 }
 
@@ -18,7 +19,7 @@ export default function useDerived(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
 
-  const { tags, original, activeTagThread, activeTagGroup, nameAlias, tagLayout } = dsb$
+  const { tags, original, activeTagThread, activeTagGroup, nameAlias, tagLayout, inlineTagLayout } = dsb$
 
   const selectedThread = (activeTagThread || '').toUpperCase()
 
@@ -51,6 +52,11 @@ export default function useDerived(): TRet {
     [tagLayout, original.tagLayout],
   )
 
+  const inlineTagLayoutTouched = useMemo(
+    () => !equals(inlineTagLayout, original.inlineTagLayout),
+    [inlineTagLayout, original.inlineTagLayout],
+  )
+
   const tagsIndexTouched = useMemo(
     () => !equals(sortById(tags), sortById(original.tags || [])),
     [tags, original.tags],
@@ -61,6 +67,7 @@ export default function useDerived(): TRet {
     groups,
     threads,
     tagLayoutTouched,
+    inlineTagLayoutTouched,
     tagsIndexTouched,
   }
 }

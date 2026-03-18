@@ -35,7 +35,8 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
   @tag_threads Config.tag_threads()
   @content_threads Config.content_threads()
-  @kanban_states Config.kanban_states()
+  @post_cats [:feature, :bug, :question, :other]
+  @post_states [:backlog, :todo, :wip, :done, :resolved, :reject]
 
   @tag_count_range Config.tag_count_range()
   @article_count_per_thread Config.article_count_per_thread()
@@ -54,7 +55,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
         with {:ok, community} <- Communities.mock(slug),
              {:ok, _} <- seed_about_dashboard(community, slug),
              {:ok, posts} <- seed_threads(community, opts),
-             {:ok, _} <- seed_kanban_states(posts),
+             {:ok, _} <- seed_post_states_and_cats(posts),
              {:ok, updated_community} <- CMS.Communities.read(community.slug, inc_views: false) do
           {:ok, updated_community}
         end
@@ -134,15 +135,42 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     {:ok, posts}
   end
 
-  defp seed_kanban_states(posts) when is_list(posts) do
-    posts
-    |> Enum.with_index()
-    |> Enum.each(fn {post, idx} ->
-      state = Enum.at(@kanban_states, rem(idx, length(@kanban_states)))
-      CMS.Articles.set_state(post, state)
-    end)
+  defp seed_post_states_and_cats(posts) when is_list(posts) do
+    post_modes =
+      posts
+      |> Enum.shuffle()
+      |> Enum.with_index()
+      |> Enum.map(fn {_post, idx} ->
+        case idx do
+          0 -> :none
+          1 -> :cat_only
+          2 -> :cat_and_state
+          _ -> Enum.random([:none, :cat_and_state, :cat_and_state, :cat_only])
+        end
+      end)
 
-    {:ok, :ok}
+    posts
+    |> Enum.zip(post_modes)
+    |> Enum.reduce_while({:ok, :ok}, fn {post, mode}, _acc ->
+      case mode do
+        :none ->
+          {:cont, {:ok, :ok}}
+
+        :cat_only ->
+          case CMS.Articles.set_cat(post, Enum.random(@post_cats)) do
+            {:ok, _} -> {:cont, {:ok, :ok}}
+            {:error, reason} -> {:halt, {:error, reason}}
+          end
+
+        :cat_and_state ->
+          with {:ok, post} <- CMS.Articles.set_cat(post, Enum.random(@post_cats)),
+               {:ok, _post} <- CMS.Articles.set_state(post, Enum.random(@post_states)) do
+            {:cont, {:ok, :ok}}
+          else
+            {:error, reason} -> {:halt, {:error, reason}}
+          end
+      end
+    end)
   end
 
   defp seed_about_dashboard(community, slug) do

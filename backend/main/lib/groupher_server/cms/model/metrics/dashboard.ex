@@ -65,6 +65,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:doc_layout, :string, "cards"],
       [:doc_faq_layout, :string, "collapse"],
       [:tag_layout, :string, "hash"],
+      [:inline_tag_layout, :string, "border"],
       [:avatar_layout, :string, "square"],
       [:brand_layout, :string, "both"],
       [:banner_layout, :string, "header"],

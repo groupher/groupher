@@ -24,7 +24,7 @@
 @source inline('{border,bg}-divider');
 
 /* editor */
-@source inline('border-digest');
+@source inline('border-{digest,outline}');
 
 /* hover */
 @source inline('hover:{text,fill}-title');

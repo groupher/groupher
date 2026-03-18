@@ -16,7 +16,7 @@ export default function useSalon() {
     //
     indentLine: cn(
       'absolute top-20 left-0 h-[calc(100%-85px)] w-5 ml-12 border-l',
-      br('divider'),
+      br('outline'),
       `hover:${br('digest')}`,
     ),
   }

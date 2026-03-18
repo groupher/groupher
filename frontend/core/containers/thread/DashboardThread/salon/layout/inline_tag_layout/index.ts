@@ -1,5 +1,5 @@
 import useTwBelt from '~/hooks/useTwBelt'
-import useBase from '.'
+import useBase from '..'
 
 export { cn, cnMerge } from '~/css'
 
@@ -9,9 +9,9 @@ export default function useSalon() {
 
   return {
     wrapper: base.baseSection,
-    block: cn(base.blockBase, 'align-both w-64 h-20'),
+    block: cn(base.blockBase, 'align-both w-44 h-14 gap-2'),
     blockActive: base.blockBaseActive,
-    select: 'row-center gap-x-8 w-full',
+    select: 'row-center gap-8 w-full wrap',
     layout: 'column-align-both',
 
     bar: cn(base.bar, 'h-1.5 w-20 opacity-40'),

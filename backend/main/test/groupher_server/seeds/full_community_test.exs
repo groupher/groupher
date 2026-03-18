@@ -6,6 +6,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Helper.ArticleEnums
   alias GroupherServer.Repo
   alias GroupherServer.CMS.Model.Metrics.Dashboard
   alias Helper.ORM
@@ -14,6 +15,9 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
   describe "[full community seeds]" do
     test "seeds full community data including about dashboard" do
+      allowed_cats = [nil | ArticleEnums.cat_values()]
+      allowed_states = [nil, :backlog, :todo, :wip, :done, :resolved, :reject]
+
       slug = "seed-full-#{System.unique_integer([:positive, :monotonic])}"
 
       {:ok, community} = CMS.Seeds.full_community(slug)
@@ -37,8 +41,15 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert changelog_count == 23
       assert doc_count == 23
 
-      post = Repo.one!(from(p in Post, where: p.community_id == ^community.id, limit: 1))
-      assert post.state in [:backlog, :todo, :wip, :done, :reject]
+      posts = Repo.all(from(p in Post, where: p.community_id == ^community.id))
+      post = List.first(posts)
+
+      assert Enum.all?(posts, &(&1.cat in allowed_cats))
+      assert Enum.all?(posts, &(&1.state in allowed_states))
+
+      assert Enum.any?(posts, &(is_nil(&1.cat) and is_nil(&1.state)))
+      assert Enum.any?(posts, &(not is_nil(&1.cat) and is_nil(&1.state)))
+      assert Enum.any?(posts, &(not is_nil(&1.cat) and not is_nil(&1.state)))
 
       comments_count =
         from(c in Comment, where: c.post_id == ^post.id) |> count()

@@ -1,5 +1,6 @@
   @theme {
     --color-divider: #eae9e9;
+    --color-outline: #dedede;
 
     /* articles */
     --color-title: oklch(27.8% 0.033 256.848); /* gray.800 */
@@ -155,6 +156,7 @@
 @layer theme {
   [data-theme="dark"] {
     --color-divider: #303030; /* #3c3c3c */
+    --color-outline: #3d3d3d;
 
     /* articles */
     --color-title: oklch(96.7% 0.003 264.542);
@@ -283,6 +285,7 @@
   [data-theme='dark'] [data-theme='light'] {
      --color-card: #fff;
      --color-divider: #eae9e9;
+     --color-outline: #dedede;
      --color-title: oklch(27.8% 0.033 256.848); /* gray.800 */
      --color-digest: oklch(55.1% 0.027 264.364); /* gray.500 */
      --color-hoverBg: #efefef78;
