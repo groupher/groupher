@@ -40,7 +40,7 @@ export default {
   dashboard: 'Dashboard',
   //
   more: 'more',
-  'tags.fold.expand': 'Expand',
+  'tags.fold.expand': 'More..',
   'tags.fold.collapse': 'Collapse',
   'tags.all': 'All tags',
   'comment.editor.placeholder': "// Comment (press 'Tab' to insert quickly)",
