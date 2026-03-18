@@ -20,7 +20,7 @@ export default function useInlineTagSalon({ color, layout }: TProps) {
     },
     [INLINE_TAG_LAYOUT.SOLID]: {
       wrapper: cn('row-center rounded-md px-1 py-px', rainbow(color, 'bg')),
-      title: cn('text-xs keep-all mr-px bold-sm text-white', fg('title')),
+      title: cn('text-xs keep-all mr-px bold-sm text-white'),
     },
     [INLINE_TAG_LAYOUT.BORDER]: {
       wrapper: cn('row-center rounded-sm px-1 py-px border', br('outline')),
