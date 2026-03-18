@@ -9,6 +9,29 @@ import useSalon, { cnMerge } from '../../salon/layout/inline_tag_layout'
 import { TAGS_DEMO_LIST } from './constant'
 import TagItem from './TagItem'
 
+const LAYOUT_OPTIONS = [
+  {
+    value: INLINE_TAG_LAYOUT.MORANDI,
+    titleKey: 'dsb.layout.inline_tag.option.morandi',
+  },
+  {
+    value: INLINE_TAG_LAYOUT.SOFT,
+    titleKey: 'dsb.layout.inline_tag.option.soft',
+  },
+  {
+    value: INLINE_TAG_LAYOUT.SOLID,
+    titleKey: 'dsb.layout.inline_tag.option.solid',
+  },
+  {
+    value: INLINE_TAG_LAYOUT.BORDER,
+    titleKey: 'dsb.layout.inline_tag.option.border',
+  },
+  {
+    value: INLINE_TAG_LAYOUT.SIMPLE,
+    titleKey: 'dsb.layout.inline_tag.option.simple',
+  },
+] as const
+
 export default function InlineTagLayout() {
   const s = useSalon()
   const { t } = useTrans()
@@ -22,115 +45,27 @@ export default function InlineTagLayout() {
         desc={t('dsb.layout.inline_tag.desc')}
       />
       <div className={s.select}>
-        <button
-          className={s.layout}
-          onClick={() => edit(INLINE_TAG_LAYOUT.MORANDI, 'inlineTagLayout')}
-        >
-          <div
-            className={cnMerge(
-              s.block,
-              inlineTagLayout === INLINE_TAG_LAYOUT.MORANDI && s.blockActive,
-            )}
-          >
-            {TAGS_DEMO_LIST.map((item) => (
-              <TagItem key={item.id} tag={item} layout={INLINE_TAG_LAYOUT.MORANDI} />
-            ))}
-          </div>
+        {LAYOUT_OPTIONS.map(({ value, titleKey }) => {
+          const isActive = inlineTagLayout === value
 
-          <CheckLabel
-            title={t('dsb.layout.inline_tag.option.morandi')}
-            active={inlineTagLayout === INLINE_TAG_LAYOUT.MORANDI}
-            top={3}
-          />
-        </button>
+          return (
+            <button
+              key={value}
+              type='button'
+              className={s.layout}
+              aria-pressed={isActive}
+              onClick={() => edit(value, 'inlineTagLayout')}
+            >
+              <div className={cnMerge(s.block, isActive && s.blockActive)}>
+                {TAGS_DEMO_LIST.map((item) => (
+                  <TagItem key={item.id} tag={item} layout={value} />
+                ))}
+              </div>
 
-        <button
-          className={s.layout}
-          onClick={() => edit(INLINE_TAG_LAYOUT.SOFT, 'inlineTagLayout')}
-        >
-          <div
-            className={cnMerge(
-              s.block,
-              inlineTagLayout === INLINE_TAG_LAYOUT.SOFT && s.blockActive,
-            )}
-          >
-            {TAGS_DEMO_LIST.map((item) => (
-              <TagItem key={item.id} tag={item} layout={INLINE_TAG_LAYOUT.SOFT} />
-            ))}
-          </div>
-
-          <CheckLabel
-            title={t('dsb.layout.inline_tag.option.soft')}
-            active={inlineTagLayout === INLINE_TAG_LAYOUT.SOFT}
-            top={3}
-          />
-        </button>
-
-        <button
-          className={s.layout}
-          onClick={() => edit(INLINE_TAG_LAYOUT.SOLID, 'inlineTagLayout')}
-        >
-          <div
-            className={cnMerge(
-              s.block,
-              inlineTagLayout === INLINE_TAG_LAYOUT.SOLID && s.blockActive,
-            )}
-          >
-            {TAGS_DEMO_LIST.map((item) => (
-              <TagItem key={item.id} tag={item} layout={INLINE_TAG_LAYOUT.SOLID} />
-            ))}
-          </div>
-
-          <CheckLabel
-            title={t('dsb.layout.inline_tag.option.solid')}
-            active={inlineTagLayout === INLINE_TAG_LAYOUT.SOLID}
-            top={3}
-          />
-        </button>
-
-        <button
-          className={s.layout}
-          onClick={() => edit(INLINE_TAG_LAYOUT.BORDER, 'inlineTagLayout')}
-        >
-          <div
-            className={cnMerge(
-              s.block,
-              inlineTagLayout === INLINE_TAG_LAYOUT.BORDER && s.blockActive,
-            )}
-          >
-            {TAGS_DEMO_LIST.map((item) => (
-              <TagItem key={item.id} tag={item} layout={INLINE_TAG_LAYOUT.BORDER} />
-            ))}
-          </div>
-
-          <CheckLabel
-            title={t('dsb.layout.inline_tag.option.border')}
-            active={inlineTagLayout === INLINE_TAG_LAYOUT.BORDER}
-            top={3}
-          />
-        </button>
-
-        <button
-          className={s.layout}
-          onClick={() => edit(INLINE_TAG_LAYOUT.SIMPLE, 'inlineTagLayout')}
-        >
-          <div
-            className={cnMerge(
-              s.block,
-              inlineTagLayout === INLINE_TAG_LAYOUT.SIMPLE && s.blockActive,
-            )}
-          >
-            {TAGS_DEMO_LIST.map((item) => (
-              <TagItem key={item.id} tag={item} layout={INLINE_TAG_LAYOUT.SIMPLE} />
-            ))}
-          </div>
-
-          <CheckLabel
-            title={t('dsb.layout.inline_tag.option.simple')}
-            active={inlineTagLayout === INLINE_TAG_LAYOUT.SIMPLE}
-            top={3}
-          />
-        </button>
+              <CheckLabel title={t(titleKey)} active={isActive} top={3} />
+            </button>
+          )
+        })}
       </div>
       <SavingBar isTouched={isTouched} field={FIELD.INLINE_TAG_LAYOUT} loading={saving} top={10} />
     </div>
