@@ -8,7 +8,7 @@ export default function useSalon({ ...spacing }: TProps) {
 
   return {
     wrapper: cn('row-center wrap relative gap-x-1.5', margin(spacing)),
-    popover: 'column m-1 gap-y-1',
+    popover: 'row-center max-w-80 m-1 gap-2 wrap',
     foldWrapper: cn('row-center wrap relative gap-x-1.5', margin(spacing)),
     // tag: 'row-center debug',
     // title: cn('text-xs keep-all mr-px', fg('digest')),

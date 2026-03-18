@@ -93,6 +93,7 @@
     --color-rainbow-blackBtn: oklch(27.8% 0.033 256.848); /* gray.800 */
     --color-rainbow-blackSoft: #f4f4f4;
 
+    --color-rainbow-greySoft: #f0f0f0;
     /* gradient colors */
     --color-pageBg: #fff;
     
@@ -252,6 +253,7 @@
     --color-rainbow-blackBtn: #e6e6e6;
     --color-rainbow-blackSoft: #313131;
 
+    --color-rainbow-greySoft: #545353;
     --color-pageBg: #212121;
 
     /* gradient colors */
