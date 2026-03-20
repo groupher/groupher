@@ -5,12 +5,12 @@ defmodule GroupherServerWeb.Endpoint do
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
-  # @session_options [
-  #   store: :cookie,
-  #   key: "_groupher_server_key",
-  #   signing_salt: "skbsUB/7",
-  #   same_site: "Lax"
-  # ]
+  @session_options [
+    store: :cookie,
+    key: "_groupher_server_key",
+    signing_salt: "skbsUB/7",
+    same_site: "Lax"
+  ]
 
   # socket("/live", Phoenix.LiveView.Socket,
   #   websocket: [connect_info: [session: @session_options]],
@@ -54,7 +54,7 @@ defmodule GroupherServerWeb.Endpoint do
   plug(Plug.MethodOverride)
   plug(Plug.Head)
   # no need for standalone frontend project like next.js
-  # plug(Plug.Session, @session_options)
+  plug(Plug.Session, @session_options)
 
   # plug(:inspect_conn)
 
