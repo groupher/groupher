@@ -9,7 +9,7 @@ defmodule Helper.Later do
   {:ok, _}
   """
   def run({mod, func, args}) do
-    if test_env?() do
+    if skip_enqueue_env?() do
       _ = {mod, func, args}
       :ok
     else
@@ -20,5 +20,7 @@ defmodule Helper.Later do
     {:ok, :pass}
   end
 
-  defp test_env?, do: Application.get_env(:groupher_server, :env) == :test
+  defp skip_enqueue_env? do
+    Application.get_env(:groupher_server, :env) in [:test, :seed_prod]
+  end
 end

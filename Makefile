@@ -136,7 +136,16 @@ be.rollback.dev:
 
 
 be.deploy:
-	cd ./backend/main && fly deploy && cd -
+	cd ./backend/main && flyctl deploy && cd -
+
+be.status:
+	flyctl status -a groupher-api
+
+be.log:
+	flyctl logs -a groupher-api
+
+be.check:
+	flyctl checks list -a groupher-api
 
 # dev: before_action
 # 	@$(JSON_CLI) -s '.[0] * .[1]' config/config.json config/config.dev.json > /tmp/config.json

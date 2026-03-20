@@ -159,6 +159,21 @@ defmodule GroupherServer.CMS.Articles.List do
     end
   end
 
+  @spec count_published(atom(), User.t()) :: T.domain_res(non_neg_integer())
+  def count_published(thread, %User{} = user) do
+    flags = %{mark_delete: false, pending: :legal}
+
+    with {:ok, info} <- match(thread) do
+      info.model
+      |> join(:inner, [article], author in assoc(article, :author))
+      |> where([article, author], author.user_id == ^user.id)
+      |> QueryBuilder.filter_pack(flags)
+      |> select([article, author], count(article.id))
+      |> Repo.one()
+      |> done()
+    end
+  end
+
   @spec paged_citing_contents(atom(), T.id(), map()) :: T.domain_res(term())
   def paged_citing_contents(cited_by_type, cited_by_id, %{page: page, size: size} = filter) do
     cited_by_type = to_upcase(cited_by_type)

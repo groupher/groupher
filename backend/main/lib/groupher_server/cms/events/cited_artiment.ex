@@ -82,7 +82,12 @@ defmodule GroupherServer.CMS.Events.CitedArtiment do
   defp update_artiment_citing_count(cited_artiments) do
     Enum.all?(cited_artiments, fn cited ->
       {:ok, count} =
-        from(c in CitedArtiment, where: c.cited_by_id == ^cited.cited_by_id) |> ORM.count()
+        from(c in CitedArtiment,
+          where:
+            c.cited_by_id == ^cited.cited_by_id and
+              c.cited_by_type == ^to_upcase(cited.cited_by_type)
+        )
+        |> ORM.count()
 
       artiment = cited.artiment
       meta = Map.merge(artiment.meta, %{citing_count: count})

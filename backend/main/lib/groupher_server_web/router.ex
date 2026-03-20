@@ -18,6 +18,10 @@ defmodule GroupherServerWeb.Router do
     get("/", PageController, :home)
   end
 
+  scope "/" do
+    get("/health", GroupherServerWeb.Controller.Health, :show)
+  end
+
   pipeline :api do
     plug(:accepts, ["json"])
     plug(GroupherServerWeb.Context)
