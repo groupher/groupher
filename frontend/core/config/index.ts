@@ -14,8 +14,10 @@ export { APP_VERSION } from './version'
 
 export const SITE_LOGO = 'https://assets.groupher.com/icons/static/new-logo.jpg'
 
+export const GRAPHQL_ENDPOINT =
+  process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ?? CONFIG.GRAPHQL_ENDPOINT
+
 export const {
-  GRAPHQL_ENDPOINT,
   SENIOR_AMOUNT_THRESHOLD,
   SPONSOR_AMOUNT_THRESHOLD,
   PAGE_SIZE,
