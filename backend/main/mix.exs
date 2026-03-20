@@ -51,6 +51,7 @@ defmodule GroupherServer.Mixfile do
   # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test"]
   defp elixirc_paths(:mock), do: ["lib", "test/support"]
+  defp elixirc_paths(:seed_prod), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib", "test/support"]
 
   # Specifies your project dependencies.

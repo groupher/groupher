@@ -15,7 +15,7 @@ if System.get_env("PHX_SERVER") do
   config :groupher_server, GroupherServerWeb.Endpoint, server: true
 end
 
-if config_env() == :prod do
+if config_env() in [:prod, :seed_prod] do
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
   # want to use a different value for prod and you most likely don't want
@@ -63,7 +63,9 @@ if config_env() == :prod do
   # which you typically run after static files are built.
   config :groupher_server, GroupherServerWeb.Endpoint, load_from_system_env: true
   # url: [host: "groupher.com", port: 80]
-  config :groupher_server, GroupherServerWeb.Endpoint, server: true
+  if config_env() == :prod do
+    config :groupher_server, GroupherServerWeb.Endpoint, server: true
+  end
 
   # cache_static_manifest: "priv/static/cache_manifest.json"
 

@@ -11,19 +11,13 @@ defmodule GroupherServer.Application do
   # for more information on OTP Applications
   @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
-    # Define workers and child supervisors to be supervised
     children =
       [
-        {DNSCluster, query: Application.get_env(:groupher_server, :dns_cluster_query) || :ignore},
-        # Start the PubSub system
         {Phoenix.PubSub, name: GroupherServer.PubSub},
-        # Start the Ecto repository
-        GroupherServer.Repo,
-        # Start the endpoint when the application starts
-        GroupherServerWeb.Endpoint
-        # Start your own worker by calling: GroupherServer.Worker.start_link(arg1, arg2, arg3)
-        # worker(Helper.Scheduler, []),
-      ] ++ maybe_rihanna_worker() ++ cache_workers()
+        GroupherServer.Repo
+      ] ++
+        maybe_dns_cluster_worker() ++
+        maybe_endpoint_worker() ++ maybe_rihanna_worker() ++ maybe_cache_workers()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -47,8 +41,24 @@ defmodule GroupherServer.Application do
     end)
   end
 
+  defp maybe_dns_cluster_worker do
+    if seed_env?() do
+      []
+    else
+      [{DNSCluster, query: Application.get_env(:groupher_server, :dns_cluster_query) || :ignore}]
+    end
+  end
+
+  defp maybe_endpoint_worker do
+    if seed_env?(), do: [], else: [GroupherServerWeb.Endpoint]
+  end
+
+  defp maybe_cache_workers do
+    if seed_env?(), do: [], else: cache_workers()
+  end
+
   defp maybe_rihanna_worker do
-    if test_env?() do
+    if test_env?() or seed_env?() do
       []
     else
       [{Rihanna.Supervisor, [postgrex: GroupherServer.Repo.config()]}]
@@ -56,4 +66,5 @@ defmodule GroupherServer.Application do
   end
 
   defp test_env?, do: Application.get_env(:groupher_server, :env) == :test
+  defp seed_env?, do: Application.get_env(:groupher_server, :env) == :seed_prod
 end
