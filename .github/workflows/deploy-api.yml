@@ -11,12 +11,15 @@ jobs:
   deploy:
     name: Deploy backend api
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-api-${{ github.ref }}
+      cancel-in-progress: true
     defaults:
       run:
         working-directory: backend/main
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
