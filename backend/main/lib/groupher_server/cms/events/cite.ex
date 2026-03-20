@@ -98,7 +98,7 @@ defmodule GroupherServer.CMS.Events.Cite do
 
   defp parse_links_in_block(artiment, block_id, links) do
     Enum.reduce(links, [], fn link, acc ->
-      case parse_valid_cited(artiment.id, link) do
+      case parse_valid_cited(artiment, link) do
         {:ok, cited} -> List.insert_at(acc, 0, shape(artiment, cited, block_id))
         _ -> acc
       end
@@ -137,9 +137,9 @@ defmodule GroupherServer.CMS.Events.Cite do
   defp node_block_id(%{"_id" => block_id}) when is_binary(block_id), do: block_id
   defp node_block_id(_), do: "block-unknown"
 
-  defp parse_valid_cited(content_id, link) do
+  defp parse_valid_cited(artiment, link) do
     with {:ok, cited} <- parse_cited_in_link(link) do
-      case not citing_itself?(content_id, cited) do
+      case not citing_itself?(artiment, cited) do
         true -> {:ok, cited}
         false -> {:error, {:custom, "citing itself, ignored"}}
       end
@@ -206,7 +206,21 @@ defmodule GroupherServer.CMS.Events.Cite do
     end
   end
 
-  defp citing_itself?(content_id, %{artiment: %{id: id}}), do: content_id == id
+  defp citing_itself?(%Comment{id: source_id}, %{type: :comment, artiment: %{id: target_id}}),
+    do: source_id == target_id
+
+  defp citing_itself?(%Comment{}, %{type: :article}), do: false
+
+  defp citing_itself?(_article, %{type: :comment}), do: false
+
+  defp citing_itself?(article, %{type: :article, artiment: target}) do
+    with {:ok, source_thread} <- FrontDesk.thread_of(article),
+         {:ok, target_thread} <- FrontDesk.thread_of(target) do
+      article.id == target.id and source_thread == target_thread
+    else
+      _ -> false
+    end
+  end
 
   defp site_article_link?(url) do
     Enum.any?(@valid_article_prefix, &String.starts_with?(url, &1))
