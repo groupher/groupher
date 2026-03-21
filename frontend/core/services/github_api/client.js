@@ -1,5 +1,6 @@
 import { makeGithubExplore } from '~/utils'
 import persist from '~/utils/persist'
+
 import { graphqlEndpoint } from './config'
 
 const token = persist.get('github_token')

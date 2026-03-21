@@ -1,9 +1,8 @@
-import { isEmpty, forEach } from 'ramda'
+import { forEach, isEmpty } from 'ramda'
 import { timeout } from 'promise-timeout'
 
-import { TIMEOUT_SEC, restEndpoint } from './config'
 import { graphqlClient, restClient } from './client'
-
+import { TIMEOUT_SEC, restEndpoint } from './config'
 import S from './schema'
 
 const baseInfoQuery = (owner, name) => {

@@ -3,6 +3,7 @@ import { registerUrql } from '@urql/next/rsc'
 import type { NextAuthConfig } from 'next-auth'
 import NextAuth from 'next-auth'
 import Github from 'next-auth/providers/github'
+
 import { GRAPHQL_ENDPOINT } from '~/config'
 import { AUTH_KEY } from '~/const/oauth'
 
