@@ -6,7 +6,6 @@
 
 import { compose, filter, isNil, not, reverse as reverseFn, slice } from 'ramda'
 import { type FC, Suspense } from 'react'
-import { AVATARS_LIST_LENGTH } from '~/config'
 import SIZE from '~/const/size'
 import type { TSpace, TUser } from '~/spec'
 
@@ -51,7 +50,7 @@ const Facepile: FC<TProps> = ({
   size = SIZE.SMALL,
   total = null,
   users = [],
-  limit = AVATARS_LIST_LENGTH.POSTS,
+  limit = 4,
   noLazyLoad = false,
   onUserSelect = console.log,
   onTotalSelect = console.log,

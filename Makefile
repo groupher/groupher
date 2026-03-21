@@ -1,15 +1,3 @@
-OS := ${shell uname}
-
-ifeq ($(OS),Darwin)  # Mac OS X
-		JSON_CLI=./tools/jq-mac
-endif
-ifeq ($(OS),Linux)
-		JSON_CLI=//usr/local/bin/jq
-endif
-
-before_action:
-	@chmod 755 $(JSON_CLI)
-
 # naming should be [part].[action].[env].[sub-app]
 # frontend
 fe.install:
@@ -146,22 +134,6 @@ be.log:
 
 be.check:
 	flyctl checks list -a groupher-api
-
-# dev: before_action
-# 	@$(JSON_CLI) -s '.[0] * .[1]' config/config.json config/config.dev.json > /tmp/config.json
-# 	@cp /tmp/config.json ./config/config.json
-# 	npm run update.version
-# 	npm run dev
-
-# build.dev: before_action
-# 	@$(JSON_CLI) -s '.[0] * .[1]' config/config.json config/config.dev.json > /tmp/config.json
-# 	@cp /tmp/config.json ./config/config.json
-# 	npm run build.dev
-
-# build.prod: before_action
-# 	@$(JSON_CLI) -s '.[0] * .[1]' config/config.json config/config.prod.json > /tmp/config.json
-# 	@cp /tmp/config.json ./config/config.json
-# 	npm run build.prod --debug
 
 serve.help:
 	$(call serve.help)

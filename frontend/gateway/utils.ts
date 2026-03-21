@@ -80,10 +80,11 @@ export const getDashboardUrl = (pathname: string, host: string, search: string):
     return new URL(pathname + search, SITE.DASHBOARD)
   }
 
-  // For /xxx/dashboard format, remove the /dashboard part
+  // For /xxx/dashboard/... format, remove the /dashboard segment
+  // but keep the rest of the nested dashboard path intact.
   const pathParts = pathname.split('/').filter(Boolean)
   if (pathParts.length >= 2) {
-    const dashboardPath = `/${pathParts[0]}`
+    const dashboardPath = `/${pathParts[0]}${pathParts.length > 2 ? `/${pathParts.slice(2).join('/')}` : ''}`
     return new URL(dashboardPath + search, SITE.DASHBOARD)
   }
 

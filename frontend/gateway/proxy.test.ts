@@ -46,6 +46,22 @@ describe('gateway/proxy', () => {
     expect(rewritten.search).toBe('?page=1')
   })
 
+  it('rewrites nested dashboard route to dashboard site and keeps real route segments', () => {
+    proxy(makeRequest('/cps/dashboard/layout/kanban', 'www.groupher.com', '?tab=preview') as any)
+    const rewritten = getRewrittenUrl()
+    expect(rewritten.origin).toBe(new URL(SITE.DASHBOARD).origin)
+    expect(rewritten.pathname).toBe('/cps/layout/kanban')
+    expect(rewritten.search).toBe('?tab=preview')
+  })
+
+  it('keeps nested dashboard route on dashboard subdomain', () => {
+    proxy(makeRequest('/cps/layout/kanban', 'dashboard.groupher.com', '?tab=preview') as any)
+    const rewritten = getRewrittenUrl()
+    expect(rewritten.origin).toBe(new URL(SITE.DASHBOARD).origin)
+    expect(rewritten.pathname).toBe('/cps/layout/kanban')
+    expect(rewritten.search).toBe('?tab=preview')
+  })
+
   it('rewrites dashboard static route to dashboard site', () => {
     proxy(makeRequest('/dashboard/_next/static/chunks/app.js', 'www.groupher.com', '?v=1') as any)
     const rewritten = getRewrittenUrl()
@@ -75,6 +91,14 @@ describe('gateway/proxy', () => {
     const rewritten = getRewrittenUrl()
     expect(rewritten.origin).toBe(new URL(SITE.MAIN).origin)
     expect(rewritten.pathname).toBe('/unknown')
+    expect(rewritten.search).toBe('?k=v')
+  })
+
+  it('does not misclassify non-dashboard routes', () => {
+    proxy(makeRequest('/foo/bar/dashboard', 'www.groupher.com', '?k=v') as any)
+    const rewritten = getRewrittenUrl()
+    expect(rewritten.origin).toBe(new URL(SITE.MAIN).origin)
+    expect(rewritten.pathname).toBe('/foo/bar/dashboard')
     expect(rewritten.search).toBe('?k=v')
   })
 })

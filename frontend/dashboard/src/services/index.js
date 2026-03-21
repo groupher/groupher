@@ -1,2 +1,2 @@
-export { default as githubAPI } from './github_api'
+export { githubAPI } from '../../../core/services'
 export const holder = 1

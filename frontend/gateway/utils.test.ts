@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  SITE,
   getDashboardUrl,
   isDashboardRoute,
   isDashboardStaticRoute,
   isLandingStaticRoute,
+  SITE,
 } from './utils'
 
 describe('gateway/utils', () => {
@@ -16,10 +16,13 @@ describe('gateway/utils', () => {
 
     it('returns true for /xxx/dashboard pattern', () => {
       expect(isDashboardRoute('/cps/dashboard', 'www.groupher.com')).toBe(true)
+      expect(isDashboardRoute('/cps/dashboard/layout', 'www.groupher.com')).toBe(true)
+      expect(isDashboardRoute('/cps/dashboard/layout/kanban', 'www.groupher.com')).toBe(true)
     })
 
     it('returns false for non-dashboard route', () => {
       expect(isDashboardRoute('/organizations/settings/dashboard', 'www.groupher.com')).toBe(false)
+      expect(isDashboardRoute('/cps/overview', 'www.groupher.com')).toBe(false)
       expect(isDashboardRoute('/cps', 'www.groupher.com')).toBe(false)
     })
   })
@@ -49,6 +52,24 @@ describe('gateway/utils', () => {
       expect(url.origin).toBe(new URL(SITE.DASHBOARD).origin)
       expect(url.pathname).toBe('/cps')
       expect(url.search).toBe('?page=2')
+    })
+
+    it('keeps nested dashboard route segments', () => {
+      const url = getDashboardUrl(
+        '/cps/dashboard/layout/kanban',
+        'www.groupher.com',
+        '?tab=preview',
+      )
+      expect(url.origin).toBe(new URL(SITE.DASHBOARD).origin)
+      expect(url.pathname).toBe('/cps/layout/kanban')
+      expect(url.search).toBe('?tab=preview')
+    })
+
+    it('keeps nested dashboard route segments for dashboard subdomain', () => {
+      const url = getDashboardUrl('/cps/layout/kanban', 'dashboard.groupher.com', '?tab=preview')
+      expect(url.origin).toBe(new URL(SITE.DASHBOARD).origin)
+      expect(url.pathname).toBe('/cps/layout/kanban')
+      expect(url.search).toBe('?tab=preview')
     })
 
     it('falls back to dashboard home for unexpected path', () => {

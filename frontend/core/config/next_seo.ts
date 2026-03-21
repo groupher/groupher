@@ -1,13 +1,15 @@
+import { SITE_NAME, SITE_SLOGAN, SITE_URL } from './values'
+
 export default {
-  title: 'groupher',
-  description: '来为你心爱的产品建立一个反馈社区吧。',
-  cannotical: 'https://groupher.com',
+  title: SITE_NAME.toLowerCase(),
+  description: SITE_SLOGAN,
+  cannotical: SITE_URL,
   openGraph: {
     type: 'website',
     locale: 'zh_cn',
-    url: 'https://groupher.com',
-    site_name: 'groupher',
-    description: '来为你心爱的产品建立一个反馈社区吧。',
+    url: SITE_URL,
+    site_name: SITE_NAME.toLowerCase(),
+    description: SITE_SLOGAN,
   },
   /*
      twitter: {
