@@ -5,8 +5,10 @@
  */
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { FC } from 'react'
 import { ROUTE } from '~/const/route'
+import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
 import AddSVG from '~/icons/Add'
 import CmdSVG from '~/icons/Cmd'
@@ -14,7 +16,6 @@ import LogoutSVG from '~/icons/Logout'
 import SettingSVG from '~/icons/Setting'
 import { signOut } from '~/oauth'
 import type { TSpace, TUser } from '~/spec'
-import useTrans from '~/hooks/useTrans'
 import ImgFallback from '~/widgets/ImgFallback'
 import Tooltip from '~/widgets/Tooltip'
 
@@ -28,6 +29,7 @@ type TProps = {
 const LoggedInAccount: FC<TProps> = ({ user }) => {
   const s = useSalon()
   const { t } = useTrans()
+  const router = useRouter()
 
   const { avatar, nickname } = user
 
@@ -63,7 +65,10 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
             </div>
           </Link>
           <div className={s.divider} />
-          <button className={cn(s.menuBar, s.warningActive)} onClick={() => signOut()}>
+          <button
+            className={cn(s.menuBar, s.warningActive)}
+            onClick={() => signOut(() => router.refresh())}
+          >
             <span className={s.menuTitle}>{t('account.menu.logout')}</span>
             <LogoutSVG className={s.logoutIcon} />
           </button>

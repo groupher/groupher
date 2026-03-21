@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
+import EVENT from '~/const/event'
+import useEvent from '~/hooks/useEvent'
 import useQuery from '~/hooks/useQuery'
 import { P } from '~/schemas'
 import createStoreHook from '../createStoreHook'
@@ -13,6 +15,12 @@ export default function Hooks() {
   const store = storeHook.live$
 
   const { data, loading, error } = useQuery(P.me, {})
+
+  // Keep client state in sync during logout before the next refresh lands.
+  // Without this, auth-sensitive widgets can briefly render the old login state.
+  useEvent(EVENT.LOGOUT, () => {
+    store.commit({ user: null, loading: false })
+  }, [store])
 
   useEffect(() => {
     if (error) {

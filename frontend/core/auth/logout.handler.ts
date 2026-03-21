@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+
 import { AUTH_KEY } from '~/const/oauth'
 
 const COOKIE_DOMAIN = process.env.NODE_ENV === 'production' ? '.groupher.com' : undefined
