@@ -12,8 +12,8 @@
     "./next.config": "./next.config.js"
   },
   "scripts": {
-    "lint": "../../node_modules/.bin/biome lint app config constant hooks icons lib schemas services spec stores unit widgets",
-    "format": "../../node_modules/.bin/biome format --write app config constant hooks icons lib schemas services spec stores unit widgets",
+    "lint": "../../node_modules/.bin/biome lint .",
+    "format": "../../node_modules/.bin/biome format --write .",
     "build": "echo 'skip build'"
   },
   "lint-staged": {

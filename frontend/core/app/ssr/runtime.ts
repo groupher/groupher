@@ -32,7 +32,7 @@ const getCommunity = async (community: string): Promise<TCommunityInfo> => {
   if (errors) {
     // console.log('## error in fetching', P.community)
     console.log('## error details 1', errors)
-    console.log('## error details 1', errors[0].locations)
+    console.log('## error details 1', errors[0]?.locations)
     return {
       community: { slug: '' },
     }
