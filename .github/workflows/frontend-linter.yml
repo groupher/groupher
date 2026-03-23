@@ -3,68 +3,14 @@ name: Frontend linter
 on:
   pull_request:
     paths:
-      - "frontend/main/**/*.ts"
-      - "frontend/main/**/*.tsx"
-      - "frontend/main/**/*.js"
-      - "frontend/main/**/*.jsx"
-      - "frontend/main/**/*.mjs"
-      - "frontend/main/**/*.cjs"
-      - "frontend/main/**/*.json"
-      - "frontend/dashboard/**/*.ts"
-      - "frontend/dashboard/**/*.tsx"
-      - "frontend/dashboard/**/*.js"
-      - "frontend/dashboard/**/*.jsx"
-      - "frontend/dashboard/**/*.mjs"
-      - "frontend/dashboard/**/*.cjs"
-      - "frontend/dashboard/**/*.json"
-      - "frontend/landing/**/*.ts"
-      - "frontend/landing/**/*.tsx"
-      - "frontend/landing/**/*.js"
-      - "frontend/landing/**/*.jsx"
-      - "frontend/landing/**/*.mjs"
-      - "frontend/landing/**/*.cjs"
-      - "frontend/landing/**/*.json"
-      - "frontend/core/**/*.ts"
-      - "frontend/core/**/*.tsx"
-      - "frontend/core/**/*.js"
-      - "frontend/core/**/*.jsx"
-      - "frontend/core/**/*.mjs"
-      - "frontend/core/**/*.cjs"
-      - "frontend/core/**/*.json"
+      - "frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
       - "frontend/**/biome.json"
       - "package.json"
       - "yarn.lock"
       - "biome.json"
   push:
     paths:
-      - "frontend/main/**/*.ts"
-      - "frontend/main/**/*.tsx"
-      - "frontend/main/**/*.js"
-      - "frontend/main/**/*.jsx"
-      - "frontend/main/**/*.mjs"
-      - "frontend/main/**/*.cjs"
-      - "frontend/main/**/*.json"
-      - "frontend/dashboard/**/*.ts"
-      - "frontend/dashboard/**/*.tsx"
-      - "frontend/dashboard/**/*.js"
-      - "frontend/dashboard/**/*.jsx"
-      - "frontend/dashboard/**/*.mjs"
-      - "frontend/dashboard/**/*.cjs"
-      - "frontend/dashboard/**/*.json"
-      - "frontend/landing/**/*.ts"
-      - "frontend/landing/**/*.tsx"
-      - "frontend/landing/**/*.js"
-      - "frontend/landing/**/*.jsx"
-      - "frontend/landing/**/*.mjs"
-      - "frontend/landing/**/*.cjs"
-      - "frontend/landing/**/*.json"
-      - "frontend/core/**/*.ts"
-      - "frontend/core/**/*.tsx"
-      - "frontend/core/**/*.js"
-      - "frontend/core/**/*.jsx"
-      - "frontend/core/**/*.mjs"
-      - "frontend/core/**/*.cjs"
-      - "frontend/core/**/*.json"
+      - "frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
       - "frontend/**/biome.json"
       - "package.json"
       - "yarn.lock"
@@ -78,10 +24,8 @@ jobs:
     name: Detect frontend linter changes
     runs-on: ubuntu-latest
     outputs:
-      main: ${{ steps.filter.outputs.main }}
-      dashboard: ${{ steps.filter.outputs.dashboard }}
-      landing: ${{ steps.filter.outputs.landing }}
-      shared: ${{ steps.filter.outputs.shared }}
+      targets: ${{ steps.matrix.outputs.targets }}
+      has_targets: ${{ steps.matrix.outputs.has_targets }}
 
     steps:
       - uses: actions/checkout@v4
@@ -91,47 +35,61 @@ jobs:
         with:
           filters: |
             main:
-              - 'frontend/main/**/*.ts'
-              - 'frontend/main/**/*.tsx'
-              - 'frontend/main/**/*.js'
-              - 'frontend/main/**/*.jsx'
-              - 'frontend/main/**/*.mjs'
-              - 'frontend/main/**/*.cjs'
-              - 'frontend/main/**/*.json'
+              - 'frontend/main/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
             dashboard:
-              - 'frontend/dashboard/**/*.ts'
-              - 'frontend/dashboard/**/*.tsx'
-              - 'frontend/dashboard/**/*.js'
-              - 'frontend/dashboard/**/*.jsx'
-              - 'frontend/dashboard/**/*.mjs'
-              - 'frontend/dashboard/**/*.cjs'
-              - 'frontend/dashboard/**/*.json'
+              - 'frontend/dashboard/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
             landing:
-              - 'frontend/landing/**/*.ts'
-              - 'frontend/landing/**/*.tsx'
-              - 'frontend/landing/**/*.js'
-              - 'frontend/landing/**/*.jsx'
-              - 'frontend/landing/**/*.mjs'
-              - 'frontend/landing/**/*.cjs'
-              - 'frontend/landing/**/*.json'
+              - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
             shared:
-              - 'frontend/core/**/*.ts'
-              - 'frontend/core/**/*.tsx'
-              - 'frontend/core/**/*.js'
-              - 'frontend/core/**/*.jsx'
-              - 'frontend/core/**/*.mjs'
-              - 'frontend/core/**/*.cjs'
-              - 'frontend/core/**/*.json'
+              - 'frontend/core/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
               - 'frontend/**/biome.json'
               - 'package.json'
               - 'yarn.lock'
               - 'biome.json'
 
-  biome-main:
-    name: biome (main)
+      - name: Build matrix
+        id: matrix
+        env:
+          MAIN_CHANGED: ${{ steps.filter.outputs.main }}
+          DASHBOARD_CHANGED: ${{ steps.filter.outputs.dashboard }}
+          LANDING_CHANGED: ${{ steps.filter.outputs.landing }}
+          SHARED_CHANGED: ${{ steps.filter.outputs.shared }}
+        run: |
+          targets=()
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$MAIN_CHANGED" = "true" ]; then
+            targets+=('{"target":"main","path":"frontend/main"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ]; then
+            targets+=('{"target":"core","path":"frontend/core"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$DASHBOARD_CHANGED" = "true" ]; then
+            targets+=('{"target":"dashboard","path":"frontend/dashboard"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then
+            targets+=('{"target":"landing","path":"frontend/landing"}')
+          fi
+
+          if [ ${#targets[@]} -eq 0 ]; then
+            echo 'targets={"include":[]}' >> "$GITHUB_OUTPUT"
+            echo 'has_targets=false' >> "$GITHUB_OUTPUT"
+          else
+            joined=$(printf '%s\n' "${targets[@]}" | paste -sd, -)
+            echo "targets={\"include\":[${joined}]}" >> "$GITHUB_OUTPUT"
+            echo 'has_targets=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  biome:
+    name: biome (${{ matrix.target }})
     needs: changes
     runs-on: ubuntu-latest
-    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.main == 'true'
+    if: needs.changes.outputs.has_targets == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.targets) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -139,6 +97,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
       - name: Enable Corepack
         run: corepack enable
@@ -152,85 +112,4 @@ jobs:
           version: "2.3.11"
 
       - name: Run Biome CI
-        run: biome ci frontend/main
-
-  biome-core:
-    name: biome (core)
-    needs: changes
-    runs-on: ubuntu-latest
-    if: needs.changes.outputs.shared == 'true'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install deps
-        run: yarn install --immutable
-
-      - name: Setup Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: "2.3.11"
-
-      - name: Run Biome CI
-        run: biome ci frontend/core
-
-  biome-dashboard:
-    name: biome (dashboard)
-    needs: changes
-    runs-on: ubuntu-latest
-    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.dashboard == 'true'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install deps
-        run: yarn install --immutable
-
-      - name: Setup Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: "2.3.11"
-
-      - name: Run Biome CI
-        run: biome ci frontend/dashboard
-
-  biome-landing:
-    name: biome (landing)
-    needs: changes
-    runs-on: ubuntu-latest
-    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.landing == 'true'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install deps
-        run: yarn install --immutable
-
-      - name: Setup Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: "2.3.11"
-
-      - name: Run Biome CI
-        run: biome ci frontend/landing
+        run: biome ci ${{ matrix.path }}
