@@ -1,6 +1,6 @@
 'use client'
 
-import Header from '~/containers/thread/DashboardThread/Header'
+import Header from '~/unit/dashboard-thread/Header'
 
 const DashboardHeaderPage = () => {
   return <Header />

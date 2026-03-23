@@ -1,9 +1,9 @@
 'use client'
 
 import { THREAD } from '~/const/thread'
-import ArticleViewer from '~/containers/viewer/ArticleViewer'
 import ArticleStoreProvider from '~/stores/article/provider'
 import CommentsStoreProvider from '~/stores/comments/provider'
+import ArticleViewer from '~/unit/article-view'
 
 import { isLitePreviewPhase, type TPreviewPhase } from '../_preview'
 import type { TChangelogPreviewCacheEntry } from './buildPreviewCacheEntry'

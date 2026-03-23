@@ -4,10 +4,10 @@ import { motion, useScroll, useSpring, useTransform } from 'motion/react'
 import { type FC, type ReactNode, useEffect, useState } from 'react'
 import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
-import Footer from '~/widgets/Footer'
+import Footer from '~/unit/site-footer'
 import GlowBackground from '~/widgets/GlobalLayout/GlowBackground'
 import useSalon from '~/widgets/GlobalLayout/salon/main'
-import HomeHeader from '~/widgets/HomeHeader'
+import HomeHeader from '~/unit/home-header'
 
 const LANDING_WIDTH_VAR = '--container-landing-width'
 const DEFAULT_CONTAINER_WIDTH = 1420

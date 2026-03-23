@@ -1,8 +1,8 @@
 'use client'
 
 import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
-import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon, { cnMerge } from '~/containers/thread/DashboardThread/salon'
+import Portal from '~/unit/dashboard-thread/Portal'
+import useSalon, { cnMerge } from '~/unit/dashboard-thread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'

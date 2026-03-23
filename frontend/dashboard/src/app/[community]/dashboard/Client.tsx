@@ -1,7 +1,7 @@
 'use client'
 
-import SideMenu from '~/containers/thread/DashboardThread/SideMenu'
-import CommunityDigest from '~/widgets/CommunityDigest/DashboardLayout'
+import { SideMenu } from '~/unit/dashboard-thread'
+import CommunityDigest from '~/unit/community-digest/dashboard-layout'
 import useSalon from './salon'
 
 const ClientLayout = ({ children, demoMode = false }) => {

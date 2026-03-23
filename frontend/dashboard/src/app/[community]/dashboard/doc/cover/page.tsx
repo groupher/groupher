@@ -1,6 +1,6 @@
 'use client'
 
-import CMS from '~/containers/thread/DashboardThread/CMS/Docs/Cover'
+import CMS from '~/unit/dashboard-thread/CMS/Docs/Cover'
 
 const DashboardDocPage = () => {
   return <CMS />

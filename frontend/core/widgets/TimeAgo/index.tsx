@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import useLocale from '~/hooks/useLocale'
+import useLocale from '~/stores/locale/hooks'
 import useNow from '~/hooks/useNow'
 import { fmtRelativeTime } from '~/utils/fmt'
 

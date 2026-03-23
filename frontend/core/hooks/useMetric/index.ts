@@ -1,4 +1,4 @@
-import useDashboard from '~/hooks/useDashboard'
+import useDashboard from '~/stores/dashboard/hooks'
 import type { TMetric } from '~/spec'
 
 type TFmt = 'default' | 'lowercase'

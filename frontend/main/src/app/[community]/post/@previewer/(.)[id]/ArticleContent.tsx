@@ -1,5 +1,5 @@
 import { THREAD } from '~/const/thread'
-import { getPagedComments, getPost } from '~/providers/ssr'
+import { getPagedComments, getPost } from '~/app/ssr'
 
 import { PreviewCacheSync } from '../../../_preview'
 import buildPreviewCacheEntry from '../../buildPreviewCacheEntry'

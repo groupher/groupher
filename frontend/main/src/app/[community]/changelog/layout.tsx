@@ -1,5 +1,5 @@
 import { THREAD } from '~/const/thread'
-import { getPagedChangelogs, getTags } from '~/providers/ssr'
+import { getPagedChangelogs, getTags } from '~/app/ssr'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
 import ChangelogPreviewAdapter from './ChangelogPreviewAdapter'
 

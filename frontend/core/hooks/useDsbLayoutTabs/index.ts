@@ -1,7 +1,7 @@
 'use client'
 
 import { useSelectedLayoutSegments } from 'next/navigation'
-import useCommunity from '~/hooks/useCommunity'
+import useCommunity from '~/stores/community/hooks'
 import type { TTabItem } from '~/spec'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 

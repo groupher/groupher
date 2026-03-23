@@ -1,6 +1,6 @@
 'use client'
 
-import Custom from '~/containers/thread/DashboardThread/Domain/Custom'
+import Custom from '~/unit/dashboard-thread/Domain/Custom'
 
 export default function CustomPage() {
   return <Custom />

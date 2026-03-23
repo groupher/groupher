@@ -1,4 +1,4 @@
-import useDashboard from '~/hooks/useDashboard'
+import useDashboard from '~/stores/dashboard/hooks'
 import type { TMediaReport, TSocialItem } from '~/spec'
 
 type TABoutInfo = {

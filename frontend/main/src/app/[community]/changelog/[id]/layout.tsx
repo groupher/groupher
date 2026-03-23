@@ -1,5 +1,5 @@
 import { THREAD } from '~/const/thread'
-import { getChangelog, getPagedComments } from '~/providers/ssr'
+import { getChangelog, getPagedComments } from '~/app/ssr'
 import ArticleStoreProvider from '~/stores/article/provider'
 import CommentsStoreProvider from '~/stores/comments/provider'
 

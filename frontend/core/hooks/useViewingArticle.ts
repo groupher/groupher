@@ -1,5 +1,5 @@
 import { SITE_URL } from '~/config'
-import useArticle from '~/hooks/useArticle'
+import useArticle from '~/stores/article/hooks'
 import type { TArticle } from '~/spec'
 
 type TRet = {

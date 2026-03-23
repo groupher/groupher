@@ -1,5 +1,5 @@
 import { pick } from 'ramda'
-import useDashboard from '~/hooks/useDashboard'
+import useDashboard from '~/stores/dashboard/hooks'
 import type {
   TAvatarLayout,
   TBannerLayout,

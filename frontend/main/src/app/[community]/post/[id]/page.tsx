@@ -1,6 +1,6 @@
 'use client'
 
-import Post from '~/widgets/Article/Post'
+import Post from '~/unit/post-article'
 
 export default function Page() {
   return <Post />

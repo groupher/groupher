@@ -1,6 +1,6 @@
 'use client'
 
-import Layout from '~/containers/thread/DashboardThread/Layout/PostLayout'
+import Layout from '~/unit/dashboard-thread/Layout/PostLayout'
 
 export default function Page() {
   return <Layout />

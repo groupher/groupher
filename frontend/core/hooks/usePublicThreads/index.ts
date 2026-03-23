@@ -1,8 +1,8 @@
 import { find, propEq, reject } from 'ramda'
 import { THREAD } from '~/const/thread'
 import { sortByIndex } from '~/helper'
-import useCommunity from '~/hooks/useCommunity'
-import useDashboard from '~/hooks/useDashboard'
+import useCommunity from '~/stores/community/hooks'
+import useDashboard from '~/stores/dashboard/hooks'
 import { shouldFoldAboutToMore } from '~/hooks/useHeaderLinks/helper'
 import type { TCommunityThread, TNameAlias } from '~/spec'
 

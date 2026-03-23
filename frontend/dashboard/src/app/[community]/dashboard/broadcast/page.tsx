@@ -1,6 +1,6 @@
 'use client'
 
-import GlobalEditor from '~/containers/thread/DashboardThread/Broadcast/Editor/Global'
+import GlobalEditor from '~/unit/dashboard-thread/Broadcast/Editor/Global'
 
 export default function Page() {
   return <GlobalEditor />

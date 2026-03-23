@@ -1,6 +1,6 @@
 'use client'
 
-import Layout from '~/containers/thread/DashboardThread/Layout/ChangelogLayout'
+import Layout from '~/unit/dashboard-thread/Layout/ChangelogLayout'
 
 export default function Page() {
   return <Layout />

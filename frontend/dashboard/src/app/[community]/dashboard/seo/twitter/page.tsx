@@ -1,6 +1,6 @@
 'use client'
 
-import TwitterGraph from '~/containers/thread/DashboardThread/SEO/TwitterGraph'
+import TwitterGraph from '~/unit/dashboard-thread/SEO/TwitterGraph'
 
 export default function Page() {
   return <TwitterGraph />

@@ -6,11 +6,10 @@
 
 import { type FC, lazy, type ReactNode, Suspense } from 'react'
 
-import Mushroom from '~/containers/Mushroom'
+import Mushroom from '~/widgets/Mushroom'
 import ThemeMonitor from './ThemeMonitor'
 
 // import Broadcast from '~/widgets/Broadcast'
-// import ModeLine from '~/containers/unit/ModeLine'
 
 import DemoModeSnackbarGate from './DemoModeSnackbarGate'
 
@@ -57,7 +56,6 @@ const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
         <Wallpaper />
         <div className={s.scrollWrapper}>
           <MainWrapper>{children}</MainWrapper>
-          {/* {isMobile && <ModeLine />} */}
         </div>
       </div>
 

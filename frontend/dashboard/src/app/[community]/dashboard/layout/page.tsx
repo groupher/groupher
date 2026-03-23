@@ -1,13 +1,13 @@
 'use client'
 
-import AvatarLayout from '~/containers/thread/DashboardThread/Layout/AvatarLayout'
-import BannerLayout from '~/containers/thread/DashboardThread/Layout/BannerLayout'
-import BrandLayout from '~/containers/thread/DashboardThread/Layout/BrandLayout'
-import InlineTagLayout from '~/containers/thread/DashboardThread/Layout/InlineTagLayout'
-import TagLayout from '~/containers/thread/DashboardThread/Layout/TagLayout'
-import TopbarLayout from '~/containers/thread/DashboardThread/Layout/TopbarLayout'
+import AvatarLayout from '~/unit/dashboard-thread/Layout/AvatarLayout'
+import BannerLayout from '~/unit/dashboard-thread/Layout/BannerLayout'
+import BrandLayout from '~/unit/dashboard-thread/Layout/BrandLayout'
+import InlineTagLayout from '~/unit/dashboard-thread/Layout/InlineTagLayout'
+import TagLayout from '~/unit/dashboard-thread/Layout/TagLayout'
+import TopbarLayout from '~/unit/dashboard-thread/Layout/TopbarLayout'
 
-import useSalon from '~/containers/thread/DashboardThread/salon/layout'
+import useSalon from '~/unit/dashboard-thread/salon/layout'
 
 export default function Page() {
   const s = useSalon()

@@ -1,6 +1,6 @@
 'use client'
 
-import Admin from '~/containers/thread/DashboardThread/Admin'
+import Admin from '~/unit/dashboard-thread/Admin'
 
 const DashboardAdminPage = () => {
   return <Admin />

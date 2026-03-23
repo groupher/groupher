@@ -17,7 +17,7 @@ import { mockUsers } from '~/mock'
 import BorderButton from '~/widgets/Buttons/BorderButton'
 import Button from '~/widgets/Buttons/Button'
 import Facepile from '~/widgets/Facepile'
-import FaqList from '~/widgets/FaqList'
+import FaqList from '~/unit/faq-list'
 import Tooltip from '~/widgets/Tooltip'
 
 import ArticlesIntroTabs from './ArticlesIntroTabs'

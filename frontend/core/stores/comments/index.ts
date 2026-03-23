@@ -1,6 +1,6 @@
 import { proxy } from 'valtio'
 import { EMPTY_PAGED_COMMENTS } from '~/const/utils'
-import { API_MODE, MODE } from '~/containers/unit/Comments/constant'
+import { API_MODE, MODE } from './constant'
 import type { TInit, TStore } from './spec'
 
 export default function CommentsStore(init: TInit = {}): TStore {

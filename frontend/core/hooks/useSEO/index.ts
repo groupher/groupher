@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
 import { SEO_KEYS } from '~/const/seo'
-import useDashboard from '~/hooks/useDashboard'
+import useDashboard from '~/stores/dashboard/hooks'
 import type { TDsdSEOConf } from '~/spec'
 
 export default function useSEO(): TDsdSEOConf {

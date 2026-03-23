@@ -1,5 +1,5 @@
 import { THREAD } from '~/const/thread'
-import { getPagedPosts, getTags } from '~/providers/ssr'
+import { getPagedPosts, getTags } from '~/app/ssr'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
 import PostPreviewAdapter from './PostPreviewAdapter'
 

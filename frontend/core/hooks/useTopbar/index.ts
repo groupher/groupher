@@ -1,7 +1,7 @@
 import { includes } from 'ramda'
 import { TOPBAR_LAYOUT } from '~/const/layout'
 import METRIC from '~/const/metric'
-import useDashboard from '~/hooks/useDashboard'
+import useDashboard from '~/stores/dashboard/hooks'
 import useMetric from '~/hooks/useMetric'
 import type { TColorName, TTopbarLayout } from '~/spec'
 

@@ -2,7 +2,7 @@
 
 import type { FC } from 'react'
 import { COLOR } from '~/const/colors'
-import useDashboard from '~/hooks/useDashboard'
+import useDashboard from '~/stores/dashboard/hooks'
 import useTrans from '~/hooks/useTrans'
 import MoreSVG from '~/icons/List'
 import WarningSVG from '~/icons/Warning'

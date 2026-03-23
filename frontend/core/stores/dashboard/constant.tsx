@@ -25,7 +25,6 @@ import {
 import SIZE from '~/const/size'
 import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
-import { EMPTY_MEDIA_REPORT } from '~/containers/thread/DashboardThread/constant'
 import type { TDsbFieldMap } from './spec'
 
 export const DEFAULT_OVERVIEW = {
@@ -34,6 +33,15 @@ export const DEFAULT_OVERVIEW = {
   postsCount: 0,
   changelogsCount: 0,
   docsCount: 0,
+}
+
+export const EMPTY_MEDIA_REPORT = {
+  index: 0,
+  title: '',
+  favicon: '',
+  siteName: '',
+  url: '',
+  editUrl: '',
 }
 
 export const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED]

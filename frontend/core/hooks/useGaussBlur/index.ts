@@ -1,5 +1,5 @@
 import THEME from '~/const/theme'
-import useDashboard from '~/hooks/useDashboard'
+import useDashboard from '~/stores/dashboard/hooks'
 import useTheme from '~/hooks/useTheme'
 
 export default function useGaussBlur(): number {

@@ -1,8 +1,8 @@
 'use client'
 
-import Item from '~/containers/thread/DashboardThread/Alias/Item'
-import { ALIAS_GROUP } from '~/containers/thread/DashboardThread/constant'
-import useAlias from '~/containers/thread/DashboardThread/logic/useAlias'
+import Item from '~/unit/dashboard-thread/Alias/Item'
+import { ALIAS_GROUP } from '~/unit/dashboard-thread/constant'
+import useAlias from '~/unit/dashboard-thread/hooks/useAlias'
 import { groupByKey } from '~/helper'
 
 export default function Page() {

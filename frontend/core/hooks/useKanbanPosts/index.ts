@@ -1,4 +1,4 @@
-import useArticleList from '~/hooks/useArticleList'
+import useArticleList from '~/stores/articleList/hooks'
 import type { TPagedPosts, TResState } from '~/spec'
 
 type TRes = {

@@ -1,4 +1,4 @@
-import useCommunity from '~/hooks/useCommunity'
+import useCommunity from '~/stores/community/hooks'
 
 type TRet = {
   enterView: () => void

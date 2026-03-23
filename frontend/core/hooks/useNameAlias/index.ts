@@ -1,6 +1,6 @@
 import { filter } from 'ramda'
 import { useMemo } from 'react'
-import useDashboard from '~/hooks/useDashboard'
+import useDashboard from '~/stores/dashboard/hooks'
 import type { TNameAlias } from '~/spec'
 
 const useNameAlias = (group = 'kanban'): Record<string, TNameAlias> => {

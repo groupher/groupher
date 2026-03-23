@@ -1,4 +1,4 @@
-import useArticleList from '~/hooks/useArticleList'
+import useArticleList from '~/stores/articleList/hooks'
 import type { TPagedPosts, TResState, TTag } from '~/spec'
 
 export type TUpdate = {

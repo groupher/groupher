@@ -2,8 +2,8 @@
 
 import { BROADCAST_TABS } from '~/const/route'
 import VIEW from '~/const/view'
-import Portal from '~/containers/thread/DashboardThread/Portal'
-import useSalon from '~/containers/thread/DashboardThread/salon/broadcast'
+import Portal from '~/unit/dashboard-thread/Portal'
+import useSalon from '~/unit/dashboard-thread/salon/broadcast'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
 import Tabs from '~/widgets/Switcher/Tabs'

@@ -1,6 +1,6 @@
 'use client'
 
-import AboutThread from '~/containers/thread/AboutThread'
+import AboutThread from '~/unit/about-thread'
 
 const CommunityAboutPage = () => {
   return <AboutThread />
