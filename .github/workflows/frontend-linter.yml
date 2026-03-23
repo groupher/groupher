@@ -5,12 +5,36 @@ on:
     paths:
       - "frontend/main/**/*.ts"
       - "frontend/main/**/*.tsx"
+      - "frontend/main/**/*.js"
+      - "frontend/main/**/*.jsx"
+      - "frontend/main/**/*.mjs"
+      - "frontend/main/**/*.cjs"
+      - "frontend/main/**/*.json"
+      - "frontend/main/**/*.jsonc"
       - "frontend/dashboard/**/*.ts"
       - "frontend/dashboard/**/*.tsx"
+      - "frontend/dashboard/**/*.js"
+      - "frontend/dashboard/**/*.jsx"
+      - "frontend/dashboard/**/*.mjs"
+      - "frontend/dashboard/**/*.cjs"
+      - "frontend/dashboard/**/*.json"
+      - "frontend/dashboard/**/*.jsonc"
       - "frontend/landing/**/*.ts"
       - "frontend/landing/**/*.tsx"
+      - "frontend/landing/**/*.js"
+      - "frontend/landing/**/*.jsx"
+      - "frontend/landing/**/*.mjs"
+      - "frontend/landing/**/*.cjs"
+      - "frontend/landing/**/*.json"
+      - "frontend/landing/**/*.jsonc"
       - "frontend/core/**/*.ts"
       - "frontend/core/**/*.tsx"
+      - "frontend/core/**/*.js"
+      - "frontend/core/**/*.jsx"
+      - "frontend/core/**/*.mjs"
+      - "frontend/core/**/*.cjs"
+      - "frontend/core/**/*.json"
+      - "frontend/core/**/*.jsonc"
       - "frontend/**/biome.json"
       - "package.json"
       - "yarn.lock"
@@ -19,12 +43,36 @@ on:
     paths:
       - "frontend/main/**/*.ts"
       - "frontend/main/**/*.tsx"
+      - "frontend/main/**/*.js"
+      - "frontend/main/**/*.jsx"
+      - "frontend/main/**/*.mjs"
+      - "frontend/main/**/*.cjs"
+      - "frontend/main/**/*.json"
+      - "frontend/main/**/*.jsonc"
       - "frontend/dashboard/**/*.ts"
       - "frontend/dashboard/**/*.tsx"
+      - "frontend/dashboard/**/*.js"
+      - "frontend/dashboard/**/*.jsx"
+      - "frontend/dashboard/**/*.mjs"
+      - "frontend/dashboard/**/*.cjs"
+      - "frontend/dashboard/**/*.json"
+      - "frontend/dashboard/**/*.jsonc"
       - "frontend/landing/**/*.ts"
       - "frontend/landing/**/*.tsx"
+      - "frontend/landing/**/*.js"
+      - "frontend/landing/**/*.jsx"
+      - "frontend/landing/**/*.mjs"
+      - "frontend/landing/**/*.cjs"
+      - "frontend/landing/**/*.json"
+      - "frontend/landing/**/*.jsonc"
       - "frontend/core/**/*.ts"
       - "frontend/core/**/*.tsx"
+      - "frontend/core/**/*.js"
+      - "frontend/core/**/*.jsx"
+      - "frontend/core/**/*.mjs"
+      - "frontend/core/**/*.cjs"
+      - "frontend/core/**/*.json"
+      - "frontend/core/**/*.jsonc"
       - "frontend/**/biome.json"
       - "package.json"
       - "yarn.lock"
@@ -53,15 +101,39 @@ jobs:
             main:
               - 'frontend/main/**/*.ts'
               - 'frontend/main/**/*.tsx'
+              - 'frontend/main/**/*.js'
+              - 'frontend/main/**/*.jsx'
+              - 'frontend/main/**/*.mjs'
+              - 'frontend/main/**/*.cjs'
+              - 'frontend/main/**/*.json'
+              - 'frontend/main/**/*.jsonc'
             dashboard:
               - 'frontend/dashboard/**/*.ts'
               - 'frontend/dashboard/**/*.tsx'
+              - 'frontend/dashboard/**/*.js'
+              - 'frontend/dashboard/**/*.jsx'
+              - 'frontend/dashboard/**/*.mjs'
+              - 'frontend/dashboard/**/*.cjs'
+              - 'frontend/dashboard/**/*.json'
+              - 'frontend/dashboard/**/*.jsonc'
             landing:
               - 'frontend/landing/**/*.ts'
               - 'frontend/landing/**/*.tsx'
+              - 'frontend/landing/**/*.js'
+              - 'frontend/landing/**/*.jsx'
+              - 'frontend/landing/**/*.mjs'
+              - 'frontend/landing/**/*.cjs'
+              - 'frontend/landing/**/*.json'
+              - 'frontend/landing/**/*.jsonc'
             shared:
               - 'frontend/core/**/*.ts'
               - 'frontend/core/**/*.tsx'
+              - 'frontend/core/**/*.js'
+              - 'frontend/core/**/*.jsx'
+              - 'frontend/core/**/*.mjs'
+              - 'frontend/core/**/*.cjs'
+              - 'frontend/core/**/*.json'
+              - 'frontend/core/**/*.jsonc'
               - 'frontend/**/biome.json'
               - 'package.json'
               - 'yarn.lock'
@@ -89,10 +161,37 @@ jobs:
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
         with:
-          version: latest
+          version: "2.3.11"
 
       - name: Run Biome CI
         run: biome ci frontend/main
+
+  biome-core:
+    name: biome (core)
+    needs: changes
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.shared == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: "2.3.11"
+
+      - name: Run Biome CI
+        run: biome ci frontend/core
 
   biome-dashboard:
     name: biome (dashboard)
@@ -116,7 +215,7 @@ jobs:
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
         with:
-          version: latest
+          version: "2.3.11"
 
       - name: Run Biome CI
         run: biome ci frontend/dashboard
@@ -143,7 +242,7 @@ jobs:
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
         with:
-          version: latest
+          version: "2.3.11"
 
       - name: Run Biome CI
         run: biome ci frontend/landing
