@@ -6,8 +6,8 @@
 
 import type { FC } from 'react'
 import { BANNER_LAYOUT } from '~/const/layout'
-import useCommunity from '~/stores/community/hooks'
 import useLayout from '~/hooks/useLayout'
+import useCommunity from '~/stores/community/hooks'
 
 import Markdown from '~/widgets/Markdown'
 import BasicStates from './BasicStates'

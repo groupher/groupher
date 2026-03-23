@@ -7,8 +7,8 @@
  */
 
 import { FOOTER_LAYOUT } from '~/const/layout'
-import useCommunity from '~/stores/community/hooks'
 import useFooterLinks from '~/hooks/useFooterLinks'
+import useCommunity from '~/stores/community/hooks'
 import GroupLayout from './GroupLayout'
 import PowerbyInfo from './PowerbyInfo'
 import SimpleLayout from './SimpleLayout'

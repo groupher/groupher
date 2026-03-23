@@ -1,9 +1,7 @@
-import type { TSpace } from '~/spec'
-
-import useTwBelt from '~/hooks/useTwBelt'
-import useLayout from '~/hooks/useLayout'
-
 import { BANNER_LAYOUT } from '~/const/layout'
+import useLayout from '~/hooks/useLayout'
+import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 type TProps = TSpace
 

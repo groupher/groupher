@@ -1,10 +1,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 
 import { ARTICLE_CAT } from '~/const/gtd'
-import type { TArticleFilter } from '~/spec'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useArticlesFilter from '~/hooks/useArticlesFilter'
+import type { TArticleFilter } from '~/spec'
 
 describe('useArticlesFilter', () => {
   it('exposes filter fields and updateActiveFilter passthrough', async () => {

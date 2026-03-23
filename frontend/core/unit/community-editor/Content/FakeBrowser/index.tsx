@@ -1,11 +1,9 @@
 import { type FC, useState } from 'react'
-
+import useSalon from '../../salon/content/fake_browser'
+import type { TCommunityType, TStep } from '../../spec'
 import BrowserHead from './BrowerHead'
 import Content from './Content'
 import MaskPanel from './MaskPanel'
-
-import type { TStep, TCommunityType } from '../../spec'
-import useSalon from '../../salon/content/fake_browser'
 
 type TProps = {
   step: TStep

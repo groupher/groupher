@@ -1,10 +1,10 @@
 import Image from 'next/image'
+import useTrans from '~/hooks/useTrans'
 import ArrowLinker from '~/widgets/ArrowLinker'
 import Button from '~/widgets/Buttons/Button'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import Input from '~/widgets/Input'
 import Modal from '~/widgets/Modal'
-import useTrans from '~/hooks/useTrans'
 import useSalon, { cn } from '../salon/third_part/setting_modal'
 
 import type { TIntegrateAnalysisTool } from './spec'

@@ -35,10 +35,10 @@ const Menu: FC = () => {
     <MenuButton
       options={menuOptions}
       extraOptions={extraOptions}
-      placement="bottom-end"
+      placement='bottom-end'
       onClick={console.log}
     >
-      <IconButton path="shape/more.svg" left={16} />
+      <IconButton path='shape/more.svg' left={16} />
     </MenuButton>
   )
 }

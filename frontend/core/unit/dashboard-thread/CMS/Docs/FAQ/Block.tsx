@@ -1,19 +1,16 @@
 import type { FC } from 'react'
-
-import type { TFAQSection } from '~/spec'
-
-import ArrowSVG from '~/icons/Arrow'
-import EditSVG from '~/icons/EditPen'
-import DeleteSVG from '~/icons/Delete'
 import useTrans from '~/hooks/useTrans'
 
-import Markdown from '~/widgets/Markdown'
-import Editor from './Editor'
+import ArrowSVG from '~/icons/Arrow'
+import DeleteSVG from '~/icons/Delete'
+import EditSVG from '~/icons/EditPen'
+import type { TFAQSection } from '~/spec'
 
+import Markdown from '~/widgets/Markdown'
 import useFAQ from '../../../logic/useFAQ'
 import useSalon, { cn } from '../../../salon/cms/docs/faq/block'
-
 import type { TProps as TIndex } from '.'
+import Editor from './Editor'
 
 type TProps = {
   section: TFAQSection

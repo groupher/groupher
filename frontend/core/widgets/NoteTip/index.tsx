@@ -5,10 +5,8 @@
  */
 
 import type { FC, ReactNode } from 'react'
-
-import type { TSpace, TTooltipPlacement } from '~/spec'
-
 import InfoSVG from '~/icons/Info'
+import type { TSpace, TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from './salon'

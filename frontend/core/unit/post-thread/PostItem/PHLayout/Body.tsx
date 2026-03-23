@@ -23,7 +23,7 @@ const Body: FC<TProps> = ({ article }) => {
           <ArticleCatState cat={article.cat} state={article.state} right={18} top={1} left={-2} />
         )}
         <ViewsCount count={article.views} />
-        <div className="mr-5" />
+        <div className='mr-5' />
         {article.commentsCount !== 0 && <CommentsCount count={article.commentsCount} />}
       </div>
     </div>

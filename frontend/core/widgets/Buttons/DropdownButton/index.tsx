@@ -1,14 +1,10 @@
 import type { FC, ReactNode } from 'react'
-
-import type { TActive, TSizeTS, TSpace, TButtonPrefix } from '~/spec'
 import SIZE from '~/const/size'
-
 import ArrowSVG from '~/icons/ArrowSimple'
 import CloseSVG from '~/icons/CloseLight'
-
-import PrefixIcon from './PrefixIcon'
-
+import type { TActive, TButtonPrefix, TSizeTS, TSpace } from '~/spec'
 import useSalon from '../salon/dropdown_button'
+import PrefixIcon from './PrefixIcon'
 
 type TProps = {
   children: ReactNode

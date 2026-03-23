@@ -1,6 +1,6 @@
 import { LINEAR_BORDER } from '../../constant'
-import useLogic from '../../useLogic'
 import useSalon, { cn } from '../../salon/toolbox/border_block/border_box'
+import useLogic from '../../useLogic'
 
 const BorderBox = ({ linearBorderPos, pos }) => {
   const { linearBorderPosOnChange } = useLogic()

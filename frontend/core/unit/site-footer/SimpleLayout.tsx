@@ -26,7 +26,11 @@ export default function SimpleLayout() {
       </Link>
       <div className={s.linksInfo}>
         {firstGroupLinks.map((item: TLinkItem) => (
-          <Link className={s.linkItem} key={`${item.groupIndex ?? 0}-${item.index}`} href={item.link}>
+          <Link
+            className={s.linkItem}
+            key={`${item.groupIndex ?? 0}-${item.index}`}
+            href={item.link}
+          >
             {item.title}
           </Link>
         ))}

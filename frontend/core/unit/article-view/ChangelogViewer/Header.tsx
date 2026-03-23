@@ -2,8 +2,8 @@ import { type FC, Fragment } from 'react'
 
 import type { TChangelog } from '~/spec'
 import ArticleCatState from '~/unit/article-cat-state'
-import DotDivider from '~/widgets/DotDivider'
 import TagsList from '~/unit/tags-list'
+import DotDivider from '~/widgets/DotDivider'
 
 import useSalon from '../salon/changelog_viewer/header'
 

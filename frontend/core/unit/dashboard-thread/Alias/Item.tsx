@@ -1,8 +1,7 @@
 import type { FC } from 'react'
-
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSolid'
 import AddButton from '~/widgets/Buttons/AddButton'
-import useTrans from '~/hooks/useTrans'
 import Input from '~/widgets/Input'
 
 import { BUILD_IN_ALIAS_SUGGESTIONS, FIELD } from '../constant'

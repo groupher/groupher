@@ -1,15 +1,12 @@
 import { useEffect } from 'react'
 
 import TadaSVG from '~/icons/Tada'
-
-import StatusBall from './StatusBall'
-
 import { STEP } from '../constant'
 import { tada } from '../helper'
-import useLogic from '../useLogic'
-
 import { Icon } from '../salon/banner/select_type/type_boxes'
 import useSalon from '../salon/header/step_map'
+import useLogic from '../useLogic'
+import StatusBall from './StatusBall'
 
 export default function StepMap() {
   const s = useSalon()

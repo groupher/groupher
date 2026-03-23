@@ -2,10 +2,9 @@ import { keys, mergeDeepRight, pick } from 'ramda'
 import { useCallback } from 'react'
 import { proxy, useSnapshot } from 'valtio'
 import { ARTICLE_CAT } from '~/const/gtd'
-import useCommunity from '~/stores/community/hooks'
-
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TArticleCat, TCommunity, TEditMode, TGroupedTags, TSubmitState, TTag } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 import S from './schema'
 import type { TEditData, TStore } from './spec'
 

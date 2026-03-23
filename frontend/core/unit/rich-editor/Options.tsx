@@ -14,7 +14,7 @@ const Options: FC<TProps> = ({ addon }) => {
   return (
     <div className={s.wrapper}>
       {addon}
-      <div className="grow" />
+      <div className='grow' />
       <Menu />
     </div>
   )

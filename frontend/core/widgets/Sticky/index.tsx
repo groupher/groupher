@@ -7,8 +7,8 @@
  *
  */
 
-import React from 'react'
 import T from 'prop-types'
+import React from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
 
 import { Global } from '~/helper'
@@ -232,7 +232,7 @@ class StickyBox extends React.Component<TStickyBoxProps, TStickyBoxState> {
     // Only applicable if scrollPane is an offsetParent
     if (
       (this.scrollPane as HTMLElement).firstChild instanceof HTMLElement &&
-      // @ts-ignore
+      // @ts-expect-error
       (this.scrollPane as HTMLElement).firstChild.offsetParent === this.scrollPane
     ) {
       this.scrollPaneOffset = (this.scrollPane as HTMLElement).getBoundingClientRect().top

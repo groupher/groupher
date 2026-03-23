@@ -5,11 +5,10 @@
  */
 
 import { type FC, memo, type ReactNode } from 'react'
-
-import type { TSpace } from '~/spec'
+import EditSVG from '~/icons/EditPen'
 
 import PlusSVG from '~/icons/Plus'
-import EditSVG from '~/icons/EditPen'
+import type { TSpace } from '~/spec'
 
 import useSalon from './salon/add_button'
 

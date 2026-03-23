@@ -2,9 +2,9 @@ import { equals, filter, find, includes, pluck, propEq, reject, uniq } from 'ram
 import { useMemo } from 'react'
 import { THREAD } from '~/const/thread'
 import { sortById } from '~/helper'
+import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
-import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
 
 export type TRet = {
   tags: readonly TTag[]
@@ -19,7 +19,8 @@ export default function useDerived(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
 
-  const { tags, original, activeTagThread, activeTagGroup, nameAlias, tagLayout, inlineTagLayout } = dsb$
+  const { tags, original, activeTagThread, activeTagGroup, nameAlias, tagLayout, inlineTagLayout } =
+    dsb$
 
   const selectedThread = (activeTagThread || '').toUpperCase()
 

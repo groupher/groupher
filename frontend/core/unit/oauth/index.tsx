@@ -4,8 +4,8 @@
  *
  */
 
-import LinkSVG from '~/icons/Link'
 import GithubSVG from '~/icons/GithubCat'
+import LinkSVG from '~/icons/Link'
 import Linker from '~/widgets/Linker'
 
 import useSalon from './salon'

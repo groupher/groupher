@@ -1,6 +1,6 @@
 import { equals, isEmpty, reject } from 'ramda'
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TSocialItem } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 export type TRet = {
   socialLinks: readonly TSocialItem[]

@@ -2,10 +2,9 @@ import { renderHook } from '@testing-library/react'
 
 import { DEFAULT_ENABLE, MORE_GROUP } from '~/const/dashboard'
 import { THREAD } from '~/const/thread'
-import type { TCommunityThread, TNameAlias } from '~/spec'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import usePublicThreads from '~/hooks/usePublicThreads'
+import type { TCommunityThread, TNameAlias } from '~/spec'
 
 describe('usePublicThreads', () => {
   const threads: readonly TCommunityThread[] = [
@@ -59,7 +58,13 @@ describe('usePublicThreads', () => {
       dashboard: {
         enable: { ...DEFAULT_ENABLE, doc: false },
         headerLinks: [
-          { index: 999, title: 'About menu', group: MORE_GROUP, link: '/acme/about', groupIndex: 999 },
+          {
+            index: 999,
+            title: 'About menu',
+            group: MORE_GROUP,
+            link: '/acme/about',
+            groupIndex: 999,
+          },
         ],
         nameAlias,
       },

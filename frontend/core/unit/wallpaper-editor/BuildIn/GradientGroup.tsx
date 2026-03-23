@@ -1,12 +1,9 @@
 import { keys } from 'ramda'
-
-import { parseWallpaper } from '~/wallpaper'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
-
 import PenSVG from '~/icons/EditPen'
-
-import useLogic from '../useLogic'
+import { parseWallpaper } from '~/wallpaper'
 import useSalon, { cn } from '../salon/build_in/gradient_group'
+import useLogic from '../useLogic'
 
 export default function GradientGroup() {
   const s = useSalon()

@@ -1,14 +1,11 @@
 import type { FC } from 'react'
 
 import { SITE_SHARE_TYPE } from '../constant'
-
-import type { TLinksData } from '../spec'
-
-import LinkBoard from './LinkBoard'
-import IFrameBoard from './IFrameBoard'
-import WechatBoard from './WechatBoard'
-
 import useSalon from '../salon/modal_panel/info_panel'
+import type { TLinksData } from '../spec'
+import IFrameBoard from './IFrameBoard'
+import LinkBoard from './LinkBoard'
+import WechatBoard from './WechatBoard'
 
 type TProps = {
   type: string

@@ -1,13 +1,9 @@
 import type { FC } from 'react'
-
-import type { TActive } from '~/spec'
-
 import useTrans from '~/hooks/useTrans'
+import type { TActive } from '~/spec'
 import Icon from '~/widgets/Menu/Icon'
-
-import type { TActiveCondition, TMenuItem } from './spec'
-
 import useSalon from './salon/active_label'
+import type { TActiveCondition, TMenuItem } from './spec'
 
 type TProps = {
   condition: TActiveCondition

@@ -1,17 +1,14 @@
 import ApplySVG from '~/icons/Apply'
-
-import Input from '~/widgets/Input'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import CitySelector from '~/widgets/CitySelector'
+import Input from '~/widgets/Input'
 
 import { SOURCE_OPTIONS } from '../constant'
-
-import ScaleSelector from './ScaleSelector'
+import useSalon from '../salon/banner/setup_extra'
+import useLogic from '../useLogic'
 import BlockSelector from './BlockSelector'
 import NextStepButton from './NextStepButton'
-
-import useLogic from '../useLogic'
-import useSalon from '../salon/banner/setup_extra'
+import ScaleSelector from './ScaleSelector'
 
 export default function SetupExtra() {
   const s = useSalon()
@@ -33,34 +30,34 @@ export default function SetupExtra() {
 
       <div className={s.info}>
         <div className={s.label}>官方主页</div>
-        <div className="mb-2.5" />
+        <div className='mb-2.5' />
         <Input
           className={s.input}
           value={homepage}
-          placeholder="https://"
+          placeholder='https://'
           onChange={(e) => inputOnChange(e, 'homepage')}
           autoFocus
         />
-        <div className="mb-9" />
+        <div className='mb-9' />
 
         <div className={s.label}>团队规模</div>
         <ScaleSelector />
-        <div className="mb-10" />
+        <div className='mb-10' />
 
         <div className={s.label}>您（的团队）所在城市是？</div>
-        <div className="mb-5" />
+        <div className='mb-5' />
         <CitySelector value={city} onChange={(v) => inputOnChange(v, 'city')} />
-        <div className="mb-10" />
+        <div className='mb-10' />
 
         <div className={s.label}>您是从哪里知道 Groupher 的？</div>
-        <div className="mb-5" />
+        <div className='mb-5' />
         <BlockSelector
           options={SOURCE_OPTIONS}
           activeValue={source}
           onChange={(v) => inputOnChange(v, 'source')}
           rounded
         />
-        <div className="mb-5" />
+        <div className='mb-5' />
         {/* <ExtraInputBox
             value={extraInfo}
             placeholder="其他信息（支持 Markdown）"
@@ -72,8 +69,8 @@ export default function SetupExtra() {
         <ArrowButton leftLayout onClick={pervStep} dimWhenIdle className={s.prevBtn}>
           上一步
         </ArrowButton>
-        <div className="mr-6" />
-        <NextStepButton onClick={nextStep} disabled={!isValid} text="完 成" loading={submitting} />
+        <div className='mr-6' />
+        <NextStepButton onClick={nextStep} disabled={!isValid} text='完 成' loading={submitting} />
       </div>
     </div>
   )

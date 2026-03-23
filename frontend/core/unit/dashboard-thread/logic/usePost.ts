@@ -1,5 +1,5 @@
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TEditFunc, TPostLayout } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 import useHelper from './useHelper'
 

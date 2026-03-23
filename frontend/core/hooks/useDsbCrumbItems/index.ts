@@ -3,9 +3,9 @@
 import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
 import { DSB_SEG } from '~/const/route'
-import useCommunity from '~/stores/community/hooks'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 import type { TBreadcrumbItem, TTransKey } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 
 export type TDsbCrumbNode = {
   title: TTransKey

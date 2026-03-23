@@ -1,6 +1,6 @@
 import { SITE_URL } from '~/config'
-import useArticle from '~/stores/article/hooks'
 import type { TArticle } from '~/spec'
+import useArticle from '~/stores/article/hooks'
 
 type TRet = {
   article: TArticle

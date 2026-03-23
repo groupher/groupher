@@ -1,5 +1,5 @@
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TEditFunc, TFooterLayout, TLinkItem } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 import type { TLinkState } from '../spec'
 import useHelper from './useHelper'

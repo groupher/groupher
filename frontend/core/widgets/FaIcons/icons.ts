@@ -1,13 +1,13 @@
 import {
-  faUser,
-  faImage,
-  faEnvelope,
-  faStar,
-  faHeart,
   faCalendarDays,
   faCircleUser,
+  faEnvelope,
+  faHeart,
+  faImage,
+  faStar,
+  faUser,
 } from '@fortawesome/free-regular-svg-icons'
-import { faMusic, faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons'
+import { faHeart as faHeartSolid, faMusic } from '@fortawesome/free-solid-svg-icons'
 
 const REGULAR_ICONS = {
   user: faUser,

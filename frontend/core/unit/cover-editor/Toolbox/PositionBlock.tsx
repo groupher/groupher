@@ -1,11 +1,9 @@
-import type { FC } from 'react'
 import { values } from 'ramda'
-
-import type { TImagePos } from '../spec'
+import type { FC } from 'react'
 import { IMAGE_POS } from '../constant'
-
-import useLogic from '../useLogic'
 import useSalon, { cn } from '../salon/toolbox/position_block'
+import type { TImagePos } from '../spec'
+import useLogic from '../useLogic'
 
 type TProps = {
   pos: TImagePos

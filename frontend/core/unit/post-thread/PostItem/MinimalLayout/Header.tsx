@@ -2,11 +2,11 @@ import Link from 'next/link'
 import type { FC } from 'react'
 import SIZE from '~/const/size'
 import { THREAD } from '~/const/thread'
-import useCommunity from '~/stores/community/hooks'
 import type { TPost } from '~/spec'
-import ArticleReadLabel from '../../ArticleReadLabel'
+import useCommunity from '~/stores/community/hooks'
 import CommentsCount from '~/unit/comments-count'
 import TagsList from '~/unit/tags-list'
+import ArticleReadLabel from '../../ArticleReadLabel'
 
 import useSalon from '../salon/minimal_layout/header'
 

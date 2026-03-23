@@ -2,11 +2,10 @@ import type { FC } from 'react'
 
 import RotateSVG from '~/icons/Rotate'
 import RangeSlider from '~/widgets/RangeSlider'
-
-import ToolUnit from './ToolUnit'
+import useSalon from '../salon/toolbox/rotate_block'
 
 import useLogic from '../useLogic'
-import useSalon from '../salon/toolbox/rotate_block'
+import ToolUnit from './ToolUnit'
 
 type TProps = {
   rotate: number
@@ -19,7 +18,7 @@ const RotateBlock: FC<TProps> = ({ rotate }) => {
 
   return (
     <ToolUnit
-      title="旋转"
+      title='旋转'
       icon={<RotateSVG className={s.icon} />}
       panel={
         <div className={s.panel}>

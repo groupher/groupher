@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import type { FC } from 'react'
 import { THREAD } from '~/const/thread'
-import useCommunity from '~/stores/community/hooks'
 import type { TPost } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 
 import ArticleReadLabel from '../../ArticleReadLabel'
 

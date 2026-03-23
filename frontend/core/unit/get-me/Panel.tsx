@@ -1,11 +1,10 @@
 import type { FC } from 'react'
-
-import FirefoxSVG from '~/icons/Firefox'
-import ChromeWebStoreSVG from '~/icons/ChromeWebStore'
-import GooglePlaySVG from '~/icons/GooglePlay'
 import AppStoreSVG from '~/icons/AppStore'
-import GithubSVG from '~/icons/social/Github'
 import LinkSVG from '~/icons/ArrowUpRight'
+import ChromeWebStoreSVG from '~/icons/ChromeWebStore'
+import FirefoxSVG from '~/icons/Firefox'
+import GooglePlaySVG from '~/icons/GooglePlay'
+import GithubSVG from '~/icons/social/Github'
 
 import useSalon from './salon/panel'
 
@@ -32,7 +31,7 @@ const Panel: FC = () => {
           <div className={s.platform}>Chrome 应用商店</div>
           <h3 className={s.title}>Groupher</h3>
         </div>
-        <div className="grow" />
+        <div className='grow' />
         <LinkSVG className={s.linkIcon} />
       </div>
 
@@ -44,7 +43,7 @@ const Panel: FC = () => {
           <div className={s.platform}>火狐插件市场</div>
           <h3 className={s.title}>Groupher</h3>
         </div>
-        <div className="grow" />
+        <div className='grow' />
         <LinkSVG className={s.linkIcon} />
       </div>
 
@@ -56,7 +55,7 @@ const Panel: FC = () => {
           <div className={s.platform}>Github</div>
           <h3 className={s.title}>Groupher</h3>
         </div>
-        <div className="grow" />
+        <div className='grow' />
         <LinkSVG className={s.linkIcon} />
       </div>
     </div>

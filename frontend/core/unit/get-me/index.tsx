@@ -16,7 +16,7 @@ const GetMe: FC = () => {
 
   return (
     <div className={s.wrapper}>
-      <Tooltip content={<Panel />} placement="bottom-end" noPadding>
+      <Tooltip content={<Panel />} placement='bottom-end' noPadding>
         <DownloadSVG className={s.downloadIcon} />
       </Tooltip>
     </div>

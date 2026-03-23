@@ -1,17 +1,14 @@
 import type { FC } from 'react'
-
-import InfoSVG from '~/icons/Info'
-import EditSVG from '~/icons/EditPen'
 import CategorySVG from '~/icons/Category'
+import EditSVG from '~/icons/EditPen'
 import WipSVG from '~/icons/GtdWip'
+import InfoSVG from '~/icons/Info'
 import SlugSVG from '~/icons/Slug'
 
 import TagNode from '~/widgets/TagNode'
-
-import type { TSubMenu } from '../spec'
 import { SUB_MENU_TYPE } from '../constant'
-
 import useSalon from '../salon/sub_menu/header'
+import type { TSubMenu } from '../spec'
 
 type TProps = {
   type: TSubMenu
@@ -29,7 +26,7 @@ const Header: FC<TProps> = ({ type }) => {
         <>
           <EditSVG className={s.icon} />
           修改标题
-          <div className="grow" />
+          <div className='grow' />
           <InfoSVG className={s.questionIcon} />
         </>
       )
@@ -43,7 +40,7 @@ const Header: FC<TProps> = ({ type }) => {
         <>
           <CategorySVG className={s.icon} />
           设置分类
-          <div className="grow" />
+          <div className='grow' />
           <InfoSVG className={s.questionIcon} />
         </>
       )
@@ -56,7 +53,7 @@ const Header: FC<TProps> = ({ type }) => {
         <>
           <WipSVG className={s.icon} />
           设置状态
-          <div className="grow" />
+          <div className='grow' />
           <InfoSVG className={s.questionIcon} />
         </>
       )
@@ -69,7 +66,7 @@ const Header: FC<TProps> = ({ type }) => {
         <>
           <SlugSVG className={s.icon} />
           设置路径 (Slug)
-          <div className="grow" />
+          <div className='grow' />
           <InfoSVG className={s.questionIcon} />
         </>
       )
@@ -83,7 +80,7 @@ const Header: FC<TProps> = ({ type }) => {
         <>
           <SlugSVG className={s.icon} />
           镜像到 Groupher
-          <div className="grow" />
+          <div className='grow' />
           <InfoSVG className={s.questionIcon} />
         </>
       )
@@ -96,7 +93,7 @@ const Header: FC<TProps> = ({ type }) => {
         <>
           <TagNode hashSize={3.5} hashRight={0.5} />
           设置标签
-          <div className="grow" />
+          <div className='grow' />
           <InfoSVG className={s.questionIcon} />
         </>
       )
@@ -107,7 +104,7 @@ const Header: FC<TProps> = ({ type }) => {
       Content = (
         <>
           <div>??</div>
-          <div className="grow" />
+          <div className='grow' />
           <InfoSVG className={s.questionIcon} />
         </>
       )

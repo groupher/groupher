@@ -1,12 +1,12 @@
 import { type FC, useState } from 'react'
 
 import VIEW from '~/const/view'
+import useTrans from '~/hooks/useTrans'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 import Modal from '~/widgets/Modal'
 import NoticeBar from '~/widgets/NoticeBar'
 import Tabs from '~/widgets/Switcher/Tabs'
-import useTrans from '~/hooks/useTrans'
 import useBaseInfo from '../../logic/useBaseInfo'
 import useSalon from '../../salon/basic_info/danger_zone/modal'
 // import from '~/widgets/Alert'
@@ -43,10 +43,7 @@ const PublicModal: FC<TProps> = ({ show, onClose }) => {
       <div className={s.wrapper}>
         <h3 className={s.warningTitle}>{t('dsb.base_info.danger.visibility.modal.title')}</h3>
         <div className={s.body}>
-          <NoticeBar
-            type='notice'
-            content={t('dsb.base_info.danger.visibility.modal.notice')}
-          />
+          <NoticeBar type='notice' content={t('dsb.base_info.danger.visibility.modal.notice')} />
 
           <List
             items={[

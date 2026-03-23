@@ -6,14 +6,12 @@
 import { useState } from 'react'
 
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
-
-import ChangelogItem from '../ChangelogItem'
 import Tabs from '~/widgets/Switcher/Tabs'
+import ChangelogItem from '../ChangelogItem'
 
 import { TABS_MODE_OPTIONS } from '../constant'
-import FilterBar from './FilterBar'
-
 import useSalon from '../salon/simple_layout'
+import FilterBar from './FilterBar'
 
 export default function SimpleLayout() {
   const s = useSalon()
@@ -30,7 +28,7 @@ export default function SimpleLayout() {
         <div className={s.tabs}>
           <Tabs
             items={TABS_MODE_OPTIONS}
-            size="small"
+            size='small'
             activeKey={tab}
             bottomSpace={0}
             onChange={(slug) => {

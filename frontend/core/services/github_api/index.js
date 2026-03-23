@@ -3,7 +3,7 @@ import { TimeoutError } from 'promise-timeout'
 import ERR from '~/const/err'
 
 import { searchRepoPromise, transformRepo } from './repo_search'
-import { searchUserPromise, ransformUser } from './user_search'
+import { ransformUser, searchUserPromise } from './user_search'
 
 const githubAPI = {
   // search repo

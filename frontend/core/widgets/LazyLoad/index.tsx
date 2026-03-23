@@ -67,11 +67,7 @@ const LazyLoad: FC<TProps> = ({
 
   return (
     <div ref={ref} className={className}>
-      {visible
-        ? typeof children === 'function'
-          ? children(visible)
-          : children
-        : placeholder}
+      {visible ? (typeof children === 'function' ? children(visible) : children) : placeholder}
     </div>
   )
 }

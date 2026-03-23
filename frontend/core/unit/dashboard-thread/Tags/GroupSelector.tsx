@@ -1,9 +1,8 @@
 import { reject } from 'ramda'
 import { memo } from 'react'
-
+import useTrans from '~/hooks/useTrans'
 import { nilOrEmpty } from '~/validator'
 import Button from '~/widgets/Buttons/Button'
-import useTrans from '~/hooks/useTrans'
 
 import useTags from '../logic/useTags'
 import useSalon, { cn } from '../salon/tags/group_selector'

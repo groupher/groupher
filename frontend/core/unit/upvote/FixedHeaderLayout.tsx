@@ -5,11 +5,9 @@
  */
 
 import { type FC, memo } from 'react'
-
-import useUpvote from './useUpvote'
-import UpvoteBtn from './UpvoteBtn'
-
 import useSalon from './salon/fixed_header_layout'
+import UpvoteBtn from './UpvoteBtn'
+import useUpvote from './useUpvote'
 
 type TProps = {
   testid?: string

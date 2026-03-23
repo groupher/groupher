@@ -1,14 +1,12 @@
-import type { FC } from 'react'
 import { isEmpty } from 'ramda'
+import type { FC } from 'react'
 
 import { parseWallpaper } from '~/wallpaper'
-
-import Placeholder from './Placeholder'
-
-import { IMAGE_POS, IMAGE_SHADOW, IMAGE_BORDER_RADIUS, IMAGE_SIZE } from '../constant'
+import { IMAGE_BORDER_RADIUS, IMAGE_POS, IMAGE_SHADOW, IMAGE_SIZE } from '../constant'
+import useSalon from '../salon/cover'
 
 import useLogic from '../useLogic'
-import useSalon from '../salon/cover'
+import Placeholder from './Placeholder'
 
 type TProps = {
   imageUrl: string
@@ -78,7 +76,7 @@ const Cover: FC<TProps> = ({ imageUrl }) => {
     >
       {hasImage && (
         <div className={s.glassBorder} style={glassBorderStyle}>
-          <img src={imageUrl} style={imageStyle} alt="" />
+          <img src={imageUrl} style={imageStyle} alt='' />
           {lightPos !== IMAGE_POS.NONE && <div className={s.light} style={lightStyle} />}
         </div>
       )}

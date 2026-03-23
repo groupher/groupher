@@ -2,12 +2,11 @@
  * this selector is only used for normal user edtior
  */
 
-import { type FC, useState, Fragment } from 'react'
+import { type FC, Fragment, useState } from 'react'
 
-import type { TTag, TGroupedTags } from '~/spec'
-
-import Tooltip from '~/widgets/Tooltip'
+import type { TGroupedTags, TTag } from '~/spec'
 import DropdownButton from '~/widgets/Buttons/DropdownButton'
+import Tooltip from '~/widgets/Tooltip'
 
 import ActiveTag from './ActiveTag'
 import FilterPanel from './FilterPanel'
@@ -25,7 +24,7 @@ const TagSelector: FC<TProps> = ({ mode = 'default', groupedTags, activeTag, onS
   const s = useSalon()
 
   const [show, setShow] = useState(false)
-  // @ts-ignore
+  // @ts-expect-error
   const [menuOpen, setMenuOpen] = useState(false)
 
   const handleSelect = (tag: TTag) => {
@@ -36,8 +35,8 @@ const TagSelector: FC<TProps> = ({ mode = 'default', groupedTags, activeTag, onS
     <div className={s.wrapper}>
       <div className={s.label}>标签</div>
       <Tooltip
-        placement="bottom-start"
-        trigger="click"
+        placement='bottom-start'
+        trigger='click'
         onShow={() => {
           setShow(true)
           setMenuOpen(true)

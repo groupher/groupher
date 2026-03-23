@@ -5,14 +5,12 @@
 import { DOC_LAYOUT } from '~/const/layout'
 
 import FaqList from '~/unit/faq-list'
-
-import BlocksLayout from './BlocksLayout'
-import ListsLayout from './ListsLayout'
-import CardsLayout from './CardsLayout'
 import ArticleLayout from './ArticleLayout'
-
-import useLogic from './useLogic'
+import BlocksLayout from './BlocksLayout'
+import CardsLayout from './CardsLayout'
+import ListsLayout from './ListsLayout'
 import useSalon from './salon'
+import useLogic from './useLogic'
 
 export default function DocThread() {
   const s = useSalon()

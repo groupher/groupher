@@ -1,6 +1,5 @@
-import { mockUsers } from '~/mock'
-
 import KanbanSVG from '~/icons/Kanban'
+import { mockUsers } from '~/mock'
 import Facepile from '~/widgets/Facepile'
 
 import useSalon from '../salon/classic_layout/actions'
@@ -19,7 +18,7 @@ export default function Actions() {
       </div>
       <div className={s.right}>
         <h3 className={s.joinTitle}>参与者</h3>
-        <Facepile size="medium" users={mockUsers(6)} total={20} />
+        <Facepile size='medium' users={mockUsers(6)} total={20} />
       </div>
     </div>
   )

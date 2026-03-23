@@ -1,5 +1,5 @@
-import type { TSizeTSM } from '~/spec'
 import SIZE from '~/const/size'
+import type { TSizeTSM } from '~/spec'
 
 export const getLavaLampScale = (size: TSizeTSM): string => {
   switch (size) {

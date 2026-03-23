@@ -3,19 +3,14 @@
  */
 
 import { type FC, memo } from 'react'
-
-import type { TEmotion, TSimpleUser, TEmotionType } from '~/spec'
-
 import { titleCase } from '~/fmt'
-import Tooltip from '~/widgets/Tooltip'
+import type { TEmotion, TEmotionType, TSimpleUser } from '~/spec'
 import AnimatedCount from '~/widgets/AnimatedCount'
-
+import Tooltip from '~/widgets/Tooltip'
+import { getEmotionName } from '../helper'
+import useSalon from '../salon/selected_emotions/emotion_unit'
 import EmotionIcon from './EmotionIcon'
 import UsersPanel from './UsersPanel'
-
-import { getEmotionName } from '../helper'
-
-import useSalon from '../salon/selected_emotions/emotion_unit'
 
 type TProps = {
   item: TEmotion
@@ -39,7 +34,7 @@ const EmotionUnit: FC<TProps> = ({ item, onAction }) => {
       <div className={s.wrapper} onClick={() => onAction(name as TEmotionType, hasEmotioned)}>
         <EmotionIcon name={name} />
         <div className={s.count}>
-          <AnimatedCount count={count} size="small" active={hasEmotioned} />
+          <AnimatedCount count={count} size='small' active={hasEmotioned} />
         </div>
       </div>
     </Tooltip>

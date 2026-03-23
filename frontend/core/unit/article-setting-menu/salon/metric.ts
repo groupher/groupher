@@ -1,5 +1,5 @@
-import type { TSubMenu } from '../spec'
 import { SUB_MENU_TYPE } from '../constant'
+import type { TSubMenu } from '../spec'
 
 export const getSubMenuWidth = (subType: TSubMenu): string => {
   switch (subType) {

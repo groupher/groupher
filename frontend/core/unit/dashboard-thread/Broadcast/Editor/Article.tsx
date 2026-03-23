@@ -1,15 +1,12 @@
-import ColorSelector from '~/widgets/ColorSelector'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
-
-import Input from '~/widgets/Input'
 import useTrans from '~/hooks/useTrans'
-
-import SectionLabel from '../../SectionLabel'
-import ArticleTemplate from '../Templates/Article'
-import SavingBar from '../../SavingBar'
-
+import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
+import ColorSelector from '~/widgets/ColorSelector'
+import Input from '~/widgets/Input'
 import useBroadcast from '../../logic/useBroadcast'
+import SavingBar from '../../SavingBar'
+import SectionLabel from '../../SectionLabel'
 import useSalon from '../../salon/broadcast/editor/article'
+import ArticleTemplate from '../Templates/Article'
 
 export default function Article() {
   const {
@@ -37,10 +34,10 @@ export default function Article() {
           />
         }
       />
-      <div className="mb-2.5" />
+      <div className='mb-2.5' />
 
       <ArticleTemplate />
-      <div className="mb-12" />
+      <div className='mb-12' />
 
       <div className={s.item}>
         <div className={s.label}>{t('dsb.broadcast.article.background')}</div>
@@ -48,7 +45,7 @@ export default function Article() {
           <ColorSelector
             activeColor={broadcastArticleBg}
             onChange={(color) => edit(color, 'broadcastArticleBg')}
-            placement="right"
+            placement='right'
             offset={[-1, 15]}
           >
             <div className={s.colorBall} color={broadcastArticleBg} />

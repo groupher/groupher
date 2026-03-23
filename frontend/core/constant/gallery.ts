@@ -1,10 +1,10 @@
 import type {
-  TGalleryDefault,
-  TGalleryList,
-  TGalleryMasonryCollumn,
-  TGalleryMainColumn,
   TGallery2Column,
   TGallery3Column,
+  TGalleryDefault,
+  TGalleryList,
+  TGalleryMainColumn,
+  TGalleryMasonryCollumn,
   TGalleryTextOnly,
   TGalleryTextWithImage,
 } from '~/spec'

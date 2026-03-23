@@ -5,9 +5,8 @@ import { ROUTE } from '~/const/route'
 
 import Img from '~/Img'
 import ArrowSVG from '~/icons/ArrowUpRight'
-
-import useLogic from '../useLogic'
 import useSalon, { cn } from '../salon/banner/finished'
+import useLogic from '../useLogic'
 
 export default function Finished() {
   const s = useSalon()
@@ -19,7 +18,7 @@ export default function Finished() {
       <div className={s.desc}>感谢您的信任，在此之前你可以去管理后台完善相关社区设置</div>
       <div className={s.frame}>
         <div className={s.leftFrame}>
-          <Img src={logo} className="size-12" />
+          <Img src={logo} className='size-12' />
           <div className={s.communityTitle}>{title}</div>
           <div className={s.communityDesc}>{desc}</div>
           <Link href={`/${slug}`} className={s.gotoLink}>

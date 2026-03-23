@@ -20,7 +20,7 @@
 
 // const { SR71, $solver, asyncRes, asyncErr } = asyncSuit
 // const sr71$ = new SR71({
-//   // @ts-ignore
+//   // @ts-expect-error
 //   receive: [EVENT.RELOAD_ARTICLE],
 // })
 
@@ -152,7 +152,7 @@
 //   if (viewerHasEmotioned) {
 //     // instantFresh
 //     const emotionInfo = {
-//       // @ts-ignore
+//       // @ts-expect-error
 //       [`${name}Count`]: comment.emotions[`${name}Count`] - 1,
 //       [`viewerHas${titleCase(name)}ed`]: false,
 //     }
@@ -160,7 +160,7 @@
 //     sr71$.mutate(S.undoEmotionToComment, { id, emotion })
 //   } else {
 //     const emotionInfo = {
-//       // @ts-ignore
+//       // @ts-expect-error
 //       [`${name}Count`]: comment.emotions[`${name}Count`] + 1,
 //       [`viewerHas${titleCase(name)}ed`]: true,
 //     }

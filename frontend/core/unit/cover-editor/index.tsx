@@ -6,9 +6,8 @@
 import type { FC } from 'react'
 
 import Cover from './Cover'
-import Toolbox from './Toolbox'
-
 import useSalon from './salon'
+import Toolbox from './Toolbox'
 
 type TProps = {
   onDelete?: () => void

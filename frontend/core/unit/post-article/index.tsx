@@ -2,10 +2,10 @@ import { useState } from 'react'
 
 // import Header from '~/widgets/CommunityDigest/HeaderLayout'
 import ViewportTracker from '~/widgets/ViewportTracker'
-import useSalon from './salon'
 import Content from './Content'
 import Digest from './Digest'
 import SideInfo from './SideInfo'
+import useSalon from './salon'
 
 export default function Post() {
   const s = useSalon()

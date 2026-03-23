@@ -1,7 +1,7 @@
-import type { FC } from 'react'
 import { keys } from 'ramda'
+import type { FC } from 'react'
 
-import type { TTag, TGroupedTags, TColorName } from '~/spec'
+import type { TColorName, TGroupedTags, TTag } from '~/spec'
 import TagNode from '~/widgets/TagNode'
 
 import useSalon from './salon/filter_panel'

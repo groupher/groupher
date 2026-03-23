@@ -1,10 +1,10 @@
 import type { FC } from 'react'
 import { BRAND_LAYOUT } from '~/const/layout'
 import { assetSrc } from '~/helper'
-import useCommunity from '~/stores/community/hooks'
 import useLayout from '~/hooks/useLayout'
 import Img from '~/Img'
 import type { TSpace } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from './salon'

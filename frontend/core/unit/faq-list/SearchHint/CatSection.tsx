@@ -1,5 +1,5 @@
-import type { FC } from 'react'
 import Link from 'next/link'
+import type { FC } from 'react'
 
 import type { TArticle, TColorName } from '~/spec'
 
@@ -20,7 +20,7 @@ const CatSection: FC<TProps> = ({ item }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.bar} />
-      <Link href="/" className={s.catItem}>
+      <Link href='/' className={s.catItem}>
         {item.title}
       </Link>
       <div className={s.catDesc}>{item.articles.length} 篇内容</div>

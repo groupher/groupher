@@ -1,11 +1,8 @@
 import type { FC } from 'react'
-
-import SettingSVG from '~/icons/Setting'
 import DeleteSVG from '~/icons/Delete'
-
-import ToolUnit from './ToolUnit'
-
+import SettingSVG from '~/icons/Setting'
 import useSalon, { cn } from '../salon/toolbox/action_block'
+import ToolUnit from './ToolUnit'
 
 type TProps = {
   onDelete: () => void
@@ -17,7 +14,7 @@ const ActionBlock: FC<TProps> = ({ onDelete, onReplace }) => {
 
   return (
     <ToolUnit
-      title="其他"
+      title='其他'
       icon={<SettingSVG className={s.icon} />}
       panel={
         <div className={s.panel}>

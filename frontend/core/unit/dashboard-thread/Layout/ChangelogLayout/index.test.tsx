@@ -29,7 +29,8 @@ vi.mock('../../salon/layout/changelog_layout', () => ({
     bar: 'bar',
     thumbnil: 'thumbnail',
   }),
-  cnMerge: (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' '),
+  cnMerge: (...classes: Array<string | false | null | undefined>) =>
+    classes.filter(Boolean).join(' '),
 }))
 
 vi.mock('../../SectionLabel', () => ({

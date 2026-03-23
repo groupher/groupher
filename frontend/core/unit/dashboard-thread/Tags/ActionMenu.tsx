@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 import MENU from '~/const/menu'
-import MenuItem from '~/widgets/MenuItem'
 import useTrans from '~/hooks/useTrans'
+import MenuItem from '~/widgets/MenuItem'
 
 import useSalon from '../salon/tags/action_menu'
 
@@ -44,7 +44,11 @@ const LinkMenu: FC<TProps> = ({
         />
       )}
 
-      <MenuItem icon={MENU.SETTING} title={t('dsb.tags.menu.advanced')} onClick={() => onSetting()} />
+      <MenuItem
+        icon={MENU.SETTING}
+        title={t('dsb.tags.menu.advanced')}
+        onClick={() => onSetting()}
+      />
     </div>
   )
 }

@@ -1,11 +1,10 @@
 import type { FC } from 'react'
-
-import { mockUsers } from '~/mock'
+import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
 
 import EditPublishSVG from '~/icons/EditPublish'
+import { mockUsers } from '~/mock'
 import Button from '~/widgets/Buttons/Button'
-import useTrans from '~/hooks/useTrans'
 
 import useSalon from '../salon/head_bar/publish_bar'
 

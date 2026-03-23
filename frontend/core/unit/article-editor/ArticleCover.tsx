@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 
 import ImageSVG from '~/icons/Image'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'

@@ -4,23 +4,18 @@
  *
  */
 
-import { type FC, memo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-
-import type { TArticle } from '~/spec'
-import useCommunity from '~/stores/community/hooks'
-
+import { type FC, memo, useEffect, useState } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD } from '~/const/thread'
-
-import { mockTags, mockUsers } from '~/mock'
 import { getRandomInt } from '~/helper'
-
-import CommentsCount from '~/unit/comments-count'
-
+import { mockTags, mockUsers } from '~/mock'
+import type { TArticle } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 import ArticleCatState from '~/unit/article-cat-state'
-import Upvote from '~/unit/upvote'
+import CommentsCount from '~/unit/comments-count'
 import TagsList from '~/unit/tags-list'
+import Upvote from '~/unit/upvote'
 
 import useSalon from '../salon/classic_layout/simple'
 
@@ -54,15 +49,15 @@ const KanbanItem: FC<TProps> = ({ article }) => {
         {article.title}
       </button>
       <div className={s.footer}>
-        <div className="row-center">
+        <div className='row-center'>
           <Upvote
             count={article.upvotesCount}
             avatarList={mockUsers(3)}
             type={UPVOTE_LAYOUT.SIMPLE}
           />
-          <div className="mr-4" />
+          <div className='mr-4' />
           {article.commentsCount !== 0 && (
-            <CommentsCount count={article.commentsCount} size="medium" />
+            <CommentsCount count={article.commentsCount} size='medium' />
           )}
         </div>
         <ArticleCatState cat={article.cat} />

@@ -1,5 +1,5 @@
-import type { TContainer } from '~/spec'
 import { ANCHOR, BODY_SCROLLER, DRAWER_SCROLLER } from '~/const/dom'
+import type { TContainer } from '~/spec'
 
 // side effects, need refactor
 const hasDocument = typeof document === 'object' && document !== null

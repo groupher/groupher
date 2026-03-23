@@ -1,10 +1,7 @@
 import { pixelAdd } from '~/dom'
-
-import { IMAGE_CONTAINER_SIZE, LINEAR_BORDER } from '../../constant'
-
-import { getImageTranslate, getLinearBorder, getImageSize, getLightPos } from '../metric'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import { IMAGE_CONTAINER_SIZE, LINEAR_BORDER } from '../../constant'
+import { getImageSize, getImageTranslate, getLightPos, getLinearBorder } from '../metric'
 
 export default function useSalon({ linearBorderPos }) {
   const { cn, br } = useTwBelt()

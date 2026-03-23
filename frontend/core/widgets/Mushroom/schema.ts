@@ -1,4 +1,4 @@
-import { P, F } from '~/schemas'
+import { F, P } from '~/schemas'
 
 const schema = {
   getUpvote: F.getUpvote,

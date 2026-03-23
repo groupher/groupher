@@ -1,11 +1,9 @@
 /* eslint-disable react/no-unescaped-entities */
 import type { FC } from 'react'
-
-import AdderSVG from '~/icons/Plus'
-import EditSVG from '~/icons/EditPen'
-
-import Button from '~/widgets/Buttons/Button'
 import useTrans from '~/hooks/useTrans'
+import EditSVG from '~/icons/EditPen'
+import AdderSVG from '~/icons/Plus'
+import Button from '~/widgets/Buttons/Button'
 
 import useSalon from '../../../salon/cms/docs/tree/actions'
 
@@ -21,27 +19,27 @@ const Actions: FC = () => {
           <div className={s.updateHint}>{t('dsb.cms.docs.tree.actions.sample_update')}</div>
         </div>
         <div className={s.previewButtons}>
-          <Button size="small" ghost noBorder left={-2.5}>
+          <Button size='small' ghost noBorder left={-2.5}>
             <EditSVG className={s.editIcon} />
             {t('dsb.cms.docs.tree.actions.edit')}
           </Button>
 
-          <Button size="small" ghost noBorder>
+          <Button size='small' ghost noBorder>
             <EditSVG className={s.editIcon} />
             {t('dsb.cms.docs.tree.actions.add_slug')}
           </Button>
         </div>
       </div>
       <div className={s.previewButtons}>
-        <Button size="small" ghost>
+        <Button size='small' ghost>
           <AdderSVG className={s.addIcon} />
           {t('dsb.cms.docs.tree.actions.pin_link')}&nbsp;
         </Button>
-        <Button size="small" ghost>
+        <Button size='small' ghost>
           <AdderSVG className={s.addIcon} />
           {t('dsb.cms.docs.tree.actions.node')}&nbsp;
         </Button>
-        <Button size="small" ghost>
+        <Button size='small' ghost>
           <AdderSVG className={s.addIcon} />
           {t('dsb.cms.docs.tree.actions.folder')}&nbsp;
         </Button>

@@ -3,9 +3,9 @@ import { INIT_KANBAN_COLORS } from '~/const/dashboard'
 import { KANBAN_LAYOUT } from '~/const/layout'
 import { randomBgNames } from '~/helper'
 import useHover from '~/hooks/useHover'
+import useTrans from '~/hooks/useTrans'
 import DiceSVG from '~/icons/Dice'
 import ResetSVG from '~/icons/Reset'
-import useTrans from '~/hooks/useTrans'
 
 import ColorSelector from '~/widgets/ColorSelector'
 
@@ -34,10 +34,7 @@ export default function BgColorsSetter() {
 
   return (
     <>
-      <SectionLabel
-        title={t('dsb.layout.kanban.bg.title')}
-        desc={t('dsb.layout.kanban.bg.desc')}
-      />
+      <SectionLabel title={t('dsb.layout.kanban.bg.title')} desc={t('dsb.layout.kanban.bg.desc')} />
 
       <div className={s.colorsWrapper}>
         <div className={s.preset}>
@@ -97,7 +94,11 @@ export default function BgColorsSetter() {
           </ColorSelector>
         </div>
         <div className='grow' />
-        <button type='button' className={s.action} onClick={() => edit(INIT_KANBAN_COLORS, FIELD.KANBAN_BG_COLORS)}>
+        <button
+          type='button'
+          className={s.action}
+          onClick={() => edit(INIT_KANBAN_COLORS, FIELD.KANBAN_BG_COLORS)}
+        >
           <ResetSVG className={s.resetIcon} />
           {t('dsb.layout.kanban.bg.reset')}
         </button>

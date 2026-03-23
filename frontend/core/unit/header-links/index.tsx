@@ -1,16 +1,12 @@
 import type { FC } from 'react'
-
-import useLayout from '~/hooks/useLayout'
-import useViewingThread from '~/hooks/useViewingThread'
-
 import { BANNER_LAYOUT } from '~/const/layout'
 import { THREAD } from '~/const/thread'
-
-import type { TProps } from './spec'
-
-import TabberLayout from './TabberLayout'
+import useLayout from '~/hooks/useLayout'
+import useViewingThread from '~/hooks/useViewingThread'
 import HeaderLayout from './HeaderLayout'
 import SidebarLayout from './SidebarLayout'
+import type { TProps } from './spec'
+import TabberLayout from './TabberLayout'
 
 const CustomHeaderLinks: FC<TProps> = (props) => {
   const { bannerLayout } = useLayout()

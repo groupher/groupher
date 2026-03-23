@@ -1,9 +1,7 @@
 import type { FC } from 'react'
-
-import type { TTagsMode } from '../../spec'
 import { TAGS_MODE } from '../../constant'
-
 import useSalon from '../../salon/simple_layout/filter_bar'
+import type { TTagsMode } from '../../spec'
 
 import TagFilter from './TagFilter'
 import TimeFilter from './TimeFilter'

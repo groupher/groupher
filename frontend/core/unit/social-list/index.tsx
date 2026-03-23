@@ -29,7 +29,12 @@ const SocialList: FC<TProps> = ({
         if (!SocialIcon || !social?.link) return null
 
         return (
-          <Link className={s.socialBox} key={`${socialType}-${social.link}`} href={social.link} target='_blank'>
+          <Link
+            className={s.socialBox}
+            key={`${socialType}-${social.link}`}
+            href={social.link}
+            target='_blank'
+          >
             <SocialIcon className={s.icon} />
           </Link>
         )

@@ -4,9 +4,8 @@
  *
  */
 
-import { type FC, Fragment, memo } from 'react'
-
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
+import { type FC, Fragment, memo } from 'react'
 
 import SIZE from '~/const/size'
 // import useTheme from '~/hooks/useTheme'

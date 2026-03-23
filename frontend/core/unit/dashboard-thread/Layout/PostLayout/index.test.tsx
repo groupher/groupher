@@ -31,7 +31,8 @@ vi.mock('../../salon/layout/post_layout', () => ({
     userAvatar: 'user-avatar',
     upvoteBtn: 'upvote-btn',
   }),
-  cnMerge: (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' '),
+  cnMerge: (...classes: Array<string | false | null | undefined>) =>
+    classes.filter(Boolean).join(' '),
 }))
 
 vi.mock('../../SectionLabel', () => ({
@@ -55,11 +56,15 @@ vi.mock('../../SavingBar', () => ({
 }))
 
 vi.mock('~/icons/Comment', () => ({
-  default: ({ className }: { className?: string }) => <svg data-testid='comment-icon' className={className} />,
+  default: ({ className }: { className?: string }) => (
+    <svg data-testid='comment-icon' className={className} />
+  ),
 }))
 
 vi.mock('~/icons/Upvote', () => ({
-  default: ({ className }: { className?: string }) => <svg data-testid='upvote-icon' className={className} />,
+  default: ({ className }: { className?: string }) => (
+    <svg data-testid='upvote-icon' className={className} />
+  ),
 }))
 
 describe('<PostLayout />', () => {

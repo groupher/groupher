@@ -5,8 +5,8 @@
 import { startTransition, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { ANCHOR } from '~/const/dom'
-import Comments from '~/unit/comments'
 import type { TArticleLoad } from '~/spec'
+import Comments from '~/unit/comments'
 import DrawerHeader from './DrawerHeader'
 import useSalon from './salon'
 
@@ -32,9 +32,7 @@ const syncDrawerToHeader = (wrapper: HTMLDivElement) => {
   container.scrollTop = Math.max(0, nextScrollTop)
 }
 
-export default function ArticleViewer({
-  isFullView = true,
-}: TProps & TViewProps) {
+export default function ArticleViewer({ isFullView = true }: TProps & TViewProps) {
   const s = useSalon()
   const { article } = useLogic()
   const wrapperRef = useRef<HTMLDivElement | null>(null)

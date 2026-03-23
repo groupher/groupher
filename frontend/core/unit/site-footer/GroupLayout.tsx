@@ -3,12 +3,11 @@ import { keys } from 'ramda'
 
 import { DEME_SOCIALS } from '~/const/social'
 import { assetSrc, groupByKey, sortByGroupIndex } from '~/helper'
-import useCommunity from '~/stores/community/hooks'
 import useFooterLinks from '~/hooks/useFooterLinks'
-
 import Img from '~/Img'
-import ImgFallback from '~/widgets/ImgFallback'
+import useCommunity from '~/stores/community/hooks'
 import SocialList from '~/unit/social-list'
+import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from './salon/group_layout'
 

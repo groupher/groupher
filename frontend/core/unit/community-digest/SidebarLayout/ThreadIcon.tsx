@@ -1,13 +1,11 @@
 import type { FC } from 'react'
-
-import type { TActive, TThread } from '~/spec'
 import { THREAD } from '~/const/thread'
-
-import KanbanSVG from '~/icons/Kanban'
-import DiscussSVG from '~/icons/Discuss'
-import TadaSVG from '~/icons/TadaRaw'
-import InfoSVG from '~/icons/Info'
 import GuideSVG from '~/icons/Book'
+import DiscussSVG from '~/icons/Discuss'
+import InfoSVG from '~/icons/Info'
+import KanbanSVG from '~/icons/Kanban'
+import TadaSVG from '~/icons/TadaRaw'
+import type { TActive, TThread } from '~/spec'
 
 import useSalon, { cn } from '../salon/sidebar_layout/thread_icon'
 

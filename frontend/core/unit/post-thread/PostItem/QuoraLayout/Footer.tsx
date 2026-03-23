@@ -1,13 +1,10 @@
 import type { FC } from 'react'
-
-import type { TPost } from '~/spec'
 import { UPVOTE_LAYOUT } from '~/const/layout'
-
 import { upvoteArticle } from '~/signal'
-
+import type { TPost } from '~/spec'
+import ArticleCatState from '~/unit/article-cat-state'
 import Upvote from '~/unit/upvote'
 import ViewsCount from '~/unit/views-count'
-import ArticleCatState from '~/unit/article-cat-state'
 
 import useSalon from '../salon/quora_layout/footer'
 

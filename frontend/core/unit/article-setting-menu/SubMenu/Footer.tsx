@@ -1,9 +1,7 @@
 import type { FC } from 'react'
-
+import ArrowSVG from '~/icons/Arrow'
 import type { TSpace } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
-
-import ArrowSVG from '~/icons/Arrow'
 
 import useSalon from '../salon/sub_menu/footer'
 
@@ -29,7 +27,7 @@ const Footer: FC<TProps> = ({
         <ArrowSVG className={s.arrowIocn} />
       </div>
       <Button
-        size="small"
+        size='small'
         onClick={() => onConfirm()}
         loading={loading}
         disabled={disabled}

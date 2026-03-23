@@ -1,5 +1,5 @@
-import ImageSVG from '~/icons/Image'
 import useTrans from '~/hooks/useTrans'
+import ImageSVG from '~/icons/Image'
 
 import useSEO from '../../logic/useSEO'
 import useSalon from '../../salon/seo/twitter_preview/summary_large_layout'

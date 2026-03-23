@@ -1,8 +1,6 @@
 import { type FC, memo } from 'react'
-
-import type { TSpace } from '~/spec'
-
 import BackSVG from '~/icons/Back'
+import type { TSpace } from '~/spec'
 
 import useSalon from './salon/cancel_button'
 

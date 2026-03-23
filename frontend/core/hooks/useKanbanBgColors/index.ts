@@ -1,6 +1,6 @@
 import { INIT_KANBAN_COLORS } from '~/const/dashboard'
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TColorName } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 export default function useKanbanBgColors(): readonly TColorName[] {
   const dsb$ = useDashboard()

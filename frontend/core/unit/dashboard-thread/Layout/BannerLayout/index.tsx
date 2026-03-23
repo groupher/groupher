@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { BANNER_LAYOUT } from '~/const/layout'
-import useCommunity from '~/stores/community/hooks'
 import useTrans from '~/hooks/useTrans'
+import useCommunity from '~/stores/community/hooks'
 import CheckLabel from '~/widgets/CheckLabel'
 import Drawer from '~/widgets/Drawer'
 

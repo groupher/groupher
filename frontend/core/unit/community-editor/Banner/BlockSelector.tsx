@@ -1,6 +1,5 @@
-import type { FC } from 'react'
-
 import { find } from 'ramda'
+import type { FC } from 'react'
 
 import type { TSelectOption } from '~/spec'
 

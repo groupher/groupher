@@ -3,8 +3,8 @@ import type { FC } from 'react'
 import { FOOTER_LAYOUT } from '~/const/layout'
 
 import useFooter from '../../logic/useFooter'
-import SimpleEditor from './Simple'
 import GroupEditor from './Group'
+import SimpleEditor from './Simple'
 
 const Editor: FC = () => {
   const { footerLayout } = useFooter()

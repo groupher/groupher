@@ -3,13 +3,11 @@
  *
  */
 
-import useLayout from '~/hooks/useLayout'
 import { KANBAN_LAYOUT } from '~/const/layout'
-
-import WaterfallLayout from './WaterfallLayout'
+import useLayout from '~/hooks/useLayout'
 import ClassicLayout from './ClassicLayout'
-
 import useSalon from './salon'
+import WaterfallLayout from './WaterfallLayout'
 
 export default function KanbanThread() {
   const s = useSalon()

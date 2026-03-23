@@ -14,8 +14,8 @@ const KanbanList: FC<TProps> = ({ num }) => {
           <KanbanItem />
           <KanbanItem width={'w-24'} />
           <KanbanItem />
-          <KanbanItem opacity="opacity-80" />
-          <KanbanItem opacity="opacity-60" />
+          <KanbanItem opacity='opacity-80' />
+          <KanbanItem opacity='opacity-60' />
         </>
       )
     }
@@ -25,8 +25,8 @@ const KanbanList: FC<TProps> = ({ num }) => {
           <KanbanItem />
           <KanbanItem />
           <KanbanItem width={'w-28'} />
-          <KanbanItem opacity="opacity-80" />
-          <KanbanItem opacity="opacity-60" />
+          <KanbanItem opacity='opacity-80' />
+          <KanbanItem opacity='opacity-60' />
         </>
       )
     }
@@ -36,8 +36,8 @@ const KanbanList: FC<TProps> = ({ num }) => {
           <KanbanItem />
           <KanbanItem width={'w-32'} />
           <KanbanItem width={'w-16'} />
-          <KanbanItem opacity="opacity-80" />
-          <KanbanItem opacity="opacity-60" />
+          <KanbanItem opacity='opacity-80' />
+          <KanbanItem opacity='opacity-60' />
         </>
       )
     }
@@ -47,8 +47,8 @@ const KanbanList: FC<TProps> = ({ num }) => {
           <KanbanItem />
           <KanbanItem width={'w-24'} />
           <KanbanItem width={'w-20'} />
-          <KanbanItem opacity="opacity-80" />
-          <KanbanItem opacity="opacity-60" />
+          <KanbanItem opacity='opacity-80' />
+          <KanbanItem opacity='opacity-60' />
         </>
       )
     }
@@ -58,8 +58,8 @@ const KanbanList: FC<TProps> = ({ num }) => {
           <KanbanItem />
           <KanbanItem width={'w-28'} />
           <KanbanItem width={'w-16'} />
-          <KanbanItem opacity="opacity-80" />
-          <KanbanItem opacity="opacity-60" />
+          <KanbanItem opacity='opacity-80' />
+          <KanbanItem opacity='opacity-60' />
         </>
       )
     }
@@ -70,8 +70,8 @@ const KanbanList: FC<TProps> = ({ num }) => {
           <KanbanItem />
           <KanbanItem width={'w-32'} />
           <KanbanItem width={'w-16'} />
-          <KanbanItem opacity="opacity-80" />
-          <KanbanItem opacity="opacity-60" />
+          <KanbanItem opacity='opacity-80' />
+          <KanbanItem opacity='opacity-60' />
         </>
       )
     }

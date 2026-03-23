@@ -5,9 +5,9 @@ import { upvoteArticle } from '~/signal'
 
 import type { TArticle } from '~/spec'
 import CommentsCount from '~/unit/comments-count'
+import Upvote from '~/unit/upvote'
 import DotDivider from '~/widgets/DotDivider'
 import TimeAgo from '~/widgets/TimeAgo'
-import Upvote from '~/unit/upvote'
 
 import useSalon from './salon/footer'
 

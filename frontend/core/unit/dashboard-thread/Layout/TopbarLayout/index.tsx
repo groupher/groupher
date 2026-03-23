@@ -75,12 +75,12 @@ export default function TopbarLayout() {
           <div className={s.bgWrapper}>
             <div>{t('dsb.layout.topbar.color_label')}</div>
             <div className={s.bgLabel}>
-                <ColorSelector
-                  activeColor={bg}
-                  onChange={(color) => edit(color, FIELD.TOPBAR_BG)}
-                  placement='right'
-                  offset={[-1, 15]}
-                >
+              <ColorSelector
+                activeColor={bg}
+                onChange={(color) => edit(color, FIELD.TOPBAR_BG)}
+                placement='right'
+                offset={[-1, 15]}
+              >
                 <div className={s.theColor} />
               </ColorSelector>
             </div>

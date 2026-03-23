@@ -1,11 +1,10 @@
 import AccountUnit from '~/widgets/AccountUnit'
 import HomeLogo from '~/widgets/HomeLogo'
 import ThemeSwitch from '~/widgets/ThemeSwitch'
-
-import StepMap from './StepMap'
+import useSalon from '../salon/header'
 
 import useLogic from '../useLogic'
-import useSalon from '../salon/header'
+import StepMap from './StepMap'
 
 export default function Header() {
   const s = useSalon()
@@ -19,9 +18,9 @@ export default function Header() {
       <h3 className={s.title}>Groupher</h3>
       <div className={s.divider} />
       <div className={s.subTitle}>创建社区</div>
-      <div className="grow" />
+      <div className='grow' />
       {showStep && <StepMap />}
-      <div className="grow" />
+      <div className='grow' />
 
       <div className={s.right}>
         <ThemeSwitch />

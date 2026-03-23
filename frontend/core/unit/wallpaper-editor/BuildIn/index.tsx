@@ -6,14 +6,12 @@
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
-
-import PictureGroup from './PictureGroup'
-import GradientGroup from './GradientGroup'
-import CustomGradientEditor from './CustomGradientEditor'
-import AnglePanel from './AnglePanel'
-
-import useLogic from '../useLogic'
 import useSalon, { cn } from '../salon/build_in'
+import useLogic from '../useLogic'
+import AnglePanel from './AnglePanel'
+import CustomGradientEditor from './CustomGradientEditor'
+import GradientGroup from './GradientGroup'
+import PictureGroup from './PictureGroup'
 
 export default function BuildIn() {
   const { getWallpaper, togglePattern, toggleBlur, toggleShadow } = useLogic()
@@ -26,7 +24,7 @@ export default function BuildIn() {
       <div className={s.title}>渐变:</div>
       <GradientGroup />
       {wallpaperType === WALLPAPER_TYPE.CUSTOM_GRADIENT && <CustomGradientEditor />}
-      <div className="mt-6" />
+      <div className='mt-6' />
       <div className={s.title}>图片:</div>
       <PictureGroup />
       <div className={s.divider} />
@@ -39,13 +37,13 @@ export default function BuildIn() {
               <ToggleSwitch checked={hasPattern} onChange={togglePattern} />
             </div>
           )}
-          <div className="mt-1.5" />
+          <div className='mt-1.5' />
           <div className={s.switchWrapper}>
             <div className={s.toggleTitle}>模糊效果</div>
             <ToggleSwitch checked={hasBlur} onChange={toggleBlur} />
           </div>
 
-          <div className="mt-1.5" />
+          <div className='mt-1.5' />
           <div className={s.switchWrapper}>
             <div className={s.toggleTitle}>阴影效果</div>
             <ToggleSwitch checked={hasShadow} onChange={toggleShadow} />
@@ -62,7 +60,7 @@ export default function BuildIn() {
           </>
         )}
       </div>
-      <div className="mt-20" />
+      <div className='mt-20' />
     </div>
   )
 }

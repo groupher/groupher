@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import type { FC } from 'react'
-import useCommunity from '~/stores/community/hooks'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
 import type { TSpace } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 
 import CustomHeaderLinks from '~/unit/header-links'
 

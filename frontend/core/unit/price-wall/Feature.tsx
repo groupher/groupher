@@ -1,7 +1,6 @@
 import type { FC } from 'react'
-
-import type { TColor } from '~/spec'
 import CheckSVG from '~/icons/Check'
+import type { TColor } from '~/spec'
 
 import useSalon from './salon/feature'
 

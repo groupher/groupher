@@ -7,14 +7,12 @@
 import { type FC, useState } from 'react'
 
 import type { TSpace } from '~/spec'
-
+import { HELP_FEEDBACK } from './constant'
+import BadSVG from './salon/BadSVG'
+import useSalon, { cn } from './salon/bottom_info'
 import GoodSVG from './salon/GoodSVG'
 import SoSoSVG from './salon/SoSoSVG'
-import BadSVG from './salon/BadSVG'
-
 import type { TDocFeedback } from './spec'
-import { HELP_FEEDBACK } from './constant'
-import useSalon, { cn } from './salon/bottom_info'
 
 type TProps = {
   offsetRight: number

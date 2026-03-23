@@ -1,8 +1,7 @@
 import { sortByIndex } from '~/helper'
-
+import useTrans from '~/hooks/useTrans'
 import type { TMediaReport } from '~/spec'
 import AddButton from '~/widgets/Buttons/AddButton'
-import useTrans from '~/hooks/useTrans'
 import useBaseInfo from '../../logic/useBaseInfo'
 
 import useSalon from '../../salon/basic_info/other_info/media_editor'

@@ -2,8 +2,8 @@ import Link from 'next/link'
 import type { FC } from 'react'
 import { THREAD } from '~/const/thread'
 import { cutRest } from '~/fmt'
-import useCommunity from '~/stores/community/hooks'
 import type { TArticle } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 import ArticleImgWindow from '../ArticleImgWindow'
 import ArticlePinLabel from '../ArticlePinLabel'
 import ArticleReadLabel from '../ArticleReadLabel'
@@ -33,11 +33,7 @@ const ArticleCard: FC<TProps> = ({ data }) => {
       </div>
 
       <div className='mt-1' />
-      <Link
-        className={s.titleLink}
-        scroll={false}
-        href={`/${slug}/${THREAD.POST}/${innerId}`}
-      >
+      <Link className={s.titleLink} scroll={false} href={`/${slug}/${THREAD.POST}/${innerId}`}>
         {title}
       </Link>
 

@@ -3,10 +3,9 @@ import { renderHook } from '@testing-library/react'
 import { MORE_GROUP } from '~/const/dashboard'
 import { ROUTE } from '~/const/route'
 import { THREAD } from '~/const/thread'
-import type { TCommunityThread } from '~/spec'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
+import type { TCommunityThread } from '~/spec'
 
 describe('useHeaderLinks', () => {
   it('keeps ABOUT on main axis when no custom main links exist', () => {

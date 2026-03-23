@@ -4,16 +4,14 @@
  *
  */
 
+import { STEP } from '../constant'
+import useSalon from '../salon/banner'
+import useLogic from '../useLogic'
+import Finished from './Finished'
 import SelectType from './SelectType'
 import SetupDomain from './SetupDomain'
-import SetupInfo from './SetupInfo'
 import SetupExtra from './SetupExtra'
-import Finished from './Finished'
-
-import { STEP } from '../constant'
-
-import useLogic from '../useLogic'
-import useSalon from '../salon/banner'
+import SetupInfo from './SetupInfo'
 
 export default function Banner() {
   const s = useSalon()

@@ -3,12 +3,11 @@
  */
 
 import { useEffect, useState } from 'react'
-
-import ArticleFooter from '../ArticleFooter'
 import ArticleBody from '~/widgets/ArtimentBody'
 import GotoTop from '~/widgets/GotoTop'
 import { ArticleContentLoading } from '~/widgets/Loading'
 import ViewportTracker from '~/widgets/ViewportTracker'
+import ArticleFooter from '../ArticleFooter'
 import useSalon, { cn } from '../salon/changelog_viewer'
 import useLogic from '../useLogic'
 import ArticleInfo from './ArticleInfo'

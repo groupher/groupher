@@ -1,9 +1,8 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import type { FC } from 'react'
-import type { TFAQSection } from '~/spec'
-
-import Markdown from '~/widgets/Markdown'
 import useTrans from '~/hooks/useTrans'
+import type { TFAQSection } from '~/spec'
+import Markdown from '~/widgets/Markdown'
 
 import { FIELD } from '../../../constant'
 

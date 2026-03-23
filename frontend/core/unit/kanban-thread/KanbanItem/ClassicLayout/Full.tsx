@@ -4,20 +4,18 @@
  *
  */
 
-import { type FC, memo, useState, useEffect } from 'react'
 import Link from 'next/link'
-
+import { type FC, memo, useEffect, useState } from 'react'
+import { UPVOTE_LAYOUT } from '~/const/layout'
+import { THREAD } from '~/const/thread'
+import { getRandomInt } from '~/helper'
+import { mockTags, mockUsers } from '~/mock'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
-import { mockTags, mockUsers } from '~/mock'
-import { getRandomInt } from '~/helper'
-import { UPVOTE_LAYOUT } from '~/const/layout'
-import { THREAD } from '~/const/thread'
-
 import ArticleCatState from '~/unit/article-cat-state'
-import Upvote from '~/unit/upvote'
 import TagsList from '~/unit/tags-list'
+import Upvote from '~/unit/upvote'
 
 import useSalon from '../salon/classic_layout/full'
 

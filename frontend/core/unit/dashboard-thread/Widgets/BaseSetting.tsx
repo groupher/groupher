@@ -1,9 +1,9 @@
 import { includes } from 'ramda'
 
 import { THREAD } from '~/const/thread'
+import useTrans from '~/hooks/useTrans'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import ColorSelector from '~/widgets/ColorSelector'
-import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../constant'
 import useWidgets from '../logic/useWidgets'
@@ -27,7 +27,10 @@ export default function BaseSetting() {
 
   return (
     <div className={s.wrapper}>
-      <SectionLabel title={t('dsb.widgets.primary_color.title')} desc={t('dsb.widgets.primary_color.desc')} />
+      <SectionLabel
+        title={t('dsb.widgets.primary_color.title')}
+        desc={t('dsb.widgets.primary_color.desc')}
+      />
       <SavingBar
         isTouched={isPrimaryColorTouched}
         field={FIELD.WIDGETS_PRIMARY_COLOR}
@@ -47,10 +50,7 @@ export default function BaseSetting() {
       </SavingBar>
 
       <div className='mt-8' />
-      <SectionLabel
-        title={t('dsb.widgets.threads.title')}
-        desc={t('dsb.widgets.threads.desc')}
-      />
+      <SectionLabel title={t('dsb.widgets.threads.title')} desc={t('dsb.widgets.threads.desc')} />
 
       <div className={s.threads}>
         <div className={s.section}>

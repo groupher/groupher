@@ -4,12 +4,10 @@ import { cutRest } from '~/fmt'
 
 import DomainSVG from '~/icons/Domain'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
-
-import NextStepButton from './NextStepButton'
-import InputBox from './InputBox'
-
 import useSalon from '../salon/banner/setup_domain'
 import useLogic from '../useLogic'
+import InputBox from './InputBox'
+import NextStepButton from './NextStepButton'
 
 export default function SetupDomain() {
   const s = useSalon()
@@ -27,7 +25,7 @@ export default function SetupDomain() {
         社区域名
       </h3>
 
-      <InputBox value={slug} placeholder="your-domain" onChange={(e) => inputOnChange(e, 'slug')} />
+      <InputBox value={slug} placeholder='your-domain' onChange={(e) => inputOnChange(e, 'slug')} />
 
       {fmtError && <div className={s.errorMsg}>仅支持字母、数字与-_的组合</div>}
 

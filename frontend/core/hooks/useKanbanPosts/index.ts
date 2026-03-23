@@ -1,5 +1,5 @@
-import useArticleList from '~/stores/articleList/hooks'
 import type { TPagedPosts, TResState } from '~/spec'
+import useArticleList from '~/stores/articleList/hooks'
 
 type TRes = {
   backlog: TPagedPosts

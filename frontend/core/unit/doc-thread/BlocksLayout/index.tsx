@@ -1,7 +1,6 @@
 import { mockHelpCats } from '~/mock'
-
-import Category from './Category'
 import useSalon from '../salon/blocks_layout'
+import Category from './Category'
 
 export default function BlocksLayout() {
   const s = useSalon()

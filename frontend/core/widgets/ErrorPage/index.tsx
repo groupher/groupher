@@ -5,9 +5,8 @@
  */
 
 import type { FC } from 'react'
-
-import type { TMetric } from '~/spec'
 import METRIC from '~/const/metric'
+import type { TMetric } from '~/spec'
 
 import useSalon from './salon'
 

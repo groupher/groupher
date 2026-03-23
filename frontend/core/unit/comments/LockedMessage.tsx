@@ -1,5 +1,5 @@
-import LockSVG from '~/icons/Lock'
 import useTrans from '~/hooks/useTrans'
+import LockSVG from '~/icons/Lock'
 
 import useSalon from './salon/locked_message'
 

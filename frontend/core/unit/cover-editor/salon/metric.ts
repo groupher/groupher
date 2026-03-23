@@ -1,8 +1,7 @@
-import type { TWallpaperGradientDir } from '~/spec'
 import { GRADIENT_DIRECTION } from '~/const/wallpaper'
-
-import type { TImagePos, TLinearBorderPos, TImageSize, TImageRadio, TImageSizeValue } from '../spec'
-import { IMAGE_RATIO_SIZE, IMAGE_POS, LINEAR_BORDER, IMAGE_SIZE } from '../constant'
+import type { TWallpaperGradientDir } from '~/spec'
+import { IMAGE_POS, IMAGE_RATIO_SIZE, IMAGE_SIZE, LINEAR_BORDER } from '../constant'
+import type { TImagePos, TImageRadio, TImageSize, TImageSizeValue, TLinearBorderPos } from '../spec'
 
 export const getImageSize = (size: TImageSize, ratio: TImageRadio): TImageSizeValue => {
   return IMAGE_RATIO_SIZE[ratio][size]

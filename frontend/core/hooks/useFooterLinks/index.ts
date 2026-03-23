@@ -1,5 +1,5 @@
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TFooterLayout, TLinkItem } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 type TFooterLinks = {
   layout: TFooterLayout

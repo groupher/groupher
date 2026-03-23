@@ -1,9 +1,7 @@
 import { BANNER_LAYOUT } from '~/const/layout'
-
-import useBase from '..'
-
 import useLayout from '~/hooks/useLayout'
 import useTwBelt from '~/hooks/useTwBelt'
+import useBase from '..'
 
 export default function useSalon() {
   const { cn } = useTwBelt()

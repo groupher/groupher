@@ -5,9 +5,8 @@ import { type FC, Fragment } from 'react'
 import { ANCHOR } from '~/const/dom'
 import { BROADCAST_LAYOUT } from '~/const/layout'
 import useBroadcast from '~/hooks/useBroadcast'
-
-import CrossSVG from '~/icons/CloseCross'
 import ArrowSVG from '~/icons/Arrow'
+import CrossSVG from '~/icons/CloseCross'
 import NotifySVG from '~/icons/Trumpet'
 
 import useSalon, { cn } from './salon'
@@ -29,12 +28,12 @@ const Broadcast: FC<TProps> = ({ testid = 'banner-notify' }) => {
   return (
     <div id={ANCHOR.GLOBAL_HEADER_ID} className={cn(s.wrapper, s.rainbow(bg, 'bg'))}>
       <div className={cn(s.inner, layout === BROADCAST_LAYOUT.CENTER && 'justify-center')}>
-        <div className="row">
+        <div className='row'>
           <NotifySVG className={s.icon} />
           <div className={s.desc}>站点开发重构中，服务暂不可用。</div>
         </div>
 
-        <div className="row">
+        <div className='row'>
           {layout === BROADCAST_LAYOUT.DEFAULT ? (
             <Fragment>
               <div

@@ -3,8 +3,8 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 
 import { upvoteArticle } from '~/signal'
 import type { TArticle } from '~/spec'
-import ArticleBaseStats from '../ArticleBaseStats'
 import Upvote from '~/unit/upvote'
+import ArticleBaseStats from '../ArticleBaseStats'
 
 import useSalon from '../salon/post_viewer/article_info'
 

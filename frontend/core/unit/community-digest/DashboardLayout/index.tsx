@@ -19,7 +19,9 @@ export default function DashboardLayout() {
           <div className={s.baseInfo}>
             <CommunityBrief />
             <div className='grow' />
-            <ArrowLinker href={FEEDBACK} noColor>反馈</ArrowLinker>
+            <ArrowLinker href={FEEDBACK} noColor>
+              反馈
+            </ArrowLinker>
             <ArrowLinker href={DOCS} className='mr-4' noColor>
               文档
             </ArrowLinker>

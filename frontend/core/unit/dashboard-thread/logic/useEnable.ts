@@ -1,5 +1,5 @@
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TEnableConf } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 import { FIELD } from '../constant'
 
 import useHelper from './useHelper'

@@ -4,8 +4,8 @@
  *
  */
 
-import { type FC, useCallback, memo } from 'react'
 import { pickBy } from 'ramda'
+import { type FC, memo, useCallback } from 'react'
 
 import TextareaAutosize from 'react-textarea-autosize'
 import useSalon, { cn } from './salon/textarea'
@@ -50,9 +50,9 @@ const Textarea: FC<TProps> = ({
       onChange={handleOnChange}
       onKeyDown={handleKeydown}
       minRows={1}
-      spellCheck="false"
+      spellCheck='false'
       autoFocus={autoFocus}
-      // @ts-ignore
+      // @ts-expect-error
       {...validProps}
     />
   )

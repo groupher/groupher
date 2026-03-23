@@ -5,19 +5,18 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ARTICLE_THREAD } from '~/const/thread'
-import useArticle from '~/stores/article/hooks'
-
 import Img from '~/Img'
 import ArrowSVG from '~/icons/Arrow'
+import useArticle from '~/stores/article/hooks'
 
 // import ArchivedSign from '~/widgets/ArchivedSign'
 
 import type { TPost } from '~/spec'
+import ArticleSettingMenu from '~/unit/article-setting-menu'
 import ArticleBaseStats from '~/unit/article-view/ArticleBaseStats'
 import ArticlePinLabel from '~/unit/post-thread/ArticlePinLabel'
-import ArticleSettingMenu from '~/unit/article-setting-menu'
-import ImgFallback from '~/widgets/ImgFallback'
 import Share from '~/unit/share'
+import ImgFallback from '~/widgets/ImgFallback'
 import useSalon from './salon/digest'
 
 export default function Digest() {

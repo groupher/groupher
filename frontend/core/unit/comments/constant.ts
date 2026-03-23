@@ -1,4 +1,4 @@
-import type { TMode, TEditMode, TAPIMode } from './spec'
+import type { TAPIMode, TEditMode, TMode } from './spec'
 
 export const MODE = {
   TIMELINE: 'TIMELINE' as TMode,

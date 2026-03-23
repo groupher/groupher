@@ -17,7 +17,7 @@ const CopyButton: FC<TProps> = ({ value }) => {
   return (
     <div className={s.wrapper}>
       <CopyToClipboard text={value}>
-        <Suspense fallback={<IconButton path="article/clipboard.svg" right={5} />}>
+        <Suspense fallback={<IconButton path='article/clipboard.svg' right={5} />}>
           {/*  @ts-ignore */}
           <AnimatedCopyButton />
         </Suspense>

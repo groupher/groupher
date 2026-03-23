@@ -1,6 +1,6 @@
 import { AVATAR_LAYOUT } from '~/const/layout'
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TAvatarLayout } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 type TRet = {
   avatarLayout: TAvatarLayout

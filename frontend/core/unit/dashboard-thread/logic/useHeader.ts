@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TEditFunc, THeaderLayout, TLinkItem } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 import type { TLinkState } from '../spec'
 import useHelper from './useHelper'

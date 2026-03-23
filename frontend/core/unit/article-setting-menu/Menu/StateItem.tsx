@@ -3,8 +3,8 @@ import { ARTICLE_STATE } from '~/const/gtd'
 import { aliasGTDDoneState } from '~/fmt'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useNameAlias from '~/hooks/useNameAlias'
-import useViewingArticle from '~/hooks/useViewingArticle'
 import useTrans from '~/hooks/useTrans'
+import useViewingArticle from '~/hooks/useViewingArticle'
 
 import ArrowSVG from '~/icons/ArrowSimple'
 

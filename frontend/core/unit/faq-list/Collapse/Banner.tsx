@@ -1,9 +1,7 @@
-import { type FC, memo, useCallback } from 'react'
 import { pluck } from 'ramda'
-
-import type { TMenuOption, TFAQSection } from '~/spec'
-
+import { type FC, memo, useCallback } from 'react'
 import ArrowSVG from '~/icons/ArrowSolid'
+import type { TFAQSection, TMenuOption } from '~/spec'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 
 import useSalon from '../salon/collapse/banner'
@@ -45,7 +43,7 @@ const Banner: FC<TProps> = ({ menuOptions, setOpenedIndexes, sections }) => {
     <div className={s.wrapper}>
       <div className={s.title}>常见问题</div>
       <div className={s.menu}>
-        <MenuButton placement="bottom-end" options={menuOptions} onClick={(key) => handleMenu(key)}>
+        <MenuButton placement='bottom-end' options={menuOptions} onClick={(key) => handleMenu(key)}>
           <ArrowSVG className={s.arrowIcon} />
         </MenuButton>
       </div>

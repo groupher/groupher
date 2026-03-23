@@ -4,9 +4,8 @@
  */
 
 import type { FC } from 'react'
-
-import useCommunity from '~/stores/community/hooks'
 import useMount from '~/hooks/useMount'
+import useCommunity from '~/stores/community/hooks'
 import Button from '~/widgets/Buttons/Button'
 import Selects from './Selects'
 import useSalon from './salon'

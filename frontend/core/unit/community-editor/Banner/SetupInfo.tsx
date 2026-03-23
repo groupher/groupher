@@ -1,18 +1,15 @@
-import { nilOrEmpty } from '~/validator'
-
-import ApplySVG from '~/icons/Apply'
-
 import Img from '~/Img'
 
+import ApplySVG from '~/icons/Apply'
 import UploadSVG from '~/icons/Upload'
+import { nilOrEmpty } from '~/validator'
+import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import Input from '~/widgets/Input'
 import OSSUploader from '~/widgets/OSSUploader'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
-
-import NextStepButton from './NextStepButton'
+import useSalon from '../salon/banner/setup_info'
 
 import useLogic from '../useLogic'
-import useSalon from '../salon/banner/setup_info'
+import NextStepButton from './NextStepButton'
 
 export default function SetupInfo() {
   const s = useSalon()
@@ -43,15 +40,15 @@ export default function SetupInfo() {
           <Input
             className={s.input}
             value={title}
-            placeholder="社区名称"
+            placeholder='社区名称'
             onChange={(e) => inputOnChange(e, 'title')}
             autoFocus
           />
-          <div className="mb-2.5" />
+          <div className='mb-2.5' />
           <Input
             className={s.input}
             value={desc}
-            placeholder="社区一句话描述"
+            placeholder='社区一句话描述'
             onChange={(e) => inputOnChange(e, 'desc')}
           />
         </div>
@@ -61,7 +58,7 @@ export default function SetupInfo() {
         <ArrowButton leftLayout onClick={pervStep} dimWhenIdle className={s.prevBtn}>
           上一步
         </ArrowButton>
-        <div className="mr-6" />
+        <div className='mr-6' />
         <NextStepButton onClick={nextStep} disabled={!isValid} />
       </div>
     </div>

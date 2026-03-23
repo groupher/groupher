@@ -1,8 +1,6 @@
 import { LOCALE } from '~/const/i18n'
-
-import setupStore from '..'
-
 import type { TInit } from '~/stores/locale/spec'
+import setupStore from '..'
 
 describe('stores/locale', () => {
   it('updates locale and localeData', () => {

@@ -1,4 +1,4 @@
-import { mergeRight, clone, keys, findIndex, forEach } from 'ramda'
+import { clone, findIndex, forEach, keys, mergeRight } from 'ramda'
 
 import type { TTabItem } from '~/spec'
 

@@ -1,13 +1,12 @@
 import type { FC } from 'react'
 
 import { THREAD } from '~/const/thread'
-
-import DiscussSVG from '~/icons/Discuss'
-import KanbanSVG from '~/icons/Kanban'
-import GuideSVG from '~/icons/Book'
-import TadaSVG from '~/icons/TadaRaw'
-import InfoSVG from '~/icons/Info'
 import ArrowSVG from '~/icons/ArrowUpRight'
+import GuideSVG from '~/icons/Book'
+import DiscussSVG from '~/icons/Discuss'
+import InfoSVG from '~/icons/Info'
+import KanbanSVG from '~/icons/Kanban'
+import TadaSVG from '~/icons/TadaRaw'
 
 import useSalon, { cn } from '../salon/tabs/local_icon'
 

@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
-import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
 import useQuery from '~/hooks/useQuery'
 import type { TCommunity, TOverview } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
+import useDashboard from '~/stores/dashboard/hooks'
 
 import S from '../schema'
 

@@ -19,7 +19,7 @@ const ArchiveAlert: FC<TProps> = ({ date = '', ...spacing }) => {
 
   return (
     <NoticeBar
-      type="archived"
+      type='archived'
       content={`本帖已于 ${dateString} 被存档, 目前为只读状态。`}
       {...spacing}
     />

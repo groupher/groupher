@@ -1,10 +1,10 @@
 import { reject } from 'ramda'
 import type { FC } from 'react'
 import { ROUTE } from '~/const/route'
-import useCommunity from '~/stores/community/hooks'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TCommunityThread } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 
 import useSalon from '../../salon/header/editors/fixed_links'
 

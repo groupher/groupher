@@ -2,10 +2,10 @@
 
 import Link from 'next/link'
 import { DSB_SEG } from '~/const/route'
-import { Portal } from '~/unit/dashboard-thread'
-import useCommunity from '~/stores/community/hooks'
 import PinSVG from '~/icons/Pin'
 import type { TDsbCoversConfig } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
+import { Portal } from '~/unit/dashboard-thread'
 import useSalon, { cn } from './salon'
 
 const joinPath = (...parts: string[]) =>

@@ -1,15 +1,12 @@
-import { type FC, memo } from 'react'
 import { isEmpty } from 'ramda'
-
-import LockSVG from '~/icons/Lock'
+import { type FC, memo } from 'react'
 import ArrowSVG from '~/icons/Arrow'
-import RefreshSVG from '~/icons/Refresh'
+import LockSVG from '~/icons/Lock'
 import MoreSVG from '~/icons/menu/MoreL'
+import RefreshSVG from '~/icons/Refresh'
 import StarSVG from '~/icons/Star5'
-
-import Favicon from './Favicon'
-
 import useSalon, { cn } from '../../salon/content/fake_browser/browser_head'
+import Favicon from './Favicon'
 
 type TProps = {
   domain?: string
@@ -46,7 +43,7 @@ const BrowserHead: FC<TProps> = ({ domain = '', title = '', activePath = '', log
             {isEmpty(domain) ? (
               <div className={s.mainDomain}>groupher.com</div>
             ) : (
-              <div className="row-center">
+              <div className='row-center'>
                 <div className={s.mainDomainActive}>groupher.com</div>
                 <div className={s.slash}>/</div>
                 <div className={s.domainText} style={s.domainTextStyle}>
@@ -58,7 +55,7 @@ const BrowserHead: FC<TProps> = ({ domain = '', title = '', activePath = '', log
                 </div>
               </div>
             )}
-            <div className="grow" />
+            <div className='grow' />
             <StarSVG className={s.starIcon} />
           </div>
         </div>

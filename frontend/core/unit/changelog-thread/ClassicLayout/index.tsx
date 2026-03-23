@@ -5,10 +5,8 @@
 
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
 import ChangelogItem from '../ChangelogItem'
-
-import Sidebar from './Sidebar'
-
 import useSalon from '../salon/classic_layout'
+import Sidebar from './Sidebar'
 
 export default function ClassicLayout() {
   const s = useSalon()
@@ -21,7 +19,7 @@ export default function ClassicLayout() {
           <ChangelogItem key={item.innerId} article={item} />
         ))}
       </div>
-      <Sidebar tagsMode="all" />
+      <Sidebar tagsMode='all' />
     </div>
   )
 }

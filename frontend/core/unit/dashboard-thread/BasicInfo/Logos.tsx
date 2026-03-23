@@ -1,5 +1,5 @@
-import OSSUploader from '~/widgets/OSSUploader'
 import useTrans from '~/hooks/useTrans'
+import OSSUploader from '~/widgets/OSSUploader'
 
 import { FIELD } from '../constant'
 import useBaseInfo from '../logic/useBaseInfo'

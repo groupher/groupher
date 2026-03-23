@@ -1,11 +1,10 @@
 import { filter, findIndex, reject, remove } from 'ramda'
 import { THREAD } from '~/const/thread'
 import { sortByIndex } from '~/helper'
-import useCommunity from '~/stores/community/hooks'
-
-import useDashboard from '~/stores/dashboard/hooks'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TTag, TThread } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
+import useDashboard from '~/stores/dashboard/hooks'
 
 import S from '../../schema'
 

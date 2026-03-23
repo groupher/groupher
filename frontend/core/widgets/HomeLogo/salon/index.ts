@@ -1,5 +1,5 @@
-import type { TSpace } from '~/spec'
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 type TProps = {
   size: number

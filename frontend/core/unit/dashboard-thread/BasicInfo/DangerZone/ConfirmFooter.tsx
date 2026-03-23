@@ -1,7 +1,7 @@
 import { type FC, useState } from 'react'
-import useCommunity from '~/stores/community/hooks'
 import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 

@@ -1,5 +1,5 @@
-import type { TUpvoteLayout } from '~/spec'
 import { UPVOTE_LAYOUT } from '~/const/layout'
+import type { TUpvoteLayout } from '~/spec'
 
 export const getIconSize = (type: TUpvoteLayout): string => {
   switch (type) {

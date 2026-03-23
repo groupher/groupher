@@ -1,8 +1,6 @@
 import type { FC } from 'react'
-
-import type { TUser } from '~/spec'
-
 import Img from '~/Img'
+import type { TUser } from '~/spec'
 
 import useSalon from '../salon/classic_layout/author'
 

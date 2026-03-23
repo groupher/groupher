@@ -28,7 +28,7 @@ const GroupInputer: FC<TProps> = ({ value, onChange, onConfirm, onCancel }) => {
           className={s.input}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="// 新分组名称"
+          placeholder='// 新分组名称'
           autoFocus
         />
       </div>

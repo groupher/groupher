@@ -1,17 +1,12 @@
 import type { FC } from 'react'
-
-import type { TPost } from '~/spec'
 import { UPVOTE_LAYOUT } from '~/const/layout'
-
 import { upvoteArticle } from '~/signal'
-
-import ArticlePinLabel from '../../ArticlePinLabel'
+import type { TPost } from '~/spec'
 import Upvote from '~/unit/upvote'
-
-import Header from './Header'
-import Footer from './Footer'
-
+import ArticlePinLabel from '../../ArticlePinLabel'
 import useSalon from '../salon/minimal_layout'
+import Footer from './Footer'
+import Header from './Header'
 
 type TProps = {
   article: TPost

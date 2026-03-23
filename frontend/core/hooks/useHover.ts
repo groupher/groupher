@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, type MutableRefObject } from 'react'
+import { type MutableRefObject, useEffect, useRef, useState } from 'react'
 
 // Hook
 // T - could be any type of HTML element like: HTMLDivElement, HTMLParagraphElement and etc.

@@ -2,9 +2,8 @@ import { useState } from 'react'
 
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
-
-import useLogic from '../useLogic'
 import useSalon from '../salon/build_in/custom_gradient_editor'
+import useLogic from '../useLogic'
 
 export default function CustomGradientEditor() {
   const s = useSalon()
@@ -19,7 +18,7 @@ export default function CustomGradientEditor() {
     <div className={s.wrapper}>
       <div className={s.label}>自定义</div>
       <Input
-        placeholder="颜色值以, 分隔, 如 #EBDDD1,#CEB2D3,#F16061"
+        placeholder='颜色值以, 分隔, 如 #EBDDD1,#CEB2D3,#F16061'
         className={s.input}
         value={colorVal}
         onChange={(e) => setColorVal(e.target.value)}
@@ -27,16 +26,16 @@ export default function CustomGradientEditor() {
       <div className={s.footer}>
         <div className={s.note}>支持多组 HEX 颜色值，</div>
 
-        <div className="grow" />
+        <div className='grow' />
         {changed && (
           <>
-            <Button ghost size="small" noBorder right={8} onClick={() => setColorVal(customColor)}>
+            <Button ghost size='small' noBorder right={8} onClick={() => setColorVal(customColor)}>
               取消
             </Button>
 
             <Button
               disabled={!changed}
-              size="small"
+              size='small'
               space={10}
               onClick={() => confirmCustomColor(colorVal)}
             >

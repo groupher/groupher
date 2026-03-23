@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { TOPBAR_LAYOUT } from '~/const/layout'
 import { FIELD } from '../../constant'
 import TopbarLayout from '.'
@@ -63,8 +63,21 @@ vi.mock('../../SavingBar', () => ({
 }))
 
 vi.mock('~/widgets/ColorSelector', () => ({
-  default: ({ activeColor, onChange, children }: { activeColor: string; onChange: (color: string) => void; children: ReactNode }) => (
-    <button type='button' data-testid='color-selector' data-color={activeColor} onClick={() => onChange('red')}>
+  default: ({
+    activeColor,
+    onChange,
+    children,
+  }: {
+    activeColor: string
+    onChange: (color: string) => void
+    children: ReactNode
+  }) => (
+    <button
+      type='button'
+      data-testid='color-selector'
+      data-color={activeColor}
+      onClick={() => onChange('red')}
+    >
       {children}
     </button>
   ),

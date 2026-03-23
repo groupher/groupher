@@ -3,7 +3,4 @@
 import createStoreHook from '../createStoreHook'
 import { StoreContext } from './provider'
 
-export default createStoreHook(StoreContext, [
-  'setLocale',
-  'setLocaleData',
-])
+export default createStoreHook(StoreContext, ['setLocale', 'setLocaleData'])

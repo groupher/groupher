@@ -7,11 +7,9 @@
 import type { FC } from 'react'
 
 import type { TSpace } from '~/spec'
-
-import TopInfo from './TopInfo'
 import BottomInfo from './BottomInfo'
-
 import useSalon from './salon'
+import TopInfo from './TopInfo'
 
 type TProps = {
   offsetRight?: number

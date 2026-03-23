@@ -9,9 +9,8 @@ import IconButton from '~/widgets/Buttons/IconButton'
 import Tooltip from '~/widgets/Tooltip'
 
 import { emotionsCoverter } from './helper'
-
-import SelectedEmotions from './SelectedEmotions'
 import Panel from './Panel'
+import SelectedEmotions from './SelectedEmotions'
 
 import useSalon from './salon'
 
@@ -31,11 +30,11 @@ const EmotionSelector: FC<TProps> = ({ onAction = console.log, isLegal = true, e
       {isLegal && (
         <Tooltip
           content={<Panel emotions={validEmotions} onAction={onAction} />}
-          trigger="click"
+          trigger='click'
           noPadding
         >
           <div className={s.selectEmotion}>
-            <IconButton icon="emotion" dimWhenIdle size={18} />
+            <IconButton icon='emotion' dimWhenIdle size={18} />
           </div>
         </Tooltip>
       )}

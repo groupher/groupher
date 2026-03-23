@@ -1,6 +1,6 @@
 export { authCookieProxy } from './auth-cookie'
 export { avoidScanProxy } from './avoid-scan'
+export { applyProxy } from './helper'
 export { oopsProxy } from './oops'
 export { queryWhitelistProxy } from './query-whitelist'
 export { urlPeekProxy } from './url-peek'
-export { applyProxy } from './helper'

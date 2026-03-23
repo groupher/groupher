@@ -1,9 +1,8 @@
 import { type FC, memo } from 'react'
 
 import SVG from '~/const/svg'
-
-import UploadSVG from '~/icons/Upload'
 import MoreSVG from '~/icons/menu/More'
+import UploadSVG from '~/icons/Upload'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 
 import useSalon from '../salon/upload_pic/upload_box'
@@ -22,7 +21,7 @@ const UploadBox: FC = () => {
   return (
     <div className={s.wrapper}>
       <div className={s.menu}>
-        <MenuButton placement="bottom-end" options={menuOptions}>
+        <MenuButton placement='bottom-end' options={menuOptions}>
           <MoreSVG className={s.moreIcon} />
         </MenuButton>
       </div>

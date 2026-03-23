@@ -59,7 +59,9 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
           <Tooltip
             content={
               <div className={s.tipNote}>
-                <div className={s.text}>{kanbanAlias[ARTICLE_STATE.WIP.toLowerCase()]?.name || t(state)}</div>
+                <div className={s.text}>
+                  {kanbanAlias[ARTICLE_STATE.WIP.toLowerCase()]?.name || t(state)}
+                </div>
               </div>
             }
             {...tipConfig}
@@ -75,7 +77,9 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
         <div className={s.box}>
           <Icon.Wip className={s.wipIcon} />
 
-          <div className={s.text}>{kanbanAlias[ARTICLE_STATE.WIP.toLowerCase()]?.name || t(state)}</div>
+          <div className={s.text}>
+            {kanbanAlias[ARTICLE_STATE.WIP.toLowerCase()]?.name || t(state)}
+          </div>
         </div>
       )
     }

@@ -1,7 +1,7 @@
+import useTrans from '~/hooks/useTrans'
 import AddSVG from '~/icons/Plus'
 import { callTagCreateEditor } from '~/signal'
 import Button from '~/widgets/Buttons/Button'
-import useTrans from '~/hooks/useTrans'
 
 import useSalon from '../salon/tags'
 import Footer from './Footer'

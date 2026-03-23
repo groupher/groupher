@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TEditFunc } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 import useHelper from './useHelper'
 

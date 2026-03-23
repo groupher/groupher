@@ -1,5 +1,5 @@
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import useTrans from '~/hooks/useTrans'
+import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import useEnable from '../logic/useEnable'
 import SectionLabel from '../SectionLabel'
 import useSalon from '../salon/threads'

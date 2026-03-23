@@ -2,10 +2,9 @@
  * KanbanThread
  */
 
+import useSalon from '../salon/classic_layout'
 import Actions from './Actions'
 import Columns from './Columns'
-
-import useSalon from '../salon/classic_layout'
 
 export default function ClassicLayout() {
   const s = useSalon()

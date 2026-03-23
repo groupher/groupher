@@ -1,18 +1,14 @@
 import type { FC } from 'react'
-
-import type { TSubMenu } from '../spec'
 import { SUB_MENU_TYPE } from '../constant'
-
-import Header from './Header'
-
-import TitleSetting from './TitleSetting'
-import CatSetting from './CatSetting'
-import StateSetting from './StateSetting'
-import SlugSetting from './SlugSetting'
-import TagsSetting from './TagsSetting'
-import Mirror2Home from './Mirror2Home'
-
 import useSalon from '../salon/sub_menu'
+import type { TSubMenu } from '../spec'
+import CatSetting from './CatSetting'
+import Header from './Header'
+import Mirror2Home from './Mirror2Home'
+import SlugSetting from './SlugSetting'
+import StateSetting from './StateSetting'
+import TagsSetting from './TagsSetting'
+import TitleSetting from './TitleSetting'
 
 type TProps = {
   closeSubMenu: () => void

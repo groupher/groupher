@@ -1,6 +1,6 @@
+import useTrans from '~/hooks/useTrans'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import Input from '~/widgets/Input'
-import useTrans from '~/hooks/useTrans'
 import useSEO from '../logic/useSEO'
 import SectionLabel from '../SectionLabel'
 import useSalon from '../salon/seo/open_graph'
@@ -23,7 +23,11 @@ export default function OpenGraph() {
         detailText={t('dsb.seo.open_graph.detail')}
         desc={t('dsb.seo.open_graph.desc')}
         onDetailClick={() => {
-          window.open('https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=zh-cn', '_blank', 'noopener,noreferrer')
+          window.open(
+            'https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=zh-cn',
+            '_blank',
+            'noopener,noreferrer',
+          )
         }}
         addon={<ToggleSwitch checked={seoEnable} onChange={(v) => toggleSEO(v)} />}
       />

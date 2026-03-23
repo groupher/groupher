@@ -1,4 +1,4 @@
-import { type FC, useState, type ReactNode } from 'react'
+import { type FC, type ReactNode, useState } from 'react'
 
 import type { TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
@@ -30,7 +30,7 @@ const ToolUnit: FC<TProps> = ({
       <Tooltip
         content={<>{panelOpen && <>{panel}</>}</>}
         placement={placement}
-        trigger="mouseenter focus"
+        trigger='mouseenter focus'
         onShow={() => setPanelOpen(true)}
         onHide={() => setPanelOpen(false)}
         hideOnClick={false}

@@ -1,12 +1,10 @@
 import { type FC, memo, useState } from 'react'
 
 import type { TArticle, TColorName } from '~/spec'
-
-import FaIcons from '~/widgets/FaIcons'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
-
-import useLogic from '../useLogic'
+import FaIcons from '~/widgets/FaIcons'
 import useSalon from '../salon/blocks_layout/category'
+import useLogic from '../useLogic'
 
 const FOLD_LIMIT = 5
 
@@ -26,7 +24,7 @@ const Category: FC<TProps> = ({ color, title, articles }) => {
     <div className={s.wrapper}>
       <div className={s.header}>
         <div className={s.iconBox}>
-          <FaIcons icon="music" size={15} color={color} opacity={0.6} />
+          <FaIcons icon='music' size={15} color={color} opacity={0.6} />
         </div>
         <h4 className={s.title}>{title}</h4>
       </div>

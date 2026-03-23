@@ -1,8 +1,7 @@
 import { BRAND_LAYOUT } from '~/const/layout'
-import useCommunity from '~/stores/community/hooks'
 import useTrans from '~/hooks/useTrans'
-
 import BrandSVG from '~/icons/Brand'
+import useCommunity from '~/stores/community/hooks'
 import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'

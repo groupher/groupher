@@ -1,9 +1,7 @@
 import type { FC } from 'react'
-
-import type { TSizeSM } from '~/spec'
 import SIZE from '~/const/size'
-
 import HookSVG from '~/icons/CheckBold'
+import type { TSizeSM } from '~/spec'
 
 import useSalon from './salon/toggle_switch'
 

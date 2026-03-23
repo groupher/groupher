@@ -1,8 +1,7 @@
 import type { FC } from 'react'
-
+import useTrans from '~/hooks/useTrans'
 import type { TFAQSection } from '~/spec'
 import Input from '~/widgets/Input'
-import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../../../constant'
 import useFAQ from '../../../logic/useFAQ'

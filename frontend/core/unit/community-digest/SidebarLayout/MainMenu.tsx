@@ -1,9 +1,8 @@
 import Link from 'next/link'
-
-import useCommunity from '~/stores/community/hooks'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
+import useCommunity from '~/stores/community/hooks'
 
 import CustomHeaderLinks from '~/unit/header-links'
 import useSalon, { cn } from '../salon/sidebar_layout/main_menu'

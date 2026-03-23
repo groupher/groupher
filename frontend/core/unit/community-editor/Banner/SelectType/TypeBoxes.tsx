@@ -1,11 +1,9 @@
 import CheckSVG from '~/icons/CheckCircle'
-
-import IntroImages from './IntroImages'
-
 import { COMMUNITY_CATS } from '../../constant'
+import useSalon, { cn, Icon } from '../../salon/banner/select_type/type_boxes'
 
 import useLogic from '../../useLogic'
-import useSalon, { cn, Icon } from '../../salon/banner/select_type/type_boxes'
+import IntroImages from './IntroImages'
 
 export default function TypeBoxes() {
   const s = useSalon()
@@ -30,7 +28,7 @@ export default function TypeBoxes() {
               {active ? <CheckSVG className={s.checkIcon} /> : <div className={s.emptyCheck} />}
             </div>
             <h3 className={cn(s.title, active && s.titleActive)}>{item.title}</h3>
-            <div className="grow" />
+            <div className='grow' />
           </div>
         )
       })}

@@ -1,7 +1,6 @@
 import { KANBAN_LAYOUT } from '~/const/layout'
-
-import CheckLabel from '~/widgets/CheckLabel'
 import useTrans from '~/hooks/useTrans'
+import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useKanban from '../../logic/useKanban'
@@ -17,7 +16,10 @@ export default function GlobalLayout() {
 
   return (
     <>
-      <SectionLabel title={t('dsb.layout.kanban.global.title')} desc={t('dsb.layout.kanban.global.desc')} />
+      <SectionLabel
+        title={t('dsb.layout.kanban.global.title')}
+        desc={t('dsb.layout.kanban.global.desc')}
+      />
       <div className={s.select}>
         <button
           type='button'

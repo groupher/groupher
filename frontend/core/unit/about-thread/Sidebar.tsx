@@ -1,9 +1,8 @@
 import { isEmpty } from 'ramda'
 
 import useAboutInfo from '~/hooks/useAboutInfo'
-
-import Linker from '~/widgets/Linker'
 import SocialList from '~/unit/social-list'
+import Linker from '~/widgets/Linker'
 
 import LabelList from './LabelList'
 import MediaReports from './MediaReports'
@@ -26,7 +25,7 @@ export default function Sidebar() {
       </div>
       <div className={cn(s.block, isEmpty(socialLinks) && 'hidden')}>
         <h3 className={s.title}>关注我们</h3>
-        <SocialList size="small" selected={socialLinks} left={-10} top={12} />
+        <SocialList size='small' selected={socialLinks} left={-10} top={12} />
       </div>
       <div className={s.divider} />
       <div className={cn(s.block, isEmpty(cities) && 'hidden')}>

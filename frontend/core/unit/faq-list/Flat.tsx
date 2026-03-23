@@ -2,10 +2,8 @@ import type { FC } from 'react'
 
 import CheckSVG from '~/icons/Check'
 import Markdown from '~/widgets/Markdown'
-
-import useSalon from './salon/flat'
-
 import type { TProps as TIndex } from '.'
+import useSalon from './salon/flat'
 
 type TProps = Pick<TIndex, 'sections' | 'large'>
 
@@ -20,7 +18,7 @@ const Flat: FC<TProps> = ({ sections, large }) => {
       <div className={s.content}>
         {sections.map((item) => (
           <div className={s.section} key={item.title}>
-            <div className="row-center">
+            <div className='row-center'>
               <div className={s.checkBox}>
                 <CheckSVG className={s.checkIcon} />
               </div>

@@ -1,8 +1,8 @@
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import { callPassportEditor } from '~/signal'
 import AdminAvatar from '~/unit/admin-avatar'
 import Button from '~/widgets/Buttons/Button'
-import useTrans from '~/hooks/useTrans'
 
 import useAdmins from '../logic/useAdmins'
 

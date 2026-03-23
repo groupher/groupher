@@ -4,11 +4,10 @@
  *
  */
 
-import { type FC, type ReactNode, memo } from 'react'
-
-import type { TSize } from '~/spec'
+import { type FC, memo, type ReactNode } from 'react'
 import SIZE from '~/const/size'
 import ArrowSVG from '~/icons/Arrow'
+import type { TSize } from '~/spec'
 
 import useSalon, { cn } from './salon/arrow_link'
 
@@ -33,7 +32,7 @@ const ArrowLink: FC<TProps> = ({
   const s = useSalon({ size, color })
 
   return (
-    <a className={cn(s.wrapper, className)} href={href} rel="noopener noreferrer" target={target}>
+    <a className={cn(s.wrapper, className)} href={href} rel='noopener noreferrer' target={target}>
       <div className={s.text}>{children}</div>
       <ArrowSVG className={s.rightIcon} />
     </a>

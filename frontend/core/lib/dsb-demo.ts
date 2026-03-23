@@ -1,14 +1,16 @@
 import { ROUTE } from '~/const/route'
-import { DSB_DEMO_KEY } from '~/unit/dashboard-thread/constant'
 import { FIELDS } from '~/stores/dashboard/constant'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
+import { DSB_DEMO_KEY } from '~/unit/dashboard-thread/constant'
 import persist from '~/utils/persist'
 
 const DEMO_CONFIG_KEY = `${DSB_DEMO_KEY}:config`
 const DEMO_SNAPSHOT_KEY = `${DSB_DEMO_KEY}:snapshot`
 
-export const isDsbDemoMode = (community: string | null | undefined, mode?: string | null): boolean =>
-  community === ROUTE.HOME && mode === 'demo'
+export const isDsbDemoMode = (
+  community: string | null | undefined,
+  mode?: string | null,
+): boolean => community === ROUTE.HOME && mode === 'demo'
 
 export const buildDsbDemoConfig = (source: Partial<TDsbFieldMap>): TDsbFieldMap => {
   const base = { ...FIELDS, ...source }

@@ -7,10 +7,9 @@
 import { type FC, memo } from 'react'
 
 import AnimatedCount from '~/widgets/AnimatedCount'
-import useUpvote from './useUpvote'
-import UpvoteBtn from './UpvoteBtn'
-
 import useSalon from './salon/simple_layout'
+import UpvoteBtn from './UpvoteBtn'
+import useUpvote from './useUpvote'
 
 type TProps = {
   testid?: string

@@ -2,18 +2,16 @@
  * Share
  */
 
-import type { FC } from 'react'
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
+import type { FC } from 'react'
 
 import type { TArticle } from '~/spec'
 
 import Modal from '~/widgets/Modal'
-
-import type { TLinksData } from '../spec'
-import Platforms from './Platforms'
-import InfoPanel from './InfoPanel'
-
 import useSalon, { cn } from '../salon/modal_panel'
+import type { TLinksData } from '../spec'
+import InfoPanel from './InfoPanel'
+import Platforms from './Platforms'
 
 type TProps = {
   show: boolean

@@ -24,6 +24,6 @@
 // }))
 
 // export type TStore = Instance<typeof ArticleViewer>
-// // @ts-ignore
+// // @ts-expect-error
 
 // export default ArticleViewer

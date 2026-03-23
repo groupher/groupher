@@ -1,5 +1,4 @@
-import type { FC } from 'react'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, FC } from 'react'
 
 import type { TComment, TID } from '~/spec'
 import Comment from '../Comment'

@@ -26,7 +26,8 @@ vi.mock('../../salon/layout/inline_tag_layout', () => ({
     block: 'block',
     blockActive: 'block-active',
   }),
-  cnMerge: (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' '),
+  cnMerge: (...classes: Array<string | false | null | undefined>) =>
+    classes.filter(Boolean).join(' '),
 }))
 
 vi.mock('./TagItem', () => ({

@@ -1,7 +1,7 @@
 import { LOCALE } from '~/const/i18n'
-import useLocale from '~/stores/locale/hooks'
 import { loadLocaleFile } from '~/i18n'
 import type { TLocale } from '~/spec'
+import useLocale from '~/stores/locale/hooks'
 
 type TRet = {
   changeLocale: (locale: TLocale) => void

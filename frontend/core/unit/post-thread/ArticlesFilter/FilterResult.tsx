@@ -15,7 +15,7 @@ const FilterResult: FC<TProps> = ({ pageNumber, totalCount }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.text}>第 {pageNumber} 页</div>
-      <DotDivider className="mx-2" />
+      <DotDivider className='mx-2' />
       <div className={s.text}>共 {totalCount} 条</div>
     </div>
   )

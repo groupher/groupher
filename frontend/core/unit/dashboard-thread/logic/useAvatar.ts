@@ -1,5 +1,5 @@
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TAvatarLayout, TEditFunc } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 import useHelper from './useHelper'
 

@@ -21,7 +21,7 @@ export default function BasicNumbers() {
         <section className={s.section}>
           <div className={s.hint}>
             参与互动人数
-            <NoteTip left={1} placement="top">
+            <NoteTip left={1} placement='top'>
               参与过发帖，评论，Emoji 反馈的人数
             </NoteTip>
           </div>

@@ -1,8 +1,8 @@
 import { PAGE_BG_CSS_KEY } from '~/const/colors'
 import { blurRGB } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'
-import useWallpaper from '~/hooks/useWallpaper'
 import useTrans from '~/hooks/useTrans'
+import useWallpaper from '~/hooks/useWallpaper'
 import RangeSlider from '~/widgets/RangeSlider'
 
 import { FIELD } from '../../constant'

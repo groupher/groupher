@@ -21,9 +21,9 @@ import {
   useScrollStuck,
   useStickyColumns,
 } from '~/hooks/useTanTable'
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
-import useTrans from '~/hooks/useTrans'
 import type { TArticle } from '~/spec'
 import TableLoading from '~/widgets/Loading/Table'
 
@@ -73,7 +73,9 @@ export default function Changelogs() {
       {
         accessorKey: 'upvotesCount',
         id: 'upvotesCount',
-        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.upvotes')}</div>,
+        header: () => (
+          <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.upvotes')}</div>
+        ),
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),
@@ -95,7 +97,9 @@ export default function Changelogs() {
       {
         accessorKey: 'commentsCount',
         id: 'commentsCount',
-        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.comments')}</div>,
+        header: () => (
+          <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.comments')}</div>
+        ),
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue() ?? 0)}</div>
         ),

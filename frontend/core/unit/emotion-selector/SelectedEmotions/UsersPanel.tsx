@@ -3,13 +3,10 @@
  */
 
 import { type FC, memo } from 'react'
-
-import type { TSimpleUser, TEmotionType } from '~/spec'
 import { cutRest } from '~/fmt'
-
-import EmotionIcon from './EmotionIcon'
-
+import type { TEmotionType, TSimpleUser } from '~/spec'
 import useSalon from '../salon/selected_emotions/users_panel'
+import EmotionIcon from './EmotionIcon'
 
 type TProps = {
   name: TEmotionType

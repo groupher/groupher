@@ -5,10 +5,10 @@ import { useEffect, useRef } from 'react'
 import { MORE_GROUP } from '~/const/dashboard'
 import { DSB_ROUTE, ROUTE } from '~/const/route'
 import { groupByKey, sortByGroupIndex } from '~/helper'
-import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
 import useDsbTab from '~/hooks/useDsbTab'
 import type { TGroupedLinks, TLinkItem } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
+import useDashboard from '~/stores/dashboard/hooks'
 
 import { EMPTY_LINK_ITEM } from '../../constant'
 

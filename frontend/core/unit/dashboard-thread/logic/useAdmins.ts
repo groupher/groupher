@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { sortByKey } from '~/helper'
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TModerator, TUser } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 type TRet = {
   moderators: TModerator[]

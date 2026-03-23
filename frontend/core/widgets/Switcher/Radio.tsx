@@ -5,9 +5,8 @@
  */
 
 import type { FC } from 'react'
-
-import type { TSizeSM, TSpace } from '~/spec'
 import SIZE from '~/const/size'
+import type { TSizeSM, TSpace } from '~/spec'
 
 import useSalon, { cn } from './salon/radio'
 
@@ -34,7 +33,7 @@ const Radio: FC<TProps> = ({
   const s = useSalon({ ...spacing })
 
   return (
-    <div className={s.wrapper} data-testid="radio">
+    <div className={s.wrapper} data-testid='radio'>
       {items.map((item) => {
         const active = item.key === activeKey
 

@@ -7,13 +7,13 @@
 import Link from 'next/link'
 import { type FC, memo } from 'react'
 import { THREAD } from '~/const/thread'
-import useCommunity from '~/stores/community/hooks'
 import ShareSVG from '~/icons/Share'
 import type { TChangelog } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 import CommentsCount from '~/unit/comments-count'
 import EmotionSelector from '~/unit/emotion-selector'
-import ReadableDate from '~/widgets/ReadableDate'
 import TagsList from '~/unit/tags-list'
+import ReadableDate from '~/widgets/ReadableDate'
 
 import { demoEmotion, demoTags } from '../constant'
 

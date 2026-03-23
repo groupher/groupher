@@ -1,9 +1,9 @@
 import { findIndex, reverse } from 'ramda'
 import { type FC, useEffect, useRef, useState } from 'react'
 import { sortByColor } from '~/helper'
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import MoreSVG from '~/icons/menu/MoreL'
-import useTrans from '~/hooks/useTrans'
 import type { TTag } from '~/spec'
 import useSalon from './salon/folder'
 import TagItem from './TagItem'
@@ -97,7 +97,9 @@ const Folder: FC<TProps> = ({
           >
             <MoreSVG className={s.toggleIcon} />
             <div className={s.subToggleTitle}>
-              {curDisplayCount === maxDisplayCount ? t('tags.fold.expand') : t('tags.fold.collapse')}
+              {curDisplayCount === maxDisplayCount
+                ? t('tags.fold.expand')
+                : t('tags.fold.collapse')}
             </div>
           </button>
         )}

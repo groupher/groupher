@@ -1,11 +1,8 @@
 import { type FC, memo } from 'react'
-
-import type { TArticle } from '~/spec'
-
 import { UPVOTE_LAYOUT } from '~/const/layout'
-
-import Upvote from '~/unit/upvote'
+import type { TArticle } from '~/spec'
 import ArticleCatState from '~/unit/article-cat-state'
+import Upvote from '~/unit/upvote'
 // import ArticleBaseStats from '~/widgets/ArticleBaseStats'
 
 import useSalon from '../salon/post_viewer/fixed_header'

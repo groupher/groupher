@@ -1,16 +1,13 @@
-import type { FC } from 'react'
 import { values } from 'ramda'
-
-import ShadowSVG from '~/icons/Shadow'
+import type { FC } from 'react'
 import EmptySVG from '~/icons/Empty'
-
-import type { TSettingLevel } from '../spec'
+import ShadowSVG from '~/icons/Shadow'
 import { IMAGE_SHADOW, SETTING_LEVEL } from '../constant'
-
-import ToolUnit from './ToolUnit'
+import useSalon, { cn } from '../salon/toolbox/shadow_block'
+import type { TSettingLevel } from '../spec'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../salon/toolbox/shadow_block'
+import ToolUnit from './ToolUnit'
 
 type TProps = {
   shadowLevel: TSettingLevel
@@ -22,7 +19,7 @@ const ShadowBlock: FC<TProps> = ({ shadowLevel }) => {
 
   return (
     <ToolUnit
-      title="阴影"
+      title='阴影'
       icon={<ShadowSVG className={s.icon} />}
       panel={
         <div className={s.panel}>

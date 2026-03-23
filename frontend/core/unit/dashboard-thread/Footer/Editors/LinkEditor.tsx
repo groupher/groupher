@@ -1,25 +1,19 @@
 import { type FC, useEffect, useState } from 'react'
-
-import type { TChangeMode, TLinkItem } from '~/spec'
-
 import { CHANGE_MODE } from '~/const/mode'
-
-import MoreSVG from '~/icons/menu/MoreL'
-import EditPenSVG from '~/icons/EditPen'
 import ArrowSVG from '~/icons/Arrow'
-
-import Tooltip from '~/widgets/Tooltip'
-import Linker from '~/widgets/Linker'
-import Input from '~/widgets/Input'
+import EditPenSVG from '~/icons/EditPen'
+import MoreSVG from '~/icons/menu/MoreL'
+import type { TChangeMode, TLinkItem } from '~/spec'
 import CancelButton from '~/widgets/Buttons/CancelButton'
+import Input from '~/widgets/Input'
+import Linker from '~/widgets/Linker'
+import Tooltip from '~/widgets/Tooltip'
 
 import { EMPTY_LINK_ITEM } from '../../constant'
-import SavingBar from '../../SavingBar'
-
-import LinkMenu from './LinkMenu'
-
 import useFooter from '../../logic/useFooter'
+import SavingBar from '../../SavingBar'
 import useSalon, { cn } from '../../salon/footer/editors/link_editor'
+import LinkMenu from './LinkMenu'
 
 type TProps = {
   notifyText?: string
@@ -84,7 +78,7 @@ const LinkEditor: FC<TProps> = ({
               {notifyText && <div className={s.notifyLabel}>New</div>}
             </div>
           )}
-          <div className="grow" />
+          <div className='grow' />
           <div className={cn(s.actions, editing && '!hidden debug')}>
             {!isFirst && (
               <ArrowSVG
@@ -112,8 +106,8 @@ const LinkEditor: FC<TProps> = ({
                     onDelete={() => deleteLink(linkItem)}
                   />
                 }
-                placement="bottom-end"
-                trigger="click"
+                placement='bottom-end'
+                trigger='click'
                 offset={[4, 0]}
                 hideOnClick
                 noPadding
@@ -123,7 +117,7 @@ const LinkEditor: FC<TProps> = ({
             )}
           </div>
         </div>
-        <div className="grow" />
+        <div className='grow' />
         {!editing && <Linker src={linkItem?.link || ''} left={-2} top={5} external />}
       </div>
 
@@ -134,7 +128,7 @@ const LinkEditor: FC<TProps> = ({
             <Input
               className={s.input}
               value={editingLink?.title || ''}
-              placeholder="链接名称"
+              placeholder='链接名称'
               onChange={(e) => updateEditingLink('title', e.target.value)}
               autoFocus
             />
@@ -144,7 +138,7 @@ const LinkEditor: FC<TProps> = ({
             <Input
               className={s.input}
               value={editingLink?.link || ''}
-              placeholder="链接地址"
+              placeholder='链接地址'
               onChange={(e) => updateEditingLink('link', e.target.value)}
             />
           </div>
@@ -152,7 +146,7 @@ const LinkEditor: FC<TProps> = ({
           <div className={s.footer}>
             {isTouched ? (
               <SavingBar
-                prefix="确认保存"
+                prefix='确认保存'
                 onConfirm={confirmLinkEditing}
                 onCancel={cancelLinkEditing}
                 top={2}

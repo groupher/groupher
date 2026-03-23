@@ -1,7 +1,6 @@
 import { DOC_FAQ_LAYOUT, DOC_LAYOUT } from '~/const/layout'
-
-import CheckLabel from '~/widgets/CheckLabel'
 import useTrans from '~/hooks/useTrans'
+import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useDoc from '../../logic/useDoc'

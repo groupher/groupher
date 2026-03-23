@@ -7,8 +7,8 @@ import { P } from '~/schemas'
 import type {
   TCommunityInfo,
   TLocale,
-  TPagedComments,
   TPagedChangelogs,
+  TPagedComments,
   TPagedPosts,
   TPost,
   TTag,
@@ -158,7 +158,11 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
   return data.pagedCommunityTags.entries
 }
 
-export const getPost = async (community: string, id: string, thread: TThread = THREAD.POST): Promise<TPost | null> => {
+export const getPost = async (
+  community: string,
+  id: string,
+  thread: TThread = THREAD.POST,
+): Promise<TPost | null> => {
   'use cache'
   cacheLife('minutes')
 

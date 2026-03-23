@@ -1,19 +1,15 @@
-import type { FC } from 'react'
 import { keys } from 'ramda'
+import type { FC } from 'react'
 
 import ArchSVG from '~/icons/Arch'
 import EmptySVG from '~/icons/Empty'
 import Radio from '~/widgets/Switcher/Radio'
-
-import BorderBox from './BorderBox'
-
-import type { TLinearBorderPos, TSettingLevel } from '../../spec'
-import { IMAGE_BORDER_RADIUS, IMAGE_SHADOW, SETTING_LEVEL, LINEAR_BORDER } from '../../constant'
-
-import ToolUnit from '../ToolUnit'
-
-import useLogic from '../../useLogic'
+import { IMAGE_BORDER_RADIUS, IMAGE_SHADOW, LINEAR_BORDER, SETTING_LEVEL } from '../../constant'
 import useSalon, { cn } from '../../salon/toolbox/border_block'
+import type { TLinearBorderPos, TSettingLevel } from '../../spec'
+import useLogic from '../../useLogic'
+import ToolUnit from '../ToolUnit'
+import BorderBox from './BorderBox'
 
 type TProps = {
   borderRadiusLevel: TSettingLevel
@@ -28,12 +24,12 @@ const ArchBlock: FC<TProps> = ({ borderRadiusLevel, linearBorderPos, hasGlassBor
 
   return (
     <ToolUnit
-      title="边框"
-      className="-ml-1"
+      title='边框'
+      className='-ml-1'
       icon={<ArchSVG className={s.icon} />}
       panel={
         <div className={s.panel}>
-          <div className="row">
+          <div className='row'>
             <div className={s.rowTitle}>圆角</div>
             <div className={s.radiusContentsRow}>
               {keys(IMAGE_BORDER_RADIUS).map((level) => {
@@ -98,7 +94,7 @@ const ArchBlock: FC<TProps> = ({ borderRadiusLevel, linearBorderPos, hasGlassBor
           <div className={s.borderRow}>
             <div className={s.rowTitle}>外框</div>
             <Radio
-              size="small"
+              size='small'
               top={-0.5}
               left={-0.5}
               items={[

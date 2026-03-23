@@ -1,16 +1,12 @@
-import { type FC, useState, useEffect } from 'react'
-
-import type { TPost } from '~/spec'
-
-import { mockImage } from '~/mock'
-
-import ArticlePinLabel from '../../ArticlePinLabel'
+import { type FC, useEffect, useState } from 'react'
 import Img from '~/Img'
 
-import Header from './Header'
-import Footer from './Footer'
-
+import { mockImage } from '~/mock'
+import type { TPost } from '~/spec'
+import ArticlePinLabel from '../../ArticlePinLabel'
 import useSalon from '../salon/cover_layout'
+import Footer from './Footer'
+import Header from './Header'
 
 type TProps = {
   article: TPost
@@ -28,7 +24,7 @@ const DigestView: FC<TProps> = ({ article }) => {
 
   return (
     <section className={s.wrapper}>
-      <ArticlePinLabel isPinned={article.isPinned} className="top-8" />
+      <ArticlePinLabel isPinned={article.isPinned} className='top-8' />
       <div className={s.coverWrapper}>
         <Img src={coverImg} className={s.cover} />
       </div>

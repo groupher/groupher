@@ -1,6 +1,5 @@
-import useSalon from '../salon/cover/placeholder'
-
 import UploadSVG from '~/icons/Upload'
+import useSalon from '../salon/cover/placeholder'
 
 export default function Placeholder() {
   const s = useSalon()

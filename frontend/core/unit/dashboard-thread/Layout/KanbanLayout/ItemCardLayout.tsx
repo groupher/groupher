@@ -1,9 +1,8 @@
 import { KANBAN_CARD_LAYOUT } from '~/const/layout'
+import useTrans from '~/hooks/useTrans'
 import CommentSVG from '~/icons/Comment'
 import UpvoteSVG from '~/icons/Upvote'
-
 import CheckLabel from '~/widgets/CheckLabel'
-import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../../constant'
 import useKanban from '../../logic/useKanban'

@@ -2,11 +2,9 @@ import type { FC } from 'react'
 
 import CheckSVG from '~/icons/Check'
 import ArrowLinker from '~/widgets/ArrowLinker'
-
-import type { TStep } from '../../spec'
 import { STEP } from '../../constant'
-
 import useSalon, { cn } from '../../salon/content/fake_browser/mask_panel'
+import type { TStep } from '../../spec'
 
 type TProps = {
   step: TStep
@@ -29,7 +27,7 @@ const MaskPanel: FC<TProps> = ({ step }) => {
         <div className={s.item}>
           <div className={s.dot} />
           如果你的产品 / 服务域名已被占用，请在
-          <ArrowLinker href="/feedback" left={1}>
+          <ArrowLinker href='/feedback' left={1}>
             这里反馈
           </ArrowLinker>
           。
@@ -41,7 +39,7 @@ const MaskPanel: FC<TProps> = ({ step }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.header}>
-        <ArrowLinker href="/" left={0}>
+        <ArrowLinker href='/' left={0}>
           自带丰富功能，查看完整特性
         </ArrowLinker>
         <div className={s.divider} />

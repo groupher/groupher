@@ -19,10 +19,9 @@ import {
   useScrollStuck,
   useStickyColumns,
 } from '~/hooks/useTanTable'
-
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
-import useTrans from '~/hooks/useTrans'
 import TableLoading from '~/widgets/Loading/Table'
 
 import useCMSInfo from '../../hooks/useCMSInfo'

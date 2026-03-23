@@ -12,8 +12,8 @@ import useLayout from '~/hooks/useLayout'
 import ArticlesFilter from './ArticlesFilter'
 // import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import PagedPosts from './PagedPosts'
-import TagNote from './TagNote'
 import useSalon from './salon'
+import TagNote from './TagNote'
 import ThreadSidebar from './ThreadSidebar'
 
 export default function PostThread() {

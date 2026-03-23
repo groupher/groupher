@@ -1,16 +1,15 @@
 import Link from 'next/link'
 import { type FC, useState } from 'react'
 import { DSB_ROUTE } from '~/const/route'
-import useCommunity from '~/stores/community/hooks'
 import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
-
 import ArrowSVG from '~/icons/ArrowSimple'
 import BindSVG from '~/icons/Bind'
 import InfoSVG from '~/icons/Info'
 import ManagementSVG from '~/icons/Management'
 import PulseSVG from '~/icons/Pulse'
+import useCommunity from '~/stores/community/hooks'
 import useSalon, { cn } from '../salon/side_menu/group'
 import type { TDsbMenuGroup } from '../spec'
 

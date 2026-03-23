@@ -1,14 +1,12 @@
 import type { FC } from 'react'
 
 import ImageSizeSVG from '~/icons/ImageSize'
-
-import type { TImageSize } from '../spec'
 import { IMAGE_SIZE } from '../constant'
-
-import ToolUnit from './ToolUnit'
+import useSalon, { cn } from '../salon/toolbox/size_block'
+import type { TImageSize } from '../spec'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../salon/toolbox/size_block'
+import ToolUnit from './ToolUnit'
 
 type TProps = {
   size: TImageSize
@@ -20,9 +18,9 @@ const SizeBlock: FC<TProps> = ({ size }) => {
 
   return (
     <ToolUnit
-      title="大小"
+      title='大小'
       icon={<ImageSizeSVG className={s.icon} />}
-      className="-ml-1"
+      className='-ml-1'
       panel={
         <div className={s.panel}>
           <div

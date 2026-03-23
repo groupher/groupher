@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { publicThreads } from '~/helper'
+import type { TCommunityThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
-import type { TCommunityThread } from '~/spec'
 
 import useHelper from '../useHelper'
 

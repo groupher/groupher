@@ -1,10 +1,8 @@
-import type { FC } from 'react'
 import Link from 'next/link'
-
-import type { TMediaReport } from '~/spec'
-
+import type { FC } from 'react'
 import Img from '~/Img'
 import ArrowSVG from '~/icons/ArrowUpRight'
+import type { TMediaReport } from '~/spec'
 
 import useSalon from '../../salon/basic_info/other_info/media_preview'
 
@@ -23,7 +21,7 @@ const MediaPreview: FC<TProps> = ({ item }) => {
         <div className={s.siteName}>{siteName}</div>
       </div>
 
-      <Link className={s.title} href={url} target="_blank">
+      <Link className={s.title} href={url} target='_blank'>
         {title}
       </Link>
       <div className={s.arrowBox}>

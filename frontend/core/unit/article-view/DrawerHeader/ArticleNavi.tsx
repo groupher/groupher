@@ -1,9 +1,7 @@
 import { useRouter } from 'next/navigation'
-import useCommunity from '~/stores/community/hooks'
-
 import useNaviArticle from '~/hooks/useNaviArticle'
-
 import ArrowSVG from '~/icons/ArrowSimple'
+import useCommunity from '~/stores/community/hooks'
 
 import useSalon, { cn } from '../salon/drawer_header/article_navi'
 

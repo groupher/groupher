@@ -1,6 +1,6 @@
 import { equals, pick, reject } from 'ramda'
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TColorName, TEditFunc, TSizeSML, TThread } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 import useHelper from './useHelper'
 
 type TRet = {

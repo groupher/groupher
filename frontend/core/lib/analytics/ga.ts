@@ -4,7 +4,7 @@ import { Global } from '../helper'
 
 // see: https://github.com/vercel/next.js/discussions/14980
 const gtag = (): void => {
-  // @ts-ignore
+  // @ts-expect-error
   // biome-ignore lint/style/noArguments: <explanation>
   Global.dataLayer?.push(arguments)
 }
@@ -13,7 +13,7 @@ const gtag = (): void => {
 
 // https://developers.google.com/analytics/devguides/collection/gtagjs/pages
 const pageview = (url: string): void => {
-  // @ts-ignore
+  // @ts-expect-error
   gtag?.('config', process.env.NEXT_PUBLIC_GA_TRACING_ID, {
     page_path: url,
   })
@@ -31,7 +31,7 @@ const pageview = (url: string): void => {
 const event = (e: TGAEvent): void => {
   const { action, category, label, value } = e
 
-  // @ts-ignore
+  // @ts-expect-error
   gtag?.('event', action, {
     event_category: category,
     event_label: label,

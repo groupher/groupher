@@ -1,8 +1,8 @@
 import { isEmpty } from 'ramda'
 import type { FC } from 'react'
-import useArticle from '~/stores/article/hooks'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TColorName } from '~/spec'
+import useArticle from '~/stores/article/hooks'
 import TagNode from '~/widgets/TagNode'
 
 import useSalon, { cn } from '../salon/menu/tags_item'

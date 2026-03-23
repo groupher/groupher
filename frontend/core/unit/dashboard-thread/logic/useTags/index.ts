@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TEditFunc, TInlineTagLayout, TTag, TTagLayout, TThread } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 import type { TChangeTagMode } from '~/stores/dashboard/spec'
 
 import useHelper from '../useHelper'

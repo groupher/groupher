@@ -1,11 +1,11 @@
 import { isEmpty } from 'ramda'
 
 import type {
+  TCustomWallpaper,
+  TWallpaper,
   TWallpaperFmt,
   TWallpaperGradient,
   TWallpaperPic,
-  TWallpaper,
-  TCustomWallpaper,
 } from '~/spec'
 
 /**
@@ -37,7 +37,7 @@ const _parseWallpaper = (
   if (customWallpaper) {
     return _parseGradientBackground(customWallpaper)
   }
-  // @ts-ignore
+  // @ts-expect-error
   return wallpaper?.colors ? _parseGradientBackground(wallpaper) : _parsePicBackground(wallpaper)
 }
 

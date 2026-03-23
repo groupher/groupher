@@ -1,6 +1,6 @@
 import THEME from '~/const/theme'
-import useDashboard from '~/stores/dashboard/hooks'
 import useTheme from '~/hooks/useTheme'
+import useDashboard from '~/stores/dashboard/hooks'
 
 export default function useGaussBlur(): number {
   const dsb$ = useDashboard()

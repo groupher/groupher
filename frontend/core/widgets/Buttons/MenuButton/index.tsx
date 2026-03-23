@@ -1,6 +1,6 @@
-import { type FC, type ReactNode, memo } from 'react'
+import { type FC, memo, type ReactNode } from 'react'
 
-import type { TTooltipPlacement, TMenuOption } from '~/spec'
+import type { TMenuOption, TTooltipPlacement } from '~/spec'
 
 import Tooltip from '~/widgets/Tooltip'
 
@@ -30,7 +30,7 @@ const MenuButton: FC<TProps> = ({
   return (
     <Tooltip
       placement={placement}
-      trigger="click"
+      trigger='click'
       hideOnClick
       offset={offset}
       content={

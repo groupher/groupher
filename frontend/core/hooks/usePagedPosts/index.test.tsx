@@ -1,9 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
-
-import type { TPagedPosts, TTag } from '~/spec'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import usePagedPosts from '~/hooks/usePagedPosts'
+import type { TPagedPosts, TTag } from '~/spec'
 
 describe('usePagedPosts', () => {
   it('can commit updates to store', async () => {

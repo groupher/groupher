@@ -5,10 +5,8 @@
  */
 
 import { type FC, memo } from 'react'
-
-import type { TUpvoteLayout } from '~/spec'
-
 import UpvoteIcon from '~/icons/Upvote'
+import type { TUpvoteLayout } from '~/spec'
 import useSalon from './salon/upvote_btn'
 
 type TProps = {

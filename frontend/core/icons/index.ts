@@ -1,41 +1,34 @@
 import type { FC } from 'react'
 
 import SVG from '~/const/svg'
-
-import UpvoteIcon from './Upvote'
-import EditPenIcon from './EditPen'
-import LockIcon from './Lock'
-import Emotion from './Emotion'
-import CommentIcon from './Comment'
-
+import AirBalloonIcon from './AirBalloon'
 import ActivityIcon from './article/Activity'
 import ArchivedIcon from './article/Archived'
-
+import BugIcon from './Bug'
 import CloseCrossIcon from './CloseLight'
-import AirBalloonIcon from './AirBalloon'
 import CollectionIcon from './CollectionBookmark'
-
-import ShareIcon from './Share'
-
-// social
-import WechatIcon from './social/WeChat'
-import EmailIcon from './social/Email'
+import CommentIcon from './Comment'
+import DesktopIcon from './Desktop'
+import EditPenIcon from './EditPen'
+import Emotion from './Emotion'
+//
+import LightIcon from './Light'
+import LockIcon from './Lock'
+import MobileIcon from './Mobile'
 
 // Menu
 import CopyIcon from './menu/Copy'
-import MoreLIcon from './menu/MoreL'
 import MoreIcon from './menu/More'
 import MoreDotIcon from './menu/MoreDot'
+import MoreLIcon from './menu/MoreL'
 import QRCodeIcon from './menu/QRCode'
 import ReportIcon from './menu/Report'
-
-//
-import LightIcon from './Light'
-import BugIcon from './Bug'
 import QuestionIcon from './Question'
-
-import DesktopIcon from './Desktop'
-import MobileIcon from './Mobile'
+import ShareIcon from './Share'
+import EmailIcon from './social/Email'
+// social
+import WechatIcon from './social/WeChat'
+import UpvoteIcon from './Upvote'
 
 export const getLocalSVG = (type: string): FC => {
   switch (type) {

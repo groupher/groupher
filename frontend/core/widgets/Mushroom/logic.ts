@@ -21,7 +21,7 @@
 
 // const { SR71, $solver, asyncRes, asyncErr } = asyncSuit
 // const sr71$ = new SR71({
-//   // @ts-ignore
+//   // @ts-expect-error
 //   receive: [
 //     EVENT.UPVOTE_ARTICLE,
 //     EVENT.UPDATE_VIEWING_ARTICLE,

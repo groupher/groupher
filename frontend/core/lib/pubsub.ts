@@ -18,11 +18,11 @@ const PubSub = {
   publishSync: (message: TMessage, data?: any): boolean =>
     publish(message, data, true, PubSub.immediateExceptions),
   subscribe: (message: TMessage, func: TSubscriber): TToken | false => {
-    if (typeof func !== "function") {
+    if (typeof func !== 'function') {
       return false
     }
 
-    message = typeof message === "symbol" ? message.toString() : message
+    message = typeof message === 'symbol' ? message.toString() : message
 
     // message is not registered yet
     if (!Object.hasOwn(messages, message)) {
@@ -90,9 +90,9 @@ const PubSub = {
     }
 
     const isTopic =
-      typeof value === "string" && (Object.hasOwn(messages, value) || descendantTopicExists(value))
-    const isToken = !isTopic && typeof value === "string"
-    const isFunction = typeof value === "function"
+      typeof value === 'string' && (Object.hasOwn(messages, value) || descendantTopicExists(value))
+    const isToken = !isTopic && typeof value === 'string'
+    const isFunction = typeof value === 'function'
     let result: TToken | boolean = false
 
     if (isTopic) {
@@ -128,7 +128,7 @@ const PubSub = {
 
 let messages: TMessages = {}
 let lastUid = -1
-const ALL_SUBSCRIBING_MSG = "*"
+const ALL_SUBSCRIBING_MSG = '*'
 
 /**
  * Check if an object has any keys
@@ -235,7 +235,7 @@ function createDeliveryFunction(
 ): () => void {
   return function deliverNamespaced() {
     let topic = String(message)
-    let position = topic.lastIndexOf(".")
+    let position = topic.lastIndexOf('.')
 
     // deliver the message as it is now
     deliverMessage(message, message, data, immediateExceptions)
@@ -243,7 +243,7 @@ function createDeliveryFunction(
     // trim the hierarchy and deliver message to each level
     while (position !== -1) {
       topic = topic.substr(0, position)
-      position = topic.lastIndexOf(".")
+      position = topic.lastIndexOf('.')
       deliverMessage(message, topic, data, immediateExceptions)
     }
 
@@ -271,11 +271,11 @@ function hasDirectSubscribersFor(message: TMessage): boolean {
 function messageHasSubscribers(message: TMessage): boolean {
   let topic = String(message)
   let found = hasDirectSubscribersFor(topic) || hasDirectSubscribersFor(ALL_SUBSCRIBING_MSG)
-  let position = topic.lastIndexOf(".")
+  let position = topic.lastIndexOf('.')
 
   while (!found && position !== -1) {
     topic = topic.substr(0, position)
-    position = topic.lastIndexOf(".")
+    position = topic.lastIndexOf('.')
     found = hasDirectSubscribersFor(topic)
   }
 
@@ -296,7 +296,7 @@ function publish(
   sync?: boolean,
   immediateExceptions?: boolean,
 ): boolean {
-  message = typeof message === "symbol" ? message.toString() : message
+  message = typeof message === 'symbol' ? message.toString() : message
 
   const deliver = createDeliveryFunction(message, data, immediateExceptions)
   const hasSubscribers = messageHasSubscribers(message)

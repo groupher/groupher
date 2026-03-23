@@ -1,13 +1,13 @@
 import { equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
 import { useEffect, useRef } from 'react'
 import { DSB_INFO_ROUTE } from '~/const/route'
-import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useDsbTab from '~/hooks/useDsbTab'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { toast } from '~/signal'
 import type { TEditValue, TTag } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
+import useDashboard from '~/stores/dashboard/hooks'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
 import {
   BASEINFO_BASIC_KEYS,

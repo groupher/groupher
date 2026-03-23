@@ -1,16 +1,13 @@
-import type { FC } from 'react'
 import { keys, values } from 'ramda'
-
-import type { TWallpaper, TWallpaperGradientDir } from '~/spec'
+import type { FC } from 'react'
 import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
-import { parseWallpaper } from '~/wallpaper'
-
 import ArrowSVG from '~/icons/Arrow'
-
-import ToolUnit from './ToolUnit'
+import type { TWallpaper, TWallpaperGradientDir } from '~/spec'
+import { parseWallpaper } from '~/wallpaper'
+import useSalon, { cn } from '../salon/toolbox/background_block'
 
 import useLogic from '../useLogic'
-import useSalon, { cn } from '../salon/toolbox/background_block'
+import ToolUnit from './ToolUnit'
 
 type TProps = {
   wallpapers: Record<string, TWallpaper>
@@ -25,9 +22,9 @@ const BackgroundBlock: FC<TProps> = ({ wallpapers, wallpaper, direction }) => {
 
   return (
     <ToolUnit
-      placement="top-end"
+      placement='top-end'
       offset={[60, 5]}
-      title="背景"
+      title='背景'
       icon={
         <div
           className={s.bgImage}

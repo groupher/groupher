@@ -1,18 +1,15 @@
-import type { FC } from 'react'
 import { startsWith } from 'ramda'
+import type { FC } from 'react'
 
-import { ONE_LINK_GROUP, MORE_GROUP } from '~/const/dashboard'
-
-import Tooltip from '~/widgets/Tooltip'
+import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import ArrowSVG from '~/icons/ArrowSimple'
-import MoreSVG from '~/icons/menu/MoreL'
 import EditSVG from '~/icons/EditPen'
-
-import GroupMenu from './GroupMenu'
-import GroupInputer from './GroupInputer'
-
+import MoreSVG from '~/icons/menu/MoreL'
+import Tooltip from '~/widgets/Tooltip'
 import useHeader from '../../logic/useHeader'
 import useSalon from '../../salon/header/editors/group_head'
+import GroupInputer from './GroupInputer'
+import GroupMenu from './GroupMenu'
 
 type TGroupTitle = {
   title: string
@@ -95,7 +92,7 @@ const GroupHead: FC<TProps> = ({
     <div className={s.wrapper}>
       <GroupTitle title={title} />
 
-      <div className="grow" />
+      <div className='grow' />
 
       {!(startsWith(ONE_LINK_GROUP, title) || title === MORE_GROUP) && (
         <EditSVG className={s.editIcon} onClick={() => triggerGroupUpdate(title, curGroupIndex)} />
@@ -114,8 +111,8 @@ const GroupHead: FC<TProps> = ({
               onDelete={onDelete}
             />
           }
-          placement="bottom-end"
-          trigger="click"
+          placement='bottom-end'
+          trigger='click'
           offset={[4, 0]}
           hideOnClick
           noPadding

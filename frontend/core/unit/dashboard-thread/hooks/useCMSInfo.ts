@@ -1,10 +1,10 @@
 import { useCallback } from 'react'
-import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TFAQSection, TID, TPagedArticles, TPagedCommunities } from '~/spec'
-import S from '../schema'
+import useCommunity from '~/stores/community/hooks'
+import useDashboard from '~/stores/dashboard/hooks'
 import useHelper from '../logic/useHelper'
+import S from '../schema'
 
 type TRet = {
   loading: boolean

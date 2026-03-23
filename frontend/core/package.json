@@ -12,8 +12,8 @@
     "./next.config": "./next.config.js"
   },
   "scripts": {
-    "lint": "biome lint **/*.{ts,tsx} ",
-    "format": "echo 'skip format'",
+    "lint": "../../node_modules/.bin/biome lint **/*.{ts,tsx}",
+    "format": "../../node_modules/.bin/biome format --write .",
     "build": "echo 'skip build'"
   },
   "lint-staged": {

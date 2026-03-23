@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 import { THREAD } from '~/const/thread'
-import useCommunity from '~/stores/community/hooks'
 import { mockHelpCats } from '~/mock'
+import useCommunity from '~/stores/community/hooks'
 
 import ArrowLinker from '~/widgets/ArrowLinker'
 import type { TProps as TIndex } from '..'

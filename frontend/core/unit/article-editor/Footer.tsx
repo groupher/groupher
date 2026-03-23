@@ -5,10 +5,9 @@ import type { TEditMode, TSubmitState } from '~/spec'
 import SubmitButton from '~/widgets/Buttons/SubmitButton'
 
 import WordsCounter from '~/widgets/WordsCounter'
-
+import useSalon from './salon/footer'
 import type { TEditData } from './spec'
 import useLogic from './useLogic'
-import useSalon from './salon/footer'
 
 type TProps = {
   mode: TEditMode
@@ -26,7 +25,7 @@ const Footer: FC<TProps> = ({ mode, editData, submitState }) => {
     <div className={s.wrapper}>
       <div className={s.publishFooter}>
         <WordsCounter body={body} bottom={3} onChange={setWordsCountState} min={40} />
-        <div className="grow" />
+        <div className='grow' />
         <SubmitButton
           submitState={submitState}
           okText={mode === 'publish' ? '发 布' : '更 新'}

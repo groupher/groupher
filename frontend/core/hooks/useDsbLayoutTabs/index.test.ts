@@ -1,9 +1,7 @@
 import { renderHook } from '@testing-library/react'
-
-import type { TCommunity } from '~/spec'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useDsbLayoutTabs, { type TDsbTabs } from '~/hooks/useDsbLayoutTabs'
+import type { TCommunity } from '~/spec'
 
 let mockSegments: string[] = []
 

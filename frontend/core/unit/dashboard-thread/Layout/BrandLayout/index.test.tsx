@@ -57,7 +57,9 @@ vi.mock('../../SavingBar', () => ({
 }))
 
 vi.mock('~/icons/Brand', () => ({
-  default: ({ className }: { className?: string }) => <svg data-testid='brand-icon' className={className} />,
+  default: ({ className }: { className?: string }) => (
+    <svg data-testid='brand-icon' className={className} />
+  ),
 }))
 
 describe('<BrandLayout />', () => {

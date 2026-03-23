@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
-import useDashboard from '~/stores/dashboard/hooks'
 import type { TDsdSEOConf, TEditFunc } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 import { SEO_KEYS } from '../constant'
 import useHelper from './useHelper'
 

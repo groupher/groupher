@@ -1,11 +1,8 @@
 import { type FC, memo, useState } from 'react'
-
-import Input from '~/widgets/Input'
 import CopyButton from '~/widgets/Buttons/CopyButton'
-
-import type { TLinksData } from '../spec'
-
+import Input from '~/widgets/Input'
 import useSalon, { cn } from '../salon/modal_panel/link_board'
+import type { TLinksData } from '../spec'
 
 type TProps = {
   linksData: TLinksData

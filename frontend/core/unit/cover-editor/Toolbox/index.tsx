@@ -1,17 +1,15 @@
 import type { FC } from 'react'
-
-import PositionBlock from './PositionBlock'
-import LightBlock from './LightBlock'
-import BorderBlock from './BorderBlock'
-import ShadowBlock from './ShadowBlock'
-import SizeBlock from './SizeBlock'
-import RatioBlock from './RatioBlock'
-import RotateBlock from './RotateBlock'
+import useSalon from '../salon/toolbox'
+import useLogic from '../useLogic'
 import ActionBlock from './ActionBlock'
 import BackgroundBlock from './BackgroundBlock'
-
-import useLogic from '../useLogic'
-import useSalon from '../salon/toolbox'
+import BorderBlock from './BorderBlock'
+import LightBlock from './LightBlock'
+import PositionBlock from './PositionBlock'
+import RatioBlock from './RatioBlock'
+import RotateBlock from './RotateBlock'
+import ShadowBlock from './ShadowBlock'
+import SizeBlock from './SizeBlock'
 
 type TProps = {
   onDelete: () => void

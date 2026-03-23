@@ -1,9 +1,8 @@
 import type { FC } from 'react'
 
 import { mockHelpCats } from '~/mock'
-
-import Category from './Category'
 import useSalon from '../salon/lists_layout'
+import Category from './Category'
 
 const ListsLayout: FC = () => {
   const s = useSalon()

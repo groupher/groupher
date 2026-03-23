@@ -1,7 +1,6 @@
 import THEME from '~/const/theme'
-
-import useTwBelt from '~/hooks/useTwBelt'
 import useTheme from '~/hooks/useTheme'
+import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
   const { cn } = useTwBelt()

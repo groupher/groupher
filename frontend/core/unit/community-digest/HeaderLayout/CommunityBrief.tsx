@@ -1,8 +1,5 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-
-import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
 import useHover from '~/hooks/useHover'
 import ArrowSVG from '~/icons/ArrowUpRight'
 import DiscussSVG from '~/icons/Discuss'
@@ -10,6 +7,8 @@ import GithubSVG from '~/icons/Github8'
 import OptionArrowSVG from '~/icons/OptionArrow'
 import PlusSVG from '~/icons/PlusCircle'
 import GlobalSVG from '~/icons/social/Global'
+import useCommunity from '~/stores/community/hooks'
+import useDashboard from '~/stores/dashboard/hooks'
 import CommunityBrand from '~/unit/community-brand'
 import Tooltip from '~/widgets/Tooltip'
 

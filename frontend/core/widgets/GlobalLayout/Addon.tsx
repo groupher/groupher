@@ -18,7 +18,7 @@ const Addon: FC = () => {
     <>
       <PriceWall />
       <UserListModal />
-      <Toaster position="top-center" />
+      <Toaster position='top-center' />
     </>
   )
 }

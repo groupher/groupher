@@ -1,6 +1,6 @@
-import useDashboard from '~/stores/dashboard/hooks'
 import usePageBgCommon from '~/hooks/usePageBg'
 import type { TEditFunc } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 import useHelper from './useHelper'
 

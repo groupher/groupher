@@ -1,5 +1,5 @@
-import Button from '~/widgets/Buttons/Button'
 import useTrans from '~/hooks/useTrans'
+import Button from '~/widgets/Buttons/Button'
 
 import useTags from '../logic/useTags'
 import useSalon, { cn } from '../salon/tags/thread_selector'

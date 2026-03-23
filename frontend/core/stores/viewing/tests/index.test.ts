@@ -1,10 +1,8 @@
 import METRIC from '~/const/metric'
 import { ARTICLE_THREAD } from '~/const/thread'
-
-import setupStore from '..'
-
 import type { TCommunity, TTag } from '~/spec'
 import type { TInit } from '~/stores/viewing/spec'
+import setupStore from '..'
 
 describe('stores/viewing', () => {
   it('merges community updates and supports commit with edge data', () => {

@@ -5,12 +5,10 @@
  */
 
 import type { FC } from 'react'
-
-import type { TSpace, TArticleCat, TArticleState } from '~/spec'
 import { ARTICLE_CAT, ARTICLE_STATE } from '~/const/gtd'
-
-import State from './State'
+import type { TArticleCat, TArticleState, TSpace } from '~/spec'
 import Label from './Label'
+import State from './State'
 
 import useSalon from './salon'
 

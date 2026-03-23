@@ -127,7 +127,7 @@
 //       // const curMentionList = clone(self.mentionList)
 //       // const uniqList = concat(curMentionList, mentionArray)
 //       // const mentionList = map(mentionMapper, uniqList)
-//       // @ts-ignore
+//       // @ts-expect-error
 //       // self.mentionList = uniq(concat(mentionList, self.participators))
 //     },
 //     updateOneComment(comment: TComment, fields = {}): void {
@@ -141,9 +141,9 @@
 //         const replyIndex = findIndex(propEq(id, 'id'), parentComment.replies)
 //         if (replyIndex < 0) return
 //         const replyComment = parentComment.replies[replyIndex]
-//         // @ts-ignore
+//         // @ts-expect-error
 //         if (fields.meta) fields.meta = { ...replyComment.meta, ...fields.meta }
-//         // @ts-ignore
+//         // @ts-expect-error
 //         self.pagedComments.entries[parentIndex].replies[replyIndex] = {
 //           ...replyComment,
 //           ...fields,
@@ -154,10 +154,10 @@
 
 //         if (index < 0) return
 //         const comment = entries[index]
-//         // @ts-ignore
+//         // @ts-expect-error
 //         if (fields.meta) fields.meta = { ...comment.meta, ...fields.meta }
 
-//         // @ts-ignore
+//         // @ts-expect-error
 //         self.pagedComments.entries[index] = { ...comment, ...fields }
 //       }
 //     },
@@ -181,7 +181,7 @@
 //       } else {
 //         const index = findIndex(propEq(id, 'id'), entries)
 //         if (index < 0) return
-//         // @ts-ignore
+//         // @ts-expect-error
 //         self.pagedComments.entries[index].emotions = {
 //           ...entries[index].emotions,
 //           ...emotion,
@@ -200,7 +200,7 @@
 //         const curReplies = entries[parentIndex].replies
 //         const uniqReplies = uniqBy(prop('id'), curReplies.concat(replies))
 
-//         // @ts-ignore
+//         // @ts-expect-error
 //         self.pagedComments.entries[parentIndex].replies = uniqReplies
 //       }
 //     },
@@ -237,6 +237,6 @@
 //   }))
 
 // export type TStore = Instance<typeof CommentsStore>
-// // @ts-ignore
+// // @ts-expect-error
 
 // export default CommentsStore

@@ -1,10 +1,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 
 import { GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
-import type { TWallpaperGradient } from '~/spec'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
+import type { TWallpaperGradient } from '~/spec'
 
 describe('useFullWallpaper', () => {
   it('returns data and can commit wallpaper changes', async () => {
