@@ -1,26 +1,19 @@
 import type { FC } from 'react'
-
-import useAccount from '~/stores/account/hooks'
-
-import type { TComment } from '~/spec'
 import { UPVOTE_LAYOUT } from '~/const/layout'
-
-import { authWarn } from '~/signal'
-
+import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/CheckBold'
 import UserBadge from '~/icons/UserBadge'
-
+import { authWarn } from '~/signal'
+import type { TComment } from '~/spec'
+import useAccount from '~/stores/account/hooks'
 import EmotionSelector from '~/unit/emotion-selector'
 import Upvote from '~/unit/upvote'
-import useTrans from '~/hooks/useTrans'
-
-import Actions from './Actions'
-
-import type { TAPIMode } from '../spec'
 import { API_MODE } from '../constant'
+import useSalon from '../salon/comment/footer'
+import type { TAPIMode } from '../spec'
 
 import useActions from '../useLogic/useActions'
-import useSalon from '../salon/comment/footer'
+import Actions from './Actions'
 
 type TProps = {
   data: TComment
@@ -58,7 +51,7 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
               {t('comment.footer.author_upvoted')}
             </div>
           )}
-          <div className="grow" />
+          <div className='grow' />
         </div>
       )}
 
@@ -71,7 +64,7 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
           onAction={(did) => handleUpvote(data, did)}
         />
 
-        <div className="mr-2.5" />
+        <div className='mr-2.5' />
 
         <EmotionSelector
           isLegal={isLegal}
@@ -82,11 +75,11 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
           }}
         />
 
-        <div className="mr-2.5" />
+        <div className='mr-2.5' />
 
         {apiMode === API_MODE.ARTICLE && <Actions data={data} />}
 
-        <div className="grow" />
+        <div className='grow' />
       </div>
     </div>
   )

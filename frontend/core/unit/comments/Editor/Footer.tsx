@@ -1,13 +1,10 @@
 import type { FC } from 'react'
-
-import type { TSubmitState } from '~/spec'
-
-import WordsCounter from '~/widgets/WordsCounter'
-import SubmitButton from '~/widgets/Buttons/SubmitButton'
 import useTrans from '~/hooks/useTrans'
-
-import useActions from '../useLogic/useActions'
+import type { TSubmitState } from '~/spec'
+import SubmitButton from '~/widgets/Buttons/SubmitButton'
+import WordsCounter from '~/widgets/WordsCounter'
 import useSalon from '../salon/editor/footer'
+import useActions from '../useLogic/useActions'
 
 type TProps = {
   body: string

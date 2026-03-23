@@ -48,7 +48,7 @@ const SharePanel: FC<TProps> = ({
   }
 
   return (
-    <Modal width="450px" show={show} offsetLeft={offsetLeft} onClose={onClose} showCloseBtn>
+    <Modal width='450px' show={show} offsetLeft={offsetLeft} onClose={onClose} showCloseBtn>
       <div className={s.wrapper}>
         <Platforms article={article} changeType={changeType} />
         <InfoPanel type={siteShareType} linksData={linksData} />

@@ -1,17 +1,14 @@
 import { type FC, memo, useCallback } from 'react'
-
-import type { TComment } from '~/spec'
 import { ICON } from '~/config'
-import useAccount from '~/stores/account/hooks'
+import useTrans from '~/hooks/useTrans'
+import MoreSVG from '~/icons/menu/More'
 
 import { authWarn } from '~/signal'
-
-import MoreSVG from '~/icons/menu/More'
+import type { TComment } from '~/spec'
+import useAccount from '~/stores/account/hooks'
 import MenuButton from '~/widgets/Buttons/MenuButton'
-import useTrans from '~/hooks/useTrans'
-
-import useActions from '../useLogic/useActions'
 import useSalon from '../salon/comment/actions'
+import useActions from '../useLogic/useActions'
 
 type TProps = {
   data: TComment
@@ -85,7 +82,7 @@ const Actions: FC<TProps> = ({ data }) => {
         }
       }
     },
-    [data, accountInfo],
+    [data, accountInfo, openUpdateEditor],
   )
 
   return (
@@ -104,7 +101,7 @@ const Actions: FC<TProps> = ({ data }) => {
         </button>
       )}
 
-      <div className="grow" />
+      <div className='grow' />
       <MenuButton options={menuOptions} extraOptions={extraOptions} onClick={handleAction}>
         <MoreSVG className={s.moreIcon} />
       </MenuButton>

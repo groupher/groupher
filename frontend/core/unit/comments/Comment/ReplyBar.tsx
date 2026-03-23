@@ -1,10 +1,9 @@
 import { type FC, memo } from 'react'
-
-import type { TComment } from '~/spec'
 import { cutRest } from '~/fmt'
+import Img from '~/Img'
 
 import ReplySVG from '~/icons/Reply'
-import Img from '~/Img'
+import type { TComment } from '~/spec'
 
 import useSalon from '../salon/comment/reply_bar'
 
@@ -26,7 +25,7 @@ const CommentReplyBar: FC<TProps> = ({ data }) => {
           __html: data.bodyHtml,
         }}
       />
-      <div className="grow" />
+      <div className='grow' />
       <div className={s.replyToFloor}>#{data.floor}</div>
     </div>
   )

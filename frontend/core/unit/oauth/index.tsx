@@ -26,7 +26,7 @@ export default function OauthHinter() {
         </div>
       </div>
       <div className={s.footer}>
-        please <Linker src="/feedback" external={false} text="feedback" inline left={4} right={4} />
+        please <Linker src='/feedback' external={false} text='feedback' inline left={4} right={4} />
         if you think sth goes wrong.
       </div>
     </div>

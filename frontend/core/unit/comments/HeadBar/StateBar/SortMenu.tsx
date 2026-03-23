@@ -1,21 +1,17 @@
 import type { FC } from 'react'
-
+import useTrans from '~/hooks/useTrans'
+import ArrowSVG from '~/icons/ArrowSolid'
 import ReplyModeSVG from '~/icons/CommentReplyMode'
 import TimelineModeSVG from '~/icons/CommentTimelineMode'
-import ArrowSVG from '~/icons/ArrowSolid'
-
 import ExpandSVG from '~/icons/Expand'
 import FoldSVG from '~/icons/Fold'
-
 import Tooltip from '~/widgets/Tooltip'
-import useTrans from '~/hooks/useTrans'
 
 import { MODE } from '../../constant'
-
-import type { TProps as TBase } from '..'
+import useSalon, { cn } from '../../salon/head_bar/state_bar/sort_menu'
 
 import useActions from '../../useLogic/useActions'
-import useSalon, { cn } from '../../salon/head_bar/state_bar/sort_menu'
+import type { TProps as TBase } from '..'
 
 type TProps = Pick<TBase, 'mode' | 'apiMode' | 'isAllFolded'>
 
@@ -53,8 +49,8 @@ const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode }) => {
               </div>
             </div>
           }
-          placement="bottom-end"
-          trigger="mouseenter focus"
+          placement='bottom-end'
+          trigger='mouseenter focus'
           offset={[-5, 5]}
           noPadding
         >

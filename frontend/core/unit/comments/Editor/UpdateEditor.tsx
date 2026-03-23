@@ -1,16 +1,12 @@
 import { type FC, memo } from 'react'
-
-import type { TSubmitState } from '~/spec'
-
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-import CustomScroller from '~/widgets/CustomScroller'
 import useTrans from '~/hooks/useTrans'
-
+import type { TSubmitState } from '~/spec'
+import CustomScroller from '~/widgets/CustomScroller'
+import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import useSalon from '../salon/editor/update_editor'
+import useActions from '../useLogic/useActions'
 import BodyEditor from './BodyEditor'
 import Footer from './Footer'
-
-import useActions from '../useLogic/useActions'
-import useSalon from '../salon/editor/update_editor'
 
 type TProps = {
   body: string
@@ -26,7 +22,7 @@ const UpdateEditor: FC<TProps> = ({ id, body, submitState }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.header}>{t('comment.update.title')}</div>
-      <CustomScroller direction="vertical" height="320px" showShadow={false} autoHide={false}>
+      <CustomScroller direction='vertical' height='320px' showShadow={false} autoHide={false}>
         <div className={s.editorWrapper}>
           {id ? (
             <BodyEditor body={body} onChange={(v) => commentOnChange(v)} />

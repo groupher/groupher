@@ -24,13 +24,7 @@ const COMMENT_VISIBILITY_STYLE: CSSProperties = {
   containIntrinsicSize: '360px',
 }
 
-const List: FC<TProps> = ({
-  mode,
-  repliesLoadingByParentId,
-  apiMode,
-  entries,
-  foldedIdSet,
-}) => {
+const List: FC<TProps> = ({ mode, repliesLoadingByParentId, apiMode, entries, foldedIdSet }) => {
   const s = useSalon()
   const { foldComment } = useActions()
 

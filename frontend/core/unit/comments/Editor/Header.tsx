@@ -1,14 +1,12 @@
 import type { FC } from 'react'
-
-import type { TAccount } from '~/spec'
+import useTrans from '~/hooks/useTrans'
 
 import Img from '~/Img'
 import CommentSVG from '~/icons/Comment'
 import UserSVG from '~/icons/User'
-import useTrans from '~/hooks/useTrans'
-
-import useActions from '../useLogic/useActions'
+import type { TAccount } from '~/spec'
 import useSalon from '../salon/editor/header'
+import useActions from '../useLogic/useActions'
 
 type TProps = {
   accountInfo: TAccount
@@ -38,7 +36,7 @@ const EditorHeader: FC<TProps> = ({ accountInfo, showEditor }) => {
         <UserSVG className={s.unLogUserIcon} />
       )}
       <div className={s.leaveRes}>{t('comment.editor.invite')}</div>
-      <div className="grow" />
+      <div className='grow' />
       <CommentSVG className={s.commentIcon} />
     </div>
   )

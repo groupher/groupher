@@ -8,7 +8,7 @@ type TProps = {
 
 const CommentBodyEditor: FC<TProps> = (_props) => {
   return (
-    <div className="comment-editor">
+    <div className='comment-editor'>
       <h2>todo</h2>
     </div>
   )

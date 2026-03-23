@@ -1,14 +1,11 @@
 import { type FC, memo } from 'react'
-
+import useTrans from '~/hooks/useTrans'
 import EditPenSVG from '~/icons/EditPen'
 import Button from '~/widgets/Buttons/Button'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-import useTrans from '~/hooks/useTrans'
-
-import SortMenu from './SortMenu'
-import type { TProps as TBase } from '..'
-
 import useSalon from '../../salon/head_bar/state_bar'
+import type { TProps as TBase } from '..'
+import SortMenu from './SortMenu'
 
 type TProps = Pick<TBase, 'mode' | 'apiMode' | 'isAllFolded' | 'loading' | 'basicState'> & {
   callEditor?: () => void
@@ -37,7 +34,7 @@ const StateBar: FC<TProps> = ({
         {loading && <LavaLampLoading right={15} />}
 
         <SortMenu mode={mode} isAllFolded={isAllFolded} apiMode={apiMode} />
-        <Button size="small" space={2.5} onClick={() => callEditor()}>
+        <Button size='small' space={2.5} onClick={() => callEditor()}>
           <EditPenSVG className={s.editIcon} />
           {t('comment.state.write')}
         </Button>

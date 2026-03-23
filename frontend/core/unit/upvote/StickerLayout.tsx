@@ -43,7 +43,7 @@ const Upvote: FC<TProps> = ({
         <AnimatedCount
           count={count}
           active={viewerHasUpvoted}
-          size="medium"
+          size='medium'
           top={0.5}
           bottom={0.5}
         />

@@ -24,10 +24,10 @@ const PublishBar: FC<TProps> = ({ closeEditor }) => {
         <div className={s.username}>mydearxym</div>
       </div>
       <div className={s.actions}>
-        <Button size="small" space={3} ghost noBorder onClick={() => closeEditor()}>
+        <Button size='small' space={3} ghost noBorder onClick={() => closeEditor()}>
           {t('comment.publish.cancel')}
         </Button>
-        <Button size="small" space={3}>
+        <Button size='small' space={3}>
           <EditPublishSVG className={s.pubIcon} />
           {t('comment.publish.publish')}
         </Button>

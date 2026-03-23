@@ -1,16 +1,12 @@
 import { type FC, memo } from 'react'
-
-import type { TSubmitState, TComment } from '~/spec'
-
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-import CustomScroller from '~/widgets/CustomScroller'
 import useTrans from '~/hooks/useTrans'
-
+import type { TComment, TSubmitState } from '~/spec'
+import CustomScroller from '~/widgets/CustomScroller'
+import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import useSalon from '../salon/editor/reply_editor'
+import useActions from '../useLogic/useActions'
 import BodyEditor from './BodyEditor'
 import Footer from './Footer'
-
-import useActions from '../useLogic/useActions'
-import useSalon from '../salon/editor/reply_editor'
 
 type TProps = {
   body: string
@@ -36,7 +32,7 @@ const ReplyEditor: FC<TProps> = ({ body, submitState, replyTo }) => {
           }}
         />
       </div>
-      <CustomScroller direction="vertical" height="320px" showShadow={false} autoHide={false}>
+      <CustomScroller direction='vertical' height='320px' showShadow={false} autoHide={false}>
         <div className={s.editorWrapper}>
           {replyTo.id ? (
             <BodyEditor

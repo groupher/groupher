@@ -12,12 +12,4 @@ const Comment = (props: TProps) => {
   return <DesktopView {...props} />
 }
 
-export default memo(Comment, (prev, next) => {
-  return (
-    prev.data === next.data &&
-    prev.apiMode === next.apiMode &&
-    prev.isFolded === next.isFolded &&
-    prev.showInnerRef === next.showInnerRef &&
-    prev.isReply === next.isReply
-  )
-})
+export default memo(Comment)

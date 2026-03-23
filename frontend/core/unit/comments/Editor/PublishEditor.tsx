@@ -1,12 +1,11 @@
 import { type FC, memo } from 'react'
 
 import type { TSubmitState } from '~/spec'
-
-// import Header from './Header'
-import BodyEditor from './BodyEditor'
+import useSalon from '../salon/editor/publish_editor'
 
 import useActions from '../useLogic/useActions'
-import useSalon from '../salon/editor/publish_editor'
+// import Header from './Header'
+import BodyEditor from './BodyEditor'
 
 type TProps = {
   body: string

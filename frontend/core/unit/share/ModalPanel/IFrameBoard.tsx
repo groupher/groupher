@@ -18,7 +18,7 @@ const IFrameBoard: FC = () => {
         <CopyButton value={code} />
       </div>
       <div className={s.codeWrapper}>
-        <Input behavior="textarea" value={code} className={s.inputer} />
+        <Input behavior='textarea' value={code} className={s.inputer} />
       </div>
     </div>
   )
