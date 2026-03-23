@@ -1,9 +1,7 @@
 import useHover from '~/hooks/useHover'
-
-import Panel from './Panel'
-import Blocks from './Blocks'
-
 import useSalon from '../../salon/battery_bento/mobile_first'
+import Blocks from './Blocks'
+import Panel from './Panel'
 
 export default function MobileFirst() {
   const s = useSalon()

@@ -1,4 +1,4 @@
-import { keys, includes } from 'ramda'
+import { includes, keys } from 'ramda'
 
 import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 
@@ -8,7 +8,7 @@ export const getGlowBackground = (wallpaper: string): string => {
             radial-gradient(circle at 58% 100%,#CACACE 0,transparent 30%)`
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   const { colors } = GRADIENT_WALLPAPER[wallpaper]
 
   if (!colors) return ''
@@ -57,7 +57,7 @@ export const getPathGradient = (wallpaper: string): string => {
     return '#E1D5CC,#955D29'
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   const { colors } = GRADIENT_WALLPAPER[wallpaper]
 
   if (!colors) return ''

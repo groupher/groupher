@@ -5,9 +5,8 @@ import PostSVG from '~/icons/Post'
 import WebhookSVG from '~/icons/Webhook'
 import { mockUsers } from '~/mock'
 import ArticleCatState from '~/unit/article-cat-state'
-
-import Checker from '~/widgets/Checker'
 import CommentsCount from '~/unit/comments-count'
+import Checker from '~/widgets/Checker'
 import Facepile from '~/widgets/Facepile/LandingPage'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/content_card'

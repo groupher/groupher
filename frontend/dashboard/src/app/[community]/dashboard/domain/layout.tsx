@@ -2,12 +2,12 @@
 
 import { DOMAIN_TABS, DSB_COVERS } from '~/const/route'
 import VIEW from '~/const/view'
-import Portal from '~/unit/dashboard-thread/Portal'
-import useSalon, { cnMerge } from '~/unit/dashboard-thread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
+import Portal from '~/unit/dashboard-thread/Portal'
+import useSalon, { cnMerge } from '~/unit/dashboard-thread/salon'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = DOMAIN_TABS.segment

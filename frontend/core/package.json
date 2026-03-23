@@ -8,12 +8,12 @@
     "./jsconfig": "./jsconfig.json",
     "./tailwind.config": "./tailwind.config.js",
     "./postcss.config": "./postcss.config.js",
-    "./biome": "./biome.json",
+    "./biome": "./config/biome.json",
     "./next.config": "./next.config.js"
   },
   "scripts": {
-    "lint": "../../node_modules/.bin/biome lint **/*.{ts,tsx}",
-    "format": "../../node_modules/.bin/biome format --write .",
+    "lint": "../../node_modules/.bin/biome lint app config constant hooks icons lib schemas services spec stores unit widgets",
+    "format": "../../node_modules/.bin/biome format --write app config constant hooks icons lib schemas services spec stores unit widgets",
     "build": "echo 'skip build'"
   },
   "lint-staged": {

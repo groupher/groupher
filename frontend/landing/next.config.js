@@ -10,5 +10,5 @@ module.exports = withBaseConfig({
   experimental: {
     scrollRestoration: true,
     optimizePackageImports: ['ramda'],
-  }
+  },
 })

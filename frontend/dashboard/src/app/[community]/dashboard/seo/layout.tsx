@@ -2,15 +2,15 @@
 
 import { DSB_COVERS, SEO_TABS } from '~/const/route'
 import VIEW from '~/const/view'
+import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
+import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
+import useTrans from '~/hooks/useTrans'
+import type { TCrumbConfig } from '~/spec'
 import { FIELD } from '~/unit/dashboard-thread/constant'
 import useSEO from '~/unit/dashboard-thread/hooks/useSEO'
 import Portal from '~/unit/dashboard-thread/Portal'
 import SavingBar from '~/unit/dashboard-thread/SavingBar'
 import useSalon, { cnMerge } from '~/unit/dashboard-thread/salon'
-import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
-import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
-import useTrans from '~/hooks/useTrans'
-import type { TCrumbConfig } from '~/spec'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = SEO_TABS.segment

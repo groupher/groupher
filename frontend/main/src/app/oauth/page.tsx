@@ -1,8 +1,7 @@
 'use client'
 
-import { Suspense } from 'react'
-
 import dynamic from 'next/dynamic'
+import { Suspense } from 'react'
 
 const OauthHinter = dynamic(() => import('~/unit/oauth'), {
   ssr: false,

@@ -1,9 +1,9 @@
 import useSalon from '../../salon/dashboard_intros/seo_tab'
 
 import ArticleCard from './ArticleCard'
-import WebCard from './WebCard'
 import Content from './Content'
 import TwitterCard from './TwitterCard'
+import WebCard from './WebCard'
 
 export default function SeoTab() {
   const s = useSalon()

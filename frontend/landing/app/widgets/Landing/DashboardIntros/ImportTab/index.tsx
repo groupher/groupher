@@ -1,6 +1,5 @@
-import ContentCard from './ContentCard'
-
 import useSalon from '../../salon/dashboard_intros/import_tab'
+import ContentCard from './ContentCard'
 
 export default function ImportTab() {
   const s = useSalon()

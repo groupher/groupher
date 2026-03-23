@@ -1,10 +1,9 @@
-import type { FC } from 'react'
 import { includes } from 'ramda'
+import type { FC } from 'react'
 
 import CheckSVG from '~/icons/CheckBold'
-
-import { LIST, ACTIVE_ITMES } from './constant'
 import useSalon, { cn } from '../../salon/dashboard_intros/admins_tab/permision_items'
+import { ACTIVE_ITMES, LIST } from './constant'
 
 type TProps = {
   userHover: boolean[]

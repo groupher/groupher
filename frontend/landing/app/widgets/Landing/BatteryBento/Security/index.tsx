@@ -1,7 +1,6 @@
 import useHover from '~/hooks/useHover'
-
-import Panel from './Panel'
 import useSalon from '../../salon/battery_bento/security'
+import Panel from './Panel'
 
 export default function Security() {
   const s = useSalon()

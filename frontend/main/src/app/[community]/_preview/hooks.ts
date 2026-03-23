@@ -139,13 +139,13 @@ export const usePreviewCacheState = <
     () => previewCacheVersion,
   )
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: version is the store subscription trigger for pruning stale entries.
   useEffect(() => {
     if (!key) return
     cleanupExpiredEntry(key)
   }, [key, version])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: version intentionally invalidates the memo when the external store changes.
   return useMemo(
     () => ({
       entry: key ? getPreviewCacheEntry<TEntry>(key) : null,

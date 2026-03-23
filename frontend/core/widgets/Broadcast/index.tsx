@@ -8,6 +8,7 @@ import useBroadcast from '~/hooks/useBroadcast'
 import ArrowSVG from '~/icons/Arrow'
 import CrossSVG from '~/icons/CloseCross'
 import NotifySVG from '~/icons/Trumpet'
+import { toast } from '~/signal'
 
 import useSalon, { cn } from './salon'
 
@@ -23,6 +24,8 @@ const Broadcast: FC<TProps> = ({ testid = 'banner-notify' }) => {
 
   const { broadcastBg: bg, broadcastLayout: layout, broadcastEnable: enabled } = useBroadcast()
 
+  const showDetail = () => toast(DETAIL_TEXT)
+
   if (!enabled) return null
 
   return (
@@ -36,17 +39,14 @@ const Broadcast: FC<TProps> = ({ testid = 'banner-notify' }) => {
         <div className='row'>
           {layout === BROADCAST_LAYOUT.DEFAULT ? (
             <Fragment>
-              <div
-                className={cn(s.linkBtn, s.rainbow(bg, 'bg'))}
-                onClick={() => alert(DETAIL_TEXT)}
-              >
+              <div className={cn(s.linkBtn, s.rainbow(bg, 'bg'))} onClick={showDetail}>
                 查看详情
               </div>
               <CrossSVG className={s.icon} />
             </Fragment>
           ) : (
             <Fragment>
-              <div className={s.linkText} onClick={() => alert(DETAIL_TEXT)}>
+              <div className={s.linkText} onClick={showDetail}>
                 查看详情
               </div>
               <ArrowSVG className={s.icon} />

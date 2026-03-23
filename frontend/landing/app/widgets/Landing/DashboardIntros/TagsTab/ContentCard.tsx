@@ -1,6 +1,6 @@
-import TagBanner from './TagBanner'
-import Sidebar from './Sidebar'
 import useSalon, { cn } from '../../salon/dashboard_intros/tags_tab/content_card'
+import Sidebar from './Sidebar'
+import TagBanner from './TagBanner'
 
 export default function ContentCard() {
   const s = useSalon()

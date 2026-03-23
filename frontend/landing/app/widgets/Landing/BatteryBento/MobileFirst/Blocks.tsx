@@ -1,8 +1,7 @@
 import type { FC } from 'react'
-
-import WeChatSVG from '~/icons/social/WeChat'
-import LinkSVG from '~/icons/Share'
 import QRCodeSolidSVG from '~/icons/QRCodeSolid'
+import LinkSVG from '~/icons/Share'
+import WeChatSVG from '~/icons/social/WeChat'
 import TwitterSVG from '~/icons/TwitterX'
 
 import useSalon, { cn } from '../../salon/battery_bento/mobile_first/blocks'

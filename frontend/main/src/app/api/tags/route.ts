@@ -1,9 +1,7 @@
 import type { NextRequest } from 'next/server'
-
-import type { TThread } from '~/spec'
-
 import { SEARCH_PARAM } from '~/const/url'
 import { getPagedTags } from '~/utils/ssr'
+import type { TThread } from '~/spec'
 
 export const GET = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url)

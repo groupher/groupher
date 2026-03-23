@@ -1,26 +1,22 @@
+import { includes, keys } from 'ramda'
 import { type FC, useState } from 'react'
-import { keys, includes } from 'ramda'
 
 import useInterval from '~/hooks/useInterval'
-
-import EmojiSVG from '~/icons/HeartDuo'
-import UserSVG from '~/icons/UserDuo'
 import APISVG from '~/icons/API'
-import CloudSVG from '~/icons/CloudDuo'
-import SearchSVG from '~/icons/SearchDuo'
-import FingerSVG from '~/icons/FingerPrintDuo'
-
-import TriangleSVG from '~/icons/TriangleDuo'
-import SquareSVG from '~/icons/SquareDuo'
 import CircleSVG from '~/icons/CircleDuo'
-import StarSVG from '~/icons/StarDuo'
+import CloudSVG from '~/icons/CloudDuo'
 import DiamandSVG from '~/icons/DiamandDuo'
+import FingerSVG from '~/icons/FingerPrintDuo'
+import EmojiSVG from '~/icons/HeartDuo'
+import SearchSVG from '~/icons/SearchDuo'
 import SqaureSrewSVG from '~/icons/SqaureSrewDuo'
-
+import SquareSVG from '~/icons/SquareDuo'
+import StarSVG from '~/icons/StarDuo'
+import TriangleSVG from '~/icons/TriangleDuo'
+import UserSVG from '~/icons/UserDuo'
+import useSalon, { cn } from '../../salon/battery_bento/grid_blocks'
 import { SHINE_DOTS } from './constant'
 import Slogan from './Slogan'
-
-import useSalon, { cn } from '../../salon/battery_bento/grid_blocks'
 
 const GridBlocks: FC = () => {
   const s = useSalon()

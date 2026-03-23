@@ -1,7 +1,6 @@
 import type { FC } from 'react'
-
-import UpSVG from '~/icons/Goup'
 import DownSVG from '~/icons/Godown'
+import UpSVG from '~/icons/Goup'
 
 import useSalon, { cn } from '../../salon/battery_bento/statistics/summary_card'
 

@@ -2,14 +2,14 @@
 
 import { DOC_TABS, DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import VIEW from '~/const/view'
-import AdminList from '~/unit/dashboard-thread/AdminList'
-import Portal from '~/unit/dashboard-thread/Portal'
-import useSalon, { cnMerge } from '~/unit/dashboard-thread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
 import type { TCrumbConfig } from '~/spec'
+import AdminList from '~/unit/dashboard-thread/AdminList'
+import Portal from '~/unit/dashboard-thread/Portal'
+import useSalon, { cnMerge } from '~/unit/dashboard-thread/salon'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = DSB_ROUTE.DOC

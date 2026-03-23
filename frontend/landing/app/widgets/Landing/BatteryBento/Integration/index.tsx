@@ -1,8 +1,6 @@
 import useHover from '~/hooks/useHover'
-
-import Panel from './Panel'
-
 import useSalon from '../../salon/battery_bento/integration'
+import Panel from './Panel'
 
 export default function Integration() {
   const [cardRef, isCardHovered] = useHover<HTMLDivElement>()

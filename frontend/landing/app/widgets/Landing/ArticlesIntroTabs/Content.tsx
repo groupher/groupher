@@ -1,14 +1,11 @@
 import type { FC } from 'react'
-
-import type { TThread } from '~/spec'
 import { THREAD } from '~/const/thread'
-
-import DiscussTab from './DiscussTab'
-import ChangelogTab from './ChangelogTab'
-import KanbanTab from './KanbanTab'
-import HelpTab from './HelpTab'
-
+import type { TThread } from '~/spec'
 import useSalon from '../salon/articles_intro_tabs/content'
+import ChangelogTab from './ChangelogTab'
+import DiscussTab from './DiscussTab'
+import HelpTab from './HelpTab'
+import KanbanTab from './KanbanTab'
 
 type TProps = {
   tab: TThread

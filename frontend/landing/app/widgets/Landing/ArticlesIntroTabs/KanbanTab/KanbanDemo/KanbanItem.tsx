@@ -1,8 +1,6 @@
 import type { FC } from 'react'
-
-import type { TArticleCat } from '~/spec'
-
 import UpvoteSVG from '~/icons/Upvote'
+import type { TArticleCat } from '~/spec'
 import ArticleCatState from '~/unit/article-cat-state'
 
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/kanban_tab/kanban_demo/kanban_item'

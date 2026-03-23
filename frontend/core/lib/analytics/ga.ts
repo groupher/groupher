@@ -3,17 +3,15 @@ import type { TGAEvent } from '~/spec'
 import { Global } from '../helper'
 
 // see: https://github.com/vercel/next.js/discussions/14980
-const gtag = (): void => {
+const gtag = (...args: unknown[]): void => {
   // @ts-expect-error
-  // biome-ignore lint/style/noArguments: <explanation>
-  Global.dataLayer?.push(arguments)
+  Global.dataLayer?.push(args)
 }
 
 // https://analytics.google.com/analytics/web/?hl=zh-CN&pli=1#/embed/report-home/a39874160w174341184p173551323
 
 // https://developers.google.com/analytics/devguides/collection/gtagjs/pages
 const pageview = (url: string): void => {
-  // @ts-expect-error
   gtag?.('config', process.env.NEXT_PUBLIC_GA_TRACING_ID, {
     page_path: url,
   })
@@ -31,7 +29,6 @@ const pageview = (url: string): void => {
 const event = (e: TGAEvent): void => {
   const { action, category, label, value } = e
 
-  // @ts-expect-error
   gtag?.('event', action, {
     event_category: category,
     event_label: label,

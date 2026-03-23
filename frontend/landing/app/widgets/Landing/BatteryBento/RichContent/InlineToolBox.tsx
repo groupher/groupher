@@ -1,9 +1,9 @@
 import type { FC } from 'react'
 
 import BoldSVG from '~/icons/editor/Bold'
-import StrikeSVG from '~/icons/editor/Strike'
-import LinkSVG from '~/icons/editor/Link'
 import HighlightSVG from '~/icons/editor/Highlight'
+import LinkSVG from '~/icons/editor/Link'
+import StrikeSVG from '~/icons/editor/Strike'
 
 import useSalon, { cn } from '../../salon/battery_bento/rich_content/inline_tool_box'
 

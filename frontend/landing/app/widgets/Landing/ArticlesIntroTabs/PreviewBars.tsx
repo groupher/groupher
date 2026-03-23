@@ -1,7 +1,6 @@
 import type { FC } from 'react'
-
-import type { TThread } from '~/spec'
 import { THREAD } from '~/const/thread'
+import type { TThread } from '~/spec'
 
 import useSalon, { cn } from '../salon/articles_intro_tabs/preview_bars'
 

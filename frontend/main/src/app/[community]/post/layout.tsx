@@ -1,6 +1,7 @@
-import { THREAD } from '~/const/thread'
 import { getPagedPosts, getTags } from '~/app/ssr'
+import { THREAD } from '~/const/thread'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
+
 import PostPreviewAdapter from './PostPreviewAdapter'
 
 // app/post/layout.tsx

@@ -1,12 +1,12 @@
 'use client'
 
 import { WIDGET_TABS } from '~/const/route'
-import Portal from '~/unit/dashboard-thread/Portal'
-import useSalon from '~/unit/dashboard-thread/salon/widgets'
-import BaseSetting from '~/unit/dashboard-thread/Widgets/BaseSetting'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
 import ViewSVG from '~/icons/article/Viewed'
+import Portal from '~/unit/dashboard-thread/Portal'
+import useSalon from '~/unit/dashboard-thread/salon/widgets'
+import BaseSetting from '~/unit/dashboard-thread/Widgets/BaseSetting'
 import Button from '~/widgets/Buttons/Button'
 import Tabs from '~/widgets/Switcher/Tabs'
 

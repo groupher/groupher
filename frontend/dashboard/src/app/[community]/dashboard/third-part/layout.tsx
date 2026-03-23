@@ -2,12 +2,12 @@
 
 import { DSB_COVERS, THIRD_PART_TABS } from '~/const/route'
 import VIEW from '~/const/view'
-import Portal from '~/unit/dashboard-thread/Portal'
-import useSalon from '~/unit/dashboard-thread/salon'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
+import Portal from '~/unit/dashboard-thread/Portal'
+import useSalon from '~/unit/dashboard-thread/salon'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = THIRD_PART_TABS.segment
