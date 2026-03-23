@@ -1,8 +1,7 @@
-import HeaderCard from './HeaderCard'
+import useSalon from '../../salon/dashboard_intros/links_tab/content_card'
 import Content from './Content'
 import FooterCard from './FooterCard'
-
-import useSalon from '../../salon/dashboard_intros/links_tab/content_card'
+import HeaderCard from './HeaderCard'
 
 export default function ContentCard() {
   const s = useSalon()

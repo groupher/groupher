@@ -4,7 +4,7 @@
  *
  */
 
-import { memo, type FC } from 'react'
+import { type FC, memo } from 'react'
 import EditPenSVG from '~/icons/EditPen'
 
 import useSalon from '../salon/publish_button/post_layout'
@@ -20,7 +20,7 @@ const PostLayout: FC<TProps> = ({ text }) => {
     <div className={s.wrapper}>
       <EditPenSVG className={s.editIcon} />
       <div className={s.title}>{text}</div>
-      <div className="grow" />
+      <div className='grow' />
     </div>
   )
 }

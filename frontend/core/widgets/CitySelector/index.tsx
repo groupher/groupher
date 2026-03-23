@@ -4,11 +4,10 @@
  *
  */
 
+import { find, forEach, includes, isEmpty, reject, without } from 'ramda'
 import { type FC, memo, useCallback, useEffect, useState } from 'react'
-import { find, includes, without, reject, isEmpty, forEach } from 'ramda'
-
+import { CITY_OPTION_VALUES, CITY_OPTIONS, HOME_CITY_OPTIONS } from '~/const/city'
 import type { TCityOption, TSpace } from '~/spec'
-import { CITY_OPTIONS, HOME_CITY_OPTIONS, CITY_OPTION_VALUES } from '~/const/city'
 
 import Input from '~/widgets/Input'
 
@@ -105,7 +104,7 @@ const CitySelector: FC<TProps> = ({ value = '', onChange = console.log, ...spaci
         <>
           <div className={s.inputLabel}>其他城市（地区）：</div>
           <Input
-            placeholder="多个城市请用 , 分隔开"
+            placeholder='多个城市请用 , 分隔开'
             value={extraCities}
             onChange={(e) => setExtraCities(e.target.value)}
             onBlur={() => extraCityOnBlur()}

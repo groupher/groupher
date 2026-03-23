@@ -10,7 +10,7 @@ import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
 
 // import Broadcast from '~/widgets/Broadcast'
-import Footer from '~/widgets/Footer'
+import Footer from '~/unit/site-footer'
 
 // import DashboardAlert from './D
 // import CustomScroller from '~/widgets/CustomScroller'

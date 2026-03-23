@@ -4,8 +4,8 @@
  *
  */
 
-import type { FC } from 'react'
 import { findIndex, propEq } from 'ramda'
+import type { FC } from 'react'
 
 import Tooltip from '~/widgets/Tooltip'
 
@@ -36,7 +36,7 @@ const IconSwitcher: FC<TProps> = ({ items, activeKey, onChange = console.log }) 
             <Tooltip
               key={item.key}
               content={<div className={s.descText}>{item.desc}</div>}
-              placement="top"
+              placement='top'
               delay={500}
               forceZIndex
               noPadding

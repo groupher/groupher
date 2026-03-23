@@ -1,8 +1,6 @@
 import type { FC } from 'react'
-
-import type { TColorName } from '~/spec'
-
 import UpvoteSVG from '~/icons/Upvote'
+import type { TColorName } from '~/spec'
 
 import useSalon from '../../salon/compare_dev/our_way/upvote_counter'
 

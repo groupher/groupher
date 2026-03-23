@@ -41,7 +41,7 @@ const RangeSlider: FC<TProps> = ({
       <input
         className={s.range}
         value={value}
-        type="range"
+        type='range'
         min={min}
         max={max}
         onChange={(v) => onChange(Number.parseInt(v.target.value, 10))}

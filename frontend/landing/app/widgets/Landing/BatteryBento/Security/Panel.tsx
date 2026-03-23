@@ -1,17 +1,14 @@
 import type { FC } from 'react'
-
-import NestlSVG from '~/icons/NestGlobal'
-
-import LockSVG from '~/icons/Lock'
-import SettingSVG from '~/icons/Setting'
-import SearchSVG from '~/icons/HeaderSearch'
 import AuthSVG from '~/icons/Auth'
-import HashSVG from '~/icons/HashTagBold'
-import UploadSVG from '~/icons/Upload'
 import CloudSVG from '~/icons/CloudCheck'
-
-import Header from './Header'
+import HashSVG from '~/icons/HashTagBold'
+import SearchSVG from '~/icons/HeaderSearch'
+import LockSVG from '~/icons/Lock'
+import NestlSVG from '~/icons/NestGlobal'
+import SettingSVG from '~/icons/Setting'
+import UploadSVG from '~/icons/Upload'
 import useSalon, { cn } from '../../salon/battery_bento/security/panel'
+import Header from './Header'
 
 type TProps = {
   hovering: boolean

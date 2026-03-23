@@ -1,5 +1,5 @@
-import useDashboard from '~/hooks/useDashboard'
 import type { TMetric } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 type TFmt = 'default' | 'lowercase'
 

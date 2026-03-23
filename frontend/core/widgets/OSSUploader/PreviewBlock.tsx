@@ -13,7 +13,7 @@ const PreviewBlock: FC<TProps> = ({ url }) => {
 
   return (
     <div>
-      <img src={assetSrc(url)} className={s.previewImg} alt="preview img" />
+      <img src={assetSrc(url)} className={s.previewImg} alt='preview img' />
     </div>
   )
 }

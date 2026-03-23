@@ -20,7 +20,7 @@ const CoverImage: FC<TProps> = ({ testid = 'cover-image' }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.imageWrapper}>
-        <Img className={s.image} src="/help-cover-demo.png" noLazy />
+        <Img className={s.image} src='/help-cover-demo.png' noLazy />
       </div>
     </div>
   )

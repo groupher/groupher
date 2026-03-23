@@ -1,5 +1,7 @@
 import type { TPagedComments, TCommentsState, TComment } from '~/spec'
-import type { TAPIMode, TMode } from '~/containers/unit/Comments/spec'
+
+export type TMode = 'REPLIES' | 'TIMELINE'
+export type TAPIMode = 'article' | 'user_published'
 
 export type TInit = Partial<
   Pick<

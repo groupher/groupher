@@ -4,9 +4,9 @@ import { useEffect } from 'react'
 
 import { LOCALE } from '~/const/i18n'
 import useChangeI18n from '~/hooks/useChangeI18n'
-import useDashboard from '~/hooks/useDashboard'
-import useLocale from '~/hooks/useLocale'
 import type { TLocale } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
+import useLocale from '~/stores/locale/hooks'
 
 const LocaleSync = () => {
   const { locale: dashboardLocale } = useDashboard()

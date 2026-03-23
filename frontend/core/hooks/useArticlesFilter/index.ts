@@ -1,5 +1,5 @@
-import useArticleList from '~/hooks/useArticleList'
 import type { TArticleCat, TArticleFilter, TArticleOrder, TArticleState } from '~/spec'
+import useArticleList from '~/stores/articleList/hooks'
 
 type TRes = {
   cat: TArticleCat

@@ -1,8 +1,7 @@
-import Tabs from './Tabs'
+import useSalon from '../../salon/dashboard_intros/cms_tab'
 import ContentCard from './ContentCard'
 import MenuCard from './MenuCard'
-
-import useSalon from '../../salon/dashboard_intros/cms_tab'
+import Tabs from './Tabs'
 
 export default function CMSTab() {
   const s = useSalon()

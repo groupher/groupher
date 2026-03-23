@@ -1,5 +1,5 @@
+import { flatten, values } from 'ramda'
 import { gql } from 'urql'
-import { values, flatten } from 'ramda'
 
 import EMOTION from '~/const/emotion'
 import { titleCase } from '~/fmt'

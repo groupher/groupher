@@ -1,11 +1,9 @@
 import type { FC } from 'react'
 
 import type { TActive } from '~/spec'
-
-import IntroDigest from './IntroDigest'
-import HelpDemo from './HelpDemo'
-
 import useSalon, { cn } from '../../salon/articles_intro_tabs/help_tab'
+import HelpDemo from './HelpDemo'
+import IntroDigest from './IntroDigest'
 
 const HelpFeat: FC<TActive> = ({ active }) => {
   const s = useSalon()

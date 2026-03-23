@@ -1,5 +1,5 @@
+import { getPagedComments, getPost } from '~/app/ssr'
 import { THREAD } from '~/const/thread'
-import { getPagedComments, getPost } from '~/providers/ssr'
 import ArticleStoreProvider from '~/stores/article/provider'
 import CommentsStoreProvider from '~/stores/comments/provider'
 

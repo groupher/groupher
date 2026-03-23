@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TActive, TArticleCat } from '~/spec'
-import ArticleCatState from '~/widgets/ArticleCatState'
+import ArticleCatState from '~/unit/article-cat-state'
 
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/discuss_tab/discuss_demo/post_item'
 

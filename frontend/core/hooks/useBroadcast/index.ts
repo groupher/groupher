@@ -1,7 +1,6 @@
 import { pick } from 'ramda'
-
-import useDashboard from '~/hooks/useDashboard'
 import type { TBroadcastConf } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 export default function useBroadcast(): TBroadcastConf {
   const dsb$ = useDashboard()

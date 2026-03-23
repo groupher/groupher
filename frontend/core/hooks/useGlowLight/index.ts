@@ -3,10 +3,10 @@ import { GLOW_EFFECT_NAME, GLOW_OPACITY } from '~/const/glow_effect'
 
 import METRIC from '~/const/metric'
 import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
-import useDashboard from '~/hooks/useDashboard'
 import useMetric from '~/hooks/useMetric'
 import useWallpaper from '~/hooks/useWallpaper'
 import type { TGlowEffect } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 export default function useGlowLight(): TGlowEffect {
   const dsb$ = useDashboard()

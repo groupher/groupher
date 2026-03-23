@@ -2,10 +2,10 @@ import { findIndex, includes, values } from 'ramda'
 import { ARTICLE_THREAD } from '~/const/thread'
 import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 import { plural } from '~/fmt'
-import useArticleList from '~/hooks/useArticleList'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import useViewingThread from '~/hooks/useViewingThread'
 import type { TArticle } from '~/spec'
+import useArticleList from '~/stores/articleList/hooks'
 
 type TRes = {
   previous: TArticle | null

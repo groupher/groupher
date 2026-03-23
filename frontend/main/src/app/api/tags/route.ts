@@ -1,8 +1,6 @@
 import type { NextRequest } from 'next/server'
-
-import type { TThread } from '~/spec'
-
 import { SEARCH_PARAM } from '~/const/url'
+import type { TThread } from '~/spec'
 import { getPagedTags } from '~/utils/ssr'
 
 export const GET = async (req: NextRequest) => {

@@ -1,6 +1,5 @@
-import setupStore from '..'
-
 import type { TUser } from '~/spec'
+import setupStore from '..'
 
 describe('stores/account', () => {
   it('defaults to logged-out state and updates derived views after commit', () => {

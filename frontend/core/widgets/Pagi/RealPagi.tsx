@@ -1,12 +1,10 @@
 import type { FC } from 'react'
 
 import { roundUpNumber } from '~/fmt'
-import type { TSpace, TPagi } from '~/spec'
-
 import ArrowSVG from '~/icons/ArrowSimple'
-import useSalon, { cn } from './salon'
-
+import type { TPagi, TSpace } from '~/spec'
 import type { TProps as TPagiProps } from '.'
+import useSalon, { cn } from './salon'
 
 type TProps = Pick<TPagiProps, 'onChange'> & TPagi & TSpace
 
@@ -33,14 +31,14 @@ const RealPagi: FC<TProps> = ({
         <div className={s.main}>
           <input
             className={cn(s.numInputer, pageNumber >= 10 ? 'w-9' : 'w-6')}
-            type="number"
+            type='number'
             min={1}
             max={999}
             value={pageNumber}
             onChange={(e) => onChange(Number(e.target.value))}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                // @ts-ignore
+                // @ts-expect-error
                 onChange(Number(e.target.value))
               }
             }}

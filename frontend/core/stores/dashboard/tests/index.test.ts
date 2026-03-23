@@ -1,11 +1,9 @@
 import { COLOR } from '~/const/colors'
 import { DEFAULT_ENABLE } from '~/const/dashboard'
 import METRIC from '~/const/metric'
-
-import setupStore from '..'
-
 import type { TEnableConf, TLinkItem, TNameAlias, TTag } from '~/spec'
 import type { TInit } from '~/stores/dashboard/spec'
+import setupStore from '..'
 
 describe('stores/dashboard', () => {
   it('commits edge data and keeps actions working', () => {

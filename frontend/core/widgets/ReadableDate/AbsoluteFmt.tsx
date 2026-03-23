@@ -1,4 +1,4 @@
-import { type FC, memo, Fragment } from 'react'
+import { type FC, Fragment, memo } from 'react'
 
 import useSalon, { cn } from './salon/absolute_fmt'
 
@@ -29,22 +29,22 @@ const AbsoluteFmt: FC<TProps> = ({ datetime, className, withTime }) => {
   return (
     <div className={cn(s.wrapper, className)}>
       {year}
-      <div className="mr-0.5" />
+      <div className='mr-0.5' />
       年
-      <div className="mr-0.5" />
+      <div className='mr-0.5' />
       {month}
-      <div className="mr-0.5" />
+      <div className='mr-0.5' />
       月
-      <div className="mr-0.5" />
+      <div className='mr-0.5' />
       {day}
-      <div className="mr-0.5" /> 日
+      <div className='mr-0.5' /> 日
       {withTime && (
         <Fragment>
-          <div className="mr-0.5" />
+          <div className='mr-0.5' />
           {range}
-          <div className="mr-0.5" />
+          <div className='mr-0.5' />
           {hour}
-          <div className="mr-0.5" />
+          <div className='mr-0.5' />
         </Fragment>
       )}
     </div>

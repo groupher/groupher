@@ -2,8 +2,8 @@
  * Maybe
  */
 
-import { type FC, memo, type ReactNode } from 'react'
 import { isEmpty } from 'ramda'
+import { type FC, memo, type ReactNode } from 'react'
 
 const MaybeLoading = ({ loading }) => {
   if (isEmpty(loading)) return <div />

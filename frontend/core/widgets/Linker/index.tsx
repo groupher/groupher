@@ -5,12 +5,9 @@
  */
 
 import type { FC } from 'react'
-
-import type { TSpace } from '~/spec'
-
 import { prettyURL } from '~/fmt'
-
 import LinkSVG from '~/icons/Link'
+import type { TSpace } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from './salon'
@@ -43,7 +40,7 @@ const Linker: FC<TProps> = ({
       <LinkSVG className={s.linkIcon} />
       <Tooltip
         content={<div className={s.popHint}>{src}</div>}
-        placement="bottom"
+        placement='bottom'
         hideOnClick={false}
         delay={300}
         offset={[-10, 0] as [number, number]}
@@ -52,8 +49,8 @@ const Linker: FC<TProps> = ({
         <a
           className={cn(s.sourceLink, plainColor && s.plainColor)}
           href={src}
-          target="_blank"
-          rel="noreferrer"
+          target='_blank'
+          rel='noreferrer'
         >
           {prettyURL(src)}
         </a>

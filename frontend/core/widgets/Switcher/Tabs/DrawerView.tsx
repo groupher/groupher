@@ -1,4 +1,4 @@
-import { type FC, useCallback, useState, useRef, useEffect } from 'react'
+import { type FC, useCallback, useEffect, useRef, useState } from 'react'
 
 import type { TTabItem } from '~/spec'
 import { isString } from '~/validator'
@@ -53,7 +53,7 @@ const Tabs: FC<TProps> = ({ onChange = console.log, items = temItems, activeKey 
   )
 
   return (
-    <div className={s.wrapper} data-testid="tabs">
+    <div className={s.wrapper} data-testid='tabs'>
       <div className={s.tabsContainer} ref={tabsRef}>
         {items.map((item, index) => (
           <button

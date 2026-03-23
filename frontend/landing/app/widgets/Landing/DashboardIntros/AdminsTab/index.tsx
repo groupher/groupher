@@ -1,9 +1,7 @@
 import { useState } from 'react'
-
+import useSalon from '../../salon/dashboard_intros/admins_tab'
 import Admins from './Admins'
 import ContentCard from './ContentCard'
-
-import useSalon from '../../salon/dashboard_intros/admins_tab'
 
 export default function AdminsTab() {
   const s = useSalon()

@@ -5,8 +5,8 @@
  */
 
 import { useState } from 'react'
+import HomeHeader from '~/unit/home-header'
 import Button from '~/widgets/Buttons/Button'
-import HomeHeader from '~/widgets/HomeHeader'
 
 import useSalon, { cn } from './salon'
 

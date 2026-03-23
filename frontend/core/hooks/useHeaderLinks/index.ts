@@ -2,9 +2,9 @@ import { filter } from 'ramda'
 import { useCallback } from 'react'
 import { MORE_GROUP } from '~/const/dashboard'
 import { groupByKey, sortByGroupIndex } from '~/helper'
-import useCommunity from '~/hooks/useCommunity'
-import useDashboard from '~/hooks/useDashboard'
 import type { THeaderLayout, TLinkItem } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
+import useDashboard from '~/stores/dashboard/hooks'
 import { getAboutPath, hasAboutLinkInMore, shouldFoldAboutToMore } from './helper'
 
 type TGroupInfo = {

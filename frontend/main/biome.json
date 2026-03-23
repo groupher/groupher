@@ -1,3 +1,4 @@
 {
+  "root": false,
   "extends": ["@groupher/frontend-core/biome"]
 }

@@ -1,0 +1,35 @@
+@config "../../tailwind.config.js";
+
+@import "tailwindcss";
+@layer base, components, utilities;
+
+@import "tailwindcss-animated";
+@plugin "@tailwindcss/typography";
+
+@import "./tokens";
+@import "./safelist";
+@import "./common";
+
+@layer base {
+  :root {
+    text-autospace: normal;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .main {
+    will-change: background-color;
+    background-clip: padding-box;
+  }
+
+  .masonry-cards-grid {
+    display: flex;
+    width: auto;
+  }
+  .masonry-cards-grid_column {
+    background-clip: padding-box;
+    padding: 8px;
+  } 
+}

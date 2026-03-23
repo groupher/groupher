@@ -1,7 +1,7 @@
-import type { TSpace } from '~/spec'
+import useTheme from '~/hooks/useTheme'
 
 import useTwBelt from '~/hooks/useTwBelt'
-import useTheme from '~/hooks/useTheme'
+import type { TSpace } from '~/spec'
 
 type TProps = {
   className?: string

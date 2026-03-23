@@ -1,7 +1,6 @@
-import type { TSizeSM } from '~/spec'
 import SIZE from '~/const/size'
-
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSizeSM } from '~/spec'
 
 type TProps = { size: TSizeSM; checked: boolean }
 

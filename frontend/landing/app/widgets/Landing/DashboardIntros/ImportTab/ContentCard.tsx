@@ -1,10 +1,8 @@
-import HeaderCard from './HeaderCard'
+import useSalon, { cn } from '../../salon/dashboard_intros/import_tab/content_card'
+import LineSVG from '../../salon/dashboard_intros/import_tab/Line'
 import Content from './Content'
 import FooterCard from './FooterCard'
-
-import LineSVG from '../../salon/dashboard_intros/import_tab/Line'
-
-import useSalon, { cn } from '../../salon/dashboard_intros/import_tab/content_card'
+import HeaderCard from './HeaderCard'
 
 export default function ContentCard() {
   const s = useSalon()

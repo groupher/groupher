@@ -1,5 +1,5 @@
-import type { TPagedArticles, TPagedComments, TPagedCommunities } from '~/spec'
 import { PAGE_SIZE } from '~/config'
+import type { TPagedArticles, TPagedComments, TPagedCommunities } from '~/spec'
 
 export const EMPTY_PAGED_ARTICLES = {
   entries: [],

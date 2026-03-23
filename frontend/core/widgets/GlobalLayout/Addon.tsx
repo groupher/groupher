@@ -6,7 +6,7 @@ import { Toaster } from 'sonner'
 
 import useShortcut from '~/hooks/useShortcut'
 
-import PriceWall from '~/widgets/PriceWall/Modal'
+import PriceWall from '~/unit/price-wall/Modal'
 import UserListModal from '~/widgets/UserListModal'
 
 const Addon: FC = () => {
@@ -18,7 +18,7 @@ const Addon: FC = () => {
     <>
       <PriceWall />
       <UserListModal />
-      <Toaster position="top-center" />
+      <Toaster position='top-center' />
     </>
   )
 }

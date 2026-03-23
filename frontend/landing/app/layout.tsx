@@ -1,9 +1,9 @@
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
+import { GlobalProvider } from '~/app/providers'
 import METRIC from '~/const/metric'
 import { LANDING_INIT_DATA } from '~/const/name'
-import GlobalProvider from '~/providers/Global'
 import MainProvider from '~/stores/provider'
 import RootLayoutShell from '~/widgets/RootLayoutShell'
 

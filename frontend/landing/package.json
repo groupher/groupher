@@ -12,8 +12,8 @@
     "serve": "serve out",
     "info": "next info",
     "analyze": "cross-env ANALYZE=true next build",
-    "lint": "biome lint app/**/*.{ts,tsx}",
-    "format": "biome format ./app",
+    "lint": "../../node_modules/.bin/biome lint app/**/*.{ts,tsx}",
+    "format": "../../node_modules/.bin/biome format --write ./app",
     "clean:up": "rm -rf *.tsbuildinfo"
   },
   "lint-staged": {

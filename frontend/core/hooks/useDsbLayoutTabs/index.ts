@@ -1,9 +1,9 @@
 'use client'
 
 import { useSelectedLayoutSegments } from 'next/navigation'
-import useCommunity from '~/hooks/useCommunity'
-import type { TTabItem } from '~/spec'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
+import type { TTabItem } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 
 type TTabDef = Omit<TTabItem, 'href'> & { segment?: string }
 

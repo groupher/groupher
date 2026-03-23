@@ -1,6 +1,6 @@
 'use client'
 
-import Posts from '~/containers/thread/DashboardThread/CMS/Posts'
+import Posts from '~/unit/dashboard-thread/CMS/Posts'
 
 const DashboardPostPage = () => {
   return <Posts />

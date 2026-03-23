@@ -1,7 +1,6 @@
+import useSalon from '../../salon/dashboard_intros/tags_tab'
 import ContentCard from './ContentCard'
 import Footer from './Footer'
-
-import useSalon from '../../salon/dashboard_intros/tags_tab'
 
 export default function TagsTab() {
   const s = useSalon()

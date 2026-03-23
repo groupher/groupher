@@ -1,3 +1,3 @@
-import { logoutHandlers } from '~/auth'
+import { logoutHandlers } from '~/app/auth'
 
 export const { POST } = logoutHandlers

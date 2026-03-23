@@ -1,9 +1,7 @@
 import METRIC from '~/const/metric'
 import { THREAD } from '~/const/thread'
-
-import setupStore from '..'
-
 import type { TChangelog, TPost, TTag } from '~/spec'
+import setupStore from '..'
 
 describe('stores/article', () => {
   it('switches article getter by thread and supports edge commits', () => {

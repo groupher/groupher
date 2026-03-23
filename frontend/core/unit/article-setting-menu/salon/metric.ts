@@ -1,0 +1,28 @@
+import { SUB_MENU_TYPE } from '../constant'
+import type { TSubMenu } from '../spec'
+
+export const getSubMenuWidth = (subType: TSubMenu): string => {
+  switch (subType) {
+    case SUB_MENU_TYPE.EDIT: {
+      return 'w-72'
+    }
+    case SUB_MENU_TYPE.CATEGORY:
+    case SUB_MENU_TYPE.STATE: {
+      return 'w-44'
+    }
+    case SUB_MENU_TYPE.SLUG: {
+      return 'w-60'
+    }
+    case SUB_MENU_TYPE.TAGS: {
+      return 'w-48'
+    }
+    case SUB_MENU_TYPE.MIRROR: {
+      return 'w-60'
+    }
+    default: {
+      return 'w-44'
+    }
+  }
+}
+
+export const holder = 1

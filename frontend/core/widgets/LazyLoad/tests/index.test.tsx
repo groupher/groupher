@@ -7,11 +7,7 @@ describe('<LazyLoad />', () => {
     const onVisible = vi.fn()
 
     render(
-      <LazyLoad
-        visibleByDefault
-        onVisible={onVisible}
-        placeholder={<span>loading</span>}
-      >
+      <LazyLoad visibleByDefault onVisible={onVisible} placeholder={<span>loading</span>}>
         <span>content</span>
       </LazyLoad>,
     )
@@ -31,10 +27,7 @@ describe('<LazyLoad />', () => {
 
     try {
       render(
-        <LazyLoad
-          onVisible={onVisible}
-          placeholder={<span>loading</span>}
-        >
+        <LazyLoad onVisible={onVisible} placeholder={<span>loading</span>}>
           {(visible) => <span>{visible ? 'content' : 'hidden'}</span>}
         </LazyLoad>,
       )

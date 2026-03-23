@@ -1,5 +1,4 @@
 import { pick } from 'ramda'
-import useDashboard from '~/hooks/useDashboard'
 import type {
   TAvatarLayout,
   TBannerLayout,
@@ -11,6 +10,7 @@ import type {
   TPostLayout,
   TTagLayout,
 } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 type TRet = {
   avatarLayout: TAvatarLayout

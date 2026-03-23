@@ -2,7 +2,6 @@ import { clone, forEach, keys } from 'ramda'
 import { useMemo } from 'react'
 
 import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
-import useWallpaperDomain from '~/hooks/useWallpaper.domain'
 import type {
   TCustomWallpaper,
   TWallpaperFmt,
@@ -10,6 +9,7 @@ import type {
   TWallpaperGradientDir,
   TWallpaperPic,
 } from '~/spec'
+import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
 import { parseWallpaper } from '~/wallpaper'
 

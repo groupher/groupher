@@ -4,7 +4,7 @@
  *
  */
 
-import { memo, type FC, Fragment } from 'react'
+import { type FC, Fragment, memo } from 'react'
 import EditPenSVG from '~/icons/EditPen'
 
 import useSalon from '../salon/publish_button/sidebar_header_layout'

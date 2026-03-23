@@ -7,12 +7,11 @@ import { COLOR } from '~/const/colors'
 import { cn, cnMerge } from '~/css'
 import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
-import useDashboard from '~/hooks/useDashboard'
 import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useSubPrimaryColor from '~/hooks/useSubPrimaryColor'
-
 import type { TColorName, TZIndexType } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 import { cachedMargin, keyToClass, RAINBOW_ALIAS, STATIC_CLS } from './constant'
 import type {
   TBgKey,

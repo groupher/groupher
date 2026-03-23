@@ -1,9 +1,7 @@
 import { renderHook } from '@testing-library/react'
-
-import type { TNameAlias } from '~/spec'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useNameAlias from '~/hooks/useNameAlias'
+import type { TNameAlias } from '~/spec'
 
 describe('useNameAlias', () => {
   it('builds alias mapping by group', () => {

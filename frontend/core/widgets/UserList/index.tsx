@@ -1,9 +1,8 @@
 import type { FC } from 'react'
 
 import { mockUsers } from '~/mock'
-
-import UserItem from './UserItem'
 import useSalon from './salon'
+import UserItem from './UserItem'
 
 const UserList: FC = () => {
   const s = useSalon()

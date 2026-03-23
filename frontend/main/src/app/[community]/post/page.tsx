@@ -1,6 +1,6 @@
 'use client'
 
-import PostThread from '~/containers/thread/PostThread'
+import PostThread from '~/unit/post-thread'
 
 export default function Page() {
   return <PostThread />

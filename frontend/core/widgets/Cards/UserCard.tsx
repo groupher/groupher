@@ -2,13 +2,12 @@
  * cards for user
  */
 
-import type { FC } from 'react'
-
 import Link from 'next/link'
-import type { TAccount, TUser } from '~/spec'
+import type { FC } from 'react'
+import { cutRest } from '~/fmt'
 
 import Img from '~/Img'
-import { cutRest } from '~/fmt'
+import type { TAccount, TUser } from '~/spec'
 
 import useSalon from './salon/user_card'
 

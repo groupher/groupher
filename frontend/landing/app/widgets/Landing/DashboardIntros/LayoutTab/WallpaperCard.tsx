@@ -1,10 +1,7 @@
-import useWallpaper from '~/hooks/useWallpaper'
-
 import { fmt2CompStyle } from '~/fmt'
-
-import WallpaperBar from './WallpaperBar'
-
+import useWallpaper from '~/hooks/useWallpaper'
 import useSalon from '../../salon/dashboard_intros/layout_tab/wallpaper_card'
+import WallpaperBar from './WallpaperBar'
 
 export default function WallpaperCard() {
   const s = useSalon()

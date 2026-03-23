@@ -5,7 +5,7 @@ import BindSVG from '~/icons/Bind'
 import KanbanSVG from '~/icons/Kanban'
 import PostSVG from '~/icons/Post'
 import ThemeSVG from '~/icons/Theme'
-import DsbCovers from '~/widgets/DsbCovers'
+import DsbCovers from '~/unit/dashboard-covers'
 
 export default function CMSCoversPage() {
   return (

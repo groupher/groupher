@@ -6,10 +6,9 @@
 
 import type { FC, ReactNode } from 'react'
 
-import type { TSpace, TPagi } from '~/spec'
-
-import useSalon, { cn } from './salon'
+import type { TPagi, TSpace } from '~/spec'
 import RealPagi from './RealPagi'
+import useSalon, { cn } from './salon'
 
 export type TProps = {
   children?: ReactNode

@@ -1,10 +1,8 @@
 import type { FC } from 'react'
-
+import useSalon, { cn } from '../../salon/battery_bento/integration/panel'
+import EmbedScript from './EmbedScript'
 import Header from './Header'
 import Sidebar from './Sidebar'
-import EmbedScript from './EmbedScript'
-
-import useSalon, { cn } from '../../salon/battery_bento/integration/panel'
 
 type TProps = {
   hovering: boolean

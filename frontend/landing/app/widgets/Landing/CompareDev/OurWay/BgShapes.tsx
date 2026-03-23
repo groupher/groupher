@@ -1,17 +1,14 @@
 import GtdWipSVG from '~/icons/GtdWip'
 import TagSVG from '~/icons/HashTagBold'
-
+import useSalon, { cn } from '../../salon/compare_dev/bg_shapes'
 import CurveLine1SVG from '../../salon/compare_dev/bg_shapes/CurveLine1'
 import CurveLine2SVG from '../../salon/compare_dev/bg_shapes/CurveLine2'
 import CurveLine3SVG from '../../salon/compare_dev/bg_shapes/CurveLine3'
 import CurveLine4SVG from '../../salon/compare_dev/bg_shapes/CurveLine4'
-
 import ShapeCircleSVG from '../../salon/compare_dev/bg_shapes/ShapeCircle'
-import ShapeCross2SVG from '../../salon/compare_dev/bg_shapes/ShapeCross2'
 import ShapeCircleHalfSVG from '../../salon/compare_dev/bg_shapes/ShapeCircleHalf'
+import ShapeCross2SVG from '../../salon/compare_dev/bg_shapes/ShapeCross2'
 import TwoLineSVG from '../../salon/compare_dev/bg_shapes/TwoLine'
-
-import useSalon, { cn } from '../../salon/compare_dev/bg_shapes'
 
 export default function BgShapes() {
   const s = useSalon()

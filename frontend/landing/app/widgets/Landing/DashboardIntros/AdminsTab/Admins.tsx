@@ -1,13 +1,10 @@
 import { type FC, useEffect } from 'react'
-
-import { mockUsers } from '~/mock'
-
-import Img from '~/Img'
 import useHover from '~/hooks/useHover'
 
-import { ACTIVE_ITMES } from './constant'
-
+import Img from '~/Img'
+import { mockUsers } from '~/mock'
 import useSalon, { cn } from '../../salon/dashboard_intros/admins_tab/admins'
+import { ACTIVE_ITMES } from './constant'
 
 type TProps = {
   onHover: (state: boolean[]) => void

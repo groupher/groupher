@@ -1,5 +1,5 @@
+import { getGroupedKanbanPosts } from '~/app/ssr'
 import { THREAD } from '~/const/thread'
-import { getGroupedKanbanPosts } from '~/providers/ssr'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
 import PostPreviewAdapter from '../post/PostPreviewAdapter'
 

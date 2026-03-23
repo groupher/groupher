@@ -1,6 +1,6 @@
 'use client'
 
-import Changelogs from '~/containers/thread/DashboardThread/CMS/Changelogs'
+import Changelogs from '~/unit/dashboard-thread/CMS/Changelogs'
 
 const DashboardChangelogPage = () => {
   return <Changelogs />

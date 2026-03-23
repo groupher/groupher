@@ -11,9 +11,8 @@
     "info": "next info",
     "clean": "shjs ./utils/scripts/clean.js",
     "analyze": "cross-env ANALYZE=true next build",
-    "lint": "biome lint src/**/*.{ts,tsx} ",
-    "format2": "biome check --apply-unsafe --organize-imports-enabled=false --formatter-enabled=true --linter-enabled=false './src'",
-    "format": "biome format ./src",
+    "lint": "../../node_modules/.bin/biome lint src/**/*.{ts,tsx}",
+    "format": "../../node_modules/.bin/biome format --write ./src",
     "clean:up": "rm -rf *.tsbuildinfo"
   },
   "lint-staged": {

@@ -1,6 +1,6 @@
 'use client'
 
-import ThirdPart from '~/containers/thread/DashboardThread/ThirdPart'
+import ThirdPart from '~/unit/dashboard-thread/ThirdPart'
 
 const DashboardThirdPartPage = () => {
   return <ThirdPart />

@@ -3,16 +3,15 @@ import type { FC, ReactNode } from 'react'
 import METRIC from '~/const/metric'
 
 import type { TCommunity, TLocale, TMetric } from '~/spec'
-import type { TInit as TArticleListInit } from '~/stores/articleList/spec'
-import type { TInit as TDashboardInit } from '~/stores/dashboard/spec'
-import type { TInit as TWallpaperInit } from '~/stores/wallpaper/spec'
-
 import ArticleListStoreProvider from '~/stores/articleList/provider'
+import type { TInit as TArticleListInit } from '~/stores/articleList/spec'
 import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
+import type { TInit as TDashboardInit } from '~/stores/dashboard/spec'
 import LocaleStoreProvider from '~/stores/locale/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
+import type { TInit as TWallpaperInit } from '~/stores/wallpaper/spec'
 
 export type TWrapperOpts = {
   metric?: TMetric

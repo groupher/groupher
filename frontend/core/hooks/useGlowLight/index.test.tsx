@@ -4,8 +4,8 @@ import METRIC from '~/const/metric'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
-import useDashboard from '~/hooks/useDashboard'
 import useGlowLight from '~/hooks/useGlowLight'
+import useDashboard from '~/stores/dashboard/hooks'
 
 describe('useGlowLight', () => {
   it('disables glow in APPLY_COMMUNITY metric and can change effect', async () => {

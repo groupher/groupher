@@ -1,6 +1,5 @@
 import { clone, keys } from 'ramda'
 import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
-import useWallpaperDomain from '~/hooks/useWallpaper.domain'
 import type {
   TWallpaper,
   TWallpaperData,
@@ -8,6 +7,7 @@ import type {
   TWallpaperGradientDir,
   TWallpaperPic,
 } from '~/spec'
+import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
 type TRet = {
   wallpaper: string

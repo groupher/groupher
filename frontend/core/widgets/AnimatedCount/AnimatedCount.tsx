@@ -1,14 +1,11 @@
 import { type FC, useEffect, useRef, useState } from 'react'
-
+import FlipNumbers from 'react-flip-numbers'
 import SIZE from '~/const/size'
 import useDidMount from '~/hooks/useDidMount'
 
-import FlipNumbers from 'react-flip-numbers'
-
 import type { TProps } from '.'
-import { getFontSize, getFlipNumOffset } from './salon/metric'
-
 import useSalon from './salon'
+import { getFlipNumOffset, getFontSize } from './salon/metric'
 
 const AnimatedCount: FC<TProps> = ({ count = 0, size = SIZE.SMALL, active = false }) => {
   const s = useSalon({ count, active })
@@ -34,7 +31,7 @@ const AnimatedCount: FC<TProps> = ({ count = 0, size = SIZE.SMALL, active = fals
         <FlipNumbers
           height={numSize}
           width={numSize - offset}
-          color="inherit"
+          color='inherit'
           perspective={400}
           duration={0.8}
           numbers={String(count)}

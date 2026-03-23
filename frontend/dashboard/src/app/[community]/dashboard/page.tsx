@@ -1,6 +1,6 @@
 'use client'
 
-import Overview from '~/containers/thread/DashboardThread/Overview'
+import Overview from '~/unit/dashboard-thread/Overview'
 
 const Page = () => {
   return <Overview />

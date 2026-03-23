@@ -1,7 +1,7 @@
 import { filter } from 'ramda'
 import { useMemo } from 'react'
-import useDashboard from '~/hooks/useDashboard'
 import type { TNameAlias } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 
 const useNameAlias = (group = 'kanban'): Record<string, TNameAlias> => {
   const dsb$ = useDashboard()

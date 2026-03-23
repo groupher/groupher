@@ -5,11 +5,9 @@
  */
 
 import type { FC } from 'react'
-
-import type { TSpace } from '~/spec'
-import { openSearch } from '~/signal'
-
 import SearchSVG from '~/icons/HeaderSearch'
+import { openSearch } from '~/signal'
+import type { TSpace } from '~/spec'
 
 import useSalon from './salon'
 
