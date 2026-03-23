@@ -1,0 +1,149 @@
+name: Frontend linter
+
+on:
+  pull_request:
+    paths:
+      - "frontend/main/**/*.ts"
+      - "frontend/main/**/*.tsx"
+      - "frontend/dashboard/**/*.ts"
+      - "frontend/dashboard/**/*.tsx"
+      - "frontend/landing/**/*.ts"
+      - "frontend/landing/**/*.tsx"
+      - "frontend/core/**/*.ts"
+      - "frontend/core/**/*.tsx"
+      - "frontend/**/biome.json"
+      - "package.json"
+      - "yarn.lock"
+      - "biome.json"
+  push:
+    paths:
+      - "frontend/main/**/*.ts"
+      - "frontend/main/**/*.tsx"
+      - "frontend/dashboard/**/*.ts"
+      - "frontend/dashboard/**/*.tsx"
+      - "frontend/landing/**/*.ts"
+      - "frontend/landing/**/*.tsx"
+      - "frontend/core/**/*.ts"
+      - "frontend/core/**/*.tsx"
+      - "frontend/**/biome.json"
+      - "package.json"
+      - "yarn.lock"
+      - "biome.json"
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect frontend linter changes
+    runs-on: ubuntu-latest
+    outputs:
+      main: ${{ steps.filter.outputs.main }}
+      dashboard: ${{ steps.filter.outputs.dashboard }}
+      landing: ${{ steps.filter.outputs.landing }}
+      shared: ${{ steps.filter.outputs.shared }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            main:
+              - 'frontend/main/**/*.ts'
+              - 'frontend/main/**/*.tsx'
+            dashboard:
+              - 'frontend/dashboard/**/*.ts'
+              - 'frontend/dashboard/**/*.tsx'
+            landing:
+              - 'frontend/landing/**/*.ts'
+              - 'frontend/landing/**/*.tsx'
+            shared:
+              - 'frontend/core/**/*.ts'
+              - 'frontend/core/**/*.tsx'
+              - 'frontend/**/biome.json'
+              - 'package.json'
+              - 'yarn.lock'
+              - 'biome.json'
+
+  biome-main:
+    name: biome (main)
+    needs: changes
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.main == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+
+      - name: Run Biome CI
+        run: biome ci frontend/main
+
+  biome-dashboard:
+    name: biome (dashboard)
+    needs: changes
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.dashboard == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+
+      - name: Run Biome CI
+        run: biome ci frontend/dashboard
+
+  biome-landing:
+    name: biome (landing)
+    needs: changes
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.landing == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+
+      - name: Run Biome CI
+        run: biome ci frontend/landing
