@@ -2,6 +2,7 @@
   "extends": "@groupher/frontend-core/tsconfig",
   "compilerOptions": {
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "jsx": "preserve"
   },
   "include": [

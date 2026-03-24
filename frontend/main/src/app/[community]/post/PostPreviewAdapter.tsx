@@ -1,12 +1,13 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { lazy, type ReactNode, Suspense } from 'react'
 
 import { THREAD } from '~/const/thread'
 
 import { getPreviewCacheKey, PreviewHost, type TPreviewPhase } from '../_preview'
 import type { TPostPreviewCacheEntry } from './buildPreviewCacheEntry'
-import PreviewRuntime from './PreviewRuntime'
+
+const PreviewRuntime = lazy(() => import('./PreviewRuntime'))
 
 type TProps = {
   children: ReactNode
@@ -23,7 +24,9 @@ export default function PostPreviewAdapter({ children }: TProps) {
         communitySlug && id ? getPreviewCacheKey(communitySlug, THREAD.POST, id) : null
       }
       renderPreview={(entry, phase: TPreviewPhase) => (
-        <PreviewRuntime key={`${entry.key}:${phase}`} entry={entry} phase={phase} />
+        <Suspense fallback={null}>
+          <PreviewRuntime key={`${entry.key}:${phase}`} entry={entry} phase={phase} />
+        </Suspense>
       )}
     >
       {children}
