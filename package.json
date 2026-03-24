@@ -31,7 +31,7 @@
     "serve:prod:gateway": "yarn workspace @groupher/frontend-gateway cross-env NODE_ENV=production next start -p 3001",
     "ci": "cross-env NODE_ENV=ci next dev",
     "update.version": "node -p \"'export const APP_VERSION = ' + JSON.stringify(require('./package.json').version)\" > config/version.ts",
-    "type-check": "tsc --noEmit",
+    "type-check": "yarn workspace @groupher/frontend-core type-check && yarn workspace @groupher/frontend-main type-check && yarn workspace @groupher/frontend-dashboard type-check && yarn workspace @groupher/frontend-landing type-check && yarn workspace @groupher/frontend-gateway type-check",
     "build": "yarn workspaces run build",
     "dev": "next dev",
     "start": "next start",
@@ -170,7 +170,7 @@
     "valtio": "2.3.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.11",
+    "@biomejs/biome": "2.4.8",
     "@commitlint/cli": "^17.6.6",
     "@commitlint/config-conventional": "^8.2.0",
     "@graphql-tools/mock": "^9.1.5",
@@ -205,7 +205,7 @@
     "react-test-renderer": "18.2.0",
     "start-server-and-test": "1.12.1",
     "tsc-files": "^1.1.4",
-    "typescript": "^5.3.3",
+    "typescript": "6.0.2",
     "vite": "^7.3.1",
     "vite-tsconfig-paths": "^6.0.0",
     "vitest": "^3.2.4"

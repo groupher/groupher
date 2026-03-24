@@ -29,11 +29,6 @@ jobs:
           corepack enable
           yarn install --immutable
 
-      - name: Setup Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: latest
-
       # - name: Run Biome for dashboard
       #   run: biome lint "$GITHUB_WORKSPACE/frontend-dashboard/src/**/*.{ts,tsx}"
 

@@ -1,7 +1,13 @@
-@config "../../tailwind.config.js";
+@config "../tailwind.config.js";
 
 @import "tailwindcss";
 @layer base, components, utilities;
+
+@source "../..";
+@source "../../../main/src";
+@source "../../../dashboard/src";
+@source "../../../landing/app";
+@source "../../../gateway";
 
 @import "tailwindcss-animated";
 @plugin "@tailwindcss/typography";

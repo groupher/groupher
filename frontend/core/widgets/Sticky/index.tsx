@@ -114,11 +114,18 @@ class StickyBox extends React.Component<TStickyBoxProps, TStickyBoxState> {
 
       this.initial()
     } else {
-      this.unsubscribes.forEach((fn) => {
-        fn()
-      })
-      this.unsubscribes = []
-      this.scrollPane = null
+      try {
+        for (const fn of this.unsubscribes) {
+          try {
+            fn()
+          } catch (err) {
+            console.error(err)
+          }
+        }
+      } finally {
+        this.unsubscribes = []
+        this.scrollPane = null
+      }
     }
   }
 

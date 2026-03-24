@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbo",
     "ci": "cross-env NODE_ENV=ci next dev",
-    "type-check": "tsc --noEmit",
+    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
     "build": "cross-env NODE_ENV=production next build",
     "start": "next start",
     "dist": "next build && next export -o \"build\"",

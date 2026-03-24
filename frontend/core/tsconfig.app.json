@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "target": "ES2015",
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -73,8 +72,8 @@
       "~/providers/*": ["../core/app/providers/*"],
       "~/proxies": ["../core/app/proxies"],
       "~/proxies/*": ["../core/app/proxies/*"],
-      "~/tailwind/*": ["../core/config/tailwind/*"],
-      "~/tailwind": ["../core/config/tailwind"]
+      "~/tailwind/*": ["../core/tailwind/*"],
+      "~/tailwind": ["../core/tailwind"]
     },
     "plugins": [
       {

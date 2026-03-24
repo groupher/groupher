@@ -33,11 +33,6 @@ jobs:
           corepack enable
           yarn install --immutable
 
-      - name: Setup Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: latest
-
       # - name: Run Biome for gateway
       #   run: biome lint "$GITHUB_WORKSPACE/frontend-gateway/src/**/*.{ts,tsx}"
 

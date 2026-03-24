@@ -29,11 +29,6 @@ jobs:
           corepack enable
           yarn install --immutable
 
-      - name: Setup Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: latest
-
       # ... (其他步骤，例如 Biome lint)
 
       - name: Build Project
