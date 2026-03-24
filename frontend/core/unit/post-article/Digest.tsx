@@ -2,6 +2,7 @@
  * PostLayout
  */
 
+import { lazy, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ARTICLE_THREAD } from '~/const/thread'
@@ -15,9 +16,10 @@ import type { TPost } from '~/spec'
 import ArticleSettingMenu from '~/unit/article-setting-menu'
 import ArticleBaseStats from '~/unit/article-view/ArticleBaseStats'
 import ArticlePinLabel from '~/unit/post-thread/ArticlePinLabel'
-import Share from '~/unit/share'
 import ImgFallback from '~/widgets/ImgFallback'
 import useSalon from './salon/digest'
+
+const Share = lazy(() => import('~/unit/share'))
 
 export default function Digest() {
   const router = useRouter()
@@ -43,7 +45,9 @@ export default function Digest() {
             <div className={s.backText}>讨论区</div>
           </button>
           <div className='grow' />
-          <Share modalOffset='35%' />
+          <Suspense fallback={null}>
+            <Share modalOffset='35%' />
+          </Suspense>
           <ArticleSettingMenu left={2} />
         </div>
 

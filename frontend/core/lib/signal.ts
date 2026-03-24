@@ -1,5 +1,3 @@
-// eslint-disable-next-line import/no-unresolved
-import { toast as hotToast } from 'sonner'
 import EVENT from '~/const/event'
 import { THREAD } from '~/const/thread'
 import TYPE from '~/const/type'
@@ -21,12 +19,14 @@ import PubSub from './pubsub'
 export const Global: TWindow = typeof window !== 'undefined' ? window : null
 
 export const toast = (msg: string, type: TToastType = 'info'): void => {
+  if (typeof window === 'undefined') return
+
   if (type === 'error') {
-    hotToast.error(msg)
+    console.error(msg)
     return
   }
 
-  hotToast.success(msg)
+  console.info(msg)
 }
 
 /**

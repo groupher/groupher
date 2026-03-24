@@ -1,8 +1,6 @@
 'use client'
 
 import type { FC } from 'react'
-// eslint-disable-next-line import/no-unresolved
-import { Toaster } from 'sonner'
 
 import useShortcut from '~/hooks/useShortcut'
 
@@ -18,7 +16,6 @@ const Addon: FC = () => {
     <>
       <PriceWall />
       <UserListModal />
-      <Toaster position='top-center' />
     </>
   )
 }

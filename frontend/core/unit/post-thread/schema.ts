@@ -1,10 +1,17 @@
 import { gql } from 'urql'
-import { plural } from '~/fmt'
-import { F, P } from '~/schemas'
+import { F } from '~/schemas'
+import { pagedCommunityTags as pagedCommunityTagsQuery } from '../../schemas/pages/misc'
+import { pagedPosts } from '../../schemas/pages/post'
+import { pagedChangelogs } from '../../schemas/pages/changelog'
+
+const PAGED_ARTICLE_SCHEMA = {
+  post: pagedPosts,
+  changelog: pagedChangelogs,
+}
 
 const getPagedArticlesSchema = (thread) => {
   return gql`
-    ${P[`paged${plural(thread, 'titleCase')}`]}
+    ${PAGED_ARTICLE_SCHEMA[thread]}
   `
 }
 
@@ -25,7 +32,7 @@ const getArticleFreshSchema = () => {
 }
 
 const pagedCommunityTags = gql`
-  ${P.pagedCommunityTags}
+  ${pagedCommunityTagsQuery}
 `
 
 const schema = {

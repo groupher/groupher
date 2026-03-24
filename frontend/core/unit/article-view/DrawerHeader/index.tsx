@@ -1,11 +1,13 @@
+import { lazy, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 
 import ArrowSVG from '~/icons/Arrow'
 import WarningSVG from '~/icons/Warning'
 import ArticleSettingMenu from '~/unit/article-setting-menu'
-import Share from '~/unit/share'
 import useSalon, { cn } from '../salon/drawer_header'
 import ArticleNavi from './ArticleNavi'
+
+const Share = lazy(() => import('~/unit/share'))
 
 export default function DrawerHeader() {
   const s = useSalon()
@@ -19,7 +21,9 @@ export default function DrawerHeader() {
       <div className='ml-1' />
       <ArticleNavi />
       <div className='grow' />
-      <Share modalOffset='53%' />
+      <Suspense fallback={null}>
+        <Share modalOffset='53%' />
+      </Suspense>
       <div className={s.divider} />
       <div className={s.iconBoxRed}>
         <WarningSVG className={cn(s.iconRed, 'size-4')} />

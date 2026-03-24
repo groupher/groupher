@@ -1,17 +1,29 @@
 import { gql } from 'urql'
-import { F, P } from '~/schemas'
+import { F } from '~/schemas'
+import { setTag as setTagMutation, unsetTag as unsetTagMutation } from '../../schemas/pages/action'
+import { doc } from '../../schemas/pages/doc'
+import { changelog } from '../../schemas/pages/changelog'
+import { post } from '../../schemas/pages/post'
+
+const ARTICLE_SCHEMA = {
+  post,
+  changelog,
+  doc,
+}
 
 const getArticle = (thread) => {
+  const schema = ARTICLE_SCHEMA[thread.toLowerCase()]
+
   return gql`
-    ${P[thread.toLowerCase()]}
+    ${schema}
   `
 }
 
 const setTag = gql`
-  ${P.setTag}
+  ${setTagMutation}
 `
 const unsetTag = gql`
-  ${P.unsetTag}
+  ${unsetTagMutation}
 `
 
 const schema = {
