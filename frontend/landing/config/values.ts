@@ -3,7 +3,7 @@ const isProd = process.env.NODE_ENV === 'production'
 const readPublicEnv = (name: string, fallback: string): string => {
   const value = process.env[name]
 
-  if (value) return value
+  if (value !== undefined) return value
 
   if (isProd) {
     throw new Error(`Missing required public env: ${name}`)
@@ -28,7 +28,7 @@ export const ICON_BASE = readPublicEnv('NEXT_PUBLIC_ICON_BASE', 'https://static.
 
 export const GRAPHQL_ENDPOINT = readPublicEnv(
   'NEXT_PUBLIC_GRAPHQL_ENDPOINT',
-  'http://127.0.0.1:4001/graphiql',
+  'http://localhost:4001/graphiql',
 )
 export const SITE_URL = readPublicEnv('NEXT_PUBLIC_SITE_URL', 'https://groupher.com')
 export const SITE_NAME = 'Groupher'
