@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "moduleResolution": "bundler",
     "paths": {
       "~/app": ["./app"],
@@ -59,8 +58,8 @@
       "~/providers/*": ["./app/providers/*"],
       "~/proxies": ["./app/proxies"],
       "~/proxies/*": ["./app/proxies/*"],
-      "~/tailwind/*": ["./config/tailwind/*"],
-      "~/tailwind": ["./config/tailwind"]
+      "~/tailwind/*": ["./tailwind/*"],
+      "~/tailwind": ["./tailwind"]
     }
   },
 

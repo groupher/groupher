@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
-    "type-check": "tsc --noEmit",
+    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
     "build": "cross-env NODE_ENV=production next build --turbopack",
     "start": "cross-env NODe_ENV=production next start -p 3000",
     "dist": "next build && next export -o \"build\"",

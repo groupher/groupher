@@ -1,0 +1,125 @@
+name: Frontend typecheck
+
+on:
+  pull_request:
+    paths:
+      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
+      - "frontend/**/tsconfig*.json"
+      - "frontend/**/package.json"
+      - "package.json"
+      - "yarn.lock"
+  push:
+    paths:
+      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
+      - "frontend/**/tsconfig*.json"
+      - "frontend/**/package.json"
+      - "package.json"
+      - "yarn.lock"
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect frontend typecheck changes
+    runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.matrix.outputs.targets }}
+      has_targets: ${{ steps.matrix.outputs.has_targets }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared:
+              - 'frontend/core/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/core/tsconfig*.json'
+              - 'frontend/core/package.json'
+              - 'package.json'
+              - 'yarn.lock'
+            main:
+              - 'frontend/main/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/main/tsconfig*.json'
+              - 'frontend/main/package.json'
+            dashboard:
+              - 'frontend/dashboard/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/dashboard/tsconfig*.json'
+              - 'frontend/dashboard/package.json'
+            landing:
+              - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/landing/tsconfig*.json'
+              - 'frontend/landing/package.json'
+            gateway:
+              - 'frontend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/gateway/tsconfig*.json'
+              - 'frontend/gateway/package.json'
+
+      - name: Build matrix
+        id: matrix
+        env:
+          SHARED_CHANGED: ${{ steps.filter.outputs.shared }}
+          MAIN_CHANGED: ${{ steps.filter.outputs.main }}
+          DASHBOARD_CHANGED: ${{ steps.filter.outputs.dashboard }}
+          LANDING_CHANGED: ${{ steps.filter.outputs.landing }}
+          GATEWAY_CHANGED: ${{ steps.filter.outputs.gateway }}
+        run: |
+          targets=()
+
+          if [ "$SHARED_CHANGED" = "true" ]; then
+            targets+=('{"target":"core","workspace":"@groupher/frontend-core"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$MAIN_CHANGED" = "true" ]; then
+            targets+=('{"target":"main","workspace":"@groupher/frontend-main"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$DASHBOARD_CHANGED" = "true" ]; then
+            targets+=('{"target":"dashboard","workspace":"@groupher/frontend-dashboard"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then
+            targets+=('{"target":"landing","workspace":"@groupher/frontend-landing"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$GATEWAY_CHANGED" = "true" ]; then
+            targets+=('{"target":"gateway","workspace":"@groupher/frontend-gateway"}')
+          fi
+
+          if [ ${#targets[@]} -eq 0 ]; then
+            echo 'targets={"include":[]}' >> "$GITHUB_OUTPUT"
+            echo 'has_targets=false' >> "$GITHUB_OUTPUT"
+          else
+            joined=$(printf '%s\n' "${targets[@]}" | paste -sd, -)
+            echo "targets={\"include\":[${joined}]}" >> "$GITHUB_OUTPUT"
+            echo 'has_targets=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  typecheck:
+    name: typecheck (${{ matrix.target }})
+    needs: changes
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.has_targets == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.targets) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Run TypeScript type-check
+        run: yarn workspace ${{ matrix.workspace }} type-check

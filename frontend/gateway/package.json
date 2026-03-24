@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "ci": "cross-env NODE_ENV=ci next dev",
+    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
     "build": "cross-env NODE_ENV=production next build --turbopack",
     "start": "cross-env NODe_ENV=production next start",
     "info": "next info",
