@@ -27,9 +27,11 @@ export const ASSETS_ENDPOINT = readPublicEnv(
 export const ICON = readPublicEnv('NEXT_PUBLIC_ICON', 'https://static.groupher.com/icons/static')
 export const ICON_BASE = readPublicEnv('NEXT_PUBLIC_ICON_BASE', 'https://static.groupher.com/icons')
 
-export const GRAPHQL_ENDPOINT = publicGraphQLEndpoint ?? (() => {
-  return 'http://127.0.0.1:4001/graphiql'
-})()
+export const GRAPHQL_ENDPOINT =
+  publicGraphQLEndpoint ??
+  (() => {
+    return 'http://127.0.0.1:4001/graphiql'
+  })()
 export const SITE_URL = readPublicEnv('NEXT_PUBLIC_SITE_URL', 'https://groupher.com')
 export const SITE_NAME = 'Groupher'
 export const SITE_SLOGAN =
