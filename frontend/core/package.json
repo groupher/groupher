@@ -12,6 +12,7 @@
     "./next.config": "./next.config.js"
   },
   "scripts": {
+    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.app.json",
     "lint": "../../node_modules/.bin/biome lint .",
     "format": "../../node_modules/.bin/biome format --write .",
     "build": "echo 'skip build'"

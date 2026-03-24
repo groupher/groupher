@@ -9,11 +9,11 @@ export function queryWhitelistProxy(req: NextRequest) {
   let hasNotAllowedParams = false
 
   // 检查URL中的查询参数是否都在白名单中
-  url.searchParams.forEach((_, key) => {
+  for (const key of url.searchParams.keys()) {
     if (!ALLOWED_PARAMS.includes(key)) {
       hasNotAllowedParams = true
     }
-  })
+  }
 
   // 如果发现不在白名单中的查询参数，重设URL查询参数，只包括白名单内的
   if (hasNotAllowedParams) {

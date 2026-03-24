@@ -21,14 +21,14 @@ export async function applyProxy(
     }
 
     // ✅ 合并 headers
-    currentResponse.headers.forEach((value, key) => {
+    for (const [key, value] of currentResponse.headers.entries()) {
       finalResponse.headers.set(key, value)
-    })
+    }
 
     // ✅ 合并 cookies
-    currentResponse.cookies.getAll().forEach((cookie) => {
+    for (const cookie of currentResponse.cookies.getAll()) {
       finalResponse.cookies.set(cookie)
-    })
+    }
   }
 
   return finalResponse

@@ -1,8 +1,6 @@
 {
-  "extends": "@groupher/frontend-core/tsconfig",
+  "extends": "../core/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
     "jsx": "preserve"
   },
   "include": [

@@ -1,7 +1,4 @@
 {
-  "extends": "@groupher/frontend-core/tsconfig",
-  "compilerOptions": {
-    "baseUrl": "."
-  },
+  "extends": "../core/tsconfig.json",
   "include": ["next-env.d.ts", "**/*.tsx", "**/*.ts", ".next/types/**/*.ts"]
 }

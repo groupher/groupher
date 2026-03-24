@@ -1,27 +1,27 @@
-name: Frontend linter
+name: Frontend typecheck
 
 on:
   pull_request:
     paths:
-      - "frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
-      - "frontend/**/biome.json"
+      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
+      - "frontend/**/tsconfig*.json"
+      - "frontend/**/package.json"
       - "package.json"
       - "yarn.lock"
-      - "biome.json"
   push:
     paths:
-      - "frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
-      - "frontend/**/biome.json"
+      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
+      - "frontend/**/tsconfig*.json"
+      - "frontend/**/package.json"
       - "package.json"
       - "yarn.lock"
-      - "biome.json"
 
 permissions:
   contents: read
 
 jobs:
   changes:
-    name: Detect frontend linter changes
+    name: Detect frontend typecheck changes
     runs-on: ubuntu-latest
     outputs:
       targets: ${{ steps.matrix.outputs.targets }}
@@ -34,43 +34,58 @@ jobs:
         id: filter
         with:
           filters: |
-            main:
-              - 'frontend/main/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
-            dashboard:
-              - 'frontend/dashboard/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
-            landing:
-              - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
             shared:
               - 'frontend/core/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
-              - 'frontend/**/biome.json'
+              - 'frontend/core/tsconfig*.json'
+              - 'frontend/core/package.json'
               - 'package.json'
               - 'yarn.lock'
-              - 'biome.json'
+            main:
+              - 'frontend/main/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/main/tsconfig*.json'
+              - 'frontend/main/package.json'
+            dashboard:
+              - 'frontend/dashboard/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/dashboard/tsconfig*.json'
+              - 'frontend/dashboard/package.json'
+            landing:
+              - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/landing/tsconfig*.json'
+              - 'frontend/landing/package.json'
+            gateway:
+              - 'frontend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/gateway/tsconfig*.json'
+              - 'frontend/gateway/package.json'
 
       - name: Build matrix
         id: matrix
         env:
+          SHARED_CHANGED: ${{ steps.filter.outputs.shared }}
           MAIN_CHANGED: ${{ steps.filter.outputs.main }}
           DASHBOARD_CHANGED: ${{ steps.filter.outputs.dashboard }}
           LANDING_CHANGED: ${{ steps.filter.outputs.landing }}
-          SHARED_CHANGED: ${{ steps.filter.outputs.shared }}
+          GATEWAY_CHANGED: ${{ steps.filter.outputs.gateway }}
         run: |
           targets=()
 
-          if [ "$SHARED_CHANGED" = "true" ] || [ "$MAIN_CHANGED" = "true" ]; then
-            targets+=('{"target":"main","path":"frontend/main"}')
+          if [ "$SHARED_CHANGED" = "true" ]; then
+            targets+=('{"target":"core","workspace":"@groupher/frontend-core"}')
           fi
 
-          if [ "$SHARED_CHANGED" = "true" ]; then
-            targets+=('{"target":"core","path":"frontend/core"}')
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$MAIN_CHANGED" = "true" ]; then
+            targets+=('{"target":"main","workspace":"@groupher/frontend-main"}')
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$DASHBOARD_CHANGED" = "true" ]; then
-            targets+=('{"target":"dashboard","path":"frontend/dashboard"}')
+            targets+=('{"target":"dashboard","workspace":"@groupher/frontend-dashboard"}')
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then
-            targets+=('{"target":"landing","path":"frontend/landing"}')
+            targets+=('{"target":"landing","workspace":"@groupher/frontend-landing"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$GATEWAY_CHANGED" = "true" ]; then
+            targets+=('{"target":"gateway","workspace":"@groupher/frontend-gateway"}')
           fi
 
           if [ ${#targets[@]} -eq 0 ]; then
@@ -82,8 +97,8 @@ jobs:
             echo 'has_targets=true' >> "$GITHUB_OUTPUT"
           fi
 
-  biome:
-    name: biome (${{ matrix.target }})
+  typecheck:
+    name: typecheck (${{ matrix.target }})
     needs: changes
     runs-on: ubuntu-latest
     if: needs.changes.outputs.has_targets == 'true'
@@ -106,5 +121,5 @@ jobs:
       - name: Install deps
         run: yarn install --immutable
 
-      - name: Run Biome CI
-        run: yarn biome ci ${{ matrix.path }}
+      - name: Run TypeScript type-check
+        run: yarn workspace ${{ matrix.workspace }} type-check
