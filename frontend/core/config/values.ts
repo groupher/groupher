@@ -7,6 +7,7 @@ export const PAGE_SIZE = {
   L: 40,
 } as const
 
+// ENV move later
 export const ASSETS_ENDPOINT = readPublicEnv(
   'NEXT_PUBLIC_ASSETS_ENDPOINT',
   'https://static.groupher.com',
