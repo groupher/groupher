@@ -106,10 +106,5 @@ jobs:
       - name: Install deps
         run: yarn install --immutable
 
-      - name: Setup Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: "2.3.11"
-
       - name: Run Biome CI
-        run: biome ci ${{ matrix.path }}
+        run: yarn biome ci ${{ matrix.path }}
