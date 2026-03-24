@@ -4,14 +4,16 @@
  *
  */
 
+import dynamic from 'next/dynamic'
 import type { FC } from 'react'
 import { POST_LAYOUT } from '~/const/layout'
 import type { TPost, TPostLayout } from '~/spec'
-import CoverLayout from './CoverLayout'
-import MasonryLayout from './MasonryLayout'
-import MinimalLayout from './MinimalLayout'
-import PHLayout from './PHLayout'
-import QuoraLayout from './QuoraLayout'
+
+const CoverLayout = dynamic(() => import('./CoverLayout'), { ssr: true })
+const MasonryLayout = dynamic(() => import('./MasonryLayout'), { ssr: true })
+const MinimalLayout = dynamic(() => import('./MinimalLayout'), { ssr: true })
+const PHLayout = dynamic(() => import('./PHLayout'), { ssr: true })
+const QuoraLayout = dynamic(() => import('./QuoraLayout'), { ssr: true })
 
 type TProps = {
   article: TPost
