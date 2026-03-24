@@ -1,16 +1,4 @@
-const isProd = process.env.NODE_ENV === 'production'
-
-const readPublicEnv = (name: string, fallback: string): string => {
-  const value = process.env[name]
-
-  if (value) return value
-
-  if (isProd) {
-    throw new Error(`Missing required public env: ${name}`)
-  }
-
-  return fallback
-}
+const readPublicEnv = (name: string, fallback: string): string => process.env[name] ?? fallback
 
 export const PAGE_SIZE = {
   S: 10,
