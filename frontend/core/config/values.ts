@@ -1,5 +1,4 @@
 const readPublicEnv = (name: string, fallback: string): string => process.env[name] ?? fallback
-const isProd = process.env.NODE_ENV === 'production'
 const publicGraphQLEndpoint = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT
 
 export const PAGE_SIZE = {
@@ -16,13 +15,11 @@ export const ASSETS_ENDPOINT = readPublicEnv(
 )
 export const ICON = readPublicEnv('NEXT_PUBLIC_ICON', 'https://static.groupher.com/icons/static')
 export const ICON_BASE = readPublicEnv('NEXT_PUBLIC_ICON_BASE', 'https://static.groupher.com/icons')
-export const GRAPHQL_ENDPOINT = publicGraphQLEndpoint ?? (() => {
-  if (isProd) {
-    throw new Error('Missing required public env: NEXT_PUBLIC_GRAPHQL_ENDPOINT')
-  }
-
-  return 'http://localhost:4001/graphiql'
-})()
+export const GRAPHQL_ENDPOINT =
+  publicGraphQLEndpoint ??
+  (() => {
+    return 'http://localhost:4001/graphiql'
+  })()
 export const SITE_URL = readPublicEnv('NEXT_PUBLIC_SITE_URL', 'https://groupher.com')
 export const SITE_NAME = 'Groupher'
 export const SITE_SLOGAN =
