@@ -11,6 +11,7 @@ import { BANNER_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 
 import HeaderLayout from './HeaderLayout'
+import SidebarLayout from './SidebarLayout'
 import TabberLayout from './TabberLayout'
 
 export default function CommunityDigest() {
@@ -20,7 +21,7 @@ export default function CommunityDigest() {
   return (
     <Fragment>
       {bannerLayout === BANNER_LAYOUT.TABBER && <TabberLayout />}
-      {bannerLayout === BANNER_LAYOUT.SIDEBAR && null}
+      {bannerLayout === BANNER_LAYOUT.SIDEBAR && <SidebarLayout />}
       {bannerLayout === BANNER_LAYOUT.HEADER && <HeaderLayout />}
     </Fragment>
   )
