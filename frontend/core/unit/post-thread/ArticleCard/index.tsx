@@ -33,11 +33,20 @@ const ArticleCard: FC<TProps> = ({ data }) => {
       </div>
 
       <div className='mt-1' />
-      <Link className={s.titleLink} scroll={false} href={`/${slug}/${THREAD.POST}/${innerId}`}>
+      <Link
+        className={s.titleLink}
+        scroll={false}
+        href={`/${slug}/${THREAD.POST}/${innerId}`}
+        data-preview-id={String(innerId)}
+      >
         {title}
       </Link>
 
-      <Link scroll={false} href={`/${slug}/${THREAD.POST}/${innerId}`}>
+      <Link
+        scroll={false}
+        href={`/${slug}/${THREAD.POST}/${innerId}`}
+        data-preview-id={String(innerId)}
+      >
         {cutRest(digest, 150)}
       </Link>
 

@@ -4,7 +4,7 @@
  * ThemeSwitch
  */
 
-import type { FC } from 'react'
+import { type FC, useEffect, useState } from 'react'
 import { THEME_MODE } from '~/const/theme'
 import useTheme from '~/hooks/useTheme'
 import useThemeLoop from '~/hooks/useThemeLoop'
@@ -21,7 +21,14 @@ const ThemeSwitch: FC<TProps> = ({ ...spacing }) => {
   const s = useSalon({ ...spacing })
   const { themeMode, changeMode } = useTheme()
   const { getNextThemeMode, getAriaLabel } = useThemeLoop()
-  const ariaLabel = getAriaLabel()
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
+
+  const displayThemeMode = isHydrated ? themeMode : THEME_MODE.SYSTEM
+  const ariaLabel = isHydrated ? getAriaLabel() : `${THEME_MODE.SYSTEM} mode`
 
   const handleToggle = () => {
     const nextMode = getNextThemeMode()
@@ -38,17 +45,17 @@ const ThemeSwitch: FC<TProps> = ({ ...spacing }) => {
         onClick={handleToggle}
         aria-live='polite'
       >
-        {themeMode === THEME_MODE.LIGHT && (
+        {displayThemeMode === THEME_MODE.LIGHT && (
           <div className={s.iconBox}>
             <SunSVG className={s.icon} />
           </div>
         )}
-        {themeMode === THEME_MODE.DARK && (
+        {displayThemeMode === THEME_MODE.DARK && (
           <div className={s.iconBox}>
             <MoonSVG className={s.icon} />
           </div>
         )}
-        {themeMode === THEME_MODE.SYSTEM && (
+        {displayThemeMode === THEME_MODE.SYSTEM && (
           <div className={s.iconBox}>
             <PlanetSVG className={cn(s.icon, 'size-4.5')} />
           </div>

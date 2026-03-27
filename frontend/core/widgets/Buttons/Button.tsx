@@ -15,6 +15,7 @@ type TProps = {
   soft?: boolean
   noBorder?: boolean
   noLeftRound?: boolean
+  noRightRound?: boolean
 
   // sizing/layout
   size?: TSizeTSM
@@ -41,6 +42,7 @@ const Button: FC<TProps> = ({
   soft = false,
   noBorder = false,
   noLeftRound = false,
+  noRightRound = false,
 
   size = SIZE.MEDIUM,
   width = 'w-fit',
@@ -61,6 +63,7 @@ const Button: FC<TProps> = ({
     soft,
     noBorder,
     noLeftRound,
+    noRightRound,
 
     size,
     width,
@@ -88,7 +91,7 @@ const Button: FC<TProps> = ({
         onClick?.()
       }}
     >
-      <div className={cn(s.inner)}>
+      <div className={cn(s.inner)} style={s.innerStyle}>
         {loading ? <LavaLampLoading size='small' /> : <div className={s.children}>{children}</div>}
       </div>
     </button>

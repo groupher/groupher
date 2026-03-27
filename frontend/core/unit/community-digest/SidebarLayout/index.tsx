@@ -3,7 +3,6 @@ import { THREAD } from '~/const/thread'
 import useEnable from '~/hooks/useEnable'
 import useViewingThread from '~/hooks/useViewingThread'
 
-import { refreshArticles } from '~/signal'
 import FileTree from '~/unit/doc-thread/FileTree'
 import PinedTree from '~/unit/doc-thread/PinedTree'
 import SocialList from '~/unit/social-list'
@@ -36,7 +35,7 @@ export default function SidebarLayout() {
           {activeThread === THREAD.POST && enable.post && (
             <>
               <div className={s.tabs}>
-                <TagsBar onSelect={() => refreshArticles()} />
+                <TagsBar />
               </div>
               <div className={cn(s.divider, 'mt-4 mb-2')} />
             </>

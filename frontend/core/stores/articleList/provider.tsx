@@ -6,7 +6,7 @@ import type { TInit, TStore } from './spec'
 
 type TProps = {
   children: ReactNode
-  initData: TInit
+  initData?: TInit
 }
 
 export const StoreContext = createContext<TStore | null>(null)
@@ -15,7 +15,7 @@ StoreContext.displayName = 'ArticleList'
 export default function Provider({ children, initData }: TProps) {
   const storeRef = useRef<TStore | null>(null)
 
-  storeRef.current ??= setupStore(initData)
+  storeRef.current ??= setupStore(initData || {})
 
   return <StoreContext.Provider value={storeRef.current}>{children}</StoreContext.Provider>
 }

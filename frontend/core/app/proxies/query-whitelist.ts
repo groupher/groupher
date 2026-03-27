@@ -1,8 +1,18 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { SEARCH_PARAM } from '~/constant/url'
 
 // 白名单参数数组
-const ALLOWED_PARAMS = ['theme', 'mode']
+const ALLOWED_PARAMS = [
+  'theme',
+  'mode',
+  'tag',
+  'page',
+  'cat',
+  'state',
+  'order',
+  SEARCH_PARAM.COMMUNITY,
+]
 
 export function queryWhitelistProxy(req: NextRequest) {
   const url = new URL(req.url)

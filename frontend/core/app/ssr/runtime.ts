@@ -3,10 +3,12 @@ import { CACHE_TAG } from '~/const/cache'
 import { LOCALE } from '~/const/i18n'
 import { THREAD } from '~/const/thread'
 import { loadLocaleFile } from '~/i18n'
+import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import { P } from '~/schemas'
 import type {
   TCommunityInfo,
   TLocale,
+  TPagedArticlesParams,
   TPagedChangelogs,
   TPagedComments,
   TPagedPosts,
@@ -69,25 +71,57 @@ export const getLocaleData = async (locale: TLocale = LOCALE.EN): Promise<any> =
   return loadLocaleFile(locale)
 }
 
-export const getPagedPosts = async (community: string): Promise<TPagedPosts | null> => {
-  'use cache'
-  cacheLife('minutes')
-  cacheTag(CACHE_TAG.articlesCache(community, THREAD.POST))
-
+const fetchPagedPosts = async (filter: TPagedArticlesParams): Promise<TPagedPosts | null> => {
   const response = await gqFetch(P.pagedPosts, {
-    filter: { community, page: 1 },
+    filter,
     userHasLogin: false,
   })
 
   const { data, errors } = await response.json()
 
   if (errors) {
-    // console.log('## error in fetching', P.community)
     console.log('## error details', errors)
     return null
   }
 
   return data.pagedPosts
+}
+
+const getCachedPagedPosts = async (community: string): Promise<TPagedPosts | null> => {
+  'use cache'
+  cacheLife('minutes')
+  cacheTag(CACHE_TAG.articlesCache(community, THREAD.POST))
+
+  return fetchPagedPosts({ community, page: 1 })
+}
+
+const isDefaultPagedPostsFilter = (filter: TPagedArticlesParams) => {
+  return (
+    (filter.page || 1) === 1 &&
+    !filter.communityTag &&
+    !filter.cat &&
+    !filter.state &&
+    !filter.order
+  )
+}
+
+export const getPagedPosts = async (filter: TPagedArticlesParams): Promise<TPagedPosts | null> => {
+  if (!filter.community) {
+    return null
+  }
+
+  if (isDefaultPagedPostsFilter(filter)) {
+    return getCachedPagedPosts(filter.community)
+  }
+
+  return fetchPagedPosts(filter)
+}
+
+export const getPagedPostsFromSearchParams = async (
+  community: string,
+  searchParams?: URLSearchParams | Record<string, string | string[] | undefined> | null,
+): Promise<TPagedPosts | null> => {
+  return getPagedPosts(getPagedArticlesParams(community, searchParams))
 }
 
 export const getPagedChangelogs = async (community: string): Promise<TPagedChangelogs | null> => {

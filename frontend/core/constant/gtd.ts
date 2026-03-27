@@ -1,3 +1,7 @@
+export const CAT = 'cat'
+export const STATE = 'state'
+export const ORDER = 'order'
+
 export const ARTICLE_CAT_REJECT = {
   REJECT: 'REJECT', // 关闭
   REJECT_DUP: 'REJECT_DUP', // 重复问题

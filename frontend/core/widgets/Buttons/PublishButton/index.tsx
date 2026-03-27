@@ -43,23 +43,27 @@ const PublishButton: FC<TProps> = ({
   return (
     <div className={s.wrapper}>
       <div className={s.pubBtn}>
-        <Button>
-          {mode === PUBLISH_MODE.DEFAULT && <PostLayout text={_text} />}
-          {mode === PUBLISH_MODE.SIDEBAR_LAYOUT_HEADER && <SidebarHeaderLayout text={text} />}
-        </Button>
-
-        <Menu
-          offset={s.menuOffset as [number, number]}
-          activeKey={ARTICLE_CAT.FEATURE}
-          placement={placement}
-          items={POST_CAT_MENU_ITEMS}
-          onSelect={(item) => onMenuSelect(item.key as TArticleCat)}
-          popWidth={48}
-        >
-          <Button className={s.arrowBtn} noLeftRound noBorder>
-            <ArrowSVG className={s.arrowIcon} />
+        <div className={s.mainBtn}>
+          <Button space={2.5} noBorder noRightRound>
+            {mode === PUBLISH_MODE.DEFAULT && <PostLayout text={_text} />}
+            {mode === PUBLISH_MODE.SIDEBAR_LAYOUT_HEADER && <SidebarHeaderLayout text={text} />}
           </Button>
-        </Menu>
+        </div>
+
+        <div className={s.menuBtn}>
+          <Menu
+            offset={s.menuOffset as [number, number]}
+            activeKey={ARTICLE_CAT.FEATURE}
+            placement={placement}
+            items={POST_CAT_MENU_ITEMS}
+            onSelect={(item) => onMenuSelect(item.key as TArticleCat)}
+            popWidth={48}
+          >
+            <Button width='w-full' space={0} className={s.arrowBtn} noLeftRound noBorder>
+              <ArrowSVG className={s.arrowIcon} />
+            </Button>
+          </Menu>
+        </div>
       </div>
     </div>
   )

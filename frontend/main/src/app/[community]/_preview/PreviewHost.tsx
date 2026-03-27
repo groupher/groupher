@@ -4,6 +4,7 @@ import { useParams, useSelectedLayoutSegment } from 'next/navigation'
 import {
   Fragment,
   type ReactNode,
+  Suspense,
   startTransition,
   useEffect,
   useLayoutEffect,
@@ -13,13 +14,20 @@ import {
 import Drawer from '~/widgets/@Drawer'
 import type { TPreviewPhase } from './constant'
 import { PREVIEW_PHASE } from './constant'
-import { markPreviewPending, usePreviewCacheState } from './hooks'
+import {
+  clearPreviewIntentKey,
+  markPreviewPending,
+  setPreviewIntentKey,
+  usePreviewCacheState,
+  usePreviewIntentKey,
+} from './hooks'
 import type { TPreviewCacheEntryBase } from './spec'
 
 type TProps<TEntry extends TPreviewCacheEntryBase> = {
   children: ReactNode
   resolvePreviewKey: (community?: string, id?: string) => string | null
   renderPreview: (entry: TEntry, phase: TPreviewPhase) => ReactNode
+  loadingFallback: ReactNode
 }
 
 const resolveParamValue = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value)
@@ -74,13 +82,18 @@ const usePreviewRouteState = <TEntry extends TPreviewCacheEntryBase>(
   const params = useParams<{ community?: string | string[]; id?: string | string[] }>()
   const community = resolveParamValue(params.community)
   const id = resolveParamValue(params.id)
-  const previewKey = resolvePreviewKey(community, id)
+  const routePreviewKey = resolvePreviewKey(community, id)
+  const intentKey = usePreviewIntentKey()
+  const previewKey = routePreviewKey ?? intentKey
   const cacheState = usePreviewCacheState<TEntry>(previewKey)
 
   return {
     activeSegment,
+    community,
     id,
+    intentKey,
     previewKey,
+    routePreviewKey,
     ...cacheState,
   }
 }
@@ -111,13 +124,20 @@ const renderDisplayNode = <TEntry extends TPreviewCacheEntryBase>(
   children: ReactNode,
   renderPreview: (entry: TEntry, phase: TPreviewPhase) => ReactNode,
   phase: TPreviewPhase,
+  loadingFallback: ReactNode,
 ) => {
   if (cachedEntry && !ready) {
     return renderPreview(cachedEntry, phase)
   }
 
+  if (previewKey && !activeSegment) {
+    return loadingFallback
+  }
+
   return (
-    <Fragment key={`${previewKey ?? activeSegment}:${PREVIEW_PHASE.LIVE}`}>{children}</Fragment>
+    <Suspense fallback={loadingFallback}>
+      <Fragment key={`${previewKey ?? activeSegment}:${PREVIEW_PHASE.LIVE}`}>{children}</Fragment>
+    </Suspense>
   )
 }
 
@@ -125,11 +145,15 @@ export default function PreviewHost<TEntry extends TPreviewCacheEntryBase>({
   children,
   resolvePreviewKey,
   renderPreview,
+  loadingFallback,
 }: TProps<TEntry>) {
   const {
     activeSegment,
+    community,
     id,
+    intentKey,
     previewKey,
+    routePreviewKey,
     entry: cachedEntry,
     ready,
   } = usePreviewRouteState<TEntry>(resolvePreviewKey)
@@ -138,7 +162,38 @@ export default function PreviewHost<TEntry extends TPreviewCacheEntryBase>({
 
   useMarkPreviewPending(previewKey)
 
-  if (!activeSegment) return null
+  useEffect(() => {
+    if (!community) return
+
+    const handlePreviewIntent = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0) return
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+
+      const target = event.target
+      if (!(target instanceof Element)) return
+
+      const previewTarget = target.closest<HTMLElement>('[data-preview-id]')
+      if (!previewTarget) return
+
+      const previewId = previewTarget.dataset.previewId
+      if (!previewId) return
+
+      const nextPreviewKey = resolvePreviewKey(community, previewId)
+      if (!nextPreviewKey) return
+
+      setPreviewIntentKey(nextPreviewKey)
+    }
+
+    document.addEventListener('click', handlePreviewIntent, true)
+    return () => document.removeEventListener('click', handlePreviewIntent, true)
+  }, [community, resolvePreviewKey])
+
+  useEffect(() => {
+    if (!routePreviewKey || intentKey !== routePreviewKey) return
+    clearPreviewIntentKey(routePreviewKey)
+  }, [intentKey, routePreviewKey])
+
+  if (!activeSegment && !previewKey) return null
 
   const displayNode = renderDisplayNode(
     cachedEntry,
@@ -148,6 +203,7 @@ export default function PreviewHost<TEntry extends TPreviewCacheEntryBase>({
     children,
     renderPreview,
     phase,
+    loadingFallback,
   )
 
   return <Drawer resetKey={`${id ?? activeSegment}:${phase}`}>{displayNode}</Drawer>

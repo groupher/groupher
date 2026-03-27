@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 
 import { THREAD } from '~/const/thread'
+import PreviewDrawerLoading from '~/widgets/Loading/Preview/Post'
 
 import { getPreviewCacheKey, PreviewHost, type TPreviewPhase } from '../_preview'
 import type { TChangelogPreviewCacheEntry } from './buildPreviewCacheEntry'
@@ -25,6 +26,7 @@ export default function ChangelogPreviewAdapter({ children }: TProps) {
       renderPreview={(entry, phase: TPreviewPhase) => (
         <PreviewRuntime key={`${entry.key}:${phase}`} entry={entry} phase={phase} />
       )}
+      loadingFallback={<PreviewDrawerLoading />}
     >
       {children}
     </PreviewHost>

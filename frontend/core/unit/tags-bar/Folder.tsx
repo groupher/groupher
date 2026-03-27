@@ -1,5 +1,5 @@
 import { findIndex, reverse } from 'ramda'
-import { type FC, useEffect, useRef, useState } from 'react'
+import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import { sortByColor } from '~/helper'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
@@ -11,7 +11,7 @@ import TagItem from './TagItem'
 type TProps = {
   title: string
   allTags: readonly TTag[]
-  activeTag: TTag
+  activeTag: TTag | null
   groupTags: readonly TTag[]
   maxDisplayCount: number
   totalCountThreshold: number
@@ -37,8 +37,11 @@ const Folder: FC<TProps> = ({
   const [isFolderOpen, toggleFolder] = useState(true)
   const [curDisplayCount, setCurDisplayCount] = useState(initDisplayCount)
 
-  const sortedTags = reverse(sortByColor([...groupTags]))
-  const isActiveTagInFolder = findIndex((item: TTag) => item.id === activeTag?.id, groupTags) >= 0
+  const sortedTags = useMemo(() => reverse(sortByColor([...groupTags])), [groupTags])
+  const isActiveTagInFolder = useMemo(
+    () => findIndex((item: TTag) => item.id === activeTag?.id, groupTags) >= 0,
+    [activeTag?.id, groupTags],
+  )
 
   const subToggleRef = useRef(null)
 
@@ -46,10 +49,10 @@ const Folder: FC<TProps> = ({
 
   // 当选中的 Tag 被折叠在展示更多里面时，将其展开
   useEffect(() => {
-    if (subToggleRef && isActiveTagInFolder) {
+    if (isActiveTagInFolder && curDisplayCount !== groupTags.length) {
       setCurDisplayCount(groupTags.length)
     }
-  }, [isActiveTagInFolder, groupTags])
+  }, [curDisplayCount, isActiveTagInFolder, groupTags.length])
 
   return (
     <>

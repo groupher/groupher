@@ -4,16 +4,10 @@ import type { TContainer } from '~/spec'
 // side effects, need refactor
 const hasDocument = typeof document === 'object' && document !== null
 const hasWindow = typeof window === 'object' && window !== null && window.self === window
-
 let pageLockCount = 0
-let pageLockScrollY = 0
 let pageLockBodyStyleSnapshot: {
+  overflow: string
   overflowY: string
-  position: string
-  top: string
-  width: string
-  left: string
-  right: string
 } | null = null
 
 /**
@@ -71,29 +65,19 @@ export const scrollToComments = (view: TContainer = 'body'): void => {
  */
 export const lockPage = (): void => {
   const safeDocument = getDocument()
-  if (!safeDocument || typeof window !== 'object') return
+  if (!safeDocument) return
 
   pageLockCount += 1
   if (pageLockCount > 1) return
 
-  pageLockScrollY = window.scrollY || window.pageYOffset || 0
-
   const el = safeDocument.getElementsByTagName('body')[0]
   pageLockBodyStyleSnapshot = {
+    overflow: el.style.overflow,
     overflowY: el.style.overflowY,
-    position: el.style.position,
-    top: el.style.top,
-    width: el.style.width,
-    left: el.style.left,
-    right: el.style.right,
   }
 
+  el.style.overflow = 'hidden'
   el.style.overflowY = 'hidden'
-  el.style.setProperty('position', 'fixed', 'important')
-  el.style.top = `-${pageLockScrollY}px`
-  el.style.width = '100%'
-  el.style.left = '0'
-  el.style.right = '0'
 }
 
 /**
@@ -102,34 +86,23 @@ export const lockPage = (): void => {
  */
 export const unlockPage = (): void => {
   const safeDocument = getDocument()
-  if (!safeDocument || typeof window !== 'object') return
-
+  if (!safeDocument) return
   if (pageLockCount <= 0) return
+
   pageLockCount -= 1
   if (pageLockCount > 0) return
 
-  const restoreScrollY = pageLockScrollY
-  pageLockScrollY = 0
-
   const el = safeDocument.getElementsByTagName('body')[0]
+
   if (pageLockBodyStyleSnapshot) {
+    el.style.overflow = pageLockBodyStyleSnapshot.overflow
     el.style.overflowY = pageLockBodyStyleSnapshot.overflowY
-    el.style.position = pageLockBodyStyleSnapshot.position
-    el.style.top = pageLockBodyStyleSnapshot.top
-    el.style.width = pageLockBodyStyleSnapshot.width
-    el.style.left = pageLockBodyStyleSnapshot.left
-    el.style.right = pageLockBodyStyleSnapshot.right
   } else {
-    el.style.overflowY = 'auto'
-    el.style.position = ''
-    el.style.top = ''
-    el.style.width = ''
-    el.style.left = ''
-    el.style.right = ''
+    el.style.overflow = ''
+    el.style.overflowY = ''
   }
 
   pageLockBodyStyleSnapshot = null
-  window.scrollTo(0, restoreScrollY)
 }
 
 /**

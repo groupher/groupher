@@ -9,6 +9,7 @@ const PREVIEW_CACHE_MAX_ENTRIES = 100
 
 const previewCache = new Map<string, TPreviewCacheEntryBase>()
 const previewStatus = new Map<string, 'pending' | 'ready'>()
+let previewIntentKey: string | null = null
 const listeners = new Set<() => void>()
 let previewCacheVersion = 0
 
@@ -118,6 +119,22 @@ export const markPreviewReady = (key: string): void => {
 
 export const getPreviewReadyState = (key: string): boolean => previewStatus.get(key) === 'ready'
 
+export const getPreviewIntentKey = (): string | null => previewIntentKey
+
+export const setPreviewIntentKey = (key: string): void => {
+  if (previewIntentKey === key) return
+  previewIntentKey = key
+  emit()
+}
+
+export const clearPreviewIntentKey = (key?: string): void => {
+  if (!previewIntentKey) return
+  if (key && previewIntentKey !== key) return
+
+  previewIntentKey = null
+  emit()
+}
+
 const subscribe = (listener: () => void) => {
   listeners.add(listener)
   return () => listeners.delete(listener)
@@ -153,4 +170,14 @@ export const usePreviewCacheState = <
     }),
     [key, version],
   )
+}
+
+export const usePreviewIntentKey = (): string | null => {
+  const version = useSyncExternalStore(
+    subscribe,
+    () => previewCacheVersion,
+    () => previewCacheVersion,
+  )
+
+  return useMemo(() => getPreviewIntentKey(), [version])
 }

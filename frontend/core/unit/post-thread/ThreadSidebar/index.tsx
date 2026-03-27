@@ -16,7 +16,7 @@ import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
 import LinkSVG from '~/icons/Link'
 import { mockUsers } from '~/mock'
-import { callGEditor, callSyncSelector, listUsers, refreshArticles } from '~/signal'
+import { callGEditor, callSyncSelector, listUsers } from '~/signal'
 import useCommunity from '~/stores/community/hooks'
 import GetMe from '~/unit/get-me'
 import TagsBar from '~/unit/tags-bar'
@@ -53,10 +53,7 @@ export default function ThreadSidebar() {
 
               <GetMe />
             </div>
-
             <h3 className={s.title}>{t('team.member', 'titleCase')}</h3>
-            <div className='mt-6' />
-
             <div className={s.joiners}>
               {mockUsers(5).map((user) => (
                 <Img
@@ -86,7 +83,7 @@ export default function ThreadSidebar() {
           {!showCommunityBadge && <div className={s.divider} />}
 
           <div className={s.tagsBar}>
-            <TagsBar onSelect={() => refreshArticles()} />
+            <TagsBar />
           </div>
         </div>
 

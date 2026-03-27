@@ -40,7 +40,12 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <div className={s.header}>
         <TagsList items={[tags[titleIdx]]} />
       </div>
-      <Link href={`/${slug}/${THREAD.POST}/${article.innerId}`} scroll={false} className={s.title}>
+      <Link
+        href={`/${slug}/${THREAD.POST}/${article.innerId}`}
+        scroll={false}
+        className={s.title}
+        data-preview-id={String(article.innerId)}
+      >
         {article.title}
       </Link>
       <div className={s.desc}>{article.digest}</div>
