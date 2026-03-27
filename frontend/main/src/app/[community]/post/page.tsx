@@ -3,7 +3,7 @@ import { getPagedPosts, getTags } from '~/app/ssr'
 import { THREAD } from '~/const/thread'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
-import PostThread from '~/unit/post-thread'
+import PostThread from '~/unit/PostThread'
 
 export default async function Page({ params, searchParams }) {
   const params$ = await params

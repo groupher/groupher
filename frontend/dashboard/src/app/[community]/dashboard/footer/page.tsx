@@ -1,6 +1,6 @@
 'use client'
 
-import Footer from '~/unit/dashboard-thread/Footer'
+import Footer from '~/unit/DashboardThread/Footer'
 
 const DashboardFooterPage = () => {
   return <Footer />

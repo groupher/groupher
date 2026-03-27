@@ -1,4 +1,4 @@
-import type { TDsbFieldKey } from '~/unit/dashboard-thread/spec'
+import type { TDsbFieldKey } from '~/unit/DashboardThread/spec'
 
 export const SEO_OG_KEYS = [
   'ogSiteName',

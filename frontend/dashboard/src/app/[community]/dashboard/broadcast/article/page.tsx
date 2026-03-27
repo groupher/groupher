@@ -1,6 +1,6 @@
 'use client'
 
-import ArticleEditor from '~/unit/dashboard-thread/Broadcast/Editor/Article'
+import ArticleEditor from '~/unit/DashboardThread/Broadcast/Editor/Article'
 
 export default function Page() {
   return <ArticleEditor />

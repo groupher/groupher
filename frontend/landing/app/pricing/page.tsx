@@ -1,8 +1,8 @@
 'use client'
 
-import HomeHeader from '~/unit/home-header'
+import HomeHeader from '~/unit/HomeHeader'
 
-import PriceWall from '~/unit/price-wall'
+import PriceWall from '~/unit/PriceWall'
 import useSalon from './salon'
 
 export default function Page() {

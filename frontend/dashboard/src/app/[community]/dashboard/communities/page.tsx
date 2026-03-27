@@ -1,6 +1,6 @@
 'use client'
 
-import Communities from '~/unit/dashboard-thread/CMS/Communities'
+import Communities from '~/unit/DashboardThread/CMS/Communities'
 
 const DashboardCommunitiesPage = () => {
   return <Communities />

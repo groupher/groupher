@@ -1,6 +1,6 @@
 'use client'
 
-import Link from '~/unit/dashboard-thread/Widgets/Link'
+import Link from '~/unit/DashboardThread/Widgets/Link'
 
 export default function LinkWidget() {
   return <Link />

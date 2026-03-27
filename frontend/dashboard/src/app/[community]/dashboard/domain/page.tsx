@@ -1,6 +1,6 @@
 'use client'
 
-import Platform from '~/unit/dashboard-thread/Domain/Platform'
+import Platform from '~/unit/DashboardThread/Domain/Platform'
 
 export default function PlatformPage() {
   return <Platform />

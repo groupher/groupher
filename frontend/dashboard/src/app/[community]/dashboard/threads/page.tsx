@@ -1,6 +1,6 @@
 'use client'
 
-import Threads from '~/unit/dashboard-thread/Threads'
+import Threads from '~/unit/DashboardThread/Threads'
 
 const DashboardThreadsPage = () => {
   return <Threads />

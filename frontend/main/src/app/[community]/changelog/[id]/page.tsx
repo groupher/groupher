@@ -1,6 +1,6 @@
 'use client'
 
-import ArticleChangelog from '~/unit/changelog-article'
+import ArticleChangelog from '~/unit/ChangelogArticle'
 
 const CommunityPostPage = () => {
   return <ArticleChangelog />
