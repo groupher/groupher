@@ -44,6 +44,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <button
         type='button'
         className={s.title}
+        data-preview-id={String(article.innerId)}
         onClick={() => router.push(`/${slug}/${THREAD.POST}/${article.innerId}`, { scroll: false })}
       >
         {article.title}

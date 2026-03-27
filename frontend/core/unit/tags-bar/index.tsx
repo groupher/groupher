@@ -6,30 +6,20 @@
 
 import { keys, reverse } from 'ramda'
 import type { FC } from 'react'
-import useMount from '~/hooks/useMount'
 import Folder from './Folder'
 import GoBackTag from './GobackTag'
 import useSalon from './salon'
 import useLogic from './useLogic'
 
 type TProps = {
-  onSelect: () => void
+  onSelect?: () => void
 }
 
 const TagsBar: FC<TProps> = ({ onSelect }) => {
   const s = useSalon()
 
-  const {
-    tags,
-    activeTag,
-    maxDisplayCount,
-    totalCountThreshold,
-    groupedTags,
-    onTagSelect,
-    syncActiveTagFromURL,
-  } = useLogic()
-
-  useMount(syncActiveTagFromURL)
+  const { tags, activeTag, maxDisplayCount, totalCountThreshold, groupedTags, onTagSelect } =
+    useLogic()
 
   const groupsKeys = reverse(keys(groupedTags)) as string[]
 

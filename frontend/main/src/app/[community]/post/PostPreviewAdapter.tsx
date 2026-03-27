@@ -3,6 +3,7 @@
 import { lazy, type ReactNode, Suspense } from 'react'
 
 import { THREAD } from '~/const/thread'
+import PreviewDrawerLoading from '~/widgets/Loading/Preview/Post'
 
 import { getPreviewCacheKey, PreviewHost, type TPreviewPhase } from '../_preview'
 import type { TPostPreviewCacheEntry } from './buildPreviewCacheEntry'
@@ -28,6 +29,7 @@ export default function PostPreviewAdapter({ children }: TProps) {
           <PreviewRuntime key={`${entry.key}:${phase}`} entry={entry} phase={phase} />
         </Suspense>
       )}
+      loadingFallback={<PreviewDrawerLoading />}
     >
       {children}
     </PreviewHost>

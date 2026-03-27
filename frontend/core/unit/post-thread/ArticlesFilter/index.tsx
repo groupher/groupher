@@ -12,7 +12,7 @@ import useArticlesFilter from '~/hooks/useArticlesFilter'
 import useLayout from '~/hooks/useLayout'
 
 import usePagedPosts from '~/hooks/usePagedPosts'
-import { callGEditor, callSyncSelector, refreshArticles } from '~/signal'
+import { callGEditor, callSyncSelector } from '~/signal'
 import type { TArticleCat, TArticleOrder, TArticleState } from '~/spec'
 import ConditionSelector from '~/unit/condition-selector'
 import PublishButton from '~/widgets/Buttons/PublishButton'
@@ -25,6 +25,7 @@ export default function ArticlesFilter() {
   const s = useSalon()
 
   const { resState } = usePagedPosts()
+  const isLoading = resState === TYPE.RES_STATE.LOADING
   const { bannerLayout } = useLayout()
 
   const {
@@ -34,6 +35,22 @@ export default function ArticlesFilter() {
     updateActiveFilter,
   } = useArticlesFilter()
 
+  const renderSearchBox = () => {
+    if (bannerLayout === BANNER_LAYOUT.SIDEBAR) {
+      return isLoading ? <LavaLampLoading /> : <SearchBox />
+    }
+
+    if (bannerLayout === BANNER_LAYOUT.HEADER) {
+      return isLoading ? <LavaLampLoading top={4} right={12} /> : <SearchBox right={-2} />
+    }
+
+    if (bannerLayout === BANNER_LAYOUT.TABBER) {
+      return isLoading ? <LavaLampLoading right={6} /> : <SearchBox right={6} />
+    }
+
+    return null
+  }
+
   return (
     <div className={s.wrapper}>
       <ConditionSelector
@@ -41,7 +58,6 @@ export default function ArticlesFilter() {
         active={activeOrder}
         onSelect={(order: TArticleOrder) => {
           updateActiveFilter({ order })
-          refreshArticles()
         }}
         selected={!!activeOrder}
         prefixIcon={BUTTON_PREFIX.SORT}
@@ -52,7 +68,6 @@ export default function ArticlesFilter() {
         active={activeCat}
         onSelect={(cat: TArticleCat) => {
           updateActiveFilter({ cat })
-          refreshArticles()
         }}
         selected={!!activeCat}
         prefixIcon={BUTTON_PREFIX.CATEGORY}
@@ -63,15 +78,13 @@ export default function ArticlesFilter() {
         active={activeState}
         onSelect={(state: TArticleState) => {
           updateActiveFilter({ state })
-          refreshArticles()
         }}
         selected={!!activeState}
         prefixIcon={BUTTON_PREFIX.STATUS}
       />
       <div className='mr-2.5' />
       <div className='grow' />
-      {resState === TYPE.RES_STATE.LOADING && <LavaLampLoading right={28} left={10} />}
-      {bannerLayout === BANNER_LAYOUT.SIDEBAR && <SearchBox />}
+      {renderSearchBox()}
       {bannerLayout === BANNER_LAYOUT.SIDEBAR && (
         <PublishButton
           text='参与讨论'
@@ -85,8 +98,6 @@ export default function ArticlesFilter() {
           top={-1}
         />
       )}
-      {bannerLayout === BANNER_LAYOUT.HEADER && <SearchBox right={-2} />}
-      {bannerLayout === BANNER_LAYOUT.TABBER && <SearchBox right={6} />}
     </div>
   )
 }

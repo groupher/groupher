@@ -5,6 +5,7 @@ import { useContext } from 'react'
 import { useSnapshot } from 'valtio'
 
 type TObject = Record<string, unknown>
+type TFunc = (...args: unknown[]) => unknown
 
 const createStoreHook = <TStore extends TObject, TSnap extends TObject = TStore>(
   StoreContext: Context<TStore | null>,
@@ -24,7 +25,17 @@ const createStoreHook = <TStore extends TObject, TSnap extends TObject = TStore>
     const base = snap as TObject
     const extra = resolvedExpose.reduce<TObject>((acc, key) => {
       if (key in store) {
-        acc[key as string] = store[key]
+        const value = store[key]
+
+        acc[key as string] =
+          typeof value === 'function'
+            ? (...args: unknown[]) => {
+                const current = store[key]
+                if (typeof current !== 'function') return undefined
+
+                return (current as TFunc)(...args)
+              }
+            : value
       }
       return acc
     }, {})

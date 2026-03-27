@@ -1,3 +1,4 @@
+import { useContext } from 'react'
 import { findIndex, includes, values } from 'ramda'
 import { ARTICLE_THREAD } from '~/const/thread'
 import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
@@ -5,7 +6,7 @@ import { plural } from '~/fmt'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import useViewingThread from '~/hooks/useViewingThread'
 import type { TArticle } from '~/spec'
-import useArticleList from '~/stores/articleList/hooks'
+import { StoreContext } from '~/stores/articleList/provider'
 
 type TRes = {
   previous: TArticle | null
@@ -13,11 +14,11 @@ type TRes = {
 }
 
 export default function useNaviArticle(): TRes {
-  const articles = useArticleList()
+  const articles = useContext(StoreContext)
   const curThread = useViewingThread()
   const { article: viewingArticle } = useViewingArticle()
 
-  if (!includes(curThread, values(ARTICLE_THREAD)) || !viewingArticle?.id) {
+  if (!articles || !includes(curThread, values(ARTICLE_THREAD)) || !viewingArticle?.id) {
     return {
       previous: null,
       next: null,

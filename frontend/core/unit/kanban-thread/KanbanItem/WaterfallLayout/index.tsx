@@ -31,7 +31,11 @@ const KanbanItem: FC<TProps> = ({ article }) => {
   return (
     <div className={s.wrapper}>
       <h4 className={s.title}>
-        <Link href={`/${slug}/${THREAD.POST}/${article.innerId}`} scroll={false}>
+        <Link
+          href={`/${slug}/${THREAD.POST}/${article.innerId}`}
+          scroll={false}
+          data-preview-id={String(article.innerId)}
+        >
           {title}
         </Link>
       </h4>

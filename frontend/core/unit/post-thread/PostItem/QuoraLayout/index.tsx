@@ -18,7 +18,12 @@ const PostItem: FC<TProps> = ({ article }) => {
   return (
     <article className={s.wrapper}>
       <Header article={article} />
-      <Link className={s.digest} href={`/${slug}/${THREAD.POST}/${article.innerId}`} scroll={false}>
+      <Link
+        className={s.digest}
+        href={`/${slug}/${THREAD.POST}/${article.innerId}`}
+        scroll={false}
+        data-preview-id={String(article.innerId)}
+      >
         {article.digest}
       </Link>
       <Footer article={article} />

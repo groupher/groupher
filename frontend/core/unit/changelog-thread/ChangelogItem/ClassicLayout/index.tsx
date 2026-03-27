@@ -37,6 +37,7 @@ const ClassicLayout: FC<TProps> = ({ article }) => {
           className={s.title}
           href={`/${slug}/${THREAD.CHANGELOG}/${article.innerId}`}
           scroll={false}
+          data-preview-id={String(article.innerId)}
         >
           {article.title}
           <div className={s.version}>v3.21</div>

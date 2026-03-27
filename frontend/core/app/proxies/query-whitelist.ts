@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
 // 白名单参数数组
-const ALLOWED_PARAMS = ['theme', 'mode']
+const ALLOWED_PARAMS = ['theme', 'mode', 'tag', 'page', 'cat', 'state', 'order']
 
 export function queryWhitelistProxy(req: NextRequest) {
   const url = new URL(req.url)

@@ -4,14 +4,13 @@ import type { TActive, TColor } from '~/spec'
 type TProps = TActive & TColor
 
 export default function useSalon({ active, color }: TProps) {
-  const { cn, fg, bg, fill, rainbow, gradientBar } = useTwBelt()
+  const { cn, fg, bg, fill, rainbow } = useTwBelt()
 
   return {
     wrapper: cn(
-      'row-center group py-1.5 px-2.5 -ml-1.5 max-w-full rounded-lg pointer',
+      'row-center group py-1.5 px-2.5 max-w-full rounded-lg pointer',
       !active && `hover:${bg('hoverBg')}`,
-      active && 'p-1.5 pl-2.5 -ml-1 my-0.5',
-      active ? gradientBar(color) : 'transparent',
+      active && cn('p-1.5 pl-3 my-0.5', bg('hoverBg')),
     ),
     title: cn('group-smoky-80', active && 'opacity-100', fg('title')),
     tag: cn('row-center grow text-sm', active && '-ml-0.5'),

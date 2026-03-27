@@ -8,12 +8,15 @@ import { buttonInner, buttonWrapper } from './variants'
 
 export { cn, cnMerge } from '~/css'
 
+const toSpaceRem = (value: number): string => `${value * 0.25}rem`
+
 type TProps = {
   red: boolean
   ghost: boolean
   soft: boolean
   noBorder: boolean
   noLeftRound: boolean
+  noRightRound: boolean
 
   width: string
   px: number | null
@@ -32,6 +35,7 @@ export default function useButtonSalon({
   soft,
   noBorder,
   noLeftRound,
+  noRightRound,
 
   width,
   px,
@@ -65,7 +69,7 @@ export default function useButtonSalon({
     mode: ghost ? 'ghost' : 'solid',
     interactive,
     soft,
-    noLeftRound,
+    width: width === 'w-full' ? 'full' : 'fit',
   })
 
   const toneBg = () => {
@@ -112,10 +116,16 @@ export default function useButtonSalon({
     return bg('hoverBg')
   }
 
+  const innerStyle = {
+    ...(px != null ? { paddingLeft: toSpaceRem(px), paddingRight: toSpaceRem(px) } : {}),
+    ...(py != null ? { paddingTop: toSpaceRem(py), paddingBottom: toSpaceRem(py) } : {}),
+  }
+
   return {
     wrapper: cnMerge(
       wrapperBase,
-      'rounded-xl',
+      noLeftRound && 'rounded-tl-none rounded-bl-none',
+      noRightRound && 'rounded-tr-none rounded-br-none',
 
       !(red || noBorder) && br('divider'),
 
@@ -127,13 +137,12 @@ export default function useButtonSalon({
     inner: cnMerge(
       innerBase,
 
-      getRound(size),
       getPadding(size),
       getHeight(size),
       getFontSize(size),
-
-      px != null && `px-${px}`,
-      py != null && `py-${py}`,
+      getRound(size),
+      noLeftRound && 'rounded-tl-none rounded-bl-none',
+      noRightRound && 'rounded-tr-none rounded-br-none',
 
       toneBg(),
       toneFg(),
@@ -144,6 +153,7 @@ export default function useButtonSalon({
       softBg(),
     ),
 
-    children: cn('align-both relative w-auto px-2'),
+    children: cn('align-both relative', width === 'w-full' ? 'w-full' : 'w-auto'),
+    innerStyle,
   }
 }

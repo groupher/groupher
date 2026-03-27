@@ -1,21 +1,10 @@
-import { getPagedChangelogs, getTags } from '~/app/ssr'
-import { THREAD } from '~/const/thread'
-import ArticleListStoreProvider from '~/stores/articleList/provider'
 import ChangelogPreviewAdapter from './ChangelogPreviewAdapter'
 
-export default async ({ children, previewer, params }) => {
-  const params$ = await params
-
-  const pagedChangelogs = await getPagedChangelogs(params$.community)
-  const tags = await getTags(params$.community, THREAD.CHANGELOG)
-
-  const initData = { pagedChangelogs, tags, thread: THREAD.CHANGELOG }
-
+export default async function Layout({ children, previewer }) {
   return (
-    <ArticleListStoreProvider initData={initData}>
+    <>
       {children}
-
       <ChangelogPreviewAdapter>{previewer}</ChangelogPreviewAdapter>
-    </ArticleListStoreProvider>
+    </>
   )
 }

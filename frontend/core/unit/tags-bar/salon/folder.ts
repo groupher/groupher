@@ -8,7 +8,7 @@ export default function useSalon({ isFolderOpen }: TProps) {
   const { cn, fg, zise, fill } = useTwBelt()
 
   return {
-    header: 'row-center mb-2 ml-0.5 pointer hover:opacity-80 transition-opacity',
+    header: 'row-center mb-2 ml-1.5 pointer hover:opacity-80 transition-opacity',
     arrowBox: 'row-center size-4',
     title: 'row-center ml-1.5',
     folderTitle: cn('text-sm mr-2', fg('digest')),
@@ -23,8 +23,8 @@ export default function useSalon({ isFolderOpen }: TProps) {
       'before:content-["("] after:content-[")"] before:text-xs after:text-xs before:mr-px after:ml-0.5 before:opacity-80 after:opacity-80',
       fg('title'),
     ),
-    content: cn('w-full mb-4', isFolderOpen ? 'block' : 'hidden'),
-    subToggle: 'row-center mt-1 ml-0.5 pointer',
+    content: cn('w-full mb-4 -ml-px', isFolderOpen ? 'block' : 'hidden'),
+    subToggle: 'row-center mt-1 ml-1.5 pointer',
     subToggleTitle: cn('text-xs ml-2 p-0.5 rounded', fg('digest')),
     toggleIcon: cn('ml-0.5', zise(3), fill('digest')),
   }

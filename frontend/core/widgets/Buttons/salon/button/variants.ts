@@ -25,6 +25,10 @@ export const buttonInner = cva(
   'align-both w-max relative text-center break-keep border border-transparent',
   {
     variants: {
+      width: {
+        fit: 'w-max',
+        full: 'w-full',
+      },
       mode: {
         solid: '',
         ghost: 'bg-transparent',
@@ -33,10 +37,6 @@ export const buttonInner = cva(
         true: 'pointer hover:brightness-110 active:brightness-95 trans-all-200',
         false: 'cursor-not-allowed dark:brightness-90',
       },
-      noLeftRound: {
-        true: 'rounded-tl-none rounded-bl-none',
-      },
-      // soft 你目前没放任何 class，可先保留（或者删掉这个 variant）
       soft: {
         true: '',
         false: '',
@@ -44,6 +44,7 @@ export const buttonInner = cva(
     },
     compoundVariants: [{ mode: 'ghost', interactive: true, class: 'hover:brightness-125' }],
     defaultVariants: {
+      width: 'fit',
       mode: 'solid',
       interactive: true,
     },

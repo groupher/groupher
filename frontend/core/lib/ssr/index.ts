@@ -13,6 +13,7 @@ import type {
   TCommunity,
   TNameAlias,
   TPagedArticles,
+  TPagedArticlesParams,
   TPagedTags,
   TParseDashboard,
   TParsedWallpaper,
@@ -157,9 +158,11 @@ const hasArticles = (thread: TThread) => {
   )
 }
 
-const getPagedQuery = (community: string, thread: TThread) => {
-  const filter = { community, page: 1 }
-
+const getPagedQuery = (
+  community: string,
+  thread: TThread,
+  filter: TPagedArticlesParams = { community, page: 1 },
+) => {
   switch (thread) {
     case THREAD.CHANGELOG: {
       return { schema: P.pagedChangelogs, variables: { filter, userHasLogin: false } }
@@ -172,7 +175,37 @@ const getPagedQuery = (community: string, thread: TThread) => {
   }
 }
 
-export const getPagedArticles = async (
+const isDefaultPagedArticlesFilter = (filter: TPagedArticlesParams) => {
+  return (
+    (filter.page || 1) === 1 &&
+    !filter.communityTag &&
+    !filter.cat &&
+    !filter.state &&
+    !filter.order
+  )
+}
+
+const fetchPagedArticles = async (
+  community: string,
+  thread: TThread,
+  filter: TPagedArticlesParams,
+): Promise<TPagedArticles | null> => {
+  if (!hasArticles(thread)) return null
+
+  const { schema, variables } = getPagedQuery(community, thread, filter)
+  const response = await gqFetch(schema, variables)
+
+  const { data, errors } = await response.json()
+
+  if (errors) {
+    console.log('## error details', errors)
+    return null
+  }
+
+  return data[extractQueryName(schema)]
+}
+
+const getCachedPagedArticles = async (
   community: string,
   thread: TThread,
 ): Promise<TPagedArticles | null> => {
@@ -180,20 +213,19 @@ export const getPagedArticles = async (
   cacheLife('minutes')
   cacheTag(CACHE_TAG.articlesCache(community, thread))
 
-  if (!hasArticles(thread)) return null
+  return fetchPagedArticles(community, thread, { community, page: 1 })
+}
 
-  const { schema, variables } = getPagedQuery(community, thread)
-  const response = await gqFetch(schema, variables)
-
-  const { data, errors } = await response.json()
-
-  if (errors) {
-    // console.log('## error in fetching', P.community)
-    console.log('## error details', errors)
-    return null
+export const getPagedArticles = async (
+  community: string,
+  thread: TThread,
+  filter: TPagedArticlesParams = { community, page: 1 },
+): Promise<TPagedArticles | null> => {
+  if (isDefaultPagedArticlesFilter(filter)) {
+    return getCachedPagedArticles(community, thread)
   }
 
-  return data[extractQueryName(schema)]
+  return fetchPagedArticles(community, thread, filter)
 }
 
 export const getPagedTags = async (
