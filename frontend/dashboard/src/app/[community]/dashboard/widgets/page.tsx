@@ -1,6 +1,6 @@
 'use client'
 
-import Drawer from '~/unit/dashboard-thread/Widgets/Drawer'
+import Drawer from '~/unit/DashboardThread/Widgets/Drawer'
 
 export default function DrawerWidget() {
   return <Drawer />

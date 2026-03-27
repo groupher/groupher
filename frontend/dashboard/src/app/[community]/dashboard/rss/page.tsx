@@ -1,6 +1,6 @@
 'use client'
 
-import RSS from '~/unit/dashboard-thread/RSS'
+import RSS from '~/unit/DashboardThread/RSS'
 
 const DashboardRSSPage = () => {
   return <RSS />

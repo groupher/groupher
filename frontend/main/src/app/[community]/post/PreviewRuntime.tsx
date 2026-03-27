@@ -3,7 +3,7 @@
 import { THREAD } from '~/const/thread'
 import ArticleStoreProvider from '~/stores/article/provider'
 import CommentsStoreProvider from '~/stores/comments/provider'
-import ArticleViewer from '~/unit/article-view'
+import ArticleViewer from '~/unit/ArticleView'
 
 import { isLitePreviewPhase, type TPreviewPhase } from '../_preview'
 import type { TPostPreviewCacheEntry } from './buildPreviewCacheEntry'

@@ -1,6 +1,6 @@
 'use client'
 
-import CommunityDigest from '~/unit/community-digest'
+import CommunityDigest from '~/unit/CommunityDigest'
 
 import useSalon from './salon'
 

@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
 
-const OauthHinter = dynamic(() => import('~/unit/oauth'), {
+const OauthHinter = dynamic(() => import('~/unit/Oauth'), {
   ssr: false,
 })
 

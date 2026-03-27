@@ -1,9 +1,9 @@
 'use client'
 
 import { groupByKey } from '~/helper'
-import Item from '~/unit/dashboard-thread/Alias/Item'
-import { ALIAS_GROUP } from '~/unit/dashboard-thread/constant'
-import useAlias from '~/unit/dashboard-thread/hooks/useAlias'
+import Item from '~/unit/DashboardThread/Alias/Item'
+import { ALIAS_GROUP } from '~/unit/DashboardThread/constant'
+import useAlias from '~/unit/DashboardThread/hooks/useAlias'
 
 export default function Page() {
   const { nameAlias } = useAlias()

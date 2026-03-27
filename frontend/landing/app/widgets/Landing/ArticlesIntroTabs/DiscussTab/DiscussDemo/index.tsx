@@ -6,7 +6,7 @@ import CommentSVG from '~/icons/Comment'
 import UpvoteSVG from '~/icons/Upvote'
 import { mockUsers } from '~/mock'
 
-import ArticleCatState from '~/unit/article-cat-state'
+import ArticleCatState from '~/unit/ArticleCatState'
 import Facepile from '~/widgets/Facepile/LandingPage'
 import TagNode from '~/widgets/TagNode'
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/discuss_tab/discuss_demo'

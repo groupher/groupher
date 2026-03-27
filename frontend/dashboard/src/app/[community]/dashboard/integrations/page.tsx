@@ -7,7 +7,7 @@ import DomainSVG from '~/icons/Domain'
 import AnalysisSVG from '~/icons/Pulse'
 import EmailSVG from '~/icons/social/Email'
 import WebhookSVG from '~/icons/Webhook'
-import DsbCovers from '~/unit/dashboard-covers'
+import DsbCovers from '~/unit/DashboardCovers'
 
 export default function IntegrationsPage() {
   return (

@@ -1,6 +1,6 @@
 'use client'
 
-import OpenGraph from '~/unit/dashboard-thread/SEO/OpenGraph'
+import OpenGraph from '~/unit/DashboardThread/SEO/OpenGraph'
 
 export default function Page() {
   return <OpenGraph />

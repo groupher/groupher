@@ -1,6 +1,6 @@
 'use client'
 
-import DocThread from '~/unit/doc-thread'
+import DocThread from '~/unit/DocThread'
 
 const CommunityDocPage = () => {
   return <DocThread />

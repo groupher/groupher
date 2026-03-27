@@ -1,13 +1,13 @@
 'use client'
 
-import FloatBackground from '~/unit/dashboard-thread/Layout/FloatBackground'
-import GaussBlur from '~/unit/dashboard-thread/Layout/GaussBlur'
-import GlowLight from '~/unit/dashboard-thread/Layout/GlowLight'
-import PageBackground from '~/unit/dashboard-thread/Layout/PageBackground'
-import PrimaryColor from '~/unit/dashboard-thread/Layout/PrimaryColor'
-import Wallpaper from '~/unit/dashboard-thread/Layout/Wallpaper'
+import FloatBackground from '~/unit/DashboardThread/Layout/FloatBackground'
+import GaussBlur from '~/unit/DashboardThread/Layout/GaussBlur'
+import GlowLight from '~/unit/DashboardThread/Layout/GlowLight'
+import PageBackground from '~/unit/DashboardThread/Layout/PageBackground'
+import PrimaryColor from '~/unit/DashboardThread/Layout/PrimaryColor'
+import Wallpaper from '~/unit/DashboardThread/Layout/Wallpaper'
 
-import useSalon from '~/unit/dashboard-thread/salon/layout'
+import useSalon from '~/unit/DashboardThread/salon/layout'
 
 export default function Page() {
   const s = useSalon()
