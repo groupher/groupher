@@ -1,5 +1,12 @@
-export default function useSalon() {
+import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
+
+type TProps = TSpace
+
+export default function useSalon({ ...spacing }: TProps) {
+  const { cn, margin } = useTwBelt()
+
   return {
-    wrapper: 'row-center w-full',
+    wrapper: cn('row-center w-full', margin(spacing)),
   }
 }

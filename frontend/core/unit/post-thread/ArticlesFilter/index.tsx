@@ -13,7 +13,7 @@ import useLayout from '~/hooks/useLayout'
 
 import usePagedPosts from '~/hooks/usePagedPosts'
 import { callGEditor, callSyncSelector } from '~/signal'
-import type { TArticleCat, TArticleOrder, TArticleState } from '~/spec'
+import type { TArticleCat, TArticleOrder, TArticleState, TSpace } from '~/spec'
 import ConditionSelector from '~/unit/condition-selector'
 import PublishButton from '~/widgets/Buttons/PublishButton'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
@@ -21,8 +21,10 @@ import SearchBox from '~/widgets/SearchBox'
 
 import useSalon from './salon'
 
-export default function ArticlesFilter() {
-  const s = useSalon()
+type TProps = TSpace
+
+export default function ArticlesFilter({ ...spacing }: TProps) {
+  const s = useSalon({ ...spacing })
 
   const { resState } = usePagedPosts()
   const isLoading = resState === TYPE.RES_STATE.LOADING
@@ -41,7 +43,7 @@ export default function ArticlesFilter() {
     }
 
     if (bannerLayout === BANNER_LAYOUT.HEADER) {
-      return isLoading ? <LavaLampLoading top={4} right={12} /> : <SearchBox right={-2} />
+      return isLoading ? <LavaLampLoading top={4} right={12} /> : <SearchBox right={-4} />
     }
 
     if (bannerLayout === BANNER_LAYOUT.TABBER) {

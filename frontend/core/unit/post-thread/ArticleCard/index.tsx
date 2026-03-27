@@ -42,7 +42,11 @@ const ArticleCard: FC<TProps> = ({ data }) => {
         {title}
       </Link>
 
-      <Link scroll={false} href={`/${slug}/${THREAD.POST}/${innerId}`} data-preview-id={String(innerId)}>
+      <Link
+        scroll={false}
+        href={`/${slug}/${THREAD.POST}/${innerId}`}
+        data-preview-id={String(innerId)}
+      >
         {cutRest(digest, 150)}
       </Link>
 

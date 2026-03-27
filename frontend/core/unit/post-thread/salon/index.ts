@@ -15,7 +15,6 @@ export default function useSalon() {
 
   return {
     wrapper: 'row w-full',
-    filter: 'row-center h-10 -ml-1.5',
     layout: cn(
       isSidebarLayout && `min-w-0 flex-1 ${isMasonary ? 'px-[12%]' : 'px-[20%]'}`,
       isHeaderLayout && `min-w-0 flex-1 mt-3 mr-12 pr-16 border-r ${br('divider')}`,

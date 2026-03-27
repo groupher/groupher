@@ -15,8 +15,9 @@ const ARTICLES_FILTER = {
   size: 20,
 }
 
-const isSearchParamsLike = (source: TSearchParamsLike | TSearchParamsObject): source is TSearchParamsLike =>
-  typeof (source as TSearchParamsLike).get === 'function'
+const isSearchParamsLike = (
+  source: TSearchParamsLike | TSearchParamsObject,
+): source is TSearchParamsLike => typeof (source as TSearchParamsLike).get === 'function'
 
 export const toURLSearchParams = (
   source?: TSearchParamsLike | TSearchParamsObject | null,

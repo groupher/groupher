@@ -7,9 +7,8 @@
  */
 
 import { BANNER_LAYOUT } from '~/const/layout'
-
-import useFetchPagedPosts from '~/hooks/usePagedPosts/useFetchPagedPosts'
 import useLayout from '~/hooks/useLayout'
+import useFetchPagedPosts from '~/hooks/usePagedPosts/useFetchPagedPosts'
 import ArticlesFilter from './ArticlesFilter'
 // import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import PagedPosts from './PagedPosts'
@@ -26,9 +25,7 @@ export default function PostThread() {
     <div className={s.wrapper}>
       <div className={s.layout}>
         <TagNote />
-        <div className={s.filter}>
-          <ArticlesFilter />
-        </div>
+        <ArticlesFilter left={-1.5} top={1.5} bottom={1.5} />
         <PagedPosts />
       </div>
 
