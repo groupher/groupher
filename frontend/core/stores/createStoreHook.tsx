@@ -35,13 +35,12 @@ const createStoreHook = <TStore extends TObject, TSnap extends TObject = TStore>
           typeof value === 'function'
             ? // Re-resolve actions from the live store so HMR does not leave
               // components holding stale proxy method references.
-              (exposedFnsRef.current[key as string] ??=
-                (...args: unknown[]) => {
-                  const current = storeRef.current[key]
-                  if (typeof current !== 'function') return undefined
+              (exposedFnsRef.current[key as string] ??= (...args: unknown[]) => {
+                const current = storeRef.current[key]
+                if (typeof current !== 'function') return undefined
 
-                  return (current as TFunc)(...args)
-                })
+                return (current as TFunc)(...args)
+              })
             : value
       }
       return acc

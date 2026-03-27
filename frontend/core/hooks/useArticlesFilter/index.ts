@@ -36,9 +36,10 @@ export default function useArticlesFilter(): TRes {
     searchParams.get(URL_PARAM.STATE),
     Object.values(ARTICLE_STATE),
   ) as TArticleState | null
-  const cat = toValidFilterValue(searchParams.get(URL_PARAM.CAT), Object.values(ARTICLE_CAT)) as
-    | TArticleCat
-    | null
+  const cat = toValidFilterValue(
+    searchParams.get(URL_PARAM.CAT),
+    Object.values(ARTICLE_CAT),
+  ) as TArticleCat | null
 
   const updateActiveFilter = (filter: TArticleFilter) => {
     const nextSearchParams = new URLSearchParams(searchParams.toString())
