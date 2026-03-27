@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import EVENT from '~/const/event'
 import TYPE from '~/const/type'
+import URL_PARAM from '~/const/url_param'
 import useEvent from '~/hooks/useEvent'
 import type { TResState } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
@@ -25,7 +26,6 @@ export default function useFetchPagedPosts() {
 
   const refreshPagedPosts = async (payload: TRefreshPayload = {}) => {
     const seq = ++requestSeq.current
-    const { activeCat, activeState, activeOrder } = articleList$
 
     articleList$.commit({ resState: loadingState })
 
@@ -33,10 +33,10 @@ export default function useFetchPagedPosts() {
       const pagedPosts = await fetchPagedPosts({
         community: slug,
         page: payload.page,
-        tag: searchParams.get('tag'),
-        cat: activeCat,
-        state: activeState,
-        order: activeOrder,
+        tag: searchParams.get(URL_PARAM.TAG),
+        cat: searchParams.get(URL_PARAM.CAT),
+        state: searchParams.get(URL_PARAM.STATE),
+        order: searchParams.get(URL_PARAM.ORDER),
       })
 
       if (seq !== requestSeq.current || !pagedPosts) return
@@ -68,12 +68,6 @@ export default function useFetchPagedPosts() {
     (_msg, payload) => {
       void refreshPagedPosts({ page: payload?.page ?? 1 })
     },
-    [
-      searchParams,
-      slug,
-      articleList$.activeCat,
-      articleList$.activeState,
-      articleList$.activeOrder,
-    ],
+    [searchParams, slug],
   )
 }

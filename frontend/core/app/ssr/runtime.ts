@@ -77,8 +77,6 @@ const fetchPagedPosts = async (filter: TPagedArticlesParams): Promise<TPagedPost
     userHasLogin: false,
   })
 
-  console.log('## fetch post filter: ', filter)
-
   const { data, errors } = await response.json()
 
   if (errors) {
@@ -108,8 +106,12 @@ const isDefaultPagedPostsFilter = (filter: TPagedArticlesParams) => {
 }
 
 export const getPagedPosts = async (filter: TPagedArticlesParams): Promise<TPagedPosts | null> => {
+  if (!filter.community) {
+    return null
+  }
+
   if (isDefaultPagedPostsFilter(filter)) {
-    return getCachedPagedPosts(filter.community || '')
+    return getCachedPagedPosts(filter.community)
   }
 
   return fetchPagedPosts(filter)

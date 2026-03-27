@@ -12,7 +12,7 @@ export default async function CommunityChangelogPage({ params }) {
     getTags(params$.community, THREAD.CHANGELOG),
   ])
 
-  const initData = { pagedChangelogs, tags, thread: THREAD.CHANGELOG }
+  const initData = { pagedChangelogs: pagedChangelogs || undefined, tags, thread: THREAD.CHANGELOG }
 
   return (
     <ArticleListStoreProvider initData={initData}>

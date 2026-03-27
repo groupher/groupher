@@ -1,5 +1,5 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { CAT, ORDER, STATE } from '~/const/gtd'
+import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATE, CAT, ORDER, STATE } from '~/const/gtd'
 import TYPE from '~/const/type'
 import URL_PARAM from '~/const/url_param'
 import type { TArticleCat, TArticleFilter, TArticleOrder, TArticleState, TResState } from '~/spec'
@@ -12,6 +12,15 @@ type TRes = {
   updateActiveFilter: (filter: TArticleFilter) => void
 }
 
+const toValidFilterValue = <TValue extends string>(
+  value: string | null,
+  allowedValues: readonly TValue[],
+): TValue | null => {
+  if (!value) return null
+
+  return allowedValues.includes(value as TValue) ? (value as TValue) : null
+}
+
 export default function useArticlesFilter(): TRes {
   const router = useRouter()
   const pathname = usePathname()
@@ -19,9 +28,17 @@ export default function useArticlesFilter(): TRes {
   const store = useArticleList()
   const loadingState = TYPE.RES_STATE.LOADING as TResState
 
-  const order = (searchParams.get(URL_PARAM.ORDER) as TArticleOrder) || null
-  const state = (searchParams.get(URL_PARAM.STATE) as TArticleState) || null
-  const cat = (searchParams.get(URL_PARAM.CAT) as TArticleCat) || null
+  const order = toValidFilterValue(
+    searchParams.get(URL_PARAM.ORDER),
+    Object.values(ARTICLE_ORDER),
+  ) as TArticleOrder | null
+  const state = toValidFilterValue(
+    searchParams.get(URL_PARAM.STATE),
+    Object.values(ARTICLE_STATE),
+  ) as TArticleState | null
+  const cat = toValidFilterValue(searchParams.get(URL_PARAM.CAT), Object.values(ARTICLE_CAT)) as
+    | TArticleCat
+    | null
 
   const updateActiveFilter = (filter: TArticleFilter) => {
     const nextSearchParams = new URLSearchParams(searchParams.toString())
@@ -53,6 +70,10 @@ export default function useArticlesFilter(): TRes {
 
     const nextQuery = nextSearchParams.toString()
     const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname
+    const currentQuery = searchParams.toString()
+    const currentUrl = currentQuery ? `${pathname}?${currentQuery}` : pathname
+
+    if (nextUrl === currentUrl) return
 
     store.commit({ resState: loadingState })
     router.push(nextUrl)

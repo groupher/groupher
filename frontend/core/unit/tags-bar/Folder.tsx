@@ -49,7 +49,7 @@ const Folder: FC<TProps> = ({
 
   // 当选中的 Tag 被折叠在展示更多里面时，将其展开
   useEffect(() => {
-    if (subToggleRef.current && isActiveTagInFolder && curDisplayCount !== groupTags.length) {
+    if (isActiveTagInFolder && curDisplayCount !== groupTags.length) {
       setCurDisplayCount(groupTags.length)
     }
   }, [curDisplayCount, isActiveTagInFolder, groupTags.length])

@@ -178,6 +178,7 @@ const getPagedQuery = (
 const isDefaultPagedArticlesFilter = (filter: TPagedArticlesParams) => {
   return (
     (filter.page || 1) === 1 &&
+    !filter.size &&
     !filter.communityTag &&
     !filter.cat &&
     !filter.state &&

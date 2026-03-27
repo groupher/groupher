@@ -1,7 +1,7 @@
 'use client'
 
 import type { Context } from 'react'
-import { useContext } from 'react'
+import { useContext, useRef } from 'react'
 import { useSnapshot } from 'valtio'
 
 type TObject = Record<string, unknown>
@@ -21,6 +21,10 @@ const createStoreHook = <TStore extends TObject, TSnap extends TObject = TStore>
       throw new Error(errorMessage)
     }
 
+    const storeRef = useRef(store)
+    storeRef.current = store
+    const exposedFnsRef = useRef<Record<string, TFunc>>({})
+
     const snap = useSnapshot(store) as TSnap
     const base = snap as TObject
     const extra = resolvedExpose.reduce<TObject>((acc, key) => {
@@ -31,12 +35,13 @@ const createStoreHook = <TStore extends TObject, TSnap extends TObject = TStore>
           typeof value === 'function'
             ? // Re-resolve actions from the live store so HMR does not leave
               // components holding stale proxy method references.
-              (...args: unknown[]) => {
-                const current = store[key]
-                if (typeof current !== 'function') return undefined
+              (exposedFnsRef.current[key as string] ??=
+                (...args: unknown[]) => {
+                  const current = storeRef.current[key]
+                  if (typeof current !== 'function') return undefined
 
-                return (current as TFunc)(...args)
-              }
+                  return (current as TFunc)(...args)
+                })
             : value
       }
       return acc
