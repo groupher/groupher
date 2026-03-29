@@ -488,15 +488,18 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     end
 
     test "pinned comments has a limit for each article", ~m(community user post)a do
-      {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      Enum.each(1..@pinned_comment_limit, fn _ ->
+        {:ok, comment} =
+          CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      Enum.reduce(0..(@pinned_comment_limit - 1), [], fn _, _acc ->
         {:ok, _} = CMS.Comments.pin_comment(comment.id)
       end)
 
+      {:ok, extra_comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
       assert {:error, {:comment_pin_limit, @pinned_comment_limit}} =
-               CMS.Comments.pin_comment(comment.id)
+               CMS.Comments.pin_comment(extra_comment.id)
     end
   end
 

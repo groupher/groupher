@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
   end
 
   describe "[emotion in paged article comment]" do
-    test "login user should got viewer has emotioned status", ~m(community post user)a do
+    test "login user should got viewer has emotion status", ~m(community post user)a do
       total_count = 0
       page_number = 10
       page_size = 20
@@ -59,7 +59,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert target.emotions.viewer_has_popcorned
     end
 
-    test "emotioned comment should return valid viewer_has status",
+    test "emotion comment should return valid viewer_has status",
          ~m(community post user user2)a do
       total_count = 3
 
@@ -187,7 +187,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert user_exist_in?(user, parent_comment.emotions.latest_downvote_users)
     end
 
-    test "same user same emotion to same comment only have one user_emotion record",
+    test "same user different emotions create one record per emotion",
          ~m(community post user)a do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -198,13 +198,35 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
       {:ok, records} = ORM.find_all(CommentUserEmotion, %{page: 1, size: 10})
-      assert records.total_count == 1
+      assert records.total_count == 2
 
-      {:ok, record} =
-        ORM.find_by(CommentUserEmotion, %{comment_id: parent_comment.id, user_id: user.id})
+      {:ok, _downvote_record} =
+        ORM.find_by(CommentUserEmotion, %{
+          comment_id: parent_comment.id,
+          user_id: user.id,
+          emotion: "downvote"
+        })
 
-      assert record.downvote
-      assert record.heart
+      {:ok, _heart_record} =
+        ORM.find_by(CommentUserEmotion, %{
+          comment_id: parent_comment.id,
+          user_id: user.id,
+          emotion: "heart"
+        })
+    end
+
+    test "undo missing emotion does not create empty record", ~m(community post user)a do
+      {:ok, parent_comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+      {:ok, _} = CMS.Comments.undo_emotion_to_comment(parent_comment.id, :downvote, user)
+
+      {:error, _} =
+        ORM.find_by(CommentUserEmotion, %{
+          comment_id: parent_comment.id,
+          user_id: user.id,
+          emotion: "downvote"
+        })
     end
 
     test "different user can make same emotions on same comment",
@@ -224,7 +246,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert user_exist_in?(user3, emotions.latest_beer_users)
     end
 
-    test "same user can make differcent emotions on same comment", ~m(community post user)a do
+    test "same user can make different emotions on same comment", ~m(community post user)a do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 

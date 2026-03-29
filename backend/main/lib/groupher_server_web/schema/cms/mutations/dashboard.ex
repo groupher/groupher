@@ -67,6 +67,27 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       resolve(&R.CMS.update_dashboard/3)
     end
 
+    @desc "update thread-specific emotion settings in dashboard"
+    field :update_dashboard_thread_emotions, :community do
+      arg(:community, non_null(:string))
+      arg(:dashboard_section, :dashboard_section, default_value: :thread_emotions)
+
+      arg(:post, list_of(:emotion_type))
+      arg(:blog, list_of(:emotion_type))
+      arg(:changelog, list_of(:emotion_type))
+      arg(:doc, list_of(:emotion_type))
+      arg(:post_comment, list_of(:emotion_type))
+      arg(:blog_comment, list_of(:emotion_type))
+      arg(:changelog_comment, list_of(:emotion_type))
+      arg(:doc_comment, list_of(:emotion_type))
+
+      middleware(M.Authorize, :login)
+      middleware(M.PublishThrottle, interval: 3, hour_limit: 100, day_limit: 100)
+      middleware(M.FrontDesk, :community)
+
+      resolve(&R.CMS.update_dashboard/3)
+    end
+
     @desc "update layout in dashboard"
     field :update_dashboard_layout, :community do
       arg(:community, non_null(:string))

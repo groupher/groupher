@@ -1,30 +1,18 @@
-defmodule GroupherServer.CMS.Model.ArticleUserEmotion.Macros do
-  @moduledoc false
-
-  import Helper.Utils, only: [get_config: 2]
-
-  @supported_emotions get_config(:article, :emotions)
-
-  defmacro emotion_fields do
-    @supported_emotions
-    |> Enum.map(fn emotion ->
-      quote do
-        field(unquote(:"#{emotion}"), :boolean, default: false)
-      end
-    end)
-  end
-end
-
 defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
   @moduledoc false
-  alias __MODULE__
 
   use Ecto.Schema
+
   import Ecto.Changeset
-  import GroupherServer.CMS.Model.ArticleUserEmotion.Macros
   import Helper.Utils, only: [get_config: 2]
   import GroupherServer.CMS.Helper.Macros
-  import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
+
+  import GroupherServer.CMS.Helper.Constraints,
+    only: [
+      articles_emotion_unique_key_constraint: 1,
+      articles_exactly_one_ref_constraint: 2,
+      articles_foreign_key_constraint: 1
+    ]
 
   alias GroupherServer.Accounts.Model.User
   alias Helper.Constant.DBPrefix
@@ -33,36 +21,40 @@ defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
   @supported_emotions get_config(:article, :emotions)
   @article_threads get_config(:article, :threads)
 
-  @required_fields ~w(user_id recived_user_id)a
-  @optional_fields Enum.map(@article_threads, &:"#{&1}_id") ++
-                     Enum.map(@supported_emotions, &:"#{&1}")
+  @required_fields ~w(user_id recived_user_id emotion)a
+  @optional_fields Enum.map(@article_threads, &:"#{&1}_id")
 
-  @type t :: %ArticleUserEmotion{}
+  @type t :: %__MODULE__{}
   schema "articles_users_emotions" do
     belongs_to(:recived_user, User, foreign_key: :recived_user_id)
     belongs_to(:user, User, foreign_key: :user_id)
 
-    emotion_fields()
+    field(:emotion, :string)
     article_belongs_to_fields()
+
     timestamps(type: :utc_datetime)
   end
 
   @doc false
-  def changeset(%ArticleUserEmotion{} = struct, attrs) do
+  def changeset(struct, attrs) do
     struct
     |> cast(attrs, @required_fields ++ @optional_fields)
+    |> normalize_emotion()
     |> validate_required(@required_fields)
+    |> validate_inclusion(:emotion, Enum.map(@supported_emotions, &to_string/1))
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:recived_user_id)
-    |> articles_foreign_key_constraint
+    |> articles_emotion_unique_key_constraint()
+    |> articles_foreign_key_constraint()
+    |> articles_exactly_one_ref_constraint(:articles_users_emotions)
   end
 
-  def update_changeset(%ArticleUserEmotion{} = struct, attrs) do
-    struct
-    |> cast(attrs, @required_fields ++ @optional_fields)
-    |> validate_required(@required_fields)
-    |> foreign_key_constraint(:user_id)
-    |> foreign_key_constraint(:recived_user_id)
-    |> articles_foreign_key_constraint
+  def update_changeset(struct, attrs), do: changeset(struct, attrs)
+
+  defp normalize_emotion(changeset) do
+    update_change(changeset, :emotion, fn
+      emotion when is_atom(emotion) -> to_string(emotion)
+      emotion -> emotion
+    end)
   end
 end

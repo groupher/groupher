@@ -182,6 +182,43 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.enable.changelog == true
     end
 
+    @update_thread_emotions_query """
+    mutation($community: String!, $post: [EmotionType!], $postComment: [EmotionType!], $docComment: [EmotionType!]) {
+      updateDashboardThreadEmotions(
+        community: $community
+        post: $post
+        postComment: $postComment
+        docComment: $docComment
+      ) {
+        id
+        dashboard {
+          threadEmotions {
+            post
+            postComment
+            docComment
+          }
+        }
+      }
+    }
+    """
+    test "update community dashboard thread emotion info", ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      variables = %{
+        community: community.slug,
+        post: ["BEER", "HEART"],
+        postComment: ["HEART"],
+        docComment: ["DOWNVOTE", "CONFUSED"]
+      }
+
+      updated = rule_conn |> gq_mutation(@update_thread_emotions_query, variables)
+      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+
+      assert found.dashboard.thread_emotions.post == [:beer, :heart]
+      assert found.dashboard.thread_emotions.post_comment == [:heart]
+      assert found.dashboard.thread_emotions.doc_comment == [:downvote, :confused]
+    end
+
     @update_layout_query """
     mutation($community: String!, $primaryColor: String, $subPrimaryColor: String, $postLayout: String, $kanbanLayout: String, $kanbanCardLayout: String, $footerLayout: String, $broadcastEnable: Boolean, $kanbanBgColors: [String], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: String, $inlineTagLayout: String, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: String, $darkFloat: Boolean) {
       updateDashboardLayout(community: $community, primaryColor: $primaryColor, subPrimaryColor: $subPrimaryColor, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, darkFloat: $darkFloat) {

@@ -216,6 +216,24 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def q(:one_comment_emotions) do
+    """
+    query($id: ID!) {
+      oneComment(id: $id) {
+        id
+        emotions {
+          type
+          count
+          viewerHasReacted
+          latestUsers {
+            login
+          }
+        }
+      }
+    }
+    """
+  end
+
   def m(:pin_article, thread) do
     """
     mutation($article: ArticleRefInput!){
@@ -244,9 +262,10 @@ defmodule GroupherServer.Test.Helper.Schema do
       emotionTo#{t(thread)}(article: $article, emotion: $emotion) {
         innerId
         emotions {
-          beerCount
-          viewerHasBeered
-          latestBeerUsers {
+          type
+          count
+          viewerHasReacted
+          latestUsers {
             login
             nickname
           }
@@ -262,9 +281,10 @@ defmodule GroupherServer.Test.Helper.Schema do
       undoEmotionTo#{t(thread)}(article: $article, emotion: $emotion) {
         innerId
         emotions {
-          beerCount
-          viewerHasBeered
-          latestBeerUsers {
+          type
+          count
+          viewerHasReacted
+          latestUsers {
             login
             nickname
           }
@@ -642,9 +662,10 @@ defmodule GroupherServer.Test.Helper.Schema do
       emotionToComment(id: $id, emotion: $emotion) {
         id
         emotions {
-          beerCount
-          viewerHasBeered
-          latestBeerUsers {
+          type
+          count
+          viewerHasReacted
+          latestUsers {
             login
             nickname
           }
@@ -660,9 +681,10 @@ defmodule GroupherServer.Test.Helper.Schema do
       undoEmotionToComment(id: $id, emotion: $emotion) {
         id
         emotions {
-          beerCount
-          viewerHasBeered
-          latestBeerUsers {
+          type
+          count
+          viewerHasReacted
+          latestUsers {
             login
             nickname
           }

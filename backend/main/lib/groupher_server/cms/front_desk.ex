@@ -213,8 +213,8 @@ defmodule GroupherServer.CMS.FrontDesk do
       |> Map.put(:"#{emotion}_user_logins", user_list |> Enum.map(& &1.login))
       |> Map.put(:"latest_#{emotion}_users", latest_users)
 
-    viewer_has_emotioned = user.login in Map.get(emotions, :"#{emotion}_user_logins")
-    emotions = emotions |> Map.put(:"viewer_has_#{emotion}ed", viewer_has_emotioned)
+    viewer_has_mentioned = user.login in Map.get(emotions, :"#{emotion}_user_logins")
+    emotions = emotions |> Map.put(:"viewer_has_#{emotion}ed", viewer_has_mentioned)
 
     artiment |> ORM.update_embed(:emotions, emotions)
   end

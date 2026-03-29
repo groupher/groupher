@@ -115,6 +115,27 @@ config :groupher_server, :article,
     :pill,
     :popcorn
   ],
+  emotions_whitelist: [
+    :upvote,
+    :downvote,
+    :beer,
+    :heart,
+    :biceps,
+    :orz,
+    :confused,
+    :pill,
+    :popcorn
+  ],
+  default_thread_emotions: %{
+    post: [:upvote, :downvote, :beer, :heart, :biceps, :orz, :confused, :pill, :popcorn],
+    blog: [:upvote, :downvote, :beer, :heart, :biceps, :orz, :confused, :pill, :popcorn],
+    changelog: [:upvote, :downvote, :beer, :heart, :biceps, :orz, :confused, :pill, :popcorn],
+    doc: [:upvote, :downvote, :beer, :heart, :biceps, :orz, :confused, :pill, :popcorn],
+    post_comment: [:downvote, :beer, :heart, :biceps, :orz, :confused, :pill, :popcorn],
+    blog_comment: [:downvote, :beer, :heart, :biceps, :orz, :confused, :pill, :popcorn],
+    changelog_comment: [:downvote, :beer, :heart, :biceps, :orz, :confused, :pill, :popcorn],
+    doc_comment: [:downvote, :beer, :heart, :biceps, :orz, :confused, :pill, :popcorn]
+  },
   digest_length: 150,
   archive_threshold: %{
     # for post, blog, will be archive after 3 months by default

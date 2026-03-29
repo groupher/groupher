@@ -37,6 +37,7 @@ defmodule GroupherServer.CMS.Comments.States do
   @spec pin(T.id()) :: T.domain_res(Comment.t())
   def pin(comment_id) do
     with {:ok, comment} <- CommentRead.fetch_comment(comment_id),
+         {:ok, comment} <- maybe_existing_pinned_comment(comment),
          {article_thread, article} <- get_article(comment),
          {:ok, info} <- match(article_thread) do
       Multi.new()
@@ -269,6 +270,23 @@ defmodule GroupherServer.CMS.Comments.States do
     end
   end
 
+  defp maybe_existing_pinned_comment(%Comment{id: comment_id, is_pinned: is_pinned} = comment) do
+    case ORM.find_by(PinnedComment, %{comment_id: comment_id}) do
+      {:ok, _record} ->
+        case is_pinned do
+          true ->
+            {:error, {:already_pinned, comment}}
+
+          false ->
+            ORM.update(comment, %{is_pinned: true})
+            |> then(fn {:ok, updated} -> {:error, {:already_pinned, updated}} end)
+        end
+
+      {:error, _} ->
+        {:ok, comment}
+    end
+  end
+
   defp add_replies_ifneed(
          %Comment{replies: replies} = parent_comment,
          %Comment{} = replied_comment
@@ -339,6 +357,7 @@ defmodule GroupherServer.CMS.Comments.States do
   defp result({:ok, %{update_comment_flag: result}}), do: {:ok, result}
   defp result({:ok, %{delete_comment: result}}), do: {:ok, result}
   defp result({:ok, %{fold_comment: result}}), do: {:ok, result}
+  defp result({:error, {:already_pinned, result}}), do: {:ok, result}
 
   defp result({:error, :create_comment, _result, _steps}) do
     raise_error(:create_comment, "create comment error")

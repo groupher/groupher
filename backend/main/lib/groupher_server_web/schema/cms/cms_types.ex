@@ -137,6 +137,17 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object(:dashboard_enable, do: dashboard_gq_fields(:enable))
+  object :dashboard_thread_emotions do
+    field(:post, list_of(:emotion_type))
+    field(:blog, list_of(:emotion_type))
+    field(:changelog, list_of(:emotion_type))
+    field(:doc, list_of(:emotion_type))
+    field(:post_comment, list_of(:emotion_type))
+    field(:blog_comment, list_of(:emotion_type))
+    field(:changelog_comment, list_of(:emotion_type))
+    field(:doc_comment, list_of(:emotion_type))
+  end
+
   object(:dashboard_base_info, do: dashboard_gq_fields(:base_info))
   object(:dashboard_name_alias, do: dashboard_gq_fields(:name_alias))
   object(:dashboard_link, do: dashboard_gq_fields(:header_link))
@@ -149,6 +160,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:wallpaper, :dashboard_wallpaper)
     field(:layout, :dashboard_layout)
     field(:enable, :dashboard_enable)
+    field(:thread_emotions, :dashboard_thread_emotions)
     field(:base_info, :dashboard_base_info)
     field(:rss, :dashboard_rss)
     field(:name_alias, list_of(:dashboard_name_alias))
@@ -244,12 +256,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     timestamp_fields()
   end
 
-  object :comment_emotions do
-    emotion_fields(:comment)
-  end
-
-  object :article_emotions do
-    emotion_fields()
+  object :emotion_stat do
+    field(:type, :emotion_type)
+    field(:count, :integer)
+    field(:viewer_has_reacted, :boolean)
+    field(:latest_users, list_of(:common_user))
   end
 
   object :comment_meta do

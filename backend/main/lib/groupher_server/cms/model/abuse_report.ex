@@ -8,7 +8,9 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
   import Ecto.Changeset
   import Helper.Utils, only: [get_config: 2]
   import GroupherServer.CMS.Helper.Macros
-  import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
+
+  import GroupherServer.CMS.Helper.Constraints,
+    only: [articles_at_most_one_ref_constraint: 2, articles_foreign_key_constraint: 1]
 
   alias GroupherServer.{Accounts, CMS}
 
@@ -48,6 +50,7 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
     |> cast(attrs, @optional_fields ++ @article_fields)
     |> cast_embed(:report_cases, required: true, with: &Embeds.AbuseReportCase.changeset/2)
     |> articles_foreign_key_constraint
+    |> articles_at_most_one_ref_constraint(:abuse_reports)
   end
 
   def update_changeset(%AbuseReport{} = struct, attrs) do
@@ -55,5 +58,6 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
     |> cast(attrs, @update_fields ++ @article_fields)
     |> cast_embed(:report_cases, required: true, with: &Embeds.AbuseReportCase.changeset/2)
     |> articles_foreign_key_constraint
+    |> articles_at_most_one_ref_constraint(:abuse_reports)
   end
 end

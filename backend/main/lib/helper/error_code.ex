@@ -9,6 +9,7 @@ defmodule Helper.ErrorCode do
   @comment_base 4400
   @article_base 4500
   @community_base 5500
+  @cancan_base 6000
 
   @spec raise_error(atom(), String.t()) :: {:error, {atom(), String.t()}}
   def raise_error(code_atom, msg) do
@@ -69,6 +70,10 @@ defmodule Helper.ErrorCode do
   def ecode(:community_root_only), do: @community_base + 1
   def ecode(:passport_community_not_match), do: @community_base + 2
   def ecode(:one_community_only), do: @community_base + 3
+
+  def ecode(:emotion_not_allowed), do: @cancan_base + 1
+  def ecode(:thread_not_visible), do: @cancan_base + 2
+  # ...
 
   def ecode(reason) when is_atom(reason) do
     case System.get_env("MIX_ENV", "dev") do

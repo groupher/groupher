@@ -631,6 +631,11 @@ type RootMutationType {
     community: String!, dashboardSection: DashboardSection, post: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean
   ): Community
 
+  "update thread-specific emotion settings in dashboard"
+  updateDashboardThreadEmotions(
+    community: String!, dashboardSection: DashboardSection, post: [EmotionType], blog: [EmotionType], changelog: [EmotionType], doc: [EmotionType], postComment: [EmotionType], blogComment: [EmotionType], changelogComment: [EmotionType], docComment: [EmotionType]
+  ): Community
+
   "update layout in dashboard"
   updateDashboardLayout(
     community: String!, dashboardSection: DashboardSection, primaryColor: String, subPrimaryColor: String, kanbanBgColors: [String], postLayout: String, kanbanLayout: String, kanbanCardLayout: String, docLayout: String, docFaqLayout: String, tagLayout: String, inlineTagLayout: String, avatarLayout: String, brandLayout: String, bannerLayout: String, topbarLayout: String, topbarBg: String, broadcastLayout: String, broadcastBg: String, broadcastEnable: Boolean, broadcastArticleLayout: String, broadcastArticleBg: String, broadcastArticleEnable: Boolean, changelogLayout: String, footerLayout: String, headerLayout: String, glowType: String, glowFixed: Boolean, glowOpacity: String, darkFloat: Boolean, gaussBlur: Int, gaussBlurDark: Int
@@ -717,7 +722,7 @@ type Post implements Article {
   meta: ArticleMeta
   upvotesCount: Int
   collectsCount: Int
-  emotions: ArticleEmotions
+  emotions: [EmotionStat]
   viewerHasCollected: Boolean
   viewerHasUpvoted: Boolean
   viewerHasViewed: Boolean
@@ -753,7 +758,7 @@ type Changelog implements Article {
   meta: ArticleMeta
   upvotesCount: Int
   collectsCount: Int
-  emotions: ArticleEmotions
+  emotions: [EmotionStat]
   viewerHasCollected: Boolean
   viewerHasUpvoted: Boolean
   viewerHasViewed: Boolean
@@ -787,7 +792,7 @@ type Doc implements Article {
   meta: ArticleMeta
   upvotesCount: Int
   collectsCount: Int
-  emotions: ArticleEmotions
+  emotions: [EmotionStat]
   viewerHasCollected: Boolean
   viewerHasUpvoted: Boolean
   viewerHasViewed: Boolean
@@ -821,7 +826,7 @@ type Blog implements Article {
   meta: ArticleMeta
   upvotesCount: Int
   collectsCount: Int
-  emotions: ArticleEmotions
+  emotions: [EmotionStat]
   viewerHasCollected: Boolean
   viewerHasUpvoted: Boolean
   viewerHasViewed: Boolean
@@ -941,6 +946,17 @@ type DashboardEnable {
   aboutMediaReport: Boolean
 }
 
+type DashboardThreadEmotions {
+  post: [EmotionType]
+  blog: [EmotionType]
+  changelog: [EmotionType]
+  doc: [EmotionType]
+  postComment: [EmotionType]
+  blogComment: [EmotionType]
+  changelogComment: [EmotionType]
+  docComment: [EmotionType]
+}
+
 type DashboardBaseInfo {
   favicon: String
   title: String
@@ -996,6 +1012,7 @@ type Dashboard {
   wallpaper: DashboardWallpaper
   layout: DashboardLayout
   enable: DashboardEnable
+  threadEmotions: DashboardThreadEmotions
   baseInfo: DashboardBaseInfo
   rss: DashboardRss
   nameAlias: [DashboardNameAlias]
@@ -1076,61 +1093,11 @@ type CommunityTag {
   updatedAt: DateTime
 }
 
-type CommentEmotions {
-  downvoteCount: Int
-  viewerHasDownvoteed: Boolean
-  latestDownvoteUsers: [CommonUser]
-  beerCount: Int
-  viewerHasBeered: Boolean
-  latestBeerUsers: [CommonUser]
-  heartCount: Int
-  viewerHasHearted: Boolean
-  latestHeartUsers: [CommonUser]
-  bicepsCount: Int
-  viewerHasBicepsed: Boolean
-  latestBicepsUsers: [CommonUser]
-  orzCount: Int
-  viewerHasOrzed: Boolean
-  latestOrzUsers: [CommonUser]
-  confusedCount: Int
-  viewerHasConfuseded: Boolean
-  latestConfusedUsers: [CommonUser]
-  pillCount: Int
-  viewerHasPilled: Boolean
-  latestPillUsers: [CommonUser]
-  popcornCount: Int
-  viewerHasPopcorned: Boolean
-  latestPopcornUsers: [CommonUser]
-}
-
-type ArticleEmotions {
-  upvoteCount: Int
-  viewerHasUpvoteed: Boolean
-  latestUpvoteUsers: [CommonUser]
-  downvoteCount: Int
-  viewerHasDownvoteed: Boolean
-  latestDownvoteUsers: [CommonUser]
-  beerCount: Int
-  viewerHasBeered: Boolean
-  latestBeerUsers: [CommonUser]
-  heartCount: Int
-  viewerHasHearted: Boolean
-  latestHeartUsers: [CommonUser]
-  bicepsCount: Int
-  viewerHasBicepsed: Boolean
-  latestBicepsUsers: [CommonUser]
-  orzCount: Int
-  viewerHasOrzed: Boolean
-  latestOrzUsers: [CommonUser]
-  confusedCount: Int
-  viewerHasConfuseded: Boolean
-  latestConfusedUsers: [CommonUser]
-  pillCount: Int
-  viewerHasPilled: Boolean
-  latestPillUsers: [CommonUser]
-  popcornCount: Int
-  viewerHasPopcorned: Boolean
-  latestPopcornUsers: [CommonUser]
+type EmotionStat {
+  type: EmotionType
+  count: Int
+  viewerHasReacted: Boolean
+  latestUsers: [CommonUser]
 }
 
 type CommentMeta {
@@ -1150,7 +1117,7 @@ type CommentReply {
   floor: Int
   upvotesCount: Int
   isArticleAuthor: Boolean
-  emotions: CommentEmotions
+  emotions: [EmotionStat]
   meta: CommentMeta
   repliesCount: Int
   thread: String
@@ -1173,7 +1140,7 @@ type Comment {
   floor: Int
   upvotesCount: Int
   isArticleAuthor: Boolean
-  emotions: CommentEmotions
+  emotions: [EmotionStat]
   meta: CommentMeta
   repliesCount: Int
   thread: String
@@ -1419,6 +1386,19 @@ enum CommentEmotion {
   POPCORN
 }
 
+"emotion options used by API output"
+enum EmotionType {
+  UPVOTE
+  DOWNVOTE
+  BEER
+  HEART
+  BICEPS
+  ORZ
+  CONFUSED
+  PILL
+  POPCORN
+}
+
 enum Thread {
   POST
   BLOG
@@ -1431,6 +1411,7 @@ enum DashboardSection {
   SEO
   WALLPAPER
   ENABLE
+  THREAD_EMOTIONS
   LAYOUT
   BASE_INFO
   RSS

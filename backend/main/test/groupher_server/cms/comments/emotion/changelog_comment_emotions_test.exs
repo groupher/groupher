@@ -208,7 +208,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
       assert user_exist_in?(user, parent_comment.emotions.latest_downvote_users)
     end
 
-    test "same user same emotion to same comment only have one user_emotion record",
+    test "same user different emotions create one record per emotion",
          ~m(community changelog user)a do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(
@@ -225,13 +225,21 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
       {:ok, records} = ORM.find_all(CommentUserEmotion, %{page: 1, size: 10})
-      assert records.total_count == 1
+      assert records.total_count == 2
 
-      {:ok, record} =
-        ORM.find_by(CommentUserEmotion, %{comment_id: parent_comment.id, user_id: user.id})
+      {:ok, _downvote_record} =
+        ORM.find_by(CommentUserEmotion, %{
+          comment_id: parent_comment.id,
+          user_id: user.id,
+          emotion: "downvote"
+        })
 
-      assert record.downvote
-      assert record.heart
+      {:ok, _heart_record} =
+        ORM.find_by(CommentUserEmotion, %{
+          comment_id: parent_comment.id,
+          user_id: user.id,
+          emotion: "heart"
+        })
     end
 
     test "different user can make same emotions on same comment",

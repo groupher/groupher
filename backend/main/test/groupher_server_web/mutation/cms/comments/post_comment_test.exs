@@ -3,6 +3,10 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
   use GroupherServer.TestMate
 
+  defp emotion_entry(emotions, type) do
+    Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))
+  end
+
   setup do
     {community, post, _, user} = mock_article(:post)
 
@@ -121,8 +125,29 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       variables = %{id: comment.id, emotion: "BEER"}
       comment = user_conn |> gq_mutation(Schema.m(:emotion_to_comment), variables)
 
-      assert comment |> get_in(["emotions", "beerCount"]) == 1
-      assert get_in(comment, ["emotions", "viewerHasBeered"])
+      assert emotion_entry(comment["emotions"], :beer)["count"] == 1
+      assert emotion_entry(comment["emotions"], :beer)["viewerHasReacted"]
+    end
+
+    test "comment emotion mutation returns sparse emotion array workflow",
+         ~m(community post user user_conn)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+      beer_variables = %{id: comment.id, emotion: "BEER"}
+      heart_variables = %{id: comment.id, emotion: "HEART"}
+
+      comment = user_conn |> gq_mutation(Schema.m(:emotion_to_comment), beer_variables)
+      assert length(comment["emotions"]) == 1
+      assert emotion_entry(comment["emotions"], :beer)["count"] == 1
+      assert is_nil(emotion_entry(comment["emotions"], :heart))
+      assert is_nil(emotion_entry(comment["emotions"], :popcorn))
+
+      comment = user_conn |> gq_mutation(Schema.m(:emotion_to_comment), heart_variables)
+      assert length(comment["emotions"]) == 2
+      assert emotion_entry(comment["emotions"], :beer)["count"] == 1
+      assert emotion_entry(comment["emotions"], :heart)["count"] == 1
+      assert emotion_entry(comment["emotions"], :heart)["viewerHasReacted"]
     end
 
     test "login user can undo emotion to a comment", ~m(community post user owner_conn)a do
@@ -134,8 +159,46 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       variables = %{id: comment.id, emotion: "BEER"}
       comment = owner_conn |> gq_mutation(Schema.m(:undo_emotion_to_comment), variables)
 
-      assert comment |> get_in(["emotions", "beerCount"]) == 0
-      assert not get_in(comment, ["emotions", "viewerHasBeered"])
+      assert is_nil(emotion_entry(comment["emotions"], :beer))
+    end
+
+    test "comment emotion query reads back sparse array after mutation and undo",
+         ~m(community post user user_conn)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+      _comment = user_conn |> gq_mutation(Schema.m(:emotion_to_comment), %{id: comment.id, emotion: "BEER"})
+      _comment = user_conn |> gq_mutation(Schema.m(:emotion_to_comment), %{id: comment.id, emotion: "HEART"})
+
+      result = user_conn |> gq_query(Schema.q(:one_comment_emotions), %{id: comment.id})
+      assert length(result["emotions"]) == 2
+      assert emotion_entry(result["emotions"], :beer)["count"] == 1
+      assert emotion_entry(result["emotions"], :beer)["viewerHasReacted"]
+      assert emotion_entry(result["emotions"], :heart)["count"] == 1
+      assert is_nil(emotion_entry(result["emotions"], :popcorn))
+
+      result =
+        user_conn
+        |> gq_mutation(Schema.m(:undo_emotion_to_comment), %{id: comment.id, emotion: "HEART"})
+
+      assert length(result["emotions"]) == 1
+      assert emotion_entry(result["emotions"], :beer)["count"] == 1
+      assert is_nil(emotion_entry(result["emotions"], :heart))
+    end
+
+    test "emotion is rejected when disabled by dashboard thread settings",
+         ~m(community post user user_conn)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :thread_emotions, %{
+          post_comment: [:heart]
+        })
+
+      variables = %{id: comment.id, emotion: "BEER"}
+
+      assert user_conn |> mutation_error?(Schema.m(:emotion_to_comment), variables)
     end
   end
 

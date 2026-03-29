@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
   @schema_prefix DBPrefix.cms()
 
   @required_fields ~w(community_id)a
-  @optional_fields ~w(base_info wallpaper seo layout enable rss header_links footer_links social_links faqs)a
+  @optional_fields ~w(base_info wallpaper seo layout enable thread_emotions rss header_links footer_links social_links faqs)a
 
   def default do
     %{
@@ -26,6 +26,7 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
       seo: Embeds.DashboardSEO.default(),
       layout: Embeds.DashboardLayout.default(),
       enable: Embeds.DashboardEnable.default(),
+      thread_emotions: Embeds.DashboardThreadEmotions.default(),
       rss: Embeds.DashboardRSS.default(),
       name_alias: Embeds.DashboardNameAlias.default(),
       header_links: Embeds.DashboardHeaderLink.default(),
@@ -43,6 +44,7 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
     embeds_one(:seo, Embeds.DashboardSEO, on_replace: :delete)
     embeds_one(:layout, Embeds.DashboardLayout, on_replace: :delete)
     embeds_one(:enable, Embeds.DashboardEnable, on_replace: :delete)
+    embeds_one(:thread_emotions, Embeds.DashboardThreadEmotions, on_replace: :delete)
     embeds_one(:rss, Embeds.DashboardRSS, on_replace: :delete)
     embeds_many(:name_alias, Embeds.DashboardNameAlias, on_replace: :delete)
     embeds_many(:header_links, Embeds.DashboardHeaderLink, on_replace: :delete)
@@ -64,6 +66,7 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
     |> cast_embed(:seo, with: &Embeds.DashboardSEO.changeset/2)
     |> cast_embed(:layout, with: &Embeds.DashboardLayout.changeset/2)
     |> cast_embed(:enable, with: &Embeds.DashboardEnable.changeset/2)
+    |> cast_embed(:thread_emotions, with: &Embeds.DashboardThreadEmotions.changeset/2)
     |> cast_embed(:rss, with: &Embeds.DashboardRSS.changeset/2)
     |> cast_embed(:name_alias, with: &Embeds.DashboardNameAlias.changeset/2)
     |> cast_embed(:header_links, with: &Embeds.DashboardHeaderLink.changeset/2)

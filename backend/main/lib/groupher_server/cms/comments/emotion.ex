@@ -10,10 +10,13 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
+  alias CMS.{CanCan, Events, FrontDesk}
+  alias CMS.Helper.EmotionToggle
   alias CMS.Model.{Comment, CommentUserEmotion}
-  alias CMS.{Events, FrontDesk}
 
-  alias Helper.{Multi, Later, ORM, T}
+  alias Helper.{Multi, Later, T, Transaction}
+
+  @latest_emotion_users_limit 4
 
   @type t_user_list :: [
           %{
@@ -29,79 +32,68 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   @spec set(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
   def set(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
-      Multi.new()
-      |> Multi.run(:create_user_emotion, fn _, _ ->
-        target = %{
-          comment_id: comment.id,
-          recived_user_id: comment.author.id,
-          user_id: user.id
-        }
+      with {:ok, article} <- FrontDesk.article_of(comment),
+           :ok <- CanCan.ensure_emotion_allowed(article.community_slug, :comment, comment.thread, emotion) do
+        Transaction.lock_row(comment, fn locked_comment ->
+          target = %{
+            comment_id: locked_comment.id,
+            recived_user_id: locked_comment.author_id,
+            user_id: user.id
+          }
 
-        args = Map.put(target, :"#{emotion}", true)
-
-        case ORM.find_by(CommentUserEmotion, target) do
-          {:ok, comment_user_emotion} -> ORM.update(comment_user_emotion, args)
-          {:error, _} -> ORM.create(CommentUserEmotion, args)
-        end
-      end)
-      |> Multi.run(:query_emotion_states, fn _, _ ->
-        query_emotion_states(comment, emotion)
-      end)
-      |> Multi.run(:update_emotions_field, fn _, %{query_emotion_states: status} ->
-        with {:ok, comment} <- FrontDesk.update_emotions_field(comment, emotion, status, user),
-             {:ok, comment} <- FrontDesk.sync_embed_replies(comment) do
-          FrontDesk.mark_viewer_emotion_states(comment, user) |> done
-        end
-      end)
-      |> Multi.run(:after_events, fn _, _ ->
-        Later.run({Events, :emit, [:subscribe_community, %{target: comment, user: user}]})
-      end)
-      |> Repo.transaction()
-      |> result
+          Multi.new()
+          |> Multi.run(:persist_user_emotion, fn _, _ ->
+            EmotionToggle.persist(CommentUserEmotion, target, emotion, true)
+          end)
+          |> Multi.run(:update_emotions_field, fn _, %{persist_user_emotion: changed?} ->
+            update_emotion_embed(locked_comment, emotion, user, changed?, :add)
+          end)
+          |> Multi.run(:after_events, fn _, _ ->
+            Later.run({Events, :emit, [:subscribe_community, %{target: locked_comment, user: user}]})
+          end)
+          |> Repo.transaction()
+          |> result
+        end)
+      end
     end
   end
 
   @spec undo(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
   def undo(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
-      Multi.new()
-      |> Multi.run(:update_user_emotion, fn _, _ ->
-        target = %{
-          comment_id: comment.id,
-          recived_user_id: comment.author.id,
-          user_id: user.id
-        }
+      with {:ok, article} <- FrontDesk.article_of(comment),
+           :ok <- CanCan.ensure_emotion_allowed(article.community_slug, :comment, comment.thread, emotion) do
+        Transaction.lock_row(comment, fn locked_comment ->
+          target = %{
+            comment_id: locked_comment.id,
+            recived_user_id: locked_comment.author_id,
+            user_id: user.id
+          }
 
-        case ORM.find_by(CommentUserEmotion, target) do
-          {:ok, comment_user_emotion} ->
-            args = Map.put(target, :"#{emotion}", false)
-            comment_user_emotion |> ORM.update(args)
-
-          {:error, _} ->
-            ORM.create(CommentUserEmotion, target)
-        end
-      end)
-      |> Multi.run(:query_emotion_states, fn _, _ ->
-        query_emotion_states(comment, emotion)
-      end)
-      |> Multi.run(:update_emotions_field, fn _, %{query_emotion_states: status} ->
-        with {:ok, comment} <- FrontDesk.update_emotions_field(comment, emotion, status, user) do
-          FrontDesk.mark_viewer_emotion_states(comment, user) |> done
-        end
-      end)
-      |> Repo.transaction()
-      |> result
+          Multi.new()
+          |> Multi.run(:persist_user_emotion, fn _, _ ->
+            EmotionToggle.persist(CommentUserEmotion, target, emotion, false)
+          end)
+          |> Multi.run(:update_emotions_field, fn _, %{persist_user_emotion: changed?} ->
+            update_emotion_embed(locked_comment, emotion, user, changed?, :remove)
+          end)
+          |> Repo.transaction()
+          |> result
+        end)
+      end
     end
   end
 
-  @spec query_emotion_states(Comment.t(), atom()) :: {:ok, t_mention_status}
-  defp query_emotion_states(comment, emotion) do
+  @spec query_latest_emotion_users(Comment.t(), atom()) :: [map()]
+  defp query_latest_emotion_users(comment, emotion) do
     query =
       from(a in CommentUserEmotion,
         join: user in User,
         on: a.user_id == user.id,
         where: a.comment_id == ^comment.id,
-        where: field(a, ^emotion) == true,
+        where: a.emotion == ^to_string(emotion),
+        order_by: [desc: a.updated_at, desc: a.id],
+        limit: @latest_emotion_users_limit,
         select: %{
           id: user.id,
           user_id: user.id,
@@ -111,15 +103,26 @@ defmodule GroupherServer.CMS.Comments.Emotion do
         }
       )
 
-    mentioned_user_info_list = Repo.all(query) |> Enum.uniq()
-    mentioned_user_count = length(mentioned_user_info_list)
-
-    {:ok, %{user_list: mentioned_user_info_list, user_count: mentioned_user_count}}
+    Repo.all(query)
   end
 
   defp result({:ok, %{update_emotions_field: result}}), do: {:ok, result}
 
   defp result({:error, _, result, _steps}) do
     {:error, result}
+  end
+
+  defp update_emotion_embed(comment, _emotion, user, false, _opt) do
+    FrontDesk.mark_viewer_emotion_states(comment, user) |> done
+  end
+
+  defp update_emotion_embed(comment, emotion, user, true, opt) do
+    with {:ok, comment} <-
+           EmotionToggle.update_embed(comment, emotion, user, opt, fn ->
+             query_latest_emotion_users(comment, emotion)
+           end),
+         {:ok, comment} <- FrontDesk.sync_embed_replies(comment) do
+      FrontDesk.mark_viewer_emotion_states(comment, user) |> done
+    end
   end
 end

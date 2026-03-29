@@ -8,7 +8,9 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   import Ecto.Changeset
   import Helper.Utils, only: [get_config: 2]
   import GroupherServer.CMS.Helper.Macros
-  import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
+
+  import GroupherServer.CMS.Helper.Constraints,
+    only: [articles_exactly_one_ref_constraint: 2, articles_foreign_key_constraint: 1]
 
   alias GroupherServer.CMS
 
@@ -40,6 +42,8 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
     |> cast(attrs, @required_fields ++ @article_fields)
     |> validate_required(@required_fields)
     |> articles_foreign_key_constraint
+    |> articles_exactly_one_ref_constraint(:pinned_comments)
+    |> unique_article_comment_constraint()
   end
 
   # @doc false
@@ -47,5 +51,15 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
     article_pined_comment
     |> cast(attrs, @required_fields ++ @article_fields)
     |> articles_foreign_key_constraint
+    |> articles_exactly_one_ref_constraint(:pinned_comments)
+    |> unique_article_comment_constraint()
+  end
+
+  defp unique_article_comment_constraint(%Ecto.Changeset{} = changeset) do
+    Enum.reduce(@article_fields, changeset, fn article_field, acc ->
+      unique_constraint(acc, :comment_id,
+        name: :"pinned_comments_#{article_field}_comment_id_index"
+      )
+    end)
   end
 end

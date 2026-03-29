@@ -7,6 +7,7 @@ defmodule GroupherServer.CMS.Model.CitedArtiment do
 
   import Ecto.Changeset
   import GroupherServer.CMS.Helper.Macros
+  import GroupherServer.CMS.Helper.Constraints, only: [articles_at_most_one_ref_constraint: 2]
 
   alias GroupherServer.{Accounts, CMS}
 
@@ -42,11 +43,13 @@ defmodule GroupherServer.CMS.Model.CitedArtiment do
     cited_artiment
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
+    |> articles_at_most_one_ref_constraint(:cited_artiments)
   end
 
   @doc false
   def update_changeset(%CitedArtiment{} = cited_artiment, attrs) do
     cited_artiment
     |> cast(attrs, @optional_fields ++ @required_fields)
+    |> articles_at_most_one_ref_constraint(:cited_artiments)
   end
 end

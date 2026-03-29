@@ -7,7 +7,13 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
   import Ecto.Changeset
   import Helper.Utils, only: [get_config: 2]
   import GroupherServer.CMS.Helper.Macros
-  import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
+
+  import GroupherServer.CMS.Helper.Constraints,
+    only: [
+      articles_exactly_one_ref_constraint: 2,
+      articles_foreign_key_constraint: 1,
+      articles_thread_matches_ref_constraint: 2
+    ]
 
   alias GroupherServer.Accounts
 
@@ -41,5 +47,7 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
     |> cast_embed(:collect_folders, with: &CollectFolder.changeset/2)
     |> foreign_key_constraint(:user_id)
     |> articles_foreign_key_constraint
+    |> articles_exactly_one_ref_constraint(:article_collects)
+    |> articles_thread_matches_ref_constraint(:article_collects)
   end
 end

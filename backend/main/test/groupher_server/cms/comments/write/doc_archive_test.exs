@@ -9,10 +9,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocArchive do
     {community, doc, _, user} = mock_article(:doc)
 
     {:ok, comment_long_ago} =
-      db_insert(:comment, %{
-        title: "last week",
-        inserted_at: @last_year
-      })
+      CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+
+    {:ok, comment_long_ago} =
+      ORM.update(comment_long_ago, %{inserted_at: @last_year}, strict: false)
 
     {:ok, _} =
       CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
@@ -52,7 +52,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocArchive do
         |> Repo.all()
 
       archived_comment = archived_comments |> List.first()
-      {:error, reason} = CMS.Comments.update_comment(archived_comment, mock_comment("updated content"))
+
+      {:error, reason} =
+        CMS.Comments.update_comment(archived_comment, mock_comment("updated content"))
+
       assert reason |> is_error?(:archived)
     end
 
