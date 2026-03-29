@@ -10,10 +10,10 @@ defmodule GroupherServer.CMS.Helper.EmotionToggle do
 
   Example:
 
-      iex> EmotionToggle.persist(CommentUserEmotion, %{comment_id: 1, user_id: 2, recived_user_id: 3}, :beer, true)
+      iex> EmotionToggle.persist(CommentUserEmotion, %{comment_id: 1, user_id: 2, received_user_id: 3}, :beer, true)
       {:ok, true}
 
-      iex> EmotionToggle.persist(CommentUserEmotion, %{comment_id: 1, user_id: 2, recived_user_id: 3}, :beer, true)
+      iex> EmotionToggle.persist(CommentUserEmotion, %{comment_id: 1, user_id: 2, received_user_id: 3}, :beer, true)
       {:ok, false}
 
   The second call is idempotent because the same `(target, user, emotion)` row
@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Helper.EmotionToggle do
     end
   end
 
-  @spec update_embed(map(), atom(), User.t(), :add | :remove, (() -> [map()])) ::
+  @spec update_embed(map(), atom(), User.t(), :add | :remove, (-> [map()])) ::
           {:ok, map()} | {:error, map()}
   def update_embed(artiment, emotion, %User{} = user, opt, latest_users_loader \\ fn -> [] end)
       when opt in [:add, :remove] and is_function(latest_users_loader, 0) do

@@ -14,12 +14,12 @@ defmodule GroupherServer.CMS.Model.CommentUserEmotion do
   @schema_prefix DBPrefix.cms()
   @supported_emotions get_config(:article, :comment_emotions)
 
-  @required_fields ~w(comment_id user_id recived_user_id emotion)a
+  @required_fields ~w(comment_id user_id received_user_id emotion)a
 
   @type t :: %__MODULE__{}
   schema "comments_users_emotions" do
     belongs_to(:comment, Comment, foreign_key: :comment_id)
-    belongs_to(:recived_user, User, foreign_key: :recived_user_id)
+    belongs_to(:received_user, User, foreign_key: :received_user_id)
     belongs_to(:user, User, foreign_key: :user_id)
 
     field(:emotion, :string)
@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Model.CommentUserEmotion do
     |> validate_inclusion(:emotion, Enum.map(@supported_emotions, &to_string/1))
     |> foreign_key_constraint(:comment_id)
     |> foreign_key_constraint(:user_id)
-    |> foreign_key_constraint(:recived_user_id)
+    |> foreign_key_constraint(:received_user_id)
     |> comment_emotion_unique_key_constraint()
   end
 

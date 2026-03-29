@@ -33,11 +33,17 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   def set(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
       with {:ok, article} <- FrontDesk.article_of(comment),
-           :ok <- CanCan.ensure_emotion_allowed(article.community_slug, :comment, comment.thread, emotion) do
+           :ok <-
+             CanCan.ensure_emotion_allowed(
+               article.community_slug,
+               :comment,
+               comment.thread,
+               emotion
+             ) do
         Transaction.lock_row(comment, fn locked_comment ->
           target = %{
             comment_id: locked_comment.id,
-            recived_user_id: locked_comment.author_id,
+            received_user_id: locked_comment.author_id,
             user_id: user.id
           }
 
@@ -49,7 +55,9 @@ defmodule GroupherServer.CMS.Comments.Emotion do
             update_emotion_embed(locked_comment, emotion, user, changed?, :add)
           end)
           |> Multi.run(:after_events, fn _, _ ->
-            Later.run({Events, :emit, [:subscribe_community, %{target: locked_comment, user: user}]})
+            Later.run(
+              {Events, :emit, [:subscribe_community, %{target: locked_comment, user: user}]}
+            )
           end)
           |> Repo.transaction()
           |> result
@@ -62,11 +70,17 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   def undo(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
       with {:ok, article} <- FrontDesk.article_of(comment),
-           :ok <- CanCan.ensure_emotion_allowed(article.community_slug, :comment, comment.thread, emotion) do
+           :ok <-
+             CanCan.ensure_emotion_allowed(
+               article.community_slug,
+               :comment,
+               comment.thread,
+               emotion
+             ) do
         Transaction.lock_row(comment, fn locked_comment ->
           target = %{
             comment_id: locked_comment.id,
-            recived_user_id: locked_comment.author_id,
+            received_user_id: locked_comment.author_id,
             user_id: user.id
           }
 

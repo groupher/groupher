@@ -87,7 +87,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
     test "article user emotion rejects multiple article refs", ~m(post blog user other_user)a do
       attrs = %{
         user_id: user.id,
-        recived_user_id: other_user.id,
+        received_user_id: other_user.id,
         emotion: "beer",
         post_id: post.id,
         blog_id: blog.id
