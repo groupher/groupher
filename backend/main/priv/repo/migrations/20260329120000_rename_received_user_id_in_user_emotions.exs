@@ -41,8 +41,12 @@ defmodule GroupherServer.Repo.Migrations.RenameReceivedUserIdInUserEmotions do
     BEGIN
       IF EXISTS (
         SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'comments_users_emotions_recived_user_id_fkey'
+        FROM pg_constraint c
+        JOIN pg_class t ON t.oid = c.conrelid
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        WHERE c.conname = 'comments_users_emotions_recived_user_id_fkey'
+          AND n.nspname = 'cms'
+          AND t.relname = 'comments_users_emotions'
       ) THEN
         ALTER TABLE cms.comments_users_emotions
         RENAME CONSTRAINT comments_users_emotions_recived_user_id_fkey
@@ -57,8 +61,12 @@ defmodule GroupherServer.Repo.Migrations.RenameReceivedUserIdInUserEmotions do
     BEGIN
       IF EXISTS (
         SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'articles_users_emotions_recived_user_id_fkey'
+        FROM pg_constraint c
+        JOIN pg_class t ON t.oid = c.conrelid
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        WHERE c.conname = 'articles_users_emotions_recived_user_id_fkey'
+          AND n.nspname = 'cms'
+          AND t.relname = 'articles_users_emotions'
       ) THEN
         ALTER TABLE cms.articles_users_emotions
         RENAME CONSTRAINT articles_users_emotions_recived_user_id_fkey
@@ -70,12 +78,12 @@ defmodule GroupherServer.Repo.Migrations.RenameReceivedUserIdInUserEmotions do
 
     execute("""
     ALTER INDEX IF EXISTS cms.comments_users_emotions_recived_user_id_index
-    RENAME TO comments_users_emotions_received_user_id_index
+    RENAME TO comments_users_emotions_received_user_id_index;
     """)
 
     execute("""
     ALTER INDEX IF EXISTS cms.articles_users_emotions_recived_user_id_index
-    RENAME TO articles_users_emotions_received_user_id_index
+    RENAME TO articles_users_emotions_received_user_id_index;
     """)
   end
 
@@ -119,8 +127,12 @@ defmodule GroupherServer.Repo.Migrations.RenameReceivedUserIdInUserEmotions do
     BEGIN
       IF EXISTS (
         SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'comments_users_emotions_received_user_id_fkey'
+        FROM pg_constraint c
+        JOIN pg_class t ON t.oid = c.conrelid
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        WHERE c.conname = 'comments_users_emotions_received_user_id_fkey'
+          AND n.nspname = 'cms'
+          AND t.relname = 'comments_users_emotions'
       ) THEN
         ALTER TABLE cms.comments_users_emotions
         RENAME CONSTRAINT comments_users_emotions_received_user_id_fkey
@@ -135,8 +147,12 @@ defmodule GroupherServer.Repo.Migrations.RenameReceivedUserIdInUserEmotions do
     BEGIN
       IF EXISTS (
         SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'articles_users_emotions_received_user_id_fkey'
+        FROM pg_constraint c
+        JOIN pg_class t ON t.oid = c.conrelid
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        WHERE c.conname = 'articles_users_emotions_received_user_id_fkey'
+          AND n.nspname = 'cms'
+          AND t.relname = 'articles_users_emotions'
       ) THEN
         ALTER TABLE cms.articles_users_emotions
         RENAME CONSTRAINT articles_users_emotions_received_user_id_fkey
@@ -148,12 +164,12 @@ defmodule GroupherServer.Repo.Migrations.RenameReceivedUserIdInUserEmotions do
 
     execute("""
     ALTER INDEX IF EXISTS cms.comments_users_emotions_received_user_id_index
-    RENAME TO comments_users_emotions_recived_user_id_index
+    RENAME TO comments_users_emotions_recived_user_id_index;
     """)
 
     execute("""
     ALTER INDEX IF EXISTS cms.articles_users_emotions_received_user_id_index
-    RENAME TO articles_users_emotions_recived_user_id_index
+    RENAME TO articles_users_emotions_recived_user_id_index;
     """)
   end
 end
