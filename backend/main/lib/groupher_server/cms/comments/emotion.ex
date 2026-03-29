@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   def set(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
       with {:ok, article} <- FrontDesk.article_of(comment),
-           :ok <-
+           {:ok, _thread_key} <-
              CanCan.ensure_emotion_allowed(
                article.community_slug,
                :comment,
@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   def undo(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
       with {:ok, article} <- FrontDesk.article_of(comment),
-           :ok <-
+           {:ok, _thread_key} <-
              CanCan.ensure_emotion_allowed(
                article.community_slug,
                :comment,

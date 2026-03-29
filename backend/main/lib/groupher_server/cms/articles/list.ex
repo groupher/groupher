@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Articles.List do
     %{page: page, size: size} = filter
     flags = %{mark_delete: false, pending: :legal}
 
-    with {:ok, _thread} <- CanCan.ensure_thread_visible(filter, thread),
+    with {:ok, _thread} <- CanCan.ensure_thread_visible(Map.get(filter, :community), thread),
          {:ok, info} <- match(thread) do
       info.model
       |> QueryBuilder.domain_query(filter)
