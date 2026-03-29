@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Accounts.Publish.Changelog do
       pub_changelogs2 =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
           changelog_attrs = mock_attrs(:changelog, %{community_id: community2.id})
-          {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+          {:ok, changelog} = CMS.Articles.create(community2, :changelog, changelog_attrs, user)
 
           acc ++ [changelog]
         end)

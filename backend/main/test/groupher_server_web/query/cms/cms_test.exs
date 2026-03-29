@@ -226,7 +226,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       variables = %{filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(@query, variables)
 
-      results["entries"] |> Enum.all?(fn x -> x["index"] == 100_000 end)
+      assert Enum.all?(results["entries"], fn x -> x["index"] == 100_000 end)
     end
 
     test "guest user can get paged communities based on category", ~m(guest_conn user)a do

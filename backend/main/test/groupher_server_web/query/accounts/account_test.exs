@@ -329,7 +329,8 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     end
 
     test "user should subscribe home community if not subscribed before", ~m(user)a do
-      community = create_community!(user, %{slug: "home"})
+      {:ok, owner} = db_insert(:user)
+      community = create_community!(owner, %{slug: "home"})
 
       user_conn = simu_conn(:user, user)
       _results = user_conn |> gq_query(@query)
