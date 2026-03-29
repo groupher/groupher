@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
       with {:ok, article} <- FrontDesk.article_of(comment),
            {:ok, _thread_key} <-
-             CanCan.ensure_emotion_allowed(
+             CanCan.allow_emotion(
                article.community_slug,
                :comment,
                comment.thread,
@@ -71,7 +71,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
       with {:ok, article} <- FrontDesk.article_of(comment),
            {:ok, _thread_key} <-
-             CanCan.ensure_emotion_allowed(
+             CanCan.allow_emotion(
                article.community_slug,
                :comment,
                comment.thread,

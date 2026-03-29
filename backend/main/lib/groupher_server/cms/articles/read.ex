@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Articles.Read do
 
   @spec read(String.t(), T.article_thread(), T.id()) :: T.domain_res(T.article())
   def read(community_slug, thread, inner_id) when thread in @article_threads do
-    with {:ok, _thread} <- CanCan.ensure_thread_visible(community_slug, thread),
+    with {:ok, _thread} <- CanCan.allow_thread(community_slug, thread),
          {:ok, article} <- if_article_legal(community_slug, thread, inner_id) do
       do_read_article(article, community_slug, thread)
     end
@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Articles.Read do
   @spec read(String.t(), T.article_thread(), T.id(), User.t()) :: T.domain_res(T.article())
   def read(community_slug, thread, inner_id, %User{id: user_id} = user)
       when thread in @article_threads do
-    with {:ok, _thread} <- CanCan.ensure_thread_visible(community_slug, thread),
+    with {:ok, _thread} <- CanCan.allow_thread(community_slug, thread),
          {:ok, article} <- if_article_legal(community_slug, thread, inner_id, user) do
       Multi.new()
       |> Multi.run(:normal_read, fn _, _ ->
