@@ -167,6 +167,19 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert exist_in?(%{id: to_string(community.id)}, blog["communities"])
     end
 
+    test "returns cancan error when community blog thread is disabled",
+         ~m(guest_conn community)a do
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :enable, %{
+          blog: false
+        })
+
+      variables = %{filter: %{page: 1, size: 10, community: community.slug}}
+
+      assert guest_conn
+             |> query_error?(Schema.q(:paged_articles, :blog), variables, ecode(:thread_not_visible))
+    end
+
     test "request large size fails", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 200}}
 

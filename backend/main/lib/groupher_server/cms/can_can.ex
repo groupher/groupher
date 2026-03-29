@@ -35,6 +35,10 @@ defmodule GroupherServer.CMS.CanCan do
   @spec thread_visible?(map(), atom() | String.t()) :: boolean()
   def thread_visible?(community, thread), do: Communities.thread_visible?(community, thread)
 
+  @spec ensure_thread_visible(map() | String.t() | nil, atom() | String.t()) ::
+          {:ok, atom()} | {:error, atom()}
+  def ensure_thread_visible(community, thread), do: Communities.ensure_thread_visible(community, thread)
+
   @spec thread_mutable?(map(), atom() | String.t()) :: boolean()
   def thread_mutable?(community, thread), do: Communities.thread_mutable?(community, thread)
 
@@ -44,7 +48,7 @@ defmodule GroupherServer.CMS.CanCan do
   end
 
   @spec ensure_emotion_allowed(String.t() | nil, scope(), atom() | String.t(), atom()) ::
-          :ok | {:error, atom()}
+          {:ok, atom()} | {:error, atom()}
   def ensure_emotion_allowed(community, scope, thread, emotion) do
     Communities.ensure_emotion_allowed(community, scope, thread, emotion)
   end

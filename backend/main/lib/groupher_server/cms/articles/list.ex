@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Articles.List do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
+  alias CMS.CanCan
   alias CMS.FrontDesk
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.{CitedArtiment, Community, PinnedArticle, Post}
@@ -42,7 +43,8 @@ defmodule GroupherServer.CMS.Articles.List do
     %{page: page, size: size} = filter
     flags = %{mark_delete: false, pending: :legal}
 
-    with {:ok, info} <- match(thread) do
+    with {:ok, _thread} <- CanCan.ensure_thread_visible(filter, thread),
+         {:ok, info} <- match(thread) do
       info.model
       |> QueryBuilder.domain_query(filter)
       |> QueryBuilder.filter_pack(Map.merge(filter, flags))

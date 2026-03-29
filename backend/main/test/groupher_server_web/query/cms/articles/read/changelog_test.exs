@@ -70,4 +70,19 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]
     assert results |> get_in(["meta", "illegalWords"]) == ["some-word"]
   end
+
+  test "returns cancan error when changelog thread is disabled",
+       ~m(guest_conn community changelog_attrs user)a do
+    {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+    {:ok, _} =
+      CMS.Communities.update_dashboard(community, :enable, %{
+        changelog: false
+      })
+
+    variables = %{article: %{inner_id: changelog.inner_id, community: changelog.community_slug}}
+
+    assert guest_conn
+           |> query_error?(Schema.q(:article, :changelog), variables, ecode(:thread_not_visible))
+  end
 end

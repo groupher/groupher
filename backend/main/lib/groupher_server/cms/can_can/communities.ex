@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.CanCan.Communities do
       {:error, :emotion_not_allowed}
   """
 
-  import Helper.Utils, only: [get_config: 2]
+  import Helper.Utils, only: [get_config: 2, done: 1]
 
   alias GroupherServer.CMS.FrontDesk
 
@@ -59,6 +59,17 @@ defmodule GroupherServer.CMS.CanCan.Communities do
     end
   end
 
+  @spec ensure_thread_visible(map() | String.t() | nil, atom() | String.t()) ::
+          {:ok, atom()} | {:error, atom()}
+  def ensure_thread_visible(community, thread) do
+    thread_key = normalize_thread(thread)
+
+    case thread_visible?(community, thread_key) do
+      true -> done(thread_key)
+      false -> {:error, :thread_not_visible}
+    end
+  end
+
   @spec thread_mutable?(map() | String.t() | nil, atom() | String.t()) :: boolean()
   def thread_mutable?(community, thread) do
     thread_visible?(community, thread) and not community_frozen?(community)
@@ -78,10 +89,12 @@ defmodule GroupherServer.CMS.CanCan.Communities do
   end
 
   @spec ensure_emotion_allowed(String.t() | nil, scope(), atom() | String.t(), atom()) ::
-          :ok | {:error, atom()}
+          {:ok, atom()} | {:error, atom()}
   def ensure_emotion_allowed(community_slug, scope, thread, emotion) do
+    thread_key = thread_key(scope, thread)
+
     case emotion_allowed?(community_slug, scope, thread, emotion) do
-      true -> :ok
+      true -> done(thread_key)
       false -> {:error, :emotion_not_allowed}
     end
   end
@@ -114,6 +127,10 @@ defmodule GroupherServer.CMS.CanCan.Communities do
   defp dashboard_enable(nil), do: nil
 
   defp dashboard_enable(%{dashboard: %{enable: enable}}), do: enable
+
+  defp dashboard_enable(%{community: community_slug}) when is_binary(community_slug) do
+    dashboard_enable(community_slug)
+  end
 
   defp dashboard_enable(community_slug) when is_binary(community_slug) do
     case FrontDesk.community(community_slug) do
