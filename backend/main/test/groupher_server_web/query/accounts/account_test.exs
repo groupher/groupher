@@ -7,6 +7,18 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
   @default_subscribed_communities get_config(:general, :default_subscribed_communities)
 
+  defp create_community!(user, attrs \\ %{}) do
+    community_attrs = mock_attrs(:community, attrs)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    community
+  end
+
+  defp create_communities!(count, user) do
+    Enum.map(1..count, fn _ ->
+      create_community!(user)
+    end)
+  end
+
   setup do
     {:ok, user} = db_insert(:user)
     guest_conn = simu_conn(:guest)
@@ -234,8 +246,9 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     }
     """
     test "guest user can get paged default subscribed communities", ~m(guest_conn)a do
-      {:ok, _} = db_insert_multi(:community, 25)
-      {:ok, _} = db_insert(:community, %{slug: "home"})
+      {:ok, user} = db_insert(:user)
+      _ = create_communities!(25, user)
+      _community = create_community!(user, %{slug: "home"})
 
       variables = %{filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
@@ -246,8 +259,9 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
     test "guest user can get paged default subscribed communities with home included",
          ~m(guest_conn)a do
-      {:ok, _} = db_insert_multi(:community, 25)
-      {:ok, _} = db_insert(:community, %{slug: "home"})
+      {:ok, user} = db_insert(:user)
+      _ = create_communities!(25, user)
+      _community = create_community!(user, %{slug: "home"})
 
       variables = %{filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
@@ -270,7 +284,8 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     """
     test "guest user can get paged default subscribed communities with empty args",
          ~m(guest_conn)a do
-      {:ok, _} = db_insert_multi(:community, 25)
+      {:ok, user} = db_insert(:user)
+      _ = create_communities!(25, user)
 
       variables = %{filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
@@ -314,7 +329,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     end
 
     test "user should subscribe home community if not subscribed before", ~m(user)a do
-      {:ok, community} = db_insert(:community, %{slug: "home"})
+      community = create_community!(user, %{slug: "home"})
 
       user_conn = simu_conn(:user, user)
       _results = user_conn |> gq_query(@query)

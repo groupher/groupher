@@ -123,7 +123,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       cur_user = user
       {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
-      {:ok, other_community} = db_insert(:community)
+      other_community_attrs = mock_attrs(:community)
+      {:ok, other_community} = CMS.Communities.create(other_community_attrs, user)
 
       new_passport_rules = %{
         "global" => %{},
@@ -145,7 +146,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       cur_user = user
       {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
 
-      {:ok, other_community} = db_insert(:community)
+      other_community_attrs = mock_attrs(:community)
+      {:ok, other_community} = CMS.Communities.create(other_community_attrs, user)
 
       new_passport_rules = %{
         "global" => %{},

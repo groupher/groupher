@@ -31,7 +31,9 @@ defmodule GroupherServer.Test.Helper.Transaction do
 
   describe "lock_row/2" do
     test "locks existing row and returns callback value" do
-      {:ok, community} = db_insert(:community)
+      {:ok, user} = db_insert(:user)
+      community_attrs = mock_attrs(:community)
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       assert {:ok, locked_community} =
                Transaction.lock_row(community, fn locked_community ->
@@ -47,8 +49,11 @@ defmodule GroupherServer.Test.Helper.Transaction do
     end
 
     test "locks multiple rows in deterministic order" do
-      {:ok, community1} = db_insert(:community)
-      {:ok, community2} = db_insert(:community)
+      {:ok, user} = db_insert(:user)
+      community1_attrs = mock_attrs(:community)
+      community2_attrs = mock_attrs(:community)
+      {:ok, community1} = CMS.Communities.create(community1_attrs, user)
+      {:ok, community2} = CMS.Communities.create(community2_attrs, user)
 
       expected_ids = [community1.id, community2.id] |> Enum.sort()
 

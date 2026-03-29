@@ -174,10 +174,11 @@ defmodule GroupherServer.Test.Helper.ORM do
 
   describe "update meta" do
     test "update meta should fill default meta info if need" do
-      {:ok, community} = db_insert(:community)
       {:ok, user} = db_insert(:user)
+      community_attrs = mock_attrs(:community)
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      assert is_nil(community.meta)
+      assert not is_nil(community.meta)
       assert is_nil(user.meta)
 
       {:ok, community} = ORM.update_meta(community, %{})

@@ -12,7 +12,8 @@ defmodule GroupherServer.Test.CMS.ChangelogArchive do
   setup do
     {:ok, user} = db_insert(:user)
     # {:ok, changelog} = db_insert(:changelog)
-    {:ok, community} = db_insert(:community)
+    community_attrs = mock_attrs(:community)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
 
     {:ok, changelog_long_ago} =
       db_insert(:changelog, %{title: "last week", inserted_at: @last_year})

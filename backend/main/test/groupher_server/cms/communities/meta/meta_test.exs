@@ -26,12 +26,14 @@ defmodule GroupherServer.Test.CMS.Communities.Meta do
                Map.merge(@default_meta, %{moderators_ids: [community.user_id]})
     end
 
-    test "update legacy community should add default meta" do
-      {:ok, community} = db_insert(:community)
-      assert is_nil(community.meta)
+    test "update community should keep default meta", ~m(user)a do
+      community_attrs = mock_attrs(:community)
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, community} = CMS.Communities.update(community, %{title: "new title"})
-      assert strip_struct(community.meta) == @default_meta
+
+      assert strip_struct(community.meta) ==
+               Map.merge(@default_meta, %{moderators_ids: [community.user_id]})
     end
 
     test "create a post should inc posts_count in meta",

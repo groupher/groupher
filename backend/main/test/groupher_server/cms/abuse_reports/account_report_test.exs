@@ -10,7 +10,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.AccountReport do
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
+    community_attrs = mock_attrs(:community)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
     post_attrs = mock_attrs(:post, %{community_id: community.id})
 
     {:ok, ~m(user user2 user3 community post_attrs)a}

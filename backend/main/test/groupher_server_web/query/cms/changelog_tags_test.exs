@@ -5,9 +5,11 @@ defmodule GroupherServer.Test.Query.CMS.ChangelogTags do
 
   setup do
     guest_conn = simu_conn(:guest)
-    {:ok, community} = db_insert(:community)
-    {:ok, community2} = db_insert(:community)
     {:ok, user} = db_insert(:user)
+    community_attrs = mock_attrs(:community)
+    community2_attrs = mock_attrs(:community)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community2} = CMS.Communities.create(community2_attrs, user)
 
     article_tag_attrs = mock_attrs(:community_tag)
     article_tag_attrs2 = mock_attrs(:community_tag)

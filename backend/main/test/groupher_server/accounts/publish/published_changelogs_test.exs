@@ -11,7 +11,8 @@ defmodule GroupherServer.Test.Accounts.Publish.Changelog do
     {community, changelog, _, user} = mock_article(:changelog)
 
     {:ok, user2} = db_insert(:user)
-    {:ok, community2} = db_insert(:community)
+    community2_attrs = mock_attrs(:community)
+    {:ok, community2} = CMS.Communities.create(community2_attrs, user)
 
     {:ok, ~m(user user2 changelog community community2)a}
   end
