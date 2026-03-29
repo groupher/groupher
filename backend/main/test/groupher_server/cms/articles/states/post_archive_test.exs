@@ -11,7 +11,8 @@ defmodule GroupherServer.Test.CMS.PostArchive do
   setup do
     {:ok, user} = db_insert(:user)
     # {:ok, post} = db_insert(:post)
-    {:ok, community} = db_insert(:community)
+    community_attrs = mock_attrs(:community)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
 
     {:ok, post_long_ago} = db_insert(:post, %{title: "last week", inserted_at: @last_year})
     db_insert_multi(:post, 5)

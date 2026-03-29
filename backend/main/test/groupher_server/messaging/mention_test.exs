@@ -12,7 +12,8 @@ defmodule GroupherServer.Test.Messaging.Mention do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    community_attrs = mock_attrs(:community)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
 
     mention_attr = %{
       thread: "POST",

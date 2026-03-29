@@ -87,8 +87,11 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      {:ok, community2} = db_insert(:community)
-      {:ok, community3} = db_insert(:community)
+      {:ok, user} = db_insert(:user)
+      community2_attrs = mock_attrs(:community)
+      community3_attrs = mock_attrs(:community)
+      {:ok, community2} = CMS.Communities.create(community2_attrs, user)
+      {:ok, community3} = CMS.Communities.create(community3_attrs, user)
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},

@@ -7,7 +7,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.AccountReport do
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
 
-    {:ok, community} = db_insert(:community)
+    community_attrs = mock_attrs(:community)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
     guest_conn = simu_conn(:guest)
 
     {:ok, ~m(guest_conn community user user2)a}

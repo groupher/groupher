@@ -8,8 +8,16 @@ defmodule GroupherServer.Test.Statistics.Status do
   @communities_count 10
   # @posts_count 11
 
+  defp create_communities!(count, user) do
+    Enum.each(1..count, fn _ ->
+      community_attrs = mock_attrs(:community)
+      {:ok, _community} = CMS.Communities.create(community_attrs, user)
+    end)
+  end
+
   setup do
-    {:ok, _} = db_insert_multi(:community, @communities_count)
+    {:ok, user} = db_insert(:user)
+    create_communities!(@communities_count, user)
 
     :ok
   end

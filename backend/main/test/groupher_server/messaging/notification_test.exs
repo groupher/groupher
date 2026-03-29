@@ -15,7 +15,8 @@ defmodule GroupherServer.Test.Messaging.Notification do
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
     {:ok, user4} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
+    community_attrs = mock_attrs(:community)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
 
     notify_attrs = %{
       thread: :post,

@@ -3,13 +3,20 @@ defmodule GroupherServer.Test.Query.CMS.Search do
 
   use GroupherServer.TestMate
 
+  defp create_community!(user, attrs) do
+    community_attrs = mock_attrs(:community, attrs)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    community
+  end
+
   setup do
     guest_conn = simu_conn(:guest)
-    {:ok, _community} = db_insert(:community, %{title: "react"})
-    {:ok, _community} = db_insert(:community, %{title: "php"})
-    {:ok, _community} = db_insert(:community, %{title: "每日妹子"})
-    {:ok, _community} = db_insert(:community, %{title: "javascript"})
-    {:ok, _community} = db_insert(:community, %{title: "java"})
+    {:ok, user} = db_insert(:user)
+    _community = create_community!(user, %{title: "react"})
+    _community = create_community!(user, %{title: "php"})
+    _community = create_community!(user, %{title: "每日妹子"})
+    _community = create_community!(user, %{title: "javascript"})
+    _community = create_community!(user, %{title: "java"})
 
     {:ok, _community} = db_insert(:post, %{title: "react"})
     {:ok, _community} = db_insert(:post, %{title: "php"})
@@ -17,7 +24,7 @@ defmodule GroupherServer.Test.Query.CMS.Search do
     {:ok, _community} = db_insert(:post, %{title: "javascript"})
     {:ok, _community} = db_insert(:post, %{title: "java"})
 
-    {:ok, ~m(guest_conn)a}
+    {:ok, ~m(guest_conn user)a}
   end
 
   describe "[cms search post query]" do
@@ -61,8 +68,8 @@ defmodule GroupherServer.Test.Query.CMS.Search do
       assert results["entries"] |> Enum.any?(&(&1["title"] == "javascript"))
     end
 
-    test "can search community with category", ~m(guest_conn)a do
-      {:ok, community} = db_insert(:community, %{title: "cool-pl"})
+    test "can search community with category", ~m(guest_conn user)a do
+      community = create_community!(user, %{title: "cool-pl"})
       {:ok, category} = db_insert(:category, %{slug: "pl"})
 
       {:ok, _} = CMS.Communities.set_category(community, category)

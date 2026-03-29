@@ -11,7 +11,8 @@ defmodule GroupherServer.Test.Accounts.Publish.Doc do
     {community, doc, _, user} = mock_article(:doc)
 
     {:ok, user2} = db_insert(:user)
-    {:ok, community2} = db_insert(:community)
+    community2_attrs = mock_attrs(:community)
+    {:ok, community2} = CMS.Communities.create(community2_attrs, user)
 
     {:ok, ~m(user user2 doc community community2)a}
   end

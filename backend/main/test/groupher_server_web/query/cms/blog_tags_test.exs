@@ -5,14 +5,14 @@ defmodule GroupherServer.Test.Query.CMS.BlogTags do
 
   setup do
     guest_conn = simu_conn(:guest)
-    {:ok, community} = db_insert(:community)
-    {:ok, community2} = db_insert(:community)
     {:ok, user} = db_insert(:user)
+    community_attrs = mock_attrs(:community)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
 
     article_tag_attrs = mock_attrs(:community_tag)
     article_tag_attrs2 = mock_attrs(:community_tag)
 
-    {:ok, ~m(guest_conn community community2 article_tag_attrs article_tag_attrs2 user)a}
+    {:ok, ~m(guest_conn community article_tag_attrs article_tag_attrs2 user)a}
   end
 
   describe "[cms query tags]" do

@@ -5,6 +5,18 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
   alias CMS.Model.Category
 
+  defp create_community!(user, attrs \\ %{}) do
+    community_attrs = mock_attrs(:community, attrs)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    community
+  end
+
+  defp create_communities!(count, user) do
+    Enum.map(1..count, fn _ ->
+      create_community!(user)
+    end)
+  end
+
   setup do
     guest_conn = simu_conn(:guest)
     {:ok, user} = db_insert(:user)
@@ -79,8 +91,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-    test "views should work", ~m(guest_conn)a do
-      {:ok, community} = db_insert(:community)
+    test "views should work", ~m(guest_conn user)a do
+      community = create_community!(user)
 
       variables = %{slug: community.slug}
       guest_conn |> gq_query(@query, variables)
@@ -93,8 +105,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert community.views == 2
     end
 
-    test "views should work with inc_views as false", ~m(guest_conn)a do
-      {:ok, community} = db_insert(:community)
+    test "views should work with inc_views as false", ~m(guest_conn user)a do
+      community = create_community!(user)
 
       variables = %{slug: community.slug, incViews: false}
       guest_conn |> gq_query(@query, variables)
@@ -107,8 +119,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert community.views == 0
     end
 
-    test "can get from alias community name", ~m(guest_conn)a do
-      {:ok, _community} = db_insert(:community, %{slug: "kubernetes", aka: "k8s"})
+    test "can get from alias community name", ~m(guest_conn user)a do
+      _community = create_community!(user, %{slug: "kubernetes", aka: "k8s"})
 
       variables = %{slug: "k8s"}
       aka_results = guest_conn |> gq_query(@query, variables)
@@ -188,7 +200,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     }
     """
     test "user can get viewer has subscribed state", ~m(user)a do
-      {:ok, communities} = db_insert_multi(:community, 5)
+      communities = create_communities!(5, user)
       {:ok, _record} = CMS.Communities.subscribe(communities |> List.first(), user)
 
       variables = %{filter: %{page: 1, size: 20}}
@@ -198,8 +210,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert results["entries"] |> Enum.any?(&(&1["viewerHasSubscribed"] == true))
     end
 
-    test "guest user can get paged communities", ~m(guest_conn)a do
-      {:ok, _communities} = db_insert_multi(:community, 5)
+    test "guest user can get paged communities", ~m(guest_conn user)a do
+      _communities = create_communities!(5, user)
 
       variables = %{filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(@query, variables)
@@ -209,19 +221,19 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert results["totalCount"] == 5 + 1
     end
 
-    test "community has default index = 100000", ~m(guest_conn)a do
-      {:ok, _communities} = db_insert_multi(:community, 5)
+    test "community has default index = 100000", ~m(guest_conn user)a do
+      _communities = create_communities!(5, user)
       variables = %{filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(@query, variables)
 
-      results["entries"] |> Enum.all?(fn x -> x["index"] == 100_000 end)
+      assert Enum.all?(results["entries"], fn x -> x["index"] == 100_000 end)
     end
 
-    test "guest user can get paged communities based on category", ~m(guest_conn)a do
+    test "guest user can get paged communities based on category", ~m(guest_conn user)a do
       {:ok, category1} = db_insert(:category)
       {:ok, category2} = db_insert(:category)
 
-      {:ok, communities} = db_insert_multi(:community, 10)
+      communities = create_communities!(10, user)
 
       community1 = communities |> Enum.at(0)
       community2 = communities |> Enum.at(1)

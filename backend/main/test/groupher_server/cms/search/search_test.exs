@@ -4,13 +4,19 @@ defmodule GroupherServer.Test.CMS.Search do
 
   alias CMS.Search
 
+  defp create_community!(user, attrs) do
+    community_attrs = mock_attrs(:community, attrs)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    community
+  end
+
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, _community} = db_insert(:community, %{title: "react"})
-    {:ok, _community} = db_insert(:community, %{title: "php"})
-    {:ok, _community} = db_insert(:community, %{title: "每日妹子"})
-    {:ok, _community} = db_insert(:community, %{title: "javascript"})
-    {:ok, _community} = db_insert(:community, %{title: "java"})
+    _community = create_community!(user, %{title: "react"})
+    _community = create_community!(user, %{title: "php"})
+    _community = create_community!(user, %{title: "每日妹子"})
+    _community = create_community!(user, %{title: "javascript"})
+    _community = create_community!(user, %{title: "java"})
 
     {:ok, _community} = db_insert(:post, %{title: "react"})
     {:ok, _community} = db_insert(:post, %{title: "php"})
@@ -60,8 +66,8 @@ defmodule GroupherServer.Test.CMS.Search do
   end
 
   describe "[cms search community with category]" do
-    test "community with category can be searched" do
-      {:ok, community} = db_insert(:community, %{title: "cool-pl"})
+    test "community with category can be searched", ~m(user)a do
+      community = create_community!(user, %{title: "cool-pl"})
       {:ok, category} = db_insert(:category, %{slug: "pl"})
 
       {:ok, _} = CMS.Communities.set_category(community, category)

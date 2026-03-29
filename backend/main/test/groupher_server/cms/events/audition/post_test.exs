@@ -7,7 +7,8 @@ defmodule GroupherServer.Test.CMS.Events.Audition.PostTest do
     {:ok, user} = db_insert(:user)
     {:ok, post} = db_insert(:post)
 
-    {:ok, community} = db_insert(:community)
+    community_attrs = mock_attrs(:community)
+    {:ok, community} = CMS.Communities.create(community_attrs, user)
 
     post_attrs = mock_attrs(:post, %{community_id: community.id})
 
