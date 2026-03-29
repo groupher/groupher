@@ -179,10 +179,11 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
       assert emotion_entry(result["emotions"], :beer)["count"] == 1
       assert emotion_entry(result["emotions"], :heart)["count"] == 1
 
-      result =
+      _result =
         user_conn
         |> gq_mutation(Schema.m(:undo_emotion_to_comment), %{id: comment_id, emotion: "HEART"})
 
+      result = user_conn |> gq_query(Schema.q(:one_comment_emotions), %{id: comment_id})
       assert length(result["emotions"]) == 1
       assert emotion_entry(result["emotions"], :beer)["count"] == 1
       assert is_nil(emotion_entry(result["emotions"], :heart))

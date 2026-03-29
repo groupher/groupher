@@ -177,10 +177,11 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert emotion_entry(result["emotions"], :heart)["count"] == 1
       assert is_nil(emotion_entry(result["emotions"], :popcorn))
 
-      result =
+      _result =
         user_conn
         |> gq_mutation(Schema.m(:undo_emotion_to_comment), %{id: comment.id, emotion: "HEART"})
 
+      result = user_conn |> gq_query(Schema.q(:one_comment_emotions), %{id: comment.id})
       assert length(result["emotions"]) == 1
       assert emotion_entry(result["emotions"], :beer)["count"] == 1
       assert is_nil(emotion_entry(result["emotions"], :heart))
@@ -198,7 +199,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       variables = %{id: comment.id, emotion: "BEER"}
 
-      assert user_conn |> mutation_error?(Schema.m(:emotion_to_comment), variables)
+      assert user_conn
+             |> mutation_error?(Schema.m(:emotion_to_comment), variables, ecode(:emotion_not_allowed))
     end
   end
 

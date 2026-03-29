@@ -110,7 +110,12 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
         emotion: "BEER"
       }
 
-      assert user_conn |> mutation_error?(Schema.m(:emotion_article, :post), variables)
+      assert user_conn
+             |> mutation_error?(
+               Schema.m(:emotion_article, :post),
+               variables,
+               ecode(:emotion_not_allowed)
+             )
     end
   end
 end

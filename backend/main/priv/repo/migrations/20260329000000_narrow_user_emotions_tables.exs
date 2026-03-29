@@ -78,7 +78,8 @@ defmodule GroupherServer.Repo.Migrations.NarrowUserEmotionsTables do
   end
 
   def down do
-    drop_if_exists(table(:comments_users_emotions, prefix: "cms"))
-    drop_if_exists(table(:articles_users_emotions, prefix: "cms"))
+    raise Ecto.MigrationError,
+      message:
+        "NarrowUserEmotionsTables is irreversible; restore the previous schema from backup if needed."
   end
 end

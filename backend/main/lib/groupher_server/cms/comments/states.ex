@@ -278,8 +278,10 @@ defmodule GroupherServer.CMS.Comments.States do
             {:error, {:already_pinned, comment}}
 
           false ->
-            ORM.update(comment, %{is_pinned: true})
-            |> then(fn {:ok, updated} -> {:error, {:already_pinned, updated}} end)
+            case ORM.update(comment, %{is_pinned: true}) do
+              {:ok, updated} -> {:error, {:already_pinned, updated}}
+              {:error, reason} -> {:error, reason}
+            end
         end
 
       {:error, _} ->
