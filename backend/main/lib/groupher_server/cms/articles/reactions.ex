@@ -21,11 +21,12 @@ defmodule GroupherServer.CMS.Articles.Reactions do
   @spec emotion(term(), atom(), User.t()) :: T.domain_res(term())
   def emotion(article, emotion, %User{} = user) do
     {:ok, info} = match(article)
+
     with {:ok, thread} <- FrontDesk.thread_of(article),
          :ok <- CanCan.ensure_emotion_allowed(article.community_slug, :article, thread, emotion) do
       Transaction.lock_row(article, fn article ->
         target =
-          %{recived_user_id: article.author.user_id, user_id: user.id}
+          %{received_user_id: article.author.user_id, user_id: user.id}
           |> Map.put(info.foreign_key, article.id)
 
         Multi.new()
@@ -44,11 +45,12 @@ defmodule GroupherServer.CMS.Articles.Reactions do
   @spec undo_emotion(term(), atom(), User.t()) :: T.domain_res(term())
   def undo_emotion(article, emotion, %User{} = user) do
     {:ok, info} = match(article)
+
     with {:ok, thread} <- FrontDesk.thread_of(article),
          :ok <- CanCan.ensure_emotion_allowed(article.community_slug, :article, thread, emotion) do
       Transaction.lock_row(article, fn article ->
         target =
-          %{recived_user_id: article.author.user_id, user_id: user.id}
+          %{received_user_id: article.author.user_id, user_id: user.id}
           |> Map.put(info.foreign_key, article.id)
 
         Multi.new()
@@ -83,6 +85,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
             avatar: user.avatar
           }
         )
+
       {:ok, Repo.all(query)}
     end
   end

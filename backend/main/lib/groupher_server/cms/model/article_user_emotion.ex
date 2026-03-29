@@ -21,12 +21,12 @@ defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
   @supported_emotions get_config(:article, :emotions)
   @article_threads get_config(:article, :threads)
 
-  @required_fields ~w(user_id recived_user_id emotion)a
+  @required_fields ~w(user_id received_user_id emotion)a
   @optional_fields Enum.map(@article_threads, &:"#{&1}_id")
 
   @type t :: %__MODULE__{}
   schema "articles_users_emotions" do
-    belongs_to(:recived_user, User, foreign_key: :recived_user_id)
+    belongs_to(:received_user, User, foreign_key: :received_user_id)
     belongs_to(:user, User, foreign_key: :user_id)
 
     field(:emotion, :string)
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
     |> validate_required(@required_fields)
     |> validate_inclusion(:emotion, Enum.map(@supported_emotions, &to_string/1))
     |> foreign_key_constraint(:user_id)
-    |> foreign_key_constraint(:recived_user_id)
+    |> foreign_key_constraint(:received_user_id)
     |> articles_emotion_unique_key_constraint()
     |> articles_foreign_key_constraint()
     |> articles_exactly_one_ref_constraint(:articles_users_emotions)
