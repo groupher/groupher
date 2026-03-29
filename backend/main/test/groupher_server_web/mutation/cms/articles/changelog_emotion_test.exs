@@ -3,6 +3,10 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogEmotion do
 
   use GroupherServer.TestMate
 
+  defp emotion_entry(emotions, type) do
+    Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))
+  end
+
   setup do
     {community, changelog, _, user} = mock_article(:changelog)
 
@@ -19,8 +23,8 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogEmotion do
 
       article = user_conn |> gq_mutation(Schema.m(:emotion_article, :changelog), variables)
 
-      assert article |> get_in(["emotions", "beerCount"]) == 1
-      assert get_in(article, ["emotions", "viewerHasBeered"])
+      assert emotion_entry(article["emotions"], :beer)["count"] == 1
+      assert emotion_entry(article["emotions"], :beer)["viewerHasReacted"]
     end
 
     test "login user can undo emotion to a changelog", ~m(community changelog user owner_conn)a do
@@ -31,8 +35,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogEmotion do
       article =
         owner_conn |> gq_mutation(Schema.m(:undo_emotion_article, :changelog), variables)
 
-      assert article |> get_in(["emotions", "beerCount"]) == 0
-      assert not get_in(article, ["emotions", "viewerHasBeered"])
+      assert is_nil(emotion_entry(article["emotions"], :beer))
     end
   end
 end

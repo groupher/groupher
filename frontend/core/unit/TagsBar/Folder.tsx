@@ -68,15 +68,16 @@ const Folder: FC<TProps> = ({
           }
         }}
       >
+        <div className={s.title}>
+          <div className={s.folderTitle}>{title}</div>
+          {!isFolderOpen && <div className={s.count}>({sortedTags.length})</div>}
+        </div>
+
+        {!isFolderOpen && isActiveTagInFolder && <TagItem tag={activeTag} active />}
+
         <div className={s.arrowBox}>
           <ArrowSVG className={s.arrow} />
         </div>
-
-        <div className={s.title}>
-          <div className={s.folderTitle}>{title}</div>
-          {!isFolderOpen && <div className={s.count}>{sortedTags.length}</div>}
-        </div>
-        {!isFolderOpen && isActiveTagInFolder && <TagItem tag={activeTag} active />}
       </button>
 
       <div className={s.content}>

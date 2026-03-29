@@ -3,6 +3,10 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
   use GroupherServer.TestMate
 
+  defp emotion_entry(emotions, type) do
+    Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))
+  end
+
   setup do
     {community, changelog, _, user} = mock_article(:changelog, preload: [author: :user])
     {:ok, user2} = db_insert(:user)
@@ -61,8 +65,9 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       archivedAt
       viewerHasUpvoted
       emotions {
-        downvoteCount
-        viewerHasDownvoteed
+        type
+        count
+        viewerHasReacted
       }
     }
   }
@@ -94,7 +99,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
     assert results["id"] == to_string(comment.id)
     assert results["viewerHasUpvoted"]
-    assert results["emotions"]["viewerHasDownvoteed"]
+    assert emotion_entry(results["emotions"], :downvote)["viewerHasReacted"]
   end
 
   describe "[basic article changelog comment]" do
@@ -151,21 +156,13 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
             upvotesCount
 
             emotions {
-              downvoteCount
-              latestDownvoteUsers {
+              type
+              count
+              latestUsers {
                 login
                 nickname
               }
-              viewerHasDownvoteed
-              beerCount
-              latestBeerUsers {
-                login
-                nickname
-              }
-              viewerHasBeered
-
-              popcornCount
-              viewerHasPopcorned
+              viewerHasReacted
             }
             isArticleAuthor
             meta {
@@ -730,14 +727,15 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       comment_emotion =
         Enum.find(results["entries"], &(&1["id"] == to_string(comment.id))) |> Map.get("emotions")
 
-      assert comment_emotion["popcornCount"] == 0
+      assert is_nil(emotion_entry(comment_emotion, :popcorn))
 
-      assert comment_emotion["downvoteCount"] == 2
-      assert comment_emotion["latestDownvoteUsers"] |> length == 2
-      assert not comment_emotion["viewerHasDownvoteed"]
+      downvote_emotion = emotion_entry(comment_emotion, :downvote)
+      assert downvote_emotion["count"] == 2
+      assert downvote_emotion["latestUsers"] |> length == 2
+      assert not downvote_emotion["viewerHasReacted"]
 
       latest_downvote_users_logins =
-        Enum.map(comment_emotion["latestDownvoteUsers"], & &1["login"])
+        Enum.map(downvote_emotion["latestUsers"], & &1["login"])
 
       assert user.login in latest_downvote_users_logins
       assert user2.login in latest_downvote_users_logins
@@ -746,11 +744,12 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         Enum.find(results["entries"], &(&1["id"] == to_string(comment2.id)))
         |> Map.get("emotions")
 
-      assert comment2_emotion["beerCount"] == 1
-      assert comment2_emotion["latestBeerUsers"] |> length == 1
-      assert not comment2_emotion["viewerHasBeered"]
+      beer_emotion = emotion_entry(comment2_emotion, :beer)
+      assert beer_emotion["count"] == 1
+      assert beer_emotion["latestUsers"] |> length == 1
+      assert not beer_emotion["viewerHasReacted"]
 
-      latest_beer_users_logins = Enum.map(comment2_emotion["latestBeerUsers"], & &1["login"])
+      latest_beer_users_logins = Enum.map(beer_emotion["latestUsers"], & &1["login"])
       assert user2.login in latest_beer_users_logins
     end
 
@@ -793,7 +792,9 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       results = user_conn |> gq_query(@query, variables)
 
       assert Enum.find(results["entries"], &(&1["id"] == to_string(comment.id)))
-             |> get_in(["emotions", "viewerHasDownvoteed"])
+             |> Map.get("emotions")
+             |> emotion_entry(:downvote)
+             |> Map.get("viewerHasReacted")
     end
 
     test "comment should have viewer has upvoted flag", ~m(user_conn community changelog user)a do
@@ -918,18 +919,13 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
             }
             upvotesCount
             emotions {
-              downvoteCount
-              latestDownvoteUsers {
+              type
+              count
+              latestUsers {
                 login
                 nickname
               }
-              viewerHasDownvoteed
-              beerCount
-              latestBeerUsers {
-                login
-                nickname
-              }
-              viewerHasBeered
+              viewerHasReacted
             }
             isArticleAuthor
             meta {

@@ -9,73 +9,62 @@ defmodule GroupherServer.CMS.Articles.Reactions do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.FrontDesk
+  alias CMS.{CanCan, FrontDesk}
+  alias CMS.Helper.EmotionToggle
   alias CMS.Model.ArticleUserEmotion
-  alias Helper.{Multi, ORM, T, Transaction}
+  alias Helper.{Multi, T, Transaction}
 
   import Ecto.Query
+
+  @latest_emotion_users_limit 4
 
   @spec emotion(term(), atom(), User.t()) :: T.domain_res(term())
   def emotion(article, emotion, %User{} = user) do
     {:ok, info} = match(article)
-
-    Transaction.lock_row(article, fn article ->
-      Multi.new()
-      |> Multi.run(:create_user_emotion, fn _, _ ->
+    with {:ok, thread} <- FrontDesk.thread_of(article),
+         :ok <- CanCan.ensure_emotion_allowed(article.community_slug, :article, thread, emotion) do
+      Transaction.lock_row(article, fn article ->
         target =
           %{recived_user_id: article.author.user_id, user_id: user.id}
           |> Map.put(info.foreign_key, article.id)
 
-        args = Map.put(target, :"#{emotion}", true)
-
-        case ORM.find_by(ArticleUserEmotion, target) do
-          {:ok, article_user_emotion} -> ORM.update(article_user_emotion, args)
-          {:error, _} -> ORM.create(ArticleUserEmotion, args)
-        end
+        Multi.new()
+        |> Multi.run(:persist_user_emotion, fn _, _ ->
+          EmotionToggle.persist(ArticleUserEmotion, target, emotion, true)
+        end)
+        |> Multi.run(:update_emotions_field, fn _, %{persist_user_emotion: changed?} ->
+          update_emotion_embed(article, emotion, user, changed?, :add)
+        end)
+        |> Repo.transaction()
+        |> update_emotions_field_result()
       end)
-      |> Multi.run(:query_emotion_status, fn _, _ ->
-        query_emotion_status(article, emotion)
-      end)
-      |> Multi.run(:update_emotions_field, fn _, %{query_emotion_status: status} ->
-        FrontDesk.update_emotions_field(article, emotion, status, user)
-      end)
-      |> Repo.transaction()
-      |> update_emotions_field_result()
-    end)
+    end
   end
 
   @spec undo_emotion(term(), atom(), User.t()) :: T.domain_res(term())
   def undo_emotion(article, emotion, %User{} = user) do
     {:ok, info} = match(article)
-
-    Transaction.lock_row(article, fn article ->
-      Multi.new()
-      |> Multi.run(:update_user_emotion, fn _, _ ->
+    with {:ok, thread} <- FrontDesk.thread_of(article),
+         :ok <- CanCan.ensure_emotion_allowed(article.community_slug, :article, thread, emotion) do
+      Transaction.lock_row(article, fn article ->
         target =
           %{recived_user_id: article.author.user_id, user_id: user.id}
           |> Map.put(info.foreign_key, article.id)
 
-        case ORM.find_by(ArticleUserEmotion, target) do
-          {:ok, article_user_emotion} ->
-            args = Map.put(target, :"#{emotion}", false)
-            article_user_emotion |> ORM.update(args)
-
-          {:error, _} ->
-            {:ok, :pass}
-        end
+        Multi.new()
+        |> Multi.run(:persist_user_emotion, fn _, _ ->
+          EmotionToggle.persist(ArticleUserEmotion, target, emotion, false)
+        end)
+        |> Multi.run(:update_emotions_field, fn _, %{persist_user_emotion: changed?} ->
+          update_emotion_embed(article, emotion, user, changed?, :remove)
+        end)
+        |> Repo.transaction()
+        |> update_emotions_field_result()
       end)
-      |> Multi.run(:query_emotion_status, fn _, _ ->
-        query_emotion_status(article, emotion)
-      end)
-      |> Multi.run(:update_emotions_field, fn _, %{query_emotion_status: status} ->
-        FrontDesk.update_emotions_field(article, emotion, status, user)
-      end)
-      |> Repo.transaction()
-      |> update_emotions_field_result()
-    end)
+    end
   end
 
-  defp query_emotion_status(article, emotion) do
+  defp query_latest_emotion_users(article, emotion) do
     with {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, info} <- match(thread) do
       query =
@@ -83,7 +72,9 @@ defmodule GroupherServer.CMS.Articles.Reactions do
           join: user in User,
           on: a.user_id == user.id,
           where: field(a, ^info.foreign_key) == ^article.id,
-          where: field(a, ^emotion) == true,
+          where: a.emotion == ^to_string(emotion),
+          order_by: [desc: a.updated_at, desc: a.id],
+          limit: @latest_emotion_users_limit,
           select: %{
             id: user.id,
             user_id: user.id,
@@ -92,11 +83,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
             avatar: user.avatar
           }
         )
-
-      mentioned_user_info_list = Repo.all(query) |> Enum.uniq()
-      mentioned_user_count = length(mentioned_user_info_list)
-
-      {:ok, %{user_list: mentioned_user_info_list, user_count: mentioned_user_count}}
+      {:ok, Repo.all(query)}
     end
   end
 
@@ -104,5 +91,17 @@ defmodule GroupherServer.CMS.Articles.Reactions do
 
   defp update_emotions_field_result({:error, _, result, _steps}) do
     {:error, result}
+  end
+
+  defp update_emotion_embed(article, _emotion, user, false, _opt) do
+    {:ok, FrontDesk.mark_viewer_emotion_states(article, user)}
+  end
+
+  defp update_emotion_embed(article, emotion, user, true, opt) do
+    with {:ok, latest_users} <- query_latest_emotion_users(article, emotion),
+         {:ok, article} <-
+           EmotionToggle.update_embed(article, emotion, user, opt, fn -> latest_users end) do
+      {:ok, FrontDesk.mark_viewer_emotion_states(article, user)}
+    end
   end
 end

@@ -38,6 +38,10 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     ]
   end
 
+  def macro_schema(:thread_emotions) do
+    []
+  end
+
   def macro_schema(:base_info) do
     [
       [:favicon, :string, ""],

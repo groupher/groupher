@@ -9,7 +9,12 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
   import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
-    only: [articles_foreign_key_constraint: 1, articles_upvote_unique_key_constraint: 1]
+    only: [
+      articles_exactly_one_ref_constraint: 2,
+      articles_foreign_key_constraint: 1,
+      articles_thread_matches_ref_constraint: 2,
+      articles_upvote_unique_key_constraint: 1
+    ]
 
   alias GroupherServer.Accounts.Model.User
   alias Helper.Constant.DBPrefix
@@ -39,5 +44,7 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
     |> foreign_key_constraint(:user_id)
     |> articles_upvote_unique_key_constraint
     |> articles_foreign_key_constraint
+    |> articles_exactly_one_ref_constraint(:article_upvotes)
+    |> articles_thread_matches_ref_constraint(:article_upvotes)
   end
 end

@@ -7,6 +7,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
+  alias CMS.Helper.EmotionFormatter
   alias CMS.Model.{Category, Community, Thread}
   alias Helper.{OgInfo, ORM}
 
@@ -457,6 +458,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def pin_comment(_root, ~m(id)a, _info), do: CMS.Comments.pin_comment(id)
 
   def undo_pin_comment(_root, ~m(id)a, _info), do: CMS.Comments.undo_pin_comment(id)
+
+  def emotions(%{thread: _} = root, _args, _info) do
+    {:ok, EmotionFormatter.format(root, :comment)}
+  end
+
+  def emotions(root, _args, _info) do
+    {:ok, EmotionFormatter.format(root, :article)}
+  end
 
   defp resolve_comment_article_ref(article_ref) do
     inner_id = Map.get(article_ref, :inner_id) || Map.get(article_ref, :innerId)

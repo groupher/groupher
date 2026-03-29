@@ -38,6 +38,9 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   @desc "emotion options of comment"
   enum(:comment_emotion, do: emotion_values(:comment))
 
+  @desc "emotion options used by API output"
+  enum(:emotion_type, do: emotion_values(:all))
+
   enum :thread do
     article_values()
     value(:user)
@@ -48,6 +51,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:seo)
     value(:wallpaper)
     value(:enable)
+    value(:thread_emotions)
     value(:layout)
     value(:base_info)
     value(:rss)

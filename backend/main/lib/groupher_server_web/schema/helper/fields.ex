@@ -13,6 +13,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   @emotions get_config(:article, :emotions)
   @comment_emotions get_config(:article, :comment_emotions)
+  @all_emotions (@emotions ++ @comment_emotions) |> Enum.uniq()
   @article_threads get_config(:article, :threads)
 
   @doc "general article fields for GraphQL resolve fields"
@@ -35,7 +36,9 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:meta, :article_meta)
       field(:upvotes_count, :integer)
       field(:collects_count, :integer)
-      field(:emotions, :article_emotions)
+      field(:emotions, list_of(:emotion_stat),
+        resolve: &GroupherServerWeb.Resolvers.CMS.emotions/3
+      )
 
       field(:viewer_has_collected, :boolean)
       field(:viewer_has_upvoted, :boolean)
@@ -95,6 +98,9 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     emotions =
       case metric do
         :comment -> @comment_emotions
+        # used by the sparse EmotionStat API output enum, which is shared by
+        # both article and comment payloads.
+        :all -> @all_emotions
         _ -> @emotions
       end
 
@@ -165,7 +171,9 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:floor, :integer)
       field(:upvotes_count, :integer)
       field(:is_article_author, :boolean)
-      field(:emotions, :comment_emotions)
+      field(:emotions, list_of(:emotion_stat),
+        resolve: &GroupherServerWeb.Resolvers.CMS.emotions/3
+      )
       field(:meta, :comment_meta)
       field(:replies_count, :integer)
       field(:thread, :string)

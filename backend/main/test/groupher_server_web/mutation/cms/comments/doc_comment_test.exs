@@ -3,6 +3,10 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
   use GroupherServer.TestMate
 
+  defp emotion_entry(emotions, type) do
+    Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))
+  end
+
   setup do
     {community, doc, _, user} = mock_article(:doc)
 
@@ -121,8 +125,29 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
       variables = %{id: comment.id, emotion: "BEER"}
       comment = user_conn |> gq_mutation(Schema.m(:emotion_to_comment), variables)
 
-      assert comment |> get_in(["emotions", "beerCount"]) == 1
-      assert get_in(comment, ["emotions", "viewerHasBeered"])
+      assert emotion_entry(comment["emotions"], :beer)["count"] == 1
+      assert emotion_entry(comment["emotions"], :beer)["viewerHasReacted"]
+    end
+
+    test "comment emotion mutation returns sparse emotion array workflow",
+         ~m(community doc user user_conn)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+      comment_id = comment.id
+
+      comment =
+        user_conn |> gq_mutation(Schema.m(:emotion_to_comment), %{id: comment_id, emotion: "BEER"})
+
+      assert length(comment["emotions"]) == 1
+      assert emotion_entry(comment["emotions"], :beer)["count"] == 1
+      assert is_nil(emotion_entry(comment["emotions"], :heart))
+
+      comment =
+        user_conn |> gq_mutation(Schema.m(:emotion_to_comment), %{id: comment_id, emotion: "HEART"})
+
+      assert length(comment["emotions"]) == 2
+      assert emotion_entry(comment["emotions"], :beer)["count"] == 1
+      assert emotion_entry(comment["emotions"], :heart)["count"] == 1
     end
 
     test "login user can undo emotion to a comment", ~m(community doc user owner_conn)a do
@@ -134,8 +159,34 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
       variables = %{id: comment.id, emotion: "BEER"}
       comment = owner_conn |> gq_mutation(Schema.m(:undo_emotion_to_comment), variables)
 
-      assert comment |> get_in(["emotions", "beerCount"]) == 0
-      assert not get_in(comment, ["emotions", "viewerHasBeered"])
+      assert is_nil(emotion_entry(comment["emotions"], :beer))
+    end
+
+    test "comment emotion query reads back sparse array after mutation and undo",
+         ~m(community doc user user_conn)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+      comment_id = comment.id
+
+      _comment =
+        user_conn |> gq_mutation(Schema.m(:emotion_to_comment), %{id: comment_id, emotion: "BEER"})
+
+      _comment =
+        user_conn |> gq_mutation(Schema.m(:emotion_to_comment), %{id: comment_id, emotion: "HEART"})
+
+      result = user_conn |> gq_query(Schema.q(:one_comment_emotions), %{id: comment_id})
+      assert length(result["emotions"]) == 2
+      assert emotion_entry(result["emotions"], :beer)["count"] == 1
+      assert emotion_entry(result["emotions"], :heart)["count"] == 1
+
+      _result =
+        user_conn
+        |> gq_mutation(Schema.m(:undo_emotion_to_comment), %{id: comment_id, emotion: "HEART"})
+
+      result = user_conn |> gq_query(Schema.q(:one_comment_emotions), %{id: comment_id})
+      assert length(result["emotions"]) == 1
+      assert emotion_entry(result["emotions"], :beer)["count"] == 1
+      assert is_nil(emotion_entry(result["emotions"], :heart))
     end
   end
 
