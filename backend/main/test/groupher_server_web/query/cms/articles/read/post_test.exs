@@ -70,4 +70,18 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]
     assert results |> get_in(["meta", "illegalWords"]) == ["some-word"]
   end
+
+  test "returns cancan error when post thread is disabled", ~m(guest_conn community post_attrs user)a do
+    {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+    {:ok, _} =
+      CMS.Communities.update_dashboard(community, :enable, %{
+        post: false
+      })
+
+    variables = %{article: %{inner_id: post.inner_id, community: post.community_slug}}
+
+    assert guest_conn
+           |> query_error?(Schema.q(:article, :post), variables, ecode(:thread_not_visible))
+  end
 end

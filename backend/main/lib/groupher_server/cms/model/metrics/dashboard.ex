@@ -23,6 +23,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   def macro_schema(:enable) do
     [
       [:post, :boolean, true],
+      [:blog, :boolean, true],
       [:kanban, :boolean, true],
       [:changelog, :boolean, true],
       # doc

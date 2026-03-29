@@ -27,14 +27,14 @@ defmodule GroupherServer.CMS.CanCan.Communities do
       iex> CMS.CanCan.Communities.allowed_emotions("groupher", :comment, :post)
       [:beer, :heart]
 
-      iex> CMS.CanCan.Communities.emotion_allowed?("groupher", :comment, :post, :beer)
-      true
+      iex> CMS.CanCan.Communities.allow_emotion("groupher", :comment, :post, :beer)
+      {:ok, :post_comment}
 
-      iex> CMS.CanCan.Communities.ensure_emotion_allowed("groupher", :comment, :post, :upvote)
+      iex> CMS.CanCan.Communities.allow_emotion("groupher", :comment, :post, :upvote)
       {:error, :emotion_not_allowed}
   """
 
-  import Helper.Utils, only: [get_config: 2]
+  import Helper.Utils, only: [get_config: 2, done: 1]
 
   alias GroupherServer.CMS.FrontDesk
 
@@ -44,44 +44,24 @@ defmodule GroupherServer.CMS.CanCan.Communities do
 
   @type scope :: :article | :comment
 
-  @spec emotion_allowed?(String.t() | nil, scope(), atom() | String.t(), atom()) :: boolean()
-  def emotion_allowed?(community_slug, scope, thread, emotion) do
-    emotion in allowed_emotions(community_slug, scope, thread)
-  end
-
-  @spec thread_visible?(map() | String.t() | nil, atom() | String.t()) :: boolean()
-  def thread_visible?(community, thread) do
+  @spec allow_thread(map() | String.t() | nil, atom() | String.t()) ::
+          {:ok, atom()} | {:error, atom()}
+  def allow_thread(community, thread) do
     thread_key = normalize_thread(thread)
 
-    case dashboard_enable(community) do
-      nil -> true
-      enable -> Map.get(enable, thread_key, true)
+    case thread_visible?(community, thread_key) do
+      true -> done(thread_key)
+      false -> {:error, :thread_not_visible}
     end
   end
 
-  @spec thread_mutable?(map() | String.t() | nil, atom() | String.t()) :: boolean()
-  def thread_mutable?(community, thread) do
-    thread_visible?(community, thread) and not community_frozen?(community)
-  end
+  @spec allow_emotion(String.t() | nil, scope(), atom() | String.t(), atom()) ::
+          {:ok, atom()} | {:error, atom()}
+  def allow_emotion(community_slug, scope, thread, emotion) do
+    thread_key = thread_key(scope, thread)
 
-  @spec community_frozen?(map() | String.t() | nil) :: boolean()
-  def community_frozen?(_community), do: false
-
-  @spec publishable?(map() | String.t() | nil, atom() | String.t(), map() | nil) :: boolean()
-  def publishable?(community, thread, _user) do
-    thread_mutable?(community, thread)
-  end
-
-  @spec dashboard_updatable?(map() | String.t() | nil, map() | nil) :: boolean()
-  def dashboard_updatable?(community, _user) do
-    not community_frozen?(community)
-  end
-
-  @spec ensure_emotion_allowed(String.t() | nil, scope(), atom() | String.t(), atom()) ::
-          :ok | {:error, atom()}
-  def ensure_emotion_allowed(community_slug, scope, thread, emotion) do
     case emotion_allowed?(community_slug, scope, thread, emotion) do
-      true -> :ok
+      true -> done(thread_key)
       false -> {:error, :emotion_not_allowed}
     end
   end
@@ -115,6 +95,10 @@ defmodule GroupherServer.CMS.CanCan.Communities do
 
   defp dashboard_enable(%{dashboard: %{enable: enable}}), do: enable
 
+  defp dashboard_enable(%{community: community_slug}) when is_binary(community_slug) do
+    dashboard_enable(community_slug)
+  end
+
   defp dashboard_enable(community_slug) when is_binary(community_slug) do
     case FrontDesk.community(community_slug) do
       {:ok, %{dashboard: %{enable: enable}}} -> enable
@@ -140,6 +124,19 @@ defmodule GroupherServer.CMS.CanCan.Communities do
   end
 
   defp community_override(_, _thread_key), do: nil
+
+  defp emotion_allowed?(community_slug, scope, thread, emotion) do
+    emotion in allowed_emotions(community_slug, scope, thread)
+  end
+
+  defp thread_visible?(community, thread) do
+    thread_key = normalize_thread(thread)
+
+    case dashboard_enable(community) do
+      nil -> true
+      enable -> Map.get(enable, thread_key, true)
+    end
+  end
 
   defp thread_key(:article, thread), do: normalize_thread(thread)
   defp thread_key(:comment, thread), do: :"#{normalize_thread(thread)}_comment"
