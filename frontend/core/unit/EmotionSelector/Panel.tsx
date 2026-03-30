@@ -28,7 +28,7 @@ const EmojiPanel: FC<TProps> = ({ emotions, onAction }) => {
   const s = useSalon()
 
   return (
-      <div className={s.wrapper}>
+    <div className={s.wrapper}>
       {values(EMOTION).map((name) => {
         const viewerHasReacted = isViewerReacted(emotions, name)
 

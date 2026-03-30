@@ -82,8 +82,7 @@ const usePreviewRouteState = <TEntry extends TPreviewCacheEntryBase>(
   const params = useParams<{ community?: string | string[]; id?: string | string[] }>()
   const community = resolveParamValue(params.community)
   const id = resolveParamValue(params.id)
-  const routePreviewKey =
-    activeSegment && community && id ? resolvePreviewKey(community, id) : null
+  const routePreviewKey = activeSegment && community && id ? resolvePreviewKey(community, id) : null
   const intentKey = usePreviewIntentKey()
   const previewKey = routePreviewKey ?? intentKey
   const cacheState = usePreviewCacheState<TEntry>(previewKey)
