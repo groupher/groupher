@@ -146,7 +146,7 @@ export type TComment = {
   upvotesCount?: number
   viewerHasUpvoted?: boolean
   isArticleAuthor?: boolean
-  emotions?: TEmotion
+  emotions?: TEmotion[]
   meta?: {
     isArticleAuthorUpvoted?: boolean
     isReplyToOthers?: boolean

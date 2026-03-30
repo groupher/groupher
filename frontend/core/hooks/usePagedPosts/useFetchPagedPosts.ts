@@ -23,6 +23,24 @@ export default function useFetchPagedPosts() {
   const requestSeq = useRef(0)
   const loadingState = TYPE.RES_STATE.LOADING as TResState
   const doneState = TYPE.RES_STATE.DONE as TResState
+  const page = searchParams.get(URL_PARAM.PAGE)
+  const tag = searchParams.get(URL_PARAM.TAG)
+  const cat = searchParams.get(URL_PARAM.CAT)
+  const state = searchParams.get(URL_PARAM.STATE)
+  const order = searchParams.get(URL_PARAM.ORDER)
+  // Do not depend on the useSearchParams() object identity directly here.
+  // Opening/closing the post preview drawer changes the route tree and can
+  // produce a new searchParams object even when the actual list filters stay
+  // exactly the same. If the effect below watched searchParams itself, each
+  // preview open/close cycle would trigger an unnecessary posts refetch.
+  const requestKey = JSON.stringify({
+    slug,
+    page: page || '1',
+    tag: tag || '',
+    cat: cat || '',
+    state: state || '',
+    order: order || '',
+  })
 
   const refreshPagedPosts = async (payload: TRefreshPayload = {}) => {
     const seq = ++requestSeq.current
@@ -33,10 +51,10 @@ export default function useFetchPagedPosts() {
       const pagedPosts = await fetchPagedPosts({
         community: slug,
         page: payload.page,
-        tag: searchParams.get(URL_PARAM.TAG),
-        cat: searchParams.get(URL_PARAM.CAT),
-        state: searchParams.get(URL_PARAM.STATE),
-        order: searchParams.get(URL_PARAM.ORDER),
+        tag,
+        cat,
+        state,
+        order,
       })
 
       if (seq !== requestSeq.current || !pagedPosts) return
@@ -53,7 +71,7 @@ export default function useFetchPagedPosts() {
     }
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: searchParams identity is the route-change trigger here
+  // biome-ignore lint/correctness/useExhaustiveDependencies: requestKey narrows refreshes to real post-list filter changes and avoids duplicate fetches during preview drawer open/close route transitions.
   useEffect(() => {
     if (!initialSyncSkipped.current) {
       initialSyncSkipped.current = true
@@ -61,13 +79,13 @@ export default function useFetchPagedPosts() {
     }
 
     void refreshPagedPosts()
-  }, [searchParams, slug])
+  }, [requestKey])
 
   useEvent<TRefreshPayload>(
     EVENT.REFRESH_ARTICLES,
     (_msg, payload) => {
       void refreshPagedPosts({ page: payload?.page ?? 1 })
     },
-    [searchParams, slug],
+    [requestKey],
   )
 }

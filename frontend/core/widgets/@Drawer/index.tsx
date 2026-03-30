@@ -42,19 +42,25 @@ export default function Drawer({
 
   const closeTimerRef = useRef<number | null>(null)
   const didCloseRef = useRef(false)
+  const didUnlockRef = useRef(false)
 
   const { rightOffset, fromContentEdge } = useDrawerOffset()
   const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
 
   useEffect(() => {
     lockPage()
+    didUnlockRef.current = false
 
     return () => {
       if (closeTimerRef.current) {
         window.clearTimeout(closeTimerRef.current)
         closeTimerRef.current = null
       }
-      unlockPage()
+
+      if (!didUnlockRef.current) {
+        unlockPage()
+        didUnlockRef.current = true
+      }
     }
   }, [])
 
@@ -78,6 +84,12 @@ export default function Drawer({
   const commitRouteBack = useCallback(() => {
     if (didCloseRef.current) return
     didCloseRef.current = true
+
+    if (!didUnlockRef.current) {
+      unlockPage()
+      didUnlockRef.current = true
+    }
+
     router.back()
   }, [router])
 

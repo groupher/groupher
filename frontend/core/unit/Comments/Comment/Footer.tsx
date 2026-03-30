@@ -69,9 +69,9 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
         <EmotionSelector
           isLegal={isLegal}
           emotions={data.emotions}
-          onAction={(name, hasEmotioned) => {
+          onAction={(name, hasReacted) => {
             if (!accountInfo) return authWarn()
-            handleEmotion(data, name, hasEmotioned)
+            handleEmotion(data, name, hasReacted)
           }}
         />
 

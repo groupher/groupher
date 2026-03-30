@@ -11,7 +11,7 @@ import EmotionUnit from './EmotionUnit'
 
 type TProps = {
   emotions: TEmotion[]
-  onAction?: (name: TEmotionType, hasEmotioned: boolean) => void
+  onAction?: (name: TEmotionType, hasReacted: boolean) => void
 }
 
 const SelectedEmotions: FC<TProps> = ({ emotions, onAction }) => {

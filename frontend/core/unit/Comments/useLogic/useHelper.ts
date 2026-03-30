@@ -8,7 +8,7 @@ import type { TEditMode } from '../spec'
 
 type TRet = {
   updateOneComment: (comment: TComment, fields?: Partial<TComment>) => void
-  upvoteEmotion: (comment: TComment, emotion: TEmotion) => void
+  upvoteEmotion: (comment: TComment, emotion: TEmotion[]) => void
   addToReplies: (parentId: TID, replies: TComment[]) => void
   published: () => void
   resetPublish: (mode: TEditMode) => void
@@ -53,9 +53,10 @@ export default function useHelper(): TRet {
     }
   }
 
-  const upvoteEmotion = (comment: TComment, emotion: TEmotion): void => {
+  const upvoteEmotion = (comment: TComment, emotions: TEmotion[]): void => {
     const { id, replyToId } = comment
     const { entries } = comments.pagedComments
+    const nextComments = [...entries]
 
     if (comments.mode === MODE.REPLIES && replyToId) {
       const parentIndex = findIndex(propEq(replyToId, 'id'), entries)
@@ -63,27 +64,21 @@ export default function useHelper(): TRet {
       const parentComment = entries[parentIndex]
       const replyIndex = findIndex(propEq(id, 'id'), parentComment.replies)
       if (replyIndex < 0) return
-      // const replyComment = parentComment.replies[replyIndex]
-
-      console.log('## TODO updateEmotion: ', emotion)
-      // const newEmotions = {
-      //   ...replyComment.emotions,
-      //   ...emotion,
-      // }
-
-      // snap.pagedComments.entries[parentIndex].replies[replyIndex].emotions = {
-      //   ...replyComment.emotions,
-      //   ...emotion,
-      // }
+      const nextReplies = [...(parentComment.replies || [])]
+      nextReplies[replyIndex] = { ...nextReplies[replyIndex], emotions }
+      nextComments[parentIndex] = { ...parentComment, replies: nextReplies }
     } else {
       const index = findIndex(propEq(id, 'id'), entries)
       if (index < 0) return
-      console.log('## TODO updateEmotion: ', emotion)
-      // snap.pagedComments.entries[index].emotions = {
-      //   ...entries[index].emotions,
-      //   ...emotion,
-      // }
+      nextComments[index] = { ...nextComments[index], emotions }
     }
+
+    commentsStore.commit({
+      pagedComments: {
+        ...comments.pagedComments,
+        entries: nextComments,
+      },
+    })
   }
 
   const addToReplies = (parentId: TID, replies: TComment[]): void => {

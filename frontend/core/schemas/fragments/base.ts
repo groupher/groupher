@@ -1,7 +1,4 @@
-import { flatten, values } from 'ramda'
 import { gql } from 'urql'
-
-import EMOTION from '~/const/emotion'
 import { titleCase } from '~/fmt'
 
 export const community = `
@@ -207,15 +204,16 @@ export const userContributes = `
   totalCount
 `
 
-export const emotionQuery = flatten(
-  values(EMOTION).map((emotion) => {
-    return [
-      `${emotion}Count`,
-      `viewerHas${titleCase(emotion)}ed`,
-      `latest${titleCase(emotion)}Users { login nickname }`,
-    ]
-  }),
-).join(' ')
+export const emotionQuery = `
+  type
+  count
+  viewerHasReacted
+  latestUsers {
+    login
+    nickname
+    avatar
+  }
+`
 
 // comment
 

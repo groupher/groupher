@@ -3,7 +3,6 @@
  */
 
 import { type FC, memo } from 'react'
-import { titleCase } from '~/fmt'
 import type { TEmotion, TEmotionType, TSimpleUser } from '~/spec'
 import AnimatedCount from '~/widgets/AnimatedCount'
 import Tooltip from '~/widgets/Tooltip'
@@ -14,16 +13,16 @@ import UsersPanel from './UsersPanel'
 
 type TProps = {
   item: TEmotion
-  onAction?: (name: TEmotionType, hasEmotioned: boolean) => void
+  onAction?: (name: TEmotionType, hasReacted: boolean) => void
 }
 
 const EmotionUnit: FC<TProps> = ({ item, onAction }) => {
   const s = useSalon()
 
   const name = getEmotionName(item)
-  const count = item[`${name}Count`] as number
-  const users = item[`latest${titleCase(name)}Users`] as TSimpleUser[]
-  const hasEmotioned = item[`viewerHas${titleCase(name)}ed`] as boolean
+  const count = item.count || 0
+  const users = (item.latestUsers || []) as TSimpleUser[]
+  const hasReacted = Boolean(item.viewerHasReacted)
 
   return (
     <Tooltip
@@ -31,10 +30,10 @@ const EmotionUnit: FC<TProps> = ({ item, onAction }) => {
       interactive={false}
       noPadding
     >
-      <div className={s.wrapper} onClick={() => onAction(name as TEmotionType, hasEmotioned)}>
+      <div className={s.wrapper} onClick={() => onAction(name as TEmotionType, hasReacted)}>
         <EmotionIcon name={name} />
         <div className={s.count}>
-          <AnimatedCount count={count} size='small' active={hasEmotioned} />
+          <AnimatedCount count={count} size='small' active={hasReacted} />
         </div>
       </div>
     </Tooltip>

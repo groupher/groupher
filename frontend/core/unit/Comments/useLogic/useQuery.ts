@@ -1,10 +1,9 @@
 import { type MutableRefObject, useContext, useEffect, useRef } from 'react'
 import { ANCHOR } from '~/const/dom'
 import { scrollIntoEle } from '~/dom'
-import { titleCase } from '~/fmt'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useViewingArticle from '~/hooks/useViewingArticle'
-import type { TComment, TEmotionType, TID } from '~/spec'
+import type { TComment, TEmotion, TEmotionType, TID } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
 import uid from '~/utils/uid'
 
@@ -22,7 +21,7 @@ export type TRet = {
   onPageChange: (page: number) => void
   onMentionSearch: (name: string) => void
   deleteComment: () => void
-  handleEmotion: (comment: TComment, name: TEmotionType, viewerHasEmotioned: boolean) => void
+  handleEmotion: (comment: TComment, name: TEmotionType, viewerHasReacted: boolean) => void
   handleUpvote: (comment: TComment, viewerHasUpvoted: boolean) => void
   replyComment: () => void
   updateComment: () => void
@@ -215,31 +214,19 @@ export default function useQuery(): TRet {
   const handleEmotion = (
     comment: TComment,
     name: TEmotionType,
-    viewerHasEmotioned: boolean,
+    viewerHasReacted: boolean,
   ): void => {
     const { id } = comment
     const emotion = name.toUpperCase()
+    const nextEmotions = updateEmotionState(comment.emotions || [], name, !viewerHasReacted)
 
-    // comment.emotions
-    if (viewerHasEmotioned) {
-      // instantFresh
-      const emotionInfo = {
-        // @ts-expect-error
-        [`${name}Count`]: comment.emotions[`${name}Count`] - 1,
-        [`viewerHas${titleCase(name)}ed`]: false,
-      }
-      upvoteEmotion(comment, emotionInfo)
+    if (viewerHasReacted) {
+      upvoteEmotion(comment, nextEmotions)
       mutate(S.undoEmotionToComment, { id, emotion }).then(({ undoEmotionToComment }) => {
         upvoteEmotion(undoEmotionToComment, undoEmotionToComment.emotions)
       })
     } else {
-      const emotionInfo = {
-        // @ts-expect-error
-        [`${name}Count`]: comment.emotions[`${name}Count`] + 1,
-        [`viewerHas${titleCase(name)}ed`]: true,
-      }
-      upvoteEmotion(comment, emotionInfo)
-      // instantFresh
+      upvoteEmotion(comment, nextEmotions)
       mutate(S.emotionToComment, { id, emotion }).then(({ emotionToComment }) => {
         upvoteEmotion(emotionToComment, emotionToComment.emotions)
       })
@@ -324,4 +311,37 @@ export default function useQuery(): TRet {
     replyComment,
     updateComment,
   }
+}
+
+const updateEmotionState = (
+  emotions: TEmotion[],
+  name: TEmotionType,
+  nextViewerState: boolean,
+): TEmotion[] => {
+  const emotionType = name.toUpperCase() as TEmotion['type']
+  const index = emotions.findIndex((item) => item.type === emotionType)
+
+  if (index < 0) {
+    return [
+      ...emotions,
+      {
+        type: emotionType,
+        count: nextViewerState ? 1 : 0,
+        viewerHasReacted: nextViewerState,
+        latestUsers: [],
+      },
+    ]
+  }
+
+  return emotions.map((item, itemIndex) => {
+    if (itemIndex !== index) return item
+
+    const count = item.count || 0
+
+    return {
+      ...item,
+      count: nextViewerState ? count + 1 : Math.max(count - 1, 0),
+      viewerHasReacted: nextViewerState,
+    }
+  })
 }

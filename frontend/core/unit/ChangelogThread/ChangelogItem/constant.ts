@@ -1,4 +1,5 @@
 import { COLOR } from '~/const/colors'
+import type { TEmotion } from '~/spec'
 
 export const demoTags = [
   {
@@ -13,39 +14,50 @@ export const demoTags = [
   },
 ]
 
-export const demoEmotion = {
-  beerCount: 2,
-  confusedCount: 0,
-  downvoteCount: 0,
-  heartCount: 0,
-  latestBeerUsers: [
-    {
-      login: 'porter172',
-      nickname: 'Immanuel172',
-      bio: null,
-      shortbio: null,
-      avatar: null,
-    },
-    {
-      login: 'cp_bot',
-      nickname: 'botman',
-      bio: null,
-      shortbio: null,
-      avatar: null,
-    },
-  ],
-  latestConfusedUsers: [],
-  latestDownvoteUsers: [],
-  latestHeartUsers: [],
-  latestPillUsers: [],
-  length: 2,
-  latestPopcornUsers: [],
-  pillCount: 0,
-  popcornCount: 0,
-  viewerHasBeered: false,
-  viewerHasConfuseded: false,
-  viewerHasDownvoteed: false,
-  viewerHasHearted: false,
-  viewerHasPilled: false,
-  viewerHasPopcorned: false,
-}
+export const demoEmotion: TEmotion[] = [
+  {
+    type: 'BEER',
+    count: 2,
+    viewerHasReacted: false,
+    latestUsers: [
+      {
+        login: 'porter172',
+        nickname: 'Immanuel172',
+        bio: null,
+        shortbio: null,
+        avatar: null,
+      },
+      {
+        login: 'cp_bot',
+        nickname: 'botman',
+        bio: null,
+        shortbio: null,
+        avatar: null,
+      },
+    ],
+  },
+  {
+    type: 'DOWNVOTE',
+    count: 0,
+    viewerHasReacted: false,
+    latestUsers: [],
+  },
+  {
+    type: 'HEART',
+    count: 0,
+    viewerHasReacted: false,
+    latestUsers: [],
+  },
+  {
+    type: 'PILL',
+    count: 0,
+    viewerHasReacted: false,
+    latestUsers: [],
+  },
+  {
+    type: 'POPCORN',
+    count: 0,
+    viewerHasReacted: false,
+    latestUsers: [],
+  },
+]

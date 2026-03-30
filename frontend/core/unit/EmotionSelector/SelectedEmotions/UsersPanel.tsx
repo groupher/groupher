@@ -16,7 +16,7 @@ type TProps = {
 
 const UsersPanel: FC<TProps> = ({ name, count, users }) => {
   const s = useSalon()
-  const showUnit = users.length > count
+  const showUnit = count > users.length
 
   return (
     <div className={s.wrapper}>

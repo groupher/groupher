@@ -1,37 +1,32 @@
-import { forEach, includes, keys, reject, values } from 'ramda'
+import { find, values } from 'ramda'
 
 import EMOTION from '~/const/emotion'
-import { titleCase } from '~/fmt'
 import type { TEmotion, TEmotionType } from '~/spec'
 
 export const getEmotionName = (item: TEmotion): TEmotionType => {
-  const eCountKey = keys(item)[0] as string
-  return eCountKey.split('Count')[0] as TEmotionType
+  return (item.type || '').toLowerCase() as TEmotionType
 }
 
-export const emotionsCoverter = (selectedEmotions: TEmotion): TEmotion[] => {
-  const converted = []
-  forEach(
-    (emotion) =>
-      converted.push({
-        [`${emotion}Count`]: selectedEmotions[`${emotion}Count`],
-        [`latest${titleCase(emotion)}Users`]: selectedEmotions[`latest${titleCase(emotion)}Users`],
-        [`viewerHas${titleCase(emotion)}ed`]: selectedEmotions[`viewerHas${titleCase(emotion)}ed`],
-      }),
-    values(EMOTION),
-  )
-
-  return reject((e) => includes(0, values(e)), converted)
+export const visibleEmotions = (emotions: TEmotion[] = []): TEmotion[] => {
+  return emotions.filter((emotion) => (emotion.count || 0) > 0)
 }
 
-export const isViewerEmotioned = (emotions: TEmotion[], name: TEmotionType): boolean => {
-  for (let i = 0; i < emotions.length; i += 1) {
-    const emotionUnit = emotions[i]
+export const isViewerReacted = (emotions: TEmotion[], name: TEmotionType): boolean => {
+  const emotion = find((item) => getEmotionName(item) === name, emotions)
+  return Boolean(emotion?.viewerHasReacted)
+}
 
-    if (emotionUnit[`viewerHas${titleCase(name)}ed`]) {
-      return true
-    }
-  }
+export const ensureEmotion = (emotions: TEmotion[] = []): TEmotion[] => {
+  const known = new Set(emotions.map((emotion) => getEmotionName(emotion)))
 
-  return false
+  const missing = values(EMOTION)
+    .filter((emotion) => !known.has(emotion))
+    .map((emotion) => ({
+      type: emotion.toUpperCase() as TEmotion['type'],
+      count: 0,
+      viewerHasReacted: false,
+      latestUsers: [],
+    }))
+
+  return [...emotions, ...missing]
 }
