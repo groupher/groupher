@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
   end
 
   describe "[emotion in paged article comment]" do
-    test "login user should got viewer has emotion status", ~m(community post user)a do
+    test "login user should get viewer reacted status", ~m(community post user)a do
       total_count = 0
       page_number = 10
       page_size = 20
@@ -59,7 +59,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert target.emotions.viewer_has_popcorned
     end
 
-    test "emotion comment should return valid viewer_has status",
+    test "reacted comment should return valid viewer_has status",
          ~m(community post user user2)a do
       total_count = 3
 

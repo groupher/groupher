@@ -8,7 +8,7 @@ import type { TEmotion, TEmotionType } from '~/spec'
 import IconButton from '~/widgets/Buttons/IconButton'
 import Tooltip from '~/widgets/Tooltip'
 
-import { emotionsCoverter } from './helper'
+import { ensureEmotion, visibleEmotions } from './helper'
 import Panel from './Panel'
 import SelectedEmotions from './SelectedEmotions'
 
@@ -16,20 +16,21 @@ import useSalon from './salon'
 
 type TProps = {
   isLegal?: boolean
-  emotions: TEmotion
-  onAction?: (name: TEmotionType, hasEmotioned: boolean) => void
+  emotions?: TEmotion[]
+  onAction?: (name: TEmotionType, hasReacted: boolean) => void
 }
 
 const EmotionSelector: FC<TProps> = ({ onAction = console.log, isLegal = true, emotions }) => {
   const s = useSalon()
-  const validEmotions = emotionsCoverter(emotions)
+  const preparedEmotions = ensureEmotion(emotions)
+  const selectedEmotions = visibleEmotions(preparedEmotions)
 
   return (
     <>
-      <SelectedEmotions emotions={validEmotions} onAction={onAction} />
+      <SelectedEmotions emotions={selectedEmotions} onAction={onAction} />
       {isLegal && (
         <Tooltip
-          content={<Panel emotions={validEmotions} onAction={onAction} />}
+          content={<Panel emotions={preparedEmotions} onAction={onAction} />}
           trigger='click'
           noPadding
         >
