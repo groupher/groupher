@@ -2,9 +2,9 @@
  * PostLayout
  */
 
-import { lazy, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { lazy, Suspense } from 'react'
 import { ARTICLE_THREAD } from '~/const/thread'
 import Img from '~/Img'
 import ArrowSVG from '~/icons/Arrow'

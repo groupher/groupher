@@ -1,8 +1,8 @@
 import { gql } from 'urql'
 import { F } from '~/schemas'
 import { setTag as setTagMutation, unsetTag as unsetTagMutation } from '../../schemas/pages/action'
-import { doc } from '../../schemas/pages/doc'
 import { changelog } from '../../schemas/pages/changelog'
+import { doc } from '../../schemas/pages/doc'
 import { post } from '../../schemas/pages/post'
 
 const ARTICLE_SCHEMA = {
