@@ -3,14 +3,14 @@ name: Frontend linter
 on:
   pull_request:
     paths:
-      - "frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
+      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
       - "frontend/**/biome.json"
       - "package.json"
       - "yarn.lock"
       - "biome.json"
   push:
     paths:
-      - "frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
+      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
       - "frontend/**/biome.json"
       - "package.json"
       - "yarn.lock"
@@ -40,6 +40,8 @@ jobs:
               - 'frontend/dashboard/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
             landing:
               - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+            gateway:
+              - 'frontend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
             shared:
               - 'frontend/core/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
               - 'frontend/**/biome.json'
@@ -53,6 +55,7 @@ jobs:
           MAIN_CHANGED: ${{ steps.filter.outputs.main }}
           DASHBOARD_CHANGED: ${{ steps.filter.outputs.dashboard }}
           LANDING_CHANGED: ${{ steps.filter.outputs.landing }}
+          GATEWAY_CHANGED: ${{ steps.filter.outputs.gateway }}
           SHARED_CHANGED: ${{ steps.filter.outputs.shared }}
         run: |
           targets=()
@@ -71,6 +74,10 @@ jobs:
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then
             targets+=('{"target":"landing","path":"frontend/landing"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$GATEWAY_CHANGED" = "true" ]; then
+            targets+=('{"target":"gateway","path":"frontend/gateway"}')
           fi
 
           if [ ${#targets[@]} -eq 0 ]; then
