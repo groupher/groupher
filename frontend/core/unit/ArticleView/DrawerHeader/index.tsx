@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
+import { lazy, Suspense } from 'react'
 
 import ArrowSVG from '~/icons/Arrow'
 import WarningSVG from '~/icons/Warning'

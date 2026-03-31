@@ -8,8 +8,8 @@ export {
   getPreviewReadyState,
   markPreviewPending,
   markPreviewReady,
-  setPreviewIntentKey,
   setPreviewCacheEntry,
+  setPreviewIntentKey,
   usePreviewCacheState,
   usePreviewIntentKey,
 } from './hooks'

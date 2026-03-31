@@ -1,8 +1,8 @@
 import { gql } from 'urql'
 import { F } from '~/schemas'
+import { pagedChangelogs } from '../../schemas/pages/changelog'
 import { pagedCommunityTags as pagedCommunityTagsQuery } from '../../schemas/pages/misc'
 import { pagedPosts } from '../../schemas/pages/post'
-import { pagedChangelogs } from '../../schemas/pages/changelog'
 
 const PAGED_ARTICLE_SCHEMA = {
   post: pagedPosts,
