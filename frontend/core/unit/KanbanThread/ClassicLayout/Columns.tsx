@@ -3,19 +3,64 @@
  *
  */
 
+import type { ReactNode, RefObject, UIEvent } from 'react'
+
 import useKanbanPosts from '~/hooks/useKanbanPosts'
+import useNameAlias from '~/hooks/useNameAlias'
+import useTrans from '~/hooks/useTrans'
 import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
 import RejectSVG from '~/icons/Reject'
+import type { TPagedPosts } from '~/spec'
 
 import KanbanItem from '../KanbanItem'
 import EmptyItem from '../KanbanItem/EmptyItem'
 
 import useSalon from '../salon/classic_layout/columns'
 
-export default function Columns() {
+type TColumn = {
+  key: string
+  count: number
+  icon: ReactNode
+  title: string
+  bodyClassName: string
+  posts: TPagedPosts
+}
+
+function HeaderColumn({ column, className = '' }: { column: TColumn; className?: string }) {
   const s = useSalon()
+
+  return (
+    <div className={className}>
+      <div className={s.header}>
+        {column.icon}
+        <h4 className={s.label}>{column.title}</h4>
+        <div className={s.subTitle}>{column.count}</div>
+        <div className='grow' />
+      </div>
+    </div>
+  )
+}
+
+function BodyColumn({ column, className = '' }: { column: TColumn; className?: string }) {
+  const s = useSalon()
+
+  return (
+    <div className={`${s.columnBase} ${className}`.trim()}>
+      <div className={column.bodyClassName}>
+        {column.count === 0 && <EmptyItem />}
+        {column.count !== 0 &&
+          column.posts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
+      </div>
+    </div>
+  )
+}
+
+export function useColumnsData() {
+  const s = useSalon()
+  const { t } = useTrans()
+  const kanbanAlias = useNameAlias('kanban')
 
   const {
     backlog: backlogPosts,
@@ -25,76 +70,94 @@ export default function Columns() {
     rejected: rejectedPosts,
   } = useKanbanPosts()
 
+  const resolveTitle = (key: string, fallback: string) => kanbanAlias[key]?.name || fallback
+
+  const columns: TColumn[] = [
+    {
+      key: 'backlog',
+      title: resolveTitle('backlog', t('article.state.backlog')),
+      count: backlogPosts.totalCount,
+      icon: <GtdTodoSVG className={s.backlogIcon} />,
+      bodyClassName: s.backlogBody,
+      posts: backlogPosts,
+    },
+    {
+      key: 'todo',
+      title: resolveTitle('todo', t('article.state.todo')),
+      count: todoPosts.totalCount,
+      icon: <GtdTodoSVG className={s.todoIcon} />,
+      bodyClassName: s.todoBody,
+      posts: todoPosts,
+    },
+    {
+      key: 'wip',
+      title: resolveTitle('wip', t('article.state.wip')),
+      count: wipPosts.totalCount,
+      icon: <GtdWipSVG className={s.wipIcon} />,
+      bodyClassName: s.wipBody,
+      posts: wipPosts,
+    },
+    {
+      key: 'done',
+      title: resolveTitle('done', t('article.state.done')),
+      count: donePosts.totalCount,
+      icon: <GtdDoneSVG className={s.doneIcon} />,
+      bodyClassName: s.doneBody,
+      posts: donePosts,
+    },
+    {
+      key: 'rejected',
+      title: resolveTitle('rejected', t('article.state.reject')),
+      count: rejectedPosts.totalCount,
+      icon: <RejectSVG className={s.rejectedIcon} />,
+      bodyClassName: s.rejectedBody,
+      posts: rejectedPosts,
+    },
+  ]
+
+  return columns
+}
+
+export function HeaderRow({
+  columns,
+  trackRef,
+  className = '',
+}: {
+  columns: TColumn[]
+  trackRef?: RefObject<HTMLDivElement | null>
+  className?: string
+}) {
+  const s = useSalon()
+
   return (
-    <>
-      <div className={s.column}>
-        <div className={s.header}>
-          <GtdTodoSVG className={s.backlogIcon} />
-          <h4 className={s.label}>需求池</h4>
-          <div className={s.subTitle}>{backlogPosts.totalCount}</div>
-          <div className='grow' />
-        </div>
-        <div className={s.backlogBody}>
-          {backlogPosts.totalCount === 0 && <EmptyItem />}
-          {backlogPosts.totalCount !== 0 &&
-            backlogPosts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
-        </div>
+    <div className={`${s.headerRowViewport} ${className}`.trim()}>
+      <div ref={trackRef} className={s.columnsTrack}>
+        {columns.map((column) => (
+          <HeaderColumn key={column.key} column={column} className={s.scrollColumn} />
+        ))}
       </div>
-      <div className={s.column}>
-        <div className={s.header}>
-          <GtdTodoSVG className={s.todoIcon} />
-          <h4 className={s.label}>待办</h4>
-          <div className={s.subTitle}>{todoPosts.totalCount}</div>
-          <div className='grow' />
-        </div>
-        <div className={s.todoBody}>
-          {todoPosts.totalCount === 0 && <EmptyItem />}
-          {todoPosts.totalCount !== 0 &&
-            todoPosts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
-        </div>
-      </div>
-      <div className={s.column}>
-        <div className={s.header}>
-          <GtdWipSVG className={s.wipIcon} />
-          <h4 className={s.label}>进行中</h4>
-          <div className={s.subTitle}>{wipPosts.totalCount}</div>
-          <div className='grow' />
-        </div>
-        <div className={s.wipBody}>
-          {wipPosts.totalCount === 0 && <EmptyItem />}
+    </div>
+  )
+}
 
-          {wipPosts.totalCount !== 0 &&
-            wipPosts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
-        </div>
-      </div>
-      <div className={s.column}>
-        <div className={s.header}>
-          <GtdDoneSVG className={s.doneIcon} />
-          <h4 className={s.label}>已完成</h4>
-          <div className={s.subTitle}>{donePosts.totalCount}</div>
-          <div className='grow' />
-        </div>
-        <div className={s.doneBody}>
-          {donePosts.totalCount === 0 && <EmptyItem />}
+export function BodyRow({
+  columns,
+  scrollRef,
+  onScroll,
+}: {
+  columns: TColumn[]
+  scrollRef: RefObject<HTMLDivElement | null>
+  onScroll: (event: UIEvent<HTMLDivElement>) => void
+}) {
+  const s = useSalon()
 
-          {donePosts.totalCount !== 0 &&
-            donePosts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
-        </div>
+  return (
+    <div ref={scrollRef} className={s.scroller} onScroll={onScroll}>
+      <div className={s.columnsTrack}>
+        {columns.map((column) => (
+          <BodyColumn key={column.key} column={column} className={s.scrollColumn} />
+        ))}
       </div>
-      <div className={s.column}>
-        <div className={s.header}>
-          <RejectSVG className={s.rejectedIcon} />
-          <h4 className={s.label}>已拒绝</h4>
-          <div className={s.subTitle}>{rejectedPosts.totalCount}</div>
-          <div className='grow' />
-        </div>
-        <div className={s.rejectedBody}>
-          {rejectedPosts.totalCount === 0 && <EmptyItem />}
-
-          {rejectedPosts.totalCount !== 0 &&
-            rejectedPosts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
-        </div>
-      </div>
-    </>
+    </div>
   )
 }

@@ -2,18 +2,61 @@
  * KanbanThread
  */
 
+'use client'
+
+import type { UIEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
 import useSalon from '../salon/classic_layout'
 import Actions from './Actions'
-import Columns from './Columns'
+import { BodyRow, HeaderRow, useColumnsData } from './Columns'
 
 export default function ClassicLayout() {
   const s = useSalon()
+  const columns = useColumnsData()
+  const boardRef = useRef<HTMLDivElement | null>(null)
+  const headerRef = useRef<HTMLDivElement | null>(null)
+  const bodyScrollRef = useRef<HTMLDivElement | null>(null)
+  const headerTrackRef = useRef<HTMLDivElement | null>(null)
+  const [isHeaderSticky, setIsHeaderSticky] = useState(false)
+
+  useEffect(() => {
+    const updateStickyState = () => {
+      const board = boardRef.current
+      const header = headerRef.current
+      if (!board || !header) return
+
+      const boardRect = board.getBoundingClientRect()
+      const headerRect = header.getBoundingClientRect()
+      const nextSticky = boardRect.top <= 0 && boardRect.bottom > headerRect.height
+
+      setIsHeaderSticky(nextSticky)
+    }
+
+    updateStickyState()
+    window.addEventListener('scroll', updateStickyState, { passive: true })
+    window.addEventListener('resize', updateStickyState)
+
+    return () => {
+      window.removeEventListener('scroll', updateStickyState)
+      window.removeEventListener('resize', updateStickyState)
+    }
+  }, [])
+
+  const handleBodyScroll = (event: UIEvent<HTMLDivElement>) => {
+    if (!headerTrackRef.current) return
+
+    headerTrackRef.current.style.transform = `translateX(-${event.currentTarget.scrollLeft}px)`
+  }
 
   return (
     <div className={s.wrapper}>
       <Actions />
-      <div className={s.columns}>
-        <Columns />
+      <div ref={boardRef} className={s.boardFrame}>
+        <div ref={headerRef} className={s.headerRow(isHeaderSticky)}>
+          <HeaderRow columns={columns} trackRef={headerTrackRef} />
+        </div>
+        <BodyRow columns={columns} scrollRef={bodyScrollRef} onScroll={handleBodyScroll} />
       </div>
     </div>
   )
