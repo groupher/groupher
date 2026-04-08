@@ -19,11 +19,7 @@ describe('parseDashboard', () => {
       },
     } as any)
 
-    expect(dashboard.kanbanBoards).toEqual([
-      KANBAN_BOARD.TODO,
-      KANBAN_BOARD.WIP,
-      KANBAN_BOARD.DONE,
-    ])
+    expect(dashboard.kanbanBoards).toEqual([KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE])
     expect(dashboard.original.kanbanBoards).toEqual([
       KANBAN_BOARD.TODO,
       KANBAN_BOARD.WIP,
