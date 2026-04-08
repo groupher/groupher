@@ -20,6 +20,7 @@ export default function ClassicLayout() {
   const headerTrackRef = useRef<HTMLDivElement | null>(null)
   const [isHeaderSticky, setIsHeaderSticky] = useState(false)
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const updateStickyState = () => {
       const board = boardRef.current
@@ -33,15 +34,33 @@ export default function ClassicLayout() {
       setIsHeaderSticky(nextSticky)
     }
 
+    const syncHeaderOffset = () => {
+      const scrollLeft = bodyScrollRef.current?.scrollLeft ?? 0
+
+      if (headerTrackRef.current) {
+        headerTrackRef.current.style.transform = `translateX(-${scrollLeft}px)`
+      }
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateStickyState()
+      syncHeaderOffset()
+    })
+
+    if (boardRef.current) resizeObserver.observe(boardRef.current)
+    if (headerRef.current) resizeObserver.observe(headerRef.current)
+
     updateStickyState()
+    syncHeaderOffset()
     window.addEventListener('scroll', updateStickyState, { passive: true })
     window.addEventListener('resize', updateStickyState)
 
     return () => {
+      resizeObserver.disconnect()
       window.removeEventListener('scroll', updateStickyState)
       window.removeEventListener('resize', updateStickyState)
     }
-  }, [])
+  }, [columns.length])
 
   const handleBodyScroll = (event: UIEvent<HTMLDivElement>) => {
     if (!headerTrackRef.current) return

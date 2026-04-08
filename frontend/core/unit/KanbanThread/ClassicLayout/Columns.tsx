@@ -45,13 +45,13 @@ function HeaderColumn({ column, className = '' }: { column: TColumn; className?:
 
 function BodyColumn({ column, className = '' }: { column: TColumn; className?: string }) {
   const s = useSalon()
+  const hasEntries = column.posts.entries.length > 0
 
   return (
     <div className={`${s.columnBase} ${className}`.trim()}>
       <div className={column.bodyClassName}>
-        {column.count === 0 && <EmptyItem />}
-        {column.count !== 0 &&
-          column.posts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
+        {!hasEntries && <EmptyItem />}
+        {hasEntries && column.posts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
       </div>
     </div>
   )
