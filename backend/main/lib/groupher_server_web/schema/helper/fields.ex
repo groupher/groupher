@@ -7,6 +7,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   alias GroupherServer.CMS
 
+  alias CMS.Helper.KanbanBoards
   alias CMS.Model.Metrics.Dashboard
 
   @page_size get_config(:general, :page_size)
@@ -296,8 +297,19 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     |> Enum.map(fn item ->
       [key, type, default_v] = item
 
-      quote do
-        field(unquote(key), unquote(to_ecto_type(type)), default: unquote(default_v))
+      case type do
+        {:array, :kanban_board} ->
+          quote do
+            field(unquote(key), {:array, Ecto.Enum},
+              values: unquote(KanbanBoards).values_list(),
+              default: unquote(default_v)
+            )
+          end
+
+        _ ->
+          quote do
+            field(unquote(key), unquote(to_ecto_type(type)), default: unquote(default_v))
+          end
       end
     end)
   end

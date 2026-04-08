@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.{Community, CommunityDashboard}
+  alias CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.{ORM, OSS, T, Transaction}
 
   @default_dashboard CommunityDashboard.default()
@@ -31,6 +31,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   defp do_update(%Community{} = community, key, args) do
     with {:ok, community_dashboard} <- ensure_exist(community),
+         :ok <- validate_dashboard_update(community_dashboard, key, args),
          {:ok, _} <- ORM.update_dashboard(community_dashboard, key, args) do
       {:ok, community}
     end
@@ -59,4 +60,15 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   defp update_community_if_need(%Community{} = community, fields) do
     ORM.update(community, fields)
   end
+
+  defp validate_dashboard_update(%CommunityDashboard{} = community_dashboard, :layout, args) do
+    current_layout = community_dashboard.layout || %Embeds.DashboardLayout{}
+
+    case Embeds.DashboardLayout.changeset(current_layout, args) do
+      %{valid?: true} -> :ok
+      changeset -> {:error, changeset}
+    end
+  end
+
+  defp validate_dashboard_update(%CommunityDashboard{}, _key, _args), do: :ok
 end

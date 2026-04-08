@@ -9,9 +9,10 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
 
   alias GroupherServer.CMS
 
-  alias CMS.Helper.ArticleEnums
+  alias CMS.Helper.{ArticleEnums, KanbanBoards}
 
   require ArticleEnums
+  require KanbanBoards
 
   @doc """
   only used for reaction result, like: upvote/collect/watch ...
@@ -130,6 +131,10 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
 
   enum :article_state_enum do
     enum_values(ArticleEnums.state())
+  end
+
+  enum :kanban_board do
+    enum_values(KanbanBoards.values())
   end
 
   @desc "the filter mode for list comments"

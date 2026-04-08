@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   import GroupherServerWeb.Schema.Helper.Fields,
     only: [dashboard_cast_fields: 1, dashboard_fields: 1]
 
+  alias GroupherServer.CMS.Helper.KanbanBoards
   alias GroupherServer.CMS.Model.Metrics.Dashboard
 
   @optional_fields dashboard_cast_fields(:layout)
@@ -28,5 +29,11 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   def changeset(struct, params) do
     struct
     |> cast(params, @optional_fields)
+    |> validate_change(:kanban_boards, fn :kanban_boards, values ->
+      case Enum.all?(values, &(&1 in KanbanBoards.values_list())) do
+        true -> []
+        false -> [kanban_boards: "contains unsupported kanban boards"]
+      end
+    end)
   end
 end

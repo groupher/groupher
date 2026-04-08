@@ -25,6 +25,9 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
 
       assert find_community.dashboard.layout.kanban_bg_colors ==
                @default_dashboard.layout.kanban_bg_colors
+
+      assert find_community.dashboard.layout.kanban_boards ==
+               @default_dashboard.layout.kanban_boards
     end
 
     test "read a exist community should have default dashboard field", ~m(community)a do
@@ -148,6 +151,17 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
 
       assert find_community.dashboard.layout.post_layout == "upvote_first"
       assert find_community.dashboard.layout.changelog_layout == "full"
+    end
+
+    test "rejects unsupported kanban boards in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:error, %Ecto.Changeset{} = changeset} =
+               CMS.Communities.update_dashboard(community, :layout, %{
+                 kanban_boards: [:todo, :invalid_board]
+               })
+
+      assert {:kanban_boards, {"is invalid", _}} = List.keyfind(changeset.errors, :kanban_boards, 0)
     end
 
     test "can update rss in community dashboard", ~m(community_attrs user)a do
