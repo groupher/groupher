@@ -8,8 +8,12 @@ export default function useSalon() {
   const body = 'p-2 pb-0 rounded-xl w-full'
 
   return {
-    column: 'column w-[19%] min-w-[19%] min-h-96',
-    header: 'row-center pb-4 w-full pl-0.5',
+    scroller: 'w-full overflow-x-auto overflow-y-visible [scrollbar-gutter:stable] scroll-smooth',
+    headerRowViewport: 'w-full overflow-hidden',
+    columnsTrack: 'flex items-start gap-5 min-w-max',
+    columnBase: 'column min-h-96',
+    scrollColumn: 'shrink-0 w-64',
+    header: 'row-center py-1.5 w-full pl-0.5',
     label: cn('text-base bold ml-2.5', fg('digest')),
     subTitle: cn('text-sm ml-1.5', fg('hint')),
     //
