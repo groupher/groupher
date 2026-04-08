@@ -165,6 +165,7 @@ const updateDashboardLayout = gql`
     $postLayout: String
     $kanbanLayout: String
     $kanbanCardLayout: String
+    $kanbanBoards: [KanbanBoard]
     $footerLayout: String
     $headerLayout: String
     $topbarLayout: String
@@ -193,6 +194,7 @@ const updateDashboardLayout = gql`
       postLayout: $postLayout
       kanbanLayout: $kanbanLayout
       kanbanCardLayout: $kanbanCardLayout
+      kanbanBoards: $kanbanBoards
       footerLayout: $footerLayout
       headerLayout: $headerLayout
       topbarLayout: $topbarLayout

@@ -176,13 +176,30 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
                List.keyfind(changeset.errors, :kanban_boards, 0)
     end
 
-    test "accepts nil kanban boards update without raising", ~m(community_attrs user)a do
+    test "normalizes nil kanban boards update to defaults", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       assert {:ok, _} =
                CMS.Communities.update_dashboard(community, :layout, %{
                  kanban_boards: nil
                })
+
+      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
+
+      assert find_community.dashboard.layout.kanban_boards == [:todo, :wip, :done]
+    end
+
+    test "normalizes empty kanban boards update to defaults", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:ok, _} =
+               CMS.Communities.update_dashboard(community, :layout, %{
+                 kanban_boards: []
+               })
+
+      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
+
+      assert find_community.dashboard.layout.kanban_boards == [:todo, :wip, :done]
     end
 
     test "rejects unsupported thread emotions in community dashboard", ~m(community_attrs user)a do

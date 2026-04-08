@@ -1,4 +1,5 @@
 import { proxy } from 'valtio'
+import { INIT_KANBAN_BOARDS } from '~/const/dashboard'
 import METRIC from '~/const/metric'
 import { CHANGE_MODE } from '~/const/mode'
 import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
@@ -50,6 +51,14 @@ export default function DashboardStore(init: TInit = {}): TStore {
     },
     init,
   )
+
+  if (!states.kanbanBoards?.length) {
+    states.kanbanBoards = INIT_KANBAN_BOARDS
+  }
+
+  if (!states.original?.kanbanBoards?.length) {
+    states.original = { ...states.original, kanbanBoards: INIT_KANBAN_BOARDS }
+  }
 
   const store = proxy(states)
   return store

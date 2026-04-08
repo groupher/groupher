@@ -4,6 +4,7 @@ import { includes, reject } from 'ramda'
 
 import { CACHE_TAG } from '~/const/cache'
 import { PAGE_BG_DEFAULT } from '~/const/colors'
+import { INIT_KANBAN_BOARDS, normalizeKanbanBoards } from '~/const/dashboard'
 import { BUILTIN_ALIAS } from '~/const/name'
 import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
@@ -130,7 +131,13 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     mediaReports,
     pageBg: pageBg || PAGE_BG_DEFAULT[THEME.LIGHT],
     pageBgDark: pageBgDark || PAGE_BG_DEFAULT[THEME.DARK],
-  })
+  }) as Partial<TParseDashboard>
+
+  if (layout?.kanbanBoards?.length) {
+    fieldsObj.kanbanBoards = normalizeKanbanBoards(layout.kanbanBoards)
+  } else if (!fieldsObj.kanbanBoards?.length) {
+    fieldsObj.kanbanBoards = INIT_KANBAN_BOARDS
+  }
 
   // If fieldsObj is empty, return default config
   if (Object.keys(fieldsObj).length === 0) {

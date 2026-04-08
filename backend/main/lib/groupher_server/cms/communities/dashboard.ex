@@ -94,7 +94,14 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
     merged_args = current_embed |> Map.merge(args) |> strip_struct()
 
     case embed_module.changeset(current_embed, merged_args) do
-      %{valid?: true} -> {:ok, merged_args}
+      %{valid?: true} = changeset ->
+        normalized_payload =
+          changeset
+          |> Ecto.Changeset.apply_changes()
+          |> strip_struct()
+
+        {:ok, normalized_payload}
+
       changeset -> {:error, changeset}
     end
   end

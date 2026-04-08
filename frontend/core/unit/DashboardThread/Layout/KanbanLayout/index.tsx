@@ -2,6 +2,7 @@ import { KANBAN_LAYOUT } from '~/const/layout'
 import useKanban from '../../logic/useKanban'
 import useSalon from '../../salon/layout/kanban_layout'
 import BgColorsSetter from './BgColorsSetter'
+import Boards from './Boards'
 import GlobalLayout from './GlobalLayout'
 import ItemCardLayout from './ItemCardLayout'
 
@@ -11,6 +12,8 @@ export default function KanbanLayout() {
 
   return (
     <div className={s.wrapper}>
+      <Boards />
+      <div className='mt-12' />
       <GlobalLayout />
 
       {kanbanLayout === KANBAN_LAYOUT.CLASSIC && <ItemCardLayout />}

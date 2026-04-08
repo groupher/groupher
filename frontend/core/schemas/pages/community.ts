@@ -97,6 +97,7 @@ export const community = `
           broadcastLayout
           kanbanLayout
           kanbanCardLayout
+          kanbanBoards
           kanbanBgColors
           changelogLayout
           headerLayout

@@ -5,6 +5,7 @@ import type {
   TBrandLayout,
   TChangelogLayout,
   TInlineTagLayout,
+  TKanbanBoard,
   TKanbanCardLayout,
   TKanbanLayout,
   TPostLayout,
@@ -21,6 +22,7 @@ type TRet = {
   postLayout: TPostLayout
   kanbanLayout: TKanbanLayout
   kanbanCardLayout: TKanbanCardLayout
+  kanbanBoards: readonly TKanbanBoard[]
   changelogLayout: TChangelogLayout
 }
 
@@ -37,6 +39,7 @@ export default function UseLayout(): TRet {
       'postLayout',
       'kanbanLayout',
       'kanbanCardLayout',
+      'kanbanBoards',
       'changelogLayout',
     ],
     dashboard,

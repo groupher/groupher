@@ -18,6 +18,7 @@ import type {
   TOPBAR_LAYOUT,
 } from '~/const/layout'
 import type { DSB_TAB } from '~/const/route'
+import type { KANBAN_BOARD } from '~/const/thread'
 import type { TConstValues } from '~/spec'
 import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
 import type { TFAQSection } from './article'
@@ -36,6 +37,7 @@ export type TTopbarLayout = TConstValues<typeof TOPBAR_LAYOUT>
 export type TPostLayout = TConstValues<typeof POST_LAYOUT>
 export type TKanbanLayout = TConstValues<typeof KANBAN_LAYOUT>
 export type TKanbanCardLayout = TConstValues<typeof KANBAN_CARD_LAYOUT>
+export type TKanbanBoard = TConstValues<typeof KANBAN_BOARD>
 export type TChangelogLayout = TConstValues<typeof CHANGELOG_LAYOUT>
 export type TDocLayout = TConstValues<typeof DOC_LAYOUT>
 export type TDocFAQLayout = TConstValues<typeof DOC_FAQ_LAYOUT>
@@ -80,7 +82,9 @@ export type TDsb = {
     docLayout: TDocLayout
     docFaqLayout: TDocFaqLayout
     postLayout: TPostLayout
+    kanbanLayout: TKanbanLayout
     kanbanCardLayout: TKanbanCardLayout
+    kanbanBoards: readonly TKanbanBoard[]
     kanbanBgColors: readonly TColorName[]
     changelogLayout: TChangelogLayout
     headerLayout: THeaderLayout

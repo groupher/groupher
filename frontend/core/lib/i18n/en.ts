@@ -358,7 +358,7 @@ export default {
     'Wallpaper is the background image shown on wide screens beyond the content area. You can upload a custom image.',
   'dsb.layout.wallpaper.original': 'Original',
   'dsb.layout.wallpaper.preview': 'Preview',
-  'dsb.layout.kanban.bg.title': 'Kanban background',
+  'dsb.layout.kanban.bg.title': 'Board backgrounds',
   'dsb.layout.kanban.bg.desc': 'Background color for each kanban column. Default is light gray.',
   'dsb.layout.kanban.bg.reset': 'Reset',
   'dsb.layout.kanban.bg.random': 'Random',
