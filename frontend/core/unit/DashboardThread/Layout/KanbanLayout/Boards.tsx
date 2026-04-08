@@ -16,7 +16,6 @@ export default function Boards() {
   const { t } = useTrans()
   const primaryColor = usePrimaryColor()
   const { cn, fg, fill, rainbow } = useTwBelt()
-
   const { kanbanBoards, isKanbanBoardsTouched: isTouched, saving, edit } = useKanban()
   const activeBoards = kanbanBoards.length > 0 ? kanbanBoards : INIT_KANBAN_BOARDS
 
@@ -53,7 +52,7 @@ export default function Boards() {
           >
             <div
               className={cn(
-                'size-4 align-both rounded trans-all-200 relative border-2',
+                s.box,
                 activeBoards.includes(value) ? rainbow(primaryColor, 'bg') : 'bg-transparent',
                 rainbow(primaryColor, 'border'),
               )}

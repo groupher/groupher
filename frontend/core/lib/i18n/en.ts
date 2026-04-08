@@ -667,7 +667,7 @@ export default {
   'dsb.threads.about.media.title': 'Media coverage',
   'dsb.threads.about.media.desc': 'Links to articles, podcasts, or videos about the team.',
   'account.menu.via_github': 'via Github',
-  'account.menu.settings': 'Account settings',
+  'account.menu.settings': 'Settings',
   'account.menu.profile': 'Profile',
   'account.menu.guide': 'User guide',
   'account.menu.shortcuts': 'Shortcuts',

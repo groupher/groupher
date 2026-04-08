@@ -77,6 +77,19 @@ const Button: FC<TProps> = ({
     ...spacing,
   })
 
+  if (loading) {
+    return (
+      <div className={cnMerge(s.wrapper, className, 'border-0 bg-transparent')} aria-busy>
+        <div className={cnMerge(s.inner, 'bg-transparent border-transparent')} style={s.innerStyle}>
+          <div className={cn(s.children, 'invisible select-none')}>{children}</div>
+          <div className='absolute inset-0 align-both'>
+            <LavaLampLoading size='small' className='!w-10 !h-3 overflow-hidden' />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <button
       className={cnMerge(s.wrapper, className)}
@@ -92,7 +105,7 @@ const Button: FC<TProps> = ({
       }}
     >
       <div className={cn(s.inner)} style={s.innerStyle}>
-        {loading ? <LavaLampLoading size='small' /> : <div className={s.children}>{children}</div>}
+        <div className={s.children}>{children}</div>
       </div>
     </button>
   )

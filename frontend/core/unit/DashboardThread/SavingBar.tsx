@@ -92,6 +92,7 @@ const SavingBar: FC<TProps> = ({
           cancelText={cancelText}
           disabled={disabled}
           saveText={saveText}
+          loading={loading}
           space={!loading ? 1.5 : 0}
           onConfirm={() => {
             if (field) {

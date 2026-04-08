@@ -10,6 +10,7 @@ export default function useSalon() {
   return {
     select: 'row-center wrap gap-x-5 gap-y-8 w-full',
     block: cn('row-center wrap pointer px-1 py-0.5', hover('box')),
+    box: 'size-4 align-both rounded trans-all-200 relative border-2',
     blockActive: base.blockBaseActive,
 
     bar: cnMerge(base.bar, 'h-1.5 w-20 opacity-40'),
