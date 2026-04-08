@@ -164,6 +164,38 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       assert {:kanban_boards, {"is invalid", _}} = List.keyfind(changeset.errors, :kanban_boards, 0)
     end
 
+    test "rejects duplicate kanban boards in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:error, %Ecto.Changeset{} = changeset} =
+               CMS.Communities.update_dashboard(community, :layout, %{
+                 kanban_boards: [:todo, :todo, :done]
+               })
+
+      assert {:kanban_boards, {"contains duplicate kanban boards", _}} =
+               List.keyfind(changeset.errors, :kanban_boards, 0)
+    end
+
+    test "accepts nil kanban boards update without raising", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:ok, _} =
+               CMS.Communities.update_dashboard(community, :layout, %{
+                 kanban_boards: nil
+               })
+    end
+
+    test "rejects unsupported thread emotions in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:error, %Ecto.Changeset{} = changeset} =
+               CMS.Communities.update_dashboard(community, :thread_emotions, %{
+                 post: [:beer, :invalid_emotion]
+               })
+
+      assert {:post, {"is invalid", _}} = List.keyfind(changeset.errors, :post, 0)
+    end
+
     test "can update rss in community dashboard", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 

@@ -341,6 +341,18 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert mutation_error?(rule_conn, @update_layout_query, variables)
     end
 
+    test "update community dashboard layout rejects duplicate kanban boards",
+         ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      variables = %{
+        community: community.slug,
+        kanbanBoards: ["TODO", "TODO", "DONE"]
+      }
+
+      assert mutation_error?(rule_conn, @update_layout_query, variables)
+    end
+
     @update_seo_query """
     mutation($community: String!, $rssFeedType: String, $rssFeedCount: Int) {
       updateDashboardRss(community: $community, rssFeedType: $rssFeedType, rssFeedCount: $rssFeedCount) {

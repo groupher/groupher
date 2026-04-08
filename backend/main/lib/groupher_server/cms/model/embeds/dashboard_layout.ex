@@ -29,10 +29,26 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   def changeset(struct, params) do
     struct
     |> cast(params, @optional_fields)
-    |> validate_change(:kanban_boards, fn :kanban_boards, values ->
-      case Enum.all?(values, &(&1 in KanbanBoards.values_list())) do
-        true -> []
-        false -> [kanban_boards: "contains unsupported kanban boards"]
+    |> validate_kanban_boards()
+  end
+
+  defp validate_kanban_boards(changeset) do
+    validate_change(changeset, :kanban_boards, fn :kanban_boards, values ->
+      cond do
+        is_nil(values) ->
+          []
+
+        not is_list(values) ->
+          [kanban_boards: "contains unsupported kanban boards"]
+
+        not Enum.all?(values, &(&1 in KanbanBoards.values_list())) ->
+          [kanban_boards: "contains unsupported kanban boards"]
+
+        length(values) != length(Enum.uniq(values)) ->
+          [kanban_boards: "contains duplicate kanban boards"]
+
+        true ->
+          []
       end
     end)
   end
