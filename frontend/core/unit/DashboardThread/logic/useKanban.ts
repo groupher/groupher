@@ -25,8 +25,7 @@ export default function useKanban(): TRet {
   const { isChanged, edit } = useHelper()
   const { kanbanBoards, original } = dsb$
 
-  const currentKanbanBoards =
-    kanbanBoards.length > 0 ? kanbanBoards : INIT_KANBAN_BOARDS
+  const currentKanbanBoards = kanbanBoards.length > 0 ? kanbanBoards : INIT_KANBAN_BOARDS
   const originalKanbanBoards =
     original.kanbanBoards.length > 0 ? original.kanbanBoards : INIT_KANBAN_BOARDS
 
