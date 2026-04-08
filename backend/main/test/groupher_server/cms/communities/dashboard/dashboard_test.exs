@@ -211,6 +211,25 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       assert find_community.dashboard.rss.rss_feed_count == 25
     end
 
+    test "rss updates keep existing values when updating incrementally", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :rss, %{
+          rss_feed_type: "full"
+        })
+
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :rss, %{
+          rss_feed_count: 25
+        })
+
+      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
+
+      assert find_community.dashboard.rss.rss_feed_type == "full"
+      assert find_community.dashboard.rss.rss_feed_count == 25
+    end
+
     test "can update alias in community dashboard", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
