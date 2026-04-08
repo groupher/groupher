@@ -51,7 +51,8 @@ function BodyColumn({ column, className = '' }: { column: TColumn; className?: s
     <div className={`${s.columnBase} ${className}`.trim()}>
       <div className={column.bodyClassName}>
         {!hasEntries && <EmptyItem />}
-        {hasEntries && column.posts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
+        {hasEntries &&
+          column.posts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
       </div>
     </div>
   )
