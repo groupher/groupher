@@ -221,12 +221,13 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $primaryColor: String, $subPrimaryColor: String, $postLayout: String, $kanbanLayout: String, $kanbanCardLayout: String, $footerLayout: String, $broadcastEnable: Boolean, $kanbanBgColors: [String], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: String, $inlineTagLayout: String, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: String, $darkFloat: Boolean) {
-      updateDashboardLayout(community: $community, primaryColor: $primaryColor, subPrimaryColor: $subPrimaryColor, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, darkFloat: $darkFloat) {
+    mutation($community: String!, $primaryColor: String, $subPrimaryColor: String, $postLayout: String, $kanbanLayout: String, $kanbanCardLayout: String, $footerLayout: String, $broadcastEnable: Boolean, $kanbanBgColors: [String], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: String, $inlineTagLayout: String, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: String, $darkFloat: Boolean) {
+      updateDashboardLayout(community: $community, primaryColor: $primaryColor, subPrimaryColor: $subPrimaryColor, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, darkFloat: $darkFloat) {
         id
         title
         dashboard {
           layout {
+            kanbanBoards
             footerLayout
             tagLayout
             inlineTagLayout
@@ -256,6 +257,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         kanbanCardLayout: "full",
         footerLayout: "simple",
         kanbanBgColors: ["#111", "#222"],
+        kanbanBoards: ["BACKLOG", "TODO", "DONE", "REJECTED"],
         glowType: "PINK",
         glowFixed: true,
         glowOpacity: "30",
@@ -280,6 +282,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.layout.kanban_card_layout == "full"
       assert found.dashboard.layout.broadcast_enable == true
       assert found.dashboard.layout.kanban_bg_colors == ["#111", "#222"]
+      assert found.dashboard.layout.kanban_boards == [:backlog, :todo, :done, :rejected]
       assert found.dashboard.layout.footer_layout == "simple"
 
       assert found.dashboard.layout.glow_type == "PINK"
@@ -324,6 +327,30 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       assert found.dashboard.layout.post_layout == "new layout"
       assert found.dashboard.layout.kanban_layout == "full"
+    end
+
+    test "update community dashboard layout rejects unsupported kanban board",
+         ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      variables = %{
+        community: community.slug,
+        kanbanBoards: ["TODO", "INVALID_BOARD"]
+      }
+
+      assert mutation_error?(rule_conn, @update_layout_query, variables)
+    end
+
+    test "update community dashboard layout rejects duplicate kanban boards",
+         ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      variables = %{
+        community: community.slug,
+        kanbanBoards: ["TODO", "TODO", "DONE"]
+      }
+
+      assert mutation_error?(rule_conn, @update_layout_query, variables)
     end
 
     @update_seo_query """

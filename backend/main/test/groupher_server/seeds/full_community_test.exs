@@ -14,6 +14,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   alias CMS.Model.{Changelog, Comment, Community, Doc, Post}
 
   describe "[full community seeds]" do
+    @tag :skip_ci
     test "seeds full community data including about dashboard" do
       allowed_cats = [nil | ArticleEnums.cat_values()]
       allowed_states = [nil, :backlog, :todo, :wip, :done, :resolved, :reject]

@@ -91,7 +91,6 @@ export default function GlobalLayout() {
       </div>
 
       <SavingBar
-        width='w-11/12'
         isTouched={isTouched}
         field={FIELD.KANBAN_LAYOUT}
         loading={saving}

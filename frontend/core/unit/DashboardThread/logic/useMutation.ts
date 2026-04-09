@@ -1,11 +1,12 @@
 import { equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
 import { useEffect, useRef } from 'react'
+import { serializeKanbanBoards } from '~/const/dashboard'
 import { DSB_INFO_ROUTE } from '~/const/route'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useDsbTab from '~/hooks/useDsbTab'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { toast } from '~/signal'
-import type { TEditValue, TTag } from '~/spec'
+import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
@@ -314,6 +315,14 @@ export default function useMutation(): TRet {
     // }
 
     if (includes(field, values(LAYOUT_FIELD))) {
+      if (field === FIELD.KANBAN_BOARDS) {
+        handleMutation(S.updateDashboardLayout, {
+          community,
+          [field]: serializeKanbanBoards(e as readonly TKanbanBoard[]),
+        })
+        return
+      }
+
       handleMutation(S.updateDashboardLayout, { community, [field]: e })
       return
     }

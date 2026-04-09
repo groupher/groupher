@@ -6,13 +6,14 @@
 import type { ReactNode, RefObject, UIEvent } from 'react'
 
 import useKanbanPosts from '~/hooks/useKanbanPosts'
+import useLayout from '~/hooks/useLayout'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
 import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
 import RejectSVG from '~/icons/Reject'
-import type { TPagedPosts } from '~/spec'
+import type { TKanbanBoard, TPagedPosts } from '~/spec'
 
 import KanbanItem from '../KanbanItem'
 import EmptyItem from '../KanbanItem/EmptyItem'
@@ -62,6 +63,7 @@ export function useColumnsData() {
   const s = useSalon()
   const { t } = useTrans()
   const kanbanAlias = useNameAlias('kanban')
+  const { kanbanBoards } = useLayout()
 
   const {
     backlog: backlogPosts,
@@ -73,8 +75,8 @@ export function useColumnsData() {
 
   const resolveTitle = (key: string, fallback: string) => kanbanAlias[key]?.name || fallback
 
-  const columns: TColumn[] = [
-    {
+  const columnMap: Record<TKanbanBoard, TColumn> = {
+    backlog: {
       key: 'backlog',
       title: resolveTitle('backlog', t('article.state.backlog')),
       count: backlogPosts.totalCount,
@@ -82,7 +84,7 @@ export function useColumnsData() {
       bodyClassName: s.backlogBody,
       posts: backlogPosts,
     },
-    {
+    todo: {
       key: 'todo',
       title: resolveTitle('todo', t('article.state.todo')),
       count: todoPosts.totalCount,
@@ -90,7 +92,7 @@ export function useColumnsData() {
       bodyClassName: s.todoBody,
       posts: todoPosts,
     },
-    {
+    wip: {
       key: 'wip',
       title: resolveTitle('wip', t('article.state.wip')),
       count: wipPosts.totalCount,
@@ -98,7 +100,7 @@ export function useColumnsData() {
       bodyClassName: s.wipBody,
       posts: wipPosts,
     },
-    {
+    done: {
       key: 'done',
       title: resolveTitle('done', t('article.state.done')),
       count: donePosts.totalCount,
@@ -106,7 +108,7 @@ export function useColumnsData() {
       bodyClassName: s.doneBody,
       posts: donePosts,
     },
-    {
+    rejected: {
       key: 'rejected',
       title: resolveTitle('rejected', t('article.state.reject')),
       count: rejectedPosts.totalCount,
@@ -114,9 +116,9 @@ export function useColumnsData() {
       bodyClassName: s.rejectedBody,
       posts: rejectedPosts,
     },
-  ]
+  }
 
-  return columns
+  return kanbanBoards.map((board) => columnMap[board]).filter(Boolean)
 }
 
 export function HeaderRow({
@@ -128,7 +130,7 @@ export function HeaderRow({
   trackRef?: RefObject<HTMLDivElement | null>
   className?: string
 }) {
-  const s = useSalon()
+  const s = useSalon(columns.length)
 
   return (
     <div className={`${s.headerRowViewport} ${className}`.trim()}>
@@ -150,7 +152,7 @@ export function BodyRow({
   scrollRef: RefObject<HTMLDivElement | null>
   onScroll: (event: UIEvent<HTMLDivElement>) => void
 }) {
-  const s = useSalon()
+  const s = useSalon(columns.length)
 
   return (
     <div ref={scrollRef} className={s.scroller} onScroll={onScroll}>

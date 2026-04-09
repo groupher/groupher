@@ -1,6 +1,6 @@
 import { BUILTIN_ALIAS } from '~/const/builtin-alias'
 import { COLOR, PAGE_BG_DEFAULT } from '~/const/colors'
-import { DEFAULT_ENABLE, TW_CARD } from '~/const/dashboard'
+import { DEFAULT_ENABLE, INIT_KANBAN_BOARDS, TW_CARD } from '~/const/dashboard'
 import { GLOW_OPACITY } from '~/const/glow_effect'
 import { LOCALE } from '~/const/i18n'
 import {
@@ -92,6 +92,7 @@ export const FIELDS: TDsbFieldMap = {
   postLayout: POST_LAYOUT.QUORA,
   kanbanLayout: KANBAN_LAYOUT.CLASSIC,
   kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,
+  kanbanBoards: INIT_KANBAN_BOARDS,
   kanbanBgColors: INIT_KANBAN_COLORS,
 
   docLayout: DOC_LAYOUT.CARDS,

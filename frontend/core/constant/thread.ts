@@ -6,6 +6,14 @@ export const ARTICLE_THREAD = {
   KANBAN: 'kanban',
 } as const
 
+export const KANBAN_BOARD = {
+  BACKLOG: 'backlog',
+  TODO: 'todo',
+  WIP: 'wip',
+  DONE: 'done',
+  REJECTED: 'rejected',
+} as const
+
 export const THREAD = {
   ...ARTICLE_THREAD,
   ACCOUNT: 'account',

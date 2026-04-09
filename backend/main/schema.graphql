@@ -628,7 +628,7 @@ type RootMutationType {
 
   "update enable in dashboard"
   updateDashboardEnable(
-    community: String!, dashboardSection: DashboardSection, post: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean
+    community: String!, dashboardSection: DashboardSection, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean
   ): Community
 
   "update thread-specific emotion settings in dashboard"
@@ -638,7 +638,7 @@ type RootMutationType {
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dashboardSection: DashboardSection, primaryColor: String, subPrimaryColor: String, kanbanBgColors: [String], postLayout: String, kanbanLayout: String, kanbanCardLayout: String, docLayout: String, docFaqLayout: String, tagLayout: String, inlineTagLayout: String, avatarLayout: String, brandLayout: String, bannerLayout: String, topbarLayout: String, topbarBg: String, broadcastLayout: String, broadcastBg: String, broadcastEnable: Boolean, broadcastArticleLayout: String, broadcastArticleBg: String, broadcastArticleEnable: Boolean, changelogLayout: String, footerLayout: String, headerLayout: String, glowType: String, glowFixed: Boolean, glowOpacity: String, darkFloat: Boolean, gaussBlur: Int, gaussBlurDark: Int
+    community: String!, dashboardSection: DashboardSection, primaryColor: String, subPrimaryColor: String, kanbanBgColors: [String], kanbanBoards: [KanbanBoard], postLayout: String, kanbanLayout: String, kanbanCardLayout: String, docLayout: String, docFaqLayout: String, tagLayout: String, inlineTagLayout: String, avatarLayout: String, brandLayout: String, bannerLayout: String, topbarLayout: String, topbarBg: String, broadcastLayout: String, broadcastBg: String, broadcastEnable: Boolean, broadcastArticleLayout: String, broadcastArticleBg: String, broadcastArticleEnable: Boolean, changelogLayout: String, footerLayout: String, headerLayout: String, glowType: String, glowFixed: Boolean, glowOpacity: String, darkFloat: Boolean, gaussBlur: Int, gaussBlurDark: Int
   ): Community
 
   "update rss in dashboard"
@@ -903,6 +903,7 @@ type DashboardLayout {
   primaryColor: String
   subPrimaryColor: String
   kanbanBgColors: [String]
+  kanbanBoards: [KanbanBoard]
   postLayout: String
   kanbanLayout: String
   kanbanCardLayout: String
@@ -934,6 +935,7 @@ type DashboardLayout {
 
 type DashboardEnable {
   post: Boolean
+  blog: Boolean
   kanban: Boolean
   changelog: Boolean
   doc: Boolean
@@ -1501,6 +1503,14 @@ enum ArticleStateEnum {
   REJECT_NO_PLAN
   REJECT_REPRO
   REJECT_STALE
+}
+
+enum KanbanBoard {
+  BACKLOG
+  TODO
+  WIP
+  DONE
+  REJECTED
 }
 
 "the filter mode for list comments"

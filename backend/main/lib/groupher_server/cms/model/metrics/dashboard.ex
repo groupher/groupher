@@ -8,6 +8,8 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   those cases need to manually add
   """
 
+  alias GroupherServer.CMS.Helper.KanbanBoards
+
   @kanban_bg_colors_default ["BLACK", "YELLOW", "PURPLE", "GREEN", "RED"]
 
   def kanban_bg_colors_default, do: @kanban_bg_colors_default
@@ -64,6 +66,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:primary_color, :string, "BLACK"],
       [:sub_primary_color, :string, "BLACK"],
       [:kanban_bg_colors, {:array, :string}, @kanban_bg_colors_default],
+      [:kanban_boards, {:array, :kanban_board}, KanbanBoards.default_values_list()],
       [:post_layout, :string, "quora"],
       [:kanban_layout, :string, "classic"],
       [:kanban_card_layout, :string, "simple"],

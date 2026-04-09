@@ -516,13 +516,13 @@ defmodule Helper.ORM do
 
   ## Examples
 
-      iex> ORM.update_dashboard(dashboard, :header_links, [%{title: "Docs"}])
+      iex> ORM.replace_dashboard_section(dashboard, :header_links, [%{title: "Docs"}])
       {:ok, %CommunityDashboard{}}
 
-      iex> ORM.update_dashboard(dashboard, :seo, %{title: "Elixir"})
+      iex> ORM.merge_dashboard_section(dashboard, :seo, %{title: "Elixir"})
       {:ok, %CommunityDashboard{}}
   """
-  def update_dashboard(%CommunityDashboard{} = community_dashboard, field, args)
+  def replace_dashboard_section(%CommunityDashboard{} = community_dashboard, field, args)
       when field in [
              # those fields are array maps
              :header_links,
@@ -538,7 +538,14 @@ defmodule Helper.ORM do
     |> Repo.update()
   end
 
-  def update_dashboard(%CommunityDashboard{} = community_dashboard, key, args) do
+  def replace_dashboard_section(%CommunityDashboard{} = community_dashboard, key, args) do
+    community_dashboard
+    |> Ecto.Changeset.change()
+    |> Ecto.Changeset.put_embed(key, args)
+    |> Repo.update()
+  end
+
+  def merge_dashboard_section(%CommunityDashboard{} = community_dashboard, key, args) do
     merged_args =
       community_dashboard[key] |> ensure_dashboard_key_exist |> Map.merge(args) |> strip_struct
 

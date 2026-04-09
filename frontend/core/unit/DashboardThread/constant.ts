@@ -16,6 +16,7 @@ export const LAYOUT_FIELD = {
   POST_LAYOUT: 'postLayout',
   KANBAN_LAYOUT: 'kanbanLayout',
   KANBAN_CARD_LAYOUT: 'kanbanCardLayout',
+  KANBAN_BOARDS: 'kanbanBoards',
   KANBAN_BG_COLORS: 'kanbanBgColors',
   DOC_LAYOUT: 'docLayout',
   DOC_FAQ_LAYOUT: 'docFaqLayout',

@@ -1,11 +1,13 @@
 import { COLOR } from '~/const/colors'
 import { INIT_KANBAN_COLORS } from '~/const/dashboard'
 import { KANBAN_LAYOUT } from '~/const/layout'
+import { KANBAN_BOARD } from '~/const/thread'
 import { randomBgNames } from '~/helper'
-import useHover from '~/hooks/useHover'
 import useTrans from '~/hooks/useTrans'
 import DiceSVG from '~/icons/Dice'
 import ResetSVG from '~/icons/Reset'
+import { useState } from 'react'
+import type { TColorName } from '~/spec'
 
 import ColorSelector from '~/widgets/ColorSelector'
 
@@ -17,20 +19,79 @@ import useSalon, { cn } from '../../../salon/layout/kanban_layout/bg_colors_sett
 import ClassicLayout from './ClassicLayout'
 import WaterfallLayout from './WaterfallLayout'
 
+const BOARD_ORDER = [
+  KANBAN_BOARD.BACKLOG,
+  KANBAN_BOARD.TODO,
+  KANBAN_BOARD.WIP,
+  KANBAN_BOARD.DONE,
+  KANBAN_BOARD.REJECTED,
+] as const
+
+const BOARD_COLOR_KEY = {
+  [KANBAN_BOARD.BACKLOG]: 'backlogBall',
+  [KANBAN_BOARD.TODO]: 'todoBall',
+  [KANBAN_BOARD.WIP]: 'wipBall',
+  [KANBAN_BOARD.DONE]: 'doneBall',
+  [KANBAN_BOARD.REJECTED]: 'rejectedBall',
+} as const
+
 export default function BgColorsSetter() {
   const s = useSalon()
   const { t } = useTrans()
+  const [hoveredBoard, setHoveredBoard] = useState<string | null>(null)
 
-  const { kanbanLayout: layout, kanbanBgColors, isKanbanColorsTouched, saving, edit } = useKanban()
+  const {
+    kanbanLayout: layout,
+    kanbanBoards,
+    kanbanBgColors,
+    isKanbanColorsTouched,
+    saving,
+    edit,
+  } = useKanban()
 
-  const [board1Ref, isBoard1Hovered] = useHover<HTMLDivElement>()
-  const [board2Ref, isBoard2Hovered] = useHover<HTMLDivElement>()
-  const [board3Ref, isBoard3Hovered] = useHover<HTMLDivElement>()
-  const [board4Ref, isBoard4Hovered] = useHover<HTMLDivElement>()
-  const [board5Ref, isBoard5Hovered] = useHover<HTMLDivElement>()
-
-  const [BG1, BG2, BG3, BG4, BG5] =
+  const colors =
     kanbanBgColors.length === INIT_KANBAN_COLORS.length ? kanbanBgColors : INIT_KANBAN_COLORS
+  const activeBoards =
+    kanbanBoards.length > 0
+      ? kanbanBoards
+      : [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE]
+  const activeBoardConfigs = activeBoards.map((board) => ({
+    board,
+    index: BOARD_ORDER.indexOf(board),
+    color: colors[BOARD_ORDER.indexOf(board)],
+  }))
+
+  const patchBoardColor = (board: string, color: TColorName) => {
+    const index = BOARD_ORDER.indexOf(board as (typeof BOARD_ORDER)[number])
+    if (index < 0) return
+
+    const nextColors = [...colors]
+    nextColors[index] = color
+    edit(nextColors, FIELD.KANBAN_BG_COLORS)
+  }
+
+  const resetEnabledBoards = () => {
+    const nextColors = [...colors]
+
+    activeBoards.forEach((board) => {
+      const index = BOARD_ORDER.indexOf(board)
+      nextColors[index] = INIT_KANBAN_COLORS[index]
+    })
+
+    edit(nextColors, FIELD.KANBAN_BG_COLORS)
+  }
+
+  const randomizeEnabledBoards = () => {
+    const nextColors = [...colors]
+    const randomColors = randomBgNames(activeBoards.length, [COLOR.CYAN])
+
+    activeBoards.forEach((board, idx) => {
+      const index = BOARD_ORDER.indexOf(board)
+      nextColors[index] = randomColors[idx]
+    })
+
+    edit(nextColors, FIELD.KANBAN_BG_COLORS)
+  }
 
   return (
     <>
@@ -38,97 +99,38 @@ export default function BgColorsSetter() {
 
       <div className={s.colorsWrapper}>
         <div className={s.preset}>
-          <ColorSelector
-            activeColor={BG1}
-            onChange={(color) => edit([color, BG2, BG3, BG4, BG5], FIELD.KANBAN_BG_COLORS)}
-            placement='right'
-            offset={[-2, 1]}
-            excepts={[COLOR.CYAN]}
-            bgMode
-          >
-            <div className={cn(s.colorBall, s.backlogBall)} ref={board1Ref} />
-          </ColorSelector>
-
-          <ColorSelector
-            activeColor={BG2}
-            onChange={(color) => edit([BG1, color, BG3, BG4, BG5], FIELD.KANBAN_BG_COLORS)}
-            placement='right'
-            offset={[-2, 1]}
-            excepts={[COLOR.CYAN]}
-            bgMode
-          >
-            <div className={cn(s.colorBall, s.todoBall)} ref={board2Ref} />
-          </ColorSelector>
-
-          <ColorSelector
-            activeColor={BG3}
-            onChange={(color) => edit([BG1, BG2, color, BG4, BG5], FIELD.KANBAN_BG_COLORS)}
-            placement='right'
-            offset={[-2, 1]}
-            excepts={[COLOR.CYAN]}
-            bgMode
-          >
-            <div className={cn(s.colorBall, s.wipBall)} ref={board3Ref} />
-          </ColorSelector>
-
-          <ColorSelector
-            activeColor={BG4}
-            onChange={(color) => edit([BG1, BG2, BG3, color, BG5], FIELD.KANBAN_BG_COLORS)}
-            placement='right'
-            offset={[-2, 1]}
-            excepts={[COLOR.CYAN]}
-            bgMode
-          >
-            <div className={cn(s.colorBall, s.doneBall)} ref={board4Ref} />
-          </ColorSelector>
-
-          <ColorSelector
-            activeColor={BG5}
-            onChange={(color) => edit([BG1, BG2, BG3, BG4, color], FIELD.KANBAN_BG_COLORS)}
-            placement='right'
-            offset={[-2, 1]}
-            excepts={[COLOR.CYAN]}
-            bgMode
-          >
-            <div className={cn(s.colorBall, s.rejectedBall)} ref={board5Ref} />
-          </ColorSelector>
+          {activeBoardConfigs.map(({ board, color }) => (
+            <ColorSelector
+              key={board}
+              activeColor={color}
+              onChange={(nextColor) => patchBoardColor(board, nextColor)}
+              placement='right'
+              offset={[-2, 1]}
+              excepts={[COLOR.CYAN]}
+              bgMode
+            >
+              <div
+                className={cn(s.colorBall, s[BOARD_COLOR_KEY[board]])}
+                onMouseEnter={() => setHoveredBoard(board)}
+                onMouseLeave={() => setHoveredBoard(null)}
+              />
+            </ColorSelector>
+          ))}
         </div>
         <div className='grow' />
-        <button
-          type='button'
-          className={s.action}
-          onClick={() => edit(INIT_KANBAN_COLORS, FIELD.KANBAN_BG_COLORS)}
-        >
+        <button type='button' className={s.action} onClick={resetEnabledBoards}>
           <ResetSVG className={s.resetIcon} />
           {t('dsb.layout.kanban.bg.reset')}
         </button>
-        <button
-          type='button'
-          className={s.action}
-          onClick={() => {
-            edit(randomBgNames(5, [COLOR.CYAN]), FIELD.KANBAN_BG_COLORS)
-          }}
-        >
+        <button type='button' className={s.action} onClick={randomizeEnabledBoards}>
           <DiceSVG className={cn(s.resetIcon, 'size-3.5')} /> {t('dsb.layout.kanban.bg.random')}
         </button>
       </div>
 
       {layout === KANBAN_LAYOUT.CLASSIC ? (
-        <ClassicLayout
-          isBoard1Hovered={isBoard1Hovered}
-          isBoard2Hovered={isBoard2Hovered}
-          isBoard3Hovered={isBoard3Hovered}
-          isBoard4Hovered={isBoard4Hovered}
-          isBoard5Hovered={isBoard5Hovered}
-        />
+        <ClassicLayout activeBoards={activeBoards} hoveredBoard={hoveredBoard} />
       ) : (
-        <WaterfallLayout
-          isBoard1Hovered={isBoard1Hovered}
-          isBoard2Hovered={isBoard2Hovered}
-          isBoard3Hovered={isBoard3Hovered}
-          isBoard4Hovered={isBoard4Hovered}
-          isBoard5Hovered={isBoard5Hovered}
-        />
+        <WaterfallLayout activeBoards={activeBoards} hoveredBoard={hoveredBoard} />
       )}
 
       <SavingBar

@@ -83,6 +83,11 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
         threadsCount
         communityTagsCount
         views
+        dashboard {
+          layout {
+            kanbanBoards
+          }
+        }
         threads {
           id
           slug
@@ -129,6 +134,15 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       results = guest_conn |> gq_query(@query, variables)
 
       assert results["id"] == aka_results["id"]
+    end
+
+    test "community query exposes default kanban boards", ~m(guest_conn user)a do
+      community = create_community!(user)
+
+      variables = %{slug: community.slug}
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert get_in(results, ["dashboard", "layout", "kanbanBoards"]) == ["TODO", "WIP", "DONE"]
     end
 
     test "can get threads count (default include)", ~m(community guest_conn)a do

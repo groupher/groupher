@@ -15,6 +15,7 @@ import type {
   THeaderLayout,
   TInlineTagLayout,
   TKanbanCardLayout,
+  TKanbanBoard,
   TKanbanLayout,
   TLinkItem,
   TLocale,
@@ -95,6 +96,7 @@ export type TDsbFieldMap = {
   postLayout: TPostLayout
   kanbanLayout: TKanbanLayout
   kanbanCardLayout: TKanbanCardLayout
+  kanbanBoards: readonly TKanbanBoard[]
   kanbanBgColors: readonly TColorName[]
 
   docLayout: TDocLayout

@@ -5,10 +5,34 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.{Community, CommunityDashboard}
+  import Helper.Utils, only: [strip_struct: 1]
+
+  alias CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.{ORM, OSS, T, Transaction}
 
   @default_dashboard CommunityDashboard.default()
+  # List-like dashboard sections are replaced as a whole on each update.
+  @replace_section_fields [
+    :header_links,
+    :footer_links,
+    :name_alias,
+    :social_links,
+    :media_reports,
+    :faqs
+  ]
+
+  # embeds_one sections are incrementally updated, so we validate the merged
+  # final payload through the section's embed changeset before persisting.
+  @embed_section_modules %{
+    base_info: Embeds.DashboardBaseInfo,
+    wallpaper: Embeds.DashboardWallpaper,
+    seo: Embeds.DashboardSEO,
+    layout: Embeds.DashboardLayout,
+    enable: Embeds.DashboardEnable,
+    thread_emotions: Embeds.DashboardThreadEmotions,
+    rss: Embeds.DashboardRSS
+  }
+  @validated_embed_section_fields Map.keys(@embed_section_modules)
 
   @doc """
   update dashboard settings of a community
@@ -31,7 +55,8 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   defp do_update(%Community{} = community, key, args) do
     with {:ok, community_dashboard} <- ensure_exist(community),
-         {:ok, _} <- ORM.update_dashboard(community_dashboard, key, args) do
+         {:ok, section_payload} <- prepare_dashboard_section_payload(community_dashboard, key, args),
+         {:ok, _} <- apply_dashboard_section_update(community_dashboard, key, section_payload) do
       {:ok, community}
     end
   end
@@ -58,5 +83,40 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   defp update_community_if_need(%Community{} = community, fields) do
     ORM.update(community, fields)
+  end
+
+  # For embeds_one sections, always prepare the merged final payload first so
+  # validation and persistence operate on the same data.
+  defp prepare_dashboard_section_payload(%CommunityDashboard{} = community_dashboard, key, args)
+       when key in @validated_embed_section_fields do
+    embed_module = Map.fetch!(@embed_section_modules, key)
+    current_embed = community_dashboard[key] || struct(embed_module)
+    merged_args = current_embed |> Map.merge(args) |> strip_struct()
+
+    case embed_module.changeset(current_embed, merged_args) do
+      %{valid?: true} = changeset ->
+        normalized_payload =
+          changeset
+          |> Ecto.Changeset.apply_changes()
+          |> strip_struct()
+
+        {:ok, normalized_payload}
+
+      changeset -> {:error, changeset}
+    end
+  end
+
+  # Replace-style sections are already the final payload.
+  defp prepare_dashboard_section_payload(%CommunityDashboard{}, _key, args), do: {:ok, args}
+
+  # Replace-style sections are written as a whole on each update.
+  defp apply_dashboard_section_update(%CommunityDashboard{} = community_dashboard, key, args)
+       when key in @replace_section_fields do
+    ORM.replace_dashboard_section(community_dashboard, key, args)
+  end
+
+  # embeds_one sections receive the validated final payload directly.
+  defp apply_dashboard_section_update(%CommunityDashboard{} = community_dashboard, key, args) do
+    ORM.replace_dashboard_section(community_dashboard, key, args)
   end
 end

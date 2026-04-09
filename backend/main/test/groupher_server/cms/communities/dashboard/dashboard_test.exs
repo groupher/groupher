@@ -25,6 +25,9 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
 
       assert find_community.dashboard.layout.kanban_bg_colors ==
                @default_dashboard.layout.kanban_bg_colors
+
+      assert find_community.dashboard.layout.kanban_boards ==
+               @default_dashboard.layout.kanban_boards
     end
 
     test "read a exist community should have default dashboard field", ~m(community)a do
@@ -150,12 +153,91 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       assert find_community.dashboard.layout.changelog_layout == "full"
     end
 
+    test "rejects unsupported kanban boards in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:error, %Ecto.Changeset{} = changeset} =
+               CMS.Communities.update_dashboard(community, :layout, %{
+                 kanban_boards: [:todo, :invalid_board]
+               })
+
+      assert {:kanban_boards, {"is invalid", _}} = List.keyfind(changeset.errors, :kanban_boards, 0)
+    end
+
+    test "rejects duplicate kanban boards in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:error, %Ecto.Changeset{} = changeset} =
+               CMS.Communities.update_dashboard(community, :layout, %{
+                 kanban_boards: [:todo, :todo, :done]
+               })
+
+      assert {:kanban_boards, {"contains duplicate kanban boards", _}} =
+               List.keyfind(changeset.errors, :kanban_boards, 0)
+    end
+
+    test "normalizes nil kanban boards update to defaults", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:ok, _} =
+               CMS.Communities.update_dashboard(community, :layout, %{
+                 kanban_boards: nil
+               })
+
+      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
+
+      assert find_community.dashboard.layout.kanban_boards == [:todo, :wip, :done]
+    end
+
+    test "normalizes empty kanban boards update to defaults", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:ok, _} =
+               CMS.Communities.update_dashboard(community, :layout, %{
+                 kanban_boards: []
+               })
+
+      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
+
+      assert find_community.dashboard.layout.kanban_boards == [:todo, :wip, :done]
+    end
+
+    test "rejects unsupported thread emotions in community dashboard", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:error, %Ecto.Changeset{} = changeset} =
+               CMS.Communities.update_dashboard(community, :thread_emotions, %{
+                 post: [:beer, :invalid_emotion]
+               })
+
+      assert {:post, {"is invalid", _}} = List.keyfind(changeset.errors, :post, 0)
+    end
+
     test "can update rss in community dashboard", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :rss, %{
           rss_feed_type: "full",
+          rss_feed_count: 25
+        })
+
+      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
+
+      assert find_community.dashboard.rss.rss_feed_type == "full"
+      assert find_community.dashboard.rss.rss_feed_count == 25
+    end
+
+    test "rss updates keep existing values when updating incrementally", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :rss, %{
+          rss_feed_type: "full"
+        })
+
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :rss, %{
           rss_feed_count: 25
         })
 
