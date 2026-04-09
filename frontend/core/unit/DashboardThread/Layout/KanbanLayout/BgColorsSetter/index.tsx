@@ -49,8 +49,12 @@ export default function BgColorsSetter() {
     edit,
   } = useKanban()
 
-  const colors = kanbanBgColors.length === INIT_KANBAN_COLORS.length ? kanbanBgColors : INIT_KANBAN_COLORS
-  const activeBoards = kanbanBoards.length > 0 ? kanbanBoards : [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE]
+  const colors =
+    kanbanBgColors.length === INIT_KANBAN_COLORS.length ? kanbanBgColors : INIT_KANBAN_COLORS
+  const activeBoards =
+    kanbanBoards.length > 0
+      ? kanbanBoards
+      : [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE]
   const activeBoardConfigs = activeBoards.map((board) => ({
     board,
     index: BOARD_ORDER.indexOf(board),

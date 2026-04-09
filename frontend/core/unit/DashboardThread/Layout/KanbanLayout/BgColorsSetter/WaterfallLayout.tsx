@@ -44,7 +44,13 @@ const WaterfallLayout: FC<TProps> = ({ activeBoards, hoveredBoard }) => {
             )}
           />
           <div className={s.content}>
-            <div className={cnMerge(s.bar, 'top-5 left-2', WIDTH_PATTERNS[index % WIDTH_PATTERNS.length])} />
+            <div
+              className={cnMerge(
+                s.bar,
+                'top-5 left-2',
+                WIDTH_PATTERNS[index % WIDTH_PATTERNS.length],
+              )}
+            />
             <div className={cnMerge(s.bar, 'top-5 right-2 w-14 opacity-20')} />
 
             <div
