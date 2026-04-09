@@ -19,13 +19,12 @@ export default function IntroItems() {
     'landing.articles.discuss.feature.4',
     'landing.articles.discuss.feature.5',
   ] as const
-  const items = itemKeys.map((key) => t(key))
 
   return (
     <>
       <div className={s.featList}>
-        {items.map((item) => (
-          <FeatItem key={item} text={item} color={color} />
+        {itemKeys.map((key) => (
+          <FeatItem key={key} text={t(key)} color={color} />
         ))}
       </div>
 

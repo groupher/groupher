@@ -11,7 +11,8 @@ export default function IntroDigest() {
       <div className={s.title}>{t('landing.articles.help.title')}</div>
       <div className={s.digest}>
         {t('landing.articles.help.digest.prefix')}
-        <span className={s.highlight}>{t('landing.articles.help.digest.faq')}</span>，
+        <span className={s.highlight}>{t('landing.articles.help.digest.faq')}</span>
+        {t('landing.articles.help.digest.sep')}
         <span className={s.highlight}>{t('landing.articles.help.digest.kb')}</span>
         {t('landing.articles.help.digest.suffix')}
       </div>

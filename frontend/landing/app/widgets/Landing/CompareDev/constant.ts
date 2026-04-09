@@ -6,7 +6,7 @@ type TTranslate = (key: TTransKey) => string
 export const getMetricMap = (t: TTranslate) => ({
   DEFAULT: {
     title: t('landing.compare.metric.default.title'),
-    upvoteText: 'Sprint',
+    upvoteText: t('landing.compare.metric.default.upvote'),
     upvoteNum: 2,
     delay: 6000,
   },

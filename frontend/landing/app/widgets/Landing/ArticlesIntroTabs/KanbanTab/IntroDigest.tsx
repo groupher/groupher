@@ -16,7 +16,6 @@ export default function IntroDigest() {
     'landing.articles.kanban.feature.4',
     'landing.articles.kanban.feature.5',
   ] as const
-  const items = itemKeys.map((key) => t(key))
 
   return (
     <div className={s.wrapper}>
@@ -31,9 +30,9 @@ export default function IntroDigest() {
       </div>
 
       <div className={s.features}>
-        {items.map((item) => (
-          <div key={item} className={s.featItem}>
-            <FeatItem text={item} color={color} />
+        {itemKeys.map((key) => (
+          <div key={key} className={s.featItem}>
+            <FeatItem text={t(key)} color={color} />
           </div>
         ))}
       </div>
