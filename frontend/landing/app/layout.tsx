@@ -2,9 +2,9 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import { GlobalProvider } from '~/app/providers'
-import { getLocaleData } from '~/app/ssr'
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
+import { loadLocaleFile } from '~/i18n'
 import { I18N_NS } from '~/i18n/namespaces'
 import { LANDING_INIT_DATA } from '~/const/name'
 import MainProvider from '~/stores/provider'
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
   const locale = LOCALE.EN
-  const localeData = await getLocaleData(locale, I18N_NS.LANDING)
+  const localeData = await loadLocaleFile(locale, I18N_NS.LANDING)
 
   return (
     <RootLayoutShell>
