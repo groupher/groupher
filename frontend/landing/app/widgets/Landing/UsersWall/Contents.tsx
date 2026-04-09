@@ -46,7 +46,9 @@ export const P3 = (markColor: TColorName, t: (key: any) => string): ReactNode =>
       {t('landing.users.p3.middle')}
       <div className={s.p}>
         {t('landing.users.p3.extra_prefix')}
-        <span className={cn(s.highlight, s[`${color$}Bg`])}>{t('landing.users.p3.highlight2')}</span>
+        <span className={cn(s.highlight, s[`${color$}Bg`])}>
+          {t('landing.users.p3.highlight2')}
+        </span>
         {t('landing.users.p3.extra_suffix')}
       </div>
     </div>

@@ -1,6 +1,7 @@
 export default {
   'landing.meta.title': 'Groupher | 让你的产品听见用户的声音',
-  'landing.meta.description': '讨论区、看板、更新日志、帮助文档多合一，收集沉淀用户反馈，助你打造更好的产品。',
+  'landing.meta.description':
+    '讨论区、看板、更新日志、帮助文档多合一，收集沉淀用户反馈，助你打造更好的产品。',
   'landing.hero.title': '让你的产品听见用户的声音',
   'landing.hero.desc.prefix': '讨论区、看板、更新日志、文档多合一，收集沉淀',
   'landing.hero.desc.feedback': '反馈',
@@ -122,7 +123,8 @@ export default {
   'landing.battery.dark.title': '暗黑模式',
   'landing.battery.dark.desc': '精心设计的的双色主题，同时适配各种自定义设置。',
   'landing.battery.integration.title': '一键集成',
-  'landing.battery.integration.desc': '一行代码让你的网站通过 Sidebar/Modal/iframe 等方式接入反馈组件。',
+  'landing.battery.integration.desc':
+    '一行代码让你的网站通过 Sidebar/Modal/iframe 等方式接入反馈组件。',
   'landing.battery.security.title': '掌控数据',
   'landing.battery.security.desc': '在安全的前提下，管理社区内容以及无缝部署迁移，来去自由。',
   'landing.battery.statistics.title': '统计分析',
@@ -185,10 +187,12 @@ export default {
   'landing.users.p2.extra': '更新日志的板块设计巧妙',
   'landing.users.p3.prefix': '其他全国所有的省份，没有一个人均产量超过700公斤的，其中2021年',
   'landing.users.p3.highlight1': '新疆，安徽，河南三省',
-  'landing.users.p3.middle': '人均都是600多公斤，辽宁省人均刚好600公斤，这四个省份也是最接近黑吉蒙的，但是可以看出人均也只有黑吉蒙的一半都不到。',
+  'landing.users.p3.middle':
+    '人均都是600多公斤，辽宁省人均刚好600公斤，这四个省份也是最接近黑吉蒙的，但是可以看出人均也只有黑吉蒙的一半都不到。',
   'landing.users.p3.extra_prefix': '我们再说四川省，四川省 一直被认为是中国的',
   'landing.users.p3.highlight2': '战略备份省份',
-  'landing.users.p3.extra_suffix': '，除了地势易守难攻，地理位置远离强敌之外，四川省在资源禀赋方面也是有自己的优势的。',
+  'landing.users.p3.extra_suffix':
+    '，除了地势易守难攻，地理位置远离强敌之外，四川省在资源禀赋方面也是有自己的优势的。',
   'landing.join.title': '加入我们的社区',
   'landing.join.desc': '和其他的用户、开发者一起建立连接。',
   'landing.join.card.wechat': '微信群',

@@ -62,11 +62,9 @@ export default {
   'landing.articles.discuss.demo.item.5': 'Where can I download the Android version?',
   'landing.articles.discuss.demo.tag': 'UI / UX',
   'landing.articles.discuss.demo.comments': 'Comments',
-  'landing.articles.kanban.digest.prefix':
-    'A classic board view helps',
+  'landing.articles.kanban.digest.prefix': 'A classic board view helps',
   'landing.articles.kanban.digest.user': 'users',
-  'landing.articles.kanban.digest.middle':
-    'understand the team’s work',
+  'landing.articles.kanban.digest.middle': 'understand the team’s work',
   'landing.articles.kanban.digest.progress': 'progress',
   'landing.articles.kanban.digest.and': 'and',
   'landing.articles.kanban.digest.plan': 'planning',
@@ -168,8 +166,7 @@ export default {
   'landing.tech.keyboard.title': 'Open Source Stack',
   'landing.tech.keyboard.desc':
     'Built on battle-tested open source technologies and continuously aligned with best practices.',
-  'landing.tech.keyboard.detail':
-    'For more details about the tech stack and architecture,',
+  'landing.tech.keyboard.detail': 'For more details about the tech stack and architecture,',
   'landing.tech.keyboard.link': 'see here',
   'landing.tech.teams.title': 'Contributors',
   'landing.compare.topping': 'It should be simple!',
@@ -201,8 +198,7 @@ export default {
   'landing.users.title': 'Trusted by Great Teams',
   'landing.users.desc':
     'From indie developers to startup teams, we return trust with product quality.',
-  'landing.users.p1.prefix':
-    'After migrating from GitHub Discussions to Groupher,',
+  'landing.users.p1.prefix': 'After migrating from GitHub Discussions to Groupher,',
   'landing.users.p1.highlight1': 'the domestic access experience became much better',
   'landing.users.p1.middle':
     ', and the feedback we collected became more focused, solving the communication needs between',
@@ -227,8 +223,7 @@ export default {
   'landing.users.p3.extra_suffix':
     '. Beyond its defensible terrain and distance from major threats, Sichuan also has its own resource advantages.',
   'landing.join.title': 'Join Our Community',
-  'landing.join.desc':
-    'Connect with other users and developers.',
+  'landing.join.desc': 'Connect with other users and developers.',
   'landing.join.card.wechat': 'WeChat Group',
   'landing.join.card.github': 'GitHub',
   'landing.join.card.forum': 'Forum',

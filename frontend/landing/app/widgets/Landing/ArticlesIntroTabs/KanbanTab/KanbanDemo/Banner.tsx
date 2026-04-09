@@ -18,7 +18,9 @@ export default function Banner() {
     <div className={s.wrapper}>
       <div className={s.inner}>
         <div className={s.header}>
-          <div className={cn(s.title, s.titleActrive)}>{t('landing.articles.kanban.banner.current')}</div>
+          <div className={cn(s.title, s.titleActrive)}>
+            {t('landing.articles.kanban.banner.current')}
+          </div>
           <div className={cn(s.title, 'ml-1.5 mr-0.5 opacity-50')}>/</div>
           <div className={s.title}>{t('landing.articles.kanban.banner.future')}</div>
           <div className='grow' />
