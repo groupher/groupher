@@ -1,23 +1,32 @@
+import { KANBAN_BOARD } from '~/const/thread'
+import type { TKanbanBoard } from '~/spec'
 import { type FC, useEffect, useRef } from 'react'
 import useSalon, { cn } from '../../../salon/layout/kanban_layout/bg_colors_setter/classic_layout'
 import KanbanList from './KanbanList'
 
 type TProps = {
-  isBoard1Hovered: boolean
-  isBoard2Hovered: boolean
-  isBoard3Hovered: boolean
-  isBoard4Hovered: boolean
-  isBoard5Hovered: boolean
+  activeBoards: readonly TKanbanBoard[]
+  hoveredBoard: string | null
 }
 
-const ClassicLayout: FC<TProps> = ({
-  isBoard1Hovered,
-  isBoard2Hovered,
-  isBoard3Hovered,
-  isBoard4Hovered,
-  isBoard5Hovered,
-}) => {
-  const s = useSalon()
+const BOARD_STYLE_KEY = {
+  [KANBAN_BOARD.BACKLOG]: 'boardBacklog',
+  [KANBAN_BOARD.TODO]: 'boardTodo',
+  [KANBAN_BOARD.WIP]: 'boardWip',
+  [KANBAN_BOARD.DONE]: 'boardDone',
+  [KANBAN_BOARD.REJECTED]: 'boardRejected',
+} as const
+
+const BOARD_ACTIVE_KEY = {
+  [KANBAN_BOARD.BACKLOG]: 'backlogActive',
+  [KANBAN_BOARD.TODO]: 'todoActive',
+  [KANBAN_BOARD.WIP]: 'wipActive',
+  [KANBAN_BOARD.DONE]: 'doneActive',
+  [KANBAN_BOARD.REJECTED]: 'rejectedActive',
+} as const
+
+const ClassicLayout: FC<TProps> = ({ activeBoards, hoveredBoard }) => {
+  const s = useSalon(activeBoards.length)
 
   const ref = useRef(null)
 
@@ -33,21 +42,18 @@ const ClassicLayout: FC<TProps> = ({
 
   return (
     <div className={s.boardsWrapper}>
-      <div className={cn(s.board, s.boardBacklog, isBoard1Hovered && s.backlogActive)}>
-        <KanbanList num={1} />
-      </div>
-      <div className={cn(s.board, s.boardTodo, isBoard2Hovered && s.todoActive)}>
-        <KanbanList num={2} />
-      </div>
-      <div className={cn(s.board, s.boardWip, isBoard3Hovered && s.wipActive)}>
-        <KanbanList num={3} />
-      </div>
-      <div className={cn(s.board, s.boardDone, isBoard4Hovered && s.doneActive)}>
-        <KanbanList num={4} />
-      </div>
-      <div className={cn(s.board, s.boardRejected, isBoard5Hovered && s.rejectedActive)}>
-        <KanbanList num={5} />
-      </div>
+      {activeBoards.map((board, index) => (
+        <div
+          key={board}
+          className={cn(
+            s.board,
+            s[BOARD_STYLE_KEY[board]],
+            hoveredBoard === board && s[BOARD_ACTIVE_KEY[board]],
+          )}
+        >
+          <KanbanList num={index + 1} />
+        </div>
+      ))}
     </div>
   )
 }

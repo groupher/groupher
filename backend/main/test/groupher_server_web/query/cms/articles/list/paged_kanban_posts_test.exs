@@ -86,6 +86,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     }
     """
     test "should get grouped paged posts", ~m(guest_conn user community post_attrs)a do
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :layout, %{
+          kanban_boards: [:backlog, :todo, :wip, :done, :rejected]
+        })
+
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
@@ -125,6 +130,36 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
 
       assert results["rejected"] |> is_valid_pagination?
       assert results["rejected"]["totalCount"] == 1
+    end
+
+    test "disabled grouped kanban boards resolve to empty paginations",
+         ~m(guest_conn user community post_attrs)a do
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :layout, %{kanban_boards: [:todo, :wip, :done]})
+
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
+      {:ok, _} = CMS.Articles.set_state(post, @article_state.backlog)
+
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
+      {:ok, _} = CMS.Articles.set_state(post, @article_state.todo)
+
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.bug)
+      {:ok, _} = CMS.Articles.set_state(post, @article_state.reject_dup)
+
+      variables = %{community: community.slug}
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert results["backlog"] |> is_valid_pagination?
+      assert results["backlog"]["totalCount"] == 0
+
+      assert results["todo"] |> is_valid_pagination?
+      assert results["todo"]["totalCount"] == 1
+
+      assert results["rejected"] |> is_valid_pagination?
+      assert results["rejected"]["totalCount"] == 0
     end
 
     @query """

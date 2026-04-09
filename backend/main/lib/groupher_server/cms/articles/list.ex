@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Articles.List do
   alias Accounts.Model.User
   alias CMS.CanCan
   alias CMS.FrontDesk
-  alias CMS.Helper.ArticleEnums
+  alias CMS.Helper.{ArticleEnums, KanbanBoards}
   alias CMS.Model.{CitedArtiment, Community, PinnedArticle, Post}
   alias Helper.{ORM, QueryBuilder, T}
 
@@ -67,27 +67,51 @@ defmodule GroupherServer.CMS.Articles.List do
   @spec grouped_kanban(Community.t()) :: T.domain_res(term())
   def grouped_kanban(%Community{} = community) do
     filter = %{page: 1, size: 20}
+    enabled_boards = enabled_kanban_boards(community)
 
-    # rejected is a virtual kanban column that aggregates all reject states.
-    with {:ok, paged_todo} <-
-           paged_kanban(community, Map.merge(filter, %{state: @article_state.todo})),
-         {:ok, paged_backlog} <-
-           paged_kanban(community, Map.merge(filter, %{state: @article_state.backlog})),
-         {:ok, paged_wip} <-
-           paged_kanban(community, Map.merge(filter, %{state: @article_state.wip})),
-         {:ok, paged_done} <-
-           paged_kanban(community, Map.merge(filter, %{state: @article_state.done})),
-         {:ok, paged_rejected} <-
-           paged_kanban(community, Map.merge(filter, %{state: @kanban_rejected_states})) do
-      %{
-        todo: paged_todo,
-        backlog: paged_backlog,
-        wip: paged_wip,
-        done: paged_done,
-        rejected: paged_rejected
-      }
-      |> done
+    KanbanBoards.values_list()
+    |> Enum.reduce_while({:ok, %{}}, fn board, {:ok, acc} ->
+      # `reduce_while/3` uses `{:cont, acc}` to continue and `{:halt, acc}` to stop early.
+      # We keep collecting board payloads on success, but short-circuit immediately on errors.
+      case paged_kanban_for_board(community, board, filter, enabled_boards) do
+        {:ok, paged_posts} -> {:cont, {:ok, Map.put(acc, board, paged_posts)}}
+        {:error, _} = error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp enabled_kanban_boards(%Community{} = community) do
+    community
+    |> Repo.preload(:dashboard, force: true)
+    |> get_in([Access.key(:dashboard), Access.key(:layout), Access.key(:kanban_boards)])
+    |> case do
+      boards when is_list(boards) and boards != [] -> boards
+      _ -> KanbanBoards.default_values_list()
     end
+  end
+
+  defp paged_kanban_for_board(
+         %Community{} = community,
+         board,
+         filter,
+         enabled_boards
+       ) do
+    if board in enabled_boards do
+      paged_kanban(community, Map.put(filter, :state, kanban_board_state(board)))
+    else
+      {:ok, empty_paged_kanban(filter)}
+    end
+  end
+
+  defp kanban_board_state(:backlog), do: @article_state.backlog
+  defp kanban_board_state(:todo), do: @article_state.todo
+  defp kanban_board_state(:wip), do: @article_state.wip
+  defp kanban_board_state(:done), do: @article_state.done
+  # rejected is a virtual kanban column that aggregates all reject states.
+  defp kanban_board_state(:rejected), do: @kanban_rejected_states
+
+  defp empty_paged_kanban(%{page: page, size: size}) do
+    %{entries: [], total_count: 0, page_number: page, page_size: size, total_pages: 0}
   end
 
   @spec paged_kanban(Community.t(), map()) :: T.domain_res(term())

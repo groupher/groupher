@@ -163,6 +163,11 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
     end
 
     test "can get grouped kanban posts", ~m(user community post_attrs)a do
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :layout, %{
+          kanban_boards: [:backlog, :todo, :wip, :done, :rejected]
+        })
+
       kanban_attrs =
         post_attrs |> Map.merge(%{cat: @article_cat.feature, state: @article_state.backlog})
 
@@ -222,6 +227,40 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
       assert grouped_kanban_posts.rejected.entries
              |> Enum.filter(&(&1.state in [@article_state.reject, @article_state.reject_dup]))
              |> length == 2
+    end
+
+    test "disabled grouped kanban boards return empty paginations", ~m(user community post_attrs)a do
+      {:ok, _} =
+        CMS.Communities.update_dashboard(community, :layout, %{kanban_boards: [:todo, :wip, :done]})
+
+      backlog_attrs =
+        post_attrs |> Map.merge(%{cat: @article_cat.feature, state: @article_state.backlog})
+
+      {:ok, _} = CMS.Articles.create(community, :post, backlog_attrs, user)
+
+      todo_attrs =
+        post_attrs |> Map.merge(%{cat: @article_cat.feature, state: @article_state.todo})
+
+      {:ok, _} = CMS.Articles.create(community, :post, todo_attrs, user)
+
+      rejected_attrs =
+        post_attrs |> Map.merge(%{cat: @article_cat.feature, state: @article_state.reject})
+
+      {:ok, _} = CMS.Articles.create(community, :post, rejected_attrs, user)
+
+      {:ok, grouped_kanban_posts} = CMS.Articles.grouped_kanban(community)
+
+      assert grouped_kanban_posts.backlog |> is_valid_pagination?(:raw)
+      assert grouped_kanban_posts.rejected |> is_valid_pagination?(:raw)
+      assert grouped_kanban_posts.todo |> is_valid_pagination?(:raw)
+
+      assert grouped_kanban_posts.backlog.total_count == 0
+      assert grouped_kanban_posts.backlog.entries == []
+
+      assert grouped_kanban_posts.rejected.total_count == 0
+      assert grouped_kanban_posts.rejected.entries == []
+
+      assert grouped_kanban_posts.todo.total_count == 1
     end
   end
 end
