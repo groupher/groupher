@@ -1,11 +1,14 @@
 import type { ReactNode } from 'react'
 
-import type { TColorName } from '~/spec'
+import type { TColorName, TTransKey } from '~/spec'
 
-import useSalon, { cn } from '../salon/users_wall'
+import type useSalon from '../salon/users_wall'
+import { cn } from '../salon/users_wall'
 
-export const P1 = (markColor: TColorName, t: (key: any) => string): ReactNode => {
-  const s = useSalon()
+type TTranslate = (key: TTransKey) => string
+type TSalon = ReturnType<typeof useSalon>
+
+export const P1 = (s: TSalon, markColor: TColorName, t: TTranslate): ReactNode => {
   const color$ = markColor.toLowerCase()
 
   return (
@@ -19,8 +22,7 @@ export const P1 = (markColor: TColorName, t: (key: any) => string): ReactNode =>
   )
 }
 
-export const P2 = (markColor: TColorName, t: (key: any) => string): ReactNode => {
-  const s = useSalon()
+export const P2 = (s: TSalon, markColor: TColorName, t: TTranslate): ReactNode => {
   const color$ = markColor.toLowerCase()
 
   return (
@@ -35,8 +37,7 @@ export const P2 = (markColor: TColorName, t: (key: any) => string): ReactNode =>
   )
 }
 
-export const P3 = (markColor: TColorName, t: (key: any) => string): ReactNode => {
-  const s = useSalon()
+export const P3 = (s: TSalon, markColor: TColorName, t: TTranslate): ReactNode => {
   const color$ = markColor.toLowerCase()
 
   return (

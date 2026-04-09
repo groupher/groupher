@@ -20,7 +20,7 @@ export default {
   'comment.sort.timeline': 'Timeline',
   'comment.sort.fold_all': 'Fold all',
   'comment.state.title': 'Comments',
-  'comment.state.write': 'Join discuss',
+  'comment.state.write': 'Join the discussion',
   'comment.publish.cancel': 'Cancel',
   'comment.publish.publish': 'Publish',
   'comment.replies.count': 'replies',

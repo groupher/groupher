@@ -9,12 +9,12 @@ type TProps = {
   href?: string
 } & TColor
 
-const MoreLink: FC<TProps> = ({ title = '了解更多', href = '/', color }) => {
+const MoreLink: FC<TProps> = ({ title, href = '/', color }) => {
   const { t } = useTrans()
 
   return (
     <ArrowLinker href={href} color={color} top={10}>
-      {title === '了解更多' ? t('landing.articles.common.more') : title}
+      {title ?? t('landing.articles.common.more')}
     </ArrowLinker>
   )
 }
