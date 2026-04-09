@@ -1,4 +1,5 @@
 import useSalon from '../salon/battery_bento'
+import useTrans from '~/hooks/useTrans'
 import BundleSize from './BundleSize'
 import DarkMode from './DarkMode'
 import Design from './Design'
@@ -11,12 +12,13 @@ import Statistics from './Statistics'
 
 export default function BatteryBento() {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <section className={s.wrapper}>
       <section className={s.slogan}>
-        <h3 className={s.title}>自带电池、开箱即用</h3>
-        <div className={s.desc}>无需繁琐配置，即刻拥有功能完善的反馈社区</div>
+        <h3 className={s.title}>{t('landing.battery.title')}</h3>
+        <div className={s.desc}>{t('landing.battery.desc')}</div>
       </section>
       <div className={s.cards}>
         <div className={s.leftCards}>

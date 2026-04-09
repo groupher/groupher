@@ -1,15 +1,19 @@
+import useTrans from '~/hooks/useTrans'
 import useSalon from '../../salon/articles_intro_tabs/help_tab/intro_digest'
 import IntroItems from './IntroItems'
 
 export default function IntroDigest() {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
-      <div className={s.title}>知识库 / 教程 / 产品手册</div>
+      <div className={s.title}>{t('landing.articles.help.title')}</div>
       <div className={s.digest}>
-        沉淀<span className={s.highlight}>常见问题</span>，
-        <span className={s.highlight}>公共知识库</span>等文档类内容，快速解决用户遇到的问题。
+        {t('landing.articles.help.digest.prefix')}
+        <span className={s.highlight}>{t('landing.articles.help.digest.faq')}</span>，
+        <span className={s.highlight}>{t('landing.articles.help.digest.kb')}</span>
+        {t('landing.articles.help.digest.suffix')}
       </div>
 
       <IntroItems />

@@ -1,6 +1,7 @@
 import dynamic from 'next/dynamic'
 
 import { COLOR } from '~/const/colors'
+import useTrans from '~/hooks/useTrans'
 import GithubSVG from '~/icons/social/Github'
 import ArrowLinker from '~/widgets/ArrowLinker'
 import useSalon, { cn } from '../salon/tech_stacks/github_card'
@@ -11,6 +12,7 @@ const Trend: any = dynamic(() => import('react-trend'), { ssr: false })
 
 export default function GithubCard() {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
@@ -18,9 +20,9 @@ export default function GithubCard() {
 
       <div className={s.topping}>
         <div className={s.githubTitle} style={s.gradientTextStyle}>
-          公开构建
+          {t('landing.tech.github.title')}
         </div>
-        <div className={s.desc}>源代码完全开源，开发过程透明公开，没有黑魔法。</div>
+        <div className={s.desc}>{t('landing.tech.github.desc')}</div>
       </div>
 
       <div className={s.numIntro}>
@@ -33,12 +35,12 @@ export default function GithubCard() {
       </div>
 
       <div className={s.row}>
-        <div className={s.label}>最新版本</div>
+        <div className={s.label}>{t('landing.tech.github.latest_version')}</div>
         <div className={s.text}>v2.0.1</div>
       </div>
 
       <div className={cn(s.row, 'items-center mb-3 mt-5')}>
-        <div className={s.label}>活跃度</div>
+        <div className={s.label}>{t('landing.tech.github.activity')}</div>
         <div className={s.trend}>
           <Trend
             smooth
@@ -54,12 +56,12 @@ export default function GithubCard() {
       </div>
 
       <div className={s.row}>
-        <div className={s.label}>授权协议</div>
+        <div className={s.label}>{t('landing.tech.github.license')}</div>
         <div className={s.text}>AGPL-3.0, self-host free</div>
       </div>
 
       <div className={s.row}>
-        <div className={s.label}>开发语言</div>
+        <div className={s.label}>{t('landing.tech.github.language')}</div>
         <LangBars />
       </div>
 
@@ -67,7 +69,7 @@ export default function GithubCard() {
 
       <div className={s.footer}>
         <ArrowLinker href='/' color={COLOR.PURPLE} className='pl-0.5'>
-          Github 主页
+          {t('landing.tech.github.home')}
         </ArrowLinker>
       </div>
     </div>

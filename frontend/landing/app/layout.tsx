@@ -2,10 +2,14 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import { GlobalProvider } from '~/app/providers'
+import { getLocaleData } from '~/app/ssr'
+import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
+import { I18N_NS } from '~/i18n/namespaces'
 import { LANDING_INIT_DATA } from '~/const/name'
 import MainProvider from '~/stores/provider'
 import RootLayoutShell from '~/widgets/RootLayoutShell'
+import landingMessages from '~/i18n/en/landing'
 
 import Main from './widgets/Main'
 
@@ -13,24 +17,33 @@ import '~/tailwind/global.css'
 import './widgets/domain.css'
 
 export const metadata: Metadata = {
-  title: 'Groupher | 让你的产品听见用户的声音',
-  description: '讨论区、看板、更新日志、帮助文档多合一，收集沉淀用户反馈，助你打造更好的产品。',
+  title: landingMessages['landing.meta.title'],
+  description: landingMessages['landing.meta.description'],
   openGraph: {
-    title: 'Groupher | 让你的产品听见用户的声音',
-    description: '讨论区、看板、更新日志、帮助文档多合一，收集沉淀用户反馈，助你打造更好的产品。',
+    title: landingMessages['landing.meta.title'],
+    description: landingMessages['landing.meta.description'],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Groupher | 让你的产品听见用户的声音',
-    description: '讨论区、看板、更新日志、帮助文档多合一，收集沉淀用户反馈，助你打造更好的产品。',
+    title: landingMessages['landing.meta.title'],
+    description: landingMessages['landing.meta.description'],
   },
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default async function Layout({ children }: { children: React.ReactNode }) {
+  const locale = LOCALE.EN
+  const localeData = await getLocaleData(locale, I18N_NS.LANDING)
+
   return (
     <RootLayoutShell>
-      <MainProvider initData={LANDING_INIT_DATA} noAccount metric={METRIC.LANDING}>
+      <MainProvider
+        initData={LANDING_INIT_DATA}
+        noAccount
+        metric={METRIC.LANDING}
+        locale={locale}
+        localeData={JSON.stringify(localeData)}
+      >
         <GlobalProvider mainBlock={Main}>{children}</GlobalProvider>
       </MainProvider>
       <Analytics />

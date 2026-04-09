@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { DSB_ROUTE } from '~/const/route'
+import useTrans from '~/hooks/useTrans'
 import useSalon from '../salon/dashboard_intros'
 import AdminsTab from './AdminsTab'
 import CMSTab from './CMSTab'
@@ -17,14 +18,15 @@ import TrendTab from './TrendTab'
 
 export default function DashboardIntros() {
   const [tab, setTab] = useState<TIntroTab>(DSB_ROUTE.LAYOUT)
+  const { t } = useTrans()
 
   const s = useSalon({ tab })
 
   return (
     <section className={s.wrapper}>
       <div className={s.slogan}>
-        <h3 className={s.title}>完善的后台管理</h3>
-        <div className={s.desc}>强大的自定义设置，满足你的品牌个性化及内容管理需要</div>
+        <h3 className={s.title}>{t('landing.dashboard.title')}</h3>
+        <div className={s.desc}>{t('landing.dashboard.desc')}</div>
       </div>
 
       <HeadTabs tab={tab} onChange={(tab) => setTab(tab)} />

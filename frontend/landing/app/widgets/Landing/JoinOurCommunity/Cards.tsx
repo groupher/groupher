@@ -2,10 +2,12 @@ import GithubSVG from '~/icons/Github8'
 import GroupSVG from '~/icons/Group'
 import EmailSVG from '~/icons/social/Email'
 import WeChatSVG from '~/icons/social/WeChat'
+import useTrans from '~/hooks/useTrans'
 import useSalon from '../salon/join_our_community/cards'
 
 export default function Cards() {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
@@ -15,7 +17,7 @@ export default function Cards() {
           <WeChatSVG className={s.icon} />
         </div>
 
-        <div className={s.title}>微信群</div>
+        <div className={s.title}>{t('landing.join.card.wechat')}</div>
       </div>
       <div className={s.divider} />
       <div className={s.card}>
@@ -23,7 +25,7 @@ export default function Cards() {
           <GithubSVG className={s.icon} />
         </div>
 
-        <div className={s.title}>Github</div>
+        <div className={s.title}>{t('landing.join.card.github')}</div>
       </div>
       <div className={s.divider} />
       <div className={s.card}>
@@ -31,7 +33,7 @@ export default function Cards() {
           <GroupSVG className={s.icon} />
         </div>
 
-        <div className={s.title}>论坛</div>
+        <div className={s.title}>{t('landing.join.card.forum')}</div>
       </div>
       <div className={s.divider} />
       <div className={s.card}>
@@ -39,7 +41,7 @@ export default function Cards() {
           <EmailSVG className={s.icon} />
         </div>
 
-        <div className={s.title}>Email</div>
+        <div className={s.title}>{t('landing.join.card.email')}</div>
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 import GtdWipSVG from '~/icons/GtdWip'
 import TagSVG from '~/icons/HashTagBold'
+import useTrans from '~/hooks/useTrans'
 import useSalon, { cn } from '../../salon/compare_dev/bg_shapes'
 import CurveLine1SVG from '../../salon/compare_dev/bg_shapes/CurveLine1'
 import CurveLine2SVG from '../../salon/compare_dev/bg_shapes/CurveLine2'
@@ -12,23 +13,24 @@ import TwoLineSVG from '../../salon/compare_dev/bg_shapes/TwoLine'
 
 export default function BgShapes() {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <div className={s.wipItem}>
         <GtdWipSVG className={cn(s.wipIcon, 'animate-spin')} />
-        <div className={s.wipText}>进行中</div>
+        <div className={s.wipText}>{t('landing.compare.shape.wip')}</div>
 
         <TwoLineSVG className={s.waweLine} />
       </div>
 
       <div className={s.topicItem}>
         <TagSVG className={s.wipIcon} />
-        <div className={s.wipText}>使用分享</div>
+        <div className={s.wipText}>{t('landing.compare.shape.topic')}</div>
       </div>
 
       <div className={s.versionText}>v 1.4.2</div>
-      <div className={s.thxText}>感谢，已解决!</div>
+      <div className={s.thxText}>{t('landing.compare.shape.thanks')}</div>
 
       <CurveLine1SVG className={s.curveLineTL} />
       <CurveLine3SVG className={s.curveLineBL} />

@@ -1,4 +1,5 @@
 import { COLOR } from '~/const/colors'
+import useTrans from '~/hooks/useTrans'
 
 import ArrowLinker from '~/widgets/ArrowLinker'
 import Button from '~/widgets/Buttons/Button'
@@ -6,36 +7,35 @@ import useSalon, { cn } from '../../salon/articles_intro_tabs'
 import FeatItem from '../FeatItem'
 
 const color = COLOR.CYAN
-const Contents = () => {
-  return (
-    <>
-      <FeatItem text='保存即发布，No bullshit' color={color} />
-      <FeatItem text='自定义 FAQ' color={color} />
-      <FeatItem text='支持 MD 格式导入' color={color} />
-      <FeatItem text='富文本内容' color={color} />
-      <FeatItem text='自定义目录封面' color={color} />
-      <FeatItem text='表情反馈' color={color} />
-      <FeatItem text='高度自定义' color={color} />
-    </>
-  )
-}
-
 export default function IntroItems() {
   const s = useSalon()
+  const { t } = useTrans()
+  const itemKeys = [
+    'landing.articles.help.feature.0',
+    'landing.articles.help.feature.1',
+    'landing.articles.help.feature.2',
+    'landing.articles.help.feature.3',
+    'landing.articles.help.feature.4',
+    'landing.articles.help.feature.5',
+    'landing.articles.help.feature.6',
+  ] as const
+  const items = itemKeys.map((key) => t(key))
 
   return (
     <>
       <div className={s.featList}>
-        <Contents />
+        {items.map((item) => (
+          <FeatItem key={item} text={item} color={color} />
+        ))}
       </div>
 
       <div className='grow' />
       <div className={cn(s.footer, 'mt-16')}>
         <Button color={color} ghost>
-          查看示例
+          {t('landing.articles.common.example')}
         </Button>
         <ArrowLinker href='/' color={color} className='py-2'>
-          了解更多
+          {t('landing.articles.common.more')}
         </ArrowLinker>
       </div>
     </>

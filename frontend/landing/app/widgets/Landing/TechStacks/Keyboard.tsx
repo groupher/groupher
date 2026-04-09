@@ -2,6 +2,7 @@ import { motion, useInView } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { COLOR } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
+import useTrans from '~/hooks/useTrans'
 import ArrowLinker from '~/widgets/ArrowLinker'
 import useSalon from '../salon/tech_stacks/keyboard'
 import HolderKey from './HolderKey'
@@ -21,6 +22,7 @@ export default function Keyboard() {
   const { activeCount, showLight } = state
 
   const { isDarkTheme } = useTheme()
+  const { t } = useTrans()
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null
@@ -90,8 +92,8 @@ export default function Keyboard() {
       )}
 
       <div className={s.banner}>
-        <div className={s.title}>开源技术栈</div>
-        <div className={s.desc}>由久经考验的开源技术栈驱动，并持续跟进业界最佳实践。</div>
+        <div className={s.title}>{t('landing.tech.keyboard.title')}</div>
+        <div className={s.desc}>{t('landing.tech.keyboard.desc')}</div>
       </div>
 
       <div className={s.techs}>
@@ -187,9 +189,9 @@ export default function Keyboard() {
         </div>
       </div>
       <div className={s.bottom}>
-        <span className={s.detail}>关于技术选型与架构的更多细节，请</span>
+        <span className={s.detail}>{t('landing.tech.keyboard.detail')}</span>
         <ArrowLinker href='/' color={COLOR.PURPLE} className='pl-0.5'>
-          参考这里
+          {t('landing.tech.keyboard.link')}
         </ArrowLinker>
       </div>
     </div>

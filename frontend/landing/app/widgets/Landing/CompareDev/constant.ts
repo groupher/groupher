@@ -1,40 +1,43 @@
 import { ARTICLE_CAT } from '~/const/gtd'
+import type { TTransKey } from '~/spec'
 
-export const METRIC = {
+type TTranslate = (key: TTransKey) => string
+
+export const getMetricMap = (t: TTranslate) => ({
   DEFAULT: {
-    title: '日常迭代',
+    title: t('landing.compare.metric.default.title'),
     upvoteText: 'Sprint',
     upvoteNum: 2,
     delay: 6000,
   },
 
   [ARTICLE_CAT.FEATURE]: {
-    title: '功能请求',
-    upvoteText: '同求',
+    title: t('landing.compare.metric.feature.title'),
+    upvoteText: t('landing.compare.metric.feature.upvote'),
     upvoteNum: 13,
     delay: 5000,
   },
 
   [ARTICLE_CAT.OTHER]: {
-    title: '讨论',
-    upvoteText: '赞同',
+    title: t('landing.compare.metric.other.title'),
+    upvoteText: t('landing.compare.metric.other.upvote'),
     upvoteNum: 18,
     delay: 7000,
   },
 
   [ARTICLE_CAT.BUG]: {
-    title: 'Bug',
-    upvoteText: '复现',
+    title: t('landing.compare.metric.bug.title'),
+    upvoteText: t('landing.compare.metric.bug.upvote'),
     upvoteNum: 9,
     delay: 8000,
   },
 
   [ARTICLE_CAT.QUESTION]: {
-    title: '求助',
-    upvoteText: '帮顶',
+    title: t('landing.compare.metric.question.title'),
+    upvoteText: t('landing.compare.metric.question.upvote'),
     upvoteNum: 6,
     delay: 10000,
   },
-}
+})
 
 export const holder = 1

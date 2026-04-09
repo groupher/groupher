@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import useTrans from '~/hooks/useTrans'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TArticleCat } from '~/spec'
 import ArticleCatState from '~/unit/ArticleCatState'
@@ -16,25 +17,26 @@ type TProps = {
 
 const KanbanItem: FC<TProps> = ({
   count = 9,
-  title = '支持暗黑模式',
+  title = '',
   cat = 'FEATURE',
   draging = false,
   dragTarget = false,
   className = '',
 }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   if (dragTarget) {
     return (
       <div className={s.target}>
-        <div>已解决</div>
+        <div>{t('landing.articles.kanban.item.drag_target')}</div>
       </div>
     )
   }
 
   return (
     <div className={cn(s.wrapper, draging && s.draging, className)}>
-      <div className={s.title}>{title}</div>
+      <div className={s.title}>{title || t('landing.articles.kanban.item.default_title')}</div>
 
       <div className={s.footer}>
         <UpvoteSVG className={s.upvoteIcon} />

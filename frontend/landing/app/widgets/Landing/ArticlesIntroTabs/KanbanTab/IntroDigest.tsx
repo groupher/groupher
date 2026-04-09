@@ -1,4 +1,5 @@
 import { COLOR } from '~/const/colors'
+import useTrans from '~/hooks/useTrans'
 import useSalon from '../../salon/articles_intro_tabs/kanban_tab/intro_digest'
 import FeatItem from '../FeatItem'
 
@@ -6,38 +7,35 @@ const color = COLOR.BLUE
 
 export default function IntroDigest() {
   const s = useSalon()
+  const { t } = useTrans()
+  const itemKeys = [
+    'landing.articles.kanban.feature.0',
+    'landing.articles.kanban.feature.1',
+    'landing.articles.kanban.feature.2',
+    'landing.articles.kanban.feature.3',
+    'landing.articles.kanban.feature.4',
+    'landing.articles.kanban.feature.5',
+  ] as const
+  const items = itemKeys.map((key) => t(key))
 
   return (
     <div className={s.wrapper}>
       <div className={s.digest}>
-        通过经典的看板视图，让<span className={s.highlight}>用户</span>直观的了解团队相关工作的
-        <span className={s.highlight}>进度</span>以及长短期<span className={s.highlight}>规划</span>
-        。
+        {t('landing.articles.kanban.digest.prefix')}
+        <span className={s.highlight}>{t('landing.articles.kanban.digest.user')}</span>
+        {t('landing.articles.kanban.digest.middle')}
+        <span className={s.highlight}>{t('landing.articles.kanban.digest.progress')}</span>
+        {t('landing.articles.kanban.digest.and')}
+        <span className={s.highlight}>{t('landing.articles.kanban.digest.plan')}</span>
+        {t('landing.articles.kanban.digest.suffix')}
       </div>
 
       <div className={s.features}>
-        <div className={s.featItem}>
-          <FeatItem text='经典简洁的 UI' color={color} />
-        </div>
-        <div className={s.featItem}>
-          <FeatItem text='富文本内容' color={color} />
-        </div>
-
-        <div className={s.featItem}>
-          <FeatItem text='状态自然同步' color={color} />
-        </div>
-
-        <div className={s.featItem}>
-          <FeatItem text='评论，表情反馈' color={color} />
-        </div>
-
-        <div className={s.featItem}>
-          <FeatItem text='一键切换状态' color={color} />
-        </div>
-
-        <div className={s.featItem}>
-          <FeatItem text='高度自定义' color={color} />
-        </div>
+        {items.map((item) => (
+          <div key={item} className={s.featItem}>
+            <FeatItem text={item} color={color} />
+          </div>
+        ))}
       </div>
     </div>
   )
