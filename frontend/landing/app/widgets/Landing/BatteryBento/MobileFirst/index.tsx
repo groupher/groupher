@@ -1,17 +1,19 @@
 import useHover from '~/hooks/useHover'
+import useTrans from '~/hooks/useTrans'
 import useSalon from '../../salon/battery_bento/mobile_first'
 import Blocks from './Blocks'
 import Panel from './Panel'
 
 export default function MobileFirst() {
   const s = useSalon()
+  const { t } = useTrans()
   const [ref, isHovered] = useHover<HTMLDivElement>()
 
   return (
     <div ref={ref} className={s.wrapper}>
       <div className={s.header}>
-        <h3 className={s.title}>移动端友好</h3>
-        <div className={s.desc}>所有内容自适应手机、平板等小屏幕尺寸，功能与桌面端一致。</div>
+        <h3 className={s.title}>{t('landing.battery.mobile.title')}</h3>
+        <div className={s.desc}>{t('landing.battery.mobile.desc')}</div>
       </div>
       <Panel hovering={isHovered} />
       <Blocks hovering={isHovered} />

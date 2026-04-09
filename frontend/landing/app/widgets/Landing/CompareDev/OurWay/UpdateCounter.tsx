@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import useTrans from '~/hooks/useTrans'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TColorName } from '~/spec'
 
@@ -10,13 +11,14 @@ type TProps = {
   color: TColorName
 }
 
-const UpdateCounter: FC<TProps> = ({ text = '投票', num = 13, color }) => {
+const UpdateCounter: FC<TProps> = ({ text, num = 13, color }) => {
   const s = useSalon({ color })
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <UpvoteSVG className={s.upvoteIcon} />
-      <div className={s.text}>{text}</div>
+      <div className={s.text}>{text ?? t('landing.compare.vote')}</div>
       <div className={s.count}>{num}</div>
     </div>
   )

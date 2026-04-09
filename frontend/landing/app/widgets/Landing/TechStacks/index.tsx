@@ -1,16 +1,18 @@
 import THEME from '~/const/theme'
+import useTrans from '~/hooks/useTrans'
 import useSalon from '../salon/tech_stacks'
 import GithubCard from './GithubCard'
 import Keyboard from './Keyboard'
 
 export default function TechStacks() {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <section className={s.wrapper}>
       <div className={s.slogan}>
-        <h3 className={s.title}>Open Web, Open Source</h3>
-        <div className={s.desc}>由久经考验的优秀开源技术栈驱动，期待您的共同参与</div>
+        <h3 className={s.title}>{t('landing.tech.title')}</h3>
+        <div className={s.desc}>{t('landing.tech.desc')}</div>
       </div>
       <div className={s.wall} data-theme={THEME.DARK}>
         <div

@@ -1,17 +1,19 @@
 import useHover from '~/hooks/useHover'
+import useTrans from '~/hooks/useTrans'
 import useSalon from '../../salon/battery_bento/security'
 import Panel from './Panel'
 
 export default function Security() {
   const s = useSalon()
+  const { t } = useTrans()
   const [cardRef, isCardHovered] = useHover<HTMLDivElement>()
 
   return (
     <div className={s.wrapper} ref={cardRef}>
       <Panel hovering={isCardHovered} />
       <div className={s.footer}>
-        <h3 className={s.title}>掌控数据</h3>
-        <div className={s.desc}>在安全的前提下，管理社区内容以及无缝部署迁移，来去自由。</div>
+        <h3 className={s.title}>{t('landing.battery.security.title')}</h3>
+        <div className={s.desc}>{t('landing.battery.security.desc')}</div>
       </div>
     </div>
   )

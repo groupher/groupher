@@ -1,9 +1,11 @@
 import useHover from '~/hooks/useHover'
+import useTrans from '~/hooks/useTrans'
 import useSalon from '../../salon/battery_bento/rich_content'
 import Panel from './Panel'
 
 export default function RichContent() {
   const s = useSalon()
+  const { t } = useTrans()
 
   const [cardRef, isCardHovered] = useHover<HTMLDivElement>()
 
@@ -11,8 +13,8 @@ export default function RichContent() {
     <div ref={cardRef} className={s.wrapper}>
       <Panel hovering={isCardHovered} />
       <div className={s.footer}>
-        <h3 className={s.title}>富文本内容</h3>
-        <div className={s.desc}>支持主流富文本内容及多媒体，兼容 Markdown。</div>
+        <h3 className={s.title}>{t('landing.battery.rich.title')}</h3>
+        <div className={s.desc}>{t('landing.battery.rich.desc')}</div>
       </div>
     </div>
   )

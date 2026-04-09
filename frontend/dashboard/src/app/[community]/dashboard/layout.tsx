@@ -3,6 +3,7 @@ import { GlobalProvider, GraphQLProvider } from '~/app/providers'
 import { getCommunityInfo, getLocaleData } from '~/app/ssr'
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
+import { I18N_NS } from '~/i18n/namespaces'
 import MainProvider from '~/stores/provider'
 import { isDsbDemoMode } from '~/utils/dsb-demo'
 import { getMetadata } from '~/utils/ssr'
@@ -27,7 +28,7 @@ export default async ({ children, params, searchParams }) => {
 
   const [{ community, dashboard }, localeData] = await Promise.all([
     getCommunityInfo(params$.community),
-    getLocaleData(locale),
+    getLocaleData(locale, I18N_NS.DASHBOARD),
   ])
 
   return (

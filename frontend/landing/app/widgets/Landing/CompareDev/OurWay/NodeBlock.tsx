@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 import { ARTICLE_CAT } from '~/const/gtd'
+import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
 import BugSVG from '~/icons/Bug'
 import ClipSVG from '~/icons/Clip'
@@ -15,7 +16,7 @@ import type { TArticleCat, TColorName } from '~/spec'
 
 import Facepile from '~/widgets/Facepile/LandingPage'
 import useSalon, { cn } from '../../salon/compare_dev/our_way/node_block'
-import { METRIC } from '../constant'
+import { getMetricMap } from '../constant'
 import SprintCounter from './SprintCounter'
 import UpdateCounter from './UpdateCounter'
 
@@ -37,9 +38,10 @@ const NodeBlock: FC<TProps> = ({
   rightDot = 'bottom-4',
 }) => {
   const s = useSalon({ bgColor: bg })
+  const { t } = useTrans()
   const users = mockUsers(10)
 
-  const metric = METRIC[cat]
+  const metric = getMetricMap(t)[cat]
 
   return (
     <div className={cn(s.wrapper, className, cat === 'DEFAULT' && 'h-32')}>

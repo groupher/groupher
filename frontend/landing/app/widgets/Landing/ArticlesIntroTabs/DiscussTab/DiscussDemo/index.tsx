@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 import { COLOR } from '~/const/colors'
 import { ARTICLE_CAT } from '~/const/gtd'
+import useTrans from '~/hooks/useTrans'
 import CommentSVG from '~/icons/Comment'
 
 import UpvoteSVG from '~/icons/Upvote'
@@ -15,6 +16,7 @@ import PostItem from './PostItem'
 
 const DiscussDemo: FC = () => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const users = mockUsers(10)
 
@@ -24,33 +26,37 @@ const DiscussDemo: FC = () => {
         <PostItem
           count={101}
           className='opacity-85'
-          title='蹲一个暗黑模式'
+          title={t('landing.articles.discuss.demo.item.0')}
           cat={ARTICLE_CAT.FEATURE}
           active
         />
         <PostItem
           className='opacity-75'
           count={65}
-          title='手机上点击标题没反应'
+          title={t('landing.articles.discuss.demo.item.1')}
           cat={ARTICLE_CAT.BUG}
         />
-        <PostItem className='opacity-65' count={44} title='希望更新日志支持视频内容' />
+        <PostItem
+          className='opacity-65'
+          count={44}
+          title={t('landing.articles.discuss.demo.item.2')}
+        />
         <PostItem
           className='opacity-50'
           count={86}
-          title='管理员可以删除评论吗'
+          title={t('landing.articles.discuss.demo.item.3')}
           cat={ARTICLE_CAT.QUESTION}
         />
         <PostItem
           className='opacity-30'
           count={74}
-          title='是否支持私有部署'
+          title={t('landing.articles.discuss.demo.item.4')}
           cat={ARTICLE_CAT.QUESTION}
         />
         <PostItem
           className='opacity-25'
           count={13}
-          title='安卓版本在哪里下载'
+          title={t('landing.articles.discuss.demo.item.5')}
           cat={ARTICLE_CAT.QUESTION}
         />
       </div>
@@ -60,11 +66,11 @@ const DiscussDemo: FC = () => {
           <ArticleCatState cat={ARTICLE_CAT.FEATURE} right={3} />
           <div className={s.tagBox}>
             <TagNode color={COLOR.PURPLE} boldHash />
-            <div className={s.tag}>UI / UX</div>
+            <div className={s.tag}>{t('landing.articles.discuss.demo.tag')}</div>
           </div>
         </div>
 
-        <div className={s.title}>蹲一个暗黑模式</div>
+        <div className={s.title}>{t('landing.articles.discuss.demo.item.0')}</div>
         <div className={s.status}>
           <div className={s.upvote}>
             <UpvoteSVG className={s.icon} />
@@ -86,7 +92,7 @@ const DiscussDemo: FC = () => {
         </div>
 
         <div className={s.commentsHeader}>
-          评论 <div className={s.commentCount}>18</div>
+          {t('landing.articles.discuss.demo.comments')} <div className={s.commentCount}>18</div>
           <div className='grow' />
           <div className={cn(s.bar, 'w-8 mt-1 right-6 opacity-15')} />
         </div>

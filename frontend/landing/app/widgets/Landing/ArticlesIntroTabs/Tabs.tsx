@@ -4,36 +4,10 @@ import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
 import IntroArrowSVG from '~/icons/IntroArrow'
 import IntroSpinSVG from '~/icons/IntroSpin'
+import useTrans from '~/hooks/useTrans'
 import type { TThread } from '~/spec'
 import useSalon, { cn, ICON } from '../salon/articles_intro_tabs/tabs'
 import PreviewBars from './PreviewBars'
-
-const TAB_ITEMS = [
-  {
-    key: THREAD.POST,
-    title: '讨论区',
-    desc: '功能请求 / Bug / 技术支持',
-    color: COLOR.PURPLE,
-  },
-  {
-    key: THREAD.KANBAN,
-    title: '看板',
-    desc: '已规划 / 进行中 / 已完成',
-    color: COLOR.BLUE,
-  },
-  {
-    key: THREAD.CHANGELOG,
-    title: '更新日志',
-    desc: '新功能 / 修复 / 版本日志',
-    color: COLOR.RED,
-  },
-  {
-    key: THREAD.DOC,
-    title: '文档',
-    desc: '知识库 / 教程 / 产品手册',
-    color: COLOR.CYAN,
-  },
-]
 
 type TProps = {
   tab: TThread
@@ -41,6 +15,33 @@ type TProps = {
 }
 const Tabs: FC<TProps> = ({ tab, onChange }) => {
   const s = useSalon()
+  const { t } = useTrans()
+  const TAB_ITEMS = [
+    {
+      key: THREAD.POST,
+      title: t('landing.articles.tab.post.title'),
+      desc: t('landing.articles.tab.post.desc'),
+      color: COLOR.PURPLE,
+    },
+    {
+      key: THREAD.KANBAN,
+      title: t('landing.articles.tab.kanban.title'),
+      desc: t('landing.articles.tab.kanban.desc'),
+      color: COLOR.BLUE,
+    },
+    {
+      key: THREAD.CHANGELOG,
+      title: t('landing.articles.tab.changelog.title'),
+      desc: t('landing.articles.tab.changelog.desc'),
+      color: COLOR.RED,
+    },
+    {
+      key: THREAD.DOC,
+      title: t('landing.articles.tab.doc.title'),
+      desc: t('landing.articles.tab.doc.desc'),
+      color: COLOR.CYAN,
+    },
+  ]
 
   return (
     <div className={s.wrapper}>

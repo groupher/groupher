@@ -8,6 +8,7 @@ import { DOC_FAQ_LAYOUT } from '~/const/layout'
 
 import { ROUTE } from '~/const/route'
 import useTheme from '~/hooks/useTheme'
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import BookSVG from '~/icons/Book'
 import DiscussSVG from '~/icons/DiscussSolid'
@@ -31,44 +32,24 @@ import useSalon, { cn } from './salon'
 import TechStacks from './TechStacks'
 import UsersWall from './UsersWall'
 
-// TODO: move to const later
-const faqs = [
-  {
-    title: 'Groupher 是免费的吗',
-    body: '是的，在一定额度内免费使用，部分高级功能需要收费。',
-    index: 0,
-  },
-  {
-    title: '可以只使用某些模块吗',
-    body: '是的，你可以根据需要单独使用讨论区、看板、更新日志等。',
-    index: 1,
-  },
-  {
-    title: '可以私有部署吗',
-    body: '是的，本项目完全开源，你可以用于私有部署，但需要遵守特定协议。',
-    index: 2,
-  },
-  {
-    title: '支持手机端使用吗',
-    body: '是的，本项目对于手机屏幕做了适配。但目前没有原生的 App',
-    index: 3,
-  },
-  {
-    title: '支持内容审核吗',
-    body: '是的，你可以在后台打开先审后发，同时平台 AI 自动会过滤违法信息。',
-    index: 4,
-  },
-  {
-    title: '支持海外访问吗',
-    body: '是的，但是目前服务器在国内，国际化相关工作还在开发中，敬请期待。',
-    index: 5,
-  },
-]
-
 export default function Landing() {
   const s = useSalon()
   const { isLightTheme } = useTheme()
+  const { t } = useTrans()
   const users = mockUsers(6)
+  const faqKeys = [
+    ['landing.faq.0.title', 'landing.faq.0.body'],
+    ['landing.faq.1.title', 'landing.faq.1.body'],
+    ['landing.faq.2.title', 'landing.faq.2.body'],
+    ['landing.faq.3.title', 'landing.faq.3.body'],
+    ['landing.faq.4.title', 'landing.faq.4.body'],
+    ['landing.faq.5.title', 'landing.faq.5.body'],
+  ] as const
+  const faqs = faqKeys.map(([titleKey, bodyKey], index) => ({
+    title: t(titleKey),
+    body: t(bodyKey),
+    index,
+  }))
 
   return (
     <div className={s.wrapper} data-testid='landing-page'>
@@ -99,24 +80,25 @@ export default function Landing() {
             <div className={s.iconFootBar} />
           </div>
 
-          <h1 className={s.title}>让你的产品听见用户的声音</h1>
+          <h1 className={s.title}>{t('landing.hero.title')}</h1>
           <div className={s.desc}>
-            讨论区、看板、更新日志、文档多合一，收集沉淀
+            {t('landing.hero.desc.prefix')}
             <div className='inline-block ml-3'>
               <Facepile users={users} noLazyLoad showMore={false} />
             </div>
-            反馈
+            {t('landing.hero.desc.feedback')}
           </div>
           <div className={cn(s.desc, 'mt-2')}>
-            与<span className='line-through px-0.5'>团队</span>
-            <span className={s.focus}>用户</span>
-            一起打造更好的产品
+            {t('landing.hero.subline.prefix')}
+            <span className='line-through px-0.5'>{t('landing.hero.subline.team')}</span>
+            <span className={s.focus}>{t('landing.hero.subline.user')}</span>
+            {t('landing.hero.subline.suffix')}
           </div>
 
           <div className={s.buttonGroup}>
             <a href={ROUTE.APPLY_COMMUNITY} className={s.linkable}>
               <BorderButton space={8} className='bold-sm'>
-                开始使用
+                {t('landing.hero.cta.start')}
               </BorderButton>
             </a>
 
@@ -124,11 +106,11 @@ export default function Landing() {
               content={
                 <div className={s.demoPanel}>
                   <a href={`/${ROUTE.HOME}`} className={s.demoItem}>
-                    <div className={s.demoItemTitle}>官方社区</div>
+                    <div className={s.demoItemTitle}>{t('landing.hero.demo.official')}</div>
                     <LinkSVG className={s.outLink} />
                   </a>
                   <a href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`} className={s.demoItem}>
-                    <div className={s.demoItemTitle}>管理后台</div>
+                    <div className={s.demoItemTitle}>{t('landing.hero.demo.dashboard')}</div>
 
                     <LinkSVG className={s.outLink} />
                   </a>
@@ -140,7 +122,7 @@ export default function Landing() {
             >
               <Button size='medium' ghost noBorder soft className={isLightTheme && 'brightness-95'}>
                 <div className='ml-2' />
-                在线体验 <ArrowSVG className={s.arrow} />
+                {t('landing.hero.cta.demo')} <ArrowSVG className={s.arrow} />
               </Button>
             </Tooltip>
           </div>

@@ -3,6 +3,7 @@ import { CACHE_TAG } from '~/const/cache'
 import { LOCALE } from '~/const/i18n'
 import { THREAD } from '~/const/thread'
 import { loadLocaleFile } from '~/i18n'
+import type { TI18nNamespace } from '~/i18n'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import { P } from '~/schemas'
 import type {
@@ -64,11 +65,14 @@ export const getCommunityInfo = async (community$: string): Promise<TCommunityIn
   return initState
 }
 
-export const getLocaleData = async (locale: TLocale = LOCALE.EN): Promise<any> => {
+export const getLocaleData = async (
+  locale: TLocale = LOCALE.EN,
+  namespaces: readonly TI18nNamespace[] = ['base'],
+): Promise<any> => {
   'use cache'
   cacheLife('days')
 
-  return loadLocaleFile(locale)
+  return loadLocaleFile(locale, namespaces)
 }
 
 const fetchPagedPosts = async (filter: TPagedArticlesParams): Promise<TPagedPosts | null> => {

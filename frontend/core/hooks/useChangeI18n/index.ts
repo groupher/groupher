@@ -1,6 +1,7 @@
 import { LOCALE } from '~/const/i18n'
-import { loadLocaleFile } from '~/i18n'
+import { getI18nNamespacesByMetric, loadLocaleFile } from '~/i18n'
 import type { TLocale } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 import useLocale from '~/stores/locale/hooks'
 
 type TRet = {
@@ -10,9 +11,11 @@ type TRet = {
 
 const useChangeI18n = (): TRet => {
   const { locale, setLocale, setLocaleData } = useLocale()
+  const { metric } = useDashboard()
+  const namespaces = getI18nNamespacesByMetric(metric)
 
   const changeLocale = (locale: TLocale) => {
-    loadLocaleFile(locale)
+    loadLocaleFile(locale, namespaces)
       .then((localeData) => {
         setLocaleData(JSON.stringify(localeData))
         setLocale(locale)
@@ -21,7 +24,7 @@ const useChangeI18n = (): TRet => {
         console.log(`## Failed to load locale file: ${error}`)
         if (locale === LOCALE.EN) return
 
-        loadLocaleFile(LOCALE.EN)
+        loadLocaleFile(LOCALE.EN, namespaces)
           .then((localeData) => {
             setLocaleData(JSON.stringify(localeData))
             setLocale(LOCALE.EN)
