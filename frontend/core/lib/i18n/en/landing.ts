@@ -215,16 +215,12 @@ export default {
   'landing.users.p2.highlight2': 'searchable and traceable at any time',
   'landing.users.p2.suffix': ', and',
   'landing.users.p2.extra': 'the changelog section is especially well designed',
-  'landing.users.p3.prefix':
-    'After bringing user feedback into one place, ',
+  'landing.users.p3.prefix': 'After bringing user feedback into one place, ',
   'landing.users.p3.highlight1': 'communication became noticeably more efficient',
-  'landing.users.p3.middle':
-    ' from collecting requests to following up after each release.',
-  'landing.users.p3.extra_prefix':
-    'For the team, it is not just a feedback board, but a ',
+  'landing.users.p3.middle': ' from collecting requests to following up after each release.',
+  'landing.users.p3.extra_prefix': 'For the team, it is not just a feedback board, but a ',
   'landing.users.p3.highlight2': 'sustainable iteration system',
-  'landing.users.p3.extra_suffix':
-    ' instead of scattered ad-hoc conversations.',
+  'landing.users.p3.extra_suffix': ' instead of scattered ad-hoc conversations.',
   'landing.join.title': 'Join Our Community',
   'landing.join.desc': 'Connect with other users and developers.',
   'landing.join.card.wechat': 'WeChat Group',

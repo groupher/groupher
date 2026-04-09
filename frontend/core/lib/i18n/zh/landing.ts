@@ -190,12 +190,10 @@ export default {
   'landing.users.p2.extra': '更新日志的板块设计巧妙',
   'landing.users.p3.prefix': '把用户反馈集中到一个地方后，',
   'landing.users.p3.highlight1': '沟通效率明显提升',
-  'landing.users.p3.middle':
-    '从需求收集到版本回访都顺畅了很多。',
+  'landing.users.p3.middle': '从需求收集到版本回访都顺畅了很多。',
   'landing.users.p3.extra_prefix': '对团队来说，这不只是反馈面板，更是一套',
   'landing.users.p3.highlight2': '可持续迭代机制',
-  'landing.users.p3.extra_suffix':
-    '，而不是散落在各处的临时沟通。',
+  'landing.users.p3.extra_suffix': '，而不是散落在各处的临时沟通。',
   'landing.join.title': '加入我们的社区',
   'landing.join.desc': '和其他的用户、开发者一起建立连接。',
   'landing.join.card.wechat': '微信群',
