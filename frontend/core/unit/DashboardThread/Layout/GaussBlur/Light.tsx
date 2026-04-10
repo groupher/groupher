@@ -36,20 +36,21 @@ export default function Light() {
         <div className={s.previewer}>
           <div className={s.previewImage} style={{ background }} />
           <div className={s.contentBlock} style={{ background: bgColor }}>
-            <div className={s.bar} />
-            <div className={cnMerge(s.bar, 'top-10 w-40 opacity-20')} />
+            <div className={s.contentTop}>
+              <div className={cnMerge(s.bar, s.titleBar)} />
+              <div className={cnMerge(s.bar, s.wideBar)} />
+              <div className={cnMerge(s.bar, s.midBar)} />
+              <div className={cnMerge(s.bar, s.longBar)} />
+              <div className={cnMerge(s.bar, s.shortBar)} />
+              <div className={cnMerge(s.bar, s.dimBar)} />
+            </div>
 
-            <div className={cnMerge(s.bar, 'top-16 w-28')} />
-            <div className={cnMerge(s.bar, 'top-20 w-44 opacity-20')} />
-
-            <div className={cnMerge(s.bar, 'top-24 w-16 opacity-30 mt-2')} />
-            <div className={cnMerge(s.bar, 'top-28 w-32 opacity-15 mt-2')} />
-
-            <div className={cnMerge(s.bar, 'bottom-20 w-28 opacity-30')} />
-            <div className={cnMerge(s.bar, 'bottom-16 w-44 opacity-15')} />
-
-            <div className={cnMerge(s.bar, 'bottom-8 w-28 opacity-20')} />
-            <div className={cnMerge(s.bar, 'bottom-4 w-44 opacity-10')} />
+            <div className={s.contentBottom}>
+              <div className={cnMerge(s.bar, s.footerMid)} />
+              <div className={cnMerge(s.bar, s.footerLong)} />
+              <div className={cnMerge(s.bar, s.footerBottomMid)} />
+              <div className={cnMerge(s.bar, s.footerBottomLong)} />
+            </div>
           </div>
         </div>
         <ul className={s.actions}>
