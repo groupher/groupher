@@ -26,11 +26,13 @@ export default function Boards() {
     { value: KANBAN_BOARD.REJECTED, title: t('REJECTED') },
     { value: KANBAN_BOARD.DONE, title: t('article.state.done') },
   ] as const
+  const boardOrder = boards.map(({ value }) => value)
 
   const handleToggle = (board: TKanbanBoard) => {
-    const nextBoards = activeBoards.includes(board)
+    const toggledBoards = activeBoards.includes(board)
       ? activeBoards.filter((item) => item !== board)
       : [...activeBoards, board]
+    const nextBoards = boardOrder.filter((item) => toggledBoards.includes(item))
 
     edit(nextBoards, FIELD.KANBAN_BOARDS)
   }

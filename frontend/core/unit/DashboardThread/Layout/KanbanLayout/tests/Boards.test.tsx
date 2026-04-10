@@ -97,7 +97,7 @@ describe('<Boards />', () => {
     fireEvent.click(screen.getByRole('button', { name: /Backlog/i }))
 
     expect(edit).toHaveBeenCalledWith(
-      [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE, KANBAN_BOARD.BACKLOG],
+      [KANBAN_BOARD.BACKLOG, KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE],
       FIELD.KANBAN_BOARDS,
     )
   })

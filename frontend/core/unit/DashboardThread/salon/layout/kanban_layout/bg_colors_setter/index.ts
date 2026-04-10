@@ -15,7 +15,7 @@ export default function useSalon() {
   return {
     colorsWrapper: 'row-center gap-x-2 w-full',
     preset: cn(
-      'align-both rounded-md gap-x-2 w-32 h-8 border',
+      'align-both rounded-md gap-x-2 w-auto px-3 h-8 border',
       `hover:${bg('hoverBg')}`,
       br('divider'),
     ),

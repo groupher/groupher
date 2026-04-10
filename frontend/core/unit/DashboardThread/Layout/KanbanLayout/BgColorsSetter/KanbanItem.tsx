@@ -1,24 +1,64 @@
 import type { FC } from 'react'
+import { KANBAN_CARD_LAYOUT } from '~/const/layout'
 
+import CommentSVG from '~/icons/Comment'
 import UpvoteSVG from '~/icons/Upvote'
 
 import useSalon, { cnMerge } from '../../../salon/layout/kanban_layout/bg_colors_setter/kanban_item'
 
 type TProps = {
+  layout: (typeof KANBAN_CARD_LAYOUT)[keyof typeof KANBAN_CARD_LAYOUT]
   opacity?: string
   width?: string
 }
 
-const KanbanItem: FC<TProps> = ({ opacity = 'opacity-100', width = 'w-20' }) => {
+const KanbanItem: FC<TProps> = ({ layout, opacity = 'opacity-100', width = 'w-20' }) => {
   const s = useSalon()
 
   return (
     <div className={cnMerge(s.wrapper, opacity)}>
-      <div className={cnMerge(s.bar, 'top-2 w-14 mt-0.5 opacity-20')} />
-      <div className={cnMerge(s.bar, 'top-5 h-1.5 opacity-30', width)} />
+      {layout === KANBAN_CARD_LAYOUT.FULL ? (
+        <div className={s.frame}>
+          <div className={s.header}>
+            <div className={cnMerge(s.bar, s.titleBar)} />
+            <div className={s.headerRow}>
+              <div className={cnMerge(s.bar, s.bodyBar, width)} />
+              <div className={cnMerge(s.bar, s.sideBar)} />
+            </div>
+          </div>
 
-      <UpvoteSVG className={s.icon} />
-      <div className={cnMerge(s.bar, 'bottom-2 left-6 h-1 w-6 opacity-10')} />
+          <div className={s.footer}>
+            <div className={s.footerLeft}>
+              <UpvoteSVG className={s.icon} />
+              <div className={s.avatarList}>
+                <div className={s.userAvatar} />
+                <div className={cnMerge(s.userAvatar, 'opacity-20')} />
+                <div className={cnMerge(s.userAvatar, 'opacity-15')} />
+              </div>
+            </div>
+            <div className={s.footerRight}>
+              <CommentSVG className={s.commentIcon} />
+              <div className={cnMerge(s.bar, s.tinyMetric)} />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className={s.frame}>
+          <div className={s.header}>
+            <div className={cnMerge(s.bar, s.titleBar)} />
+            <div className={cnMerge(s.bar, s.bodyBar, width)} />
+          </div>
+
+          <div className={s.footer}>
+            <div className={s.footerLeft}>
+              <UpvoteSVG className={s.icon} />
+            </div>
+            <div className={s.footerRight}>
+              <div className={cnMerge(s.bar, s.simpleMetric)} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
