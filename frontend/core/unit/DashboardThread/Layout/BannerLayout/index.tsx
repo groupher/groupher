@@ -11,6 +11,157 @@ import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cn, cnMerge } from '../../salon/layout/banner_layout'
 
+function HeaderPreview({ isActive, title }: { isActive: boolean; title: string }) {
+  const s = useSalon()
+
+  return (
+    <div className={cn(s.block, isActive && s.blockActive)}>
+      <div className={s.frame}>
+        <div className={s.nav}>
+          <h4 className={s.communityTitle}>{title}</h4>
+          <div className={cnMerge(s.bar, s.navBar)} />
+          <div className={s.circle} />
+        </div>
+        <div className={cnMerge(s.hDivider, 'mt-1.5 mb-5')} />
+
+        <div className={s.mainClassic}>
+          <div className={s.contentColumn}>
+            <div className={s.sectionBlock}>
+              <div className={cnMerge(s.bar, s.contentTitleWide)} />
+              <div className={cnMerge(s.bar, s.contentDigest)} />
+            </div>
+            <div className={s.sectionBlock}>
+              <div className={cnMerge(s.bar, s.contentTitle)} />
+              <div className={cnMerge(s.bar, s.contentDigestShort)} />
+            </div>
+            <div className={s.sectionBlock}>
+              <div className={cnMerge(s.bar, s.contentTitle)} />
+              <div className={cnMerge(s.bar, s.contentDigestWide)} />
+            </div>
+            <div className={s.sectionBlock}>
+              <div className={cnMerge(s.bar, s.contentTitleWide)} />
+              <div className={cnMerge(s.bar, s.contentDigestShort)} />
+            </div>
+          </div>
+
+          <div className={s.vDivider} />
+
+          <div className={s.rightRail}>
+            <div className={cnMerge(s.bar, s.primaryBar, s.primaryChip)} />
+            <div className={cnMerge(s.bar, s.railItemShort)} />
+            <div className={cnMerge(s.bar, s.railItemWide)} />
+            <div className={cnMerge(s.bar, s.railItem)} />
+            <div className={cnMerge(s.bar, s.footerItem)} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CoverPreview({ isActive, title }: { isActive: boolean; title: string }) {
+  const s = useSalon()
+
+  return (
+    <div className={cnMerge(s.block, isActive && s.blockActive)}>
+      <div className={s.mainCover}>
+        <div className={s.coverHero} />
+        <div className={s.coverHeader}>
+          <div className={s.coverLead}>
+            <div className={cnMerge(s.bar, s.coverAvatar)} />
+            <h4 className={s.communityTitle}>{title}</h4>
+          </div>
+          <div className={cnMerge(s.bar, s.primaryBar, s.primaryChip, s.coverAction)} />
+        </div>
+
+        <div className={s.coverContent}>
+          <div className={s.coverMain}>
+            <div className={s.coverSection}>
+              <div className={cnMerge(s.bar, s.contentTitle)} />
+              <div className={cnMerge(s.bar, s.coverBodyShort)} />
+            </div>
+            <div className={s.coverSection}>
+              <div className={cnMerge(s.bar, s.contentTitle, 'w-1/2')} />
+              <div className={cnMerge(s.bar, s.coverBodyLong)} />
+            </div>
+            <div className={s.coverSection}>
+              <div className={cnMerge(s.bar, s.contentTitle)} />
+              <div className={cnMerge(s.bar, s.coverBodyLong)} />
+            </div>
+            <div className={s.coverSection}>
+              <div className={cnMerge(s.bar, s.contentTitle, 'w-1/2')} />
+              <div className={cnMerge(s.bar, s.coverBodyLong, 'w-1/3')} />
+            </div>
+          </div>
+
+          <div className={s.rightRail}>
+            <div className={cnMerge(s.bar, s.railItemShort)} />
+            <div className={cnMerge(s.bar, s.railItemWide)} />
+            <div className={cnMerge(s.bar, s.railItem)} />
+            <div className={cnMerge(s.bar, s.footerItem, 'mt-auto')} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SidebarPreview({ isActive, title }: { isActive: boolean; title: string }) {
+  const s = useSalon()
+
+  return (
+    <div className={cnMerge(s.block, isActive && s.blockActive)}>
+      <div className={s.frame}>
+        <div className={s.nav}>
+          <h4 className={s.communityTitle}>{title}</h4>
+          <div className={s.navCenter}>
+            <div className={cnMerge(s.bar, 'w-8')} />
+            <div className={cnMerge(s.bar, s.primaryBar, s.primaryChip)} />
+          </div>
+
+          <div className={s.circle} />
+        </div>
+
+        <div className={s.mainSidebar}>
+          <div className={s.sidebarNav}>
+            <div className={cnMerge(s.bar, s.sideNavItem)} />
+            <div className={cnMerge(s.bar, s.sideNavItemWide)} />
+            <div className={cnMerge(s.bar, s.sideNavActive)} />
+            <div className={cnMerge(s.bar, s.sideNavItem)} />
+            <div className={cnMerge(s.bar, s.sideNavItem)} />
+            <div className={cnMerge(s.bar, s.sideNavActive)} />
+            <div className={cnMerge(s.bar, s.sideNavItem)} />
+            <div className={cnMerge(s.bar, s.sidebarBottom, 'mt-auto')} />
+          </div>
+
+          <div className={s.vDivider} />
+
+          <div className={s.sidebarMain}>
+            <div className={s.sectionBlock}>
+              <div className={cnMerge(s.bar, s.contentTitle, 'w-1/2')} />
+              <div className={cnMerge(s.bar, s.contentDigestShort)} />
+            </div>
+            <div className={s.sectionBlock}>
+              <div className={cnMerge(s.bar, s.contentTitle)} />
+              <div className={cnMerge(s.bar, s.contentDigest)} />
+            </div>
+            <div className={s.sectionBlock}>
+              <div className={cnMerge(s.bar, 'w-24')} />
+              <div className={cnMerge(s.bar, s.contentDigestShort)} />
+              <div className={cnMerge(s.bar, 'w-16')} />
+            </div>
+            <div className={s.sectionBlock}>
+              <div className={cnMerge(s.bar, 'w-24')} />
+              <div className={cnMerge(s.bar, s.contentDigestShort)} />
+              <div className={cnMerge(s.bar, 'w-16')} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function BannerLayout() {
   const s = useSalon()
   const [showDrawer, setShowDrawer] = useState(false)
@@ -37,41 +188,7 @@ export default function BannerLayout() {
           aria-pressed={layout === BANNER_LAYOUT.HEADER}
           onClick={() => edit(BANNER_LAYOUT.HEADER, FIELD.BANNER_LAYOUT)}
         >
-          <div className={cn(s.block, layout === BANNER_LAYOUT.HEADER && s.blockActive)}>
-            <h4 className={cn(s.communityTitle)}>{title}</h4>
-            <div className={cnMerge(s.bar, 'left-28 top-5')} />
-            <div className={cnMerge(s.circle, 'right-5 top-5')} />
-            <div className={cnMerge(s.hDivider, 'mt-1.5 mb-5')} />
-
-            <div className='absolute w-full h-6 left-4 top-14'>
-              <div className={cnMerge(s.bar, 'left-0 top-0 w-36')} />
-              <div className={cnMerge(s.bar, 'left-0 top-4 h-1 w-28 opacity-30')} />
-            </div>
-
-            <div className='absolute w-full h-6 left-4 top-24'>
-              <div className={cnMerge(s.bar, 'left-0 top-0 w-28')} />
-              <div className={cnMerge(s.bar, 'left-0 top-4 h-1 w-24 opacity-30')} />
-            </div>
-
-            <div className='absolute w-full h-6 left-4 bottom-14'>
-              <div className={cnMerge(s.bar, 'left-0 -top-1 w-24')} />
-              <div className={cnMerge(s.bar, 'left-0 top-3 h-1 w-32 opacity-30')} />
-            </div>
-
-            <div className='absolute w-full h-6 left-4 bottom-4'>
-              <div className={cnMerge(s.bar, 'left-0 -top-1 w-32')} />
-              <div className={cnMerge(s.bar, 'left-0 top-3 h-1 w-28 opacity-30')} />
-            </div>
-
-            <div className={cnMerge(s.vDivider, 'h-3/5 right-20 top-12')} />
-
-            <div className={cnMerge(s.bar, s.primaryBar, 'right-6 top-14 h-1 w-10 h-2.5')} />
-
-            <div className={cnMerge(s.bar, 'right-9 top-24 h-1 w-6 opacity-20')} />
-            <div className={cnMerge(s.bar, 'right-5 top-28 h-1 w-10 opacity-20')} />
-            <div className={cnMerge(s.bar, 'right-7 top-32 h-1 w-8 opacity-20')} />
-            <div className={cnMerge(s.bar, 'right-7 bottom-5 h-1 w-8 opacity-30')} />
-          </div>
+          <HeaderPreview isActive={layout === BANNER_LAYOUT.HEADER} title={title} />
           <CheckLabel
             title={t('dsb.layout.banner.option.classic')}
             active={layout === BANNER_LAYOUT.HEADER}
@@ -84,33 +201,7 @@ export default function BannerLayout() {
           aria-pressed={layout === BANNER_LAYOUT.TABBER}
           onClick={() => edit(BANNER_LAYOUT.TABBER, FIELD.BANNER_LAYOUT)}
         >
-          <div className={cnMerge(s.block, layout === BANNER_LAYOUT.TABBER && s.blockActive)}>
-            <div className={cnMerge(s.bar, 'left-2.5 top-2 w-11/12 h-10 opacity-10')} />
-            <div className={cnMerge(s.bar, 'left-4 top-8 w-10 h-10 opacity-30')} />
-            <h4 className={cnMerge(s.communityTitle, 'absolute top-14 left-16')}>{title}</h4>
-
-            <div className='absolute w-full h-6 left-5 top-24'>
-              <div className={cnMerge(s.bar, 'left-0 top-0 w-28')} />
-              <div className={cnMerge(s.bar, 'left-0 top-4 h-1 w-24 opacity-30')} />
-            </div>
-
-            <div className='absolute w-full h-6 left-5 bottom-14'>
-              <div className={cnMerge(s.bar, 'left-0 -top-2 w-24')} />
-              <div className={cnMerge(s.bar, 'left-0 top-2 h-1 w-32 opacity-30')} />
-            </div>
-
-            <div className='absolute w-full h-6 left-5 bottom-6'>
-              <div className={cnMerge(s.bar, 'left-0 top-0 w-32')} />
-              <div className={cnMerge(s.bar, 'left-0 top-4 h-1 w-28 opacity-30')} />
-            </div>
-
-            <div className={cnMerge(s.bar, s.primaryBar, 'right-6 top-14 h-1 w-10 h-2.5')} />
-
-            <div className={cnMerge(s.bar, 'right-10 top-24 h-1 w-6 opacity-20')} />
-            <div className={cnMerge(s.bar, 'right-6 top-28 h-1 w-10 opacity-20')} />
-            <div className={cnMerge(s.bar, 'right-8 top-32 h-1 w-8 opacity-20')} />
-            <div className={cnMerge(s.bar, 'right-8 bottom-5 h-1 w-8 opacity-30')} />
-          </div>
+          <CoverPreview isActive={layout === BANNER_LAYOUT.TABBER} title={title} />
           <CheckLabel
             title={t('dsb.layout.banner.option.cover')}
             active={layout === BANNER_LAYOUT.TABBER}
@@ -123,44 +214,7 @@ export default function BannerLayout() {
           aria-pressed={layout === BANNER_LAYOUT.SIDEBAR}
           onClick={() => edit(BANNER_LAYOUT.SIDEBAR, FIELD.BANNER_LAYOUT)}
         >
-          <div className={cnMerge(s.block, layout === BANNER_LAYOUT.SIDEBAR && s.blockActive)}>
-            <h4 className={s.communityTitle}>{title}</h4>
-            <div className={cnMerge(s.bar, 'left-28 w-10 top-5')} />
-            <div className={cnMerge(s.circle, 'right-5 top-5')} />
-            <div className={cnMerge(s.bar, s.primaryBar, 'right-16 top-5 h-1 w-10 h-2.5')} />
-
-            <div className='absolute w-3/5 h-6 right-2 top-12'>
-              <div className={cnMerge(s.bar, 'left-0 top-0 w-28')} />
-              <div className={cnMerge(s.bar, 'left-0 top-4 h-1 w-28 opacity-30')} />
-            </div>
-
-            <div className='absolute w-3/5 h-6 right-2 top-20'>
-              <div className={cnMerge(s.bar, 'left-0 top-1 w-28')} />
-              <div className={cnMerge(s.bar, 'left-0 top-5 h-1 w-24 opacity-30')} />
-            </div>
-
-            <div className='absolute w-3/5 h-6 right-2 bottom-20'>
-              <div className={cnMerge(s.bar, 'left-0 top-0 w-24')} />
-              <div className={cnMerge(s.bar, 'left-0 top-4 h-1 w-32 opacity-30')} />
-            </div>
-
-            <div className='absolute w-3/5 h-6 right-2 bottom-10'>
-              <div className={cnMerge(s.bar, 'left-0 top-0 w-20')} />
-              <div className={cnMerge(s.bar, 'left-0 top-4 h-1 w-28 opacity-30')} />
-              <div className={cnMerge(s.bar, 'left-0 top-8 w-16')} />
-            </div>
-
-            <div className={cnMerge(s.vDivider, 'h-4/5 left-20 top-12')} />
-
-            <div className={cnMerge(s.bar, 'left-5 top-12 h-1 w-6 opacity-20')} />
-            <div className={cnMerge(s.bar, 'left-5 top-16 h-1 w-10 opacity-20')} />
-            <div className={cnMerge(s.bar, 'left-5 top-20 h-1 w-8 opacity-60')} />
-            <div className={cnMerge(s.bar, 'left-5 top-24 h-1 w-8 opacity-20')} />
-            <div className={cnMerge(s.bar, 'left-5 top-28 h-1 w-8 opacity-20')} />
-            <div className={cnMerge(s.bar, 'left-5 top-32 h-1 w-8 opacity-60')} />
-            <div className={cnMerge(s.bar, 'left-5 top-36 h-1 w-8 opacity-20')} />
-            <div className={cnMerge(s.bar, 'left-5 bottom-5 h-1 w-8 opacity-30')} />
-          </div>
+          <SidebarPreview isActive={layout === BANNER_LAYOUT.SIDEBAR} title={title} />
           <CheckLabel
             title={t('dsb.layout.banner.option.sidebar')}
             active={layout === BANNER_LAYOUT.SIDEBAR}
