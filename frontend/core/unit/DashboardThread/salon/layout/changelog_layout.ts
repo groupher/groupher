@@ -31,7 +31,7 @@ export default function useSalon() {
     minimalEntry: 'column-center w-full',
     minimalHeader: 'row-start w-2/3',
     minimalText: 'column gap-2.5',
-    minimalMeta: cnMerge(base.bar, 'static h-1.5 w-7 opacity-20 debug'),
+    minimalMeta: cnMerge(base.bar, 'static h-1.5 w-7 opacity-20'),
     minimalTitle: cnMerge(base.bar, 'static h-2.5 w-20 opacity-30'),
     minimalBodyWide: cnMerge(base.bar, 'static h-1.5 w-28 opacity-30'),
     minimalBodyNarrow: cnMerge(base.bar, 'static h-1.5 w-24 opacity-20'),
