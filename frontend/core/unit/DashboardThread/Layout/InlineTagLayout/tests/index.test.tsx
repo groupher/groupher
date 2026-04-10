@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { INLINE_TAG_LAYOUT } from '~/const/layout'
-import { FIELD } from '../../constant'
-import InlineTagLayout from '.'
+import { FIELD } from '../../../constant'
+import InlineTagLayout from '..'
 
 const edit = vi.fn()
 
@@ -9,7 +9,7 @@ vi.mock('~/hooks/useTrans', () => ({
   default: () => ({ t: (key: string) => key }),
 }))
 
-vi.mock('../../logic/useTags', () => ({
+vi.mock('../../../logic/useTags', () => ({
   default: () => ({
     edit,
     inlineTagLayout: INLINE_TAG_LAYOUT.MORANDI,
@@ -18,7 +18,7 @@ vi.mock('../../logic/useTags', () => ({
   }),
 }))
 
-vi.mock('../../salon/layout/inline_tag_layout', () => ({
+vi.mock('../../../salon/layout/inline_tag_layout', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',
@@ -30,13 +30,13 @@ vi.mock('../../salon/layout/inline_tag_layout', () => ({
     classes.filter(Boolean).join(' '),
 }))
 
-vi.mock('./TagItem', () => ({
+vi.mock('../TagItem', () => ({
   default: ({ tag, layout }: { tag: { title: string }; layout: string }) => (
     <span data-testid={`tag-item-${layout}`}>{tag.title}</span>
   ),
 }))
 
-vi.mock('../../SectionLabel', () => ({
+vi.mock('../../../SectionLabel', () => ({
   default: ({ title, desc }: { title: string; desc: string }) => (
     <div>
       <span>{title}</span>
@@ -51,7 +51,7 @@ vi.mock('~/widgets/CheckLabel', () => ({
   ),
 }))
 
-vi.mock('../../SavingBar', () => ({
+vi.mock('../../../SavingBar', () => ({
   default: ({ field }: { field: string }) => <div data-testid='saving-bar'>{field}</div>,
 }))
 

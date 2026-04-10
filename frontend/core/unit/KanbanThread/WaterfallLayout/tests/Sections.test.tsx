@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { KANBAN_BOARD } from '~/const/thread'
 import type { TPagedPosts } from '~/spec'
-import Sections from './Sections'
+import Sections from '../Sections'
 
 const emptyPosts: TPagedPosts = {
   entries: [],
@@ -37,7 +37,7 @@ vi.mock('~/hooks/useTrans', () => ({
   }),
 }))
 
-vi.mock('../salon/waterfall_layout/sections', () => ({
+vi.mock('../../salon/waterfall_layout/sections', () => ({
   default: () => ({
     wrapper: 'wrapper',
     column: 'column',
@@ -64,11 +64,11 @@ vi.mock('../salon/waterfall_layout/sections', () => ({
   cn: (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' '),
 }))
 
-vi.mock('../KanbanItem', () => ({
+vi.mock('../../KanbanItem', () => ({
   default: () => <div>item</div>,
 }))
 
-vi.mock('../KanbanItem/EmptyItem', () => ({
+vi.mock('../../KanbanItem/EmptyItem', () => ({
   default: () => <div>empty</div>,
 }))
 

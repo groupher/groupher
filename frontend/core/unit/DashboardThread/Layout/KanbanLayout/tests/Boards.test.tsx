@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { KANBAN_BOARD } from '~/const/thread'
-import { FIELD } from '../../constant'
-import Boards from './Boards'
+import { FIELD } from '../../../constant'
+import Boards from '../Boards'
 
 const edit = vi.fn()
 
@@ -33,7 +33,7 @@ vi.mock('~/hooks/useTwBelt', () => ({
   }),
 }))
 
-vi.mock('../../logic/useKanban', () => ({
+vi.mock('../../../logic/useKanban', () => ({
   default: () => ({
     kanbanBoards: [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE],
     isKanbanBoardsTouched: false,
@@ -42,7 +42,7 @@ vi.mock('../../logic/useKanban', () => ({
   }),
 }))
 
-vi.mock('../../salon/layout/kanban_layout/boards', () => ({
+vi.mock('../../../salon/layout/kanban_layout/boards', () => ({
   default: () => ({
     select: 'select',
     layout: 'layout',
@@ -50,7 +50,7 @@ vi.mock('../../salon/layout/kanban_layout/boards', () => ({
   }),
 }))
 
-vi.mock('../../SectionLabel', () => ({
+vi.mock('../../../SectionLabel', () => ({
   default: ({ title, desc }: { title: string; desc: string }) => (
     <div>
       <span>{title}</span>
@@ -59,7 +59,7 @@ vi.mock('../../SectionLabel', () => ({
   ),
 }))
 
-vi.mock('../../SavingBar', () => ({
+vi.mock('../../../SavingBar', () => ({
   default: ({ field }: { field: string }) => <div data-testid='saving-bar'>{field}</div>,
 }))
 

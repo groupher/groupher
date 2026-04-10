@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react'
 import { KANBAN_BOARD } from '~/const/thread'
 import type { TPagedPosts } from '~/spec'
-import { useColumnsData } from './Columns'
+import { useColumnsData } from '../Columns'
 
 const emptyPosts: TPagedPosts = {
   entries: [],
@@ -37,7 +37,7 @@ vi.mock('~/hooks/useTrans', () => ({
   }),
 }))
 
-vi.mock('../salon/classic_layout/columns', () => ({
+vi.mock('../../salon/classic_layout/columns', () => ({
   default: () => ({
     backlogIcon: 'backlogIcon',
     todoIcon: 'todoIcon',
@@ -60,11 +60,11 @@ vi.mock('../salon/classic_layout/columns', () => ({
   }),
 }))
 
-vi.mock('../KanbanItem', () => ({
+vi.mock('../../KanbanItem', () => ({
   default: () => <div>item</div>,
 }))
 
-vi.mock('../KanbanItem/EmptyItem', () => ({
+vi.mock('../../KanbanItem/EmptyItem', () => ({
   default: () => <div>empty</div>,
 }))
 

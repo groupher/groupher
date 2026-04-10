@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { TAG_LAYOUT } from '~/const/layout'
-import { FIELD } from '../../constant'
-import TagLayout from '.'
+import { FIELD } from '../../../constant'
+import TagLayout from '..'
 
 const edit = vi.fn()
 
@@ -9,7 +9,7 @@ vi.mock('~/hooks/useTrans', () => ({
   default: () => ({ t: (key: string) => key }),
 }))
 
-vi.mock('../../logic/useTags', () => ({
+vi.mock('../../../logic/useTags', () => ({
   default: () => ({
     edit,
     tagLayout: TAG_LAYOUT.HASH,
@@ -18,7 +18,7 @@ vi.mock('../../logic/useTags', () => ({
   }),
 }))
 
-vi.mock('../../salon/layout/tag_layout', () => ({
+vi.mock('../../../salon/layout/tag_layout', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',
@@ -33,7 +33,7 @@ vi.mock('../../salon/layout/tag_layout', () => ({
     classes.filter(Boolean).join(' '),
 }))
 
-vi.mock('../../SectionLabel', () => ({
+vi.mock('../../../SectionLabel', () => ({
   default: ({ title, desc }: { title: string; desc: string }) => (
     <div>
       <span>{title}</span>
@@ -48,7 +48,7 @@ vi.mock('~/widgets/CheckLabel', () => ({
   ),
 }))
 
-vi.mock('../../SavingBar', () => ({
+vi.mock('../../../SavingBar', () => ({
   default: ({ field }: { field: string }) => <div data-testid='saving-bar'>{field}</div>,
 }))
 

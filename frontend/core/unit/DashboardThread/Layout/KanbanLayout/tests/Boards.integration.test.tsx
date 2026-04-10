@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import { KANBAN_BOARD } from '~/const/thread'
 import useDashboard from '~/stores/dashboard/hooks'
-import useKanban from '../../logic/useKanban'
-import Boards from './Boards'
+import useKanban from '../../../logic/useKanban'
+import Boards from '../Boards'
 
 vi.mock('~/hooks/useTrans', () => ({
   default: () => ({

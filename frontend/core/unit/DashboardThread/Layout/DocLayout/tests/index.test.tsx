@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { DOC_FAQ_LAYOUT, DOC_LAYOUT } from '~/const/layout'
-import { FIELD } from '../../constant'
-import DocLayout from '.'
+import { FIELD } from '../../../constant'
+import DocLayout from '..'
 
 const edit = vi.fn()
 
@@ -9,7 +9,7 @@ vi.mock('~/hooks/useTrans', () => ({
   default: () => ({ t: (key: string) => key }),
 }))
 
-vi.mock('../../logic/useDoc', () => ({
+vi.mock('../../../logic/useDoc', () => ({
   default: () => ({
     docLayout: DOC_LAYOUT.BLOCKS,
     docFaqLayout: DOC_FAQ_LAYOUT.COLLAPSE,
@@ -20,7 +20,7 @@ vi.mock('../../logic/useDoc', () => ({
   }),
 }))
 
-vi.mock('../../salon/layout/doc_layout', () => ({
+vi.mock('../../../salon/layout/doc_layout', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',
@@ -32,15 +32,15 @@ vi.mock('../../salon/layout/doc_layout', () => ({
   cn: (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' '),
 }))
 
-vi.mock('./MainTemplate', () => ({
+vi.mock('../MainTemplate', () => ({
   default: ({ layout }: { layout: string }) => <span data-testid={`main-template-${layout}`} />,
 }))
 
-vi.mock('./FaqTemplate', () => ({
+vi.mock('../FaqTemplate', () => ({
   default: ({ layout }: { layout: string }) => <span data-testid={`faq-template-${layout}`} />,
 }))
 
-vi.mock('../../SectionLabel', () => ({
+vi.mock('../../../SectionLabel', () => ({
   default: ({ title, desc, detailText }: { title: string; desc: string; detailText?: string }) => (
     <div>
       <span>{title}</span>
@@ -56,7 +56,7 @@ vi.mock('~/widgets/CheckLabel', () => ({
   ),
 }))
 
-vi.mock('../../SavingBar', () => ({
+vi.mock('../../../SavingBar', () => ({
   default: ({ field }: { field: string }) => <div data-testid={`saving-bar-${field}`}>{field}</div>,
 }))
 

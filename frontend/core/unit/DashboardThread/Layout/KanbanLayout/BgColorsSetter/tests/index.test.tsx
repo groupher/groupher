@@ -4,8 +4,8 @@ import { COLOR } from '~/const/colors'
 import { INIT_KANBAN_COLORS } from '~/const/dashboard'
 import { KANBAN_LAYOUT } from '~/const/layout'
 import { KANBAN_BOARD } from '~/const/thread'
-import { FIELD } from '../../../constant'
-import BgColorsSetter from '.'
+import { FIELD } from '../../../../constant'
+import BgColorsSetter from '..'
 
 const edit = vi.fn()
 
@@ -13,7 +13,7 @@ vi.mock('~/hooks/useTrans', () => ({
   default: () => ({ t: (key: string) => key }),
 }))
 
-vi.mock('../../../logic/useKanban', () => ({
+vi.mock('../../../../logic/useKanban', () => ({
   default: () => ({
     kanbanLayout: KANBAN_LAYOUT.CLASSIC,
     kanbanBoards: [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE],
@@ -24,7 +24,7 @@ vi.mock('../../../logic/useKanban', () => ({
   }),
 }))
 
-vi.mock('../../../salon/layout/kanban_layout/bg_colors_setter', () => ({
+vi.mock('../../../../salon/layout/kanban_layout/bg_colors_setter', () => ({
   default: () => ({
     colorsWrapper: 'colorsWrapper',
     preset: 'preset',
@@ -40,17 +40,17 @@ vi.mock('../../../salon/layout/kanban_layout/bg_colors_setter', () => ({
   cn: (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' '),
 }))
 
-vi.mock('./ClassicLayout', () => ({
+vi.mock('../ClassicLayout', () => ({
   default: ({ activeBoards }: { activeBoards: string[] }) => (
     <div data-testid='classic-preview'>{activeBoards.join(',')}</div>
   ),
 }))
 
-vi.mock('./WaterfallLayout', () => ({
+vi.mock('../WaterfallLayout', () => ({
   default: () => <div data-testid='waterfall-preview' />,
 }))
 
-vi.mock('../../../SectionLabel', () => ({
+vi.mock('../../../../SectionLabel', () => ({
   default: ({ title, desc }: { title: string; desc: string }) => (
     <div>
       <span>{title}</span>
@@ -59,7 +59,7 @@ vi.mock('../../../SectionLabel', () => ({
   ),
 }))
 
-vi.mock('../../../SavingBar', () => ({
+vi.mock('../../../../SavingBar', () => ({
   default: ({ field }: { field: string }) => <div data-testid={`saving-bar-${field}`}>{field}</div>,
 }))
 

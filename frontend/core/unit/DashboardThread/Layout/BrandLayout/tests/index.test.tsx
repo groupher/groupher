@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { BRAND_LAYOUT } from '~/const/layout'
-import { FIELD } from '../../constant'
-import BrandLayout from '.'
+import { FIELD } from '../../../constant'
+import BrandLayout from '..'
 
 const edit = vi.fn()
 
@@ -13,7 +13,7 @@ vi.mock('~/stores/community/hooks', () => ({
   default: () => ({ title: 'Groupher' }),
 }))
 
-vi.mock('../../logic/useBrand', () => ({
+vi.mock('../../../logic/useBrand', () => ({
   default: () => ({
     edit,
     layout: BRAND_LAYOUT.BOTH,
@@ -22,7 +22,7 @@ vi.mock('../../logic/useBrand', () => ({
   }),
 }))
 
-vi.mock('../../salon/layout/brand_layout', () => ({
+vi.mock('../../../salon/layout/brand_layout', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',
@@ -37,7 +37,7 @@ vi.mock('../../salon/layout/brand_layout', () => ({
   cn: (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' '),
 }))
 
-vi.mock('../../SectionLabel', () => ({
+vi.mock('../../../SectionLabel', () => ({
   default: ({ title, desc }: { title: string; desc: string }) => (
     <div>
       <span>{title}</span>
@@ -52,7 +52,7 @@ vi.mock('~/widgets/CheckLabel', () => ({
   ),
 }))
 
-vi.mock('../../SavingBar', () => ({
+vi.mock('../../../SavingBar', () => ({
   default: ({ field }: { field: string }) => <div data-testid='saving-bar'>{field}</div>,
 }))
 
