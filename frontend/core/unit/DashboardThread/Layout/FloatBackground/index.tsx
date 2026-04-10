@@ -6,6 +6,36 @@ import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cnMerge } from '../../salon/layout/float_background'
 
+function PanelContent({ dark = false }: { dark?: boolean }) {
+  const s = useSalon()
+  const tone = dark ? 'bg-white' : undefined
+
+  return (
+    <>
+      <div className={cnMerge(s.bar, s.panelTitle, tone)} />
+      <div className={cnMerge(s.bar, s.panelShort, tone)} />
+      <div className={cnMerge(s.bar, s.panelWide, tone)} />
+      <div className={cnMerge(s.bar, s.panelMid, tone)} />
+      <div className={cnMerge(s.bar, s.panelNarrow, tone)} />
+      <div className={cnMerge(s.bar, s.panelWideDim, tone)} />
+      <div className={cnMerge(s.bar, s.panelWideDim, tone)} />
+    </>
+  )
+}
+
+function PopoverContent({ dark = false }: { dark?: boolean }) {
+  const s = useSalon()
+  const tone = dark ? 'bg-white' : 'bg-black'
+
+  return (
+    <div className={s.popoverBody}>
+      <div className={cnMerge(s.bar, s.popoverTitle, tone)} />
+      <div className={cnMerge(s.bar, s.popoverBodyWide, tone)} />
+      <div className={cnMerge(s.bar, s.popoverBodyNarrow, tone)} />
+    </div>
+  )
+}
+
 export default function FloatBackground() {
   const s = useSalon()
   const { darkFloat, edit, isTouched, saving } = useDarkFloat()
@@ -30,27 +60,13 @@ export default function FloatBackground() {
               className={cnMerge(s.popover, 'left-20 top-12')}
               style={{ borderColor: 'dimgray' }}
             >
-              <div className={cnMerge(s.bar, 'top-4 left-5 w-20 opacity-30 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-8 left-5 w-14 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-12 left-5 w-12 opacity-20 bg-white')} />
+              <PopoverContent dark />
             </div>
-            <div className={s.lightPanel}>
-              <div className={cnMerge(s.bar, 'h-2.5 top-5 left-5 ml-0.5 opacity-20')} />
-              <div className={cnMerge(s.bar, 'top-10 left-5 w-12 opacity-20')} />
-              <div className={cnMerge(s.bar, 'top-16 left-5 w-20 opacity-20')} />
-              <div className={cnMerge(s.bar, 'top-24 left-5 w-16 opacity-20')} />
-              <div className={cnMerge(s.bar, 'top-28 left-5 w-20 opacity-20')} />
-              <div className={cnMerge(s.bar, 'top-32 left-5 w-20 opacity-10')} />
-              <div className={cnMerge(s.bar, 'top-36 left-5 w-20 opacity-10')} />
+            <div className={cnMerge(s.panel, s.lightPanel)}>
+              <PanelContent />
             </div>
-            <div className={s.darkPanel}>
-              <div className={cnMerge(s.bar, 'h-2.5 top-5 right-5 ml-0.5 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-10 right-5 w-12 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-16 right-5 w-20 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-24 right-5 w-14 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-28 right-5 w-12 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-32 right-5 w-20 opacity-10 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-36 right-5 w-20 opacity-10 bg-white')} />
+            <div className={cnMerge(s.panel, s.darkPanel)}>
+              <PanelContent dark />
             </div>
           </div>
 
@@ -71,37 +87,21 @@ export default function FloatBackground() {
               className={cnMerge(s.popover, 'left-5 top-12 w-24 bg-white')}
               style={{ borderColor: 'dimgray' }}
             >
-              <div className={cnMerge(s.bar, 'top-4 left-5 w-14 opacity-30 bg-black')} />
-              <div className={cnMerge(s.bar, 'top-8 left-5 w-12 opacity-20 bg-black')} />
-              <div className={cnMerge(s.bar, 'top-12 left-5 w-8 opacity-20 bg-black')} />
+              <PopoverContent />
             </div>
 
             <div
               className={cnMerge(s.popover, 'right-5 top-12 w-24')}
               style={{ borderColor: 'dimgray' }}
             >
-              <div className={cnMerge(s.bar, 'top-4 left-5 w-14 opacity-30 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-8 left-5 w-12 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-12 left-5 w-8 opacity-20 bg-white')} />
+              <PopoverContent dark />
             </div>
 
-            <div className={s.lightPanel}>
-              <div className={cnMerge(s.bar, 'h-2.5 top-5 left-5 ml-0.5 opacity-20')} />
-              <div className={cnMerge(s.bar, 'top-10 left-5 w-12 opacity-20')} />
-              <div className={cnMerge(s.bar, 'top-16 left-5 w-20 opacity-20')} />
-              <div className={cnMerge(s.bar, 'top-24 left-5 w-16 opacity-20')} />
-              <div className={cnMerge(s.bar, 'top-28 left-5 w-20 opacity-20')} />
-              <div className={cnMerge(s.bar, 'top-32 left-5 w-20 opacity-10')} />
-              <div className={cnMerge(s.bar, 'top-36 left-5 w-20 opacity-10')} />
+            <div className={cnMerge(s.panel, s.lightPanel)}>
+              <PanelContent />
             </div>
-            <div className={s.darkPanel}>
-              <div className={cnMerge(s.bar, 'h-2.5 top-5 right-5 ml-0.5 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-10 right-5 w-12 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-16 right-5 w-20 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-24 right-5 w-14 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-28 right-5 w-12 opacity-20 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-32 right-5 w-20 opacity-10 bg-white')} />
-              <div className={cnMerge(s.bar, 'top-36 right-5 w-20 opacity-10 bg-white')} />
+            <div className={cnMerge(s.panel, s.darkPanel)}>
+              <PanelContent dark />
             </div>
           </div>
 
