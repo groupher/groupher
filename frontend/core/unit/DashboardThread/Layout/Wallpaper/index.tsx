@@ -40,17 +40,18 @@ export default function Wallpaper() {
           <div className={s.realPreview}>
             <div className={s.previewImage} style={{ background }} />
             <div className={s.content} style={{ background: bgColor }}>
-              <div className={cnMerge(s.bar, 'top-3 opacity-30')} />
-              <div className={cnMerge(s.bar, 'top-8 w-40 opacity-20')} />
-
-              <div className={cnMerge(s.bar, 'top-14 w-32 opacity-30')} />
-              <div className={cnMerge(s.bar, 'top-20 w-44 -mt-1.5 opacity-20')} />
-
-              <div className={cnMerge(s.bar, 'top-24 w-20 opacity-20')} />
-              <div className={cnMerge(s.bar, 'top-28 w-32 mt-0.5 opacity-10')} />
-
-              <div className={cnMerge(s.bar, 'bottom-8 w-14 opacity-15')} />
-              <div className={cnMerge(s.bar, 'bottom-4 w-32 mt-0.5 opacity-10')} />
+              <div className={s.contentTop}>
+                <div className={cnMerge(s.bar, s.titleBar)} />
+                <div className={cnMerge(s.bar, s.wideBar)} />
+                <div className={cnMerge(s.bar, s.midBar)} />
+                <div className={cnMerge(s.bar, s.longBar)} />
+                <div className={cnMerge(s.bar, s.shortBar)} />
+                <div className={cnMerge(s.bar, s.dimBar)} />
+              </div>
+              <div className={s.contentBottom}>
+                <div className={cnMerge(s.bar, s.footerShort)} />
+                <div className={cnMerge(s.bar, s.footerWide)} />
+              </div>
             </div>
           </div>
           <CheckLabel title={t('dsb.layout.wallpaper.preview')} top={4} active={false} />

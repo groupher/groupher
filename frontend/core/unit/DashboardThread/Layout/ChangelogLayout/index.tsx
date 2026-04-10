@@ -19,6 +19,93 @@ const CHANGELOG_LAYOUT_OPTIONS = [
   },
 ] as const
 
+function ClassicPreview({ isActive }: { isActive: boolean }) {
+  const s = useSalon()
+
+  return (
+    <div className={cnMerge(s.block, isActive && s.blockActive)}>
+      <div className={s.frame}>
+        <div className={s.classicList}>
+          <div className={s.classicEntry}>
+            <div className={s.classicCover} />
+            <div className={s.classicText}>
+              <div className={s.classicTitle} />
+              <div className={s.classicBodyWide} />
+              <div className={s.classicBodyNarrow} />
+            </div>
+          </div>
+
+          <div className={s.classicEntry}>
+            <div className={s.classicCover} />
+            <div className={s.classicText}>
+              <div className={s.classicTitle} />
+              <div className={s.classicBodyNarrow} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MinimalPreview({ isActive }: { isActive: boolean }) {
+  const s = useSalon()
+
+  return (
+    <div className={cnMerge(s.block, isActive && s.blockActive)}>
+      <div className={s.frame}>
+        <div className={s.minimalList}>
+          <div className={s.minimalListInner}>
+            <div className={s.minimalEntry}>
+              <div className={s.minimalHeader}>
+                <div className={s.minimalMeta} />
+                <div className={s.minimalMain}>
+                  <div className={s.minimalText}>
+                    <div className={s.minimalTitle} />
+                    <div className={s.minimalBodyWide} />
+                    <div className={s.minimalBodyNarrow} />
+                  </div>
+                  <div className={s.minimalThumbRow}>
+                    <div className={s.minimalThumb} />
+                    <div className={s.minimalThumb} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={s.minimalEntry}>
+              <div className={s.minimalHeader}>
+                <div className={s.minimalMeta} />
+                <div className={s.minimalMain}>
+                  <div className={s.minimalText}>
+                    <div className={s.minimalTitle} />
+                    <div className={s.minimalBodyNarrow} />
+                    <div className={s.minimalBodyWide} />
+                    <div className={s.minimalBodyTiny} />
+                  </div>
+                  <div className={s.minimalThumbRow}>
+                    <div className={s.minimalThumb} />
+                    <div className={s.minimalThumb} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={s.minimalEntry}>
+              <div className={s.minimalHeader}>
+                <div className={s.minimalMeta} />
+                <div className={s.minimalMain}>
+                  <div className={s.minimalTitle} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ChangelogLayout() {
   const s = useSalon()
   const { edit, layout, isTouched, saving } = useChangelog()
@@ -43,79 +130,11 @@ export default function ChangelogLayout() {
               aria-pressed={isActive}
               onClick={() => edit(value, FIELD.CHANGELOG_LAYOUT)}
             >
-              <div className={cnMerge(s.block, isActive && s.blockActive)}>
-                {value === CHANGELOG_LAYOUT.CLASSIC ? (
-                  <>
-                    <div className={cnMerge(s.cover, 'left-16')} />
-                    <div className={cnMerge(s.bar, 'h-2.5 top-28 left-16 ml-0.5 opacity-30')} />
-                    <div
-                      className={cnMerge(s.bar, 'h-1.5 top-32 left-16 ml-0.5 mt-2 w-32 opacity-20')}
-                    />
-                    <div
-                      className={cnMerge(s.bar, 'h-1.5 top-36 left-16 ml-0.5 mt-2 w-28 opacity-10')}
-                    />
-
-                    <div className={cnMerge(s.cover, 'left-16 bottom-16')} />
-                    <div
-                      className={cnMerge(s.bar, 'h-2.5 w-14 bottom-10 left-16 ml-0.5 opacity-30')}
-                    />
-                    <div
-                      className={cnMerge(
-                        s.bar,
-                        'h-1.5 bottom-6 left-16 ml-0.5 mt-2 w-28 opacity-15',
-                      )}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <div
-                      className={cnMerge(s.bar, 'h-1.5 w-7 top-5 mt-0.5 left-10 ml-0.5 opacity-20')}
-                    />
-                    <div className={cnMerge(s.bar, 'h-2.5 top-5 left-24 ml-0.5 opacity-30')} />
-                    <div
-                      className={cnMerge(s.bar, 'h-1.5 top-10 left-24 ml-0.5 mt-2 w-28 opacity-30')}
-                    />
-                    <div
-                      className={cnMerge(s.bar, 'h-1.5 top-14 left-24 ml-0.5 mt-2 w-24 opacity-20')}
-                    />
-
-                    <div className={cnMerge(s.thumbnil, 'top-20 left-24')} />
-                    <div className={cnMerge(s.thumbnil, 'top-20 left-36 ml-2')} />
-
-                    <div
-                      className={cnMerge(
-                        s.bar,
-                        'h-1.5 w-7 top-36 mt-0.5 left-10 ml-0.5 opacity-20',
-                      )}
-                    />
-                    <div
-                      className={cnMerge(s.bar, 'h-2.5 w-16 top-36 left-24 ml-0.5 opacity-30')}
-                    />
-                    <div
-                      className={cnMerge(s.bar, 'h-1.5 top-40 left-24 ml-0.5 mt-2 w-24 opacity-30')}
-                    />
-                    <div
-                      className={cnMerge(s.bar, 'h-1.5 top-44 left-24 ml-0.5 mt-2 w-28 opacity-20')}
-                    />
-                    <div
-                      className={cnMerge(s.bar, 'h-1.5 top-48 left-24 ml-0.5 mt-2 w-16 opacity-10')}
-                    />
-
-                    <div className={cnMerge(s.thumbnil, 'top-52 mt-2.5 left-24')} />
-                    <div className={cnMerge(s.thumbnil, 'top-52 mt-2.5 left-36 ml-2')} />
-
-                    <div
-                      className={cnMerge(
-                        s.bar,
-                        'h-1.5 w-8 bottom-6 mt-0.5 left-10 ml-0.5 opacity-20',
-                      )}
-                    />
-                    <div
-                      className={cnMerge(s.bar, 'h-2.5 w-16 bottom-6 left-24 ml-0.5 opacity-30')}
-                    />
-                  </>
-                )}
-              </div>
+              {value === CHANGELOG_LAYOUT.CLASSIC ? (
+                <ClassicPreview isActive={isActive} />
+              ) : (
+                <MinimalPreview isActive={isActive} />
+              )}
 
               <CheckLabel title={t(titleKey)} active={isActive} top={4} />
             </button>

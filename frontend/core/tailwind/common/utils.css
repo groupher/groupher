@@ -7,6 +7,14 @@
     @apply flex flex-row items-center;
   }
 
+  .row-start {
+    @apply flex flex-row items-start;
+  }
+
+  .row-end {
+    @apply flex flex-row items-end;
+  }
+
   .align-both {
     @apply flex flex-row items-center justify-center;
   }
@@ -21,6 +29,10 @@
 
   .column-center {
     @apply flex flex-col items-center;
+  }
+
+  .column-start {
+    @apply flex flex-col items-start;
   }
 
   .column-align-both {

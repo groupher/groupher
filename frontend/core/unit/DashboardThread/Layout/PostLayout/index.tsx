@@ -10,6 +10,131 @@ import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cnMerge } from '../../salon/layout/post_layout'
 
+function ClassicPreview({ isActive }: { isActive: boolean }) {
+  const s = useSalon()
+
+  return (
+    <div className={cnMerge(s.block, isActive && s.blockActive)}>
+      <div className={s.frame}>
+        <div className={s.topRow}>
+          <div className={s.header}>
+            <div className={cnMerge(s.bar, s.metaBar)} />
+            <div className={cnMerge(s.bar, s.titleBar)} />
+            <div className={cnMerge(s.bar, s.bodyWide)} />
+          </div>
+          <CommentSVG className={s.commentIcon} />
+        </div>
+
+        <div className={s.footer}>
+          <div className={s.footerLeft}>
+            <UpvoteSVG className={s.upvoteIcon} />
+            <div className={cnMerge(s.bar, s.scoreBar)} />
+            <div className={cnMerge(s.bar, s.noteBar)} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ThreeColumnPreview({ isActive }: { isActive: boolean }) {
+  const s = useSalon()
+
+  return (
+    <div className={cnMerge(s.block, isActive && s.blockActive)}>
+      <div className={cnMerge(s.contentRow, 'items-start')}>
+        <div className={cnMerge(s.userAvatar, 'mt-0.5')} />
+
+        <div className={cnMerge(s.textColumn, 'grow pt-1')}>
+          <div className={cnMerge(s.bar, s.phTitleBar)} />
+          <div className={cnMerge(s.bar, s.phBodyWide)} />
+          <div className={cnMerge(s.bar, s.phBodyTiny)} />
+        </div>
+
+        <div className={cnMerge(s.upvoteBtn, 'scale-90 -mt-1')}>
+          <UpvoteSVG className={s.upvoteIcon} />
+          <div>N</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MasonryPreview({ isActive }: { isActive: boolean }) {
+  const s = useSalon()
+
+  return (
+    <div className={cnMerge(s.masonryBlock, isActive && s.blockActive)}>
+      <div className={s.masonryGrid}>
+        <div className={s.masonryCol}>
+          <div className={cnMerge(s.bar, s.masonryTopBar)} />
+          <div className={cnMerge(s.bar, s.masonryMainCard)} />
+          <div className={cnMerge(s.bar, s.masonryBottomCard)} />
+        </div>
+
+        <div className={s.masonryCol}>
+          <div className={cnMerge(s.bar, s.masonrySideTop)} />
+          <div className={cnMerge(s.bar, s.masonrySideMain)} />
+          <div className={cnMerge(s.bar, s.masonrySideBottom)} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MinimalPreview({ isActive }: { isActive: boolean }) {
+  const s = useSalon()
+
+  return (
+    <div className={cnMerge(s.block, isActive && s.blockActive)}>
+      <div className={cnMerge(s.contentRow, 'items-start')}>
+        <div className={s.upvoteBtn}>
+          <UpvoteSVG className={s.upvoteIcon} />
+          <div>N</div>
+        </div>
+
+        <div className={cnMerge(s.textColumn, 'grow pt-1')}>
+          <div className={cnMerge(s.bar, s.minimalTitleBar)} />
+          <div className={cnMerge(s.bar, s.minimalBodyWide)} />
+          <div className={cnMerge(s.bar, s.minimalBodyTiny)} />
+        </div>
+
+        <CommentSVG className={cnMerge(s.upvoteIcon, 'size-3')} />
+      </div>
+    </div>
+  )
+}
+
+function CoverPreview({ isActive }: { isActive: boolean }) {
+  const s = useSalon()
+
+  return (
+    <div className={cnMerge(s.block, isActive && s.blockActive)}>
+      <div className={s.contentRow}>
+        <div className={cnMerge(s.bar, s.coverMedia)} />
+
+        <div className={cnMerge(s.frame, 'grow')}>
+          <div className={s.header}>
+            <div className={cnMerge(s.bar, s.coverMeta)} />
+            <div className={cnMerge(s.bar, s.coverTitle)} />
+          </div>
+
+          <div className={s.footer}>
+            <div className={s.footerLeft}>
+              <UpvoteSVG className={s.upvoteIcon} />
+              <div className={cnMerge(s.bar, s.coverScore)} />
+            </div>
+            <div className={s.footerRight}>
+              <CommentSVG className={cnMerge(s.upvoteIcon, 'size-3.5')} />
+              <div className={cnMerge(s.bar, s.coverNote)} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PostLayout() {
   const s = useSalon()
   const { layout, isTouched, saving, edit } = usePost()
@@ -29,18 +154,7 @@ export default function PostLayout() {
           aria-pressed={layout === POST_LAYOUT.QUORA}
           onClick={() => edit(POST_LAYOUT.QUORA, FIELD.POST_LAYOUT)}
         >
-          <div className={cnMerge(s.block, layout === POST_LAYOUT.QUORA && s.blockActive)}>
-            <div className={cnMerge(s.bar, 'left-4 top-5 h-1 opacity-30')} />
-
-            <div className={cnMerge(s.bar, 'left-4 top-8 w-28 h-2.5 opacity-50')} />
-            <div className={cnMerge(s.bar, 'left-4 top-12 w-48 mt-0.5 opacity-30')} />
-
-            <CommentSVG className={cnMerge(s.commentIcon, 'right-5 top-5')} />
-
-            <UpvoteSVG className={cnMerge(s.upvoteIcon, 'left-4 bottom-3')} />
-            <div className={cnMerge(s.bar, 'left-10 bottom-4 w-10 h-2 opacity-40')} />
-            <div className={cnMerge(s.bar, 'left-24 bottom-4 w-10 h-1 mb-0.5 opacity-20')} />
-          </div>
+          <ClassicPreview isActive={layout === POST_LAYOUT.QUORA} />
           <CheckLabel
             title={t('dsb.layout.post.option.classic')}
             active={layout === POST_LAYOUT.QUORA}
@@ -53,18 +167,7 @@ export default function PostLayout() {
           aria-pressed={layout === POST_LAYOUT.PH}
           onClick={() => edit(POST_LAYOUT.PH, FIELD.POST_LAYOUT)}
         >
-          <div className={cnMerge(s.block, layout === POST_LAYOUT.PH && s.blockActive)}>
-            <div className={s.userAvatar} />
-
-            <div className={cnMerge(s.bar, 'left-14 top-6 w-24 h-2.5 opacity-40')} />
-            <div className={cnMerge(s.bar, 'left-14 top-11 w-36 h-1.5 opacity-20')} />
-            <div className={cnMerge(s.bar, 'left-14 top-14 w-14 h-1.5 opacity-15')} />
-
-            <div className={cnMerge(s.upvoteBtn, 'top-4 right-5 scale-90')}>
-              <UpvoteSVG className={cnMerge(s.upvoteIcon, 'relative')} />
-              <div>N</div>
-            </div>
-          </div>
+          <ThreeColumnPreview isActive={layout === POST_LAYOUT.PH} />
           <CheckLabel
             title={t('dsb.layout.post.option.ph')}
             active={layout === POST_LAYOUT.PH}
@@ -78,15 +181,7 @@ export default function PostLayout() {
           aria-pressed={layout === POST_LAYOUT.MASONRY}
           onClick={() => edit(POST_LAYOUT.MASONRY, FIELD.POST_LAYOUT)}
         >
-          <div className={cnMerge(s.block, layout === POST_LAYOUT.MASONRY && s.blockActive)}>
-            <div className={cnMerge(s.bar, 'left-6 top-0 w-28 h-2 opacity-15')} />
-            <div className={cnMerge(s.bar, 'left-6 top-4 w-28 h-12 opacity-50')} />
-            <div className={cnMerge(s.bar, 'left-6 bottom-0 w-28 h-6 opacity-20')} />
-
-            <div className={cnMerge(s.bar, 'right-6 top-0 w-28 h-4 opacity-20')} />
-            <div className={cnMerge(s.bar, 'right-6 top-6 w-28 h-14 opacity-40')} />
-            <div className={cnMerge(s.bar, 'right-6 bottom-0 w-28 h-2 opacity-15')} />
-          </div>
+          <MasonryPreview isActive={layout === POST_LAYOUT.MASONRY} />
           <CheckLabel
             title={t('dsb.layout.post.option.masonry')}
             active={layout === POST_LAYOUT.MASONRY}
@@ -100,18 +195,7 @@ export default function PostLayout() {
           aria-pressed={layout === POST_LAYOUT.MINIMAL}
           onClick={() => edit(POST_LAYOUT.MINIMAL, FIELD.POST_LAYOUT)}
         >
-          <div className={cnMerge(s.block, layout === POST_LAYOUT.MINIMAL && s.blockActive)}>
-            <div className={cnMerge(s.upvoteBtn, 'top-5 left-5')}>
-              <UpvoteSVG className={cnMerge(s.upvoteIcon, 'relative')} />
-              <div>N</div>
-            </div>
-
-            <div className={cnMerge(s.bar, 'left-20 top-6 w-28 h-2.5 opacity-40')} />
-            <div className={cnMerge(s.bar, 'left-20 top-11 w-36 h-1.5 opacity-20')} />
-            <div className={cnMerge(s.bar, 'left-20 top-14 w-10 h-1.5 opacity-15')} />
-
-            <CommentSVG className={cnMerge(s.upvoteIcon, 'right-6 top-6 ml-5 size-3')} />
-          </div>
+          <MinimalPreview isActive={layout === POST_LAYOUT.MINIMAL} />
           <CheckLabel
             title={t('dsb.layout.post.option.minimal')}
             active={layout === POST_LAYOUT.MINIMAL}
@@ -125,17 +209,7 @@ export default function PostLayout() {
           aria-pressed={layout === POST_LAYOUT.COVER}
           onClick={() => edit(POST_LAYOUT.COVER, FIELD.POST_LAYOUT)}
         >
-          <div className={cnMerge(s.block, layout === POST_LAYOUT.COVER && s.blockActive)}>
-            <div className={cnMerge(s.bar, 'left-5 top-4 w-24 h-16 opacity-30')} />
-            <div className={cnMerge(s.bar, 'right-28 top-6 w-12 h-1.5 opacity-20')} />
-            <div className={cnMerge(s.bar, 'right-12 top-10 w-28 h-2 opacity-40')} />
-
-            <UpvoteSVG className={cnMerge(s.upvoteIcon, 'right-36 bottom-4 ml-5')} />
-            <div className={cnMerge(s.bar, 'left-36 bottom-5 w-4 h-1.5 opacity-30')} />
-
-            <CommentSVG className={cnMerge(s.upvoteIcon, 'right-24 bottom-4 ml-5 size-3.5')} />
-            <div className={cnMerge(s.bar, 'right-16 bottom-5 ml-2 w-6 h-1.5 opacity-20')} />
-          </div>
+          <CoverPreview isActive={layout === POST_LAYOUT.COVER} />
           <CheckLabel
             title={t('dsb.layout.post.option.cover')}
             active={layout === POST_LAYOUT.COVER}

@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { TOPBAR_LAYOUT } from '~/const/layout'
-import { FIELD } from '../../constant'
-import TopbarLayout from '.'
+import { FIELD } from '../../../constant'
+import TopbarLayout from '..'
 
 const edit = vi.fn()
 
@@ -10,7 +10,7 @@ vi.mock('~/hooks/useTrans', () => ({
   default: () => ({ t: (key: string) => key }),
 }))
 
-vi.mock('../../logic/useTopbar', () => ({
+vi.mock('../../../logic/useTopbar', () => ({
   default: () => ({
     edit,
     layout: TOPBAR_LAYOUT.YES,
@@ -21,7 +21,7 @@ vi.mock('../../logic/useTopbar', () => ({
   }),
 }))
 
-vi.mock('../../salon/layout/topbar_layout', () => ({
+vi.mock('../../../salon/layout/topbar_layout', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',
@@ -37,7 +37,7 @@ vi.mock('../../salon/layout/topbar_layout', () => ({
   cn: (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' '),
 }))
 
-vi.mock('../../SectionLabel', () => ({
+vi.mock('../../../SectionLabel', () => ({
   default: ({ title, desc, detailText }: { title: string; desc: string; detailText?: string }) => (
     <div>
       <span>{title}</span>
@@ -53,7 +53,7 @@ vi.mock('~/widgets/CheckLabel', () => ({
   ),
 }))
 
-vi.mock('../../SavingBar', () => ({
+vi.mock('../../../SavingBar', () => ({
   default: ({ field, children }: { field: string; children?: ReactNode }) => (
     <div data-testid={`saving-bar-${field}`}>
       {field}

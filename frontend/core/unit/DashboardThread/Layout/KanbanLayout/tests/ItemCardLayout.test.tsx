@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { POST_LAYOUT } from '~/const/layout'
-import { FIELD } from '../../constant'
-import PostLayout from '.'
+import { KANBAN_CARD_LAYOUT } from '~/const/layout'
+import { FIELD } from '../../../constant'
+import ItemCardLayout from '../ItemCardLayout'
 
 const edit = vi.fn()
 
@@ -9,16 +9,16 @@ vi.mock('~/hooks/useTrans', () => ({
   default: () => ({ t: (key: string) => key }),
 }))
 
-vi.mock('../../logic/usePost', () => ({
+vi.mock('../../../logic/useKanban', () => ({
   default: () => ({
-    layout: POST_LAYOUT.QUORA,
-    isTouched: false,
+    kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,
+    isKanbanCardLayoutTouched: false,
     saving: false,
     edit,
   }),
 }))
 
-vi.mock('../../salon/layout/post_layout', () => ({
+vi.mock('../../../salon/layout/kanban_layout/item_card_layout', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',
@@ -26,21 +26,18 @@ vi.mock('../../salon/layout/post_layout', () => ({
     block: 'block',
     blockActive: 'block-active',
     bar: 'bar',
-    commentIcon: 'comment-icon',
-    upvoteIcon: 'upvote-icon',
+    icon: 'icon',
     userAvatar: 'user-avatar',
-    upvoteBtn: 'upvote-btn',
   }),
   cnMerge: (...classes: Array<string | false | null | undefined>) =>
     classes.filter(Boolean).join(' '),
 }))
 
-vi.mock('../../SectionLabel', () => ({
-  default: ({ title, desc, detailText }: { title: string; desc: string; detailText?: string }) => (
+vi.mock('../../../SectionLabel', () => ({
+  default: ({ title, desc }: { title: string; desc: string }) => (
     <div>
       <span>{title}</span>
       <span>{desc}</span>
-      {detailText ? <span>{detailText}</span> : null}
     </div>
   ),
 }))
@@ -51,7 +48,7 @@ vi.mock('~/widgets/CheckLabel', () => ({
   ),
 }))
 
-vi.mock('../../SavingBar', () => ({
+vi.mock('../../../SavingBar', () => ({
   default: ({ field }: { field: string }) => <div data-testid='saving-bar'>{field}</div>,
 }))
 
@@ -67,23 +64,22 @@ vi.mock('~/icons/Upvote', () => ({
   ),
 }))
 
-describe('<PostLayout />', () => {
-  it('renders five post layout toggles with active state', () => {
-    render(<PostLayout />)
+describe('<ItemCardLayout />', () => {
+  it('renders two kanban card layout toggles with active state', () => {
+    render(<ItemCardLayout />)
 
     const buttons = screen.getAllByRole('button')
-    expect(buttons).toHaveLength(5)
-    expect(buttons[0]).toHaveAttribute('type', 'button')
+    expect(buttons).toHaveLength(2)
     expect(buttons[0]).toHaveAttribute('aria-pressed', 'true')
-    expect(buttons[4]).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByTestId('saving-bar')).toHaveTextContent(FIELD.POST_LAYOUT)
+    expect(buttons[1]).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByTestId('saving-bar')).toHaveTextContent(FIELD.KANBAN_CARD_LAYOUT)
   })
 
-  it('updates post layout when cover option is clicked', () => {
-    render(<PostLayout />)
+  it('updates card layout when full option is clicked', () => {
+    render(<ItemCardLayout />)
 
-    fireEvent.click(screen.getAllByRole('button')[4])
+    fireEvent.click(screen.getAllByRole('button')[1])
 
-    expect(edit).toHaveBeenCalledWith(POST_LAYOUT.COVER, FIELD.POST_LAYOUT)
+    expect(edit).toHaveBeenCalledWith(KANBAN_CARD_LAYOUT.FULL, FIELD.KANBAN_CARD_LAYOUT)
   })
 })

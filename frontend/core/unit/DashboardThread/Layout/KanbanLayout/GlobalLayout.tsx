@@ -8,6 +8,36 @@ import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/global_layout'
 
+const CLASSIC_COLUMNS = [
+  ['opacity-35', 'opacity-20'],
+  ['opacity-35', 'opacity-25', 'opacity-15', 'opacity-10'],
+  ['opacity-35', 'opacity-25', 'opacity-15'],
+] as const
+
+const WATERFALL_GROUPS = [
+  {
+    headerWidth: 'w-full',
+    titleWidth: 'w-16 opacity-30',
+    rows: [
+      { left: 'w-32 opacity-30', right: 'w-8 opacity-20' },
+      { left: 'w-24 opacity-20', right: 'w-8 opacity-10' },
+    ],
+  },
+  {
+    headerWidth: 'w-full',
+    titleWidth: 'w-10 opacity-40',
+    rows: [
+      { left: 'w-32 opacity-30', right: 'w-8 opacity-20' },
+      { left: 'w-24 opacity-20', right: 'w-8 opacity-10' },
+    ],
+  },
+  {
+    headerWidth: 'w-full',
+    titleWidth: 'w-12 opacity-25',
+    rows: [{ left: 'w-12 opacity-10', right: 'w-8 opacity-10' }],
+  },
+] as const
+
 export default function GlobalLayout() {
   const s = useSalon()
   const { t } = useTrans()
@@ -28,21 +58,25 @@ export default function GlobalLayout() {
           onClick={() => edit(KANBAN_LAYOUT.CLASSIC, FIELD.KANBAN_LAYOUT)}
         >
           <div className={cnMerge(s.block, layout === KANBAN_LAYOUT.CLASSIC && s.blockActive)}>
-            <div className={cnMerge(s.bar, 'w-10')} />
-            <div className={cnMerge(s.bar, 'w-6 right-5 opacity-30')} />
+            <div className={s.frame}>
+              <div className={s.toolbar}>
+                <div className={cnMerge(s.bar, s.toolbarLeft)} />
+                <div className={cnMerge(s.bar, s.toolbarRight)} />
+              </div>
 
-            <div className={cnMerge(s.bar, s.board, 'left-3')} />
-            <div className={cnMerge(s.bar, s.item, 'left-5 top-14 opacity-35')} />
-            <div className={cnMerge(s.bar, s.item, 'left-5 top-24 opacity-20 -mt-1')} />
-            <div className={cnMerge(s.bar, s.board, 'left-24 ml-1')} />
-            <div className={cnMerge(s.bar, s.item, 'left-24 top-14 opacity-35 ml-3')} />
-            <div className={cnMerge(s.bar, s.item, 'left-24 top-24 opacity-25 -mt-1 ml-3')} />
-            <div className={cnMerge(s.bar, s.item, 'left-24 bottom-9 opacity-15 ml-3')} />
-            <div className={cnMerge(s.bar, s.item, 'left-24 bottom-0 opacity-10 ml-3')} />
-            <div className={cnMerge(s.bar, s.board, 'right-4 ml-1')} />
-            <div className={cnMerge(s.bar, s.item, 'right-6 top-14 opacity-35')} />
-            <div className={cnMerge(s.bar, s.item, 'right-6 top-24 opacity-25 -mt-1')} />
-            <div className={cnMerge(s.bar, s.item, 'right-6 bottom-9 opacity-15')} />
+              <div className={s.boardGrid}>
+                {CLASSIC_COLUMNS.map((cards, index) => (
+                  <div key={index} className={s.boardColumn}>
+                    <div className={s.boardSurface} />
+                    <div className={s.boardContent}>
+                      {cards.map((opacity, cardIndex) => (
+                        <div key={`${index}-${cardIndex}`} className={cnMerge(s.card, opacity)} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <CheckLabel
             title={t('dsb.layout.kanban.global.option.classic')}
@@ -57,30 +91,29 @@ export default function GlobalLayout() {
           onClick={() => edit(KANBAN_LAYOUT.WATERFALL, FIELD.KANBAN_LAYOUT)}
         >
           <div className={cnMerge(s.block, layout === KANBAN_LAYOUT.WATERFALL && s.blockActive)}>
-            <div className={cnMerge(s.bar, 'w-10')} />
-            <div className={cnMerge(s.bar, 'w-6 right-5 opacity-30')} />
+            <div className={s.frame}>
+              <div className={s.toolbar}>
+                <div className={cnMerge(s.bar, s.toolbarLeft)} />
+                <div className={cnMerge(s.bar, s.toolbarRight)} />
+              </div>
 
-            <div className={cnMerge(s.bar, 'w-64 h-3.5 left-4 top-12 opacity-10')} />
-            <div className={cnMerge(s.bar, 'w-8 h-1.5 left-6 top-12 mt-1 opacity-30')} />
+              <div className={s.waterfall}>
+                {WATERFALL_GROUPS.map((group, index) => (
+                  <div key={index} className={s.waterfallGroup}>
+                    <div className={cnMerge(s.waterfallMain, group.headerWidth)}>
+                      <div className={cnMerge(s.waterfallTitle, group.titleWidth)} />
+                    </div>
 
-            <div className={cnMerge(s.bar, 'w-32 h-1.5 left-6 top-16 mt-2 opacity-30')} />
-            <div className={cnMerge(s.bar, 'w-24 h-1.5 left-6 top-20 mt-2 opacity-20')} />
-            <div className={cnMerge(s.bar, 'w-8 h-1.5 right-4 top-16 mt-2 opacity-20')} />
-            <div className={cnMerge(s.bar, 'w-8 h-1.5 right-4 top-20 mt-1.5 opacity-10')} />
-
-            <div className={cnMerge(s.bar, 'w-64 h-3.5 left-4 top-24 mt-2 opacity-10')} />
-            <div className={cnMerge(s.bar, 'w-10 h-1.5 left-6 top-24 mt-3 opacity-40')} />
-
-            <div className={cnMerge(s.bar, 'w-32 h-1.5 left-6 top-28 mt-3.5 opacity-30')} />
-            <div className={cnMerge(s.bar, 'w-24 h-1.5 left-6 top-32 mt-3.5 opacity-20')} />
-            <div className={cnMerge(s.bar, 'w-8 h-1.5 right-4 top-28 mt-3.5 opacity-20')} />
-            <div className={cnMerge(s.bar, 'w-8 h-1.5 right-4 top-32 mt-3 opacity-10')} />
-
-            <div className={cnMerge(s.bar, 'w-64 h-3.5 left-4 bottom-5 opacity-10')} />
-            <div className={cnMerge(s.bar, 'w-8 h-1.5 left-6 bottom-6 opacity-25')} />
-
-            <div className={cnMerge(s.bar, 'w-12 h-1.5 left-6 bottom-2 mt-3.5 opacity-10')} />
-            <div className={cnMerge(s.bar, 'w-8 h-1.5 right-4 bottom-2 mt-3 opacity-10')} />
+                    {group.rows.map((row, rowIndex) => (
+                      <div key={`${index}-${rowIndex}`} className={s.waterfallRow}>
+                        <div className={cnMerge(s.waterfallMeta, row.left)} />
+                        <div className={cnMerge(s.waterfallMeta, row.right)} />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <CheckLabel
             title={t('dsb.layout.kanban.global.option.waterfall')}

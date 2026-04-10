@@ -79,7 +79,7 @@ const LinkEditor: FC<TProps> = ({
             </div>
           )}
           <div className='grow' />
-          <div className={cn(s.actions, editing && '!hidden debug')}>
+          <div className={cn(s.actions, editing && '!hidden')}>
             {!isFirst && (
               <ArrowSVG
                 className={cn(s.icon, 'size-3 rotate-90')}

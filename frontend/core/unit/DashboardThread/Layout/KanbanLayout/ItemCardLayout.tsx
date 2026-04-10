@@ -21,6 +21,63 @@ const KANBAN_CARD_LAYOUT_OPTIONS = [
   },
 ] as const
 
+function SimplePreview({ isActive }: { isActive: boolean }) {
+  const s = useSalon()
+
+  return (
+    <div className={cnMerge(s.block, isActive && s.blockActive)}>
+      <div className={s.frame}>
+        <div className={s.header}>
+          <div className={cnMerge(s.bar, s.titleBar)} />
+          <div className={cnMerge(s.bar, s.bodyBar)} />
+        </div>
+
+        <div className={s.footer}>
+          <div className={s.footerLeft}>
+            <UpvoteSVG className={s.icon} />
+            <CommentSVG className={s.commentIcon} />
+          </div>
+          <div className={cnMerge(s.bar, s.simpleMetric)} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FullPreview({ isActive }: { isActive: boolean }) {
+  const s = useSalon()
+
+  return (
+    <div className={cnMerge(s.block, isActive && s.blockActive)}>
+      <div className={s.frame}>
+        <div className={s.header}>
+          <div className={cnMerge(s.bar, s.titleBar)} />
+          <div className={s.headerRow}>
+            <div className={cnMerge(s.bar, s.bodyBar)} />
+            <div className={cnMerge(s.bar, s.sideBar)} />
+          </div>
+        </div>
+
+        <div className={s.footer}>
+          <div className={s.footerLeft}>
+            <UpvoteSVG className={s.icon} />
+            <div className={s.avatarList}>
+              <div className={s.userAvatar} />
+              <div className={cnMerge(s.userAvatar, 'opacity-30')} />
+              <div className={cnMerge(s.userAvatar, 'opacity-20')} />
+            </div>
+          </div>
+
+          <div className={s.footerRight}>
+            <CommentSVG className={s.commentIcon} />
+            <div className={cnMerge(s.bar, s.tinyMetric)} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ItemCardLayout() {
   const s = useSalon()
   const { t } = useTrans()
@@ -50,32 +107,11 @@ export default function ItemCardLayout() {
               aria-pressed={isActive}
               onClick={() => edit(value, FIELD.KANBAN_CARD_LAYOUT)}
             >
-              <div className={cnMerge(s.block, isActive && s.blockActive)}>
-                <div className={cnMerge(s.bar, 'w-16')} />
-                <div className={cnMerge(s.bar, 'top-8 w-28 h-2.5 opacity-40')} />
-
-                {value === KANBAN_CARD_LAYOUT.SIMPLE ? (
-                  <>
-                    <div className={cnMerge(s.bar, 'bottom-4 right-4 w-10 opacity-30')} />
-
-                    <UpvoteSVG className={cnMerge(s.icon, 'bottom-3 left-4')} />
-                    <CommentSVG className={cnMerge(s.icon, 'size-3.5 bottom-3.5 left-12')} />
-                  </>
-                ) : (
-                  <>
-                    <div className={cnMerge(s.bar, 'bottom-12 right-4 w-10 mb-1 opacity-20')} />
-
-                    <UpvoteSVG className={cnMerge(s.icon, 'bottom-3 left-4')} />
-                    <div className={cnMerge(s.userAvatar, 'left-10 bottom-3.5')} />
-                    <div className={cnMerge(s.userAvatar, 'left-16 bottom-3.5 -ml-1 opacity-30')} />
-                    <div className={cnMerge(s.userAvatar, 'left-20 bottom-3.5 opacity-20')} />
-
-                    <CommentSVG className={cnMerge(s.icon, 'size-3.5 bottom-3.5 right-10')} />
-
-                    <div className={cnMerge(s.bar, 'w-4 bottom-5 right-4 mt-1 opacity-20')} />
-                  </>
-                )}
-              </div>
+              {value === KANBAN_CARD_LAYOUT.SIMPLE ? (
+                <SimplePreview isActive={isActive} />
+              ) : (
+                <FullPreview isActive={isActive} />
+              )}
               <CheckLabel title={t(titleKey)} active={isActive} top={2} />
             </button>
           )

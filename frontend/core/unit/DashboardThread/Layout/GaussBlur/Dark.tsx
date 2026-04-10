@@ -35,20 +35,21 @@ export default function Dark() {
         <div className={s.previewer}>
           <div className={s.previewImage} style={{ background }} />
           <div className={s.contentBlock} style={{ background: bgColor }}>
-            <div className={cn(s.bar)} />
-            <div className={cn(s.bar, 'top-10 w-40 opacity-20')} />
+            <div className={s.contentTop}>
+              <div className={cn(s.bar, s.titleBar)} />
+              <div className={cn(s.bar, s.wideBar)} />
+              <div className={cn(s.bar, s.midBar)} />
+              <div className={cn(s.bar, s.longBar)} />
+              <div className={cn(s.bar, s.shortBar)} />
+              <div className={cn(s.bar, s.dimBar)} />
+            </div>
 
-            <div className={cn(s.bar, 'top-16 w-28')} />
-            <div className={cn(s.bar, 'top-20 w-44 opacity-20')} />
-
-            <div className={cn(s.bar, 'top-24 w-16 opacity-30 mt-2')} />
-            <div className={cn(s.bar, 'top-28 w-32 opacity-15 mt-2')} />
-
-            <div className={cn(s.bar, 'bottom-20 w-28 opacity-30')} />
-            <div className={cn(s.bar, 'bottom-16 w-44 opacity-15')} />
-
-            <div className={cn(s.bar, 'bottom-8 w-28 opacity-20')} />
-            <div className={cn(s.bar, 'bottom-4 w-44 opacity-10')} />
+            <div className={s.contentBottom}>
+              <div className={cn(s.bar, s.footerMid)} />
+              <div className={cn(s.bar, s.footerLong)} />
+              <div className={cn(s.bar, s.footerBottomMid)} />
+              <div className={cn(s.bar, s.footerBottomLong)} />
+            </div>
           </div>
         </div>
         <ul className={s.actions}>

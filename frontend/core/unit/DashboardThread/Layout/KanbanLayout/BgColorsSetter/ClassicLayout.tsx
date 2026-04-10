@@ -1,6 +1,8 @@
+import { type FC, useEffect, useRef } from 'react'
+import { KANBAN_CARD_LAYOUT } from '~/const/layout'
 import { KANBAN_BOARD } from '~/const/thread'
 import type { TKanbanBoard } from '~/spec'
-import { type FC, useEffect, useRef } from 'react'
+import useKanban from '../../../logic/useKanban'
 import useSalon, { cn } from '../../../salon/layout/kanban_layout/bg_colors_setter/classic_layout'
 import KanbanList from './KanbanList'
 
@@ -27,6 +29,7 @@ const BOARD_ACTIVE_KEY = {
 
 const ClassicLayout: FC<TProps> = ({ activeBoards, hoveredBoard }) => {
   const s = useSalon(activeBoards.length)
+  const { kanbanCardLayout } = useKanban()
 
   const ref = useRef(null)
 
@@ -51,7 +54,14 @@ const ClassicLayout: FC<TProps> = ({ activeBoards, hoveredBoard }) => {
             hoveredBoard === board && s[BOARD_ACTIVE_KEY[board]],
           )}
         >
-          <KanbanList num={index + 1} />
+          <KanbanList
+            num={index + 1}
+            layout={
+              kanbanCardLayout === KANBAN_CARD_LAYOUT.FULL
+                ? KANBAN_CARD_LAYOUT.FULL
+                : KANBAN_CARD_LAYOUT.SIMPLE
+            }
+          />
         </div>
       ))}
     </div>

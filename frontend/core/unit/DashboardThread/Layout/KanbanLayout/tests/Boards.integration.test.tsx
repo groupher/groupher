@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import { KANBAN_BOARD } from '~/const/thread'
 import useDashboard from '~/stores/dashboard/hooks'
-import useKanban from '../../logic/useKanban'
-import Boards from './Boards'
+import useKanban from '../../../logic/useKanban'
+import Boards from '../Boards'
 
 vi.mock('~/hooks/useTrans', () => ({
   default: () => ({
@@ -72,6 +72,36 @@ describe('<Boards /> integration', () => {
       expect(screen.getByTestId('probe')).toHaveTextContent('"isKanbanBoardsTouched":true')
       expect(screen.getByText('dsb.saving_bar.save')).toBeInTheDocument()
       expect(screen.getByText('dsb.saving_bar.cancel')).toBeInTheDocument()
+    })
+  })
+
+  it('clears touched state after toggling a board off and back on', async () => {
+    const wrapper = makeStoreWrapper({
+      dashboard: {
+        kanbanBoards: [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE],
+      },
+    })
+
+    render(
+      <>
+        <Boards />
+        <Probe />
+      </>,
+      { wrapper },
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Todo/i }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('probe')).toHaveTextContent('"kanbanBoards":["wip","done"]')
+      expect(screen.getByTestId('probe')).toHaveTextContent('"isKanbanBoardsTouched":true')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Todo/i }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('probe')).toHaveTextContent('"kanbanBoards":["todo","wip","done"]')
+      expect(screen.getByTestId('probe')).toHaveTextContent('"isKanbanBoardsTouched":false')
     })
   })
 })
