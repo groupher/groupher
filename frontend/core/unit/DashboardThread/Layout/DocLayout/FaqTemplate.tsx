@@ -9,6 +9,30 @@ type TProps = {
   layout: TDocFAQLayout
 }
 
+const COLLAPSE_ITEMS = [
+  { title: 'w-16', body1: 'w-24', body2: 'w-20' },
+  { title: 'w-16', body1: 'w-20', body2: 'w-14' },
+  { title: 'w-20', body1: 'w-14', body2: 'w-16' },
+] as const
+
+const FLAT_ROWS = [
+  [
+    { title: 'w-10', body1: 'w-16', body2: 'w-12' },
+    { title: 'w-12', body1: 'w-16', body2: 'w-12' },
+    { title: 'w-9', body1: 'w-16', body2: 'w-12' },
+  ],
+  [
+    { title: 'w-8', body1: 'w-12', body2: 'w-8' },
+    { title: 'w-14', body1: 'w-10', body2: 'w-10' },
+  ],
+] as const
+
+const LEFT_RIGHT_ITEMS = [
+  { title: 'w-16', body1: 'w-24', body2: 'w-20' },
+  { title: 'w-16', body1: 'w-20', body2: 'w-14' },
+  { title: 'w-20', body1: 'w-14', body2: 'w-16' },
+] as const
+
 const FaqTemplate: FC<TProps> = ({ layout }) => {
   const s = useSalon()
   const { t } = useTrans()
@@ -16,18 +40,19 @@ const FaqTemplate: FC<TProps> = ({ layout }) => {
   if (layout === DOC_FAQ_LAYOUT.COLLAPSE) {
     return (
       <div className={s.block}>
-        <div className={cnMerge(s.faqTitle, 'top-5 left-28')}>{t('dsb.layout.doc.faq.label')}</div>
-        <div className={cnMerge(s.bar, 'h-1.5 top-14 left-24 w-16')} />
-        <div className={cnMerge(s.bar, 'h-1 top-16 mt-2 left-24 w-24 opacity-20')} />
-        <div className={cnMerge(s.bar, 'h-1 top-20 mt-1.5 left-24 w-20 opacity-20')} />
+        <div className={s.titleWrap}>
+          <div className={s.faqTitle}>{t('dsb.layout.doc.faq.label')}</div>
+        </div>
 
-        <div className={cnMerge(s.bar, 'h-1.5 top-24 mt-2 left-24 w-16')} />
-        <div className={cnMerge(s.bar, 'h-1 top-28 mt-2 left-24 w-20 opacity-20')} />
-        <div className={cnMerge(s.bar, 'h-1 top-32 mt-1.5 left-24 w-14 opacity-20')} />
-
-        <div className={cnMerge(s.bar, 'h-1.5 top-36 mt-2 left-24 w-20')} />
-        <div className={cnMerge(s.bar, 'h-1.5 top-40 mt-2.5 left-24 w-14')} />
-        <div className={cnMerge(s.bar, 'h-1.5 top-44 mt-2.5 left-24 w-16 opacity-30')} />
+        <div className={s.collapseList}>
+          {COLLAPSE_ITEMS.map((item, index) => (
+            <div key={index} className={s.collapseItem}>
+              <div className={cnMerge(s.bar, item.title)} />
+              <div className={cnMerge(s.bar, 'h-1', item.body1, 'opacity-20')} />
+              <div className={cnMerge(s.bar, 'h-1', item.body2, 'opacity-20')} />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -35,63 +60,45 @@ const FaqTemplate: FC<TProps> = ({ layout }) => {
   if (layout === DOC_FAQ_LAYOUT.LEFT_RIGHT) {
     return (
       <div className={s.block}>
-        <div className={cnMerge(s.faqTitle, 'top-8 left-7 -ml-1')}>
-          {t('dsb.layout.doc.faq.label')}
+        <div className={s.leftRightMain}>
+          <div className={s.leftRightSide}>
+            <div className={s.faqTitle}>{t('dsb.layout.doc.faq.label')}</div>
+            <div className={cnMerge(s.bar, 'h-1', 'w-16', 'opacity-20')} />
+            <div className={cnMerge(s.bar, 'h-1', 'w-12', 'opacity-10')} />
+          </div>
+
+          <div className={s.leftRightList}>
+            {LEFT_RIGHT_ITEMS.map((item, index) => (
+              <div key={index} className={s.leftRightItem}>
+                <div className={cnMerge(s.bar, item.title)} />
+                <div className={cnMerge(s.bar, 'h-1', item.body1, 'opacity-20')} />
+                <div className={cnMerge(s.bar, 'h-1', item.body2, 'opacity-20')} />
+              </div>
+            ))}
+          </div>
         </div>
-        <div className={cnMerge(s.bar, 'h-1.5 top-14 left-6 w-16 opacity-20')} />
-        <div className={cnMerge(s.bar, 'h-1.5 top-16 left-6 w-12 mt-1 opacity-10')} />
-
-        <div className={cnMerge(s.bar, 'h-1.5 top-9 left-32 w-16')} />
-        <div className={cnMerge(s.bar, 'h-1 top-12 mt-2 left-32 w-24 opacity-20')} />
-        <div className={cnMerge(s.bar, 'h-1 top-16 mt-1.5 left-32 w-20 opacity-20')} />
-
-        <div className={cnMerge(s.bar, 'h-1.5 top-20 mt-2 left-32 w-16')} />
-        <div className={cnMerge(s.bar, 'h-1 top-24 mt-2 left-32 w-20 opacity-20')} />
-        <div className={cnMerge(s.bar, 'h-1 top-28 mt-1.5 left-32 w-14 opacity-20')} />
-
-        <div className={cnMerge(s.bar, 'h-1.5 top-32 mt-2 left-32 w-20')} />
-        <div className={cnMerge(s.bar, 'h-1.5 top-36 mt-2.5 left-32 w-14')} />
-        <div className={cnMerge(s.bar, 'h-1.5 top-40 mt-2.5 left-32 w-16 opacity-20')} />
       </div>
     )
   }
 
   return (
     <div className={s.block}>
-      <div className={cnMerge(s.faqTitle, 'top-5 left-28 -ml-1')}>
-        {t('dsb.layout.doc.faq.label')}
+      <div className={s.titleWrap}>
+        <div className={s.faqTitle}>{t('dsb.layout.doc.faq.label')}</div>
       </div>
 
-      <div className={s.list}>
-        <div className={s.box}>
-          <div className={cnMerge(s.bar, 'h-1.5 top-0 left-3 w-10')} />
-          <div className={cnMerge(s.bar, 'h-1 top-2 mt-2 left-3 w-16 opacity-20')} />
-          <div className={cnMerge(s.bar, 'h-1 top-4 mt-2.5 left-3 w-12 opacity-20')} />
-        </div>
-
-        <div className={s.box}>
-          <div className={cnMerge(s.bar, 'h-1.5 top-0 left-3 w-12')} />
-          <div className={cnMerge(s.bar, 'h-1 top-2 mt-2 left-3 w-16 opacity-20')} />
-          <div className={cnMerge(s.bar, 'h-1 top-4 mt-2.5 left-3 w-12 opacity-20')} />
-        </div>
-
-        <div className={s.box}>
-          <div className={cnMerge(s.bar, 'h-1.5 top-0 left-3 w-9')} />
-          <div className={cnMerge(s.bar, 'h-1 top-2 mt-2 left-3 w-16 opacity-20')} />
-          <div className={cnMerge(s.bar, 'h-1 top-4 mt-2.5 left-3 w-12 opacity-20')} />
-        </div>
-
-        <div className={s.box}>
-          <div className={cnMerge(s.bar, 'h-1.5 top-0 left-3 w-8')} />
-          <div className={cnMerge(s.bar, 'h-1 top-2 mt-2 left-3 w-16 opacity-20')} />
-          <div className={cnMerge(s.bar, 'h-1 top-4 mt-2.5 left-3 w-12 opacity-20')} />
-        </div>
-
-        <div className={s.box}>
-          <div className={cnMerge(s.bar, 'h-1.5 top-0 left-3 w-14')} />
-          <div className={cnMerge(s.bar, 'h-1 top-2 mt-2 left-3 w-20 opacity-20')} />
-          <div className={cnMerge(s.bar, 'h-1 top-4 mt-2.5 left-3 w-12 opacity-20')} />
-        </div>
+      <div className={s.flatList}>
+        {FLAT_ROWS.map((row, rowIndex) => (
+          <div key={rowIndex} className={s.flatRow}>
+            {row.map((item, index) => (
+              <div key={index} className={s.flatBox}>
+                <div className={cnMerge(s.bar, item.title)} />
+                <div className={cnMerge(s.bar, 'h-1', item.body1, 'opacity-20')} />
+                <div className={cnMerge(s.bar, 'h-1', item.body2, 'opacity-20')} />
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   )

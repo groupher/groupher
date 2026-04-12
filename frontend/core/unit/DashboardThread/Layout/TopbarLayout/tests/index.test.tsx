@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { TOPBAR_LAYOUT } from '~/const/layout'
+import { BANNER_LAYOUT, TOPBAR_LAYOUT } from '~/const/layout'
 import { FIELD } from '../../../constant'
 import TopbarLayout from '..'
 
@@ -19,6 +19,27 @@ vi.mock('../../../logic/useTopbar', () => ({
     saving: false,
     bg: 'black',
   }),
+}))
+
+vi.mock('../../../logic/useBanner', () => ({
+  default: () => ({
+    layout: BANNER_LAYOUT.HEADER,
+    edit: vi.fn(),
+    isTouched: false,
+    saving: false,
+  }),
+}))
+
+vi.mock('~/stores/community/hooks', () => ({
+  default: () => ({
+    title: 'Home',
+  }),
+}))
+
+vi.mock('../../BannerLayout/BannerLayoutPreviewContent', () => ({
+  default: ({ layout, title }: { layout: string; title: string }) => (
+    <div data-testid='banner-layout-preview' data-layout={layout} data-title={title} />
+  ),
 }))
 
 vi.mock('../../../salon/layout/topbar_layout', () => ({

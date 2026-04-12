@@ -1,13 +1,16 @@
 import { TOPBAR_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
+import useCommunity from '~/stores/community/hooks'
 import CheckLabel from '~/widgets/CheckLabel'
 import ColorSelector from '~/widgets/ColorSelector'
 
 import { FIELD } from '../../constant'
+import useBanner from '../../logic/useBanner'
 import useTopbar from '../../logic/useTopbar'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cn } from '../../salon/layout/topbar_layout'
+import BannerLayoutPreviewContent from '../BannerLayout/BannerLayoutPreviewContent'
 
 const TOPBAR_LAYOUT_OPTIONS = [
   {
@@ -23,8 +26,10 @@ const TOPBAR_LAYOUT_OPTIONS = [
 export default function TopbarLayout() {
   const s = useSalon()
   const { t } = useTrans()
+  const { title } = useCommunity()
 
   const { edit, layout, isBgTouched, isLayoutTouched, saving, bg } = useTopbar()
+  const { layout: bannerLayout } = useBanner()
 
   return (
     <div className={s.wrapper}>
@@ -45,10 +50,10 @@ export default function TopbarLayout() {
               aria-pressed={isActive}
               onClick={() => edit(value, FIELD.TOPBAR_LAYOUT)}
             >
+              {value === TOPBAR_LAYOUT.YES && <div className={s.topBar} />}
               <div className={cn(s.block, isActive && s.blockActive)}>
-                {value === TOPBAR_LAYOUT.YES && <div className={s.topBar} />}
-                <div className={cn(s.bar, 'top-8 left-5 h-28 w-6/12 opacity-5')} />
-                <div className={cn(s.bar, 'top-8 right-5 h-24 w-20 opacity-5')} />
+                <div className='mb-2' />
+                <BannerLayoutPreviewContent layout={bannerLayout} title={title} />
               </div>
               <CheckLabel title={t(titleKey)} active={isActive} top={4} />
             </button>
