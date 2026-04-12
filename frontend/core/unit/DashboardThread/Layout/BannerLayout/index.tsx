@@ -19,7 +19,7 @@ function LayoutPreview({
 }: {
   isActive: boolean
   title: string
-  layout: typeof BANNER_LAYOUT[keyof typeof BANNER_LAYOUT]
+  layout: (typeof BANNER_LAYOUT)[keyof typeof BANNER_LAYOUT]
 }) {
   const s = useSalon()
 

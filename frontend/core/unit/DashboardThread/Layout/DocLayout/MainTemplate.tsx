@@ -12,7 +12,14 @@ type TProps = {
 const BLOCK_ITEMS = [
   { toneBg: 'redBg', toneFg: 'red', title: 'w-6', body1: 'w-8', body2: 'w-14', body3: 'w-10' },
   { toneBg: 'blueBg', toneFg: 'blue', title: 'w-6', body1: 'w-12', body2: 'w-14', body3: 'w-10' },
-  { toneBg: 'purpleBg', toneFg: 'purple', title: 'w-6', body1: 'w-8', body2: 'w-16', body3: 'w-10' },
+  {
+    toneBg: 'purpleBg',
+    toneFg: 'purple',
+    title: 'w-6',
+    body1: 'w-8',
+    body2: 'w-16',
+    body3: 'w-10',
+  },
   { toneBg: 'brownBg', toneFg: 'brown', title: 'w-6', body1: 'w-10', body2: 'w-12', body3: 'w-10' },
   { toneBg: 'greenBg', toneFg: 'green', title: 'w-6', body1: 'w-12', body2: 'w-14', body3: 'w-8' },
 ] as const

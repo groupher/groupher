@@ -20,11 +20,10 @@ export default function useSalon() {
 
     bar: cnMerge(base.bar, 'static h-1.5 w-20 opacity-40'),
     boardGrid: 'grid min-h-0 flex-1 grid-cols-3 items-end gap-2.5',
-    boardColumn:
-      cnMerge(
-        'mt-auto flex h-36 min-h-0 flex-col justify-start self-end rounded-lg rounded-b-none px-2 pt-2.5',
-        bg('alphaBg'),
-      ),
+    boardColumn: cnMerge(
+      'mt-auto flex h-36 min-h-0 flex-col justify-start self-end rounded-lg rounded-b-none px-2 pt-2.5',
+      bg('alphaBg'),
+    ),
     boardContent: 'flex min-h-0 flex-col gap-2',
     card: cnMerge(base.bar, 'static h-7 w-full rounded'),
 
