@@ -12,15 +12,12 @@ export default function useSalon() {
 
   return {
     wrapper: base.baseSection,
-    block: cn(base.blockBase, 'align-both w-72 h-44'),
+    block: cn(base.blockBase, 'column w-72 h-56 overflow-hidden px-4 pb-3 pt-0'),
     blockActive: base.blockBaseActive,
     select: 'row-center gap-x-8 w-full',
-    layout: 'column-align-both',
-
-    bar: cn(base.bar, 'h-1.5 w-20 opacity-40'),
-    circle: cn(base.circle, 'size-3.5 opacity-40'),
+    layout: 'column-align-both relative overflow-hidden',
     topBar: cn(
-      'row-center absolute top-0 left-0 h-1 w-full -mt-px rounded-tl-md rounded-tr-md',
+      'absolute top-0 left-0 h-1 w-full rounded-tl-md rounded-tr-md z-10',
       rainbow(topbarBg, 'bg'),
     ),
 

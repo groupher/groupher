@@ -218,7 +218,7 @@ export default {
   'dsb.layout.gauss_blur.opacity.note.light': 'light',
   'dsb.layout.gauss_blur.opacity.note.dark': 'dark',
   'dsb.layout.gauss_blur.opacity.note.suffix': ' themes separately.',
-  'dsb.layout.doc.title': 'Doc directory layout',
+  'dsb.layout.doc.title': 'Doc cover layout',
   'dsb.layout.doc.desc': 'Layout for all docs directories.',
   'dsb.layout.doc.option.blocks': 'Blocks',
   'dsb.layout.doc.option.lists': 'List',

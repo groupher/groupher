@@ -4,7 +4,7 @@ import useBase from '..'
 export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cnMerge } = useTwBelt()
+  const { cnMerge, bg } = useTwBelt()
   const base = useBase()
 
   return {
@@ -21,12 +21,11 @@ export default function useSalon() {
     bar: cnMerge(base.bar, 'static h-1.5 w-20 opacity-40'),
     boardGrid: 'grid min-h-0 flex-1 grid-cols-3 items-end gap-2.5',
     boardColumn:
-      'relative mt-auto flex h-36 min-h-0 flex-col justify-start self-end rounded-lg rounded-b-none px-2 pt-2.5',
-    boardSurface: cnMerge(
-      base.bar,
-      'absolute inset-0 h-auto w-auto rounded-lg rounded-b-none opacity-10',
-    ),
-    boardContent: 'relative z-10 flex min-h-0 flex-col gap-2',
+      cnMerge(
+        'mt-auto flex h-36 min-h-0 flex-col justify-start self-end rounded-lg rounded-b-none px-2 pt-2.5',
+        bg('alphaBg'),
+      ),
+    boardContent: 'flex min-h-0 flex-col gap-2',
     card: cnMerge(base.bar, 'static h-7 w-full rounded'),
 
     waterfall: 'flex min-h-0 flex-1 flex-col gap-4',
