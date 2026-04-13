@@ -19,11 +19,67 @@
     }
   }
 
+  @keyframes arrow-nudge-right {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(4px, 0, 0);
+    }
+  }
+
+  @keyframes arrow-nudge-left {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(-4px, 0, 0);
+    }
+  }
+
+  @keyframes arrow-nudge-up {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(0, -3px, 0);
+    }
+  }
+
+  @keyframes arrow-nudge-down {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(0, 3px, 0);
+    }
+  }
+
   .animate-loading-grow {
     animation: loading-grow 1s linear infinite;
   }
 
   .animate-loading-move {
     animation: loading-move 1s linear infinite;
+  }
+
+  .arrow-button-scope:hover .group-hover-arrow-right {
+    animation-name: arrow-nudge-right;
+  }
+
+  .arrow-button-scope:hover .group-hover-arrow-left {
+    animation-name: arrow-nudge-left;
+  }
+
+  .arrow-button-scope:hover .group-hover-arrow-up {
+    animation-name: arrow-nudge-up;
+  }
+
+  .arrow-button-scope:hover .group-hover-arrow-down {
+    animation-name: arrow-nudge-down;
   }
 }

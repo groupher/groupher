@@ -14,9 +14,8 @@ export default function useSalon({ disabled, dimWhenIdle, leftLayout, ...spacing
 
   return {
     wrapper: cn(
-      'group row-center relative inline-flex border-none bg-transparent bold-sm text-sm',
+      'row-center relative inline-flex border-none bg-transparent text-sm',
       leftLayout ? 'pl-2' : 'pr-3.5',
-      !leftLayout && 'hover:pr-1',
       'hover:brightness-110 trans-all-100 pointer',
       linker('fg'),
       margin(spacing),

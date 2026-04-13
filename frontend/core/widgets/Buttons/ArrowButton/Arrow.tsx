@@ -17,13 +17,31 @@ const Arrow: FC<TProps> = ({ leftLayout, up, down }) => {
   const s = useSalon()
 
   if (!leftLayout) {
-    if (down) return <ArrowSVG className={s.downArrow} />
-    if (up) return <ArrowSVG className={s.upArrow} />
+    if (down)
+      return (
+        <span className={s.downArrow}>
+          <ArrowSVG className={s.downArrowIcon} />
+        </span>
+      )
+    if (up)
+      return (
+        <span className={s.upArrow}>
+          <ArrowSVG className={s.upArrowIcon} />
+        </span>
+      )
 
-    return <ArrowSVG className={s.rightArrow} />
+    return (
+      <span className={s.rightArrow}>
+        <ArrowSVG className={s.rightArrowIcon} />
+      </span>
+    )
   }
 
-  return <ArrowSVG className={s.leftArrow} />
+  return (
+    <span className={s.leftArrow}>
+      <ArrowSVG className={s.leftArrowIcon} />
+    </span>
+  )
 }
 
 export default Arrow

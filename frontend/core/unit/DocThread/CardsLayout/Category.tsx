@@ -19,6 +19,8 @@ const Category: FC<TProps> = ({ title, desc, articles }) => {
 
   const { gotoDetailLayout } = useLogic()
   const [sliceCount, setSliceCount] = useState(FOLD_LIMIT)
+  const isFolded = sliceCount <= FOLD_LIMIT
+  const handleToggleFold = () => setSliceCount(isFolded ? articles.length : FOLD_LIMIT)
 
   return (
     <div className={s.wrapper}>
@@ -27,6 +29,7 @@ const Category: FC<TProps> = ({ title, desc, articles }) => {
         <div className={s.header}>
           <div className={s.topping}>
             <div className={s.updateDate}>2022-3-4</div>
+            <div className='grow' />
             <Facepile users={mockUsers(2)} total={3} />
           </div>
 
@@ -45,19 +48,19 @@ const Category: FC<TProps> = ({ title, desc, articles }) => {
         </div>
 
         {articles.length >= FOLD_LIMIT && (
-          <div className={s.footer}>
-            {articles.length >= FOLD_LIMIT && sliceCount <= FOLD_LIMIT && (
-              <ArrowButton down onClick={() => setSliceCount(articles.length)}>
+          <button className={s.footer} onClick={handleToggleFold} type='button'>
+            {isFolded && (
+              <ArrowButton as='span' down>
                 查看全部
               </ArrowButton>
             )}
 
-            {articles.length >= FOLD_LIMIT && sliceCount > FOLD_LIMIT && (
-              <ArrowButton up onClick={() => setSliceCount(FOLD_LIMIT)} initWidth={26}>
+            {!isFolded && (
+              <ArrowButton as='span' up initWidth={26}>
                 收起
               </ArrowButton>
             )}
-          </div>
+          </button>
         )}
       </div>
     </div>
