@@ -61,8 +61,5 @@ defmodule GroupherServer.Accounts.Profiles.List do
     |> done()
   end
 
-  defp sort_communities(paged_communities, user) do
-    _user = user
-    paged_communities
-  end
+  defp sort_communities(paged_communities, _user), do: paged_communities
 end
