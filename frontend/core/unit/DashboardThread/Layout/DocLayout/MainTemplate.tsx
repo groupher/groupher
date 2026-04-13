@@ -9,7 +9,7 @@ type TProps = {
   layout: TDocLayout
 }
 
-const BLOCK_ITEMS = [
+const OUTLINE_ITEMS = [
   { toneBg: 'redBg', toneFg: 'red', title: 'w-6', body1: 'w-8', body2: 'w-14', body3: 'w-10' },
   { toneBg: 'blueBg', toneFg: 'blue', title: 'w-6', body1: 'w-12', body2: 'w-14', body3: 'w-10' },
   {
@@ -23,7 +23,7 @@ const BLOCK_ITEMS = [
   { toneBg: 'brownBg', toneFg: 'brown', title: 'w-6', body1: 'w-10', body2: 'w-12', body3: 'w-10' },
   { toneBg: 'greenBg', toneFg: 'green', title: 'w-6', body1: 'w-12', body2: 'w-14', body3: 'w-8' },
 ] as const
-const BLOCK_ROWS = [BLOCK_ITEMS.slice(0, 3), BLOCK_ITEMS.slice(3)] as const
+const OUTLINE_ROWS = [OUTLINE_ITEMS.slice(0, 3), OUTLINE_ITEMS.slice(3)] as const
 
 const LIST_ITEMS = [
   { toneBg: 'redBg', toneFg: 'red', title: 'w-14', body1: 'w-28', body2: 'w-16' },
@@ -98,7 +98,7 @@ const MainTemplate: FC<TProps> = ({ layout }) => {
   return (
     <div className={cnMerge(s.block, 'justify-center')}>
       <div className={s.blocksRows}>
-        {BLOCK_ROWS.map((row, rowIndex) => (
+        {OUTLINE_ROWS.map((row, rowIndex) => (
           <div key={rowIndex} className={s.blocksRow}>
             {row.map((item, index) => (
               <div key={index} className={s.blocksCard}>

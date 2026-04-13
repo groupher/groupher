@@ -1,8 +1,8 @@
 import { mockHelpCats } from '~/mock'
-import useSalon from '../salon/blocks_layout'
+import useSalon from '../salon/outline_layout'
 import Category from './Category'
 
-export default function BlocksLayout() {
+export default function OutlineLayout() {
   const s = useSalon()
   const cats = mockHelpCats()
 

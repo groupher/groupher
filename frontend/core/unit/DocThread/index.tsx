@@ -6,9 +6,9 @@ import { DOC_LAYOUT } from '~/const/layout'
 
 import FaqList from '~/unit/FaqList'
 import ArticleLayout from './ArticleLayout'
-import BlocksLayout from './BlocksLayout'
 import CardsLayout from './CardsLayout'
 import ListsLayout from './ListsLayout'
+import OutlineLayout from './OutlineLayout'
 import useSalon from './salon'
 import useLogic from './useLogic'
 
@@ -23,7 +23,7 @@ export default function DocThread() {
 
   return (
     <div className={s.wrapper}>
-      {layout === DOC_LAYOUT.BLOCKS && <BlocksLayout />}
+      {layout === DOC_LAYOUT.OUTLINE && <OutlineLayout />}
       {layout === DOC_LAYOUT.LISTS && <ListsLayout />}
       {layout === DOC_LAYOUT.CARDS && <CardsLayout />}
 

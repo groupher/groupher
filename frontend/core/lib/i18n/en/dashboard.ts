@@ -220,7 +220,7 @@ export default {
   'dsb.layout.gauss_blur.opacity.note.suffix': ' themes separately.',
   'dsb.layout.doc.title': 'Doc cover layout',
   'dsb.layout.doc.desc': 'Layout for all docs cover pages.',
-  'dsb.layout.doc.option.blocks': 'Blocks',
+  'dsb.layout.doc.option.outline': 'Outline',
   'dsb.layout.doc.option.lists': 'List',
   'dsb.layout.doc.option.cards': 'Cards',
   'dsb.layout.doc.faq.title': 'FAQ layout',

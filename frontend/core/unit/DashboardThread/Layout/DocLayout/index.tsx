@@ -27,15 +27,15 @@ export default function DocLayout() {
         <button
           type='button'
           className={s.layout}
-          aria-pressed={docLayout === DOC_LAYOUT.BLOCKS}
-          onClick={() => edit(DOC_LAYOUT.BLOCKS, FIELD.DOC_LAYOUT)}
+          aria-pressed={docLayout === DOC_LAYOUT.OUTLINE}
+          onClick={() => edit(DOC_LAYOUT.OUTLINE, FIELD.DOC_LAYOUT)}
         >
-          <div className={cn(s.block, docLayout === DOC_LAYOUT.BLOCKS && s.blockActive)}>
-            <MainTemplate layout={DOC_LAYOUT.BLOCKS} />
+          <div className={cn(s.block, docLayout === DOC_LAYOUT.OUTLINE && s.blockActive)}>
+            <MainTemplate layout={DOC_LAYOUT.OUTLINE} />
           </div>
           <CheckLabel
-            title={t('dsb.layout.doc.option.blocks')}
-            active={docLayout === DOC_LAYOUT.BLOCKS}
+            title={t('dsb.layout.doc.option.outline')}
+            active={docLayout === DOC_LAYOUT.OUTLINE}
             top={4}
           />
         </button>
