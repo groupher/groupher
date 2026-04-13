@@ -14,7 +14,8 @@ export default function useTopbar(): TRet {
   const dsb$ = useDashboard()
   const metric = useMetric()
 
-  const hasTopbar = !includes(metric, [METRIC.APPLY_COMMUNITY, METRIC.LANDING]) && dsb$.topbarEnabled
+  const hasTopbar =
+    !includes(metric, [METRIC.APPLY_COMMUNITY, METRIC.LANDING]) && dsb$.topbarEnabled
 
   return {
     hasTopbar,
