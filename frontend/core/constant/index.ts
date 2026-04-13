@@ -1,6 +1,5 @@
 // a.k.a for HOME COMMUNITY NAME
 
-export { default as C11N } from './c11n'
 export { default as EMOTION } from './emotion'
 export { default as ERR } from './err'
 export { default as EVENT } from './event'
@@ -22,7 +21,6 @@ export {
   UPVOTE_LAYOUT,
 } from './layout'
 export { default as METRIC } from './metric'
-export { PAYMENT_METHOD, PAYMENT_USAGE } from './payment'
 export { default as RECIPE } from './recipe'
 export { REPORT, REPORT_TYPE } from './report'
 export { DSB_ROUTE, NON_COMMUNITY_ROUTE, ROUTE } from './route'

@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 import { ARTICLE_STATE } from '~/const/gtd'
-import { aliasGTDDoneState } from '~/fmt'
+import { aliasGTDDoneState, toGTDLabelKey } from '~/fmt'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
@@ -36,7 +36,7 @@ const StateItem: FC<TProps> = ({ onClick }) => {
         <TheIcon className={cn(s.icon, s.rainbowFill)} />
         {article.state === ARTICLE_STATE.DONE
           ? t(aliasGTDDoneState(article.cat, article.state))
-          : kanbanAlias[ARTICLE_STATE[article.state].toLowerCase()]?.name || t(article.state)}
+          : kanbanAlias[article.state]?.name || t(toGTDLabelKey(article.state))}
         <div className='grow' />
         <ArrowSVG className={cn(s.icon, 'rotate-180')} />
       </button>

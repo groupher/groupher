@@ -125,17 +125,9 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:purple)
   end
 
-  enum :article_cat_enum do
-    enum_values(ArticleEnums.cat())
-  end
-
-  enum :article_state_enum do
-    enum_values(ArticleEnums.state())
-  end
-
-  enum :kanban_board do
-    enum_values(KanbanBoards.values())
-  end
+  lowercase_enum(:article_cat_enum, ArticleEnums.cat())
+  lowercase_enum(:article_state_enum, ArticleEnums.state())
+  lowercase_enum(:kanban_board, KanbanBoards.values())
 
   dsb_enum(:post_layout)
   dsb_enum(:kanban_layout)

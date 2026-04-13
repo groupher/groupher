@@ -5,6 +5,11 @@ defmodule GroupherServer.CMS.Helper.KanbanBoards do
 
   @type board :: :backlog | :todo | :wip | :done | :rejected
 
+  # Single source of truth for dashboard kanban board enums.
+  #
+  # Example:
+  # - Ecto.Enum list values: [:backlog, :todo, :wip]
+  # - GraphQL enum values: backlog / todo / wip
   @values [:backlog, :todo, :wip, :done, :rejected]
   @default_values [:todo, :wip, :done]
 

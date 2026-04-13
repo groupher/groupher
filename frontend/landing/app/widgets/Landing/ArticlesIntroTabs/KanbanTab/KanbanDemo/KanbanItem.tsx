@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import { ARTICLE_CAT } from '~/const/gtd'
 import useTrans from '~/hooks/useTrans'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TArticleCat } from '~/spec'
@@ -18,7 +19,7 @@ type TProps = {
 const KanbanItem: FC<TProps> = ({
   count = 9,
   title = '',
-  cat = 'FEATURE',
+  cat = ARTICLE_CAT.FEATURE,
   draging = false,
   dragTarget = false,
   className = '',

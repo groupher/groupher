@@ -259,7 +259,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         footerLayout: "simple",
         topbarEnabled: true,
         kanbanBgColors: ["#111", "#222"],
-        kanbanBoards: ["BACKLOG", "TODO", "DONE", "REJECTED"],
+        kanbanBoards: ["backlog", "todo", "done", "rejected"],
         glowType: "PINK",
         glowFixed: true,
         glowOpacity: "30",
@@ -338,7 +338,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
-        kanbanBoards: ["TODO", "INVALID_BOARD"]
+        kanbanBoards: ["todo", "INVALID_BOARD"]
       }
 
       assert mutation_error?(rule_conn, @update_layout_query, variables)
@@ -350,7 +350,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
-        kanbanBoards: ["TODO", "TODO", "DONE"]
+        kanbanBoards: ["todo", "todo", "done"]
       }
 
       assert mutation_error?(rule_conn, @update_layout_query, variables)

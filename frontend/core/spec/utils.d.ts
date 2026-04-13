@@ -3,7 +3,6 @@ import type { ChangeEvent, ReactNode } from 'react'
 import type BUTTON_PREFIX from '~/const/button_prefix'
 import type { DSB_DESC_LAYOUT } from '~/const/layout'
 import type { CHANGE_MODE, CONDITION_MODE, PUBLISH_MODE } from '~/const/mode'
-import type { PAYMENT_METHOD, PAYMENT_USAGE } from '~/const/payment'
 import type { SOCIAL_LIST } from '~/const/social'
 import type { TConstValues, TTransKey } from '~/spec'
 import type { TArticleThread } from './thread'
@@ -103,9 +102,6 @@ export type TTabItem = {
 }
 
 export type TResState = 'LOADING' | 'DONE' | 'EMPTY'
-
-export type TPaymentUsage = TConstValues<typeof PAYMENT_USAGE>
-export type TPaymentMethod = TConstValues<typeof PAYMENT_METHOD>
 
 export type TFlexRule =
   | 'align-both'

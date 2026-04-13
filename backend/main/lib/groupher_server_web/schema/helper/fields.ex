@@ -258,6 +258,45 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   end
 
   @doc """
+  Expand a compile-time atom list into a lowercase GraphQL enum.
+
+  Example:
+
+      lowercase_enum(:article_cat_enum, ArticleEnums.cat())
+
+  Expands into:
+
+      enum :article_cat_enum do
+        value(:feature, name: "feature")
+        value(:bug, name: "bug")
+      end
+
+  Absinthe uppercases enum names by default, so we pin the schema-facing
+  `name` explicitly to keep GraphQL values aligned with the internal atoms.
+  """
+  defmacro lowercase_enum(type, values_ast) do
+    expanded = Macro.expand(values_ast, __CALLER__)
+
+    if is_list(expanded) do
+      value_defs =
+        Enum.map(expanded, fn value ->
+          quote do
+            value(unquote(value), name: unquote(Atom.to_string(value)))
+          end
+        end)
+
+      quote do
+        enum unquote(type) do
+          unquote_splicing(value_defs)
+        end
+      end
+    else
+      raise ArgumentError,
+            "lowercase_enum/2 expects a compile-time list, got: #{Macro.to_string(expanded)}"
+    end
+  end
+
+  @doc """
   general collect folder meta info
   """
   defmacro collect_folder_meta_fields do

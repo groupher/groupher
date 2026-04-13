@@ -169,13 +169,6 @@ export const user = `
   followersCount
   followingsCount
 `
-export const c11n = `
-  bannerLayout
-  contentDivider
-  markViewed
-  displayDensity
-  theme
-`
 export const achievement = `
   reputation
   articlesUpvotesCount

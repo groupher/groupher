@@ -20,28 +20,6 @@ defmodule GroupherServerWeb.Middleware.PageSizeProof do
   # 3. large size should trigger error
   def call(%{errors: errors} = resolution, _) when length(errors) > 0, do: resolution
 
-  def call(
-        %{context: %{cur_user: %{customization: customization}}, arguments: arguments} =
-          resolution,
-        args
-      )
-      when not is_nil(customization) do
-    # NOTE:  c11n display_density should also linted by page limit,
-    # otherwise dataloader will crash for empty extra items
-    size = customization.display_density |> String.to_integer() |> min(@max_page_size)
-
-    case Map.has_key?(arguments, :filter) do
-      true ->
-        filter = arguments.filter |> Map.merge(%{size: size})
-        arguments = arguments |> Map.merge(%{filter: filter})
-        %{resolution | arguments: set_sort_ifneed(arguments, args)}
-
-      false ->
-        arguments = arguments |> Map.merge(%{filter: %{page: 1, size: size, first: size}})
-        %{resolution | arguments: arguments}
-    end
-  end
-
   def call(resolution, args) do
     case valid_size(resolution.arguments) do
       {:error, msg} -> resolution |> handle_absinthe_error(msg, ecode(:pagination))

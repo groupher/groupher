@@ -13,10 +13,8 @@ defmodule GroupherServer.Accounts.Model.User do
   alias Accounts.Model.{
     Achievement,
     CollectFolder,
-    Customization,
     Embeds,
     OauthProvider,
-    Purchase,
     Social,
     UserFollower,
     UserFollowing
@@ -70,9 +68,6 @@ defmodule GroupherServer.Accounts.Model.User do
     embeds_one(:meta, Embeds.UserMeta, on_replace: :update)
     embeds_one(:contributes, Embeds.UserContribute, on_replace: :update)
     embeds_one(:mailbox, Embeds.UserMailbox, on_replace: :update)
-
-    has_one(:customization, Customization)
-    has_one(:purchase, Purchase)
 
     timestamps(type: :utc_datetime)
   end

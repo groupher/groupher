@@ -60,18 +60,6 @@ config :groupher_server, :general,
   notify_group_interval_hour: 1,
   nofity_actions: [:upvote, :comment, :reply, :collect, :follow]
 
-config :groupher_server, :customization,
-  theme: "cyan",
-  community_chart: false,
-  brainwash_free: false,
-  banner_layout: "digest",
-  contents_layout: "digest",
-  content_divider: false,
-  content_hover: true,
-  mark_viewed: true,
-  display_density: "20",
-  sidebar_communities_index: %{}
-
 config :groupher_server, :article,
   min_length: 10,
   max_length: 20_000,

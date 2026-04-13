@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 import { ARTICLE_STATE } from '~/const/gtd'
-import { aliasGTDDoneState } from '~/fmt'
+import { aliasGTDDoneState, toGTDLabelKey } from '~/fmt'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
 import type { TTooltipPlacement } from '~/spec'
@@ -33,7 +33,9 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
           <Tooltip
             content={
               <div className={s.tipNote}>
-                <div className={s.text}>{kanbanAlias[stateKey]?.name || t(state)}</div>
+                <div className={s.text}>
+                  {kanbanAlias[stateKey]?.name || t(toGTDLabelKey(state))}
+                </div>
               </div>
             }
             {...tipConfig}
@@ -48,7 +50,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
       return (
         <div className={s.box}>
           <Icon.Todo className={s.todoIcon} />
-          <div className={s.text}>{kanbanAlias[stateKey]?.name || t(state)}</div>
+          <div className={s.text}>{kanbanAlias[stateKey]?.name || t(toGTDLabelKey(state))}</div>
         </div>
       )
     }
@@ -60,7 +62,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
             content={
               <div className={s.tipNote}>
                 <div className={s.text}>
-                  {kanbanAlias[ARTICLE_STATE.WIP.toLowerCase()]?.name || t(state)}
+                  {kanbanAlias[ARTICLE_STATE.WIP]?.name || t(toGTDLabelKey(state))}
                 </div>
               </div>
             }
@@ -78,7 +80,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
           <Icon.Wip className={s.wipIcon} />
 
           <div className={s.text}>
-            {kanbanAlias[ARTICLE_STATE.WIP.toLowerCase()]?.name || t(state)}
+            {kanbanAlias[ARTICLE_STATE.WIP]?.name || t(toGTDLabelKey(state))}
           </div>
         </div>
       )
@@ -124,7 +126,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
           <Tooltip
             content={
               <div className={s.tipNote}>
-                <div className={s.text}>{t(rejectStateKey)}</div>
+                <div className={s.text}>{t(toGTDLabelKey(rejectStateKey))}</div>
               </div>
             }
             {...tipConfig}
@@ -139,7 +141,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
       return (
         <div className={s.box}>
           <Icon.Reject className={s.rejectIcon} />
-          <div className={s.text}>{t(rejectStateKey)}</div>
+          <div className={s.text}>{t(toGTDLabelKey(rejectStateKey))}</div>
         </div>
       )
     }

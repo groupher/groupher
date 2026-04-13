@@ -55,7 +55,7 @@ defmodule GroupherServerWeb.Context do
 
   defp authorize(token) do
     with {:ok, claims, _info} <- Guardian.jwt_decode(token) do
-      case ORM.find(User, claims.id, preload: :customization) do
+      case ORM.find(User, claims.id) do
         {:ok, user} ->
           check_passport(user)
 

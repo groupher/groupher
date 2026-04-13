@@ -7,7 +7,6 @@ import type {
   TCommunity,
   TCommunitySetterStyle,
   TGQLError,
-  TPaymentUsage,
   TTag,
   TThread,
   TToastType,
@@ -50,13 +49,6 @@ export const logout = (): void => {
  *
  */
 export const closeDrawer = (type = ''): void => send(EVENT.DRAWER.CLOSE, { type })
-
-/**
- * shortcut for call cashier
- *
- */
-export const checkout = (amount: number, usage: TPaymentUsage): void =>
-  send(EVENT.CALL_CASHIER, { amount, usage })
 
 export const addCollection = (): void => {
   send(EVENT.SET_FAVORITE_CONTENT, {
@@ -111,10 +103,6 @@ export const listUsers = (type: 'modal' | 'drawer'): void => {
 export const callPassportEditor = (): void => {
   const type = TYPE.DRAWER.PASSPORT_EDITOR
   send(EVENT.DRAWER.OPEN, { type })
-}
-
-export const c11nSettings = (): void => {
-  send(EVENT.DRAWER.OPEN, { type: TYPE.DRAWER.C11N_SETTINGS })
 }
 
 export const callWallpaperEditor = (): void => {

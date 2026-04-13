@@ -142,7 +142,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       variables = %{slug: community.slug}
       results = guest_conn |> gq_query(@query, variables)
 
-      assert get_in(results, ["dashboard", "layout", "kanbanBoards"]) == ["TODO", "WIP", "DONE"]
+      assert get_in(results, ["dashboard", "layout", "kanbanBoards"]) == ["todo", "wip", "done"]
     end
 
     test "can get threads count (default include)", ~m(community guest_conn)a do

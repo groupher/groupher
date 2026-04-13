@@ -18,6 +18,13 @@ defmodule GroupherServer.CMS.Helper.ArticleEnums do
           | :reject_repro
           | :reject_stale
 
+  # Single source of truth for article category/status enums.
+  #
+  # Internal values stay as lowercase atoms:
+  #   [:feature, :bug]
+  #
+  # GraphQL enums expand from the same list and keep lowercase names:
+  #   feature / bug
   @cat [:feature, :bug, :question, :other]
 
   @state [

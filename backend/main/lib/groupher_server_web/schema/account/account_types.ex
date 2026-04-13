@@ -56,11 +56,6 @@ defmodule GroupherServerWeb.Schema.Account.Types do
       middleware(M.AchievementProof)
     end
 
-    field(:customization, :customization) do
-      middleware(M.Authorize, :login)
-      resolve(&R.Accounts.get_customization/3)
-    end
-
     field(:cms_passport_string, :string) do
       middleware(M.Authorize, :login)
       resolve(&R.Accounts.get_passport_string/3)
@@ -136,20 +131,6 @@ defmodule GroupherServerWeb.Schema.Account.Types do
     field(:from_users_count, :integer)
 
     timestamp_fields()
-  end
-
-  # field(:sidebar_layout, :map)
-  object :customization do
-    field(:theme, :string)
-    field(:community_chart, :boolean)
-    field(:brainwash_free, :boolean)
-
-    field(:banner_layout, :string)
-    field(:contents_layout, :string)
-    field(:content_divider, :boolean)
-    field(:content_hover, :boolean)
-    field(:mark_viewed, :boolean)
-    field(:display_density, :string)
   end
 
   object :github_profile do
