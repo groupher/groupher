@@ -14,6 +14,7 @@ export type TProps = {
   as?: 'button' | 'span'
   children?: ReactNode
   onClick?: () => void
+  scopeClassName?: string
   dimWhenIdle?: boolean
   disabled?: boolean
   color?: TColorName | null
@@ -30,6 +31,7 @@ const ArrowButton: FC<TProps> = ({
   as = 'button',
   children = '下一步',
   onClick = console.log,
+  scopeClassName = '',
   dimWhenIdle = false,
   disabled = false,
   color = null,
@@ -43,7 +45,13 @@ const ArrowButton: FC<TProps> = ({
   ...spacing
 }) => {
   const isLeft = leftLayout || up || down
-  const s = useSalon({ disabled, dimWhenIdle, leftLayout: isLeft, ...spacing })
+  const s = useSalon({
+    disabled,
+    dimWhenIdle,
+    leftLayout: isLeft,
+    scopeClassName,
+    ...spacing,
+  })
   const primaryColor = usePrimaryColor()
   const content = (
     <>

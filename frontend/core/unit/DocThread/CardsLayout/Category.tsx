@@ -50,13 +50,13 @@ const Category: FC<TProps> = ({ title, desc, articles }) => {
         {articles.length >= FOLD_LIMIT && (
           <button className={s.footer} onClick={handleToggleFold} type='button'>
             {isFolded && (
-              <ArrowButton as='span' down>
+              <ArrowButton as='span' down scopeClassName='arrow-button-scope'>
                 查看全部
               </ArrowButton>
             )}
 
             {!isFolded && (
-              <ArrowButton as='span' up initWidth={26}>
+              <ArrowButton as='span' up initWidth={26} scopeClassName='arrow-button-scope'>
                 收起
               </ArrowButton>
             )}

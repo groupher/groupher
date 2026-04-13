@@ -67,18 +67,22 @@
     animation: loading-move 1s linear infinite;
   }
 
+  .arrow-button:hover .group-hover-arrow-right,
   .arrow-button-scope:hover .group-hover-arrow-right {
     animation-name: arrow-nudge-right;
   }
 
+  .arrow-button:hover .group-hover-arrow-left,
   .arrow-button-scope:hover .group-hover-arrow-left {
     animation-name: arrow-nudge-left;
   }
 
+  .arrow-button:hover .group-hover-arrow-up,
   .arrow-button-scope:hover .group-hover-arrow-up {
     animation-name: arrow-nudge-up;
   }
 
+  .arrow-button:hover .group-hover-arrow-down,
   .arrow-button-scope:hover .group-hover-arrow-down {
     animation-name: arrow-nudge-down;
   }
