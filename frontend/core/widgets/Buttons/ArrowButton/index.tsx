@@ -74,7 +74,11 @@ const ArrowButton: FC<TProps> = ({
   }
 
   return (
-    <button className={cnMerge(s.wrapper, className)} onClick={() => !disabled && onClick()} type='button'>
+    <button
+      className={cnMerge(s.wrapper, className)}
+      onClick={() => !disabled && onClick()}
+      type='button'
+    >
       {content}
     </button>
   )
