@@ -13,6 +13,10 @@ export default function useSalon() {
       'column-align-both w-full mt-7 ml-0',
       bannerLayout === BANNER_LAYOUT.TABBER && 'mt-1.5 ml-12',
     ),
-    cats: cn(base.main, 'row justify-center wrap min-h-96 gap-7 px-0 w-fit'),
+    cats: cn(
+      base.main,
+      'grid min-h-96 w-full content-start justify-start justify-items-start gap-7 px-0',
+      'grid-cols-2 lg:grid-cols-3',
+    ),
   }
 }

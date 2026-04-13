@@ -11,7 +11,7 @@ vi.mock('~/hooks/useTrans', () => ({
 
 vi.mock('../../../logic/useDoc', () => ({
   default: () => ({
-    docLayout: DOC_LAYOUT.BLOCKS,
+    docLayout: DOC_LAYOUT.OUTLINE,
     docFaqLayout: DOC_FAQ_LAYOUT.COLLAPSE,
     isTouched: false,
     isFaqTouched: false,
@@ -71,7 +71,7 @@ describe('<DocLayout />', () => {
     expect(buttons[3]).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId(`saving-bar-${FIELD.DOC_LAYOUT}`)).toBeInTheDocument()
     expect(screen.getByTestId(`saving-bar-${FIELD.DOC_FAQ_LAYOUT}`)).toBeInTheDocument()
-    expect(screen.getByTestId(`main-template-${DOC_LAYOUT.BLOCKS}`)).toBeInTheDocument()
+    expect(screen.getByTestId(`main-template-${DOC_LAYOUT.OUTLINE}`)).toBeInTheDocument()
     expect(screen.getByTestId(`faq-template-${DOC_FAQ_LAYOUT.COLLAPSE}`)).toBeInTheDocument()
   })
 

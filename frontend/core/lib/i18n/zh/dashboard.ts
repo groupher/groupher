@@ -208,7 +208,7 @@ export default {
   'dsb.layout.gauss_blur.opacity.note.suffix': '主题分别设置。',
   'dsb.layout.doc.title': '封面目录布局',
   'dsb.layout.doc.desc': '全部文档的目录布局。',
-  'dsb.layout.doc.option.blocks': '块状排列',
+  'dsb.layout.doc.option.outline': '大纲排列',
   'dsb.layout.doc.option.lists': '列表排列',
   'dsb.layout.doc.option.cards': '卡片排列',
   'dsb.layout.doc.faq.title': '常见问题（FAQ）布局',

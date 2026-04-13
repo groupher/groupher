@@ -11,8 +11,10 @@ import useSalon, { cnMerge } from '../salon/arrow_button'
 import Arrow from './Arrow'
 
 export type TProps = {
+  as?: 'button' | 'span'
   children?: ReactNode
   onClick?: () => void
+  scopeClassName?: string
   dimWhenIdle?: boolean
   disabled?: boolean
   color?: TColorName | null
@@ -26,8 +28,10 @@ export type TProps = {
 } & TSpace
 
 const ArrowButton: FC<TProps> = ({
+  as = 'button',
   children = '下一步',
   onClick = console.log,
+  scopeClassName = '',
   dimWhenIdle = false,
   disabled = false,
   color = null,
@@ -40,13 +44,17 @@ const ArrowButton: FC<TProps> = ({
   initWidth = 55,
   ...spacing
 }) => {
-  const s = useSalon({ disabled, dimWhenIdle, leftLayout, ...spacing })
-
-  const primaryColor = usePrimaryColor()
   const isLeft = leftLayout || up || down
-
-  return (
-    <button className={cnMerge(s.wrapper, className)} onClick={() => !disabled && onClick()}>
+  const s = useSalon({
+    disabled,
+    dimWhenIdle,
+    leftLayout: isLeft,
+    scopeClassName,
+    ...spacing,
+  })
+  const primaryColor = usePrimaryColor()
+  const content = (
+    <>
       {isLeft && (
         <Arrow
           color={color || primaryColor}
@@ -66,6 +74,20 @@ const ArrowButton: FC<TProps> = ({
           down={down}
         />
       )}
+    </>
+  )
+
+  if (as === 'span') {
+    return <span className={cnMerge(s.wrapper, className)}>{content}</span>
+  }
+
+  return (
+    <button
+      className={cnMerge(s.wrapper, className)}
+      onClick={() => !disabled && onClick()}
+      type='button'
+    >
+      {content}
     </button>
   )
 }

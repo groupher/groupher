@@ -7,16 +7,23 @@ type TProps = {
   disabled: boolean
   dimWhenIdle: boolean
   leftLayout: boolean
+  scopeClassName?: string
 } & TSpace
 
-export default function useSalon({ disabled, dimWhenIdle, leftLayout, ...spacing }: TProps) {
+export default function useSalon({
+  disabled,
+  dimWhenIdle,
+  leftLayout,
+  scopeClassName = '',
+  ...spacing
+}: TProps) {
   const { cn, margin, linker } = useTwBelt()
 
   return {
     wrapper: cn(
-      'group row-center relative inline-flex border-none bg-transparent bold-sm text-sm',
+      'arrow-button row-center relative inline-flex border-none bg-transparent text-sm',
+      scopeClassName,
       leftLayout ? 'pl-2' : 'pr-3.5',
-      !leftLayout && 'hover:pr-1',
       'hover:brightness-110 trans-all-100 pointer',
       linker('fg'),
       margin(spacing),

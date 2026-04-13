@@ -3,7 +3,7 @@ import { type FC, memo, useState } from 'react'
 import type { TArticle, TColorName } from '~/spec'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import FaIcons from '~/widgets/FaIcons'
-import useSalon from '../salon/blocks_layout/category'
+import useSalon from '../salon/outline_layout/category'
 import useLogic from '../useLogic'
 
 const FOLD_LIMIT = 5

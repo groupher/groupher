@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:post_layout, :string, "quora"],
       [:kanban_layout, :string, "classic"],
       [:kanban_card_layout, :string, "simple"],
-      [:doc_layout, :string, "cards"],
+      [:doc_layout, :string, "outline"],
       [:doc_faq_layout, :string, "collapse"],
       [:tag_layout, :string, "hash"],
       [:inline_tag_layout, :string, "border"],

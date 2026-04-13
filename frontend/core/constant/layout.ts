@@ -85,7 +85,7 @@ export const DSB_DESC_LAYOUT = {
 } as const
 
 export const DOC_LAYOUT = {
-  BLOCKS: 'blocks',
+  OUTLINE: 'outline',
   LISTS: 'lists',
   CARDS: 'cards',
   ARTICLE: 'article',
