@@ -20,7 +20,6 @@ import {
   POST_LAYOUT,
   RSS_TYPE,
   TAG_LAYOUT,
-  TOPBAR_LAYOUT,
 } from '~/const/layout'
 import SIZE from '~/const/size'
 import THEME from '~/const/theme'
@@ -102,7 +101,7 @@ export const FIELDS: TDsbFieldMap = {
   avatarLayout: AVATAR_LAYOUT.SQUARE,
   brandLayout: BRAND_LAYOUT.BOTH,
   bannerLayout: BANNER_LAYOUT.HEADER,
-  topbarLayout: TOPBAR_LAYOUT.NO,
+  topbarEnabled: false,
   topbarBg: COLOR.ORANGE,
 
   broadcastLayout: BROADCAST_LAYOUT.DEFAULT,

@@ -40,11 +40,6 @@ export const BANNER_LAYOUT = {
   SIDEBAR: 'sidebar',
 } as const
 
-export const TOPBAR_LAYOUT = {
-  YES: 'yes',
-  NO: 'no',
-} as const
-
 export const BROADCAST_LAYOUT = {
   DEFAULT: 'default',
   CENTER: 'center',
@@ -88,7 +83,6 @@ export const DOC_LAYOUT = {
   OUTLINE: 'outline',
   LISTS: 'lists',
   CARDS: 'cards',
-  ARTICLE: 'article',
 } as const
 
 export const DOC_FAQ_LAYOUT = {

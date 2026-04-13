@@ -15,7 +15,6 @@ import type {
   POST_LAYOUT,
   RSS_TYPE,
   TAG_LAYOUT,
-  TOPBAR_LAYOUT,
 } from '~/const/layout'
 import type { DSB_TAB } from '~/const/route'
 import type { KANBAN_BOARD } from '~/const/thread'
@@ -33,7 +32,6 @@ export type TAvatarLayout = TConstValues<typeof AVATAR_LAYOUT>
 export type TBrandLayout = TConstValues<typeof BRAND_LAYOUT>
 export type TBannerLayout = TConstValues<typeof BANNER_LAYOUT>
 
-export type TTopbarLayout = TConstValues<typeof TOPBAR_LAYOUT>
 export type TPostLayout = TConstValues<typeof POST_LAYOUT>
 export type TKanbanLayout = TConstValues<typeof KANBAN_LAYOUT>
 export type TKanbanCardLayout = TConstValues<typeof KANBAN_CARD_LAYOUT>
@@ -69,7 +67,7 @@ export type TDsb = {
     brandLayout: TBrandLayout
     primaryColor: TColorName
     subPrimaryColor: TColorName
-    topbarLayout: TTopbarLayout
+    topbarEnabled: boolean
     topbarBg: TColorName
     tagLayout: TTagLayout
     inlineTagLayout: TInlineTagLayout

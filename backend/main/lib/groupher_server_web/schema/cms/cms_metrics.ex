@@ -137,6 +137,23 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     enum_values(KanbanBoards.values())
   end
 
+  dsb_enum(:post_layout)
+  dsb_enum(:kanban_layout)
+  dsb_enum(:kanban_card_layout)
+  dsb_enum(:doc_layout)
+  dsb_enum(:doc_faq_layout)
+  dsb_enum(:tag_layout)
+  dsb_enum(:inline_tag_layout)
+  dsb_enum(:avatar_layout)
+  dsb_enum(:brand_layout)
+  dsb_enum(:banner_layout)
+  dsb_enum(:broadcast_layout)
+  dsb_enum(:broadcast_article_layout)
+  dsb_enum(:changelog_layout)
+  dsb_enum(:header_layout)
+  dsb_enum(:footer_layout)
+  dsb_enum(:rss_feed_type)
+
   @desc "the filter mode for list comments"
   enum :comments_mode do
     value(:replies)

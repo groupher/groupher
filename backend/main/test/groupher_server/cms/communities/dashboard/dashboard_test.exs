@@ -143,14 +143,16 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
 
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :layout, %{
-          post_layout: "upvote_first",
-          changelog_layout: "full"
+          post_layout: "cover",
+          changelog_layout: "simple",
+          topbar_enabled: true
         })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
-      assert find_community.dashboard.layout.post_layout == "upvote_first"
-      assert find_community.dashboard.layout.changelog_layout == "full"
+      assert find_community.dashboard.layout.post_layout == :cover
+      assert find_community.dashboard.layout.changelog_layout == :simple
+      assert find_community.dashboard.layout.topbar_enabled == true
     end
 
     test "rejects unsupported kanban boards in community dashboard", ~m(community_attrs user)a do
@@ -224,7 +226,7 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
-      assert find_community.dashboard.rss.rss_feed_type == "full"
+      assert find_community.dashboard.rss.rss_feed_type == :full
       assert find_community.dashboard.rss.rss_feed_count == 25
     end
 
@@ -243,7 +245,7 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
-      assert find_community.dashboard.rss.rss_feed_type == "full"
+      assert find_community.dashboard.rss.rss_feed_type == :full
       assert find_community.dashboard.rss.rss_feed_count == 25
     end
 

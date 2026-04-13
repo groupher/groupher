@@ -162,17 +162,17 @@ const updateDashboardLayout = gql`
     $community: String!
     $primaryColor: String
     $subPrimaryColor: String
-    $postLayout: String
-    $kanbanLayout: String
-    $kanbanCardLayout: String
+    $postLayout: DsbPostLayout
+    $kanbanLayout: DsbKanbanLayout
+    $kanbanCardLayout: DsbKanbanCardLayout
     $kanbanBoards: [KanbanBoard]
-    $footerLayout: String
-    $headerLayout: String
-    $topbarLayout: String
+    $footerLayout: DsbFooterLayout
+    $headerLayout: DsbHeaderLayout
+    $topbarEnabled: Boolean
     $topbarBg: String
-    $tagLayout: String
-    $inlineTagLayout: String
-    $avatarLayout: String
+    $tagLayout: DsbTagLayout
+    $inlineTagLayout: DsbInlineTagLayout
+    $avatarLayout: DsbAvatarLayout
     $broadcastEnable: Boolean
     $kanbanBgColors: [String]
     $glowType: String
@@ -181,11 +181,11 @@ const updateDashboardLayout = gql`
     $darkFloat: Boolean
     $gaussBlur: Int
     $gaussBlurDark: Int
-    $brandLayout: String
-    $bannerLayout: String
-    $changelogLayout: String
-    $docLayout: String
-    $docFaqLayout: String
+    $brandLayout: DsbBrandLayout
+    $bannerLayout: DsbBannerLayout
+    $changelogLayout: DsbChangelogLayout
+    $docLayout: DsbDocLayout
+    $docFaqLayout: DsbDocFaqLayout
   ) {
     updateDashboardLayout(
       community: $community
@@ -197,7 +197,7 @@ const updateDashboardLayout = gql`
       kanbanBoards: $kanbanBoards
       footerLayout: $footerLayout
       headerLayout: $headerLayout
-      topbarLayout: $topbarLayout
+      topbarEnabled: $topbarEnabled
       topbarBg: $topbarBg
       tagLayout: $tagLayout
       inlineTagLayout: $inlineTagLayout

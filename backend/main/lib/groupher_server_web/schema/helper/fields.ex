@@ -274,8 +274,10 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   fields for dashboard seo
   """
   defmacro dashboard_cast_fields(section \\ :layout) do
+    schema = Dashboard.macro_schema(section) |> Macro.escape()
+
     quote do
-      Enum.reduce(unquote(Dashboard.macro_schema(section)), [], fn [k, _, _], acc ->
+      Enum.reduce(unquote(schema), [], fn [k, _, _], acc ->
         [k] ++ acc
       end)
     end
@@ -287,7 +289,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       [key, type, _default_v] = item
 
       quote do
-        arg(unquote(key), unquote(to_absinthe_type(type)))
+        arg(unquote(key), unquote(to_absinthe_type(type, key)))
       end
     end)
   end
@@ -298,10 +300,20 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       [key, type, default_v] = item
 
       case type do
+        :enum ->
+          quote do
+            # Dashboard enums use the default Ecto.Enum flow:
+            #   [:quora, :ph] -> internal :quora / :ph -> DB "quora" / "ph"
+            field(unquote(key), Ecto.Enum,
+              values: unquote(Dashboard.enum_values(key)),
+              default: unquote(default_v)
+            )
+          end
+
         {:array, :kanban_board} ->
           quote do
             field(unquote(key), {:array, Ecto.Enum},
-              values: unquote(KanbanBoards).values_list(),
+              values: unquote(KanbanBoards.values_list()),
               default: unquote(default_v)
             )
           end
@@ -320,14 +332,16 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       [key, type, _default_v] = item
 
       quote do
-        field(unquote(key), unquote(to_absinthe_type(type)))
+        field(unquote(key), unquote(to_absinthe_type(type, key)))
       end
     end)
   end
 
   defmacro dashboard_default(section \\ :layout) do
+    schema = Dashboard.macro_schema(section) |> Macro.escape()
+
     quote do
-      Enum.reduce(unquote(Dashboard.macro_schema(section)), %{}, fn [k, _t, v], acc ->
+      Enum.reduce(unquote(schema), %{}, fn [k, _t, v], acc ->
         Map.put(acc, k, v)
       end)
     end
@@ -340,11 +354,41 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   # Convert dashboard metric DSL types to Absinthe field/arg type AST.
   # Supports list-like types in shared dashboard schema definitions.
-  defp to_absinthe_type({:array, inner}) do
-    quote(do: list_of(unquote(to_absinthe_type(inner))))
-  end
+  defp to_absinthe_type({:array, inner}, _key),
+    do: quote(do: list_of(unquote(to_absinthe_type(inner, nil))))
+  defp to_absinthe_type(:enum, key), do: :"dsb_#{key}"
+  defp to_absinthe_type(type, _key), do: type
 
-  defp to_absinthe_type(type), do: type
+  # Expand dashboard enum registry into GraphQL enums.
+  #
+  # Example:
+  #   dsb_enum(:post_layout)
+  #
+  # Expands into:
+  #   enum :dsb_post_layout do
+  #     value(:quora, name: "quora")
+  #     value(:ph, name: "ph")
+  #   end
+  #
+  # Absinthe uppercases enum names by default, so we pin the GraphQL-facing
+  # name explicitly to keep the whole dashboard enum chain lowercase.
+  defmacro dsb_enum(enum_key) do
+    values = Dashboard.enum_values(enum_key)
+    type = :"dsb_#{enum_key}"
+
+    value_defs =
+      Enum.map(values, fn value ->
+        quote do
+          value(unquote(value), name: unquote(Atom.to_string(value)))
+        end
+      end)
+
+    quote do
+      enum unquote(type) do
+        unquote_splicing(value_defs)
+      end
+    end
+  end
 
   defmacro enum_values(values_ast) do
     expanded = Macro.expand(values_ast, __CALLER__)

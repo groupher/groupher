@@ -27,7 +27,7 @@ export const LAYOUT_FIELD = {
   BANNER_LAYOUT: 'bannerLayout',
   HEADER_LAYOUT: 'headerLayout',
   FOOTER_LAYOUT: 'footerLayout',
-  TOPBAR_LAYOUT: 'topbarLayout',
+  TOPBAR_ENABLED: 'topbarEnabled',
   TOPBAR_BG: 'topbarBg',
   BROADCAST_LAYOUT: 'broadcastLayout',
   BROADCAST_ARTICLE_LAYOUT: 'broadcastArticleLayout',

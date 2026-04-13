@@ -638,11 +638,13 @@ type RootMutationType {
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dashboardSection: DashboardSection, primaryColor: String, subPrimaryColor: String, kanbanBgColors: [String], kanbanBoards: [KanbanBoard], postLayout: String, kanbanLayout: String, kanbanCardLayout: String, docLayout: String, docFaqLayout: String, tagLayout: String, inlineTagLayout: String, avatarLayout: String, brandLayout: String, bannerLayout: String, topbarLayout: String, topbarBg: String, broadcastLayout: String, broadcastBg: String, broadcastEnable: Boolean, broadcastArticleLayout: String, broadcastArticleBg: String, broadcastArticleEnable: Boolean, changelogLayout: String, footerLayout: String, headerLayout: String, glowType: String, glowFixed: Boolean, glowOpacity: String, darkFloat: Boolean, gaussBlur: Int, gaussBlurDark: Int
+    community: String!, dashboardSection: DashboardSection, primaryColor: String, subPrimaryColor: String, kanbanBgColors: [String], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docLayout: DsbDocLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, bannerLayout: DsbBannerLayout, topbarEnabled: Boolean, topbarBg: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, darkFloat: Boolean, gaussBlur: Int, gaussBlurDark: Int
   ): Community
 
   "update rss in dashboard"
-  updateDashboardRss(community: String!, dashboardSection: DashboardSection, rssFeedType: String, rssFeedCount: Int): Community
+  updateDashboardRss(
+    community: String!, dashboardSection: DashboardSection, rssFeedType: DsbRssFeedType, rssFeedCount: Int
+  ): Community
 
   "update name alias in dashboard"
   updateDashboardNameAlias(community: String!, dashboardSection: DashboardSection, nameAlias: [DashboardAliasMap]): Community
@@ -864,7 +866,7 @@ type ContributeMap {
 }
 
 type DashboardRss {
-  rssFeedType: String
+  rssFeedType: DsbRssFeedType
   rssFeedCount: Int
 }
 
@@ -904,27 +906,27 @@ type DashboardLayout {
   subPrimaryColor: String
   kanbanBgColors: [String]
   kanbanBoards: [KanbanBoard]
-  postLayout: String
-  kanbanLayout: String
-  kanbanCardLayout: String
-  docLayout: String
-  docFaqLayout: String
-  tagLayout: String
-  inlineTagLayout: String
-  avatarLayout: String
-  brandLayout: String
-  bannerLayout: String
-  topbarLayout: String
+  postLayout: DsbPostLayout
+  kanbanLayout: DsbKanbanLayout
+  kanbanCardLayout: DsbKanbanCardLayout
+  docLayout: DsbDocLayout
+  docFaqLayout: DsbDocFaqLayout
+  tagLayout: DsbTagLayout
+  inlineTagLayout: DsbInlineTagLayout
+  avatarLayout: DsbAvatarLayout
+  brandLayout: DsbBrandLayout
+  bannerLayout: DsbBannerLayout
+  topbarEnabled: Boolean
   topbarBg: String
-  broadcastLayout: String
+  broadcastLayout: DsbBroadcastLayout
   broadcastBg: String
   broadcastEnable: Boolean
-  broadcastArticleLayout: String
+  broadcastArticleLayout: DsbBroadcastArticleLayout
   broadcastArticleBg: String
   broadcastArticleEnable: Boolean
-  changelogLayout: String
-  footerLayout: String
-  headerLayout: String
+  changelogLayout: DsbChangelogLayout
+  footerLayout: DsbFooterLayout
+  headerLayout: DsbHeaderLayout
   glowType: String
   glowFixed: Boolean
   glowOpacity: String
@@ -1511,6 +1513,98 @@ enum KanbanBoard {
   WIP
   DONE
   REJECTED
+}
+
+enum DsbPostLayout {
+  quora
+  ph
+  masonry
+  minimal
+  cover
+}
+
+enum DsbKanbanLayout {
+  classic
+  waterfall
+}
+
+enum DsbKanbanCardLayout {
+  simple
+  full
+}
+
+enum DsbDocLayout {
+  outline
+  lists
+  cards
+}
+
+enum DsbDocFaqLayout {
+  flat
+  collapse
+  search_hint
+  left_right
+}
+
+enum DsbTagLayout {
+  hash
+  dot
+}
+
+enum DsbInlineTagLayout {
+  morandi
+  soft
+  solid
+  border
+  simple
+}
+
+enum DsbAvatarLayout {
+  circle
+  square
+}
+
+enum DsbBrandLayout {
+  both
+  logo
+  text
+}
+
+enum DsbBannerLayout {
+  header
+  tabber
+  sidebar
+}
+
+enum DsbBroadcastLayout {
+  default
+  center
+}
+
+enum DsbBroadcastArticleLayout {
+  default
+  simple
+}
+
+enum DsbChangelogLayout {
+  classic
+  simple
+}
+
+enum DsbHeaderLayout {
+  center
+  right
+  float
+}
+
+enum DsbFooterLayout {
+  simple
+  group
+}
+
+enum DsbRssFeedType {
+  digest
+  full
 }
 
 "the filter mode for list comments"

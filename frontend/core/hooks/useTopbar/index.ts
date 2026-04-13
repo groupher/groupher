@@ -1,13 +1,12 @@
 import { includes } from 'ramda'
-import { TOPBAR_LAYOUT } from '~/const/layout'
 import METRIC from '~/const/metric'
 import useMetric from '~/hooks/useMetric'
-import type { TColorName, TTopbarLayout } from '~/spec'
+import type { TColorName } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
 type TRet = {
   hasTopbar: boolean
-  topbar: TTopbarLayout
+  topbarEnabled: boolean
   topbarBg: TColorName
 }
 
@@ -15,13 +14,11 @@ export default function useTopbar(): TRet {
   const dsb$ = useDashboard()
   const metric = useMetric()
 
-  const hasTopbar =
-    !includes(metric, [METRIC.APPLY_COMMUNITY, METRIC.LANDING]) &&
-    dsb$.topbarLayout === TOPBAR_LAYOUT.YES
+  const hasTopbar = !includes(metric, [METRIC.APPLY_COMMUNITY, METRIC.LANDING]) && dsb$.topbarEnabled
 
   return {
     hasTopbar,
-    topbar: dsb$.topbarLayout,
+    topbarEnabled: dsb$.topbarEnabled,
     topbarBg: dsb$.topbarBg,
   }
 }

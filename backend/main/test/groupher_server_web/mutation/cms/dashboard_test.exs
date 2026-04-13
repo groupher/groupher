@@ -221,14 +221,15 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $primaryColor: String, $subPrimaryColor: String, $postLayout: String, $kanbanLayout: String, $kanbanCardLayout: String, $footerLayout: String, $broadcastEnable: Boolean, $kanbanBgColors: [String], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: String, $inlineTagLayout: String, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: String, $darkFloat: Boolean) {
-      updateDashboardLayout(community: $community, primaryColor: $primaryColor, subPrimaryColor: $subPrimaryColor, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, darkFloat: $darkFloat) {
+    mutation($community: String!, $primaryColor: String, $subPrimaryColor: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [String], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: DsbBrandLayout, $darkFloat: Boolean) {
+      updateDashboardLayout(community: $community, primaryColor: $primaryColor, subPrimaryColor: $subPrimaryColor, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, darkFloat: $darkFloat) {
         id
         title
         dashboard {
           layout {
             kanbanBoards
             footerLayout
+            topbarEnabled
             tagLayout
             inlineTagLayout
             glowType
@@ -251,11 +252,12 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         community: community.slug,
         primaryColor: "PURPLE",
         subPrimaryColor: "YELLOW",
-        postLayout: "new layout",
+        postLayout: "cover",
         broadcastEnable: true,
         kanbanLayout: "waterfall",
         kanbanCardLayout: "full",
         footerLayout: "simple",
+        topbarEnabled: true,
         kanbanBgColors: ["#111", "#222"],
         kanbanBoards: ["BACKLOG", "TODO", "DONE", "REJECTED"],
         glowType: "PINK",
@@ -265,7 +267,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         inlineTagLayout: "soft",
         gaussBlur: 80,
         gaussBlurDark: 60,
-        brandLayout: "LOGO",
+        brandLayout: "logo",
         darkFloat: false
       }
 
@@ -277,22 +279,23 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       assert found.dashboard.layout.primary_color == "PURPLE"
       assert found.dashboard.layout.sub_primary_color == "YELLOW"
-      assert found.dashboard.layout.post_layout == "new layout"
-      assert found.dashboard.layout.kanban_layout == "waterfall"
-      assert found.dashboard.layout.kanban_card_layout == "full"
+      assert found.dashboard.layout.post_layout == :cover
+      assert found.dashboard.layout.kanban_layout == :waterfall
+      assert found.dashboard.layout.kanban_card_layout == :full
       assert found.dashboard.layout.broadcast_enable == true
       assert found.dashboard.layout.kanban_bg_colors == ["#111", "#222"]
       assert found.dashboard.layout.kanban_boards == [:backlog, :todo, :done, :rejected]
-      assert found.dashboard.layout.footer_layout == "simple"
+      assert found.dashboard.layout.footer_layout == :simple
+      assert found.dashboard.layout.topbar_enabled == true
 
       assert found.dashboard.layout.glow_type == "PINK"
       assert found.dashboard.layout.glow_fixed == true
       assert found.dashboard.layout.glow_opacity == "30"
-      assert found.dashboard.layout.tag_layout == "dot"
-      assert found.dashboard.layout.inline_tag_layout == "soft"
+      assert found.dashboard.layout.tag_layout == :dot
+      assert found.dashboard.layout.inline_tag_layout == :soft
       assert found.dashboard.layout.gauss_blur == 80
       assert found.dashboard.layout.gauss_blur_dark == 60
-      assert found.dashboard.layout.brand_layout == "LOGO"
+      assert found.dashboard.layout.brand_layout == :logo
       assert found.dashboard.layout.dark_float == false
     end
 
@@ -302,7 +305,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
-        postLayout: "new layout"
+        postLayout: "cover"
       }
 
       updated =
@@ -311,12 +314,12 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
-      assert found.dashboard.layout.post_layout == "new layout"
-      assert found.dashboard.layout.kanban_layout == "classic"
+      assert found.dashboard.layout.post_layout == :cover
+      assert found.dashboard.layout.kanban_layout == :classic
 
       variables = %{
         community: community.slug,
-        kanbanLayout: "full"
+        kanbanLayout: "waterfall"
       }
 
       updated =
@@ -325,8 +328,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
-      assert found.dashboard.layout.post_layout == "new layout"
-      assert found.dashboard.layout.kanban_layout == "full"
+      assert found.dashboard.layout.post_layout == :cover
+      assert found.dashboard.layout.kanban_layout == :waterfall
     end
 
     test "update community dashboard layout rejects unsupported kanban board",
@@ -354,7 +357,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_seo_query """
-    mutation($community: String!, $rssFeedType: String, $rssFeedCount: Int) {
+    mutation($community: String!, $rssFeedType: DsbRssFeedType, $rssFeedCount: Int) {
       updateDashboardRss(community: $community, rssFeedType: $rssFeedType, rssFeedCount: $rssFeedCount) {
         id
         title
@@ -376,7 +379,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
-      assert found.dashboard.rss.rss_feed_type == "digest"
+      assert found.dashboard.rss.rss_feed_type == :digest
       assert found.dashboard.rss.rss_feed_count == 22
     end
 

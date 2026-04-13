@@ -92,7 +92,7 @@ export const community = `
           avatarLayout
           brandLayout
           bannerLayout
-          topbarLayout
+          topbarEnabled
           topbarBg
           broadcastLayout
           kanbanLayout

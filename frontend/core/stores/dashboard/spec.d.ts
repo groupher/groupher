@@ -32,7 +32,6 @@ import type {
   TTag,
   TTagLayout,
   TThread,
-  TTopbarLayout,
   TUser,
 } from '~/spec'
 
@@ -106,7 +105,7 @@ export type TDsbFieldMap = {
   avatarLayout: TAvatarLayout
   brandLayout: TBrandLayout
   bannerLayout: TBannerLayout
-  topbarLayout: TTopbarLayout
+  topbarEnabled: boolean
   topbarBg: TColorName
 
   broadcastLayout: TBroadcastLayout

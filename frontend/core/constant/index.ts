@@ -19,7 +19,6 @@ export {
   FOOTER_LAYOUT,
   KANBAN_CARD_LAYOUT,
   POST_LAYOUT,
-  TOPBAR_LAYOUT,
   UPVOTE_LAYOUT,
 } from './layout'
 export { default as METRIC } from './metric'

@@ -11,8 +11,35 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   alias GroupherServer.CMS.Helper.KanbanBoards
 
   @kanban_bg_colors_default ["BLACK", "YELLOW", "PURPLE", "GREEN", "RED"]
+  # Single source of truth for dashboard enums.
+  #
+  # Internal business values stay as lowercase atoms:
+  #   [:quora, :ph]
+  #
+  # They are expanded downstream into:
+  # - Ecto.Enum values: [:quora, :ph] -> DB stores "quora" / "ph"
+  # - GraphQL enum values: value(:quora), value(:ph)
+  @enum_values %{
+    post_layout: [:quora, :ph, :masonry, :minimal, :cover],
+    kanban_layout: [:classic, :waterfall],
+    kanban_card_layout: [:simple, :full],
+    doc_layout: [:outline, :lists, :cards],
+    doc_faq_layout: [:flat, :collapse, :search_hint, :left_right],
+    tag_layout: [:hash, :dot],
+    inline_tag_layout: [:morandi, :soft, :solid, :border, :simple],
+    avatar_layout: [:circle, :square],
+    brand_layout: [:both, :logo, :text],
+    banner_layout: [:header, :tabber, :sidebar],
+    broadcast_layout: [:default, :center],
+    broadcast_article_layout: [:default, :simple],
+    changelog_layout: [:classic, :simple],
+    footer_layout: [:simple, :group],
+    header_layout: [:center, :right, :float],
+    rss_feed_type: [:digest, :full]
+  }
 
   def kanban_bg_colors_default, do: @kanban_bg_colors_default
+  def enum_values(key), do: Map.fetch!(@enum_values, key)
 
   def layout_default do
     macro_schema(:layout)
@@ -67,27 +94,27 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:sub_primary_color, :string, "BLACK"],
       [:kanban_bg_colors, {:array, :string}, @kanban_bg_colors_default],
       [:kanban_boards, {:array, :kanban_board}, KanbanBoards.default_values_list()],
-      [:post_layout, :string, "quora"],
-      [:kanban_layout, :string, "classic"],
-      [:kanban_card_layout, :string, "simple"],
-      [:doc_layout, :string, "outline"],
-      [:doc_faq_layout, :string, "collapse"],
-      [:tag_layout, :string, "hash"],
-      [:inline_tag_layout, :string, "border"],
-      [:avatar_layout, :string, "square"],
-      [:brand_layout, :string, "both"],
-      [:banner_layout, :string, "header"],
-      [:topbar_layout, :string, "no"],
+      [:post_layout, :enum, :quora],
+      [:kanban_layout, :enum, :classic],
+      [:kanban_card_layout, :enum, :simple],
+      [:doc_layout, :enum, :outline],
+      [:doc_faq_layout, :enum, :collapse],
+      [:tag_layout, :enum, :hash],
+      [:inline_tag_layout, :enum, :border],
+      [:avatar_layout, :enum, :square],
+      [:brand_layout, :enum, :both],
+      [:banner_layout, :enum, :header],
+      [:topbar_enabled, :boolean, false],
       [:topbar_bg, :string, "BLACK"],
-      [:broadcast_layout, :string, "default"],
+      [:broadcast_layout, :enum, :default],
       [:broadcast_bg, :string, "BLACK"],
       [:broadcast_enable, :boolean, false],
-      [:broadcast_article_layout, :string, "default"],
+      [:broadcast_article_layout, :enum, :default],
       [:broadcast_article_bg, :string, "RED"],
       [:broadcast_article_enable, :boolean, true],
-      [:changelog_layout, :string, "classic"],
-      [:footer_layout, :string, "group"],
-      [:header_layout, :string, "center"],
+      [:changelog_layout, :enum, :classic],
+      [:footer_layout, :enum, :group],
+      [:header_layout, :enum, :center],
       ## glow
       [:glow_type, :string, ""],
       [:glow_fixed, :boolean, true],
@@ -124,7 +151,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
 
   def macro_schema(:rss) do
     [
-      [:rss_feed_type, :string, "digest"],
+      [:rss_feed_type, :enum, :digest],
       [:rss_feed_count, :integer, 20]
     ]
   end
