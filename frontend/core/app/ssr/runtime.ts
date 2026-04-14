@@ -180,9 +180,7 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
   cacheLife('days')
   cacheTag(CACHE_TAG.tagsCache(community, thread))
 
-  const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number])
-    ? thread
-    : null
+  const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number]) ? thread : null
   if (!gqlThread) return []
 
   const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread: gqlThread } })

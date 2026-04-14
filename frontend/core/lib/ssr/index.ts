@@ -243,9 +243,7 @@ export const getPagedTags = async (
   cacheLife('hours')
   cacheTag(CACHE_TAG.tagsCache(community, thread))
 
-  const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number])
-    ? thread
-    : null
+  const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number]) ? thread : null
   if (!gqlThread) return null
 
   const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread: gqlThread } })
