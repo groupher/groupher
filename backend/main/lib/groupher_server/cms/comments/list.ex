@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   alias Accounts.Model.User
   alias CMS.FrontDesk
+  alias CMS.Helper.Threads
   alias CMS.Model.{Comment, PinnedComment}
   alias CMS.Comments.Helper, as: CommentHelper
   alias Helper.{Later, ORM, QueryBuilder, T}
@@ -101,15 +102,14 @@ defmodule GroupherServer.CMS.Comments.List do
   def paged_published_comments(%User{id: user_id}, thread, filter) do
     %{page: page, size: size} = filter
 
-    thread = thread |> to_string |> String.upcase()
-    thread_atom = thread |> String.downcase() |> String.to_atom()
+    {:ok, thread_atom} = Threads.to_atom(thread)
 
     article_preload = Keyword.new([{thread_atom, [author: :user]}])
     query = from(comment in Comment, preload: ^article_preload)
 
     query
     |> join(:inner, [comment], author in assoc(comment, :author))
-    |> where([comment, author], comment.thread == ^thread)
+    |> where([comment, author], comment.thread == ^thread_atom)
     |> where([comment, author], author.id == ^user_id)
     |> QueryBuilder.filter_pack(filter)
     |> ORM.paginator(~m(page size)a)
@@ -255,6 +255,4 @@ defmodule GroupherServer.CMS.Comments.List do
   end
 
   defp sort_solution_to_front(_, pinned_comments), do: pinned_comments
-
-
 end

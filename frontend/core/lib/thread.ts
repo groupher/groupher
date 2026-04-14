@@ -1,15 +1,9 @@
-import { ARTICLE_THREAD } from '~/const/thread'
-import type { TThread } from '~/spec'
+import { THREAD_PATH } from '~/const/thread'
+import type { TThread, TThreadPath } from '~/spec'
 
-export type TGqlThreadScope = 'ALL' | 'TAGS'
+export const thread2Path = (thread: TThread): TThreadPath => THREAD_PATH[thread]
 
-const TAGS_THREAD_SET = new Set(
-  Object.values(ARTICLE_THREAD).filter((t) => t !== ARTICLE_THREAD.KANBAN),
-)
-
-export const toGqlThread = (thread: TThread, scope: TGqlThreadScope = 'ALL'): string | null => {
-  // @ts-expect-error
-  if (scope === 'TAGS' && !TAGS_THREAD_SET.has(thread)) return null
-
-  return thread.toUpperCase()
+export const path2Thread = (path: TThreadPath): TThread => {
+  const entry = Object.entries(THREAD_PATH).find(([, v]) => v === path)
+  return entry?.[0] as TThread
 }

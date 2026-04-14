@@ -35,7 +35,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :common_article do
-    field(:thread, :string)
+    field(:thread, :thread)
     field(:id, :id)
     # field(:body_html, :string)
     field(:title, :string)
@@ -243,8 +243,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:desc, :string)
     field(:layout, :string)
     field(:slug, :string)
-    field(:color, :string)
-    field(:thread, :string)
+    field(:color, :rainbow_color)
+    field(:thread, :thread)
     field(:group, :string)
     field(:extra, list_of(:string))
     field(:icon, :string)
@@ -318,7 +318,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :citing do
     field(:id, :id)
-    field(:thread, :string)
+    field(:thread, :thread)
     field(:title, :string)
     field(:block_linker, list_of(:string))
     field(:comment_id, :id)
@@ -400,7 +400,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   @desc "article meta info"
   object :article_meta do
-    field(:thread, :string)
+    field(:thread, :thread)
     field(:is_edited, :boolean)
     field(:is_comment_locked, :boolean)
     field(:last_active_at, :datetime)

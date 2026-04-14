@@ -626,7 +626,7 @@ type RootMutationType {
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dashboardSection: DashboardSection, primaryColor: String, subPrimaryColor: String, kanbanBgColors: [String], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docLayout: DsbDocLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, bannerLayout: DsbBannerLayout, topbarEnabled: Boolean, topbarBg: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, darkFloat: Boolean, gaussBlur: Int, gaussBlurDark: Int
+    community: String!, dashboardSection: DashboardSection, primaryColor: RainbowColor, primaryCustomColor: String, subPrimaryColor: RainbowColor, subPrimaryCustomColor: String, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docLayout: DsbDocLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, bannerLayout: DsbBannerLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, darkFloat: Boolean, gaussBlur: Int, gaussBlurDark: Int
   ): Community
 
   "update rss in dashboard"
@@ -674,7 +674,7 @@ type CommonUser {
 }
 
 type CommonArticle {
-  thread: String
+  thread: Thread
   id: ID
   title: String
   author: CommonUser
@@ -890,9 +890,11 @@ type DashboardWallpaper {
 }
 
 type DashboardLayout {
-  primaryColor: String
-  subPrimaryColor: String
-  kanbanBgColors: [String]
+  primaryColor: RainbowColor
+  primaryCustomColor: String
+  subPrimaryColor: RainbowColor
+  subPrimaryCustomColor: String
+  kanbanBgColors: [RainbowColor]
   kanbanBoards: [KanbanBoard]
   postLayout: DsbPostLayout
   kanbanLayout: DsbKanbanLayout
@@ -905,12 +907,15 @@ type DashboardLayout {
   brandLayout: DsbBrandLayout
   bannerLayout: DsbBannerLayout
   topbarEnabled: Boolean
-  topbarBg: String
+  topbarBg: RainbowColor
+  topbarBgCustomColor: String
   broadcastLayout: DsbBroadcastLayout
-  broadcastBg: String
+  broadcastBg: RainbowColor
+  broadcastCustomBg: String
   broadcastEnable: Boolean
   broadcastArticleLayout: DsbBroadcastArticleLayout
-  broadcastArticleBg: String
+  broadcastArticleBg: RainbowColor
+  broadcastArticleCustomBg: String
   broadcastArticleEnable: Boolean
   changelogLayout: DsbChangelogLayout
   footerLayout: DsbFooterLayout
@@ -1073,8 +1078,8 @@ type CommunityTag {
   desc: String
   layout: String
   slug: String
-  color: String
-  thread: String
+  color: RainbowColor
+  thread: Thread
   group: String
   extra: [String]
   icon: String
@@ -1112,7 +1117,7 @@ type CommentReply {
   emotions: [EmotionStat]
   meta: CommentMeta
   repliesCount: Int
-  thread: String
+  thread: Thread
   viewerHasUpvoted: Boolean
   replyTo: Comment
   replyToId: ID
@@ -1135,7 +1140,7 @@ type Comment {
   emotions: [EmotionStat]
   meta: CommentMeta
   repliesCount: Int
-  thread: String
+  thread: Thread
   viewerHasUpvoted: Boolean
   replyTo: Comment
   replyToId: ID
@@ -1178,7 +1183,7 @@ type AbuseReport {
 
 type Citing {
   id: ID
-  thread: String
+  thread: Thread
   title: String
   blockLinker: [String]
   commentId: ID
@@ -1301,7 +1306,7 @@ type PagedArticles {
 
 "article meta info"
 type ArticleMeta {
-  thread: String
+  thread: Thread
   isEdited: Boolean
   isCommentLocked: Boolean
   lastActiveAt: DateTime
@@ -1396,6 +1401,10 @@ enum Thread {
   BLOG
   CHANGELOG
   DOC
+  KANBAN
+  ACCOUNT
+  ABOUT
+  DASHBOARD
   USER
 }
 
@@ -1466,133 +1475,134 @@ enum RainbowColor {
   ORANGE
   YELLOW
   BROWN
-  GREEN
   GREEN_LIGHT
+  GREEN
   CYAN
   CYAN_LIGHT
   BLUE
   PURPLE
+  CUSTOM
 }
 
 enum ArticleCatEnum {
-  feature
-  bug
-  question
-  other
+  FEATURE
+  BUG
+  QUESTION
+  OTHER
 }
 
 enum ArticleStateEnum {
-  default
-  backlog
-  todo
-  wip
-  done
-  resolved
-  reject
-  reject_dup
-  reject_no_plan
-  reject_repro
-  reject_stale
+  DEFAULT
+  BACKLOG
+  TODO
+  WIP
+  DONE
+  RESOLVED
+  REJECT
+  REJECT_DUP
+  REJECT_NO_PLAN
+  REJECT_REPRO
+  REJECT_STALE
 }
 
 enum KanbanBoard {
-  backlog
-  todo
-  wip
-  done
-  rejected
+  BACKLOG
+  TODO
+  WIP
+  DONE
+  REJECTED
 }
 
 enum DsbPostLayout {
-  quora
-  ph
-  masonry
-  minimal
-  cover
+  QUORA
+  PH
+  MASONRY
+  MINIMAL
+  COVER
 }
 
 enum DsbKanbanLayout {
-  classic
-  waterfall
+  CLASSIC
+  WATERFALL
 }
 
 enum DsbKanbanCardLayout {
-  simple
-  full
+  SIMPLE
+  FULL
 }
 
 enum DsbDocLayout {
-  outline
-  lists
-  cards
+  OUTLINE
+  LISTS
+  CARDS
 }
 
 enum DsbDocFaqLayout {
-  flat
-  collapse
-  search_hint
-  left_right
+  FLAT
+  COLLAPSE
+  SEARCH_HINT
+  LEFT_RIGHT
 }
 
 enum DsbTagLayout {
-  hash
-  dot
+  HASH
+  DOT
 }
 
 enum DsbInlineTagLayout {
-  morandi
-  soft
-  solid
-  border
-  simple
+  MORANDI
+  SOFT
+  SOLID
+  BORDER
+  SIMPLE
 }
 
 enum DsbAvatarLayout {
-  circle
-  square
+  CIRCLE
+  SQUARE
 }
 
 enum DsbBrandLayout {
-  both
-  logo
-  text
+  BOTH
+  LOGO
+  TEXT
 }
 
 enum DsbBannerLayout {
-  header
-  tabber
-  sidebar
+  HEADER
+  TABBER
+  SIDEBAR
 }
 
 enum DsbBroadcastLayout {
-  default
-  center
+  DEFAULT
+  CENTER
 }
 
 enum DsbBroadcastArticleLayout {
-  default
-  simple
+  DEFAULT
+  SIMPLE
 }
 
 enum DsbChangelogLayout {
-  classic
-  simple
+  CLASSIC
+  SIMPLE
 }
 
 enum DsbHeaderLayout {
-  center
-  right
-  float
+  CENTER
+  RIGHT
+  FLOAT
 }
 
 enum DsbFooterLayout {
-  simple
-  group
+  SIMPLE
+  GROUP
 }
 
 enum DsbRssFeedType {
-  digest
-  full
+  DIGEST
+  FULL
 }
 
 "the filter mode for list comments"
@@ -1926,7 +1936,7 @@ type MailboxStatus {
 
 type MailboxMention {
   id: ID
-  thread: String
+  thread: Thread
   articleId: ID
   title: String
   commentId: ID
@@ -1940,7 +1950,7 @@ type MailboxMention {
 type MailboxNotification {
   id: ID
   action: String
-  thread: String
+  thread: Thread
   articleId: ID
   title: String
   commentId: ID

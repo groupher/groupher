@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Articles.States do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Comments.Write
-  alias CMS.Helper.ArticleEnums
+  alias CMS.Helper.{ArticleEnums, Threads}
   alias CMS.Model.{Community, Embeds, PinnedArticle, Post}
   alias CMS.{Communities, FrontDesk}
 
@@ -277,7 +277,7 @@ defmodule GroupherServer.CMS.Articles.States do
 
   defp pack_pin_args(%Community{} = community, thread, article_id) do
     with {:ok, info} <- match(thread) do
-      thread = thread |> to_string() |> String.upcase()
+      {:ok, thread} = Threads.to_atom(thread)
 
       Map.put(
         %{community_id: community.id, thread: thread},
@@ -288,7 +288,7 @@ defmodule GroupherServer.CMS.Articles.States do
   end
 
   defp check_pinned_article_count(%Community{} = community, thread) do
-    thread = thread |> to_string() |> String.upcase()
+    {:ok, thread} = Threads.to_atom(thread)
 
     query =
       from(p in PinnedArticle, where: p.community_id == ^community.id and p.thread == ^thread)

@@ -221,7 +221,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $primaryColor: String, $subPrimaryColor: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [String], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: DsbBrandLayout, $darkFloat: Boolean) {
+    mutation($community: String!, $primaryColor: RainbowColor, $subPrimaryColor: RainbowColor, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: DsbBrandLayout, $darkFloat: Boolean) {
       updateDashboardLayout(community: $community, primaryColor: $primaryColor, subPrimaryColor: $subPrimaryColor, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, darkFloat: $darkFloat) {
         id
         title
@@ -252,22 +252,22 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         community: community.slug,
         primaryColor: "PURPLE",
         subPrimaryColor: "YELLOW",
-        postLayout: "cover",
+        postLayout: "COVER",
         broadcastEnable: true,
-        kanbanLayout: "waterfall",
-        kanbanCardLayout: "full",
-        footerLayout: "simple",
+        kanbanLayout: "WATERFALL",
+        kanbanCardLayout: "FULL",
+        footerLayout: "SIMPLE",
         topbarEnabled: true,
-        kanbanBgColors: ["#111", "#222"],
-        kanbanBoards: ["backlog", "todo", "done", "rejected"],
+        kanbanBgColors: ["BLACK", "YELLOW"],
+        kanbanBoards: ["BACKLOG", "TODO", "DONE", "REJECTED"],
         glowType: "PINK",
         glowFixed: true,
         glowOpacity: "30",
-        tagLayout: "dot",
-        inlineTagLayout: "soft",
+        tagLayout: "DOT",
+        inlineTagLayout: "SOFT",
         gaussBlur: 80,
         gaussBlurDark: 60,
-        brandLayout: "logo",
+        brandLayout: "LOGO",
         darkFloat: false
       }
 
@@ -277,13 +277,13 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
-      assert found.dashboard.layout.primary_color == "PURPLE"
-      assert found.dashboard.layout.sub_primary_color == "YELLOW"
+      assert found.dashboard.layout.primary_color == :purple
+      assert found.dashboard.layout.sub_primary_color == :yellow
       assert found.dashboard.layout.post_layout == :cover
       assert found.dashboard.layout.kanban_layout == :waterfall
       assert found.dashboard.layout.kanban_card_layout == :full
       assert found.dashboard.layout.broadcast_enable == true
-      assert found.dashboard.layout.kanban_bg_colors == ["#111", "#222"]
+      assert found.dashboard.layout.kanban_bg_colors == [:black, :yellow]
       assert found.dashboard.layout.kanban_boards == [:backlog, :todo, :done, :rejected]
       assert found.dashboard.layout.footer_layout == :simple
       assert found.dashboard.layout.topbar_enabled == true
@@ -305,7 +305,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
-        postLayout: "cover"
+        postLayout: "COVER"
       }
 
       updated =
@@ -319,7 +319,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
-        kanbanLayout: "waterfall"
+        kanbanLayout: "WATERFALL"
       }
 
       updated =
@@ -338,7 +338,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
-        kanbanBoards: ["todo", "INVALID_BOARD"]
+        kanbanBoards: ["TODO", "INVALID_BOARD"]
       }
 
       assert mutation_error?(rule_conn, @update_layout_query, variables)
@@ -350,7 +350,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
-        kanbanBoards: ["todo", "todo", "done"]
+        kanbanBoards: ["TODO", "TODO", "DONE"]
       }
 
       assert mutation_error?(rule_conn, @update_layout_query, variables)
@@ -369,7 +369,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
-        rssFeedType: "digest",
+        rssFeedType: "DIGEST",
         rssFeedCount: 22
       }
 

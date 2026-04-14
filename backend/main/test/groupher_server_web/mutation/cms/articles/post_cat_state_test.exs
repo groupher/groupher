@@ -31,18 +31,18 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
     test "can set cat for a existing post", ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-        cat: "feature"
+        cat: "FEATURE"
       }
 
       created = user_conn |> gq_mutation(@set_cat_query, variables)
 
-      assert "feature" == created["cat"]
+      assert "FEATURE" == created["cat"]
     end
 
     test "set cat rejects non-enum value", ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-        cat: "FEATURE"
+        cat: "NOT_EXIST"
       }
 
       assert user_conn |> mutation_error?(@set_cat_query, variables)
@@ -65,18 +65,18 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
     test "can set state for a existing post", ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-        state: "done"
+        state: "DONE"
       }
 
       created = user_conn |> gq_mutation(@set_state_query, variables)
 
-      assert "done" == created["state"]
+      assert "DONE" == created["state"]
     end
 
     test "set state rejects non-enum value", ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-        state: "DONE"
+        state: "NOT_EXIST"
       }
 
       assert user_conn |> mutation_error?(@set_state_query, variables)

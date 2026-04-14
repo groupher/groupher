@@ -293,7 +293,7 @@
      --color-hoverBg: #efefef78;
   }
 
-  [data-theme="dark"] [data-primary-color="BLACK"] { 
+  [data-theme="dark"] [data-primary-color="BLACK"] {
     --color-rainbow-black: oklch(0.57 0 0); 
   }
 }

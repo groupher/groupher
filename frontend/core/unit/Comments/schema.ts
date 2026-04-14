@@ -84,8 +84,8 @@ const replyComment = gql`
   }
 `
 const deleteComment = gql`
-  mutation ($thread: CmsThread, $id: ID!) {
-    deleteComment(thread: $thread, id: $id) {
+  mutation ($id: ID!) {
+    deleteComment(id: $id) {
       id
     }
   }

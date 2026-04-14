@@ -144,7 +144,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
     report
     |> Map.get(thread)
     |> Map.take(@export_article_keys)
-    |> Map.merge(%{thread: thread |> to_string |> String.upcase()})
+    |> Map.merge(%{thread: thread})
   end
 
   defp extract_article_comment_info(%AbuseReport{} = report) do

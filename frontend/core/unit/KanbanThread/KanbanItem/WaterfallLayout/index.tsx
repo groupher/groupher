@@ -7,7 +7,7 @@
 import Link from 'next/link'
 import type { FC } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import { mockUsers } from '~/mock'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -32,7 +32,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
     <div className={s.wrapper}>
       <h4 className={s.title}>
         <Link
-          href={`/${slug}/${THREAD.POST}/${article.innerId}`}
+          href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
           scroll={false}
           data-preview-id={String(article.innerId)}
         >

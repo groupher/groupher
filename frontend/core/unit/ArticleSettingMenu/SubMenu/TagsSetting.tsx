@@ -7,7 +7,6 @@ import useViewingArticle from '~/hooks/useViewingArticle'
 import { toast, updateViewingArticle } from '~/signal'
 import type { TColorName, TID, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import { toGqlThread } from '~/utils/thread'
 import Checker from '~/widgets/Checker'
 import TagNode from '~/widgets/TagNode'
 import useSalon from '../salon/sub_menu/tags_setting'
@@ -33,7 +32,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
     variables: {
       filter: {
         community,
-        thread: toGqlThread(THREAD.POST, 'TAGS') || THREAD.POST.toUpperCase(),
+        thread: THREAD.POST,
       },
     },
     requestPolicy: 'cache-and-network',

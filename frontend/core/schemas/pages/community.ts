@@ -83,7 +83,9 @@ export const community = `
         }
         layout {
           primaryColor
+          primaryCustomColor
           subPrimaryColor
+          subPrimaryCustomColor
           postLayout
           docLayout
           docFaqLayout
@@ -94,7 +96,12 @@ export const community = `
           bannerLayout
           topbarEnabled
           topbarBg
+          topbarBgCustomColor
           broadcastLayout
+          broadcastBg
+          broadcastCustomBg
+          broadcastArticleBg
+          broadcastArticleCustomBg
           kanbanLayout
           kanbanCardLayout
           kanbanBoards

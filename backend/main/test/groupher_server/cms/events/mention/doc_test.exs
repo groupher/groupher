@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.DocTest do
       {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
-      assert mention.thread == "DOC"
+      assert mention.thread == :doc
       assert mention.block_linker |> length == 2
       assert mention.article_id == doc.id
       assert mention.title == doc.title
@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.DocTest do
       {:ok, result} = Messaging.paged_messages(:mention, user3, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
-      assert mention.thread == "DOC"
+      assert mention.thread == :doc
       assert mention.block_linker |> length == 1
       assert mention.article_id == doc.id
       assert mention.title == doc.title
@@ -62,7 +62,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.DocTest do
       {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
-      assert mention.thread == "DOC"
+      assert mention.thread == :doc
       assert mention.comment_id == comment.id
       assert mention.block_linker |> length == 1
       assert mention.article_id == doc.id

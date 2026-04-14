@@ -91,7 +91,9 @@ export type TDsbFieldMap = {
 
   // layout
   primaryColor: TColorName
+  primaryCustomColor: string
   subPrimaryColor: TColorName
+  subPrimaryCustomColor: string
   postLayout: TPostLayout
   kanbanLayout: TKanbanLayout
   kanbanCardLayout: TKanbanCardLayout
@@ -107,13 +109,16 @@ export type TDsbFieldMap = {
   bannerLayout: TBannerLayout
   topbarEnabled: boolean
   topbarBg: TColorName
+  topbarBgCustomColor: string
 
   broadcastLayout: TBroadcastLayout
   broadcastBg: TColorName
+  broadcastCustomBg: string
   broadcastEnable: boolean
   broadcastArticleLayout: TBroadcastArticleLayout
 
   broadcastArticleBg: TColorName
+  broadcastArticleCustomBg: string
   broadcastArticleEnable: boolean
 
   changelogLayout: TChangelogLayout

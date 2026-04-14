@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
 
       {:ok, comment} = ORM.find(Comment, comment.id)
 
-      assert comment.thread == "POST"
+      assert comment.thread == :post
       assert comment.post_id == post.id
       assert is_nil(comment.blog_id)
       assert is_nil(comment.changelog_id)
@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
       {:ok, _post} = CMS.Articles.upvote(post, user)
 
       assert {:ok, upvote} =
-               ORM.find_by(ArticleUpvote, %{user_id: user.id, thread: "POST", post_id: post.id})
+               ORM.find_by(ArticleUpvote, %{user_id: user.id, thread: :post, post_id: post.id})
 
       assert upvote.post_id == post.id
       assert is_nil(upvote.blog_id)
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
       {:ok, _collect} = CMS.Articles.collect(post, user)
 
       assert {:ok, collect} =
-               ORM.find_by(ArticleCollect, %{user_id: user.id, thread: "POST", post_id: post.id})
+               ORM.find_by(ArticleCollect, %{user_id: user.id, thread: :post, post_id: post.id})
 
       assert collect.post_id == post.id
       assert is_nil(collect.blog_id)

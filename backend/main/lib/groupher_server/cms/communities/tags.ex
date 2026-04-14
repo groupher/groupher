@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   community tags logic
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, atom_values_to_upcase: 1]
+  import Helper.Utils, only: [done: 1]
 
   import GroupherServer.CMS.Articles.Write,
     only: [ensure_author_exists: 1]
@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
+  alias CMS.Helper.Threads
   alias CMS.Model.{Community, CommunityTag}
   alias Helper.{Multi, ORM, QueryBuilder, T}
 
@@ -35,7 +36,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
           thread: thread
         }
 
-        attrs = attrs |> Map.merge(update_attrs) |> atom_values_to_upcase
+        attrs = attrs |> Map.merge(update_attrs) |> normalize_tag_attrs()
 
         ORM.create(CommunityTag, attrs)
       end)
@@ -56,7 +57,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   @spec update(T.id(), map()) :: {:ok, CommunityTag.t()} | {:error, Ecto.Changeset.t()}
   def update(id, attrs) do
     with {:ok, tag} <- ORM.find(CommunityTag, id) do
-      attrs = attrs |> atom_values_to_upcase
+      attrs = attrs |> normalize_tag_attrs()
       ORM.update(tag, attrs)
     end
   end
@@ -242,7 +243,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   end
 
   defp find_group_tags(%Community{} = community, thread, group) do
-    filter = %{community: community.slug, thread: thread} |> atom_values_to_upcase
+    filter = %{community: community.slug, thread: thread}
 
     CommunityTag
     |> where([t], t.group == ^group)
@@ -263,6 +264,15 @@ defmodule GroupherServer.CMS.Communities.Tags do
       {new_key, v}
     end)
     |> Map.new()
+  end
+
+  defp normalize_tag_attrs(attrs) do
+    Map.update(attrs, :thread, nil, fn thread ->
+      case Threads.to_atom(thread) do
+        {:ok, normalized} -> normalized
+        {:error, _} -> thread
+      end
+    end)
   end
 
   defp result({:ok, %{create_tag: result}}), do: {:ok, result}

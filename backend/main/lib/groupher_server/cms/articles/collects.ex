@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
         FrontDesk.update_article_reaction_user_list(:collect, article, user, :add)
       end)
       |> Multi.run(:create_collect, fn _, _ ->
-        {:ok, thread} = FrontDesk.thread_of(article, :upcase)
+        {:ok, thread} = FrontDesk.thread_of(article)
         args = Map.put(%{user_id: user.id, thread: thread}, info.foreign_key, article.id)
 
         ORM.create(ArticleCollect, args)
@@ -160,7 +160,7 @@ defmodule GroupherServer.CMS.Articles.Collects do
 
   defp collection_findby_args(article, user_id) do
     {:ok, info} = match(article)
-    {:ok, thread} = FrontDesk.thread_of(article, :upcase)
+    {:ok, thread} = FrontDesk.thread_of(article)
 
     %{thread: thread, user_id: user_id} |> Map.put(info.foreign_key, article.id)
   end

@@ -105,7 +105,7 @@ defmodule GroupherServerWeb.Schema.Account.Types do
 
   object :mailbox_mention do
     field(:id, :id)
-    field(:thread, :string)
+    field(:thread, :thread)
     field(:article_id, :id)
     field(:title, :string)
     field(:comment_id, :id)
@@ -121,7 +121,7 @@ defmodule GroupherServerWeb.Schema.Account.Types do
   object :mailbox_notification do
     field(:id, :id)
     field(:action, :string)
-    field(:thread, :string)
+    field(:thread, :thread)
     field(:article_id, :id)
     field(:title, :string)
     field(:comment_id, :id)

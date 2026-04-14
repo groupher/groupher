@@ -3,8 +3,8 @@ import useHeaderLinks from '~/hooks/useHeaderLinks'
 import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
 import useCommunity from '~/stores/community/hooks'
-
 import CustomHeaderLinks from '~/unit/HeaderLinks'
+import { path2Thread } from '~/utils/thread'
 import useSalon, { cn } from '../salon/sidebar_layout/main_menu'
 import ThreadIcon from './ThreadIcon'
 
@@ -22,11 +22,11 @@ export default function MainMenu() {
   return (
     <div className={s.wrapper}>
       {publicThreads.map((thread) => {
-        const active = activeThread === thread.slug
+        const active = activeThread === path2Thread(thread.slug)
 
         return (
           <Link className={s.menuItem} key={thread.slug} href={`/${community}/${thread.slug}`}>
-            <ThreadIcon thread={thread.slug} active={active} />
+            <ThreadIcon thread={path2Thread(thread.slug)} active={active} />
             <div className={cn(s.menuTitle, active && s.titleActive)}>{thread.title}</div>
           </Link>
         )

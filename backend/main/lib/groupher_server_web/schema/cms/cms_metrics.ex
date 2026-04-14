@@ -9,10 +9,11 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
 
   alias GroupherServer.CMS
 
-  alias CMS.Helper.{ArticleEnums, KanbanBoards}
+  alias CMS.Helper.{ArticleEnums, KanbanBoards, Threads}
 
   require ArticleEnums
   require KanbanBoards
+  require Threads
 
   @doc """
   only used for reaction result, like: upvote/collect/watch ...
@@ -43,9 +44,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   enum(:emotion_type, do: emotion_values(:all))
 
   enum :thread do
-    article_values()
-    value(:user)
-    # home community
+    enum_values(Threads.values())
   end
 
   enum :dashboard_section do
@@ -117,17 +116,18 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:orange)
     value(:yellow)
     value(:brown)
-    value(:green)
     value(:green_light)
+    value(:green)
     value(:cyan)
     value(:cyan_light)
     value(:blue)
     value(:purple)
+    value(:custom)
   end
 
-  lowercase_enum(:article_cat_enum, ArticleEnums.cat())
-  lowercase_enum(:article_state_enum, ArticleEnums.state())
-  lowercase_enum(:kanban_board, KanbanBoards.values())
+  enum(:article_cat_enum, do: enum_values(ArticleEnums.cat()))
+  enum(:article_state_enum, do: enum_values(ArticleEnums.state()))
+  enum(:kanban_board, do: enum_values(KanbanBoards.values()))
 
   dsb_enum(:post_layout)
   dsb_enum(:kanban_layout)

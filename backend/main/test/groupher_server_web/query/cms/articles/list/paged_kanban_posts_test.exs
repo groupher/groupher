@@ -193,13 +193,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
 
       variables = %{
         community: community.slug,
-        filter: %{page: 1, size: 20, state: "wip"}
+        filter: %{page: 1, size: 20, state: "WIP"}
       }
 
       results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == 1
-      assert results["entries"] |> Enum.at(0) |> Map.get("state") == "wip"
+      assert results["entries"] |> Enum.at(0) |> Map.get("state") == "WIP"
     end
   end
 end

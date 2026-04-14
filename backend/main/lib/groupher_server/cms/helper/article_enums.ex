@@ -23,8 +23,8 @@ defmodule GroupherServer.CMS.Helper.ArticleEnums do
   # Internal values stay as lowercase atoms:
   #   [:feature, :bug]
   #
-  # GraphQL enums expand from the same list and keep lowercase names:
-  #   feature / bug
+  # Absinthe exposes FEATURE / BUG over GraphQL by default and maps them
+  # back to the same lowercase atoms above automatically.
   @cat [:feature, :bug, :question, :other]
 
   @state [

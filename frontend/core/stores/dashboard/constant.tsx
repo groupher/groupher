@@ -87,7 +87,9 @@ export const FIELDS: TDsbFieldMap = {
 
   // layout
   primaryColor: COLOR.BLACK,
+  primaryCustomColor: '',
   subPrimaryColor: COLOR.BLACK,
+  subPrimaryCustomColor: '',
   postLayout: POST_LAYOUT.QUORA,
   kanbanLayout: KANBAN_LAYOUT.CLASSIC,
   kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,
@@ -103,13 +105,16 @@ export const FIELDS: TDsbFieldMap = {
   bannerLayout: BANNER_LAYOUT.HEADER,
   topbarEnabled: false,
   topbarBg: COLOR.ORANGE,
+  topbarBgCustomColor: '',
 
   broadcastLayout: BROADCAST_LAYOUT.DEFAULT,
   broadcastBg: COLOR.BLACK,
+  broadcastCustomBg: '',
   broadcastEnable: false,
 
   broadcastArticleLayout: BROADCAST_ARTICLE_LAYOUT.DEFAULT,
   broadcastArticleBg: COLOR.RED,
+  broadcastArticleCustomBg: '',
   broadcastArticleEnable: true,
 
   changelogLayout: CHANGELOG_LAYOUT.CLASSIC,

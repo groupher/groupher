@@ -4,13 +4,14 @@ defmodule GroupherServer.Messaging.Notifications do
   import Ecto.Query, warn: false
 
   import Helper.Utils,
-    only: [get_config: 2, done: 1, atom_values_to_upcase: 1]
+    only: [get_config: 2, done: 1]
 
   import ShortMaps
 
   alias GroupherServer.{Accounts, Repo}
 
   alias Accounts.Model.User
+  alias GroupherServer.CMS.Helper.Threads
   alias GroupherServer.CMS.Model.Embeds
   alias GroupherServer.Messaging.Model.Notification
   alias Helper.{Multi, ORM}
@@ -126,7 +127,11 @@ defmodule GroupherServer.Messaging.Notifications do
   end
 
   defp create_notification(attrs, from_user) do
-    attrs = attrs |> Map.merge(%{from_users_count: 1}) |> atom_values_to_upcase
+    attrs =
+      attrs
+      |> Map.merge(%{from_users_count: 1})
+      |> normalize_thread_attr()
+      |> normalize_action_attr()
 
     %Notification{}
     |> Ecto.Changeset.change(attrs)
@@ -166,7 +171,7 @@ defmodule GroupherServer.Messaging.Notifications do
 
   defp find_exist_notify(%{comment_id: comment_id} = attrs, opt)
        when not is_nil(comment_id) do
-    ~m(thread article_id comment_id)a = atom_values_to_upcase(attrs)
+    %{thread: thread, article_id: article_id, comment_id: comment_id} = normalize_thread_attr(attrs)
 
     Notification
     |> where(
@@ -177,7 +182,7 @@ defmodule GroupherServer.Messaging.Notifications do
   end
 
   defp find_exist_notify(attrs, opt) do
-    ~m(thread article_id)a = atom_values_to_upcase(attrs)
+    %{thread: thread, article_id: article_id} = normalize_thread_attr(attrs)
 
     Notification
     |> where([n], n.thread == ^thread and n.article_id == ^article_id)
@@ -187,7 +192,7 @@ defmodule GroupherServer.Messaging.Notifications do
   @spec do_find_exist_notify(Ecto.Queryable.t(), map(), atom()) ::
           {atom(), Notification.t()}
   defp do_find_exist_notify(queryable, attrs, :latest_peroid) do
-    ~m(user_id action)a = atom_values_to_upcase(attrs)
+    %{user_id: user_id, action: action} = normalize_action_attr(attrs)
 
     queryable
     |> where([n], n.inserted_at >= ^interval_threshold_time() and n.user_id == ^user_id)
@@ -201,7 +206,7 @@ defmodule GroupherServer.Messaging.Notifications do
   @spec do_find_exist_notify(Ecto.Queryable.t(), map(), atom()) ::
           {atom(), [Notification.t()]}
   defp do_find_exist_notify(queryable, attrs, _opt) do
-    ~m(user_id action from_user)a = atom_values_to_upcase(attrs)
+    %{user_id: user_id, action: action, from_user: from_user} = normalize_action_attr(attrs)
 
     queryable = queryable |> where([n], n.user_id == ^user_id and n.action == ^action)
 
@@ -240,6 +245,21 @@ defmodule GroupherServer.Messaging.Notifications do
   defp interval_threshold_time do
     Timex.shift(Timex.now(), hours: -@notify_group_interval_hour)
   end
+
+  defp normalize_thread_attr(%{thread: thread} = attrs) do
+    case Threads.to_atom(thread) do
+      {:ok, normalized} -> Map.put(attrs, :thread, normalized)
+      {:error, _} -> attrs
+    end
+  end
+
+  defp normalize_thread_attr(attrs), do: attrs
+
+  defp normalize_action_attr(%{action: action} = attrs) when is_atom(action) do
+    Map.put(attrs, :action, action |> to_string() |> String.upcase())
+  end
+
+  defp normalize_action_attr(attrs), do: attrs
 
   defp normalize_embed_users(users) do
     users

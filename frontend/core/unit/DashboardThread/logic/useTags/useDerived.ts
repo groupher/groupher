@@ -1,8 +1,8 @@
-import { equals, filter, find, includes, pluck, propEq, reject, uniq } from 'ramda'
+import { equals, filter, find, includes, pluck, reject, uniq } from 'ramda'
 import { useMemo } from 'react'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import { sortById } from '~/helper'
-import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
+import type { TCommunityThread, TNameAlias, TTag, TThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -22,7 +22,7 @@ export default function useDerived(): TRet {
   const { tags, original, activeTagThread, activeTagGroup, nameAlias, tagLayout, inlineTagLayout } =
     dsb$
 
-  const selectedThread = (activeTagThread || '').toUpperCase()
+  const selectedThread = activeTagThread ? (activeTagThread as TThread) : null
 
   const filteredTags = useMemo(() => {
     const filteredByGroup = activeTagGroup
@@ -35,7 +35,9 @@ export default function useDerived(): TRet {
 
   const threads = useMemo(() => {
     const mappedThreads = community$.threads.map((pThread) => {
-      const aliasItem = find(propEq('slug', pThread.slug))(nameAlias) as TNameAlias
+      const aliasItem = find((item: TNameAlias) => item.slug === pThread.slug, nameAlias) as
+        | TNameAlias
+        | undefined
       return {
         ...pThread,
         title: aliasItem?.name || pThread.title,
@@ -43,7 +45,7 @@ export default function useDerived(): TRet {
     })
 
     return reject(
-      (thread: TCommunityThread) => includes(thread.slug, [THREAD.ABOUT, THREAD.DOC]),
+      (thread: TCommunityThread) => includes(thread.slug, [THREAD_PATH.ABOUT, THREAD_PATH.DOC]),
       mappedThreads,
     )
   }, [community$.threads, nameAlias])

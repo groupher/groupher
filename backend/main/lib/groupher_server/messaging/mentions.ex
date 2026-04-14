@@ -2,13 +2,14 @@ defmodule GroupherServer.Messaging.Mentions do
   @moduledoc false
 
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, atom_values_to_upcase: 1]
-  import GroupherServer.CMS.FrontDesk, only: [thread_of: 2]
+  import Helper.Utils, only: [done: 1]
+  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
   import ShortMaps
 
   alias GroupherServer.{Accounts, Repo}
 
   alias Accounts.Model.User
+  alias GroupherServer.CMS.Helper.Threads
   alias GroupherServer.CMS.Model.Comment
   alias GroupherServer.Messaging.Model.Mention
   alias Helper.{Multi, ORM}
@@ -21,7 +22,7 @@ defmodule GroupherServer.Messaging.Mentions do
       batch_delete_mentions(comment, from_user)
     end)
     |> Multi.run(:batch_insert_mentions, fn _, _ ->
-      mentions = Enum.map(mentions, &atom_values_to_upcase(&1))
+      mentions = Enum.map(mentions, &normalize_thread_attr/1)
 
       case {0, nil} !== Repo.insert_all(Mention, mentions) do
         true -> {:ok, :pass}
@@ -43,7 +44,7 @@ defmodule GroupherServer.Messaging.Mentions do
     |> Multi.run(:batch_insert_mentions, fn _, _ ->
       mentions =
         mentions
-        |> Enum.map(&atom_values_to_upcase(&1))
+        |> Enum.map(&normalize_thread_attr/1)
         |> Enum.reject(&(&1.to_user_id == from_user.id))
 
       case Enum.empty?(mentions) or {0, nil} !== Repo.insert_all(Mention, mentions) do
@@ -95,7 +96,7 @@ defmodule GroupherServer.Messaging.Mentions do
   end
 
   defp batch_delete_mentions(article, %User{} = from_user) do
-    with {:ok, thread} <- thread_of(article, :upcase) do
+    with {:ok, thread} <- thread_of(article) do
       from(m in Mention,
         where: m.article_id == ^article.id,
         where: m.thread == ^thread,
@@ -104,6 +105,15 @@ defmodule GroupherServer.Messaging.Mentions do
       |> ORM.delete_all(:if_exist)
     end
   end
+
+  defp normalize_thread_attr(%{thread: thread} = attrs) do
+    case Threads.to_atom(thread) do
+      {:ok, normalized} -> Map.put(attrs, :thread, normalized)
+      {:error, _} -> attrs
+    end
+  end
+
+  defp normalize_thread_attr(attrs), do: attrs
 
   defp extract_mentions(%{entries: entries} = paged_mentions) do
     entries = entries |> Repo.preload(:from_user) |> Enum.map(&shape(&1))

@@ -11,13 +11,13 @@ import {
   reject,
   slice,
   split,
-  toUpper,
 } from 'ramda'
 
 import { HOME_COMMUNITY } from '~/const/name'
 import { ROUTE } from '~/const/route'
-import { THREAD } from '~/const/thread'
+import { THREAD, THREAD_PATH } from '~/const/thread'
 import { Global } from './helper'
+import { path2Thread } from './thread'
 import { nilOrEmpty } from './validator'
 
 // example: /getme/xxx?aa=bb&cc=dd
@@ -143,7 +143,7 @@ export const ssrParseURL = (req: any): any => {
   const { url } = req
   if (url === '/') {
     const mainPath = 'home'
-    const subPath = THREAD.POST
+    const subPath = THREAD_PATH.POST
 
     return {
       community: mainPath,
@@ -152,7 +152,7 @@ export const ssrParseURL = (req: any): any => {
       mainPath,
       subPath,
       thirdPath: '',
-      thread: toUpper(THREAD.POST),
+      thread: THREAD.POST,
     }
   }
 
@@ -170,7 +170,7 @@ export const ssrParseURL = (req: any): any => {
     mainPath,
     subPath,
     thirdPath,
-    thread: toUpper(thread),
+    thread: path2Thread(thread),
   }
 }
 

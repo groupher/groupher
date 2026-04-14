@@ -5,6 +5,7 @@ defmodule GroupherServer.Messaging.Model.Mention do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias GroupherServer.CMS.Helper.Threads
   alias GroupherServer.Accounts.Model.User
   alias Helper.Constant.DBPrefix
 
@@ -15,7 +16,7 @@ defmodule GroupherServer.Messaging.Model.Mention do
 
   @type t :: %Mention{}
   schema "mentions" do
-    field(:thread, :string)
+    field(:thread, Ecto.Enum, values: Threads.enums())
     field(:article_id, :id)
     field(:title, :string)
     field(:comment_id, :id)

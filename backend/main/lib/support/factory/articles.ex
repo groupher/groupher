@@ -336,7 +336,7 @@ defmodule GroupherServer.Support.Factory.Articles do
     text = Faker.Lorem.sentence(10)
 
     title = "changelog-#{String.slice(text, 1, 49)}"
-    meta = Map.merge(default_article_meta, %{thread: "CHANGELOG"})
+    meta = Map.merge(default_article_meta, %{thread: :changelog})
 
     article_base(
       meta,
@@ -355,7 +355,7 @@ defmodule GroupherServer.Support.Factory.Articles do
     text = Faker.Lorem.sentence(10)
 
     title = "doc-#{String.slice(text, 1, 49)}"
-    meta = Map.merge(default_article_meta, %{thread: "DOC"})
+    meta = Map.merge(default_article_meta, %{thread: :doc})
 
     article_base(
       meta,
@@ -374,7 +374,7 @@ defmodule GroupherServer.Support.Factory.Articles do
     text = Faker.Lorem.sentence(10)
 
     title = "blog-#{String.slice(text, 1, 49)}"
-    meta = Map.merge(default_article_meta, %{thread: "BLOG"})
+    meta = Map.merge(default_article_meta, %{thread: :blog})
 
     article_base(
       meta,

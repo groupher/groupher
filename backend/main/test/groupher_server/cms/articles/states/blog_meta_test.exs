@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.BlogMeta do
       {:ok, blog} = ORM.find_by(Blog, id: blog.id)
       meta = blog.meta |> Map.from_struct() |> Map.delete(:id)
 
-      assert meta == @default_article_meta |> Map.merge(%{thread: "BLOG"})
+      assert meta == @default_article_meta |> Map.merge(%{thread: :blog})
     end
 
     test "is_edited flag should set to true after blog updated",

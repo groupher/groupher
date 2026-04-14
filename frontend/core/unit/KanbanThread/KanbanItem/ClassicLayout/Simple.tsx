@@ -7,7 +7,7 @@
 import { useRouter } from 'next/navigation'
 import { type FC, memo, useEffect, useState } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import { getRandomInt } from '~/helper'
 import { mockTags, mockUsers } from '~/mock'
 import type { TArticle } from '~/spec'
@@ -45,7 +45,9 @@ const KanbanItem: FC<TProps> = ({ article }) => {
         type='button'
         className={s.title}
         data-preview-id={String(article.innerId)}
-        onClick={() => router.push(`/${slug}/${THREAD.POST}/${article.innerId}`, { scroll: false })}
+        onClick={() =>
+          router.push(`/${slug}/${THREAD_PATH.POST}/${article.innerId}`, { scroll: false })
+        }
       >
         {article.title}
       </button>

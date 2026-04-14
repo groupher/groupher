@@ -61,7 +61,7 @@ describe('stores/dashboard', () => {
   it('normalizes empty kanban boards init to defaults', () => {
     const store = setupStore({ kanbanBoards: [] })
 
-    expect(store.kanbanBoards).toEqual(['todo', 'wip', 'done'])
-    expect(store.original.kanbanBoards).toEqual(['todo', 'wip', 'done'])
+    expect(store.kanbanBoards).toEqual(['TODO', 'WIP', 'DONE'])
+    expect(store.original.kanbanBoards).toEqual(['TODO', 'WIP', 'DONE'])
   })
 })

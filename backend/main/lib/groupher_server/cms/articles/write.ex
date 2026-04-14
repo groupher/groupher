@@ -11,8 +11,7 @@ defmodule GroupherServer.CMS.Articles.Write do
     only: [
       done: 1,
       plural: 1,
-      module_to_atom: 1,
-      module_to_upcase: 1
+      module_to_atom: 1
     ]
 
   alias GroupherServer.{Accounts, CMS, Messaging, Repo, Statistics}
@@ -241,7 +240,7 @@ defmodule GroupherServer.CMS.Articles.Write do
       %{id: community_id, meta: community_meta, slug: community_slug} = community
       inner_id = community_meta |> Map.get(:"#{threads_name}_inner_id_index")
 
-      meta = @default_article_meta |> Map.merge(%{thread: module_to_upcase(model)})
+      meta = @default_article_meta |> Map.merge(%{thread: module_to_atom(model)})
 
       struct(model)
       |> model.changeset(attrs |> Map.merge(%{inner_id: inner_id + 1}))

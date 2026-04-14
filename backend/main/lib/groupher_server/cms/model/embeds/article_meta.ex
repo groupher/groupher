@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
 
   alias GroupherServer.CMS
 
+  alias CMS.Helper.Threads
   alias CMS.Model.Embeds
 
   @optional_fields ~w(thread is_edited is_comment_locked upvoted_user_ids collected_user_ids viewed_user_ids comments_participant_user_ids reported_user_ids reported_count is_sunk can_undo_sink last_active_at is_legal illegal_reason illegal_words next_floor)a
@@ -17,7 +18,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
   @doc "for test usage"
   def default_meta do
     %{
-      thread: "POST",
+      thread: :post,
       is_edited: false,
       is_comment_locked: false,
       folded_comment_count: 0,
@@ -42,7 +43,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
   end
 
   embedded_schema do
-    field(:thread, :string)
+    field(:thread, Ecto.Enum, values: Threads.article_enums())
     field(:is_edited, :boolean, default: false)
     field(:is_comment_locked, :boolean, default: false)
     field(:folded_comment_count, :integer, default: 0)

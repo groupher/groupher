@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
+  alias CMS.Helper.Threads
   alias CMS.Model.{Comment, Community, Embeds, Thread}
   alias Helper.{ORM, QueryBuilder, T}
 
@@ -122,21 +123,16 @@ defmodule GroupherServer.CMS.FrontDesk do
   @doc "get thread of comment or article"
   @spec thread_of(Comment.t()) :: {:ok, atom()} | {:error, map()}
   def thread_of(%Comment{thread: thread}) do
-    thread |> String.downcase() |> String.to_atom() |> done
+    Threads.to_atom(thread)
   end
 
   @spec thread_of(map()) :: {:ok, atom()} | {:error, map()}
   def thread_of(%{meta: %{thread: thread}}) do
-    thread |> String.downcase() |> String.to_atom() |> done
+    Threads.to_atom(thread)
   end
 
   @spec thread_of(any()) :: {:error, {:custom, String.t()}}
   def thread_of(_), do: {:error, {:custom, "invalid article"}}
-
-  @spec thread_of(map(), :upcase) :: {:ok, String.t()}
-  def thread_of(%{meta: %{thread: thread}}, :upcase) do
-    thread |> to_string() |> String.upcase() |> done
-  end
 
   @doc """
   mark viewer emotions status for article or comment

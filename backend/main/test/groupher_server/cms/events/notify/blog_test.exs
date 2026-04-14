@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       notify = notifications.entries |> List.first()
       assert notify.action == "UPVOTE"
       assert notify.article_id == blog.id
-      assert notify.thread == "BLOG"
+      assert notify.thread == :blog
       assert notify.user_id == blog.author.user.id
       assert user_exist_in?(user2, notify.from_users)
     end
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       notify = notifications.entries |> List.first()
       assert notify.action == "UPVOTE"
       assert notify.article_id == blog.id
-      assert notify.thread == "BLOG"
+      assert notify.thread == :blog
       assert notify.user_id == comment.author.id
       assert notify.comment_id == comment.id
       assert user_exist_in?(user2, notify.from_users)
@@ -103,7 +103,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       notify = notifications.entries |> List.first()
       assert notify.action == "COLLECT"
       assert notify.article_id == blog.id
-      assert notify.thread == "BLOG"
+      assert notify.thread == :blog
       assert notify.user_id == blog.author.user.id
       assert user_exist_in?(user2, notify.from_users)
     end
@@ -141,7 +141,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
       notify = notifications.entries |> List.first()
       assert notify.action == "COMMENT"
-      assert notify.thread == "BLOG"
+      assert notify.thread == :blog
       assert notify.article_id == blog.id
       assert notify.user_id == blog.author.user.id
       assert user_exist_in?(user2, notify.from_users)
@@ -166,7 +166,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       notify = notifications.entries |> List.first()
 
       assert notify.action == "REPLY"
-      assert notify.thread == "BLOG"
+      assert notify.thread == :blog
       assert notify.article_id == blog.id
       assert notify.comment_id == replied_comment.id
 

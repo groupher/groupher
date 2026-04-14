@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { FC } from 'react'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import type { TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useSalon from '../salon/quora_layout'
@@ -20,7 +20,7 @@ const PostItem: FC<TProps> = ({ article }) => {
       <Header article={article} />
       <Link
         className={s.digest}
-        href={`/${slug}/${THREAD.POST}/${article.innerId}`}
+        href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
         scroll={false}
         data-preview-id={String(article.innerId)}
       >

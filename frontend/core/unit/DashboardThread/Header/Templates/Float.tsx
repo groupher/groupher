@@ -2,7 +2,7 @@ import { reject } from 'ramda'
 import type { FC } from 'react'
 
 import { HEADER_LAYOUT } from '~/const/layout'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 
 import AccountSVG from '~/icons/Account'
 import type { TActive, TCommunityThread, TLinkItem } from '~/spec'
@@ -28,7 +28,7 @@ const Float: FC<TProps> = ({ active, threads, links }) => {
 
   const isAboutFold = links.length >= 2 && links[0].title !== ''
   const visibleThreads = isAboutFold
-    ? reject((t: TCommunityThread) => t.slug === THREAD.ABOUT, threads)
+    ? reject((t: TCommunityThread) => t.slug === THREAD_PATH.ABOUT, threads)
     : threads
 
   return (

@@ -1,3 +1,4 @@
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
@@ -22,9 +23,9 @@ export default function useSalon() {
     footer: 'w-full align-both',
     notifyLabel: cn(
       'text-xs border rounded-md px-1 py-px bold-sm ml-1.5 scale-75',
-      rainbow('RED', 'fg'),
-      rainbow('RED', 'borderSoft'),
-      rainbow('RED', 'bgSoft'),
+      rainbow(COLOR.RED, 'fg'),
+      rainbow(COLOR.RED, 'borderSoft'),
+      rainbow(COLOR.RED, 'bgSoft'),
     ),
     icon: cn('size-3.5 pointer smoky-90', fill('digest')),
   }

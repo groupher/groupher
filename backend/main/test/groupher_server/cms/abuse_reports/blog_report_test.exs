@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
 
       report = all_reports.entries |> List.first()
       assert report.article.id == blog.id
-      assert report.article.thread == "BLOG"
+      assert report.article.thread == :blog
     end
 
     test "report a blog should have a abuse report record", ~m(user blog)a do

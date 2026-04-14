@@ -177,7 +177,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       )
       field(:meta, :comment_meta)
       field(:replies_count, :integer)
-      field(:thread, :string)
+      field(:thread, :thread)
       field(:viewer_has_upvoted, :boolean)
       field(:reply_to, :comment, resolve: dataloader(CMS, :reply_to))
       field(:reply_to_id, :id)
@@ -258,45 +258,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   end
 
   @doc """
-  Expand a compile-time atom list into a lowercase GraphQL enum.
-
-  Example:
-
-      lowercase_enum(:article_cat_enum, ArticleEnums.cat())
-
-  Expands into:
-
-      enum :article_cat_enum do
-        value(:feature, name: "feature")
-        value(:bug, name: "bug")
-      end
-
-  Absinthe uppercases enum names by default, so we pin the schema-facing
-  `name` explicitly to keep GraphQL values aligned with the internal atoms.
-  """
-  defmacro lowercase_enum(type, values_ast) do
-    expanded = Macro.expand(values_ast, __CALLER__)
-
-    if is_list(expanded) do
-      value_defs =
-        Enum.map(expanded, fn value ->
-          quote do
-            value(unquote(value), name: unquote(Atom.to_string(value)))
-          end
-        end)
-
-      quote do
-        enum unquote(type) do
-          unquote_splicing(value_defs)
-        end
-      end
-    else
-      raise ArgumentError,
-            "lowercase_enum/2 expects a compile-time list, got: #{Macro.to_string(expanded)}"
-    end
-  end
-
-  @doc """
   general collect folder meta info
   """
   defmacro collect_folder_meta_fields do
@@ -349,10 +310,26 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
             )
           end
 
+        :rainbow_color ->
+          quote do
+            field(unquote(key), Ecto.Enum,
+              values: unquote(Dashboard.rainbow_colors()),
+              default: unquote(default_v)
+            )
+          end
+
         {:array, :kanban_board} ->
           quote do
             field(unquote(key), {:array, Ecto.Enum},
               values: unquote(KanbanBoards.values_list()),
+              default: unquote(default_v)
+            )
+          end
+
+        {:array, :rainbow_color} ->
+          quote do
+            field(unquote(key), {:array, Ecto.Enum},
+              values: unquote(Dashboard.rainbow_colors()),
               default: unquote(default_v)
             )
           end
@@ -396,6 +373,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   defp to_absinthe_type({:array, inner}, _key),
     do: quote(do: list_of(unquote(to_absinthe_type(inner, nil))))
   defp to_absinthe_type(:enum, key), do: :"dsb_#{key}"
+  defp to_absinthe_type(:rainbow_color, _key), do: :rainbow_color
   defp to_absinthe_type(type, _key), do: type
 
   # Expand dashboard enum registry into GraphQL enums.
@@ -405,12 +383,12 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   #
   # Expands into:
   #   enum :dsb_post_layout do
-  #     value(:quora, name: "quora")
-  #     value(:ph, name: "ph")
+  #     value(:quora)
+  #     value(:ph)
   #   end
   #
-  # Absinthe uppercases enum names by default, so we pin the GraphQL-facing
-  # name explicitly to keep the whole dashboard enum chain lowercase.
+  # Absinthe will expose QUORA / PH over GraphQL and map them back to
+  # internal :quora / :ph atoms automatically.
   defmacro dsb_enum(enum_key) do
     values = Dashboard.enum_values(enum_key)
     type = :"dsb_#{enum_key}"
@@ -418,7 +396,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     value_defs =
       Enum.map(values, fn value ->
         quote do
-          value(unquote(value), name: unquote(Atom.to_string(value)))
+          value(unquote(value))
         end
       end)
 

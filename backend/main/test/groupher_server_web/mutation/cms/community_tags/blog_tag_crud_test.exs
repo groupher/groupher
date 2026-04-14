@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.BlogTagCRUD do
       {:ok, found} = CommunityTag |> ORM.find(created["id"])
 
       assert created["id"] == to_string(found.id)
-      assert found.thread == "BLOG"
+      assert found.thread == :blog
       assert found.group == "awesome"
       assert belong_community["id"] == to_string(community.id)
     end

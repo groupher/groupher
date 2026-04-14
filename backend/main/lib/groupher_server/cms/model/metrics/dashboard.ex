@@ -10,7 +10,22 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
 
   alias GroupherServer.CMS.Helper.KanbanBoards
 
-  @kanban_bg_colors_default ["BLACK", "YELLOW", "PURPLE", "GREEN", "RED"]
+  @rainbow_colors [
+    :black,
+    :pink,
+    :red,
+    :orange,
+    :yellow,
+    :brown,
+    :green_light,
+    :green,
+    :cyan,
+    :cyan_light,
+    :blue,
+    :purple,
+    :custom
+  ]
+  @kanban_bg_colors_default [:black, :yellow, :purple, :green, :red]
   # Single source of truth for dashboard enums.
   #
   # Internal business values stay as lowercase atoms:
@@ -18,7 +33,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   #
   # They are expanded downstream into:
   # - Ecto.Enum values: [:quora, :ph] -> DB stores "quora" / "ph"
-  # - GraphQL enum values: value(:quora), value(:ph)
+  # - GraphQL enum values: value(:quora), value(:ph) -> QUORA / PH
   @enum_values %{
     post_layout: [:quora, :ph, :masonry, :minimal, :cover],
     kanban_layout: [:classic, :waterfall],
@@ -39,6 +54,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   }
 
   def kanban_bg_colors_default, do: @kanban_bg_colors_default
+  def rainbow_colors, do: @rainbow_colors
   def enum_values(key), do: Map.fetch!(@enum_values, key)
 
   def layout_default do
@@ -90,9 +106,11 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   # note: write kanban_bg_colors schema/graphql rules by itself
   def macro_schema(:layout) do
     [
-      [:primary_color, :string, "BLACK"],
-      [:sub_primary_color, :string, "BLACK"],
-      [:kanban_bg_colors, {:array, :string}, @kanban_bg_colors_default],
+      [:primary_color, :rainbow_color, :black],
+      [:primary_custom_color, :string, ""],
+      [:sub_primary_color, :rainbow_color, :black],
+      [:sub_primary_custom_color, :string, ""],
+      [:kanban_bg_colors, {:array, :rainbow_color}, @kanban_bg_colors_default],
       [:kanban_boards, {:array, :kanban_board}, KanbanBoards.default_values_list()],
       [:post_layout, :enum, :quora],
       [:kanban_layout, :enum, :classic],
@@ -105,12 +123,15 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:brand_layout, :enum, :both],
       [:banner_layout, :enum, :header],
       [:topbar_enabled, :boolean, false],
-      [:topbar_bg, :string, "BLACK"],
+      [:topbar_bg, :rainbow_color, :black],
+      [:topbar_bg_custom_color, :string, ""],
       [:broadcast_layout, :enum, :default],
-      [:broadcast_bg, :string, "BLACK"],
+      [:broadcast_bg, :rainbow_color, :black],
+      [:broadcast_custom_bg, :string, ""],
       [:broadcast_enable, :boolean, false],
       [:broadcast_article_layout, :enum, :default],
-      [:broadcast_article_bg, :string, "RED"],
+      [:broadcast_article_bg, :rainbow_color, :red],
+      [:broadcast_article_custom_bg, :string, ""],
       [:broadcast_article_enable, :boolean, true],
       [:changelog_layout, :enum, :classic],
       [:footer_layout, :enum, :group],

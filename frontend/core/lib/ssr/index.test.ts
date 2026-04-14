@@ -2,7 +2,7 @@ import { KANBAN_BOARD } from '~/const/thread'
 import { parseDashboard } from '.'
 
 describe('parseDashboard', () => {
-  it('normalizes uppercase kanban board enums from GraphQL into lowercase store values', () => {
+  it('keeps uppercase kanban board enums aligned with GraphQL values', () => {
     const dashboard = parseDashboard({
       slug: 'acme',
       threads: [],

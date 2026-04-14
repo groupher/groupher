@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Helper.KanbanBoards do
   #
   # Example:
   # - Ecto.Enum list values: [:backlog, :todo, :wip]
-  # - GraphQL enum values: backlog / todo / wip
+  # - GraphQL enum values: BACKLOG / TODO / WIP
   @values [:backlog, :todo, :wip, :done, :rejected]
   @default_values [:todo, :wip, :done]
 

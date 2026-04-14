@@ -2,6 +2,7 @@ import type { TSimpleUse } from './account'
 import type { TDsb, TParseDashboard } from './dashboard'
 import type { TID, TPagi } from './utils'
 import type { TParsedWallpaper } from './wallpaper'
+import type { TThread, TCommunityThread } from './thread'
 
 type TMeta = {
   postsCount?: number
@@ -57,7 +58,7 @@ export type TTag = {
   slug?: string
   layout?: string
   desc?: string
-  thread?: string
+  thread?: TThread
   color?: string
   group?: string
   community?: TCommunity

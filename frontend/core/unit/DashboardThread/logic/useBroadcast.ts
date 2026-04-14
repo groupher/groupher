@@ -68,8 +68,10 @@ export default function useBroadcast(): TRet {
       [
         'broadcastLayout',
         'broadcastBg',
+        'broadcastCustomBg',
         'broadcastEnable',
         'broadcastArticleBg',
+        'broadcastArticleCustomBg',
         'broadcastArticleLayout',
         'broadcastArticleEnable',
         'saving',

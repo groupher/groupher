@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.CMS.Articles.PostList do
 
       assert paged_posts |> is_valid_pagination?(:raw)
       assert length(paged_posts.entries) >= 2
-      assert Enum.all?(paged_posts.entries, &(&1.meta.thread == "POST"))
+      assert Enum.all?(paged_posts.entries, &(&1.meta.thread == :post))
     end
   end
 end

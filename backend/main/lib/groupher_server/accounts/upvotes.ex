@@ -9,13 +9,14 @@ defmodule GroupherServer.Accounts.Upvotes do
 
   alias GroupherServer.CMS
 
+  alias CMS.Helper.Threads
   alias CMS.Model.ArticleUpvote
   alias Helper.{ORM, QueryBuilder}
 
   @article_threads get_config(:article, :threads)
 
   def paged_articles(user_id, %{thread: thread} = filter) do
-    thread = thread |> to_string() |> String.upcase()
+    {:ok, thread} = Threads.to_atom(thread)
     where_query = dynamic([a], a.user_id == ^user_id and a.thread == ^thread)
 
     load_articles(where_query, filter)

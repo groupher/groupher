@@ -6,7 +6,7 @@ import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useDsbTab from '~/hooks/useDsbTab'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { toast } from '~/signal'
-import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
+import type { TEditValue, TKanbanBoard, TTag, TThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
@@ -273,7 +273,7 @@ export default function useMutation(): TRet {
 
     if (field === FIELD.TAG_INDEX) {
       const { activeTagThread, activeTagGroup: group, tags } = dashboard$
-      const thread = activeTagThread.toUpperCase()
+      const thread = activeTagThread as TThread
 
       const tagIndex = tags.map((item) => ({
         id: item.id,

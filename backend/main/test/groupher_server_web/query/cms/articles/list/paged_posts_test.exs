@@ -123,15 +123,15 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post, "cat state"), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["cat"] == "feature"))
-      assert results["entries"] |> Enum.any?(&(&1["state"] == "wip"))
+      assert results["entries"] |> Enum.any?(&(&1["cat"] == "FEATURE"))
+      assert results["entries"] |> Enum.any?(&(&1["state"] == "WIP"))
     end
 
     test "should get valid cat & state by filter", ~m(guest_conn post_last_week)a do
       {:ok, _} = CMS.Articles.set_cat(post_last_week, @article_cat.feature)
       {:ok, _} = CMS.Articles.set_state(post_last_week, @article_state.wip)
 
-      variables = %{filter: %{page: 1, size: 20, cat: "feature"}}
+      variables = %{filter: %{page: 1, size: 20, cat: "FEATURE"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post, "cat state"), variables)
       assert results["totalCount"] == 1
 
@@ -140,7 +140,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert guest_conn
              |> query_error?(Schema.q(:paged_articles, :post, "cat state"), variables)
 
-      variables = %{filter: %{page: 1, size: 20, state: "wip"}}
+      variables = %{filter: %{page: 1, size: 20, state: "WIP"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post, "cat state"), variables)
       assert results["totalCount"] == 1
 
@@ -149,7 +149,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert guest_conn
              |> query_error?(Schema.q(:paged_articles, :post, "cat state"), variables)
 
-      variables = %{filter: %{page: 1, size: 20, cat: "feature", state: "wip"}}
+      variables = %{filter: %{page: 1, size: 20, cat: "FEATURE", state: "WIP"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post, "cat state"), variables)
       assert results["totalCount"] == 1
     end

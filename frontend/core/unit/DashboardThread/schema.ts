@@ -160,8 +160,10 @@ const updateDashboardEnable = gql`
 const updateDashboardLayout = gql`
   mutation (
     $community: String!
-    $primaryColor: String
-    $subPrimaryColor: String
+    $primaryColor: RainbowColor
+    $primaryCustomColor: String
+    $subPrimaryColor: RainbowColor
+    $subPrimaryCustomColor: String
     $postLayout: DsbPostLayout
     $kanbanLayout: DsbKanbanLayout
     $kanbanCardLayout: DsbKanbanCardLayout
@@ -169,12 +171,17 @@ const updateDashboardLayout = gql`
     $footerLayout: DsbFooterLayout
     $headerLayout: DsbHeaderLayout
     $topbarEnabled: Boolean
-    $topbarBg: String
+    $topbarBg: RainbowColor
+    $topbarBgCustomColor: String
     $tagLayout: DsbTagLayout
     $inlineTagLayout: DsbInlineTagLayout
     $avatarLayout: DsbAvatarLayout
     $broadcastEnable: Boolean
-    $kanbanBgColors: [String]
+    $kanbanBgColors: [RainbowColor]
+    $broadcastBg: RainbowColor
+    $broadcastCustomBg: String
+    $broadcastArticleBg: RainbowColor
+    $broadcastArticleCustomBg: String
     $glowType: String
     $glowFixed: Boolean
     $glowOpacity: String
@@ -190,7 +197,9 @@ const updateDashboardLayout = gql`
     updateDashboardLayout(
       community: $community
       primaryColor: $primaryColor
+      primaryCustomColor: $primaryCustomColor
       subPrimaryColor: $subPrimaryColor
+      subPrimaryCustomColor: $subPrimaryCustomColor
       postLayout: $postLayout
       kanbanLayout: $kanbanLayout
       kanbanCardLayout: $kanbanCardLayout
@@ -199,10 +208,15 @@ const updateDashboardLayout = gql`
       headerLayout: $headerLayout
       topbarEnabled: $topbarEnabled
       topbarBg: $topbarBg
+      topbarBgCustomColor: $topbarBgCustomColor
       tagLayout: $tagLayout
       inlineTagLayout: $inlineTagLayout
       avatarLayout: $avatarLayout
       broadcastEnable: $broadcastEnable
+      broadcastBg: $broadcastBg
+      broadcastCustomBg: $broadcastCustomBg
+      broadcastArticleBg: $broadcastArticleBg
+      broadcastArticleCustomBg: $broadcastArticleCustomBg
       kanbanBgColors: $kanbanBgColors
       glowType: $glowType
       glowFixed: $glowFixed

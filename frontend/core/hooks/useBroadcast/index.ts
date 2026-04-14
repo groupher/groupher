@@ -9,9 +9,11 @@ export default function useBroadcast(): TBroadcastConf {
     [
       'broadcastLayout',
       'broadcastBg',
+      'broadcastCustomBg',
       'broadcastEnable',
       'broadcastArticleLayout',
       'broadcastArticleBg',
+      'broadcastArticleCustomBg',
       'broadcastArticleEnable',
     ],
     dsb$,

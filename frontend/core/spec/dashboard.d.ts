@@ -66,9 +66,12 @@ export type TDsb = {
   layout?: {
     brandLayout: TBrandLayout
     primaryColor: TColorName
+    primaryCustomColor: string
     subPrimaryColor: TColorName
+    subPrimaryCustomColor: string
     topbarEnabled: boolean
     topbarBg: TColorName
+    topbarBgCustomColor: string
     tagLayout: TTagLayout
     inlineTagLayout: TInlineTagLayout
     avatarLayout: TAvatarLayout
@@ -119,9 +122,11 @@ export type TBroadcastConf = {
   // banner
   broadcastLayout: TBroadcastLayout
   broadcastBg: TColorName
+  broadcastCustomBg: string
   broadcastEnable: boolean
   // article
   broadcastArticleBg: TColorName
+  broadcastArticleCustomBg: string
   broadcastArticleLayout: TBroadcastArticleLayout
   broadcastArticleEnable: boolean
 }

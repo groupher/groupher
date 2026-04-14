@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { FC } from 'react'
 import '@fortawesome/fontawesome-svg-core/styles.css'
 
+import { COLOR } from '~/const/colors'
 import { camelize } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'
 import type { TColorName, TSpace } from '~/spec'
@@ -28,7 +29,7 @@ const FaIcons: FC<TProps> = ({
   testid = 'fa-icons',
   size = 16,
   icon = 'user',
-  color = 'ORANGE',
+  color = COLOR.ORANGE,
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })
