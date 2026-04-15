@@ -9,6 +9,7 @@ defmodule GroupherServer.Messaging.Mentions do
   alias GroupherServer.{Accounts, Repo}
 
   alias Accounts.Model.User
+  alias GroupherServer.CMS.Helper.Threads
   alias GroupherServer.CMS.Model.Comment
   alias GroupherServer.Messaging.Model.Mention
   alias Helper.{Multi, ORM}
@@ -21,12 +22,14 @@ defmodule GroupherServer.Messaging.Mentions do
       batch_delete_mentions(comment, from_user)
     end)
     |> Multi.run(:batch_insert_mentions, fn _, _ ->
-      case {0, nil} !== Repo.insert_all(Mention, mentions) do
-        true -> {:ok, :pass}
-        false -> {:error, "insert mentions error"}
+      with {:ok, mentions} <- normalize_mentions(mentions) do
+        case Enum.empty?(mentions) or {0, nil} !== Repo.insert_all(Mention, mentions) do
+          true -> {:ok, mentions}
+          false -> {:error, "insert mentions error"}
+        end
       end
     end)
-    |> Multi.run(:update_user_mailbox_status, fn _, _ ->
+    |> Multi.run(:update_user_mailbox_status, fn _, %{batch_insert_mentions: mentions} ->
       Enum.each(mentions, &Accounts.Mailbox.update_status(&1.to_user_id)) |> done
     end)
     |> Repo.transaction()
@@ -39,21 +42,46 @@ defmodule GroupherServer.Messaging.Mentions do
       batch_delete_mentions(article, from_user)
     end)
     |> Multi.run(:batch_insert_mentions, fn _, _ ->
-      mentions =
-        mentions
-        |> Enum.reject(&(&1.to_user_id == from_user.id))
+      with {:ok, mentions} <- normalize_mentions(mentions) do
+        mentions =
+          mentions
+          |> Enum.reject(&(&1.to_user_id == from_user.id))
 
-      case Enum.empty?(mentions) or {0, nil} !== Repo.insert_all(Mention, mentions) do
-        true -> {:ok, :pass}
-        false -> {:error, "insert mentions error"}
+        case Enum.empty?(mentions) or {0, nil} !== Repo.insert_all(Mention, mentions) do
+          true -> {:ok, mentions}
+          false -> {:error, "insert mentions error"}
+        end
       end
     end)
-    |> Multi.run(:update_user_mailbox_status, fn _, _ ->
+    |> Multi.run(:update_user_mailbox_status, fn _, %{batch_insert_mentions: mentions} ->
       Enum.each(mentions, &Accounts.Mailbox.update_status(&1.to_user_id)) |> done
     end)
     |> Repo.transaction()
     |> result()
   end
+
+  defp normalize_mentions(mentions) do
+    mentions
+    |> Enum.reduce_while({:ok, []}, fn mention, {:ok, acc} ->
+      case normalize_mention(mention) do
+        {:ok, mention} -> {:cont, {:ok, [mention | acc]}}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, mentions} -> {:ok, Enum.reverse(mentions)}
+      error -> error
+    end
+  end
+
+  defp normalize_mention(%{thread: thread} = mention) do
+    case Threads.to_atom(thread) do
+      {:ok, thread} -> {:ok, %{mention | thread: thread}}
+      {:error, _reason} -> {:error, "insert mentions error"}
+    end
+  end
+
+  defp normalize_mention(mention), do: {:ok, mention}
 
   def paged(%User{} = user, %{page: page, size: size} = filter) do
     read = Map.get(filter, :read, false)
@@ -126,6 +154,6 @@ defmodule GroupherServer.Messaging.Mentions do
     |> Map.put(:user, user)
   end
 
-  defp result({:ok, %{batch_insert_mentions: result}}), do: {:ok, result}
+  defp result({:ok, %{batch_insert_mentions: _result}}), do: {:ok, :pass}
   defp result({:error, _, result, _steps}), do: {:error, result}
 end

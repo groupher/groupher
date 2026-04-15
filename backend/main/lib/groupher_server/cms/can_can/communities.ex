@@ -37,6 +37,7 @@ defmodule GroupherServer.CMS.CanCan.Communities do
   import Helper.Utils, only: [get_config: 2, done: 1]
 
   alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Helper.Threads
 
   @article_threads get_config(:article, :threads)
   @emotions_whitelist get_config(:article, :emotions_whitelist)
@@ -44,23 +45,27 @@ defmodule GroupherServer.CMS.CanCan.Communities do
 
   @type scope :: :article | :comment
 
-  @spec allow_thread(map() | String.t() | nil, atom()) ::
-          {:ok, atom()} | {:error, atom()}
+  @spec allow_thread(map() | String.t() | nil, atom() | String.t()) ::
+          {:ok, atom()} | {:error, atom() | {:custom, String.t()}}
   def allow_thread(community, thread) do
-    case thread_visible?(community, thread) do
-      true -> done(thread)
-      false -> {:error, :thread_not_visible}
+    with {:ok, thread} <- Threads.to_atom(thread) do
+      case thread_visible?(community, thread) do
+        true -> done(thread)
+        false -> {:error, :thread_not_visible}
+      end
     end
   end
 
-  @spec allow_emotion(String.t() | nil, scope(), atom(), atom()) ::
-          {:ok, atom()} | {:error, atom()}
+  @spec allow_emotion(String.t() | nil, scope(), atom() | String.t(), atom()) ::
+          {:ok, atom()} | {:error, atom() | {:custom, String.t()}}
   def allow_emotion(community_slug, scope, thread, emotion) do
-    thread_key = thread_key(scope, thread)
+    with {:ok, thread} <- Threads.to_atom(thread) do
+      thread_key = thread_key(scope, thread)
 
-    case emotion_allowed?(community_slug, scope, thread, emotion) do
-      true -> done(thread_key)
-      false -> {:error, :emotion_not_allowed}
+      case emotion_allowed?(community_slug, scope, thread, emotion) do
+        true -> done(thread_key)
+        false -> {:error, :emotion_not_allowed}
+      end
     end
   end
 

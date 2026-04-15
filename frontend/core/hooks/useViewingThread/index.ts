@@ -13,9 +13,11 @@ const isThreadPath = (value: string): value is TThreadPath => {
 
 const getThreadFromPathname = (pathname: string): TThread | null => {
   const segments = pathname.split('/').filter(Boolean)
-  const maybeThread = segments.at(-1)
+  const maybeThread = [...segments]
+    .reverse()
+    .find((segment): segment is TThreadPath => isThreadPath(segment))
 
-  if (maybeThread && isThreadPath(maybeThread)) {
+  if (maybeThread) {
     return path2Thread(maybeThread)
   }
 

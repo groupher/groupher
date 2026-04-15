@@ -30,4 +30,14 @@ describe('useViewingThread', () => {
     }).result
     expect(b.current).toBe(THREAD.POST)
   })
+
+  it('resolves thread from detail pathname segments', () => {
+    mockPathname = '/acme/changelog/42'
+
+    const result = renderHook(() => useViewingThread(), {
+      wrapper: makeStoreWrapper({ metric: METRIC.COMMUNITY }),
+    }).result
+
+    expect(result.current).toBe(THREAD.CHANGELOG)
+  })
 })

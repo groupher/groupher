@@ -79,6 +79,10 @@ defmodule GroupherServer.Test.CMS.CanCan.Communities do
       assert {:ok, :post} = CanCan.allow_thread(community.slug, :post)
     end
 
+    test "allow_thread normalizes string threads before visibility checks", ~m(community)a do
+      assert {:ok, :post} = CanCan.allow_thread(community.slug, "POST")
+    end
+
     test "allow_thread returns cancan error key when disabled", ~m(community)a do
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :enable, %{

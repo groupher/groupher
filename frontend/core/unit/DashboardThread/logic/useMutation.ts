@@ -273,7 +273,10 @@ export default function useMutation(): TRet {
 
     if (field === FIELD.TAG_INDEX) {
       const { activeTagThread, activeTagGroup: group, tags } = dashboard$
-      if (!activeTagThread) return
+      if (!activeTagThread) {
+        _handleDone()
+        return
+      }
       const thread = activeTagThread
 
       const tagIndex = tags.map((item) => ({
