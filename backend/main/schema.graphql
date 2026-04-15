@@ -1372,6 +1372,11 @@ enum Thread {
   BLOG
   CHANGELOG
   DOC
+  KANBAN
+  ACCOUNT
+  ABOUT
+  DASHBOARD
+  USER
 }
 
 enum DashboardSection {
@@ -1406,13 +1411,6 @@ enum WhenEnum {
 }
 
 enum InsertedSortEnum {
-  ASC_INSERTED
-  DESC_INSERTED
-}
-
-enum ThreadSortEnum {
-  ASC_INDEX
-  DESC_INDEX
   ASC_INSERTED
   DESC_INSERTED
 }
@@ -1592,12 +1590,6 @@ input CommunitiesFilter {
   sort: SortEnum
 
   category: String
-}
-
-input ThreadsFilter {
-  page: Int
-  size: Int
-  sort: ThreadSortEnum
 }
 
 input CommunityTagsFilter {

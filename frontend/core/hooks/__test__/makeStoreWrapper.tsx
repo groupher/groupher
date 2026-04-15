@@ -39,10 +39,14 @@ export const makeStoreWrapper = (opts: TWrapperOpts = {}): FC<{ children: ReactN
     articleListInit = {},
   } = opts
 
+  const threads = community.threads
+    ? community.threads.map((thread) => ({ ...thread }))
+    : COMMUNITY_THREADS.map((thread) => ({ ...thread }))
+
   const initCommunity: TCommunity = {
     ...community,
     slug: community.slug ?? 'acme',
-    threads: community.threads ?? COMMUNITY_THREADS,
+    threads,
   }
 
   const initDashboard: TDashboardInit = {

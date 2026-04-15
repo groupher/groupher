@@ -11,6 +11,7 @@ defmodule GroupherServer.Statistics.Delegate.Status do
   alias CMS.Model.{
     Blog,
     Category,
+    Changelog,
     Community,
     CommunityTag,
     Post
@@ -32,12 +33,13 @@ defmodule GroupherServer.Statistics.Delegate.Status do
     {:ok, %{total_count: communities_count}} = find_total_count(Community)
     {:ok, %{total_count: posts_count}} = find_total_count(Post)
     {:ok, %{total_count: blogs_count}} = find_total_count(Blog)
+    {:ok, %{total_count: changelogs_count}} = find_total_count(Changelog)
 
     {:ok, %{total_count: community_tags_count}} = find_total_count(CommunityTag)
     {:ok, %{total_count: categories_count}} = find_total_count(Category)
 
     {:ok,
-     ~m(communities_count posts_count blogs_count community_tags_count categories_count)a}
+     ~m(communities_count posts_count blogs_count changelogs_count community_tags_count categories_count)a}
   end
 
   defp find_total_count(queryable), do: ORM.find_all(queryable, @count_filter)

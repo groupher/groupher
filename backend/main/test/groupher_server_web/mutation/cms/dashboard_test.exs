@@ -5,7 +5,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
   setup do
     {:ok, category} = db_insert(:category)
-    {:ok, thread} = db_insert(:thread)
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community)
     {:ok, community} = CMS.Communities.create(community_attrs, user)
@@ -13,7 +12,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     user_conn = simu_conn(:user)
     guest_conn = simu_conn(:guest)
 
-    {:ok, ~m(user_conn guest_conn community thread category user)a}
+    {:ok, ~m(user_conn guest_conn community category user)a}
   end
 
   describe "[mutation cms community]" do

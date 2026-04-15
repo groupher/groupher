@@ -36,4 +36,5 @@ defmodule GroupherServer.CMS.Seeds.Threads do
 
   def get(:city), do: [%{slug: "post"}]
   def get(:users), do: []
+  def get(_unknown), do: []
 end
