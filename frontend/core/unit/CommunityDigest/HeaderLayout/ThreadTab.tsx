@@ -5,8 +5,8 @@ import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
 import type { TSpace } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-
 import CustomHeaderLinks from '~/unit/HeaderLinks'
+import { path2Thread } from '~/utils/thread'
 
 import useSalon, { cn } from '../salon/header_layout/thread_tab'
 
@@ -24,7 +24,7 @@ const ThreadTab: FC<TProps> = ({ ...spacing }) => {
   return (
     <div className={s.wrapper}>
       {threads.map((item) => {
-        const active = activeThread === item.slug
+        const active = activeThread === path2Thread(item.slug)
 
         return (
           <Link

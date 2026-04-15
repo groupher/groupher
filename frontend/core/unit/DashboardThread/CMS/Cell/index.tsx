@@ -8,6 +8,7 @@ import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import ArticleCatState from '~/unit/ArticleCatState'
 import TagsList from '~/unit/TagsList'
+import { thread2Path } from '~/utils/thread'
 import TimeAgo from '~/widgets/TimeAgo'
 import useSalon, { cn } from '../../salon/cms/cell'
 
@@ -37,7 +38,7 @@ export const ArticleCell = React.memo(function ArticleCell({ rowData }: { rowDat
         type='button'
         className={cn(s.articleTitle, 'truncate w-full text-left')}
         onClick={() =>
-          router.push(`/${slug}/${rowData.meta.thread.toLowerCase()}/${rowData.innerId}`, {
+          router.push(`/${slug}/${thread2Path(rowData.meta.thread)}/${rowData.innerId}`, {
             scroll: false,
           })
         }

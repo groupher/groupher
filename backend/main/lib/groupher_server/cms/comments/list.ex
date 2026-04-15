@@ -101,10 +101,7 @@ defmodule GroupherServer.CMS.Comments.List do
   def paged_published_comments(%User{id: user_id}, thread, filter) do
     %{page: page, size: size} = filter
 
-    thread = thread |> to_string |> String.upcase()
-    thread_atom = thread |> String.downcase() |> String.to_atom()
-
-    article_preload = Keyword.new([{thread_atom, [author: :user]}])
+    article_preload = Keyword.new([{thread, [author: :user]}])
     query = from(comment in Comment, preload: ^article_preload)
 
     query
@@ -255,6 +252,4 @@ defmodule GroupherServer.CMS.Comments.List do
   end
 
   defp sort_solution_to_front(_, pinned_comments), do: pinned_comments
-
-
 end

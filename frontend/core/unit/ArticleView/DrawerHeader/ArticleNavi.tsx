@@ -2,6 +2,7 @@ import { useRouter } from 'next/navigation'
 import useNaviArticle from '~/hooks/useNaviArticle'
 import ArrowSVG from '~/icons/ArrowSimple'
 import useCommunity from '~/stores/community/hooks'
+import { thread2Path } from '~/utils/thread'
 
 import useSalon, { cn } from '../salon/drawer_header/article_navi'
 
@@ -19,7 +20,7 @@ export default function ArticleNavi() {
           className={cn(s.switchBlock, s.upBlock)}
           onClick={() =>
             router.push(
-              `/${slug}/${articleNavi.previous.meta.thread.toLowerCase()}/${articleNavi.previous.innerId}`,
+              `/${slug}/${thread2Path(articleNavi.previous.meta.thread)}/${articleNavi.previous.innerId}`,
               {
                 scroll: false,
               },
@@ -37,7 +38,7 @@ export default function ArticleNavi() {
           className={cn(s.switchBlock, s.downBlock)}
           onClick={() =>
             router.push(
-              `/${slug}/${articleNavi.next.meta.thread.toLowerCase()}/${articleNavi.next.innerId}`,
+              `/${slug}/${thread2Path(articleNavi.next.meta.thread)}/${articleNavi.next.innerId}`,
               {
                 scroll: false,
               },

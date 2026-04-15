@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react'
 
 import { MORE_GROUP } from '~/const/dashboard'
 import { ROUTE } from '~/const/route'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import type { TCommunityThread } from '~/spec'
@@ -10,8 +10,8 @@ import type { TCommunityThread } from '~/spec'
 describe('useHeaderLinks', () => {
   it('keeps ABOUT on main axis when no custom main links exist', () => {
     const threads: readonly TCommunityThread[] = [
-      { slug: THREAD.POST, title: 'Posts', index: 1 },
-      { slug: THREAD.ABOUT, title: 'About', index: 2 },
+      { slug: THREAD_PATH.POST, title: 'Posts', index: 1 },
+      { slug: THREAD_PATH.ABOUT, title: 'About', index: 2 },
     ]
 
     const wrapper = makeStoreWrapper({
@@ -31,8 +31,8 @@ describe('useHeaderLinks', () => {
 
   it('folds ABOUT to MORE when custom main links exist', () => {
     const threads: readonly TCommunityThread[] = [
-      { slug: THREAD.POST, title: 'Posts', index: 1 },
-      { slug: THREAD.ABOUT, title: 'About', index: 2 },
+      { slug: THREAD_PATH.POST, title: 'Posts', index: 1 },
+      { slug: THREAD_PATH.ABOUT, title: 'About', index: 2 },
     ]
 
     const wrapper = makeStoreWrapper({

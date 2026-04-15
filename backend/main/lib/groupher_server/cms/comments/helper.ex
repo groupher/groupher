@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.Comments.Helper do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias CMS.FrontDesk
+  alias CMS.Helper.Threads
   alias CMS.Model.{Comment, Embeds}
   alias Accounts.Model.User
 
@@ -30,7 +31,11 @@ defmodule GroupherServer.CMS.Comments.Helper do
     %User{id: user_id} = user
 
     with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
-      thread = foreign_key |> to_string |> String.trim_trailing("_id") |> String.upcase()
+      {:ok, thread} =
+        foreign_key
+        |> to_string()
+        |> String.trim_trailing("_id")
+        |> Threads.to_atom()
 
       # 设置 root_comment_id：如果是回复评论，则使用被回复评论的 root_comment_id（如果存在）或其 ID
       root_comment_id =

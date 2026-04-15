@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import { toGTDLabelKey } from '~/fmt'
 import useTrans from '~/hooks/useTrans'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import ArrowSVG from '~/icons/ArrowSimple'
@@ -26,7 +27,7 @@ const CatItem: FC<TProps> = ({ onClick }) => {
     return (
       <div className={s.menuItem} onClick={onClick}>
         <TheIcon />
-        {t(article.cat)}
+        {t(toGTDLabelKey(article.cat))}
         <div className='grow' />
         <ArrowSVG className={cn(s.icon, 'rotate-180')} />
       </div>

@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocList do
 
       assert paged_docs |> is_valid_pagination?(:raw)
       assert length(paged_docs.entries) >= 2
-      assert Enum.all?(paged_docs.entries, &(&1.meta.thread == "DOC"))
+      assert Enum.all?(paged_docs.entries, &(&1.meta.thread == :doc))
     end
   end
 end

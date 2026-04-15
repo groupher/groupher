@@ -204,7 +204,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, ret} =
         ORM.update_meta(post, %{
           is_edited: true,
-          thread: "POST2",
+          thread: :post,
           citing_count: 20,
           is_comment_locked: true,
           upvoted_user_ids: [2, 3, 5],
@@ -216,7 +216,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert ret.meta.upvoted_user_ids == [2, 3, 5]
       assert ret.meta.citing_count == 20
       assert ret.meta.last_active_at == post.inserted_at
-      assert ret.meta.thread == "POST2"
+      assert ret.meta.thread == :post
     end
 
     test "update meta should effect inserted_at", ~m(community user)a do

@@ -58,23 +58,6 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
     Accounts.Profiles.unlink_oauth(cur_user.login, provider)
   end
 
-  def get_customization(_root, _args, %{context: %{cur_user: cur_user}}) do
-    Accounts.Customizations.get_customization(cur_user)
-  end
-
-  # def set_customization(_root, ~m(user_id customization)a, %{context: %{cur_user: cur_user}}) do
-  # Accounts.Customizations.set_customization(%User{id: user_id}, customization)
-  # end
-
-  def set_customization(_root, args, %{context: %{cur_user: cur_user}}) do
-    customization = add_c11n_communities_index_ifneed(args)
-    Accounts.Customizations.set_customization(cur_user, customization)
-  end
-
-  def set_customization(_root, _args, _info) do
-    {:error, [message: "need login", code: ecode(:account_login)]}
-  end
-
   def follow(_root, ~m(login)a, %{context: %{cur_user: cur_user}}) do
     case Accounts.FrontDesk.userid(login) do
       {:ok, user_id} -> Accounts.Fans.follow(cur_user, %User{id: user_id})
@@ -264,25 +247,5 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   # end
   def search_users(_root, %{name: name}, _info) do
     Accounts.Search.user(name)
-  end
-
-  defp add_c11n_communities_index_ifneed(~m(customization)a = args) do
-    case Map.has_key?(args, :sidebar_communities_index) do
-      true ->
-        sidebar_communities_index =
-          try do
-            args
-            |> Map.get(:sidebar_communities_index, [])
-            |> Enum.map(fn %{community: c, index: i} -> {c, i} end)
-            |> Map.new()
-          rescue
-            _ -> %{}
-          end
-
-        Map.merge(customization, %{sidebar_communities_index: sidebar_communities_index})
-
-      false ->
-        customization
-    end
   end
 end

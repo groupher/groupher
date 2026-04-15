@@ -7,7 +7,7 @@
 import Link from 'next/link'
 import { type FC, memo, useEffect, useState } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import { getRandomInt } from '~/helper'
 import { mockTags, mockUsers } from '~/mock'
 import type { TArticle } from '~/spec'
@@ -41,7 +41,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
         <TagsList items={[tags[titleIdx]]} />
       </div>
       <Link
-        href={`/${slug}/${THREAD.POST}/${article.innerId}`}
+        href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
         scroll={false}
         className={s.title}
         data-preview-id={String(article.innerId)}

@@ -61,21 +61,5 @@ defmodule GroupherServer.Accounts.Profiles.List do
     |> done()
   end
 
-  defp sort_communities(paged_communities, user) do
-    with {:ok, customization} <- Accounts.Customizations.get_customization(user) do
-      case Enum.empty?(customization.sidebar_communities_index) do
-        true ->
-          paged_communities
-
-        false ->
-          entries =
-            Enum.map(paged_communities.entries, fn c ->
-              index = Map.get(customization.sidebar_communities_index, c.slug, 100_000)
-              %{c | index: index}
-            end)
-
-          %{paged_communities | entries: entries}
-      end
-    end
-  end
+  defp sort_communities(paged_communities, _user), do: paged_communities
 end

@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
   import Ecto.Changeset
   import Helper.Utils, only: [get_config: 2]
 
+  alias GroupherServer.CMS.Helper.Threads
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -24,7 +25,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
 
   @type t :: %ArticleDocument{}
   schema "article_documents" do
-    field(:thread, :string)
+    field(:thread, Ecto.Enum, values: Threads.article_enums())
     field(:title, :string)
     field(:article_id, :id)
     field(:json, :string)

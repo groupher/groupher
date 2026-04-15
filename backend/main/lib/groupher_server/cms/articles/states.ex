@@ -277,8 +277,6 @@ defmodule GroupherServer.CMS.Articles.States do
 
   defp pack_pin_args(%Community{} = community, thread, article_id) do
     with {:ok, info} <- match(thread) do
-      thread = thread |> to_string() |> String.upcase()
-
       Map.put(
         %{community_id: community.id, thread: thread},
         info.foreign_key,
@@ -288,8 +286,6 @@ defmodule GroupherServer.CMS.Articles.States do
   end
 
   defp check_pinned_article_count(%Community{} = community, thread) do
-    thread = thread |> to_string() |> String.upcase()
-
     query =
       from(p in PinnedArticle, where: p.community_id == ^community.id and p.thread == ^thread)
 

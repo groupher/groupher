@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { FC } from 'react'
 import SIZE from '~/const/size'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import type { TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommentsCount from '~/unit/CommentsCount'
@@ -25,7 +25,7 @@ const Header: FC<TProps> = ({ article }) => {
         <ArticleReadLabel viewed={article.viewerHasViewed} />
         <Link
           className={s.title}
-          href={`/${slug}/${THREAD.POST}/${article.innerId}`}
+          href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
           scroll={false}
           data-preview-id={String(article.innerId)}
         >

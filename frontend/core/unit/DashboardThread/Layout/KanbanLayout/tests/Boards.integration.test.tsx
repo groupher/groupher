@@ -68,7 +68,7 @@ describe('<Boards /> integration', () => {
     fireEvent.click(screen.getByRole('button', { name: /Todo/i }))
 
     await waitFor(() => {
-      expect(screen.getByTestId('probe')).toHaveTextContent('"kanbanBoards":["wip","done"]')
+      expect(screen.getByTestId('probe')).toHaveTextContent('"kanbanBoards":["WIP","DONE"]')
       expect(screen.getByTestId('probe')).toHaveTextContent('"isKanbanBoardsTouched":true')
       expect(screen.getByText('dsb.saving_bar.save')).toBeInTheDocument()
       expect(screen.getByText('dsb.saving_bar.cancel')).toBeInTheDocument()
@@ -93,14 +93,14 @@ describe('<Boards /> integration', () => {
     fireEvent.click(screen.getByRole('button', { name: /Todo/i }))
 
     await waitFor(() => {
-      expect(screen.getByTestId('probe')).toHaveTextContent('"kanbanBoards":["wip","done"]')
+      expect(screen.getByTestId('probe')).toHaveTextContent('"kanbanBoards":["WIP","DONE"]')
       expect(screen.getByTestId('probe')).toHaveTextContent('"isKanbanBoardsTouched":true')
     })
 
     fireEvent.click(screen.getByRole('button', { name: /Todo/i }))
 
     await waitFor(() => {
-      expect(screen.getByTestId('probe')).toHaveTextContent('"kanbanBoards":["todo","wip","done"]')
+      expect(screen.getByTestId('probe')).toHaveTextContent('"kanbanBoards":["TODO","WIP","DONE"]')
       expect(screen.getByTestId('probe')).toHaveTextContent('"isKanbanBoardsTouched":false')
     })
   })

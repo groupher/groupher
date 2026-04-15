@@ -413,6 +413,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
           layout {
             postLayout
             kanbanBgColors
+            topbarEnabled
           }
           baseInfo {
             favicon
@@ -438,10 +439,13 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, _} = CMS.Communities.update_dashboard(community, :seo, %{og_title: "groupher"})
 
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :layout, %{post_layout: "new layout"})
+        CMS.Communities.update_dashboard(community, :layout, %{
+          post_layout: "cover",
+          topbar_enabled: true
+        })
 
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :layout, %{kanban_bg_colors: ["GREEN", "RED"]})
+        CMS.Communities.update_dashboard(community, :layout, %{kanban_bg_colors: [:green, :red]})
 
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :base_info, %{favicon: "new favicon"})
@@ -461,11 +465,12 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       results = guest_conn |> gq_query(@query, variables)
       assert get_in(results, ["dashboard", "seo", "ogTitle"]) == "groupher"
-      assert get_in(results, ["dashboard", "layout", "postLayout"]) == "new layout"
+      assert get_in(results, ["dashboard", "layout", "postLayout"]) == "COVER"
+      assert get_in(results, ["dashboard", "layout", "topbarEnabled"]) == true
       assert get_in(results, ["dashboard", "layout", "kanbanBgColors"]) == ["GREEN", "RED"]
       assert get_in(results, ["dashboard", "baseInfo", "favicon"]) == "new favicon"
 
-      assert get_in(results, ["dashboard", "rss", "rssFeedType"]) == "digest"
+      assert get_in(results, ["dashboard", "rss", "rssFeedType"]) == "DIGEST"
       assert get_in(results, ["dashboard", "rss", "rssFeedCount"]) == 50
 
       assert get_in(results, ["dashboard", "nameAlias"]) == [

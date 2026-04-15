@@ -13,6 +13,7 @@ import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
 import RejectSVG from '~/icons/Reject'
+import { KANBAN_BOARD } from '~/const/thread'
 import type { TKanbanBoard, TPagedPosts } from '~/spec'
 
 import KanbanItem from '../KanbanItem'
@@ -76,7 +77,7 @@ export function useColumnsData() {
   const resolveTitle = (key: string, fallback: string) => kanbanAlias[key]?.name || fallback
 
   const columnMap: Record<TKanbanBoard, TColumn> = {
-    backlog: {
+    [KANBAN_BOARD.BACKLOG]: {
       key: 'backlog',
       title: resolveTitle('backlog', t('article.state.backlog')),
       count: backlogPosts.totalCount,
@@ -84,7 +85,7 @@ export function useColumnsData() {
       bodyClassName: s.backlogBody,
       posts: backlogPosts,
     },
-    todo: {
+    [KANBAN_BOARD.TODO]: {
       key: 'todo',
       title: resolveTitle('todo', t('article.state.todo')),
       count: todoPosts.totalCount,
@@ -92,7 +93,7 @@ export function useColumnsData() {
       bodyClassName: s.todoBody,
       posts: todoPosts,
     },
-    wip: {
+    [KANBAN_BOARD.WIP]: {
       key: 'wip',
       title: resolveTitle('wip', t('article.state.wip')),
       count: wipPosts.totalCount,
@@ -100,7 +101,7 @@ export function useColumnsData() {
       bodyClassName: s.wipBody,
       posts: wipPosts,
     },
-    done: {
+    [KANBAN_BOARD.DONE]: {
       key: 'done',
       title: resolveTitle('done', t('article.state.done')),
       count: donePosts.totalCount,
@@ -108,7 +109,7 @@ export function useColumnsData() {
       bodyClassName: s.doneBody,
       posts: donePosts,
     },
-    rejected: {
+    [KANBAN_BOARD.REJECTED]: {
       key: 'rejected',
       title: resolveTitle('rejected', t('article.state.reject')),
       count: rejectedPosts.totalCount,

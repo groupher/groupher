@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { FC } from 'react'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import { cutRest } from '~/fmt'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -36,7 +36,7 @@ const ArticleCard: FC<TProps> = ({ data }) => {
       <Link
         className={s.titleLink}
         scroll={false}
-        href={`/${slug}/${THREAD.POST}/${innerId}`}
+        href={`/${slug}/${THREAD_PATH.POST}/${innerId}`}
         data-preview-id={String(innerId)}
       >
         {title}
@@ -44,7 +44,7 @@ const ArticleCard: FC<TProps> = ({ data }) => {
 
       <Link
         scroll={false}
-        href={`/${slug}/${THREAD.POST}/${innerId}`}
+        href={`/${slug}/${THREAD_PATH.POST}/${innerId}`}
         data-preview-id={String(innerId)}
       >
         {cutRest(digest, 150)}

@@ -46,8 +46,14 @@ defmodule GroupherServer.DataCase do
   def errors_on(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
       Enum.reduce(opts, message, fn {key, value}, acc ->
-        String.replace(acc, "%{#{key}}", to_string(value))
+        String.replace(acc, "%{#{key}}", error_value_to_string(value))
       end)
     end)
   end
+
+  defp error_value_to_string(value) when is_binary(value), do: value
+  defp error_value_to_string(value) when is_atom(value), do: to_string(value)
+  defp error_value_to_string(value) when is_number(value), do: to_string(value)
+  defp error_value_to_string(value) when is_list(value), do: to_string(value)
+  defp error_value_to_string(value), do: inspect(value)
 end

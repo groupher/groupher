@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
     test "set cat rejects non-enum value", ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-        cat: "feature"
+        cat: "NOT_EXIST"
       }
 
       assert user_conn |> mutation_error?(@set_cat_query, variables)
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
     test "set state rejects non-enum value", ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-        state: "done"
+        state: "NOT_EXIST"
       }
 
       assert user_conn |> mutation_error?(@set_state_query, variables)

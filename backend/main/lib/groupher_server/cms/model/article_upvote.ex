@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
     ]
 
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Helper.Threads
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -29,7 +30,7 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
   @type t :: %ArticleUpvote{}
   schema "article_upvotes" do
     # for user-center to filter
-    field(:thread, :string)
+    field(:thread, Ecto.Enum, values: Threads.article_enums())
     belongs_to(:user, User, foreign_key: :user_id)
 
     article_belongs_to_fields()

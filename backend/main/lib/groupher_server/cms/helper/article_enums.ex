@@ -18,6 +18,13 @@ defmodule GroupherServer.CMS.Helper.ArticleEnums do
           | :reject_repro
           | :reject_stale
 
+  # Single source of truth for article category/status enums.
+  #
+  # Internal values stay as lowercase atoms:
+  #   [:feature, :bug]
+  #
+  # Absinthe exposes FEATURE / BUG over GraphQL by default and maps them
+  # back to the same lowercase atoms above automatically.
   @cat [:feature, :bug, :question, :other]
 
   @state [

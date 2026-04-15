@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
       {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
-      assert mention.thread == "CHANGELOG"
+      assert mention.thread == :changelog
       assert mention.block_linker |> length == 2
       assert mention.article_id == changelog.id
       assert mention.title == changelog.title
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
       {:ok, result} = Messaging.paged_messages(:mention, user3, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
-      assert mention.thread == "CHANGELOG"
+      assert mention.thread == :changelog
       assert mention.block_linker |> length == 1
       assert mention.article_id == changelog.id
       assert mention.title == changelog.title
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.CMS.Events.Mention.ChangelogTest do
       {:ok, result} = Messaging.paged_messages(:mention, user2, %{page: 1, size: 10})
 
       mention = result.entries |> List.first()
-      assert mention.thread == "CHANGELOG"
+      assert mention.thread == :changelog
       assert mention.comment_id == comment.id
       assert mention.block_linker |> length == 1
       assert mention.article_id == changelog.id

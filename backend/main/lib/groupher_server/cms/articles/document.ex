@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   @spec create(map(), map()) :: document_result()
   def create(article, %{content_payload: payload}) do
-    with {:ok, article_thread} <- FrontDesk.thread_of(article, :upcase),
+    with {:ok, article_thread} <- FrontDesk.thread_of(article),
          false <- article_document_exist(article) do
       attrs = ContentPayload.pick_valid_fields(payload)
 
@@ -38,10 +38,10 @@ defmodule GroupherServer.CMS.Articles.Document do
         ArticleDocument |> ORM.create(document_attrs)
       end)
       |> Multi.run(:create_thread_document, fn _, _ ->
-        attrs = attrs |> Map.put(foreign_key(article_thread), article.id)
+        attrs = attrs |> Map.put(:"#{article_thread}_id", article.id)
 
         CMS.Model
-        |> Module.concat("#{Recase.to_title(article_thread)}Document")
+        |> Module.concat("#{Recase.to_title(to_string(article_thread))}Document")
         |> ORM.create(attrs)
       end)
       |> Repo.transaction()
@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.Articles.Document do
   end
 
   defp article_document_exist(article) do
-    with {:ok, article_thread} <- FrontDesk.thread_of(article, :upcase) do
+    with {:ok, article_thread} <- FrontDesk.thread_of(article) do
       {:ok, count} =
         ArticleDocument
         |> where([ad], ad.thread == ^article_thread and ad.article_id == ^article.id)
@@ -74,7 +74,7 @@ defmodule GroupherServer.CMS.Articles.Document do
   """
   @spec update(map(), map()) :: document_result()
   def update(article, %{content_payload: payload}) do
-    with {:ok, article_thread} <- FrontDesk.thread_of(article, :upcase),
+    with {:ok, article_thread} <- FrontDesk.thread_of(article),
          {:ok, article_doc} <- find_article_document(article_thread, article),
          {:ok, thread_doc} <- find_thread_document(article_thread, article) do
       attrs = ContentPayload.pick_valid_fields(payload)
@@ -99,7 +99,7 @@ defmodule GroupherServer.CMS.Articles.Document do
   end
 
   def update(article, %{title: _title} = attrs) do
-    with {:ok, article_thread} <- FrontDesk.thread_of(article, :upcase),
+    with {:ok, article_thread} <- FrontDesk.thread_of(article),
          {:ok, article_doc} <- find_article_document(article_thread, article) do
       article_doc |> ORM.update(%{title: attrs.title})
     end
@@ -113,8 +113,8 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   defp find_thread_document(article_thread, article) do
     CMS.Model
-    |> Module.concat("#{Recase.to_title(article_thread)}Document")
-    |> ORM.find_by(Map.put(%{}, foreign_key(article_thread), article.id))
+    |> Module.concat("#{Recase.to_title(to_string(article_thread))}Document")
+    |> ORM.find_by(%{:"#{article_thread}_id" => article.id})
   end
 
   @doc """
@@ -122,15 +122,7 @@ defmodule GroupherServer.CMS.Articles.Document do
   """
   @spec remove(atom(), T.id()) :: {:ok, ArticleDocument.t()} | {:error, map()}
   def remove(thread, id) do
-    thread = thread |> to_string |> String.upcase()
-
     ArticleDocument |> ORM.findby_delete!(%{thread: thread, article_id: id})
-  end
-
-  defp foreign_key(article_thread) do
-    thread_atom = article_thread |> String.downcase() |> String.to_atom()
-
-    :"#{thread_atom}_id"
   end
 
   defp result({:ok, %{create_thread_document: result}}), do: {:ok, result}

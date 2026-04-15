@@ -53,7 +53,7 @@ const ColorSelector: FC<TProps> = ({
           {colorKeys.map((color) => {
             const selected = color === activeColor
 
-            if (endsWith('_LIGHT', color)) return null
+            if (endsWith('_LIGHT', color) || color === COLOR.CUSTOM) return null
 
             return (
               <div key={color} className={s.dotWrapper} onClick={() => onChange(color)}>

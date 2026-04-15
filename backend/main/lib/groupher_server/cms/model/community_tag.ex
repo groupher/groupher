@@ -9,7 +9,9 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
 
   alias GroupherServer.CMS
 
+  alias CMS.Helper.Threads
   alias CMS.Model.{Author, Community}
+  alias CMS.Model.Metrics.Dashboard
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 
@@ -23,8 +25,8 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
     field(:title, :string)
     field(:desc, :string)
     field(:slug, :string)
-    field(:color, :string)
-    field(:thread, :string)
+    field(:color, Ecto.Enum, values: Dashboard.rainbow_colors())
+    field(:thread, Ecto.Enum, values: Threads.enums())
     field(:group, :string)
     field(:extra, {:array, :string})
     field(:icon, :string)

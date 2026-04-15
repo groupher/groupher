@@ -97,7 +97,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   end
 
   defp create_upvote(article, info, user) do
-    {:ok, thread} = FrontDesk.thread_of(article, :upcase)
+    {:ok, thread} = FrontDesk.thread_of(article)
     args = Map.put(%{user_id: user.id, thread: thread}, info.foreign_key, article.id)
 
     case ORM.create(ArticleUpvote, args) do

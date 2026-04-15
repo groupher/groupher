@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
 
       report = all_reports.entries |> List.first()
       assert report.article.id == changelog.id
-      assert report.article.thread == "CHANGELOG"
+      assert report.article.thread == :changelog
     end
 
     test "report a changelog should have a abuse report record", ~m(user changelog)a do

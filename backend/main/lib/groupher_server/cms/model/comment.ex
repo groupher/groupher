@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
+  alias CMS.Helper.Threads
   alias CMS.Model.{CommentUpvote, Embeds}
   alias Helper.Constant.DBPrefix
 
@@ -80,7 +81,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   schema "comments" do
     belongs_to(:author, User, foreign_key: :author_id)
 
-    field(:thread, :string)
+    field(:thread, Ecto.Enum, values: Threads.article_enums())
     field(:body, :string)
     field(:body_html, :string)
     # 是否被折叠

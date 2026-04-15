@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { BRAND_LAYOUT } from '~/const/layout'
 import { HOME_COMMUNITY } from '~/const/name'
 import { APPLY_COMMUNITY } from '~/const/route'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import { assetSrc } from '~/helper'
 import useLayout from '~/hooks/useLayout'
 import usePublicThreads from '~/hooks/usePublicThreads'
@@ -99,16 +99,16 @@ export default function CommunityBrief() {
             {threads.map((item) => {
               return (
                 <Link key={item.slug} className={s.panelItem} href={`/${slug}/${item.slug}`}>
-                  {item.slug === THREAD.POST && <DiscussSVG className={s.icon} />}
-                  {item.slug === THREAD.KANBAN && <KanbanSVG className={s.icon} />}
-                  {item.slug === THREAD.CHANGELOG && <ChangelogSVG className={s.icon} />}
-                  {item.slug === THREAD.DOC && <GuideSVG className={s.icon} />}
+                  {item.slug === THREAD_PATH.POST && <DiscussSVG className={s.icon} />}
+                  {item.slug === THREAD_PATH.KANBAN && <KanbanSVG className={s.icon} />}
+                  {item.slug === THREAD_PATH.CHANGELOG && <ChangelogSVG className={s.icon} />}
+                  {item.slug === THREAD_PATH.DOC && <GuideSVG className={s.icon} />}
                   <div>{item.title}</div>
                 </Link>
               )
             })}
 
-            <Link className={s.panelItem} href={`/${slug}/${THREAD.ABOUT}`}>
+            <Link className={s.panelItem} href={`/${slug}/${THREAD_PATH.ABOUT}`}>
               <AboutSVG className={s.icon} />
               <div>{t('dsb.community_brief.about')}</div>
             </Link>

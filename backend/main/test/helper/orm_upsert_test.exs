@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Helper.ORMUpsert do
 
   use GroupherServer.TestMate
 
-  alias Accounts.Model.Customization
+  alias Accounts.Model.Achievement
   alias Helper.ORM
 
   describe "upsert helpers" do
@@ -11,38 +11,38 @@ defmodule GroupherServer.Test.Helper.ORMUpsert do
       {:ok, user} = db_insert(:user)
 
       assert {:ok, created} =
-               ORM.upsert_by(Customization, [user_id: user.id], %{user_id: user.id, theme: "dark"})
+               ORM.upsert_by(Achievement, [user_id: user.id], %{user_id: user.id, reputation: 1})
 
       assert created.user_id == user.id
 
       assert {:ok, updated} =
-               ORM.upsert_by(Customization, [user_id: user.id], %{
+               ORM.upsert_by(Achievement, [user_id: user.id], %{
                  user_id: user.id,
-                 theme: "light"
+                 reputation: 2
                })
 
       assert updated.user_id == user.id
-      assert updated.theme == "light"
+      assert updated.reputation == 2
 
       assert {:ok, 1} =
-               ORM.count(from(c in Customization, where: c.user_id == ^user.id))
+               ORM.count(from(a in Achievement, where: a.user_id == ^user.id))
     end
 
     test "insert_or_ignore is idempotent on conflict" do
       {:ok, user} = db_insert(:user)
 
       assert {:ok, _} =
-               ORM.insert_or_ignore(Customization, %{user_id: user.id, theme: "dark"},
+               ORM.insert_or_ignore(Achievement, %{user_id: user.id, reputation: 1},
                  conflict_target: [:user_id]
                )
 
       assert {:ok, _} =
-               ORM.insert_or_ignore(Customization, %{user_id: user.id, theme: "light"},
+               ORM.insert_or_ignore(Achievement, %{user_id: user.id, reputation: 2},
                  conflict_target: [:user_id]
                )
 
-      assert {:ok, customization} = ORM.find_by(Customization, user_id: user.id)
-      assert customization.theme == "dark"
+      assert {:ok, achievement} = ORM.find_by(Achievement, user_id: user.id)
+      assert achievement.reputation == 1
     end
   end
 end

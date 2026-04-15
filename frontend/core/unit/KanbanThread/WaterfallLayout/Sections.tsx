@@ -13,6 +13,7 @@ import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
 import RejectSVG from '~/icons/Reject'
+import { KANBAN_BOARD } from '~/const/thread'
 import type { TKanbanBoard, TPagedPosts } from '~/spec'
 
 import KanbanItem from '../KanbanItem'
@@ -44,40 +45,40 @@ export default function Sections() {
   const s = useSalon()
   const resolveTitle = (key: string, fallback: string) => kanbanAlias[key]?.name || fallback
   const sectionMap: Record<TKanbanBoard, TSection> = {
-    backlog: {
-      key: 'backlog',
+    [KANBAN_BOARD.BACKLOG]: {
+      key: KANBAN_BOARD.BACKLOG,
       title: resolveTitle('backlog', t('article.state.backlog')),
       countClassName: s.backlogText,
       headClassName: s.backlogHead,
       icon: <GtdTodoSVG className={s.backlogIcon} />,
       posts: backlogPosts,
     },
-    todo: {
-      key: 'todo',
+    [KANBAN_BOARD.TODO]: {
+      key: KANBAN_BOARD.TODO,
       title: resolveTitle('todo', t('article.state.todo')),
       countClassName: s.todoText,
       headClassName: s.todoHead,
       icon: <GtdTodoSVG className={s.todoIcon} />,
       posts: todoPosts,
     },
-    wip: {
-      key: 'wip',
+    [KANBAN_BOARD.WIP]: {
+      key: KANBAN_BOARD.WIP,
       title: resolveTitle('wip', t('article.state.wip')),
       countClassName: s.wipText,
       headClassName: s.wipHead,
       icon: <GtdWipSVG className={s.wipIcon} />,
       posts: wipPosts,
     },
-    done: {
-      key: 'done',
+    [KANBAN_BOARD.DONE]: {
+      key: KANBAN_BOARD.DONE,
       title: resolveTitle('done', t('article.state.done')),
       countClassName: s.doneText,
       headClassName: s.doneHead,
       icon: <GtdDoneSVG className={s.doneIcon} />,
       posts: donePosts,
     },
-    rejected: {
-      key: 'rejected',
+    [KANBAN_BOARD.REJECTED]: {
+      key: KANBAN_BOARD.REJECTED,
       title: resolveTitle('rejected', t('article.state.reject')),
       countClassName: s.rejectedText,
       headClassName: s.rejectedHead,

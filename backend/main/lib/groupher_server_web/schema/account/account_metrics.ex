@@ -36,16 +36,6 @@ defmodule GroupherServerWeb.Schema.Account.Metrics do
     social_fields()
   end
 
-  enum :cus_banner_layout_num do
-    value(:digest)
-    value(:brief)
-  end
-
-  enum :cus_contents_layout_num do
-    value(:digest)
-    value(:list)
-  end
-
   # this is for all oauth provider
   input_object :oauth_provider_input do
     field(:provider, non_null(:string))
@@ -61,24 +51,6 @@ defmodule GroupherServerWeb.Schema.Account.Metrics do
     field(:city, :string)
     field(:company, :string)
     field(:raw, :json)
-  end
-
-  input_object :customization_input do
-    field(:theme, :string)
-    field(:community_chart, :boolean)
-    field(:brainwash_free, :boolean)
-
-    field(:banner_layout, :cus_banner_layout_num)
-    field(:contents_layout, :cus_contents_layout_num)
-    field(:content_divider, :boolean)
-    field(:content_hover, :boolean)
-    field(:mark_viewed, :boolean)
-    field(:display_density, :string)
-  end
-
-  input_object :community_index do
-    field(:community, :string)
-    field(:index, :integer)
   end
 
   # see: https://github.com/absinthe-graphql/absinthe/issues/206

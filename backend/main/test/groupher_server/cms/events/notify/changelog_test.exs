@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       notify = notifications.entries |> List.first()
       assert notify.action == "UPVOTE"
       assert notify.article_id == changelog.id
-      assert notify.thread == "CHANGELOG"
+      assert notify.thread == :changelog
       assert notify.user_id == changelog.author.user.id
       assert user_exist_in?(user2, notify.from_users)
     end
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       notify = notifications.entries |> List.first()
       assert notify.action == "UPVOTE"
       assert notify.article_id == changelog.id
-      assert notify.thread == "CHANGELOG"
+      assert notify.thread == :changelog
       assert notify.user_id == comment.author.id
       assert notify.comment_id == comment.id
       assert user_exist_in?(user2, notify.from_users)
@@ -103,7 +103,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       notify = notifications.entries |> List.first()
       assert notify.action == "COLLECT"
       assert notify.article_id == changelog.id
-      assert notify.thread == "CHANGELOG"
+      assert notify.thread == :changelog
       assert notify.user_id == changelog.author.user.id
       assert user_exist_in?(user2, notify.from_users)
     end
@@ -147,7 +147,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
 
       notify = notifications.entries |> List.first()
       assert notify.action == "COMMENT"
-      assert notify.thread == "CHANGELOG"
+      assert notify.thread == :changelog
       assert notify.article_id == changelog.id
       assert notify.user_id == changelog.author.user.id
       assert user_exist_in?(user2, notify.from_users)
@@ -178,7 +178,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       notify = notifications.entries |> List.first()
 
       assert notify.action == "REPLY"
-      assert notify.thread == "CHANGELOG"
+      assert notify.thread == :changelog
       assert notify.article_id == changelog.id
       assert notify.comment_id == replied_comment.id
 

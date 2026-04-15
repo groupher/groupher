@@ -8,6 +8,7 @@ defmodule GroupherServer.Messaging.Model.Notification do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
+  alias CMS.Helper.Threads
   alias CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
 
@@ -19,7 +20,7 @@ defmodule GroupherServer.Messaging.Model.Notification do
   @type t :: %Notification{}
   schema "notifications" do
     belongs_to(:user, User)
-    field(:thread, :string)
+    field(:thread, Ecto.Enum, values: Threads.enums())
     field(:article_id, :id)
     field(:title, :string)
     field(:comment_id, :id)

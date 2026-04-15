@@ -13,6 +13,7 @@ export const COLOR = {
   CYAN_LIGHT: 'CYAN_LIGHT',
   BLUE: 'BLUE',
   PURPLE: 'PURPLE',
+  CUSTOM: 'CUSTOM',
 } as const
 
 // map to css var name in ~/tailwind/token/colors

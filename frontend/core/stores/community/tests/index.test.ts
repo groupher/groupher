@@ -1,4 +1,4 @@
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import type { TCommunityThread } from '~/spec'
 import setupStore from '..'
 
@@ -12,8 +12,8 @@ describe('stores/community', () => {
     expect(store.communityDigestInView).toBe(true)
 
     const threads: readonly TCommunityThread[] = [
-      { slug: THREAD.POST, title: 'Posts', index: 2 },
-      { slug: THREAD.ABOUT, title: 'About', index: 1 },
+      { slug: THREAD_PATH.POST, title: 'Posts', index: 2 },
+      { slug: THREAD_PATH.ABOUT, title: 'About', index: 1 },
     ]
 
     store.commit({

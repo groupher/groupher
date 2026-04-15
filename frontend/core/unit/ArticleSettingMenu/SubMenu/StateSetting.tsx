@@ -2,7 +2,7 @@ import { type FC, useEffect, useState } from 'react'
 import { useMutation } from 'urql'
 import { ARTICLE_STATE } from '~/const/gtd'
 import { POST_STATE_MENU_ITEMS } from '~/const/menu'
-import { aliasGTDDoneState } from '~/fmt'
+import { aliasGTDDoneState, toGTDLabelKey } from '~/fmt'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
@@ -91,9 +91,9 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
               )}
             />
             <div className={cn(s.title, active && s.titleActive)}>
-              {article.state === ARTICLE_STATE.DONE
+              {item.key === ARTICLE_STATE.DONE
                 ? t(aliasGTDDoneState(article.cat, item.key))
-                : kanbanAlias[ARTICLE_STATE[item.key].toLowerCase()]?.name || t(item.key)}
+                : kanbanAlias[item.key]?.name || t(toGTDLabelKey(item.key))}
             </div>
             {active && <CheckSVG className={s.checkIcon} />}
           </button>

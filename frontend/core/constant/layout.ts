@@ -11,71 +11,66 @@ export const UPVOTE_LAYOUT = {
 } as const
 
 export const TAG_LAYOUT = {
-  HASH: 'hash',
-  DOT: 'dot',
+  HASH: 'HASH',
+  DOT: 'DOT',
 } as const
 
 export const INLINE_TAG_LAYOUT = {
-  MORANDI: 'morandi',
-  SOFT: 'soft',
-  SOLID: 'solid',
-  BORDER: 'border',
-  SIMPLE: 'simple',
+  MORANDI: 'MORANDI',
+  SOFT: 'SOFT',
+  SOLID: 'SOLID',
+  BORDER: 'BORDER',
+  SIMPLE: 'SIMPLE',
 } as const
 
 export const AVATAR_LAYOUT = {
-  CIRCLE: 'circle',
-  SQUARE: 'square',
+  CIRCLE: 'CIRCLE',
+  SQUARE: 'SQUARE',
 } as const
 
 export const BRAND_LAYOUT = {
-  BOTH: 'both',
-  LOGO: 'logo',
-  TEXT: 'text',
+  BOTH: 'BOTH',
+  LOGO: 'LOGO',
+  TEXT: 'TEXT',
 } as const
 
 export const BANNER_LAYOUT = {
-  HEADER: 'header',
-  TABBER: 'tabber',
-  SIDEBAR: 'sidebar',
-} as const
-
-export const TOPBAR_LAYOUT = {
-  YES: 'yes',
-  NO: 'no',
+  HEADER: 'HEADER',
+  TABBER: 'TABBER',
+  SIDEBAR: 'SIDEBAR',
 } as const
 
 export const BROADCAST_LAYOUT = {
-  DEFAULT: 'default',
-  CENTER: 'center',
+  DEFAULT: 'DEFAULT',
+  CENTER: 'CENTER',
 } as const
 
 export const BROADCAST_ARTICLE_LAYOUT = {
-  DEFAULT: 'default',
-  SIMPLE: 'simple',
+  DEFAULT: 'DEFAULT',
+  SIMPLE: 'SIMPLE',
 } as const
 
 export const POST_LAYOUT = {
-  QUORA: 'quora',
-  PH: 'ph',
-  MASONRY: 'masonry',
-  MINIMAL: 'minimal',
-  COVER: 'cover',
+  QUORA: 'QUORA',
+  PH: 'PH',
+  MASONRY: 'MASONRY',
+  MINIMAL: 'MINIMAL',
+  COVER: 'COVER',
 } as const
 
 export const KANBAN_LAYOUT = {
-  CLASSIC: 'classic',
-  WATERFALL: 'waterfall',
+  CLASSIC: 'CLASSIC',
+  WATERFALL: 'WATERFALL',
 } as const
 
 export const KANBAN_CARD_LAYOUT = {
-  SIMPLE: 'simple',
-  FULL: 'full',
+  SIMPLE: 'SIMPLE',
+  FULL: 'FULL',
 } as const
 
 export const CHANGELOG_LAYOUT = {
-  CLASSIC: 'classic',
-  SIMPLE: 'simple',
+  CLASSIC: 'CLASSIC',
+  SIMPLE: 'SIMPLE',
 } as const
 
 export const DSB_DESC_LAYOUT = {
@@ -85,31 +80,30 @@ export const DSB_DESC_LAYOUT = {
 } as const
 
 export const DOC_LAYOUT = {
-  OUTLINE: 'outline',
-  LISTS: 'lists',
-  CARDS: 'cards',
-  ARTICLE: 'article',
+  OUTLINE: 'OUTLINE',
+  LISTS: 'LISTS',
+  CARDS: 'CARDS',
 } as const
 
 export const DOC_FAQ_LAYOUT = {
-  FLAT: 'flat',
-  COLLAPSE: 'collapse',
-  SEARCH_HINT: 'search_hint',
-  LEFT_RIGHT: 'left_right',
+  FLAT: 'FLAT',
+  COLLAPSE: 'COLLAPSE',
+  SEARCH_HINT: 'SEARCH_HINT',
+  LEFT_RIGHT: 'LEFT_RIGHT',
 } as const
 
 export const HEADER_LAYOUT = {
-  CENTER: 'center',
-  RIGHT: 'right',
-  FLOAT: 'float',
+  CENTER: 'CENTER',
+  RIGHT: 'RIGHT',
+  FLOAT: 'FLOAT',
 } as const
 
 export const FOOTER_LAYOUT = {
-  SIMPLE: 'simple',
-  GROUP: 'group',
+  SIMPLE: 'SIMPLE',
+  GROUP: 'GROUP',
 } as const
 
 export const RSS_TYPE = {
-  DIGEST: 'digest',
-  FULL: 'full',
+  DIGEST: 'DIGEST',
+  FULL: 'FULL',
 } as const

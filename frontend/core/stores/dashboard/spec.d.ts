@@ -32,7 +32,6 @@ import type {
   TTag,
   TTagLayout,
   TThread,
-  TTopbarLayout,
   TUser,
 } from '~/spec'
 
@@ -92,7 +91,9 @@ export type TDsbFieldMap = {
 
   // layout
   primaryColor: TColorName
+  primaryCustomColor: string
   subPrimaryColor: TColorName
+  subPrimaryCustomColor: string
   postLayout: TPostLayout
   kanbanLayout: TKanbanLayout
   kanbanCardLayout: TKanbanCardLayout
@@ -106,15 +107,18 @@ export type TDsbFieldMap = {
   avatarLayout: TAvatarLayout
   brandLayout: TBrandLayout
   bannerLayout: TBannerLayout
-  topbarLayout: TTopbarLayout
+  topbarEnabled: boolean
   topbarBg: TColorName
+  topbarBgCustomColor: string
 
   broadcastLayout: TBroadcastLayout
   broadcastBg: TColorName
+  broadcastCustomBg: string
   broadcastEnable: boolean
   broadcastArticleLayout: TBroadcastArticleLayout
 
   broadcastArticleBg: TColorName
+  broadcastArticleCustomBg: string
   broadcastArticleEnable: boolean
 
   changelogLayout: TChangelogLayout
@@ -137,7 +141,7 @@ export type TDsbFieldMap = {
   // tags
   tags: readonly TTag[]
   activeTagGroup: string | null
-  activeTagThread: string | null
+  activeTagThread: TThread | null
   nameAlias: readonly TNameAlias[]
   enable: TEnableConf
 

@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import { mockHelpCats } from '~/mock'
 import useCommunity from '~/stores/community/hooks'
 
@@ -29,7 +29,7 @@ const SearchHint: FC<TProps> = ({ sections }) => {
 
       <div className={s.footer}>
         更多类似问题，请移步
-        <ArrowLinker href={`/${community}/${THREAD.DOC}`} left={1}>
+        <ArrowLinker href={`/${community}/${THREAD_PATH.DOC}`} left={1}>
           文档
         </ArrowLinker>
       </div>

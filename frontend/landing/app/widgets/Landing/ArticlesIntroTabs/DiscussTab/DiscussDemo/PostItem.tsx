@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import { ARTICLE_CAT } from '~/const/gtd'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TActive, TArticleCat } from '~/spec'
 import ArticleCatState from '~/unit/ArticleCatState'
@@ -15,7 +16,7 @@ type TProps = {
 
 const PostItem: FC<TProps> = ({
   title = '',
-  cat = 'FEATURE',
+  cat = ARTICLE_CAT.FEATURE,
   count = 9,
   className = '',
   active,

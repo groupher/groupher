@@ -9,10 +9,11 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
 
   alias GroupherServer.CMS
 
-  alias CMS.Helper.{ArticleEnums, KanbanBoards}
+  alias CMS.Helper.{ArticleEnums, KanbanBoards, Threads}
 
   require ArticleEnums
   require KanbanBoards
+  require Threads
 
   @doc """
   only used for reaction result, like: upvote/collect/watch ...
@@ -43,9 +44,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   enum(:emotion_type, do: emotion_values(:all))
 
   enum :thread do
-    article_values()
-    value(:user)
-    # home community
+    enum_values(Threads.values())
   end
 
   enum :dashboard_section do
@@ -117,25 +116,35 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:orange)
     value(:yellow)
     value(:brown)
-    value(:green)
     value(:green_light)
+    value(:green)
     value(:cyan)
     value(:cyan_light)
     value(:blue)
     value(:purple)
+    value(:custom)
   end
 
-  enum :article_cat_enum do
-    enum_values(ArticleEnums.cat())
-  end
+  enum(:article_cat_enum, do: enum_values(ArticleEnums.cat()))
+  enum(:article_state_enum, do: enum_values(ArticleEnums.state()))
+  enum(:kanban_board, do: enum_values(KanbanBoards.values()))
 
-  enum :article_state_enum do
-    enum_values(ArticleEnums.state())
-  end
-
-  enum :kanban_board do
-    enum_values(KanbanBoards.values())
-  end
+  dsb_enum(:post_layout)
+  dsb_enum(:kanban_layout)
+  dsb_enum(:kanban_card_layout)
+  dsb_enum(:doc_layout)
+  dsb_enum(:doc_faq_layout)
+  dsb_enum(:tag_layout)
+  dsb_enum(:inline_tag_layout)
+  dsb_enum(:avatar_layout)
+  dsb_enum(:brand_layout)
+  dsb_enum(:banner_layout)
+  dsb_enum(:broadcast_layout)
+  dsb_enum(:broadcast_article_layout)
+  dsb_enum(:changelog_layout)
+  dsb_enum(:header_layout)
+  dsb_enum(:footer_layout)
+  dsb_enum(:rss_feed_type)
 
   @desc "the filter mode for list comments"
   enum :comments_mode do

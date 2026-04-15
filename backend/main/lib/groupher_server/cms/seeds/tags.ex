@@ -74,7 +74,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
   defp tag_filter(community_id, thread) do
     %{
       community_id: community_id,
-      thread: thread |> to_string() |> String.upcase(),
+      thread: thread,
       page: 1,
       size: 100
     }

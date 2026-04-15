@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
       body_map = Jason.decode!(changelog.document.json)
 
-      assert changelog.meta.thread == "CHANGELOG"
+      assert changelog.meta.thread == :changelog
 
       assert changelog.title == changelog_attrs.title
       assert is_list(body_map)
@@ -296,7 +296,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert not is_nil(changelog.document.html)
 
       {:ok, article_doc} =
-        ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: "CHANGELOG"})
+        ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})
 
       {:ok, changelog_doc} = ORM.find_by(ChangelogDocument, %{changelog_id: changelog.id})
 
@@ -309,14 +309,14 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, _article_doc} =
-        ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: "CHANGELOG"})
+        ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})
 
       {:ok, _changelog_doc} = ORM.find_by(ChangelogDocument, %{changelog_id: changelog.id})
 
       {:ok, _} = CMS.Articles.delete(changelog)
 
       {:error, _} = ORM.find(Changelog, changelog.id)
-      {:error, _} = ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: "CHANGELOG"})
+      {:error, _} = ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})
       {:error, _} = ORM.find_by(ChangelogDocument, %{changelog_id: changelog.id})
     end
 
@@ -328,7 +328,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} = CMS.Articles.update(changelog, %{body: body})
 
       {:ok, article_doc} =
-        ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: "CHANGELOG"})
+        ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})
 
       {:ok, changelog_doc} = ORM.find_by(ChangelogDocument, %{changelog_id: changelog.id})
 

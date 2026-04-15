@@ -21,7 +21,7 @@ vi.mock('~/hooks/useTrans', () => ({
 }))
 
 vi.mock('~/hooks/usePrimaryColor', () => ({
-  default: () => 'BLACK',
+  default: () => 'black',
 }))
 
 vi.mock('~/hooks/useTwBelt', () => ({

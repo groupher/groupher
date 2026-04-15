@@ -821,6 +821,10 @@ select {
   border-width: 0;
 }
 
+.collapse {
+  visibility: collapse;
+}
+
 .static {
   position: static;
 }
@@ -1430,6 +1434,10 @@ select {
 
 .font-semibold {
   font-weight: 600;
+}
+
+.lowercase {
+  text-transform: lowercase;
 }
 
 .leading-5 {

@@ -64,9 +64,6 @@ type RootQueryType {
   "paged published docs"
   pagedPublishedDocs(login: String!, filter: PagiFilter!, thread: DocThread): PagedDocs
 
-  "get all bills"
-  pagedBillRecords(filter: PagiFilter!): PagedBills!
-
   "list cities geo info"
   citiesGeoInfo: PagedGeoInfos
 
@@ -212,20 +209,11 @@ type RootMutationType {
   "remove article from a collect folder"
   removeFromCollect(article: ArticleRefInput!, folderId: ID!): CollectFolder
 
-  "set user's customization"
-  setCustomization(userId: ID, customization: CustomizationInput!, sidebarCommunitiesIndex: [CommunityIndex]): User
-
   "mark a message as read"
   markRead(ids: [ID], type: MailboxType): Done
 
   "mark all unread message as read"
   markReadAll(type: MailboxType): Done
-
-  "create bill"
-  createBill(paymentMethod: PaymentMethodEnum!, paymentUsage: PaymentUsageEnum!, amount: Float!, note: String): Bill
-
-  "update user's bill state"
-  updateBillState(id: ID!, state: BillStateEnum!): Bill
 
   makeContribute(userId: ID!): UserContribute
 
@@ -638,11 +626,13 @@ type RootMutationType {
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dashboardSection: DashboardSection, primaryColor: String, subPrimaryColor: String, kanbanBgColors: [String], kanbanBoards: [KanbanBoard], postLayout: String, kanbanLayout: String, kanbanCardLayout: String, docLayout: String, docFaqLayout: String, tagLayout: String, inlineTagLayout: String, avatarLayout: String, brandLayout: String, bannerLayout: String, topbarLayout: String, topbarBg: String, broadcastLayout: String, broadcastBg: String, broadcastEnable: Boolean, broadcastArticleLayout: String, broadcastArticleBg: String, broadcastArticleEnable: Boolean, changelogLayout: String, footerLayout: String, headerLayout: String, glowType: String, glowFixed: Boolean, glowOpacity: String, darkFloat: Boolean, gaussBlur: Int, gaussBlurDark: Int
+    community: String!, dashboardSection: DashboardSection, primaryColor: RainbowColor, primaryCustomColor: String, subPrimaryColor: RainbowColor, subPrimaryCustomColor: String, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docLayout: DsbDocLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, bannerLayout: DsbBannerLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, darkFloat: Boolean, gaussBlur: Int, gaussBlurDark: Int
   ): Community
 
   "update rss in dashboard"
-  updateDashboardRss(community: String!, dashboardSection: DashboardSection, rssFeedType: String, rssFeedCount: Int): Community
+  updateDashboardRss(
+    community: String!, dashboardSection: DashboardSection, rssFeedType: DsbRssFeedType, rssFeedCount: Int
+  ): Community
 
   "update name alias in dashboard"
   updateDashboardNameAlias(community: String!, dashboardSection: DashboardSection, nameAlias: [DashboardAliasMap]): Community
@@ -684,7 +674,7 @@ type CommonUser {
 }
 
 type CommonArticle {
-  thread: String
+  thread: Thread
   id: ID
   title: String
   author: CommonUser
@@ -864,7 +854,7 @@ type ContributeMap {
 }
 
 type DashboardRss {
-  rssFeedType: String
+  rssFeedType: DsbRssFeedType
   rssFeedCount: Int
 }
 
@@ -900,31 +890,36 @@ type DashboardWallpaper {
 }
 
 type DashboardLayout {
-  primaryColor: String
-  subPrimaryColor: String
-  kanbanBgColors: [String]
+  primaryColor: RainbowColor
+  primaryCustomColor: String
+  subPrimaryColor: RainbowColor
+  subPrimaryCustomColor: String
+  kanbanBgColors: [RainbowColor]
   kanbanBoards: [KanbanBoard]
-  postLayout: String
-  kanbanLayout: String
-  kanbanCardLayout: String
-  docLayout: String
-  docFaqLayout: String
-  tagLayout: String
-  inlineTagLayout: String
-  avatarLayout: String
-  brandLayout: String
-  bannerLayout: String
-  topbarLayout: String
-  topbarBg: String
-  broadcastLayout: String
-  broadcastBg: String
+  postLayout: DsbPostLayout
+  kanbanLayout: DsbKanbanLayout
+  kanbanCardLayout: DsbKanbanCardLayout
+  docLayout: DsbDocLayout
+  docFaqLayout: DsbDocFaqLayout
+  tagLayout: DsbTagLayout
+  inlineTagLayout: DsbInlineTagLayout
+  avatarLayout: DsbAvatarLayout
+  brandLayout: DsbBrandLayout
+  bannerLayout: DsbBannerLayout
+  topbarEnabled: Boolean
+  topbarBg: RainbowColor
+  topbarBgCustomColor: String
+  broadcastLayout: DsbBroadcastLayout
+  broadcastBg: RainbowColor
+  broadcastCustomBg: String
   broadcastEnable: Boolean
-  broadcastArticleLayout: String
-  broadcastArticleBg: String
+  broadcastArticleLayout: DsbBroadcastArticleLayout
+  broadcastArticleBg: RainbowColor
+  broadcastArticleCustomBg: String
   broadcastArticleEnable: Boolean
-  changelogLayout: String
-  footerLayout: String
-  headerLayout: String
+  changelogLayout: DsbChangelogLayout
+  footerLayout: DsbFooterLayout
+  headerLayout: DsbHeaderLayout
   glowType: String
   glowFixed: Boolean
   glowOpacity: String
@@ -1083,8 +1078,8 @@ type CommunityTag {
   desc: String
   layout: String
   slug: String
-  color: String
-  thread: String
+  color: RainbowColor
+  thread: Thread
   group: String
   extra: [String]
   icon: String
@@ -1122,7 +1117,7 @@ type CommentReply {
   emotions: [EmotionStat]
   meta: CommentMeta
   repliesCount: Int
-  thread: String
+  thread: Thread
   viewerHasUpvoted: Boolean
   replyTo: Comment
   replyToId: ID
@@ -1145,7 +1140,7 @@ type Comment {
   emotions: [EmotionStat]
   meta: CommentMeta
   repliesCount: Int
-  thread: String
+  thread: Thread
   viewerHasUpvoted: Boolean
   replyTo: Comment
   replyToId: ID
@@ -1188,7 +1183,7 @@ type AbuseReport {
 
 type Citing {
   id: ID
-  thread: String
+  thread: Thread
   title: String
   blockLinker: [String]
   commentId: ID
@@ -1311,7 +1306,7 @@ type PagedArticles {
 
 "article meta info"
 type ArticleMeta {
-  thread: String
+  thread: Thread
   isEdited: Boolean
   isCommentLocked: Boolean
   lastActiveAt: DateTime
@@ -1406,7 +1401,6 @@ enum Thread {
   BLOG
   CHANGELOG
   DOC
-  USER
 }
 
 enum DashboardSection {
@@ -1476,12 +1470,13 @@ enum RainbowColor {
   ORANGE
   YELLOW
   BROWN
-  GREEN
   GREEN_LIGHT
+  GREEN
   CYAN
   CYAN_LIGHT
   BLUE
   PURPLE
+  CUSTOM
 }
 
 enum ArticleCatEnum {
@@ -1511,6 +1506,98 @@ enum KanbanBoard {
   WIP
   DONE
   REJECTED
+}
+
+enum DsbPostLayout {
+  QUORA
+  PH
+  MASONRY
+  MINIMAL
+  COVER
+}
+
+enum DsbKanbanLayout {
+  CLASSIC
+  WATERFALL
+}
+
+enum DsbKanbanCardLayout {
+  SIMPLE
+  FULL
+}
+
+enum DsbDocLayout {
+  OUTLINE
+  LISTS
+  CARDS
+}
+
+enum DsbDocFaqLayout {
+  FLAT
+  COLLAPSE
+  SEARCH_HINT
+  LEFT_RIGHT
+}
+
+enum DsbTagLayout {
+  HASH
+  DOT
+}
+
+enum DsbInlineTagLayout {
+  MORANDI
+  SOFT
+  SOLID
+  BORDER
+  SIMPLE
+}
+
+enum DsbAvatarLayout {
+  CIRCLE
+  SQUARE
+}
+
+enum DsbBrandLayout {
+  BOTH
+  LOGO
+  TEXT
+}
+
+enum DsbBannerLayout {
+  HEADER
+  TABBER
+  SIDEBAR
+}
+
+enum DsbBroadcastLayout {
+  DEFAULT
+  CENTER
+}
+
+enum DsbBroadcastArticleLayout {
+  DEFAULT
+  SIMPLE
+}
+
+enum DsbChangelogLayout {
+  CLASSIC
+  SIMPLE
+}
+
+enum DsbHeaderLayout {
+  CENTER
+  RIGHT
+  FLOAT
+}
+
+enum DsbFooterLayout {
+  SIMPLE
+  GROUP
+}
+
+enum DsbRssFeedType {
+  DIGEST
+  FULL
 }
 
 "the filter mode for list comments"
@@ -1763,42 +1850,6 @@ type CountStatusInfo {
   threadsCount: Int
 }
 
-enum BillStateEnum {
-  PENDING
-  DONE
-  REJECT
-}
-
-enum PaymentUsageEnum {
-  SENIOR
-  DONATE
-  SPONSOR
-}
-
-enum PaymentMethodEnum {
-  WECHAT
-  ALIPAY
-}
-
-type Bill {
-  id: ID
-  state: String
-  amount: Float
-  hashId: String
-  paymentUsage: String
-  paymentMethod: String
-  note: String
-  insertedAt: DateTime
-}
-
-type PagedBills {
-  entries: [Bill]
-  totalCount: Int
-  pageSize: Int
-  totalPages: Int
-  pageNumber: Int
-}
-
 type SessionState {
   user: User
   isValid: Boolean
@@ -1844,8 +1895,6 @@ type User {
 
   achievement: Achievement
 
-  customization: Customization
-
   cmsPassportString: String
 
   cmsPassport: Json
@@ -1882,7 +1931,7 @@ type MailboxStatus {
 
 type MailboxMention {
   id: ID
-  thread: String
+  thread: Thread
   articleId: ID
   title: String
   commentId: ID
@@ -1896,7 +1945,7 @@ type MailboxMention {
 type MailboxNotification {
   id: ID
   action: String
-  thread: String
+  thread: Thread
   articleId: ID
   title: String
   commentId: ID
@@ -1905,18 +1954,6 @@ type MailboxNotification {
   fromUsersCount: Int
   insertedAt: DateTime
   updatedAt: DateTime
-}
-
-type Customization {
-  theme: String
-  communityChart: Boolean
-  brainwashFree: Boolean
-  bannerLayout: String
-  contentsLayout: String
-  contentDivider: Boolean
-  contentHover: Boolean
-  markViewed: Boolean
-  displayDensity: String
 }
 
 type SocialMap {
@@ -2059,16 +2096,6 @@ input SocialInput {
   huaban: String
 }
 
-enum CusBannerLayoutNum {
-  DIGEST
-  BRIEF
-}
-
-enum CusContentsLayoutNum {
-  DIGEST
-  LIST
-}
-
 input OauthProviderInput {
   provider: String!
   providerId: String!
@@ -2083,23 +2110,6 @@ input OauthProviderInput {
   city: String
   company: String
   raw: Json
-}
-
-input CustomizationInput {
-  theme: String
-  communityChart: Boolean
-  brainwashFree: Boolean
-  bannerLayout: CusBannerLayoutNum
-  contentsLayout: CusContentsLayoutNum
-  contentDivider: Boolean
-  contentHover: Boolean
-  markViewed: Boolean
-  displayDensity: String
-}
-
-input CommunityIndex {
-  community: String
-  index: Int
 }
 
 """

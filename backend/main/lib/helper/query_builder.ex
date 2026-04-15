@@ -5,7 +5,7 @@ defmodule Helper.QueryBuilder do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Helper.ArticleEnums
+  alias GroupherServer.CMS.Helper.{ArticleEnums, Threads}
   alias Helper.Constant
 
   @article_cat ArticleEnums.cat_values()
@@ -221,8 +221,10 @@ defmodule Helper.QueryBuilder do
         )
 
       {:thread, thread}, queryable ->
-        thread = thread |> to_string |> String.upcase()
-        from(q in queryable, where: q.thread == ^thread)
+        case Threads.to_atom(thread) do
+          {:ok, thread} -> from(q in queryable, where: q.thread == ^thread)
+          {:error, _} -> from(q in queryable, where: false)
+        end
 
       {:community_id, community_id}, queryable ->
         from(

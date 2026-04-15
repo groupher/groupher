@@ -1,5 +1,6 @@
 import { gql } from 'urql'
 import { F } from '~/schemas'
+import { thread2Path } from '~/utils/thread'
 import { setTag as setTagMutation, unsetTag as unsetTagMutation } from '../../schemas/pages/action'
 import { changelog } from '../../schemas/pages/changelog'
 import { doc } from '../../schemas/pages/doc'
@@ -12,7 +13,7 @@ const ARTICLE_SCHEMA = {
 }
 
 const getArticle = (thread) => {
-  const schema = ARTICLE_SCHEMA[thread.toLowerCase()]
+  const schema = ARTICLE_SCHEMA[thread2Path(thread)]
 
   return gql`
     ${schema}

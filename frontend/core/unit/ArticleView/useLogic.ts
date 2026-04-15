@@ -3,7 +3,7 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TArticle, TArticleLoad } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import useArticle from '~/stores/article/hooks'
-import { toGqlThread } from '~/utils/thread'
+import { thread2Path } from '~/utils/thread'
 
 import S from './schema'
 
@@ -25,7 +25,7 @@ export default function useLogic(): TRet {
   const handleArticleLoaded = (article: TArticle): void => {
     // console.log('## # handleArticleRes: ', article)
     setLoading(false)
-    const thread = article.meta.thread.toLowerCase()
+    const thread = thread2Path(article.meta.thread)
     // const { document, ...restArticle } = article
     // store.mark({ document })
     // store.setViewing({ [thread]: mergeRight(store.viewingArticle, restArticle) })
@@ -54,7 +54,7 @@ export default function useLogic(): TRet {
       article: {
         innerId,
         community,
-        thread: toGqlThread(thread) || thread.toUpperCase(),
+        thread,
       },
       userHasLogin,
     }

@@ -5,7 +5,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { lazy, Suspense } from 'react'
-import { ARTICLE_THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import Img from '~/Img'
 import ArrowSVG from '~/icons/Arrow'
 import useArticle from '~/stores/article/hooks'
@@ -34,7 +34,7 @@ export default function Digest() {
 
   const { innerId, author, title } = changelog
 
-  const backUrl = `/${changelog.communitySlug}/${ARTICLE_THREAD.CHANGELOG}`
+  const backUrl = `/${changelog.communitySlug}/${THREAD_PATH.CHANGELOG}`
 
   return (
     <div className={s.wrapper}>

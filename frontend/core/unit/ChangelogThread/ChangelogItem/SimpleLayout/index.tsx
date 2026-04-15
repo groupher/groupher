@@ -6,7 +6,7 @@
 
 import Link from 'next/link'
 import { type FC, memo } from 'react'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import ShareSVG from '~/icons/Share'
 import type { TChangelog } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -34,7 +34,7 @@ const SimpleLayout: FC<TProps> = ({ article }) => {
       </div>
       <div className={s.main}>
         <Link
-          href={`/${slug}/${THREAD.CHANGELOG}/${article.innerId}`}
+          href={`/${slug}/${THREAD_PATH.CHANGELOG}/${article.innerId}`}
           className={s.title}
           scroll={false}
           data-preview-id={String(article.innerId)}

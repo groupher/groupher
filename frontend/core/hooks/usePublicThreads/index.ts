@@ -1,5 +1,5 @@
 import { find, propEq, reject } from 'ramda'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import { sortByIndex } from '~/helper'
 import { shouldFoldAboutToMore } from '~/hooks/useHeaderLinks/helper'
 import type { TCommunityThread, TNameAlias } from '~/spec'
@@ -25,7 +25,7 @@ export default function usePublicThreads(): TCommunityThread[] {
 
   if (shouldFoldAbout) {
     return reject(
-      (item: TCommunityThread) => item.slug === THREAD.ABOUT,
+      (item: TCommunityThread) => item.slug === THREAD_PATH.ABOUT,
       mappedThreads as TCommunityThread[],
     ) as TCommunityThread[]
   }

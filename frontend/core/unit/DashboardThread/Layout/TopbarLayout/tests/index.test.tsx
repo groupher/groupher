@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { BANNER_LAYOUT, TOPBAR_LAYOUT } from '~/const/layout'
+import { BANNER_LAYOUT } from '~/const/layout'
 import { FIELD } from '../../../constant'
 import TopbarLayout from '..'
 
@@ -13,7 +13,7 @@ vi.mock('~/hooks/useTrans', () => ({
 vi.mock('../../../logic/useTopbar', () => ({
   default: () => ({
     edit,
-    layout: TOPBAR_LAYOUT.YES,
+    enabled: true,
     isBgTouched: false,
     isLayoutTouched: false,
     saving: false,
@@ -116,7 +116,7 @@ describe('<TopbarLayout />', () => {
       'aria-pressed',
       'false',
     )
-    expect(screen.getByTestId(`saving-bar-${FIELD.TOPBAR_LAYOUT}`)).toBeInTheDocument()
+    expect(screen.getByTestId(`saving-bar-${FIELD.TOPBAR_ENABLED}`)).toBeInTheDocument()
     expect(screen.getByTestId(`saving-bar-${FIELD.TOPBAR_BG}`)).toBeInTheDocument()
     expect(screen.getByTestId('color-selector')).toHaveAttribute('data-color', 'black')
   })
@@ -126,7 +126,7 @@ describe('<TopbarLayout />', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'dsb.layout.topbar.option.none' }))
 
-    expect(edit).toHaveBeenCalledWith(TOPBAR_LAYOUT.NO, FIELD.TOPBAR_LAYOUT)
+    expect(edit).toHaveBeenCalledWith(false, FIELD.TOPBAR_ENABLED)
   })
 
   it('updates topbar color while yes layout is active', () => {

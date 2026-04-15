@@ -84,7 +84,7 @@ defmodule GroupherServer.CMS.Events.Audition do
   end
 
   def handle_audition_result({:error, audit_res}, %{body_html: _} = comment) do
-    comment_addr = "/#{String.downcase(comment.thread)}/#{comment.id}"
+    comment_addr = "/#{comment.thread}/#{comment.id}"
     illegal_comments = [comment_addr]
 
     audit_res = Map.merge(audit_res, %{illegal_comments: illegal_comments})
@@ -95,7 +95,7 @@ defmodule GroupherServer.CMS.Events.Audition do
   end
 
   def handle_audition_result({:error, audit_res}, article) do
-    article_addr = "/#{String.downcase(article.meta.thread)}/#{article.id}"
+    article_addr = "/#{article.meta.thread}/#{article.id}"
     illegal_articles = [article_addr]
 
     audit_res = Map.merge(audit_res, %{illegal_articles: illegal_articles})

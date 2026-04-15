@@ -55,7 +55,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
       body_map = Jason.decode!(post.document.json)
 
-      assert post.meta.thread == "POST"
+      assert post.meta.thread == :post
 
       assert post.title == post_attrs.title
       assert is_list(body_map)
@@ -294,7 +294,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:ok, post} = CMS.Articles.read(post.community_slug, :post, post.inner_id, user)
       assert not is_nil(post.document.html)
 
-      {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: "POST"})
+      {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: :post})
       {:ok, post_doc} = ORM.find_by(PostDocument, %{post_id: post.id})
 
       assert post.document.json == post_doc.json
@@ -303,13 +303,13 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
     test "delete post should also delete related document", ~m(user community post_attrs)a do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: "POST"})
+      {:ok, _article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: :post})
       {:ok, _post_doc} = ORM.find_by(PostDocument, %{post_id: post.id})
 
       {:ok, _} = CMS.Articles.delete(post)
 
       {:error, _} = ORM.find(Post, post.id)
-      {:error, _} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: "POST"})
+      {:error, _} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: :post})
       {:error, _} = ORM.find_by(PostDocument, %{post_id: post.id})
     end
 
@@ -319,7 +319,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       body = mock_rich_text(~s(new content))
       {:ok, post} = CMS.Articles.update(post, %{body: body})
 
-      {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: "POST"})
+      {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: :post})
       {:ok, post_doc} = ORM.find_by(PostDocument, %{post_id: post.id})
 
       assert String.contains?(post_doc.json, "new content")

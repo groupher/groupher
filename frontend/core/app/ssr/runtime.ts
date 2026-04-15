@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from 'next/cache'
 import { CACHE_TAG } from '~/const/cache'
 import { LOCALE } from '~/const/i18n'
-import { THREAD } from '~/const/thread'
+import { TAG_THREADS, THREAD } from '~/const/thread'
 import { loadLocaleFile } from '~/i18n'
 import type { TI18nNamespace } from '~/i18n'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
@@ -19,7 +19,6 @@ import type {
 } from '~/spec'
 import { gqFetch } from '~/utils/api'
 import { parseDashboard, parseWallpaper } from '~/utils/ssr'
-import { toGqlThread } from '~/utils/thread'
 
 const getCommunity = async (community: string): Promise<TCommunityInfo> => {
   'use cache'
@@ -38,6 +37,8 @@ const getCommunity = async (community: string): Promise<TCommunityInfo> => {
     console.log('## error details 1', errors[0]?.locations)
     return {
       community: { slug: '' },
+      dashboard: parseDashboard(null),
+      wallpaper: parseWallpaper(null),
     }
   }
 
@@ -181,7 +182,7 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
   cacheLife('days')
   cacheTag(CACHE_TAG.tagsCache(community, thread))
 
-  const gqlThread = toGqlThread(thread, 'TAGS')
+  const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number]) ? thread : null
   if (!gqlThread) return []
 
   const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread: gqlThread } })
@@ -209,7 +210,7 @@ export const getPost = async (
     article: {
       innerId: id,
       community,
-      thread: toGqlThread(thread) || thread.toUpperCase(),
+      thread,
     },
     userHasLogin: false,
   })
@@ -234,7 +235,7 @@ export const getChangelog = async (community: string, id: string): Promise<TPost
     article: {
       innerId: id,
       community,
-      thread: toGqlThread(THREAD.CHANGELOG) || THREAD.CHANGELOG.toUpperCase(),
+      thread: THREAD.CHANGELOG,
     },
     userHasLogin: false,
   })
@@ -263,7 +264,7 @@ export const getPagedComments = async (
     article: {
       innerId: id,
       community,
-      thread: toGqlThread(thread) || thread.toUpperCase(),
+      thread,
     },
     mode: 'REPLIES',
     filter: { page, size: 30 },

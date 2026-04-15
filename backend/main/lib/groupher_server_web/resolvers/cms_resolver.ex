@@ -7,7 +7,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Helper.EmotionFormatter
+  alias CMS.Helper.{EmotionFormatter, Threads}
   alias CMS.Model.{Category, Community, Thread}
   alias Helper.{OgInfo, ORM}
 
@@ -479,10 +479,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp normalize_thread(nil), do: {:ok, :post}
   defp normalize_thread(thread) when is_atom(thread), do: {:ok, thread}
-
-  defp normalize_thread(thread) when is_binary(thread) do
-    {:ok, thread |> String.downcase() |> String.to_atom()}
-  end
+  defp normalize_thread(thread) when is_binary(thread), do: Threads.to_atom(thread)
 
   ############
   ############

@@ -188,19 +188,21 @@ export const prettyURL = (url: string): string => {
  * alias GTD DONE key
  * 如果是问题，显示已解决，如果是其他，显示已完成
  */
+export const toGTDLabelKey = (value: string): TTransKey => value.toUpperCase() as TTransKey
+
 export const aliasGTDDoneState = (cat: TArticleCat, state: TArticleState): TTransKey => {
-  if (state !== ARTICLE_STATE.DONE) return state as TTransKey
+  if (state !== ARTICLE_STATE.DONE) return toGTDLabelKey(state)
 
   switch (cat) {
     case ARTICLE_CAT.BUG: {
-      return ARTICLE_STATE.FIXED
+      return toGTDLabelKey(ARTICLE_STATE.FIXED)
     }
     case ARTICLE_CAT.QUESTION: {
-      return ARTICLE_STATE.SOLVED
+      return toGTDLabelKey(ARTICLE_STATE.SOLVED)
     }
 
     default: {
-      return ARTICLE_STATE.DONE
+      return toGTDLabelKey(ARTICLE_STATE.DONE)
     }
   }
 }

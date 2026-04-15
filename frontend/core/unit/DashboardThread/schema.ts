@@ -160,49 +160,63 @@ const updateDashboardEnable = gql`
 const updateDashboardLayout = gql`
   mutation (
     $community: String!
-    $primaryColor: String
-    $subPrimaryColor: String
-    $postLayout: String
-    $kanbanLayout: String
-    $kanbanCardLayout: String
+    $primaryColor: RainbowColor
+    $primaryCustomColor: String
+    $subPrimaryColor: RainbowColor
+    $subPrimaryCustomColor: String
+    $postLayout: DsbPostLayout
+    $kanbanLayout: DsbKanbanLayout
+    $kanbanCardLayout: DsbKanbanCardLayout
     $kanbanBoards: [KanbanBoard]
-    $footerLayout: String
-    $headerLayout: String
-    $topbarLayout: String
-    $topbarBg: String
-    $tagLayout: String
-    $inlineTagLayout: String
-    $avatarLayout: String
+    $footerLayout: DsbFooterLayout
+    $headerLayout: DsbHeaderLayout
+    $topbarEnabled: Boolean
+    $topbarBg: RainbowColor
+    $topbarBgCustomColor: String
+    $tagLayout: DsbTagLayout
+    $inlineTagLayout: DsbInlineTagLayout
+    $avatarLayout: DsbAvatarLayout
     $broadcastEnable: Boolean
-    $kanbanBgColors: [String]
+    $kanbanBgColors: [RainbowColor]
+    $broadcastBg: RainbowColor
+    $broadcastCustomBg: String
+    $broadcastArticleBg: RainbowColor
+    $broadcastArticleCustomBg: String
     $glowType: String
     $glowFixed: Boolean
     $glowOpacity: String
     $darkFloat: Boolean
     $gaussBlur: Int
     $gaussBlurDark: Int
-    $brandLayout: String
-    $bannerLayout: String
-    $changelogLayout: String
-    $docLayout: String
-    $docFaqLayout: String
+    $brandLayout: DsbBrandLayout
+    $bannerLayout: DsbBannerLayout
+    $changelogLayout: DsbChangelogLayout
+    $docLayout: DsbDocLayout
+    $docFaqLayout: DsbDocFaqLayout
   ) {
     updateDashboardLayout(
       community: $community
       primaryColor: $primaryColor
+      primaryCustomColor: $primaryCustomColor
       subPrimaryColor: $subPrimaryColor
+      subPrimaryCustomColor: $subPrimaryCustomColor
       postLayout: $postLayout
       kanbanLayout: $kanbanLayout
       kanbanCardLayout: $kanbanCardLayout
       kanbanBoards: $kanbanBoards
       footerLayout: $footerLayout
       headerLayout: $headerLayout
-      topbarLayout: $topbarLayout
+      topbarEnabled: $topbarEnabled
       topbarBg: $topbarBg
+      topbarBgCustomColor: $topbarBgCustomColor
       tagLayout: $tagLayout
       inlineTagLayout: $inlineTagLayout
       avatarLayout: $avatarLayout
       broadcastEnable: $broadcastEnable
+      broadcastBg: $broadcastBg
+      broadcastCustomBg: $broadcastCustomBg
+      broadcastArticleBg: $broadcastArticleBg
+      broadcastArticleCustomBg: $broadcastArticleCustomBg
       kanbanBgColors: $kanbanBgColors
       glowType: $glowType
       glowFixed: $glowFixed

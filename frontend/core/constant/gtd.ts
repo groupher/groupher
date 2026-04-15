@@ -29,6 +29,7 @@ export const ARTICLE_STATE = {
   TODO: 'TODO',
   WIP: 'WIP',
   DONE: 'DONE',
+  RESOLVED: 'RESOLVED',
   SOLVED: 'SOLVED',
   FIXED: 'FIXED',
   DEFAULT: 'DEFAULT',

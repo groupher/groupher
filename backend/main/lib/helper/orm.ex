@@ -421,11 +421,11 @@ defmodule Helper.ORM do
 
   ## Examples
 
-      iex> ORM.upsert_by(Customization, [user_id: user.id], %{user_id: user.id, theme: "light"})
-      {:ok, %Customization{}}
+      iex> ORM.upsert_by(Achievement, [user_id: user.id], %{user_id: user.id, reputation: 1})
+      {:ok, %Achievement{}}
 
-      iex> ORM.upsert_by(Customization, %{user_id: user.id}, %{user_id: user.id, theme: "dark"})
-      {:ok, %Customization{}}
+      iex> ORM.upsert_by(Achievement, %{user_id: user.id}, %{user_id: user.id, reputation: 2})
+      {:ok, %Achievement{}}
   """
   def upsert_by(queryable, clauses, attrs) do
     conflict_target = clause_keys(clauses)
@@ -453,8 +453,8 @@ defmodule Helper.ORM do
 
   ## Examples
 
-      iex> ORM.insert_or_ignore(Customization, %{user_id: user.id}, conflict_target: [:user_id])
-      {:ok, %Customization{}}
+      iex> ORM.insert_or_ignore(Achievement, %{user_id: user.id}, conflict_target: [:user_id])
+      {:ok, %Achievement{}}
   """
   def insert_or_ignore(queryable, attrs, conflict_target: conflict_target) do
     attrs = attrs |> normalize_attrs()

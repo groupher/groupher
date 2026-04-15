@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
 
       body_map = Jason.decode!(blog.document.json)
 
-      assert blog.meta.thread == "BLOG"
+      assert blog.meta.thread == :blog
 
       assert blog.title == blog_attrs.title
       assert is_list(body_map)
@@ -271,7 +271,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       {:ok, blog} = CMS.Articles.read(blog.community_slug, :blog, blog.inner_id, user)
       assert not is_nil(blog.document.html)
 
-      {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: "BLOG"})
+      {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: :blog})
 
       {:ok, doc_doc} = ORM.find_by(BlogDocument, %{blog_id: blog.id})
 
@@ -283,14 +283,14 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
          ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
-      {:ok, _article_doc} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: "BLOG"})
+      {:ok, _article_doc} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: :blog})
 
       {:ok, _doc} = ORM.find_by(BlogDocument, %{blog_id: blog.id})
 
       {:ok, _} = CMS.Articles.delete(blog)
 
       {:error, _} = ORM.find(Blog, blog.id)
-      {:error, _} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: "BLOG"})
+      {:error, _} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: :blog})
       {:error, _} = ORM.find_by(BlogDocument, %{blog_id: blog.id})
     end
 
@@ -301,7 +301,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       body = mock_rich_text(~s(new content))
       {:ok, blog} = CMS.Articles.update(blog, %{body: body})
 
-      {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: "BLOG"})
+      {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: :blog})
 
       {:ok, doc_doc} = ORM.find_by(BlogDocument, %{blog_id: blog.id})
 

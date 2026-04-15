@@ -1,4 +1,3 @@
-import { TOPBAR_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import useCommunity from '~/stores/community/hooks'
 import CheckLabel from '~/widgets/CheckLabel'
@@ -14,11 +13,11 @@ import BannerLayoutPreviewContent from '../BannerLayout/BannerLayoutPreviewConte
 
 const TOPBAR_LAYOUT_OPTIONS = [
   {
-    value: TOPBAR_LAYOUT.YES,
+    value: true,
     titleKey: 'dsb.layout.topbar.option.with',
   },
   {
-    value: TOPBAR_LAYOUT.NO,
+    value: false,
     titleKey: 'dsb.layout.topbar.option.none',
   },
 ] as const
@@ -28,7 +27,7 @@ export default function TopbarLayout() {
   const { t } = useTrans()
   const { title } = useCommunity()
 
-  const { edit, layout, isBgTouched, isLayoutTouched, saving, bg } = useTopbar()
+  const { edit, enabled, isBgTouched, isLayoutTouched, saving, bg } = useTopbar()
   const { layout: bannerLayout } = useBanner()
 
   return (
@@ -40,17 +39,17 @@ export default function TopbarLayout() {
       />
       <div className={s.select}>
         {TOPBAR_LAYOUT_OPTIONS.map(({ value, titleKey }) => {
-          const isActive = layout === value
+          const isActive = enabled === value
 
           return (
             <button
-              key={value}
+              key={String(value)}
               type='button'
               className={s.layout}
               aria-pressed={isActive}
-              onClick={() => edit(value, FIELD.TOPBAR_LAYOUT)}
+              onClick={() => edit(value, FIELD.TOPBAR_ENABLED)}
             >
-              {value === TOPBAR_LAYOUT.YES && <div className={s.topBar} />}
+              {value && <div className={s.topBar} />}
               <div className={cn(s.block, isActive && s.blockActive)}>
                 <div className='mb-2' />
                 <BannerLayoutPreviewContent layout={bannerLayout} title={title} />
@@ -63,13 +62,13 @@ export default function TopbarLayout() {
 
       <SavingBar
         isTouched={isLayoutTouched}
-        field={FIELD.TOPBAR_LAYOUT}
+        field={FIELD.TOPBAR_ENABLED}
         loading={saving}
         top={10}
       />
 
       <div className='mt-8' />
-      {layout === TOPBAR_LAYOUT.YES && (
+      {enabled && (
         <SavingBar
           isTouched={isBgTouched}
           field={FIELD.TOPBAR_BG}

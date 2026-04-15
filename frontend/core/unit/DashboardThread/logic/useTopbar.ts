@@ -1,11 +1,11 @@
-import type { TColorName, TEditFunc, TTopbarLayout } from '~/spec'
+import type { TColorName, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import useHelper from './useHelper'
 
 type TRet = {
   edit: TEditFunc
-  layout: TTopbarLayout
+  enabled: boolean
   isLayoutTouched: boolean
   isBgTouched: boolean
   saving: boolean
@@ -16,14 +16,14 @@ export default function useTopbar(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 
-  const { topbarLayout, topbarBg, saving } = dsb$
+  const { topbarEnabled, topbarBg, saving } = dsb$
 
-  const isLayoutTouched = isChanged('topbarLayout')
+  const isLayoutTouched = isChanged('topbarEnabled')
   const isBgTouched = isChanged('topbarBg')
 
   return {
     edit,
-    layout: topbarLayout,
+    enabled: topbarEnabled,
     isLayoutTouched,
     isBgTouched,
     bg: topbarBg,

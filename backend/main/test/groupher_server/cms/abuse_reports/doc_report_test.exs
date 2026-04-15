@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
 
       report = all_reports.entries |> List.first()
       assert report.article.id == doc.id
-      assert report.article.thread == "DOC"
+      assert report.article.thread == :doc
     end
 
     test "report a doc should have a abuse report record", ~m(user doc)a do

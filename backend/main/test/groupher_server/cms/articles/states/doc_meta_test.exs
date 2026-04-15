@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.DocMeta do
       {:ok, doc} = ORM.find_by(Doc, id: doc.id)
       meta = doc.meta |> Map.from_struct() |> Map.delete(:id)
 
-      assert meta == @default_article_meta |> Map.merge(%{thread: "DOC"})
+      assert meta == @default_article_meta |> Map.merge(%{thread: :doc})
     end
 
     test "is_edited flag should set to true after doc updated",

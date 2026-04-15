@@ -2,21 +2,23 @@
 
 import { usePathname } from 'next/navigation'
 import METRIC from '~/const/metric'
-import { THREAD } from '~/const/thread'
+import { THREAD, THREAD_PATH } from '~/const/thread'
 import useMetric from '~/hooks/useMetric'
+import type { TThread, TThreadPath } from '~/spec'
+import { path2Thread } from '~/utils/thread'
 
-import type { TThread } from '~/spec'
-
-const isThread = (value: string): value is TThread => {
-  return Object.values(THREAD).includes(value as TThread)
+const isThreadPath = (value: string): value is TThreadPath => {
+  return Object.values(THREAD_PATH).includes(value as TThreadPath)
 }
 
 const getThreadFromPathname = (pathname: string): TThread | null => {
   const segments = pathname.split('/').filter(Boolean)
-  const maybeThread = segments.at(-1)
+  const maybeThread = [...segments]
+    .reverse()
+    .find((segment): segment is TThreadPath => isThreadPath(segment))
 
-  if (maybeThread && isThread(maybeThread)) {
-    return maybeThread
+  if (maybeThread) {
+    return path2Thread(maybeThread)
   }
 
   return null

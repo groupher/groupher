@@ -47,7 +47,7 @@ export default function useSalon() {
     coverWrapper: cn(
       'relative row-between mt-5 mb-4 w-64 h-24 rounded-md',
       isLightTheme ? 'opacity-25' : 'opacity-40',
-      rainbow('CYAN', 'bg'),
+      rainbow(COLOR.CYAN, 'bg'),
     ),
     slash: cn('absolute h-28 w-1 left-1/2 top-0 rotate-12', bg('card')),
     coverText: cn('text-lg absolute bold', fg('button.fg'), vividDark()),

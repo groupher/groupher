@@ -23,7 +23,7 @@ export default function useUtils(): TRet {
 
   const loadTags = (activeThread = THREAD.POST): void => {
     const community = community$.slug
-    const thread = activeThread.toUpperCase()
+    const thread = activeThread
 
     const params = {
       filter: { community, thread },

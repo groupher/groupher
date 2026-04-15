@@ -14,11 +14,14 @@ defmodule GroupherServer.Accounts.Upvotes do
 
   @article_threads get_config(:article, :threads)
 
-  def paged_articles(user_id, %{thread: thread} = filter) do
-    thread = thread |> to_string() |> String.upcase()
+  def paged_articles(user_id, %{thread: thread} = filter) when is_atom(thread) do
     where_query = dynamic([a], a.user_id == ^user_id and a.thread == ^thread)
 
     load_articles(where_query, filter)
+  end
+
+  def paged_articles(_user_id, %{thread: _thread} = filter) do
+    load_articles(dynamic([a], false), filter)
   end
 
   def paged_articles(user_id, filter) do

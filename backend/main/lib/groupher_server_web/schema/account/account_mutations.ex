@@ -111,15 +111,6 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.remove_from_collect/3)
     end
 
-    @desc "set user's customization"
-    field :set_customization, :user do
-      arg(:user_id, :id)
-      arg(:customization, non_null(:customization_input))
-      arg(:sidebar_communities_index, list_of(:community_index))
-
-      resolve(&R.Accounts.set_customization/3)
-    end
-
     @desc "mark a message as read"
     field :mark_read, :done do
       arg(:ids, list_of(:id))

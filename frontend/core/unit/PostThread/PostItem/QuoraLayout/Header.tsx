@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { type FC, lazy, Suspense } from 'react'
 import { BANNER_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
-import { THREAD } from '~/const/thread'
+import { THREAD_PATH } from '~/const/thread'
 import useLayout from '~/hooks/useLayout'
 import type { TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -55,7 +55,7 @@ const Header: FC<TProps> = ({ article }) => {
       <div className={s.main}>
         <Link
           className={s.title}
-          href={`/${slug}/${THREAD.POST}/${innerId}`}
+          href={`/${slug}/${THREAD_PATH.POST}/${innerId}`}
           scroll={false}
           data-preview-id={String(innerId)}
         >

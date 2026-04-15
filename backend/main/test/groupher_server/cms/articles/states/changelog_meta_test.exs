@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
       {:ok, changelog} = ORM.find_by(Changelog, id: changelog.id)
       meta = changelog.meta |> Map.from_struct() |> Map.delete(:id)
 
-      assert meta == @default_article_meta |> Map.merge(%{thread: "CHANGELOG"})
+      assert meta == @default_article_meta |> Map.merge(%{thread: :changelog})
     end
 
     test "is_edited flag should set to true after changelog updated",

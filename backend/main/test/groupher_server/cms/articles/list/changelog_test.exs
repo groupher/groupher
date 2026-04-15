@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.CMS.Articles.ChangelogList do
 
       assert paged_changelogs |> is_valid_pagination?(:raw)
       assert length(paged_changelogs.entries) >= 2
-      assert Enum.all?(paged_changelogs.entries, &(&1.meta.thread == "CHANGELOG"))
+      assert Enum.all?(paged_changelogs.entries, &(&1.meta.thread == :changelog))
     end
   end
 end

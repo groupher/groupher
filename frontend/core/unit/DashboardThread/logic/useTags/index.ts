@@ -13,12 +13,12 @@ type TRet = {
   editingTag: TTag
   settingTag: TTag
   activeTagGroup: string
-  activeTagThread: string
+  activeTagThread: TThread | null
   tagLayout: TTagLayout
   inlineTagLayout: TInlineTagLayout
 
   edit: TEditFunc
-  changeThread: (thread: string) => void
+  changeThread: (thread: TThread) => void
   editTag: (key: TChangeTagMode, tag: TTag) => void
 
   loadTags: (thread?: TThread) => void
@@ -48,7 +48,7 @@ export default function useTags(): TRet {
   ]
 
   const editTag = (key: TChangeTagMode, tag: TTag): void => dsb$.commit({ [key]: tag })
-  const changeThread = (thread: string) => dsb$.commit({ activeTagThread: thread })
+  const changeThread = (thread: TThread) => dsb$.commit({ activeTagThread: thread })
 
   const moveTagUp = (tag: TTag): void => moveTag(tag, 'up')
   const moveTagDown = (tag: TTag): void => moveTag(tag, 'down')

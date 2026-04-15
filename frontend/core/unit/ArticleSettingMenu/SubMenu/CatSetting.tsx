@@ -1,6 +1,7 @@
 import { type FC, useEffect, useState } from 'react'
 import { useMutation } from 'urql'
 import { POST_CAT_MENU_ITEMS } from '~/const/menu'
+import { toGTDLabelKey } from '~/fmt'
 import useTrans from '~/hooks/useTrans'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import CheckSVG from '~/icons/CheckBold'
@@ -69,7 +70,9 @@ const CatSetting: FC<TProps> = ({ onBack }) => {
             }}
           >
             <TheIcon className={s.icon} />
-            <div className={cn(s.title, $active && s.titleActive)}>{t(item.key)}</div>
+            <div className={cn(s.title, $active && s.titleActive)}>
+              {t(toGTDLabelKey(item.key))}
+            </div>
             {$active && <CheckSVG className={s.checkIcon} />}
           </button>
         )

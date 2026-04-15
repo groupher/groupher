@@ -7,7 +7,7 @@ import { PAGE_BG_DEFAULT } from '~/const/colors'
 import { INIT_KANBAN_BOARDS, normalizeKanbanBoards } from '~/const/dashboard'
 import { BUILTIN_ALIAS } from '~/const/name'
 import THEME from '~/const/theme'
-import { THREAD } from '~/const/thread'
+import { TAG_THREADS, THREAD } from '~/const/thread'
 import { removeEmptyValuesFromObject } from '~/helper'
 import { P } from '~/schemas'
 import type {
@@ -23,7 +23,6 @@ import type {
 import { FIELDS } from '~/stores/dashboard/constant'
 import { gqFetch } from '~/utils/api'
 import { extractQueryName } from '~/utils/graphql'
-import { toGqlThread } from '~/utils/thread'
 
 import type { TGQSSRResult } from './spec'
 
@@ -244,7 +243,7 @@ export const getPagedTags = async (
   cacheLife('hours')
   cacheTag(CACHE_TAG.tagsCache(community, thread))
 
-  const gqlThread = toGqlThread(thread, 'TAGS')
+  const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number]) ? thread : null
   if (!gqlThread) return null
 
   const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread: gqlThread } })

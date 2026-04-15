@@ -13,11 +13,11 @@ export const normalizeKanbanBoards = (
 ): readonly TKanbanBoard[] => {
   if (!boards?.length) return INIT_KANBAN_BOARDS
 
-  return boards.map((board) => board.toLowerCase() as TKanbanBoard)
+  return boards as readonly TKanbanBoard[]
 }
 
 export const serializeKanbanBoards = (boards: readonly TKanbanBoard[]): string[] => {
-  return boards.map((board) => board.toUpperCase())
+  return [...boards]
 }
 
 export const DEFAULT_ENABLE = {

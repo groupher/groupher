@@ -109,8 +109,8 @@ defmodule GroupherServer.Support.Factory do
     %{
       title: "#{cheese}#{unique_num}",
       slug: tag_slug,
-      thread: "POST",
-      color: "YELLOW",
+      thread: :post,
+      color: :yellow,
       group: "cool",
       index: 0,
       # community: Faker.Pizza.topping(),
@@ -278,7 +278,7 @@ defmodule GroupherServer.Support.Factory do
     {:ok, post} = db_insert(:post)
 
     mention_attr = %{
-      thread: "POST",
+      thread: :post,
       title: post.title,
       article_id: post.id,
       comment_id: nil,

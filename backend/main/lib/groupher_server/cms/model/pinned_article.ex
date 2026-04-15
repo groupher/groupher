@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
 
   alias GroupherServer.CMS
 
+  alias CMS.Helper.Threads
   alias CMS.Model.Community
   alias Helper.Constant.DBPrefix
 
@@ -24,7 +25,7 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
   @type t :: %PinnedArticle{}
   schema "pinned_articles" do
     belongs_to(:community, Community, foreign_key: :community_id)
-    field(:thread, :string)
+    field(:thread, Ecto.Enum, values: Threads.article_enums())
 
     article_belongs_to_fields()
     timestamps(type: :utc_datetime)

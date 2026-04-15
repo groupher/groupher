@@ -380,6 +380,7 @@ defmodule Helper.ORMAtom do
   defp prepare_json_value(value) when is_binary(value), do: value
   defp prepare_json_value(value) when is_number(value), do: value
   defp prepare_json_value(value) when is_boolean(value), do: value
+  defp prepare_json_value(value) when is_atom(value) and not is_nil(value), do: to_string(value)
   defp prepare_json_value(value) when is_list(value), do: value
   defp prepare_json_value(value) when is_struct(value, DateTime), do: value
   defp prepare_json_value(value) when is_map(value), do: value

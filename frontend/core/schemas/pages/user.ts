@@ -73,9 +73,6 @@ export const sessionState = `
         }
         cmsPassport
         subscribedCommunitiesCount
-        customization {
-          ${F.c11n}
-        }
         githubProfile {
           htmlUrl
           login

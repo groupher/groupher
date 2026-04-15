@@ -9,7 +9,6 @@ defmodule GroupherServer.CMS.Helper.Matcher do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-
   @type match_info :: %{
           model: module(),
           thread: atom(),
@@ -57,13 +56,9 @@ defmodule GroupherServer.CMS.Helper.Matcher do
      }}
   end
 
-  defp thread_of(%{thread: thread}) when is_binary(thread) do
-    thread |> String.downcase() |> String.to_atom() |> then(&{:ok, &1})
-  end
+  defp thread_of(%{thread: thread}) when is_atom(thread), do: {:ok, thread}
 
-  defp thread_of(%{meta: %{thread: thread}}) do
-    thread |> String.downcase() |> String.to_atom() |> then(&{:ok, &1})
-  end
+  defp thread_of(%{meta: %{thread: thread}}) when is_atom(thread), do: {:ok, thread}
 
   defp thread_of(_), do: {:error, {:custom, "invalid article"}}
 

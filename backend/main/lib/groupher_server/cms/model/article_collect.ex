@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
     ]
 
   alias GroupherServer.Accounts
+  alias GroupherServer.CMS.Helper.Threads
 
   alias Accounts.Model.{CollectFolder, User}
   alias Helper.Constant.DBPrefix
@@ -31,7 +32,7 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
 
   @type t :: %ArticleCollect{}
   schema "article_collects" do
-    field(:thread, :string)
+    field(:thread, Ecto.Enum, values: Threads.article_enums())
     belongs_to(:user, User, foreign_key: :user_id)
     embeds_many(:collect_folders, CollectFolder, on_replace: :delete)
 

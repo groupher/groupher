@@ -11,6 +11,7 @@ import type { TCommunity, TTag } from '.'
 import type { TAccount, TSimpleUser, TUser } from './account'
 import type { TColor } from './color'
 import type { TEmotion } from './emotion'
+import type { TThread } from './thread'
 import type { TID, TPagi } from './utils'
 
 export type TArticleTitle = { $isPinned?: boolean; viewerHasViewed?: boolean } & TColor
@@ -18,7 +19,7 @@ export type TArticleTitle = { $isPinned?: boolean; viewerHasViewed?: boolean } &
 export type TCopyright = 'cc' | 'approve' | 'forbid'
 
 export type TArticleMeta = {
-  thread?: string
+  thread?: TThread
   citingCount?: number
   isCommentLocked?: boolean
   isEdited?: boolean
@@ -132,7 +133,7 @@ export type TPagedArticles = {
 
 export type TComment = {
   id: string
-  thread?: string
+  thread?: TThread
   isPinned?: boolean
   floor?: number
   bodyHtml?: string
@@ -157,7 +158,7 @@ export type TComment = {
   article?: {
     id?: string
     title?: string
-    thread?: string
+    thread?: TThread
     author?: {
       login
       nickname
