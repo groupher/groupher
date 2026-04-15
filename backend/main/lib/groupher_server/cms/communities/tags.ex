@@ -14,7 +14,6 @@ defmodule GroupherServer.CMS.Communities.Tags do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Helper.Threads
   alias CMS.Model.{Community, CommunityTag}
   alias Helper.{Multi, ORM, QueryBuilder, T}
 
@@ -30,13 +29,11 @@ defmodule GroupherServer.CMS.Communities.Tags do
          {:ok, community} <- ORM.find_by(Community, slug: community.slug) do
       Multi.new()
       |> Multi.run(:create_tag, fn _, _ ->
-        update_attrs = %{
+        attrs = Map.merge(attrs, %{
           author_id: author.id,
           community_id: community.id,
           thread: thread
-        }
-
-        attrs = attrs |> Map.merge(update_attrs) |> normalize_tag_attrs()
+        })
 
         ORM.create(CommunityTag, attrs)
       end)
@@ -57,7 +54,6 @@ defmodule GroupherServer.CMS.Communities.Tags do
   @spec update(T.id(), map()) :: {:ok, CommunityTag.t()} | {:error, Ecto.Changeset.t()}
   def update(id, attrs) do
     with {:ok, tag} <- ORM.find(CommunityTag, id) do
-      attrs = attrs |> normalize_tag_attrs()
       ORM.update(tag, attrs)
     end
   end
@@ -264,15 +260,6 @@ defmodule GroupherServer.CMS.Communities.Tags do
       {new_key, v}
     end)
     |> Map.new()
-  end
-
-  defp normalize_tag_attrs(attrs) do
-    Map.update(attrs, :thread, nil, fn thread ->
-      case Threads.to_atom(thread) do
-        {:ok, normalized} -> normalized
-        {:error, _} -> thread
-      end
-    end)
   end
 
   defp result({:ok, %{create_tag: result}}), do: {:ok, result}

@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.Events.Cite do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Events.{CitedArtiment, Event}
-  alias CMS.FrontDesk
+  alias CMS.{FrontDesk, Helper.Threads}
   alias CMS.Model.Comment
   alias Helper.ContentPipeline
   alias Helper.Multi
@@ -197,10 +197,10 @@ defmodule GroupherServer.CMS.Events.Cite do
   defp load_cited_article_from_url(url) do
     %{path: path} = URI.parse(url)
     path_list = path |> String.split("/")
-    thread = path_list |> Enum.at(1) |> String.downcase() |> String.to_atom()
     article_id = path_list |> Enum.at(2)
 
-    with {:ok, info} <- match(thread),
+    with {:ok, thread} <- Threads.to_atom(path_list |> Enum.at(1)),
+         {:ok, info} <- match(thread),
          {:ok, article} <- FrontDesk.get(info.model, article_id) do
       {:ok, %{type: :article, artiment: article}}
     end

@@ -1,4 +1,5 @@
 import useTrans from '~/hooks/useTrans'
+import { path2Thread } from '~/utils/thread'
 import Button from '~/widgets/Buttons/Button'
 
 import useTags from '../logic/useTags'
@@ -19,9 +20,9 @@ export default function ThreadSelector() {
           <Button
             key={thread.slug}
             size='small'
-            className={cn(thread.slug !== active && 'saturate-0')}
-            noBorder={thread.slug !== active}
-            onClick={() => changeThread(thread.slug)}
+            className={cn(path2Thread(thread.slug) !== active && 'saturate-0')}
+            noBorder={path2Thread(thread.slug) !== active}
+            onClick={() => changeThread(path2Thread(thread.slug))}
             ghost
           >
             {thread.title}

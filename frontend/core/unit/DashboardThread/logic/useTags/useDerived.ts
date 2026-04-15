@@ -2,7 +2,7 @@ import { equals, filter, find, includes, pluck, reject, uniq } from 'ramda'
 import { useMemo } from 'react'
 import { THREAD_PATH } from '~/const/thread'
 import { sortById } from '~/helper'
-import type { TCommunityThread, TNameAlias, TTag, TThread } from '~/spec'
+import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -22,7 +22,7 @@ export default function useDerived(): TRet {
   const { tags, original, activeTagThread, activeTagGroup, nameAlias, tagLayout, inlineTagLayout } =
     dsb$
 
-  const selectedThread = activeTagThread ? (activeTagThread as TThread) : null
+  const selectedThread = activeTagThread
 
   const filteredTags = useMemo(() => {
     const filteredByGroup = activeTagGroup

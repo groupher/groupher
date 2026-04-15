@@ -40,7 +40,7 @@ defmodule GroupherServer.Repo.Migrations.NormalizeThreadValuesToLowercase do
     execute("""
     UPDATE #{@cms_prefix}.#{table}
     SET meta = jsonb_set(meta, '{thread}', to_jsonb(LOWER(meta->>'thread')))
-    WHERE meta IS NOT NULL AND meta ? 'thread'
+    WHERE meta IS NOT NULL AND meta ? 'thread' AND meta->>'thread' IS NOT NULL
     """)
   end
 

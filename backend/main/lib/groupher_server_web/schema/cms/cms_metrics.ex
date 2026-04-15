@@ -44,7 +44,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   enum(:emotion_type, do: emotion_values(:all))
 
   enum :thread do
-    enum_values(Threads.values())
+    enum_values(Threads.article_values())
   end
 
   enum :dashboard_section do

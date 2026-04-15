@@ -9,8 +9,6 @@ defmodule GroupherServer.CMS.Helper.Matcher do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Helper.Threads
-
   @type match_info :: %{
           model: module(),
           thread: atom(),
@@ -58,9 +56,9 @@ defmodule GroupherServer.CMS.Helper.Matcher do
      }}
   end
 
-  defp thread_of(%{thread: thread}), do: Threads.to_atom(thread)
+  defp thread_of(%{thread: thread}) when is_atom(thread), do: {:ok, thread}
 
-  defp thread_of(%{meta: %{thread: thread}}), do: Threads.to_atom(thread)
+  defp thread_of(%{meta: %{thread: thread}}) when is_atom(thread), do: {:ok, thread}
 
   defp thread_of(_), do: {:error, {:custom, "invalid article"}}
 

@@ -1401,11 +1401,6 @@ enum Thread {
   BLOG
   CHANGELOG
   DOC
-  KANBAN
-  ACCOUNT
-  ABOUT
-  DASHBOARD
-  USER
 }
 
 enum DashboardSection {

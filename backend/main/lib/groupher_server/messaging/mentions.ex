@@ -9,7 +9,6 @@ defmodule GroupherServer.Messaging.Mentions do
   alias GroupherServer.{Accounts, Repo}
 
   alias Accounts.Model.User
-  alias GroupherServer.CMS.Helper.Threads
   alias GroupherServer.CMS.Model.Comment
   alias GroupherServer.Messaging.Model.Mention
   alias Helper.{Multi, ORM}
@@ -22,8 +21,6 @@ defmodule GroupherServer.Messaging.Mentions do
       batch_delete_mentions(comment, from_user)
     end)
     |> Multi.run(:batch_insert_mentions, fn _, _ ->
-      mentions = Enum.map(mentions, &normalize_thread_attr/1)
-
       case {0, nil} !== Repo.insert_all(Mention, mentions) do
         true -> {:ok, :pass}
         false -> {:error, "insert mentions error"}
@@ -44,7 +41,6 @@ defmodule GroupherServer.Messaging.Mentions do
     |> Multi.run(:batch_insert_mentions, fn _, _ ->
       mentions =
         mentions
-        |> Enum.map(&normalize_thread_attr/1)
         |> Enum.reject(&(&1.to_user_id == from_user.id))
 
       case Enum.empty?(mentions) or {0, nil} !== Repo.insert_all(Mention, mentions) do
@@ -105,15 +101,6 @@ defmodule GroupherServer.Messaging.Mentions do
       |> ORM.delete_all(:if_exist)
     end
   end
-
-  defp normalize_thread_attr(%{thread: thread} = attrs) do
-    case Threads.to_atom(thread) do
-      {:ok, normalized} -> Map.put(attrs, :thread, normalized)
-      {:error, _} -> attrs
-    end
-  end
-
-  defp normalize_thread_attr(attrs), do: attrs
 
   defp extract_mentions(%{entries: entries} = paged_mentions) do
     entries = entries |> Repo.preload(:from_user) |> Enum.map(&shape(&1))

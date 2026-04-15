@@ -223,7 +223,7 @@ defmodule Helper.QueryBuilder do
       {:thread, thread}, queryable ->
         case Threads.to_atom(thread) do
           {:ok, thread} -> from(q in queryable, where: q.thread == ^thread)
-          {:error, _} -> queryable
+          {:error, _} -> from(q in queryable, where: false)
         end
 
       {:community_id, community_id}, queryable ->

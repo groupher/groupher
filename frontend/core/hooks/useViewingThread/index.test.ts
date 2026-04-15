@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react'
 
 import METRIC from '~/const/metric'
+import { THREAD } from '~/const/thread'
 
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useViewingThread from '~/hooks/useViewingThread'
@@ -22,11 +23,11 @@ describe('useViewingThread', () => {
     const a = renderHook(() => useViewingThread(), {
       wrapper: makeStoreWrapper({ metric: METRIC.COMMUNITY }),
     }).result
-    expect(a.current).toBe('changelog')
+    expect(a.current).toBe(THREAD.CHANGELOG)
 
     const b = renderHook(() => useViewingThread(), {
       wrapper: makeStoreWrapper({ metric: METRIC.LANDING }),
     }).result
-    expect(b.current).toBe('post')
+    expect(b.current).toBe(THREAD.POST)
   })
 })

@@ -141,7 +141,7 @@ export type TDsbFieldMap = {
   // tags
   tags: readonly TTag[]
   activeTagGroup: string | null
-  activeTagThread: string | null
+  activeTagThread: TThread | null
   nameAlias: readonly TNameAlias[]
   enable: TEnableConf
 

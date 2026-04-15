@@ -1,9 +1,9 @@
 import { THREAD_PATH } from '~/const/thread'
 import type { TThread, TThreadPath } from '~/spec'
 
-export const thread2Path = (thread: TThread): TThreadPath => THREAD_PATH[thread]
+const THREAD_BY_PATH = Object.fromEntries(
+  Object.entries(THREAD_PATH).map(([thread, path]) => [path, thread]),
+) as Record<TThreadPath, TThread>
 
-export const path2Thread = (path: TThreadPath): TThread => {
-  const entry = Object.entries(THREAD_PATH).find(([, v]) => v === path)
-  return entry?.[0] as TThread
-}
+export const thread2Path = (slug: TThread): TThreadPath => THREAD_PATH[slug]
+export const path2Thread = (path: TThreadPath): TThread => THREAD_BY_PATH[path]

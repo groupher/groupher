@@ -11,7 +11,6 @@ defmodule GroupherServer.Messaging.Notifications do
   alias GroupherServer.{Accounts, Repo}
 
   alias Accounts.Model.User
-  alias GroupherServer.CMS.Helper.Threads
   alias GroupherServer.CMS.Model.Embeds
   alias GroupherServer.Messaging.Model.Notification
   alias Helper.{Multi, ORM}
@@ -130,7 +129,6 @@ defmodule GroupherServer.Messaging.Notifications do
     attrs =
       attrs
       |> Map.merge(%{from_users_count: 1})
-      |> normalize_thread_attr()
       |> normalize_action_attr()
 
     %Notification{}
@@ -171,7 +169,7 @@ defmodule GroupherServer.Messaging.Notifications do
 
   defp find_exist_notify(%{comment_id: comment_id} = attrs, opt)
        when not is_nil(comment_id) do
-    %{thread: thread, article_id: article_id, comment_id: comment_id} = normalize_thread_attr(attrs)
+    %{thread: thread, article_id: article_id, comment_id: comment_id} = attrs
 
     Notification
     |> where(
@@ -182,7 +180,7 @@ defmodule GroupherServer.Messaging.Notifications do
   end
 
   defp find_exist_notify(attrs, opt) do
-    %{thread: thread, article_id: article_id} = normalize_thread_attr(attrs)
+    %{thread: thread, article_id: article_id} = attrs
 
     Notification
     |> where([n], n.thread == ^thread and n.article_id == ^article_id)
@@ -245,15 +243,6 @@ defmodule GroupherServer.Messaging.Notifications do
   defp interval_threshold_time do
     Timex.shift(Timex.now(), hours: -@notify_group_interval_hour)
   end
-
-  defp normalize_thread_attr(%{thread: thread} = attrs) do
-    case Threads.to_atom(thread) do
-      {:ok, normalized} -> Map.put(attrs, :thread, normalized)
-      {:error, _} -> attrs
-    end
-  end
-
-  defp normalize_thread_attr(attrs), do: attrs
 
   defp normalize_action_attr(%{action: action} = attrs) when is_atom(action) do
     Map.put(attrs, :action, action |> to_string() |> String.upcase())

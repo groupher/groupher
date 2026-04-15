@@ -4,7 +4,7 @@ import EVENT from '~/const/event'
 import { CHANGE_MODE } from '~/const/mode'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { closeDrawer, send } from '~/signal'
-import type { TChangeMode, TEditValue, TSelectOption, TTag, TThread } from '~/spec'
+import type { TChangeMode, TEditValue, TSelectOption, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { nilOrEmpty } from '~/validator'
@@ -69,12 +69,13 @@ export default function useLogic(): TRet {
 
   const onUpdate = (): void => {
     setProcessing(true)
+    if (!activeTagThread) return setProcessing(false)
 
     const params = {
       ...editingTag,
       slug: editingTag.title,
       community: community$.slug,
-      thread: activeTagThread as TThread,
+      thread: activeTagThread,
     }
 
     mutate(S.updateCommunityTag, params).then((res) => {
@@ -85,12 +86,13 @@ export default function useLogic(): TRet {
 
   const onCreate = (): void => {
     setProcessing(true)
+    if (!activeTagThread) return setProcessing(false)
 
     const params = {
       ...editingTag,
       slug: editingTag.title,
       community: community$.slug,
-      thread: activeTagThread as TThread,
+      thread: activeTagThread,
     }
 
     mutate(S.createCommunityTag, params).then((res) => {

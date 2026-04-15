@@ -16,9 +16,11 @@ defmodule GroupherServer.CMS.Helper.Threads do
           |> Enum.uniq()
 
   defmacro values, do: @values
+  defmacro article_values, do: @article_values
 
   def enums, do: @values
   def article_enums, do: @article_values
+  def article_values_list, do: @article_values
 
   def to_atom(value) when is_atom(value) and value in @values, do: {:ok, value}
 
