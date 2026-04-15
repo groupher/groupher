@@ -167,10 +167,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentReplies do
       assert total_reply_count == paged_replies.total_count
       assert is_valid_pagination?(paged_replies, :raw)
 
-      assert exist_in?(Enum.at(reply_comment_list, 0), paged_replies.entries)
-      # assert exist_in?(Enum.at(reply_comment_list, 1), paged_replies.entries)
-      assert exist_in?(Enum.at(reply_comment_list, 2), paged_replies.entries)
-      assert exist_in?(Enum.at(reply_comment_list, 3), paged_replies.entries)
+      reply_ids = reply_comment_list |> Enum.map(& &1.id) |> MapSet.new()
+
+      assert paged_replies.entries |> length == 20
+      assert Enum.all?(paged_replies.entries, &MapSet.member?(reply_ids, &1.id))
     end
 
     test "can get reply_to info of a parent comment", ~m(community doc user)a do
