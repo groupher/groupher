@@ -39,3 +39,12 @@ export const THREAD_PATH = {
 } as const
 
 export const TAG_THREADS = [THREAD.POST, THREAD.BLOG, THREAD.CHANGELOG, THREAD.DOC] as const
+
+export const COMMUNITY_THREADS = [
+  { title: 'Posts', slug: THREAD_PATH.POST, index: 0 },
+  { title: 'Blogs', slug: THREAD_PATH.BLOG, index: 1 },
+  { title: 'Kanban', slug: THREAD_PATH.KANBAN, index: 2 },
+  { title: 'Changelog', slug: THREAD_PATH.CHANGELOG, index: 3 },
+  { title: 'Docs', slug: THREAD_PATH.DOC, index: 4 },
+  { title: 'About', slug: THREAD_PATH.ABOUT, index: 5 },
+] as const

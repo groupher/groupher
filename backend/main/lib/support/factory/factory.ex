@@ -17,9 +17,7 @@ defmodule GroupherServer.Support.Factory do
     Category,
     Comment,
     Community,
-    CommunityTag,
-    CommunityThread,
-    Thread
+    CommunityTag
   }
 
   alias Helper.ORM
@@ -63,15 +61,6 @@ defmodule GroupherServer.Support.Factory do
 
   defp mock_meta(:author) do
     %{role: "normal", user: mock(:user)}
-  end
-
-  defp mock_meta(:communities_threads) do
-    %{community_id: 1, thread_id: 1}
-  end
-
-  defp mock_meta(:thread) do
-    unique_num = System.unique_integer([:positive, :monotonic])
-    %{title: "thread #{unique_num}", slug: "thread-#{unique_num}", index: :rand.uniform(20)}
   end
 
   defp mock_meta(:community) do
@@ -151,11 +140,7 @@ defmodule GroupherServer.Support.Factory do
   def mock_attrs(:author, attrs), do: mock_meta(:author) |> Map.merge(attrs)
 
   def mock_attrs(:community, attrs), do: mock_meta(:community) |> Map.merge(attrs)
-  def mock_attrs(:thread, attrs), do: mock_meta(:thread) |> Map.merge(attrs)
   def mock_attrs(:mention, attrs), do: mock_meta(:mention) |> Map.merge(attrs)
-
-  def mock_attrs(:communities_threads, attrs),
-    do: mock_meta(:communities_threads) |> Map.merge(attrs)
 
   def mock_attrs(:community_tag, attrs), do: mock_meta(:community_tag) |> Map.merge(attrs)
   def mock_attrs(:category, attrs), do: mock_meta(:category) |> Map.merge(attrs)
@@ -179,10 +164,6 @@ defmodule GroupherServer.Support.Factory do
 
   defp mock(:user), do: User |> struct(mock_meta(:user))
   defp mock(:community), do: Community |> struct(mock_meta(:community))
-  defp mock(:thread), do: Thread |> struct(mock_meta(:thread))
-
-  defp mock(:communities_threads),
-    do: CommunityThread |> struct(mock_meta(:communities_threads))
 
   defp mock(thread) do
     with {:ok, info} <- match(thread) do

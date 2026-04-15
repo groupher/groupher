@@ -1,14 +1,13 @@
 defmodule GroupherServer.CMS.Seeds.Helper do
   @moduledoc false
 
-  import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1]
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Model.{Category, Community, Thread}
+  alias CMS.Model.{Category, Community}
+  alias CMS.Helper.Threads
   alias CMS.Seeds.SeedsConfig
 
   alias Helper.ORM
@@ -16,18 +15,6 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"
 
   @categories CMS.Seeds.Categories.get()
-
-  # set threads to given communities
-  def threadify_communities(communities, threads) when is_list(communities) do
-    Enum.each(communities, fn community ->
-      Enum.each(threads, fn thread ->
-        {:ok, _} =
-          CMS.Communities.set_thread(%Community{id: community.id}, %Thread{id: thread.id})
-      end)
-    end)
-  end
-
-  # create tags
 
   def tagfy_threads(communities, threads, bot, type) when is_list(communities) do
     Enum.each(communities, fn community ->
@@ -37,8 +24,8 @@ defmodule GroupherServer.CMS.Seeds.Helper do
     end)
   end
 
-  def create_tags(%Community{} = community, %Thread{slug: slug}, bot, type) do
-    thread = slug |> String.to_atom()
+  def create_tags(%Community{} = community, %{slug: slug}, bot, type) do
+    {:ok, thread} = Threads.to_atom(slug)
 
     Enum.each(
       CMS.Seeds.Tags.get(community, thread, type),
@@ -64,26 +51,6 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   end
 
   # seed community end
-
-  # seed thread
-  def seed_threads(type) do
-    threads = CMS.Seeds.Threads.get(type)
-    threads_list = threads |> Enum.map(& &1.slug)
-
-    threads
-    |> Enum.each(fn thread ->
-      with {:error, _} <- ORM.find_by(Thread, %{slug: thread.slug}) do
-        CMS.Communities.create_thread(thread)
-      end
-    end)
-
-    Thread
-    |> where([t], t.slug in ^threads_list)
-    |> ORM.paginator(page: 1, size: 10)
-    |> done()
-  end
-
-  # seed thread end
 
   def seed_categories_ifneed(bot) do
     with true <- empty_in_db?(Category) do

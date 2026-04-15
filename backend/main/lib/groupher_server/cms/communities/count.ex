@@ -111,12 +111,6 @@ defmodule GroupherServer.CMS.Communities.Count do
   @spec count(Community.t(), atom()) :: T.domain_res(integer())
   def count(community, type)
 
-  def count(%Community{id: id}, :threads) do
-    with {:ok, community} <- ORM.find(Community, id, preload: :threads) do
-      {:ok, length(community.threads)}
-    end
-  end
-
   def count(%Community{id: id}, :community_tags) do
     with {:ok, community} <- ORM.find(Community, id) do
       result =

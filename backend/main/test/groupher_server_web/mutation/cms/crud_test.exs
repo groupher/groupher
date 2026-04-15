@@ -10,7 +10,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
   setup do
     {:ok, category} = db_insert(:category)
-    {:ok, thread} = db_insert(:thread)
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
 
@@ -20,7 +19,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     user_conn2 = simu_conn(:user)
     guest_conn = simu_conn(:guest)
 
-    {:ok, ~m(user_conn user_conn2 guest_conn community thread category user user2)a}
+    {:ok, ~m(user_conn user_conn2 guest_conn community category user user2)a}
   end
 
   describe "mutation cms category" do
@@ -202,11 +201,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
         author {
           id
         }
-        threads {
-          title
-          slug
-          index
-        }
       }
     }
     """
@@ -220,21 +214,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, found} = Community |> ORM.find(created["id"])
       assert created["id"] == to_string(found.id)
       assert created["locale"] == "zh"
-    end
-
-    test "created community should have default threads" do
-      rule_conn = simu_conn(:user, cms: %{"community.create" => true})
-      variables = mock_attrs(:community)
-
-      created = rule_conn |> gq_mutation(@create_community_query, variables)
-
-      assert created["threads"] == [
-               %{"index" => 0, "slug" => "post", "title" => "post"},
-               %{"index" => 1, "slug" => "kanban", "title" => "kanban"},
-               %{"index" => 2, "slug" => "changelog", "title" => "changelog"},
-               %{"index" => 3, "slug" => "doc", "title" => "doc"},
-               %{"index" => 4, "slug" => "about", "title" => "about"}
-             ]
     end
 
     test "can create community with some title, different slug" do
@@ -357,88 +336,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "delete non-exist community fails" do
       rule_conn = simu_conn(:user, cms: %{"community.delete" => true})
       assert rule_conn |> mutation_error?(@delete_community_query, %{id: non_exist_id()})
-    end
-  end
-
-  describe "[mutation cms thread]" do
-    @query """
-    mutation($community: String!, $title: String!, $slug: String!){
-      createThread(community: $community, title: $title, slug: $slug) {
-        title
-      }
-    }
-    """
-    test "auth user can create thread", ~m(user community)a do
-      title = "other"
-      slug = "OTHER"
-      variables = ~m(title slug)a |> Map.put(:community, community.slug)
-
-      passport_rules = %{community.slug => %{"thread.create" => true}}
-      rule_conn = simu_conn(:user, user, cms: passport_rules)
-
-      result = rule_conn |> gq_mutation(@query, variables)
-
-      assert result["title"] == title
-    end
-
-    test "unauth user create thread fails", ~m(user_conn guest_conn community)a do
-      title = "other"
-      slug = "OTHER"
-      variables = ~m(title slug)a |> Map.put(:community, community.slug)
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
-
-      assert user_conn |> mutation_error?(@query, variables, ecode(:passport))
-      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
-      assert rule_conn |> mutation_error?(@query, variables, ecode(:passport))
-    end
-
-    @query """
-    mutation($community: String!, $threadId: ID!){
-      setThread(community: $community, threadId: $threadId) {
-        id
-        threads {
-          title
-        }
-      }
-    }
-    """
-    test "auth user can add thread to community", ~m(user community)a do
-      title = "other"
-      slug = "OTHER"
-      {:ok, thread} = CMS.Communities.create_thread(community.slug, ~m(title slug)a)
-      variables = %{threadId: thread.id, community: community.slug}
-
-      passport_rules = %{community.slug => %{"thread.set" => true}}
-      rule_conn = simu_conn(:user, user, cms: passport_rules)
-
-      result = rule_conn |> gq_mutation(@query, variables)
-
-      assert result["threads"] |> Enum.at(1) |> Map.get("title") == title
-      assert result["id"] == to_string(community.id)
-    end
-
-    @query """
-    mutation($community: String!, $threadId: ID!){
-      unsetThread(community: $community, threadId: $threadId) {
-        id
-        threads {
-          title
-        }
-      }
-    }
-    """
-    test "auth user can remove thread from community", ~m(user community thread)a do
-      CMS.Communities.set_thread(community, thread)
-      {:ok, found_community} = Community |> ORM.find(community.id, preload: :threads)
-
-      assert found_community.threads |> Enum.any?(&(&1.thread_id == thread.id))
-      variables = %{threadId: thread.id, community: community.slug}
-
-      passport_rules = %{community.slug => %{"thread.unset" => true}}
-      rule_conn = simu_conn(:user, user, cms: passport_rules)
-
-      result = rule_conn |> gq_mutation(@query, variables)
-      assert result["threads"] |> Enum.count() == 5
     end
   end
 

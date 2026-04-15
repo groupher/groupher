@@ -112,19 +112,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       resolve(&R.CMS.update_category/3)
     end
 
-    @desc "create independent thread"
-    field :create_thread, :thread_item do
-      arg(:community, non_null(:string))
-      arg(:title, non_null(:string))
-      arg(:slug, non_null(:string))
-      arg(:index, :integer, default_value: 0)
-
-      middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "thread.create")
-
-      resolve(&R.CMS.create_thread/3)
-    end
-
     @desc "add a moderator for a community"
     field :add_moderator, :community do
       arg(:community, non_null(:string))

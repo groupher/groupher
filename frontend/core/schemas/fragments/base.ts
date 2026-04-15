@@ -14,11 +14,6 @@ export const community = `
   views
   pending
 
-  threads {
-    slug
-    title
-  }
-
   insertedAt
   updatedAt
 `

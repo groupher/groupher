@@ -7,16 +7,15 @@ defmodule GroupherServer.CMS.Seeds.Domain do
 
   import GroupherServer.CMS.Seeds.Helper,
     only: [
-      threadify_communities: 2,
       tagfy_threads: 4,
       categorify_communities: 3,
       seed_bot: 0,
-      seed_threads: 1,
       seed_categories_ifneed: 1,
       insert_community: 3
     ]
 
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Seeds.Threads
 
   alias CMS.Model.{Category, Community}
   alias CMS.Seeds.Communities, as: CommunitySeeds
@@ -37,12 +36,10 @@ defmodule GroupherServer.CMS.Seeds.Domain do
 
   @spec community(atom(), atom()) :: T.domain_res(Community.t())
   def community(slug, type) when type in @community_types do
-    with {:ok, threads} <- seed_threads(type),
-         {:ok, bot} <- seed_bot(),
+    with {:ok, bot} <- seed_bot(),
          {:ok, categories} <- seed_categories_ifneed(bot),
          {:ok, community} <- insert_community(bot, slug, type) do
-      threadify_communities([community], threads.entries)
-      tagfy_threads([community], threads.entries, bot, type)
+      tagfy_threads([community], Threads.get(type), bot, type)
       categorify_communities([community], categories, type)
 
       {:ok, community}
@@ -72,8 +69,7 @@ defmodule GroupherServer.CMS.Seeds.Domain do
   """
   def seed_community(:home) do
     with {:error, _} <- ORM.find_by(Community, %{slug: "home"}),
-         {:ok, bot} <- seed_bot(),
-         {:ok, _threads} <- seed_threads(:home) do
+         {:ok, bot} <- seed_bot() do
       _args = %{
         title: "Groupher",
         desc: "让你的产品聆听用户的声音",
@@ -94,7 +90,6 @@ defmodule GroupherServer.CMS.Seeds.Domain do
   def seed_community(:blackhole) do
     with {:error, _} <- ORM.find_by(Community, %{slug: "blackhole"}),
          {:ok, bot} <- seed_bot(),
-         {:ok, threads} <- seed_threads(:blackhole),
          {:ok, categories} <- seed_categories_ifneed(bot) do
       args = %{
         title: "黑洞",
@@ -105,8 +100,7 @@ defmodule GroupherServer.CMS.Seeds.Domain do
       }
 
       {:ok, community} = Community |> ORM.create(args)
-      threadify_communities([community], threads.entries)
-      tagfy_threads([community], threads.entries, bot, :blackhole)
+      tagfy_threads([community], Threads.get(:blackhole), bot, :blackhole)
       categorify_communities([community], categories, :feedback)
 
       {:ok, community}
@@ -116,7 +110,6 @@ defmodule GroupherServer.CMS.Seeds.Domain do
   def seed_community(:feedback) do
     with {:error, _} <- ORM.find_by(Community, %{slug: "feedback"}),
          {:ok, bot} <- seed_bot(),
-         {:ok, threads} <- seed_threads(:feedback),
          {:ok, categories} <- seed_categories_ifneed(bot) do
       args = %{
         title: "反馈与建议",
@@ -127,8 +120,7 @@ defmodule GroupherServer.CMS.Seeds.Domain do
       }
 
       {:ok, community} = Community |> ORM.create(args)
-      threadify_communities([community], threads.entries)
-      tagfy_threads([community], threads.entries, bot, :feedback)
+      tagfy_threads([community], Threads.get(:feedback), bot, :feedback)
       categorify_communities([community], categories, :feedback)
 
       {:ok, community}

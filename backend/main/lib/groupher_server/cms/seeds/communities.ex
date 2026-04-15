@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Seeds.Communities do
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Seeds.Domain
 
-  alias CMS.Model.{Community, Thread}
+  alias CMS.Model.Community
   alias Helper.{ORM, T}
 
   @community_types [:pl, :framework]
@@ -39,7 +39,6 @@ defmodule GroupherServer.CMS.Seeds.Communities do
 
     with {:ok, user} <- GroupherServer.CMS.Seeds.Helper.seed_bot(),
          {:ok, community} <- find_or_create(slug, title, user),
-         {:ok, _} <- ensure_threads(community, @default_threads),
          {:ok, _} <- ensure_about_enabled(community) do
       CMS.Communities.read(community.slug, inc_views: false)
     end
@@ -68,43 +67,18 @@ defmodule GroupherServer.CMS.Seeds.Communities do
     end
   end
 
-  defp ensure_threads(%Community{} = community, threads) do
-    Enum.each(threads, fn thread ->
-      slug = to_string(thread)
-
-      thread_record =
-        case ORM.find_by(Thread, %{slug: slug}) do
-          {:ok, record} ->
-            record
-
-          {:error, _} ->
-            {:ok, record} =
-              CMS.Communities.create_thread(%{
-                title: String.capitalize(slug),
-                slug: slug,
-                index: 0
-              })
-
-            record
-        end
-
-      case CMS.Communities.set_thread(community, thread_record) do
-        {:ok, _} -> :ok
-        {:error, _} -> :ok
-      end
-    end)
-
-    {:ok, :ok}
-  end
-
   defp ensure_about_enabled(%Community{} = community) do
-    CMS.Communities.update_dashboard(community, :enable, %{
-      about: true,
-      about_techstack: true,
-      about_location: true,
-      about_links: true,
-      about_media_report: true
-    })
+    enable =
+      @default_threads
+      |> Enum.reduce(%{}, fn thread, acc -> Map.put(acc, thread, true) end)
+      |> Map.merge(%{
+        about_techstack: true,
+        about_location: true,
+        about_links: true,
+        about_media_report: true
+      })
+
+    CMS.Communities.update_dashboard(community, :enable, enable)
   end
 
   def get(:pl) do

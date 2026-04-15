@@ -96,9 +96,6 @@ type RootQueryType {
   "get all categories"
   pagedCategories(filter: PagiFilter): PagedCategories
 
-  "get all the threads across all communities"
-  pagedThreads(filter: ThreadsFilter): PagedThreads
-
   "get paged community tags"
   pagedCommunityTags(filter: CommunityTagsFilter): PagedCommunityTags
 
@@ -246,9 +243,6 @@ type RootMutationType {
   "update category"
   updateCategory(community: String!, id: ID!, title: String!): Category
 
-  "create independent thread"
-  createThread(community: String!, title: String!, slug: String!, index: Int): ThreadItem
-
   "add a moderator for a community"
   addModerator(community: String!, user: String!, role: String!): Community
 
@@ -276,12 +270,6 @@ type RootMutationType {
 
   "unset category to a community"
   unsetCategory(community: String!, categoryId: ID!): Community
-
-  "bind a thread to a exist community"
-  setThread(community: String!, threadId: ID!): Community
-
-  "remove a thread from a exist community, thread content is not delete"
-  unsetThread(community: String!, threadId: ID!): Community
 
   "subscribe a community so it can appear in sidebar"
   subscribeCommunity(community: String!): Community
@@ -834,13 +822,6 @@ type Blog implements Article {
   activeAt: DateTime
 }
 
-type ThreadItem {
-  id: ID
-  title: String
-  slug: String
-  index: Int
-}
-
 type Contribute {
   date: Date
   count: Int
@@ -1042,7 +1023,6 @@ type Community {
   logo: String
   author: User
   locale: String
-  threads: [ThreadItem]
   categories: [Category]
   dashboard: Dashboard
   moderators: [CommunityModerator]
@@ -1056,7 +1036,6 @@ type Community {
   viewerHasSubscribed: Boolean
   viewerIsModerator: Boolean
   pending: Int
-  threadsCount: Int
   insertedAt: DateTime
   updatedAt: DateTime
 }
@@ -1282,14 +1261,6 @@ type PagedCommunities {
 
 type PagedCommunityTags {
   entries: [CommunityTag]
-  totalCount: Int
-  pageSize: Int
-  totalPages: Int
-  pageNumber: Int
-}
-
-type PagedThreads {
-  entries: [ThreadItem]
   totalCount: Int
   pageSize: Int
   totalPages: Int
@@ -1847,7 +1818,6 @@ type CountStatusInfo {
   blogsCount: Int
   categoriesCount: Int
   communityTagsCount: Int
-  threadsCount: Int
 }
 
 type SessionState {

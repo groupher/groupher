@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.CMS.Communities.Write do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias CMS.Model.CommunityThread
-
   setup do
     {:ok, user} = db_insert(:user)
 
@@ -11,19 +9,13 @@ defmodule GroupherServer.Test.CMS.Communities.Write do
   end
 
   describe "[cms community curd]" do
-    test "new created community should have default threads & locale", ~m(user)a do
+    test "new created community should have default locale", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir"})
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      {:ok, all_threads} =
-        ORM.find_all(CommunityThread, %{page: 1, size: 20, community_id: community.id})
-
-      assert all_threads.total_count == 5
-
-      {:ok, community} = ORM.find(Community, community.id, preload: :threads)
+      {:ok, community} = ORM.find(Community, community.id)
 
       assert community.locale == "en"
-      assert community.threads |> length == 5
     end
 
     test "create community should reject invalid slug format", ~m(user)a do
@@ -32,21 +24,13 @@ defmodule GroupherServer.Test.CMS.Communities.Write do
       assert {:error, %Ecto.Changeset{}} = CMS.Communities.create(community_attrs, user)
     end
 
-    test "deleted community should delete all related threads", ~m(user)a do
+    test "deleted community should delete the community row", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir"})
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      {:ok, all_threads} =
-        ORM.find_all(CommunityThread, %{page: 1, size: 20, community_id: community.id})
-
-      assert all_threads.total_count !== 0
-
       {:ok, _} = CMS.Communities.delete(community.slug)
 
-      {:ok, all_threads} =
-        ORM.find_all(CommunityThread, %{page: 1, size: 20, community_id: community.id})
-
-      assert all_threads.total_count == 0
+      assert {:error, _} = ORM.find(Community, community.id)
     end
 
     test "deleted community should delete all related articles", ~m(user)a do

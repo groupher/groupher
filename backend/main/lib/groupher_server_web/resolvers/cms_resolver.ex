@@ -8,7 +8,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   alias Accounts.Model.User
   alias CMS.Helper.{EmotionFormatter, Threads}
-  alias CMS.Model.{Category, Community, Thread}
+  alias CMS.Model.{Category, Community}
   alias Helper.{OgInfo, ORM}
 
   # #######################
@@ -233,20 +233,6 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def unset_category(_root, ~m(community category_id)a, %{context: %{cur_user: _}}) do
     CMS.Communities.unset_category(community, %Category{id: category_id})
   end
-
-  # #######################
-  # thread ..
-  # #######################
-  def paged_threads(_root, ~m(filter)a, _info), do: Thread |> ORM.find_all(filter)
-
-  def create_thread(_root, ~m(community title slug index)a, _info),
-    do: CMS.Communities.create_thread(community, ~m(title slug index)a)
-
-  def set_thread(_root, ~m(community thread)a, _info),
-    do: CMS.Communities.set_thread(community, thread)
-
-  def unset_thread(_root, ~m(community thread)a, _info),
-    do: CMS.Communities.unset_thread(community, thread)
 
   # #######################
   # moderators ..
@@ -518,8 +504,6 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # ##############################################
   # counts just for managers to use in admin site ..
   # ##############################################
-  def threads_count(root, _, _), do: CMS.Communities.count(%Community{id: root.id}, :threads)
-
   def community_tags_count(root, _, _),
     do: CMS.Communities.count(%Community{id: root.id}, :community_tags)
 end

@@ -80,18 +80,12 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       community(slug: $slug, incViews: $incViews) {
         id
         title
-        threadsCount
         communityTagsCount
         views
         dashboard {
           layout {
             kanbanBoards
           }
-        }
-        threads {
-          id
-          slug
-          index
         }
       }
     }
@@ -145,19 +139,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert get_in(results, ["dashboard", "layout", "kanbanBoards"]) == ["TODO", "WIP", "DONE"]
     end
 
-    test "can get threads count (default include)", ~m(community guest_conn)a do
-      {:ok, threads} = db_insert_multi(:thread, 5)
-
-      Enum.map(threads, fn thread ->
-        CMS.Communities.set_thread(community, thread)
-      end)
-
-      variables = %{slug: community.slug}
-      results = guest_conn |> gq_query(@query, variables)
-
-      assert results["threadsCount"] == 10
-    end
-
     test "can get tags count ", ~m(community guest_conn user)a do
       community_tag_attrs = mock_attrs(:community_tag)
 
@@ -173,23 +154,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       results = guest_conn |> gq_query(@query, variables)
 
       assert results["communityTagsCount"] == 2
-    end
-
-    test "guest use get community threads with default asc sort index",
-         ~m(guest_conn community)a do
-      {:ok, threads} = db_insert_multi(:thread, 5)
-
-      Enum.map(threads, fn thread ->
-        CMS.Communities.set_thread(community, thread)
-      end)
-
-      variables = %{slug: community.slug}
-      results = guest_conn |> gq_query(@query, variables)
-
-      first_idx = results["threads"] |> List.first() |> Map.get("index")
-      last_idx = results["threads"] |> List.last() |> Map.get("index")
-
-      assert first_idx < last_idx
     end
 
     @query """
@@ -282,51 +246,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == 10 + 1
-    end
-  end
-
-  describe "[cms threads]" do
-    @query """
-    query($filter: ThreadsFilter!) {
-      pagedThreads(filter: $filter) {
-        entries {
-          id
-          title
-          slug
-          index
-        }
-        totalCount
-        totalPages
-        pageSize
-        pageNumber
-      }
-    }
-    """
-    test "can get whole threads (with default)", ~m(guest_conn)a do
-      {:ok, _threads} = db_insert_multi(:thread, 5)
-
-      variables = %{filter: %{page: 1, size: 20}}
-      results = guest_conn |> gq_query(@query, variables)
-      assert results |> is_valid_pagination?
-      assert results["totalCount"] == 10
-    end
-
-    test "can get sorted thread based on index", ~m(guest_conn)a do
-      {:ok, _threads} = db_insert_multi(:thread, 10)
-
-      variables = %{filter: %{page: 1, size: 20, sort: "DESC_INDEX"}}
-      results = guest_conn |> gq_query(@query, variables)
-      first_idx = results["entries"] |> List.first() |> Map.get("index")
-      last_idx = results["entries"] |> List.last() |> Map.get("index")
-
-      assert first_idx > last_idx
-
-      variables = %{filter: %{page: 1, size: 20, sort: "ASC_INDEX"}}
-      results = guest_conn |> gq_query(@query, variables)
-      first_idx = results["entries"] |> List.first() |> Map.get("index")
-      last_idx = results["entries"] |> List.last() |> Map.get("index")
-
-      assert first_idx < last_idx
     end
   end
 
