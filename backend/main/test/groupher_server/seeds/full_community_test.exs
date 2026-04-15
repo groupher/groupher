@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   @moduledoc false
   use GroupherServerWeb.ConnCase, async: false
   @moduletag timeout: 300_000
+  @default_threads [:post, :changelog, :kanban, :doc, :about]
 
   import Ecto.Query, warn: false
 
@@ -23,11 +24,9 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
       {:ok, community} = CMS.Seeds.full_community(slug)
 
-      {:ok, community} =
-        ORM.find(Community, community.id, preload: [:dashboard, threads: :thread])
+      {:ok, community} = ORM.find(Community, community.id, preload: :dashboard)
 
-      thread_slugs = Enum.map(community.threads, & &1.thread.slug)
-      assert Enum.all?(["post", "changelog", "kanban", "doc", "about"], &(&1 in thread_slugs))
+      assert Enum.all?(@default_threads, &Map.get(community.dashboard.enable, &1))
 
       post_count =
         from(p in Post, where: p.community_id == ^community.id) |> count()
