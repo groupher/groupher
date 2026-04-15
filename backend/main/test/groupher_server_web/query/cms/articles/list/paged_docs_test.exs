@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
     end
 
     test "publish order should work", ~m(guest_conn community user)a do
-      variables = %{filter: %{page: 1, size: 20, order: "publish"}}
+      variables = %{filter: %{page: 1, size: 20, order: "PUBLISH"}}
 
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
@@ -69,7 +69,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
     test "upvotes_count order should work",
          ~m(guest_conn doc_last_week user user2 user3)a do
-      variables = %{filter: %{page: 1, size: 20, order: "upvotes"}}
+      variables = %{filter: %{page: 1, size: 20, order: "UPVOTES"}}
 
       {:ok, _} = CMS.Articles.upvote(doc_last_week, user)
       {:ok, _} = CMS.Articles.upvote(doc_last_week, user2)
@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
     test "comments_count order should work",
          ~m(guest_conn community doc_last_week user user2 user3)a do
-      variables = %{filter: %{page: 1, size: 20, order: "comments"}}
+      variables = %{filter: %{page: 1, size: 20, order: "COMMENTS"}}
       doc_id = doc_last_week.inner_id
 
       {:ok, _} = CMS.Comments.create_comment(community, :doc, doc_id, mock_comment(), user)
@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
     end
 
     test "views order should work", ~m(guest_conn community user user2 user3)a do
-      variables = %{filter: %{page: 1, size: 20, order: "views"}}
+      variables = %{filter: %{page: 1, size: 20, order: "VIEWS"}}
 
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
@@ -176,7 +176,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       variables = %{filter: %{page: 1, size: 10, community: community.slug}}
 
       assert guest_conn
-             |> query_error?(Schema.q(:paged_articles, :doc), variables, ecode(:thread_not_visible))
+             |> query_error?(
+               Schema.q(:paged_articles, :doc),
+               variables,
+               ecode(:thread_not_visible)
+             )
     end
 
     test "request large size fails", ~m(guest_conn)a do

@@ -40,8 +40,6 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   def call(resolution, :comment), do: fetch_comment(resolution)
 
-  def call(resolution, :thread), do: fetch_thread(resolution)
-
   def call(resolution, :user), do: fetch_user(resolution)
 
   def call(resolution, _), do: resolution
@@ -121,11 +119,6 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
       {:error, err_msg} ->
         resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
     end
-  end
-
-  defp fetch_thread(%{arguments: %{thread_id: thread_id} = arguments} = resolution) do
-    {:ok, community} = FrontDesk.thread(thread_id)
-    %{resolution | arguments: Map.put(arguments, :thread, community)}
   end
 
   defp fetch_user(%{arguments: %{login: login} = arguments} = resolution) do

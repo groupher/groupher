@@ -34,10 +34,6 @@ const subscribeCommunity = gql`
     subscribeCommunity(communityId: $communityId) {
       ${F.community}
       contributesDigest
-      threads {
-        title
-        slug
-      }
     }
   }
 `

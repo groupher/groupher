@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Communities do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Model.{Category, Community, CommunityTag, Thread}
+  alias CMS.Model.{Category, Community, CommunityTag}
   alias Helper.T
 
   alias __MODULE__.{
@@ -21,7 +21,6 @@ defmodule GroupherServer.CMS.Communities do
     Read,
     Subscribe,
     Tags,
-    Threads,
     Write
   }
 
@@ -107,23 +106,6 @@ defmodule GroupherServer.CMS.Communities do
   @spec unset_category(Community.t(), Category.t()) :: T.domain_res(Community.t())
   def unset_category(%Community{} = community, %Category{} = category) do
     Categories.unset(community, category)
-  end
-
-  # Thread
-  @spec create_thread(String.t(), map()) :: T.domain_res(Thread.t())
-  def create_thread(community, attrs), do: Threads.create(community, attrs)
-
-  @spec create_thread(map()) :: T.domain_res(Thread.t())
-  def create_thread(attrs), do: Threads.create(attrs)
-
-  @spec set_thread(Community.t(), Thread.t()) :: T.domain_res(Community.t())
-  def set_thread(%Community{} = community, %Thread{} = thread) do
-    Threads.set(community, thread)
-  end
-
-  @spec unset_thread(Community.t(), Thread.t()) :: T.domain_res(Community.t())
-  def unset_thread(%Community{} = community, %Thread{} = thread) do
-    Threads.unset(community, thread)
   end
 
   # Passport

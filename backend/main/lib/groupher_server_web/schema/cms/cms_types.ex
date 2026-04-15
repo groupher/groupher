@@ -107,13 +107,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     timestamp_fields(:article)
   end
 
-  object :thread_item do
-    field(:id, :id)
-    field(:title, :string)
-    field(:slug, :string)
-    field(:index, :integer)
-  end
-
   object :contribute do
     meta(:cache, max_age: 30)
     field(:date, :date)
@@ -194,7 +187,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:logo, :string)
     field(:author, :user, resolve: dataloader(CMS, :author))
     field(:locale, :string)
-    field(:threads, list_of(:thread_item), resolve: dataloader(CMS, :threads))
     field(:categories, list_of(:category), resolve: dataloader(CMS, :categories))
     field(:dashboard, :dashboard, resolve: dataloader(CMS, :dashboard))
 
@@ -217,11 +209,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:viewer_is_moderator, :boolean)
 
     field(:pending, :integer)
-
-    # TODO: remove
-    field :threads_count, :integer do
-      resolve(&R.CMS.threads_count/3)
-    end
 
     timestamp_fields()
   end
@@ -385,11 +372,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :paged_community_tags do
     field(:entries, list_of(:community_tag))
-    pagination_fields()
-  end
-
-  object :paged_threads do
-    field(:entries, list_of(:thread_item))
     pagination_fields()
   end
 

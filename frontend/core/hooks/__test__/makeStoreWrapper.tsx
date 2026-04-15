@@ -1,6 +1,7 @@
 import type { FC, ReactNode } from 'react'
 
 import METRIC from '~/const/metric'
+import { COMMUNITY_THREADS } from '~/const/thread'
 
 import type { TCommunity, TLocale, TMetric } from '~/spec'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
@@ -38,10 +39,14 @@ export const makeStoreWrapper = (opts: TWrapperOpts = {}): FC<{ children: ReactN
     articleListInit = {},
   } = opts
 
+  const threads = community.threads
+    ? community.threads.map((thread) => ({ ...thread }))
+    : COMMUNITY_THREADS.map((thread) => ({ ...thread }))
+
   const initCommunity: TCommunity = {
     ...community,
     slug: community.slug ?? 'acme',
-    threads: community.threads ?? [],
+    threads,
   }
 
   const initDashboard: TDashboardInit = {

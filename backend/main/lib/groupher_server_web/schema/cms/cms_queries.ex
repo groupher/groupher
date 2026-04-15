@@ -71,14 +71,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.paged_categories/3)
     end
 
-    @desc "get all the threads across all communities"
-    field :paged_threads, :paged_threads do
-      arg(:filter, :threads_filter)
-
-      middleware(M.PageSizeProof)
-      resolve(&R.CMS.paged_threads/3)
-    end
-
     @desc "get paged community tags"
     field :paged_community_tags, :paged_community_tags do
       arg(:filter, :community_tags_filter)

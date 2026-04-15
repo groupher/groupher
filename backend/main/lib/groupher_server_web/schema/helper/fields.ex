@@ -37,6 +37,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:meta, :article_meta)
       field(:upvotes_count, :integer)
       field(:collects_count, :integer)
+
       field(:emotions, list_of(:emotion_stat),
         resolve: &GroupherServerWeb.Resolvers.CMS.emotions/3
       )
@@ -172,9 +173,11 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:floor, :integer)
       field(:upvotes_count, :integer)
       field(:is_article_author, :boolean)
+
       field(:emotions, list_of(:emotion_stat),
         resolve: &GroupherServerWeb.Resolvers.CMS.emotions/3
       )
+
       field(:meta, :comment_meta)
       field(:replies_count, :integer)
       field(:thread, :thread)
@@ -216,7 +219,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:community_tag, :string)
       field(:cat, :article_cat_enum)
       field(:state, :article_state_enum)
-      field(:order, :string)
+      field(:order, :article_order_enum)
       field(:community_tags, list_of(:string))
       field(:community, :string)
       field(:author, :string)
@@ -372,6 +375,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   # Supports list-like types in shared dashboard schema definitions.
   defp to_absinthe_type({:array, inner}, _key),
     do: quote(do: list_of(unquote(to_absinthe_type(inner, nil))))
+
   defp to_absinthe_type(:enum, key), do: :"dsb_#{key}"
   defp to_absinthe_type(:rainbow_color, _key), do: :rainbow_color
   defp to_absinthe_type(type, _key), do: type
@@ -402,7 +406,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
     quote do
       enum unquote(type) do
-        unquote_splicing(value_defs)
+        (unquote_splicing(value_defs))
       end
     end
   end

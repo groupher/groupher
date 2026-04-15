@@ -10,8 +10,6 @@ defmodule GroupherServer.FrontDesk do
 
   def community(slug) when is_binary(slug), do: CMS.FrontDesk.community(slug)
 
-  def thread(thread_id), do: CMS.FrontDesk.thread(thread_id)
-
   def user(id) when is_integer(id) do
     Accounts.FrontDesk.user(id)
   end

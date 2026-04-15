@@ -24,7 +24,6 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     CommunityModerator,
     CommunitySubscriber,
     CommunityTag,
-    CommunityThread,
     Doc,
     PinnedArticle,
     PinnedComment,
@@ -325,7 +324,6 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
   defp delete_community_relations(community_id) do
     delete_all(from(c in CommunityDashboard, where: c.community_id == ^community_id))
-    delete_all(from(c in CommunityThread, where: c.community_id == ^community_id))
     delete_all(from(c in CommunityCategory, where: c.community_id == ^community_id))
     delete_all(from(c in CommunitySubscriber, where: c.community_id == ^community_id))
     delete_all(from(c in CommunityModerator, where: c.community_id == ^community_id))

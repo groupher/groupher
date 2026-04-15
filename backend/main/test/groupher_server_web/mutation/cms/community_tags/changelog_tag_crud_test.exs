@@ -6,7 +6,6 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
   alias CMS.Model.CommunityTag
 
   setup do
-    {:ok, thread} = db_insert(:thread)
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community)
     {:ok, community} = CMS.Communities.create(community_attrs, user)
@@ -16,7 +15,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
     user_conn = simu_conn(:user)
     guest_conn = simu_conn(:guest)
 
-    {:ok, ~m(user_conn guest_conn community thread user community_tag_attrs)a}
+    {:ok, ~m(user_conn guest_conn community user community_tag_attrs)a}
   end
 
   describe "[mutation cms tag]" do

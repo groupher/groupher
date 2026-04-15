@@ -114,15 +114,6 @@ defmodule GroupherServer.CMS.Articles.List do
     %{entries: [], total_count: 0, page_number: page, page_size: size, total_pages: 0}
   end
 
-  @spec paged_kanban(Community.t(), map()) :: T.domain_res(term())
-  def paged_kanban(%Community{} = community, %{state: state} = filter)
-      when is_binary(state) do
-    state = normalize_article_state(state) || :__invalid__
-    filter = filter |> Map.merge(%{state: state})
-
-    paged_kanban(community, filter)
-  end
-
   def paged_kanban(%Community{} = community, %{state: states} = filter) when is_list(states) do
     %{page: page, size: size} = filter
 
@@ -258,11 +249,6 @@ defmodule GroupherServer.CMS.Articles.List do
 
   defp citing_thread(cited) do
     @article_threads |> Enum.find(fn thread -> not is_nil(Map.get(cited, :"#{thread}_id")) end)
-  end
-
-  defp normalize_article_state(state) when is_binary(state) do
-    state = state |> String.downcase()
-    Map.keys(@article_state) |> Enum.find(fn value -> Atom.to_string(value) == state end)
   end
 
   defp add_pin_articles_ifneed(articles, queryable, %{community: community} = filter) do

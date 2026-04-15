@@ -68,7 +68,6 @@ defmodule GroupherServer.Test.Query.Statistics do
         postsCount
         categoriesCount
         communityTagsCount
-        threadsCount
       }
     }
     """

@@ -18,11 +18,6 @@ export const community = `
     community(slug: $slug, incViews: $incViews) {
       ${F.community}
       viewerHasSubscribed @include(if: $userHasLogin)
-      threads {
-        title
-        slug
-        index
-      }
       contributesDigest
       moderatorsCount
       meta {

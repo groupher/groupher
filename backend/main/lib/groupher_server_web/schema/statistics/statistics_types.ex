@@ -24,6 +24,5 @@ defmodule GroupherServerWeb.Schema.Statistics.Types do
 
     field(:categories_count, :integer)
     field(:community_tags_count, :integer)
-    field(:threads_count, :integer)
   end
 end

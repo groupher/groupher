@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   alias Accounts.Model.User
   alias CMS.Helper.Threads
-  alias CMS.Model.{Comment, Community, Embeds, Thread}
+  alias CMS.Model.{Comment, Community, Embeds}
   alias Helper.{ORM, QueryBuilder, T}
 
   @article_threads Application.compile_env(:groupher_server, :article, [])
@@ -38,9 +38,6 @@ defmodule GroupherServer.CMS.FrontDesk do
       {:error, _} = error -> error
     end
   end
-
-  @spec thread(integer()) :: {:ok, Thread.t()} | {:error, map()}
-  def thread(thread_id), do: ORM.find(Thread, thread_id)
 
   @spec comment(integer()) :: T.domain_res(Comment.t())
   def comment(comment_id) do
