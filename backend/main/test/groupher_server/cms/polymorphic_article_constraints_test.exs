@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
                |> Comment.changeset(Map.put(attrs, :blog_id, blog.id))
                |> Repo.insert()
 
-      assert "is invalid" in errors_on(changeset).post_id
+      assert "is invalid" in errors_on(changeset).thread
     end
 
     test "comment rejects thread mismatches article ref", ~m(post user)a do
@@ -56,7 +56,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
                |> ArticleUpvote.changeset(attrs)
                |> Repo.insert()
 
-      assert "is invalid" in errors_on(changeset).post_id
+      assert "is invalid" in errors_on(changeset).thread
     end
 
     test "article collect rejects thread mismatches article ref", ~m(post user)a do
