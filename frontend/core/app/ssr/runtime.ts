@@ -37,6 +37,8 @@ const getCommunity = async (community: string): Promise<TCommunityInfo> => {
     console.log('## error details 1', errors[0]?.locations)
     return {
       community: { slug: '' },
+      dashboard: parseDashboard(null),
+      wallpaper: parseWallpaper(null),
     }
   }
 
