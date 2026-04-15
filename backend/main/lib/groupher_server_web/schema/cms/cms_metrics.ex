@@ -88,25 +88,25 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   end
 
   enum :sort_enum do
+    value(:desc_inserted)
     value(:most_views)
     value(:asc_active)
     value(:desc_active)
-    value(:most_updated)
-    value(:most_upvotes)
     value(:most_stars)
-    value(:most_comments)
     value(:least_views)
-    value(:least_updated)
-    value(:least_upvotes)
     value(:least_stars)
-    value(:least_watched)
-    value(:least_comments)
-    value(:recent_updated)
   end
 
   enum :length_enum do
     value(:most_words)
     value(:least_words)
+  end
+
+  enum :article_order_enum do
+    value(:upvotes)
+    value(:comments)
+    value(:views)
+    value(:publish)
   end
 
   enum :rainbow_color do

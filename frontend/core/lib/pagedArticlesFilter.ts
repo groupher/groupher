@@ -15,6 +15,11 @@ const ARTICLES_FILTER = {
   size: 20,
 }
 
+const normalizeEnumValue = (value: string | null): string | null => {
+  if (!value) return null
+  return value.toUpperCase()
+}
+
 const isSearchParamsLike = (
   source: TSearchParamsLike | TSearchParamsObject,
 ): source is TSearchParamsLike => typeof (source as TSearchParamsLike).get === 'function'
@@ -51,9 +56,9 @@ export const getPagedArticlesParams = (
     community,
     page: Number(searchParams.get(URL_PARAM.PAGE)) || 1,
     communityTag: searchParams.get(URL_PARAM.TAG),
-    cat: searchParams.get(URL_PARAM.CAT),
-    state: searchParams.get(URL_PARAM.STATE),
-    order: searchParams.get(URL_PARAM.ORDER),
+    cat: normalizeEnumValue(searchParams.get(URL_PARAM.CAT)),
+    state: normalizeEnumValue(searchParams.get(URL_PARAM.STATE)),
+    order: normalizeEnumValue(searchParams.get(URL_PARAM.ORDER)),
   })
 
   return mergeRight(ARTICLES_FILTER, filter) as TPagedArticlesParams

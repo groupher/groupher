@@ -1416,20 +1416,20 @@ enum InsertedSortEnum {
 }
 
 enum SortEnum {
+  DESC_INSERTED
   MOST_VIEWS
   ASC_ACTIVE
   DESC_ACTIVE
-  MOST_UPDATED
-  MOST_UPVOTES
   MOST_STARS
-  MOST_COMMENTS
   LEAST_VIEWS
-  LEAST_UPDATED
-  LEAST_UPVOTES
   LEAST_STARS
-  LEAST_WATCHED
-  LEAST_COMMENTS
-  RECENT_UPDATED
+}
+
+enum ArticleOrderEnum {
+  UPVOTES
+  COMMENTS
+  VIEWS
+  PUBLISH
 }
 
 enum RainbowColor {
@@ -1634,7 +1634,7 @@ input PagedPostsFilter {
 
   state: ArticleStateEnum
 
-  order: String
+  order: ArticleOrderEnum
 
   communityTags: [String]
 
@@ -1667,7 +1667,7 @@ input PagedChangelogsFilter {
 
   state: ArticleStateEnum
 
-  order: String
+  order: ArticleOrderEnum
 
   communityTags: [String]
 
@@ -1693,7 +1693,7 @@ input PagedDocsFilter {
 
   state: ArticleStateEnum
 
-  order: String
+  order: ArticleOrderEnum
 
   communityTags: [String]
 
@@ -1712,7 +1712,7 @@ input PagedBlogsFilter {
   communityTag: String
   cat: ArticleCatEnum
   state: ArticleStateEnum
-  order: String
+  order: ArticleOrderEnum
   communityTags: [String]
   community: String
   author: String

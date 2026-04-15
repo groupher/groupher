@@ -61,8 +61,8 @@ defmodule Helper.QueryBuilder do
       {:order, nil}, queryable ->
         queryable
 
-      {:order, key}, queryable ->
-        queryable |> trans_articles_order(String.downcase(key))
+      {:order, key}, queryable when is_atom(key) ->
+        queryable |> trans_articles_order(key)
 
       {_, _}, queryable ->
         queryable
@@ -299,19 +299,19 @@ defmodule Helper.QueryBuilder do
     Enum.find(values, fn value -> Atom.to_string(value) == input end)
   end
 
-  defp trans_articles_order(queryable, "upvotes") do
+  defp trans_articles_order(queryable, :upvotes) do
     queryable |> order_by(desc: :upvotes_count)
   end
 
-  defp trans_articles_order(queryable, "comments") do
+  defp trans_articles_order(queryable, :comments) do
     queryable |> order_by(desc: :comments_count)
   end
 
-  defp trans_articles_order(queryable, "views") do
+  defp trans_articles_order(queryable, :views) do
     queryable |> order_by(desc: :views, desc: :inserted_at)
   end
 
-  defp trans_articles_order(queryable, "publish") do
+  defp trans_articles_order(queryable, :publish) do
     queryable |> order_by(desc: :inserted_at)
   end
 
