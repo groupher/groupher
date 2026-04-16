@@ -24,7 +24,6 @@ export default function PageBackground() {
       <SectionLabel
         title={t('dsb.layout.page_background.title')}
         desc={t('dsb.layout.page_background.desc')}
-        classNames='pr-8'
         withThemeSelect
       />
 

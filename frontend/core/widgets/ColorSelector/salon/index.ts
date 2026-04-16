@@ -3,44 +3,20 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { bg, br, cn, fg, fill, primary, shadow } = useTwBelt()
+  const { cn, fill, primary, shadow } = useTwBelt()
 
   return {
-    wrapper: 'row-center pl-1.5 pr-1.5 gap-x-3',
+    content: 'w-full px-1',
+    selectRow: 'row-center w-fit gap-x-1.5',
+    buildInWrapper: 'w-full',
     dotWrapper: 'align-both size-7 circle',
-    dot: cn('size-5.5 circle pointer trans-all-100', 'hover:-mt-0.5'),
+    dot: cn('size-5.5 circle align-both pointer trans-all-100', 'hover:-mt-0.5'),
     dotActive: cn(
       'size-6 align-both border border-transparent',
       primary('borderSoft'),
       shadow('md'),
     ),
     checkIcon: cn('size-3', fill('button.fg')),
-    customBlock: 'mt-1.5 px-1.5 pb-1.5',
-    customTitle: cn('mb-2 text-base opacity-65', fg('digest')),
-
-    //
-    customWrapper: 'w-52',
-    customPickerPanel: 'column gap-y-3 w-[280px]',
-    colorArea: cn(
-      'relative w-full h-32 rounded-md overflow-hidden border',
-      br('divider'),
-      shadow('sm'),
-    ),
-    colorSlider: 'w-full',
-    colorSliderTrack: cn(
-      'relative w-full h-5 rounded-md overflow-hidden border',
-      br('divider'),
-      shadow('sm'),
-    ),
-    colorAreaThumb: cn(
-      'size-4 rounded-full border-2 border-white bg-transparent shadow-md outline-none',
-      "after:absolute after:left-1/2 after:top-1/2 after:size-4 after:-translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:border after:border-black/80 after:bg-[var(--thumb-color)] after:content-['']",
-    ),
-    colorSliderThumb: cn(
-      'absolute size-4 rounded-full border-2 border-white bg-transparent shadow-md outline-none',
-      "after:absolute after:left-1/2 after:top-1/2 after:size-4 after:-translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:border after:border-black/80 after:bg-[var(--thumb-color)] after:content-['']",
-    ),
-    colorField: cn('w-full rounded-md border px-0', bg('popover.bg'), br('divider'), shadow('sm')),
-    colorInput: cn('w-full h-7 rounded-md bg-transparent px-3 outline-none', fg('title')),
+    customBlock: 'mt-1.5 max-w-full px-1.5 pb-1.5',
   }
 }

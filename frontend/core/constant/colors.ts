@@ -16,6 +16,14 @@ export const COLOR = {
   CUSTOM: 'CUSTOM',
 } as const
 
+export const STACKED_COLOR = {
+  RED: 'RED',
+  YELLOW: 'YELLOW',
+  GREEN: 'GREEN',
+  BLUE: 'BLUE',
+  PURPLE: 'PURPLE',
+} as const
+
 // map to css var name in ~/tailwind/token/colors
 export const PAGE_BG_CSS_KEY = 'color-pageBg'
 

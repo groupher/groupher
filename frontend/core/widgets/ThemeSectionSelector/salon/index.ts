@@ -1,12 +1,13 @@
+import type { TSpace } from '~/spec'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default function useSalon() {
-  const { cn, fg, bg, fill, sexyVBorder, hover } = useTwBelt()
+export default function useSalon(spacing: TSpace) {
+  const { cn, fg, bg, fill, margin, sexyVBorder, hover } = useTwBelt()
 
   return {
-    wrapper: 'row-center',
+    wrapper: cn('row-center', margin(spacing)),
     section: cn('row-center px-1 py-0.5 transition-colors', hover('box')),
     sectionActive: cn('!opacity-100', bg('hoverBg')),
     title: cn('ml-0.5 text-xs', fg('digest')),

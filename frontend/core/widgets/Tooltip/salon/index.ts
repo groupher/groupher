@@ -8,7 +8,7 @@ export default function useSalon() {
   return {
     tooltip: cn(
       // 'relative p-1.5 rounded border backdrop-blur-sm cursor-default',
-      'relative inline-block w-fit p-1.5 rounded border backdrop-blur-sm cursor-default debug',
+      'relative inline-block w-fit p-1.5 rounded border backdrop-blur-sm cursor-default',
       shadow('xl'),
       fg('digest'),
       bg('popover.bg'),

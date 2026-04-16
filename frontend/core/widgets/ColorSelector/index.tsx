@@ -4,16 +4,14 @@
  *
  */
 
-import { endsWith, includes, isEmpty, keys } from 'ramda'
-import type { FC, ReactNode } from 'react'
-import { COLOR } from '~/const/colors'
-import useTwBelt from '~/hooks/useTwBelt'
-import HookSVG from '~/icons/Hook'
+import { useState, type FC, type ReactNode } from 'react'
 import type { TColorName, TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
+import BuildInColors from './BuildInColors'
 import CustomColor from './CustomColor'
+import CustomColorPicker from './CustomColorPicker'
 
-import useSalon, { cn } from './salon'
+import useSalon from './salon'
 
 type TProps = {
   activeColor?: TColorName | string
@@ -34,12 +32,8 @@ const ColorSelector: FC<TProps> = ({
   offset = [5, 5],
   excepts = [],
 }) => {
-  const colorKeys = isEmpty(excepts)
-    ? keys(COLOR)
-    : keys(COLOR).filter((k) => !includes(k, excepts))
-
   const s = useSalon()
-  const { rainbow } = useTwBelt()
+  const [customColor, setCustomColor] = useState('#8B5CF6')
 
   return (
     <Tooltip
@@ -49,32 +43,17 @@ const ColorSelector: FC<TProps> = ({
       maxWidth='none'
       offset={offset}
       content={
-        <div data-testid={testid}>
-          <div className={s.wrapper}>
-            {colorKeys.map((color) => {
-              const selected = color === activeColor
+        <div className={s.content} data-testid={testid}>
+          <div className={s.selectRow}>
+            <div className={s.buildInWrapper}>
+              <BuildInColors activeColor={activeColor} onChange={onChange} excepts={excepts} />
+            </div>
 
-              if (endsWith('_LIGHT', color) || color === COLOR.CUSTOM) return null
-
-              return (
-                <button key={color} className={s.dotWrapper} onClick={() => onChange(color)}>
-                  <div className={cn(s.dot, selected && s.dotActive, rainbow(color, 'bg'))}>
-                    {selected && <HookSVG className={s.checkIcon} />}
-                  </div>
-                </button>
-              )
-            })}
-
-            <button className={s.dotWrapper}>
-              <div className={cn(s.dot, rainbow('RED', 'bg'))}>
-                <HookSVG className={s.checkIcon} />
-              </div>
-            </button>
+            <CustomColor color={customColor} />
           </div>
-          <div className={s.customBlock}>
-            <div className={s.customTitle}>custom color picker</div>
 
-            <CustomColor />
+          <div className={s.customBlock}>
+            <CustomColorPicker color={customColor} onChange={setCustomColor} />
           </div>
         </div>
       }

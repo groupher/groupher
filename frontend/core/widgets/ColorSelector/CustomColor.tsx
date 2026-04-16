@@ -4,55 +4,30 @@
  *
  */
 
-import type { FC } from 'react'
-import {
-  ColorPicker as AriaColorPicker,
-  ColorArea,
-  ColorField,
-  ColorSlider,
-  ColorThumb,
-  Input,
-  SliderTrack,
-} from 'react-aria-components'
-
+import HookSVG from '~/icons/Hook'
 import useSalon from './salon/custom_color'
 
 type TProps = {
-  //
+  color: string
 }
 
-const ColorSelector: FC<TProps> = () => {
+const CustomColor = ({ color }: TProps) => {
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
-      <AriaColorPicker aria-label='Custom color picker' defaultValue='#8B5CF6'>
-        <div className={s.pickerPanel}>
-          <ColorArea
-            className={s.colorArea}
-            colorSpace='hsb'
-            xChannel='saturation'
-            yChannel='brightness'
-          >
-            <ColorThumb className={s.colorAreaThumb} />
-          </ColorArea>
-
-          <ColorSlider className={s.slider} colorSpace='hsb' channel='hue'>
-            <SliderTrack className={s.sliderTrack}>
-              <ColorThumb
-                className={s.colorSliderThumb}
-                style={{ top: '50%', transform: 'translate(-50%, -50%)' }}
-              />
-            </SliderTrack>
-          </ColorSlider>
-
-          <ColorField className={s.colorField}>
-            <Input className={s.colorInput} />
-          </ColorField>
+      <div className={s.divider} />
+      <button className={s.inner}>
+        <div className={s.dot}>
+          <div className={s.dotInner} style={{ backgroundColor: color }}>
+            <HookSVG className={s.checkIcon} />
+          </div>
         </div>
-      </AriaColorPicker>
+      </button>
+
+      <div className={s.title}>自定义颜色</div>
     </div>
   )
 }
 
-export default ColorSelector
+export default CustomColor

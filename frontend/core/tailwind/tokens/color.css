@@ -156,7 +156,7 @@
 
 @layer theme {
   [data-theme="dark"] {
-    --color-divider: #303030; /* #3c3c3c */
+    --color-divider: #535353; /* #3c3c3c */
     --color-outline: #3d3d3d;
 
     /* articles */
@@ -171,7 +171,7 @@
     --color-table-border: #4f4b4b;
 
     /* utils */
-    --color-hoverBg: #42424259;
+    --color-hoverBg: #50505059;
     --color-card: #252525; /* #1A1A1A, og: #1e1e1e; */
     --color-cardAlpha: #1f2020c7; /*#111111b5;*/
     --color-sandBox: #31303059;

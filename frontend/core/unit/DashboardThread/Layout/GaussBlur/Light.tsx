@@ -28,7 +28,6 @@ export default function Light() {
       <SectionLabel
         title={t('dsb.layout.gauss_blur.title')}
         desc={t('dsb.layout.gauss_blur.desc')}
-        classNames='pr-8'
         withThemeSelect
       />
 
