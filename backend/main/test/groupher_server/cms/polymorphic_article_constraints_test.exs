@@ -32,13 +32,13 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
                |> Comment.changeset(Map.put(attrs, :blog_id, blog.id))
                |> Repo.insert()
 
-      assert "is invalid" in errors_on(changeset).thread
+      assert "is invalid" in errors_on(changeset).post_id
     end
 
     test "comment rejects thread mismatches article ref", ~m(post user)a do
       attrs =
         valid_comment_attrs(user.id, post.id)
-        |> Map.put(:thread, "BLOG")
+        |> Map.put(:thread, :blog)
 
       assert {:error, changeset} =
                %Comment{}
@@ -49,18 +49,18 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
     end
 
     test "article upvote rejects multiple article refs", ~m(post blog user)a do
-      attrs = %{user_id: user.id, thread: "POST", post_id: post.id, blog_id: blog.id}
+      attrs = %{user_id: user.id, thread: :post, post_id: post.id, blog_id: blog.id}
 
       assert {:error, changeset} =
                %ArticleUpvote{}
                |> ArticleUpvote.changeset(attrs)
                |> Repo.insert()
 
-      assert "is invalid" in errors_on(changeset).thread
+      assert "is invalid" in errors_on(changeset).post_id
     end
 
     test "article collect rejects thread mismatches article ref", ~m(post user)a do
-      attrs = %{user_id: user.id, thread: "BLOG", post_id: post.id, collect_folders: []}
+      attrs = %{user_id: user.id, thread: :blog, post_id: post.id, collect_folders: []}
 
       assert {:error, changeset} =
                %ArticleCollect{}
@@ -138,7 +138,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
       author_id: user_id,
       body: "comment-body",
       body_html: "<p>comment-body</p>",
-      thread: "POST",
+      thread: :post,
       post_id: post_id,
       emotions: Embeds.CommentEmotion.default_emotions(),
       meta: Embeds.CommentMeta.default_meta()

@@ -29,11 +29,11 @@ defmodule GroupherServer.CMS.CanCan do
 
   @type scope :: :article | :comment
 
-  @spec allow_thread(map() | String.t() | nil, atom() | String.t()) ::
+  @spec allow_thread(map() | String.t() | nil, atom()) ::
           {:ok, atom()} | {:error, atom()}
   def allow_thread(community, thread), do: Communities.allow_thread(community, thread)
 
-  @spec allow_emotion(String.t() | nil, scope(), atom() | String.t(), atom()) ::
+  @spec allow_emotion(String.t() | nil, scope(), atom(), atom()) ::
           {:ok, atom()} | {:error, atom()}
   def allow_emotion(community, scope, thread, emotion) do
     Communities.allow_emotion(community, scope, thread, emotion)

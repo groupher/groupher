@@ -199,12 +199,23 @@ defmodule GroupherServer.CMS.Events.Cite do
     path_list = path |> String.split("/")
     article_id = path_list |> Enum.at(2)
 
-    with {:ok, thread} <- Threads.to_atom(path_list |> Enum.at(1)),
+    with {:ok, thread} <- parse_thread_slug(path_list |> Enum.at(1)),
          {:ok, info} <- match(thread),
          {:ok, article} <- FrontDesk.get(info.model, article_id) do
       {:ok, %{type: :article, artiment: article}}
     end
   end
+
+  defp parse_thread_slug(slug) when is_binary(slug) do
+    normalized = String.downcase(slug)
+
+    case Enum.find(Threads.article_enums(), fn thread -> Atom.to_string(thread) == normalized end) do
+      nil -> {:error, {:custom, "invalid thread"}}
+      thread -> {:ok, thread}
+    end
+  end
+
+  defp parse_thread_slug(_), do: {:error, {:custom, "invalid thread"}}
 
   defp citing_itself?(%Comment{id: source_id}, %{type: :comment, artiment: %{id: target_id}}),
     do: source_id == target_id

@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
   alias CMS.Model.Community
   alias Helper.T
 
-  @tag_colors ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink", "grey"]
+  @tag_colors ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink"]
   @seed_groups ["General", "Engineering", "Resources", "Ecosystem"]
   @tag_title_zh ["排查", "经验", "讨论", "实战", "建议", "复盘", "教程", "技巧", "案例", "工具"]
   @tag_title_en [
@@ -38,32 +38,44 @@ defmodule GroupherServer.CMS.Seeds.Tags do
 
     with {:ok, bot} <- GroupherServer.CMS.Seeds.Helper.seed_bot(),
          {:ok, existing} <- CMS.Communities.paged_tags(tag_filter(community.id, thread)) do
-      needed = max(count - length(existing.entries), 0)
-
-      Enum.each(1..needed, fn index ->
-        group = Enum.at(groups, rem(index - 1, length(groups)))
-        lang = if index <= div(count, 2), do: :zh, else: :en
-
-        title_seed =
-          case lang do
-            :zh -> Enum.at(@tag_title_zh, rem(index - 1, length(@tag_title_zh)))
-            :en -> Enum.at(@tag_title_en, rem(index - 1, length(@tag_title_en)))
-          end
-
-        attrs = %{
-          title: "#{title_seed}#{index}",
-          slug: "#{thread}-#{lang}-#{index}-#{System.unique_integer([:positive, :monotonic])}",
-          group: group,
-          color: random_color()
-        }
-
-        CMS.Communities.create_tag(community, thread, attrs, bot)
-      end)
-
-      with {:ok, tags} <- CMS.Communities.paged_tags(tag_filter(community.id, thread)) do
+      with :ok <- ensure_tags_count(community, thread, bot, groups, count, length(existing.entries)),
+           {:ok, tags} <- CMS.Communities.paged_tags(tag_filter(community.id, thread)) do
         {:ok, Enum.map(tags.entries, & &1.id)}
       end
     end
+  end
+
+  defp ensure_tags_count(_community, _thread, _bot, _groups, target_count, current_count)
+       when current_count >= target_count,
+       do: :ok
+
+  defp ensure_tags_count(community, thread, bot, groups, target_count, current_count) do
+    index = current_count + 1
+    attrs = build_tag_attrs(thread, groups, target_count, index)
+
+    with {:ok, _tag} <- CMS.Communities.create_tag(community, thread, attrs, bot) do
+      ensure_tags_count(community, thread, bot, groups, target_count, index)
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp build_tag_attrs(thread, groups, target_count, index) do
+    group = Enum.at(groups, rem(index - 1, length(groups)))
+    lang = if index <= div(target_count, 2), do: :zh, else: :en
+
+    title_seed =
+      case lang do
+        :zh -> Enum.at(@tag_title_zh, rem(index - 1, length(@tag_title_zh)))
+        :en -> Enum.at(@tag_title_en, rem(index - 1, length(@tag_title_en)))
+      end
+
+    %{
+      title: "#{title_seed}#{index}",
+      slug: "#{thread}-#{lang}-#{index}-#{System.unique_integer([:positive, :monotonic])}",
+      group: group,
+      color: random_color()
+    }
   end
 
   defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max,

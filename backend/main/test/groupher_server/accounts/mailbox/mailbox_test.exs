@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
 
       mention_contents = [
         %{
-          thread: "POST",
+          thread: :post,
           title: post.title,
           article_id: post.id,
           comment_id: nil,

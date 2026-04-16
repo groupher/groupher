@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.Messaging.Mention do
     {:ok, community} = CMS.Communities.create(community_attrs, user)
 
     mention_attr = %{
-      thread: "POST",
+      thread: :post,
       title: post.title,
       article_id: post.id,
       comment_id: nil,

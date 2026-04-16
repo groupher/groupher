@@ -119,12 +119,12 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   @doc "get thread of comment or article"
   @spec thread_of(Comment.t()) :: {:ok, atom()} | {:error, map()}
-  def thread_of(%Comment{thread: thread}) do
+  def thread_of(%Comment{thread: thread}) when is_atom(thread) do
     Threads.to_atom(thread)
   end
 
   @spec thread_of(map()) :: {:ok, atom()} | {:error, map()}
-  def thread_of(%{meta: %{thread: thread}}) do
+  def thread_of(%{meta: %{thread: thread}}) when is_atom(thread) do
     Threads.to_atom(thread)
   end
 

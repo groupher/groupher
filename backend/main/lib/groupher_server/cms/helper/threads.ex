@@ -24,20 +24,5 @@ defmodule GroupherServer.CMS.Helper.Threads do
 
   def to_atom(value) when is_atom(value) and value in @values, do: {:ok, value}
 
-  def to_atom(value) when is_binary(value) do
-    normalized =
-      value
-      |> String.downcase()
-      |> String.to_existing_atom()
-
-    if normalized in @values do
-      {:ok, normalized}
-    else
-      {:error, {:custom, "invalid thread"}}
-    end
-  rescue
-    ArgumentError -> {:error, {:custom, "invalid thread"}}
-  end
-
   def to_atom(_), do: {:error, {:custom, "invalid thread"}}
 end

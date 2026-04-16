@@ -20,9 +20,7 @@ defmodule GroupherServer.Accounts.Upvotes do
     load_articles(where_query, filter)
   end
 
-  def paged_articles(_user_id, %{thread: _thread} = filter) do
-    load_articles(dynamic([a], false), filter)
-  end
+  def paged_articles(_user_id, %{thread: _thread}), do: {:error, {:custom, "invalid thread"}}
 
   def paged_articles(user_id, filter) do
     where_query = dynamic([a], a.user_id == ^user_id)
