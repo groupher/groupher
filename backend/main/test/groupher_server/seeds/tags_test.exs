@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.Seeds.TagsTest do
           page: 1,
           size: 100,
           community_id: community.id,
-          thread: "POST"
+          thread: :post
         })
 
       assert paged_tags.total_count >= 4

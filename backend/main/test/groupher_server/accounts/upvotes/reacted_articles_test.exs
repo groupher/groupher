@@ -39,15 +39,11 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
       assert 1 == articles |> Map.get(:total_count)
     end
 
-    test "invalid thread filter returns empty pagination instead of crashing", ~m(user post)a do
+    test "invalid thread filter returns explicit error", ~m(user post)a do
       {:ok, _} = CMS.Articles.upvote(post, user)
 
       filter = %{thread: "INVALID", page: 1, size: 20}
-      {:ok, articles} = Accounts.paged_articles(user.id, filter)
-
-      assert articles |> is_valid_pagination?(:raw)
-      assert articles.entries == []
-      assert articles.total_count == 0
+      assert {:error, {:custom, "invalid thread"}} = Accounts.paged_articles(user.id, filter)
     end
   end
 end

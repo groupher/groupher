@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
           page: 1,
           size: 100,
           community_id: community.id,
-          thread: "POST"
+          thread: :post
         })
 
       assert paged_post_tags.total_count in 10..20

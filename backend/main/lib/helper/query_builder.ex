@@ -10,6 +10,7 @@ defmodule Helper.QueryBuilder do
 
   @article_cat ArticleEnums.cat_values()
   @article_state ArticleEnums.state_values()
+  @threads Threads.enums()
 
   @audit_illegal Constant.CMS.pending(:illegal)
   @audit_failed Constant.CMS.pending(:audit_failed)
@@ -221,9 +222,9 @@ defmodule Helper.QueryBuilder do
         )
 
       {:thread, thread}, queryable ->
-        case Threads.to_atom(thread) do
-          {:ok, thread} -> from(q in queryable, where: q.thread == ^thread)
-          {:error, _} -> from(q in queryable, where: false)
+        case is_atom(thread) and thread in @threads do
+          true -> from(q in queryable, where: q.thread == ^thread)
+          false -> from(q in queryable, where: false)
         end
 
       {:community_id, community_id}, queryable ->
@@ -277,26 +278,11 @@ defmodule Helper.QueryBuilder do
     end
   end
 
-  defp trans_article_cat(queryable, cat) when is_binary(cat) do
-    cat_value = find_article_enum(@article_cat, cat)
-    trans_article_cat(queryable, cat_value || :__invalid__)
-  end
-
   defp trans_article_state(queryable, state) when is_atom(state) do
     case state in @article_state do
       true -> queryable |> where([p], p.state == ^state)
       false -> queryable |> where([p], p.id == -1)
     end
-  end
-
-  defp trans_article_state(queryable, state) when is_binary(state) do
-    state_value = find_article_enum(@article_state, state)
-    trans_article_state(queryable, state_value || :__invalid__)
-  end
-
-  defp find_article_enum(values, input) do
-    input = input |> String.downcase()
-    Enum.find(values, fn value -> Atom.to_string(value) == input end)
   end
 
   defp trans_articles_order(queryable, :upvotes) do

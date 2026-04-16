@@ -74,12 +74,14 @@ defmodule GroupherServer.Messaging.Mentions do
     end
   end
 
-  defp normalize_mention(%{thread: thread} = mention) do
+  defp normalize_mention(%{thread: thread} = mention) when is_atom(thread) do
     case Threads.to_atom(thread) do
       {:ok, thread} -> {:ok, %{mention | thread: thread}}
       {:error, _reason} -> {:error, "insert mentions error"}
     end
   end
+
+  defp normalize_mention(%{thread: _thread}), do: {:error, "insert mentions error"}
 
   defp normalize_mention(mention), do: {:ok, mention}
 

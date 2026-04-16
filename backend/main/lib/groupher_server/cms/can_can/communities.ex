@@ -45,9 +45,9 @@ defmodule GroupherServer.CMS.CanCan.Communities do
 
   @type scope :: :article | :comment
 
-  @spec allow_thread(map() | String.t() | nil, atom() | String.t()) ::
+  @spec allow_thread(map() | String.t() | nil, atom()) ::
           {:ok, atom()} | {:error, atom() | {:custom, String.t()}}
-  def allow_thread(community, thread) do
+  def allow_thread(community, thread) when is_atom(thread) do
     with {:ok, thread} <- Threads.to_atom(thread) do
       case thread_visible?(community, thread) do
         true -> done(thread)
@@ -56,9 +56,11 @@ defmodule GroupherServer.CMS.CanCan.Communities do
     end
   end
 
-  @spec allow_emotion(String.t() | nil, scope(), atom() | String.t(), atom()) ::
+  def allow_thread(_community, _thread), do: {:error, {:custom, "invalid thread"}}
+
+  @spec allow_emotion(String.t() | nil, scope(), atom(), atom()) ::
           {:ok, atom()} | {:error, atom() | {:custom, String.t()}}
-  def allow_emotion(community_slug, scope, thread, emotion) do
+  def allow_emotion(community_slug, scope, thread, emotion) when is_atom(thread) do
     with {:ok, thread} <- Threads.to_atom(thread) do
       thread_key = thread_key(scope, thread)
 
@@ -68,6 +70,9 @@ defmodule GroupherServer.CMS.CanCan.Communities do
       end
     end
   end
+
+  def allow_emotion(_community_slug, _scope, _thread, _emotion),
+    do: {:error, {:custom, "invalid thread"}}
 
   @spec emotions_whitelist() :: [atom()]
   def emotions_whitelist, do: @emotions_whitelist
