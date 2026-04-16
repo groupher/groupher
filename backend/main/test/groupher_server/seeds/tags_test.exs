@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.Seeds.TagsTest do
 
     test "random_color returns valid color atom" do
       color = Tags.random_color()
-      assert color in [:red, :orange, :yellow, :green, :cyan, :blue, :purple, :pink, :grey]
+      assert color in [:red, :orange, :yellow, :green, :cyan, :blue, :purple, :pink]
     end
   end
 end
