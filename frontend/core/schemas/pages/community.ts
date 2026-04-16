@@ -88,7 +88,7 @@ export const community = `
           inlineTagLayout
           avatarLayout
           brandLayout
-          bannerLayout
+          globalLayout
           topbarEnabled
           topbarBg
           topbarBgCustomColor

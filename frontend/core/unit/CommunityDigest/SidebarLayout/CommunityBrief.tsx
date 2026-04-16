@@ -21,7 +21,7 @@ export default function CommunityBrief() {
   const router = useRouter()
   const { logo, slug, title, desc, dashboard } = useCommunity()
   const activeThread = useViewingThread()
-  const { bannerLayout, brandLayout } = useLayout()
+  const { globalLayout, brandLayout } = useLayout()
 
   const { baseInfo } = dashboard
 
@@ -36,7 +36,7 @@ export default function CommunityBrief() {
       {brandLayout !== BRAND_LAYOUT.LOGO && <h2 className={s.title}>{title}</h2>}
       <div className={s.desc}>{desc}</div>
 
-      {bannerLayout === BANNER_LAYOUT.SIDEBAR && activeThread === THREAD.DOC && (
+      {globalLayout === BANNER_LAYOUT.SIDEBAR && activeThread === THREAD.DOC && (
         <ArrowButton top={12} left={-2} leftLayout onClick={() => router.push(`/${slug}`)}>
           返回社区
         </ArrowButton>

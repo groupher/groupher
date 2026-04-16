@@ -2,7 +2,7 @@ import { BANNER_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 
 export default function useSidebarLayout(): boolean {
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
 
-  return bannerLayout === BANNER_LAYOUT.SIDEBAR
+  return globalLayout === BANNER_LAYOUT.SIDEBAR
 }

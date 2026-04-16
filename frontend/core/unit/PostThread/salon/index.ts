@@ -5,11 +5,11 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
   const { cn, br } = useTwBelt()
-  const { postLayout, bannerLayout } = useLayout()
+  const { postLayout, globalLayout } = useLayout()
 
-  const isSidebarLayout = bannerLayout === BANNER_LAYOUT.SIDEBAR
-  const isHeaderLayout = bannerLayout === BANNER_LAYOUT.HEADER
-  const isTabberLayout = bannerLayout === BANNER_LAYOUT.TABBER
+  const isSidebarLayout = globalLayout === BANNER_LAYOUT.SIDEBAR
+  const isHeaderLayout = globalLayout === BANNER_LAYOUT.HEADER
+  const isTabberLayout = globalLayout === BANNER_LAYOUT.TABBER
 
   const isMasonary = postLayout === POST_LAYOUT.MASONRY
 

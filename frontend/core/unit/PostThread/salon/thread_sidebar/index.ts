@@ -6,10 +6,10 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
   const { cn, fg, fill, avatar, sexyBorder, linkable, cut } = useTwBelt()
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
 
-  const isTabberLayout = BANNER_LAYOUT.TABBER === bannerLayout
-  const isHeaderLayout = BANNER_LAYOUT.HEADER === bannerLayout
+  const isTabberLayout = BANNER_LAYOUT.TABBER === globalLayout
+  const isHeaderLayout = BANNER_LAYOUT.HEADER === globalLayout
 
   const { isAtTop } = useScroll({ disable: !isTabberLayout })
 

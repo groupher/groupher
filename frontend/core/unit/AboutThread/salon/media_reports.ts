@@ -5,7 +5,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
   const { cn, fg, bg, fill, cut } = useTwBelt()
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
 
   return {
     preview: 'row-center w-72 mb-2.5 mt-4 -ml-1 group',
@@ -16,7 +16,7 @@ export default function useSalon() {
     title: cn(
       'text-sm no-underline hover:underline',
       `hover:${fg('title')}`,
-      bannerLayout === BANNER_LAYOUT.SIDEBAR ? cut('w-44') : cut('w-28'),
+      globalLayout === BANNER_LAYOUT.SIDEBAR ? cut('w-44') : cut('w-28'),
       fg('digest'),
     ),
     //

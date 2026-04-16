@@ -21,7 +21,7 @@ export default function ArticleLayout() {
   const s = useSalon({ outlineOpen })
 
   const { isMobile } = useMobileDetect()
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
 
   return (
     <div className={s.wrapper}>
@@ -39,7 +39,7 @@ export default function ArticleLayout() {
         </div>
       )}
 
-      {!isMobile && bannerLayout !== BANNER_LAYOUT.SIDEBAR && (
+      {!isMobile && globalLayout !== BANNER_LAYOUT.SIDEBAR && (
         <div className={s.sidebar}>
           <PinedTree />
           <Sticky offsetTop={30}>

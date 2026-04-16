@@ -11,13 +11,13 @@ type TProps = {
 
 export default function useSalon({ isSidebarLayout }: TProps) {
   const { cn, fg, sexyBorder } = useTwBelt()
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
 
   return {
     wrapper: cn(
       'row align-start w-full mt-6',
-      bannerLayout === BANNER_LAYOUT.SIDEBAR && 'pl-24',
-      bannerLayout === BANNER_LAYOUT.TABBER && 'px-1.5',
+      globalLayout === BANNER_LAYOUT.SIDEBAR && 'pl-24',
+      globalLayout === BANNER_LAYOUT.TABBER && 'px-1.5',
     ),
     main: cn('w-auto min-h-3/5 bg-transparent mt-6', isSidebarLayout && 'pl-16'),
     intro: 'w-[620px] pb-14',

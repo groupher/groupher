@@ -1,6 +1,6 @@
 import type {
   TAvatarLayout,
-  TBannerLayout,
+  TGlobalLayout,
   TBrandLayout,
   TBroadcastArticleLayout,
   TBroadcastLayout,
@@ -106,7 +106,7 @@ export type TDsbFieldMap = {
   inlineTagLayout: TInlineTagLayout
   avatarLayout: TAvatarLayout
   brandLayout: TBrandLayout
-  bannerLayout: TBannerLayout
+  globalLayout: TGlobalLayout
   topbarEnabled: boolean
   topbarBg: TColorName
   topbarBgCustomColor: string

@@ -18,6 +18,17 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   alias CMS.Model.Metrics.Dashboard
 
   @optional_fields dashboard_cast_fields(:layout)
+  @layout_schema Dashboard.macro_schema(:layout)
+  @enum_fields Enum.flat_map(@layout_schema, fn
+                 [key, :enum, _default] -> [key]
+                 [key, :rainbow_color, _default] -> [key]
+                 _ -> []
+               end)
+  @enum_array_fields Enum.flat_map(@layout_schema, fn
+                       [key, {:array, :kanban_board}, _default] -> [key]
+                       [key, {:array, :rainbow_color}, _default] -> [key]
+                       _ -> []
+                     end)
 
   @doc "for test usage"
   def default, do: Dashboard.layout_default()
@@ -29,20 +40,72 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   @doc "for test usage"
 
   def changeset(struct, params) do
-    params = normalize_kanban_boards(params)
+    params =
+      params
+      |> normalize_layout_enum_values()
+      |> normalize_kanban_boards()
 
     struct
     |> cast(params, @optional_fields)
     |> validate_kanban_boards()
   end
 
-  defp normalize_kanban_boards(params) when is_map(params) do
-    case Map.get(params, :kanban_boards) do
-      nil ->
-        Map.put(params, :kanban_boards, KanbanBoards.default_values_list())
+  defp normalize_layout_enum_values(params) when is_map(params) do
+    params = Enum.reduce(@enum_fields, params, fn key, acc -> normalize_enum_param(acc, key) end)
 
-      [] ->
-        Map.put(params, :kanban_boards, KanbanBoards.default_values_list())
+    Enum.reduce(@enum_array_fields, params, fn key, acc ->
+      normalize_enum_array_param(acc, key)
+    end)
+  end
+
+  defp normalize_layout_enum_values(params), do: params
+
+  defp normalize_enum_param(params, key) do
+    case fetch_param(params, key) do
+      {:ok, value} ->
+        put_param(params, key, normalize_enum_value(value))
+
+      :error ->
+        params
+    end
+  end
+
+  defp normalize_enum_array_param(params, key) do
+    case fetch_param(params, key) do
+      {:ok, values} when is_list(values) ->
+        put_param(params, key, Enum.map(values, &normalize_enum_value/1))
+
+      _ ->
+        params
+    end
+  end
+
+  defp fetch_param(params, key) do
+    cond do
+      Map.has_key?(params, key) -> {:ok, Map.get(params, key)}
+      Map.has_key?(params, Atom.to_string(key)) -> {:ok, Map.get(params, Atom.to_string(key))}
+      true -> :error
+    end
+  end
+
+  defp put_param(params, key, value) do
+    cond do
+      Map.has_key?(params, key) -> Map.put(params, key, value)
+      Map.has_key?(params, Atom.to_string(key)) -> Map.put(params, Atom.to_string(key), value)
+      true -> params
+    end
+  end
+
+  defp normalize_enum_value(value) when is_binary(value), do: String.downcase(value)
+  defp normalize_enum_value(value), do: value
+
+  defp normalize_kanban_boards(params) when is_map(params) do
+    case fetch_param(params, :kanban_boards) do
+      {:ok, nil} ->
+        put_param(params, :kanban_boards, KanbanBoards.default_values_list())
+
+      {:ok, []} ->
+        put_param(params, :kanban_boards, KanbanBoards.default_values_list())
 
       _ ->
         params

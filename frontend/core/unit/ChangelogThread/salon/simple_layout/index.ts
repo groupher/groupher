@@ -6,9 +6,9 @@ import useTwBelt from '~/hooks/useTwBelt'
 export default function useSalon() {
   const { isLightTheme } = useTheme()
   const { cn, fg, sexyBorder } = useTwBelt()
-  const { bannerLayout, changelogLayout } = useLayout()
+  const { globalLayout, changelogLayout } = useLayout()
 
-  const isSidebarLayout = bannerLayout === BANNER_LAYOUT.SIDEBAR
+  const isSidebarLayout = globalLayout === BANNER_LAYOUT.SIDEBAR
   const alignLeft = changelogLayout === CHANGELOG_LAYOUT.SIMPLE
 
   return {
