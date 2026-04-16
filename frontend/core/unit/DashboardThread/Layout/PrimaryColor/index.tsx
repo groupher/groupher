@@ -26,7 +26,7 @@ export default function PrimaryColor() {
                 activeColor={primaryColor}
                 onChange={(color) => edit(color, 'primaryColor')}
                 placement='right'
-                offset={[-1, 15]}
+                offset={[-1, 24]}
               >
                 <div className={s.colorBall} />
               </ColorSelector>

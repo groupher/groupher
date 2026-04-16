@@ -26,6 +26,7 @@ import useSalon, { cnMerge } from './salon'
 export type TProps = {
   children: ReactNode
   content: string | ReactNode
+  maxWidth?: number | string
   placement?: TTooltipPlacement
   delay?: number
   offset?: [number, number]
@@ -49,6 +50,7 @@ export type TProps = {
 type TTippyReactProps = {
   ref: React.RefObject<HTMLDivElement>
   content: ReactNode
+  maxWidth?: number | string
   placement?: TTooltipPlacement
   hideOnClick?: boolean
   zIndex?: number
@@ -70,6 +72,7 @@ const Tooltip: FC<TProps> = ({
   interactive = true,
   onHide,
   onShow,
+  maxWidth,
   placement = 'top',
   delay = 0,
   offset = [5, 5],
@@ -149,6 +152,7 @@ const Tooltip: FC<TProps> = ({
     const props: TTippyReactProps = {
       ref: triggerRef as React.RefObject<HTMLDivElement>, // triggerRef is compatible (nullable current)
       content: PopoverContent,
+      maxWidth,
       placement,
       hideOnClick,
       zIndex: 3000,
@@ -181,6 +185,7 @@ const Tooltip: FC<TProps> = ({
     return props
   }, [
     PopoverContent,
+    maxWidth,
     placement,
     hideOnClick,
     delay,

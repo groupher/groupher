@@ -3,32 +3,19 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { bg, br, cn, fg, fill, primary, shadow } = useTwBelt()
+  const { bg, br, cn, fg, shadow } = useTwBelt()
 
   return {
-    wrapper: 'row-center pl-1.5 pr-1.5 gap-x-3',
-    dotWrapper: 'align-both size-7 circle',
-    dot: cn('size-5.5 circle pointer trans-all-100', 'hover:-mt-0.5'),
-    dotActive: cn(
-      'size-6 align-both border border-transparent',
-      primary('borderSoft'),
-      shadow('md'),
-    ),
-    checkIcon: cn('size-3', fill('button.fg')),
-    customBlock: 'mt-1.5 px-1.5 pb-1.5',
-    customTitle: cn('mb-2 text-base opacity-65', fg('digest')),
-
-    //
-    customWrapper: 'w-52',
-    customPickerPanel: 'column gap-y-3 w-[280px]',
+    wrapper: 'w-52',
+    pickerPanel: 'column gap-y-3',
     colorArea: cn(
       'relative w-full h-32 rounded-md overflow-hidden border',
       br('divider'),
       shadow('sm'),
     ),
-    colorSlider: 'w-full',
-    colorSliderTrack: cn(
-      'relative w-full h-5 rounded-md overflow-hidden border',
+    slider: 'w-full',
+    sliderTrack: cn(
+      'relative w-full h-4 rounded-md overflow-hidden border',
       br('divider'),
       shadow('sm'),
     ),
