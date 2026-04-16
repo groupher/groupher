@@ -7,6 +7,8 @@ defmodule GroupherServer.Repo.Migrations.RenameDashboardBannerLayoutToGlobalLayo
     execute("""
     UPDATE #{@cms_prefix}.community_dashboards
     SET layout = CASE
+      WHEN layout ? 'banner_layout' AND layout ? 'global_layout' THEN
+        layout - 'banner_layout'
       WHEN layout ? 'banner_layout' THEN
         jsonb_set(
           layout - 'banner_layout',
@@ -23,6 +25,8 @@ defmodule GroupherServer.Repo.Migrations.RenameDashboardBannerLayoutToGlobalLayo
     execute("""
     UPDATE #{@cms_prefix}.community_dashboards
     SET layout = CASE
+      WHEN layout ? 'global_layout' AND layout ? 'banner_layout' THEN
+        layout - 'global_layout'
       WHEN layout ? 'global_layout' THEN
         jsonb_set(
           layout - 'global_layout',
