@@ -17,7 +17,7 @@ import TagNote from './TagNote'
 import ThreadSidebar from './ThreadSidebar'
 
 export default function PostThread() {
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
   const s = useSalon()
   useFetchPagedPosts()
 
@@ -29,7 +29,7 @@ export default function PostThread() {
         <PagedPosts />
       </div>
 
-      {bannerLayout !== BANNER_LAYOUT.SIDEBAR && <ThreadSidebar />}
+      {globalLayout !== BANNER_LAYOUT.SIDEBAR && <ThreadSidebar />}
     </div>
   )
 }

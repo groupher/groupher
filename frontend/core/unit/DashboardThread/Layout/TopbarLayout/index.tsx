@@ -28,7 +28,7 @@ export default function TopbarLayout() {
   const { title } = useCommunity()
 
   const { edit, enabled, isBgTouched, isLayoutTouched, saving, bg } = useTopbar()
-  const { layout: bannerLayout } = useBanner()
+  const { layout: globalLayout } = useBanner()
 
   return (
     <div className={s.wrapper}>
@@ -52,7 +52,7 @@ export default function TopbarLayout() {
               {value && <div className={s.topBar} />}
               <div className={cn(s.block, isActive && s.blockActive)}>
                 <div className='mb-2' />
-                <BannerLayoutPreviewContent layout={bannerLayout} title={title} />
+                <BannerLayoutPreviewContent layout={globalLayout} title={title} />
               </div>
               <CheckLabel title={t(titleKey)} active={isActive} top={4} />
             </button>

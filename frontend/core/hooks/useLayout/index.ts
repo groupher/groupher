@@ -1,7 +1,7 @@
 import { pick } from 'ramda'
 import type {
   TAvatarLayout,
-  TBannerLayout,
+  TGlobalLayout,
   TBrandLayout,
   TChangelogLayout,
   TInlineTagLayout,
@@ -15,7 +15,7 @@ import useDashboard from '~/stores/dashboard/hooks'
 
 type TRet = {
   avatarLayout: TAvatarLayout
-  bannerLayout: TBannerLayout
+  globalLayout: TGlobalLayout
   brandLayout: TBrandLayout
   tagLayout: TTagLayout
   inlineTagLayout: TInlineTagLayout
@@ -32,7 +32,7 @@ export default function UseLayout(): TRet {
   return pick(
     [
       'avatarLayout',
-      'bannerLayout',
+      'globalLayout',
       'brandLayout',
       'tagLayout',
       'inlineTagLayout',

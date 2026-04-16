@@ -1,5 +1,5 @@
 import { BANNER_LAYOUT } from '~/const/layout'
-import type { TBannerLayout } from '~/spec'
+import type { TGlobalLayout } from '~/spec'
 
 import useSalon, { cnMerge } from '../../salon/layout/banner_layout'
 
@@ -149,7 +149,7 @@ function SidebarContent({ title }: { title: string }) {
 }
 
 type TProps = {
-  layout: TBannerLayout
+  layout: TGlobalLayout
   title: string
 }
 

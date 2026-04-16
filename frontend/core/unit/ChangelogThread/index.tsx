@@ -12,7 +12,7 @@ import ClassicLayout from './ClassicLayout'
 import SimpleLayout from './SimpleLayout'
 
 export default function ChangelogThread() {
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
 
-  return bannerLayout === BANNER_LAYOUT.TABBER ? <ClassicLayout /> : <SimpleLayout />
+  return globalLayout === BANNER_LAYOUT.TABBER ? <ClassicLayout /> : <SimpleLayout />
 }

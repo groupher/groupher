@@ -23,7 +23,7 @@ type TProps = {
 
 const Header: FC<TProps> = ({ article }) => {
   const { slug } = useCommunity()
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
   const { isPinned } = article
 
   const s = useSalon({ isPinned })
@@ -69,7 +69,7 @@ const Header: FC<TProps> = ({ article }) => {
           <CommentsCount
             count={commentsCount}
             size={SIZE.MEDIUM}
-            right={bannerLayout === BANNER_LAYOUT.SIDEBAR ? 4 : 0}
+            right={globalLayout === BANNER_LAYOUT.SIDEBAR ? 4 : 0}
           />
         )}
       </div>

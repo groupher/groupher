@@ -30,7 +30,7 @@ export type TTagLayout = TConstValues<typeof TAG_LAYOUT>
 export type TInlineTagLayout = TConstValues<typeof INLINE_TAG_LAYOUT>
 export type TAvatarLayout = TConstValues<typeof AVATAR_LAYOUT>
 export type TBrandLayout = TConstValues<typeof BRAND_LAYOUT>
-export type TBannerLayout = TConstValues<typeof BANNER_LAYOUT>
+export type TGlobalLayout = TConstValues<typeof BANNER_LAYOUT>
 
 export type TPostLayout = TConstValues<typeof POST_LAYOUT>
 export type TKanbanLayout = TConstValues<typeof KANBAN_LAYOUT>
@@ -75,13 +75,13 @@ export type TDsb = {
     tagLayout: TTagLayout
     inlineTagLayout: TInlineTagLayout
     avatarLayout: TAvatarLayout
-    bannerLayout: TBannerLayout
+    globalLayout: TGlobalLayout
     glowType: string
     glowFixed: boolean
     glowOpacity: string
     darkFloat: boolean
     docLayout: TDocLayout
-    docFaqLayout: TDocFaqLayout
+    docFaqLayout: TDocFAQLayout
     postLayout: TPostLayout
     kanbanLayout: TKanbanLayout
     kanbanCardLayout: TKanbanCardLayout
