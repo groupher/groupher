@@ -5,13 +5,13 @@ import useBase from '..'
 
 export default function useSalon() {
   const { cn } = useTwBelt()
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
   const base = useBase()
 
   return {
     wrapper: cn(
       'column-align-both w-full mt-7 ml-0',
-      bannerLayout === BANNER_LAYOUT.TABBER && 'mt-1.5 ml-12',
+      globalLayout === BANNER_LAYOUT.TABBER && 'mt-1.5 ml-12',
     ),
     cats: cn(
       base.main,

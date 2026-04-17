@@ -191,7 +191,7 @@ const updateDashboardLayout = gql`
     $gaussBlur: Int
     $gaussBlurDark: Int
     $brandLayout: DsbBrandLayout
-    $bannerLayout: DsbBannerLayout
+    $globalLayout: DsbGlobalLayout
     $changelogLayout: DsbChangelogLayout
     $docLayout: DsbDocLayout
     $docFaqLayout: DsbDocFaqLayout
@@ -229,7 +229,7 @@ const updateDashboardLayout = gql`
       gaussBlur: $gaussBlur
       gaussBlurDark: $gaussBlurDark
       brandLayout: $brandLayout
-      bannerLayout: $bannerLayout
+      globalLayout: $globalLayout
       changelogLayout: $changelogLayout
       docLayout: $docLayout
       docFaqLayout: $docFaqLayout

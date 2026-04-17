@@ -104,7 +104,7 @@ export const FIELDS: TDsbFieldMap = {
   inlineTagLayout: INLINE_TAG_LAYOUT.BORDER,
   avatarLayout: AVATAR_LAYOUT.SQUARE,
   brandLayout: BRAND_LAYOUT.BOTH,
-  bannerLayout: BANNER_LAYOUT.HEADER,
+  globalLayout: BANNER_LAYOUT.HEADER,
   topbarEnabled: false,
   topbarBg: COLOR.ORANGE,
   topbarBgCustomColor: '',

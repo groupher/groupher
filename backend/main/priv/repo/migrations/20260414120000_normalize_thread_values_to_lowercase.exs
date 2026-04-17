@@ -14,14 +14,17 @@ defmodule GroupherServer.Repo.Migrations.NormalizeThreadValuesToLowercase do
     {@messaging_prefix, :notifications}
   ]
   @article_tables ~w(posts blogs changelogs docs)a
+  @thread_match_tables ~w(comments article_upvotes article_collects)a
+  @article_ref_columns ~w(post_id blog_id changelog_id doc_id)
 
   def up do
+    Enum.each(@thread_match_tables, &drop_thread_match_constraint/1)
+    Enum.each(@thread_match_tables, &delete_invalid_thread_ref_rows/1)
+
     Enum.each(@thread_tables, &normalize_thread_column/1)
     Enum.each(@article_tables, &normalize_article_meta_thread/1)
 
-    recreate_thread_match_constraint(:comments)
-    recreate_thread_match_constraint(:article_upvotes)
-    recreate_thread_match_constraint(:article_collects)
+    Enum.each(@thread_match_tables, &recreate_thread_match_constraint/1)
   end
 
   def down do
@@ -45,8 +48,6 @@ defmodule GroupherServer.Repo.Migrations.NormalizeThreadValuesToLowercase do
   end
 
   defp recreate_thread_match_constraint(table) do
-    drop_check_constraint_if_exists(table, :"#{table}_thread_matches_article_ref_check")
-
     create(
       constraint(table, :"#{table}_thread_matches_article_ref_check",
         check: thread_matches_article_ref_sql(),
@@ -55,10 +56,22 @@ defmodule GroupherServer.Repo.Migrations.NormalizeThreadValuesToLowercase do
     )
   end
 
+  defp drop_thread_match_constraint(table) do
+    drop_check_constraint_if_exists(table, :"#{table}_thread_matches_article_ref_check")
+  end
+
   defp drop_check_constraint_if_exists(table, name) do
     execute("""
     ALTER TABLE #{@cms_prefix}.#{table}
     DROP CONSTRAINT IF EXISTS #{name}
+    """)
+  end
+
+  defp delete_invalid_thread_ref_rows(table) do
+    execute("""
+    DELETE FROM #{@cms_prefix}.#{table}
+    WHERE thread IS NULL
+       OR num_nonnulls(#{Enum.join(@article_ref_columns, ", ")}) != 1
     """)
   end
 

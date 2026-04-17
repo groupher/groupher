@@ -20,7 +20,7 @@ describe('useLayout', () => {
     const wrapper = makeStoreWrapper({
       dashboard: {
         avatarLayout: AVATAR_LAYOUT.SQUARE,
-        bannerLayout: BANNER_LAYOUT.HEADER,
+        globalLayout: BANNER_LAYOUT.HEADER,
         brandLayout: BRAND_LAYOUT.BOTH,
         tagLayout: TAG_LAYOUT.HASH,
         postLayout: POST_LAYOUT.QUORA,

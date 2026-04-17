@@ -9,14 +9,14 @@ import type { TProps } from './spec'
 import TabberLayout from './TabberLayout'
 
 const CustomHeaderLinks: FC<TProps> = (props) => {
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
   const activeThread = useViewingThread()
 
   if (activeThread === THREAD.DASHBOARD) {
     return <HeaderLayout {...props} />
   }
 
-  switch (bannerLayout) {
+  switch (globalLayout) {
     case BANNER_LAYOUT.HEADER: {
       return <HeaderLayout {...props} />
     }

@@ -9,7 +9,7 @@ type TProps = TSpace
 
 export default function useSalon({ ...spacing }: TProps) {
   const { cn, margin, fg, bg, br, fill } = useTwBelt()
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
   const { isLightTheme } = useTheme()
 
   const normalWrapper = cn('row-center', margin(spacing))
@@ -20,8 +20,8 @@ export default function useSalon({ ...spacing }: TProps) {
     margin(spacing),
   )
 
-  const isTabberLayout = bannerLayout === BANNER_LAYOUT.TABBER
-  const wrapper = includes(bannerLayout, [BANNER_LAYOUT.SIDEBAR]) ? withBgWrapper : normalWrapper
+  const isTabberLayout = globalLayout === BANNER_LAYOUT.TABBER
+  const wrapper = includes(globalLayout, [BANNER_LAYOUT.SIDEBAR]) ? withBgWrapper : normalWrapper
 
   return {
     wrapper,

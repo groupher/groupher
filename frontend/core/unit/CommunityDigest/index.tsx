@@ -16,13 +16,13 @@ import TabberLayout from './TabberLayout'
 
 export default function CommunityDigest() {
   // const router = useRouter()
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
 
   return (
     <Fragment>
-      {bannerLayout === BANNER_LAYOUT.TABBER && <TabberLayout />}
-      {bannerLayout === BANNER_LAYOUT.SIDEBAR && <SidebarLayout />}
-      {bannerLayout === BANNER_LAYOUT.HEADER && <HeaderLayout />}
+      {globalLayout === BANNER_LAYOUT.TABBER && <TabberLayout />}
+      {globalLayout === BANNER_LAYOUT.SIDEBAR && <SidebarLayout />}
+      {globalLayout === BANNER_LAYOUT.HEADER && <HeaderLayout />}
     </Fragment>
   )
 }

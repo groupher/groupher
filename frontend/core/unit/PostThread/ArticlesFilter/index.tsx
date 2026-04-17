@@ -28,7 +28,7 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
 
   const { resState } = usePagedPosts()
   const isLoading = resState === TYPE.RES_STATE.LOADING
-  const { bannerLayout } = useLayout()
+  const { globalLayout } = useLayout()
 
   const {
     cat: activeCat,
@@ -38,15 +38,15 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
   } = useArticlesFilter()
 
   const renderSearchBox = () => {
-    if (bannerLayout === BANNER_LAYOUT.SIDEBAR) {
+    if (globalLayout === BANNER_LAYOUT.SIDEBAR) {
       return isLoading ? <LavaLampLoading /> : <SearchBox />
     }
 
-    if (bannerLayout === BANNER_LAYOUT.HEADER) {
+    if (globalLayout === BANNER_LAYOUT.HEADER) {
       return isLoading ? <LavaLampLoading top={4} right={12} /> : <SearchBox right={-4} />
     }
 
-    if (bannerLayout === BANNER_LAYOUT.TABBER) {
+    if (globalLayout === BANNER_LAYOUT.TABBER) {
       return isLoading ? <LavaLampLoading right={6} /> : <SearchBox right={6} />
     }
 
@@ -87,7 +87,7 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
       <div className='mr-2.5' />
       <div className='grow' />
       {renderSearchBox()}
-      {bannerLayout === BANNER_LAYOUT.SIDEBAR && (
+      {globalLayout === BANNER_LAYOUT.SIDEBAR && (
         <PublishButton
           text='参与讨论'
           mode={PUBLISH_MODE.SIDEBAR_LAYOUT_HEADER}

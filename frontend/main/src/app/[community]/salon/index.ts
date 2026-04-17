@@ -6,8 +6,8 @@ import useTwBelt from '~/hooks/useTwBelt'
 export default function useSalon() {
   const { cn } = useTwBelt()
 
-  const { bannerLayout } = useLayout()
-  const isSidebarLayout = bannerLayout === BANNER_LAYOUT.SIDEBAR
+  const { globalLayout } = useLayout()
+  const isSidebarLayout = globalLayout === BANNER_LAYOUT.SIDEBAR
 
   return {
     wrapper: cn('w-full', isSidebarLayout && 'row justify-between'),
