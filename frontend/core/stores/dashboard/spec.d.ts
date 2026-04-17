@@ -92,8 +92,10 @@ export type TDsbFieldMap = {
   // layout
   primaryColor: TColorName
   primaryCustomColor: string
+  primaryCustomColorDark: string
   subPrimaryColor: TColorName
   subPrimaryCustomColor: string
+  subPrimaryCustomColorDark: string
   postLayout: TPostLayout
   kanbanLayout: TKanbanLayout
   kanbanCardLayout: TKanbanCardLayout

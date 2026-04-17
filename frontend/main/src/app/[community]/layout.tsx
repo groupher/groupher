@@ -5,6 +5,7 @@ import { LOCALE } from '~/const/i18n'
 import { I18N_NS } from '~/i18n/namespaces'
 import MainProvider from '~/stores/provider'
 import { getMetadata } from '~/utils/ssr'
+import { injectDsbColors } from '~/utils/ssr/script'
 import Client from './Client'
 
 export async function generateMetadata({ params }): Promise<Metadata> {
@@ -25,16 +26,24 @@ export default async ({ children, params }) => {
   // console.log('## got community$ in layout: ', community)
 
   return (
-    <MainProvider
-      initData={{ community, dashboard }}
-      locale={locale}
-      localeData={JSON.stringify(localeData)}
-    >
-      <GraphQLProvider>
-        <GlobalProvider>
-          <Client>{children}</Client>
-        </GlobalProvider>
-      </GraphQLProvider>
-    </MainProvider>
+    <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: injectDsbColors(dashboard),
+        }}
+      />
+
+      <MainProvider
+        initData={{ community, dashboard }}
+        locale={locale}
+        localeData={JSON.stringify(localeData)}
+      >
+        <GraphQLProvider>
+          <GlobalProvider>
+            <Client>{children}</Client>
+          </GlobalProvider>
+        </GraphQLProvider>
+      </MainProvider>
+    </>
   )
 }

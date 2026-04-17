@@ -48,6 +48,24 @@ export default function useEdit(): TRet {
   }
 
   const rollbackEdit = (field: TDsbFieldKey): void => {
+    if (field === FIELD.PRIMARY_COLOR) {
+      dsb$.commit({
+        primaryColor: dsb$.original.primaryColor,
+        primaryCustomColor: dsb$.original.primaryCustomColor,
+        primaryCustomColorDark: dsb$.original.primaryCustomColorDark,
+      })
+      return
+    }
+
+    if (field === FIELD.SUB_PRIMARY_COLOR) {
+      dsb$.commit({
+        subPrimaryColor: dsb$.original.subPrimaryColor,
+        subPrimaryCustomColor: dsb$.original.subPrimaryCustomColor,
+        subPrimaryCustomColorDark: dsb$.original.subPrimaryCustomColorDark,
+      })
+      return
+    }
+
     if (field === FIELD.BASE_INFO) {
       _rollbackByKeys(BASEINFO_KEYS)
       return

@@ -19,7 +19,7 @@ const Admins: FC<TProps> = ({ onHover, userHover }) => {
   const [user2Ref, user2Hovered] = useHover<HTMLDivElement>()
   const [user3Ref, user3Hovered] = useHover<HTMLDivElement>()
 
-  // NOTE: add onHover in devps will cause parallax effect break, don't do it
+  // biome-ignore lint/correctness/useExhaustiveDependencies: The parallax parent passes a transient onHover callback each render; re-subscribing here causes hover flicker and breaks the landing animation.
   useEffect(() => {
     onHover([user1Hovered, user2Hovered, user3Hovered])
   }, [user1Hovered, user2Hovered, user3Hovered])

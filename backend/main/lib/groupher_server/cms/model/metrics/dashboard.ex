@@ -108,8 +108,10 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     [
       [:primary_color, :rainbow_color, :black],
       [:primary_custom_color, :string, ""],
+      [:primary_custom_color_dark, :string, ""],
       [:sub_primary_color, :rainbow_color, :black],
       [:sub_primary_custom_color, :string, ""],
+      [:sub_primary_custom_color_dark, :string, ""],
       [:kanban_bg_colors, {:array, :rainbow_color}, @kanban_bg_colors_default],
       [:kanban_boards, {:array, :kanban_board}, KanbanBoards.default_values_list()],
       [:post_layout, :enum, :quora],

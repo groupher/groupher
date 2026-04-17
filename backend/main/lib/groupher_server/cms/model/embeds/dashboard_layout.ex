@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
 
   alias CMS.Helper.KanbanBoards
   alias CMS.Model.Metrics.Dashboard
+  @hex_color_re ~r/^#[0-9a-fA-F]{6}$/
 
   @optional_fields dashboard_cast_fields(:layout)
   @layout_schema Dashboard.macro_schema(:layout)
@@ -48,6 +49,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
     struct
     |> cast(params, @optional_fields)
     |> validate_kanban_boards()
+    |> validate_custom_colors()
   end
 
   defp normalize_layout_enum_values(params) when is_map(params) do
@@ -132,6 +134,24 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
         true ->
           []
       end
+    end)
+  end
+
+  defp validate_custom_colors(changeset) do
+    [:primary_custom_color, :primary_custom_color_dark, :sub_primary_custom_color, :sub_primary_custom_color_dark]
+    |> Enum.reduce(changeset, fn field, acc ->
+      validate_change(acc, field, fn ^field, value ->
+        cond do
+          value in [nil, ""] ->
+            []
+
+          is_binary(value) and Regex.match?(@hex_color_re, value) ->
+            []
+
+          true ->
+            [{field, "must be a valid hex color"}]
+        end
+      end)
     end)
   end
 end

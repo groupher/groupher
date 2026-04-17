@@ -9,11 +9,11 @@
 @source inline('bg-{pageBg,link,dot,digest,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,popover-bg,menuHoverBg,menuInvertBg,alphaBg,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}');
 
 /* rainbow */
-@source inline('{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,black,blackSoft,blackBtn}');
+@source inline('{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,custom,customSoft,subCustom,subCustomSoft,black,blackSoft,blackBtn}');
 @source inline('bg-rainbow-greySoft');
 
-@source inline('border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,purple,black}/50');
-@source inline("{hover:}border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,purple,black}/50");
+@source inline('border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,custom,subCustom,black}/50');
+@source inline("{hover:}border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,custom,subCustom,black}/50");
 
 /* z-index */
 @source inline('z-{modal,popover,tooltip,modalOverlay,modalCloseBtn,drawer,drawerOverlay,articleFixedHeader,header}');
@@ -32,13 +32,13 @@
 @source inline('hover:{border-divider,border-digest,border-hint}');
 @source inline('focus:border-digest');
 @source inline('hover:text-rainbow-red');
-@source inline('hover:bg-rainbow-{red,redSoft}');
+@source inline('hover:bg-rainbow-{red,redSoft,custom,customSoft,subCustom,subCustomSoft}');
 @source inline('hover:{bg-hoverBg,bg-menuHoverBg,bg-sandBox,bg-card,bg-alphaBg}');
 @source inline('hover:shadow-sm');
 
 /* group hover */
 @source inline('group-hover:{text-title,fill-rainbow-red,fill-title,shadow-sm}');
-@source inline('group-hover:{fill,text}-rainbow-{red,orange,yellow,green,cyan,blue,purple,pink}');
+@source inline('group-hover:{fill,text}-rainbow-{red,orange,yellow,green,cyan,blue,purple,pink,custom,subCustom}');
 @source inline('group-hover:border-divider');
 
 /* menu group hover */

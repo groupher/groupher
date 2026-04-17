@@ -27,7 +27,6 @@ export default function Dark() {
       <SectionLabel
         title={t('dsb.layout.gauss_blur.title_dark')}
         desc={t('dsb.layout.gauss_blur.desc')}
-        classNames='pr-8'
         withThemeSelect
       />
 

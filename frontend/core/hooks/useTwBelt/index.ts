@@ -54,10 +54,6 @@ export default function useTwBelt(): TRet {
   const br = (key: TBorderKey | `${string}.${string}`) => keyToClass('border', key)
 
   const rainbow = (color: TColorName, prefix: TColorPrefix = 'fg'): string => {
-    if (color === COLOR.CUSTOM) {
-      return rainbow(COLOR.BLACK, prefix)
-    }
-
     const prefix$ = RAINBOW_ALIAS[prefix]
     const color$ = camelize(color)
 
@@ -73,17 +69,42 @@ export default function useTwBelt(): TRet {
   }
 
   const rainbowSoft = (color: TColorName | string): string => {
-    if (color === COLOR.CUSTOM) return `bg-rainbow-${camelize(COLOR.BLACK)}Soft`
-
     const color$ = camelize(color)
     return `bg-rainbow-${color$}Soft`
   }
 
+  const resolveCustomRainbowToken = (
+    color: TColorName,
+    customKey: 'custom' | 'subCustom',
+    prefix: TColorPrefix,
+  ): string => {
+    if (color !== COLOR.CUSTOM) {
+      return rainbow(color, prefix)
+    }
+
+    const prefix$ = RAINBOW_ALIAS[prefix]
+
+    if (prefix === 'bgSoft') {
+      return `${prefix$}-${customKey}Soft`
+    }
+
+    if (prefix === 'borderSoft') {
+      return `${prefix$}-${customKey}/50`
+    }
+
+    return `${prefix$}-${customKey}`
+  }
+
   const primary = (prefix: TColorPrefix = 'fg'): string => rainbow(primaryColor, prefix)
-  const subPrimary = (prefix: TColorPrefix = 'fg'): string => rainbow(subPrimaryColor, prefix)
+  const subPrimary = (prefix: TColorPrefix = 'fg'): string =>
+    resolveCustomRainbowToken(subPrimaryColor, 'subCustom', prefix)
 
   const linker = (prefix: TLinkColorPrefix = 'fg'): string => {
-    return rainbow(subPrimaryColor, prefix as unknown as TColorPrefix)
+    return resolveCustomRainbowToken(
+      subPrimaryColor,
+      'subCustom',
+      prefix as unknown as TColorPrefix,
+    )
   }
 
   const linkable = () => STATIC_CLS.linkable

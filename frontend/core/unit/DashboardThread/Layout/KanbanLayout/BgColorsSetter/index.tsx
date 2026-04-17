@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { COLOR } from '~/const/colors'
 import { INIT_KANBAN_COLORS } from '~/const/dashboard'
 import { KANBAN_LAYOUT } from '~/const/layout'
@@ -6,7 +7,6 @@ import { randomBgNames } from '~/helper'
 import useTrans from '~/hooks/useTrans'
 import DiceSVG from '~/icons/Dice'
 import ResetSVG from '~/icons/Reset'
-import { useState } from 'react'
 import type { TColorName } from '~/spec'
 
 import ColorSelector from '~/widgets/ColorSelector'
@@ -107,7 +107,6 @@ export default function BgColorsSetter() {
               placement='right'
               offset={[-2, 1]}
               excepts={[COLOR.CYAN]}
-              bgMode
             >
               <div
                 className={cn(s.colorBall, s[BOARD_COLOR_KEY[board]])}

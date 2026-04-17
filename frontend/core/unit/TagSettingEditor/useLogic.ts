@@ -69,7 +69,10 @@ export default function useLogic(): TRet {
 
   const onUpdate = (): void => {
     setProcessing(true)
-    if (!activeTagThread) return setProcessing(false)
+    if (!activeTagThread) {
+      setProcessing(false)
+      return
+    }
 
     const params = {
       ...editingTag,
@@ -86,7 +89,10 @@ export default function useLogic(): TRet {
 
   const onCreate = (): void => {
     setProcessing(true)
-    if (!activeTagThread) return setProcessing(false)
+    if (!activeTagThread) {
+      setProcessing(false)
+      return
+    }
 
     const params = {
       ...editingTag,

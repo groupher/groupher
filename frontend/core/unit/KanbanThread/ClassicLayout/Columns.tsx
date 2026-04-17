@@ -4,7 +4,7 @@
  */
 
 import type { ReactNode, RefObject, UIEvent } from 'react'
-
+import { KANBAN_BOARD } from '~/const/thread'
 import useKanbanPosts from '~/hooks/useKanbanPosts'
 import useLayout from '~/hooks/useLayout'
 import useNameAlias from '~/hooks/useNameAlias'
@@ -13,7 +13,6 @@ import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
 import RejectSVG from '~/icons/Reject'
-import { KANBAN_BOARD } from '~/const/thread'
 import type { TKanbanBoard, TPagedPosts } from '~/spec'
 
 import KanbanItem from '../KanbanItem'

@@ -1,5 +1,5 @@
-import { mockUsers } from '~/mock'
 import useTrans from '~/hooks/useTrans'
+import { mockUsers } from '~/mock'
 import Facepile from '~/widgets/Facepile'
 import useSalon from '../salon/join_our_community'
 import Cards from './Cards'

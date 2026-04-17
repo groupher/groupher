@@ -89,6 +89,15 @@
     --color-rainbow-pink: #b36976;
     --color-rainbow-pinkSoft: #ffd8ea59;
 
+    --color-primary-custom: #333333;
+    --color-primary-custom-dark: #333333;
+    --color-sub-primary-custom: #333333;
+    --color-sub-primary-custom-dark: #333333;
+    --color-rainbow-custom: var(--color-primary-custom);
+    --color-rainbow-customSoft: color-mix(in srgb, var(--color-primary-custom) 18%, transparent);
+    --color-rainbow-subCustom: var(--color-sub-primary-custom);
+    --color-rainbow-subCustomSoft: color-mix(in srgb, var(--color-sub-primary-custom) 18%, transparent);
+
     --color-rainbow-black: #333333;
     --color-rainbow-blackBtn: oklch(27.8% 0.033 256.848); /* gray.800 */
     --color-rainbow-blackSoft: #f4f4f4;
@@ -156,7 +165,7 @@
 
 @layer theme {
   [data-theme="dark"] {
-    --color-divider: #303030; /* #3c3c3c */
+    --color-divider: #535353; /* #3c3c3c */
     --color-outline: #3d3d3d;
 
     /* articles */
@@ -171,7 +180,7 @@
     --color-table-border: #4f4b4b;
 
     /* utils */
-    --color-hoverBg: #42424259;
+    --color-hoverBg: #50505059;
     --color-card: #252525; /* #1A1A1A, og: #1e1e1e; */
     --color-cardAlpha: #1f2020c7; /*#111111b5;*/
     --color-sandBox: #31303059;
@@ -248,6 +257,11 @@
 
     --color-rainbow-pink: #b36976;
     --color-rainbow-pinkSoft: #73526159;
+
+    --color-rainbow-custom: var(--color-primary-custom-dark);
+    --color-rainbow-customSoft: color-mix(in srgb, var(--color-primary-custom-dark) 20%, transparent);
+    --color-rainbow-subCustom: var(--color-sub-primary-custom-dark);
+    --color-rainbow-subCustomSoft: color-mix(in srgb, var(--color-sub-primary-custom-dark) 20%, transparent);
 
     --color-rainbow-black: #4e4e4e;
     --color-rainbow-blackBtn: #e6e6e6;

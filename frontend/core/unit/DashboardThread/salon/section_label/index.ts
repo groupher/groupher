@@ -14,7 +14,7 @@ export default function useSalon({ width, desc, ...spacing }: TProps) {
 
   return {
     wrapper: cn('column', width, margin(spacing)),
-    header: 'row-center',
+    header: 'row-center w-full',
     title: cn('row-center w-full text-base', !desc && 'mb-4', fg('title')),
     desc: cn('text-sm mt-2.5 mb-8 mt-2.5 leading-relaxed', fg('digest')),
   }

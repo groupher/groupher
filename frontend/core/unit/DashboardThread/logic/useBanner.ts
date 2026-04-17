@@ -1,4 +1,4 @@
-import type { TGlobalLayout, TEditFunc } from '~/spec'
+import type { TEditFunc, TGlobalLayout } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import useHelper from './useHelper'

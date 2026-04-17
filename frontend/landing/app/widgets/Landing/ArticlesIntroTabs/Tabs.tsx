@@ -2,9 +2,9 @@ import { includes } from 'ramda'
 import type { FC } from 'react'
 import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
+import useTrans from '~/hooks/useTrans'
 import IntroArrowSVG from '~/icons/IntroArrow'
 import IntroSpinSVG from '~/icons/IntroSpin'
-import useTrans from '~/hooks/useTrans'
 import type { TThread } from '~/spec'
 import useSalon, { cn, ICON } from '../salon/articles_intro_tabs/tabs'
 import PreviewBars from './PreviewBars'
@@ -53,8 +53,9 @@ const Tabs: FC<TProps> = ({ tab, onChange }) => {
         const CurIcon = ICON[item.key]
 
         return (
-          <div
+          <button
             key={item.key}
+            type='button'
             className={cn(s.tabItem, active && s.tabActive, active && s[`${color}Border`])}
             onClick={() => onChange(item.key as TThread)}
           >
@@ -93,7 +94,7 @@ const Tabs: FC<TProps> = ({ tab, onChange }) => {
 
             <h3 className={cn(s.title, active && s.titleActive)}>{item.title}</h3>
             <div className={cn(s.desc, active && s.descActive)}>{item.desc}</div>
-          </div>
+          </button>
         )
       })}
     </div>

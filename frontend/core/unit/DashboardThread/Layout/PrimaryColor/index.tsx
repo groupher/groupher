@@ -4,12 +4,13 @@ import { FIELD } from '../../constant'
 import usePrimaryColor from '../../logic/usePrimaryColor'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon from '../../salon/layout/primary_color'
+import useSalon, { cn } from '../../salon/layout/primary_color'
 import SubPrimaryColor from '../SubPrimaryColor'
 
 export default function PrimaryColor() {
   const s = useSalon()
-  const { edit, primaryColor, isTouched, saving } = usePrimaryColor()
+  const { editPrimaryColor, editCustomColor, primaryColor, customColor, isTouched, saving } =
+    usePrimaryColor()
   const { t } = useTrans()
 
   return (
@@ -19,14 +20,17 @@ export default function PrimaryColor() {
         desc={t('dsb.layout.primary_color.desc')}
       />
       <div className={s.content}>
-        <div className={s.block}>
+        <div className={cn(s.block, 'pr-2')}>
           <div className={s.head}>
             <div className={s.ballWrapper}>
               <ColorSelector
                 activeColor={primaryColor}
-                onChange={(color) => edit(color, 'primaryColor')}
+                customColor={customColor}
+                onChange={editPrimaryColor}
+                onCustomColorChange={editCustomColor}
+                allowCustomColor
                 placement='right'
-                offset={[-1, 15]}
+                offset={[-1, 24]}
               >
                 <div className={s.colorBall} />
               </ColorSelector>

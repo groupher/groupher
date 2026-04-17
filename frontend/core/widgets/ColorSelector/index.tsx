@@ -4,66 +4,169 @@
  *
  */
 
-import { endsWith, includes, isEmpty, keys } from 'ramda'
-import type { FC, ReactNode } from 'react'
-import { COLOR } from '~/const/colors'
-import useTwBelt from '~/hooks/useTwBelt'
-import HookSVG from '~/icons/Hook'
+import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
+import { type FC, type ReactNode, useEffect, useMemo, useState } from 'react'
+import { COLOR, getDefaultCustomColor } from '~/const/colors'
+import useTheme from '~/hooks/useTheme'
 import type { TColorName, TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
+import BuildInColors from './BuildInColors'
+import CustomColor from './CustomColor'
+import CustomColorPicker from './CustomColorPicker'
 
-import useSalon, { cn } from './salon'
+import useSalon from './salon'
 
 type TProps = {
   activeColor?: TColorName | string
+  customColor?: string
   testid?: string
   children: ReactNode
   onChange?: (color: TColorName) => void
+  onCustomColorChange?: (color: string) => void
+  allowCustomColor?: boolean
   placement?: TTooltipPlacement
   offset?: [number, number]
-  bgMode?: boolean
   excepts?: TColorName[]
 }
 
 const ColorSelector: FC<TProps> = ({
   testid = 'color-selector',
   activeColor,
+  customColor,
   children,
   onChange = console.log,
+  onCustomColorChange = console.log,
+  allowCustomColor = false,
   placement = 'bottom',
   offset = [5, 5],
-  bgMode = false,
   excepts = [],
 }) => {
-  const colorKeys = isEmpty(excepts)
-    ? keys(COLOR)
-    : keys(COLOR).filter((k) => !includes(k, excepts))
-
   const s = useSalon()
-  const { rainbow } = useTwBelt()
+  const { theme } = useTheme()
+  const defaultCustomColor = getDefaultCustomColor(theme)
+  const [customExpanded, setCustomExpanded] = useState(false)
+  const isCustomSelected = allowCustomColor && activeColor === COLOR.CUSTOM
+
+  useEffect(() => {
+    if (!isCustomSelected) {
+      setCustomExpanded(false)
+    }
+  }, [isCustomSelected])
+
+  const mode = useMemo(() => {
+    if (!allowCustomColor) return 'preset'
+    if (customExpanded) return 'custom-expanded'
+    if (isCustomSelected) return 'custom-collapsed'
+    return 'preset'
+  }, [allowCustomColor, customExpanded, isCustomSelected])
+
+  const showCustomPicker = mode === 'custom-expanded'
+  const stacked = showCustomPicker
+
+  const ensureCustomColor = () => {
+    if (!customColor) {
+      onCustomColorChange(defaultCustomColor)
+    }
+  }
+
+  const handleCustomClick = () => {
+    ensureCustomColor()
+
+    if (!isCustomSelected) {
+      onChange(COLOR.CUSTOM)
+    }
+
+    setCustomExpanded(true)
+  }
+
+  const handlePresetClick = (color: TColorName) => {
+    onChange(color)
+    setCustomExpanded(false)
+  }
+
+  const handleCollapse = () => {
+    setCustomExpanded(false)
+  }
 
   return (
     <Tooltip
       placement={placement}
       trigger='click'
       hideOnClick={false}
+      maxWidth='none'
       offset={offset}
+      onHide={() => setCustomExpanded(false)}
       content={
-        <div className={s.wrapper} data-testid={testid}>
-          {colorKeys.map((color) => {
-            const selected = color === activeColor
+        <LazyMotion features={domAnimation}>
+          <m.div
+            layout
+            transition={{ layout: { duration: 0.15, ease: 'easeInOut' } }}
+            className={s.content}
+            data-testid={testid}
+          >
+            <m.div
+              layout
+              transition={{ layout: { duration: 0.15, ease: 'easeInOut' } }}
+              className={s.selectRow}
+            >
+              <m.div
+                layout
+                transition={{ layout: { duration: 0.15, ease: 'easeInOut' } }}
+                className={s.buildInWrapper}
+              >
+                <BuildInColors
+                  activeColor={showCustomPicker ? undefined : activeColor}
+                  stacked={stacked}
+                  onChange={handlePresetClick}
+                  onCollapse={handleCollapse}
+                  excepts={excepts}
+                />
+              </m.div>
 
-            if (endsWith('_LIGHT', color) || color === COLOR.CUSTOM) return null
+              {allowCustomColor && (
+                <m.div
+                  layout
+                  transition={{ layout: { duration: 0.15, ease: 'easeInOut' } }}
+                  className={s.customWrapper}
+                >
+                  <CustomColor
+                    color={customColor || defaultCustomColor}
+                    selected={isCustomSelected}
+                    expanded={showCustomPicker}
+                    stacked={stacked}
+                    onClick={handleCustomClick}
+                  />
+                </m.div>
+              )}
+            </m.div>
 
-            return (
-              <div key={color} className={s.dotWrapper} onClick={() => onChange(color)}>
-                <div className={cn(s.dot, selected && s.dotActive, rainbow(color, 'bg'))}>
-                  {selected && <HookSVG className={s.checkIcon} />}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+            <AnimatePresence initial={false}>
+              {showCustomPicker && (
+                <m.div
+                  key='custom-picker'
+                  initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                  animate={{ height: 'auto', opacity: 1, marginTop: 6 }}
+                  exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                  transition={{ duration: 0.15, ease: 'easeInOut' }}
+                  className={s.customBlockMotion}
+                >
+                  <m.div
+                    initial={{ y: -10, scale: 0.98 }}
+                    animate={{ y: 0, scale: 1 }}
+                    exit={{ y: -8, scale: 0.98 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className={s.customBlock}
+                  >
+                    <CustomColorPicker
+                      color={customColor || defaultCustomColor}
+                      onChange={onCustomColorChange}
+                    />
+                  </m.div>
+                </m.div>
+              )}
+            </AnimatePresence>
+          </m.div>
+        </LazyMotion>
       }
     >
       {children}

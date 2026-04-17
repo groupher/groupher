@@ -79,8 +79,10 @@ export const community = `
         layout {
           primaryColor
           primaryCustomColor
+          primaryCustomColorDark
           subPrimaryColor
           subPrimaryCustomColor
+          subPrimaryCustomColorDark
           postLayout
           docLayout
           docFaqLayout

@@ -1,8 +1,8 @@
+import useTrans from '~/hooks/useTrans'
 import GithubSVG from '~/icons/Github8'
 import GroupSVG from '~/icons/Group'
 import EmailSVG from '~/icons/social/Email'
 import WeChatSVG from '~/icons/social/WeChat'
-import useTrans from '~/hooks/useTrans'
 import useSalon from '../salon/join_our_community/cards'
 
 export default function Cards() {
