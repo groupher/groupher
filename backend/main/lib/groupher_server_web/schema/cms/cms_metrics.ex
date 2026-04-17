@@ -138,7 +138,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   dsb_enum(:inline_tag_layout)
   dsb_enum(:avatar_layout)
   dsb_enum(:brand_layout)
-  dsb_enum(:banner_layout)
+  dsb_enum(:global_layout)
   dsb_enum(:broadcast_layout)
   dsb_enum(:broadcast_article_layout)
   dsb_enum(:changelog_layout)

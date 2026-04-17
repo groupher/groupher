@@ -14,6 +14,25 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     assert DashboardLayout.default().kanban_bg_colors == Dashboard.kanban_bg_colors_default()
   end
 
+  test "changeset normalizes legacy uppercase enum strings" do
+    changeset =
+      DashboardLayout.changeset(%DashboardLayout{}, %{
+        primary_color: "BLACK",
+        post_layout: "COVER",
+        kanban_bg_colors: ["BLACK", "YELLOW"],
+        kanban_boards: ["BACKLOG", "DONE"]
+      })
+
+    assert changeset.valid?
+
+    layout = Ecto.Changeset.apply_changes(changeset)
+
+    assert layout.primary_color == :black
+    assert layout.post_layout == :cover
+    assert layout.kanban_bg_colors == [:black, :yellow]
+    assert layout.kanban_boards == [:backlog, :done]
+  end
+
   test "accepts valid custom colors for primary and sub-primary in both themes" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
