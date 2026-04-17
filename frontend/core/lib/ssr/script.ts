@@ -42,6 +42,10 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
           dashboard.primaryCustomColor || getDefaultCustomColor(THEME.LIGHT),
         '--color-primary-custom-dark':
           dashboard.primaryCustomColorDark || getDefaultCustomColor(THEME.DARK),
+        '--color-sub-primary-custom':
+          dashboard.subPrimaryCustomColor || getDefaultCustomColor(THEME.LIGHT),
+        '--color-sub-primary-custom-dark':
+          dashboard.subPrimaryCustomColorDark || getDefaultCustomColor(THEME.DARK),
       },
     ],
   ]

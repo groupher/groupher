@@ -70,6 +70,7 @@ export type TDsb = {
     primaryCustomColorDark: string
     subPrimaryColor: TColorName
     subPrimaryCustomColor: string
+    subPrimaryCustomColorDark: string
     topbarEnabled: boolean
     topbarBg: TColorName
     topbarBgCustomColor: string

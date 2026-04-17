@@ -9,7 +9,13 @@ type TProps = {
 }
 
 const DashboardThemeScope: FC<TProps> = ({ children }) => {
-  const { primaryColor, primaryCustomColor, primaryCustomColorDark } = useDashboard()
+  const {
+    primaryColor,
+    primaryCustomColor,
+    primaryCustomColorDark,
+    subPrimaryCustomColor,
+    subPrimaryCustomColorDark,
+  } = useDashboard()
   const lightDefault = getDefaultCustomColor('light')
   const darkDefault = getDefaultCustomColor('dark')
 
@@ -18,11 +24,25 @@ const DashboardThemeScope: FC<TProps> = ({ children }) => {
 
     root.style.setProperty('--color-primary-custom', primaryCustomColor || lightDefault)
     root.style.setProperty('--color-primary-custom-dark', primaryCustomColorDark || darkDefault)
-  }, [darkDefault, lightDefault, primaryCustomColor, primaryCustomColorDark])
+    root.style.setProperty('--color-sub-primary-custom', subPrimaryCustomColor || lightDefault)
+    root.style.setProperty(
+      '--color-sub-primary-custom-dark',
+      subPrimaryCustomColorDark || darkDefault,
+    )
+  }, [
+    darkDefault,
+    lightDefault,
+    primaryCustomColor,
+    primaryCustomColorDark,
+    subPrimaryCustomColor,
+    subPrimaryCustomColorDark,
+  ])
 
   const style = {
     '--color-primary-custom': primaryCustomColor || lightDefault,
     '--color-primary-custom-dark': primaryCustomColorDark || darkDefault,
+    '--color-sub-primary-custom': subPrimaryCustomColor || lightDefault,
+    '--color-sub-primary-custom-dark': subPrimaryCustomColorDark || darkDefault,
   } as CSSProperties
 
   return (

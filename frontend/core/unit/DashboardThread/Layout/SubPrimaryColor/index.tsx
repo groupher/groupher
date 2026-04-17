@@ -8,21 +8,25 @@ import useSalon, { cn, cnMerge } from '../../salon/layout/primary_color'
 
 export default function SubPrimaryColor() {
   const s = useSalon()
-  const { rainbow } = useTwBelt()
-  const { edit, subPrimaryColor, isTouched, saving } = useSubPrimaryColor()
+  const { subPrimary } = useTwBelt()
+  const { editSubPrimaryColor, editCustomColor, subPrimaryColor, customColor, isTouched, saving } =
+    useSubPrimaryColor()
   const { t } = useTrans()
 
   return (
     <div className={cn(s.block, 'pl-2')}>
       <div className={cn(s.head, s.subHead)}>
-        <div className={cnMerge(s.ballWrapper, s.subBall, rainbow(subPrimaryColor, 'borderSoft'))}>
+        <div className={cnMerge(s.ballWrapper, s.subBall, subPrimary('borderSoft'))}>
           <ColorSelector
             activeColor={subPrimaryColor}
-            onChange={(color) => edit(color, 'subPrimaryColor')}
+            customColor={customColor}
+            onChange={editSubPrimaryColor}
+            onCustomColorChange={editCustomColor}
+            allowCustomColor
             placement='right'
             offset={[-1, 15]}
           >
-            <div className={cnMerge(s.colorBall, s.subColorBall, rainbow(subPrimaryColor, 'bg'))} />
+            <div className={cnMerge(s.colorBall, s.subColorBall, subPrimary('bg'))} />
           </ColorSelector>
         </div>
         <div className={s.title}>{t('dsb.layout.sub_primary_color.title')}</div>

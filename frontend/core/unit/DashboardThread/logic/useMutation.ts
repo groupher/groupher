@@ -40,6 +40,8 @@ export default function useMutation(): TRet {
   const { slug: community } = community$
   const primaryCustomColorField =
     theme === THEME.DARK ? 'primaryCustomColorDark' : 'primaryCustomColor'
+  const subPrimaryCustomColorField =
+    theme === THEME.DARK ? 'subPrimaryCustomColorDark' : 'subPrimaryCustomColor'
 
   // get latest store, for those state not in UI render cycle
   useEffect(() => {
@@ -111,6 +113,14 @@ export default function useMutation(): TRet {
         ...dashboard$.original,
         primaryColor: dashboard$.primaryColor,
         [primaryCustomColorField]: dashboard$[primaryCustomColorField],
+      }
+    }
+
+    if (field === FIELD.SUB_PRIMARY_COLOR) {
+      original = {
+        ...dashboard$.original,
+        subPrimaryColor: dashboard$.subPrimaryColor,
+        [subPrimaryCustomColorField]: dashboard$[subPrimaryCustomColorField],
       }
     }
 
@@ -337,6 +347,15 @@ export default function useMutation(): TRet {
           community,
           primaryColor: storeRef.current.primaryColor,
           [primaryCustomColorField]: storeRef.current[primaryCustomColorField],
+        })
+        return
+      }
+
+      if (field === FIELD.SUB_PRIMARY_COLOR) {
+        handleMutation(S.updateDashboardLayout, {
+          community,
+          subPrimaryColor: storeRef.current.subPrimaryColor,
+          [subPrimaryCustomColorField]: storeRef.current[subPrimaryCustomColorField],
         })
         return
       }

@@ -22,6 +22,8 @@ export default function useEdit(): TRet {
   const { theme } = useTheme()
   const primaryCustomColorField =
     theme === THEME.DARK ? 'primaryCustomColorDark' : 'primaryCustomColor'
+  const subPrimaryCustomColorField =
+    theme === THEME.DARK ? 'subPrimaryCustomColorDark' : 'subPrimaryCustomColor'
 
   const edit = useCallback(
     (v: TEditValue, field: TDsbFieldKey): void => {
@@ -57,6 +59,14 @@ export default function useEdit(): TRet {
       dsb$.commit({
         primaryColor: dsb$.original.primaryColor,
         [primaryCustomColorField]: dsb$.original[primaryCustomColorField],
+      })
+      return
+    }
+
+    if (field === FIELD.SUB_PRIMARY_COLOR) {
+      dsb$.commit({
+        subPrimaryColor: dsb$.original.subPrimaryColor,
+        [subPrimaryCustomColorField]: dsb$.original[subPrimaryCustomColorField],
       })
       return
     }

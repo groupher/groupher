@@ -23,7 +23,7 @@ type TProps = {
   children: ReactNode
   onChange?: (color: TColorName) => void
   onCustomColorChange?: (color: string) => void
-  allowCustom?: boolean
+  allowCustomColor?: boolean
   placement?: TTooltipPlacement
   offset?: [number, number]
   excepts?: TColorName[]
@@ -36,7 +36,7 @@ const ColorSelector: FC<TProps> = ({
   children,
   onChange = console.log,
   onCustomColorChange = console.log,
-  allowCustom = false,
+  allowCustomColor = false,
   placement = 'bottom',
   offset = [5, 5],
   excepts = [],
@@ -45,7 +45,7 @@ const ColorSelector: FC<TProps> = ({
   const { theme } = useTheme()
   const defaultCustomColor = getDefaultCustomColor(theme)
   const [customExpanded, setCustomExpanded] = useState(false)
-  const isCustomSelected = activeColor === COLOR.CUSTOM
+  const isCustomSelected = allowCustomColor && activeColor === COLOR.CUSTOM
 
   useEffect(() => {
     if (!isCustomSelected) {
@@ -54,11 +54,11 @@ const ColorSelector: FC<TProps> = ({
   }, [isCustomSelected])
 
   const mode = useMemo(() => {
-    if (!allowCustom) return 'preset'
+    if (!allowCustomColor) return 'preset'
     if (customExpanded) return 'custom-expanded'
     if (isCustomSelected) return 'custom-collapsed'
     return 'preset'
-  }, [allowCustom, customExpanded, isCustomSelected])
+  }, [allowCustomColor, customExpanded, isCustomSelected])
 
   const showCustomPicker = mode === 'custom-expanded'
   const stacked = showCustomPicker
@@ -121,7 +121,7 @@ const ColorSelector: FC<TProps> = ({
                 />
               </m.div>
 
-              {allowCustom && (
+              {allowCustomColor && (
                 <m.div
                   layout
                   transition={{ layout: { duration: 0.15, ease: 'easeInOut' } }}

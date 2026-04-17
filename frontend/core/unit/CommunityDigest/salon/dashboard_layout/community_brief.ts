@@ -1,11 +1,9 @@
-import useSubPrimaryColor from '~/hooks/useSubPrimaryColor'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cn, fg, bg, br, fill, menu, sexyBorder, rainbow, rainbowSoft } = useTwBelt()
-  const subPrimaryColor = useSubPrimaryColor()
+  const { cn, fg, bg, br, fill, menu, sexyBorder, subPrimary } = useTwBelt()
 
   return {
     wrapper: 'row-center group',
@@ -31,8 +29,8 @@ export default function useSalon() {
     //
     levelLabel: cn(
       'text-xs px-2 ml-1.5 py-0.5 rounded-lg bold scale-90',
-      rainbowSoft(subPrimaryColor),
-      rainbow(subPrimaryColor, 'fg'),
+      subPrimary('bgSoft'),
+      subPrimary('fg'),
     ),
   }
 }

@@ -82,6 +82,7 @@ export const community = `
           primaryCustomColorDark
           subPrimaryColor
           subPrimaryCustomColor
+          subPrimaryCustomColorDark
           postLayout
           docLayout
           docFaqLayout

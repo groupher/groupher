@@ -28,7 +28,7 @@ export default function PrimaryColor() {
                 customColor={customColor}
                 onChange={editPrimaryColor}
                 onCustomColorChange={editCustomColor}
-                allowCustom
+                allowCustomColor
                 placement='right'
                 offset={[-1, 24]}
               >
