@@ -130,7 +130,7 @@ const ColorSelector: FC<TProps> = ({
                   className={s.customWrapper}
                 >
                   <CustomColor
-                    color={customColor}
+                    color={customColor || defaultCustomColor}
                     selected={isCustomSelected}
                     expanded={showCustomPicker}
                     stacked={stacked}
