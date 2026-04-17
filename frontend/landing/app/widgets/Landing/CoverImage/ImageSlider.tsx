@@ -15,6 +15,13 @@ import ScrollbarDark from './ScrollbarDark'
 
 export const MAX_INTRO_IMAGES_COUNT = 5
 export const MAX_THEMES_COUNT = 5
+const INTRO_SLIDE_KEYS = [
+  'cover-slide-1',
+  'cover-slide-2',
+  'cover-slide-3',
+  'cover-slide-4',
+  'cover-slide-5',
+] as const
 
 // see: https://karanokara.github.io/react-scroll-snap-anime-slider/docs/component-api/carousel
 const VISIBLE_SLIDES = 1
@@ -109,7 +116,7 @@ export default function ImageSlider() {
         >
           <Slider ref={sliderRef}>
             {range(0, MAX_INTRO_IMAGES_COUNT).map((_, i) => (
-              <Slide key={i}>
+              <Slide key={INTRO_SLIDE_KEYS[i]}>
                 <div className={s.slideImage}>
                   {i !== 1 && <Img src={currentImgSrc} alt='cover page' className={s.coverImg} />}
                   {i === 1 && <Img src={imgSrc2} alt='cover page' className={s.coverImg} />}

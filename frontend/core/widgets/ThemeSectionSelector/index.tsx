@@ -1,10 +1,10 @@
-import type { TSpace } from '~/spec'
 import THEME from '~/const/theme'
 import useDidMount from '~/hooks/useDidMount'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import MoonSVG from '~/icons/Moon'
 import SunSVG from '~/icons/Sun'
+import type { TSpace } from '~/spec'
 
 import useSalon, { cn } from './salon'
 

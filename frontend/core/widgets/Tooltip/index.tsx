@@ -121,6 +121,7 @@ const Tooltip: FC<TProps> = ({
     }
   }, [])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Position refresh intentionally tracks rendered tooltip state/content only; instanceRef/contentRef mutations do not participate in React's dependency model.
   useEffect(() => {
     if (!active || !contentRef.current) return
 

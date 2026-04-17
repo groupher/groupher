@@ -1,8 +1,7 @@
+import useTrans from '~/hooks/useTrans'
 import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
-
 import GtdWipSVG from '~/icons/GtdWip'
-import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
 import Facepile from '~/widgets/Facepile/LandingPage'
 

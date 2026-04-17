@@ -1,4 +1,5 @@
 import dynamic from 'next/dynamic'
+import type { ComponentType } from 'react'
 
 import { COLOR } from '~/const/colors'
 import useTrans from '~/hooks/useTrans'
@@ -8,7 +9,25 @@ import useSalon, { cn } from '../salon/tech_stacks/github_card'
 import LangBars from './LangBars'
 import Teams from './Teams'
 
-const Trend: any = dynamic(() => import('react-trend'), { ssr: false })
+type TTrendProps = {
+  smooth?: boolean
+  autoDraw?: boolean
+  autoDrawDuration?: number
+  autoDrawEasing?: string
+  width?: number
+  height?: number
+  padding?: number
+  radius?: number
+  gradient?: string[]
+  data: number[]
+  stroke?: string
+  strokeWidth?: number
+  strokeLinecap?: 'butt' | 'round' | 'square'
+}
+
+const Trend = dynamic(() => import('react-trend'), {
+  ssr: false,
+}) as ComponentType<TTrendProps>
 
 export default function GithubCard() {
   const s = useSalon()

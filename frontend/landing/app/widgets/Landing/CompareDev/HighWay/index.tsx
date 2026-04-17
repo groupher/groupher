@@ -1,5 +1,5 @@
-import SeedSVG from '~/icons/Seed'
 import useTrans from '~/hooks/useTrans'
+import SeedSVG from '~/icons/Seed'
 import useSalon, { cn } from '../../salon/compare_dev/high_way'
 import Block from './Block'
 

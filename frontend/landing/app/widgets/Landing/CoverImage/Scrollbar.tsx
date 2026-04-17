@@ -27,7 +27,14 @@ export default function Scrollbar({ totalSlides, currentSlide, slideTo }: TProps
 
         return (
           <div key={i} className={cn(dotClass, active && dotActive)}>
-            {!active && <div className={dotBoxClass} onClick={() => slideTo(i)} />}
+            {!active && (
+              <button
+                type='button'
+                className={dotBoxClass}
+                onClick={() => slideTo(i)}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            )}
           </div>
         )
       })}

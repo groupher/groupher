@@ -5,7 +5,7 @@
  */
 
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
-import { useEffect, useMemo, useState, type FC, type ReactNode } from 'react'
+import { type FC, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { COLOR, getDefaultCustomColor } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import type { TColorName, TTooltipPlacement } from '~/spec'

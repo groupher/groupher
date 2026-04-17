@@ -1,9 +1,9 @@
 import { pick } from 'ramda'
 import type {
   TAvatarLayout,
-  TGlobalLayout,
   TBrandLayout,
   TChangelogLayout,
+  TGlobalLayout,
   TInlineTagLayout,
   TKanbanBoard,
   TKanbanCardLayout,

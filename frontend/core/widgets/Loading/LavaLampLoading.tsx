@@ -3,8 +3,8 @@
 import { range } from 'ramda'
 import type { FC } from 'react'
 import SIZE from '~/const/size'
-import type { TSizeTSM, TSpace } from '~/spec'
 import { cnMerge } from '~/css'
+import type { TSizeTSM, TSpace } from '~/spec'
 
 import useSalon, { cn } from './salon/lava_lamp_loading'
 

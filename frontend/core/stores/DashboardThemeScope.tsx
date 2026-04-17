@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, type CSSProperties, type FC, type ReactNode } from 'react'
+import { type CSSProperties, type FC, type ReactNode, useEffect } from 'react'
 import { getDefaultCustomColor } from '~/const/colors'
 import useDashboard from '~/stores/dashboard/hooks'
 
