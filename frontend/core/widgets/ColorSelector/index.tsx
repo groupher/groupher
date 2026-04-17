@@ -64,7 +64,9 @@ const ColorSelector: FC<TProps> = ({
   const stacked = showCustomPicker
 
   const ensureCustomColor = () => {
-    onCustomColorChange(customColor || defaultCustomColor)
+    if (!customColor) {
+      onCustomColorChange(defaultCustomColor)
+    }
   }
 
   const handleCustomClick = () => {

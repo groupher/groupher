@@ -94,6 +94,7 @@ const BuildInColors: FC<TProps> = ({
             className={s.dotWrapper}
             onClick={() => {
               if (stacked) {
+                onChange(color)
                 onCollapse()
                 return
               }

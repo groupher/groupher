@@ -19,7 +19,7 @@ export const COLOR = {
 
 export const DEFAULT_CUSTOM_COLOR = {
   [THEME.LIGHT]: '#333333',
-  [THEME.DARK]: '#ffff',
+  [THEME.DARK]: '#ffffff',
 } as const
 
 export const getDefaultCustomColor = (theme: TThemeName): string => {

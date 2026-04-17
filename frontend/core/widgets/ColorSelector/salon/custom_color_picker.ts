@@ -30,6 +30,10 @@ export default function useSalon() {
     inputFooter: 'row-center',
     inputLabel: cn('text-sm mr-2', fg('digest')),
     colorField: cn('w-full rounded-md border px-0', bg('popover.bg'), br('divider'), shadow('sm')),
-    colorInput: cn('w-full h-6 pl-2 rounded-md text-xs outline-none', fg('title')),
+    colorInput: cn(
+      'w-full h-6 pl-2 rounded-md text-xs outline-none focus-visible:ring-1 focus-visible:ring-inset',
+      fg('title'),
+      'focus-visible:ring-current',
+    ),
   }
 }

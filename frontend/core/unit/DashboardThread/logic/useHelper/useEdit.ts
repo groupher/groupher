@@ -1,7 +1,5 @@
 import { findIndex, has, update } from 'ramda'
 import { useCallback } from 'react'
-import THEME from '~/const/theme'
-import useTheme from '~/hooks/useTheme'
 import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 import { isObject } from '~/validator'
@@ -19,11 +17,6 @@ export type TRet = {
 export default function useEdit(): TRet {
   const dsb$ = useDashboard()
   const { mutation } = useMutation()
-  const { theme } = useTheme()
-  const primaryCustomColorField =
-    theme === THEME.DARK ? 'primaryCustomColorDark' : 'primaryCustomColor'
-  const subPrimaryCustomColorField =
-    theme === THEME.DARK ? 'subPrimaryCustomColorDark' : 'subPrimaryCustomColor'
 
   const edit = useCallback(
     (v: TEditValue, field: TDsbFieldKey): void => {
@@ -58,7 +51,8 @@ export default function useEdit(): TRet {
     if (field === FIELD.PRIMARY_COLOR) {
       dsb$.commit({
         primaryColor: dsb$.original.primaryColor,
-        [primaryCustomColorField]: dsb$.original[primaryCustomColorField],
+        primaryCustomColor: dsb$.original.primaryCustomColor,
+        primaryCustomColorDark: dsb$.original.primaryCustomColorDark,
       })
       return
     }
@@ -66,7 +60,8 @@ export default function useEdit(): TRet {
     if (field === FIELD.SUB_PRIMARY_COLOR) {
       dsb$.commit({
         subPrimaryColor: dsb$.original.subPrimaryColor,
-        [subPrimaryCustomColorField]: dsb$.original[subPrimaryCustomColorField],
+        subPrimaryCustomColor: dsb$.original.subPrimaryCustomColor,
+        subPrimaryCustomColorDark: dsb$.original.subPrimaryCustomColorDark,
       })
       return
     }

@@ -57,7 +57,7 @@ const ColorSelectorPicker: FC<TProps> = ({ color, onChange }) => {
           <div className={s.inputFooter}>
             <div className={s.inputLabel}>HEX</div>
             <ColorField className={s.colorField}>
-              <Input className={s.colorInput} />
+              <Input aria-label='Custom color hex value' className={s.colorInput} />
             </ColorField>
           </div>
         </div>

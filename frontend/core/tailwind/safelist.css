@@ -12,8 +12,8 @@
 @source inline('{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,custom,customSoft,subCustom,subCustomSoft,black,blackSoft,blackBtn}');
 @source inline('bg-rainbow-greySoft');
 
-@source inline('border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,custom,subCustom,purple,black}/50');
-@source inline("{hover:}border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,custom,subCustom,purple,black}/50");
+@source inline('border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,custom,subCustom,black}/50');
+@source inline("{hover:}border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,custom,subCustom,black}/50");
 
 /* z-index */
 @source inline('z-{modal,popover,tooltip,modalOverlay,modalCloseBtn,drawer,drawerOverlay,articleFixedHeader,header}');

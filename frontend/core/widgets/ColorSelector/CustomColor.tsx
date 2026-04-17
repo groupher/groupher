@@ -22,7 +22,7 @@ const CustomColor = ({
   selected = false,
   expanded = false,
   stacked = false,
-  onClick = console.log,
+  onClick = () => undefined,
 }: TProps) => {
   const s = useSalon({ stacked })
   const { t } = useTrans()
@@ -35,6 +35,8 @@ const CustomColor = ({
     >
       <m.button
         layout
+        type='button'
+        aria-label={t('dsb.layout.primary_color.custom')}
         initial={false}
         animate={{ scale: expanded ? 0.98 : 1 }}
         transition={{ duration: 0.15, ease: 'easeInOut', delay: 0.06 }}
