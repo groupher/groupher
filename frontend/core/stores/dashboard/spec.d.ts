@@ -92,6 +92,7 @@ export type TDsbFieldMap = {
   // layout
   primaryColor: TColorName
   primaryCustomColor: string
+  primaryCustomColorDark: string
   subPrimaryColor: TColorName
   subPrimaryCustomColor: string
   postLayout: TPostLayout

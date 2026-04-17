@@ -13,7 +13,7 @@ export default function SubPrimaryColor() {
   const { t } = useTrans()
 
   return (
-    <div className={s.block}>
+    <div className={cn(s.block, 'pl-2')}>
       <div className={cn(s.head, s.subHead)}>
         <div className={cnMerge(s.ballWrapper, s.subBall, rainbow(subPrimaryColor, 'borderSoft'))}>
           <ColorSelector

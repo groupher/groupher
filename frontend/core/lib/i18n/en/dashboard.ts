@@ -254,6 +254,7 @@ export default {
   'dsb.layout.primary_color.title': 'Primary color',
   'dsb.layout.primary_color.desc': 'Applied to components and functional text. Reference',
   'dsb.layout.primary_color.label': 'Primary color',
+  'dsb.layout.primary_color.custom': 'Custom color',
   'dsb.layout.primary_color.hint': 'Used for buttons, active tabs, and menu highlights.',
   'dsb.layout.page_background.title': 'Page background',
   'dsb.layout.page_background.desc': 'Set the main page background color. Reference',

@@ -4,7 +4,10 @@
  *
  */
 
-import { useState, type FC, type ReactNode } from 'react'
+import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
+import { useEffect, useMemo, useState, type FC, type ReactNode } from 'react'
+import { COLOR, getDefaultCustomColor } from '~/const/colors'
+import useTheme from '~/hooks/useTheme'
 import type { TColorName, TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 import BuildInColors from './BuildInColors'
@@ -15,9 +18,12 @@ import useSalon from './salon'
 
 type TProps = {
   activeColor?: TColorName | string
+  customColor?: string
   testid?: string
   children: ReactNode
   onChange?: (color: TColorName) => void
+  onCustomColorChange?: (color: string) => void
+  allowCustom?: boolean
   placement?: TTooltipPlacement
   offset?: [number, number]
   excepts?: TColorName[]
@@ -26,14 +32,59 @@ type TProps = {
 const ColorSelector: FC<TProps> = ({
   testid = 'color-selector',
   activeColor,
+  customColor,
   children,
   onChange = console.log,
+  onCustomColorChange = console.log,
+  allowCustom = false,
   placement = 'bottom',
   offset = [5, 5],
   excepts = [],
 }) => {
   const s = useSalon()
-  const [customColor, setCustomColor] = useState('#8B5CF6')
+  const { theme } = useTheme()
+  const defaultCustomColor = getDefaultCustomColor(theme)
+  const [customExpanded, setCustomExpanded] = useState(false)
+  const isCustomSelected = activeColor === COLOR.CUSTOM
+
+  useEffect(() => {
+    if (!isCustomSelected) {
+      setCustomExpanded(false)
+    }
+  }, [isCustomSelected])
+
+  const mode = useMemo(() => {
+    if (!allowCustom) return 'preset'
+    if (customExpanded) return 'custom-expanded'
+    if (isCustomSelected) return 'custom-collapsed'
+    return 'preset'
+  }, [allowCustom, customExpanded, isCustomSelected])
+
+  const showCustomPicker = mode === 'custom-expanded'
+  const stacked = showCustomPicker
+
+  const ensureCustomColor = () => {
+    onCustomColorChange(customColor || defaultCustomColor)
+  }
+
+  const handleCustomClick = () => {
+    ensureCustomColor()
+
+    if (!isCustomSelected) {
+      onChange(COLOR.CUSTOM)
+    }
+
+    setCustomExpanded(true)
+  }
+
+  const handlePresetClick = (color: TColorName) => {
+    onChange(color)
+    setCustomExpanded(false)
+  }
+
+  const handleCollapse = () => {
+    setCustomExpanded(false)
+  }
 
   return (
     <Tooltip
@@ -42,20 +93,78 @@ const ColorSelector: FC<TProps> = ({
       hideOnClick={false}
       maxWidth='none'
       offset={offset}
+      onHide={() => setCustomExpanded(false)}
       content={
-        <div className={s.content} data-testid={testid}>
-          <div className={s.selectRow}>
-            <div className={s.buildInWrapper}>
-              <BuildInColors activeColor={activeColor} onChange={onChange} excepts={excepts} />
-            </div>
+        <LazyMotion features={domAnimation}>
+          <m.div
+            layout
+            transition={{ layout: { duration: 0.15, ease: 'easeInOut' } }}
+            className={s.content}
+            data-testid={testid}
+          >
+            <m.div
+              layout
+              transition={{ layout: { duration: 0.15, ease: 'easeInOut' } }}
+              className={s.selectRow}
+            >
+              <m.div
+                layout
+                transition={{ layout: { duration: 0.15, ease: 'easeInOut' } }}
+                className={s.buildInWrapper}
+              >
+                <BuildInColors
+                  activeColor={showCustomPicker ? undefined : activeColor}
+                  stacked={stacked}
+                  onChange={handlePresetClick}
+                  onCollapse={handleCollapse}
+                  excepts={excepts}
+                />
+              </m.div>
 
-            <CustomColor color={customColor} />
-          </div>
+              {allowCustom && (
+                <m.div
+                  layout
+                  transition={{ layout: { duration: 0.15, ease: 'easeInOut' } }}
+                  className={s.customWrapper}
+                >
+                  <CustomColor
+                    color={customColor}
+                    selected={isCustomSelected}
+                    expanded={showCustomPicker}
+                    stacked={stacked}
+                    onClick={handleCustomClick}
+                  />
+                </m.div>
+              )}
+            </m.div>
 
-          <div className={s.customBlock}>
-            <CustomColorPicker color={customColor} onChange={setCustomColor} />
-          </div>
-        </div>
+            <AnimatePresence initial={false}>
+              {showCustomPicker && (
+                <m.div
+                  key='custom-picker'
+                  initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                  animate={{ height: 'auto', opacity: 1, marginTop: 6 }}
+                  exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                  transition={{ duration: 0.15, ease: 'easeInOut' }}
+                  className={s.customBlockMotion}
+                >
+                  <m.div
+                    initial={{ y: -10, scale: 0.98 }}
+                    animate={{ y: 0, scale: 1 }}
+                    exit={{ y: -8, scale: 0.98 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className={s.customBlock}
+                  >
+                    <CustomColorPicker
+                      color={customColor || defaultCustomColor}
+                      onChange={onCustomColorChange}
+                    />
+                  </m.div>
+                </m.div>
+              )}
+            </AnimatePresence>
+          </m.div>
+        </LazyMotion>
       }
     >
       {children}

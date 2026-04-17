@@ -88,6 +88,7 @@ export const FIELDS: TDsbFieldMap = {
   // layout
   primaryColor: COLOR.BLACK,
   primaryCustomColor: '',
+  primaryCustomColorDark: '',
   subPrimaryColor: COLOR.BLACK,
   subPrimaryCustomColor: '',
   postLayout: POST_LAYOUT.QUORA,

@@ -241,6 +241,7 @@ export default {
   'dsb.layout.primary_color.title': '主题色',
   'dsb.layout.primary_color.desc': '设置后会在常见组件，功能性文字等位置显示该个性化主题色。参考',
   'dsb.layout.primary_color.label': '主题颜色',
+  'dsb.layout.primary_color.custom': '自定义颜色',
   'dsb.layout.primary_color.hint': '作用于各类功能按钮，Tab 高亮，菜单高亮等品牌颜色。',
   'dsb.layout.page_background.title': '页面背景色',
   'dsb.layout.page_background.desc': '设置主页面背景色。参考',

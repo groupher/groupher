@@ -162,6 +162,7 @@ const updateDashboardLayout = gql`
     $community: String!
     $primaryColor: RainbowColor
     $primaryCustomColor: String
+    $primaryCustomColorDark: String
     $subPrimaryColor: RainbowColor
     $subPrimaryCustomColor: String
     $postLayout: DsbPostLayout
@@ -198,6 +199,7 @@ const updateDashboardLayout = gql`
       community: $community
       primaryColor: $primaryColor
       primaryCustomColor: $primaryCustomColor
+      primaryCustomColorDark: $primaryCustomColorDark
       subPrimaryColor: $subPrimaryColor
       subPrimaryCustomColor: $subPrimaryCustomColor
       postLayout: $postLayout

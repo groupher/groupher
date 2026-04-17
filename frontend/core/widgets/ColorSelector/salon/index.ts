@@ -7,8 +7,9 @@ export default function useSalon() {
 
   return {
     content: 'w-full px-1',
-    selectRow: 'row-center w-fit gap-x-1.5',
-    buildInWrapper: 'w-full',
+    selectRow: 'row-center gap-x-1.5',
+    buildInWrapper: 'w-fit grow',
+    customWrapper: 'w-fit',
     dotWrapper: 'align-both size-7 circle',
     dot: cn('size-5.5 circle align-both pointer trans-all-100', 'hover:-mt-0.5'),
     dotActive: cn(
@@ -17,6 +18,7 @@ export default function useSalon() {
       shadow('md'),
     ),
     checkIcon: cn('size-3', fill('button.fg')),
-    customBlock: 'mt-1.5 max-w-full px-1.5 pb-1.5',
+    customBlockMotion: 'overflow-hidden',
+    customBlock: 'max-w-full px-1.5 pb-1.5',
   }
 }

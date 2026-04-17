@@ -121,6 +121,24 @@ const Tooltip: FC<TProps> = ({
     }
   }, [])
 
+  useEffect(() => {
+    if (!active || !contentRef.current) return
+
+    const updatePosition = () => {
+      instanceRef.current?.popperInstance?.update()
+    }
+
+    updatePosition()
+
+    const observer = new ResizeObserver(() => {
+      updatePosition()
+    })
+
+    observer.observe(contentRef.current)
+
+    return () => observer.disconnect()
+  }, [active, content])
+
   const PopoverContent = useMemo(
     () => (
       <div

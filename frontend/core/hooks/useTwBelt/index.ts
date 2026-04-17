@@ -54,10 +54,6 @@ export default function useTwBelt(): TRet {
   const br = (key: TBorderKey | `${string}.${string}`) => keyToClass('border', key)
 
   const rainbow = (color: TColorName, prefix: TColorPrefix = 'fg'): string => {
-    if (color === COLOR.CUSTOM) {
-      return rainbow(COLOR.BLACK, prefix)
-    }
-
     const prefix$ = RAINBOW_ALIAS[prefix]
     const color$ = camelize(color)
 
@@ -73,8 +69,6 @@ export default function useTwBelt(): TRet {
   }
 
   const rainbowSoft = (color: TColorName | string): string => {
-    if (color === COLOR.CUSTOM) return `bg-rainbow-${camelize(COLOR.BLACK)}Soft`
-
     const color$ = camelize(color)
     return `bg-rainbow-${color$}Soft`
   }

@@ -7,9 +7,10 @@ export default function useSalon({ stacked }) {
 
   return {
     wrapper: cnMerge(
-      'row-center w-fit gap-x-1.5 pr-1',
-      stacked && cn('pl-1 pr-3 gap-x-0', hover('box')),
+      'row-center w-fit gap-x-1 pr-1',
+      stacked && cn('pr-3 gap-x-0 ml-0.5', hover('box')),
     ),
+    backButton: 'align-both size-4',
     dotWrapper: cnMerge('align-both size-7 circle', stacked && '-mr-2.5 size-6 scale-80'),
     dot: cn(
       'size-5.5 circle align-both pointer trans-all-100',
@@ -21,7 +22,7 @@ export default function useSalon({ stacked }) {
       primary('borderSoft'),
       shadow('md'),
     ),
-    backIcon: cn('size-4', fill('button.fg')),
+    backIcon: cn('size-4 pointer', fill('button.fg')),
     checkIcon: cn('size-3', fill('button.fg')),
     customBlock: 'mt-1.5 px-1.5 pb-1.5',
     customTitle: cn('mb-2 text-base opacity-65', fg('digest')),

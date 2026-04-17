@@ -7,6 +7,7 @@ import { I18N_NS } from '~/i18n/namespaces'
 import MainProvider from '~/stores/provider'
 import { isDsbDemoMode } from '~/utils/dsb-demo'
 import { getMetadata } from '~/utils/ssr'
+import { injectDsbColors } from '~/utils/ssr/script'
 import Client from './Client'
 
 const parseLocale = (lang?: string | string[]) => {
@@ -32,17 +33,25 @@ export default async ({ children, params, searchParams }) => {
   ])
 
   return (
-    <MainProvider
-      initData={{ community, dashboard }}
-      locale={locale}
-      metric={METRIC.DASHBOARD}
-      localeData={JSON.stringify(localeData)}
-    >
-      <GraphQLProvider>
-        <GlobalProvider>
-          <Client demoMode={isDemoMode}>{children}</Client>
-        </GlobalProvider>
-      </GraphQLProvider>
-    </MainProvider>
+    <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: injectDsbColors(dashboard),
+        }}
+      />
+
+      <MainProvider
+        initData={{ community, dashboard }}
+        locale={locale}
+        metric={METRIC.DASHBOARD}
+        localeData={JSON.stringify(localeData)}
+      >
+        <GraphQLProvider>
+          <GlobalProvider>
+            <Client demoMode={isDemoMode}>{children}</Client>
+          </GlobalProvider>
+        </GraphQLProvider>
+      </MainProvider>
+    </>
   )
 }

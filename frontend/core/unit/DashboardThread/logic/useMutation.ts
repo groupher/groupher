@@ -1,10 +1,12 @@
 import { equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
 import { useEffect, useRef } from 'react'
+import THEME from '~/const/theme'
 import { serializeKanbanBoards } from '~/const/dashboard'
 import { DSB_INFO_ROUTE } from '~/const/route'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useDsbTab from '~/hooks/useDsbTab'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
+import useTheme from '~/hooks/useTheme'
 import { toast } from '~/signal'
 import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -32,9 +34,12 @@ export default function useMutation(): TRet {
   const { mutate } = useGraphQLClient()
   const { subTab } = useDsbTab()
   const isDemoMode = useDsbDemoMode()
+  const { theme } = useTheme()
 
   const storeRef = useRef(dashboard$)
   const { slug: community } = community$
+  const primaryCustomColorField =
+    theme === THEME.DARK ? 'primaryCustomColorDark' : 'primaryCustomColor'
 
   // get latest store, for those state not in UI render cycle
   useEffect(() => {
@@ -99,6 +104,14 @@ export default function useMutation(): TRet {
         current[key] = dashboard$[key]
       }
       original = { ...dashboard$.original, ...current }
+    }
+
+    if (field === FIELD.PRIMARY_COLOR) {
+      original = {
+        ...dashboard$.original,
+        primaryColor: dashboard$.primaryColor,
+        [primaryCustomColorField]: dashboard$[primaryCustomColorField],
+      }
     }
 
     dashboard$.commit({ original })
@@ -319,6 +332,15 @@ export default function useMutation(): TRet {
     // }
 
     if (includes(field, values(LAYOUT_FIELD))) {
+      if (field === FIELD.PRIMARY_COLOR) {
+        handleMutation(S.updateDashboardLayout, {
+          community,
+          primaryColor: storeRef.current.primaryColor,
+          [primaryCustomColorField]: storeRef.current[primaryCustomColorField],
+        })
+        return
+      }
+
       if (field === FIELD.KANBAN_BOARDS) {
         handleMutation(S.updateDashboardLayout, {
           community,

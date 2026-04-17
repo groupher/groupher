@@ -67,6 +67,7 @@ export type TDsb = {
     brandLayout: TBrandLayout
     primaryColor: TColorName
     primaryCustomColor: string
+    primaryCustomColorDark: string
     subPrimaryColor: TColorName
     subPrimaryCustomColor: string
     topbarEnabled: boolean

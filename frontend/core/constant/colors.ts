@@ -1,4 +1,5 @@
 import THEME from '~/const/theme'
+import type { TThemeName } from '~/spec'
 
 export const COLOR = {
   BLACK: 'BLACK',
@@ -15,6 +16,15 @@ export const COLOR = {
   PURPLE: 'PURPLE',
   CUSTOM: 'CUSTOM',
 } as const
+
+export const DEFAULT_CUSTOM_COLOR = {
+  [THEME.LIGHT]: '#333333',
+  [THEME.DARK]: '#ffff',
+} as const
+
+export const getDefaultCustomColor = (theme: TThemeName): string => {
+  return DEFAULT_CUSTOM_COLOR[theme]
+}
 
 export const STACKED_COLOR = {
   RED: 'RED',
