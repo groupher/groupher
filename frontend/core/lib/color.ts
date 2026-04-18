@@ -86,8 +86,7 @@ const rgbToHsl = (r: number, g: number, b: number): [number, number, number] => 
     return [0, 0, lightness * 100]
   }
 
-  const saturation =
-    lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min)
+  const saturation = lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min)
 
   let hue = 0
   switch (max) {
@@ -198,8 +197,7 @@ export const getPageBgCustomColor = (
 ): string => {
   const safeHue = normalizePageBgHue(hue)
   const safeIntensity = normalizePageBgIntensity(intensity)
-  const tintColor =
-    theme === THEME.DARK ? hslToRgb(safeHue, 78, 58) : hslToRgb(safeHue, 88, 64)
+  const tintColor = theme === THEME.DARK ? hslToRgb(safeHue, 78, 58) : hslToRgb(safeHue, 88, 64)
 
   if (theme === THEME.DARK) {
     const mixed = mixRgb([12, 16, 24], tintColor, getDarkPageBgTintRatio(safeIntensity))
@@ -233,9 +231,7 @@ export const getPageBgCustomParamsFromHex = (
     if (!nextRgb) continue
 
     const distance =
-      (rgb[0] - nextRgb[0]) ** 2 +
-      (rgb[1] - nextRgb[1]) ** 2 +
-      (rgb[2] - nextRgb[2]) ** 2
+      (rgb[0] - nextRgb[0]) ** 2 + (rgb[1] - nextRgb[1]) ** 2 + (rgb[2] - nextRgb[2]) ** 2
 
     if (distance < bestDistance) {
       bestDistance = distance

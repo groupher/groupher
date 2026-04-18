@@ -34,11 +34,7 @@ const SOLARIZED_PAGE_BG = {
   [THEME.DARK]: 'solarized dark',
 } as const
 
-const resolveInitialPreset = (
-  current: string,
-  original: string,
-  fallback: string,
-): string => {
+const resolveInitialPreset = (current: string, original: string, fallback: string): string => {
   if (current !== COLOR.CUSTOM) return current
   if (original !== COLOR.CUSTOM) return original
   return fallback

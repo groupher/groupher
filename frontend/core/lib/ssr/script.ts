@@ -1,10 +1,6 @@
 import { COLOR, getDefaultCustomColor } from '~/const/colors'
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
-import {
-  getPageBgCustomColor,
-  normalizePageBgHue,
-  normalizePageBgIntensity,
-} from '~/lib/color'
+import { getPageBgCustomColor, normalizePageBgHue, normalizePageBgIntensity } from '~/lib/color'
 import type { TParseDashboard } from '~/spec'
 
 export const ssrThemeInitScript = () => `
