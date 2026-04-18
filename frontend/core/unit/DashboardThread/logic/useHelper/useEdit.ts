@@ -57,6 +57,30 @@ export default function useEdit(): TRet {
       return
     }
 
+    if (field === FIELD.PAGE_BG) {
+      dsb$.commit({
+        pageBg: dsb$.original.pageBg,
+        pageCustomBg: dsb$.original.pageCustomBg,
+        pageCustomIntensity: dsb$.original.pageCustomIntensity,
+        pageBgDark: dsb$.original.pageBgDark,
+        pageCustomBgDark: dsb$.original.pageCustomBgDark,
+        pageCustomIntensityDark: dsb$.original.pageCustomIntensityDark,
+      })
+      return
+    }
+
+    if (field === FIELD.PAGE_BG_DARK) {
+      dsb$.commit({
+        pageBg: dsb$.original.pageBg,
+        pageCustomBg: dsb$.original.pageCustomBg,
+        pageCustomIntensity: dsb$.original.pageCustomIntensity,
+        pageBgDark: dsb$.original.pageBgDark,
+        pageCustomBgDark: dsb$.original.pageCustomBgDark,
+        pageCustomIntensityDark: dsb$.original.pageCustomIntensityDark,
+      })
+      return
+    }
+
     if (field === FIELD.SUB_PRIMARY_COLOR) {
       dsb$.commit({
         subPrimaryColor: dsb$.original.subPrimaryColor,

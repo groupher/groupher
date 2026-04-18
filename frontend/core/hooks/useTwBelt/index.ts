@@ -38,9 +38,17 @@ export default function useTwBelt(): TRet {
   const metricLower = metric.toLowerCase()
   const containerClass = `container-${metricLower}`
 
+  const resolvePageClass = (value: string, mode: 'light' | 'dark') => {
+    if (value === COLOR.CUSTOM) {
+      return mode === 'light' ? 'page-customLight' : 'page-customDark'
+    }
+
+    return `page-${camelize(value)}`
+  }
+
   // keep your page-bg strategy (no flash)
-  const pageLightClass = `page-${camelize(pageBg)}`
-  const pageDarkClass = `page-${camelize(pageBgDark)}`
+  const pageLightClass = resolvePageClass(pageBg, 'light')
+  const pageDarkClass = resolvePageClass(pageBgDark, 'dark')
 
   /**
    * ✅ New token scheme:

@@ -12,6 +12,7 @@ import {
   ColorSlider,
   ColorThumb,
   Input,
+  parseColor,
   SliderTrack,
 } from 'react-aria-components'
 
@@ -25,6 +26,7 @@ type TProps = {
 
 const ColorSelectorPicker: FC<TProps> = ({ color, onChange }) => {
   const s = useSalon()
+  const thumbColor = parseColor(color).toString('hex')
 
   return (
     <div className={s.wrapper}>
@@ -45,12 +47,14 @@ const ColorSelectorPicker: FC<TProps> = ({ color, onChange }) => {
             <ColorThumb className={s.colorAreaThumb} />
           </ColorArea>
 
-          <ColorSlider className={s.slider} colorSpace='hsb' channel='hue'>
+          <ColorSlider
+            className={s.slider}
+            colorSpace='hsb'
+            channel='hue'
+            style={{ ['--thumb-color' as string]: thumbColor }}
+          >
             <SliderTrack className={s.sliderTrack}>
-              <ColorThumb
-                className={s.colorSliderThumb}
-                style={{ top: '50%', transform: 'translate(-50%, -50%)' }}
-              />
+              <ColorThumb className={s.colorSliderThumb} />
             </SliderTrack>
           </ColorSlider>
 

@@ -69,6 +69,10 @@ export type TDsbFieldMap = {
   // page
   pageBg: string
   pageBgDark: string
+  pageCustomBg: number
+  pageCustomBgDark: number
+  pageCustomIntensity: number
+  pageCustomIntensityDark: number
 
   // seo
   seoEnable: boolean

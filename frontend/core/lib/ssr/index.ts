@@ -110,8 +110,6 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     headerLinks,
     footerLinks,
     mediaReports,
-    pageBg,
-    pageBgDark,
   } = dashboard
 
   const fieldsObj = removeEmptyValuesFromObject({
@@ -128,8 +126,8 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     footerLinks,
     moderators,
     mediaReports,
-    pageBg: pageBg || PAGE_BG_DEFAULT[THEME.LIGHT],
-    pageBgDark: pageBgDark || PAGE_BG_DEFAULT[THEME.DARK],
+    pageBg: layout?.pageBg || PAGE_BG_DEFAULT[THEME.LIGHT],
+    pageBgDark: layout?.pageBgDark || PAGE_BG_DEFAULT[THEME.DARK],
   }) as Partial<TParseDashboard>
 
   if (layout?.kanbanBoards?.length) {

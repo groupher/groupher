@@ -19,7 +19,7 @@ export default function Dark() {
   const { gaussBlurDark, saving, isDarkTouched: isTouched, edit } = useGaussBlur()
   const { wallpaper, background } = useWallpaper()
 
-  const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
+  const pageBg = useCSSVar(PAGE_BG_CSS_KEY, [gaussBlurDark], { selector: 'main' })
   const bgColor = `${blurRGB(pageBg, gaussBlurDark)}`
 
   return (

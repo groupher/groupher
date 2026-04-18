@@ -1,5 +1,5 @@
 import { getCSSVar } from '~/css'
-import { camelize, titleCaseHM, upperSnakeCase } from '~/fmt'
+import { camelize, titleCaseHM } from '~/fmt'
 import useDidMount from '~/hooks/useDidMount'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
@@ -9,6 +9,7 @@ import usePageBg from '../../logic/usePageBg'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cn } from '../../salon/layout/page_background'
+import CustomBackground from './CustomBackground'
 
 export default function PageBackground() {
   const { rawBg, edit, isTouched, isDarkTouched, saving } = usePageBg()
@@ -42,7 +43,7 @@ export default function PageBackground() {
                 className={cn(s.block, `rotate-${s.rotateAngle[index]}`, active && s.blockActive)}
                 aria-pressed={active}
                 onClick={() => {
-                  edit(upperSnakeCase(bg), isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK)
+                  edit(bg, isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK)
                 }}
               >
                 <div className={cn(s.blockInner, s.getPageClass(pageName))}>
@@ -56,6 +57,8 @@ export default function PageBackground() {
             )
           })}
       </div>
+
+      <CustomBackground />
 
       {isLightTheme ? (
         <SavingBar isTouched={isTouched} field={FIELD.PAGE_BG} loading={saving} top={10} left={1} />

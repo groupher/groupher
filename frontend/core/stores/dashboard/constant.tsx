@@ -24,6 +24,7 @@ import {
 import SIZE from '~/const/size'
 import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
+import { PAGE_CUSTOM_HUE_DEFAULT, PAGE_CUSTOM_INTENSITY_DEFAULT } from '~/lib/color'
 import type { TDsbFieldMap } from './spec'
 
 export const DEFAULT_OVERVIEW = {
@@ -65,6 +66,10 @@ export const FIELDS: TDsbFieldMap = {
   // page
   pageBg: PAGE_BG_DEFAULT[THEME.LIGHT],
   pageBgDark: PAGE_BG_DEFAULT[THEME.DARK],
+  pageCustomBg: PAGE_CUSTOM_HUE_DEFAULT,
+  pageCustomBgDark: PAGE_CUSTOM_HUE_DEFAULT,
+  pageCustomIntensity: PAGE_CUSTOM_INTENSITY_DEFAULT,
+  pageCustomIntensityDark: PAGE_CUSTOM_INTENSITY_DEFAULT,
 
   // seo
   seoEnable: true,

@@ -106,6 +106,12 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   # note: write kanban_bg_colors schema/graphql rules by itself
   def macro_schema(:layout) do
     [
+      [:page_bg, :string, "pure white"],
+      [:page_bg_dark, :string, "outer space"],
+      [:page_custom_bg, :integer, 190],
+      [:page_custom_bg_dark, :integer, 190],
+      [:page_custom_intensity, :integer, 100],
+      [:page_custom_intensity_dark, :integer, 100],
       [:primary_color, :rainbow_color, :black],
       [:primary_custom_color, :string, ""],
       [:primary_custom_color_dark, :string, ""],

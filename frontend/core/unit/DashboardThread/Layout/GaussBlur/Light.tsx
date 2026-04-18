@@ -20,7 +20,7 @@ export default function Light() {
   const { wallpaper, background } = useWallpaper()
   const { gaussBlur, saving, isTouched, edit } = useGaussBlur()
 
-  const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
+  const pageBg = useCSSVar(PAGE_BG_CSS_KEY, [gaussBlur], { selector: 'main' })
   const bgColor = `${blurRGB(pageBg, gaussBlur)}`
 
   return (

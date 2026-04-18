@@ -32,6 +32,9 @@ html[data-theme="light"] {
   .page-todo2 {
     --color-pageBg: var(--color-page-todo2);
   }
+  .page-customLight {
+    --color-pageBg: var(--color-page-custom-light);
+  }
 }
 
 html[data-theme="dark"] {
@@ -82,5 +85,8 @@ html[data-theme="dark"] {
   }
   .page-arsenic {
     --color-pageBg: var(--color-page-arsenic);
+  }
+  .page-customDark {
+    --color-pageBg: var(--color-page-custom-dark);
   }
 }

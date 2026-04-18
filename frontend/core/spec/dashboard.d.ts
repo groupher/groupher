@@ -65,6 +65,12 @@ export type TDsb = {
 
   layout?: {
     brandLayout: TBrandLayout
+    pageBg: string
+    pageBgDark: string
+    pageCustomBg: number
+    pageCustomBgDark: number
+    pageCustomIntensity: number
+    pageCustomIntensityDark: number
     primaryColor: TColorName
     primaryCustomColor: string
     primaryCustomColorDark: string
@@ -111,9 +117,6 @@ export type TDsb = {
     homepage?: string
   }
   mediaReports?: readonly TMediaReport[]
-
-  pageBg?: string
-  pageBgDark?: string
 }
 
 export type TParseDashboard = TDsbFieldMap & {

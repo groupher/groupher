@@ -1,7 +1,9 @@
 'use client'
 
 import { type CSSProperties, type FC, type ReactNode, useEffect } from 'react'
-import { getDefaultCustomColor } from '~/const/colors'
+import { COLOR, getDefaultCustomColor } from '~/const/colors'
+import THEME from '~/const/theme'
+import { getPageBgCustomColor } from '~/lib/color'
 import useDashboard from '~/stores/dashboard/hooks'
 
 type TProps = {
@@ -11,6 +13,12 @@ type TProps = {
 const DashboardThemeScope: FC<TProps> = ({ children }) => {
   const {
     primaryColor,
+    pageBg,
+    pageBgDark,
+    pageCustomBg,
+    pageCustomBgDark,
+    pageCustomIntensity,
+    pageCustomIntensityDark,
     primaryCustomColor,
     primaryCustomColorDark,
     subPrimaryCustomColor,
@@ -21,6 +29,14 @@ const DashboardThemeScope: FC<TProps> = ({ children }) => {
 
   useEffect(() => {
     const root = document.documentElement
+    const lightPageBg =
+      pageBg === COLOR.CUSTOM
+        ? getPageBgCustomColor(THEME.LIGHT, pageCustomBg, pageCustomIntensity)
+        : 'transparent'
+    const darkPageBg =
+      pageBgDark === COLOR.CUSTOM
+        ? getPageBgCustomColor(THEME.DARK, pageCustomBgDark, pageCustomIntensityDark)
+        : 'transparent'
 
     root.style.setProperty('--color-primary-custom', primaryCustomColor || lightDefault)
     root.style.setProperty('--color-primary-custom-dark', primaryCustomColorDark || darkDefault)
@@ -29,9 +45,17 @@ const DashboardThemeScope: FC<TProps> = ({ children }) => {
       '--color-sub-primary-custom-dark',
       subPrimaryCustomColorDark || darkDefault,
     )
+    root.style.setProperty('--color-page-custom-light', lightPageBg)
+    root.style.setProperty('--color-page-custom-dark', darkPageBg)
   }, [
     darkDefault,
     lightDefault,
+    pageBg,
+    pageBgDark,
+    pageCustomBg,
+    pageCustomBgDark,
+    pageCustomIntensity,
+    pageCustomIntensityDark,
     primaryCustomColor,
     primaryCustomColorDark,
     subPrimaryCustomColor,
@@ -39,6 +63,14 @@ const DashboardThemeScope: FC<TProps> = ({ children }) => {
   ])
 
   const style = {
+    '--color-page-custom-light':
+      pageBg === COLOR.CUSTOM
+        ? getPageBgCustomColor(THEME.LIGHT, pageCustomBg, pageCustomIntensity)
+        : 'transparent',
+    '--color-page-custom-dark':
+      pageBgDark === COLOR.CUSTOM
+        ? getPageBgCustomColor(THEME.DARK, pageCustomBgDark, pageCustomIntensityDark)
+        : 'transparent',
     '--color-primary-custom': primaryCustomColor || lightDefault,
     '--color-primary-custom-dark': primaryCustomColorDark || darkDefault,
     '--color-sub-primary-custom': subPrimaryCustomColor || lightDefault,

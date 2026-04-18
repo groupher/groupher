@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
+import { PAGE_BG_CSS_KEY } from '~/const/colors'
 import { blurRGB } from '~/fmt'
+import useCSSVar from '~/hooks/useCssVar'
 import useGaussBlur from '~/hooks/useGaussBlur'
 import useTheme from '~/hooks/useTheme'
-import useTwBelt from '~/hooks/useTwBelt'
+import useDashboard from '~/stores/dashboard/hooks'
 
 type TRes = {
   background: string
@@ -10,26 +12,35 @@ type TRes = {
 }
 
 export default function usePageBg(): TRes {
-  const { page } = useTwBelt()
   const { isLightTheme } = useTheme()
-
+  const {
+    pageBg,
+    pageBgDark,
+    pageCustomBg,
+    pageCustomBgDark,
+    pageCustomIntensity,
+    pageCustomIntensityDark,
+  } = useDashboard()
   const gaussBlur = useGaussBlur()
-  const pageBg = page()
+  const rawBg = useCSSVar(
+    PAGE_BG_CSS_KEY,
+    [
+      pageBg,
+      pageBgDark,
+      pageCustomBg,
+      pageCustomBgDark,
+      pageCustomIntensity,
+      pageCustomIntensityDark,
+      gaussBlur,
+      isLightTheme,
+    ],
+    { selector: 'main' },
+  )
 
-  const [rawBg, setRawBg] = useState<string>(null)
-  const [background, setBackground] = useState<string>(null)
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    const mainEl = document.querySelector('main')
-    if (!mainEl) return
-
-    const style = getComputedStyle(mainEl)
-    const pageBg = style.getPropertyValue('--color-pageBg').trim()
-
-    setRawBg(pageBg)
-    setBackground(blurRGB(pageBg, gaussBlur))
-  }, [gaussBlur, pageBg, isLightTheme])
+  const background = useMemo(() => {
+    if (!rawBg) return null
+    return blurRGB(rawBg, gaussBlur)
+  }, [rawBg, gaussBlur])
 
   return { background, rawBg }
 }

@@ -11,6 +11,12 @@ export const ALIGN_HEADER_OFFSET = '100px'
 
 // do not change, it's map to GQ endpoint updateDashboardLayout
 export const LAYOUT_FIELD = {
+  PAGE_BG: 'pageBg',
+  PAGE_BG_DARK: 'pageBgDark',
+  PAGE_CUSTOM_BG: 'pageCustomBg',
+  PAGE_CUSTOM_BG_DARK: 'pageCustomBgDark',
+  PAGE_CUSTOM_INTENSITY: 'pageCustomIntensity',
+  PAGE_CUSTOM_INTENSITY_DARK: 'pageCustomIntensityDark',
   PRIMARY_COLOR: 'primaryColor',
   SUB_PRIMARY_COLOR: 'subPrimaryColor',
   POST_LAYOUT: 'postLayout',
@@ -66,8 +72,12 @@ export const FIELD = {
   GLOW_TYPE: 'glowType',
   GLOW_FIXED: 'glowFixed',
   GLOW_OPACITY: 'glowOpacity',
-  PAGE_BG: 'pageBg',
-  PAGE_BG_DARK: 'pageBgDark',
+  PAGE_BG: LAYOUT_FIELD.PAGE_BG,
+  PAGE_BG_DARK: LAYOUT_FIELD.PAGE_BG_DARK,
+  PAGE_CUSTOM_BG: LAYOUT_FIELD.PAGE_CUSTOM_BG,
+  PAGE_CUSTOM_BG_DARK: LAYOUT_FIELD.PAGE_CUSTOM_BG_DARK,
+  PAGE_CUSTOM_INTENSITY: LAYOUT_FIELD.PAGE_CUSTOM_INTENSITY,
+  PAGE_CUSTOM_INTENSITY_DARK: LAYOUT_FIELD.PAGE_CUSTOM_INTENSITY_DARK,
   BROADCAST_ENABLE: 'broadcastEnable',
 } as const
 

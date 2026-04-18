@@ -258,6 +258,11 @@ export default {
   'dsb.layout.primary_color.hint': 'Used for buttons, active tabs, and menu highlights.',
   'dsb.layout.page_background.title': 'Page background',
   'dsb.layout.page_background.desc': 'Set the main page background color. Reference',
+  'dsb.layout.page_background.custom.toggle': 'Use custom background color',
+  'dsb.layout.page_background.custom.hue': 'Hue',
+  'dsb.layout.page_background.custom.hue_desc': 'Choose a tint color',
+  'dsb.layout.page_background.custom.intensity': 'Intensity',
+  'dsb.layout.page_background.custom.intensity_desc': 'Control how strongly the tint is applied',
   'dsb.layout.float_background.title': 'Overlay appearance',
   'dsb.layout.float_background.desc':
     'Use dark overlays on light theme. Applies to tooltip/menu/popover only; not modal/drawer. Reference',

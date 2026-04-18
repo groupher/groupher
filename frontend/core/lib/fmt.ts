@@ -207,25 +207,13 @@ export const aliasGTDDoneState = (cat: TArticleCat, state: TArticleState): TTran
   }
 }
 
-const hex2RGB = (hex) => {
-  const hexValues = hex
-    .replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (_m, r, g, b) => `#${r}${r}${g}${g}${b}${b}`)
-    .substring(1)
-    .match(/.{2}/g)
-    .map((x) => Number.parseInt(x, 16))
-    .join(' ')
-
-  return hexValues
-}
-
 /**
  * convert hex color to global gauss blur if need
  */
-export const blurRGB = (hex, blur = 100) => {
-  if (hex === '') return '#fff'
-  if (!blur || blur === 100) return hex
-
-  return `rgb(${hex2RGB(hex)} / ${blur}%)`
+export const blurRGB = (color, blur = 100) => {
+  if (color === '') return '#fff'
+  if (!blur || blur === 100) return color
+  return `color-mix(in srgb, ${color} ${blur}%, transparent)`
 }
 
 /**

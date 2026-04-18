@@ -116,6 +116,30 @@ export default function useMutation(): TRet {
       }
     }
 
+    if (field === FIELD.PAGE_BG) {
+      original = {
+        ...dashboard$.original,
+        pageBg: dashboard$.pageBg,
+        pageCustomBg: dashboard$.pageCustomBg,
+        pageCustomIntensity: dashboard$.pageCustomIntensity,
+        pageBgDark: dashboard$.pageBgDark,
+        pageCustomBgDark: dashboard$.pageCustomBgDark,
+        pageCustomIntensityDark: dashboard$.pageCustomIntensityDark,
+      }
+    }
+
+    if (field === FIELD.PAGE_BG_DARK) {
+      original = {
+        ...dashboard$.original,
+        pageBg: dashboard$.pageBg,
+        pageCustomBg: dashboard$.pageCustomBg,
+        pageCustomIntensity: dashboard$.pageCustomIntensity,
+        pageBgDark: dashboard$.pageBgDark,
+        pageCustomBgDark: dashboard$.pageCustomBgDark,
+        pageCustomIntensityDark: dashboard$.pageCustomIntensityDark,
+      }
+    }
+
     if (field === FIELD.SUB_PRIMARY_COLOR) {
       original = {
         ...dashboard$.original,
@@ -342,6 +366,32 @@ export default function useMutation(): TRet {
     // }
 
     if (includes(field, values(LAYOUT_FIELD))) {
+      if (field === FIELD.PAGE_BG) {
+        handleMutation(S.updateDashboardLayout, {
+          community,
+          pageBg: storeRef.current.pageBg,
+          pageCustomBg: storeRef.current.pageCustomBg,
+          pageCustomIntensity: storeRef.current.pageCustomIntensity,
+          pageBgDark: storeRef.current.pageBgDark,
+          pageCustomBgDark: storeRef.current.pageCustomBgDark,
+          pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
+        })
+        return
+      }
+
+      if (field === FIELD.PAGE_BG_DARK) {
+        handleMutation(S.updateDashboardLayout, {
+          community,
+          pageBg: storeRef.current.pageBg,
+          pageCustomBg: storeRef.current.pageCustomBg,
+          pageCustomIntensity: storeRef.current.pageCustomIntensity,
+          pageBgDark: storeRef.current.pageBgDark,
+          pageCustomBgDark: storeRef.current.pageCustomBgDark,
+          pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
+        })
+        return
+      }
+
       if (field === FIELD.PRIMARY_COLOR) {
         handleMutation(S.updateDashboardLayout, {
           community,

@@ -245,6 +245,11 @@ export default {
   'dsb.layout.primary_color.hint': '作用于各类功能按钮，Tab 高亮，菜单高亮等品牌颜色。',
   'dsb.layout.page_background.title': '页面背景色',
   'dsb.layout.page_background.desc': '设置主页面背景色。参考',
+  'dsb.layout.page_background.custom.toggle': '使用自定义背景色',
+  'dsb.layout.page_background.custom.hue': 'Hue',
+  'dsb.layout.page_background.custom.hue_desc': '选择一个色相',
+  'dsb.layout.page_background.custom.intensity': 'Intensity',
+  'dsb.layout.page_background.custom.intensity_desc': '控制页面背景色的着色强度',
   'dsb.layout.float_background.title': '弹出层外观',
   'dsb.layout.float_background.desc':
     '浅色主题下使用深色弹出层, 仅作用于 Tooltip/Menu/Popover 等轻量弹出层，不影响 Modal/Drawer 等容器组件。参考',
