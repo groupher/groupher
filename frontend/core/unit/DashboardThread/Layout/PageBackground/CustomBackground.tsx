@@ -62,11 +62,7 @@ export default function CustomBackground({ draft, originalDraft, onDraftChange }
   const [dummyIntensity, setDummyIntensity] = useState(intensity)
   const dummyHueColor = parseColor(`hsl(${dummyHue}, 100%, 50%)`)
   const lastPresetRef = useRef({
-    light: resolveInitialPreset(
-      draft.pageBg,
-      originalDraft.pageBg,
-      PAGE_BG_DEFAULT[THEME.LIGHT],
-    ),
+    light: resolveInitialPreset(draft.pageBg, originalDraft.pageBg, PAGE_BG_DEFAULT[THEME.LIGHT]),
     dark: resolveInitialPreset(
       draft.pageBgDark,
       originalDraft.pageBgDark,
