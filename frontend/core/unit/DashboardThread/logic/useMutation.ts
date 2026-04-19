@@ -30,13 +30,14 @@ type TRet = {
 
 export default function useMutation(): TRet {
   const dashboard$ = useDashboard()
+  const liveDashboard$ = dashboard$.live$ ?? dashboard$
   const community$ = useCommunity()
   const { mutate } = useGraphQLClient()
   const { subTab } = useDsbTab()
   const isDemoMode = useDsbDemoMode()
   const { theme } = useTheme()
 
-  const storeRef = useRef(dashboard$)
+  const storeRef = useRef(liveDashboard$)
   const { slug: community } = community$
   const primaryCustomColorField =
     theme === THEME.DARK ? 'primaryCustomColorDark' : 'primaryCustomColor'
@@ -45,17 +46,17 @@ export default function useMutation(): TRet {
 
   // get latest store, for those state not in UI render cycle
   useEffect(() => {
-    storeRef.current = dashboard$
-  }, [dashboard$])
+    storeRef.current = liveDashboard$
+  }, [liveDashboard$])
 
   const _findTagIdx = (): number => {
-    const { tags, editingTag } = dashboard$
+    const { tags, editingTag } = storeRef.current
     const targetIdx = findIndex((item: TTag) => item.id === editingTag.id, tags)
     return targetIdx
   }
 
   const mergeBackEditingTag = (): TTag[] => {
-    const { editingTag, tags } = dashboard$
+    const { editingTag, tags } = storeRef.current
     const targetIdx = _findTagIdx()
 
     if (targetIdx < 0) return
@@ -66,96 +67,122 @@ export default function useMutation(): TRet {
     }
 
     // store.commit({ editingTag: null })
-    dashboard$.commit({ tags: updatedTags, editingTag: null })
+    storeRef.current.commit({ tags: updatedTags, editingTag: null })
 
     return updatedTags
   }
 
+  const normalizePageBgLayoutPatch = () => ({
+    pageBg: storeRef.current.pageBg,
+    pageCustomBg: Math.round(storeRef.current.pageCustomBg),
+    pageCustomIntensity: Math.round(storeRef.current.pageCustomIntensity),
+    pageBgDark: storeRef.current.pageBgDark,
+    pageCustomBgDark: Math.round(storeRef.current.pageCustomBgDark),
+    pageCustomIntensityDark: Math.round(storeRef.current.pageCustomIntensityDark),
+  })
+
   const applyOriginal = (field: TDsbFieldKey | null): void => {
     if (!field) return
 
+    const current = storeRef.current
     console.log('## done field: ', field)
-    let original = { ...dashboard$.original, [field]: dashboard$[field] }
+    let original = { ...current.original, [field]: current[field] }
 
     if (field === FIELD.TAG_INDEX) {
-      original = { ...dashboard$.original, tags: dashboard$.tags }
+      original = { ...current.original, tags: current.tags }
     }
 
     if (includes(field, [FIELD.FAQ_SECTION_ADD, FIELD.FAQ_SECTION_DELETE])) {
-      original = { ...dashboard$.original, faqSections: dashboard$.faqSections }
+      original = { ...current.original, faqSections: current.faqSections }
     }
 
     if (field === FIELD.BASE_INFO) {
       const current = {}
 
       for (const key of BASEINFO_KEYS) {
-        current[key] = dashboard$[key]
+        current[key] = storeRef.current[key]
       }
-      original = { ...dashboard$.original, ...current }
+      original = { ...storeRef.current.original, ...current }
     }
 
     if (field === FIELD.TAG) {
       const updatedTags = mergeBackEditingTag()
-      original = { ...dashboard$.original, tags: updatedTags }
+      original = { ...storeRef.current.original, tags: updatedTags }
     }
 
     if (field === FIELD.SEO) {
       const current = {}
 
       for (const key of SEO_KEYS) {
-        current[key] = dashboard$[key]
+        current[key] = storeRef.current[key]
       }
-      original = { ...dashboard$.original, ...current }
+      original = { ...storeRef.current.original, ...current }
     }
 
     if (field === FIELD.PRIMARY_COLOR) {
       original = {
-        ...dashboard$.original,
-        primaryColor: dashboard$.primaryColor,
-        [primaryCustomColorField]: dashboard$[primaryCustomColorField],
+        ...storeRef.current.original,
+        primaryColor: storeRef.current.primaryColor,
+        [primaryCustomColorField]: storeRef.current[primaryCustomColorField],
       }
     }
 
     if (field === FIELD.PAGE_BG) {
       original = {
-        ...dashboard$.original,
-        pageBg: dashboard$.pageBg,
-        pageCustomBg: dashboard$.pageCustomBg,
-        pageCustomIntensity: dashboard$.pageCustomIntensity,
-        pageBgDark: dashboard$.pageBgDark,
-        pageCustomBgDark: dashboard$.pageCustomBgDark,
-        pageCustomIntensityDark: dashboard$.pageCustomIntensityDark,
+        ...storeRef.current.original,
+        pageBg: storeRef.current.pageBg,
+        pageCustomBg: storeRef.current.pageCustomBg,
+        pageCustomIntensity: storeRef.current.pageCustomIntensity,
+        pageBgDark: storeRef.current.pageBgDark,
+        pageCustomBgDark: storeRef.current.pageCustomBgDark,
+        pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
       }
     }
 
     if (field === FIELD.PAGE_BG_DARK) {
       original = {
-        ...dashboard$.original,
-        pageBg: dashboard$.pageBg,
-        pageCustomBg: dashboard$.pageCustomBg,
-        pageCustomIntensity: dashboard$.pageCustomIntensity,
-        pageBgDark: dashboard$.pageBgDark,
-        pageCustomBgDark: dashboard$.pageCustomBgDark,
-        pageCustomIntensityDark: dashboard$.pageCustomIntensityDark,
+        ...storeRef.current.original,
+        pageBg: storeRef.current.pageBg,
+        pageCustomBg: storeRef.current.pageCustomBg,
+        pageCustomIntensity: storeRef.current.pageCustomIntensity,
+        pageBgDark: storeRef.current.pageBgDark,
+        pageCustomBgDark: storeRef.current.pageCustomBgDark,
+        pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
       }
     }
 
     if (field === FIELD.SUB_PRIMARY_COLOR) {
       original = {
-        ...dashboard$.original,
-        subPrimaryColor: dashboard$.subPrimaryColor,
-        [subPrimaryCustomColorField]: dashboard$[subPrimaryCustomColorField],
+        ...storeRef.current.original,
+        subPrimaryColor: storeRef.current.subPrimaryColor,
+        [subPrimaryCustomColorField]: storeRef.current[subPrimaryCustomColorField],
       }
     }
 
-    dashboard$.commit({ original })
+    storeRef.current.commit({ original })
   }
 
   const _handleDone = (fieldOverride?: TDsbFieldKey): void => {
     const field = fieldOverride ?? storeRef.current.savingField
     applyOriginal(field)
     // avoid page component jump caused by saving state
-    setTimeout(() => dashboard$.commit({ saving: false, savingField: null }), 800)
+    setTimeout(() => storeRef.current.commit({ saving: false, savingField: null }), 800)
+  }
+
+  const revalidateCommunityCache = async () => {
+    if (!community) return
+
+    try {
+      await fetch('/api/revalidate/community', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ community }),
+      })
+    } catch (error) {
+      console.error('## revalidate community cache error: ', error)
+    }
   }
 
   /**
@@ -164,9 +191,10 @@ export default function useMutation(): TRet {
    */
   const handleMutation = (schema, params, okCb = null) => {
     mutate(schema, params)
-      .then((data) => {
+      .then(async (data) => {
         toast('设置已保存')
         if (okCb) okCb(data)
+        await revalidateCommunityCache()
         _handleDone()
       })
       .catch((err) => {
@@ -369,12 +397,7 @@ export default function useMutation(): TRet {
       if (field === FIELD.PAGE_BG) {
         handleMutation(S.updateDashboardLayout, {
           community,
-          pageBg: storeRef.current.pageBg,
-          pageCustomBg: storeRef.current.pageCustomBg,
-          pageCustomIntensity: storeRef.current.pageCustomIntensity,
-          pageBgDark: storeRef.current.pageBgDark,
-          pageCustomBgDark: storeRef.current.pageCustomBgDark,
-          pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
+          ...normalizePageBgLayoutPatch(),
         })
         return
       }
@@ -382,12 +405,7 @@ export default function useMutation(): TRet {
       if (field === FIELD.PAGE_BG_DARK) {
         handleMutation(S.updateDashboardLayout, {
           community,
-          pageBg: storeRef.current.pageBg,
-          pageCustomBg: storeRef.current.pageCustomBg,
-          pageCustomIntensity: storeRef.current.pageCustomIntensity,
-          pageBgDark: storeRef.current.pageBgDark,
-          pageCustomBgDark: storeRef.current.pageCustomBgDark,
-          pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
+          ...normalizePageBgLayoutPatch(),
         })
         return
       }

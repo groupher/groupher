@@ -170,7 +170,7 @@ export const normalizePageBgHue = (value?: number | null): number => {
     return PAGE_CUSTOM_HUE_DEFAULT
   }
 
-  return clamp(Math.round(value), 0, 360)
+  return clamp(value, 0, 360)
 }
 
 export const normalizePageBgIntensity = (value?: number | null): number => {
@@ -178,7 +178,7 @@ export const normalizePageBgIntensity = (value?: number | null): number => {
     return PAGE_CUSTOM_INTENSITY_DEFAULT
   }
 
-  return clamp(Math.round(value), 0, 100)
+  return clamp(value, 0, 100)
 }
 
 export const getHueFromHexColor = (hex: string, fallback = PAGE_CUSTOM_HUE_DEFAULT): number => {

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { PAGE_BG_CSS_KEY } from '~/const/colors'
+import { COLOR, PAGE_BG_COLOR_HEX } from '~/const/colors'
 import { blurRGB } from '~/fmt'
-import useCSSVar from '~/hooks/useCssVar'
+import { getPageBgCustomColor } from '~/lib/color'
 import useGaussBlur from '~/hooks/useGaussBlur'
 import useTheme from '~/hooks/useTheme'
 import useDashboard from '~/stores/dashboard/hooks'
@@ -22,20 +22,24 @@ export default function usePageBg(): TRes {
     pageCustomIntensityDark,
   } = useDashboard()
   const gaussBlur = useGaussBlur()
-  const rawBg = useCSSVar(
-    PAGE_BG_CSS_KEY,
-    [
-      pageBg,
-      pageBgDark,
-      pageCustomBg,
-      pageCustomBgDark,
-      pageCustomIntensity,
-      pageCustomIntensityDark,
-      gaussBlur,
-      isLightTheme,
-    ],
-    { selector: 'main' },
-  )
+  const rawBg = useMemo(() => {
+    const currentPageBg = isLightTheme ? pageBg : pageBgDark
+    if (currentPageBg === COLOR.CUSTOM) {
+      return isLightTheme
+        ? getPageBgCustomColor('light', pageCustomBg, pageCustomIntensity)
+        : getPageBgCustomColor('dark', pageCustomBgDark, pageCustomIntensityDark)
+    }
+
+    return PAGE_BG_COLOR_HEX[currentPageBg] || ''
+  }, [
+    isLightTheme,
+    pageBg,
+    pageBgDark,
+    pageCustomBg,
+    pageCustomBgDark,
+    pageCustomIntensity,
+    pageCustomIntensityDark,
+  ])
 
   const background = useMemo(() => {
     if (!rawBg) return null
