@@ -19,8 +19,12 @@ export default function usePageBg(): TRet {
 
   const { saving } = dsb$
 
-  const isTouched = isChanged('pageBg')
-  const isDarkTouched = isChanged('pageBgDark')
+  const lightTouched =
+    isChanged('pageBg') || isChanged('pageCustomBg') || isChanged('pageCustomIntensity')
+  const darkTouched =
+    isChanged('pageBgDark') || isChanged('pageCustomBgDark') || isChanged('pageCustomIntensityDark')
+  const isTouched = lightTouched || darkTouched
+  const isDarkTouched = isTouched
 
   return {
     rawBg,

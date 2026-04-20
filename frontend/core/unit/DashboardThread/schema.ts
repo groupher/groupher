@@ -160,6 +160,12 @@ const updateDashboardEnable = gql`
 const updateDashboardLayout = gql`
   mutation (
     $community: String!
+    $pageBg: String
+    $pageBgDark: String
+    $pageCustomBg: Int
+    $pageCustomBgDark: Int
+    $pageCustomIntensity: Int
+    $pageCustomIntensityDark: Int
     $primaryColor: RainbowColor
     $primaryCustomColor: String
     $primaryCustomColorDark: String
@@ -198,6 +204,12 @@ const updateDashboardLayout = gql`
   ) {
     updateDashboardLayout(
       community: $community
+      pageBg: $pageBg
+      pageBgDark: $pageBgDark
+      pageCustomBg: $pageCustomBg
+      pageCustomBgDark: $pageCustomBgDark
+      pageCustomIntensity: $pageCustomIntensity
+      pageCustomIntensityDark: $pageCustomIntensityDark
       primaryColor: $primaryColor
       primaryCustomColor: $primaryCustomColor
       primaryCustomColorDark: $primaryCustomColorDark

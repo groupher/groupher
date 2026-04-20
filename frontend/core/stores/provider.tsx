@@ -8,7 +8,7 @@ import DashboardStoreProvider from '~/stores/dashboard/provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
-import DashboardThemeScope from './DashboardThemeScope'
+import CustomThemeScope from './CustomThemeScope'
 
 type TProps = {
   children: React.ReactNode
@@ -42,7 +42,7 @@ const MainProvider: FC<TProps> = ({
           <CommunityStoreProvider initData={community}>
             <DashboardStoreProvider initData={{ ...dashboard, metric, now }}>
               <WallpaperStoreProvider>
-                <DashboardThemeScope>{children}</DashboardThemeScope>
+                <CustomThemeScope>{children}</CustomThemeScope>
               </WallpaperStoreProvider>
             </DashboardStoreProvider>
           </CommunityStoreProvider>

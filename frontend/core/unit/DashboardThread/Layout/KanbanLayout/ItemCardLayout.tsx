@@ -82,12 +82,7 @@ export default function ItemCardLayout() {
   const s = useSalon()
   const { t } = useTrans()
 
-  const {
-    kanbanCardLayout: cardLayout,
-    isKanbanCardLayoutTouched: isTouched,
-    saving,
-    edit,
-  } = useKanban()
+  const { kanbanCardLayout: cardLayout, isKanbanCardLayoutTouched: isTouched, edit } = useKanban()
 
   return (
     <div className={s.wrapper}>
@@ -118,7 +113,7 @@ export default function ItemCardLayout() {
         })}
       </div>
 
-      <SavingBar isTouched={isTouched} field={FIELD.KANBAN_CARD_LAYOUT} loading={saving} top={10} />
+      <SavingBar isTouched={isTouched} field={FIELD.KANBAN_CARD_LAYOUT} top={10} />
     </div>
   )
 }

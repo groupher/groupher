@@ -36,7 +36,7 @@ export default function InlineTagLayout() {
   const s = useSalon()
   const { t } = useTrans()
 
-  const { edit, inlineTagLayout, inlineTagLayoutTouched: isTouched, saving } = useTags()
+  const { edit, inlineTagLayout, inlineTagLayoutTouched: isTouched } = useTags()
 
   return (
     <div className={s.wrapper}>
@@ -67,7 +67,7 @@ export default function InlineTagLayout() {
           )
         })}
       </div>
-      <SavingBar isTouched={isTouched} field={FIELD.INLINE_TAG_LAYOUT} loading={saving} top={10} />
+      <SavingBar isTouched={isTouched} field={FIELD.INLINE_TAG_LAYOUT} top={10} />
     </div>
   )
 }

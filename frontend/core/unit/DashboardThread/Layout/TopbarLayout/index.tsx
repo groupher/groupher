@@ -27,7 +27,7 @@ export default function TopbarLayout() {
   const { t } = useTrans()
   const { title } = useCommunity()
 
-  const { edit, enabled, isBgTouched, isLayoutTouched, saving, bg } = useTopbar()
+  const { edit, enabled, isBgTouched, isLayoutTouched, bg } = useTopbar()
   const { layout: globalLayout } = useBanner()
 
   return (
@@ -60,22 +60,11 @@ export default function TopbarLayout() {
         })}
       </div>
 
-      <SavingBar
-        isTouched={isLayoutTouched}
-        field={FIELD.TOPBAR_ENABLED}
-        loading={saving}
-        top={10}
-      />
+      <SavingBar isTouched={isLayoutTouched} field={FIELD.TOPBAR_ENABLED} top={10} />
 
       <div className='mt-8' />
       {enabled && (
-        <SavingBar
-          isTouched={isBgTouched}
-          field={FIELD.TOPBAR_BG}
-          loading={saving}
-          left={-10}
-          top={30}
-        >
+        <SavingBar isTouched={isBgTouched} field={FIELD.TOPBAR_BG} left={-10} top={30}>
           <div className={s.bgWrapper}>
             <div>{t('dsb.layout.topbar.color_label')}</div>
             <div className={s.bgLabel}>

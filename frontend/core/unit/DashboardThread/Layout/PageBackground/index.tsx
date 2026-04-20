@@ -1,23 +1,67 @@
-import { getCSSVar } from '~/css'
-import { camelize, titleCaseHM, upperSnakeCase } from '~/fmt'
+import { useMemo } from 'react'
+import { PAGE_BG_COLOR_HEX } from '~/const/colors'
+import { blurRGB, camelize, titleCaseHM } from '~/fmt'
 import useDidMount from '~/hooks/useDidMount'
+import useGaussBlur from '~/hooks/useGaussBlur'
+import useLocalDraft from '~/hooks/useLocalDraft'
+import useMainBackgroundPreview from '~/hooks/useMainBackgroundPreview'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/Check'
+import useDashboard from '~/stores/dashboard/hooks'
 import { FIELD } from '../../constant'
-import usePageBg from '../../logic/usePageBg'
+import useHelper from '../../logic/useHelper'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cn } from '../../salon/layout/page_background'
+import CustomBackground from './CustomBackground'
+import { resolveRawBg, type TPageBgDraft, usePageBgDraft } from './hooks'
 
 export default function PageBackground() {
-  const { rawBg, edit, isTouched, isDarkTouched, saving } = usePageBg()
-
+  const dsb$ = useDashboard()
+  const { onSave } = useHelper()
   const mounted = useDidMount()
-
   const s = useSalon()
   const { isLightTheme } = useTheme()
   const { t } = useTrans()
+  const gaussBlur = useGaussBlur()
+
+  const storeDraft = usePageBgDraft(dsb$)
+  const originalDraft = usePageBgDraft(dsb$.original)
+
+  const {
+    draft,
+    setDraft,
+    isTouched: activeTouched,
+    resetDraft,
+  } = useLocalDraft(storeDraft, originalDraft)
+
+  const rawBg = useMemo(() => resolveRawBg(draft, isLightTheme), [draft, isLightTheme])
+  const background = useMemo(() => {
+    if (!rawBg) return null
+    return blurRGB(rawBg, gaussBlur)
+  }, [gaussBlur, rawBg])
+
+  useMainBackgroundPreview(background)
+
+  const onDraftChange = (patch: Partial<TPageBgDraft>) => {
+    setDraft((prev) => ({ ...prev, ...patch }))
+  }
+
+  const handleConfirm = () => {
+    dsb$.live$.commit({
+      pageBg: draft.pageBg,
+      pageBgDark: draft.pageBgDark,
+      pageCustomBg: draft.pageCustomBg,
+      pageCustomBgDark: draft.pageCustomBgDark,
+      pageCustomIntensity: draft.pageCustomIntensity,
+      pageCustomIntensityDark: draft.pageCustomIntensityDark,
+    })
+
+    window.requestAnimationFrame(() => {
+      onSave(isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK)
+    })
+  }
 
   return (
     <section className={s.wrapper}>
@@ -32,7 +76,7 @@ export default function PageBackground() {
           s.bgColorNames.map((bg, index) => {
             const bgTitle = titleCaseHM(bg)
             const pageName = camelize(bg)
-            const bgVal = getCSSVar(`color-page-${pageName}`)
+            const bgVal = PAGE_BG_COLOR_HEX[bg]
             const active = rawBg === bgVal && !!rawBg
 
             return (
@@ -42,7 +86,8 @@ export default function PageBackground() {
                 className={cn(s.block, `rotate-${s.rotateAngle[index]}`, active && s.blockActive)}
                 aria-pressed={active}
                 onClick={() => {
-                  edit(upperSnakeCase(bg), isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK)
+                  const pageBgKey = isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK
+                  onDraftChange({ [pageBgKey]: bg })
                 }}
               >
                 <div className={cn(s.blockInner, s.getPageClass(pageName))}>
@@ -57,17 +102,15 @@ export default function PageBackground() {
           })}
       </div>
 
-      {isLightTheme ? (
-        <SavingBar isTouched={isTouched} field={FIELD.PAGE_BG} loading={saving} top={10} left={1} />
-      ) : (
-        <SavingBar
-          isTouched={isDarkTouched}
-          field={FIELD.PAGE_BG_DARK}
-          loading={saving}
-          top={10}
-          left={1}
-        />
-      )}
+      <CustomBackground draft={draft} originalDraft={originalDraft} onDraftChange={onDraftChange} />
+
+      <SavingBar
+        isTouched={activeTouched}
+        top={10}
+        left={1}
+        onCancel={resetDraft}
+        onConfirm={handleConfirm}
+      />
     </section>
   )
 }

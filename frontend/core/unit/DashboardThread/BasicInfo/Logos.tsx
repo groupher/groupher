@@ -9,7 +9,7 @@ import useSalon from '../salon/basic_info/logos'
 export default function Logos() {
   const s = useSalon()
   const { t } = useTrans()
-  const { edit, saving, logo, isLogosTouched } = useBaseInfo()
+  const { edit, logo, isLogosTouched } = useBaseInfo()
 
   return (
     <div className={s.wrapper}>
@@ -33,7 +33,7 @@ export default function Logos() {
       </div>
       <div className={s.desc}>{t('dsb.base_info.logo.desc')}</div>
 
-      <SavingBar field={FIELD.BASE_INFO} isTouched={isLogosTouched} loading={saving} top={10} />
+      <SavingBar field={FIELD.BASE_INFO} isTouched={isLogosTouched} top={10} />
     </div>
   )
 }

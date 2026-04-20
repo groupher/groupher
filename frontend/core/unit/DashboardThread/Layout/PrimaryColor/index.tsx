@@ -1,6 +1,5 @@
 import useTrans from '~/hooks/useTrans'
 import ColorSelector from '~/widgets/ColorSelector'
-import { FIELD } from '../../constant'
 import usePrimaryColor from '../../logic/usePrimaryColor'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
@@ -9,8 +8,15 @@ import SubPrimaryColor from '../SubPrimaryColor'
 
 export default function PrimaryColor() {
   const s = useSalon()
-  const { editPrimaryColor, editCustomColor, primaryColor, customColor, isTouched, saving } =
-    usePrimaryColor()
+  const {
+    editPrimaryColor,
+    editCustomColor,
+    primaryColor,
+    customColor,
+    isTouched,
+    onCancel,
+    onConfirm,
+  } = usePrimaryColor()
   const { t } = useTrans()
 
   return (
@@ -39,7 +45,7 @@ export default function PrimaryColor() {
           </div>
           <p className={s.desc}>{t('dsb.layout.primary_color.hint')}</p>
 
-          <SavingBar isTouched={isTouched} field={FIELD.PRIMARY_COLOR} loading={saving} top={6} />
+          <SavingBar isTouched={isTouched} top={6} onCancel={onCancel} onConfirm={onConfirm} />
         </div>
 
         <SubPrimaryColor />

@@ -8,7 +8,7 @@ import useSalon from './salon/rss'
 export default function RSS() {
   const s = useSalon()
 
-  const { rssFeedType, rssFeedCount, saving, isTouched, edit, rssOnSave, rssOnCancel } = useRSS()
+  const { rssFeedType, rssFeedCount, isTouched, edit, rssOnSave, rssOnCancel } = useRSS()
 
   return (
     <div className={s.wrapper}>
@@ -50,7 +50,6 @@ export default function RSS() {
           isTouched={isTouched}
           onCancel={() => rssOnCancel()}
           onConfirm={() => rssOnSave()}
-          loading={saving}
           top={10}
         />
       </div>

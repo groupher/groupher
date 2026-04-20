@@ -10,7 +10,6 @@ import ArticleTemplate from '../Templates/Article'
 
 export default function Article() {
   const {
-    saving,
     broadcastArticleBg,
     broadcastOnSave,
     broadcastOnCancel,
@@ -67,7 +66,6 @@ export default function Article() {
         isTouched={isArticleTouched}
         onCancel={() => broadcastOnCancel(true)}
         onConfirm={() => broadcastOnSave(true)}
-        loading={saving}
         top={10}
       />
     </div>

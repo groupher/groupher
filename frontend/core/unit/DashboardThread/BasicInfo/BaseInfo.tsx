@@ -11,8 +11,7 @@ import useSalon from '../salon/basic_info/base_info'
 import DangerZone from './DangerZone'
 
 export default function BaseInfo() {
-  const { saving, locale, desc, title, slug, homepage, introduction, isTouched, edit } =
-    useBaseInfo()
+  const { locale, desc, title, slug, homepage, introduction, isTouched, edit } = useBaseInfo()
 
   const s = useSalon()
   const { t } = useTrans()
@@ -64,9 +63,7 @@ export default function BaseInfo() {
       />
 
       {/* avoid show saving bar when loading community info */}
-      {title && (
-        <SavingBar field={FIELD.BASE_INFO} isTouched={isTouched} loading={saving} top={30} />
-      )}
+      {title && <SavingBar field={FIELD.BASE_INFO} isTouched={isTouched} top={30} />}
 
       <div className='mb-12' />
       <DangerZone />

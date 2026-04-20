@@ -1,35 +1,56 @@
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
+import { COLOR, PAGE_BG_COLOR_HEX, PAGE_BG_DEFAULT } from '~/const/colors'
+import THEME from '~/const/theme'
 import { blurRGB } from '~/fmt'
+import { getPageBgCustomColor } from '~/lib/color'
 import useGaussBlur from '~/hooks/useGaussBlur'
 import useTheme from '~/hooks/useTheme'
-import useTwBelt from '~/hooks/useTwBelt'
+import useDashboard from '~/stores/dashboard/hooks'
 
 type TRes = {
-  background: string
+  background: string | null
   rawBg: string
 }
 
-export default function usePageBg(): TRes {
-  const { page } = useTwBelt()
+export default function usePageBg(themeOverride?: string): TRes {
   const { isLightTheme } = useTheme()
-
+  const {
+    pageBg,
+    pageBgDark,
+    pageCustomBg,
+    pageCustomBgDark,
+    pageCustomIntensity,
+    pageCustomIntensityDark,
+  } = useDashboard()
   const gaussBlur = useGaussBlur()
-  const pageBg = page()
+  const theme = themeOverride || (isLightTheme ? THEME.LIGHT : THEME.DARK)
+  const isLightBg = theme === THEME.LIGHT
 
-  const [rawBg, setRawBg] = useState<string>(null)
-  const [background, setBackground] = useState<string>(null)
+  const rawBg = useMemo(() => {
+    const currentPageBg = isLightBg ? pageBg : pageBgDark
+    if (currentPageBg === COLOR.CUSTOM) {
+      return isLightBg
+        ? getPageBgCustomColor('light', pageCustomBg, pageCustomIntensity)
+        : getPageBgCustomColor('dark', pageCustomBgDark, pageCustomIntensityDark)
+    }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    const mainEl = document.querySelector('main')
-    if (!mainEl) return
+    const fallbackPageBg = PAGE_BG_DEFAULT[theme]
+    return PAGE_BG_COLOR_HEX[currentPageBg] || PAGE_BG_COLOR_HEX[fallbackPageBg]
+  }, [
+    isLightBg,
+    pageBg,
+    pageBgDark,
+    pageCustomBg,
+    pageCustomBgDark,
+    pageCustomIntensity,
+    pageCustomIntensityDark,
+    theme,
+  ])
 
-    const style = getComputedStyle(mainEl)
-    const pageBg = style.getPropertyValue('--color-pageBg').trim()
-
-    setRawBg(pageBg)
-    setBackground(blurRGB(pageBg, gaussBlur))
-  }, [gaussBlur, pageBg, isLightTheme])
+  const background = useMemo(() => {
+    if (!rawBg) return null
+    return blurRGB(rawBg, gaussBlur)
+  }, [rawBg, gaussBlur])
 
   return { background, rawBg }
 }

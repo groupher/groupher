@@ -7,7 +7,7 @@ import Editor from './Editors'
 import Templates from './Templates'
 
 const Header: FC = () => {
-  const { saving, isHeaderLinksTouched: isTouched } = useHeader()
+  const { isHeaderLinksTouched: isTouched } = useHeader()
 
   return (
     <>
@@ -15,7 +15,7 @@ const Header: FC = () => {
       <div className='mt-4' />
       <Editor />
 
-      <SavingBar field={FIELD.HEADER_LINKS} isTouched={isTouched} loading={saving} top={10} />
+      <SavingBar field={FIELD.HEADER_LINKS} isTouched={isTouched} top={10} />
     </>
   )
 }

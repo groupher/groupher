@@ -45,7 +45,6 @@ export default function BgColorsSetter() {
     kanbanBoards,
     kanbanBgColors,
     isKanbanColorsTouched,
-    saving,
     edit,
   } = useKanban()
 
@@ -132,12 +131,7 @@ export default function BgColorsSetter() {
         <WaterfallLayout activeBoards={activeBoards} hoveredBoard={hoveredBoard} />
       )}
 
-      <SavingBar
-        isTouched={isKanbanColorsTouched}
-        field={FIELD.KANBAN_BG_COLORS}
-        loading={saving}
-        top={10}
-      />
+      <SavingBar isTouched={isKanbanColorsTouched} field={FIELD.KANBAN_BG_COLORS} top={10} />
     </>
   )
 }

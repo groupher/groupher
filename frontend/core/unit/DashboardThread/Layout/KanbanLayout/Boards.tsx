@@ -16,7 +16,7 @@ export default function Boards() {
   const { t } = useTrans()
   const primaryColor = usePrimaryColor()
   const { cn, fg, fill, rainbow } = useTwBelt()
-  const { kanbanBoards, isKanbanBoardsTouched: isTouched, saving, edit } = useKanban()
+  const { kanbanBoards, isKanbanBoardsTouched: isTouched, edit } = useKanban()
   const activeBoards = kanbanBoards.length > 0 ? kanbanBoards : INIT_KANBAN_BOARDS
 
   const boards = [
@@ -78,13 +78,7 @@ export default function Boards() {
         ))}
       </div>
 
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.KANBAN_BOARDS}
-        loading={saving}
-        top={8}
-        bottom={20}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.KANBAN_BOARDS} top={8} bottom={20} />
     </>
   )
 }

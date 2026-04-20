@@ -15,6 +15,7 @@ type TProps = {
   unit?: string
   min?: number
   max?: number
+  step?: number
   width?: string
   onChange?: (v: number) => void
 } & TSpace
@@ -25,6 +26,7 @@ const RangeSlider: FC<TProps> = ({
   value = 0,
   min = -15,
   max = 15,
+  step = 1,
   width = 'w-auto',
   unit = 'deg',
   onChange,
@@ -35,7 +37,7 @@ const RangeSlider: FC<TProps> = ({
   return (
     <div className={s.wrapper} data-testid={testid}>
       <div className={s.value}>
-        {value}
+        {Number.isInteger(value) ? value : value.toFixed(1)}
         <div className={s.unit}>{unit}</div>
       </div>
       <input
@@ -44,7 +46,8 @@ const RangeSlider: FC<TProps> = ({
         type='range'
         min={min}
         max={max}
-        onChange={(v) => onChange(Number.parseInt(v.target.value, 10))}
+        step={step}
+        onChange={(v) => onChange?.(Number.parseFloat(v.target.value))}
       />
     </div>
   )

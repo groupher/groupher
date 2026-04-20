@@ -7,7 +7,7 @@ import useSalon from '../salon/basic_info/base_info'
 
 export default function SocialInfo() {
   const s = useSalon()
-  const { socialLinks, saving, isSocialLinksTouched, edit } = useBaseInfo()
+  const { socialLinks, isSocialLinksTouched, edit } = useBaseInfo()
 
   return (
     <div className={s.wrapper}>
@@ -19,12 +19,7 @@ export default function SocialInfo() {
         }}
       />
 
-      <SavingBar
-        isTouched={isSocialLinksTouched}
-        field={FIELD.SOCIAL_LINKS}
-        loading={saving}
-        top={10}
-      />
+      <SavingBar isTouched={isSocialLinksTouched} field={FIELD.SOCIAL_LINKS} top={10} />
     </div>
   )
 }

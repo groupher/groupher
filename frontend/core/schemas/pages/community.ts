@@ -77,6 +77,12 @@ export const community = `
           group
         }
         layout {
+          pageBg
+          pageBgDark
+          pageCustomBg
+          pageCustomBgDark
+          pageCustomIntensity
+          pageCustomIntensityDark
           primaryColor
           primaryCustomColor
           primaryCustomColorDark

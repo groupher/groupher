@@ -14,7 +14,7 @@ export default function DocLayout() {
   const s = useSalon()
   const { t } = useTrans()
 
-  const { docLayout, docFaqLayout, isTouched, isFaqTouched, saving, edit } = useDoc()
+  const { docLayout, docFaqLayout, isTouched, isFaqTouched, edit } = useDoc()
 
   return (
     <div className={s.wrapper}>
@@ -78,7 +78,7 @@ export default function DocLayout() {
           />
         </button>
       </div>
-      <SavingBar isTouched={isTouched} field={FIELD.DOC_LAYOUT} loading={saving} top={10} />
+      <SavingBar isTouched={isTouched} field={FIELD.DOC_LAYOUT} top={10} />
 
       <div className={s.divider} />
 
@@ -134,7 +134,7 @@ export default function DocLayout() {
           />
         </button>
       </div>
-      <SavingBar isTouched={isFaqTouched} field={FIELD.DOC_FAQ_LAYOUT} loading={saving} top={10} />
+      <SavingBar isTouched={isFaqTouched} field={FIELD.DOC_FAQ_LAYOUT} top={10} />
     </div>
   )
 }

@@ -1,12 +1,16 @@
-import { PAGE_BG_CSS_KEY } from '~/const/colors'
 import { blurRGB } from '~/fmt'
-import useCSSVar from '~/hooks/useCssVar'
+import THEME from '~/const/theme'
+import useLocalDraft from '~/hooks/useLocalDraft'
+import useMainBackgroundPreview from '~/hooks/useMainBackgroundPreview'
+import usePageBg from '~/hooks/usePageBg'
+import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import useWallpaper from '~/hooks/useWallpaper'
+import useDashboard from '~/stores/dashboard/hooks'
 import RangeSlider from '~/widgets/RangeSlider'
 
 import { FIELD } from '../../constant'
-import useGaussBlur from '../../logic/useGaussBlur'
+import useHelper from '../../logic/useHelper'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 
@@ -15,12 +19,23 @@ import useSalon, { cn } from '../../salon/layout/gauss_blur'
 export default function Dark() {
   const s = useSalon()
   const { t } = useTrans()
+  const dsb$ = useDashboard()
+  const { onSave } = useHelper()
+  const { isDarkTheme } = useTheme()
 
-  const { gaussBlurDark, saving, isDarkTouched: isTouched, edit } = useGaussBlur()
   const { wallpaper, background } = useWallpaper()
+  const { rawBg } = usePageBg(THEME.DARK)
+  const {
+    draft: gaussBlurDark,
+    setDraft,
+    isTouched,
+    resetDraft,
+  } = useLocalDraft(FIELD.GAUSS_BLUR_DARK)
 
-  const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
-  const bgColor = `${blurRGB(pageBg, gaussBlurDark)}`
+  const bgColor = `${blurRGB(rawBg, gaussBlurDark)}`
+  const cleanupBackground = blurRGB(rawBg, dsb$.gaussBlurDark)
+
+  useMainBackgroundPreview(bgColor, { enabled: isDarkTheme, cleanupBackground })
 
   return (
     <div className={s.wrapper} key={wallpaper}>
@@ -66,16 +81,25 @@ export default function Dark() {
           <br />
           <RangeSlider
             value={gaussBlurDark}
-            onChange={(v) => edit(v, FIELD.GAUSS_BLUR_DARK)}
+            onChange={(v) => setDraft(v)}
             top={5}
             min={50}
             max={100}
+            step={0.1}
             unit='%'
           />
         </ul>
       </div>
 
-      <SavingBar isTouched={isTouched} field={FIELD.GAUSS_BLUR_DARK} loading={saving} top={20} />
+      <SavingBar
+        isTouched={isTouched}
+        top={20}
+        onCancel={resetDraft}
+        onConfirm={() => {
+          dsb$.live$.commit({ gaussBlurDark: gaussBlurDark })
+          window.requestAnimationFrame(() => onSave(FIELD.GAUSS_BLUR_DARK))
+        }}
+      />
     </div>
   )
 }

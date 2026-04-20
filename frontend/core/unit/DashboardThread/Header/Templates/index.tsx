@@ -61,7 +61,6 @@ const Templates: FC = () => {
         isTouched={isLayoutTouched}
         field={FIELD.HEADER_LAYOUT}
         onConfirm={() => setShowAll(false)}
-        loading={saving}
         top={10}
       />
 

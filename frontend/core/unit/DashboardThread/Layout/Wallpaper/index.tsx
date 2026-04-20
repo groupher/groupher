@@ -18,7 +18,7 @@ export default function Wallpaper() {
 
   const gaussBlur = useGaussBlur()
   const { background } = useWallpaper()
-  const pageBg = useCSSVar(PAGE_BG_CSS_KEY)
+  const pageBg = useCSSVar(PAGE_BG_CSS_KEY, [gaussBlur], { selector: 'main' })
 
   const bgColor = `${blurRGB(pageBg, gaussBlur)}`
 

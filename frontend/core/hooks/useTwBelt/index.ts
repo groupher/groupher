@@ -4,6 +4,7 @@ import { clsx } from 'clsx'
 import { useMemo } from 'react'
 
 import { COLOR } from '~/const/colors'
+import THEME from '~/const/theme'
 import { cn, cnMerge } from '~/css'
 import { camelize } from '~/fmt'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
@@ -38,9 +39,17 @@ export default function useTwBelt(): TRet {
   const metricLower = metric.toLowerCase()
   const containerClass = `container-${metricLower}`
 
+  const resolvePageClass = (value: string, mode: 'light' | 'dark') => {
+    if (value === COLOR.CUSTOM) {
+      return mode === THEME.LIGHT ? 'page-customLight' : 'page-customDark'
+    }
+
+    return `page-${camelize(value)}`
+  }
+
   // keep your page-bg strategy (no flash)
-  const pageLightClass = `page-${camelize(pageBg)}`
-  const pageDarkClass = `page-${camelize(pageBgDark)}`
+  const pageLightClass = resolvePageClass(pageBg, THEME.LIGHT)
+  const pageDarkClass = resolvePageClass(pageBgDark, THEME.DARK)
 
   /**
    * ✅ New token scheme:

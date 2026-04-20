@@ -1,5 +1,6 @@
-import { getDefaultCustomColor } from '~/const/colors'
+import { COLOR, getDefaultCustomColor } from '~/const/colors'
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
+import { getPageBgCustomColor, normalizePageBgHue, normalizePageBgIntensity } from '~/lib/color'
 import type { TParseDashboard } from '~/spec'
 
 export const ssrThemeInitScript = () => `
@@ -43,6 +44,19 @@ const resolveSafeColor = (
   return getDefaultCustomColor(theme)
 }
 
+const resolveSafePageBg = (
+  theme: typeof THEME.LIGHT | typeof THEME.DARK,
+  pageBg: string | undefined,
+  hue: number | undefined,
+  intensity: number | undefined,
+) => {
+  if (pageBg !== COLOR.CUSTOM) {
+    return 'transparent'
+  }
+
+  return getPageBgCustomColor(theme, normalizePageBgHue(hue), normalizePageBgIntensity(intensity))
+}
+
 // Build first-paint dashboard color variables on the server so custom colors do
 // not wait for client hydration to override the base token defaults.
 const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string, TCSSVarMap]> => {
@@ -62,6 +76,18 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
         '--color-sub-primary-custom-dark': resolveSafeColor(
           dashboard.subPrimaryCustomColorDark,
           THEME.DARK,
+        ),
+        '--color-page-custom-light': resolveSafePageBg(
+          THEME.LIGHT,
+          dashboard.pageBg,
+          dashboard.pageCustomBg,
+          dashboard.pageCustomIntensity,
+        ),
+        '--color-page-custom-dark': resolveSafePageBg(
+          THEME.DARK,
+          dashboard.pageBgDark,
+          dashboard.pageCustomBgDark,
+          dashboard.pageCustomIntensityDark,
         ),
       },
     ],

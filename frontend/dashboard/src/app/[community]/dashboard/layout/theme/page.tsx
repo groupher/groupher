@@ -20,11 +20,11 @@ export default function Page() {
       <div className={s.divider} />
       <PageBackground />
       <div className={s.divider} />
-      <Wallpaper />
-      <div className={s.divider} />
       <GaussBlur />
       <div className={s.divider} />
       <GlowLight />
+      <div className={s.divider} />
+      <Wallpaper />
     </>
   )
 }
