@@ -1,4 +1,5 @@
 import { blurRGB } from '~/fmt'
+import THEME from '~/const/theme'
 import useLocalDraft from '~/hooks/useLocalDraft'
 import useMainBackgroundPreview from '~/hooks/useMainBackgroundPreview'
 import usePageBg from '~/hooks/usePageBg'
@@ -23,7 +24,7 @@ export default function Dark() {
   const { isDarkTheme } = useTheme()
 
   const { wallpaper, background } = useWallpaper()
-  const { rawBg } = usePageBg()
+  const { rawBg } = usePageBg(THEME.DARK)
   const {
     draft: gaussBlurDark,
     setDraft,

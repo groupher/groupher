@@ -47,7 +47,7 @@ const RangeSlider: FC<TProps> = ({
         min={min}
         max={max}
         step={step}
-        onChange={(v) => onChange(Number.parseFloat(v.target.value))}
+        onChange={(v) => onChange?.(Number.parseFloat(v.target.value))}
       />
     </div>
   )

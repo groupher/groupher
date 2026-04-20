@@ -15,6 +15,7 @@ export default function useCSSVar(name: string, deps?: any[], options?: TOptions
 
     const el = document.querySelector(selector)
     if (!el) return
+    const root = document.documentElement
 
     const readVar = () => {
       const computed = getComputedStyle(el).getPropertyValue(`--${name}`).trim()
@@ -24,10 +25,15 @@ export default function useCSSVar(name: string, deps?: any[], options?: TOptions
     readVar()
 
     const observer = new MutationObserver(() => readVar())
-    observer.observe(el, {
+    const observeOptions: MutationObserverInit = {
       attributes: true,
       attributeFilter: ['class', 'style', 'data-theme'],
-    })
+    }
+
+    observer.observe(el, observeOptions)
+    if (root !== el) {
+      observer.observe(root, observeOptions)
+    }
 
     return () => observer.disconnect()
   }, [theme, name, selector, ...(deps || [])])

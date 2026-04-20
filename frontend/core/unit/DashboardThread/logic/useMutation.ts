@@ -128,26 +128,18 @@ export default function useMutation(): TRet {
     }
 
     if (field === FIELD.PAGE_BG) {
+      const normalizedPageBg = normalizePageBgLayoutPatch()
       original = {
         ...storeRef.current.original,
-        pageBg: storeRef.current.pageBg,
-        pageCustomBg: storeRef.current.pageCustomBg,
-        pageCustomIntensity: storeRef.current.pageCustomIntensity,
-        pageBgDark: storeRef.current.pageBgDark,
-        pageCustomBgDark: storeRef.current.pageCustomBgDark,
-        pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
+        ...normalizedPageBg,
       }
     }
 
     if (field === FIELD.PAGE_BG_DARK) {
+      const normalizedPageBg = normalizePageBgLayoutPatch()
       original = {
         ...storeRef.current.original,
-        pageBg: storeRef.current.pageBg,
-        pageCustomBg: storeRef.current.pageCustomBg,
-        pageCustomIntensity: storeRef.current.pageCustomIntensity,
-        pageBgDark: storeRef.current.pageBgDark,
-        pageCustomBgDark: storeRef.current.pageCustomBgDark,
-        pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
+        ...normalizedPageBg,
       }
     }
 
@@ -173,13 +165,20 @@ export default function useMutation(): TRet {
     if (!community) return
 
     try {
-      await fetch('/api/revalidate/community', {
+      const response = await fetch('/api/revalidate/community', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ community }),
       })
+
+      if (!response.ok) {
+        const details = await response.text().catch(() => '')
+        throw new Error(
+          `revalidate failed for ${community}: ${response.status} ${response.statusText} ${details}`,
+        )
+      }
     } catch (error) {
       console.error('## revalidate community cache error: ', error)
     }
