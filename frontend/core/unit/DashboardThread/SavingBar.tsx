@@ -2,6 +2,7 @@ import type { FC, ReactNode } from 'react'
 import useTrans from '~/hooks/useTrans'
 import InfoSVG from '~/icons/Save'
 import type { TSpace } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
 import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
 import useHelper from './logic/useHelper'
 import useSalon, { cn } from './salon/saving_bar'
@@ -27,7 +28,7 @@ const SavingBar: FC<TProps> = ({
   hint = null,
   children = null,
   isTouched = false,
-  loading = false,
+  loading,
   minimal = false,
   disabled = false,
   onCancel = console.log,
@@ -36,11 +37,13 @@ const SavingBar: FC<TProps> = ({
   ...spacing
 }) => {
   const s = useSalon({ minimal, width, ...spacing })
+  const dsb$ = useDashboard()
   const { rollbackEdit, onSave } = useHelper()
   const { t } = useTrans()
   const resolvedPrefix = prefix ?? t('dsb.saving_bar.prefix')
   const cancelText = t('dsb.saving_bar.cancel')
   const saveText = t('dsb.saving_bar.save')
+  const resolvedLoading = loading ?? dsb$.saving
 
   if (children !== null) {
     if (isTouched) {
@@ -53,8 +56,8 @@ const SavingBar: FC<TProps> = ({
               cancelText={cancelText}
               saveText={saveText}
               disabled={disabled}
-              loading={loading}
-              space={!loading ? 1.5 : 0}
+              loading={resolvedLoading}
+              space={!resolvedLoading ? 1.5 : 0}
               onCancel={() => {
                 onCancel?.()
                 field && rollbackEdit(field)
@@ -92,8 +95,8 @@ const SavingBar: FC<TProps> = ({
           cancelText={cancelText}
           disabled={disabled}
           saveText={saveText}
-          loading={loading}
-          space={!loading ? 1.5 : 0}
+          loading={resolvedLoading}
+          space={!resolvedLoading ? 1.5 : 0}
           onConfirm={() => {
             if (field) {
               onSave(field)

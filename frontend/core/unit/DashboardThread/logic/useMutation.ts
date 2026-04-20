@@ -163,7 +163,7 @@ export default function useMutation(): TRet {
   }
 
   const _handleDone = (fieldOverride?: TDsbFieldKey): void => {
-    const field = fieldOverride ?? storeRef.current.savingField
+    const field = (fieldOverride ?? storeRef.current.savingField) as TDsbFieldKey | null
     applyOriginal(field)
     // avoid page component jump caused by saving state
     setTimeout(() => storeRef.current.commit({ saving: false, savingField: null }), 800)

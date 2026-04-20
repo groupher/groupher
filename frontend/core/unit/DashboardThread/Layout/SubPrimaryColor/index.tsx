@@ -1,7 +1,6 @@
 import useTrans from '~/hooks/useTrans'
 import useTwBelt from '~/hooks/useTwBelt'
 import ColorSelector from '~/widgets/ColorSelector'
-import { FIELD } from '../../constant'
 import useSubPrimaryColor from '../../logic/useSubPrimaryColor'
 import SavingBar from '../../SavingBar'
 import useSalon, { cn, cnMerge } from '../../salon/layout/primary_color'
@@ -9,8 +8,15 @@ import useSalon, { cn, cnMerge } from '../../salon/layout/primary_color'
 export default function SubPrimaryColor() {
   const s = useSalon()
   const { subPrimary } = useTwBelt()
-  const { editSubPrimaryColor, editCustomColor, subPrimaryColor, customColor, isTouched, saving } =
-    useSubPrimaryColor()
+  const {
+    editSubPrimaryColor,
+    editCustomColor,
+    subPrimaryColor,
+    customColor,
+    isTouched,
+    onCancel,
+    onConfirm,
+  } = useSubPrimaryColor()
   const { t } = useTrans()
 
   return (
@@ -33,7 +39,7 @@ export default function SubPrimaryColor() {
       </div>
       <p className={s.desc}>{t('dsb.layout.sub_primary_color.desc')}</p>
 
-      <SavingBar isTouched={isTouched} field={FIELD.SUB_PRIMARY_COLOR} loading={saving} top={6} />
+      <SavingBar isTouched={isTouched} top={6} onCancel={onCancel} onConfirm={onConfirm} />
     </div>
   )
 }

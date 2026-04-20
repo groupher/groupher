@@ -17,9 +17,7 @@ export default function BaseSetting() {
 
   const {
     widgetsPrimaryColor,
-    widgetsThreads,
-    saving,
-    isThreadTouched,
+    widgetsThreads, isThreadTouched,
     isPrimaryColorTouched,
     edit,
     threadOnChange,
@@ -34,7 +32,7 @@ export default function BaseSetting() {
       <SavingBar
         isTouched={isPrimaryColorTouched}
         field={FIELD.WIDGETS_PRIMARY_COLOR}
-        loading={saving}
+       
         bottom={2}
       >
         <div className={s.label}>
@@ -104,7 +102,7 @@ export default function BaseSetting() {
       <SavingBar
         isTouched={isThreadTouched}
         field={FIELD.WIDGETS_THREADS}
-        loading={saving}
+       
         top={10}
         bottom={10}
       />

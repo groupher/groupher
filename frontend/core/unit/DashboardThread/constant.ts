@@ -46,7 +46,7 @@ export const LAYOUT_FIELD = {
   DARK_FLOAT: 'darkFloat',
   GAUSS_BLUR: 'gaussBlur',
   GAUSS_BLUR_DARK: 'gaussBlurDark',
-}
+} as const
 
 export const FIELD = {
   ...LAYOUT_FIELD,

@@ -22,9 +22,7 @@ export default function GlowLight() {
     glowOpacity,
     isTouched,
     isGrowFixedTouched,
-    isGrowOpacityTouched,
-    saving,
-    edit,
+    isGrowOpacityTouched, edit,
   } = useGlowLight()
 
   return (
@@ -62,11 +60,11 @@ export default function GlowLight() {
           ))}
       </div>
 
-      <SavingBar isTouched={isTouched} field={FIELD.GLOW_TYPE} loading={saving} top={10} />
+      <SavingBar isTouched={isTouched} field={FIELD.GLOW_TYPE} top={10} />
 
       <div className='mb-10' />
 
-      <SavingBar isTouched={isGrowFixedTouched} field={FIELD.GLOW_FIXED} loading={saving}>
+      <SavingBar isTouched={isGrowFixedTouched} field={FIELD.GLOW_FIXED}>
         <div className={s.settings}>
           <h3 className={s.title}>{t('dsb.layout.glow.follow.title')}</h3>
           <Radio
@@ -93,7 +91,7 @@ export default function GlowLight() {
         <SavingBar
           isTouched={isGrowOpacityTouched}
           field={FIELD.GLOW_OPACITY}
-          loading={saving}
+         
           top={-8}
         >
           <div className={s.settings}>

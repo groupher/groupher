@@ -10,7 +10,7 @@ type TProps = {
   children: ReactNode
 }
 
-const DashboardThemeScope: FC<TProps> = ({ children }) => {
+const CustomThemeScope: FC<TProps> = ({ children }) => {
   const {
     primaryColor,
     pageBg,
@@ -24,8 +24,8 @@ const DashboardThemeScope: FC<TProps> = ({ children }) => {
     subPrimaryCustomColor,
     subPrimaryCustomColorDark,
   } = useDashboard()
-  const lightDefault = getDefaultCustomColor('light')
-  const darkDefault = getDefaultCustomColor('dark')
+  const lightDefault = getDefaultCustomColor(THEME.LIGHT)
+  const darkDefault = getDefaultCustomColor(THEME.DARK)
 
   useEffect(() => {
     const root = document.documentElement
@@ -84,4 +84,4 @@ const DashboardThemeScope: FC<TProps> = ({ children }) => {
   )
 }
 
-export default DashboardThemeScope
+export default CustomThemeScope

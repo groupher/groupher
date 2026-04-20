@@ -27,7 +27,7 @@ export default function TopbarLayout() {
   const { t } = useTrans()
   const { title } = useCommunity()
 
-  const { edit, enabled, isBgTouched, isLayoutTouched, saving, bg } = useTopbar()
+  const { edit, enabled, isBgTouched, isLayoutTouched, bg } = useTopbar()
   const { layout: globalLayout } = useBanner()
 
   return (
@@ -63,7 +63,7 @@ export default function TopbarLayout() {
       <SavingBar
         isTouched={isLayoutTouched}
         field={FIELD.TOPBAR_ENABLED}
-        loading={saving}
+       
         top={10}
       />
 
@@ -72,7 +72,7 @@ export default function TopbarLayout() {
         <SavingBar
           isTouched={isBgTouched}
           field={FIELD.TOPBAR_BG}
-          loading={saving}
+         
           left={-10}
           top={30}
         >

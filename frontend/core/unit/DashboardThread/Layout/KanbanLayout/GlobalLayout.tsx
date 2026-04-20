@@ -13,7 +13,7 @@ export default function GlobalLayout() {
   const s = useSalon()
   const { t } = useTrans()
 
-  const { kanbanLayout: layout, isKanbanLayoutTouched: isTouched, saving, edit } = useKanban()
+  const { kanbanLayout: layout, isKanbanLayoutTouched: isTouched, edit } = useKanban()
 
   return (
     <>
@@ -69,7 +69,7 @@ export default function GlobalLayout() {
       <SavingBar
         isTouched={isTouched}
         field={FIELD.KANBAN_LAYOUT}
-        loading={saving}
+       
         top={8}
         bottom={20}
       />

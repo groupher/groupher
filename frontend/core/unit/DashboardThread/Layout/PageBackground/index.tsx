@@ -1,40 +1,21 @@
-import { useEffect, useMemo, useState } from 'react'
-import { COLOR, PAGE_BG_COLOR_HEX } from '~/const/colors'
+import { useMemo } from 'react'
+import { PAGE_BG_COLOR_HEX } from '~/const/colors'
 import { blurRGB, camelize, titleCaseHM } from '~/fmt'
 import useDidMount from '~/hooks/useDidMount'
 import useGaussBlur from '~/hooks/useGaussBlur'
+import useLocalDraft from '~/hooks/useLocalDraft'
+import useMainBackgroundPreview from '~/hooks/useMainBackgroundPreview'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/Check'
-import { getPageBgCustomColor } from '~/lib/color'
 import useDashboard from '~/stores/dashboard/hooks'
 import { FIELD } from '../../constant'
 import useHelper from '../../logic/useHelper'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cn } from '../../salon/layout/page_background'
-import CustomBackground, { type TPageBgDraft } from './CustomBackground'
-
-const buildDraft = (source: TPageBgDraft): TPageBgDraft => ({
-  pageBg: source.pageBg,
-  pageBgDark: source.pageBgDark,
-  pageCustomBg: source.pageCustomBg,
-  pageCustomBgDark: source.pageCustomBgDark,
-  pageCustomIntensity: source.pageCustomIntensity,
-  pageCustomIntensityDark: source.pageCustomIntensityDark,
-})
-
-const resolveRawBg = (draft: TPageBgDraft, isLightTheme: boolean) => {
-  const currentPageBg = isLightTheme ? draft.pageBg : draft.pageBgDark
-
-  if (currentPageBg === COLOR.CUSTOM) {
-    return isLightTheme
-      ? getPageBgCustomColor('light', draft.pageCustomBg, draft.pageCustomIntensity)
-      : getPageBgCustomColor('dark', draft.pageCustomBgDark, draft.pageCustomIntensityDark)
-  }
-
-  return PAGE_BG_COLOR_HEX[currentPageBg] || ''
-}
+import CustomBackground from './CustomBackground'
+import { resolveRawBg, type TPageBgDraft, usePageBgDraft } from './hooks'
 
 export default function PageBackground() {
   const dsb$ = useDashboard()
@@ -45,51 +26,15 @@ export default function PageBackground() {
   const { t } = useTrans()
   const gaussBlur = useGaussBlur()
 
-  const storeDraft = useMemo(
-    () =>
-      buildDraft({
-        pageBg: dsb$.pageBg,
-        pageBgDark: dsb$.pageBgDark,
-        pageCustomBg: dsb$.pageCustomBg,
-        pageCustomBgDark: dsb$.pageCustomBgDark,
-        pageCustomIntensity: dsb$.pageCustomIntensity,
-        pageCustomIntensityDark: dsb$.pageCustomIntensityDark,
-      }),
-    [
-      dsb$.pageBg,
-      dsb$.pageBgDark,
-      dsb$.pageCustomBg,
-      dsb$.pageCustomBgDark,
-      dsb$.pageCustomIntensity,
-      dsb$.pageCustomIntensityDark,
-    ],
-  )
+  const storeDraft = usePageBgDraft(dsb$)
+  const originalDraft = usePageBgDraft(dsb$.original)
 
-  const originalDraft = useMemo(
-    () =>
-      buildDraft({
-        pageBg: dsb$.original.pageBg,
-        pageBgDark: dsb$.original.pageBgDark,
-        pageCustomBg: dsb$.original.pageCustomBg,
-        pageCustomBgDark: dsb$.original.pageCustomBgDark,
-        pageCustomIntensity: dsb$.original.pageCustomIntensity,
-        pageCustomIntensityDark: dsb$.original.pageCustomIntensityDark,
-      }),
-    [
-      dsb$.original.pageBg,
-      dsb$.original.pageBgDark,
-      dsb$.original.pageCustomBg,
-      dsb$.original.pageCustomBgDark,
-      dsb$.original.pageCustomIntensity,
-      dsb$.original.pageCustomIntensityDark,
-    ],
-  )
-
-  const [draft, setDraft] = useState(storeDraft)
-
-  useEffect(() => {
-    setDraft(storeDraft)
-  }, [storeDraft])
+  const {
+    draft,
+    setDraft,
+    isTouched: activeTouched,
+    resetDraft,
+  } = useLocalDraft(storeDraft, originalDraft)
 
   const rawBg = useMemo(() => resolveRawBg(draft, isLightTheme), [draft, isLightTheme])
   const background = useMemo(() => {
@@ -97,40 +42,10 @@ export default function PageBackground() {
     return blurRGB(rawBg, gaussBlur)
   }, [gaussBlur, rawBg])
 
-  useEffect(() => {
-    const main = document.querySelector('main')
-    if (!main) return
-
-    if (background) {
-      ;(main as HTMLElement).style.backgroundColor = background
-      return
-    }
-
-    ;(main as HTMLElement).style.removeProperty('background-color')
-  }, [background])
-
-  useEffect(() => {
-    return () => {
-      const main = document.querySelector('main')
-      if (!main) return
-      ;(main as HTMLElement).style.removeProperty('background-color')
-    }
-  }, [])
+  useMainBackgroundPreview(background)
 
   const onDraftChange = (patch: Partial<TPageBgDraft>) => {
     setDraft((prev) => ({ ...prev, ...patch }))
-  }
-
-  const activeTouched =
-    draft.pageBg !== originalDraft.pageBg ||
-    draft.pageCustomBg !== originalDraft.pageCustomBg ||
-    draft.pageCustomIntensity !== originalDraft.pageCustomIntensity ||
-    draft.pageBgDark !== originalDraft.pageBgDark ||
-    draft.pageCustomBgDark !== originalDraft.pageCustomBgDark ||
-    draft.pageCustomIntensityDark !== originalDraft.pageCustomIntensityDark
-
-  const handleCancel = () => {
-    setDraft(originalDraft)
   }
 
   const handleConfirm = () => {
@@ -171,13 +86,8 @@ export default function PageBackground() {
                 className={cn(s.block, `rotate-${s.rotateAngle[index]}`, active && s.blockActive)}
                 aria-pressed={active}
                 onClick={() => {
-                  onDraftChange(
-                    isLightTheme
-                      ? { pageBg: bg }
-                      : {
-                          pageBgDark: bg,
-                        },
-                  )
+                  const pageBgKey = isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK
+                  onDraftChange({ [pageBgKey]: bg })
                 }}
               >
                 <div className={cn(s.blockInner, s.getPageClass(pageName))}>
@@ -196,10 +106,9 @@ export default function PageBackground() {
 
       <SavingBar
         isTouched={activeTouched}
-        loading={dsb$.saving}
         top={10}
         left={1}
-        onCancel={handleCancel}
+        onCancel={resetDraft}
         onConfirm={handleConfirm}
       />
     </section>

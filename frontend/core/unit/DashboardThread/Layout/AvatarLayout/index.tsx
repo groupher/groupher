@@ -22,7 +22,7 @@ const AVATAR_LAYOUT_OPTIONS = [
 export default function AvatarLayout() {
   const s = useSalon()
 
-  const { edit, layout, isTouched, saving } = useAvatar()
+  const { edit, layout, isTouched } = useAvatar()
   const { t } = useTrans()
 
   return (
@@ -57,7 +57,7 @@ export default function AvatarLayout() {
           )
         })}
       </div>
-      <SavingBar isTouched={isTouched} field={FIELD.AVATAR_LAYOUT} loading={saving} top={8} />
+      <SavingBar isTouched={isTouched} field={FIELD.AVATAR_LAYOUT} top={8} />
     </div>
   )
 }

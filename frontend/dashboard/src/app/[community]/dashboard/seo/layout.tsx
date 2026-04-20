@@ -27,7 +27,7 @@ const CRUMB_CONFIG = {
 export default function Layout({ children }) {
   const s = useSalon()
 
-  const { saving, isTouched } = useSEO()
+  const { isTouched } = useSEO()
   const { items, activeTab } = useDsbLayoutTabs(SEO_TABS)
   const { t } = useTrans()
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
@@ -49,7 +49,7 @@ export default function Layout({ children }) {
 
       {children}
 
-      <SavingBar field={FIELD.SEO} isTouched={isTouched} loading={saving} />
+      <SavingBar field={FIELD.SEO} isTouched={isTouched} />
     </div>
   )
 }

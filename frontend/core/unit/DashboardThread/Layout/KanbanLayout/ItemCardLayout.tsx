@@ -84,9 +84,7 @@ export default function ItemCardLayout() {
 
   const {
     kanbanCardLayout: cardLayout,
-    isKanbanCardLayoutTouched: isTouched,
-    saving,
-    edit,
+    isKanbanCardLayoutTouched: isTouched, edit,
   } = useKanban()
 
   return (
@@ -118,7 +116,7 @@ export default function ItemCardLayout() {
         })}
       </div>
 
-      <SavingBar isTouched={isTouched} field={FIELD.KANBAN_CARD_LAYOUT} loading={saving} top={10} />
+      <SavingBar isTouched={isTouched} field={FIELD.KANBAN_CARD_LAYOUT} top={10} />
     </div>
   )
 }

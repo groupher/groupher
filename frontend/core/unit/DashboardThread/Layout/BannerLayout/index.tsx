@@ -35,7 +35,7 @@ export default function BannerLayout() {
   const [showDrawer, setShowDrawer] = useState(false)
   const { t } = useTrans()
 
-  const { edit, layout, isTouched, saving } = useBanner()
+  const { edit, layout, isTouched } = useBanner()
   const { title } = useCommunity()
 
   return (
@@ -102,7 +102,7 @@ export default function BannerLayout() {
           />
         </button>
       </div>
-      <SavingBar isTouched={isTouched} field={FIELD.BANNER_LAYOUT} loading={saving} top={10} />
+      <SavingBar isTouched={isTouched} field={FIELD.BANNER_LAYOUT} top={10} />
     </div>
   )
 }

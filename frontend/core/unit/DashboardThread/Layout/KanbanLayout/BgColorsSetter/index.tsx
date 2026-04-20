@@ -44,9 +44,7 @@ export default function BgColorsSetter() {
     kanbanLayout: layout,
     kanbanBoards,
     kanbanBgColors,
-    isKanbanColorsTouched,
-    saving,
-    edit,
+    isKanbanColorsTouched, edit,
   } = useKanban()
 
   const colors =
@@ -135,7 +133,7 @@ export default function BgColorsSetter() {
       <SavingBar
         isTouched={isKanbanColorsTouched}
         field={FIELD.KANBAN_BG_COLORS}
-        loading={saving}
+       
         top={10}
       />
     </>

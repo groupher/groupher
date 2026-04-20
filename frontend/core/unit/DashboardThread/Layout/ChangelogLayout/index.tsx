@@ -108,7 +108,7 @@ function MinimalPreview({ isActive }: { isActive: boolean }) {
 
 export default function ChangelogLayout() {
   const s = useSalon()
-  const { edit, layout, isTouched, saving } = useChangelog()
+  const { edit, layout, isTouched } = useChangelog()
   const { t } = useTrans()
 
   return (
@@ -142,7 +142,7 @@ export default function ChangelogLayout() {
         })}
       </div>
 
-      <SavingBar isTouched={isTouched} field={FIELD.CHANGELOG_LAYOUT} loading={saving} top={12} />
+      <SavingBar isTouched={isTouched} field={FIELD.CHANGELOG_LAYOUT} top={12} />
     </div>
   )
 }

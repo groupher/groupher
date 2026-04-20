@@ -9,9 +9,7 @@ import useSalon from '../../salon/broadcast/editor/global'
 import GlobalTemplate from '../Templates/Global'
 
 export default function Global() {
-  const {
-    saving,
-    broadcastBg,
+  const { broadcastBg,
     broadcastEnable,
     broadcastOnSave,
     broadcastOnCancel,
@@ -62,7 +60,7 @@ export default function Global() {
         isTouched={isTouched}
         onCancel={broadcastOnCancel}
         onConfirm={broadcastOnSave}
-        loading={saving}
+       
         top={10}
       />
     </div>

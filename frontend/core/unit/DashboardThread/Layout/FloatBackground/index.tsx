@@ -38,7 +38,7 @@ function PopoverContent({ dark = false }: { dark?: boolean }) {
 
 export default function FloatBackground() {
   const s = useSalon()
-  const { darkFloat, edit, isTouched, saving } = useDarkFloat()
+  const { darkFloat, edit, isTouched } = useDarkFloat()
   const { t } = useTrans()
 
   return (
@@ -113,7 +113,7 @@ export default function FloatBackground() {
         </button>
       </div>
 
-      <SavingBar isTouched={isTouched} field={FIELD.DARK_FLOAT} loading={saving} top={6} />
+      <SavingBar isTouched={isTouched} field={FIELD.DARK_FLOAT} top={6} />
     </section>
   )
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { TChangeMode, TColorName, TConstValues, TDsbPath, TLinkItem, TTransKey } from '~/spec'
+import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 import type { FIELD } from './constant'
 
 export { TNameAlias } from '~/spec'
@@ -27,7 +28,8 @@ export type TLinkState = {
   editingGroupIndex: number | null
 }
 
-export type TDsbFieldKey = TConstValues<typeof FIELD>
+export type TDsbStoreFieldKey = keyof TDsbFieldMap
+export type TDsbFieldKey = TDsbStoreFieldKey | TConstValues<typeof FIELD>
 
 type TDocFile = {
   index: number

@@ -29,7 +29,7 @@ export default function BrandLayout() {
   const s = useSalon()
 
   const { title } = useCommunity()
-  const { edit, layout, isTouched, saving } = useBrand()
+  const { edit, layout, isTouched } = useBrand()
   const { t } = useTrans()
 
   return (
@@ -63,7 +63,7 @@ export default function BrandLayout() {
       <SavingBar
         isTouched={isTouched}
         field={FIELD.BRAND_LAYOUT}
-        loading={saving}
+       
         top={10}
         left={1}
       />

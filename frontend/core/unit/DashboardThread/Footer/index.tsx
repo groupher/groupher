@@ -7,7 +7,7 @@ import Editor from './Editors'
 import Templates from './Templates'
 
 const Footer: FC = () => {
-  const { saving, isFooterLinksTouched: isTouched } = useFooter()
+  const { isFooterLinksTouched: isTouched } = useFooter()
 
   return (
     <>
@@ -16,7 +16,7 @@ const Footer: FC = () => {
       <br />
       <Editor />
 
-      <SavingBar field={FIELD.FOOTER_LINKS} isTouched={isTouched} loading={saving} top={10} />
+      <SavingBar field={FIELD.FOOTER_LINKS} isTouched={isTouched} top={10} />
     </>
   )
 }

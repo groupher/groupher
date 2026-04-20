@@ -9,9 +9,7 @@ import useSalon from '../../salon/broadcast/editor/article'
 import ArticleTemplate from '../Templates/Article'
 
 export default function Article() {
-  const {
-    saving,
-    broadcastArticleBg,
+  const { broadcastArticleBg,
     broadcastOnSave,
     broadcastOnCancel,
     broadcastArticleEnable,
@@ -67,7 +65,7 @@ export default function Article() {
         isTouched={isArticleTouched}
         onCancel={() => broadcastOnCancel(true)}
         onConfirm={() => broadcastOnSave(true)}
-        loading={saving}
+       
         top={10}
       />
     </div>
