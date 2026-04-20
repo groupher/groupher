@@ -82,10 +82,7 @@ export default function ItemCardLayout() {
   const s = useSalon()
   const { t } = useTrans()
 
-  const {
-    kanbanCardLayout: cardLayout,
-    isKanbanCardLayoutTouched: isTouched, edit,
-  } = useKanban()
+  const { kanbanCardLayout: cardLayout, isKanbanCardLayoutTouched: isTouched, edit } = useKanban()
 
   return (
     <div className={s.wrapper}>

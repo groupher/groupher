@@ -29,10 +29,11 @@ export default function CustomBackground({ draft, originalDraft, onDraftChange }
 
   const isDarkTheme = theme === THEME.DARK
   const checked = draft.pageBg === COLOR.CUSTOM || draft.pageBgDark === COLOR.CUSTOM
-  const { pageBg, pageCustomBg: hue, pageCustomIntensity: intensity } = getThemePageBgState(
-    draft,
-    theme,
-  )
+  const {
+    pageBg,
+    pageCustomBg: hue,
+    pageCustomIntensity: intensity,
+  } = getThemePageBgState(draft, theme)
   const hueColor = parseColor(`hsl(${hue}, 100%, 50%)`)
   const lastPresetByThemeRef = useRef(resolveLastPresetByTheme(draft, originalDraft))
 

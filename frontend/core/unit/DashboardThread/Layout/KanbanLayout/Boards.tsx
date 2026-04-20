@@ -78,13 +78,7 @@ export default function Boards() {
         ))}
       </div>
 
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.KANBAN_BOARDS}
-       
-        top={8}
-        bottom={20}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.KANBAN_BOARDS} top={8} bottom={20} />
     </>
   )
 }

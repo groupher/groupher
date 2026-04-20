@@ -50,7 +50,6 @@ export default function RSS() {
           isTouched={isTouched}
           onCancel={() => rssOnCancel()}
           onConfirm={() => rssOnSave()}
-         
           top={10}
         />
       </div>

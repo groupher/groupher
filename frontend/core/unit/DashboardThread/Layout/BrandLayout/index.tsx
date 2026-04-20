@@ -60,13 +60,7 @@ export default function BrandLayout() {
           )
         })}
       </div>
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.BRAND_LAYOUT}
-       
-        top={10}
-        left={1}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.BRAND_LAYOUT} top={10} left={1} />
     </div>
   )
 }

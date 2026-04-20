@@ -66,13 +66,7 @@ export default function GlobalLayout() {
         </button>
       </div>
 
-      <SavingBar
-        isTouched={isTouched}
-        field={FIELD.KANBAN_LAYOUT}
-       
-        top={8}
-        bottom={20}
-      />
+      <SavingBar isTouched={isTouched} field={FIELD.KANBAN_LAYOUT} top={8} bottom={20} />
     </>
   )
 }

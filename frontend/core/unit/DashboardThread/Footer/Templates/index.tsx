@@ -56,7 +56,6 @@ const Templates: FC = () => {
         isTouched={isLayoutTouched}
         field={FIELD.FOOTER_LAYOUT}
         onConfirm={() => setShowAll(false)}
-       
         top={10}
       />
 

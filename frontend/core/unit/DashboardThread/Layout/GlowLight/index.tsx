@@ -22,7 +22,8 @@ export default function GlowLight() {
     glowOpacity,
     isTouched,
     isGrowFixedTouched,
-    isGrowOpacityTouched, edit,
+    isGrowOpacityTouched,
+    edit,
   } = useGlowLight()
 
   return (
@@ -88,12 +89,7 @@ export default function GlowLight() {
       <div className='mb-10' />
 
       {glowType !== '' && (
-        <SavingBar
-          isTouched={isGrowOpacityTouched}
-          field={FIELD.GLOW_OPACITY}
-         
-          top={-8}
-        >
+        <SavingBar isTouched={isGrowOpacityTouched} field={FIELD.GLOW_OPACITY} top={-8}>
           <div className={s.settings}>
             <h3 className={s.title}>{t('dsb.layout.glow.intensity.title')}</h3>
             <Radio

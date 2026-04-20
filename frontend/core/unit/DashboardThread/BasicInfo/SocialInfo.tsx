@@ -19,12 +19,7 @@ export default function SocialInfo() {
         }}
       />
 
-      <SavingBar
-        isTouched={isSocialLinksTouched}
-        field={FIELD.SOCIAL_LINKS}
-       
-        top={10}
-      />
+      <SavingBar isTouched={isSocialLinksTouched} field={FIELD.SOCIAL_LINKS} top={10} />
     </div>
   )
 }

@@ -8,8 +8,15 @@ import SubPrimaryColor from '../SubPrimaryColor'
 
 export default function PrimaryColor() {
   const s = useSalon()
-  const { editPrimaryColor, editCustomColor, primaryColor, customColor, isTouched, onCancel, onConfirm } =
-    usePrimaryColor()
+  const {
+    editPrimaryColor,
+    editCustomColor,
+    primaryColor,
+    customColor,
+    isTouched,
+    onCancel,
+    onConfirm,
+  } = usePrimaryColor()
   const { t } = useTrans()
 
   return (

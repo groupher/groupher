@@ -24,9 +24,12 @@ export default function Dark() {
 
   const { wallpaper, background } = useWallpaper()
   const { rawBg } = usePageBg()
-  const { draft: gaussBlurDark, setDraft, isTouched, resetDraft } = useLocalDraft(
-    FIELD.GAUSS_BLUR_DARK,
-  )
+  const {
+    draft: gaussBlurDark,
+    setDraft,
+    isTouched,
+    resetDraft,
+  } = useLocalDraft(FIELD.GAUSS_BLUR_DARK)
 
   const bgColor = `${blurRGB(rawBg, gaussBlurDark)}`
   const cleanupBackground = blurRGB(rawBg, dsb$.gaussBlurDark)

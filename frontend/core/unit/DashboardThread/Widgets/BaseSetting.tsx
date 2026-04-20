@@ -17,7 +17,8 @@ export default function BaseSetting() {
 
   const {
     widgetsPrimaryColor,
-    widgetsThreads, isThreadTouched,
+    widgetsThreads,
+    isThreadTouched,
     isPrimaryColorTouched,
     edit,
     threadOnChange,
@@ -29,12 +30,7 @@ export default function BaseSetting() {
         title={t('dsb.widgets.primary_color.title')}
         desc={t('dsb.widgets.primary_color.desc')}
       />
-      <SavingBar
-        isTouched={isPrimaryColorTouched}
-        field={FIELD.WIDGETS_PRIMARY_COLOR}
-       
-        bottom={2}
-      >
+      <SavingBar isTouched={isPrimaryColorTouched} field={FIELD.WIDGETS_PRIMARY_COLOR} bottom={2}>
         <div className={s.label}>
           <ColorSelector
             activeColor={widgetsPrimaryColor}
@@ -99,13 +95,7 @@ export default function BaseSetting() {
 
       <div className={cn(isThreadTouched ? 'mt-5' : 'mt-14')} />
 
-      <SavingBar
-        isTouched={isThreadTouched}
-        field={FIELD.WIDGETS_THREADS}
-       
-        top={10}
-        bottom={10}
-      />
+      <SavingBar isTouched={isThreadTouched} field={FIELD.WIDGETS_THREADS} top={10} bottom={10} />
     </div>
   )
 }

@@ -28,8 +28,7 @@ export default function usePrimaryColor(): TRet {
   const { primaryColor } = dsb$
   const primaryCustomColorField: TDsbFieldKey =
     theme === THEME.DARK ? 'primaryCustomColorDark' : 'primaryCustomColor'
-  const previewVar =
-    theme === THEME.DARK ? '--color-primary-custom-dark' : '--color-primary-custom'
+  const previewVar = theme === THEME.DARK ? '--color-primary-custom-dark' : '--color-primary-custom'
   const defaultCustomColor = getDefaultCustomColor(theme)
   const sourceColor = dsb$[primaryCustomColorField] || defaultCustomColor
   const {
