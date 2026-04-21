@@ -31,7 +31,7 @@ export type TCmsTableToolbarProps = {
   withTags?: boolean
 }
 
-export type TCmsSelectColumnFactory = <TRowData,>() => ColumnDef<TRowData, unknown>
+export type TCmsSelectColumnFactory = <TRowData>() => ColumnDef<TRowData, unknown>
 
 export type TCmsTableMultiSelect = {
   enabled: boolean
