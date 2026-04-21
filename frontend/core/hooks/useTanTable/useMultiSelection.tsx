@@ -6,7 +6,7 @@ import { useCallback, useRef, useState } from 'react'
 import Checker from '~/widgets/Checker'
 
 export const SELECT_COL_ID = 'select'
-export const SELECT_COL_WIDTH = 44
+export const SELECT_COL_WIDTH = 34
 
 export type MultiSelectionTableMeta = {
   selected: Set<string>

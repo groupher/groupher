@@ -103,7 +103,7 @@
   }
 
   [data-select="on"] .table-col-select {
-    max-width: 44px !important;
+    max-width: 34px !important;
     padding-left: 0.5rem !important; /* 对齐 px-2 */
     padding-right: 0.5rem !important; /* 对齐 px-2 */
     opacity: 1 !important;
@@ -126,6 +126,10 @@
   [data-select="off"] .table-col-select-inner {
     transform: translateX(-10px);
     opacity: 0;
+  }
+
+  [data-select="on"] .table-row-hoverable:hover > .table-row-cell {
+    background-color: var(--color-hoverBg) !important;
   }
 
   [data-stuck-left="on"] .sticky-column-left::after {

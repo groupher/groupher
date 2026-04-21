@@ -11,6 +11,7 @@ type StickySide = 'left' | 'right' | false
 
 type TStickyProps = {
   className: string
+  pinned: StickySide
   style: React.CSSProperties
 }
 
@@ -65,9 +66,10 @@ export function useStickyColumns<TData>(table: Table<TData>, options?: TStickyOp
 
       const style: React.CSSProperties = { width }
 
-      if (!pinned) return { className: '', style }
+      if (!pinned) return { className: '', pinned, style }
 
       style.position = 'sticky'
+      style.zIndex = kind === 'header' ? 2 : 1
       const classParts: string[] = [bg('pageBg')]
       if (kind === 'header') classParts.push(zIndex('tableStickyColumn'))
 
@@ -79,7 +81,7 @@ export function useStickyColumns<TData>(table: Table<TData>, options?: TStickyOp
         classParts.push('sticky-column-right')
       }
 
-      return { className: classParts.join(' '), style }
+      return { className: classParts.join(' '), pinned, style }
     }
 
     const headerProps = new Map<string, TStickyProps>()
@@ -92,7 +94,7 @@ export function useStickyColumns<TData>(table: Table<TData>, options?: TStickyOp
     return { headerProps, bodyProps }
   }, [layoutKey, showSelectColumn])
 
-  const empty: TStickyProps = { className: '', style: {} }
+  const empty: TStickyProps = { className: '', pinned: false, style: {} }
 
   return {
     header: (colId: string) => headerProps.get(colId) ?? empty,

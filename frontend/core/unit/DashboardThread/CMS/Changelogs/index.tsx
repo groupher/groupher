@@ -1,66 +1,36 @@
-// Changelogs.tsx
 'use client'
 
-import {
-  type ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  type SortingState,
-  useReactTable,
-} from '@tanstack/react-table'
-import { includes } from 'ramda'
-import { startTransition, useMemo, useState } from 'react'
-
+import type { ColumnDef } from '@tanstack/react-table'
+import { useMemo } from 'react'
 import useMount from '~/hooks/useMount'
-import {
-  getArticleRowId,
-  SELECT_COL_ID,
-  type TSortDir,
-  useMultiSelection,
-  useScrollStuck,
-  useStickyColumns,
-} from '~/hooks/useTanTable'
+import { getArticleRowId } from '~/hooks/useTanTable'
 import useTrans from '~/hooks/useTrans'
-import ArrowSVG from '~/icons/Arrow'
-import FilterSVG from '~/icons/Filter'
 import type { TArticle } from '~/spec'
-import TableLoading from '~/widgets/Loading/Table'
-
 import useCMSInfo from '../../hooks/useCMSInfo'
 import useSalon, { cn } from '../../salon/cms/changelogs'
+import CmsDataTable from '../../Tables/CmsDataTable'
+import CmsTableToolbar from '../../Tables/CmsTableToolbar'
+import useCmsTableController from '../../Tables/useCmsTableController'
 import { ArticleCell, AuthorCell, DateCell, StateCell } from '../Cell'
-import FilterBar from '../FilterBar'
-
-const SORTABLE_COLUMN = ['upvotesCount', 'views', 'commentsCount']
-const HEADER_ALIGN_LEFT = ['title']
-const HEADER_ALIGN_RIGHT = ['dates', 'author']
 
 export default function Changelogs() {
   const { pagedChangelogs, loading, loadChangelogs } = useCMSInfo()
   const s = useSalon({ loading })
   const { t } = useTrans()
-
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [showSelectColumn, setShowSelectColumn] = useState(false)
-  const { scrollRef, stuck } = useScrollStuck()
+  const table = useCmsTableController()
 
   useMount(loadChangelogs)
 
-  const data = (pagedChangelogs.entries ?? []) as TArticle[] // 这里沿用 TArticle；若 changelog 有独立类型，请替换
-  const { metaRef, selectColumn, selectedCount, clear } = useMultiSelection()
+  const data = (pagedChangelogs.entries ?? []) as TArticle[]
 
-  const columns = useMemo<ColumnDef<TArticle, any>[]>(() => {
+  const columns = useMemo<ColumnDef<TArticle, unknown>[]>(() => {
     return [
-      selectColumn(),
-
       {
         id: 'title',
         header: () => <div className={s.title}>{t('dsb.cms.table.title')}</div>,
-        // changelog 也走 ArticleCell（你原 rsuite 版就是 ArticleCell dataKey='title'）
         cell: ({ row }) => <ArticleCell rowData={row.original} />,
         size: 420,
-        meta: { sticky: 'left' },
+        meta: { sticky: 'left', align: 'left' },
       },
 
       {
@@ -112,6 +82,7 @@ export default function Changelogs() {
         header: () => <div className={cn(s.title, 'text-right')}>{t('dsb.cms.table.dates')}</div>,
         cell: ({ row }) => <DateCell rowData={row.original} />,
         size: 120,
+        meta: { align: 'right' },
       },
 
       {
@@ -119,134 +90,46 @@ export default function Changelogs() {
         header: () => <div className={cn(s.title, 'text-right')}>{t('dsb.cms.table.author')}</div>,
         cell: ({ row }) => <AuthorCell rowData={row.original} />,
         size: 160,
-        meta: { sticky: 'right' },
+        meta: { sticky: 'right', align: 'right' },
       },
     ]
-  }, [selectColumn, s.title, s.cell])
-
-  const table = useReactTable<TArticle>({
-    data,
-    columns,
-    state: { sorting },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getRowId: (row, index) => getArticleRowId(row, index),
-    meta: metaRef,
-  })
-
-  const sticky = useStickyColumns(table, { showSelectColumn })
-  const rows = table.getRowModel().rows
+  }, [s.title, s.cell, t])
 
   return (
     <>
-      <FilterBar
-        checkboxActive={showSelectColumn}
-        triggerCheckbox={(next) => {
-          startTransition(() => {
-            setShowSelectColumn(next)
-            clear()
-          })
+      <CmsTableToolbar
+        multiSelectEnabled={table.multiSelectEnabled}
+        onToggleMultiSelectAction={table.toggleMultiSelect}
+        selectedCount={table.selectedCount}
+        search={{
+          value: table.searchValue,
+          onChangeAction: table.setSearchValue,
+          placeholder: t('dsb.cms.filter.search_placeholder'),
         }}
-        selectedCount={selectedCount}
+        withCategory
+        withState
+        withDateRange
+        withReset
+        onResetAction={table.resetFilters}
+        batchActions={{
+          onCancelAction: () => table.toggleMultiSelect(false),
+          withDelete: true,
+        }}
       />
 
-      <div
-        ref={scrollRef}
-        data-select={showSelectColumn ? 'on' : 'off'}
-        data-stuck-left={stuck.left ? 'on' : 'off'}
-        data-stuck-right={stuck.right ? 'on' : 'off'}
-        className={s.table.wrapper}
-      >
-        <div className={s.table.inner}>
-          {/* header */}
-          <div className={cn('flex border-b', s.table.border)}>
-            {table.getHeaderGroups().map((hg) =>
-              hg.headers.map((header) => {
-                const col = header.column
-                const canSort = col.getCanSort()
-                const sortDir = col.getIsSorted() as TSortDir
-
-                const showSortIcon = includes(col.id, SORTABLE_COLUMN)
-
-                const p = sticky.header(col.id)
-                const isSelectCol = col.id === SELECT_COL_ID
-
-                return (
-                  <button
-                    key={header.id}
-                    type='button'
-                    className={cn(
-                      s.table.actionBtn,
-                      HEADER_ALIGN_LEFT.includes(col.id) && '!justify-start',
-                      HEADER_ALIGN_RIGHT.includes(col.id) && '!justify-end',
-                      canSort && s.table.canSort,
-                      isSelectCol && 'table-col-select',
-                      p.className,
-                    )}
-                    style={p.style}
-                    onClick={canSort ? col.getToggleSortingHandler() : undefined}
-                    aria-label={canSort ? t('dsb.cms.table.sort') : undefined}
-                  >
-                    {isSelectCol ? (
-                      <div className='table-col-select-inner'>
-                        {!header.isPlaceholder &&
-                          flexRender(header.column.columnDef.header, header.getContext())}
-                      </div>
-                    ) : (
-                      <span className='truncate'>
-                        {!header.isPlaceholder &&
-                          flexRender(header.column.columnDef.header, header.getContext())}
-                      </span>
-                    )}
-
-                    {!isSelectCol && showSortIcon && (
-                      <>
-                        {sortDir === 'asc' && <ArrowSVG className={s.icon.arrowUp} />}
-                        {sortDir === 'desc' && <ArrowSVG className={s.icon.arrowDown} />}
-                        {!sortDir && <FilterSVG className={s.icon.filter} />}
-                      </>
-                    )}
-                  </button>
-                )
-              }),
-            )}
-          </div>
-
-          {/* body */}
-          <div>
-            {rows.map((row) => (
-              <div key={row.id} className={cn('border-b', s.table.border)}>
-                <div className='flex'>
-                  {row.getVisibleCells().map((cell) => {
-                    const colId = cell.column.id
-                    const p = sticky.cell(colId)
-                    const isSelectCol = colId === SELECT_COL_ID
-
-                    return (
-                      <div
-                        key={cell.id}
-                        className={cn(s.table.cell, isSelectCol && 'table-col-select', p.className)}
-                        style={p.style}
-                      >
-                        {isSelectCol ? (
-                          <div className='table-col-select-inner'>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </div>
-                        ) : (
-                          flexRender(cell.column.columnDef.cell, cell.getContext())
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {loading && <TableLoading className='absolute top-10' />}
-      </div>
+      <CmsDataTable<TArticle>
+        data={data}
+        columns={columns}
+        loading={loading}
+        sorting={table.sorting}
+        onSortingChangeAction={table.setSorting}
+        getRowIdAction={getArticleRowId}
+        multiSelect={{
+          enabled: table.multiSelectEnabled,
+          metaRef: table.metaRef,
+          selectColumn: table.selectColumn,
+        }}
+      />
     </>
   )
 }

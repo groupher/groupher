@@ -14,6 +14,7 @@ type TProps = {
   ghost?: boolean
   soft?: boolean
   noBorder?: boolean
+  iconOnly?: boolean
   noLeftRound?: boolean
   noRightRound?: boolean
 
@@ -41,6 +42,7 @@ const Button: FC<TProps> = ({
   ghost = false,
   soft = false,
   noBorder = false,
+  iconOnly = false,
   noLeftRound = false,
   noRightRound = false,
 
@@ -62,6 +64,7 @@ const Button: FC<TProps> = ({
     ghost,
     soft,
     noBorder,
+    iconOnly,
     noLeftRound,
     noRightRound,
 
