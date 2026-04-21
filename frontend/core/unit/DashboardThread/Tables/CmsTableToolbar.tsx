@@ -63,6 +63,7 @@ export default function CmsTableToolbar({
     <div className={s.wrapper}>
       <div className={s.main}>
         <Button
+          ariaLabel='Toggle multi-select'
           size='tiny'
           onClick={() => onToggleMultiSelectAction(!multiSelectEnabled)}
           iconOnly
@@ -196,7 +197,7 @@ function CmsDateRangePicker({ label }: { label: string }) {
           )}
         </DateInput>
 
-        <AriaButton className={s.dateRangeTrigger}>
+        <AriaButton aria-label={label} className={s.dateRangeTrigger}>
           <CalendarSVG className={s.dateRangeTriggerIcon} />
         </AriaButton>
       </Group>

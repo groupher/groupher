@@ -6,6 +6,7 @@ import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import useSalon, { cn, cnMerge } from './salon/button'
 
 type TProps = {
+  ariaLabel?: string
   children?: ReactNode
   className?: string
 
@@ -35,6 +36,7 @@ type TProps = {
 } & TSpace
 
 const Button: FC<TProps> = ({
+  ariaLabel = undefined,
   children = 'button',
   className = '',
 
@@ -97,6 +99,7 @@ const Button: FC<TProps> = ({
     <button
       className={cnMerge(s.wrapper, className)}
       disabled={disabled}
+      aria-label={ariaLabel}
       aria-disabled={disabled || loading}
       aria-busy={loading}
       onClick={(e) => {

@@ -152,6 +152,9 @@ export default function CmsDataTable<TData>({
                     multiSelect?.enabled
                       ? (event) => {
                           if (event.key !== 'Enter' && event.key !== ' ') return
+                          const target = event.target
+                          if (!(target instanceof HTMLElement)) return
+                          if (target.closest(ROW_SELECT_IGNORE_SELECTOR)) return
 
                           event.preventDefault()
                           handleRowToggle()

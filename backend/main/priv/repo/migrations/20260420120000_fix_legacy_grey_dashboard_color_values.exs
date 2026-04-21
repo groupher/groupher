@@ -65,14 +65,15 @@ defmodule GroupherServer.Repo.Migrations.FixLegacyGreyDashboardColorValues do
         (
           SELECT jsonb_agg(
             to_jsonb(
-              CASE LOWER(value)
+              CASE LOWER(elem.value)
                 WHEN 'grey' THEN 'black'
                 WHEN 'gray' THEN 'black'
-                ELSE LOWER(value)
+                ELSE elem.value
               END
             )
+            ORDER BY elem.ord
           )
-          FROM jsonb_array_elements_text(layout->'#{key}') AS values(value)
+          FROM jsonb_array_elements_text(layout->'#{key}') WITH ORDINALITY AS elem(value, ord)
         ),
         '[]'::jsonb
       )
@@ -82,8 +83,8 @@ defmodule GroupherServer.Repo.Migrations.FixLegacyGreyDashboardColorValues do
       AND jsonb_typeof(layout->'#{key}') = 'array'
       AND EXISTS (
         SELECT 1
-        FROM jsonb_array_elements_text(layout->'#{key}') AS values(value)
-        WHERE LOWER(value) IN ('grey', 'gray')
+        FROM jsonb_array_elements_text(layout->'#{key}') WITH ORDINALITY AS elem(value, ord)
+        WHERE LOWER(elem.value) IN ('grey', 'gray')
       );
     """)
   end
