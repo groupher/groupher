@@ -2,8 +2,8 @@
 import '@tanstack/table-core'
 
 declare module '@tanstack/table-core' {
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   interface ColumnMeta<TData, TValue> {
+    align?: 'left' | 'center' | 'right'
     sticky?: 'left' | 'right'
   }
 }

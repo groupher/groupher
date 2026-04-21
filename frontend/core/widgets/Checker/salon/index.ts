@@ -23,7 +23,7 @@ export default function useSalon({
   size,
   ...spacing
 }: TProps) {
-  const { cn, margin, fg, fill, rainbow } = useTwBelt()
+  const { cn, margin, fg, fill, bg, rainbow } = useTwBelt()
   const primaryColor = usePrimaryColor()
 
   const show = checked || indeterminate || !hiddenMode
@@ -62,8 +62,8 @@ export default function useSalon({
 
     mixedIcon: cn(
       'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-sm',
-      size === SIZE.SMALL ? 'h-[2px] w-2' : 'h-[2px] w-2.5',
-      indeterminate && !checked ? fill('button.fg') : 'hidden',
+      size === SIZE.SMALL ? 'h-px w-2' : 'h-px w-2.5',
+      indeterminate && !checked ? bg('button.fg') : 'hidden',
     ),
 
     children: cn('size-sm ml-2', active ? fg('title') : fg('digest')),

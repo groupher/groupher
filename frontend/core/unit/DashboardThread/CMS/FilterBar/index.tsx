@@ -7,7 +7,6 @@ import ResetSVG from '~/icons/Reset'
 import ConditionSelector from '~/unit/ConditionSelector'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
-import useCMSInfo from '../../hooks/useCMSInfo'
 import useSalon, { cn } from '../../salon/cms/filter_bar'
 import ActionBar from './ActionBar'
 
@@ -19,8 +18,6 @@ type TProps = {
 
 const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount }) => {
   const s = useSalon()
-
-  const { batchSelectAll } = useCMSInfo()
   const { t } = useTrans()
 
   return (
@@ -29,12 +26,7 @@ const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount 
         <Button
           size='small'
           left={-3.5}
-          onClick={() => {
-            if (checkboxActive) {
-              batchSelectAll(false)
-            }
-            triggerCheckbox(!checkboxActive)
-          }}
+          onClick={() => triggerCheckbox(!checkboxActive)}
           ghost
           noBorder
         >
@@ -60,13 +52,7 @@ const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount 
       </div>
 
       {checkboxActive && selectedCount > 0 && (
-        <ActionBar
-          selectedCount={selectedCount}
-          onCancel={() => {
-            batchSelectAll(false)
-            triggerCheckbox(false)
-          }}
-        />
+        <ActionBar selectedCount={selectedCount} onCancel={() => triggerCheckbox(false)} />
       )}
     </div>
   )

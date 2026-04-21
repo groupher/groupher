@@ -6,6 +6,7 @@ import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import useSalon, { cn, cnMerge } from './salon/button'
 
 type TProps = {
+  ariaLabel?: string
   children?: ReactNode
   className?: string
 
@@ -14,6 +15,7 @@ type TProps = {
   ghost?: boolean
   soft?: boolean
   noBorder?: boolean
+  iconOnly?: boolean
   noLeftRound?: boolean
   noRightRound?: boolean
 
@@ -34,6 +36,7 @@ type TProps = {
 } & TSpace
 
 const Button: FC<TProps> = ({
+  ariaLabel = undefined,
   children = 'button',
   className = '',
 
@@ -41,6 +44,7 @@ const Button: FC<TProps> = ({
   ghost = false,
   soft = false,
   noBorder = false,
+  iconOnly = false,
   noLeftRound = false,
   noRightRound = false,
 
@@ -62,6 +66,7 @@ const Button: FC<TProps> = ({
     ghost,
     soft,
     noBorder,
+    iconOnly,
     noLeftRound,
     noRightRound,
 
@@ -94,6 +99,7 @@ const Button: FC<TProps> = ({
     <button
       className={cnMerge(s.wrapper, className)}
       disabled={disabled}
+      aria-label={ariaLabel}
       aria-disabled={disabled || loading}
       aria-busy={loading}
       onClick={(e) => {

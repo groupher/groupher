@@ -15,6 +15,7 @@ type TProps = {
   ghost: boolean
   soft: boolean
   noBorder: boolean
+  iconOnly: boolean
   noLeftRound: boolean
   noRightRound: boolean
 
@@ -34,6 +35,7 @@ export default function useButtonSalon({
   ghost,
   soft,
   noBorder,
+  iconOnly,
   noLeftRound,
   noRightRound,
 
@@ -52,9 +54,10 @@ export default function useButtonSalon({
   const tone = color ? 'color' : red ? 'red' : 'primary'
   const interactive = !disabled && !loading
 
-  // ✅ wrapper border: red/noBorder always none (even when disabled); otherwise disabled/default
+  // ghost buttons draw their own inner outline; keep wrapper border off to avoid a false shadow ring
+  // red/noBorder also always remove the wrapper border, even when disabled
   let wrapperBorder: 'default' | 'none' | 'disabled' = 'default'
-  if (red || noBorder) {
+  if (ghost || red || noBorder) {
     wrapperBorder = 'none'
   } else if (disabled) {
     wrapperBorder = 'disabled'
@@ -97,7 +100,7 @@ export default function useButtonSalon({
   }
 
   const ghostBorder = () => {
-    if (!ghost) return ''
+    if (!ghost || noBorder) return ''
     if (color) return rainbow(color, 'borderSoft')
     if (red) return rainbow(COLOR.RED, 'borderSoft')
     return br('text.hint')
@@ -105,6 +108,7 @@ export default function useButtonSalon({
 
   const ghostHoverBg = () => {
     if (!ghost || !interactive) return ''
+    if (noBorder) return ''
     if (color) return `hover:${rainbow(color, 'bgSoft')}`
     return `hover:${primary('bgSoft')}`
   }
@@ -124,10 +128,12 @@ export default function useButtonSalon({
   return {
     wrapper: cnMerge(
       wrapperBase,
+      iconOnly && getRound(size),
       noLeftRound && 'rounded-tl-none rounded-bl-none',
       noRightRound && 'rounded-tr-none rounded-br-none',
 
-      !(red || noBorder) && br('divider'),
+      !(ghost || red || noBorder) && br('divider'),
+      ghost && noBorder && interactive && `hover:${bg('hoverBg')}`,
 
       !ghost && bg('divider'),
       loading && bg('transparent'),

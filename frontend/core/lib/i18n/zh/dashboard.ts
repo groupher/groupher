@@ -331,7 +331,7 @@ export default {
   'dsb.cms.filter.cancel': '取消',
   'dsb.cms.filter.multi_select': '多选',
   'dsb.cms.filter.search_placeholder': '按标题搜索',
-  'dsb.cms.filter.date_range': '日期范围(TODO)',
+  'dsb.cms.filter.date_range': '日期范围',
   'dsb.cms.filter.reset': '重置',
   'dsb.cms.action.selected_prefix': '共选中 ',
   'dsb.cms.action.selected_suffix': ' 条，',
