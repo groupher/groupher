@@ -9,10 +9,9 @@ export default function CoverCardsLayout() {
   return (
     <div className={s.wrapper}>
       <div className={s.cats}>
-        {cats.slice(0, 6).map((cat, index) => (
+        {cats.map((cat) => (
           <Category
             key={cat.id}
-            index={index}
             title={cat.title}
             desc={cat.desc}
             articles={cat.articles}

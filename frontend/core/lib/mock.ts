@@ -225,12 +225,14 @@ const communities = [
 ]
 
 const images = [
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1557555187-23d685287bc3?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80',
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1484399172022-72a90b12e3c1?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80',
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1617419086540-518c5b847b88?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=700&q=80',
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1617365564200-c6b079284290?ixid=MXwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwyNHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1617391765934-f7ac7aa648bc?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=642&q=80',
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1611095973362-88e8e2557e58?ixlib=rb-1.2.1&ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&auto=format&fit=crop&w=1050&q=80',
+  'https://feed.muzli.cloud/muzli_feed/wp-content/uploads/2026/04/17235039/claude_design-1-1.png',
+  'https://ph-files.imgix.net/e8fedd1e-2775-4868-8769-9c74be268563.png?auto=format',
+  'https://files.muzli.cloud/9d1f045a5091ac03719db58d9022466d.jpeg',
+  'https://files.muzli.cloud/3906721ed134fc1e90621ca9de80b10e.jpeg',
+  'https://files.muzli.cloud/8699406f17b698906c95aa6a28052a89.jpeg',
+  'https://uploads.sitepoint.com/wp-content/uploads/medium_Why_Is_Email_Deliverability_Important_fd4d27f1c3.png',
+  'https://files.muzli.cloud/d591b0c7613aa00330e7becf594abccf.jpeg',
+  'https://files.muzli.cloud/5b0e2e6b3b586a4f1d430c12c5ba374e.jpg',
 ]
 
 export const mockImage = (): string => {

@@ -5,6 +5,6 @@ export default function useSalon() {
 
   return {
     wrapper: base.main,
-    cats: 'grid grid-cols-1 gap-8 xl:grid-cols-3',
+    cats: 'mx-auto w-full max-w-6xl column gap-16 px-4',
   }
 }
