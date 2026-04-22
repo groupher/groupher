@@ -672,8 +672,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :replies
         )
 
-      assert pined_comment_1.id == List.first(paged_comments.entries) |> Map.get(:id)
-      assert pined_comment_2.id == Enum.at(paged_comments.entries, 1) |> Map.get(:id)
+      assert pined_comment_2.id == List.first(paged_comments.entries) |> Map.get(:id)
+      assert pined_comment_1.id == Enum.at(paged_comments.entries, 1) |> Map.get(:id)
 
       assert paged_comments.total_count == total_count + 2
     end
