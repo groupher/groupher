@@ -33,7 +33,7 @@ export default function useLogic(): TRet {
   return {
     isArticleLayout: article$.isArticleLayout,
     isFAQArticleLayout: article$.isFAQArticleLayout,
-    layout: dashboard.docLayout,
+    layout: dashboard.docCoverLayout,
     faqLayout: dashboard.docFaqLayout,
     faqSections: [],
     gotoDetailLayout,

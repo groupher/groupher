@@ -6,7 +6,7 @@ import { DEFAULT_NEW_FAQ } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
-  docLayout: TDocCoverLayout
+  docCoverLayout: TDocCoverLayout
   docFaqLayout: TDocFAQLayout
   saving: boolean
   isTouched: boolean
@@ -39,12 +39,12 @@ export default function useDoc(): TRet {
     dsb$.commit({ docCategories })
   }
 
-  const isTouched = isChanged('docLayout')
+  const isTouched = isChanged('docCoverLayout')
   const isFaqTouched = isChanged('docFaqLayout')
 
   return {
     edit,
-    ...pick(['docLayout', 'docFaqLayout', 'saving'], dsb$),
+    ...pick(['docCoverLayout', 'docFaqLayout', 'saving'], dsb$),
     isTouched,
     isFaqTouched,
     addFAQSection,

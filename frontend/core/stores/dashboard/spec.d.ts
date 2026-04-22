@@ -106,7 +106,7 @@ export type TDsbFieldMap = {
   kanbanBoards: readonly TKanbanBoard[]
   kanbanBgColors: readonly TColorName[]
 
-  docLayout: TDocCoverLayout
+  docCoverLayout: TDocCoverLayout
   docFaqLayout: TDocFAQLayout
   tagLayout: TTagLayout
   inlineTagLayout: TInlineTagLayout

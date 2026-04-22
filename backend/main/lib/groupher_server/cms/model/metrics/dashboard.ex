@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     post_layout: [:quora, :ph, :masonry, :minimal, :cover],
     kanban_layout: [:classic, :waterfall],
     kanban_card_layout: [:simple, :full],
-    doc_layout: [
+    doc_cover_layout: [
       :outline_columns,
       :outline_toc,
       :brief_cards,
@@ -130,7 +130,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:post_layout, :enum, :quora],
       [:kanban_layout, :enum, :classic],
       [:kanban_card_layout, :enum, :simple],
-      [:doc_layout, :enum, :stack_cards],
+      [:doc_cover_layout, :enum, :stack_cards],
       [:doc_faq_layout, :enum, :collapse],
       [:tag_layout, :enum, :hash],
       [:inline_tag_layout, :enum, :border],

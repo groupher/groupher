@@ -103,7 +103,7 @@ export const FIELDS: TDsbFieldMap = {
   kanbanBoards: INIT_KANBAN_BOARDS,
   kanbanBgColors: INIT_KANBAN_COLORS,
 
-  docLayout: DOC_COVER_LAYOUT.STACK_CARDS,
+  docCoverLayout: DOC_COVER_LAYOUT.STACK_CARDS,
   docFaqLayout: DOC_FAQ_LAYOUT.COLLAPSE,
   tagLayout: TAG_LAYOUT.HASH,
   inlineTagLayout: INLINE_TAG_LAYOUT.BORDER,

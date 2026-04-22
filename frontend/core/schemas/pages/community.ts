@@ -90,7 +90,7 @@ export const community = `
           subPrimaryCustomColor
           subPrimaryCustomColorDark
           postLayout
-          docLayout
+          docCoverLayout
           docFaqLayout
           tagLayout
           inlineTagLayout

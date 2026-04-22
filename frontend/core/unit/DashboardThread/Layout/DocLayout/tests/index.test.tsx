@@ -11,7 +11,7 @@ vi.mock('~/hooks/useTrans', () => ({
 
 vi.mock('../../../logic/useDoc', () => ({
   default: () => ({
-    docLayout: DOC_COVER_LAYOUT.OUTLINE_COLUMNS,
+    docCoverLayout: DOC_COVER_LAYOUT.OUTLINE_COLUMNS,
     docFaqLayout: DOC_FAQ_LAYOUT.COLLAPSE,
     isTouched: false,
     isFaqTouched: false,
@@ -69,7 +69,7 @@ describe('<DocLayout />', () => {
     expect(buttons[0]).toHaveAttribute('aria-pressed', 'true')
     expect(buttons[1]).toHaveAttribute('aria-pressed', 'false')
     expect(buttons[6]).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByTestId(`saving-bar-${FIELD.DOC_LAYOUT}`)).toBeInTheDocument()
+    expect(screen.getByTestId(`saving-bar-${FIELD.DOC_COVER_LAYOUT}`)).toBeInTheDocument()
     expect(screen.getByTestId(`saving-bar-${FIELD.DOC_FAQ_LAYOUT}`)).toBeInTheDocument()
     expect(
       screen.getByTestId(`main-template-${DOC_COVER_LAYOUT.OUTLINE_COLUMNS}`),
@@ -84,7 +84,18 @@ describe('<DocLayout />', () => {
     fireEvent.click(buttons[2])
     fireEvent.click(buttons[8])
 
-    expect(edit).toHaveBeenNthCalledWith(1, DOC_COVER_LAYOUT.BRIEF_CARDS, FIELD.DOC_LAYOUT)
+    expect(edit).toHaveBeenNthCalledWith(1, DOC_COVER_LAYOUT.BRIEF_CARDS, FIELD.DOC_COVER_LAYOUT)
     expect(edit).toHaveBeenNthCalledWith(2, DOC_FAQ_LAYOUT.LEFT_RIGHT, FIELD.DOC_FAQ_LAYOUT)
+  })
+
+  it('keeps tile cards before cover cards in layout options', () => {
+    render(<DocLayout />)
+
+    const buttons = screen.getAllByRole('button')
+    fireEvent.click(buttons[3])
+    fireEvent.click(buttons[4])
+
+    expect(edit).toHaveBeenNthCalledWith(1, DOC_COVER_LAYOUT.TILE_CARDS, FIELD.DOC_COVER_LAYOUT)
+    expect(edit).toHaveBeenNthCalledWith(2, DOC_COVER_LAYOUT.COVER_CARDS, FIELD.DOC_COVER_LAYOUT)
   })
 })

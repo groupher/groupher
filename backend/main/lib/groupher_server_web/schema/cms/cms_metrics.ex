@@ -132,7 +132,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   dsb_enum(:post_layout)
   dsb_enum(:kanban_layout)
   dsb_enum(:kanban_card_layout)
-  dsb_enum(:doc_layout)
+  dsb_enum(:doc_cover_layout)
   dsb_enum(:doc_faq_layout)
   dsb_enum(:tag_layout)
   dsb_enum(:inline_tag_layout)

@@ -14,7 +14,7 @@ export default function DocLayout() {
   const s = useSalon()
   const { t } = useTrans()
 
-  const { docLayout, docFaqLayout, isTouched, isFaqTouched, edit } = useDoc()
+  const { docCoverLayout, docFaqLayout, isTouched, isFaqTouched, edit } = useDoc()
 
   return (
     <div className={s.wrapper}>
@@ -27,17 +27,20 @@ export default function DocLayout() {
         <button
           type='button'
           className={s.layout}
-          aria-pressed={docLayout === DOC_COVER_LAYOUT.OUTLINE_COLUMNS}
-          onClick={() => edit(DOC_COVER_LAYOUT.OUTLINE_COLUMNS, FIELD.DOC_LAYOUT)}
+          aria-pressed={docCoverLayout === DOC_COVER_LAYOUT.OUTLINE_COLUMNS}
+          onClick={() => edit(DOC_COVER_LAYOUT.OUTLINE_COLUMNS, FIELD.DOC_COVER_LAYOUT)}
         >
           <div
-            className={cn(s.block, docLayout === DOC_COVER_LAYOUT.OUTLINE_COLUMNS && s.blockActive)}
+            className={cn(
+              s.block,
+              docCoverLayout === DOC_COVER_LAYOUT.OUTLINE_COLUMNS && s.blockActive,
+            )}
           >
             <MainTemplate layout={DOC_COVER_LAYOUT.OUTLINE_COLUMNS} />
           </div>
           <CheckLabel
             title={t('dsb.layout.doc.option.outline_columns')}
-            active={docLayout === DOC_COVER_LAYOUT.OUTLINE_COLUMNS}
+            active={docCoverLayout === DOC_COVER_LAYOUT.OUTLINE_COLUMNS}
             top={4}
           />
         </button>
@@ -45,15 +48,17 @@ export default function DocLayout() {
         <button
           type='button'
           className={s.layout}
-          aria-pressed={docLayout === DOC_COVER_LAYOUT.OUTLINE_TOC}
-          onClick={() => edit(DOC_COVER_LAYOUT.OUTLINE_TOC, FIELD.DOC_LAYOUT)}
+          aria-pressed={docCoverLayout === DOC_COVER_LAYOUT.OUTLINE_TOC}
+          onClick={() => edit(DOC_COVER_LAYOUT.OUTLINE_TOC, FIELD.DOC_COVER_LAYOUT)}
         >
-          <div className={cn(s.block, docLayout === DOC_COVER_LAYOUT.OUTLINE_TOC && s.blockActive)}>
+          <div
+            className={cn(s.block, docCoverLayout === DOC_COVER_LAYOUT.OUTLINE_TOC && s.blockActive)}
+          >
             <MainTemplate layout={DOC_COVER_LAYOUT.OUTLINE_TOC} />
           </div>
           <CheckLabel
             title={t('dsb.layout.doc.option.outline_toc')}
-            active={docLayout === DOC_COVER_LAYOUT.OUTLINE_TOC}
+            active={docCoverLayout === DOC_COVER_LAYOUT.OUTLINE_TOC}
             top={4}
           />
         </button>
@@ -61,21 +66,17 @@ export default function DocLayout() {
         <button
           type='button'
           className={s.layout}
-          aria-pressed={docLayout === DOC_COVER_LAYOUT.BRIEF_CARDS}
-          onClick={() => edit(DOC_COVER_LAYOUT.BRIEF_CARDS, FIELD.DOC_LAYOUT)}
+          aria-pressed={docCoverLayout === DOC_COVER_LAYOUT.BRIEF_CARDS}
+          onClick={() => edit(DOC_COVER_LAYOUT.BRIEF_CARDS, FIELD.DOC_COVER_LAYOUT)}
         >
           <div
-            className={cn(
-              s.block,
-              'py-2 pl-2.5 pr-0',
-              docLayout === DOC_COVER_LAYOUT.BRIEF_CARDS && s.blockActive,
-            )}
+            className={cn(s.block, docCoverLayout === DOC_COVER_LAYOUT.BRIEF_CARDS && s.blockActive)}
           >
             <MainTemplate layout={DOC_COVER_LAYOUT.BRIEF_CARDS} />
           </div>
           <CheckLabel
             title={t('dsb.layout.doc.option.brief_cards')}
-            active={docLayout === DOC_COVER_LAYOUT.BRIEF_CARDS}
+            active={docCoverLayout === DOC_COVER_LAYOUT.BRIEF_CARDS}
             top={4}
           />
         </button>
@@ -83,43 +84,17 @@ export default function DocLayout() {
         <button
           type='button'
           className={s.layout}
-          aria-pressed={docLayout === DOC_COVER_LAYOUT.COVER_CARDS}
-          onClick={() => edit(DOC_COVER_LAYOUT.COVER_CARDS, FIELD.DOC_LAYOUT)}
+          aria-pressed={docCoverLayout === DOC_COVER_LAYOUT.TILE_CARDS}
+          onClick={() => edit(DOC_COVER_LAYOUT.TILE_CARDS, FIELD.DOC_COVER_LAYOUT)}
         >
           <div
-            className={cn(
-              s.block,
-              'py-2 pl-2.5 pr-0',
-              docLayout === DOC_COVER_LAYOUT.COVER_CARDS && s.blockActive,
-            )}
-          >
-            <MainTemplate layout={DOC_COVER_LAYOUT.COVER_CARDS} />
-          </div>
-          <CheckLabel
-            title={t('dsb.layout.doc.option.cover_cards')}
-            active={docLayout === DOC_COVER_LAYOUT.COVER_CARDS}
-            top={4}
-          />
-        </button>
-
-        <button
-          type='button'
-          className={s.layout}
-          aria-pressed={docLayout === DOC_COVER_LAYOUT.TILE_CARDS}
-          onClick={() => edit(DOC_COVER_LAYOUT.TILE_CARDS, FIELD.DOC_LAYOUT)}
-        >
-          <div
-            className={cn(
-              s.block,
-              'py-2 pl-2.5 pr-0',
-              docLayout === DOC_COVER_LAYOUT.TILE_CARDS && s.blockActive,
-            )}
+            className={cn(s.block, docCoverLayout === DOC_COVER_LAYOUT.TILE_CARDS && s.blockActive)}
           >
             <MainTemplate layout={DOC_COVER_LAYOUT.TILE_CARDS} />
           </div>
           <CheckLabel
             title={t('dsb.layout.doc.option.tile_cards')}
-            active={docLayout === DOC_COVER_LAYOUT.TILE_CARDS}
+            active={docCoverLayout === DOC_COVER_LAYOUT.TILE_CARDS}
             top={4}
           />
         </button>
@@ -127,26 +102,40 @@ export default function DocLayout() {
         <button
           type='button'
           className={s.layout}
-          aria-pressed={docLayout === DOC_COVER_LAYOUT.STACK_CARDS}
-          onClick={() => edit(DOC_COVER_LAYOUT.STACK_CARDS, FIELD.DOC_LAYOUT)}
+          aria-pressed={docCoverLayout === DOC_COVER_LAYOUT.COVER_CARDS}
+          onClick={() => edit(DOC_COVER_LAYOUT.COVER_CARDS, FIELD.DOC_COVER_LAYOUT)}
         >
           <div
-            className={cn(
-              s.block,
-              'py-2 pl-2.5 pr-0',
-              docLayout === DOC_COVER_LAYOUT.STACK_CARDS && s.blockActive,
-            )}
+            className={cn(s.block, docCoverLayout === DOC_COVER_LAYOUT.COVER_CARDS && s.blockActive)}
+          >
+            <MainTemplate layout={DOC_COVER_LAYOUT.COVER_CARDS} />
+          </div>
+          <CheckLabel
+            title={t('dsb.layout.doc.option.cover_cards')}
+            active={docCoverLayout === DOC_COVER_LAYOUT.COVER_CARDS}
+            top={4}
+          />
+        </button>
+
+        <button
+          type='button'
+          className={s.layout}
+          aria-pressed={docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS}
+          onClick={() => edit(DOC_COVER_LAYOUT.STACK_CARDS, FIELD.DOC_COVER_LAYOUT)}
+        >
+          <div
+            className={cn(s.block, docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS && s.blockActive)}
           >
             <MainTemplate layout={DOC_COVER_LAYOUT.STACK_CARDS} />
           </div>
           <CheckLabel
             title={t('dsb.layout.doc.option.stack_cards')}
-            active={docLayout === DOC_COVER_LAYOUT.STACK_CARDS}
+            active={docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS}
             top={4}
           />
         </button>
       </div>
-      <SavingBar isTouched={isTouched} field={FIELD.DOC_LAYOUT} top={10} />
+      <SavingBar isTouched={isTouched} field={FIELD.DOC_COVER_LAYOUT} top={10} />
 
       <div className={s.divider} />
 
