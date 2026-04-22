@@ -4,13 +4,12 @@ import useSalon from '../salon/outline_toc_layout/category'
 import useLogic from '../useLogic'
 
 type TProps = {
-  index: number
   title: string
   desc: string
   articles: TArticle[]
 }
 
-const Category: FC<TProps> = ({ index, title, desc, articles }) => {
+const Category: FC<TProps> = ({ title, desc, articles }) => {
   const s = useSalon()
   const { gotoDetailLayout } = useLogic()
 
@@ -28,7 +27,7 @@ const Category: FC<TProps> = ({ index, title, desc, articles }) => {
           >
             <span className={s.articleTitle}>{article.title}</span>
             <span className={s.line} />
-            <span className={s.itemIndex}>{index * 5 + articleIndex + 1} Mins</span>
+            <span className={s.itemIndex}>{articleIndex + 1}</span>
           </button>
         ))}
       </div>

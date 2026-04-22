@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
 import type { TArticle, TColorName } from '~/spec'
 import DotDivider from '~/widgets/DotDivider'
@@ -16,7 +17,12 @@ type TProps = {
 
 const Category: FC<TProps> = ({ title, desc, color, articles }) => {
   const s = useSalon({ color })
+  const { t } = useTrans()
   const { gotoDetailLayout } = useLogic()
+  const authorsCount =
+    new Set(articles.map((article) => article.author?.login || article.author?.id).filter(Boolean))
+      .size || 2
+  const articleCount = articles.length
 
   return (
     <button type='button' className={s.wrapper} onClick={() => gotoDetailLayout()}>
@@ -29,9 +35,13 @@ const Category: FC<TProps> = ({ title, desc, color, articles }) => {
 
       <div className={s.footer}>
         <Facepile users={mockUsers(2)} total={2} showMore={false} />
-        <div className={s.count}>{articles.length} author</div>
+        <div className={s.count}>
+          {authorsCount} {t(authorsCount > 1 ? 'doc.thread.authors' : 'doc.thread.author')}
+        </div>
         <DotDivider className='mx-2' />
-        <div className={s.count}>{articles.length} articles</div>
+        <div className={s.count}>
+          {articleCount} {t(articleCount > 1 ? 'doc.thread.articles' : 'doc.thread.article')}
+        </div>
         <div className='grow' />
       </div>
     </button>

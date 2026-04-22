@@ -42,4 +42,9 @@ export default {
   'comment.illegal.separator': ', ',
   'comment.header.post_author': 'Author',
   'comment.header.reply_to': 'Reply to:',
+  'doc.thread.no_desc': 'No description yet',
+  'doc.thread.author': 'author',
+  'doc.thread.authors': 'authors',
+  'doc.thread.article': 'article',
+  'doc.thread.articles': 'articles',
 }

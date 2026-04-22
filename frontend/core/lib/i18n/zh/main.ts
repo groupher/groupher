@@ -42,4 +42,9 @@ export default {
   'comment.illegal.separator': '，',
   'comment.header.post_author': '发帖',
   'comment.header.reply_to': '回复:',
+  'doc.thread.no_desc': '暂无描述',
+  'doc.thread.author': '位作者',
+  'doc.thread.authors': '位作者',
+  'doc.thread.article': '篇文档',
+  'doc.thread.articles': '篇文档',
 }
