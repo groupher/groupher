@@ -8,12 +8,12 @@ export default function useSalon() {
   const base = cn('align-both size-5 circle border', br('digest'))
 
   return {
-    dot: cn('size-2 circle', bg('text.digest')),
+    dot: cn('size-2 circle', bg('digest')),
     //
     done: cn(
       base,
       'size-4',
-      !isDarkTheme && cn(bg('text.digest'), 'border-none'),
+      !isDarkTheme && cn(bg('digest'), 'border-none'),
       isDarkTheme && cn(bg('card'), 'border-dotted'),
     ),
     doing: cn(base, 'border-dashed animate-spin animate-duration-[8000ms]'),

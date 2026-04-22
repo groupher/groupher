@@ -21,6 +21,6 @@ export default function useSalon() {
       bg('hoverBg'),
     ),
     codeItem: 'row-center gap-1.5 mb-2',
-    bar: cn('h-1 w-8 rounded-md opacity-20', bg('text.digest')),
+    bar: cn('h-1 w-8 rounded-md opacity-20', bg('digest')),
   }
 }

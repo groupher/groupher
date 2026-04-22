@@ -16,7 +16,7 @@ export default function useSalon() {
     select: 'row-center gap-x-8 w-full',
     layout: 'column-align-both',
     list: 'row-center gap-x-2',
-    divider: cn('h-6 w-px ml-4 mr-4 opacity-65', bg('text.digest')),
+    divider: cn('h-6 w-px ml-4 mr-4 opacity-65', bg('digest')),
     avatar: 'align-both size-7 text-xs border bold-sm rounded',
     blue: cn(
       rainbow(COLOR.BLUE, 'fg'),

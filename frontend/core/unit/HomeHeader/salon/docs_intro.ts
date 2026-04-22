@@ -20,7 +20,7 @@ export default function useSalon() {
     content: 'column relative gap-y-1.5 pl-2.5 mt-2.5',
     contentBorder: cn(
       'absolute left-0 top-0 h-full w-px',
-      bg('text.digest'),
+      bg('digest'),
       isLightTheme ? 'opacity-30' : 'opacity-40',
     ),
     item: cn(

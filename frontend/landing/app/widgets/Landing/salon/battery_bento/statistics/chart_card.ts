@@ -46,6 +46,6 @@ export default function useSalon() {
     highlightDotHover: 'top-16 mt-0.5 right-16 mr-1.5 opacity-100',
     dotBorderStyle: { borderColor: isLightTheme ? 'white' : 'black' },
     //
-    column: cn('absolute top-12 w-px h-28 opacity-15 z-10 trans-all-100', bg('text.digest')),
+    column: cn('absolute top-12 w-px h-28 opacity-15 z-10 trans-all-100', bg('digest')),
   }
 }

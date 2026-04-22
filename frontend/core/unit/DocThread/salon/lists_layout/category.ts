@@ -18,6 +18,6 @@ export default function useSalon({ color }: TProps) {
     desc: cn('text-sm line-clamp-2 mt-1.5', fg('digest')),
     footer: 'row-between w-full mt-4',
     authorHint: cn('text-xs', fg('hint')),
-    moreLink: 'mt-1 scale-90',
+    moreLink: 'mt-1 scale-90 -mr-2',
   }
 }

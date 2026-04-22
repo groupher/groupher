@@ -1,11 +1,11 @@
-import type { TDocFAQLayout, TDocLayout, TFAQSection } from '~/spec'
+import type { TDocCoverLayout, TDocFAQLayout, TFAQSection } from '~/spec'
 import useArticle from '~/stores/article/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
 type TRet = {
   isArticleLayout: boolean
   isFAQArticleLayout: boolean
-  layout: TDocLayout
+  layout: TDocCoverLayout
   faqLayout: TDocFAQLayout
   gotoDetailLayout: () => void
   gotoFAQDetailLayout: () => void

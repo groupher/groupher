@@ -12,6 +12,6 @@ export default function useSalon() {
     descText: cn('align-both min-w-24 px-2.5 py-1', fg('title')),
     label: 'align-both size-6 text-sm pointer',
     //
-    slider: cn('row absolute size-6 rounded trans-all-200', bg('text.digest')),
+    slider: cn('row absolute size-6 rounded trans-all-200', bg('digest')),
   }
 }

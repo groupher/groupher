@@ -1,12 +1,12 @@
 import type { FC } from 'react'
-import { DOC_LAYOUT } from '~/const/layout'
+import { DOC_COVER_LAYOUT } from '~/const/layout'
 import ToolSVG from '~/icons/Book'
-import type { TDocLayout } from '~/spec'
+import type { TDocCoverLayout } from '~/spec'
 
 import useSalon, { cnMerge } from '../../salon/layout/doc_layout/main_template'
 
 type TProps = {
-  layout: TDocLayout
+  layout: TDocCoverLayout
 }
 
 const OUTLINE_ITEMS = [
@@ -45,7 +45,7 @@ const CARD_ROWS = [CARD_ITEMS.slice(0, 3), CARD_ITEMS.slice(3)] as const
 const MainTemplate: FC<TProps> = ({ layout }) => {
   const s = useSalon()
 
-  if (layout === DOC_LAYOUT.CARDS) {
+  if (layout === DOC_COVER_LAYOUT.STACK_CARDS) {
     return (
       <div className={cnMerge(s.block, 'justify-center')}>
         <div className={s.cardsRows}>
@@ -73,7 +73,7 @@ const MainTemplate: FC<TProps> = ({ layout }) => {
     )
   }
 
-  if (layout === DOC_LAYOUT.LISTS) {
+  if (layout === DOC_COVER_LAYOUT.TILE_CARDS) {
     return (
       <div className={s.block}>
         <div className={s.list}>
@@ -91,6 +91,18 @@ const MainTemplate: FC<TProps> = ({ layout }) => {
             </div>
           ))}
         </div>
+      </div>
+    )
+  }
+
+  if (
+    layout === DOC_COVER_LAYOUT.OUTLINE_COLUMNS ||
+    layout === DOC_COVER_LAYOUT.BRIEF_CARDS ||
+    layout === DOC_COVER_LAYOUT.COVER_CARDS
+  ) {
+    return (
+      <div className={cnMerge(s.block, 'items-center justify-center')}>
+        <h2>TODO</h2>
       </div>
     )
   }

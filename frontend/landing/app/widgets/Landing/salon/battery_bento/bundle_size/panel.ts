@@ -22,7 +22,7 @@ export default function useSalon() {
     textRed: cn(rainbow(COLOR.RED, 'fg'), 'bold-sm'),
     //
     barTrack: cn('h-1 w-full mt-2 rounded-md', bg('divider')),
-    bar: cn('h-full opacity-60', bg('text.digest')),
+    bar: cn('h-full opacity-60', bg('digest')),
     barGreen: rainbow(COLOR.GREEN, 'bg'),
     barRed: rainbow(COLOR.RED, 'bg'),
     //

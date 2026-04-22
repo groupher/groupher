@@ -42,7 +42,7 @@ export default function useSalon() {
     arrowIcon: cn('size-4 opacity-80', fill('digest')),
     arrowText: cn('text-xs opacity-80', fg('digest')),
     //
-    bar: cn('h-1.5 w-40 mt-4 opacity-30 rounded-md', bg('text.digest')),
+    bar: cn('h-1.5 w-40 mt-4 opacity-30 rounded-md', bg('digest')),
     // cover
     coverWrapper: cn(
       'relative row-between mt-5 mb-4 w-64 h-24 rounded-md',

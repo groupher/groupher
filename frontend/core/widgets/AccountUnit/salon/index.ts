@@ -34,9 +34,6 @@ export default function useSalon({ ...spacing }: TProps) {
     nickname: cn('text-sm ml-2.5', fg('digest')),
     unLoginIcon: cn('size-3 pointer', fill('digest'), `hover:${fill('title')}`),
 
-    loadingBox: cn(
-      'size-4 rounded animate-pulse',
-      isLightTheme ? bg('divider') : bg('text.digest'),
-    ),
+    loadingBox: cn('size-4 rounded animate-pulse', isLightTheme ? bg('divider') : bg('digest')),
   }
 }

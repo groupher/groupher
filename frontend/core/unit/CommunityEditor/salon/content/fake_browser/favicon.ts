@@ -4,7 +4,7 @@ export default function useSalon() {
   const { cn, bg } = useTwBelt()
 
   return {
-    holder: cn('size-3.5 opacity-30 rounded ml-4', bg('text.digest')),
+    holder: cn('size-3.5 opacity-30 rounded ml-4', bg('digest')),
     logo: 'size-3.5 ml-4 rounded',
   }
 }

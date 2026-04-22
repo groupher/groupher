@@ -14,6 +14,6 @@ export default function useSalon() {
     fillGreen: rainbow(COLOR.GREEN, 'fill'),
     title: cn('text-xs', fg('digest')),
     //
-    bar: cn('absolute h-1.5 w-20 rounded-md opacity-20', bg('text.digest')),
+    bar: cn('absolute h-1.5 w-20 rounded-md opacity-20', bg('digest')),
   }
 }

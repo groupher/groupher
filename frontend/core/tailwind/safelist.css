@@ -39,7 +39,7 @@
 /* group hover */
 @source inline('group-hover:{text-title,fill-rainbow-red,fill-title,shadow-sm}');
 @source inline('group-hover:{fill,text}-rainbow-{red,orange,yellow,green,cyan,blue,purple,pink,custom,subCustom}');
-@source inline('group-hover:border-divider');
+@source inline('group-hover:{border-divider,border-digest}');
 
 /* menu group hover */
 @source inline('group-hover/menubar:{text-rainbow-red,fill-rainbow-red,fill-title}');

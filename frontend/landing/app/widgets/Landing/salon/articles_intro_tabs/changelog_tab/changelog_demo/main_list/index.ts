@@ -29,7 +29,7 @@ export default function useSalon() {
       bg('hoverBg'),
       br('divider'),
     ),
-    bar: cn('w-40 h-1.5 opacity-30', bg('text.digest')),
+    bar: cn('w-40 h-1.5 opacity-30', bg('digest')),
     starIcon: 'absolute size-4 z-30',
     starYellow: rainbow(COLOR.YELLOW, 'fill'),
     starRed: rainbow(COLOR.PINK, 'fill'),

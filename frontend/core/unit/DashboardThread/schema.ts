@@ -199,7 +199,7 @@ const updateDashboardLayout = gql`
     $brandLayout: DsbBrandLayout
     $globalLayout: DsbGlobalLayout
     $changelogLayout: DsbChangelogLayout
-    $docLayout: DsbDocLayout
+    $docLayout: DsbDocCoverLayout
     $docFaqLayout: DsbDocFaqLayout
   ) {
     updateDashboardLayout(

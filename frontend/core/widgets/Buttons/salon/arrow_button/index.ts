@@ -24,7 +24,7 @@ export default function useSalon({
       'arrow-button row-center relative inline-flex border-none bg-transparent text-sm',
       scopeClassName,
       leftLayout ? 'pl-2' : 'pr-3.5',
-      'hover:brightness-110 trans-all-100 pointer',
+      'opacity-65 hover:opacity-100 hover:brightness-110 trans-all-100 pointer',
       linker('fg'),
       margin(spacing),
     ),

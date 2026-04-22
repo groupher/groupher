@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { DOC_FAQ_LAYOUT, DOC_LAYOUT } from '~/const/layout'
+import { DOC_COVER_LAYOUT, DOC_FAQ_LAYOUT } from '~/const/layout'
 import { FIELD } from '../../../constant'
 import DocLayout from '..'
 
@@ -11,7 +11,7 @@ vi.mock('~/hooks/useTrans', () => ({
 
 vi.mock('../../../logic/useDoc', () => ({
   default: () => ({
-    docLayout: DOC_LAYOUT.OUTLINE,
+    docLayout: DOC_COVER_LAYOUT.OUTLINE_COLUMNS,
     docFaqLayout: DOC_FAQ_LAYOUT.COLLAPSE,
     isTouched: false,
     isFaqTouched: false,
@@ -65,13 +65,15 @@ describe('<DocLayout />', () => {
     render(<DocLayout />)
 
     const buttons = screen.getAllByRole('button')
-    expect(buttons).toHaveLength(6)
+    expect(buttons).toHaveLength(9)
     expect(buttons[0]).toHaveAttribute('aria-pressed', 'true')
     expect(buttons[1]).toHaveAttribute('aria-pressed', 'false')
-    expect(buttons[3]).toHaveAttribute('aria-pressed', 'true')
+    expect(buttons[6]).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId(`saving-bar-${FIELD.DOC_LAYOUT}`)).toBeInTheDocument()
     expect(screen.getByTestId(`saving-bar-${FIELD.DOC_FAQ_LAYOUT}`)).toBeInTheDocument()
-    expect(screen.getByTestId(`main-template-${DOC_LAYOUT.OUTLINE}`)).toBeInTheDocument()
+    expect(
+      screen.getByTestId(`main-template-${DOC_COVER_LAYOUT.OUTLINE_COLUMNS}`),
+    ).toBeInTheDocument()
     expect(screen.getByTestId(`faq-template-${DOC_FAQ_LAYOUT.COLLAPSE}`)).toBeInTheDocument()
   })
 
@@ -80,9 +82,9 @@ describe('<DocLayout />', () => {
 
     const buttons = screen.getAllByRole('button')
     fireEvent.click(buttons[2])
-    fireEvent.click(buttons[5])
+    fireEvent.click(buttons[8])
 
-    expect(edit).toHaveBeenNthCalledWith(1, DOC_LAYOUT.CARDS, FIELD.DOC_LAYOUT)
+    expect(edit).toHaveBeenNthCalledWith(1, DOC_COVER_LAYOUT.BRIEF_CARDS, FIELD.DOC_LAYOUT)
     expect(edit).toHaveBeenNthCalledWith(2, DOC_FAQ_LAYOUT.LEFT_RIGHT, FIELD.DOC_FAQ_LAYOUT)
   })
 })

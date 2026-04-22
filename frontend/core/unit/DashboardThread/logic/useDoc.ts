@@ -1,12 +1,12 @@
 import { pick } from 'ramda'
 import { COLOR } from '~/const/colors'
-import type { TDocFAQLayout, TDocLayout, TEditFunc } from '~/spec'
+import type { TDocCoverLayout, TDocFAQLayout, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 import { DEFAULT_NEW_FAQ } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
-  docLayout: TDocLayout
+  docLayout: TDocCoverLayout
   docFaqLayout: TDocFAQLayout
   saving: boolean
   isTouched: boolean

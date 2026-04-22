@@ -22,6 +22,6 @@ export default function useSalon() {
     item: 'row-center mb-0.5',
     avatar: 'size-3.5 rounded mt-0.5',
     post: 'column ml-2.5 gap-y-1 mt-1',
-    bar: cn('w-10 h-1 opacity-30 rounded-xl', bg('text.digest')),
+    bar: cn('w-10 h-1 opacity-30 rounded-xl', bg('digest')),
   }
 }

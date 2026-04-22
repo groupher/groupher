@@ -8,7 +8,7 @@ import type {
   TChangeMode,
   TColorName,
   TDocFAQLayout,
-  TDocLayout,
+  TDocCoverLayout,
   TEnableConf,
   TFAQSection,
   TFooterLayout,
@@ -106,7 +106,7 @@ export type TDsbFieldMap = {
   kanbanBoards: readonly TKanbanBoard[]
   kanbanBgColors: readonly TColorName[]
 
-  docLayout: TDocLayout
+  docLayout: TDocCoverLayout
   docFaqLayout: TDocFAQLayout
   tagLayout: TTagLayout
   inlineTagLayout: TInlineTagLayout
