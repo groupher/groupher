@@ -52,7 +52,10 @@ export default function DocLayout() {
           onClick={() => edit(DOC_COVER_LAYOUT.OUTLINE_TOC, FIELD.DOC_COVER_LAYOUT)}
         >
           <div
-            className={cn(s.block, docCoverLayout === DOC_COVER_LAYOUT.OUTLINE_TOC && s.blockActive)}
+            className={cn(
+              s.block,
+              docCoverLayout === DOC_COVER_LAYOUT.OUTLINE_TOC && s.blockActive,
+            )}
           >
             <MainTemplate layout={DOC_COVER_LAYOUT.OUTLINE_TOC} />
           </div>
@@ -70,7 +73,10 @@ export default function DocLayout() {
           onClick={() => edit(DOC_COVER_LAYOUT.BRIEF_CARDS, FIELD.DOC_COVER_LAYOUT)}
         >
           <div
-            className={cn(s.block, docCoverLayout === DOC_COVER_LAYOUT.BRIEF_CARDS && s.blockActive)}
+            className={cn(
+              s.block,
+              docCoverLayout === DOC_COVER_LAYOUT.BRIEF_CARDS && s.blockActive,
+            )}
           >
             <MainTemplate layout={DOC_COVER_LAYOUT.BRIEF_CARDS} />
           </div>
@@ -106,7 +112,10 @@ export default function DocLayout() {
           onClick={() => edit(DOC_COVER_LAYOUT.COVER_CARDS, FIELD.DOC_COVER_LAYOUT)}
         >
           <div
-            className={cn(s.block, docCoverLayout === DOC_COVER_LAYOUT.COVER_CARDS && s.blockActive)}
+            className={cn(
+              s.block,
+              docCoverLayout === DOC_COVER_LAYOUT.COVER_CARDS && s.blockActive,
+            )}
           >
             <MainTemplate layout={DOC_COVER_LAYOUT.COVER_CARDS} />
           </div>
@@ -124,7 +133,10 @@ export default function DocLayout() {
           onClick={() => edit(DOC_COVER_LAYOUT.STACK_CARDS, FIELD.DOC_COVER_LAYOUT)}
         >
           <div
-            className={cn(s.block, docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS && s.blockActive)}
+            className={cn(
+              s.block,
+              docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS && s.blockActive,
+            )}
           >
             <MainTemplate layout={DOC_COVER_LAYOUT.STACK_CARDS} />
           </div>
