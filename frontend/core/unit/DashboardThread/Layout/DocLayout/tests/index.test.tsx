@@ -32,8 +32,28 @@ vi.mock('../../../salon/layout/doc_layout', () => ({
   cn: (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' '),
 }))
 
-vi.mock('../MainTemplate', () => ({
-  default: ({ layout }: { layout: string }) => <span data-testid={`main-template-${layout}`} />,
+vi.mock('../OutlineColumnsLayout', () => ({
+  default: () => <span data-testid={`main-template-${DOC_COVER_LAYOUT.OUTLINE_COLUMNS}`} />,
+}))
+
+vi.mock('../OutlineTocLayout', () => ({
+  default: () => <span data-testid={`main-template-${DOC_COVER_LAYOUT.OUTLINE_TOC}`} />,
+}))
+
+vi.mock('../BriefCardsLayout', () => ({
+  default: () => <span data-testid={`main-template-${DOC_COVER_LAYOUT.BRIEF_CARDS}`} />,
+}))
+
+vi.mock('../TileCardsLayout', () => ({
+  default: () => <span data-testid={`main-template-${DOC_COVER_LAYOUT.TILE_CARDS}`} />,
+}))
+
+vi.mock('../CoverCardsLayout', () => ({
+  default: () => <span data-testid={`main-template-${DOC_COVER_LAYOUT.COVER_CARDS}`} />,
+}))
+
+vi.mock('../StackCardsLayout', () => ({
+  default: () => <span data-testid={`main-template-${DOC_COVER_LAYOUT.STACK_CARDS}`} />,
 }))
 
 vi.mock('../FaqTemplate', () => ({

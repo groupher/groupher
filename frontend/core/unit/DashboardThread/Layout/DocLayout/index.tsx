@@ -7,8 +7,13 @@ import useDoc from '../../logic/useDoc'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cn } from '../../salon/layout/doc_layout'
+import BriefCardsLayout from './BriefCardsLayout'
+import CoverCardsLayout from './CoverCardsLayout'
 import FaqTemplate from './FaqTemplate'
-import MainTemplate from './MainTemplate'
+import OutlineColumnsLayout from './OutlineColumnsLayout'
+import OutlineTocLayout from './OutlineTocLayout'
+import StackCardsLayout from './StackCardsLayout'
+import TileCardsLayout from './TileCardsLayout'
 
 export default function DocLayout() {
   const s = useSalon()
@@ -36,7 +41,7 @@ export default function DocLayout() {
               docCoverLayout === DOC_COVER_LAYOUT.OUTLINE_COLUMNS && s.blockActive,
             )}
           >
-            <MainTemplate layout={DOC_COVER_LAYOUT.OUTLINE_COLUMNS} />
+            <OutlineColumnsLayout />
           </div>
           <CheckLabel
             title={t('dsb.layout.doc.option.outline_columns')}
@@ -57,7 +62,7 @@ export default function DocLayout() {
               docCoverLayout === DOC_COVER_LAYOUT.OUTLINE_TOC && s.blockActive,
             )}
           >
-            <MainTemplate layout={DOC_COVER_LAYOUT.OUTLINE_TOC} />
+            <OutlineTocLayout />
           </div>
           <CheckLabel
             title={t('dsb.layout.doc.option.outline_toc')}
@@ -78,7 +83,7 @@ export default function DocLayout() {
               docCoverLayout === DOC_COVER_LAYOUT.BRIEF_CARDS && s.blockActive,
             )}
           >
-            <MainTemplate layout={DOC_COVER_LAYOUT.BRIEF_CARDS} />
+            <BriefCardsLayout />
           </div>
           <CheckLabel
             title={t('dsb.layout.doc.option.brief_cards')}
@@ -96,7 +101,7 @@ export default function DocLayout() {
           <div
             className={cn(s.block, docCoverLayout === DOC_COVER_LAYOUT.TILE_CARDS && s.blockActive)}
           >
-            <MainTemplate layout={DOC_COVER_LAYOUT.TILE_CARDS} />
+            <TileCardsLayout />
           </div>
           <CheckLabel
             title={t('dsb.layout.doc.option.tile_cards')}
@@ -117,7 +122,7 @@ export default function DocLayout() {
               docCoverLayout === DOC_COVER_LAYOUT.COVER_CARDS && s.blockActive,
             )}
           >
-            <MainTemplate layout={DOC_COVER_LAYOUT.COVER_CARDS} />
+            <CoverCardsLayout />
           </div>
           <CheckLabel
             title={t('dsb.layout.doc.option.cover_cards')}
@@ -138,7 +143,7 @@ export default function DocLayout() {
               docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS && s.blockActive,
             )}
           >
-            <MainTemplate layout={DOC_COVER_LAYOUT.STACK_CARDS} />
+            <StackCardsLayout />
           </div>
           <CheckLabel
             title={t('dsb.layout.doc.option.stack_cards')}

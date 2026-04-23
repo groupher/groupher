@@ -13,17 +13,8 @@ export default function useSalon() {
     block: 'column s-full px-4 py-3',
     bar: cnMerge(base.bar, 'static h-1.5 w-20 opacity-40'),
     circle: cnMerge(base.circle, 'static size-3.5 opacity-40'),
-    blocksRows: 'column gap-10 w-fit self-center pt-1',
-    blocksRow: 'row gap-6',
-    blocksCard: 'column gap-2 w-16',
-    blocksIconWrap: 'row',
     iconBox: 'align-both size-4 rounded',
     icon: 'size-2.5',
-    blocksText: 'column gap-1 w-full',
-
-    list: 'column gap-4 w-full px-8 py-1',
-    listEntry: 'row-start gap-4',
-    listCopy: 'column gap-1 pt-0.5',
 
     cardsRows: 'column gap-4 w-fit self-center',
     cardsRow: 'row gap-2.5',
