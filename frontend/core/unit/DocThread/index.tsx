@@ -26,10 +26,6 @@ export default function DocThread() {
 
   return (
     <div className={s.wrapper}>
-      <OutlineColumnsLayout />
-
-      <OutlineTocLayout />
-
       {layout === DOC_COVER_LAYOUT.OUTLINE_COLUMNS && <OutlineColumnsLayout />}
       {layout === DOC_COVER_LAYOUT.OUTLINE_TOC && <OutlineTocLayout />}
       {layout === DOC_COVER_LAYOUT.BRIEF_CARDS && <BriefCardsLayout />}
