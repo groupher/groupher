@@ -9,10 +9,11 @@ import useSalon, { cnMerge } from '../../salon/layout/doc_layout/brief_cards_lay
 
 export default function BriefCardsLayout() {
   const s = useSalon()
+  const shortDesc = 'w-1/3'
 
   return (
     <div className={s.block}>
-      <div className={cnMerge(s.itemTitle, 'mb-3 w-10 opacity-40 ml-0.5')} />
+      <div className={cnMerge(s.itemTitle, 'mb-3 w-1/4 opacity-40 ml-0.5')} />
       <div className={s.items}>
         <div className={s.item}>
           <div className={cnMerge(s.iconBox)}>
@@ -21,7 +22,7 @@ export default function BriefCardsLayout() {
           <div className={s.copy}>
             <div className={s.itemTitle} />
             <div className={s.itemDesc} />
-            <div className={cnMerge(s.itemDesc, 'w-6')} />
+            <div className={cnMerge(s.itemDesc, shortDesc)} />
           </div>
         </div>
 
@@ -32,7 +33,7 @@ export default function BriefCardsLayout() {
           <div className={s.copy}>
             <div className={s.itemTitle} />
             <div className={s.itemDesc} />
-            <div className={cnMerge(s.itemDesc, 'w-6')} />
+            <div className={cnMerge(s.itemDesc, shortDesc)} />
           </div>
         </div>
 
@@ -43,7 +44,7 @@ export default function BriefCardsLayout() {
           <div className={s.copy}>
             <div className={s.itemTitle} />
             <div className={s.itemDesc} />
-            <div className={cnMerge(s.itemDesc, 'w-6')} />
+            <div className={cnMerge(s.itemDesc, shortDesc)} />
           </div>
         </div>
 
@@ -54,7 +55,7 @@ export default function BriefCardsLayout() {
           <div className={s.copy}>
             <div className={s.itemTitle} />
             <div className={s.itemDesc} />
-            <div className={cnMerge(s.itemDesc, 'w-6')} />
+            <div className={cnMerge(s.itemDesc, shortDesc)} />
           </div>
         </div>
 
@@ -65,12 +66,12 @@ export default function BriefCardsLayout() {
           <div className={s.copy}>
             <div className={s.itemTitle} />
             <div className={s.itemDesc} />
-            <div className={cnMerge(s.itemDesc, 'w-6')} />
+            <div className={cnMerge(s.itemDesc, shortDesc)} />
           </div>
         </div>
       </div>
 
-      <div className={cnMerge(s.itemTitle, 'mt-5 mb-3 w-8 opacity-40 ml-0.5')} />
+      <div className={cnMerge(s.itemTitle, 'mt-5 mb-3 w-1/5 opacity-40 ml-0.5')} />
       <div className={s.items}>
         <div className={s.item}>
           <div className={cnMerge(s.iconBox)}>
@@ -79,7 +80,7 @@ export default function BriefCardsLayout() {
           <div className={s.copy}>
             <div className={s.itemTitle} />
             <div className={s.itemDesc} />
-            <div className={cnMerge(s.itemDesc, 'w-6')} />
+            <div className={cnMerge(s.itemDesc, shortDesc)} />
           </div>
         </div>
 
@@ -90,12 +91,12 @@ export default function BriefCardsLayout() {
           <div className={s.copy}>
             <div className={s.itemTitle} />
             <div className={s.itemDesc} />
-            <div className={cnMerge(s.itemDesc, 'w-6')} />
+            <div className={cnMerge(s.itemDesc, shortDesc)} />
           </div>
         </div>
       </div>
 
-      <div className={cnMerge(s.itemTitle, 'mt-5 mb-3 w-8 opacity-40 ml-0.5')} />
+      <div className={cnMerge(s.itemTitle, 'mt-5 mb-3 w-1/5 opacity-40 ml-0.5')} />
       <div className={s.items}>
         <div className={s.item}>
           <div className={cnMerge(s.iconBox)}>
@@ -104,7 +105,7 @@ export default function BriefCardsLayout() {
           <div className={s.copy}>
             <div className={s.itemTitle} />
             <div className={s.itemDesc} />
-            <div className={cnMerge(s.itemDesc, 'w-6')} />
+            <div className={cnMerge(s.itemDesc, shortDesc)} />
           </div>
         </div>
 
@@ -115,7 +116,7 @@ export default function BriefCardsLayout() {
           <div className={s.copy}>
             <div className={s.itemTitle} />
             <div className={s.itemDesc} />
-            <div className={cnMerge(s.itemDesc, 'w-6')} />
+            <div className={cnMerge(s.itemDesc, shortDesc)} />
           </div>
         </div>
 
@@ -126,7 +127,7 @@ export default function BriefCardsLayout() {
           <div className={s.copy}>
             <div className={s.itemTitle} />
             <div className={s.itemDesc} />
-            <div className={cnMerge(s.itemDesc, 'w-6')} />
+            <div className={cnMerge(s.itemDesc, shortDesc)} />
           </div>
         </div>
       </div>

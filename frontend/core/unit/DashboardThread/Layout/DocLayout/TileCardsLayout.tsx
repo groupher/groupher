@@ -8,6 +8,7 @@ import useSalon, { cnMerge } from '../../salon/layout/doc_layout/tile_cards_layo
 
 export default function TileCardsLayout() {
   const s = useSalon()
+  const descMedium = 'w-2/5'
 
   return (
     <div className={s.block}>
@@ -15,7 +16,7 @@ export default function TileCardsLayout() {
         <div className={s.card}>
           <BookSVG className={s.icon} />
           <div className={s.title} />
-          <div className={cnMerge(s.desc, 'w-10')} />
+          <div className={cnMerge(s.desc, descMedium)} />
           <div className={s.desc} />
           <div className={s.footer}>
             <div className={s.circle} />
@@ -26,7 +27,7 @@ export default function TileCardsLayout() {
         <div className={s.card}>
           <AdminSVG className={s.icon} />
           <div className={s.title} />
-          <div className={cnMerge(s.desc, 'w-10')} />
+          <div className={cnMerge(s.desc, descMedium)} />
           <div className={s.desc} />
           <div className={s.footer}>
             <div className={s.circle} />
@@ -37,7 +38,7 @@ export default function TileCardsLayout() {
         <div className={s.card}>
           <BillingSVG className={s.icon} />
           <div className={s.title} />
-          <div className={cnMerge(s.desc, 'w-9')} />
+          <div className={cnMerge(s.desc, 'w-1/3')} />
           <div className={s.desc} />
           <div className={s.footer}>
             <div className={s.circle} />
@@ -48,7 +49,7 @@ export default function TileCardsLayout() {
         <div className={s.card}>
           <AirBallonSVG className={s.icon} />
           <div className={s.title} />
-          <div className={cnMerge(s.desc, 'w-10')} />
+          <div className={cnMerge(s.desc, descMedium)} />
           <div className={s.desc} />
           <div className={s.footer}>
             <div className={s.circle} />
@@ -59,7 +60,7 @@ export default function TileCardsLayout() {
         <div className={s.card}>
           <CmsSVG className={s.icon} />
           <div className={s.title} />
-          <div className={cnMerge(s.desc, 'w-10')} />
+          <div className={cnMerge(s.desc, descMedium)} />
           <div className={s.desc} />
           <div className={s.footer}>
             <div className={s.circle} />
