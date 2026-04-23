@@ -32,6 +32,27 @@ export default function DocLayout() {
         <button
           type='button'
           className={s.layout}
+          aria-pressed={docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS}
+          onClick={() => edit(DOC_COVER_LAYOUT.STACK_CARDS, FIELD.DOC_COVER_LAYOUT)}
+        >
+          <div
+            className={cn(
+              s.block,
+              docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS && s.blockActive,
+            )}
+          >
+            <StackCardsLayout />
+          </div>
+          <CheckLabel
+            title={t('dsb.layout.doc.option.stack_cards')}
+            active={docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS}
+            top={4}
+          />
+        </button>
+
+        <button
+          type='button'
+          className={s.layout}
           aria-pressed={docCoverLayout === DOC_COVER_LAYOUT.OUTLINE_COLUMNS}
           onClick={() => edit(DOC_COVER_LAYOUT.OUTLINE_COLUMNS, FIELD.DOC_COVER_LAYOUT)}
         >
@@ -130,28 +151,8 @@ export default function DocLayout() {
             top={4}
           />
         </button>
-
-        <button
-          type='button'
-          className={s.layout}
-          aria-pressed={docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS}
-          onClick={() => edit(DOC_COVER_LAYOUT.STACK_CARDS, FIELD.DOC_COVER_LAYOUT)}
-        >
-          <div
-            className={cn(
-              s.block,
-              docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS && s.blockActive,
-            )}
-          >
-            <StackCardsLayout />
-          </div>
-          <CheckLabel
-            title={t('dsb.layout.doc.option.stack_cards')}
-            active={docCoverLayout === DOC_COVER_LAYOUT.STACK_CARDS}
-            top={4}
-          />
-        </button>
       </div>
+
       <SavingBar isTouched={isTouched} field={FIELD.DOC_COVER_LAYOUT} top={10} />
 
       <div className={s.divider} />
