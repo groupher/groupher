@@ -29,7 +29,7 @@ export default function useSalon() {
     iconHead: 'opacity-80 row-center gap-x-4 relative mt-5 mb-4',
     iconFootBar: cn(
       'absolute bottom-2 w-60 h-4 -left-5 rounded-md',
-      bg('text.digest'),
+      bg('digest'),
       isLightTheme ? 'opacity-10' : 'opacity-20',
     ),
     icon: 'size-9 inline-block mr-1 -mt-1 z-20',

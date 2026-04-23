@@ -1,22 +1,18 @@
-import type { FC } from 'react'
-
 import { mockHelpCats } from '~/mock'
-import useSalon from '../salon/lists_layout'
+import useSalon from '../salon/outline_toc_layout'
 import Category from './Category'
 
-const ListsLayout: FC = () => {
-  const s = useSalon()
+export default function OutlineTocLayout() {
   const cats = mockHelpCats()
+  const s = useSalon()
 
   return (
     <div className={s.wrapper}>
       <div className={s.cats}>
         {cats.map((cat) => (
-          <Category key={cat.id} color={cat.color} title={cat.title} desc={cat.desc} />
+          <Category key={cat.id} title={cat.title} desc={cat.desc} articles={cat.articles} />
         ))}
       </div>
     </div>
   )
 }
-
-export default ListsLayout

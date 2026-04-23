@@ -20,7 +20,7 @@ export default function useSalon() {
     iconBox: 'absolute left-2.5',
     icon: cn('size-3.5 mr-1 opacity-65', fill('digest')),
     //
-    bar: cn('w-10 h-1.5 opacity-15 rounded-md absolute', bg('text.digest')),
+    bar: cn('w-10 h-1.5 opacity-15 rounded-md absolute', bg('digest')),
     editBox: cn(
       'align-both size-9 rounded-2xl border absolute top-48 left-48',
       br('divider'),

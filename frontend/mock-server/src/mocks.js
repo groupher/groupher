@@ -53,7 +53,7 @@ const makeDashboard = (slug = 'home') => {
       postLayout: 'quora',
       kanbanLayout: 'classic',
       kanbanCardLayout: 'simple',
-      docLayout: 'cards',
+      docCoverLayout: 'stack_cards',
       docFaqLayout: 'collapse',
       tagLayout: 'hash',
       inlineTagLayout: 'border',

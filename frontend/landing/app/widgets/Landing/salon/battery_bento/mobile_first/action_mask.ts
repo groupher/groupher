@@ -22,6 +22,6 @@ export default function useSalon() {
     //
     icon: cn('size-3', fill('title')),
     menuItem: cn('row-center mb-2 mt-0.5 ml-0.5 text-xs', fg('digest')),
-    bar: cn('ml-2 w-8 h-1.5 rounded-md opacity-80', bg('text.digest')),
+    bar: cn('ml-2 w-8 h-1.5 rounded-md opacity-80', bg('digest')),
   }
 }

@@ -34,7 +34,7 @@ export default function useSalon() {
       rainbow(COLOR.BLUE, 'fill'),
     ),
     //
-    bar: cn('h-1.5 w-10/12 ml-3.5 rounded-md opacity-10', bg('text.digest')),
+    bar: cn('h-1.5 w-10/12 ml-3.5 rounded-md opacity-10', bg('digest')),
     curveLine: cn(
       'absolute top-24 left-52 size-40 z-20 -rotate-6 opacity-40 brightness-110',
       rainbow(COLOR.BLUE, 'fill'),

@@ -24,7 +24,7 @@ export const LAYOUT_FIELD = {
   KANBAN_CARD_LAYOUT: 'kanbanCardLayout',
   KANBAN_BOARDS: 'kanbanBoards',
   KANBAN_BG_COLORS: 'kanbanBgColors',
-  DOC_LAYOUT: 'docLayout',
+  DOC_COVER_LAYOUT: 'docCoverLayout',
   DOC_FAQ_LAYOUT: 'docFaqLayout',
   BRAND_LAYOUT: 'brandLayout',
   TAG_LAYOUT: 'tagLayout',

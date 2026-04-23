@@ -199,7 +199,7 @@ const updateDashboardLayout = gql`
     $brandLayout: DsbBrandLayout
     $globalLayout: DsbGlobalLayout
     $changelogLayout: DsbChangelogLayout
-    $docLayout: DsbDocLayout
+    $docCoverLayout: DsbDocCoverLayout
     $docFaqLayout: DsbDocFaqLayout
   ) {
     updateDashboardLayout(
@@ -243,7 +243,7 @@ const updateDashboardLayout = gql`
       brandLayout: $brandLayout
       globalLayout: $globalLayout
       changelogLayout: $changelogLayout
-      docLayout: $docLayout
+      docCoverLayout: $docCoverLayout
       docFaqLayout: $docFaqLayout
     ) {
       slug

@@ -28,6 +28,6 @@ export default function useSalon() {
     ),
     spiderSVG: cn('size-5 opacity-80', rainbow(COLOR.CYAN, 'fill')),
     //
-    bar: cn('absolute h-1 w-10 rounded-md opacity-20', bg('text.digest')),
+    bar: cn('absolute h-1 w-10 rounded-md opacity-20', bg('digest')),
   }
 }

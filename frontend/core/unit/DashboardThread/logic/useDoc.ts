@@ -1,12 +1,12 @@
 import { pick } from 'ramda'
 import { COLOR } from '~/const/colors'
-import type { TDocFAQLayout, TDocLayout, TEditFunc } from '~/spec'
+import type { TDocCoverLayout, TDocFAQLayout, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 import { DEFAULT_NEW_FAQ } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
-  docLayout: TDocLayout
+  docCoverLayout: TDocCoverLayout
   docFaqLayout: TDocFAQLayout
   saving: boolean
   isTouched: boolean
@@ -39,12 +39,12 @@ export default function useDoc(): TRet {
     dsb$.commit({ docCategories })
   }
 
-  const isTouched = isChanged('docLayout')
+  const isTouched = isChanged('docCoverLayout')
   const isFaqTouched = isChanged('docFaqLayout')
 
   return {
     edit,
-    ...pick(['docLayout', 'docFaqLayout', 'saving'], dsb$),
+    ...pick(['docCoverLayout', 'docFaqLayout', 'saving'], dsb$),
     isTouched,
     isFaqTouched,
     addFAQSection,

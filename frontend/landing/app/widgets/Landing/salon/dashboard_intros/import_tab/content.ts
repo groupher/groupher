@@ -11,6 +11,6 @@ export default function useSalon() {
     logo: cn('size-6', shadow('sm')),
     title: cn('text-lg ml-2', fg('title')),
     //
-    bar: cn('w-32 h-2 opacity-15 rounded-md mb-3', bg('text.digest')),
+    bar: cn('w-32 h-2 opacity-15 rounded-md mb-3', bg('digest')),
   }
 }

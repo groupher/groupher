@@ -17,6 +17,6 @@ export default function useSalon() {
     links: 'align-both -ml-2 gap-x-4',
     linkName: 'text-xs',
     //
-    bar: cn('w-4 h-1.5 opacity-15', bg('text.digest')),
+    bar: cn('w-4 h-1.5 opacity-15', bg('digest')),
   }
 }

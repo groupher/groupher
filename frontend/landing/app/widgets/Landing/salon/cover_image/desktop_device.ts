@@ -22,7 +22,7 @@ export default function useSalon() {
     brower: cn('align-both w-full h-8 pl-4 rounded-md z-30', bg('cardAlpha')),
     dot: cn(
       'size-2.5 circle mr-1.5',
-      isLightTheme ? bg('divider') : cn(bg('text.digest'), 'opacity-40'),
+      isLightTheme ? bg('divider') : cn(bg('digest'), 'opacity-40'),
     ),
     addrBar: cn('row-center text-xs -ml-16 px-2 py-0.5 rounded-md border', br('divider')),
     addtext: cn(fg('digest'), isLightTheme && 'opacity-80'),

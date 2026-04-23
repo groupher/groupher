@@ -12,7 +12,7 @@ export default function useSalon({ bgColor }: TProps) {
   const { cn, br, fg, bg, fill, shadow, rainbow } = useTwBelt()
 
   const softBg = bgColor ? rainbow(COLOR[bgColor], 'bgSoft') : ''
-  const solidBg = bgColor ? rainbow(COLOR[bgColor], 'bg') : bg('text.digest')
+  const solidBg = bgColor ? rainbow(COLOR[bgColor], 'bg') : bg('digest')
   const titleColor = bgColor ? rainbow(COLOR[bgColor], 'fg') : fg('digest')
   const fillColor = bgColor ? rainbow(COLOR[bgColor], 'fill') : fill('digest')
 
@@ -37,7 +37,7 @@ export default function useSalon({ bgColor }: TProps) {
     headIcon: cn('size-3 mr-1.5', fillColor),
     attachIcon: cn('size-4 absolute right-2 -top-1 opacity-50', fillColor),
     //
-    leftDot: cn('size-1.5 circle absolute -left-1 opacity-65 z-30', bg('text.digest')),
+    leftDot: cn('size-1.5 circle absolute -left-1 opacity-65 z-30', bg('digest')),
     rightDot: cn('size-1.5 circle absolute -right-1 opacity-65 z-30', solidBg),
     bar: cn('rounded-md w-16 h-1.5 mb-2 opacity-15', solidBg),
     //

@@ -79,10 +79,13 @@ export const DSB_DESC_LAYOUT = {
   CHANGELOG_LIST: 'changelog_list',
 } as const
 
-export const DOC_LAYOUT = {
-  OUTLINE: 'OUTLINE',
-  LISTS: 'LISTS',
-  CARDS: 'CARDS',
+export const DOC_COVER_LAYOUT = {
+  OUTLINE_COLUMNS: 'OUTLINE_COLUMNS',
+  OUTLINE_TOC: 'OUTLINE_TOC',
+  BRIEF_CARDS: 'BRIEF_CARDS',
+  COVER_CARDS: 'COVER_CARDS',
+  TILE_CARDS: 'TILE_CARDS',
+  STACK_CARDS: 'STACK_CARDS',
 } as const
 
 export const DOC_FAQ_LAYOUT = {

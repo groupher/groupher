@@ -225,12 +225,14 @@ const communities = [
 ]
 
 const images = [
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1557555187-23d685287bc3?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80',
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1484399172022-72a90b12e3c1?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80',
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1617419086540-518c5b847b88?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=700&q=80',
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1617365564200-c6b079284290?ixid=MXwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwyNHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1617391765934-f7ac7aa648bc?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=642&q=80',
-  'https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1611095973362-88e8e2557e58?ixlib=rb-1.2.1&ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&auto=format&fit=crop&w=1050&q=80',
+  'https://feed.muzli.cloud/muzli_feed/wp-content/uploads/2026/04/17235039/claude_design-1-1.png',
+  'https://ph-files.imgix.net/e8fedd1e-2775-4868-8769-9c74be268563.png?auto=format',
+  'https://files.muzli.cloud/9d1f045a5091ac03719db58d9022466d.jpeg',
+  'https://files.muzli.cloud/3906721ed134fc1e90621ca9de80b10e.jpeg',
+  'https://files.muzli.cloud/8699406f17b698906c95aa6a28052a89.jpeg',
+  'https://uploads.sitepoint.com/wp-content/uploads/medium_Why_Is_Email_Deliverability_Important_fd4d27f1c3.png',
+  'https://files.muzli.cloud/d591b0c7613aa00330e7becf594abccf.jpeg',
+  'https://files.muzli.cloud/5b0e2e6b3b586a4f1d430c12c5ba374e.jpg',
 ]
 
 export const mockImage = (): string => {
@@ -383,10 +385,12 @@ export const mockHelpCats = () => {
         {
           id: '0',
           title: '基本介绍',
+          desc: '了解 Groupher 的定位与核心能力。',
         },
         {
           id: '1',
           title: '社区板块介绍',
+          desc: '快速浏览讨论区、看板与文档的组织方式。',
         },
       ],
     },
@@ -399,26 +403,32 @@ export const mockHelpCats = () => {
         {
           id: '0',
           title: '社区基本信息设置',
+          desc: '设置标题、域名、Logo 与社区基础资料。',
         },
         {
           id: '1',
           title: 'SEO 信息设置',
+          desc: '配置搜索引擎摘要与社交分享信息。',
         },
         {
           id: '2',
           title: '社区板块',
+          desc: '按需开启或关闭公开板块。',
         },
         {
           id: '3',
           title: '别名管理',
+          desc: '自定义频道与导航文案。',
         },
         {
           id: '4',
           title: '自定义页头',
+          desc: '调整顶部品牌区与导航展现。',
         },
         {
           id: '5',
           title: '自定义页脚',
+          desc: '配置页脚链接与补充信息。',
         },
       ],
     },
@@ -431,26 +441,32 @@ export const mockHelpCats = () => {
         {
           id: '0',
           title: '讨论区帖子',
+          desc: '管理文章、分类与置顶内容。',
         },
         {
           id: '1',
           title: '看板墙',
+          desc: '用状态列梳理反馈与路线图。',
         },
         {
           id: '2',
           title: '更新日志',
+          desc: '统一维护版本发布与变更记录。',
         },
         {
           id: '3',
           title: '文档内容',
+          desc: '维护帮助中心与产品文档。',
         },
         {
           id: '4',
           title: '自定义页头',
+          desc: '为内容区提供更清晰的入口。',
         },
         {
           id: '5',
           title: '自定义页脚',
+          desc: '补充说明、链接与版权信息。',
         },
       ],
     },
@@ -463,18 +479,22 @@ export const mockHelpCats = () => {
         {
           id: '0',
           title: '社区基本信息设置',
+          desc: '查看基础信息与默认展示设置。',
         },
         {
           id: '1',
           title: 'SEO 信息设置',
+          desc: '追踪搜索流量与收录表现。',
         },
         {
           id: '2',
           title: '社区板块',
+          desc: '分析不同板块的访问情况。',
         },
         {
           id: '3',
           title: '别名管理',
+          desc: '比对不同入口文案的效果。',
         },
       ],
     },
@@ -487,18 +507,22 @@ export const mockHelpCats = () => {
         {
           id: '0',
           title: '社区基本信息设置',
+          desc: '查看联系渠道与服务说明。',
         },
         {
           id: '1',
           title: 'SEO 信息设置',
+          desc: '了解工单与反馈的提交方式。',
         },
         {
           id: '2',
           title: '社区板块',
+          desc: '找到适合的问题分类入口。',
         },
         {
           id: '3',
           title: '别名管理',
+          desc: '快速联系社区维护者。',
         },
       ],
     },
@@ -511,18 +535,22 @@ export const mockHelpCats = () => {
         {
           id: '0',
           title: '社区基本信息设置',
+          desc: '掌握数据采集与使用方式。',
         },
         {
           id: '1',
           title: 'SEO 信息设置',
+          desc: '阅读账户与权限相关条款。',
         },
         {
           id: '2',
           title: '社区板块',
+          desc: '查看内容可见性与访问限制。',
         },
         {
           id: '3',
           title: '别名管理',
+          desc: '了解隐私设置与合规说明。',
         },
       ],
     },
@@ -535,18 +563,22 @@ export const mockHelpCats = () => {
         {
           id: '0',
           title: '社区基本信息设置',
+          desc: '连接常用开发与协作平台。',
         },
         {
           id: '1',
           title: 'SEO 信息设置',
+          desc: '配置同步、通知与 webhook。',
         },
         {
           id: '2',
           title: '社区板块',
+          desc: '管理第三方接入的权限范围。',
         },
         {
           id: '3',
           title: '别名管理',
+          desc: '组合你的自动化工作流。',
         },
       ],
     },

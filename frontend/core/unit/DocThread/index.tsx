@@ -2,14 +2,17 @@
  * DocThread
  */
 
-import { DOC_LAYOUT } from '~/const/layout'
+import { DOC_COVER_LAYOUT } from '~/const/layout'
 
 import FaqList from '~/unit/FaqList'
 import ArticleLayout from './ArticleLayout'
-import CardsLayout from './CardsLayout'
-import ListsLayout from './ListsLayout'
-import OutlineLayout from './OutlineLayout'
+import BriefCardsLayout from './BriefCardsLayout'
+import CoverCardsLayout from './CoverCardsLayout'
+import OutlineColumnsLayout from './OutlineColumnsLayout'
+import OutlineTocLayout from './OutlineTocLayout'
+import StackCardsLayout from './StackCardsLayout'
 import useSalon from './salon'
+import TileCardsLayout from './TileCardsLayout'
 import useLogic from './useLogic'
 
 export default function DocThread() {
@@ -23,9 +26,12 @@ export default function DocThread() {
 
   return (
     <div className={s.wrapper}>
-      {layout === DOC_LAYOUT.OUTLINE && <OutlineLayout />}
-      {layout === DOC_LAYOUT.LISTS && <ListsLayout />}
-      {layout === DOC_LAYOUT.CARDS && <CardsLayout />}
+      {layout === DOC_COVER_LAYOUT.OUTLINE_COLUMNS && <OutlineColumnsLayout />}
+      {layout === DOC_COVER_LAYOUT.OUTLINE_TOC && <OutlineTocLayout />}
+      {layout === DOC_COVER_LAYOUT.BRIEF_CARDS && <BriefCardsLayout />}
+      {layout === DOC_COVER_LAYOUT.COVER_CARDS && <CoverCardsLayout />}
+      {layout === DOC_COVER_LAYOUT.TILE_CARDS && <TileCardsLayout />}
+      {layout === DOC_COVER_LAYOUT.STACK_CARDS && <StackCardsLayout />}
 
       <div className={s.divider} />
 

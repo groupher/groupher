@@ -18,6 +18,6 @@ export default function useSalon() {
     brGreen: rainbow(COLOR.GREEN, 'border'),
     brBlue: rainbow(COLOR.BLUE, 'border'),
     brORange: rainbow(COLOR.ORANGE, 'border'),
-    bar: cn('absolute left-2 w-12 h-1.5 rounded-md opacity-30', bg('text.digest')),
+    bar: cn('absolute left-2 w-12 h-1.5 rounded-md opacity-30', bg('digest')),
   }
 }

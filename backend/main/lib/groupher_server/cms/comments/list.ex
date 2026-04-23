@@ -231,7 +231,7 @@ defmodule GroupherServer.CMS.Comments.List do
       join: c in Comment,
       on: p.comment_id == c.id,
       where: field(p, ^foreign_key) == ^article_id,
-      order_by: [desc: p.inserted_at],
+      order_by: [desc: p.inserted_at, desc: p.id],
       select: c
     )
     |> Repo.all()

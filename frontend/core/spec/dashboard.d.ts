@@ -5,8 +5,8 @@ import type {
   BROADCAST_ARTICLE_LAYOUT,
   BROADCAST_LAYOUT,
   CHANGELOG_LAYOUT,
+  DOC_COVER_LAYOUT,
   DOC_FAQ_LAYOUT,
-  DOC_LAYOUT,
   FOOTER_LAYOUT,
   HEADER_LAYOUT,
   INLINE_TAG_LAYOUT,
@@ -37,7 +37,7 @@ export type TKanbanLayout = TConstValues<typeof KANBAN_LAYOUT>
 export type TKanbanCardLayout = TConstValues<typeof KANBAN_CARD_LAYOUT>
 export type TKanbanBoard = TConstValues<typeof KANBAN_BOARD>
 export type TChangelogLayout = TConstValues<typeof CHANGELOG_LAYOUT>
-export type TDocLayout = TConstValues<typeof DOC_LAYOUT>
+export type TDocCoverLayout = TConstValues<typeof DOC_COVER_LAYOUT>
 export type TDocFAQLayout = TConstValues<typeof DOC_FAQ_LAYOUT>
 export type THeaderLayout = TConstValues<typeof HEADER_LAYOUT>
 export type TFooterLayout = TConstValues<typeof FOOTER_LAYOUT>
@@ -88,7 +88,7 @@ export type TDsb = {
     glowFixed: boolean
     glowOpacity: string
     darkFloat: boolean
-    docLayout: TDocLayout
+    docCoverLayout: TDocCoverLayout
     docFaqLayout: TDocFAQLayout
     postLayout: TPostLayout
     kanbanLayout: TKanbanLayout

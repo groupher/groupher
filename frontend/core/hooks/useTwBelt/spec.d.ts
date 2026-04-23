@@ -22,6 +22,7 @@ export type TBgKey =
   | 'divider'
   | 'hoverBg'
   | 'dot'
+  | 'digest'
   | 'card'
   | 'cardAlpha'
   | 'sandBox'
@@ -29,15 +30,20 @@ export type TBgKey =
   | 'alphaBg2'
   | 'menuHoverBg'
   | 'menuInvertBg'
+  | 'button.fg'
+  | 'button.toggle'
+  | 'notice.bg'
   | 'popover.bg'
+  | 'form.inputBg'
   | 'modal.bg'
   | 'modal.mask'
+  | 'modal.subPanel'
   | 'drawer.mask'
-  | 'table.border'
   | 'pageBg'
   | 'transparent'
   | 'snackBar'
   | 'link'
+  | 'rainbow.redSoft'
 
 export type TBorderKey = 'outline' | 'divider' | 'table.border' | 'digest' | 'title'
 
@@ -49,7 +55,7 @@ export type TRet = {
   container: () => string
 
   fg: (key: TTextKey | `${string}.${string}`) => string
-  bg: (key: TBgKey | `${string}.${string}`) => string
+  bg: (key: TBgKey) => string
   fill: (key: TFillKey | `${string}.${string}`) => string
   br: (key: TBorderKey | `${string}.${string}`) => string
 

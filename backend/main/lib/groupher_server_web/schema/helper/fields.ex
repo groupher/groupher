@@ -376,6 +376,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   defp to_absinthe_type({:array, inner}, _key),
     do: quote(do: list_of(unquote(to_absinthe_type(inner, nil))))
 
+  defp to_absinthe_type(:enum, :doc_cover_layout), do: :dsb_doc_cover_layout
   defp to_absinthe_type(:enum, key), do: :"dsb_#{key}"
   defp to_absinthe_type(:rainbow_color, _key), do: :rainbow_color
   defp to_absinthe_type(type, _key), do: type
@@ -395,7 +396,11 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   # internal :quora / :ph atoms automatically.
   defmacro dsb_enum(enum_key) do
     values = Dashboard.enum_values(enum_key)
-    type = :"dsb_#{enum_key}"
+    type =
+      case enum_key do
+        :doc_cover_layout -> :dsb_doc_cover_layout
+        _ -> :"dsb_#{enum_key}"
+      end
 
     value_defs =
       Enum.map(values, fn value ->
