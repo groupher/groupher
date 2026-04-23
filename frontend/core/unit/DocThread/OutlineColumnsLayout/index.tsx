@@ -9,8 +9,14 @@ export default function OutlineColumnsLayout() {
   return (
     <div className={s.wrapper}>
       <div className={s.cols}>
-        {cats.map((cat) => (
-          <Category key={cat.id} title={cat.title} color={cat.color} articles={cat.articles} />
+        {cats.map((cat, categoryIndex) => (
+          <Category
+            key={cat.id}
+            categoryIndex={categoryIndex + 1}
+            title={cat.title}
+            color={cat.color}
+            articles={cat.articles}
+          />
         ))}
       </div>
     </div>

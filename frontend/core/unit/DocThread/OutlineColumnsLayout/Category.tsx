@@ -4,18 +4,22 @@ import useSalon from '../salon/outline_columns_layout/category'
 import useLogic from '../useLogic'
 
 type TProps = {
+  categoryIndex: number
   title: string
   color: TColorName
   articles: TArticle[]
 }
 
-const Category: FC<TProps> = ({ title, color, articles }) => {
-  const s = useSalon({ color })
+const Category: FC<TProps> = ({ categoryIndex, title, articles }) => {
+  const s = useSalon()
   const { gotoDetailLayout } = useLogic()
 
   return (
     <section className={s.wrapper}>
-      <h3 className={s.title}>{title}</h3>
+      <h3 className={s.title}>
+        <span className={s.titleIndex}>{`${categoryIndex}.0`}</span>
+        <span>{title}</span>
+      </h3>
 
       <div className={s.items}>
         {articles.map((article, articleIndex) => (
@@ -27,7 +31,7 @@ const Category: FC<TProps> = ({ title, color, articles }) => {
           >
             <span className={s.articleTitle}>{article.title}</span>
             <span className={s.line} />
-            <span className={s.itemIndex}>{articleIndex + 1}</span>
+            <span className={s.itemIndex}>{`${categoryIndex}.${articleIndex + 1}`}</span>
           </button>
         ))}
       </div>

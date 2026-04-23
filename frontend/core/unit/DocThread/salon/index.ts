@@ -18,6 +18,7 @@ export default function useSalon() {
     articleTitle: cn(
       'text-sm line-clamp-1 transition-colors pointer',
       `group-hover:${fg('title')}`,
+      'group-hover:underline',
       fg('digest'),
     ),
 
@@ -25,6 +26,7 @@ export default function useSalon() {
       'mx-3 mt-0.5 grow border-b border-dashed',
       br('divider'),
       `group-hover:${br('digest')}`,
+      'group-hover:opacity-50',
       'transition-colors',
     ),
   }
