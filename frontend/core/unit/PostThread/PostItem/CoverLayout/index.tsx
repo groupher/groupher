@@ -2,6 +2,8 @@ import { type FC, useEffect, useState } from 'react'
 import Img from '~/Img'
 
 import { mockImage } from '~/mock'
+import { THREAD_PATH } from '~/const/thread'
+import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import type { TPost } from '~/spec'
 import ArticlePinLabel from '../../ArticlePinLabel'
 import useSalon from '../salon/cover_layout'
@@ -14,7 +16,8 @@ type TProps = {
 }
 
 const DigestView: FC<TProps> = ({ article }) => {
-  const s = useSalon()
+  const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
+  const s = useSalon({ active: isActive })
 
   const [coverImg, setCoverImg] = useState('')
 

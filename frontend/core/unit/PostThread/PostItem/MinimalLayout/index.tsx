@@ -1,5 +1,7 @@
 import type { FC } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
+import { THREAD_PATH } from '~/const/thread'
+import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { upvoteArticle } from '~/signal'
 import type { TPost } from '~/spec'
 import Upvote from '~/unit/Upvote'
@@ -13,7 +15,8 @@ type TProps = {
 }
 
 const DigestView: FC<TProps> = ({ article }) => {
-  const s = useSalon()
+  const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
+  const s = useSalon({ active: isActive })
   const { upvotesCount, meta, viewerHasUpvoted } = article
 
   return (

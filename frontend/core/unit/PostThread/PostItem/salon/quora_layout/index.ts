@@ -2,9 +2,13 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import useBase from '..'
 
-export default function useSalon() {
+type TProps = {
+  active?: boolean
+}
+
+export default function useSalon({ active = false }: TProps = {}) {
   const { cn, fg } = useTwBelt()
-  const { hoverEffect } = useBase()
+  const { hoverEffect } = useBase({ active })
 
   return {
     wrapper: cn(hoverEffect, 'column grow'),

@@ -1,10 +1,18 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default function useSalon() {
-  const { cn, fg, br, fill } = useTwBelt()
+type TProps = {
+  active?: boolean
+}
+
+export default function useSalon({ active = false }: TProps = {}) {
+  const { cn, fg, br, fill, bg } = useTwBelt()
 
   return {
-    wrapper: cn('row items-start pt-3 border-b mb-8 last:border-b-0', br('divider')),
+    wrapper: cn(
+      'row items-start pt-3 border-b mb-8 last:border-b-0',
+      br('divider'),
+      active && bg('hoverBg'),
+    ),
     main: 'w-full min-h-[220px] pb-8',
     title: cn(
       'text-xl font-semibold mb-2.5 mt-8 block no-underline',

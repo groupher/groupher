@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { type FC, memo, useEffect, useState } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
+import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { getRandomInt } from '~/helper'
 import { mockTags, mockUsers } from '~/mock'
 import type { TArticle } from '~/spec'
@@ -24,7 +25,8 @@ type TProps = {
 }
 
 const KanbanItem: FC<TProps> = ({ article }) => {
-  const s = useSalon()
+  const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
+  const s = useSalon({ active: isActive })
   const { slug } = useCommunity()
 
   const [titleIdx, setTitleIdx] = useState(0)

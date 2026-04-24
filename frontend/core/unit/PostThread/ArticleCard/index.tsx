@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { FC } from 'react'
 import { THREAD_PATH } from '~/const/thread'
+import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { cutRest } from '~/fmt'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -17,7 +18,8 @@ export type TProps = {
 }
 
 const ArticleCard: FC<TProps> = ({ data }) => {
-  const s = useSalon()
+  const isActive = usePreviewItemActive(data.innerId, THREAD_PATH.POST)
+  const s = useSalon({ active: isActive })
 
   const { slug } = useCommunity()
   const { innerId, title, digest, isPinned, viewerHasViewed } = data
